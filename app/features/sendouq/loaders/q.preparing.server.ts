@@ -13,7 +13,6 @@ export const loader = async () => {
 	});
 
 	return {
-		lastUpdated: Date.now(),
 		group: ownGroup!,
 	};
 };

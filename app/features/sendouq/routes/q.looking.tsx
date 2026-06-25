@@ -17,8 +17,8 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { metaTags } from "~/utils/remix";
@@ -39,6 +39,8 @@ import { loader } from "../loaders/q.looking.server";
 import {
 	FULL_GROUP_SIZE,
 	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+	SENDOUQ_LOOKING_ROOM,
+	sqGroupWebsocketRoom,
 } from "../q-constants";
 
 export { action, loader };
@@ -79,7 +81,16 @@ function QLookingPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const [searchParams] = useSearchParams();
-	useAutoRefresh(data.lastUpdated);
+
+	// Pool-shape changes (a group joining/leaving, a morph, a match starting) are
+	// broadcast to this shared room so every looking client revalidates.
+	useWebsocketRevalidation(SENDOUQ_LOOKING_ROOM);
+	// Group-specific updates (e.g. a received like) are pushed to the group's own
+	// dedicated topic.
+	useWebsocketRevalidation(
+		data.ownGroup ? sqGroupWebsocketRoom(data.ownGroup.id) : "",
+		Boolean(data.ownGroup),
+	);
 
 	const wasTryingToJoinAnotherTeam = searchParams.get("joining") === "true";
 
@@ -218,15 +229,19 @@ function Groups() {
 
 	const width = useMainContentWidth();
 
-	if (!isHydrated) return null;
+	// width === 0 means the main content hasn't been measured yet; rendering the
+	// Flipper before measurement makes it snapshot the width-0 (mobile) default
+	// layout and then morph every card into the real layout on first navigation
+	if (!isHydrated || width === 0) return null;
 
 	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
+	const layout = isMobile ? "mobile" : "desktop";
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
-			<ColumnHeader>
+			<ColumnHeader isMobile={isMobile}>
 				{t(
 					isFullGroup
 						? "q:looking.columns.challenged"
@@ -245,6 +260,7 @@ function Groups() {
 							action="UNLIKE"
 							showNote
 							ownGroup={data.ownGroup}
+							layout={layout}
 						/>
 					);
 				})}
@@ -253,7 +269,9 @@ function Groups() {
 
 	const ownGroupElement = data.ownGroup ? (
 		<div className="stack sm">
-			<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
+			<ColumnHeader isMobile={isMobile}>
+				{t("q:looking.columns.myGroup")}
+			</ColumnHeader>
 			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
@@ -319,7 +337,9 @@ function Groups() {
 						</SendouTabList>
 						<SendouTabPanel id="groups">
 							<div className="stack sm">
-								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
+								<ColumnHeader isMobile={isMobile}>
+									{t("q:looking.columns.available")}
+								</ColumnHeader>
 								{(isMobile
 									? data.groups.filter(
 											(group) =>
@@ -342,6 +362,7 @@ function Groups() {
 											}
 											showNote
 											ownGroup={data.ownGroup}
+											layout={layout}
 										/>
 									);
 								})}
@@ -369,6 +390,7 @@ function Groups() {
 											action={action()}
 											showNote
 											ownGroup={data.ownGroup}
+											layout={layout}
 										/>
 									);
 								})}
@@ -379,7 +401,7 @@ function Groups() {
 				</div>
 				{!isMobile ? (
 					<div className="stack sm">
-						<ColumnHeader>
+						<ColumnHeader isMobile={isMobile}>
 							{t(
 								isFullGroup
 									? "q:looking.columns.challenges"
@@ -406,6 +428,7 @@ function Groups() {
 									action={action()}
 									showNote
 									ownGroup={data.ownGroup}
+									layout={layout}
 								/>
 							);
 						})}
@@ -416,11 +439,13 @@ function Groups() {
 	);
 }
 
-function ColumnHeader({ children }: { children: React.ReactNode }) {
-	const width = useMainContentWidth();
-
-	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
-
+function ColumnHeader({
+	isMobile,
+	children,
+}: {
+	isMobile: boolean;
+	children: React.ReactNode;
+}) {
 	if (isMobile) return null;
 
 	return <div className={styles.header}>{children}</div>;

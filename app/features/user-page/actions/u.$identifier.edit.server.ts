@@ -4,16 +4,16 @@ import { BADGE } from "~/features/badges/badges-constants";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseFormData } from "~/form/parse.server";
+import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
-import { userEditProfileSchemaServer } from "../user-page-schemas.server";
+import { userEditProfileBaseSchema } from "../user-page-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 
-	const result = await parseFormData({
+	const result = await parseFormDataWithImages({
 		request,
-		schema: userEditProfileSchemaServer,
+		schema: userEditProfileBaseSchema,
 	});
 
 	if (!result.success) {
@@ -21,6 +21,17 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	const data = result.data;
+
+	if (data.customUrl) {
+		const existingUser = await UserRepository.findByCustomUrl(data.customUrl);
+		if (existingUser && existingUser.id !== user.id) {
+			return {
+				fieldErrors: {
+					customUrl: "forms:errors.profileCustomUrlDuplicate",
+				},
+			};
+		}
+	}
 
 	const [subjectPronoun, objectPronoun] = data.pronouns ?? [null, null];
 	const pronouns =
@@ -43,8 +54,7 @@ export const action: ActionFunction = async ({ request }) => {
 		: 1;
 	const limitedBadgeIds = data.favoriteBadgeIds.slice(0, maxBadgeCount);
 
-	const editedUser = await UserRepository.updateProfile({
-		userId: user.id,
+	const editedUser = await UserRepository.updateOwnProfile({
 		country: data.country,
 		bio: data.bio,
 		customUrl: data.customUrl,
@@ -59,19 +69,19 @@ export const action: ActionFunction = async ({ request }) => {
 		showDiscordUniqueName: data.showDiscordUniqueName ? 1 : 0,
 		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
 		commissionText: isArtist ? data.commissionText : null,
+		customAvatarImgId: isSupporter ? data.customAvatar : null,
 	});
 
-	await UserRepository.updatePreferences(user.id, {
+	await UserRepository.updateOwnPreferences({
 		newProfileEnabled: isSupporter ? data.newProfileEnabled : false,
 	});
 
 	// TODO: to transaction
 	if (data.inGameName) {
 		const tournamentIdsAffected =
-			await TournamentTeamRepository.updateMemberInGameNameForNonStarted({
-				inGameName: data.inGameName,
-				userId: user.id,
-			});
+			await TournamentTeamRepository.updateOwnMemberInGameNameForNonStarted(
+				data.inGameName,
+			);
 
 		for (const tournamentId of tournamentIdsAffected) {
 			clearTournamentDataCache(tournamentId);

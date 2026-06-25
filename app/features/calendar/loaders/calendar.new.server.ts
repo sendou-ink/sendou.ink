@@ -4,17 +4,16 @@ import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { canEditCalendarEvent } from "../calendar-utils";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	requireRole("CALENDAR_EVENT_ADDER");
-
-	const url = new URL(request.url);
 
 	const eventWithTournament = async (key: string) => {
 		const eventId = Number(url.searchParams.get(key));
@@ -28,7 +27,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 		if (!event) return;
 
-		if (!event?.tournamentId) return { ...event, tournament: null };
+		if (!event?.tournamentId)
+			return { ...event, tournament: null, rules: null };
 
 		return {
 			...event,
@@ -36,6 +36,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				tournamentId: event.tournamentId,
 				user,
 			}),
+			rules: await TournamentRepository.findRulesById(event.tournamentId),
 		};
 	};
 
@@ -92,6 +93,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			}
 		: undefined;
 
+	// the badges the user can pick from, plus any already-attached prize badges they no
+	// longer manage (so an existing selection still renders and stays removable)
+	const badgeOptions = R.uniqueBy(
+		[...managedBadges, ...(eventToEdit?.badgePrizes ?? [])].map((badge) => ({
+			id: badge.id,
+			code: badge.code,
+			displayName: badge.displayName,
+			hue: badge.hue,
+		})),
+		(badge) => badge.id,
+	);
+
 	return {
 		isAddingTournament: Boolean(
 			url.searchParams.has("tournament") ||
@@ -99,6 +112,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				eventToEdit?.tournament,
 		),
 		managedBadges,
+		badgeOptions,
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
 		eventToCopy,
 		recentTournaments:

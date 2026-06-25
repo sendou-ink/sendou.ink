@@ -17,7 +17,7 @@ vi.mock("~/modules/twitch/vods", async (importOriginal) => {
 	};
 });
 
-vi.mock("~/modules/twitch/utils", () => ({
+vi.mock("~/modules/twitch/utils.server", () => ({
 	hasTwitchEnvVars: () => true,
 }));
 

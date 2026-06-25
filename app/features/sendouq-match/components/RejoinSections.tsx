@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SENDOUQ_PAGE } from "~/utils/urls";
 import * as RejoinVote from "../core/RejoinVote";
@@ -95,14 +95,25 @@ export function TrustedRejoinSection({
 
 function DeclinedSection() {
 	const { t } = useTranslation(["q"]);
+	const rejoinFetcher = useFetcher();
 	return (
 		<div className="stack md items-center">
 			<p className="text-lighter text-sm text-center">
 				{t("q:match.rematch.declined")}
 			</p>
-			<Link to={SENDOUQ_PAGE} className="text-sm">
+			<SendouButton
+				variant="minimal"
+				className="text-sm font-bold"
+				isPending={rejoinFetcher.state !== "idle"}
+				onPress={() => {
+					rejoinFetcher.submit(
+						{ _action: "JOIN_QUEUE", direct: "true" },
+						{ method: "post", action: SENDOUQ_PAGE },
+					);
+				}}
+			>
 				{t("q:match.rematch.rejoinQueue")}
-			</Link>
+			</SendouButton>
 		</div>
 	);
 }

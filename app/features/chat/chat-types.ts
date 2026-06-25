@@ -37,6 +37,7 @@ export type ChatUser = Pick<
 	Tables["User"],
 	"username" | "discordId" | "discordAvatar" | "pronouns"
 > & {
+	customAvatarUrl: string | null;
 	chatNameHue: string | null;
 	title?: string;
 };

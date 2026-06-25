@@ -2,10 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { logger } from "~/utils/logger";
-import weapons from "./dicts/WeaponInfoMain.json";
+import { loadWeaponInfoMain } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const weapons = loadWeaponInfoMain();
 
 const DIR_PATH_1 = path.join(
 	__dirname,

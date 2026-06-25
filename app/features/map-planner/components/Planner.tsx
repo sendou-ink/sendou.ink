@@ -794,7 +794,7 @@ function createRangeCircleForShape(
 	if (!assetId) return;
 
 	const asset = editor.getAsset(assetId as TLAssetId);
-	if (!asset || asset.type !== "image" || !asset.props.src) return;
+	if (asset?.type !== "image" || !asset.props.src) return;
 
 	const weaponId = extractMainWeaponIdFromSrc(asset.props.src);
 	if (!weaponId) return;

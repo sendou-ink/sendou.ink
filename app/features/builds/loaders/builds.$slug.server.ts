@@ -15,7 +15,7 @@ import {
 } from "../builds-schemas";
 import { filterBuilds } from "../core/filter.server";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const t = await i18next.getFixedT(request, ["weapons", "common"], {
 		lng: "en",
@@ -26,7 +26,6 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const url = new URL(request.url);
 	const limit = buildsLimitSearchParam.parse(url.searchParams.get("limit"));
 
 	const weaponName = t(`weapons:MAIN_${weaponId}`);

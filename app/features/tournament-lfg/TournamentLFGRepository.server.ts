@@ -2,10 +2,12 @@ import type { Transaction } from "kysely";
 import { jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
@@ -63,6 +65,7 @@ type TournamentLFGMemberObject = {
 	username: Tables["User"]["username"];
 	discordId: Tables["User"]["discordId"];
 	discordAvatar: Tables["User"]["discordAvatar"];
+	customAvatarUrl: string | null;
 	customUrl: Tables["User"]["customUrl"];
 	languages: Tables["User"]["languages"];
 	vc: Tables["User"]["vc"];
@@ -107,6 +110,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						username: eb.ref("User.username"),
 						discordId: eb.ref("User.discordId"),
 						discordAvatar: eb.ref("User.discordAvatar"),
+						customAvatarUrl: customAvatarUrl(eb),
 						customUrl: eb.ref("User.customUrl"),
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
@@ -146,6 +150,7 @@ export async function findSubGroups(tournamentId: number) {
 						username: eb.ref("User.username"),
 						discordId: eb.ref("User.discordId"),
 						discordAvatar: eb.ref("User.discordAvatar"),
+						customAvatarUrl: customAvatarUrl(eb),
 						customUrl: eb.ref("User.customUrl"),
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
@@ -328,20 +333,18 @@ export function updateMemberRole({
 		.execute();
 }
 
-export function updateStayAsSub({
+export function updateOwnStayAsSub({
 	teamId,
-	userId,
 	value,
 }: {
 	teamId: number;
-	userId: number;
 	value: boolean;
 }) {
 	return db
 		.updateTable("TournamentTeamMember")
 		.set({ isStayAsSub: value ? 1 : 0 })
 		.where("tournamentTeamId", "=", teamId)
-		.where("userId", "=", userId)
+		.where("userId", "=", actorId())
 		.execute();
 }
 

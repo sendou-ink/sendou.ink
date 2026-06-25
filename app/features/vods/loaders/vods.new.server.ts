@@ -10,10 +10,9 @@ const newVodLoaderParamsSchema = z.object({
 	vod: z.preprocess(actualNumber, id),
 });
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
-	const url = new URL(request.url);
 	const params = newVodLoaderParamsSchema.safeParse(
 		Object.fromEntries(url.searchParams),
 	);

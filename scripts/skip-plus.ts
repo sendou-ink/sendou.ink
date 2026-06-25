@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { sql } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import invariant from "~/utils/invariant";

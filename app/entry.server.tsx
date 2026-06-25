@@ -1,7 +1,6 @@
-import * as Sentry from "@sentry/react-router";
-import "@formatjs/intl-durationformat/polyfill.js";
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
+import * as Sentry from "@sentry/react-router";
 import { createInstance } from "i18next";
 import { isbot } from "isbot";
 import cron from "node-cron";
@@ -12,6 +11,8 @@ import {
 	type HandleErrorFunction,
 	ServerRouter,
 } from "react-router";
+import { Config } from "~/config";
+import { ServerConfig } from "~/config.server";
 import { config } from "~/modules/i18n/config"; // your i18n configuration file
 import { i18next } from "~/modules/i18n/i18next.server";
 import { resources } from "./modules/i18n/resources.server";
@@ -26,7 +27,7 @@ import { logger } from "./utils/logger";
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
 
-const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+const SENTRY_ENABLED = Config.sentry.enabled;
 
 async function handleRequest(
 	request: Request,
@@ -95,7 +96,7 @@ declare global {
 	var appStartSignal: undefined | true;
 }
 
-if (!global.appStartSignal && process.env.NODE_ENV === "production") {
+if (!global.appStartSignal && ServerConfig.isProduction) {
 	global.appStartSignal = true;
 
 	cron.schedule("0 */1 * * *", async () => {

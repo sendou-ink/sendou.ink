@@ -1,6 +1,6 @@
-import type { Tables } from "~/db/tables";
+import type { MemberRole, MemberRoleType, Tables } from "~/db/tables";
 import type * as TeamRepository from "./TeamRepository.server";
-import { TEAM } from "./team-constants";
+import { NON_PLAYER_TEAM_ROLES, TEAM } from "./team-constants";
 
 export function isTeamOwner({
 	team,
@@ -72,6 +72,20 @@ export function resolveNewOwner(
 	}
 
 	return null;
+}
+
+/**
+ * Resolves how a team member's role should be classified. For custom roles the explicit
+ * `roleType` is authoritative; for predefined roles it is derived from {@link NON_PLAYER_TEAM_ROLES}.
+ * Returns `null` when the member has no role at all (treated as a player by callers).
+ */
+export function getMemberRoleType(member: {
+	role: MemberRole | null;
+	roleType: MemberRoleType | null;
+}): MemberRoleType | null {
+	if (member.roleType) return member.roleType;
+	if (!member.role) return null;
+	return NON_PLAYER_TEAM_ROLES.includes(member.role) ? "OTHER" : "PLAYER";
 }
 
 /**

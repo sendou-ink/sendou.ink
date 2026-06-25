@@ -4,7 +4,7 @@ import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import * as ArtRepository from "../ArtRepository.server";
 import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
+export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const cachedArts = await cachified({
 		key: "arts",
 		cache,
@@ -18,7 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		},
 	});
 
-	const filteredTagName = new URL(request.url).searchParams.get(
+	const filteredTagName = url.searchParams.get(
 		FILTERED_TAG_KEY_SEARCH_PARAM_KEY,
 	);
 

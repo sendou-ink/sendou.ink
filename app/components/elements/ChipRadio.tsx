@@ -3,6 +3,7 @@ import styles from "./ChipRadio.module.css";
 interface SendouChipRadioGroupProps {
 	children: React.ReactNode;
 	orientation?: "horizontal" | "vertical";
+	wrap?: boolean;
 	className?: string;
 }
 
@@ -17,12 +18,14 @@ interface SendouChipRadioProps {
 export function SendouChipRadioGroup({
 	children,
 	orientation = "horizontal",
+	wrap = false,
 	className,
 }: SendouChipRadioGroupProps) {
 	return (
 		<div
 			className={className ? `${styles.group} ${className}` : styles.group}
 			data-orientation={orientation}
+			data-wrap={wrap}
 			role="radiogroup"
 		>
 			{children}

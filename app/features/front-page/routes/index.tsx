@@ -13,7 +13,9 @@ import { ExternalIcon } from "~/components/icons/External";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
+import { Config } from "~/config";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
+import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -21,6 +23,7 @@ import styles from "~/styles/front.module.css";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
+	CALENDAR_PAGE,
 	LUTI_PAGE,
 	leaderboardsPage,
 	navIconUrl,
@@ -41,6 +44,7 @@ export default function FrontPage() {
 			<LeagueBanner />
 			<SeasonBanner />
 			<SplatoonRotations />
+			<TournamentShowcase />
 			<ResultHighlights />
 			<DiscoverFeatures />
 			<ChangelogList />
@@ -138,7 +142,7 @@ function SeasonCard() {
 }
 
 function LeagueBanner() {
-	const showBannerFor = import.meta.env.VITE_SHOW_BANNER_FOR_SEASON;
+	const showBannerFor = Config.showBannerForSeason;
 	if (!showBannerFor) return null;
 
 	return (
@@ -147,6 +151,27 @@ function LeagueBanner() {
 			Registration now open for Leagues Under The Ink (LUTI) Season{" "}
 			{showBannerFor}!
 		</Link>
+	);
+}
+
+function TournamentShowcase() {
+	const { t } = useTranslation(["front"]);
+	const data = useLoaderData<typeof loader>();
+
+	if (data.tournaments.showcase.length === 0) return null;
+
+	return (
+		<div className={styles.tournamentCards}>
+			<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
+				{data.tournaments.showcase.map((tournament) => (
+					<TournamentCard key={tournament.id} tournament={tournament} />
+				))}
+			</div>
+			<Link to={CALENDAR_PAGE} className={styles.tournamentCardsViewAllCard}>
+				<Image path={navIconUrl("medal")} size={36} alt="" />
+				{t("front:showcase.viewAll")}
+			</Link>
+		</div>
 	);
 }
 
@@ -309,6 +334,7 @@ function DiscoverFeatures() {
 					</Link>
 				))}
 			</nav>
+			<PWAInstallBanner />
 		</div>
 	);
 }

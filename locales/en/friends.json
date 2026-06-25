@@ -8,6 +8,8 @@
 	"friendsList.friendSince": "Friends since {{date}}",
 	"friendsList.viewUserPage": "View user page",
 	"friendsList.viewTournament": "View tournament",
+	"friendsList.viewMatch": "View match",
+	"friendsList.live": "Live",
 	"friendsList.joinSendouQ": "Join SendouQ",
 	"friendsList.deleteFriend": "Delete friend",
 	"friendsList.deleteConfirm": "Delete {{name}} as a friend?",
@@ -15,5 +17,7 @@
 	"view.friends": "Friends",
 	"view.teamMembers": "Team members",
 	"view.all": "All",
-	"teamMembers.empty": "No team members yet"
+	"teamMembers.empty": "No team members yet",
+	"unseenRequests_one": "{{count}} unseen friend request",
+	"unseenRequests_other": "{{count}} unseen friend requests"
 }

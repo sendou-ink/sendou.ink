@@ -6,6 +6,7 @@ import {
 	badges,
 	datetimeOptional,
 	fieldset,
+	image,
 	select,
 	stringConstant,
 	textAreaOptional,
@@ -33,6 +34,7 @@ export const newOrganizationSchema = z.object({
 
 export const organizationEditFormSchema = z.object({
 	name: orgNameField,
+	logo: image({ label: "labels.logo", autoValidate: true }),
 	description: textAreaOptional({
 		label: "labels.description",
 		maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
@@ -86,7 +88,7 @@ export const organizationEditFormSchema = z.object({
 
 export const banUserActionSchema = z.object({
 	_action: stringConstant("BAN_USER"),
-	userId: userSearch({ label: "labels.banUserPlayer" }),
+	userId: userSearch({ label: "labels.player" }),
 	privateNote: textAreaOptional({
 		label: "labels.banUserNote",
 		bottomText: "bottomTexts.banUserNoteHelp",

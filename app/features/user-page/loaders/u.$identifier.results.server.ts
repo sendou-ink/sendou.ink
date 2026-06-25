@@ -15,7 +15,7 @@ import { userResultsPageSearchParamsSchema } from "../user-page-schemas";
 
 export type UserResultsLoaderData = SerializeFrom<typeof loader>;
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 	const parsedSearchParams = parseSafeSearchParams({
 		request,
 		schema: userResultsPageSearchParamsSchema,
@@ -35,7 +35,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		showHighlightsOnly = false;
 	}
 
-	const isChoosingHighlights = request.url.includes("/results/highlights");
+	const isChoosingHighlights = url.pathname.includes("/results/highlights");
 	if (isChoosingHighlights) {
 		showHighlightsOnly = false;
 	}
@@ -62,7 +62,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	const pagesCount = Math.ceil(totalCount / RESULTS_PER_PAGE);
 
-	redirectIfPageOutOfBounds({ request, page, pagesCount });
+	redirectIfPageOutOfBounds({ url, page, pagesCount });
 
 	return {
 		results: {

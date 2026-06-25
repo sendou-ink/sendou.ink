@@ -15,7 +15,7 @@ import {
 	notFoundIfFalsy,
 	parseParams,
 } from "~/utils/remix.server";
-import { tournamentPage } from "~/utils/urls";
+import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import { validateCanJoinTeam } from "../tournament-utils";
 import {
@@ -23,13 +23,12 @@ import {
 	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = async ({ params, url }) => {
 	const { id: tournamentId } = parseParams({
 		params,
 		schema: idObject,
 	});
 	const user = requireUser();
-	const url = new URL(request.url);
 	const inviteCode = url.searchParams.get("code");
 	invariant(inviteCode, "code is missing");
 
@@ -55,11 +54,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 		team.members.some((member) => member.userId === user.id),
 	);
 
+	errorToastIfFalsy(
+		!previousTeam,
+		"Leave your current team before joining another",
+	);
+
 	if (tournament.hasStarted) {
-		errorToastIfFalsy(
-			!previousTeam || previousTeam.checkIns.length === 0,
-			"Can't leave checked in team mid tournament",
-		);
 		errorToastIfFalsy(tournament.autonomousSubs, "Subs are not allowed");
 	} else {
 		errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
@@ -79,26 +79,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 		"No friend code",
 	);
 
-	const whatToDoWithPreviousTeam = !previousTeam
-		? undefined
-		: previousTeam.members.some(
-					(member) => member.userId === user.id && member.role === "OWNER",
-				)
-			? "DELETE"
-			: "LEAVE";
-
 	await TournamentLFGRepository.leaveLfg({ userId: user.id, tournamentId });
 	await TournamentTeamRepository.join({
 		userId: user.id,
 		newTeamId: teamToJoin.id,
-		previousTeamId: previousTeam?.id,
-		// making sure they aren't unfilling one checking in condition i.e. having full roster
-		// and then having members leave without it affecting the checking in status
-		checkOutTeam:
-			whatToDoWithPreviousTeam === "LEAVE" &&
-			previousTeam &&
-			previousTeam.members.length <= tournament.minMembersPerTeam,
-		whatToDoWithPreviousTeam,
 	});
 
 	ShowcaseTournaments.addToCached({
@@ -109,5 +93,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	clearTournamentDataCache(tournamentId);
 
-	throw redirect(tournamentPage(leanTeam.tournamentId));
+	throw redirect(
+		tournament.registrationOpen
+			? tournamentRegisterPage(leanTeam.tournamentId)
+			: tournamentPage(leanTeam.tournamentId),
+	);
 };

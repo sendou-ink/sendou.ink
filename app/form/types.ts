@@ -1,6 +1,9 @@
 import type { z } from "zod";
+import type { TeamSearchResult } from "~/components/elements/TeamSearch";
+import type { UserSearchResult } from "~/components/elements/UserSearch";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type forms from "../../locales/en/forms.json";
+import type { ImageFieldDimensions } from "./image-field";
 
 export type FormsTranslationKey = keyof typeof forms;
 
@@ -40,6 +43,11 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 
 interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
+}
+
+interface FormFieldInGameName<T extends string> extends FormFieldBase<T> {
+	maxLength: number;
+	required: boolean;
 }
 
 interface FormFieldItem<V extends string> {
@@ -114,9 +122,10 @@ interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
 	disableBannedMaps?: boolean;
 }
 
-interface FormFieldImage<T extends string>
-	extends Omit<FormFieldBase<T>, "bottomText"> {
-	dimensions: "logo" | "thick-banner";
+interface FormFieldImage<T extends string> extends FormFieldBase<T> {
+	dimensions?: ImageFieldDimensions;
+	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
+	autoValidate?: boolean;
 }
 
 export interface FormFieldArray<T extends string, S extends z.ZodType>
@@ -124,6 +133,10 @@ export interface FormFieldArray<T extends string, S extends z.ZodType>
 	min?: number;
 	max: number;
 	field: S;
+	/** When false, the "Add" button is hidden (the array can only be edited/shrunk, not grown). Defaults to true. */
+	addable?: boolean;
+	/** When true, items (object arrays only) can be reordered via drag-and-drop and the new order is reflected in the value. */
+	sortable?: boolean;
 }
 
 interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
@@ -141,6 +154,10 @@ interface FormFieldUserSearch<T extends string> extends FormFieldBase<T> {
 }
 
 interface FormFieldTournamentSearch<T extends string> extends FormFieldBase<T> {
+	required: boolean;
+}
+
+interface FormFieldTeamSearch<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
@@ -169,6 +186,7 @@ interface FormFieldWeaponSelect<T extends string> extends FormFieldBase<T> {
 export type FormField<V extends string = string> =
 	| FormFieldBase<"custom">
 	| FormFieldText<"text-field">
+	| FormFieldInGameName<"in-game-name">
 	| FormFieldTextarea<"text-area">
 	| FormFieldBase<"switch">
 	| FormFieldSelect<"select", V>
@@ -190,6 +208,7 @@ export type FormField<V extends string = string> =
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
 	| FormFieldUserSearch<"user-search">
 	| FormFieldTournamentSearch<"tournament-search">
+	| FormFieldTeamSearch<"team-search">
 	| FormFieldBadges<"badges">
 	| FormFieldStageSelect<"stage-select">
 	| FormFieldWeaponSelect<"weapon-select">;
@@ -259,6 +278,7 @@ export type TypedFormFieldProps<
 	label?: string;
 	disabled?: boolean;
 	maxCount?: number;
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -275,6 +295,7 @@ export type FlexibleFormFieldProps = {
 	label?: string;
 	disabled?: boolean;
 	maxCount?: number;
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -287,4 +308,39 @@ export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {
 		props: TypedFormFieldProps<TSchema, TName>,
 	): React.ReactNode;
 	(props: FlexibleFormFieldProps): React.ReactNode;
+};
+
+/**
+ * Runtime config consumed only by the `team-search` field. Passed via the
+ * `options` prop (the same channel `badges`/`select-dynamic` use), so it stays
+ * scoped to this field type instead of polluting every `FormField`.
+ *
+ * `initialTeam` carries the selected team's display data (name, avatar) for the
+ * edit/prefill case — that metadata is not part of the stored form value (a
+ * plain team id), so it cannot come from `defaultValues`.
+ */
+export type TeamSearchFieldOptions = {
+	onTeamSelected?: (team: TeamSearchResult | null) => void;
+	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
+};
+
+/**
+ * Runtime config consumed only by the `user-search` field, passed via the
+ * `options` prop (the same channel `team-search` uses).
+ *
+ * `onUserSelected` exposes the resolved user (with its username) on selection —
+ * the stored form value is only the user id, so callers that need to display the
+ * picked user's name elsewhere capture it here.
+ */
+export type UserSearchFieldOptions = {
+	onUserSelected?: (user: UserSearchResult | null) => void;
+};
+
+/**
+ * Runtime config consumed only by the `tournament-search` field, passed via the
+ * `options` prop (the same channel `team-search` uses).
+ */
+export type TournamentSearchFieldOptions = {
+	/** Restrict results to tournaments that have already started (finished/past). */
+	pastOnly?: boolean;
 };

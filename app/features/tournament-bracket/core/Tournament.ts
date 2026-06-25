@@ -38,6 +38,11 @@ import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
 
+/** The progress status of a team member in a running tournament, as resolved by {@link Tournament.teamMemberOfProgressStatus}. */
+export type TournamentTeamMemberProgressStatus = NonNullable<
+	ReturnType<Tournament["teamMemberOfProgressStatus"]>
+>;
+
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
 	brackets: Bracket[] = [];
@@ -631,6 +636,15 @@ export class Tournament {
 		return modesIncluded(this.ctx.mapPickingStyle, this.ctx.toSetMapPool);
 	}
 
+	/** Should the rules page (and its nav item) be shown. True if there are rules or any map pool to show. */
+	get hasRulesPage() {
+		return (
+			this.ctx.hasRules ||
+			this.ctx.toSetMapPool.length > 0 ||
+			this.ctx.tieBreakerMapPool.length > 0
+		);
+	}
+
 	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
 	tournamentTeamLogoSrc(team: TournamentDataTeam) {
 		return team.team?.logoUrl ?? team.pickupAvatarUrl;
@@ -666,12 +680,17 @@ export class Tournament {
 
 		// for small tournaments there should be no risk that the pool gets full
 		// so to make it more convenient just use same suffix every match
-		const globalSuffix = this.ctx.teams.length <= 20 ? this.ctx.id % 10 : null;
+		// pool numbers are kept in the 1-9 range (0 is not used)
+		const globalSuffix =
+			this.ctx.teams.length <= 20 ? (this.ctx.id % 9) + 1 : null;
 
 		return {
 			prefix,
 			suffix:
-				globalSuffix ?? groupLetters ?? bracketNumber ?? hostingTeamId % 10,
+				globalSuffix ??
+				groupLetters ??
+				bracketNumber ??
+				(hostingTeamId % 9) + 1,
 		};
 	}
 

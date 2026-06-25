@@ -34,7 +34,7 @@ import {
 	BUILDS_PAGE_MAX_BUILDS,
 	FILTER_SEARCH_PARAM_KEY,
 	MAX_BUILD_FILTERS,
-	PATCHES,
+	RECENT_PATCHES,
 } from "../builds-constants";
 import {
 	type BuildFiltersFromSearchParams,
@@ -210,7 +210,7 @@ export default function WeaponsBuildsPage() {
 				: type === "date"
 					? {
 							type: "date",
-							date: PATCHES[0].date,
+							date: RECENT_PATCHES[0].date,
 						}
 					: {
 							type: "mode",

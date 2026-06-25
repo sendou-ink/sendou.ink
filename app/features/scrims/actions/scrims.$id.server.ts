@@ -44,10 +44,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				errorToast("Cannot cancel a scrim that was already scheduled to start");
 			}
 
-			await ScrimPostRepository.cancelScrim(id, {
-				userId: user.id,
-				reason: data.reason,
-			});
+			await ScrimPostRepository.cancelScrim(id, data.reason);
 
 			const acceptedRequest = post.requests.find((r) => r.isAccepted);
 			if (acceptedRequest) {
@@ -106,7 +103,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				serializedPool,
 			});
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "REMOVE_MAP_LIST": {
@@ -114,7 +111,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			await ScrimMapListRepository.deleteMapList(post.id, viewerSide);
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "REPORT_MAP": {
@@ -128,10 +125,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				scrimPostId: post.id,
 				mapId: data.mapId,
 				winnerSide: data.winnerSide,
-				reportedByUserId: user.id,
 			});
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "UNDO_MAP": {
@@ -142,7 +138,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			await ScrimMapRepository.undoMostRecentMap(post.id);
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "REPLAY_MAP": {
@@ -207,18 +203,13 @@ async function loadMapByMapContext({
 	return { viewerSide: viewerSide!, maps, mapLists };
 }
 
-function broadcastRevalidate({
-	post,
-	user,
-}: {
-	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
-	user: ReturnType<typeof requireUser>;
-}) {
+function broadcastRevalidate(
+	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>,
+) {
 	if (!post.chatCode) return;
 	ChatSystemMessage.send({
 		room: post.chatCode,
 		revalidateOnly: true,
-		authorUserId: user.id,
 	});
 }
 

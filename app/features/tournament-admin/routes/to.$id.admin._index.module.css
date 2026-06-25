@@ -1,0 +1,96 @@
+.toolbar {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	row-gap: var(--s-4);
+}
+
+.toolbarActions {
+	display: flex;
+	gap: var(--s-2);
+	justify-content: flex-end;
+}
+
+.searchInput {
+	width: 100%;
+}
+
+@container (min-width: 32rem) {
+	.toolbar {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.toolbarActions {
+		order: 1;
+	}
+
+	.searchInput {
+		flex: 1;
+		max-width: 22rem;
+	}
+}
+
+.teamName {
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.droppedOut {
+	opacity: 0.6;
+}
+
+.checkInTrigger {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: var(--s-1);
+}
+
+.checkInMark {
+	width: 1rem;
+	height: 1rem;
+	color: var(--color-success);
+}
+
+.checkInCross {
+	width: 1rem;
+	height: 1rem;
+	color: var(--color-error);
+}
+
+.checkInScopes {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.checkInScope {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+}
+
+.checkInScopeLabel {
+	font-weight: var(--weight-semi);
+}
+
+.checkInScopeStatus {
+	color: var(--color-text-high);
+	font-weight: var(--weight-body);
+}
+
+.noResults {
+	text-align: center;
+	color: var(--color-text-lighter);
+	padding-block: var(--s-6);
+}

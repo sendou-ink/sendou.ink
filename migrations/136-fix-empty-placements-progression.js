@@ -9,7 +9,7 @@ export function up(db) {
 
 	const settings = JSON.parse(row.settings);
 	const source = settings.bracketProgression?.[1]?.sources?.[0];
-	if (!source || source.placements?.length !== 0) return;
+	if (source?.placements?.length !== 0) return;
 
 	source.placements = [-1];
 

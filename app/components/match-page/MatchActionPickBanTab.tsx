@@ -30,6 +30,7 @@ interface MatchActionPickBanTabProps {
 	type: "PICK" | "BAN";
 	onSubmit?: (data: PickBanSubmission) => void;
 	isSubmitting?: boolean;
+	actionButtons?: React.ReactNode;
 	secondaryAction?: React.ReactNode;
 	waitingFor?: string;
 }
@@ -39,6 +40,7 @@ export function MatchActionPickBanTab({
 	type,
 	onSubmit,
 	isSubmitting,
+	actionButtons,
 	secondaryAction,
 	waitingFor,
 }: MatchActionPickBanTabProps) {
@@ -86,6 +88,9 @@ export function MatchActionPickBanTab({
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
 			<div className={styles.root}>
 				<div className={styles.title}>{t(titleKey)}</div>
+				{actionButtons ? (
+					<div className={styles.actionButtons}>{actionButtons}</div>
+				) : null}
 
 				<div className={styles.options}>
 					{layout === "STAGE_BY_MODE" ? (
@@ -296,6 +301,9 @@ function StageTile({
 					onClick={onSelect}
 					disabled={disabled}
 					data-testid="pick-ban-button"
+					aria-label={`${type === "PICK" ? "Pick" : "Ban"} ${shortStageName(
+						t(`game-misc:STAGE_${option.stageId!}`),
+					)}`}
 				/>
 				{isSelected ? (
 					type === "PICK" ? (

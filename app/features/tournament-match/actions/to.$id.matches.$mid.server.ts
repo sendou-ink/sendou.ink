@@ -33,13 +33,13 @@ import {
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
+import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
 import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
 import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
-import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
@@ -60,6 +60,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 	const match = notFoundIfFalsy(
 		await TournamentMatchRepository.findMatchById(matchId),
 	);
+
+	if (match.tournamentId !== tournamentId) {
+		throw new Response(null, { status: 404 });
+	}
+
 	const data = await parseRequestPayload({
 		request,
 		schema: matchSchema,
@@ -99,8 +104,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 					tournamentId,
 					matchId,
 					teams: [match.opponentOne.id, match.opponentTwo.id],
+					mapPoolByTeamId: (teamId) =>
+						tournament.teamById(teamId)?.mapPool ?? [],
 					mapPickingStyle: match.mapPickingStyle,
 					maps: match.roundMaps,
+					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 					pickBanEvents,
 					recentlyPlayedMaps:
 						match.mapPickingStyle !== "TO"
@@ -118,6 +126,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	let emitTournamentUpdate = false;
 	let setIsOver = false;
 	let endedDroppedMatchIds: number[] = [];
+	let followingMatchIds: number[] = [];
 
 	switch (data._action) {
 		case "REPORT_SCORE": {
@@ -196,53 +205,62 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Duplicate user in rosters",
 			);
 
-			sql.transaction(() => {
-				manager.update.match({
-					id: match.id,
-					opponent1: {
-						score: scores[0],
-						result: setOver && scores[0] > scores[1] ? "win" : undefined,
-					},
-					opponent2: {
-						score: scores[1],
-						result: setOver && scores[1] > scores[0] ? "win" : undefined,
-					},
-				});
-
-				const result = insertTournamentMatchGameResult({
-					matchId: match.id,
-					mode: currentMap.mode,
-					stageId: currentMap.stageId,
-					reporterId: user.id,
-					winnerTeamId: data.winnerTeamId,
-					number: data.position + 1,
-					source: String(currentMap.source),
-					opponentOnePoints: data.points?.[0] ?? null,
-					opponentTwoPoints: data.points?.[1] ?? null,
-				});
-
-				for (const userId of teamOneRoster) {
-					insertTournamentMatchGameResultParticipant({
-						matchGameResultId: result.id,
-						userId,
-						tournamentTeamId: match.opponentOne!.id!,
+			try {
+				sql.transaction(() => {
+					manager.update.match({
+						id: match.id,
+						opponent1: {
+							score: scores[0],
+							result: setOver && scores[0] > scores[1] ? "win" : undefined,
+						},
+						opponent2: {
+							score: scores[1],
+							result: setOver && scores[1] > scores[0] ? "win" : undefined,
+						},
 					});
-				}
-				for (const userId of teamTwoRoster) {
-					insertTournamentMatchGameResultParticipant({
-						matchGameResultId: result.id,
-						userId,
-						tournamentTeamId: match.opponentTwo!.id!,
-					});
-				}
 
-				if (setOver) {
-					endedDroppedMatchIds = endDroppedTeamMatches({
-						tournament,
-						manager,
+					const result = insertTournamentMatchGameResult({
+						matchId: match.id,
+						mode: currentMap.mode,
+						stageId: currentMap.stageId,
+						reporterId: user.id,
+						winnerTeamId: data.winnerTeamId,
+						number: data.position + 1,
+						source: String(currentMap.source),
+						opponentOnePoints: data.points?.[0] ?? null,
+						opponentTwoPoints: data.points?.[1] ?? null,
 					});
+
+					for (const userId of teamOneRoster) {
+						insertTournamentMatchGameResultParticipant({
+							matchGameResultId: result.id,
+							userId,
+							tournamentTeamId: match.opponentOne!.id!,
+						});
+					}
+					for (const userId of teamTwoRoster) {
+						insertTournamentMatchGameResultParticipant({
+							matchGameResultId: result.id,
+							userId,
+							tournamentTeamId: match.opponentTwo!.id!,
+						});
+					}
+
+					if (setOver) {
+						endedDroppedMatchIds = endDroppedTeamMatches({
+							tournament,
+							manager,
+						});
+					}
+				})();
+			} catch (error) {
+				// another request already reported this game in the race window,
+				// let their page refresh to pick up the already-recorded result
+				if (errorIsSqliteUniqueConstraintFailure(error)) {
+					return null;
 				}
-			})();
+				throw error;
+			}
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -286,7 +304,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				return null;
 			}
 
-			const results = findResultsByMatchId(matchId);
+			const results =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
 			invariant(lastResult, "Last result is missing");
 
@@ -377,6 +396,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 			errorToastIfFalsy(result, "Result not found");
 			errorToastIfFalsy(
+				result.matchId === matchId,
+				"Result does not belong to this match",
+			);
+			errorToastIfFalsy(
 				data.rosters[0].length === tournament.minMembersPerTeam &&
 					data.rosters[1].length === tournament.minMembersPerTeam,
 				"Invalid roster length",
@@ -456,7 +479,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "BAN_PICK": {
-			const results = findResultsByMatchId(matchId);
+			const results =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
 
 			const teamOne = match.opponentOne?.id
 				? tournament.teamById(match.opponentOne.id)
@@ -553,14 +577,23 @@ export const action: ActionFunction = async ({ params, request }) => {
 				return "PICK" as const;
 			})();
 
-			await TournamentRepository.addPickBanEvent({
-				authorId: user.id,
-				matchId: match.id,
-				stageId: isModeAction ? null : data.stageId!,
-				mode: isCustomStageBan ? null : (data.mode ?? null),
-				number: currentPickBanEvents.length + 1,
-				type: eventType,
-			});
+			try {
+				await TournamentRepository.addPickBanEvent({
+					authorId: user.id,
+					matchId: match.id,
+					stageId: isModeAction ? null : data.stageId!,
+					mode: isCustomStageBan ? null : (data.mode ?? null),
+					number: currentPickBanEvents.length + 1,
+					type: eventType,
+				});
+			} catch (error) {
+				// another request already recorded this pick/ban in the race window,
+				// let their page refresh to pick up the already-recorded event
+				if (errorIsSqliteUniqueConstraintFailure(error)) {
+					return null;
+				}
+				throw error;
+			}
 
 			// Chain roll after action for CUSTOM flow
 			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
@@ -594,7 +627,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Match can't be reopened, bracket has progressed",
 			);
 
-			const results = findResultsByMatchId(matchId);
+			const results =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
 
 			const endedEarly = matchEndedEarly({
@@ -631,7 +665,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 					}
 				}
 
-				if (lastResult) deleteTournamentMatchGameResultById(lastResult.id);
+				// when the set was force-ended early no extra result was inserted for
+				// the forced win, so the last result is a genuinely played game and must
+				// be kept to avoid desyncing the score from the results
+				if (!endedEarly && lastResult) {
+					deleteTournamentMatchGameResultById(lastResult.id);
+				}
 
 				manager.update.match({
 					id: match.id,
@@ -645,6 +684,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 					},
 				});
 			})();
+
+			// the teams advanced into following matches are being pulled back out,
+			// so those "waiting for teams" pages need to revalidate too
+			followingMatchIds = followingMatches.map(
+				(followingMatch) => followingMatch.id,
+			);
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -783,10 +828,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Weapon reporting is closed",
 			);
 
-			await ReportedWeaponRepository.upsertOneTournament({
+			await ReportedWeaponRepository.upsertOwnTournament({
 				tournamentMatchId: matchId,
 				mapIndex: data.mapIndex,
-				userId: user.id,
 				weaponSplId: data.weaponSplId,
 				createdAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
 			});
@@ -803,9 +847,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Weapon reporting is closed",
 			);
 
-			await ReportedWeaponRepository.deleteByUserMapIndexTournament({
+			await ReportedWeaponRepository.deleteOwnByMapIndexTournament({
 				tournamentMatchId: matchId,
-				userId: user.id,
 				mapIndex: data.mapIndex,
 			});
 
@@ -821,22 +864,29 @@ export const action: ActionFunction = async ({ params, request }) => {
 	// update RunningTournaments to make sure sidebar is not showing stale matches at the end
 	// of the tournament in case the TO is not finalizing the tournament right away
 	if (setIsOver) {
-		await tournamentFromDB({ tournamentId, user });
+		const refreshedTournament = await tournamentFromDB({ tournamentId, user });
+		// the teams that just advanced now populate following matches, so their
+		// "waiting for teams" pages need to revalidate too
+		followingMatchIds = refreshedTournament
+			.followingMatches(match.id)
+			.map((followingMatch) => followingMatch.id);
 	}
 
 	if (emitMatchUpdate) {
+		const otherMatchIdsToRevalidate = Array.from(
+			new Set([...endedDroppedMatchIds, ...followingMatchIds]),
+		).filter((id) => id !== matchId);
+
 		ChatSystemMessage.send([
 			{
 				room: tournamentMatchWebsocketRoom(matchId),
 				type: "TOURNAMENT_MATCH_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
-			...endedDroppedMatchIds.map((id) => ({
+			...otherMatchIdsToRevalidate.map((id) => ({
 				room: tournamentMatchWebsocketRoom(id),
 				type: "TOURNAMENT_MATCH_UPDATED" as const,
 				revalidateOnly: true as const,
-				authorUserId: user.id,
 			})),
 		]);
 	}
@@ -846,7 +896,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
 		]);
 	}

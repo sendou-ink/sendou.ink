@@ -1,7 +1,6 @@
 import clsx from "clsx";
-import { Check, QrCode, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -22,7 +21,7 @@ interface MatchBannerProps {
 	mode: ModeShort;
 	screenLegal?: boolean;
 	joinPool?: string | null;
-	joinViaQr?: boolean;
+	joinPass?: string | null;
 	children?: React.ReactNode;
 }
 
@@ -31,7 +30,7 @@ export function MatchBanner({
 	mode,
 	screenLegal,
 	joinPool,
-	joinViaQr,
+	joinPass,
 	children,
 }: MatchBannerProps) {
 	const { t } = useTranslation(["game-misc"]);
@@ -50,7 +49,7 @@ export function MatchBanner({
 			</div>
 			<div className={clsx(styles.info, styles.thickText)}>{children}</div>
 
-			{joinPool ? <JoinPoolBadge pool={joinPool} viaQr={joinViaQr} /> : null}
+			{joinPool ? <JoinInfo pool={joinPool} pass={joinPass} /> : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -82,7 +81,7 @@ interface IconBannerProps {
 	subtitle?: string;
 	screenLegal?: boolean;
 	joinPool?: string | null;
-	joinViaQr?: boolean;
+	joinPass?: string | null;
 	topRight?: React.ReactNode;
 	testId?: string;
 }
@@ -93,7 +92,7 @@ export function IconBanner({
 	subtitle,
 	screenLegal,
 	joinPool,
-	joinViaQr,
+	joinPass,
 	topRight,
 	testId,
 }: IconBannerProps) {
@@ -104,7 +103,7 @@ export function IconBanner({
 			{subtitle ? (
 				<div className={styles.iconBannerSubtitle}>{subtitle}</div>
 			) : null}
-			{joinPool ? <JoinPoolBadge pool={joinPool} viaQr={joinViaQr} /> : null}
+			{joinPool ? <JoinInfo pool={joinPool} pass={joinPass} /> : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -115,35 +114,33 @@ export function IconBanner({
 	);
 }
 
-function JoinPoolBadge({ pool, viaQr }: { pool: string; viaQr?: boolean }) {
+function JoinInfo({ pool, pass }: { pool: string; pass?: string | null }) {
 	const { t } = useTranslation(["q"]);
-	const [, setSearchParams] = useSearchParams();
 
 	return (
-		<SendouButton
-			variant="minimal"
-			className={styles.joinBadge}
-			onPress={() =>
-				setSearchParams(
-					{ tab: "join" },
-					{
-						preventScrollReset: true,
-						defaultShouldRevalidate: false,
-					},
-				)
-			}
-			aria-label={t("q:match.pool")}
-			testId="join-pool-badge"
-		>
-			{viaQr ? <QrCode size={18} /> : pool}
-		</SendouButton>
+		<div className={styles.joinInfo}>
+			<div className={styles.joinInfoItem}>
+				<div className={styles.joinInfoLabel}>{t("q:match.pool")}</div>
+				<div className={styles.joinInfoValue}>{pool}</div>
+			</div>
+			{pass ? (
+				<div className={styles.joinInfoItem}>
+					<div className={styles.joinInfoLabel}>
+						{t("q:match.password.short")}
+					</div>
+					<div className={styles.joinInfoValue} data-testid="room-pass">
+						{pass}
+					</div>
+				</div>
+			) : null}
+		</div>
 	);
 }
 
 function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 	const { t } = useTranslation(["weapons", "q"]);
 
-	const imgSize = 18;
+	const imgSize = 24;
 
 	const Icon = screenLegal ? Check : X;
 
@@ -154,16 +151,17 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 					variant="minimal"
 					className={styles.notice}
 					testId={screenLegal ? "screen-allowed" : "screen-banned"}
+					aria-label={screenLegal ? "Screen allowed" : "Screen banned"}
 				>
-					<Icon
-						size={imgSize}
-						className={screenLegal ? styles.legalIcon : styles.illegalIcon}
-					/>
 					<img
 						src={`${specialWeaponImageUrl(19)}.avif`}
 						width={imgSize}
 						height={imgSize}
 						alt=""
+					/>
+					<Icon
+						size={imgSize}
+						className={screenLegal ? styles.legalIcon : styles.illegalIcon}
 					/>
 				</SendouButton>
 			}

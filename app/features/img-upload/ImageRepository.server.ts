@@ -1,8 +1,9 @@
+import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
+import type { DB, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { IMAGES_TO_VALIDATE_AT_ONCE } from "./upload-constants";
-import type { ImageUploadType } from "./upload-types";
 
 /** Finds an unvalidated image by ID with associated calendar event data */
 export function findById(id: number) {
@@ -94,28 +95,14 @@ export function unvalidatedImages() {
 		.execute();
 }
 
-/** Counts unvalidated team images submitted by a specific user */
+/**
+ * Counts unvalidated images submitted by a user that are connected to a team, art, or calendar
+ * event (i.e. excluding not-yet-connected orphans), so it can gate the SendouForm `image()` upload
+ * path.
+ */
 export async function countUnvalidatedBySubmitterUserId(userId: number) {
-	const result = await db
-		.selectFrom("UnvalidatedUserSubmittedImage")
-		.innerJoin("Team", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.avatarImgId"),
-					),
-					eb(
-						"UnvalidatedUserSubmittedImage.id",
-						"=",
-						eb.ref("Team.bannerImgId"),
-					),
-				]),
-			),
-		)
+	const result = await unvalidatedImagesBaseQuery
 		.select(({ fn }) => fn.countAll<number>().as("count"))
-		.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
 		.where("UnvalidatedUserSubmittedImage.submitterUserId", "=", userId)
 		.executeTakeFirstOrThrow();
 	return result.count;
@@ -130,49 +117,16 @@ export function validateImage(id: number) {
 		.execute();
 }
 
-/** Creates a new image and associates it with a team or organization */
-export function addNewImage({
-	submitterUserId,
-	url,
-	validatedAt,
-	teamId,
-	organizationId,
-	type,
-}: {
-	submitterUserId: number;
-	url: string;
-	validatedAt: number | null;
-	teamId?: number;
-	organizationId?: number;
-	type: ImageUploadType;
-}) {
-	return db.transaction().execute(async (trx) => {
-		const img = await trx
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({ submitterUserId, url, validatedAt })
-			.returningAll()
-			.executeTakeFirstOrThrow();
-
-		if (type === "team-pfp" && teamId) {
-			await trx
-				.updateTable("AllTeam")
-				.set({ avatarImgId: img.id })
-				.where("id", "=", teamId)
-				.execute();
-		} else if (type === "team-banner" && teamId) {
-			await trx
-				.updateTable("AllTeam")
-				.set({ bannerImgId: img.id })
-				.where("id", "=", teamId)
-				.execute();
-		} else if (type === "org-pfp" && organizationId) {
-			await trx
-				.updateTable("TournamentOrganization")
-				.set({ avatarImgId: img.id })
-				.where("id", "=", organizationId)
-				.execute();
-		}
-
-		return img;
-	});
+/**
+ * Inserts an unvalidated image row without associating it with any owner. Returns the inserted row.
+ */
+export function insert(
+	args: TablesInsertable["UnvalidatedUserSubmittedImage"],
+	trx: Transaction<DB> | typeof db = db,
+) {
+	return trx
+		.insertInto("UnvalidatedUserSubmittedImage")
+		.values(args)
+		.returningAll()
+		.executeTakeFirstOrThrow();
 }

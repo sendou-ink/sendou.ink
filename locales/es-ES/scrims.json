@@ -38,6 +38,7 @@
 	"acceptModal.title": "¿Aceptar la petición de scrim de {{groupName}} y rechazar las demás (si las hay)?",
 	"acceptModal.prevented": "Pide a la persona que publicó el scrim que acepte esta petición",
 	"acceptModal.confirmFor": "Confirmar para: {{time}}",
+	"autoCancelInfo": "",
 	"postModal.footer": "Publicación creada a las {{time}}",
 	"forms.title": "Creando una nueva publicación de scrim",
 	"forms.with.title": "Con",

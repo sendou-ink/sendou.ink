@@ -1,7 +1,10 @@
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import { TournamentMatchStatus } from "~/db/tables";
+import { TournamentMatchStatus, type TournamentRoundMaps } from "~/db/tables";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import invariant from "~/utils/invariant";
+import { customAvatarUrl } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
@@ -12,6 +15,12 @@ const opponentOneScore = sql<
 const opponentTwoScore = sql<
 	number | null
 >`"TournamentMatch"."opponentTwo" ->> '$.score'`;
+const opponentOneResult = sql<
+	"win" | "loss"
+>`"TournamentMatch"."opponentOne" ->> '$.result'`;
+const opponentTwoResult = sql<
+	"win" | "loss"
+>`"TournamentMatch"."opponentTwo" ->> '$.result'`;
 
 export type FindMatchById = NonNullable<Unwrapped<typeof findMatchById>>;
 export async function findMatchById(id: number) {
@@ -44,7 +53,7 @@ export async function findMatchById(id: number) {
 				eb
 					.selectFrom("TournamentTeamMember")
 					.innerJoin("User", "User.id", "TournamentTeamMember.userId")
-					.select([
+					.select((eb) => [
 						"User.id",
 						"User.username",
 						"TournamentTeamMember.tournamentTeamId",
@@ -57,6 +66,7 @@ export async function findMatchById(id: number) {
 						"User.customUrl",
 						"User.discordAvatar",
 						"User.pronouns",
+						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.where(({ or, eb: innerEb }) =>
 						or([
@@ -98,12 +108,197 @@ export function findResultById(id: number) {
 		.selectFrom("TournamentMatchGameResult")
 		.select([
 			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResult.matchId",
 			"TournamentMatchGameResult.opponentOnePoints",
 			"TournamentMatchGameResult.opponentTwoPoints",
 			"TournamentMatchGameResult.winnerTeamId",
 		])
 		.where("TournamentMatchGameResult.id", "=", id)
 		.executeTakeFirst();
+}
+
+export function findResultsByMatchId(matchId: number) {
+	return db
+		.selectFrom("TournamentMatchGameResult")
+		.select(({ eb }) => [
+			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResult.winnerTeamId",
+			"TournamentMatchGameResult.stageId",
+			"TournamentMatchGameResult.mode",
+			"TournamentMatchGameResult.source",
+			"TournamentMatchGameResult.createdAt",
+			"TournamentMatchGameResult.opponentOnePoints",
+			"TournamentMatchGameResult.opponentTwoPoints",
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentMatchGameResultParticipant")
+					.select([
+						"TournamentMatchGameResultParticipant.tournamentTeamId",
+						"TournamentMatchGameResultParticipant.userId",
+					])
+					.whereRef(
+						"TournamentMatchGameResultParticipant.matchGameResultId",
+						"=",
+						"TournamentMatchGameResult.id",
+					),
+			).as("participants"),
+		])
+		.where("TournamentMatchGameResult.matchId", "=", matchId)
+		.orderBy("TournamentMatchGameResult.number", "asc")
+		.execute();
+}
+
+interface AllMatchResultOpponent {
+	id: number;
+	score: number;
+	result: "win" | "loss";
+	droppedOut: boolean;
+	activeRosterUserIds: number[] | null;
+	memberUserIds: number[];
+}
+export interface AllMatchResult {
+	opponentOne: AllMatchResultOpponent;
+	opponentTwo: AllMatchResultOpponent;
+	roundMaps: TournamentRoundMaps;
+	maps: Array<{
+		stageId: StageId;
+		mode: ModeShort;
+		winnerTeamId: number;
+		participants: Array<{
+			// in the DB this can actually also be null, but for new tournaments it should always be a number
+			tournamentTeamId: number;
+			userId: number;
+		}>;
+	}>;
+}
+
+export async function allResultsByTournamentId(
+	tournamentId: number,
+): Promise<AllMatchResult[]> {
+	const rows = await db
+		.selectFrom("TournamentMatch")
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.innerJoin(
+			"TournamentRound",
+			"TournamentRound.id",
+			"TournamentMatch.roundId",
+		)
+		.innerJoin("TournamentTeam as Team1", (join) =>
+			join.on((eb) => eb(opponentOneId, "=", eb.ref("Team1.id"))),
+		)
+		.innerJoin("TournamentTeam as Team2", (join) =>
+			join.on((eb) => eb(opponentTwoId, "=", eb.ref("Team2.id"))),
+		)
+		.select(({ eb }) => [
+			opponentOneId.as("opponentOneId"),
+			opponentTwoId.as("opponentTwoId"),
+			sql<number>`"TournamentMatch"."opponentOne" ->> '$.score'`.as(
+				"opponentOneScore",
+			),
+			sql<number>`"TournamentMatch"."opponentTwo" ->> '$.score'`.as(
+				"opponentTwoScore",
+			),
+			opponentOneResult.as("opponentOneResult"),
+			opponentTwoResult.as("opponentTwoResult"),
+			"TournamentRound.maps as roundMaps",
+			"Team1.droppedOut as opponentOneDroppedOut",
+			"Team2.droppedOut as opponentTwoDroppedOut",
+			"Team1.activeRosterUserIds as opponentOneActiveRoster",
+			"Team2.activeRosterUserIds as opponentTwoActiveRoster",
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamMember")
+					.select("TournamentTeamMember.userId")
+					.whereRef("TournamentTeamMember.tournamentTeamId", "=", "Team1.id"),
+			).as("opponentOneMembers"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamMember")
+					.select("TournamentTeamMember.userId")
+					.whereRef("TournamentTeamMember.tournamentTeamId", "=", "Team2.id"),
+			).as("opponentTwoMembers"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentMatchGameResult")
+					.select(({ eb: innerEb }) => [
+						"TournamentMatchGameResult.stageId",
+						"TournamentMatchGameResult.mode",
+						"TournamentMatchGameResult.winnerTeamId",
+						jsonArrayFrom(
+							innerEb
+								.selectFrom("TournamentMatchGameResultParticipant")
+								.select([
+									"TournamentMatchGameResultParticipant.tournamentTeamId",
+									"TournamentMatchGameResultParticipant.userId",
+								])
+								.whereRef(
+									"TournamentMatchGameResultParticipant.matchGameResultId",
+									"=",
+									"TournamentMatchGameResult.id",
+								),
+						).as("participants"),
+					])
+					.whereRef(
+						"TournamentMatchGameResult.matchId",
+						"=",
+						"TournamentMatch.id",
+					)
+					.orderBy("TournamentMatchGameResult.number", "asc"),
+			).as("maps"),
+		])
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.where(opponentOneResult, "is not", null)
+		// strictly speaking the order by condition is not accurate, future improvement would be to add order conditions that match the tournament structure
+		.orderBy("TournamentMatch.id", "asc")
+		.execute();
+
+	return rows.map((row) => {
+		const opponentOne: AllMatchResultOpponent = {
+			id: row.opponentOneId,
+			score: row.opponentOneScore,
+			result: row.opponentOneResult,
+			droppedOut: row.opponentOneDroppedOut === 1,
+			activeRosterUserIds: row.opponentOneActiveRoster,
+			memberUserIds: row.opponentOneMembers.map((member) => member.userId),
+		};
+		const opponentTwo: AllMatchResultOpponent = {
+			id: row.opponentTwoId,
+			score: row.opponentTwoScore,
+			result: row.opponentTwoResult,
+			droppedOut: row.opponentTwoDroppedOut === 1,
+			activeRosterUserIds: row.opponentTwoActiveRoster,
+			memberUserIds: row.opponentTwoMembers.map((member) => member.userId),
+		};
+
+		return {
+			opponentOne,
+			opponentTwo,
+			roundMaps: row.roundMaps,
+			maps: row.maps.map((map) => {
+				invariant(map.participants.length > 0, "No participants found");
+				invariant(
+					map.participants.every(
+						(participant) => typeof participant.tournamentTeamId === "number",
+					),
+					"Some participants have no team id",
+				);
+				invariant(
+					map.participants.every(
+						(participant) =>
+							participant.tournamentTeamId === row.opponentOneId ||
+							participant.tournamentTeamId === row.opponentTwoId,
+					),
+					"Some participants have an invalid team id",
+				);
+
+				return map;
+			}),
+		};
+	});
 }
 
 export async function userParticipationByTournamentId(tournamentId: number) {
@@ -212,12 +407,13 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 								"otherTeam.id",
 							),
 					)
-					.select([
+					.select((eb) => [
 						"User.id",
 						"User.username",
 						"User.discordAvatar",
 						"User.discordId",
 						"User.customUrl",
+						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.whereRef(
 						"TournamentMatchGameResult.matchId",

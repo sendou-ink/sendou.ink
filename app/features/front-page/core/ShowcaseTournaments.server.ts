@@ -275,10 +275,6 @@ async function tournamentsToParticipationInfoMap(
 			addToMap(userId, tournament.id, "organizer");
 		}
 
-		for (const { userId } of tournament.organizationMembers) {
-			addToMap(userId, tournament.id, "organizer");
-		}
-
 		addToMap(tournament.authorId, tournament.id, "organizer");
 	}
 
@@ -304,6 +300,7 @@ function mapTournamentFromDB(
 		url: tournamentPage(tournament.id),
 		id: tournament.id,
 		authorId: tournament.authorId,
+		organizationId: tournament.organizationId,
 		name: tournament.name,
 		startTime: tournament.startTime,
 		teamsCount: tournament.teamsCount,
@@ -381,6 +378,7 @@ function buildFirstPlacerEntry(
 	const members = withMembers
 		? rows.slice(0, MEMBERS_TO_SHOW).map((row) => ({
 				customUrl: row.customUrl,
+				customAvatarUrl: row.customAvatarUrl,
 				discordAvatar: row.discordAvatar,
 				discordId: row.discordId,
 				id: row.id,

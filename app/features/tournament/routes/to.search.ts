@@ -17,6 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		q: query,
 		limit,
 		minStartTime,
+		maxStartTime,
 	} = parseSearchParams({
 		request,
 		schema: tournamentSearchSearchParamsSchema,
@@ -29,6 +30,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			query,
 			limit,
 			minStartTime,
+			maxStartTime,
 		}),
 		query,
 	};

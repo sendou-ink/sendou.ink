@@ -1,3 +1,4 @@
+import { ClipboardList, DoorOpen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -7,7 +8,11 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
-import { userEditProfilePage } from "~/utils/urls";
+import {
+	tournamentRegisterPage,
+	tournamentTeamPage,
+	userEditProfilePage,
+} from "~/utils/urls";
 import { action } from "../actions/to.$id.join.server";
 import { loader } from "../loaders/to.$id.join.server";
 import styles from "../tournament.module.css";
@@ -23,12 +28,16 @@ export default function JoinTeamPage() {
 	const data = useLoaderData<typeof loader>();
 
 	const teamToJoin = data.teamId ? tournament.teamById(data.teamId) : undefined;
+	const teamMemberOf = tournament.teamMemberOfByUser(user);
 	const validationStatus = validateCanJoinTeam({
 		inviteCode: data.inviteCode,
 		teamToJoin,
 		userId: user?.id,
 		maxTeamSize: tournament.maxMembersPerTeam,
 	});
+
+	const isAlreadyInAnotherTeam =
+		validationStatus === "VALID" && Boolean(teamMemberOf);
 
 	const textPrompt = () => {
 		switch (validationStatus) {
@@ -67,22 +76,50 @@ export default function JoinTeamPage() {
 	}
 
 	return (
-		<div className="stack lg items-center">
-			<div className="text-center text-lg font-semi-bold">{textPrompt()}</div>
-			<div className="stack sm items-center">
-				{validationStatus === "VALID" ? (
+		<div className="stack md items-center">
+			{isAlreadyInAnotherTeam || validationStatus === "TEAM_FULL" ? (
+				<Alert variation="WARNING" alertClassName={styles.joinAlert}>
+					{isAlreadyInAnotherTeam
+						? t("tournament:join.alreadyInTeam")
+						: textPrompt()}
+				</Alert>
+			) : (
+				<div className="text-center font-semi-bold">{textPrompt()}</div>
+			)}
+			{isAlreadyInAnotherTeam ? (
+				<LinkButton
+					to={tournamentRegisterPage(tournament.ctx.id)}
+					size="small"
+					variant="outlined"
+					icon={<ClipboardList />}
+				>
+					{t("tournament:join.viewRegistration")}
+				</LinkButton>
+			) : teamMemberOf ? (
+				<LinkButton
+					to={tournamentTeamPage({
+						tournamentId: tournament.ctx.id,
+						tournamentTeamId: teamMemberOf.id,
+					})}
+					size="small"
+					variant="outlined"
+					icon={<Users />}
+				>
+					{t("tournament:join.viewTeam")}
+				</LinkButton>
+			) : null}
+			{validationStatus === "VALID" && !isAlreadyInAnotherTeam ? (
+				<div className="text-lighter text-center font-semi-bold text-sm">
 					<FriendCodeInput friendCode={user?.friendCode} />
-				) : null}
-				{user?.inGameName ? (
-					<div className="font-bold">
-						<span className="text-lighter">IGN</span> {user.inGameName}
-					</div>
-				) : null}
-			</div>
+					{user?.inGameName ? (
+						<div className="font-bold">IGN {user.inGameName}</div>
+					) : null}
+				</div>
+			) : null}
 			<Form method="post" className={styles.inviteContainer}>
-				{validationStatus === "VALID" ? (
+				{validationStatus === "VALID" && !isAlreadyInAnotherTeam ? (
 					<div className="stack md items-center">
-						<SubmitButton size="big" isDisabled={!user?.friendCode}>
+						<SubmitButton isDisabled={!user?.friendCode} icon={<DoorOpen />}>
 							{t("common:actions.join")}
 						</SubmitButton>
 						{!user?.friendCode ? (
@@ -90,7 +127,7 @@ export default function JoinTeamPage() {
 								Save friend code before joining the team
 							</div>
 						) : (
-							<div className="text-lighter text-sm">
+							<div className="text-lighter text-xs text-center">
 								{t("tournament:join.friendSuggestion")}
 							</div>
 						)}

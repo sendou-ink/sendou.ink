@@ -117,7 +117,7 @@
 }
 
 .teamMemberNameRoleSub {
-	background-color: var(--color-info);
+	background-color: var(--color-warning-high);
 }
 
 .logoContainer {
@@ -272,6 +272,10 @@
 	flex-direction: column;
 	gap: var(--s-12);
 	align-items: center;
+}
+
+.joinAlert {
+	max-width: 22rem;
 }
 
 .streamUserContainer {
@@ -504,6 +508,10 @@
 	border-color: var(--color-error);
 }
 
+.standingsRowAlt > td {
+	background-color: var(--color-bg-high);
+}
+
 .standingsTeamName {
 	min-width: 125px;
 	display: flex;
@@ -524,7 +532,7 @@
 
 .standingsDivider {
 	width: 5px;
-	background-color: var(--color-bg-high);
+	background-color: var(--color-border-high);
 	border-radius: var(--radius-box);
 }
 

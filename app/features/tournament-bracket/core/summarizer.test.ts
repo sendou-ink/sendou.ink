@@ -1,6 +1,6 @@
 import { ordinal, rating } from "openskill";
 import { describe, expect, test } from "vitest";
-import type { AllMatchResult } from "~/features/tournament-match/queries/allMatchResultsByTournamentId.server";
+import type { AllMatchResult } from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import type { Tables } from "../../../db/tables";
 import type * as Progression from "./Progression";
@@ -51,6 +51,7 @@ describe("tournamentSummary()", () => {
 			streamViewerCount: null,
 			streamThumbnailUrl: null,
 			role: "REGULAR",
+			customAvatarUrl: null,
 		})),
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
@@ -58,6 +59,7 @@ describe("tournamentSummary()", () => {
 		team: null,
 		seed: 1,
 		activeRosterUserIds: [],
+		avatarImgId: null,
 		pickupAvatarUrl: null,
 	});
 

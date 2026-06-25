@@ -21,16 +21,22 @@ import {
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
+import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
+import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
+	PLANNER_URL,
 	SETTINGS_PAGE,
 	userPage,
 } from "~/utils/urls";
@@ -55,6 +61,13 @@ import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
+
+/** Id of the loading-bar track rendered inside the header. NProgress mounts its
+ * bar into it; the track sits just below the header border, spans only the area
+ * between the sidebars, and clips the bar so it never extends over a sidebar.
+ * Living inside the header makes it follow the header on scroll and in
+ * standalone (PWA) mode where the header grows by the safe-area inset. */
+export const NPROGRESS_ANCHOR_ID = "nprogress-anchor";
 
 function useRelativeDayFormat() {
 	const { i18n } = useTranslation();
@@ -213,10 +226,17 @@ export function Layout({
 	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] = React.useState(false);
 
+	const layoutSize = useLayoutSize();
+	useVisualViewportHeight();
 	const chatSidebarOpen = chatContext?.chatOpen ?? false;
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 
-	const { t } = useTranslation(["front", "common"]);
+	const setChatSidebarModalOpenAndSync = (open: boolean) => {
+		setChatSidebarModalOpen(open);
+		setChatSidebarOpen(open);
+	};
+
+	const { t } = useTranslation(["front", "common", "friends"]);
 	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
@@ -246,12 +266,15 @@ export function Layout({
 	const sidebarData = data?.sidebar;
 	const events = sidebarData?.events ?? [];
 	const friends = sidebarData?.friends ?? [];
+	const unseenFriendRequests = useUnseenFriendRequests(
+		sidebarData?.incomingFriendRequestIds ?? [],
+	);
 	const streams = sidebarData?.streams ?? [];
 
 	const isFrontPage = location.pathname === "/";
 
 	const showLeaderboard =
-		import.meta.env.VITE_FUSE_ENABLED &&
+		Config.fuseEnabled &&
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
 
@@ -307,10 +330,23 @@ export function Layout({
 				icon={<Users />}
 				action={
 					user ? (
-						<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
-							{t("common:actions.viewAll")}
-							<ChevronRight size={14} />
-						</Link>
+						<>
+							{unseenFriendRequests > 0 ? (
+								<span
+									className={styles.friendRequestsBadge}
+									role="status"
+									aria-label={t("friends:unseenRequests", {
+										count: unseenFriendRequests,
+									})}
+								>
+									{unseenFriendRequests}
+								</span>
+							) : null}
+							<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
+								{t("common:actions.viewAll")}
+								<ChevronRight size={14} />
+							</Link>
+						</>
 					) : null
 				}
 			>
@@ -372,6 +408,7 @@ export function Layout({
 						<SideNavCollapseButton
 							className={styles.sideNavModalTrigger}
 							showNotificationDot={!sideNavModalOpen && unseenIds.length > 0}
+							badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
 							testId="sidenav-modal-trigger"
 						/>
 						<ModalOverlay className={styles.sideNavModalOverlay} isDismissable>
@@ -393,7 +430,7 @@ export function Layout({
 						className={styles.chatSidebarModalOverlay}
 						isDismissable
 						isOpen={chatSidebarModalOpen}
-						onOpenChange={setChatSidebarModalOpen}
+						onOpenChange={setChatSidebarModalOpenAndSync}
 					>
 						<Modal className={styles.chatSidebarModal}>
 							<Dialog
@@ -408,6 +445,7 @@ export function Layout({
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
 						showNotificationDot={sideNavCollapsed && unseenIds.length > 0}
+						badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
 						testId="sidenav-collapse-button"
 					/>
 					<TopNavMenus />
@@ -424,11 +462,12 @@ export function Layout({
 						}
 						onChatModalToggle={
 							data?.user
-								? () => setChatSidebarModalOpen((prev) => !prev)
+								? () => setChatSidebarModalOpenAndSync(!chatSidebarModalOpen)
 								: undefined
 						}
 						chatUnreadCount={chatContext?.totalUnreadCount}
 					/>
+					<div id={NPROGRESS_ANCHOR_ID} aria-hidden />
 				</header>
 				{showLeaderboard ? (
 					<FuseZone
@@ -440,7 +479,7 @@ export function Layout({
 				{children}
 				<Footer />
 			</div>
-			{chatSidebarOpen ? (
+			{chatSidebarOpen && layoutSize === "desktop" ? (
 				<div
 					className={clsx(
 						styles.chatSidebar,
@@ -457,6 +496,7 @@ export function Layout({
 
 function SiteTitle() {
 	const location = useLocation();
+	const prefersReducedMotion = usePrefersReducedMotion();
 	const { breadcrumbs, currentPageText } = useBreadcrumbData();
 
 	const isFrontPage = location.pathname === "/";
@@ -466,9 +506,17 @@ function SiteTitle() {
 		<Flipper
 			flipKey={isFrontPage ? "front" : "other"}
 			className={styles.siteTitleFlipper}
+			decisionData={{ pathname: location.pathname }}
 		>
 			<div className={styles.siteTitle}>
-				<Flipped flipId="site-logo">
+				<Flipped
+					flipId="site-logo"
+					shouldFlip={(prev, current) =>
+						!prefersReducedMotion &&
+						prev?.pathname !== PLANNER_URL &&
+						current?.pathname !== PLANNER_URL
+					}
+				>
 					<Link to="/" className={styles.siteLogo}>
 						<SiteLogoContent />
 					</Link>
@@ -516,13 +564,17 @@ function SideNavCollapseButton({
 	onToggle,
 	className,
 	showNotificationDot,
+	badgeCount,
 	testId,
 }: {
 	onToggle?: () => void;
 	className?: string;
 	showNotificationDot?: boolean;
+	badgeCount?: number;
 	testId?: string;
 }) {
+	const { t } = useTranslation(["friends"]);
+
 	return (
 		<div className={styles.sideNavCollapseButtonContainer} data-testid={testId}>
 			<SendouButton
@@ -534,6 +586,17 @@ function SideNavCollapseButton({
 				onPress={onToggle}
 			/>
 			{showNotificationDot ? <NotificationDot /> : null}
+			{badgeCount ? (
+				<span
+					className={clsx(styles.sideNavCollapseBadge, {
+						[styles.sideNavCollapseBadgeLeft]: showNotificationDot,
+					})}
+					role="status"
+					aria-label={t("friends:unseenRequests", { count: badgeCount })}
+				>
+					{badgeCount}
+				</span>
+			) : null}
 		</div>
 	);
 }

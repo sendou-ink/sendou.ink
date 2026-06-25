@@ -1,4 +1,4 @@
-import { add } from "date-fns";
+import { add, sub } from "date-fns";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
@@ -14,6 +14,7 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
+import { logger } from "~/utils/logger";
 import {
 	actionError,
 	errorToast,
@@ -24,6 +25,7 @@ import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import { SCRIM } from "../scrims-constants";
 import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
@@ -38,7 +40,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	switch (data._action) {
 		case "DELETE_POST": {
 			const post = await findPost({
-				userId: user.id,
 				postId: data.scrimPostId,
 			});
 			requirePermission(post, "DELETE_POST");
@@ -54,7 +55,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 		case "NEW_REQUEST": {
 			const post = await findPost({
-				userId: user.id,
 				postId: data.scrimPostId,
 			});
 
@@ -121,7 +121,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 		case "ACCEPT_REQUEST": {
 			const { post, request } = await findRequest({
-				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
 			requirePermission(post, "MANAGE_REQUESTS");
@@ -177,11 +176,50 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				},
 			});
 
+			if (fullPost) {
+				try {
+					const bookedAt = databaseTimestampToDate(
+						Scrim.getStartTime(fullPost),
+					);
+					const startTime = dateToDatabaseTimestamp(
+						sub(bookedAt, { hours: SCRIM.AUTO_CANCEL_WINDOW_HOURS }),
+					);
+					const endTime = dateToDatabaseTimestamp(
+						add(bookedAt, { hours: SCRIM.AUTO_CANCEL_WINDOW_HOURS }),
+					);
+
+					const { posts, requestIds } =
+						await ScrimPostRepository.findPendingOverlapsForUsers({
+							userIds: Scrim.participantIdsListFromAccepted(fullPost),
+							startTime,
+							endTime,
+							excludePostId: post.id,
+						});
+
+					for (const requestId of requestIds) {
+						await ScrimPostRepository.deleteRequest(requestId);
+					}
+
+					for (const removed of posts) {
+						await ScrimPostRepository.del(removed.id);
+						notify({
+							userIds: removed.memberIds,
+							defaultSeenUserIds: [user.id],
+							notification: {
+								type: "SCRIM_AUTO_DELETED",
+								meta: { at: removed.at },
+							},
+						});
+					}
+				} catch (error) {
+					logger.error("Failed to auto-cancel overlapping scrims", error);
+				}
+			}
+
 			break;
 		}
 		case "CANCEL_REQUEST": {
 			const { request } = await findRequest({
-				userId: user.id,
 				requestId: data.scrimPostRequestId,
 			});
 			requirePermission(request, "CANCEL");
@@ -196,7 +234,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "PERSIST_SCRIM_FILTERS": {
-			await UserRepository.updatePreferences(user.id, {
+			await UserRepository.updateOwnPreferences({
 				defaultScrimsFilters: data.filters,
 			});
 
@@ -210,14 +248,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return null;
 };
 
-async function findPost({
-	userId,
-	postId,
-}: {
-	userId: number;
-	postId: number;
-}) {
-	const posts = await ScrimPostRepository.findAllRelevant(userId);
+async function findPost({ postId }: { postId: number }) {
+	const posts = await ScrimPostRepository.findAllRelevant();
 	const post = posts.find((post) => post.id === postId);
 
 	errorToastIfFalsy(post, "Post not found");
@@ -225,14 +257,8 @@ async function findPost({
 	return post;
 }
 
-async function findRequest({
-	userId,
-	requestId,
-}: {
-	userId: number;
-	requestId: number;
-}) {
-	const posts = await ScrimPostRepository.findAllRelevant(userId);
+async function findRequest({ requestId }: { requestId: number }) {
+	const posts = await ScrimPostRepository.findAllRelevant();
 	const post = posts.find((post) =>
 		post.requests.some((request) => request.id === requestId),
 	);

@@ -6,21 +6,48 @@ import {
 	sql,
 } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
+import { Config } from "~/config";
 import type { DB, Tables } from "~/db/tables";
 import { IS_E2E_TEST_RUN } from "./e2e";
 
-export const COMMON_USER_FIELDS = [
-	"User.id",
-	"User.username",
-	"User.discordId",
-	"User.discordAvatar",
-	"User.customUrl",
-] as const;
+/**
+ * Select list for the fields shared by every user representation across the app. Includes
+ * `customAvatarUrl`, the full URL of the user's supporter custom avatar (resolved from
+ * `User.customAvatarImgId`), or `null` when they have none. `"User"` must be in scope at the call
+ * site (it always is, since the other fields reference `User.*`).
+ */
+export function commonUserSelect(eb: ExpressionBuilder<Tables, "User">) {
+	return [
+		"User.id",
+		"User.username",
+		"User.discordId",
+		"User.discordAvatar",
+		"User.customUrl",
+		customAvatarUrl(eb).as("customAvatarUrl"),
+	] as const;
+}
+
+/**
+ * SQL expression resolving to the full URL of a user's supporter custom avatar (from
+ * `User.customAvatarImgId`), or `null` when they have none. Alias it
+ * (`.as("customAvatarUrl")`) when selecting it directly. Prefer {@link commonUserSelect} /
+ * {@link commonUserJsonObject}; reach for this only when those don't fit (e.g. prefixed aliases or
+ * a hand-built `jsonBuildObject`).
+ */
+export function customAvatarUrl(eb: ExpressionBuilder<Tables, "User">) {
+	return concatUserSubmittedImagePrefix(
+		eb
+			.selectFrom("UserSubmittedImage")
+			.select("UserSubmittedImage.url")
+			.whereRef("UserSubmittedImage.id", "=", "User.customAvatarImgId")
+			.$asScalar(),
+	).$castTo<string | null>();
+}
 
 export type CommonUser = Pick<
 	Tables["User"],
 	"id" | "username" | "discordId" | "discordAvatar" | "customUrl"
->;
+> & { customAvatarUrl: string | null };
 
 const userChatNameHueRaw = sql<
 	string | null
@@ -35,12 +62,18 @@ export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
 		discordId: eb.ref("User.discordId"),
 		discordAvatar: eb.ref("User.discordAvatar"),
 		customUrl: eb.ref("User.customUrl"),
+		customAvatarUrl: concatUserSubmittedImagePrefix(
+			eb
+				.selectFrom("UserSubmittedImage")
+				.select("UserSubmittedImage.url")
+				.whereRef("UserSubmittedImage.id", "=", "User.customAvatarImgId")
+				.$asScalar(),
+		).$castTo<string | null>(),
 	});
 }
 
 const USER_SUBMITTED_IMAGE_ROOT =
-	(process.env.NODE_ENV === "development" &&
-		import.meta.env.VITE_PROD_MODE !== "true") ||
+	(process.env.NODE_ENV === "development" && !Config.prodMode) ||
 	IS_E2E_TEST_RUN ||
 	process.env.NODE_ENV === "test"
 		? "http://127.0.0.1:9000/sendou"
@@ -94,8 +127,7 @@ export function tournamentLogoWithDefault(
 					"UnvalidatedUserSubmittedImage.id",
 				)
 				.$asScalar(),
-			sql.lit(`${import.meta.env.VITE_TOURNAMENT_DEFAULT_LOGO}
-  `),
+			sql.lit(Config.tournamentDefaultLogo),
 		),
 	);
 }

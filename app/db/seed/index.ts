@@ -2212,13 +2212,14 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 		sql
 			.prepare(
 				/*sql*/ `
-      insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "leftAt")
+      insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "leftAt", "order")
         values (
           1,
           ${userId},
           ${i === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
           ${i === 0 ? 1 : 0},
-          ${i < 4 ? "null" : "1672587342"}
+          ${i < 4 ? "null" : "1672587342"},
+          ${i}
         )
     `,
 			)
@@ -2290,12 +2291,13 @@ function otherTeams() {
 			sql
 				.prepare(
 					/*sql*/ `
-        insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner")
+        insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "order")
           values (
             ${i},
             ${userId},
             ${j === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
-            ${j === 0 ? 1 : 0}
+            ${j === 0 ? 1 : 0},
+            ${j}
           )
       `,
 				)
@@ -2724,23 +2726,6 @@ async function groups(variation?: SeedVariation | null) {
 				expiresAfter: { hours: 2 },
 			});
 		}
-
-		const thirtyMinutesAgo = dateToDatabaseTimestamp(
-			sub(new Date(), { minutes: 30 }),
-		);
-		sql
-			.prepare(
-				/* sql */ `
-				insert into "RoomLink" ("userId", "url", "createdAt", "refreshedAt")
-				values (@userId, @url, @createdAt, @refreshedAt)
-			`,
-			)
-			.run({
-				userId: ADMIN_ID,
-				url: "https://example.com//private_battle/seed_room_123",
-				createdAt: thirtyMinutesAgo,
-				refreshedAt: thirtyMinutesAgo,
-			});
 	}
 }
 
@@ -3082,6 +3067,23 @@ async function playedMatches() {
 			}),
 		);
 	}
+
+	// skills are inserted with createdAt of the current time, but matches are
+	// backdated above. Sync skill createdAt to the match date so the season
+	// progression chart on the user seasons page has data spread across days.
+	sql
+		.prepare(
+			/* sql */ `
+      update "Skill"
+      set "createdAt" = (
+        select "createdAt"
+        from "GroupMatch"
+        where "GroupMatch"."id" = "Skill"."groupMatchId"
+      )
+      where "groupMatchId" is not null
+    `,
+		)
+		.run();
 }
 
 async function friendCodes() {

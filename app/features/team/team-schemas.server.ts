@@ -1,9 +1,12 @@
 import { z } from "zod";
 import { mySlugify } from "~/utils/urls";
-import { _action, falsyToNull, id, themeInputSchema } from "~/utils/zod";
+import { _action, themeInputSchema } from "~/utils/zod";
 import * as TeamRepository from "./TeamRepository.server";
-import { TEAM, TEAM_MEMBER_ROLES } from "./team-constants";
-import { createTeamSchema } from "./team-schemas";
+import {
+	createTeamSchema,
+	editTeamFormSchema,
+	updateRosterSchema,
+} from "./team-schemas";
 
 export const createTeamSchemaServer = z.object({
 	...createTeamSchema.shape,
@@ -27,62 +30,28 @@ export const teamProfilePageActionSchema = z.union([
 	z.object({
 		_action: _action("MAKE_MAIN_TEAM"),
 	}),
+	z.object({
+		_action: _action("DELETE_TEAM"),
+	}),
 ]);
 
-const deleteActionsSchema = z.object({
-	_action: z.union([
-		_action("DELETE_TEAM"),
-		_action("DELETE_AVATAR"),
-		_action("DELETE_BANNER"),
-	]),
+const updateTeamCustomThemeSchema = z.object({
+	_action: _action("UPDATE_CUSTOM_THEME"),
+	newValue: z.preprocess(
+		(val) => (!val || val === "null" ? null : val),
+		themeInputSchema.nullable(),
+	),
 });
 
-export const editTeamSchema = z.union([
-	deleteActionsSchema,
-	z.object({
-		_action: _action("UPDATE_CUSTOM_THEME"),
-		newValue: z.preprocess(
-			(val) => (!val || val === "null" ? null : val),
-			themeInputSchema.nullable(),
-		),
-	}),
-	z.object({
-		_action: _action("EDIT"),
-		name: z.string().min(TEAM.NAME_MIN_LENGTH).max(TEAM.NAME_MAX_LENGTH),
-		bio: z.preprocess(
-			falsyToNull,
-			z.string().max(TEAM.BIO_MAX_LENGTH).nullable(),
-		),
-		bsky: z.preprocess(
-			falsyToNull,
-			z.string().max(TEAM.BSKY_MAX_LENGTH).nullable(),
-		),
-		tag: z.preprocess(
-			falsyToNull,
-			z.string().max(TEAM.TAG_MAX_LENGTH).nullable(),
-		),
-	}),
+/** Every payload the team edit route action accepts, discriminated by `_action`. */
+export const editTeamActionSchema = z.union([
+	editTeamFormSchema,
+	updateTeamCustomThemeSchema,
 ]);
 
 export const manageRosterSchema = z.union([
+	updateRosterSchema,
 	z.object({
 		_action: _action("RESET_INVITE_LINK"),
-	}),
-	z.object({
-		_action: _action("DELETE_MEMBER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("ADD_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("REMOVE_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("UPDATE_MEMBER_ROLE"),
-		userId: id,
-		role: z.union([z.enum(TEAM_MEMBER_ROLES), z.literal("")]),
 	}),
 ]);

@@ -83,7 +83,9 @@ function ListItemContent({
 	suppressSubtitleHydrationWarning,
 }: {
 	children: React.ReactNode;
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
+		customAvatarUrl?: string | null;
+	};
 	imageUrl?: string;
 	overlayIconUrl?: string;
 	subtitle?: React.ReactNode;
@@ -155,7 +157,9 @@ export function ListLink({
 	isActive?: boolean;
 	imageUrl?: string;
 	overlayIconUrl?: string;
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
+		customAvatarUrl?: string | null;
+	};
 	subtitle?: React.ReactNode;
 	badge?: React.ReactNode;
 	badgeVariant?: "default" | "warning";
@@ -190,7 +194,9 @@ export function ListButton({
 	badgeVariant,
 }: {
 	children: React.ReactNode;
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
+		customAvatarUrl?: string | null;
+	};
 	subtitle?: string | null;
 	badge?: string | null;
 	badgeVariant?: "default" | "warning";

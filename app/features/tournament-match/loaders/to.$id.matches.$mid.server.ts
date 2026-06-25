@@ -3,7 +3,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
-import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -22,7 +21,6 @@ import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
-import { findResultsByMatchId } from "../queries/findResultsByMatchId.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 import { matchEndedEarly } from "../tournament-match-utils";
 
@@ -56,7 +54,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		? await TournamentRepository.pickBanEventsByMatchId(match.id)
 		: [];
 
-	const results = findResultsByMatchId(matchId);
+	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
 
 	const reportedWeapons =
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
@@ -124,8 +122,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						tournamentId,
 						matchId,
 						teams: [match.opponentOne.id, match.opponentTwo.id],
+						mapPoolByTeamId: (teamId) =>
+							tournament.teamById(teamId)?.mapPool ?? [],
 						mapPickingStyle: match.mapPickingStyle,
 						maps: match.roundMaps,
+						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 						pickBanEvents,
 						recentlyPlayedMaps:
 							match.mapPickingStyle !== "TO"
@@ -216,16 +217,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
 		!isLeagueRoundLocked(tournament, match.roundId);
 
-	const [roomLinks, anyUserPrefersNoSplatnet] = canJoin
-		? await Promise.all([
-				RoomLinkRepository.findByUserIds(
-					match.players.map((p) => p.id),
-					3,
-				),
-				UserRepository.anyUserPrefersNoSplatnet(match.players.map((p) => p.id)),
-			])
-		: ([[], false] as const);
-
 	return {
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
@@ -236,8 +227,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		noScreen,
 		chatCode: visibleChatCode,
 		canJoin,
-		roomLinks,
-		anyUserPrefersNoSplatnet,
 		pickBanEventCount: pickBanEvents.length,
 		pickBanEvents: pickBanEvents.map((e) => ({
 			type: e.type,

@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import { ServerConfig } from "~/config.server";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -52,7 +53,7 @@ const DEFAULT_RETRY_AFTER_SECONDS = 10;
 const MAX_RETRY_AFTER_SECONDS = 60;
 
 async function fetchPatronData(urlToFetch: string) {
-	if (!process.env.PATREON_ACCESS_TOKEN) {
+	if (!ServerConfig.patreon.accessToken) {
 		throw new Error("Missing Patreon access token");
 	}
 
@@ -61,7 +62,7 @@ async function fetchPatronData(urlToFetch: string) {
 			urlToFetch,
 			{
 				headers: {
-					Authorization: `Bearer ${process.env.PATREON_ACCESS_TOKEN}`,
+					Authorization: `Bearer ${ServerConfig.patreon.accessToken}`,
 				},
 			},
 			30_000,

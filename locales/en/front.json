@@ -10,6 +10,7 @@
 	"showcase.card.unranked": "Unranked",
 	"showcase.card.winner": "Winner",
 	"showcase.results": "Recent results",
+	"showcase.viewAll": "View all tournaments",
 	"leaderboards.topPlayers": "Top players",
 	"leaderboards.topTeams": "Top teams",
 	"leaderboards.viewFull": "View full leaderboard",
@@ -40,5 +41,15 @@
 	"rotations.nextLabel": "Next",
 	"rotations.credit": "Data from splatoon3.ink",
 	"rotations.filter.all": "All",
-	"discover.header": "Discover all the features"
+	"discover.header": "Discover all the features",
+	"install.button": "Install app",
+	"install.header": "Install sendou.ink",
+	"install.banner.title": "Get the sendou.ink app",
+	"install.banner.description": "Add sendou.ink to your home screen for quick access",
+	"install.ios.step1": "Tap the share button in your browser",
+	"install.ios.step2": "Select \"Add to Home Screen\"",
+	"install.ios.step3": "Tap \"Add\"",
+	"install.safari.step1": "Click the share button in Safari's toolbar",
+	"install.safari.step2": "Select \"Add to Dock\"",
+	"install.safari.step3": "Click \"Add\""
 }

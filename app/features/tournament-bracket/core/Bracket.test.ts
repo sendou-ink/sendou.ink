@@ -29,6 +29,59 @@ describe("swiss standings - losses against tied", () => {
 		expect(standing.stats?.lossesAgainstTied).toBe(1);
 	});
 
+	it("breaks ties on losses against tied, not wins against tied", () => {
+		const tournament = new Tournament({
+			...LOW_INK_DECEMBER_2024(),
+			simulateBrackets: false,
+		});
+
+		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+
+		// Both teams finished 4-2 in the same Swiss group. Team 16872 beat MORE of
+		// its tied peers (winsAgainstTied=2) than team 17505 (winsAgainstTied=1),
+		// but Swiss intentionally ranks on losses against tied (not wins), because
+		// not every tied team has played each other. Both lost to zero tied peers,
+		// so the tiebreaker is a draw and the higher opponent set win % wins out —
+		// placing 17505 above 16872 despite 16872's extra win against a tied team.
+		const moreWinsVsTied = standings.find((s) => s.team.id === 16872);
+		const higherOpponentWinPct = standings.find((s) => s.team.id === 17505);
+		invariant(moreWinsVsTied && higherOpponentWinPct, "Standings not found");
+
+		expect(moreWinsVsTied.stats?.winsAgainstTied).toBe(2);
+		expect(higherOpponentWinPct.stats?.winsAgainstTied).toBe(1);
+		expect(moreWinsVsTied.stats?.lossesAgainstTied).toBe(0);
+		expect(higherOpponentWinPct.stats?.lossesAgainstTied).toBe(0);
+
+		expect(higherOpponentWinPct.placement).toBeLessThan(
+			moreWinsVsTied.placement,
+		);
+	});
+
+	it("ranks fewer losses against tied above a higher opponent set win %", () => {
+		const tournament = new Tournament({
+			...LOW_INK_DECEMBER_2024(),
+			simulateBrackets: false,
+		});
+
+		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+
+		// Both teams finished 4-2 in the same Swiss group. Team 16996 lost to none
+		// of its tied peers while team 17067 lost to one, even though 17067 has the
+		// higher opponent set win %. The losses-against-tied tiebreaker is applied
+		// before opponent win %, so 16996 is placed higher.
+		const noTiedLosses = standings.find((s) => s.team.id === 16996);
+		const oneTiedLoss = standings.find((s) => s.team.id === 17067);
+		invariant(noTiedLosses && oneTiedLoss, "Standings not found");
+
+		expect(noTiedLosses.stats?.lossesAgainstTied).toBe(0);
+		expect(oneTiedLoss.stats?.lossesAgainstTied).toBe(1);
+		expect(oneTiedLoss.stats?.opponentSetWinPercentage).toBeGreaterThan(
+			noTiedLosses.stats!.opponentSetWinPercentage!,
+		);
+
+		expect(noTiedLosses.placement).toBeLessThan(oneTiedLoss.placement);
+	});
+
 	it("should ignore early dropped out teams for standings (losses against tied)", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
@@ -473,5 +526,103 @@ describe("round robin A/B divisions standings", () => {
 			.source({ placements: [1, 5] });
 
 		expect(teams).toEqual([1, 2]);
+	});
+});
+
+describe("single elimination standings - third place match", () => {
+	const singleEliminationTournament = ({
+		thirdPlaceMatchReported,
+	}: {
+		thirdPlaceMatchReported: boolean;
+	}) => {
+		const storage = new InMemoryDatabase();
+		const manager = new BracketsManager(storage);
+
+		manager.create({
+			name: "SE",
+			tournamentId: 1,
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: { consolationFinal: true },
+		});
+
+		const reportLowerTeamIdAsWinner = (matchId: number) => {
+			manager.update.match({
+				id: matchId,
+				opponent1: { score: 2, result: "win" },
+				opponent2: { score: 0 },
+			});
+		};
+
+		const semifinals = storage
+			.select<any>("match")!
+			.filter((match) => match.opponent1?.id && match.opponent2?.id);
+		invariant(semifinals.length === 2, "Expected two semifinal matches");
+
+		const semifinalLoserIds: number[] = [];
+		for (const match of semifinals) {
+			semifinalLoserIds.push(match.opponent2.id);
+			reportLowerTeamIdAsWinner(match.id);
+		}
+
+		let thirdPlaceWinnerId: number | undefined;
+		let thirdPlaceLoserId: number | undefined;
+		if (thirdPlaceMatchReported) {
+			const thirdPlaceGroupId = Math.max(
+				...storage.select<any>("group")!.map((group) => group.id),
+			);
+			const thirdPlaceMatch = storage
+				.select<any>("match")!
+				.find((match) => match.group_id === thirdPlaceGroupId);
+			invariant(thirdPlaceMatch, "Third place match not found");
+			thirdPlaceWinnerId = thirdPlaceMatch.opponent1.id;
+			thirdPlaceLoserId = thirdPlaceMatch.opponent2.id;
+			reportLowerTeamIdAsWinner(thirdPlaceMatch.id);
+		}
+
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "SE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data: manager.get.tournamentData(1),
+		});
+
+		return { tournament, thirdPlaceWinnerId, thirdPlaceLoserId };
+	};
+
+	it("excludes semifinal losers from standings before the third place match concludes", () => {
+		const { tournament } = singleEliminationTournament({
+			thirdPlaceMatchReported: false,
+		});
+
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(standings).toHaveLength(0);
+	});
+
+	it("places third place match winner 3rd and loser 4th once it is played", () => {
+		const { tournament, thirdPlaceWinnerId, thirdPlaceLoserId } =
+			singleEliminationTournament({
+				thirdPlaceMatchReported: true,
+			});
+
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(
+			standings.find((s) => s.team.id === thirdPlaceWinnerId)?.placement,
+		).toBe(3);
+		expect(
+			standings.find((s) => s.team.id === thirdPlaceLoserId)?.placement,
+		).toBe(4);
 	});
 });

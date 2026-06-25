@@ -1,9 +1,9 @@
 import { Check, Clipboard } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 
 interface CopyToClipboardPopoverProps {
 	url: string;
@@ -15,17 +15,7 @@ export function CopyToClipboardPopover({
 	url,
 }: CopyToClipboardPopoverProps) {
 	const { t } = useTranslation(["common"]);
-	const [state, copyToClipboard] = useCopyToClipboard();
-	const [copySuccess, setCopySuccess] = React.useState(false);
-
-	React.useEffect(() => {
-		if (!state.value) return;
-
-		setCopySuccess(true);
-		const timeout = setTimeout(() => setCopySuccess(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [state]);
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	return (
 		<SendouPopover trigger={trigger}>

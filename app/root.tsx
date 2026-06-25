@@ -27,18 +27,19 @@ import {
 	useRevalidator,
 	useSearchParams,
 } from "react-router";
-import { useDebounce } from "react-use";
 import { useChangeLanguage } from "remix-i18next/react";
+import { Config } from "~/config";
 import type { CustomTheme } from "~/db/tables";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
+import { useDebounce } from "~/hooks/useDebounce";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
 import { SendouToastRegion, toastQueue } from "./components/elements/Toast";
 import { FusePageInit } from "./components/fuse/Fuse";
-import { Layout } from "./components/layout";
+import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
@@ -72,6 +73,11 @@ import "~/styles/common.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
+
+// Anchor the loading bar to the header so it sits between the sidebars. Set at
+// module scope (not in an effect) so the very first navigation's NProgress.start
+// already targets the header instead of briefly rendering over the sidebar.
+NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isRevalidation(args)) return true;
@@ -119,6 +125,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						discordId: user.discordId,
 						id: user.id,
 						customUrl: user.customUrl,
+						customAvatarUrl: user.customAvatarUrl,
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
 						preferences: user.preferences ?? {},
@@ -179,8 +186,7 @@ function Document({
 			className={clsx(htmlThemeClass, "scrollbar")}
 			style={htmlStyle}
 			data-fuse={
-				import.meta.env.VITE_FUSE_ENABLED &&
-				!data?.user?.roles.includes("MINOR_SUPPORT")
+				Config.fuseEnabled && !data?.user?.roles.includes("MINOR_SUPPORT")
 					? "true"
 					: undefined
 			}
@@ -188,7 +194,7 @@ function Document({
 		>
 			<head>
 				<meta charSet="utf-8" />
-				{import.meta.env.VITE_FUSE_ENABLED &&
+				{Config.fuseEnabled &&
 				// check for data so supporters don't see ads on error page
 				data &&
 				!data.user?.roles.includes("MINOR_SUPPORT") ? (
@@ -262,7 +268,7 @@ function useTriggerToasts() {
 			);
 		}
 
-		navigate({ search: "" }, { replace: true });
+		navigate({ search: "" }, { replace: true, defaultShouldRevalidate: false });
 	}, [error, success, navigate]);
 }
 
@@ -277,7 +283,7 @@ function useLoadingIndicator() {
 				NProgress.done();
 			}
 		},
-		250,
+		150,
 		[transition.state],
 	);
 }

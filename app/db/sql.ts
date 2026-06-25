@@ -8,28 +8,31 @@ import {
 	SqliteDialect,
 } from "kysely";
 import { format } from "sql-formatter";
-import invariant from "~/utils/invariant";
+import { Config } from "~/config";
+import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import type { DB } from "./tables";
 
-const LOG_LEVEL = (["trunc", "full", "none"] as const).find(
-	(val) => val === process.env.SQL_LOG,
-);
-
-const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
-
 const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
 
-invariant(process.env.DB_PATH, "DB_PATH env variable must be set");
-
 export const sql = new Database(
-	process.env.NODE_ENV === "test" ? migratedEmptyDb : process.env.DB_PATH,
+	ServerConfig.isTest ? migratedEmptyDb : ServerConfig.dbPath,
 );
 
 sql.pragma("journal_mode = WAL");
+// The synchronous=NORMAL setting provides the best balance between performance and safety for most applications running in WAL mode.
+// You lose durability across power lose with synchronous NORMAL in WAL mode, but that is not important for most applications.
+// Transactions are still atomic, consistent, and isolated, which are the most important characteristics in most use cases.
+// Source: https://sqlite.org/pragma.html
+sql.pragma("synchronous = NORMAL");
 sql.pragma("foreign_keys = ON");
 sql.pragma("busy_timeout = 5000");
+// 64MB page cache (default is 2MB)
+sql.pragma("cache_size = -65536");
+// lets reads come straight from the OS page cache without read() syscalls
+// Source: https://sqlite.org/mmap.html
+sql.pragma("mmap_size = 3221225472");
 // see https://sqlite.org/pragma.html#pragma_optimize — recommended for long-lived
 // connections; pair with a periodic `PRAGMA optimize;` (see OptimizeDatabase routine)
 sql.pragma("optimize = 0x10002");
@@ -43,7 +46,7 @@ export const db = new Kysely<DB>({
 });
 
 function log(event: LogEvent) {
-	if (SENTRY_ENABLED && event.level === "query") {
+	if (Config.sentry.enabled && event.level === "query") {
 		// Backdated span so the query nests under the active loader/action span
 		// in Sentry's waterfall. `onlyIfParent: true` skips emission when there's
 		// no active trace (e.g. cron routines), avoiding orphan root spans.
@@ -55,7 +58,7 @@ function log(event: LogEvent) {
 		}).end();
 	}
 
-	if (LOG_LEVEL === "trunc" || LOG_LEVEL === "full") {
+	if (ServerConfig.sqlLog === "trunc" || ServerConfig.sqlLog === "full") {
 		logQuery(event);
 	} else {
 		logError(event);
@@ -119,7 +122,7 @@ function formatSql(sql: string, params: readonly unknown[]) {
 
 	const lines = formatted.split("\n");
 
-	if (LOG_LEVEL === "full" || lines.length <= 11) {
+	if (ServerConfig.sqlLog === "full" || lines.length <= 11) {
 		return addParams(formatted, params);
 	}
 

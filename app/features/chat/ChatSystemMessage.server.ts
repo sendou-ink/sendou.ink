@@ -1,5 +1,7 @@
 import { add } from "date-fns";
 import { nanoid } from "nanoid";
+import { ServerConfig } from "~/config.server";
+import { actorIdOrNullSafe } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import invariant from "~/utils/invariant";
@@ -15,7 +17,7 @@ function logSkalpError(action: string) {
 
 		if (code === "ECONNREFUSED") {
 			logger.error(
-				`Skalop "${action}" failed: connection refused at ${process.env.SKALOP_SYSTEM_MESSAGE_URL} — is the skalop service running?`,
+				`Skalop "${action}" failed: connection refused at ${ServerConfig.skalop.systemMessageUrl} — is the skalop service running?`,
 			);
 		} else {
 			logger.error(`Skalop "${action}" failed:`, err);
@@ -35,13 +37,13 @@ let systemMessagesDisabled = false;
 
 if (!IS_E2E_TEST_RUN) {
 	invariant(
-		process.env.SKALOP_SYSTEM_MESSAGE_URL,
+		ServerConfig.skalop.systemMessageUrl,
 		"Missing env var: SKALOP_SYSTEM_MESSAGE_URL",
 	);
-	invariant(process.env.SKALOP_TOKEN, "Missing env var: SKALOP_TOKEN");
+	invariant(ServerConfig.skalop.token, "Missing env var: SKALOP_TOKEN");
 } else if (
-	!process.env.SKALOP_SYSTEM_MESSAGE_URL ||
-	!process.env.SKALOP_TOKEN
+	!ServerConfig.skalop.systemMessageUrl ||
+	!ServerConfig.skalop.token
 ) {
 	systemMessagesDisabled = true;
 }
@@ -59,18 +61,18 @@ export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 			context: partialMsg.context,
 			type: partialMsg.type,
 			revalidateOnly: partialMsg.revalidateOnly,
-			authorUserId: partialMsg.authorUserId,
+			authorUserId: partialMsg.authorUserId ?? actorIdOrNullSafe() ?? undefined,
 		};
 	});
 
-	return void fetch(process.env.SKALOP_SYSTEM_MESSAGE_URL!, {
+	return void fetch(ServerConfig.skalop.systemMessageUrl!, {
 		method: "POST",
 		body: JSON.stringify({
 			action: "sendMessage",
 			messages: fullMessages,
 		}),
 		headers: [
-			[SKALOP_TOKEN_HEADER_NAME, process.env.SKALOP_TOKEN!],
+			[SKALOP_TOKEN_HEADER_NAME, ServerConfig.skalop.token!],
 			["Content-Type", "application/json"],
 		],
 	}).catch(logSkalpError("sendMessage"));
@@ -79,14 +81,14 @@ export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 export function removeRoom(chatCode: string) {
 	if (systemMessagesDisabled) return;
 
-	return void fetch(process.env.SKALOP_SYSTEM_MESSAGE_URL!, {
+	return void fetch(ServerConfig.skalop.systemMessageUrl!, {
 		method: "POST",
 		body: JSON.stringify({
 			action: "removeRoom",
 			chatCode,
 		}),
 		headers: [
-			[SKALOP_TOKEN_HEADER_NAME, process.env.SKALOP_TOKEN!],
+			[SKALOP_TOKEN_HEADER_NAME, ServerConfig.skalop.token!],
 			["Content-Type", "application/json"],
 		],
 	}).catch(logSkalpError("removeRoom"));
@@ -109,7 +111,7 @@ const metadataDedup = new Map<string, string>();
 
 export async function setMetadata(args: SetMetadataArgs) {
 	if (systemMessagesDisabled) return;
-	if (!process.env.SKALOP_SYSTEM_MESSAGE_URL) return;
+	if (!ServerConfig.skalop.systemMessageUrl) return;
 
 	const participantsKey = args.participantUserIds
 		.slice()
@@ -146,7 +148,7 @@ export async function setMetadata(args: SetMetadataArgs) {
 		`Setting chat room metadata for ${args.chatCode} (participants: ${participantsKey})`,
 	);
 
-	return void fetch(process.env.SKALOP_SYSTEM_MESSAGE_URL, {
+	return void fetch(ServerConfig.skalop.systemMessageUrl, {
 		method: "POST",
 		body: JSON.stringify({
 			action: "setMetadata",
@@ -162,7 +164,7 @@ export async function setMetadata(args: SetMetadataArgs) {
 			},
 		}),
 		headers: [
-			[SKALOP_TOKEN_HEADER_NAME, process.env.SKALOP_TOKEN!],
+			[SKALOP_TOKEN_HEADER_NAME, ServerConfig.skalop.token!],
 			["Content-Type", "application/json"],
 		],
 	}).catch(logSkalpError("setMetadata"));

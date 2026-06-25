@@ -17,7 +17,7 @@ vi.mock("~/modules/twitch", () => ({
 	getStreams: mockGetStreams,
 }));
 
-vi.mock("~/modules/twitch/utils", () => ({
+vi.mock("~/modules/twitch/utils.server", () => ({
 	hasTwitchEnvVars: () => true,
 }));
 
@@ -108,6 +108,7 @@ describe("syncLiveStreams tournament streamers", () => {
 							streamTwitch: null,
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
+							customAvatarUrl: null,
 						},
 					],
 				}),
@@ -148,6 +149,7 @@ describe("syncLiveStreams tournament streamers", () => {
 							streamTwitch: null,
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
+							customAvatarUrl: null,
 						},
 					],
 				}),
@@ -201,6 +203,7 @@ describe("syncLiveStreams tournament streamers", () => {
 							streamTwitch: null,
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
+							customAvatarUrl: null,
 						},
 					],
 				}),
@@ -237,6 +240,7 @@ describe("syncLiveStreams tournament streamers", () => {
 							streamTwitch: null,
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
+							customAvatarUrl: null,
 						},
 					],
 				}),
@@ -276,6 +280,7 @@ describe("syncLiveStreams tournament streamers", () => {
 							streamTwitch: null,
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
+							customAvatarUrl: null,
 						},
 					],
 				}),

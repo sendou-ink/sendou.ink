@@ -3,10 +3,15 @@ import { type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables, UserMapModePreferences } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
-import { COMMON_USER_FIELDS, matchProfileWeapons } from "~/utils/kysely.server";
+import {
+	commonUserSelect,
+	customAvatarUrl,
+	matchProfileWeapons,
+} from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
@@ -53,6 +58,7 @@ export async function findCurrentGroups() {
 		username: Tables["User"]["username"];
 		discordId: Tables["User"]["discordId"];
 		discordAvatar: Tables["User"]["discordAvatar"];
+		customAvatarUrl: string | null;
 		customUrl: Tables["User"]["customUrl"];
 		pronouns: Tables["User"]["pronouns"] | null;
 		mapModePreferences: Tables["User"]["mapModePreferences"];
@@ -98,6 +104,7 @@ export async function findCurrentGroups() {
 						username: eb.ref("User.username"),
 						discordId: eb.ref("User.discordId"),
 						discordAvatar: eb.ref("User.discordAvatar"),
+						customAvatarUrl: customAvatarUrl(eb),
 						customUrl: eb.ref("User.customUrl"),
 						mapModePreferences: eb.ref("User.mapModePreferences"),
 						noScreen: eb.ref("User.noScreen"),
@@ -421,10 +428,7 @@ export function rechallenge({
 		.execute();
 }
 
-export async function friendsAndTeammates(
-	userId: number,
-	{ requireFriendCode = true }: { requireFriendCode?: boolean } = {},
-) {
+export async function friendsAndTeammates(userId: number) {
 	const teams = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
@@ -435,11 +439,8 @@ export async function friendsAndTeammates(
 	const rows = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-		.$if(requireFriendCode, (qb) =>
-			qb.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id"),
-		)
-		.select([
-			...COMMON_USER_FIELDS,
+		.select((eb) => [
+			...commonUserSelect(eb),
 			"User.inGameName",
 			"TeamMemberWithSecondary.teamId",
 		])
@@ -465,11 +466,8 @@ export async function friendsAndTeammates(
 						]),
 					),
 				)
-				.$if(requireFriendCode, (qb) =>
-					qb.innerJoin("UserFriendCode", "UserFriendCode.userId", "User.id"),
-				)
-				.select([
-					...COMMON_USER_FIELDS,
+				.select((eb) => [
+					...commonUserSelect(eb),
 					"User.inGameName",
 					sql<any>`null`.as("teamId"),
 				]),
@@ -741,13 +739,11 @@ export function refreshGroup(groupId: number, trx?: Transaction<DB>) {
 		.execute();
 }
 
-export function updateMemberNote({
+export function updateOwnMemberNote({
 	groupId,
-	userId,
 	value,
 }: {
 	groupId: number;
-	userId: number;
 	value: string | null;
 }) {
 	return db.transaction().execute(async (trx) => {
@@ -755,7 +751,7 @@ export function updateMemberNote({
 			.updateTable("GroupMember")
 			.set({ note: value })
 			.where("groupId", "=", groupId)
-			.where("userId", "=", userId)
+			.where("userId", "=", actorId())
 			.execute();
 
 		await refreshGroup(groupId, trx);

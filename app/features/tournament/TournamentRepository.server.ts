@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { ordinal } from "openskill";
 import { db } from "~/db/sql";
 import type {
 	CastedMatchesInfo,
@@ -9,15 +10,21 @@ import type {
 	Tables,
 	TournamentSettings,
 } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
+import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
+import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -50,11 +57,19 @@ export async function findById(id: number) {
 			"Tournament.castTwitchAccounts",
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
-			"Tournament.rules",
+			sql<boolean>`"Tournament"."rules" is not null`.as("hasRules"),
 			"Tournament.parentTournamentId",
+			eb
+				.selectFrom("CalendarEvent as ParentCalendarEvent")
+				.select("ParentCalendarEvent.name")
+				.whereRef(
+					"ParentCalendarEvent.tournamentId",
+					"=",
+					"Tournament.parentTournamentId",
+				)
+				.as("parentTournamentName"),
 			"Tournament.tier",
 			"CalendarEvent.name",
-			"CalendarEvent.description",
 			"CalendarEventDate.startTime",
 			"Tournament.isFinalized",
 			"Tournament.seedingSnapshot",
@@ -81,10 +96,10 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.userId",
 									"User.id",
 								)
-								.select([
+								.select((eb) => [
 									"TournamentOrganizationMember.userId",
 									"TournamentOrganizationMember.role",
-									...COMMON_USER_FIELDS,
+									...commonUserSelect(eb),
 									"User.pronouns",
 								])
 								.whereRef(
@@ -93,6 +108,16 @@ export async function findById(id: number) {
 									"TournamentOrganization.id",
 								),
 						).as("members"),
+						jsonArrayFrom(
+							innerEb
+								.selectFrom("TournamentOrganizationSeries")
+								.select("TournamentOrganizationSeries.name")
+								.whereRef(
+									"TournamentOrganizationSeries.organizationId",
+									"=",
+									"TournamentOrganization.id",
+								),
+						).as("series"),
 					])
 					.whereRef(
 						"TournamentOrganization.id",
@@ -104,15 +129,15 @@ export async function findById(id: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS, "User.pronouns"])
+					.select((eb) => [...commonUserSelect(eb), "User.pronouns"])
 					.whereRef("User.id", "=", "CalendarEvent.authorId"),
 			).as("author"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentStaff")
 					.innerJoin("User", "TournamentStaff.userId", "User.id")
-					.select([
-						...COMMON_USER_FIELDS,
+					.select((eb) => [
+						...commonUserSelect(eb),
 						"User.pronouns",
 						"TournamentStaff.role",
 					])
@@ -151,6 +176,7 @@ export async function findById(id: number) {
 						"TournamentTeam.activeRosterUserIds",
 						"TournamentTeam.startingBracketIdx",
 						"TournamentTeam.abDivision",
+						"TournamentTeam.avatarImgId",
 						concatUserSubmittedImagePrefix(
 							innerEb.ref("UserSubmittedImage.url"),
 						).as("pickupAvatarUrl"),
@@ -169,7 +195,7 @@ export async function findById(id: number) {
 								)
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 								.leftJoin("LiveStream", "LiveStream.userId", "User.id")
-								.select([
+								.select((eb) => [
 									"User.id as userId",
 									"User.username",
 									"User.discordId",
@@ -188,6 +214,7 @@ export async function findById(id: number) {
 									"LiveStream.twitch as streamTwitch",
 									"LiveStream.viewerCount as streamViewerCount",
 									"LiveStream.thumbnailUrl as streamThumbnailUrl",
+									customAvatarUrl(eb).as("customAvatarUrl"),
 								])
 								.whereRef(
 									"TournamentTeamMember.tournamentTeamId",
@@ -317,6 +344,34 @@ export async function findById(id: number) {
 	};
 }
 
+/**
+ * Loads a tournament's rules markdown. Kept out of {@link findById} since it can
+ * be large and is only needed on the tournament's rules page.
+ */
+export async function findRulesById(tournamentId: number) {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("Tournament.rules")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return row?.rules ?? null;
+}
+
+/**
+ * Loads a tournament's description markdown. Kept out of {@link findById} since it
+ * can be large and is only needed on the tournament's info page.
+ */
+export async function findDescriptionById(tournamentId: number) {
+	const row = await db
+		.selectFrom("CalendarEvent")
+		.select("CalendarEvent.description")
+		.where("CalendarEvent.tournamentId", "=", tournamentId)
+		.executeTakeFirst();
+
+	return row?.description ?? null;
+}
+
 export async function hasChildTournaments(parentTournamentId: number) {
 	const row = await db
 		.selectFrom("Tournament")
@@ -412,25 +467,6 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 			).as("staff"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("TournamentOrganization")
-					.innerJoin(
-						"TournamentOrganizationMember",
-						"TournamentOrganization.id",
-						"TournamentOrganizationMember.organizationId",
-					)
-					.select(["TournamentOrganizationMember.userId"])
-					.whereRef(
-						"TournamentOrganization.id",
-						"=",
-						"CalendarEvent.organizationId",
-					)
-					.where("TournamentOrganizationMember.role", "in", [
-						"ADMIN",
-						"ORGANIZER",
-					]),
-			).as("organizationMembers"),
-			jsonArrayFrom(
-				eb
 					.selectFrom("TournamentTeam")
 					.innerJoin(
 						"TournamentTeamMember",
@@ -444,7 +480,6 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 		.where("Tournament.id", "in", tournamentIds)
 		.$narrowType<{
 			staff: NotNull;
-			organizationMembers: NotNull;
 			teamMembers: NotNull;
 		}>()
 		.execute();
@@ -531,7 +566,7 @@ export function forShowcase() {
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
 					.select((eb) => [
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(eb),
 						"User.country",
 						"TournamentResult.div",
 						"TournamentTeam.name as teamName",
@@ -612,7 +647,7 @@ export function topThreeResultsByTournamentId(tournamentId: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS])
+					.select((eb) => commonUserSelect(eb))
 					.whereRef("User.id", "=", "TournamentResult.userId"),
 			).as("user"),
 		])
@@ -742,42 +777,40 @@ export function overrideTeamBracketProgression({
 		.execute();
 }
 
-export function addStaff({
+export function setStaff({
 	tournamentId,
-	userId,
-	role,
+	staff,
 }: {
 	tournamentId: number;
-	userId: number;
-	role: Tables["TournamentStaff"]["role"];
+	staff: Array<{
+		userId: number;
+		role: Tables["TournamentStaff"]["role"];
+	}>;
 }) {
-	return db
-		.insertInto("TournamentStaff")
-		.values({
-			tournamentId,
-			userId,
-			role,
-		})
-		.execute();
-}
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("TournamentStaff")
+			.where("tournamentId", "=", tournamentId)
+			.execute();
 
-export function removeStaff({
-	tournamentId,
-	userId,
-}: {
-	tournamentId: number;
-	userId: number;
-}) {
-	return db
-		.deleteFrom("TournamentStaff")
-		.where("tournamentId", "=", tournamentId)
-		.where("userId", "=", userId)
-		.execute();
+		if (staff.length > 0) {
+			await trx
+				.insertInto("TournamentStaff")
+				.values(
+					staff.map((staffer) => ({
+						tournamentId,
+						userId: staffer.userId,
+						role: staffer.role,
+					})),
+				)
+				.execute();
+		}
+	});
 }
 
 interface UpsertPreparedMapsArgs {
 	tournamentId: number;
-	maps: Omit<PreparedMaps, "createdAt">;
+	maps: Omit<PreparedMaps, "createdAt" | "authorId">;
 	bracketIdx: number;
 }
 
@@ -797,7 +830,11 @@ export function upsertPreparedMaps({
 			tournament.preparedMaps ??
 			nullFilledArray(tournament.settings.bracketProgression.length);
 
-		preparedMaps[bracketIdx] = { ...maps, createdAt: databaseTimestampNow() };
+		preparedMaps[bracketIdx] = {
+			...maps,
+			authorId: actorId(),
+			createdAt: databaseTimestampNow(),
+		};
 
 		await trx
 			.updateTable("Tournament")
@@ -817,7 +854,11 @@ export function updateCastTwitchAccounts({
 	return db
 		.updateTable("Tournament")
 		.set({
-			castTwitchAccounts: JSON.stringify(castTwitchAccounts),
+			castTwitchAccounts: JSON.stringify(
+				castTwitchAccounts
+					.map((account) => account.trim().toLowerCase())
+					.filter(Boolean),
+			),
 		})
 		.where("id", "=", tournamentId)
 		.execute();
@@ -1009,6 +1050,217 @@ export function reopenTournament(tournamentId: number) {
 	});
 }
 
+/**
+ * Finalizes a tournament, recording the full summary: skills, seeding skills,
+ * map/player result deltas, badge owners and placements. Use
+ * {@link finalizeWithoutSummary} for test tournaments that should be marked as
+ * finalized without recording any stats.
+ */
+export function finalize({
+	tournamentId,
+	summary,
+	season,
+	badgeReceivers = [],
+}: {
+	tournamentId: number;
+	summary: TournamentSummary;
+	season?: number;
+	badgeReceivers?: TournamentBadgeReceivers;
+}) {
+	const seasonValue = season ?? null;
+
+	return db.transaction().execute(async (trx) => {
+		for (const skill of summary.skills) {
+			invariant(seasonValue !== null, "Season missing for skill");
+			// A skill row keys on either userId (solo) or identifier (team), never
+			// both. The matchesCount subquery filters by whichever is present so it
+			// references exactly one indexed column — a combined
+			// `where "userId" = ? or "identifier" = ?` triggers a stat4-driven
+			// misestimate when one parameter is NULL (the planner treats NULL as a
+			// frequent indexed value, ~900K rows for Skill.identifier) and picks a
+			// pathological MULTI-INDEX OR plan.
+			const insertedSkill = await trx
+				.insertInto("Skill")
+				.values((eb) => ({
+					tournamentId,
+					mu: skill.mu,
+					sigma: skill.sigma,
+					ordinal: ordinal(skill),
+					userId: skill.userId,
+					identifier: skill.identifier,
+					matchesCount: eb(
+						eb.val(skill.matchesCount),
+						"+",
+						eb
+							.selectFrom("Skill")
+							.select((e2) =>
+								e2.fn
+									.coalesce(e2.fn.max("matchesCount"), e2.val(0))
+									.as("matchesCount"),
+							)
+							.$if(skill.userId !== null, (qb) =>
+								qb.where("userId", "=", skill.userId),
+							)
+							.$if(skill.identifier !== null, (qb) =>
+								qb.where("identifier", "=", skill.identifier),
+							)
+							.where("season", "=", seasonValue),
+					),
+					season: seasonValue,
+					createdAt: databaseTimestampNow(),
+				}))
+				.returningAll()
+				.executeTakeFirstOrThrow();
+
+			if (insertedSkill.identifier) {
+				for (const userId of identifierToUserIds(insertedSkill.identifier)) {
+					await trx
+						.insertInto("SkillTeamUser")
+						.values({ skillId: insertedSkill.id, userId })
+						.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+						.execute();
+				}
+			}
+		}
+
+		// SeedingSkill has `on conflict replace` set in its migration
+		if (summary.seedingSkills.length > 0) {
+			await trx
+				.insertInto("SeedingSkill")
+				.values(
+					summary.seedingSkills.map((seedingSkill) => ({
+						type: seedingSkill.type,
+						mu: seedingSkill.mu,
+						sigma: seedingSkill.sigma,
+						ordinal: seedingSkill.ordinal,
+						userId: seedingSkill.userId,
+					})),
+				)
+				.execute();
+		}
+
+		for (const mapResultDelta of summary.mapResultDeltas) {
+			invariant(seasonValue !== null, "Season missing for map result");
+			await trx
+				.insertInto("MapResult")
+				.values({
+					mode: mapResultDelta.mode,
+					stageId: mapResultDelta.stageId,
+					userId: mapResultDelta.userId,
+					wins: mapResultDelta.wins,
+					losses: mapResultDelta.losses,
+					season: seasonValue,
+				})
+				.onConflict((oc) =>
+					oc
+						.columns(["userId", "stageId", "mode", "season"])
+						.doUpdateSet((eb) => ({
+							wins: eb("MapResult.wins", "+", eb.ref("excluded.wins")),
+							losses: eb("MapResult.losses", "+", eb.ref("excluded.losses")),
+						})),
+				)
+				.execute();
+		}
+
+		for (const playerResultDelta of summary.playerResultDeltas) {
+			invariant(seasonValue !== null, "Season missing for player result");
+			await trx
+				.insertInto("PlayerResult")
+				.values({
+					ownerUserId: playerResultDelta.ownerUserId,
+					otherUserId: playerResultDelta.otherUserId,
+					mapWins: playerResultDelta.mapWins,
+					mapLosses: playerResultDelta.mapLosses,
+					setWins: playerResultDelta.setWins,
+					setLosses: playerResultDelta.setLosses,
+					type: playerResultDelta.type,
+					season: seasonValue,
+				})
+				.onConflict((oc) =>
+					oc
+						.columns(["ownerUserId", "otherUserId", "type", "season"])
+						.doUpdateSet((eb) => ({
+							mapWins: eb(
+								"PlayerResult.mapWins",
+								"+",
+								eb.ref("excluded.mapWins"),
+							),
+							mapLosses: eb(
+								"PlayerResult.mapLosses",
+								"+",
+								eb.ref("excluded.mapLosses"),
+							),
+							setWins: eb(
+								"PlayerResult.setWins",
+								"+",
+								eb.ref("excluded.setWins"),
+							),
+							setLosses: eb(
+								"PlayerResult.setLosses",
+								"+",
+								eb.ref("excluded.setLosses"),
+							),
+						})),
+				)
+				.execute();
+		}
+
+		const badgeOwners = badgeReceivers.flatMap((badgeReceiver) =>
+			badgeReceiver.userIds.map((userId) => ({
+				tournamentId,
+				badgeId: badgeReceiver.badgeId,
+				userId,
+			})),
+		);
+		if (badgeOwners.length > 0) {
+			await trx
+				.insertInto("TournamentBadgeOwner")
+				.values(badgeOwners)
+				.execute();
+		}
+
+		for (const tournamentResult of summary.tournamentResults) {
+			const setResults = summary.setResults.get(tournamentResult.userId);
+
+			if (setResults?.every((result) => !result)) {
+				continue;
+			}
+
+			await trx
+				.insertInto("TournamentResult")
+				.values({
+					tournamentId,
+					userId: tournamentResult.userId,
+					placement: tournamentResult.placement,
+					participantCount: tournamentResult.participantCount,
+					tournamentTeamId: tournamentResult.tournamentTeamId,
+					setResults: JSON.stringify(setResults ?? []),
+					spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
+					div: tournamentResult.div,
+				})
+				.execute();
+		}
+
+		await trx
+			.updateTable("Tournament")
+			.set({ isFinalized: 1 })
+			.where("id", "=", tournamentId)
+			.execute();
+	});
+}
+
+/**
+ * Marks a tournament as finalized without recording any summary stats. Used for
+ * test tournaments. See {@link finalize} for the normal path.
+ */
+export function finalizeWithoutSummary(tournamentId: number) {
+	return db
+		.updateTable("Tournament")
+		.set({ isFinalized: 1 })
+		.where("id", "=", tournamentId)
+		.execute();
+}
+
 export type TournamentRepositoryInsertableMatch = Omit<
 	Insertable<DB["TournamentMatch"]>,
 	"status" | "chatCode"
@@ -1056,10 +1308,12 @@ export async function searchByName({
 	query,
 	limit,
 	minStartTime,
+	maxStartTime,
 }: {
 	query: string;
 	limit: number;
 	minStartTime?: Date;
+	maxStartTime?: Date;
 }) {
 	let sqlQuery = db
 		.selectFrom("Tournament")
@@ -1085,6 +1339,14 @@ export async function searchByName({
 			"CalendarEventDate.startTime",
 			">=",
 			dateToDatabaseTimestamp(minStartTime),
+		);
+	}
+
+	if (maxStartTime) {
+		sqlQuery = sqlQuery.where(
+			"CalendarEventDate.startTime",
+			"<=",
+			dateToDatabaseTimestamp(maxStartTime),
 		);
 	}
 

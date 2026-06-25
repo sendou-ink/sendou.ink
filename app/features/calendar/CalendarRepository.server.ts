@@ -28,6 +28,7 @@ import {
 import invariant from "~/utils/invariant";
 import {
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
@@ -396,13 +397,14 @@ export async function findResultsByEventId(eventId: number) {
 				eb
 					.selectFrom("CalendarEventResultPlayer")
 					.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
-					.select([
+					.select((eb) => [
 						"CalendarEventResultPlayer.userId as id",
 						"CalendarEventResultPlayer.name",
 						"User.username",
 						"User.discordId",
 						"User.discordAvatar",
 						"User.customUrl",
+						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.whereRef(
 						"CalendarEventResultPlayer.teamId",

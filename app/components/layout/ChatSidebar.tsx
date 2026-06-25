@@ -2,12 +2,8 @@ import clsx from "clsx";
 import { ArrowLeft, MessageSquare, X } from "lucide-react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
 import { useCurrentRouteChatCode } from "~/features/chat/ChatProvider";
-import {
-	extractRoomLink,
-	isMatchRoomUrl,
-} from "~/features/chat/chat-constants";
 import { resolveDatePlaceholders } from "~/features/chat/chat-utils";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
@@ -174,11 +170,28 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		minute: "numeric",
 	});
 
-	const otherRoomsUnreadCount = Object.entries(chatContext.unreadCounts)
-		.filter(([code]) => code !== activeRoom)
-		.reduce((sum, [, count]) => sum + count, 0);
+	const rawRouteChatCode = useCurrentRouteChatCode();
+	const routeChatCodes = rawRouteChatCode
+		? Array.isArray(rawRouteChatCode)
+			? rawRouteChatCode
+			: [rawRouteChatCode]
+		: [];
 
-	const roomLinkFetcher = useFetcher();
+	// Mirror the room list's badge visibility (RoomList): only rooms that are
+	// visible (non-expired or in route) and not obsolete contribute, so the
+	// back-arrow total can't outrun what the list can actually show.
+	const otherRoomsUnreadCount = chatContext.rooms
+		.filter(
+			(room) =>
+				room.chatCode !== activeRoom &&
+				!room.isObsolete &&
+				(room.expiresAt > Date.now() || routeChatCodes.includes(room.chatCode)),
+		)
+		.reduce(
+			(sum, room) => sum + (chatContext.unreadCounts[room.chatCode] ?? 0),
+			0,
+		);
+
 	const room = chatContext.rooms.find((r) => r.chatCode === activeRoom);
 	const roomExpired = Boolean(room?.expiresAt && room.expiresAt < Date.now());
 	const messages = chatContext.messagesForRoom(activeRoom);
@@ -194,26 +207,10 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 		}
 	}
 
-	const isMatchRoom = room?.url ? isMatchRoomUrl(room.url) : false;
-
 	const chatAdapter = {
 		messages,
 		send: (contents: string) => {
 			chatContext.send(activeRoom, contents);
-
-			if (isMatchRoom) {
-				const link = extractRoomLink(contents);
-				if (link) {
-					roomLinkFetcher.submit(
-						{ _action: "UPSERT", url: link },
-						{
-							method: "post",
-							action: "/room",
-							encType: "application/json",
-						},
-					);
-				}
-			}
 		},
 		currentRoom: activeRoom,
 		setCurrentRoom: () => {},

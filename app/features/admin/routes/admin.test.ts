@@ -9,6 +9,7 @@ import {
 	assertResponseErrored,
 	dbInsertUsers,
 	dbReset,
+	withUserId,
 	wrappedAction,
 } from "~/utils/Test";
 import type { adminActionSchema } from "../actions/admin.server";
@@ -380,11 +381,12 @@ describe("Account migration", () => {
 			ownerUserId: 2,
 			isMainTeam: true,
 		});
-		await TeamRepository.addNewTeamMember({
-			teamId: 1,
-			userId: 1,
-			maxTeamsAllowed: 1,
-		});
+		await withUserId(1, () =>
+			TeamRepository.joinTeam({
+				teamId: 1,
+				maxTeamsAllowed: 1,
+			}),
+		);
 		await TeamRepository.handleMemberLeaving({ teamId: 1, userId: 1 });
 
 		for (const userId of [1, 2]) {
@@ -402,14 +404,16 @@ describe("Account migration", () => {
 	});
 
 	it("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {
-		await UserRepository.updateProfile({
-			userId: 1,
-			weapons: [{ weaponSplId: 1, isFavorite: 1 }],
-		});
-		await UserRepository.updateProfile({
-			userId: 2,
-			weapons: [{ weaponSplId: 10 }],
-		});
+		await withUserId(1, () =>
+			UserRepository.updateOwnProfile({
+				weapons: [{ weaponSplId: 1, isFavorite: 1 }],
+			}),
+		);
+		await withUserId(2, () =>
+			UserRepository.updateOwnProfile({
+				weapons: [{ weaponSplId: 10 }],
+			}),
+		);
 
 		await migrateUserAction();
 

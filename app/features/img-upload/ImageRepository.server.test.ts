@@ -1,15 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { databaseTimestampNow } from "~/utils/dates";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as ArtRepository from "../art/ArtRepository.server";
 import * as CalendarRepository from "../calendar/CalendarRepository.server";
-import * as TeamRepository from "../team/TeamRepository.server";
-import * as TournamentOrganizationRepository from "../tournament-organization/TournamentOrganizationRepository.server";
 import * as ImageRepository from "./ImageRepository.server";
 
 let imageCounter = 0;
-let teamCounter = 0;
-let orgCounter = 0;
 
 const createImage = async ({
 	submitterUserId,
@@ -21,32 +17,26 @@ const createImage = async ({
 	imageCounter++;
 	const url = `image-${submitterUserId}-${imageCounter}.png`;
 
-	return ImageRepository.addNewImage({
-		submitterUserId,
-		url,
-		validatedAt,
-		type: "team-pfp",
-	});
+	return ImageRepository.insert({ submitterUserId, url, validatedAt });
 };
 
-const createTeam = async (ownerUserId: number) => {
-	teamCounter++;
-	const createdTeam = await TeamRepository.create({
-		name: `Team ${teamCounter}`,
-		ownerUserId,
-		isMainTeam: true,
-	});
-	const team = await TeamRepository.findByCustomUrl(createdTeam.customUrl);
-	if (!team) throw new Error("Team not found after creation");
-	return team;
-};
-
-const createOrganization = async (ownerId: number) => {
-	orgCounter++;
-	return TournamentOrganizationRepository.create({
-		name: `Org ${orgCounter}`,
-		ownerId,
-	});
+const createArtImage = async ({
+	authorId,
+	validatedAt = null,
+}: {
+	authorId: number;
+	validatedAt?: number | null;
+}) => {
+	imageCounter++;
+	return withUserId(authorId, () =>
+		ArtRepository.insert({
+			url: `art-${imageCounter}.png`,
+			validatedAt,
+			description: null,
+			linkedUsers: [],
+			tags: [],
+		}),
+	);
 };
 
 const createCalendarEvent = async (authorId: number, avatarImgId?: number) => {
@@ -124,25 +114,15 @@ describe("deleteImageById", () => {
 	});
 
 	test("deletes associated art when deleting image", async () => {
-		imageCounter++;
-		const art = await ArtRepository.insert({
-			authorId: 1,
-			url: `art-${imageCounter}.png`,
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
+		const art = await createArtImage({ authorId: 1, validatedAt: Date.now() });
 
 		const artsBefore = await ArtRepository.findArtsByUserId(1);
 		expect(artsBefore).toHaveLength(1);
 		expect(artsBefore[0].id).toBe(art.id);
 
-		const imgId = art.imgId;
+		await ImageRepository.deleteImageById(art.imgId);
 
-		await ImageRepository.deleteImageById(imgId);
-
-		const result = await ImageRepository.findById(imgId);
+		const result = await ImageRepository.findById(art.imgId);
 		expect(result).toBeUndefined();
 
 		const artsAfter = await ArtRepository.findArtsByUserId(1);
@@ -161,25 +141,8 @@ describe("countUnvalidatedArt", () => {
 	});
 
 	test("counts unvalidated art by author", async () => {
-		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: `art-${imageCounter}.png`,
-			validatedAt: null,
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
-
-		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: `art-${imageCounter}.png`,
-			validatedAt: null,
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
+		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: 1 });
 
 		const count = await ImageRepository.countUnvalidatedArt(1);
 
@@ -187,25 +150,8 @@ describe("countUnvalidatedArt", () => {
 	});
 
 	test("does not count validated art", async () => {
-		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: `art-${imageCounter}.png`,
-			validatedAt: null,
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
-
-		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: `art-${imageCounter}.png`,
-			validatedAt: Date.now(),
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
+		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: 1, validatedAt: Date.now() });
 
 		const count = await ImageRepository.countUnvalidatedArt(1);
 
@@ -222,7 +168,6 @@ describe("countUnvalidatedArt", () => {
 describe("countAllUnvalidated", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		teamCounter = 0;
 		await dbInsertUsers(3);
 	});
 
@@ -230,32 +175,8 @@ describe("countAllUnvalidated", () => {
 		dbReset();
 	});
 
-	test("counts unvalidated images used in teams", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
-
-		const count = await ImageRepository.countAllUnvalidated();
-
-		expect(count).toBe(1);
-	});
-
 	test("counts unvalidated images used in art", async () => {
-		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: `art-${imageCounter}.png`,
-			validatedAt: null,
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
+		await createArtImage({ authorId: 1 });
 
 		const count = await ImageRepository.countAllUnvalidated();
 
@@ -272,15 +193,7 @@ describe("countAllUnvalidated", () => {
 	});
 
 	test("does not count validated images", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: Date.now(),
-			teamId: team.id,
-			type: "team-pfp",
-		});
+		await createArtImage({ authorId: 1, validatedAt: Date.now() });
 
 		const count = await ImageRepository.countAllUnvalidated();
 
@@ -288,25 +201,10 @@ describe("countAllUnvalidated", () => {
 	});
 
 	test("counts multiple unvalidated images across different types", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
+		await createArtImage({ authorId: 1 });
 
-		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 1,
-			url: `art-${imageCounter}.png`,
-			validatedAt: null,
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
+		const img = await createImage({ submitterUserId: 1 });
+		await createCalendarEvent(1, img.id);
 
 		const count = await ImageRepository.countAllUnvalidated();
 
@@ -323,7 +221,6 @@ describe("countAllUnvalidated", () => {
 describe("countUnvalidatedBySubmitterUserId", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		teamCounter = 0;
 		await dbInsertUsers(3);
 	});
 
@@ -331,32 +228,25 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		dbReset();
 	});
 
-	test("counts unvalidated team images by submitter", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
+	test("counts unvalidated images connected to art by submitter", async () => {
+		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: 1 });
 
 		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
 
-		expect(count).toBe(1);
+		expect(count).toBe(2);
+	});
+
+	test("does not count orphan images not connected to anything", async () => {
+		await createImage({ submitterUserId: 1 });
+
+		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
+
+		expect(count).toBe(0);
 	});
 
 	test("does not count validated images", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: Date.now(),
-			teamId: team.id,
-			type: "team-pfp",
-		});
+		await createArtImage({ authorId: 1, validatedAt: Date.now() });
 
 		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
 
@@ -364,33 +254,15 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 	});
 
 	test("does not count images from other submitters", async () => {
-		const team1 = await createTeam(1);
-		const team2 = await createTeam(2);
-
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team1-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team1.id,
-			type: "team-pfp",
-		});
-
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 2,
-			url: `team2-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team2.id,
-			type: "team-pfp",
-		});
+		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: 2 });
 
 		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
 
 		expect(count).toBe(1);
 	});
 
-	test("returns 0 when user has no unvalidated team images", async () => {
+	test("returns 0 when user has no unvalidated images", async () => {
 		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
 
 		expect(count).toBe(0);
@@ -417,20 +289,12 @@ describe("validateImage", () => {
 	});
 
 	test("validated image is not included in unvalidated count", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		const img = await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
+		const art = await createArtImage({ authorId: 1 });
 
 		const countBefore = await ImageRepository.countAllUnvalidated();
 		expect(countBefore).toBe(1);
 
-		await ImageRepository.validateImage(img.id);
+		await ImageRepository.validateImage(art.imgId);
 
 		const countAfter = await ImageRepository.countAllUnvalidated();
 		expect(countAfter).toBe(0);
@@ -440,8 +304,7 @@ describe("validateImage", () => {
 describe("unvalidatedImages", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		teamCounter = 0;
-		await dbInsertUsers(10);
+		await dbInsertUsers(3);
 	});
 
 	afterEach(() => {
@@ -449,16 +312,17 @@ describe("unvalidatedImages", () => {
 	});
 
 	test("fetches unvalidated images with submitter info", async () => {
-		const team = await createTeam(1);
 		imageCounter++;
-		const filename = `team-avatar-${imageCounter}.png`;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: filename,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
+		const filename = `art-${imageCounter}.png`;
+		await withUserId(1, () =>
+			ArtRepository.insert({
+				url: filename,
+				validatedAt: null,
+				description: null,
+				linkedUsers: [],
+				tags: [],
+			}),
+		);
 
 		const result = await ImageRepository.unvalidatedImages();
 
@@ -469,44 +333,19 @@ describe("unvalidatedImages", () => {
 	});
 
 	test("does not fetch validated images", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: Date.now(),
-			teamId: team.id,
-			type: "team-pfp",
-		});
+		await createArtImage({ authorId: 1, validatedAt: Date.now() });
 
 		const result = await ImageRepository.unvalidatedImages();
 
 		expect(result).toHaveLength(0);
 	});
 
-	test("fetches images from teams, art, and calendar events", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
+	test("fetches images from art and calendar events", async () => {
+		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: 2 });
 
-		imageCounter++;
-		await ArtRepository.insert({
-			authorId: 2,
-			url: `art-${imageCounter}.png`,
-			validatedAt: null,
-			description: null,
-			linkedUsers: [],
-			tags: [],
-		});
-
-		const img2 = await createImage({ submitterUserId: 3 });
-		await createCalendarEvent(3, img2.id);
+		const img = await createImage({ submitterUserId: 3 });
+		await createCalendarEvent(3, img.id);
 
 		const result = await ImageRepository.unvalidatedImages();
 
@@ -515,16 +354,7 @@ describe("unvalidatedImages", () => {
 
 	test("respects the max unvalidated images to show at once for approval limit constant", async () => {
 		for (let i = 0; i < 10; i++) {
-			const teamOwnerId = i + 1;
-			const team = await createTeam(teamOwnerId);
-
-			await ImageRepository.addNewImage({
-				submitterUserId: teamOwnerId,
-				url: `team-avatar-${i}.png`,
-				validatedAt: null,
-				teamId: team.id,
-				type: "team-pfp",
-			});
+			await createArtImage({ authorId: 1 });
 		}
 
 		const result = await ImageRepository.unvalidatedImages();
@@ -536,116 +366,5 @@ describe("unvalidatedImages", () => {
 		const result = await ImageRepository.unvalidatedImages();
 
 		expect(result).toHaveLength(0);
-	});
-});
-
-describe("addNewImage", () => {
-	beforeEach(async () => {
-		imageCounter = 0;
-		teamCounter = 0;
-		orgCounter = 0;
-		await dbInsertUsers(3);
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	test("creates image for team avatar", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		const filename = `team-avatar-${imageCounter}.png`;
-
-		const img = await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: filename,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
-
-		expect(img.url).toBe(filename);
-		expect(img.submitterUserId).toBe(1);
-		expect(img.validatedAt).toBeNull();
-
-		const result = await ImageRepository.findById(img.id);
-		expect(result).toBeDefined();
-	});
-
-	test("creates image for team banner", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-		const filename = `team-banner-${imageCounter}.png`;
-
-		const img = await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: filename,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-banner",
-		});
-
-		expect(img.url).toBe(filename);
-		expect(img.submitterUserId).toBe(1);
-		expect(img.validatedAt).toBeNull();
-
-		const result = await ImageRepository.findById(img.id);
-		expect(result).toBeDefined();
-	});
-
-	test("creates image for organization avatar", async () => {
-		const org = await createOrganization(1);
-		imageCounter++;
-		const filename = `org-avatar-${imageCounter}.png`;
-
-		const img = await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: filename,
-			validatedAt: null,
-			organizationId: org.id,
-			type: "org-pfp",
-		});
-
-		expect(img.url).toBe(filename);
-		expect(img.submitterUserId).toBe(1);
-		expect(img.validatedAt).toBeNull();
-
-		const result = await ImageRepository.findById(img.id);
-		expect(result).toBeDefined();
-	});
-
-	test("creates validated image when validatedAt is provided", async () => {
-		const team = await createTeam(1);
-		const validatedAt = Date.now();
-		imageCounter++;
-
-		const img = await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt,
-			teamId: team.id,
-			type: "team-pfp",
-		});
-
-		expect(img.validatedAt).toBe(validatedAt);
-
-		const count = await ImageRepository.countAllUnvalidated();
-		expect(count).toBe(0);
-	});
-
-	test("creates unvalidated image when validatedAt is null", async () => {
-		const team = await createTeam(1);
-		imageCounter++;
-
-		await ImageRepository.addNewImage({
-			submitterUserId: 1,
-			url: `team-avatar-${imageCounter}.png`,
-			validatedAt: null,
-			teamId: team.id,
-			type: "team-pfp",
-		});
-
-		const count = await ImageRepository.countAllUnvalidated();
-		expect(count).toBe(1);
 	});
 });

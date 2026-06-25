@@ -1,22 +1,41 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+	mainWeaponIds,
+	specialWeaponIds,
+	subWeaponIds,
+} from "~/modules/in-game-lists/weapon-ids";
 import { logger } from "~/utils/logger";
-import weapons from "./dicts/WeaponInfoMain.json";
+import {
+	loadWeaponInfoMain,
+	loadWeaponInfoSpecial,
+	loadWeaponInfoSub,
+	MUSH_DIR,
+	PARAMETER_DIR,
+} from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PARAMETER_DIR = path.join(__dirname, "dicts", "parameter");
+const weapons = loadWeaponInfoMain();
+const subWeapons = loadWeaponInfoSub();
+const specialWeapons = loadWeaponInfoSpecial();
+
 const OUTPUT_DIR = path.join(
 	__dirname,
 	"..",
 	"app",
 	"features",
-	"weapons",
+	"params",
 	"data",
 );
-const OUTPUT_FILE = path.join(OUTPUT_DIR, "weapon-params.json");
+const OUTPUT_FILE = path.join(OUTPUT_DIR, "all-version-weapon-params.json");
+const SUB_OUTPUT_FILE = path.join(OUTPUT_DIR, "all-version-sub-params.json");
+const SPECIAL_OUTPUT_FILE = path.join(
+	OUTPUT_DIR,
+	"all-version-special-params.json",
+);
 
 const WEAPON_TYPES_TO_IGNORE = [
 	"Mission",
@@ -66,6 +85,31 @@ function buildWeaponFileNameToIdMap(): Map<string, number> {
 		if (!seenFileNames.has(fileName)) {
 			seenFileNames.add(fileName);
 			map.set(fileName, weapon.Id);
+		}
+	}
+
+	return map;
+}
+
+// Sub and special weapons share the per-version `weapon` GameParameterTable dump with main
+// weapons, so only the canonical "Versus" entry of each id is kept (Hero/Mission/etc. variants
+// of the same weapon are ignored).
+function buildSubOrSpecialFileNameToIdMap(
+	entries: Array<{ Id: number; __RowId: string; Type: string }>,
+	allowedIds: ReadonlySet<number>,
+): Map<string, number> {
+	const map = new Map<string, number>();
+	const seenFileNames = new Set<string>();
+
+	for (const entry of entries) {
+		if (entry.Type !== "Versus") continue;
+		if (!allowedIds.has(entry.Id)) continue;
+
+		const fileName = weaponRowIdToFileName(entry.__RowId);
+
+		if (!seenFileNames.has(fileName)) {
+			seenFileNames.add(fileName);
+			map.set(fileName, entry.Id);
 		}
 	}
 
@@ -196,6 +240,133 @@ function mergeWithHistory(
 	return result;
 }
 
+// SpecialPoint lives in WeaponInfoMain (kit data), which is not part of the per-version weapon
+// GameParameterTable dump, so it is read per version from the local mush dir.
+function collectSpecialPointsByVersion(
+	sortedVersions: string[],
+): Map<number, Map<string, number>> {
+	const result = new Map<number, Map<string, number>>();
+	const mainWeaponIdSet = new Set<number>(mainWeaponIds);
+
+	for (const version of sortedVersions) {
+		const filePath = path.join(MUSH_DIR, version, "WeaponInfoMain.json");
+		if (!fs.existsSync(filePath)) continue;
+
+		let entries: MainWeapon[];
+		try {
+			entries = JSON.parse(fs.readFileSync(filePath, "utf8"));
+		} catch {
+			logger.warn(`Failed to parse ${filePath}`);
+			continue;
+		}
+
+		for (const weapon of entries) {
+			if (mainWeaponShouldBeSkipped(weapon)) continue;
+			if (!mainWeaponIdSet.has(weapon.Id)) continue;
+			if (typeof weapon.SpecialPoint !== "number") continue;
+
+			if (!result.has(weapon.Id)) {
+				result.set(weapon.Id, new Map());
+			}
+			result.get(weapon.Id)!.set(version, weapon.SpecialPoint);
+		}
+	}
+
+	return result;
+}
+
+function buildSpecialPointsHistory(
+	specialPointsByVersion: Map<number, Map<string, number>>,
+	sortedVersions: string[],
+): Record<
+	string,
+	{ current: number; history: Array<{ version: string; value: number }> }
+> {
+	const result: Record<
+		string,
+		{ current: number; history: Array<{ version: string; value: number }> }
+	> = {};
+
+	for (const [weaponId, byVersion] of specialPointsByVersion) {
+		const presentVersions = sortedVersions.filter((v) => byVersion.has(v));
+		if (presentVersions.length === 0) continue;
+
+		const current = byVersion.get(presentVersions[presentVersions.length - 1])!;
+		const history: Array<{ version: string; value: number }> = [];
+
+		for (let i = 0; i < presentVersions.length - 1; i++) {
+			const value = byVersion.get(presentVersions[i])!;
+			const nextValue = byVersion.get(presentVersions[i + 1])!;
+			if (value !== nextValue) {
+				history.push({
+					version: parseVersionToDisplay(presentVersions[i]),
+					value,
+				});
+			}
+		}
+
+		result[String(weaponId)] = { current, history };
+	}
+
+	return result;
+}
+
+// Reads every per-version `weapon` GameParameterTable dump for the given files and folds the
+// historical values of each weapon into its latest params using versioned (`Key@version`) keys.
+function buildParamsWithHistory(
+	fileNameToId: Map<string, number>,
+	sortedVersions: string[],
+): Record<string, Record<string, unknown>> {
+	const allVersions = new Map<number, Map<string, Record<string, unknown>>>();
+
+	for (const version of sortedVersions) {
+		const weaponDir = path.join(PARAMETER_DIR, version, "weapon");
+		if (!fs.existsSync(weaponDir)) continue;
+
+		for (const file of fs.readdirSync(weaponDir)) {
+			if (!fileNameToId.has(file)) continue;
+
+			const weaponId = fileNameToId.get(file)!;
+			const filePath = path.join(weaponDir, file);
+
+			try {
+				const content = JSON.parse(fs.readFileSync(filePath, "utf8"));
+				const params = stripTypeFields(content.GameParameters) as Record<
+					string,
+					unknown
+				>;
+
+				if (!allVersions.has(weaponId)) {
+					allVersions.set(weaponId, new Map());
+				}
+				allVersions.get(weaponId)!.set(version, params);
+			} catch {
+				logger.warn(`Failed to parse ${filePath}`);
+			}
+		}
+	}
+
+	const output: Record<string, Record<string, unknown>> = {};
+	const latestVersion = sortedVersions[sortedVersions.length - 1];
+
+	for (const [weaponId, versionParams] of allVersions) {
+		const latestParams = versionParams.get(latestVersion);
+		if (!latestParams) continue;
+
+		const versionsWithWeapon = sortedVersions.filter((v) =>
+			versionParams.has(v),
+		);
+
+		output[String(weaponId)] = mergeWithHistory(
+			latestParams,
+			versionParams,
+			versionsWithWeapon,
+		);
+	}
+
+	return output;
+}
+
 async function main() {
 	logger.info("Starting weapon params sync...");
 
@@ -208,78 +379,62 @@ async function main() {
 		`Found ${sortedVersions.length} versions: ${sortedVersions.map(parseVersionToDisplay).join(", ")}`,
 	);
 
+	const latestVersion = sortedVersions[sortedVersions.length - 1];
+	const metadata = {
+		generatedAt: new Date().toISOString(),
+		latestVersion: parseVersionToDisplay(latestVersion),
+		versions: sortedVersions.map(parseVersionToDisplay),
+	};
+
 	const weaponFileNameToId = buildWeaponFileNameToIdMap();
 	logger.info(`Processing ${weaponFileNameToId.size} unique weapons`);
+	const outputWeapons = buildParamsWithHistory(
+		weaponFileNameToId,
+		sortedVersions,
+	);
 
-	const weaponParamsAllVersions = new Map<
-		number,
-		Map<string, Record<string, unknown>>
-	>();
+	const specialPoints = buildSpecialPointsHistory(
+		collectSpecialPointsByVersion(sortedVersions),
+		sortedVersions,
+	);
 
-	for (const version of sortedVersions) {
-		const weaponDir = path.join(PARAMETER_DIR, version, "weapon");
-		if (!fs.existsSync(weaponDir)) continue;
+	const outputSubWeapons = buildParamsWithHistory(
+		buildSubOrSpecialFileNameToIdMap(subWeapons, new Set(subWeaponIds)),
+		sortedVersions,
+	);
 
-		const files = fs.readdirSync(weaponDir);
-
-		for (const file of files) {
-			if (!weaponFileNameToId.has(file)) continue;
-
-			const weaponId = weaponFileNameToId.get(file)!;
-			const filePath = path.join(weaponDir, file);
-
-			try {
-				const content = JSON.parse(fs.readFileSync(filePath, "utf8"));
-				const params = stripTypeFields(content.GameParameters) as Record<
-					string,
-					unknown
-				>;
-
-				if (!weaponParamsAllVersions.has(weaponId)) {
-					weaponParamsAllVersions.set(weaponId, new Map());
-				}
-				weaponParamsAllVersions.get(weaponId)!.set(version, params);
-			} catch {
-				logger.warn(`Failed to parse ${filePath}`);
-			}
-		}
-	}
-
-	const outputWeapons: Record<string, Record<string, unknown>> = {};
-	const latestVersion = sortedVersions[sortedVersions.length - 1];
-
-	for (const [weaponId, versionParams] of weaponParamsAllVersions) {
-		const latestParams = versionParams.get(latestVersion);
-		if (!latestParams) continue;
-
-		const versionsWithWeapon = sortedVersions.filter((v) =>
-			versionParams.has(v),
-		);
-		const paramsWithHistory = mergeWithHistory(
-			latestParams,
-			versionParams,
-			versionsWithWeapon,
-		);
-
-		outputWeapons[String(weaponId)] = paramsWithHistory;
-	}
-
-	const output = {
-		metadata: {
-			generatedAt: new Date().toISOString(),
-			latestVersion: parseVersionToDisplay(latestVersion),
-			versions: sortedVersions.map(parseVersionToDisplay),
-		},
-		weapons: outputWeapons,
-	};
+	const outputSpecialWeapons = buildParamsWithHistory(
+		buildSubOrSpecialFileNameToIdMap(specialWeapons, new Set(specialWeaponIds)),
+		sortedVersions,
+	);
 
 	if (!fs.existsSync(OUTPUT_DIR)) {
 		fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 	}
 
-	fs.writeFileSync(OUTPUT_FILE, JSON.stringify(output, null, 2));
+	fs.writeFileSync(
+		OUTPUT_FILE,
+		JSON.stringify(
+			{ metadata, weapons: outputWeapons, specialPoints },
+			null,
+			2,
+		),
+	);
+	fs.writeFileSync(
+		SUB_OUTPUT_FILE,
+		JSON.stringify({ metadata, weapons: outputSubWeapons }, null, 2),
+	);
+	fs.writeFileSync(
+		SPECIAL_OUTPUT_FILE,
+		JSON.stringify({ metadata, weapons: outputSpecialWeapons }, null, 2),
+	);
+
 	logger.info(`Written to ${OUTPUT_FILE}`);
-	logger.info(`Total weapons: ${Object.keys(outputWeapons).length}`);
+	logger.info(`Total main weapons: ${Object.keys(outputWeapons).length}`);
+	logger.info(`Total sub weapons: ${Object.keys(outputSubWeapons).length}`);
+	logger.info(
+		`Total special weapons: ${Object.keys(outputSpecialWeapons).length}`,
+	);
 }
 
 main().catch((err) => logger.error(err));

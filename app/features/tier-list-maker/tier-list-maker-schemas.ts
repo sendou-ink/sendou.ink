@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { assertType } from "~/utils/types";
 import {
-	hexCode,
+	ability,
+	hexCodeWithoutAlpha,
 	modeShort,
 	specialWeaponId,
 	stageId,
@@ -16,6 +17,7 @@ export const tierListItemTypeSchema = z.enum([
 	"stage",
 	"mode",
 	"stage-mode",
+	"ability",
 ]);
 assertType<z.infer<typeof tierListItemTypeSchema>, TierListItem["type"]>();
 
@@ -50,6 +52,11 @@ const tierListItemSchema = z.union([
 		nth: z.number().optional(),
 		type: z.literal("stage-mode"),
 	}),
+	z.object({
+		id: ability,
+		nth: z.number().optional(),
+		type: z.literal("ability"),
+	}),
 ]);
 
 export type TierListItem = z.infer<typeof tierListItemSchema>;
@@ -57,7 +64,7 @@ export type TierListItem = z.infer<typeof tierListItemSchema>;
 const tierSchema = z.object({
 	id: z.string(),
 	name: z.string(),
-	color: hexCode,
+	color: hexCodeWithoutAlpha,
 });
 
 export type TierListMakerTier = z.infer<typeof tierSchema>;

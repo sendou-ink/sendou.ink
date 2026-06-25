@@ -1,6 +1,7 @@
 import type { Transaction } from "kysely";
 import { db, sql } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
@@ -346,8 +347,13 @@ export function unbanUser({
 	});
 }
 
-export function addModNote(args: TablesInsertable["ModNote"]) {
-	return db.insertInto("ModNote").values(args).execute();
+export function addModNote(
+	args: Omit<TablesInsertable["ModNote"], "authorId">,
+) {
+	return db
+		.insertInto("ModNote")
+		.values({ ...args, authorId: actorId() })
+		.execute();
 }
 
 export function findModeNoteById(id: number) {

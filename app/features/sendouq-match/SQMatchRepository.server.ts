@@ -4,6 +4,7 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, ParsedMemento } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
@@ -11,7 +12,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	matchProfileWeapons,
 	tournamentLogoWithDefault,
@@ -137,7 +138,7 @@ function groupWithTeamAndMembers(
 								),
 						)
 						.select((arrayEb) => [
-							...COMMON_USER_FIELDS,
+							...commonUserSelect(arrayEb),
 							"GroupMember.role",
 							"GroupMember.note",
 							"User.inGameName",
@@ -228,7 +229,7 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 			eb
 				.selectFrom("GroupMember")
 				.innerJoin("User", "GroupMember.userId", "User.id")
-				.select([...COMMON_USER_FIELDS])
+				.select((eb) => commonUserSelect(eb))
 				.whereRef(
 					"GroupMember.groupId",
 					"=",
@@ -578,15 +579,18 @@ export type CancelMatchResult =
 
 export async function cancelMatch({
 	matchId,
-	reportedByUserId,
 	isAdminReport,
 }: {
 	matchId: number;
-	reportedByUserId: number;
 	isAdminReport?: boolean;
 }): Promise<CancelMatchResult> {
+	const reportedByUserId = actorId();
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
+
+	if (match.isLocked) {
+		return { status: "CANT_CANCEL", shouldRefreshCaches: false };
+	}
 
 	if (isAdminReport) {
 		await db.transaction().execute(async (trx) => {
@@ -1070,6 +1074,7 @@ async function finalizeMatch({
 			.set({
 				confirmedAt: dateToDatabaseTimestamp(new Date()),
 				confirmedByUserId,
+				cancelRequestedByUserId: null,
 			})
 			.where("id", "=", match.id)
 			.execute();

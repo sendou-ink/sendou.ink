@@ -11,7 +11,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfFalsy(
+		await TeamRepository.findByCustomUrl(customUrl, {
+			includeUnvalidatedImages: true,
+		}),
+	);
 
 	if (!isTeamManager({ team, user }) && !user.roles.includes("ADMIN")) {
 		throw redirect(teamPage(customUrl));

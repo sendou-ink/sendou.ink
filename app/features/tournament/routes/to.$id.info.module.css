@@ -1,0 +1,33 @@
+.description {
+	white-space: pre-wrap;
+
+	& > :is(h1, h2, h3, h4, h5, h6) {
+		margin-block-end: var(--s-4);
+	}
+
+	& > :is(h2, h3, h4, h5, h6) {
+		margin-block-start: var(--s-6);
+	}
+
+	& > :first-child {
+		margin-block-start: 0;
+	}
+
+	& > h1 {
+		font-size: var(--font-xl);
+	}
+
+	& > :is(h2, h3, h4, h5, h6) {
+		font-size: var(--font-lg);
+	}
+
+	& > :is(h3, h4, h5, h6) {
+		font-size: var(--font-md);
+	}
+}
+
+.modes {
+	display: inline-flex;
+	gap: var(--s-1);
+	flex-wrap: wrap;
+}

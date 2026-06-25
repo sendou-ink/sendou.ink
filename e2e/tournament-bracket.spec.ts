@@ -1,3 +1,4 @@
+import type { Locator, Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import { updateMatchProfileSchema } from "~/features/settings/match-profile-schemas";
@@ -5,6 +6,7 @@ import {
 	NOTIFICATIONS_URL,
 	SETTINGS_PAGE,
 	tournamentAdminPage,
+	tournamentAdminRegistrationEditPage,
 	tournamentBracketsPage,
 	tournamentMatchPage,
 	tournamentPage,
@@ -12,12 +14,13 @@ import {
 	userResultsPage,
 } from "~/utils/urls";
 import {
+	clickNavTab,
 	expect,
 	impersonate,
 	isNotVisible,
+	modalClickConfirmButton,
 	navigate,
 	seed,
-	selectUser,
 	startBracket,
 	submit,
 	test,
@@ -200,17 +203,11 @@ test.describe("Tournament bracket", () => {
 
 		await navigate({
 			page,
-			url: tournamentPage(tournamentId),
+			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByTestId("admin-tab").click();
-
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-
-		for (let id = 103; id < 117; id++) {
-			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
-			await submit(page);
-		}
+		// check out teams 103-116 (rows are sorted by seed)
+		await checkOutTeamRows(page, 2, 15);
 
 		await navigate({
 			page,
@@ -267,17 +264,11 @@ test.describe("Tournament bracket", () => {
 
 		await navigate({
 			page,
-			url: tournamentPage(tournamentId),
+			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByTestId("admin-tab").click();
-
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-
-		for (let id = 202; id < 210; id++) {
-			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
-			await submit(page);
-		}
+		// check out teams 202-209 (rows are sorted by seed)
+		await checkOutTeamRows(page, 1, 8);
 
 		await navigate({
 			page,
@@ -312,12 +303,14 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team", { exact: true }).selectOption("216");
-		await page
-			.getByLabel("Bracket", { exact: true })
-			.selectOption("Underground bracket");
-		await submit(page);
+		// check team 216 in to the underground bracket — match on the stable team
+		// id rather than the seeded (faker-generated) team name or the row index,
+		// neither of which is stable after the start
+		await adminTeamRowAction(
+			page,
+			page.locator('[data-testid="team-row"][data-team-id="216"]'),
+			"Check in (Underground bracket)",
+		);
 
 		await navigate({
 			page,
@@ -369,11 +362,8 @@ test.describe("Tournament bracket", () => {
 			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-		for (const teamId of ["303", "304"]) {
-			await page.getByLabel("Team", { exact: true }).selectOption(teamId);
-			await submit(page);
-		}
+		// check out teams 303 & 304 (rows are sorted by seed)
+		await checkOutTeamRows(page, 2, 3);
 
 		await page.getByTestId("edit-event-info-button").click();
 		for (let i = 0; i < 3; i++) {
@@ -382,7 +372,10 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("placements-input").last().fill("1,2");
 		await submit(page);
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
@@ -441,7 +434,10 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page);
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
@@ -464,14 +460,16 @@ test.describe("Tournament bracket", () => {
 		await navigateToMatch(page, 7);
 		await expect(page.getByTestId("back-to-bracket-button")).toBeVisible();
 
-		await page.getByTestId("admin-tab").click();
-		await page.getByLabel("Action").selectOption("ADD_MEMBER");
-		await page.getByLabel("Team", { exact: true }).selectOption("303"); // a team in the Mako bracket
-		await selectUser({
-			labelName: "User",
-			userName: "Sendou",
+		// add Sendou to team 303 (a team in the Mako bracket)
+		await navigate({
 			page,
+			url: tournamentAdminRegistrationEditPage(tournamentId, 303),
 		});
+		await page.getByRole("button", { name: "Add", exact: true }).click();
+		await page.getByLabel("Player").last().click();
+		await page.getByTestId("user-search-input").fill("Sendou");
+		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
+		await page.keyboard.press("Enter");
 		await submit(page);
 
 		await navigate({
@@ -513,7 +511,10 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page);
 
-		await page.getByText("Seeds").click();
+		await navigate({
+			page,
+			url: `${tournamentAdminPage(tournamentId)}/seeds`,
+		});
 		await page.getByTestId("set-starting-brackets").click();
 
 		for (let i = 0; i < 16; i++) {
@@ -536,7 +537,10 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page, "set-starting-brackets-submit-button");
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		for (const bracketName of [
 			"Groups stage",
 			"Great White",
@@ -602,7 +606,10 @@ test.describe("Tournament bracket", () => {
 
 		await submit(page);
 
-		await page.getByTestId("brackets-tab").click();
+		await navigate({
+			page,
+			url: tournamentBracketsPage({ tournamentId }),
+		});
 		await page.getByTestId("finalize-bracket-button").click();
 		await page.getByTestId("increase-map-count-button").first().click();
 		await submit(page, "confirm-finalize-bracket-button");
@@ -725,19 +732,15 @@ test.describe("Tournament bracket", () => {
 
 		await navigate({
 			page,
-			url: tournamentPage(tournamentId),
+			url: tournamentAdminPage(tournamentId),
 		});
 
-		await page.getByTestId("admin-tab").click();
+		// check out teams 103-114 (rows are sorted by seed)
+		await checkOutTeamRows(page, 2, 13);
 
-		await page.getByLabel("Action").selectOption("CHECK_OUT");
-
-		for (let id = 103; id < 115; id++) {
-			await page.getByLabel("Team", { exact: true }).selectOption(String(id));
-			await submit(page);
-		}
-
-		await page.getByLabel("Twitch accounts").fill("test");
+		await page.getByRole("tab", { name: "Stream" }).click();
+		// an empty array field already renders one placeholder input
+		await page.getByPlaceholder("dappleproductions").fill("test");
 		await submit(page, "save-cast-twitch-accounts-button");
 
 		await navigate({
@@ -772,6 +775,9 @@ test.describe("Tournament bracket", () => {
 		await goToTab(page, "admin");
 		// Lock state is signalled by the toggle being "Unlock" instead of "Lock"
 		await expect(page.getByRole("button", { name: "Unlock" })).toBeVisible();
+		// A locked match still needs to show the pool & room pass so players can join
+		await expect(page.getByText("Pool", { exact: true })).toBeVisible();
+		await expect(page.getByTestId("room-pass")).toBeVisible();
 		await submit(page, "cast-info-submit-button");
 		await expect(page.getByTestId("stage-banner")).toBeVisible();
 
@@ -800,15 +806,20 @@ test.describe("Tournament bracket", () => {
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 
-		await page.getByTestId("admin-tab").click();
+		await clickNavTab(page, "admin-tab");
+		await page.getByRole("tab", { name: "Brackets" }).click();
 		await page
 			.getByLabel('Type bracket name ("Main bracket") to confirm')
 			.fill("Main bracket");
 		await submit(page, "reset-bracket-button");
 
-		await page.getByLabel("Action").selectOption("CHECK_IN");
-		await page.getByLabel("Team", { exact: true }).selectOption("1");
-		await submit(page);
+		await page.getByRole("tab", { name: "Teams" }).click();
+		// check team 1 (seed 1) back in
+		await adminTeamRowAction(
+			page,
+			page.getByTestId("team-row").first(),
+			/^Check in/,
+		);
 
 		await page.getByTestId("brackets-tab").click();
 		await page.getByTestId("finalize-bracket-button").click();
@@ -906,11 +917,12 @@ test.describe("Tournament bracket", () => {
 		await submit(page, "start-round-button");
 		await expect(page.locator(`[data-match-id="9"]`)).toBeVisible();
 
-		await page.getByTestId("admin-tab").click();
+		await clickNavTab(page, "admin-tab");
 
-		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
-		await page.getByLabel("Team", { exact: true }).selectOption("401");
-		await submit(page);
+		// drop out team 401 (seed 1)
+		await page.getByTestId("team-row").nth(0).getByLabel("Actions").click();
+		await page.getByRole("menuitem", { name: "Drop out" }).click();
+		await modalClickConfirmButton(page);
 
 		await navigate({
 			page,
@@ -1132,9 +1144,10 @@ test.describe("Tournament bracket", () => {
 			page,
 			url: tournamentAdminPage(tournamentId),
 		});
-		await page.getByLabel("Action").selectOption("DROP_TEAM_OUT");
-		await page.getByLabel("Team", { exact: true }).selectOption("102");
-		await submit(page);
+		// drop out team 102 (seed 2)
+		await page.getByTestId("team-row").nth(1).getByLabel("Actions").click();
+		await page.getByRole("menuitem", { name: "Drop out" }).click();
+		await modalClickConfirmButton(page);
 
 		// 3) Verify the ongoing match ended early (no longer ongoing → "Final")
 		await navigate({
@@ -1291,3 +1304,26 @@ test.describe("Tournament bracket", () => {
 		await expect(page.getByText(/Ban a map/)).toBeVisible();
 	});
 });
+
+/** Opens the admin team list row's actions menu and clicks the given menu item, waiting for the resulting POST. */
+async function adminTeamRowAction(
+	page: Page,
+	row: Locator,
+	menuItemName: string | RegExp,
+) {
+	await row.getByLabel("Actions").click();
+	await waitForPOSTResponse(page, () =>
+		page.getByRole("menuitem", { name: menuItemName }).click(),
+	);
+}
+
+/** Checks out the admin team list rows in the given inclusive index range (rows are sorted by seed). */
+async function checkOutTeamRows(page: Page, fromIdx: number, toIdx: number) {
+	for (let i = fromIdx; i <= toIdx; i++) {
+		await adminTeamRowAction(
+			page,
+			page.getByTestId("team-row").nth(i),
+			/^Check out/,
+		);
+	}
+}

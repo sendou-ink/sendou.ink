@@ -1,0 +1,59 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.inputRow {
+	position: relative;
+	display: flex;
+	align-items: center;
+
+	& input {
+		padding-right: calc(var(--field-size) + var(--s-1));
+	}
+
+	& button {
+		position: absolute;
+		right: var(--s-1-5);
+	}
+}
+
+.picker {
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+	gap: var(--s-1);
+	padding-top: var(--s-0-5);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(2.25rem, 1fr));
+	gap: var(--s-1);
+	max-height: 300px;
+	overflow-y: auto;
+	padding: var(--s-2);
+}
+
+.glyph {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1;
+	border: var(--border-style);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}

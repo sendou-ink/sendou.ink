@@ -50,6 +50,8 @@ interface RosterTabTeam {
 	subbedOut?: Array<number>;
 	tier?: { name: TierName; isPlus: boolean };
 	seed?: number | null;
+	/** Whether this team is expected to host the room (tournament only). */
+	isHost?: boolean;
 }
 
 interface MatchRosterTabProps {
@@ -162,10 +164,10 @@ function TeamRoster({
 										member={member}
 										className={styles.memberLink}
 									/>
-									<div className={styles.memberTier}>
-										<MemberTierPopover tier={member.tier} />
-									</div>
-									<div className={styles.memberMetaArea}>
+									<div className={styles.memberSecondRow}>
+										<div className={styles.memberTier}>
+											<MemberTierPopover tier={member.tier} />
+										</div>
 										<MemberMeta
 											plusTier={member.plusTier}
 											weaponPool={member.weaponPool}
@@ -261,6 +263,8 @@ function TeamHeader({
 	label: string;
 	dotClassName: string;
 }) {
+	const { t } = useTranslation(["common"]);
+
 	const tierText = team.tier
 		? `${team.tier.name.toLowerCase()}${team.tier.isPlus ? "+" : ""}`
 		: undefined;
@@ -280,6 +284,12 @@ function TeamHeader({
 				<>
 					<span>•</span>
 					<span>{seedText}</span>
+				</>
+			) : null}
+			{team.isHost ? (
+				<>
+					<span>•</span>
+					<span>{t("common:host")}</span>
 				</>
 			) : null}
 		</div>
@@ -347,7 +357,11 @@ function MemberTierPopover({
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton variant="minimal" className={styles.tierBadge}>
+				<SendouButton
+					variant="minimal"
+					className={styles.tierBadge}
+					aria-label="Tier"
+				>
 					{tier === "CALCULATING" ? (
 						<Image
 							path={tierImageUrl("CALCULATING")}

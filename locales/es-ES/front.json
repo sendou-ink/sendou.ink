@@ -10,6 +10,7 @@
 	"showcase.card.unranked": "Sin rango",
 	"showcase.card.winner": "Ganador",
 	"showcase.results": "Resultados recientes",
+	"showcase.viewAll": "Ver todos los torneos",
 	"leaderboards.topPlayers": "Mejores jugadores",
 	"leaderboards.topTeams": "Mejores equipos",
 	"leaderboards.viewFull": "Ver clasificación completa",
@@ -40,5 +41,15 @@
 	"rotations.nextLabel": "",
 	"rotations.credit": "",
 	"rotations.filter.all": "",
-	"discover.header": ""
+	"discover.header": "",
+	"install.button": "",
+	"install.header": "",
+	"install.banner.title": "",
+	"install.banner.description": "",
+	"install.ios.step1": "",
+	"install.ios.step2": "",
+	"install.ios.step3": "",
+	"install.safari.step1": "",
+	"install.safari.step2": "",
+	"install.safari.step3": ""
 }

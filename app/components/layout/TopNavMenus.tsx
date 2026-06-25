@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { navIconUrl } from "~/utils/urls";
 import { SendouPopover } from "../elements/Popover";
@@ -17,7 +18,7 @@ const NAV_CATEGORIES = [
 			{ name: "lfg", url: "lfg" },
 			{ name: "calendar", url: "calendar" },
 			{ name: "leaderboards", url: "leaderboards" },
-			...(import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === "true"
+			...(Config.showLutiNavItem
 				? [{ name: "luti" as const, url: "luti" as const }]
 				: []),
 		],
@@ -71,6 +72,7 @@ function CategoryMenu({
 }) {
 	const { t } = useTranslation(["common", "front"]);
 	const [isOpen, setIsOpen] = useState(false);
+	const [isPreviewSuppressed, setIsPreviewSuppressed] = useState(false);
 	const user = useUser();
 	const isStaff = user?.roles.includes("STAFF") ?? false;
 	const showStaffOnly = isStaff || process.env.NODE_ENV === "development";
@@ -80,35 +82,64 @@ function CategoryMenu({
 	);
 
 	return (
-		<SendouPopover
-			trigger={
-				<Button className={styles.menuButton}>
-					{t(`front:nav.${category.name}`)}
-				</Button>
-			}
-			popoverClassName={styles.menuPopover}
-			placement="bottom start"
-			isOpen={isOpen}
-			onOpenChange={setIsOpen}
-		>
-			<div className={styles.menuContent}>
-				{visibleItems.map((item) => (
-					<Link
-						key={item.url}
-						to={`/${item.url}`}
-						className={styles.menuItem}
-						onClick={() => setIsOpen(false)}
+		<div className={styles.menuWrapper}>
+			<SendouPopover
+				trigger={
+					<Button
+						className={styles.menuButton}
+						onHoverStart={() => setIsPreviewSuppressed(false)}
 					>
-						<Image
-							path={navIconUrl("icon" in item ? item.icon : item.name)}
-							alt=""
-							size={20}
-							className={styles.menuItemIcon}
-						/>
-						{t(`common:pages.${item.name}`)}
-					</Link>
-				))}
-			</div>
-		</SendouPopover>
+						{t(`front:nav.${category.name}`)}
+					</Button>
+				}
+				popoverClassName={styles.menuPopover}
+				placement="bottom start"
+				isOpen={isOpen}
+				onOpenChange={setIsOpen}
+			>
+				<div className={styles.menuContent}>
+					{visibleItems.map((item) => (
+						<Link
+							key={item.url}
+							to={`/${item.url}`}
+							className={styles.menuItem}
+							onClick={() => {
+								setIsOpen(false);
+								setIsPreviewSuppressed(true);
+							}}
+						>
+							<Image
+								path={navIconUrl("icon" in item ? item.icon : item.name)}
+								alt=""
+								size={20}
+								className={styles.menuItemIcon}
+							/>
+							{t(`common:pages.${item.name}`)}
+						</Link>
+					))}
+				</div>
+			</SendouPopover>
+			{!isOpen && !isPreviewSuppressed ? (
+				<div className={styles.preview}>
+					{visibleItems.map((item) => (
+						<Link
+							key={item.url}
+							to={`/${item.url}`}
+							className={styles.previewIcon}
+							title={t(`common:pages.${item.name}`)}
+							aria-label={t(`common:pages.${item.name}`)}
+							tabIndex={-1}
+							onClick={() => setIsPreviewSuppressed(true)}
+						>
+							<Image
+								path={navIconUrl("icon" in item ? item.icon : item.name)}
+								alt=""
+								size={20}
+							/>
+						</Link>
+					))}
+				</div>
+			) : null}
+		</div>
 	);
 }

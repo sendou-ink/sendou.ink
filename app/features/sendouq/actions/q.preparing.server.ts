@@ -5,10 +5,12 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
 import { preparingSchema } from "../q-schemas.server";
 import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
@@ -39,6 +41,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
+				ChatSystemMessage.send({
+					room: SENDOUQ_LOOKING_ROOM,
+					revalidateOnly: true,
+				});
+
 				return redirect(SENDOUQ_LOOKING_PAGE);
 			}
 			case "ADD_FRIEND": {
@@ -53,6 +60,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					),
 					"Not a friend",
 				);
+				errorToastIfFalsy(
+					(await UserRepository.findLeanById(data.id))?.friendCode,
+					"User you are trying to add has no friend code set",
+				);
 
 				const { chatCodeToRevalidate } = await SQGroupRepository.addMember(
 					ownGroup.id,
@@ -66,7 +77,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: chatCodeToRevalidate,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -79,6 +89,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						members: updatedGroup.members,
 					});
 				}
+
+				ChatSystemMessage.send({
+					room: sqGroupWebsocketRoom(ownGroup.id),
+					revalidateOnly: true,
+				});
 
 				notify({
 					userIds: [data.id],

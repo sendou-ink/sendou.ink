@@ -53,7 +53,9 @@ export function diff<T extends string | number>(arr1: T[], arr2: T[]): T[] {
 	const result: T[] = [];
 
 	for (const [element, count] of diff) {
-		result.push(...new Array(count).fill(element));
+		for (let i = 0; i < count; i++) {
+			result.push(element);
+		}
 	}
 
 	return result;

@@ -133,13 +133,34 @@ export function weekNumberToDate({
 }) {
 	const result = new Date(Date.UTC(year, 0, 4));
 
-	result.setDate(
-		result.getDate() - (result.getDay() || 7) + 1 + 7 * (week - 1),
+	result.setUTCDate(
+		result.getUTCDate() - (result.getUTCDay() || 7) + 1 + 7 * (week - 1),
 	);
 	if (position === "end") {
-		result.setDate(result.getDate() + 6);
+		result.setUTCDate(result.getUTCDate() + 6);
 	}
 	return result;
+}
+
+/**
+ * Returns the UTC date range covering an ISO week: the Monday that starts the
+ * week and the Monday that starts the following week (a 7-day span). Uses UTC
+ * date arithmetic so the span is exactly 7×24h regardless of the server's
+ * timezone or any DST transition that falls inside the week.
+ */
+export function weekNumberToDateRange({
+	week,
+	year,
+}: {
+	week: number;
+	year: number;
+}) {
+	const startTime = weekNumberToDate({ week, year });
+
+	const endTime = new Date(startTime);
+	endTime.setUTCDate(endTime.getUTCDate() + 7);
+
+	return { startTime, endTime };
 }
 
 /**
@@ -176,25 +197,18 @@ function prefixZero(number: number) {
 	return number < 10 ? `0${number}` : number;
 }
 
-/**
- * Retrieves a new Date object that is offset by several hours.
- *
- * NOTE: it is important that we work with & return a copy of the date here,
- *  otherwise we will just be mutating the original date passed into this function.
- */
-export function getDateWithHoursOffset(date: Date, hoursOffset: number) {
-	const copiedDate = new Date(date.getTime());
-	copiedDate.setHours(date.getHours() + hoursOffset);
-	return copiedDate;
-}
-
 export function getDateAtNextFullHour(date: Date) {
 	const copiedDate = new Date(date.getTime());
-	if (date.getMinutes() > 0) {
+	if (
+		date.getMinutes() > 0 ||
+		date.getSeconds() > 0 ||
+		date.getMilliseconds() > 0
+	) {
 		copiedDate.setHours(date.getHours() + 1);
 		copiedDate.setMinutes(0);
 	}
 	copiedDate.setSeconds(0);
+	copiedDate.setMilliseconds(0);
 	return copiedDate;
 }
 

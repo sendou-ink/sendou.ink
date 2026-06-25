@@ -30,9 +30,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			: [];
 
 	return {
-		user: {
-			...user,
-		},
+		user,
 		customTheme: user.customTheme,
 		type: widgetsEnabled ? ("new" as const) : ("old" as const),
 		mutualFriends,

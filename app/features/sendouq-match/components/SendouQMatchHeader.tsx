@@ -16,7 +16,7 @@ export function SendouQMatchHeader({ data }: { data: SendouQMatchLoaderData }) {
 
 	return (
 		<MatchPageHeader
-			subtitle={`SendouQ Season ${season}`}
+			subtitle={t("q:match.subtitle", { nth: season })}
 			topRight={
 				<LinkButton
 					to={SENDOUQ_RULES_PAGE}

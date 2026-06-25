@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { sql } from "~/db/sql";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";

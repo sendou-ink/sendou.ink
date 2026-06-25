@@ -6,6 +6,7 @@ import {
 	datetimeRequired,
 	dayMonthYearRequired,
 	dualSelectOptional,
+	image,
 	numberFieldOptional,
 	radioGroup,
 	select,
@@ -146,7 +147,16 @@ export const formFieldsShowcaseSchema = z.object({
 		label: "labels.vodWeapon",
 	}),
 	user: userSearchOptional({
-		label: "labels.banUserPlayer",
+		label: "labels.player",
+	}),
+
+	// Image fields
+	logo: image({
+		label: "labels.logo",
+	}),
+	banner: image({
+		label: "labels.banner",
+		dimensions: "thick-banner",
 	}),
 
 	// Custom field

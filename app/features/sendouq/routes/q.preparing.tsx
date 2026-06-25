@@ -3,7 +3,7 @@ import type { MetaFunction } from "react-router";
 import { useFetcher, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
+import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
@@ -12,7 +12,7 @@ import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
 import { loader } from "../loaders/q.preparing.server";
-import { FULL_GROUP_SIZE } from "../q-constants";
+import { FULL_GROUP_SIZE, sqGroupWebsocketRoom } from "../q-constants";
 
 export { action, loader };
 
@@ -38,7 +38,8 @@ export default function QPreparingPage() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
 	const joinQFetcher = useFetcher();
-	useAutoRefresh(data.lastUpdated);
+
+	useWebsocketRevalidation(sqGroupWebsocketRoom(data.group.id));
 
 	return (
 		<Main className="stack lg items-center">

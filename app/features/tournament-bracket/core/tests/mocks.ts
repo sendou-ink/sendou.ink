@@ -1399,6 +1399,7 @@ export const PADDLING_POOL_257 = () =>
 			tier: null,
 			tentativeTier: null,
 			parentTournamentId: null,
+			parentTournamentName: null,
 			tags: null,
 			eventId: 1352,
 			bracketProgressionOverrides: [],
@@ -1456,9 +1457,7 @@ export const PADDLING_POOL_257 = () =>
 			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_ALL",
 			name: "Paddling Pool 257",
-			description:
-				"Hosted by Dapple Productions.\n\nThe longest tournament series in Splatoon!\nEvery week a tournament!\n\n✓ DE or Groups into SE\n✓ All Modes (Picnic system)\n✓ Badge prize\n✓ A well-ran tournament experience\n\nCome join!",
-			rules: null,
+			hasRules: false,
 			logoUrl: "/test.avif",
 			startTime: 1709748000,
 			author: {
@@ -1468,6 +1467,7 @@ export const PADDLING_POOL_257 = () =>
 				discordId: "163771047068303360",
 				discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 				customUrl: "alicetheto",
+				customAvatarUrl: null,
 			},
 			staff: [
 				{
@@ -1478,6 +1478,7 @@ export const PADDLING_POOL_257 = () =>
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
 					role: "ORGANIZER",
+					customAvatarUrl: null,
 				},
 				{
 					id: 1662,
@@ -1487,6 +1488,7 @@ export const PADDLING_POOL_257 = () =>
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
 					role: "ORGANIZER",
+					customAvatarUrl: null,
 				},
 				{
 					id: 6648,
@@ -1496,6 +1498,7 @@ export const PADDLING_POOL_257 = () =>
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
 					role: "ORGANIZER",
+					customAvatarUrl: null,
 				},
 				{
 					id: 12717,
@@ -1505,6 +1508,7 @@ export const PADDLING_POOL_257 = () =>
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
 					role: "STREAMER",
+					customAvatarUrl: null,
 				},
 			],
 			isFinalized: 1,
@@ -1529,6 +1533,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709743534,
 					members: [
@@ -1547,6 +1552,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5728,
@@ -1563,6 +1569,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 185,
@@ -1579,6 +1586,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9925,
@@ -1595,6 +1603,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -1656,6 +1665,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709737918,
 					members: [
@@ -1674,6 +1684,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1300,
@@ -1690,6 +1701,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27958,
@@ -1706,6 +1718,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7265,
@@ -1722,6 +1735,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4603,
@@ -1738,6 +1752,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -1799,6 +1814,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709743523,
 					members: [
@@ -1817,6 +1833,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 343,
@@ -1833,6 +1850,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 193,
@@ -1849,6 +1867,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10615,
@@ -1865,6 +1884,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -1926,6 +1946,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709743262,
 					members: [
@@ -1944,6 +1965,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28485,
@@ -1960,6 +1982,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8734,
@@ -1976,6 +1999,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7094,
@@ -1992,6 +2016,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -2053,6 +2078,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709741396,
 					members: [
@@ -2071,6 +2097,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2622,
@@ -2087,6 +2114,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8139,
@@ -2103,6 +2131,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11199,
@@ -2119,6 +2148,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13227,
@@ -2135,6 +2165,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -2196,6 +2227,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709711811,
 					members: [
@@ -2214,6 +2246,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8258,
@@ -2230,6 +2263,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13562,
@@ -2246,6 +2280,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 25721,
@@ -2262,6 +2297,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1447,
@@ -2278,6 +2314,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -2339,6 +2376,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709738831,
 					members: [
@@ -2357,6 +2395,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 14489,
@@ -2373,6 +2412,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20755,
@@ -2389,6 +2429,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11056,
@@ -2405,6 +2446,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 175,
@@ -2421,6 +2463,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -2482,6 +2525,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709737837,
 					members: [
@@ -2500,6 +2544,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 21979,
@@ -2516,6 +2561,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11627,
@@ -2532,6 +2578,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12976,
@@ -2548,6 +2595,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -2609,6 +2657,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709741719,
 					members: [
@@ -2627,6 +2676,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6508,
@@ -2643,6 +2693,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 32579,
@@ -2659,6 +2710,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 24585,
@@ -2675,6 +2727,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27515,
@@ -2691,6 +2744,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11151,
@@ -2707,6 +2761,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -2768,6 +2823,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709730354,
 					members: [
@@ -2786,6 +2842,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 379,
@@ -2802,6 +2859,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8480,
@@ -2818,6 +2876,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5229,
@@ -2834,6 +2893,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7336,
@@ -2850,6 +2910,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -2911,6 +2972,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709745630,
 					members: [
@@ -2929,6 +2991,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9403,
@@ -2945,6 +3008,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 18039,
@@ -2961,6 +3025,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 38062,
@@ -2977,6 +3042,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 25210,
@@ -2993,6 +3059,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -3052,6 +3119,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709592381,
 					members: [
@@ -3070,6 +3138,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29321,
@@ -3086,6 +3155,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 3930,
@@ -3102,6 +3172,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1740,
@@ -3118,6 +3189,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5368,
@@ -3134,6 +3206,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29433,
@@ -3150,6 +3223,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -3211,6 +3285,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709723749,
 					members: [
@@ -3229,6 +3304,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 35118,
@@ -3245,6 +3321,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30730,
@@ -3261,6 +3338,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30758,
@@ -3277,6 +3355,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 76,
@@ -3293,6 +3372,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -3354,6 +3434,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709668399,
 					members: [
@@ -3372,6 +3453,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28851,
@@ -3388,6 +3470,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13832,
@@ -3404,6 +3487,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23307,
@@ -3420,6 +3504,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20143,
@@ -3436,6 +3521,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27108,
@@ -3452,6 +3538,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -3513,6 +3600,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709735267,
 					members: [
@@ -3531,6 +3619,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23016,
@@ -3547,6 +3636,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6053,
@@ -3563,6 +3653,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23858,
@@ -3579,6 +3670,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -3645,6 +3737,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709745849,
 					members: [
@@ -3663,6 +3756,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29904,
@@ -3679,6 +3773,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20698,
@@ -3695,6 +3790,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23820,
@@ -3711,6 +3807,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -3777,6 +3874,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709742258,
 					members: [
@@ -3795,6 +3893,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30220,
@@ -3811,6 +3910,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7440,
@@ -3827,6 +3927,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26665,
@@ -3843,6 +3944,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27686,
@@ -3859,6 +3961,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -3918,6 +4021,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709738744,
 					members: [
@@ -3936,6 +4040,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7270,
@@ -3952,6 +4057,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 18703,
@@ -3968,6 +4074,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27578,
@@ -3984,6 +4091,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8715,
@@ -4000,6 +4108,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4061,6 +4170,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709746054,
 					members: [
@@ -4079,6 +4189,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 22434,
@@ -4095,6 +4206,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10992,
@@ -4111,6 +4223,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2302,
@@ -4127,6 +4240,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4191,6 +4305,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709744894,
 					members: [
@@ -4209,6 +4324,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 35807,
@@ -4225,6 +4341,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23505,
@@ -4241,6 +4358,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 271,
@@ -4257,6 +4375,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4318,6 +4437,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709728278,
 					members: [
@@ -4336,6 +4456,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 22452,
@@ -4352,6 +4473,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11625,
@@ -4368,6 +4490,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11716,
@@ -4384,6 +4507,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4445,6 +4569,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709715006,
 					members: [
@@ -4463,6 +4588,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10883,
@@ -4479,6 +4605,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27664,
@@ -4495,6 +4622,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2137,
@@ -4511,6 +4639,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4572,6 +4701,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709660578,
 					members: [
@@ -4590,6 +4720,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12214,
@@ -4606,6 +4737,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29723,
@@ -4622,6 +4754,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28602,
@@ -4638,6 +4771,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4704,6 +4838,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709721869,
 					members: [
@@ -4722,6 +4857,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9367,
@@ -4738,6 +4874,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28191,
@@ -4754,6 +4891,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 34238,
@@ -4770,6 +4908,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2781,
@@ -4786,6 +4925,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4850,6 +4990,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709743633,
 					members: [
@@ -4868,6 +5009,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6935,
@@ -4884,6 +5026,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8243,
@@ -4900,6 +5043,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 19002,
@@ -4916,6 +5060,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -4982,6 +5127,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709738747,
 					members: [
@@ -5000,6 +5146,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28822,
@@ -5016,6 +5163,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 24441,
@@ -5032,6 +5180,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28629,
@@ -5048,6 +5197,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9211,
@@ -5064,6 +5214,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -5130,6 +5281,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709626047,
 					members: [
@@ -5148,6 +5300,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 368,
@@ -5164,6 +5317,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1624,
@@ -5180,6 +5334,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 25088,
@@ -5196,6 +5351,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 15526,
@@ -5212,6 +5368,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -5273,6 +5430,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709727951,
 					members: [
@@ -5291,6 +5449,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 18143,
@@ -5307,6 +5466,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30942,
@@ -5323,6 +5483,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 21583,
@@ -5339,6 +5500,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -5400,6 +5562,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709741482,
 					members: [
@@ -5418,6 +5581,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9307,
@@ -5434,6 +5598,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5735,
@@ -5450,6 +5615,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10010,
@@ -5466,6 +5632,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 17798,
@@ -5482,6 +5649,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11635,
@@ -5498,6 +5666,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -5557,6 +5726,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709744451,
 					members: [
@@ -5575,6 +5745,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28271,
@@ -5591,6 +5762,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 34715,
@@ -5607,6 +5779,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12188,
@@ -5623,6 +5796,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -5689,6 +5863,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709726536,
 					members: [
@@ -5707,6 +5882,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26454,
@@ -5723,6 +5899,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5740,
@@ -5755,6 +5932,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -5803,6 +5981,7 @@ export const PADDLING_POOL_257 = () =>
 							mode: "CB",
 						},
 					],
+					customAvatarUrl: null,
 				},
 				{
 					id: 819,
@@ -5816,6 +5995,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709558706,
 					members: [
@@ -5834,6 +6014,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28194,
@@ -5850,6 +6031,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11226,
@@ -5866,6 +6048,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10370,
@@ -5882,6 +6065,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -5948,6 +6132,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709744323,
 					members: [
@@ -5966,6 +6151,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 35382,
@@ -5982,6 +6168,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23037,
@@ -5998,6 +6185,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27768,
@@ -6014,6 +6202,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 38120,
@@ -6030,6 +6219,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -6096,6 +6286,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709677397,
 					members: [
@@ -6114,6 +6305,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28178,
@@ -6130,6 +6322,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23353,
@@ -6146,6 +6339,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 31658,
@@ -6162,6 +6356,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -6223,6 +6418,7 @@ export const PADDLING_POOL_257 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1709618711,
 					members: [
@@ -6241,6 +6437,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28338,
@@ -6257,6 +6454,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30928,
@@ -6273,6 +6471,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 37658,
@@ -6289,6 +6488,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26758,
@@ -6305,6 +6505,7 @@ export const PADDLING_POOL_257 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -8035,6 +8236,7 @@ export const PADDLING_POOL_255 = () =>
 			tier: null,
 			tentativeTier: null,
 			parentTournamentId: null,
+			parentTournamentName: null,
 			tags: null,
 			eventId: 1286,
 			bracketProgressionOverrides: [],
@@ -8085,8 +8287,7 @@ export const PADDLING_POOL_255 = () =>
 			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_ALL",
 			name: "Paddling Pool 255",
-			description: null,
-			rules: null,
+			hasRules: false,
 			logoUrl: "/test.avif",
 			startTime: 1708538400,
 			author: {
@@ -8096,6 +8297,7 @@ export const PADDLING_POOL_255 = () =>
 				discordId: "163771047068303360",
 				discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 				customUrl: "alicetheto",
+				customAvatarUrl: null,
 			},
 			staff: [
 				{
@@ -8106,6 +8308,7 @@ export const PADDLING_POOL_255 = () =>
 					discordAvatar: "8b8c1d85cc525ea366f3ce2a6a594c05",
 					customUrl: "pinky",
 					role: "ORGANIZER",
+					customAvatarUrl: null,
 				},
 				{
 					id: 1662,
@@ -8115,6 +8318,7 @@ export const PADDLING_POOL_255 = () =>
 					discordAvatar: "25bf68c5aa4e622ceb5a241c34841c6d",
 					customUrl: null,
 					role: "ORGANIZER",
+					customAvatarUrl: null,
 				},
 				{
 					id: 6648,
@@ -8124,6 +8328,7 @@ export const PADDLING_POOL_255 = () =>
 					discordAvatar: "a_03ec4bbcb2a4ab000237c9f3e9e71508",
 					customUrl: "sdomi19",
 					role: "ORGANIZER",
+					customAvatarUrl: null,
 				},
 				{
 					id: 12717,
@@ -8133,6 +8338,7 @@ export const PADDLING_POOL_255 = () =>
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
 					role: "STREAMER",
+					customAvatarUrl: null,
 				},
 			],
 			isFinalized: 1,
@@ -8155,6 +8361,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708476597,
 					members: [
@@ -8173,6 +8380,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 62,
@@ -8189,6 +8397,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4275,
@@ -8205,6 +8414,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11593,
@@ -8221,6 +8431,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -8282,6 +8493,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708535137,
 					members: [
@@ -8300,6 +8512,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 31358,
@@ -8316,6 +8529,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 32579,
@@ -8332,6 +8546,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27515,
@@ -8348,6 +8563,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -8409,6 +8625,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708533764,
 					members: [
@@ -8427,6 +8644,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27958,
@@ -8443,6 +8661,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4061,
@@ -8459,6 +8678,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 38062,
@@ -8475,6 +8695,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2414,
@@ -8491,6 +8712,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -8550,6 +8772,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708537512,
 					members: [
@@ -8568,6 +8791,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4234,
@@ -8584,6 +8808,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 331,
@@ -8600,6 +8825,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 205,
@@ -8616,6 +8842,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 319,
@@ -8632,6 +8859,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -8693,6 +8921,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708533309,
 					members: [
@@ -8711,6 +8940,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 3400,
@@ -8727,6 +8957,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7094,
@@ -8743,6 +8974,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 3161,
@@ -8759,6 +8991,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -8820,6 +9053,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708430641,
 					members: [
@@ -8838,6 +9072,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13562,
@@ -8854,6 +9089,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8852,
@@ -8870,6 +9106,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23746,
@@ -8886,6 +9123,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28485,
@@ -8902,6 +9140,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -8963,6 +9202,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708536306,
 					members: [
@@ -8981,6 +9221,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10578,
@@ -8997,6 +9238,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11151,
@@ -9013,6 +9255,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 222,
@@ -9029,6 +9272,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -9088,6 +9332,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708526368,
 					members: [
@@ -9106,6 +9351,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10615,
@@ -9122,6 +9368,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 31690,
@@ -9138,6 +9385,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6710,
@@ -9154,6 +9402,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -9215,6 +9464,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708506060,
 					members: [
@@ -9233,6 +9483,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 14489,
@@ -9249,6 +9500,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28725,
@@ -9265,6 +9517,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 16,
@@ -9281,6 +9534,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20755,
@@ -9297,6 +9551,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4606,
@@ -9313,6 +9568,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -9374,6 +9630,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708526814,
 					members: [
@@ -9392,6 +9649,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12976,
@@ -9408,6 +9666,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 21979,
@@ -9424,6 +9683,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11627,
@@ -9440,6 +9700,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -9499,6 +9760,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708466421,
 					members: [
@@ -9517,6 +9779,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 38080,
@@ -9533,6 +9796,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 35807,
@@ -9549,6 +9813,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23128,
@@ -9565,6 +9830,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26392,
@@ -9581,6 +9847,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -9642,6 +9909,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708377426,
 					members: [
@@ -9660,6 +9928,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23307,
@@ -9676,6 +9945,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28851,
@@ -9692,6 +9962,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27108,
@@ -9708,6 +9979,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23820,
@@ -9724,6 +9996,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -9783,6 +10056,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708448289,
 					members: [
@@ -9801,6 +10075,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1740,
@@ -9817,6 +10092,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 3930,
@@ -9833,6 +10109,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29321,
@@ -9849,6 +10126,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29433,
@@ -9865,6 +10143,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5368,
@@ -9881,6 +10160,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -9942,6 +10222,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708532602,
 					members: [
@@ -9960,6 +10241,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 15346,
@@ -9976,6 +10258,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13296,
@@ -9992,6 +10275,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13832,
@@ -10008,6 +10292,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -10069,6 +10354,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708535205,
 					members: [
@@ -10087,6 +10373,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30449,
@@ -10103,6 +10390,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28441,
@@ -10119,6 +10407,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12619,
@@ -10135,6 +10424,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 31131,
@@ -10151,6 +10441,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -10212,6 +10503,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708515945,
 					members: [
@@ -10230,6 +10522,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 418,
@@ -10246,6 +10539,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23858,
@@ -10262,6 +10556,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28662,
@@ -10278,6 +10573,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -10339,6 +10635,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708453334,
 					members: [
@@ -10357,6 +10654,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5072,
@@ -10373,6 +10671,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13997,
@@ -10389,6 +10688,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7735,
@@ -10405,6 +10705,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -10464,6 +10765,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708522730,
 					members: [
@@ -10482,6 +10784,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7270,
@@ -10498,6 +10801,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 18703,
@@ -10514,6 +10818,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27578,
@@ -10530,6 +10835,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8715,
@@ -10546,6 +10852,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -10607,6 +10914,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708375443,
 					members: [
@@ -10625,6 +10933,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27686,
@@ -10641,6 +10950,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10841,
@@ -10657,6 +10967,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23784,
@@ -10673,6 +10984,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9342,
@@ -10689,6 +11001,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -10750,6 +11063,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708532665,
 					members: [
@@ -10768,6 +11082,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29904,
@@ -10784,6 +11099,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11506,
@@ -10800,6 +11116,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 32328,
@@ -10816,6 +11133,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -10882,6 +11200,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708364254,
 					members: [
@@ -10900,6 +11219,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2137,
@@ -10916,6 +11236,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10883,
@@ -10932,6 +11253,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27664,
@@ -10948,6 +11270,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 342,
@@ -10964,6 +11287,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -11030,6 +11354,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708464101,
 					members: [
@@ -11048,6 +11373,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2535,
@@ -11064,6 +11390,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2670,
@@ -11080,6 +11407,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6202,
@@ -11096,6 +11424,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9547,
@@ -11112,6 +11441,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -11176,6 +11506,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708520249,
 					members: [
@@ -11194,6 +11525,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5844,
@@ -11210,6 +11542,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9654,
@@ -11226,6 +11559,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 461,
@@ -11242,6 +11576,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10819,
@@ -11258,6 +11593,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -11319,6 +11655,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708535804,
 					members: [
@@ -11337,6 +11674,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9874,
@@ -11353,6 +11691,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10992,
@@ -11369,6 +11708,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 22434,
@@ -11385,6 +11725,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -11446,6 +11787,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708535891,
 					members: [
@@ -11464,6 +11806,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11625,
@@ -11480,6 +11823,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 22452,
@@ -11496,6 +11840,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12642,
@@ -11512,6 +11857,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11716,
@@ -11528,6 +11874,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -11589,6 +11936,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708521749,
 					members: [
@@ -11607,6 +11955,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7440,
@@ -11623,6 +11972,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26665,
@@ -11639,6 +11989,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9719,
@@ -11655,6 +12006,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30220,
@@ -11671,6 +12023,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -11732,6 +12085,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708536584,
 					members: [
@@ -11750,6 +12104,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28745,
@@ -11766,6 +12121,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 32688,
@@ -11782,6 +12138,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26792,
@@ -11798,6 +12155,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -11859,6 +12217,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708537772,
 					members: [
@@ -11877,6 +12236,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5528,
@@ -11893,6 +12253,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12358,
@@ -11925,6 +12286,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 306,
@@ -11941,6 +12303,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8243,
@@ -11957,6 +12320,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -12010,6 +12374,7 @@ export const PADDLING_POOL_255 = () =>
 							mode: "TC",
 						},
 					],
+					customAvatarUrl: null,
 				},
 				{
 					id: 675,
@@ -12023,6 +12388,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708379916,
 					members: [
@@ -12041,6 +12407,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13736,
@@ -12057,6 +12424,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27960,
@@ -12073,6 +12441,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 25814,
@@ -12089,6 +12458,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 31311,
@@ -12105,6 +12475,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -12166,6 +12537,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708519753,
 					members: [
@@ -12184,6 +12556,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 24441,
@@ -12200,6 +12573,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28629,
@@ -12216,6 +12590,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28822,
@@ -12232,6 +12607,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9211,
@@ -12248,6 +12624,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -12314,6 +12691,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708534312,
 					members: [
@@ -12332,6 +12710,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30234,
@@ -12348,6 +12727,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 35118,
@@ -12364,6 +12744,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 32156,
@@ -12380,6 +12761,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30751,
@@ -12396,6 +12778,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -12460,6 +12843,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708531929,
 					members: [
@@ -12478,6 +12862,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 16634,
@@ -12494,6 +12879,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2392,
@@ -12510,6 +12896,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26726,
@@ -12526,6 +12913,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -12587,6 +12975,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708477155,
 					members: [
@@ -12605,6 +12994,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 14973,
@@ -12621,6 +13011,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 17137,
@@ -12637,6 +13028,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8391,
@@ -12653,6 +13045,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -12719,6 +13112,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708531564,
 					members: [
@@ -12737,6 +13131,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 17940,
@@ -12753,6 +13148,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30972,
@@ -12769,6 +13165,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 38902,
@@ -12785,6 +13182,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 29099,
@@ -12801,6 +13199,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26683,
@@ -12817,6 +13216,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 30767,
@@ -12833,6 +13233,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -12899,6 +13300,7 @@ export const PADDLING_POOL_255 = () =>
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1708503356,
 					members: [
@@ -12917,6 +13319,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 15135,
@@ -12933,6 +13336,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 31597,
@@ -12949,6 +13353,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 34933,
@@ -12965,6 +13370,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 14927,
@@ -12981,6 +13387,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7461,
@@ -12997,6 +13404,7 @@ export const PADDLING_POOL_255 = () =>
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15007,6 +15415,7 @@ export const IN_THE_ZONE_32 = ({
 		ctx: {
 			id: 11,
 			parentTournamentId: null,
+			parentTournamentName: null,
 			organization: null,
 			tier: null,
 			tentativeTier: null,
@@ -15039,8 +15448,7 @@ export const IN_THE_ZONE_32 = ({
 			seedingSnapshot: null,
 			mapPickingStyle: "AUTO_SZ",
 			name: "In The Zone 32",
-			description: "Part of sendou.ink ranked season 2",
-			rules: null,
+			hasRules: false,
 			logoUrl: "/test.avif",
 			startTime: 1707588000,
 			author: {
@@ -15050,6 +15458,7 @@ export const IN_THE_ZONE_32 = ({
 				discordId: "79237403620945920",
 				discordAvatar: "6fc41a44b069a0d2152ac06d1e496c6c",
 				customUrl: "sendou",
+				customAvatarUrl: null,
 			},
 			staff: [
 				{
@@ -15060,6 +15469,7 @@ export const IN_THE_ZONE_32 = ({
 					discordAvatar: "b33d8f230218d6a92705a63fdf803851",
 					customUrl: "alicetheto",
 					role: "STREAMER",
+					customAvatarUrl: null,
 				},
 				{
 					id: 12717,
@@ -15069,6 +15479,7 @@ export const IN_THE_ZONE_32 = ({
 					discordAvatar: "a_b55f70ada809a600e73c5088b910e659",
 					customUrl: "brufnie",
 					role: "STREAMER",
+					customAvatarUrl: null,
 				},
 			],
 			isFinalized: 1,
@@ -15093,6 +15504,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707443313,
 					members: [
@@ -15111,6 +15523,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 118,
@@ -15127,6 +15540,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 133,
@@ -15143,6 +15557,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 257,
@@ -15159,6 +15574,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15207,6 +15623,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707366405,
 					members: [
@@ -15225,6 +15642,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 164,
@@ -15241,6 +15659,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 138,
@@ -15257,6 +15676,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 305,
@@ -15273,6 +15693,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15321,6 +15742,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1706912643,
 					members: [
@@ -15339,6 +15761,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 123,
@@ -15355,6 +15778,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1043,
@@ -15371,6 +15795,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 702,
@@ -15387,6 +15812,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15435,6 +15861,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707359335,
 					members: [
@@ -15453,6 +15880,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 439,
@@ -15469,6 +15897,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 81,
@@ -15485,6 +15914,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23381,
@@ -15501,6 +15931,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26278,
@@ -15517,6 +15948,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 104,
@@ -15533,6 +15965,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15581,6 +16014,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707171426,
 					members: [
@@ -15599,6 +16033,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10293,
@@ -15615,6 +16050,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5728,
@@ -15631,6 +16067,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 35,
@@ -15647,6 +16084,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 99,
@@ -15663,6 +16101,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15711,6 +16150,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707342696,
 					members: [
@@ -15729,6 +16169,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 48,
@@ -15745,6 +16186,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 172,
@@ -15761,6 +16203,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 126,
@@ -15777,6 +16220,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 160,
@@ -15793,6 +16237,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15841,6 +16286,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707513942,
 					members: [
@@ -15859,6 +16305,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 957,
@@ -15875,6 +16322,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 25423,
@@ -15891,6 +16339,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20583,
@@ -15907,6 +16356,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1105,
@@ -15923,6 +16373,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 14,
@@ -15939,6 +16390,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -15987,6 +16439,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707526815,
 					members: [
@@ -16005,6 +16458,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 451,
@@ -16021,6 +16475,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 141,
@@ -16037,6 +16492,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 260,
@@ -16053,6 +16509,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 202,
@@ -16069,6 +16526,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 276,
@@ -16085,6 +16543,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16133,6 +16592,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707583385,
 					members: [
@@ -16151,6 +16611,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 124,
@@ -16167,6 +16628,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 255,
@@ -16183,6 +16645,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 252,
@@ -16199,6 +16662,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16247,6 +16711,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707486395,
 					members: [
@@ -16265,6 +16730,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 151,
@@ -16281,6 +16747,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 15418,
@@ -16297,6 +16764,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 411,
@@ -16313,6 +16781,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16361,6 +16830,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707513290,
 					members: [
@@ -16379,6 +16849,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 3298,
@@ -16395,6 +16866,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 5337,
@@ -16411,6 +16883,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6557,
@@ -16427,6 +16900,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16475,6 +16949,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707531084,
 					members: [
@@ -16493,6 +16968,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 57,
@@ -16509,6 +16985,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1658,
@@ -16525,6 +17002,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 2801,
@@ -16541,6 +17019,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16589,6 +17068,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707568466,
 					members: [
@@ -16607,6 +17087,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 291,
@@ -16623,6 +17104,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 372,
@@ -16639,6 +17121,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 392,
@@ -16655,6 +17138,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 7326,
@@ -16671,6 +17155,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16719,6 +17204,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707481625,
 					members: [
@@ -16737,6 +17223,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 286,
@@ -16753,6 +17240,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 206,
@@ -16769,6 +17257,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11010,
@@ -16785,6 +17274,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16833,6 +17323,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707530166,
 					members: [
@@ -16851,6 +17342,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 94,
@@ -16867,6 +17359,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 232,
@@ -16883,6 +17376,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 233,
@@ -16899,6 +17393,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -16947,6 +17442,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707181792,
 					members: [
@@ -16965,6 +17461,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12976,
@@ -16981,6 +17478,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 15916,
@@ -16997,6 +17495,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27958,
@@ -17013,6 +17512,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4603,
@@ -17029,6 +17529,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -17077,6 +17578,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707550321,
 					members: [
@@ -17095,6 +17597,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10200,
@@ -17111,6 +17614,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 229,
@@ -17127,6 +17631,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 246,
@@ -17143,6 +17648,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 14564,
@@ -17159,6 +17665,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -17212,6 +17719,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707575096,
 					members: [
@@ -17230,6 +17738,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8734,
@@ -17246,6 +17755,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 16980,
@@ -17262,6 +17772,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 272,
@@ -17278,6 +17789,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6710,
@@ -17294,6 +17806,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -17342,6 +17855,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707569490,
 					members: [
@@ -17360,6 +17874,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11593,
@@ -17376,6 +17891,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 50,
@@ -17392,6 +17908,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8,
@@ -17408,6 +17925,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 331,
@@ -17424,6 +17942,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 132,
@@ -17440,6 +17959,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -17488,6 +18008,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707537425,
 					members: [
@@ -17506,6 +18027,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 36,
@@ -17522,6 +18044,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 335,
@@ -17538,6 +18061,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 292,
@@ -17554,6 +18078,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -17602,6 +18127,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707564691,
 					members: [
@@ -17620,6 +18146,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4061,
@@ -17636,6 +18163,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10592,
@@ -17652,6 +18180,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10812,
@@ -17668,6 +18197,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 115,
@@ -17684,6 +18214,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 12395,
@@ -17700,6 +18231,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -17753,6 +18285,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707145818,
 					members: [
@@ -17771,6 +18304,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 71,
@@ -17787,6 +18321,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 204,
@@ -17803,6 +18338,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4762,
@@ -17819,6 +18355,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6048,
@@ -17835,6 +18372,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [],
@@ -17877,6 +18415,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707558330,
 					members: [
@@ -17895,6 +18434,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 14489,
@@ -17911,6 +18451,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 26392,
@@ -17927,6 +18468,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28725,
@@ -17943,6 +18485,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -17991,6 +18534,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707586842,
 					members: [
@@ -18009,6 +18553,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 15403,
@@ -18025,6 +18570,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9718,
@@ -18041,6 +18587,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 18039,
@@ -18057,6 +18604,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -18105,6 +18653,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707583597,
 					members: [
@@ -18123,6 +18672,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 3258,
@@ -18139,6 +18689,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 27108,
@@ -18155,6 +18706,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20143,
@@ -18171,6 +18723,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23820,
@@ -18187,6 +18740,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28851,
@@ -18203,6 +18757,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -18251,6 +18806,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707429804,
 					members: [
@@ -18269,6 +18825,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13296,
@@ -18285,6 +18842,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 15346,
@@ -18301,6 +18859,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 21099,
@@ -18317,6 +18876,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4099,
@@ -18333,6 +18893,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -18381,6 +18942,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707539973,
 					members: [
@@ -18399,6 +18961,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20859,
@@ -18415,6 +18978,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13614,
@@ -18431,6 +18995,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 22041,
@@ -18447,6 +19012,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20731,
@@ -18463,6 +19029,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -18516,6 +19083,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707507831,
 					members: [
@@ -18534,6 +19102,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 346,
@@ -18550,6 +19119,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1038,
@@ -18566,6 +19136,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 6255,
@@ -18582,6 +19153,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4097,
@@ -18598,6 +19170,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -18646,6 +19219,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707586297,
 					members: [
@@ -18664,6 +19238,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9674,
@@ -18680,6 +19255,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28482,
@@ -18696,6 +19272,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 10841,
@@ -18712,6 +19289,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 20154,
@@ -18728,6 +19306,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -18774,6 +19353,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707583885,
 					members: [
@@ -18792,6 +19372,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4307,
@@ -18808,6 +19389,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 21339,
@@ -18824,6 +19406,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1136,
@@ -18840,6 +19423,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1441,
@@ -18856,6 +19440,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 25117,
@@ -18872,6 +19457,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -18920,6 +19506,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707578076,
 					members: [
@@ -18938,6 +19525,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 168,
@@ -18954,6 +19542,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 1178,
@@ -18970,6 +19559,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9064,
@@ -18986,6 +19576,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 11148,
@@ -19002,6 +19593,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -19053,6 +19645,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707582953,
 					members: [
@@ -19071,6 +19664,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 23128,
@@ -19087,6 +19681,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 38080,
@@ -19103,6 +19698,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 35807,
@@ -19119,6 +19715,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -19167,6 +19764,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707575330,
 					members: [
@@ -19185,6 +19783,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 24705,
@@ -19201,6 +19800,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 9367,
@@ -19217,6 +19817,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 28191,
@@ -19233,6 +19834,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 13342,
@@ -19249,6 +19851,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [
@@ -19304,6 +19907,7 @@ export const IN_THE_ZONE_32 = ({
 					startingBracketIdx: null,
 					abDivision: null,
 					activeRosterUserIds: [],
+					avatarImgId: null,
 					pickupAvatarUrl: null,
 					createdAt: 1707527645,
 					members: [
@@ -19322,6 +19926,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "OWNER",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 8927,
@@ -19338,6 +19943,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 						{
 							userId: 4434,
@@ -19354,6 +19960,7 @@ export const IN_THE_ZONE_32 = ({
 							streamViewerCount: null,
 							streamThumbnailUrl: null,
 							role: "REGULAR",
+							customAvatarUrl: null,
 						},
 					],
 					checkIns: [],

@@ -25,48 +25,46 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				? clampThemeToGamut(data.newValue)
 				: null;
 
-			await UserRepository.updateCustomTheme(user.id, clampedTheme);
+			await UserRepository.updateOwnCustomTheme(clampedTheme);
 			break;
 		}
 		case "UPDATE_DISABLE_BUILD_ABILITY_SORTING": {
-			await UserRepository.updatePreferences(user.id, {
+			await UserRepository.updateOwnPreferences({
 				disableBuildAbilitySorting: data.newValue,
 			});
 			break;
 		}
 		case "DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED": {
-			await UserRepository.updatePreferences(user.id, {
+			await UserRepository.updateOwnPreferences({
 				disallowScrimPickupsFromUntrusted: data.newValue,
 			});
 			break;
 		}
 		case "UPDATE_SPOILER_FREE_MODE": {
-			await UserRepository.updatePreferences(user.id, {
+			await UserRepository.updateOwnPreferences({
 				spoilerFreeMode: data.newValue,
 			});
 			break;
 		}
 		case "UPDATE_CLOCK_FORMAT": {
-			await UserRepository.updatePreferences(user.id, {
+			await UserRepository.updateOwnPreferences({
 				clockFormat: data.newValue,
 			});
 			break;
 		}
 		case "UPDATE_WEAPON_REPORT_DEFAULT_OPEN": {
-			await UserRepository.updatePreferences(user.id, {
+			await UserRepository.updateOwnPreferences({
 				weaponReportDefaultOpen: data.newValue,
 			});
 			break;
 		}
 		case "UPDATE_MATCH_PROFILE": {
-			await MatchProfileRepository.updateMatchProfile({
-				userId: user.id,
+			await MatchProfileRepository.updateOwnMatchProfile({
 				mapModePreferences: data.mapModePreferences,
 				vc: data.vc,
 				languages: data.languages,
 				weaponPool: data.weaponPool,
 				noScreen: Number(data.noScreen),
-				noSplatnet: Number(data.noSplatnet),
 			});
 			break;
 		}

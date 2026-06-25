@@ -25,12 +25,13 @@ const defaultBracket = (): Progression.InputBracket => ({
 export function BracketProgressionSelector({
 	initialBrackets,
 	isInvitationalTournament,
-	setErrored,
+	onChange,
 	isTournamentInProgress,
 }: {
 	initialBrackets?: Progression.InputBracket[];
 	isInvitationalTournament: boolean;
-	setErrored: (errored: boolean) => void;
+	/** Emits the validated brackets while valid, or `null` while invalid/incomplete. */
+	onChange: (value: Progression.ParsedBracket[] | null) => void;
 	isTournamentInProgress: boolean;
 }) {
 	const [brackets, setBrackets] = React.useState<Progression.InputBracket[]>(
@@ -75,24 +76,21 @@ export function BracketProgressionSelector({
 	};
 
 	const validated = Progression.validatedBrackets(brackets);
+	// `validatedBrackets` returns a fresh array each render, so emit only when the
+	// serialized result actually changes — otherwise `onChange` would loop the form store.
+	const serialized = Progression.isBrackets(validated)
+		? JSON.stringify(validated)
+		: null;
+	const lastSerialized = React.useRef<string | null | undefined>(undefined);
 
 	React.useEffect(() => {
-		if (Progression.isError(validated)) {
-			setErrored(true);
-		} else {
-			setErrored(false);
-		}
-	}, [validated, setErrored]);
+		if (lastSerialized.current === serialized) return;
+		lastSerialized.current = serialized;
+		onChange(serialized ? JSON.parse(serialized) : null);
+	}, [serialized, onChange]);
 
 	return (
 		<div className="stack lg items-start">
-			{Progression.isBrackets(validated) ? (
-				<input
-					type="hidden"
-					name="bracketProgression"
-					value={JSON.stringify(validated)}
-				/>
-			) : null}
 			<div className="stack lg">
 				{brackets.map((bracket, i) => (
 					<TournamentFormatBracketSelector

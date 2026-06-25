@@ -6834,6 +6834,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		id: 815,
 		eventId: 2614,
 		parentTournamentId: null,
+		parentTournamentName: null,
 		tier: null,
 		tentativeTier: null,
 		discordUrl: "https://discord.gg/F7RaNUR",
@@ -6915,17 +6916,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		},
 		seedingSnapshot: null,
 		mapPickingStyle: "TO",
-		rules:
-			"# Important Notices\n\nEach team's captain must be in the Inking Performance Labs Discord. Before registering, join the discord here, and then get the Low Ink role using the Channels & Roles feature.\n\nRegistration for Low Ink closes 17 hours prior to the event starting which is 8 PM ET (day before) (5 PM PT (day before), 1 AM GMT/UTC (day of), 2 AM CET (day of)).\n\nBy registering for the tournament, you agree to and consent to follow all rules in Low Ink, and promise to read all announcements leading up to the event. In compliance with Nintendo tournament guidelines, you also consent that by registering for this tournament, Inkling Performance Labs may use videos, still images, etc. of me and my teammates' gameplay from Inkling Performance Labs events for monetization.\n\nNintendo is not a sponsor of or affiliated with this tournament.\nTerms for participating in and viewing Community Tournaments using Nintendo Games can be found at the following URL: https://en-americas-support.nintendo.com/app/answers/detail/a_id/63454\n\n# Full Rules\n\nLow Ink's full ruleset (which is too large to include here) can be found in our [rules document](https://docs.google.com/document/d/1sMUOeRe8isLuu4Koco_qRvwMa2oV1_1LQZ0Vt3_IBt4/pub). **By registering, you and your team agree to follow all rules in the rules document.**",
+		hasRules: true,
 		name: "Low Ink December 2024",
-		description:
-			"# Low Ink is a Splatoon 3 tournament for newer and lower-level competitive teams.\n\nWe give teams a chance to get into the Splatoon 3 tournament scene and gain valuable competitive experience.\n\n## What makes Low Ink good for newer players?\n• The tournament bans players with tourney results exceeding the skill cap.\n• An easy to follow format on day 1, which guarantees 18 games played with multiple teams.\n• Multiple brackets on Day 2 for the top cut of teams, with placements determined by day 1 performance.\n• Quality live stream and commentary with a focus on introducing competitive Splatoon to newcomers.\n\n## Who can play?\n\nIf this is your first time playing in a Splatoon tournament, you are allowed to play. Low Ink bans players based on results from community-driven tournaments. Solo queue results or in-game anarchy rank is not a factor. Results from other competitive events or participation in other tournaments are not required to play in Low Ink, they only set the skill cap. More information about eligibility is available on the rules page or in the Low Ink FAQ in our [discord server](https://iplabs.ink/discord).\n\n## How to signup and play\n\nSign up on sendou.ink (this page). The site will guide you through the sign-up process. Once signed up, have at least the captain of your team join our discord server to access important announcements alongside other Low Ink channels, get the Low Ink role through the Channels & Roles feature when you join!\n\nDuring the tournament, your matches will appear here on sendou.ink and you can chat with your opponent, and report scores here. Tournament announcements and helpdesk (for contacting staff) is done on our [discord server](https://iplabs.ink/discord).\n\n## Format\n\n### Day 1\n\nThe first day of Low Ink uses the Swiss format. All teams in the tournament will be guaranteed 6 rounds versus other teams. There is no elimination on day 1! You will always get 6 rounds, no matter what your results are. Swiss matches you to against teams with similar win/loss ratios, meaning opponents should get closer to your skill as the day progresses! When day 1 ends, teams progressing to the day 2 elimination brackets will be announced in the li-announcements channel on our [discord server](https://iplabs.ink/discord).\n\n### Day 2\n\nThe second day of Low Ink consists of individual brackets, for the top teams based on day 1 results. Typically, 1st-8th plays in Alpha bracket, 9th-16th in Beta bracket, and 17th-24th in Gamma bracket. Each of these brackets are straight double elimination. Double elimination means each progressing through the bracket and has to lose two matches to be eliminated. The first loss puts a team in 'losers bracket' and a second ends their tournament run.\n\nDay 2 also utilizes counter picking in the map list. Please read the rules for details on how counterpicking works.\n\n*Format is subject to change if > 128 teams register.*",
 		startTime: 1734199200,
 		organization: {
 			id: 3,
 			name: "Inkling Performance Labs",
 			slug: "inkling-performance-labs",
 			logoUrl: "fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp",
+			series: [],
 			members: [
 				{
 					userId: 405,
@@ -6936,6 +6935,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "260999523806085120",
 					discordAvatar: "4f15f20946fbd992ee9d694a539e6317",
 					customUrl: "elemental",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 622,
@@ -6946,6 +6946,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "201922904781357057",
 					discordAvatar: "7fa46b7dc27fa589d3d278ba4b60224f",
 					customUrl: "dotjpg",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 680,
@@ -6956,6 +6957,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "87494390724964352",
 					discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 					customUrl: "inkfarer",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 936,
@@ -6966,6 +6968,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "119620026767507456",
 					discordAvatar: "aa1ff5b8eefd5a26657c411138a160b8",
 					customUrl: null,
+					customAvatarUrl: null,
 				},
 				{
 					userId: 1402,
@@ -6976,6 +6979,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "216335108037148673",
 					discordAvatar: "458f1e233a3b590a62f6b867b95a6241",
 					customUrl: "grace",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 1755,
@@ -6986,6 +6990,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "200777324520538113",
 					discordAvatar: "a_d71ac2f474ce422ce711e8e74d657b2f",
 					customUrl: "brushstrokes",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 2908,
@@ -6996,6 +7001,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "112254088992792576",
 					discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 					customUrl: "kitsunekeira",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 3742,
@@ -7006,6 +7012,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "124007565758693376",
 					discordAvatar: "ca9e37c9b31dfa39f88b2a2da2d4af21",
 					customUrl: "thoma",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 3806,
@@ -7016,6 +7023,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "113026708071821312",
 					discordAvatar: "4b3f0da55a834acc0beb258edd9c7e34",
 					customUrl: null,
+					customAvatarUrl: null,
 				},
 				{
 					userId: 4941,
@@ -7026,6 +7034,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "236292964052107264",
 					discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 					customUrl: "hoeenhero",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 5036,
@@ -7036,6 +7045,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "248232091005747201",
 					discordAvatar: "40a21a204f8fae6ae2e7e8c5de70de83",
 					customUrl: "toasty",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 8098,
@@ -7046,6 +7056,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "442431978269310987",
 					discordAvatar: "e0fd0fed98a4d3c3bfd56332678d4e6c",
 					customUrl: "popgun",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 8750,
@@ -7056,6 +7067,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "273188925189914628",
 					discordAvatar: "c62afa020e24ead92cc043ffa809ffdc",
 					customUrl: "liberowolf",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 9222,
@@ -7066,6 +7078,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "298241282550267906",
 					discordAvatar: "f69bb5af745eca4e9b7f55504c641f78",
 					customUrl: "jardonian",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 9719,
@@ -7076,6 +7089,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "184478601171828737",
 					discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 					customUrl: "scepidilionz",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 18720,
@@ -7086,6 +7100,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					discordId: "103988435785650176",
 					discordAvatar: "df9936bea9dcbd250daf8e2ef2d7c04a",
 					customUrl: "tulip",
+					customAvatarUrl: null,
 				},
 			],
 		},
@@ -7097,6 +7112,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			discordId: "236292964052107264",
 			discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 			customUrl: "hoeenhero",
+			customAvatarUrl: null,
 		},
 		staff: [
 			{
@@ -7107,6 +7123,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "4f15f20946fbd992ee9d694a539e6317",
 				customUrl: "elemental",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 446,
@@ -7116,6 +7133,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "89e15b6e74f5abdef1183c9416434dde",
 				customUrl: "pock",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 680,
@@ -7125,6 +7143,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 				customUrl: "inkfarer",
 				role: "STREAMER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 787,
@@ -7134,6 +7153,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "0d31f0d52ebfeaa0216fcacb86eb140a",
 				customUrl: "shads",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 2908,
@@ -7143,6 +7163,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 				customUrl: "kitsunekeira",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 2963,
@@ -7152,6 +7173,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "1408d204fa8a128efd2d2625476468c2",
 				customUrl: null,
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 5877,
@@ -7161,6 +7183,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "f552df977e0165e7fb93d1ce2a7512d4",
 				customUrl: "bars",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 6766,
@@ -7170,6 +7193,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "a_3ca2a0737b2c1e2b5e82ddc98fe79c8b",
 				customUrl: "bowen",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 7400,
@@ -7179,6 +7203,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "11490e6c0ace327ebc32a117b9e0510c",
 				customUrl: "toes",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 8277,
@@ -7188,6 +7213,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "c3afd465b53dedbb97fb9dd504d01305",
 				customUrl: "neato",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 22026,
@@ -7197,6 +7223,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "31da63dcb6dd1dbe4c3f135c105f07e7",
 				customUrl: "strings",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 23094,
@@ -7206,6 +7233,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "cb9bf51b05f22c763a2b4812bdd574cc",
 				customUrl: "michi",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 29467,
@@ -7215,6 +7243,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "b8ad30de9487a9699093b728098e01d0",
 				customUrl: "glumbaron",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 29775,
@@ -7224,6 +7253,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "dc110c2d77ea84e470c87a18ac0b7e5d",
 				customUrl: "lemon7890",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 30996,
@@ -7233,6 +7263,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "48089383c5d666ae7ef8417d205bfa1f",
 				customUrl: "eemeee",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 31736,
@@ -7242,6 +7273,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				discordAvatar: "911c0ac66f9489406ea4ae970e7ed5b0",
 				customUrl: "pin-eye",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 		],
 		bracketProgressionOverrides: [],
@@ -7258,6 +7290,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157607,
 				activeRosterUserIds: [25875, 21063, 11226, 31597],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7275,6 +7308,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27529,
@@ -7291,6 +7325,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25875,
@@ -7307,6 +7342,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21063,
@@ -7323,6 +7359,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31597,
@@ -7339,6 +7376,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7368,6 +7406,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157629,
 				activeRosterUserIds: [14837, 27260, 42704, 9379],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7385,6 +7424,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27260,
@@ -7401,6 +7441,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42704,
@@ -7417,6 +7458,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 6211,
@@ -7433,6 +7475,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9379,
@@ -7449,6 +7492,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7478,6 +7522,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733161494,
 				activeRosterUserIds: [34424, 31195, 31395, 26103],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7495,6 +7540,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31195,
@@ -7511,6 +7557,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31395,
@@ -7527,6 +7574,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41682,
@@ -7543,6 +7591,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26103,
@@ -7559,6 +7608,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7588,6 +7638,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166918,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7605,6 +7656,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44033,
@@ -7621,6 +7673,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 19717,
@@ -7637,6 +7690,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9404,
@@ -7653,6 +7707,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7682,6 +7737,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166213,
 				activeRosterUserIds: [32160, 29267, 25591, 36962],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7699,6 +7755,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29267,
@@ -7715,6 +7772,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25591,
@@ -7731,6 +7789,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36962,
@@ -7747,6 +7806,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37749,
@@ -7763,6 +7823,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7787,6 +7848,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733189945,
 				activeRosterUserIds: [12418, 34355, 2319, 7430],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7804,6 +7866,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34355,
@@ -7820,6 +7883,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2319,
@@ -7836,6 +7900,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 39480,
@@ -7852,6 +7917,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7430,
@@ -7868,6 +7934,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7897,6 +7964,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733244862,
 				activeRosterUserIds: [29425, 31524, 35674, 26285],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -7914,6 +7982,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31524,
@@ -7930,6 +7999,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35674,
@@ -7946,6 +8016,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7126,
@@ -7962,6 +8033,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26285,
@@ -7978,6 +8050,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8007,6 +8080,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733282085,
 				activeRosterUserIds: [26747, 27292, 5708, 6309],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8024,6 +8098,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5708,
@@ -8040,6 +8115,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1661,
@@ -8056,6 +8132,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27292,
@@ -8072,6 +8149,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21588,
@@ -8088,6 +8166,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 6309,
@@ -8104,6 +8183,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8133,6 +8213,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733291438,
 				activeRosterUserIds: [24459, 40851, 23974, 43608],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8150,6 +8231,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23974,
@@ -8166,6 +8248,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 24459,
@@ -8182,6 +8265,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40851,
@@ -8198,6 +8282,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 18090,
@@ -8214,6 +8299,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42350,
@@ -8230,6 +8316,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8259,6 +8346,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733439755,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8276,6 +8364,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37000,
@@ -8292,6 +8381,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37835,
@@ -8308,6 +8398,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26807,
@@ -8324,6 +8415,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8353,6 +8445,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733485884,
 				activeRosterUserIds: [30686, 1961, 30685, 22396],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8370,6 +8463,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30686,
@@ -8386,6 +8480,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22396,
@@ -8402,6 +8497,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1961,
@@ -8418,6 +8514,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46305,
@@ -8434,6 +8531,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 18698,
@@ -8450,6 +8548,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8479,6 +8578,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733937993,
 				activeRosterUserIds: [12434, 30263, 5861, 24275],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8496,6 +8596,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30411,
@@ -8512,6 +8613,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 24275,
@@ -8528,6 +8630,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30263,
@@ -8544,6 +8647,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5861,
@@ -8560,6 +8664,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30870,
@@ -8576,6 +8681,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8605,6 +8711,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166818,
 				activeRosterUserIds: [32670, 38046, 42638, 34589],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-Hj-Us_Roj5Ksfv000ceBo-1733166818832.webp",
 				members: [
 					{
@@ -8622,6 +8729,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38046,
@@ -8638,6 +8746,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42638,
@@ -8654,6 +8763,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34589,
@@ -8670,6 +8780,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44378,
@@ -8686,6 +8797,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8715,6 +8827,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733167616,
 				activeRosterUserIds: [45102, 26711, 41739, 4533],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8732,6 +8845,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45102,
@@ -8748,6 +8862,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3362,
@@ -8764,6 +8879,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41739,
@@ -8780,6 +8896,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26711,
@@ -8796,6 +8913,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8825,6 +8943,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733201503,
 				activeRosterUserIds: [20807, 31556, 33373, 42703],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8842,6 +8961,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35282,
@@ -8858,6 +8978,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20774,
@@ -8874,6 +8995,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33373,
@@ -8890,6 +9012,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42703,
@@ -8906,6 +9029,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31556,
@@ -8922,6 +9046,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8951,6 +9076,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733218069,
 				activeRosterUserIds: [26509, 7959, 7690, 7958],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -8968,6 +9094,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7690,
@@ -8984,6 +9111,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7959,
@@ -9000,6 +9128,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26509,
@@ -9016,6 +9145,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7102,
@@ -9032,6 +9162,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9061,6 +9192,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733319202,
 				activeRosterUserIds: [10714, 21685, 8840, 10028],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9078,6 +9210,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21685,
@@ -9094,6 +9227,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34842,
@@ -9110,6 +9244,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10714,
@@ -9126,6 +9261,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10028,
@@ -9142,6 +9278,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8840,
@@ -9158,6 +9295,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9187,6 +9325,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733471556,
 				activeRosterUserIds: [17532, 30204, 36007, 38896],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9204,6 +9343,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36007,
@@ -9220,6 +9360,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38896,
@@ -9236,6 +9377,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30204,
@@ -9252,6 +9394,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41285,
@@ -9268,6 +9411,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9297,6 +9441,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733501938,
 				activeRosterUserIds: [30495, 43073, 30488, 45295],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9314,6 +9459,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43073,
@@ -9330,6 +9476,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30495,
@@ -9346,6 +9493,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30488,
@@ -9362,6 +9510,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45295,
@@ -9378,6 +9527,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9407,6 +9557,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733622364,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9424,6 +9575,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30612,
@@ -9440,6 +9592,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 13671,
@@ -9456,6 +9609,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36898,
@@ -9472,6 +9626,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -9495,6 +9650,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733635706,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9512,6 +9668,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30466,
@@ -9528,6 +9685,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26162,
@@ -9544,6 +9702,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 24013,
@@ -9560,6 +9719,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9589,6 +9749,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733671856,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9606,6 +9767,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29433,
@@ -9622,6 +9784,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21181,
@@ -9638,6 +9801,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32002,
@@ -9654,6 +9818,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9678,6 +9843,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733810204,
 				activeRosterUserIds: [1959, 17352, 33954, 22403],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-3KZntw8OZ9LkW4XqZRLS9-1733810204048.webp",
 				members: [
 					{
@@ -9695,6 +9861,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5906,
@@ -9711,6 +9878,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 17352,
@@ -9727,6 +9895,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22403,
@@ -9743,6 +9912,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33954,
@@ -9759,6 +9929,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9783,6 +9954,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733889961,
 				activeRosterUserIds: [6696, 32107, 33402, 30619],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9800,6 +9972,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32107,
@@ -9816,6 +9989,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33402,
@@ -9832,6 +10006,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30619,
@@ -9848,6 +10023,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35133,
@@ -9864,6 +10040,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9888,6 +10065,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733892132,
 				activeRosterUserIds: [21670, 8993, 8395, 3566],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -9905,6 +10083,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8993,
@@ -9921,6 +10100,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8395,
@@ -9937,6 +10117,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3566,
@@ -9953,6 +10134,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46637,
@@ -9969,6 +10151,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -9998,6 +10181,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734035170,
 				activeRosterUserIds: [24510, 10670, 22577, 31143],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10015,6 +10199,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31143,
@@ -10031,6 +10216,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10670,
@@ -10047,6 +10233,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5261,
@@ -10063,6 +10250,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22577,
@@ -10079,6 +10267,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10108,6 +10297,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734107844,
 				activeRosterUserIds: [28170, 14309, 17310, 23164],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10125,6 +10315,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 14309,
@@ -10141,6 +10332,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23164,
@@ -10157,6 +10349,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 17310,
@@ -10173,6 +10366,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2199,
@@ -10189,6 +10383,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10218,6 +10413,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734132225,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-_asHjlVchhJ50PH_mDBtw-1734132224819.webp",
 				members: [
 					{
@@ -10235,6 +10431,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 16387,
@@ -10251,6 +10448,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31154,
@@ -10267,6 +10465,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 6051,
@@ -10283,6 +10482,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10307,6 +10507,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733194304,
 				activeRosterUserIds: [40505, 29011, 23082, 45036],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10324,6 +10525,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29011,
@@ -10340,6 +10542,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23082,
@@ -10356,6 +10559,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21549,
@@ -10372,6 +10576,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45036,
@@ -10388,6 +10593,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10417,6 +10623,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733195091,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10434,6 +10641,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26820,
@@ -10450,6 +10658,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3513,
@@ -10466,6 +10675,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10297,
@@ -10482,6 +10692,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10511,6 +10722,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733364647,
 				activeRosterUserIds: [22801, 31150, 35354, 27747],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10528,6 +10740,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8953,
@@ -10544,6 +10757,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27747,
@@ -10560,6 +10774,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31150,
@@ -10576,6 +10791,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35354,
@@ -10592,6 +10808,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10621,6 +10838,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733374295,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10638,6 +10856,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38686,
@@ -10654,6 +10873,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 12005,
@@ -10670,6 +10890,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31295,
@@ -10686,6 +10907,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10715,6 +10937,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733433864,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10732,6 +10955,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40636,
@@ -10748,6 +10972,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44489,
@@ -10764,6 +10989,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34314,
@@ -10780,6 +11006,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28247,
@@ -10796,6 +11023,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41628,
@@ -10812,6 +11040,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -10835,6 +11064,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733513814,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10852,6 +11082,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26321,
@@ -10868,6 +11099,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22324,
@@ -10884,6 +11116,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11088,
@@ -10900,6 +11133,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -10929,6 +11163,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733602400,
 				activeRosterUserIds: [10826, 4248, 20419, 11180],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -10946,6 +11181,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20419,
@@ -10962,6 +11198,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 4248,
@@ -10978,6 +11215,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10826,
@@ -10994,6 +11232,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28504,
@@ -11010,6 +11249,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11039,6 +11279,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733753214,
 				activeRosterUserIds: [27903, 28446, 34634, 30728],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11056,6 +11297,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28446,
@@ -11072,6 +11314,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30728,
@@ -11088,6 +11331,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32158,
@@ -11104,6 +11348,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34634,
@@ -11120,6 +11365,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11149,6 +11395,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733914001,
 				activeRosterUserIds: [32909, 10190, 35922, 40304],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11166,6 +11413,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31189,
@@ -11182,6 +11430,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10190,
@@ -11198,6 +11447,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37959,
@@ -11214,6 +11464,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40304,
@@ -11230,6 +11481,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35922,
@@ -11246,6 +11498,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11275,6 +11528,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733966548,
 				activeRosterUserIds: [35617, 37669, 37436, 35811],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11292,6 +11546,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35617,
@@ -11308,6 +11563,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37669,
@@ -11324,6 +11580,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37436,
@@ -11340,6 +11597,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35811,
@@ -11356,6 +11614,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11385,6 +11644,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734032213,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11402,6 +11662,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1925,
@@ -11418,6 +11679,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11391,
@@ -11434,6 +11696,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27355,
@@ -11450,6 +11713,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11479,6 +11743,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734106606,
 				activeRosterUserIds: [37173, 43269, 43623, 16054],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11496,6 +11761,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43269,
@@ -11512,6 +11778,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37173,
@@ -11528,6 +11795,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34448,
@@ -11544,6 +11812,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 16054,
@@ -11560,6 +11829,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11589,6 +11859,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734116765,
 				activeRosterUserIds: [25312, 10378, 46771, 26044],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11606,6 +11877,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10378,
@@ -11622,6 +11894,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46771,
@@ -11638,6 +11911,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5350,
@@ -11654,6 +11928,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 12609,
@@ -11670,6 +11945,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26044,
@@ -11686,6 +11962,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11715,6 +11992,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734125312,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11732,6 +12010,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43060,
@@ -11748,6 +12027,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22622,
@@ -11764,6 +12044,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22968,
@@ -11780,6 +12061,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11809,6 +12091,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734134382,
 				activeRosterUserIds: [26758, 25689, 42164, 44475],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11826,6 +12109,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42164,
@@ -11842,6 +12126,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25689,
@@ -11858,6 +12143,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43524,
@@ -11874,6 +12160,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26758,
@@ -11890,6 +12177,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -11914,6 +12202,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733156802,
 				activeRosterUserIds: [9036, 7434, 3738, 9112],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -11931,6 +12220,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9112,
@@ -11947,6 +12237,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3738,
@@ -11963,6 +12254,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7434,
@@ -11979,6 +12271,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9036,
@@ -11995,6 +12288,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12024,6 +12318,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157391,
 				activeRosterUserIds: [5935, 38204, 3741, 8080],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12041,6 +12336,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38204,
@@ -12057,6 +12353,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35506,
@@ -12073,6 +12370,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3741,
@@ -12089,6 +12387,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31728,
@@ -12105,6 +12404,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8080,
@@ -12121,6 +12421,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12150,6 +12451,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733162274,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12167,6 +12469,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42975,
@@ -12183,6 +12486,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20319,
@@ -12199,6 +12503,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28054,
@@ -12215,6 +12520,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12244,6 +12550,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733367806,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12261,6 +12568,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46586,
@@ -12277,6 +12585,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33790,
@@ -12293,6 +12602,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 18632,
@@ -12309,6 +12619,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12338,6 +12649,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733456080,
 				activeRosterUserIds: [10386, 33369, 29617, 22942],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12355,6 +12667,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10386,
@@ -12371,6 +12684,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22942,
@@ -12387,6 +12701,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33369,
@@ -12403,6 +12718,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29617,
@@ -12419,6 +12735,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12448,6 +12765,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733579092,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12465,6 +12783,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 14170,
@@ -12481,6 +12800,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25419,
@@ -12497,6 +12817,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 14413,
@@ -12513,6 +12834,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -12536,6 +12858,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733769667,
 				activeRosterUserIds: [3481, 38022, 41269, 43551],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12553,6 +12876,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38022,
@@ -12569,6 +12893,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41269,
@@ -12585,6 +12910,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7935,
@@ -12601,6 +12927,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43856,
@@ -12617,6 +12944,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43551,
@@ -12633,6 +12961,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12662,6 +12991,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733794148,
 				activeRosterUserIds: [22820, 29636, 27036, 28959],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12679,6 +13009,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27036,
@@ -12695,6 +13026,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22820,
@@ -12711,6 +13043,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28021,
@@ -12727,6 +13060,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1890,
@@ -12743,6 +13077,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29636,
@@ -12759,6 +13094,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12788,6 +13124,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733820540,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-t2-mrQNINFqIoFNYuxbmW-1733820600291.webp",
 				members: [
 					{
@@ -12805,6 +13142,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21989,
@@ -12821,6 +13159,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25242,
@@ -12837,6 +13176,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43081,
@@ -12853,6 +13193,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12877,6 +13218,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733825084,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12894,6 +13236,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 24252,
@@ -12910,6 +13253,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32444,
@@ -12926,6 +13270,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36113,
@@ -12942,6 +13287,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -12971,6 +13317,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733865890,
 				activeRosterUserIds: [15425, 41975, 28938, 8587],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -12988,6 +13335,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27828,
@@ -13004,6 +13352,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41975,
@@ -13020,6 +13369,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28938,
@@ -13036,6 +13386,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8587,
@@ -13052,6 +13403,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13081,6 +13433,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733873149,
 				activeRosterUserIds: [40550, 7115, 29674, 30031],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13098,6 +13451,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7115,
@@ -13114,6 +13468,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29674,
@@ -13130,6 +13485,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 39569,
@@ -13146,6 +13502,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30031,
@@ -13162,6 +13519,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28866,
@@ -13178,6 +13536,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13207,6 +13566,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733875608,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13224,6 +13584,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33824,
@@ -13240,6 +13601,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35608,
@@ -13256,6 +13618,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22677,
@@ -13272,6 +13635,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13301,6 +13665,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733888417,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-c9a1igcMT4m2otyRdTs_0-1733888672873.webp",
 				members: [
 					{
@@ -13318,6 +13683,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30030,
@@ -13334,6 +13700,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21454,
@@ -13350,6 +13717,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42483,
@@ -13366,6 +13734,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13390,6 +13759,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734008857,
 				activeRosterUserIds: [30266, 37341, 22699, 28145],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13407,6 +13777,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37341,
@@ -13423,6 +13794,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22699,
@@ -13439,6 +13811,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28145,
@@ -13455,6 +13828,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 39363,
@@ -13471,6 +13845,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13500,6 +13875,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734018352,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13517,6 +13893,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20990,
@@ -13533,6 +13910,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22469,
@@ -13549,6 +13927,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41594,
@@ -13565,6 +13944,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13594,6 +13974,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734019701,
 				activeRosterUserIds: [35421, 33524, 22500, 32802],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-u4oKxXYjamTXZ1x-bgNFp-1734019701188.webp",
 				members: [
 					{
@@ -13611,6 +13992,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35421,
@@ -13627,6 +14009,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33524,
@@ -13643,6 +14026,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22500,
@@ -13659,6 +14043,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42081,
@@ -13675,6 +14060,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20063,
@@ -13691,6 +14077,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13715,6 +14102,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734023441,
 				activeRosterUserIds: [1852, 2898, 25763, 3466],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13732,6 +14120,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2898,
@@ -13748,6 +14137,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25763,
@@ -13764,6 +14154,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3466,
@@ -13780,6 +14171,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34662,
@@ -13796,6 +14188,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13825,6 +14218,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734099744,
 				activeRosterUserIds: [39098, 22624, 28137, 2769],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -13842,6 +14236,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7461,
@@ -13858,6 +14253,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 39098,
@@ -13874,6 +14270,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22624,
@@ -13890,6 +14287,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28137,
@@ -13906,6 +14304,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -13935,6 +14334,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734109256,
 				activeRosterUserIds: [29661, 15158, 35067, 31655],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-An13SrR78qDNIM2t95ujb-1734109256283.webp",
 				members: [
 					{
@@ -13952,6 +14352,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29661,
@@ -13968,6 +14369,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10333,
@@ -13984,6 +14386,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35067,
@@ -14000,6 +14403,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31655,
@@ -14016,6 +14420,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40743,
@@ -14032,6 +14437,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14056,6 +14462,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734125682,
 				activeRosterUserIds: [36575, 30425, 32430, 24290],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14073,6 +14480,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32430,
@@ -14089,6 +14497,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26701,
@@ -14105,6 +14514,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30584,
@@ -14121,6 +14531,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 24290,
@@ -14137,6 +14548,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36575,
@@ -14153,6 +14565,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14182,6 +14595,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733515005,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14199,6 +14613,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36921,
@@ -14215,6 +14630,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37563,
@@ -14231,6 +14647,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37665,
@@ -14247,6 +14664,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14276,6 +14694,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733521735,
 				activeRosterUserIds: [44772, 38912, 36853, 42599],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14293,6 +14712,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38912,
@@ -14309,6 +14729,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23357,
@@ -14325,6 +14746,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36853,
@@ -14341,6 +14763,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42599,
@@ -14357,6 +14780,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14386,6 +14810,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733525617,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14403,6 +14828,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21818,
@@ -14419,6 +14845,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22991,
@@ -14435,6 +14862,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2266,
@@ -14451,6 +14879,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14480,6 +14909,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733847805,
 				activeRosterUserIds: [33615, 32015, 45778, 32970],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14497,6 +14927,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32015,
@@ -14513,6 +14944,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30663,
@@ -14529,6 +14961,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45778,
@@ -14545,6 +14978,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32970,
@@ -14561,6 +14995,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14590,6 +15025,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733858126,
 				activeRosterUserIds: [34545, 35567, 41108, 41255],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14607,6 +15043,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35567,
@@ -14623,6 +15060,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41108,
@@ -14639,6 +15077,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34545,
@@ -14655,6 +15094,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26564,
@@ -14671,6 +15111,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14700,6 +15141,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733966096,
 				activeRosterUserIds: [39470, 42874, 32878, 25741],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -14717,6 +15159,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25741,
@@ -14733,6 +15176,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42874,
@@ -14749,6 +15193,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 39470,
@@ -14765,6 +15210,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32878,
@@ -14781,6 +15227,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14810,6 +15257,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734021147,
 				activeRosterUserIds: [45250, 45174, 6976, 10222],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-v3boyVjbFsTyMlQylz4Dn-1734021152539.webp",
 				members: [
 					{
@@ -14827,6 +15275,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45174,
@@ -14843,6 +15292,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10222,
@@ -14859,6 +15309,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 6976,
@@ -14875,6 +15326,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46504,
@@ -14891,6 +15343,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -14920,6 +15373,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734040772,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-Jx6JnhFJQjOnM10s_79ld-1734041234919.webp",
 				members: [
 					{
@@ -14937,6 +15391,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43753,
@@ -14953,6 +15408,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45806,
@@ -14969,6 +15425,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46648,
@@ -14985,6 +15442,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -15014,6 +15472,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734033803,
 				activeRosterUserIds: [27800, 12235, 30044, 29531],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15031,6 +15490,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44328,
@@ -15047,6 +15507,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 12235,
@@ -15063,6 +15524,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29531,
@@ -15079,6 +15541,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30044,
@@ -15095,6 +15558,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -15124,6 +15588,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734099612,
 				activeRosterUserIds: [24572, 7058, 37641, 33913],
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-RrPQW5kG_K1cvjdU5TKcF-1734099611923.webp",
 				members: [
 					{
@@ -15141,6 +15606,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37641,
@@ -15157,6 +15623,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33913,
@@ -15173,6 +15640,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42597,
@@ -15189,6 +15657,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 24572,
@@ -15205,6 +15674,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -15229,6 +15699,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734113463,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15246,6 +15717,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33276,
@@ -15262,6 +15734,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41038,
@@ -15278,6 +15751,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11198,
@@ -15294,6 +15768,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -15323,6 +15798,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734118202,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15340,6 +15816,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 14927,
@@ -15356,6 +15833,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1236,
@@ -15372,6 +15850,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27069,
@@ -15388,6 +15867,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -15411,6 +15891,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734134334,
 				activeRosterUserIds: [11186, 27611, 25952, 23481],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15428,6 +15909,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25952,
@@ -15444,6 +15926,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27611,
@@ -15460,6 +15943,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11186,
@@ -15476,6 +15960,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23481,
@@ -15492,6 +15977,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -15521,6 +16007,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733169181,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15538,6 +16025,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38610,
@@ -15554,6 +16042,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40713,
@@ -15570,6 +16059,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40766,
@@ -15586,6 +16076,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -15615,6 +16106,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733247691,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo--fZF6IGlzuuHeotc6Z00p-1733762912138.webp",
 				members: [
 					{
@@ -15632,6 +16124,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46538,
@@ -15648,6 +16141,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46523,
@@ -15664,6 +16158,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46501,
@@ -15680,6 +16175,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -15709,6 +16205,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733452618,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15726,6 +16223,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 17049,
@@ -15742,6 +16240,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36888,
@@ -15758,6 +16257,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46546,
@@ -15774,6 +16274,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42172,
@@ -15790,6 +16291,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -15808,6 +16310,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733481710,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15825,6 +16328,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40912,
@@ -15841,6 +16345,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30455,
@@ -15857,6 +16362,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27649,
@@ -15873,6 +16379,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43703,
@@ -15889,6 +16396,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -15912,6 +16420,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733508949,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -15929,6 +16438,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46451,
@@ -15945,6 +16455,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44412,
@@ -15961,6 +16472,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45194,
@@ -15977,6 +16489,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -16006,6 +16519,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733611261,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -16023,6 +16537,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21755,
@@ -16039,6 +16554,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27984,
@@ -16055,6 +16571,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27990,
@@ -16071,6 +16588,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -16095,6 +16613,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733841846,
 				activeRosterUserIds: [41943, 46289, 45290, 46394],
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -16112,6 +16631,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41943,
@@ -16128,6 +16648,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45290,
@@ -16144,6 +16665,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46394,
@@ -16160,6 +16682,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46400,
@@ -16176,6 +16699,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -16205,6 +16729,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733878153,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: null,
 				members: [
 					{
@@ -16222,6 +16747,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38960,
@@ -16238,6 +16764,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32199,
@@ -16254,6 +16781,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40126,
@@ -16270,6 +16798,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -16299,6 +16828,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734135144,
 				activeRosterUserIds: null,
+				avatarImgId: null,
 				pickupAvatarUrl: "pickup-logo-obQfxdRnJg0CsbrE6OXdl-1734135144301.webp",
 				members: [
 					{
@@ -16316,6 +16846,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44866,
@@ -16332,6 +16863,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44642,
@@ -16348,6 +16880,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45391,
@@ -16364,6 +16897,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [

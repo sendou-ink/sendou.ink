@@ -11,6 +11,7 @@ import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
 import {
+	type AuthenticatedUser,
 	getUserFromRequest,
 	userAsyncLocalStorage,
 } from "~/features/auth/core/user-context.server";
@@ -19,6 +20,27 @@ import { logger } from "./logger";
 export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 	return (
 		arr1.length === arr2.length && arr1.every((item) => arr2.includes(item))
+	);
+}
+
+/**
+ * Runs `fn` inside the user AsyncLocalStorage store so that repository functions
+ * resolving the actor via `actorId()` / `actorIdOrNull()` see `user` as the acting
+ * user. Use in direct repository unit tests, which run outside a request.
+ */
+export function withUser<T>(user: AuthenticatedUser, fn: () => T): T {
+	return userAsyncLocalStorage.run({ user }, fn);
+}
+
+/**
+ * Like {@link withUser} but takes only a user id, building a minimal acting-user
+ * context. Convenient for repository data-setup in tests where only the actor's id
+ * matters (repositories read the actor solely via `actorId()` / `actorIdOrNull()`).
+ */
+export function withUserId<T>(id: number, fn: () => T): T {
+	return userAsyncLocalStorage.run(
+		{ user: { id } as unknown as AuthenticatedUser },
+		fn,
 	);
 }
 
@@ -65,7 +87,10 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 			],
 		});
 
-		const userFromRequest = await getUserFromRequest(request);
+		const userFromRequest = await getUserFromRequest(
+			request,
+			new URL(request.url),
+		);
 
 		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
 			try {
@@ -115,7 +140,10 @@ export function wrappedLoader<T>({
 			],
 		});
 
-		const userFromRequest = await getUserFromRequest(request);
+		const userFromRequest = await getUserFromRequest(
+			request,
+			new URL(request.url),
+		);
 
 		return userAsyncLocalStorage.run({ user: userFromRequest }, async () => {
 			try {
@@ -186,9 +214,20 @@ async function authHeader(
  * });
  */
 export const dbReset = () => {
+	// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
+	// deleted from directly; the fts index stays in sync via the User triggers
 	const tables = sql
 		.prepare(
-			"SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'migrations';",
+			`SELECT name FROM sqlite_master
+			WHERE type='table'
+			AND name NOT LIKE 'sqlite_%'
+			AND name NOT LIKE 'migrations'
+			AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
+			AND NOT EXISTS (
+				SELECT 1 FROM sqlite_master AS vt
+				WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
+				AND sqlite_master.name LIKE vt.name || '_%'
+			);`,
 		)
 		.all() as { name: string }[];
 

@@ -6,6 +6,7 @@ import styles from "./UserSearchFormField.module.css";
 type TournamentSearchFormFieldProps = FormFieldProps<"tournament-search"> & {
 	value: number | null;
 	onChange: (value: number | null) => void;
+	pastOnly?: boolean;
 };
 
 export function TournamentSearchFormField({
@@ -17,6 +18,7 @@ export function TournamentSearchFormField({
 	value,
 	onChange,
 	onBlur,
+	pastOnly,
 }: TournamentSearchFormFieldProps) {
 	const { translatedLabel } = useTranslatedTexts({
 		label,
@@ -27,6 +29,7 @@ export function TournamentSearchFormField({
 			<div className="stack xs">
 				<TournamentSearch
 					initialTournamentId={value ?? undefined}
+					pastOnly={pastOnly}
 					onChange={(tournament) => onChange(tournament?.id ?? null)}
 					onBlur={() => onBlur?.()}
 					label={translatedLabel}

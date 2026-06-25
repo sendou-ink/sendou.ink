@@ -15,15 +15,13 @@ import {
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useSearchParams } from "react-router";
-import { useDebounce } from "react-use";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import type { SearchLoaderData } from "~/features/search/routes/search";
+import { useDebounce } from "~/hooks/useDebounce";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {
-	mySlugify,
 	navIconUrl,
 	teamPage,
 	tournamentOrganizationPage,
@@ -38,6 +36,7 @@ import {
 	saveRecentWeapon,
 	WeaponDestinationMenu,
 	WeaponResultsList,
+	weaponToSelectedWeapon,
 } from "./WeaponSearch";
 
 const SEARCH_TYPES = [
@@ -166,9 +165,7 @@ function resolveInitialWeapon(
 	if (Number.isNaN(id)) return null;
 	const name = t(`weapons:MAIN_${id}`);
 	if (!name || name === `MAIN_${id}`) return null;
-	const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-	const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, { lng: "en" });
-	return { id, name, englishName, slug: mySlugify(slugName) };
+	return weaponToSelectedWeapon(id, t);
 }
 
 function GlobalSearchContent({
@@ -239,14 +236,7 @@ function GlobalSearchContent({
 
 	const recentWeapons: SelectedWeapon[] =
 		searchType === "weapons"
-			? getRecentWeapons().map((id) => {
-					const name = t(`weapons:MAIN_${id}`);
-					const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-					const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, {
-						lng: "en",
-					});
-					return { id, name, englishName, slug: mySlugify(slugName) };
-				})
+			? getRecentWeapons().map((id) => weaponToSelectedWeapon(id, t))
 			: [];
 
 	const handleSelect = (key: React.Key) => {

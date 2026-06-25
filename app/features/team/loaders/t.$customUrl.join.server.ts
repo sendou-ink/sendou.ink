@@ -9,7 +9,7 @@ import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamFull, isTeamMember } from "../team-utils";
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
@@ -19,7 +19,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 		}),
 	);
 
-	const inviteCode = new URL(request.url).searchParams.get("code") ?? "";
+	const inviteCode = url.searchParams.get("code") ?? "";
 	const realInviteCode = team.inviteCode!;
 
 	const teamCount = (await TeamRepository.teamsByMemberUserId(user.id)).length;

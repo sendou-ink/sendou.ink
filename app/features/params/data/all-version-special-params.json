@@ -1,0 +1,2169 @@
+{
+	"metadata": {
+		"generatedAt": "2026-06-15T13:59:10.026Z",
+		"latestVersion": "11.2.0",
+		"versions": [
+			"0.9.9",
+			"1.0.0",
+			"1.1.0",
+			"1.1.1",
+			"1.2.0",
+			"2.0.0",
+			"2.1.0",
+			"3.0.0",
+			"3.1.0",
+			"4.0.0",
+			"4.1.0",
+			"5.0.0",
+			"5.1.0",
+			"5.2.0",
+			"6.0.0",
+			"6.1.0",
+			"7.0.0",
+			"7.1.0",
+			"7.2.0",
+			"8.0.0",
+			"8.1.0",
+			"9.0.0",
+			"9.1.0",
+			"9.2.0",
+			"9.3.0",
+			"10.0.0",
+			"10.1.0",
+			"11.0.0",
+			"11.0.1",
+			"11.1.0",
+			"11.2.0"
+		]
+	},
+	"weapons": {
+		"1": {
+			"BlastParam": {
+				"DistanceDamage": [
+					{
+						"Damage": 530,
+						"Distance": 2.5
+					},
+					{
+						"Damage": 350,
+						"Distance": 4
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 470,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"PaintRadius": 3.2,
+				"SubSpecialSpecUpList": [
+					{
+						"SpecUpType": "PaintRadius",
+						"Value": {
+							"High": 4,
+							"Low": 3.2,
+							"Mid": 3.6
+						}
+					},
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.3,
+							"Low": 1,
+							"Mid": 1.15
+						}
+					}
+				],
+				"DistanceDamage@9.2.0": [
+					{
+						"Damage": 530,
+						"Distance": 4
+					}
+				],
+				"DistanceDamage@5.0.0": [
+					{
+						"Damage": 600,
+						"Distance": 4
+					}
+				],
+				"DistanceDamage@4.0.0": [
+					{
+						"Damage": 400,
+						"Distance": 4
+					}
+				]
+			},
+			"CollisionParam": {
+				"ChangeFrameForField": 20,
+				"ChangeFrameForPlayer": 10,
+				"EndRadiusForField": 0.3,
+				"EndRadiusForPlayer": 0.75,
+				"InitRadiusForField": 0.01,
+				"InitRadiusForPlayer": 0.01
+			},
+			"DamageParam": {
+				"DirectHitDamage": 2200
+			},
+			"MoveParam": {
+				"BrakeAirResist": 0.09,
+				"BrakeGravity": 0.09,
+				"BrakeToFreeStateFrame": 10,
+				"BrakeToFreeVelocityXZ": 1,
+				"BrakeToFreeVelocityY": -0.1,
+				"FreeAirResist": 0.01985,
+				"FreeGravity": 0.0190565,
+				"GoStraightStateEndMaxSpeed": 1,
+				"GoStraightToBrakeStateFrame": 18,
+				"SpawnSpeed": 1
+			},
+			"UltraShotMoveParam": {
+				"OrbitalRadiusEnd": 1,
+				"OrbitalRadiusTransitionFrame": 10
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 0,
+				"YPlusRate": 0,
+				"ZRate": 0
+			},
+			"spl__WeaponSpUltraShotParam": {
+				"EjectCartridgeAngularVel": {
+					"X": 35,
+					"Y": 0,
+					"Z": 20
+				},
+				"EjectCartridgeFadeOutFrame": 5,
+				"EjectCartridgeFrame": 30,
+				"EjectCartridgeInitSpeed": 5,
+				"EjectCartridgeLifeTimeFrame": 60,
+				"HideCartridgeBeforeEjectFrame": 1,
+				"HoldAimFrame": 55,
+				"IsReqShotInStartDelay": true,
+				"KnockBackParam": {
+					"AirBreakRt": 0.8,
+					"ImpactValue": 0.04,
+					"StickDownRt": 5
+				},
+				"MoveSpeed": 0.07,
+				"MoveSpeedInCharge": 0.04,
+				"RepeatFrame": 55,
+				"ShotDelayFrame": 15,
+				"SpecialDurationFrame": {
+					"High": 480,
+					"Low": 330,
+					"Mid": 405,
+					"Low@9.2.0": 360,
+					"Mid@9.2.0": 420
+				},
+				"StartDelayFrame": 5
+			}
+		},
+		"2": {
+			"spl__BulletSpGreatBarrierMoveParam": {
+				"BarrierParam": {
+					"CanopyKnockBack": 700,
+					"DamgeRatio": 0.64,
+					"MaxFieldHP": {
+						"High": 36864,
+						"Low": 30720,
+						"Mid": 33792,
+						"High@7.1.0": 28800,
+						"Low@7.1.0": 24000,
+						"Mid@7.1.0": 26400
+					},
+					"MaxHP": {
+						"High": 18432,
+						"Low": 15360,
+						"Mid": 16896,
+						"High@7.1.0": 14400,
+						"Low@7.1.0": 12000,
+						"Mid@7.1.0": 13200
+					},
+					"MaxRadius": 7.5,
+					"MinRadius": 2.255,
+					"RadiusRatioCurve": {
+						"Data": [
+							0.1940299, 0, 0, 0.6522388, 0.3726415, -0.02766653, 0.8723881,
+							0.75, 1.1808, 1, 1, 4.740566
+						],
+						"MaxX": 1,
+						"Type": "Hermit2DSmooth"
+					},
+					"TimeDamage": 921,
+					"TimeDamageOnVLift": 1842,
+					"DamgeRatio@7.1.0": 0.5,
+					"MaxRadius@3.1.0": 6,
+					"TimeDamage@7.1.0": 720,
+					"TimeDamageOnVLift@7.1.0": 1440
+				},
+				"BaseParam": {
+					"PaintRadius": 4.5,
+					"PaintTexture": "Bomb00Height3pnt4"
+				},
+				"DroneParam": {
+					"AscendCurve": {
+						"Data": [
+							0, 0, 0, 0.25, 0.1122642, 0.8181818, 0.5, 0.5, 2.926098,
+							0.6830189, 0.8556603, 1.395833, 1, 1, 0
+						],
+						"MaxX": 1,
+						"Type": "Hermit2DSmooth"
+					},
+					"AscendFrame": 30,
+					"AscendHeight": 8.5,
+					"FieldCollisionRadius": 0.4,
+					"IgnitionFrame": 15,
+					"OverlapFieldDamage": 5,
+					"OverlapFieldDamageInterval": 5,
+					"AscendHeight@3.1.0": 7
+				}
+			},
+			"spl__WeaponSpGreatBarrierParam": {
+				"KnockBackParam": {
+					"ImpactValue": 0.05
+				}
+			}
+		},
+		"3": {
+			"BulletBombMoveParam": {
+				"FlyGravity": 0,
+				"FlyPositionAirResist": 0,
+				"GuideHitCollisionType": "SuperHook",
+				"SpawnSpeedZSpecUp": {
+					"High": 3.36,
+					"Low": 3.36,
+					"Mid": 3.36
+				}
+			},
+			"BulletParam": {
+				"CollisionRadiusForField": 1.6,
+				"CollisionRadiusForPlayer": 1.2,
+				"KnockBackParam": {
+					"Accel": 450,
+					"Bias": 0,
+					"Degree": 55,
+					"DirectionZeroAccelRate": 1,
+					"Distance": 10
+				},
+				"PaintDepthScale": 1.5,
+				"PaintSpanFrame": 2,
+				"PaintWidthHalf": 1
+			},
+			"HookBlastParam": {
+				"CrossPaintCheckLength": 1.4,
+				"CrossPaintRadius": 1.4,
+				"DistanceDamage": [
+					{
+						"Damage": 450,
+						"Distance": 5.25
+					},
+					{
+						"Damage": 350,
+						"Distance": 6
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 470,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"DistanceDamage@10.0.0": [
+					{
+						"Damage": 450,
+						"Distance": 4.8
+					},
+					{
+						"Damage": 350,
+						"Distance": 6
+					}
+				],
+				"DistanceDamage@4.1.0": [
+					{
+						"Damage": 350,
+						"Distance": 3.2
+					},
+					{
+						"Damage": 250,
+						"Distance": 4
+					}
+				]
+			},
+			"HookCollisionParam": {
+				"EndRadiusForField": 0.5,
+				"EndRadiusForPlayer": 0.01,
+				"InitRadiusForField": 0.5,
+				"InitRadiusForPlayer": 0.01
+			},
+			"WeaponParam": {
+				"InkCapacityRt": 1.5,
+				"InkConsume_Hook": {
+					"High": 0.015,
+					"Low": 0.04,
+					"Mid": 0.025,
+					"High@11.1.0": 0.0225,
+					"High@1.2.0": 0.015,
+					"High@1.0.0": 0.056,
+					"High@0.9.9": 0.015,
+					"Low@11.1.0": 0.06,
+					"Low@1.2.0": 0.04,
+					"Low@1.0.0": 0.08,
+					"Low@0.9.9": 0.04,
+					"Mid@11.1.0": 0.0375,
+					"Mid@1.2.0": 0.025,
+					"Mid@1.0.0": 0.068,
+					"Mid@0.9.9": 0.025
+				},
+				"InkConsume_PerSec": {
+					"High": 0.12,
+					"Low": 0.15,
+					"Mid": 0.1305,
+					"High@1.2.0": 0.08,
+					"High@1.0.0": 0.056,
+					"High@0.9.9": 0.08,
+					"Low@1.2.0": 0.1,
+					"Low@1.0.0": 0.08,
+					"Low@0.9.9": 0.1,
+					"Mid@1.2.0": 0.087,
+					"Mid@1.0.0": 0.068,
+					"Mid@0.9.9": 0.087
+				},
+				"MaxLengthHook": 35,
+				"MinLengthHook_Floor": 3,
+				"MinLengthHook_Wall": 0,
+				"MoveAccAttack": 0.1,
+				"MoveSpeedAttack_Init": 0.06,
+				"ShotFailedIntervalFrm": 20,
+				"SpecialTotalFrame": 540,
+				"WaitFrameShot2Attack": 12,
+				"MinLengthHook_Floor@4.1.0": 4
+			}
+		},
+		"4": {
+			"spl__BulletBlastParam": {
+				"CrossPaintCheckLength": 3,
+				"DamageOffsetY": 0,
+				"DistanceDamage": [
+					{
+						"Damage": 1500,
+						"Distance": 1.1
+					},
+					{
+						"Damage": 500,
+						"Distance": 2.1
+					},
+					{
+						"Damage": 300,
+						"Distance": 4.25
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 700,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"PaintOffsetY": 0,
+				"PaintRadius": 3,
+				"SubSpecialSpecUpList": [
+					{
+						"Value": {
+							"High": 3.78,
+							"Low": 3.15,
+							"Mid": 3.465
+						}
+					},
+					{
+						"SpecUpType": "CrossPaintRadius",
+						"Value": {
+							"High": 2,
+							"Low": 2,
+							"Mid": 2
+						}
+					},
+					{
+						"SpecUpType": "CrossPaintCheckLength",
+						"Value": {
+							"High": 3,
+							"Low": 3,
+							"Mid": 3
+						}
+					}
+				],
+				"DistanceDamage@5.0.0": [
+					{
+						"Damage": 1500,
+						"Distance": 1.1
+					},
+					{
+						"Damage": 500,
+						"Distance": 2.1
+					},
+					{
+						"Damage": 300,
+						"Distance": 5
+					}
+				]
+			},
+			"spl__BulletSpMultiMissileDamageParam": {},
+			"spl__BulletSpMultiMissileMoveParam": {
+				"RiseParam": {
+					"RiseBaseSpeedComeUnderRate": 0.9
+				},
+				"TargetParam": {
+					"MultiTargetCircleArray": [
+						{
+							"Num": 0,
+							"RandomOffset": 4,
+							"RandomOffsetBias": 0.3
+						}
+					],
+					"OneTargetCircleArray": [
+						{
+							"Num": 1,
+							"Radius": 0,
+							"RandomOffset": 0
+						},
+						{
+							"Num": 9,
+							"Radius": 3,
+							"RandomOffset": 0.5,
+							"RandomOffsetBias": 0.35
+						},
+						{
+							"Radius": 5,
+							"RandomOffset": 0.5,
+							"RandomOffsetBias": 0.35
+						}
+					]
+				}
+			},
+			"spl__WeaponSpMultiMissileLaunchParam": {
+				"ShotIntervalTargetArray": [4],
+				"ShotNumOneTargetArray": [10, 5, 4]
+			},
+			"spl__WeaponSpMultiMissileLockOnParam": {
+				"TargetCircleEffectDefaultRadius": 9.3,
+				"TargetInCircleRadius": {
+					"High": 240,
+					"Low": 140,
+					"Mid": 190
+				}
+			},
+			"spl__WeaponSpMultiMissilePlayerParam": {
+				"JumpVelLimitSearching": 0.06,
+				"MoveVelLimitSearching": 0.048
+			}
+		},
+		"5": {
+			"CloudParam": {
+				"DamageRadius": 10,
+				"NoPaintRainNum": 0,
+				"RainNum": 72,
+				"RainyFrame": {
+					"High": 600,
+					"Low": 480,
+					"Mid": 540
+				},
+				"WithNoPaintRainNum": 120
+			},
+			"MoveParam": {
+				"GuideHitCollisionType": "InkStorm",
+				"SpawnSpeedY": 0.24,
+				"SpawnSpeedYWorldMin": -0.4,
+				"SpawnSpeedZSpecUp": {
+					"High": 1.68,
+					"Low": 1.12,
+					"Mid": 1.4
+				},
+				"GuideHitCollisionType@1.0.0": "EnemyOffFenceOn",
+				"GuideHitCollisionType@0.9.9": "InkStorm"
+			},
+			"RainParam": {
+				"CollisionParam": {
+					"EndRadiusForField": 0.25,
+					"EndRadiusForPlayer": 0,
+					"InitRadiusForField": 0.25,
+					"InitRadiusForPlayer": 0
+				},
+				"MoveParam": {
+					"BrakeAirResist": 0,
+					"BrakeGravity": 0,
+					"BrakeToFreeStateFrame": 0,
+					"BrakeToFreeVelocityXZ": 0,
+					"BrakeToFreeVelocityY": 0,
+					"FreeAirResist": 0.07,
+					"FreeGravity": 0.02,
+					"GoStraightStateEndMaxSpeed": 0,
+					"GoStraightToBrakeStateFrame": 0,
+					"SpawnSpeed": 0
+				}
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 1.6,
+				"YMax": 0.16,
+				"YPlusRate": 4
+			}
+		},
+		"6": {
+			"BlastParam": {
+				"CrossPaintCheckLength": 1.5,
+				"CrossPaintRadius": 1.5,
+				"DamageOffsetY": -0.2,
+				"DamageRadiusEnd": 12.6,
+				"KnockBackParam": {
+					"Accel": 93.333,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"PaintOffsetY": 0.3,
+				"PaintRadiusEnd": 13.5,
+				"PaintRotateDegree": 8.5,
+				"PaintSpanFrame": 6
+			},
+			"FootSplashParam": {
+				"PaintRadius": 4.68
+			},
+			"MoveParam": {
+				"FlyGravity": 0.021,
+				"FlyPositionAirResist": 0.045,
+				"GuideHitCollisionType": "NiceBall",
+				"SpawnSpeedYWorldMin": -0.4,
+				"SpawnSpeedZSpecUp": {
+					"High": 1,
+					"Low": 1,
+					"Mid": 1
+				}
+			},
+			"WeaponParam": {
+				"ArmorHP": 4700,
+				"ChargeRateAutoPerFrame": {
+					"High": 0.01,
+					"Low": 0.002,
+					"Mid": 0.006
+				},
+				"ChargeRateNiceFriend": [0.088, 0.044, 0.022, 0.011],
+				"ChargeRateNiceSelf": 0.077,
+				"ThanksPaintPointMax": 15,
+				"ThanksPaintPointOnce": [6, 3, 2, 1, 0.5],
+				"ChargeRateNiceFriend@9.1.0": [0.08, 0.04, 0.02, 0.01]
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 0,
+				"YMinusRate": 0,
+				"YPlusRate": 0,
+				"ZRate": 0
+			}
+		},
+		"7": {
+			"spl__BulletInformImpactControlForGeyserParam": {
+				"AddSpeedPerImpact": 0.06
+			},
+			"spl__BulletSpShockSonarParam": {
+				"GeneratorParam": {
+					"HeadColRadius": 0.75,
+					"HitDamage": 300,
+					"HitDamageInterval": 0.5,
+					"HitKnockback": 400,
+					"MarkingFrame": 45,
+					"MarkingGroundFrameRadiusRatio": [
+						{
+							"Frame": 4,
+							"Ratio": 0.19
+						},
+						{
+							"Frame": 10,
+							"Ratio": 0.4
+						},
+						{
+							"Frame": 18,
+							"Ratio": 0.615
+						},
+						{
+							"Frame": 27,
+							"Ratio": 0.615
+						},
+						{
+							"Frame": 37,
+							"Ratio": 0.615
+						},
+						{
+							"Frame": 47,
+							"Ratio": 0.615
+						},
+						{
+							"Frame": 57,
+							"Ratio": 0.615
+						}
+					],
+					"MaxHP": 4800,
+					"MoveParam": {
+						"FlyGravity": 0.009,
+						"FlyPositionAirResist": 0.001,
+						"GuideHitCollisionType": "Clam",
+						"SpawnSpeedY": 0.07,
+						"SpawnSpeedYWorldMin": -0.5,
+						"SpawnSpeedZSpecUp": {
+							"High": 0.3,
+							"Low": 0.3,
+							"Mid": 0.3
+						}
+					},
+					"PoleColHeight": 2.75,
+					"SphereAnimCurve": {
+						"Data": [
+							0, 0, 0, 0.1454545, 0, 0, 0.901515, 1, -0.1383645, 1, 0, 0
+						],
+						"MaxX": 1,
+						"Type": "Hermit2DSmooth"
+					},
+					"SphereAnimRadius": 0.3,
+					"WaveEmitFrameArray": [90, 240, 390]
+				},
+				"WaveParam": {
+					"Damage": 450,
+					"DamageYMax": 2.8,
+					"DamageYMin": -5.2,
+					"MaxFrame": {
+						"High": 216,
+						"Low": 160,
+						"Mid": 192
+					},
+					"MaxRadius": {
+						"High": 27,
+						"Low": 20,
+						"Mid": 24
+					}
+				}
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 0,
+				"YPlusRate": 0,
+				"ZRate": 0
+			},
+			"spl__WeaponSpShockSonarParam": {
+				"ShotParam": {}
+			}
+		},
+		"8": {
+			"ExhaleBlastParamMaxCharge": {
+				"CrossPaintCheckLength": 6,
+				"CrossPaintRadius": 9,
+				"DamageOffsetY": 0.5,
+				"DistanceDamage": [
+					{
+						"Damage": 2200,
+						"Distance": 11
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 700,
+					"Bias": 0.8,
+					"Distance": 9
+				},
+				"PaintOffsetY": 0.5,
+				"PaintRadius": 11,
+				"DistanceDamage@10.0.0": [
+					{
+						"Damage": 2200,
+						"Distance": 10
+					}
+				],
+				"DistanceDamage@4.0.0": [
+					{
+						"Damage": 2200,
+						"Distance": 8
+					}
+				],
+				"DistanceDamage@1.2.0": [
+					{
+						"Damage": 1200,
+						"Distance": 8
+					}
+				],
+				"PaintRadius@10.0.0": 10,
+				"PaintRadius@4.0.0": 8
+			},
+			"ExhaleBlastParamMinCharge": {
+				"CrossPaintCheckLength": 6,
+				"CrossPaintRadius": 5.5,
+				"DamageOffsetY": 0.5,
+				"DistanceDamage": [
+					{
+						"Damage": 2200,
+						"Distance": 6
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 700,
+					"Bias": 0.8,
+					"DirectionZeroAccelRate": 0,
+					"Distance": 9
+				},
+				"PaintOffsetY": 0.5,
+				"PaintRadius": 6,
+				"DistanceDamage@4.0.0": [
+					{
+						"Damage": 2200,
+						"Distance": 4
+					}
+				],
+				"DistanceDamage@1.2.0": [
+					{
+						"Damage": 1200,
+						"Distance": 4
+					}
+				],
+				"PaintRadius@4.0.0": 4
+			},
+			"ExhaleCollisionParam": {
+				"RadiusForPlayerMinCharge": 0.4
+			},
+			"ExhaleParam": {
+				"DirectAccel": 200,
+				"DirectDamage": 2200,
+				"FlyGravity": 0.003,
+				"FlyPositionAirResist": 0.01,
+				"GuideHitCollisionType": "BlowerExhale",
+				"GuideRadius": 0.25,
+				"PaintRadiusMaxCharge": 3.2,
+				"PaintRadiusMinCharge": 2.4,
+				"SpawnBlastWaitFrame": 50,
+				"SpawnSpeedY": 0.08,
+				"SpawnSpeedYMaxCharge": 0.08,
+				"SpawnSpeedZMaxCharge": 0.7,
+				"SpawnSpeedZSpecUp": {
+					"High": 0.55,
+					"Low": 0.55,
+					"Mid": 0.55
+				}
+			},
+			"ExhaleSplashPaintSpawnParam": {},
+			"InhaleParam": {
+				"CollisionAccelRateNearest": 2,
+				"CollisionAccelRatePerDist": 0.01,
+				"CollisionAirResist": 0.12,
+				"CollisionAirResistMaxNum": 2,
+				"CollisionAirResistNum0": 0.02,
+				"DamagePerFrameByObject": 20,
+				"EffectRingSpanFrame": 56,
+				"EffectRingSpeed": {
+					"Data": [
+						0, 0.55, 0.1832544, 0.0637774, 0.5, 0, 0.4208998, 0.219, 0, 1,
+						0.219, 0
+					],
+					"MaxX": 1,
+					"Type": "Hermit2D"
+				},
+				"EffectScalePerCollision": {
+					"Data": [0, 0.28, 2.329197, 0.440625, 1, 0, 1, 1, 0],
+					"MaxX": 1,
+					"Type": "Hermit2D"
+				},
+				"EffectSpanForGeyser": 10,
+				"EffectSpeed": 2,
+				"LengthAddPerFrame": 0.3334,
+				"LengthMax": 15,
+				"MuzzleCollisionOffset": 1,
+				"MuzzleCollisionRadius": 1.2,
+				"PaintSplashParam": {
+					"DepthMaxDropHeight": 1,
+					"DepthMinDropHeight": 1,
+					"DepthScaleMax": 2,
+					"DepthScaleMin": 2,
+					"WidthHalf": 1.5,
+					"WidthHalfNearest": 1.5
+				},
+				"PaintSplashSpanFrame": 20,
+				"PaintSplashSpawnOffset": {
+					"X": -0.3,
+					"Y": -0.7,
+					"Z": -0.7
+				},
+				"PoisonMistForPlayer": {
+					"EffectFrame": 5,
+					"Level": [
+						{},
+						{
+							"NextLevelCount": 4
+						},
+						{
+							"Frame": 15,
+							"NextLevelCount": 0
+						}
+					],
+					"SideStepInkConsumeRate": 3.5,
+					"SpecialWeapon": true
+				},
+				"RadiusMax": {
+					"High": 4.3,
+					"Low": 3.3,
+					"Mid": 3.8,
+					"High@3.0.0": 4,
+					"Low@3.0.0": 3,
+					"Mid@3.0.0": 3.5
+				},
+				"RadiusMin": {
+					"High": 1.4,
+					"Low": 0.8,
+					"Mid": 1.1
+				},
+				"ReceiveDamageForGeyser": 10,
+				"ReceiveDamageForPlayer": 15
+			},
+			"WeaponParam": {
+				"ExhaleWaitFrame": 150,
+				"InhaleToExhaleWaitFrame": 20,
+				"JumpHeightFullCharge": 0.07,
+				"JumpHeightMinCharge": 0.115,
+				"JumpVelExhale": 0.07,
+				"MoveJumpDownBias": 1,
+				"MoveJumpDownStartChargeRate": 0.1,
+				"MoveSpeedFullCharge": 0.07,
+				"MoveSpeedMinCharge": 0.09,
+				"ShotDirXZ_RotDegH": 2,
+				"ShotPitVel": 0.15
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 0.1,
+				"YPlusRate": 0.5,
+				"ZRate": 0.5
+			}
+		},
+		"9": {
+			"spl__BulletSpMicroLaserBitParam": {
+				"ChargeParam": {
+					"ChargeFrame": 36,
+					"InterpRate": 0.4,
+					"MaxAngularVel": 30,
+					"MaxAngularVelChargeStateNoTgt": 1.5
+				},
+				"FollowParam": {
+					"LockonEndFrame": 15
+				},
+				"LaserParam": {
+					"AfterLaserWaitFrame": 20,
+					"FreeMoveRotSpeed": 0.3,
+					"LaserDamage": 35,
+					"LaserDamageIntervalFrame": 5,
+					"LaserFrame": {
+						"High": 240,
+						"Low": 180,
+						"Mid": 220,
+						"Mid@2.1.0": 210
+					},
+					"LaserDamage@5.0.0": 30
+				}
+			},
+			"spl__WeaponSpMicroLaserParam": {
+				"LaunchParam": {
+					"EnableDualLaunch": true,
+					"LaserBitCenterOffset": {
+						"X": 0,
+						"Y": 1.7,
+						"Z": -0.6
+					},
+					"LaserBitRadius": 1.3,
+					"LockonDeg": 80,
+					"LockonRadius": 10
+				},
+				"PlayerParam": {
+					"AfterShot_NoBombFrm": 40,
+					"AfterShot_NoShotFrm": 40,
+					"AfterShot_NoSquidFrm": 40
+				}
+			}
+		},
+		"10": {
+			"BlastParam": {
+				"CrossPaintCheckLength": 0,
+				"CrossPaintRadius": 0,
+				"DistanceDamage": [
+					{
+						"Damage": 500,
+						"Distance": 2.55
+					},
+					{
+						"Damage": 300,
+						"Distance": 5
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 470,
+					"Bias": 0.6,
+					"Distance": 8
+				},
+				"PaintRadius": 3.2,
+				"SplashAroundParam": {
+					"Num": 10,
+					"OffsetY": 0.3,
+					"PaintRadius": 0.63,
+					"PitchMax": 30,
+					"PitchMin": 5,
+					"VelocityMax": 0.33,
+					"VelocityMin": 0.49
+				},
+				"SubSpecialSpecUpList": [
+					{
+						"Value": {
+							"High": 4,
+							"Low": 3.2,
+							"Mid": 3.6
+						}
+					},
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.3,
+							"Low": 1,
+							"Mid": 1.15
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMin",
+						"Value": {
+							"High": 0.52,
+							"Low": 0.49,
+							"Mid": 0.505
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMax",
+						"Value": {
+							"High": 0.35,
+							"Low": 0.33,
+							"Mid": 0.34
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundPaintRadius",
+						"Value": {
+							"High": 0.7,
+							"Low": 0.63,
+							"Mid": 0.665
+						}
+					}
+				],
+				"DistanceDamage@4.0.0": [
+					{
+						"Damage": 500,
+						"Distance": 3
+					},
+					{
+						"Damage": 300,
+						"Distance": 5
+					}
+				],
+				"DistanceDamage@3.0.0": [
+					{
+						"Damage": 500,
+						"Distance": 2.1
+					},
+					{
+						"Damage": 300,
+						"Distance": 5
+					}
+				]
+			},
+			"JetParam": {},
+			"LauncherCollisionParam": {
+				"ChangeFrameForField": 0,
+				"ChangeFrameForPlayer": 0,
+				"EndRadiusForField": 0.3,
+				"EndRadiusForPlayer": 0.3,
+				"FriendThroughFrameForPlayer": 1000,
+				"InitRadiusForField": 0.3,
+				"InitRadiusForPlayer": 0.3
+			},
+			"MoveParam": {
+				"Distance": 30
+			},
+			"WeaponParam": {
+				"Boost_JumpVel": 0.3,
+				"SpecialTotalFrame": {
+					"High": 510,
+					"Low": 450,
+					"Mid": 480
+				}
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 0,
+				"YMax": 100,
+				"YMinusRate": 0,
+				"YPlusRate": 0,
+				"ZRate": 0
+			}
+		},
+		"11": {
+			"SwingBigBlastParam": {
+				"CrossPaintCheckLength": 0,
+				"CrossPaintRadius": 0,
+				"DamageAttackerPriority": true,
+				"DamageOffsetY": 0.2,
+				"DistanceDamage": [
+					{
+						"Damage": 400,
+						"Distance": 4
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 460,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"PaintOffsetY": 0,
+				"PaintRadius": 0,
+				"DistanceDamage@3.0.0": [
+					{
+						"Damage": 400,
+						"Distance": 2.8
+					}
+				]
+			},
+			"SwingBulletWallParam": {},
+			"SwingParam": {
+				"DefiladeHandSideOffsetLength": 0.1,
+				"StateSwingUpLateFrame": 2
+			},
+			"SwingSmallBlastParam": {
+				"CrossPaintCheckLength": 0,
+				"CrossPaintRadius": 0,
+				"DamageAttackerPriority": true,
+				"DamageOffsetY": 0.2,
+				"DistanceDamage": [
+					{
+						"Damage": 400,
+						"Distance": 4
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 460,
+					"Bias": 0.8,
+					"Distance": 6
+				},
+				"PaintOffsetY": 0,
+				"PaintRadius": 0,
+				"DistanceDamage@3.0.0": [
+					{
+						"Damage": 400,
+						"Distance": 2.8
+					}
+				]
+			},
+			"SwingWallDropCollisionPaintParam": {
+				"PaintRadiusGround": 0.5
+			},
+			"SwingWallDropMoveParam": {
+				"FallPeriodFirstFrameMax": 70,
+				"FallPeriodFirstFrameMin": 50,
+				"FallPeriodLastFrameMax": 35,
+				"FallPeriodLastFrameMin": 20,
+				"FallPeriodSecondFrame": 5,
+				"FallPeriodSecondTargetSpeed": 0.08
+			},
+			"ThrowBlastParam": {
+				"CrossPaintCheckLength": 2.5,
+				"CrossPaintRadius": 2.5,
+				"DistanceDamage": [
+					{
+						"Damage": 2200,
+						"Distance": 3.6
+					},
+					{
+						"Damage": 600,
+						"Distance": 8
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 460,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"PaintRadius": 5,
+				"DistanceDamage@11.0.1": [
+					{
+						"Damage": 2200,
+						"Distance": 4
+					},
+					{
+						"Damage": 600,
+						"Distance": 8
+					}
+				],
+				"DistanceDamage@9.2.0": [
+					{
+						"Damage": 600,
+						"Distance": 4
+					},
+					{
+						"Damage": 300,
+						"Distance": 8
+					}
+				]
+			},
+			"ThrowMoveParam": {
+				"DirectAccel": 200,
+				"DirectDamageValue": 2200,
+				"FlyGravity": 0.013,
+				"FlyPositionAirResist": 0.03,
+				"GuideHitCollisionType": "ThrowUltraStamp",
+				"GuideRadius": 1.1,
+				"SpawnSpeedY": 0.17,
+				"SpawnSpeedYWorldMin": -0.4,
+				"SpawnSpeedZSpecUp": {
+					"High": 0.85,
+					"Low": 0.85,
+					"Mid": 0.85
+				}
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 0,
+				"YPlusRate": 0,
+				"ZRate": 0
+			},
+			"spl__WeaponSpUltraStampParam": {
+				"BangDownSmall_TurnLimitAngleDeg": 6,
+				"BangDown_VelLimitY": 0.14,
+				"HoldSwingKnockBackParam": {
+					"Accel": 500,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"SpecialTotalFrame": {
+					"High": 660,
+					"Low": 450,
+					"Mid": 570,
+					"Low@3.1.0": 540,
+					"Mid@3.1.0": 600
+				},
+				"VelLimit_NoPaint": 0.144
+			}
+		},
+		"12": {
+			"AdditionMovePlayerParam": {
+				"ZRate": 2
+			},
+			"BodyParam": {
+				"CollisionRadiusForField": 1.15,
+				"CollisionRadiusForPlayer": 1.45,
+				"KnockBackChariotPlayer": {
+					"AccelMax": 720,
+					"AccelMin": 480,
+					"MyVelocityRate": 4800,
+					"OpponentVelocityRate": 300
+				},
+				"KnockBackOpponent": {
+					"AccelMax": 720,
+					"AccelMin": 480,
+					"MyVelocityRate": 5400,
+					"OpponentVelocityRate": 300
+				}
+			},
+			"CannonParam": {
+				"BlastParam": {
+					"CrossPaintCheckLength": 0,
+					"CrossPaintRadius": 0,
+					"DamageOffsetY": 0.2,
+					"DistanceDamage": [
+						{
+							"Damage": 300,
+							"Distance": 4.8
+						}
+					],
+					"KnockBackParam": {
+						"Accel": 470,
+						"Bias": 0.8,
+						"Distance": 5
+					},
+					"PaintOffsetY": 0.2,
+					"PaintRadius": 4.5,
+					"DistanceDamage@11.1.0": [
+						{
+							"Damage": 300,
+							"Distance": 5.6
+						}
+					]
+				},
+				"CollisionParam": {
+					"ChangeFrameForField": 4,
+					"ChangeFrameForPlayer": 5,
+					"EndRadiusForField": 0.25,
+					"EndRadiusForPlayer": 0.4,
+					"FriendThroughFrameForPlayer": 1000,
+					"InitRadiusForField": 0.1,
+					"InitRadiusForPlayer": 0.04
+				},
+				"DirectDamage": 500,
+				"DrawSize": 0.7,
+				"MoveParam": {
+					"BrakeAirResist": 0.1,
+					"BrakeGravity": 0.04,
+					"BrakeToFreeStateFrame": 1,
+					"BrakeToFreeVelocityXZ": 20,
+					"BrakeToFreeVelocityY": 10,
+					"FreeAirResist": 0.12,
+					"FreeGravity": 0.05,
+					"GoStraightToBrakeStateFrame": 8
+				},
+				"SplashParam": {
+					"DrawSizeCollisionPaintParam": {
+						"CollisionParam": {
+							"EndRadiusForField": 0.15,
+							"EndRadiusForPlayer": 0,
+							"InitRadiusForField": 0.15,
+							"InitRadiusForPlayer": 0
+						},
+						"DrawRadius": 0.1,
+						"PaintDepthScale": 2,
+						"PaintWidthHalf": 1.12
+					},
+					"SpawnParam": {
+						"SpawnBetweenLength": 3.1,
+						"SpawnNum": 10
+					}
+				}
+			},
+			"ShooterCollisionParam": {
+				"ChangeFrameForField": 0,
+				"EndRadiusForField": 0.2,
+				"EndRadiusForPlayer": 0.2,
+				"FriendThroughFrameForPlayer": 0,
+				"InitRadiusForField": 0.2,
+				"InitRadiusForPlayer": 0.2
+			},
+			"ShooterDamageParam": {
+				"ReduceEndFrame": 25,
+				"ReduceStartFrame": 9,
+				"ValueMax": 320,
+				"ValueMin": 160
+			},
+			"ShooterMoveParam": {
+				"FreeGravity": 0.016,
+				"GoStraightStateEndMaxSpeed": 2.232,
+				"GoStraightToBrakeStateFrame": 7,
+				"SpawnSpeed": 3.36
+			},
+			"ShooterPaintParam": {
+				"DistanceMiddle": 1.1,
+				"WidthHalfFar": 1.5,
+				"WidthHalfMiddle": 1.6,
+				"WidthHalfNear": 1.6
+			},
+			"ShooterSplashPaintParam": {
+				"DepthMaxDropHeight": 3,
+				"DepthMinDropHeight": 10,
+				"WidthHalf": 1,
+				"WidthHalfNearest": 2.016
+			},
+			"ShooterSplashSpawnParam": {
+				"ForceSpawnNearestAddNumArray": [],
+				"SpawnBetweenLength": 10,
+				"SpawnNearestLength": 1,
+				"SpawnNum": 2.5,
+				"SplitNum": 8
+			},
+			"ShooterWallDropCollisionPaintParam": {
+				"PaintRadiusFall": 0.65,
+				"PaintRadiusGround": 0.6,
+				"PaintRadiusShock": 1.3
+			},
+			"ShooterWallDropMoveParam": {
+				"FallPeriodFirstFrameMax": 40,
+				"FallPeriodFirstFrameMin": 20,
+				"FallPeriodFirstTargetSpeed": 0.06,
+				"FallPeriodLastFrameMax": 35,
+				"FallPeriodLastFrameMin": 15,
+				"FallPeriodSecondFrame": 10,
+				"FallPeriodSecondTargetSpeed": 0.06,
+				"FreeGravityType": "value_0_008"
+			},
+			"WeaponSpChariotParam": {
+				"ArmorHP": 5000,
+				"ArmorHP_BreakScissors": 2500,
+				"CannonNoShotFrame": 32,
+				"MoveSpeedCoef_Squid": 0.6,
+				"MoveSpeedX": 0.075,
+				"MoveSpeedX_SpongeEnemy": 0.024,
+				"MoveSpeedZ": 0.015,
+				"MoveSpeedZ_SpongeEnemy": 0.0048,
+				"NoShotBombReqFrm_FinishSpecial": 25,
+				"PreDelayFrm_Squid_ShotBomb": 20,
+				"RotDegLmt_ToHumanFrm": 20,
+				"ShooterRepeatFrame_Bias": 0.2,
+				"ShooterRepeatFrame_First": 12,
+				"ShooterRepeatFrame_Term": 90,
+				"ShotGuideCannonFrame": 0,
+				"ShotPitVelLmt": 0.015,
+				"SpecialTotalFrame": {
+					"High": 660,
+					"Low": 480,
+					"Mid": 570,
+					"Low@2.0.0": 540,
+					"Mid@2.0.0": 600
+				},
+				"StartDelayFrame_Cannon": 20,
+				"StartDelayFrame_Shooter": 20
+			},
+			"spl__BulletShooterTailLengthParam": {
+				"DelayShotFrame": 4,
+				"EndMaxLength": 2
+			},
+			"spl__PaintMonitorSetParam": {
+				"RelabilityMinTime": 0
+			}
+		},
+		"13": {
+			"BulletBlastParam": {
+				"DamageOffsetY": 0.6,
+				"DistanceDamage": [
+					{
+						"Damage": 2200,
+						"Distance": 9
+					},
+					{
+						"Damage": 700,
+						"Distance": 14.9
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 700,
+					"Bias": 0.8,
+					"Distance": 12
+				},
+				"PaintRadius": 0,
+				"PaintTexture": "Bomb00",
+				"SplashAroundParam": {
+					"Num": 15,
+					"OffsetY": 0.3,
+					"PaintRadius": 0,
+					"PitchMax": 30,
+					"VelocityMax": 0,
+					"VelocityMin": 0
+				},
+				"SubSpecialSpecUpList": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					},
+					{
+						"SpecUpType": "PaintRadius",
+						"Value": {
+							"High": 9.012,
+							"Low": 7.51,
+							"Mid": 8.26
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMin",
+						"Value": {
+							"High": 0.7,
+							"Low": 0.6,
+							"Mid": 0.65
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMax",
+						"Value": {
+							"High": 0.8,
+							"Low": 0.7,
+							"Mid": 0.75
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundPaintRadius",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					}
+				],
+				"DamageOffsetY@10.1.0": 0,
+				"DistanceDamage@10.1.0": [
+					{
+						"Damage": 2200,
+						"Distance": 7.5
+					},
+					{
+						"Damage": 700,
+						"Distance": 14.9
+					}
+				],
+				"DistanceDamage@8.0.0": [
+					{
+						"Damage": 2200,
+						"Distance": 7.5
+					},
+					{
+						"Damage": 700,
+						"Distance": 13.5
+					}
+				],
+				"DistanceDamage@3.0.0": [
+					{
+						"Damage": 2200,
+						"Distance": 7.5
+					},
+					{
+						"Damage": 600,
+						"Distance": 11.5
+					}
+				],
+				"DistanceDamage@1.2.0": [
+					{
+						"Damage": 1800,
+						"Distance": 7.5
+					},
+					{
+						"Damage": 600,
+						"Distance": 11.5
+					}
+				],
+				"SubSpecialSpecUpList@10.1.0": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					},
+					{
+						"SpecUpType": "PaintRadius",
+						"Value": {
+							"High": 9.69,
+							"Low": 8.075,
+							"Mid": 8.882
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMin",
+						"Value": {
+							"High": 0.7,
+							"Low": 0.6,
+							"Mid": 0.65
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMax",
+						"Value": {
+							"High": 0.8,
+							"Low": 0.7,
+							"Mid": 0.75
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundPaintRadius",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					}
+				],
+				"SubSpecialSpecUpList@8.0.0": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					},
+					{
+						"SpecUpType": "PaintRadius",
+						"Value": {
+							"High": 10.2,
+							"Low": 8.5,
+							"Mid": 9.35
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMin",
+						"Value": {
+							"High": 0.7,
+							"Low": 0.6,
+							"Mid": 0.65
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMax",
+						"Value": {
+							"High": 0.8,
+							"Low": 0.7,
+							"Mid": 0.75
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundPaintRadius",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					}
+				],
+				"SubSpecialSpecUpList@3.0.0": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					},
+					{
+						"SpecUpType": "PaintRadius",
+						"Value": {
+							"High": 8.4,
+							"Low": 7,
+							"Mid": 7.7
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMin",
+						"Value": {
+							"High": 0.6,
+							"Low": 0.5,
+							"Mid": 0.55
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundVelocityMax",
+						"Value": {
+							"High": 0.7,
+							"Low": 0.6,
+							"Mid": 0.65
+						}
+					},
+					{
+						"SpecUpType": "SplashAroundPaintRadius",
+						"Value": {
+							"High": 1.2,
+							"Low": 1,
+							"Mid": 1.1
+						}
+					}
+				]
+			},
+			"BulletParam": {
+				"CollisionRadiusForPlayer": 0.8,
+				"DamageValue": 2200,
+				"KnockBackLen": 250,
+				"DamageValue@1.2.0": 1800
+			},
+			"WeaponParam": {
+				"ChargeFrame": 0,
+				"Distance_Afterglow": 5,
+				"GravityKf": 1.2,
+				"MoveAcc": 0.031,
+				"MoveBrk": 0.031,
+				"MoveCancelableFrame": 15,
+				"MoveFrame": 54,
+				"MoveFrameOmen": 27,
+				"MoveRotDeg": 0.5,
+				"MoveSpeed": 0.405,
+				"MoveSpeed_Aerial": 0.22,
+				"NoDamageFrame_AfterBurst": 28,
+				"NoDamageStartFrame_PreMove": 25,
+				"OffsetLocal_DetectPlayer": {
+					"X": 0,
+					"Y": 0.8,
+					"Z": 1
+				},
+				"PaintSplashParam": {
+					"DepthMaxDropHeight": 1,
+					"DepthMinDropHeight": 1,
+					"DepthScaleMax": 1.8,
+					"DepthScaleMin": 1.8,
+					"WidthHalf": 3,
+					"WidthHalfNearest": 3
+				},
+				"PaintSplashSpanFrame": 3,
+				"PreBurstEmitFrame": 15,
+				"PreBurstFrame": 38,
+				"PreMoveFrame": 38,
+				"Radius_DetectPlayer": 1,
+				"RutPaintRadius": 1.2,
+				"UnrelaxFrame": 28,
+				"MoveFrame@10.1.0": 60,
+				"MoveSpeed@10.1.0": 0.45
+			}
+		},
+		"14": {
+			"BlastParam": {
+				"DamageHeightUp": 20,
+				"DamageRadiusEnd": 7.7,
+				"DamageValueEnd": 75,
+				"DamageValueStart": 75,
+				"KnockBackParam": {
+					"Accel": 93.333,
+					"Bias": 0.8,
+					"Distance": 8
+				},
+				"PaintRadiusEnd": 7,
+				"PaintRadiusStart": 0.5,
+				"PaintRotateDegree": 8.5,
+				"PaintSpanFrame": 2,
+				"RadiusSpreadFrame": 50,
+				"DamageRadiusEnd@2.0.0": 7,
+				"DamageValueEnd@2.0.0": 50,
+				"PaintRadiusEnd@1.0.0": 6,
+				"PaintRadiusEnd@0.9.9": 7
+			},
+			"MissileParam": {
+				"UseDirect": false,
+				"XZBias": 0.8
+			},
+			"MotherParam": {
+				"TargetHeight": 150
+			},
+			"MoveParam": {
+				"GuideHitCollisionType": "TripleTornadoGuideDevice",
+				"SpawnSpeedY": 0.276,
+				"SpawnSpeedYWorldMin": -0.4,
+				"SpawnSpeedZSpecUp": {
+					"High": 2.6,
+					"Low": 2,
+					"Mid": 2.3
+				}
+			},
+			"WeaponParam": {
+				"SpecialTotalFrame": 360
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 1.6,
+				"YMax": 0.16,
+				"YPlusRate": 4
+			}
+		},
+		"15": {
+			"FridgeParam": {
+				"PowerUpFrame": {
+					"High": 1500,
+					"Low": 1020,
+					"Mid": 1290,
+					"Low@3.1.0": 900,
+					"Mid@3.1.0": 1200
+				},
+				"PutFrame": 900,
+				"PutFrameOnYagura": 450,
+				"ServeAreaHeightDown": 0,
+				"ServeAreaHeightUp": 3,
+				"ServeAreaRadius": 7,
+				"VanishDistance": 1.8,
+				"ServeAreaRadius@3.0.0": 3.5
+			},
+			"MoveParam": {
+				"CanPlaceBoundDegree": 30,
+				"CanPlaceBoundVel": 0.09,
+				"CanPlaceCheckLength1": 0,
+				"CanPlaceCheckLength2": 0,
+				"CanPlaceHeight": 1,
+				"FlyGravity": 0.009,
+				"FlyHitDeg50WallReboundMaxRt": 0.4,
+				"FlyHitVerticalWallReboundMaxRt": 0.3,
+				"FlyHitWallPitchToPlane": 5,
+				"FlyHitWallReboundResetFrame": 12,
+				"FlyPositionAirResist": 0.001,
+				"GuideHitCollisionType": "EnemyOffFenceOnBlowerOffShieldOff",
+				"GuideRadius": 1.35,
+				"SpawnSpeedY": 0.07,
+				"SpawnSpeedYWorldMin": -0.5,
+				"SpawnSpeedZSpecUp": {
+					"High": 0.4,
+					"Low": 0.4,
+					"Mid": 0.4,
+					"High@3.0.0": 0.3,
+					"Low@3.0.0": 0.3,
+					"Mid@3.0.0": 0.3
+				}
+			},
+			"WeaponParam": {
+				"SpecialReduceFrame": 600,
+				"SpecialReduceFrame@4.1.0": 450
+			},
+			"spl__BulletInformImpactControlForGeyserParam": {
+				"AddSpeedPerImpact": 0.03
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 0,
+				"YMax": 100,
+				"YPlusRate": 0,
+				"ZRate": 0
+			}
+		},
+		"16": {
+			"IceParam": {
+				"BlastParam": {
+					"CrossPaintCheckLength": 2.5,
+					"CrossPaintRadius": 2.5,
+					"DamageOffsetY": 0.1,
+					"DistanceDamage": [
+						{
+							"Damage": 700,
+							"Distance": 3.6
+						},
+						{
+							"Damage": 350,
+							"Distance": 6
+						}
+					],
+					"KnockBackParam": {
+						"Accel": 700,
+						"Bias": 0.8,
+						"Distance": 12
+					},
+					"PaintHeight": 4,
+					"PaintOffsetY": 0.1,
+					"PaintRadius": 3.5,
+					"SplashAroundParam": {
+						"PaintRadius": 1.116,
+						"PitchMax": 45,
+						"VelocityMax": 0.64
+					},
+					"SubSpecialSpecUpList": [
+						{
+							"Value": {
+								"High": 4.1,
+								"Low": 3.5,
+								"Mid": 3.8
+							}
+						},
+						{
+							"SpecUpType": "CrossPaintCheckLength",
+							"Value": {
+								"High": 3,
+								"Low": 2.5,
+								"Mid": 2.75
+							}
+						},
+						{
+							"SpecUpType": "CrossPaintRadius",
+							"Value": {
+								"High": 3,
+								"Low": 2.5,
+								"Mid": 2.75
+							}
+						},
+						{
+							"SpecUpType": "DistanceDamageDistanceRate",
+							"Value": {
+								"High": 1.2,
+								"Low": 1,
+								"Mid": 1.1
+							}
+						}
+					],
+					"DistanceDamage@4.0.0": [
+						{
+							"Damage": 600,
+							"Distance": 2.6
+						},
+						{
+							"Damage": 350,
+							"Distance": 3.8
+						},
+						{
+							"Damage": 350,
+							"Distance": 5
+						}
+					],
+					"DistanceDamage@3.1.0": [
+						{
+							"Damage": 600,
+							"Distance": 2.6
+						},
+						{
+							"Damage": 350,
+							"Distance": 3.8
+						},
+						{
+							"Damage": 250,
+							"Distance": 5
+						}
+					]
+				},
+				"BurstFrame": 210,
+				"CollisionRadius": 0.8,
+				"FlyingFrame": 108,
+				"GroundOffsetY": 0.9,
+				"HitPoint": 600,
+				"InitialScale": 0.1,
+				"PaintRadius": 2.8,
+				"RotateDegRatePerFrame": 0.994,
+				"ScaleResetFrame": 5,
+				"SpawnRotateDegMax": 4.5,
+				"SpawnRotateDegMin": 3,
+				"WarningAnimRestFrame": 140,
+				"WarningSERestFrame": 60,
+				"BurstFrame@8.0.0": 240
+			},
+			"PipeParam": {
+				"DepthRadius": 10,
+				"MinBetweenDistance": 5,
+				"TargetCenterBias": 0.3
+			},
+			"WeaponParam": {
+				"SpecialTotalFrame": 635,
+				"TargetCenterBias": 0.4,
+				"TargetCenterDistanceMax": 35,
+				"TargetCenterDistanceMin": 18,
+				"TargetCenterRadius": 3,
+				"TargetHeightCheckSpanFrame": 1,
+				"UseDistanceMinCameraDownRate": 0.25,
+				"UseDistanceMinCameraUpRate": 0.3,
+				"TargetCenterDistanceMin@3.1.0": 25
+			}
+		},
+		"17": {
+			"BodyParam": {
+				"CollisionAttackFrontOffset": 0.5,
+				"CollisionDashFrontOffset": 2.75,
+				"CollisionDashRadiusForPlayer": 1.5,
+				"CollisionJumpRadiusForPlayer": 2.65,
+				"CollisionPaintAttackFrontOffset": 0.5,
+				"CollisionPaintDashFrontOffset": 0.8,
+				"CollisionPaintOffFrontOffset": 0.3,
+				"CollisionRadiusForField": 1.15,
+				"CollisionUpperOffset": 0,
+				"DamageJumpValue": 600,
+				"DefiladeUpperOffset": 0.1,
+				"DefiladeYMinusLength": 0.2,
+				"PaintCheckUpperOffset": 0.4,
+				"PaintDepthScale": 1.2,
+				"PaintSpanFrame": 4,
+				"PaintWidthHalf": 1.2
+			},
+			"WeaponParam": {
+				"ColBullet_OffsetY": 0.25,
+				"ColBullet_OffsetZ_Head": 0.5,
+				"ColBullet_OffsetZ_Tail": -0.5,
+				"ColBullet_Radius": 1,
+				"Dash_ChargeCancelableFrame": 34,
+				"Dash_ChargeFrame": 35,
+				"Dash_InvalidFrame": 10,
+				"Dash_MoveFrame": 35,
+				"Dash_MoveSpeedCoef_Charged": 0.1,
+				"Dash_MoveSpeedCoef_Charging_Ed": 0.1,
+				"Dash_MoveSpeedCoef_Charging_St": 0.2,
+				"Dash_MoveSpeed_Floor_MaxCharge": 0.3,
+				"Dash_MoveSpeed_Floor_MinCharge": 0.3,
+				"Dash_MoveSpeed_Floor_NoPaint": 0.21,
+				"Dash_MoveSpeed_Wall_MaxCharge": 0.22,
+				"Dash_MoveSpeed_Wall_MinCharge": 0.22,
+				"DokanWarpLmtFrm_FinishSpecial": 60,
+				"FinishAlertStartFrame": 120,
+				"KnockBackKf_Charge_Ed": 1,
+				"KnockBackKf_Charge_Ed_Frm": 30,
+				"KnockBackKf_Charge_St": 3,
+				"KnockBackKf_Dash": 0,
+				"KnockBackKf_Std": 3,
+				"MoveSpeed": 0.192,
+				"NoShotBombFrm_FinishSpecial": 60,
+				"NoShotBombReqFrm_FinishSpecial": 40,
+				"SpecialTotalFrame": {
+					"High": 600,
+					"Low": 480,
+					"Mid": 540
+				},
+				"StartDelayFrame_NetRecv": 30,
+				"StartDelayFrame_NetSend": 60,
+				"StickDownRt_OnVLift": 2,
+				"Dash_ChargeCancelableFrame@8.0.0": 29,
+				"Dash_ChargeFrame@8.0.0": 30,
+				"MoveSpeed@5.0.0": 0.1728
+			}
+		},
+		"18": {
+			"BlastParamDokanWarp": {
+				"CrossPaintCheckLength": 6,
+				"CrossPaintRadius": 6,
+				"CrossPaintTexture": "SprLanding00",
+				"DistanceDamage": [
+					{
+						"Damage": 2200,
+						"Distance": 7
+					},
+					{
+						"Damage": 600,
+						"Distance": 10.5
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 420,
+					"Distance": 15
+				},
+				"PaintRadius": 9,
+				"PaintTexture": "SprLanding00",
+				"PlaneDamage": [
+					{
+						"Damage": 10000,
+						"Distance": -4.5
+					},
+					{
+						"Damage": 10000,
+						"Distance": 6.4
+					}
+				],
+				"SubSpecialSpecUpList": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.1,
+							"Low": 1,
+							"Mid": 1.05
+						}
+					},
+					{
+						"SpecUpType": "PaintRadius",
+						"Value": {
+							"High": 12,
+							"Low": 10,
+							"Mid": 11
+						}
+					}
+				],
+				"DistanceDamage@7.1.0": [
+					{
+						"Damage": 2200,
+						"Distance": 7
+					},
+					{
+						"Damage": 600,
+						"Distance": 12
+					}
+				],
+				"SubSpecialSpecUpList@9.2.0": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.1,
+							"Low": 1,
+							"Mid": 1.05
+						}
+					},
+					{
+						"SpecUpType": "PaintRadius",
+						"Value": {
+							"High": 10.8,
+							"Low": 9,
+							"Mid": 9.9
+						}
+					}
+				]
+			},
+			"BlastParamNormal": {
+				"CrossPaintCheckLength": 6,
+				"CrossPaintRadius": 6,
+				"CrossPaintTexture": "SprLanding00",
+				"DistanceDamage": [
+					{
+						"Damage": 2200,
+						"Distance": 7
+					},
+					{
+						"Damage": 600,
+						"Distance": 10.5
+					}
+				],
+				"KnockBackParam": {
+					"Accel": 420,
+					"Distance": 15
+				},
+				"PaintRadius": 9,
+				"PaintTexture": "SprLanding00",
+				"PlaneDamage": [
+					{
+						"Damage": 10000,
+						"Distance": -4.5
+					},
+					{
+						"Damage": 10000,
+						"Distance": 6.4
+					}
+				],
+				"SubSpecialSpecUpList": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.1,
+							"Low": 1,
+							"Mid": 1.05
+						}
+					},
+					{
+						"Value": {
+							"High": 12,
+							"Low": 10,
+							"Mid": 11
+						}
+					}
+				],
+				"DistanceDamage@7.1.0": [
+					{
+						"Damage": 2200,
+						"Distance": 7
+					},
+					{
+						"Damage": 600,
+						"Distance": 12
+					}
+				],
+				"SubSpecialSpecUpList@9.2.0": [
+					{
+						"SpecUpType": "DistanceDamageDistanceRate",
+						"Value": {
+							"High": 1.1,
+							"Low": 1,
+							"Mid": 1.05
+						}
+					},
+					{
+						"Value": {
+							"High": 10.8,
+							"Low": 9,
+							"Mid": 9.9
+						}
+					}
+				]
+			},
+			"BulletParam": {
+				"HitPoint": 1000,
+				"MoveCollisionHeight": [2, 1.5, 1, 0.5],
+				"MoveDistance": 6,
+				"MoveFrame": 15,
+				"StartInvincibleFrame": 55,
+				"SuperJumpWaitFrame0": 30,
+				"SuperJumpWaitFrame1": 60,
+				"WaitRiseFrame": 0,
+				"StartInvincibleFrame@7.1.0": 65
+			},
+			"spl__WeaponSpPogoParam": {
+				"Rise_Frame": 60,
+				"Rise_NoDamageStartFrame": 60,
+				"SpecialTotalFrame": 60,
+				"Rise_Frame@7.1.0": 70,
+				"Rise_NoDamageStartFrame@7.1.0": 70,
+				"SpecialTotalFrame@7.1.0": 70
+			}
+		},
+		"19": {
+			"MoveParam": {
+				"DamageValueForDamageTag": 4000,
+				"GuideHitCollisionType": "InkStorm",
+				"SpawnSpeedY": 0.24,
+				"SpawnSpeedYWorldMin": -0.4,
+				"SpawnSpeedZSpecUp": {
+					"High": 1.7,
+					"Low": 1.3,
+					"Mid": 1.5,
+					"High@11.1.0": 1.68,
+					"Low@11.1.0": 1.12,
+					"Mid@11.1.0": 1.4
+				}
+			},
+			"WallParam": {
+				"ClosingFrame": 60,
+				"DamageValue": 400,
+				"DebugBlockRotateDistance": 0.5,
+				"DebugBlockRotateSpeedMax": 1,
+				"DebugBlockRotateSpeedMin": 0.5,
+				"DebugCircleRadius": 1,
+				"DebugCircleSideOffset": 1.5,
+				"DebugCircleSlantOffset": {
+					"X": 0.75,
+					"Y": 1
+				},
+				"DebugWallAlpha": 0,
+				"MarkingFrame": 120,
+				"MoveSpeed": {
+					"High": 0.06,
+					"Low": 0.04,
+					"Mid": 0.053
+				},
+				"RunningFrame": 560,
+				"SaturationChangeOutFrame": 120,
+				"SaturationFrame": 360,
+				"SaturationTarget": 0.05,
+				"SplashPaintRadius": 2.5,
+				"SplashSpawnAllFrame": 10,
+				"SplashSpawnPosition": [
+					{
+						"X": -5,
+						"Y": 4.5,
+						"Z": 0.85
+					},
+					{
+						"X": 7,
+						"Y": 5,
+						"Z": 0.25
+					},
+					{
+						"X": -3,
+						"Y": 4,
+						"Z": 1.25
+					},
+					{
+						"X": 1,
+						"Y": 4,
+						"Z": 1.5
+					},
+					{
+						"X": 11,
+						"Y": 6.5,
+						"Z": -2
+					},
+					{
+						"X": 3,
+						"Y": 4,
+						"Z": 1.25
+					},
+					{
+						"X": 9,
+						"Y": 6.5,
+						"Z": -0.6
+					},
+					{
+						"X": -9,
+						"Y": 6.5,
+						"Z": -0.6
+					},
+					{
+						"X": -1,
+						"Y": 4,
+						"Z": 1.5
+					},
+					{
+						"X": -7,
+						"Y": 5,
+						"Z": 0.25
+					},
+					{
+						"X": 5,
+						"Y": 4.5,
+						"Z": 0.85
+					},
+					{
+						"X": -11,
+						"Y": 6.5,
+						"Z": -2
+					}
+				],
+				"SplashSpawnSpan": 45,
+				"StartUpFrame": 60,
+				"TargetSpeedFrame": 300,
+				"WallDepth": 0.25,
+				"WallHeightDown": 4.5,
+				"WallHeightUp": 4.5,
+				"WallWidth": 15,
+				"DamageValue@7.1.0": 300
+			},
+			"spl__SpawnBulletAdditionMovePlayerParam": {
+				"XRate": 1.6,
+				"YMax": 0.16,
+				"YPlusRate": 4
+			}
+		}
+	}
+}

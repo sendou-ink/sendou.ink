@@ -262,7 +262,7 @@ function ScrimStartTimeDisplay({
 
 	const timeDisplay = (
 		<TimePopover
-			time={startTime}
+			date={startTime}
 			options={{
 				hour: "numeric",
 				minute: "numeric",
@@ -524,6 +524,7 @@ export function ScrimRequestCard({
 							dialogHeading={t("scrims:acceptModal.title", {
 								groupName: teamName,
 							})}
+							description={t("scrims:autoCancelInfo")}
 							fields={[
 								["scrimPostRequestId", request.id],
 								["_action", "ACCEPT_REQUEST"],

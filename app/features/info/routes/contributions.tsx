@@ -70,7 +70,7 @@ const TRANSLATORS: Array<{
 		language: "it",
 	},
 	{
-		translators: ["funyaaa", "taqm", "yutarour"],
+		translators: ["funyaaa", "taqm", "yutarour", "Koreki"],
 		language: "ja",
 	},
 	{
@@ -94,7 +94,14 @@ const TRANSLATORS: Array<{
 		language: "ru",
 	},
 	{
-		translators: ["たここ", "ShanglinMo", "gellneko", "zenpk", "chenyenru"],
+		translators: [
+			"たここ",
+			"ShanglinMo",
+			"gellneko",
+			"zenpk",
+			"chenyenru",
+			"Inkorest",
+		],
 		language: "zh",
 	},
 ];

@@ -1,6 +1,7 @@
 import { differenceInMinutes } from "date-fns";
 import {
 	Flag,
+	Gavel,
 	Hourglass,
 	Lock,
 	MousePointerClick,
@@ -54,10 +55,8 @@ export function TournamentMatchBanner({
 		teamsMissingActiveRoster,
 		matchIsLocked,
 		joinPool,
-		activeRoomLink,
+		joinPass,
 	} = useMatch();
-	const joinViaQr =
-		Boolean(activeRoomLink?.joinLink) && !activeRoomLink?.isStale;
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
@@ -96,7 +95,27 @@ export function TournamentMatchBanner({
 	return (
 		<MatchBannerContainer>
 			<TournamentMatchBannerTopRow data={data} />
-			{leagueRoundLocked ? (
+			{data.matchIsOver ? (
+				droppedOutTeamName ? (
+					<IconBanner
+						icon={<Flag size={32} />}
+						header={t("tournament:match.droppedOut.header")}
+						subtitle={t("tournament:match.droppedOut.subtitle", {
+							team: droppedOutTeamName,
+						})}
+					/>
+				) : data.endedEarly ? (
+					<IconBanner
+						icon={<Gavel size={32} />}
+						header={t("tournament:match.endedEarly.header")}
+						subtitle={t("tournament:match.endedEarly.subtitle")}
+					/>
+				) : (
+					<MultiMatchBanner
+						stageIds={data.results.map((result) => result.stageId)}
+					/>
+				)
+			) : leagueRoundLocked ? (
 				<IconBanner
 					icon={<Lock size={32} />}
 					header={t("tournament:match.leagueLocked.header")}
@@ -115,6 +134,8 @@ export function TournamentMatchBanner({
 					header={t("tournament:match.locked.header")}
 					subtitle={t("tournament:match.locked.subtitle")}
 					screenLegal={screenLegal}
+					joinPool={joinPool}
+					joinPass={joinPass}
 				/>
 			) : isMissingTeam ? (
 				<IconBanner
@@ -131,23 +152,9 @@ export function TournamentMatchBanner({
 					})}
 					screenLegal={screenLegal}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 					testId="active-roster-needed-text"
 				/>
-			) : data.matchIsOver ? (
-				droppedOutTeamName ? (
-					<IconBanner
-						icon={<Flag size={32} />}
-						header={t("tournament:match.droppedOut.header")}
-						subtitle={t("tournament:match.droppedOut.subtitle", {
-							team: droppedOutTeamName,
-						})}
-					/>
-				) : (
-					<MultiMatchBanner
-						stageIds={data.results.map((result) => result.stageId)}
-					/>
-				)
 			) : pickBanBanner ? (
 				<IconBanner
 					icon={pickBanBanner.icon}
@@ -155,7 +162,7 @@ export function TournamentMatchBanner({
 					subtitle={pickBanBanner.subtitle}
 					screenLegal={screenLegal}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 				/>
 			) : currentMap ? (
 				<MatchBanner
@@ -163,7 +170,7 @@ export function TournamentMatchBanner({
 					mode={currentMap.mode}
 					screenLegal={screenLegal}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 				>
 					<CurrentMapPickInfo
 						source={currentMap.source}
@@ -178,7 +185,7 @@ export function TournamentMatchBanner({
 				</MatchBanner>
 			) : null}
 			<MatchBannerBottomRow
-				games={resolveBannerGames({ data, opponentOneId: opponentOne?.id })}
+				games={resolveBannerGames({ data })}
 				activeRosters={
 					opponentOne?.id && opponentTwo?.id
 						? {
@@ -332,14 +339,39 @@ function resolveCurrentMinutes({
 }): number {
 	if (data.matchIsOver) return 0;
 
+	const sessionStart = resolveCurrentSessionStartedAt({ data, tournament });
+	if (typeof sessionStart !== "number") return 0;
+
+	return Math.max(
+		0,
+		differenceInMinutes(currentTime, databaseTimestampToDate(sessionStart)),
+	);
+}
+
+/**
+ * Resolves the database timestamp that the current "session" (the thing the
+ * sub-timer counts up from) started at. For pick/ban matches this is the start
+ * of the current pick/ban turn, otherwise it is the time the most recently
+ * reported game finished, falling back to the match start.
+ */
+function resolveCurrentSessionStartedAt({
+	data,
+	tournament,
+}: {
+	data: TournamentMatchLoaderData;
+	tournament: ReturnType<typeof useTournament>;
+}): number | null {
+	const lastGameStartedAt =
+		data.results.at(-1)?.createdAt ?? data.match.startedAt;
+
 	const opponentOneId = data.match.opponentOne?.id;
 	const opponentTwoId = data.match.opponentTwo?.id;
-	if (!opponentOneId || !opponentTwoId) return 0;
-	if (!data.match.roundMaps?.pickBan) return 0;
+	if (!opponentOneId || !opponentTwoId) return lastGameStartedAt;
+	if (!data.match.roundMaps?.pickBan) return lastGameStartedAt;
 
 	const teamOne = tournament.teamById(opponentOneId);
 	const teamTwo = tournament.teamById(opponentTwoId);
-	if (!teamOne || !teamTwo) return 0;
+	if (!teamOne || !teamTwo) return lastGameStartedAt;
 
 	const teams: [PickBan.PickBanTeam, PickBan.PickBanTeam] = [
 		{ id: teamOne.id, seed: teamOne.seed },
@@ -353,21 +385,17 @@ function resolveCurrentMinutes({
 		mapList: data.mapList,
 		pickBanEventCount: data.pickBanEventCount,
 	});
-	if (!currentTurn) return 0;
+	if (!currentTurn) return lastGameStartedAt;
 
-	const sessionStart = PickBan.currentTurnSessionStartedAt({
-		currentTurn,
-		events: data.pickBanEvents,
-		results: data.results,
-		matchStartedAt: data.match.startedAt,
-		maps: data.match.roundMaps,
-		teams,
-	});
-	if (sessionStart == null) return 0;
-
-	return Math.max(
-		0,
-		differenceInMinutes(currentTime, databaseTimestampToDate(sessionStart)),
+	return (
+		PickBan.currentTurnSessionStartedAt({
+			currentTurn,
+			events: data.pickBanEvents,
+			results: data.results,
+			matchStartedAt: data.match.startedAt,
+			maps: data.match.roundMaps,
+			teams,
+		}) ?? lastGameStartedAt
 	);
 }
 
@@ -458,30 +486,23 @@ function resolveDroppedOutTeamName({
 				: null;
 	if (!droppedOutId) return null;
 
-	return tournament.teamById(droppedOutId)?.name ?? null;
+	const team = tournament.teamById(droppedOutId);
+	if (!team?.droppedOut) return null;
+
+	return team.name;
 }
 
 function resolveBannerGames({
 	data,
-	opponentOneId,
 }: {
 	data: TournamentMatchLoaderData;
-	opponentOneId: number | null | undefined;
-}): Array<{ mode: ModeShort | null; winner?: "ALPHA" | "BRAVO" }> {
+}): Array<{ mode: ModeShort | null }> {
 	const playedAndScheduled =
-		data.mapList?.map((map, i) => {
-			const result = data.results.at(i);
-			const winner = result
-				? result.winnerTeamId === opponentOneId
-					? ("ALPHA" as const)
-					: ("BRAVO" as const)
-				: undefined;
-
-			return {
+		data.mapList
+			?.filter((map) => !map.bannedByTournamentTeamId)
+			.map((map) => ({
 				mode: map.mode as ModeShort | null,
-				winner,
-			};
-		}) ?? [];
+			})) ?? [];
 
 	if (data.matchIsOver) return playedAndScheduled;
 

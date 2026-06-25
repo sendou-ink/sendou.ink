@@ -5,7 +5,7 @@ import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	userProfileWeapons,
 } from "~/utils/kysely.server";
@@ -31,7 +31,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 					.selectFrom("User")
 					.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 					.select(({ eb: innerEb }) => [
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(innerEb),
 						"User.languages",
 						"User.country",
 						"PlusTier.tier as plusTier",
@@ -59,7 +59,7 @@ export async function posts(user?: { id: number; plusTier: number | null }) {
 								.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 								.select(({ eb: innestEb }) => [
-									...COMMON_USER_FIELDS,
+									...commonUserSelect(innestEb),
 									"User.languages",
 									"User.country",
 									"PlusTier.tier as plusTier",

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as TournamentLFGRepository from "./TournamentLFGRepository.server";
 
 const createTournament = () =>
@@ -554,22 +554,24 @@ describe("updateStayAsSub", () => {
 		const tournament = await createTournament();
 		const team = await createPlaceholder(tournament.id, 1);
 
-		await TournamentLFGRepository.updateStayAsSub({
-			teamId: team.id,
-			userId: 1,
-			value: true,
-		});
+		await withUserId(1, () =>
+			TournamentLFGRepository.updateOwnStayAsSub({
+				teamId: team.id,
+				value: true,
+			}),
+		);
 
 		let subs = await TournamentLFGRepository.getSubsForTournament(
 			tournament.id,
 		);
 		expect(subs).toContain(1);
 
-		await TournamentLFGRepository.updateStayAsSub({
-			teamId: team.id,
-			userId: 1,
-			value: false,
-		});
+		await withUserId(1, () =>
+			TournamentLFGRepository.updateOwnStayAsSub({
+				teamId: team.id,
+				value: false,
+			}),
+		);
 
 		subs = await TournamentLFGRepository.getSubsForTournament(tournament.id);
 		expect(subs).not.toContain(1);

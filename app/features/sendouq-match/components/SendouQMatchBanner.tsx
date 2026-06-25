@@ -15,8 +15,8 @@ import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomR
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
+import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
-import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -46,12 +46,6 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 		<MatchBannerBottomRow
 			games={data.match.mapList.map((map) => ({
 				mode: map.mode,
-				winner:
-					map.winnerGroupId === data.match.groupAlpha.id
-						? "ALPHA"
-						: map.winnerGroupId === data.match.groupBravo.id
-							? "BRAVO"
-							: undefined,
 			}))}
 			activeRosters={{
 				alpha: data.match.groupAlpha.members,
@@ -87,17 +81,16 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 	const currentMap = data.match.currentMap;
 	invariant(currentMap);
 
-	const joinPool = `SQ${String(data.match.id).at(-1)}`;
-	const activeRoomLink = resolveActiveRoomLink({
-		roomLinks: data.roomLinks,
-		freshnessCutoff: data.match.createdAt,
-		viewerUserId: user?.id,
-		members: [
-			...data.match.groupAlpha.members,
-			...data.match.groupBravo.members,
-		],
-	});
-	const joinViaQr = Boolean(activeRoomLink.joinLink) && !activeRoomLink.isStale;
+	const isParticipant = Boolean(
+		SendouQMatch.resolveGroupMemberOf({
+			groupAlpha: data.match.groupAlpha,
+			groupBravo: data.match.groupBravo,
+			userId: user?.id,
+		}),
+	);
+
+	const joinPool = isParticipant ? `SQ${String(data.match.id).at(-1)}` : null;
+	const joinPass = isParticipant ? resolveRoomPass(data.match.id) : null;
 
 	return (
 		<MatchBannerContainer>
@@ -110,7 +103,7 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 						teamName: cancelRequesterName,
 					})}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 				/>
 			) : (
 				<MatchBanner
@@ -120,7 +113,7 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 						!data.match.groupAlpha.noScreen && !data.match.groupBravo.noScreen
 					}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 				>
 					<CurrentMapVotesBadge voters={currentMap.voters} />
 				</MatchBanner>

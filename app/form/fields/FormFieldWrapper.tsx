@@ -2,6 +2,7 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
+import { useOptionalFormFieldContext } from "../SendouForm";
 import { errorMessageId } from "../utils";
 import styles from "./FormFieldWrapper.module.css";
 
@@ -81,6 +82,8 @@ export function FormFieldWrapper({
 	children,
 }: FormFieldWrapperProps) {
 	const { translatedLabel } = useTranslatedTexts({ label });
+	const hideRequiredIndicator =
+		useOptionalFormFieldContext()?.hideRequiredIndicator ?? false;
 
 	return (
 		<div className={styles.root}>
@@ -88,7 +91,7 @@ export function FormFieldWrapper({
 				{translatedLabel ? (
 					<Label
 						htmlFor={id}
-						required={required}
+						required={hideRequiredIndicator ? false : required}
 						valueLimits={valueLimits}
 						spaced={false}
 					>

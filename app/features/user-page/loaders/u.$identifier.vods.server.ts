@@ -9,7 +9,7 @@ import {
 	redirectIfPageOutOfBounds,
 } from "~/utils/remix.server";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
+export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 	const userId = notFoundIfFalsy(
 		await UserRepository.identifierToUserId(params.identifier!),
 	).id;
@@ -30,7 +30,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	const pagesCount = Math.max(1, Math.ceil(totalCount / VODS_PAGE_BATCH_SIZE));
 
-	redirectIfPageOutOfBounds({ request, page, pagesCount });
+	redirectIfPageOutOfBounds({ url, page, pagesCount });
 
 	return {
 		vods,

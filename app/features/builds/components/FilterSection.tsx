@@ -13,7 +13,7 @@ import type {
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";
-import { PATCHES } from "../builds-constants";
+import { RECENT_PATCHES } from "../builds-constants";
 import type {
 	AbilityBuildFilter,
 	BuildFilter,
@@ -203,7 +203,9 @@ function DateFilter({
 	});
 
 	const selectValue = () =>
-		PATCHES.some(({ date }) => date === filter.date) ? filter.date : "CUSTOM";
+		RECENT_PATCHES.some(({ date }) => date === filter.date)
+			? filter.date
+			: "CUSTOM";
 
 	// on Saturday so it doesn't overlap with actual path dates (no patches on Saturdays)
 	const oneMonthAgoOnSaturday = new Date();
@@ -232,7 +234,7 @@ function DateFilter({
 					})
 				}
 			>
-				{PATCHES.map(({ patch, date: dateString }) => {
+				{RECENT_PATCHES.map(({ patch, date: dateString }) => {
 					const date = new Date(dateString);
 
 					return (

@@ -4,7 +4,6 @@ import type {
 	Insertable,
 	JSONColumnType,
 	Selectable,
-	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
@@ -33,6 +32,8 @@ type Generated<T> =
 		: ColumnType<T, T | undefined, T>;
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
+
+export type MemberRoleType = "PLAYER" | "OTHER";
 
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = number;
@@ -98,6 +99,11 @@ export interface TeamMember {
 	isManager: Generated<number>;
 	leftAt: number | null;
 	role: MemberRole | null;
+	customRole: string | null;
+	/** If customRole is defined, this classifies how the role should be treated */
+	roleType: MemberRoleType | null;
+	/** User-defined ordering of members within a team (ascending) */
+	order: Generated<number>;
 	teamId: number;
 	userId: number;
 	isMainTeam: DBBoolean;
@@ -818,10 +824,13 @@ export interface TournamentLFGLike {
 	createdAt: Generated<number>;
 }
 
+export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
+
 export interface TournamentStaff {
 	tournamentId: number;
 	userId: number;
-	role: "ORGANIZER" | "STREAMER";
+	role: TournamentStaffRole;
 }
 
 export interface TournamentTeam {
@@ -844,6 +853,8 @@ export interface TournamentTeam {
 	chatCode: Generated<string | null>;
 	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
 	abDivision: number | null;
+	/** The team's {@link TournamentTeamHistory} row, created lazily on its first audited event. */
+	tournamentTeamHistoryId: number | null;
 }
 
 export interface TournamentTeamCheckIn {
@@ -864,6 +875,48 @@ export interface TournamentTeamMember {
 	isStayAsSub: Generated<DBBoolean>;
 	// denormalized from TournamentTeam.isLooking
 	isLooking: Generated<DBBoolean>;
+}
+
+/** Stable shadow of a tournament team's identity that survives the team's hard-deletion, so the audit log can still resolve its name. */
+export interface TournamentTeamHistory {
+	/** Surrogate key. Audit log rows reference this so a reused `TournamentTeam.id` can never collide with an older team's history. */
+	id: GeneratedAlways<number>;
+	/** Mirrors the original `TournamentTeam.id` at creation time. Informational only; not a live or unique foreign key, so it is not cascade-deleted with the team and may repeat across teams that reused an id. */
+	tournamentTeamId: number;
+	tournamentId: number;
+	name: string;
+}
+
+export const TOURNAMENT_AUDIT_LOG_TYPES = [
+	"MEMBER_ADDED",
+	"MEMBER_REMOVED",
+	"TEAM_REGISTERED",
+	"TEAM_UNREGISTERED",
+	"TEAM_CHECKED_IN",
+	"TEAM_CHECKED_OUT",
+	"TEAM_DROPPED_OUT",
+	"TEAM_DROP_OUT_UNDONE",
+	"UPDATE_IN_GAME_NAME",
+] as const;
+
+export interface TournamentAuditLog {
+	id: GeneratedAlways<number>;
+	tournamentId: number;
+	type: (typeof TOURNAMENT_AUDIT_LOG_TYPES)[number];
+	/** The user who performed the action. */
+	actorUserId: number;
+	/** The affected member, for member-level events. `null` for team-level events. */
+	subjectUserId: number | null;
+	/** References {@link TournamentTeamHistory.id} so the team name stays resolvable after the team is hard-deleted. */
+	tournamentTeamHistoryId: number | null;
+	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
+	createdAt: number;
+}
+
+export interface TournamentAuditLogMetadata {
+	bracketIdx?: number;
+	/** The new in-game name, for `UPDATE_IN_GAME_NAME` events. */
+	inGameName?: string;
 }
 
 export interface TournamentOrganization {
@@ -1046,6 +1099,7 @@ export interface User {
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
 	discordAvatar: string | null;
+	customAvatarImgId: number | null;
 	discordId: string;
 	discordName: string;
 	customName: string | null;
@@ -1077,8 +1131,6 @@ export interface User {
 	weaponPool: JSONColumnTypeNullable<WeaponPoolEntry[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
-	/** User doesn't have access to SplatNet 3 to join rooms made by others */
-	noSplatnet: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
@@ -1103,6 +1155,17 @@ export interface UserSubmittedImage {
 	submitterUserId: number | null;
 	url: string;
 	validatedAt: number | null;
+}
+
+/** FTS5 trigram index over User's searchable columns (external content table,
+ * kept in sync with triggers). Only meant for reading: filter with
+ * `match` and join `rowid` to `User.id`. */
+export interface UserSearch {
+	rowid: GeneratedAlways<number>;
+	username: GeneratedAlways<string | null>;
+	inGameName: GeneratedAlways<string | null>;
+	discordUniqueName: GeneratedAlways<string | null>;
+	customUrl: GeneratedAlways<string | null>;
 }
 
 export interface UserWeapon {
@@ -1160,6 +1223,15 @@ export interface TournamentStreamer {
 	userId: number | null;
 	tournamentId: number;
 	twitchAccount: string;
+}
+
+export interface ExternalStream {
+	id: GeneratedAlways<number>;
+	name: string;
+	url: string;
+	avatarImgId: number | null;
+	startTime: number;
+	createdAt: Generated<number>;
 }
 
 export interface TournamentMatchVod {
@@ -1359,13 +1431,6 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
-export interface RoomLink {
-	userId: number;
-	url: string;
-	createdAt: Generated<number>;
-	refreshedAt: Generated<number>;
-}
-
 export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
 export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
 
@@ -1381,7 +1446,6 @@ export interface SplatoonRotation {
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
-export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 
 export interface DB {
 	AllTeam: Team;
@@ -1407,6 +1471,7 @@ export interface DB {
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
+	ExternalStream: ExternalStream;
 
 	Group: Group;
 	GroupLike: GroupLike;
@@ -1424,7 +1489,6 @@ export interface DB {
 	PlusTier: PlusTier;
 	PlusVote: PlusVote;
 	PlusVotingResult: PlusVotingResult;
-	RoomLink: RoomLink;
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
@@ -1448,6 +1512,8 @@ export interface DB {
 	TournamentTeam: TournamentTeam;
 	TournamentTeamCheckIn: TournamentTeamCheckIn;
 	TournamentTeamMember: TournamentTeamMember;
+	TournamentTeamHistory: TournamentTeamHistory;
+	TournamentAuditLog: TournamentAuditLog;
 	TournamentOrganization: TournamentOrganization;
 	TournamentOrganizationMember: TournamentOrganizationMember;
 	TournamentOrganizationBadge: TournamentOrganizationBadge;
@@ -1462,6 +1528,7 @@ export interface DB {
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;
+	UserSearch: UserSearch;
 	UserResultHighlight: UserResultHighlight;
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;

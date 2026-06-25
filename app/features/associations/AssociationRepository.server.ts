@@ -6,7 +6,7 @@ import { ASSOCIATION } from "~/features/associations/associations-constants";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import { LimitReachedError } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 
 interface FindOptions {
@@ -61,7 +61,10 @@ const baseFindQuery = (options: FindOptions) =>
 						.selectFrom("AssociationMember")
 						.innerJoin("User", "User.id", "AssociationMember.userId")
 						.whereRef("AssociationMember.associationId", "=", "Association.id")
-						.select([...COMMON_USER_FIELDS, "AssociationMember.role"]),
+						.select((eb) => [
+							...commonUserSelect(eb),
+							"AssociationMember.role",
+						]),
 				).as("members"),
 			),
 		);

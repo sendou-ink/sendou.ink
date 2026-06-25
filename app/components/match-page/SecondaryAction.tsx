@@ -8,17 +8,21 @@ interface SecondaryActionProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	collapsedLabel: string;
-	collapsedIcon?: JSX.Element;
+	collapsedIcon?: React.JSX.Element;
 	expandedAriaLabel?: string;
+	/**
+	 * Always-open variant used when this is the only content in the tab (no
+	 * primary action to sit underneath). Hides the collapse toggle and drops the
+	 * striped footer styling.
+	 */
 	standalone?: boolean;
 	children: React.ReactNode;
 }
 
 /**
- * Generic collapsible panel rendered below the primary match action.
- * Hosts optional follow-up actions (e.g. weapon reporting, scrim map list
- * management) and switches to a full-tab standalone variant when there is
- * no primary action to sit underneath.
+ * Generic panel hosting follow-up match actions (e.g. weapon reporting, scrim
+ * map list management). Defaults to a striped footer attached beneath the
+ * primary action card; pass `standalone` when it is the only tab content.
  */
 export function SecondaryAction({
 	isOpen,
@@ -29,9 +33,11 @@ export function SecondaryAction({
 	standalone,
 	children,
 }: SecondaryActionProps) {
+	const footerClass = standalone ? undefined : styles.footer;
+
 	if (!isOpen && !standalone) {
 		return (
-			<div className={styles.rootCollapsed}>
+			<div className={clsx(styles.collapsed, footerClass)}>
 				<SendouButton
 					variant="minimal"
 					size="small"
@@ -45,7 +51,7 @@ export function SecondaryAction({
 	}
 
 	return (
-		<div className={clsx(styles.root, { [styles.standalone]: standalone })}>
+		<div className={clsx(styles.expanded, footerClass)}>
 			{standalone ? null : (
 				<SendouButton
 					variant="minimal"

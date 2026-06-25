@@ -126,30 +126,6 @@ export function datesToRegClosesAt({
 	return "0";
 }
 
-export function closeByWeeks(args: { week: number; year: number }) {
-	if (args.week < 1 || args.week > 52) {
-		throw new Error("Invalid week number");
-	}
-
-	return [-4, -3, -2, -1, 0, 1, 2, 3, 4].map((week) => {
-		let number = args.week + week;
-		let year = args.year;
-
-		if (number < 1) {
-			number = 52 + number;
-			year--;
-		} else if (number > 52) {
-			number = number - 52;
-			year++;
-		}
-
-		return {
-			number,
-			year,
-		};
-	});
-}
-
 interface CanEditCalendarEventArgs {
 	user?: Pick<Tables["User"], "id">;
 	event: Pick<Tables["CalendarEvent"], "authorId">;

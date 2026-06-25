@@ -66,6 +66,7 @@ type FormFieldHelpers<T extends z.ZodRawShape> = {
 	) => Promise<void>;
 	setDateTime: (name: keyof Inferred<T>, date: Date) => Promise<void>;
 	setDate: (name: keyof Inferred<T>, date: Date) => Promise<void>;
+	setImage: (name: keyof Inferred<T>, filePath: string) => Promise<void>;
 	submit: () => Promise<void>;
 	getLabel: <K extends keyof Inferred<T>>(name: K) => string;
 	getItemLabel: (name: keyof Inferred<T>, itemValue: string) => string;
@@ -89,6 +90,14 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 			throw new Error(`No label found for field: ${name}`);
 		}
 		return resolveTranslation(metadata.label);
+	};
+
+	// match the whole label (allowing the trailing space and optional required " *" the
+	// Label component always renders) so a short label like "Name" doesn't also pick up
+	// "Bracket's name" or "Require in-game names"
+	const byLabel = (label: string) => {
+		const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		return page.getByLabel(new RegExp(`^${escaped} *\\*?$`, "i"));
 	};
 
 	const getItemLabel = (name: string, itemValue: string): string => {
@@ -116,12 +125,12 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 		async fill(name, value) {
 			const label = getLabel(String(name));
-			await page.getByLabel(label).fill(value);
+			await byLabel(label).fill(value);
 		},
 
 		async check(name) {
 			const label = getLabel(String(name));
-			const locator = page.getByLabel(label);
+			const locator = byLabel(label);
 			const isChecked = await locator.isChecked();
 			if (!isChecked) {
 				await locator.click({ force: true });
@@ -130,7 +139,7 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 		async uncheck(name) {
 			const label = getLabel(String(name));
-			const locator = page.getByLabel(label);
+			const locator = byLabel(label);
 			const isChecked = await locator.isChecked();
 			if (isChecked) {
 				await locator.click({ force: true });
@@ -166,7 +175,7 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 		async select(name, optionValue) {
 			const label = getLabel(String(name));
-			const locator = page.getByLabel(label);
+			const locator = byLabel(label);
 			const tagName = await locator.evaluate((el) => el.tagName.toLowerCase());
 
 			const metadata = getFieldMetadata(String(name));
@@ -249,6 +258,11 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 			await fillSpinbutton("year", date.getFullYear().toString());
 			await fillSpinbutton("month", (date.getMonth() + 1).toString());
 			await fillSpinbutton("day", date.getDate().toString());
+		},
+
+		async setImage(name, filePath) {
+			const label = getLabel(String(name));
+			await page.getByLabel(label).setInputFiles(filePath);
 		},
 
 		async submit() {

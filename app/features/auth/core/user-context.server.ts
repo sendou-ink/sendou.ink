@@ -26,6 +26,7 @@ export function getUserContext(): UserContext {
 
 export async function getUserFromRequest(
 	request: Request,
+	url: URL,
 ): Promise<AuthenticatedUser | undefined> {
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
@@ -37,7 +38,6 @@ export async function getUserFromRequest(
 	if (!userId) return undefined;
 
 	if (userIsBanned(userId)) {
-		const url = new URL(request.url);
 		const isExemptPath =
 			url.pathname === SUSPENDED_PAGE ||
 			// needed for ban E2E tests

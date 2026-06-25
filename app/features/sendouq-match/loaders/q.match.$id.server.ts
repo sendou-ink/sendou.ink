@@ -1,13 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
-import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
@@ -29,28 +27,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		...matchUnmapped.groupBravo.members,
 	].map((m) => m.id);
 
-	const [privateNotes, roomLinks, anyUserPrefersNoSplatnet, reportedWeapons] =
-		await Promise.all([
-			user
-				? PrivateUserNoteRepository.byAuthorUserId(user.id, matchUsers)
-				: undefined,
-			RoomLinkRepository.findByUserIds(matchUsers, 3),
-			UserRepository.anyUserPrefersNoSplatnet(matchUsers),
-			ReportedWeaponRepository.findByMatchId(matchId),
-		]);
+	const isStaff = user?.roles.includes("STAFF") ?? false;
+	const isParticipant = Boolean(user && matchUsers.includes(user.id));
+
+	const [privateNotes, reportedWeapons] = await Promise.all([
+		user ? PrivateUserNoteRepository.ownNotes(matchUsers) : undefined,
+		ReportedWeaponRepository.findByMatchId(matchId),
+	]);
 
 	const match = SendouQ.mapMatch(matchUnmapped, user, privateNotes);
 
 	return {
 		match,
-		roomLinks,
-		anyUserPrefersNoSplatnet,
 		reportedWeapons,
 		isOffSeason: Seasons.current() === null,
 		chatCode: (() => {
-			const isStaff = user?.roles.includes("STAFF") ?? false;
-			const isParticipant = user && matchUsers.includes(user.id);
-
 			if (!(isStaff || isParticipant)) return null;
 
 			const accessible = chatAccessible({

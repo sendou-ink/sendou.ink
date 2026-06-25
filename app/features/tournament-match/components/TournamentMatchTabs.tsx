@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
-import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
@@ -8,9 +7,7 @@ import type {
 	TimelineMap,
 	TimelinePickBanEvent,
 } from "~/components/match-page/MatchTimeline";
-import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
-import { useConfirmRoom } from "~/features/chat/room-link-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -88,9 +85,6 @@ export function TournamentMatchTabs({
 					isOngoing={!data.matchIsOver && data.results.length > 0}
 				/>
 			) : null}
-			{tabs.includes(TAB_KEYS.JOIN) ? (
-				<TournamentMatchJoinTab data={data} />
-			) : null}
 			<TournamentMatchRosterTab data={data} />
 			{tabs.includes(TAB_KEYS.ACTION) ? (
 				isPickBanStep && turnOfResult ? (
@@ -156,6 +150,7 @@ function resolveTimelineMaps(
 				discordId: u.discordId,
 				discordAvatar: u.discordAvatar,
 				customUrl: u.customUrl,
+				customAvatarUrl: u.customAvatarUrl,
 			}));
 
 	return data.results.map((result, mapIndex) => {
@@ -311,30 +306,6 @@ function slotOfEvent({
 	}
 }
 
-function TournamentMatchJoinTab({ data }: { data: TournamentMatchLoaderData }) {
-	const { onConfirmRoom, isConfirming } = useConfirmRoom();
-	const {
-		teams: [teamOne, teamTwo],
-		joinPool,
-		activeRoomLink,
-	} = useMatch();
-	if (!teamOne || !teamTwo || !joinPool || !activeRoomLink) return null;
-
-	const hostingTeam = resolveHostingTeam([teamOne, teamTwo]);
-
-	return (
-		<MatchJoinTab
-			{...activeRoomLink}
-			hostedBy={activeRoomLink.hostedBy ?? hostingTeam.name}
-			onConfirmRoom={onConfirmRoom}
-			isConfirming={isConfirming}
-			pool={joinPool}
-			pass={resolveRoomPass(hostingTeam.id)}
-			showNoSplatnetAlert={data.anyUserPrefersNoSplatnet}
-		/>
-	);
-}
-
 function TournamentMatchRosterTab({
 	data,
 }: {
@@ -349,6 +320,9 @@ function TournamentMatchRosterTab({
 	} = useMatch();
 
 	const tbdTeam = { defaultName: t("tournament:match.tbd"), members: [] };
+
+	const hostingTeamId =
+		teamOne && teamTwo ? resolveHostingTeam([teamOne, teamTwo]).id : null;
 
 	return (
 		<MatchRosterTab
@@ -398,10 +372,12 @@ function TournamentMatchRosterTab({
 				discordId: m.discordId,
 				discordAvatar: m.discordAvatar,
 				customUrl: m.customUrl,
+				customAvatarUrl: m.customAvatarUrl,
 				inGameName: m.inGameName,
 			})),
 			subbedOut,
 			seed: team.seed,
+			isHost: hostingTeamId === team.id,
 		};
 	}
 

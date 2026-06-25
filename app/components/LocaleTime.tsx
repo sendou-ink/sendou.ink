@@ -11,6 +11,8 @@ interface LocaleTimeProps {
 	className?: string;
 	/** When `true`, renders inline; otherwise the element is displayed as a block. Defaults to block. */
 	inline?: boolean;
+	/** Optional test id forwarded to the rendered `<time>` element. */
+	"data-testid"?: string;
 }
 
 /**
@@ -25,6 +27,7 @@ export function LocaleTime({
 	options,
 	className,
 	inline,
+	"data-testid": testId,
 }: LocaleTimeProps) {
 	const { formatter, isLoaded } = useDateTimeFormat(options);
 
@@ -33,9 +36,13 @@ export function LocaleTime({
 
 	return (
 		<time
+			// Hydration warnings are suppressed because callers may pass a live "now" value (e.g. a clock)
+			// whose server and client render instants differ slightly, which would otherwise mismatch the
+			// `dateTime` attribute. For fixed dates the ISO string is deterministic, so nothing real is masked.
+			suppressHydrationWarning
+			data-testid={testId}
 			dateTime={dateObject.toISOString()}
 			className={clsx(
-				"reserve-one-lb",
 				{
 					block: !inline,
 					invisible: !isLoaded,

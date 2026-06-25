@@ -7,6 +7,8 @@ import { BadgesFormField } from "./fields/BadgesFormField";
 import { DatetimeFormField } from "./fields/DatetimeFormField";
 import { DualSelectFormField } from "./fields/DualSelectFormField";
 import { FieldsetFormField } from "./fields/FieldsetFormField";
+import { ImageFormField } from "./fields/ImageFormField";
+import { InGameNameFormField } from "./fields/InGameNameFormField";
 import { InputFormField } from "./fields/InputFormField";
 import {
 	CheckboxGroupFormField,
@@ -15,6 +17,7 @@ import {
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
+import { TeamSearchFormField } from "./fields/TeamSearchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
 import { TournamentSearchFormField } from "./fields/TournamentSearchFormField";
@@ -24,7 +27,8 @@ import {
 	type WeaponPoolItem,
 } from "./fields/WeaponPoolFormField";
 import { WeaponSelectFormField } from "./fields/WeaponSelectFormField";
-import { useOptionalFormFieldContext } from "./SendouForm";
+import type { ImageFieldValue } from "./image-field";
+import { EMPTY_FORM_STORE, useOptionalFormFieldContext } from "./SendouForm";
 import type {
 	ArrayItemRenderContext,
 	BadgeOption,
@@ -32,15 +36,20 @@ import type {
 	FormFieldItemsWithImage,
 	FormField as FormFieldType,
 	SelectOption,
+	TeamSearchFieldOptions,
+	TournamentSearchFieldOptions,
+	UserSearchFieldOptions,
 } from "./types";
 import {
+	fieldsetDefaults,
 	getNestedSchema,
 	getNestedValue,
-	setNestedValue,
 	validateField,
 } from "./utils";
 
 export type { CustomFieldRenderProps };
+
+const EMPTY_FORM_VALUES: Record<string, unknown> = {};
 
 interface FormFieldProps {
 	name: string;
@@ -53,6 +62,8 @@ interface FormFieldProps {
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
 	/** Field-specific options */
 	options?: unknown;
+	/** For `array` fields: hide the remove button for items where this returns false. */
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 }
 
 export function FormField({
@@ -63,8 +74,10 @@ export function FormField({
 	field,
 	children,
 	options,
+	canRemoveItem,
 }: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
+	const isDisabled = disabled ?? context?.readOnly ?? false;
 
 	const fieldSchema = React.useMemo(() => {
 		if (field) return field;
@@ -99,14 +112,39 @@ export function FormField({
 	}, [fieldSchema, name, label]);
 
 	const isNestedPath = name.includes(".") || name.includes("[");
-	const value =
-		(isNestedPath
-			? getNestedValue(context?.values ?? {}, name)
-			: context?.values[name]) ?? formField.initialValue;
+	const store = context?.store ?? EMPTY_FORM_STORE;
+
+	const getValue = () =>
+		isNestedPath ? getNestedValue(store.values, name) : store.values[name];
+	const storedValue = React.useSyncExternalStore(
+		store.subscribe,
+		getValue,
+		getValue,
+	);
+	const value = storedValue ?? formField.initialValue;
+
+	const getClientError = () => store.clientErrors[name];
+	const clientError = React.useSyncExternalStore(
+		store.subscribe,
+		getClientError,
+		getClientError,
+	);
+
+	// Only object arrays with a custom render receive the whole-form values, so
+	// every other field type subscribes to a constant and skips re-rendering
+	// when unrelated fields change.
+	const needsAllValues =
+		formField.type === "array" && typeof children === "function";
+	const getAllValues = () =>
+		needsAllValues ? store.values : EMPTY_FORM_VALUES;
+	const formValues = React.useSyncExternalStore(
+		store.subscribe,
+		getAllValues,
+		getAllValues,
+	);
 
 	const serverError =
 		context?.serverErrors[name as keyof typeof context.serverErrors];
-	const clientError = context?.clientErrors[name];
 	const hasSubmitted = context?.hasSubmitted ?? false;
 
 	const runValidation = (val: unknown) => {
@@ -122,16 +160,19 @@ export function FormField({
 
 	const handleChange = React.useCallback(
 		(newValue: unknown) => {
-			context?.setValue(name, newValue);
-			if (hasSubmitted && context) {
-				const updatedValues = isNestedPath
-					? setNestedValue(context.values, name, newValue)
-					: { ...context.values, [name]: newValue };
-				context.revalidateAll(updatedValues);
+			if (!context) return;
+			const previousValues = context.store.values;
+			context.setValue(name, newValue);
+			context.clearServerError(name);
+			if (
+				context.hasSubmitted &&
+				!isArrayAppend(previousValues, name, newValue)
+			) {
+				context.revalidateAll(context.store.values);
 			}
-			context?.onFieldChange?.(name, newValue);
+			context.onFieldChange?.(name, newValue);
 		},
-		[context, hasSubmitted, isNestedPath, name],
+		[context, name],
 	);
 
 	const displayedError = serverError ?? clientError;
@@ -143,7 +184,19 @@ export function FormField({
 			<InputFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
+				value={value as string}
+				onChange={handleChange as (v: string) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "in-game-name") {
+		return (
+			<InGameNameFormField
+				{...commonProps}
+				{...formField}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -155,7 +208,7 @@ export function FormField({
 			<SwitchFormField
 				{...commonProps}
 				{...formField}
-				isDisabled={disabled}
+				isDisabled={isDisabled}
 				checked={value as boolean}
 				onChange={handleChange as (v: boolean) => void}
 			/>
@@ -167,7 +220,7 @@ export function FormField({
 			<TextareaFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -289,6 +342,18 @@ export function FormField({
 		);
 	}
 
+	if (formField.type === "image") {
+		return (
+			<ImageFormField
+				{...commonProps}
+				{...formField}
+				disabled={isDisabled}
+				value={value as ImageFieldValue}
+				onChange={handleChange as (v: ImageFieldValue) => void}
+			/>
+		);
+	}
+
 	if (formField.type === "custom") {
 		if (!children) {
 			throw new Error("Custom form field requires children render function");
@@ -321,7 +386,7 @@ export function FormField({
 		const hasCustomRender = typeof children === "function";
 		const itemInitialValue =
 			isObjectArray && innerFieldMeta
-				? computeFieldsetInitialValue(innerFieldMeta)
+				? fieldsetDefaults(innerFieldMeta)
 				: innerFieldMeta?.initialValue;
 
 		return (
@@ -332,6 +397,7 @@ export function FormField({
 				onChange={handleChange as (v: unknown[]) => void}
 				isObjectArray={isObjectArray}
 				itemInitialValue={itemInitialValue}
+				canRemoveItem={canRemoveItem}
 				renderItem={(idx, itemName) => {
 					if (hasCustomRender && isObjectArray) {
 						const arrayValue = value as Record<string, unknown>[];
@@ -359,7 +425,7 @@ export function FormField({
 							index: idx,
 							itemName,
 							values: itemValues,
-							formValues: context?.values ?? {},
+							formValues,
 							setItemField,
 							canRemove: arrayValue.length > (formField.min ?? 0),
 							remove,
@@ -379,23 +445,42 @@ export function FormField({
 	}
 
 	if (formField.type === "user-search") {
+		const userOptions = options as UserSearchFieldOptions | undefined;
 		return (
 			<UserSearchFormField
 				{...commonProps}
 				{...formField}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
+				onUserSelected={userOptions?.onUserSelected}
 			/>
 		);
 	}
 
 	if (formField.type === "tournament-search") {
+		const tournamentOptions = options as
+			| TournamentSearchFieldOptions
+			| undefined;
 		return (
 			<TournamentSearchFormField
 				{...commonProps}
 				{...formField}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
+				pastOnly={tournamentOptions?.pastOnly}
+			/>
+		);
+	}
+
+	if (formField.type === "team-search") {
+		const teamOptions = options as TeamSearchFieldOptions | undefined;
+		return (
+			<TeamSearchFormField
+				{...commonProps}
+				{...formField}
+				onChange={handleChange as (v: number | null) => void}
+				onTeamSelected={teamOptions?.onTeamSelected}
+				initialTeam={teamOptions?.initialTeam}
 			/>
 		);
 	}
@@ -443,22 +528,13 @@ export function FormField({
 	);
 }
 
-function computeFieldsetInitialValue(
-	fieldsetMeta: FormFieldType,
-): Record<string, unknown> {
-	if (fieldsetMeta.type !== "fieldset") return {};
-
-	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
-	const result: Record<string, unknown> = {};
-
-	for (const [key, fieldSchema] of Object.entries(shape)) {
-		const fieldMeta = formRegistry.get(fieldSchema) as
-			| FormFieldType
-			| undefined;
-		if (fieldMeta) {
-			result[key] = fieldMeta.initialValue;
-		}
-	}
-
-	return result;
+function isArrayAppend(
+	values: Record<string, unknown>,
+	name: string,
+	newValue: unknown,
+): boolean {
+	if (!Array.isArray(newValue)) return false;
+	const isNestedPath = name.includes(".") || name.includes("[");
+	const prevValue = isNestedPath ? getNestedValue(values, name) : values[name];
+	return Array.isArray(prevValue) && newValue.length > prevValue.length;
 }

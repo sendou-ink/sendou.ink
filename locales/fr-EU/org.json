@@ -10,7 +10,6 @@
 	"events.tabs.events": "Evenements",
 	"events.tabs.leaderboard": "Leaderboard",
 	"edit.form.title": "Modification de l'organisation du tournoi",
-	"edit.form.uploadLogo": "Télécharger le logo",
 	"edit.form.socialLinks.title": "Liens de réseau saciaux",
 	"edit.form.members.title": "Membres",
 	"edit.form.members.info": "\"Admin\" Le rôle d'administrateur permet aux utilisateurs de modifier l'organisation et toute inscription à un tournoi hébergé par l'organisation. \"Organisateur\" and \"Streamer\" donnent le rôle correspondant dans les tournois. \"Membre\" n'a aucune autorisation spéciale.",

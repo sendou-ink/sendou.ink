@@ -1,6 +1,7 @@
 import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, DBBoolean } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 
 export async function findForGroups(groupIds: number[], trx?: Transaction<DB>) {
 	if (groupIds.length === 0) return [];
@@ -27,15 +28,14 @@ export async function findForGroups(groupIds: number[], trx?: Transaction<DB>) {
 export async function cast(
 	{
 		groupId,
-		userId,
 		isContinuing,
 	}: {
 		groupId: number;
-		userId: number;
 		isContinuing: DBBoolean;
 	},
 	trx?: Transaction<DB>,
 ) {
+	const userId = actorId();
 	const executor = trx ?? db;
 
 	const runner = async (t: Transaction<DB>) => {

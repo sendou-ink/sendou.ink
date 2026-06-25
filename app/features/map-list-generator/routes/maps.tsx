@@ -1,14 +1,15 @@
+import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { useSearchParams } from "react-router";
-import { useCopyToClipboard } from "react-use";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
 import type { Tables } from "~/db/tables";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
@@ -115,7 +116,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 	const { t } = useTranslation(["game-misc", "common"]);
 	const [mapList, setMapList] = React.useState<ModeWithStage[]>();
 	const [szEveryOther, setSzEveryOther] = React.useState(false);
-	const [, copyToClipboard] = useCopyToClipboard();
+	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
 	const handleCreateMaplist = () => {
 		const generator = MapList.generate({ mapPool });
@@ -161,6 +162,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 					<SendouButton
 						size="small"
 						variant="outlined"
+						icon={copySuccess ? <Check /> : <Clipboard />}
 						onPress={() =>
 							copyToClipboard(
 								mapList

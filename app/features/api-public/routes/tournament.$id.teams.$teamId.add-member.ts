@@ -1,7 +1,21 @@
 import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
-import { action as adminAction } from "~/features/tournament/actions/to.$id.admin.server";
-import { parseBody, parseParams } from "~/utils/remix.server";
+import { requireUser } from "~/features/auth/core/user.server";
+import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { notify } from "~/features/notifications/core/notify.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import {
+	clearTournamentDataCache,
+	tournamentFromDB,
+} from "~/features/tournament-bracket/core/Tournament.server";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import {
+	errorToastIfFalsy,
+	parseBody,
+	parseParams,
+} from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
@@ -24,19 +38,80 @@ export const action = async (args: ActionFunctionArgs) => {
 		schema: bodySchema,
 	});
 
-	const internalRequest = new Request(args.request.url, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({
-			_action: "ADD_MEMBER",
-			teamId,
-			userId,
-		}),
-	});
+	return wrapActionForApi(async () => {
+		const user = requireUser();
+		const tournament = await tournamentFromDB({ tournamentId, user });
+		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
 
-	return wrapActionForApi(adminAction, {
-		...args,
-		params: { id: String(tournamentId) },
-		request: internalRequest,
-	});
+		const team = tournament.teamById(teamId);
+		errorToastIfFalsy(team, "Invalid team id");
+
+		const previousTeam = tournament.teamMemberOfByUser({ id: userId });
+
+		errorToastIfFalsy(
+			!previousTeam?.id || previousTeam.id !== team.id,
+			"User is already in this team",
+		);
+
+		errorToastIfFalsy(
+			tournament.hasStarted || !previousTeam,
+			"User is already in a team",
+		);
+
+		errorToastIfFalsy(
+			!userIsBanned(userId),
+			"User trying to be added currently has an active ban from sendou.ink",
+		);
+
+		const addMemberUser = await UserRepository.findLeanById(userId);
+		errorToastIfFalsy(addMemberUser?.friendCode, "User has no friend code set");
+		errorToastIfFalsy(
+			!tournament.ctx.settings.requireInGameNames || addMemberUser?.inGameName,
+			"User has no in-game name set",
+		);
+
+		await TournamentLFGRepository.leaveLfg({
+			userId,
+			tournamentId,
+		});
+		await TournamentTeamRepository.join({
+			userId,
+			newTeamId: team.id,
+			// this team is not checked in & tournament started, so we can simply delete it
+			previousTeamIdToDelete:
+				previousTeam &&
+				previousTeam.checkIns.length === 0 &&
+				tournament.hasStarted
+					? previousTeam.id
+					: undefined,
+		});
+
+		ShowcaseTournaments.addToCached({
+			tournamentId,
+			type: "participant",
+			userId,
+		});
+
+		if (!tournament.isTest && !tournament.isDraft) {
+			notify({
+				userIds: [userId],
+				notification: {
+					type: "TO_ADDED_TO_TEAM",
+					pictureUrl:
+						tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoUrl,
+					meta: {
+						adderUsername: user.username,
+						teamName: team.name,
+						tournamentId,
+						tournamentName: tournament.ctx.name,
+						tournamentTeamId: team.id,
+					},
+				},
+			});
+		}
+
+		clearTournamentDataCache(tournamentId);
+
+		return null;
+	}, args);
 };

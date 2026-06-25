@@ -1,4 +1,5 @@
 import type { ActionFunction } from "react-router";
+import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	errorToastIfFalsy,
@@ -47,12 +48,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "MAKE_MAIN_TEAM": {
-			await TeamRepository.switchMainTeam({
-				userId: user.id,
-				teamId: team.id,
-			});
+			await TeamRepository.switchOwnMainTeam(team.id);
 
 			break;
+		}
+		case "DELETE_TEAM": {
+			errorToastIfFalsy(
+				isTeamOwner({ user, team }) || user.roles.includes("ADMIN"),
+				"You are not the team owner",
+			);
+
+			await TeamRepository.del(team.id);
+			throw redirect("/");
 		}
 		default: {
 			assertUnreachable(data);

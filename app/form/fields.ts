@@ -1,5 +1,9 @@
 import * as R from "remeda";
 import { z } from "zod";
+import {
+	IN_GAME_NAME_MAX_LENGTH,
+	inGameNameIsValid,
+} from "~/features/user-page/in-game-name";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	date,
@@ -11,6 +15,7 @@ import {
 	timeString,
 	weaponSplId,
 } from "~/utils/zod";
+import { imageValue } from "./image-field";
 import type {
 	BadgeOption,
 	FieldWithOptions,
@@ -25,6 +30,8 @@ import type {
 	FormFieldSelect,
 	FormsTranslationKey,
 	SelectOption,
+	TeamSearchFieldOptions,
+	TournamentSearchFieldOptions,
 } from "./types";
 
 export const formRegistry = z.registry<FormField>();
@@ -77,6 +84,24 @@ function prefixItems<V extends string>(
 		...item,
 		label: typeof item.label === "string" ? `forms:${item.label}` : item.label,
 	}));
+}
+
+export function image(args: {
+	label: FormsTranslationKey;
+	bottomText?: FormsTranslationKey;
+	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
+	autoValidate?: boolean;
+}) {
+	// clone so each field gets its own registry entry (the shared `imageValue`
+	// instance would otherwise have its metadata overwritten by later fields)
+	return imageValue.clone().register(formRegistry, {
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		dimensions: args.dimensions ?? "logo",
+		autoValidate: args.autoValidate ?? false,
+		type: "image",
+		initialValue: null,
+	});
 }
 
 export function customField<T extends z.ZodType>(
@@ -176,6 +201,29 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 	}
 
 	return result as T;
+}
+
+export function inGameName(
+	args: WithTypedTranslationKeys<{
+		label?: FormsTranslationKey;
+		bottomText?: FormsTranslationKey;
+	}>,
+) {
+	const schema = safeNullableStringSchema({
+		max: IN_GAME_NAME_MAX_LENGTH,
+	}).refine((val) => val === null || inGameNameIsValid(val), {
+		message: "forms:errors.profileInGameName",
+	});
+
+	return schema.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		maxLength: IN_GAME_NAME_MAX_LENGTH,
+		required: false,
+		type: "in-game-name",
+		initialValue: "",
+	});
 }
 
 export function numberField(
@@ -747,7 +795,27 @@ export function tournamentSearchOptional(
 		type: "tournament-search",
 		initialValue: null,
 		required: false,
-	});
+	}) as unknown as z.ZodType<number | null> &
+		FieldWithOptions<TournamentSearchFieldOptions>;
+}
+
+export function teamSearchOptional(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "team-search" }>,
+			"type" | "initialValue" | "required"
+		>
+	>,
+) {
+	return z.preprocess(falsyToNull, id.nullable()).register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "team-search",
+		initialValue: null,
+		required: false,
+	}) as unknown as z.ZodType<number | null> &
+		FieldWithOptions<TeamSearchFieldOptions>;
 }
 
 export function badges(
