@@ -262,6 +262,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 				throw error;
 			}
 
+			if (setOver) {
+				// the set ended, so weapons reported in advance for map indexes
+				// beyond the games actually played are trimmed
+				await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
+					tournamentMatchId: matchId,
+					gameCount: data.position + 1,
+				});
+			}
+
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
 			setIsOver = setOver;
@@ -376,11 +385,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 					deletePickBanEvent({ matchId, number });
 				}
 			})();
-
-			await ReportedWeaponRepository.deleteByMapIndexTournament({
-				tournamentMatchId: matchId,
-				mapIndex: data.position,
-			});
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -811,6 +815,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 					manager,
 				});
 			})();
+
+			// the set ended early so no further games will be played; trim weapons
+			// reported in advance for map indexes beyond the games actually played
+			const playedResults =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
+			await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
+				tournamentMatchId: matchId,
+				gameCount: playedResults.length,
+			});
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
