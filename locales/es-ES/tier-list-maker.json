@@ -16,7 +16,7 @@
 	"hideAltKits": "Ocultar kits alternativos",
 	"hideAltSkins": "Ocultar skins alternativas",
 	"resetConfirmation": "¿Seguro que quieres reiniciar la tier list? Esto eliminará todos los elementos y restaurará las tiers por defecto.",
-	"allowDuplicates": "Permitir duplicados",
+	"noDuplicates": "",
 	"showTierHeaders": "Mostrar encabezados de las tiers",
 	"titlePlaceholder": "Haz clic para añadir un título...",
 	"by": "Creado por",

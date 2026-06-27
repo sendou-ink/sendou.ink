@@ -227,10 +227,10 @@ function TierListMakerContent() {
 							))}
 						</SendouChipRadioGroup>
 						<SendouSwitch
-							isSelected={canAddDuplicates}
-							onChange={setCanAddDuplicates}
+							isSelected={!canAddDuplicates}
+							onChange={(value) => setCanAddDuplicates(!value)}
 						>
-							{t("tier-list-maker:allowDuplicates")}
+							{t("tier-list-maker:noDuplicates")}
 						</SendouSwitch>
 						<SendouSwitch
 							isSelected={showTierHeaders}

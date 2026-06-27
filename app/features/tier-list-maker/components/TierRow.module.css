@@ -70,7 +70,6 @@
 	cursor: pointer;
 }
 
-
 .targetZoneSelectable:hover {
 	background-color: var(--color-bg-higher);
 }

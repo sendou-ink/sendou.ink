@@ -74,7 +74,7 @@ export function useTierList() {
 
 	const [canAddDuplicates, setCanAddDuplicates] = useSearchParamState({
 		name: "canAddDuplicates",
-		defaultValue: true,
+		defaultValue: false,
 		revive: (value) => value === "true",
 	});
 
