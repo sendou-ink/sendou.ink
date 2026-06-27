@@ -3,7 +3,13 @@ import { sub } from "date-fns";
 import { SendHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
-import { Button } from "react-aria-components";
+import {
+	Button,
+	ListBox,
+	ListBoxItem,
+	ListLayout,
+	Virtualizer,
+} from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
@@ -13,6 +19,9 @@ import { findRoomLinks, MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
 import styles from "./Chat.module.css";
+
+const MESSAGE_GAP = 8;
+const ESTIMATED_MESSAGE_HEIGHT = 44;
 
 export interface ChatAdapter {
 	messages: ChatMessage[];
@@ -38,7 +47,7 @@ export function Chat({
 	chat: ChatAdapter;
 }) {
 	const { t } = useTranslation(["common"]);
-	const messagesContainerRef = React.useRef<HTMLOListElement>(null);
+	const messagesContainerRef = React.useRef<HTMLDivElement>(null);
 	const inputRef = React.useRef<HTMLInputElement>(null);
 	const {
 		send,
@@ -114,6 +123,13 @@ export function Chat({
 		}
 	};
 
+	const renderableMessages = messages.filter((msg) => {
+		if (systemMessageText(msg)) return true;
+
+		const user = msg.userId ? users[msg.userId] : null;
+		return Boolean(user) || Boolean(missingUserName);
+	});
+
 	return (
 		<section className={clsx(styles.container, className, { hidden })}>
 			{rooms.length > 1 ? (
@@ -147,39 +163,42 @@ export function Chat({
 				</div>
 			) : null}
 			<div className={styles.inputContainer}>
-				<ol
-					className={clsx(
-						styles.messages,
-						"scrollbar",
-						messagesContainerClassName,
-					)}
-					ref={messagesContainerRef}
+				<Virtualizer
+					layout={ListLayout}
+					layoutOptions={{
+						gap: MESSAGE_GAP,
+						estimatedRowSize: ESTIMATED_MESSAGE_HEIGHT,
+					}}
 				>
-					{messages.map((msg) => {
-						const systemMessage = systemMessageText(msg);
-						if (systemMessage) {
+					<ListBox
+						ref={messagesContainerRef}
+						aria-label="Chat messages"
+						selectionMode="none"
+						items={renderableMessages}
+						className={clsx(
+							styles.messages,
+							"scrollbar",
+							messagesContainerClassName,
+						)}
+					>
+						{(msg) => {
+							const systemMessage = systemMessageText(msg);
+							if (systemMessage) {
+								return <SystemMessage message={msg} text={systemMessage} />;
+							}
+
+							const user = msg.userId ? users[msg.userId] : null;
+
 							return (
-								<SystemMessage
-									key={msg.id}
+								<Message
+									user={user}
+									missingUserName={missingUserName}
 									message={msg}
-									text={systemMessage}
 								/>
 							);
-						}
-
-						const user = msg.userId ? users[msg.userId] : null;
-						if (!user && !missingUserName) return null;
-
-						return (
-							<Message
-								key={msg.id}
-								user={user}
-								missingUserName={missingUserName}
-								message={msg}
-							/>
-						);
-					})}
-				</ol>
+						}}
+					</ListBox>
+				</Virtualizer>
 				{unseenMessagesInTheRoom ? (
 					<SendouButton
 						className={styles.unseenMessages}
@@ -241,7 +260,10 @@ function Message({
 	missingUserName?: string;
 }) {
 	return (
-		<li className={styles.message}>
+		<ListBoxItem
+			className={styles.message}
+			textValue={message.contents ?? user?.username ?? missingUserName ?? ""}
+		>
 			{user ? (
 				<div
 					className={clsx(styles.avatarWrapper, {
@@ -283,7 +305,7 @@ function Message({
 					) : null}
 				</div>
 			</div>
-		</li>
+		</ListBoxItem>
 	);
 }
 
@@ -295,7 +317,7 @@ function SystemMessage({
 	text: string;
 }) {
 	return (
-		<li className={styles.message}>
+		<ListBoxItem className={styles.message} textValue={text}>
 			<div>
 				<div className="stack horizontal sm">
 					<MessageTimestamp timestamp={message.timestamp} />
@@ -309,7 +331,7 @@ function SystemMessage({
 					{text}
 				</div>
 			</div>
-		</li>
+		</ListBoxItem>
 	);
 }
 
