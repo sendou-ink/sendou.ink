@@ -39,11 +39,18 @@
 	gap: var(--s-1);
 }
 
+.freeAgentBadge {
+	position: absolute;
+	top: var(--s-2);
+	left: var(--s-2);
+}
+
 .identity {
 	display: flex;
 	align-items: flex-end;
 	gap: var(--s-2-5);
 	margin-top: calc(-1 * (var(--s-6) + var(--s-1)));
+	position: relative;
 }
 
 .avatar {
@@ -54,13 +61,20 @@
 .nameGroup {
 	display: flex;
 	flex-direction: column;
-	padding-bottom: var(--s-1);
+	padding-bottom: var(--s-6);
+	position: absolute;
+	top: 18px;
+	left: 92px;
 }
 
 .username {
 	font-size: var(--font-lg);
 	font-weight: var(--weight-bold);
 	line-height: 1.1;
+	max-width: 180px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
 }
 
 .subtitle {
@@ -134,7 +148,7 @@
 
 .seasonTop {
 	position: absolute;
-	bottom: calc(-1 * var(--s-2));
+	bottom: calc(-1 * var(--s-1));
 	left: 50%;
 	transform: translateX(-50%);
 	display: inline-flex;
@@ -152,6 +166,19 @@
 	width: 2px;
 	align-self: stretch;
 	background-color: var(--color-border);
+}
+
+.mutualFriends {
+	display: flex;
+	align-items: center;
+	min-height: var(--field-size-sm);
+}
+
+.noMutualFriends {
+	margin-inline: auto;
+	font-style: italic;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 }
 
 .bio {

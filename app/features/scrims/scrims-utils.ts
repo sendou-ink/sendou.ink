@@ -3,6 +3,7 @@ import * as R from "remeda";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { databaseTimestampToDate } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
+import { LUTI_DIVS } from "./scrims-constants";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
 
 export const getPostRequestCensor =
@@ -51,6 +52,20 @@ export const parseLutiDiv = (div: number): LutiDiv => {
 	if (div === 0) return "X";
 
 	return String(div) as LutiDiv;
+};
+
+/**
+ * Extracts the LUTI division (e.g. `"X"`, `"2"`) from a tournament name such as
+ * "LUTI: Season 15 - Division 2". Returns `null` if no valid division token is found.
+ */
+export const parseLutiDivFromName = (name: string): LutiDiv | null => {
+	const match = name.match(/\bdiv(?:ision)?\.?\s*(X|11|10|[1-9])\b/i);
+	if (!match) return null;
+
+	const token = match[1].toUpperCase();
+	return (LUTI_DIVS as readonly string[]).includes(token)
+		? (token as LutiDiv)
+		: null;
 };
 
 export const serializeLutiDiv = (div: LutiDiv): number => {

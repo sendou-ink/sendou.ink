@@ -1573,24 +1573,6 @@ function AvatarSection({ id }: { id: string }) {
 	);
 }
 
-const USER_CARD_MUTUAL_FRIENDS = [
-	"100",
-	"200",
-	"300",
-	"400",
-	"500",
-	"600",
-	"700",
-	"800",
-].map((discordId, i) => ({
-	id: i + 1,
-	username: `Friend ${i + 1}`,
-	discordId,
-	discordAvatar: null,
-	customUrl: null,
-	customAvatarUrl: null,
-}));
-
 const USER_CARD_DATA = {
 	id: 1,
 	username: "Sendou",
@@ -1601,9 +1583,8 @@ const USER_CARD_DATA = {
 	banner: { type: "STAGE", stageId: 5 },
 	shortBio: "Very show bio goes here maybe max two lines that gets clamped.",
 	customTheme: null,
-	friendCode: null,
-	isFriend: false,
-	mutualFriends: [],
+	friendCode: "1234-1234-1234",
+	isFreeAgent: true,
 	privateNote: { text: null, sentiment: "NEUTRAL" },
 	stats: [
 		{
@@ -1621,7 +1602,7 @@ const USER_CARD_DATA = {
 				name: "LEVIATHAN",
 			},
 		},
-		{ type: "DIV", value: "Div 1" },
+		{ type: "DIV", value: "1" },
 		{ type: "PLUS", value: 1 },
 	],
 } satisfies UserCardData;

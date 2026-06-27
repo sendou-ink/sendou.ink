@@ -40,22 +40,6 @@
 	color: var(--color-text);
 }
 
-.avatar {
-	min-width: 36px;
-}
-
-.avatarPositive {
-	outline: 2px solid var(--color-success-low);
-}
-
-.avatarNeutral {
-	outline: 2px solid var(--color-warning-low);
-}
-
-.avatarNegative {
-	outline: 2px solid var(--color-error-low);
-}
-
 .tier {
 	margin-inline-start: auto;
 }

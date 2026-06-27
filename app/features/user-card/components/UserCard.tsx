@@ -1,8 +1,9 @@
 import clsx from "clsx";
-import { BadgeCheck, NotebookPen, UserPlus } from "lucide-react";
+import { BadgeCheck, Megaphone, NotebookPen, UserPlus } from "lucide-react";
 import * as React from "react";
 import { Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { useFetcher, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { Image, TierImage } from "~/components/Image";
@@ -12,12 +13,16 @@ import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,
+	LFG_PAGE,
 	navIconUrl,
 	stageBannerImageUrl,
+	userCardFriendshipPage,
 	userPage,
 } from "~/utils/urls";
+import type { UserCardFriendshipLoaderData } from "../routes/user-card.$id.friendship";
 import type {
 	UserCardData,
+	UserCardFriendship,
 	UserCardStat,
 	XPDivision,
 } from "../user-card-types";
@@ -38,20 +43,49 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 };
 
 /**
- * xxx: docs here
+ * Hover/focus wrapper that opens a popover with the user's card. Card data is resolved from the
+ * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.userCards`);
+ * pass `data` directly to bypass the lookup (e.g. the components showcase). When no card data exists
+ * for the user, the `children` are rendered plain without a popover.
+ *
+ * Viewer-relative friendship data (`isFriend` + `mutualFriends`) is lazy-loaded from the
+ * `/user-card/:id/friendship` route the first time the card opens.
  */
 export function UserCard({
-	data,
+	userId,
+	data: dataProp,
 	children,
 }: {
-	data: UserCardData;
+	userId?: number;
+	data?: UserCardData;
 	// xxx: should this be a button or not?
 	children: React.ReactNode;
 }) {
+	const lookedUpData = useUserCardData(userId);
+	const data = dataProp ?? lookedUpData;
+
 	const triggerRef = React.useRef<HTMLSpanElement>(null);
+	const popoverRef = React.useRef<HTMLElement>(null);
 	const openTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 	const closeTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+	const lastPointerType =
+		React.useRef<React.PointerEvent["pointerType"]>("mouse");
 	const [isOpen, setIsOpen] = React.useState(false);
+	const [openedByTouch, setOpenedByTouch] = React.useState(false);
+
+	const fetcher = useFetcher<UserCardFriendshipLoaderData>();
+	const friendshipLoadedRef = React.useRef(false);
+
+	React.useEffect(() => {
+		if (!isOpen) return;
+		if (friendshipLoadedRef.current) return;
+		if (typeof data?.id !== "number") return;
+
+		friendshipLoadedRef.current = true;
+		fetcher.load(userCardFriendshipPage(data.id));
+	}, [isOpen, data?.id, fetcher.load]);
+
+	const friendship = fetcher.data;
 
 	// xxx: probably not the play
 	React.useEffect(
@@ -61,6 +95,24 @@ export function UserCard({
 		},
 		[],
 	);
+
+	// a non-modal popover does not close on interact outside; for touch-opened cards we close it
+	// ourselves so the page stays interactive without making the popover modal (which would steal focus)
+	React.useEffect(() => {
+		if (!isOpen || !openedByTouch) return;
+
+		const onPointerDownOutside = (event: PointerEvent) => {
+			const target = event.target as Node;
+			if (triggerRef.current?.contains(target)) return;
+			if (popoverRef.current?.contains(target)) return;
+			setIsOpen(false);
+			setOpenedByTouch(false);
+		};
+
+		document.addEventListener("pointerdown", onPointerDownOutside);
+		return () =>
+			document.removeEventListener("pointerdown", onPointerDownOutside);
+	}, [isOpen, openedByTouch]);
 
 	const scheduleOpen = () => {
 		clearTimeout(closeTimeout.current);
@@ -90,14 +142,30 @@ export function UserCard({
 		scheduleClose();
 	};
 
+	const onPointerDown = (event: React.PointerEvent) => {
+		lastPointerType.current = event.pointerType;
+	};
+
+	const onClick = (event: React.MouseEvent) => {
+		if (lastPointerType.current === "mouse") return;
+		// on touch/pen open the card instead of activating the child (e.g. following a link)
+		event.preventDefault();
+		setOpenedByTouch(true);
+		setIsOpen((prev) => !prev);
+	};
+
+	if (!data) return <>{children}</>;
+
 	return (
 		<>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: hover/focus wrapper delegating to the interactive child trigger; the card opens on hover/focus */}
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: hover/focus/tap wrapper delegating to the interactive child trigger; the card opens on hover/focus (mouse) or tap (touch) */}
 			<span
 				ref={triggerRef}
 				className={styles.triggerWrapper}
 				onPointerEnter={onPointerEnter}
 				onPointerLeave={onPointerLeave}
+				onPointerDown={onPointerDown}
+				onClick={onClick}
 				onFocus={() => setIsOpen(true)}
 				onBlur={(event) => {
 					if (!event.currentTarget.contains(event.relatedTarget)) {
@@ -108,15 +176,20 @@ export function UserCard({
 				{children}
 			</span>
 			<Popover
+				ref={popoverRef}
 				triggerRef={triggerRef}
 				isOpen={isOpen}
-				onOpenChange={setIsOpen}
+				onOpenChange={(open) => {
+					setIsOpen(open);
+					if (!open) setOpenedByTouch(false);
+				}}
 				isNonModal
 				placement="bottom"
 				className={styles.popover}
 			>
 				<CardContent
 					data={data}
+					friendship={friendship}
 					onPointerEnter={cancelClose}
 					onPointerLeave={onPointerLeave}
 				/>
@@ -125,12 +198,36 @@ export function UserCard({
 	);
 }
 
+/**
+ * Resolves a user's `UserCardData` from any matched route loader that spread `{ userCards }`
+ * (see `UserCardRepository.userCards`). Returns `undefined` when no loader on the current route
+ * tree carries data for the given user.
+ */
+function useUserCardData(userId: number | undefined): UserCardData | undefined {
+	const matches = useMatches();
+
+	if (typeof userId !== "number") return undefined;
+
+	for (const match of matches) {
+		const data = match.data as
+			| { userCards?: Map<number, UserCardData> }
+			| undefined;
+		const card = data?.userCards?.get(userId);
+		if (card) return card;
+	}
+
+	return undefined;
+}
+
 function CardContent({
 	data,
+	friendship,
 	onPointerEnter,
 	onPointerLeave,
 }: {
 	data: UserCardData;
+	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
+	friendship: UserCardFriendship | undefined;
 	onPointerEnter: () => void;
 	onPointerLeave: (event: React.PointerEvent) => void;
 }) {
@@ -148,8 +245,19 @@ function CardContent({
 			onPointerLeave={onPointerLeave}
 		>
 			<Banner banner={data.banner} />
+			{data.isFreeAgent ? (
+				<LinkButton
+					// xxx: make it scroll to the fa post
+					to={LFG_PAGE}
+					size="miniscule"
+					icon={<Megaphone />}
+					className={styles.freeAgentBadge}
+				>
+					{t("user:card.freeAgent")}
+				</LinkButton>
+			) : null}
 			<div className={styles.iconButtons}>
-				{!data.isFriend ? (
+				{friendship && !friendship.isFriend ? (
 					<SendouButton
 						size="miniscule"
 						shape="circle"
@@ -168,9 +276,11 @@ function CardContent({
 				<Avatar user={data} size="md" className={styles.avatar} />
 				<div className={styles.nameGroup}>
 					<h2 className={styles.username}>{data.username}</h2>
-					<Subtitle data={data} />
+					{data.customUrl ? (
+						<div className={styles.subtitle}>{data.customUrl}</div>
+					) : null}
 					{data.friendCode ? (
-						<span className={styles.friendCode}>{data.friendCode}</span>
+						<span className={styles.friendCode}>SW-{data.friendCode}</span>
 					) : (
 						/** reserve space */
 						<span className={styles.friendCode}>{"\u200b"}</span>
@@ -187,7 +297,7 @@ function CardContent({
 					))}
 				</div>
 			) : null}
-			<MutualFriends mutualFriends={data.mutualFriends} />
+			<CardMutualFriends friendship={friendship} />
 			{data.shortBio ? <p className={styles.bio}>{data.shortBio}</p> : null}
 			<LinkButton
 				to={userPage(data)}
@@ -197,6 +307,31 @@ function CardContent({
 			>
 				{t("user:card.viewUserPage")}
 			</LinkButton>
+		</div>
+	);
+}
+
+/**
+ * Mutual friends row with reserved height so the card does not shift when the lazy friendship fetch
+ * resolves: empty while loading, "No mutual friends" when there are none, the avatar stack otherwise.
+ */
+function CardMutualFriends({
+	friendship,
+}: {
+	friendship: UserCardFriendship | undefined;
+}) {
+	const { t } = useTranslation(["user"]);
+
+	return (
+		<div className={styles.mutualFriends}>
+			{friendship === undefined ? null : friendship.mutualFriends.length ===
+				0 ? (
+				<span className={styles.noMutualFriends}>
+					{t("user:card.noMutualFriends")}
+				</span>
+			) : (
+				<MutualFriends mutualFriends={friendship.mutualFriends} />
+			)}
 		</div>
 	);
 }
@@ -218,27 +353,6 @@ function Banner({ banner }: { banner: UserCardData["banner"] }) {
 	})();
 
 	return <div className={styles.banner} style={style} />;
-}
-
-function Subtitle({ data }: { data: UserCardData }) {
-	const parts: Array<string> = [];
-
-	if (data.customUrl) {
-		parts.push(data.customUrl);
-	}
-
-	if (parts.length === 0) return null;
-
-	return (
-		<div className={styles.subtitle}>
-			{parts.map((part, i) => (
-				<span key={part} className="stack horizontal xs items-center">
-					{i > 0 ? <span>·</span> : null}
-					{part}
-				</span>
-			))}
-		</div>
-	);
 }
 
 function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
@@ -275,7 +389,7 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 			);
 		}
 		case "DIV":
-			return <span className={styles.stat}>{stat.value}</span>;
+			return <span className={styles.stat}>Div {stat.value}</span>;
 		case "PLUS":
 			return (
 				<span className={clsx(styles.stat, styles.plusStat)}>

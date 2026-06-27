@@ -26,9 +26,11 @@ import {
 } from "~/features/plus-voting/core";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
+import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
@@ -178,6 +180,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	adminUserWeaponPool,
 	adminUserWidgets,
 	userProfiles,
+	userCardData,
 	variation === "TEAM_MAP_PREFS" ? undefined : userMapModePreferences,
 	userMatchProfileWeaponPool,
 	seedingSkills,
@@ -897,6 +900,66 @@ async function userProfiles() {
 					: faker.helpers.arrayElement(["YES", "NO", "LISTEN_ONLY"]),
 		});
 	}
+}
+
+/**
+ * SendouQ groups draw their members from the lowest user ids, so users at or below this id are
+ * guaranteed full user card data (the rest get a realistic mix of set/unset fields).
+ */
+const USER_CARD_SEEDED_USER_ID_CEILING = 100;
+
+async function userCardData() {
+	for (let id = 2; id < 500; id++) {
+		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
+
+		const guaranteed = id <= USER_CARD_SEEDED_USER_ID_CEILING;
+
+		sql
+			.prepare(
+				/* sql */ `
+        update "User"
+        set
+          "shortBio" = @shortBio,
+          "div" = @div,
+          "bannerPresetImg" = @bannerPresetImg,
+          "unverifiedPeakXP" = @unverifiedPeakXP
+        where "id" = @id`,
+			)
+			.run({
+				id,
+				shortBio:
+					guaranteed || faker.number.float(1) > 0.4
+						? faker.lorem.sentence()
+						: null,
+				div:
+					guaranteed || faker.number.float(1) > 0.5
+						? faker.helpers.arrayElement(LUTI_DIVS)
+						: null,
+				bannerPresetImg: randomBannerPresetImg(),
+				unverifiedPeakXP:
+					guaranteed || faker.number.float(1) > 0.6 ? randomPeakXp() : null,
+			});
+	}
+}
+
+/** Mix of the three banner sources: null (color derived from user id), a stage banner, an explicit color. */
+function randomBannerPresetImg() {
+	const roll = faker.number.float(1);
+	if (roll < 0.34) return null;
+	if (roll < 0.67) return String(faker.helpers.arrayElement(stageIds));
+	return faker.helpers.arrayElement(PRESET_COLORS);
+}
+
+/** Self-reported peak XP with exactly one division defined (the other null), as the column expects. */
+function randomPeakXp() {
+	const points = faker.number.int({ min: 2000, max: 3500 });
+	const isTentatek = faker.datatype.boolean();
+
+	return JSON.stringify({
+		overall: points,
+		tentatek: isTentatek ? points : null,
+		takoroka: isTentatek ? null : points,
+	});
 }
 
 const randomPreferences = (): UserMapModePreferences => {
@@ -3496,16 +3559,7 @@ const SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG = [100, 101];
 const SENDOU_FRIEND_IDS_OTHER = [102, 103];
 
 async function friendships(variation?: SeedVariation | null) {
-	const allFriendIds = [
-		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
-		...SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG,
-		...SENDOU_FRIEND_IDS_OTHER,
-	];
-
-	for (const friendId of allFriendIds) {
-		const userOneId = Math.min(ADMIN_ID, friendId);
-		const userTwoId = Math.max(ADMIN_ID, friendId);
-
+	const insertFriendship = (idA: number, idB: number) =>
 		sql
 			.prepare(
 				/* sql */ `
@@ -3513,8 +3567,23 @@ async function friendships(variation?: SeedVariation | null) {
 				values (@userOneId, @userTwoId)
 			`,
 			)
-			.run({ userOneId, userTwoId });
+			.run({ userOneId: Math.min(idA, idB), userTwoId: Math.max(idA, idB) });
+
+	const allFriendIds = [
+		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
+		...SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG,
+		...SENDOU_FRIEND_IDS_OTHER,
+	];
+
+	for (const friendId of allFriendIds) {
+		insertFriendship(ADMIN_ID, friendId);
 	}
+
+	// friendships between some looking-group owners so their user cards show mutual friends with the
+	// admin, while others (e.g. 153 and the additional members) intentionally have none
+	insertFriendship(150, 151);
+	insertFriendship(150, 152);
+	insertFriendship(151, 152);
 
 	if (variation === "NO_SQ_GROUPS" || variation === "TEAM_MAP_PREFS") return;
 

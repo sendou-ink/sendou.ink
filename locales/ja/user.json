@@ -204,5 +204,7 @@
 	"card.viewUserPage": "",
 	"card.sendFriendRequest": "",
 	"card.editPrivateNote": "",
-	"card.xp": ""
+	"card.xp": "",
+	"card.freeAgent": "",
+	"card.noMutualFriends": ""
 }

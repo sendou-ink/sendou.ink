@@ -1,4 +1,4 @@
-import type { ExpressionBuilder, NotNull } from "kysely";
+import { type ExpressionBuilder, type NotNull, sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
@@ -232,7 +232,12 @@ export async function syncXPBadges() {
 
 		const userTopXPowers = await trx
 			.selectFrom("SplatoonPlayer")
-			.select(["userId", "peakXp"])
+			.select([
+				"userId",
+				sql<number | null>`"SplatoonPlayer"."peakXp" ->> '$.overall'`.as(
+					"peakXp",
+				),
+			])
 			.where("userId", "is not", null)
 			.where("peakXp", "is not", null)
 			.$narrowType<{ userId: NotNull; peakXp: NotNull }>()

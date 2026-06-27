@@ -65,7 +65,21 @@ async function insertSplatoonPlayer(args: {
 	userId: number | null;
 	peakXp: number | null;
 }) {
-	await db.insertInto("SplatoonPlayer").values(args).execute();
+	await db
+		.insertInto("SplatoonPlayer")
+		.values({
+			splId: args.splId,
+			userId: args.userId,
+			peakXp:
+				args.peakXp === null
+					? null
+					: JSON.stringify({
+							overall: args.peakXp,
+							tentatek: args.peakXp,
+							takoroka: null,
+						}),
+		})
+		.execute();
 }
 
 async function findBadgeByCode(code: string) {

@@ -8,10 +8,19 @@ export interface UserCardData extends CommonUser {
 	shortBio: string | null;
 	customTheme: CustomTheme | null;
 	friendCode: string | null;
-	isFriend: boolean;
-	mutualFriends: Array<CommonUser>;
+	isFreeAgent: boolean;
 	privateNote: Pick<Tables["PrivateUserNote"], "text" | "sentiment">;
 	stats: Array<UserCardStat>;
+}
+
+/**
+ * Viewer-relative card fields lazy-loaded when the card opens (see the
+ * `/user-card/:id/friendship` resource route), kept out of the batched `UserCardData`
+ * query because they are only needed for the one card a viewer actually opens.
+ */
+export interface UserCardFriendship {
+	isFriend: boolean;
+	mutualFriends: Array<CommonUser>;
 }
 
 type UserCarBannerData =
@@ -50,7 +59,7 @@ export type UserCardStat =
 // xxx: should live in tables.ts or something?
 export type XPDivision = "TENTATEK" | "TAKOROKA";
 
-interface UserCardStatXPValue {
+export interface UserCardStatXPValue {
 	isVerified: boolean;
 	div: XPDivision;
 	points: number;

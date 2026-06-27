@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
@@ -43,7 +44,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						.whereRef("UserWeapon.userId", "=", "User.id")
 						.orderBy("UserWeapon.order", "asc"),
 				).as("weapons"),
-				"SplatoonPlayer.peakXp",
+				sql<number | null>`"SplatoonPlayer"."peakXp" ->> '$.overall'`.as(
+					"peakXp",
+				),
 				jsonArrayFrom(
 					eb
 						.selectFrom("TeamMemberWithSecondary")

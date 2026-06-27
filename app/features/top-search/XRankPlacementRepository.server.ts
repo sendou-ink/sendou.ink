@@ -132,12 +132,23 @@ export type FindPlacement = InferResult<
 export async function refreshAllPeakXp() {
 	await db
 		.updateTable("SplatoonPlayer")
-		.set((eb) => ({
-			peakXp: eb
-				.selectFrom("XRankPlacement")
-				.select((eb) => eb.fn.max("XRankPlacement.power").as("peakXp"))
-				.whereRef("XRankPlacement.playerId", "=", "SplatoonPlayer.id"),
-		}))
+		.set({
+			// denormalized PeakXP json: overall + per-division peaks
+			// (region WEST = Tentatek, otherwise Takoroka). null when no placements.
+			peakXp: sql<string | null>`(
+				select iif(
+					max("XRankPlacement"."power") is null,
+					null,
+					json_object(
+						'overall', max("XRankPlacement"."power"),
+						'tentatek', max(iif("XRankPlacement"."region" = 'WEST', "XRankPlacement"."power", null)),
+						'takoroka', max(iif("XRankPlacement"."region" != 'WEST', "XRankPlacement"."power", null))
+					)
+				)
+				from "XRankPlacement"
+				where "XRankPlacement"."playerId" = "SplatoonPlayer"."id"
+			)`,
+		})
 		.execute();
 }
 

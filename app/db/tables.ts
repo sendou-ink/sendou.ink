@@ -500,12 +500,21 @@ export interface SeedingSkill {
 	type: "RANKED" | "UNRANKED";
 }
 
+interface PeakXP {
+	/** Peak XP across all divisions */
+	overall: number;
+	/** Peak XP (Takoroka division) */
+	takoroka: number | null;
+	/** Peak XP (Tentatek division) */
+	tentatek: number | null;
+}
+
 export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
 	/** Players best XP across both divisions. Denormalized for performance. */
-	peakXp: number | null;
+	peakXp: JSONColumnTypeNullable<PeakXP>;
 }
 
 export interface TaggedArt {
@@ -1091,7 +1100,10 @@ export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
 	bannedReason: string | null;
+	/** Shown on old user profile and Plus Voting */
 	bio: string | null;
+	/** Shown on user card */
+	shortBio: string | null;
 	commissionsOpen: Generated<number | null>;
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
@@ -1136,8 +1148,13 @@ export interface User {
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
 	joinOrder: number | null;
-	/** Last message used when creating a tournament sub post */
-	lastSubMessage: string | null;
+	// xxx: add bannerImgId
+	/** User card banner default selection, hex code or stage id. Note: supporters can also upload banner (stored in UserSubmittedImage) */
+	bannerPresetImg: JSONColumnTypeNullable<string | StageId>;
+	/** Div in the latest finished LUTI (e.g. "2" or "X"). Must have been in a team that did not drop and the user played at least one match (got result as well) */
+	div: string | null;
+	/** Peak XP as indicated by the user. Should have either `takoroka` or `tentatek` key defined but not both. */
+	unverifiedPeakXP: JSONColumnTypeNullable<PeakXP>;
 }
 
 /** Represents User joined with PlusTier table */

@@ -147,6 +147,9 @@ export const PATRONS_LIST_ROUTE = "/patrons-list";
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 
+export const userCardFriendshipPage = (userId: number) =>
+	`/user-card/${userId}/friendship`;
+
 interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];
 	customUrl?: Tables["User"]["customUrl"];

@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { commonUserSelect } from "~/utils/kysely.server";
@@ -35,14 +36,14 @@ export function findXRankStreams() {
 		.innerJoin("User", "User.twitch", "LiveStream.twitch")
 		.innerJoin("SplatoonPlayer", "SplatoonPlayer.userId", "User.id")
 		.where(
-			"SplatoonPlayer.peakXp",
+			sql<number>`"SplatoonPlayer"."peakXp" ->> '$.overall'`,
 			">=",
 			StreamRanking.minXpForStreamToBeShown(),
 		)
 		.where("LiveStream.twitch", "is not", null)
 		.select((eb) => [
 			...commonUserSelect(eb),
-			"SplatoonPlayer.peakXp",
+			sql<number>`"SplatoonPlayer"."peakXp" ->> '$.overall'`.as("peakXp"),
 			"LiveStream.viewerCount",
 			"LiveStream.thumbnailUrl",
 			"LiveStream.twitch as twitchUsername",

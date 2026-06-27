@@ -1,7 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { groupExpiryStatus } from "../core/groups";
 import { SendouQ } from "../core/SendouQ.server";
 import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
@@ -31,11 +33,24 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		});
 	}
 
+	const groupsToShow =
+		ownGroup && groupExpiryStatus(ownGroup.latestActionAt) === "EXPIRED"
+			? []
+			: groups;
+
+	const cardUserIds = R.unique([
+		...(ownGroup?.members ?? []).map((member) => member.id),
+		...groupsToShow.flatMap((group) =>
+			(group.members ?? []).map((member) => member.id),
+		),
+	]);
+
 	return {
-		groups:
-			ownGroup && groupExpiryStatus(ownGroup.latestActionAt) === "EXPIRED"
-				? []
-				: groups,
+		...(await UserCardRepository.userCards({
+			userIds: cardUserIds,
+			viewerId: user.id,
+		})),
+		groups: groupsToShow,
 		ownGroup,
 		likes: ownGroup
 			? await SQGroupRepository.allLikesByGroupId(ownGroup.id)

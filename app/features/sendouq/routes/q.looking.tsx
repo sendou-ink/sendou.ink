@@ -76,6 +76,8 @@ export default function QLookingShell() {
 	return <QLookingPage />;
 }
 
+// xxx: update prompt to fill the profile to include UserCard stuff
+
 function QLookingPage() {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
@@ -258,7 +260,6 @@ function Groups() {
 							key={group.id}
 							group={group}
 							action="UNLIKE"
-							showNote
 							ownGroup={data.ownGroup}
 							layout={layout}
 						/>
@@ -272,7 +273,7 @@ function Groups() {
 			<ColumnHeader isMobile={isMobile}>
 				{t("q:looking.columns.myGroup")}
 			</ColumnHeader>
-			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
+			<GroupCard group={data.ownGroup} ownGroup={data.ownGroup} />
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
 					inviteCode={data.ownGroup.inviteCode}
@@ -360,7 +361,6 @@ function Groups() {
 													? "UNLIKE"
 													: "LIKE"
 											}
-											showNote
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -388,7 +388,6 @@ function Groups() {
 											key={group.id}
 											group={group}
 											action={action()}
-											showNote
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -426,7 +425,6 @@ function Groups() {
 									key={group.id}
 									group={group}
 									action={action()}
-									showNote
 									ownGroup={data.ownGroup}
 									layout={layout}
 								/>
