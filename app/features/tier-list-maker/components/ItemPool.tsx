@@ -45,6 +45,7 @@ function ClickableItem({
 	return (
 		<button
 			type="button"
+			data-item-id={tierListItemId(item)}
 			className={styles.clickableItem}
 			onClick={onClick}
 			disabled={disabled}
