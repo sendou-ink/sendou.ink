@@ -280,7 +280,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		for (const id of [2, 4, 6, 7, 8, 9, 10, 11, 12]) {
+		for (const id of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
 			await navigateToMatch(page, id);
 			await goToTab(page, "action");
 			await reportResult(page, { mapsToReport: 2 });
@@ -319,7 +319,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await navigateToMatch(page, 13);
+		await navigateToMatch(page, 10);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 3 });
 
@@ -329,7 +329,7 @@ test.describe("Tournament bracket", () => {
 		});
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
-		for (const matchId of [14, 15, 16, 17]) {
+		for (const matchId of [11, 12, 13, 14]) {
 			await navigateToMatch(page, matchId);
 			await goToTab(page, "action");
 			await reportResult(page, { mapsToReport: 3 });
@@ -342,10 +342,40 @@ test.describe("Tournament bracket", () => {
 
 		// after finalizing the tournament, the admin tab disappears so the
 		// reopen action is no longer reachable
-		await navigateToMatch(page, 14);
+		await navigateToMatch(page, 11);
 		await isNotVisible(page.getByRole("tab", { name: "Admin" }));
 		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await backToBracket(page);
+	});
+
+	test("starts a round robin bracket with unevenly sized groups (5 teams)", async ({
+		page,
+	}) => {
+		const tournamentId = 3;
+
+		await seed(page);
+		await impersonate(page);
+
+		await navigate({
+			page,
+			url: tournamentAdminPage(tournamentId),
+		});
+
+		// leave 5 checked in teams -> groups of 3 and 2 with different round counts
+		await checkOutTeamRows(page, 6, 15);
+
+		await navigate({
+			page,
+			url: tournamentBracketsPage({
+				tournamentId,
+			}),
+		});
+
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+
+		// bracket starts without an "Invalid map count" error -> matches are rendered
+		await expect(page.locator("[data-match-id]").first()).toBeVisible();
 	});
 
 	test("shows tournament results on user profile after finalized tournament", async ({
@@ -570,7 +600,7 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		await navigateToMatch(page, 2);
+		await navigateToMatch(page, 1);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 
@@ -635,30 +665,30 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		// needs also to be completed so 9 unlocks
-		await navigateToMatch(page, 7);
+		// needs also to be completed so 6 unlocks
+		await navigateToMatch(page, 4);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
 		// set situation where match A is completed and its participants also completed their follow up matches B & C
 		// and then we go back and change the winner of A
-		await navigateToMatch(page, 8);
+		await navigateToMatch(page, 5);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
-		await navigateToMatch(page, 9);
+		await navigateToMatch(page, 6);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
-		await navigateToMatch(page, 10);
+		await navigateToMatch(page, 7);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
-		await navigateToMatch(page, 8);
+		await navigateToMatch(page, 5);
 		await goToTab(page, "admin");
 		await submit(page, "reopen-match-button");
 		await goToTab(page, "action");
@@ -687,36 +717,36 @@ test.describe("Tournament bracket", () => {
 		await submit(page, "confirm-finalize-bracket-button");
 
 		// Use Group B which has 4 teams and 2 matches per round
-		// Group B Round 1: Match 7 (Whatcha Say vs Come Together), Match 8 (We Are Champions vs Please Mr Postman)
-		// Group B Round 2: Match 9 (Please Mr Postman vs Come Together), Match 10 (Whatcha Say vs We Are Champions)
+		// Group B Round 1: Match 4, Match 5
+		// Group B Round 2: Match 6, Match 7
 
-		// Complete R1 matches in group B (matches 7 and 8) to unlock R2 matches
-		await navigateToMatch(page, 7);
+		// Complete R1 matches in group B (matches 4 and 5) to unlock R2 matches
+		await navigateToMatch(page, 4);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
-		await navigateToMatch(page, 8);
+		await navigateToMatch(page, 5);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 2 });
 		await backToBracket(page);
 
-		// Match 9 is R2 in group B - should now be unlocked since R1 is complete
+		// Match 6 is R2 in group B - should now be unlocked since R1 is complete
 		// Start it but don't complete it
-		await navigateToMatch(page, 9);
+		await navigateToMatch(page, 6);
 		await goToTab(page, "action");
 		await reportResult(page, { mapsToReport: 1, setEnds: false });
 		await backToBracket(page);
 
-		// Reopen match 7 (R1 match) - simulating a score misreport correction
-		await navigateToMatch(page, 7);
+		// Reopen match 4 (R1 match) - simulating a score misreport correction
+		await navigateToMatch(page, 4);
 		await goToTab(page, "admin");
 		await submit(page, "reopen-match-button");
 		await backToBracket(page);
 
 		// Verify the R2 match that was already in progress is still playable
 		// Before the fix, this would become locked and unplayable
-		await navigateToMatch(page, 9);
+		await navigateToMatch(page, 6);
 		await expectScore(page, [1, 0]);
 		await goToTab(page, "action");
 		await expect(page.getByTestId("winner-radio-1")).toBeVisible();
