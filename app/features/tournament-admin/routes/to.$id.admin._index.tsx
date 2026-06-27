@@ -131,7 +131,9 @@ export default function TournamentAdminTeamsPage() {
 								colSpan={maxRosterSize + (tournament.ctx.isFinalized ? 2 : 3)}
 								className={styles.noResults}
 							>
-								No registrations yet
+								{tournament.ctx.teams.length === 0
+									? "No registrations yet"
+									: "No registrations match your search"}
 							</td>
 						</tr>
 					) : null}
