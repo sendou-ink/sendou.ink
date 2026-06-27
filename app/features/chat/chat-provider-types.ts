@@ -53,7 +53,6 @@ export interface ChatContextValue {
 	chatOpen: boolean;
 	setChatOpen: (open: boolean) => void;
 	activeRoom: string | null;
-	// xxx: make it accept also [chatCode, chatCode] if split view?
 	setActiveRoom: (chatCode: string | null) => void;
 	chatLabels: Record<number, string>;
 	setChatLabels: (labels: Record<number, string>) => void;
