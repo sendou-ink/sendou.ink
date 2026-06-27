@@ -5,6 +5,7 @@ import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
 import type { StageId } from "~/modules/in-game-lists/types";
@@ -47,29 +48,21 @@ export async function userCards({
 		.where("User.id", "in", userIds)
 		.execute();
 
-	// xxx: this should check last two and pick better
-	const season = Seasons.currentOrPrevious()?.nth ?? null;
-	const seasonSkills: Record<string, TieredSkill> =
-		season !== null ? userSkills(season).userSkills : {};
-	const seasonTopByUserId =
-		season !== null
-			? new Map(
-					(await cachedFullUserLeaderboard(season)).map((entry) => [
-						entry.id,
-						entry.placementRank,
-					]),
-				)
-			: new Map<number, number>();
+	// a user's card surfaces the better of their last two finished seasons (see bestSeasonResult)
+	const seasonResults: Array<SeasonResult> = await Promise.all(
+		Seasons.allFinished()
+			.slice(0, 2)
+			.map((season) => seasonResult(season, userIds)),
+	);
 
 	const userCards = new Map<number, UserCardData>();
 	for (const { cardData } of rows) {
 		userCards.set(
 			cardData.id,
-			enrichUserCardData(cardData, {
-				seasonSkill: seasonSkills[cardData.id],
-				// xxx: only needed for leviathan+, maybe lazy load the leaderboard too
-				seasonTop: seasonTopByUserId.get(cardData.id) ?? null,
-			}),
+			enrichUserCardData(
+				cardData,
+				bestSeasonResult(cardData.id, seasonResults),
+			),
 		);
 	}
 
@@ -224,6 +217,94 @@ function xpUnverifiedJson() {
 			)
 		)
 	`;
+}
+
+type SeasonResult = {
+	skills: Record<string, TieredSkill>;
+	placementsByUserId: Map<number, number>;
+};
+
+/**
+ * Resolves one finished season's data for the requested users. `userSkills` is a synchronous
+ * in-memory cache, so we read tiers first and only fetch the (DB-backed) leaderboard when at least
+ * one requested user reached Leviathan+ that season—placements are surfaced for that rank only, so
+ * the common case of regular users never touches the leaderboard cache at all.
+ */
+async function seasonResult(
+	season: number,
+	userIds: Array<number>,
+): Promise<SeasonResult> {
+	const skills = userSkills(season).userSkills;
+
+	const anyLeviathanPlus = userIds.some((id) => {
+		const skill = skills[id];
+		return (
+			skill !== undefined && !skill.approximate && isLeviathanPlus(skill.tier)
+		);
+	});
+
+	const placementsByUserId = anyLeviathanPlus
+		? new Map(
+				(await cachedFullUserLeaderboard(season)).map((entry) => [
+					entry.id,
+					entry.placementRank,
+				]),
+			)
+		: new Map<number, number>();
+
+	return { skills, placementsByUserId };
+}
+
+const isLeviathanPlus = (tier: TieredSkill["tier"]) =>
+	tier.name === "LEVIATHAN" && tier.isPlus;
+
+/**
+ * Comparable strength of a tier (higher = better). Based on the tier's position in `TIERS` rather
+ * than the raw ordinal, because each season sets its own ordinal thresholds—the same ordinal can
+ * map to different tiers across seasons—so only the tier itself is comparable. `isPlus` (top half of
+ * a tier) breaks ties within the same tier name.
+ */
+const tierStrength = (tier: TieredSkill["tier"]) => {
+	const index = TIERS.findIndex((t) => t.name === tier.name);
+	return (TIERS.length - index) * 2 + (tier.isPlus ? 1 : 0);
+};
+
+/**
+ * Reduces a user's results across the last two finished seasons into the single result their card
+ * shows: the highest tier they reached (ignoring `approximate` tiers, which lack enough matches to
+ * count), and—only when that includes the very top Leviathan+ rank—their best (lowest) leaderboard
+ * placement among the Leviathan+ seasons.
+ */
+function bestSeasonResult(
+	userId: number,
+	seasonResults: Array<SeasonResult>,
+): { seasonSkill: TieredSkill | undefined; seasonTop: number | null } {
+	let seasonSkill: TieredSkill | undefined;
+	let seasonTop: number | null = null;
+
+	for (const { skills, placementsByUserId } of seasonResults) {
+		const skill = skills[userId];
+		if (!skill || skill.approximate) continue;
+
+		if (
+			!seasonSkill ||
+			tierStrength(skill.tier) > tierStrength(seasonSkill.tier)
+		) {
+			seasonSkill = skill;
+		}
+
+		if (isLeviathanPlus(skill.tier)) {
+			const placement = placementsByUserId.get(userId);
+			if (
+				typeof placement === "number" &&
+				(seasonTop === null || placement < seasonTop)
+			) {
+				seasonTop = placement;
+			}
+		}
+	}
+
+	return { seasonSkill, seasonTop };
 }
 
 function enrichUserCardData(
