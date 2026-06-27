@@ -82,4 +82,5 @@
 	font-weight: var(--weight-bold);
 	font-size: var(--font-xs);
 	color: var(--color-text);
+	white-space: nowrap;
 }
