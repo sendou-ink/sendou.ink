@@ -3,6 +3,7 @@ import { jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
@@ -201,6 +202,8 @@ export function mergeTeams({
 				.set({
 					role: member.role === "OWNER" ? "MANAGER" : member.role,
 					tournamentTeamId: survivingTeamId,
+					// reset so the merged-in members sort after the surviving team's original members
+					createdAt: databaseTimestampNow(),
 				})
 				.where("TournamentTeamMember.tournamentTeamId", "=", otherTeamId)
 				.where("TournamentTeamMember.userId", "=", member.userId)
