@@ -93,7 +93,7 @@ describe("Create a round-robin stage", () => {
 		).toThrow("Not enough seeds in at least one group of the manual ordering.");
 	});
 
-	test("should create a round-robin stage without BYE vs. BYE matches", () => {
+	test("should drop empty slots instead of creating BYE matches", () => {
 		const example = {
 			name: "Example",
 			tournamentId: 0,
@@ -104,8 +104,50 @@ describe("Create a round-robin stage", () => {
 
 		manager.create(example);
 
-		// One match must be missing.
-		expect(storage.select("match")!.length).toBe(11);
+		// 5 teams in 2 groups -> groups of 3 and 2 with no BYE matches at all.
+		const matches = storage.select<any>("match")!;
+		expect(matches.length).toBe(4);
+		for (const match of matches) {
+			expect(match.opponent1?.id).not.toBeNull();
+			expect(match.opponent2?.id).not.toBeNull();
+		}
+	});
+
+	test("should not pad a short group with empty rounds when teams divide unevenly", () => {
+		// 5 teams in 2 groups -> groups of 3 and 2. The 2-team group must be a
+		// clean single-round single-match group, not padded with BYE-only rounds
+		// that strand the real match in a later round.
+		manager.create({
+			name: "Uneven groups",
+			tournamentId: 0,
+			type: "round_robin",
+			seeding: [1, 2, 3, 4, 5],
+			settings: { groupCount: 2, seedOrdering: ["groups.seed_optimized"] },
+		} as any);
+
+		const isRealMatch = (match: any) =>
+			match.opponent1?.id != null && match.opponent2?.id != null;
+
+		const shortGroup = storage.select<any>("group")!.find((group: any) => {
+			const matches = storage.select<any>("match", { group_id: group.id })!;
+			return matches.filter(isRealMatch).length === 1;
+		})!;
+
+		const rounds = storage.select<any>("round", {
+			group_id: shortGroup.id,
+		})!;
+		const matches = storage.select<any>("match", {
+			group_id: shortGroup.id,
+		})!;
+		const realMatch = matches.find(isRealMatch)!;
+		const realMatchRound = rounds.find(
+			(round: any) => round.id === realMatch.round_id,
+		)!;
+
+		// No BYE matches and no empty rounds, just the single match in round 1.
+		expect(matches.length).toBe(1);
+		expect(rounds.length).toBe(1);
+		expect(realMatchRound.number).toBe(1);
 	});
 
 	test("should create a round-robin stage with to be determined participants", () => {
@@ -390,6 +432,34 @@ describe("Update scores in a round-robin stage", () => {
 				id: round2Match.id,
 				opponent1: { score: 16, result: "win" },
 				opponent2: { score: 4 },
+			}),
+		).not.toThrow();
+	});
+
+	test("should let the only real match be played in a group with fewer teams than slots", () => {
+		storage.reset();
+		// Group sized for 3 but only 2 teams placed (the 3rd slot is a BYE).
+		// The two real teams only meet in round 3, preceded by two BYE rounds
+		// that can never be reported. The real match must still be playable.
+		manager.create({
+			name: "Two teams in a three-slot group",
+			tournamentId: 0,
+			type: "round_robin",
+			seeding: [1, 2, null],
+			settings: { groupCount: 1 },
+		} as any);
+
+		const realMatch = storage
+			.select<any>("match")!
+			.find((m: any) => m.opponent1?.id && m.opponent2?.id)!;
+
+		expect(realMatch.status).toBe(2); // Ready
+
+		expect(() =>
+			manager.update.match({
+				id: realMatch.id,
+				opponent1: { score: 16, result: "win" },
+				opponent2: { score: 9 },
 			}),
 		).not.toThrow();
 	});

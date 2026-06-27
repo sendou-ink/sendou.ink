@@ -241,10 +241,13 @@
 	}
 
 	/* messages: no top padding, fill available space */
-	& ol {
+	& [role="listbox"] {
 		padding-top: 0;
 		flex: 1;
 		height: auto;
+	}
+
+	& [role="option"] {
 		padding-inline: var(--s-2);
 	}
 

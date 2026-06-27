@@ -254,8 +254,6 @@ function LFGTeamNote({
 	const { t } = useTranslation(["common", "q"]);
 	const [editing, setEditing] = React.useState(false);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies(note): when note updates exit editing mode
-	// biome-ignore lint/correctness/useExhaustiveDependencies(isStayAsSub): when isStayAsSub updates exit editing mode
 	React.useEffect(() => {
 		setEditing(false);
 	}, [note, isStayAsSub]);

@@ -274,6 +274,10 @@
 	align-items: center;
 }
 
+.joinAlert {
+	max-width: 22rem;
+}
+
 .streamUserContainer {
 	font-size: var(--font-xs);
 	display: flex;

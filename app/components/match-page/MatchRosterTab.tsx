@@ -119,6 +119,14 @@ function TeamRoster({
 	const [isEditing, setIsEditing] = useState(defaultIsEditing);
 	const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
 
+	const rosterIdentity = rosterIdentityKey(team);
+	const [prevRosterIdentity, setPrevRosterIdentity] = useState(rosterIdentity);
+	if (rosterIdentity !== prevRosterIdentity) {
+		setPrevRosterIdentity(rosterIdentity);
+		setIsEditing(defaultIsEditing);
+		setSelectedMemberIds([]);
+	}
+
 	const dotClassName = side === "alpha" ? styles.teamOneDot : styles.teamTwoDot;
 	const label =
 		side === "alpha" ? t("q:match.sides.alpha") : t("q:match.sides.bravo");
@@ -250,6 +258,13 @@ function TeamRoster({
 		setSelectedMemberIds(activeMembers.map((m) => m.id));
 		setIsEditing(false);
 	}
+}
+
+function rosterIdentityKey(team: RosterTabTeam) {
+	return [
+		team.members.map((member) => member.id).join("-"),
+		(team.subbedOut ?? []).join("-"),
+	].join("_");
 }
 
 function TeamHeader({

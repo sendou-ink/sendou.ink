@@ -99,7 +99,7 @@
 	},
 	"devDependencies": {
 		"@babel/preset-typescript": "7.29.7",
-		"@biomejs/biome": "2.4.16",
+		"@biomejs/biome": "2.5.1",
 		"@playwright/test": "1.60.0",
 		"@react-router/dev": "7.17.0",
 		"@types/better-sqlite3": "7.6.13",

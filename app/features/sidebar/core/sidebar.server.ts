@@ -12,8 +12,14 @@ import {
 	type SidebarStream,
 } from "~/features/core/streams/streams.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
-import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
-import { resolveFriendActivity } from "~/features/friends/friends-utils.server";
+import {
+	type FriendActivityType,
+	isLiveFriendActivity,
+} from "~/features/friends/friends-constants";
+import {
+	type FriendActivity,
+	resolveFriendActivity,
+} from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server";
@@ -51,6 +57,8 @@ export type SidebarFriend = {
 	url: string;
 	subtitle: string;
 	badge: string;
+	activityType: FriendActivityType | null;
+	matchId: number | null;
 	tournamentId: number | null;
 };
 
@@ -274,33 +282,26 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	const friendRows = unique.filter((f) => f.friendshipId !== null);
 	const teamMemberRows = unique.filter((f) => f.friendshipId === null);
 
+	const activeFriends: SidebarFriend[] = [];
 	const sendouqFriends: SidebarFriend[] = [];
 	const tournamentSubFriends: SidebarFriend[] = [];
 	const inactiveFriends: FriendWithActivity[] = [];
 
 	for (const friend of friendRows) {
-		const activity = resolveFriendActivity(
-			friend.id,
-			friend.tournamentName,
-			friend.teamMemberCount,
-			friend.tournamentMinTeamSize,
-		);
+		const activity = activityForRow(friend);
 
-		if (!activity.subtitle) {
+		if (!activity.type) {
 			inactiveFriends.push(friend);
 			continue;
 		}
 
-		const sidebarFriend = rowToSidebarFriend(
-			friend,
-			activity.subtitle,
-			activity.badge ?? "",
-		);
+		const sidebarFriend = rowToSidebarFriend(friend, activity);
 
-		if (activity.subtitle === SENDOUQ_ACTIVITY_LABEL) {
+		if (isLiveFriendActivity(activity.type)) {
+			activeFriends.push(sidebarFriend);
+		} else if (activity.type === "SENDOUQ") {
 			sendouqFriends.push(sidebarFriend);
 		} else {
-			// this is temporary, will be replaced with "SQified tournament team creator"
 			tournamentSubFriends.push(sidebarFriend);
 		}
 	}
@@ -320,6 +321,10 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	}
 
 	if (result.length < MAX_FRIENDS_VISIBLE) {
+		result.push(...activeFriends.slice(0, MAX_FRIENDS_VISIBLE - result.length));
+	}
+
+	if (result.length < MAX_FRIENDS_VISIBLE) {
 		const shownIds = new Set(result.map((f) => f.id));
 		const inactiveTeamMembers: FriendWithActivity[] = [];
 
@@ -327,20 +332,13 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 			if (result.length >= MAX_FRIENDS_VISIBLE) break;
 			if (shownIds.has(tm.id)) continue;
 
-			const activity = resolveFriendActivity(
-				tm.id,
-				tm.tournamentName,
-				tm.teamMemberCount,
-				tm.tournamentMinTeamSize,
-			);
-			if (!activity.subtitle) {
+			const activity = activityForRow(tm);
+			if (!activity.type) {
 				inactiveTeamMembers.push(tm);
 				continue;
 			}
 
-			result.push(
-				rowToSidebarFriend(tm, activity.subtitle, activity.badge ?? ""),
-			);
+			result.push(rowToSidebarFriend(tm, activity));
 			shownIds.add(tm.id);
 		}
 
@@ -348,24 +346,33 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 			if (result.length >= MAX_FRIENDS_VISIBLE) break;
 			if (shownIds.has(friend.id)) continue;
 
-			result.push(rowToSidebarFriend(friend, "", ""));
+			result.push(rowToSidebarFriend(friend, null));
 			shownIds.add(friend.id);
 		}
 
 		for (const tm of inactiveTeamMembers) {
 			if (result.length >= MAX_FRIENDS_VISIBLE) break;
 
-			result.push(rowToSidebarFriend(tm, "", ""));
+			result.push(rowToSidebarFriend(tm, null));
 		}
 	}
 
-	return result;
+	return result.slice(0, MAX_FRIENDS_VISIBLE);
+}
+
+function activityForRow(row: FriendWithActivity): FriendActivity {
+	return resolveFriendActivity({
+		friendId: row.id,
+		tournamentId: row.tournamentId,
+		tournamentName: row.tournamentName,
+		teamMemberCount: row.teamMemberCount,
+		tournamentMinTeamSize: row.tournamentMinTeamSize,
+	});
 }
 
 function rowToSidebarFriend(
 	row: FriendWithActivity,
-	subtitle: string,
-	badge: string,
+	activity: FriendActivity | null,
 ): SidebarFriend {
 	return {
 		id: row.id,
@@ -374,9 +381,11 @@ function rowToSidebarFriend(
 		discordAvatar: row.discordAvatar,
 		customAvatarUrl: row.customAvatarUrl,
 		url: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
-		subtitle,
-		badge,
-		tournamentId: row.tournamentId,
+		subtitle: activity?.subtitle ?? "",
+		badge: activity?.badge ?? "",
+		activityType: activity?.type ?? null,
+		matchId: activity?.matchId ?? null,
+		tournamentId: activity?.tournamentId ?? row.tournamentId,
 	};
 }
 

@@ -456,6 +456,35 @@ describe("mergeTeams", () => {
 		expect(likes.given).toHaveLength(0);
 		expect(likes.received).toHaveLength(0);
 	});
+
+	test("resets createdAt of merged-in members so they sort after survivors", async () => {
+		const tournament = await createTournament();
+		const team1 = await createPlaceholder(tournament.id, 1);
+		const team2 = await createPlaceholder(tournament.id, 2);
+
+		// user 2 was looking before user 1 i.e. has an older createdAt
+		await db
+			.updateTable("TournamentTeamMember")
+			.set({ createdAt: 1000 })
+			.where("tournamentTeamId", "=", team2.id)
+			.where("userId", "=", 2)
+			.execute();
+
+		await TournamentLFGRepository.mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
+			maxGroupSize: 4,
+		});
+
+		const mergedMember = await db
+			.selectFrom("TournamentTeamMember")
+			.select("createdAt")
+			.where("tournamentTeamId", "=", team1.id)
+			.where("userId", "=", 2)
+			.executeTakeFirstOrThrow();
+
+		expect(mergedMember.createdAt).toBeGreaterThan(1000);
+	});
 });
 
 describe("updateTeamNote", () => {

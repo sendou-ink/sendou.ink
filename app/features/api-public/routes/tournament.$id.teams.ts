@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
@@ -94,6 +95,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						"=",
 						"TournamentTeam.id",
 					)
+					.orderBy(sql`"TournamentTeamMember"."role" = 'OWNER'`, "desc")
 					.orderBy("TournamentTeamMember.createdAt", "asc"),
 			).as("members"),
 			jsonArrayFrom(

@@ -430,7 +430,6 @@ function MemberNote({
 		setEditing(true);
 	};
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies(note): when note updates exit editing mode
 	React.useEffect(() => {
 		setEditing(false);
 	}, [note]);

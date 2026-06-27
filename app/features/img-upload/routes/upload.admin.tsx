@@ -22,7 +22,6 @@ export default function ImageUploadAdminPage() {
 function ImageValidator() {
 	const data = useLoaderData<typeof loader>();
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: Biome v2 migration
 	React.useEffect(() => {
 		window.scrollTo(0, 0);
 	}, [data]);

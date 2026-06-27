@@ -154,6 +154,11 @@
 	&:last-child {
 		clip-path: polygon(var(--slant) 0, 100% 0, 100% 100%, 0 100%);
 	}
+
+	&:only-child {
+		clip-path: none;
+		margin-inline-start: 0;
+	}
 }
 
 .iconBanner {

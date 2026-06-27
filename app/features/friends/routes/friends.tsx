@@ -31,7 +31,6 @@ export default function FriendsPage() {
 		.map((request) => request.id)
 		.join(",");
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: stabilized on the joined ids to avoid refiring on every loader-data reference change
 	React.useEffect(() => {
 		markFriendRequestsSeen(data.incomingRequests.map((request) => request.id));
 	}, [incomingRequestIds]);

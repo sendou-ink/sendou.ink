@@ -5,6 +5,7 @@ import {
 } from "@dnd-kit/sortable";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Trash } from "lucide-react";
+import type { KeyboardEvent } from "react";
 import { useLayoutEffect, useRef } from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -38,6 +39,9 @@ export function TierRow({ tier }: TierRowProps) {
 		handleMoveTierDown,
 		showTierHeaders,
 		screenshotMode,
+		placementMode,
+		selectedTierId,
+		setSelectedTierId,
 	} = useTierListState();
 
 	const items = getItemsInTier(tier.id);
@@ -54,6 +58,23 @@ export function TierRow({ tier }: TierRowProps) {
 	const tierIndex = state.tiers.findIndex((t) => t.id === tier.id);
 	const isFirstTier = tierIndex === 0;
 	const isLastTier = tierIndex === state.tiers.length - 1;
+
+	const isClickMode = placementMode === "click";
+	const isSelected = isClickMode && selectedTierId === tier.id;
+
+	const selectTierProps = isClickMode
+		? {
+				role: "button",
+				tabIndex: 0,
+				onClick: () => setSelectedTierId(tier.id),
+				onKeyDown: (event: KeyboardEvent) => {
+					if (event.key === "Enter" || event.key === " ") {
+						event.preventDefault();
+						setSelectedTierId(tier.id);
+					}
+				},
+			}
+		: {};
 
 	return (
 		<div className={styles.container}>
@@ -134,11 +155,16 @@ export function TierRow({ tier }: TierRowProps) {
 				}}
 				className={clsx(styles.targetZone, {
 					[styles.targetZoneOver]: isOver,
+					[styles.targetZoneSelectable]: isClickMode,
+					[styles.targetZoneSelected]: isSelected,
 				})}
+				{...selectTierProps}
 			>
 				{items.length === 0 && !screenshotMode ? (
 					<div className={styles.emptyMessage}>
-						{t("tier-list-maker:dropItems")}
+						{isClickMode
+							? t("tier-list-maker:clickToAdd")
+							: t("tier-list-maker:dropItems")}
 					</div>
 				) : items.length > 0 ? (
 					<SortableContext

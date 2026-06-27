@@ -5,6 +5,30 @@ export function tierListItemId(item: TierListItem) {
 }
 
 /**
+ * Returns a new tier list state with the given item appended to the end of the
+ * specified tier. Used by the "click" placement mode. If the tier does not
+ * exist the state is returned unchanged.
+ */
+export function addItemToTier(
+	state: TierListState,
+	tierId: string,
+	item: TierListItem,
+): TierListState {
+	if (!state.tiers.some((tier) => tier.id === tierId)) {
+		return state;
+	}
+
+	const newTierItems = new Map(state.tierItems);
+	const tierItems = newTierItems.get(tierId) ?? [];
+	newTierItems.set(tierId, [...tierItems, item]);
+
+	return {
+		...state,
+		tierItems: newTierItems,
+	};
+}
+
+/**
  * Finds the next nth value for a duplicate item in the tier list.
  * Searches through all tiers to find the maximum nth value for items
  * with the same id and type, then returns max + 1.

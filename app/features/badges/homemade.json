@@ -551,6 +551,10 @@
 		"displayName": "HACKER Cup (2nd Place)",
 		"authorDiscordId": "530722502603833346"
 	},
+	"hackercupsp2": {
+		"displayName": "Hacker cup special sp2",
+		"authorDiscordId": "338702451156844545"
+	},
 	"happyena": {
 		"displayName": "ENA",
 		"authorDiscordId": "528851510222782474"
@@ -726,6 +730,10 @@
 	"lunablaster": {
 		"displayName": "Blast Away!",
 		"authorDiscordId": "342369454719631361"
+	},
+	"machineneo": {
+		"displayName": "Machine Party",
+		"authorDiscordId": "774355198205755414"
 	},
 	"madrid": {
 		"displayName": "Madridista",
@@ -1318,6 +1326,10 @@
 	"sunday-run": {
 		"displayName": "Sunday Run",
 		"authorDiscordId": "570323825669963972"
+	},
+	"sunshinerun": {
+		"displayName": "Sunshine Run !",
+		"authorDiscordId": "338702451156844545"
 	},
 	"superseasnails": {
 		"displayName": "Super Sea Snails",

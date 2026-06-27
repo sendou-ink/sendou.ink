@@ -252,8 +252,17 @@ class Create {
 
 		if (groupId === -1) throw Error("Could not insert the group.");
 
+		// Groups can be padded with empty slots when teams don't divide evenly
+		// (`null`) or by the seed ordering (`undefined`). An empty slot is just an
+		// absent team, so drop it to round-robin only the present teams — otherwise
+		// the padding becomes BYE rounds that strand real matches in later rounds.
+		// TBD slots (`{ id: null }`) are kept; only nullish placeholders are removed.
+		const presentSlots = slots.filter(
+			(slot) => slot !== null && slot !== undefined,
+		);
+
 		const rounds = helpers.makeRoundRobinMatches(
-			slots,
+			presentSlots,
 			this.stage.settings?.roundRobinMode,
 		);
 
