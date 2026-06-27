@@ -288,7 +288,9 @@ export function upsertRegistration({
 
 		for (const userId of membersToAdd) {
 			const isOwner = isNew && userId === ownerUserId;
-			const inGameName = await resolveInGameName(trx, tournamentId, userId);
+			const inGameName =
+				inGameNameUpdates.find((member) => member.userId === userId)
+					?.inGameName ?? (await resolveInGameName(trx, tournamentId, userId));
 
 			await trx
 				.insertInto("TournamentTeamMember")
