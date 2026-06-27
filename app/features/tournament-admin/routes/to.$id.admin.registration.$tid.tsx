@@ -265,6 +265,10 @@ function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
 									onUserSelected: (user) => {
 										if (!user) return;
 										setUsernames((prev) => ({ ...prev, [user.id]: user.name }));
+										// prefill the in-game name from the user's existing one
+										if (requireInGameNames && user.inGameName) {
+											setValue(`${itemName}.inGameName`, user.inGameName);
+										}
 									},
 								} satisfies UserSearchFieldOptions
 							}

@@ -35,7 +35,7 @@ const GREY = {
 	type: "user" as const,
 	id: 5,
 	name: "Grey",
-	secondaryName: null,
+	inGameName: null,
 	avatarUrl: null,
 	discordId: "123",
 	discordAvatar: null,

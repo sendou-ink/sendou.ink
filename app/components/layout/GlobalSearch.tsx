@@ -463,9 +463,9 @@ function ResultItem({ result }: { result: SearchResult }) {
 					/>
 					<div className={styles.resultTexts}>
 						<span className={styles.resultName}>{result.name}</span>
-						{result.secondaryName ? (
+						{result.inGameName ? (
 							<span className={styles.resultSecondary}>
-								{result.secondaryName}
+								{result.inGameName}
 							</span>
 						) : null}
 					</div>
