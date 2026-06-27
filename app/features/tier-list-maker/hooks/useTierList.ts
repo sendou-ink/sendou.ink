@@ -31,7 +31,9 @@ import {
 	tierListItemTypeSchema,
 	tierListStateSerializedSchema,
 } from "../tier-list-maker-schemas";
-import { getNextNthForItem } from "../tier-list-maker-utils";
+import { addItemToTier, getNextNthForItem } from "../tier-list-maker-utils";
+
+export type TierListPlacementMode = "track" | "click";
 
 export function useTierList() {
 	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
@@ -46,6 +48,17 @@ export function useTierList() {
 	const { tiers, setTiers, persistTiersStateToParams } =
 		useSearchParamTiersState();
 	const [activeItem, setActiveItem] = React.useState<TierListItem | null>(null);
+
+	const [placementMode, setPlacementMode] =
+		React.useState<TierListPlacementMode>("click");
+	const [selectedTierId, setSelectedTierId] = React.useState<string | null>(
+		() => tiers.tiers[0]?.id ?? null,
+	);
+
+	const handleChangePlacementMode = (mode: TierListPlacementMode) => {
+		setPlacementMode(mode);
+		setSelectedTierId(mode === "click" ? (tiers.tiers[0]?.id ?? null) : null);
+	};
 
 	const [hideAltKits, setHideAltKits] = useSearchParamState({
 		name: "hideAltKits",
@@ -278,6 +291,14 @@ export function useTierList() {
 		persistTiersStateToParams(tiers);
 	};
 
+	const handleAddItemToTier = (item: TierListItem, tierId: string) => {
+		const newState = addItemToTier(tiers, tierId, item);
+		if (newState === tiers) return;
+
+		setTiers(newState);
+		persistTiersStateToParams(newState);
+	};
+
 	const handleAddTier = () => {
 		const newTier: TierListMakerTier = {
 			id: `tier-${Date.now()}`,
@@ -294,6 +315,10 @@ export function useTierList() {
 	};
 
 	const handleRemoveTier = (tierId: string) => {
+		if (selectedTierId === tierId) {
+			setSelectedTierId(null);
+		}
+
 		const newTierItems = new Map(tiers.tierItems);
 		newTierItems.delete(tierId);
 
@@ -455,6 +480,7 @@ export function useTierList() {
 		handleDragOver,
 		handleDragEnd,
 		handleAddTier,
+		handleAddItemToTier,
 		handleRemoveTier,
 		handleRenameTier,
 		handleChangeTierColor,
@@ -475,6 +501,10 @@ export function useTierList() {
 		setTitle,
 		selectedModes,
 		setSelectedModes,
+		placementMode,
+		setPlacementMode: handleChangePlacementMode,
+		selectedTierId,
+		setSelectedTierId,
 	};
 }
 

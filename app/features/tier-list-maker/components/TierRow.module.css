@@ -66,6 +66,21 @@
 	background: var(--color-bg-higher);
 }
 
+.targetZoneSelectable {
+	cursor: pointer;
+}
+
+
+.targetZoneSelectable:hover {
+	background-color: var(--color-bg-higher);
+}
+
+.targetZoneSelected {
+	background: var(--color-bg-higher);
+	outline: var(--border-style-high);
+	outline-offset: -2px;
+}
+
 .emptyMessage {
 	width: 100%;
 	height: 100%;
