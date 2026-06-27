@@ -1465,7 +1465,6 @@ function StatCard({
 	};
 
 	const memoKey = isStaticValue ? stat : stat[2];
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
 	const modifiedBy = React.useMemo(() => {
 		return isStaticValue ? [] : [stat[0].modifiedBy].flat();
 	}, [memoKey]);

@@ -209,7 +209,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const previousLocationKey = React.useRef(locationKey);
 
 	// Reset form when URL changes (handles edit → new transitions)
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally reset on URL change only, using current schema/defaultValues from closure
 	React.useEffect(() => {
 		if (previousLocationKey.current === locationKey) return;
 		previousLocationKey.current = locationKey;

@@ -255,7 +255,6 @@ export function Layout({
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally close modals on navigation
 	React.useEffect(() => {
 		setSideNavModalOpen(false);
 		setChatSidebarModalOpen(false);

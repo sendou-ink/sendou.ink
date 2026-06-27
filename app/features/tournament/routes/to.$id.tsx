@@ -102,7 +102,6 @@ export function TournamentLayout() {
 
 	// this is nice to debug with tournament in browser console
 	if (process.env.NODE_ENV === "development") {
-		// biome-ignore lint/correctness/useHookAtTopLevel: process.env.NODE_ENV is a constant
 		React.useEffect(() => {
 			// @ts-expect-error for dev purposes
 			window.tourney = tournament;
