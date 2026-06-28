@@ -37,6 +37,7 @@ import type { TournamentMaplistSource } from "~/modules/tournament-map-list-gene
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
+import { resolveHostingTeam } from "../tournament-match-utils";
 
 export function TournamentMatchBanner({
 	data,
@@ -56,7 +57,18 @@ export function TournamentMatchBanner({
 		matchIsLocked,
 		joinPool,
 		joinPass,
+		teams,
 	} = useMatch();
+
+	const [teamOne, teamTwo] = teams;
+	const hostingTeam =
+		teamOne && teamTwo ? resolveHostingTeam([teamOne, teamTwo]) : null;
+	const host = hostingTeam
+		? {
+				name: hostingTeam.name,
+				avatarUrl: tournament.tournamentTeamLogoSrc(hostingTeam) ?? undefined,
+			}
+		: null;
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
@@ -136,6 +148,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 				/>
 			) : isMissingTeam ? (
 				<IconBanner
@@ -153,6 +166,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 					testId="active-roster-needed-text"
 				/>
 			) : pickBanBanner ? (
@@ -163,6 +177,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 				/>
 			) : currentMap ? (
 				<MatchBanner
@@ -171,6 +186,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 				>
 					<CurrentMapPickInfo
 						source={currentMap.source}

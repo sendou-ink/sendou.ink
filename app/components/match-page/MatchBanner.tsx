@@ -1,12 +1,18 @@
 import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { specialWeaponImageUrl, stageBannerImageUrl } from "~/utils/urls";
 import { ModeImage } from "../Image";
 import styles from "./MatchBanner.module.css";
+
+interface BannerHost {
+	name: string;
+	avatarUrl?: string;
+}
 
 export function MatchBannerContainer({
 	children,
@@ -22,6 +28,7 @@ interface MatchBannerProps {
 	screenLegal?: boolean;
 	joinPool?: string | null;
 	joinPass?: string | null;
+	host?: BannerHost | null;
 	children?: React.ReactNode;
 }
 
@@ -31,6 +38,7 @@ export function MatchBanner({
 	screenLegal,
 	joinPool,
 	joinPass,
+	host,
 	children,
 }: MatchBannerProps) {
 	const { t } = useTranslation(["game-misc"]);
@@ -49,7 +57,9 @@ export function MatchBanner({
 			</div>
 			<div className={clsx(styles.info, styles.thickText)}>{children}</div>
 
-			{joinPool ? <JoinInfo pool={joinPool} pass={joinPass} /> : null}
+			{joinPool ? (
+				<JoinInfo pool={joinPool} pass={joinPass} host={host} />
+			) : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -82,6 +92,7 @@ interface IconBannerProps {
 	screenLegal?: boolean;
 	joinPool?: string | null;
 	joinPass?: string | null;
+	host?: BannerHost | null;
 	topRight?: React.ReactNode;
 	testId?: string;
 }
@@ -93,6 +104,7 @@ export function IconBanner({
 	screenLegal,
 	joinPool,
 	joinPass,
+	host,
 	topRight,
 	testId,
 }: IconBannerProps) {
@@ -103,7 +115,9 @@ export function IconBanner({
 			{subtitle ? (
 				<div className={styles.iconBannerSubtitle}>{subtitle}</div>
 			) : null}
-			{joinPool ? <JoinInfo pool={joinPool} pass={joinPass} /> : null}
+			{joinPool ? (
+				<JoinInfo pool={joinPool} pass={joinPass} host={host} />
+			) : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -114,8 +128,16 @@ export function IconBanner({
 	);
 }
 
-function JoinInfo({ pool, pass }: { pool: string; pass?: string | null }) {
-	const { t } = useTranslation(["q"]);
+function JoinInfo({
+	pool,
+	pass,
+	host,
+}: {
+	pool: string;
+	pass?: string | null;
+	host?: BannerHost | null;
+}) {
+	const { t } = useTranslation(["q", "common"]);
 
 	return (
 		<div className={styles.joinInfo}>
@@ -130,6 +152,19 @@ function JoinInfo({ pool, pass }: { pool: string; pass?: string | null }) {
 					</div>
 					<div className={styles.joinInfoValue} data-testid="room-pass">
 						{pass}
+					</div>
+				</div>
+			) : null}
+			{host ? (
+				<div className={styles.joinInfoItem}>
+					<div className={styles.joinInfoLabel}>{t("common:host")}</div>
+					<div className={styles.joinInfoValue}>
+						<Avatar
+							url={host.avatarUrl}
+							identiconInput={host.name}
+							size="xxs"
+							title={host.name}
+						/>
 					</div>
 				</div>
 			) : null}
