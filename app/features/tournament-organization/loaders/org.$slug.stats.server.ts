@@ -1,6 +1,7 @@
 import { addMonths, format, startOfMonth, subMonths } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
+import * as R from "remeda";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import {
@@ -12,14 +13,7 @@ import { organizationFromParams } from "../tournament-organization-utils.server"
 export async function loader({ params }: LoaderFunctionArgs) {
 	const organization = await organizationFromParams(params);
 
-	const user = requireUser();
-	const isOrgAdmin = organization.members.some(
-		(member) => member.id === user.id && member.role === "ADMIN",
-	);
-
-	if (!isOrgAdmin) {
-		throw new Response("Forbidden", { status: 403 });
-	}
+	requirePermission(organization, "EDIT");
 
 	const fullMonths = recentFullMonths(ESTABLISHED_ORG.MONTHS_CONSIDERED);
 
@@ -38,9 +32,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 		count: monthlyCounts[index],
 	}));
 
-	const averageMonthlyParticipants =
-		monthlyCounts.reduce((sum, count) => sum + count, 0) /
-		ESTABLISHED_ORG.MONTHS_CONSIDERED;
+	const averageMonthlyParticipants = R.mean(monthlyCounts) ?? 0;
 
 	return {
 		monthlyStats,

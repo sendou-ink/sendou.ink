@@ -1,4 +1,6 @@
 import { db } from "~/db/sql";
+import invariant from "../../utils/invariant";
+import { dbInsertTournament } from "../tournament/tournament-test-utils";
 
 /**
  * Seeds a played tournament hosted by `organizationId`, starting at `startTime`
@@ -23,23 +25,21 @@ export async function seedOrgEventWithParticipants({
 	participantUserIds: number[];
 	checkIn?: "in" | "out" | "none";
 }) {
-	const tournament = await db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	const { tournamentId } = await dbInsertTournament({
+		organizationId,
+		startTime,
+	});
+
+	invariant(tournamentId, "Expected tournamentId to be defined");
 
 	const event = await db
 		.insertInto("CalendarEvent")
 		.values({
 			authorId: participantUserIds[0],
-			name: `Event ${tournament.id}`,
+			name: `Event ${tournamentId}`,
 			bracketUrl: "https://example.com/bracket",
 			organizationId,
-			tournamentId: tournament.id,
+			tournamentId,
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();
@@ -52,9 +52,9 @@ export async function seedOrgEventWithParticipants({
 	const team = await db
 		.insertInto("TournamentTeam")
 		.values({
-			tournamentId: tournament.id,
-			name: `Team ${tournament.id}`,
-			inviteCode: `inv-${tournament.id}`,
+			tournamentId,
+			name: `Team ${tournamentId}`,
+			inviteCode: `inv-${tournamentId}`,
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();
@@ -73,7 +73,7 @@ export async function seedOrgEventWithParticipants({
 	const stage = await db
 		.insertInto("TournamentStage")
 		.values({
-			tournamentId: tournament.id,
+			tournamentId,
 			name: "Stage",
 			number: 1,
 			type: "single_elimination",
@@ -138,5 +138,5 @@ export async function seedOrgEventWithParticipants({
 		)
 		.execute();
 
-	return { tournamentId: tournament.id, teamId: team.id };
+	return { tournamentId, teamId: team.id };
 }
