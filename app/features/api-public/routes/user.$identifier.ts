@@ -8,6 +8,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { badgeUrl } from "~/utils/urls";
 import type { GetUserResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -107,8 +108,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		badges: badges.map((badge) => ({
 			name: badge.displayName,
 			count: badge.count,
-			gifUrl: `https://sendou.ink/static-assets/badges/${badge.code}.gif`,
-			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.avif`,
+			gifUrl: badgeUrl({ code: badge.code, extension: "gif" }),
+			imageUrl: badgeUrl({ code: badge.code }),
 		})),
 		teams: user.teams.map((team) => ({
 			id: team.id,

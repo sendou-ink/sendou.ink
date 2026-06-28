@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { clearSentNotificationsForTesting, notify } from "./notify.server";
 
@@ -259,7 +260,7 @@ describe("notify() - web push notifications", () => {
 		expect(payload.title).toBe("New Scrim Request");
 		expect(payload.body).toBe("alice requested a scrim");
 		expect(payload.data.url).toBe("/scrims");
-		expect(payload.icon).toBe("/static-assets/img/app-icon.png");
+		expect(payload.icon).toBe(APP_ICON_URL);
 	});
 
 	test("sends web push to multiple subscriptions", async () => {

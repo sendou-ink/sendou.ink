@@ -1,4 +1,5 @@
 import slugify from "slugify";
+import { Config } from "~/config";
 import type { GearType, Preference, Tables } from "~/db/tables";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
@@ -126,20 +127,22 @@ export const SETTINGS_PAGE = "/settings";
 export const LUTI_PAGE = "/luti";
 export const PLUS_VOTING_PAGE = "/plus/voting";
 
-export const BLANK_IMAGE_URL = "/static-assets/img/blank.gif";
-export const COMMON_PREVIEW_IMAGE =
-	"/static-assets/img/layout/common-preview.png";
-export const ERROR_GIRL_IMAGE_PATH = "/static-assets/img/layout/error-girl";
-export const SENDOU_LOVE_EMOJI_PATH = "/static-assets/img/layout/sendou_love";
-export const FIRST_PLACEMENT_ICON_PATH =
-	"/static-assets/svg/placements/first.svg";
-export const SECOND_PLACEMENT_ICON_PATH =
-	"/static-assets/svg/placements/second.svg";
-export const THIRD_PLACEMENT_ICON_PATH =
-	"/static-assets/svg/placements/third.svg";
+const STATIC_ASSETS_URL = Config.staticAssetsUrl;
+
+export const BLANK_IMAGE_URL = `${STATIC_ASSETS_URL}/img/blank.gif`;
+export const COMMON_PREVIEW_IMAGE = `${STATIC_ASSETS_URL}/img/layout/common-preview.png`;
+export const ERROR_GIRL_IMAGE_PATH = `${STATIC_ASSETS_URL}/img/layout/error-girl`;
+export const SENDOU_LOVE_EMOJI_PATH = `${STATIC_ASSETS_URL}/img/layout/sendou_love`;
+export const FIRST_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/first.svg`;
+export const SECOND_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/second.svg`;
+export const THIRD_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/third.svg`;
+
+export const APP_ICON_URL = `${STATIC_ASSETS_URL}/img/app-icon.png`;
+export const pwaSplashScreenImageUrl = (fileName: string) =>
+	`${STATIC_ASSETS_URL}/img/splash-screens/${fileName}`;
 
 export const soundPath = (fileName: string) =>
-	`/static-assets/sounds/${fileName}.wav`;
+	`${STATIC_ASSETS_URL}/sounds/${fileName}.wav`;
 
 export const GET_FRIENDS_FOR_ADDING_ROUTE = "/friends-for-adding";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
@@ -479,56 +482,57 @@ export const badgeUrl = ({
 }: {
 	code: Tables["Badge"]["code"];
 	extension?: "gif";
-}) => `/static-assets/badges/${code}${extension ? `.${extension}` : ""}`;
+}) => `${STATIC_ASSETS_URL}/badges/${code}${extension ? `.${extension}` : ""}`;
 export const gameBadgeUrl = (id: string) =>
-	`/static-assets/img/badges/${id}.avif`;
+	`${STATIC_ASSETS_URL}/img/badges/${id}.avif`;
 export const articlePreviewUrl = (slug: string) =>
-	`/static-assets/img/article-previews/${slug}.png`;
+	`${STATIC_ASSETS_URL}/img/article-previews/${slug}.png`;
 
 export const navIconUrl = (navItem: string) =>
-	`/static-assets/img/layout/${navItem}`;
+	`${STATIC_ASSETS_URL}/img/layout/${navItem}`;
 export const gearImageUrl = (gearType: GearType, gearSplId: number) =>
-	`/static-assets/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
+	`${STATIC_ASSETS_URL}/img/gear/${gearType.toLowerCase()}/${gearSplId}`;
 export const weaponCategoryUrl = (
 	category: (typeof weaponCategories)[number]["name"],
-) => `/static-assets/img/weapon-categories/${category}`;
+) => `${STATIC_ASSETS_URL}/img/weapon-categories/${category}`;
 export const mainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-	`/static-assets/img/main-weapons/${mainWeaponSplId}`;
+	`${STATIC_ASSETS_URL}/img/main-weapons/${mainWeaponSplId}`;
 export const mainWeaponVariantImageUrl = (
 	mainWeaponSplId: MainWeaponId,
 	variant: "launched",
-) => `/static-assets/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
+) =>
+	`${STATIC_ASSETS_URL}/img/main-weapons/variants/${mainWeaponSplId}-${variant}`;
 export const outlinedMainWeaponImageUrl = (mainWeaponSplId: MainWeaponId) =>
-	`/static-assets/img/main-weapons-outlined/${mainWeaponSplId}`;
+	`${STATIC_ASSETS_URL}/img/main-weapons-outlined/${mainWeaponSplId}`;
 export const outlinedFiveStarMainWeaponImageUrl = (
 	mainWeaponSplId: MainWeaponId,
-) => `/static-assets/img/main-weapons-outlined-2/${mainWeaponSplId}`;
+) => `${STATIC_ASSETS_URL}/img/main-weapons-outlined-2/${mainWeaponSplId}`;
 export const outlinedTenStarMainWeaponImageUrl = (
 	mainWeaponSplId: MainWeaponId,
-) => `/static-assets/img/main-weapons-outlined-3/${mainWeaponSplId}`;
+) => `${STATIC_ASSETS_URL}/img/main-weapons-outlined-3/${mainWeaponSplId}`;
 export const subWeaponImageUrl = (subWeaponSplId: SubWeaponId) =>
-	`/static-assets/img/sub-weapons/${subWeaponSplId}`;
+	`${STATIC_ASSETS_URL}/img/sub-weapons/${subWeaponSplId}`;
 export const specialWeaponImageUrl = (specialWeaponSplId: SpecialWeaponId) =>
-	`/static-assets/img/special-weapons/${specialWeaponSplId}`;
+	`${STATIC_ASSETS_URL}/img/special-weapons/${specialWeaponSplId}`;
 export const specialWeaponVariantImageUrl = (
 	specialWeaponSplId: SpecialWeaponId,
 	variant: "weakpoints",
 ) =>
-	`/static-assets/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
+	`${STATIC_ASSETS_URL}/img/special-weapons/variants/${specialWeaponSplId}-${variant}`;
 export const abilityImageUrl = (ability: AbilityWithUnknown) =>
-	`/static-assets/img/abilities/${ability}`;
+	`${STATIC_ASSETS_URL}/img/abilities/${ability}`;
 export const brandImageUrl = (brand: BrandId) =>
-	`/static-assets/img/brands/${brand}`;
+	`${STATIC_ASSETS_URL}/img/brands/${brand}`;
 export const modeImageUrl = (mode: ModeShortWithSpecial) =>
-	`/static-assets/img/modes/${mode}`;
+	`${STATIC_ASSETS_URL}/img/modes/${mode}`;
 export const stageImageUrl = (stageId: StageId) =>
-	`/static-assets/img/stages/${stageId}`;
+	`${STATIC_ASSETS_URL}/img/stages/${stageId}`;
 export const stageBannerImageUrl = (stageId: StageId) =>
-	`/static-assets/img/stage-banners/${stageId}.avif`;
+	`${STATIC_ASSETS_URL}/img/stage-banners/${stageId}.avif`;
 export const tierImageUrl = (tier: TierName | "CALCULATING") =>
-	`/static-assets/img/tiers/${tier === "CALCULATING" ? "unranked" : tier.toLowerCase()}`;
+	`${STATIC_ASSETS_URL}/img/tiers/${tier === "CALCULATING" ? "unranked" : tier.toLowerCase()}`;
 export const controllerImageUrl = (controller: string) =>
-	`/static-assets/img/controllers/${controller}.avif`;
+	`${STATIC_ASSETS_URL}/img/controllers/${controller}.avif`;
 export const preferenceEmojiUrl = (preference?: Preference) => {
 	const emoji =
 		preference === "PREFER"
@@ -537,9 +541,9 @@ export const preferenceEmojiUrl = (preference?: Preference) => {
 				? "unamused"
 				: "no-mouth";
 
-	return `/static-assets/img/emoji/${emoji}.svg`;
+	return `${STATIC_ASSETS_URL}/img/emoji/${emoji}.svg`;
 };
-export const TIER_PLUS_URL = "/static-assets/img/tiers/plus";
+export const TIER_PLUS_URL = `${STATIC_ASSETS_URL}/img/tiers/plus`;
 
 export const winnersImageUrl = ({
 	season,
@@ -547,10 +551,10 @@ export const winnersImageUrl = ({
 }: {
 	season: number;
 	placement: number;
-}) => `/static-assets/img/winners/${season}/${placement}`;
+}) => `${STATIC_ASSETS_URL}/img/winners/${season}/${placement}`;
 
 export const sqHeaderGuyImageUrl = (season: number) =>
-	`/static-assets/img/sq-header/${season}`;
+	`${STATIC_ASSETS_URL}/img/sq-header/${season}`;
 
 export const stageMinimapImageUrlWithEnding = ({
 	stageId,
