@@ -186,6 +186,38 @@
 	font-size: var(--font-xs);
 }
 
+.splitView {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.splitPanel {
+	flex-grow: var(--split-grow, 1);
+	flex-shrink: 1;
+	flex-basis: 0;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+
+	& + & {
+		border-top: 1.5px solid var(--color-border);
+	}
+}
+
+.splitPanelHeader {
+	flex-shrink: 0;
+	padding: var(--s-1-5) var(--s-3);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--color-text-high);
+	background-color: var(--color-bg-high);
+}
+
 .chatContainer {
 	flex: 1;
 	min-height: 0;
