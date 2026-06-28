@@ -17,14 +17,20 @@ const BASE_URL = "https://sendou.ink";
 const EXPORT_FORMATS = ["list", "csv"] as const;
 const EXPORT_STATUSES = ["all", "checkedIn", "notCheckedIn"] as const;
 const EXPORT_SORTS = ["name", "seed", "registration"] as const;
+const EXPORT_ROSTERS = ["full", "captains"] as const;
 
 type ExportFormat = (typeof EXPORT_FORMATS)[number];
 type ExportStatus = (typeof EXPORT_STATUSES)[number];
 type ExportSort = (typeof EXPORT_SORTS)[number];
+type ExportRoster = (typeof EXPORT_ROSTERS)[number];
 
 const FORMAT_LABELS: Record<ExportFormat, string> = {
 	list: "List",
 	csv: "CSV",
+};
+const ROSTER_LABELS: Record<ExportRoster, string> = {
+	full: "Full roster",
+	captains: "Captains only",
 };
 const STATUS_LABELS: Record<ExportStatus, string> = {
 	all: "All teams",
@@ -80,6 +86,7 @@ export function ExportDialog({ close }: { close: () => void }) {
 	const [status, setStatus] = React.useState<ExportStatus>("all");
 	const [bracketIdx, setBracketIdx] = React.useState<number | null>(null);
 	const [sort, setSort] = React.useState<ExportSort>("seed");
+	const [roster, setRoster] = React.useState<ExportRoster>("full");
 	const [fields, setFields] = React.useState<Set<ExportField>>(
 		new Set(DEFAULT_FIELDS),
 	);
@@ -119,6 +126,7 @@ export function ExportDialog({ close }: { close: () => void }) {
 			teams,
 			format,
 			fields,
+			captainsOnly: roster === "captains",
 			bracketIdx,
 			bracketRequiresOwnCheckIn,
 			checkedInLabel: "Checked in",
@@ -160,6 +168,16 @@ export function ExportDialog({ close }: { close: () => void }) {
 						))}
 					</div>
 				</div>
+
+				<RadioRow
+					label="Roster"
+					value={roster}
+					onChange={setRoster}
+					options={EXPORT_ROSTERS.map((value) => ({
+						value,
+						label: ROSTER_LABELS[value],
+					}))}
+				/>
 
 				{tournament.brackets.length > 1 ? (
 					<RadioRow
@@ -356,6 +374,7 @@ function buildContent({
 	teams,
 	format,
 	fields,
+	captainsOnly,
 	bracketIdx,
 	bracketRequiresOwnCheckIn,
 	checkedInLabel,
@@ -364,6 +383,7 @@ function buildContent({
 	teams: TournamentDataTeam[];
 	format: ExportFormat;
 	fields: Set<ExportField>;
+	captainsOnly: boolean;
 	bracketIdx: number | null;
 	bracketRequiresOwnCheckIn: boolean;
 	checkedInLabel: string;
@@ -371,6 +391,10 @@ function buildContent({
 }) {
 	const teamFields = TEAM_FIELDS.filter((field) => fields.has(field));
 	const memberFields = MEMBER_FIELDS.filter((field) => fields.has(field));
+	const membersOf = (team: TournamentDataTeam) =>
+		captainsOnly
+			? team.members.filter((member) => member.role === "OWNER")
+			: team.members;
 	const labelOpts = {
 		checkedInLabel,
 		notCheckedInLabel,
@@ -379,7 +403,10 @@ function buildContent({
 	};
 
 	if (format === "csv") {
-		const maxRoster = Math.max(0, ...teams.map((team) => team.members.length));
+		const maxRoster = Math.max(
+			0,
+			...teams.map((team) => membersOf(team).length),
+		);
 
 		const header = [
 			...teamFields.map((field) => FIELD_LABELS[field]),
@@ -392,8 +419,9 @@ function buildContent({
 			const teamValues = teamFields.map((field) =>
 				teamFieldValue(team, field, labelOpts),
 			);
+			const teamMembers = membersOf(team);
 			const memberValues = Array.from({ length: maxRoster }).flatMap((_, i) => {
-				const member = team.members[i];
+				const member = teamMembers[i];
 				return memberFields.map((field) =>
 					member ? memberFieldValue(member, field) : "",
 				);
@@ -405,8 +433,11 @@ function buildContent({
 	}
 
 	// list: members grouped under each team (omitted when no member fields chosen,
-	// so a team-name-only export is just a plain list of names)
+	// so a team-name-only export is just a plain list of names). Members are only
+	// indented under a team header when team fields are present — without them the
+	// export is a tight flat list (e.g. captains-only + Discord mention).
 	const hasMemberFields = memberFields.length > 0;
+	const groupByTeam = teamFields.length > 0;
 
 	const entries = teams.map((team) => {
 		const teamLine = teamFields
@@ -414,17 +445,19 @@ function buildContent({
 			.filter(Boolean)
 			.join(" - ");
 		if (!hasMemberFields) return teamLine;
-		const memberLines = team.members.map(
-			(member) =>
-				`  ${memberFields
-					.map((field) => memberFieldValue(member, field))
-					.filter(Boolean)
-					.join(" - ")}`,
-		);
-		return [teamLine, ...memberLines].join("\n");
+		const memberLines = membersOf(team).map((member) => {
+			const memberLine = memberFields
+				.map((field) => memberFieldValue(member, field))
+				.filter(Boolean)
+				.join(" - ");
+			return groupByTeam ? `  ${memberLine}` : memberLine;
+		});
+		return [teamLine, ...memberLines].filter(Boolean).join("\n");
 	});
 
-	return entries.join(hasMemberFields ? "\n\n" : "\n");
+	return entries
+		.filter(Boolean)
+		.join(groupByTeam && hasMemberFields ? "\n\n" : "\n");
 }
 
 function handleDownload({
