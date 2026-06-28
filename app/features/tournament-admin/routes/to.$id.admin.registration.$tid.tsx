@@ -196,7 +196,6 @@ function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
 	// keep ownerId in sync with it: default to the first member and reset when the
 	// current captain is no longer on the roster (e.g. their row was removed)
 	const ownerOptionsKey = ownerOptions.map((option) => option.value).join(",");
-	// biome-ignore lint/correctness/useExhaustiveDependencies: values/setValue read from closure; resync only when the roster changes
 	React.useEffect(() => {
 		if (ownerOptions.length === 0) return;
 		if (ownerOptions.some((option) => option.value === values.ownerId)) return;
@@ -266,6 +265,10 @@ function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
 									onUserSelected: (user) => {
 										if (!user) return;
 										setUsernames((prev) => ({ ...prev, [user.id]: user.name }));
+										// prefill the in-game name from the user's existing one
+										if (requireInGameNames && user.inGameName) {
+											setValue(`${itemName}.inGameName`, user.inGameName);
+										}
 									},
 								} satisfies UserSearchFieldOptions
 							}
@@ -375,7 +378,6 @@ function ImportTeamFields({
 	// form value in sync with it: default to the first team and reset when the
 	// loaded set of teams changes (e.g. after picking a different tournament)
 	const teamIdsKey = teams.map((team) => team.id).join(",");
-	// biome-ignore lint/correctness/useExhaustiveDependencies: values/setValue read from closure; resync only when the loaded teams change
 	React.useEffect(() => {
 		if (teams.length === 0) return;
 		const current = values.sourceTournamentTeamId;

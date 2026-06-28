@@ -165,7 +165,7 @@ export interface GetTournamentResponse {
 	 */
 	url: string;
 	/**
-	 * @example "https://sendou.ink/static-assets/img/tournament-logos/itz.avif"
+	 * @example "https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/img/tournament-logos/itz.avif"
 	 */
 	logoUrl: string | null;
 	/**
@@ -481,11 +481,11 @@ type Badge = {
 	name: string;
 	count: number;
 	/**
-	 * @example "https://sendou.ink/static-assets/badges/monday.avif"
+	 * @example "https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/badges/monday.avif"
 	 */
 	imageUrl: string;
 	/**
-	 * @example "https://sendou.ink/static-assets/badges/monday.gif"
+	 * @example "https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/badges/monday.gif"
 	 */
 	gifUrl: string;
 };

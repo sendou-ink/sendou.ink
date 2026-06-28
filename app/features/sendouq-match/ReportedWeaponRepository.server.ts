@@ -150,17 +150,26 @@ export async function deleteOwnByMapIndexTournament({
 		.execute();
 }
 
-export async function deleteByMapIndexTournament({
-	tournamentMatchId,
-	mapIndex,
-}: {
-	tournamentMatchId: number;
-	mapIndex: number;
-}) {
-	await db
+/**
+ * Deletes reported weapons that no longer correspond to a played game, i.e.
+ * those reported "in advance" for map indexes beyond the games that ended up
+ * being played. Called when a set ends to trim leftover weapons that earlier
+ * score undos intentionally left dangling.
+ */
+export async function deleteExtraByTournamentMatchId(
+	{
+		tournamentMatchId,
+		gameCount,
+	}: {
+		tournamentMatchId: number;
+		gameCount: number;
+	},
+	trx?: Transaction<DB>,
+) {
+	await (trx ?? db)
 		.deleteFrom("ReportedWeapon")
 		.where("tournamentMatchId", "=", tournamentMatchId)
-		.where("mapIndex", "=", mapIndex)
+		.where("mapIndex", ">=", gameCount)
 		.execute();
 }
 

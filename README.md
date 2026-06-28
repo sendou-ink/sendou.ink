@@ -100,6 +100,10 @@ To override any of them, create a `.env` file in the project root — see [`.env
 
 In production these variables are read from the host environment, and the ones marked as required will fail fast at startup with a clear error if they are missing.
 
+#### Static assets
+
+Static assets (weapon, gear and stage images, badges, sounds, etc.) are not stored in this repository. They live in [sendou-ink/assets](https://github.com/sendou-ink/assets) and are served from a CDN. The base URL is configurable via the `VITE_STATIC_ASSETS_URL` environment variable, which defaults to the production CDN so the app works out of the box without any local setup.
+
 #### Docker
 
 Optionally, if you want to develop image upload, real-time features or chat, you can use Docker to spin up the Skalop service and Minio for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:

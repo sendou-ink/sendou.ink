@@ -6,6 +6,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Flag } from "~/components/Flag";
 import { Image, ModeImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
@@ -20,9 +21,11 @@ import styles from "./TournamentCard.module.css";
 export function TournamentCard({
 	tournament,
 	className,
+	timeFormat = "relative",
 }: {
 	tournament: CalendarEvent | ShowcaseCalendarEvent;
 	className?: string;
+	timeFormat?: "relative" | "absolute";
 }) {
 	const isHydrated = useHydrated();
 	const formatDistanceToNow = useFormatDistanceToNow();
@@ -84,16 +87,30 @@ export function TournamentCard({
 					) : null}
 				</div>
 				{startDate ? (
-					<time
-						className={clsx(styles.time, {
-							invisible: !isHydrated,
-						})}
-						dateTime={startDate.toISOString()}
-					>
-						{isHydrated
-							? formatDistanceToNow(startDate, { addSuffix: true })
-							: "Placeholder"}
-					</time>
+					timeFormat === "absolute" ? (
+						<LocaleTime
+							date={startDate}
+							className={styles.time}
+							options={{
+								month: "short",
+								day: "numeric",
+								weekday: "short",
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
+					) : (
+						<time
+							className={clsx(styles.time, {
+								invisible: !isHydrated,
+							})}
+							dateTime={startDate.toISOString()}
+						>
+							{isHydrated
+								? formatDistanceToNow(startDate, { addSuffix: true })
+								: "Placeholder"}
+						</time>
+					)
 				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">

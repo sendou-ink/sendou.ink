@@ -235,20 +235,6 @@
 	justify-content: center;
 }
 
-.teamOneDot {
-	border-radius: 100%;
-	background-color: var(--color-accent);
-	width: 8px;
-	height: 8px;
-}
-
-.teamTwoDot {
-	border-radius: 100%;
-	background-color: var(--color-second);
-	width: 8px;
-	height: 8px;
-}
-
 .teamAvatar {
 	border-radius: var(--radius-avatar);
 	width: 44px;

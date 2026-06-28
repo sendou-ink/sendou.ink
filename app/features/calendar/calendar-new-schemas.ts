@@ -31,7 +31,7 @@ const calendarEventDateField = datetimeRequired({
 
 export const calendarNewBaseSchema = z.object({
 	// discriminates between a calendar event and a tournament; seeded from the loader, no visible control
-	toToolsEnabled: customField({ initialValue: false }, z.boolean()), // xxx: use "stringConstant" instead
+	toToolsEnabled: customField({ initialValue: false }, z.boolean()),
 	eventToEditId: idConstantOptional(),
 	tournamentToCopyId: idConstantOptional(),
 	name: textFieldRequired({

@@ -92,6 +92,14 @@
 	margin-inline-start: 8px;
 }
 
+.matchTimerWarning {
+	background-color: var(--color-warning);
+}
+
+.matchTimerError {
+	background-color: var(--color-error);
+}
+
 .match {
 	width: var(--match-width);
 	min-height: var(--match-height);

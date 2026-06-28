@@ -164,7 +164,11 @@ function TournamentShowcase() {
 		<div className={styles.tournamentCards}>
 			<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
 				{data.tournaments.showcase.map((tournament) => (
-					<TournamentCard key={tournament.id} tournament={tournament} />
+					<TournamentCard
+						key={tournament.id}
+						tournament={tournament}
+						timeFormat="absolute"
+					/>
 				))}
 			</div>
 			<Link to={CALENDAR_PAGE} className={styles.tournamentCardsViewAllCard}>

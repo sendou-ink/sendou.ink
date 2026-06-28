@@ -8,12 +8,14 @@ test.describe("Tier List Maker", () => {
 	}) => {
 		await navigate({ page, url: TIER_LIST_MAKER_URL });
 
+		await page.getByText("Drag & drop").click();
+
 		const emptyTiers = page.getByText("Drop items here");
 
 		await expect(emptyTiers).toHaveCount(5);
 
 		// Test that toggles are clickable (just verify they work)
-		await page.getByText("Allow duplicates").click();
+		await page.getByText("No duplicates").click();
 		await page.getByText("Show tier headers").click();
 		await page.getByText("Hide alt kits").click();
 		await page.getByText("Hide alt skins").click();
@@ -39,8 +41,30 @@ test.describe("Tier List Maker", () => {
 		// Reload the page
 		await page.reload();
 
+		// Placement mode is not persisted, so re-enter drag & drop mode
+		await page.getByText("Drag & drop").click();
+
 		// Verify items persisted in the tier list (not in the pool)
 		// Should have fewer than 5 "Drop items here" (meaning at least 1 tier is filled)
+		await expect(emptyTiers).toHaveCount(3);
+	});
+
+	test("click to place mode adds items to the selected tier", async ({
+		page,
+	}) => {
+		await navigate({ page, url: TIER_LIST_MAKER_URL });
+
+		// Click to place is the default mode
+		const emptyTiers = page.getByText("Click items to add here");
+		await expect(emptyTiers).toHaveCount(5);
+
+		// The first tier is selected by default, clicking a weapon places it there
+		await page.locator('button[data-item-id^="main-weapon:"]').first().click();
+		await expect(emptyTiers).toHaveCount(4);
+
+		// Selecting another tier and clicking a weapon places it there
+		await emptyTiers.first().click();
+		await page.locator('button[data-item-id^="main-weapon:"]').first().click();
 		await expect(emptyTiers).toHaveCount(3);
 	});
 });

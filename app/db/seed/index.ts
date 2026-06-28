@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
 import { nanoid } from "nanoid";
 import * as R from "remeda";
+import { Config } from "~/config";
 import { db, sql } from "~/db/sql";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
@@ -3452,7 +3453,7 @@ async function notifications() {
 		{
 			type: "TO_CHECK_IN_OPENED",
 			meta: { tournamentId: 1, tournamentName: "PICNIC #2" },
-			pictureUrl: "/static-assets/img/tournament-logos/pn.avif",
+			pictureUrl: `${Config.staticAssetsUrl}/img/tournament-logos/pn.avif`,
 		},
 	];
 

@@ -64,12 +64,11 @@ export default function PlusVotingResultsPage() {
 						))}
 					</ul>
 					<div className="text-sm text-center text-lighter">
-						Click{" "}
 						<a href={PLUS_SERVER_DISCORD_URL} target="_blank" rel="noreferrer">
-							here
+							Join the Discord server
 						</a>{" "}
-						to join the Discord server. In some cases you might need to rejoin
-						the server to get the correct role.
+						to get the correct role. In some cases you might need to rejoin the
+						server.
 					</div>
 				</>
 			) : null}

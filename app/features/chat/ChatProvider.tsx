@@ -133,7 +133,7 @@ function ChatProviderInner({
 		"CONNECTING" | "CONNECTED" | "CLOSED"
 	>("CONNECTING");
 	const [chatOpen, _setChatOpen] = React.useState(false);
-	const [activeRoom, setActiveRoom] = React.useState<string | null>(null);
+	const [activeRooms, setActiveRooms] = React.useState<string[]>([]);
 	const [unreadCounts, setUnreadCounts] = React.useState<
 		Record<string, number>
 	>({});
@@ -191,9 +191,7 @@ function ChatProviderInner({
 				const { [removedCode]: _, ...rest } = prev;
 				return rest;
 			});
-			if (activeRoom === removedCode) {
-				setActiveRoom(null);
-			}
+			setActiveRooms((prev) => prev.filter((code) => code !== removedCode));
 			return;
 		}
 
@@ -333,7 +331,7 @@ function ChatProviderInner({
 			);
 
 			const isOwnMessage = msg.userId === userId;
-			if (isOwnMessage || (roomCode === activeRoom && chatOpen)) {
+			if (isOwnMessage || (activeRooms.includes(roomCode) && chatOpen)) {
 				writeLastReadCount(roomCode, msg.totalMessageCount);
 				setUnreadCounts((prev) => ({ ...prev, [roomCode]: 0 }));
 			} else {
@@ -487,15 +485,17 @@ function ChatProviderInner({
 			_setChatOpen(open);
 			if (!open) return;
 
-			if (activeRoom) {
-				markAsRead(activeRoom);
+			if (activeRooms.length > 0) {
+				for (const code of activeRooms) {
+					markAsRead(code);
+				}
 			} else if (rooms.length === 1) {
 				requestHistory(rooms[0].chatCode);
-				setActiveRoom(rooms[0].chatCode);
+				setActiveRooms([rooms[0].chatCode]);
 				markAsRead(rooms[0].chatCode);
 			}
 		},
-		[activeRoom, markAsRead, requestHistory, rooms.length, rooms[0]?.chatCode],
+		[activeRooms, markAsRead, requestHistory, rooms.length, rooms[0]?.chatCode],
 	);
 
 	useFetchUnknownChatUsers({
@@ -509,8 +509,8 @@ function ChatProviderInner({
 		userId,
 		isLoading,
 		readyState,
-		activeRoom,
-		setActiveRoom,
+		activeRooms,
+		setActiveRooms,
 		setChatOpen,
 		markAsRead,
 		subscribe,
@@ -540,8 +540,8 @@ function ChatProviderInner({
 			chatUsers: chatUsersCache,
 			chatOpen,
 			setChatOpen,
-			activeRoom,
-			setActiveRoom,
+			activeRooms,
+			setActiveRooms,
 			chatLabels,
 			setChatLabels,
 			clearChatLabels,
@@ -562,7 +562,7 @@ function ChatProviderInner({
 			readyState,
 			chatUsersCache,
 			chatOpen,
-			activeRoom,
+			activeRooms,
 			setChatOpen,
 			chatLabels,
 			clearChatLabels,
@@ -579,8 +579,8 @@ function useChatRouteSync({
 	userId,
 	isLoading,
 	readyState,
-	activeRoom,
-	setActiveRoom,
+	activeRooms,
+	setActiveRooms,
 	setChatOpen,
 	markAsRead,
 	subscribe,
@@ -595,8 +595,8 @@ function useChatRouteSync({
 	userId: number;
 	isLoading: boolean;
 	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
-	activeRoom: string | null;
-	setActiveRoom: (chatCode: string | null) => void;
+	activeRooms: string[];
+	setActiveRooms: React.Dispatch<React.SetStateAction<string[]>>;
 	setChatOpen: (open: boolean) => void;
 	markAsRead: (chatCode: string) => void;
 	subscribe: (chatCode: string) => void;
@@ -609,12 +609,7 @@ function useChatRouteSync({
 	requestHistory: (chatCode: string) => void;
 	messagesByRoom: Record<string, ChatMessage[]>;
 }) {
-	const rawChatCode = useCurrentRouteChatCode();
-	const chatCodesKey = rawChatCode
-		? Array.isArray(rawChatCode)
-			? rawChatCode.join(",")
-			: rawChatCode
-		: "";
+	const chatCodesKey = useCurrentRouteChatCodes().join(",");
 	const { pathname } = useLocation();
 	const layoutSize = useLayoutSize();
 	const subscribedRoomRef = React.useRef<string[]>([]);
@@ -630,8 +625,8 @@ function useChatRouteSync({
 	const onReconnect = React.useEffectEvent(() => {
 		logger.debug("WS reconnected, re-acquiring room subscriptions and history");
 		subscribedRoomRef.current = [];
-		if (activeRoom) {
-			requestHistory(activeRoom);
+		for (const code of activeRooms) {
+			requestHistory(code);
 		}
 	});
 
@@ -667,15 +662,21 @@ function useChatRouteSync({
 				const { [code]: _, ...rest } = prev;
 				return rest;
 			});
-			if (activeRoom === code) {
-				setActiveRoom(null);
-				setChatOpen(false);
-			}
 		}
 		if (removedRooms.length > 0) {
 			subscribedRoomRef.current = previousSubscribed.filter((code) =>
 				chatCodes.includes(code),
 			);
+
+			const remainingActive = activeRooms.filter(
+				(code) => !removedRooms.includes(code),
+			);
+			if (remainingActive.length !== activeRooms.length) {
+				setActiveRooms(remainingActive);
+				if (remainingActive.length === 0) {
+					setChatOpen(false);
+				}
+			}
 		}
 
 		if (chatCodes.length > 0) {
@@ -696,13 +697,17 @@ function useChatRouteSync({
 			previousRouteChatCodeRef.current = chatCodes;
 
 			if (routeChatCodeChanged) {
-				setActiveRoom(chatCodes[0]);
-				if (!messagesByRoom[chatCodes[0]]) {
-					requestHistory(chatCodes[0]);
+				setActiveRooms(chatCodes);
+				for (const code of chatCodes) {
+					if (!messagesByRoom[code]) {
+						requestHistory(code);
+					}
 				}
 				if (layoutSize === "desktop") {
 					setChatOpen(true);
-					markAsRead(chatCodes[0]);
+					for (const code of chatCodes) {
+						markAsRead(code);
+					}
 				}
 			}
 		} else {
@@ -717,7 +722,7 @@ function useChatRouteSync({
 				);
 
 				if (matchedRoom) {
-					setActiveRoom(matchedRoom.chatCode);
+					setActiveRooms([matchedRoom.chatCode]);
 					if (!messagesByRoom[matchedRoom.chatCode]) {
 						requestHistory(matchedRoom.chatCode);
 					}
@@ -734,8 +739,8 @@ function useChatRouteSync({
 		pathname,
 		rooms,
 		userId,
-		activeRoom,
-		setActiveRoom,
+		activeRooms,
+		setActiveRooms,
 		setChatOpen,
 		markAsRead,
 		layoutSize,
@@ -749,7 +754,12 @@ function useChatRouteSync({
 	]);
 }
 
-export function useCurrentRouteChatCode(): string | string[] | null {
+/**
+ * Chat codes the current route wants visible. A route may expose several codes
+ * (e.g. a SendouQ match exposes the match chat alongside the group chat) which
+ * are then shown stacked as a single combined view.
+ */
+export function useCurrentRouteChatCodes(): string[] {
 	const matches = useMatches();
 
 	for (const match of matches) {
@@ -757,11 +767,13 @@ export function useCurrentRouteChatCode(): string | string[] | null {
 			| { chatCode?: string | string[] }
 			| undefined;
 		if (matchData?.chatCode) {
-			return matchData.chatCode;
+			return Array.isArray(matchData.chatCode)
+				? matchData.chatCode
+				: [matchData.chatCode];
 		}
 	}
 
-	return null;
+	return [];
 }
 
 function useFetchUnknownChatUsers({

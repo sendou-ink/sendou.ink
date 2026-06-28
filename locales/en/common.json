@@ -141,6 +141,7 @@
 	"actions.noOutline": "No outline",
 	"actions.join": "Join",
 	"host": "Host",
+	"seed": "Seed {{number}}",
 	"actions.nevermind": "Nevermind",
 	"actions.clickHere": "Click here",
 	"actions.goBack": "Go back",

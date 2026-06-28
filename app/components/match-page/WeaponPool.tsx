@@ -1,6 +1,7 @@
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { abilityImageUrl } from "~/utils/urls";
 import { SendouPopover } from "../elements/Popover";
 import { Image, WeaponImage } from "../Image";
 import styles from "./WeaponPool.module.css";
@@ -30,7 +31,7 @@ export function WeaponPool({
 							<Image
 								key={i}
 								className={styles.unknownWeapon}
-								path="/static-assets/img/abilities/UNKNOWN"
+								path={abilityImageUrl("UNKNOWN")}
 								alt="?"
 								size={size}
 							/>

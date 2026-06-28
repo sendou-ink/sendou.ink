@@ -60,6 +60,7 @@ export interface LinkButtonProps {
 	to: LinkProps["to"];
 	prefetch?: LinkProps["prefetch"];
 	preventScrollReset?: LinkProps["preventScrollReset"];
+	state?: LinkProps["state"];
 	isExternal?: boolean;
 	className?: string;
 	variant?: SendouButtonProps["variant"];
@@ -76,6 +77,7 @@ export function LinkButton({
 	to,
 	prefetch,
 	preventScrollReset,
+	state,
 	isExternal,
 	className,
 	variant,
@@ -114,6 +116,7 @@ export function LinkButton({
 			data-testid={testId}
 			prefetch={prefetch}
 			preventScrollReset={preventScrollReset}
+			state={state}
 			onClick={onClick}
 			aria-label={ariaLabel}
 		>

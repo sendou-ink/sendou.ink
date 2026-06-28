@@ -37,6 +37,7 @@ import type { TournamentMaplistSource } from "~/modules/tournament-map-list-gene
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
+import { resolveHostingTeam } from "../tournament-match-utils";
 
 export function TournamentMatchBanner({
 	data,
@@ -56,7 +57,18 @@ export function TournamentMatchBanner({
 		matchIsLocked,
 		joinPool,
 		joinPass,
+		teams,
 	} = useMatch();
+
+	const [teamOne, teamTwo] = teams;
+	const hostingTeam =
+		teamOne && teamTwo ? resolveHostingTeam([teamOne, teamTwo]) : null;
+	const host = hostingTeam
+		? {
+				name: hostingTeam.name,
+				avatarUrl: tournament.tournamentTeamLogoSrc(hostingTeam) ?? undefined,
+			}
+		: null;
 
 	const opponentOne = data.match.opponentOne;
 	const opponentTwo = data.match.opponentTwo;
@@ -136,6 +148,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 				/>
 			) : isMissingTeam ? (
 				<IconBanner
@@ -153,6 +166,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 					testId="active-roster-needed-text"
 				/>
 			) : pickBanBanner ? (
@@ -163,6 +177,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 				/>
 			) : currentMap ? (
 				<MatchBanner
@@ -171,6 +186,7 @@ export function TournamentMatchBanner({
 					screenLegal={screenLegal}
 					joinPool={joinPool}
 					joinPass={joinPass}
+					host={host}
 				>
 					<CurrentMapPickInfo
 						source={currentMap.source}
@@ -267,25 +283,37 @@ function CurrentMapPickInfo({
 	});
 	if (!picker) return null;
 
-	const team = tournament.teamById(picker.teamId);
-	if (!team) return null;
+	const teamIds = picker.kind === "BOTH" ? picker.teamIds : [picker.teamId];
+	const teams = teamIds
+		.map((teamId) => tournament.teamById(teamId))
+		.filter((team) => team !== undefined);
+	if (teams.length !== teamIds.length) return null;
 
-	const text = t(
-		picker.kind === "COUNTERPICK"
-			? "tournament:pickInfo.counterpickedBy"
-			: "tournament:pickInfo.pickedBy",
-		{ teamName: team.name },
-	);
+	const text = (() => {
+		switch (picker.kind) {
+			case "BOTH":
+				return t("tournament:pickInfo.both");
+			case "COUNTERPICK":
+				return t("tournament:pickInfo.counterpickedBy", {
+					teamName: teams[0].name,
+				});
+			default:
+				return t("tournament:pickInfo.pickedBy", { teamName: teams[0].name });
+		}
+	})();
 
 	return (
 		<SendouPopover
 			trigger={
 				<SendouButton variant="minimal" className={bannerStyles.infoBadge}>
-					<Avatar
-						url={tournament.tournamentTeamLogoSrc(team)}
-						identiconInput={team.name}
-						size="xxs"
-					/>
+					{teams.map((team) => (
+						<Avatar
+							key={team.id}
+							url={tournament.tournamentTeamLogoSrc(team)}
+							identiconInput={team.name}
+							size="xxs"
+						/>
+					))}
 				</SendouButton>
 			}
 		>
@@ -304,12 +332,19 @@ function resolveCurrentMapPicker({
 	results: Array<{ winnerTeamId: number }>;
 	opponentIds: [number, number] | null;
 	pickBan: TournamentRoundMaps["pickBan"] | null;
-}): { teamId: number; kind: "PICK" | "COUNTERPICK" } | null {
+}):
+	| { teamId: number; kind: "PICK" | "COUNTERPICK" }
+	| { teamIds: [number, number]; kind: "BOTH" }
+	| null {
 	if (!opponentIds) return null;
 
 	if (typeof source === "number") {
 		if (!opponentIds.includes(source)) return null;
 		return { teamId: source, kind: "PICK" };
+	}
+
+	if (source === "BOTH") {
+		return { teamIds: opponentIds, kind: "BOTH" };
 	}
 
 	if (

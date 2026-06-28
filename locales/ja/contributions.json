@@ -1,14 +1,14 @@
 {
-	"project": "Sendou.ink は Sendou によるプロジェクトで、以下のコントリビューターに支えられています:",
-	"code": "すべてのコードコントリビューターを見る",
-	"lean": "Splatoon 内部理解のサポート、Lanista bot の作成",
-	"borzoic": "バッジ、アイコン、トップページアートの作成",
-	"toripng": "",
-	"uberu": "mini Judd holding heart 絵文字の作成",
+	"project": "Sendou.ink は Sendou によるプロジェクトで、以下のメンバーに支えられています:",
+	"code": "すべてのコード貢献者を見る",
+	"lean": "スプラトゥーン内部理解のサポート、Lanista bot の作成",
+	"borzoic": "バッジ、アイコン、トップページイラストの作成",
+	"toripng": "アイコン作成",
+	"uberu": "ハート持ちコジャッジくんのイラストの作成",
 	"yaga": "サブ/スペシャルウェポンアイコンの提供",
-	"centritide": "",
-	"antariska": "Map プランナーのバックグラウンド画像",
-	"splatoon3ink": "X ランクバトル結果",
+	"centritide": "ブキ射程計算",
+	"antariska": "戦略プランナーの背景画像提供",
+	"splatoon3ink": "X マッチランキングデータ",
 	"translation": "翻訳",
 	"sounds": "音声効果"
 }

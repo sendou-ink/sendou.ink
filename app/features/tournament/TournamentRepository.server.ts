@@ -221,6 +221,7 @@ export async function findById(id: number) {
 									"=",
 									"TournamentTeam.id",
 								)
+								.orderBy(sql`"TournamentTeamMember"."role" = 'OWNER'`, "desc")
 								.orderBy("TournamentTeamMember.createdAt", "asc"),
 						).as("members"),
 						jsonArrayFrom(

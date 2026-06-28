@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import { APP_ICON_URL } from "~/utils/urls";
 import type { NotificationSubscription } from "../../../db/tables";
 import { i18next } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
@@ -172,7 +173,7 @@ function pushNotificationOptions(
 			`common:notifications.text.${notification.type}`,
 			notification.meta,
 		),
-		icon: notification.pictureUrl ?? "/static-assets/img/app-icon.png",
+		icon: notification.pictureUrl ?? APP_ICON_URL,
 		data: { url: notificationLink(notification) },
 	};
 }

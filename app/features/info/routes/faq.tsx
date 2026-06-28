@@ -34,7 +34,6 @@ export default function FAQPage() {
 						</summary>
 						<p
 							className={styles.details}
-							// biome-ignore lint/security/noDangerouslySetInnerHtml: trusted source
 							dangerouslySetInnerHTML={{
 								__html: t(`faq:a${questionNumber}` as any),
 							}}

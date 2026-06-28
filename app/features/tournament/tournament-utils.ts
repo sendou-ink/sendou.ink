@@ -285,11 +285,11 @@ export function validateCanJoinTeam({
 	if (!teamToJoin) {
 		return "NO_TEAM_MATCHING_CODE";
 	}
-	if (teamToJoin.members.length >= maxTeamSize) {
-		return "TEAM_FULL";
-	}
 	if (teamToJoin.members.some((member) => member.userId === userId)) {
 		return "ALREADY_JOINED";
+	}
+	if (teamToJoin.members.length >= maxTeamSize) {
+		return "TEAM_FULL";
 	}
 
 	return "VALID";

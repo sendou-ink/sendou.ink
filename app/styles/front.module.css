@@ -153,7 +153,7 @@
 	font-weight: var(--weight-bold);
 	text-align: center;
 	color: var(--color-text);
-	transition: 0.2s ease-out;
+	transition: background-color 0.2s ease-out;
 	min-width: 90px;
 	max-width: 90px;
 

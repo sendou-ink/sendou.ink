@@ -8,9 +8,9 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
-import { SENDOUQ_PAGE } from "~/utils/urls";
+import { navIconUrl, SENDOUQ_PAGE } from "~/utils/urls";
 
-const FC_INFO_IMAGE_URL = "/static-assets/img/layout/fc-info";
+const FC_INFO_IMAGE_URL = navIconUrl("fc-info");
 
 export function FriendCodeInput({
 	friendCode,

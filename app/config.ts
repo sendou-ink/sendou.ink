@@ -29,6 +29,9 @@ const schema = z.object({
 		isProd,
 		"tournament-logo-default.avif",
 	),
+	VITE_STATIC_ASSETS_URL: z
+		.string()
+		.default("https://sendou-assets.nyc3.cdn.digitaloceanspaces.com"),
 	VITE_PROD_MODE: z.stringbool().default(false),
 	VITE_SHOW_LUTI_NAV_ITEM: z.stringbool().default(false),
 	VITE_FUSE_ENABLED: z.stringbool().default(false),
@@ -51,6 +54,8 @@ export const Config = {
 	siteDomain: values.VITE_SITE_DOMAIN,
 	/** Filename of the default tournament logo asset. */
 	tournamentDefaultLogo: values.VITE_TOURNAMENT_DEFAULT_LOGO,
+	/** Base URL for static assets (images, sounds, svg). */
+	staticAssetsUrl: values.VITE_STATIC_ASSETS_URL,
 	/** Whether to use real seasons & league data (used when developing against the production database). */
 	prodMode: values.VITE_PROD_MODE,
 	/** Whether to show the LUTI navigation item. */

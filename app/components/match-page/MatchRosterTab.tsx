@@ -49,9 +49,8 @@ interface RosterTabTeam {
 	/** Sub user ids i.e. those who are not the current active roster */
 	subbedOut?: Array<number>;
 	tier?: { name: TierName; isPlus: boolean };
+	/** Tournament seed of the team (tournament only). */
 	seed?: number | null;
-	/** Whether this team is expected to host the room (tournament only). */
-	isHost?: boolean;
 }
 
 interface MatchRosterTabProps {
@@ -115,13 +114,17 @@ function TeamRoster({
 	onSubbedOutChange?: (teamId: number, subbedOut: number[]) => void;
 	isSubmitting?: boolean;
 }) {
-	const { t } = useTranslation(["common", "q"]);
+	const { t } = useTranslation(["common"]);
 	const [isEditing, setIsEditing] = useState(defaultIsEditing);
 	const [selectedMemberIds, setSelectedMemberIds] = useState<number[]>([]);
 
-	const dotClassName = side === "alpha" ? styles.teamOneDot : styles.teamTwoDot;
-	const label =
-		side === "alpha" ? t("q:match.sides.alpha") : t("q:match.sides.bravo");
+	const rosterIdentity = rosterIdentityKey(team);
+	const [prevRosterIdentity, setPrevRosterIdentity] = useState(rosterIdentity);
+	if (rosterIdentity !== prevRosterIdentity) {
+		setPrevRosterIdentity(rosterIdentity);
+		setIsEditing(defaultIsEditing);
+		setSelectedMemberIds([]);
+	}
 
 	const subbedOutSet = new Set(team.subbedOut);
 	const activeMembers = team.members.filter(
@@ -135,12 +138,7 @@ function TeamRoster({
 
 	return (
 		<div className={clsx("stack xxs", styles.rosterColumn)}>
-			<TeamHeader
-				team={team}
-				side={side}
-				label={label}
-				dotClassName={dotClassName}
-			/>
+			<TeamHeader team={team} side={side} />
 			{team.members.length > 0 ? (
 				<ul className={styles.rosterMembers}>
 					{isEditing
@@ -252,45 +250,36 @@ function TeamRoster({
 	}
 }
 
+function rosterIdentityKey(team: RosterTabTeam) {
+	return [
+		team.members.map((member) => member.id).join("-"),
+		(team.subbedOut ?? []).join("-"),
+	].join("_");
+}
+
 function TeamHeader({
 	team,
 	side,
-	label,
-	dotClassName,
 }: {
 	team: RosterTabTeam;
 	side: "alpha" | "bravo";
-	label: string;
-	dotClassName: string;
 }) {
 	const { t } = useTranslation(["common"]);
 
 	const tierText = team.tier
 		? `${team.tier.name.toLowerCase()}${team.tier.isPlus ? "+" : ""}`
 		: undefined;
-	const seedText = typeof team.seed === "number" ? `#${team.seed}` : undefined;
 
 	const meta = (
 		<div className="stack xs horizontal items-center text-lighter">
-			<div className={dotClassName} />
-			{label}
-			{tierText ? (
-				<>
-					<span>•</span>
+			{typeof team.seed === "number" ? (
+				<span>{t("common:seed", { number: team.seed })}</span>
+			) : null}
+			{team.tier && tierText ? (
+				<div className="stack xxs horizontal items-center">
+					<TierImage tier={team.tier} width={20} />
 					<span className="text-capitalize">{tierText}</span>
-				</>
-			) : null}
-			{seedText ? (
-				<>
-					<span>•</span>
-					<span>{seedText}</span>
-				</>
-			) : null}
-			{team.isHost ? (
-				<>
-					<span>•</span>
-					<span>{t("common:host")}</span>
-				</>
+				</div>
 			) : null}
 		</div>
 	);

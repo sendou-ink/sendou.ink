@@ -56,7 +56,7 @@ async function searchByType({
 				type: "user" as const,
 				id: u.id,
 				name: u.username,
-				secondaryName: u.inGameName,
+				inGameName: u.inGameName,
 				avatarUrl: null,
 				discordId: u.discordId,
 				discordAvatar: u.discordAvatar,

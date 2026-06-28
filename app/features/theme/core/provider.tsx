@@ -119,10 +119,7 @@ function ThemeHead() {
 		<>
 			<meta name="color-scheme" content={metaColorScheme} />
 			{initialUserTheme === "auto" ? (
-				<script
-					// biome-ignore lint/security/noDangerouslySetInnerHtml: trusted source
-					dangerouslySetInnerHTML={{ __html: CLIENT_THEME_SCRIPT }}
-				/>
+				<script dangerouslySetInnerHTML={{ __html: CLIENT_THEME_SCRIPT }} />
 			) : null}
 		</>
 	);

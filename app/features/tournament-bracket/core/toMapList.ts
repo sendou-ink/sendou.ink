@@ -97,9 +97,29 @@ function getFilteredRounds(
 ) {
 	if (type !== "round_robin" && type !== "swiss") return rounds;
 
-	// highest group id because lower group id's can have byes that higher don't
-	const highestGroupId = Math.max(...rounds.map((x) => x.group_id));
-	return rounds.filter((x) => x.group_id === highestGroupId);
+	// Groups can have different round counts when teams don't divide evenly
+	// (e.g. groups of 3 and 2). Use the group with the most rounds: it covers
+	// every round number and its map list is shared with the smaller groups.
+	const fullestGroupId = fullestGroupIdByRounds(rounds);
+	return rounds.filter((x) => x.group_id === fullestGroupId);
+}
+
+function fullestGroupIdByRounds(rounds: Round[]) {
+	const roundCountByGroup = new Map<number, number>();
+	for (const round of rounds) {
+		roundCountByGroup.set(
+			round.group_id,
+			(roundCountByGroup.get(round.group_id) ?? 0) + 1,
+		);
+	}
+
+	let fullestGroupId = rounds[0].group_id;
+	for (const [groupId, count] of roundCountByGroup) {
+		if (count > roundCountByGroup.get(fullestGroupId)!)
+			fullestGroupId = groupId;
+	}
+
+	return fullestGroupId;
 }
 
 function sortRounds(rounds: Round[], type: Tables["TournamentStage"]["type"]) {
@@ -135,11 +155,11 @@ function resolveRoundMapCount(
 	counts: BracketMapCounts,
 	type: Tables["TournamentStage"]["type"],
 ) {
-	// with rr/swiss we just take the first group id
-	// as every group has the same map list
+	// with rr/swiss every group shares the same map list, so use the group with
+	// the most rounds since it is the one that covers every round number
 	const groupId =
 		type === "round_robin" || type === "swiss"
-			? Math.max(...Array.from(counts.keys()))
+			? fullestGroupIdByCounts(counts)
 			: round.group_id;
 
 	const count = counts.get(groupId)?.get(round.number)?.count;
@@ -151,4 +171,14 @@ function resolveRoundMapCount(
 	}
 
 	return count;
+}
+
+function fullestGroupIdByCounts(counts: BracketMapCounts) {
+	let fullestGroupId = counts.keys().next().value as number;
+	for (const [groupId, roundCounts] of counts) {
+		if (roundCounts.size > counts.get(fullestGroupId)!.size)
+			fullestGroupId = groupId;
+	}
+
+	return fullestGroupId;
 }

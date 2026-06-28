@@ -9,7 +9,8 @@
 			"!build/**/*",
 			"!test-results/**/*",
 			"!playwright-report/**/*",
-			"!.react-router/**/*"
+			"!.react-router/**/*",
+			"!**/*.svg"
 		]
 	},
 	"linter": {
