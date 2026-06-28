@@ -1,15 +1,23 @@
 import { db } from "~/db/sql";
-import homemadeBadges from "~/features/badges/homemade.json";
 import { logger } from "~/utils/logger";
 
+const HOMEMADE_BADGES_URL =
+	"https://raw.githubusercontent.com/sendou-ink/assets/main/homemade.json";
+
+interface HomemadeBadge {
+	displayName: string;
+	authorDiscordId: string;
+}
+
 async function main() {
+	const homemadeBadges = await fetchHomemadeBadges();
+
 	let deleted = 0;
 	let updated = 0;
 
 	// update existing
 	for (const existingBadge of await homemadeBadgesInDb()) {
-		const badge =
-			homemadeBadges[existingBadge.code as keyof typeof homemadeBadges];
+		const badge = homemadeBadges[existingBadge.code];
 
 		if (!badge) {
 			await deleteBadge(existingBadge.id);
@@ -72,6 +80,18 @@ async function main() {
 	logger.info(
 		`Deleted ${deleted}, updated ${updated}, added ${added} homemade badges`,
 	);
+}
+
+async function fetchHomemadeBadges(): Promise<Record<string, HomemadeBadge>> {
+	const response = await fetch(HOMEMADE_BADGES_URL);
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to fetch homemade badges (${response.status} ${response.statusText})`,
+		);
+	}
+
+	return response.json() as Promise<Record<string, HomemadeBadge>>;
 }
 
 async function homemadeBadgesInDb() {

@@ -36,8 +36,6 @@ jobs:
         run: pnpm run knip
       - name: Check translations jsons
         run: pnpm run check-translation-jsons:no-write
-      - name: Check homemade badges
-        run: pnpm run check-homemade-badges
       - name: Check articles
         run: pnpm run check-articles
       - name: Check test DB migrations
