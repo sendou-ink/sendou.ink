@@ -22,7 +22,7 @@ export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 
 	if (!chatContext) return null;
 
-	if (chatContext.activeRoom) {
+	if (chatContext.activeRooms.length > 0) {
 		return <ChatView onClose={onClose} />;
 	}
 
@@ -106,10 +106,12 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		? visibleRooms.filter((room) => !combinedChatCodes.has(room.chatCode))
 		: visibleRooms;
 
-	const openRoom = (chatCode: string) => {
-		chatContext.requestHistory(chatCode);
-		chatContext.setActiveRoom(chatCode);
-		chatContext.markAsRead(chatCode);
+	const openRooms = (chatCodes: string[]) => {
+		for (const chatCode of chatCodes) {
+			chatContext.requestHistory(chatCode);
+			chatContext.markAsRead(chatCode);
+		}
+		chatContext.setActiveRooms(chatCodes);
 	};
 
 	return (
@@ -125,7 +127,9 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 						{isCombined ? (
 							<CombinedRoomListItem
 								rooms={combinedRooms}
-								onPress={() => openRoom(combinedRooms[0].chatCode)}
+								onPress={() =>
+									openRooms(combinedRooms.map((room) => room.chatCode))
+								}
 							/>
 						) : null}
 						{standaloneRooms.map((room) => {
@@ -139,7 +143,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 										styles.roomItem,
 										room.isObsolete ? "opaque" : null,
 									)}
-									onPress={() => openRoom(room.chatCode)}
+									onPress={() => openRooms([room.chatCode])}
 								>
 									{room.imageUrl ? (
 										<img
@@ -235,18 +239,13 @@ function CombinedRoomListItem({
 
 function ChatView({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
-	const activeRoom = chatContext.activeRoom!;
 
-	const routeChatCodes = useCurrentRouteChatCodes();
-	const groupRooms = routeChatCodes
+	const activeRooms = chatContext.activeRooms
 		.map((code) => chatContext.rooms.find((r) => r.chatCode === code))
 		.filter((r): r is RoomInfo => Boolean(r));
 
-	const isCombined =
-		groupRooms.length > 1 && routeChatCodes.includes(activeRoom);
-
-	if (isCombined) {
-		return <CombinedChatView rooms={groupRooms} onClose={onClose} />;
+	if (activeRooms.length > 1) {
+		return <CombinedChatView rooms={activeRooms} onClose={onClose} />;
 	}
 
 	return <SingleChatView onClose={onClose} />;
@@ -255,7 +254,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 function SingleChatView({ onClose }: { onClose?: () => void }) {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
-	const activeRoom = chatContext.activeRoom!;
+	const activeRoom = chatContext.activeRooms[0];
 	const { formatter: headerFormatter } = useDateTimeFormat({
 		month: "numeric",
 		day: "numeric",
@@ -298,7 +297,7 @@ function SingleChatView({ onClose }: { onClose?: () => void }) {
 	};
 
 	const handleBack = () => {
-		chatContext.setActiveRoom(null);
+		chatContext.setActiveRooms([]);
 	};
 
 	const headerContent = (
@@ -385,15 +384,8 @@ function CombinedChatView({
 		minute: "numeric",
 	});
 
-	const roomCodesKey = rooms.map((r) => r.chatCode).join(",");
-	React.useEffect(() => {
-		for (const code of roomCodesKey.split(",")) {
-			chatContext.requestHistory(code);
-		}
-	}, [roomCodesKey, chatContext.requestHistory]);
-
 	const handleBack = () => {
-		chatContext.setActiveRoom(null);
+		chatContext.setActiveRooms([]);
 	};
 
 	const primary = rooms[0];
