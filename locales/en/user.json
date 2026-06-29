@@ -205,8 +205,12 @@
 	"mutualFriends.count_other": "mutual friends",
 	"card.viewUserPage": "View user page",
 	"card.sendFriendRequest": "Send friend request",
+	"card.friendRequestPending": "Friend request pending",
 	"card.editPrivateNote": "Edit private note",
 	"card.xp": "XP",
 	"card.freeAgent": "FA",
-	"card.noMutualFriends": "No mutual friends"
+	"card.noMutualFriends": "No mutual friends",
+	"card.edit.title": "Edit user card",
+	"card.edit.bannerColor": "Banner color",
+	"card.edit.supporterOnlyBanner": "Uploading a banner image is a supporter-only feature."
 }

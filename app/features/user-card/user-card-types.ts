@@ -1,4 +1,4 @@
-import type { CustomTheme, Tables } from "~/db/tables";
+import type { CustomTheme, Tables, XRankPlacementRegion } from "~/db/tables";
 import type { StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TieredSkill } from "../mmr/tiered.server";
@@ -8,9 +8,12 @@ export interface UserCardData extends CommonUser {
 	shortBio: string | null;
 	customTheme: CustomTheme | null;
 	friendCode: string | null;
-	isFreeAgent: boolean;
+	/** Id of the user's free agent LFG post, or `null` if they have none. */
+	freeAgentPostId: number | null;
 	privateNote: Pick<Tables["PrivateUserNote"], "text" | "sentiment">;
 	stats: Array<UserCardStat>;
+	/** Stat types the user has chosen to hide; filtered out of `stats` at render time. */
+	hiddenStats: Array<UserCardStat["type"]>;
 }
 
 /**
@@ -20,6 +23,8 @@ export interface UserCardData extends CommonUser {
  */
 export interface UserCardFriendship {
 	isFriend: boolean;
+	/** Whether a friend request between the viewer and this user is currently pending. */
+	hasPendingFriendRequest: boolean;
 	mutualFriends: Array<CommonUser>;
 }
 
@@ -56,11 +61,8 @@ export type UserCardStat =
 			top: number | null;
 	  };
 
-// xxx: should live in tables.ts or something?
-export type XPDivision = "TENTATEK" | "TAKOROKA";
-
 export interface UserCardStatXPValue {
 	isVerified: boolean;
-	div: XPDivision;
+	region: XRankPlacementRegion;
 	points: number;
 }

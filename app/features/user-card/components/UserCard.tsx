@@ -1,21 +1,32 @@
 import clsx from "clsx";
-import { BadgeCheck, Megaphone, NotebookPen, UserPlus } from "lucide-react";
+import {
+	BadgeCheck,
+	Check,
+	Megaphone,
+	NotebookPen,
+	Pencil,
+	UserPlus,
+} from "lucide-react";
 import * as React from "react";
 import { Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useMatches } from "react-router";
+import { useFetcher, useLocation, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { Image, TierImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
+import type { XRankPlacementRegion } from "~/db/tables";
+import { useUser } from "~/features/auth/core/user";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
 import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,
+	FRIENDS_PAGE,
 	LFG_PAGE,
 	navIconUrl,
 	stageBannerImageUrl,
+	userCardEditPage,
 	userCardFriendshipPage,
 	userPage,
 } from "~/utils/urls";
@@ -24,7 +35,6 @@ import type {
 	UserCardData,
 	UserCardFriendship,
 	UserCardStat,
-	XPDivision,
 } from "../user-card-types";
 import styles from "./UserCard.module.css";
 
@@ -64,6 +74,9 @@ export function UserCard({
 	const lookedUpData = useUserCardData(userId);
 	const data = dataProp ?? lookedUpData;
 
+	const user = useUser();
+	const isOwnCard = user?.id === data?.id;
+
 	const triggerRef = React.useRef<HTMLSpanElement>(null);
 	const popoverRef = React.useRef<HTMLElement>(null);
 	const openTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -79,11 +92,12 @@ export function UserCard({
 	React.useEffect(() => {
 		if (!isOpen) return;
 		if (friendshipLoadedRef.current) return;
+		if (isOwnCard) return;
 		if (typeof data?.id !== "number") return;
 
 		friendshipLoadedRef.current = true;
 		fetcher.load(userCardFriendshipPage(data.id));
-	}, [isOpen, data?.id, fetcher.load]);
+	}, [isOpen, isOwnCard, data?.id, fetcher.load]);
 
 	const friendship = fetcher.data;
 
@@ -190,6 +204,7 @@ export function UserCard({
 				<CardContent
 					data={data}
 					friendship={friendship}
+					isOwnCard={isOwnCard}
 					onPointerEnter={cancelClose}
 					onPointerLeave={onPointerLeave}
 				/>
@@ -222,20 +237,27 @@ function useUserCardData(userId: number | undefined): UserCardData | undefined {
 function CardContent({
 	data,
 	friendship,
+	isOwnCard,
 	onPointerEnter,
 	onPointerLeave,
 }: {
 	data: UserCardData;
 	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
 	friendship: UserCardFriendship | undefined;
+	isOwnCard: boolean;
 	onPointerEnter: () => void;
 	onPointerLeave: (event: React.PointerEvent) => void;
 }) {
-	const { t } = useTranslation(["user"]);
+	const { t } = useTranslation(["common", "user"]);
+	const location = useLocation();
 
-	const stats = data.stats.toSorted(
-		(a, b) => STAT_ORDER[a.type] - STAT_ORDER[b.type],
-	);
+	const stats = data.stats
+		.filter((stat) => !data.hiddenStats.includes(stat.type))
+		.toSorted((a, b) => STAT_ORDER[a.type] - STAT_ORDER[b.type]);
+
+	const editPageUrl = userCardEditPage({
+		returnTo: `${location.pathname}${location.search}`,
+	});
 
 	return (
 		<div
@@ -245,10 +267,9 @@ function CardContent({
 			onPointerLeave={onPointerLeave}
 		>
 			<Banner banner={data.banner} />
-			{data.isFreeAgent ? (
+			{data.freeAgentPostId !== null ? (
 				<LinkButton
-					// xxx: make it scroll to the fa post
-					to={LFG_PAGE}
+					to={`${LFG_PAGE}#${data.freeAgentPostId}`}
 					size="miniscule"
 					icon={<Megaphone />}
 					className={styles.freeAgentBadge}
@@ -257,20 +278,26 @@ function CardContent({
 				</LinkButton>
 			) : null}
 			<div className={styles.iconButtons}>
-				{friendship && !friendship.isFriend ? (
-					<SendouButton
-						size="miniscule"
-						shape="circle"
-						icon={<UserPlus />}
-						aria-label={t("user:card.sendFriendRequest")}
-					/>
-				) : null}
-				<SendouButton
-					size="miniscule"
-					shape="circle"
-					icon={<NotebookPen />}
-					aria-label={t("user:card.editPrivateNote")}
-				/>
+				{isOwnCard ? (
+					<LinkButton to={editPageUrl} size="miniscule" icon={<Pencil />}>
+						{t("common:actions.edit")}
+					</LinkButton>
+				) : (
+					<>
+						{friendship && !friendship.isFriend ? (
+							<FriendRequestButton
+								targetUserId={data.id}
+								hasPendingFriendRequest={friendship.hasPendingFriendRequest}
+							/>
+						) : null}
+						<SendouButton
+							size="miniscule"
+							shape="circle"
+							icon={<NotebookPen />}
+							aria-label={t("user:card.editPrivateNote")}
+						/>
+					</>
+				)}
 			</div>
 			<div className={styles.identity}>
 				<Avatar user={data} size="md" className={styles.avatar} />
@@ -297,7 +324,7 @@ function CardContent({
 					))}
 				</div>
 			) : null}
-			<CardMutualFriends friendship={friendship} />
+			{isOwnCard ? null : <CardMutualFriends friendship={friendship} />}
 			{data.shortBio ? <p className={styles.bio}>{data.shortBio}</p> : null}
 			<LinkButton
 				to={userPage(data)}
@@ -308,6 +335,56 @@ function CardContent({
 				{t("user:card.viewUserPage")}
 			</LinkButton>
 		</div>
+	);
+}
+
+/**
+ * Send friend request action on the card. Submits to the `/friends` route action and shows a
+ * checkmark once a request is pending (server-known or just sent). Cancelling a pending request
+ * is done on the `/friends` page.
+ */
+// xxx: better pending
+function FriendRequestButton({
+	targetUserId,
+	hasPendingFriendRequest,
+}: {
+	targetUserId: number;
+	hasPendingFriendRequest: boolean;
+}) {
+	const { t } = useTranslation(["user"]);
+	const fetcher = useFetcher();
+
+	const requestPending =
+		hasPendingFriendRequest ||
+		fetcher.state !== "idle" ||
+		fetcher.data === null;
+
+	if (requestPending) {
+		return (
+			<SendouButton
+				size="miniscule"
+				shape="circle"
+				variant="outlined-success"
+				icon={<Check />}
+				isDisabled
+				aria-label={t("user:card.friendRequestPending")}
+			/>
+		);
+	}
+
+	return (
+		<SendouButton
+			size="miniscule"
+			shape="circle"
+			icon={<UserPlus />}
+			aria-label={t("user:card.sendFriendRequest")}
+			onPress={() =>
+				fetcher.submit(
+					{ _action: "SEND_REQUEST", userId: targetUserId },
+					{ method: "post", action: FRIENDS_PAGE },
+				)
+			}
+		/>
 	);
 }
 
@@ -372,7 +449,7 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 							{primary.isVerified ? (
 								<BadgeCheck className={styles.xpVerifiedIconLarge} />
 							) : null}
-							<DivImage div={primary.div} />
+							<DivImage region={primary.region} />
 							{primary.points}
 							{t("user:card.xp")}
 						</span>
@@ -380,7 +457,7 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 					{secondary ? (
 						<span className={styles.xpVerified}>
 							<BadgeCheck className={styles.xpVerifiedIconSmall} />
-							<DivImage div={secondary.div} />
+							<DivImage region={secondary.region} />
 							{secondary.points}
 							{t("user:card.xp")}
 						</span>
@@ -417,13 +494,15 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 	}
 }
 
-function DivImage({ div }: { div: XPDivision }) {
-	if (div !== "TENTATEK") return null;
+function DivImage({ region }: { region: XRankPlacementRegion }) {
+	const { t } = useTranslation(["common"]);
+
+	if (region !== "WEST") return null;
 
 	return (
 		<Image
 			path={brandImageUrl(TENTATEK_BRAND_ID)}
-			alt={div}
+			alt={t("common:divisions.WEST")}
 			width={18}
 			height={18}
 		/>

@@ -10,6 +10,10 @@ export function up(db) {
 		).run();
 		// nullable: null means no explicit choice, the card derives a preset color from the user id
 		db.prepare(/* sql */ `alter table "User" add "bannerPresetImg" text`).run();
+		// supporter-uploaded banner (UserSubmittedImage id), takes precedence over bannerPresetImg
+		db.prepare(/* sql */ `alter table "User" add "bannerImgId" integer`).run();
+		// json array of card stat types the user has chosen to hide
+		db.prepare(/* sql */ `alter table "User" add "hiddenCardStats" text`).run();
 
 		// backfill unverifiedPeakXP from the existing "peak-xp-unverified" profile widget
 		db.prepare(

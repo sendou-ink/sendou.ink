@@ -500,7 +500,7 @@ export interface SeedingSkill {
 	type: "RANKED" | "UNRANKED";
 }
 
-interface PeakXP {
+export interface PeakXP {
 	/** Peak XP across all divisions */
 	overall: number;
 	/** Peak XP (Takoroka division) */
@@ -1096,6 +1096,9 @@ export type Pronouns = {
 	object: (typeof OBJECT_PRONOUNS)[number];
 };
 
+/** Card stat types that can be hidden from a user's card (kept here so `User.hiddenCardStats` does not import a feature module; keep in sync with the feature's `UserCardStat["type"]`). */
+export type HideableUserCardStat = "XP" | "DIV";
+
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
@@ -1148,9 +1151,12 @@ export interface User {
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
 	joinOrder: number | null;
-	// xxx: add bannerImgId
-	/** User card banner default selection, hex code or stage id. Note: supporters can also upload banner (stored in UserSubmittedImage) */
+	/** User card banner default selection, hex code or stage id. Note: supporters can also upload banner (stored in UserSubmittedImage, referenced by `bannerImgId` which takes precedence) */
 	bannerPresetImg: JSONColumnTypeNullable<string | StageId>;
+	/** Supporter-uploaded user card banner (UserSubmittedImage id). Takes precedence over `bannerPresetImg`. */
+	bannerImgId: number | null;
+	/** Card stat types the user has chosen to hide from their card. */
+	hiddenCardStats: JSONColumnTypeNullable<Array<HideableUserCardStat>>;
 	/** Div in the latest finished LUTI (e.g. "2" or "X"). Must have been in a team that did not drop and the user played at least one match (got result as well) */
 	div: string | null;
 	/** Peak XP as indicated by the user. Should have either `takoroka` or `tentatek` key defined but not both. */
@@ -1307,6 +1313,9 @@ export interface VideoMatchPlayer {
 	weaponSplId: number;
 }
 
+/** `WEST` = Tentatek division, `JPN` = Takoroka division. */
+export type XRankPlacementRegion = "WEST" | "JPN";
+
 export interface XRankPlacement {
 	badges: string;
 	bannerSplId: number;
@@ -1318,7 +1327,7 @@ export interface XRankPlacement {
 	playerId: number;
 	power: number;
 	rank: number;
-	region: "WEST" | "JPN";
+	region: XRankPlacementRegion;
 	title: string;
 	weaponSplId: MainWeaponId;
 	year: number;

@@ -1584,14 +1584,14 @@ const USER_CARD_DATA = {
 	shortBio: "Very show bio goes here maybe max two lines that gets clamped.",
 	customTheme: null,
 	friendCode: "1234-1234-1234",
-	isFreeAgent: true,
+	freeAgentPostId: 1,
 	privateNote: { text: null, sentiment: "NEUTRAL" },
 	stats: [
 		{
 			type: "XP",
 			values: [
-				{ isVerified: false, div: "TAKOROKA", points: 3123 },
-				{ isVerified: true, div: "TAKOROKA", points: 2901 },
+				{ isVerified: false, region: "JPN", points: 3123 },
+				{ isVerified: true, region: "JPN", points: 2901 },
 			],
 		},
 		{
@@ -1605,6 +1605,7 @@ const USER_CARD_DATA = {
 		{ type: "DIV", value: "1" },
 		{ type: "PLUS", value: 1 },
 	],
+	hiddenStats: [],
 } satisfies UserCardData;
 
 function UserCardSection({ id }: { id: string }) {

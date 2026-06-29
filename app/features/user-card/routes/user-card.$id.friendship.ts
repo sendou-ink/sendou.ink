@@ -18,13 +18,21 @@ export const loader = async ({
 	const targetUserId = Number(params.id);
 
 	if (!viewer || Number.isNaN(targetUserId)) {
-		return { isFriend: false, mutualFriends: [] };
+		return {
+			isFriend: false,
+			hasPendingFriendRequest: false,
+			mutualFriends: [],
+		};
 	}
 
-	const [friendship, mutualFriends] = await Promise.all([
+	const [friendship, pendingRequest, mutualFriends] = await Promise.all([
 		FriendRepository.findFriendship({
 			userOneId: viewer.id,
 			userTwoId: targetUserId,
+		}),
+		FriendRepository.findFriendRequestBetween({
+			senderId: viewer.id,
+			receiverId: targetUserId,
 		}),
 		FriendRepository.findMutualFriends({
 			loggedInUserId: viewer.id,
@@ -32,5 +40,9 @@ export const loader = async ({
 		}),
 	]);
 
-	return { isFriend: Boolean(friendship), mutualFriends };
+	return {
+		isFriend: Boolean(friendship),
+		hasPendingFriendRequest: Boolean(pendingRequest),
+		mutualFriends,
+	};
 };

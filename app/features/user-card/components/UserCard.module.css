@@ -49,7 +49,7 @@
 	display: flex;
 	align-items: flex-end;
 	gap: var(--s-2-5);
-	margin-top: calc(-1 * (var(--s-6) + var(--s-1)));
+	margin-top: calc(-1 * (var(--s-6)));
 	position: relative;
 }
 
@@ -71,18 +71,19 @@
 	font-size: var(--font-lg);
 	font-weight: var(--weight-bold);
 	line-height: 1.1;
-	max-width: 180px;
+	max-width: 170px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
 }
 
 .subtitle {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-1);
+	max-width: 170px;
 	font-size: var(--font-xs);
 	color: var(--color-text-high);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
 }
 
 .friendCode {

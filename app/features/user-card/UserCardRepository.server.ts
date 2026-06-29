@@ -1,21 +1,32 @@
+import { sub } from "date-fns";
 import type { Expression, ExpressionBuilder } from "kysely";
 import { sql } from "kysely";
 import { jsonBuildObject, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
+import type {
+	HideableUserCardStat,
+	PeakXP,
+	Tables,
+	XRankPlacementRegion,
+} from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
+import { LFG } from "~/features/lfg/lfg-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
 import type { StageId } from "~/modules/in-game-lists/types";
-import { commonUserObjectFields } from "~/utils/kysely.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	commonUserObjectFields,
+	concatUserSubmittedImagePrefix,
+} from "~/utils/kysely.server";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import type {
 	UserCardData,
 	UserCardStat,
 	UserCardStatXPValue,
-	XPDivision,
 } from "./user-card-types";
 
 /**
@@ -69,6 +80,91 @@ export async function userCards({
 	return { userCards };
 }
 
+/**
+ * Overall verified peak XP of the user's linked Splatoon player, or `null` when no player is linked.
+ * Used to bound how high a linked user may self-report their unverified peak XP.
+ */
+// xxx: different file?
+export async function linkedPlayerPeakXp(
+	userId: number,
+): Promise<number | null> {
+	const player = await db
+		.selectFrom("SplatoonPlayer")
+		.select("SplatoonPlayer.peakXp")
+		.where("SplatoonPlayer.userId", "=", userId)
+		.executeTakeFirst();
+
+	return player?.peakXp?.overall ?? null;
+}
+
+/**
+ * Raw card fields the edit form needs that are not part of {@link UserCardData}: the uploaded banner
+ * image (id + preview url, for the image field's default value), the self-reported peak XP, and the
+ * linked player's verified peak XP (to display the XP input's max hint).
+ */
+export async function cardEditExtras(userId: number) {
+	const row = await db
+		.selectFrom("User")
+		.select((eb) => [
+			"User.bannerImgId",
+			"User.unverifiedPeakXP",
+			bannerImageUrl(eb).as("bannerImageUrl"),
+		])
+		.where("User.id", "=", userId)
+		.executeTakeFirst();
+
+	return {
+		bannerImgId: row?.bannerImgId ?? null,
+		bannerImageUrl: row?.bannerImageUrl ?? null,
+		unverifiedPeakXP: row?.unverifiedPeakXP ?? null,
+		linkedPlayerPeakXp: await linkedPlayerPeakXp(userId),
+	};
+}
+
+/** Updates the editable user card fields of the acting user (their own card). */
+export function updateOwnCard(args: {
+	shortBio: string | null;
+	bannerPresetImg: string | null;
+	bannerImgId: number | null;
+	unverifiedPeakXP: PeakXP | null;
+	hiddenCardStats: Array<HideableUserCardStat>;
+}) {
+	const userId = actorId();
+	return db.transaction().execute(async (trx) => {
+		// a removed or replaced uploaded banner is no longer referenced by anything,
+		// so its submitted image row is cleaned up (mirrors custom avatar handling)
+		const current = await trx
+			.selectFrom("User")
+			.select("User.bannerImgId")
+			.where("id", "=", userId)
+			.executeTakeFirst();
+		if (current?.bannerImgId && current.bannerImgId !== args.bannerImgId) {
+			await trx
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "=", current.bannerImgId)
+				.where("UnvalidatedUserSubmittedImage.submitterUserId", "=", userId)
+				.execute();
+		}
+
+		await trx
+			.updateTable("User")
+			.set({
+				shortBio: args.shortBio,
+				bannerPresetImg: args.bannerPresetImg,
+				bannerImgId: args.bannerImgId,
+				unverifiedPeakXP: args.unverifiedPeakXP
+					? JSON.stringify(args.unverifiedPeakXP)
+					: null,
+				hiddenCardStats:
+					args.hiddenCardStats.length > 0
+						? JSON.stringify(args.hiddenCardStats)
+						: null,
+			})
+			.where("id", "=", userId)
+			.execute();
+	});
+}
+
 /** SQLite `case` expression mapping `User.id % PRESET_COLORS.length` to a preset banner color. */
 const BANNER_PRESET_COLOR_CASE = `case "User"."id" % ${PRESET_COLORS.length}\n${PRESET_COLORS.map(
 	(color, index) => `when ${index} then '${color}'`,
@@ -100,11 +196,13 @@ function userCardDataJsonObject(
 		shortBio: eb.ref("User.shortBio"),
 		div: eb.ref("User.div"),
 		customTheme: eb.ref("User.customTheme"),
-		banner: bannerJson(),
+		hiddenCardStats: eb.ref("User.hiddenCardStats"),
+		banner: bannerJson(eb),
 		friendCode: include?.friendCode
 			? friendCodeScalar(eb)
 			: sql<string | null>`null`,
 		privateNote: privateNoteJson(eb, viewerId),
+		freeAgentPostId: freeAgentPostIdScalar(eb),
 		plusTier: plusTierScalar(eb),
 		xpVerified: xpVerifiedJson(eb),
 		xpUnverified: xpUnverifiedJson(),
@@ -117,17 +215,21 @@ type RawUserCardData =
 		: never;
 
 /**
- * Loosely-typed banner pulled from the `User.bannerPresetImg` column ("hex code or stage id"). A
- * numeric value is a stage id (`STAGE`), anything else is a `COLOR` hex code. When the column is
- * null (no explicit choice) a preset color is derived from the user id. Narrow to the
- * `{ COLOR | STAGE }` union in the enrich pass. (Supporter-uploaded URL banners are not yet backed
- * by a column, so no `URL` variant is produced here.)
+ * Loosely-typed banner. A supporter-uploaded image (`User.bannerImgId`) takes precedence and yields
+ * a `URL` banner; otherwise it is pulled from the `User.bannerPresetImg` column ("hex code or stage
+ * id") where a numeric value is a stage id (`STAGE`) and anything else a `COLOR` hex code. When both
+ * are null (no explicit choice) a preset color is derived from the user id. Narrow to the
+ * `{ URL | COLOR | STAGE }` union in the enrich pass.
  */
-function bannerJson() {
+function bannerJson(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonBuildObject({
-		type: sql<
-			"COLOR" | "STAGE"
-		>`iif("User"."bannerPresetImg" GLOB '[0-9]*', 'STAGE', 'COLOR')`,
+		type: sql<"URL" | "COLOR" | "STAGE">`
+			case
+				when "User"."bannerImgId" is not null then 'URL'
+				when "User"."bannerPresetImg" GLOB '[0-9]*' then 'STAGE'
+				else 'COLOR'
+			end`,
+		url: bannerImageUrl(eb),
 		hexCode: sql<string | null>`
 			case
 				when "User"."bannerPresetImg" is null then (${sql.raw(BANNER_PRESET_COLOR_CASE)})
@@ -138,6 +240,17 @@ function bannerJson() {
 			number | null
 		>`iif("User"."bannerPresetImg" GLOB '[0-9]*', "User"."bannerPresetImg", null)`,
 	});
+}
+
+/** Full URL of the supporter-uploaded banner image (resolved from `User.bannerImgId`), or null. */
+function bannerImageUrl(eb: ExpressionBuilder<Tables, "User">) {
+	return concatUserSubmittedImagePrefix(
+		eb
+			.selectFrom("UserSubmittedImage")
+			.select("UserSubmittedImage.url")
+			.whereRef("UserSubmittedImage.id", "=", "User.bannerImgId")
+			.$asScalar(),
+	).$castTo<string | null>();
 }
 
 function friendCodeScalar(eb: ExpressionBuilder<Tables, "User">) {
@@ -170,6 +283,29 @@ function privateNoteJson(
 	);
 }
 
+/**
+ * Id of the user's most recent non-expired "looking for team" LFG post, which marks them as a free
+ * agent. `null` when they have no such post. Mirrors the LFG page's freshness cutoff so the id always
+ * points at a post that is still listed there.
+ */
+function freeAgentPostIdScalar(eb: ExpressionBuilder<Tables, "User">) {
+	return eb
+		.selectFrom("LFGPost")
+		.select("LFGPost.id")
+		.whereRef("LFGPost.authorId", "=", "User.id")
+		.where("LFGPost.type", "=", "PLAYER_FOR_TEAM")
+		.where(
+			"LFGPost.updatedAt",
+			">",
+			dateToDatabaseTimestamp(
+				sub(new Date(), { days: LFG.POST_FRESHNESS_DAYS }),
+			),
+		)
+		.orderBy("LFGPost.updatedAt", "desc")
+		.limit(1)
+		.$asScalar();
+}
+
 function plusTierScalar(eb: ExpressionBuilder<Tables, "User">) {
 	return eb
 		.selectFrom("PlusTier")
@@ -178,7 +314,7 @@ function plusTierScalar(eb: ExpressionBuilder<Tables, "User">) {
 		.$asScalar();
 }
 
-/** Single highest X Rank power placement (verified XP). `WEST` region = Tentatek, otherwise Takoroka. */
+/** Single highest X Rank power placement (verified XP). */
 function xpVerifiedJson(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonObjectFrom(
 		eb
@@ -191,11 +327,7 @@ function xpVerifiedJson(eb: ExpressionBuilder<Tables, "User">) {
 			.whereRef("SplatoonPlayer.userId", "=", "User.id")
 			.select([
 				sql<number>`"XRankPlacement"."power"`.as("points"),
-				sql<
-					"TENTATEK" | "TAKOROKA"
-				>`iif("XRankPlacement"."region" = 'WEST', 'TENTATEK', 'TAKOROKA')`.as(
-					"div",
-				),
+				"XRankPlacement.region",
 			])
 			.orderBy("XRankPlacement.power", "desc")
 			.limit(1),
@@ -204,16 +336,17 @@ function xpVerifiedJson(eb: ExpressionBuilder<Tables, "User">) {
 
 /**
  * Self-reported peak XP from the `User.unverifiedPeakXP` column. Has exactly one of `tentatek` /
- * `takoroka` defined, which decides the division; `points` is that division's value.
+ * `takoroka` defined, which decides the region (`tentatek` = `WEST`, `takoroka` = `JPN`); `points`
+ * is that region's value.
  */
 function xpUnverifiedJson() {
-	return sql<{ points: number; div: "TENTATEK" | "TAKOROKA" } | null>`
+	return sql<{ points: number; region: XRankPlacementRegion } | null>`
 		iif(
 			"User"."unverifiedPeakXP" is null,
 			null,
 			json_object(
 				'points', "User"."unverifiedPeakXP" ->> '$.overall',
-				'div', iif("User"."unverifiedPeakXP" ->> '$.tentatek' is not null, 'TENTATEK', 'TAKOROKA')
+				'region', iif("User"."unverifiedPeakXP" ->> '$.tentatek' is not null, 'WEST', 'JPN')
 			)
 		)
 	`;
@@ -325,9 +458,9 @@ function enrichUserCardData(
 		customTheme: cardData.customTheme,
 		banner: enrichBanner(cardData.banner),
 		friendCode: cardData.friendCode,
-		// TODO: derive from LFG free agent posts
-		isFreeAgent: false,
+		freeAgentPostId: cardData.freeAgentPostId,
 		privateNote: cardData.privateNote ?? { text: null, sentiment: "NEUTRAL" },
+		hiddenStats: cardData.hiddenCardStats ?? [],
 		stats: userCardStats({
 			div: cardData.div,
 			plusTier: cardData.plusTier,
@@ -342,6 +475,10 @@ function enrichUserCardData(
 function enrichBanner(
 	banner: RawUserCardData["banner"],
 ): UserCardData["banner"] {
+	if (banner.type === "URL" && banner.url) {
+		return { type: "URL", url: banner.url };
+	}
+
 	if (banner.type === "STAGE") {
 		return { type: "STAGE", stageId: banner.stageId as StageId };
 	}
@@ -359,8 +496,8 @@ function userCardStats({
 }: {
 	div: string | null;
 	plusTier: number | null;
-	xpVerified: { points: number; div: XPDivision } | null;
-	xpUnverified: { points: number; div: XPDivision } | null;
+	xpVerified: { points: number; region: XRankPlacementRegion } | null;
+	xpUnverified: { points: number; region: XRankPlacementRegion } | null;
 	seasonSkill: TieredSkill | undefined;
 	seasonTop: number | null;
 }): Array<UserCardStat> {
@@ -370,14 +507,14 @@ function userCardStats({
 	if (xpUnverified) {
 		xpValues.push({
 			isVerified: false,
-			div: xpUnverified.div,
+			region: xpUnverified.region,
 			points: xpUnverified.points,
 		});
 	}
 	if (xpVerified) {
 		xpValues.push({
 			isVerified: true,
-			div: xpVerified.div,
+			region: xpVerified.region,
 			points: xpVerified.points,
 		});
 	}

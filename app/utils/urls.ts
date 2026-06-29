@@ -124,6 +124,7 @@ export const LFG_PAGE = "/lfg";
 export const EVENTS_PAGE = "/events";
 export const FRIENDS_PAGE = "/friends";
 export const SETTINGS_PAGE = "/settings";
+const USER_CARD_EDIT_PAGE = "/user-card/edit";
 export const LUTI_PAGE = "/luti";
 export const PLUS_VOTING_PAGE = "/plus/voting";
 
@@ -177,6 +178,10 @@ export const userBuildsPage = (user: UserLinkArgs) =>
 export const userResultsPage = (user: UserLinkArgs, showAll?: boolean) =>
 	`${userPage(user)}/results${showAll ? "?all=true" : ""}`;
 export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
+export const userCardEditPage = (args?: { returnTo?: string }) =>
+	`${USER_CARD_EDIT_PAGE}${
+		args?.returnTo ? `?returnTo=${encodeURIComponent(args.returnTo)}` : ""
+	}`;
 export const newVodPage = (vodToEditId?: number) =>
 	`${VODS_PAGE}/new${vodToEditId ? `?vod=${vodToEditId}` : ""}`;
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>

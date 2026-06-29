@@ -204,8 +204,12 @@
 	"mutualFriends.count": "个共同好友",
 	"card.viewUserPage": "",
 	"card.sendFriendRequest": "",
+	"card.friendRequestPending": "",
 	"card.editPrivateNote": "",
 	"card.xp": "",
 	"card.freeAgent": "",
-	"card.noMutualFriends": ""
+	"card.noMutualFriends": "",
+	"card.edit.title": "",
+	"card.edit.bannerColor": "",
+	"card.edit.supporterOnlyBanner": ""
 }

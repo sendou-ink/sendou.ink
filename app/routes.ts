@@ -53,6 +53,8 @@ export default [
 
 	route("/friends", "features/friends/routes/friends.tsx"),
 
+	route("/user-card/edit", "features/user-card/routes/user-card.edit.tsx"),
+
 	route(
 		"/user-card/:id/friendship",
 		"features/user-card/routes/user-card.$id.friendship.ts",
