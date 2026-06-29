@@ -70,6 +70,17 @@ test.describe("Tournament Organization", () => {
 			.selectOption("ADMIN");
 		await submit(page);
 
+		// Establish the organization so its admins can edit tournament event info
+		await navigate({ page, url });
+		await page.getByRole("tab", { name: "Admin" }).click();
+		const isEstablishedForm = createFormHelpers(
+			page,
+			updateIsEstablishedSchema,
+		);
+		await waitForPOSTResponse(page, () =>
+			isEstablishedForm.check("isEstablished"),
+		);
+
 		// 3. As the promoted user, verify edit controls are visible and page can be accessed
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
