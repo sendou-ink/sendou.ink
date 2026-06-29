@@ -626,3 +626,196 @@ describe("single elimination standings - third place match", () => {
 		).toBe(4);
 	});
 });
+
+const reportLowerIdWinner = (
+	storage: InMemoryDatabase,
+	manager: BracketsManager,
+	matchId: number,
+) => {
+	const match = storage.select<any>("match", matchId);
+	invariant(match, `match ${matchId} not found`);
+	const opponent1Lower = match.opponent1.id < match.opponent2.id;
+	manager.update.match({
+		id: matchId,
+		opponent1: opponent1Lower ? { score: 2, result: "win" } : { score: 0 },
+		opponent2: opponent1Lower ? { score: 0 } : { score: 2, result: "win" },
+	});
+};
+
+const readyMatches = (
+	storage: InMemoryDatabase,
+	predicate: (match: any) => boolean,
+) =>
+	storage
+		.select<any>("match")!
+		.filter(
+			(match) =>
+				predicate(match) &&
+				match.opponent1?.id != null &&
+				match.opponent2?.id != null &&
+				match.opponent1.result == null &&
+				match.opponent2.result == null,
+		);
+
+describe("single elimination standings - projected ties", () => {
+	// Two semifinal losers tie for 3rd (no consolation final). Reports only one
+	// semifinal so the other is still in progress, mirroring the projected
+	// standings bug where the finished team is shown one placement too low.
+	const partialSingleEliminationTournament = () => {
+		const storage = new InMemoryDatabase();
+		const manager = new BracketsManager(storage);
+
+		manager.create({
+			name: "SE",
+			tournamentId: 1,
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: {},
+		});
+
+		const semifinals = storage
+			.select<any>("match")!
+			.filter((match) => match.opponent1?.id && match.opponent2?.id);
+		invariant(semifinals.length === 2, "Expected two semifinal matches");
+
+		const decided = semifinals[0];
+		const decidedLoserId = Math.max(decided.opponent1.id, decided.opponent2.id);
+		reportLowerIdWinner(storage, manager, decided.id);
+
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "SE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data: manager.get.tournamentData(1),
+		});
+
+		return { tournament, decidedLoserId };
+	};
+
+	it("projects a finished semifinal loser as tied 3rd before the other semifinal finishes", () => {
+		const { tournament, decidedLoserId } = partialSingleEliminationTournament();
+
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(standings.find((s) => s.team.id === decidedLoserId)?.placement).toBe(
+			3,
+		);
+	});
+});
+
+describe("double elimination standings - projected ties", () => {
+	// 8-team DE: losers round 2 produces the 5th/6th tie. Plays out the whole
+	// winners bracket and losers round 1, then reports only one of the two
+	// losers round 2 matches so its loser should already project to tied 5th
+	// while the sibling match is still unfinished.
+	const partialDoubleEliminationTournament = () => {
+		const storage = new InMemoryDatabase();
+		const manager = new BracketsManager(storage);
+
+		manager.create({
+			name: "DE",
+			tournamentId: 1,
+			type: "double_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: { grandFinal: "double", seedOrdering: ["natural"] },
+		});
+
+		const groupId = (number: number) =>
+			storage.select<any>("group")!.find((g) => g.number === number)!.id;
+		const winnersGroupId = groupId(1);
+		const losersGroupId = groupId(2);
+
+		const losersRoundId = (number: number) =>
+			storage
+				.select<any>("round")!
+				.find((r) => r.group_id === losersGroupId && r.number === number)!.id;
+
+		// play out the entire winners bracket so all losers feed in
+		let winnersReady = readyMatches(
+			storage,
+			(m) => m.group_id === winnersGroupId,
+		);
+		while (winnersReady.length) {
+			for (const match of winnersReady) {
+				reportLowerIdWinner(storage, manager, match.id);
+			}
+			winnersReady = readyMatches(
+				storage,
+				(m) => m.group_id === winnersGroupId,
+			);
+		}
+
+		// losers round 1: both matches -> two teams eliminated, tied 7th/8th
+		for (const match of readyMatches(
+			storage,
+			(m) => m.round_id === losersRoundId(1),
+		)) {
+			reportLowerIdWinner(storage, manager, match.id);
+		}
+
+		// losers round 2: report only one of the two matches
+		const losersRound2 = readyMatches(
+			storage,
+			(m) => m.round_id === losersRoundId(2),
+		);
+		invariant(losersRound2.length === 2, "Expected two losers round 2 matches");
+
+		const decided = losersRound2[0];
+		const decidedLoserId = Math.max(decided.opponent1.id, decided.opponent2.id);
+		const stillPlayingTeamIds = [
+			losersRound2[1].opponent1.id,
+			losersRound2[1].opponent2.id,
+		];
+		reportLowerIdWinner(storage, manager, decided.id);
+
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "double_elimination",
+							name: "DE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data: manager.get.tournamentData(1),
+		});
+
+		return { tournament, decidedLoserId, stillPlayingTeamIds };
+	};
+
+	it("projects a finished losers-round-2 loser as tied 5th before the sibling match finishes", () => {
+		const { tournament, decidedLoserId } = partialDoubleEliminationTournament();
+
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(standings.find((s) => s.team.id === decidedLoserId)?.placement).toBe(
+			5,
+		);
+	});
+
+	it("does not yet place teams still playing their losers round 2 match", () => {
+		const { tournament, stillPlayingTeamIds } =
+			partialDoubleEliminationTournament();
+
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		for (const teamId of stillPlayingTeamIds) {
+			expect(standings.find((s) => s.team.id === teamId)).toBe(undefined);
+		}
+	});
+});

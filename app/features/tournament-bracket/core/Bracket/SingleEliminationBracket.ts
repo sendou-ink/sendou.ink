@@ -5,6 +5,7 @@ import type { Round } from "~/modules/brackets-model";
 import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
+import { cumulativeEliminationsByRound } from "./utils";
 
 export class SingleEliminationBracket extends Bracket {
 	get type(): Tables["TournamentStage"]["type"] {
@@ -96,6 +97,8 @@ export class SingleEliminationBracket extends Bracket {
 		const teamCountWhoDidntLoseYet =
 			this.participantTournamentTeamIds.length - teams.length;
 
+		const eliminationsThroughRound = cumulativeEliminationsByRound(matches);
+
 		const result: Standing[] = [];
 		for (const roundId of R.unique(teams.map((team) => team.lostAt))) {
 			const teamsLostThisRound: { id: number }[] = [];
@@ -103,15 +106,18 @@ export class SingleEliminationBracket extends Bracket {
 				teamsLostThisRound.push(teams.shift()!);
 			}
 
+			const placement =
+				this.participantTournamentTeamIds.length -
+				eliminationsThroughRound.get(roundId)! +
+				1;
+
 			for (const { id: teamId } of teamsLostThisRound) {
 				const team = this.tournament.teamById(teamId);
 				invariant(team, `Team not found for id: ${teamId}`);
 
-				const teamsPlacedAbove = teamCountWhoDidntLoseYet + teams.length;
-
 				result.push({
 					team,
-					placement: teamsPlacedAbove + 1,
+					placement,
 				});
 			}
 		}
