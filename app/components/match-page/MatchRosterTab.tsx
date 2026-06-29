@@ -465,26 +465,12 @@ function RosterMemberLink({
 	member: RosterTabMember;
 	className?: string;
 }) {
-	const { t } = useTranslation(["friends", "q", "user"]);
+	const { t } = useTranslation(["friends", "q"]);
 
 	const showNoteItem = member.privateNote !== undefined;
-	const hasContentBelowName = !!(
-		member.tier ||
-		typeof member.plusTier === "number" ||
-		(member.weaponPool && member.weaponPool.length > 0)
-	);
-	const showIgnInMenu = hasContentBelowName && !!member.inGameName;
-	const showIgnUnderName = !hasContentBelowName && !!member.inGameName;
-	const useMenu = !!member.friendCode || showNoteItem || showIgnInMenu;
+	const useMenu = !!member.friendCode || showNoteItem;
 
-	const nameContent = (
-		<div className={styles.memberNameStack}>
-			<span>{member.username}</span>
-			{showIgnUnderName ? (
-				<span className={styles.memberInGameName}>{member.inGameName}</span>
-			) : null}
-		</div>
-	);
+	const nameContent = <span>{member.inGameName ?? member.username}</span>;
 
 	if (!useMenu) {
 		return (
@@ -495,20 +481,11 @@ function RosterMemberLink({
 		);
 	}
 
-	const headerContent =
-		member.friendCode || showIgnInMenu ? (
-			<div className={styles.memberMenuHeader}>
-				{member.friendCode ? <span>{`SW-${member.friendCode}`}</span> : null}
-				{showIgnInMenu ? (
-					<span className={styles.memberMenuIgn}>
-						<span className={styles.memberMenuIgnLabel}>
-							{t("user:ign.short")}:
-						</span>{" "}
-						{member.inGameName}
-					</span>
-				) : null}
-			</div>
-		) : undefined;
+	const headerContent = member.friendCode ? (
+		<div className={styles.memberMenuHeader}>
+			<span>{`SW-${member.friendCode}`}</span>
+		</div>
+	) : undefined;
 
 	return (
 		<SendouMenu
