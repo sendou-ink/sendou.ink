@@ -23,6 +23,7 @@ import { Redirect } from "~/components/Redirect";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	calendarEventPage,
 	tournamentAdminPage,
@@ -42,6 +43,7 @@ export default function TournamentAdminLayout() {
 	const tournament = useTournament();
 	const outletContext = useOutletContext();
 	const user = useUser();
+	const isTournamentAdder = useHasRole("TOURNAMENT_ADDER");
 	const location = useLocation();
 
 	const showReopen = Boolean(
@@ -73,7 +75,8 @@ export default function TournamentAdminLayout() {
 
 	return (
 		<div className={clsx("stack lg", containerClassName("wide"))}>
-			{tournament.isAdmin(user) && !tournament.hasStarted ? (
+			{tournament.canEditEventInfo(user, { isTournamentAdder }) &&
+			!tournament.hasStarted ? (
 				<div className="stack horizontal items-end">
 					<LinkButton
 						to={tournamentEditPage(tournament.ctx.eventId)}
