@@ -47,7 +47,7 @@
 		"@faker-js/faker": "10.4.0",
 		"@formatjs/intl-durationformat": "0.10.14",
 		"@internationalized/date": "3.12.2",
-		"@react-router/node": "7.17.0",
+		"@react-router/node": "8.0.1",
 		"@react-router/serve": "7.15.0",
 		"@remix-run/form-data-parser": "0.17.3",
 		"@sentry/react-router": "^10.57.0",
