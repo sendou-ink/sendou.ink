@@ -206,6 +206,7 @@
 	"card.viewUserPage": "View user page",
 	"card.sendFriendRequest": "Send friend request",
 	"card.friendRequestPending": "Friend request pending",
+	"card.friendRequestSent": "Friend request sent",
 	"card.editPrivateNote": "Edit private note",
 	"card.xp": "XP",
 	"card.freeAgent": "FA",

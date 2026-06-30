@@ -1,11 +1,11 @@
 import clsx from "clsx";
 import {
 	BadgeCheck,
-	Check,
 	Megaphone,
 	NotebookPen,
 	Pencil,
 	UserPlus,
+	UserRoundCheck,
 } from "lucide-react";
 import * as React from "react";
 import { Popover } from "react-aria-components";
@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useFetcher, useLocation, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { toastQueue } from "~/components/elements/Toast";
 import { Image, TierImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import type { XRankPlacementRegion } from "~/db/tables";
@@ -353,6 +354,24 @@ function FriendRequestButton({
 }) {
 	const { t } = useTranslation(["user"]);
 	const fetcher = useFetcher();
+	const previousStateRef = React.useRef(fetcher.state);
+
+	React.useEffect(() => {
+		if (
+			previousStateRef.current !== "idle" &&
+			fetcher.state === "idle" &&
+			fetcher.data === null
+		) {
+			toastQueue.add(
+				{
+					message: t("user:card.friendRequestSent"),
+					variant: "success",
+				},
+				{ timeout: 5000 },
+			);
+		}
+		previousStateRef.current = fetcher.state;
+	}, [fetcher.state, fetcher.data, t]);
 
 	const requestPending =
 		hasPendingFriendRequest ||
@@ -364,8 +383,7 @@ function FriendRequestButton({
 			<SendouButton
 				size="miniscule"
 				shape="circle"
-				variant="outlined-success"
-				icon={<Check />}
+				icon={<UserRoundCheck />}
 				isDisabled
 				aria-label={t("user:card.friendRequestPending")}
 			/>
