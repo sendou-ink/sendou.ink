@@ -102,7 +102,7 @@
 		"@playwright/test": "1.60.0",
 		"@react-router/dev": "7.17.0",
 		"@types/better-sqlite3": "7.6.13",
-		"@types/node": "25.9.3",
+		"@types/node": "26.0.0",
 		"@types/node-cron": "3.0.11",
 		"@types/nprogress": "0.2.3",
 		"@types/react": "19.2.17",
