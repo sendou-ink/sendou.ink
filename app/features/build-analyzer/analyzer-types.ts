@@ -188,6 +188,23 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 	BumpDamage?: number;
 	JumpDamage?: number;
 	TickDamage?: number;
+
+	// Map planner range circle params (populated by scripts/create-analyzer-json.ts).
+	/** Effect radius for area specials (Big Bubbler, Ink Storm, ...) */
+	Range_Radius?: number;
+	/** Straight-flight range for projectile specials with a fixed distance (Inkjet) */
+	Range_Distance?: number;
+	/** Outer blast radius drawn around a projectile special's impact */
+	Range_BlastRadius?: number;
+	/** Projectile trajectory params (Trizooka, Crab Tank); see comp-analyzer weapon-range */
+	Range_SpawnSpeed?: number;
+	Range_GoStraightStateEndMaxSpeed?: number;
+	Range_GoStraightToBrakeStateFrame?: number;
+	Range_FreeGravity?: number;
+	Range_FreeAirResist?: number;
+	Range_BrakeAirResist?: number;
+	Range_BrakeGravity?: number;
+	Range_BrakeToFreeStateFrame?: number;
 };
 
 export type ParamsJson = {
