@@ -1,11 +1,23 @@
-.triggerWrapper {
+.trigger {
 	display: inline-flex;
 	width: fit-content;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
 }
 
 .popover {
 	border: none;
 	background: none;
+}
+
+.dialog {
+	outline: none;
 }
 
 .card {
@@ -184,7 +196,7 @@
 
 .bio {
 	font-size: var(--font-xs);
-	color: var(--color-text-high);
+	color: var(--color-text);
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	line-clamp: 2;
@@ -206,7 +218,7 @@
 .noteHeaderGroup {
 	display: flex;
 	flex-direction: column;
-	line-height: 1.1;
+	gap: var(--s-0-5);
 }
 
 .noteHeader {
@@ -222,14 +234,15 @@
 
 .noteText {
 	font-size: var(--font-xs);
-	color: var(--color-text-high);
+	color: var(--color-text);
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
 }
 
 .noteViewActions {
+	margin-block-start: var(--s-2);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: var(--s-2);
+	gap: var(--s-4);
 }

@@ -10,7 +10,7 @@ import {
 	UserRoundCheck,
 } from "lucide-react";
 import * as React from "react";
-import { Popover } from "react-aria-components";
+import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLocation, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -48,9 +48,6 @@ import styles from "./UserCard.module.css";
 
 // xxx: also secondary action? e.g. "View tournament" from sidebar
 
-const HOVER_OPEN_DELAY_MS = 150;
-const HOVER_CLOSE_DELAY_MS = 200;
-
 const TENTATEK_BRAND_ID: BrandId = "B10";
 
 const STAT_ORDER: Record<UserCardStat["type"], number> = {
@@ -61,16 +58,14 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 };
 
 /**
- * Hover/focus wrapper that opens a popover with the user's card. Card data is resolved from the
+ * Click-to-open trigger that shows a popover with the user's card. Card data is resolved from the
  * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.userCards`);
  * pass `data` directly to bypass the lookup (e.g. the components showcase). When no card data exists
- * for the user, the `children` are rendered plain without a popover.
+ * for the user, the `children` are rendered plain without a trigger.
  *
  * Viewer-relative friendship data (`isFriend` + `mutualFriends`) is lazy-loaded from the
  * `/user-card/:id/friendship` route the first time the card opens.
  */
-
-// xxx: make click to open, arrows to scroll which one is selected (logical order on the page?)
 export function UserCard({
 	userId,
 	data: dataProp,
@@ -78,7 +73,6 @@ export function UserCard({
 }: {
 	userId?: number;
 	data?: UserCardData;
-	// xxx: should this be a button or not?
 	children: React.ReactNode;
 }) {
 	const { t } = useTranslation(["common", "q"]);
@@ -88,16 +82,9 @@ export function UserCard({
 	const user = useUser();
 	const isOwnCard = user?.id === data?.id;
 
-	const triggerRef = React.useRef<HTMLSpanElement>(null);
-	const popoverRef = React.useRef<HTMLElement>(null);
-	const openTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-	const closeTimeout = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-	const lastPointerType =
-		React.useRef<React.PointerEvent["pointerType"]>("mouse");
 	const [isOpen, setIsOpen] = React.useState(false);
-	const [openedByTouch, setOpenedByTouch] = React.useState(false);
-	// kept at this level (outside the hover popover) so the modals survive the popover closing
-	// when they take focus; the note view inside the card opens them
+	// kept at this level (outside the popover) so the modals survive the popover closing when they
+	// take focus; the note view inside the card opens them
 	const [isNoteDialogOpen, setIsNoteDialogOpen] = React.useState(false);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
 
@@ -116,98 +103,14 @@ export function UserCard({
 
 	const friendship = fetcher.data;
 
-	// xxx: probably not the play
-	React.useEffect(
-		() => () => {
-			clearTimeout(openTimeout.current);
-			clearTimeout(closeTimeout.current);
-		},
-		[],
-	);
-
-	// a non-modal popover does not close on interact outside; for touch-opened cards we close it
-	// ourselves so the page stays interactive without making the popover modal (which would steal focus)
-	React.useEffect(() => {
-		if (!isOpen || !openedByTouch) return;
-
-		const onPointerDownOutside = (event: PointerEvent) => {
-			const target = event.target as Node;
-			if (triggerRef.current?.contains(target)) return;
-			if (popoverRef.current?.contains(target)) return;
-			setIsOpen(false);
-			setOpenedByTouch(false);
-		};
-
-		document.addEventListener("pointerdown", onPointerDownOutside);
-		return () =>
-			document.removeEventListener("pointerdown", onPointerDownOutside);
-	}, [isOpen, openedByTouch]);
-
-	const scheduleOpen = () => {
-		clearTimeout(closeTimeout.current);
-		openTimeout.current = setTimeout(
-			() => setIsOpen(true),
-			HOVER_OPEN_DELAY_MS,
-		);
-	};
-
-	const scheduleClose = () => {
-		clearTimeout(openTimeout.current);
-		closeTimeout.current = setTimeout(
-			() => setIsOpen(false),
-			HOVER_CLOSE_DELAY_MS,
-		);
-	};
-
-	const cancelClose = () => clearTimeout(closeTimeout.current);
-
-	const onPointerEnter = (event: React.PointerEvent) => {
-		if (event.pointerType !== "mouse") return;
-		scheduleOpen();
-	};
-
-	const onPointerLeave = (event: React.PointerEvent) => {
-		if (event.pointerType !== "mouse") return;
-		// A full-page view transition (e.g. a toast animating in) momentarily swaps the
-		// live DOM for snapshot pseudo-elements, firing a spurious pointerleave even though
-		// the cursor never moved. Ignore leaves whose coordinates are still over the trigger
-		// or popover so the card does not close itself when a toast appears.
-		if (
-			pointerWithin(triggerRef.current, event) ||
-			pointerWithin(popoverRef.current, event)
-		) {
-			return;
-		}
-		scheduleClose();
-	};
-
-	const onPointerDown = (event: React.PointerEvent) => {
-		lastPointerType.current = event.pointerType;
-	};
-
-	const onClick = (event: React.MouseEvent) => {
-		if (lastPointerType.current === "mouse") return;
-		// on touch/pen open the card instead of activating the child (e.g. following a link)
-		event.preventDefault();
-		setOpenedByTouch(true);
-		setIsOpen((prev) => !prev);
-	};
-
-	// close the hover popover so only the modal is shown
-	const closePopover = () => {
-		clearTimeout(openTimeout.current);
-		clearTimeout(closeTimeout.current);
-		setIsOpen(false);
-		setOpenedByTouch(false);
-	};
-
+	// close the popover so only the modal is shown
 	const openNoteDialog = () => {
-		closePopover();
+		setIsOpen(false);
 		setIsNoteDialogOpen(true);
 	};
 
 	const openDeleteConfirm = () => {
-		closePopover();
+		setIsOpen(false);
 		setIsDeleteConfirmOpen(true);
 	};
 
@@ -215,45 +118,20 @@ export function UserCard({
 
 	return (
 		<>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: hover/focus/tap wrapper delegating to the interactive child trigger; the card opens on hover/focus (mouse) or tap (touch) */}
-			<span
-				ref={triggerRef}
-				className={styles.triggerWrapper}
-				onPointerEnter={onPointerEnter}
-				onPointerLeave={onPointerLeave}
-				onPointerDown={onPointerDown}
-				onClick={onClick}
-				onFocus={() => setIsOpen(true)}
-				onBlur={(event) => {
-					if (!event.currentTarget.contains(event.relatedTarget)) {
-						setIsOpen(false);
-					}
-				}}
-			>
-				{children}
-			</span>
-			<Popover
-				ref={popoverRef}
-				triggerRef={triggerRef}
-				isOpen={isOpen}
-				onOpenChange={(open) => {
-					setIsOpen(open);
-					if (!open) setOpenedByTouch(false);
-				}}
-				isNonModal
-				placement="right"
-				className={styles.popover}
-			>
-				<CardContent
-					data={data}
-					friendship={friendship}
-					isOwnCard={isOwnCard}
-					onEditNote={openNoteDialog}
-					onDeleteNote={openDeleteConfirm}
-					onPointerEnter={cancelClose}
-					onPointerLeave={onPointerLeave}
-				/>
-			</Popover>
+			<DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
+				<Button className={styles.trigger}>{children}</Button>
+				<Popover placement="right" className={styles.popover}>
+					<Dialog className={styles.dialog}>
+						<CardContent
+							data={data}
+							friendship={friendship}
+							isOwnCard={isOwnCard}
+							onEditNote={openNoteDialog}
+							onDeleteNote={openDeleteConfirm}
+						/>
+					</Dialog>
+				</Popover>
+			</DialogTrigger>
 			{isNoteDialogOpen ? (
 				<AddPrivateNoteDialog
 					userId={data.id}
@@ -273,20 +151,6 @@ export function UserCard({
 				submitButtonText={t("common:actions.delete")}
 			/>
 		</>
-	);
-}
-
-function pointerWithin(
-	element: HTMLElement | null,
-	event: React.PointerEvent,
-): boolean {
-	if (!element) return false;
-	const rect = element.getBoundingClientRect();
-	return (
-		event.clientX >= rect.left &&
-		event.clientX <= rect.right &&
-		event.clientY >= rect.top &&
-		event.clientY <= rect.bottom
 	);
 }
 
@@ -319,8 +183,6 @@ function CardContent({
 	isOwnCard,
 	onEditNote,
 	onDeleteNote,
-	onPointerEnter,
-	onPointerLeave,
 }: {
 	data: UserCardData;
 	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
@@ -328,8 +190,6 @@ function CardContent({
 	isOwnCard: boolean;
 	onEditNote: () => void;
 	onDeleteNote: () => void;
-	onPointerEnter: () => void;
-	onPointerLeave: (event: React.PointerEvent) => void;
 }) {
 	const { t } = useTranslation(["common", "user"]);
 	const location = useLocation();
@@ -355,12 +215,7 @@ function CardContent({
 	};
 
 	return (
-		<div
-			className={styles.card}
-			style={customThemeStyle(data.customTheme)}
-			onPointerEnter={onPointerEnter}
-			onPointerLeave={onPointerLeave}
-		>
+		<div className={styles.card} style={customThemeStyle(data.customTheme)}>
 			<Banner banner={data.banner} />
 			{data.freeAgentPostId !== null ? (
 				<LinkButton
@@ -476,7 +331,7 @@ function NoteView({
 			<div className={styles.noteViewActions}>
 				<SendouButton
 					variant="minimal"
-					size="small"
+					size="miniscule"
 					icon={<Pencil />}
 					onPress={onEdit}
 				>
@@ -484,7 +339,7 @@ function NoteView({
 				</SendouButton>
 				<SendouButton
 					variant="minimal-destructive"
-					size="small"
+					size="miniscule"
 					icon={<Trash2 />}
 					onPress={onDelete}
 				>

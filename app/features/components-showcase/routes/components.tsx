@@ -1617,10 +1617,8 @@ function UserCardSection({ id }: { id: string }) {
 			<SectionTitle id={id}>User Card</SectionTitle>
 
 			<div className="stack md">
-				<ComponentRow label="Hover the trigger">
-					<UserCard data={USER_CARD_DATA}>
-						<SendouButton variant="minimal">Sendou</SendouButton>
-					</UserCard>
+				<ComponentRow label="Click the trigger">
+					<UserCard data={USER_CARD_DATA}>Sendou</UserCard>
 				</ComponentRow>
 			</div>
 		</Section>
