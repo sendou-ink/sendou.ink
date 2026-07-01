@@ -84,7 +84,7 @@
 		"react-error-boundary": "6.1.2",
 		"react-flip-toolkit": "7.2.4",
 		"react-i18next": "17.0.8",
-		"react-router": "7.17.0",
+		"react-router": "8.0.1",
 		"react-use-draggable-scroll": "0.4.7",
 		"remeda": "2.39.0",
 		"remix-auth": "4.2.0",
