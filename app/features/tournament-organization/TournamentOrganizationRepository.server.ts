@@ -200,7 +200,13 @@ export function searchByName({
 				"avatarUrl",
 			),
 		])
-		.where("TournamentOrganization.name", "like", `%${query}%`)
+		.where(({ eb, ref }) =>
+			eb(
+				sql`unaccent(${ref("TournamentOrganization.name")})`,
+				"like",
+				sql`unaccent(${`%${query}%`})`,
+			),
+		)
 		.orderBy("TournamentOrganization.name", "asc")
 		.limit(limit)
 		.execute();

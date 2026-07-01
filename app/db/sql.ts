@@ -37,6 +37,15 @@ sql.pragma("mmap_size = 3221225472");
 // connections; pair with a periodic `PRAGMA optimize;` (see OptimizeDatabase routine)
 sql.pragma("optimize = 0x10002");
 
+// Strips diacritics so accent-insensitive name searches are possible
+// (e.g. "cafe" matches "Café"). Combined with LIKE's built-in ASCII
+// case-insensitivity this also folds case for the resulting latin letters.
+sql.function("unaccent", { deterministic: true }, (value) =>
+	typeof value === "string"
+		? value.normalize("NFD").replace(/\p{M}/gu, "")
+		: value,
+);
+
 export const db = new Kysely<DB>({
 	dialect: new SqliteDialect({
 		database: sql,
