@@ -59,7 +59,7 @@ import styles from "../components-showcase.module.css";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user"],
+	i18n: ["user", "q"],
 };
 
 export const SECTIONS = [
@@ -1585,7 +1585,10 @@ const USER_CARD_DATA = {
 	customTheme: null,
 	friendCode: "1234-1234-1234",
 	freeAgentPostId: 1,
-	privateNote: { text: null, sentiment: "NEUTRAL" },
+	privateNote: {
+		text: "Played with them, very friendly",
+		sentiment: "POSITIVE",
+	},
 	stats: [
 		{
 			type: "XP",

@@ -3,7 +3,9 @@ import {
 	BadgeCheck,
 	Megaphone,
 	NotebookPen,
+	NotebookText,
 	Pencil,
+	Trash2,
 	UserPlus,
 	UserRoundCheck,
 } from "lucide-react";
@@ -14,7 +16,9 @@ import { useFetcher, useLocation, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, TierImage } from "~/components/Image";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placement } from "~/components/Placement";
 import type { XRankPlacementRegion } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
@@ -29,6 +33,7 @@ import {
 	stageBannerImageUrl,
 	userCardEditPage,
 	userCardFriendshipPage,
+	userCardNotePage,
 	userPage,
 } from "~/utils/urls";
 import type { UserCardFriendshipLoaderData } from "../routes/user-card.$id.friendship";
@@ -37,6 +42,7 @@ import type {
 	UserCardFriendship,
 	UserCardStat,
 } from "../user-card-types";
+import { AddPrivateNoteDialog } from "./AddPrivateNoteDialog";
 import styles from "./UserCard.module.css";
 
 // xxx: also secondary action? e.g. "View tournament" from sidebar
@@ -72,6 +78,7 @@ export function UserCard({
 	// xxx: should this be a button or not?
 	children: React.ReactNode;
 }) {
+	const { t } = useTranslation(["common", "q"]);
 	const lookedUpData = useUserCardData(userId);
 	const data = dataProp ?? lookedUpData;
 
@@ -86,6 +93,10 @@ export function UserCard({
 		React.useRef<React.PointerEvent["pointerType"]>("mouse");
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [openedByTouch, setOpenedByTouch] = React.useState(false);
+	// kept at this level (outside the hover popover) so the modals survive the popover closing
+	// when they take focus; the note view inside the card opens them
+	const [isNoteDialogOpen, setIsNoteDialogOpen] = React.useState(false);
+	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
 
 	const fetcher = useFetcher<UserCardFriendshipLoaderData>();
 	const friendshipLoadedRef = React.useRef(false);
@@ -154,6 +165,16 @@ export function UserCard({
 
 	const onPointerLeave = (event: React.PointerEvent) => {
 		if (event.pointerType !== "mouse") return;
+		// A full-page view transition (e.g. a toast animating in) momentarily swaps the
+		// live DOM for snapshot pseudo-elements, firing a spurious pointerleave even though
+		// the cursor never moved. Ignore leaves whose coordinates are still over the trigger
+		// or popover so the card does not close itself when a toast appears.
+		if (
+			pointerWithin(triggerRef.current, event) ||
+			pointerWithin(popoverRef.current, event)
+		) {
+			return;
+		}
 		scheduleClose();
 	};
 
@@ -167,6 +188,24 @@ export function UserCard({
 		event.preventDefault();
 		setOpenedByTouch(true);
 		setIsOpen((prev) => !prev);
+	};
+
+	// close the hover popover so only the modal is shown
+	const closePopover = () => {
+		clearTimeout(openTimeout.current);
+		clearTimeout(closeTimeout.current);
+		setIsOpen(false);
+		setOpenedByTouch(false);
+	};
+
+	const openNoteDialog = () => {
+		closePopover();
+		setIsNoteDialogOpen(true);
+	};
+
+	const openDeleteConfirm = () => {
+		closePopover();
+		setIsDeleteConfirmOpen(true);
 	};
 
 	if (!data) return <>{children}</>;
@@ -206,11 +245,45 @@ export function UserCard({
 					data={data}
 					friendship={friendship}
 					isOwnCard={isOwnCard}
+					onEditNote={openNoteDialog}
+					onDeleteNote={openDeleteConfirm}
 					onPointerEnter={cancelClose}
 					onPointerLeave={onPointerLeave}
 				/>
 			</Popover>
+			{isNoteDialogOpen ? (
+				<AddPrivateNoteDialog
+					userId={data.id}
+					username={data.username}
+					note={data.privateNote}
+					onClose={() => setIsNoteDialogOpen(false)}
+				/>
+			) : null}
+			<FormWithConfirm
+				isOpen={isDeleteConfirmOpen}
+				onOpenChange={setIsDeleteConfirmOpen}
+				action={userCardNotePage(data.id)}
+				fields={[["_action", "DELETE"]]}
+				dialogHeading={t("q:privateNote.delete.header", {
+					name: data.username,
+				})}
+				submitButtonText={t("common:actions.delete")}
+			/>
 		</>
+	);
+}
+
+function pointerWithin(
+	element: HTMLElement | null,
+	event: React.PointerEvent,
+): boolean {
+	if (!element) return false;
+	const rect = element.getBoundingClientRect();
+	return (
+		event.clientX >= rect.left &&
+		event.clientX <= rect.right &&
+		event.clientY >= rect.top &&
+		event.clientY <= rect.bottom
 	);
 }
 
@@ -219,7 +292,9 @@ export function UserCard({
  * (see `UserCardRepository.userCards`). Returns `undefined` when no loader on the current route
  * tree carries data for the given user.
  */
-function useUserCardData(userId: number | undefined): UserCardData | undefined {
+export function useUserCardData(
+	userId: number | undefined,
+): UserCardData | undefined {
 	const matches = useMatches();
 
 	if (typeof userId !== "number") return undefined;
@@ -239,6 +314,8 @@ function CardContent({
 	data,
 	friendship,
 	isOwnCard,
+	onEditNote,
+	onDeleteNote,
 	onPointerEnter,
 	onPointerLeave,
 }: {
@@ -246,11 +323,15 @@ function CardContent({
 	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
 	friendship: UserCardFriendship | undefined;
 	isOwnCard: boolean;
+	onEditNote: () => void;
+	onDeleteNote: () => void;
 	onPointerEnter: () => void;
 	onPointerLeave: (event: React.PointerEvent) => void;
 }) {
 	const { t } = useTranslation(["common", "user"]);
 	const location = useLocation();
+
+	const [isNoteOpen, setIsNoteOpen] = React.useState(false);
 
 	const stats = data.stats
 		.filter((stat) => !data.hiddenStats.includes(stat.type))
@@ -259,6 +340,16 @@ function CardContent({
 	const editPageUrl = userCardEditPage({
 		returnTo: `${location.pathname}${location.search}`,
 	});
+
+	// an existing note shows in-place (toggled); with no note the button opens the add modal directly
+	const showNoteView = isNoteOpen && data.privateNote !== null;
+	const onNoteButtonPress = () => {
+		if (data.privateNote === null) {
+			onEditNote();
+			return;
+		}
+		setIsNoteOpen((prev) => !prev);
+	};
 
 	return (
 		<div
@@ -294,14 +385,19 @@ function CardContent({
 						<SendouButton
 							size="miniscule"
 							shape="circle"
-							icon={<NotebookPen />}
+							icon={
+								data.privateNote !== null ? <NotebookText /> : <NotebookPen />
+							}
+							onPress={onNoteButtonPress}
 							aria-label={t("user:card.editPrivateNote")}
 						/>
 					</>
 				)}
 			</div>
 			<div className={styles.identity}>
-				<Avatar user={data} size="md" className={styles.avatar} />
+				<NoteAvatar sentiment={data.privateNote?.sentiment}>
+					<Avatar user={data} size="md" className={styles.avatar} />
+				</NoteAvatar>
 				<div className={styles.nameGroup}>
 					<h2 className={styles.username}>{data.username}</h2>
 					{data.customUrl ? (
@@ -315,26 +411,73 @@ function CardContent({
 					)}
 				</div>
 			</div>
-			{stats.length > 0 ? (
-				<div className={styles.stats}>
-					{stats.map((stat, i) => (
-						<React.Fragment key={stat.type}>
-							{i > 0 ? <span className={styles.statDivider} /> : null}
-							<Stat stat={stat} />
-						</React.Fragment>
-					))}
-				</div>
-			) : null}
-			{isOwnCard ? null : <CardMutualFriends friendship={friendship} />}
-			{data.shortBio ? <p className={styles.bio}>{data.shortBio}</p> : null}
-			<LinkButton
-				to={userPage(data)}
-				variant="outlined"
-				size="small"
-				className={styles.viewUserPage}
-			>
-				{t("user:card.viewUserPage")}
-			</LinkButton>
+			{showNoteView ? (
+				<NoteView
+					note={data.privateNote}
+					onEdit={onEditNote}
+					onDelete={onDeleteNote}
+				/>
+			) : (
+				<>
+					{stats.length > 0 ? (
+						<div className={styles.stats}>
+							{stats.map((stat, i) => (
+								<React.Fragment key={stat.type}>
+									{i > 0 ? <span className={styles.statDivider} /> : null}
+									<Stat stat={stat} />
+								</React.Fragment>
+							))}
+						</div>
+					) : null}
+					{isOwnCard ? null : <CardMutualFriends friendship={friendship} />}
+					{data.shortBio ? <p className={styles.bio}>{data.shortBio}</p> : null}
+					<LinkButton
+						to={userPage(data)}
+						variant="outlined"
+						size="small"
+						className={styles.viewUserPage}
+					>
+						{t("user:card.viewUserPage")}
+					</LinkButton>
+				</>
+			)}
+		</div>
+	);
+}
+
+function NoteView({
+	note,
+	onEdit,
+	onDelete,
+}: {
+	note: UserCardData["privateNote"];
+	onEdit: () => void;
+	onDelete: () => void;
+}) {
+	const { t } = useTranslation(["common", "user"]);
+
+	return (
+		<div className={styles.noteView}>
+			<span className={styles.noteHeader}>{t("user:card.privateNote")}</span>
+			{note?.text ? <p className={styles.noteText}>{note.text}</p> : null}
+			<div className={styles.noteViewActions}>
+				<SendouButton
+					variant="minimal"
+					size="small"
+					icon={<Pencil />}
+					onPress={onEdit}
+				>
+					{t("common:actions.edit")}
+				</SendouButton>
+				<SendouButton
+					variant="minimal-destructive"
+					size="small"
+					icon={<Trash2 />}
+					onPress={onDelete}
+				>
+					{t("common:actions.delete")}
+				</SendouButton>
+			</div>
 		</div>
 	);
 }

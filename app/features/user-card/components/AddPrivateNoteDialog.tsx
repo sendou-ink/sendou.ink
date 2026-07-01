@@ -6,37 +6,55 @@ import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
-import type { SQMatchGroup } from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ } from "~/features/sendouq/q-constants";
-import { preferenceEmojiUrl } from "~/utils/urls";
+import { preferenceEmojiUrl, userCardNotePage } from "~/utils/urls";
 
+type PrivateNote = Pick<Tables["PrivateUserNote"], "text" | "sentiment">;
+
+/**
+ * Modal for adding/editing the viewer's private note about a user, posting to the
+ * `/user-card/:id/note` resource route. Closes once the fetcher settles (save succeeds →
+ * automatic revalidation refreshes the card). Clearing the text with a neutral sentiment and saving
+ * deletes the note (handled by the route). Rendered wherever a `UserCard` lives.
+ */
 export function AddPrivateNoteDialog({
-	aboutUser,
-	close,
+	userId,
+	username,
+	note,
+	onClose,
 }: {
-	aboutUser?: Pick<
-		SQMatchGroup["members"][number],
-		"id" | "username" | "privateNote"
-	>;
-	close: () => void;
+	userId: number;
+	username: string;
+	note: PrivateNote | null;
+	onClose: () => void;
 }) {
 	const { t } = useTranslation(["q", "common"]);
 	const fetcher = useFetcher();
 
-	if (!aboutUser) return null;
+	const wasSubmittingRef = React.useRef(false);
+	React.useEffect(() => {
+		if (fetcher.state !== "idle") {
+			wasSubmittingRef.current = true;
+		} else if (wasSubmittingRef.current) {
+			wasSubmittingRef.current = false;
+			onClose();
+		}
+	}, [fetcher.state, onClose]);
 
 	return (
 		<SendouDialog
-			isOpen
-			heading={t("q:privateNote.header", { name: aboutUser.username })}
-			onClose={close}
+			heading={t("q:privateNote.header", { name: username })}
+			onClose={onClose}
 		>
-			<fetcher.Form method="post" className="stack md">
-				<input type="hidden" name="targetId" value={aboutUser.id} />
-				<Textarea initialValue={aboutUser.privateNote?.text} />
-				<Sentiment initialValue={aboutUser.privateNote?.sentiment} />
+			<fetcher.Form
+				method="post"
+				action={userCardNotePage(userId)}
+				className="stack md"
+			>
+				<Textarea initialValue={note?.text} />
+				<Sentiment initialValue={note?.sentiment} />
 				<div className="stack items-center mt-2">
-					<SubmitButton _action="ADD_PRIVATE_USER_NOTE">
+					<SubmitButton _action="SAVE" state={fetcher.state}>
 						{t("common:actions.save")}
 					</SubmitButton>
 				</div>
@@ -105,9 +123,9 @@ function Textarea({ initialValue }: { initialValue?: string | null }) {
 	const [value, setValue] = React.useState(initialValue ?? "");
 
 	return (
-		<div className="u-edit__bio-container">
+		<div className="stack">
 			<Label
-				htmlFor="text"
+				htmlFor="comment"
 				valueLimits={{
 					current: value.length,
 					max: SENDOUQ.PRIVATE_USER_NOTE_MAX_LENGTH,
@@ -116,7 +134,7 @@ function Textarea({ initialValue }: { initialValue?: string | null }) {
 				{t("q:privateNote.comment.header")}
 			</Label>
 			<textarea
-				id="text"
+				id="comment"
 				name="comment"
 				value={value}
 				onChange={(e) => setValue(e.target.value)}

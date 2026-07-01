@@ -17,12 +17,7 @@ import type { TierName } from "~/features/mmr/mmr-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import {
-	navIconUrl,
-	preferenceEmojiUrl,
-	tierImageUrl,
-	userPage,
-} from "~/utils/urls";
+import { navIconUrl, tierImageUrl, userPage } from "~/utils/urls";
 import { SendouTabPanel } from "../elements/Tabs";
 import styles from "./MatchRosterTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
@@ -33,7 +28,6 @@ type RosterTabMember = CommonUser & {
 	plusTier?: number | null;
 	weaponPool?: Array<MainWeaponId>;
 	friendCode?: string | null;
-	privateNote?: { sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE" } | null;
 	inGameName?: string | null;
 };
 
@@ -467,7 +461,6 @@ function RosterMemberLink({
 }) {
 	const { t } = useTranslation(["friends", "q", "user"]);
 
-	const showNoteItem = member.privateNote !== undefined;
 	const hasContentBelowName = !!(
 		member.tier ||
 		typeof member.plusTier === "number" ||
@@ -475,7 +468,7 @@ function RosterMemberLink({
 	);
 	const showIgnInMenu = hasContentBelowName && !!member.inGameName;
 	const showIgnUnderName = !hasContentBelowName && !!member.inGameName;
-	const useMenu = !!member.friendCode || showNoteItem || showIgnInMenu;
+	const useMenu = !!member.friendCode || showIgnInMenu;
 
 	const nameContent = (
 		<div className={styles.memberNameStack}>
@@ -510,6 +503,7 @@ function RosterMemberLink({
 			</div>
 		) : undefined;
 
+	// xxx: after usercard everywhere, menu should no longer be necessary
 	return (
 		<SendouMenu
 			trigger={
@@ -526,33 +520,6 @@ function RosterMemberLink({
 				<SendouMenuItem href={userPage(member)} icon={<User />}>
 					{t("friends:friendsList.viewUserPage")}
 				</SendouMenuItem>
-				{showNoteItem ? (
-					<SendouMenuItem
-						href={`?note=${member.id}`}
-						icon={
-							member.privateNote ? (
-								<img
-									src={preferenceEmojiUrl(
-										member.privateNote.sentiment === "POSITIVE"
-											? "PREFER"
-											: member.privateNote.sentiment === "NEGATIVE"
-												? "AVOID"
-												: undefined,
-									)}
-									alt=""
-									width={18}
-									height={18}
-								/>
-							) : (
-								<Edit />
-							)
-						}
-					>
-						{member.privateNote
-							? t("q:looking.groups.editNote")
-							: t("q:looking.groups.addNote")}
-					</SendouMenuItem>
-				) : null}
 			</SendouMenuSection>
 		</SendouMenu>
 	);

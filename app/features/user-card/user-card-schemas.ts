@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { SENDOUQ } from "~/features/sendouq/q-constants";
 import {
 	customField,
 	image,
@@ -8,6 +9,7 @@ import {
 	textAreaOptional,
 	toggle,
 } from "~/form/fields";
+import { _action, falsyToNull, id } from "~/utils/zod";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import { USER_CARD } from "./user-card-constants";
 
@@ -40,4 +42,22 @@ export const updateUserCardSchema = z.object({
 	}),
 	hideXp: toggle({ label: "labels.hideXp" }),
 	hideDiv: toggle({ label: "labels.hideDiv" }),
+});
+
+export const userCardNoteSchema = z.union([
+	z.object({
+		_action: _action("SAVE"),
+		comment: z.preprocess(
+			falsyToNull,
+			z.string().max(SENDOUQ.PRIVATE_USER_NOTE_MAX_LENGTH).nullable(),
+		),
+		sentiment: z.enum(["POSITIVE", "NEUTRAL", "NEGATIVE"]),
+	}),
+	z.object({
+		_action: _action("DELETE"),
+	}),
+]);
+
+export const userCardNoteParamsSchema = z.object({
+	id,
 });

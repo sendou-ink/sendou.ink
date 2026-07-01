@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { SENDOUQ } from "~/features/sendouq/q-constants";
-import { _action, falsyToNull, id, weaponSplId } from "~/utils/zod";
+import { _action, id, weaponSplId } from "~/utils/zod";
 
 export const matchSchema = z.union([
 	z.object({
@@ -20,15 +19,6 @@ export const matchSchema = z.union([
 		_action: _action("REPORT_WEAPON"),
 		weaponSplId,
 		mapIndex: z.coerce.number().int().nonnegative(),
-	}),
-	z.object({
-		_action: _action("ADD_PRIVATE_USER_NOTE"),
-		comment: z.preprocess(
-			falsyToNull,
-			z.string().max(SENDOUQ.PRIVATE_USER_NOTE_MAX_LENGTH).nullable(),
-		),
-		sentiment: z.enum(["POSITIVE", "NEUTRAL", "NEGATIVE"]),
-		targetId: id,
 	}),
 	z.object({
 		_action: _action("UNDO_MATCH_REPORT"),

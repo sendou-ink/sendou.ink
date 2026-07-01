@@ -18,6 +18,7 @@ import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
+import type { UserCardData } from "~/features/user-card/user-card-types";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
@@ -241,6 +242,8 @@ function Groups() {
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
+	const groups = sortGroupsByPrivateNoteSentiment(data.groups, data.userCards);
+
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
 			<ColumnHeader isMobile={isMobile}>
@@ -250,7 +253,7 @@ function Groups() {
 						: "q:looking.columns.invited",
 				)}
 			</ColumnHeader>
-			{data.groups
+			{groups
 				.filter((group) =>
 					data.likes.given.some((like) => like.groupId === group.id),
 				)
@@ -287,12 +290,12 @@ function Groups() {
 		</div>
 	) : null;
 
-	const neutralGroups = data.groups.filter(
+	const neutralGroups = groups.filter(
 		(group) =>
 			!data.likes.given.some((like) => like.groupId === group.id) &&
 			!data.likes.received.some((like) => like.groupId === group.id),
 	);
-	const groupsReceivedLikesFrom = data.groups.filter((group) =>
+	const groupsReceivedLikesFrom = groups.filter((group) =>
 		data.likes.received.some((like) => like.groupId === group.id),
 	);
 
@@ -342,7 +345,7 @@ function Groups() {
 									{t("q:looking.columns.available")}
 								</ColumnHeader>
 								{(isMobile
-									? data.groups.filter(
+									? groups.filter(
 											(group) =>
 												!data.likes.received.some(
 													(like) => like.groupId === group.id,
@@ -435,6 +438,38 @@ function Groups() {
 			</div>
 		</Flipper>
 	);
+}
+
+/**
+ * Floats groups the viewer has a positive private note on up and groups with a
+ * negative note down, while preserving the server's tier/activity ordering
+ * within each sentiment bucket and keeping full (censored) groups last. The
+ * note sentiment is read from the already-loaded `userCards` data so the server
+ * does not need to attach notes to group members.
+ */
+function sortGroupsByPrivateNoteSentiment<
+	T extends { members?: { id: number }[] },
+>(groups: T[], userCards: Map<number, UserCardData>): T[] {
+	const sentimentScore = (group: T) => {
+		if (!group.members) return 0;
+
+		let score = 0;
+		for (const member of group.members) {
+			const sentiment = userCards.get(member.id)?.privateNote?.sentiment;
+			if (sentiment === "NEGATIVE") return -1;
+			if (sentiment === "POSITIVE") score = 1;
+		}
+
+		return score;
+	};
+
+	return [...groups].sort((a, b) => {
+		const aIsFull = !a.members;
+		const bIsFull = !b.members;
+		if (aIsFull !== bIsFull) return aIsFull ? 1 : -1;
+
+		return sentimentScore(b) - sentimentScore(a);
+	});
 }
 
 function ColumnHeader({

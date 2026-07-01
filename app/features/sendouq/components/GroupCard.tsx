@@ -1,21 +1,25 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
-import { Mic, PenSquare, Star, Volume2, VolumeX } from "lucide-react";
+import { Mic, Star, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import { UserCard } from "~/features/user-card/components/UserCard";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -44,7 +48,6 @@ export function GroupCard({
 	hideVc = false,
 	hideWeapons = false,
 	hideNote: _hidenote = false,
-	showAddNote,
 	ownGroup,
 	layout = "desktop",
 }: {
@@ -54,12 +57,10 @@ export function GroupCard({
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
-	showAddNote?: SqlBool;
 	ownGroup?: SQOwnGroup;
 	layout?: "mobile" | "desktop";
 }) {
 	const { t } = useTranslation(["q"]);
-	const user = useUser();
 	const fetcher = useFetcher();
 
 	const hideNote =
@@ -96,7 +97,6 @@ export function GroupCard({
 									hideWeapons={hideWeapons}
 									hideNote={hideNote}
 									enableKicking={enableKicking}
-									showAddNote={showAddNote && member.id !== user?.id}
 								/>
 							);
 						})}
@@ -254,7 +254,6 @@ function GroupMember({
 	hideWeapons,
 	hideNote,
 	enableKicking,
-	showAddNote,
 }: {
 	member: SQGroupMember;
 	showActions: boolean;
@@ -263,10 +262,10 @@ function GroupMember({
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
 	enableKicking?: boolean;
-	showAddNote?: SqlBool;
 }) {
 	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
+	const cardData = useUserCardData(member.id);
 
 	return (
 		<div className="stack xxs" data-testid="sendouq-group-card-member">
@@ -274,7 +273,12 @@ function GroupMember({
 				<div className="text-main-forced stack xs horizontal items-center">
 					<UserCard userId={member.id}>
 						<span className="stack xs horizontal items-center">
-							<Avatar user={member} size="xs" />
+							<NoteAvatar
+								sentiment={cardData?.privateNote?.sentiment}
+								size="sm"
+							>
+								<Avatar user={member} size="xs" />
+							</NoteAvatar>
 							<span className={styles.name}>
 								{member.inGameName ? (
 									<>
@@ -329,19 +333,6 @@ function GroupMember({
 						>
 							SW-{member.friendCode}
 						</SendouPopover>
-					) : null}
-					{showAddNote ? (
-						<LinkButton
-							to={`?note=${member.id}`}
-							icon={<PenSquare />}
-							className={clsx(styles.addNoteButton, {
-								[styles.addNoteButtonEdit]: member.privateNote,
-							})}
-						>
-							{member.privateNote
-								? t("q:looking.groups.editNote")
-								: t("q:looking.groups.addNote")}
-						</LinkButton>
 					) : null}
 				</div>
 				{member.weapons && member.weapons.length > 0 && !hideWeapons ? (

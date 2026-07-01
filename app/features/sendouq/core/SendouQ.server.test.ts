@@ -1,10 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db } from "~/db/sql";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
-import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
-import { dbInsertUsers, dbReset, withUser } from "~/utils/Test";
+import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -67,29 +65,6 @@ const createMatch = async (
 			confirmedAt,
 		})
 		.execute();
-};
-
-const ownNotesOf = async (authorId: number, targetUserIds?: number[]) => {
-	const user = await UserRepository.findLeanById(authorId);
-	return withUser(user!, () =>
-		PrivateUserNoteRepository.ownNotes(targetUserIds),
-	);
-};
-
-const createPrivateNote = async (
-	authorId: number,
-	targetId: number,
-	sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE",
-	text = "test note",
-) => {
-	const user = await UserRepository.findLeanById(authorId);
-	await withUser(user!, () =>
-		PrivateUserNoteRepository.upsertOwnNote({
-			targetId,
-			sentiment,
-			text,
-		}),
-	);
 };
 
 const insertSkill = async (userId: number, ordinal: number, season = 1) => {
@@ -273,8 +248,7 @@ describe("SendouQ", () => {
 		test("returns empty array when no groups exist", async () => {
 			await refreshSendouQInstance();
 
-			const notes = await ownNotesOf(1);
-			const groups = SendouQ.previewGroups(1, notes);
+			const groups = SendouQ.previewGroups(1);
 
 			expect(groups).toEqual([]);
 		});
@@ -283,8 +257,7 @@ describe("SendouQ", () => {
 			await createGroup([1, 2, 3, 4]);
 			await refreshSendouQInstance();
 
-			const notes = await ownNotesOf(1);
-			const groups = SendouQ.previewGroups(1, notes);
+			const groups = SendouQ.previewGroups(1);
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeUndefined();
@@ -294,26 +267,11 @@ describe("SendouQ", () => {
 			await createGroup([1, 2]);
 			await refreshSendouQInstance();
 
-			const notes = await ownNotesOf(1);
-			const groups = SendouQ.previewGroups(1, notes);
+			const groups = SendouQ.previewGroups(1);
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeDefined();
 			expect(groups[0].members).toHaveLength(2);
-		});
-
-		test("attaches private notes to members", async () => {
-			await createGroup([1, 2]);
-			await createPrivateNote(3, 2, "POSITIVE", "Great player");
-			await refreshSendouQInstance();
-
-			const notes = await ownNotesOf(3);
-			const groups = SendouQ.previewGroups(3, notes);
-
-			expect(groups).toHaveLength(1);
-			const member = groups[0].members?.find((m) => m.id === 2);
-			expect(member?.privateNote).toBeDefined();
-			expect(member?.privateNote?.sentiment).toBe("POSITIVE");
 		});
 
 		test("removes inviteCode and chatCode from all groups", async () => {
@@ -321,8 +279,7 @@ describe("SendouQ", () => {
 			await createGroup([3, 4, 5, 6], { inviteCode: "CODE2" });
 			await refreshSendouQInstance();
 
-			const notes = await ownNotesOf(1);
-			const groups = SendouQ.previewGroups(1, notes);
+			const groups = SendouQ.previewGroups(1);
 
 			expect(groups).toHaveLength(2);
 			for (const group of groups) {
@@ -337,8 +294,7 @@ describe("SendouQ", () => {
 			await createGroup([7, 8, 9]);
 			await refreshSendouQInstance();
 
-			const notes = await ownNotesOf(1);
-			const groups = SendouQ.previewGroups(1, notes);
+			const groups = SendouQ.previewGroups(1);
 
 			expect(groups).toHaveLength(3);
 
@@ -354,8 +310,7 @@ describe("SendouQ", () => {
 			await createGroup([5, 6]);
 			await refreshSendouQInstance();
 
-			const notes = await ownNotesOf(1);
-			const groups = SendouQ.previewGroups(1, notes);
+			const groups = SendouQ.previewGroups(1);
 
 			const fullGroup = groups.find((g) => g.members === undefined);
 			const partialGroup = groups.find((g) => g.members !== undefined);
@@ -399,8 +354,7 @@ describe("SendouQ", () => {
 					.execute();
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.previewGroups(1, notes);
+				const groups = SendouQ.previewGroups(1);
 
 				expect(groups).toHaveLength(2);
 				expect(groups[0].id).toBe(group1Id);
@@ -427,8 +381,7 @@ describe("SendouQ", () => {
 					.execute();
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.previewGroups(1, notes);
+				const groups = SendouQ.previewGroups(1);
 
 				expect(groups).toHaveLength(3);
 				expect(groups[0].members![0].id).toBe(4);
@@ -448,34 +401,11 @@ describe("SendouQ", () => {
 				const partialGroupId = await createGroup([6]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.previewGroups(1, notes);
+				const groups = SendouQ.previewGroups(1);
 
 				expect(groups).toHaveLength(2);
 				expect(groups[0].id).toBe(partialGroupId);
 				expect(groups[1].id).toBe(fullGroupId);
-			});
-
-			test("sorts by sentiment first, then tier within same sentiment", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 500);
-				await insertSkill(3, 2000);
-				await insertSkill(4, 1050);
-
-				await createGroup([2]);
-				await createGroup([3]);
-				await createGroup([4]);
-				await createPrivateNote(1, 2, "POSITIVE");
-				await createPrivateNote(1, 3, "NEGATIVE");
-				await refreshSendouQInstance();
-
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.previewGroups(1, notes);
-
-				expect(groups).toHaveLength(3);
-				expect(groups[0].members![0].id).toBe(2);
-				expect(groups[1].members![0].id).toBe(4);
-				expect(groups[2].members![0].id).toBe(3);
 			});
 
 			test("handles viewer without skill gracefully", async () => {
@@ -486,8 +416,7 @@ describe("SendouQ", () => {
 				await createGroup([3]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.previewGroups(1, notes);
+				const groups = SendouQ.previewGroups(1);
 
 				expect(groups).toHaveLength(2);
 			});
@@ -508,8 +437,7 @@ describe("SendouQ", () => {
 				await createGroup([1, 2, 3, 4]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(5);
-				const groups = SendouQ.lookingGroups(5, notes);
+				const groups = SendouQ.lookingGroups(5);
 
 				expect(groups).toEqual([]);
 			});
@@ -526,8 +454,7 @@ describe("SendouQ", () => {
 				await createGroup([4], { status: "ACTIVE" });
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members![0].id).toBe(4);
@@ -542,8 +469,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members![0].id).toBe(3);
@@ -554,8 +480,7 @@ describe("SendouQ", () => {
 				await createGroup([3, 4]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members?.some((m) => m.id === 1)).toBe(false);
@@ -569,8 +494,7 @@ describe("SendouQ", () => {
 				await createGroup([11, 12, 13, 14]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members).toBeUndefined();
@@ -584,8 +508,7 @@ describe("SendouQ", () => {
 				await createGroup([10, 11, 12, 13]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members).toHaveLength(1);
@@ -600,8 +523,7 @@ describe("SendouQ", () => {
 				await createGroup([9, 10, 11, 12]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups).toHaveLength(2);
 				const groupSizes = groups.map((g) => g.members!.length);
@@ -617,8 +539,7 @@ describe("SendouQ", () => {
 				await createGroup([8, 9, 10, 11]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups).toHaveLength(3);
 				const groupSizes = groups.map((g) => g.members!.length);
@@ -655,8 +576,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				const fullGroups = groups.filter((g) => g.members === undefined);
 				expect(fullGroups.some((g) => g.isReplay)).toBe(true);
@@ -679,8 +599,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				for (const group of groups) {
 					expect(group.isReplay).toBe(false);
@@ -693,8 +612,7 @@ describe("SendouQ", () => {
 				await createGroup([3]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				for (const group of groups) {
 					expect(group.isReplay).toBe(false);
@@ -718,8 +636,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				const partialGroup = groups.find((g) =>
 					g.members?.some((m) => m.id === 5),
@@ -742,8 +659,7 @@ describe("SendouQ", () => {
 				await createGroup([5, 6, 7, 8]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				const fullGroup = groups.find((g) => g.members === undefined);
 				expect(fullGroup).toBeDefined();
@@ -754,8 +670,7 @@ describe("SendouQ", () => {
 				await createGroup([2, 3]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				const partialGroup = groups.find((g) => g.members?.length === 2);
 				expect(partialGroup).toBeDefined();
@@ -768,83 +683,12 @@ describe("SendouQ", () => {
 				await createGroup([3, 4, 5, 6]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				for (const group of groups) {
 					expect(group).not.toHaveProperty("inviteCode");
 					expect(group).not.toHaveProperty("chatCode");
 				}
-			});
-		});
-
-		describe("private note sorting", () => {
-			beforeEach(async () => {
-				await dbInsertUsers(8);
-			});
-
-			afterEach(() => {
-				dbReset();
-			});
-
-			test("users with positive note sorted first", async () => {
-				await createGroup([1]);
-				await createGroup([2]);
-				await createGroup([3]);
-				await createGroup([4]);
-				await createGroup([5]);
-				await createGroup([6, 7]);
-				await createGroup([8]);
-
-				await createPrivateNote(1, 5, "POSITIVE");
-
-				await refreshSendouQInstance();
-
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
-
-				expect(groups[0].members![0].id).toBe(5);
-			});
-
-			test("users with negative note sorted last", async () => {
-				await createGroup([1]);
-				await createGroup([2]);
-				await createGroup([3]);
-				await createGroup([4]);
-				await createGroup([5]);
-				await createGroup([6, 7]);
-				await createGroup([8]);
-
-				await createPrivateNote(1, 5, "NEGATIVE");
-
-				await refreshSendouQInstance();
-
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
-
-				expect(groups[groups.length - 1].members![0].id).toBe(5);
-			});
-
-			test("group with both negative and positive sentiment sorted last", async () => {
-				await createGroup([1]);
-				await createGroup([2]);
-				await createGroup([3]);
-				await createGroup([4]);
-				await createGroup([5]);
-				await createGroup([6, 7]);
-				await createGroup([8]);
-
-				await createPrivateNote(1, 6, "POSITIVE");
-				await createPrivateNote(1, 7, "NEGATIVE");
-
-				await refreshSendouQInstance();
-
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
-
-				expect(groups[groups.length - 1].members?.some((m) => m.id === 6)).toBe(
-					true,
-				);
 			});
 		});
 
@@ -858,26 +702,7 @@ describe("SendouQ", () => {
 				dbReset();
 			});
 
-			test("sentiment still takes priority over skill", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 500);
-				await insertSkill(4, 2000);
-
-				await createGroup([1]);
-				await createGroup([2]);
-				await createGroup([4]);
-
-				await createPrivateNote(1, 4, "POSITIVE");
-
-				await refreshSendouQInstance();
-
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
-
-				expect(groups[0].members![0].id).toBe(4);
-			});
-
-			test("groups with closer skill sorted first within same sentiment", async () => {
+			test("groups with closer skill sorted first", async () => {
 				await insertSkill(1, 1000);
 				await insertSkill(2, 1050);
 				await insertSkill(3, 500);
@@ -890,8 +715,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups[0].members![0].id).toBe(2);
 			});
@@ -914,8 +738,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups.length).toBeGreaterThan(0);
 				expect(groups[0].id).toBe(closerGroup);
@@ -946,8 +769,7 @@ describe("SendouQ", () => {
 				await createGroup([1]);
 				await refreshSendouQInstance();
 
-				const notes = await ownNotesOf(1);
-				const groups = SendouQ.lookingGroups(1, notes);
+				const groups = SendouQ.lookingGroups(1);
 
 				expect(groups[0].members![0].id).toBe(3);
 				expect(groups[1].members![0].id).toBe(2);

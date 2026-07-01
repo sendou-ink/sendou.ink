@@ -459,7 +459,7 @@ function enrichUserCardData(
 		banner: enrichBanner(cardData.banner),
 		friendCode: cardData.friendCode,
 		freeAgentPostId: cardData.freeAgentPostId,
-		privateNote: cardData.privateNote ?? { text: null, sentiment: "NEUTRAL" },
+		privateNote: cardData.privateNote,
 		hiddenStats: cardData.hiddenCardStats ?? [],
 		stats: userCardStats({
 			div: cardData.div,
