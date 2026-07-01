@@ -18,6 +18,7 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, TierImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placement } from "~/components/Placement";
 import type { XRankPlacementRegion } from "~/db/tables";
@@ -68,6 +69,8 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
  * Viewer-relative friendship data (`isFriend` + `mutualFriends`) is lazy-loaded from the
  * `/user-card/:id/friendship` route the first time the card opens.
  */
+
+// xxx: make click to open, arrows to scroll which one is selected (logical order on the page?)
 export function UserCard({
 	userId,
 	data: dataProp,
@@ -238,7 +241,7 @@ export function UserCard({
 					if (!open) setOpenedByTouch(false);
 				}}
 				isNonModal
-				placement="bottom"
+				placement="right"
 				className={styles.popover}
 			>
 				<CardContent
@@ -333,9 +336,9 @@ function CardContent({
 
 	const [isNoteOpen, setIsNoteOpen] = React.useState(false);
 
-	const stats = data.stats
-		.filter((stat) => !data.hiddenStats.includes(stat.type))
-		.toSorted((a, b) => STAT_ORDER[a.type] - STAT_ORDER[b.type]);
+	const stats = data.stats.toSorted(
+		(a, b) => STAT_ORDER[a.type] - STAT_ORDER[b.type],
+	);
 
 	const editPageUrl = userCardEditPage({
 		returnTo: `${location.pathname}${location.search}`,
@@ -458,7 +461,17 @@ function NoteView({
 
 	return (
 		<div className={styles.noteView}>
-			<span className={styles.noteHeader}>{t("user:card.privateNote")}</span>
+			<div className={styles.noteHeaderGroup}>
+				<span className={styles.noteHeader}>{t("user:card.privateNote")}</span>
+				{note ? (
+					<LocaleTime
+						date={note.updatedAt}
+						options={{ day: "numeric", month: "numeric", year: "numeric" }}
+						className={styles.noteDate}
+						inline
+					/>
+				) : null}
+			</div>
 			{note?.text ? <p className={styles.noteText}>{note.text}</p> : null}
 			<div className={styles.noteViewActions}>
 				<SendouButton
@@ -568,7 +581,10 @@ function CardMutualFriends({
 					{t("user:card.noMutualFriends")}
 				</span>
 			) : (
-				<MutualFriends mutualFriends={friendship.mutualFriends} />
+				<MutualFriends
+					mutualFriends={friendship.mutualFriends}
+					withoutPopover
+				/>
 			)}
 		</div>
 	);

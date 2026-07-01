@@ -44,7 +44,6 @@ const FALLBACK_TIER = { isPlus: false, name: "IRON" } as const;
 const SECONDS_TILL_STALE =
 	process.env.NODE_ENV === "development" || IS_E2E_TEST_RUN ? 1_000_000 : 1_800;
 
-// xxx: probably just export sort static method that takes in groups and private notes. currently sorting is in several places
 class SendouQClass {
 	groups;
 	#recentMatches;

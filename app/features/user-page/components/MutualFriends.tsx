@@ -9,18 +9,23 @@ import styles from "./MutualFriends.module.css";
 
 const MAX_VISIBLE_AVATARS = 5;
 
-// xxx: for usercard do we even want popover there? or a different component, lighter data and no popover
 export function MutualFriends({
 	mutualFriends,
+	withoutPopover = false,
 }: {
 	mutualFriends: Array<CommonUser>;
+	/** When true renders a static avatar stack without the interactive popover, e.g. on the user card. */
+	withoutPopover?: boolean;
 }) {
-	const { t } = useTranslation(["user"]);
-
 	if (mutualFriends.length === 0) return null;
 
-	const visibleFriends = mutualFriends.slice(0, MAX_VISIBLE_AVATARS);
-	const overflowCount = mutualFriends.length - MAX_VISIBLE_AVATARS;
+	if (withoutPopover) {
+		return (
+			<div className={styles.trigger}>
+				<AvatarStack mutualFriends={mutualFriends} />
+			</div>
+		);
+	}
 
 	return (
 		<div>
@@ -28,24 +33,7 @@ export function MutualFriends({
 				trigger={
 					<SendouButton variant="minimal" size="small">
 						<div className={styles.trigger}>
-							<div className={styles.avatarStack}>
-								{visibleFriends.map((friend) => (
-									<Avatar
-										key={friend.id}
-										user={friend}
-										size="xxs"
-										className={styles.stackedAvatar}
-									/>
-								))}
-							</div>
-							{overflowCount > 0 ? (
-								<span className={styles.overflow}>+{overflowCount}</span>
-							) : null}
-							<span>
-								{t("user:mutualFriends.count", {
-									count: mutualFriends.length,
-								})}
-							</span>
+							<AvatarStack mutualFriends={mutualFriends} />
 						</div>
 					</SendouButton>
 				}
@@ -64,5 +52,35 @@ export function MutualFriends({
 				</div>
 			</SendouPopover>
 		</div>
+	);
+}
+
+function AvatarStack({ mutualFriends }: { mutualFriends: Array<CommonUser> }) {
+	const { t } = useTranslation(["user"]);
+
+	const visibleFriends = mutualFriends.slice(0, MAX_VISIBLE_AVATARS);
+	const overflowCount = mutualFriends.length - MAX_VISIBLE_AVATARS;
+
+	return (
+		<>
+			<div className={styles.avatarStack}>
+				{visibleFriends.map((friend) => (
+					<Avatar
+						key={friend.id}
+						user={friend}
+						size="xxs"
+						className={styles.stackedAvatar}
+					/>
+				))}
+			</div>
+			{overflowCount > 0 ? (
+				<span className={styles.overflow}>+{overflowCount}</span>
+			) : null}
+			<span>
+				{t("user:mutualFriends.count", {
+					count: mutualFriends.length,
+				})}
+			</span>
+		</>
 	);
 }

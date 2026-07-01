@@ -203,9 +203,20 @@
 	gap: var(--s-2);
 }
 
+.noteHeaderGroup {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.1;
+}
+
 .noteHeader {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
+	color: var(--color-text);
+}
+
+.noteDate {
+	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
 

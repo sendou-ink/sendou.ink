@@ -39,8 +39,6 @@ import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
 
-// xxx: red cross to indicate negative note left?
-
 export function GroupCard({
 	group,
 	action,

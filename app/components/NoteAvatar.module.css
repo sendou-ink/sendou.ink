@@ -7,8 +7,9 @@
 
 .badge {
 	position: absolute;
-	bottom: -2px;
-	left: -2px;
+	bottom: 15%;
+	left: 15%;
+	transform: translate(-50%, 50%);
 	display: grid;
 	place-items: center;
 	border-radius: var(--radius-full);

@@ -16,6 +16,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
+import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
@@ -43,11 +44,17 @@ export async function userCards({
 	userIds,
 	viewerId,
 	include,
+	includeHiddenStats = false,
 }: {
 	userIds: Array<number>;
 	viewerId: number | null;
 	/** Opt-in fields skipped from the query by default; defaults to `false` each. */
 	include?: { friendCode?: boolean };
+	/**
+	 * Keep stats the user has hidden in the resolved `stats` array. Off by default so hidden stat
+	 * values never reach a viewer; the edit page opts in to render (and un-hide) its own toggles.
+	 */
+	includeHiddenStats?: boolean;
 }): Promise<{ userCards: Map<number, UserCardData> }> {
 	if (userIds.length === 0) return { userCards: new Map() };
 
@@ -73,6 +80,7 @@ export async function userCards({
 			enrichUserCardData(
 				cardData,
 				bestSeasonResult(cardData.id, seasonResults),
+				includeHiddenStats,
 			),
 		);
 	}
@@ -81,26 +89,10 @@ export async function userCards({
 }
 
 /**
- * Overall verified peak XP of the user's linked Splatoon player, or `null` when no player is linked.
- * Used to bound how high a linked user may self-report their unverified peak XP.
- */
-// xxx: different file?
-export async function linkedPlayerPeakXp(
-	userId: number,
-): Promise<number | null> {
-	const player = await db
-		.selectFrom("SplatoonPlayer")
-		.select("SplatoonPlayer.peakXp")
-		.where("SplatoonPlayer.userId", "=", userId)
-		.executeTakeFirst();
-
-	return player?.peakXp?.overall ?? null;
-}
-
-/**
  * Raw card fields the edit form needs that are not part of {@link UserCardData}: the uploaded banner
- * image (id + preview url, for the image field's default value), the self-reported peak XP, and the
- * linked player's verified peak XP (to display the XP input's max hint).
+ * image (id + preview url, for the image field's default value), the self-reported peak XP, the
+ * hidden stat types (to pre-check the visibility toggles), and the linked player's verified peak XP
+ * (to display the XP input's max hint).
  */
 export async function cardEditExtras(userId: number) {
 	const row = await db
@@ -108,6 +100,7 @@ export async function cardEditExtras(userId: number) {
 		.select((eb) => [
 			"User.bannerImgId",
 			"User.unverifiedPeakXP",
+			"User.hiddenCardStats",
 			bannerImageUrl(eb).as("bannerImageUrl"),
 		])
 		.where("User.id", "=", userId)
@@ -117,7 +110,9 @@ export async function cardEditExtras(userId: number) {
 		bannerImgId: row?.bannerImgId ?? null,
 		bannerImageUrl: row?.bannerImageUrl ?? null,
 		unverifiedPeakXP: row?.unverifiedPeakXP ?? null,
-		linkedPlayerPeakXp: await linkedPlayerPeakXp(userId),
+		hiddenCardStats: row?.hiddenCardStats ?? [],
+		linkedPlayerPeakXp:
+			await XRankPlacementRepository.verifiedPeakXpByUserId(userId),
 	};
 }
 
@@ -270,14 +265,18 @@ function privateNoteJson(
 	if (viewerId === null) {
 		return sql<Pick<
 			Tables["PrivateUserNote"],
-			"text" | "sentiment"
+			"text" | "sentiment" | "updatedAt"
 		> | null>`null`;
 	}
 
 	return jsonObjectFrom(
 		eb
 			.selectFrom("PrivateUserNote")
-			.select(["PrivateUserNote.text", "PrivateUserNote.sentiment"])
+			.select([
+				"PrivateUserNote.text",
+				"PrivateUserNote.sentiment",
+				"PrivateUserNote.updatedAt",
+			])
 			.where("PrivateUserNote.authorId", "=", viewerId)
 			.whereRef("PrivateUserNote.targetId", "=", "User.id"),
 	);
@@ -446,7 +445,20 @@ function enrichUserCardData(
 		seasonSkill,
 		seasonTop,
 	}: { seasonSkill: TieredSkill | undefined; seasonTop: number | null },
+	includeHiddenStats: boolean,
 ): UserCardData {
+	const hiddenStats: Array<UserCardStat["type"]> =
+		cardData.hiddenCardStats ?? [];
+
+	const stats = userCardStats({
+		div: cardData.div,
+		plusTier: cardData.plusTier,
+		xpVerified: cardData.xpVerified,
+		xpUnverified: cardData.xpUnverified,
+		seasonSkill,
+		seasonTop,
+	});
+
 	return {
 		id: cardData.id,
 		username: cardData.username,
@@ -460,15 +472,9 @@ function enrichUserCardData(
 		friendCode: cardData.friendCode,
 		freeAgentPostId: cardData.freeAgentPostId,
 		privateNote: cardData.privateNote,
-		hiddenStats: cardData.hiddenCardStats ?? [],
-		stats: userCardStats({
-			div: cardData.div,
-			plusTier: cardData.plusTier,
-			xpVerified: cardData.xpVerified,
-			xpUnverified: cardData.xpUnverified,
-			seasonSkill,
-			seasonTop,
-		}),
+		stats: includeHiddenStats
+			? stats
+			: stats.filter((stat) => !hiddenStats.includes(stat.type)),
 	};
 }
 

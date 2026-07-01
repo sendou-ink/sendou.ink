@@ -11,10 +11,11 @@ export interface UserCardData extends CommonUser {
 	/** Id of the user's free agent LFG post, or `null` if they have none. */
 	freeAgentPostId: number | null;
 	/** The viewer's private note about this user, or `null` when they have none. */
-	privateNote: Pick<Tables["PrivateUserNote"], "text" | "sentiment"> | null;
+	privateNote: Pick<
+		Tables["PrivateUserNote"],
+		"text" | "sentiment" | "updatedAt"
+	> | null;
 	stats: Array<UserCardStat>;
-	/** Stat types the user has chosen to hide; filtered out of `stats` at render time. */
-	hiddenStats: Array<UserCardStat["type"]>;
 }
 
 /**

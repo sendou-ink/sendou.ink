@@ -1588,6 +1588,7 @@ const USER_CARD_DATA = {
 	privateNote: {
 		text: "Played with them, very friendly",
 		sentiment: "POSITIVE",
+		updatedAt: 1704067200,
 	},
 	stats: [
 		{
@@ -1608,7 +1609,6 @@ const USER_CARD_DATA = {
 		{ type: "DIV", value: "1" },
 		{ type: "PLUS", value: 1 },
 	],
-	hiddenStats: [],
 } satisfies UserCardData;
 
 function UserCardSection({ id }: { id: string }) {

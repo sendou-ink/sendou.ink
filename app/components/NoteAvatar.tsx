@@ -29,7 +29,6 @@ const SIZE_CLASS = {
  * children without a badge when `sentiment` is `null`/`undefined`. `size` scales the badge to match
  * the wrapped avatar (`sm` for small avatars, `md` for large ones).
  */
-// xxx: same position for the icon no matter if big or small
 export function NoteAvatar({
 	sentiment,
 	size = "md",
