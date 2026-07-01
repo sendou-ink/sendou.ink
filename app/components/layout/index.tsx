@@ -605,7 +605,8 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 		return null;
 	}
 
-	const isExternal = crumb.imgPath.includes(".");
+	const lastPathSegment = crumb.imgPath.split("/").pop() ?? "";
+	const isExternal = lastPathSegment.includes(".");
 	const iconClass = clsx(styles.pageIcon, "rounded");
 
 	return (
