@@ -5,6 +5,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
@@ -34,6 +35,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const match = SendouQ.mapMatch(matchUnmapped, user);
 
 	return {
+		...(await UserCardRepository.userCards({
+			userIds: matchUsers,
+			viewerId: user?.id ?? null,
+			include: { friendCode: true },
+		})),
 		match,
 		reportedWeapons,
 		isOffSeason: Seasons.current() === null,

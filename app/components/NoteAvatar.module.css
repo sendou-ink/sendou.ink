@@ -42,6 +42,17 @@
 	}
 }
 
+.badgeXs {
+	width: 0.65rem;
+	height: 0.65rem;
+	border-width: 1.5px;
+
+	& > svg {
+		width: 0.45rem;
+		height: 0.45rem;
+	}
+}
+
 .positive {
 	background-color: var(--color-success);
 }

@@ -383,7 +383,6 @@ export function createMatchMemento(
 				return [
 					member.id,
 					{
-						plusTier: member.plusTier ?? undefined,
 						skill:
 							!skill || skill.approximate ? ("CALCULATING" as const) : skill,
 					},

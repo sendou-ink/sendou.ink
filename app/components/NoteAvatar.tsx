@@ -19,6 +19,7 @@ const BADGE_ICON: Record<Sentiment, React.ReactNode> = {
 };
 
 const SIZE_CLASS = {
+	xs: styles.badgeXs,
 	sm: styles.badgeSm,
 	md: styles.badgeMd,
 } as const;
@@ -27,7 +28,7 @@ const SIZE_CLASS = {
  * Wraps an avatar (or any node) and overlays a sentiment badge on the bottom-left corner when
  * `sentiment` is set: POSITIVE → green check, NEGATIVE → red cross, NEUTRAL → grey dash. Renders the
  * children without a badge when `sentiment` is `null`/`undefined`. `size` scales the badge to match
- * the wrapped avatar (`sm` for small avatars, `md` for large ones).
+ * the wrapped avatar (`xs` for tiny avatars, `sm` for small avatars, `md` for large ones).
  */
 export function NoteAvatar({
 	sentiment,

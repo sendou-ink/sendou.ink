@@ -47,7 +47,7 @@ export async function userCards({
 	includeHiddenStats = false,
 }: {
 	userIds: Array<number>;
-	viewerId: number | null;
+	viewerId: number | null; // xxx: use actorId
 	/** Opt-in fields skipped from the query by default; defaults to `false` each. */
 	include?: { friendCode?: boolean };
 	/**

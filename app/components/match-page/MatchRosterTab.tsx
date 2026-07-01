@@ -1,23 +1,22 @@
 import clsx from "clsx";
-import { Armchair, Edit, User } from "lucide-react";
+import { Armchair, Edit } from "lucide-react";
 import { useState } from "react";
-import { Button as ReactAriaButton } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
-import {
-	SendouMenu,
-	SendouMenuItem,
-	SendouMenuSection,
-} from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, TierImage } from "~/components/Image";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import type { TierName } from "~/features/mmr/mmr-constants";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
-import { navIconUrl, tierImageUrl, userPage } from "~/utils/urls";
+import { tierImageUrl } from "~/utils/urls";
 import { SendouTabPanel } from "../elements/Tabs";
 import styles from "./MatchRosterTab.module.css";
 import { TAB_KEYS } from "./MatchTabs";
@@ -25,9 +24,7 @@ import { WeaponPool } from "./WeaponPool";
 
 type RosterTabMember = CommonUser & {
 	tier?: { name: TierName; isPlus: boolean } | "CALCULATING";
-	plusTier?: number | null;
 	weaponPool?: Array<MainWeaponId>;
-	friendCode?: string | null;
 	inGameName?: string | null;
 };
 
@@ -160,10 +157,7 @@ function TeamRoster({
 										<div className={styles.memberTier}>
 											<MemberTierPopover tier={member.tier} />
 										</div>
-										<MemberMeta
-											plusTier={member.plusTier}
-											weaponPool={member.weaponPool}
-										/>
+										<MemberMeta weaponPool={member.weaponPool} />
 									</div>
 								</li>
 							))}
@@ -397,27 +391,14 @@ function MemberTierPopoverContent({
 	);
 }
 
-function MemberMeta({
-	plusTier,
-	weaponPool,
-}: {
-	plusTier?: number | null;
-	weaponPool?: Array<MainWeaponId>;
-}) {
-	const hasPlusTier = typeof plusTier === "number";
+function MemberMeta({ weaponPool }: { weaponPool?: Array<MainWeaponId> }) {
 	const hasWeapons = weaponPool && weaponPool.length > 0;
 
-	if (!hasPlusTier && !hasWeapons) return null;
+	if (!hasWeapons) return null;
 
 	return (
 		<div className={styles.memberMeta}>
-			{hasPlusTier ? (
-				<div className={styles.plusTier}>
-					<Image path={navIconUrl("plus")} width={16} height={16} alt="" />
-					<span>{plusTier}</span>
-				</div>
-			) : null}
-			{hasWeapons ? <WeaponPool weapons={weaponPool} size={18} /> : null}
+			<WeaponPool weapons={weaponPool} size={18} />
 		</div>
 	);
 }
@@ -459,68 +440,21 @@ function RosterMemberLink({
 	member: RosterTabMember;
 	className?: string;
 }) {
-	const { t } = useTranslation(["friends", "q", "user"]);
+	const cardData = useUserCardData(member.id);
 
-	const hasContentBelowName = !!(
-		member.tier ||
-		typeof member.plusTier === "number" ||
-		(member.weaponPool && member.weaponPool.length > 0)
-	);
-	const showIgnInMenu = hasContentBelowName && !!member.inGameName;
-	const showIgnUnderName = !hasContentBelowName && !!member.inGameName;
-	const useMenu = !!member.friendCode || showIgnInMenu;
-
-	const nameContent = (
-		<div className={styles.memberNameStack}>
-			<span>{member.username}</span>
-			{showIgnUnderName ? (
-				<span className={styles.memberInGameName}>{member.inGameName}</span>
-			) : null}
-		</div>
-	);
-
-	if (!useMenu) {
-		return (
-			<Link to={userPage(member)} className={className}>
-				<Avatar user={member} size="xxs" />
-				{nameContent}
-			</Link>
-		);
-	}
-
-	const headerContent =
-		member.friendCode || showIgnInMenu ? (
-			<div className={styles.memberMenuHeader}>
-				{member.friendCode ? <span>{`SW-${member.friendCode}`}</span> : null}
-				{showIgnInMenu ? (
-					<span className={styles.memberMenuIgn}>
-						<span className={styles.memberMenuIgnLabel}>
-							{t("user:ign.short")}:
-						</span>{" "}
-						{member.inGameName}
-					</span>
-				) : null}
-			</div>
-		) : undefined;
-
-	// xxx: after usercard everywhere, menu should no longer be necessary
 	return (
-		<SendouMenu
-			trigger={
-				<ReactAriaButton className={clsx(className, styles.memberMenuTrigger)}>
+		<UserCard userId={member.id}>
+			<span className={className}>
+				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
 					<Avatar user={member} size="xxs" />
-					{nameContent}
-				</ReactAriaButton>
-			}
-		>
-			<SendouMenuSection
-				headerText={headerContent}
-				headerClassName={styles.friendCodeHeader}
-			>
-				<SendouMenuItem href={userPage(member)} icon={<User />}>
-					{t("friends:friendsList.viewUserPage")}
-				</SendouMenuItem>
-			</SendouMenuSection>
-		</SendouMenu>
+				</NoteAvatar>
+				<div className={styles.memberNameStack}>
+					<span>{member.username}</span>
+					{member.inGameName ? (
+						<span className={styles.memberInGameName}>{member.inGameName}</span>
+					) : null}
+				</div>
+			</span>
+		</UserCard>
 	);
 }

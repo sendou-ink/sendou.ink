@@ -134,37 +134,6 @@
 	font-weight: var(--weight-semi);
 }
 
-.memberMenuTrigger {
-	background: none;
-	border: 0;
-	padding: 0;
-	color: inherit;
-	font: inherit;
-	text-align: inherit;
-	cursor: pointer;
-}
-
-.friendCodeHeader {
-	text-align: center;
-}
-
-.memberMenuHeader {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-0-5);
-}
-
-.memberMenuIgn {
-	font-size: var(--font-2xs);
-	color: var(--color-text-high);
-}
-
-.memberMenuIgnLabel {
-	font-weight: var(--weight-bold);
-	text-transform: uppercase;
-	font-size: var(--font-3xs);
-}
-
 .memberTier {
 	display: flex;
 	justify-content: center;
@@ -177,18 +146,6 @@
 	align-items: center;
 	gap: var(--s-1);
 	font-size: var(--font-2xs);
-}
-
-.plusTier {
-	display: flex;
-	align-items: center;
-	gap: var(--s-0-5);
-	background-color: var(--color-bg-higher);
-	border-radius: var(--radius-full);
-	padding: var(--s-0-5) var(--s-1-5);
-	padding-inline-start: var(--s-1);
-	font-weight: var(--weight-semi);
-	color: var(--color-text);
 }
 
 .subbedOutTrigger {

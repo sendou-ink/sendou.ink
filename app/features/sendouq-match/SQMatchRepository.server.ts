@@ -123,7 +123,6 @@ function groupWithTeamAndMembers(
 					eb
 						.selectFrom("GroupMember")
 						.innerJoin("User", "User.id", "GroupMember.userId")
-						.leftJoin("PlusTier", "User.id", "PlusTier.userId")
 						.leftJoin("GroupMatchContinueVote", (join) =>
 							join
 								.onRef(
@@ -148,7 +147,6 @@ function groupWithTeamAndMembers(
 							"User.noScreen",
 							matchProfileWeapons(arrayEb).as("weapons"),
 							"User.mapModePreferences",
-							"PlusTier.tier as plusTier",
 							"GroupMatchContinueVote.isContinuing",
 							arrayEb
 								.selectFrom("UserFriendCode")

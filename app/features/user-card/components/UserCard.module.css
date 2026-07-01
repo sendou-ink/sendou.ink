@@ -24,7 +24,7 @@
 	position: relative;
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-3);
+	gap: var(--s-5);
 	width: 18rem;
 	max-width: calc(100vw - var(--s-4));
 	padding: 0 var(--s-4) var(--s-4);

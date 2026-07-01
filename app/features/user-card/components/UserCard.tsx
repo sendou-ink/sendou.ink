@@ -46,8 +46,6 @@ import type {
 import { AddPrivateNoteDialog } from "./AddPrivateNoteDialog";
 import styles from "./UserCard.module.css";
 
-// xxx: also secondary action? e.g. "View tournament" from sidebar
-
 const TENTATEK_BRAND_ID: BrandId = "B10";
 
 const STAT_ORDER: Record<UserCardStat["type"], number> = {
@@ -63,16 +61,21 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
  * pass `data` directly to bypass the lookup (e.g. the components showcase). When no card data exists
  * for the user, the `children` are rendered plain without a trigger.
  *
- * Viewer-relative friendship data (`isFriend` + `mutualFriends`) is lazy-loaded from the
- * `/user-card/:id/friendship` route the first time the card opens.
+ * Viewer-relative friendship data (`isFriend`) is lazy-loaded from the `/user-card/:id/friendship`
+ * route the first time the card opens. Mutual friends are only fetched and shown when
+ * `withMutualFriends` is set (e.g. the SendouQ looking page); other views (e.g. match pages) skip
+ * both the extra query and the row.
  */
 export function UserCard({
 	userId,
 	data: dataProp,
+	withMutualFriends = false,
 	children,
 }: {
 	userId?: number;
 	data?: UserCardData;
+	/** Fetch and show the mutual friends row. Off by default. */
+	withMutualFriends?: boolean;
 	children: React.ReactNode;
 }) {
 	const { t } = useTranslation(["common", "q"]);
@@ -98,8 +101,8 @@ export function UserCard({
 		if (typeof data?.id !== "number") return;
 
 		friendshipLoadedRef.current = true;
-		fetcher.load(userCardFriendshipPage(data.id));
-	}, [isOpen, isOwnCard, data?.id, fetcher.load]);
+		fetcher.load(userCardFriendshipPage(data.id, { withMutualFriends }));
+	}, [isOpen, isOwnCard, data?.id, withMutualFriends, fetcher.load]);
 
 	const friendship = fetcher.data;
 
@@ -126,6 +129,7 @@ export function UserCard({
 							data={data}
 							friendship={friendship}
 							isOwnCard={isOwnCard}
+							withMutualFriends={withMutualFriends}
 							onEditNote={openNoteDialog}
 							onDeleteNote={openDeleteConfirm}
 						/>
@@ -181,6 +185,7 @@ function CardContent({
 	data,
 	friendship,
 	isOwnCard,
+	withMutualFriends,
 	onEditNote,
 	onDeleteNote,
 }: {
@@ -188,6 +193,7 @@ function CardContent({
 	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
 	friendship: UserCardFriendship | undefined;
 	isOwnCard: boolean;
+	withMutualFriends: boolean;
 	onEditNote: () => void;
 	onDeleteNote: () => void;
 }) {
@@ -287,7 +293,9 @@ function CardContent({
 							))}
 						</div>
 					) : null}
-					{isOwnCard ? null : <CardMutualFriends friendship={friendship} />}
+					{isOwnCard || !withMutualFriends ? null : (
+						<CardMutualFriends friendship={friendship} />
+					)}
 					{data.shortBio ? <p className={styles.bio}>{data.shortBio}</p> : null}
 					<LinkButton
 						to={userPage(data)}

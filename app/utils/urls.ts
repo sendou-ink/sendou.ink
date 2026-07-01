@@ -151,8 +151,13 @@ export const PATRONS_LIST_ROUTE = "/patrons-list";
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 
-export const userCardFriendshipPage = (userId: number) =>
-	`/user-card/${userId}/friendship`;
+export const userCardFriendshipPage = (
+	userId: number,
+	args?: { withMutualFriends?: boolean },
+) =>
+	`/user-card/${userId}/friendship${
+		args?.withMutualFriends ? "?mutuals=true" : ""
+	}`;
 
 export const userCardNotePage = (userId: number) => `/user-card/${userId}/note`;
 

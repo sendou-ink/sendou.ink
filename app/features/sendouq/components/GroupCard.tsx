@@ -24,7 +24,6 @@ import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import {
-	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	specialWeaponImageUrl,
 	TIERS_PAGE,
@@ -269,7 +268,7 @@ function GroupMember({
 		<div className="stack xxs" data-testid="sendouq-group-card-member">
 			<div className={styles.member}>
 				<div className="text-main-forced stack xs horizontal items-center">
-					<UserCard userId={member.id}>
+					<UserCard userId={member.id} withMutualFriends>
 						<span className="stack xs horizontal items-center">
 							<NoteAvatar
 								sentiment={cardData?.privateNote?.sentiment}
@@ -313,12 +312,6 @@ function GroupMember({
 					{member.vc && !hideVc ? (
 						<div className={styles.extraInfo}>
 							<VoiceChatInfo member={member} />
-						</div>
-					) : null}
-					{member.plusTier ? (
-						<div className={styles.extraInfo}>
-							<Image path={navIconUrl("plus")} width={20} height={20} alt="" />
-							{member.plusTier}
 						</div>
 					) : null}
 					{member.friendCode ? (
