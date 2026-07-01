@@ -37,7 +37,6 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 	}
 
-	// xxx: just autovalidate and prevent input from the boundary
 	const isSupporter = Boolean(user.roles?.includes("SUPPORTER"));
 
 	await UserCardRepository.updateOwnCard({

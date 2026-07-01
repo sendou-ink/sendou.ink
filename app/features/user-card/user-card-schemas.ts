@@ -31,6 +31,7 @@ export const updateUserCardSchema = z.object({
 	bannerImage: image({
 		label: "labels.bannerImage",
 		dimensions: "thick-banner",
+		autoValidate: true,
 	}),
 	unverifiedXpPoints: numberFieldOptional({ label: "labels.unverifiedXp" }),
 	unverifiedXpDivision: select({
