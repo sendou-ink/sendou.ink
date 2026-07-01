@@ -43,5 +43,8 @@
 	"leave.confirm": "",
 	"leave.soleAdmin": "",
 	"new.heading": "",
-	"new.noPermissions": ""
+	"new.noPermissions": "",
+	"stats.title": "",
+	"stats.established.title": "",
+	"stats.established.help": ""
 }

@@ -1,4 +1,11 @@
-import { Link as LinkIcon, Lock, LogOut, SquarePen, Users } from "lucide-react";
+import {
+	ChartNoAxesColumn,
+	Link as LinkIcon,
+	Lock,
+	LogOut,
+	SquarePen,
+	Users,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useSearchParams } from "react-router";
@@ -33,6 +40,7 @@ import {
 	navIconUrl,
 	tournamentOrganizationEditPage,
 	tournamentOrganizationPage,
+	tournamentOrganizationStatsPage,
 	tournamentPage,
 	userPage,
 } from "~/utils/urls";
@@ -118,8 +126,9 @@ function LogoHeader() {
 	const currentMember = user
 		? data.organization.members.find((m) => m.id === user.id)
 		: undefined;
+	const isOrgAdmin = currentMember?.role === "ADMIN";
 	const isSoleAdmin =
-		currentMember?.role === "ADMIN" &&
+		isOrgAdmin &&
 		data.organization.members.filter((m) => m.role === "ADMIN").length === 1;
 
 	return (
@@ -138,6 +147,17 @@ function LogoHeader() {
 								testId="edit-org-button"
 							>
 								{t("common:actions.edit")}
+							</LinkButton>
+						) : null}
+						{isOrgAdmin ? (
+							<LinkButton
+								to={tournamentOrganizationStatsPage(data.organization.slug)}
+								icon={<ChartNoAxesColumn />}
+								size="small"
+								variant="outlined"
+								testId="org-stats-button"
+							>
+								{t("org:stats.title")}
 							</LinkButton>
 						) : null}
 						{currentMember ? (
