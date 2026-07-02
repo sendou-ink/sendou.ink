@@ -1,7 +1,9 @@
+import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { Unpacked } from "~/utils/types";
 import * as LFGRepository from "../LFGRepository.server";
 
@@ -9,9 +11,20 @@ export const loader = async () => {
 	const user = getUser();
 	const posts = await LFGRepository.posts(user);
 
+	const cardUserIds = R.unique(
+		posts.flatMap((post) => [
+			post.author.id,
+			...(post.team?.members ?? []).map((member) => member.id),
+		]),
+	);
+
 	return {
 		posts,
 		tiersMap: postsUsersTiersMap(posts),
+		...(await UserCardRepository.userCards({
+			userIds: cardUserIds,
+			viewerId: user?.id ?? null,
+		})),
 	};
 };
 

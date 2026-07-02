@@ -117,21 +117,3 @@
 		height: 14px;
 	}
 }
-
-.tier {
-	position: absolute;
-	top: -3px;
-	right: 4px;
-}
-
-.tierPill {
-	width: 60px;
-}
-
-.tierPillStart {
-	border-radius: 0 var(--radius-box) var(--radius-box) 0;
-}
-
-.tierPillEnd {
-	border-radius: var(--radius-box) 0 0 var(--radius-box);
-}

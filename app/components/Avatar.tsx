@@ -122,6 +122,12 @@ export function Avatar({
 	const [isErrored, setIsErrored] = React.useState(false);
 	const isClient = useHydrated();
 
+	// an <img> can finish loading (and fail) before React hydrates and attaches onError, so that
+	// error is missed — re-check on mount and fall back manually so SSR'd avatars still heal
+	const checkAlreadyErrored = (img: HTMLImageElement | null) => {
+		if (img?.complete && img.naturalWidth === 0) setIsErrored(true);
+	};
+
 	const identiconSource = identiconInput ?? user?.discordId ?? "unknown";
 
 	const src = url
@@ -141,6 +147,7 @@ export function Avatar({
 	return (
 		<div className={clsx(styles.avatarWrapper, className)}>
 			<img
+				ref={checkAlreadyErrored}
 				src={src}
 				alt={alt}
 				title={alt ? alt : undefined}
