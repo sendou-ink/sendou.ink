@@ -59,7 +59,7 @@ export function Widget({
 	user,
 }: {
 	widget: SerializeFrom<LoadedWidget>;
-	user: Pick<Tables["User"], "discordId" | "customUrl">;
+	user: Pick<Tables["User"], "id" | "discordId" | "customUrl">;
 }) {
 	const { t } = useTranslation(["user", "badges", "team", "org", "lfg"]);
 	const { formatter: patronSinceFormatter } = useDateTimeFormat({
@@ -79,11 +79,23 @@ export function Widget({
 					</article>
 				);
 			case "badges-owned":
-				return <BadgeDisplay badges={widget.data} />;
+				return (
+					<BadgeDisplay badges={widget.data} key={`badges-owned-${user.id}`} />
+				);
 			case "badges-authored":
-				return <BadgeDisplay badges={widget.data} />;
+				return (
+					<BadgeDisplay
+						badges={widget.data}
+						key={`badges-authored-${user.id}`}
+					/>
+				);
 			case "badges-managed":
-				return <BadgeDisplay badges={widget.data} />;
+				return (
+					<BadgeDisplay
+						badges={widget.data}
+						key={`badges-managed-${user.id}`}
+					/>
+				);
 			case "teams":
 				return (
 					<Memberships
