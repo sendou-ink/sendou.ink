@@ -40,12 +40,12 @@ export const IN_GAME_NAME_CHARACTER_CATEGORIES = [
 	{
 		id: "hiragana",
 		label: "inGameName.categories.hiragana",
-		characters: range(0x3041, 0x3096),
+		characters: [...range(0x3041, 0x3096), ..."ゝゞ"],
 	},
 	{
 		id: "katakana",
 		label: "inGameName.categories.katakana",
-		characters: range(0x30a1, 0x30fa),
+		characters: [...range(0x30a1, 0x30fa), ..."ヽヾ"],
 	},
 	{
 		id: "cjk-symbols",
