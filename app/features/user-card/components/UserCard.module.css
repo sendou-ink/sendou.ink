@@ -61,7 +61,7 @@
 	display: flex;
 	align-items: flex-end;
 	gap: var(--s-2-5);
-	margin-top: calc(-1 * (var(--s-6)));
+	margin-top: calc(-1 * (var(--s-8)));
 	position: relative;
 }
 
