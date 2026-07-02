@@ -35,7 +35,7 @@ export default function UserArtPage() {
 	});
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
 	const hasBothArtMadeByAndMadeOf =
 		data.arts.some((a) => a.author) && data.arts.some((a) => !a.author);

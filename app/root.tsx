@@ -61,9 +61,11 @@ import { isSupporter } from "./modules/permissions/utils";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
+import { requestContextMiddleware } from "./utils/request-context-middleware.server";
 import { APP_ICON_URL, pwaSplashScreenImageUrl } from "./utils/urls";
 
 export const middleware: Route.MiddlewareFunction[] = [
+	requestContextMiddleware,
 	sessionIdMiddleware,
 	userMiddleware,
 ];
@@ -334,7 +336,7 @@ function useCustomThemeVars() {
 	const styles: Map<string, number> = new Map();
 
 	for (const match of matches) {
-		const data = match.data as { customTheme?: CustomTheme } | undefined;
+		const data = match.loaderData as { customTheme?: CustomTheme } | undefined;
 
 		if (data?.customTheme) {
 			for (const [key, value] of Object.entries(data.customTheme)) {

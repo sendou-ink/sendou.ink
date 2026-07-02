@@ -22,7 +22,7 @@ export type LoaderNotification = NonNullable<
 export function useNotifications() {
 	const [root] = useMatches();
 
-	const notifications = (root.data as RootLoaderData | undefined)
+	const notifications = (root.loaderData as RootLoaderData | undefined)
 		?.notifications;
 
 	const unseenIds = React.useMemo(

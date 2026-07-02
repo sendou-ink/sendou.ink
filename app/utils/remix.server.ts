@@ -8,6 +8,7 @@ import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
 import { ServerConfig } from "~/config.server";
 import { logger } from "./logger";
+import { currentRequestPathname } from "./request-context.server";
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) throw new Response(null, { status: 404 });
@@ -226,7 +227,7 @@ export function canAccessLohiEndpoint(request: Request) {
 }
 
 function errorToastRedirect(message: string) {
-	return redirect(`?__error=${message}`);
+	return redirect(`${currentRequestPathname() ?? ""}?__error=${message}`);
 }
 
 /** Asserts condition is truthy. Throws a redirect triggering an error toast with given message otherwise.  */
@@ -258,7 +259,7 @@ export function errorToast(message: string) {
 }
 
 export function successToast(message: string) {
-	return redirect(`?__success=${message}`);
+	return redirect(`${currentRequestPathname() ?? ""}?__success=${message}`);
 }
 
 export function successToastWithRedirect({

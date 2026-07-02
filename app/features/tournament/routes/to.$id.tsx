@@ -31,7 +31,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	const rawData = args.data as string | undefined;
+	const rawData = args.loaderData as string | undefined;
 
 	if (!rawData) return [];
 
@@ -51,7 +51,7 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["tournament", "calendar"],
 	breadcrumb: ({ match }) => {
-		const rawData = match.data as string | undefined;
+		const rawData = match.loaderData as string | undefined;
 
 		if (!rawData) return [];
 

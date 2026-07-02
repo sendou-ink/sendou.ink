@@ -23,7 +23,7 @@ export { loader };
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "common", "analyzer", "params"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 		if (!data) return [];
 		return [
 			{
@@ -36,10 +36,10 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 	return metaTags({
-		title: `${args.data.weaponName} parameters`,
-		description: `${args.data.weaponName} parameters with version history compared across ${comparedAcross(args.data.kind)}.`,
+		title: `${args.loaderData.weaponName} parameters`,
+		description: `${args.loaderData.weaponName} parameters with version history compared across ${comparedAcross(args.loaderData.kind)}.`,
 		location: args.location,
 	});
 };

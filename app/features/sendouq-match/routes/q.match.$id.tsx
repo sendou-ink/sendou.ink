@@ -14,7 +14,7 @@ import { loader } from "../loaders/q.match.$id.server";
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader> | null;
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 

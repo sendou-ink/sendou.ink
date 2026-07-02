@@ -23,10 +23,9 @@ export async function wrapActionForApi(
 	} catch (e) {
 		if (e instanceof Response && e.status === 302) {
 			const location = e.headers.get("Location") ?? "";
-			if (location.includes("__error=")) {
-				const errorMsg = new URLSearchParams(location.replace("?", "")).get(
-					"__error",
-				);
+			const search = location.slice(location.indexOf("?") + 1);
+			const errorMsg = new URLSearchParams(search).get("__error");
+			if (errorMsg !== null) {
 				return new Response(JSON.stringify({ error: errorMsg }), {
 					status: 400,
 					headers: { "Content-Type": "application/json" },

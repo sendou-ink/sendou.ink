@@ -15,7 +15,7 @@ export default function PlusCommentModalPage() {
 	const user = useUser();
 	const matches = useMatches();
 	const params = useParams();
-	const data = matches.at(-2)!.data as PlusSuggestionsLoaderData;
+	const data = matches.at(-2)!.loaderData as PlusSuggestionsLoaderData;
 
 	const targetUserId = Number(params.userId);
 	const tierSuggestedTo = Number(params.tier);

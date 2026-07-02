@@ -34,12 +34,14 @@ import { loader } from "../loaders/calendar.new.server";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
-	const what = args.data.isAddingTournament ? "tournament" : "calendar event";
+	const what = args.loaderData.isAddingTournament
+		? "tournament"
+		: "calendar event";
 
 	return metaTags({
-		title: args.data.eventToEdit ? `Editing ${what}` : `New ${what}`,
+		title: args.loaderData.eventToEdit ? `Editing ${what}` : `New ${what}`,
 		location: args.location,
 	});
 };

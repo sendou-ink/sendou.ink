@@ -30,11 +30,11 @@ export { loader };
 import "~/features/user-page/user-page.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: args.data.user.username,
-		description: `${args.data.user.username}'s profile on sendou.ink including builds, tournament results, art and more.`,
+		title: args.loaderData.user.username,
+		description: `${args.loaderData.user.username}'s profile on sendou.ink including builds, tournament results, art and more.`,
 		location: args.location,
 	});
 };
@@ -42,7 +42,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["user", "badges", "game-badges"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as UserPageLoaderData | undefined;
+		const data = match.loaderData as UserPageLoaderData | undefined;
 
 		if (!data) return [];
 
@@ -86,7 +86,9 @@ export default function UserPageLayout() {
 	const allResultsCount =
 		data.user.calendarEventResultsCount + data.user.tournamentResultsCount;
 
-	const isNewUserPage = matches.some((m) => (m.data as any)?.type === "new");
+	const isNewUserPage = matches.some(
+		(m) => (m.loaderData as any)?.type === "new",
+	);
 
 	const navItems: UserPageNavItem[] = [
 		{

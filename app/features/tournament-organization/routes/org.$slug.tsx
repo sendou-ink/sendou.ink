@@ -55,15 +55,15 @@ import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: args.data.organization.name,
+		title: args.loaderData.organization.name,
 		location: args.location,
-		description: args.data.organization.description ?? undefined,
-		image: args.data.organization.avatarUrl
+		description: args.loaderData.organization.description ?? undefined,
+		image: args.loaderData.organization.avatarUrl
 			? {
-					url: args.data.organization.avatarUrl,
+					url: args.loaderData.organization.avatarUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,
@@ -73,7 +73,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["badges", "org"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 

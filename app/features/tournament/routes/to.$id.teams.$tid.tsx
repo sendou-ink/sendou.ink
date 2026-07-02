@@ -29,12 +29,12 @@ import { useTournament } from "./to.$id";
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].data as any)
+	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
 		?.tournament as TournamentData;
-	if (!args.data || !tournamentData) return [];
+	if (!args.loaderData || !tournamentData) return [];
 
 	const team = tournamentData.ctx.teams.find(
-		(t) => t.id === args.data!.tournamentTeamId,
+		(t) => t.id === args.loaderData!.tournamentTeamId,
 	)!;
 	const teamLogoUrl = team.team?.logoUrl ?? team.pickupAvatarUrl;
 
