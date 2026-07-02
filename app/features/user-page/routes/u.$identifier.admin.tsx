@@ -20,7 +20,7 @@ export { action, loader };
 export default function UserAdminPage() {
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
 	return (
 		<div className="stack xl">

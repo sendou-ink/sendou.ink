@@ -27,7 +27,7 @@ export default function UserEditPage() {
 	const { t } = useTranslation(["common", "user"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
 	const isSupporter = useHasRole("SUPPORTER");
 	const isArtist = useHasRole("ARTIST");

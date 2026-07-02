@@ -48,7 +48,7 @@ function ThemeSelector() {
 
 function CustomColorSelector() {
 	const [root] = useMatches();
-	const rootData = root.data as RootLoaderData | undefined;
+	const rootData = root.loaderData as RootLoaderData | undefined;
 	const isSupporter = useHasRole("SUPPORTER");
 	const fetcher = useFetcher();
 

@@ -2326,6 +2326,15 @@ export const weaponParams = {
 				},
 			],
 			DirectDamage: 2200,
+			Range_SpawnSpeed: 1,
+			Range_GoStraightStateEndMaxSpeed: 1,
+			Range_GoStraightToBrakeStateFrame: 18,
+			Range_FreeGravity: 0.0190565,
+			Range_FreeAirResist: 0.01985,
+			Range_BrakeAirResist: 0.09,
+			Range_BrakeGravity: 0.09,
+			Range_BrakeToFreeStateFrame: 10,
+			Range_BlastRadius: 4,
 		},
 		"2": {
 			overwrites: {
@@ -2364,6 +2373,7 @@ export const weaponParams = {
 					Distance: 6,
 				},
 			],
+			Range_Radius: 35,
 		},
 		"4": {
 			overwrites: {
@@ -2412,6 +2422,8 @@ export const weaponParams = {
 				},
 			},
 			TickDamage: 33,
+			Range_Distance: 27,
+			Range_BlastRadius: 12.6,
 		},
 		"7": {
 			overwrites: {
@@ -2428,6 +2440,7 @@ export const weaponParams = {
 			},
 			DirectDamage: 300,
 			WaveDamage: 450,
+			Range_Radius: 20,
 		},
 		"8": {
 			overwrites: {
@@ -2504,6 +2517,8 @@ export const weaponParams = {
 				},
 			],
 			DirectDamage: 1200,
+			Range_Distance: 30,
+			Range_BlastRadius: 5,
 		},
 		"11": {
 			overwrites: {
@@ -2534,6 +2549,8 @@ export const weaponParams = {
 				},
 			],
 			ThrowDirectDamage: 2200,
+			Range_Distance: 24,
+			Range_BlastRadius: 8,
 		},
 		"12": {
 			ArmorHP: 5000,
@@ -2557,6 +2574,11 @@ export const weaponParams = {
 				},
 			],
 			BumpDamage: 400,
+			Range_SpawnSpeed: 3.36,
+			Range_GoStraightStateEndMaxSpeed: 2.232,
+			Range_GoStraightToBrakeStateFrame: 7,
+			Range_FreeGravity: 0.016,
+			Range_BlastRadius: 4.8,
 		},
 		"13": {
 			overwrites: {
@@ -2591,6 +2613,7 @@ export const weaponParams = {
 					Distance: 14.9,
 				},
 			],
+			Range_Radius: 9,
 		},
 		"14": {
 			overwrites: {
@@ -2601,6 +2624,8 @@ export const weaponParams = {
 				},
 			},
 			TickDamage: 75,
+			Range_Distance: 28,
+			Range_BlastRadius: 7.7,
 		},
 		"15": {
 			overwrites: {
@@ -2641,6 +2666,8 @@ export const weaponParams = {
 					Distance: 6,
 				},
 			],
+			Range_Distance: 30,
+			Range_BlastRadius: 6,
 		},
 		"17": {
 			overwrites: {
@@ -2676,6 +2703,7 @@ export const weaponParams = {
 					Distance: 10.5,
 				},
 			],
+			Range_Radius: 7,
 		},
 		"19": {
 			overwrites: {

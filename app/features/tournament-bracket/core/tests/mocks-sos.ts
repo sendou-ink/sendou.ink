@@ -2026,6 +2026,7 @@ export const SWIM_OR_SINK_167 = (
 			id: 3,
 			name: "Inkling Performance Labs",
 			slug: "inkling-performance-labs",
+			isEstablished: 1,
 			logoUrl: "fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp",
 			series: [],
 			members: [

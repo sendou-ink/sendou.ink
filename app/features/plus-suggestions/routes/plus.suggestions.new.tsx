@@ -15,7 +15,7 @@ export { action };
 export default function PlusNewSuggestionModalPage() {
 	const user = useUser();
 	const matches = useMatches();
-	const data = matches.at(-2)!.data as PlusSuggestionsLoaderData;
+	const data = matches.at(-2)!.loaderData as PlusSuggestionsLoaderData;
 
 	const tierOptions = PLUS_TIERS.filter((tier) => {
 		// user will be redirected anyway

@@ -45,7 +45,7 @@ export default function TeamIndexPage() {
 	const { t } = useTranslation(["team"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as TeamLoaderData;
+	const layoutData = parentRoute.loaderData as TeamLoaderData;
 
 	const members = layoutData.team.members;
 	const playerMembers = members.filter(
@@ -110,7 +110,7 @@ function ActionButtons() {
 	const isAdmin = useHasRole("ADMIN");
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as TeamLoaderData;
+	const layoutData = parentRoute.loaderData as TeamLoaderData;
 	const team = layoutData.team;
 
 	if (!isTeamMember({ user, team }) && !isAdmin) {

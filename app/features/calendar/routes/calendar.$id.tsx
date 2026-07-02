@@ -41,7 +41,7 @@ import { loader } from "../loaders/calendar.$id.server";
 export { action, loader };
 
 export const meta: MetaFunction = (args) => {
-	const data = args.data as SerializeFrom<typeof loader>;
+	const data = args.loaderData as SerializeFrom<typeof loader>;
 
 	if (!data) return [];
 
@@ -57,7 +57,7 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "game-misc"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 

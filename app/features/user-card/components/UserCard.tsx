@@ -171,7 +171,7 @@ export function useUserCardData(
 	if (typeof userId !== "number") return undefined;
 
 	for (const match of matches) {
-		const data = match.data as
+		const data = match.loaderData as
 			| { userCards?: Map<number, UserCardData> }
 			| undefined;
 		const card = data?.userCards?.get(userId);

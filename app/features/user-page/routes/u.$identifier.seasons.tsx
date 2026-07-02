@@ -78,7 +78,7 @@ export default function UserSeasonsPage() {
 	const data = useLoaderData<typeof loader>();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
 	if (!data) {
 		return (
@@ -325,7 +325,7 @@ function Rank({
 	const { t } = useTranslation(["user"]);
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
 	const maxOrdinal = Math.max(...skills.map((s) => s.ordinal));
 
@@ -469,7 +469,7 @@ function Stages({
 	stages: NonNullable<UserSeasonsPageLoaderData["info"]["stages"]>;
 }) {
 	const { t } = useTranslation(["user", "game-misc"]);
-	const layoutData = useMatches().at(-2)!.data as UserPageLoaderData;
+	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
 
 	return (
 		<div className="stack horizontal justify-center md flex-wrap">
@@ -804,7 +804,7 @@ function Results({
 function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 	const userId = layoutData.user.id;
 
 	// score when match has not yet been played or was canceled

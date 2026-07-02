@@ -19,7 +19,7 @@ export { loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -35,7 +35,7 @@ export const handle: SendouRouteHandle = {
 
 export const meta: MetaFunction = (args) => {
 	invariant(args.params.slug);
-	const data = args.data as SerializeFrom<typeof loader> | null;
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
 
 	if (!data) return [];
 

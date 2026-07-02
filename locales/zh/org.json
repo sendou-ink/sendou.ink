@@ -43,5 +43,8 @@
 	"leave.confirm": "您确定要退出 {{organizationName}} 吗？",
 	"leave.soleAdmin": "您是该组织唯一的管理员。请先添加另一位管理员，或者联系网站管理员删除该组织。",
 	"new.heading": "创建组织",
-	"new.noPermissions": "您没有创建组织的权限。只有拥有赛事创建权限的用户才能创建组织。"
+	"new.noPermissions": "您没有创建组织的权限。只有拥有赛事创建权限的用户才能创建组织。",
+	"stats.title": "",
+	"stats.established.title": "",
+	"stats.established.help": ""
 }

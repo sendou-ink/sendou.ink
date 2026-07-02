@@ -22,7 +22,7 @@ export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -44,16 +44,16 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	const aliasesStr =
-		args.data.names.aliases.length > 0
-			? ` (Aliases: ${args.data.names.aliases.join(", ")})`
+		args.loaderData.names.aliases.length > 0
+			? ` (Aliases: ${args.loaderData.names.aliases.join(", ")})`
 			: "";
 
 	return metaTags({
-		title: `${args.data.names.primary} X Battle Top 500 Placements`,
-		description: `Splatoon 3 X Battle results for the player ${args.data.names.primary}${aliasesStr}`,
+		title: `${args.loaderData.names.primary} X Battle Top 500 Placements`,
+		description: `Splatoon 3 X Battle results for the player ${args.loaderData.names.primary}${aliasesStr}`,
 		location: args.location,
 	});
 };

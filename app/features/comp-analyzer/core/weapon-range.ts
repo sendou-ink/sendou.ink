@@ -2,7 +2,7 @@ import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 
-interface TrajectoryParams {
+export interface TrajectoryParams {
 	spawnSpeed: number;
 	goStraightStateEndMaxSpeed: number;
 	goStraightToBrakeStateFrame: number;
@@ -37,7 +37,7 @@ function getWeaponCategoryName(weaponId: MainWeaponId): string | undefined {
 
 const PLAYER_HEIGHT = 1.0;
 
-function calculateGroundRange(trajectory: TrajectoryPoint[]): number {
+export function calculateGroundRange(trajectory: TrajectoryPoint[]): number {
 	for (let i = 1; i < trajectory.length; i++) {
 		const point = trajectory[i];
 		const prevPoint = trajectory[i - 1];
@@ -55,7 +55,9 @@ function calculateBouncingRange(trajectory: TrajectoryPoint[]): number {
 	return lastPoint?.z ?? 0;
 }
 
-function simulateTrajectoryPoints(params: TrajectoryParams): TrajectoryPoint[] {
+export function simulateTrajectoryPoints(
+	params: TrajectoryParams,
+): TrajectoryPoint[] {
 	const {
 		spawnSpeed,
 		goStraightStateEndMaxSpeed,

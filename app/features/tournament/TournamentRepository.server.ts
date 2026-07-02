@@ -85,6 +85,7 @@ export async function findById(id: number) {
 						"TournamentOrganization.id",
 						"TournamentOrganization.name",
 						"TournamentOrganization.slug",
+						"TournamentOrganization.isEstablished",
 						concatUserSubmittedImagePrefix(
 							innerEb.ref("UserSubmittedImage.url"),
 						).as("logoUrl"),

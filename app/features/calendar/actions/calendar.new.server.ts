@@ -44,6 +44,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const isEditing = Boolean(data.eventToEditId);
 	const isAddingTournament = data.toToolsEnabled;
+	const isTournamentAdder = user.roles.includes("TOURNAMENT_ADDER");
 	const organizationId = data.organizationId
 		? Number(data.organizationId)
 		: null;
@@ -52,7 +53,7 @@ export const action: ActionFunction = async ({ request }) => {
 		await validateOrganization({
 			userId: user.id,
 			organizationId,
-			isTournamentAdder: user.roles.includes("TOURNAMENT_ADDER"),
+			isTournamentAdder,
 		});
 	} else if (!isEditing) {
 		requireRole(
@@ -141,7 +142,10 @@ export const action: ActionFunction = async ({ request }) => {
 				"Tournament has already started",
 			);
 
-			errorToastIfFalsy(tournament.isAdmin(user), "Not authorized");
+			errorToastIfFalsy(
+				tournament.canEditEventInfo(user, { isTournamentAdder }),
+				"Not authorized",
+			);
 
 			// once published, a tournament can't be flipped back to draft
 			if (!tournament.isDraft) {

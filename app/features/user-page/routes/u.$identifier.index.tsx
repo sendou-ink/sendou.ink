@@ -73,7 +73,7 @@ function NewUserInfoPage() {
 	const user = useUser();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 	const { navItems } = useOutletContext<{ navItems: UserPageNavItem[] }>();
 
 	if (data.type !== "new") {
@@ -171,7 +171,7 @@ export function OldUserInfoPage() {
 	const data = useLoaderData<typeof loader>();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
 	if (data.type !== "old") {
 		throw new Error("Expected old user data");

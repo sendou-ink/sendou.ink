@@ -129,12 +129,12 @@ function filterKey(filter: ParsedFilter): string {
 }
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: `${args.data.weaponName} builds`,
-		ogTitle: `${args.data.weaponName} Splatoon 3 builds`,
-		description: `Collection of ${args.data.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		title: `${args.loaderData.weaponName} builds`,
+		ogTitle: `${args.loaderData.weaponName} Splatoon 3 builds`,
+		description: `Collection of ${args.loaderData.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
 		location: args.location,
 	});
 };
@@ -142,7 +142,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "gear", "analyzer"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 

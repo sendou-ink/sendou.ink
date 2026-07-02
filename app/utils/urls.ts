@@ -425,6 +425,8 @@ export const tournamentOrganizationPage = ({
 };
 export const tournamentOrganizationEditPage = (organizationSlug: string) =>
 	`${tournamentOrganizationPage({ organizationSlug })}/edit`;
+export const tournamentOrganizationStatsPage = (organizationSlug: string) =>
+	`${tournamentOrganizationPage({ organizationSlug })}/stats`;
 
 export const sendouQInviteLink = (inviteCode: string) =>
 	`${SENDOUQ_PAGE}?${JOIN_CODE_SEARCH_PARAM_KEY}=${inviteCode}`;

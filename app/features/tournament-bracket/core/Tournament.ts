@@ -1382,6 +1382,31 @@ export class Tournament {
 		return this.ctx.author.id === user.id;
 	}
 
+	/**
+	 * Checks if the given user can edit the tournament's calendar event info.
+	 *
+	 * Mirrors the authorization enforced when the edit is submitted: organization
+	 * admins can only edit when the organization is established, unless they have
+	 * the TOURNAMENT_ADDER role.
+	 */
+	canEditEventInfo(
+		user: OptionalIdObject,
+		{ isTournamentAdder }: { isTournamentAdder: boolean },
+	) {
+		if (!user) return false;
+		if (isAdmin(user)) return true;
+		if (this.ctx.author.id === user.id) return true;
+
+		const isOrganizationAdmin = this.ctx.organization?.members.some(
+			(member) => member.userId === user.id && member.role === "ADMIN",
+		);
+
+		return Boolean(
+			isOrganizationAdmin &&
+				(isTournamentAdder || this.ctx.organization?.isEstablished),
+		);
+	}
+
 	/** Checks if the given user is an organizer of the tournament. */
 	isOrganizer(user: OptionalIdObject) {
 		if (!user) return false;

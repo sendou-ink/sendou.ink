@@ -19,7 +19,7 @@ export default function UserVodsPage() {
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const data = useLoaderData<typeof loader>();
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 	const [, setSearchParams] = useSearchParams();
 
 	const setPage = (page: number) => {

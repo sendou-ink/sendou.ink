@@ -43,5 +43,8 @@
 	"leave.confirm": "Are you sure you want to leave {{organizationName}}?",
 	"leave.soleAdmin": "You are the only admin of this organization. Add another admin first or ask a site administrator to delete it.",
 	"new.heading": "New Organization",
-	"new.noPermissions": "No permissions to add organizations. Organizations can be created by users with tournament adder permissions."
+	"new.noPermissions": "No permissions to add organizations. Organizations can be created by users with tournament adder permissions.",
+	"stats.title": "Stats",
+	"stats.established.title": "Established status",
+	"stats.established.help": "Average active players over the last {{months}} months. Reach {{gain}} to become established, drop below {{lose}} to lose it. Check the FAQ page for more information on established organizations."
 }

@@ -763,7 +763,7 @@ export function useCurrentRouteChatCodes(): string[] {
 	const matches = useMatches();
 
 	for (const match of matches) {
-		const matchData = match.data as
+		const matchData = match.loaderData as
 			| { chatCode?: string | string[] }
 			| undefined;
 		if (matchData?.chatCode) {

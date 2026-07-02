@@ -5,6 +5,7 @@ import {
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
 import { RangeVisualization } from "../components/RangeVisualization";
+import { SpecialRangeVisualization } from "../components/SpecialRangeVisualization";
 
 export default function AllRangesPage() {
 	return (
@@ -31,6 +32,10 @@ export default function AllRangesPage() {
 					</section>
 				);
 			})}
+			<section>
+				<h2 style={{ textTransform: "capitalize" }}>specials</h2>
+				<SpecialRangeVisualization />
+			</section>
 		</Main>
 	);
 }
