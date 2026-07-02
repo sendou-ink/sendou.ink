@@ -181,10 +181,19 @@ export async function seasonResultPagesByUserId({
 		.select(({ fn }) => [fn.countAll().as("count")])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb }) =>
+		.where(({ or, eb, exists, selectFrom }) =>
 			or([
 				eb("groupMatchId", "is not", null),
-				eb("tournamentId", "is not", null),
+				exists(
+					selectFrom("TournamentResult")
+						.select("TournamentResult.userId")
+						.whereRef(
+							"TournamentResult.tournamentId",
+							"=",
+							"Skill.tournamentId",
+						)
+						.where("TournamentResult.userId", "=", userId),
+				),
 			]),
 		)
 		.executeTakeFirstOrThrow();
@@ -310,10 +319,19 @@ export async function seasonResultsByUserId({
 		])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb }) =>
+		.where(({ or, eb, exists, selectFrom }) =>
 			or([
 				eb("groupMatchId", "is not", null),
-				eb("tournamentId", "is not", null),
+				exists(
+					selectFrom("TournamentResult")
+						.select("TournamentResult.userId")
+						.whereRef(
+							"TournamentResult.tournamentId",
+							"=",
+							"Skill.tournamentId",
+						)
+						.where("TournamentResult.userId", "=", userId),
+				),
 			]),
 		)
 		.limit(MATCHES_PER_SEASONS_PAGE)
