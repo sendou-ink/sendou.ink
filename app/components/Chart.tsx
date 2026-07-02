@@ -244,7 +244,9 @@ export default function Chart({
 						x: {
 							...scaleDefaults,
 							max: xAbilityLimit,
-							type: "linear",
+							// category (not linear) for date axes so ticks only land on real
+							// data indices instead of fractional positions like 0.5
+							type: xAxis === "localTime" ? "category" : "linear",
 							ticks: {
 								...scaleDefaults.ticks,
 								maxRotation: 0,
