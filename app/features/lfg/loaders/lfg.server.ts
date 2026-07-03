@@ -23,7 +23,6 @@ export const loader = async () => {
 		tiersMap: postsUsersTiersMap(posts),
 		...(await UserCardRepository.userCards({
 			userIds: cardUserIds,
-			viewerId: user?.id ?? null,
 		})),
 	};
 };

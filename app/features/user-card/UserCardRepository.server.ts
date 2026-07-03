@@ -9,7 +9,7 @@ import type {
 	Tables,
 	XRankPlacementRegion,
 } from "~/db/tables";
-import { actorId } from "~/features/auth/core/user.server";
+import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import { LFG } from "~/features/lfg/lfg-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -34,20 +34,19 @@ import type {
  * Loads `UserCardData` for many users at once, keyed by user id. The single batched DB query (see
  * {@link userCardDataJsonObject}) is merged with the in-memory SEASON caches (tier from
  * `userSkills`, leaderboard placement from `cachedFullUserLeaderboard`) in this app-layer enrich
- * pass, producing the fully-formed `stats` array each card renders. `viewerId` is the logged-in
- * user viewing the cards (or `null`), used to resolve `isFriend`, `mutualFriends` and `privateNote`.
+ * pass, producing the fully-formed `stats` array each card renders. The acting user viewing the
+ * cards (resolved from request context via `actorIdOrNull()`, or `null` when anonymous) scopes the
+ * per-viewer `privateNote`.
  *
  * Designed to be spread into a route loader (`{ ...(await userCards(...)) }`) so the `UserCard`
  * component can resolve its own data from the route tree by id.
  */
 export async function userCards({
 	userIds,
-	viewerId,
 	include,
 	includeHiddenStats = false,
 }: {
 	userIds: Array<number>;
-	viewerId: number | null; // xxx: use actorId
 	/** Opt-in fields skipped from the query by default; defaults to `false` each. */
 	include?: { friendCode?: boolean };
 	/**
@@ -57,6 +56,8 @@ export async function userCards({
 	includeHiddenStats?: boolean;
 }): Promise<{ userCards: Map<number, UserCardData> }> {
 	if (userIds.length === 0) return { userCards: new Map() };
+
+	const viewerId = actorIdOrNull();
 
 	const rows = await db
 		.selectFrom("User")

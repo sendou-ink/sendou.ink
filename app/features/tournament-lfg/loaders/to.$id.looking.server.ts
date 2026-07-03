@@ -94,7 +94,6 @@ async function lookingMode({
 		mode: "looking" as const,
 		...(await UserCardRepository.userCards({
 			userIds: cardUserIds,
-			viewerId: user?.id ?? null,
 		})),
 		groups: otherGroups,
 		ownGroup,
@@ -143,7 +142,6 @@ async function subsMode({
 		mode: "subs" as const,
 		...(await UserCardRepository.userCards({
 			userIds: subs.map((sub) => sub.userId),
-			viewerId: user?.id ?? null,
 		})),
 		subs,
 		hasOwnSubPost: subs.some((sub) => sub.userId === user?.id),

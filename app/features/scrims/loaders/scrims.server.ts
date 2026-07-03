@@ -57,7 +57,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return {
 		...(await UserCardRepository.userCards({
 			userIds: cardUserIds,
-			viewerId: user?.id ?? null,
 		})),
 		posts: dividePosts(posts, user?.id),
 		teams: user ? await TeamRepository.teamsByMemberUserId(user.id) : [],

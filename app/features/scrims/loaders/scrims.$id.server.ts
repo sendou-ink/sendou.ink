@@ -39,7 +39,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		...(await UserCardRepository.userCards({
 			userIds: participantIds,
-			viewerId: user.id,
 			include: { friendCode: true },
 		})),
 		post,

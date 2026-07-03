@@ -45,6 +45,15 @@ export function withUserId<T>(id: number, fn: () => T): T {
 }
 
 /**
+ * Runs `fn` inside a user AsyncLocalStorage store with no acting user, mirroring an
+ * anonymous visitor's request. Repository functions resolving the actor via
+ * `actorIdOrNull()` then see `null`, as they would inside a real request context.
+ */
+export function withNoUser<T>(fn: () => T): T {
+	return userAsyncLocalStorage.run({ user: undefined }, fn);
+}
+
+/**
  * Wraps an action function to provide a strongly-typed, reusable handler for executing actions
  * in unit tests as if it was a normal function. The returned function allows you to pass
  * parameters that match the schema defined by the action, and it simulates a request with

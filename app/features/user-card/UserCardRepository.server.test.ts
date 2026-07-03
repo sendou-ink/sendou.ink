@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
+import { dbInsertUsers, dbReset, withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 
 describe("UserCardRepository.userCards", () => {
@@ -13,10 +13,11 @@ describe("UserCardRepository.userCards", () => {
 	});
 
 	it("returns an empty map when given no user ids", async () => {
-		const { userCards } = await UserCardRepository.userCards({
-			userIds: [],
-			viewerId: null,
-		});
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.userCards({
+				userIds: [],
+			}),
+		);
 
 		expect(userCards.size).toBe(0);
 	});
@@ -36,10 +37,11 @@ describe("UserCardRepository.userCards", () => {
 			.execute();
 		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
 
-		const { userCards } = await UserCardRepository.userCards({
-			userIds: [1, 2],
-			viewerId: null,
-		});
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.userCards({
+				userIds: [1, 2],
+			}),
+		);
 
 		expect(userCards.size).toBe(2);
 
@@ -82,10 +84,11 @@ describe("UserCardRepository.userCards", () => {
 			}),
 		);
 
-		const { userCards } = await UserCardRepository.userCards({
-			userIds: [1],
-			viewerId: 1,
-		});
+		const { userCards } = await withUserId(1, () =>
+			UserCardRepository.userCards({
+				userIds: [1],
+			}),
+		);
 		const card = userCards.get(1);
 
 		expect(card?.shortBio).toBe("hello");
@@ -114,11 +117,12 @@ describe("UserCardRepository.userCards", () => {
 			}),
 		);
 
-		const { userCards } = await UserCardRepository.userCards({
-			userIds: [1],
-			viewerId: 1,
-			includeHiddenStats: true,
-		});
+		const { userCards } = await withUserId(1, () =>
+			UserCardRepository.userCards({
+				userIds: [1],
+				includeHiddenStats: true,
+			}),
+		);
 		const card = userCards.get(1);
 
 		expect(card?.stats.find((stat) => stat.type === "XP")).toMatchObject({
@@ -144,10 +148,11 @@ describe("UserCardRepository.userCards", () => {
 			}),
 		);
 
-		const { userCards } = await UserCardRepository.userCards({
-			userIds: [1],
-			viewerId: 1,
-		});
+		const { userCards } = await withUserId(1, () =>
+			UserCardRepository.userCards({
+				userIds: [1],
+			}),
+		);
 
 		const banner = userCards.get(1)?.banner;
 		expect(banner?.type).toBe("URL");

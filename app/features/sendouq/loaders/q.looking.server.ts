@@ -43,7 +43,6 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	return {
 		...(await UserCardRepository.userCards({
 			userIds: cardUserIds,
-			viewerId: user.id,
 		})),
 		groups: groupsToShow,
 		ownGroup,

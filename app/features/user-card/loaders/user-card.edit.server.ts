@@ -9,7 +9,6 @@ export const loader = async () => {
 	const [{ userCards }, extras] = await Promise.all([
 		UserCardRepository.userCards({
 			userIds: [user.id],
-			viewerId: user.id,
 			includeHiddenStats: true,
 		}),
 		UserCardRepository.cardEditExtras(user.id),
