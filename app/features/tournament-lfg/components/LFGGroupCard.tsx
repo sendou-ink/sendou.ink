@@ -3,23 +3,28 @@ import { Mic, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Pronouns } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { navIconUrl, userPage } from "~/utils/urls";
+import { navIconUrl } from "~/utils/urls";
 import { updateGroupFormSchema } from "../tournament-lfg-schemas";
 import styles from "./LFGGroupCard.module.css";
 
@@ -194,14 +199,23 @@ function LFGGroupMemberRow({
 	showActions: boolean;
 	isOwnGroup: boolean;
 }) {
+	const cardData = useUserCardData(member.id);
+
 	return (
 		<div className="stack xxs">
 			<div className={styles.member}>
 				<div className="text-main-forced stack xs horizontal items-center">
-					<Avatar user={member} size="xs" />
-					<Link to={userPage(member)} className={styles.name}>
-						{member.username}
-					</Link>
+					<UserCard userId={member.id} withMutualFriends>
+						<span className="stack xs horizontal items-center">
+							<NoteAvatar
+								sentiment={cardData?.privateNote?.sentiment}
+								size="sm"
+							>
+								<Avatar user={member} size="xs" />
+							</NoteAvatar>
+							<span className={styles.name}>{member.username}</span>
+						</span>
+					</UserCard>
 					{member.pronouns ? (
 						<span className="text-lighter ml-1 text-xxxs">
 							{member.pronouns.subject}/{member.pronouns.object}
