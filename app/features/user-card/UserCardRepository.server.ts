@@ -4,6 +4,7 @@ import { sql } from "kysely";
 import { jsonBuildObject, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type {
+	CustomTheme,
 	HideableUserCardStat,
 	PeakXP,
 	Tables,
@@ -191,7 +192,7 @@ function userCardDataJsonObject(
 		...commonUserObjectFields(eb),
 		shortBio: eb.ref("User.shortBio"),
 		div: eb.ref("User.div"),
-		customTheme: eb.ref("User.customTheme"),
+		customTheme: sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
 		hiddenCardStats: eb.ref("User.hiddenCardStats"),
 		banner: bannerJson(eb),
 		friendCode: include?.friendCode

@@ -79,7 +79,8 @@ cannot use currentColor inside data URLs
 
 Any changes here NEED to be reflected in oklch-gamut.ts as well
 */
-html.dark {
+html.dark,
+html.dark [data-custom-theme] {
 	--color-base-0: oklch(100% var(--_base-c-0) var(--_base-h));
 	--color-base-1: oklch(95% var(--_base-c-1) var(--_base-h));
 	--color-base-2: oklch(90% var(--_base-c-2) var(--_base-h));
@@ -129,7 +130,8 @@ html.dark {
 	--field-icon-time: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(145, 145, 145)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'%3E%3C/circle%3E%3Cpolyline points='12 6 12 12 16 14'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
-html.light {
+html.light,
+html.light [data-custom-theme] {
 	--color-base-0: oklch(17% var(--_base-c-7) var(--_base-h));
 	--color-base-1: oklch(25% var(--_base-c-6) var(--_base-h));
 	--color-base-2: oklch(32% var(--_base-c-5) var(--_base-h));
@@ -182,7 +184,9 @@ html.light {
 /*
 These are the vars you mainly want to use
 */
-html {
+html,
+/* biome-ignore lint/style/noDescendingSpecificity: [data-custom-theme] re-declares theme vars for card subtrees; different properties than the html.dark/light blocks so no real override */
+[data-custom-theme] {
 	--color-text: var(--color-base-0);
 	--color-text-high: var(--color-base-3);
 	--color-text-inverse: var(--color-base-7);

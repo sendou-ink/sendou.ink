@@ -221,7 +221,11 @@ function CardContent({
 	};
 
 	return (
-		<div className={styles.card} style={customThemeStyle(data.customTheme)}>
+		<div
+			className={styles.card}
+			style={customThemeStyle(data.customTheme)}
+			data-custom-theme={data.customTheme ? true : undefined}
+		>
 			<Banner banner={data.banner} />
 			{data.freeAgentPostId !== null ? (
 				<LinkButton
@@ -557,6 +561,7 @@ function customThemeStyle(
 	const style: Record<string, number> = {};
 	for (const [key, value] of Object.entries(customTheme)) {
 		if (value === null) continue;
+		if (key.includes("--_size") || key.includes("--_border")) continue;
 		style[key] = value;
 	}
 
