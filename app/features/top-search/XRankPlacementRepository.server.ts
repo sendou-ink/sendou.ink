@@ -29,6 +29,17 @@ export async function verifiedPeakXpByUserId(
 	return player?.peakXp?.overall ?? null;
 }
 
+/** Whether the user has a linked Splatoon player (i.e. has claimed their X Rank results). */
+export async function isPlayerLinkedByUserId(userId: number): Promise<boolean> {
+	const player = await db
+		.selectFrom("SplatoonPlayer")
+		.select("SplatoonPlayer.id")
+		.where("SplatoonPlayer.userId", "=", userId)
+		.executeTakeFirst();
+
+	return Boolean(player);
+}
+
 function xRankPlacementsQueryBase() {
 	return db
 		.selectFrom("XRankPlacement")

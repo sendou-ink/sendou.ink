@@ -7,6 +7,7 @@ import {
 } from "react-router";
 import { Main } from "~/components/Main";
 import type { XRankPlacementRegion } from "~/db/tables";
+import { HowToLinkPopover } from "~/features/top-search/components/HowToLinkPopover";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -42,7 +43,10 @@ export default function UserCardEditPage() {
 	return (
 		<Main halfWidth>
 			<div className="stack md">
-				<h2 className="text-lg">{t("user:card.edit.title")}</h2>
+				<div>
+					<h2 className="text-lg">{t("user:card.edit.title")}</h2>
+					{!data.hasLinkedPlayer ? <HowToLinkPopover /> : null}
+				</div>
 				<SendouForm
 					schema={updateUserCardSchema}
 					action={returnTo ? userCardEditPage({ returnTo }) : undefined}
