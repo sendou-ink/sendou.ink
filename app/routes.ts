@@ -69,7 +69,13 @@ export default [
 			"edit-widgets",
 			"features/user-page/routes/u.$identifier.edit-widgets.tsx",
 		),
-		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx"),
+		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx", [
+			index("features/user-page/routes/u.$identifier.seasons.index.tsx"),
+			route(
+				"stats",
+				"features/user-page/routes/u.$identifier.seasons.stats.tsx",
+			),
+		]),
 		route("vods", "features/user-page/routes/u.$identifier.vods.tsx"),
 		route("builds", "features/user-page/routes/u.$identifier.builds.tsx"),
 		route(

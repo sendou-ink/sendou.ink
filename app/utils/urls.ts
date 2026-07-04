@@ -167,6 +167,22 @@ export const userSeasonsPage = ({
 	`${userPage(user)}/seasons${
 		typeof season === "number" ? `?season=${season}` : ""
 	}`;
+export const userSeasonsStatsPage = ({
+	user,
+	season,
+	info,
+}: {
+	user: UserLinkArgs;
+	season?: number;
+	info?: "weapons" | "stages" | "mates" | "enemies";
+}) => {
+	const params = new URLSearchParams();
+	if (info) params.set("info", info);
+	if (typeof season === "number") params.set("season", String(season));
+	const query = params.toString();
+
+	return `${userPage(user)}/seasons/stats${query ? `?${query}` : ""}`;
+};
 export const userEditProfilePage = (user: UserLinkArgs) =>
 	`${userPage(user)}/edit`;
 export const userBuildsPage = (user: UserLinkArgs) =>

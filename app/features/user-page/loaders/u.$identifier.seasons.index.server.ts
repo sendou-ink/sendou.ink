@@ -1,9 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import * as SkillRepository from "~/features/mmr/SkillRepository.server";
-import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
-import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -13,12 +10,12 @@ import {
 	userParamsSchema,
 } from "../user-page-schemas";
 
-export type UserSeasonsPageLoaderData = NonNullable<
+export type UserSeasonsSetsLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
 >;
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
-	const loggedInUser = requireUser();
+	requireUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
 		Object.fromEntries(url.searchParams),
@@ -34,42 +31,22 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		return null;
 	}
 
-	const { season = seasonsParticipatedIn[0] } = parsedSearchParams.success
-		? parsedSearchParams.data
-		: {};
-
-	const { isAccurateTiers, userSkills } = _userSkills(season);
-	const { tier, ordinal, approximate } = userSkills[user.id] ?? {
-		approximate: false,
-		ordinal: 0,
-		tier: { isPlus: false, name: "IRON" },
-	};
+	const { page = 1, season = seasonsParticipatedIn[0] } =
+		parsedSearchParams.success ? parsedSearchParams.data : {};
 
 	return {
-		seasonsParticipatedIn,
-		currentOrdinal: !approximate ? ordinal : undefined,
-		winrates: {
-			maps: await PlayerStatRepository.seasonMapWinrateByUserId({
+		results: {
+			value: await SQMatchRepository.seasonResultsByUserId({
 				season,
 				userId: user.id,
+				page,
 			}),
-			sets: await PlayerStatRepository.seasonSetWinrateByUserId({
+			currentPage: page,
+			pages: await SQMatchRepository.seasonResultPagesByUserId({
 				season,
 				userId: user.id,
 			}),
 		},
-		skills: await SkillRepository.seasonProgressionByUserId({
-			season,
-			userId: user.id,
-		}),
-		tier,
-		isAccurateTiers,
-		canceled: loggedInUser.roles.includes("STAFF")
-			? await SQMatchRepository.seasonCanceledMatchesByUserId({
-					season,
-					userId: user.id,
-				})
-			: null,
 		season,
 	};
 };
