@@ -37,7 +37,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		...(await UserCardRepository.userCards({
 			userIds: matchUsers,
-			include: { friendCode: true },
+			include: { friendCode: isStaff || isParticipant },
 		})),
 		match,
 		reportedWeapons,

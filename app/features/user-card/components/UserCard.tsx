@@ -13,6 +13,7 @@ import * as React from "react";
 import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLocation, useMatches } from "react-router";
+import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
@@ -557,12 +558,9 @@ function customThemeStyle(
 ): React.CSSProperties {
 	if (!customTheme) return {};
 
-	const style: Record<string, number> = {};
-	for (const [key, value] of Object.entries(customTheme)) {
-		if (value === null) continue;
-		if (key.includes("--_size") || key.includes("--_border")) continue;
-		style[key] = value;
-	}
-
-	return style as React.CSSProperties;
+	return R.pickBy(
+		customTheme,
+		(value, key) =>
+			value !== null && !key.includes("--_size") && !key.includes("--_border"),
+	) as React.CSSProperties;
 }

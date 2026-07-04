@@ -221,7 +221,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		...(await UserCardRepository.userCards({
 			userIds: match.players.map((p) => p.id),
-			include: { friendCode: true },
+			include: {
+				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
+			},
 		})),
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,

@@ -247,42 +247,6 @@ describe("refreshTenStarWeapons", () => {
 	});
 });
 
-describe("verifiedPeakXpByUserId", () => {
-	beforeEach(() => {
-		placementCounter = 0;
-		dbReset();
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	test("reports a linked player's peak xp", async () => {
-		const userId = await createUser("user1");
-
-		expect(
-			await XRankPlacementRepository.verifiedPeakXpByUserId(userId),
-		).toBeNull();
-
-		await db
-			.insertInto("SplatoonPlayer")
-			.values({
-				userId,
-				splId: "spl-1",
-				peakXp: JSON.stringify({
-					overall: 2800,
-					takoroka: 2800,
-					tentatek: null,
-				}),
-			})
-			.execute();
-
-		expect(await XRankPlacementRepository.verifiedPeakXpByUserId(userId)).toBe(
-			2800,
-		);
-	});
-});
-
 describe("refreshTenStarWeapons with userId", () => {
 	beforeEach(() => {
 		placementCounter = 0;

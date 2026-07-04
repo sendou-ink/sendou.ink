@@ -14,19 +14,11 @@ export function unlinkPlayerByUserId(userId: number) {
 }
 
 /**
- * Overall verified peak XP of the user's linked Splatoon player, or `null` when no player is linked.
- * Used to bound how high a linked user may self-report their unverified peak XP.
+ * SQLite expression extracting a Splatoon player's overall peak XP from the denormalized `peakXp`
+ * JSON column (see {@link refreshAllPeakXp}). `"SplatoonPlayer"` must be in scope at the call site.
  */
-export async function verifiedPeakXpByUserId(
-	userId: number,
-): Promise<number | null> {
-	const player = await db
-		.selectFrom("SplatoonPlayer")
-		.select("SplatoonPlayer.peakXp")
-		.where("SplatoonPlayer.userId", "=", userId)
-		.executeTakeFirst();
-
-	return player?.peakXp?.overall ?? null;
+export function peakXpOverallSql<T extends number | null = number | null>() {
+	return sql<T>`"SplatoonPlayer"."peakXp" ->> '$.overall'`;
 }
 
 /** Whether the user has a linked Splatoon player (i.e. has claimed their X Rank results). */

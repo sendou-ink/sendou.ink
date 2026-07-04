@@ -47,7 +47,7 @@ export { loader };
 import styles from "./to.$id.looking.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["q", "tournament", "forms", "common"],
+	i18n: ["q", "tournament", "forms", "common", "user"],
 };
 
 export default function TournamentLFGShell() {

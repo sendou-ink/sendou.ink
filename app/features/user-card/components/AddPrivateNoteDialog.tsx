@@ -37,9 +37,11 @@ export function AddPrivateNoteDialog({
 			wasSubmittingRef.current = true;
 		} else if (wasSubmittingRef.current) {
 			wasSubmittingRef.current = false;
-			onClose();
+			if ((fetcher.data as { ok?: boolean } | undefined)?.ok) {
+				onClose();
+			}
 		}
-	}, [fetcher.state, onClose]);
+	}, [fetcher.state, fetcher.data, onClose]);
 
 	return (
 		<SendouDialog

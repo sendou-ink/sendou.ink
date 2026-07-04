@@ -232,7 +232,7 @@ function bannerJson(eb: ExpressionBuilder<Tables, "User">) {
 			end`,
 		stageId: sql<
 			number | null
-		>`iif("User"."bannerPresetImg" GLOB '[0-9]*', "User"."bannerPresetImg", null)`,
+		>`iif("User"."bannerPresetImg" GLOB '[0-9]*', CAST("User"."bannerPresetImg" AS INTEGER), null)`,
 	});
 }
 

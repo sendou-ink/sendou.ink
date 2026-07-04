@@ -8,7 +8,7 @@
 .badge {
 	position: absolute;
 	bottom: 15%;
-	left: 15%;
+	inset-inline-start: 15%;
 	transform: translate(-50%, 50%);
 	display: grid;
 	place-items: center;

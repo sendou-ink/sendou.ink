@@ -31,7 +31,6 @@
 	background-color: var(--color-bg);
 	border: 1px solid var(--color-border);
 	border-radius: var(--radius-box);
-	box-shadow: var(--shadow-md);
 	overflow: hidden;
 }
 
@@ -40,13 +39,13 @@
 	margin-inline: calc(-1 * var(--s-4));
 	background-size: cover;
 	background-position: center;
-	background-color: var(--color-bg-lighter);
+	background-color: var(--color-bg-higher);
 }
 
 .iconButtons {
 	position: absolute;
 	top: var(--s-2);
-	right: var(--s-2);
+	inset-inline-end: var(--s-2);
 	display: flex;
 	gap: var(--s-2);
 }
@@ -54,7 +53,7 @@
 .freeAgentBadge {
 	position: absolute;
 	top: var(--s-2);
-	left: var(--s-2);
+	inset-inline-start: var(--s-2);
 }
 
 .identity {
@@ -76,7 +75,7 @@
 	padding-bottom: var(--s-6);
 	position: absolute;
 	top: 18px;
-	left: 92px;
+	inset-inline-start: 92px;
 }
 
 .username {

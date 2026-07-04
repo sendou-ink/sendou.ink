@@ -26,7 +26,10 @@ export const updateUserCardSchema = z.object({
 			{ label: "options.bannerType.URL", value: "URL" },
 		],
 	}),
-	bannerColor: customField({ initialValue: PRESET_COLORS[0] }, z.string()),
+	bannerColor: customField(
+		{ initialValue: PRESET_COLORS[0] },
+		z.string().regex(/^#[0-9a-f]{6}$/i),
+	),
 	bannerStageId: stageSelect({ label: "labels.bannerStage" }),
 	bannerImage: image({
 		label: "labels.bannerImage",

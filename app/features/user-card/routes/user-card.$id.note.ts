@@ -26,7 +26,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	if (data._action === "DELETE" || isEmptySave) {
 		await PrivateUserNoteRepository.deleteOwnNoteById(targetId);
-		return null;
+		return { ok: true };
 	}
 
 	await PrivateUserNoteRepository.upsertOwnNote({
@@ -35,5 +35,5 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		text: data.comment,
 	});
 
-	return null;
+	return { ok: true };
 };

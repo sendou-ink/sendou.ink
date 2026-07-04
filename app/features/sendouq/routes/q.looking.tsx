@@ -461,7 +461,7 @@ function sortGroupsByPrivateNoteSentiment<
 		return score;
 	};
 
-	return [...groups].sort((a, b) => {
+	return groups.toSorted((a, b) => {
 		const aIsFull = !a.members;
 		const bIsFull = !b.members;
 		if (aIsFull !== bIsFull) return aIsFull ? 1 : -1;
