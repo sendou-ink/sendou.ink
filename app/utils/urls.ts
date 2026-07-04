@@ -24,15 +24,6 @@ import type {
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import type { DayMonthYear } from "~/utils/zod";
 
-const staticAssetsUrl = ({
-	folder,
-	fileName,
-}: {
-	folder: string;
-	fileName: string;
-}) =>
-	`https://raw.githubusercontent.com/sendou-ink/assets/main/${folder}/${fileName}`;
-
 export const discordAvatarUrl = ({
 	discordId,
 	discordAvatar,
@@ -582,11 +573,7 @@ export const stageMinimapImageUrlWithEnding = ({
 	stageId: StageId;
 	mode: ModeShort;
 	style: StageBackgroundStyle;
-}) =>
-	staticAssetsUrl({
-		folder: "planner-maps",
-		fileName: `${stageId}-${mode}-${style}.png`,
-	});
+}) => `${STATIC_ASSETS_URL}/planner-maps/${stageId}-${mode}-${style}.png`;
 
 export function resolveBaseUrl(url: string) {
 	return new URL(url).host;
