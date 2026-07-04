@@ -77,8 +77,6 @@ export default function QLookingShell() {
 	return <QLookingPage />;
 }
 
-// xxx: update prompt to fill the profile to include UserCard stuff
-
 function QLookingPage() {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
