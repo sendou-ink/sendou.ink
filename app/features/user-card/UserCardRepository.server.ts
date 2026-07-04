@@ -59,20 +59,21 @@ export async function userCards({
 
 	const viewerId = actorIdOrNull();
 
-	const rows = await db
-		.selectFrom("User")
-		.select((eb) =>
-			userCardDataJsonObject(eb, { viewerId, include }).as("cardData"),
-		)
-		.where("User.id", "in", userIds)
-		.execute();
-
 	// a user's card surfaces the better of their last two finished seasons (see bestSeasonResult)
-	const seasonResults: Array<SeasonResult> = await Promise.all(
-		Seasons.allFinished()
-			.slice(0, 2)
-			.map((season) => seasonResult(season, userIds)),
-	);
+	const [rows, seasonResults] = await Promise.all([
+		db
+			.selectFrom("User")
+			.select((eb) =>
+				userCardDataJsonObject(eb, { viewerId, include }).as("cardData"),
+			)
+			.where("User.id", "in", userIds)
+			.execute(),
+		Promise.all(
+			Seasons.allFinished()
+				.slice(0, 2)
+				.map((season) => seasonResult(season, userIds)),
+		),
+	]);
 
 	const userCards = new Map<number, UserCardData>();
 	for (const { cardData } of rows) {
@@ -374,15 +375,35 @@ async function seasonResult(
 	});
 
 	const placementsByUserId = anyLeviathanPlus
-		? new Map(
-				(await cachedFullUserLeaderboard(season)).map((entry) => [
-					entry.id,
-					entry.placementRank,
-				]),
-			)
+		? await finishedSeasonPlacements(season)
 		: new Map<number, number>();
 
 	return { skills, placementsByUserId };
+}
+
+const placementsBySeason = new Map<number, Map<number, number>>();
+
+/**
+ * Leaderboard placements of a finished season, keyed by user id. Cached for the process lifetime:
+ * a finished season's leaderboard is immutable, matching how `userSkills` already holds finished
+ * seasons' tiers permanently. This keeps cards off `cachedFullUserLeaderboard`'s TTL, whose
+ * synchronous rebuild would otherwise stall the first Leviathan+ card render after a quiet period.
+ */
+async function finishedSeasonPlacements(
+	season: number,
+): Promise<Map<number, number>> {
+	const cached = placementsBySeason.get(season);
+	if (cached) return cached;
+
+	const placements = new Map(
+		(await cachedFullUserLeaderboard(season)).map((entry) => [
+			entry.id,
+			entry.placementRank,
+		]),
+	);
+	placementsBySeason.set(season, placements);
+
+	return placements;
 }
 
 const isLeviathanPlus = (tier: TieredSkill["tier"]) =>
