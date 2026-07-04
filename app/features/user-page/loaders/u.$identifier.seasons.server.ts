@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
@@ -19,7 +19,7 @@ export type UserSeasonsPageLoaderData = NonNullable<
 >;
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
-	const loggedInUser = getUser();
+	const loggedInUser = requireUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
 		Object.fromEntries(url.searchParams),
@@ -79,7 +79,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 				userId: user.id,
 			}),
 		},
-		canceled: loggedInUser?.roles.includes("STAFF")
+		canceled: loggedInUser.roles.includes("STAFF")
 			? await SQMatchRepository.seasonCanceledMatchesByUserId({
 					season,
 					userId: user.id,
