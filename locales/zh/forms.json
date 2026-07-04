@@ -15,6 +15,7 @@
 	"options.bannerType.URL": "",
 	"options.xpDivision.WEST": "",
 	"options.xpDivision.JPN": "",
+	"bottomTexts.unverifiedXp": "",
 	"errors.unverifiedXpTooHigh": "",
 	"labels.link": "链接",
 	"labels.tag": "标签",

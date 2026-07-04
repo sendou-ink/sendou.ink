@@ -1,7 +1,19 @@
+import type { XRankPlacementRegion } from "~/db/tables";
 import { USER_CARD } from "./user-card-constants";
 
-export function maxUnverifiedXp(linkedPeakXp: number | null) {
-	return typeof linkedPeakXp === "number"
-		? linkedPeakXp + USER_CARD.MAX_UNVERIFIED_XP_ABOVE_LINKED_PLAYER
-		: USER_CARD.MAX_UNVERIFIED_XP_WITHOUT_LINKED_PLAYER;
+/**
+ * Highest self-reported peak XP accepted for the given division. A user with a
+ * linked, verified Splatoon player is allowed a higher cap than one without.
+ */
+export function maxUnverifiedXp({
+	division,
+	hasLinkedPlayer,
+}: {
+	division: XRankPlacementRegion;
+	hasLinkedPlayer: boolean;
+}) {
+	const base = USER_CARD.MAX_UNVERIFIED_XP_BY_DIVISION[division];
+	return hasLinkedPlayer
+		? base + USER_CARD.MAX_UNVERIFIED_XP_LINKED_PLAYER_BONUS
+		: base;
 }

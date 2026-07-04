@@ -33,7 +33,10 @@ export const updateUserCardSchema = z.object({
 		dimensions: "thick-banner",
 		autoValidate: true,
 	}),
-	unverifiedXpPoints: numberFieldOptional({ label: "labels.unverifiedXp" }),
+	unverifiedXpPoints: numberFieldOptional({
+		label: "labels.unverifiedXp",
+		bottomText: "bottomTexts.unverifiedXp",
+	}),
 	unverifiedXpDivision: select({
 		label: "labels.division",
 		items: [

@@ -367,7 +367,6 @@ function NoteView({
  * checkmark once a request is pending (server-known or just sent). Cancelling a pending request
  * is done on the `/friends` page.
  */
-// xxx: better pending
 function FriendRequestButton({
 	targetUserId,
 	hasPendingFriendRequest,

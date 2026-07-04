@@ -2,7 +2,6 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import invariant from "~/utils/invariant";
 import * as UserCardRepository from "../UserCardRepository.server";
-import { maxUnverifiedXp } from "../user-card-utils";
 
 export const loader = async () => {
 	const user = requireUser();
@@ -23,7 +22,6 @@ export const loader = async () => {
 		card,
 		extras,
 		isSupporter: Boolean(user.roles?.includes("SUPPORTER")),
-		maxUnverifiedXp: maxUnverifiedXp(extras.linkedPlayerPeakXp),
 		presentStats: card.stats.map((stat) => stat.type),
 		hasLinkedPlayer,
 	};

@@ -17,7 +17,6 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
-import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
@@ -92,9 +91,8 @@ export async function userCards({
 
 /**
  * Raw card fields the edit form needs that are not part of {@link UserCardData}: the uploaded banner
- * image (id + preview url, for the image field's default value), the self-reported peak XP, the
- * hidden stat types (to pre-check the visibility toggles), and the linked player's verified peak XP
- * (to display the XP input's max hint).
+ * image (id + preview url, for the image field's default value), the self-reported peak XP, and the
+ * hidden stat types (to pre-check the visibility toggles).
  */
 export async function cardEditExtras(userId: number) {
 	const row = await db
@@ -113,8 +111,6 @@ export async function cardEditExtras(userId: number) {
 		bannerImageUrl: row?.bannerImageUrl ?? null,
 		unverifiedPeakXP: row?.unverifiedPeakXP ?? null,
 		hiddenCardStats: row?.hiddenCardStats ?? [],
-		linkedPlayerPeakXp:
-			await XRankPlacementRepository.verifiedPeakXpByUserId(userId),
 	};
 }
 

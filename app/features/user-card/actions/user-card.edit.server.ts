@@ -27,10 +27,13 @@ export const action: ActionFunction = async ({ request }) => {
 	const data = result.data;
 
 	if (data.unverifiedXpPoints) {
-		const linkedPeakXp = await XRankPlacementRepository.verifiedPeakXpByUserId(
-			user.id,
-		);
-		if (data.unverifiedXpPoints > maxUnverifiedXp(linkedPeakXp)) {
+		const hasLinkedPlayer =
+			await XRankPlacementRepository.isPlayerLinkedByUserId(user.id);
+		const max = maxUnverifiedXp({
+			division: data.unverifiedXpDivision,
+			hasLinkedPlayer,
+		});
+		if (data.unverifiedXpPoints > max) {
 			return {
 				fieldErrors: { unverifiedXpPoints: "forms:errors.unverifiedXpTooHigh" },
 			};
