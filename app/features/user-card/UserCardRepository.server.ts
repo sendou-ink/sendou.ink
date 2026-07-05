@@ -29,6 +29,7 @@ import type {
 	UserCardStat,
 	UserCardStatXPValue,
 } from "./user-card-types";
+import { isValidUnverifiedXp } from "./user-card-utils";
 
 /**
  * Loads `UserCardData` for many users at once, keyed by user id. The single batched DB query (see
@@ -529,7 +530,14 @@ function userCardStats({
 	const stats: Array<UserCardStat> = [];
 
 	const xpValues: Array<UserCardStatXPValue> = [];
-	if (xpUnverified) {
+	// self-reported peak XP is only surfaced as a valid claim sitting on top of a verified placement
+	if (
+		xpUnverified &&
+		isValidUnverifiedXp({
+			unverified: xpUnverified.points,
+			verified: xpVerified?.points ?? null,
+		})
+	) {
 		xpValues.push({
 			isVerified: false,
 			region: xpUnverified.region,

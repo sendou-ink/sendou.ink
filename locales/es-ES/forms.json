@@ -16,7 +16,7 @@
 	"options.xpDivision.WEST": "",
 	"options.xpDivision.JPN": "",
 	"bottomTexts.unverifiedXp": "",
-	"errors.unverifiedXpTooHigh": "",
+	"errors.unverifiedXpNotAboveVerified": "",
 	"labels.link": "",
 	"labels.tag": "Etiqueta",
 	"labels.teamBsky": "Bluesky del equipo",

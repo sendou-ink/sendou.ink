@@ -16,7 +16,7 @@
 	"options.xpDivision.WEST": "",
 	"options.xpDivision.JPN": "",
 	"bottomTexts.unverifiedXp": "",
-	"errors.unverifiedXpTooHigh": "",
+	"errors.unverifiedXpNotAboveVerified": "",
 	"labels.link": "链接",
 	"labels.tag": "标签",
 	"labels.teamBsky": "队伍 Bluesky",

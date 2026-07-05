@@ -32,6 +32,22 @@ export async function isPlayerLinkedByUserId(userId: number): Promise<boolean> {
 	return Boolean(player);
 }
 
+/**
+ * The user's verified peak XP, read from their linked player's denormalized `SplatoonPlayer.peakXp`
+ * column (see {@link refreshAllPeakXp}). `null` when they have no linked player or no placements.
+ */
+export async function peakVerifiedXpByUserId(
+	userId: Tables["User"]["id"],
+): Promise<number | null> {
+	const row = await db
+		.selectFrom("SplatoonPlayer")
+		.where("SplatoonPlayer.userId", "=", userId)
+		.select(peakXpOverallSql().as("overall"))
+		.executeTakeFirst();
+
+	return row?.overall ?? null;
+}
+
 function xRankPlacementsQueryBase() {
 	return db
 		.selectFrom("XRankPlacement")

@@ -2,6 +2,40 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { db } from "~/db/sql";
 import { dbInsertUsers, dbReset, withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
+import type { UserCardData } from "./user-card-types";
+
+const insertVerifiedXp = async (
+	userId: number,
+	power: number,
+	region: "WEST" | "JPN" = "WEST",
+) => {
+	const player = await db
+		.insertInto("SplatoonPlayer")
+		.values({ splId: `spl-${userId}`, userId })
+		.returning("id")
+		.executeTakeFirstOrThrow();
+	await db
+		.insertInto("XRankPlacement")
+		.values({
+			playerId: player.id,
+			weaponSplId: 0,
+			badges: "[]",
+			bannerSplId: 1,
+			mode: "SZ",
+			month: 1,
+			year: 2024,
+			name: "Test Player",
+			nameDiscriminator: "0000",
+			power,
+			rank: 1,
+			region,
+			title: "Test",
+		})
+		.execute();
+};
+
+const findXpStat = (card: UserCardData | undefined) =>
+	card?.stats.find((stat) => stat.type === "XP");
 
 describe("UserCardRepository.userCards", () => {
 	beforeEach(async () => {
@@ -25,17 +59,11 @@ describe("UserCardRepository.userCards", () => {
 	it("keys cards by user id and builds the stats array from db fields", async () => {
 		await db
 			.updateTable("User")
-			.set({
-				div: "1",
-				unverifiedPeakXP: JSON.stringify({
-					overall: 3000,
-					takoroka: 3000,
-					tentatek: null,
-				}),
-			})
+			.set({ div: "1" })
 			.where("id", "=", 1)
 			.execute();
 		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
+		await insertVerifiedXp(1, 2500);
 
 		const { userCards } = await withNoUser(() =>
 			UserCardRepository.userCards({
@@ -54,9 +82,9 @@ describe("UserCardRepository.userCards", () => {
 		expect(statTypes).toContain("DIV");
 		expect(statTypes).toContain("PLUS");
 
-		expect(card?.stats.find((stat) => stat.type === "XP")).toMatchObject({
+		expect(findXpStat(card)).toMatchObject({
 			type: "XP",
-			values: [{ isVerified: false, region: "JPN", points: 3000 }],
+			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
 		expect(card?.stats.find((stat) => stat.type === "DIV")).toMatchObject({
 			type: "DIV",
@@ -71,15 +99,103 @@ describe("UserCardRepository.userCards", () => {
 		expect(userCards.get(2)?.stats).toHaveLength(0);
 	});
 
+	it("surfaces self-reported peak XP only when it beats the verified XP", async () => {
+		await insertVerifiedXp(1, 2500);
+		await withUserId(1, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: { overall: 2600, takoroka: null, tentatek: 2600 },
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.userCards({ userIds: [1] }),
+		);
+
+		expect(findXpStat(userCards.get(1))).toMatchObject({
+			type: "XP",
+			values: [
+				{ isVerified: false, region: "WEST", points: 2600 },
+				{ isVerified: true, region: "WEST", points: 2500 },
+			],
+		});
+	});
+
+	it("ignores self-reported peak XP that does not beat the verified XP", async () => {
+		await insertVerifiedXp(1, 2500);
+		await withUserId(1, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: { overall: 2400, takoroka: null, tentatek: 2400 },
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.userCards({ userIds: [1] }),
+		);
+
+		expect(findXpStat(userCards.get(1))).toMatchObject({
+			type: "XP",
+			values: [{ isVerified: true, region: "WEST", points: 2500 }],
+		});
+	});
+
+	it("ignores self-reported peak XP more than 200 above the verified XP", async () => {
+		await insertVerifiedXp(1, 2500);
+		await withUserId(1, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: { overall: 2800, takoroka: null, tentatek: 2800 },
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.userCards({ userIds: [1] }),
+		);
+
+		expect(findXpStat(userCards.get(1))).toMatchObject({
+			type: "XP",
+			values: [{ isVerified: true, region: "WEST", points: 2500 }],
+		});
+	});
+
+	it("ignores self-reported peak XP when there is no verified XP", async () => {
+		await withUserId(1, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: { overall: 3000, takoroka: 3000, tentatek: null },
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.userCards({ userIds: [1] }),
+		);
+
+		expect(findXpStat(userCards.get(1))).toBeUndefined();
+	});
+
 	it("persists edited card fields and surfaces hidden stats", async () => {
 		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
+		await insertVerifiedXp(1, 2500);
 
 		await withUserId(1, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: "hello",
 				bannerPresetImg: "#ff4655",
 				bannerImgId: null,
-				unverifiedPeakXP: { overall: 2500, takoroka: null, tentatek: 2500 },
+				unverifiedPeakXP: null,
 				hiddenCardStats: ["XP"],
 			}),
 		);
@@ -94,7 +210,7 @@ describe("UserCardRepository.userCards", () => {
 		expect(card?.shortBio).toBe("hello");
 		expect(card?.banner).toMatchObject({ type: "COLOR", hexCode: "#ff4655" });
 		// the hidden stat is filtered out of `stats` at query time
-		expect(card?.stats.find((stat) => stat.type === "XP")).toBeUndefined();
+		expect(findXpStat(card)).toBeUndefined();
 		expect(card?.stats.find((stat) => stat.type === "PLUS")).toMatchObject({
 			type: "PLUS",
 			value: 2,
@@ -105,14 +221,14 @@ describe("UserCardRepository.userCards", () => {
 	});
 
 	it("keeps hidden stats in `stats` when includeHiddenStats is set", async () => {
-		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
+		await insertVerifiedXp(1, 2500);
 
 		await withUserId(1, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
 				bannerImgId: null,
-				unverifiedPeakXP: { overall: 2500, takoroka: null, tentatek: 2500 },
+				unverifiedPeakXP: null,
 				hiddenCardStats: ["XP"],
 			}),
 		);
@@ -125,9 +241,9 @@ describe("UserCardRepository.userCards", () => {
 		);
 		const card = userCards.get(1);
 
-		expect(card?.stats.find((stat) => stat.type === "XP")).toMatchObject({
+		expect(findXpStat(card)).toMatchObject({
 			type: "XP",
-			values: [{ isVerified: false, region: "WEST", points: 2500 }],
+			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
 	});
 
