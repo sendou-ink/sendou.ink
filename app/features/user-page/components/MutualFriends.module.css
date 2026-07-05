@@ -1,6 +1,8 @@
 .trigger {
 	display: flex;
 	align-items: center;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
 
 	span {
 		color: var(--color-text-high);

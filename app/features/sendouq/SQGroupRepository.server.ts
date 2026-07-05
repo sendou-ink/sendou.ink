@@ -72,14 +72,12 @@ export async function findCurrentGroups() {
 					isTenStar: number;
 			  })[]
 			| null;
-		plusTier: Tables["PlusTier"]["tier"] | null;
 	};
 
 	return db
 		.selectFrom("Group")
 		.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
 		.innerJoin("User", "User.id", "GroupMember.userId")
-		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.leftJoin("GroupMatch", (join) =>
 			join.on((eb) =>
 				eb.or([
@@ -112,7 +110,6 @@ export async function findCurrentGroups() {
 						note: eb.ref("GroupMember.note"),
 						weapons: matchProfileWeapons(eb),
 						languages: eb.ref("User.languages"),
-						plusTier: eb.ref("PlusTier.tier"),
 						vc: eb.ref("User.vc"),
 					}),
 				])

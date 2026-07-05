@@ -2,6 +2,7 @@ import type { ExpressionBuilder, NotNull } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import { peakXpOverallSql } from "~/features/top-search/XRankPlacementRepository.server";
 import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
 import invariant from "~/utils/invariant";
 import { commonUserSelect } from "~/utils/kysely.server";
@@ -232,7 +233,7 @@ export async function syncXPBadges() {
 
 		const userTopXPowers = await trx
 			.selectFrom("SplatoonPlayer")
-			.select(["userId", "peakXp"])
+			.select(["userId", peakXpOverallSql().as("peakXp")])
 			.where("userId", "is not", null)
 			.where("peakXp", "is not", null)
 			.$narrowType<{ userId: NotNull; peakXp: NotNull }>()

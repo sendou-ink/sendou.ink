@@ -1140,6 +1140,23 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 	});
 }
 
+/** Bulk-sets each user's latest LUTI division. Used by the `ComputeLutiDivs` routine. */
+export function updateManyDivs(
+	updates: Array<{ userId: number; div: string }>,
+) {
+	if (updates.length === 0) return;
+
+	return db.transaction().execute(async (trx) => {
+		for (const { userId, div } of updates) {
+			await trx
+				.updateTable("User")
+				.set({ div })
+				.where("id", "=", userId)
+				.execute();
+		}
+	});
+}
+
 export function updateOwnCustomTheme(css: CustomTheme | null) {
 	return db
 		.updateTable("User")

@@ -13,6 +13,25 @@ export function unlinkPlayerByUserId(userId: number) {
 		.execute();
 }
 
+/**
+ * SQLite expression extracting a Splatoon player's overall peak XP from the denormalized `peakXp`
+ * JSON column (see {@link refreshAllPeakXp}). `"SplatoonPlayer"` must be in scope at the call site.
+ */
+export function peakXpOverallSql<T extends number | null = number | null>() {
+	return sql<T>`"SplatoonPlayer"."peakXp" ->> '$.overall'`;
+}
+
+/** Whether the user has a linked Splatoon player (i.e. has claimed their X Rank results). */
+export async function isPlayerLinkedByUserId(userId: number): Promise<boolean> {
+	const player = await db
+		.selectFrom("SplatoonPlayer")
+		.select("SplatoonPlayer.id")
+		.where("SplatoonPlayer.userId", "=", userId)
+		.executeTakeFirst();
+
+	return Boolean(player);
+}
+
 function xRankPlacementsQueryBase() {
 	return db
 		.selectFrom("XRankPlacement")
@@ -132,12 +151,23 @@ export type FindPlacement = InferResult<
 export async function refreshAllPeakXp() {
 	await db
 		.updateTable("SplatoonPlayer")
-		.set((eb) => ({
-			peakXp: eb
-				.selectFrom("XRankPlacement")
-				.select((eb) => eb.fn.max("XRankPlacement.power").as("peakXp"))
-				.whereRef("XRankPlacement.playerId", "=", "SplatoonPlayer.id"),
-		}))
+		.set({
+			// denormalized PeakXP json: overall + per-division peaks
+			// (region WEST = Tentatek, otherwise Takoroka). null when no placements.
+			peakXp: sql<string | null>`(
+				select iif(
+					max("XRankPlacement"."power") is null,
+					null,
+					json_object(
+						'overall', max("XRankPlacement"."power"),
+						'tentatek', max(iif("XRankPlacement"."region" = 'WEST', "XRankPlacement"."power", null)),
+						'takoroka', max(iif("XRankPlacement"."region" != 'WEST', "XRankPlacement"."power", null))
+					)
+				)
+				from "XRankPlacement"
+				where "XRankPlacement"."playerId" = "SplatoonPlayer"."id"
+			)`,
+		})
 		.execute();
 }
 

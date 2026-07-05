@@ -30,7 +30,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["q"],
+	i18n: ["q", "user"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("sendouq"),
 		href: SENDOUQ_PAGE,

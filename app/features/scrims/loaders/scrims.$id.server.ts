@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
@@ -36,6 +37,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const mapByMap = await resolveMapByMap({ post, user });
 
 	return {
+		...(await UserCardRepository.userCards({
+			userIds: participantIds,
+			include: { friendCode: true },
+		})),
 		post,
 		chatCode:
 			(user.roles.includes("STAFF") || participantIds.includes(user.id)) &&

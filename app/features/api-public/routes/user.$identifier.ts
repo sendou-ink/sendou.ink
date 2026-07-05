@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
+import { peakXpOverallSql } from "~/features/top-search/XRankPlacementRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { i18next } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
@@ -44,7 +45,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						.whereRef("UserWeapon.userId", "=", "User.id")
 						.orderBy("UserWeapon.order", "asc"),
 				).as("weapons"),
-				"SplatoonPlayer.peakXp",
+				peakXpOverallSql().as("peakXp"),
 				jsonArrayFrom(
 					eb
 						.selectFrom("TeamMemberWithSecondary")

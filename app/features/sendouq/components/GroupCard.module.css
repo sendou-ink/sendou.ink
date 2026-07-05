@@ -40,22 +40,6 @@
 	color: var(--color-text);
 }
 
-.avatar {
-	min-width: 36px;
-}
-
-.avatarPositive {
-	outline: 2px solid var(--color-success-low);
-}
-
-.avatarNeutral {
-	outline: 2px solid var(--color-warning-low);
-}
-
-.avatarNegative {
-	outline: 2px solid var(--color-error-low);
-}
-
 .tier {
 	margin-inline-start: auto;
 }
@@ -95,23 +79,6 @@
 	color: var(--color-text);
 	border: none;
 	height: 24px;
-}
-
-.addNoteButton {
-	border: none;
-	padding: 0 var(--s-1-5);
-	color: var(--color-text-accent);
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-semi);
-	background-color: var(--color-bg);
-	white-space: nowrap;
-	height: 100%;
-	border-radius: var(--radius-selector);
-
-	& > svg {
-		width: 18px;
-		height: 18px;
-	}
 }
 
 .noteTextarea {

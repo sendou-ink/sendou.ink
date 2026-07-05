@@ -11,7 +11,7 @@ import { loader } from "../loaders/scrims.$id.server";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["scrims", "q"],
+	i18n: ["scrims", "q", "user"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("scrims"),
 		href: scrimsPage(),

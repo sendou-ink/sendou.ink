@@ -201,5 +201,17 @@
 	"builds.sorting.PRIVATE_BUILD": "非公開ビルド",
 	"commissions.open": "",
 	"commissions.closed": "",
-	"mutualFriends": ""
+	"mutualFriends": "",
+	"card.viewUserPage": "",
+	"card.sendFriendRequest": "",
+	"card.friendRequestPending": "",
+	"card.friendRequestSent": "",
+	"card.editPrivateNote": "",
+	"card.privateNote": "",
+	"card.xp": "",
+	"card.freeAgent": "",
+	"card.noMutualFriends": "",
+	"card.edit.title": "",
+	"card.edit.bannerColor": "",
+	"card.edit.supporterOnlyBanner": ""
 }

@@ -35,7 +35,7 @@ import "./settings.global.css";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["settings"],
+	i18n: ["settings", "user"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("settings"),
 		href: SETTINGS_PAGE,

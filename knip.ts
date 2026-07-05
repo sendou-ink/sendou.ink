@@ -4,7 +4,6 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignore: ["scripts/dicts/**"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.js",

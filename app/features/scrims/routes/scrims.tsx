@@ -38,7 +38,7 @@ import styles from "./scrims.module.css";
 export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
 
 export const handle: SendouRouteHandle = {
-	i18n: ["calendar", "scrims"],
+	i18n: ["calendar", "scrims", "user", "q"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("scrims"),
 		href: scrimsPage(),

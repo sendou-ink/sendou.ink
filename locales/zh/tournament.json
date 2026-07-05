@@ -123,7 +123,6 @@
 	"actions.addSub": "添加替补",
 	"actions.shareLink": "分享您的邀请链接以添加成员: {{inviteLink}}",
 	"actions.sub.prompt_other": "您仍可以向阵容中添加 {{count}} 名替补",
-	"actions.sub.prompt_one": "您仍可以向阵容中添加 {{count}} 名替补",
 	"actions.sub.prompt_zero": "您的阵容已满，无法添加更多替补",
 	"actions.finalize": "正在结束赛事",
 	"actions.finalize.button": "结束赛事",

@@ -3,7 +3,7 @@ import { Mic, Trash } from "lucide-react";
 import * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher, useLoaderData } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -16,16 +16,20 @@ import {
 } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userPage } from "~/utils/urls";
 import { LFGGroupCard } from "../components/LFGGroupCard";
 import {
 	type LookingLoaderData,
@@ -43,7 +47,7 @@ export { loader };
 import styles from "./to.$id.looking.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["q", "tournament", "forms", "common"],
+	i18n: ["q", "tournament", "forms", "common", "user"],
 };
 
 export default function TournamentLFGShell() {
@@ -285,6 +289,7 @@ function SubCard({ sub }: { sub: SubEntry }) {
 	const { t } = useTranslation(["common", "tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
+	const cardData = useUserCardData(sub.userId);
 
 	const infos = [
 		<div key="vc" className={styles.subsInfoVc}>
@@ -322,10 +327,18 @@ function SubCard({ sub }: { sub: SubEntry }) {
 	return (
 		<div>
 			<section className={styles.subsSection}>
-				<Avatar user={sub} size="sm" className={styles.subsSectionAvatar} />
-				<Link to={userPage(sub)} className={styles.subsSectionName}>
-					{sub.username}
-				</Link>
+				<div className={styles.subsSectionAvatar}>
+					<UserCard userId={sub.userId} withMutualFriends>
+						<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+							<Avatar user={sub} size="sm" />
+						</NoteAvatar>
+					</UserCard>
+				</div>
+				<div className={styles.subsSectionName}>
+					<UserCard userId={sub.userId} withMutualFriends>
+						<span>{sub.username}</span>
+					</UserCard>
+				</div>
 				<div className={styles.subsSectionInfo}>{infos}</div>
 				{sub.weapons ? (
 					<div className={styles.subsSectionWeapons}>

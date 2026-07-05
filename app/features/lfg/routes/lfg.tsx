@@ -31,7 +31,7 @@ import styles from "./lfg.module.css";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["lfg"],
+	i18n: ["lfg", "user", "q"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("lfg"),
 		href: LFG_PAGE,
@@ -131,7 +131,7 @@ export default function LFGPage() {
 					className={clsx("stack sm", styles.post)}
 				>
 					{showExpiryAlert(post) ? <PostExpiryAlert postId={post.id} /> : null}
-					<LFGPost post={post} tiersMap={tiersMap} />
+					<LFGPost post={post} />
 				</div>
 			))}
 			{filteredPosts.length === 0 ? (

@@ -15,7 +15,6 @@ import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
-import * as PrivateUserNoteRepository from "../PrivateUserNoteRepository.server";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
 import { lookingSchema } from "../q-schemas.server";
 import { resolveFutureMatchModes } from "../q-utils";
@@ -328,11 +327,6 @@ export const action: ActionFunction = async ({ request }) => {
 				await refreshSendouQInstance();
 
 				broadcastLookingUpdate();
-
-				break;
-			}
-			case "DELETE_PRIVATE_USER_NOTE": {
-				await PrivateUserNoteRepository.deleteOwnNoteById(data.targetId);
 
 				break;
 			}

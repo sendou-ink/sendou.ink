@@ -11,6 +11,7 @@ import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { Status } from "~/modules/brackets-model";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
@@ -218,6 +219,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		!isLeagueRoundLocked(tournament, match.roundId);
 
 	return {
+		...(await UserCardRepository.userCards({
+			userIds: match.players.map((p) => p.id),
+			include: {
+				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
+			},
+		})),
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
 		reportedWeapons,

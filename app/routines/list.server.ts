@@ -1,5 +1,6 @@
 import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
+import { ComputeLutiDivsRoutine } from "./computeLutiDivs";
 import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
 import { DeleteOldExternalStreamsRoutine } from "./deleteOldExternalStreams";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
@@ -43,6 +44,7 @@ export const daily = [
 	DeleteOldTournamentAuditLogsRoutine,
 	CloseExpiredCommissionsRoutine,
 	DeleteOrphanArtTagsRoutine,
+	ComputeLutiDivsRoutine,
 	OptimizeDatabaseRoutine,
 ];
 

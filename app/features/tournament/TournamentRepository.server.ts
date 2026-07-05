@@ -421,6 +421,39 @@ export async function findChildTournaments(parentTournamentId: number) {
 	}));
 }
 
+/** Child division tournaments of a league sign-up, with their name and finalized status. */
+export function findChildTournamentsForDivCalc(parentTournamentId: number) {
+	return db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.select([
+			"Tournament.id as tournamentId",
+			"CalendarEvent.name",
+			"Tournament.isFinalized",
+		])
+		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.execute();
+}
+
+/**
+ * User ids eligible for a LUTI division placement in the given tournament: they have a result, were
+ * on a team that did not drop out, and played at least one match.
+ */
+export function findLeagueDivParticipantUserIds(tournamentId: number) {
+	return db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentResult.tournamentTeamId",
+		)
+		.select("TournamentResult.userId")
+		.distinct()
+		.where("TournamentResult.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.droppedOut", "=", 0)
+		.execute();
+}
+
 export async function findTOSetMapPoolById(tournamentId: number) {
 	return (
 		await db

@@ -115,6 +115,7 @@ export const LFG_PAGE = "/lfg";
 export const EVENTS_PAGE = "/events";
 export const FRIENDS_PAGE = "/friends";
 export const SETTINGS_PAGE = "/settings";
+const USER_CARD_EDIT_PAGE = "/user-card/edit";
 export const LUTI_PAGE = "/luti";
 export const PLUS_VOTING_PAGE = "/plus/voting";
 
@@ -140,6 +141,16 @@ export const PATRONS_LIST_ROUTE = "/patrons-list";
 
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
+
+export const userCardFriendshipPage = (
+	userId: number,
+	args?: { withMutualFriends?: boolean },
+) =>
+	`/user-card/${userId}/friendship${
+		args?.withMutualFriends ? "?mutuals=true" : ""
+	}`;
+
+export const userCardNotePage = (userId: number) => `/user-card/${userId}/note`;
 
 interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];
@@ -181,6 +192,10 @@ export const userBuildsPage = (user: UserLinkArgs) =>
 export const userResultsPage = (user: UserLinkArgs, showAll?: boolean) =>
 	`${userPage(user)}/results${showAll ? "?all=true" : ""}`;
 export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
+export const userCardEditPage = (args?: { returnTo?: string }) =>
+	`${USER_CARD_EDIT_PAGE}${
+		args?.returnTo ? `?returnTo=${encodeURIComponent(args.returnTo)}` : ""
+	}`;
 export const newVodPage = (vodToEditId?: number) =>
 	`${VODS_PAGE}/new${vodToEditId ? `?vod=${vodToEditId}` : ""}`;
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>

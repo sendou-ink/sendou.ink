@@ -203,5 +203,17 @@
 	"commissions.closed": "",
 	"mutualFriends": "",
 	"mutualFriends.count_one": "",
-	"mutualFriends.count_other": ""
+	"mutualFriends.count_other": "",
+	"card.viewUserPage": "",
+	"card.sendFriendRequest": "",
+	"card.friendRequestPending": "",
+	"card.friendRequestSent": "",
+	"card.editPrivateNote": "",
+	"card.privateNote": "",
+	"card.xp": "",
+	"card.freeAgent": "",
+	"card.noMutualFriends": "",
+	"card.edit.title": "",
+	"card.edit.bannerColor": "",
+	"card.edit.supporterOnlyBanner": ""
 }

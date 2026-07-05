@@ -15,7 +15,7 @@ import { tournamentMatchWebsocketRoom } from "../tournament-match-utils";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["q"],
+	i18n: ["q", "user"],
 };
 
 export default function TournamentMatchPage() {
