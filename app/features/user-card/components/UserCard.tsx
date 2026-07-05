@@ -25,6 +25,7 @@ import { Placement } from "~/components/Placement";
 import type { XRankPlacementRegion } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
+import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -83,6 +84,10 @@ export function UserCard({
 	const lookedUpData = useUserCardData(userId);
 	const data = dataProp ?? lookedUpData;
 
+	// beside the trigger there is no room for the card on a narrow viewport, so it is placed
+	// vertically instead where React Aria can shift it horizontally to keep it on-screen
+	const placement = useLayoutSize() === "mobile" ? "bottom" : "right";
+
 	const user = useUser();
 	const isOwnCard = user?.id === data?.id;
 
@@ -124,7 +129,7 @@ export function UserCard({
 		<>
 			<DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
 				<Button className={styles.trigger}>{children}</Button>
-				<Popover placement="right" className={styles.popover}>
+				<Popover placement={placement} className={styles.popover}>
 					<Dialog className={styles.dialog}>
 						<CardContent
 							data={data}
