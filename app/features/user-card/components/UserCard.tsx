@@ -473,7 +473,13 @@ function Banner({ banner }: { banner: UserCardData["banner"] }) {
 		}
 	})();
 
-	return <div className={styles.banner} style={style} />;
+	return (
+		<div
+			className={styles.banner}
+			style={style}
+			data-testid="user-card-banner"
+		/>
+	);
 }
 
 function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
