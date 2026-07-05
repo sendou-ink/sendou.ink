@@ -358,7 +358,7 @@ describe("Import / export", () => {
 		expect(storage.select<any>("match", 0).opponent1.result).toBe("win");
 		expect(storage.select<any>("match", 1).opponent1.result).toBe("win");
 
-		manager.import(initialData);
+		manager.importData(initialData);
 
 		expect(storage.select<any>("match", 0).opponent1.result).toBe(undefined);
 		expect(storage.select<any>("match", 1).opponent1.result).toBe(undefined);

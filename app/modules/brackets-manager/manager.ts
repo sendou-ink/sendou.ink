@@ -69,7 +69,7 @@ export class BracketsManager {
 	 * @param data Data to import.
 	 * @param normalizeIds Enable ID normalization: all IDs (and references to them) are remapped to consecutive IDs starting from 0.
 	 */
-	public import(rawData: Database, normalizeIds = false): void {
+	public importData(rawData: Database, normalizeIds = false): void {
 		const data = normalizeIds ? helpers.normalizeIds(rawData) : rawData;
 
 		if (!this.storage.delete("stage"))
