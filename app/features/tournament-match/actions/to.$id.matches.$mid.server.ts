@@ -3,7 +3,6 @@ import { sql } from "~/db/sql";
 import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as IngestRepository from "~/features/ingest/IngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -29,7 +28,6 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
-	errorToast,
 	errorToastIfFalsy,
 	notFoundIfFalsy,
 	parseParams,
@@ -866,68 +864,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournamentMatchId: matchId,
 				mapIndex: data.mapIndex,
 			});
-
-			break;
-		}
-		case "LINK_INGESTED_USERS": {
-			const isMemberOfATeamInTheMatch = match.players.some(
-				(p) => p.id === user.id,
-			);
-			errorToastIfFalsy(
-				isMemberOfATeamInTheMatch || tournament.isOrganizer(user),
-				"Unauthorized",
-			);
-
-			const ingestedWeapons =
-				await IngestRepository.findIngestedWeaponsByTournamentMatchId(matchId);
-			const setParticipantUserIds = new Set(
-				(await TournamentMatchRepository.findResultsByMatchId(matchId)).flatMap(
-					(result) =>
-						result.participants.map((participant) => participant.userId),
-				),
-			);
-
-			for (const link of data.links) {
-				const player = match.players.find((p) => p.id === link.userId);
-				errorToastIfFalsy(player, "User is not in the match");
-				errorToastIfFalsy(
-					setParticipantUserIds.size === 0 ||
-						setParticipantUserIds.has(link.userId),
-					"User did not play in the match",
-				);
-				errorToastIfFalsy(
-					link.ingestedTeamId === null ||
-						player.tournamentTeamId === link.ingestedTeamId,
-					"User is not a member of the team",
-				);
-				errorToastIfFalsy(
-					ingestedWeapons.some(
-						(w) =>
-							w.userId === null &&
-							w.ingestedInGameName === link.ingestedInGameName &&
-							w.ingestedTeamId === link.ingestedTeamId,
-					),
-					"Unknown ingested in-game name",
-				);
-			}
-
-			for (const link of data.links) {
-				try {
-					await IngestRepository.linkIngestedUser({
-						tournamentId,
-						ingestedInGameName: link.ingestedInGameName,
-						ingestedTeamId: link.ingestedTeamId,
-						userId: link.userId,
-					});
-				} catch (error) {
-					if (error instanceof IngestRepository.IngestedLinkConflictError) {
-						errorToast(
-							`Could not link "${link.ingestedInGameName}": the selected user already has a weapon on one of the games`,
-						);
-					}
-					throw error;
-				}
-			}
 
 			break;
 		}

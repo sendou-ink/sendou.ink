@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
-import { type NotNull, sql } from "kysely";
+import { sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
-import type { IngestableGame, IngestedWeaponRow } from "./core/Scoreboards";
+import type { DB } from "~/db/tables";
+import type {
+	IngestableGame,
+	IngestedScoreboardData,
+	MatchedScoreboard,
+} from "./core/Scoreboards";
 import type { IngestedEventInput } from "./ingest-schemas";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
@@ -96,6 +101,7 @@ export async function gamesPlayedByUserInTournament({
 			"TournamentMatch.stageId",
 		)
 		.select([
+			"TournamentMatchGameResult.id as matchGameResultId",
 			"TournamentMatchGameResult.matchId as tournamentMatchId",
 			"TournamentMatchGameResult.number",
 			"TournamentMatchGameResult.mode",
@@ -124,6 +130,7 @@ export async function gamesPlayedByUserInTournament({
 					: null;
 
 		return {
+			matchGameResultId: row.matchGameResultId,
 			tournamentMatchId: row.tournamentMatchId,
 			mapIndex: row.number - 1,
 			mode: row.mode,
@@ -188,235 +195,136 @@ export async function tournamentStartTime(tournamentId: number) {
 }
 
 /**
- * Inserts ingested weapon rows, skipping rows whose in-game name already has
- * a reported weapon for the same map (e.g. from an earlier ingest).
+ * Stores matched scoreboards. A game that already has a stored scoreboard
+ * keeps it (first ingest wins). When the scoreboard's POV player is known
+ * (via povIndex + povUserId), their row is attributed to the user and their
+ * weapon is reported as a regular ReportedWeapon, unless the user already
+ * has one for that game.
  *
- * @returns count of inserted rows
+ * @returns count of newly stored scoreboards
  */
-export async function addReportedWeapons(rows: IngestedWeaponRow[]) {
-	if (rows.length === 0) return 0;
+export async function addScoreboards({
+	scoreboards,
+	povUserId,
+}: {
+	scoreboards: MatchedScoreboard[];
+	povUserId: number | null;
+}) {
+	let storedCount = 0;
 
-	const matchIds = [...new Set(rows.map((row) => row.tournamentMatchId))];
-	const existing = await db
-		.selectFrom("ReportedWeapon")
-		.select([
-			"tournamentMatchId",
-			"mapIndex",
-			"ingestedInGameName",
-			"ingestedTeamId",
-		])
-		.where("tournamentMatchId", "in", matchIds)
-		.where("ingestedInGameName", "is not", null)
-		.execute();
+	for (const scoreboard of scoreboards) {
+		const wasInserted = await db.transaction().execute(async (trx) => {
+			const povPlayer =
+				povUserId !== null && scoreboard.povIndex !== null
+					? scoreboard.data.players[scoreboard.povIndex]
+					: undefined;
 
-	const rowKey = (row: {
-		tournamentMatchId: number | null;
-		mapIndex: number;
-		ingestedInGameName: string | null;
-		ingestedTeamId: number | null;
-	}) =>
-		`${row.tournamentMatchId}-${row.mapIndex}-${row.ingestedTeamId}-${row.ingestedInGameName}`;
+			const data: IngestedScoreboardData = povPlayer
+				? {
+						...scoreboard.data,
+						players: scoreboard.data.players.map((player, playerIdx) =>
+							playerIdx === scoreboard.povIndex
+								? { ...player, userId: povUserId! }
+								: player,
+						),
+					}
+				: scoreboard.data;
 
-	const existingKeys = new Set(existing.map(rowKey));
-	const newRows = rows.filter((row) => !existingKeys.has(rowKey(row)));
+			const insertResult = await trx
+				.insertInto("IngestedScoreboard")
+				.values({
+					matchGameResultId: scoreboard.matchGameResultId,
+					data: JSON.stringify(data),
+				})
+				.onConflict((oc) => oc.column("matchGameResultId").doNothing())
+				.executeTakeFirst();
+			const inserted = Number(insertResult.numInsertedOrUpdatedRows ?? 0) > 0;
 
-	if (newRows.length === 0) return 0;
+			if (!povPlayer) return inserted;
 
-	await db.insertInto("ReportedWeapon").values(newRows).execute();
+			if (!inserted) {
+				await attributePovUser({
+					trx,
+					matchGameResultId: scoreboard.matchGameResultId,
+					povIndex: scoreboard.povIndex!,
+					userId: povUserId!,
+				});
+			}
 
-	return newRows.length;
+			if (povPlayer.weaponSplId !== null) {
+				await trx
+					.insertInto("ReportedWeapon")
+					.values({
+						tournamentMatchId: scoreboard.tournamentMatchId,
+						mapIndex: scoreboard.mapIndex,
+						userId: povUserId!,
+						weaponSplId: povPlayer.weaponSplId,
+					})
+					.onConflict((oc) =>
+						oc.columns(["tournamentMatchId", "mapIndex", "userId"]).doNothing(),
+					)
+					.execute();
+			}
+
+			return inserted;
+		});
+
+		if (wasInserted) storedCount++;
+	}
+
+	return storedCount;
 }
 
-/** Returns a tournament match's ingested weapons (both linked to a user and not). */
-export function findIngestedWeaponsByTournamentMatchId(
-	tournamentMatchId: number,
-) {
-	return db
-		.selectFrom("ReportedWeapon")
-		.select([
-			"ReportedWeapon.mapIndex",
-			"ReportedWeapon.weaponSplId",
-			"ReportedWeapon.ingestedInGameName",
-			"ReportedWeapon.ingestedTeamId",
-			"ReportedWeapon.userId",
-		])
-		.where("ReportedWeapon.tournamentMatchId", "=", tournamentMatchId)
-		.where("ReportedWeapon.ingestedInGameName", "is not", null)
-		.orderBy("ReportedWeapon.mapIndex", "asc")
-		.$narrowType<{ ingestedInGameName: NotNull }>()
-		.execute();
-}
-
-// xxx: probably would struggle with people with same name?
-
-/**
- *  it's half-handled. Let me walk through the two variants, because they behave very differently.
-
-Same name on opposite teams: handled. Every row carries ingestedTeamId (derived from scoreboard position + who won the game), so the two "Nayo"s produce distinct (name, team) identities. The dialog groups by team, so each appears under its own team section with its own select, and linkIngestedUser scopes the update by name and team. No collision anywhere.
-
-Same name on the same team: stored, but linking breaks. Tracing it through:
-
-1. Ingest: both scoreboard rows insert fine — there's no unique constraint on (match, mapIndex, name), and the userId uniques don't fire because userId is NULL (SQLite treats NULLs as distinct). Raw data preserved, weapons possibly different per row.
-2. Dialog: resolveUnlinkedNames collapses them into one entry keyed by (name, teamId), with their weapons merged. You get a single select for what is physically two players — there's no way to express "row 2's Nayo is user A, row 3's Nayo is user B".
-3. Linking — the actual bug: the update sets userId on every matching row. Two rows on the same (match, mapIndex) both get the same userId → violates unique(tournamentMatchId, mapIndex, userId) → the transaction rolls back and the user gets a generic error. So for that name, linking doesn't degrade gracefully — it just fails.
-
-The deeper issue is that the ambiguity is unresolvable in principle: ReportedWeapon rows don't retain scoreboard row position, and even if they did, row position isn't a stable identity across games — so there's no honest way to say which weapon belonged to which of the two players, in this game or the next.
-
-How likely is it? True duplicates in one lobby are rare, but note the OCR angle: emberz name reading can snap two different names to the same string, which makes this more common than the "two players genuinely named the same" case suggests.
-
-Options as I see them:
-
-- A. Drop ambiguous rows at ingest time. When a scoreboard has two identical (non-empty) names on the same side, skip those rows (keep the other 6–7 players). The raw event is stored anyway, so nothing is truly lost. This makes everything downstream consistent by construction: the dialog never shows an unlinkable entry, linking can never double-assign. Simple, honest — we refuse to attribute data we can't attribute.
-- B. Keep the rows but harden linking. Store them, show the merged entry, and make linkIngestedUser assign at most one row per (match, mapIndex) (e.g. lowest rowid) and leave/delete the rest. No crash, but the attribution of the kept row is a coin flip, and the merged weapon display quietly mixes two players.
-- C. Full modeling — add a row-index column, per-map link rows, "Nayo (2)" UI with multiple selects. Correct-ish within a single map but still can't track identity across games, and a lot of UX for a rare case.
-
-My recommendation is A, plus a cheap defense-in-depth tweak to linkIngestedUser so it can never violate the unique constraint even if bad rows exist (from data ingested before the fix, or future regressions). One related small thing I'd fix in the same pass: the re-ingest skip key in addReportedWeapons is (match, mapIndex, name) without teamId, so an opposite-team duplicate that becomes readable only in a later re-ingest would get skipped — including teamId in that key closes it.
- */
-/**
- * Thrown by linkIngestedUser when the target user is already attributed
- * another ingested name on one of the games the linked name appears in.
- */
-export class IngestedLinkConflictError extends Error {}
-
-/**
- * Connects an ingested in-game name to a sendou.ink user, filling
- * ReportedWeapon.userId for every match of the tournament where the name
- * played for the given team. Ingested rows that would duplicate a weapon the
- * user reported themselves are dropped instead. Linking a user who is already
- * attributed another ingested name on one of the games throws
- * IngestedLinkConflictError and rolls the whole link back.
- */
-export function linkIngestedUser({
-	tournamentId,
-	ingestedInGameName,
-	ingestedTeamId,
+async function attributePovUser({
+	trx,
+	matchGameResultId,
+	povIndex,
 	userId,
 }: {
-	tournamentId: number;
-	ingestedInGameName: string;
-	ingestedTeamId: number | null;
+	trx: Transaction<DB>;
+	matchGameResultId: number;
+	povIndex: number;
 	userId: number;
 }) {
-	return db.transaction().execute(async (trx) => {
-		const tournamentMatchIds = trx
-			.selectFrom("TournamentMatch")
-			.innerJoin(
-				"TournamentStage",
-				"TournamentStage.id",
-				"TournamentMatch.stageId",
-			)
-			.select("TournamentMatch.id")
-			.where("TournamentStage.tournamentId", "=", tournamentId);
+	const existing = await trx
+		.selectFrom("IngestedScoreboard")
+		.select(["id", "data"])
+		.where("matchGameResultId", "=", matchGameResultId)
+		.executeTakeFirst();
+	if (!existing) return;
 
-		await trx
-			.deleteFrom("ReportedWeapon as ingested")
-			.where("ingested.userId", "is", null)
-			.where("ingested.ingestedInGameName", "=", ingestedInGameName)
-			.where((eb) =>
-				ingestedTeamId === null
-					? eb("ingested.ingestedTeamId", "is", null)
-					: eb("ingested.ingestedTeamId", "=", ingestedTeamId),
-			)
-			.where("ingested.tournamentMatchId", "in", tournamentMatchIds)
-			.where(({ exists, selectFrom }) =>
-				exists(
-					selectFrom("ReportedWeapon as own")
-						.select("own.mapIndex")
-						.whereRef(
-							"own.tournamentMatchId",
-							"=",
-							"ingested.tournamentMatchId",
-						)
-						.whereRef("own.mapIndex", "=", "ingested.mapIndex")
-						.where("own.userId", "=", userId)
-						.where("own.ingestedInGameName", "is", null),
-				),
-			)
-			.execute();
+	const player = existing.data.players[povIndex];
+	if (!player || player.userId !== undefined) return;
 
-		// xxx: why is this needed?
-		// rows from before same-side duplicate names were dropped at ingest time
-		// can still hold two rows on one (match, mapIndex); linking both would
-		// violate unique(tournamentMatchId, mapIndex, userId), so keep only one
-		await trx
-			.deleteFrom("ReportedWeapon")
-			.where(
-				sql`rowid`,
-				"in",
-				trx
-					.selectFrom("ReportedWeapon as ingested")
-					.select(sql`"ingested"."rowid"`.as("rowid"))
-					.where("ingested.userId", "is", null)
-					.where("ingested.ingestedInGameName", "=", ingestedInGameName)
-					.where((eb) =>
-						ingestedTeamId === null
-							? eb("ingested.ingestedTeamId", "is", null)
-							: eb("ingested.ingestedTeamId", "=", ingestedTeamId),
-					)
-					.where("ingested.tournamentMatchId", "in", tournamentMatchIds)
-					.where(({ exists, selectFrom }) =>
-						exists(
-							selectFrom("ReportedWeapon as other")
-								.select("other.mapIndex")
-								.whereRef(
-									"other.tournamentMatchId",
-									"=",
-									"ingested.tournamentMatchId",
-								)
-								.whereRef("other.mapIndex", "=", "ingested.mapIndex")
-								.whereRef(
-									"other.ingestedInGameName",
-									"=",
-									"ingested.ingestedInGameName",
-								)
-								.where("other.userId", "is", null)
-								.where(sql<boolean>`"other"."rowid" < "ingested"."rowid"`),
-						),
-					),
-			)
-			.execute();
+	const players = existing.data.players.map((other, playerIdx) =>
+		playerIdx === povIndex ? { ...other, userId } : other,
+	);
 
-		const conflictingRow = await trx
-			.selectFrom("ReportedWeapon as ingested")
-			.select("ingested.mapIndex")
-			.where("ingested.userId", "is", null)
-			.where("ingested.ingestedInGameName", "=", ingestedInGameName)
-			.where((eb) =>
-				ingestedTeamId === null
-					? eb("ingested.ingestedTeamId", "is", null)
-					: eb("ingested.ingestedTeamId", "=", ingestedTeamId),
-			)
-			.where("ingested.tournamentMatchId", "in", tournamentMatchIds)
-			.where(({ exists, selectFrom }) =>
-				exists(
-					selectFrom("ReportedWeapon as own")
-						.select("own.mapIndex")
-						.whereRef(
-							"own.tournamentMatchId",
-							"=",
-							"ingested.tournamentMatchId",
-						)
-						.whereRef("own.mapIndex", "=", "ingested.mapIndex")
-						.where("own.userId", "=", userId),
-				),
-			)
-			.limit(1)
-			.executeTakeFirst();
-		if (conflictingRow) {
-			throw new IngestedLinkConflictError();
-		}
+	await trx
+		.updateTable("IngestedScoreboard")
+		.set({ data: JSON.stringify({ ...existing.data, players }) })
+		.where("id", "=", existing.id)
+		.execute();
+}
 
-		await trx
-			.updateTable("ReportedWeapon")
-			.set({ userId })
-			.where("ReportedWeapon.userId", "is", null)
-			.where("ReportedWeapon.ingestedInGameName", "=", ingestedInGameName)
-			.where((eb) =>
-				ingestedTeamId === null
-					? eb("ReportedWeapon.ingestedTeamId", "is", null)
-					: eb("ReportedWeapon.ingestedTeamId", "=", ingestedTeamId),
-			)
-			.where("ReportedWeapon.tournamentMatchId", "in", tournamentMatchIds)
-			.execute();
-	});
+/** Returns a tournament match's ingested scoreboards with their 0-based map indexes. */
+export async function findScoreboardsByTournamentMatchId(
+	tournamentMatchId: number,
+) {
+	const rows = await db
+		.selectFrom("IngestedScoreboard")
+		.innerJoin(
+			"TournamentMatchGameResult",
+			"TournamentMatchGameResult.id",
+			"IngestedScoreboard.matchGameResultId",
+		)
+		.select(["TournamentMatchGameResult.number", "IngestedScoreboard.data"])
+		.where("TournamentMatchGameResult.matchId", "=", tournamentMatchId)
+		.orderBy("TournamentMatchGameResult.number", "asc")
+		.execute();
+
+	return rows.map((row) => ({
+		mapIndex: row.number - 1,
+		data: row.data,
+	}));
 }

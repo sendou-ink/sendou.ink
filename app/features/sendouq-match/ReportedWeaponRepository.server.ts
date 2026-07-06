@@ -101,10 +101,9 @@ export async function findByMatchId(matchId: number) {
 			"ReportedWeapon.userId",
 		])
 		.where("ReportedWeapon.groupMatchId", "=", matchId)
-		.where("ReportedWeapon.userId", "is not", null)
 		.orderBy("ReportedWeapon.mapIndex", "asc")
 		.orderBy("ReportedWeapon.userId", "asc")
-		.$narrowType<{ groupMatchId: NotNull; userId: NotNull }>()
+		.$narrowType<{ groupMatchId: NotNull }>()
 		.execute();
 
 	if (rows.length === 0) return null;
@@ -184,14 +183,9 @@ export async function findByTournamentMatchId(matchId: number) {
 			"ReportedWeapon.userId",
 		])
 		.where("ReportedWeapon.tournamentMatchId", "=", matchId)
-		.where("ReportedWeapon.userId", "is not", null)
 		.orderBy("ReportedWeapon.mapIndex", "asc")
 		.orderBy("ReportedWeapon.userId", "asc")
-		.$narrowType<{
-			tournamentMatchId: NotNull;
-			mapIndex: NotNull;
-			userId: NotNull;
-		}>()
+		.$narrowType<{ tournamentMatchId: NotNull; mapIndex: NotNull }>()
 		.execute();
 
 	if (rows.length === 0) return null;

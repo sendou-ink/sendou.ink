@@ -1,4 +1,3 @@
-import type { Tables } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
@@ -43,6 +42,7 @@ const PLAYERS_PER_TEAM = 4;
 
 /** A game of a tournament match that ingested scoreboards can be matched against. */
 export interface IngestableGame {
+	matchGameResultId: number;
 	tournamentMatchId: number;
 	/** 0-based index of the game within its match */
 	mapIndex: number;
@@ -58,18 +58,35 @@ export interface IngestableGame {
 	playedAt: number;
 }
 
-export type IngestedWeaponRow = Pick<
-	Tables["ReportedWeapon"],
-	"tournamentMatchId" | "mapIndex" | "weaponSplId" | "createdAt"
-> & {
-	ingestedInGameName: string;
-	ingestedTeamId: number | null;
-};
+export interface IngestedScoreboardPlayer {
+	name: string;
+	tournamentTeamId: number | null;
+	weaponSplId: MainWeaponId | null;
+	ka: number | null;
+	d: number | null;
+	s: number | null;
+	paint: number | null;
+	/** set only via povIndex attribution */
+	userId?: number;
+}
+
+export interface IngestedScoreboardData {
+	scores: [number | null, number | null];
+	/** in scoreboard order: rows 0-3 winning team, rows 4-7 losing team */
+	players: IngestedScoreboardPlayer[];
+}
+
+export interface MatchedScoreboard {
+	matchGameResultId: number;
+	tournamentMatchId: number;
+	mapIndex: number;
+	povIndex: number | null;
+	data: IngestedScoreboardData;
+}
 
 /**
  * Matches scoreboard events against the games the POV user played and turns
- * them into insertable ReportedWeapon rows (identified by in-game name, not
- * user id).
+ * them into insertable scoreboard rows.
  *
  * Events and games are both walked in chronological order: each scoreboard is
  * assigned to the next not-yet-assigned game with the same mode and stage
@@ -78,15 +95,13 @@ export type IngestedWeaponRow = Pick<
  * Scoreboards from other lobbies, with unreadable mode/stage or duplicated
  * detections of the same game are skipped.
  */
-export function reportedWeaponRowsFromEvents({
+export function matchedScoreboards({
 	events,
 	games,
-	createdAt,
 }: {
 	events: IngestedEventInput[];
 	games: IngestableGame[];
-	createdAt: number;
-}): IngestedWeaponRow[] {
+}): MatchedScoreboard[] {
 	const scoreboards = dedupeScoreboards(
 		events
 			.filter(isScoreboardEvent)
@@ -99,7 +114,7 @@ export function reportedWeaponRowsFromEvents({
 		(a, b) => a.playedAt - b.playedAt || a.mapIndex - b.mapIndex,
 	);
 
-	const rows: IngestedWeaponRow[] = [];
+	const result: MatchedScoreboard[] = [];
 
 	let nextGameIdx = 0;
 	for (const scoreboard of scoreboards) {
@@ -116,13 +131,13 @@ export function reportedWeaponRowsFromEvents({
 			if (game.mode !== mode || game.stageId !== stageId) continue;
 			if (!sidesMatchKnownPlayers(scoreboard, game)) continue;
 
-			rows.push(...scoreboardToWeaponRows({ scoreboard, game, createdAt }));
+			result.push(scoreboardToMatchedScoreboard({ scoreboard, game }));
 			nextGameIdx = i + 1;
 			break;
 		}
 	}
 
-	return rows;
+	return result;
 }
 
 function isScoreboardEvent(
@@ -189,47 +204,40 @@ function normalizeInGameName(name: string) {
 	return name.split("#")[0]!.normalize("NFKC").trim().toLowerCase();
 }
 
-function scoreboardToWeaponRows({
+function scoreboardToMatchedScoreboard({
 	scoreboard,
 	game,
-	createdAt,
 }: {
 	scoreboard: ScoreboardEventInput;
 	game: IngestableGame;
-	createdAt: number;
-}): IngestedWeaponRow[] {
-	const rows: IngestedWeaponRow[] = [];
+}): MatchedScoreboard {
+	const players = scoreboard.data.players.map(
+		(player, playerIdx): IngestedScoreboardPlayer => {
+			const weaponSplId = Number(player.weapon);
 
-	const sideNameCounts = new Map<string, number>();
-	for (const [playerIdx, player] of scoreboard.data.players.entries()) {
-		const side = playerIdx < PLAYERS_PER_TEAM ? "W" : "L";
-		const key = `${side}|${normalizeInGameName(player.name)}`;
-		sideNameCounts.set(key, (sideNameCounts.get(key) ?? 0) + 1);
-	}
+			return {
+				name: player.name.trim(),
+				tournamentTeamId:
+					playerIdx < PLAYERS_PER_TEAM ? game.winnerTeamId : game.loserTeamId,
+				weaponSplId: MAIN_WEAPON_IDS.has(weaponSplId)
+					? (weaponSplId as MainWeaponId)
+					: null,
+				ka: player.ka,
+				d: player.d,
+				s: player.s,
+				paint: player.paint,
+			};
+		},
+	);
 
-	for (const [playerIdx, player] of scoreboard.data.players.entries()) {
-		const ingestedInGameName = player.name.trim();
-		if (!ingestedInGameName) continue;
-
-		// two identical names on the same side can't be told apart, so
-		// attributing weapons to either player would be a coin flip
-		const side = playerIdx < PLAYERS_PER_TEAM ? "W" : "L";
-		if (sideNameCounts.get(`${side}|${normalizeInGameName(player.name)}`)! > 1)
-			continue;
-
-		const weaponSplId = Number(player.weapon);
-		if (!MAIN_WEAPON_IDS.has(weaponSplId)) continue;
-
-		rows.push({
-			tournamentMatchId: game.tournamentMatchId,
-			mapIndex: game.mapIndex,
-			weaponSplId: weaponSplId as MainWeaponId,
-			ingestedInGameName,
-			ingestedTeamId:
-				playerIdx < PLAYERS_PER_TEAM ? game.winnerTeamId : game.loserTeamId,
-			createdAt,
-		});
-	}
-
-	return rows;
+	return {
+		matchGameResultId: game.matchGameResultId,
+		tournamentMatchId: game.tournamentMatchId,
+		mapIndex: game.mapIndex,
+		povIndex: scoreboard.data.povIndex,
+		data: {
+			scores: scoreboard.data.scores,
+			players,
+		},
+	};
 }

@@ -61,11 +61,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const reportedWeapons =
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
 
-	const ingestedWeapons =
-		await IngestRepository.findIngestedWeaponsByTournamentMatchId(matchId);
-	const ingestedWeaponPools = ingestedWeapons.some((w) => w.userId === null)
-		? await UserRepository.weaponPoolsByUserIds(match.players.map((p) => p.id))
-		: [];
+	const ingestedScoreboards =
+		await IngestRepository.findScoreboardsByTournamentMatchId(matchId);
+	const ingestedWeapons = ingestedScoreboards.flatMap((scoreboard) =>
+		scoreboard.data.players.flatMap((player) =>
+			player.userId === undefined && player.weaponSplId !== null
+				? [
+						{
+							mapIndex: scoreboard.mapIndex,
+							tournamentTeamId: player.tournamentTeamId,
+							weaponSplId: player.weaponSplId,
+						},
+					]
+				: [],
+		),
+	);
 
 	const matchIsOver =
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
@@ -236,7 +246,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		results,
 		reportedWeapons,
 		ingestedWeapons,
-		ingestedWeaponPools,
 		mapList,
 		matchIsOver,
 		endedEarly,

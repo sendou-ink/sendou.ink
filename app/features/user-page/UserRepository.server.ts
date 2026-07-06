@@ -1398,20 +1398,3 @@ export function weaponPoolByUserId(userId: number) {
 		.orderBy("UserWeaponPool.sortOrder", "asc")
 		.execute();
 }
-
-/** Returns weapon pool entries for the given users. */
-export function weaponPoolsByUserIds(userIds: number[]) {
-	if (userIds.length === 0) return Promise.resolve([]);
-
-	return db
-		.selectFrom("UserWeaponPool")
-		.select([
-			"UserWeaponPool.userId",
-			"UserWeaponPool.weaponSplId",
-			"UserWeaponPool.isFavorite",
-		])
-		.where("UserWeaponPool.userId", "in", userIds)
-		.orderBy("UserWeaponPool.userId", "asc")
-		.orderBy("UserWeaponPool.sortOrder", "asc")
-		.execute();
-}

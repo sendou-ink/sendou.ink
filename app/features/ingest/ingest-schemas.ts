@@ -22,6 +22,7 @@ const scoreboardDataSchema = z.object({
 	stage: detectionText.nullable(),
 	scores: z.tuple([z.number().nullable(), z.number().nullable()]),
 	players: z.array(scoreboardPlayerSchema).length(8),
+	povIndex: z.number().int().min(0).max(7).nullable(),
 });
 
 const scoreboardReplayDataSchema = scoreboardDataSchema.extend({

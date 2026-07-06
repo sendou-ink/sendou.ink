@@ -8,6 +8,7 @@ import type {
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
+import type { IngestedScoreboardData } from "~/features/ingest/core/Scoreboards";
 import type { IngestedEventData } from "~/features/ingest/ingest-schemas";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
@@ -463,15 +464,12 @@ export interface PlusVotingResult {
 	wasSuggested: DBBoolean;
 }
 
-// xxx: or keep ReportedWeapon as it was and add some new rich stats table?
 export interface ReportedWeapon {
 	groupMatchId: number | null;
 	tournamentMatchId: number | null;
 	mapIndex: number;
-	userId: number | null;
+	userId: number;
 	weaponSplId: MainWeaponId;
-	ingestedInGameName: string | null;
-	ingestedTeamId: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -486,6 +484,13 @@ export interface IngestedEvent {
 	data: JSONColumnType<IngestedEventData>;
 	detectedAt: number | null;
 	eventHash: string;
+	createdAt: Generated<number>;
+}
+
+export interface IngestedScoreboard {
+	id: GeneratedAlways<number>;
+	matchGameResultId: number;
+	data: JSONColumnType<IngestedScoreboardData>;
 	createdAt: Generated<number>;
 }
 
@@ -1523,6 +1528,7 @@ export interface DB {
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
 	IngestedEvent: IngestedEvent;
+	IngestedScoreboard: IngestedScoreboard;
 	PrivateUserNote: PrivateUserNote;
 	LogInLink: LogInLink;
 	LFGPost: LFGPost;

@@ -21,11 +21,9 @@ export const action: ActionFunction = async ({ request }) => {
 	if (povUserId) {
 		badRequestIfFalsy(await UserRepository.findLeanById(povUserId));
 	}
-	const tournamentStartTime = tournamentId
-		? badRequestIfFalsy(
-				await IngestRepository.tournamentStartTime(tournamentId),
-			)
-		: null;
+	if (tournamentId) {
+		badRequestIfFalsy(await IngestRepository.tournamentStartTime(tournamentId));
+	}
 
 	const storedEventsCount = await IngestRepository.addEvents({
 		tournamentId,
@@ -34,22 +32,21 @@ export const action: ActionFunction = async ({ request }) => {
 		events: data.events,
 	});
 
-	let reportedWeaponsCount = 0;
-	if (tournamentId && tournamentStartTime && povUserId) {
+	let storedScoreboardsCount = 0;
+	if (tournamentId && povUserId) {
 		const games = await IngestRepository.gamesPlayedByUserInTournament({
 			userId: povUserId,
 			tournamentId,
 		});
 
-		reportedWeaponsCount = await IngestRepository.addReportedWeapons(
-			Scoreboards.reportedWeaponRowsFromEvents({
+		storedScoreboardsCount = await IngestRepository.addScoreboards({
+			scoreboards: Scoreboards.matchedScoreboards({
 				events: data.events,
 				games,
-				// xxx: why createdAt here? makes no sense
-				createdAt: tournamentStartTime,
 			}),
-		);
+			povUserId,
+		});
 	}
 
-	return { storedEventsCount, reportedWeaponsCount };
+	return { storedEventsCount, storedScoreboardsCount };
 };

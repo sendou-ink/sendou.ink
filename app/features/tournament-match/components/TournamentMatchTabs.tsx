@@ -19,7 +19,6 @@ import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
-import { TournamentMatchIngestedUsers } from "./TournamentMatchIngestedUsers";
 
 export function TournamentMatchTabs({
 	data,
@@ -84,9 +83,7 @@ export function TournamentMatchTabs({
 					maps={timelineMaps}
 					pickBanRowsBySlot={pickBanData?.rowsBySlot}
 					isOngoing={!data.matchIsOver && data.results.length > 0}
-				>
-					<TournamentMatchIngestedUsers data={data} />
-				</MatchResultTab>
+				/>
 			) : null}
 			<TournamentMatchRosterTab data={data} />
 			{tabs.includes(TAB_KEYS.ACTION) ? (
@@ -174,9 +171,7 @@ function resolveTimelineMaps(
 		): WeaponPoolWeapon[] => {
 			const unlinkedIngested = data.ingestedWeapons.filter(
 				(w) =>
-					w.mapIndex === mapIndex &&
-					w.userId === null &&
-					w.ingestedTeamId === tournamentTeamId,
+					w.mapIndex === mapIndex && w.tournamentTeamId === tournamentTeamId,
 			);
 
 			let unlinkedIdx = 0;

@@ -10,6 +10,7 @@ function testGame(
 	partial: Partial<Scoreboards.IngestableGame> = {},
 ): Scoreboards.IngestableGame {
 	return {
+		matchGameResultId: 11,
 		tournamentMatchId: 1,
 		mapIndex: 0,
 		mode: "SZ",
@@ -30,6 +31,7 @@ function testScoreboard({
 	lobby = "Private Battle",
 	names = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"],
 	weapons = ["10", "10", "10", "10", "20", "20", "20", "20"],
+	povIndex = null,
 }: {
 	t?: number;
 	mode?: string | null;
@@ -37,6 +39,7 @@ function testScoreboard({
 	lobby?: string | null;
 	names?: string[];
 	weapons?: string[];
+	povIndex?: number | null;
 } = {}): IngestedEventInput {
 	return {
 		type: "Scoreboard",
@@ -55,50 +58,43 @@ function testScoreboard({
 				d: 5,
 				s: 2,
 			})),
+			povIndex,
 		},
 	};
 }
 
-describe("reportedWeaponRowsFromEvents", () => {
-	it("fills weapons for all 8 players of a matching game", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
-			events: [testScoreboard()],
+describe("matchedScoreboards", () => {
+	it("turns a matching game's scoreboard into stored scoreboard data", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
+			events: [testScoreboard({ povIndex: 2 })],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(8);
-		expect(rows[0]).toEqual({
+		expect(scoreboards).toHaveLength(1);
+		expect(scoreboards[0]).toEqual({
+			matchGameResultId: 11,
 			tournamentMatchId: 1,
 			mapIndex: 0,
-			weaponSplId: 10,
-			ingestedInGameName: "w1",
-			ingestedTeamId: WINNER_TEAM_ID,
-			createdAt: 123,
+			povIndex: 2,
+			data: {
+				scores: [100, 52],
+				players: ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"].map(
+					(name, i) => ({
+						name,
+						tournamentTeamId: i < 4 ? WINNER_TEAM_ID : LOSER_TEAM_ID,
+						weaponSplId: i < 4 ? 10 : 20,
+						ka: 10,
+						d: 5,
+						s: 2,
+						paint: 1000,
+					}),
+				),
+			},
 		});
-	});
-
-	it("assigns the winning side to the game's winner team and the losing side to the loser team", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
-			events: [testScoreboard()],
-			games: [testGame()],
-			createdAt: 123,
-		});
-
-		expect(
-			rows
-				.filter((row) => row.ingestedTeamId === WINNER_TEAM_ID)
-				.map((row) => row.ingestedInGameName),
-		).toEqual(["w1", "w2", "w3", "w4"]);
-		expect(
-			rows
-				.filter((row) => row.ingestedTeamId === LOSER_TEAM_ID)
-				.map((row) => row.ingestedInGameName),
-		).toEqual(["l1", "l2", "l3", "l4"]);
 	});
 
 	it("matches scoreboards to games by mode and stage", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({ mode: "Rainmaker", stage: "Eeltail Alley", t: 60 }),
 			],
@@ -106,14 +102,13 @@ describe("reportedWeaponRowsFromEvents", () => {
 				testGame({ mapIndex: 0, mode: "SZ", stageId: 0 as StageId }),
 				testGame({ mapIndex: 1, mode: "RM", stageId: 1 as StageId }),
 			],
-			createdAt: 123,
 		});
 
-		expect(new Set(rows.map((row) => row.mapIndex))).toEqual(new Set([1]));
+		expect(scoreboards.map((s) => s.mapIndex)).toEqual([1]);
 	});
 
 	it("assigns two games on the same mode and stage in chronological order", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({
 					t: 60,
@@ -128,56 +123,54 @@ describe("reportedWeaponRowsFromEvents", () => {
 				testGame({ tournamentMatchId: 1, playedAt: 1000 }),
 				testGame({ tournamentMatchId: 2, playedAt: 2000 }),
 			],
-			createdAt: 123,
 		});
 
 		expect(
-			rows.find((row) => row.ingestedInGameName === "a")?.tournamentMatchId,
+			scoreboards.find((s) => s.data.players[0]!.name === "a")
+				?.tournamentMatchId,
 		).toBe(1);
 		expect(
-			rows.find((row) => row.ingestedInGameName === "i")?.tournamentMatchId,
+			scoreboards.find((s) => s.data.players[0]!.name === "i")
+				?.tournamentMatchId,
 		).toBe(2);
 	});
 
 	it("skips duplicate detections of the same scoreboard", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [testScoreboard({ t: 60 }), testScoreboard({ t: 65 })],
 			games: [
 				testGame({ tournamentMatchId: 1, playedAt: 1000 }),
 				testGame({ tournamentMatchId: 2, playedAt: 2000 }),
 			],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(8);
-		expect(rows[0]!.tournamentMatchId).toBe(1);
+		expect(scoreboards).toHaveLength(1);
+		expect(scoreboards[0]!.tournamentMatchId).toBe(1);
 	});
 
 	it("skips scoreboards from other lobbies", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [testScoreboard({ lobby: "X Battle" })],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(0);
+		expect(scoreboards).toHaveLength(0);
 	});
 
 	it("skips scoreboards with unreadable mode or stage", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({ mode: null }),
 				testScoreboard({ stage: "Not A Stage" }),
 			],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(0);
+		expect(scoreboards).toHaveLength(0);
 	});
 
-	it("skips players with unknown weapon or empty name", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+	it("keeps players with unknown weapon or empty name", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({
 					names: ["w1", "", "w3", "w4", "l1", "l2", "l3", "l4"],
@@ -185,15 +178,18 @@ describe("reportedWeaponRowsFromEvents", () => {
 				}),
 			],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(6);
-		expect(rows.some((row) => row.ingestedInGameName === "w3")).toBe(false);
+		const players = scoreboards[0]!.data.players;
+		expect(players).toHaveLength(8);
+		expect(players[1]!.name).toBe("");
+		expect(players[1]!.weaponSplId).toBe(10);
+		expect(players[2]!.weaponSplId).toBe(null);
+		expect(players[2]!.ka).toBe(10);
 	});
 
 	it("skips non-scoreboard events", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				{
 					type: "MapStart",
@@ -203,14 +199,13 @@ describe("reportedWeaponRowsFromEvents", () => {
 				},
 			],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(0);
+		expect(scoreboards).toHaveLength(0);
 	});
 
 	it("skips scoreboards that have no matching game left", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({ t: 60 }),
 				testScoreboard({
@@ -219,15 +214,14 @@ describe("reportedWeaponRowsFromEvents", () => {
 				}),
 			],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(8);
+		expect(scoreboards).toHaveLength(1);
 	});
 
 	it("uses ScoreboardReplay events too", () => {
 		const scoreboard = testScoreboard();
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				{
 					...scoreboard,
@@ -244,14 +238,13 @@ describe("reportedWeaponRowsFromEvents", () => {
 				},
 			],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
-		expect(rows).toHaveLength(8);
+		expect(scoreboards).toHaveLength(1);
 	});
 
 	it("skips a game whose known rosters contradict the scoreboard sides", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [testScoreboard()],
 			games: [
 				testGame({
@@ -268,15 +261,13 @@ describe("reportedWeaponRowsFromEvents", () => {
 					playedAt: 2000,
 				}),
 			],
-			createdAt: 123,
 		});
 
-		expect(rows.map((row) => row.tournamentMatchId)).not.toContain(1);
-		expect(rows.filter((row) => row.tournamentMatchId === 2)).toHaveLength(8);
+		expect(scoreboards.map((s) => s.tournamentMatchId)).toEqual([2]);
 	});
 
 	it("matches known in-game names ignoring discriminator, case and unicode width", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({
 					names: ["Ｗ１", "w2", "w3", "w4", "l1", "l2", "l3", "l4"],
@@ -288,36 +279,30 @@ describe("reportedWeaponRowsFromEvents", () => {
 					loserInGameNames: ["W3#5678"],
 				}),
 			],
-			createdAt: 123,
 		});
 
 		// "Ｗ１" matches winner roster "w1#1234" straight (1) but "w3" on the
 		// winning side would match the loser roster flipped (1); straight wins ties
-		expect(rows).toHaveLength(8);
+		expect(scoreboards).toHaveLength(1);
 	});
 
-	it("skips players whose name appears twice on the same side", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+	it("keeps players whose name appears twice on the same side", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({
 					names: ["dupe", "dupe", "w3", "w4", "l1", "l2", "l3", "dupe"],
 				}),
 			],
 			games: [testGame()],
-			createdAt: 123,
 		});
 
 		expect(
-			rows.filter((row) => row.ingestedInGameName === "dupe"),
-		).toHaveLength(1);
-		expect(
-			rows.find((row) => row.ingestedInGameName === "dupe")?.ingestedTeamId,
-		).toBe(LOSER_TEAM_ID);
-		expect(rows).toHaveLength(6);
+			scoreboards[0]!.data.players.filter((p) => p.name === "dupe"),
+		).toHaveLength(3);
 	});
 
 	it("does not assign a game played before the previously assigned one", () => {
-		const rows = Scoreboards.reportedWeaponRowsFromEvents({
+		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({ t: 60, mode: "Rainmaker", stage: "Eeltail Alley" }),
 				testScoreboard({ t: 1000, mode: "Splat Zones", stage: "Scorch Gorge" }),
@@ -336,10 +321,8 @@ describe("reportedWeaponRowsFromEvents", () => {
 					playedAt: 2000,
 				}),
 			],
-			createdAt: 123,
 		});
 
-		expect(rows.map((row) => row.tournamentMatchId)).not.toContain(1);
-		expect(rows.filter((row) => row.tournamentMatchId === 2)).toHaveLength(8);
+		expect(scoreboards.map((s) => s.tournamentMatchId)).toEqual([2]);
 	});
 });
