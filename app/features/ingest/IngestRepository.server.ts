@@ -100,6 +100,11 @@ export async function gamesPlayedByUserInTournament({
 			"TournamentStage.id",
 			"TournamentMatch.stageId",
 		)
+		.leftJoin(
+			"IngestedScoreboard",
+			"IngestedScoreboard.matchGameResultId",
+			"TournamentMatchGameResult.id",
+		)
 		.select([
 			"TournamentMatchGameResult.id as matchGameResultId",
 			"TournamentMatchGameResult.matchId as tournamentMatchId",
@@ -108,6 +113,7 @@ export async function gamesPlayedByUserInTournament({
 			"TournamentMatchGameResult.stageId",
 			"TournamentMatchGameResult.winnerTeamId",
 			"TournamentMatchGameResult.createdAt as playedAt",
+			"IngestedScoreboard.data as storedScoreboardData",
 			opponentOneId.as("opponentOneId"),
 			opponentTwoId.as("opponentTwoId"),
 		])
@@ -143,6 +149,8 @@ export async function gamesPlayedByUserInTournament({
 					? inGameNamesByTeamId.get(loserTeamId)
 					: undefined) ?? [],
 			playedAt: row.playedAt,
+			storedScoreboardPlayerNames:
+				row.storedScoreboardData?.players.map((player) => player.name) ?? null,
 		};
 	});
 }
@@ -292,6 +300,10 @@ async function attributePovUser({
 		.where("matchGameResultId", "=", matchGameResultId)
 		.executeTakeFirst();
 	if (!existing) return;
+
+	if (existing.data.players.some((player) => player.userId === userId)) {
+		return;
+	}
 
 	const player = existing.data.players[povIndex];
 	if (!player || player.userId !== undefined) return;

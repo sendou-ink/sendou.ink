@@ -20,6 +20,7 @@ function testGame(
 		winnerInGameNames: [],
 		loserInGameNames: [],
 		playedAt: 1000,
+		storedScoreboardPlayerNames: null,
 		...partial,
 	};
 }
@@ -31,6 +32,7 @@ function testScoreboard({
 	lobby = "Private Battle",
 	names = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"],
 	weapons = ["10", "10", "10", "10", "20", "20", "20", "20"],
+	abilities = {},
 	povIndex = null,
 }: {
 	t?: number;
@@ -39,6 +41,7 @@ function testScoreboard({
 	lobby?: string | null;
 	names?: string[];
 	weapons?: string[];
+	abilities?: Record<number, string[][]>;
 	povIndex?: number | null;
 } = {}): IngestedEventInput {
 	return {
@@ -57,6 +60,7 @@ function testScoreboard({
 				ka: 10,
 				d: 5,
 				s: 2,
+				...(abilities[i] ? { abilities: abilities[i] } : null),
 			})),
 			povIndex,
 		},
@@ -91,6 +95,77 @@ describe("matchedScoreboards", () => {
 				),
 			},
 		});
+	});
+
+	it("carries ingested player abilities through to the stored scoreboard", () => {
+		const build = [
+			["ISM", "ISS", "ISS", "ISS"],
+			["QR", "QSJ", "QSJ", "QSJ"],
+			["SSU", "RSU", "RSU", "RSU"],
+		];
+		const scoreboards = Scoreboards.matchedScoreboards({
+			events: [testScoreboard({ abilities: { 5: build } })],
+			games: [testGame()],
+		});
+
+		expect(scoreboards[0]!.data.players[5]!.abilities).toEqual(build);
+		expect(scoreboards[0]!.data.players[0]!.abilities).toBeUndefined();
+	});
+
+	it("skips a game whose stored scoreboard has different players", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
+			events: [testScoreboard()],
+			games: [
+				testGame({
+					matchGameResultId: 11,
+					storedScoreboardPlayerNames: ["a", "b", "c", "d", "e", "f", "g", "h"],
+				}),
+				testGame({ matchGameResultId: 12, playedAt: 2000 }),
+			],
+		});
+
+		expect(scoreboards.map((s) => s.matchGameResultId)).toEqual([12]);
+	});
+
+	it("matches a re-detection of a stored scoreboard to the same game despite misread names", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
+			events: [testScoreboard()],
+			games: [
+				testGame({
+					matchGameResultId: 11,
+					storedScoreboardPlayerNames: [
+						"w1",
+						"w2",
+						"w3",
+						"wA",
+						"l1",
+						"l2",
+						"l3",
+						"lB",
+					],
+				}),
+				testGame({ matchGameResultId: 12, playedAt: 2000 }),
+			],
+		});
+
+		expect(scoreboards.map((s) => s.matchGameResultId)).toEqual([11]);
+	});
+
+	it("does not count unreadable names towards stored scoreboard re-detection", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
+			events: [
+				testScoreboard({ names: ["", "", "", "", "l1", "l2", "l3", "l4"] }),
+			],
+			games: [
+				testGame({
+					matchGameResultId: 11,
+					storedScoreboardPlayerNames: ["", "", "", "", "l1", "l2", "l3", "l4"],
+				}),
+				testGame({ matchGameResultId: 12, playedAt: 2000 }),
+			],
+		});
+
+		expect(scoreboards.map((s) => s.matchGameResultId)).toEqual([12]);
 	});
 
 	it("matches scoreboards to games by mode and stage", () => {

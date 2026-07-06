@@ -16,9 +16,10 @@ export type WeaponPoolWeapon =
 	  }
 	| null;
 
+// xxx: maybe sort confirmed first then unconfirmed in weapon id order
 export function WeaponPool({
 	weapons,
-	size = 24,
+	size = 32,
 }: {
 	weapons: WeaponPoolWeapon[];
 	size?: number;
@@ -60,12 +61,7 @@ export function WeaponPool({
 			<div className={styles.weaponPopover}>
 				{entries.map((weapon, i) =>
 					weapon !== null ? (
-						<div
-							key={i}
-							className={clsx(styles.weaponPopoverRow, {
-								[styles.unverifiedWeapon]: weapon.unverified,
-							})}
-						>
+						<div key={i} className={styles.weaponPopoverRow}>
 							<WeaponImage
 								weaponSplId={weapon.weaponSplId}
 								variant="badge"

@@ -37,6 +37,13 @@ const TOURNAMENT_LOBBY = "Private Battle";
  */
 const DUPLICATE_SCOREBOARD_WINDOW_SECONDS = 300;
 
+/**
+ * How many of the 8 player rows must carry the same readable name in the
+ * same position for a scoreboard to count as a re-detection of a game's
+ * already stored scoreboard (allows a couple of OCR misreads).
+ */
+const MIN_STORED_DUPLICATE_NAME_MATCHES = 6;
+
 /** How many players on the winning (first) resp. losing side of a scoreboard. */
 const PLAYERS_PER_TEAM = 4;
 
@@ -56,6 +63,13 @@ export interface IngestableGame {
 	loserInGameNames: string[];
 	/** database timestamp used to order games chronologically across matches */
 	playedAt: number;
+	/**
+	 * player names (in scoreboard row order) of the game's already stored
+	 * scoreboard; null when the game has none yet. Lets matching skip taken
+	 * games across requests while recognizing re-detections of the same
+	 * scoreboard.
+	 */
+	storedScoreboardPlayerNames: string[] | null;
 }
 
 export interface IngestedScoreboardPlayer {
@@ -66,6 +80,8 @@ export interface IngestedScoreboardPlayer {
 	d: number | null;
 	s: number | null;
 	paint: number | null;
+	/** [head, clothes, shoes] ability rows gathered from the match's death screens */
+	abilities?: string[][];
 	/** set only via povIndex attribution */
 	userId?: number;
 }
@@ -94,6 +110,12 @@ export interface MatchedScoreboard {
  * scoreboard rows should overlap the game winner's roster, not the loser's).
  * Scoreboards from other lobbies, with unreadable mode/stage or duplicated
  * detections of the same game are skipped.
+ *
+ * Scoreboards of one session may arrive over many requests (one per match),
+ * so games whose scoreboard was stored by an earlier request are skipped —
+ * unless the incoming scoreboard is a re-detection of the stored one, which
+ * is matched to the same game so re-sends stay idempotent and another POV's
+ * attribution still lands.
  */
 export function matchedScoreboards({
 	events,
@@ -129,7 +151,13 @@ export function matchedScoreboards({
 		for (let i = nextGameIdx; i < orderedGames.length; i++) {
 			const game = orderedGames[i]!;
 			if (game.mode !== mode || game.stageId !== stageId) continue;
-			if (!sidesMatchKnownPlayers(scoreboard, game)) continue;
+			if (game.storedScoreboardPlayerNames) {
+				if (!isStoredDuplicate(scoreboard, game.storedScoreboardPlayerNames)) {
+					continue;
+				}
+			} else if (!sidesMatchKnownPlayers(scoreboard, game)) {
+				continue;
+			}
 
 			result.push(scoreboardToMatchedScoreboard({ scoreboard, game }));
 			nextGameIdx = i + 1;
@@ -200,6 +228,27 @@ function nameOverlap(names: string[], knownNames: string[]) {
 	return names.filter((name) => name && known.has(name)).length;
 }
 
+/**
+ * Checks whether a scoreboard is a re-detection of a game's already stored
+ * scoreboard: enough player rows carry the same readable name in the same
+ * position. Positional comparison keeps two games between the same eight
+ * players apart — their row orders and sides practically always differ.
+ */
+function isStoredDuplicate(
+	scoreboard: ScoreboardEventInput,
+	storedPlayerNames: string[],
+) {
+	const matches = scoreboard.data.players.filter((player, i) => {
+		const name = normalizeInGameName(player.name);
+		const storedName = storedPlayerNames[i]
+			? normalizeInGameName(storedPlayerNames[i])
+			: "";
+		return name !== "" && name === storedName;
+	}).length;
+
+	return matches >= MIN_STORED_DUPLICATE_NAME_MATCHES;
+}
+
 function normalizeInGameName(name: string) {
 	return name.split("#")[0]!.normalize("NFKC").trim().toLowerCase();
 }
@@ -226,6 +275,7 @@ function scoreboardToMatchedScoreboard({
 				d: player.d,
 				s: player.s,
 				paint: player.paint,
+				...(player.abilities ? { abilities: player.abilities } : null),
 			};
 		},
 	);

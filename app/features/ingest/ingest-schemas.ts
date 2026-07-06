@@ -14,6 +14,8 @@ const scoreboardPlayerSchema = z.object({
 	ka: z.number().nullable(),
 	d: z.number().nullable(),
 	s: z.number().nullable(),
+	/** [head, clothes, shoes] ability rows gathered from the match's death screens */
+	abilities: z.array(z.array(detectionText)).optional(),
 });
 
 const scoreboardDataSchema = z.object({

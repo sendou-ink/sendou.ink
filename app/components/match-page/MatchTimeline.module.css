@@ -67,14 +67,7 @@
 	display: grid;
 	grid-template-rows: auto 1fr auto;
 	align-self: stretch;
-
-	&:first-child {
-		justify-self: end;
-	}
-
-	&:last-child {
-		justify-self: start;
-	}
+	container: weapon-pool / inline-size;
 }
 
 .mapCenter {
@@ -110,6 +103,14 @@
 	align-items: center;
 	justify-content: center;
 	gap: var(--s-2-5);
+
+	.mapSide:first-child & {
+		justify-self: end;
+	}
+
+	.mapSide:last-child & {
+		justify-self: start;
+	}
 }
 
 .resultHeader {
