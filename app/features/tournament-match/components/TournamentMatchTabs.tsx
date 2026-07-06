@@ -7,6 +7,7 @@ import type {
 	TimelineMap,
 	TimelinePickBanEvent,
 } from "~/components/match-page/MatchTimeline";
+import type { WeaponPoolWeapon } from "~/components/match-page/WeaponPool";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -18,6 +19,7 @@ import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
+import { TournamentMatchIngestedUsers } from "./TournamentMatchIngestedUsers";
 
 export function TournamentMatchTabs({
 	data,
@@ -82,7 +84,9 @@ export function TournamentMatchTabs({
 					maps={timelineMaps}
 					pickBanRowsBySlot={pickBanData?.rowsBySlot}
 					isOngoing={!data.matchIsOver && data.results.length > 0}
-				/>
+				>
+					<TournamentMatchIngestedUsers data={data} />
+				</MatchResultTab>
 			) : null}
 			<TournamentMatchRosterTab data={data} />
 			{tabs.includes(TAB_KEYS.ACTION) ? (
@@ -164,8 +168,31 @@ function resolveTimelineMaps(
 				(w) => w.mapIndex === mapIndex && w.userId === userId,
 			)?.weaponSplId ?? null;
 
-		const alphaWeapons = alphaRoster.map((u) => weaponFor(u.id));
-		const bravoWeapons = bravoRoster.map((u) => weaponFor(u.id));
+		const weaponsFor = (
+			roster: ReturnType<typeof resolveRoster>,
+			tournamentTeamId: number,
+		): WeaponPoolWeapon[] => {
+			const unlinkedIngested = data.ingestedWeapons.filter(
+				(w) =>
+					w.mapIndex === mapIndex &&
+					w.userId === null &&
+					w.ingestedTeamId === tournamentTeamId,
+			);
+
+			let unlinkedIdx = 0;
+			return roster.map((u) => {
+				const linked = weaponFor(u.id);
+				if (linked !== null) return linked;
+
+				const ingested = unlinkedIngested[unlinkedIdx++];
+				return ingested
+					? { weaponSplId: ingested.weaponSplId, unverified: true }
+					: null;
+			});
+		};
+
+		const alphaWeapons = weaponsFor(alphaRoster, opponentOneId);
+		const bravoWeapons = weaponsFor(bravoRoster, opponentTwoId);
 		const hasAnyWeapon =
 			alphaWeapons.some((w) => w !== null) ||
 			bravoWeapons.some((w) => w !== null);

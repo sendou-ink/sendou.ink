@@ -25,3 +25,7 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 }
+
+.unverifiedWeapon {
+	opacity: 0.7;
+}

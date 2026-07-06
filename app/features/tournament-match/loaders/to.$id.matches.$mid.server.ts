@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as IngestRepository from "~/features/ingest/IngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -59,6 +60,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const reportedWeapons =
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
+
+	const ingestedWeapons =
+		await IngestRepository.findIngestedWeaponsByTournamentMatchId(matchId);
+	const ingestedWeaponPools = ingestedWeapons.some((w) => w.userId === null)
+		? await UserRepository.weaponPoolsByUserIds(match.players.map((p) => p.id))
+		: [];
 
 	const matchIsOver =
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
@@ -228,6 +235,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
 		reportedWeapons,
+		ingestedWeapons,
+		ingestedWeaponPools,
 		mapList,
 		matchIsOver,
 		endedEarly,

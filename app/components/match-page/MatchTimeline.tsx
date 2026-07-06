@@ -11,11 +11,7 @@ import { useTranslation } from "react-i18next";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { Avatar } from "../Avatar";
@@ -24,6 +20,7 @@ import { SendouPopover } from "../elements/Popover";
 import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
+import type { WeaponPoolWeapon } from "./WeaponPool";
 import { WeaponPool } from "./WeaponPool";
 
 const LONG_TEAM_NAME_THRESHOLD = 16;
@@ -45,8 +42,8 @@ export interface TimelineMap {
 		bravo: CommonUser[];
 	};
 	weapons?: {
-		alpha: Array<MainWeaponId | null>;
-		bravo: Array<MainWeaponId | null>;
+		alpha: WeaponPoolWeapon[];
+		bravo: WeaponPoolWeapon[];
 	};
 	/** Optional point values [alpha, bravo] */
 	points?: [number, number];
@@ -259,7 +256,7 @@ function SideResult({
 }: {
 	result: "WIN" | "LOSS";
 	points?: number;
-	weapons?: Array<MainWeaponId | null>;
+	weapons?: WeaponPoolWeapon[];
 	isPicked?: boolean;
 }) {
 	const { t } = useTranslation(["q"]);

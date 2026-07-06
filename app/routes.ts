@@ -329,6 +329,8 @@ export default [
 	route("/seed", "features/api-private/routes/seed.ts"),
 	route("/users", "features/api-private/routes/users.ts"),
 
+	route("/ingest", "features/ingest/routes/ingest.ts"),
+
 	layout("features/api-public/routes/api.layout.tsx", [
 		...prefix("/api", [
 			route(

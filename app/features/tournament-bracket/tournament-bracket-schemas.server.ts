@@ -112,6 +112,19 @@ export const matchSchema = z.union([
 		_action: _action("UNDO_WEAPON_REPORT"),
 		mapIndex: z.coerce.number().int().nonnegative(),
 	}),
+	z.object({
+		_action: _action("LINK_INGESTED_USERS"),
+		links: z
+			.array(
+				z.object({
+					ingestedInGameName: z.string().min(1).max(500),
+					ingestedTeamId: id.nullable(),
+					userId: id,
+				}),
+			)
+			.min(1)
+			.max(TOURNAMENT.INGESTED_USER_LINKS_MAX),
+	}),
 ]);
 
 export const bracketIdx = z.coerce.number().int().min(0).max(100);
