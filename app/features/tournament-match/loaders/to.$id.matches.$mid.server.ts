@@ -63,19 +63,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const ingestedScoreboards =
 		await IngestRepository.findScoreboardsByTournamentMatchId(matchId);
-	const ingestedWeapons = ingestedScoreboards.flatMap((scoreboard) =>
-		scoreboard.data.players.flatMap((player) =>
-			player.userId === undefined && player.weaponSplId !== null
-				? [
-						{
-							mapIndex: scoreboard.mapIndex,
-							tournamentTeamId: player.tournamentTeamId,
-							weaponSplId: player.weaponSplId,
-						},
-					]
-				: [],
-		),
-	);
 
 	const matchIsOver =
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
@@ -245,7 +232,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
 		reportedWeapons,
-		ingestedWeapons,
+		ingestedScoreboards,
 		mapList,
 		matchIsOver,
 		endedEarly,

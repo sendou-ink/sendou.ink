@@ -693,6 +693,87 @@ export default function MatchPageTestRoute() {
 									alpha: [40, null, 1100, 3040],
 									bravo: [null, 210, null, 4010],
 								},
+								scoreboard: {
+									scores: [500, 0],
+									alpha: [
+										{
+											name: "Sendou",
+											weaponSplId: 40,
+											ka: 12,
+											d: 4,
+											s: 3,
+											paint: 1102,
+											abilities: [
+												["LDE", "IRU", "IRU", "SCU"],
+												["SPU", "ISM", "ISM", "SCU"],
+												["SCU", "QSJ", "SRU", "SCU"],
+											],
+										},
+										{
+											name: "Lean",
+											weaponSplId: 1100,
+											ka: 9,
+											d: 6,
+											s: 2,
+											paint: 987,
+										},
+										{
+											name: "Kiver",
+											weaponSplId: 3040,
+											ka: 7,
+											d: 5,
+											s: 4,
+											paint: 1345,
+										},
+										{
+											name: "Brian",
+											weaponSplId: null,
+											ka: null,
+											d: null,
+											s: null,
+											paint: null,
+										},
+									],
+									bravo: [
+										{
+											name: "Naga",
+											weaponSplId: 210,
+											ka: 8,
+											d: 7,
+											s: 1,
+											paint: 876,
+											abilities: [
+												["CB", "SPU", "SPU", "SPU"],
+												["SCU", "SCU", "SS", "SCU"],
+												["SJ", "SRU", "QSJ", "QSJ"],
+											],
+										},
+										{
+											name: "Grey",
+											weaponSplId: 4010,
+											ka: 5,
+											d: 8,
+											s: 2,
+											paint: 1204,
+										},
+										{
+											name: "Poppy",
+											weaponSplId: 50,
+											ka: 6,
+											d: 9,
+											s: 3,
+											paint: 743,
+										},
+										{
+											name: "Lime",
+											weaponSplId: 2010,
+											ka: 4,
+											d: 10,
+											s: 1,
+											paint: 654,
+										},
+									],
+								},
 								rosters: {
 									alpha: [
 										{

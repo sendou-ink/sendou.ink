@@ -81,7 +81,7 @@ export interface IngestedScoreboardPlayer {
 	s: number | null;
 	paint: number | null;
 	/** [head, clothes, shoes] ability rows gathered from the match's death screens */
-	abilities?: string[][];
+	abilities?: string[][]; // xxx: improve types incl. this
 	/** set only via povIndex attribution */
 	userId?: number;
 }

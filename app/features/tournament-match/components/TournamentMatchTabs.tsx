@@ -20,6 +20,9 @@ import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanT
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
 
+/** Ingested scoreboard rows come winning team first, 4 players per side. */
+const SCOREBOARD_PLAYERS_PER_TEAM = 4;
+
 export function TournamentMatchTabs({
 	data,
 }: {
@@ -160,6 +163,11 @@ function resolveTimelineMaps(
 		const alphaRoster = resolveRoster(result.participants, opponentOneId);
 		const bravoRoster = resolveRoster(result.participants, opponentTwoId);
 
+		const ingestedScoreboard = data.ingestedScoreboards.find(
+			(scoreboard) => scoreboard.mapIndex === mapIndex,
+		);
+		const alphaIsWinner = result.winnerTeamId === opponentOneId;
+
 		const weaponFor = (userId: number) =>
 			data.reportedWeapons?.find(
 				(w) => w.mapIndex === mapIndex && w.userId === userId,
@@ -169,10 +177,14 @@ function resolveTimelineMaps(
 			roster: ReturnType<typeof resolveRoster>,
 			tournamentTeamId: number,
 		): WeaponPoolWeapon[] => {
-			const unlinkedIngested = data.ingestedWeapons.filter(
-				(w) =>
-					w.mapIndex === mapIndex && w.tournamentTeamId === tournamentTeamId,
-			);
+			const unlinkedIngested =
+				ingestedScoreboard?.data.players.flatMap((player) =>
+					player.userId === undefined &&
+					player.weaponSplId !== null &&
+					player.tournamentTeamId === tournamentTeamId
+						? [player.weaponSplId]
+						: [],
+				) ?? [];
 
 			let unlinkedIdx = 0;
 			return roster.map((u) => {
@@ -180,8 +192,8 @@ function resolveTimelineMaps(
 				if (linked !== null) return linked;
 
 				const ingested = unlinkedIngested[unlinkedIdx++];
-				return ingested
-					? { weaponSplId: ingested.weaponSplId, unverified: true }
+				return ingested !== undefined
+					? { weaponSplId: ingested, unverified: true }
 					: null;
 			});
 		};
@@ -196,10 +208,7 @@ function resolveTimelineMaps(
 			stageId: result.stageId,
 			mode: result.mode,
 			timestamp: databaseTimestampToJavascriptTimestamp(result.createdAt),
-			winner:
-				result.winnerTeamId === opponentOneId
-					? ("ALPHA" as const)
-					: ("BRAVO" as const),
+			winner: alphaIsWinner ? ("ALPHA" as const) : ("BRAVO" as const),
 			rosters: {
 				alpha: alphaRoster,
 				bravo: bravoRoster,
@@ -213,8 +222,48 @@ function resolveTimelineMaps(
 						number,
 					])
 				: undefined,
+			scoreboard: resolveTimelineScoreboard(ingestedScoreboard, alphaIsWinner),
 		};
 	});
+}
+
+function resolveTimelineScoreboard(
+	ingestedScoreboard:
+		| TournamentMatchLoaderData["ingestedScoreboards"][number]
+		| undefined,
+	alphaIsWinner: boolean,
+): TimelineMap["scoreboard"] {
+	if (!ingestedScoreboard) return undefined;
+
+	const toTimelinePlayers = (
+		players: (typeof ingestedScoreboard)["data"]["players"],
+	) =>
+		players.map((player) => ({
+			name: player.name,
+			weaponSplId: player.weaponSplId,
+			ka: player.ka,
+			d: player.d,
+			s: player.s,
+			paint: player.paint,
+			abilities: player.abilities,
+		}));
+
+	const winnerRows = ingestedScoreboard.data.players.slice(
+		0,
+		SCOREBOARD_PLAYERS_PER_TEAM,
+	);
+	const loserRows = ingestedScoreboard.data.players.slice(
+		SCOREBOARD_PLAYERS_PER_TEAM,
+	);
+	const [winnerScore, loserScore] = ingestedScoreboard.data.scores;
+
+	return {
+		scores: alphaIsWinner
+			? ([winnerScore, loserScore] as [number | null, number | null])
+			: ([loserScore, winnerScore] as [number | null, number | null]),
+		alpha: toTimelinePlayers(alphaIsWinner ? winnerRows : loserRows),
+		bravo: toTimelinePlayers(alphaIsWinner ? loserRows : winnerRows),
+	};
 }
 
 function resolveTimelinePickBanData(
