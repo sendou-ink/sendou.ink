@@ -175,6 +175,8 @@
 	"match.locked.subtitle": "",
 	"match.waitingForTeams.header": "",
 	"match.waitingForTeams.subtitle": "",
+	"match.waitingForPrevious.header": "",
+	"match.waitingForPrevious.subtitle": "",
 	"match.tbd": "",
 	"match.action.undoLastScore": "",
 	"match.action.reopenMatch": "",

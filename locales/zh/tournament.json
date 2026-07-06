@@ -169,6 +169,8 @@
 	"match.locked.subtitle": "请等待工作人员解锁",
 	"match.waitingForTeams.header": "正在等待队伍",
 	"match.waitingForTeams.subtitle": "队伍将由先前的对局结果决定",
+	"match.waitingForPrevious.header": "",
+	"match.waitingForPrevious.subtitle": "",
 	"match.tbd": "待定",
 	"match.action.undoLastScore": "撤销上一局比分",
 	"match.action.reopenMatch": "重新开启对局",

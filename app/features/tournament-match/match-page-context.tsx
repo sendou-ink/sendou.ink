@@ -1,6 +1,7 @@
 import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { resolveRoomPass } from "~/components/match-page/utils";
+import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
@@ -32,6 +33,7 @@ type MatchPageContextValue = {
 	turnOfResult: ReturnType<typeof PickBan.turnOf>;
 	isPickBanStep: boolean;
 	matchIsLocked: boolean;
+	waitingForPreviousMatch: boolean;
 	joinPool: string | null;
 	joinPass: string | null;
 };
@@ -99,6 +101,10 @@ export function MatchPageProvider({
 		scores,
 	});
 
+	const waitingForPreviousMatch =
+		data.match.status === TournamentMatchStatus.Locked ||
+		data.match.status === TournamentMatchStatus.Waiting;
+
 	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 
 	const tabs = resolveVisibleTabs({
@@ -117,6 +123,7 @@ export function MatchPageProvider({
 			tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized,
 		leagueRoundLocked: isLeagueRoundLocked(tournament, data.match.roundId),
 		lockedForCast,
+		waitingForPreviousMatch,
 	});
 
 	return (
@@ -132,6 +139,7 @@ export function MatchPageProvider({
 				turnOfResult,
 				isPickBanStep,
 				matchIsLocked: lockedForCast,
+				waitingForPreviousMatch,
 				joinPool: joinInfo?.pool ?? null,
 				joinPass: joinInfo?.pass ?? null,
 			}}
@@ -160,6 +168,7 @@ function resolveVisibleTabs({
 	isAdminEligible,
 	leagueRoundLocked,
 	lockedForCast,
+	waitingForPreviousMatch,
 }: {
 	canReportScore: boolean;
 	canReportWeapons: boolean;
@@ -171,11 +180,13 @@ function resolveVisibleTabs({
 	isAdminEligible: boolean;
 	leagueRoundLocked: boolean;
 	lockedForCast: boolean;
+	waitingForPreviousMatch: boolean;
 }): MatchTabKey[] {
 	const tabs: MatchTabKey[] = [TAB_KEYS.ROSTERS];
 
 	if (
 		!leagueRoundLocked &&
+		!waitingForPreviousMatch &&
 		(isPickBanStep ||
 			(canReportScore &&
 				hasCurrentMap &&

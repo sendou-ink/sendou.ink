@@ -171,6 +171,8 @@
 	"match.locked.subtitle": "Please wait for staff to unlock",
 	"match.waitingForTeams.header": "Waiting for teams",
 	"match.waitingForTeams.subtitle": "Teams will be resolved from earlier matches",
+	"match.waitingForPrevious.header": "Previous match ongoing",
+	"match.waitingForPrevious.subtitle": "Match will be reportable when both teams are ready to play",
 	"match.tbd": "TBD",
 	"match.action.undoLastScore": "Undo last score",
 	"match.action.reopenMatch": "Reopen match",

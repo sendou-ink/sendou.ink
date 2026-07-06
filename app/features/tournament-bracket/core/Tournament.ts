@@ -15,7 +15,7 @@ import {
 } from "~/features/tournament/tournament-utils";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { Match, Stage } from "~/modules/brackets-model";
+import { type Match, type Stage, Status } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
@@ -797,6 +797,11 @@ export class Tournament {
 
 		// match didn't start yet
 		if (!match.opponent1 || !match.opponent2) return false;
+
+		// waiting for teams to finish their previous matches
+		if (match.status === Status.Locked || match.status === Status.Waiting) {
+			return false;
+		}
 
 		const matchIsOver =
 			match.opponent1.result === "win" || match.opponent2.result === "win";
