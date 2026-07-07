@@ -112,6 +112,7 @@
 
 .stat {
 	white-space: nowrap;
+	flex-shrink: 0;
 }
 
 .plusStat {
@@ -156,6 +157,7 @@
 .seasonStat {
 	position: relative;
 	display: inline-flex;
+	flex-shrink: 0;
 }
 
 .seasonTop {
@@ -176,6 +178,7 @@
 
 .statDivider {
 	width: 2px;
+	min-width: 2px;
 	align-self: stretch;
 	background-color: var(--color-border);
 }
