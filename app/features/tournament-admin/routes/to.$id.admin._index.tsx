@@ -72,7 +72,7 @@ export default function TournamentAdminTeamsPage() {
 					>
 						Export
 					</SendouButton>
-					{!tournament.ctx.isFinalized ? (
+					{!tournament.hasStarted ? (
 						<LinkButton
 							size="small"
 							icon={<Plus />}
