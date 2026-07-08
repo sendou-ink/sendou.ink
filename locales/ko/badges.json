@@ -2,10 +2,12 @@
 	"patreon": "Patreon에서 sendou.ink Supporter",
 	"patreon+": "Patreon에서 sendou.ink Supporter+",
 	"xp": "{{xpText}} 달성 기념",
+	"tournament_one": "{{tournament}} 우승 기념",
+	"tournament_other": "{{tournament}} 우승 기념 (×{{count}})",
 	"forYourEvent": "이벤트에 배지를 원하나요?",
 	"managedBy": "<0></0>가 관리",
-	"madeBy": "",
-	"own.divider": "",
-	"other.divider": "",
-	"noBadgesFound": ""
+	"madeBy": "<0></0>가 제작",
+	"own.divider": "관리 중인 배지",
+	"other.divider": "기타 배지",
+	"noBadgesFound": "검색 결과와 일치하는 배지가 없습니다"
 }

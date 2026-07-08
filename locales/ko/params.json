@@ -1,14 +1,14 @@
 {
-	"tab.params": "",
-	"tab.patches": "",
-	"noPatches": "",
-	"patches.showSubSpecial": "",
-	"header.parameter": "",
-	"legend.title": "",
-	"legend.damage": "",
-	"legend.frames": "",
-	"legend.powerUp": "",
-	"compare.action": "",
-	"compare.heading": "",
-	"dataCredit.lean": ""
+	"tab.params": "파라미터",
+	"tab.patches": "패치 기록",
+	"noPatches": "이 무기에 대해 추적된 밸런스 변경 사항이 아직 없습니다.",
+	"patches.showSubSpecial": "서브 & 스페셜 변경 사항 표시",
+	"header.parameter": "파라미터",
+	"legend.title": "참고",
+	"legend.damage": "대미지 값은 ×10으로 저장되므로, 450이라는 값은 45.0의 대미지를 의미합니다.",
+	"legend.frames": "시간은 프레임 단위로 측정되며, 60프레임 = 1초입니다.",
+	"legend.powerUp": "Low, Mid, High는 관련 기어 파워(스페셜은 스페셜 성능 업, 서브는 서브 성능 업)를 각각 장착하지 않았을 때, 적당히 장착했을 때, 최대로 장착했을 때의 동일한 값을 나타냅니다.",
+	"compare.action": "무기 간 비교",
+	"compare.heading": "무기 간 {{parameter}} 비교",
+	"dataCredit.lean": "데이터 제공: Lean"
 }
