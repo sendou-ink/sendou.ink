@@ -90,7 +90,7 @@
 		"remeda": "2.39.0",
 		"remix-auth": "4.2.0",
 		"remix-auth-oauth2": "3.4.1",
-		"remix-i18next": "7.5.0",
+		"remix-i18next": "8.0.0",
 		"slugify": "1.6.9",
 		"swr": "2.4.2",
 		"web-haptics": "0.0.6",
