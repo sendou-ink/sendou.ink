@@ -65,8 +65,6 @@
 	"errors.duplicateOrgName": "There is already an organization with this name",
 	"errors.noOnlySpecialCharacters": "Name can't be only special characters",
 	"errors.customRoleRequired": "Enter a name for the custom role",
-	"errors.customRoleTypeRequired": "Select a role type for the custom role",
-	"errors.customRoleOnlyWhenCustom": "Custom role is only allowed when the role is set to Custom",
 	"labels.weaponPool": "Weapon pool",
 	"placeholders.weaponPoolFull": "Pool full - remove a weapon to add more",
 	"labels.voiceChat": "Can voice chat",

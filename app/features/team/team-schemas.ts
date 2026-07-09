@@ -4,6 +4,7 @@ import {
 	fieldset,
 	idConstant,
 	image,
+	select,
 	selectOptional,
 	stringConstant,
 	textAreaOptional,
@@ -90,7 +91,7 @@ export const updateRosterSchema = z
 						label: "labels.teamMemberCustomRole",
 						maxLength: CUSTOM_ROLE_MAX_LENGTH,
 					}),
-					roleType: selectOptional({
+					roleType: select({
 						label: "labels.teamMemberRoleType",
 						items: [
 							{ value: "PLAYER", label: "options.teamMemberRoleType.PLAYER" },
@@ -111,22 +112,6 @@ export const updateRosterSchema = z
 					code: z.ZodIssueCode.custom,
 					path: ["members", index, "customRole"],
 					message: "forms:errors.customRoleRequired",
-				});
-			}
-
-			if (isCustom && !member.roleType) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ["members", index, "roleType"],
-					message: "forms:errors.customRoleTypeRequired",
-				});
-			}
-
-			if (!isCustom && member.customRole) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					path: ["members", index, "customRole"],
-					message: "forms:errors.customRoleOnlyWhenCustom",
 				});
 			}
 		}

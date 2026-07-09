@@ -65,8 +65,6 @@
 	"errors.duplicateOrgName": "该组织名称已被占用",
 	"errors.noOnlySpecialCharacters": "名称不能仅由特殊字符组成",
 	"errors.customRoleRequired": "请输入自定义职责的名称",
-	"errors.customRoleTypeRequired": "请选择自定义职责的类型",
-	"errors.customRoleOnlyWhenCustom": "仅当职责设为“自定义”时，才允许配置自定义职责",
 	"labels.weaponPool": "武器池",
 	"placeholders.weaponPoolFull": "武器池已满。请移除一个武器以添加新武器",
 	"labels.voiceChat": "可以进行语音聊天吗？",

@@ -65,8 +65,6 @@
 	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
-	"errors.customRoleTypeRequired": "",
-	"errors.customRoleOnlyWhenCustom": "",
 	"labels.weaponPool": "Armes jouées",
 	"placeholders.weaponPoolFull": "",
 	"labels.voiceChat": "",

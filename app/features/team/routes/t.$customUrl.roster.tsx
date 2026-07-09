@@ -123,7 +123,7 @@ function MemberActions() {
 						userId: member.id,
 						role: member.customRole ? CUSTOM_ROLE_VALUE : (member.role ?? null),
 						customRole: member.customRole ?? null,
-						roleType: member.roleType ?? null,
+						roleType: member.roleType ?? "PLAYER",
 						isManager: Boolean(member.isManager),
 					})),
 				}}

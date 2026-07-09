@@ -65,8 +65,6 @@
 	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
-	"errors.customRoleTypeRequired": "",
-	"errors.customRoleOnlyWhenCustom": "",
 	"labels.weaponPool": "Våbenpulje",
 	"placeholders.weaponPoolFull": "",
 	"labels.voiceChat": "",
