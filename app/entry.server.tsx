@@ -1,21 +1,19 @@
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import * as Sentry from "@sentry/react-router";
-import { createInstance } from "i18next";
 import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
-import { I18nextProvider, initReactI18next } from "react-i18next";
+import { I18nextProvider } from "react-i18next";
 import {
 	type EntryContext,
 	type HandleErrorFunction,
+	type RouterContextProvider,
 	ServerRouter,
 } from "react-router";
 import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
-import { config } from "~/modules/i18n/config"; // your i18n configuration file
-import { i18next } from "~/modules/i18n/i18next.server";
-import { resources } from "./modules/i18n/resources.server";
+import { getI18nInstance } from "~/modules/i18n/i18next.server";
 import {
 	daily,
 	everyHourAt00,
@@ -34,23 +32,13 @@ async function handleRequest(
 	responseStatusCode: number,
 	responseHeaders: Headers,
 	reactRouterContext: EntryContext,
+	loadContext: RouterContextProvider,
 ) {
 	const callbackName = isbot(request.headers.get("user-agent"))
 		? "onAllReady"
 		: "onShellReady";
 
-	const instance = createInstance();
-	const lng = await i18next.getLocale(request);
-	const ns = i18next.getRouteNamespaces(reactRouterContext);
-
-	await instance
-		.use(initReactI18next) // Tell our instance to use react-i18next
-		.init({
-			...config, // spread the configuration
-			lng, // The locale we detected above
-			ns, // The namespaces the routes about to render wants to use
-			resources,
-		});
+	const instance = getI18nInstance(loadContext);
 
 	return new Promise((resolve, reject) => {
 		let didError = false;

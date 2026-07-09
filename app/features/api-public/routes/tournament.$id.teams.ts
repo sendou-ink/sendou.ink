@@ -5,7 +5,7 @@ import { z } from "zod";
 import { db } from "~/db/sql";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
@@ -18,7 +18,7 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT("en", ["game-misc"]);
+	const t = await getFixedTForLanguage("en", ["game-misc"]);
 	const { id } = parseParams({
 		params,
 		schema: paramsSchema,

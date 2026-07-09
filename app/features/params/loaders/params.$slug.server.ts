@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -35,10 +35,8 @@ const subParamsData = subWeaponParamsData as WeaponParams.AllVersionParams;
 const specialParamsData =
 	specialWeaponParamsData as WeaponParams.AllVersionParams;
 
-export const loader = async ({ request, params }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["weapons"], {
-		lng: "en",
-	});
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const t = await getFixedTForLanguage("en", ["weapons"]);
 
 	const mainWeaponId = weaponNameSlugToId(params.slug);
 	if (typeof mainWeaponId === "number") {
