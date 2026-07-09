@@ -40,7 +40,7 @@ import {
 	SETTINGS_PAGE,
 	userPage,
 } from "~/utils/urls";
-import { Avatar } from "../Avatar";
+import { Avatar, generateIdenticon } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { FuseZone } from "../fuse/Fuse";
@@ -601,6 +601,9 @@ function SideNavCollapseButton({
 }
 
 function PageIcon({ crumb }: { crumb: Breadcrumb }) {
+	const [isErrored, setIsErrored] = React.useState(false);
+	const isClient = useHydrated();
+
 	if (crumb.type !== "IMAGE") {
 		return null;
 	}
@@ -609,15 +612,28 @@ function PageIcon({ crumb }: { crumb: Breadcrumb }) {
 	const isExternal = lastPathSegment.includes(".");
 	const iconClass = clsx(styles.pageIcon, "rounded");
 
+	// an <img> can finish loading (and fail) before React hydrates and attaches onError, so that
+	// error is missed — re-check on mount and fall back manually so SSR'd icons still heal
+	const checkAlreadyErrored = (img: HTMLImageElement | null) => {
+		if (img?.complete && img.naturalWidth === 0) setIsErrored(true);
+	};
+
+	const identiconSrc =
+		isErrored && isClient && crumb.identiconInput
+			? generateIdenticon(crumb.identiconInput, 28, 7)
+			: null;
+
 	return (
 		<div className={styles.pageIconWrapper}>
 			{isExternal ? (
 				<img
-					src={crumb.imgPath}
+					ref={checkAlreadyErrored}
+					src={identiconSrc ?? crumb.imgPath}
 					alt=""
 					className={iconClass}
 					width={28}
 					height={28}
+					onError={() => setIsErrored(true)}
 				/>
 			) : (
 				<Image

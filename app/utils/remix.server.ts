@@ -290,6 +290,8 @@ export type Breadcrumb =
 			type: "IMAGE";
 			href: string;
 			text?: string;
+			/** Seed for the identicon shown if `imgPath` fails to load. */
+			identiconInput?: string;
 	  }
 	| { text: string; type: "TEXT"; href: string };
 

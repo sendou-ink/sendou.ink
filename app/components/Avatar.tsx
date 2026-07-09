@@ -42,7 +42,7 @@ function generateColors(hash: number) {
 	};
 }
 
-function generateIdenticon(input: string, size = 128, gridSize = 5) {
+export function generateIdenticon(input: string, size = 128, gridSize = 5) {
 	const cacheKey = `${input}-${size}-${gridSize}`;
 	const cached = identiconCache.get(cacheKey);
 	if (cached) return cached;

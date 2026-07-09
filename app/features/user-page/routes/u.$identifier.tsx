@@ -69,6 +69,7 @@ export const handle: SendouRouteHandle = {
 			href: userPage(data.user),
 			type: "IMAGE",
 			text: data.user.username,
+			identiconInput: String(data.user.discordId),
 		};
 	},
 };
