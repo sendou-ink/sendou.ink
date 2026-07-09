@@ -15,7 +15,7 @@ import {
 } from "~/features/tournament/tournament-utils";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import { type Match, type Stage, Status } from "~/modules/brackets-model";
+import type { Match, Stage } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
@@ -780,41 +780,6 @@ export class Tournament {
 			this.isOrganizer(user) &&
 			!this.ctx.isFinalized
 		);
-	}
-
-	/** Should it be possible for the given user to report score for this match at this time? */
-	canReportScore({
-		matchId,
-		user,
-	}: {
-		matchId: number;
-		user: OptionalIdObject;
-	}) {
-		const match = this.brackets
-			.flatMap((bracket) => (bracket.preview ? [] : bracket.data.match))
-			.find((match) => match.id === matchId);
-		invariant(match, "Match not found");
-
-		// match didn't start yet
-		if (!match.opponent1 || !match.opponent2) return false;
-
-		// waiting for teams to finish their previous matches
-		if (match.status === Status.Locked || match.status === Status.Waiting) {
-			return false;
-		}
-
-		const matchIsOver =
-			match.opponent1.result === "win" || match.opponent2.result === "win";
-
-		if (matchIsOver) return false;
-
-		const teamMemberOf = this.teamMemberOfByUser(user)?.id;
-
-		const isParticipant =
-			match.opponent1.id === teamMemberOf ||
-			match.opponent2.id === teamMemberOf;
-
-		return isParticipant || this.isOrganizer(user);
 	}
 
 	/**

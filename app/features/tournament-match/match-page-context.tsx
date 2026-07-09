@@ -108,9 +108,12 @@ export function MatchPageProvider({
 	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 
 	const tabs = resolveVisibleTabs({
-		canReportScore: tournament.canReportScore({
-			matchId: data.match.id,
+		canReportScore: resolveCanReportScore({
+			tournament,
 			user,
+			teams,
+			matchIsOver: data.matchIsOver,
+			waitingForPreviousMatch,
 		}),
 		canReportWeapons:
 			isParticipant && tournament.weaponReportingOpen && hasReportedMaps,
@@ -206,6 +209,33 @@ function resolveVisibleTabs({
 	}
 
 	return tabs;
+}
+
+// Derived from the match loader's data instead of the tournament loader's
+// bracket data — the latter can be stale on the client (its revalidation is
+// aborted if the user navigates mid-flight and same-tournament navigations
+// skip it), which would hide the action tab on an already-ready match.
+function resolveCanReportScore({
+	tournament,
+	user,
+	teams,
+	matchIsOver,
+	waitingForPreviousMatch,
+}: {
+	tournament: ReturnType<typeof useTournament>;
+	user: ReturnType<typeof useUser>;
+	teams: [MatchPageTeam | null, MatchPageTeam | null];
+	matchIsOver: boolean;
+	waitingForPreviousMatch: boolean;
+}) {
+	const [teamOne, teamTwo] = teams;
+	if (!teamOne || !teamTwo) return false;
+	if (waitingForPreviousMatch || matchIsOver) return false;
+
+	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
+	const isParticipant = userTeamId === teamOne.id || userTeamId === teamTwo.id;
+
+	return isParticipant || tournament.isOrganizer(user);
 }
 
 function resolveJoinInfo({
