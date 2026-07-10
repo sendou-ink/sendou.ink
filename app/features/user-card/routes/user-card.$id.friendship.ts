@@ -23,7 +23,8 @@ export const loader = async ({
 	if (!viewer || Number.isNaN(targetUserId)) {
 		return {
 			isFriend: false,
-			hasPendingFriendRequest: false,
+			sentFriendRequest: false,
+			incomingFriendRequestId: null,
 			mutualFriends: [],
 		};
 	}
@@ -50,7 +51,11 @@ export const loader = async ({
 
 	return {
 		isFriend: Boolean(friendship),
-		hasPendingFriendRequest: Boolean(pendingRequest),
+		sentFriendRequest: pendingRequest?.senderId === viewer.id,
+		incomingFriendRequestId:
+			pendingRequest && pendingRequest.senderId !== viewer.id
+				? pendingRequest.id
+				: null,
 		mutualFriends,
 	};
 };

@@ -187,7 +187,7 @@ export async function findFriendRequestBetween({
 }) {
 	return db
 		.selectFrom("FriendRequest")
-		.select("FriendRequest.id")
+		.select(["FriendRequest.id", "FriendRequest.senderId"])
 		.where((eb) =>
 			eb.or([
 				eb.and([

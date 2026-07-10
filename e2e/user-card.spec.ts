@@ -1,12 +1,15 @@
+import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
+import { FRIENDS_PAGE, LFG_PAGE, SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
 	navigate,
 	seed,
+	selectUser,
 	submit,
 	test,
+	waitForPOSTResponse,
 } from "./helpers/playwright";
 
 test.describe("User card", () => {
@@ -35,5 +38,56 @@ test.describe("User card", () => {
 			"background-color",
 			"rgb(65, 105, 225)",
 		);
+	});
+});
+
+test.describe("User card friend request", () => {
+	test("receiver sees add friend button that accepts the incoming request", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: FRIENDS_PAGE });
+
+		await selectUser({ page, userName: "Sendou", labelName: "User" });
+		await submit(page);
+		await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+
+		await impersonate(page);
+		await navigate({ page, url: LFG_PAGE });
+
+		await page.getByRole("button", { name: "N-ZAP" }).first().click();
+
+		const acceptButton = page.getByLabel("Accept friend request");
+		await expect(acceptButton).toBeVisible();
+		await expect(page.getByLabel("Friend request pending")).not.toBeVisible();
+
+		await waitForPOSTResponse(page, () => acceptButton.click());
+
+		await expect(page.getByText("Friend request accepted")).toBeAttached();
+		await expect(acceptButton).not.toBeVisible();
+		await expect(page.getByLabel("Send friend request")).not.toBeVisible();
+
+		await navigate({ page, url: FRIENDS_PAGE });
+		await expect(page.getByRole("button", { name: "N-ZAP" })).toBeVisible();
+	});
+
+	test("sender still sees pending state on the receiver's card", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({ page, url: FRIENDS_PAGE });
+
+		await selectUser({ page, userName: "N-ZAP", labelName: "User" });
+		await submit(page);
+		await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+
+		await navigate({ page, url: LFG_PAGE });
+		await page.getByRole("button", { name: "N-ZAP" }).first().click();
+
+		await expect(page.getByLabel("Friend request pending")).toBeVisible();
+		await expect(page.getByLabel("Friend request pending")).toBeDisabled();
+		await expect(page.getByLabel("Accept friend request")).not.toBeVisible();
 	});
 });
