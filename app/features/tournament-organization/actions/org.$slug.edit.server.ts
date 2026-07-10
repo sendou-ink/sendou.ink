@@ -3,7 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getServerTFunction } from "~/modules/i18n/i18next.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { actionError } from "~/utils/remix.server";
 import { tournamentOrganizationPage } from "~/utils/urls";
@@ -24,7 +24,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const data = result.data;
 
-	const t = await i18next.getFixedT(request, ["org"]);
+	const t = getServerTFunction(["org"]);
 
 	const organization = await organizationFromParams(params);
 

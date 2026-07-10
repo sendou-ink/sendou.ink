@@ -4,7 +4,7 @@ import { type Urgency, WebPushError } from "web-push";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { APP_ICON_URL } from "~/utils/urls";
 import type { NotificationSubscription } from "../../../db/tables";
-import { i18next } from "../../../modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
@@ -76,7 +76,7 @@ export async function notify({
 		dededuplicatedUserIds,
 	);
 	if (subscriptions.length > 0) {
-		const t = await i18next.getFixedT("en-US", ["common"]);
+		const t = await getFixedTForLanguage("en-US", ["common"]);
 
 		const limit = pLimit(50);
 

@@ -27,7 +27,6 @@ import {
 	useRevalidator,
 	useSearchParams,
 } from "react-router";
-import { useChangeLanguage } from "remix-i18next/react";
 import { Config } from "~/config";
 import type { CustomTheme } from "~/db/tables";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
@@ -56,7 +55,12 @@ import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
-import { i18nCookie, i18next } from "./modules/i18n/i18next.server";
+import {
+	getLocale,
+	i18nCookie,
+	i18nMiddleware,
+} from "./modules/i18n/i18next.server";
+import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
@@ -68,6 +72,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 	requestContextMiddleware,
 	sessionIdMiddleware,
 	userMiddleware,
+	i18nMiddleware,
 ];
 
 import "~/styles/vars.css";
@@ -110,7 +115,7 @@ export type LoggedInUser = NonNullable<RootLoaderData["user"]>;
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
-	const locale = await i18next.getLocale(request);
+	const locale = getLocale();
 	const themeSession = await getThemeSession(request);
 	const sidenavSession = await getSidenavSession(request);
 
