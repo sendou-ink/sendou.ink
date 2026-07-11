@@ -211,5 +211,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "Escudo de equipo",
 	"comp.specialCategory.TEAM_BUFF": "Mejora de equipo",
 	"comp.removeAll": "Eliminar todos",
-	"comp.addAll": "Añadir todos"
+	"comp.addAll": "Añadir todos",
+	"comp.singleWeaponCombos": ""
 }

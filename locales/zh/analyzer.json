@@ -205,5 +205,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "团队防护罩",
 	"comp.specialCategory.TEAM_BUFF": "团队增益",
 	"comp.removeAll": "移除所有",
-	"comp.addAll": "添加所有"
+	"comp.addAll": "添加所有",
+	"comp.singleWeaponCombos": ""
 }
