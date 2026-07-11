@@ -58,6 +58,7 @@
 	"errors.required": "",
 	"errors.minLength": "",
 	"errors.maxLength": "",
+	"errors.mustBeWholeNumber": "",
 	"errors.invalidUrl": "",
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",

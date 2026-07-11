@@ -58,6 +58,7 @@
 	"errors.required": "此项为必填项",
 	"errors.minLength": "字数不能少于 {{min}} 个字符",
 	"errors.maxLength": "字数不能多于 {{max}} 个字符",
+	"errors.mustBeWholeNumber": "",
 	"errors.invalidUrl": "请输入有效的 URL 地址",
 	"errors.notAllowedCharacters": "包含非法字符",
 	"errors.atLeastOneOption": "请至少选择一个选项",

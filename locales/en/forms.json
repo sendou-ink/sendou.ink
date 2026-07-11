@@ -58,6 +58,7 @@
 	"errors.required": "This field is required",
 	"errors.minLength": "Must be at least {{min}} characters",
 	"errors.maxLength": "Must be at most {{max}} characters",
+	"errors.mustBeWholeNumber": "Must be a whole number (no decimals)",
 	"errors.invalidUrl": "Must be a valid URL",
 	"errors.notAllowedCharacters": "Contains not allowed characters",
 	"errors.atLeastOneOption": "At least one option must be selected",

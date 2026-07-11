@@ -58,6 +58,7 @@
 	"errors.required": "Este campo es obligatorio",
 	"errors.minLength": "Debe tener al menos {{min}} caracteres",
 	"errors.maxLength": "Debe tener como máximo {{max}} caracteres",
+	"errors.mustBeWholeNumber": "",
 	"errors.invalidUrl": "Debe ser una URL válida",
 	"errors.notAllowedCharacters": "Contiene caracteres no permitidos",
 	"errors.atLeastOneOption": "Debe seleccionarse al menos una opción",

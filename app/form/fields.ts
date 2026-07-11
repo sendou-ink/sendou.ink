@@ -241,7 +241,7 @@ export function numberField(
 ) {
 	return z.coerce
 		.number()
-		.int()
+		.int({ message: "forms:errors.mustBeWholeNumber" })
 		.nonnegative()
 		.register(formRegistry, {
 			...args,
@@ -270,7 +270,7 @@ export function numberFieldOptional(
 ) {
 	return z.coerce
 		.number()
-		.int()
+		.int({ message: "forms:errors.mustBeWholeNumber" })
 		.nonnegative()
 		.optional()
 		.register(formRegistry, {
