@@ -31,7 +31,8 @@
 		"test:e2e:flaky-detect": "playwright test --repeat-each=10 --max-failures=1",
 		"test:e2e:generate-seeds": "cross-env DB_PATH=db-test.sqlite3 pnpm run migrate up && cross-env DB_PATH=db-test.sqlite3 vite-node scripts/generate-e2e-seed-dbs.ts",
 		"check-test-db-migrations": "node --experimental-strip-types scripts/check-test-db-migrations.ts",
-		"checks": "pnpm run biome:fix && pnpm run test:unit:browser && pnpm run check-translation-jsons && pnpm run typecheck && pnpm run knip && pnpm run check-test-db-migrations",
+		"check-plural-collapse": "node --experimental-strip-types scripts/collapse-single-plural-keys.ts --check",
+		"checks": "pnpm run biome:fix && pnpm run test:unit:browser && pnpm run check-translation-jsons && pnpm run check-plural-collapse && pnpm run typecheck && pnpm run knip && pnpm run check-test-db-migrations",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
 		"i18n:sync": "node --experimental-strip-types scripts/collapse-single-plural-keys.ts && i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && pnpm run biome:fix",
 		"knip": "knip"
