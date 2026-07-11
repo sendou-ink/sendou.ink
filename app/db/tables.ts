@@ -881,6 +881,8 @@ export interface TournamentTeamMember {
 	userId: number;
 	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
 	isStayAsSub: Generated<DBBoolean>;
+	/** Set when the member was added to the roster after registration closed. */
+	isSub: Generated<DBBoolean>;
 	// denormalized from TournamentTeam.isLooking
 	isLooking: Generated<DBBoolean>;
 }

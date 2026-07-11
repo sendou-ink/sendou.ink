@@ -208,6 +208,7 @@ export async function findById(id: number) {
 									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
+									"TournamentTeamMember.isSub",
 									sql<string | null> /*sql*/`coalesce(
                     "TournamentTeamMember"."inGameName",
                     "User"."inGameName"
