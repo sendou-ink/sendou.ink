@@ -18,6 +18,7 @@ import { useFetcher, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
+import { LocaleTime } from "~/components/LocaleTime";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import { useDebounce } from "~/hooks/useDebounce";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -505,7 +506,14 @@ function ResultItem({ result }: { result: SearchResult }) {
 							className={styles.resultLogo}
 						/>
 					) : null}
-					<span className={styles.resultName}>{result.name}</span>
+					<div className={styles.resultTexts}>
+						<span className={styles.resultName}>{result.name}</span>
+						<LocaleTime
+							date={result.startTime}
+							options={{ day: "numeric", month: "long", year: "numeric" }}
+							className={styles.resultSecondary}
+						/>
+					</div>
 				</div>
 			);
 	}
