@@ -6,14 +6,16 @@ import * as UserCardRepository from "../UserCardRepository.server";
 export const loader = async () => {
 	const user = requireUser();
 
-	const [{ userCards }, extras, hasLinkedPlayer] = await Promise.all([
-		UserCardRepository.userCards({
-			userIds: [user.id],
-			includeHiddenStats: true,
-		}),
-		UserCardRepository.cardEditExtras(user.id),
-		XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
-	]);
+	const [{ userCards }, extras, hasLinkedPlayer, verifiedPeakXp] =
+		await Promise.all([
+			UserCardRepository.userCards({
+				userIds: [user.id],
+				includeHiddenStats: true,
+			}),
+			UserCardRepository.cardEditExtras(user.id),
+			XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
+			XRankPlacementRepository.peakVerifiedXpByUserId(user.id),
+		]);
 
 	const card = userCards.get(user.id);
 	invariant(card, "card data not found for own user");
@@ -24,5 +26,6 @@ export const loader = async () => {
 		isSupporter: Boolean(user.roles?.includes("SUPPORTER")),
 		presentStats: card.stats.map((stat) => stat.type),
 		hasLinkedPlayer,
+		verifiedPeakXp,
 	};
 };
