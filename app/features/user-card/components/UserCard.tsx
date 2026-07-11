@@ -389,21 +389,19 @@ function FriendRequestButton({
 	const previousStateRef = React.useRef(fetcher.state);
 	const acceptsIncomingRequest = incomingFriendRequestId !== null;
 
-	// fires on the submitting -> revalidating transition (not on idle) so the accepted toast still
-	// shows before the revalidated friendship data unmounts this button
+	// Sending a request keeps this button mounted (it becomes the pending checkmark), so the
+	// success toast can wait for the server round-trip here. The accept path instead unmounts the
+	// button as soon as the revalidated friendship data arrives, which can race the toast render,
+	// so that toast is fired directly from the press handler below.
 	React.useEffect(() => {
 		if (
+			!acceptsIncomingRequest &&
 			previousStateRef.current === "submitting" &&
 			fetcher.state !== "submitting" &&
 			fetcher.data === null
 		) {
 			toastQueue.add(
-				{
-					message: acceptsIncomingRequest
-						? "Friend request accepted"
-						: t("user:card.friendRequestSent"),
-					variant: "success",
-				},
+				{ message: t("user:card.friendRequestSent"), variant: "success" },
 				{ timeout: 5000 },
 			);
 		}
@@ -418,15 +416,22 @@ function FriendRequestButton({
 				icon={<UserPlus />}
 				isDisabled={fetcher.state !== "idle" || fetcher.data === null}
 				aria-label="Accept friend request"
-				onPress={() =>
+				onPress={() => {
+					toastQueue.add(
+						{
+							message: t("user:card.friendRequestAccepted"),
+							variant: "success",
+						},
+						{ timeout: 5000 },
+					);
 					fetcher.submit(
 						{
 							_action: "ACCEPT_REQUEST",
 							friendRequestId: incomingFriendRequestId,
 						},
 						{ method: "post", action: FRIENDS_PAGE },
-					)
-				}
+					);
+				}}
 			/>
 		);
 	}
