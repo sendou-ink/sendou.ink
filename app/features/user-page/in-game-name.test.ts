@@ -30,6 +30,7 @@ describe("inGameNameIsValid", () => {
 			"こ々ろ#1234",
 			"〆〇〃#1234",
 			"※Test#1234",
+			"○☆Mikurby#2897",
 		];
 
 		for (const name of validNames) {

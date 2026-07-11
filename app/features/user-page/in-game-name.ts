@@ -17,7 +17,7 @@ export const IN_GAME_NAME_CHARACTER_CATEGORIES = [
 		id: "symbols",
 		label: "inGameName.categories.symbols",
 		characters: [
-			..."¿¡′‘’‚‛•…″“”„«»←→↑↓⇒⇔˜ˊˋ¢€£¥¤𝑓×÷±∞√¬∀⊂⊃∴∵⁀∂№°¹²³¼½¾♪♭♀♂⚪⚫◎◻◼◇◆△▲▽▼☆★©®™§¶†⍑※",
+			..."¿¡′‘’‚‛•…″“”„«»←→↑↓⇒⇔˜ˊˋ¢€£¥¤𝑓×÷±∞√¬∀⊂⊃∴∵⁀∂№°¹²³¼½¾♪♭♀♂○⚪⚫◎◻◼◇◆△▲▽▼☆★©®™§¶†⍑※",
 		],
 	},
 	{
