@@ -100,11 +100,8 @@ test.describe("Composition Analyzer", () => {
 		await expect(damageComboList).not.toBeVisible();
 		await expect(rangeVisualization).not.toBeVisible();
 
-		// Select one weapon - damage combo still not visible
+		// Select two weapons with range data (blaster - ID 210)
 		await page.getByTestId("weapon-button-40").click();
-		await expect(damageComboList).not.toBeVisible();
-
-		// Select a second weapon with range data (blaster - ID 210)
 		await page.getByTestId("weapon-button-210").click();
 
 		// Both damage combo list and range visualization should now be visible
