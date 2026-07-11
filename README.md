@@ -1,4 +1,4 @@
-<center><img src="public/static-assets/img/app-icon.png" style="border-radius:100%" width="200" height="200"></center>
+<center><img src="https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/img/app-icon.png" style="border-radius:100%" width="200" height="200"></center>
 
 <a href="https://sendou.ink" target="_blank" rel="noreferrer">sendou.ink</a> - a Splatoon platform with competitive focus
 
