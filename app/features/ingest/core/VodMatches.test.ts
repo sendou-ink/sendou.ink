@@ -7,7 +7,7 @@ import {
 import { prefillVodMatches, resolveVodMatches } from "./VodMatches";
 
 // 8 real main weapon ids (4v4): Splattershot etc.
-const WEAPONS = ["40", "40", "40", "40", "20", "20", "20", "20"];
+const WEAPONS = [40, 40, 40, 40, 20, 20, 20, 20];
 
 function testMatch(
 	partial: Partial<IngestVodMatchInput> = {},
@@ -58,7 +58,7 @@ describe("resolveVodMatches", () => {
 
 	it("skips a match with an unreadable weapon", () => {
 		const { resolved, skippedCount } = resolveVodMatches({
-			matches: [testMatch({ weapons: [...WEAPONS.slice(0, 7), "unknown"] })],
+			matches: [testMatch({ weapons: [...WEAPONS.slice(0, 7), null] })],
 			teamSize: 4,
 		});
 		expect(resolved).toHaveLength(0);
@@ -76,7 +76,7 @@ describe("resolveVodMatches", () => {
 
 	it("honours a non-default team size", () => {
 		const { resolved } = resolveVodMatches({
-			matches: [testMatch({ weapons: ["40", "40", "20", "20"] })],
+			matches: [testMatch({ weapons: [40, 40, 20, 20] })],
 			teamSize: 2,
 		});
 		expect(resolved).toHaveLength(1);
@@ -99,7 +99,7 @@ describe("prefillVodMatches", () => {
 			testMatch({
 				mode: null,
 				stage: "Not A Stage",
-				weapons: [...WEAPONS.slice(0, 7), "unknown"],
+				weapons: [...WEAPONS.slice(0, 7), null],
 			}),
 		]);
 

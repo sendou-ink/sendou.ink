@@ -247,15 +247,14 @@ function scoreboardToMatchedScoreboard({
 }): MatchedScoreboard {
 	const players = scoreboard.data.players.map(
 		(player, playerIdx): IngestedScoreboardPlayer => {
-			const weaponSplId = Number(player.weapon);
-
 			return {
 				name: player.name.trim(),
 				tournamentTeamId:
 					playerIdx < PLAYERS_PER_TEAM ? game.winnerTeamId : game.loserTeamId,
-				weaponSplId: MAIN_WEAPON_IDS.has(weaponSplId)
-					? (weaponSplId as MainWeaponId)
-					: null,
+				weaponSplId:
+					player.weaponId !== null && MAIN_WEAPON_IDS.has(player.weaponId)
+						? (player.weaponId as MainWeaponId)
+						: null,
 				ka: player.ka,
 				d: player.d,
 				s: player.s,

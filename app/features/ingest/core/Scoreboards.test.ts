@@ -31,7 +31,7 @@ function testScoreboard({
 	stage = "Scorch Gorge",
 	lobby = "Private Battle",
 	names = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"],
-	weapons = ["10", "10", "10", "10", "20", "20", "20", "20"],
+	weapons = [10, 10, 10, 10, 20, 20, 20, 20] as (number | null)[],
 	abilities = {},
 	povIndex = null,
 }: {
@@ -40,7 +40,7 @@ function testScoreboard({
 	stage?: string | null;
 	lobby?: string | null;
 	names?: string[];
-	weapons?: string[];
+	weapons?: (number | null)[];
 	abilities?: Record<number, string[][]>;
 	povIndex?: number | null;
 } = {}): IngestedEventInput {
@@ -55,7 +55,7 @@ function testScoreboard({
 			scores: [100, 52],
 			players: names.map((name, i) => ({
 				name,
-				weapon: weapons[i]!,
+				weaponId: weapons[i]!,
 				paint: 1000,
 				ka: 10,
 				d: 5,
@@ -244,12 +244,12 @@ describe("matchedScoreboards", () => {
 		expect(scoreboards).toHaveLength(0);
 	});
 
-	it("keeps players with unknown weapon or empty name", () => {
+	it("keeps players with unread weapon or empty name", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({
 					names: ["w1", "", "w3", "w4", "l1", "l2", "l3", "l4"],
-					weapons: ["10", "10", "unknown", "10", "20", "20", "20", "20"],
+					weapons: [10, 10, null, 10, 20, 20, 20, 20],
 				}),
 			],
 			games: [testGame()],

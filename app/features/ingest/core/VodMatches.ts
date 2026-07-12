@@ -20,7 +20,7 @@ export interface ResolvedVodMatch {
 /**
  * Turns the raw per-match rows an emberz VoD scan sends into insertable
  * VideoMatch data: the English mode/stage names are resolved to sendou.ink
- * ids and the weapon-id strings validated. A match is dropped when its mode or
+ * ids and the weapon ids validated. A match is dropped when its mode or
  * stage did not read to a known value, or when it does not carry exactly
  * `teamSize * 2` weapons that all resolve to real main weapons (an OCR miss on
  * any weapon leaves the match incomplete — better to skip it than show a hole).
@@ -83,22 +83,20 @@ export function prefillVodMatches(
 		stageId:
 			(match.stage ? STAGE_ID_BY_ENGLISH_NAME.get(match.stage) : undefined) ??
 			null,
-		weapons: match.weapons.map((weapon) => {
-			const id = Number(weapon);
-			return Number.isInteger(id) && MAIN_WEAPON_IDS.has(id)
-				? (id as MainWeaponId)
-				: null;
-		}),
+		weapons: match.weapons.map((weapon) =>
+			weapon !== null && MAIN_WEAPON_IDS.has(weapon)
+				? (weapon as MainWeaponId)
+				: null,
+		),
 	}));
 }
 
 /** Returns the weapons as main weapon ids, or null if any did not resolve. */
-function resolveWeapons(weapons: string[]): MainWeaponId[] | null {
+function resolveWeapons(weapons: (number | null)[]): MainWeaponId[] | null {
 	const result: MainWeaponId[] = [];
 	for (const weapon of weapons) {
-		const id = Number(weapon);
-		if (!Number.isInteger(id) || !MAIN_WEAPON_IDS.has(id)) return null;
-		result.push(id as MainWeaponId);
+		if (weapon === null || !MAIN_WEAPON_IDS.has(weapon)) return null;
+		result.push(weapon as MainWeaponId);
 	}
 	return result;
 }

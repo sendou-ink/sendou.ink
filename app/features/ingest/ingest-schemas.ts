@@ -9,7 +9,8 @@ const detectionText = z.string().max(500);
 
 const scoreboardPlayerSchema = z.object({
 	name: detectionText,
-	weapon: detectionText,
+	/** sendou main-weapon id; null when the row's weapon was unreadable */
+	weaponId: z.number().int().nullable(),
 	paint: z.number().nullable(),
 	ka: z.number().nullable(),
 	d: z.number().nullable(),

@@ -13,10 +13,16 @@ const ingestVodMatchSchema = z.object({
 	startsAt: z.number().int().min(0),
 	/** English mode name; null when no source read it */
 	mode: detectionText.nullable(),
+	/**
+	 * true when `mode` is the scanner's fabricated PoC default (Splat Zones)
+	 * rather than a real read. Currently informational only — assumed modes
+	 * are still stored, since casted footage never exposes the mode.
+	 */
+	modeAssumed: z.boolean().optional(),
 	/** English stage name; null when no source read it */
 	stage: detectionText.nullable(),
-	/** the match's weapons (sendou main-weapon-id strings, or "unknown") */
-	weapons: z.array(detectionText).max(16),
+	/** sendou main-weapon ids; null for a slot that never read */
+	weapons: z.array(z.number().int().nullable()).max(16),
 });
 
 export const ingestVodBodySchema = z.object({
