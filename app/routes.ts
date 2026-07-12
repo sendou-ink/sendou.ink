@@ -330,6 +330,7 @@ export default [
 	route("/users", "features/api-private/routes/users.ts"),
 
 	route("/ingest", "features/ingest/routes/ingest.ts"),
+	route("/ingest/vod", "features/ingest/routes/ingest.vod.ts"),
 
 	layout("features/api-public/routes/api.layout.tsx", [
 		...prefix("/api", [

@@ -1,32 +1,17 @@
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
-import gameMisc from "../../../../locales/en/game-misc.json";
 import type {
 	IngestedEventInput,
 	ScoreboardEventInput,
 } from "../ingest-schemas";
-
-const STAGE_ID_BY_ENGLISH_NAME = new Map<string, StageId>(
-	stageIds.map((stageId) => [
-		(gameMisc as Record<string, string>)[`STAGE_${stageId}`]!,
-		stageId,
-	]),
-);
-
-const MODE_SHORT_BY_ENGLISH_NAME = new Map<string, ModeShort>(
-	modesShort.map((modeShort) => [
-		(gameMisc as Record<string, string>)[`MODE_LONG_${modeShort}`]!,
-		modeShort,
-	]),
-);
-
-const MAIN_WEAPON_IDS: ReadonlySet<number> = new Set(mainWeaponIds);
+import {
+	MAIN_WEAPON_IDS,
+	MODE_SHORT_BY_ENGLISH_NAME,
+	STAGE_ID_BY_ENGLISH_NAME,
+} from "./game-names";
 
 /** Lobby header value scoreboards of tournament games are expected to have. */
 const TOURNAMENT_LOBBY = "Private Battle";
