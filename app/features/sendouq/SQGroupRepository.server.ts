@@ -586,13 +586,18 @@ export async function closeExpiredContinueVotes() {
 
 export async function mapModePreferencesBySeasonNth(seasonNth: number) {
 	return db
-		.selectFrom("Skill")
-		.innerJoin("User", "User.id", "Skill.userId")
+		.selectFrom("User")
 		.select("User.mapModePreferences")
-		.where("Skill.season", "=", seasonNth)
-		.where("Skill.userId", "is not", null)
 		.where("User.mapModePreferences", "is not", null)
-		.groupBy("Skill.userId")
+		.where(({ eb, exists }) =>
+			exists(
+				eb
+					.selectFrom("Skill")
+					.select("Skill.id")
+					.whereRef("Skill.userId", "=", "User.id")
+					.where("Skill.season", "=", seasonNth),
+			),
+		)
 		.$narrowType<{ mapModePreferences: UserMapModePreferences }>()
 		.execute();
 }

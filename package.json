@@ -17,7 +17,7 @@
 		"check-translation-jsons": "node --experimental-strip-types scripts/check-translation-jsons.ts",
 		"check-translation-jsons:no-write": "node --experimental-strip-types scripts/check-translation-jsons.ts --no-write",
 		"check-articles": "vite-node scripts/check-articles.ts",
-		"bench:db": "cross-env DB_PATH=db-prod.sqlite3 vite-node scripts/benchmark-db.ts",
+		"bench:db": "cross-env DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true vite-node scripts/benchmark-db.ts",
 		"compute-luti-divs": "vite-node scripts/compute-luti-divs.ts",
 		"refresh-prod-db": "node --experimental-strip-types scripts/refresh-prod-db.ts && pnpm run migrate:prod",
 		"biome:check": "biome check --error-on-warnings .",

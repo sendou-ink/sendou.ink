@@ -465,11 +465,12 @@ export async function seasonPopularUsersWeapon(
 			fn.max("q1.count").as("count"),
 		])
 		.groupBy("q1.userId")
+		.having(
+			({ fn }) => fn.max("q1.count"),
+			">",
+			MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
+		)
 		.execute();
 
-	return Object.fromEntries(
-		rows
-			.filter((r) => r.count > MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
-			.map((r) => [r.userId, r.weaponSplId]),
-	);
+	return Object.fromEntries(rows.map((r) => [r.userId, r.weaponSplId]));
 }
