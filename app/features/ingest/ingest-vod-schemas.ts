@@ -42,4 +42,17 @@ export const ingestVodBodySchema = z.object({
 	matches: z.array(ingestVodMatchSchema).min(1).max(50),
 });
 
+/**
+ * The emberz VoD tab's "Upload to sendou.ink" button packs this, JSONCrushed,
+ * into /vods/new's `ingest` search param to prefill the form: the same match
+ * rows as the /ingest/vod body, minus the submission fields (YouTube URL,
+ * title, date) the user fills in the form. `type` is sent only when the scan
+ * auto-detected it (spectator map screens → CAST); absent means the form's
+ * default.
+ */
+export const ingestVodPrefillSchema = z.object({
+	type: z.enum(videoMatchTypes).optional(),
+	matches: z.array(ingestVodMatchSchema).min(1).max(100),
+});
+
 export type IngestVodMatchInput = z.infer<typeof ingestVodMatchSchema>;

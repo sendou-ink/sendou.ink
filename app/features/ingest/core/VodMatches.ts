@@ -60,6 +60,38 @@ export function resolveVodMatches({
 	return { resolved, skippedCount };
 }
 
+export interface PrefillVodMatch {
+	startsAt: number;
+	mode: ModeShort | null;
+	stageId: StageId | null;
+	weapons: (MainWeaponId | null)[];
+}
+
+/**
+ * Lenient variant of resolveVodMatches for prefilling the /vods/new form:
+ * no match is dropped — a mode, stage, or weapon that did not resolve becomes
+ * null and is left for the user to fill in the form.
+ */
+export function prefillVodMatches(
+	matches: IngestVodMatchInput[],
+): PrefillVodMatch[] {
+	return matches.map((match) => ({
+		startsAt: match.startsAt,
+		mode:
+			(match.mode ? MODE_SHORT_BY_ENGLISH_NAME.get(match.mode) : undefined) ??
+			null,
+		stageId:
+			(match.stage ? STAGE_ID_BY_ENGLISH_NAME.get(match.stage) : undefined) ??
+			null,
+		weapons: match.weapons.map((weapon) => {
+			const id = Number(weapon);
+			return Number.isInteger(id) && MAIN_WEAPON_IDS.has(id)
+				? (id as MainWeaponId)
+				: null;
+		}),
+	}));
+}
+
 /** Returns the weapons as main weapon ids, or null if any did not resolve. */
 function resolveWeapons(weapons: string[]): MainWeaponId[] | null {
 	const result: MainWeaponId[] = [];
