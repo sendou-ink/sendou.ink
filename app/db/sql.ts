@@ -1,17 +1,13 @@
 import { styleText } from "node:util";
 import * as Sentry from "@sentry/react-router";
 import Database from "better-sqlite3";
-import {
-	Kysely,
-	type LogEvent,
-	ParseJSONResultsPlugin,
-	SqliteDialect,
-} from "kysely";
+import { Kysely, type LogEvent, SqliteDialect } from "kysely";
 import { format } from "sql-formatter";
 import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { FastParseJSONResultsPlugin } from "./parse-json-results-plugin";
 import type { DB } from "./tables";
 
 const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
@@ -51,7 +47,7 @@ export const db = new Kysely<DB>({
 		database: sql,
 	}),
 	log,
-	plugins: [new ParseJSONResultsPlugin()],
+	plugins: [new FastParseJSONResultsPlugin()],
 });
 
 function log(event: LogEvent) {
