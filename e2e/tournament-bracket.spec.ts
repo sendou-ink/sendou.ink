@@ -691,6 +691,11 @@ test.describe("Tournament bracket", () => {
 		await navigateToMatch(page, 5);
 		await goToTab(page, "admin");
 		await submit(page, "reopen-match-button");
+		// Wait for the reopen to be reflected before switching tabs: switching
+		// tabs is a `defaultShouldRevalidate: false` navigation that would abort
+		// the still-in-flight post-reopen loader revalidation, leaving the match
+		// stuck as "over" so the action tab never appears.
+		await isNotVisible(page.getByTestId("reopen-match-button"));
 		await goToTab(page, "action");
 		await undoLastReport(page);
 		await reportResult(page, {
