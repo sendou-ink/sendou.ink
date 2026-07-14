@@ -76,7 +76,9 @@ function logQuery(event: LogEvent) {
 	if (event.level === "query" && isSelectQuery) {
 		const from = () =>
 			(event.query.query as any).from.froms.map(
-				(f: any) => f.table.identifier.name,
+				// plain tables have the name under table, aliased tables and
+				// subqueries under alias
+				(f: any) => f.table?.identifier?.name ?? f.alias?.name ?? "unknown",
 			);
 		// biome-ignore lint/suspicious/noConsole: dev only
 		console.log(styleText("blue", `-- SQLITE QUERY to "${from()}" --`));

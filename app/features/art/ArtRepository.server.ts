@@ -1,4 +1,4 @@
-import type { Transaction } from "kysely";
+import { sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
@@ -28,7 +28,26 @@ function getDailySeed() {
 
 export async function findShowcaseArts(): Promise<ListedArt[]> {
 	const arts = await db
-		.selectFrom("Art")
+		.selectFrom((eb) =>
+			eb
+				// each author's most recent art (showcase ones first) via SQLite's
+				// max() + bare column rule, packed into one integer since createdAt
+				// always stays below the isShowcase component
+				.selectFrom("Art")
+				.innerJoin("User", "User.id", "Art.authorId")
+				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
+				.select(({ fn }) => [
+					"Art.id as artId",
+					fn
+						.max(
+							sql<number>`"Art"."isShowcase" * 10000000000 + "Art"."createdAt"`,
+						)
+						.as("packedShowcaseCreatedAt"),
+				])
+				.groupBy("Art.authorId")
+				.as("BestOfAuthor"),
+		)
+		.innerJoin("Art", "Art.id", "BestOfAuthor.artId")
 		.innerJoin("User", "User.id", "Art.authorId")
 		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
 		.select((eb) => [
@@ -50,31 +69,19 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 		.orderBy("User.id", "asc")
 		.execute();
 
-	const encounteredUserIds = new Set<number>();
-
-	const mappedArts = arts
-		.filter((row) => {
-			if (encounteredUserIds.has(row.userId)) {
-				return false;
-			}
-
-			encounteredUserIds.add(row.userId);
-
-			return true;
-		})
-		.map((a) => ({
-			id: a.id,
-			createdAt: a.createdAt,
-			url: a.url,
-			isShowcase: Boolean(a.isShowcase),
-			author: {
-				commissionsOpen: a.commissionsOpen,
-				discordAvatar: a.discordAvatar,
-				customAvatarUrl: a.customAvatarUrl,
-				discordId: a.discordId,
-				username: a.username,
-			},
-		}));
+	const mappedArts = arts.map((a) => ({
+		id: a.id,
+		createdAt: a.createdAt,
+		url: a.url,
+		isShowcase: Boolean(a.isShowcase),
+		author: {
+			commissionsOpen: a.commissionsOpen,
+			discordAvatar: a.discordAvatar,
+			customAvatarUrl: a.customAvatarUrl,
+			discordId: a.discordId,
+			username: a.username,
+		},
+	}));
 
 	const { seededShuffle } = seededRandom(getDailySeed());
 	return seededShuffle(mappedArts);
