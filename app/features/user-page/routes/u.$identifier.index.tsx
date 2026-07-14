@@ -89,7 +89,7 @@ function NewUserInfoPage() {
 		<div className={newStyles.container}>
 			<div className="stack sm">
 				<div className={newStyles.header}>
-					<Avatar user={layoutData.user} size="xmd" />
+					<Avatar user={layoutData.user} size="xmd" loading="eager" />
 					<div className={newStyles.userInfo}>
 						<div className={newStyles.nameGroup}>
 							<h1 className={newStyles.username}>{layoutData.user.username}</h1>
@@ -181,7 +181,12 @@ export function OldUserInfoPage() {
 		<div className={styles.container}>
 			<div className="stack sm">
 				<div className={styles.avatarContainer}>
-					<Avatar user={layoutData.user} size="lg" className={styles.avatar} />
+					<Avatar
+						user={layoutData.user}
+						size="lg"
+						className={styles.avatar}
+						loading="eager"
+					/>
 					<div>
 						<h2 className={styles.name}>
 							<div>{layoutData.user.username}</div>

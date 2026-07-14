@@ -57,6 +57,7 @@ export function TournamentCard({
 								height={32}
 								className={styles.avatarImg}
 								alt=""
+								loading="lazy"
 							/>
 						</div>
 					) : null}
@@ -208,6 +209,7 @@ function TournamentFirstPlacerWithMembers({
 						alt=""
 						width={24}
 						className="rounded-full"
+						loading="lazy"
 					/>
 				) : null}{" "}
 				<div className="stack items-start">

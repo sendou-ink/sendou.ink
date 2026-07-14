@@ -133,7 +133,11 @@ function LogoHeader() {
 
 	return (
 		<div className="stack horizontal md">
-			<Avatar size="lg" url={data.organization.avatarUrl ?? undefined} />
+			<Avatar
+				size="lg"
+				url={data.organization.avatarUrl ?? undefined}
+				loading="eager"
+			/>
 			<div className="stack sm">
 				<div className="text-xl font-bold">{data.organization.name}</div>
 				{canEditOrganization || currentMember ? (
