@@ -5,7 +5,9 @@ import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import { Config } from "~/config";
+import type { LanguageCode } from "~/modules/i18n/config";
 import { i18nLoader } from "./modules/i18n/loader";
+import { loadDateFnsLocale } from "./utils/dates";
 import { logger } from "./utils/logger";
 import { getSessionId } from "./utils/session-id";
 
@@ -125,7 +127,12 @@ if ("serviceWorker" in navigator) {
 	});
 }
 
-i18nLoader()
+// the server rendered with the page language's date-fns locale, so it must be
+// cached before hydration to avoid a markup mismatch
+Promise.all([
+	i18nLoader(),
+	loadDateFnsLocale(document.documentElement.lang as LanguageCode),
+])
 	.then(() =>
 		hydrateRoot(
 			document,
