@@ -6914,7 +6914,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			],
 			lockedMatches: [],
 		},
-		seedingSnapshot: null,
 		mapPickingStyle: "TO",
 		hasRules: true,
 		name: "Low Ink December 2024",

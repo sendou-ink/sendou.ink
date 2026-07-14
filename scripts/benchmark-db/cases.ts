@@ -811,6 +811,12 @@ export function buildCases(fx: Fixtures): {
 		(tournamentId) => TournamentRepository.findDescriptionById(tournamentId),
 	);
 	add(
+		"TournamentRepository.findSeedingSnapshotById",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findSeedingSnapshotById(tournamentId),
+	);
+	add(
 		"TournamentRepository.hasChildTournaments",
 		fx.parentTournamentId,
 		(parentTournamentId) =>

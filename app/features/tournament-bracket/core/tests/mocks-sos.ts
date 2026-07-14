@@ -2017,7 +2017,6 @@ export const SWIM_OR_SINK_167 = (
 			],
 			lockedMatches: [],
 		},
-		seedingSnapshot: null,
 		mapPickingStyle: "TO",
 		hasRules: true,
 		name: "Swim or Sink 167",
