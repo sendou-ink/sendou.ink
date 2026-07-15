@@ -100,12 +100,22 @@ if ("serviceWorker" in navigator) {
 	});
 }
 
+/**
+ * Max time hydration waits for Sentry to initialize. If Sentry loads within
+ * this window its instrumentation is passed to the router (enabling the
+ * pageload trace); if not, hydration proceeds without it and errors are still
+ * captured once Sentry finishes loading.
+ */
+const SENTRY_INIT_TIMEOUT_MS = 1000;
+
+const sentryPromise = initSentry();
+
 // the server rendered with the page language's date-fns locale, so it must be
 // cached before hydration to avoid a markup mismatch
 Promise.all([
 	i18nLoader(),
 	loadDateFnsLocale(document.documentElement.lang as LanguageCode),
-	initSentry(),
+	Promise.race([sentryPromise, wait(SENTRY_INIT_TIMEOUT_MS)]),
 ])
 	.then(([, , sentry]) =>
 		hydrateRoot(
@@ -116,8 +126,10 @@ Promise.all([
 						sentry ? [sentry.tracing.clientInstrumentation] : []
 					}
 					onError={(error) => {
-						if (sentry && error instanceof Error) {
-							sentry.captureException(error);
+						if (error instanceof Error) {
+							void sentryPromise.then((sentry) =>
+								sentry?.captureException(error),
+							);
 						}
 					}}
 				/>
