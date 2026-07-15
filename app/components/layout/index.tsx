@@ -20,7 +20,13 @@ import {
 } from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher, useLocation, useMatches } from "react-router";
+import {
+	Link,
+	useFetcher,
+	useLocation,
+	useMatches,
+	useSearchParams,
+} from "react-router";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
@@ -50,10 +56,9 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
-import { AuthErrorDialog } from "./AuthErrorDialog";
-import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
+import { LazyChatSidebar } from "./LazyChatSidebar";
 import { LogInButtonContainer } from "./LogInButtonContainer";
 import { NotificationContent, useNotifications } from "./NotificationPopover";
 import notificationPopoverStyles from "./NotificationPopover.module.css";
@@ -61,6 +66,14 @@ import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
+
+// lazy loaded so the rarely needed auth error dialog stays out of the eager
+// bundle loaded on every page
+const AuthErrorDialog = React.lazy(() =>
+	import("./AuthErrorDialog").then((module) => ({
+		default: module.AuthErrorDialog,
+	})),
+);
 
 /** Id of the loading-bar track rendered inside the header. NProgress mounts its
  * bar into it; the track sits just below the header border, spans only the area
@@ -240,6 +253,7 @@ export function Layout({
 	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
+	const [searchParams] = useSearchParams();
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
 
@@ -436,7 +450,7 @@ export function Layout({
 								className={styles.chatSidebarModalDialog}
 								aria-label={t("common:chat.sidebar.title")}
 							>
-								<ChatSidebar />
+								<LazyChatSidebar />
 							</Dialog>
 						</Modal>
 					</ModalOverlay>
@@ -485,10 +499,14 @@ export function Layout({
 						showLeaderboard && styles.sidebarFuseSpace,
 					)}
 				>
-					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
+					<LazyChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
-			<AuthErrorDialog />
+			{searchParams.has("authError") ? (
+				<React.Suspense>
+					<AuthErrorDialog />
+				</React.Suspense>
+			) : null}
 		</>
 	);
 }

@@ -9,7 +9,6 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { snapdom } from "@zumer/snapdom";
 import clsx from "clsx";
 import { HardDriveDownload, Plus, RefreshCcw } from "lucide-react";
 import { useRef } from "react";
@@ -137,6 +136,8 @@ function TierListMakerContent() {
 
 	const handleDownload = async () => {
 		if (!tierListRef.current) return;
+
+		const { snapdom } = await import("@zumer/snapdom");
 
 		flushSync(() => setScreenshotMode(true));
 

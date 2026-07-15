@@ -3,7 +3,7 @@ import { Config } from "~/config";
 import type { GearType, Preference, Tables } from "~/db/tables";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
-import { serializeBuild } from "~/features/build-analyzer/core/utils";
+import { serializeBuild } from "~/features/build-analyzer/core/serializer";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { StageBackgroundStyle } from "~/features/map-planner";

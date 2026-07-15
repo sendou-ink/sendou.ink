@@ -322,13 +322,6 @@ export function validatedBuildFromSearchParams(
 	}
 }
 
-export function serializeBuild(build: BuildAbilitiesTupleWithUnknown) {
-	return build
-		.flat()
-		.map((ability) => (ability === "UNKNOWN" ? UNKNOWN_SHORT : ability))
-		.join(",");
-}
-
 export const hpDivided = (hp: number) => hp / 10;
 
 export function possibleApValues() {

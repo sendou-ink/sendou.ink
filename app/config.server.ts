@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { formatEnvErrors, requiredInProd } from "./config-helpers";
+import { formatEnvErrors, requiredInProd } from "./config-helpers.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
 /**

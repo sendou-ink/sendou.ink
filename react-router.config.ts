@@ -1,11 +1,8 @@
 import type { Config } from "@react-router/dev/config";
 import { sentryOnBuildEnd } from "@sentry/react-router";
 
+// xxx: if we remove routeDiscovery, need to add caching in cloudflare
 export default {
-	// Upfront cost vs. lazy loading trade-off
-	// also lazy loading causes more load on the server
-	// this matches old Remix v2 behavior
-	routeDiscovery: { mode: "initial" },
 	splitRouteModules: true,
 	buildEnd: async ({ viteConfig, reactRouterConfig, buildManifest }) => {
 		await sentryOnBuildEnd({
