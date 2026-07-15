@@ -8,6 +8,9 @@ export default defineConfig((config) => {
 	return {
 		server: {
 			port: Number(env.PORT) || 5173,
+			// Vite's built-in CORS would answer preflights before route middleware
+			// (e.g. ingestCorsMiddleware) and omit Access-Control-Allow-Credentials
+			cors: false,
 		},
 		ssr: {
 			noExternal: ["react-charts", "react-use"],

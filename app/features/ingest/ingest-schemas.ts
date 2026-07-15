@@ -62,6 +62,11 @@ const ingestedEventSchema = z.discriminatedUnion("type", [
 	}),
 	eventBaseSchema.extend({
 		type: z.literal("ScoreboardReplay"),
+		/**
+		 * when the replay's game was played (UTC ms), derived client-side from
+		 * the replay browser's on-screen timestamp
+		 */
+		recordedAt: z.number().int().positive().optional(),
 		data: scoreboardReplayDataSchema,
 	}),
 	eventBaseSchema.extend({

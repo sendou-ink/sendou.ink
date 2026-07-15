@@ -46,7 +46,7 @@ function corsHeaders(origin: string | null) {
 	return {
 		"Access-Control-Allow-Origin": origin,
 		"Access-Control-Allow-Credentials": "true",
-		"Access-Control-Allow-Methods": "POST, OPTIONS",
+		"Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 		// xxx: we will also need to allow auth header eventually?
 		"Access-Control-Allow-Headers": "Content-Type, Lohi-Token",
 		"Access-Control-Max-Age": "86400",

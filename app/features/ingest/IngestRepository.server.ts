@@ -186,6 +186,68 @@ async function teamInGameNames(teamIds: Array<number | null>) {
 	return result;
 }
 
+/** How long before the events' timestamp their match may have started (long sets, swiss rounds get startedAt at creation). */
+const MATCH_WINDOW_BEFORE_SECONDS = 4 * 60 * 60;
+/** Event timestamps come from client clocks, so allow the match to have "started" a little after them. */
+const MATCH_WINDOW_AFTER_SECONDS = 60 * 60;
+
+/**
+ * The tournament the user was (probably) playing in at the given wall-clock
+ * time: their team is in a match whose `startedAt` is close enough before
+ * `at`. When several qualify (rare) the latest-started one wins.
+ */
+// xxx: change it to more generic. user id + stage + mode + startedAt -> what scrim, sq, tournament if any?
+export async function tournamentIdAt({
+	userId,
+	at,
+}: {
+	userId: number;
+	/** wall-clock ms */
+	at: number;
+}) {
+	const atSeconds = Math.floor(at / 1000);
+
+	const row = await db
+		.selectFrom("TournamentTeamMember")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.tournamentId",
+			"TournamentTeam.tournamentId",
+		)
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.stageId",
+			"TournamentStage.id",
+		)
+		.select("TournamentTeam.tournamentId")
+		.where("TournamentTeamMember.userId", "=", userId)
+		.where((eb) =>
+			eb.or([
+				eb(opponentOneId, "=", eb.ref("TournamentTeam.id")),
+				eb(opponentTwoId, "=", eb.ref("TournamentTeam.id")),
+			]),
+		)
+		.where(
+			"TournamentMatch.startedAt",
+			"<=",
+			atSeconds + MATCH_WINDOW_AFTER_SECONDS,
+		)
+		.where(
+			"TournamentMatch.startedAt",
+			">=",
+			atSeconds - MATCH_WINDOW_BEFORE_SECONDS,
+		)
+		.orderBy("TournamentMatch.startedAt", "desc")
+		.executeTakeFirst();
+
+	return row?.tournamentId ?? null;
+}
+
 /** Returns the tournament's start time as a database timestamp. */
 export async function tournamentStartTime(tournamentId: number) {
 	const row = await db

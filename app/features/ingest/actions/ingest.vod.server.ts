@@ -15,6 +15,8 @@ import { ingestVodBodySchema } from "../ingest-vod-schemas";
 
 const DEFAULT_TEAM_SIZE = 4;
 
+// xxx: verify is in use
+
 /**
  * Creates a VoD (default type CAST) on /vods out of an emberz VoD scan: each
  * detected match (src/core/vod-matches.ts) becomes a VideoMatch after its
