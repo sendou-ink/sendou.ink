@@ -9,6 +9,7 @@
 		"deploy": "pnpm install --frozen-lockfile && pnpm run build",
 		"build": "react-router build",
 		"dev": "cross-env DB_PATH=db.sqlite3 pnpm run migrate up && pnpm run setup && react-router dev --host",
+		"dev:fast": "react-router dev --host",
 		"dev:sentry": "NODE_OPTIONS='--import ./instrument.server.mjs' pnpm dev",
 		"dev:prod": "cross-env DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true react-router dev --host",
 		"start": "pnpm run migrate up && NODE_ENV=production NODE_OPTIONS='--import ./instrument.server.mjs' react-router-serve ./build/server/index.js",
