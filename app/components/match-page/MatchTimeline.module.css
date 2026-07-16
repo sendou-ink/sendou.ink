@@ -104,11 +104,11 @@
 	justify-content: center;
 	gap: var(--s-2-5);
 
-	.mapSide:first-child & {
+	.mapSide:not(.mapSideBravo) & {
 		justify-self: end;
 	}
 
-	.mapSide:last-child & {
+	.mapSideBravo & {
 		justify-self: start;
 	}
 }

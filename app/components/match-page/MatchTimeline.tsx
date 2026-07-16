@@ -279,7 +279,7 @@ function TimelineMapRow({
 					<span>{shortStageName(t(`game-misc:STAGE_${map.stageId}`))}</span>
 				</div>
 			</div>
-			<div className={styles.mapSide}>
+			<div className={clsx(styles.mapSide, styles.mapSideBravo)}>
 				<SideResult
 					result={map.winner === "BRAVO" ? "WIN" : "LOSS"}
 					points={bravoPoints}
