@@ -35,7 +35,7 @@ import { Avatar } from "./Avatar";
 import { EventsList } from "./EventsList";
 import { LinkButton } from "./elements/Button";
 import { Image } from "./Image";
-import { LazyChatSidebar } from "./layout/LazyChatSidebar";
+import { ChatSidebar } from "./layout/ChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -608,7 +608,7 @@ function ChatPanel({
 				)}
 			>
 				<Dialog className={styles.panelDialog}>
-					<LazyChatSidebar onClose={onClose} />
+					<ChatSidebar onClose={onClose} />
 					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
 				</Dialog>
 			</Modal>

@@ -56,9 +56,9 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
+import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
-import { LazyChatSidebar } from "./LazyChatSidebar";
 import { LogInButtonContainer } from "./LogInButtonContainer";
 import { NotificationContent, useNotifications } from "./NotificationPopover";
 import notificationPopoverStyles from "./NotificationPopover.module.css";
@@ -450,7 +450,7 @@ export function Layout({
 								className={styles.chatSidebarModalDialog}
 								aria-label={t("common:chat.sidebar.title")}
 							>
-								<LazyChatSidebar />
+								<ChatSidebar />
 							</Dialog>
 						</Modal>
 					</ModalOverlay>
@@ -499,7 +499,7 @@ export function Layout({
 						showLeaderboard && styles.sidebarFuseSpace,
 					)}
 				>
-					<LazyChatSidebar onClose={() => setChatSidebarOpen(false)} />
+					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
 			{searchParams.has("authError") ? (
