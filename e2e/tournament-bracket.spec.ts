@@ -471,12 +471,20 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		for (const matchId of [1, 2, 3, 4, 5, 6]) {
+		// every match of the group but one that Sendou's team is not part of
+		for (const matchId of [1, 2, 3, 4, 6]) {
 			await navigateToMatch(page, matchId);
 			await goToTab(page, "action");
 			await reportResult(page, { mapsToReport: 2 });
 			await backToBracket(page);
 		}
+
+		await expect(page.getByText("Waiting on group to finish")).toBeVisible();
+
+		await navigateToMatch(page, 5);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
+		await backToBracket(page);
 
 		await page.getByRole("tab", { name: "Hammerhead" }).click();
 		await isNotVisible(page.getByTestId("brackets-viewer"));

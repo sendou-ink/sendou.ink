@@ -24,6 +24,7 @@ const TOURNAMENT_STATUS_IS_IN_PROGRESS: Record<
 	WAITING_FOR_MATCH: true,
 	WAITING_FOR_CAST: true,
 	WAITING_FOR_ROUND: true,
+	WAITING_FOR_GROUPS: true,
 	// to counter 2 day tournaments showing LIVE in between
 	WAITING_FOR_BRACKET: false,
 	CHECKIN: false,
