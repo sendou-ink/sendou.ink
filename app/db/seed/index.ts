@@ -76,7 +76,12 @@ import {
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
-import type { ParsedMemento, Tables, UserMapModePreferences } from "../tables";
+import {
+	type ParsedMemento,
+	type Tables,
+	USER_REPORT_CATEGORIES,
+	type UserMapModePreferences,
+} from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -236,6 +241,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	playedMatches,
 	variation === "NO_SQ_GROUPS" ? undefined : () => groups(variation),
 	friendCodes,
+	userReports,
 	lfgPosts,
 	variation === "NO_SCRIMS" ? undefined : scrimPosts,
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
@@ -3163,6 +3169,28 @@ async function friendCodes() {
 			friendCode,
 		});
 	}
+}
+
+async function userReports() {
+	// uneven spread over the trailing 12 months so the admin tab bar graph shows variety
+	const monthsAgoDistribution = [
+		0, 0, 0, 1, 2, 2, 2, 2, 5, 5, 7, 8, 10, 11, 11,
+	];
+
+	await db
+		.insertInto("UserReport")
+		.values(
+			monthsAgoDistribution.map((monthsAgo, i) => ({
+				reportedUserId: NZAP_TEST_ID,
+				reporterUserId: 10 + i,
+				category: USER_REPORT_CATEGORIES[i % USER_REPORT_CATEGORIES.length],
+				description: faker.lorem.sentences({ min: 1, max: 3 }),
+				createdAt: dateToDatabaseTimestamp(
+					sub(new Date(), { months: monthsAgo, days: (i * 3) % 7, hours: i }),
+				),
+			})),
+		)
+		.execute();
 }
 
 async function lfgPosts() {

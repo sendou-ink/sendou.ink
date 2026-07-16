@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import {
 	BadgeCheck,
+	Flag,
 	Megaphone,
 	NotebookPen,
 	NotebookText,
@@ -25,6 +26,7 @@ import { Placement } from "~/components/Placement";
 import type { XRankPlacementRegion } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
+import { ReportUserDialog } from "~/features/user-report/components/ReportUserDialog";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
@@ -68,6 +70,7 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
  * `withMutualFriends` is set (e.g. the SendouQ looking page); other views (e.g. match pages) skip
  * both the extra query and the row.
  */
+// xxx: way to access this on user profile page
 export function UserCard({
 	userId,
 	data: dataProp,
@@ -96,6 +99,7 @@ export function UserCard({
 	// take focus; the note view inside the card opens them
 	const [isNoteDialogOpen, setIsNoteDialogOpen] = React.useState(false);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
+	const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
 
 	const fetcher = useFetcher<UserCardFriendshipLoaderData>();
 	const friendshipLoadedRef = React.useRef(false);
@@ -123,6 +127,11 @@ export function UserCard({
 		setIsDeleteConfirmOpen(true);
 	};
 
+	const openReportDialog = () => {
+		setIsOpen(false);
+		setIsReportDialogOpen(true);
+	};
+
 	if (!data) return <>{children}</>;
 
 	return (
@@ -138,6 +147,7 @@ export function UserCard({
 							withMutualFriends={withMutualFriends}
 							onEditNote={openNoteDialog}
 							onDeleteNote={openDeleteConfirm}
+							onReport={user ? openReportDialog : undefined}
 						/>
 					</Dialog>
 				</Popover>
@@ -148,6 +158,13 @@ export function UserCard({
 					username={data.username}
 					note={data.privateNote}
 					onClose={() => setIsNoteDialogOpen(false)}
+				/>
+			) : null}
+			{isReportDialogOpen ? (
+				<ReportUserDialog
+					userId={data.id}
+					username={data.username}
+					onClose={() => setIsReportDialogOpen(false)}
 				/>
 			) : null}
 			<FormWithConfirm
@@ -194,6 +211,7 @@ function CardContent({
 	withMutualFriends,
 	onEditNote,
 	onDeleteNote,
+	onReport,
 }: {
 	data: UserCardData;
 	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
@@ -202,6 +220,8 @@ function CardContent({
 	withMutualFriends: boolean;
 	onEditNote: () => void;
 	onDeleteNote: () => void;
+	/** Not passed for logged-out viewers, hiding the report button. */
+	onReport: (() => void) | undefined;
 }) {
 	const { t } = useTranslation(["common", "user"]);
 	const location = useLocation();
@@ -266,6 +286,16 @@ function CardContent({
 							onPress={onNoteButtonPress}
 							aria-label={t("user:card.editPrivateNote")}
 						/>
+						{onReport ? (
+							<SendouButton
+								size="miniscule"
+								shape="circle"
+								icon={<Flag />}
+								onPress={onReport}
+								aria-label="Report user"
+								data-testid="report-user-button"
+							/>
+						) : null}
 					</>
 				)}
 			</div>

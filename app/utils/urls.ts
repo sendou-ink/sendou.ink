@@ -152,6 +152,8 @@ export const userCardFriendshipPage = (
 
 export const userCardNotePage = (userId: number) => `/user-card/${userId}/note`;
 
+export const userReportPage = (userId: number) => `/user-report/${userId}`;
+
 interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];
 	customUrl?: Tables["User"]["customUrl"];

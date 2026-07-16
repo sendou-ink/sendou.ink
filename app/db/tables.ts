@@ -1287,6 +1287,24 @@ export interface ModNote {
 	isDeleted: Generated<DBBoolean>;
 }
 
+export const USER_REPORT_CATEGORIES = [
+	"INAPPROPRIATE_CONTENT",
+	"ALTING",
+	"HARASSMENT",
+	"CHEATING",
+	"OTHER",
+] as const;
+export type UserReportCategory = (typeof USER_REPORT_CATEGORIES)[number];
+
+export interface UserReport {
+	id: GeneratedAlways<number>;
+	reportedUserId: number;
+	reporterUserId: number;
+	category: UserReportCategory;
+	description: string;
+	createdAt: Generated<number>;
+}
+
 export interface Video {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
@@ -1563,6 +1581,7 @@ export interface DB {
 	TenStarWeapon: TenStarWeapon;
 	UserFriendCode: UserFriendCode;
 	UserWidget: UserWidget;
+	UserReport: UserReport;
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

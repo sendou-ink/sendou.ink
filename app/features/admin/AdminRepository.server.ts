@@ -94,6 +94,35 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.set({ userId: args.oldUserId })
 			.execute();
 
+		// reports between the two merged accounts would become self-reports
+		await trx
+			.deleteFrom("UserReport")
+			.where((eb) =>
+				eb.or([
+					eb.and([
+						eb("reporterUserId", "=", args.newUserId),
+						eb("reportedUserId", "=", args.oldUserId),
+					]),
+					eb.and([
+						eb("reporterUserId", "=", args.oldUserId),
+						eb("reportedUserId", "=", args.newUserId),
+					]),
+				]),
+			)
+			.execute();
+		await deleteOlderCollidingUserReports(trx, args, "reporterUserId");
+		await deleteOlderCollidingUserReports(trx, args, "reportedUserId");
+		await trx
+			.updateTable("UserReport")
+			.where("reporterUserId", "=", args.newUserId)
+			.set({ reporterUserId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("UserReport")
+			.where("reportedUserId", "=", args.newUserId)
+			.set({ reportedUserId: args.oldUserId })
+			.execute();
+
 		// special case: delete same team membership to avoid unique constraint violation
 		await trx
 			.deleteFrom("AllTeamMember")
@@ -139,6 +168,47 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 
 		return null;
 	});
+}
+
+/**
+ * Merging accounts can collide on the one-report-per-pair unique index; the newer
+ * report (by `createdAt`, id as tie-breaker) wins and the other row is dropped.
+ */
+function deleteOlderCollidingUserReports(
+	trx: Transaction<DB>,
+	args: { newUserId: number; oldUserId: number },
+	column: "reporterUserId" | "reportedUserId",
+) {
+	const otherColumn =
+		column === "reporterUserId" ? "reportedUserId" : "reporterUserId";
+
+	return trx
+		.deleteFrom("UserReport")
+		.where(column, "in", [args.newUserId, args.oldUserId])
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("UserReport as newer")
+					.select("newer.id")
+					.where(`newer.${column}`, "in", [args.newUserId, args.oldUserId])
+					.whereRef(`newer.${otherColumn}`, "=", `UserReport.${otherColumn}`)
+					.whereRef("newer.id", "!=", "UserReport.id")
+					.where((inner) =>
+						inner.or([
+							inner("newer.createdAt", ">", inner.ref("UserReport.createdAt")),
+							inner.and([
+								inner(
+									"newer.createdAt",
+									"=",
+									inner.ref("UserReport.createdAt"),
+								),
+								inner("newer.id", ">", inner.ref("UserReport.id")),
+							]),
+						]),
+					),
+			),
+		)
+		.execute();
 }
 
 async function validateMigration(
