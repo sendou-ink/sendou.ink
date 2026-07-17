@@ -122,6 +122,7 @@ export default defineConfig((config) => {
 				"jsoncrush",
 				"kysely",
 				"kysely/helpers/sqlite",
+				"markdown-to-jsx",
 				"neverthrow",
 				"openskill",
 				"partysocket",
