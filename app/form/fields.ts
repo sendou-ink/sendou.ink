@@ -38,7 +38,7 @@ export const formRegistry = z.registry<FormField>();
 
 /**
  * Looks up a schemas form field metadata. Needed to bypass the
- * registrys deep generic `get` signature which causes 
+ * registrys deep generic `get` signature which causes
  * "Type instantiation is excessively deep" errors.
  */
 export function getFormFieldMetadata(schema: z.ZodType): FormField | undefined {
