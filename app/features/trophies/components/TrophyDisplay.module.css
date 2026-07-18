@@ -37,23 +37,48 @@
 	background-color: var(--color-bg-high);
 }
 
+.modal {
+	padding: 0;
+	max-width: 48rem;
+	container-type: inline-size;
+}
+
 .modalContent {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: 1fr;
 	align-items: center;
-	gap: var(--s-2);
+	background-color: var(--color-bg-high);
 }
 
 .modalTrophy {
 	width: 100%;
-	max-width: 320px;
-	border-radius: var(--radius-box);
-	background-color: var(--color-bg-high);
 }
 
-.modalLink {
-	font-size: var(--font-sm);
+.modalDetails {
+	align-self: stretch;
+	padding: var(--s-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	background-color: var(--color-bg);
+	border-top: var(--border-style);
+	overflow-y: auto;
+}
+
+.modalTrophyName {
 	font-weight: var(--weight-bold);
+	font-size: var(--font-lg);
+}
+
+@container (width >= 560px) {
+	.modalContent {
+		grid-template-columns: 60% 1fr;
+	}
+
+	.modalDetails {
+		border-top: 0;
+		border-left: var(--border-style);
+	}
 }
 
 .pagination {

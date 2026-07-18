@@ -1,10 +1,8 @@
 import clsx from "clsx";
 import * as React from "react";
-import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { usePagination } from "~/hooks/usePagination";
-import { TROPHIES_PAGE } from "~/utils/urls";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "../trophies-constants";
 import { useProgressiveRender } from "../trophies-utils";
 import { Trophy, TrophyContextProvider } from "./Trophy";
@@ -64,6 +62,7 @@ export function TrophyDisplay({ trophies, className }: TrophyDisplayProps) {
 									className={styles.trophy}
 									model={trophy.model}
 									tier={trophy.tier ?? null}
+									preview={!!openTrophy}
 									disableCameraControls
 								/>
 							</button>
@@ -84,16 +83,14 @@ export function TrophyDisplay({ trophies, className }: TrophyDisplayProps) {
 				<SendouDialog
 					isOpen={Boolean(openTrophy)}
 					onClose={() => setOpenTrophy(null)}
-					showCloseButton
+					showHeading={false}
+					className={styles.modal}
 				>
 					<div className={styles.modalContent}>
 						<Trophy className={styles.modalTrophy} model={openTrophy.model} />
-						<Link
-							to={`${TROPHIES_PAGE}/${openTrophy.id}`}
-							className={styles.modalLink}
-						>
-							{openTrophy.name}
-						</Link>
+						<div className={styles.modalDetails}>
+							<p className={styles.modalTrophyName}>{openTrophy.name}</p>
+						</div>
 					</div>
 				</SendouDialog>
 			) : null}
