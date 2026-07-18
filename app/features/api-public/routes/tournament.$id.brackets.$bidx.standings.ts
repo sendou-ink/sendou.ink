@@ -10,8 +10,10 @@ const paramsSchema = z.object({
 	bidx: z.coerce.number().int(),
 });
 
-export const loader = async ({ params }: LoaderFunctionArgs) => {
+export const loader = async ({ request, params }: LoaderFunctionArgs) => {
+	const url = new URL(request.url);
 	const { id, bidx } = parseParams({ params, schema: paramsSchema });
+	const isLive = url.searchParams.has("live");
 
 	const tournament = await tournamentFromDB({
 		user: undefined,
@@ -22,7 +24,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	notFoundIfFalsy(!bracket.preview);
 
 	const result: GetTournamentBracketStandingsResponse = {
-		standings: bracket.standings.map((standing) => ({
+		standings: bracket.currentStandings(isLive).map((standing) => ({
 			tournamentTeamId: standing.team.id,
 			placement: standing.placement,
 			stats: standing.stats,

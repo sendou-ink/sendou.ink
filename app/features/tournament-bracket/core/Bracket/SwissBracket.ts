@@ -199,6 +199,12 @@ export class SwissBracket extends Bracket {
 					match.opponent1?.result !== "win" &&
 					match.opponent2?.result !== "win"
 				) {
+					if (match.opponent1?.id) {
+						updateTeam({ teamId: match.opponent1.id });
+					}
+					if (match.opponent2?.id) {
+						updateTeam({ teamId: match.opponent2.id });
+					}
 					continue;
 				}
 

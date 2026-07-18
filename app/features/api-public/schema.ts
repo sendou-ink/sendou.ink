@@ -357,7 +357,10 @@ export interface GetTournamentBracketResponse {
 	};
 }
 
-/** GET /api/tournament/{tournamentId}/brackets/{bracketIndex}/standings */
+/** GET /api/tournament/{tournamentId}/brackets/{bracketIndex}/standings
+ * ?live query parameter is supported. This makes Swiss and Round Robin brackets return standings including in-progress
+ * groups. For other bracket types, this has no effect.
+ */
 
 export interface GetTournamentBracketStandingsResponse {
 	standings: Array<{
