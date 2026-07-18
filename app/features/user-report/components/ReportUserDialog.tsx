@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { toastQueue } from "~/components/elements/Toast";
+import { FormMessage } from "~/components/FormMessage";
 import { SendouForm } from "~/form";
 import { userReportPage } from "~/utils/urls";
 import { reportUserSchema } from "../user-report-schemas";
@@ -10,7 +11,6 @@ import { reportUserSchema } from "../user-report-schemas";
  * route. Re-reporting the same user overwrites the previous report. Rendered wherever
  * a `UserCard` lives.
  */
-// xxx: note about false reports
 export function ReportUserDialog({
 	userId,
 	username,
@@ -42,6 +42,9 @@ export function ReportUserDialog({
 					<>
 						<FormField name="category" />
 						<FormField name="description" />
+						<FormMessage type="info">
+							{t("user:card.report.falseReportsWarning")}
+						</FormMessage>
 					</>
 				)}
 			</SendouForm>

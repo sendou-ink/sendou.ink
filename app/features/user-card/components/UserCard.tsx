@@ -70,7 +70,6 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
  * `withMutualFriends` is set (e.g. the SendouQ looking page); other views (e.g. match pages) skip
  * both the extra query and the row.
  */
-// xxx: way to access this on user profile page
 export function UserCard({
 	userId,
 	data: dataProp,

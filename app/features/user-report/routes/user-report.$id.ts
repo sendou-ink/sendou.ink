@@ -40,12 +40,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		description: result.data.description,
 	});
 
+	const reportCounts =
+		await UserReportRepository.countRecentByReportedUserId(reportedUserId);
+
 	sendUserReportWebhook({
 		reportedUser,
 		reporter: user,
 		category: result.data.category,
 		description: result.data.description,
 		isUpdate,
+		reportCounts,
 	});
 
 	return null;

@@ -1,6 +1,7 @@
+import { subMonths, subYears } from "date-fns";
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
-import { databaseTimestampNow } from "~/utils/dates";
+import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 
 /**
  * Inserts a report or, when the (reporter, reported) pair already has one, overwrites
@@ -32,6 +33,27 @@ export function upsert(
 
 		return { isUpdate: Boolean(existing) };
 	});
+}
+
+/** Returns how many reports have been made against the given user in the last month and in the last year. */
+export async function countRecentByReportedUserId(reportedUserId: number) {
+	const monthAgo = dateToDatabaseTimestamp(subMonths(new Date(), 1));
+	const yearAgo = dateToDatabaseTimestamp(subYears(new Date(), 1));
+
+	const row = await db
+		.selectFrom("UserReport")
+		.select((eb) => [
+			eb.fn
+				.countAll<number>()
+				.filterWhere("createdAt", ">=", monthAgo)
+				.as("lastMonth"),
+			eb.fn.countAll<number>().as("lastYear"),
+		])
+		.where("reportedUserId", "=", reportedUserId)
+		.where("createdAt", ">=", yearAgo)
+		.executeTakeFirstOrThrow();
+
+	return { lastMonth: row.lastMonth, lastYear: row.lastYear };
 }
 
 /** Returns all reports made against the given user, newest first, with the reporter's identifying info. */

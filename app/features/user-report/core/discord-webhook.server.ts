@@ -16,6 +16,7 @@ export function sendUserReportWebhook(args: {
 	category: UserReportCategory;
 	description: string;
 	isUpdate: boolean;
+	reportCounts: { lastMonth: number; lastYear: number };
 }) {
 	const webhookUrl = process.env.USER_REPORT_DISCORD_WEBHOOK_URL;
 	if (!webhookUrl) {
@@ -48,6 +49,10 @@ export function sendUserReportWebhook(args: {
 					{
 						name: "Description",
 						value: truncate(args.description),
+					},
+					{
+						name: "Reports against this user",
+						value: `Last month: ${args.reportCounts.lastMonth} • Last year: ${args.reportCounts.lastYear}`,
 					},
 				],
 				timestamp: new Date().toISOString(),
