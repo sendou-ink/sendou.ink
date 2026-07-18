@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs } from "react-router";
-import { redirect } from "react-router";
 import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -9,7 +8,7 @@ import {
 	refreshSendouQInstance,
 	SendouQ,
 } from "~/features/sendouq/core/SendouQ.server";
-import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import { SENDOUQ_LOOKING_ROOM } from "~/features/sendouq/q-constants";
 import { SendouQError } from "~/features/sendouq/q-utils.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
@@ -25,7 +24,6 @@ import {
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { sendouQMatchPage } from "~/utils/urls";
 import * as RejoinVote from "../core/RejoinVote";
 import * as SendouQMatch from "../core/SendouQMatch";
 import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
@@ -102,7 +100,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						ChatSystemMessage.send({
 							room: match.chatCode,
 							revalidateOnly: true,
-							authorUserId: user.id,
 						});
 					}
 				}
@@ -155,9 +152,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
+
+				// The group re-enters the looking pool, so refresh every looking client.
+				ChatSystemMessage.send({
+					room: SENDOUQ_LOOKING_ROOM,
+					revalidateOnly: true,
+				});
 
 				break;
 			}
@@ -223,13 +225,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					}
 
 					await refreshSendouQInstance();
+
+					// The continuing group re-enters the looking pool, so refresh
+					// every looking client.
+					ChatSystemMessage.send({
+						room: SENDOUQ_LOOKING_ROOM,
+						revalidateOnly: true,
+					});
 				}
 
 				if (match.chatCode) {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -252,15 +260,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				break;
 			}
-			case "ADD_PRIVATE_USER_NOTE": {
-				await PrivateUserNoteRepository.upsertOwnNote({
-					sentiment: data.sentiment,
-					targetId: data.targetId,
-					text: data.comment,
-				});
-
-				throw redirect(sendouQMatchPage(matchId));
-			}
 			case "UNDO_MATCH_REPORT": {
 				const result = await SQMatchRepository.undoMatchReport({
 					matchId,
@@ -281,7 +280,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -306,7 +304,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -386,7 +383,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: match.chatCode,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 

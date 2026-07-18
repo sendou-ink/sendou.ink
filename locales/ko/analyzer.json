@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "",
+	"rawParameters": "",
 	"attribute.weight": "무게",
 	"attribute.weight.Fast": "가벼움",
 	"attribute.weight.Slow": "무거움",
@@ -201,5 +202,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "",
 	"comp.specialCategory.TEAM_BUFF": "",
 	"comp.removeAll": "",
-	"comp.addAll": ""
+	"comp.addAll": "",
+	"comp.singleWeaponCombos": ""
 }

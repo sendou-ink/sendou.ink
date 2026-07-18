@@ -1,5 +1,8 @@
+import { Pencil } from "lucide-react";
 import * as React from "react";
-import { useLoaderData } from "react-router";
+import { useTranslation } from "react-i18next";
+import { useLoaderData, useLocation } from "react-router";
+import { LinkButton } from "~/components/elements/Button";
 import { ModeImage } from "~/components/Image";
 import type { Preference, UserMapModePreferences } from "~/db/tables";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
@@ -7,54 +10,70 @@ import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-
 import { SendouForm } from "~/form/SendouForm";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { userCardEditPage } from "~/utils/urls";
 import type { loader } from "../loaders/settings.server";
 import { updateMatchProfileSchema } from "../match-profile-schemas";
 import { ModeMapPoolPicker } from "./ModeMapPoolPicker";
 import { PreferenceRadioGroup } from "./PreferenceRadioGroup";
 
 export function MatchProfileTab() {
+	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
+	const location = useLocation();
 	const matchProfile = data.matchProfile;
 
 	if (!matchProfile) return null;
 
 	return (
-		<SendouForm
-			schema={updateMatchProfileSchema}
-			defaultValues={{
-				mapModePreferences: preferencesFromRaw(matchProfile.mapModePreferences),
-				weaponPool: (matchProfile.weaponPool ?? []).map((w) => ({
-					id: w.weaponSplId,
-					isFavorite: Boolean(w.isFavorite),
-				})),
-				vc: matchProfile.vc ?? "NO",
-				languages: matchProfile.languages ?? [],
-				noScreen: Boolean(matchProfile.noScreen),
-				noSplatnet: Boolean(matchProfile.noSplatnet),
-			}}
-			revalidateRoot
-		>
-			{({ FormField }) => (
-				<>
-					<FormField name="mapModePreferences">
-						{(props: {
-							value: unknown;
-							onChange: (value: UserMapModePreferences) => void;
-						}) => (
-							<MapModePreferencesField
-								value={props.value as UserMapModePreferences}
-								onChange={props.onChange}
-							/>
-						)}
-					</FormField>
-					<FormField name="weaponPool" />
-					<FormField name="vc" />
-					<FormField name="languages" />
-					<FormField name="noSplatnet" />
-					<FormField name="noScreen" />
-				</>
-			)}
-		</SendouForm>
+		<div className="stack md">
+			<LinkButton
+				to={userCardEditPage({
+					returnTo: `${location.pathname}${location.search}`,
+				})}
+				size="small"
+				variant="outlined"
+				icon={<Pencil />}
+				className="self-start"
+			>
+				{t("user:card.edit.title")}
+			</LinkButton>
+			<SendouForm
+				schema={updateMatchProfileSchema}
+				defaultValues={{
+					mapModePreferences: preferencesFromRaw(
+						matchProfile.mapModePreferences,
+					),
+					weaponPool: (matchProfile.weaponPool ?? []).map((w) => ({
+						id: w.weaponSplId,
+						isFavorite: Boolean(w.isFavorite),
+					})),
+					vc: matchProfile.vc ?? "NO",
+					languages: matchProfile.languages ?? [],
+					noScreen: Boolean(matchProfile.noScreen),
+				}}
+				revalidateRoot
+			>
+				{({ FormField }) => (
+					<>
+						<FormField name="mapModePreferences">
+							{(props: {
+								value: unknown;
+								onChange: (value: UserMapModePreferences) => void;
+							}) => (
+								<MapModePreferencesField
+									value={props.value as UserMapModePreferences}
+									onChange={props.onChange}
+								/>
+							)}
+						</FormField>
+						<FormField name="weaponPool" />
+						<FormField name="vc" />
+						<FormField name="languages" />
+						<FormField name="noScreen" />
+					</>
+				)}
+			</SendouForm>
+		</div>
 	);
 }
 

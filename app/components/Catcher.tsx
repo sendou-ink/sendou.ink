@@ -23,6 +23,10 @@ export function Catcher() {
 	const { revalidate } = useRevalidator();
 	const location = useLocation();
 
+	React.useEffect(() => {
+		window.scrollTo(0, 0);
+	}, []);
+
 	// refresh user data to make sure it's up to date (e.g. cookie might have been removed, let's show the prompt to log back in)
 	const hasRevalidated = React.useRef(false);
 	React.useEffect(() => {

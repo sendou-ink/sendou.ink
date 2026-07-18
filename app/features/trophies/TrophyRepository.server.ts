@@ -9,7 +9,7 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
@@ -95,7 +95,7 @@ const withCreator = (eb: ExpressionBuilder<DB, "Trophy">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(COMMON_USER_FIELDS)
+			.select((eb) => commonUserSelect(eb))
 			.whereRef("User.id", "=", "Trophy.creatorId"),
 	).as("creator");
 };
@@ -104,7 +104,7 @@ const withManager = (eb: ExpressionBuilder<DB, "Trophy">) => {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("User")
-			.select(COMMON_USER_FIELDS)
+			.select((eb) => commonUserSelect(eb))
 			.whereRef("User.id", "=", "Trophy.managerId"),
 	).as("manager");
 };
@@ -123,9 +123,9 @@ const withOwners = (eb: ExpressionBuilder<DB, "Trophy">) => {
 		eb
 			.selectFrom("TrophyOwner")
 			.innerJoin("User", "TrophyOwner.userId", "User.id")
-			.select(({ fn }) => [
-				fn.count<number>("TrophyOwner.trophyId").as("count"),
-				...COMMON_USER_FIELDS,
+			.select((eb) => [
+				eb.fn.count<number>("TrophyOwner.trophyId").as("count"),
+				...commonUserSelect(eb),
 			])
 			.whereRef("TrophyOwner.trophyId", "=", "Trophy.id")
 			.groupBy("User.id")

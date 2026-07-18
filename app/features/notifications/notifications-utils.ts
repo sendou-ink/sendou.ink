@@ -43,6 +43,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "SCRIM_SCHEDULED":
 		case "SCRIM_CANCELED":
 		case "SCRIM_STARTING_SOON":
+		case "SCRIM_AUTO_DELETED":
 			return "scrims";
 		case "FRIEND_REQUEST_RECEIVED":
 			return "sendou_love";
@@ -85,7 +86,8 @@ export const notificationLink = (notification: Notification) => {
 		case "TO_TEST_CREATED":
 		case "TO_CHECK_IN_OPENED":
 			return tournamentRegisterPage(notification.meta.tournamentId);
-		case "SCRIM_NEW_REQUEST": {
+		case "SCRIM_NEW_REQUEST":
+		case "SCRIM_AUTO_DELETED": {
 			return scrimsPage();
 		}
 		case "SCRIM_CANCELED":

@@ -212,6 +212,8 @@ test.describe("Tournament admin team management", () => {
 		);
 
 		await search.fill("zzz-no-such-team-zzz");
-		await expect(page.getByText("No registrations yet")).toBeVisible();
+		await expect(
+			page.getByText("No registrations match your search"),
+		).toBeVisible();
 	});
 });

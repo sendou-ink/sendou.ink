@@ -1,7 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { parseSearchParams } from "~/utils/remix.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as Scrim from "../core/Scrim";
@@ -43,7 +45,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			}),
 		}));
 
+	const cardUserIds = R.unique(
+		posts.flatMap((post) => [
+			...post.users.map((user) => user.id),
+			...post.requests.flatMap((request) =>
+				request.users.map((user) => user.id),
+			),
+		]),
+	);
+
 	return {
+		...(await UserCardRepository.userCards({
+			userIds: cardUserIds,
+		})),
 		posts: dividePosts(posts, user?.id),
 		teams: user ? await TeamRepository.teamsByMemberUserId(user.id) : [],
 		filters: filters ?? Scrim.defaultFilters(),

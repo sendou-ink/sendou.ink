@@ -14,6 +14,7 @@ import gameMiscDa from "../../../locales/da/game-misc.json";
 import gearDa from "../../../locales/da/gear.json";
 import lfgDa from "../../../locales/da/lfg.json";
 import orgDa from "../../../locales/da/org.json";
+import paramsDa from "../../../locales/da/params.json";
 import qDa from "../../../locales/da/q.json";
 import scrimsDa from "../../../locales/da/scrims.json";
 import settingsDa from "../../../locales/da/settings.json";
@@ -40,6 +41,7 @@ import gameMiscDe from "../../../locales/de/game-misc.json";
 import gearDe from "../../../locales/de/gear.json";
 import lfgDe from "../../../locales/de/lfg.json";
 import orgDe from "../../../locales/de/org.json";
+import paramsDe from "../../../locales/de/params.json";
 import qDe from "../../../locales/de/q.json";
 import scrimsDe from "../../../locales/de/scrims.json";
 import settingsDe from "../../../locales/de/settings.json";
@@ -66,6 +68,7 @@ import gameMisc from "../../../locales/en/game-misc.json";
 import gear from "../../../locales/en/gear.json";
 import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
+import params from "../../../locales/en/params.json";
 import q from "../../../locales/en/q.json";
 import scrimsEn from "../../../locales/en/scrims.json";
 import settings from "../../../locales/en/settings.json";
@@ -92,6 +95,7 @@ import gameMiscEsEs from "../../../locales/es-ES/game-misc.json";
 import gearEsEs from "../../../locales/es-ES/gear.json";
 import lfgEsEs from "../../../locales/es-ES/lfg.json";
 import orgEsEs from "../../../locales/es-ES/org.json";
+import paramsEsEs from "../../../locales/es-ES/params.json";
 import qEsEs from "../../../locales/es-ES/q.json";
 import scrimsEsEs from "../../../locales/es-ES/scrims.json";
 import settingsEsEs from "../../../locales/es-ES/settings.json";
@@ -118,6 +122,7 @@ import gameMiscEsUs from "../../../locales/es-US/game-misc.json";
 import gearEsUs from "../../../locales/es-US/gear.json";
 import lfgEsUs from "../../../locales/es-US/lfg.json";
 import orgEsUs from "../../../locales/es-US/org.json";
+import paramsEsUs from "../../../locales/es-US/params.json";
 import qEsUs from "../../../locales/es-US/q.json";
 import scrimsEsUs from "../../../locales/es-US/scrims.json";
 import settingsEsUs from "../../../locales/es-US/settings.json";
@@ -144,6 +149,7 @@ import gameMiscFrCa from "../../../locales/fr-CA/game-misc.json";
 import gearFrCa from "../../../locales/fr-CA/gear.json";
 import lfgFrCa from "../../../locales/fr-CA/lfg.json";
 import orgFrCa from "../../../locales/fr-CA/org.json";
+import paramsFrCa from "../../../locales/fr-CA/params.json";
 import qFrCa from "../../../locales/fr-CA/q.json";
 import scrimsFrCa from "../../../locales/fr-CA/scrims.json";
 import settingsFrCa from "../../../locales/fr-CA/settings.json";
@@ -170,6 +176,7 @@ import gameMiscFrEu from "../../../locales/fr-EU/game-misc.json";
 import gearFrEu from "../../../locales/fr-EU/gear.json";
 import lfgFrEu from "../../../locales/fr-EU/lfg.json";
 import orgFrEu from "../../../locales/fr-EU/org.json";
+import paramsFrEu from "../../../locales/fr-EU/params.json";
 import qFrEu from "../../../locales/fr-EU/q.json";
 import scrimsFrEu from "../../../locales/fr-EU/scrims.json";
 import settingsFrEu from "../../../locales/fr-EU/settings.json";
@@ -196,6 +203,7 @@ import gameMiscHe from "../../../locales/he/game-misc.json";
 import gearHe from "../../../locales/he/gear.json";
 import lfgHe from "../../../locales/he/lfg.json";
 import orgHe from "../../../locales/he/org.json";
+import paramsHe from "../../../locales/he/params.json";
 import qHe from "../../../locales/he/q.json";
 import scrimsHe from "../../../locales/he/scrims.json";
 import settingsHe from "../../../locales/he/settings.json";
@@ -222,6 +230,7 @@ import gameMiscIt from "../../../locales/it/game-misc.json";
 import gearIt from "../../../locales/it/gear.json";
 import lfgIt from "../../../locales/it/lfg.json";
 import orgIt from "../../../locales/it/org.json";
+import paramsIt from "../../../locales/it/params.json";
 import qIt from "../../../locales/it/q.json";
 import scrimsIt from "../../../locales/it/scrims.json";
 import settingsIt from "../../../locales/it/settings.json";
@@ -248,6 +257,7 @@ import gameMiscJa from "../../../locales/ja/game-misc.json";
 import gearJa from "../../../locales/ja/gear.json";
 import lfgJa from "../../../locales/ja/lfg.json";
 import orgJa from "../../../locales/ja/org.json";
+import paramsJa from "../../../locales/ja/params.json";
 import qJa from "../../../locales/ja/q.json";
 import scrimsJa from "../../../locales/ja/scrims.json";
 import settingsJa from "../../../locales/ja/settings.json";
@@ -274,6 +284,7 @@ import gameMiscKo from "../../../locales/ko/game-misc.json";
 import gearKo from "../../../locales/ko/gear.json";
 import lfgKo from "../../../locales/ko/lfg.json";
 import orgKo from "../../../locales/ko/org.json";
+import paramsKo from "../../../locales/ko/params.json";
 import qKo from "../../../locales/ko/q.json";
 import scrimsKo from "../../../locales/ko/scrims.json";
 import settingsKo from "../../../locales/ko/settings.json";
@@ -300,6 +311,7 @@ import gameMiscNl from "../../../locales/nl/game-misc.json";
 import gearNl from "../../../locales/nl/gear.json";
 import lfgNl from "../../../locales/nl/lfg.json";
 import orgNl from "../../../locales/nl/org.json";
+import paramsNl from "../../../locales/nl/params.json";
 import qNl from "../../../locales/nl/q.json";
 import scrimsNl from "../../../locales/nl/scrims.json";
 import settingsNl from "../../../locales/nl/settings.json";
@@ -326,6 +338,7 @@ import gameMiscPl from "../../../locales/pl/game-misc.json";
 import gearPl from "../../../locales/pl/gear.json";
 import lfgPl from "../../../locales/pl/lfg.json";
 import orgPl from "../../../locales/pl/org.json";
+import paramsPl from "../../../locales/pl/params.json";
 import qPl from "../../../locales/pl/q.json";
 import scrimsPl from "../../../locales/pl/scrims.json";
 import settingsPl from "../../../locales/pl/settings.json";
@@ -352,6 +365,7 @@ import gameMiscPtBr from "../../../locales/pt-BR/game-misc.json";
 import gearPtBr from "../../../locales/pt-BR/gear.json";
 import lfgPtBr from "../../../locales/pt-BR/lfg.json";
 import orgPtBr from "../../../locales/pt-BR/org.json";
+import paramsPtBr from "../../../locales/pt-BR/params.json";
 import qPtBr from "../../../locales/pt-BR/q.json";
 import scrimsPtBr from "../../../locales/pt-BR/scrims.json";
 import settingsPtBr from "../../../locales/pt-BR/settings.json";
@@ -378,6 +392,7 @@ import gameMiscRu from "../../../locales/ru/game-misc.json";
 import gearRu from "../../../locales/ru/gear.json";
 import lfgRu from "../../../locales/ru/lfg.json";
 import orgRu from "../../../locales/ru/org.json";
+import paramsRu from "../../../locales/ru/params.json";
 import qRu from "../../../locales/ru/q.json";
 import scrimsRu from "../../../locales/ru/scrims.json";
 import settingsRu from "../../../locales/ru/settings.json";
@@ -404,6 +419,7 @@ import gameMiscZh from "../../../locales/zh/game-misc.json";
 import gearZh from "../../../locales/zh/gear.json";
 import lfgZh from "../../../locales/zh/lfg.json";
 import orgZh from "../../../locales/zh/org.json";
+import paramsZh from "../../../locales/zh/params.json";
 import qZh from "../../../locales/zh/q.json";
 import scrimsZh from "../../../locales/zh/scrims.json";
 import settingsZh from "../../../locales/zh/settings.json";
@@ -437,6 +453,7 @@ export const resources = {
 		vods: vodsEsUs,
 		calendar: calendarEsUs,
 		org: orgEsUs,
+		params: paramsEsUs,
 		badges: badgesEsUs,
 		contributions: contributionsEsUs,
 		team: teamEsUs,
@@ -465,6 +482,7 @@ export const resources = {
 		vods: vods,
 		calendar: calendar,
 		org: org,
+		params: params,
 		badges: badges,
 		contributions: contributions,
 		team: team,
@@ -493,6 +511,7 @@ export const resources = {
 		vods: vodsKo,
 		calendar: calendarKo,
 		org: orgKo,
+		params: paramsKo,
 		badges: badgesKo,
 		contributions: contributionsKo,
 		team: teamKo,
@@ -521,6 +540,7 @@ export const resources = {
 		vods: vodsDe,
 		calendar: calendarDe,
 		org: orgDe,
+		params: paramsDe,
 		badges: badgesDe,
 		contributions: contributionsDe,
 		team: teamDe,
@@ -549,6 +569,7 @@ export const resources = {
 		vods: vodsNl,
 		calendar: calendarNl,
 		org: orgNl,
+		params: paramsNl,
 		badges: badgesNl,
 		contributions: contributionsNl,
 		team: teamNl,
@@ -577,6 +598,7 @@ export const resources = {
 		vods: vodsPtBr,
 		calendar: calendarPtBr,
 		org: orgPtBr,
+		params: paramsPtBr,
 		badges: badgesPtBr,
 		contributions: contributionsPtBr,
 		team: teamPtBr,
@@ -605,6 +627,7 @@ export const resources = {
 		vods: vodsZh,
 		calendar: calendarZh,
 		org: orgZh,
+		params: paramsZh,
 		badges: badgesZh,
 		contributions: contributionsZh,
 		team: teamZh,
@@ -633,6 +656,7 @@ export const resources = {
 		vods: vodsFrCa,
 		calendar: calendarFrCa,
 		org: orgFrCa,
+		params: paramsFrCa,
 		badges: badgesFrCa,
 		contributions: contributionsFrCa,
 		team: teamFrCa,
@@ -661,6 +685,7 @@ export const resources = {
 		vods: vodsRu,
 		calendar: calendarRu,
 		org: orgRu,
+		params: paramsRu,
 		badges: badgesRu,
 		contributions: contributionsRu,
 		team: teamRu,
@@ -689,6 +714,7 @@ export const resources = {
 		vods: vodsIt,
 		calendar: calendarIt,
 		org: orgIt,
+		params: paramsIt,
 		badges: badgesIt,
 		contributions: contributionsIt,
 		team: teamIt,
@@ -717,6 +743,7 @@ export const resources = {
 		vods: vodsJa,
 		calendar: calendarJa,
 		org: orgJa,
+		params: paramsJa,
 		badges: badgesJa,
 		contributions: contributionsJa,
 		team: teamJa,
@@ -745,6 +772,7 @@ export const resources = {
 		vods: vodsDa,
 		calendar: calendarDa,
 		org: orgDa,
+		params: paramsDa,
 		badges: badgesDa,
 		contributions: contributionsDa,
 		team: teamDa,
@@ -773,6 +801,7 @@ export const resources = {
 		vods: vodsEsEs,
 		calendar: calendarEsEs,
 		org: orgEsEs,
+		params: paramsEsEs,
 		badges: badgesEsEs,
 		contributions: contributionsEsEs,
 		team: teamEsEs,
@@ -801,6 +830,7 @@ export const resources = {
 		vods: vodsHe,
 		calendar: calendarHe,
 		org: orgHe,
+		params: paramsHe,
 		badges: badgesHe,
 		contributions: contributionsHe,
 		team: teamHe,
@@ -829,6 +859,7 @@ export const resources = {
 		vods: vodsFrEu,
 		calendar: calendarFrEu,
 		org: orgFrEu,
+		params: paramsFrEu,
 		badges: badgesFrEu,
 		contributions: contributionsFrEu,
 		team: teamFrEu,
@@ -857,6 +888,7 @@ export const resources = {
 		vods: vodsPl,
 		calendar: calendarPl,
 		org: orgPl,
+		params: paramsPl,
 		badges: badgesPl,
 		contributions: contributionsPl,
 		team: teamPl,

@@ -65,7 +65,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				languages: data.languages,
 				weaponPool: data.weaponPool,
 				noScreen: Number(data.noScreen),
-				noSplatnet: Number(data.noSplatnet),
 			});
 			break;
 		}

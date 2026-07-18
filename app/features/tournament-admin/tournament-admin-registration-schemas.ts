@@ -13,11 +13,13 @@ import {
 	tournamentSearchOptional,
 	userSearch,
 } from "~/form/fields";
-import { TEAM } from "../team/team-constants";
-import { IN_GAME_NAME_REGEXP } from "../user-page/user-page-constants";
-
-/** Combined in-game name e.g. `Sendou#1234` is at most 10 + `#` + 5 characters. */
-const IN_GAME_NAME_MAX_LENGTH = 16;
+import { IN_GAME_NAME_MAX_LENGTH } from "../user-page/in-game-name";
+/**
+ * Roster size cap for organizer-managed registrations. The per-tournament
+ * `maxMembersPerTeam` limit intentionally doesn't apply to organizers, so this
+ * is just a generous safety ceiling rather than a competitive constraint.
+ */
+export const ADMIN_REGISTRATION_MAX_MEMBERS = 20;
 
 const memberFieldset = fieldset({
 	fields: z.object({
@@ -25,10 +27,6 @@ const memberFieldset = fieldset({
 		inGameName: textFieldOptional({
 			label: "labels.inGameName",
 			maxLength: IN_GAME_NAME_MAX_LENGTH,
-			regExp: {
-				pattern: IN_GAME_NAME_REGEXP,
-				message: "forms:errors.profileInGameName",
-			},
 		}),
 	}),
 });
@@ -52,7 +50,7 @@ export const adminRegistrationFormSchema = z
 		members: array({
 			label: "labels.members",
 			min: 1,
-			max: TEAM.MAX_MEMBER_COUNT,
+			max: ADMIN_REGISTRATION_MAX_MEMBERS,
 			field: memberFieldset,
 		}),
 	})

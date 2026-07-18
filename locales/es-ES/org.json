@@ -44,5 +44,8 @@
 	"leave.confirm": "¿Seguro que quieres abandonar {{organizationName}}?",
 	"leave.soleAdmin": "Eres el único admin de esta organización. Añade otro admin primero o pide a un administrador del sitio que la elimine.",
 	"new.heading": "Nueva organización",
-	"new.noPermissions": "Sin permisos para añadir organizaciones. Las organizaciones pueden ser creadas por usuarios con permisos de organizador de torneos."
+	"new.noPermissions": "Sin permisos para añadir organizaciones. Las organizaciones pueden ser creadas por usuarios con permisos de organizador de torneos.",
+	"stats.title": "",
+	"stats.established.title": "",
+	"stats.established.help": ""
 }

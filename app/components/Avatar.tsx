@@ -42,7 +42,7 @@ function generateColors(hash: number) {
 	};
 }
 
-function generateIdenticon(input: string, size = 128, gridSize = 5) {
+export function generateIdenticon(input: string, size = 128, gridSize = 5) {
 	const cacheKey = `${input}-${size}-${gridSize}`;
 	const cached = identiconCache.get(cacheKey);
 	if (cached) return cached;
@@ -108,50 +108,55 @@ export function Avatar({
 	size = "sm",
 	className,
 	alt = "",
+	loading = "lazy",
 	...rest
 }: {
-	user?: Pick<Tables["User"], "discordId" | "discordAvatar">;
+	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
+		customAvatarUrl?: string | null;
+	};
 	url?: string | null;
 	identiconInput?: string;
 	className?: string;
 	alt?: string;
 	size: keyof typeof dimensions;
+	loading?: "lazy" | "eager";
 } & React.ButtonHTMLAttributes<HTMLImageElement>) {
 	const [isErrored, setIsErrored] = React.useState(false);
-	const [loaded, setLoaded] = React.useState(false);
 	const isClient = useHydrated();
 
-	const isIdenticon =
-		!url && (!user?.discordAvatar || isErrored || identiconInput);
+	// an <img> can finish loading (and fail) before React hydrates and attaches onError, so that
+	// error is missed — re-check on mount and fall back manually so SSR'd avatars still heal
+	const checkAlreadyErrored = (img: HTMLImageElement | null) => {
+		if (img?.complete && img.naturalWidth === 0) setIsErrored(true);
+	};
 
 	const identiconSource = identiconInput ?? user?.discordId ?? "unknown";
 
 	const src = url
 		? url
-		: user?.discordAvatar && !isErrored
-			? discordAvatarUrl({
-					discordAvatar: user.discordAvatar,
-					discordId: user.discordId,
-					size: size === "lg" || size === "xmd" ? "lg" : "sm",
-				})
-			: isClient
-				? generateIdenticon(identiconSource, dimensions[size], 7)
-				: BLANK_IMAGE_URL;
+		: user?.customAvatarUrl && !isErrored
+			? user.customAvatarUrl
+			: user?.discordAvatar && !isErrored
+				? discordAvatarUrl({
+						discordAvatar: user.discordAvatar,
+						discordId: user.discordId,
+						size: size === "lg" || size === "xmd" ? "lg" : "sm",
+					})
+				: isClient
+					? generateIdenticon(identiconSource, dimensions[size], 7)
+					: BLANK_IMAGE_URL;
 
 	return (
 		<div className={clsx(styles.avatarWrapper, className)}>
 			<img
-				className={clsx({
-					[styles.identicon]: isIdenticon,
-					[styles.loaded]: loaded,
-				})}
+				ref={checkAlreadyErrored}
 				src={src}
 				alt={alt}
 				title={alt ? alt : undefined}
 				width={dimensions[size]}
 				height={dimensions[size]}
+				loading={loading}
 				onError={() => setIsErrored(true)}
-				onLoad={() => setLoaded(true)}
 				{...rest}
 			/>
 		</div>

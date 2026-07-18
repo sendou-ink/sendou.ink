@@ -52,8 +52,13 @@ export interface ChatContextValue {
 	chatUsers: Record<number, ChatUser>;
 	chatOpen: boolean;
 	setChatOpen: (open: boolean) => void;
-	activeRoom: string | null;
-	setActiveRoom: (chatCode: string | null) => void;
+	/**
+	 * Chat codes the user is currently viewing. Empty means none are open, one
+	 * renders a single chat, more than one renders the split view. The first code
+	 * is the primary room (shown on top / given the larger share in split view).
+	 */
+	activeRooms: string[];
+	setActiveRooms: (chatCodes: string[]) => void;
 	chatLabels: Record<number, string>;
 	setChatLabels: (labels: Record<number, string>) => void;
 	clearChatLabels: () => void;

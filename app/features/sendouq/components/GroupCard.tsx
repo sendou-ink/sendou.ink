@@ -1,52 +1,42 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
-import { Mic, PenSquare, Star, Trash, Volume2, VolumeX } from "lucide-react";
+import { Mic, Star, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
-import { LocaleTime } from "~/components/LocaleTime";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import { useMainContentWidth } from "~/hooks/useMainContentWidth";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import {
-	navIconUrl,
 	SENDOUQ_LOOKING_PAGE,
 	specialWeaponImageUrl,
 	TIERS_PAGE,
 	tierImageUrl,
-	userPage,
 } from "~/utils/urls";
 import type {
 	SQGroup,
 	SQGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
-import {
-	FULL_GROUP_SIZE,
-	IS_Q_LOOKING_MOBILE_BREAKPOINT,
-	SENDOUQ,
-} from "../q-constants";
+import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
-
-const SENTIMENT_STYLES = {
-	POSITIVE: styles.avatarPositive,
-	NEUTRAL: styles.avatarNeutral,
-	NEGATIVE: styles.avatarNegative,
-} as const;
 
 export function GroupCard({
 	group,
@@ -55,9 +45,8 @@ export function GroupCard({
 	hideVc = false,
 	hideWeapons = false,
 	hideNote: _hidenote = false,
-	showAddNote,
-	showNote = false,
 	ownGroup,
+	layout = "desktop",
 }: {
 	group: SQGroup | SQOwnGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
@@ -65,12 +54,10 @@ export function GroupCard({
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
-	showAddNote?: SqlBool;
-	showNote?: boolean;
 	ownGroup?: SQOwnGroup;
+	layout?: "mobile" | "desktop";
 }) {
 	const { t } = useTranslation(["q"]);
-	const user = useUser();
 	const fetcher = useFetcher();
 
 	const hideNote =
@@ -88,7 +75,11 @@ export function GroupCard({
 	const enableKicking = group.usersRole === "OWNER" && !displayOnly;
 
 	return (
-		<GroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
+		<GroupCardContainer
+			groupId={group.id}
+			isOwnGroup={isOwnGroup}
+			layout={layout}
+		>
 			<section className={styles.group} data-testid="sendouq-group-card">
 				{group.members ? (
 					<div className="stack md">
@@ -103,8 +94,6 @@ export function GroupCard({
 									hideWeapons={hideWeapons}
 									hideNote={hideNote}
 									enableKicking={enableKicking}
-									showNote={showNote}
-									showAddNote={showAddNote && member.id !== user?.id}
 								/>
 							);
 						})}
@@ -240,15 +229,14 @@ export function GroupCard({
 function GroupCardContainer({
 	isOwnGroup,
 	groupId,
+	layout,
 	children,
 }: {
 	isOwnGroup: boolean;
 	groupId: number;
+	layout: "mobile" | "desktop";
 	children: React.ReactNode;
 }) {
-	const width = useMainContentWidth();
-	const layout = width < IS_Q_LOOKING_MOBILE_BREAKPOINT ? "mobile" : "desktop";
-
 	// we don't want it to animate
 	if (isOwnGroup) return <>{children}</>;
 
@@ -263,8 +251,6 @@ function GroupMember({
 	hideWeapons,
 	hideNote,
 	enableKicking,
-	showAddNote,
-	showNote,
 }: {
 	member: SQGroupMember;
 	showActions: boolean;
@@ -273,70 +259,37 @@ function GroupMember({
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
 	enableKicking?: boolean;
-	showAddNote?: SqlBool;
-	showNote?: boolean;
 }) {
 	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
+	const cardData = useUserCardData(member.id);
 
 	return (
 		<div className="stack xxs" data-testid="sendouq-group-card-member">
 			<div className={styles.member}>
 				<div className="text-main-forced stack xs horizontal items-center">
-					{showNote && member.privateNote ? (
-						<SendouPopover
-							trigger={
-								<SendouButton variant="minimal">
-									<Avatar
-										user={member}
-										size="xs"
-										className={clsx(
-											styles.avatar,
-											SENTIMENT_STYLES[member.privateNote.sentiment],
-										)}
-									/>
-								</SendouButton>
-							}
-						>
-							{member.privateNote.text}
-							<div
-								className={clsx(
-									"stack sm horizontal justify-between items-center",
-									{ "mt-2": member.privateNote.text },
-								)}
+					<UserCard userId={member.id} withMutualFriends>
+						<span className="stack xs horizontal items-center">
+							<NoteAvatar
+								sentiment={cardData?.privateNote?.sentiment}
+								size="sm"
 							>
-								<LocaleTime
-									date={member.privateNote.updatedAt}
-									options={{
-										hour: "numeric",
-										minute: "numeric",
-										day: "numeric",
-										month: "numeric",
-										year: "numeric",
-									}}
-									className="text-xxs text-lighter"
-								/>
-								<DeletePrivateNoteForm
-									name={member.username}
-									targetId={member.id}
-								/>
-							</div>
-						</SendouPopover>
-					) : (
-						<Avatar user={member} size="xs" />
-					)}
-					<Link to={userPage(member)} className={styles.name}>
-						{member.inGameName ? (
-							<>
-								<span className="text-lighter font-bold text-xxxs">
-									{t("user:ign.short")}:
-								</span>{" "}
-								{inGameNameWithoutDiscriminator(member.inGameName)}
-							</>
-						) : (
-							member.username
-						)}
-					</Link>
+								<Avatar user={member} size="xs" />
+							</NoteAvatar>
+							<span className={styles.name}>
+								{member.inGameName ? (
+									<>
+										<span className="text-lighter font-bold text-xxxs">
+											{t("user:ign.short")}:
+										</span>{" "}
+										{inGameNameWithoutDiscriminator(member.inGameName)}
+									</>
+								) : (
+									member.username
+								)}
+							</span>
+						</span>
+					</UserCard>
 					{member.pronouns ? (
 						<span className="text-lighter ml-1 text-xxxs">
 							{member.pronouns.subject}/{member.pronouns.object}
@@ -361,12 +314,6 @@ function GroupMember({
 							<VoiceChatInfo member={member} />
 						</div>
 					) : null}
-					{member.plusTier ? (
-						<div className={styles.extraInfo}>
-							<Image path={navIconUrl("plus")} width={20} height={20} alt="" />
-							{member.plusTier}
-						</div>
-					) : null}
 					{member.friendCode ? (
 						<SendouPopover
 							trigger={
@@ -377,19 +324,6 @@ function GroupMember({
 						>
 							SW-{member.friendCode}
 						</SendouPopover>
-					) : null}
-					{showAddNote ? (
-						<LinkButton
-							to={`?note=${member.id}`}
-							icon={<PenSquare />}
-							className={clsx(styles.addNoteButton, {
-								[styles.addNoteButtonEdit]: member.privateNote,
-							})}
-						>
-							{member.privateNote
-								? t("q:looking.groups.editNote")
-								: t("q:looking.groups.addNote")}
-						</LinkButton>
 					) : null}
 				</div>
 				{member.weapons && member.weapons.length > 0 && !hideWeapons ? (
@@ -430,7 +364,6 @@ function MemberNote({
 		setEditing(true);
 	};
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies(note): when note updates exit editing mode
 	React.useEffect(() => {
 		setEditing(false);
 	}, [note]);
@@ -522,30 +455,6 @@ function AddPrivateNoteForm({
 				)}
 			</div>
 		</fetcher.Form>
-	);
-}
-
-function DeletePrivateNoteForm({
-	targetId,
-	name,
-}: {
-	targetId: number;
-	name: string;
-}) {
-	const { t } = useTranslation(["q"]);
-
-	return (
-		<FormWithConfirm
-			dialogHeading={t("q:privateNote.delete.header", { name })}
-			fields={[
-				["targetId", targetId],
-				["_action", "DELETE_PRIVATE_USER_NOTE"],
-			]}
-		>
-			<SubmitButton variant="minimal-destructive" size="small" type="submit">
-				<Trash className="small-icon" />
-			</SubmitButton>
-		</FormWithConfirm>
 	);
 }
 

@@ -53,6 +53,20 @@ export default [
 
 	route("/friends", "features/friends/routes/friends.tsx"),
 
+	route("/user-card/edit", "features/user-card/routes/user-card.edit.tsx"),
+
+	route(
+		"/user-card/:id/friendship",
+		"features/user-card/routes/user-card.$id.friendship.ts",
+	),
+
+	route(
+		"/user-card/:id/note",
+		"features/user-card/routes/user-card.$id.note.ts",
+	),
+
+	route("/user-report/:id", "features/user-report/routes/user-report.$id.ts"),
+
 	route("/events", "features/calendar/routes/events.tsx"),
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),
@@ -69,7 +83,13 @@ export default [
 			"edit-widgets",
 			"features/user-page/routes/u.$identifier.edit-widgets.tsx",
 		),
-		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx"),
+		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx", [
+			index("features/user-page/routes/u.$identifier.seasons.index.tsx"),
+			route(
+				"stats",
+				"features/user-page/routes/u.$identifier.seasons.stats.tsx",
+			),
+		]),
 		route("vods", "features/user-page/routes/u.$identifier.vods.tsx"),
 		route("builds", "features/user-page/routes/u.$identifier.builds.tsx"),
 		route(
@@ -186,6 +206,10 @@ export default [
 	...prefix("/org/:slug", [
 		index("features/tournament-organization/routes/org.$slug.tsx"),
 		route("edit", "features/tournament-organization/routes/org.$slug.edit.tsx"),
+		route(
+			"stats",
+			"features/tournament-organization/routes/org.$slug.stats.tsx",
+		),
 	]),
 
 	route("/faq", "features/info/routes/faq.tsx"),
@@ -247,6 +271,8 @@ export default [
 
 	route("/weapon-usage", "features/sendouq/routes/weapon-usage.ts"),
 
+	route("/params/:slug", "features/params/routes/params.$slug.tsx"),
+
 	route("/tiers", "features/sendouq/routes/tiers.tsx"),
 
 	route(
@@ -273,8 +299,8 @@ export default [
 	]),
 
 	route("/admin", "features/admin/routes/admin.tsx"),
+	route("/admin/streams", "features/admin/routes/admin.streams.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
-	route("/room", "features/chat/routes/room.ts"),
 	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [

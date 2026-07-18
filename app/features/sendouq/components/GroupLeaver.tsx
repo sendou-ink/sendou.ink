@@ -10,15 +10,15 @@ export function GroupLeaver({
 }: {
 	type: "LEAVE_GROUP" | "LEAVE_Q" | "GO_BACK";
 }) {
-	const { t } = useTranslation(["q"]);
+	const { t } = useTranslation(["q", "common"]);
 	const fetcher = useFetcher();
 
 	if (type === "LEAVE_GROUP") {
 		return (
 			<FormWithConfirm
-				dialogHeading="Leave this group?"
+				dialogHeading={t("q:looking.groups.actions.leaveGroup.confirm")}
 				fields={[["_action", "LEAVE_GROUP"]]}
-				submitButtonText="Leave"
+				submitButtonText={t("common:actions.leave")}
 				action={SENDOUQ_LOOKING_PAGE}
 			>
 				<SendouButton variant="minimal-destructive" size="small">

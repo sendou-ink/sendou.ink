@@ -2017,7 +2017,6 @@ export const SWIM_OR_SINK_167 = (
 			],
 			lockedMatches: [],
 		},
-		seedingSnapshot: null,
 		mapPickingStyle: "TO",
 		hasRules: true,
 		name: "Swim or Sink 167",
@@ -2026,6 +2025,7 @@ export const SWIM_OR_SINK_167 = (
 			id: 3,
 			name: "Inkling Performance Labs",
 			slug: "inkling-performance-labs",
+			isEstablished: 1,
 			logoUrl: "fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp",
 			series: [],
 			members: [
@@ -2038,6 +2038,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "260999523806085120",
 					discordAvatar: "a_71a6a4b4f76bd79bc9d7743e322a879d",
 					customUrl: "elemental",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 622,
@@ -2048,6 +2049,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "201922904781357057",
 					discordAvatar: "7fa46b7dc27fa589d3d278ba4b60224f",
 					customUrl: "dotjpg",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 680,
@@ -2058,6 +2060,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "87494390724964352",
 					discordAvatar: "3b82ee3101ba39120b6a65c042a04a37",
 					customUrl: "inkfarer",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 936,
@@ -2068,6 +2071,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "119620026767507456",
 					discordAvatar: "aa1ff5b8eefd5a26657c411138a160b8",
 					customUrl: null,
+					customAvatarUrl: null,
 				},
 				{
 					userId: 1402,
@@ -2078,6 +2082,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "216335108037148673",
 					discordAvatar: "458f1e233a3b590a62f6b867b95a6241",
 					customUrl: "grace",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 1755,
@@ -2088,6 +2093,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "200777324520538113",
 					discordAvatar: "a_d71ac2f474ce422ce711e8e74d657b2f",
 					customUrl: "brushstrokes",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 2908,
@@ -2098,6 +2104,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "112254088992792576",
 					discordAvatar: "711e8d48f316687faa4fdb41ab9298f0",
 					customUrl: "kitsunekeira",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 3742,
@@ -2108,6 +2115,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "124007565758693376",
 					discordAvatar: "702429723f31a57326f87d11063139f7",
 					customUrl: "thoma",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 3806,
@@ -2118,6 +2126,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "113026708071821312",
 					discordAvatar: "4b3f0da55a834acc0beb258edd9c7e34",
 					customUrl: null,
+					customAvatarUrl: null,
 				},
 				{
 					userId: 4941,
@@ -2128,6 +2137,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "236292964052107264",
 					discordAvatar: "c95b9a8cfb9164f3a66267a5e8cfe8b1",
 					customUrl: "hoeenhero",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 5036,
@@ -2138,6 +2148,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "248232091005747201",
 					discordAvatar: "40a21a204f8fae6ae2e7e8c5de70de83",
 					customUrl: "toasty",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 8098,
@@ -2148,6 +2159,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "442431978269310987",
 					discordAvatar: "e0fd0fed98a4d3c3bfd56332678d4e6c",
 					customUrl: "popgun",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 8750,
@@ -2158,6 +2170,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "273188925189914628",
 					discordAvatar: "c62afa020e24ead92cc043ffa809ffdc",
 					customUrl: "liberowolf",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 9222,
@@ -2168,6 +2181,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "298241282550267906",
 					discordAvatar: "f69bb5af745eca4e9b7f55504c641f78",
 					customUrl: "jardonian",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 9719,
@@ -2178,6 +2192,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "184478601171828737",
 					discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 					customUrl: "scepidilionz",
+					customAvatarUrl: null,
 				},
 				{
 					userId: 18720,
@@ -2188,6 +2203,7 @@ export const SWIM_OR_SINK_167 = (
 					discordId: "103988435785650176",
 					discordAvatar: "5fef4bf0c1b8a6a76fe2f43b956bfc3d",
 					customUrl: "tulip",
+					customAvatarUrl: null,
 				},
 			],
 		},
@@ -2199,6 +2215,7 @@ export const SWIM_OR_SINK_167 = (
 			discordId: "216335108037148673",
 			discordAvatar: "458f1e233a3b590a62f6b867b95a6241",
 			customUrl: "grace",
+			customAvatarUrl: null,
 		},
 		staff: [
 			{
@@ -2209,6 +2226,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "42d40d5ae6ff7081ae57bc02b6e2f717",
 				customUrl: null,
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 405,
@@ -2218,6 +2236,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "a_71a6a4b4f76bd79bc9d7743e322a879d",
 				customUrl: "elemental",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 451,
@@ -2227,6 +2246,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "940589e5c6793a5cbbab2adebd84fe0b",
 				customUrl: null,
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 570,
@@ -2236,6 +2256,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "bab3e7a9cdb2071de7f2ae29256fc83b",
 				customUrl: null,
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 657,
@@ -2245,6 +2266,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "da7cfcd1a5b8bee37cfa5d308b0898eb",
 				customUrl: "mashimashi",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 3266,
@@ -2254,6 +2276,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "a9475b488962953152c60f4f138b1618",
 				customUrl: "tux",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 4285,
@@ -2263,6 +2286,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "f30c675fc07203ca112d93fd03b5cc96",
 				customUrl: "tbob408",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 5239,
@@ -2272,6 +2296,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "e821ac7a457033d6c990bcaf518287e5",
 				customUrl: null,
 				role: "STREAMER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 5639,
@@ -2281,6 +2306,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "77b479e49ec0d09edb8f9b975bff04ce",
 				customUrl: "reefsixes",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 8695,
@@ -2290,6 +2316,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "c5a2506e46e135b2568ef48242f669e8",
 				customUrl: "kloud",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 9678,
@@ -2299,6 +2326,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "a_a60bcc9c76d4baa9814287fdc5c28fe9",
 				customUrl: "pipedreamdx",
 				role: "STREAMER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 9719,
@@ -2308,6 +2336,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "75dedb3527b73d9571151f0a00d1c365",
 				customUrl: "scepidilionz",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 18461,
@@ -2317,6 +2346,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "498b21d6f64dcd56d06e61c2ec39e571",
 				customUrl: "rooster",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 18720,
@@ -2326,6 +2356,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "5fef4bf0c1b8a6a76fe2f43b956bfc3d",
 				customUrl: "tulip",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 24117,
@@ -2335,6 +2366,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "6b7156dcd0582ee160564bfa0c5cdc0e",
 				customUrl: "fusionboltzgx",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 28303,
@@ -2344,6 +2376,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "b815bb6090c2b32fec23f1336fae5663",
 				customUrl: null,
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 28482,
@@ -2353,6 +2386,7 @@ export const SWIM_OR_SINK_167 = (
 				discordAvatar: "f5139304fb364bca35634a8e5cd11c0f",
 				customUrl: "phantom_spl",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 		],
 		bracketProgressionOverrides: overrides ?? [],
@@ -2385,6 +2419,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9403,
@@ -2401,6 +2437,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31868,
@@ -2417,6 +2455,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 13562,
@@ -2433,6 +2473,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34724,
@@ -2449,6 +2491,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27222,
@@ -2465,6 +2509,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -2527,6 +2573,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 331,
@@ -2543,6 +2591,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44,
@@ -2559,6 +2609,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 65,
@@ -2575,6 +2627,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -2637,6 +2691,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10200,
@@ -2653,6 +2709,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1038,
@@ -2669,6 +2727,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1059,
@@ -2685,6 +2745,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 267,
@@ -2701,6 +2763,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -2763,6 +2827,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9034,
@@ -2779,6 +2845,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 590,
@@ -2795,6 +2863,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29643,
@@ -2811,6 +2881,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -2873,6 +2945,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5368,
@@ -2889,6 +2963,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 373,
@@ -2905,6 +2981,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37677,
@@ -2921,6 +2999,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -2983,6 +3063,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11143,
@@ -2999,6 +3081,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20311,
@@ -3015,6 +3099,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11815,
@@ -3031,6 +3117,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5001,
@@ -3047,6 +3135,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7216,
@@ -3063,6 +3153,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -3130,6 +3222,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20026,
@@ -3146,6 +3240,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5227,
@@ -3162,6 +3258,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25622,
@@ -3178,6 +3276,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25053,
@@ -3194,6 +3294,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -3261,6 +3363,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5947,
@@ -3277,6 +3381,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8760,
@@ -3293,6 +3399,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1548,
@@ -3309,6 +3417,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 163,
@@ -3325,6 +3435,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -3392,6 +3504,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2670,
@@ -3408,6 +3522,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36265,
@@ -3424,6 +3540,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23505,
@@ -3440,6 +3558,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -3507,6 +3627,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11244,
@@ -3523,6 +3645,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3181,
@@ -3539,6 +3663,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11495,
@@ -3555,6 +3681,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31073,
@@ -3571,6 +3699,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -3633,6 +3763,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21487,
@@ -3649,6 +3781,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28391,
@@ -3665,6 +3799,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23292,
@@ -3681,6 +3817,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27438,
@@ -3697,6 +3835,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -3759,6 +3899,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 4307,
@@ -3775,6 +3917,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20731,
@@ -3791,6 +3935,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22706,
@@ -3807,6 +3953,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -3869,6 +4017,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 15278,
@@ -3885,6 +4035,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34414,
@@ -3901,6 +4053,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 863,
@@ -3917,6 +4071,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31526,
@@ -3933,6 +4089,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4000,6 +4158,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1736,
@@ -4016,6 +4176,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 986,
@@ -4032,6 +4194,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2300,
@@ -4048,6 +4212,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25464,
@@ -4064,6 +4230,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30204,
@@ -4080,6 +4248,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4147,6 +4317,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11275,
@@ -4163,6 +4335,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9718,
@@ -4179,6 +4353,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -4215,6 +4391,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2088,
@@ -4231,6 +4409,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9454,
@@ -4247,6 +4427,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2059,
@@ -4263,6 +4445,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4325,6 +4509,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25168,
@@ -4341,6 +4527,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27485,
@@ -4357,6 +4545,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 14007,
@@ -4373,6 +4563,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4435,6 +4627,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1338,
@@ -4451,6 +4645,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5679,
@@ -4467,6 +4663,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 241,
@@ -4483,6 +4681,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4545,6 +4745,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33116,
@@ -4561,6 +4763,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34014,
@@ -4577,6 +4781,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44751,
@@ -4593,6 +4799,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 44198,
@@ -4609,6 +4817,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22756,
@@ -4625,6 +4835,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4692,6 +4904,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1487,
@@ -4708,6 +4922,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 17310,
@@ -4724,6 +4940,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34657,
@@ -4740,6 +4958,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22409,
@@ -4756,6 +4976,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4823,6 +5045,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2672,
@@ -4839,6 +5063,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 4504,
@@ -4855,6 +5081,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25856,
@@ -4871,6 +5099,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -4938,6 +5168,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34071,
@@ -4954,6 +5186,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23946,
@@ -4970,6 +5204,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21339,
@@ -4986,6 +5222,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -5048,6 +5286,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5261,
@@ -5064,6 +5304,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 190,
@@ -5080,6 +5322,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 12585,
@@ -5096,6 +5340,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -5158,6 +5404,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2731,
@@ -5174,6 +5422,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31764,
@@ -5190,6 +5440,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25133,
@@ -5206,6 +5458,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 17855,
@@ -5222,6 +5476,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -5263,6 +5519,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32885,
@@ -5279,6 +5537,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1953,
@@ -5295,6 +5555,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 15188,
@@ -5311,6 +5573,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2888,
@@ -5327,6 +5591,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -5394,6 +5660,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8297,
@@ -5410,6 +5678,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8830,
@@ -5426,6 +5696,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 38176,
@@ -5442,6 +5714,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -5509,6 +5783,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36215,
@@ -5525,6 +5801,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -5566,6 +5844,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 6051,
@@ -5582,6 +5862,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22903,
@@ -5598,6 +5880,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23132,
@@ -5614,6 +5898,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -5676,6 +5962,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29120,
@@ -5692,6 +5980,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35225,
@@ -5708,6 +5998,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8587,
@@ -5724,6 +6016,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23333,
@@ -5740,6 +6034,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -5807,6 +6103,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31395,
@@ -5823,6 +6121,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31195,
@@ -5839,6 +6139,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28700,
@@ -5855,6 +6157,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33402,
@@ -5871,6 +6175,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -5933,6 +6239,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30686,
@@ -5949,6 +6257,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22396,
@@ -5965,6 +6275,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1961,
@@ -5981,6 +6293,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -6048,6 +6362,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 5187,
@@ -6064,6 +6380,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10265,
@@ -6080,6 +6398,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22744,
@@ -6096,6 +6416,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29823,
@@ -6112,6 +6434,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -6179,6 +6503,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 13671,
@@ -6195,6 +6521,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30612,
@@ -6211,6 +6539,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36898,
@@ -6227,6 +6557,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31580,
@@ -6243,6 +6575,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -6310,6 +6644,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31533,
@@ -6326,6 +6662,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29483,
@@ -6342,6 +6680,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42118,
@@ -6358,6 +6698,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 36800,
@@ -6374,6 +6716,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -6415,6 +6759,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26820,
@@ -6431,6 +6777,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31154,
@@ -6447,6 +6795,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10297,
@@ -6463,6 +6813,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3513,
@@ -6479,6 +6831,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25469,
@@ -6495,6 +6849,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -6562,6 +6918,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3635,
@@ -6578,6 +6936,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7433,
@@ -6594,6 +6954,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 6647,
@@ -6610,6 +6972,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -6651,6 +7015,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20807,
@@ -6667,6 +7033,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42703,
@@ -6683,6 +7051,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 42409,
@@ -6699,6 +7069,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -6766,6 +7138,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11941,
@@ -6782,6 +7156,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 715,
@@ -6798,6 +7174,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11409,
@@ -6814,6 +7192,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -6850,6 +7230,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29182,
@@ -6866,6 +7248,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 9235,
@@ -6882,6 +7266,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30591,
@@ -6898,6 +7284,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -6960,6 +7348,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2279,
@@ -6976,6 +7366,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26162,
@@ -6992,6 +7384,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 4334,
@@ -7008,6 +7402,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 24013,
@@ -7024,6 +7420,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -7065,6 +7463,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26801,
@@ -7081,6 +7481,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29855,
@@ -7097,6 +7499,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 34594,
@@ -7113,6 +7517,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33825,
@@ -7129,6 +7535,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7191,6 +7599,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26988,
@@ -7207,6 +7617,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 26989,
@@ -7223,6 +7635,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 12610,
@@ -7239,6 +7653,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 25755,
@@ -7255,6 +7671,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7322,6 +7740,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37341,
@@ -7338,6 +7758,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 22699,
@@ -7354,6 +7776,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28145,
@@ -7370,6 +7794,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 39363,
@@ -7386,6 +7812,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27113,
@@ -7402,6 +7830,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7469,6 +7899,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29467,
@@ -7485,6 +7917,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10611,
@@ -7501,6 +7935,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46099,
@@ -7517,6 +7953,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7579,6 +8017,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45163,
@@ -7595,6 +8035,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2620,
@@ -7611,6 +8053,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 32203,
@@ -7627,6 +8071,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46101,
@@ -7643,6 +8089,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7705,6 +8153,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29011,
@@ -7721,6 +8171,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23082,
@@ -7737,6 +8189,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33067,
@@ -7753,6 +8207,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21549,
@@ -7769,6 +8225,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7836,6 +8294,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20240,
@@ -7852,6 +8312,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28097,
@@ -7868,6 +8330,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21249,
@@ -7884,6 +8348,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -7946,6 +8412,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23712,
@@ -7962,6 +8430,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 27474,
@@ -7978,6 +8448,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 20990,
@@ -7994,6 +8466,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8080,
@@ -8010,6 +8484,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 28671,
@@ -8026,6 +8502,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8088,6 +8566,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3275,
@@ -8104,6 +8584,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 35169,
@@ -8120,6 +8602,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7008,
@@ -8136,6 +8620,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 40169,
@@ -8152,6 +8638,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8219,6 +8707,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 23183,
@@ -8235,6 +8725,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 7664,
@@ -8251,6 +8743,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30237,
@@ -8267,6 +8761,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [],
@@ -8308,6 +8804,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 8552,
@@ -8324,6 +8822,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29897,
@@ -8340,6 +8840,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1894,
@@ -8356,6 +8858,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -8418,6 +8922,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43850,
@@ -8434,6 +8940,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45635,
@@ -8450,6 +8958,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46045,
@@ -8466,6 +8976,8 @@ export const SWIM_OR_SINK_167 = (
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [

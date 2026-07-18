@@ -25,7 +25,7 @@ export default function UserResultsPage() {
 
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const showAll = searchParams.get("all") === "true";

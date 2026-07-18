@@ -71,6 +71,7 @@ export type Notification =
 			"SCRIM_STARTING_SOON",
 			{ id: number; opponentTeamName: string }
 	  >
+	| NotificationItem<"SCRIM_AUTO_DELETED", { at: number }>
 	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>
 	| NotificationItem<"FRIEND_REQUEST_RECEIVED", { senderUsername: string }>
 	| NotificationItem<

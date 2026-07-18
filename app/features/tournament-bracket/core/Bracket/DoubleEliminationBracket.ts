@@ -5,6 +5,7 @@ import type { Round } from "~/modules/brackets-model";
 import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
+import { cumulativeEliminationsByRound } from "./utils";
 
 export class DoubleEliminationBracket extends Bracket {
 	get type(): Tables["TournamentStage"]["type"] {
@@ -73,13 +74,13 @@ export class DoubleEliminationBracket extends Bracket {
 
 		const losersGroupId = this.data.group.find((g) => g.number === 2)?.id;
 
+		const losersMatches = this.data.match
+			.filter((match) => match.group_id === losersGroupId)
+			.sort((a, b) => a.round_id - b.round_id);
+
 		const teams: { id: number; lostAt: number }[] = [];
 
-		for (const match of this.data.match
-			.slice()
-			.sort((a, b) => a.round_id - b.round_id)) {
-			if (match.group_id !== losersGroupId) continue;
-
+		for (const match of losersMatches) {
 			if (
 				match.opponent1?.result !== "win" &&
 				match.opponent2?.result !== "win"
@@ -97,8 +98,8 @@ export class DoubleEliminationBracket extends Bracket {
 			teams.push({ id: loser.id, lostAt: match.round_id });
 		}
 
-		const teamCountWhoDidntLoseInLosersYet =
-			this.participantTournamentTeamIds.length - teams.length;
+		const eliminationsThroughLosersRound =
+			cumulativeEliminationsByRound(losersMatches);
 
 		const result: Standing[] = [];
 		for (const roundId of R.unique(teams.map((team) => team.lostAt))) {
@@ -107,16 +108,18 @@ export class DoubleEliminationBracket extends Bracket {
 				teamsLostThisRound.push(teams.shift()!);
 			}
 
+			const placement =
+				this.participantTournamentTeamIds.length -
+				eliminationsThroughLosersRound.get(roundId)! +
+				1;
+
 			for (const { id: teamId } of teamsLostThisRound) {
 				const team = this.tournament.teamById(teamId);
 				invariant(team, `Team not found for id: ${teamId}`);
 
-				const teamsPlacedAbove =
-					teamCountWhoDidntLoseInLosersYet + teams.length;
-
 				result.push({
 					team,
-					placement: teamsPlacedAbove + 1,
+					placement,
 				});
 			}
 		}

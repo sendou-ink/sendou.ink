@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { Image, WeaponImage } from "~/components/Image";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
@@ -14,7 +15,11 @@ import {
 	subWeaponImageUrl,
 } from "~/utils/urls";
 import { LETHAL_DAMAGE } from "../comp-analyzer-constants";
-import { useTargetResAp, useTargetSubDefenseAp } from "../comp-analyzer-hooks";
+import {
+	useSingleWeaponCombos,
+	useTargetResAp,
+	useTargetSubDefenseAp,
+} from "../comp-analyzer-hooks";
 import type { DamageCombo, DamageSegment } from "../comp-analyzer-types";
 import {
 	calculateDamageCombos,
@@ -268,6 +273,10 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 		initialTargetSubDefenseAp,
 	);
 	const [isCollapsed, setIsCollapsed] = useState(false);
+	const [singleWeaponCombos, setSingleWeaponCombos] = useSingleWeaponCombos();
+
+	const singleWeaponOnly = weaponIds.length === 1;
+	const includeSingleWeaponCombos = singleWeaponOnly || singleWeaponCombos;
 
 	const allDamageKeys = getAllDamageKeys(weaponIds, targetSubDefenseAp);
 	const allDamageKeyStrings = new Set(allDamageKeys.map(filterKeyToString));
@@ -279,9 +288,11 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 		weaponIds,
 		validExcludedKeys,
 		targetSubDefenseAp,
+		undefined,
+		includeSingleWeaponCombos,
 	);
 
-	if (weaponIds.length < 2) {
+	if (weaponIds.length < 1) {
 		return null;
 	}
 
@@ -356,6 +367,15 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 							className={styles.resSlider}
 						/>
 						<span className={styles.resSliderValue}>{targetResAp} AP</span>
+					</div>
+					<div className={styles.singleWeaponToggleRow}>
+						<SendouSwitch
+							isSelected={includeSingleWeaponCombos}
+							onChange={setSingleWeaponCombos}
+							isDisabled={singleWeaponOnly}
+						>
+							{t("analyzer:comp.singleWeaponCombos")}
+						</SendouSwitch>
 					</div>
 					<div className={styles.filterControlsRow}>
 						<button

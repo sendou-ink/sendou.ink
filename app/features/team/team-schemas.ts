@@ -1,13 +1,23 @@
 import { z } from "zod";
 import {
+	array,
+	fieldset,
+	idConstant,
 	image,
+	select,
+	selectOptional,
 	stringConstant,
 	textAreaOptional,
 	textFieldOptional,
 	textFieldRequired,
+	toggle,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
-import { TEAM } from "./team-constants";
+import {
+	CUSTOM_ROLE_MAX_LENGTH,
+	TEAM,
+	TEAM_MEMBER_ROLES,
+} from "./team-constants";
 
 const teamNameValidate = {
 	func: (teamName: string) =>
@@ -50,3 +60,59 @@ export const editTeamFormSchema = z.object({
 	logo: image({ label: "labels.logo" }),
 	banner: image({ label: "labels.banner", dimensions: "thick-banner" }),
 });
+
+/** Sentinel `role` value selected to switch a member to a free-text custom role. Never stored. */
+export const CUSTOM_ROLE_VALUE = "CUSTOM";
+
+export const updateRosterSchema = z
+	.object({
+		_action: stringConstant("UPDATE_ROSTER"),
+		members: array({
+			max: TEAM.MAX_MEMBER_COUNT,
+			addable: false,
+			sortable: true,
+			field: fieldset({
+				fields: z.object({
+					userId: idConstant(),
+					role: selectOptional({
+						label: "labels.teamMemberRole",
+						items: [
+							...TEAM_MEMBER_ROLES.map((role) => ({
+								value: role,
+								label: `options.teamMemberRole.${role}` as const,
+							})),
+							{
+								value: CUSTOM_ROLE_VALUE,
+								label: "options.teamMemberRole.CUSTOM" as const,
+							},
+						],
+					}),
+					customRole: textFieldOptional({
+						label: "labels.teamMemberCustomRole",
+						maxLength: CUSTOM_ROLE_MAX_LENGTH,
+					}),
+					roleType: select({
+						label: "labels.teamMemberRoleType",
+						items: [
+							{ value: "PLAYER", label: "options.teamMemberRoleType.PLAYER" },
+							{ value: "OTHER", label: "options.teamMemberRoleType.OTHER" },
+						],
+					}),
+					isManager: toggle({ label: "labels.teamEditor" }),
+				}),
+			}),
+		}),
+	})
+	.superRefine((data, ctx) => {
+		for (const [index, member] of data.members.entries()) {
+			const isCustom = member.role === CUSTOM_ROLE_VALUE;
+
+			if (isCustom && !member.customRole) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					path: ["members", index, "customRole"],
+					message: "forms:errors.customRoleRequired",
+				});
+			}
+		}
+	});

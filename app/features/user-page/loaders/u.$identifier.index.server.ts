@@ -1,9 +1,16 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const { id: userId } = notFoundIfFalsy(
+		await UserRepository.identifierToUserId(params.identifier!),
+	);
+
+	const userCards = await UserCardRepository.userCards({ userIds: [userId] });
+
 	const widgetsEnabled = await UserRepository.widgetsEnabledByIdentifier(
 		params.identifier!,
 	);
@@ -14,6 +21,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			widgets: notFoundIfFalsy(
 				await UserRepository.widgetsByUserId(params.identifier!),
 			),
+			...userCards,
 		};
 	}
 
@@ -27,5 +35,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		type: "old" as const,
 		user,
 		trophies,
+		...userCards,
 	};
 };

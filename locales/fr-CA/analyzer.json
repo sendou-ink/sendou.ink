@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "",
+	"rawParameters": "",
 	"attribute.weight": "Poids",
 	"attribute.weight.Fast": "Léger",
 	"attribute.weight.Slow": "Lourd",
@@ -210,5 +211,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "",
 	"comp.specialCategory.TEAM_BUFF": "",
 	"comp.removeAll": "",
-	"comp.addAll": ""
+	"comp.addAll": "",
+	"comp.singleWeaponCombos": ""
 }

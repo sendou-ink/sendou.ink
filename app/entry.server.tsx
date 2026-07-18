@@ -1,54 +1,49 @@
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
 import * as Sentry from "@sentry/react-router";
-import { createInstance } from "i18next";
 import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
-import { I18nextProvider, initReactI18next } from "react-i18next";
+import { I18nextProvider } from "react-i18next";
 import {
 	type EntryContext,
 	type HandleErrorFunction,
+	type RouterContextProvider,
 	ServerRouter,
 } from "react-router";
-import { config } from "~/modules/i18n/config"; // your i18n configuration file
-import { i18next } from "~/modules/i18n/i18next.server";
-import { resources } from "./modules/i18n/resources.server";
+import { Config } from "~/config";
+import { ServerConfig } from "~/config.server";
+import { getI18nInstance } from "~/modules/i18n/i18next.server";
 import {
 	daily,
 	everyHourAt00,
 	everyHourAt30,
 	everyTwoMinutes,
 } from "./routines/list.server";
+import { loadAllDateFnsLocales } from "./utils/dates";
 import { logger } from "./utils/logger";
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
 
-const SENTRY_ENABLED = import.meta.env.VITE_SENTRY_ENABLED === "true";
+const SENTRY_ENABLED = Config.sentry.enabled;
+
+const dateFnsLocalesLoaded = loadAllDateFnsLocales();
 
 async function handleRequest(
 	request: Request,
 	responseStatusCode: number,
 	responseHeaders: Headers,
 	reactRouterContext: EntryContext,
+	loadContext: RouterContextProvider,
 ) {
+	await dateFnsLocalesLoaded;
+
 	const callbackName = isbot(request.headers.get("user-agent"))
 		? "onAllReady"
 		: "onShellReady";
 
-	const instance = createInstance();
-	const lng = await i18next.getLocale(request);
-	const ns = i18next.getRouteNamespaces(reactRouterContext);
-
-	await instance
-		.use(initReactI18next) // Tell our instance to use react-i18next
-		.init({
-			...config, // spread the configuration
-			lng, // The locale we detected above
-			ns, // The namespaces the routes about to render wants to use
-			resources,
-		});
+	const instance = getI18nInstance(loadContext);
 
 	return new Promise((resolve, reject) => {
 		let didError = false;
@@ -94,7 +89,7 @@ declare global {
 	var appStartSignal: undefined | true;
 }
 
-if (!global.appStartSignal && process.env.NODE_ENV === "production") {
+if (!global.appStartSignal && ServerConfig.isProduction) {
 	global.appStartSignal = true;
 
 	cron.schedule("0 */1 * * *", async () => {

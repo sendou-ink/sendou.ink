@@ -473,16 +473,14 @@ function MatchTimerInner({
 
 	const displayText = elapsedMinutes >= 60 ? "1h+" : `${elapsedMinutes}m`;
 
-	const statusColor =
-		status === "error"
-			? "var(--color-error)"
-			: status === "warning"
-				? "var(--color-warning)"
-				: "var(--color-text)";
-
 	return (
 		<div className={styles.matchTimer} data-testid="bracket-match-timer">
-			<div className={styles.matchHeaderBox} style={{ color: statusColor }}>
+			<div
+				className={clsx(styles.matchHeaderBox, styles.matchHeaderBoxButton, {
+					[styles.matchTimerWarning]: status === "warning",
+					[styles.matchTimerError]: status === "error",
+				})}
+			>
 				{displayText}
 			</div>
 		</div>

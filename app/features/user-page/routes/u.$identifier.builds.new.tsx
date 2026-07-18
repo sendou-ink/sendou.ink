@@ -20,7 +20,7 @@ export default function NewBuildPage() {
 	const { defaultValues, gearIdToAbilities } = useLoaderData<typeof loader>();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as UserPageLoaderData;
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 	const { t } = useTranslation(["builds"]);
 
 	if (layoutData.user.buildsCount >= BUILD.MAX_COUNT) {

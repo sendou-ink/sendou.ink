@@ -8,7 +8,11 @@ export function isAbility(value: string): value is Ability {
 }
 
 const normalizeTerm = (term: string): string => {
-	return term.trim().toLocaleLowerCase();
+	return term
+		.normalize("NFD")
+		.replace(/\p{M}/gu, "")
+		.replace(/[^\p{L}\p{N}]/gu, "")
+		.toLocaleLowerCase();
 };
 
 export function filterWeapon({

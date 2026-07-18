@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "要分析的武器",
+	"rawParameters": "原始参数",
 	"attribute.weight": "量级",
 	"attribute.weight.Fast": "轻量级",
 	"attribute.weight.Slow": "重量级",
@@ -93,6 +94,7 @@
 	"damage.header.baseDamage": "基础伤害",
 	"damage.header.baseDamage.short": "基础",
 	"damage.header.distance": "距离",
+	"damage.toSplat": "{{count}} 确击倒",
 	"damage.NORMAL_MIN": "最小值",
 	"damage.NORMAL_MAX": "最大值",
 	"damage.SECONDARY_MODE_MIN": "第二射击模式 (最小值)",
@@ -150,7 +152,7 @@
 	"patch": "游戏版本:",
 	"abilityPoints.short": "AP",
 	"abilityChunks": "所需碎片",
-	"torpedoExplanation": "根据游戏机制，你无法同时使用多个鱼雷。",
+	"torpedoExplanation": "同时只能使用一个鱼雷。",
 	"trackingSubDefExplanation": "定点侦测器、墨汁陷阱和标线器的索敌时间是根据没有携带提升次要武器性能的敌人计算得出。",
 	"damageSubDefExplanation": "洒墨器和斯普拉防护墙未在表内显示，但是它们所造成的伤害也会被减轻次要武器影响的效果降低。",
 	"distanceInline": "距离: {{value}}",
@@ -162,6 +164,7 @@
 	"labels.weapon": "武器",
 	"dmgHtdExplanation": "DMG = 伤害 | HTD = 破坏所需伤害",
 	"noDmgData": "目前没有该武器的伤害数据。请期待后续更新！",
+	"perInkTankGrid.header": "使用 {{count}} 次次要武器后的 {{weapon}} 剩余攻击次数",
 	"bigBubblerExplanation": "{{weapon}} 的持续时间也会一起增加。",
 	"button.showChart": "显示图表",
 	"button.showConsumptionGrid": "显示耗墨量网格",
@@ -179,8 +182,9 @@
 	"comp.removeWeapon": "移除武器",
 	"comp.reorderWeapon": "拖动来重新排序武器",
 	"comp.pickWeapon": "选择一个武器",
-	"comp.showWeaponGrid": "显示武器选择器",
-	"comp.hideWeaponGrid": "隐藏武器选择器",
+	"comp.showWeaponGrid": "显示武器选单",
+	"comp.hideWeaponGrid": "隐藏武器选单",
+	"comp.hits": "命中 {{count}} 次",
 	"comp.enemyRes": "对手的 减轻对手墨汁影响",
 	"comp.enemySubDef": "对手的 减轻次要武器影响",
 	"comp.weaponRanges": "武器射程",
@@ -201,5 +205,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "团队防护罩",
 	"comp.specialCategory.TEAM_BUFF": "团队增益",
 	"comp.removeAll": "移除所有",
-	"comp.addAll": "添加所有"
+	"comp.addAll": "添加所有",
+	"comp.singleWeaponCombos": ""
 }

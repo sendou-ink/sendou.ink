@@ -89,6 +89,7 @@
 	"events.view.hosting": "",
 	"events.view.scrims": "",
 	"events.view.saved": "",
+	"events.view.organization": "",
 	"events.empty": "",
 	"events.emptyAll": "",
 	"events.findOnCalendar": ""

@@ -20,12 +20,17 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ModeImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import { NoteAvatar } from "~/components/NoteAvatar";
 import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
+import {
+	UserCard,
+	useUserCardData,
+} from "~/features/user-card/components/UserCard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { scrimPage, tournamentRegisterPage, userPage } from "~/utils/urls";
+import { scrimPage, tournamentRegisterPage } from "~/utils/urls";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import styles from "./ScrimCard.module.css";
@@ -142,11 +147,19 @@ function ScrimTeamAvatar({
 	teamName: string;
 	owner: ScrimPost["users"][number];
 }) {
+	const cardData = useUserCardData(owner.id);
+
 	if (teamAvatarUrl) {
 		return <Avatar size="xs" url={teamAvatarUrl} alt={teamName} />;
 	}
 
-	return <Avatar size="xs" user={owner} alt={owner.username} />;
+	return (
+		<UserCard userId={owner.id} withMutualFriends>
+			<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+				<Avatar size="xs" user={owner} alt={owner.username} />
+			</NoteAvatar>
+		</UserCard>
+	);
 }
 
 function ScrimVisibilityPopover() {
@@ -178,17 +191,25 @@ function ScrimTeamMembersPopover({ users }: { users: ScrimPost["users"] }) {
 		>
 			<div className="stack md">
 				{users.map((user) => (
-					<Link
-						to={userPage(user)}
-						key={user.id}
-						className="stack horizontal sm"
-					>
-						<Avatar size="xxs" user={user} />
-						{user.username}
-					</Link>
+					<ScrimTeamMemberRow key={user.id} user={user} />
 				))}
 			</div>
 		</SendouPopover>
+	);
+}
+
+function ScrimTeamMemberRow({ user }: { user: ScrimPost["users"][number] }) {
+	const cardData = useUserCardData(user.id);
+
+	return (
+		<UserCard userId={user.id} withMutualFriends>
+			<span className="stack horizontal sm items-center">
+				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="xs">
+					<Avatar size="xxs" user={user} />
+				</NoteAvatar>
+				{user.username}
+			</span>
+		</UserCard>
 	);
 }
 
@@ -524,6 +545,7 @@ export function ScrimRequestCard({
 							dialogHeading={t("scrims:acceptModal.title", {
 								groupName: teamName,
 							})}
+							description={t("scrims:autoCancelInfo")}
 							fields={[
 								["scrimPostRequestId", request.id],
 								["_action", "ACCEPT_REQUEST"],

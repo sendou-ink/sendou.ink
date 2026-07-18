@@ -1,0 +1,74 @@
+.statNumber {
+	font-size: 2.5rem;
+	font-weight: var(--weight-extra);
+	line-height: 1;
+}
+
+.progress {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.progressHeader {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-2);
+}
+
+.progressTrack {
+	width: 100%;
+	height: 0.75rem;
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-higher);
+	overflow: hidden;
+}
+
+.progressBar {
+	height: 100%;
+	border-radius: var(--radius-full);
+	background-color: var(--color-accent);
+	transition: width 0.3s ease;
+}
+
+.progressBarMet {
+	background-color: var(--color-success);
+}
+
+.breakdown {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-top: var(--s-2);
+}
+
+.breakdownRow {
+	display: grid;
+	grid-template-columns: 6rem 1fr 2.5rem;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.breakdownLabel {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.breakdownTrack {
+	height: 0.5rem;
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-higher);
+	overflow: hidden;
+}
+
+.breakdownBar {
+	height: 100%;
+	border-radius: var(--radius-full);
+	background-color: var(--color-accent);
+}
+
+.breakdownCount {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	text-align: right;
+}

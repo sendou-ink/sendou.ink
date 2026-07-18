@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "Arma a analizar",
+	"rawParameters": "",
 	"attribute.weight": "Peso",
 	"attribute.weight.Fast": "Ligero",
 	"attribute.weight.Slow": "Pesado",
@@ -210,5 +211,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "Escudo de equipo",
 	"comp.specialCategory.TEAM_BUFF": "Mejora de equipo",
 	"comp.removeAll": "Eliminar todos",
-	"comp.addAll": "Añadir todos"
+	"comp.addAll": "Añadir todos",
+	"comp.singleWeaponCombos": ""
 }

@@ -15,6 +15,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/xsearch.player.$id.server";
+import { HowToLinkPopover } from "../components/HowToLinkPopover";
 import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.player.$id.server";
 
@@ -22,7 +23,7 @@ export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -44,16 +45,16 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	const aliasesStr =
-		args.data.names.aliases.length > 0
-			? ` (Aliases: ${args.data.names.aliases.join(", ")})`
+		args.loaderData.names.aliases.length > 0
+			? ` (Aliases: ${args.loaderData.names.aliases.join(", ")})`
 			: "";
 
 	return metaTags({
-		title: `${args.data.names.primary} X Battle Top 500 Placements`,
-		description: `Splatoon 3 X Battle results for the player ${args.data.names.primary}${aliasesStr}`,
+		title: `${args.loaderData.names.primary} X Battle Top 500 Placements`,
+		description: `Splatoon 3 X Battle results for the player ${args.loaderData.names.primary}${aliasesStr}`,
 		location: args.location,
 	});
 };
@@ -77,19 +78,22 @@ export default function XSearchPlayerPage() {
 	return (
 		<Main halfWidth className="stack lg">
 			<div>
-				<h2 className="text-lg">
-					{hasUserLinked(placementUser) ? (
-						<Link to={userPage(placementUser)}>{data.names.primary}</Link>
-					) : (
-						data.names.primary
-					)}{" "}
-					{t("common:xsearch.placements")}
-				</h2>
-				{data.names.aliases.length > 0 ? (
-					<div className="text-lighter text-sm">
-						{t("common:xsearch.aliases")} {data.names.aliases.join(", ")}
-					</div>
-				) : null}
+				<div>
+					<h2 className="text-lg">
+						{hasUserLinked(placementUser) ? (
+							<Link to={userPage(placementUser)}>{data.names.primary}</Link>
+						) : (
+							data.names.primary
+						)}{" "}
+						{t("common:xsearch.placements")}
+					</h2>
+					{data.names.aliases.length > 0 ? (
+						<div className="text-lighter text-sm">
+							{t("common:xsearch.aliases")} {data.names.aliases.join(", ")}
+						</div>
+					) : null}
+				</div>
+				{!hasUserLinked(placementUser) ? <HowToLinkPopover /> : null}
 			</div>
 			<PlacementsTable placements={data.placements} type="MODE_INFO" />
 			{isLinkedToCurrentUser ? <UnlinkFormWithButton /> : null}

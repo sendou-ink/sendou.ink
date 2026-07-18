@@ -21,7 +21,7 @@ export function isParticipating(post: ScrimPost, userId: number) {
 }
 
 export function resolvePoolCode(postId: number) {
-	return `SC${postId % 10}`;
+	return `SC${(postId % 9) + 1}`;
 }
 
 /**

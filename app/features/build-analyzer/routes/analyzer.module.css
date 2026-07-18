@@ -255,12 +255,41 @@
 	align-items: center;
 }
 
+/* doubled class to outweigh the Table cell padding rule so the popover
+   button does not make these rows taller than the text-only rows */
+.popoverCell.popoverCell {
+	padding-block: 0;
+}
+
 .statPopover {
 	min-width: 360px;
 
 	--chart-bg: transparent;
 	--chart-height: 250px;
 	--chart-width: 340px;
+
+	/* Let the chart shrink to whatever height react-aria allots the popover
+	   (so it never gets clipped) by threading a flex column down to it. */
+	display: flex;
+	flex-direction: column;
+
+	/* The chart shrinks to fit, so no scroll is needed here; keep visible so the
+	   hover tooltip can overlay the chart instead of being clipped. */
+	overflow: visible;
+}
+
+.statPopover [role="dialog"] {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	flex: 1;
+	min-height: 0;
+}
+
+.statChartContainer {
+	flex: 1 1 auto;
+	min-height: 0;
+	max-width: 100%;
 }
 
 @media screen and (min-width: 700px) {

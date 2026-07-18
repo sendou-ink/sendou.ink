@@ -3,7 +3,7 @@
 	--card-height: 93px;
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-8);
+	gap: var(--s-10);
 }
 
 .changeLogImg {
@@ -125,6 +125,12 @@
 	}
 }
 
+.tournamentCards {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
 .tournamentCardsSpacer {
 	display: flex;
 	gap: var(--s-2);
@@ -134,6 +140,26 @@
 	margin-block-start: -6px;
 	margin-inline-start: -6px;
 	overflow-x: auto;
+}
+
+.tournamentCardsViewAllCard {
+	background-color: var(--color-bg-higher);
+	height: var(--card-height);
+	border-radius: var(--radius-box);
+	display: grid;
+	place-items: center;
+	padding: var(--s-2);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-align: center;
+	color: var(--color-text);
+	transition: background-color 0.2s ease-out;
+	min-width: 90px;
+	max-width: 90px;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
 }
 
 .resultHighlights {

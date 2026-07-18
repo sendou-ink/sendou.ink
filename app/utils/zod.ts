@@ -294,6 +294,7 @@ const EMPTY_CHARACTERS = [
 	"\u1160",
 	"\uFEFF",
 	"\u2060",
+	"[\\uFE00-\\uFE0F]",
 ];
 const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 

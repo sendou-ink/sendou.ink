@@ -3,8 +3,31 @@ import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	formatFlexTimeDisplay,
 	generateTimeOptions,
+	parseLutiDivFromName,
 	parseMapPoolInput,
 } from "./scrims-utils";
+
+describe("parseLutiDivFromName", () => {
+	it("parses a numeric division", () => {
+		expect(parseLutiDivFromName("LUTI: Season 15 - Division 2")).toBe("2");
+	});
+
+	it("parses division X", () => {
+		expect(parseLutiDivFromName("LUTI Season 15 Division X")).toBe("X");
+	});
+
+	it("parses a two-digit division without matching a single digit", () => {
+		expect(parseLutiDivFromName("LUTI Season 15 Div 10")).toBe("10");
+	});
+
+	it("returns null when no division token is present", () => {
+		expect(parseLutiDivFromName("Leagues Under The Ink Season 15")).toBeNull();
+	});
+
+	it("returns null for an out-of-range division", () => {
+		expect(parseLutiDivFromName("LUTI Division 12")).toBeNull();
+	});
+});
 
 describe("generateTimeOptions", () => {
 	it("includes both start and end times", () => {

@@ -35,8 +35,8 @@ import type {
 	SubWeaponDamage,
 	SubWeaponParams,
 } from "../analyzer-types";
-import { abilityValues as abilityValuesJson } from "./ability-values";
-import { weaponParams as rawWeaponParams } from "./weapon-params";
+import { abilityValues as abilityValuesJson } from "../data/ability-values";
+import { weaponParams as rawWeaponParams } from "../data/weapon-params";
 
 export function weaponParams(): ParamsJson {
 	return rawWeaponParams as unknown as ParamsJson;
@@ -49,6 +49,14 @@ export function mainWeaponParams(weaponId: MainWeaponId): MainWeaponParams {
 	const kit = params.weaponKits[weaponId];
 
 	return { ...baseStats, ...kit } as MainWeaponParams;
+}
+
+export function specialWeaponParams(
+	specialWeaponId: SpecialWeaponId,
+): SpecialWeaponParams {
+	const params = rawWeaponParams as unknown as ParamsJson;
+
+	return params.specialWeapons[specialWeaponId] as SpecialWeaponParams;
 }
 
 export function buildToAbilityPoints(build: BuildAbilitiesTupleWithUnknown) {
@@ -312,13 +320,6 @@ export function validatedBuildFromSearchParams(
 	} catch {
 		return EMPTY_BUILD;
 	}
-}
-
-export function serializeBuild(build: BuildAbilitiesTupleWithUnknown) {
-	return build
-		.flat()
-		.map((ability) => (ability === "UNKNOWN" ? UNKNOWN_SHORT : ability))
-		.join(",");
 }
 
 export const hpDivided = (hp: number) => hp / 10;

@@ -1,19 +1,14 @@
 import { createCookieSessionStorage } from "react-router";
+import { ServerConfig } from "~/config.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import invariant from "~/utils/invariant";
 
 const TEN_YEARS_IN_SECONDS = 315_360_000;
-
-if (process.env.NODE_ENV === "production") {
-	invariant(process.env.SESSION_SECRET, "SESSION_SECRET is required");
-}
-const sessionSecret = process.env.SESSION_SECRET ?? "secret";
 
 const sidenavStorage = createCookieSessionStorage({
 	cookie: {
 		name: "sidenav",
-		secure: process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN,
-		secrets: [sessionSecret],
+		secure: ServerConfig.isProduction && !IS_E2E_TEST_RUN,
+		secrets: [ServerConfig.sessionSecret],
 		sameSite: "lax",
 		path: "/",
 		httpOnly: true,

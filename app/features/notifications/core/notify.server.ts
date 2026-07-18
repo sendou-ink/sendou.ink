@@ -2,8 +2,9 @@ import type { TFunction } from "i18next";
 import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import { APP_ICON_URL } from "~/utils/urls";
 import type { NotificationSubscription } from "../../../db/tables";
-import { i18next } from "../../../modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
@@ -29,6 +30,7 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	SCRIM_SCHEDULED: "high",
 	SCRIM_CANCELED: "high",
 	SCRIM_STARTING_SOON: "high",
+	SCRIM_AUTO_DELETED: "normal",
 	COMMISSIONS_CLOSED: "normal",
 	FRIEND_REQUEST_RECEIVED: "normal",
 };
@@ -74,7 +76,7 @@ export async function notify({
 		dededuplicatedUserIds,
 	);
 	if (subscriptions.length > 0) {
-		const t = await i18next.getFixedT("en-US", ["common"]);
+		const t = await getFixedTForLanguage("en-US", ["common"]);
 
 		const limit = pLimit(50);
 
@@ -171,7 +173,7 @@ function pushNotificationOptions(
 			`common:notifications.text.${notification.type}`,
 			notification.meta,
 		),
-		icon: notification.pictureUrl ?? "/static-assets/img/app-icon.png",
+		icon: notification.pictureUrl ?? APP_ICON_URL,
 		data: { url: notificationLink(notification) },
 	};
 }

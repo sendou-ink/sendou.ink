@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "",
+	"rawParameters": "",
 	"attribute.weight": "Vægt",
 	"attribute.weight.Fast": "Let",
 	"attribute.weight.Slow": "Tung",
@@ -207,5 +208,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "",
 	"comp.specialCategory.TEAM_BUFF": "",
 	"comp.removeAll": "",
-	"comp.addAll": ""
+	"comp.addAll": "",
+	"comp.singleWeaponCombos": ""
 }

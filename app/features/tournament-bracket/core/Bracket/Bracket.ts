@@ -127,7 +127,7 @@ export abstract class Bracket {
 		try {
 			const manager = getTournamentManager();
 
-			manager.import(this.data);
+			manager.importData(this.data);
 
 			const teamOrder = this.teamOrderForSimulation();
 

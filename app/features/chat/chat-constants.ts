@@ -31,18 +31,6 @@ export function findRoomLinks(
 	return results;
 }
 
-export function extractRoomLink(text: string): string | null {
-	return findRoomLinks(text)[0]?.url ?? null;
-}
-
-const MATCH_ROOM_URL_PATTERN =
-	/^\/q\/match\/\d+$|^\/to\/\d+\/matches\/\d+$|^\/scrims\/\d+$/;
-
-export function isMatchRoomUrl(url: string) {
-	const pathname = canParseUrl(url) ? new URL(url).pathname : url;
-	return MATCH_ROOM_URL_PATTERN.test(pathname);
-}
-
 function canParseUrl(url: string): boolean {
 	try {
 		new URL(url);

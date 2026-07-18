@@ -42,7 +42,7 @@ export { action, loader };
 export const handle: SendouRouteHandle = {
 	i18n: ["vods"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 
@@ -62,10 +62,10 @@ export const handle: SendouRouteHandle = {
 };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: args.data.vod.title,
+		title: args.loaderData.vod.title,
 		description:
 			"Splatoon 3 VoD with timestamps to check out specific weapons as well as map and mode combinations.",
 		location: args.location,

@@ -1,5 +1,5 @@
 import { clsx } from "clsx";
-import type { TFunction } from "i18next";
+import type { Namespace, TFunction } from "i18next";
 import {
 	Calculator,
 	ChartColumnBig,
@@ -7,6 +7,7 @@ import {
 	Flame,
 	FlaskConical,
 	ImageIcon,
+	SlidersHorizontal,
 	Users,
 	Videotape,
 } from "lucide-react";
@@ -19,6 +20,7 @@ import { filterWeapon } from "~/modules/in-game-lists/utils";
 import {
 	canonicalWeaponSplId,
 	mainWeaponIds,
+	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
 import {
 	ANALYZER_URL,
@@ -29,6 +31,7 @@ import {
 	weaponBuildPage,
 	weaponBuildPopularPage,
 	weaponBuildStatsPage,
+	weaponParamsPage,
 } from "~/utils/urls";
 import styles from "./GlobalSearch.module.css";
 
@@ -37,6 +40,7 @@ const WEAPON_DESTINATIONS = [
 	"popular",
 	"stats",
 	"analyzer",
+	"params",
 	"vods",
 	"art",
 	"lfg",
@@ -48,6 +52,29 @@ export interface SelectedWeapon {
 	name: string;
 	englishName: string;
 	slug: string;
+	paramsSlug: string;
+}
+
+/**
+ * Builds the {@link SelectedWeapon} for a main weapon id: its localized name plus the English-derived
+ * url slugs (the build pages slug from the weapon's canonical id, the params page slug from its base
+ * id). The caller's `t` must have the `weapons` namespace available.
+ */
+export function weaponToSelectedWeapon<Ns extends Namespace>(
+	id: MainWeaponId,
+	t: TFunction<Ns>,
+): SelectedWeapon {
+	return {
+		id,
+		name: t(`weapons:MAIN_${id}` as never),
+		englishName: t(`weapons:MAIN_${id}` as never, { lng: "en" }),
+		slug: mySlugify(
+			t(`weapons:MAIN_${canonicalWeaponSplId(id)}` as never, { lng: "en" }),
+		),
+		paramsSlug: mySlugify(
+			t(`weapons:MAIN_${weaponIdToBaseWeaponId(id)}` as never, { lng: "en" }),
+		),
+	};
 }
 
 export function filterWeaponResults(
@@ -58,24 +85,14 @@ export function filterWeaponResults(
 
 	const matches: SelectedWeapon[] = [];
 	for (const id of mainWeaponIds) {
-		const weaponName = t(`weapons:MAIN_${id}`);
 		const isMatch = filterWeapon({
 			weapon: { type: "MAIN", id },
-			weaponName,
+			weaponName: t(`weapons:MAIN_${id}`),
 			searchTerm: query,
 		});
 
 		if (isMatch) {
-			const englishName = t(`weapons:MAIN_${id}`, { lng: "en" });
-			const slugName = t(`weapons:MAIN_${canonicalWeaponSplId(id)}`, {
-				lng: "en",
-			});
-			matches.push({
-				id,
-				name: weaponName,
-				englishName,
-				slug: mySlugify(slugName),
-			});
+			matches.push(weaponToSelectedWeapon(id, t));
 		}
 
 		if (matches.length >= 10) break;
@@ -93,6 +110,7 @@ function getWeaponDestinationUrl(
 		popular: weaponBuildPopularPage(weapon.slug),
 		stats: weaponBuildStatsPage(weapon.slug),
 		analyzer: `${ANALYZER_URL}?weapon=${weapon.id}`,
+		params: weaponParamsPage(weapon.paramsSlug),
 		vods: `${VODS_PAGE}?weapon=${weapon.id}`,
 		art: `/art?tab=showcase&tag=${encodeURIComponent(weapon.englishName.toLowerCase())}`,
 		lfg: `${LFG_PAGE}?q=w.${weapon.id}`,
@@ -188,6 +206,18 @@ export function WeaponDestinationMenu({
 						<Calculator size={20} />
 						<span className={styles.resultName}>
 							{t("common:pages.analyzer")}
+						</span>
+					</div>
+				</ListBoxItem>
+				<ListBoxItem
+					id="params"
+					href={getWeaponDestinationUrl("params", selectedWeapon)}
+					className={styles.listBoxItem}
+				>
+					<div className={styles.resultItem}>
+						<SlidersHorizontal size={20} />
+						<span className={styles.resultName}>
+							{t("common:pages.params")}
 						</span>
 					</div>
 				</ListBoxItem>

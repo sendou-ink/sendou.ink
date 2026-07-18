@@ -1,0 +1,12 @@
+diff --git a/dist/cli.js b/dist/cli.js
+index 7871cebe46f6df886b76364db5346adfa1838622..495960a0a12d3d027ababaacc0b92a7dc39274a6 100644
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -118,7 +118,6 @@ async function run() {
+ 	}));
+ 	app.use(expressPublicPath, express.static(build.assetsBuildDirectory));
+ 	app.use(express.static("public", { maxAge: "1h" }));
+-	app.use(morgan("tiny"));
+ 	if (build.fetch) app.all("/{*splat}", createRequestListener(build.fetch));
+ 	else app.all("/{*splat}", createRequestHandler({
+ 		build: buildModule,

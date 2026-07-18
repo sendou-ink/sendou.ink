@@ -12,6 +12,7 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { removeMarkdown } from "~/utils/strings";
 import { tournamentPage } from "~/utils/urls";
+import { action } from "../actions/to.$id.info.server";
 import { FactCardGrid, type FactCardItem } from "../components/FactCard";
 import { RegistrationActions } from "../components/RegistrationActions";
 import {
@@ -23,18 +24,17 @@ import { bracketProgressionLabel } from "../tournament-utils";
 import { useTournament } from "./to.$id";
 import styles from "./to.$id.info.module.css";
 
-export { loader };
+export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].data as any)?.tournament as
-		| TournamentData
-		| undefined;
+	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
+		?.tournament as TournamentData | undefined;
 	if (!tournamentData) return [];
 
 	return metaTags({
 		title: tournamentData.ctx.name,
-		description: args.data?.description
-			? removeMarkdown(args.data.description)
+		description: args.loaderData?.description
+			? removeMarkdown(args.loaderData.description)
 			: undefined,
 		image: {
 			url: tournamentData.ctx.logoUrl,

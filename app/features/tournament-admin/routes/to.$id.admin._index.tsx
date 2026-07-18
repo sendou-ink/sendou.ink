@@ -13,7 +13,7 @@ import {
 	X,
 } from "lucide-react";
 import * as React from "react";
-import { useFetcher } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
@@ -29,9 +29,10 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import {
-	teamPage,
 	tournamentAdminRegistrationEditPage,
 	tournamentAdminRegistrationPage,
+	tournamentTeamPage,
+	userPage,
 } from "~/utils/urls";
 import { queryToUserIdentifier } from "~/utils/users";
 import { ExportDialog } from "../components/ExportDialog";
@@ -71,13 +72,15 @@ export default function TournamentAdminTeamsPage() {
 					>
 						Export
 					</SendouButton>
-					<LinkButton
-						size="small"
-						icon={<Plus />}
-						to={tournamentAdminRegistrationPage(tournament.ctx.id)}
-					>
-						Add new team
-					</LinkButton>
+					{!tournament.hasStarted ? (
+						<LinkButton
+							size="small"
+							icon={<Plus />}
+							to={tournamentAdminRegistrationPage(tournament.ctx.id)}
+						>
+							Add new team
+						</LinkButton>
+					) : null}
 				</div>
 				<Input
 					className={styles.searchInput}
@@ -98,7 +101,7 @@ export default function TournamentAdminTeamsPage() {
 							sort={sort}
 							onChange={setSort}
 						/>
-						<th>Actions</th>
+						{!tournament.ctx.isFinalized ? <th>Actions</th> : null}
 						<SortableTableHeader
 							label="Check-in"
 							sortKey="checkIn"
@@ -124,8 +127,13 @@ export default function TournamentAdminTeamsPage() {
 					))}
 					{sortedTeams.length === 0 ? (
 						<tr>
-							<td colSpan={maxRosterSize + 3} className={styles.noResults}>
-								No registrations yet
+							<td
+								colSpan={maxRosterSize + (tournament.ctx.isFinalized ? 2 : 3)}
+								className={styles.noResults}
+							>
+								{tournament.ctx.teams.length === 0
+									? "No registrations yet"
+									: "No registrations match your search"}
 							</td>
 						</tr>
 					) : null}
@@ -155,28 +163,28 @@ function TeamRow({
 		<tr
 			className={clsx({ [styles.droppedOut]: team.droppedOut })}
 			data-testid="team-row"
+			data-team-id={team.id}
 		>
 			<td>
 				<div className="stack horizontal sm items-center">
 					<Avatar size="xxs" url={logoSrc} identiconInput={team.name} />
-					{team.team ? (
-						<a
-							href={teamPage(team.team.customUrl ?? "")}
-							className={styles.teamName}
-							data-testid="team-name"
-						>
-							{team.name}
-						</a>
-					) : (
-						<span className={styles.teamName} data-testid="team-name">
-							{team.name}
-						</span>
-					)}
+					<Link
+						to={tournamentTeamPage({
+							tournamentId: tournament.ctx.id,
+							tournamentTeamId: team.id,
+						})}
+						className={styles.teamName}
+						data-testid="team-name"
+					>
+						{team.name}
+					</Link>
 				</div>
 			</td>
-			<td>
-				<TeamRowMenu team={team} editPage={editPage} />
-			</td>
+			{!tournament.ctx.isFinalized ? (
+				<td>
+					<TeamRowMenu team={team} editPage={editPage} />
+				</td>
+			) : null}
 			<td>
 				<CheckInCell team={team} />
 			</td>
@@ -185,14 +193,15 @@ function TeamRow({
 				return (
 					<td key={`player-${i}`}>
 						{member ? (
-							<span
+							<Link
+								to={userPage(member)}
 								className={clsx("stack horizontal xxs items-center", {
 									"font-bold": member.role === "OWNER",
 								})}
 							>
 								{member.role === "OWNER" ? "(C) " : null}
 								{member.username}
-							</span>
+							</Link>
 						) : null}
 					</td>
 				);

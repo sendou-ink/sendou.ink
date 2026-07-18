@@ -15,16 +15,19 @@ import styles from "./ImageFormField.module.css";
 type ImageFormFieldProps = Omit<FormFieldProps<"image">, "onBlur"> & {
 	value: ImageFieldValue;
 	onChange: (value: ImageFieldValue) => void;
+	disabled?: boolean;
 };
 
 export function ImageFormField({
 	name,
 	label,
+	bottomText,
 	dimensions,
 	autoValidate,
 	error,
 	value,
 	onChange,
+	disabled,
 }: ImageFormFieldProps) {
 	const id = React.useId();
 	const { t } = useTranslation(["common"]);
@@ -72,7 +75,8 @@ export function ImageFormField({
 			label={label}
 			error={error}
 			bottomText={
-				autoValidate ? undefined : "forms:bottomTexts.imageModeration"
+				bottomText ??
+				(autoValidate ? undefined : "forms:bottomTexts.imageModeration")
 			}
 		>
 			<div className="stack sm items-start">
@@ -88,6 +92,7 @@ export function ImageFormField({
 						variant="minimal-destructive"
 						size="small"
 						onPress={() => onChange(null)}
+						isDisabled={disabled}
 					>
 						{t("common:actions.remove")}
 					</SendouButton>
@@ -97,6 +102,7 @@ export function ImageFormField({
 						type="file"
 						accept="image/png, image/jpeg, image/webp"
 						onChange={handleFileChange}
+						disabled={disabled}
 					/>
 				)}
 			</div>

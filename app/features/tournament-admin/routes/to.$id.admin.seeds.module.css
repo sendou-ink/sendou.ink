@@ -176,15 +176,6 @@
 	margin-left: var(--s-1);
 }
 
-.plusTier {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 2px;
-	font-size: var(--font-2xs);
-	color: var(--color-text-high);
-}
-
 .playerRemoved {
 	text-decoration: line-through;
 	color: var(--color-text-high);

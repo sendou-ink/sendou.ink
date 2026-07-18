@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import { Ban, Swords } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -9,20 +8,14 @@ import {
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerScheduledTime } from "~/components/match-page/MatchBannerScheduledTime";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
-import { useUser } from "~/features/auth/core/user";
-import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
-import {
-	databaseTimestampToDate,
-	dateToDatabaseTimestamp,
-} from "~/utils/dates";
+import { resolveRoomPass } from "~/components/match-page/utils";
+import { databaseTimestampToDate } from "~/utils/dates";
 import * as Scrim from "../core/Scrim";
 import type { loader } from "../loaders/scrims.$id.server";
-import { SCRIM } from "../scrims-constants";
 
 export function ScrimMatchBanner() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const user = useUser();
 
 	const screenLegal = !data.anyUserPrefersNoScreen;
 
@@ -45,17 +38,8 @@ export function ScrimMatchBanner() {
 		);
 	}
 
-	const acceptedRequest = data.post.requests[0];
-	const activeRoomLink = resolveActiveRoomLink({
-		roomLinks: data.roomLinks,
-		freshnessCutoff: dateToDatabaseTimestamp(
-			sub(new Date(), { minutes: SCRIM.ROOM_LINK_FRESHNESS_MINUTES }),
-		),
-		viewerUserId: user?.id,
-		members: [...data.post.users, ...acceptedRequest.users],
-	});
-	const joinViaQr = Boolean(activeRoomLink.joinLink) && !activeRoomLink.isStale;
 	const joinPool = Scrim.resolvePoolCode(data.post.id);
+	const joinPass = resolveRoomPass(data.post.id);
 
 	const currentMap = data.mapByMap.currentMap;
 
@@ -68,7 +52,7 @@ export function ScrimMatchBanner() {
 					mode={currentMap.mode}
 					screenLegal={screenLegal}
 					joinPool={joinPool}
-					joinViaQr={joinViaQr}
+					joinPass={joinPass}
 				/>
 			</MatchBannerContainer>
 		);
@@ -83,7 +67,7 @@ export function ScrimMatchBanner() {
 				subtitle={t("scrims:banner.freeForm.subtitle")}
 				screenLegal={screenLegal}
 				joinPool={joinPool}
-				joinViaQr={joinViaQr}
+				joinPass={joinPass}
 			/>
 		</MatchBannerContainer>
 	);

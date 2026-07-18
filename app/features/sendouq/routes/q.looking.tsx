@@ -17,8 +17,9 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
+import type { UserCardData } from "~/features/user-card/user-card-types";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { useAutoRefresh } from "~/hooks/useAutoRefresh";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { metaTags } from "~/utils/remix";
@@ -39,6 +40,8 @@ import { loader } from "../loaders/q.looking.server";
 import {
 	FULL_GROUP_SIZE,
 	IS_Q_LOOKING_MOBILE_BREAKPOINT,
+	SENDOUQ_LOOKING_ROOM,
+	sqGroupWebsocketRoom,
 } from "../q-constants";
 
 export { action, loader };
@@ -79,7 +82,16 @@ function QLookingPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const [searchParams] = useSearchParams();
-	useAutoRefresh(data.lastUpdated);
+
+	// Pool-shape changes (a group joining/leaving, a morph, a match starting) are
+	// broadcast to this shared room so every looking client revalidates.
+	useWebsocketRevalidation(SENDOUQ_LOOKING_ROOM);
+	// Group-specific updates (e.g. a received like) are pushed to the group's own
+	// dedicated topic.
+	useWebsocketRevalidation(
+		data.ownGroup ? sqGroupWebsocketRoom(data.ownGroup.id) : "",
+		Boolean(data.ownGroup),
+	);
 
 	const wasTryingToJoinAnotherTeam = searchParams.get("joining") === "true";
 
@@ -218,22 +230,28 @@ function Groups() {
 
 	const width = useMainContentWidth();
 
-	if (!isHydrated) return null;
+	// width === 0 means the main content hasn't been measured yet; rendering the
+	// Flipper before measurement makes it snapshot the width-0 (mobile) default
+	// layout and then morph every card into the real layout on first navigation
+	if (!isHydrated || width === 0) return null;
 
 	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
+	const layout = isMobile ? "mobile" : "desktop";
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
+	const groups = sortGroupsByPrivateNoteSentiment(data.groups, data.userCards);
+
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
-			<ColumnHeader>
+			<ColumnHeader isMobile={isMobile}>
 				{t(
 					isFullGroup
 						? "q:looking.columns.challenged"
 						: "q:looking.columns.invited",
 				)}
 			</ColumnHeader>
-			{data.groups
+			{groups
 				.filter((group) =>
 					data.likes.given.some((like) => like.groupId === group.id),
 				)
@@ -243,8 +261,8 @@ function Groups() {
 							key={group.id}
 							group={group}
 							action="UNLIKE"
-							showNote
 							ownGroup={data.ownGroup}
+							layout={layout}
 						/>
 					);
 				})}
@@ -253,8 +271,10 @@ function Groups() {
 
 	const ownGroupElement = data.ownGroup ? (
 		<div className="stack sm">
-			<ColumnHeader>{t("q:looking.columns.myGroup")}</ColumnHeader>
-			<GroupCard group={data.ownGroup} showNote ownGroup={data.ownGroup} />
+			<ColumnHeader isMobile={isMobile}>
+				{t("q:looking.columns.myGroup")}
+			</ColumnHeader>
+			<GroupCard group={data.ownGroup} ownGroup={data.ownGroup} />
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
 					inviteCode={data.ownGroup.inviteCode}
@@ -268,12 +288,12 @@ function Groups() {
 		</div>
 	) : null;
 
-	const neutralGroups = data.groups.filter(
+	const neutralGroups = groups.filter(
 		(group) =>
 			!data.likes.given.some((like) => like.groupId === group.id) &&
 			!data.likes.received.some((like) => like.groupId === group.id),
 	);
-	const groupsReceivedLikesFrom = data.groups.filter((group) =>
+	const groupsReceivedLikesFrom = groups.filter((group) =>
 		data.likes.received.some((like) => like.groupId === group.id),
 	);
 
@@ -319,9 +339,11 @@ function Groups() {
 						</SendouTabList>
 						<SendouTabPanel id="groups">
 							<div className="stack sm">
-								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
+								<ColumnHeader isMobile={isMobile}>
+									{t("q:looking.columns.available")}
+								</ColumnHeader>
 								{(isMobile
-									? data.groups.filter(
+									? groups.filter(
 											(group) =>
 												!data.likes.received.some(
 													(like) => like.groupId === group.id,
@@ -340,8 +362,8 @@ function Groups() {
 													? "UNLIKE"
 													: "LIKE"
 											}
-											showNote
 											ownGroup={data.ownGroup}
+											layout={layout}
 										/>
 									);
 								})}
@@ -367,8 +389,8 @@ function Groups() {
 											key={group.id}
 											group={group}
 											action={action()}
-											showNote
 											ownGroup={data.ownGroup}
+											layout={layout}
 										/>
 									);
 								})}
@@ -379,7 +401,7 @@ function Groups() {
 				</div>
 				{!isMobile ? (
 					<div className="stack sm">
-						<ColumnHeader>
+						<ColumnHeader isMobile={isMobile}>
 							{t(
 								isFullGroup
 									? "q:looking.columns.challenges"
@@ -404,8 +426,8 @@ function Groups() {
 									key={group.id}
 									group={group}
 									action={action()}
-									showNote
 									ownGroup={data.ownGroup}
+									layout={layout}
 								/>
 							);
 						})}
@@ -416,11 +438,45 @@ function Groups() {
 	);
 }
 
-function ColumnHeader({ children }: { children: React.ReactNode }) {
-	const width = useMainContentWidth();
+/**
+ * Floats groups the viewer has a positive private note on up and groups with a
+ * negative note down, while preserving the server's tier/activity ordering
+ * within each sentiment bucket and keeping full (censored) groups last. The
+ * note sentiment is read from the already-loaded `userCards` data so the server
+ * does not need to attach notes to group members.
+ */
+function sortGroupsByPrivateNoteSentiment<
+	T extends { members?: { id: number }[] },
+>(groups: T[], userCards: Map<number, UserCardData>): T[] {
+	const sentimentScore = (group: T) => {
+		if (!group.members) return 0;
 
-	const isMobile = width < IS_Q_LOOKING_MOBILE_BREAKPOINT;
+		let score = 0;
+		for (const member of group.members) {
+			const sentiment = userCards.get(member.id)?.privateNote?.sentiment;
+			if (sentiment === "NEGATIVE") return -1;
+			if (sentiment === "POSITIVE") score = 1;
+		}
 
+		return score;
+	};
+
+	return groups.toSorted((a, b) => {
+		const aIsFull = !a.members;
+		const bIsFull = !b.members;
+		if (aIsFull !== bIsFull) return aIsFull ? 1 : -1;
+
+		return sentimentScore(b) - sentimentScore(a);
+	});
+}
+
+function ColumnHeader({
+	isMobile,
+	children,
+}: {
+	isMobile: boolean;
+	children: React.ReactNode;
+}) {
 	if (isMobile) return null;
 
 	return <div className={styles.header}>{children}</div>;

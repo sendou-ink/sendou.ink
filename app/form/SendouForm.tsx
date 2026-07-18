@@ -4,13 +4,14 @@ import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import { useFetcher, useLocation } from "react-router";
+import { isPlainObject } from "remeda";
 import type { z } from "zod";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
 import { FormField as FormFieldComponent } from "./FormField";
-import { formRegistry } from "./fields";
+import { getFormFieldMetadata } from "./fields";
 import styles from "./SendouForm.module.css";
-import type { FormField, TypedFormFieldComponent } from "./types";
+import type { TypedFormFieldComponent } from "./types";
 import {
 	buildFieldPath,
 	errorMessageId,
@@ -36,6 +37,8 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	setClientError: (name: string, error: string | undefined) => void;
 	clearServerError: (name: string) => void;
 	onFieldChange?: (name: string, newValue: unknown) => void;
+	hideRequiredIndicator: boolean;
+	readOnly: boolean;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
 	setValueFromPrev: (name: string, updater: (prev: unknown) => unknown) => void;
@@ -97,6 +100,17 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	 * layout that already controls width/alignment.
 	 */
 	fullWidth?: boolean;
+	/**
+	 * When true, fields don't show the red `*` required indicator next to their
+	 * label. Useful on pages where every field is required and the asterisk only
+	 * adds noise (e.g. the settings page).
+	 */
+	hideRequiredIndicator?: boolean;
+	/**
+	 * When true, renders the form for viewing only: every field is disabled and
+	 * the submit button is hidden.
+	 */
+	readOnly?: boolean;
 	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
 	/**
@@ -142,6 +156,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 	revalidateRoot,
 	className,
 	fullWidth,
+	hideRequiredIndicator = false,
+	readOnly = false,
 	onApply,
 	secondarySubmit,
 	onSuccess,
@@ -193,7 +209,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const previousLocationKey = React.useRef(locationKey);
 
 	// Reset form when URL changes (handles edit → new transitions)
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally reset on URL change only, using current schema/defaultValues from closure
 	React.useEffect(() => {
 		if (previousLocationKey.current === locationKey) return;
 		previousLocationKey.current = locationKey;
@@ -257,6 +272,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 			clearServerError: actions.clearServerError,
 			onFieldChange:
 				autoSubmit || autoApply ? actions.onFieldChange : undefined,
+			hideRequiredIndicator,
+			readOnly,
 			setValue: actions.setValue,
 			setValueFromPrev: actions.setValueFromPrev,
 			revalidateAll: actions.revalidateAll,
@@ -271,6 +288,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 			hasSubmitted,
 			autoSubmit,
 			autoApply,
+			hideRequiredIndicator,
+			readOnly,
 			fetcher.state,
 			store,
 			actions,
@@ -293,7 +312,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 		<>
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
-			{autoSubmit || autoApply ? null : (
+			{autoSubmit || autoApply || readOnly ? null : (
 				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
 					<SubmitButton
 						_action={_action}
@@ -606,17 +625,17 @@ function buildInitialValues<T extends z.ZodRawShape>(
 	const result: Record<string, unknown> = {};
 
 	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
-		const formField = formRegistry.get(fieldSchema as z.ZodType) as
-			| FormField
-			| undefined;
+		const formField = getFormFieldMetadata(fieldSchema as z.ZodType);
 
 		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
 		if (defaultValue !== undefined) {
 			if (formField?.type === "array" && Array.isArray(defaultValue)) {
+				// only object-array (fieldset) items get a stable `_key`; spreading would
+				// collapse non-plain objects like `Date` into `{}`, so leave those intact
 				result[key] = (defaultValue as unknown[]).map((item) =>
-					typeof item === "object" && item !== null
+					isPlainObject(item)
 						? {
-								...(item as Record<string, unknown>),
+								...item,
 								_key: crypto.randomUUID(),
 							}
 						: item,
@@ -662,6 +681,8 @@ export function useFormFieldContext(): FormContextValue {
 		setClientError: context.setClientError,
 		clearServerError: context.clearServerError,
 		onFieldChange: context.onFieldChange,
+		hideRequiredIndicator: context.hideRequiredIndicator,
+		readOnly: context.readOnly,
 		values,
 		setValue: context.setValue,
 		setValueFromPrev: context.setValueFromPrev,

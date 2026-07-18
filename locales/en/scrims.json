@@ -38,6 +38,7 @@
 	"acceptModal.title": "Accept the request to scrim by {{groupName}} & reject others (if any)?",
 	"acceptModal.prevented": "Ask the person who posted the scrim to accept this request",
 	"acceptModal.confirmFor": "Confirm for {{time}}",
+	"autoCancelInfo": "Once a scrim is booked, any other posts and requests within ±1 hour that share players are automatically removed to avoid double-booking.",
 	"postModal.footer": "Post created {{time}}",
 	"forms.title": "Creating a new scrim post",
 	"forms.with.title": "With",

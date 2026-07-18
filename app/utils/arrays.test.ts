@@ -36,6 +36,12 @@ describe("diff", () => {
 		const result = diff(arr1, arr2);
 		expect(result).toEqual([]);
 	});
+
+	it("should not overflow the stack for very large counts", () => {
+		const arr2 = new Array(200_000).fill(1);
+		const result = diff([], arr2);
+		expect(result).toHaveLength(200_000);
+	});
 });
 
 describe("mostPopularArrayElement", () => {

@@ -1,5 +1,8 @@
 .content {
-	max-width: 20rem;
+	max-width: min(20rem, calc(100vw - var(--s-4)));
+	/* react-aria clamps the popover's max-height/width to the available viewport
+	   space; scroll the overflow instead of letting it spill past the border */
+	overflow: auto;
 	padding: var(--s-2);
 	border: var(--border-style);
 	border-radius: var(--radius-box);

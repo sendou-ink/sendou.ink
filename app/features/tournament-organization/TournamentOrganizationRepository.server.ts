@@ -15,8 +15,9 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { mySlugify } from "~/utils/urls";
@@ -74,10 +75,10 @@ export async function findBySlug(slug: string) {
 				eb
 					.selectFrom("TournamentOrganizationMember")
 					.innerJoin("User", "User.id", "TournamentOrganizationMember.userId")
-					.select([
+					.select((eb) => [
 						"TournamentOrganizationMember.role",
 						"TournamentOrganizationMember.roleDisplayName",
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(eb),
 					])
 					.whereRef(
 						"TournamentOrganizationMember.organizationId",
@@ -199,7 +200,13 @@ export function searchByName({
 				"avatarUrl",
 			),
 		])
-		.where("TournamentOrganization.name", "like", `%${query}%`)
+		.where(({ eb, ref }) =>
+			eb(
+				sql`unaccent(${ref("TournamentOrganization.name")})`,
+				"like",
+				sql`unaccent(${`%${query}%`})`,
+			),
+		)
 		.orderBy("TournamentOrganization.name", "asc")
 		.limit(limit)
 		.execute();
@@ -270,7 +277,11 @@ const findEventsBaseQuery = (organizationId: number) =>
 							innerEb
 								.selectFrom("TournamentResult as WinnerResult")
 								.innerJoin("User", "User.id", "WinnerResult.userId")
-								.select(["User.discordAvatar", "User.discordId"])
+								.select((winnerEb) => [
+									"User.discordAvatar",
+									"User.discordId",
+									customAvatarUrl(winnerEb).as("customAvatarUrl"),
+								])
 								.whereRef(
 									"WinnerResult.tournamentTeamId",
 									"=",
@@ -304,7 +315,11 @@ const findEventsBaseQuery = (organizationId: number) =>
 									"User.id",
 									"CalendarEventResultPlayer.userId",
 								)
-								.select(["User.discordAvatar", "User.discordId"])
+								.select((playerEb) => [
+									"User.discordAvatar",
+									"User.discordId",
+									customAvatarUrl(playerEb).as("customAvatarUrl"),
+								])
 								.whereRef(
 									"CalendarEventResultPlayer.teamId",
 									"=",
@@ -426,6 +441,49 @@ export async function findAllEventsBySeries({
 	}).execute();
 
 	return events.map(mapEvent);
+}
+
+/**
+ * Counts the distinct players who participated in at least one match of a
+ * tournament hosted by the organization, whose event started within the
+ * `[startTime, endTime]` range. Only players belonging to teams that checked
+ * in (and did not check out) are included.
+ *
+ * `startTime` and `endTime` are database timestamps (seconds).
+ */
+export async function countActiveParticipants({
+	organizationId,
+	startTime,
+	endTime,
+}: {
+	organizationId: number;
+	startTime: number;
+	endTime: number;
+}) {
+	const result = await db
+		.selectFrom("CalendarEvent as ce")
+		.innerJoin("CalendarEventDate as ced", "ced.eventId", "ce.id")
+		.innerJoin("Tournament as t", "t.id", "ce.tournamentId")
+		.innerJoin("TournamentTeam as tt", "tt.tournamentId", "t.id")
+		.innerJoin(
+			"TournamentTeamCheckIn as ttci",
+			"ttci.tournamentTeamId",
+			"tt.id",
+		)
+		.innerJoin(
+			"TournamentMatchGameResultParticipant as tmgrp",
+			"tmgrp.tournamentTeamId",
+			"tt.id",
+		)
+		.select(({ fn }) => fn.count<number>("tmgrp.userId").distinct().as("count"))
+		.where("ce.organizationId", "=", organizationId)
+		.where("ced.startTime", ">=", startTime)
+		.where("ced.startTime", "<", endTime)
+		.where("ttci.checkedInAt", "is not", null)
+		.where("ttci.isCheckOut", "=", 0)
+		.executeTakeFirst();
+
+	return result?.count ?? 0;
 }
 
 interface UpdateArgs
@@ -637,11 +695,11 @@ export function allBannedUsersByOrganizationId(organizationId: number) {
 	return db
 		.selectFrom("TournamentOrganizationBannedUser")
 		.innerJoin("User", "User.id", "TournamentOrganizationBannedUser.userId")
-		.select([
+		.select((eb) => [
 			"TournamentOrganizationBannedUser.privateNote",
 			"TournamentOrganizationBannedUser.updatedAt",
 			"TournamentOrganizationBannedUser.expiresAt",
-			...COMMON_USER_FIELDS,
+			...commonUserSelect(eb),
 		])
 		.where(
 			"TournamentOrganizationBannedUser.organizationId",

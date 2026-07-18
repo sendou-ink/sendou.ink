@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "",
+	"rawParameters": "",
 	"attribute.weight": "Waga",
 	"attribute.weight.Fast": "Lekka",
 	"attribute.weight.Slow": "Ciężka",
@@ -213,5 +214,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "",
 	"comp.specialCategory.TEAM_BUFF": "",
 	"comp.removeAll": "",
-	"comp.addAll": ""
+	"comp.addAll": "",
+	"comp.singleWeaponCombos": ""
 }

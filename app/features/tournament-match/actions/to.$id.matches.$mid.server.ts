@@ -78,6 +78,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 		);
 
 		errorToastIfFalsy(
+			match.status !== TournamentMatchStatus.Locked &&
+				match.status !== TournamentMatchStatus.Waiting,
+			"Match is locked, waiting for teams to finish their previous matches",
+		);
+
+		errorToastIfFalsy(
 			canReportTournamentScore({
 				match,
 				isMemberOfATeamInTheMatch,
@@ -262,6 +268,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 				throw error;
 			}
 
+			if (setOver) {
+				// the set ended, so weapons reported in advance for map indexes
+				// beyond the games actually played are trimmed
+				await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
+					tournamentMatchId: matchId,
+					gameCount: data.position + 1,
+				});
+			}
+
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
 			setIsOver = setOver;
@@ -376,11 +391,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 					deletePickBanEvent({ matchId, number });
 				}
 			})();
-
-			await ReportedWeaponRepository.deleteByMapIndexTournament({
-				tournamentMatchId: matchId,
-				mapIndex: data.position,
-			});
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -812,6 +822,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 				});
 			})();
 
+			// the set ended early so no further games will be played; trim weapons
+			// reported in advance for map indexes beyond the games actually played
+			const playedResults =
+				await TournamentMatchRepository.findResultsByMatchId(matchId);
+			await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
+				tournamentMatchId: matchId,
+				gameCount: playedResults.length,
+			});
+
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
 			setIsOver = true;
@@ -882,13 +901,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentMatchWebsocketRoom(matchId),
 				type: "TOURNAMENT_MATCH_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
 			...otherMatchIdsToRevalidate.map((id) => ({
 				room: tournamentMatchWebsocketRoom(id),
 				type: "TOURNAMENT_MATCH_UPDATED" as const,
 				revalidateOnly: true as const,
-				authorUserId: user.id,
 			})),
 		]);
 	}
@@ -898,7 +915,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
 		]);
 	}

@@ -19,6 +19,7 @@ export function ModeMapPoolPicker({
 	onChange,
 	modeTabs,
 	onModeChange,
+	disabled,
 }: {
 	mode: ModeShort;
 	amountToPick: number;
@@ -28,6 +29,8 @@ export function ModeMapPoolPicker({
 	/** When provided, the divider becomes a tab switcher between these modes. */
 	modeTabs?: ModeShort[];
 	onModeChange?: (mode: ModeShort) => void;
+	/** When true, stages can't be picked or removed (view-only). */
+	disabled?: boolean;
 }) {
 	const [wigglingStageId, setWigglingStageId] = React.useState<StageId | null>(
 		null,
@@ -114,6 +117,7 @@ export function ModeMapPoolPicker({
 					const selected = stages.includes(stageId);
 
 					const onClick = () => {
+						if (disabled) return;
 						if (isTiebreaker) return;
 						if (banned) return;
 						if (selected) return handlePickedStageClick(stageId);
@@ -130,6 +134,7 @@ export function ModeMapPoolPicker({
 							banned={banned}
 							tiebreaker={isTiebreaker}
 							wiggle={wigglingStageId === stageId}
+							disabled={disabled}
 							testId={`map-pool-${mode}-${stageId}`}
 						/>
 					);
@@ -158,6 +163,7 @@ function MapButton({
 	banned,
 	tiebreaker,
 	wiggle,
+	disabled,
 	testId,
 }: {
 	stageId: StageId;
@@ -166,6 +172,7 @@ function MapButton({
 	banned?: boolean;
 	tiebreaker?: boolean;
 	wiggle?: boolean;
+	disabled?: boolean;
 	testId: string;
 }) {
 	const { t } = useTranslation(["game-misc"]);
@@ -181,7 +188,7 @@ function MapButton({
 				})}
 				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.avif")` }}
 				onClick={onClick}
-				disabled={banned}
+				disabled={disabled || banned}
 				type="button"
 				data-testid={testId}
 			/>

@@ -93,10 +93,10 @@ export const testTournament = ({
 				],
 			},
 			castedMatchesInfo: null,
-			seedingSnapshot: null,
 			teams: nTeams(participant.length, Math.min(...participant)),
 			author: {
 				customUrl: null,
+				customAvatarUrl: null,
 				discordAvatar: null,
 				discordId: "123",
 				username: "test",

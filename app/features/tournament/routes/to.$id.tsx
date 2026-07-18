@@ -4,7 +4,6 @@ import {
 	Outlet,
 	type ShouldRevalidateFunction,
 	useLoaderData,
-	useMatches,
 	useOutletContext,
 } from "react-router";
 import { containerClassName, Main } from "~/components/Main";
@@ -32,7 +31,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	const rawData = args.data as string | undefined;
+	const rawData = args.loaderData as string | undefined;
 
 	if (!rawData) return [];
 
@@ -52,7 +51,7 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["tournament", "calendar"],
 	breadcrumb: ({ match }) => {
-		const rawData = match.data as string | undefined;
+		const rawData = match.loaderData as string | undefined;
 
 		if (!rawData) return [];
 
@@ -98,13 +97,11 @@ export function TournamentLayout() {
 		[data],
 	);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
-	const mainBreakout = useActiveRouteMainBreakout();
 
 	useTournamentChatLabels(tournament);
 
 	// this is nice to debug with tournament in browser console
 	if (process.env.NODE_ENV === "development") {
-		// biome-ignore lint/correctness/useHookAtTopLevel: process.env.NODE_ENV is a constant
 		React.useEffect(() => {
 			// @ts-expect-error for dev purposes
 			window.tourney = tournament;
@@ -134,22 +131,12 @@ export function TournamentLayout() {
 		</>
 	);
 
+	// Always render within the breakout container so the nav (and content) keep a
+	// consistent width across routes, avoiding a layout shift when switching tabs.
 	return (
-		<Main bigger breakoutContainer={mainBreakout}>
-			{mainBreakout ? (
-				<div className={containerClassName("wide")}>{content}</div>
-			) : (
-				content
-			)}
+		<Main breakoutContainer>
+			<div className={containerClassName("wide")}>{content}</div>
 		</Main>
-	);
-}
-
-function useActiveRouteMainBreakout(): boolean {
-	const matches = useMatches();
-
-	return matches.some(
-		(match) => (match.handle as SendouRouteHandle | undefined)?.mainBreakout,
 	);
 }
 

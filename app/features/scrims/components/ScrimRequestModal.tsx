@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { FormMessage } from "~/components/FormMessage";
 import type { CustomFieldRenderProps } from "~/form";
 import { SendouForm } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -77,6 +78,7 @@ export function ScrimRequestModal({
 							<FormField name="at" options={timeOptions} />
 						) : null}
 						<FormField name="message" />
+						<FormMessage type="info">{t("scrims:autoCancelInfo")}</FormMessage>
 					</>
 				)}
 			</SendouForm>

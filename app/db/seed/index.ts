@@ -2,6 +2,7 @@ import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
 import { nanoid } from "nanoid";
 import * as R from "remeda";
+import { Config } from "~/config";
 import { db, sql } from "~/db/sql";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
@@ -26,9 +27,11 @@ import {
 } from "~/features/plus-voting/core";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
+import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
@@ -73,7 +76,12 @@ import {
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
-import type { ParsedMemento, Tables, UserMapModePreferences } from "../tables";
+import {
+	type ParsedMemento,
+	type Tables,
+	USER_REPORT_CATEGORIES,
+	type UserMapModePreferences,
+} from "../tables";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,
@@ -179,6 +187,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	adminUserWeaponPool,
 	adminUserWidgets,
 	userProfiles,
+	userCardData,
 	variation === "TEAM_MAP_PREFS" ? undefined : userMapModePreferences,
 	userMatchProfileWeaponPool,
 	seedingSkills,
@@ -233,6 +242,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	playedMatches,
 	variation === "NO_SQ_GROUPS" ? undefined : () => groups(variation),
 	friendCodes,
+	userReports,
 	lfgPosts,
 	variation === "NO_SCRIMS" ? undefined : scrimPosts,
 	variation === "NO_SCRIMS" ? undefined : scrimPostRequests,
@@ -904,6 +914,66 @@ async function userProfiles() {
 					: faker.helpers.arrayElement(["YES", "NO", "LISTEN_ONLY"]),
 		});
 	}
+}
+
+/**
+ * SendouQ groups draw their members from the lowest user ids, so users at or below this id are
+ * guaranteed full user card data (the rest get a realistic mix of set/unset fields).
+ */
+const USER_CARD_SEEDED_USER_ID_CEILING = 100;
+
+async function userCardData() {
+	for (let id = 2; id < 500; id++) {
+		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
+
+		const guaranteed = id <= USER_CARD_SEEDED_USER_ID_CEILING;
+
+		sql
+			.prepare(
+				/* sql */ `
+        update "User"
+        set
+          "shortBio" = @shortBio,
+          "div" = @div,
+          "bannerPresetImg" = @bannerPresetImg,
+          "unverifiedPeakXP" = @unverifiedPeakXP
+        where "id" = @id`,
+			)
+			.run({
+				id,
+				shortBio:
+					guaranteed || faker.number.float(1) > 0.4
+						? faker.lorem.sentence()
+						: null,
+				div:
+					guaranteed || faker.number.float(1) > 0.5
+						? faker.helpers.arrayElement(LUTI_DIVS)
+						: null,
+				bannerPresetImg: randomBannerPresetImg(),
+				unverifiedPeakXP:
+					guaranteed || faker.number.float(1) > 0.6 ? randomPeakXp() : null,
+			});
+	}
+}
+
+/** Mix of the three banner sources: null (color derived from user id), a stage banner, an explicit color. */
+function randomBannerPresetImg() {
+	const roll = faker.number.float(1);
+	if (roll < 0.34) return null;
+	if (roll < 0.67) return String(faker.helpers.arrayElement(stageIds));
+	return faker.helpers.arrayElement(PRESET_COLORS);
+}
+
+/** Self-reported peak XP with exactly one division defined (the other null), as the column expects. */
+function randomPeakXp() {
+	const points = faker.number.int({ min: 2000, max: 3500 });
+	const isTentatek = faker.datatype.boolean();
+
+	return JSON.stringify({
+		overall: points,
+		tentatek: isTentatek ? points : null,
+		takoroka: isTentatek ? null : points,
+	});
 }
 
 const randomPreferences = (): UserMapModePreferences => {
@@ -2435,13 +2505,14 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 		sql
 			.prepare(
 				/*sql*/ `
-      insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "leftAt")
+      insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "leftAt", "order")
         values (
           1,
           ${userId},
           ${i === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
           ${i === 0 ? 1 : 0},
-          ${i < 4 ? "null" : "1672587342"}
+          ${i < 4 ? "null" : "1672587342"},
+          ${i}
         )
     `,
 			)
@@ -2513,12 +2584,13 @@ function otherTeams() {
 			sql
 				.prepare(
 					/*sql*/ `
-        insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner")
+        insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "order")
           values (
             ${i},
             ${userId},
             ${j === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
-            ${j === 0 ? 1 : 0}
+            ${j === 0 ? 1 : 0},
+            ${j}
           )
       `,
 				)
@@ -2947,23 +3019,6 @@ async function groups(variation?: SeedVariation | null) {
 				expiresAfter: { hours: 2 },
 			});
 		}
-
-		const thirtyMinutesAgo = dateToDatabaseTimestamp(
-			sub(new Date(), { minutes: 30 }),
-		);
-		sql
-			.prepare(
-				/* sql */ `
-				insert into "RoomLink" ("userId", "url", "createdAt", "refreshedAt")
-				values (@userId, @url, @createdAt, @refreshedAt)
-			`,
-			)
-			.run({
-				userId: ADMIN_ID,
-				url: "https://example.com//private_battle/seed_room_123",
-				createdAt: thirtyMinutesAgo,
-				refreshedAt: thirtyMinutesAgo,
-			});
 	}
 }
 
@@ -3305,6 +3360,23 @@ async function playedMatches() {
 			}),
 		);
 	}
+
+	// skills are inserted with createdAt of the current time, but matches are
+	// backdated above. Sync skill createdAt to the match date so the season
+	// progression chart on the user seasons page has data spread across days.
+	sql
+		.prepare(
+			/* sql */ `
+      update "Skill"
+      set "createdAt" = (
+        select "createdAt"
+        from "GroupMatch"
+        where "GroupMatch"."id" = "Skill"."groupMatchId"
+      )
+      where "groupMatchId" is not null
+    `,
+		)
+		.run();
 }
 
 async function friendCodes() {
@@ -3320,6 +3392,28 @@ async function friendCodes() {
 			friendCode,
 		});
 	}
+}
+
+async function userReports() {
+	// uneven spread over the trailing 12 months so the admin tab bar graph shows variety
+	const monthsAgoDistribution = [
+		0, 0, 0, 1, 2, 2, 2, 2, 5, 5, 7, 8, 10, 11, 11,
+	];
+
+	await db
+		.insertInto("UserReport")
+		.values(
+			monthsAgoDistribution.map((monthsAgo, i) => ({
+				reportedUserId: NZAP_TEST_ID,
+				reporterUserId: 10 + i,
+				category: USER_REPORT_CATEGORIES[i % USER_REPORT_CATEGORIES.length],
+				description: faker.lorem.sentences({ min: 1, max: 3 }),
+				createdAt: dateToDatabaseTimestamp(
+					sub(new Date(), { months: monthsAgo, days: (i * 3) % 7, hours: i }),
+				),
+			})),
+		)
+		.execute();
 }
 
 async function lfgPosts() {
@@ -3610,7 +3704,7 @@ async function notifications() {
 		{
 			type: "TO_CHECK_IN_OPENED",
 			meta: { tournamentId: 1, tournamentName: "PICNIC #2" },
-			pictureUrl: "/static-assets/img/tournament-logos/pn.avif",
+			pictureUrl: `${Config.staticAssetsUrl}/img/tournament-logos/pn.avif`,
 		},
 	];
 
@@ -3717,16 +3811,7 @@ const SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG = [100, 101];
 const SENDOU_FRIEND_IDS_OTHER = [102, 103];
 
 async function friendships(variation?: SeedVariation | null) {
-	const allFriendIds = [
-		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
-		...SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG,
-		...SENDOU_FRIEND_IDS_OTHER,
-	];
-
-	for (const friendId of allFriendIds) {
-		const userOneId = Math.min(ADMIN_ID, friendId);
-		const userTwoId = Math.max(ADMIN_ID, friendId);
-
+	const insertFriendship = (idA: number, idB: number) =>
 		sql
 			.prepare(
 				/* sql */ `
@@ -3734,8 +3819,23 @@ async function friendships(variation?: SeedVariation | null) {
 				values (@userOneId, @userTwoId)
 			`,
 			)
-			.run({ userOneId, userTwoId });
+			.run({ userOneId: Math.min(idA, idB), userTwoId: Math.max(idA, idB) });
+
+	const allFriendIds = [
+		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
+		...SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG,
+		...SENDOU_FRIEND_IDS_OTHER,
+	];
+
+	for (const friendId of allFriendIds) {
+		insertFriendship(ADMIN_ID, friendId);
 	}
+
+	// friendships between some looking-group owners so their user cards show mutual friends with the
+	// admin, while others (e.g. 153 and the additional members) intentionally have none
+	insertFriendship(150, 151);
+	insertFriendship(150, 152);
+	insertFriendship(151, 152);
 
 	if (variation === "NO_SQ_GROUPS" || variation === "TEAM_MAP_PREFS") return;
 

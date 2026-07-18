@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { chatAccessible } from "~/features/chat/chat-utils";
-import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy } from "../../../utils/remix.server";
@@ -31,16 +31,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const participantIds = Scrim.participantIdsListFromAccepted(post);
 
-	const [anyUserPrefersNoScreen, anyUserPrefersNoSplatnet, roomLinks] =
-		await Promise.all([
-			UserRepository.anyUserPrefersNoScreen(participantIds),
-			UserRepository.anyUserPrefersNoSplatnet(participantIds),
-			RoomLinkRepository.findByUserIds(participantIds, 3),
-		]);
+	const anyUserPrefersNoScreen =
+		await UserRepository.anyUserPrefersNoScreen(participantIds);
 
 	const mapByMap = await resolveMapByMap({ post, user });
 
 	return {
+		...(await UserCardRepository.userCards({
+			userIds: participantIds,
+			include: { friendCode: true },
+		})),
 		post,
 		chatCode:
 			(user.roles.includes("STAFF") || participantIds.includes(user.id)) &&
@@ -52,8 +52,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				? post.chatCode
 				: undefined,
 		anyUserPrefersNoScreen,
-		anyUserPrefersNoSplatnet,
-		roomLinks,
 		mapByMap,
 	};
 };

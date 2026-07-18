@@ -85,7 +85,7 @@ export function TournamentNav({
 
 	return (
 		<nav className={styles.nav} aria-label={t("tournament:nav.label")}>
-			<NavLink to={homeHref} className={styles.identity} end>
+			<NavLink to={homeHref} className={styles.identity} end preventScrollReset>
 				<Avatar url={tournament.ctx.logoUrl} size="sm" alt="" />
 				<div className={styles.identityText}>
 					<span className={styles.identityName}>{name}</span>
@@ -155,7 +155,14 @@ function useNavItems({
 
 	const items: Partial<Record<NavItemKey, NavItem>> = {};
 
-	if (tournament.registrationOpen) {
+	// invitational teams are added by the organizer so registration is never "open",
+	// but their captains still need to reach this page to set their roster & map pool
+	const showRegisterForInvitationalCaptain =
+		tournament.isInvitational &&
+		!tournament.hasStarted &&
+		Boolean(tournament.ownedTeamByUser(user));
+
+	if (tournament.registrationOpen || showRegisterForInvitationalCaptain) {
 		items.register = {
 			key: "register",
 			label: t("tournament:nav.register"),
@@ -278,6 +285,7 @@ function NavItemLink({
 			to={item.to}
 			end={item.end ?? true}
 			prefetch="intent"
+			preventScrollReset
 			className={({ isActive }) =>
 				clsx(overflow ? styles.overflowLink : styles.link, {
 					[styles.linkActive]: isActive,

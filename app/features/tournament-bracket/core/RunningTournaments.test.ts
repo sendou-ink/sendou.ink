@@ -18,6 +18,8 @@ const createMember = (userId: number) =>
 		streamViewerCount: null,
 		streamThumbnailUrl: null,
 		role: "REGULAR",
+		isSub: 0,
+		customAvatarUrl: null,
 	}) as const;
 
 const createTestTournament = (

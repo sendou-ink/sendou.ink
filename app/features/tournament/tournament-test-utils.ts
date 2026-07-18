@@ -9,9 +9,19 @@ import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
 /**
  * Creates a mock tournament with one single elimination bracket.
+ *
+ * @returns The created event and tournament ids.
  */
-export async function dbInsertTournament() {
-	await CalendarRepository.create({
+export async function dbInsertTournament({
+	organizationId = null,
+	startTime = null,
+}: {
+	/** Organization hosting the tournament. Defaults to no organization. */
+	organizationId?: number | null;
+	/** Event start time as a database timestamp (seconds). Defaults to now. */
+	startTime?: number | null;
+} = {}) {
+	return CalendarRepository.create({
 		isFullTournament: true,
 		authorId: 1,
 		badges: [],
@@ -19,9 +29,9 @@ export async function dbInsertTournament() {
 		description: null,
 		discordInviteCode: "test-discord",
 		name: "Test Tournament",
-		organizationId: null,
+		organizationId,
 		rules: null,
-		startTimes: [databaseTimestampNow()],
+		startTimes: [startTime ?? databaseTimestampNow()],
 		tags: null,
 		bracketProgression: [
 			{

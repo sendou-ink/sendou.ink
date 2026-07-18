@@ -70,6 +70,17 @@ test.describe("Tournament Organization", () => {
 			.selectOption("ADMIN");
 		await submit(page);
 
+		// Establish the organization so its admins can edit tournament event info
+		await navigate({ page, url });
+		await page.getByRole("tab", { name: "Admin" }).click();
+		const isEstablishedForm = createFormHelpers(
+			page,
+			updateIsEstablishedSchema,
+		);
+		await waitForPOSTResponse(page, () =>
+			isEstablishedForm.check("isEstablished"),
+		);
+
 		// 3. As the promoted user, verify edit controls are visible and page can be accessed
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
@@ -89,9 +100,7 @@ test.describe("Tournament Organization", () => {
 
 		await page.getByTestId("admin-tab").click();
 		await page.getByTestId("edit-event-info-button").click();
-		await expect(page.getByTestId("calendar-event-name-input")).toHaveValue(
-			"PICNIC #2",
-		);
+		await expect(page.getByLabel(/^Name *\*?$/)).toHaveValue("PICNIC #2");
 	});
 
 	test("banned player cannot join a tournament of that organization", async ({

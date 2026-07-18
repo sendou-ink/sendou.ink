@@ -3,7 +3,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
-import * as RoomLinkRepository from "~/features/chat/RoomLinkRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -12,6 +11,7 @@ import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { Status } from "~/modules/brackets-model";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
@@ -218,17 +218,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
 		!isLeagueRoundLocked(tournament, match.roundId);
 
-	const [roomLinks, anyUserPrefersNoSplatnet] = canJoin
-		? await Promise.all([
-				RoomLinkRepository.findByUserIds(
-					match.players.map((p) => p.id),
-					3,
-				),
-				UserRepository.anyUserPrefersNoSplatnet(match.players.map((p) => p.id)),
-			])
-		: ([[], false] as const);
-
 	return {
+		...(await UserCardRepository.userCards({
+			userIds: match.players.map((p) => p.id),
+			include: {
+				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
+			},
+		})),
 		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
 		results,
 		reportedWeapons,
@@ -238,8 +234,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		noScreen,
 		chatCode: visibleChatCode,
 		canJoin,
-		roomLinks,
-		anyUserPrefersNoSplatnet,
 		pickBanEventCount: pickBanEvents.length,
 		pickBanEvents: pickBanEvents.map((e) => ({
 			type: e.type,

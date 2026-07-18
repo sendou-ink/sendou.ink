@@ -143,6 +143,8 @@ export function create({
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
+		const isSub = (await registrationClosedNow(trx, tournamentId)) ? 1 : 0;
+
 		const inGameName = await resolveInGameName(trx, tournamentId, userId);
 
 		await trx
@@ -152,6 +154,7 @@ export function create({
 				userId,
 				role: "OWNER",
 				inGameName,
+				isSub,
 			})
 			.execute();
 
@@ -174,6 +177,7 @@ export function create({
 					tournamentTeamId: tournamentTeam.id,
 					userId: memberUserId,
 					inGameName: memberInGameName,
+					isSub,
 				})
 				.execute();
 
@@ -286,9 +290,17 @@ export function upsertRegistration({
 				.execute();
 		}
 
+		const isSub =
+			membersToAdd.length > 0 &&
+			(await registrationClosedNow(trx, tournamentId))
+				? 1
+				: 0;
+
 		for (const userId of membersToAdd) {
 			const isOwner = isNew && userId === ownerUserId;
-			const inGameName = await resolveInGameName(trx, tournamentId, userId);
+			const inGameName =
+				inGameNameUpdates.find((member) => member.userId === userId)
+					?.inGameName ?? (await resolveInGameName(trx, tournamentId, userId));
 
 			await trx
 				.insertInto("TournamentTeamMember")
@@ -296,6 +308,7 @@ export function upsertRegistration({
 					tournamentTeamId: id,
 					userId,
 					inGameName,
+					isSub,
 					...(isOwner ? { role: "OWNER" as const } : {}),
 				})
 				.execute();
@@ -340,6 +353,35 @@ export function upsertRegistration({
 			});
 		}
 	});
+}
+
+/**
+ * Whether the tournament's registration is closed at the current moment, based on
+ * the organizer-set `regClosesAt` if present, otherwise the tournament start time.
+ * Members added while registration is closed are persisted as subs.
+ */
+async function registrationClosedNow(
+	trx: Transaction<DB>,
+	tournamentId: number,
+) {
+	const { regClosesAt } = await trx
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(
+			sql<number>`coalesce(
+				"Tournament"."settings" ->> 'regClosesAt',
+				min("CalendarEventDate"."startTime")
+			)`.as("regClosesAt"),
+		)
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirstOrThrow();
+
+	return regClosesAt <= databaseTimestampNow();
 }
 
 async function resolveInGameName(
@@ -407,6 +449,7 @@ export function copyFromAnotherTournament({
 				"TournamentTeamMember.inGameName",
 				"TournamentTeamMember.role",
 				"TournamentTeamMember.userId",
+				"TournamentTeamMember.isSub",
 
 				// -- exclude these
 				// "TournamentTeamMember.tournamentTeamId"
@@ -685,50 +728,25 @@ export function undoDropOut(tournamentTeamId: number) {
 }
 
 export function join({
-	previousTeamId,
-	whatToDoWithPreviousTeam,
+	previousTeamIdToDelete,
 	newTeamId,
 	userId,
-	checkOutTeam = false,
 }: {
-	previousTeamId?: number;
-	whatToDoWithPreviousTeam?: "LEAVE" | "DELETE";
+	/** Team to delete as the user joins, e.g. a solo team they leave behind. */
+	previousTeamIdToDelete?: number;
 	newTeamId: number;
 	/** The user joining the team. */
 	userId: number;
-	checkOutTeam?: boolean;
 }) {
 	return db.transaction().execute(async (trx) => {
-		if (whatToDoWithPreviousTeam === "DELETE") {
+		if (previousTeamIdToDelete) {
 			await TournamentAuditLogRepository.insert(trx, {
 				type: "TEAM_UNREGISTERED",
-				tournamentTeamId: previousTeamId!,
+				tournamentTeamId: previousTeamIdToDelete,
 			});
 			await trx
 				.deleteFrom("TournamentTeam")
-				.where("TournamentTeam.id", "=", previousTeamId!)
-				.execute();
-		} else if (whatToDoWithPreviousTeam === "LEAVE") {
-			await TournamentAuditLogRepository.insert(trx, {
-				type: "MEMBER_REMOVED",
-				tournamentTeamId: previousTeamId!,
-				subjectUserId: userId,
-			});
-			await trx
-				.deleteFrom("TournamentTeamMember")
-				.where("TournamentTeamMember.tournamentTeamId", "=", previousTeamId!)
-				.where("TournamentTeamMember.userId", "=", userId)
-				.execute();
-		}
-
-		if (checkOutTeam) {
-			invariant(
-				previousTeamId,
-				"previousTeamId is required when checking out team",
-			);
-			await trx
-				.deleteFrom("TournamentTeamCheckIn")
-				.where("TournamentTeamCheckIn.tournamentTeamId", "=", previousTeamId)
+				.where("TournamentTeam.id", "=", previousTeamIdToDelete)
 				.execute();
 		}
 
@@ -741,6 +759,7 @@ export function join({
 		).tournamentId;
 
 		const inGameName = await resolveInGameName(trx, tournamentId, userId);
+		const isSub = (await registrationClosedNow(trx, tournamentId)) ? 1 : 0;
 
 		await trx
 			.insertInto("TournamentTeamMember")
@@ -748,6 +767,7 @@ export function join({
 				tournamentTeamId: newTeamId,
 				userId,
 				inGameName,
+				isSub,
 			})
 			.execute();
 

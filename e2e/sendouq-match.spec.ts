@@ -184,7 +184,9 @@ test.describe("SendouQ match page", () => {
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
-	test("Rejoin vote: 'no' shows rejoin queue link", async ({ page }) => {
+	test("Rejoin vote: 'no' shows rejoin queue button that rejoins directly", async ({
+		page,
+	}) => {
 		const matchId = await seedMatchAndGetId(page);
 		await staffSweepAlpha(page, matchId);
 
@@ -193,8 +195,8 @@ test.describe("SendouQ match page", () => {
 		await voteNo(page);
 
 		await expect(page.getByText("You declined to continue")).toBeVisible();
-		const rejoinLink = page.getByRole("link", { name: "Rejoin queue" });
-		await expect(rejoinLink).toHaveAttribute("href", SENDOUQ_PAGE);
+		await page.getByRole("button", { name: "Rejoin queue" }).click();
+		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
 	test("Rejoin vote: cascade wipes yes on no, revote completes and rejoins", async ({
@@ -293,8 +295,21 @@ async function selectMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
 		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
 	).toHaveCount(0);
 	// react-aria's Radio renders a hidden input behind a span overlay; click the
-	// wrapping label so the press handler fires and updates winnerId.
-	await page.locator(`label:has(input[aria-label="${teamName}"])`).click();
+	// wrapping label so the press handler fires and updates winnerId. The press
+	// occasionally registers a press-start without a press-end (same React Aria
+	// nondeterminism as in waitForPOSTResponse), so the selection silently drops
+	// and Submit stays disabled. Re-issue the click until the radio reports
+	// selected; otherwise the Submit-click retry loop spins on a disabled button.
+	const label = page.locator(`label:has(input[aria-label="${teamName}"])`);
+	const radio = page.locator(
+		`[data-testid^="winner-radio-"]:has(input[aria-label="${teamName}"])`,
+	);
+	await expect(async () => {
+		await label.click();
+		await expect(radio).toHaveAttribute("data-selected", "true", {
+			timeout: 1_000,
+		});
+	}).toPass();
 }
 
 async function voteNo(page: Page) {

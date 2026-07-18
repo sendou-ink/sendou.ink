@@ -8,17 +8,27 @@ interface SecondaryActionProps {
 	isOpen: boolean;
 	onOpenChange: (open: boolean) => void;
 	collapsedLabel: string;
-	collapsedIcon?: JSX.Element;
+	collapsedIcon?: React.JSX.Element;
 	expandedAriaLabel?: string;
+	/**
+	 * Always-open variant used when this is the only content in the tab (no
+	 * primary action to sit underneath). Hides the collapse toggle and drops the
+	 * striped footer styling.
+	 */
 	standalone?: boolean;
+	/**
+	 * Forces the expanded state and hides the collapse toggle while keeping the
+	 * footer styling. Used when the expanded content is small enough that
+	 * collapsing brings no benefit.
+	 */
+	alwaysOpen?: boolean;
 	children: React.ReactNode;
 }
 
 /**
- * Generic collapsible panel rendered below the primary match action.
- * Hosts optional follow-up actions (e.g. weapon reporting, scrim map list
- * management) and switches to a full-tab standalone variant when there is
- * no primary action to sit underneath.
+ * Generic panel hosting follow-up match actions (e.g. weapon reporting, scrim
+ * map list management). Defaults to a striped footer attached beneath the
+ * primary action card; pass `standalone` when it is the only tab content.
  */
 export function SecondaryAction({
 	isOpen,
@@ -27,11 +37,15 @@ export function SecondaryAction({
 	collapsedIcon,
 	expandedAriaLabel,
 	standalone,
+	alwaysOpen,
 	children,
 }: SecondaryActionProps) {
-	if (!isOpen && !standalone) {
+	const footerClass = standalone ? undefined : styles.footer;
+	const collapsible = !standalone && !alwaysOpen;
+
+	if (!isOpen && collapsible) {
 		return (
-			<div className={styles.rootCollapsed}>
+			<div className={clsx(styles.collapsed, footerClass)}>
 				<SendouButton
 					variant="minimal"
 					size="small"
@@ -45,8 +59,8 @@ export function SecondaryAction({
 	}
 
 	return (
-		<div className={clsx(styles.root, { [styles.standalone]: standalone })}>
-			{standalone ? null : (
+		<div className={clsx(styles.expanded, footerClass)}>
+			{collapsible ? (
 				<SendouButton
 					variant="minimal"
 					size="miniscule"
@@ -55,7 +69,7 @@ export function SecondaryAction({
 					className={styles.collapseButton}
 					aria-label={expandedAriaLabel ?? collapsedLabel}
 				/>
-			)}
+			) : null}
 			{children}
 		</div>
 	);

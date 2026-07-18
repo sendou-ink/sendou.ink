@@ -18,7 +18,7 @@ export default function EditBadgePage() {
 	const isStaff = useHasRole("STAFF");
 	const matches = useMatches();
 	const parentMatch = matches.at(-2)!;
-	const data = parentMatch.data as BadgeDetailsLoaderData;
+	const data = parentMatch.loaderData as BadgeDetailsLoaderData;
 	const { badge } = useOutletContext<BadgeDetailsContext>();
 	const canManageBadge = useHasPermission(badge, "MANAGE");
 

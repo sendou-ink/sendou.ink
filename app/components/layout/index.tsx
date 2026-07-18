@@ -20,7 +20,14 @@ import {
 } from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher, useLocation, useMatches } from "react-router";
+import {
+	Link,
+	useFetcher,
+	useLocation,
+	useMatches,
+	useSearchParams,
+} from "react-router";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
@@ -28,6 +35,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
+import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
@@ -38,7 +46,7 @@ import {
 	SETTINGS_PAGE,
 	userPage,
 } from "~/utils/urls";
-import { Avatar } from "../Avatar";
+import { Avatar, generateIdenticon } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { FuseZone } from "../fuse/Fuse";
@@ -48,7 +56,6 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
-import { AuthErrorDialog } from "./AuthErrorDialog";
 import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
@@ -59,6 +66,14 @@ import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
+
+// lazy loaded so the rarely needed auth error dialog stays out of the eager
+// bundle loaded on every page
+const AuthErrorDialog = React.lazy(() =>
+	import("./AuthErrorDialog").then((module) => ({
+		default: module.AuthErrorDialog,
+	})),
+);
 
 /** Id of the loading-bar track rendered inside the header. NProgress mounts its
  * bar into it; the track sits just below the header border, spans only the area
@@ -234,10 +249,11 @@ export function Layout({
 		setChatSidebarOpen(open);
 	};
 
-	const { t } = useTranslation(["front", "common"]);
+	const { t } = useTranslation(["front", "common", "friends"]);
 	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
+	const [searchParams] = useSearchParams();
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
 
@@ -253,7 +269,6 @@ export function Layout({
 		return () => window.removeEventListener("resize", handleResize);
 	}, []);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: intentionally close modals on navigation
 	React.useEffect(() => {
 		setSideNavModalOpen(false);
 		setChatSidebarModalOpen(false);
@@ -264,12 +279,15 @@ export function Layout({
 	const sidebarData = data?.sidebar;
 	const events = sidebarData?.events ?? [];
 	const friends = sidebarData?.friends ?? [];
+	const unseenFriendRequests = useUnseenFriendRequests(
+		sidebarData?.incomingFriendRequestIds ?? [],
+	);
 	const streams = sidebarData?.streams ?? [];
 
 	const isFrontPage = location.pathname === "/";
 
 	const showLeaderboard =
-		import.meta.env.VITE_FUSE_ENABLED &&
+		Config.fuseEnabled &&
 		!data?.user?.roles.includes("MINOR_SUPPORT") &&
 		!location.pathname.includes("plans");
 
@@ -325,10 +343,23 @@ export function Layout({
 				icon={<Users />}
 				action={
 					user ? (
-						<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
-							{t("common:actions.viewAll")}
-							<ChevronRight size={14} />
-						</Link>
+						<>
+							{unseenFriendRequests > 0 ? (
+								<span
+									className={styles.friendRequestsBadge}
+									role="status"
+									aria-label={t("friends:unseenRequests", {
+										count: unseenFriendRequests,
+									})}
+								>
+									{unseenFriendRequests}
+								</span>
+							) : null}
+							<Link to={FRIENDS_PAGE} className={styles.viewAllLink}>
+								{t("common:actions.viewAll")}
+								<ChevronRight size={14} />
+							</Link>
+						</>
 					) : null
 				}
 			>
@@ -390,6 +421,7 @@ export function Layout({
 						<SideNavCollapseButton
 							className={styles.sideNavModalTrigger}
 							showNotificationDot={!sideNavModalOpen && unseenIds.length > 0}
+							badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
 							testId="sidenav-modal-trigger"
 						/>
 						<ModalOverlay className={styles.sideNavModalOverlay} isDismissable>
@@ -426,6 +458,7 @@ export function Layout({
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
 						showNotificationDot={sideNavCollapsed && unseenIds.length > 0}
+						badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
 						testId="sidenav-collapse-button"
 					/>
 					<TopNavMenus />
@@ -469,7 +502,11 @@ export function Layout({
 					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
-			<AuthErrorDialog />
+			{searchParams.has("authError") ? (
+				<React.Suspense>
+					<AuthErrorDialog />
+				</React.Suspense>
+			) : null}
 		</>
 	);
 }
@@ -544,13 +581,17 @@ function SideNavCollapseButton({
 	onToggle,
 	className,
 	showNotificationDot,
+	badgeCount,
 	testId,
 }: {
 	onToggle?: () => void;
 	className?: string;
 	showNotificationDot?: boolean;
+	badgeCount?: number;
 	testId?: string;
 }) {
+	const { t } = useTranslation(["friends"]);
+
 	return (
 		<div className={styles.sideNavCollapseButtonContainer} data-testid={testId}>
 			<SendouButton
@@ -562,27 +603,55 @@ function SideNavCollapseButton({
 				onPress={onToggle}
 			/>
 			{showNotificationDot ? <NotificationDot /> : null}
+			{badgeCount ? (
+				<span
+					className={clsx(styles.sideNavCollapseBadge, {
+						[styles.sideNavCollapseBadgeLeft]: showNotificationDot,
+					})}
+					role="status"
+					aria-label={t("friends:unseenRequests", { count: badgeCount })}
+				>
+					{badgeCount}
+				</span>
+			) : null}
 		</div>
 	);
 }
 
 function PageIcon({ crumb }: { crumb: Breadcrumb }) {
+	const [isErrored, setIsErrored] = React.useState(false);
+	const isClient = useHydrated();
+
 	if (crumb.type !== "IMAGE") {
 		return null;
 	}
 
-	const isExternal = crumb.imgPath.includes(".");
+	const lastPathSegment = crumb.imgPath.split("/").pop() ?? "";
+	const isExternal = lastPathSegment.includes(".");
 	const iconClass = clsx(styles.pageIcon, "rounded");
+
+	// an <img> can finish loading (and fail) before React hydrates and attaches onError, so that
+	// error is missed — re-check on mount and fall back manually so SSR'd icons still heal
+	const checkAlreadyErrored = (img: HTMLImageElement | null) => {
+		if (img?.complete && img.naturalWidth === 0) setIsErrored(true);
+	};
+
+	const identiconSrc =
+		isErrored && isClient && crumb.identiconInput
+			? generateIdenticon(crumb.identiconInput, 28, 7)
+			: null;
 
 	return (
 		<div className={styles.pageIconWrapper}>
 			{isExternal ? (
 				<img
-					src={crumb.imgPath}
+					ref={checkAlreadyErrored}
+					src={identiconSrc ?? crumb.imgPath}
 					alt=""
 					className={iconClass}
 					width={28}
 					height={28}
+					onError={() => setIsErrored(true)}
 				/>
 			) : (
 				<Image

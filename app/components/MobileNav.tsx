@@ -21,6 +21,7 @@ import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import type { RootLoaderData } from "~/root";
 import {
 	EVENTS_PAGE,
@@ -60,6 +61,9 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const hasFriendInSendouQ =
 		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
 		false;
+	const unseenFriendRequests = useUnseenFriendRequests(
+		sidebarData?.incomingFriendRequestIds ?? [],
+	);
 
 	const skipAnimation = previousPanelRef.current !== "closed";
 
@@ -152,6 +156,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				isLoggedIn={Boolean(user)}
 				hasUnseenNotifications={hasUnseenNotifications}
 				hasFriendInSendouQ={hasFriendInSendouQ}
+				unseenFriendRequests={unseenFriendRequests}
 			/>
 		</div>
 	);
@@ -163,12 +168,14 @@ function MobileTabBar({
 	isLoggedIn,
 	hasUnseenNotifications,
 	hasFriendInSendouQ,
+	unseenFriendRequests,
 }: {
 	activePanel: PanelType;
 	onTabPress: (panel: PanelType) => void;
 	isLoggedIn: boolean;
 	hasUnseenNotifications: boolean;
 	hasFriendInSendouQ: boolean;
+	unseenFriendRequests: number;
 }) {
 	const { t } = useTranslation(["front", "common"]);
 	const chatContext = useChatContext();
@@ -190,6 +197,8 @@ function MobileTabBar({
 						isActive={activePanel === "friends"}
 						onPress={() => onTabPress("friends")}
 						showNotificationDot={hasFriendInSendouQ}
+						badgeCount={unseenFriendRequests}
+						badgeLeft={hasFriendInSendouQ}
 					/>
 					<MobileTab
 						icon={<Calendar />}
@@ -233,6 +242,8 @@ function MobileTab({
 	onPress,
 	showNotificationDot,
 	unreadCount,
+	badgeCount,
+	badgeLeft,
 }: {
 	icon: React.ReactNode;
 	label: string;
@@ -240,7 +251,11 @@ function MobileTab({
 	onPress: () => void;
 	showNotificationDot?: boolean;
 	unreadCount?: number;
+	badgeCount?: number;
+	badgeLeft?: boolean;
 }) {
+	const count = unreadCount ?? badgeCount;
+
 	return (
 		<button
 			type="button"
@@ -251,8 +266,14 @@ function MobileTab({
 			<span className={styles.tabIcon}>
 				{icon}
 				{showNotificationDot ? <NotificationDot /> : null}
-				{unreadCount ? (
-					<span className={styles.tabBadge}>{unreadCount}</span>
+				{count ? (
+					<span
+						className={clsx(styles.tabBadge, {
+							[styles.tabBadgeLeft]: badgeLeft,
+						})}
+					>
+						{count}
+					</span>
 				) : null}
 			</span>
 			<span>{label}</span>

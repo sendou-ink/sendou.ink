@@ -60,7 +60,7 @@ export function Widget({
 	user,
 }: {
 	widget: SerializeFrom<LoadedWidget>;
-	user: Pick<Tables["User"], "discordId" | "customUrl">;
+	user: Pick<Tables["User"], "id" | "discordId" | "customUrl">;
 }) {
 	const { t } = useTranslation(["user", "badges", "team", "org", "lfg"]);
 	const { formatter: patronSinceFormatter } = useDateTimeFormat({
@@ -82,11 +82,23 @@ export function Widget({
 			case "trophies-owned":
 				return <TrophyDisplay trophies={widget.data} />;
 			case "badges-owned":
-				return <BadgeDisplay badges={widget.data} />;
+				return (
+					<BadgeDisplay badges={widget.data} key={`badges-owned-${user.id}`} />
+				);
 			case "badges-authored":
-				return <BadgeDisplay badges={widget.data} />;
+				return (
+					<BadgeDisplay
+						badges={widget.data}
+						key={`badges-authored-${user.id}`}
+					/>
+				);
 			case "badges-managed":
-				return <BadgeDisplay badges={widget.data} />;
+				return (
+					<BadgeDisplay
+						badges={widget.data}
+						key={`badges-managed-${user.id}`}
+					/>
+				);
 			case "teams":
 				return (
 					<Memberships
@@ -95,7 +107,9 @@ export function Widget({
 							url: teamPage(team.customUrl),
 							name: team.name,
 							logoUrl: team.logoUrl,
-							roleDisplayName: team.role ? t(`team:roles.${team.role}`) : null,
+							roleDisplayName:
+								team.customRole ??
+								(team.role ? t(`team:roles.${team.role}`) : null),
 						}))}
 					/>
 				);

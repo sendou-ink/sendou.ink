@@ -1,6 +1,7 @@
 import { Divider } from "~/components/Divider";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { Config } from "~/config";
 import { list } from "~/features/mmr/core/Seasons";
 import { navIconUrl, tierImageUrl } from "~/utils/urls";
 
@@ -134,7 +135,7 @@ function EventSchedule({
 		<div className="stack md horizontal items-center mx-auto">
 			<img
 				alt=""
-				src={`http://localhost:5173/static-assets/img/tournament-logos/${imgId}.avif`}
+				src={`${Config.staticAssetsUrl}/img/tournament-logos/${imgId}.avif`}
 				style={{
 					width: "4rem",
 					height: "4rem",

@@ -3,6 +3,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { APP_ICON_URL } from "~/utils/urls";
 import styles from "./PWAInstallBanner.module.css";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -64,7 +65,7 @@ export function PWAInstallBanner() {
 			</div>
 			<div className={styles.homeScreenIcon}>
 				<img
-					src="/static-assets/img/app-icon.png"
+					src={APP_ICON_URL}
 					alt=""
 					className={styles.homeScreenIconImg}
 					draggable="false"

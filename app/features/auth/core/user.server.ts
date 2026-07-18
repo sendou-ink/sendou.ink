@@ -1,6 +1,10 @@
 import { IMPERSONATED_SESSION_KEY, SESSION_KEY } from "./authenticator.server";
 import { authSessionStorage } from "./session.server";
-import { type AuthenticatedUser, getUserContext } from "./user-context.server";
+import {
+	type AuthenticatedUser,
+	getUserContext,
+	userAsyncLocalStorage,
+} from "./user-context.server";
 
 export type { AuthenticatedUser };
 
@@ -30,6 +34,13 @@ export function actorId(): number {
  *  also serve anonymous visitors, where the actor only scopes the result. */
 export function actorIdOrNull(): number | null {
 	return getUser()?.id ?? null;
+}
+
+/** Id of the acting user, or null when there is no actor *or* no request
+ *  context at all (e.g. cron routines). Never throws, unlike actorIdOrNull —
+ *  use for ambient side effects that may also run outside of a request. */
+export function actorIdOrNullSafe(): number | null {
+	return userAsyncLocalStorage.getStore()?.user?.id ?? null;
 }
 
 export async function isImpersonating(request: Request) {

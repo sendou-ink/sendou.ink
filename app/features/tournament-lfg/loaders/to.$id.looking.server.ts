@@ -1,7 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import type { Pronouns } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
@@ -83,8 +85,16 @@ async function lookingMode({
 		ownGroup,
 	});
 
+	const cardUserIds = R.unique([
+		...groups.flatMap((group) => group.members.map((member) => member.id)),
+		...(ownTeam?.members ?? []).map((member) => member.id),
+	]);
+
 	return {
 		mode: "looking" as const,
+		...(await UserCardRepository.userCards({
+			userIds: cardUserIds,
+		})),
 		groups: otherGroups,
 		ownGroup,
 		ownTeam,
@@ -118,6 +128,7 @@ async function subsMode({
 			username: member.username,
 			discordId: member.discordId,
 			discordAvatar: member.discordAvatar,
+			customAvatarUrl: member.customAvatarUrl,
 			customUrl: member.customUrl,
 			vc: member.vc,
 			languages,
@@ -129,6 +140,9 @@ async function subsMode({
 
 	return {
 		mode: "subs" as const,
+		...(await UserCardRepository.userCards({
+			userIds: subs.map((sub) => sub.userId),
+		})),
 		subs,
 		hasOwnSubPost: subs.some((sub) => sub.userId === user?.id),
 		tournamentId,
@@ -160,6 +174,7 @@ async function resolveOwnTeam({
 		username: m.username,
 		discordId: m.discordId,
 		discordAvatar: m.discordAvatar,
+		customAvatarUrl: m.customAvatarUrl,
 		customUrl: m.customUrl,
 		languages: [],
 		vc: null,
@@ -200,6 +215,7 @@ function transformMembers(
 			username: m.username,
 			discordId: m.discordId,
 			discordAvatar: m.discordAvatar,
+			customAvatarUrl: m.customAvatarUrl,
 			customUrl: m.customUrl,
 			languages,
 			vc: m.vc,

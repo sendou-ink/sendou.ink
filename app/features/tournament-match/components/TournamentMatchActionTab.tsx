@@ -39,12 +39,15 @@ export function TournamentMatchActionTab({
 	});
 
 	// during pick/ban there is no current map to report, but a wrongly reported
-	// score from a previous game can still be undone
+	// score from a previous game can still be undone (not once the set is over)
 	if (!currentMap) {
+		const canUndo = scoreSum > 0 && !data.matchIsOver;
 		return (
 			<SendouTabPanel id={TAB_KEYS.ACTION}>
-				{scoreSum > 0 ? <UndoReportButton scoreSum={scoreSum} /> : null}
-				{weaponReport ? <WeaponReporter {...weaponReport} standalone /> : null}
+				{canUndo ? <UndoReportButton scoreSum={scoreSum} /> : null}
+				{weaponReport ? (
+					<WeaponReporter {...weaponReport} standalone={!canUndo} />
+				) : null}
 			</SendouTabPanel>
 		);
 	}
@@ -223,12 +226,14 @@ function buildSetEndingData({
 		discordId: string;
 		discordAvatar: string | null;
 		customUrl: string | null;
+		customAvatarUrl: string | null;
 	}): CommonUser => ({
 		id: m.userId,
 		username: m.username,
 		discordId: m.discordId,
 		discordAvatar: m.discordAvatar,
 		customUrl: m.customUrl,
+		customAvatarUrl: m.customAvatarUrl,
 	});
 
 	const teamOneMembersMap = new Map(

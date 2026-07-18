@@ -4,7 +4,6 @@ import type {
 	Insertable,
 	JSONColumnType,
 	Selectable,
-	Updateable,
 } from "kysely";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
@@ -33,6 +32,8 @@ type Generated<T> =
 		: ColumnType<T, T | undefined, T>;
 
 export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
+
+export type MemberRoleType = "PLAYER" | "OTHER";
 
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = number;
@@ -98,6 +99,11 @@ export interface TeamMember {
 	isManager: Generated<number>;
 	leftAt: number | null;
 	role: MemberRole | null;
+	customRole: string | null;
+	/** If customRole is defined, this classifies how the role should be treated */
+	roleType: MemberRoleType | null;
+	/** User-defined ordering of members within a team (ascending) */
+	order: Generated<number>;
 	teamId: number;
 	userId: number;
 	isMainTeam: DBBoolean;
@@ -320,7 +326,6 @@ export type ParsedMemento = {
 	users: Record<
 		number,
 		{
-			plusTier?: PlusTier["tier"];
 			skill?: TieredSkill | "CALCULATING";
 			skillDifference?: UserSkillDifference;
 		}
@@ -532,12 +537,21 @@ export interface SeedingSkill {
 	type: "RANKED" | "UNRANKED";
 }
 
+export interface PeakXP {
+	/** Peak XP across all divisions */
+	overall: number;
+	/** Peak XP (Takoroka division) */
+	takoroka: number | null;
+	/** Peak XP (Tentatek division) */
+	tentatek: number | null;
+}
+
 export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
 	/** Players best XP across both divisions. Denormalized for performance. */
-	peakXp: number | null;
+	peakXp: JSONColumnTypeNullable<PeakXP>;
 }
 
 export interface TaggedArt {
@@ -905,6 +919,8 @@ export interface TournamentTeamMember {
 	userId: number;
 	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
 	isStayAsSub: Generated<DBBoolean>;
+	/** Set when the member was added to the roster after registration closed. */
+	isSub: Generated<DBBoolean>;
 	// denormalized from TournamentTeam.isLooking
 	isLooking: Generated<DBBoolean>;
 }
@@ -1119,11 +1135,17 @@ export type Pronouns = {
 	object: (typeof OBJECT_PRONOUNS)[number];
 };
 
+/** Card stat types that can be hidden from a user's card (kept here so `User.hiddenCardStats` does not import a feature module; keep in sync with the feature's `UserCardStat["type"]`). */
+export type HideableUserCardStat = "XP" | "DIV";
+
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
 	bannedReason: string | null;
+	/** Shown on old user profile and Plus Voting */
 	bio: string | null;
+	/** Shown on user card */
+	shortBio: string | null;
 	commissionsOpen: Generated<number | null>;
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
@@ -1131,6 +1153,7 @@ export interface User {
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
 	discordAvatar: string | null;
+	customAvatarImgId: number | null;
 	discordId: string;
 	discordName: string;
 	customName: string | null;
@@ -1164,15 +1187,21 @@ export interface User {
 	weaponPool: JSONColumnTypeNullable<WeaponPoolEntry[]>;
 	plusSkippedForSeasonNth: number | null;
 	noScreen: Generated<DBBoolean>;
-	/** User doesn't have access to SplatNet 3 to join rooms made by others */
-	noSplatnet: Generated<DBBoolean>;
 	buildSorting: JSONColumnTypeNullable<BuildSort[]>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
 	joinOrder: number | null;
-	/** Last message used when creating a tournament sub post */
-	lastSubMessage: string | null;
+	/** User card banner default selection, hex code or stage id. Note: supporters can also upload banner (stored in UserSubmittedImage, referenced by `bannerImgId` which takes precedence) */
+	bannerPresetImg: JSONColumnTypeNullable<string | StageId>;
+	/** Supporter-uploaded user card banner (UserSubmittedImage id). Takes precedence over `bannerPresetImg`. */
+	bannerImgId: number | null;
+	/** Card stat types the user has chosen to hide from their card. */
+	hiddenCardStats: JSONColumnTypeNullable<Array<HideableUserCardStat>>;
+	/** Div in the latest finished LUTI (e.g. "2" or "X"). Must have been in a team that did not drop and the user played at least one match (got result as well) */
+	div: string | null;
+	/** Peak XP as indicated by the user. Should have either `takoroka` or `tentatek` key defined but not both. */
+	unverifiedPeakXP: JSONColumnTypeNullable<PeakXP>;
 }
 
 /** Represents User joined with PlusTier table */
@@ -1260,6 +1289,15 @@ export interface TournamentStreamer {
 	twitchAccount: string;
 }
 
+export interface ExternalStream {
+	id: GeneratedAlways<number>;
+	name: string;
+	url: string;
+	avatarImgId: number | null;
+	startTime: number;
+	createdAt: Generated<number>;
+}
+
 export interface TournamentMatchVod {
 	id: GeneratedAlways<number>;
 	matchId: number;
@@ -1289,6 +1327,24 @@ export interface ModNote {
 	isDeleted: Generated<DBBoolean>;
 }
 
+export const USER_REPORT_CATEGORIES = [
+	"INAPPROPRIATE_CONTENT",
+	"ALTING",
+	"HARASSMENT",
+	"CHEATING",
+	"OTHER",
+] as const;
+export type UserReportCategory = (typeof USER_REPORT_CATEGORIES)[number];
+
+export interface UserReport {
+	id: GeneratedAlways<number>;
+	reportedUserId: number;
+	reporterUserId: number;
+	category: UserReportCategory;
+	description: string;
+	createdAt: Generated<number>;
+}
+
 export interface Video {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
@@ -1316,6 +1372,9 @@ export interface VideoMatchPlayer {
 	weaponSplId: number;
 }
 
+/** `WEST` = Tentatek division, `JPN` = Takoroka division. */
+export type XRankPlacementRegion = "WEST" | "JPN";
+
 export interface XRankPlacement {
 	badges: string;
 	bannerSplId: number;
@@ -1327,7 +1386,7 @@ export interface XRankPlacement {
 	playerId: number;
 	power: number;
 	rank: number;
-	region: "WEST" | "JPN";
+	region: XRankPlacementRegion;
 	title: string;
 	weaponSplId: MainWeaponId;
 	year: number;
@@ -1457,13 +1516,6 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
-export interface RoomLink {
-	userId: number;
-	url: string;
-	createdAt: Generated<number>;
-	refreshedAt: Generated<number>;
-}
-
 export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
 export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
 
@@ -1479,7 +1531,6 @@ export interface SplatoonRotation {
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
-export type TablesUpdatable = { [P in keyof DB]: Updateable<DB[P]> };
 
 export interface DB {
 	AllTeam: Team;
@@ -1505,6 +1556,7 @@ export interface DB {
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
+	ExternalStream: ExternalStream;
 
 	Group: Group;
 	GroupLike: GroupLike;
@@ -1522,7 +1574,6 @@ export interface DB {
 	PlusTier: PlusTier;
 	PlusVote: PlusVote;
 	PlusVotingResult: PlusVotingResult;
-	RoomLink: RoomLink;
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
@@ -1574,6 +1625,7 @@ export interface DB {
 	TenStarWeapon: TenStarWeapon;
 	UserFriendCode: UserFriendCode;
 	UserWidget: UserWidget;
+	UserReport: UserReport;
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

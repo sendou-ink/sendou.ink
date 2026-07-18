@@ -1,9 +1,4 @@
-// To run this script you need from https://github.com/Leanny/leanny.github.io
-// 1) WeaponInfoMain.json inside dicts
-// 2) WeaponInfoSub.json inside dicts
-// 3) WeaponInfoSpecial.json inside dicts
-// 4) SplPlayer.game__GameParameterTable.json inside dicts
-// 5) params (weapon folder) inside dicts
+// To run this script drop the https://github.com/Leanny/splat3 repo into scripts/dicts/splat3
 
 import fs from "node:fs";
 import path from "node:path";
@@ -28,18 +23,24 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import playersParams from "./dicts/SplPlayer.game__GameParameterTable.json";
-import weapons from "./dicts/WeaponInfoMain.json";
-import specialWeapons from "./dicts/WeaponInfoSpecial.json";
-import subWeapons from "./dicts/WeaponInfoSub.json";
 import {
 	LANG_JSONS_TO_CREATE,
 	loadLangDicts,
+	loadSplPlayerParams,
+	loadWeaponInfoMain,
+	loadWeaponInfoSpecial,
+	loadWeaponInfoSub,
 	translationJsonFolderName,
+	weaponParamsDir,
 } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const playersParams = loadSplPlayerParams();
+const weapons = loadWeaponInfoMain();
+const subWeapons = loadWeaponInfoSub();
+const specialWeapons = loadWeaponInfoSpecial();
 
 const CURRENT_SEASON = 9;
 
@@ -128,6 +129,8 @@ async function main() {
 			params.DistanceDamage = undefined;
 		}
 
+		Object.assign(params, specialWeaponRangeParams(specialWeapon, rawParams));
+
 		if (hasLangDicts) {
 			translationsToArray({
 				arr: translations,
@@ -157,7 +160,7 @@ async function main() {
 			"app",
 			"features",
 			"build-analyzer",
-			"core",
+			"data",
 			"weapon-params.ts",
 		),
 		weaponParamsTs,
@@ -692,6 +695,96 @@ function parametersToSubWeaponResult(
 	};
 }
 
+// Thrown targeting specials (Booyah Bomb, Super Chump, Triple Inkstrike, Ultra Stamp) are
+// player-aimed and have no throw-distance param in the game data, so their throw (fly) range is
+// approximated with a constant. Kept as named per-special constants so each can be tuned later;
+// for now they all reuse Booyah Bomb's value.
+const BOOYAH_BOMB_FLY_DISTANCE = 27;
+const SUPER_CHUMP_FLY_DISTANCE = 30;
+const TRIPLE_INKSTRIKE_FLY_DISTANCE = 28;
+const ULTRA_STAMP_FLY_DISTANCE = 24;
+
+// Range circle data for the map planner. Projectile / thrown specials store the distance the shot
+// travels plus its blast; a few store a single effect radius. Specials whose reach is global
+// (Tenta Missiles, Killer Wail), placed or utility (Big Bubbler, Tacticooler, Ink Storm, Ink Vac),
+// or otherwise has no meaningful circle (Kraken Royale, Splattercolor Screen) are left out.
+// See app/features/comp-analyzer/core/special-weapon-range.ts.
+function specialWeaponRangeParams(
+	specialWeapon: SpecialWeapon,
+	rawParams: any,
+): Record<string, number | undefined> {
+	const outerBlastDistance = (blastParam: any): number | undefined =>
+		blastParam?.DistanceDamage?.at(-1)?.Distance;
+
+	const trajectoryFromMoveParam = (moveParam: any) => ({
+		Range_SpawnSpeed: moveParam?.SpawnSpeed,
+		Range_GoStraightStateEndMaxSpeed: moveParam?.GoStraightStateEndMaxSpeed,
+		Range_GoStraightToBrakeStateFrame: moveParam?.GoStraightToBrakeStateFrame,
+		Range_FreeGravity: moveParam?.FreeGravity,
+		Range_FreeAirResist: moveParam?.FreeAirResist,
+		Range_BrakeAirResist: moveParam?.BrakeAirResist,
+		Range_BrakeGravity: moveParam?.BrakeGravity,
+		Range_BrakeToFreeStateFrame: moveParam?.BrakeToFreeStateFrame,
+	});
+
+	switch (specialWeapon.__RowId) {
+		case "SpUltraShot": // Trizooka
+			return {
+				...trajectoryFromMoveParam(rawParams.MoveParam),
+				Range_BlastRadius: outerBlastDistance(rawParams.BlastParam),
+			};
+		case "SpJetpack": // Inkjet (shot flies straight for a fixed distance)
+			return {
+				Range_Distance: rawParams.MoveParam?.Distance,
+				Range_BlastRadius: outerBlastDistance(rawParams.BlastParam),
+			};
+		case "SpChariot": // Crab Tank (rapid gun reach)
+			return {
+				...trajectoryFromMoveParam(rawParams.ShooterMoveParam),
+				Range_BlastRadius: outerBlastDistance(
+					rawParams.CannonParam?.BlastParam,
+				),
+			};
+		case "SpNiceBall": // Booyah Bomb (thrown, then bursts on impact)
+			return {
+				Range_Distance: BOOYAH_BOMB_FLY_DISTANCE,
+				Range_BlastRadius: rawParams.BlastParam?.DamageRadiusEnd,
+			};
+		case "SpFirework": // Super Chump (thrown, chumps burst on impact)
+			return {
+				Range_Distance: SUPER_CHUMP_FLY_DISTANCE,
+				Range_BlastRadius: outerBlastDistance(rawParams.IceParam?.BlastParam),
+			};
+		case "SpTripleTornado": // Triple Inkstrike (thrown beacons, strikes burst)
+			return {
+				Range_Distance: TRIPLE_INKSTRIKE_FLY_DISTANCE,
+				Range_BlastRadius: rawParams.BlastParam?.DamageRadiusEnd,
+			};
+		case "SpUltraStamp": // Ultra Stamp (thrown stamp bursts on impact)
+			return {
+				Range_Distance: ULTRA_STAMP_FLY_DISTANCE,
+				Range_BlastRadius: outerBlastDistance(rawParams.ThrowBlastParam),
+			};
+		case "SpSuperHook": // Zipcaster (grapple reach)
+			return { Range_Radius: rawParams.WeaponParam?.MaxLengthHook };
+		case "SpShockSonar": // Wave Breaker (tracking wave max radius, base Special Power Up)
+			return {
+				Range_Radius:
+					rawParams.spl__BulletSpShockSonarParam?.WaveParam?.MaxRadius?.Low,
+			};
+		case "SpSkewer": // Reefslider (lethal blast)
+			return {
+				Range_Radius: rawParams.BulletBlastParam?.DistanceDamage?.[0]?.Distance,
+			};
+		case "SpPogo": // Triple Splashdown (lethal blast, per splashdown)
+			return {
+				Range_Radius: rawParams.BlastParamNormal?.DistanceDamage?.[0]?.Distance,
+			};
+		default:
+			return {};
+	}
+}
+
 // some specials lack damage values in the params
 // so they are instead hardcoded here as a workaround
 function parametersToSpecialWeaponResult(params: any) {
@@ -1093,7 +1186,7 @@ function loadWeaponParamsObject(
 ) {
 	return JSON.parse(
 		fs.readFileSync(
-			path.join(__dirname, "dicts", "weapon", weaponRowIdToFileName(weapon)),
+			path.join(weaponParamsDir(), weaponRowIdToFileName(weapon)),
 			"utf8",
 		),
 	).GameParameters;

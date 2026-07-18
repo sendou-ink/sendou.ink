@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { _action, id, noDuplicates, safeJSONParse } from "~/utils/zod";
+import { BADGE } from "./badges-constants";
 
 export const editBadgeActionSchema = z.union([
 	z.object({
@@ -8,6 +9,9 @@ export const editBadgeActionSchema = z.union([
 	}),
 	z.object({
 		_action: _action("OWNERS"),
-		ownerIds: z.preprocess(safeJSONParse, z.array(id)),
+		ownerIds: z.preprocess(
+			safeJSONParse,
+			z.array(id).max(BADGE.OWNERS_MAX_LENGTH),
+		),
 	}),
 ]);

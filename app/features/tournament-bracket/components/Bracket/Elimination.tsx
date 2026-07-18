@@ -229,7 +229,7 @@ function resolveCompactedFirstRoundId(args: {
 	const playedMatchCount = firstRoundMatches.filter(
 		(match) => match.opponent1 && match.opponent2,
 	).length;
-	if (playedMatchCount >= firstRoundMatches.length / 2) return null;
+	if (playedMatchCount > firstRoundMatches.length / 2) return null;
 
 	const everyPairHasAtMostOnePlayedMatch = R.chunk(firstRoundMatches, 2).every(
 		(pair) =>

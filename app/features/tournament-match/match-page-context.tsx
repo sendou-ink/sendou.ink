@@ -1,7 +1,8 @@
 import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { resolveRoomPass } from "~/components/match-page/utils";
+import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { resolveActiveRoomLink } from "~/features/chat/room-link-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -12,8 +13,6 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
-
-type ActiveRoomLink = ReturnType<typeof resolveActiveRoomLink>;
 
 export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>>;
 
@@ -34,8 +33,9 @@ type MatchPageContextValue = {
 	turnOfResult: ReturnType<typeof PickBan.turnOf>;
 	isPickBanStep: boolean;
 	matchIsLocked: boolean;
+	waitingForPreviousMatch: boolean;
 	joinPool: string | null;
-	activeRoomLink: ActiveRoomLink | null;
+	joinPass: string | null;
 };
 
 const MatchPageContext = React.createContext<MatchPageContextValue | null>(
@@ -101,25 +101,22 @@ export function MatchPageProvider({
 		scores,
 	});
 
-	const joinPool = resolveJoinPool({ tournament, data, teams });
+	const waitingForPreviousMatch =
+		data.match.status === TournamentMatchStatus.Locked ||
+		data.match.status === TournamentMatchStatus.Waiting;
 
-	const activeRoomLink = data.canJoin
-		? resolveActiveRoomLink({
-				roomLinks: data.roomLinks,
-				freshnessCutoff: data.match.startedAt ?? 0,
-				viewerUserId: user?.id,
-				members: data.match.players,
-			})
-		: null;
+	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 
 	const tabs = resolveVisibleTabs({
-		canReportScore: tournament.canReportScore({
-			matchId: data.match.id,
+		canReportScore: resolveCanReportScore({
+			tournament,
 			user,
+			teams,
+			matchIsOver: data.matchIsOver,
+			waitingForPreviousMatch,
 		}),
 		canReportWeapons:
 			isParticipant && tournament.weaponReportingOpen && hasReportedMaps,
-		canJoin: data.canJoin,
 		hasCurrentMap: Boolean(currentMap),
 		hasMissingActiveRoster: teamsMissingActiveRoster.length > 0,
 		hasReportedMaps,
@@ -129,6 +126,7 @@ export function MatchPageProvider({
 			tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized,
 		leagueRoundLocked: isLeagueRoundLocked(tournament, data.match.roundId),
 		lockedForCast,
+		waitingForPreviousMatch,
 	});
 
 	return (
@@ -144,8 +142,9 @@ export function MatchPageProvider({
 				turnOfResult,
 				isPickBanStep,
 				matchIsLocked: lockedForCast,
-				joinPool,
-				activeRoomLink,
+				waitingForPreviousMatch,
+				joinPool: joinInfo?.pool ?? null,
+				joinPass: joinInfo?.pass ?? null,
 			}}
 		>
 			{children}
@@ -164,7 +163,6 @@ export function useMatch() {
 function resolveVisibleTabs({
 	canReportScore,
 	canReportWeapons,
-	canJoin,
 	hasCurrentMap,
 	hasMissingActiveRoster,
 	hasReportedMaps,
@@ -173,10 +171,10 @@ function resolveVisibleTabs({
 	isAdminEligible,
 	leagueRoundLocked,
 	lockedForCast,
+	waitingForPreviousMatch,
 }: {
 	canReportScore: boolean;
 	canReportWeapons: boolean;
-	canJoin: boolean;
 	hasCurrentMap: boolean;
 	hasMissingActiveRoster: boolean;
 	hasReportedMaps: boolean;
@@ -185,14 +183,13 @@ function resolveVisibleTabs({
 	isAdminEligible: boolean;
 	leagueRoundLocked: boolean;
 	lockedForCast: boolean;
+	waitingForPreviousMatch: boolean;
 }): MatchTabKey[] {
 	const tabs: MatchTabKey[] = [TAB_KEYS.ROSTERS];
 
-	if (canJoin) {
-		tabs.push(TAB_KEYS.JOIN);
-	}
 	if (
 		!leagueRoundLocked &&
+		!waitingForPreviousMatch &&
 		(isPickBanStep ||
 			(canReportScore &&
 				hasCurrentMap &&
@@ -214,7 +211,34 @@ function resolveVisibleTabs({
 	return tabs;
 }
 
-function resolveJoinPool({
+// Derived from the match loader's data instead of the tournament loader's
+// bracket data — the latter can be stale on the client (its revalidation is
+// aborted if the user navigates mid-flight and same-tournament navigations
+// skip it), which would hide the action tab on an already-ready match.
+function resolveCanReportScore({
+	tournament,
+	user,
+	teams,
+	matchIsOver,
+	waitingForPreviousMatch,
+}: {
+	tournament: ReturnType<typeof useTournament>;
+	user: ReturnType<typeof useUser>;
+	teams: [MatchPageTeam | null, MatchPageTeam | null];
+	matchIsOver: boolean;
+	waitingForPreviousMatch: boolean;
+}) {
+	const [teamOne, teamTwo] = teams;
+	if (!teamOne || !teamTwo) return false;
+	if (waitingForPreviousMatch || matchIsOver) return false;
+
+	const userTeamId = tournament.teamMemberOfByUser(user)?.id;
+	const isParticipant = userTeamId === teamOne.id || userTeamId === teamTwo.id;
+
+	return isParticipant || tournament.isOrganizer(user);
+}
+
+function resolveJoinInfo({
 	tournament,
 	data,
 	teams,
@@ -222,7 +246,7 @@ function resolveJoinPool({
 	tournament: ReturnType<typeof useTournament>;
 	data: TournamentMatchLoaderData;
 	teams: [MatchPageTeam | null, MatchPageTeam | null];
-}): string | null {
+}): { pool: string; pass: string } | null {
 	if (!data.canJoin) return null;
 
 	const [teamOne, teamTwo] = teams;
@@ -254,7 +278,10 @@ function resolveJoinPool({
 				: undefined,
 	});
 
-	return `${poolCode.prefix}${poolCode.suffix}`;
+	return {
+		pool: `${poolCode.prefix}${poolCode.suffix}`,
+		pass: resolveRoomPass(hostingTeam.id),
+	};
 }
 
 function resolveTeamsMissingActiveRoster(

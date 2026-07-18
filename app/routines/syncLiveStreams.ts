@@ -3,7 +3,7 @@ import * as LiveStreamRepository from "~/features/live-streams/LiveStreamReposit
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getStreams } from "~/modules/twitch";
-import { hasTwitchEnvVars } from "~/modules/twitch/utils";
+import { hasTwitchEnvVars } from "~/modules/twitch/utils.server";
 import { Routine } from "./routine.server";
 
 const TOURNAMENT_STREAM_SYNC_INTERVAL_MINS = 30;

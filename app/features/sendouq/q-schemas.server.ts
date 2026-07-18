@@ -80,10 +80,6 @@ export const lookingSchema = z.union([
 			z.string().max(SENDOUQ.OWN_PUBLIC_NOTE_MAX_LENGTH).nullable(),
 		),
 	}),
-	z.object({
-		_action: _action("DELETE_PRIVATE_USER_NOTE"),
-		targetId: id,
-	}),
 ]);
 
 export const weaponUsageSearchParamsSchema = z.object({

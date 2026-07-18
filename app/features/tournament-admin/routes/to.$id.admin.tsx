@@ -23,6 +23,7 @@ import { Redirect } from "~/components/Redirect";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	calendarEventPage,
 	tournamentAdminPage,
@@ -42,6 +43,7 @@ export default function TournamentAdminLayout() {
 	const tournament = useTournament();
 	const outletContext = useOutletContext();
 	const user = useUser();
+	const isTournamentAdder = useHasRole("TOURNAMENT_ADDER");
 	const location = useLocation();
 
 	const showReopen = Boolean(
@@ -54,14 +56,13 @@ export default function TournamentAdminLayout() {
 		tournament.hasStarted &&
 		!tournament.ctx.isFinalized;
 	const showStaffTab = tournament.isAdmin(user);
-	const showBracketsTab =
-		!tournament.isLeagueSignup || showEditBrackets || showReopen;
+	const showBracketsTab = tournament.ctx.isFinalized
+		? showReopen
+		: !tournament.isLeagueSignup || showEditBrackets;
+	const showStreamTab = !tournament.ctx.isFinalized;
 	const showSeedsTab = !tournament.hasStarted && !tournament.isLeagueSignup;
 
-	if (
-		!tournament.isOrganizer(user) ||
-		(tournament.ctx.isFinalized && !DANGEROUS_CAN_ACCESS_DEV_CONTROLS)
-	) {
+	if (!tournament.isOrganizer(user)) {
 		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
 	}
 
@@ -74,7 +75,8 @@ export default function TournamentAdminLayout() {
 
 	return (
 		<div className={clsx("stack lg", containerClassName("wide"))}>
-			{tournament.isAdmin(user) && !tournament.hasStarted ? (
+			{tournament.canEditEventInfo(user, { isTournamentAdder }) &&
+			!tournament.hasStarted ? (
 				<div className="stack horizontal items-end">
 					<LinkButton
 						to={tournamentEditPage(tournament.ctx.eventId)}
@@ -132,9 +134,11 @@ export default function TournamentAdminLayout() {
 							{t("tournament:admin.tab.staff")}
 						</SendouTab>
 					) : null}
-					<SendouTab id="stream" href={`${adminPage}/stream`} icon={<Tv />}>
-						{t("tournament:admin.tab.stream")}
-					</SendouTab>
+					{showStreamTab ? (
+						<SendouTab id="stream" href={`${adminPage}/stream`} icon={<Tv />}>
+							{t("tournament:admin.tab.stream")}
+						</SendouTab>
+					) : null}
 					{showBracketsTab ? (
 						<SendouTab
 							id="brackets"

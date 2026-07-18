@@ -1,15 +1,14 @@
 import type { FileUpload } from "@remix-run/form-data-parser";
 import { parseFormData as parseMultipartFormData } from "@remix-run/form-data-parser";
 import type { Namespace, TFunction } from "i18next";
-import { nanoid } from "nanoid";
 import type { Ok, Result } from "neverthrow";
 import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
-import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
-import invariant from "./invariant";
+import { ServerConfig } from "~/config.server";
 import { logger } from "./logger";
+import { currentRequestPathname } from "./request-context.server";
 
 export function notFoundIfFalsy<T>(value: T | null | undefined): T {
 	if (!value) throw new Response(null, { status: 404 });
@@ -224,12 +223,11 @@ const LOHI_TOKEN_HEADER_NAME = "Lohi-Token";
 
 /** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
 export function canAccessLohiEndpoint(request: Request) {
-	invariant(process.env.LOHI_TOKEN, "LOHI_TOKEN is required");
-	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === process.env.LOHI_TOKEN;
+	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === ServerConfig.lohiToken;
 }
 
 function errorToastRedirect(message: string) {
-	return redirect(`?__error=${message}`);
+	return redirect(`${currentRequestPathname() ?? ""}?__error=${message}`);
 }
 
 /** Asserts condition is truthy. Throws a redirect triggering an error toast with given message otherwise.  */
@@ -261,7 +259,7 @@ export function errorToast(message: string) {
 }
 
 export function successToast(message: string) {
-	return redirect(`?__success=${message}`);
+	return redirect(`${currentRequestPathname() ?? ""}?__success=${message}`);
 }
 
 export function successToastWithRedirect({
@@ -292,6 +290,8 @@ export type Breadcrumb =
 			type: "IMAGE";
 			href: string;
 			text?: string;
+			/** Seed for the identicon shown if `imgPath` fails to load. */
+			identiconInput?: string;
 	  }
 	| { text: string; type: "TEXT"; href: string };
 
@@ -384,61 +384,6 @@ export async function safeParseMultipartFormData(
 				`File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`,
 			);
 		}
-		throw err;
-	}
-}
-
-export async function uploadImageIfSubmitted({
-	request,
-	fileNamePrefix,
-}: {
-	request: Request;
-	fileNamePrefix: string;
-}) {
-	const preDecidedFilename = `${fileNamePrefix}-${nanoid()}-${Date.now()}`;
-
-	const uploadHandler = async (fileUpload: FileUpload) => {
-		if (fileUpload.fieldName === "img") {
-			const [, ending] = fileUpload.name.split(".");
-			invariant(ending);
-			const newFilename = `${preDecidedFilename}.${ending}`;
-
-			const uploadedFileLocation = await uploadStreamToS3(
-				fileUpload.stream(),
-				newFilename,
-			);
-			return uploadedFileLocation;
-		}
-		return null;
-	};
-
-	let formData: FormData;
-
-	try {
-		formData = await safeParseMultipartFormData(request, uploadHandler);
-		const imgSrc = formData.get("img") as string | null;
-		if (!imgSrc) {
-			throw new TypeError("No image submitted");
-		}
-
-		const urlParts = imgSrc.split("/");
-		const fileName = urlParts[urlParts.length - 1];
-		invariant(fileName);
-
-		return {
-			avatarFileName: fileName,
-			formData,
-		};
-	} catch (err) {
-		// user did not submit image
-		if (err instanceof TypeError) {
-			return {
-				avatarFileName: undefined,
-				// @ts-expect-error: TODO: jank but temporary jank. Later lets refactor to a more general and robust way of sending images
-				formData,
-			};
-		}
-
 		throw err;
 	}
 }

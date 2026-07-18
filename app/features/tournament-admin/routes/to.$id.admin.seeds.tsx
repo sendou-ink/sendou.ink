@@ -18,7 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import * as React from "react";
-import { Link, useFetcher, useNavigation } from "react-router";
+import { useFetcher, useLoaderData, useNavigation } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -27,7 +27,6 @@ import {
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { Image } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
@@ -37,12 +36,21 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import { UserCard } from "~/features/user-card/components/UserCard";
 import invariant from "~/utils/invariant";
-import { navIconUrl, userResultsPage } from "~/utils/urls";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import styles from "./to.$id.admin.seeds.module.css";
 
 export { action } from "../actions/to.$id.admin.seeds.server";
+
+import { loader } from "../loaders/to.$id.admin.seeds.server";
+
+export { loader };
+
+export const handle: SendouRouteHandle = {
+	i18n: ["user", "q"],
+};
 
 const AB_DIVISION_RADIO_OPTIONS = [
 	{ value: "unassigned", label: "Unassigned" },
@@ -76,7 +84,7 @@ export default function TournamentAdminSeedsPage() {
 		}),
 	);
 
-	const seedingSnapshot = tournament.ctx.seedingSnapshot;
+	const { seedingSnapshot } = useLoaderData<typeof loader>();
 	const newTeamIds = computeNewTeamIds(tournament.ctx.teams, seedingSnapshot);
 	const newPlayersByTeam = computeNewPlayers(
 		tournament.ctx.teams,
@@ -755,20 +763,9 @@ function RowContents({
 									[styles.playerNew]: isNew,
 								})}
 							>
-								<Link to={userResultsPage(member, true)}>
-									{member.username}
-								</Link>
-								{member.plusTier ? (
-									<span className={styles.plusTier}>
-										<Image
-											path={navIconUrl("plus")}
-											width={14}
-											height={14}
-											alt=""
-										/>
-										{member.plusTier}
-									</span>
-								) : null}
+								<UserCard userId={member.userId}>
+									<span>{member.username}</span>
+								</UserCard>
 								{isNew ? (
 									<span className={styles.playerNewBadge}>NEW</span>
 								) : null}

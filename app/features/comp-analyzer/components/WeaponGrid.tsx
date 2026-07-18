@@ -13,7 +13,11 @@ import {
 	subWeaponIds,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
-import { specialWeaponImageUrl, subWeaponImageUrl } from "~/utils/urls";
+import {
+	specialWeaponImageUrl,
+	subWeaponImageUrl,
+	weaponCategoryUrl,
+} from "~/utils/urls";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import type { CategorizationType } from "../comp-analyzer-types";
 import styles from "./WeaponGrid.module.css";
@@ -163,7 +167,7 @@ function groupWeaponsByType(categorization: CategorizationType): WeaponGroup[] {
 		return weaponCategories.map((category) => ({
 			key: category.name,
 			name: category.name.toLowerCase(),
-			iconPath: `/static-assets/img/weapon-categories/${category.name}`,
+			iconPath: weaponCategoryUrl(category.name),
 			weaponIds: [...category.weaponIds] as MainWeaponId[],
 		}));
 	}

@@ -83,6 +83,11 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "customAvatar",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
 		name: "favoriteBadges",
 		extraInfo: true,
 	},

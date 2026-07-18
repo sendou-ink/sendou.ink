@@ -9,7 +9,6 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { snapdom } from "@zumer/snapdom";
 import clsx from "clsx";
 import { HardDriveDownload, Plus, RefreshCcw } from "lucide-react";
 import { useRef } from "react";
@@ -18,6 +17,10 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -42,8 +45,11 @@ import {
 	TierListProvider,
 	useTierListState,
 } from "../contexts/TierListContext";
+import type { TierListPlacementMode } from "../hooks/useTierList";
 import type { TierListItem } from "../tier-list-maker-schemas";
 import styles from "./tier-list-maker.module.css";
+
+const PLACEMENT_MODES: TierListPlacementMode[] = ["click", "track"];
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -109,6 +115,8 @@ function TierListMakerContent() {
 		setScreenshotMode,
 		selectedModes,
 		setSelectedModes,
+		placementMode,
+		setPlacementMode,
 	} = useTierListState();
 
 	const sensors = useSensors(
@@ -128,6 +136,8 @@ function TierListMakerContent() {
 
 	const handleDownload = async () => {
 		if (!tierListRef.current) return;
+
+		const { snapdom } = await import("@zumer/snapdom");
 
 		flushSync(() => setScreenshotMode(true));
 
@@ -199,12 +209,29 @@ function TierListMakerContent() {
 						))}
 					</div>
 
-					<div className="stack horizontal md flex-wrap">
+					<div className="stack horizontal md flex-wrap items-center">
+						<SendouChipRadioGroup>
+							{PLACEMENT_MODES.map((mode) => (
+								<SendouChipRadio
+									key={mode}
+									name="tier-list-placement-mode"
+									value={mode}
+									checked={placementMode === mode}
+									onChange={(value) =>
+										setPlacementMode(value as TierListPlacementMode)
+									}
+								>
+									{t(
+										`tier-list-maker:placementMode${mode === "track" ? "Track" : "Click"}`,
+									)}
+								</SendouChipRadio>
+							))}
+						</SendouChipRadioGroup>
 						<SendouSwitch
-							isSelected={canAddDuplicates}
-							onChange={setCanAddDuplicates}
+							isSelected={!canAddDuplicates}
+							onChange={(value) => setCanAddDuplicates(!value)}
 						>
-							{t("tier-list-maker:allowDuplicates")}
+							{t("tier-list-maker:noDuplicates")}
 						</SendouSwitch>
 						<SendouSwitch
 							isSelected={showTierHeaders}
@@ -234,6 +261,7 @@ function TierListMakerContent() {
 						<SendouTab id="stage-mode">
 							{t("tier-list-maker:stageModes")}
 						</SendouTab>
+						<SendouTab id="ability">{t("tier-list-maker:abilities")}</SendouTab>
 					</SendouTabList>
 
 					<SendouTabPanel id="main-weapon">
@@ -298,6 +326,10 @@ function TierListMakerContent() {
 								})}
 							</div>
 						</div>
+					</SendouTabPanel>
+
+					<SendouTabPanel id="ability">
+						<ItemPool />
 					</SendouTabPanel>
 				</SendouTabs>
 

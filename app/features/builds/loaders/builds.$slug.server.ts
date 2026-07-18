@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
@@ -15,11 +15,9 @@ import {
 } from "../builds-schemas";
 import { filterBuilds } from "../core/filter.server";
 
-export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
+export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const user = getUser();
-	const t = await i18next.getFixedT(request, ["weapons", "common"], {
-		lng: "en",
-	});
+	const t = await getFixedTForLanguage("en", ["weapons", "common"]);
 	const weaponId = weaponNameSlugToId(params.slug);
 
 	if (typeof weaponId !== "number" || weaponIdToType(weaponId) === "ALT_SKIN") {

@@ -95,6 +95,7 @@ export function resolveTimelineSpChanges(
 					discordId: m.discordId,
 					discordAvatar: m.discordAvatar,
 					customUrl: m.customUrl,
+					customAvatarUrl: m.customAvatarUrl,
 				},
 				skillDifference: m.skillDifference!,
 			}));

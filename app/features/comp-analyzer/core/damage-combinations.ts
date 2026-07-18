@@ -147,8 +147,10 @@ export function calculateDamageCombos(
 	excludedKeys: ExcludedDamageKey[] = [],
 	targetSubDefenseAp = 0,
 	maxCombosDisplayed = MAX_COMBOS_DISPLAYED,
+	includeSingleWeaponCombos = false,
 ): DamageCombo[] {
-	if (weaponIds.length < 2) {
+	const minWeaponSlots = includeSingleWeaponCombos ? 1 : 2;
+	if (weaponIds.length < minWeaponSlots) {
 		return [];
 	}
 
@@ -158,7 +160,11 @@ export function calculateDamageCombos(
 
 	const sources = extractDamageSources(weaponIds, targetSubDefenseAp);
 	const damageOptions = flattenToOptions(sources, excludedSet);
-	const combos = generateCombinations(damageOptions);
+	const combos = generateCombinations(
+		damageOptions,
+		minWeaponSlots,
+		includeSingleWeaponCombos,
+	);
 	const filtered = filterAndSortCombos(combos, maxCombosDisplayed);
 
 	return filtered;
@@ -201,10 +207,29 @@ interface PartialCombo {
 	hitCount: number;
 	usedSlots: Set<number>;
 	typeCountMap: Map<DamageType, number>;
-	slotDamageType: Map<number, DamageType>;
+	slotDamageType: Map<string, DamageType>;
 }
 
-function generateCombinations(options: DamageOption[]): DamageCombo[] {
+/**
+ * Groups a weapon slot's damage into a single "channel" that may only ever
+ * contribute one damage type per combo. In single-weapon mode each weapon type
+ * (main/sub/special) is its own channel so a single weapon can pair e.g. its
+ * main damage with its sub; otherwise a whole slot is one channel.
+ */
+function slotDamageChannel(
+	option: DamageOption,
+	includeSingleWeaponCombos: boolean,
+): string {
+	return includeSingleWeaponCombos
+		? `${option.weaponSlot}-${option.weaponType}`
+		: String(option.weaponSlot);
+}
+
+function generateCombinations(
+	options: DamageOption[],
+	minWeaponSlots: number,
+	includeSingleWeaponCombos: boolean,
+): DamageCombo[] {
 	const results: DamageCombo[] = [];
 
 	const initialState: PartialCombo = {
@@ -216,7 +241,14 @@ function generateCombinations(options: DamageOption[]): DamageCombo[] {
 		slotDamageType: new Map(),
 	};
 
-	backtrack(options, 0, initialState, results);
+	backtrack(
+		options,
+		0,
+		initialState,
+		results,
+		minWeaponSlots,
+		includeSingleWeaponCombos,
+	);
 
 	return results;
 }
@@ -226,9 +258,11 @@ function backtrack(
 	startIndex: number,
 	current: PartialCombo,
 	results: DamageCombo[],
+	minWeaponSlots: number,
+	includeSingleWeaponCombos: boolean,
 ): void {
 	if (
-		current.usedSlots.size >= 2 &&
+		current.usedSlots.size >= minWeaponSlots &&
 		current.totalDamage >= COMBO_DAMAGE_THRESHOLD
 	) {
 		results.push({
@@ -260,7 +294,8 @@ function backtrack(
 			continue;
 		}
 
-		const existingTypeForSlot = current.slotDamageType.get(option.weaponSlot);
+		const slotChannel = slotDamageChannel(option, includeSingleWeaponCombos);
+		const existingTypeForSlot = current.slotDamageType.get(slotChannel);
 		if (existingTypeForSlot && existingTypeForSlot !== option.damageType) {
 			continue;
 		}
@@ -287,7 +322,7 @@ function backtrack(
 			newTypeCountMap.set(option.damageType, currentTypeCount + count);
 
 			const newSlotDamageType = new Map(current.slotDamageType);
-			newSlotDamageType.set(option.weaponSlot, option.damageType);
+			newSlotDamageType.set(slotChannel, option.damageType);
 
 			const newState: PartialCombo = {
 				segments: [...current.segments, segment],
@@ -298,7 +333,14 @@ function backtrack(
 				slotDamageType: newSlotDamageType,
 			};
 
-			backtrack(options, i + 1, newState, results);
+			backtrack(
+				options,
+				i + 1,
+				newState,
+				results,
+				minWeaponSlots,
+				includeSingleWeaponCombos,
+			);
 		}
 	}
 }

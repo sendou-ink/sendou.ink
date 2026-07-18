@@ -39,7 +39,7 @@ type BuildFilter = "ALL" | "PUBLIC" | "PRIVATE" | MainWeaponId;
 export default function UserBuildsPage() {
 	const { t } = useTranslation(["builds", "user"]);
 	const user = useUser();
-	const layoutData = useMatches().at(-2)!.data as UserPageLoaderData;
+	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
 	const [weaponFilter, setWeaponFilter] = useSearchParamState<BuildFilter>({
 		defaultValue: "ALL",
@@ -122,7 +122,7 @@ function BuildsFilters({
 	const { t } = useTranslation(["weapons", "builds"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
-	const layoutData = useMatches().at(-2)!.data as UserPageLoaderData;
+	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
 
 	if (data.builds.length === 0) return null;
 

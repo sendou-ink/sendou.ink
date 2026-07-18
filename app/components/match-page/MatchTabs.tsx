@@ -1,11 +1,4 @@
-import {
-	BarChart3,
-	DoorOpen,
-	Key,
-	ScrollText,
-	Tally5,
-	Users,
-} from "lucide-react";
+import { BarChart3, Key, ScrollText, Tally5, Users } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
@@ -26,7 +19,6 @@ const TAB_KEY = "tab";
 export const TAB_KEYS = {
 	ROSTERS: "rosters",
 	ACTION: "action",
-	JOIN: "join",
 	RESULT: "result",
 	STATS: "stats",
 	ADMIN: "admin",
@@ -35,7 +27,6 @@ export const TAB_KEYS = {
 const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	rosters: <Users />,
 	action: <Tally5 />,
-	join: <DoorOpen />,
 	result: <ScrollText />,
 	stats: <BarChart3 />,
 	admin: <Key />,
@@ -44,7 +35,6 @@ const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 const TAB_TRANSLATION_KEYS = {
 	rosters: "q:match.tabs.rosters",
 	action: "q:match.tabs.action",
-	join: "common:actions.join",
 	result: "q:match.tabs.result",
 	stats: "q:match.tabs.stats",
 	admin: "common:pages.admin",

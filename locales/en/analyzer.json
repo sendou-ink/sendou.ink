@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "Weapon to analyze",
+	"rawParameters": "Raw parameters",
 	"attribute.weight": "Weight",
 	"attribute.weight.Fast": "Light",
 	"attribute.weight.Slow": "Heavy",
@@ -207,5 +208,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "Team Shield",
 	"comp.specialCategory.TEAM_BUFF": "Team Buff",
 	"comp.removeAll": "Remove all",
-	"comp.addAll": "Add all"
+	"comp.addAll": "Add all",
+	"comp.singleWeaponCombos": "Single weapon combos"
 }

@@ -10,6 +10,7 @@ import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
 import { preparingSchema } from "../q-schemas.server";
 import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
@@ -39,6 +40,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				await SQGroupRepository.setPreparingGroupAsActive(ownGroup.id);
 
 				await refreshSendouQInstance();
+
+				ChatSystemMessage.send({
+					room: SENDOUQ_LOOKING_ROOM,
+					revalidateOnly: true,
+				});
 
 				return redirect(SENDOUQ_LOOKING_PAGE);
 			}
@@ -71,7 +77,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						room: chatCodeToRevalidate,
 						revalidateOnly: true,
-						authorUserId: user.id,
 					});
 				}
 
@@ -84,6 +89,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						members: updatedGroup.members,
 					});
 				}
+
+				ChatSystemMessage.send({
+					room: sqGroupWebsocketRoom(ownGroup.id),
+					revalidateOnly: true,
+				});
 
 				notify({
 					userIds: [data.id],

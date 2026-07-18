@@ -10,17 +10,29 @@ import {
 	SendouMenuSection,
 } from "~/components/elements/Menu";
 import { ListButton } from "~/components/SideNav";
-import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
+import {
+	type FriendActivityType,
+	isLiveFriendActivity,
+} from "~/features/friends/friends-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { SENDOUQ_LOOKING_PAGE, tournamentSubsPage } from "~/utils/urls";
+import {
+	SENDOUQ_PAGE,
+	sendouQMatchPage,
+	tournamentMatchPage,
+	tournamentPage,
+	tournamentSubsPage,
+} from "~/utils/urls";
 
 export function FriendMenu({
 	discordId,
 	discordAvatar,
+	customAvatarUrl,
 	name,
 	subtitle,
 	badge,
 	url,
+	activityType,
+	matchId,
 	tournamentId,
 	friendshipId,
 	friendshipCreatedAt,
@@ -28,10 +40,13 @@ export function FriendMenu({
 }: {
 	discordId: string;
 	discordAvatar: string | null;
+	customAvatarUrl: string | null;
 	name: string;
 	subtitle: string | null;
 	badge: string | null;
 	url: string;
+	activityType: FriendActivityType | null;
+	matchId: number | null;
 	tournamentId: number | null;
 	friendshipId?: number;
 	friendshipCreatedAt?: number | null;
@@ -52,16 +67,18 @@ export function FriendMenu({
 			})
 		: null;
 
-	const activityHref = resolveActivityHref({ subtitle, tournamentId });
+	const isLive = isLiveFriendActivity(activityType);
+	const activity = resolveActivity({ activityType, matchId, tournamentId });
 
 	return (
 		<>
 			<SendouMenu
 				trigger={
 					<ListButton
-						user={{ discordId, discordAvatar }}
+						user={{ discordId, discordAvatar, customAvatarUrl }}
 						subtitle={subtitle}
-						badge={badge}
+						badge={isLive ? t("friends:friendsList.live") : badge}
+						badgeVariant={isLive ? "warning" : "default"}
 					>
 						{name}
 					</ListButton>
@@ -71,15 +88,36 @@ export function FriendMenu({
 					<SendouMenuItem href={url} icon={<User />} onAction={onNavigate}>
 						{t("friends:friendsList.viewUserPage")}
 					</SendouMenuItem>
-					{activityHref ? (
+					{activity?.type === "join-sendouq" ? (
 						<SendouMenuItem
-							href={activityHref.url}
+							icon={<Swords />}
+							onAction={() => {
+								fetcher.submit(
+									{ _action: "JOIN_QUEUE", direct: "true" },
+									{ method: "post", action: SENDOUQ_PAGE },
+								);
+								onNavigate?.();
+							}}
+						>
+							{t("friends:friendsList.joinSendouQ")}
+						</SendouMenuItem>
+					) : null}
+					{activity?.type === "view-match" ? (
+						<SendouMenuItem
+							href={activity.url}
 							icon={<Swords />}
 							onAction={onNavigate}
 						>
-							{activityHref.isSendouQ
-								? t("friends:friendsList.joinSendouQ")
-								: t("friends:friendsList.viewTournament")}
+							{t("friends:friendsList.viewMatch")}
+						</SendouMenuItem>
+					) : null}
+					{activity?.type === "view-tournament" ? (
+						<SendouMenuItem
+							href={activity.url}
+							icon={<Swords />}
+							onAction={onNavigate}
+						>
+							{t("friends:friendsList.viewTournament")}
 						</SendouMenuItem>
 					) : null}
 					{friendshipId !== undefined ? (
@@ -128,19 +166,46 @@ export function FriendMenu({
 	);
 }
 
-function resolveActivityHref(friend: {
-	subtitle: string | null;
+function resolveActivity(friend: {
+	activityType: FriendActivityType | null;
+	matchId: number | null;
 	tournamentId: number | null;
 }) {
-	if (!friend.subtitle) return null;
-
-	if (friend.subtitle === SENDOUQ_ACTIVITY_LABEL) {
-		return { url: SENDOUQ_LOOKING_PAGE, isSendouQ: true };
+	switch (friend.activityType) {
+		case "SENDOUQ_MATCH":
+			return friend.matchId
+				? ({
+						type: "view-match",
+						url: sendouQMatchPage(friend.matchId),
+					} as const)
+				: null;
+		case "TOURNAMENT_MATCH":
+			return friend.tournamentId && friend.matchId
+				? ({
+						type: "view-match",
+						url: tournamentMatchPage({
+							tournamentId: friend.tournamentId,
+							matchId: friend.matchId,
+						}),
+					} as const)
+				: null;
+		case "TOURNAMENT_PLAYING":
+			return friend.tournamentId
+				? ({
+						type: "view-tournament",
+						url: tournamentPage(friend.tournamentId),
+					} as const)
+				: null;
+		case "SENDOUQ":
+			return { type: "join-sendouq" } as const;
+		case "TOURNAMENT_SUB":
+			return friend.tournamentId
+				? ({
+						type: "view-tournament",
+						url: tournamentSubsPage(friend.tournamentId),
+					} as const)
+				: null;
+		default:
+			return null;
 	}
-
-	if (friend.tournamentId) {
-		return { url: tournamentSubsPage(friend.tournamentId), isSendouQ: false };
-	}
-
-	return null;
 }

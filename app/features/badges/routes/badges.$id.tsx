@@ -1,17 +1,40 @@
 import clsx from "clsx";
 import { Trans, useTranslation } from "react-i18next";
+import type { MetaFunction } from "react-router";
 import { Link, Outlet, useLoaderData } from "react-router";
 import { Badge } from "~/components/Badge";
 import { LinkButton } from "~/components/elements/Button";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
-import type { SerializeFrom } from "~/utils/remix";
-import { userPage } from "~/utils/urls";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { badgeUrl, userPage } from "~/utils/urls";
 import styles from "../badges.module.css";
 import { badgeExplanationText } from "../badges-utils";
 
 import { loader } from "../loaders/badges.$id.server";
 
 export { loader };
+
+export const meta: MetaFunction = (args) => {
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
+
+	if (!data) return [];
+
+	const ownerCount = data.badge.owners.reduce(
+		(sum, owner) => sum + owner.count,
+		0,
+	);
+
+	return metaTags({
+		title: data.badge.displayName,
+		ogTitle: `${data.badge.displayName} (Splatoon badge)`,
+		description: `See who owns the ${data.badge.displayName} badge on sendou.ink. Awarded ${ownerCount} time${ownerCount === 1 ? "" : "s"} so far.`,
+		image: {
+			url: badgeUrl({ code: data.badge.code, extension: "gif" }),
+			dimensions: { width: 200, height: 200 },
+		},
+		location: args.location,
+	});
+};
 
 export interface BadgeDetailsContext {
 	badge: SerializeFrom<typeof loader>["badge"];

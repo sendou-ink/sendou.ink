@@ -7,11 +7,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isStaff } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
-import {
-	canAccessLohiEndpoint,
-	errorToastIfFalsy,
-	parseSearchParams,
-} from "~/utils/remix.server";
+import { canAccessLohiEndpoint, parseSearchParams } from "~/utils/remix.server";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
@@ -68,11 +64,6 @@ export const logOutAction: ActionFunction = async ({ request }) => {
 };
 
 export const logInAction: ActionFunction = async ({ request }) => {
-	errorToastIfFalsy(
-		process.env.LOGIN_DISABLED !== "true",
-		"Login is temporarily disabled",
-	);
-
 	return await authenticator.authenticate("discord", request);
 };
 
@@ -91,6 +82,8 @@ export const impersonateAction: ActionFunction = async ({ request, url }) => {
 		}
 	}
 
+	const returnTo = await safeReturnTo(request);
+
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
 	);
@@ -108,12 +101,14 @@ export const impersonateAction: ActionFunction = async ({ request, url }) => {
 
 	session.set(IMPERSONATED_SESSION_KEY, userId);
 
-	throw redirect(ADMIN_PAGE, {
+	throw redirect(returnTo ?? ADMIN_PAGE, {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },
 	});
 };
 
 export const stopImpersonatingAction: ActionFunction = async ({ request }) => {
+	const returnTo = await safeReturnTo(request);
+
 	const session = await authSessionStorage.getSession(
 		request.headers.get("Cookie"),
 	);
@@ -127,10 +122,20 @@ export const stopImpersonatingAction: ActionFunction = async ({ request }) => {
 
 	session.unset(IMPERSONATED_SESSION_KEY);
 
-	throw redirect(ADMIN_PAGE, {
+	throw redirect(returnTo ?? ADMIN_PAGE, {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },
 	});
 };
+
+async function safeReturnTo(request: Request): Promise<string | null> {
+	if (!request.headers.get("Content-Type")?.includes("form")) return null;
+
+	const value = (await request.formData()).get("returnTo");
+	if (typeof value !== "string") return null;
+	if (!value.startsWith("/") || value.startsWith("//")) return null;
+
+	return value;
+}
 
 // below is alternative log-in flow that is operated via the Lohi Discord bot
 // this is intended primarily as a workaround when website is having problems communicating

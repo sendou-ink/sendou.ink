@@ -14,7 +14,13 @@ export const handle: SendouRouteHandle = {
 	i18n: ["calendar"],
 };
 
-const VIEW_FILTERS = ["registered", "hosting", "scrims", "saved"] as const;
+const VIEW_FILTERS = [
+	"registered",
+	"hosting",
+	"scrims",
+	"saved",
+	"organization",
+] as const;
 type ViewFilter = (typeof VIEW_FILTERS)[number];
 
 export default function EventsPage() {
@@ -33,29 +39,19 @@ export default function EventsPage() {
 		hosting: `${t("calendar:events.view.hosting")} (${data.hosting.length})`,
 		scrims: `${t("calendar:events.view.scrims")} (${data.scrims.length})`,
 		saved: `${t("calendar:events.view.saved")} (${data.saved.length})`,
+		organization: `${t("calendar:events.view.organization")} (${data.organization.length})`,
 	};
 
-	const shownEvents =
-		filter === "registered"
-			? data.registered
-			: filter === "hosting"
-				? data.hosting
-				: filter === "saved"
-					? data.saved
-					: data.scrims;
+	const shownEvents = data[filter];
 
-	const hasNoEventsAtAll =
-		data.registered.length === 0 &&
-		data.hosting.length === 0 &&
-		data.scrims.length === 0 &&
-		data.saved.length === 0;
+	const hasNoEventsAtAll = VIEW_FILTERS.every((key) => data[key].length === 0);
 
 	return (
 		<Main halfWidth>
 			<div className={styles.eventsListHeader}>
 				<h2 className="text-lg mx-2">{t("calendar:events.title")}</h2>
 				{hasNoEventsAtAll ? null : (
-					<SubNav secondary>
+					<SubNav secondary className={styles.subNav}>
 						{VIEW_FILTERS.map((value) => (
 							<SubNavLink
 								key={value}

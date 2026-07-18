@@ -11,6 +11,7 @@ import {
 	useSearchParamState,
 	useSearchParamStateEncoder,
 } from "~/hooks/useSearchParamState";
+import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
@@ -30,10 +31,13 @@ import {
 	tierListStateSerializedSchema,
 } from "../tier-list-maker-schemas";
 import {
+	addItemToTier,
 	compress,
 	decompress,
 	getNextNthForItem,
 } from "../tier-list-maker-utils";
+
+export type TierListPlacementMode = "track" | "click";
 
 export function useTierList() {
 	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
@@ -49,6 +53,17 @@ export function useTierList() {
 		useSearchParamTiersState();
 	const [activeItem, setActiveItem] = React.useState<TierListItem | null>(null);
 
+	const [placementMode, setPlacementMode] =
+		React.useState<TierListPlacementMode>("click");
+	const [selectedTierId, setSelectedTierId] = React.useState<string | null>(
+		() => tiers.tiers[0]?.id ?? null,
+	);
+
+	const handleChangePlacementMode = (mode: TierListPlacementMode) => {
+		setPlacementMode(mode);
+		setSelectedTierId(mode === "click" ? (tiers.tiers[0]?.id ?? null) : null);
+	};
+
 	const [hideAltKits, setHideAltKits] = useSearchParamState({
 		name: "hideAltKits",
 		defaultValue: false,
@@ -63,7 +78,7 @@ export function useTierList() {
 
 	const [canAddDuplicates, setCanAddDuplicates] = useSearchParamState({
 		name: "canAddDuplicates",
-		defaultValue: true,
+		defaultValue: false,
 		revive: (value) => value === "true",
 	});
 
@@ -94,7 +109,7 @@ export function useTierList() {
 		const [type, idStr, nth] = String(id).split(":");
 		if (!type || !idStr) return null;
 
-		if (type === "mode" || type === "stage-mode") {
+		if (type === "mode" || type === "stage-mode" || type === "ability") {
 			return {
 				type: type as TierListItem["type"],
 				id: idStr,
@@ -280,6 +295,14 @@ export function useTierList() {
 		persistTiersStateToParams(tiers);
 	};
 
+	const handleAddItemToTier = (item: TierListItem, tierId: string) => {
+		const newState = addItemToTier(tiers, tierId, item);
+		if (newState === tiers) return;
+
+		setTiers(newState);
+		persistTiersStateToParams(newState);
+	};
+
 	const handleAddTier = () => {
 		const newTier: TierListMakerTier = {
 			id: `tier-${Date.now()}`,
@@ -296,6 +319,10 @@ export function useTierList() {
 	};
 
 	const handleRemoveTier = (tierId: string) => {
+		if (selectedTierId === tierId) {
+			setSelectedTierId(null);
+		}
+
 		const newTierItems = new Map(tiers.tierItems);
 		newTierItems.delete(tierId);
 
@@ -345,6 +372,8 @@ export function useTierList() {
 				return [...stageIds];
 			case "mode":
 				return [...modesShort];
+			case "ability":
+				return [...abilitiesShort];
 			case "stage-mode": {
 				const combinations: string[] = [];
 				for (const stageId of stageIds) {
@@ -455,6 +484,7 @@ export function useTierList() {
 		handleDragOver,
 		handleDragEnd,
 		handleAddTier,
+		handleAddItemToTier,
 		handleRemoveTier,
 		handleRenameTier,
 		handleChangeTierColor,
@@ -475,6 +505,10 @@ export function useTierList() {
 		setTitle,
 		selectedModes,
 		setSelectedModes,
+		placementMode,
+		setPlacementMode: handleChangePlacementMode,
+		selectedTierId,
+		setSelectedTierId,
 	};
 }
 

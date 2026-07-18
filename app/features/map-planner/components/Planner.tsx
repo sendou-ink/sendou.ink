@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { getSpecialWeaponRange } from "~/features/comp-analyzer/core/special-weapon-range";
 import { getWeaponRange } from "~/features/comp-analyzer/core/weapon-range";
 import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
@@ -41,6 +42,7 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
+	SpecialWeaponId,
 	StageId,
 } from "~/modules/in-game-lists/types";
 import {
@@ -71,6 +73,7 @@ const GAME_UNITS_TO_PX: Record<"MINI" | "OVER", number> = {
 	OVER: 8.4,
 };
 const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
+const SPECIAL_WEAPON_URL_PATTERN = /special-weapons\/(\d+)/;
 
 export default function Planner() {
 	const { t, i18n } = useTranslation(["common"]);
@@ -783,6 +786,36 @@ function extractMainWeaponIdFromSrc(src: string): MainWeaponId | null {
 	return id as MainWeaponId;
 }
 
+function extractSpecialWeaponIdFromSrc(src: string): SpecialWeaponId | null {
+	const match = src.match(SPECIAL_WEAPON_URL_PATTERN);
+	if (!match) return null;
+
+	const id = Number(match[1]);
+	if (!specialWeaponIds.includes(id as SpecialWeaponId)) return null;
+
+	return id as SpecialWeaponId;
+}
+
+function rangeForSrc(
+	src: string,
+): { range: number; blastRadius?: number } | null {
+	const mainWeaponId = extractMainWeaponIdFromSrc(src);
+	if (mainWeaponId !== null) {
+		const result = getWeaponRange(mainWeaponId);
+		if (result.rangeType === "unsupported" || result.range <= 0) return null;
+		return { range: result.range, blastRadius: result.blastRadius };
+	}
+
+	const specialWeaponId = extractSpecialWeaponIdFromSrc(src);
+	if (specialWeaponId !== null) {
+		const result = getSpecialWeaponRange(specialWeaponId);
+		if (!result || result.range <= 0) return null;
+		return { range: result.range, blastRadius: result.blastRadius };
+	}
+
+	return null;
+}
+
 function createRangeCircleForShape(
 	editor: Editor,
 	shape: ReturnType<Editor["getCurrentPageShapes"]>[number],
@@ -796,11 +829,8 @@ function createRangeCircleForShape(
 	const asset = editor.getAsset(assetId as TLAssetId);
 	if (asset?.type !== "image" || !asset.props.src) return;
 
-	const weaponId = extractMainWeaponIdFromSrc(asset.props.src);
-	if (!weaponId) return;
-
-	const rangeResult = getWeaponRange(weaponId);
-	if (rangeResult.rangeType === "unsupported" || rangeResult.range <= 0) return;
+	const rangeResult = rangeForSrc(asset.props.src);
+	if (!rangeResult) return;
 
 	const centerX = shape.x + (shape.props as { w: number }).w / 2;
 	const centerY = shape.y + (shape.props as { h: number }).h / 2;

@@ -15,6 +15,7 @@ const DEFAULT_FIELDS = {
 	commissionsOpen: false,
 	commissionText: null,
 	country: "FI",
+	customAvatar: null,
 	customName: null,
 	customUrl: null,
 	favoriteBadgeIds: [],

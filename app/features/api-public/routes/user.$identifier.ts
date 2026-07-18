@@ -4,10 +4,12 @@ import { z } from "zod";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
+import { peakXpOverallSql } from "~/features/top-search/XRankPlacementRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { badgeUrl } from "~/utils/urls";
 import type { GetUserResponse } from "../schema";
 
 const paramsSchema = z.object({
@@ -15,7 +17,7 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT("en", ["weapons"]);
+	const t = await getFixedTForLanguage("en", ["weapons"]);
 	const { identifier } = parseParams({ params, schema: paramsSchema });
 
 	const user = notFoundIfFalsy(
@@ -43,7 +45,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						.whereRef("UserWeapon.userId", "=", "User.id")
 						.orderBy("UserWeapon.order", "asc"),
 				).as("weapons"),
-				"SplatoonPlayer.peakXp",
+				peakXpOverallSql().as("peakXp"),
 				jsonArrayFrom(
 					eb
 						.selectFrom("TeamMemberWithSecondary")
@@ -107,8 +109,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		badges: badges.map((badge) => ({
 			name: badge.displayName,
 			count: badge.count,
-			gifUrl: `https://sendou.ink/static-assets/badges/${badge.code}.gif`,
-			imageUrl: `https://sendou.ink/static-assets/badges/${badge.code}.avif`,
+			gifUrl: badgeUrl({ code: badge.code, extension: "gif" }),
+			imageUrl: badgeUrl({ code: badge.code }),
 		})),
 		teams: user.teams.map((team) => ({
 			id: team.id,

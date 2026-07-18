@@ -107,6 +107,18 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			}
 		: undefined;
 
+	// the badges the user can pick from, plus any already-attached prize badges they no
+	// longer manage (so an existing selection still renders and stays removable)
+	const badgeOptions = R.uniqueBy(
+		[...managedBadges, ...(eventToEdit?.badgePrizes ?? [])].map((badge) => ({
+			id: badge.id,
+			code: badge.code,
+			displayName: badge.displayName,
+			hue: badge.hue,
+		})),
+		(badge) => badge.id,
+	);
+
 	return {
 		isAddingTournament: Boolean(
 			url.searchParams.has("tournament") ||
@@ -114,6 +126,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 				eventToEdit?.tournament,
 		),
 		managedBadges,
+		badgeOptions,
 		eventToEdit: canEditEvent ? eventToEdit : undefined,
 		eventToCopy,
 		recentTournaments:

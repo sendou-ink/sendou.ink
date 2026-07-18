@@ -1,5 +1,6 @@
 {
 	"weaponSelect.label": "",
+	"rawParameters": "",
 	"attribute.weight": "משקל",
 	"attribute.weight.Fast": "קל",
 	"attribute.weight.Slow": "כבד",
@@ -210,5 +211,6 @@
 	"comp.specialCategory.TEAM_SHIELD": "מגן הקבוצה",
 	"comp.specialCategory.TEAM_BUFF": "חיזוק הקבוצה",
 	"comp.removeAll": "הסר הכל",
-	"comp.addAll": "הוסף הכל"
+	"comp.addAll": "הוסף הכל",
+	"comp.singleWeaponCombos": ""
 }

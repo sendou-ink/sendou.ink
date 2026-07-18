@@ -21,12 +21,12 @@ import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import styles from "./builds.$slug.stats.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: `${args.data.weaponName} popular abilities`,
-		ogTitle: `${args.data.weaponName} Splatoon 3 popular abilities`,
-		description: `List of the most popular abilities for ${args.data.weaponName} in Splatoon 3.`,
+		title: `${args.loaderData.weaponName} popular abilities`,
+		ogTitle: `${args.loaderData.weaponName} Splatoon 3 popular abilities`,
+		description: `List of the most popular abilities for ${args.loaderData.weaponName} in Splatoon 3.`,
 		location: args.location,
 	});
 };
@@ -34,7 +34,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["weapons", "builds", "analyzer"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 

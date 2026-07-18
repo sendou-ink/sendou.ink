@@ -1,0 +1,250 @@
+.trigger {
+	display: inline-flex;
+	width: fit-content;
+	padding: 0;
+	margin: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: inherit;
+	cursor: pointer;
+}
+
+.popover {
+	border: none;
+	background: none;
+}
+
+.dialog {
+	outline: none;
+}
+
+.card {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-5);
+	width: 18rem;
+	max-width: calc(100vw - var(--s-4));
+	padding: 0 var(--s-4) var(--s-4);
+	background-color: var(--color-bg);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	overflow: hidden;
+}
+
+.banner {
+	height: 6rem;
+	margin-inline: calc(-1 * var(--s-4));
+	background-size: cover;
+	background-position: center;
+	background-color: var(--color-bg-higher);
+}
+
+.iconButtons {
+	position: absolute;
+	top: var(--s-2);
+	inset-inline-end: var(--s-2);
+	display: flex;
+	gap: var(--s-2);
+}
+
+.freeAgentBadge {
+	position: absolute;
+	top: var(--s-2);
+	inset-inline-start: var(--s-2);
+}
+
+.identity {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2-5);
+	margin-top: calc(-1 * (var(--s-8)));
+	position: relative;
+}
+
+.avatar {
+	border: 3px solid var(--color-bg);
+	margin-block-end: -3px;
+}
+
+.nameGroup {
+	display: flex;
+	flex-direction: column;
+	padding-bottom: var(--s-6);
+	position: absolute;
+	top: 18px;
+	inset-inline-start: 92px;
+}
+
+.username {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	line-height: 1.1;
+	max-width: 170px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.subtitle {
+	max-width: 170px;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.friendCode {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.stats {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2-5);
+	font-weight: var(--weight-bold);
+}
+
+.stat {
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.plusStat {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.xpStat {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-end;
+	line-height: 1.1;
+}
+
+.xpPrimary {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.xpVerified {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.xpVerifiedIconSmall {
+	width: var(--s-4);
+	height: var(--s-4);
+	color: var(--color-success);
+}
+
+.xpVerifiedIconLarge {
+	width: var(--s-5);
+	height: var(--s-5);
+	color: var(--color-success);
+}
+
+.seasonStat {
+	position: relative;
+	display: inline-flex;
+	flex-shrink: 0;
+}
+
+.seasonTop {
+	position: absolute;
+	bottom: calc(-1 * var(--s-1));
+	left: 50%;
+	transform: translateX(-50%);
+	display: inline-flex;
+	align-items: center;
+	padding: 0 var(--s-1);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+}
+
+.statDivider {
+	width: 2px;
+	min-width: 2px;
+	align-self: stretch;
+	background-color: var(--color-border);
+}
+
+.mutualFriends {
+	display: flex;
+	align-items: center;
+	min-height: var(--field-size-sm);
+}
+
+.noMutualFriends {
+	margin-inline: auto;
+	font-style: italic;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.bio {
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.viewUserPage {
+	margin-top: var(--s-1);
+	align-self: center;
+}
+
+.noteView {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.noteHeaderGroup {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.noteHeader {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text);
+}
+
+.noteDate {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.noteText {
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.noteViewActions {
+	margin-block-start: var(--s-2);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-4);
+}

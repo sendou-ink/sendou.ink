@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { startOfToday, subHours } from "date-fns";
 import type { ActionFunction } from "react-router";
 import { z } from "zod";
 import { sql } from "~/db/sql";
@@ -67,7 +68,12 @@ const SEED_REFERENCE_TIMESTAMP = 1767440151;
 // TODO: do this cleaner
 function adjustSeedDatesToCurrent(variation: SeedVariation) {
 	const halfAnHourFromNow = Math.floor((Date.now() + 1000 * 60 * 30) / 1000);
-	const oneHourAgo = Math.floor((Date.now() - 1000 * 60 * 60) / 1000);
+	// clamped to the start of today so that within the first hour after midnight
+	// the event does not fall onto the previous calendar day (calendar renders today onward)
+	const oneHourAgo = Math.floor(
+		Math.max(subHours(new Date(), 1).getTime(), startOfToday().getTime()) /
+			1000,
+	);
 	const now = Math.floor(Date.now() / 1000);
 
 	const tournamentEventIds = sql

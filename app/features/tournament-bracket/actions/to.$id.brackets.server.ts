@@ -91,9 +91,16 @@ export const action: ActionFunction = async ({ params, request }) => {
 					? abDivisionsForSeeding(seeding, tournament, groupCount)
 					: undefined;
 
+			// in rr/swiss every group shares one map list per round number, and
+			// groups can have different round counts when teams divide unevenly,
+			// so compare against the number of distinct round numbers
+			const distinctRoundNumberCount = new Set(
+				bracket.data.round.map((round) => round.number),
+			).size;
+
 			errorToastIfFalsy(
 				bracket.type === "round_robin" || bracket.type === "swiss"
-					? bracket.data.round.length / groupCount === maps.length
+					? distinctRoundNumberCount === maps.length
 					: bracket.data.round.length === maps.length,
 				"Invalid map count",
 			);
@@ -348,7 +355,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
-				authorUserId: user.id,
 			},
 		]);
 	}

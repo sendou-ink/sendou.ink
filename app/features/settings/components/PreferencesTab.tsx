@@ -5,6 +5,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { SendouForm } from "~/form/SendouForm";
 import {
@@ -97,7 +98,7 @@ function PushNotificationsEnabler() {
 		} else {
 			const subscription = await swRegistration.pushManager.subscribe({
 				userVisibleOnly: true,
-				applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
+				applicationServerKey: Config.vapid.publicKey,
 			});
 			sendSubscriptionToServer(subscription);
 		}

@@ -246,6 +246,21 @@ describe("Tournament match page", () => {
 		});
 	});
 
+	describe("locked match", () => {
+		it("should return error when reporting score for a match waiting on previous matches", async () => {
+			await setActiveRosterAction();
+			await db
+				.updateTable("TournamentMatch")
+				.set({ status: 0 })
+				.where("id", "=", 1)
+				.execute();
+
+			const res = await reportScoreAction({ position: 0 });
+
+			assertResponseErrored(res, "Match is locked");
+		});
+	});
+
 	describe("BYE matches", () => {
 		it("should 404 when accessing a BYE match", async () => {
 			await db

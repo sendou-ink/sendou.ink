@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -6,6 +7,7 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { SendouForm } from "~/form/SendouForm";
+import { markFriendRequestsSeen } from "~/hooks/useUnseenFriendRequests";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FriendMenu } from "../components/FriendMenu";
 import { sendFriendRequestBaseSchema } from "../friends-schemas";
@@ -24,6 +26,14 @@ type ViewFilter = (typeof VIEW_FILTERS)[number];
 
 export default function FriendsPage() {
 	const data = useLoaderData<FriendsLoaderData>();
+
+	const incomingRequestIds = data.incomingRequests
+		.map((request) => request.id)
+		.join(",");
+
+	React.useEffect(() => {
+		markFriendRequestsSeen(data.incomingRequests.map((request) => request.id));
+	}, [incomingRequestIds]);
 
 	return (
 		<Main halfWidth>
@@ -69,6 +79,7 @@ function IncomingRequestsSection() {
 								user={{
 									discordId: request.sender.discordId,
 									discordAvatar: request.sender.discordAvatar,
+									customAvatarUrl: request.sender.customAvatarUrl,
 								}}
 								size="xxsm"
 							/>
@@ -120,6 +131,7 @@ function PendingRequestsSection() {
 								user={{
 									discordId: request.receiver.discordId,
 									discordAvatar: request.receiver.discordAvatar,
+									customAvatarUrl: request.receiver.customAvatarUrl,
 								}}
 								size="xxsm"
 							/>

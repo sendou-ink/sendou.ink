@@ -15,15 +15,15 @@ export { loader };
 import styles from "../team.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: args.data.team.name,
-		description: args.data.team.bio ?? undefined,
+		title: args.loaderData.team.name,
+		description: args.loaderData.team.bio ?? undefined,
 		location: args.location,
-		image: args.data.team.avatarUrl
+		image: args.loaderData.team.avatarUrl
 			? {
-					url: args.data.team.avatarUrl,
+					url: args.loaderData.team.avatarUrl,
 					dimensions: {
 						width: 124,
 						height: 124,
@@ -36,7 +36,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["team"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 

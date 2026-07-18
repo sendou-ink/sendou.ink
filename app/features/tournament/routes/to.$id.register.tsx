@@ -13,6 +13,7 @@ import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { Label } from "~/components/Label";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
@@ -24,7 +25,6 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import invariant from "~/utils/invariant";
 import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
@@ -68,9 +68,12 @@ export default function TournamentRegisterPage() {
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			{isRegularMemberOfATeam ? (
-				<div className="stack md items-center">
-					<Alert>{t("tournament:pre.inATeam")}</Alert>
-					<LeaveTeamControl />
+				<div className="stack md">
+					<Alert>{t("tournament:pre.captainOnlyEdit")}</Alert>
+					<div className="stack md items-center">
+						<LeaveTeamControl />
+					</div>
+					<RegistrationForms readOnly />
 				</div>
 			) : registrationClosedForNonParticipant ? (
 				<Alert>{t("tournament:pre.registrationClosed")}</Alert>
@@ -147,10 +150,14 @@ function PleaseLogIn() {
 	);
 }
 
-function RegistrationForms() {
+function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const user = useUser();
 	const tournament = useTournament();
+
+	if (readOnly) {
+		return <ReadOnlyRegistrationForms />;
+	}
 
 	const ownTeam = tournament.ownedTeamByUser(user);
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
@@ -206,6 +213,32 @@ function RegistrationForms() {
 						<CounterPickMapPoolPicker key={tournament.ctx.id} />
 					) : null}
 				</>
+			) : null}
+		</div>
+	);
+}
+
+function ReadOnlyRegistrationForms() {
+	const user = useUser();
+	const tournament = useTournament();
+
+	const team = tournament.teamMemberOfByUser(user);
+	if (!team) return null;
+
+	const checkedIn = team.checkIns.length > 0;
+
+	return (
+		<div className="stack lg">
+			<RegistrationProgress
+				checkedIn={checkedIn}
+				name={team.name}
+				mapPool={team.mapPool ?? undefined}
+				members={team.members}
+			/>
+			<TeamInfo ownTeam={team} canUnregister={false} readOnly />
+			<FillRoster ownTeam={team} ownTeamCheckedIn={checkedIn} readOnly />
+			{tournament.teamsPrePickMaps ? (
+				<CounterPickMapPoolPicker readOnly mapPool={team.mapPool ?? []} />
 			) : null}
 		</div>
 	);
@@ -418,16 +451,22 @@ function CheckIn({
 function TeamInfo({
 	ownTeam,
 	canUnregister,
+	readOnly = false,
 }: {
 	ownTeam?: TournamentDataTeam | null;
 	canUnregister: boolean;
+	readOnly?: boolean;
 }) {
 	const { t } = useTranslation(["tournament", "common"]);
 	const tournament = useTournament();
 
 	const defaultValues: Partial<RegisterTeamFormValues> = {
-		teamId: ownTeam?.team ? String(ownTeam.team.id) : null,
-		pickUpName: ownTeam?.team ? null : (ownTeam?.name ?? ""),
+		teamId: readOnly ? null : ownTeam?.team ? String(ownTeam.team.id) : null,
+		pickUpName: readOnly
+			? (ownTeam?.name ?? "")
+			: ownTeam?.team
+				? null
+				: (ownTeam?.name ?? ""),
 		logo:
 			!ownTeam?.team &&
 			ownTeam?.pickupAvatarUrl &&
@@ -487,18 +526,33 @@ function TeamInfo({
 					className="stack md items-center"
 					submitButtonText={t("common:actions.save")}
 					submitButtonTestId="save-team-button"
+					readOnly={readOnly}
 				>
-					<RegisterTeamFields />
+					<RegisterTeamFields readOnly={readOnly} />
 				</SendouForm>
 			</section>
 		</div>
 	);
 }
 
-function RegisterTeamFields() {
+function RegisterTeamFields({ readOnly = false }: { readOnly?: boolean }) {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const tournament = useTournament();
 	const { values } = useFormFieldContext();
+
+	if (readOnly) {
+		return (
+			<>
+				<div className={styles.sectionInputContainer}>
+					<FormField name="pickUpName" />
+				</div>
+				<div className={styles.sectionInputContainer}>
+					<FormField name="logo" />
+				</div>
+				<FormField name="prefersNotToHost" />
+			</>
+		);
+	}
 
 	const isLinked = Boolean(values.teamId);
 
@@ -563,7 +617,7 @@ function GoogleFormsLink() {
 			</h3>
 			<section className={clsx(styles.section, "stack lg items-center")}>
 				<a
-					href={import.meta.env.VITE_LEAGUE_GOOGLE_FORM_URL}
+					href={Config.leagueGoogleFormUrl}
 					className="py-4 font-bold"
 					target="_blank"
 					rel="noopener noreferrer"
@@ -582,12 +636,13 @@ function GoogleFormsLink() {
 function FillRoster({
 	ownTeam,
 	ownTeamCheckedIn,
+	readOnly = false,
 }: {
 	ownTeam: TournamentDataTeam;
 	ownTeamCheckedIn: boolean;
+	readOnly?: boolean;
 }) {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
-	const user = useUser();
 	const tournament = useTournament();
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const { t } = useTranslation(["common", "tournament"]);
@@ -597,8 +652,7 @@ function FillRoster({
 		inviteCode: ownTeam.inviteCode!,
 	})}`;
 
-	const { members: ownTeamMembers } = tournament.ownedTeamByUser(user) ?? {};
-	invariant(ownTeamMembers, "own team members should exist");
+	const ownTeamMembers = ownTeam.members;
 
 	const missingMembers = Math.max(
 		tournament.minMembersPerTeam - ownTeamMembers.length,
@@ -611,11 +665,14 @@ function FillRoster({
 	);
 
 	const showDeleteMemberSection =
-		(!ownTeamCheckedIn && ownTeamMembers.length > 1) ||
-		(ownTeamCheckedIn && ownTeamMembers.length > tournament.minMembersPerTeam);
+		!readOnly &&
+		((!ownTeamCheckedIn && ownTeamMembers.length > 1) ||
+			(ownTeamCheckedIn &&
+				ownTeamMembers.length > tournament.minMembersPerTeam));
 
 	const playersAvailableToDirectlyAdd = (() => {
-		return (data!.friendPlayers?.friends ?? []).filter((user) => {
+		if (readOnly) return [];
+		return (data?.friendPlayers?.friends ?? []).filter((user) => {
 			const isNotInTeam = tournament.ctx.teams.every((team) =>
 				team.members.every((member) => member.userId !== user.id),
 			);
@@ -628,7 +685,7 @@ function FillRoster({
 	})();
 
 	const teamIsFull = ownTeamMembers.length >= tournament.maxMembersPerTeam;
-	const canAddMembers = !teamIsFull && tournament.registrationOpen;
+	const canAddMembers = !teamIsFull && tournament.registrationOpen && !readOnly;
 
 	return (
 		<div>
@@ -841,13 +898,19 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 	);
 }
 
-function CounterPickMapPoolPicker() {
+function CounterPickMapPoolPicker({
+	readOnly = false,
+	mapPool,
+}: {
+	readOnly?: boolean;
+	mapPool?: NonNullable<TournamentDataTeam["mapPool"]>;
+}) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const [counterPickMaps, setCounterPickMaps] = React.useState(
-		data?.mapPool ?? [],
+		mapPool ?? data?.mapPool ?? [],
 	);
 
 	const counterPickMapPool = new MapPool(counterPickMaps);
@@ -898,14 +961,15 @@ function CounterPickMapPoolPicker() {
 											...stageIds.map((stageId) => ({ mode, stageId })),
 										])
 									}
+									disabled={readOnly}
 								/>
 							);
 						})}
-					{validateCounterPickMapPool(
-						counterPickMapPool,
-						isOneModeTournamentOf,
-						tournament.ctx.tieBreakerMapPool,
-					) === "VALID" ? (
+					{readOnly ? null : validateCounterPickMapPool(
+							counterPickMapPool,
+							isOneModeTournamentOf,
+							tournament.ctx.tieBreakerMapPool,
+						) === "VALID" ? (
 						<SubmitButton
 							_action="UPDATE_MAP_POOL"
 							state={fetcher.state}

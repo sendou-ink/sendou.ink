@@ -40,10 +40,7 @@ Note: it only works with Node 16.
 
 ## Doing monthly update
 
-1. Fill /scripts/dicts with new data from leanny repository:
-   - weapon = contents of `weapon` folder
-   - langs = contents of `language` folder
-   - Couple of others at the root: `GearInfoClothes.json`, `GearInfoHead.json`, `GearInfoShoes.json`, `spl__DamageRateInfoConfig.pp__CombinationDataTableData.json`, `SplPlayer.game__GameParameterTable.json`, `WeaponInfoMain.json`, `WeaponInfoSpecial.json` and `WeaponInfoSub.json`
+1. Drop the whole [splat3 repository](https://github.com/Leanny/splat3) into `/scripts/dicts/splat3` (pull before).
 1. Update all `CURRENT_SEASON` constants
 1. Update `CURRENT_PATCH` constants
 1. Update `PATCHES` constant with the late patch + remove the oldest
@@ -52,7 +49,8 @@ Note: it only works with Node 16.
 1. `pnpm exec vite-node scripts/create-gear-json.ts`
 1. `pnpm exec vite-node scripts/create-analyzer-json.ts`
    8a. Double check that no hard-coded special damages changed
-1. `pnpm exec vite-node scripts/create-object-dmg-json.ts`
+1. `pnpm exec vite-node scripts/create-object-dmg-json.ts` (also writes `damage-rate-history.json` for the params page directly into `app/features/params/data`)
+1. `pnpm exec vite-node scripts/sync-weapon-params.ts` (writes the weapon/sub/special param histories for the params page, see [Sync weapon params](#sync-weapon-params))
 1. Fill new weapon IDs by category to `weapon-ids.ts` (easy to take from the diff of English weapons.json)
 1. Get gear IDs for each slot from /output folder and update `gear-ids.ts`.
 1. Replace `object-dmg.json` with the `object-dmg.json` in /output folder

@@ -6,7 +6,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
@@ -17,7 +17,7 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT("en", ["game-misc"]);
+	const t = await getFixedTForLanguage("en", ["game-misc"]);
 	const { id } = parseParams({
 		params,
 		schema: paramsSchema,

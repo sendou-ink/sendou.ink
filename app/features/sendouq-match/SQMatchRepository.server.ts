@@ -12,7 +12,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	matchProfileWeapons,
 	tournamentLogoWithDefault,
@@ -123,7 +123,6 @@ function groupWithTeamAndMembers(
 					eb
 						.selectFrom("GroupMember")
 						.innerJoin("User", "User.id", "GroupMember.userId")
-						.leftJoin("PlusTier", "User.id", "PlusTier.userId")
 						.leftJoin("GroupMatchContinueVote", (join) =>
 							join
 								.onRef(
@@ -138,7 +137,7 @@ function groupWithTeamAndMembers(
 								),
 						)
 						.select((arrayEb) => [
-							...COMMON_USER_FIELDS,
+							...commonUserSelect(arrayEb),
 							"GroupMember.role",
 							"GroupMember.note",
 							"User.inGameName",
@@ -148,7 +147,6 @@ function groupWithTeamAndMembers(
 							"User.noScreen",
 							matchProfileWeapons(arrayEb).as("weapons"),
 							"User.mapModePreferences",
-							"PlusTier.tier as plusTier",
 							"GroupMatchContinueVote.isContinuing",
 							arrayEb
 								.selectFrom("UserFriendCode")
@@ -181,10 +179,19 @@ export async function seasonResultPagesByUserId({
 		.select(({ fn }) => [fn.countAll().as("count")])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb }) =>
+		.where(({ or, eb, exists, selectFrom }) =>
 			or([
 				eb("groupMatchId", "is not", null),
-				eb("tournamentId", "is not", null),
+				exists(
+					selectFrom("TournamentResult")
+						.select("TournamentResult.userId")
+						.whereRef(
+							"TournamentResult.tournamentId",
+							"=",
+							"Skill.tournamentId",
+						)
+						.where("TournamentResult.userId", "=", userId),
+				),
 			]),
 		)
 		.executeTakeFirstOrThrow();
@@ -229,7 +236,7 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 			eb
 				.selectFrom("GroupMember")
 				.innerJoin("User", "GroupMember.userId", "User.id")
-				.select([...COMMON_USER_FIELDS])
+				.select((eb) => commonUserSelect(eb))
 				.whereRef(
 					"GroupMember.groupId",
 					"=",
@@ -310,10 +317,19 @@ export async function seasonResultsByUserId({
 		])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb }) =>
+		.where(({ or, eb, exists, selectFrom }) =>
 			or([
 				eb("groupMatchId", "is not", null),
-				eb("tournamentId", "is not", null),
+				exists(
+					selectFrom("TournamentResult")
+						.select("TournamentResult.userId")
+						.whereRef(
+							"TournamentResult.tournamentId",
+							"=",
+							"Skill.tournamentId",
+						)
+						.where("TournamentResult.userId", "=", userId),
+				),
 			]),
 		)
 		.limit(MATCHES_PER_SEASONS_PAGE)

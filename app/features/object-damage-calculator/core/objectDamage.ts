@@ -20,7 +20,7 @@ import {
 	damageTypesToCombine,
 } from "../calculator-constants";
 import type { CombineWith, DamageReceiver } from "../calculator-types";
-import objectDamages from "./object-dmg.json";
+import objectDamages from "../data/object-dmg.json";
 import { objectHitPoints } from "./objectHitPoints";
 
 function damageTypeToMultipliers({

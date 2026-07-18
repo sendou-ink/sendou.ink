@@ -11,7 +11,7 @@ export function TeamGoBackButton() {
 
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
-	const layoutData = parentRoute.data as TeamLoaderData;
+	const layoutData = parentRoute.loaderData as TeamLoaderData;
 
 	return (
 		<div className="stack">

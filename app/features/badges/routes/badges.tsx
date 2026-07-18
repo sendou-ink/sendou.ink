@@ -33,7 +33,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon badges (tournament prizes list)",
 		location: args.location,
 		description:
-			"Over 400 badge tournament prizes and counting! Check out the full list including the owners.",
+			"Full list of Splatoon tournament prize badges. Check out every badge along with its owners.",
 	});
 };
 

@@ -1,4 +1,4 @@
-import { add } from "date-fns";
+import { add, sub } from "date-fns";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
@@ -14,6 +14,7 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import { ConcurrentModificationError } from "~/utils/errors";
+import { logger } from "~/utils/logger";
 import {
 	actionError,
 	errorToast,
@@ -24,6 +25,7 @@ import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
+import { SCRIM } from "../scrims-constants";
 import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
@@ -173,6 +175,46 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					meta: { id: post.id, opponentTeamName: postTeamName },
 				},
 			});
+
+			if (fullPost) {
+				try {
+					const bookedAt = databaseTimestampToDate(
+						Scrim.getStartTime(fullPost),
+					);
+					const startTime = dateToDatabaseTimestamp(
+						sub(bookedAt, { hours: SCRIM.AUTO_CANCEL_WINDOW_HOURS }),
+					);
+					const endTime = dateToDatabaseTimestamp(
+						add(bookedAt, { hours: SCRIM.AUTO_CANCEL_WINDOW_HOURS }),
+					);
+
+					const { posts, requestIds } =
+						await ScrimPostRepository.findPendingOverlapsForUsers({
+							userIds: Scrim.participantIdsListFromAccepted(fullPost),
+							startTime,
+							endTime,
+							excludePostId: post.id,
+						});
+
+					for (const requestId of requestIds) {
+						await ScrimPostRepository.deleteRequest(requestId);
+					}
+
+					for (const removed of posts) {
+						await ScrimPostRepository.del(removed.id);
+						notify({
+							userIds: removed.memberIds,
+							defaultSeenUserIds: [user.id],
+							notification: {
+								type: "SCRIM_AUTO_DELETED",
+								meta: { at: removed.at },
+							},
+						});
+					}
+				} catch (error) {
+					logger.error("Failed to auto-cancel overlapping scrims", error);
+				}
+			}
 
 			break;
 		}

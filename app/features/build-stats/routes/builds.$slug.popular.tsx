@@ -18,12 +18,12 @@ import { loader } from "../loaders/builds.$slug.popular.server";
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	if (!args.data) return [];
+	if (!args.loaderData) return [];
 
 	return metaTags({
-		title: `${args.data.weaponName} popular builds`,
-		ogTitle: `${args.data.weaponName} Splatoon 3 popular builds`,
-		description: `List of most popular ability combinations for ${args.data.weaponName}.`,
+		title: `${args.loaderData.weaponName} popular builds`,
+		ogTitle: `${args.loaderData.weaponName} Splatoon 3 popular builds`,
+		description: `List of most popular ability combinations for ${args.loaderData.weaponName}.`,
 		location: args.location,
 	});
 };
@@ -31,7 +31,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["analyzer", "builds"],
 	breadcrumb: ({ match }) => {
-		const data = match.data as SerializeFrom<typeof loader> | undefined;
+		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
 		if (!data) return [];
 

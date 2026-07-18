@@ -1,5 +1,9 @@
 import * as R from "remeda";
 import { z } from "zod";
+import {
+	IN_GAME_NAME_MAX_LENGTH,
+	inGameNameIsValid,
+} from "~/features/user-page/in-game-name";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	date,
@@ -32,6 +36,18 @@ import type {
 } from "./types";
 
 export const formRegistry = z.registry<FormField>();
+
+/**
+ * Looks up a schemas form field metadata. Needed to bypass the
+ * registrys deep generic `get` signature which causes
+ * "Type instantiation is excessively deep" errors.
+ */
+export function getFormFieldMetadata(schema: z.ZodType): FormField | undefined {
+	const registry = formRegistry as {
+		get(schema: z.ZodType): FormField | undefined;
+	};
+	return registry.get(schema);
+}
 
 export type RequiresDefault<T extends z.ZodType> = T & {
 	_requiresDefault: true;
@@ -85,6 +101,7 @@ function prefixItems<V extends string>(
 
 export function image(args: {
 	label: FormsTranslationKey;
+	bottomText?: FormsTranslationKey;
 	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
 	autoValidate?: boolean;
 }) {
@@ -92,6 +109,7 @@ export function image(args: {
 	// instance would otherwise have its metadata overwritten by later fields)
 	return imageValue.clone().register(formRegistry, {
 		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
 		dimensions: args.dimensions ?? "logo",
 		autoValidate: args.autoValidate ?? false,
 		type: "image",
@@ -198,6 +216,29 @@ function textFieldRefined<T extends z.ZodType<string | null>>(
 	return result as T;
 }
 
+export function inGameName(
+	args: WithTypedTranslationKeys<{
+		label?: FormsTranslationKey;
+		bottomText?: FormsTranslationKey;
+	}>,
+) {
+	const schema = safeNullableStringSchema({
+		max: IN_GAME_NAME_MAX_LENGTH,
+	}).refine((val) => val === null || inGameNameIsValid(val), {
+		message: "forms:errors.profileInGameName",
+	});
+
+	return schema.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		maxLength: IN_GAME_NAME_MAX_LENGTH,
+		required: false,
+		type: "in-game-name",
+		initialValue: "",
+	});
+}
+
 export function numberField(
 	args: WithTypedTranslationKeys<
 		Omit<
@@ -213,7 +254,7 @@ export function numberField(
 ) {
 	return z.coerce
 		.number()
-		.int()
+		.int({ message: "forms:errors.mustBeWholeNumber" })
 		.nonnegative()
 		.register(formRegistry, {
 			...args,
@@ -242,7 +283,7 @@ export function numberFieldOptional(
 ) {
 	return z.coerce
 		.number()
-		.int()
+		.int({ message: "forms:errors.mustBeWholeNumber" })
 		.nonnegative()
 		.optional()
 		.register(formRegistry, {

@@ -52,14 +52,16 @@ export function useEntitySearch<TItem extends { id: number }>({
 
 	const queryFetcher = useFetcher<unknown>();
 
+	const query = filterText.trim();
+
 	useDebounce(
 		() => {
-			if (!filterText) return;
-			queryFetcher.load(buildUrl(filterText));
+			if (!query) return;
+			queryFetcher.load(buildUrl(query));
 			setSelectedKey(null);
 		},
 		500,
-		[filterText],
+		[query],
 	);
 
 	React.useEffect(() => {
@@ -69,7 +71,7 @@ export function useEntitySearch<TItem extends { id: number }>({
 	}, [initialSelectedId]);
 
 	const items = withInitialItem(
-		toEntitySearchItems(parseResults(queryFetcher.data, filterText)),
+		toEntitySearchItems(parseResults(queryFetcher.data, query)),
 		initialItem,
 	);
 

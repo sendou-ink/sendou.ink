@@ -103,7 +103,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				serializedPool,
 			});
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "REMOVE_MAP_LIST": {
@@ -111,7 +111,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			await ScrimMapListRepository.deleteMapList(post.id, viewerSide);
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "REPORT_MAP": {
@@ -127,7 +127,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				winnerSide: data.winnerSide,
 			});
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "UNDO_MAP": {
@@ -138,7 +138,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			await ScrimMapRepository.undoMostRecentMap(post.id);
 
-			broadcastRevalidate({ post, user });
+			broadcastRevalidate(post);
 			break;
 		}
 		case "REPLAY_MAP": {
@@ -203,18 +203,13 @@ async function loadMapByMapContext({
 	return { viewerSide: viewerSide!, maps, mapLists };
 }
 
-function broadcastRevalidate({
-	post,
-	user,
-}: {
-	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>;
-	user: ReturnType<typeof requireUser>;
-}) {
+function broadcastRevalidate(
+	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>,
+) {
 	if (!post.chatCode) return;
 	ChatSystemMessage.send({
 		room: post.chatCode,
 		revalidateOnly: true,
-		authorUserId: user.id,
 	});
 }
 

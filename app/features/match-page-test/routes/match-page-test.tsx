@@ -17,7 +17,6 @@ import {
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
-import { MatchJoinTab } from "~/components/match-page/MatchJoinTab";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
@@ -96,6 +95,8 @@ export default function MatchPageTestRoute() {
 							teamName: "Chimera",
 						})}
 						screenLegal={false}
+						joinPool="SQ7"
+						joinPass="8430"
 					/>
 					<MatchBannerBottomRow
 						games={[{ mode: "SZ" }, { mode: "TC" }, { mode: "RM" }]}
@@ -107,6 +108,7 @@ export default function MatchPageTestRoute() {
 									discordId: "123",
 									discordAvatar: null,
 									customUrl: "sendou",
+									customAvatarUrl: null,
 								},
 								{
 									id: 2,
@@ -114,6 +116,7 @@ export default function MatchPageTestRoute() {
 									discordId: "456",
 									discordAvatar: null,
 									customUrl: null,
+									customAvatarUrl: null,
 								},
 								{
 									id: 3,
@@ -121,6 +124,7 @@ export default function MatchPageTestRoute() {
 									discordId: "789",
 									discordAvatar: null,
 									customUrl: null,
+									customAvatarUrl: null,
 								},
 								{
 									id: 4,
@@ -128,6 +132,7 @@ export default function MatchPageTestRoute() {
 									discordId: "012",
 									discordAvatar: null,
 									customUrl: null,
+									customAvatarUrl: null,
 								},
 							],
 							bravo: [
@@ -137,6 +142,7 @@ export default function MatchPageTestRoute() {
 									discordId: "345",
 									discordAvatar: null,
 									customUrl: null,
+									customAvatarUrl: null,
 								},
 								{
 									id: 6,
@@ -144,6 +150,7 @@ export default function MatchPageTestRoute() {
 									discordId: "678",
 									discordAvatar: null,
 									customUrl: null,
+									customAvatarUrl: null,
 								},
 								{
 									id: 7,
@@ -151,6 +158,7 @@ export default function MatchPageTestRoute() {
 									discordId: "901",
 									discordAvatar: null,
 									customUrl: null,
+									customAvatarUrl: null,
 								},
 								{
 									id: 8,
@@ -158,19 +166,14 @@ export default function MatchPageTestRoute() {
 									discordId: "234",
 									discordAvatar: null,
 									customUrl: null,
+									customAvatarUrl: null,
 								},
 							],
 						}}
 					/>
 				</MatchBannerContainer>
 
-				<MatchTabs tabs={["join", "rosters", "action", "result"]}>
-					<MatchJoinTab
-						joinLink="https://app.nintendo.net/private_battle/abc123"
-						pool="SQ7"
-						pass="8430"
-						showNoSplatnetAlert
-					/>
+				<MatchTabs tabs={["rosters", "action", "result"]}>
 					<MatchRosterTab
 						minMembersPerTeam={4}
 						canEditSubbedOut={[true, false]}
@@ -193,8 +196,8 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: "sendou",
 										tier: { name: "LEVIATHAN", isPlus: true },
-										plusTier: 1,
 										weaponPool: [0, 2000, 4000],
+										customAvatarUrl: null,
 									},
 									{
 										id: 2,
@@ -203,8 +206,8 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: { name: "DIAMOND", isPlus: false },
-										plusTier: 2,
 										weaponPool: [20, 1100],
+										customAvatarUrl: null,
 									},
 									{
 										id: 3,
@@ -213,6 +216,7 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: "CALCULATING",
+										customAvatarUrl: null,
 									},
 									{
 										id: 4,
@@ -220,6 +224,7 @@ export default function MatchPageTestRoute() {
 										discordId: "012",
 										discordAvatar: null,
 										customUrl: null,
+										customAvatarUrl: null,
 									},
 									{
 										id: 9,
@@ -228,6 +233,7 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: { name: "GOLD", isPlus: true },
+										customAvatarUrl: null,
 									},
 								],
 								subbedOut: [9],
@@ -242,8 +248,8 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: { name: "PLATINUM", isPlus: false },
-										plusTier: 3,
 										weaponPool: [40, 3000],
+										customAvatarUrl: null,
 									},
 									{
 										id: 6,
@@ -252,6 +258,7 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: { name: "SILVER", isPlus: true },
+										customAvatarUrl: null,
 									},
 									{
 										id: 7,
@@ -259,6 +266,7 @@ export default function MatchPageTestRoute() {
 										discordId: "901",
 										discordAvatar: null,
 										customUrl: null,
+										customAvatarUrl: null,
 									},
 									{
 										id: 8,
@@ -267,6 +275,7 @@ export default function MatchPageTestRoute() {
 										discordAvatar: null,
 										customUrl: null,
 										tier: { name: "BRONZE", isPlus: false },
+										customAvatarUrl: null,
 									},
 								],
 							},
@@ -376,6 +385,7 @@ export default function MatchPageTestRoute() {
 											discordId: "123",
 											discordAvatar: null,
 											customUrl: "sendou",
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: true,
@@ -391,6 +401,7 @@ export default function MatchPageTestRoute() {
 											discordId: "456",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: true,
@@ -406,6 +417,7 @@ export default function MatchPageTestRoute() {
 											discordId: "789",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: false,
@@ -420,6 +432,7 @@ export default function MatchPageTestRoute() {
 											discordId: "012",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: false,
@@ -444,6 +457,7 @@ export default function MatchPageTestRoute() {
 											discordId: "345",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: true,
@@ -459,6 +473,7 @@ export default function MatchPageTestRoute() {
 											discordId: "678",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: true,
@@ -474,6 +489,7 @@ export default function MatchPageTestRoute() {
 											discordId: "901",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: true,
@@ -489,6 +505,7 @@ export default function MatchPageTestRoute() {
 											discordId: "234",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										skillDifference: {
 											calculated: true,
@@ -523,6 +540,7 @@ export default function MatchPageTestRoute() {
 											discordId: "123",
 											discordAvatar: null,
 											customUrl: "sendou",
+											customAvatarUrl: null,
 										},
 										{
 											id: 2,
@@ -530,6 +548,7 @@ export default function MatchPageTestRoute() {
 											discordId: "456",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 3,
@@ -537,6 +556,7 @@ export default function MatchPageTestRoute() {
 											discordId: "789",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 4,
@@ -544,6 +564,7 @@ export default function MatchPageTestRoute() {
 											discordId: "012",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 									],
 									bravo: [
@@ -553,6 +574,7 @@ export default function MatchPageTestRoute() {
 											discordId: "345",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 6,
@@ -560,6 +582,7 @@ export default function MatchPageTestRoute() {
 											discordId: "678",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 7,
@@ -567,6 +590,7 @@ export default function MatchPageTestRoute() {
 											discordId: "901",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 8,
@@ -574,6 +598,7 @@ export default function MatchPageTestRoute() {
 											discordId: "234",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 									],
 								},
@@ -595,6 +620,7 @@ export default function MatchPageTestRoute() {
 											discordId: "123",
 											discordAvatar: null,
 											customUrl: "sendou",
+											customAvatarUrl: null,
 										},
 										{
 											id: 2,
@@ -602,6 +628,7 @@ export default function MatchPageTestRoute() {
 											discordId: "456",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 3,
@@ -609,6 +636,7 @@ export default function MatchPageTestRoute() {
 											discordId: "789",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 4,
@@ -616,6 +644,7 @@ export default function MatchPageTestRoute() {
 											discordId: "012",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 									],
 									bravo: [
@@ -625,6 +654,7 @@ export default function MatchPageTestRoute() {
 											discordId: "345",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 6,
@@ -632,6 +662,7 @@ export default function MatchPageTestRoute() {
 											discordId: "678",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 7,
@@ -639,6 +670,7 @@ export default function MatchPageTestRoute() {
 											discordId: "901",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 8,
@@ -646,6 +678,7 @@ export default function MatchPageTestRoute() {
 											discordId: "234",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 									],
 								},
@@ -668,6 +701,7 @@ export default function MatchPageTestRoute() {
 											discordId: "123",
 											discordAvatar: null,
 											customUrl: "sendou",
+											customAvatarUrl: null,
 										},
 										{
 											id: 2,
@@ -675,6 +709,7 @@ export default function MatchPageTestRoute() {
 											discordId: "456",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 3,
@@ -682,6 +717,7 @@ export default function MatchPageTestRoute() {
 											discordId: "789",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 4,
@@ -689,6 +725,7 @@ export default function MatchPageTestRoute() {
 											discordId: "012",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 									],
 									bravo: [
@@ -698,6 +735,7 @@ export default function MatchPageTestRoute() {
 											discordId: "345",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 6,
@@ -705,6 +743,7 @@ export default function MatchPageTestRoute() {
 											discordId: "678",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 9,
@@ -712,6 +751,7 @@ export default function MatchPageTestRoute() {
 											discordId: "567",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 										{
 											id: 8,
@@ -719,6 +759,7 @@ export default function MatchPageTestRoute() {
 											discordId: "234",
 											discordAvatar: null,
 											customUrl: null,
+											customAvatarUrl: null,
 										},
 									],
 								},

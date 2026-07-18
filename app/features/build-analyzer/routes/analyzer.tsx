@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, SlidersHorizontal } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
@@ -16,6 +16,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Image } from "~/components/Image";
+import { weaponToSelectedWeapon } from "~/components/layout/WeaponSearch";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
@@ -52,8 +53,9 @@ import {
 	specialWeaponImageUrl,
 	subWeaponImageUrl,
 	userNewBuildPage,
+	weaponParamsPage,
 } from "~/utils/urls";
-import { SendouButton } from "../../../components/elements/Button";
+import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { metaTags } from "../../../utils/remix";
 import {
@@ -156,6 +158,7 @@ function BuildAnalyzerPage() {
 		isComparing: !buildIsEmpty(build) && !buildIsEmpty(build2),
 		mainWeaponId,
 		abilityPoints,
+		abilityPoints2,
 	};
 
 	const mainWeaponCategoryItems = [
@@ -246,7 +249,7 @@ function BuildAnalyzerPage() {
 		<Main>
 			<div className={styles.container}>
 				<div className={styles.leftColumn}>
-					<div className="stack sm items-center w-full">
+					<div className="stack sm items-start w-full">
 						<div className="w-full">
 							<WeaponSelect
 								label={t("analyzer:weaponSelect.label")}
@@ -258,6 +261,16 @@ function BuildAnalyzerPage() {
 								}
 							/>
 						</div>
+						<LinkButton
+							to={weaponParamsPage(
+								weaponToSelectedWeapon(mainWeaponId, t).paramsSlug,
+							)}
+							variant="minimal"
+							size="small"
+							icon={<SlidersHorizontal />}
+						>
+							{t("analyzer:rawParameters")}
+						</LinkButton>
 					</div>
 					<div className="stack md items-center w-full">
 						<div className="w-full">
@@ -987,6 +1000,8 @@ interface StatChartProps {
 	valueSuffix?: string;
 	mainWeaponId: MainWeaponId;
 	simple?: boolean;
+	/** Marks where the current build(s) sit on the curve: `x` ability points, `y` stat value. */
+	highlight?: Array<{ x: number; y: number }>;
 }
 
 function StatChartPopover(props: StatChartProps) {
@@ -997,7 +1012,7 @@ function StatChartPopover(props: StatChartProps) {
 				<SendouButton
 					shape="circle"
 					variant="minimal"
-					size="small"
+					size={props.simple ? "miniscule" : "small"}
 					icon={<FlaskConical />}
 				/>
 			}
@@ -1014,6 +1029,7 @@ function StatChart({
 	valueSuffix,
 	mainWeaponId,
 	subWeaponId,
+	highlight,
 }: StatChartProps) {
 	const { t } = useTranslation(["analyzer"]);
 
@@ -1046,9 +1062,13 @@ function StatChart({
 	return (
 		<Chart
 			options={chartOptions as any}
+			containerClassName={styles.statChartContainer}
 			headerSuffix={t("analyzer:abilityPoints.short")}
 			valueSuffix={valueSuffix}
 			xAxis="linear"
+			xAbilityLimit={57}
+			highlight={highlight}
+			crosshair
 		/>
 	);
 }
@@ -1399,7 +1419,7 @@ function StatCard({
 	suffix,
 	popoverInfo,
 	testId,
-	context: { mainWeaponId, abilityPoints, isComparing },
+	context: { mainWeaponId, abilityPoints, abilityPoints2, isComparing },
 }: {
 	title: string;
 	stat: StatTuple | StatTuple<string> | number | string;
@@ -1409,6 +1429,7 @@ function StatCard({
 	context: {
 		mainWeaponId: MainWeaponId;
 		abilityPoints: AbilityPoints;
+		abilityPoints2: AbilityPoints;
 		isComparing: boolean;
 	};
 }) {
@@ -1444,10 +1465,31 @@ function StatCard({
 	};
 
 	const memoKey = isStaticValue ? stat : stat[2];
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
 	const modifiedBy = React.useMemo(() => {
 		return isStaticValue ? [] : [stat[0].modifiedBy].flat();
 	}, [memoKey]);
+
+	const stackableAbility = modifiedBy.find(isStackableAbility);
+	const highlight = (() => {
+		if (isStaticValue || !stackableAbility || !showBuildValue())
+			return undefined;
+
+		const builds = [
+			[abilityPoints, stat[0].value],
+			...(isComparing ? ([[abilityPoints2, stat[1].value]] as const) : []),
+		] as const;
+
+		const points: Array<{ x: number; y: number }> = [];
+		for (const [ap, value] of builds) {
+			if (typeof value !== "number") continue;
+			points.push({
+				x: Math.min(ap.get(stackableAbility) ?? 0, MAX_AP),
+				y: value,
+			});
+		}
+
+		return points.length > 0 ? points : undefined;
+	})();
 
 	return (
 		<div
@@ -1516,6 +1558,7 @@ function StatCard({
 							title={title}
 							valueSuffix={suffix}
 							mainWeaponId={mainWeaponId}
+							highlight={highlight}
 						/>
 					</>
 				)}
@@ -1630,19 +1673,21 @@ function DamageTable({
 
 					return (
 						<tr key={val.id}>
-							<td className="stack horizontal xs items-center">
-								{damageIsSubWeaponDamage(val) ? (
-									<Image
-										alt=""
-										path={subWeaponImageUrl(val.subWeaponId)}
-										width={12}
-										height={12}
-									/>
-								) : null}{" "}
-								{t(typeRowName as any)}{" "}
-								{damageIsSubWeaponDamage(val) && val.type === "SPLASH" ? (
-									<>({t("analyzer:damage.SPLASH")})</>
-								) : null}
+							<td>
+								<div className="stack horizontal xs items-center">
+									{damageIsSubWeaponDamage(val) ? (
+										<Image
+											alt=""
+											path={subWeaponImageUrl(val.subWeaponId)}
+											width={12}
+											height={12}
+										/>
+									) : null}{" "}
+									{t(typeRowName as any)}{" "}
+									{damageIsSubWeaponDamage(val) && val.type === "SPLASH" ? (
+										<>({t("analyzer:damage.SPLASH")})</>
+									) : null}
+								</div>
 							</td>
 							{showDistanceColumn && (
 								<td>
@@ -1666,7 +1711,7 @@ function DamageTable({
 								</td>
 							)}
 							{showPopovers ? (
-								<td>
+								<td className={styles.popoverCell}>
 									{renderPopover(val, (val as SubWeaponDamage).subWeaponId) ? (
 										<StatChartPopover
 											mainWeaponId={0}

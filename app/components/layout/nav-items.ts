@@ -1,10 +1,12 @@
+import { Config } from "~/config";
+
 export const navItems = [
 	{
 		name: "settings",
 		url: "settings",
 		prefetch: true,
 	},
-	import.meta.env.VITE_SHOW_LUTI_NAV_ITEM === "true"
+	Config.showLutiNavItem
 		? {
 				name: "luti",
 				url: "luti",

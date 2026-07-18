@@ -20,6 +20,7 @@ export interface ListedArt {
 		discordId: Tables["User"]["discordId"];
 		username: Tables["User"]["username"];
 		discordAvatar: Tables["User"]["discordAvatar"];
+		customAvatarUrl: string | null;
 		commissionsOpen?: Tables["User"]["commissionsOpen"];
 	};
 }

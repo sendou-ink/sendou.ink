@@ -1,29 +1,29 @@
-.rootCollapsed {
+.collapsed {
 	display: flex;
 	justify-content: center;
+}
+
+.collapsed.footer {
 	background-color: var(--color-bg-higher);
 	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	padding: var(--s-2);
 	margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-6));
 }
 
-.root {
+.expanded {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	gap: var(--s-4);
+	container-type: inline-size;
+	position: relative;
+}
+
+.expanded.footer {
 	background-color: var(--color-bg-higher);
 	border-radius: 0 0 var(--radius-box) var(--radius-box);
 	padding: var(--s-4);
 	margin: var(--s-4) calc(-1 * var(--s-4)) calc(-1 * var(--s-6));
-	container-type: inline-size;
-	position: relative;
-
-	&.standalone {
-		margin-block-start: calc(-1 * var(--s-6));
-		min-height: 200px;
-		justify-content: center;
-	}
 }
 
 .collapseButton {

@@ -104,23 +104,22 @@
 }
 
 .memberGrid {
-	display: grid;
-	grid-template-areas:
-		"avatar name"
-		"tier meta";
-	grid-template-columns: auto 1fr;
-	column-gap: var(--s-2);
-	row-gap: var(--s-1);
-	align-items: center;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--s-1);
 }
 
 .memberLink {
-	grid-row: 1;
-	grid-column: 1 / -1;
-	display: grid;
-	grid-template-columns: subgrid;
-	column-gap: var(--s-2);
+	display: flex;
 	align-items: center;
+	gap: var(--s-2);
+}
+
+.memberSecondRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
 }
 
 .memberNameStack {
@@ -135,45 +134,11 @@
 	font-weight: var(--weight-semi);
 }
 
-.memberMenuTrigger {
-	background: none;
-	border: 0;
-	padding: 0;
-	color: inherit;
-	font: inherit;
-	text-align: inherit;
-	cursor: pointer;
-	width: 100%;
-}
-
-.friendCodeHeader {
-	text-align: center;
-}
-
-.memberMenuHeader {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-0-5);
-}
-
-.memberMenuIgn {
-	font-size: var(--font-2xs);
-	color: var(--color-text-high);
-}
-
-.memberMenuIgnLabel {
-	font-weight: var(--weight-bold);
-	text-transform: uppercase;
-	font-size: var(--font-3xs);
-}
-
 .memberTier {
-	grid-area: tier;
-	justify-self: center;
-}
-
-.memberMetaArea {
-	grid-area: meta;
+	display: flex;
+	justify-content: center;
+	width: 24px;
+	flex-shrink: 0;
 }
 
 .memberMeta {
@@ -181,18 +146,6 @@
 	align-items: center;
 	gap: var(--s-1);
 	font-size: var(--font-2xs);
-}
-
-.plusTier {
-	display: flex;
-	align-items: center;
-	gap: var(--s-0-5);
-	background-color: var(--color-bg-higher);
-	border-radius: var(--radius-full);
-	padding: var(--s-0-5) var(--s-1-5);
-	padding-inline-start: var(--s-1);
-	font-weight: var(--weight-semi);
-	color: var(--color-text);
 }
 
 .subbedOutTrigger {
@@ -237,20 +190,6 @@
 	gap: var(--s-2);
 	margin-block-start: var(--s-4);
 	justify-content: center;
-}
-
-.teamOneDot {
-	border-radius: 100%;
-	background-color: var(--color-accent);
-	width: 8px;
-	height: 8px;
-}
-
-.teamTwoDot {
-	border-radius: 100%;
-	background-color: var(--color-second);
-	width: 8px;
-	height: 8px;
 }
 
 .teamAvatar {

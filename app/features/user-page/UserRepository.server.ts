@@ -1,4 +1,4 @@
-import type { ExpressionBuilder, FunctionModule, NotNull } from "kysely";
+import type { ExpressionBuilder, NotNull } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
@@ -17,8 +17,9 @@ import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	tournamentLogoOrNull,
 	userChatNameHue,
 	userProfileWeapons,
@@ -87,7 +88,7 @@ export function findLayoutDataByIdentifier(
 	return identifierToUserIdQuery(identifier)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select((eb) => [
-			...COMMON_USER_FIELDS,
+			...commonUserSelect(eb),
 			"User.pronouns",
 			"User.country",
 			"User.inGameName",
@@ -184,6 +185,8 @@ export async function findProfileByIdentifier(
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
+			"User.customAvatarImgId",
+			customAvatarUrl(eb).as("customAvatarUrl"),
 			userProfileWeapons(eb).as("weapons"),
 			jsonArrayFrom(
 				eb
@@ -200,6 +203,7 @@ export async function findProfileByIdentifier(
 						"Team.id",
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.role as userTeamRole",
+						"TeamMemberWithSecondary.customRole as userTeamCustomRole",
 						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 							"avatarUrl",
 						),
@@ -381,7 +385,7 @@ export function findByFriendCode(friendCode: string) {
 	return db
 		.selectFrom("UserFriendCode")
 		.innerJoin("User", "User.id", "UserFriendCode.userId")
-		.select([...COMMON_USER_FIELDS])
+		.select((eb) => commonUserSelect(eb))
 		.where("UserFriendCode.friendCode", "=", friendCode)
 		.execute();
 }
@@ -392,7 +396,7 @@ export async function findLeanById(id: number) {
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.where("User.id", "=", id)
 		.select(({ eb }) => [
-			...COMMON_USER_FIELDS,
+			...commonUserSelect(eb),
 			"User.customTheme",
 			"User.isArtist",
 			"User.isVideoAdder",
@@ -440,11 +444,11 @@ export function findModInfoById(id: number) {
 				eb
 					.selectFrom("ModNote")
 					.innerJoin("User", "User.id", "ModNote.authorId")
-					.select([
+					.select((eb) => [
 						"ModNote.id as noteId",
 						"ModNote.text",
 						"ModNote.createdAt",
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(eb),
 					])
 					.where("ModNote.isDeleted", "=", 0)
 					.where("ModNote.userId", "=", id)
@@ -454,11 +458,11 @@ export function findModInfoById(id: number) {
 				eb
 					.selectFrom("BanLog")
 					.innerJoin("User", "User.id", "BanLog.bannedByUserId")
-					.select([
+					.select((eb) => [
 						"BanLog.banned",
 						"BanLog.bannedReason",
 						"BanLog.createdAt",
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(eb),
 					])
 					.where("BanLog.userId", "=", id)
 					.orderBy("BanLog.createdAt", "desc"),
@@ -493,14 +497,7 @@ export function findAllPlusServerMembers() {
 export async function findChatUsersByUserIds(userIds: number[]) {
 	const users = await db
 		.selectFrom("User")
-		.select([
-			"User.id",
-			"User.discordId",
-			"User.discordAvatar",
-			"User.username",
-			"User.pronouns",
-			userChatNameHue,
-		])
+		.select((eb) => [...commonUserSelect(eb), "User.pronouns", userChatNameHue])
 		.where("User.id", "in", userIds)
 		.execute();
 
@@ -602,7 +599,10 @@ export function findResultsByUserId(
 				eb
 					.selectFrom("CalendarEventResultPlayer")
 					.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
-					.select([...COMMON_USER_FIELDS, "CalendarEventResultPlayer.name"])
+					.select((eb) => [
+						...commonUserSelect(eb),
+						"CalendarEventResultPlayer.name",
+					])
 					.whereRef(
 						"CalendarEventResultPlayer.teamId",
 						"=",
@@ -637,7 +637,10 @@ export function findResultsByUserId(
 				eb
 					.selectFrom("TournamentResult as TournamentResult2")
 					.innerJoin("User", "User.id", "TournamentResult2.userId")
-					.select([...COMMON_USER_FIELDS, sql<string | null>`null`.as("name")])
+					.select((eb) => [
+						...commonUserSelect(eb),
+						sql<string | null>`null`.as("name"),
+					])
 					.whereRef(
 						"TournamentResult2.tournamentTeamId",
 						"=",
@@ -778,16 +781,18 @@ export async function findResultPlacementsByUserId(userId: number) {
 	];
 }
 
-const searchSelectedFields = ({ fn }: { fn: FunctionModule<DB, "User"> }) =>
+const searchSelectedFields = (eb: ExpressionBuilder<DB, "User">) =>
 	[
-		...COMMON_USER_FIELDS,
+		...commonUserSelect(eb),
 		"User.inGameName",
 		"PlusTier.tier as plusTier",
-		fn<string | null>("iif", [
-			"User.showDiscordUniqueName",
-			"User.discordUniqueName",
-			sql`null`,
-		]).as("discordUniqueName"),
+		eb
+			.fn<string | null>("iif", [
+				"User.showDiscordUniqueName",
+				"User.discordUniqueName",
+				sql`null`,
+			])
+			.as("discordUniqueName"),
 	] as const;
 export async function search({
 	query,
@@ -1072,11 +1077,30 @@ type UpdateProfileArgs = Pick<
 	favoriteBadgeIds?: number[] | null;
 	favoriteTrophyIds?: number[] | null;
 	hiddenTrophyIds?: number[] | null;
+	customAvatarImgId?: number | null;
 };
 export function updateOwnProfile(args: UpdateProfileArgs) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("UserWeapon").where("userId", "=", userId).execute();
+
+		// a removed or replaced custom avatar is no longer referenced by anything,
+		// so its submitted image row is cleaned up
+		const current = await trx
+			.selectFrom("User")
+			.select("User.customAvatarImgId")
+			.where("id", "=", userId)
+			.executeTakeFirst();
+		if (
+			current?.customAvatarImgId &&
+			current.customAvatarImgId !== args.customAvatarImgId
+		) {
+			await trx
+				.deleteFrom("UnvalidatedUserSubmittedImage")
+				.where("id", "=", current.customAvatarImgId)
+				.where("UnvalidatedUserSubmittedImage.submitterUserId", "=", userId)
+				.execute();
+		}
 
 		if (args.weapons.length > 0) {
 			await trx
@@ -1118,10 +1142,28 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				commissionsOpen: args.commissionsOpen,
 				commissionsOpenedAt:
 					args.commissionsOpen === 1 ? databaseTimestampNow() : null,
+				customAvatarImgId: args.customAvatarImgId ?? null,
 			})
 			.where("id", "=", userId)
 			.returning(["User.id", "User.customUrl", "User.discordId"])
 			.executeTakeFirstOrThrow();
+	});
+}
+
+/** Bulk-sets each user's latest LUTI division. Used by the `ComputeLutiDivs` routine. */
+export function updateManyDivs(
+	updates: Array<{ userId: number; div: string }>,
+) {
+	if (updates.length === 0) return;
+
+	return db.transaction().execute(async (trx) => {
+		for (const { userId, div } of updates) {
+			await trx
+				.updateTable("User")
+				.set({ div })
+				.where("id", "=", userId)
+				.execute();
+		}
 	});
 }
 
@@ -1292,21 +1334,6 @@ export async function anyUserPrefersNoScreen(
 		.select("User.noScreen")
 		.where("User.id", "in", userIds)
 		.where("User.noScreen", "=", 1)
-		.executeTakeFirst();
-
-	return Boolean(result);
-}
-
-export async function anyUserPrefersNoSplatnet(
-	userIds: number[],
-): Promise<boolean> {
-	if (userIds.length === 0) return false;
-
-	const result = await db
-		.selectFrom("User")
-		.select("User.noSplatnet")
-		.where("User.id", "in", userIds)
-		.where("User.noSplatnet", "=", 1)
 		.executeTakeFirst();
 
 	return Boolean(result);

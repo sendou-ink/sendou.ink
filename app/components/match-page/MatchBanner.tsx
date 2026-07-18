@@ -1,13 +1,18 @@
 import clsx from "clsx";
-import { Check, QrCode, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
+import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { specialWeaponImageUrl, stageBannerImageUrl } from "~/utils/urls";
 import { ModeImage } from "../Image";
 import styles from "./MatchBanner.module.css";
+
+interface BannerHost {
+	name: string;
+	avatarUrl?: string;
+}
 
 export function MatchBannerContainer({
 	children,
@@ -22,7 +27,8 @@ interface MatchBannerProps {
 	mode: ModeShort;
 	screenLegal?: boolean;
 	joinPool?: string | null;
-	joinViaQr?: boolean;
+	joinPass?: string | null;
+	host?: BannerHost | null;
 	children?: React.ReactNode;
 }
 
@@ -31,7 +37,8 @@ export function MatchBanner({
 	mode,
 	screenLegal,
 	joinPool,
-	joinViaQr,
+	joinPass,
+	host,
 	children,
 }: MatchBannerProps) {
 	const { t } = useTranslation(["game-misc"]);
@@ -50,7 +57,9 @@ export function MatchBanner({
 			</div>
 			<div className={clsx(styles.info, styles.thickText)}>{children}</div>
 
-			{joinPool ? <JoinPoolBadge pool={joinPool} viaQr={joinViaQr} /> : null}
+			{joinPool ? (
+				<JoinInfo pool={joinPool} pass={joinPass} host={host} />
+			) : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -82,7 +91,8 @@ interface IconBannerProps {
 	subtitle?: string;
 	screenLegal?: boolean;
 	joinPool?: string | null;
-	joinViaQr?: boolean;
+	joinPass?: string | null;
+	host?: BannerHost | null;
 	topRight?: React.ReactNode;
 	testId?: string;
 }
@@ -93,7 +103,8 @@ export function IconBanner({
 	subtitle,
 	screenLegal,
 	joinPool,
-	joinViaQr,
+	joinPass,
+	host,
 	topRight,
 	testId,
 }: IconBannerProps) {
@@ -104,7 +115,9 @@ export function IconBanner({
 			{subtitle ? (
 				<div className={styles.iconBannerSubtitle}>{subtitle}</div>
 			) : null}
-			{joinPool ? <JoinPoolBadge pool={joinPool} viaQr={joinViaQr} /> : null}
+			{joinPool ? (
+				<JoinInfo pool={joinPool} pass={joinPass} host={host} />
+			) : null}
 			{screenLegal !== undefined ? (
 				<ScreenNotice screenLegal={screenLegal} />
 			) : null}
@@ -115,35 +128,54 @@ export function IconBanner({
 	);
 }
 
-function JoinPoolBadge({ pool, viaQr }: { pool: string; viaQr?: boolean }) {
-	const { t } = useTranslation(["q"]);
-	const [, setSearchParams] = useSearchParams();
+function JoinInfo({
+	pool,
+	pass,
+	host,
+}: {
+	pool: string;
+	pass?: string | null;
+	host?: BannerHost | null;
+}) {
+	const { t } = useTranslation(["q", "common"]);
 
 	return (
-		<SendouButton
-			variant="minimal"
-			className={styles.joinBadge}
-			onPress={() =>
-				setSearchParams(
-					{ tab: "join" },
-					{
-						preventScrollReset: true,
-						defaultShouldRevalidate: false,
-					},
-				)
-			}
-			aria-label={t("q:match.pool")}
-			testId="join-pool-badge"
-		>
-			{viaQr ? <QrCode size={18} /> : pool}
-		</SendouButton>
+		<div className={styles.joinInfo}>
+			<div className={styles.joinInfoItem}>
+				<div className={styles.joinInfoLabel}>{t("q:match.pool")}</div>
+				<div className={styles.joinInfoValue}>{pool}</div>
+			</div>
+			{pass ? (
+				<div className={styles.joinInfoItem}>
+					<div className={styles.joinInfoLabel}>
+						{t("q:match.password.short")}
+					</div>
+					<div className={styles.joinInfoValue} data-testid="room-pass">
+						{pass}
+					</div>
+				</div>
+			) : null}
+			{host ? (
+				<div className={styles.joinInfoItem}>
+					<div className={styles.joinInfoLabel}>{t("common:host")}</div>
+					<div className={styles.joinInfoValue}>
+						<Avatar
+							url={host.avatarUrl}
+							identiconInput={host.name}
+							size="xxs"
+							title={host.name}
+						/>
+					</div>
+				</div>
+			) : null}
+		</div>
 	);
 }
 
 function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 	const { t } = useTranslation(["weapons", "q"]);
 
-	const imgSize = 18;
+	const imgSize = 24;
 
 	const Icon = screenLegal ? Check : X;
 
@@ -156,15 +188,15 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 					testId={screenLegal ? "screen-allowed" : "screen-banned"}
 					aria-label={screenLegal ? "Screen allowed" : "Screen banned"}
 				>
-					<Icon
-						size={imgSize}
-						className={screenLegal ? styles.legalIcon : styles.illegalIcon}
-					/>
 					<img
 						src={`${specialWeaponImageUrl(19)}.avif`}
 						width={imgSize}
 						height={imgSize}
 						alt=""
+					/>
+					<Icon
+						size={imgSize}
+						className={screenLegal ? styles.legalIcon : styles.illegalIcon}
 					/>
 				</SendouButton>
 			}

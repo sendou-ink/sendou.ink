@@ -319,7 +319,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		},
 		castTwitchAccounts: null,
 		castedMatchesInfo: null,
-		seedingSnapshot: null,
 		mapPickingStyle: "TO",
 		hasRules: true,
 		parentTournamentId: null,
@@ -336,6 +335,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			discordId: "308483655515373570",
 			discordAvatar: "a5fff2b4706d99364e646cab28c8085b",
 			customUrl: "puma",
+			customAvatarUrl: null,
 		},
 		staff: [
 			{
@@ -346,6 +346,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordAvatar: "2a569302e9545c6a07f8f8aa337d139d",
 				customUrl: "penis",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 3147,
@@ -355,6 +356,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordAvatar: "85090cfe2e0da693355bcec9740c1eaa",
 				customUrl: "cookie",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 5212,
@@ -364,6 +366,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordAvatar: "bd634c91f7d0475f3671956fa9a2110a",
 				customUrl: null,
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 			{
 				id: 23120,
@@ -373,6 +376,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				discordAvatar: "f1191c94b1da5396a06b620408017c1f",
 				customUrl: "weizihao",
 				role: "ORGANIZER",
+				customAvatarUrl: null,
 			},
 		],
 		bracketProgressionOverrides: [],
@@ -406,6 +410,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2899,
@@ -422,6 +428,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 6114,
@@ -438,6 +446,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33963,
@@ -454,6 +464,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 30176,
@@ -470,6 +482,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -517,6 +531,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 21689,
@@ -533,6 +549,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 3147,
@@ -549,6 +567,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 2072,
@@ -565,6 +585,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -607,6 +629,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 13370,
@@ -623,6 +647,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 45,
@@ -639,6 +665,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 1843,
@@ -655,6 +683,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -697,6 +727,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 13590,
@@ -713,6 +745,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 10757,
@@ -729,6 +763,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33047,
@@ -745,6 +781,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 41024,
@@ -761,6 +799,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -808,6 +848,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 29665,
@@ -824,6 +866,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46006,
@@ -840,6 +884,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33483,
@@ -856,6 +902,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 11780,
@@ -872,6 +920,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 37901,
@@ -888,6 +938,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -930,6 +982,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 43662,
@@ -946,6 +1000,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33491,
@@ -962,6 +1018,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46467,
@@ -978,6 +1036,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 46813,
@@ -994,6 +1054,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [
@@ -1041,6 +1103,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "OWNER",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33611,
@@ -1057,6 +1121,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 31148,
@@ -1073,6 +1139,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 					{
 						userId: 33578,
@@ -1089,6 +1157,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						streamViewerCount: null,
 						streamThumbnailUrl: null,
 						role: "REGULAR",
+						isSub: 0,
+						customAvatarUrl: null,
 					},
 				],
 				checkIns: [

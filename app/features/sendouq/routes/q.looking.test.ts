@@ -1,4 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	removeRoom: vi.fn(),
+	setMetadata: vi.fn(),
+}));
+
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";

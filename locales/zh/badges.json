@@ -2,6 +2,7 @@
 	"patreon": "Patreon 上的 sendou.ink Supporter",
 	"patreon+": "Patreon 上的 sendou.ink Supporter+",
 	"xp": "到达 {{xpText}} 的奖励",
+	"tournament": "在 {{tournament}} 中获胜了 {{count}} 次的奖励",
 	"forYourEvent": "在我的活动中设置徽章",
 	"managedBy": "由 <0></0> 管理",
 	"madeBy": "由 <0></0> 创作",

@@ -29,7 +29,6 @@ export function MemberAdder({
 	const showMemberAddError = fetcher.data?.error === "taken";
 
 	const groupMembersJoined = groupMemberIds.join(",");
-	// biome-ignore lint/correctness/useExhaustiveDependencies: biome migration
 	React.useEffect(() => {
 		setFriend(undefined);
 	}, [groupMembersJoined]);

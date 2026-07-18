@@ -1,9 +1,11 @@
+import { sub } from "date-fns";
 import { type SelectQueryBuilder, sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { COMMON_USER_FIELDS } from "~/utils/kysely.server";
+import { commonUserSelect, customAvatarUrl } from "~/utils/kysely.server";
+import { FRIEND } from "./friends-constants";
 
 export async function findByUserIdWithActivity(userId: number) {
 	const [friendRows, teamMemberRows] = await Promise.all([
@@ -99,8 +101,8 @@ function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
-		.select([
-			...COMMON_USER_FIELDS,
+		.select((eb) => [
+			...commonUserSelect(eb),
 			"CalendarEvent.name as tournamentName",
 			"TournamentTeam.tournamentId",
 			"CalendarEventDate.startTime as tournamentStartTime",
@@ -121,7 +123,7 @@ export async function findPendingSentRequests(senderId: number) {
 	return db
 		.selectFrom("FriendRequest")
 		.innerJoin("User", "User.id", "FriendRequest.receiverId")
-		.select([
+		.select((eb) => [
 			"FriendRequest.id",
 			"FriendRequest.createdAt",
 			"User.id as receiverId",
@@ -129,6 +131,7 @@ export async function findPendingSentRequests(senderId: number) {
 			"User.discordId as receiverDiscordId",
 			"User.discordAvatar as receiverDiscordAvatar",
 			"User.customUrl as receiverCustomUrl",
+			customAvatarUrl(eb).as("receiverCustomAvatarUrl"),
 		])
 		.where("FriendRequest.senderId", "=", senderId)
 		.orderBy("FriendRequest.createdAt", "desc")
@@ -162,6 +165,19 @@ export async function deleteFriendRequest({
 		.execute();
 }
 
+export function deleteOldPendingRequests() {
+	return db
+		.deleteFrom("FriendRequest")
+		.where(
+			"FriendRequest.createdAt",
+			"<",
+			dateToDatabaseTimestamp(
+				sub(new Date(), { months: FRIEND.PENDING_REQUEST_EXPIRES_IN_MONTHS }),
+			),
+		)
+		.executeTakeFirst();
+}
+
 export async function findFriendRequestBetween({
 	senderId,
 	receiverId,
@@ -171,7 +187,7 @@ export async function findFriendRequestBetween({
 }) {
 	return db
 		.selectFrom("FriendRequest")
-		.select("FriendRequest.id")
+		.select(["FriendRequest.id", "FriendRequest.senderId"])
 		.where((eb) =>
 			eb.or([
 				eb.and([
@@ -205,7 +221,7 @@ export async function findPendingReceivedRequests(receiverId: number) {
 	return db
 		.selectFrom("FriendRequest")
 		.innerJoin("User", "User.id", "FriendRequest.senderId")
-		.select([
+		.select((eb) => [
 			"FriendRequest.id",
 			"FriendRequest.createdAt",
 			"User.id as senderId",
@@ -213,10 +229,23 @@ export async function findPendingReceivedRequests(receiverId: number) {
 			"User.discordId as senderDiscordId",
 			"User.discordAvatar as senderDiscordAvatar",
 			"User.customUrl as senderCustomUrl",
+			customAvatarUrl(eb).as("senderCustomAvatarUrl"),
 		])
 		.where("FriendRequest.receiverId", "=", receiverId)
 		.orderBy("FriendRequest.createdAt", "desc")
 		.execute();
+}
+
+export async function findPendingReceivedRequestIds(
+	receiverId: number,
+): Promise<number[]> {
+	const rows = await db
+		.selectFrom("FriendRequest")
+		.select("FriendRequest.id")
+		.where("FriendRequest.receiverId", "=", receiverId)
+		.execute();
+
+	return rows.map((row) => row.id);
 }
 
 export async function insertFriendship({
@@ -329,13 +358,7 @@ export async function findMutualFriends({
 				eb("f2.userTwoId", "=", targetUserId),
 			]),
 		)
-		.select([
-			"User.id",
-			"User.username",
-			"User.discordId",
-			"User.discordAvatar",
-			"User.customUrl",
-		])
+		.select((eb) => commonUserSelect(eb))
 		.execute();
 }
 
@@ -374,7 +397,7 @@ export async function findFriendsByUserId(userId: number) {
 				eb("Friendship.userTwoId", "=", userId),
 			]),
 		)
-		.select([...COMMON_USER_FIELDS])
+		.select((eb) => commonUserSelect(eb))
 		.orderBy("User.username", "asc")
 		.execute();
 }

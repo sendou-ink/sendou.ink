@@ -3,10 +3,12 @@ import { jsonBuildObject } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
@@ -64,6 +66,7 @@ type TournamentLFGMemberObject = {
 	username: Tables["User"]["username"];
 	discordId: Tables["User"]["discordId"];
 	discordAvatar: Tables["User"]["discordAvatar"];
+	customAvatarUrl: string | null;
 	customUrl: Tables["User"]["customUrl"];
 	languages: Tables["User"]["languages"];
 	vc: Tables["User"]["vc"];
@@ -108,6 +111,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 						username: eb.ref("User.username"),
 						discordId: eb.ref("User.discordId"),
 						discordAvatar: eb.ref("User.discordAvatar"),
+						customAvatarUrl: customAvatarUrl(eb),
 						customUrl: eb.ref("User.customUrl"),
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
@@ -147,6 +151,7 @@ export async function findSubGroups(tournamentId: number) {
 						username: eb.ref("User.username"),
 						discordId: eb.ref("User.discordId"),
 						discordAvatar: eb.ref("User.discordAvatar"),
+						customAvatarUrl: customAvatarUrl(eb),
 						customUrl: eb.ref("User.customUrl"),
 						languages: eb.ref("User.languages"),
 						vc: eb.ref("User.vc"),
@@ -197,6 +202,8 @@ export function mergeTeams({
 				.set({
 					role: member.role === "OWNER" ? "MANAGER" : member.role,
 					tournamentTeamId: survivingTeamId,
+					// reset so the merged-in members sort after the surviving team's original members
+					createdAt: databaseTimestampNow(),
 				})
 				.where("TournamentTeamMember.tournamentTeamId", "=", otherTeamId)
 				.where("TournamentTeamMember.userId", "=", member.userId)

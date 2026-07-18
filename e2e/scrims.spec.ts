@@ -126,6 +126,48 @@ test.describe("Scrims", () => {
 		await expect(page.getByText("Scheduled scrim")).toBeVisible();
 	});
 
+	test("auto-cancels overlapping pending scrims when a scrim is booked", async ({
+		page,
+	}) => {
+		await seed(page, "NO_SCRIMS");
+		await impersonate(page);
+
+		const bookedAt = new Date();
+		bookedAt.setDate(bookedAt.getDate() + 1);
+		bookedAt.setHours(18, 0, 0, 0);
+
+		const overlappingAt = new Date(bookedAt);
+		overlappingAt.setMinutes(30); // within ±1h of the booked time
+
+		const farAwayAt = new Date(bookedAt);
+		farAwayAt.setHours(22, 0, 0, 0); // outside the ±1h window
+
+		await createScrimPost(page, bookedAt, "Booked post");
+		await createScrimPost(page, overlappingAt, "Overlapping post");
+		await createScrimPost(page, farAwayAt, "Far away post");
+
+		// NZAP requests the earliest (soon-to-be-booked) post
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: scrimsPage() });
+		await page.getByTestId("available-scrims-tab").click();
+		await page.getByTestId("request-scrim-button").first().click();
+		await selectUser({ labelName: "User 2", page, userName: "5" });
+		await selectUser({ labelName: "User 3", page, userName: "6" });
+		await selectUser({ labelName: "User 4", page, userName: "7" });
+		await submit(page);
+
+		// Author accepts the request, booking the scrim
+		await impersonate(page);
+		await navigate({ page, url: scrimsPage() });
+		await page.getByTestId("confirm-modal-trigger-button").first().click();
+		await submit(page, "confirm-button");
+
+		// The overlapping pending post is auto-removed, the far away one survives
+		await page.getByRole("tab", { name: /Owned/ }).click();
+		await expect(page.getByText("Far away post")).toBeVisible();
+		await expect(page.getByText("Overlapping post")).toHaveCount(0);
+	});
+
 	test("cancels a scrim and shows canceled status", async ({ page }) => {
 		await seed(page);
 		await impersonate(page, ADMIN_ID);
@@ -355,6 +397,17 @@ test.describe("Scrims", () => {
 		expect(total).toBe(4);
 	});
 });
+
+async function createScrimPost(page: Page, at: Date, text: string) {
+	await navigate({ page, url: newScrimPostPage() });
+
+	const form = createFormHelpers(page, scrimsNewFormSchema);
+
+	await form.setDateTime("at", at);
+	await form.fill("postText", text);
+
+	await submit(page);
+}
 
 async function reportScrimMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
 	const testId = winner === "ALPHA" ? "winner-radio-1" : "winner-radio-2";

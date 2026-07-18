@@ -25,8 +25,9 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
-	COMMON_USER_FIELDS,
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -74,7 +75,6 @@ export async function findById(id: number) {
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",
 			"Tournament.isFinalized",
-			"Tournament.seedingSnapshot",
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentOrganization")
@@ -87,6 +87,7 @@ export async function findById(id: number) {
 						"TournamentOrganization.id",
 						"TournamentOrganization.name",
 						"TournamentOrganization.slug",
+						"TournamentOrganization.isEstablished",
 						concatUserSubmittedImagePrefix(
 							innerEb.ref("UserSubmittedImage.url"),
 						).as("logoUrl"),
@@ -98,10 +99,10 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.userId",
 									"User.id",
 								)
-								.select([
+								.select((eb) => [
 									"TournamentOrganizationMember.userId",
 									"TournamentOrganizationMember.role",
-									...COMMON_USER_FIELDS,
+									...commonUserSelect(eb),
 									"User.pronouns",
 								])
 								.whereRef(
@@ -131,15 +132,15 @@ export async function findById(id: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS, "User.pronouns"])
+					.select((eb) => [...commonUserSelect(eb), "User.pronouns"])
 					.whereRef("User.id", "=", "CalendarEvent.authorId"),
 			).as("author"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentStaff")
 					.innerJoin("User", "TournamentStaff.userId", "User.id")
-					.select([
-						...COMMON_USER_FIELDS,
+					.select((eb) => [
+						...commonUserSelect(eb),
 						"User.pronouns",
 						"TournamentStaff.role",
 					])
@@ -197,7 +198,7 @@ export async function findById(id: number) {
 								)
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 								.leftJoin("LiveStream", "LiveStream.userId", "User.id")
-								.select([
+								.select((eb) => [
 									"User.id as userId",
 									"User.username",
 									"User.discordId",
@@ -209,6 +210,7 @@ export async function findById(id: number) {
 									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
+									"TournamentTeamMember.isSub",
 									sql<string | null> /*sql*/`coalesce(
                     "TournamentTeamMember"."inGameName",
                     "User"."inGameName"
@@ -216,12 +218,14 @@ export async function findById(id: number) {
 									"LiveStream.twitch as streamTwitch",
 									"LiveStream.viewerCount as streamViewerCount",
 									"LiveStream.thumbnailUrl as streamThumbnailUrl",
+									customAvatarUrl(eb).as("customAvatarUrl"),
 								])
 								.whereRef(
 									"TournamentTeamMember.tournamentTeamId",
 									"=",
 									"TournamentTeam.id",
 								)
+								.orderBy(sql`"TournamentTeamMember"."role" = 'OWNER'`, "desc")
 								.orderBy("TournamentTeamMember.createdAt", "asc"),
 						).as("members"),
 						jsonArrayFrom(
@@ -373,6 +377,19 @@ export async function findDescriptionById(tournamentId: number) {
 	return row?.description ?? null;
 }
 
+/**
+ * Loads a tournament's seeding snapshot.
+ */
+export async function findSeedingSnapshotById(tournamentId: number) {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("Tournament.seedingSnapshot")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return row?.seedingSnapshot ?? null;
+}
+
 export async function hasChildTournaments(parentTournamentId: number) {
 	const row = await db
 		.selectFrom("Tournament")
@@ -418,6 +435,39 @@ export async function findChildTournaments(parentTournamentId: number) {
 		...row,
 		participantUserIds: new Set(row.teamMembers.map((member) => member.userId)),
 	}));
+}
+
+/** Child division tournaments of a league sign-up, with their name and finalized status. */
+export function findChildTournamentsForDivCalc(parentTournamentId: number) {
+	return db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.select([
+			"Tournament.id as tournamentId",
+			"CalendarEvent.name",
+			"Tournament.isFinalized",
+		])
+		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.execute();
+}
+
+/**
+ * User ids eligible for a LUTI division placement in the given tournament: they have a result, were
+ * on a team that did not drop out, and played at least one match.
+ */
+export function findLeagueDivParticipantUserIds(tournamentId: number) {
+	return db
+		.selectFrom("TournamentResult")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentResult.tournamentTeamId",
+		)
+		.select("TournamentResult.userId")
+		.distinct()
+		.where("TournamentResult.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.droppedOut", "=", 0)
+		.execute();
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {
@@ -468,25 +518,6 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 			).as("staff"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("TournamentOrganization")
-					.innerJoin(
-						"TournamentOrganizationMember",
-						"TournamentOrganization.id",
-						"TournamentOrganizationMember.organizationId",
-					)
-					.select(["TournamentOrganizationMember.userId"])
-					.whereRef(
-						"TournamentOrganization.id",
-						"=",
-						"CalendarEvent.organizationId",
-					)
-					.where("TournamentOrganizationMember.role", "in", [
-						"ADMIN",
-						"ORGANIZER",
-					]),
-			).as("organizationMembers"),
-			jsonArrayFrom(
-				eb
 					.selectFrom("TournamentTeam")
 					.innerJoin(
 						"TournamentTeamMember",
@@ -500,7 +531,6 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 		.where("Tournament.id", "in", tournamentIds)
 		.$narrowType<{
 			staff: NotNull;
-			organizationMembers: NotNull;
 			teamMembers: NotNull;
 		}>()
 		.execute();
@@ -587,7 +617,7 @@ export function forShowcase() {
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
 					.select((eb) => [
-						...COMMON_USER_FIELDS,
+						...commonUserSelect(eb),
 						"User.country",
 						"TournamentResult.div",
 						"TournamentTeam.name as teamName",
@@ -668,7 +698,7 @@ export function topThreeResultsByTournamentId(tournamentId: number) {
 			jsonObjectFrom(
 				eb
 					.selectFrom("User")
-					.select([...COMMON_USER_FIELDS])
+					.select((eb) => commonUserSelect(eb))
 					.whereRef("User.id", "=", "TournamentResult.userId"),
 			).as("user"),
 		])

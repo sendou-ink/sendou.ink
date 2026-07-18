@@ -8,6 +8,7 @@ import { DatetimeFormField } from "./fields/DatetimeFormField";
 import { DualSelectFormField } from "./fields/DualSelectFormField";
 import { FieldsetFormField } from "./fields/FieldsetFormField";
 import { ImageFormField } from "./fields/ImageFormField";
+import { InGameNameFormField } from "./fields/InGameNameFormField";
 import { InputFormField } from "./fields/InputFormField";
 import {
 	CheckboxGroupFormField,
@@ -63,6 +64,8 @@ interface FormFieldProps {
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
 	/** Field-specific options */
 	options?: unknown;
+	/** For `array` fields: hide the remove button for items where this returns false. */
+	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 }
 
 export function FormField({
@@ -73,8 +76,10 @@ export function FormField({
 	field,
 	children,
 	options,
+	canRemoveItem,
 }: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
+	const isDisabled = disabled ?? context?.readOnly ?? false;
 
 	const fieldSchema = React.useMemo(() => {
 		if (field) return field;
@@ -181,7 +186,19 @@ export function FormField({
 			<InputFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
+				value={value as string}
+				onChange={handleChange as (v: string) => void}
+			/>
+		);
+	}
+
+	if (formField.type === "in-game-name") {
+		return (
+			<InGameNameFormField
+				{...commonProps}
+				{...formField}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -193,7 +210,7 @@ export function FormField({
 			<SwitchFormField
 				{...commonProps}
 				{...formField}
-				isDisabled={disabled}
+				isDisabled={isDisabled}
 				checked={value as boolean}
 				onChange={handleChange as (v: boolean) => void}
 			/>
@@ -205,7 +222,7 @@ export function FormField({
 			<TextareaFormField
 				{...commonProps}
 				{...formField}
-				disabled={disabled}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -332,6 +349,7 @@ export function FormField({
 			<ImageFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as ImageFieldValue}
 				onChange={handleChange as (v: ImageFieldValue) => void}
 			/>
@@ -381,6 +399,7 @@ export function FormField({
 				onChange={handleChange as (v: unknown[]) => void}
 				isObjectArray={isObjectArray}
 				itemInitialValue={itemInitialValue}
+				canRemoveItem={canRemoveItem}
 				renderItem={(idx, itemName) => {
 					if (hasCustomRender && isObjectArray) {
 						const arrayValue = value as Record<string, unknown>[];

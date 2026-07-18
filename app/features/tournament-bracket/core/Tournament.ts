@@ -38,6 +38,11 @@ import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
 
+/** The progress status of a team member in a running tournament, as resolved by {@link Tournament.teamMemberOfProgressStatus}. */
+export type TournamentTeamMemberProgressStatus = NonNullable<
+	ReturnType<Tournament["teamMemberOfProgressStatus"]>
+>;
+
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
 	brackets: Bracket[] = [];
@@ -675,12 +680,17 @@ export class Tournament {
 
 		// for small tournaments there should be no risk that the pool gets full
 		// so to make it more convenient just use same suffix every match
-		const globalSuffix = this.ctx.teams.length <= 20 ? this.ctx.id % 10 : null;
+		// pool numbers are kept in the 1-9 range (0 is not used)
+		const globalSuffix =
+			this.ctx.teams.length <= 20 ? (this.ctx.id % 9) + 1 : null;
 
 		return {
 			prefix,
 			suffix:
-				globalSuffix ?? groupLetters ?? bracketNumber ?? hostingTeamId % 10,
+				globalSuffix ??
+				groupLetters ??
+				bracketNumber ??
+				(hostingTeamId % 9) + 1,
 		};
 	}
 
@@ -770,36 +780,6 @@ export class Tournament {
 			this.isOrganizer(user) &&
 			!this.ctx.isFinalized
 		);
-	}
-
-	/** Should it be possible for the given user to report score for this match at this time? */
-	canReportScore({
-		matchId,
-		user,
-	}: {
-		matchId: number;
-		user: OptionalIdObject;
-	}) {
-		const match = this.brackets
-			.flatMap((bracket) => (bracket.preview ? [] : bracket.data.match))
-			.find((match) => match.id === matchId);
-		invariant(match, "Match not found");
-
-		// match didn't start yet
-		if (!match.opponent1 || !match.opponent2) return false;
-
-		const matchIsOver =
-			match.opponent1.result === "win" || match.opponent2.result === "win";
-
-		if (matchIsOver) return false;
-
-		const teamMemberOf = this.teamMemberOfByUser(user)?.id;
-
-		const isParticipant =
-			match.opponent1.id === teamMemberOf ||
-			match.opponent2.id === teamMemberOf;
-
-		return isParticipant || this.isOrganizer(user);
 	}
 
 	/**
@@ -1229,6 +1209,31 @@ export class Tournament {
 
 		if (team.checkIns.length === 0) return null;
 
+		if (!team.droppedOut) {
+			for (const bracket of this.brackets) {
+				if (
+					bracket.type !== "round_robin" ||
+					bracket.preview ||
+					bracket.everyMatchOver
+				) {
+					continue;
+				}
+
+				const isParticipant = bracket.participantTournamentTeamIds.includes(
+					team.id,
+				);
+				const hasFollowUpBrackets = this.brackets.some((otherBracket) =>
+					otherBracket.sources?.some(
+						(source) => source.bracketIdx === bracket.idx,
+					),
+				);
+
+				if (isParticipant && hasFollowUpBrackets) {
+					return { type: "WAITING_FOR_GROUPS" } as const;
+				}
+			}
+		}
+
 		return { type: "THANKS_FOR_PLAYING" } as const;
 	}
 
@@ -1370,6 +1375,31 @@ export class Tournament {
 		}
 
 		return this.ctx.author.id === user.id;
+	}
+
+	/**
+	 * Checks if the given user can edit the tournament's calendar event info.
+	 *
+	 * Mirrors the authorization enforced when the edit is submitted: organization
+	 * admins can only edit when the organization is established, unless they have
+	 * the TOURNAMENT_ADDER role.
+	 */
+	canEditEventInfo(
+		user: OptionalIdObject,
+		{ isTournamentAdder }: { isTournamentAdder: boolean },
+	) {
+		if (!user) return false;
+		if (isAdmin(user)) return true;
+		if (this.ctx.author.id === user.id) return true;
+
+		const isOrganizationAdmin = this.ctx.organization?.members.some(
+			(member) => member.userId === user.id && member.role === "ADMIN",
+		);
+
+		return Boolean(
+			isOrganizationAdmin &&
+				(isTournamentAdder || this.ctx.organization?.isEstablished),
+		);
 	}
 
 	/** Checks if the given user is an organizer of the tournament. */

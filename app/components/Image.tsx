@@ -35,7 +35,7 @@ interface ImageProps {
 	containerStyle?: React.CSSProperties;
 	testId?: string;
 	onClick?: () => void;
-	loading?: "lazy";
+	loading?: "lazy" | "eager";
 }
 
 export function Image({
@@ -51,7 +51,7 @@ export function Image({
 	containerClassName,
 	containerStyle,
 	onClick,
-	loading,
+	loading = "lazy",
 }: ImageProps) {
 	return (
 		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
