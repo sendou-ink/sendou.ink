@@ -78,6 +78,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 		);
 
 		errorToastIfFalsy(
+			match.status !== TournamentMatchStatus.Locked &&
+				match.status !== TournamentMatchStatus.Waiting,
+			"Match is locked, waiting for teams to finish their previous matches",
+		);
+
+		errorToastIfFalsy(
 			canReportTournamentScore({
 				match,
 				isMemberOfATeamInTheMatch,

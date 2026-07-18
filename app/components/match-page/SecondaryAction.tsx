@@ -16,6 +16,12 @@ interface SecondaryActionProps {
 	 * striped footer styling.
 	 */
 	standalone?: boolean;
+	/**
+	 * Forces the expanded state and hides the collapse toggle while keeping the
+	 * footer styling. Used when the expanded content is small enough that
+	 * collapsing brings no benefit.
+	 */
+	alwaysOpen?: boolean;
 	children: React.ReactNode;
 }
 
@@ -31,11 +37,13 @@ export function SecondaryAction({
 	collapsedIcon,
 	expandedAriaLabel,
 	standalone,
+	alwaysOpen,
 	children,
 }: SecondaryActionProps) {
 	const footerClass = standalone ? undefined : styles.footer;
+	const collapsible = !standalone && !alwaysOpen;
 
-	if (!isOpen && !standalone) {
+	if (!isOpen && collapsible) {
 		return (
 			<div className={clsx(styles.collapsed, footerClass)}>
 				<SendouButton
@@ -52,7 +60,7 @@ export function SecondaryAction({
 
 	return (
 		<div className={clsx(styles.expanded, footerClass)}>
-			{standalone ? null : (
+			{collapsible ? (
 				<SendouButton
 					variant="minimal"
 					size="miniscule"
@@ -61,7 +69,7 @@ export function SecondaryAction({
 					className={styles.collapseButton}
 					aria-label={expandedAriaLabel ?? collapsedLabel}
 				/>
-			)}
+			) : null}
 			{children}
 		</div>
 	);

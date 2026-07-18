@@ -55,6 +55,8 @@ export function WeaponReporter({
 	const unreportedCount = inputTargetMap
 		? maps.length - pastReported.length - 1
 		: maps.length - pastReported.length;
+	const allReported =
+		pastReported.length > 0 && !inputTargetMap && unreportedCount === 0;
 
 	const handleToggle = (newOpen: boolean) => {
 		setIsOpen(newOpen);
@@ -71,6 +73,7 @@ export function WeaponReporter({
 			collapsedLabel={t("q:match.actions.reportWeapons")}
 			collapsedIcon={<Crosshair size={16} />}
 			standalone={standalone}
+			alwaysOpen={allReported}
 		>
 			{inputTargetMap ? (
 				<div className={styles.mapRow}>

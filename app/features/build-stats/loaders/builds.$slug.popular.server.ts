@@ -1,15 +1,15 @@
 import { cachified } from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getServerTFunction } from "~/modules/i18n/i18next.server";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { notFoundIfNullLike } from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { popularBuilds } from "../build-stats-utils";
 
-export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT(request, ["builds", "weapons"]);
+export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const t = getServerTFunction(["builds", "weapons"]);
 	const slug = params.slug;
 	const weaponId = notFoundIfNullLike(weaponNameSlugToId(slug));
 

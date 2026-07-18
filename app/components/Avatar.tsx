@@ -42,7 +42,7 @@ function generateColors(hash: number) {
 	};
 }
 
-function generateIdenticon(input: string, size = 128, gridSize = 5) {
+export function generateIdenticon(input: string, size = 128, gridSize = 5) {
 	const cacheKey = `${input}-${size}-${gridSize}`;
 	const cached = identiconCache.get(cacheKey);
 	if (cached) return cached;
@@ -108,6 +108,7 @@ export function Avatar({
 	size = "sm",
 	className,
 	alt = "",
+	loading = "lazy",
 	...rest
 }: {
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
@@ -118,6 +119,7 @@ export function Avatar({
 	className?: string;
 	alt?: string;
 	size: keyof typeof dimensions;
+	loading?: "lazy" | "eager";
 } & React.ButtonHTMLAttributes<HTMLImageElement>) {
 	const [isErrored, setIsErrored] = React.useState(false);
 	const isClient = useHydrated();
@@ -153,6 +155,7 @@ export function Avatar({
 				title={alt ? alt : undefined}
 				width={dimensions[size]}
 				height={dimensions[size]}
+				loading={loading}
 				onError={() => setIsErrored(true)}
 				{...rest}
 			/>

@@ -782,36 +782,6 @@ export class Tournament {
 		);
 	}
 
-	/** Should it be possible for the given user to report score for this match at this time? */
-	canReportScore({
-		matchId,
-		user,
-	}: {
-		matchId: number;
-		user: OptionalIdObject;
-	}) {
-		const match = this.brackets
-			.flatMap((bracket) => (bracket.preview ? [] : bracket.data.match))
-			.find((match) => match.id === matchId);
-		invariant(match, "Match not found");
-
-		// match didn't start yet
-		if (!match.opponent1 || !match.opponent2) return false;
-
-		const matchIsOver =
-			match.opponent1.result === "win" || match.opponent2.result === "win";
-
-		if (matchIsOver) return false;
-
-		const teamMemberOf = this.teamMemberOfByUser(user)?.id;
-
-		const isParticipant =
-			match.opponent1.id === teamMemberOf ||
-			match.opponent2.id === teamMemberOf;
-
-		return isParticipant || this.isOrganizer(user);
-	}
-
 	/**
 	 * Checks if a team fulfills all the conditions to check-in. Returns the reason, if not.
 	 */
@@ -1238,6 +1208,31 @@ export class Tournament {
 		}
 
 		if (team.checkIns.length === 0) return null;
+
+		if (!team.droppedOut) {
+			for (const bracket of this.brackets) {
+				if (
+					bracket.type !== "round_robin" ||
+					bracket.preview ||
+					bracket.everyMatchOver
+				) {
+					continue;
+				}
+
+				const isParticipant = bracket.participantTournamentTeamIds.includes(
+					team.id,
+				);
+				const hasFollowUpBrackets = this.brackets.some((otherBracket) =>
+					otherBracket.sources?.some(
+						(source) => source.bracketIdx === bracket.idx,
+					),
+				);
+
+				if (isParticipant && hasFollowUpBrackets) {
+					return { type: "WAITING_FOR_GROUPS" } as const;
+				}
+			}
+		}
 
 		return { type: "THANKS_FOR_PLAYING" } as const;
 	}

@@ -403,6 +403,69 @@ describe("calculateDamageCombos - deduplication", () => {
 	});
 });
 
+describe("calculateDamageCombos - single weapon combos", () => {
+	test("returns no combos for a single weapon when disabled", () => {
+		const combos = calculateDamageCombos([SPLATTERSHOT_ID]);
+
+		expect(combos).toEqual([]);
+	});
+
+	test("generates combos from a single weapon when enabled", () => {
+		const combos = calculateDamageCombos(
+			[SPLATTERSHOT_ID],
+			[],
+			0,
+			undefined,
+			true,
+		);
+
+		expect(combos.length).toBeGreaterThan(0);
+
+		for (const combo of combos) {
+			const uniqueSlots = new Set(combo.segments.map((s) => s.weaponSlot));
+			expect(uniqueSlots.size).toBe(1);
+			expect(combo.totalDamage).toBeGreaterThanOrEqual(COMBO_DAMAGE_THRESHOLD);
+		}
+	});
+
+	test("lets a single weapon pair its main and sub damage when enabled", () => {
+		const combos = calculateDamageCombos(
+			[SPLATTERSHOT_ID],
+			[],
+			0,
+			undefined,
+			true,
+		);
+
+		const hasMainSubCombo = combos.some((combo) => {
+			const hasMain = combo.segments.some(
+				(s) => !s.isSubWeapon && !s.isSpecialWeapon,
+			);
+			const hasSub = combo.segments.some((s) => s.isSubWeapon);
+			return hasMain && hasSub;
+		});
+		expect(hasMainSubCombo).toBe(true);
+	});
+
+	test("keeps single-weapon combos alongside cross-weapon ones when enabled", () => {
+		const withoutSingle = calculateDamageCombos(
+			[SPLATTERSHOT_ID, SPLAT_ROLLER_ID],
+			[],
+			0,
+			1000,
+		);
+		const withSingle = calculateDamageCombos(
+			[SPLATTERSHOT_ID, SPLAT_ROLLER_ID],
+			[],
+			0,
+			1000,
+			true,
+		);
+
+		expect(withSingle.length).toBeGreaterThanOrEqual(withoutSingle.length);
+	});
+});
+
 describe("virtual damage combos", () => {
 	test("Explosher has COMBO damage type combining DIRECT and DISTANCE", () => {
 		const sources = extractDamageSources([EXPLOSHER_ID]);

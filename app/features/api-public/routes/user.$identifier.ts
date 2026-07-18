@@ -6,7 +6,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import { peakXpOverallSql } from "~/features/top-search/XRankPlacementRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { badgeUrl } from "~/utils/urls";
@@ -17,7 +17,7 @@ const paramsSchema = z.object({
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const t = await i18next.getFixedT("en", ["weapons"]);
+	const t = await getFixedTForLanguage("en", ["weapons"]);
 	const { identifier } = parseParams({ params, schema: paramsSchema });
 
 	const user = notFoundIfFalsy(

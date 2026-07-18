@@ -25,8 +25,10 @@ export interface UserCardData extends CommonUser {
  */
 export interface UserCardFriendship {
 	isFriend: boolean;
-	/** Whether a friend request between the viewer and this user is currently pending. */
-	hasPendingFriendRequest: boolean;
+	/** Whether the viewer has a pending friend request sent to this user. */
+	sentFriendRequest: boolean;
+	/** Id of this user's pending friend request to the viewer, or `null` when there is none. */
+	incomingFriendRequestId: number | null;
 	mutualFriends: Array<CommonUser>;
 }
 

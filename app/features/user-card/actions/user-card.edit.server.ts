@@ -6,7 +6,7 @@ import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
 import * as UserCardRepository from "../UserCardRepository.server";
 import { updateUserCardSchema } from "../user-card-schemas";
-import { maxUnverifiedXp } from "../user-card-utils";
+import { isValidUnverifiedXp } from "../user-card-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -27,15 +27,18 @@ export const action: ActionFunction = async ({ request }) => {
 	const data = result.data;
 
 	if (data.unverifiedXpPoints) {
-		const hasLinkedPlayer =
-			await XRankPlacementRepository.isPlayerLinkedByUserId(user.id);
-		const max = maxUnverifiedXp({
-			division: data.unverifiedXpDivision,
-			hasLinkedPlayer,
-		});
-		if (data.unverifiedXpPoints > max) {
+		const verifiedPeakXp =
+			await XRankPlacementRepository.peakVerifiedXpByUserId(user.id);
+		if (
+			!isValidUnverifiedXp({
+				unverified: data.unverifiedXpPoints,
+				verified: verifiedPeakXp,
+			})
+		) {
 			return {
-				fieldErrors: { unverifiedXpPoints: "forms:errors.unverifiedXpTooHigh" },
+				fieldErrors: {
+					unverifiedXpPoints: "forms:errors.unverifiedXpNotAboveVerified",
+				},
 			};
 		}
 	}

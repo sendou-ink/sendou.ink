@@ -98,6 +98,7 @@ function SeasonBanner() {
 					className={styles.seasonBannerImg}
 					path={sqHeaderGuyImageUrl(season.nth)}
 					alt=""
+					loading="eager"
 				/>
 			</Link>
 			<Link to={SENDOUQ_PAGE} className={styles.seasonBannerLink}>
@@ -131,6 +132,7 @@ function SeasonCard() {
 					className={styles.seasonCardImg}
 					path={sqHeaderGuyImageUrl(season.nth)}
 					alt=""
+					loading="eager"
 				/>
 			</Link>
 			<Link to={SENDOUQ_PAGE} className={styles.seasonCardButton}>
@@ -394,6 +396,7 @@ function ChangelogItem({ item }: { item: Changelog.ChangelogItem }) {
 								src={image.thumb}
 								alt=""
 								className={styles.changeLogImg}
+								loading="lazy"
 							/>
 						))}
 					</div>

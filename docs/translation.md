@@ -15,5 +15,6 @@ Things to note:
 - If you want to add a new language, ask Sendou.
 - Some lines have dynamic parts like `"articleBy": "by {{author}}"`. The `{{author}}` part should appear in the translated version unchanged - don't translate the part inside `{{}}`.
 - Another special syntax: `"project": "Sendou.ink is a project by <2>Sendou</2> with help from contributors:"`. The `<2></2>` tags should appear in the translated version, but the text inside them can change.
+- Some English keys come in plural variants like `"tournament_one"` and `"tournament_other"`. Languages that only have a single plural form (e.g. Chinese, Japanese, Korean) can only hold **one** translation for such a key, so during syncing these variants are collapsed into a single key (e.g. `"tournament"`). When collapsing, the `_other` value is kept (it's the one that includes the `{{count}}` number), and the other variants are discarded. This means for these languages you should translate the `_other` variant. 
 
 Any questions please ask Sendou!

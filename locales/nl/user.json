@@ -208,6 +208,7 @@
 	"card.sendFriendRequest": "",
 	"card.friendRequestPending": "",
 	"card.friendRequestSent": "",
+	"card.friendRequestAccepted": "",
 	"card.editPrivateNote": "",
 	"card.privateNote": "",
 	"card.xp": "",

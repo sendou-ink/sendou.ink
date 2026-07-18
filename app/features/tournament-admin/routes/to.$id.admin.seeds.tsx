@@ -18,7 +18,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import * as React from "react";
-import { useFetcher, useNavigation } from "react-router";
+import { useFetcher, useLoaderData, useNavigation } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -43,7 +43,10 @@ import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
 import styles from "./to.$id.admin.seeds.module.css";
 
 export { action } from "../actions/to.$id.admin.seeds.server";
-export { loader } from "../loaders/to.$id.admin.seeds.server";
+
+import { loader } from "../loaders/to.$id.admin.seeds.server";
+
+export { loader };
 
 export const handle: SendouRouteHandle = {
 	i18n: ["user", "q"],
@@ -81,7 +84,7 @@ export default function TournamentAdminSeedsPage() {
 		}),
 	);
 
-	const seedingSnapshot = tournament.ctx.seedingSnapshot;
+	const { seedingSnapshot } = useLoaderData<typeof loader>();
 	const newTeamIds = computeNewTeamIds(tournament.ctx.teams, seedingSnapshot);
 	const newPlayersByTeam = computeNewPlayers(
 		tournament.ctx.teams,

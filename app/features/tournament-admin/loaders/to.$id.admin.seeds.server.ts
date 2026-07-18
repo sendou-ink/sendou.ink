@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { parseParams } from "~/utils/remix.server";
@@ -20,6 +21,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 
 	return {
+		seedingSnapshot:
+			await TournamentRepository.findSeedingSnapshotById(tournamentId),
 		...(await UserCardRepository.userCards({
 			userIds,
 		})),

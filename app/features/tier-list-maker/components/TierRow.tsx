@@ -60,7 +60,8 @@ export function TierRow({ tier }: TierRowProps) {
 	const isLastTier = tierIndex === state.tiers.length - 1;
 
 	const isClickMode = placementMode === "click";
-	const isSelected = isClickMode && selectedTierId === tier.id;
+	const isSelected =
+		isClickMode && !screenshotMode && selectedTierId === tier.id;
 
 	const selectTierProps = isClickMode
 		? {
@@ -152,10 +153,11 @@ export function TierRow({ tier }: TierRowProps) {
 				ref={combinedRef}
 				style={{
 					borderRadius: screenshotMode ? "var(--radius-field)" : undefined,
+					transition: screenshotMode ? "none" : undefined,
 				}}
 				className={clsx(styles.targetZone, {
 					[styles.targetZoneOver]: isOver,
-					[styles.targetZoneSelectable]: isClickMode,
+					[styles.targetZoneSelectable]: isClickMode && !screenshotMode,
 					[styles.targetZoneSelected]: isSelected,
 				})}
 				{...selectTierProps}

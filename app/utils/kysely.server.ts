@@ -2,7 +2,6 @@ import {
 	type ColumnType,
 	type Expression,
 	type ExpressionBuilder,
-	expressionBuilder,
 	sql,
 } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
@@ -139,13 +138,11 @@ export function tournamentLogoWithDefault(
 export function concatUserSubmittedImagePrefix<T extends string | null>(
 	expr: Expression<T>,
 ) {
-	const eb = expressionBuilder<DB>();
-
-	return eb.fn<T extends null ? string | null : string>("iif", [
-		eb(expr, "is not", null),
-		eb.fn<string>("concat", [sql.lit(`${USER_SUBMITTED_IMAGE_ROOT}/`), expr]),
-		sql`null`,
-	]);
+	// null-propagating || instead of iif(expr is not null, concat(...), null)
+	// so a correlated subquery passed as expr is evaluated only once per row
+	return sql<T extends null ? string | null : string>`(${sql.lit(
+		`${USER_SUBMITTED_IMAGE_ROOT}/`,
+	)} || ${expr})`;
 }
 
 export type JSONColumnTypeNullable<

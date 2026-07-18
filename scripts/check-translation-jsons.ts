@@ -12,6 +12,13 @@ const dontWrite = process.argv.includes(NO_WRITE_KEY);
 
 const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 
+// `_zero` is an i18next `count === 0` override, not a CLDR plural category. It
+// may legitimately sit alongside the bare singular key that single-plural
+// languages (zh, ja, ko) use after `i18n:sync` collapses their plural forms, so
+// unlike the real plural suffixes it never counts as a with/without-suffix clash.
+const ZERO_SUFFIX = "_zero";
+const PLURAL_SUFFIXES = KNOWN_SUFFIXES.filter((sfx) => sfx !== ZERO_SUFFIX);
+
 const REPO_TRANSLATIONS_INFO_URL =
 	"https://github.com/sendou-ink/sendou.ink/blob/main/docs/translation.md";
 
@@ -187,40 +194,47 @@ function getKeysWithoutSuffix(
 	lang: string,
 	file: string,
 ): string[] {
-	const foundSuffixKeys = new Set<string>();
-	const keys = [];
+	const pluralBaseKeys = new Set<string>();
+	const bareKeys = new Set<string>();
+	const keys: string[] = [];
+
+	const pushOnce = (key: string) => {
+		if (!keys.includes(key)) keys.push(key);
+	};
 
 	for (const [key, value] of Object.entries(translations)) {
 		if (value === "") {
 			continue; // Consider key missing if untranslated
 		}
 
-		const suffix = KNOWN_SUFFIXES.find((sfx) => key.endsWith(sfx));
+		if (key.endsWith(ZERO_SUFFIX)) {
+			// `_zero` override always maps to its base key and never clashes with it
+			pushOnce(key.slice(0, -ZERO_SUFFIX.length));
+			continue;
+		}
+
+		const suffix = PLURAL_SUFFIXES.find((sfx) => key.endsWith(sfx));
 		if (!suffix) {
-			if (foundSuffixKeys.has(key)) {
+			if (pluralBaseKeys.has(key)) {
 				throw new Error(
 					`Found same key with and without suffixes in ${lang}/${file}: ${key}`,
 				);
 			}
-			keys.push(key);
+			bareKeys.add(key);
+			pushOnce(key);
 			continue;
 		}
 
-		const baseKey = key.replace(suffix, "");
+		const baseKey = key.slice(0, -suffix.length);
 
-		if (foundSuffixKeys.has(baseKey)) {
-			// Already found this key with a suffix. Duplicates are handled elsewhere.
-			continue;
-		}
-
-		if (keys.includes(baseKey)) {
+		if (bareKeys.has(baseKey)) {
 			throw new Error(
 				`Found same key with and without suffixes in ${lang}/${file}: ${baseKey}`,
 			);
 		}
 
-		keys.push(baseKey);
-		foundSuffixKeys.add(baseKey);
+		pluralBaseKeys.add(baseKey);
+		pushOnce(baseKey);
 	}
 
 	return keys;

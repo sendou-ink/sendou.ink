@@ -150,6 +150,15 @@ export function TournamentTeamActions() {
 		);
 	}
 
+	if (status.type === "WAITING_FOR_GROUPS") {
+		return (
+			<Container>
+				Waiting on group to finish
+				<Dots />
+			</Container>
+		);
+	}
+
 	if (status.type === "WAITING_FOR_BRACKET") {
 		return (
 			<Container spaced>

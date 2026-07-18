@@ -11,7 +11,7 @@ import {
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
-import { parseParams } from "~/utils/remix.server";
+import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { tournamentAdminPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import { adminRegistrationFormSchemaServer } from "../tournament-admin-registration-schemas.server";
@@ -49,6 +49,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 	if (typeof data.tournamentTeamId === "number") {
 		team = tournament.teamById(data.tournamentTeamId);
 	}
+
+	errorToastIfFalsy(team || !tournament.hasStarted, "Tournament has started");
 
 	const currentMemberIds = team?.members.map((member) => member.userId) ?? [];
 	const submittedMemberIds = submittedMembers.map((member) => member.userId);

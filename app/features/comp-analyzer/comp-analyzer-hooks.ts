@@ -43,6 +43,15 @@ export function useSelectedWeapons() {
 	});
 }
 
+export function useSingleWeaponCombos() {
+	return useSearchParamStateEncoder<boolean>({
+		defaultValue: false,
+		name: "singleCombos",
+		revive: (value) => value === "true",
+		encode: (val) => String(val),
+	});
+}
+
 export function useTargetSubDefenseAp() {
 	return useSearchParamStateEncoder<number>({
 		defaultValue: 0,

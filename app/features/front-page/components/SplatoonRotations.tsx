@@ -220,12 +220,14 @@ function RotationCard({
 					className={styles.rotationCardStageImage}
 					width={114}
 					height={64}
+					loading="eager"
 				/>
 				<StageImage
 					stageId={displayRotation.stageId2 as StageId}
 					className={styles.rotationCardStageImage}
 					width={114}
 					height={64}
+					loading="eager"
 				/>
 			</div>
 			<div className={styles.rotationCardNext}>

@@ -167,6 +167,13 @@
 	color: var(--color-text-high);
 }
 
+.singleWeaponToggleRow {
+	display: flex;
+	padding-block-end: var(--s-3);
+	border-block-end: 1px solid var(--color-border);
+	margin-block-end: var(--s-1);
+}
+
 .filterControlsRow {
 	display: flex;
 	gap: var(--s-2);

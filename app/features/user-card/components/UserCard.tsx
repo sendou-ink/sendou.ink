@@ -25,6 +25,7 @@ import { Placement } from "~/components/Placement";
 import type { XRankPlacementRegion } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
+import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -83,6 +84,10 @@ export function UserCard({
 	const lookedUpData = useUserCardData(userId);
 	const data = dataProp ?? lookedUpData;
 
+	// beside the trigger there is no room for the card on a narrow viewport, so it is placed
+	// vertically instead where React Aria can shift it horizontally to keep it on-screen
+	const placement = useLayoutSize() === "mobile" ? "bottom" : "right";
+
 	const user = useUser();
 	const isOwnCard = user?.id === data?.id;
 
@@ -124,7 +129,7 @@ export function UserCard({
 		<>
 			<DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
 				<Button className={styles.trigger}>{children}</Button>
-				<Popover placement="right" className={styles.popover}>
+				<Popover placement={placement} className={styles.popover}>
 					<Dialog className={styles.dialog}>
 						<CardContent
 							data={data}
@@ -248,7 +253,8 @@ function CardContent({
 						{friendship && !friendship.isFriend ? (
 							<FriendRequestButton
 								targetUserId={data.id}
-								hasPendingFriendRequest={friendship.hasPendingFriendRequest}
+								sentFriendRequest={friendship.sentFriendRequest}
+								incomingFriendRequestId={friendship.incomingFriendRequestId}
 							/>
 						) : null}
 						<SendouButton
@@ -364,42 +370,74 @@ function NoteView({
 }
 
 /**
- * Send friend request action on the card. Submits to the `/friends` route action and shows a
- * checkmark once a request is pending (server-known or just sent). Cancelling a pending request
- * is done on the `/friends` page.
+ * Friend request action on the card, submitting to the `/friends` route action. Normally sends a
+ * request and shows a checkmark once one is pending (server-known or just sent); when the shown
+ * user has already sent the viewer a request, the same add-friend press accepts it instead.
+ * Cancelling a pending request is done on the `/friends` page.
  */
 function FriendRequestButton({
 	targetUserId,
-	hasPendingFriendRequest,
+	sentFriendRequest,
+	incomingFriendRequestId,
 }: {
 	targetUserId: number;
-	hasPendingFriendRequest: boolean;
+	sentFriendRequest: boolean;
+	incomingFriendRequestId: number | null;
 }) {
 	const { t } = useTranslation(["user"]);
 	const fetcher = useFetcher();
 	const previousStateRef = React.useRef(fetcher.state);
+	const acceptsIncomingRequest = incomingFriendRequestId !== null;
 
+	// Sending a request keeps this button mounted (it becomes the pending checkmark), so the
+	// success toast can wait for the server round-trip here. The accept path instead unmounts the
+	// button as soon as the revalidated friendship data arrives, which can race the toast render,
+	// so that toast is fired directly from the press handler below.
 	React.useEffect(() => {
 		if (
-			previousStateRef.current !== "idle" &&
-			fetcher.state === "idle" &&
+			!acceptsIncomingRequest &&
+			previousStateRef.current === "submitting" &&
+			fetcher.state !== "submitting" &&
 			fetcher.data === null
 		) {
 			toastQueue.add(
-				{
-					message: t("user:card.friendRequestSent"),
-					variant: "success",
-				},
+				{ message: t("user:card.friendRequestSent"), variant: "success" },
 				{ timeout: 5000 },
 			);
 		}
 		previousStateRef.current = fetcher.state;
-	}, [fetcher.state, fetcher.data, t]);
+	}, [fetcher.state, fetcher.data, acceptsIncomingRequest, t]);
+
+	if (acceptsIncomingRequest) {
+		return (
+			<SendouButton
+				size="miniscule"
+				shape="circle"
+				icon={<UserPlus />}
+				isDisabled={fetcher.state !== "idle" || fetcher.data === null}
+				aria-label="Accept friend request"
+				onPress={() => {
+					toastQueue.add(
+						{
+							message: t("user:card.friendRequestAccepted"),
+							variant: "success",
+						},
+						{ timeout: 5000 },
+					);
+					fetcher.submit(
+						{
+							_action: "ACCEPT_REQUEST",
+							friendRequestId: incomingFriendRequestId,
+						},
+						{ method: "post", action: FRIENDS_PAGE },
+					);
+				}}
+			/>
+		);
+	}
 
 	const requestPending =
-		hasPendingFriendRequest ||
-		fetcher.state !== "idle" ||
-		fetcher.data === null;
+		sentFriendRequest || fetcher.state !== "idle" || fetcher.data === null;
 
 	if (requestPending) {
 		return (

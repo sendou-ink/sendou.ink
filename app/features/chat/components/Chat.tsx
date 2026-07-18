@@ -22,6 +22,10 @@ import styles from "./Chat.module.css";
 
 const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
+const VIRTUALIZER_LAYOUT_OPTIONS = {
+	gap: MESSAGE_GAP,
+	estimatedRowSize: ESTIMATED_MESSAGE_HEIGHT,
+};
 
 export interface ChatAdapter {
 	messages: ChatMessage[];
@@ -165,10 +169,7 @@ export function Chat({
 			<div className={styles.inputContainer}>
 				<Virtualizer
 					layout={ListLayout}
-					layoutOptions={{
-						gap: MESSAGE_GAP,
-						estimatedRowSize: ESTIMATED_MESSAGE_HEIGHT,
-					}}
+					layoutOptions={VIRTUALIZER_LAYOUT_OPTIONS}
 				>
 					<ListBox
 						ref={messagesContainerRef}

@@ -5,7 +5,6 @@ import { ModeImage, StageImage } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { userPage } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import { useTournament, useTournamentFriendCodes } from "../routes/to.$id";
@@ -62,9 +61,6 @@ export function TeamWithRoster({
 				<ul className={styles.teamWithRosterMembers}>
 					{team.members.map((member) => {
 						const friendCode = friendCodes?.[member.userId];
-						const isSub =
-							databaseTimestampToDate(member.createdAt) >
-							tournament.registrationClosesAt;
 
 						const name = () => {
 							if (!tournament.ctx.settings.requireInGameNames) {
@@ -79,7 +75,7 @@ export function TeamWithRoster({
 								{member.role === "OWNER" ? (
 									<span className={`${styles.teamMemberNameRole}`}>C</span>
 								) : null}
-								{isSub && member.role !== "OWNER" ? (
+								{member.isSub && member.role !== "OWNER" ? (
 									<span
 										className={`${styles.teamMemberNameRole} ${styles.teamMemberNameRoleSub}`}
 									>

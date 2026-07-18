@@ -72,7 +72,6 @@ export async function findById(id: number) {
 			"CalendarEvent.name",
 			"CalendarEventDate.startTime",
 			"Tournament.isFinalized",
-			"Tournament.seedingSnapshot",
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentOrganization")
@@ -208,6 +207,7 @@ export async function findById(id: number) {
 									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
+									"TournamentTeamMember.isSub",
 									sql<string | null> /*sql*/`coalesce(
                     "TournamentTeamMember"."inGameName",
                     "User"."inGameName"
@@ -372,6 +372,19 @@ export async function findDescriptionById(tournamentId: number) {
 		.executeTakeFirst();
 
 	return row?.description ?? null;
+}
+
+/**
+ * Loads a tournament's seeding snapshot.
+ */
+export async function findSeedingSnapshotById(tournamentId: number) {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("Tournament.seedingSnapshot")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return row?.seedingSnapshot ?? null;
 }
 
 export async function hasChildTournaments(parentTournamentId: number) {

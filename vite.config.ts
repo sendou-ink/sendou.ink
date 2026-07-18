@@ -5,12 +5,17 @@ import babel from "vite-plugin-babel";
 
 export default defineConfig((config) => {
 	const env = loadEnv(config.mode, process.cwd(), "");
+	const isBuild = config.command === "build";
 	return {
 		server: {
 			port: Number(env.PORT) || 5173,
-			// Vite's built-in CORS would answer preflights before route middleware
+			warmup: {
+				// Vite's built-in CORS would answer preflights before route middleware
 			// (e.g. ingestCorsMiddleware) and omit Access-Control-Allow-Credentials
 			cors: false,
+				clientFiles: ["./app/entry.client.tsx", "./app/root.tsx"],
+				ssrFiles: ["./app/entry.server.tsx"],
+			},
 		},
 		ssr: {
 			noExternal: ["react-charts", "react-use"],
@@ -36,25 +41,31 @@ export default defineConfig((config) => {
 				},
 			},
 			reactRouter(),
-			babel({
-				include: /\.[jt]sx?$/,
-				babelConfig: {
-					presets: ["@babel/preset-typescript"],
-					plugins: [["babel-plugin-react-compiler", {}]],
-				},
-			}),
-			sentryReactRouter(
-				{
-					org: process.env.SENTRY_ORG,
-					project: process.env.SENTRY_PROJECT,
-					authToken: process.env.SENTRY_AUTH_TOKEN,
-					telemetry: false,
-					unstable_sentryVitePluginOptions: {
-						applicationKey: "sendou-ink",
-					},
-				},
-				config,
-			),
+			// React Compiler and Sentry are skipped in dev where their per-module
+			// transform cost outweighs their value.
+			...(isBuild
+				? [
+						babel({
+							include: /\.[jt]sx?$/,
+							babelConfig: {
+								presets: ["@babel/preset-typescript"],
+								plugins: [["babel-plugin-react-compiler", {}]],
+							},
+						}),
+						sentryReactRouter(
+							{
+								org: process.env.SENTRY_ORG,
+								project: process.env.SENTRY_PROJECT,
+								authToken: process.env.SENTRY_AUTH_TOKEN,
+								telemetry: false,
+								unstable_sentryVitePluginOptions: {
+									applicationKey: "sendou-ink",
+								},
+							},
+							config,
+						),
+					]
+				: []),
 		],
 
 		test: {
@@ -76,6 +87,58 @@ export default defineConfig((config) => {
 		},
 		optimizeDeps: {
 			exclude: ["@sentry/react-router"],
+			// Dependencies which are only imported by specific route modules.
+			// Pre-bundling them at startup avoids mid-session re-optimization
+			// and full page reloads on first navigations.
+			include: [
+				"@date-fns/tz",
+				"@dnd-kit/core",
+				"@dnd-kit/modifiers",
+				"@dnd-kit/sortable",
+				"@dnd-kit/utilities",
+				"@epic-web/cachified",
+				"@internationalized/date",
+				"@remix-run/form-data-parser",
+				"@tldraw/tldraw",
+				"@zumer/snapdom",
+				"better-sqlite3",
+				"chart.js",
+				"compressorjs",
+				"date-fns/locale/da",
+				"date-fns/locale/de",
+				"date-fns/locale/en-US",
+				"date-fns/locale/es",
+				"date-fns/locale/fr",
+				"date-fns/locale/fr-CA",
+				"date-fns/locale/he",
+				"date-fns/locale/it",
+				"date-fns/locale/ja",
+				"date-fns/locale/ko",
+				"date-fns/locale/nl",
+				"date-fns/locale/pl",
+				"date-fns/locale/pt-BR",
+				"date-fns/locale/ru",
+				"date-fns/locale/zh-CN",
+				"edmonds-blossom-fixed",
+				"i18next-browser-languagedetector",
+				"i18next-http-backend",
+				"jsoncrush",
+				"kysely",
+				"kysely/helpers/sqlite",
+				"markdown-to-jsx",
+				"neverthrow",
+				"openskill",
+				"partysocket",
+				"qrcode.react",
+				"react-chartjs-2",
+				"react-flip-toolkit",
+				"remeda",
+				"remix-auth",
+				"remix-auth-oauth2",
+				"remix-i18next",
+				"sql-formatter",
+				"swr/immutable",
+			],
 		},
 	};
 });

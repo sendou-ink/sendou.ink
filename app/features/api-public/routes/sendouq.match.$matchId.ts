@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import { i18next } from "~/modules/i18n/i18next.server";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetSendouqMatchResponse, MapListMap } from "../schema";
@@ -18,7 +18,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
 
-	const t = await i18next.getFixedT("en", ["game-misc"]);
+	const t = await getFixedTForLanguage("en", ["game-misc"]);
 
 	const userIdToRank = (userId: number) => {
 		const memento = match.memento;

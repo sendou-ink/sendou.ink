@@ -36,6 +36,18 @@ import type {
 
 export const formRegistry = z.registry<FormField>();
 
+/**
+ * Looks up a schemas form field metadata. Needed to bypass the
+ * registrys deep generic `get` signature which causes
+ * "Type instantiation is excessively deep" errors.
+ */
+export function getFormFieldMetadata(schema: z.ZodType): FormField | undefined {
+	const registry = formRegistry as {
+		get(schema: z.ZodType): FormField | undefined;
+	};
+	return registry.get(schema);
+}
+
 export type RequiresDefault<T extends z.ZodType> = T & {
 	_requiresDefault: true;
 };
@@ -241,7 +253,7 @@ export function numberField(
 ) {
 	return z.coerce
 		.number()
-		.int()
+		.int({ message: "forms:errors.mustBeWholeNumber" })
 		.nonnegative()
 		.register(formRegistry, {
 			...args,
@@ -270,7 +282,7 @@ export function numberFieldOptional(
 ) {
 	return z.coerce
 		.number()
-		.int()
+		.int({ message: "forms:errors.mustBeWholeNumber" })
 		.nonnegative()
 		.optional()
 		.register(formRegistry, {

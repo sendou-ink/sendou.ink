@@ -18,6 +18,7 @@ import { PRESET_COLORS } from "../../tier-list-maker/tier-list-maker-constants";
 import { action } from "../actions/user-card.edit.server";
 import { loader } from "../loaders/user-card.edit.server";
 import { updateUserCardSchema } from "../user-card-schemas";
+import { isValidUnverifiedXp } from "../user-card-utils";
 import styles from "./user-card.edit.module.css";
 
 export { action, loader };
@@ -62,7 +63,16 @@ export default function UserCardEditPage() {
 function defaultValues(data: Awaited<ReturnType<typeof loader>>) {
 	const { card, extras } = data;
 	const banner = card.banner;
-	const peakXp = extras.unverifiedPeakXP;
+	// a stored self-reported peak XP is only autofilled while it's still a valid claim on top of a
+	// verified placement; otherwise the field is left blank rather than showing an unsubmittable value
+	const peakXp =
+		extras.unverifiedPeakXP &&
+		isValidUnverifiedXp({
+			unverified: extras.unverifiedPeakXP.overall,
+			verified: data.verifiedPeakXp,
+		})
+			? extras.unverifiedPeakXP
+			: null;
 
 	return {
 		shortBio: card.shortBio ?? "",

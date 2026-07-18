@@ -55,6 +55,7 @@ export function TournamentMatchBanner({
 		currentMap,
 		teamsMissingActiveRoster,
 		matchIsLocked,
+		waitingForPreviousMatch,
 		joinPool,
 		joinPass,
 		teams,
@@ -155,6 +156,16 @@ export function TournamentMatchBanner({
 					icon={<Hourglass size={32} />}
 					header={t("tournament:match.waitingForTeams.header")}
 					subtitle={t("tournament:match.waitingForTeams.subtitle")}
+				/>
+			) : waitingForPreviousMatch ? (
+				<IconBanner
+					icon={<Hourglass size={32} />}
+					header={t("tournament:match.waitingForPrevious.header")}
+					subtitle={t("tournament:match.waitingForPrevious.subtitle")}
+					screenLegal={screenLegal}
+					joinPool={joinPool}
+					joinPass={joinPass}
+					host={host}
 				/>
 			) : teamsMissingActiveRoster.length > 0 ? (
 				<IconBanner
