@@ -134,7 +134,9 @@ export default defineConfig((config) => {
 				"markdown-to-jsx",
 				"neverthrow",
 				"openskill",
+				"pako",
 				"partysocket",
+				"picocad2-web",
 				"qrcode.react",
 				"react-chartjs-2",
 				"react-flip-toolkit",
@@ -144,6 +146,7 @@ export default defineConfig((config) => {
 				"remix-i18next",
 				"sql-formatter",
 				"swr/immutable",
+				"zod",
 			],
 		},
 	};
