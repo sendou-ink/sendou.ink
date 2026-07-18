@@ -5,44 +5,67 @@ import {
 } from "@internationalized/date";
 import type { Locale } from "date-fns";
 import { formatDistanceToNow as dateFnsFormatDistanceToNow } from "date-fns";
-import { da } from "date-fns/locale/da";
-import { de } from "date-fns/locale/de";
 import { enUS } from "date-fns/locale/en-US";
-import { es } from "date-fns/locale/es";
-import { fr } from "date-fns/locale/fr";
-import { frCA } from "date-fns/locale/fr-CA";
-import { he } from "date-fns/locale/he";
-import { it } from "date-fns/locale/it";
-import { ja } from "date-fns/locale/ja";
-import { ko } from "date-fns/locale/ko";
-import { nl } from "date-fns/locale/nl";
-import { pl } from "date-fns/locale/pl";
-import { ptBR } from "date-fns/locale/pt-BR";
-import { ru } from "date-fns/locale/ru";
-import { zhCN } from "date-fns/locale/zh-CN";
 import type { MonthYear } from "~/features/plus-voting/core";
 import type { LanguageCode } from "~/modules/i18n/config";
+import { logger } from "./logger";
 import type { DayMonthYear } from "./zod";
 
-const LOCALE_MAP: Record<LanguageCode, Locale> = {
-	da,
-	de,
-	en: enUS,
-	"es-ES": es,
-	"es-US": es,
-	"fr-CA": frCA,
-	"fr-EU": fr,
-	he,
-	it,
-	ja,
-	ko,
-	nl,
-	pl,
-	"pt-BR": ptBR,
-	ru,
-	zh: zhCN,
+// en-US ships with date-fns core as the default locale, so it costs no extra bytes
+const LOCALE_LOADERS: Record<LanguageCode, () => Promise<Locale>> = {
+	da: () => import("date-fns/locale/da").then((module) => module.da),
+	de: () => import("date-fns/locale/de").then((module) => module.de),
+	en: () => Promise.resolve(enUS),
+	"es-ES": () => import("date-fns/locale/es").then((module) => module.es),
+	"es-US": () => import("date-fns/locale/es").then((module) => module.es),
+	"fr-CA": () => import("date-fns/locale/fr-CA").then((module) => module.frCA),
+	"fr-EU": () => import("date-fns/locale/fr").then((module) => module.fr),
+	he: () => import("date-fns/locale/he").then((module) => module.he),
+	it: () => import("date-fns/locale/it").then((module) => module.it),
+	ja: () => import("date-fns/locale/ja").then((module) => module.ja),
+	ko: () => import("date-fns/locale/ko").then((module) => module.ko),
+	nl: () => import("date-fns/locale/nl").then((module) => module.nl),
+	pl: () => import("date-fns/locale/pl").then((module) => module.pl),
+	"pt-BR": () => import("date-fns/locale/pt-BR").then((module) => module.ptBR),
+	ru: () => import("date-fns/locale/ru").then((module) => module.ru),
+	zh: () => import("date-fns/locale/zh-CN").then((module) => module.zhCN),
 };
 
+const loadedLocales = new Map<LanguageCode, Locale>();
+
+/**
+ * Loads the date-fns locale for the given language into the in-memory cache
+ * used by {@link formatDistanceToNow}. Load failures are logged and result in
+ * an English fallback instead of rejecting.
+ */
+export async function loadDateFnsLocale(language: LanguageCode) {
+	if (loadedLocales.has(language)) return;
+
+	const loader = LOCALE_LOADERS[language];
+	if (!loader) return;
+
+	try {
+		loadedLocales.set(language, await loader());
+	} catch (error) {
+		logger.warn(
+			`Failed to load date-fns locale for language ${language}`,
+			error,
+		);
+	}
+}
+
+/** Loads every date-fns locale into the cache (meant for the server where bundle size does not matter). */
+export function loadAllDateFnsLocales() {
+	return Promise.all(
+		(Object.keys(LOCALE_LOADERS) as LanguageCode[]).map(loadDateFnsLocale),
+	);
+}
+
+/**
+ * Formats how long ago / until the given date in the given language. The
+ * language's date-fns locale must be loaded first via
+ * {@link loadDateFnsLocale}; otherwise falls back to English.
+ */
 export function formatDistanceToNow(
 	date: Parameters<typeof dateFnsFormatDistanceToNow>[0],
 	options: Omit<
@@ -52,7 +75,7 @@ export function formatDistanceToNow(
 ) {
 	return dateFnsFormatDistanceToNow(date, {
 		...options,
-		locale: LOCALE_MAP[options.language],
+		locale: loadedLocales.get(options.language) ?? enUS,
 	});
 }
 

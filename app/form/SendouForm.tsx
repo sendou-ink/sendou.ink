@@ -9,9 +9,9 @@ import type { z } from "zod";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
 import { FormField as FormFieldComponent } from "./FormField";
-import { formRegistry } from "./fields";
+import { getFormFieldMetadata } from "./fields";
 import styles from "./SendouForm.module.css";
-import type { FormField, TypedFormFieldComponent } from "./types";
+import type { TypedFormFieldComponent } from "./types";
 import {
 	buildFieldPath,
 	errorMessageId,
@@ -625,9 +625,7 @@ function buildInitialValues<T extends z.ZodRawShape>(
 	const result: Record<string, unknown> = {};
 
 	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
-		const formField = formRegistry.get(fieldSchema as z.ZodType) as
-			| FormField
-			| undefined;
+		const formField = getFormFieldMetadata(fieldSchema as z.ZodType);
 
 		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
 		if (defaultValue !== undefined) {

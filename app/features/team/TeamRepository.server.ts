@@ -30,12 +30,15 @@ export function findAllUndisbanded() {
 			),
 			jsonArrayFrom(
 				eb
-					.selectFrom("TeamMemberWithSecondary")
-					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
+					// AllTeamMember directly instead of the TeamMemberWithSecondary view:
+					// the view's team-existence check is redundant when joining to Team
+					.selectFrom("AllTeamMember")
+					.innerJoin("User", "User.id", "AllTeamMember.userId")
 					.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 					.select(["User.id", "User.username", "PlusTier.tier as plusTier"])
-					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
-					.orderBy("TeamMemberWithSecondary.order", "asc"),
+					.whereRef("AllTeamMember.teamId", "=", "Team.id")
+					.where("AllTeamMember.leftAt", "is", null)
+					.orderBy("AllTeamMember.order", "asc"),
 			).as("members"),
 		])
 		.execute();

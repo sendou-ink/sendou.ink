@@ -20,12 +20,15 @@ import {
 	everyHourAt30,
 	everyTwoMinutes,
 } from "./routines/list.server";
+import { loadAllDateFnsLocales } from "./utils/dates";
 import { logger } from "./utils/logger";
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
 
 const SENTRY_ENABLED = Config.sentry.enabled;
+
+const dateFnsLocalesLoaded = loadAllDateFnsLocales();
 
 async function handleRequest(
 	request: Request,
@@ -34,6 +37,8 @@ async function handleRequest(
 	reactRouterContext: EntryContext,
 	loadContext: RouterContextProvider,
 ) {
+	await dateFnsLocalesLoaded;
+
 	const callbackName = isbot(request.headers.get("user-agent"))
 		? "onAllReady"
 		: "onShellReady";

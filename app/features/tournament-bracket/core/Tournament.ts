@@ -1209,6 +1209,31 @@ export class Tournament {
 
 		if (team.checkIns.length === 0) return null;
 
+		if (!team.droppedOut) {
+			for (const bracket of this.brackets) {
+				if (
+					bracket.type !== "round_robin" ||
+					bracket.preview ||
+					bracket.everyMatchOver
+				) {
+					continue;
+				}
+
+				const isParticipant = bracket.participantTournamentTeamIds.includes(
+					team.id,
+				);
+				const hasFollowUpBrackets = this.brackets.some((otherBracket) =>
+					otherBracket.sources?.some(
+						(source) => source.bracketIdx === bracket.idx,
+					),
+				);
+
+				if (isParticipant && hasFollowUpBrackets) {
+					return { type: "WAITING_FOR_GROUPS" } as const;
+				}
+			}
+		}
+
 		return { type: "THANKS_FOR_PLAYING" } as const;
 	}
 

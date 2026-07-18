@@ -1,5 +1,3 @@
-import { z } from "zod";
-import { formatEnvErrors, requiredInProd } from "./config-helpers";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
 /**
@@ -9,6 +7,9 @@ import { IS_E2E_TEST_RUN } from "./utils/e2e";
  * Values are validated once when this module is first imported, surfacing a
  * single clear error for any misconfigured variable. Variables required in
  * production fall back to development defaults outside of production.
+ *
+ * Note: this module ships in the critical client bundle so it must stay free of
+ * heavy dependencies (e.g. zod, which the server config uses).
  */
 
 // `import.meta.env` is undefined when Playwright bundles test code, so guard the
@@ -23,31 +24,35 @@ const isProd =
 	import.meta.env.PROD === true &&
 	!IS_E2E_TEST_RUN;
 
-const schema = z.object({
-	VITE_SITE_DOMAIN: requiredInProd(isProd, "http://localhost:5173"),
+const TRUTHY_STRINGS = ["true", "1", "yes", "on", "y", "enabled"];
+const FALSY_STRINGS = ["false", "0", "no", "off", "n", "disabled"];
+
+const issues: Array<{ name: string; message: string }> = [];
+
+const values = {
+	VITE_SITE_DOMAIN: requiredInProd("VITE_SITE_DOMAIN", "http://localhost:5173"),
 	VITE_TOURNAMENT_DEFAULT_LOGO: requiredInProd(
-		isProd,
+		"VITE_TOURNAMENT_DEFAULT_LOGO",
 		"tournament-logo-default.avif",
 	),
-	VITE_STATIC_ASSETS_URL: z
-		.string()
-		.default("https://sendou-assets.nyc3.cdn.digitaloceanspaces.com"),
-	VITE_PROD_MODE: z.stringbool().default(false),
-	VITE_SHOW_LUTI_NAV_ITEM: z.stringbool().default(false),
-	VITE_FUSE_ENABLED: z.stringbool().default(false),
-	VITE_LEAGUE_GOOGLE_FORM_URL: z.string().optional(),
-	VITE_SHOW_BANNER_FOR_SEASON: z.string().optional(),
-	VITE_SENTRY_DSN: z.string().optional(),
-	VITE_SENTRY_ENABLED: z.stringbool().default(false),
-	VITE_SKALOP_WS_URL: z.string().optional(),
-	VITE_VAPID_PUBLIC_KEY: z.string().optional(),
-});
+	VITE_STATIC_ASSETS_URL: withDefault(
+		"VITE_STATIC_ASSETS_URL",
+		"https://sendou-assets.nyc3.cdn.digitaloceanspaces.com",
+	),
+	VITE_PROD_MODE: stringBool("VITE_PROD_MODE"),
+	VITE_SHOW_LUTI_NAV_ITEM: stringBool("VITE_SHOW_LUTI_NAV_ITEM"),
+	VITE_FUSE_ENABLED: stringBool("VITE_FUSE_ENABLED"),
+	VITE_LEAGUE_GOOGLE_FORM_URL: env.VITE_LEAGUE_GOOGLE_FORM_URL,
+	VITE_SHOW_BANNER_FOR_SEASON: env.VITE_SHOW_BANNER_FOR_SEASON,
+	VITE_SENTRY_DSN: env.VITE_SENTRY_DSN,
+	VITE_SENTRY_ENABLED: stringBool("VITE_SENTRY_ENABLED"),
+	VITE_SKALOP_WS_URL: env.VITE_SKALOP_WS_URL,
+	VITE_VAPID_PUBLIC_KEY: env.VITE_VAPID_PUBLIC_KEY,
+};
 
-const parsed = schema.safeParse(env);
-if (!parsed.success) {
-	throw formatEnvErrors("client", parsed.error);
+if (issues.length > 0) {
+	throw envError(issues);
 }
-const values = parsed.data;
 
 export const Config = {
 	/** Base URL of the site, e.g. `https://sendou.ink`. */
@@ -79,3 +84,51 @@ export const Config = {
 		publicKey: values.VITE_VAPID_PUBLIC_KEY,
 	},
 };
+
+function requiredInProd(name: string, devFallback: string): string {
+	const value = env[name];
+
+	if (!isProd) {
+		return value ?? devFallback;
+	}
+
+	if (value === undefined) {
+		issues.push({ name, message: "required in production" });
+		return "";
+	}
+	if (value.length === 0) {
+		issues.push({ name, message: "required in production (cannot be empty)" });
+		return "";
+	}
+
+	return value;
+}
+
+function withDefault(name: string, defaultValue: string): string {
+	return env[name] ?? defaultValue;
+}
+
+function stringBool(name: string): boolean {
+	const value = env[name];
+	if (value === undefined) return false;
+
+	const normalized = value.toLowerCase();
+	if (TRUTHY_STRINGS.includes(normalized)) return true;
+	if (FALSY_STRINGS.includes(normalized)) return false;
+
+	issues.push({
+		name,
+		message: `must be a boolean-like string (e.g. "true" or "false"), got "${value}"`,
+	});
+	return false;
+}
+
+function envError(issues: Array<{ name: string; message: string }>): Error {
+	const lines = issues.map((issue) => `  - ${issue.name}: ${issue.message}`);
+
+	return new Error(
+		`Invalid client environment configuration:\n${lines.join(
+			"\n",
+		)}\n\nSee .env.example for the full list of variables and how to set them.`,
+	);
+}

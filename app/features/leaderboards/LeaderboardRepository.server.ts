@@ -22,6 +22,9 @@ import {
 	MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 } from "./leaderboards-constants";
 
+// must stay above the largest weaponSplId
+const USER_WEAPON_PACK_FACTOR = 100_000;
+
 function addPowers<T extends { ordinal: number }>(entries: T[]) {
 	return entries.map((entry) => ({
 		...entry,
@@ -38,32 +41,42 @@ function addPlacementRank<T>(entries: T[]) {
 
 const teamLeaderboardBySeasonQuery = (season: number) =>
 	db
-		.selectFrom("Skill")
-		.innerJoin(
-			(eb) =>
-				eb
-					.selectFrom("Skill as InnerSkill")
-					.select(({ fn }) => [
-						"InnerSkill.identifier",
-						fn.max("InnerSkill.id").as("maxId"),
-					])
-					.where("season", "=", season)
-					.groupBy("InnerSkill.identifier")
-					.as("Latest"),
-			(join) =>
-				join
-					.onRef("Latest.identifier", "=", "Skill.identifier")
-					.onRef("Latest.maxId", "=", "Skill.id"),
+		.selectFrom((eb) =>
+			eb
+				.selectFrom((eb) =>
+					eb
+						.selectFrom("Skill")
+						// with a lone max() aggregate SQLite takes the bare columns
+						// from the row that had the max id
+						.select(({ fn }) => [
+							fn.max("Skill.id").as("entryId"),
+							"Skill.ordinal",
+							"Skill.matchesCount",
+						])
+						.where("Skill.season", "=", season)
+						.where("Skill.identifier", "is not", null)
+						.groupBy("Skill.identifier")
+						.as("LatestOfTeam"),
+				)
+				.select(["LatestOfTeam.entryId", "LatestOfTeam.ordinal"])
+				.where(
+					"LatestOfTeam.matchesCount",
+					">=",
+					MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
+				)
+				.orderBy("LatestOfTeam.ordinal", "desc")
+				.limit(DEFAULT_LEADERBOARD_MAX_SIZE)
+				.as("Entry"),
 		)
 		.select((eb) => [
-			"Skill.id as entryId",
-			"Skill.ordinal",
+			"Entry.entryId",
+			"Entry.ordinal",
 			jsonArrayFrom(
 				eb
 					.selectFrom("SkillTeamUser")
 					.innerJoin("User", "SkillTeamUser.userId", "User.id")
 					.select((eb) => commonUserSelect(eb))
-					.whereRef("SkillTeamUser.skillId", "=", "Skill.id"),
+					.whereRef("SkillTeamUser.skillId", "=", "Entry.entryId"),
 			).as("members"),
 			jsonArrayFrom(
 				eb
@@ -90,13 +103,10 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 						"TeamMemberWithSecondary.isMainTeam",
 						"TeamMemberWithSecondary.userId",
 					])
-					.whereRef("SkillTeamUser.skillId", "=", "Skill.id"),
+					.whereRef("SkillTeamUser.skillId", "=", "Entry.entryId"),
 			).as("teams"),
 		])
-		.where("Skill.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
-		.where("Skill.season", "=", season)
-		.orderBy("Skill.ordinal", "desc")
-		.limit(DEFAULT_LEADERBOARD_MAX_SIZE);
+		.orderBy("Entry.ordinal", "desc");
 type TeamLeaderboardBySeasonQueryReturnType = InferResult<
 	ReturnType<typeof teamLeaderboardBySeasonQuery>
 >;
@@ -129,12 +139,12 @@ async function filterOutNonSqPlayers(args: {
 	entries: TeamLeaderboardBySeasonQueryReturnType;
 	season: number;
 }) {
-	const validUserIds = await userIdsWithEnoughSqMatchesForTeamLeaderboard(
-		args.season,
+	const validUserIds = new Set(
+		await userIdsWithEnoughSqMatchesForTeamLeaderboard(args.season),
 	);
 
 	return args.entries.filter((entry) =>
-		entry.members.every((member) => validUserIds.includes(member.id)),
+		entry.members.every((member) => validUserIds.has(member.id)),
 	);
 }
 
@@ -296,20 +306,47 @@ function xpLeaderboardQuery(where?: {
 	mode?: RankedModeShort;
 	weaponSplId?: MainWeaponId;
 }) {
-	// aggregating before joining keeps the group-by an index-only scan and the
-	// player/user joins limited to one lookup per player instead of per placement
+	// walks placements from the highest power down (power-descending indexes
+	// keeping only each player's best placement, so it can
+	// stop at the 500th distinct player instead of aggregating every player's
+	// max power first
 	return db
 		.selectFrom((eb) => {
 			let placements = eb
 				.selectFrom("XRankPlacement")
-				.select(({ fn }) => [
+				.select([
 					"XRankPlacement.id as entryId",
 					"XRankPlacement.playerId",
 					"XRankPlacement.weaponSplId",
 					"XRankPlacement.name",
-					fn.max("XRankPlacement.power").as("power"),
+					"XRankPlacement.power",
 				])
-				.groupBy("XRankPlacement.playerId");
+				.where(({ not, exists, selectFrom }) =>
+					not(
+						exists(
+							selectFrom("XRankPlacement as Better")
+								.select("Better.id")
+								.whereRef("Better.playerId", "=", "XRankPlacement.playerId")
+								.$if(Boolean(where?.mode), (qb) =>
+									qb.where("Better.mode", "=", where!.mode!),
+								)
+								.$if(typeof where?.weaponSplId === "number", (qb) =>
+									qb.where("Better.weaponSplId", "=", where!.weaponSplId!),
+								)
+								.where((eb) =>
+									eb.or([
+										eb("Better.power", ">", eb.ref("XRankPlacement.power")),
+										eb.and([
+											eb("Better.power", "=", eb.ref("XRankPlacement.power")),
+											eb("Better.id", "<", eb.ref("XRankPlacement.id")),
+										]),
+									]),
+								),
+						),
+					),
+				)
+				.orderBy("XRankPlacement.power", "desc")
+				.limit(DEFAULT_LEADERBOARD_MAX_SIZE);
 
 			if (where?.mode) {
 				placements = placements.where("XRankPlacement.mode", "=", where.mode);
@@ -360,44 +397,46 @@ export type UserSPLeaderboardItem = Awaited<
 
 export async function userSPLeaderboard(season: number) {
 	const rows = await db
-		.selectFrom("Skill")
-		.innerJoin("User", "User.id", "Skill.userId")
-		.innerJoin(
-			(eb) =>
-				eb
-					.selectFrom("Skill as InnerSkill")
-					.select(({ fn }) => [
-						"InnerSkill.userId",
-						fn.max("InnerSkill.id").as("maxId"),
-					])
-					.where("season", "=", season)
-					.groupBy("InnerSkill.userId")
-					.as("Latest"),
-			(join) =>
-				join
-					.onRef("Latest.userId", "=", "Skill.userId")
-					.onRef("Latest.maxId", "=", "Skill.id"),
+		.selectFrom((eb) =>
+			eb
+				.selectFrom("Skill")
+				// with a lone max() aggregate SQLite takes the bare columns from the
+				// row that had the max id
+				.select(({ fn }) => [
+					fn.max("Skill.id").as("entryId"),
+					"Skill.ordinal",
+					"Skill.matchesCount",
+					"Skill.userId",
+				])
+				.where("Skill.season", "=", season)
+				.where("Skill.userId", "is not", null)
+				.groupBy("Skill.userId")
+				.as("Latest"),
 		)
+		.innerJoin("User", "User.id", "Latest.userId")
 		.select((eb) => [
 			...commonUserSelect(eb),
-			"Skill.id as entryId",
-			"Skill.ordinal",
+			"Latest.entryId",
+			"Latest.ordinal",
 			"User.plusSkippedForSeasonNth",
-			sql<number>`rank() over (order by "Skill"."ordinal" desc)`.as(
-				"placementRank",
-			),
 		])
-		.where("Skill.userId", "is not", null)
-		.where("Skill.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
-		.where("Skill.season", "=", season)
-		.orderBy("Skill.ordinal", "desc")
+		.where("Latest.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
+		.orderBy("Latest.ordinal", "desc")
 		.execute();
 
-	return rows.map(({ ordinal, ...rest }) => ({
-		...rest,
-		pendingPlusTier: null as number | null,
-		power: ordinalToSp(ordinal),
-	}));
+	let placementRank = 0;
+	return rows.map(({ ordinal, ...rest }, index) => {
+		if (index === 0 || ordinal !== rows[index - 1].ordinal) {
+			placementRank = index + 1;
+		}
+
+		return {
+			...rest,
+			placementRank,
+			pendingPlusTier: null as number | null,
+			power: ordinalToSp(ordinal),
+		};
+	});
 }
 
 export type SeasonPopularUsersWeapon = Record<
@@ -412,17 +451,19 @@ export async function seasonPopularUsersWeapon(
 	const startsTs = dateToDatabaseTimestamp(starts);
 	const endsTs = dateToDatabaseTimestamp(ends);
 
+	// grouping the ~quarter million rows a season has by one packed integer is
+	// measurably faster than by the (userId, weaponSplId) pair; the packed key
+	// also sorts identically to the pair so max() tie-breaking is unchanged
+	const packedUserWeapon = sql<number>`"ReportedWeapon"."userId" * ${sql.lit(
+		USER_WEAPON_PACK_FACTOR,
+	)} + "ReportedWeapon"."weaponSplId"`;
+
 	const sendouqWeapons = db
 		.selectFrom("ReportedWeapon")
 		.innerJoin("GroupMatch", "ReportedWeapon.groupMatchId", "GroupMatch.id")
-		.select(({ fn }) => [
-			"ReportedWeapon.userId",
-			"ReportedWeapon.weaponSplId",
-			fn.countAll<number>().as("count"),
-		])
+		.select(packedUserWeapon.as("packedUserWeapon"))
 		.where("GroupMatch.createdAt", ">=", startsTs)
-		.where("GroupMatch.createdAt", "<=", endsTs)
-		.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]);
+		.where("GroupMatch.createdAt", "<=", endsTs);
 
 	const tournamentWeapons = db
 		.selectFrom("ReportedWeapon")
@@ -437,26 +478,25 @@ export async function seasonPopularUsersWeapon(
 			"TournamentMatch.stageId",
 		)
 		.innerJoin("Tournament", "Tournament.id", "TournamentStage.tournamentId")
-		.select(({ fn }) => [
-			"ReportedWeapon.userId",
-			"ReportedWeapon.weaponSplId",
-			fn.countAll<number>().as("count"),
-		])
+		.select(packedUserWeapon.as("packedUserWeapon"))
 		.where("Tournament.isFinalized", "=", 1)
 		.where("ReportedWeapon.createdAt", ">=", startsTs)
-		.where("ReportedWeapon.createdAt", "<=", endsTs)
-		.groupBy(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"]);
+		.where("ReportedWeapon.createdAt", "<=", endsTs);
 
 	const rows = await db
 		.with("q1", (db) =>
 			db
 				.selectFrom(sendouqWeapons.unionAll(tournamentWeapons).as("merged"))
-				.select(({ fn }) => [
-					"merged.userId",
-					"merged.weaponSplId",
-					fn.sum<number>("merged.count").as("count"),
+				.select(({ fn, ref }) => [
+					sql<number>`${ref("merged.packedUserWeapon")} / ${sql.lit(
+						USER_WEAPON_PACK_FACTOR,
+					)}`.as("userId"),
+					sql<MainWeaponId>`${ref("merged.packedUserWeapon")} % ${sql.lit(
+						USER_WEAPON_PACK_FACTOR,
+					)}`.as("weaponSplId"),
+					fn.countAll<number>().as("count"),
 				])
-				.groupBy(["merged.userId", "merged.weaponSplId"]),
+				.groupBy("merged.packedUserWeapon"),
 		)
 		.selectFrom("q1")
 		.select(({ fn }) => [
@@ -465,11 +505,12 @@ export async function seasonPopularUsersWeapon(
 			fn.max("q1.count").as("count"),
 		])
 		.groupBy("q1.userId")
+		.having(
+			({ fn }) => fn.max("q1.count"),
+			">",
+			MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
+		)
 		.execute();
 
-	return Object.fromEntries(
-		rows
-			.filter((r) => r.count > MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
-			.map((r) => [r.userId, r.weaponSplId]),
-	);
+	return Object.fromEntries(rows.map((r) => [r.userId, r.weaponSplId]));
 }
