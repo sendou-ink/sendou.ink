@@ -104,12 +104,12 @@
 	justify-content: center;
 	gap: var(--s-2-5);
 
-	.mapSide:not(.mapSideBravo) & {
-		justify-self: end;
-	}
-
 	.mapSideBravo & {
 		justify-self: start;
+	}
+
+	.mapSide:not(.mapSideBravo) & {
+		justify-self: end;
 	}
 }
 
