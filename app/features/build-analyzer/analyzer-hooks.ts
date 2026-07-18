@@ -10,12 +10,12 @@ import { isAbility } from "~/modules/in-game-lists/utils";
 import invariant from "~/utils/invariant";
 import { MAX_LDE_INTENSITY } from "./analyzer-constants";
 import type { SpecialEffectType } from "./analyzer-types";
+import { serializeBuild } from "./core/serializer";
 import { applySpecialEffects, SPECIAL_EFFECTS } from "./core/specialEffects";
 import { buildStats } from "./core/stats";
 import {
 	buildIsEmpty,
 	buildToAbilityPoints,
-	serializeBuild,
 	validatedBuildFromSearchParams,
 	validatedWeaponIdFromSearchParams,
 } from "./core/utils";

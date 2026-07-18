@@ -712,6 +712,10 @@ describe("SendouQ", () => {
 				await createGroup([2]);
 				await createGroup([3]);
 				await createGroup([4]);
+				await db
+					.updateTable("Group")
+					.set({ latestActionAt: databaseTimestampNow() })
+					.execute();
 
 				await refreshSendouQInstance();
 

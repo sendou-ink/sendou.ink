@@ -57,6 +57,15 @@ export default defineConfig((config) => {
 								telemetry: false,
 								unstable_sentryVitePluginOptions: {
 									applicationKey: "sendou-ink",
+									// tree-shakes SDK features we don't use (Replay, debug logging)
+									// out of the dynamically imported client bundle
+									bundleSizeOptimizations: {
+										excludeDebugStatements: true,
+										excludeReplayCanvas: true,
+										excludeReplayShadowDom: true,
+										excludeReplayIframe: true,
+										excludeReplayWorker: true,
+									},
 								},
 							},
 							config,
