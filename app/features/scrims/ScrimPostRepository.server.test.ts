@@ -204,3 +204,83 @@ describe("findPendingOverlapsForUsers", () => {
 		expect(requestIds).toHaveLength(0);
 	});
 });
+
+describe("findUserScrims", () => {
+	beforeEach(async () => {
+		await dbInsertUsers(5);
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	test("passed-over requester does not see the scrim booked between the post and another team", async () => {
+		const postId = await insertPost({
+			at: BOOKED_AT,
+			users: [{ userId: 3, isOwner: 1 }],
+		});
+		await ScrimPostRepository.insertRequest({
+			scrimPostId: postId,
+			teamId: null,
+			message: null,
+			at: null,
+			users: [
+				{ userId: 1, isOwner: 1 },
+				{ userId: 2, isOwner: 0 },
+			],
+		});
+		await ScrimPostRepository.insertRequest({
+			scrimPostId: postId,
+			teamId: null,
+			message: null,
+			at: null,
+			users: [
+				{ userId: 4, isOwner: 1 },
+				{ userId: 5, isOwner: 0 },
+			],
+		});
+
+		const post = await ScrimPostRepository.findById(postId);
+		const acceptedRequest = post!.requests.find((request) =>
+			request.users.some((user) => user.id === 4),
+		);
+		await ScrimPostRepository.acceptRequest(acceptedRequest!.id);
+
+		const passedOverRequesterScrims =
+			await ScrimPostRepository.findUserScrims(1);
+
+		expect(passedOverRequesterScrims).toHaveLength(0);
+	});
+
+	test("post owner sees the accepted request's side as the opponent", async () => {
+		const postId = await insertPost({
+			at: BOOKED_AT,
+			users: [{ userId: 3, isOwner: 1 }],
+		});
+		await ScrimPostRepository.insertRequest({
+			scrimPostId: postId,
+			teamId: null,
+			message: null,
+			at: null,
+			users: [{ userId: 1, isOwner: 1 }],
+		});
+		await ScrimPostRepository.insertRequest({
+			scrimPostId: postId,
+			teamId: null,
+			message: null,
+			at: null,
+			users: [{ userId: 4, isOwner: 1 }],
+		});
+
+		const post = await ScrimPostRepository.findById(postId);
+		const acceptedRequest = post!.requests.find((request) =>
+			request.users.some((user) => user.id === 4),
+		);
+		await ScrimPostRepository.acceptRequest(acceptedRequest!.id);
+
+		const postOwnerScrims = await ScrimPostRepository.findUserScrims(3);
+
+		expect(postOwnerScrims).toHaveLength(1);
+		expect(postOwnerScrims[0]!.status).toBe("booked");
+	});
+});
