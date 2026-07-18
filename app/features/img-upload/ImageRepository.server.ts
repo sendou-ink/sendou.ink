@@ -44,26 +44,44 @@ export async function countUnvalidatedArt(authorId: number) {
 
 const unvalidatedImagesBaseQuery = db
 	.selectFrom("UnvalidatedUserSubmittedImage")
-	.leftJoin("Team", (join) =>
-		join.on((eb) =>
-			eb.or([
-				eb("UnvalidatedUserSubmittedImage.id", "=", eb.ref("Team.avatarImgId")),
-				eb("UnvalidatedUserSubmittedImage.id", "=", eb.ref("Team.bannerImgId")),
-			]),
-		),
-	)
-	.leftJoin("Art", "UnvalidatedUserSubmittedImage.id", "Art.imgId")
-	.leftJoin(
-		"CalendarEvent",
-		"UnvalidatedUserSubmittedImage.id",
-		"CalendarEvent.avatarImgId",
-	)
 	.where("UnvalidatedUserSubmittedImage.validatedAt", "is", null)
 	.where((eb) =>
 		eb.or([
-			eb("Team.id", "is not", null),
-			eb("Art.id", "is not", null),
-			eb("CalendarEvent.id", "is not", null),
+			eb.exists(
+				eb
+					.selectFrom("Team")
+					.select("Team.id")
+					.where((innerEb) =>
+						innerEb.or([
+							innerEb(
+								"Team.avatarImgId",
+								"=",
+								innerEb.ref("UnvalidatedUserSubmittedImage.id"),
+							),
+							innerEb(
+								"Team.bannerImgId",
+								"=",
+								innerEb.ref("UnvalidatedUserSubmittedImage.id"),
+							),
+						]),
+					),
+			),
+			eb.exists(
+				eb
+					.selectFrom("Art")
+					.select("Art.id")
+					.whereRef("Art.imgId", "=", "UnvalidatedUserSubmittedImage.id"),
+			),
+			eb.exists(
+				eb
+					.selectFrom("CalendarEvent")
+					.select("CalendarEvent.id")
+					.whereRef(
+						"CalendarEvent.avatarImgId",
+						"=",
+						"UnvalidatedUserSubmittedImage.id",
+					),
+			),
 		]),
 	);
 
