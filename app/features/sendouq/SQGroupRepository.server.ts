@@ -74,56 +74,55 @@ export async function findCurrentGroups() {
 			| null;
 	};
 
-	return db
-		.selectFrom("Group")
-		.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
-		.innerJoin("User", "User.id", "GroupMember.userId")
-		.leftJoin("GroupMatch", (join) =>
-			join.on((eb) =>
-				eb.or([
-					eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
-					eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
-				]),
-			),
-		)
-		.select(({ fn, eb }) => [
-			"Group.id",
-			"Group.chatCode",
-			"Group.inviteCode",
-			"Group.latestActionAt",
-			"Group.chatCode",
-			"Group.inviteCode",
-			"Group.status",
-			"GroupMatch.id as matchId",
-			fn
-				.agg("json_group_array", [
-					jsonBuildObject({
-						id: eb.ref("User.id"),
-						username: eb.ref("User.username"),
-						discordId: eb.ref("User.discordId"),
-						discordAvatar: eb.ref("User.discordAvatar"),
-						customAvatarUrl: customAvatarUrl(eb),
-						customUrl: eb.ref("User.customUrl"),
-						mapModePreferences: eb.ref("User.mapModePreferences"),
-						noScreen: eb.ref("User.noScreen"),
-						role: eb.ref("GroupMember.role"),
-						note: eb.ref("GroupMember.note"),
-						weapons: matchProfileWeapons(eb),
-						languages: eb.ref("User.languages"),
-						vc: eb.ref("User.vc"),
-					}),
-				])
-				.$castTo<SendouQMemberObject[]>()
-				.as("members"),
-		])
-		.where((eb) =>
-			eb.or([
-				eb("Group.status", "=", "ACTIVE"),
-				eb("Group.status", "=", "PREPARING"),
-			]),
-		)
-		.groupBy("Group.id")
-		.execute();
+	return (
+		db
+			.selectFrom("Group")
+			.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
+			.innerJoin("User", "User.id", "GroupMember.userId")
+			.leftJoin("GroupMatch", (join) =>
+				join.on((eb) =>
+					eb.or([
+						eb("GroupMatch.alphaGroupId", "=", eb.ref("Group.id")),
+						eb("GroupMatch.bravoGroupId", "=", eb.ref("Group.id")),
+					]),
+				),
+			)
+			.select(({ fn, eb }) => [
+				"Group.id",
+				"Group.chatCode",
+				"Group.inviteCode",
+				"Group.latestActionAt",
+				"Group.chatCode",
+				"Group.inviteCode",
+				"Group.status",
+				"GroupMatch.id as matchId",
+				fn
+					.agg("json_group_array", [
+						jsonBuildObject({
+							id: eb.ref("User.id"),
+							username: eb.ref("User.username"),
+							discordId: eb.ref("User.discordId"),
+							discordAvatar: eb.ref("User.discordAvatar"),
+							customAvatarUrl: customAvatarUrl(eb),
+							customUrl: eb.ref("User.customUrl"),
+							mapModePreferences: eb.ref("User.mapModePreferences"),
+							noScreen: eb.ref("User.noScreen"),
+							role: eb.ref("GroupMember.role"),
+							note: eb.ref("GroupMember.note"),
+							weapons: matchProfileWeapons(eb),
+							languages: eb.ref("User.languages"),
+							vc: eb.ref("User.vc"),
+						}),
+					])
+					.$castTo<SendouQMemberObject[]>()
+					.as("members"),
+			])
+			// != INACTIVE (same set as ACTIVE or PREPARING) so the partial
+			// group_status_active index applies
+			.where("Group.status", "!=", "INACTIVE")
+			.groupBy("Group.id")
+			.execute()
+	);
 }
 
 export async function findActiveGroupMembers() {
@@ -586,13 +585,18 @@ export async function closeExpiredContinueVotes() {
 
 export async function mapModePreferencesBySeasonNth(seasonNth: number) {
 	return db
-		.selectFrom("Skill")
-		.innerJoin("User", "User.id", "Skill.userId")
+		.selectFrom("User")
 		.select("User.mapModePreferences")
-		.where("Skill.season", "=", seasonNth)
-		.where("Skill.userId", "is not", null)
 		.where("User.mapModePreferences", "is not", null)
-		.groupBy("Skill.userId")
+		.where(({ eb, exists }) =>
+			exists(
+				eb
+					.selectFrom("Skill")
+					.select("Skill.id")
+					.whereRef("Skill.userId", "=", "User.id")
+					.where("Skill.season", "=", seasonNth),
+			),
+		)
 		.$narrowType<{ mapModePreferences: UserMapModePreferences }>()
 		.execute();
 }
