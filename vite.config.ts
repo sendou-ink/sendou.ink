@@ -14,9 +14,6 @@ export default defineConfig((config) => {
 				ssrFiles: ["./app/entry.server.tsx"],
 			},
 		},
-		ssr: {
-			noExternal: ["react-charts", "react-use"],
-		},
 		plugins: [
 			{
 				// Wraps CSS modules in @layer components so utility classes always win.
@@ -128,10 +125,10 @@ export default defineConfig((config) => {
 				"edmonds-blossom-fixed",
 				"i18next-browser-languagedetector",
 				"i18next-http-backend",
-				"jsoncrush",
 				"kysely",
 				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
+				"nanoid",
 				"neverthrow",
 				"openskill",
 				"pako",
@@ -140,12 +137,14 @@ export default defineConfig((config) => {
 				"qrcode.react",
 				"react-chartjs-2",
 				"react-flip-toolkit",
+				"react-use-draggable-scroll",
 				"remeda",
 				"remix-auth",
 				"remix-auth-oauth2",
 				"remix-i18next",
 				"sql-formatter",
 				"swr/immutable",
+				"web-haptics/react",
 				"zod",
 			],
 		},
