@@ -6,6 +6,13 @@
 	border-radius: var(--radius-full);
 	padding: var(--s-0-5) var(--s-1-5);
 	cursor: pointer;
+
+	@container weapon-pool (max-width: 150px) {
+		display: grid;
+		grid-template-columns: repeat(2, auto);
+		justify-items: center;
+		border-radius: var(--radius-box);
+	}
 }
 
 :global(html.light) .unknownWeapon {
@@ -24,4 +31,8 @@
 	gap: var(--s-2);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
+}
+
+.unverifiedWeapon {
+	opacity: 0.7;
 }

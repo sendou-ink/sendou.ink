@@ -8,6 +8,8 @@ import type {
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { tags } from "~/features/calendar/calendar-constants";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
+import type { IngestedScoreboardData } from "~/features/ingest/core/Scoreboards";
+import type { IngestedEventData } from "~/features/ingest/ingest-schemas";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
@@ -468,6 +470,27 @@ export interface ReportedWeapon {
 	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
+	createdAt: Generated<number>;
+}
+
+export interface IngestedEvent {
+	id: GeneratedAlways<number>;
+	tournamentId: number | null;
+	povUserId: number | null;
+	submitterUserId: number | null;
+	type: string;
+	t: number;
+	confidence: number;
+	data: JSONColumnType<IngestedEventData>;
+	detectedAt: number | null;
+	eventHash: string;
+	createdAt: Generated<number>;
+}
+
+export interface IngestedScoreboard {
+	id: GeneratedAlways<number>;
+	matchGameResultId: number;
+	data: JSONColumnType<IngestedScoreboardData>;
 	createdAt: Generated<number>;
 }
 
@@ -1506,6 +1529,8 @@ export interface DB {
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
+	IngestedEvent: IngestedEvent;
+	IngestedScoreboard: IngestedScoreboard;
 	PrivateUserNote: PrivateUserNote;
 	LogInLink: LogInLink;
 	LFGPost: LFGPost;

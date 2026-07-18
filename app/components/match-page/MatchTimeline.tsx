@@ -1,38 +1,64 @@
 import clsx from "clsx";
 import {
 	ArrowRight,
+	ChevronDown,
 	MousePointerClick,
 	RefreshCcw,
 	TrendingUp,
 	Users,
 	X,
 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
+import { abilities } from "~/modules/in-game-lists/abilities";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { abilityImageUrl, navIconUrl } from "~/utils/urls";
+import { Ability } from "../Ability";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
-import { ModeImage, StageImage } from "../Image";
+import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
+import type { WeaponPoolWeapon } from "./WeaponPool";
 import { WeaponPool } from "./WeaponPool";
 
 const LONG_TEAM_NAME_THRESHOLD = 16;
+
+// xxx: make actual in-game score
+/** In-game team scores run 0-500p; a knockout shows as 500p for the winner. */
+const SCOREBOARD_KO_SCORE = 500;
+
+const ABILITY_NAMES: ReadonlySet<string> = new Set(
+	abilities.map((ability) => ability.name),
+);
 
 type MatchSide = "ALPHA" | "BRAVO";
 
 export interface TimelineTeam {
 	name: string;
 	avatar?: string;
+}
+
+export interface TimelineScoreboardPlayer {
+	name: string;
+	weaponSplId: MainWeaponId | null;
+	ka: number | null;
+	d: number | null;
+	s: number | null;
+	paint: number | null;
+	/** [head, clothes, shoes] ability rows (main + subs) as ability codes */
+	abilities?: string[][];
 }
 
 export interface TimelineMap {
@@ -45,13 +71,20 @@ export interface TimelineMap {
 		bravo: CommonUser[];
 	};
 	weapons?: {
-		alpha: Array<MainWeaponId | null>;
-		bravo: Array<MainWeaponId | null>;
+		alpha: WeaponPoolWeapon[];
+		bravo: WeaponPoolWeapon[];
 	};
 	/** Optional point values [alpha, bravo] */
 	points?: [number, number];
 	/** Side that picked this map (counterpick / postGame map PICK). Renders a click indicator next to that side's WIN/LOSS label. */
 	pickedBy?: MatchSide;
+	/** Ingested end-of-game scoreboard rendered as an expandable stats section below the map row. */
+	scoreboard?: {
+		/** [alpha, bravo] on the in-game 0-500p scale (500 = knockout) */
+		scores: [number | null, number | null];
+		alpha: TimelineScoreboardPlayer[];
+		bravo: TimelineScoreboardPlayer[];
+	};
 }
 
 interface TimelineSpMember {
@@ -130,7 +163,7 @@ export function MatchTimeline({
 								{substitutions.map((sub, j) => (
 									<TimelineSubstitutionRow key={j} substitution={sub} />
 								))}
-								<TimelineMapRow map={map} />
+								<TimelineMapRow map={map} teams={teams} />
 							</div>
 						);
 					})}
@@ -207,7 +240,13 @@ function TimelineHeader({
 	);
 }
 
-function TimelineMapRow({ map }: { map: TimelineMap }) {
+function TimelineMapRow({
+	map,
+	teams,
+}: {
+	map: TimelineMap;
+	teams: MatchTimelineProps["teams"];
+}) {
 	const { t } = useTranslation(["game-misc"]);
 
 	const alphaPoints = map.points?.[0];
@@ -219,6 +258,7 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 				<SideResult
 					result={map.winner === "ALPHA" ? "WIN" : "LOSS"}
 					points={alphaPoints}
+					scoreboardScore={map.scoreboard?.scores[0]}
 					weapons={map.weapons?.alpha}
 					isPicked={map.pickedBy === "ALPHA"}
 				/>
@@ -239,14 +279,18 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 					<span>{shortStageName(t(`game-misc:STAGE_${map.stageId}`))}</span>
 				</div>
 			</div>
-			<div className={styles.mapSide}>
+			<div className={clsx(styles.mapSide, styles.mapSideBravo)}>
 				<SideResult
 					result={map.winner === "BRAVO" ? "WIN" : "LOSS"}
 					points={bravoPoints}
+					scoreboardScore={map.scoreboard?.scores[1]}
 					weapons={map.weapons?.bravo}
 					isPicked={map.pickedBy === "BRAVO"}
 				/>
 			</div>
+			{map.scoreboard ? (
+				<TimelineScoreboardSection scoreboard={map.scoreboard} teams={teams} />
+			) : null}
 		</div>
 	);
 }
@@ -254,47 +298,201 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 function SideResult({
 	result,
 	points,
+	scoreboardScore,
 	weapons,
 	isPicked,
 }: {
 	result: "WIN" | "LOSS";
 	points?: number;
-	weapons?: Array<MainWeaponId | null>;
+	/** in-game 0-500p team score from an ingested scoreboard (500 = knockout) */
+	scoreboardScore?: number | null;
+	weapons?: WeaponPoolWeapon[];
 	isPicked?: boolean;
 }) {
 	const { t } = useTranslation(["q"]);
 
 	return (
 		<div className={styles.sideResult}>
-			<div className={styles.resultHeader}>
-				{isPicked ? (
-					<ExplainerIcon
-						icon={
-							<MousePointerClick
-								size={14}
-								className={result === "WIN" ? "text-success" : "text-error"}
-							/>
-						}
-						description={t("q:match.timeline.explainer.picked")}
-					/>
-				) : null}
-				<span
-					className={clsx(
-						styles.resultLabel,
-						result === "WIN" ? "text-success" : "text-error",
-					)}
-				>
-					{result === "WIN"
-						? t("q:match.timeline.win")
-						: t("q:match.timeline.loss")}
-				</span>
-				{points === 100 ? (
-					<span className={styles.resultPoints}>{t("q:match.action.ko")}</span>
+			<div className={styles.resultHeaderGroup}>
+				<div className={styles.resultHeader}>
+					{isPicked ? (
+						<ExplainerIcon
+							icon={
+								<MousePointerClick
+									size={14}
+									className={result === "WIN" ? "text-success" : "text-error"}
+								/>
+							}
+							description={t("q:match.timeline.explainer.picked")}
+						/>
+					) : null}
+					<span
+						className={clsx(
+							styles.resultLabel,
+							result === "WIN" ? "text-success" : "text-error",
+						)}
+					>
+						{result === "WIN"
+							? t("q:match.timeline.win")
+							: t("q:match.timeline.loss")}
+					</span>
+					{points === 100 && scoreboardScore == null ? (
+						<span className={styles.resultPoints}>
+							{t("q:match.action.ko")}
+						</span>
+					) : null}
+				</div>
+				{typeof scoreboardScore === "number" ? (
+					<span className={styles.resultPoints}>
+						{scoreboardScore === SCOREBOARD_KO_SCORE
+							? t("q:match.action.ko")
+							: t("q:match.timeline.points", { points: scoreboardScore })}
+					</span>
 				) : null}
 			</div>
 			{weapons ? <WeaponPool weapons={weapons} /> : null}
 		</div>
 	);
+}
+
+function TimelineScoreboardSection({
+	scoreboard,
+	teams,
+}: {
+	scoreboard: NonNullable<TimelineMap["scoreboard"]>;
+	teams: MatchTimelineProps["teams"];
+}) {
+	const { t } = useTranslation(["q"]);
+	const [isExpanded, setIsExpanded] = useState(false);
+
+	return (
+		<div className={styles.scoreboard}>
+			<button
+				type="button"
+				className={styles.scoreboardToggle}
+				onClick={() => setIsExpanded(!isExpanded)}
+				aria-expanded={isExpanded}
+			>
+				{t("q:match.timeline.stats")}
+				<ChevronDown
+					size={14}
+					className={clsx(styles.scoreboardChevron, {
+						[styles.scoreboardChevronOpen]: isExpanded,
+					})}
+				/>
+			</button>
+			{isExpanded ? (
+				<div className={styles.scoreboardPanel}>
+					<ScoreboardTeamRows
+						name={teams.alpha.name}
+						players={scoreboard.alpha}
+					/>
+					<ScoreboardTeamRows
+						name={teams.bravo.name}
+						players={scoreboard.bravo}
+					/>
+				</div>
+			) : null}
+		</div>
+	);
+}
+
+function ScoreboardTeamRows({
+	name,
+	players,
+}: {
+	name: string;
+	players: TimelineScoreboardPlayer[];
+}) {
+	const { t } = useTranslation(["q"]);
+
+	return (
+		<>
+			<div className={styles.scoreboardTeamHeader}>
+				<span className={styles.scoreboardTeamName}>{name}</span>
+				<span className={styles.scoreboardStat}>
+					{t("q:match.timeline.stats.paint")}
+				</span>
+				<span className={styles.scoreboardStat}>
+					{t("q:match.timeline.stats.kills")}
+				</span>
+				<span className={styles.scoreboardStat}>
+					{t("q:match.timeline.stats.deaths")}
+				</span>
+				<span className={styles.scoreboardStat}>
+					{t("q:match.timeline.stats.specials")}
+				</span>
+			</div>
+			{players.map((player, i) => (
+				<div key={i} className={styles.scoreboardPlayerRow}>
+					{player.weaponSplId !== null ? (
+						<WeaponImage
+							weaponSplId={player.weaponSplId}
+							variant="badge"
+							size={28}
+						/>
+					) : (
+						<Image
+							path={abilityImageUrl("UNKNOWN")}
+							alt="?"
+							size={28}
+							className={styles.scoreboardUnknownWeapon}
+						/>
+					)}
+					<span className={styles.scoreboardPlayerName}>{player.name}</span>
+					<span className={styles.scoreboardStat}>
+						{player.paint !== null
+							? t("q:match.timeline.points", { points: player.paint })
+							: "–"}
+					</span>
+					<span className={styles.scoreboardStat}>{player.ka ?? "–"}</span>
+					<span className={styles.scoreboardStat}>{player.d ?? "–"}</span>
+					<span className={styles.scoreboardStat}>{player.s ?? "–"}</span>
+					<span className={styles.scoreboardBuildCell}>
+						{player.abilities && player.abilities.length > 0 ? (
+							<ScoreboardBuildPopover abilities={player.abilities} />
+						) : null}
+					</span>
+				</div>
+			))}
+		</>
+	);
+}
+
+function ScoreboardBuildPopover({ abilities }: { abilities: string[][] }) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<SendouPopover
+			trigger={
+				<SendouButton shape="circle" size="small" variant="minimal">
+					<Image
+						path={navIconUrl("builds")}
+						alt={t("common:pages.builds")}
+						size={18}
+					/>
+				</SendouButton>
+			}
+		>
+			<div className={styles.scoreboardAbilities}>
+				{abilities.map((row, i) => (
+					<div key={i} className={styles.scoreboardAbilityRow}>
+						{row.map((ability, j) => (
+							<Ability
+								key={j}
+								ability={toAbility(ability)}
+								size={j === 0 ? "MAIN" : "SUB"}
+							/>
+						))}
+					</div>
+				))}
+			</div>
+		</SendouPopover>
+	);
+}
+
+function toAbility(value: string): AbilityWithUnknown {
+	return ABILITY_NAMES.has(value) ? (value as AbilityWithUnknown) : "UNKNOWN";
 }
 
 function TimelineEventRow({

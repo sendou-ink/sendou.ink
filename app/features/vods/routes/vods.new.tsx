@@ -48,21 +48,23 @@ export default function NewVodPage() {
 
 	const defaultValues = data.vodToEdit
 		? vodToEditToFormValues(data.vodToEdit)
-		: {
-				type: "TOURNAMENT" as const,
-				teamSize: "4" as const,
-				pov: { type: "USER" as const },
-				matches: [
-					{
-						mode: "SZ" as const,
-						stageId: 1 as StageId,
-						startsAt: "",
-						weapon: undefined as MainWeaponId | undefined,
-						weaponsTeamOne: [] as WeaponPoolItem[],
-						weaponsTeamTwo: [] as WeaponPoolItem[],
-					},
-				],
-			};
+		: data.vodPrefill
+			? vodPrefillToFormValues(data.vodPrefill)
+			: {
+					type: "TOURNAMENT" as const,
+					teamSize: "4" as const,
+					pov: { type: "USER" as const },
+					matches: [
+						{
+							mode: "SZ" as const,
+							stageId: 1 as StageId,
+							startsAt: "",
+							weapon: undefined as MainWeaponId | undefined,
+							weaponsTeamOne: [] as WeaponPoolItem[],
+							weaponsTeamTwo: [] as WeaponPoolItem[],
+						},
+					],
+				};
 
 	return (
 		<Main halfWidth className={styles.layout}>
@@ -121,6 +123,46 @@ function vodToEditToFormValues(vodToEdit: VodToEdit) {
 				: [],
 		})),
 	};
+}
+
+type VodPrefill = NonNullable<Awaited<ReturnType<typeof loader>>["vodPrefill"]>;
+
+/**
+ * Prefill from the emberz VoD parser's `ingest` search param (see the loader):
+ * detected matches with anything the detectors missed left at the blank form's
+ * defaults for the user to fill. CAST weapons are the alpha team's four slots
+ * then bravo's; unread slots are dropped so the remaining empty (required)
+ * selects surface them.
+ */
+function vodPrefillToFormValues(prefill: VodPrefill) {
+	const teamSize = 4;
+	const isCast = prefill.type === "CAST";
+
+	return {
+		type: prefill.type ?? ("TOURNAMENT" as const),
+		teamSize: "4" as const,
+		pov: { type: "USER" as const },
+		matches: prefill.matches.map((match) => ({
+			startsAt: match.startsAt,
+			mode: match.mode ?? ("SZ" as const),
+			stageId: (match.stageId ?? 1) as StageId,
+			weapon: undefined as MainWeaponId | undefined,
+			weaponsTeamOne: isCast
+				? weaponPoolFromPrefill(match.weapons.slice(0, teamSize))
+				: ([] as WeaponPoolItem[]),
+			weaponsTeamTwo: isCast
+				? weaponPoolFromPrefill(match.weapons.slice(teamSize, teamSize * 2))
+				: ([] as WeaponPoolItem[]),
+		})),
+	};
+}
+
+function weaponPoolFromPrefill(
+	weapons: VodPrefill["matches"][number]["weapons"],
+): WeaponPoolItem[] {
+	return weapons
+		.filter((id): id is MainWeaponId => id !== null)
+		.map((id) => ({ id, isFavorite: false }));
 }
 
 function YouTubeEmbedWrapper({
