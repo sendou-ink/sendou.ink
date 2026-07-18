@@ -210,6 +210,8 @@
 	"card.friendRequestSent": "Friend request sent",
 	"card.friendRequestAccepted": "Friend request accepted",
 	"card.editPrivateNote": "Edit private note",
+	"card.report.header": "Report {{name}}",
+	"card.report.falseReportsWarning": "Abuse of the reporting system or making false reports can lead to the suspension of your account.",
 	"card.privateNote": "Private note",
 	"card.xp": "XP",
 	"card.freeAgent": "FA",

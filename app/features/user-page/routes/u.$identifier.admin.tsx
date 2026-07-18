@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { useLoaderData, useMatches } from "react-router";
+import { Link, useLoaderData, useMatches } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -7,7 +7,10 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import { addModNoteSchema } from "~/features/user-page/user-page-schemas";
+import { ReportsBarChart } from "~/features/user-report/components/ReportsBarChart";
+import { USER_REPORT_CATEGORY_LABELS } from "~/features/user-report/user-report-constants";
 import { SendouForm } from "~/form";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import invariant from "~/utils/invariant";
 import { userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.admin.server";
@@ -42,6 +45,13 @@ export default function UserAdminPage() {
 					Mod notes
 				</Divider>
 				<ModNotes />
+			</div>
+
+			<div className="stack sm">
+				<Divider smallText className="font-bold">
+					Reports
+				</Divider>
+				<Reports />
 			</div>
 
 			<div className="stack sm">
@@ -186,6 +196,44 @@ function NewModNoteDialog() {
 				{({ FormField }) => <FormField name="value" />}
 			</SendouForm>
 		</SendouDialog>
+	);
+}
+
+function Reports() {
+	const data = useLoaderData<typeof loader>();
+	const formatDistanceToNow = useFormatDistanceToNow();
+
+	if (data.reports.length === 0) {
+		return <p className="text-center text-lighter italic">No reports</p>;
+	}
+
+	return (
+		<div className="stack md">
+			<p className="font-bold">{data.reports.length} total</p>
+			<ReportsBarChart monthlyCounts={data.reportsMonthlyCounts} />
+			<div className="stack sm" data-testid="user-reports-list">
+				{data.reports.map((report) => (
+					<details key={report.id}>
+						<summary>
+							<span className="font-bold">
+								{USER_REPORT_CATEGORY_LABELS[report.category]}
+							</span>{" "}
+							- By:{" "}
+							<Link
+								to={userPage({
+									discordId: report.reporterDiscordId,
+									customUrl: report.reporterCustomUrl,
+								})}
+							>
+								{report.reporterUsername}
+							</Link>{" "}
+							- {formatDistanceToNow(report.createdAt)}
+						</summary>
+						<p className="ml-2 whitespace-pre-wrap">{report.description}</p>
+					</details>
+				))}
+			</div>
+		</div>
 	);
 }
 

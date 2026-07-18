@@ -65,6 +65,8 @@ export default [
 		"features/user-card/routes/user-card.$id.note.ts",
 	),
 
+	route("/user-report/:id", "features/user-report/routes/user-report.$id.ts"),
+
 	route("/events", "features/calendar/routes/events.tsx"),
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),
