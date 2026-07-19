@@ -1,26 +1,21 @@
-import { CV_ASSETS_URL } from "~/utils/urls";
+import { Ability } from "~/components/Ability";
+import { WeaponImage } from "~/components/Image";
 import type {
 	MinimapData,
 	MinimapEnemy,
 	MinimapTeammate,
 } from "../core/detectors/minimap/index";
+import type { CvAbility } from "../cv-types";
 import { saveFixtureFromEvent } from "./fixture-export";
 import { formatTime } from "./format";
-import { mainWeaponLabel, stageLabel } from "./labels";
+import { stageLabel } from "./labels";
 
-function AbilityRow({ abilities }: { abilities: (string | null)[] }) {
+function AbilityRow({ abilities }: { abilities: (CvAbility | null)[] }) {
 	return (
 		<>
 			{abilities.map((id, i) =>
 				id ? (
-					<img
-						key={i}
-						className="weapon-icon"
-						src={`${CV_ASSETS_URL}/abilities/${id}.png`}
-						alt={id}
-						title={id}
-						style={{ width: 22, height: 22 }}
-					/>
+					<Ability key={i} ability={id} size="TINY" />
 				) : (
 					<span key={i} title="unreadable badge">
 						?
@@ -44,11 +39,11 @@ function PlayerRow({
 			<td>{player.name ?? ""}</td>
 			<td>
 				{player.weaponId !== null ? (
-					<img
+					<WeaponImage
+						weaponSplId={player.weaponId}
+						variant="build"
+						size={28}
 						className="weapon-icon"
-						src={`${CV_ASSETS_URL}/main-weapons/${player.weaponId}.png`}
-						alt={mainWeaponLabel(player.weaponId) ?? String(player.weaponId)}
-						title={mainWeaponLabel(player.weaponId) ?? String(player.weaponId)}
 					/>
 				) : (
 					"?"

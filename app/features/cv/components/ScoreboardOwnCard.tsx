@@ -1,4 +1,4 @@
-import { CV_ASSETS_URL } from "~/utils/urls";
+import { WeaponImage } from "~/components/Image";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import { AbilityGrid } from "./AbilityGrid";
 import { saveFixtureFromEvent } from "./fixture-export";
@@ -59,14 +59,14 @@ export function ScoreboardOwnCard(props: {
 			</div>
 			<div className="teams">
 				<div className="team">
-					{data.weaponId !== null && (
-						<img
+					{data.weaponId !== null ? (
+						<WeaponImage
+							weaponSplId={data.weaponId}
+							variant="build"
+							size={28}
 							className="weapon-icon"
-							src={`${CV_ASSETS_URL}/main-weapons/${data.weaponId}.png`}
-							alt={mainWeaponLabel(data.weaponId) ?? String(data.weaponId)}
-							title={`weapon ${data.weaponId}`}
 						/>
-					)}
+					) : null}
 					<AbilityGrid abilities={data.abilities} />
 				</div>
 			</div>

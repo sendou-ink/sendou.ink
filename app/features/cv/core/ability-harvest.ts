@@ -7,6 +7,7 @@
  * and weapon id.
  */
 
+import type { CvAbility } from "../cv-types";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type {
@@ -16,7 +17,7 @@ import type {
 import type { DetectedEvent } from "./detectors/types";
 
 /** player row index (0-7) → [head, clothes, shoes] ability-id rows */
-export type PlayerAbilityMap = Map<number, string[][]>;
+export type PlayerAbilityMap = Map<number, CvAbility[][]>;
 
 /**
  * Match a death's killer to a scoreboard player row. Both signals are OCR

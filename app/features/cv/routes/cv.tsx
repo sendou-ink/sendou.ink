@@ -3,6 +3,13 @@ import type { MetaFunction } from "react-router";
 import { Placeholder } from "~/components/Placeholder";
 import { useHydrated } from "~/hooks/useHydrated";
 import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+
+// `builds` powers the empty/UNKNOWN ability label in <Ability />; the weapon
+// and game-misc namespaces the CV cards rely on are always loaded.
+export const handle: SendouRouteHandle = {
+	i18n: ["builds"],
+};
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

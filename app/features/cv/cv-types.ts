@@ -17,7 +17,7 @@ export type CvLobby = (typeof CV_LOBBIES)[number];
  * unrecognized marker (the UNKNOWN template in assets/cv/abilities —
  * distinct from null, which means the badge was covered/absent).
  */
-export type CvAbility = Ability | "UNKNOWN";
+export type CvAbility = Ability | "UNKNOWN"; // xxx: why not AbilityWithUnknown
 
 const MAIN_WEAPON_ID_SET: ReadonlySet<number> = new Set(mainWeaponIds);
 const ABILITY_SET: ReadonlySet<string> = new Set(abilities.map((a) => a.name));

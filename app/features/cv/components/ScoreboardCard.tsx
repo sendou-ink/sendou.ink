@@ -1,4 +1,4 @@
-import { CV_ASSETS_URL } from "~/utils/urls";
+import { WeaponImage } from "~/components/Image";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
 import type {
 	ScoreboardData,
@@ -27,17 +27,17 @@ function PlayerRows({
 					<tr key={i}>
 						<td>
 							<span className="weapon-cell">
-								{p.weaponId !== null && (
-									<img
+								{p.weaponId !== null ? (
+									<WeaponImage
+										weaponSplId={p.weaponId}
+										variant="build"
+										size={28}
 										className="weapon-icon"
-										src={`${CV_ASSETS_URL}/main-weapons/${p.weaponId}.png`}
-										alt={String(p.weaponId)}
-										title={`weapon ${p.weaponId}`}
 									/>
-								)}
-								{abilities?.has(offset + i) && (
+								) : null}
+								{abilities?.has(offset + i) ? (
 									<AbilityPopover abilities={abilities.get(offset + i)!} />
-								)}
+								) : null}
 							</span>
 						</td>
 						<td>{p.name || "?"}</td>

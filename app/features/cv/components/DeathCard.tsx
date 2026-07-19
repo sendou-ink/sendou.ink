@@ -1,4 +1,5 @@
-import { CV_ASSETS_URL } from "~/utils/urls";
+import { WeaponImage } from "~/components/Image";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { DeathData } from "../core/detectors/death/index";
 import { AbilityGrid } from "./AbilityGrid";
 import { saveFixtureFromEvent } from "./fixture-export";
@@ -52,14 +53,14 @@ export function DeathCard(props: {
 			</div>
 			<div className="teams">
 				<div className="team">
-					{data.weaponId !== null && data.weaponType === "MAIN" && (
-						<img
+					{data.weaponId !== null && data.weaponType === "MAIN" ? (
+						<WeaponImage
+							weaponSplId={data.weaponId as MainWeaponId}
+							variant="build"
+							size={28}
 							className="weapon-icon"
-							src={`${CV_ASSETS_URL}/main-weapons/${data.weaponId}.png`}
-							alt={weaponName ?? String(data.weaponId)}
-							title={`weapon ${data.weaponId}`}
 						/>
-					)}
+					) : null}
 					<AbilityGrid abilities={data.abilities} />
 				</div>
 			</div>

@@ -4,11 +4,12 @@
  */
 
 import { useState } from "react";
-import { CV_ASSETS_URL } from "~/utils/urls";
+import { Ability } from "~/components/Ability";
+import type { CvAbility } from "../cv-types";
 
 const ROW_LABELS = ["head", "clothes", "shoes"] as const;
 
-export function AbilityGrid({ abilities }: { abilities: string[][] }) {
+export function AbilityGrid({ abilities }: { abilities: CvAbility[][] }) {
 	return (
 		<table className="players">
 			<tbody>
@@ -17,16 +18,7 @@ export function AbilityGrid({ abilities }: { abilities: string[][] }) {
 						<td>{ROW_LABELS[i]}</td>
 						{row.map((id, j) => (
 							<td key={j}>
-								<img
-									className="weapon-icon"
-									src={`${CV_ASSETS_URL}/abilities/${id}.png`}
-									alt={id}
-									title={id}
-									style={{
-										width: j === 0 ? 28 : 20,
-										height: j === 0 ? 28 : 20,
-									}}
-								/>
+								<Ability ability={id} size={j === 0 ? "SUBTINY" : "TINY"} />
 							</td>
 						))}
 					</tr>
@@ -40,7 +32,7 @@ export function AbilityGrid({ abilities }: { abilities: string[][] }) {
  * Click-to-toggle popover showing a player's ability grid; the trigger is
  * the head-main ability icon. Closes when the pointer leaves it.
  */
-export function AbilityPopover({ abilities }: { abilities: string[][] }) {
+export function AbilityPopover({ abilities }: { abilities: CvAbility[][] }) {
 	const [open, setOpen] = useState(false);
 	const trigger = abilities[0]?.[0];
 	if (!trigger) return null;
@@ -53,10 +45,7 @@ export function AbilityPopover({ abilities }: { abilities: string[][] }) {
 				onClick={() => setOpen((o) => !o)}
 				title="Show abilities (from death events)"
 			>
-				<img
-					src={`${CV_ASSETS_URL}/abilities/${trigger}.png`}
-					alt="abilities"
-				/>
+				<Ability ability={trigger} size="TINY" />
 			</button>
 			{open && (
 				<div className="popover">
