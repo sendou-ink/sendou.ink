@@ -77,64 +77,6 @@
 	}
 }
 
-.tournamentHistory {
-	display: flex;
-	flex-direction: column;
-	padding: 0;
-	margin: 0;
-	gap: var(--s-1);
-
-	& > li {
-		list-style: none;
-	}
-}
-
-.tournamentHistoryEntry {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	padding: var(--s-1-5);
-	border-radius: var(--radius-field);
-
-	&:hover {
-		background-color: var(--color-bg-high);
-	}
-}
-
-.tournamentHistoryLogo {
-	border-radius: 50%;
-	flex-shrink: 0;
-}
-
-.tournamentHistoryName {
-	font-size: var(--font-sm);
-	font-weight: var(--weight-semi);
-	display: flex;
-	align-items: center;
-	gap: 0 var(--s-2);
-	flex-wrap: wrap;
-}
-
-.tournamentHistoryMeta {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--s-2);
-	color: var(--color-text-high);
-	font-size: var(--font-2xs);
-}
-
-.tournamentHistoryMetaItem {
-	display: flex;
-	align-items: center;
-	gap: var(--s-1);
-}
-
-.tournamentHistoryIcon {
-	width: 12px;
-	height: 12px;
-}
-
 .ownerCount {
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);

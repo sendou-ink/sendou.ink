@@ -208,6 +208,14 @@
 	gap: var(--s-2);
 }
 
+.trophyGridButton {
+	all: unset;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .trophyGridItem {
 	border: var(--border-width) solid var(--tier-bg);
 	border-radius: var(--radius-field);
@@ -217,4 +225,16 @@
 .trophyGridPlaceholder {
 	width: 100%;
 	aspect-ratio: 1 / 1;
+}
+
+.trophyModalTournaments {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	opacity: 1;
+	transition: opacity 0.2s ease;
+
+	@starting-style {
+		opacity: 0;
+	}
 }

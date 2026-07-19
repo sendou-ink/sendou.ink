@@ -114,6 +114,10 @@ export default [
 		"/trophies/:id/wins/:userId",
 		"features/trophies/routes/trophies.$id.wins.$userId.ts",
 	),
+	route(
+		"/trophies/:id/tournaments",
+		"features/trophies/routes/trophies.$id.tournaments.ts",
+	),
 	route("/trophies", "features/trophies/routes/trophies.tsx", [
 		route(":id", "features/trophies/routes/trophies.$id.tsx"),
 	]),

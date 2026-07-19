@@ -6,9 +6,10 @@ import {
 	SquarePen,
 	Users,
 } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, NavLink, useLoaderData, useSearchParams } from "react-router";
+import { Link, useFetcher, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -33,6 +34,9 @@ import {
 	Trophy,
 	TrophyContextProvider,
 } from "~/features/trophies/components/Trophy";
+import { TrophyShowcaseModal } from "~/features/trophies/components/TrophyShowcase";
+import { TrophyTournamentHistory } from "~/features/trophies/components/TrophyTournamentHistory";
+import type { TrophyTournamentsLoaderData } from "~/features/trophies/routes/trophies.$id.tournaments";
 import { useProgressiveRender } from "~/features/trophies/trophies-utils";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
@@ -43,11 +47,11 @@ import {
 	BLANK_IMAGE_URL,
 	calendarEventPage,
 	navIconUrl,
-	TROPHIES_PAGE,
 	tournamentOrganizationEditPage,
 	tournamentOrganizationPage,
 	tournamentOrganizationStatsPage,
 	tournamentPage,
+	trophyTournamentsPage,
 	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/org.$slug.server";
@@ -741,13 +745,22 @@ function TrophyGrid({
 	trophies: SerializeFrom<typeof loader>["trophies"];
 }) {
 	const visibleCount = useProgressiveRender(trophies.length, "");
+	const [openTrophy, setOpenTrophy] = React.useState<
+		SerializeFrom<typeof loader>["trophies"][number] | null
+	>(null);
 
 	return (
 		<TrophyContextProvider>
 			<div className={styles.trophyGrid}>
 				{trophies.map((trophy, i) =>
 					i < visibleCount ? (
-						<NavLink key={trophy.id} to={`${TROPHIES_PAGE}/${trophy.id}`}>
+						<button
+							key={trophy.id}
+							type="button"
+							className={styles.trophyGridButton}
+							onClick={() => setOpenTrophy(trophy)}
+							aria-label={trophy.name}
+						>
 							<Trophy
 								model={trophy.model}
 								className={styles.trophyGridItem}
@@ -755,12 +768,44 @@ function TrophyGrid({
 								tentativeTier={trophy.tentativeTier}
 								preview
 							/>
-						</NavLink>
+						</button>
 					) : (
 						<div key={trophy.id} className={styles.trophyGridPlaceholder} />
 					),
 				)}
 			</div>
+			{openTrophy ? (
+				<TrophyShowcaseModal
+					trophy={openTrophy}
+					onClose={() => setOpenTrophy(null)}
+				>
+					<TrophyModalTournaments
+						key={openTrophy.id}
+						trophyId={openTrophy.id}
+					/>
+				</TrophyShowcaseModal>
+			) : null}
 		</TrophyContextProvider>
+	);
+}
+
+function TrophyModalTournaments({ trophyId }: { trophyId: number }) {
+	const { t } = useTranslation(["trophies"]);
+	const fetcher = useFetcher<TrophyTournamentsLoaderData>();
+
+	const loadedRef = React.useRef(false);
+	React.useEffect(() => {
+		if (loadedRef.current) return;
+		loadedRef.current = true;
+		fetcher.load(trophyTournamentsPage(trophyId));
+	}, [fetcher.load, trophyId]);
+
+	if (!fetcher.data || fetcher.data.tournaments.length === 0) return null;
+
+	return (
+		<div className={styles.trophyModalTournaments}>
+			<Divider smallText>{t("trophies:details.tournamentHistory")}</Divider>
+			<TrophyTournamentHistory tournaments={fetcher.data.tournaments} />
+		</div>
 	);
 }

@@ -2,6 +2,21 @@
 	container-type: inline-size;
 }
 
+.modal {
+	padding: 0;
+	max-width: 48rem;
+}
+
+.trophyName {
+	font-weight: var(--weight-bold);
+	font-size: var(--font-lg);
+}
+
+.trophyPageLink {
+	font-size: var(--font-2xs);
+	margin-bottom: var(--s-2);
+}
+
 .content {
 	display: grid;
 	grid-template-columns: 1fr;

@@ -163,6 +163,9 @@ export const trophyPage = (trophyId: number) => `${TROPHIES_PAGE}/${trophyId}`;
 export const trophyWinsPage = (args: { trophyId: number; userId: number }) =>
 	`${TROPHIES_PAGE}/${args.trophyId}/wins/${args.userId}`;
 
+export const trophyTournamentsPage = (trophyId: number) =>
+	`${TROPHIES_PAGE}/${trophyId}/tournaments`;
+
 interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];
 	customUrl?: Tables["User"]["customUrl"];

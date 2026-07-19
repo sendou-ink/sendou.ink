@@ -6,7 +6,6 @@ import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
-import { SendouDialog } from "~/components/elements/Dialog";
 import { WeaponImage } from "~/components/Image";
 import { TierPill } from "~/components/TierPill";
 import { UserCard } from "~/features/user-card/components/UserCard";
@@ -14,7 +13,7 @@ import { ParticipationPill } from "~/features/user-page/components/Participation
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { usePagination } from "~/hooks/usePagination";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import { tournamentPage, trophyPage, trophyWinsPage } from "~/utils/urls";
+import { tournamentPage, trophyWinsPage } from "~/utils/urls";
 import type { TrophyWinsLoaderData } from "../routes/trophies.$id.wins.$userId";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "../trophies-constants";
 import {
@@ -23,7 +22,7 @@ import {
 } from "../trophies-utils";
 import { Trophy, TrophyContextProvider } from "./Trophy";
 import styles from "./TrophyDisplay.module.css";
-import { TrophyShowcase } from "./TrophyShowcase";
+import { TrophyShowcaseModal } from "./TrophyShowcase";
 
 type TrophyItem = {
 	id: number;
@@ -136,42 +135,28 @@ function TrophyModal({
 	}, [fetcher.load, trophy.id, trophy.code, userId]);
 
 	return (
-		<SendouDialog
-			isOpen
-			onClose={onClose}
-			showHeading={false}
-			isDismissable
-			className={styles.modal}
-		>
-			<TrophyShowcase model={trophy.model}>
-				<div className="stack xxs">
-					<p className={styles.modalTrophyName}>{trophy.name}</p>
-					<Link to={trophyPage(trophy.id)} className={styles.modalLink}>
-						{t("trophies:display.viewTrophyPage")}
-					</Link>
+		<TrophyShowcaseModal trophy={trophy} onClose={onClose}>
+			{special ? (
+				<div>
+					<Divider />
+					<p className={styles.specialDescription}>
+						{special.type === "supporter"
+							? t("trophies:special.supporter.description")
+							: t("trophies:special.xp.description", {
+									value: special.value,
+								})}
+					</p>
 				</div>
-				{special ? (
-					<div>
-						<Divider />
-						<p className={styles.specialDescription}>
-							{special.type === "supporter"
-								? t("trophies:special.supporter.description")
-								: t("trophies:special.xp.description", {
-										value: special.value,
-									})}
-						</p>
-					</div>
-				) : null}
-				{data
-					? data.wins.map((win) => (
-							<div key={win.tournamentId}>
-								<Divider />
-								<TrophyWinDetails win={win} userCards={data.userCards} />
-							</div>
-						))
-					: null}
-			</TrophyShowcase>
-		</SendouDialog>
+			) : null}
+			{data
+				? data.wins.map((win) => (
+						<div key={win.tournamentId}>
+							<Divider />
+							<TrophyWinDetails win={win} userCards={data.userCards} />
+						</div>
+					))
+				: null}
+		</TrophyShowcaseModal>
 	);
 }
 

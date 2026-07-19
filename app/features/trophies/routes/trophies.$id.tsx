@@ -1,16 +1,11 @@
 import clsx from "clsx";
-import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
-import { TierPill } from "~/components/TierPill";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { tournamentPage, userPage } from "~/utils/urls";
+import { userPage } from "~/utils/urls";
 import { TrophyShowcase } from "../components/TrophyShowcase";
-import {
-	loader,
-	type TrophyDetailsLoaderData,
-} from "../loaders/trophies.$id.server";
+import { TrophyTournamentHistory } from "../components/TrophyTournamentHistory";
+import { loader } from "../loaders/trophies.$id.server";
 import { parseSpecialTrophyCode } from "../trophies-utils";
 import styles from "./trophies.module.css";
 
@@ -68,14 +63,7 @@ export default function TrophyDetailsPage() {
 						{t("trophies:details.tournamentHistory")}
 					</Divider>
 					{tournaments.length > 0 ? (
-						<ul className={styles.tournamentHistory}>
-							{tournaments.map((tournament) => (
-								<TournamentHistoryEntry
-									key={tournament.tournamentId}
-									tournament={tournament}
-								/>
-							))}
-						</ul>
+						<TrophyTournamentHistory tournaments={tournaments} />
 					) : (
 						<p className="text-center text-lighter text-xxs">
 							{t("trophies:details.noTournamentHistory")}
@@ -109,55 +97,5 @@ export default function TrophyDetailsPage() {
 				)}
 			</div>
 		</TrophyShowcase>
-	);
-}
-
-function TournamentHistoryEntry({
-	tournament,
-}: {
-	tournament: TrophyDetailsLoaderData["tournaments"][number];
-}) {
-	const { formatter } = useDateTimeFormat({
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
-
-	return (
-		<li>
-			<Link
-				to={tournamentPage(tournament.tournamentId)}
-				className={styles.tournamentHistoryEntry}
-			>
-				<img
-					src={tournament.logoUrl}
-					alt=""
-					width={32}
-					height={32}
-					className={styles.tournamentHistoryLogo}
-				/>
-				<div className="stack xxs">
-					<span className={styles.tournamentHistoryName}>
-						<p>{tournament.name}</p>
-						{tournament.tier ? (
-							<TierPill tier={tournament.tier} />
-						) : tournament.tentativeTier ? (
-							<TierPill tier={tournament.tentativeTier} isTentative />
-						) : null}
-					</span>
-					<div className={styles.tournamentHistoryMeta}>
-						<span className={styles.tournamentHistoryMetaItem}>
-							<Users className={styles.tournamentHistoryIcon} />
-							{tournament.teamsCount}
-						</span>
-						{tournament.startTime ? (
-							<span className={styles.tournamentHistoryMetaItem}>
-								{formatter.format(tournament.startTime)}
-							</span>
-						) : null}
-					</div>
-				</div>
-			</Link>
-		</li>
 	);
 }
