@@ -32,6 +32,13 @@ const MIN_STORED_DUPLICATE_NAME_MATCHES = 6;
 /** How many players on the winning (first) resp. losing side of a scoreboard. */
 const PLAYERS_PER_TEAM = 4;
 
+/**
+ * How many scoreboards must align with one tournament's games for content
+ * resolution to trust it. A single game's (mode, stage, sides) is common
+ * across a user's history; two already carry order.
+ */
+const MIN_RESOLVED_SCOREBOARDS = 2;
+
 /** A game of a tournament match that ingested scoreboards can be matched against. */
 export interface IngestableGame {
 	matchGameResultId: number;
@@ -42,6 +49,7 @@ export interface IngestableGame {
 	stageId: StageId;
 	winnerTeamId: number;
 	loserTeamId: number | null;
+	// xxx: this should not be needed? we get winner or not from the ingested event
 	/** known in-game names of the winning team's roster, used to validate scoreboard sides */
 	winnerInGameNames: string[];
 	/** known in-game names of the losing team's roster, used to validate scoreboard sides */
@@ -83,6 +91,48 @@ export interface MatchedScoreboard {
 	mapIndex: number;
 	povIndex: number | null;
 	data: IngestedScoreboardData;
+}
+
+/** A candidate game for content resolution, tagged with its tournament. */
+export interface IngestableGameWithTournament extends IngestableGame {
+	tournamentId: number;
+}
+
+/**
+ * Resolves which tournament a request's scoreboards belong to from their
+ * content alone: the candidate games (the POV user's reported games across
+ * tournaments) are grouped by tournament and each tournament is scored by
+ * how many scoreboards `matchedScoreboards` aligns with its games — the
+ * same mode+stage sequence walk and roster-side validation that decides
+ * what would actually be stored.
+ */
+export function resolveTournamentId({
+	events,
+	games,
+}: {
+	events: IngestedEventInput[];
+	games: IngestableGameWithTournament[];
+}): number | null {
+	const byTournament = new Map<number, IngestableGameWithTournament[]>();
+	for (const game of games) {
+		const tournamentGames = byTournament.get(game.tournamentId) ?? [];
+		tournamentGames.push(game);
+		byTournament.set(game.tournamentId, tournamentGames);
+	}
+
+	let best: { tournamentId: number; matched: number } | null = null;
+	for (const [tournamentId, tournamentGames] of byTournament) {
+		const matched = matchedScoreboards({
+			events,
+			games: tournamentGames,
+		}).length;
+		if (!best || matched > best.matched) {
+			best = { tournamentId, matched };
+		}
+	}
+
+	if (!best || best.matched < MIN_RESOLVED_SCOREBOARDS) return null;
+	return best.tournamentId;
 }
 
 /**

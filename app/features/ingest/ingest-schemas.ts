@@ -36,7 +36,9 @@ const scoreboardReplayDataSchema = scoreboardDataSchema.extend({
 
 const deathDataSchema = z.object({
 	weapon: detectionText.nullable(),
-	weaponId: detectionText.nullable(),
+	// xxx: these ids conflict so more info will be needed
+	/** sendou weapon id (main/sub/special id space per weaponType) */
+	weaponId: z.number().int().nullable(),
 	weaponType: z.enum(["MAIN", "SUB", "SPECIAL"]).nullable(),
 	abilities: z.array(z.array(detectionText)),
 	name: detectionText.nullable(),

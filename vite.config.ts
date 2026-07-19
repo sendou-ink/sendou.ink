@@ -9,10 +9,10 @@ export default defineConfig((config) => {
 	return {
 		server: {
 			port: Number(env.PORT) || 5173,
-			warmup: {
-				// Vite's built-in CORS would answer preflights before route middleware
+			// Vite's built-in CORS would answer preflights before route middleware
 			// (e.g. ingestCorsMiddleware) and omit Access-Control-Allow-Credentials
 			cors: false,
+			warmup: {
 				clientFiles: ["./app/entry.client.tsx", "./app/root.tsx"],
 				ssrFiles: ["./app/entry.server.tsx"],
 			},

@@ -3,7 +3,7 @@ import { sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type {
-	IngestableGame,
+	IngestableGameWithTournament,
 	IngestedScoreboardData,
 	MatchedScoreboard,
 } from "./core/Scoreboards";
@@ -76,13 +76,35 @@ function eventHash({
 }
 
 /** Returns the games a user played in a tournament, in chronological order. */
-export async function gamesPlayedByUserInTournament({
-	userId,
-	tournamentId,
-}: {
+export function gamesPlayedByUserInTournament(params: {
 	userId: number;
 	tournamentId: number;
-}): Promise<IngestableGame[]> {
+}) {
+	return gamesPlayedByUser(params);
+}
+
+/**
+ * Returns the games a user played in any tournament since the given
+ * database timestamp, in chronological order — the candidate set for
+ * content-based tournament resolution (Scoreboards.resolveTournamentId).
+ */
+export function gamesPlayedByUserSince(params: {
+	userId: number;
+	/** database timestamp (seconds) */
+	since: number;
+}) {
+	return gamesPlayedByUser(params);
+}
+
+async function gamesPlayedByUser({
+	userId,
+	tournamentId,
+	since,
+}: {
+	userId: number;
+	tournamentId?: number;
+	since?: number;
+}): Promise<IngestableGameWithTournament[]> {
 	const rows = await db
 		.selectFrom("TournamentMatchGameResultParticipant")
 		.innerJoin(
@@ -113,12 +135,18 @@ export async function gamesPlayedByUserInTournament({
 			"TournamentMatchGameResult.stageId",
 			"TournamentMatchGameResult.winnerTeamId",
 			"TournamentMatchGameResult.createdAt as playedAt",
+			"TournamentStage.tournamentId",
 			"IngestedScoreboard.data as storedScoreboardData",
 			opponentOneId.as("opponentOneId"),
 			opponentTwoId.as("opponentTwoId"),
 		])
 		.where("TournamentMatchGameResultParticipant.userId", "=", userId)
-		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.$if(tournamentId !== undefined, (qb) =>
+			qb.where("TournamentStage.tournamentId", "=", tournamentId!),
+		)
+		.$if(since !== undefined, (qb) =>
+			qb.where("TournamentMatchGameResult.createdAt", ">=", since!),
+		)
 		.orderBy("TournamentMatchGameResult.createdAt", "asc")
 		.orderBy("TournamentMatchGameResult.number", "asc")
 		.execute();
@@ -138,6 +166,7 @@ export async function gamesPlayedByUserInTournament({
 		return {
 			matchGameResultId: row.matchGameResultId,
 			tournamentMatchId: row.tournamentMatchId,
+			tournamentId: row.tournamentId,
 			mapIndex: row.number - 1,
 			mode: row.mode,
 			stageId: row.stageId,

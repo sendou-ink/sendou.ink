@@ -401,3 +401,105 @@ describe("matchedScoreboards", () => {
 		expect(scoreboards.map((s) => s.tournamentMatchId)).toEqual([2]);
 	});
 });
+
+describe("resolveTournamentId", () => {
+	/** A tournament's reported games as an ordered (mode, stageId) sequence. */
+	function tournamentGames(
+		tournamentId: number,
+		sequence: [ModeShort, number][],
+		partial: Partial<Scoreboards.IngestableGame> = {},
+	): Scoreboards.IngestableGameWithTournament[] {
+		return sequence.map(([mode, stageId], i) => ({
+			...testGame({
+				matchGameResultId: tournamentId * 1000 + i,
+				tournamentMatchId: tournamentId * 100,
+				mapIndex: i,
+				mode,
+				stageId: stageId as StageId,
+				playedAt: 1000 + i,
+				...partial,
+			}),
+			tournamentId,
+		}));
+	}
+
+	const seenSequence = [
+		testScoreboard({ t: 60, mode: "Splat Zones", stage: "Scorch Gorge" }),
+		testScoreboard({ t: 600, mode: "Tower Control", stage: "Eeltail Alley" }),
+	];
+
+	it("resolves the tournament whose games match the scoreboard sequence", () => {
+		const tournamentId = Scoreboards.resolveTournamentId({
+			events: seenSequence,
+			games: [
+				...tournamentGames(1, [
+					["SZ", 0],
+					["TC", 1],
+				]),
+				...tournamentGames(2, [
+					["SZ", 3],
+					["TC", 2],
+				]),
+			],
+		});
+
+		expect(tournamentId).toBe(1);
+	});
+
+	it("does not resolve from a single matching scoreboard", () => {
+		const tournamentId = Scoreboards.resolveTournamentId({
+			events: [seenSequence[0]!],
+			games: tournamentGames(1, [
+				["SZ", 0],
+				["TC", 1],
+			]),
+		});
+
+		expect(tournamentId).toBe(null);
+	});
+
+	it("lets roster sides break a map-sequence tie", () => {
+		const sharedMaplist: [ModeShort, number][] = [
+			["SZ", 0],
+			["TC", 1],
+		];
+		const tournamentId = Scoreboards.resolveTournamentId({
+			events: seenSequence,
+			games: [
+				...tournamentGames(1, sharedMaplist, {
+					winnerInGameNames: ["w1", "w2", "w3", "w4"],
+					loserInGameNames: ["l1", "l2", "l3", "l4"],
+				}),
+				// the other tournament's rosters contradict the scoreboard sides
+				...tournamentGames(2, sharedMaplist, {
+					winnerInGameNames: ["l1", "l2", "l3", "l4"],
+					loserInGameNames: ["w1", "w2", "w3", "w4"],
+				}),
+			],
+		});
+
+		expect(tournamentId).toBe(1);
+	});
+
+	it("skips unreadable scoreboards but resolves from the rest", () => {
+		const tournamentId = Scoreboards.resolveTournamentId({
+			events: [
+				seenSequence[0]!,
+				testScoreboard({ t: 300, stage: null }),
+				seenSequence[1]!,
+			],
+			games: [
+				...tournamentGames(1, [
+					["SZ", 0],
+					["TC", 1],
+				]),
+				...tournamentGames(2, [
+					["SZ", 3],
+					["TC", 2],
+				]),
+			],
+		});
+
+		expect(tournamentId).toBe(1);
+	});
+});
