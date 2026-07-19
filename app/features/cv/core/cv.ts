@@ -1,0 +1,66 @@
+/**
+ * OpenCV.js singleton loader. Works in Node, browser main thread, and workers —
+ * the UMD bundle embeds its WASM, so no asset paths are involved.
+ *
+ * Everything in core/ obtains the cv namespace through getCV(); callers must
+ * await loadOpenCV() once at startup (worker bootstrap, test setup, tool entry).
+ */
+import cvModule from "@techstark/opencv-js";
+
+export type CV = typeof cvModule;
+export type Mat = InstanceType<CV["Mat"]>;
+
+let cvInstance: CV | null = null;
+let loading: Promise<CV> | null = null;
+
+export function loadOpenCV(): Promise<CV> {
+  if (cvInstance) return Promise.resolve(cvInstance);
+  if (loading) return loading;
+  const attempt = (async () => {
+    const mod = cvModule as unknown;
+    let cv: CV;
+    if (mod instanceof Promise) {
+      cv = await mod;
+    } else if ((mod as CV).Mat) {
+      cv = mod as CV;
+    } else {
+      await new Promise<void>((resolve) => {
+        (mod as { onRuntimeInitialized?: () => void }).onRuntimeInitialized = resolve;
+      });
+      cv = mod as CV;
+    }
+    cvInstance = cv;
+    return cv;
+  })();
+  // a failed load must not poison the singleton — clear it so callers can retry
+  loading = attempt.catch((error) => {
+    loading = null;
+    throw error;
+  });
+  return loading;
+}
+
+export function getCV(): CV {
+  if (!cvInstance) {
+    throw new Error("OpenCV not loaded — await loadOpenCV() before using core/");
+  }
+  return cvInstance;
+}
+
+// The bundled type definitions mark the optional mask argument of these as
+// required; thin wrappers restore the real (mask-less) signatures.
+
+export interface MinMaxResult {
+  minVal: number;
+  maxVal: number;
+  minLoc: { x: number; y: number };
+  maxLoc: { x: number; y: number };
+}
+
+export function minMaxLoc(mat: Mat): MinMaxResult {
+  return (getCV() as unknown as { minMaxLoc(m: Mat): MinMaxResult }).minMaxLoc(mat);
+}
+
+export function meanOf(mat: Mat): number[] {
+  return (getCV() as unknown as { mean(m: Mat): number[] }).mean(mat);
+}

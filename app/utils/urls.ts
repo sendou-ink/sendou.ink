@@ -129,6 +129,10 @@ export const FIRST_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/fi
 export const SECOND_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/second.svg`;
 export const THIRD_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/third.svg`;
 
+/** CV parser atlases/templates; the version segment guards against CDN cache
+ * skew — bump it together with breaking atlas format changes */
+export const CV_ASSETS_URL = `${STATIC_ASSETS_URL}/cv/v1`;
+
 export const APP_ICON_URL = `${STATIC_ASSETS_URL}/img/app-icon.png`;
 export const pwaSplashScreenImageUrl = (fileName: string) =>
 	`${STATIC_ASSETS_URL}/img/splash-screens/${fileName}`;
