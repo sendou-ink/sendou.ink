@@ -13,6 +13,8 @@ const devOnlyRoutes =
 					"/admin/generate-images",
 					"features/admin/routes/generate-images.tsx",
 				),
+				// promote out of devOnlyRoutes once verified on Render
+				route("/cv", "features/cv/routes/cv.tsx"),
 				route(
 					"/components",
 					"features/components-showcase/routes/components.tsx",
