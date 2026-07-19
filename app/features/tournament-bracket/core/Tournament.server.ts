@@ -165,6 +165,17 @@ function isTournamentLive(tournament: Tournament) {
 	return Boolean(latestStartTime && latestStartTime >= cutoff);
 }
 
+/**
+ * Re-evaluates liveness of every tournament in the running tournaments registry,
+ * evicting those that are no longer live (e.g. abandoned tournaments whose latest
+ * day started over 6 hours ago and no page load has triggered a re-sync).
+ */
+export function evictStaleRunningTournaments() {
+	for (const tournament of RunningTournaments.all) {
+		syncTournamentToRegistry(tournament);
+	}
+}
+
 function syncTournamentToRegistry(tournament: Tournament) {
 	const isRunning = isTournamentLive(tournament);
 	const wasInRegistry = RunningTournaments.has(tournament.ctx.id);
