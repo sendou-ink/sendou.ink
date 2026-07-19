@@ -5,6 +5,8 @@ const config = {
 	},
 	tags: ["-lintignore"],
 	ignoreBinaries: ["lsof"],
+	// vendored 2022 dictionary tooling, not part of the module graph
+	ignore: ["scripts/dicts/**"],
 	// cwd relative path inside an execSync command, which knip resolves relative to the file instead
 	ignoreUnresolved: ["scripts/seed-single-variation.ts"],
 	entry: [

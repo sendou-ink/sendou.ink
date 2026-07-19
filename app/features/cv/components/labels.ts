@@ -4,7 +4,7 @@
  * into human-readable names for cards, CSV export, and the fixture
  * exporter's informational *Label fields.
  */
-import gameMisc from "../../../../locales/en/game-misc.json";
+
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -12,8 +12,12 @@ import type {
 	StageId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import gameMisc from "../../../../locales/en/game-misc.json";
+import {
+	ALL_WEAPON_ENTRIES,
+	type WeaponType,
+} from "../core/detectors/death/weapon-names";
 import type { CvLobby } from "../cv-types";
-import { ALL_WEAPON_ENTRIES, type WeaponType } from "../core/detectors/death/weapon-names";
 
 const misc = gameMisc as Record<string, string>;
 
@@ -34,7 +38,9 @@ export function mainWeaponLabel(id: MainWeaponId | null): string | null {
 }
 
 export function stageLabel(stageId: StageId | null): string | null {
-	return stageId === null ? null : (misc[`STAGE_${stageId}`] ?? String(stageId));
+	return stageId === null
+		? null
+		: (misc[`STAGE_${stageId}`] ?? String(stageId));
 }
 
 export function modeLabel(mode: ModeShort | null): string | null {

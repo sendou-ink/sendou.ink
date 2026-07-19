@@ -22,7 +22,7 @@ export const ROW_CENTERS = [416, 482, 547, 613, 770, 836, 901, 967] as const;
  * and intentionally excludes the larger replay-browser template sizes.
  */
 export function weaponRoi(cy: number): Roi {
-  return { x: 1054, y: cy - 28, w: 67, h: 56 };
+	return { x: 1054, y: cy - 28, w: 67, h: 56 };
 }
 
 /**
@@ -31,23 +31,23 @@ export function weaponRoi(cy: number): Roi {
  * region at the leftmost paint digit.
  */
 export function nameRoi(cy: number): Roi {
-  return { x: 1122, y: cy - 14, w: 208, h: 32 };
+	return { x: 1122, y: cy - 14, w: 208, h: 32 };
 }
 
 /** Paint amount digits, right-aligned ending at x=1409 (the "p" suffix is excluded). */
 export function paintRoi(cy: number): Roi {
-  return { x: 1325, y: cy - 17, w: 84, h: 34 };
+	return { x: 1325, y: cy - 17, w: 84, h: 34 };
 }
 
 /** The constant white "p" after the paint number — used as a gate anchor. */
 export function paintSuffixRoi(cy: number): Roi {
-  return { x: 1409, y: cy - 14, w: 18, h: 28 };
+	return { x: 1409, y: cy - 14, w: 18, h: 28 };
 }
 
 /** Stat counter digits (two, zero-padded; the small "x" prefix at 1477/1540/1603 is excluded). */
 export function statRoi(cy: number, index: 0 | 1 | 2): Roi {
-  const x = [1484, 1547, 1610][index]!;
-  return { x, y: cy + 1, w: 32, h: 23 };
+	const x = [1484, 1547, 1610][index]!;
+	return { x, y: cy + 1, w: 32, h: 23 };
 }
 
 /**
@@ -56,7 +56,7 @@ export function statRoi(cy: number, index: 0 | 1 | 2): Roi {
  * below at cy+1 so the white counter digits stay out of the binarized shape.
  */
 export function specialIconRoi(cy: number): Roi {
-  return { x: 1595, y: cy - 29, w: 40, h: 30 };
+	return { x: 1595, y: cy - 29, w: 40, h: 30 };
 }
 
 /**
@@ -66,13 +66,13 @@ export function specialIconRoi(cy: number): Roi {
  * circle (~x 995) so yellow hair/gear can't leak in.
  */
 export function povArrowRoi(cy: number): Roi {
-  return { x: 930, y: cy - 32, w: 58, h: 56 };
+	return { x: 930, y: cy - 32, w: 58, h: 56 };
 }
 
 /** Team score totals ("500 p"), larger digits, right-aligned ending at x=1658. */
 export const TEAM_SCORE_ROIS: readonly [Roi, Roi] = [
-  { x: 1530, y: 330, w: 132, h: 44 },
-  { x: 1530, y: 684, w: 132, h: 44 },
+	{ x: 1530, y: 330, w: 132, h: 44 },
+	{ x: 1530, y: 684, w: 132, h: 44 },
 ];
 
 /**
@@ -80,14 +80,14 @@ export const TEAM_SCORE_ROIS: readonly [Roi, Roi] = [
  * first stat "x" (starts 1477) is always empty pill background (near-black).
  */
 export function gateDarkProbe(cy: number): Roi {
-  return { x: 1434, y: cy - 10, w: 38, h: 20 };
+	return { x: 1434, y: cy - 10, w: 38, h: 20 };
 }
 
 /** Panel background probes (dark gray ~35) outside the team boxes. */
 export const GATE_PANEL_PROBES: readonly Roi[] = [
-  { x: 800, y: 500, w: 30, h: 30 },
-  { x: 800, y: 900, w: 30, h: 30 },
-  { x: 1770, y: 930, w: 30, h: 30 },
+	{ x: 800, y: 500, w: 30, h: 30 },
+	{ x: 800, y: 900, w: 30, h: 30 },
+	{ x: 1770, y: 930, w: 30, h: 30 },
 ];
 
 export const GATE_DARK_MAX_MEAN = 60;

@@ -10,16 +10,16 @@ import { getCV, type Mat, meanOf, minMaxLoc } from "./cv";
 export type { Roi };
 
 export interface FrameData {
-  width: number;
-  height: number;
-  /** RGBA, 4 bytes per pixel */
-  data: Uint8ClampedArray;
+	width: number;
+	height: number;
+	/** RGBA, 4 bytes per pixel */
+	data: Uint8ClampedArray;
 }
 
 export function toMat(frame: FrameData): Mat {
-  const cv = getCV();
-  // matFromImageData only reads width/height/data, so FrameData is compatible
-  return cv.matFromImageData(frame as unknown as ImageData);
+	const cv = getCV();
+	// matFromImageData only reads width/height/data, so FrameData is compatible
+	return cv.matFromImageData(frame as unknown as ImageData);
 }
 
 /**
@@ -27,15 +27,23 @@ export function toMat(frame: FrameData): Mat {
  * constants are defined against. Returns a new mat; caller owns both.
  */
 export function normalizeFrame(src: Mat): Mat {
-  const cv = getCV();
-  const dst = new cv.Mat();
-  if (src.cols === CANONICAL_WIDTH && src.rows === CANONICAL_HEIGHT) {
-    src.copyTo(dst);
-    return dst;
-  }
-  const interpolation = src.cols > CANONICAL_WIDTH ? cv.INTER_AREA : cv.INTER_CUBIC;
-  cv.resize(src, dst, new cv.Size(CANONICAL_WIDTH, CANONICAL_HEIGHT), 0, 0, interpolation);
-  return dst;
+	const cv = getCV();
+	const dst = new cv.Mat();
+	if (src.cols === CANONICAL_WIDTH && src.rows === CANONICAL_HEIGHT) {
+		src.copyTo(dst);
+		return dst;
+	}
+	const interpolation =
+		src.cols > CANONICAL_WIDTH ? cv.INTER_AREA : cv.INTER_CUBIC;
+	cv.resize(
+		src,
+		dst,
+		new cv.Size(CANONICAL_WIDTH, CANONICAL_HEIGHT),
+		0,
+		0,
+		interpolation,
+	);
+	return dst;
 }
 
 /**
@@ -45,17 +53,17 @@ export function normalizeFrame(src: Mat): Mat {
  * Use copyRoi when pixel access is needed.
  */
 export function cropRoi(src: Mat, roi: Roi): Mat {
-  const cv = getCV();
-  return src.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
+	const cv = getCV();
+	return src.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
 }
 
 /** Crop a rect into a fresh continuous mat (safe for `.data` access). */
 export function copyRoi(src: Mat, roi: Roi): Mat {
-  const view = cropRoi(src, roi);
-  const out = new (getCV().Mat)();
-  view.copyTo(out);
-  view.delete();
-  return out;
+	const view = cropRoi(src, roi);
+	const out = new (getCV().Mat)();
+	view.copyTo(out);
+	view.delete();
+	return out;
 }
 
 /**
@@ -64,87 +72,91 @@ export function copyRoi(src: Mat, roi: Roi): Mat {
  * The shared probe primitive of every detector gate.
  */
 export function meanBrightness(mat: Mat, roi: Roi): number {
-  const view = cropRoi(mat, roi);
-  const m = meanOf(view);
-  view.delete();
-  return mat.channels() >= 3 ? (m[0]! + m[1]! + m[2]!) / 3 : m[0]!;
+	const view = cropRoi(mat, roi);
+	const m = meanOf(view);
+	view.delete();
+	return mat.channels() >= 3 ? (m[0]! + m[1]! + m[2]!) / 3 : m[0]!;
 }
 
 /** Brightest pixel of a grayscale ROI. */
 export function maxBrightness(gray: Mat, roi: Roi): number {
-  const view = cropRoi(gray, roi);
-  const { maxVal } = minMaxLoc(view);
-  view.delete();
-  return maxVal;
+	const view = cropRoi(gray, roi);
+	const { maxVal } = minMaxLoc(view);
+	view.delete();
+	return maxVal;
 }
 
-function channelExtreme(mat: Mat, roi: Roi | undefined, op: "min" | "max"): Mat {
-  const cv = getCV();
-  const view = roi ? cropRoi(mat, roi) : null;
-  const src = view ?? mat;
-  const channels = new cv.MatVector();
-  cv.split(src, channels);
-  const r = channels.get(0);
-  const g = channels.get(1);
-  const b = channels.get(2);
-  const rg = new cv.Mat();
-  const out = new cv.Mat();
-  if (op === "max") {
-    cv.max(r, g, rg);
-    cv.max(rg, b, out);
-  } else {
-    cv.min(r, g, rg);
-    cv.min(rg, b, out);
-  }
-  rg.delete();
-  r.delete();
-  g.delete();
-  b.delete();
-  if (mat.channels() === 4) channels.get(3).delete();
-  channels.delete();
-  view?.delete();
-  return out;
+function channelExtreme(
+	mat: Mat,
+	roi: Roi | undefined,
+	op: "min" | "max",
+): Mat {
+	const cv = getCV();
+	const view = roi ? cropRoi(mat, roi) : null;
+	const src = view ?? mat;
+	const channels = new cv.MatVector();
+	cv.split(src, channels);
+	const r = channels.get(0);
+	const g = channels.get(1);
+	const b = channels.get(2);
+	const rg = new cv.Mat();
+	const out = new cv.Mat();
+	if (op === "max") {
+		cv.max(r, g, rg);
+		cv.max(rg, b, out);
+	} else {
+		cv.min(r, g, rg);
+		cv.min(rg, b, out);
+	}
+	rg.delete();
+	r.delete();
+	g.delete();
+	b.delete();
+	if (mat.channels() === 4) channels.get(3).delete();
+	channels.delete();
+	view?.delete();
+	return out;
 }
 
 /** Brightest channel per pixel, so colored text binarizes like white. */
 export function maxChannel(mat: Mat, roi?: Roi): Mat {
-  return channelExtreme(mat, roi, "max");
+	return channelExtreme(mat, roi, "max");
 }
 
 /** Per-pixel min of R/G/B — drops color-tinted brightness, keeps white. */
 export function minChannel(mat: Mat, roi?: Roi): Mat {
-  return channelExtreme(mat, roi, "min");
+	return channelExtreme(mat, roi, "min");
 }
 
 /** |Laplacian| response of a grayscale mat; caller owns the result. */
 export function laplacianAbs(gray: Mat): Mat {
-  const cv = getCV();
-  const lap = new cv.Mat();
-  cv.Laplacian(gray, lap, cv.CV_16S, 3, 1, 0, cv.BORDER_DEFAULT);
-  const abs8 = new cv.Mat();
-  cv.convertScaleAbs(lap, abs8);
-  lap.delete();
-  return abs8;
+	const cv = getCV();
+	const lap = new cv.Mat();
+	cv.Laplacian(gray, lap, cv.CV_16S, 3, 1, 0, cv.BORDER_DEFAULT);
+	const abs8 = new cv.Mat();
+	cv.convertScaleAbs(lap, abs8);
+	lap.delete();
+	return abs8;
 }
 
 export function matToFrameData(mat: Mat): FrameData {
-  const cv = getCV();
-  const rgba = new cv.Mat();
-  if (mat.type() === cv.CV_8UC4) {
-    mat.copyTo(rgba);
-  } else if (mat.type() === cv.CV_8UC3) {
-    cv.cvtColor(mat, rgba, cv.COLOR_RGB2RGBA);
-  } else if (mat.type() === cv.CV_8UC1) {
-    cv.cvtColor(mat, rgba, cv.COLOR_GRAY2RGBA);
-  } else {
-    rgba.delete();
-    throw new Error(`unsupported mat type ${mat.type()}`);
-  }
-  const out: FrameData = {
-    width: rgba.cols,
-    height: rgba.rows,
-    data: new Uint8ClampedArray(rgba.data),
-  };
-  rgba.delete();
-  return out;
+	const cv = getCV();
+	const rgba = new cv.Mat();
+	if (mat.type() === cv.CV_8UC4) {
+		mat.copyTo(rgba);
+	} else if (mat.type() === cv.CV_8UC3) {
+		cv.cvtColor(mat, rgba, cv.COLOR_RGB2RGBA);
+	} else if (mat.type() === cv.CV_8UC1) {
+		cv.cvtColor(mat, rgba, cv.COLOR_GRAY2RGBA);
+	} else {
+		rgba.delete();
+		throw new Error(`unsupported mat type ${mat.type()}`);
+	}
+	const out: FrameData = {
+		width: rgba.cols,
+		height: rgba.rows,
+		data: new Uint8ClampedArray(rgba.data),
+	};
+	rgba.delete();
+	return out;
 }

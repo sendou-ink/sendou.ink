@@ -5,17 +5,8 @@
  * layer and never leave a detector.
  */
 import { abilities } from "~/modules/in-game-lists/abilities";
-import {
-	mainWeaponIds,
-	specialWeaponIds,
-	subWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
-import type {
-	Ability,
-	MainWeaponId,
-	SpecialWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 
 /** The scoreboard header's lobby tag. PRIVATE marks tournament games. */
 export const CV_LOBBIES = ["X", "SERIES", "OPEN", "PRIVATE"] as const;
@@ -29,24 +20,12 @@ export type CvLobby = (typeof CV_LOBBIES)[number];
 export type CvAbility = Ability | "UNKNOWN";
 
 const MAIN_WEAPON_ID_SET: ReadonlySet<number> = new Set(mainWeaponIds);
-const SUB_WEAPON_ID_SET: ReadonlySet<number> = new Set(subWeaponIds);
-const SPECIAL_WEAPON_ID_SET: ReadonlySet<number> = new Set(specialWeaponIds);
 const ABILITY_SET: ReadonlySet<string> = new Set(abilities.map((a) => a.name));
 
 /** Narrow a template/manifest id to a MainWeaponId; null when unknown. */
 export function toMainWeaponId(id: number | string): MainWeaponId | null {
 	const n = Number(id);
 	return MAIN_WEAPON_ID_SET.has(n) ? (n as MainWeaponId) : null;
-}
-
-export function toSubWeaponId(id: number | string): SubWeaponId | null {
-	const n = Number(id);
-	return SUB_WEAPON_ID_SET.has(n) ? (n as SubWeaponId) : null;
-}
-
-export function toSpecialWeaponId(id: number | string): SpecialWeaponId | null {
-	const n = Number(id);
-	return SPECIAL_WEAPON_ID_SET.has(n) ? (n as SpecialWeaponId) : null;
 }
 
 /** Narrow an ability-template id to a CvAbility; null when unknown. */

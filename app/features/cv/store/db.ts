@@ -21,19 +21,19 @@ export const VOD_FRAMES_STORE = "vod-frames";
  * migration), stamping `hasFrame` on the source records.
  */
 function extractFrames(source: IDBObjectStore, frames: IDBObjectStore): void {
-  const req = source.openCursor();
-  req.onsuccess = () => {
-    const cursor = req.result;
-    if (!cursor) return;
-    const record = cursor.value as { frame?: Blob; hasFrame?: boolean };
-    if (record.frame) {
-      frames.put(record.frame, cursor.primaryKey);
-      record.hasFrame = true;
-      delete record.frame;
-      cursor.update(record);
-    }
-    cursor.continue();
-  };
+	const req = source.openCursor();
+	req.onsuccess = () => {
+		const cursor = req.result;
+		if (!cursor) return;
+		const record = cursor.value as { frame?: Blob; hasFrame?: boolean };
+		if (record.frame) {
+			frames.put(record.frame, cursor.primaryKey);
+			record.hasFrame = true;
+			delete record.frame;
+			cursor.update(record);
+		}
+		cursor.continue();
+	};
 }
 
 /**
@@ -43,68 +43,72 @@ function extractFrames(source: IDBObjectStore, frames: IDBObjectStore): void {
  * block plus a DB_VERSION bump, never an edit to an old block: databases that
  * already ran the old block would silently skip the change otherwise.
  */
-function migrate(database: IDBDatabase, transaction: IDBTransaction, oldVersion: number): void {
-  if (oldVersion < 2) {
-    // v1/v2 era stores; contains() guards absorb the pre-versioned scheme,
-    // where every creation was unconditionally contains()-gated
-    if (!database.objectStoreNames.contains(EVENTS_STORE)) {
-      const store = database.createObjectStore(EVENTS_STORE, {
-        keyPath: "id",
-        autoIncrement: true,
-      });
-      store.createIndex("t", "t");
-      store.createIndex("detectedAt", "detectedAt");
-    }
-    if (!database.objectStoreNames.contains(VODS_STORE)) {
-      database.createObjectStore(VODS_STORE, { keyPath: "name" });
-    }
-    if (!database.objectStoreNames.contains(VOD_EVENTS_STORE)) {
-      const store = database.createObjectStore(VOD_EVENTS_STORE, {
-        keyPath: "id",
-        autoIncrement: true,
-      });
-      store.createIndex("vod", "vod");
-    }
-  }
-  if (oldVersion < 3) {
-    // frame blobs move out of the event records into keyed frame stores
-    const frames = database.createObjectStore(FRAMES_STORE);
-    const vodFrames = database.createObjectStore(VOD_FRAMES_STORE);
-    extractFrames(transaction.objectStore(EVENTS_STORE), frames);
-    extractFrames(transaction.objectStore(VOD_EVENTS_STORE), vodFrames);
-  }
+function migrate(
+	database: IDBDatabase,
+	transaction: IDBTransaction,
+	oldVersion: number,
+): void {
+	if (oldVersion < 2) {
+		// v1/v2 era stores; contains() guards absorb the pre-versioned scheme,
+		// where every creation was unconditionally contains()-gated
+		if (!database.objectStoreNames.contains(EVENTS_STORE)) {
+			const store = database.createObjectStore(EVENTS_STORE, {
+				keyPath: "id",
+				autoIncrement: true,
+			});
+			store.createIndex("t", "t");
+			store.createIndex("detectedAt", "detectedAt");
+		}
+		if (!database.objectStoreNames.contains(VODS_STORE)) {
+			database.createObjectStore(VODS_STORE, { keyPath: "name" });
+		}
+		if (!database.objectStoreNames.contains(VOD_EVENTS_STORE)) {
+			const store = database.createObjectStore(VOD_EVENTS_STORE, {
+				keyPath: "id",
+				autoIncrement: true,
+			});
+			store.createIndex("vod", "vod");
+		}
+	}
+	if (oldVersion < 3) {
+		// frame blobs move out of the event records into keyed frame stores
+		const frames = database.createObjectStore(FRAMES_STORE);
+		const vodFrames = database.createObjectStore(VOD_FRAMES_STORE);
+		extractFrames(transaction.objectStore(EVENTS_STORE), frames);
+		extractFrames(transaction.objectStore(VOD_EVENTS_STORE), vodFrames);
+	}
 }
 
 function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (event) => {
-      migrate(req.result, req.transaction!, event.oldVersion);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
+	return new Promise((resolve, reject) => {
+		const req = indexedDB.open(DB_NAME, DB_VERSION);
+		req.onupgradeneeded = (event) => {
+			migrate(req.result, req.transaction!, event.oldVersion);
+		};
+		req.onsuccess = () => resolve(req.result);
+		req.onerror = () => reject(req.error);
+	});
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 export function db(): Promise<IDBDatabase> {
-  dbPromise ??= openDb();
-  return dbPromise;
+	dbPromise ??= openDb();
+	return dbPromise;
 }
 
 /** Single-request convenience wrapper over one object store. */
 export function tx<T>(
-  storeName: string,
-  mode: IDBTransactionMode,
-  run: (store: IDBObjectStore) => IDBRequest<T>,
+	storeName: string,
+	mode: IDBTransactionMode,
+	run: (store: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T> {
-  return db().then(
-    (database) =>
-      new Promise<T>((resolve, reject) => {
-        const transaction = database.transaction(storeName, mode);
-        const req = run(transaction.objectStore(storeName));
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      }),
-  );
+	return db().then(
+		(database) =>
+			new Promise<T>((resolve, reject) => {
+				const transaction = database.transaction(storeName, mode);
+				const req = run(transaction.objectStore(storeName));
+				req.onsuccess = () => resolve(req.result);
+				req.onerror = () => reject(req.error);
+			}),
+	);
 }

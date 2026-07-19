@@ -21,22 +21,28 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import type { DeathData } from "./core/detectors/death/index";
 import type { MapStartData } from "./core/detectors/map-start/index";
-import type { ScoreboardData, ScoreboardPlayer } from "./core/detectors/scoreboard/index";
+import type {
+	ScoreboardData,
+	ScoreboardPlayer,
+} from "./core/detectors/scoreboard/index";
 import type { ScoreboardReplayData } from "./core/detectors/scoreboard-replay/index";
 import { CV_LOBBIES } from "./cv-types";
 
 const detectionText = z.string().max(500);
 
-export const cvLobbySchema = z.enum(CV_LOBBIES);
+const cvLobbySchema = z.enum(CV_LOBBIES);
 export const modeShortSchema = z.enum(modesShort);
 export const stageIdSchema = z.literal(stageIds);
 export const mainWeaponIdSchema = z.literal(mainWeaponIds);
-export const subWeaponIdSchema = z.literal(subWeaponIds);
-export const specialWeaponIdSchema = z.literal(specialWeaponIds);
+const subWeaponIdSchema = z.literal(subWeaponIds);
+const specialWeaponIdSchema = z.literal(specialWeaponIds);
 
 const abilityNames = abilities.map((ability) => ability.name) as Ability[];
 /** a sendou ability id, or the detectors' explicit unrecognized marker */
-export const cvAbilitySchema = z.union([z.literal(abilityNames), z.literal("UNKNOWN")]);
+export const cvAbilitySchema = z.union([
+	z.literal(abilityNames),
+	z.literal("UNKNOWN"),
+]);
 
 export const cvScoreboardPlayerSchema = z.object({
 	name: detectionText,

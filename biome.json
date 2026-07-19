@@ -7,6 +7,7 @@
 			"!scripts/output/**/*",
 			"!app/db/seed/placements.json",
 			"!build/**/*",
+			"!app/features/cv/tests/fixtures/**",
 			"!test-results/**/*",
 			"!playwright-report/**/*",
 			"!.react-router/**/*",

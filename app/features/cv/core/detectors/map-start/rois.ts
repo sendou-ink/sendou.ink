@@ -90,10 +90,10 @@ export const STAGE_RAW_BIN_THRESHOLDS: readonly number[] = [225, 235, 245];
  * own white strokes blow the probe means.
  */
 export const GATE_DARK_PROBES: readonly Roi[] = [
-  { x: 780, y: 280, w: 30, h: 20 },
-  { x: 1105, y: 280, w: 30, h: 20 },
-  { x: 850, y: 355, w: 30, h: 20 },
-  { x: 1030, y: 355, w: 30, h: 20 },
+	{ x: 780, y: 280, w: 30, h: 20 },
+	{ x: 1105, y: 280, w: 30, h: 20 },
+	{ x: 850, y: 355, w: 30, h: 20 },
+	{ x: 1030, y: 355, w: 30, h: 20 },
 ];
 export const GATE_DARK_MAX_MEAN = 45;
 

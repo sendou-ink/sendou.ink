@@ -39,13 +39,13 @@ export const GEAR_ROWS = 3;
  * sub box excludes the main-size templates within a shared template list.
  */
 export function gearMainRoi(row: number): Roi {
-  const cx = GEAR_MAIN_CXS[row]!;
-  return { x: cx - 32, y: GEAR_BADGE_CY - 32, w: 64, h: 64 };
+	const cx = GEAR_MAIN_CXS[row]!;
+	return { x: cx - 32, y: GEAR_BADGE_CY - 32, w: 64, h: 64 };
 }
 
 export function gearSubRoi(row: number, slot: number): Roi {
-  const cx = GEAR_MAIN_CXS[row]! + GEAR_SUB_DXS[slot]!;
-  return { x: cx - 26, y: GEAR_BADGE_CY - 26, w: 52, h: 52 };
+	const cx = GEAR_MAIN_CXS[row]! + GEAR_SUB_DXS[slot]!;
+	return { x: cx - 26, y: GEAR_BADGE_CY - 26, w: 52, h: 52 };
 }
 
 /** Template heights (px at 1080p) per badge role (main ⌀~49, sub ⌀~38). */
@@ -71,26 +71,26 @@ export const OWN_ABILITY_INK_THRESHOLD = 170;
  * strip's gray shows in the constant gap after the third sub badge.
  */
 export const GATE_PANEL_PROBES: readonly Roi[] = [
-  { x: 860, y: 245, w: 30, h: 20 },
-  { x: 1690, y: 395, w: 30, h: 20 },
-  { x: 875, y: 695, w: 30, h: 20 },
-  { x: 1400, y: 985, w: 30, h: 20 },
+	{ x: 860, y: 245, w: 30, h: 20 },
+	{ x: 1690, y: 395, w: 30, h: 20 },
+	{ x: 875, y: 695, w: 30, h: 20 },
+	{ x: 1400, y: 985, w: 30, h: 20 },
 ];
 export const GATE_PANEL_MAX_MEAN = 65;
 
 /** Left edge of each card's title text (weapon card first). */
 export const GATE_TITLE_TEXT_PROBES: readonly Roi[] = [
-  { x: 880, y: 768, w: 70, h: 26 },
-  { x: 1090, y: 768, w: 70, h: 26 },
-  { x: 1319, y: 768, w: 70, h: 26 },
-  { x: 1550, y: 768, w: 70, h: 26 },
+	{ x: 880, y: 768, w: 70, h: 26 },
+	{ x: 1090, y: 768, w: 70, h: 26 },
+	{ x: 1319, y: 768, w: 70, h: 26 },
+	{ x: 1550, y: 768, w: 70, h: 26 },
 ];
 /** Title text regions must contain bright (white) pixels. */
 export const GATE_TEXT_MIN_MAX = 180;
 
 /** Gray ability-strip gap after the third sub badge, one per gear card. */
 export function gateStripProbe(row: number): Roi {
-  return { x: GEAR_MAIN_CXS[row]! + 148, y: 917, w: 10, h: 18 };
+	return { x: GEAR_MAIN_CXS[row]! + 148, y: 917, w: 10, h: 18 };
 }
 export const GATE_STRIP_MIN_MEAN = 110;
 export const GATE_STRIP_MAX_MEAN = 200;

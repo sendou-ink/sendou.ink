@@ -29,7 +29,7 @@ export const PANEL_XS = [0, PANEL_DX] as const;
  * vertical slide room. matchTemplate silently skips taller templates.
  */
 export function weaponRoi(cy: number, dx: number): Roi {
-  return { x: 522 + dx, y: cy - 34, w: 96, h: 68 };
+	return { x: 522 + dx, y: cy - 34, w: 96, h: 68 };
 }
 
 /**
@@ -40,7 +40,7 @@ export function weaponRoi(cy: number, dx: number): Roi {
  * pill around it sits above matchSpecial's ink threshold.
  */
 export function specialIconRoi(cy: number, dx: number): Roi {
-  return { x: 1104 + dx, y: cy - 32, w: 38, h: 33 };
+	return { x: 1104 + dx, y: cy - 32, w: 38, h: 33 };
 }
 
 /**
@@ -50,7 +50,7 @@ export function specialIconRoi(cy: number, dx: number): Roi {
  * into the left edge — kept narrower than any observed first glyph.
  */
 export function nameRoi(cy: number, dx: number): Roi {
-  return { x: 620 + dx, y: cy - 16, w: 226, h: 37 };
+	return { x: 620 + dx, y: cy - 16, w: 226, h: 37 };
 }
 
 /**
@@ -60,7 +60,7 @@ export function nameRoi(cy: number, dx: number): Roi {
  * charset drops it on score.
  */
 export function paintRoi(cy: number, dx: number): Roi {
-  return { x: 821 + dx, y: cy - 15, w: 88, h: 34 };
+	return { x: 821 + dx, y: cy - 15, w: 88, h: 34 };
 }
 
 /**
@@ -69,7 +69,7 @@ export function paintRoi(cy: number, dx: number): Roi {
  * 898-907 after 3 digits, 915-924 after 4 — the probe spans both.
  */
 export function paintSuffixRoi(cy: number, dx: number): Roi {
-  return { x: 896 + dx, y: cy - 13, w: 31, h: 26 };
+	return { x: 896 + dx, y: cy - 13, w: 31, h: 26 };
 }
 
 /**
@@ -78,8 +78,8 @@ export function paintSuffixRoi(cy: number, dx: number): Roi {
  * anything higher, so the top edge must stay below them.
  */
 export function statRoi(cy: number, dx: number, index: 0 | 1 | 2): Roi {
-  const x = [1000, 1057, 1114][index]!;
-  return { x: x + dx, y: cy + 3, w: 36, h: 24 };
+	const x = [1000, 1057, 1114][index]!;
+	return { x: x + dx, y: cy + 3, w: 36, h: 24 };
 }
 
 /**
@@ -88,12 +88,12 @@ export function statRoi(cy: number, dx: number, index: 0 | 1 | 2): Roi {
  * short of the weapon-icon region (x 522+) core so icon yellows can't leak in.
  */
 export function povArrowRoi(cy: number, dx: number): Roi {
-  return { x: 480 + dx, y: cy - 32, w: 54, h: 56 };
+	return { x: 480 + dx, y: cy - 32, w: 54, h: 56 };
 }
 
 /** Team totals ("440p") on the VICTORY/DEFEAT banner, digits ending x~1119. */
 export function teamScoreRoi(dx: number): Roi {
-  return { x: 1040 + dx, y: 481, w: 86, h: 36 };
+	return { x: 1040 + dx, y: 481, w: 86, h: 36 };
 }
 
 /**
@@ -101,13 +101,13 @@ export function teamScoreRoi(dx: number): Roi {
  * won (the replay owner's team may sit on either side).
  */
 export function resultTagRoi(dx: number): Roi {
-  return { x: 540 + dx, y: 460, w: 220, h: 50 };
+	return { x: 540 + dx, y: 460, w: 220, h: 50 };
 }
 
 /** The colored "Score: NN" banners; digits after the constant label. */
 export const MATCH_SCORE_ROIS: readonly [Roi, Roi] = [
-  { x: 742, y: 340, w: 130, h: 56 },
-  { x: 1620, y: 340, w: 130, h: 56 },
+	{ x: 742, y: 340, w: 130, h: 56 },
+	{ x: 1620, y: 340, w: 130, h: 56 },
 ];
 
 /**
@@ -136,13 +136,13 @@ export const REPLAY_CODE_ROI: Roi = { x: 574, y: 960, w: 400, h: 38 };
  * the first stat "x" — mid-gray on this screen, not near-black.
  */
 export function gateFlatProbe(cy: number, dx: number): Roi {
-  return { x: 930 + dx, y: cy - 10, w: 42, h: 20 };
+	return { x: 930 + dx, y: cy - 10, w: 42, h: 20 };
 }
 
 /** Dark gap between row 1 and row 2 pills, one strip per panel. */
 export const GATE_GAP_PROBES: readonly Roi[] = [
-  { x: 560, y: 611, w: 540, h: 5 },
-  { x: 560 + PANEL_DX, y: 611, w: 540, h: 5 },
+	{ x: 560, y: 611, w: 540, h: 5 },
+	{ x: 560 + PANEL_DX, y: 611, w: 540, h: 5 },
 ];
 
 /** Flat pill strips must sit in this mid-gray band. */

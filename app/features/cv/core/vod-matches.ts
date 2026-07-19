@@ -25,9 +25,19 @@
  * stage, or a full set of weapons.
  */
 
-import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { MAP_START_EVENT_TYPE, type MapStartData } from "./detectors/map-start/index";
-import { MINIMAP_EVENT_TYPE, type MinimapData } from "./detectors/minimap/index";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
+import {
+	MAP_START_EVENT_TYPE,
+	type MapStartData,
+} from "./detectors/map-start/index";
+import {
+	MINIMAP_EVENT_TYPE,
+	type MinimapData,
+} from "./detectors/minimap/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
 import type { DetectedEvent } from "./detectors/types";
@@ -49,51 +59,51 @@ const MATCH_GAP_SECONDS = 300;
 
 /** One VoD match as prefilled into sendou.ink's /vods/new form. */
 export interface VodMatch {
-  /** whole seconds into the video the match starts at */
-  startsAt: number;
-  /** null when no source read it */
-  mode: ModeShort | null;
-  /**
-   * true when `mode` is the fabricated PoC default rather than a real
-   * read — lets the endpoint/form treat it as a guess, not a detection
-   */
-  modeAssumed: boolean;
-  /** null when no source read it */
-  stage: StageId | null;
-  /**
-   * the match's weapons, alpha team then bravo team: sendou main-weapon
-   * ids, or null for a slot that never read
-   */
-  weapons: (MainWeaponId | null)[];
+	/** whole seconds into the video the match starts at */
+	startsAt: number;
+	/** null when no source read it */
+	mode: ModeShort | null;
+	/**
+	 * true when `mode` is the fabricated PoC default rather than a real
+	 * read — lets the endpoint/form treat it as a guess, not a detection
+	 */
+	modeAssumed: boolean;
+	/** null when no source read it */
+	stage: StageId | null;
+	/**
+	 * the match's weapons, alpha team then bravo team: sendou main-weapon
+	 * ids, or null for a slot that never read
+	 */
+	weapons: (MainWeaponId | null)[];
 }
 
 /** A match being accumulated as the timeline is walked. */
 interface OpenMatch {
-  mapStart: DetectedEvent | null;
-  firstMinimap: DetectedEvent | null;
-  minimaps: DetectedEvent[];
-  scoreboard: DetectedEvent | null;
-  /**
-   * per-stage read counts across the match's minimaps (a MapStart's stage
-   * seeds it); the plurality winner delimits same-vs-next map and is the
-   * reported stage, so one misread frame can't poison the whole match
-   */
-  stageVotes: Map<StageId, number>;
-  /** t of the last minimap added, for the gap check */
-  lastMinimapT: number | null;
+	mapStart: DetectedEvent | null;
+	firstMinimap: DetectedEvent | null;
+	minimaps: DetectedEvent[];
+	scoreboard: DetectedEvent | null;
+	/**
+	 * per-stage read counts across the match's minimaps (a MapStart's stage
+	 * seeds it); the plurality winner delimits same-vs-next map and is the
+	 * reported stage, so one misread frame can't poison the whole match
+	 */
+	stageVotes: Map<StageId, number>;
+	/** t of the last minimap added, for the gap check */
+	lastMinimapT: number | null;
 }
 
 /** Plurality stage of the reads so far; insertion order breaks ties. */
 function leadingStage(votes: Map<StageId, number>): StageId | null {
-  let winner: StageId | null = null;
-  let best = 0;
-  for (const [stage, count] of votes) {
-    if (count > best) {
-      winner = stage;
-      best = count;
-    }
-  }
-  return winner;
+	let winner: StageId | null = null;
+	let best = 0;
+	for (const [stage, count] of votes) {
+		if (count > best) {
+			winner = stage;
+			best = count;
+		}
+	}
+	return winner;
 }
 
 /**
@@ -102,98 +112,100 @@ function leadingStage(votes: Map<StageId, number>): StageId | null {
  * stage and time gap.
  */
 export function buildVodMatches(events: readonly DetectedEvent[]): VodMatch[] {
-  const sorted = [...events].sort((a, b) => a.t - b.t);
-  const matches: VodMatch[] = [];
+	const sorted = [...events].sort((a, b) => a.t - b.t);
+	const matches: VodMatch[] = [];
 
-  // For each minimap event, the next minimap's non-null stage read (walked
-  // backwards). A stage change only splits when the next read doesn't refute
-  // it: a lone frame disagreeing with both its match's running stage and the
-  // following read is a misread to fold in as a minority vote, not a match
-  // boundary. With no later read the change stands.
-  const nextStage = new Map<DetectedEvent, StageId | null>();
-  let carry: StageId | null = null;
-  for (let i = sorted.length - 1; i >= 0; i--) {
-    const event = sorted[i]!;
-    if (event.type !== MINIMAP_EVENT_TYPE) continue;
-    nextStage.set(event, carry);
-    carry = (event.data as MinimapData).stage ?? carry;
-  }
+	// For each minimap event, the next minimap's non-null stage read (walked
+	// backwards). A stage change only splits when the next read doesn't refute
+	// it: a lone frame disagreeing with both its match's running stage and the
+	// following read is a misread to fold in as a minority vote, not a match
+	// boundary. With no later read the change stands.
+	const nextStage = new Map<DetectedEvent, StageId | null>();
+	let carry: StageId | null = null;
+	for (let i = sorted.length - 1; i >= 0; i--) {
+		const event = sorted[i]!;
+		if (event.type !== MINIMAP_EVENT_TYPE) continue;
+		nextStage.set(event, carry);
+		carry = (event.data as MinimapData).stage ?? carry;
+	}
 
-  let open: OpenMatch | null = null;
-  const start = (): OpenMatch => ({
-    mapStart: null,
-    firstMinimap: null,
-    minimaps: [],
-    scoreboard: null,
-    stageVotes: new Map(),
-    lastMinimapT: null,
-  });
-  const vote = (votes: Map<StageId, number>, stage: StageId | null): void => {
-    if (stage !== null) votes.set(stage, (votes.get(stage) ?? 0) + 1);
-  };
-  const finalize = (): void => {
-    if (!open) return;
-    const match = toVodMatch(open);
-    if (match) matches.push(match);
-    open = null;
-  };
+	let open: OpenMatch | null = null;
+	const start = (): OpenMatch => ({
+		mapStart: null,
+		firstMinimap: null,
+		minimaps: [],
+		scoreboard: null,
+		stageVotes: new Map(),
+		lastMinimapT: null,
+	});
+	const vote = (votes: Map<StageId, number>, stage: StageId | null): void => {
+		if (stage !== null) votes.set(stage, (votes.get(stage) ?? 0) + 1);
+	};
+	const finalize = (): void => {
+		if (!open) return;
+		const match = toVodMatch(open);
+		if (match) matches.push(match);
+		open = null;
+	};
 
-  for (const event of sorted) {
-    if (event.type === MAP_START_EVENT_TYPE) {
-      finalize();
-      open = start();
-      open.mapStart = event;
-      vote(open.stageVotes, (event.data as MapStartData).stage ?? null);
-    } else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-      open ??= start();
-      open.scoreboard = event;
-      vote(open.stageVotes, (event.data as ScoreboardData).stage ?? null);
-      finalize();
-    } else if (event.type === MINIMAP_EVENT_TYPE) {
-      const stage = (event.data as MinimapData).stage;
-      if (open) {
-        const current = leadingStage(open.stageVotes);
-        const stageChanged =
-          current !== null &&
-          stage !== null &&
-          stage !== current &&
-          (nextStage.get(event) ?? stage) === stage;
-        const gapTooBig =
-          open.lastMinimapT !== null && event.t - open.lastMinimapT > MATCH_GAP_SECONDS;
-        if (stageChanged || gapTooBig) finalize();
-      }
-      open ??= start();
-      open.minimaps.push(event);
-      open.firstMinimap ??= event;
-      open.lastMinimapT = event.t;
-      vote(open.stageVotes, stage);
-    }
-  }
-  finalize();
+	for (const event of sorted) {
+		if (event.type === MAP_START_EVENT_TYPE) {
+			finalize();
+			open = start();
+			open.mapStart = event;
+			vote(open.stageVotes, (event.data as MapStartData).stage ?? null);
+		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+			open ??= start();
+			open.scoreboard = event;
+			vote(open.stageVotes, (event.data as ScoreboardData).stage ?? null);
+			finalize();
+		} else if (event.type === MINIMAP_EVENT_TYPE) {
+			const stage = (event.data as MinimapData).stage;
+			if (open) {
+				const current = leadingStage(open.stageVotes);
+				const stageChanged =
+					current !== null &&
+					stage !== null &&
+					stage !== current &&
+					(nextStage.get(event) ?? stage) === stage;
+				const gapTooBig =
+					open.lastMinimapT !== null &&
+					event.t - open.lastMinimapT > MATCH_GAP_SECONDS;
+				if (stageChanged || gapTooBig) finalize();
+			}
+			open ??= start();
+			open.minimaps.push(event);
+			open.firstMinimap ??= event;
+			open.lastMinimapT = event.t;
+			vote(open.stageVotes, stage);
+		}
+	}
+	finalize();
 
-  return matches;
+	return matches;
 }
 
 /** Builds a match, or null when it carries no weapons to show. */
 function toVodMatch(open: OpenMatch): VodMatch | null {
-  const start = open.mapStart?.data as MapStartData | undefined;
-  const board = open.scoreboard?.data as ScoreboardData | undefined;
+	const start = open.mapStart?.data as MapStartData | undefined;
+	const board = open.scoreboard?.data as ScoreboardData | undefined;
 
-  const weapons = board
-    ? board.players.map((player) => player.weaponId)
-    : weaponsFromMinimaps(open.minimaps);
-  if (weapons.length === 0) return null;
+	const weapons = board
+		? board.players.map((player) => player.weaponId)
+		: weaponsFromMinimaps(open.minimaps);
+	if (weapons.length === 0) return null;
 
-  const anchorT = open.mapStart?.t ?? open.firstMinimap?.t ?? open.scoreboard?.t ?? 0;
+	const anchorT =
+		open.mapStart?.t ?? open.firstMinimap?.t ?? open.scoreboard?.t ?? 0;
 
-  const readMode = start?.mode ?? board?.mode ?? null;
-  return {
-    startsAt: Math.max(0, Math.floor(anchorT)),
-    mode: readMode ?? DEFAULT_MODE,
-    modeAssumed: readMode === null,
-    stage: start?.stage ?? board?.stage ?? leadingStage(open.stageVotes),
-    weapons,
-  };
+	const readMode = start?.mode ?? board?.mode ?? null;
+	return {
+		startsAt: Math.max(0, Math.floor(anchorT)),
+		mode: readMode ?? DEFAULT_MODE,
+		modeAssumed: readMode === null,
+		stage: start?.stage ?? board?.stage ?? leadingStage(open.stageVotes),
+		weapons,
+	};
 }
 
 /**
@@ -202,20 +214,26 @@ function toVodMatch(open: OpenMatch): VodMatch | null {
  * a match, so a slot missed in one frame is filled from another. Empty when
  * there were no minimaps.
  */
-function weaponsFromMinimaps(minimaps: DetectedEvent[]): (MainWeaponId | null)[] {
-  if (minimaps.length === 0) return [];
-  const datas = minimaps.map((event) => event.data as MinimapData);
-  const alpha = mergeSlots(datas.map((d) => d.teammates.map((t) => t.weaponId)));
-  const bravo = mergeSlots(datas.map((d) => d.enemies.map((e) => e.weaponId)));
-  return [...alpha, ...bravo];
+function weaponsFromMinimaps(
+	minimaps: DetectedEvent[],
+): (MainWeaponId | null)[] {
+	if (minimaps.length === 0) return [];
+	const datas = minimaps.map((event) => event.data as MinimapData);
+	const alpha = mergeSlots(
+		datas.map((d) => d.teammates.map((t) => t.weaponId)),
+	);
+	const bravo = mergeSlots(datas.map((d) => d.enemies.map((e) => e.weaponId)));
+	return [...alpha, ...bravo];
 }
 
 /** For each slot index, the first non-null id across frames, else null. */
-function mergeSlots(frames: (MainWeaponId | null)[][]): (MainWeaponId | null)[] {
-  const width = Math.max(0, ...frames.map((frame) => frame.length));
-  const out: (MainWeaponId | null)[] = [];
-  for (let i = 0; i < width; i++) {
-    out.push(frames.map((frame) => frame[i]).find((id) => id != null) ?? null);
-  }
-  return out;
+function mergeSlots(
+	frames: (MainWeaponId | null)[][],
+): (MainWeaponId | null)[] {
+	const width = Math.max(0, ...frames.map((frame) => frame.length));
+	const out: (MainWeaponId | null)[] = [];
+	for (let i = 0; i < width; i++) {
+		out.push(frames.map((frame) => frame[i]).find((id) => id != null) ?? null);
+	}
+	return out;
 }

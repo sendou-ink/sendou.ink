@@ -5,11 +5,11 @@
 let pending: Blob | null = null;
 
 export function setScreenshotFrame(frame: Blob): void {
-  pending = frame;
+	pending = frame;
 }
 
 export function takeScreenshotFrame(): Blob | null {
-  const frame = pending;
-  pending = null;
-  return frame;
+	const frame = pending;
+	pending = null;
+	return frame;
 }

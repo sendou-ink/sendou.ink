@@ -68,14 +68,14 @@ const ABILITY_SUB_YS = [702, 797, 888] as const;
  * 56px sub box excludes the main-size templates.
  */
 export function abilityMainRoi(row: number): Roi {
-  const cy = ABILITY_MAIN_YS[row]!;
-  return { x: ABILITY_MAIN_X - 38, y: cy - 38, w: 76, h: 76 };
+	const cy = ABILITY_MAIN_YS[row]!;
+	return { x: ABILITY_MAIN_X - 38, y: cy - 38, w: 76, h: 76 };
 }
 
 export function abilitySubRoi(row: number, slot: number): Roi {
-  const cx = ABILITY_SUB_XS[slot]!;
-  const cy = ABILITY_SUB_YS[row]!;
-  return { x: cx - 28, y: cy - 28, w: 56, h: 56 };
+	const cx = ABILITY_SUB_XS[slot]!;
+	const cy = ABILITY_SUB_YS[row]!;
+	return { x: cx - 28, y: cy - 28, w: 56, h: 56 };
 }
 
 /** Template heights (px at 1080p) per circle role. */
@@ -134,13 +134,13 @@ export const TAG_NAME_TEXT_HEIGHT = 46;
  * right of the sub circles. The white message text gives the bright anchor.
  */
 export const GATE_BURST_PROBES: readonly Roi[] = [
-  { x: 750, y: 376, w: 36, h: 22 },
-  { x: 1134, y: 376, w: 36, h: 22 },
-  { x: 930, y: 466, w: 60, h: 18 },
+	{ x: 750, y: 376, w: 36, h: 22 },
+	{ x: 1134, y: 376, w: 36, h: 22 },
+	{ x: 930, y: 466, w: 60, h: 18 },
 ];
 export const GATE_PANEL_PROBES: readonly Roi[] = [
-  { x: 720, y: 686, w: 30, h: 20 },
-  { x: 720, y: 785, w: 30, h: 20 },
+	{ x: 720, y: 686, w: 30, h: 20 },
+	{ x: 720, y: 785, w: 30, h: 20 },
 ];
 export const GATE_DARK_MAX_MEAN = 95;
 /** SPLAT_LINE1_ROI must contain near-white pixels... */
@@ -158,6 +158,11 @@ export const GATE_TEXT_MAX_FRACTION = 0.35;
  * max-channel while the closest non-death fixture row is 184.
  */
 export function gateAbilityProbe(row: number): Roi {
-  return { x: ABILITY_MAIN_X - 14, y: ABILITY_MAIN_YS[row]! - 14, w: 28, h: 28 };
+	return {
+		x: ABILITY_MAIN_X - 14,
+		y: ABILITY_MAIN_YS[row]! - 14,
+		w: 28,
+		h: 28,
+	};
 }
 export const GATE_ICON_MIN_MAX = 200;

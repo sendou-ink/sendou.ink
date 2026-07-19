@@ -10,7 +10,10 @@
  * type untouched.
  */
 import JSONCrush from "jsoncrush";
-import { MINIMAP_EVENT_TYPE, type MinimapData } from "../core/detectors/minimap/index";
+import {
+	MINIMAP_EVENT_TYPE,
+	type MinimapData,
+} from "../core/detectors/minimap/index";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildVodMatches } from "../core/vod-matches";
 
@@ -25,32 +28,34 @@ const VODS_NEW_PATH = "/vods/new";
 const MAX_URL_LENGTH = 8000;
 
 export interface SendouUpload {
-  /** prefilled /vods/new path (same-origin); null when nothing usable to send */
-  url: string | null;
-  /** set when matches exist but no usable URL could be built */
-  problem: string | null;
+	/** prefilled /vods/new path (same-origin); null when nothing usable to send */
+	url: string | null;
+	/** set when matches exist but no usable URL could be built */
+	problem: string | null;
 }
 
 /** Builds the prefilled /vods/new link for a completed scan's events. */
 export function sendouUpload(events: readonly DetectedEvent[]): SendouUpload {
-  const matches = buildVodMatches(events);
-  if (matches.length === 0) return { url: null, problem: null };
+	const matches = buildVodMatches(events);
+	if (matches.length === 0) return { url: null, problem: null };
 
-  const isCast = events.some(
-    (event) => event.type === MINIMAP_EVENT_TYPE && (event.data as MinimapData).spectator,
-  );
+	const isCast = events.some(
+		(event) =>
+			event.type === MINIMAP_EVENT_TYPE &&
+			(event.data as MinimapData).spectator,
+	);
 
-  const payload = isCast ? { type: "CAST", matches } : { matches };
-  const params = new URLSearchParams();
-  params.set("ingest", JSONCrush.crush(JSON.stringify(payload)));
-  const result = `${VODS_NEW_PATH}?${params.toString()}`;
-  if (result.length > MAX_URL_LENGTH) {
-    return {
-      url: null,
-      problem:
-        `prefill URL is ${result.length} chars (limit ~${MAX_URL_LENGTH}) — ` +
-        `too many matches for a GET query param.`,
-    };
-  }
-  return { url: result, problem: null };
+	const payload = isCast ? { type: "CAST", matches } : { matches };
+	const params = new URLSearchParams();
+	params.set("ingest", JSONCrush.crush(JSON.stringify(payload)));
+	const result = `${VODS_NEW_PATH}?${params.toString()}`;
+	if (result.length > MAX_URL_LENGTH) {
+		return {
+			url: null,
+			problem:
+				`prefill URL is ${result.length} chars (limit ~${MAX_URL_LENGTH}) — ` +
+				"too many matches for a GET query param.",
+		};
+	}
+	return { url: result, problem: null };
 }

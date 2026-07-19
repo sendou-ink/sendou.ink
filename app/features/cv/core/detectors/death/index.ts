@@ -20,10 +20,19 @@
  * decisive margin, and below that the burst icon and the text ranking
  * corroborate each other (steps 2c/2d in parse).
  */
-import type { MainWeaponId, SpecialWeaponId, SubWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import { type CvAbility, toCvAbility } from "../../../cv-types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
-import { type GlyphSet, type RecognizedText, recognizeText, scaleGlyphSet } from "../../glyphs";
+import {
+	type GlyphSet,
+	type RecognizedText,
+	recognizeText,
+	scaleGlyphSet,
+} from "../../glyphs";
 import { copyRoi, cropRoi, meanBrightness, type Roi } from "../../image";
 import { closestEntry, matchKey, rankBy, rankByRead } from "../../text";
 import type { ScoreboardResources } from "../scoreboard/index";
@@ -31,53 +40,57 @@ import { parseName } from "../scoreboard/names";
 import { matchWeapon, type WeaponMatch } from "../scoreboard/weapons";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
-  DEATH_MESSAGE_TEMPLATES,
-  type DeathMessageTemplate,
-  LOCALIZED_WEAPON_NAMES,
+	DEATH_MESSAGE_TEMPLATES,
+	type DeathMessageTemplate,
+	LOCALIZED_WEAPON_NAMES,
 } from "./localized-messages";
 import {
-  ABILITY_INK_THRESHOLD,
-  ABILITY_ROWS,
-  ABILITY_SLOT_MIN_INK,
-  ABILITY_SUB_XS,
-  abilityMainRoi,
-  abilitySubRoi,
-  BURST_ICON_ROI,
-  GATE_BURST_PROBES,
-  GATE_DARK_MAX_MEAN,
-  GATE_ICON_MIN_MAX,
-  GATE_PANEL_PROBES,
-  GATE_TEXT_MAX_FRACTION,
-  GATE_TEXT_MIN_MAX,
-  gateAbilityProbe,
-  JA_CONST_LINE_ROI,
-  JA_WEAPON_LINE_ROI,
-  SPLAT_LINE1_ROI,
-  SPLAT_TEXT_BIN_THRESHOLD,
-  TAG_NAME_INNER,
-  TAG_NAME_OUTER,
-  TAG_NAME_TEXT_HEIGHT,
-  TAG_TILT_DEG,
-  WEAPON_LINE_ROI,
-  WEAPON_TEXT_HEIGHT,
+	ABILITY_INK_THRESHOLD,
+	ABILITY_ROWS,
+	ABILITY_SLOT_MIN_INK,
+	ABILITY_SUB_XS,
+	abilityMainRoi,
+	abilitySubRoi,
+	BURST_ICON_ROI,
+	GATE_BURST_PROBES,
+	GATE_DARK_MAX_MEAN,
+	GATE_ICON_MIN_MAX,
+	GATE_PANEL_PROBES,
+	GATE_TEXT_MAX_FRACTION,
+	GATE_TEXT_MIN_MAX,
+	gateAbilityProbe,
+	JA_CONST_LINE_ROI,
+	JA_WEAPON_LINE_ROI,
+	SPLAT_LINE1_ROI,
+	SPLAT_TEXT_BIN_THRESHOLD,
+	TAG_NAME_INNER,
+	TAG_NAME_OUTER,
+	TAG_NAME_TEXT_HEIGHT,
+	TAG_TILT_DEG,
+	WEAPON_LINE_ROI,
+	WEAPON_TEXT_HEIGHT,
 } from "./rois";
-import { ALL_WEAPON_ENTRIES, type WeaponEntry, type WeaponType } from "./weapon-names";
+import {
+	ALL_WEAPON_ENTRIES,
+	type WeaponEntry,
+	type WeaponType,
+} from "./weapon-names";
 
 export interface DeathData {
-  /**
-   * the killer's weapon id — a sendou main/sub/special weapon id, unique
-   * only within its kind (`weaponType` disambiguates); null if unreadable
-   */
-  weaponId: MainWeaponId | SubWeaponId | SpecialWeaponId | null;
-  /** which kind of weapon got the splat; null when the weapon is unreadable */
-  weaponType: WeaponType | null;
-  /**
-   * killer's gear abilities, [head, clothes, shoes] rows of [main, sub...]
-   * ability ids; rows carry as many sub entries as the gear has slots (1-3)
-   */
-  abilities: CvAbility[][];
-  /** killer's splash-tag name; null if unreadable */
-  name: string | null;
+	/**
+	 * the killer's weapon id — a sendou main/sub/special weapon id, unique
+	 * only within its kind (`weaponType` disambiguates); null if unreadable
+	 */
+	weaponId: MainWeaponId | SubWeaponId | SpecialWeaponId | null;
+	/** which kind of weapon got the splat; null when the weapon is unreadable */
+	weaponType: WeaponType | null;
+	/**
+	 * killer's gear abilities, [head, clothes, shoes] rows of [main, sub...]
+	 * ability ids; rows carry as many sub entries as the gear has slots (1-3)
+	 */
+	abilities: CvAbility[][];
+	/** killer's splash-tag name; null if unreadable */
+	name: string | null;
 }
 
 export const DEATH_EVENT_TYPE = "Death";
@@ -130,14 +143,14 @@ const TAG_SPLIT_MIN_FRACTION = 0.15;
 const TAG_SPLIT_MIN_CHANNEL_DISTANCE = 40;
 
 interface WeaponCandidate {
-  /** the full weapon line as this template renders it, e.g. "Durch Klecksroller" */
-  text: string;
-  entry: WeaponEntry;
+	/** the full weapon line as this template renders it, e.g. "Durch Klecksroller" */
+	text: string;
+	entry: WeaponEntry;
 }
 
 /** JA templates read through the JA atlas and the swapped-width line ROIs. */
 function isJaTemplate(t: DeathMessageTemplate): boolean {
-  return t.langs.some((lang) => lang.endsWith("ja"));
+	return t.langs.some((lang) => lang.endsWith("ja"));
 }
 
 /**
@@ -147,568 +160,665 @@ function isJaTemplate(t: DeathMessageTemplate): boolean {
  */
 const templateCandidates = new Map<DeathMessageTemplate, WeaponCandidate[]>();
 function candidatesFor(template: DeathMessageTemplate): WeaponCandidate[] {
-  let candidates = templateCandidates.get(template);
-  if (candidates) return candidates;
-  const byName = new Map(ALL_WEAPON_ENTRIES.map((e) => [e.name, e]));
-  const seen = new Set<string>();
-  candidates = [];
-  const push = (text: string, entry: WeaponEntry | undefined) => {
-    const k = matchKey(text);
-    if (!entry || seen.has(k)) return;
-    seen.add(k);
-    candidates!.push({ text: template.weaponPre + text + template.weaponPost, entry });
-  };
-  for (const lang of template.langs) {
-    for (const { text, name } of LOCALIZED_WEAPON_NAMES[lang] ?? []) push(text, byName.get(name));
-  }
-  for (const entry of ALL_WEAPON_ENTRIES) push(entry.name, entry);
-  templateCandidates.set(template, candidates);
-  return candidates;
+	let candidates = templateCandidates.get(template);
+	if (candidates) return candidates;
+	const byName = new Map(ALL_WEAPON_ENTRIES.map((e) => [e.name, e]));
+	const seen = new Set<string>();
+	candidates = [];
+	const push = (text: string, entry: WeaponEntry | undefined) => {
+		const k = matchKey(text);
+		if (!entry || seen.has(k)) return;
+		seen.add(k);
+		candidates!.push({
+			text: template.weaponPre + text + template.weaponPost,
+			entry,
+		});
+	};
+	for (const lang of template.langs) {
+		for (const { text, name } of LOCALIZED_WEAPON_NAMES[lang] ?? [])
+			push(text, byName.get(name));
+	}
+	for (const entry of ALL_WEAPON_ENTRIES) push(entry.name, entry);
+	templateCandidates.set(template, candidates);
+	return candidates;
 }
 
-export function createDeathDetector(resources: ScoreboardResources): Detector<DeathData> {
-  const cv = getCV();
+export function createDeathDetector(
+	resources: ScoreboardResources,
+): Detector<DeathData> {
+	const cv = getCV();
 
-  const scaled = (set: GlyphSet | null | undefined, height: number): GlyphSet | null =>
-    set ? scaleGlyphSet(set, height / set.height) : null;
+	const scaled = (
+		set: GlyphSet | null | undefined,
+		height: number,
+	): GlyphSet | null => (set ? scaleGlyphSet(set, height / set.height) : null);
 
-  const weaponGlyphs = scaled(resources.deathWeaponGlyphs, WEAPON_TEXT_HEIGHT);
-  // JA glyphs match at native scale: the atlas mixes fixture crops with
-  // per-face renders already sized to the on-screen condensed text
-  const jaGlyphs = resources.deathWeaponJaGlyphs ?? null;
-  const tagNameGlyphs = scaled(resources.deathTagNameGlyphs, TAG_NAME_TEXT_HEIGHT);
-  const abilities = resources.abilities ?? null;
-  const burstWeapons = resources.deathBurstWeapons ?? null;
-  const mainById = new Map(
-    ALL_WEAPON_ENTRIES.filter((e) => e.type === "MAIN").map((e) => [e.id, e]),
-  );
+	const weaponGlyphs = scaled(resources.deathWeaponGlyphs, WEAPON_TEXT_HEIGHT);
+	// JA glyphs match at native scale: the atlas mixes fixture crops with
+	// per-face renders already sized to the on-screen condensed text
+	const jaGlyphs = resources.deathWeaponJaGlyphs ?? null;
+	const tagNameGlyphs = scaled(
+		resources.deathTagNameGlyphs,
+		TAG_NAME_TEXT_HEIGHT,
+	);
+	const abilities = resources.abilities ?? null;
+	const burstWeapons = resources.deathBurstWeapons ?? null;
+	const mainById = new Map(
+		ALL_WEAPON_ENTRIES.filter((e) => e.type === "MAIN").map((e) => [e.id, e]),
+	);
 
-  function gate(frame: Mat): GateResult {
-    let darkOk = 0;
-    const darkProbes = [...GATE_BURST_PROBES, ...GATE_PANEL_PROBES];
-    for (const roi of darkProbes) {
-      if (meanBrightness(frame, roi) < GATE_DARK_MAX_MEAN) darkOk++;
-    }
+	function gate(frame: Mat): GateResult {
+		let darkOk = 0;
+		const darkProbes = [...GATE_BURST_PROBES, ...GATE_PANEL_PROBES];
+		for (const roi of darkProbes) {
+			if (meanBrightness(frame, roi) < GATE_DARK_MAX_MEAN) darkOk++;
+		}
 
-    const gray = new cv.Mat();
-    cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-    const line1 = copyRoi(gray, SPLAT_LINE1_ROI);
-    const { maxVal } = minMaxLoc(line1);
-    const bin = new cv.Mat();
-    cv.threshold(line1, bin, GATE_TEXT_MIN_MAX, 255, cv.THRESH_BINARY);
-    line1.delete();
-    const whiteFraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
-    bin.delete();
-    const textOk =
-      maxVal > GATE_TEXT_MIN_MAX && whiteFraction > 0.01 && whiteFraction < GATE_TEXT_MAX_FRACTION;
+		const gray = new cv.Mat();
+		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const line1 = copyRoi(gray, SPLAT_LINE1_ROI);
+		const { maxVal } = minMaxLoc(line1);
+		const bin = new cv.Mat();
+		cv.threshold(line1, bin, GATE_TEXT_MIN_MAX, 255, cv.THRESH_BINARY);
+		line1.delete();
+		const whiteFraction = cv.countNonZero(bin) / (bin.rows * bin.cols);
+		bin.delete();
+		const textOk =
+			maxVal > GATE_TEXT_MIN_MAX &&
+			whiteFraction > 0.01 &&
+			whiteFraction < GATE_TEXT_MAX_FRACTION;
 
-    // max RGB channel, not gray: saturated icon art can be gray-dark (rois.ts)
-    let iconOk = 0;
-    for (const row of [0, 1, 2]) {
-      const probe = copyRoi(frame, gateAbilityProbe(row));
-      const d = probe.data;
-      const ch = probe.channels();
-      const n = probe.rows * probe.cols;
-      let maxCh = 0;
-      for (let i = 0; i < n; i++) {
-        const v = Math.max(d[i * ch]!, d[i * ch + 1]!, d[i * ch + 2]!);
-        if (v > maxCh) maxCh = v;
-      }
-      probe.delete();
-      if (maxCh > GATE_ICON_MIN_MAX) iconOk++;
-    }
-    gray.delete();
+		// max RGB channel, not gray: saturated icon art can be gray-dark (rois.ts)
+		let iconOk = 0;
+		for (const row of [0, 1, 2]) {
+			const probe = copyRoi(frame, gateAbilityProbe(row));
+			const d = probe.data;
+			const ch = probe.channels();
+			const n = probe.rows * probe.cols;
+			let maxCh = 0;
+			for (let i = 0; i < n; i++) {
+				const v = Math.max(d[i * ch]!, d[i * ch + 1]!, d[i * ch + 2]!);
+				if (v > maxCh) maxCh = v;
+			}
+			probe.delete();
+			if (maxCh > GATE_ICON_MIN_MAX) iconOk++;
+		}
+		gray.delete();
 
-    const score = (darkOk / darkProbes.length + (textOk ? 1 : 0) + iconOk / 3) / 3;
-    return { pass: darkOk === darkProbes.length && textOk && iconOk === 3, score };
-  }
+		const score =
+			(darkOk / darkProbes.length + (textOk ? 1 : 0) + iconOk / 3) / 3;
+		return {
+			pass: darkOk === darkProbes.length && textOk && iconOk === 3,
+			score,
+		};
+	}
 
-  /** Crop the tilted tag, rotate it level, and return the name band crop. */
-  function levelTagInner(rgb: Mat): Mat {
-    const outer = copyRoi(rgb, TAG_NAME_OUTER);
-    const center = new cv.Point(outer.cols / 2, outer.rows / 2);
-    const m = cv.getRotationMatrix2D(center, -TAG_TILT_DEG, 1);
-    const rotated = new cv.Mat();
-    cv.warpAffine(
-      outer,
-      rotated,
-      m,
-      new cv.Size(outer.cols, outer.rows),
-      cv.INTER_LINEAR,
-      cv.BORDER_REPLICATE,
-      new cv.Scalar(),
-    );
-    m.delete();
-    outer.delete();
-    const inner = copyRoi(rotated, TAG_NAME_INNER);
-    rotated.delete();
-    return inner;
-  }
+	/** Crop the tilted tag, rotate it level, and return the name band crop. */
+	function levelTagInner(rgb: Mat): Mat {
+		const outer = copyRoi(rgb, TAG_NAME_OUTER);
+		const center = new cv.Point(outer.cols / 2, outer.rows / 2);
+		const m = cv.getRotationMatrix2D(center, -TAG_TILT_DEG, 1);
+		const rotated = new cv.Mat();
+		cv.warpAffine(
+			outer,
+			rotated,
+			m,
+			new cv.Size(outer.cols, outer.rows),
+			cv.INTER_LINEAR,
+			cv.BORDER_REPLICATE,
+			new cv.Scalar(),
+		);
+		m.delete();
+		outer.delete();
+		const inner = copyRoi(rotated, TAG_NAME_INNER);
+		rotated.delete();
+		return inner;
+	}
 
-  /** Per-channel median color of `inner`, over pixels where mask(i) holds. */
-  function medianColor(inner: Mat, mask?: (i: number) => boolean): [number, number, number] {
-    const n = inner.rows * inner.cols;
-    const px = inner.data;
-    const color: [number, number, number] = [0, 0, 0];
-    for (let c = 0; c < 3; c++) {
-      const hist = new Array<number>(256).fill(0);
-      let total = 0;
-      for (let i = 0; i < n; i++) {
-        if (mask && !mask(i)) continue;
-        hist[px[i * 3 + c]!]!++;
-        total++;
-      }
-      let acc = 0;
-      let v = 0;
-      for (; v < 255; v++) {
-        acc += hist[v]!;
-        if (acc >= total / 2) break;
-      }
-      color[c] = v;
-    }
-    return color;
-  }
+	/** Per-channel median color of `inner`, over pixels where mask(i) holds. */
+	function medianColor(
+		inner: Mat,
+		mask?: (i: number) => boolean,
+	): [number, number, number] {
+		const n = inner.rows * inner.cols;
+		const px = inner.data;
+		const color: [number, number, number] = [0, 0, 0];
+		for (let c = 0; c < 3; c++) {
+			const hist = new Array<number>(256).fill(0);
+			let total = 0;
+			for (let i = 0; i < n; i++) {
+				if (mask && !mask(i)) continue;
+				hist[px[i * 3 + c]!]!++;
+				total++;
+			}
+			let acc = 0;
+			let v = 0;
+			for (; v < 255; v++) {
+				acc += hist[v]!;
+				if (acc >= total / 2) break;
+			}
+			color[c] = v;
+		}
+		return color;
+	}
 
-  /**
-   * Dominant colors of `inner`: the most frequent quantized colors (5 bits/
-   * channel), each refined to the per-channel median within its bin, with
-   * the bin's share of the band. A second background estimate besides
-   * medianColor: independent whole-image channel medians blend distinct
-   * populations into a color nobody has (a black banner half-covered by
-   * green art medians to green-ish, turning the banner base itself into
-   * "ink" that swallows the name), while the bin vote fails the other way
-   * on textured banner bases, where a flat art blob out-votes any single
-   * shade of the texture. Neither estimator wins everywhere, so the parse
-   * tries both and keeps the better read. The runner-up cluster feeds the
-   * split-banner candidate (see TAG_SPLIT_MIN_FRACTION).
-   *
-   * Bins are clustered before ranking: a flat hue that straddles a
-   * quantization boundary splits into neighbor bins (a split banner's
-   * yellow half measured 0.090+0.084 as two bins), and unclustered each
-   * fragment under-reports the hue's real share of the band.
-   */
-  function dominantColors(
-    inner: Mat,
-    count: number,
-  ): { color: [number, number, number]; fraction: number }[] {
-    const n = inner.rows * inner.cols;
-    const px = inner.data;
-    const bins = new Map<number, number>();
-    for (let i = 0; i < n; i++) {
-      const key = ((px[i * 3]! >> 3) << 10) | ((px[i * 3 + 1]! >> 3) << 5) | (px[i * 3 + 2]! >> 3);
-      bins.set(key, (bins.get(key) ?? 0) + 1);
-    }
-    // greedy cluster of the top bins by quantized-center proximity
-    const CLUSTER_MAX_CHANNEL_DISTANCE = 24;
-    const top = [...bins.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
-    const centerOf = (key: number): [number, number, number] => [
-      ((key >> 10) << 3) + 4,
-      (((key >> 5) & 31) << 3) + 4,
-      ((key & 31) << 3) + 4,
-    ];
-    const clusters: { seed: [number, number, number]; keys: Set<number>; count: number }[] = [];
-    for (const [key, binCount] of top) {
-      const c = centerOf(key);
-      const home = clusters.find((cl) =>
-        cl.seed.every((s, i) => Math.abs(s - c[i]!) <= CLUSTER_MAX_CHANNEL_DISTANCE),
-      );
-      if (home) {
-        home.keys.add(key);
-        home.count += binCount;
-      } else {
-        clusters.push({ seed: c, keys: new Set([key]), count: binCount });
-      }
-    }
-    return clusters
-      .sort((a, b) => b.count - a.count)
-      .slice(0, count)
-      .map(({ keys, count: clusterCount }) => {
-        const inCluster = (i: number) =>
-          keys.has(
-            ((px[i * 3]! >> 3) << 10) | ((px[i * 3 + 1]! >> 3) << 5) | (px[i * 3 + 2]! >> 3),
-          );
-        return { color: medianColor(inner, inCluster), fraction: clusterCount / n };
-      });
-  }
+	/**
+	 * Dominant colors of `inner`: the most frequent quantized colors (5 bits/
+	 * channel), each refined to the per-channel median within its bin, with
+	 * the bin's share of the band. A second background estimate besides
+	 * medianColor: independent whole-image channel medians blend distinct
+	 * populations into a color nobody has (a black banner half-covered by
+	 * green art medians to green-ish, turning the banner base itself into
+	 * "ink" that swallows the name), while the bin vote fails the other way
+	 * on textured banner bases, where a flat art blob out-votes any single
+	 * shade of the texture. Neither estimator wins everywhere, so the parse
+	 * tries both and keeps the better read. The runner-up cluster feeds the
+	 * split-banner candidate (see TAG_SPLIT_MIN_FRACTION).
+	 *
+	 * Bins are clustered before ranking: a flat hue that straddles a
+	 * quantization boundary splits into neighbor bins (a split banner's
+	 * yellow half measured 0.090+0.084 as two bins), and unclustered each
+	 * fragment under-reports the hue's real share of the band.
+	 */
+	function dominantColors(
+		inner: Mat,
+		count: number,
+	): { color: [number, number, number]; fraction: number }[] {
+		const n = inner.rows * inner.cols;
+		const px = inner.data;
+		const bins = new Map<number, number>();
+		for (let i = 0; i < n; i++) {
+			const key =
+				((px[i * 3]! >> 3) << 10) |
+				((px[i * 3 + 1]! >> 3) << 5) |
+				(px[i * 3 + 2]! >> 3);
+			bins.set(key, (bins.get(key) ?? 0) + 1);
+		}
+		// greedy cluster of the top bins by quantized-center proximity
+		const CLUSTER_MAX_CHANNEL_DISTANCE = 24;
+		const top = [...bins.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+		const centerOf = (key: number): [number, number, number] => [
+			((key >> 10) << 3) + 4,
+			(((key >> 5) & 31) << 3) + 4,
+			((key & 31) << 3) + 4,
+		];
+		const clusters: {
+			seed: [number, number, number];
+			keys: Set<number>;
+			count: number;
+		}[] = [];
+		for (const [key, binCount] of top) {
+			const c = centerOf(key);
+			const home = clusters.find((cl) =>
+				cl.seed.every(
+					(s, i) => Math.abs(s - c[i]!) <= CLUSTER_MAX_CHANNEL_DISTANCE,
+				),
+			);
+			if (home) {
+				home.keys.add(key);
+				home.count += binCount;
+			} else {
+				clusters.push({ seed: c, keys: new Set([key]), count: binCount });
+			}
+		}
+		return clusters
+			.sort((a, b) => b.count - a.count)
+			.slice(0, count)
+			.map(({ keys, count: clusterCount }) => {
+				const inCluster = (i: number) =>
+					keys.has(
+						((px[i * 3]! >> 3) << 10) |
+							((px[i * 3 + 1]! >> 3) << 5) |
+							(px[i * 3 + 2]! >> 3),
+					);
+				return {
+					color: medianColor(inner, inCluster),
+					fraction: clusterCount / n,
+				};
+			});
+	}
 
-  /**
-   * Text-ness map of the name band: per-pixel max-channel distance from
-   * the nearest of `colors` (one color for solid banners; the two hues of
-   * a split banner). Banner art and text color vary per player — including
-   * pairs like pink text on a light-blue banner with almost no luminance
-   * contrast — so "differs from the dominant banner color" is the primary
-   * signal, not brightness in any fixed channel or polarity. `invert`
-   * flips the polarity to *closeness* for the text-color refinement pass.
-   */
-  function distanceBand(
-    inner: Mat,
-    colors: readonly [number, number, number][],
-    invert: boolean,
-  ): Mat {
-    const n = inner.rows * inner.cols;
-    const px = inner.data;
-    const band = new cv.Mat(inner.rows, inner.cols, cv.CV_8UC1);
-    const out = band.data;
-    for (let i = 0; i < n; i++) {
-      let d = 255;
-      for (const color of colors) {
-        const dc = Math.max(
-          Math.abs(px[i * 3]! - color[0]),
-          Math.abs(px[i * 3 + 1]! - color[1]),
-          Math.abs(px[i * 3 + 2]! - color[2]),
-        );
-        if (dc < d) d = dc;
-      }
-      out[i] = invert ? 255 - d : d;
-    }
-    return band;
-  }
+	/**
+	 * Text-ness map of the name band: per-pixel max-channel distance from
+	 * the nearest of `colors` (one color for solid banners; the two hues of
+	 * a split banner). Banner art and text color vary per player — including
+	 * pairs like pink text on a light-blue banner with almost no luminance
+	 * contrast — so "differs from the dominant banner color" is the primary
+	 * signal, not brightness in any fixed channel or polarity. `invert`
+	 * flips the polarity to *closeness* for the text-color refinement pass.
+	 */
+	function distanceBand(
+		inner: Mat,
+		colors: readonly [number, number, number][],
+		invert: boolean,
+	): Mat {
+		const n = inner.rows * inner.cols;
+		const px = inner.data;
+		const band = new cv.Mat(inner.rows, inner.cols, cv.CV_8UC1);
+		const out = band.data;
+		for (let i = 0; i < n; i++) {
+			let d = 255;
+			for (const color of colors) {
+				const dc = Math.max(
+					Math.abs(px[i * 3]! - color[0]),
+					Math.abs(px[i * 3 + 1]! - color[1]),
+					Math.abs(px[i * 3 + 2]! - color[2]),
+				);
+				if (dc < d) d = dc;
+			}
+			out[i] = invert ? 255 - d : d;
+		}
+		return band;
+	}
 
-  /**
-   * Zero out ink components that touch the band border. Busy banner art
-   * (collages, prints) also differs from the median banner color, but the
-   * art always continues past the name band and so touches its edges,
-   * while the name is laid out inside it (fixture extremes: dakuten at
-   * y=3, a 'y' descender ending 2px above the bottom). Left in place, an
-   * edge blob merges into a glyph's column segment and corrupts the read.
-   */
-  function clearBorderBlobs(band: Mat, threshold: number): void {
-    const bin = new cv.Mat();
-    cv.threshold(band, bin, threshold, 255, cv.THRESH_BINARY);
-    const labels = new cv.Mat();
-    const stats = new cv.Mat();
-    const centroids = new cv.Mat();
-    const count = cv.connectedComponentsWithStats(bin, labels, stats, centroids, 8);
-    bin.delete();
-    centroids.delete();
-    const s = stats.data32S;
-    const touchesBorder = new Uint8Array(count);
-    for (let i = 1; i < count; i++) {
-      const left = s[i * 5 + cv.CC_STAT_LEFT]!;
-      const top = s[i * 5 + cv.CC_STAT_TOP]!;
-      const right = left + s[i * 5 + cv.CC_STAT_WIDTH]!;
-      const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT]!;
-      touchesBorder[i] =
-        left === 0 || top === 0 || right === band.cols || bottom === band.rows ? 1 : 0;
-    }
-    stats.delete();
-    const lab = labels.data32S;
-    const out = band.data;
-    for (let i = 0; i < out.length; i++) {
-      if (touchesBorder[lab[i]!]!) out[i] = 0;
-    }
-    labels.delete();
-  }
+	/**
+	 * Zero out ink components that touch the band border. Busy banner art
+	 * (collages, prints) also differs from the median banner color, but the
+	 * art always continues past the name band and so touches its edges,
+	 * while the name is laid out inside it (fixture extremes: dakuten at
+	 * y=3, a 'y' descender ending 2px above the bottom). Left in place, an
+	 * edge blob merges into a glyph's column segment and corrupts the read.
+	 */
+	function clearBorderBlobs(band: Mat, threshold: number): void {
+		const bin = new cv.Mat();
+		cv.threshold(band, bin, threshold, 255, cv.THRESH_BINARY);
+		const labels = new cv.Mat();
+		const stats = new cv.Mat();
+		const centroids = new cv.Mat();
+		const count = cv.connectedComponentsWithStats(
+			bin,
+			labels,
+			stats,
+			centroids,
+			8,
+		);
+		bin.delete();
+		centroids.delete();
+		const s = stats.data32S;
+		const touchesBorder = new Uint8Array(count);
+		for (let i = 1; i < count; i++) {
+			const left = s[i * 5 + cv.CC_STAT_LEFT]!;
+			const top = s[i * 5 + cv.CC_STAT_TOP]!;
+			const right = left + s[i * 5 + cv.CC_STAT_WIDTH]!;
+			const bottom = top + s[i * 5 + cv.CC_STAT_HEIGHT]!;
+			touchesBorder[i] =
+				left === 0 || top === 0 || right === band.cols || bottom === band.rows
+					? 1
+					: 0;
+		}
+		stats.delete();
+		const lab = labels.data32S;
+		const out = band.data;
+		for (let i = 0; i < out.length; i++) {
+			if (touchesBorder[lab[i]!]!) out[i] = 0;
+		}
+		labels.delete();
+	}
 
-  function parse(frame: Mat, t: number): DetectedEvent<DeathData>[] {
-    const gray = new cv.Mat();
-    cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-    const rgb = new cv.Mat();
-    cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
+	function parse(frame: Mat, t: number): DetectedEvent<DeathData>[] {
+		const gray = new cv.Mat();
+		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const rgb = new cv.Mat();
+		cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
 
-    const confidences: number[] = [];
+		const confidences: number[] = [];
 
-    // 1. read both burst lines and find the language template whose constant
-    // line reads back best — a gate hit matching none is a lookalike.
-    // Latin templates read the standard line boxes with the Latin atlas;
-    // JA templates read the swapped-width JA boxes (weapon line 1 wide,
-    // constant line 2 narrow — see rois.ts) with the JA atlas, so the two
-    // scripts never compete inside one glyph set.
-    let line1: RecognizedText | null = null;
-    let line2: RecognizedText | null = null;
-    let jaWeaponLine: RecognizedText | null = null;
-    let jaConstLine: RecognizedText | null = null;
-    let template: DeathMessageTemplate | null = null;
-    let line1Score = 0;
-    if (weaponGlyphs) {
-      const readLine = (roi: Roi, glyphs: GlyphSet) => {
-        const crop = cropRoi(gray, roi);
-        const read = recognizeText(crop, glyphs, {
-          binThreshold: SPLAT_TEXT_BIN_THRESHOLD,
-          minCharScore: 0.3,
-        });
-        crop.delete();
-        return read;
-      };
-      line1 = readLine(SPLAT_LINE1_ROI, weaponGlyphs);
-      line2 = readLine(WEAPON_LINE_ROI, weaponGlyphs);
-      if (jaGlyphs) {
-        jaWeaponLine = readLine(JA_WEAPON_LINE_ROI, jaGlyphs);
-        jaConstLine = readLine(JA_CONST_LINE_ROI, jaGlyphs);
-      }
-      for (const t of DEATH_MESSAGE_TEMPLATES) {
-        let constReading: string;
-        if (isJaTemplate(t)) {
-          if (!jaConstLine) continue;
-          constReading = jaConstLine.text;
-        } else {
-          constReading = t.weaponLine === 1 ? line2.text : line1.text;
-        }
-        const score = closestEntry(constReading, [t.constText])?.score ?? 0;
-        if (score > line1Score) {
-          line1Score = score;
-          template = t;
-        }
-      }
-      if (!template || line1Score < LINE1_MIN_SCORE) {
-        gray.delete();
-        rgb.delete();
-        return [];
-      }
-    }
+		// 1. read both burst lines and find the language template whose constant
+		// line reads back best — a gate hit matching none is a lookalike.
+		// Latin templates read the standard line boxes with the Latin atlas;
+		// JA templates read the swapped-width JA boxes (weapon line 1 wide,
+		// constant line 2 narrow — see rois.ts) with the JA atlas, so the two
+		// scripts never compete inside one glyph set.
+		let line1: RecognizedText | null = null;
+		let line2: RecognizedText | null = null;
+		let jaWeaponLine: RecognizedText | null = null;
+		let jaConstLine: RecognizedText | null = null;
+		let template: DeathMessageTemplate | null = null;
+		let line1Score = 0;
+		if (weaponGlyphs) {
+			const readLine = (roi: Roi, glyphs: GlyphSet) => {
+				const crop = cropRoi(gray, roi);
+				const read = recognizeText(crop, glyphs, {
+					binThreshold: SPLAT_TEXT_BIN_THRESHOLD,
+					minCharScore: 0.3,
+				});
+				crop.delete();
+				return read;
+			};
+			line1 = readLine(SPLAT_LINE1_ROI, weaponGlyphs);
+			line2 = readLine(WEAPON_LINE_ROI, weaponGlyphs);
+			if (jaGlyphs) {
+				jaWeaponLine = readLine(JA_WEAPON_LINE_ROI, jaGlyphs);
+				jaConstLine = readLine(JA_CONST_LINE_ROI, jaGlyphs);
+			}
+			for (const t of DEATH_MESSAGE_TEMPLATES) {
+				let constReading: string;
+				if (isJaTemplate(t)) {
+					if (!jaConstLine) continue;
+					constReading = jaConstLine.text;
+				} else {
+					constReading = t.weaponLine === 1 ? line2.text : line1.text;
+				}
+				const score = closestEntry(constReading, [t.constText])?.score ?? 0;
+				if (score > line1Score) {
+					line1Score = score;
+					template = t;
+				}
+			}
+			if (!template || line1Score < LINE1_MIN_SCORE) {
+				gray.delete();
+				rgb.delete();
+				return [];
+			}
+		}
 
-    // 2. the other line carries the weapon name; snap it to the template
-    // language's names (localized + canonical English)
-    let weapon: string | null = null;
-    let weaponId: DeathData["weaponId"] = null;
-    let weaponType: WeaponType | null = null;
-    let weaponScore = 0;
-    let weaponRaw: RecognizedText | null = null;
-    let plainRanked: { entry: WeaponCandidate; score: number }[] = [];
-    const accept = (entry: WeaponEntry, score: number) => {
-      weapon = entry.name;
-      weaponId = Number(entry.id) as NonNullable<DeathData["weaponId"]>;
-      weaponType = entry.type;
-      weaponScore = score;
-    };
-    if (weaponGlyphs && template) {
-      weaponRaw = isJaTemplate(template) ? jaWeaponLine : template.weaponLine === 1 ? line1 : line2;
-      const reading = weaponRaw!.text;
-      if (reading) plainRanked = rankBy(reading, candidatesFor(template), (c) => c.text);
-      const match = plainRanked[0];
-      if (match) {
-        weaponScore = match.score;
-        if (match.score >= WEAPON_MIN_SCORE) accept(match.entry.entry, match.score);
-      }
-    }
+		// 2. the other line carries the weapon name; snap it to the template
+		// language's names (localized + canonical English)
+		let weapon: string | null = null;
+		let weaponId: DeathData["weaponId"] = null;
+		let weaponType: WeaponType | null = null;
+		let weaponScore = 0;
+		let weaponRaw: RecognizedText | null = null;
+		let plainRanked: { entry: WeaponCandidate; score: number }[] = [];
+		const accept = (entry: WeaponEntry, score: number) => {
+			weapon = entry.name;
+			weaponId = Number(entry.id) as NonNullable<DeathData["weaponId"]>;
+			weaponType = entry.type;
+			weaponScore = score;
+		};
+		if (weaponGlyphs && template) {
+			weaponRaw = isJaTemplate(template)
+				? jaWeaponLine
+				: template.weaponLine === 1
+					? line1
+					: line2;
+			const reading = weaponRaw!.text;
+			if (reading)
+				plainRanked = rankBy(reading, candidatesFor(template), (c) => c.text);
+			const match = plainRanked[0];
+			if (match) {
+				weaponScore = match.score;
+				if (match.score >= WEAPON_MIN_SCORE)
+					accept(match.entry.entry, match.score);
+			}
+		}
 
-    // 2b. text can be unreadable while the burst's weapon icon is intact
-    // (the WIPEOUT banner covers the weapon name line), so fall back to
-    // matching the icon against the main-weapon set at burst size. Only a
-    // decisive match is trusted: fixture positives score 0.55+ while the
-    // best off-target frame (icon displaced by a rainmaker line) hits 0.48.
-    let burstIcon: WeaponMatch | null = null;
-    if (weapon === null && burstWeapons) {
-      const crop = cropRoi(rgb, BURST_ICON_ROI);
-      burstIcon = matchWeapon(crop, burstWeapons);
-      crop.delete();
-      const entry =
-        burstIcon.score >= BURST_ICON_MIN_SCORE ? mainById.get(burstIcon.id) : undefined;
-      if (entry) accept(entry, burstIcon.score);
-    }
+		// 2b. text can be unreadable while the burst's weapon icon is intact
+		// (the WIPEOUT banner covers the weapon name line), so fall back to
+		// matching the icon against the main-weapon set at burst size. Only a
+		// decisive match is trusted: fixture positives score 0.55+ while the
+		// best off-target frame (icon displaced by a rainmaker line) hits 0.48.
+		let burstIcon: WeaponMatch | null = null;
+		if (weapon === null && burstWeapons) {
+			const crop = cropRoi(rgb, BURST_ICON_ROI);
+			burstIcon = matchWeapon(crop, burstWeapons);
+			crop.delete();
+			const entry =
+				burstIcon.score >= BURST_ICON_MIN_SCORE
+					? mainById.get(burstIcon.id)
+					: undefined;
+			if (entry) accept(entry, burstIcon.score);
+		}
 
-    // 2c. low-fidelity captures (720p upscaled to canonical) garble the
-    // per-segment top-1 read enough that the plain snap stays under
-    // WEAPON_MIN_SCORE, while the correct glyphs sit at rank 2-3 of the
-    // segments' candidate lists. Re-rank through those lists (rankByRead)
-    // and accept the top weapon when it clears the field decisively.
-    let latticeTop: { entry: WeaponEntry; score: number; margin: number } | null = null;
-    let latticeRanked: { entry: WeaponCandidate; score: number }[] = [];
-    if (weapon === null && weaponGlyphs && template && weaponRaw!.chars.length > 0) {
-      latticeRanked = rankByRead(weaponRaw!.chars, candidatesFor(template), (c) => c.text);
-      const top = latticeRanked[0]!;
-      // margin vs the nearest *other* weapon: the same weapon rides both
-      // its localized and English candidate lines
-      const runner = latticeRanked.find((r) => r.entry.entry !== top.entry.entry);
-      latticeTop = {
-        entry: top.entry.entry,
-        score: top.score,
-        margin: top.score - (runner?.score ?? 0),
-      };
-      if (latticeTop.score >= LATTICE_MIN_SCORE && latticeTop.margin >= LATTICE_MIN_MARGIN) {
-        accept(latticeTop.entry, latticeTop.score);
-      }
-    }
+		// 2c. low-fidelity captures (720p upscaled to canonical) garble the
+		// per-segment top-1 read enough that the plain snap stays under
+		// WEAPON_MIN_SCORE, while the correct glyphs sit at rank 2-3 of the
+		// segments' candidate lists. Re-rank through those lists (rankByRead)
+		// and accept the top weapon when it clears the field decisively.
+		let latticeTop: {
+			entry: WeaponEntry;
+			score: number;
+			margin: number;
+		} | null = null;
+		let latticeRanked: { entry: WeaponCandidate; score: number }[] = [];
+		if (
+			weapon === null &&
+			weaponGlyphs &&
+			template &&
+			weaponRaw!.chars.length > 0
+		) {
+			latticeRanked = rankByRead(
+				weaponRaw!.chars,
+				candidatesFor(template),
+				(c) => c.text,
+			);
+			const top = latticeRanked[0]!;
+			// margin vs the nearest *other* weapon: the same weapon rides both
+			// its localized and English candidate lines
+			const runner = latticeRanked.find(
+				(r) => r.entry.entry !== top.entry.entry,
+			);
+			latticeTop = {
+				entry: top.entry.entry,
+				score: top.score,
+				margin: top.score - (runner?.score ?? 0),
+			};
+			if (
+				latticeTop.score >= LATTICE_MIN_SCORE &&
+				latticeTop.margin >= LATTICE_MIN_MARGIN
+			) {
+				accept(latticeTop.entry, latticeTop.score);
+			}
+		}
 
-    // 2d. neither signal is decisive alone, but if the burst icon's main
-    // weapon is also the text's best guess (plain or lattice ranking,
-    // within EPS of that ranking's top), the independent agreement is
-    // decisive together.
-    if (weapon === null && burstIcon && burstIcon.score >= BURST_ICON_CORROBORATE_MIN_SCORE) {
-      const entry = mainById.get(burstIcon.id);
-      if (entry) {
-        const bestFor = (ranked: { entry: WeaponCandidate; score: number }[]) =>
-          ranked.reduce((s, r) => (r.entry.entry === entry ? Math.max(s, r.score) : s), 0);
-        const supported =
-          (plainRanked.length > 0 &&
-            bestFor(plainRanked) >= plainRanked[0]!.score - CORROBORATE_EPS) ||
-          (latticeRanked.length > 0 &&
-            bestFor(latticeRanked) >= latticeRanked[0]!.score - CORROBORATE_EPS);
-        if (supported) accept(entry, burstIcon.score);
-      }
-    }
-    if (weaponGlyphs && template) confidences.push(weaponScore);
+		// 2d. neither signal is decisive alone, but if the burst icon's main
+		// weapon is also the text's best guess (plain or lattice ranking,
+		// within EPS of that ranking's top), the independent agreement is
+		// decisive together.
+		if (
+			weapon === null &&
+			burstIcon &&
+			burstIcon.score >= BURST_ICON_CORROBORATE_MIN_SCORE
+		) {
+			const entry = mainById.get(burstIcon.id);
+			if (entry) {
+				const bestFor = (ranked: { entry: WeaponCandidate; score: number }[]) =>
+					ranked.reduce(
+						(s, r) => (r.entry.entry === entry ? Math.max(s, r.score) : s),
+						0,
+					);
+				const supported =
+					(plainRanked.length > 0 &&
+						bestFor(plainRanked) >= plainRanked[0]!.score - CORROBORATE_EPS) ||
+					(latticeRanked.length > 0 &&
+						bestFor(latticeRanked) >=
+							latticeRanked[0]!.score - CORROBORATE_EPS);
+				if (supported) accept(entry, burstIcon.score);
+			}
+		}
+		if (weaponGlyphs && template) confidences.push(weaponScore);
 
-    // 3. ability grid; rows carry 1-3 sub circles (left-aligned, as many
-    // as the gear has slots), so a sub box without badge ink ends the row
-    const abilityRows: CvAbility[][] = [];
-    const abilityDebug: (WeaponMatch | null)[][] = [];
-    if (abilities) {
-      for (let row = 0; row < ABILITY_ROWS; row++) {
-        const ids: CvAbility[] = [];
-        const debug: (WeaponMatch | null)[] = [];
-        const mainCrop = cropRoi(rgb, abilityMainRoi(row));
-        const main = matchWeapon(mainCrop, abilities.mains, {
-          inkThreshold: ABILITY_INK_THRESHOLD,
-        });
-        mainCrop.delete();
-        ids.push(toCvAbility(main.id) ?? "UNKNOWN");
-        debug.push(main);
-        confidences.push(Math.max(0, main.score));
-        for (let slot = 0; slot < ABILITY_SUB_XS.length; slot++) {
-          const crop = copyRoi(rgb, abilitySubRoi(row, slot));
-          const d = crop.data;
-          const n = crop.rows * crop.cols;
-          let ink = 0;
-          for (let i = 0; i < n; i++) {
-            const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
-            if (v > ABILITY_INK_THRESHOLD) ink++;
-          }
-          if (ink < ABILITY_SLOT_MIN_INK) {
-            crop.delete();
-            break;
-          }
-          const sub = matchWeapon(crop, abilities.subs, {
-            inkThreshold: ABILITY_INK_THRESHOLD,
-          });
-          crop.delete();
-          ids.push(toCvAbility(sub.id) ?? "UNKNOWN");
-          debug.push(sub);
-          confidences.push(Math.max(0, sub.score));
-        }
-        abilityRows.push(ids);
-        abilityDebug.push(debug);
-      }
-    }
+		// 3. ability grid; rows carry 1-3 sub circles (left-aligned, as many
+		// as the gear has slots), so a sub box without badge ink ends the row
+		const abilityRows: CvAbility[][] = [];
+		const abilityDebug: (WeaponMatch | null)[][] = [];
+		if (abilities) {
+			for (let row = 0; row < ABILITY_ROWS; row++) {
+				const ids: CvAbility[] = [];
+				const debug: (WeaponMatch | null)[] = [];
+				const mainCrop = cropRoi(rgb, abilityMainRoi(row));
+				const main = matchWeapon(mainCrop, abilities.mains, {
+					inkThreshold: ABILITY_INK_THRESHOLD,
+				});
+				mainCrop.delete();
+				ids.push(toCvAbility(main.id) ?? "UNKNOWN");
+				debug.push(main);
+				confidences.push(Math.max(0, main.score));
+				for (let slot = 0; slot < ABILITY_SUB_XS.length; slot++) {
+					const crop = copyRoi(rgb, abilitySubRoi(row, slot));
+					const d = crop.data;
+					const n = crop.rows * crop.cols;
+					let ink = 0;
+					for (let i = 0; i < n; i++) {
+						const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+						if (v > ABILITY_INK_THRESHOLD) ink++;
+					}
+					if (ink < ABILITY_SLOT_MIN_INK) {
+						crop.delete();
+						break;
+					}
+					const sub = matchWeapon(crop, abilities.subs, {
+						inkThreshold: ABILITY_INK_THRESHOLD,
+					});
+					crop.delete();
+					ids.push(toCvAbility(sub.id) ?? "UNKNOWN");
+					debug.push(sub);
+					confidences.push(Math.max(0, sub.score));
+				}
+				abilityRows.push(ids);
+				abilityDebug.push(debug);
+			}
+		}
 
-    // 4. splash-tag name, two passes per background candidate: distance
-    // from the estimated banner color, then — because busy banner art
-    // (collages, prints) also differs from that estimate, merging with
-    // glyphs and surviving as fake ones — closeness to the text color
-    // estimated from pass 1's ink. Whichever pass reads back more
-    // confidently wins: solid banners stay on pass 1, art-heavy banners
-    // recover on pass 2. Both background estimators run (see
-    // dominantColor) and the better-reading candidate wins the same way.
-    let name: string | null = null;
-    let nameConfidence = 0;
-    let nameRaw = "";
-    let tagBackground: [number, number, number] | null = null;
-    let tagTextColor: [number, number, number] | null = null;
-    if (tagNameGlyphs) {
-      const spaceGap = Math.max(7, Math.round(tagNameGlyphs.medianWidth * 0.55));
-      const inner = levelTagInner(rgb);
-      const readWithBackground = (backgrounds: readonly [number, number, number][]) => {
-        const band = distanceBand(inner, backgrounds, false);
-        cv.normalize(band, band, 0, 255, cv.NORM_MINMAX);
-        clearBorderBlobs(band, TAG_NAME_BIN_THRESHOLD);
-        let parsed = parseName(band, tagNameGlyphs, {
-          spaceGap,
-          binThreshold: TAG_NAME_BIN_THRESHOLD,
-        });
+		// 4. splash-tag name, two passes per background candidate: distance
+		// from the estimated banner color, then — because busy banner art
+		// (collages, prints) also differs from that estimate, merging with
+		// glyphs and surviving as fake ones — closeness to the text color
+		// estimated from pass 1's ink. Whichever pass reads back more
+		// confidently wins: solid banners stay on pass 1, art-heavy banners
+		// recover on pass 2. Both background estimators run (see
+		// dominantColor) and the better-reading candidate wins the same way.
+		let name: string | null = null;
+		let nameConfidence = 0;
+		let nameRaw = "";
+		let tagBackground: [number, number, number] | null = null;
+		let tagTextColor: [number, number, number] | null = null;
+		if (tagNameGlyphs) {
+			const spaceGap = Math.max(
+				7,
+				Math.round(tagNameGlyphs.medianWidth * 0.55),
+			);
+			const inner = levelTagInner(rgb);
+			const readWithBackground = (
+				backgrounds: readonly [number, number, number][],
+			) => {
+				const band = distanceBand(inner, backgrounds, false);
+				cv.normalize(band, band, 0, 255, cv.NORM_MINMAX);
+				clearBorderBlobs(band, TAG_NAME_BIN_THRESHOLD);
+				let parsed = parseName(band, tagNameGlyphs, {
+					spaceGap,
+					binThreshold: TAG_NAME_BIN_THRESHOLD,
+				});
 
-        let textColor: [number, number, number] | null = null;
-        const ink = band.data;
-        let inkCount = 0;
-        for (let i = 0; i < ink.length; i++) if (ink[i]! > TAG_NAME_BIN_THRESHOLD) inkCount++;
-        if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
-          textColor = medianColor(inner, (i) => ink[i]! > TAG_NAME_BIN_THRESHOLD);
-          const refined = distanceBand(inner, [textColor], true);
-          clearBorderBlobs(refined, TAG_NAME_REFINE_BIN_THRESHOLD);
-          const reparsed = parseName(refined, tagNameGlyphs, {
-            spaceGap,
-            binThreshold: TAG_NAME_REFINE_BIN_THRESHOLD,
-          });
-          refined.delete();
-          if (reparsed.confidence > parsed.confidence) parsed = reparsed;
-        }
-        band.delete();
-        return { parsed, background: backgrounds[0]!, textColor };
-      };
+				let textColor: [number, number, number] | null = null;
+				const ink = band.data;
+				let inkCount = 0;
+				for (let i = 0; i < ink.length; i++)
+					if (ink[i]! > TAG_NAME_BIN_THRESHOLD) inkCount++;
+				if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
+					textColor = medianColor(
+						inner,
+						(i) => ink[i]! > TAG_NAME_BIN_THRESHOLD,
+					);
+					const refined = distanceBand(inner, [textColor], true);
+					clearBorderBlobs(refined, TAG_NAME_REFINE_BIN_THRESHOLD);
+					const reparsed = parseName(refined, tagNameGlyphs, {
+						spaceGap,
+						binThreshold: TAG_NAME_REFINE_BIN_THRESHOLD,
+					});
+					refined.delete();
+					if (reparsed.confidence > parsed.confidence) parsed = reparsed;
+				}
+				band.delete();
+				return { parsed, background: backgrounds[0]!, textColor };
+			};
 
-      const median = medianColor(inner);
-      const dominants = dominantColors(inner, 2);
-      const dominant = dominants[0]!.color;
-      const candidates: [number, number, number][][] = [[median]];
-      if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8)) candidates.push([dominant]);
-      const second = dominants[1];
-      if (
-        second &&
-        second.fraction >= TAG_SPLIT_MIN_FRACTION &&
-        second.color.some((c, i) => Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE)
-      ) {
-        candidates.push([dominant, second.color]);
-      }
-      // an empty read never beats one that produced glyphs (an estimate
-      // landing on the text color blanks the whole band, and recognizeText
-      // reports a segment-less band as confidence 1), and near-tied
-      // confidences resolve to the longer read: confidence is the *min*
-      // char score, so a background estimate that erases most of the name
-      // can still read its two surviving glyphs immaculately — more
-      // recognized glyphs is the better read when neither is clearly worse
-      const NEAR_TIE = 0.03;
-      const beats = (a: { parsed: { name: string; confidence: number } }, b: typeof a) => {
-        const aRead = a.parsed.name.length > 0 ? 1 : 0;
-        const bRead = b.parsed.name.length > 0 ? 1 : 0;
-        if (aRead !== bRead) return aRead - bRead;
-        if (Math.abs(a.parsed.confidence - b.parsed.confidence) <= NEAR_TIE) {
-          return a.parsed.name.length - b.parsed.name.length;
-        }
-        return a.parsed.confidence - b.parsed.confidence;
-      };
-      let best = readWithBackground(candidates[0]!);
-      for (const backgrounds of candidates.slice(1)) {
-        const alt = readWithBackground(backgrounds);
-        if (beats(alt, best) > 0) best = alt;
-      }
-      inner.delete();
+			const median = medianColor(inner);
+			const dominants = dominantColors(inner, 2);
+			const dominant = dominants[0]!.color;
+			const candidates: [number, number, number][][] = [[median]];
+			if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8))
+				candidates.push([dominant]);
+			const second = dominants[1];
+			if (
+				second &&
+				second.fraction >= TAG_SPLIT_MIN_FRACTION &&
+				second.color.some(
+					(c, i) => Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
+				)
+			) {
+				candidates.push([dominant, second.color]);
+			}
+			// an empty read never beats one that produced glyphs (an estimate
+			// landing on the text color blanks the whole band, and recognizeText
+			// reports a segment-less band as confidence 1), and near-tied
+			// confidences resolve to the longer read: confidence is the *min*
+			// char score, so a background estimate that erases most of the name
+			// can still read its two surviving glyphs immaculately — more
+			// recognized glyphs is the better read when neither is clearly worse
+			const NEAR_TIE = 0.03;
+			const beats = (
+				a: { parsed: { name: string; confidence: number } },
+				b: typeof a,
+			) => {
+				const aRead = a.parsed.name.length > 0 ? 1 : 0;
+				const bRead = b.parsed.name.length > 0 ? 1 : 0;
+				if (aRead !== bRead) return aRead - bRead;
+				if (Math.abs(a.parsed.confidence - b.parsed.confidence) <= NEAR_TIE) {
+					return a.parsed.name.length - b.parsed.name.length;
+				}
+				return a.parsed.confidence - b.parsed.confidence;
+			};
+			let best = readWithBackground(candidates[0]!);
+			for (const backgrounds of candidates.slice(1)) {
+				const alt = readWithBackground(backgrounds);
+				if (beats(alt, best) > 0) best = alt;
+			}
+			inner.delete();
 
-      tagBackground = best.background;
-      tagTextColor = best.textColor;
-      nameRaw = best.parsed.raw.text;
-      if (best.parsed.name.length > 0) name = best.parsed.name;
-      nameConfidence = best.parsed.confidence;
-      confidences.push(nameConfidence);
-    }
+			tagBackground = best.background;
+			tagTextColor = best.textColor;
+			nameRaw = best.parsed.raw.text;
+			if (best.parsed.name.length > 0) name = best.parsed.name;
+			nameConfidence = best.parsed.confidence;
+			confidences.push(nameConfidence);
+		}
 
-    gray.delete();
-    rgb.delete();
+		gray.delete();
+		rgb.delete();
 
-    const confidence =
-      confidences.length > 0 ? confidences.reduce((a, b) => a + b, 0) / confidences.length : 0;
+		const confidence =
+			confidences.length > 0
+				? confidences.reduce((a, b) => a + b, 0) / confidences.length
+				: 0;
 
-    return [
-      {
-        type: DEATH_EVENT_TYPE,
-        t,
-        confidence,
-        data: { weaponId, weaponType, abilities: abilityRows, name },
-        debug: {
-          weaponName: weapon,
-          line1: line1?.text,
-          line2: line2?.text,
-          jaWeaponLine: jaWeaponLine?.text,
-          jaConstLine: jaConstLine?.text,
-          line1Score,
-          messageLangs: template?.langs,
-          weaponRaw: weaponRaw?.text,
-          weaponScore,
-          weaponLattice: latticeTop && {
-            name: latticeTop.entry.name,
-            score: latticeTop.score,
-            margin: latticeTop.margin,
-          },
-          burstIcon: burstIcon && { id: burstIcon.id, score: burstIcon.score, top: burstIcon.top },
-          abilityRows: abilityDebug.map((row) =>
-            row.map((m) => m && { top: m.top, score: m.score }),
-          ),
-          nameRaw,
-          nameScore: nameConfidence,
-          tagBackground,
-          tagTextColor,
-        },
-      },
-    ];
-  }
+		return [
+			{
+				type: DEATH_EVENT_TYPE,
+				t,
+				confidence,
+				data: { weaponId, weaponType, abilities: abilityRows, name },
+				debug: {
+					weaponName: weapon,
+					line1: line1?.text,
+					line2: line2?.text,
+					jaWeaponLine: jaWeaponLine?.text,
+					jaConstLine: jaConstLine?.text,
+					line1Score,
+					messageLangs: template?.langs,
+					weaponRaw: weaponRaw?.text,
+					weaponScore,
+					weaponLattice: latticeTop && {
+						name: latticeTop.entry.name,
+						score: latticeTop.score,
+						margin: latticeTop.margin,
+					},
+					burstIcon: burstIcon && {
+						id: burstIcon.id,
+						score: burstIcon.score,
+						top: burstIcon.top,
+					},
+					abilityRows: abilityDebug.map((row) =>
+						row.map((m) => m && { top: m.top, score: m.score }),
+					),
+					nameRaw,
+					nameScore: nameConfidence,
+					tagBackground,
+					tagTextColor,
+				},
+			},
+		];
+	}
 
-  return { id: "death", gate, parse };
+	return { id: "death", gate, parse };
 }

@@ -12,7 +12,11 @@ type SubtestBody = () => void | Promise<void>;
 
 export interface CompatTestContext {
 	test(name: string, fn: SubtestBody): Promise<void>;
-	test(name: string, opts: { skip?: boolean | string }, fn: SubtestBody): Promise<void>;
+	test(
+		name: string,
+		opts: { skip?: boolean | string },
+		fn: SubtestBody,
+	): Promise<void>;
 }
 
 export default function test(
@@ -47,11 +51,14 @@ export default function test(
 			throw new Error(`[${subName}] ${String(error)}`);
 		}
 		const summary = failures
-			.map(({ name: subName, error }) =>
-				`[${subName}] ${error instanceof Error ? error.message : String(error)}`,
+			.map(
+				({ name: subName, error }) =>
+					`[${subName}] ${error instanceof Error ? error.message : String(error)}`,
 			)
 			.join("\n");
-		const aggregate = new Error(`${failures.length} subtests failed:\n${summary}`);
+		const aggregate = new Error(
+			`${failures.length} subtests failed:\n${summary}`,
+		);
 		const first = failures[0]?.error;
 		if (first instanceof Error && first.stack) aggregate.stack = first.stack;
 		throw aggregate;

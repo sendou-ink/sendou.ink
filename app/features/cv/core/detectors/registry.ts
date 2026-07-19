@@ -8,14 +8,14 @@ import { createDeathDetector } from "./death/index";
 import { createMapStartDetector } from "./map-start/index";
 import { createMinimapDetector } from "./minimap/index";
 import {
-  createScoreboardDetector,
-  SCOREBOARD_EVENT_TYPE,
-  type ScoreboardResources,
+	createScoreboardDetector,
+	SCOREBOARD_EVENT_TYPE,
+	type ScoreboardResources,
 } from "./scoreboard/index";
 import { createScoreboardOwnDetector } from "./scoreboard-own/index";
 import {
-  createScoreboardReplayDetector,
-  SCOREBOARD_REPLAY_EVENT_TYPE,
+	createScoreboardReplayDetector,
+	SCOREBOARD_REPLAY_EVENT_TYPE,
 } from "./scoreboard-replay/index";
 import type { Detector } from "./types";
 
@@ -24,17 +24,19 @@ import type { Detector } from "./types";
  * (ScoreboardData): the results screen and the replay-browser detail.
  */
 export const SCOREBOARD_EVENT_TYPES: readonly string[] = [
-  SCOREBOARD_EVENT_TYPE,
-  SCOREBOARD_REPLAY_EVENT_TYPE,
+	SCOREBOARD_EVENT_TYPE,
+	SCOREBOARD_REPLAY_EVENT_TYPE,
 ];
 
-export function createAllDetectors(resources: ScoreboardResources): Detector<unknown>[] {
-  return [
-    createScoreboardDetector(resources) as Detector<unknown>,
-    createScoreboardReplayDetector(resources) as Detector<unknown>,
-    createScoreboardOwnDetector(resources) as Detector<unknown>,
-    createDeathDetector(resources) as Detector<unknown>,
-    createMapStartDetector(resources) as Detector<unknown>,
-    createMinimapDetector(resources) as Detector<unknown>,
-  ];
+export function createAllDetectors(
+	resources: ScoreboardResources,
+): Detector<unknown>[] {
+	return [
+		createScoreboardDetector(resources) as Detector<unknown>,
+		createScoreboardReplayDetector(resources) as Detector<unknown>,
+		createScoreboardOwnDetector(resources) as Detector<unknown>,
+		createDeathDetector(resources) as Detector<unknown>,
+		createMapStartDetector(resources) as Detector<unknown>,
+		createMinimapDetector(resources) as Detector<unknown>,
+	];
 }

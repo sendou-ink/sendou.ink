@@ -7,13 +7,22 @@
  */
 
 import type { PlayerAbilityMap } from "../core/ability-harvest";
-import { DEATH_EVENT_TYPE, type DeathData } from "../core/detectors/death/index";
-import { MAP_START_EVENT_TYPE, type MapStartData } from "../core/detectors/map-start/index";
-import { MINIMAP_EVENT_TYPE, type MinimapData } from "../core/detectors/minimap/index";
+import {
+	DEATH_EVENT_TYPE,
+	type DeathData,
+} from "../core/detectors/death/index";
+import {
+	MAP_START_EVENT_TYPE,
+	type MapStartData,
+} from "../core/detectors/map-start/index";
+import {
+	MINIMAP_EVENT_TYPE,
+	type MinimapData,
+} from "../core/detectors/minimap/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import {
-  SCOREBOARD_OWN_EVENT_TYPE,
-  type ScoreboardOwnData,
+	SCOREBOARD_OWN_EVENT_TYPE,
+	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
 import type { SendStatus } from "../store/events";
 import { DeathCard } from "./DeathCard";
@@ -27,92 +36,102 @@ import { setScreenshotFrame } from "./screenshot-handoff";
 export type GetFrame = () => Promise<Blob | null | undefined>;
 
 export function EventCard(props: {
-  type: string;
-  t: number;
-  confidence: number;
-  data: FixtureData;
-  thumbnail?: string;
-  detectedAt?: number;
-  /** lazy loader for the exact analyzed frame; enables Inspect + fixture export */
-  getFrame?: GetFrame;
-  /** Scoreboard only: abilities harvested from the match's death events */
-  abilities?: PlayerAbilityMap;
-  /** sendou.ink /ingest status of this event; absent = never attempted */
-  send?: SendStatus;
-  /** when set, shows a Send/Retry button that sends this event's match batch */
-  onSend?: () => void;
+	type: string;
+	t: number;
+	confidence: number;
+	data: FixtureData;
+	thumbnail?: string;
+	detectedAt?: number;
+	/** lazy loader for the exact analyzed frame; enables Inspect + fixture export */
+	getFrame?: GetFrame;
+	/** Scoreboard only: abilities harvested from the match's death events */
+	abilities?: PlayerAbilityMap;
+	/** sendou.ink /ingest status of this event; absent = never attempted */
+	send?: SendStatus;
+	/** when set, shows a Send/Retry button that sends this event's match batch */
+	onSend?: () => void;
 }) {
-  const { type, t, confidence, data, thumbnail, detectedAt, getFrame } = props;
-  const onInspect = getFrame
-    ? () =>
-        void getFrame().then((frame) => {
-          if (!frame) return;
-          setScreenshotFrame(frame);
-          window.location.hash = "#/screenshot";
-        })
-    : undefined;
-  const shared = { t, confidence, thumbnail, detectedAt, getFrame, onInspect };
+	const { type, t, confidence, data, thumbnail, detectedAt, getFrame } = props;
+	const onInspect = getFrame
+		? () =>
+				void getFrame().then((frame) => {
+					if (!frame) return;
+					setScreenshotFrame(frame);
+					window.location.hash = "#/screenshot";
+				})
+		: undefined;
+	const shared = { t, confidence, thumbnail, detectedAt, getFrame, onInspect };
 
-  const card = renderCard(type, data, shared, props.abilities);
-  if (!props.send && !props.onSend) return card;
-  return (
-    <div className="send-wrap">
-      {card}
-      <SendStrip send={props.send} onSend={props.onSend} />
-    </div>
-  );
+	const card = renderCard(type, data, shared, props.abilities);
+	if (!props.send && !props.onSend) return card;
+	return (
+		<div className="send-wrap">
+			{card}
+			<SendStrip send={props.send} onSend={props.onSend} />
+		</div>
+	);
 }
 
 const SEND_LABELS: Record<SendStatus["state"], string> = {
-  queued: "queued",
-  sending: "sending…",
-  sent: "sent",
-  failed: "failed",
+	queued: "queued",
+	sending: "sending…",
+	sent: "sent",
+	failed: "failed",
 };
 
-function SendStrip({ send, onSend }: { send?: SendStatus; onSend?: () => void }) {
-  const state = send?.state;
-  return (
-    <div className={`send-strip ${state ?? "unsent"}`}>
-      <span>
-        sendou.ink: {state ? SEND_LABELS[state] : "not sent"}
-        {state === "sent" && send && ` ${new Date(send.at).toLocaleTimeString()}`}
-      </span>
-      {send?.error && <span className="error">{send.error}</span>}
-      {onSend && state !== "sent" && state !== "sending" && (
-        <button onClick={onSend}>{state === "failed" ? "Retry" : "Send"}</button>
-      )}
-    </div>
-  );
+function SendStrip({
+	send,
+	onSend,
+}: {
+	send?: SendStatus;
+	onSend?: () => void;
+}) {
+	const state = send?.state;
+	return (
+		<div className={`send-strip ${state ?? "unsent"}`}>
+			<span>
+				sendou.ink: {state ? SEND_LABELS[state] : "not sent"}
+				{state === "sent" &&
+					send &&
+					` ${new Date(send.at).toLocaleTimeString()}`}
+			</span>
+			{send?.error && <span className="error">{send.error}</span>}
+			{onSend && state !== "sent" && state !== "sending" && (
+				<button type="button" onClick={onSend}>
+					{state === "failed" ? "Retry" : "Send"}
+				</button>
+			)}
+		</div>
+	);
 }
 
 function renderCard(
-  type: string,
-  data: FixtureData,
-  shared: {
-    t: number;
-    confidence: number;
-    thumbnail?: string;
-    detectedAt?: number;
-    getFrame?: GetFrame;
-    onInspect?: () => void;
-  },
-  abilities?: PlayerAbilityMap,
+	type: string,
+	data: FixtureData,
+	shared: {
+		t: number;
+		confidence: number;
+		thumbnail?: string;
+		detectedAt?: number;
+		getFrame?: GetFrame;
+		onInspect?: () => void;
+	},
+	abilities?: PlayerAbilityMap,
 ) {
-  return type === DEATH_EVENT_TYPE ? (
-    <DeathCard {...shared} data={data as DeathData} />
-  ) : type === MAP_START_EVENT_TYPE ? (
-    <MapStartCard {...shared} data={data as MapStartData} />
-  ) : type === SCOREBOARD_OWN_EVENT_TYPE ? (
-    <ScoreboardOwnCard {...shared} data={data as ScoreboardOwnData} />
-  ) : type === MINIMAP_EVENT_TYPE ? (
-    <MinimapCard {...shared} data={data as MinimapData} />
-  ) : (
-    <ScoreboardCard
-      {...shared}
-      eventType={type}
-      data={data as ScoreboardData}
-      abilities={abilities}
-    />
-  );
+	return type === DEATH_EVENT_TYPE ? (
+		<DeathCard {...shared} data={data as DeathData} />
+	) : type === MAP_START_EVENT_TYPE ? (
+		<MapStartCard {...shared} data={data as MapStartData} />
+	) : type === SCOREBOARD_OWN_EVENT_TYPE ? (
+		<ScoreboardOwnCard {...shared} data={data as ScoreboardOwnData} />
+	) : type === MINIMAP_EVENT_TYPE ? (
+		<MinimapCard {...shared} data={data as MinimapData} />
+	) : (
+		<ScoreboardCard
+			{...shared}
+			eventType={type}
+			data={data as ScoreboardData}
+			abilities={abilities}
+		/>
+	);
 }

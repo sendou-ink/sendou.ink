@@ -1,26 +1,26 @@
 import type { Mat } from "../cv";
 
 export interface DetectedEvent<TData = unknown> {
-  type: string;
-  /** seconds into the stream/video */
-  t: number;
-  /** 0..1 aggregate confidence; TimelineBuilder drops events below threshold */
-  confidence: number;
-  data: TData;
-  /** per-field match scores etc. for the harness/debugging; not persisted upstream */
-  debug?: Record<string, unknown>;
+	type: string;
+	/** seconds into the stream/video */
+	t: number;
+	/** 0..1 aggregate confidence; TimelineBuilder drops events below threshold */
+	confidence: number;
+	data: TData;
+	/** per-field match scores etc. for the harness/debugging; not persisted upstream */
+	debug?: Record<string, unknown>;
 }
 
 export interface GateResult {
-  pass: boolean;
-  /** raw score of the gate check, for tuning */
-  score: number;
-  /**
-   * which screen variant the gate recognized, for detectors that gate more
-   * than one (minimap: "overlay" | "spectator") — parse() branches on it
-   * instead of re-running the gate probes
-   */
-  variant?: string;
+	pass: boolean;
+	/** raw score of the gate check, for tuning */
+	score: number;
+	/**
+	 * which screen variant the gate recognized, for detectors that gate more
+	 * than one (minimap: "overlay" | "spectator") — parse() branches on it
+	 * instead of re-running the gate probes
+	 */
+	variant?: string;
 }
 
 /**
@@ -31,7 +31,7 @@ export interface GateResult {
  * whatever it needs) so one-shot tools can call parse() directly.
  */
 export interface Detector<TData = unknown> {
-  id: string;
-  gate(frame: Mat): GateResult;
-  parse(frame: Mat, t: number, gate?: GateResult): DetectedEvent<TData>[];
+	id: string;
+	gate(frame: Mat): GateResult;
+	parse(frame: Mat, t: number, gate?: GateResult): DetectedEvent<TData>[];
 }

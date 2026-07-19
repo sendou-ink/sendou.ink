@@ -7,18 +7,24 @@
  * sub-tile disambiguation (assets/cv/sub-weapons) reads `sub` the same way.
  */
 import { weaponParams } from "~/features/build-analyzer/data/weapon-params";
-import type { SpecialWeaponId, SubWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 
 export interface WeaponKit {
-  /** sendou.ink sub weapon id */
-  sub: SubWeaponId;
-  /** sendou.ink special weapon id, matching assets/cv/specials */
-  special: SpecialWeaponId;
+	/** sendou.ink sub weapon id */
+	sub: SubWeaponId;
+	/** sendou.ink special weapon id, matching assets/cv/specials */
+	special: SpecialWeaponId;
 }
 
 export const WEAPON_KITS: ReadonlyMap<string, WeaponKit> = new Map(
-  Object.entries(weaponParams.weaponKits).map(([id, kit]) => [
-    id,
-    { sub: kit.subWeaponId as SubWeaponId, special: kit.specialWeaponId as SpecialWeaponId },
-  ]),
+	Object.entries(weaponParams.weaponKits).map(([id, kit]) => [
+		id,
+		{
+			sub: kit.subWeaponId as SubWeaponId,
+			special: kit.specialWeaponId as SpecialWeaponId,
+		},
+	]),
 );

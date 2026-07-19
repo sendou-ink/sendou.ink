@@ -32,20 +32,20 @@ import type { Roi } from "../../canonical";
 export type CardSlot = "up" | "left" | "right" | "self" | "down";
 
 export interface CardLayout {
-  slot: CardSlot;
-  /** name text band (BlitzMain caps ~29px plus outline/descender margin) */
-  name: Roi;
-  /** main-weapon silhouette box (icons render ~31-48px tall) */
-  weapon: Roi;
-  /** sub-weapon tile: saturated team-color art, the ink-color anchor */
-  subTile: Roi;
-  /** the three main-ability badge centers, 48px pitch */
-  badges: readonly (readonly [number, number])[];
-  /**
-   * cross-out probe at the card center (where the X's arms meet): white
-   * name glyphs and the dark pill are unsaturated, the X core is not
-   */
-  cross: Roi;
+	slot: CardSlot;
+	/** name text band (BlitzMain caps ~29px plus outline/descender margin) */
+	name: Roi;
+	/** main-weapon silhouette box (icons render ~31-48px tall) */
+	weapon: Roi;
+	/** sub-weapon tile: saturated team-color art, the ink-color anchor */
+	subTile: Roi;
+	/** the three main-ability badge centers, 48px pitch */
+	badges: readonly (readonly [number, number])[];
+	/**
+	 * cross-out probe at the card center (where the X's arms meet): white
+	 * name glyphs and the dark pill are unsaturated, the X core is not
+	 */
+	cross: Roi;
 }
 
 /**
@@ -55,64 +55,64 @@ export interface CardLayout {
  * left inset for the name, no d-pad.
  */
 export const CARD_LAYOUTS: readonly CardLayout[] = [
-  {
-    slot: "up",
-    name: { x: 872, y: 46, w: 300, h: 44 },
-    weapon: { x: 860, y: 83, w: 84, h: 54 },
-    subTile: { x: 932, y: 98, w: 38, h: 41 },
-    badges: [
-      [1066, 114],
-      [1114, 114],
-      [1162, 114],
-    ],
-    cross: { x: 925, y: 78, w: 60, h: 32 },
-  },
-  {
-    slot: "left",
-    name: { x: 198, y: 492, w: 300, h: 44 },
-    weapon: { x: 193, y: 529, w: 84, h: 54 },
-    subTile: { x: 265, y: 544, w: 38, h: 41 },
-    badges: [
-      [392, 564],
-      [440, 564],
-      [488, 564],
-    ],
-    cross: { x: 258, y: 524, w: 60, h: 32 },
-  },
-  {
-    slot: "right",
-    name: { x: 1550, y: 492, w: 300, h: 44 },
-    weapon: { x: 1545, y: 529, w: 84, h: 54 },
-    subTile: { x: 1617, y: 544, w: 38, h: 41 },
-    badges: [
-      [1744, 564],
-      [1792, 564],
-      [1840, 564],
-    ],
-    cross: { x: 1610, y: 524, w: 60, h: 32 },
-  },
-  {
-    slot: "self",
-    name: { x: 126, y: 942, w: 300, h: 46 },
-    weapon: { x: 118, y: 985, w: 94, h: 55 },
-    subTile: { x: 193, y: 995, w: 38, h: 36 },
-    badges: [
-      [320, 1014],
-      [368, 1014],
-      [416, 1014],
-    ],
-    cross: { x: 255, y: 968, w: 60, h: 32 },
-  },
+	{
+		slot: "up",
+		name: { x: 872, y: 46, w: 300, h: 44 },
+		weapon: { x: 860, y: 83, w: 84, h: 54 },
+		subTile: { x: 932, y: 98, w: 38, h: 41 },
+		badges: [
+			[1066, 114],
+			[1114, 114],
+			[1162, 114],
+		],
+		cross: { x: 925, y: 78, w: 60, h: 32 },
+	},
+	{
+		slot: "left",
+		name: { x: 198, y: 492, w: 300, h: 44 },
+		weapon: { x: 193, y: 529, w: 84, h: 54 },
+		subTile: { x: 265, y: 544, w: 38, h: 41 },
+		badges: [
+			[392, 564],
+			[440, 564],
+			[488, 564],
+		],
+		cross: { x: 258, y: 524, w: 60, h: 32 },
+	},
+	{
+		slot: "right",
+		name: { x: 1550, y: 492, w: 300, h: 44 },
+		weapon: { x: 1545, y: 529, w: 84, h: 54 },
+		subTile: { x: 1617, y: 544, w: 38, h: 41 },
+		badges: [
+			[1744, 564],
+			[1792, 564],
+			[1840, 564],
+		],
+		cross: { x: 1610, y: 524, w: 60, h: 32 },
+	},
+	{
+		slot: "self",
+		name: { x: 126, y: 942, w: 300, h: 46 },
+		weapon: { x: 118, y: 985, w: 94, h: 55 },
+		subTile: { x: 193, y: 995, w: 38, h: 36 },
+		badges: [
+			[320, 1014],
+			[368, 1014],
+			[416, 1014],
+		],
+		cross: { x: 255, y: 968, w: 60, h: 32 },
+	},
 ];
 
 /** Enemy panel row centers (65px pitch) and per-row element boxes. */
 export const ENEMY_ROW_CYS = [82, 147, 213, 278] as const;
 
 export function enemyWeaponRoi(cy: number): Roi {
-  return { x: 1541, y: cy - 26, w: 58, h: 52 };
+	return { x: 1541, y: cy - 26, w: 58, h: 52 };
 }
 export function enemySubTileRoi(cy: number): Roi {
-  return { x: 1602, y: cy - 20, w: 39, h: 40 };
+	return { x: 1602, y: cy - 20, w: 39, h: 40 };
 }
 export const ENEMY_BADGE_XS = [1730, 1778, 1826] as const;
 /**
@@ -120,12 +120,12 @@ export const ENEMY_BADGE_XS = [1730, 1778, 1826] as const;
  * first badge; on a clean row the gap stays unsaturated.
  */
 export function enemyCrossRoi(cy: number): Roi {
-  return { x: 1685, y: cy - 12, w: 28, h: 24 };
+	return { x: 1685, y: cy - 12, w: 28, h: 24 };
 }
 
 /** Badge search box (badges ⌀~44; the box height keeps larger sets out). */
 export function badgeRoi(cx: number, cy: number): Roi {
-  return { x: cx - 26, y: cy - 26, w: 52, h: 52 };
+	return { x: cx - 26, y: cy - 26, w: 52, h: 52 };
 }
 export const BADGE_TEMPLATE_SIZES = [38, 42, 46] as const;
 /** Badge art fills the circle like the death panel's mains. */
@@ -172,7 +172,9 @@ export const SUB_TILE_TEMPLATE_SIZES = [24, 27, 30, 33, 36] as const;
 
 export const CARD_WEAPON_BACKGROUND = 40;
 export const SPECIAL_READY_BACKGROUND = 150;
-export const MINIMAP_WEAPON_TEMPLATE_SIZES = [40, 44, 48, 52, 56, 60, 64] as const;
+export const MINIMAP_WEAPON_TEMPLATE_SIZES = [
+	40, 44, 48, 52, 56, 60, 64,
+] as const;
 export const MINIMAP_WEAPON_INK_THRESHOLD = CARD_WEAPON_BACKGROUND + 50;
 export const SPECIAL_READY_INK_THRESHOLD = SPECIAL_READY_BACKGROUND + 50;
 /**
@@ -201,16 +203,16 @@ export const PRESENCE_MIN_LAPLACIAN = 8;
 /** Gate probes (overlay variant): close-button disc + Spawn Point pill shapes. */
 export const GATE_CLOSE_BRIGHT: Roi = { x: 90, y: 90, w: 16, h: 16 };
 export const GATE_CLOSE_DARK_PROBES: readonly Roi[] = [
-  { x: 88, y: 50, w: 20, h: 14 },
-  { x: 88, y: 132, w: 20, h: 14 },
-  { x: 58, y: 88, w: 14, h: 20 },
-  { x: 132, y: 88, w: 14, h: 20 },
+	{ x: 88, y: 50, w: 20, h: 14 },
+	{ x: 88, y: 132, w: 20, h: 14 },
+	{ x: 58, y: 88, w: 14, h: 20 },
+	{ x: 132, y: 88, w: 14, h: 20 },
 ];
 /** The white jump-arrows icon left of the (localized) pill label. */
 export const GATE_SPAWN_BRIGHT: Roi = { x: 888, y: 963, w: 60, h: 60 };
 export const GATE_SPAWN_DARK_PROBES: readonly Roi[] = [
-  { x: 812, y: 958, w: 26, h: 14 },
-  { x: 950, y: 1024, w: 60, h: 12 },
+	{ x: 812, y: 958, w: 26, h: 14 },
+	{ x: 950, y: 1024, w: 60, h: 12 },
 ];
 export const GATE_DARK_MAX_MEAN = 85;
 export const GATE_BRIGHT_MIN_MAX = 210;
@@ -231,17 +233,17 @@ export const GATE_BRIGHT_MIN_MAX = 210;
  * bright>=249 / dark<=65 against the shared 210/85 thresholds.
  */
 export const GATE_SPECTATOR_X_BRIGHT: readonly Roi[] = [
-  { x: 1418, y: 706, w: 12, h: 12 },
-  { x: 1411, y: 692, w: 12, h: 12 },
-  { x: 1425, y: 692, w: 12, h: 12 },
-  { x: 1411, y: 720, w: 12, h: 12 },
-  { x: 1425, y: 720, w: 12, h: 12 },
+	{ x: 1418, y: 706, w: 12, h: 12 },
+	{ x: 1411, y: 692, w: 12, h: 12 },
+	{ x: 1425, y: 692, w: 12, h: 12 },
+	{ x: 1411, y: 720, w: 12, h: 12 },
+	{ x: 1425, y: 720, w: 12, h: 12 },
 ];
 export const GATE_SPECTATOR_X_DARK: readonly Roi[] = [
-  { x: 1399, y: 708, w: 8, h: 8 },
-  { x: 1441, y: 708, w: 8, h: 8 },
-  { x: 1420, y: 682, w: 8, h: 8 },
-  { x: 1420, y: 734, w: 8, h: 8 },
+	{ x: 1399, y: 708, w: 8, h: 8 },
+	{ x: 1441, y: 708, w: 8, h: 8 },
+	{ x: 1420, y: 682, w: 8, h: 8 },
+	{ x: 1420, y: 734, w: 8, h: 8 },
 ];
 
 /**
@@ -259,23 +261,31 @@ export const GATE_SPECTATOR_X_DARK: readonly Roi[] = [
  * struck-through or special-ready spectator fixture is attested yet, so
  * those probes reuse the overlay thresholds untuned.
  */
-export const SPECTATOR_SLOTS: readonly CardSlot[] = ["up", "right", "down", "left"];
+export const SPECTATOR_SLOTS: readonly CardSlot[] = [
+	"up",
+	"right",
+	"down",
+	"left",
+];
 export const SPECTATOR_ENEMY_DX = 1348;
 const SPECTATOR_ROW_PITCH = 120;
 
-export function spectatorCardLayout(row: number, dx: number): Omit<CardLayout, "slot"> {
-  const dy = SPECTATOR_ROW_PITCH * row;
-  return {
-    name: { x: 198 + dx, y: 306 + dy, w: 310, h: 44 },
-    weapon: { x: 196 + dx, y: 350 + dy, w: 66, h: 54 },
-    subTile: { x: 264 + dx, y: 354 + dy, w: 38, h: 42 },
-    badges: [
-      [390 + dx, 374 + dy],
-      [438 + dx, 374 + dy],
-      [486 + dx, 374 + dy],
-    ],
-    cross: { x: 344 + dx, y: 362 + dy, w: 20, h: 24 },
-  };
+export function spectatorCardLayout(
+	row: number,
+	dx: number,
+): Omit<CardLayout, "slot"> {
+	const dy = SPECTATOR_ROW_PITCH * row;
+	return {
+		name: { x: 198 + dx, y: 306 + dy, w: 310, h: 44 },
+		weapon: { x: 196 + dx, y: 350 + dy, w: 66, h: 54 },
+		subTile: { x: 264 + dx, y: 354 + dy, w: 38, h: 42 },
+		badges: [
+			[390 + dx, 374 + dy],
+			[438 + dx, 374 + dy],
+			[486 + dx, 374 + dy],
+		],
+		cross: { x: 344 + dx, y: 362 + dy, w: 20, h: 24 },
+	};
 }
 
 /**

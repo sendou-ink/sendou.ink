@@ -17,7 +17,9 @@ export const meta: MetaFunction = (args) => {
 // IndexedDB, WebCodecs, getUserMedia. Nothing from core/worker/capture/store
 // may be imported at route-module top level — only from inside this lazily
 // imported client component tree, after hydration.
-const CvApp = lazy(() => import("~/features/cv/components/App").then((m) => ({ default: m.App })));
+const CvApp = lazy(() =>
+	import("~/features/cv/components/App").then((m) => ({ default: m.App })),
+);
 
 export default function CvPage() {
 	const isHydrated = useHydrated();

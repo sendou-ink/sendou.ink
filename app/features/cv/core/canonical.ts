@@ -7,8 +7,8 @@ export const CANONICAL_WIDTH = 1920;
 export const CANONICAL_HEIGHT = 1080;
 
 export interface Roi {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+	x: number;
+	y: number;
+	w: number;
+	h: number;
 }

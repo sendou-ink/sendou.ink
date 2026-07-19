@@ -5,5 +5,5 @@
  * version segment must match worker-side CV_ASSETS_URL (app/utils/urls.ts).
  */
 export const CV_ASSETS_DIR =
-  process.env.CV_ASSETS_DIR ??
-  new URL("../../../../../assets/assets/cv/v1", import.meta.url).pathname;
+	process.env.CV_ASSETS_DIR ??
+	new URL("../../../../../assets/assets/cv/v1", import.meta.url).pathname;
