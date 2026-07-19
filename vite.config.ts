@@ -92,6 +92,7 @@ export default defineConfig((config) => {
 			// and full page reloads on first navigations.
 			include: [
 				"@date-fns/tz",
+				"@techstark/opencv-js",
 				"@dnd-kit/core",
 				"@dnd-kit/modifiers",
 				"@dnd-kit/sortable",
@@ -126,6 +127,7 @@ export default defineConfig((config) => {
 				"kysely",
 				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
+				"mediabunny",
 				"neverthrow",
 				"openskill",
 				"partysocket",

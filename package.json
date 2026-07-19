@@ -55,6 +55,7 @@
 		"@react-router/serve": "8.1.0",
 		"@remix-run/form-data-parser": "0.17.4",
 		"@sentry/react-router": "10.64.0",
+		"@techstark/opencv-js": "5.0.0-release.1",
 		"@tldraw/tldraw": "3.12.1",
 		"@zumer/snapdom": "2.15.0",
 		"better-sqlite3": "12.11.1",
@@ -73,6 +74,7 @@
 		"kysely": "0.29.0",
 		"lucide-react": "1.23.0",
 		"markdown-to-jsx": "9.8.2",
+		"mediabunny": "1.50.6",
 		"nanoid": "5.1.16",
 		"neverthrow": "8.2.0",
 		"node-cron": "4.6.0",
@@ -103,6 +105,7 @@
 	"devDependencies": {
 		"@babel/preset-typescript": "7.29.7",
 		"@biomejs/biome": "2.5.3",
+		"@napi-rs/canvas": "1.0.2",
 		"@playwright/test": "1.61.1",
 		"@react-router/dev": "8.1.0",
 		"@types/better-sqlite3": "7.6.13",
