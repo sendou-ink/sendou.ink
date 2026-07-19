@@ -22,6 +22,10 @@ const DEV_IMPERSONATE_ITEMS = [
 	{ name: "Logged out", icon: "log_in", action: STOP_IMPERSONATING_URL },
 ] as const;
 
+const DEV_LINK_ITEMS = [
+	{ name: "Components", icon: "settings", url: "/components" },
+] as const;
+
 const NAV_CATEGORIES = [
 	{
 		name: "play",
@@ -125,6 +129,25 @@ function DevMenu() {
 							</button>
 						</Form>
 					))}
+					{DEV_LINK_ITEMS.map((item) => (
+						<Link
+							key={item.name}
+							to={item.url}
+							className={styles.menuItem}
+							onClick={() => {
+								setIsOpen(false);
+								setIsPreviewSuppressed(true);
+							}}
+						>
+							<Image
+								path={navIconUrl(item.icon)}
+								alt=""
+								size={20}
+								className={styles.menuItemIcon}
+							/>
+							{item.name}
+						</Link>
+					))}
 				</div>
 			</SendouPopover>
 			{!isOpen && !isPreviewSuppressed ? (
@@ -148,6 +171,19 @@ function DevMenu() {
 								<Image path={navIconUrl(item.icon)} alt="" size={20} />
 							</button>
 						</Form>
+					))}
+					{DEV_LINK_ITEMS.map((item) => (
+						<Link
+							key={item.name}
+							to={item.url}
+							className={styles.previewIcon}
+							title={item.name}
+							aria-label={item.name}
+							tabIndex={-1}
+							onClick={() => setIsPreviewSuppressed(true)}
+						>
+							<Image path={navIconUrl(item.icon)} alt="" size={20} />
+						</Link>
 					))}
 				</div>
 			) : null}
