@@ -1,0 +1,88 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": "Undertow Spillway",
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "こむぎこをこねたユウ",
+        "weapon": "Splattershot",
+        "abilities": [
+          "CB",
+          "ISS",
+          "SJ"
+        ]
+      },
+      {
+        "slot": "left",
+        "name": "Snix",
+        "weapon": "Splatana Stamper",
+        "abilities": [
+          "CB",
+          "SSU",
+          "SJ"
+        ]
+      },
+      {
+        "slot": "right",
+        "name": "スライムLv.13",
+        "weapon": "Splattershot Jr.",
+        "abilities": [
+          "ISS",
+          "ISS",
+          "ISS"
+        ]
+      },
+      {
+        "slot": "self",
+        "name": "Sendou",
+        "weapon": "Custom Blaster",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ]
+      }
+    ],
+    "enemies": [
+      {
+        "weapon": "Inkbrush Nouveau",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ]
+      },
+      {
+        "weapon": ".52 Gal",
+        "abilities": [
+          "OG",
+          "SSU",
+          "SJ"
+        ]
+      },
+      {
+        "weapon": "Big Swig Roller",
+        "abilities": [
+          "ISM",
+          "SSU",
+          "SCU"
+        ]
+      },
+      {
+        "weapon": "Luna Blaster Neo",
+        "abilities": [
+          "SSU",
+          "NS",
+          "SSU"
+        ]
+      }
+    ]
+  },
+  "options": {
+    "skipFields": [
+      "teammates.0.name"
+    ],
+    "notes": "Tower Control frame with three special-ready camo surfaces: the left card (Splatana Stamper — dark art whose padded-square icon renders bigger than the 54px weapon box, unmatchable before the art-cropped templates) and enemy rows 0 (Inkbrush Nouveau) and 2 (Big Swig Roller). Self card is a Custom Blaster on a warm translucent background (kit tiles: Point Sensor + Triple Splashdown). teammates.0.name skipped: the up card reads こむきこをこねたユウ — the ぎ dakuten is below atlas resolution at 29px. Control values are the deterministic estimator output."
+  }
+}

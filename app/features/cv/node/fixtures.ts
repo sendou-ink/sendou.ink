@@ -1,7 +1,7 @@
 /**
  * Fixture discovery and detector execution for tests and tools.
  *
- * A fixture is a directory under <repo>/tests/fixtures/<detector>/<case-name>/ containing
+ * A fixture is a directory under app/features/cv/tests/fixtures/<detector>/<case-name>/ containing
  * frame.png or frame.jpg (raw capture, any resolution — normalization happens
  * inside the pipeline under test) and expected.json.
  */
@@ -12,7 +12,7 @@ import type { DetectedEvent, Detector, GateResult } from "../core/detectors/type
 import { normalizeFrame, toMat } from "../core/image";
 import { readImage } from "./image-io";
 
-export const FIXTURES_DIR = new URL("../../tests/fixtures", import.meta.url).pathname;
+export const FIXTURES_DIR = new URL("../tests/fixtures", import.meta.url).pathname;
 
 interface ExpectedPlayer {
   name?: string;

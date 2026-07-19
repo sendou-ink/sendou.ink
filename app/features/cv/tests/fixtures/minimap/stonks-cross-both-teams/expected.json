@@ -1,0 +1,73 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": "Museum d'Alfonsino",
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "STONKS",
+        "weapon": "Tri-Stringer",
+        "abilities": [
+          "IRU",
+          "RP",
+          "SJ"
+        ]
+      },
+      {
+        "slot": "left",
+        "name": "Player",
+        "weapon": "Splattershot Jr.",
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ]
+      },
+      {
+        "slot": "right",
+        "name": null,
+        "weapon": null,
+        "abilities": []
+      },
+      {
+        "slot": "self",
+        "name": "Edd",
+        "weapon": "Ballpoint Splatling",
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ]
+      }
+    ],
+    "enemies": [
+      {
+        "weapon": "Slosher",
+        "abilities": [
+          "BRU",
+          "SS",
+          "IRU"
+        ]
+      },
+      {
+        "weapon": "Splat Roller",
+        "abilities": []
+      },
+      {
+        "weapon": "Dualie Squelchers",
+        "abilities": []
+      },
+      {
+        "weapon": "Splattershot",
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ]
+      }
+    ]
+  },
+  "options": {
+    "notes": "One respawning card per team plus a struck-out special-ready (camo) enemy row. Enemy row 1's label was corrected from Flingza Roller to Splat Roller when the art-cropped templates landed (white roll, blue L-frame, yellow-striped grip — matches the 1010 icon exactly). Enemy row 2 is both struck out and special-ready: the red dualie art reads through the X, but the Custom-vs-plain Dualie Squelchers tag is hidden behind a stroke, so the icon matcher near-ties the twins (5031 0.600 vs 5030 0.597); the row's sub tile (Splat Bomb silhouette, readable despite the stroke clipping it) breaks the tie to plain Dualie Squelchers (subResolved). Control values are the deterministic estimator output (share of visible map surface, not in-game turf %)."
+  }
+}

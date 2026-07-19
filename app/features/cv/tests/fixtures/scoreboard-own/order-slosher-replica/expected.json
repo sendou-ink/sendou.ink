@@ -1,0 +1,30 @@
+{
+  "event": "ScoreboardOwn",
+  "data": {
+    "lobby": "Private Battle",
+    "mode": "Splat Zones",
+    "stage": "Mahi-Mahi Resort",
+    "weapon": "Order Slosher Replica",
+    "weaponId": 3005,
+    "abilities": [
+      [
+        "CB",
+        "QSJ",
+        "SS",
+        "RES"
+      ],
+      [
+        "SSU",
+        "QSJ",
+        "SS",
+        "SRU"
+      ],
+      [
+        "SJ",
+        "ISS",
+        "SS",
+        "QSJ"
+      ]
+    ]
+  }
+}

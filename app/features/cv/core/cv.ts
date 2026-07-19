@@ -17,7 +17,19 @@ export function loadOpenCV(): Promise<CV> {
   if (cvInstance) return Promise.resolve(cvInstance);
   if (loading) return loading;
   const attempt = (async () => {
-    const mod = cvModule as unknown;
+    // The package is patched (patches/@techstark__opencv-js…) to export
+    // { cvReadyPromise } instead of the bare ready-promise: a thenable (or
+    // default-wrapped thenable) module.exports leaks `then` through
+    // vite-node's CJS namespace proxy and crashes every Node-side import.
+    // Depending on bundler interop we see the wrapper (possibly nested
+    // under `default`) or, in bundles that took the UMD's non-CJS branch,
+    // the promise itself.
+    const raw = cvModule as {
+      cvReadyPromise?: unknown;
+      default?: { cvReadyPromise?: unknown };
+    } | null;
+    const mod: unknown =
+      raw?.cvReadyPromise ?? raw?.default?.cvReadyPromise ?? raw?.default ?? raw;
     let cv: CV;
     if (mod instanceof Promise) {
       cv = await mod;

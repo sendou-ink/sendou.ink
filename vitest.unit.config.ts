@@ -8,6 +8,8 @@ export default defineConfig({
 			...configDefaults.exclude,
 			"e2e/**",
 			"**/*.browser.test.{ts,tsx}",
+			// the CV golden-file suite has its own heavy project (vitest.cv.config.ts)
+			"app/features/cv/**",
 		],
 		setupFiles: ["./app/test-setup.ts"],
 	},

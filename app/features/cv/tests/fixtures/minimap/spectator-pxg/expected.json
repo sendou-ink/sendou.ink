@@ -1,0 +1,93 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": "Crableg Capital",
+    "spectator": true,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "kyutpie<3",
+        "weapon": ".96 Gal",
+        "abilities": [
+          "SSU",
+          "SSU",
+          "SJ"
+        ]
+      },
+      {
+        "slot": "right",
+        "name": "Grey",
+        "weapon": "Flingza Roller",
+        "abilities": [
+          "LDE",
+          "SCU",
+          "ISM"
+        ]
+      },
+      {
+        "slot": "down",
+        "name": "JORDANYAGI",
+        "weapon": "Order Slosher Replica",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ]
+      },
+      {
+        "slot": "left",
+        "name": "f(x)= x²-8",
+        "weapon": "Rapid Blaster Pro WNT-R",
+        "abilities": [
+          "OG",
+          "SCU",
+          "ISM"
+        ]
+      }
+    ],
+    "enemies": [
+      {
+        "name": "Nala fan",
+        "weapon": "S-BLAST '91",
+        "abilities": [
+          "CB",
+          "SSU",
+          "SJ"
+        ]
+      },
+      {
+        "name": "バッラスト",
+        "weapon": "Snipewriter 5H",
+        "abilities": [
+          "LDE",
+          "SPU",
+          "ISM"
+        ]
+      },
+      {
+        "name": "Jared",
+        "weapon": "Twinklez Splat Dualies",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ]
+      },
+      {
+        "name": "Reiyu C:3",
+        "weapon": "Splash-o-matic",
+        "abilities": [
+          "SSU",
+          "SSU",
+          "SJ"
+        ]
+      }
+    ]
+  },
+  "options": {
+    "skipFields": [
+      "teammates.3.name"
+    ],
+    "notes": "8-player spectator map screen from a different stream layout (PXG score bug top-left) — attests the card grid and the X jump-button disc land on the same ROIs across layouts. Latin names anchor the 29-30px glyph-height calibration. teammates.3.name skipped: the superscript two in f(x)= x²-8 is not a charset glyph (reads ´ or ·)."
+  }
+}

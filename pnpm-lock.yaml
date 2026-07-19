@@ -6,6 +6,7 @@ settings:
 
 patchedDependencies:
   '@react-router/serve@8.1.0': 4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6
+  '@techstark/opencv-js@5.0.0-release.1': 0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3
   kysely@0.29.0: 6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6
 
 importers:
@@ -59,7 +60,7 @@ importers:
         version: 10.64.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@react-router/node@8.1.0(react-router@8.1.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.1.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       '@techstark/opencv-js':
         specifier: 5.0.0-release.1
-        version: 5.0.0-release.1
+        version: 5.0.0-release.1(patch_hash=0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3)
       '@tldraw/tldraw':
         specifier: 3.12.1
         version: 3.12.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -7272,7 +7273,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@techstark/opencv-js@5.0.0-release.1': {}
+  '@techstark/opencv-js@5.0.0-release.1(patch_hash=0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3)': {}
 
   '@tiptap/core@2.27.2(@tiptap/pm@2.27.2)':
     dependencies:

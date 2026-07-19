@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weapon": "Slosher",
+    "weaponId": 3000,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "CB",
+        "SS",
+        "SSU",
+        "ISS"
+      ],
+      [
+        "QR",
+        "QR",
+        "QR",
+        "QSJ"
+      ],
+      [
+        "QR",
+        "QR",
+        "RES",
+        "SRU"
+      ]
+    ],
+    "name": "FxG スパータン"
+  }
+}

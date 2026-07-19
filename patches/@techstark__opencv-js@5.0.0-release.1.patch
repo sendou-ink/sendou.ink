@@ -1,0 +1,13 @@
+diff --git a/dist/opencv.js b/dist/opencv.js
+index 0ad5948a0b3bc2caa751c80b17a8ccd237dd3a70..2346f10d411eafc727a78f5c847e089612f7021b 100644
+--- a/dist/opencv.js
++++ b/dist/opencv.js
+@@ -8,7 +8,7 @@
+     // Node. Does not work with strict CommonJS, but
+     // only CommonJS-like environments that support module.exports,
+     // like Node.
+-    module.exports = factory();
++    module.exports = { cvReadyPromise: factory() };
+   } else if (typeof window === 'object') {
+     // Browser globals
+     root.cv = factory();

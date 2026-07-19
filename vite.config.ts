@@ -69,7 +69,11 @@ export default defineConfig((config) => {
 		],
 
 		test: {
-			projects: ["./vitest.unit.config.ts", "./vitest.browser.config.ts"],
+			projects: [
+				"./vitest.unit.config.ts",
+				"./vitest.browser.config.ts",
+				"./vitest.cv.config.ts",
+			],
 		},
 		define: {
 			__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
