@@ -13,7 +13,8 @@ const devOnlyRoutes =
 					"/admin/generate-images",
 					"features/admin/routes/generate-images.tsx",
 				),
-				// promote out of devOnlyRoutes once verified on Render
+				// verified against a production build (worker chunk, CDN fetch,
+				// React Compiler output); promote out of devOnlyRoutes on deploy
 				route("/cv", "features/cv/routes/cv.tsx"),
 				route(
 					"/components",

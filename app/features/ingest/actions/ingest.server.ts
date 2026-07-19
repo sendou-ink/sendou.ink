@@ -43,7 +43,7 @@ export const action: ActionFunction = async ({ request }) => {
 			const games = await IngestRepository.gamesPlayedByUserSince({
 				userId: povUserId,
 				since:
-				// xxx: use date-fns
+					// xxx: use date-fns
 					Math.floor(Date.now() / 1000) - CONTENT_RESOLUTION_WINDOW_SECONDS,
 			});
 			tournamentId = Scoreboards.resolveTournamentId({

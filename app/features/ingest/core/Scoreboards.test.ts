@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { CvAbility, CvLobby } from "~/features/cv/cv-types";
-import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import type { IngestedEventInput } from "../ingest-schemas";
 import * as Scoreboards from "./Scoreboards";
 
@@ -171,9 +175,7 @@ describe("matchedScoreboards", () => {
 
 	it("matches scoreboards to games by mode and stage", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({ mode: "RM", stage: 1, t: 60 }),
-			],
+			events: [testScoreboard({ mode: "RM", stage: 1, t: 60 })],
 			games: [
 				testGame({ mapIndex: 0, mode: "SZ", stageId: 0 as StageId }),
 				testGame({ mapIndex: 1, mode: "RM", stageId: 1 as StageId }),
@@ -235,10 +237,7 @@ describe("matchedScoreboards", () => {
 
 	it("skips scoreboards with unreadable mode or stage", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({ mode: null }),
-				testScoreboard({ stage: null }),
-			],
+			events: [testScoreboard({ mode: null }), testScoreboard({ stage: null })],
 			games: [testGame()],
 		});
 

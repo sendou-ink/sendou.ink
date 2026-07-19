@@ -7,7 +7,9 @@ import {
 import { prefillVodMatches } from "./VodMatches";
 
 // 8 real main weapon ids (4v4): Splattershot etc.
-const WEAPONS: IngestVodMatchInput["weapons"] = [40, 40, 40, 40, 20, 20, 20, 20];
+const WEAPONS: IngestVodMatchInput["weapons"] = [
+	40, 40, 40, 40, 20, 20, 20, 20,
+];
 
 function testMatch(
 	partial: Partial<IngestVodMatchInput> = {},
