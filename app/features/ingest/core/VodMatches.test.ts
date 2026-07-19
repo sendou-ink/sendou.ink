@@ -7,44 +7,44 @@ import {
 import { prefillVodMatches } from "./VodMatches";
 
 // 8 real main weapon ids (4v4): Splattershot etc.
-const WEAPONS = [40, 40, 40, 40, 20, 20, 20, 20];
+const WEAPONS: IngestVodMatchInput["weapons"] = [40, 40, 40, 40, 20, 20, 20, 20];
 
 function testMatch(
 	partial: Partial<IngestVodMatchInput> = {},
 ): IngestVodMatchInput {
 	return {
 		startsAt: 30,
-		mode: "Splat Zones",
-		stage: "Scorch Gorge",
+		mode: "SZ",
+		stage: 0,
 		weapons: WEAPONS,
 		...partial,
 	};
 }
 
 describe("prefillVodMatches", () => {
-	it("resolves English mode/stage names and weapon ids", () => {
+	it("maps validated match rows into the form's prefill shape", () => {
 		const prefilled = prefillVodMatches([testMatch()]);
 
 		expect(prefilled).toHaveLength(1);
-		expect(prefilled[0]).toMatchObject({
+		expect(prefilled[0]).toEqual({
 			startsAt: 30,
 			mode: "SZ",
+			stageId: 0,
 			weapons: [40, 40, 40, 40, 20, 20, 20, 20],
 		});
-		expect(typeof prefilled[0]!.stageId).toBe("number");
 	});
 
-	it("resolves what it can and nulls the rest instead of skipping", () => {
+	it("keeps unread (null) fields for the user to fill in the form", () => {
 		const prefilled = prefillVodMatches([
 			testMatch({
 				mode: null,
-				stage: "Not A Stage",
+				stage: null,
 				weapons: [...WEAPONS.slice(0, 7), null],
 			}),
 		]);
 
 		expect(prefilled).toHaveLength(1);
-		expect(prefilled[0]).toMatchObject({
+		expect(prefilled[0]).toEqual({
 			startsAt: 30,
 			mode: null,
 			stageId: null,
@@ -52,9 +52,17 @@ describe("prefillVodMatches", () => {
 		});
 	});
 
-	it("accepts the JSONCrushed `ingest` search param emberz sends", () => {
-		// what emberz's "Upload to sendou.ink" button puts in the param
-		// (src/ui/sendou-upload.ts): a crushed { type?, matches } payload
+	it("rejects rows that are not sendou ids", () => {
+		const parsed = ingestVodPrefillSchema.safeParse({
+			matches: [{ ...testMatch(), stage: "Scorch Gorge" }],
+		});
+		expect(parsed.success).toBe(false);
+	});
+
+	it("accepts the JSONCrushed `ingest` search param the CV VoD tab sends", () => {
+		// what the CV VoD tab's "Upload as VoD" button puts in the param
+		// (~/features/cv/components/sendou-upload.ts): a crushed
+		// { type?, matches } payload
 		const param = JSONCrush.crush(
 			JSON.stringify({ type: "CAST", matches: [testMatch()] }),
 		);

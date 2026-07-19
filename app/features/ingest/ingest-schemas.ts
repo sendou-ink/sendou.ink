@@ -1,52 +1,33 @@
 import { z } from "zod";
+import {
+	cvAbilitySchema,
+	cvDeathDataSchema,
+	cvMapStartDataSchema,
+	cvScoreboardDataSchema,
+	cvScoreboardPlayerSchema,
+	cvScoreboardReplayDataSchema,
+} from "~/features/cv/cv-schemas";
 import { id } from "~/utils/zod";
-
-// xxx: we can make these more strict e.g. validate is a proper mode etc.
 
 const INGEST_MAX_EVENTS_PER_REQUEST = 1000;
 
-const detectionText = z.string().max(500);
+/**
+ * The event data shapes come from the producer (~/features/cv/cv-schemas —
+ * the single source of truth for the CV events domain); this module only
+ * adds the ingest-specific envelope and enrichments.
+ */
 
-const scoreboardPlayerSchema = z.object({
-	name: detectionText,
-	/** sendou main-weapon id; null when the row's weapon was unreadable */
-	weaponId: z.number().int().nullable(),
-	paint: z.number().nullable(),
-	ka: z.number().nullable(),
-	d: z.number().nullable(),
-	s: z.number().nullable(),
-	/** [head, clothes, shoes] ability rows gathered from the match's death screens */
-	abilities: z.array(z.array(detectionText)).optional(),
+/** [head, clothes, shoes] ability rows gathered from the match's death screens */
+const scoreboardPlayerSchema = cvScoreboardPlayerSchema.extend({
+	abilities: z.array(z.array(cvAbilitySchema)).optional(),
 });
 
-const scoreboardDataSchema = z.object({
-	lobby: detectionText.nullable(),
-	mode: detectionText.nullable(),
-	stage: detectionText.nullable(),
-	scores: z.tuple([z.number().nullable(), z.number().nullable()]),
+const scoreboardDataSchema = cvScoreboardDataSchema.extend({
 	players: z.array(scoreboardPlayerSchema).length(8),
-	povIndex: z.number().int().min(0).max(7).nullable(),
 });
 
-const scoreboardReplayDataSchema = scoreboardDataSchema.extend({
-	timestamp: detectionText.nullable(),
-	replayCode: detectionText.nullable(),
-	matchScores: z.tuple([z.number().nullable(), z.number().nullable()]),
-});
-
-const deathDataSchema = z.object({
-	weapon: detectionText.nullable(),
-	// xxx: these ids conflict so more info will be needed
-	/** sendou weapon id (main/sub/special id space per weaponType) */
-	weaponId: z.number().int().nullable(),
-	weaponType: z.enum(["MAIN", "SUB", "SPECIAL"]).nullable(),
-	abilities: z.array(z.array(detectionText)),
-	name: detectionText.nullable(),
-});
-
-const mapStartDataSchema = z.object({
-	mode: detectionText.nullable(),
-	stage: detectionText.nullable(),
+const scoreboardReplayDataSchema = cvScoreboardReplayDataSchema.extend({
+	players: z.array(scoreboardPlayerSchema).length(8),
 });
 
 const eventBaseSchema = z.object({
@@ -73,11 +54,11 @@ const ingestedEventSchema = z.discriminatedUnion("type", [
 	}),
 	eventBaseSchema.extend({
 		type: z.literal("Death"),
-		data: deathDataSchema,
+		data: cvDeathDataSchema,
 	}),
 	eventBaseSchema.extend({
 		type: z.literal("MapStart"),
-		data: mapStartDataSchema,
+		data: cvMapStartDataSchema,
 	}),
 ]);
 

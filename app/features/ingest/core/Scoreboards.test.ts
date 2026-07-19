@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { CvAbility, CvLobby } from "~/features/cv/cv-types";
+import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { IngestedEventInput } from "../ingest-schemas";
 import * as Scoreboards from "./Scoreboards";
 
@@ -27,21 +28,21 @@ function testGame(
 
 function testScoreboard({
 	t = 60,
-	mode = "Splat Zones",
-	stage = "Scorch Gorge",
-	lobby = "Private Battle",
+	mode = "SZ",
+	stage = 0,
+	lobby = "PRIVATE",
 	names = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"],
-	weapons = [10, 10, 10, 10, 20, 20, 20, 20] as (number | null)[],
+	weapons = [10, 10, 10, 10, 20, 20, 20, 20] as (MainWeaponId | null)[],
 	abilities = {},
 	povIndex = null,
 }: {
 	t?: number;
-	mode?: string | null;
-	stage?: string | null;
-	lobby?: string | null;
+	mode?: ModeShort | null;
+	stage?: StageId | null;
+	lobby?: CvLobby | null;
 	names?: string[];
-	weapons?: (number | null)[];
-	abilities?: Record<number, string[][]>;
+	weapons?: (MainWeaponId | null)[];
+	abilities?: Record<number, CvAbility[][]>;
 	povIndex?: number | null;
 } = {}): IngestedEventInput {
 	return {
@@ -98,7 +99,7 @@ describe("matchedScoreboards", () => {
 	});
 
 	it("carries ingested player abilities through to the stored scoreboard", () => {
-		const build = [
+		const build: CvAbility[][] = [
 			["ISM", "ISS", "ISS", "ISS"],
 			["QR", "QSJ", "QSJ", "QSJ"],
 			["SSU", "RSU", "RSU", "RSU"],
@@ -171,7 +172,7 @@ describe("matchedScoreboards", () => {
 	it("matches scoreboards to games by mode and stage", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
-				testScoreboard({ mode: "Rainmaker", stage: "Eeltail Alley", t: 60 }),
+				testScoreboard({ mode: "RM", stage: 1, t: 60 }),
 			],
 			games: [
 				testGame({ mapIndex: 0, mode: "SZ", stageId: 0 as StageId }),
@@ -225,7 +226,7 @@ describe("matchedScoreboards", () => {
 
 	it("skips scoreboards from other lobbies", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard({ lobby: "X Battle" })],
+			events: [testScoreboard({ lobby: "X" })],
 			games: [testGame()],
 		});
 
@@ -236,7 +237,7 @@ describe("matchedScoreboards", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
 				testScoreboard({ mode: null }),
-				testScoreboard({ stage: "Not A Stage" }),
+				testScoreboard({ stage: null }),
 			],
 			games: [testGame()],
 		});
@@ -270,7 +271,7 @@ describe("matchedScoreboards", () => {
 					type: "MapStart",
 					t: 10,
 					confidence: 0.9,
-					data: { mode: "Splat Zones", stage: "Scorch Gorge" },
+					data: { mode: "SZ", stage: 0 },
 				},
 			],
 			games: [testGame()],
@@ -379,8 +380,8 @@ describe("matchedScoreboards", () => {
 	it("does not assign a game played before the previously assigned one", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
 			events: [
-				testScoreboard({ t: 60, mode: "Rainmaker", stage: "Eeltail Alley" }),
-				testScoreboard({ t: 1000, mode: "Splat Zones", stage: "Scorch Gorge" }),
+				testScoreboard({ t: 60, mode: "RM", stage: 1 }),
+				testScoreboard({ t: 1000, mode: "SZ", stage: 0 }),
 			],
 			games: [
 				testGame({
@@ -424,8 +425,8 @@ describe("resolveTournamentId", () => {
 	}
 
 	const seenSequence = [
-		testScoreboard({ t: 60, mode: "Splat Zones", stage: "Scorch Gorge" }),
-		testScoreboard({ t: 600, mode: "Tower Control", stage: "Eeltail Alley" }),
+		testScoreboard({ t: 60, mode: "SZ", stage: 0 }),
+		testScoreboard({ t: 600, mode: "TC", stage: 1 }),
 	];
 
 	it("resolves the tournament whose games match the scoreboard sequence", () => {

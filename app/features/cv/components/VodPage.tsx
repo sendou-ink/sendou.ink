@@ -32,6 +32,7 @@ import type { FixtureData } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
 import { countIngestBatches, type SendouUser, sendVodResults } from "./sendou-ingest";
+import { Link } from "react-router";
 import { sendouUpload } from "./sendou-upload";
 import { thumbnailFromBlob } from "./thumbnail";
 
@@ -405,9 +406,9 @@ export function VodPage({
               </button>
             )}
             {SENDOU_UPLOAD_ENABLED && upload?.url && (
-              <button onClick={() => window.open(upload.url!, "_blank", "noopener")}>
+              <Link to={upload.url} className="link-button">
                 Upload as VoD
-              </button>
+              </Link>
             )}
             {SENDOU_UPLOAD_ENABLED && upload?.problem && (
               <span className="score">upload unavailable: {upload.problem}</span>

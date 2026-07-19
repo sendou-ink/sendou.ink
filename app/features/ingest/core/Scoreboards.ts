@@ -1,3 +1,4 @@
+import type { CvAbility } from "~/features/cv/cv-types";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -7,14 +8,9 @@ import type {
 	IngestedEventInput,
 	ScoreboardEventInput,
 } from "../ingest-schemas";
-import {
-	MAIN_WEAPON_IDS,
-	MODE_SHORT_BY_ENGLISH_NAME,
-	STAGE_ID_BY_ENGLISH_NAME,
-} from "./game-names";
 
 /** Lobby header value scoreboards of tournament games are expected to have. */
-const TOURNAMENT_LOBBY = "Private Battle";
+const TOURNAMENT_LOBBY = "PRIVATE";
 
 /**
  * Two scoreboards this close in the source video with identical contents are
@@ -74,7 +70,7 @@ export interface IngestedScoreboardPlayer {
 	s: number | null;
 	paint: number | null;
 	/** [head, clothes, shoes] ability rows gathered from the match's death screens */
-	abilities?: string[][]; // xxx: improve types incl. this
+	abilities?: CvAbility[][];
 	/** set only via povIndex attribution */
 	userId?: number;
 }
@@ -175,13 +171,9 @@ export function matchedScoreboards({
 
 	let nextGameIdx = 0;
 	for (const scoreboard of scoreboards) {
-		const mode = scoreboard.data.mode
-			? MODE_SHORT_BY_ENGLISH_NAME.get(scoreboard.data.mode)
-			: undefined;
-		const stageId = scoreboard.data.stage
-			? STAGE_ID_BY_ENGLISH_NAME.get(scoreboard.data.stage)
-			: undefined;
-		if (mode === undefined || stageId === undefined) continue;
+		const mode = scoreboard.data.mode;
+		const stageId = scoreboard.data.stage;
+		if (mode === null || stageId === null) continue;
 
 		for (let i = nextGameIdx; i < orderedGames.length; i++) {
 			const game = orderedGames[i]!;
@@ -301,10 +293,7 @@ function scoreboardToMatchedScoreboard({
 				name: player.name.trim(),
 				tournamentTeamId:
 					playerIdx < PLAYERS_PER_TEAM ? game.winnerTeamId : game.loserTeamId,
-				weaponSplId:
-					player.weaponId !== null && MAIN_WEAPON_IDS.has(player.weaponId)
-						? (player.weaponId as MainWeaponId)
-						: null,
+				weaponSplId: player.weaponId,
 				ka: player.ka,
 				d: player.d,
 				s: player.s,

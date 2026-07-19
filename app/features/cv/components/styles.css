@@ -511,3 +511,20 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
   color: var(--color-error);
 }
 
+
+/* internal navigation styled like the sibling action buttons */
+.cv-app .link-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--field-padding);
+  height: var(--field-size-sm);
+  border: var(--border-style);
+  border-radius: var(--radius-field);
+  background: var(--color-bg-higher);
+  color: var(--color-text);
+  font-size: var(--font-sm);
+  text-decoration: none;
+}
+.cv-app .link-button:focus-visible {
+  outline: var(--focus-ring);
+}
