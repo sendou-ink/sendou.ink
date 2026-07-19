@@ -21,18 +21,21 @@ export default function test(
 ): void {
 	vitestTest(name, async () => {
 		const failures: { name: string; error: unknown }[] = [];
-		const t: CompatTestContext = {
-			async test(subName, optsOrFn, maybeFn?) {
-				const opts = typeof optsOrFn === "function" ? {} : optsOrFn;
-				const body = typeof optsOrFn === "function" ? optsOrFn : maybeFn;
-				if (opts.skip || !body) return;
-				try {
-					await body();
-				} catch (error) {
-					failures.push({ name: subName, error });
-				}
-			},
+		const subtest = async (
+			subName: string,
+			optsOrFn: { skip?: boolean | string } | SubtestBody,
+			maybeFn?: SubtestBody,
+		): Promise<void> => {
+			const opts = typeof optsOrFn === "function" ? {} : optsOrFn;
+			const body = typeof optsOrFn === "function" ? optsOrFn : maybeFn;
+			if (opts.skip || !body) return;
+			try {
+				await body();
+			} catch (error) {
+				failures.push({ name: subName, error });
+			}
 		};
+		const t: CompatTestContext = { test: subtest };
 		await fn(t);
 		if (failures.length === 0) return;
 		if (failures.length === 1 && failures[0]) {

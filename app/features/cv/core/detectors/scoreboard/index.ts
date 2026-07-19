@@ -2,6 +2,8 @@
  * ScoreboardDetector: parses the end-of-match results scoreboard
  * (team scores + 8 rows of weapon / name / paint / splats / deaths / specials).
  */
+import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { CvLobby } from "../../../cv-types";
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { cropRoi, maxBrightness, meanBrightness } from "../../image";
@@ -34,7 +36,7 @@ import type { WeaponMatch, WeaponTemplate } from "./weapons";
 export interface ScoreboardPlayer {
   name: string;
   /** sendou main-weapon id; null when the row's weapon was unreadable */
-  weaponId: number | null;
+  weaponId: MainWeaponId | null;
   paint: number | null;
   /** kills+assists (the combined counter as shown) */
   ka: number | null;
@@ -43,12 +45,10 @@ export interface ScoreboardPlayer {
 }
 
 export interface ScoreboardData {
-  /** e.g. "X Battle", from the header tag; null when unreadable */
-  lobby: string | null;
-  /** e.g. "Splat Zones" */
-  mode: string | null;
-  /** e.g. "Scorch Gorge" */
-  stage: string | null;
+  /** from the header tag; null when unreadable */
+  lobby: CvLobby | null;
+  mode: ModeShort | null;
+  stage: StageId | null;
   /** [winning team total, losing team total] as shown ("500 p") */
   scores: [number | null, number | null];
   /** 8 players: rows 0-3 winning team, rows 4-7 losing team */

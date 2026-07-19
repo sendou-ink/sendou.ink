@@ -1,9 +1,9 @@
 {
   "event": "ScoreboardReplay",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Marlin Airport",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 22,
     "timestamp": "9/7/2026 18:17",
     "scores": [
       500,
@@ -71,7 +71,8 @@
         "s": 0
       }
     ],
-    "replayCode": "R24X-YWMH-K2S6-TK9G"
+    "replayCode": "R24X-YWMH-K2S6-TK9G",
+    "stageLabel": "Marlin Airport"
   },
   "options": {
     "notes": "Twitch-stream capture. 7-player match: the 8th pill is empty and must not be emitted. Replay code hand-verified from the zoomed frame (old parser returned no code; a later one misread T as 7)."

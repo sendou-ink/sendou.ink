@@ -7,6 +7,8 @@
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { CvAbility, CvLobby } from "../cv-types";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent, Detector, GateResult } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
@@ -16,7 +18,7 @@ export const FIXTURES_DIR = new URL("../tests/fixtures", import.meta.url).pathna
 
 interface ExpectedPlayer {
   name?: string;
-  weaponId?: number | null;
+  weaponId?: MainWeaponId | null;
   paint?: number;
   ka?: number;
   d?: number;
@@ -26,17 +28,19 @@ interface ExpectedPlayer {
 interface ExpectedMinimapTeammate {
   slot?: "up" | "left" | "right" | "self";
   name?: string | null;
-  weapon?: string | null;
-  weaponId?: number | null;
-  abilities?: (string | null)[];
+  /** informational for the human corrector; tests compare weaponId */
+  weaponLabel?: string | null;
+  weaponId?: MainWeaponId | null;
+  abilities?: (CvAbility | null)[];
 }
 
 interface ExpectedMinimapEnemy {
   /** spectator frames only: the screen shows bravo-team names */
   name?: string | null;
-  weapon?: string | null;
-  weaponId?: number | null;
-  abilities?: (string | null)[];
+  /** informational for the human corrector; tests compare weaponId */
+  weaponLabel?: string | null;
+  weaponId?: MainWeaponId | null;
+  abilities?: (CvAbility | null)[];
 }
 
 interface ExpectedScoreboard {
@@ -49,9 +53,11 @@ interface ExpectedScoreboard {
     | "Minimap"
     | "none";
   data?: {
-    lobby?: string;
-    mode?: string;
-    stage?: string;
+    lobby?: CvLobby;
+    mode?: ModeShort;
+    stage?: StageId;
+    /** informational for the human corrector; tests compare `stage` */
+    stageLabel?: string;
     /** ScoreboardReplay only */
     timestamp?: string;
     /** ScoreboardReplay only */
@@ -63,14 +69,15 @@ interface ExpectedScoreboard {
     /** index of the yellow POV-arrow row in `players`; null = no arrow */
     povIndex?: number | null;
     /**
-     * Death: killer's weapon (English name), its id, and its kind.
+     * Death: killer's weapon id and kind (ids are unique per kind).
      * ScoreboardOwn: the player's own main weapon (weaponType unused).
+     * weaponLabel is informational for the human corrector.
      */
-    weapon?: string;
+    weaponLabel?: string;
     weaponId?: number | null;
     weaponType?: "MAIN" | "SUB" | "SPECIAL";
     /** Death + ScoreboardOwn: 3 gear rows of [main, sub, sub, sub] ability ids */
-    abilities?: string[][];
+    abilities?: CvAbility[][];
     /** Death only: killer's splash-tag name */
     name?: string;
     /** Minimap only: casted 8-player spectator map screen (not parsed yet) */

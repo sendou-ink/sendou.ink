@@ -6,39 +6,40 @@
  */
 
 import assert from "node:assert/strict";
-import test from "./node-test-compat";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { CvAbility } from "../cv-types";
 import { connectAbilities } from "../core/ability-harvest";
 import { DEATH_EVENT_TYPE, type DeathData } from "../core/detectors/death/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent } from "../core/detectors/types";
+import test from "./node-test-compat";
 
-const GRID_A = [
+const GRID_A: CvAbility[][] = [
   ["ISM", "ISM", "ISM", "ISM"],
   ["RSU", "RSU", "RSU", "RSU"],
   ["SSU", "SSU", "SSU", "SSU"],
 ];
-const GRID_B = [
+const GRID_B: CvAbility[][] = [
   ["QR", "QR", "QR", "QR"],
   ["QSJ", "QSJ", "QSJ", "QSJ"],
   ["IRU", "IRU", "IRU", "IRU"],
 ];
 
-function player(name: string, weaponId: number) {
+function player(name: string, weaponId: MainWeaponId) {
   return { name, weaponId, paint: null, ka: null, d: null, s: null };
 }
 
 function death(
   t: number,
   name: string | null,
-  weaponId: number | null,
-  abilities: string[][] = GRID_A,
+  weaponId: MainWeaponId | null,
+  abilities: CvAbility[][] = GRID_A,
 ): DetectedEvent<DeathData> {
   return {
     type: DEATH_EVENT_TYPE,
     t,
     confidence: 0.9,
     data: {
-      weapon: null,
       weaponId,
       weaponType: weaponId !== null ? "MAIN" : null,
       abilities,

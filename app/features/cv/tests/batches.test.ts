@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import type { CvAbility, CvLobby } from "../cv-types";
 import test from "./node-test-compat";
 import {
   buildIngestBatches,
@@ -16,17 +17,16 @@ function mapStart(t: number): DetectedEvent {
     type: "MapStart",
     t,
     confidence: 0.9,
-    data: { mode: "Splat Zones", stage: "Scorch Gorge" },
+    data: { mode: "SZ", stage: 0 },
   };
 }
 
 function death(
   t: number,
   name: string,
-  abilities: string[][] = [["ISM", "ISS", "ISS", "ISS"]],
+  abilities: CvAbility[][] = [["ISM", "ISS", "ISS", "ISS"]],
 ): DetectedEvent {
   const data: DeathData = {
-    weapon: "Splattershot",
     weaponId: null,
     weaponType: "MAIN",
     abilities,
@@ -35,11 +35,14 @@ function death(
   return { type: "Death", t, confidence: 0.9, data };
 }
 
-function scoreboard(t: number, { lobby = "Private Battle" as string | null } = {}): DetectedEvent {
+function scoreboard(
+  t: number,
+  { lobby = "PRIVATE" as CvLobby | null } = {},
+): DetectedEvent {
   const data: ScoreboardData = {
     lobby,
-    mode: "Splat Zones",
-    stage: "Scorch Gorge",
+    mode: "SZ",
+    stage: 0,
     scores: [100, 47],
     players: NAMES.map((name) => ({
       name,
@@ -73,7 +76,7 @@ test("groups map start, deaths and scoreboard into one batch", () => {
 });
 
 test("enriches the scoreboard players with abilities from the batch's deaths", () => {
-  const build = [
+  const build: CvAbility[][] = [
     ["ISM", "ISS", "ISS", "ISS"],
     ["QR", "QSJ", "QSJ", "QSJ"],
     ["SSU", "RSU", "RSU", "RSU"],
@@ -134,7 +137,7 @@ test("non-private-battle scoreboards are dropped together with their batch", () 
   const batches = buildIngestBatches([
     mapStart(0),
     death(60, "l2"),
-    scoreboard(300, { lobby: "X Battle" }),
+    scoreboard(300, { lobby: "X" }),
     mapStart(400),
     scoreboard(700),
   ]);
@@ -176,10 +179,9 @@ test("event types the endpoint does not accept are excluded", () => {
     t: 310,
     confidence: 0.9,
     data: {
-      lobby: "Private Battle",
+      lobby: "PRIVATE",
       mode: null,
       stage: null,
-      weapon: null,
       weaponId: null,
       abilities: [],
     },

@@ -20,6 +20,8 @@
  * decisive margin, and below that the burst icon and the text ranking
  * corroborate each other (steps 2c/2d in parse).
  */
+import type { MainWeaponId, SpecialWeaponId, SubWeaponId } from "~/modules/in-game-lists/types";
+import { type CvAbility, toCvAbility } from "../../../cv-types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import { type GlyphSet, type RecognizedText, recognizeText, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, cropRoi, meanBrightness, type Roi } from "../../image";
@@ -62,21 +64,18 @@ import {
 import { ALL_WEAPON_ENTRIES, type WeaponEntry, type WeaponType } from "./weapon-names";
 
 export interface DeathData {
-  /** killer's weapon (English name, e.g. "Splattershot"); null if unreadable */
-  weapon: string | null;
   /**
-   * the weapon's in-game id, unique only within its kind (MAIN ids are the
-   * assets/cv/main-weapons id space; SUB/SPECIAL ids are sendou.ink's)
+   * the killer's weapon id — a sendou main/sub/special weapon id, unique
+   * only within its kind (`weaponType` disambiguates); null if unreadable
    */
-  weaponId: number | null;
+  weaponId: MainWeaponId | SubWeaponId | SpecialWeaponId | null;
   /** which kind of weapon got the splat; null when the weapon is unreadable */
   weaponType: WeaponType | null;
   /**
-   * killer's gear abilities, [head, clothes, shoes] rows of
-   * [main, sub...] ability ids (assets/cv/abilities id space); rows
-   * carry as many sub entries as the gear has slots (1-3)
+   * killer's gear abilities, [head, clothes, shoes] rows of [main, sub...]
+   * ability ids; rows carry as many sub entries as the gear has slots (1-3)
    */
-  abilities: string[][];
+  abilities: CvAbility[][];
   /** killer's splash-tag name; null if unreadable */
   name: string | null;
 }
@@ -461,14 +460,14 @@ export function createDeathDetector(resources: ScoreboardResources): Detector<De
     // 2. the other line carries the weapon name; snap it to the template
     // language's names (localized + canonical English)
     let weapon: string | null = null;
-    let weaponId: number | null = null;
+    let weaponId: DeathData["weaponId"] = null;
     let weaponType: WeaponType | null = null;
     let weaponScore = 0;
     let weaponRaw: RecognizedText | null = null;
     let plainRanked: { entry: WeaponCandidate; score: number }[] = [];
     const accept = (entry: WeaponEntry, score: number) => {
       weapon = entry.name;
-      weaponId = Number(entry.id);
+      weaponId = Number(entry.id) as NonNullable<DeathData["weaponId"]>;
       weaponType = entry.type;
       weaponScore = score;
     };
@@ -542,18 +541,18 @@ export function createDeathDetector(resources: ScoreboardResources): Detector<De
 
     // 3. ability grid; rows carry 1-3 sub circles (left-aligned, as many
     // as the gear has slots), so a sub box without badge ink ends the row
-    const abilityRows: string[][] = [];
+    const abilityRows: CvAbility[][] = [];
     const abilityDebug: (WeaponMatch | null)[][] = [];
     if (abilities) {
       for (let row = 0; row < ABILITY_ROWS; row++) {
-        const ids: string[] = [];
+        const ids: CvAbility[] = [];
         const debug: (WeaponMatch | null)[] = [];
         const mainCrop = cropRoi(rgb, abilityMainRoi(row));
         const main = matchWeapon(mainCrop, abilities.mains, {
           inkThreshold: ABILITY_INK_THRESHOLD,
         });
         mainCrop.delete();
-        ids.push(main.id);
+        ids.push(toCvAbility(main.id) ?? "UNKNOWN");
         debug.push(main);
         confidences.push(Math.max(0, main.score));
         for (let slot = 0; slot < ABILITY_SUB_XS.length; slot++) {
@@ -573,7 +572,7 @@ export function createDeathDetector(resources: ScoreboardResources): Detector<De
             inkThreshold: ABILITY_INK_THRESHOLD,
           });
           crop.delete();
-          ids.push(sub.id);
+          ids.push(toCvAbility(sub.id) ?? "UNKNOWN");
           debug.push(sub);
           confidences.push(Math.max(0, sub.score));
         }
@@ -682,8 +681,9 @@ export function createDeathDetector(resources: ScoreboardResources): Detector<De
         type: DEATH_EVENT_TYPE,
         t,
         confidence,
-        data: { weapon, weaponId, weaponType, abilities: abilityRows, name },
+        data: { weaponId, weaponType, abilities: abilityRows, name },
         debug: {
+          weaponName: weapon,
           line1: line1?.text,
           line2: line2?.text,
           jaWeaponLine: jaWeaponLine?.text,

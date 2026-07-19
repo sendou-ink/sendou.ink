@@ -1,10 +1,9 @@
 {
   "event": "ScoreboardOwn",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Museum d'Alfonsino",
-    "weapon": ".52 Gal",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 6,
     "weaponId": 50,
     "abilities": [
       [
@@ -25,6 +24,8 @@
         "QSJ",
         "IA"
       ]
-    ]
+    ],
+    "stageLabel": "Museum d'Alfonsino",
+    "weaponLabel": ".52 Gal"
   }
 }

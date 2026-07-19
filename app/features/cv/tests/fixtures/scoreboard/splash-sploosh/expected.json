@@ -6,9 +6,9 @@
     ]
   },
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Brinewater Springs",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 13,
     "scores": [
       500,
       0
@@ -79,6 +79,7 @@
         "d": 12,
         "s": 6
       }
-    ]
+    ],
+    "stageLabel": "Brinewater Springs"
   }
 }

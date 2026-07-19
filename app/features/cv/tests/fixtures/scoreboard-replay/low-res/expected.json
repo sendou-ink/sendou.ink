@@ -1,9 +1,9 @@
 {
   "event": "ScoreboardReplay",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Hagglefish Market",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 2,
     "replayCode": "RVRM-XXEL-0573-Q45U",
     "scores": [
       500,
@@ -78,6 +78,7 @@
         "d": 3,
         "s": 1
       }
-    ]
+    ],
+    "stageLabel": "Hagglefish Market"
   }
 }

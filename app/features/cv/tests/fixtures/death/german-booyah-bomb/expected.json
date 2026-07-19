@@ -1,7 +1,6 @@
 {
   "event": "Death",
   "data": {
-    "weapon": "Booyah Bomb",
     "weaponId": 6,
     "weaponType": "SPECIAL",
     "abilities": [
@@ -24,6 +23,7 @@
         "RES"
       ]
     ],
-    "name": "aruka"
+    "name": "aruka",
+    "weaponLabel": "Booyah Bomb"
   }
 }

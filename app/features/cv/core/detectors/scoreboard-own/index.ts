@@ -15,6 +15,8 @@ import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, cropRoi, maxBrightness, meanBrightness } from "../../image";
 import { closestBy, matchKey } from "../../text";
 import { LOCALIZED_WEAPON_NAMES } from "../death/localized-messages";
+import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { type CvAbility, type CvLobby, toCvAbility, toMainWeaponId } from "../../../cv-types";
 import { ALL_WEAPON_ENTRIES, type WeaponEntry } from "../death/weapon-names";
 import { type ParsedHeader, parseHeader } from "../scoreboard/header";
 import type { ScoreboardResources } from "../scoreboard/index";
@@ -38,21 +40,17 @@ import {
 } from "./rois";
 
 export interface ScoreboardOwnData {
-  /** e.g. "Private Battle", from the header tag; null when unreadable */
-  lobby: string | null;
-  /** e.g. "Splat Zones" */
-  mode: string | null;
-  /** e.g. "Museum d'Alfonsino" */
-  stage: string | null;
-  /** the player's main weapon (canonical English name); null if unreadable */
-  weapon: string | null;
-  /** the weapon's id in the assets/cv/main-weapons id space */
-  weaponId: number | null;
+  /** from the header tag; null when unreadable */
+  lobby: CvLobby | null;
+  mode: ModeShort | null;
+  stage: StageId | null;
+  /** the player's main weapon; null if unreadable */
+  weaponId: MainWeaponId | null;
   /**
    * own gear abilities, [head, clothes, shoes] rows of
-   * [main, sub, sub, sub] ability ids (assets/cv/abilities id space)
+   * [main, sub, sub, sub] ability ids
    */
-  abilities: string[][];
+  abilities: CvAbility[][];
 }
 
 export const SCOREBOARD_OWN_EVENT_TYPE = "ScoreboardOwn";
@@ -157,7 +155,7 @@ export function createScoreboardOwnDetector(
     // condensed, whose dense antialiased columns fail the dark-or-bright
     // tag-column test and truncate the read mid-name.
     let weapon: string | null = null;
-    let weaponId: number | null = null;
+    let weaponId: MainWeaponId | null = null;
     let weaponScore = 0;
     let weaponReading = "";
     if (titleGlyphs) {
@@ -175,25 +173,25 @@ export function createScoreboardOwnDetector(
         weaponScore = match.score;
         if (match.score >= WEAPON_MIN_SCORE) {
           weapon = match.entry.entry.name;
-          weaponId = Number(match.entry.entry.id);
+          weaponId = toMainWeaponId(match.entry.entry.id);
         }
       }
       confidences.push(weaponScore);
     }
 
     // gear-card ability strips: [head, clothes, shoes] x [main, sub, sub, sub]
-    const abilityRows: string[][] = [];
+    const abilityRows: CvAbility[][] = [];
     const abilityDebug: (WeaponMatch | null)[][] = [];
     if (abilities) {
       for (let row = 0; row < GEAR_ROWS; row++) {
-        const ids: string[] = [];
+        const ids: CvAbility[] = [];
         const debug: (WeaponMatch | null)[] = [];
         const mainCrop = cropRoi(rgb, gearMainRoi(row));
         const main = matchWeapon(mainCrop, abilities.mains, {
           inkThreshold: OWN_ABILITY_INK_THRESHOLD,
         });
         mainCrop.delete();
-        ids.push(main.id);
+        ids.push(toCvAbility(main.id) ?? "UNKNOWN");
         debug.push(main);
         confidences.push(Math.max(0, main.score));
         for (let slot = 0; slot < 3; slot++) {
@@ -202,7 +200,7 @@ export function createScoreboardOwnDetector(
             inkThreshold: OWN_ABILITY_INK_THRESHOLD,
           });
           crop.delete();
-          ids.push(sub.id);
+          ids.push(toCvAbility(sub.id) ?? "UNKNOWN");
           debug.push(sub);
           confidences.push(Math.max(0, sub.score));
         }
@@ -226,12 +224,12 @@ export function createScoreboardOwnDetector(
           lobby: header?.lobby ?? null,
           mode: header?.mode ?? null,
           stage: header?.stage ?? null,
-          weapon,
           weaponId,
           abilities: abilityRows,
         },
         debug: {
           header: header?.debug,
+          weaponName: weapon,
           weaponReading,
           weaponScore,
           abilityRows: abilityDebug.map((row) =>

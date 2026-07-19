@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
 import test from "./node-test-compat";
 import type {
   MinimapData,
@@ -10,24 +11,22 @@ import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildVodMatches } from "../core/vod-matches";
 
-const ALPHA = [40, 1001, 2010, 3030];
-const BRAVO = [50, 210, 4010, 8000];
+const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];
+const BRAVO: MainWeaponId[] = [50, 210, 4010, 8000];
 const ALL = [...ALPHA, ...BRAVO];
 
-function teammate(weaponId: number | null, i: number): MinimapTeammate {
+function teammate(weaponId: MainWeaponId | null, i: number): MinimapTeammate {
   return {
     slot: SPECTATOR_SLOTS[i]!,
     name: null,
-    weapon: null,
     weaponId,
     abilities: [],
   };
 }
 
-function enemy(weaponId: number | null): MinimapEnemy {
+function enemy(weaponId: MainWeaponId | null): MinimapEnemy {
   return {
     name: null,
-    weapon: null,
     weaponId,
     abilities: [],
   };
@@ -36,9 +35,9 @@ function enemy(weaponId: number | null): MinimapEnemy {
 function minimap(
   t: number,
   {
-    stage = "Scorch Gorge" as string | null,
-    alpha = ALPHA as (number | null)[],
-    bravo = BRAVO as (number | null)[],
+    stage = 0 as StageId | null,
+    alpha = ALPHA as (MainWeaponId | null)[],
+    bravo = BRAVO as (MainWeaponId | null)[],
   } = {},
 ): DetectedEvent {
   const data: MinimapData = {
@@ -52,7 +51,7 @@ function minimap(
 
 function mapStart(
   t: number,
-  { mode = "Splat Zones" as string | null, stage = "Scorch Gorge" as string | null } = {},
+  { mode = "SZ" as ModeShort | null, stage = 0 as StageId | null } = {},
 ): DetectedEvent {
   return { type: "MapStart", t, confidence: 0.9, data: { mode, stage } };
 }
@@ -60,13 +59,13 @@ function mapStart(
 function scoreboard(
   t: number,
   {
-    mode = "Splat Zones" as string | null,
-    stage = "Scorch Gorge" as string | null,
-    weapons = ALL,
+    mode = "SZ" as ModeShort | null,
+    stage = 0 as StageId | null,
+    weapons = ALL as (MainWeaponId | null)[],
   } = {},
 ): DetectedEvent {
   const data: ScoreboardData = {
-    lobby: "Private Battle",
+    lobby: "PRIVATE",
     mode,
     stage,
     scores: [100, 47],
@@ -88,16 +87,16 @@ test("a spectator map's minimaps become one match: weapons + stage from the mini
   assert.equal(matches.length, 1);
   assert.deepEqual(matches[0], {
     startsAt: 70,
-    mode: "Splat Zones", // PoC default — the minimap can't read mode
+    mode: "SZ", // PoC default — the minimap can't read mode
     modeAssumed: true,
-    stage: "Scorch Gorge",
+    stage: 0,
     weapons: ALL,
   });
 });
 
 test("a real mode read is not flagged as assumed", () => {
-  const matches = buildVodMatches([mapStart(30, { mode: "Rainmaker" }), minimap(70)]);
-  assert.equal(matches[0]!.mode, "Rainmaker");
+  const matches = buildVodMatches([mapStart(30, { mode: "RM" }), minimap(70)]);
+  assert.equal(matches[0]!.mode, "RM");
   assert.equal(matches[0]!.modeAssumed, false);
 });
 
@@ -106,25 +105,25 @@ test("a lone misread stage neither splits the match nor poisons its stage", () =
   // the next read, so it folds in as a minority vote: one match, majority
   // stage, its weapons still contributing to the slot merge
   const matches = buildVodMatches([
-    minimap(70, { stage: "Scorch Gorge" }),
-    minimap(90, { stage: "Eeltail Alley" }),
-    minimap(110, { stage: "Scorch Gorge" }),
-    minimap(130, { stage: "Scorch Gorge" }),
+    minimap(70, { stage: 0 }),
+    minimap(90, { stage: 1 }),
+    minimap(110, { stage: 0 }),
+    minimap(130, { stage: 0 }),
   ]);
   assert.equal(matches.length, 1);
-  assert.equal(matches[0]!.stage, "Scorch Gorge");
+  assert.equal(matches[0]!.stage, 0);
 });
 
 test("a confirmed stage change splits even when the misread-looking frame is mid-stream", () => {
   const matches = buildVodMatches([
-    minimap(70, { stage: "Scorch Gorge" }),
-    minimap(90, { stage: "Eeltail Alley" }),
-    minimap(110, { stage: "Eeltail Alley" }),
+    minimap(70, { stage: 0 }),
+    minimap(90, { stage: 1 }),
+    minimap(110, { stage: 1 }),
   ]);
   assert.equal(matches.length, 2);
   assert.deepEqual(
     matches.map((m) => m.stage),
-    ["Scorch Gorge", "Eeltail Alley"],
+    [0, 1],
   );
   assert.deepEqual(
     matches.map((m) => m.startsAt),
@@ -146,14 +145,14 @@ test("same-stage rematch within the gap window merges into one match (known limi
 
 test("a stage change splits minimaps into separate per-map matches", () => {
   const matches = buildVodMatches([
-    minimap(70, { stage: "Scorch Gorge" }),
-    minimap(120, { stage: "Scorch Gorge" }),
-    minimap(400, { stage: "Eeltail Alley" }),
+    minimap(70, { stage: 0 }),
+    minimap(120, { stage: 0 }),
+    minimap(400, { stage: 1 }),
   ]);
   assert.equal(matches.length, 2);
   assert.deepEqual(
     matches.map((m) => m.stage),
-    ["Scorch Gorge", "Eeltail Alley"],
+    [0, 1],
   );
   assert.deepEqual(
     matches.map((m) => m.startsAt),
@@ -190,22 +189,22 @@ test("a slot no frame read stays null for the endpoint to skip on", () => {
 
 test("a MapStart supplies the real mode and opens a match", () => {
   const matches = buildVodMatches([
-    mapStart(30, { mode: "Rainmaker", stage: "Museum d'Alfonsino" }),
-    minimap(70, { stage: "Museum d'Alfonsino" }),
+    mapStart(30, { mode: "RM", stage: 6 }),
+    minimap(70, { stage: 6 }),
   ]);
   assert.equal(matches.length, 1);
-  assert.equal(matches[0]!.mode, "Rainmaker");
+  assert.equal(matches[0]!.mode, "RM");
   assert.equal(matches[0]!.startsAt, 30);
 });
 
 test("a scoreboard is the preferred weapon/mode source and closes a match", () => {
-  const boardWeapons = [10, 10, 10, 10, 20, 20, 20, 20];
+  const boardWeapons: (MainWeaponId | null)[] = [10, 10, 10, 10, 20, 20, 20, 20];
   const matches = buildVodMatches([
     minimap(70),
-    scoreboard(330, { mode: "Tower Control", weapons: boardWeapons }),
+    scoreboard(330, { mode: "TC", weapons: boardWeapons }),
   ]);
   assert.equal(matches.length, 1);
-  assert.equal(matches[0]!.mode, "Tower Control");
+  assert.equal(matches[0]!.mode, "TC");
   assert.deepEqual(matches[0]!.weapons, boardWeapons);
   assert.equal(matches[0]!.startsAt, 70); // first minimap open
 });

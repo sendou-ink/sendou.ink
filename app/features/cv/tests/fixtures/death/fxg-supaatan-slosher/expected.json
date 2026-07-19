@@ -1,7 +1,6 @@
 {
   "event": "Death",
   "data": {
-    "weapon": "Slosher",
     "weaponId": 3000,
     "weaponType": "MAIN",
     "abilities": [
@@ -24,6 +23,7 @@
         "SRU"
       ]
     ],
-    "name": "FxG スパータン"
+    "name": "FxG スパータン",
+    "weaponLabel": "Slosher"
   }
 }

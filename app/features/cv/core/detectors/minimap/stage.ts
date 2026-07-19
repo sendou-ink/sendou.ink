@@ -20,9 +20,9 @@
  * the reported result is the winning tile's stage. Mode is left to the
  * mode-bearing detectors (map-start, scoreboard header).
  */
+import type { StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
 import type { FrameData } from "../../image";
-import { STAGES } from "../scoreboard/header-entries";
 
 /** Downscaled signature dimensions (canonical 1920x1080 / 16). */
 export const PLANNER_SIG_W = 120;
@@ -40,16 +40,14 @@ const MIN_MARGIN = 0.05;
 export interface PlannerStage {
   /** "<stageId>-<MODE>", e.g. "6-SZ" */
   key: string;
-  /** sendou stage id (index into STAGES) */
-  stageId: number;
+  /** sendou stage id */
+  stageId: StageId;
   /** unit-L2-normalized structural signature, row-major PLANNER_SIG_W x _H */
   sig: Float32Array;
 }
 
 export interface StageMatch {
-  /** canonical English stage name (STAGES[stageId]) */
-  stage: string;
-  stageId: number;
+  stageId: StageId;
   /** best NCC of the winning stage */
   score: number;
   /** lead over the best-scoring other stage */
@@ -150,13 +148,13 @@ export function matchStage(
   planners: readonly PlannerStage[],
 ): StageMatch | null {
   if (planners.length === 0) return null;
-  const byStage = new Map<number, number>();
+  const byStage = new Map<StageId, number>();
   for (const p of planners) {
     const score = bestNcc(sig, p.sig);
     const prev = byStage.get(p.stageId);
     if (prev === undefined || score > prev) byStage.set(p.stageId, score);
   }
-  let bestId = -1;
+  let bestId: StageId | null = null;
   let best = -1;
   let second = -1;
   for (const [id, score] of byStage) {
@@ -169,9 +167,8 @@ export function matchStage(
     }
   }
   const margin = second < 0 ? best : best - second;
-  if (best < MIN_SCORE || margin < MIN_MARGIN) return null;
+  if (bestId === null || best < MIN_SCORE || margin < MIN_MARGIN) return null;
   return {
-    stage: STAGES[bestId] ?? "",
     stageId: bestId,
     score: Math.round(best * 1000) / 1000,
     margin: Math.round(margin * 1000) / 1000,
@@ -211,7 +208,7 @@ export function loadPlannerStages(atlas: FrameData, manifest: PlannerManifest): 
     }
     const norm = Math.sqrt(sumSq) || 1;
     for (let j = 0; j < sig.length; j++) sig[j]! /= norm;
-    const stageId = Number(key.split("-")[0]);
+    const stageId = Number(key.split("-")[0]) as StageId;
     return { key, stageId, sig };
   });
 }

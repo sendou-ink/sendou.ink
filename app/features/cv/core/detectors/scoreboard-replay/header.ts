@@ -8,6 +8,8 @@
  * shape and kept as a raw string; stage and lobby+mode snap to the closed
  * sets shared with the live header.
  */
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { CvLobby } from "../../../cv-types";
 import type { Mat } from "../../cv";
 import type { GlyphSet } from "../../glyphs";
 import { ALL_STAGE_ENTRIES, LOBBY_MODE_COMBOS } from "../../localized";
@@ -17,9 +19,9 @@ import { HEADER_BOTTOM_BAND, HEADER_TOP_BAND } from "./rois";
 
 export interface ParsedReplayHeader {
   timestamp: string | null;
-  stage: string | null;
-  lobby: string | null;
-  mode: string | null;
+  stage: StageId | null;
+  lobby: CvLobby | null;
+  mode: ModeShort | null;
   /** min of the closed-set match scores that were attempted */
   confidence: number;
   debug: {
@@ -54,13 +56,13 @@ const TIMESTAMP_RE = /^(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})\s+(\d(?: ?\d)?: ?\d ?\d
 interface TopBandParse {
   reading: string;
   timestamp: string | null;
-  stage: string | null;
+  stage: StageId | null;
   stageScore: number;
 }
 
 function parseTopBand(reading: string): TopBandParse {
   let timestamp: string | null = null;
-  let stage: string | null = null;
+  let stage: StageId | null = null;
   let stageScore = 0;
   // The top band reads with the BlitzMain name glyphs, where 1/I/l/| are
   // identical bars ("I9:04") and O rides a hair above 0 ("2O26"); in the
@@ -75,7 +77,7 @@ function parseTopBand(reading: string): TopBandParse {
     const match = closestBy(stageReading, ALL_STAGE_ENTRIES, (e) => e.text);
     if (match) {
       stageScore = match.score;
-      if (match.score >= MIN_MATCH_SCORE) stage = match.entry.canonical;
+      if (match.score >= MIN_MATCH_SCORE) stage = match.entry.stageId;
     }
   }
   return { reading, timestamp, stage, stageScore };
@@ -109,8 +111,8 @@ export function parseReplayHeader(
     }
   }
 
-  let lobby: string | null = null;
-  let mode: string | null = null;
+  let lobby: CvLobby | null = null;
+  let mode: ModeShort | null = null;
   if (bottomMatch && bottomMatch.score >= MIN_MATCH_SCORE) {
     lobby = bottomMatch.entry.lobby;
     mode = bottomMatch.entry.mode;

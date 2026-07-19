@@ -64,16 +64,13 @@ for (const fixture of fixtures) {
 
     await t.test(
       "weapon",
-      { skip: expected.weapon === undefined || skip(fixture, "weapon") },
+      { skip: expected.weaponId === undefined || skip(fixture, "weapon") },
       () => {
         assert.equal(
-          event.data.weapon,
-          expected.weapon,
-          `weapon mismatch (raw: "${event.debug?.weaponReading}", score=${Number(event.debug?.weaponScore ?? 0).toFixed(3)})`,
+          event.data.weaponId,
+          expected.weaponId,
+          `weapon mismatch (read: "${event.debug?.weaponName}", raw: "${event.debug?.weaponReading}", score=${Number(event.debug?.weaponScore ?? 0).toFixed(3)})`,
         );
-        if (expected.weaponId !== undefined) {
-          assert.equal(event.data.weaponId, expected.weaponId);
-        }
       },
     );
 

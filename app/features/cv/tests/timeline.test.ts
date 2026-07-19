@@ -81,18 +81,18 @@ test("different event types never merge", () => {
 
 test("scoreboards with different stages stay separate inside the window", () => {
   const tl = new TimelineBuilder({ minConfidence: 0 });
-  assert.equal(tl.push(replay(100, 0.8, { stage: "Robo ROM-en" })).action, "added");
-  assert.equal(tl.push(replay(104, 0.8, { stage: "Hagglefish Market" })).action, "added");
-  assert.equal(tl.push(replay(108, 0.8, { stage: "Barnacle & Dime" })).action, "added");
+  assert.equal(tl.push(replay(100, 0.8, { stage: 21 })).action, "added");
+  assert.equal(tl.push(replay(104, 0.8, { stage: 2 })).action, "added");
+  assert.equal(tl.push(replay(108, 0.8, { stage: 17 })).action, "added");
   // revisiting the first replay merges back into its event, skipping the
   // incompatible ones in between
-  assert.equal(tl.push(replay(112, 0.7, { stage: "Robo ROM-en" })).action, "merged");
+  assert.equal(tl.push(replay(112, 0.7, { stage: 21 })).action, "merged");
   assert.equal(tl.events.length, 3);
 });
 
 test("a null stage read never splits", () => {
   const tl = new TimelineBuilder({ minConfidence: 0 });
-  tl.push(replay(100, 0.8, { stage: "Robo ROM-en" }));
+  tl.push(replay(100, 0.8, { stage: 21 }));
   assert.equal(tl.push(replay(104, 0.7, { stage: null })).action, "merged");
 });
 

@@ -1,9 +1,9 @@
 {
   "event": "ScoreboardReplay",
   "data": {
-    "lobby": "X Battle",
-    "mode": "Rainmaker",
-    "stage": "Brinewater Springs",
+    "lobby": "X",
+    "mode": "RM",
+    "stage": 13,
     "timestamp": "9/7/2026 14:04",
     "replayCode": "R80B-00DL-WF4X-V3CA",
     "scores": [
@@ -79,7 +79,8 @@
         "d": 3,
         "s": 1
       }
-    ]
+    ],
+    "stageLabel": "Brinewater Springs"
   },
   "options": {
     "notes": "Heavily compressed stream capture. Replay code hand-verified from the zoomed frame; a prior parse misread 8>6, B>D/A, F>E, A>I."

@@ -1,9 +1,9 @@
 {
   "event": "Scoreboard",
   "data": {
-    "lobby": "Anarchy Battle (Series)",
-    "mode": "Splat Zones",
-    "stage": "Inkblot Art Academy",
+    "lobby": "SERIES",
+    "mode": "SZ",
+    "stage": 8,
     "scores": [
       500,
       0
@@ -73,6 +73,7 @@
         "d": 4,
         "s": 1
       }
-    ]
+    ],
+    "stageLabel": "Inkblot Art Academy"
   }
 }

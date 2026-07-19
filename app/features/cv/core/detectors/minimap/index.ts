@@ -30,7 +30,8 @@ import {
   meanBrightness,
   type Roi,
 } from "../../image";
-import { WEAPON_NAMES } from "../death/weapon-names";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import { type CvAbility, toCvAbility, toMainWeaponId } from "../../../cv-types";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseName } from "../scoreboard/names";
 import {
@@ -81,16 +82,13 @@ export interface MinimapTeammate {
   slot: CardSlot;
   /** card name; null when covered by a respawn cross-out or unreadable */
   name: string | null;
-  /** main weapon (canonical English name); null when unreadable/covered */
-  weapon: string | null;
   /** sendou main-weapon id; null when unreadable/covered */
-  weaponId: number | null;
+  weaponId: MainWeaponId | null;
   /**
-   * the card's three main abilities, [head, clothes, shoes]
-   * (assets/cv/abilities id space, null per unreadable badge);
-   * empty when a respawn cross-out sits over the badges
+   * the card's three main abilities, [head, clothes, shoes] (null per
+   * unreadable badge); empty when a respawn cross-out sits over the badges
    */
-  abilities: (string | null)[];
+  abilities: (CvAbility | null)[];
 }
 
 export interface MinimapEnemy {
@@ -100,19 +98,18 @@ export interface MinimapEnemy {
    */
   name: string | null;
   /** readable even on struck rows: the cross-out spares the weapon icon */
-  weapon: string | null;
-  weaponId: number | null;
-  abilities: (string | null)[];
+  weaponId: MainWeaponId | null;
+  abilities: (CvAbility | null)[];
 }
 
 export interface MinimapData {
   /**
-   * canonical English stage name, matched from the drawn map against the
-   * planner renders (stage.ts); null when no stage matched confidently or
-   * the planner signatures were not loaded. The mode is not identifiable
-   * this way (see stage.ts) and is left to the mode-bearing detectors.
+   * sendou stage id, matched from the drawn map against the planner
+   * renders (stage.ts); null when no stage matched confidently or the
+   * planner signatures were not loaded. The mode is not identifiable this
+   * way (see stage.ts) and is left to the mode-bearing detectors.
    */
-  stage: string | null;
+  stage: StageId | null;
   /**
    * true when the frame is a casted stream's 8-player spectator map screen
    * rather than the POV overlay: the alpha (left) column is reported as
@@ -240,7 +237,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
     inkThreshold: number,
     confidences: number[],
     debugRow: (WeaponMatch | null)[],
-  ): (string | null)[] {
+  ): (CvAbility | null)[] {
     if (!badges) return [null, null, null];
     return centers.map(([cx, cy]) => {
       const crop = cropRoi(rgb, badgeRoi(cx, cy));
@@ -248,7 +245,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
       crop.delete();
       debugRow.push(match);
       confidences.push(Math.max(0, match.score));
-      return match.score >= ABILITY_MIN_SCORE ? match.id : null;
+      return match.score >= ABILITY_MIN_SCORE ? toCvAbility(match.id) : null;
     });
   }
 
@@ -313,7 +310,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
         let nameRaw = "";
         let weapon: WeaponMatch | null = null;
         const badgeDebug: (WeaponMatch | null)[] = [];
-        let abilities: (string | null)[] = [];
+        let abilities: (CvAbility | null)[] = [];
         if (!occluded) {
           const parsed = bestNameRead(gray, layout.name);
           if (parsed) {
@@ -358,8 +355,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
         const matched = weapon !== null && weapon.score >= floor ? weapon : null;
         const fields = {
           name,
-          weapon: matched ? (WEAPON_NAMES.get(matched.id) ?? null) : null,
-          weaponId: matched ? Number(matched.id) : null,
+          weaponId: matched ? toMainWeaponId(matched.id) : null,
           abilities,
         };
         if (dx === 0) {
@@ -387,7 +383,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
         t,
         confidence,
         data: {
-          stage: stageMatch?.stage ?? null,
+          stage: stageMatch?.stageId ?? null,
           spectator: true,
           teammates,
           enemies,
@@ -438,7 +434,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
       let nameRaw = "";
       let weapon: WeaponMatch | null = null;
       const badgeDebug: (WeaponMatch | null)[] = [];
-      let abilities: (string | null)[] = [];
+      let abilities: (CvAbility | null)[] = [];
       if (!occluded) {
         if (nameGlyphs) {
           const band = copyRoi(gray, layout.name);
@@ -491,8 +487,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
       teammates.push({
         slot: layout.slot,
         name,
-        weapon: matched ? (WEAPON_NAMES.get(matched.id) ?? null) : null,
-        weaponId: matched ? Number(matched.id) : null,
+        weaponId: matched ? toMainWeaponId(matched.id) : null,
         abilities,
       });
     }
@@ -529,7 +524,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
         confidences.push(Math.max(0, weapon.score));
       }
       const badgeDebug: (WeaponMatch | null)[] = [];
-      const abilities: (string | null)[] = occluded
+      const abilities: (CvAbility | null)[] = occluded
         ? []
         : matchBadges(
             rgb,
@@ -553,8 +548,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
       const matched = weapon !== null && weapon.score >= floor ? weapon : null;
       enemies.push({
         name: null,
-        weapon: matched ? (WEAPON_NAMES.get(matched.id) ?? null) : null,
-        weaponId: matched ? Number(matched.id) : null,
+        weaponId: matched ? toMainWeaponId(matched.id) : null,
         abilities,
       });
     }
@@ -577,7 +571,7 @@ export function createMinimapDetector(resources: ScoreboardResources): Detector<
         t,
         confidence,
         data: {
-          stage: stageMatch?.stage ?? null,
+          stage: stageMatch?.stageId ?? null,
           spectator: false,
           teammates,
           enemies,

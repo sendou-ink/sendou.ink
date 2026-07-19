@@ -19,6 +19,7 @@
  * which drops blue-tinted water that gray keeps — under several
  * binarizations, keeping the best-snapping one (see rois.ts).
  */
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import { type GlyphSet, type RecognizedText, recognizeText, scaleGlyphSet } from "../../glyphs";
 import { copyRoi, meanBrightness, minChannel } from "../../image";
@@ -54,10 +55,8 @@ import {
 } from "./rois";
 
 export interface MapStartData {
-  /** e.g. "Splat Zones"; null if unreadable */
-  mode: string | null;
-  /** e.g. "Undertow Spillway"; null if unreadable */
-  stage: string | null;
+  mode: ModeShort | null;
+  stage: StageId | null;
 }
 
 export const MAP_START_EVENT_TYPE = "MapStart";
@@ -230,7 +229,7 @@ export function createMapStartDetector(resources: ScoreboardResources): Detector
     }
 
     // 2. mode title: find the 1-2 text lines, OCR each, snap the joined text
-    let mode: string | null = null;
+    let mode: ModeShort | null = null;
     let modeScore = 0;
     let modeReading = "";
     if (modeGlyphs) {
@@ -272,7 +271,7 @@ export function createMapStartDetector(resources: ScoreboardResources): Detector
       const match = modeReading ? closestBy(modeReading, ALL_MODE_ENTRIES, (e) => e.text) : null;
       if (match) {
         modeScore = match.score;
-        if (match.score >= MIN_MATCH_SCORE) mode = match.entry.canonical;
+        if (match.score >= MIN_MATCH_SCORE) mode = match.entry.mode;
       }
     }
 
@@ -282,7 +281,7 @@ export function createMapStartDetector(resources: ScoreboardResources): Detector
     // near-dark-masked crop (wins on dark scenes) and the raw crop at a few
     // rising thresholds (a high one isolates the text's saturated-white
     // core from an only-nearly-white floor), and keep whichever snaps best.
-    let stage: string | null = null;
+    let stage: StageId | null = null;
     let stageScore = 0;
     let stageReading = "";
     if (stageGlyphs) {
@@ -300,7 +299,7 @@ export function createMapStartDetector(resources: ScoreboardResources): Detector
         if (match && match.score > stageScore) {
           stageScore = match.score;
           stageReading = read.text;
-          if (match.score >= MIN_MATCH_SCORE) stage = match.entry.canonical;
+          if (match.score >= MIN_MATCH_SCORE) stage = match.entry.stageId;
         }
       }
       masked.delete();

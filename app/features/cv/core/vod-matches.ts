@@ -25,6 +25,7 @@
  * stage, or a full set of weapons.
  */
 
+import type { MainWeaponId, ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { MAP_START_EVENT_TYPE, type MapStartData } from "./detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE, type MinimapData } from "./detectors/minimap/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
@@ -36,7 +37,7 @@ import type { DetectedEvent } from "./detectors/types";
  * matches default to Splat Zones — flagged via `modeAssumed` so downstream can
  * tell the guess from a real read. Replace with real mode detection later.
  */
-const DEFAULT_MODE = "Splat Zones";
+const DEFAULT_MODE = "SZ" satisfies ModeShort;
 
 /**
  * Two minimaps more than this far apart cannot be the same game (a Splatoon
@@ -50,20 +51,20 @@ const MATCH_GAP_SECONDS = 300;
 export interface VodMatch {
   /** whole seconds into the video the match starts at */
   startsAt: number;
-  /** canonical English mode name; null when no source read it */
-  mode: string | null;
+  /** null when no source read it */
+  mode: ModeShort | null;
   /**
    * true when `mode` is the fabricated PoC default rather than a real
    * read — lets the endpoint/form treat it as a guess, not a detection
    */
   modeAssumed: boolean;
-  /** canonical English stage name; null when no source read it */
-  stage: string | null;
+  /** null when no source read it */
+  stage: StageId | null;
   /**
    * the match's weapons, alpha team then bravo team: sendou main-weapon
    * ids, or null for a slot that never read
    */
-  weapons: (number | null)[];
+  weapons: (MainWeaponId | null)[];
 }
 
 /** A match being accumulated as the timeline is walked. */
@@ -77,14 +78,14 @@ interface OpenMatch {
    * seeds it); the plurality winner delimits same-vs-next map and is the
    * reported stage, so one misread frame can't poison the whole match
    */
-  stageVotes: Map<string, number>;
+  stageVotes: Map<StageId, number>;
   /** t of the last minimap added, for the gap check */
   lastMinimapT: number | null;
 }
 
 /** Plurality stage of the reads so far; insertion order breaks ties. */
-function leadingStage(votes: Map<string, number>): string | null {
-  let winner: string | null = null;
+function leadingStage(votes: Map<StageId, number>): StageId | null {
+  let winner: StageId | null = null;
   let best = 0;
   for (const [stage, count] of votes) {
     if (count > best) {
@@ -109,8 +110,8 @@ export function buildVodMatches(events: readonly DetectedEvent[]): VodMatch[] {
   // it: a lone frame disagreeing with both its match's running stage and the
   // following read is a misread to fold in as a minority vote, not a match
   // boundary. With no later read the change stands.
-  const nextStage = new Map<DetectedEvent, string | null>();
-  let carry: string | null = null;
+  const nextStage = new Map<DetectedEvent, StageId | null>();
+  let carry: StageId | null = null;
   for (let i = sorted.length - 1; i >= 0; i--) {
     const event = sorted[i]!;
     if (event.type !== MINIMAP_EVENT_TYPE) continue;
@@ -127,7 +128,7 @@ export function buildVodMatches(events: readonly DetectedEvent[]): VodMatch[] {
     stageVotes: new Map(),
     lastMinimapT: null,
   });
-  const vote = (votes: Map<string, number>, stage: string | null): void => {
+  const vote = (votes: Map<StageId, number>, stage: StageId | null): void => {
     if (stage !== null) votes.set(stage, (votes.get(stage) ?? 0) + 1);
   };
   const finalize = (): void => {
@@ -201,7 +202,7 @@ function toVodMatch(open: OpenMatch): VodMatch | null {
  * a match, so a slot missed in one frame is filled from another. Empty when
  * there were no minimaps.
  */
-function weaponsFromMinimaps(minimaps: DetectedEvent[]): (number | null)[] {
+function weaponsFromMinimaps(minimaps: DetectedEvent[]): (MainWeaponId | null)[] {
   if (minimaps.length === 0) return [];
   const datas = minimaps.map((event) => event.data as MinimapData);
   const alpha = mergeSlots(datas.map((d) => d.teammates.map((t) => t.weaponId)));
@@ -210,9 +211,9 @@ function weaponsFromMinimaps(minimaps: DetectedEvent[]): (number | null)[] {
 }
 
 /** For each slot index, the first non-null id across frames, else null. */
-function mergeSlots(frames: (number | null)[][]): (number | null)[] {
+function mergeSlots(frames: (MainWeaponId | null)[][]): (MainWeaponId | null)[] {
   const width = Math.max(0, ...frames.map((frame) => frame.length));
-  const out: (number | null)[] = [];
+  const out: (MainWeaponId | null)[] = [];
   for (let i = 0; i < width; i++) {
     out.push(frames.map((frame) => frame[i]).find((id) => id != null) ?? null);
   }

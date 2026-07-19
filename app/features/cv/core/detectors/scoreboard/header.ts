@@ -7,9 +7,11 @@
  * are near-black background + white text; the map thumbnail around them is
  * mid-brightness), then OCR'd as one line and snapped to the known entries:
  * the mode+stage line is matched against every language's mode × stage
- * combinations (core/localized.ts), and the reported values are always the
- * canonical English names regardless of the game's language.
+ * combinations (core/localized.ts), and the reported values are always
+ * sendou.ink ids regardless of the game's language.
  */
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { CvLobby } from "../../../cv-types";
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, type RecognizeOptions, recognizeText } from "../../glyphs";
 import { copyRoi } from "../../image";
@@ -18,9 +20,9 @@ import { closestBy } from "../../text";
 import { HEADER_LINE_BAND, HEADER_LOBBY_BAND } from "./rois";
 
 export interface ParsedHeader {
-  lobby: string | null;
-  mode: string | null;
-  stage: string | null;
+  lobby: CvLobby | null;
+  mode: ModeShort | null;
+  stage: StageId | null;
   /** min of the closed-set match scores that were attempted */
   confidence: number;
   debug: {
@@ -112,13 +114,12 @@ export function parseHeader(gray: Mat, lobbyGlyphs: GlyphSet, lineGlyphs: GlyphS
     : null;
   const lineMatch = lineReading ? closestBy(lineReading, MODE_STAGE_COMBOS, (c) => c.text) : null;
 
-  const lobby =
-    lobbyMatch && lobbyMatch.score >= MIN_MATCH_SCORE ? lobbyMatch.entry.canonical : null;
-  let mode: string | null = null;
-  let stage: string | null = null;
+  const lobby = lobbyMatch && lobbyMatch.score >= MIN_MATCH_SCORE ? lobbyMatch.entry.lobby : null;
+  let mode: ModeShort | null = null;
+  let stage: StageId | null = null;
   if (lineMatch && lineMatch.score >= MIN_MATCH_SCORE) {
     mode = lineMatch.entry.mode;
-    stage = lineMatch.entry.stage;
+    stage = lineMatch.entry.stageId;
   }
 
   const attempted = [lobbyMatch?.score ?? 0, lineMatch?.score ?? 0];

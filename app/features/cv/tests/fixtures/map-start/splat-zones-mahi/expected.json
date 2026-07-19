@@ -1,7 +1,8 @@
 {
   "event": "MapStart",
   "data": {
-    "mode": "Splat Zones",
-    "stage": "Mahi-Mahi Resort"
+    "mode": "SZ",
+    "stage": 7,
+    "stageLabel": "Mahi-Mahi Resort"
   }
 }

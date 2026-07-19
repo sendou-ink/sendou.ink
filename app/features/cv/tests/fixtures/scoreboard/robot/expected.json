@@ -1,9 +1,9 @@
 {
   "event": "Scoreboard",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Mincemeat Metalworks",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 4,
     "scores": [
       500,
       0
@@ -73,6 +73,7 @@
         "d": 9,
         "s": 2
       }
-    ]
+    ],
+    "stageLabel": "Mincemeat Metalworks"
   }
 }

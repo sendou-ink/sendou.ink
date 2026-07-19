@@ -1,7 +1,6 @@
 {
   "event": "Death",
   "data": {
-    "weapon": "Rapid Blaster Deco",
     "weaponId": 241,
     "weaponType": "MAIN",
     "abilities": [
@@ -24,6 +23,7 @@
         "ISM"
       ]
     ],
-    "name": "heavy kez"
+    "name": "heavy kez",
+    "weaponLabel": "Rapid Blaster Deco"
   }
 }

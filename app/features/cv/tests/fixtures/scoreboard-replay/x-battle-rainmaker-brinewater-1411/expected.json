@@ -1,8 +1,8 @@
 {
   "event": "ScoreboardReplay",
   "data": {
-    "lobby": "X Battle",
-    "mode": "Rainmaker",
+    "lobby": "X",
+    "mode": "RM",
     "replayCode": "R17L-PFKK-C1Q2-143L",
     "scores": [
       265,
@@ -78,8 +78,9 @@
         "s": 1
       }
     ],
-    "stage": "Brinewater Springs",
-    "timestamp": "9/7/2026 14:11"
+    "stage": 13,
+    "timestamp": "9/7/2026 14:11",
+    "stageLabel": "Brinewater Springs"
   },
   "options": {
     "skipFields": [

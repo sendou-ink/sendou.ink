@@ -1,9 +1,9 @@
 {
   "event": "Scoreboard",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Clam Blitz",
-    "stage": "Scorch Gorge",
+    "lobby": "PRIVATE",
+    "mode": "CB",
+    "stage": 0,
     "scores": [
       480,
       370
@@ -74,7 +74,8 @@
         "d": 13,
         "s": 3
       }
-    ]
+    ],
+    "stageLabel": "Scorch Gorge"
   },
   "options": {
     "skipFields": [

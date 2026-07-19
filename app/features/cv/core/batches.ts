@@ -20,7 +20,7 @@ import type { ScoreboardData, ScoreboardPlayer } from "./detectors/scoreboard/in
 import type { DetectedEvent } from "./detectors/types";
 
 /** The lobby header value private battles (tournament games) carry. */
-const TOURNAMENT_LOBBY = "Private Battle";
+const TOURNAMENT_LOBBY = "PRIVATE";
 
 /**
  * How far back a scoreboard with no preceding MapStart claims deaths as its

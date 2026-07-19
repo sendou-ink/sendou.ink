@@ -83,8 +83,8 @@ for (const fixture of fixtures) {
           if (want.name !== undefined && !isFieldSkipped(fixture, `teammates.${i}.name`)) {
             assert.equal(got.name, want.name, `name (debug: ${cardDebug})`);
           }
-          if (want.weapon !== undefined && !isFieldSkipped(fixture, `teammates.${i}.weapon`)) {
-            assert.equal(got.weapon, want.weapon, `weapon (debug: ${cardDebug})`);
+          if (want.weaponId !== undefined && !isFieldSkipped(fixture, `teammates.${i}.weapon`)) {
+            assert.equal(got.weaponId, want.weaponId, `weapon (debug: ${cardDebug})`);
           }
           if (
             want.abilities !== undefined &&
@@ -104,8 +104,8 @@ for (const fixture of fixtures) {
         if (want.name !== undefined && !isFieldSkipped(fixture, `enemies.${i}.name`)) {
           assert.equal(got.name, want.name, `name (debug: ${rowDebug})`);
         }
-        if (want.weapon !== undefined && !isFieldSkipped(fixture, `enemies.${i}.weapon`)) {
-          assert.equal(got.weapon, want.weapon, `weapon (debug: ${rowDebug})`);
+        if (want.weaponId !== undefined && !isFieldSkipped(fixture, `enemies.${i}.weapon`)) {
+          assert.equal(got.weaponId, want.weaponId, `weapon (debug: ${rowDebug})`);
         }
         if (want.abilities !== undefined && !isFieldSkipped(fixture, `enemies.${i}.abilities`)) {
           assert.deepEqual(got.abilities, want.abilities, `abilities (debug: ${rowDebug})`);

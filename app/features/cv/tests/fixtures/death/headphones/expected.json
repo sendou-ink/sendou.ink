@@ -1,7 +1,6 @@
 {
   "event": "Death",
   "data": {
-    "weapon": "Splattershot Jr.",
     "weaponId": 10,
     "weaponType": "MAIN",
     "abilities": [
@@ -24,6 +23,7 @@
         "SRU"
       ]
     ],
-    "name": "Headphones"
+    "name": "Headphones",
+    "weaponLabel": "Splattershot Jr."
   }
 }

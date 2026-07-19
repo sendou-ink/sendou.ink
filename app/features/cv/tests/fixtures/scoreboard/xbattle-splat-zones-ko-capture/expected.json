@@ -1,9 +1,9 @@
 {
   "event": "Scoreboard",
   "data": {
-    "lobby": "X Battle",
-    "mode": "Splat Zones",
-    "stage": "Scorch Gorge",
+    "lobby": "X",
+    "mode": "SZ",
+    "stage": 0,
     "scores": [
       500,
       0
@@ -74,6 +74,7 @@
         "d": 2,
         "s": 4
       }
-    ]
+    ],
+    "stageLabel": "Scorch Gorge"
   }
 }

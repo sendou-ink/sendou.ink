@@ -1,7 +1,6 @@
 {
   "event": "Death",
   "data": {
-    "weapon": "Splattershot",
     "weaponId": 40,
     "weaponType": "MAIN",
     "abilities": [
@@ -24,6 +23,7 @@
         "QSJ"
       ]
     ],
-    "name": "てづか"
+    "name": "てづか",
+    "weaponLabel": "Splattershot"
   }
 }

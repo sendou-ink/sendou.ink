@@ -6,6 +6,7 @@
  * glyph sets (replay rows are smaller, so it passes rescaled sets), and two
  * match options.
  */
+import { toMainWeaponId } from "../../../cv-types";
 import type { Mat } from "../../cv";
 import type { GlyphSet } from "../../glyphs";
 import { cropRoi, type Roi } from "../../image";
@@ -124,7 +125,7 @@ export function parseScoreboardRow(
   return {
     player: {
       name: name?.name ?? "",
-      weaponId: weapon ? Number(weapon.id) : null,
+      weaponId: weapon ? toMainWeaponId(weapon.id) : null,
       paint: paint?.value ?? null,
       ka: statValues[0] ?? null,
       d: statValues[1] ?? null,

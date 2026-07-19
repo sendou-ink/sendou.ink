@@ -1,9 +1,9 @@
 {
   "event": "ScoreboardReplay",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Crableg Capital",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 18,
     "timestamp": "9/7/2026 18:13",
     "replayCode": "R1V4-PAHW-GGM2-PD9S",
     "scores": [
@@ -71,6 +71,7 @@
         "d": 4,
         "s": 0
       }
-    ]
+    ],
+    "stageLabel": "Crableg Capital"
   }
 }

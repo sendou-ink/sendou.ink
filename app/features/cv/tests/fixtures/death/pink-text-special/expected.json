@@ -1,7 +1,6 @@
 {
   "event": "Death",
   "data": {
-    "weapon": "Triple Splashdown",
     "weaponId": 18,
     "weaponType": "SPECIAL",
     "abilities": [
@@ -24,6 +23,7 @@
         "QSJ"
       ]
     ],
-    "name": "Jrod_14"
+    "name": "Jrod_14",
+    "weaponLabel": "Triple Splashdown"
   }
 }

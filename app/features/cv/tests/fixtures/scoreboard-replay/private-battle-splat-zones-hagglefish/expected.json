@@ -1,9 +1,9 @@
 {
   "event": "ScoreboardReplay",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Hagglefish Market",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 2,
     "timestamp": "3/7/2026 22:28",
     "replayCode": "R6KE-D064-3CXD-XVKL",
     "scores": [
@@ -80,6 +80,7 @@
         "s": 8,
         "weaponId": 6001
       }
-    ]
+    ],
+    "stageLabel": "Hagglefish Market"
   }
 }

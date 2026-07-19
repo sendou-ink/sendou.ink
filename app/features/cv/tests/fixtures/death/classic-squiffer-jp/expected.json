@@ -1,7 +1,6 @@
 {
   "event": "Death",
   "data": {
-    "weapon": "Classic Squiffer",
     "weaponId": 2000,
     "weaponType": "MAIN",
     "abilities": [
@@ -24,7 +23,8 @@
         "SSU"
       ]
     ],
-    "name": "ごあんぜんに"
+    "name": "ごあんぜんに",
+    "weaponLabel": "Classic Squiffer"
   },
   "options": {
     "notes": "Japanese-language capture (message 'スクイックリンα で / やられた!', weapon on line 1, read via the death-weapon-ja atlas). Streamer webcam bottom-left pixelated for privacy (clear of every parsed ROI). The all-kana tag name needs the dakuten headroom in TAG_NAME_INNER (ご/ぜ) and the harvested に crop (its bar stroke reads as a near-perfect l otherwise)."

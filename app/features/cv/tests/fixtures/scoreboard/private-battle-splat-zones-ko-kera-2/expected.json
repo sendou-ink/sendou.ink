@@ -1,9 +1,9 @@
 {
   "event": "Scoreboard",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Undertow Spillway",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 3,
     "scores": [
       425,
       410
@@ -74,6 +74,7 @@
         "d": 12,
         "s": 3
       }
-    ]
+    ],
+    "stageLabel": "Undertow Spillway"
   }
 }

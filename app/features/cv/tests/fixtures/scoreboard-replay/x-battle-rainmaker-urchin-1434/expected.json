@@ -1,9 +1,9 @@
 {
   "event": "ScoreboardReplay",
   "data": {
-    "lobby": "X Battle",
-    "mode": "Rainmaker",
-    "stage": "Urchin Underpass",
+    "lobby": "X",
+    "mode": "RM",
+    "stage": 24,
     "timestamp": "9/7/2026 14:34",
     "replayCode": "RUCT-5HNH-XWDC-J51U",
     "scores": [
@@ -79,7 +79,8 @@
         "d": 9,
         "s": 7
       }
-    ]
+    ],
+    "stageLabel": "Urchin Underpass"
   },
   "options": {
     "notes": "Heavily compressed stream capture, anonymized-view names. Code hand-verified from the zoomed frame; a prior parse misread U>D, T>7, 5>6, N>H, U>L."

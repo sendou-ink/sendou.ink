@@ -1,7 +1,8 @@
 {
   "event": "MapStart",
   "data": {
-    "mode": "Splat Zones",
-    "stage": "Robo ROM-en"
+    "mode": "SZ",
+    "stage": 21,
+    "stageLabel": "Robo ROM-en"
   }
 }

@@ -1,88 +1,97 @@
 {
   "event": "Minimap",
   "data": {
-    "stage": "Manta Maria",
+    "stage": 14,
     "spectator": true,
     "teammates": [
       {
         "slot": "up",
         "name": "リビア",
-        "weapon": "Splash-o-matic",
         "abilities": [
           "SSU",
           "SCU",
           "SJ"
-        ]
+        ],
+        "weaponLabel": "Splash-o-matic",
+        "weaponId": 20
       },
       {
         "slot": "right",
         "name": "がらっこ",
-        "weapon": "Dread Wringer",
         "abilities": [
           "LDE",
           "SPU",
           "SJ"
-        ]
+        ],
+        "weaponLabel": "Dread Wringer",
+        "weaponId": 3050
       },
       {
         "slot": "down",
         "name": "ーロたべる",
-        "weapon": "Custom Blaster",
         "abilities": [
           "OG",
           "SSU",
           "SJ"
-        ]
+        ],
+        "weaponLabel": "Custom Blaster",
+        "weaponId": 211
       },
       {
         "slot": "left",
         "name": "ももドラグーン",
-        "weapon": "Snipewriter 5H",
         "abilities": [
           "LDE",
           "SCU",
           "ISM"
-        ]
+        ],
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070
       }
     ],
     "enemies": [
       {
         "name": "ウルボー",
-        "weapon": "Snipewriter 5H",
         "abilities": [
           "LDE",
           "SPU",
           "SJ"
-        ]
+        ],
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070
       },
       {
         "name": "ねこすき",
-        "weapon": "S-BLAST '91",
         "abilities": [
           "OG",
           "QR",
           "SJ"
-        ]
+        ],
+        "weaponLabel": "S-BLAST '91",
+        "weaponId": 261
       },
       {
         "name": "そっぴ",
-        "weapon": "Zink Mini Splatling",
         "abilities": [
           "RSU",
           "RSU",
           "SJ"
-        ]
+        ],
+        "weaponLabel": "Zink Mini Splatling",
+        "weaponId": 4001
       },
       {
         "name": "しゅーた",
-        "weapon": ".52 Gal",
         "abilities": [
           "OG",
           "SSU",
           "SJ"
-        ]
+        ],
+        "weaponLabel": ".52 Gal",
+        "weaponId": 50
       }
-    ]
+    ],
+    "stageLabel": "Manta Maria"
   },
   "options": {
     "skipFields": [

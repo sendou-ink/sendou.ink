@@ -1,9 +1,9 @@
 {
   "event": "Scoreboard",
   "data": {
-    "lobby": "Private Battle",
-    "mode": "Splat Zones",
-    "stage": "Museum d'Alfonsino",
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 6,
     "scores": [
       500,
       0
@@ -74,6 +74,7 @@
         "d": 6,
         "s": 1
       }
-    ]
+    ],
+    "stageLabel": "Museum d'Alfonsino"
   }
 }
