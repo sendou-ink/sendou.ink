@@ -64,6 +64,7 @@ const WHO_I18N_KEYS = {
 const ACTION_I18N_KEYS = {
 	ROLL: "tournament:customFlow.action.ROLL",
 	PICK: "tournament:customFlow.action.PICK",
+	PICK_NO_MODE_REPEAT: "tournament:customFlow.action.PICK_NO_MODE_REPEAT",
 	BAN: "tournament:customFlow.action.BAN",
 	MODE_PICK: "tournament:customFlow.action.MODE_PICK",
 	MODE_BAN: "tournament:customFlow.action.MODE_BAN",

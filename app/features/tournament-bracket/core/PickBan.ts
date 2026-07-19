@@ -715,7 +715,24 @@ function unavailableModes({
 			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
 			.map((e) => e.mode!);
 
-		return new Set([...preSetModeBans, ...currentSectionModeBans]);
+		const currentStep = maps.customFlow
+			? resolveCurrentStep({
+					eventCount: events.length,
+					preSet: maps.customFlow.preSet,
+					postGame: maps.customFlow.postGame,
+					resultsCount: results.length,
+				})
+			: null;
+		const noModeRepeatModes =
+			currentStep?.action === "PICK_NO_MODE_REPEAT"
+				? results.map((result) => result.mode)
+				: [];
+
+		return new Set([
+			...preSetModeBans,
+			...currentSectionModeBans,
+			...noModeRepeatModes,
+		]);
 	}
 
 	// COUNTERPICK: can't pick the same mode last won on
@@ -762,6 +779,12 @@ const BEFORE_SET_INVALID_WHO: ReadonlySet<WhoSide> = new Set([
 	"LOSER",
 ]);
 
+/** Actions where a team picks a map (as opposed to ROLL which has no picker). */
+const MAP_PICK_ACTIONS: ReadonlySet<ActionType> = new Set([
+	"PICK",
+	"PICK_NO_MODE_REPEAT",
+]);
+
 export const CUSTOM_FLOW_VALIDATION_ERRORS = {
 	STEP_MISSING_ACTION: "STEP_MISSING_ACTION",
 	STEP_MISSING_WHO: "STEP_MISSING_WHO",
@@ -800,8 +823,8 @@ export function validateCustomFlowSection(
 	if (
 		!lastStep ||
 		(lastStep.action &&
-			lastStep.action !== "PICK" &&
-			lastStep.action !== "ROLL")
+			lastStep.action !== "ROLL" &&
+			!MAP_PICK_ACTIONS.has(lastStep.action))
 	) {
 		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.LAST_STEP_MUST_BE_PICK_OR_ROLL);
 	}
@@ -821,14 +844,16 @@ export function validateCustomFlowSection(
 	}
 
 	const mapPickCount = steps.filter(
-		(s) => s.action === "PICK" || s.action === "ROLL",
+		(s) => s.action === "ROLL" || (s.action && MAP_PICK_ACTIONS.has(s.action)),
 	).length;
 	if (mapPickCount > 1) {
 		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS);
 	}
 
 	const modePickStep = steps.find((s) => s.action === "MODE_PICK");
-	const mapPickStep = steps.find((s) => s.action === "PICK");
+	const mapPickStep = steps.find(
+		(s) => s.action && MAP_PICK_ACTIONS.has(s.action),
+	);
 	if (
 		modePickStep?.side &&
 		mapPickStep?.side &&

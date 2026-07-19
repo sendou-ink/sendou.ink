@@ -492,6 +492,7 @@ function resolvePickBanBanner(
 		if (isCounterpick) return t("tournament:pickBan.counterpick");
 		switch (turnOfResult.action) {
 			case "PICK":
+			case "PICK_NO_MODE_REPEAT":
 				return t("tournament:pickBan.pickMap") + stepCounter;
 			case "BAN":
 				return t("tournament:pickBan.banMap") + stepCounter;

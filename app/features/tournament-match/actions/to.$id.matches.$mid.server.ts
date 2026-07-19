@@ -583,7 +583,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 			}
 
 			const eventType = (() => {
-				if (match.roundMaps.pickBan === "CUSTOM") return actionType;
+				if (match.roundMaps.pickBan === "CUSTOM") {
+					// a no-mode-repeat pick is stored as a regular map pick; the
+					// restriction only applies while choosing, not to the stored event
+					return actionType === "PICK_NO_MODE_REPEAT"
+						? ("PICK" as const)
+						: actionType;
+				}
 				if (match.roundMaps.pickBan === "BAN_2") return "BAN" as const;
 				return "PICK" as const;
 			})();

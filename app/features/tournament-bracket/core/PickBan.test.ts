@@ -72,6 +72,37 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
+	it("accepts PICK_NO_MODE_REPEAT as the last (map picking) step", () => {
+		const steps = [
+			{ action: "BAN" as const, side: "HIGHER_SEED" as const },
+			{ action: "PICK_NO_MODE_REPEAT" as const, side: "LOWER_SEED" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "postGame")).toEqual([]);
+	});
+
+	it("counts PICK_NO_MODE_REPEAT toward TOO_MANY_MAP_PICKS", () => {
+		const steps = [
+			{ action: "PICK" as const, side: "HIGHER_SEED" as const },
+			{ action: "PICK_NO_MODE_REPEAT" as const, side: "LOWER_SEED" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS,
+		);
+	});
+
+	it("returns SAME_TEAM_MODE_AND_MAP_PICK for PICK_NO_MODE_REPEAT by the mode picker", () => {
+		const steps = [
+			{ action: "MODE_PICK" as const, side: "HIGHER_SEED" as const },
+			{ action: "PICK_NO_MODE_REPEAT" as const, side: "HIGHER_SEED" as const },
+		];
+
+		expect(validateCustomFlowSection(steps, "preSet")).toContain(
+			CUSTOM_FLOW_VALIDATION_ERRORS.SAME_TEAM_MODE_AND_MAP_PICK,
+		);
+	});
+
 	it("returns LAST_STEP_MUST_BE_PICK_OR_ROLL when last step is MODE_BAN", () => {
 		const steps = [{ action: "MODE_BAN" as const, side: "ALPHA" as const }];
 
@@ -1118,6 +1149,97 @@ describe("mapsListWithLegality — pre-set MODE_PICK only restricts the first ma
 		// second map should be free to choose any mode, not locked to SZ.
 		expect(legalModes.has(TC)).toBe(true);
 		expect(legalModes.has(RM)).toBe(true);
+	});
+});
+
+describe("mapsListWithLegality — PICK_NO_MODE_REPEAT", () => {
+	const SZ = "SZ" as ModeShort;
+	const TC = "TC" as ModeShort;
+	const RM = "RM" as ModeShort;
+
+	const toSetMapPool = [
+		{ mode: SZ, stageId: 1 as StageId },
+		{ mode: SZ, stageId: 2 as StageId },
+		{ mode: TC, stageId: 3 as StageId },
+		{ mode: TC, stageId: 4 as StageId },
+		{ mode: RM, stageId: 5 as StageId },
+	];
+
+	const teams = [{ mapPool: [] }, { mapPool: [] }] as unknown as Parameters<
+		typeof mapsListWithLegality
+	>[0]["teams"];
+
+	const customMaps: TournamentRoundMaps = {
+		count: 5,
+		type: "BEST_OF",
+		pickBan: "CUSTOM",
+		customFlow: {
+			preSet: [{ action: "PICK", side: "HIGHER_SEED" }],
+			postGame: [{ action: "PICK_NO_MODE_REPEAT", side: "LOSER" }],
+		},
+	};
+
+	it("excludes modes already played in the set", () => {
+		// game 1: SZ stage 1 played, now at PICK_NO_MODE_REPEAT for game 2's map
+		const pickBanEvents: PickBanEvent[] = [
+			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+		];
+
+		const result = mapsListWithLegality({
+			results: [{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 }],
+			maps: customMaps,
+			mapList: null,
+			teams,
+			pickerTeamId: 100,
+			tieBreakerMapPool: [],
+			toSetMapPool,
+			pickBanEvents,
+		});
+
+		const legalModes = new Set(
+			result.filter((m) => m.isLegal).map((m) => m.mode),
+		);
+
+		// SZ was already played, so it must not be pickable again
+		expect(legalModes.has(SZ)).toBe(false);
+		expect(legalModes.has(TC)).toBe(true);
+		expect(legalModes.has(RM)).toBe(true);
+	});
+
+	it("falls back to allowing every mode once all modes have been played", () => {
+		// every mode has been played, but each still has an unplayed stage; a mode
+		// repeat is now unavoidable so the restriction lifts and the remaining
+		// stages of already-played modes become legal again
+		const pickBanEvents: PickBanEvent[] = [
+			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+			{ type: "PICK", stageId: 3 as StageId, mode: TC },
+			{ type: "PICK", stageId: 5 as StageId, mode: RM },
+		];
+
+		const result = mapsListWithLegality({
+			results: [
+				{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 },
+				{ mode: TC, stageId: 3 as StageId, winnerTeamId: 100 },
+				{ mode: RM, stageId: 5 as StageId, winnerTeamId: 200 },
+			],
+			maps: customMaps,
+			mapList: null,
+			teams,
+			pickerTeamId: 100,
+			tieBreakerMapPool: [],
+			toSetMapPool,
+			pickBanEvents,
+		});
+
+		const legalMaps = result.filter((m) => m.isLegal);
+		const legalModes = new Set(legalMaps.map((m) => m.mode));
+
+		// SZ and TC each still have an unplayed stage (2 and 4); RM's only stage (5)
+		// was played. Modes are no longer restricted, only the played stages are.
+		expect(legalModes).toEqual(new Set([SZ, TC]));
+		expect(
+			legalMaps.some((m) => m.mode === SZ && m.stageId === (2 as StageId)),
+		).toBe(true);
 	});
 });
 

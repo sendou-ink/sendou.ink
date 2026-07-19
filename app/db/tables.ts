@@ -749,6 +749,7 @@ export type WhoSide = (typeof WHO_SIDES)[number];
 export const ACTION_TYPES = [
 	"ROLL",
 	"PICK",
+	"PICK_NO_MODE_REPEAT",
 	"BAN",
 	"MODE_PICK",
 	"MODE_BAN",
