@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Clipboard, Trash2 } from "lucide-react";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
 	Form,
 	type MetaFunction,
@@ -30,6 +30,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	navIconUrl,
 	PICOCAD2_WEB_VIEWER_URL,
+	SENDOU_INK_DISCORD_URL,
 	TROPHIES_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/trophies.new.server";
@@ -164,7 +165,20 @@ function TrophyTermsGate({ children }: { children: React.ReactNode }) {
 				<p className={styles.termsDisclaimer}>
 					{t("trophies:new.terms.disclaimer")}
 				</p>
-				<p>{t("trophies:new.terms.preApproval")}</p>
+				<p>
+					<Trans t={t} i18nKey="trophies:new.terms.preApproval">
+						If you are unsure if your tournament is eligible, feel free to
+						acquire a pre-approval by creating a pre-approval request in the
+						<a
+							href={SENDOU_INK_DISCORD_URL}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							Discord server
+						</a>
+						.
+					</Trans>
+				</p>
 			</div>
 			<SendouButton className={styles.termsAgreeButton} onPress={agreeToTerms}>
 				{t("trophies:new.terms.agree")}
