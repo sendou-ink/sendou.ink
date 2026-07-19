@@ -23,6 +23,7 @@ import {
 } from "../trophies-utils";
 import { Trophy, TrophyContextProvider } from "./Trophy";
 import styles from "./TrophyDisplay.module.css";
+import { TrophyShowcase } from "./TrophyShowcase";
 
 type TrophyItem = {
 	id: number;
@@ -142,37 +143,34 @@ function TrophyModal({
 			isDismissable
 			className={styles.modal}
 		>
-			<div className={styles.modalContent}>
-				<Trophy className={styles.modalTrophy} model={trophy.model} />
-				<div className={clsx(styles.modalDetails, "scrollbar")}>
-					<div className="stack xxs">
-						<p className={styles.modalTrophyName}>{trophy.name}</p>
-						<Link to={trophyPage(trophy.id)} className={styles.modalLink}>
-							{t("trophies:display.viewTrophyPage")}
-						</Link>
-					</div>
-					{special ? (
-						<div>
-							<Divider />
-							<p className={styles.specialDescription}>
-								{special.type === "supporter"
-									? t("trophies:special.supporter.description")
-									: t("trophies:special.xp.description", {
-											value: special.value,
-										})}
-							</p>
-						</div>
-					) : null}
-					{data
-						? data.wins.map((win) => (
-								<div key={win.tournamentId}>
-									<Divider />
-									<TrophyWinDetails win={win} userCards={data.userCards} />
-								</div>
-							))
-						: null}
+			<TrophyShowcase model={trophy.model}>
+				<div className="stack xxs">
+					<p className={styles.modalTrophyName}>{trophy.name}</p>
+					<Link to={trophyPage(trophy.id)} className={styles.modalLink}>
+						{t("trophies:display.viewTrophyPage")}
+					</Link>
 				</div>
-			</div>
+				{special ? (
+					<div>
+						<Divider />
+						<p className={styles.specialDescription}>
+							{special.type === "supporter"
+								? t("trophies:special.supporter.description")
+								: t("trophies:special.xp.description", {
+										value: special.value,
+									})}
+						</p>
+					</div>
+				) : null}
+				{data
+					? data.wins.map((win) => (
+							<div key={win.tournamentId}>
+								<Divider />
+								<TrophyWinDetails win={win} userCards={data.userCards} />
+							</div>
+						))
+					: null}
+			</TrophyShowcase>
 		</SendouDialog>
 	);
 }

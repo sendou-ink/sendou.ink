@@ -1,0 +1,32 @@
+.wrapper {
+	container-type: inline-size;
+}
+
+.content {
+	display: grid;
+	grid-template-columns: 1fr;
+	align-items: center;
+	background-color: var(--color-bg-high);
+}
+
+.details {
+	padding: var(--s-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	background-color: var(--color-bg);
+	border-top: var(--border-style);
+	overflow-y: auto;
+}
+
+@container (width >= 560px) {
+	.content {
+		grid-template-columns: 60% 1fr;
+	}
+
+	.details {
+		border-top: 0;
+		border-left: var(--border-style);
+		height: 60cqw;
+	}
+}

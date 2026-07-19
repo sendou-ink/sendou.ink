@@ -34,29 +34,16 @@
 	aspect-ratio: 1 / 1;
 }
 
-.trophyDetailsWrapper {
-	container-type: inline-size;
-}
-
 .trophyDetailsContainer {
 	border: var(--border-style);
 	border-radius: var(--radius-box);
-	background-color: var(--color-bg-high);
-	display: grid;
-	grid-template-columns: 1fr;
-	align-items: center;
 	overflow: clip;
 }
 
-.trophyDetails {
-	padding: var(--s-4);
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-2);
-	background-color: var(--color-bg);
-	height: 512px;
-	border-top: var(--border-style);
-	overflow-y: auto;
+@container (width < 560px) {
+	.trophyDetails {
+		height: 512px;
+	}
 }
 
 .divider {
@@ -151,16 +138,4 @@
 .ownerCount {
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
-}
-
-@container (width >= 560px) {
-	.trophyDetailsContainer {
-		grid-template-columns: 60% 1fr;
-	}
-
-	.trophyDetails {
-		border-top: 0;
-		border-left: var(--border-style);
-		height: 60cqw;
-	}
 }
