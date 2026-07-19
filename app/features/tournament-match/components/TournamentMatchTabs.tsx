@@ -235,6 +235,7 @@ function resolveTimelinePickBanData(
 			maps,
 			teams: pickBanTeamsLite,
 			results: data.results,
+			matchId: data.match.id,
 		});
 		if (teamId === null) continue;
 

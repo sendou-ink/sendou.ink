@@ -52,7 +52,9 @@ export function TournamentMatchActionPickBanTab({
 	const isCustomStageBan =
 		data.match.roundMaps?.pickBan === "CUSTOM" && turnOfResult.action === "BAN";
 	const sharedActionType: "PICK" | "BAN" =
-		turnOfResult.action === "PICK" || turnOfResult.action === "MODE_PICK"
+		turnOfResult.action === "PICK" ||
+		turnOfResult.action === "PICK_NO_MODE_REPEAT" ||
+		turnOfResult.action === "MODE_PICK"
 			? "PICK"
 			: "BAN";
 
@@ -142,7 +144,9 @@ function buildPickBanOptions({
 			seen.add(mode);
 			uniqueModes.push({ mode });
 		}
-		return uniqueModes;
+		return uniqueModes.sort(
+			(a, b) => modesShort.indexOf(a.mode!) - modesShort.indexOf(b.mode!),
+		);
 	}
 
 	if (isCustomStageBan) {

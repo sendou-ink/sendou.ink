@@ -87,6 +87,7 @@ export function MatchPageProvider({
 					],
 					mapList: data.mapList,
 					pickBanEventCount: data.pickBanEventCount,
+					matchId: data.match.id,
 				})
 			: null;
 	const isPickBanStep =
