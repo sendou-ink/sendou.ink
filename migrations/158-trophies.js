@@ -6,9 +6,10 @@ export function up(db) {
         "id" integer primary key,
         "name" text not null,
         "model" text not null,
+        "code" text unique,
         "organizationId" integer,
-        "creatorId" integer not null,
-        "managerId" integer not null,
+        "creatorId" integer,
+        "managerId" integer,
         foreign key ("organizationId") references "TournamentOrganization"("id") on delete set null,
         foreign key ("creatorId") references "User"("id"),
         foreign key ("managerId") references "User"("id")
@@ -32,6 +33,19 @@ export function up(db) {
 
 		db.prepare(
 			/*sql*/ `create unique index "trophy_owner_tournament_user_unique" on "TrophyOwner"("tournamentId", "userId", "trophyId")`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `
+      create table "SpecialTrophyOwner" (
+        "trophyId" integer not null,
+        "userId" integer not null,
+        "createdAt" integer not null,
+        primary key ("trophyId", "userId"),
+        foreign key ("trophyId") references "Trophy"("id") on delete cascade,
+        foreign key ("userId") references "User"("id") on delete cascade
+      ) strict
+    `,
 		).run();
 
 		db.prepare(

@@ -1,8 +1,28 @@
 import { deflateRaw, inflateRaw } from "pako";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Role } from "~/modules/permissions/types";
+import {
+	SUPPORTER_TROPHY_CODE,
+	XP_TROPHY_CODE_PREFIX,
+} from "./trophies-constants";
 
 const TERMS_AGREED_SESSION_STORAGE_KEY = "trophyTermsAgreed";
+
+type SpecialTrophyKind = { type: "supporter" } | { type: "xp"; value: number };
+
+export function parseSpecialTrophyCode(
+	code: string | null | undefined,
+): SpecialTrophyKind | null {
+	if (!code) return null;
+	if (code === SUPPORTER_TROPHY_CODE) return { type: "supporter" };
+
+	if (code.startsWith(XP_TROPHY_CODE_PREFIX)) {
+		const value = Number(code.slice(XP_TROPHY_CODE_PREFIX.length));
+		if (Number.isFinite(value)) return { type: "xp", value };
+	}
+
+	return null;
+}
 
 export function canReviewTrophies(user?: { roles: Array<Role> } | null) {
 	if (!user) return false;

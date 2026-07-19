@@ -159,9 +159,11 @@ export interface Trophy {
 	id: GeneratedAlways<number>;
 	name: string;
 	model: string;
+	/** Identifies special trophies, null for regular trophies. */
+	code: Generated<string | null>;
 	organizationId: number | null;
-	creatorId: number;
-	managerId: number;
+	creatorId: number | null;
+	managerId: number | null;
 }
 
 export interface TrophyOwner {
@@ -169,6 +171,12 @@ export interface TrophyOwner {
 	userId: number;
 	tournamentId: number;
 	tier: number | null;
+}
+
+export interface SpecialTrophyOwner {
+	trophyId: number;
+	userId: number;
+	createdAt: number;
 }
 
 export interface PendingTrophy {
@@ -1609,6 +1617,7 @@ export interface DB {
 	TournamentMatchVod: TournamentMatchVod;
 	Trophy: Trophy;
 	TrophyOwner: TrophyOwner;
+	SpecialTrophyOwner: SpecialTrophyOwner;
 	PendingTrophy: PendingTrophy;
 	PendingTrophyApproval: PendingTrophyApproval;
 	TrustRelationship: TrustRelationship;

@@ -17,7 +17,10 @@ import { roundToNDecimalPlaces } from "~/utils/number";
 import { tournamentPage, trophyPage, trophyWinsPage } from "~/utils/urls";
 import type { TrophyWinsLoaderData } from "../routes/trophies.$id.wins.$userId";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "../trophies-constants";
-import { useProgressiveRender } from "../trophies-utils";
+import {
+	parseSpecialTrophyCode,
+	useProgressiveRender,
+} from "../trophies-utils";
 import { Trophy, TrophyContextProvider } from "./Trophy";
 import styles from "./TrophyDisplay.module.css";
 
@@ -26,6 +29,7 @@ type TrophyItem = {
 	name: string;
 	model: string;
 	tier?: number | null;
+	code?: string | null;
 };
 
 export interface TrophyDisplayProps {
@@ -121,12 +125,14 @@ function TrophyModal({
 	const fetcher = useFetcher<TrophyWinsLoaderData>();
 	const data = fetcher.data;
 
+	const special = parseSpecialTrophyCode(trophy.code);
+
 	const loadedRef = React.useRef(false);
 	React.useEffect(() => {
-		if (loadedRef.current) return;
+		if (parseSpecialTrophyCode(trophy.code) || loadedRef.current) return;
 		loadedRef.current = true;
 		fetcher.load(trophyWinsPage({ trophyId: trophy.id, userId }));
-	}, [fetcher.load, trophy.id, userId]);
+	}, [fetcher.load, trophy.id, trophy.code, userId]);
 
 	return (
 		<SendouDialog
@@ -145,6 +151,18 @@ function TrophyModal({
 							{t("trophies:display.viewTrophyPage")}
 						</Link>
 					</div>
+					{special ? (
+						<div>
+							<Divider />
+							<p className={styles.specialDescription}>
+								{special.type === "supporter"
+									? t("trophies:special.supporter.description")
+									: t("trophies:special.xp.description", {
+											value: special.value,
+										})}
+							</p>
+						</div>
+					) : null}
 					{data
 						? data.wins.map((win) => (
 								<div key={win.tournamentId}>

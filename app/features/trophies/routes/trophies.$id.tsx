@@ -11,6 +11,7 @@ import {
 	loader,
 	type TrophyDetailsLoaderData,
 } from "../loaders/trophies.$id.server";
+import { parseSpecialTrophyCode } from "../trophies-utils";
 import styles from "./trophies.module.css";
 
 export { loader };
@@ -19,6 +20,8 @@ export default function TrophyDetailsPage() {
 	const { t } = useTranslation(["trophies"]);
 	const data = useLoaderData<typeof loader>();
 	const { trophy, tournaments } = data;
+
+	const special = parseSpecialTrophyCode(trophy.code);
 
 	return (
 		<div className={styles.trophyDetailsContainer}>
@@ -47,26 +50,37 @@ export default function TrophyDetailsPage() {
 							})}
 						</p>
 					) : null}
-				</div>
-				<div className="stack xs">
-					<Divider className={styles.divider} smallText>
-						{t("trophies:details.tournamentHistory")}
-					</Divider>
-					{tournaments.length > 0 ? (
-						<ul className={styles.tournamentHistory}>
-							{tournaments.map((tournament) => (
-								<TournamentHistoryEntry
-									key={tournament.tournamentId}
-									tournament={tournament}
-								/>
-							))}
-						</ul>
-					) : (
-						<p className="text-center text-lighter text-xxs">
-							{t("trophies:details.noTournamentHistory")}
+					{special ? (
+						<p className={styles.trophyMeta}>
+							{special.type === "supporter"
+								? t("trophies:special.supporter.description")
+								: t("trophies:special.xp.description", {
+										value: special.value,
+									})}
 						</p>
-					)}
+					) : null}
 				</div>
+				{special ? null : (
+					<div className="stack xs">
+						<Divider className={styles.divider} smallText>
+							{t("trophies:details.tournamentHistory")}
+						</Divider>
+						{tournaments.length > 0 ? (
+							<ul className={styles.tournamentHistory}>
+								{tournaments.map((tournament) => (
+									<TournamentHistoryEntry
+										key={tournament.tournamentId}
+										tournament={tournament}
+									/>
+								))}
+							</ul>
+						) : (
+							<p className="text-center text-lighter text-xxs">
+								{t("trophies:details.noTournamentHistory")}
+							</p>
+						)}
+					</div>
+				)}
 				<div className="stack xs">
 					<Divider className={styles.divider} smallText>
 						{t("trophies:details.owners")}

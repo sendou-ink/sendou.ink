@@ -10,6 +10,8 @@
 	"details.tournamentHistory": "Tournaments",
 	"details.noTournamentHistory": "No tournament history",
 	"display.viewTrophyPage": "View trophy page",
+	"special.supporter.description": "Awarded for supporting sendou.ink",
+	"special.xp.description": "Awarded for reaching {{value}} X Power",
 	"new.form.limitReached": "You have reached the limit of {{limit}} pending trophies. Delete or wait for an existing submission to be reviewed before submitting another.",
 	"new.terms.title": "Attention! Read the conditions before creating or commissioning a trophy model!",
 	"new.terms.intro": "You need to meet AT LEAST one of the following conditions for your trophy to be accepted:",

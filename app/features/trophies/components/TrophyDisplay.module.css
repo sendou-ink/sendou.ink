@@ -211,6 +211,12 @@
 	gap: var(--s-1);
 }
 
+.specialDescription {
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+	padding-top: var(--s-2);
+}
+
 .winSp {
 	display: flex;
 	align-items: center;

@@ -32,9 +32,15 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
+import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import {
+	SUPPORTER_TROPHY_CODE,
+	XP_TROPHY_CODE_PREFIX,
+} from "~/features/trophies/trophies-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import {
@@ -258,6 +264,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	trophyWinsTournament,
 	pendingTrophiesToDb,
 	assignTrophyToTournament,
+	specialTrophies,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -675,6 +682,7 @@ function wipeDB() {
 		"PendingTrophyApproval",
 		"PendingTrophy",
 		"TrophyOwner",
+		"SpecialTrophyOwner",
 		"Trophy",
 		"User",
 		"PlusSuggestion",
@@ -1770,6 +1778,32 @@ function assignTrophyToTournament() {
 	sql
 		.prepare(`update "CalendarEvent" set "trophyId" = 1 where "id" = ?`)
 		.run(PICNIC_EVENT_ID);
+}
+
+async function specialTrophies() {
+	const models = Object.values(trophies);
+
+	const insertSpecialTrophyStm = sql.prepare(
+		`insert into "Trophy" ("name", "model", "code", "organizationId", "creatorId", "managerId") values ($name, $model, $code, null, null, null)`,
+	);
+
+	insertSpecialTrophyStm.run({
+		name: "Supporter",
+		model: models[0 % models.length],
+		code: SUPPORTER_TROPHY_CODE,
+	});
+	insertSpecialTrophyStm.run({
+		name: "3000 X Power",
+		model: models[1 % models.length],
+		code: `${XP_TROPHY_CODE_PREFIX}3000`,
+	});
+	insertSpecialTrophyStm.run({
+		name: "2600 X Power",
+		model: models[2 % models.length],
+		code: `${XP_TROPHY_CODE_PREFIX}2600`,
+	});
+
+	await TrophyRepository.syncSpecialTrophies();
 }
 
 function patrons() {
@@ -3036,7 +3070,7 @@ const addPlacementStm = sql.prepare(/* sql */ `
   )
 `);
 
-function xRankPlacements() {
+async function xRankPlacements() {
 	sql.transaction(() => {
 		for (const [i, placement] of placements.entries()) {
 			const userId = () => {
@@ -3054,6 +3088,8 @@ function xRankPlacements() {
 			addPlacementStm.run(placement);
 		}
 	})();
+
+	await XRankPlacementRepository.refreshAllPeakXp();
 }
 
 const addArtStm = sql.prepare(/* sql */ `
