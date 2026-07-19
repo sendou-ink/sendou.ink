@@ -1,6 +1,8 @@
 import { deflateRaw, inflateRaw } from "pako";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Role } from "~/modules/permissions/types";
+
+const TERMS_AGREED_SESSION_STORAGE_KEY = "trophyTermsAgreed";
 
 export function canReviewTrophies(user?: { roles: Array<Role> } | null) {
 	if (!user) return false;
@@ -30,6 +32,38 @@ export function decompressTrophyModel(modelBase64: string) {
 	const binary = atob(modelBase64);
 	const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
 	return inflateRaw(bytes, { to: "string" });
+}
+
+export function useTrophyTermsAgreement() {
+	const hasAgreedToTerms = useSyncExternalStore(
+		subscribeToTermsAgreed,
+		getTermsAgreedSnapshot,
+		getTermsAgreedServerSnapshot,
+	);
+
+	const agreeToTerms = () => {
+		sessionStorage.setItem(TERMS_AGREED_SESSION_STORAGE_KEY, "true");
+		for (const listener of termsAgreedListeners) {
+			listener();
+		}
+	};
+
+	return { hasAgreedToTerms, agreeToTerms };
+}
+
+const termsAgreedListeners = new Set<() => void>();
+
+function subscribeToTermsAgreed(listener: () => void) {
+	termsAgreedListeners.add(listener);
+	return () => termsAgreedListeners.delete(listener);
+}
+
+function getTermsAgreedSnapshot() {
+	return sessionStorage.getItem(TERMS_AGREED_SESSION_STORAGE_KEY) === "true";
+}
+
+function getTermsAgreedServerSnapshot() {
+	return false;
 }
 
 export function useProgressiveRender(total: number, resetKey: string) {

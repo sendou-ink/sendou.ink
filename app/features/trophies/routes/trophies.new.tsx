@@ -51,6 +51,7 @@ import {
 	compressTrophyModel,
 	decompressTrophyModel,
 	useProgressiveRender,
+	useTrophyTermsAgreement,
 } from "../trophies-utils";
 import styles from "./trophies.new.module.css";
 
@@ -102,7 +103,9 @@ export default function NewTrophyPage() {
 							})}
 						</Alert>
 					) : (
-						<NewTrophyForm key={data.ownUnreviewedCount} />
+						<TrophyTermsGate>
+							<NewTrophyForm key={data.ownUnreviewedCount} />
+						</TrophyTermsGate>
 					)}
 				</SendouTabPanel>
 				<SendouTabPanel id="update">
@@ -124,6 +127,49 @@ export default function NewTrophyPage() {
 				</SendouTabPanel>
 			</SendouTabs>
 		</Main>
+	);
+}
+
+function TrophyTermsGate({ children }: { children: React.ReactNode }) {
+	const { t } = useTranslation(["trophies"]);
+	const { hasAgreedToTerms, agreeToTerms } = useTrophyTermsAgreement();
+
+	if (hasAgreedToTerms) return children;
+
+	return (
+		<div className={styles.terms}>
+			<h2 className={styles.termsTitle}>{t("trophies:new.terms.title")}</h2>
+			<p>{t("trophies:new.terms.intro")}</p>
+			<div>
+				<p className={styles.termsGroupTitle}>
+					{t("trophies:new.terms.oneOff.title")}
+				</p>
+				<ul className={styles.termsList}>
+					<li>{t("trophies:new.terms.trustedOrg")}</li>
+					<li>{t("trophies:new.terms.oneOff.pastTournaments")}</li>
+					<li>{t("trophies:new.terms.oneOff.projectedTeams")}</li>
+					<li>{t("trophies:new.terms.oneOff.signedUpTeams")}</li>
+				</ul>
+			</div>
+			<div>
+				<p className={styles.termsGroupTitle}>
+					{t("trophies:new.terms.series.title")}
+				</p>
+				<ul className={styles.termsList}>
+					<li>{t("trophies:new.terms.trustedOrg")}</li>
+					<li>{t("trophies:new.terms.series.consistentTeams")}</li>
+				</ul>
+			</div>
+			<div>
+				<p className={styles.termsDisclaimer}>
+					{t("trophies:new.terms.disclaimer")}
+				</p>
+				<p>{t("trophies:new.terms.preApproval")}</p>
+			</div>
+			<SendouButton className={styles.termsAgreeButton} onPress={agreeToTerms}>
+				{t("trophies:new.terms.agree")}
+			</SendouButton>
+		</div>
 	);
 }
 
