@@ -35,3 +35,6 @@ dump
 .e2e-minio-started
 
 notepad.txt
+
+# proprietary game fonts for the CV glyph-atlas builders (scripts/cv)
+/assets/fonts/
