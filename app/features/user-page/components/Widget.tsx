@@ -80,7 +80,7 @@ export function Widget({
 					</article>
 				);
 			case "trophies-owned":
-				return <TrophyDisplay trophies={widget.data} />;
+				return <TrophyDisplay trophies={widget.data} userId={user.id} />;
 			case "badges-owned":
 				return (
 					<BadgeDisplay badges={widget.data} key={`badges-owned-${user.id}`} />

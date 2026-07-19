@@ -57,6 +57,7 @@ export const handle: SendouRouteHandle = {
 		"weapons",
 		"gear",
 		"game-badges",
+		"trophies",
 	],
 };
 
@@ -233,9 +234,16 @@ export function OldUserInfoPage() {
 			<WeaponPool />
 			<TopPlacements />
 			{data.trophies.length > 0 ? (
-				<TrophyDisplay trophies={data.trophies} key={layoutData.user.id} />
+				<TrophyDisplay
+					trophies={data.trophies}
+					userId={layoutData.user.id}
+					key={`trophies-${layoutData.user.id}`}
+				/>
 			) : null}
-			<BadgeDisplay badges={data.user.badges} key={layoutData.user.id} />
+			<BadgeDisplay
+				badges={data.user.badges}
+				key={`badges-${layoutData.user.id}`}
+			/>
 			{data.user.bio && <article>{data.user.bio}</article>}
 		</div>
 	);

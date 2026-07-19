@@ -279,6 +279,133 @@ export async function findTournamentsByTrophyId(trophyId: number) {
 	});
 }
 
+export async function findWinsByOwner({
+	trophyId,
+	userId,
+}: {
+	trophyId: number;
+	userId: number;
+}) {
+	const tournaments = await db
+		.selectFrom("TrophyOwner")
+		.innerJoin("Tournament", "Tournament.id", "TrophyOwner.tournamentId")
+		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.select((eb) => [
+			"TrophyOwner.tournamentId",
+			"TrophyOwner.tier",
+			"CalendarEvent.name",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+			eb
+				.selectFrom("CalendarEventDate")
+				.select((eb2) => eb2.fn.min<number>("startTime").as("startTime"))
+				.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
+				.as("startTime"),
+			eb
+				.selectFrom("TournamentTeam")
+				.select((eb2) => eb2.fn.countAll<number>().as("count"))
+				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+				.where("TournamentTeam.isPlaceholder", "=", 0)
+				.as("teamsCount"),
+		])
+		.where("TrophyOwner.trophyId", "=", trophyId)
+		.where("TrophyOwner.userId", "=", userId)
+		.orderBy("startTime", "desc")
+		.execute();
+
+	if (tournaments.length === 0) return [];
+
+	const tournamentIds = tournaments.map(
+		(tournament) => tournament.tournamentId,
+	);
+
+	const ownResults = await db
+		.selectFrom("TournamentResult")
+		.select(["tournamentId", "tournamentTeamId", "spDiff"])
+		.where("userId", "=", userId)
+		.where("tournamentId", "in", tournamentIds)
+		.execute();
+
+	const teamIds = ownResults.map((result) => result.tournamentTeamId);
+
+	const memberRows =
+		teamIds.length > 0
+			? await db
+					.selectFrom("TournamentResult")
+					.innerJoin("User", "User.id", "TournamentResult.userId")
+					.select((eb) => [
+						"TournamentResult.tournamentTeamId",
+						"TournamentResult.setResults",
+						...commonUserSelect(eb),
+					])
+					.where("TournamentResult.tournamentTeamId", "in", teamIds)
+					.execute()
+			: [];
+
+	const memberIds = R.unique(memberRows.map((member) => member.id));
+
+	const weaponRows =
+		memberIds.length > 0
+			? await db
+					.selectFrom("ReportedWeapon")
+					.innerJoin(
+						"TournamentMatch",
+						"TournamentMatch.id",
+						"ReportedWeapon.tournamentMatchId",
+					)
+					.innerJoin(
+						"TournamentStage",
+						"TournamentStage.id",
+						"TournamentMatch.stageId",
+					)
+					.select(({ fn }) => [
+						"TournamentStage.tournamentId",
+						"ReportedWeapon.userId",
+						"ReportedWeapon.weaponSplId",
+						fn.countAll<number>().as("count"),
+					])
+					.where("TournamentStage.tournamentId", "in", tournamentIds)
+					.where("ReportedWeapon.userId", "in", memberIds)
+					.groupBy([
+						"TournamentStage.tournamentId",
+						"ReportedWeapon.userId",
+						"ReportedWeapon.weaponSplId",
+					])
+					.orderBy("count", "desc")
+					.execute()
+			: [];
+
+	return tournaments.map((tournament) => {
+		const ownResult = ownResults.find(
+			(result) => result.tournamentId === tournament.tournamentId,
+		);
+
+		const members = memberRows
+			.filter(
+				(member) => member.tournamentTeamId === ownResult?.tournamentTeamId,
+			)
+			.map((member) => ({
+				...R.omit(member, ["tournamentTeamId"]),
+				weapons: weaponRows
+					.filter(
+						(weapon) =>
+							weapon.tournamentId === tournament.tournamentId &&
+							weapon.userId === member.id,
+					)
+					.map((weapon) => weapon.weaponSplId),
+			}));
+
+		return {
+			...tournament,
+			spDiff: ownResult?.spDiff ?? null,
+			members: R.sortBy(
+				members,
+				(member) => (member.id === userId ? 0 : 1),
+				(member) => member.username.toLowerCase(),
+			),
+		};
+	});
+}
+
 export async function findOrganizationIdById(trophyId: number) {
 	const row = await db
 		.selectFrom("Trophy")

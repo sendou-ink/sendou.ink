@@ -1,8 +1,21 @@
 import clsx from "clsx";
+import { Users } from "lucide-react";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useFetcher } from "react-router";
+import { Avatar } from "~/components/Avatar";
+import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { WeaponImage } from "~/components/Image";
+import { TierPill } from "~/components/TierPill";
+import { UserCard } from "~/features/user-card/components/UserCard";
+import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { usePagination } from "~/hooks/usePagination";
+import { roundToNDecimalPlaces } from "~/utils/number";
+import { tournamentPage, trophyPage, trophyWinsPage } from "~/utils/urls";
+import type { TrophyWinsLoaderData } from "../routes/trophies.$id.wins.$userId";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "../trophies-constants";
 import { useProgressiveRender } from "../trophies-utils";
 import { Trophy, TrophyContextProvider } from "./Trophy";
@@ -17,10 +30,15 @@ type TrophyItem = {
 
 export interface TrophyDisplayProps {
 	trophies: Array<TrophyItem>;
+	userId: number;
 	className?: string;
 }
 
-export function TrophyDisplay({ trophies, className }: TrophyDisplayProps) {
+export function TrophyDisplay({
+	trophies,
+	userId,
+	className,
+}: TrophyDisplayProps) {
 	const [openTrophy, setOpenTrophy] = React.useState<TrophyItem | null>(null);
 
 	const {
@@ -80,21 +98,149 @@ export function TrophyDisplay({ trophies, className }: TrophyDisplayProps) {
 				) : null}
 			</div>
 			{openTrophy ? (
-				<SendouDialog
-					isOpen={Boolean(openTrophy)}
+				<TrophyModal
+					trophy={openTrophy}
+					userId={userId}
 					onClose={() => setOpenTrophy(null)}
-					showHeading={false}
-					className={styles.modal}
-				>
-					<div className={styles.modalContent}>
-						<Trophy className={styles.modalTrophy} model={openTrophy.model} />
-						<div className={styles.modalDetails}>
-							<p className={styles.modalTrophyName}>{openTrophy.name}</p>
-						</div>
-					</div>
-				</SendouDialog>
+				/>
 			) : null}
 		</TrophyContextProvider>
+	);
+}
+
+function TrophyModal({
+	trophy,
+	userId,
+	onClose,
+}: {
+	trophy: TrophyItem;
+	userId: number;
+	onClose: () => void;
+}) {
+	const { t } = useTranslation(["trophies"]);
+	const fetcher = useFetcher<TrophyWinsLoaderData>();
+	const data = fetcher.data;
+
+	const loadedRef = React.useRef(false);
+	React.useEffect(() => {
+		if (loadedRef.current) return;
+		loadedRef.current = true;
+		fetcher.load(trophyWinsPage({ trophyId: trophy.id, userId }));
+	}, [fetcher.load, trophy.id, userId]);
+
+	return (
+		<SendouDialog
+			isOpen
+			onClose={onClose}
+			showHeading={false}
+			isDismissable
+			className={styles.modal}
+		>
+			<div className={styles.modalContent}>
+				<Trophy className={styles.modalTrophy} model={trophy.model} />
+				<div className={clsx(styles.modalDetails, "scrollbar")}>
+					<div className="stack xxs">
+						<p className={styles.modalTrophyName}>{trophy.name}</p>
+						<Link to={trophyPage(trophy.id)} className={styles.modalLink}>
+							{t("trophies:display.viewTrophyPage")}
+						</Link>
+					</div>
+					{data
+						? data.wins.map((win) => (
+								<div key={win.tournamentId}>
+									<Divider />
+									<TrophyWinDetails win={win} userCards={data.userCards} />
+								</div>
+							))
+						: null}
+				</div>
+			</div>
+		</SendouDialog>
+	);
+}
+
+function TrophyWinDetails({
+	win,
+	userCards,
+}: {
+	win: TrophyWinsLoaderData["wins"][number];
+	userCards: TrophyWinsLoaderData["userCards"];
+}) {
+	const { formatter } = useDateTimeFormat({
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+	});
+
+	return (
+		<div className={styles.win}>
+			<Link to={tournamentPage(win.tournamentId)} className={styles.winHeader}>
+				<img
+					src={win.logoUrl}
+					alt=""
+					width={32}
+					height={32}
+					className={styles.winLogo}
+				/>
+				<div className="stack xxs">
+					<span className={styles.winName}>
+						<p>{win.name}</p>
+						{win.tier ? <TierPill tier={win.tier} /> : null}
+					</span>
+					<div className={styles.winMeta}>
+						<span className={styles.winMetaItem}>
+							<Users className={styles.winMetaIcon} />
+							{win.teamsCount}
+						</span>
+						{win.startTime ? (
+							<span className={styles.winMetaItem}>
+								{formatter.format(win.startTime)}
+							</span>
+						) : null}
+					</div>
+				</div>
+			</Link>
+			<div className={styles.winDetails}>
+				{win.members.length > 0 ? (
+					<div className={styles.winMembers}>
+						{win.members.map((member) => (
+							<div key={member.id} className={styles.winMember}>
+								<UserCard data={userCards.get(member.id)}>
+									<span className={styles.winMemberUser}>
+										<Avatar size="xxxs" user={member} />
+										<span className={styles.winMemberName}>
+											{member.username}
+										</span>
+									</span>
+								</UserCard>
+								<span className={styles.winMemberWeapons}>
+									{member.weapons.map((weaponSplId) => (
+										<WeaponImage
+											key={weaponSplId}
+											weaponSplId={weaponSplId}
+											variant="badge"
+											width={24}
+											height={24}
+										/>
+									))}
+								</span>
+								<ParticipationPill setResults={member.setResults} />
+							</div>
+						))}
+					</div>
+				) : null}
+				{win.spDiff ? (
+					<div className={styles.winSp}>
+						{win.spDiff > 0 ? (
+							<span className="text-success">▲</span>
+						) : (
+							<span className="text-warning">▼</span>
+						)}
+						{Math.abs(roundToNDecimalPlaces(win.spDiff))}SP
+					</div>
+				) : null}
+			</div>
+		</div>
 	);
 }
 
