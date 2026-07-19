@@ -299,7 +299,10 @@ export function numberFieldOptional(
 
 export function textAreaOptional(
 	args: WithTypedTranslationKeys<
-		Omit<Extract<FormField, { type: "text-area" }>, "type" | "initialValue">
+		Omit<
+			Extract<FormField, { type: "text-area" }>,
+			"type" | "initialValue" | "required"
+		>
 	>,
 ) {
 	return safeNullableStringSchema({ max: args.maxLength }).register(
@@ -308,6 +311,7 @@ export function textAreaOptional(
 			...args,
 			label: prefixKey(args.label),
 			bottomText: prefixKey(args.bottomText),
+			required: false,
 			type: "text-area",
 			initialValue: "",
 		},
@@ -316,13 +320,17 @@ export function textAreaOptional(
 
 export function textAreaRequired(
 	args: WithTypedTranslationKeys<
-		Omit<Extract<FormField, { type: "text-area" }>, "type" | "initialValue">
+		Omit<
+			Extract<FormField, { type: "text-area" }>,
+			"type" | "initialValue" | "required"
+		>
 	>,
 ) {
 	return safeStringSchema({ max: args.maxLength }).register(formRegistry, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
+		required: true,
 		type: "text-area",
 		initialValue: "",
 	});

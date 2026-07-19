@@ -16,6 +16,7 @@ export function TextareaFormField({
 	maxLength,
 	error,
 	onBlur,
+	required,
 	disabled,
 	value,
 	onChange,
@@ -27,6 +28,7 @@ export function TextareaFormField({
 			id={id}
 			name={name}
 			label={label}
+			required={required}
 			error={error}
 			bottomText={bottomText}
 			valueLimits={
@@ -43,6 +45,7 @@ export function TextareaFormField({
 					id,
 					bottomText,
 					error,
+					required,
 				})}
 			/>
 		</FormFieldWrapper>

@@ -43,6 +43,7 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 
 interface FormFieldTextarea<T extends string> extends FormFieldBase<T> {
 	maxLength: number;
+	required: boolean;
 }
 
 interface FormFieldInGameName<T extends string> extends FormFieldBase<T> {
