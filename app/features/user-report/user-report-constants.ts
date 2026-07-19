@@ -2,6 +2,7 @@ import type { UserReportCategory } from "~/db/tables";
 
 export const USER_REPORT = {
 	DESCRIPTION_MAX_LENGTH: 2000,
+	MATCH_ID_MAX_LENGTH: 10,
 };
 
 /** English display names, shown on the staff-only admin tab and in the Discord webhook embed. */

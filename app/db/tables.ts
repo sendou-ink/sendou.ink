@@ -1305,6 +1305,7 @@ export interface UserReport {
 	reporterUserId: number;
 	category: UserReportCategory;
 	description: string;
+	matchId: number | null;
 	createdAt: Generated<number>;
 }
 

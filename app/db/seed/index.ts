@@ -3177,6 +3177,12 @@ async function userReports() {
 		0, 0, 0, 1, 2, 2, 2, 2, 5, 5, 7, 8, 10, 11, 11,
 	];
 
+	// attach a real SendouQ match to some reports so the admin tab's match links have data
+	const someMatch = await db
+		.selectFrom("GroupMatch")
+		.select("id")
+		.executeTakeFirst();
+
 	await db
 		.insertInto("UserReport")
 		.values(
@@ -3185,6 +3191,7 @@ async function userReports() {
 				reporterUserId: 10 + i,
 				category: USER_REPORT_CATEGORIES[i % USER_REPORT_CATEGORIES.length],
 				description: faker.lorem.sentences({ min: 1, max: 3 }),
+				matchId: i % 3 === 0 ? (someMatch?.id ?? null) : null,
 				createdAt: dateToDatabaseTimestamp(
 					sub(new Date(), { months: monthsAgo, days: (i * 3) % 7, hours: i }),
 				),

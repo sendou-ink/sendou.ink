@@ -33,6 +33,17 @@ import * as PlayerStatRepository from "./PlayerStatRepository.server";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
 import * as SkillRepository from "./SkillRepository.server";
 
+/** Whether a GroupMatch with the given id exists. */
+export async function exists(id: number) {
+	const row = await db
+		.selectFrom("GroupMatch")
+		.select("id")
+		.where("id", "=", id)
+		.executeTakeFirst();
+
+	return Boolean(row);
+}
+
 export async function findById(id: number) {
 	const result = await db
 		.selectFrom("GroupMatch")
