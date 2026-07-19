@@ -1,4 +1,5 @@
 import { parseDate } from "@internationalized/date";
+import clsx from "clsx";
 import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
@@ -48,7 +49,12 @@ import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Table } from "~/components/Table";
+import { TierPill } from "~/components/TierPill";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import {
+	Trophy,
+	TrophyContextProvider,
+} from "~/features/trophies/components/Trophy";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import type { CustomFieldRenderProps } from "~/form/FormField";
@@ -56,6 +62,7 @@ import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import styles from "../components-showcase.module.css";
+import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
@@ -102,6 +109,8 @@ export const SECTIONS = [
 	{ title: "Flags", id: "flags", component: FlagSection },
 	{ title: "Placements", id: "placements", component: PlacementSection },
 	{ title: "Badges", id: "badges", component: BadgeSection },
+	{ title: "Trophies", id: "trophies", component: TrophySection },
+	{ title: "Tier Pills", id: "tier-pills", component: TierPillSection },
 	{ title: "Game Selects", id: "game-selects", component: GameSelectSection },
 	{ title: "Form Fields", id: "form-fields", component: FormFieldsSection },
 	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
@@ -2041,6 +2050,108 @@ function BadgeSection({ id }: { id: string }) {
 							isAnimated={false}
 							size={96}
 						/>
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+function TrophySection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Trophies</SectionTitle>
+
+			<TrophyContextProvider>
+				<div className="stack md">
+					<ComponentRow label="Interactive (drag to rotate)">
+						<Trophy
+							model={EXAMPLE_TROPHY_MODEL}
+							className={styles.trophyExample}
+						/>
+					</ComponentRow>
+
+					<ComponentRow label="Preview (static)">
+						<Trophy
+							model={EXAMPLE_TROPHY_MODEL}
+							className={styles.trophyExample}
+							preview
+						/>
+					</ComponentRow>
+
+					<ComponentRow label="With Tier">
+						<div className="stack horizontal sm flex-wrap">
+							{([1, 4, 9] as const).map((tier) => (
+								<Trophy
+									key={tier}
+									model={EXAMPLE_TROPHY_MODEL}
+									className={styles.trophyExample}
+									tier={tier}
+									preview
+								/>
+							))}
+						</div>
+					</ComponentRow>
+
+					<ComponentRow label="Tentative Tier">
+						<Trophy
+							model={EXAMPLE_TROPHY_MODEL}
+							className={styles.trophyExample}
+							tentativeTier={2}
+							preview
+						/>
+					</ComponentRow>
+
+					<ComponentRow label="Different Sizes">
+						<div className="stack horizontal sm items-end flex-wrap">
+							<Trophy
+								model={EXAMPLE_TROPHY_MODEL}
+								className={clsx(
+									styles.trophyExample,
+									styles.trophyExampleSmall,
+								)}
+								preview
+							/>
+							<Trophy
+								model={EXAMPLE_TROPHY_MODEL}
+								className={styles.trophyExample}
+								preview
+							/>
+							<Trophy
+								model={EXAMPLE_TROPHY_MODEL}
+								className={clsx(
+									styles.trophyExample,
+									styles.trophyExampleLarge,
+								)}
+								preview
+							/>
+						</div>
+					</ComponentRow>
+				</div>
+			</TrophyContextProvider>
+		</Section>
+	);
+}
+
+function TierPillSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Tier Pills</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="All Tiers">
+					<div className="stack horizontal sm flex-wrap">
+						{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((tier) => (
+							<TierPill key={tier} tier={tier} />
+						))}
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Tentative">
+					<div className="stack horizontal sm flex-wrap">
+						{[1, 4, 9].map((tier) => (
+							<TierPill key={tier} tier={tier} isTentative />
+						))}
 					</div>
 				</ComponentRow>
 			</div>
