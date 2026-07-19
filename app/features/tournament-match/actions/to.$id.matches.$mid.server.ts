@@ -517,6 +517,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				],
 				mapList,
 				pickBanEventCount: currentPickBanEvents.length,
+				matchId: match.id,
 			});
 			errorToastIfFalsy(turnOfResult, "Not time to pick/ban");
 			const pickerTeamId = turnOfResult.teamId;

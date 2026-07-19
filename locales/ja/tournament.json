@@ -247,6 +247,8 @@
 	"customFlow.validation.tooManyModePicks": "",
 	"customFlow.validation.tooManyMapPicks": "",
 	"customFlow.validation.sameTeamModeAndMapPick": "",
+	"customFlow.who.RANDOM": "",
+	"customFlow.who.RANDOM_OTHER": "",
 	"customFlow.who.ALPHA": "",
 	"customFlow.who.BRAVO": "",
 	"customFlow.who.HIGHER_SEED": "",

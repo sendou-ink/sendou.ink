@@ -735,6 +735,8 @@ export interface TournamentRoundMaps {
 }
 
 export const WHO_SIDES = [
+	"RANDOM",
+	"RANDOM_OTHER",
 	"ALPHA",
 	"BRAVO",
 	"HIGHER_SEED",

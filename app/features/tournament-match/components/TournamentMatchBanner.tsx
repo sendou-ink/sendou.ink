@@ -430,6 +430,7 @@ function resolveCurrentSessionStartedAt({
 		teams,
 		mapList: data.mapList,
 		pickBanEventCount: data.pickBanEventCount,
+		matchId: data.match.id,
 	});
 	if (!currentTurn) return lastGameStartedAt;
 
@@ -441,6 +442,7 @@ function resolveCurrentSessionStartedAt({
 			matchStartedAt: data.match.startedAt,
 			maps: data.match.roundMaps,
 			teams,
+			matchId: data.match.id,
 		}) ?? lastGameStartedAt
 	);
 }
@@ -470,6 +472,7 @@ function resolvePickBanBanner(
 		],
 		mapList: data.mapList,
 		pickBanEventCount: data.pickBanEventCount,
+		matchId: data.match.id,
 	});
 	if (!turnOfResult) return null;
 

@@ -249,6 +249,8 @@
 	"customFlow.validation.tooManyModePicks": "每个区块最多只能有一个“选择模式”",
 	"customFlow.validation.tooManyMapPicks": "每个区块最多只能有一个“选择场地”或“随机场地”",
 	"customFlow.validation.sameTeamModeAndMapPick": "同一支队伍不能同时选择模式和场地",
+	"customFlow.who.RANDOM": "",
+	"customFlow.who.RANDOM_OTHER": "",
 	"customFlow.who.ALPHA": "Alpha 队",
 	"customFlow.who.BRAVO": "Bravo 队",
 	"customFlow.who.HIGHER_SEED": "高顺位种子",

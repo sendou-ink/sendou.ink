@@ -51,6 +51,8 @@ import {
 import styles from "./CustomFlowBuilder.module.css";
 
 const WHO_I18N_KEYS = {
+	RANDOM: "tournament:customFlow.who.RANDOM",
+	RANDOM_OTHER: "tournament:customFlow.who.RANDOM_OTHER",
 	ALPHA: "tournament:customFlow.who.ALPHA",
 	BRAVO: "tournament:customFlow.who.BRAVO",
 	HIGHER_SEED: "tournament:customFlow.who.HIGHER_SEED",
