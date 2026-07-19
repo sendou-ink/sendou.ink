@@ -1060,6 +1060,67 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 	});
 });
 
+describe("mapsListWithLegality — pre-set MODE_PICK only restricts the first map", () => {
+	const SZ = "SZ" as ModeShort;
+	const TC = "TC" as ModeShort;
+	const RM = "RM" as ModeShort;
+
+	const toSetMapPool = [
+		{ mode: SZ, stageId: 1 as StageId },
+		{ mode: SZ, stageId: 2 as StageId },
+		{ mode: TC, stageId: 3 as StageId },
+		{ mode: TC, stageId: 4 as StageId },
+		{ mode: RM, stageId: 5 as StageId },
+	];
+
+	const teams = [{ mapPool: [] }, { mapPool: [] }] as unknown as Parameters<
+		typeof mapsListWithLegality
+	>[0]["teams"];
+
+	const customMaps: TournamentRoundMaps = {
+		count: 5,
+		type: "BEST_OF",
+		pickBan: "CUSTOM",
+		customFlow: {
+			preSet: [
+				{ action: "MODE_PICK", side: "HIGHER_SEED" },
+				{ action: "PICK", side: "LOWER_SEED" },
+			],
+			postGame: [{ action: "PICK", side: "LOSER" }],
+		},
+	};
+
+	it("does not lock the second map's mode to the pre-set MODE_PICK", () => {
+		// preSet: HIGHER_SEED picks mode SZ, LOWER_SEED picks SZ stage 1
+		// game 1: SZ stage 1 played, team 200 wins
+		// postGame cycle 1: LOSER (100) is now at PICK for game 2's map
+		const pickBanEvents: PickBanEvent[] = [
+			{ type: "MODE_PICK", stageId: null, mode: SZ },
+			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
+		];
+
+		const result = mapsListWithLegality({
+			results: [{ mode: SZ, stageId: 1 as StageId, winnerTeamId: 200 }],
+			maps: customMaps,
+			mapList: null,
+			teams,
+			pickerTeamId: 100,
+			tieBreakerMapPool: [],
+			toSetMapPool,
+			pickBanEvents,
+		});
+
+		const legalModes = new Set(
+			result.filter((m) => m.isLegal).map((m) => m.mode),
+		);
+
+		// The pre-set MODE_PICK only decides the first map's mode; picking the
+		// second map should be free to choose any mode, not locked to SZ.
+		expect(legalModes.has(TC)).toBe(true);
+		expect(legalModes.has(RM)).toBe(true);
+	});
+});
+
 describe("mapsListWithLegality — pre-set MODE_BAN persists into postGame", () => {
 	const SZ = "SZ" as ModeShort;
 	const TC = "TC" as ModeShort;

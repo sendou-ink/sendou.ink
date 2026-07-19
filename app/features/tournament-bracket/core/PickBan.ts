@@ -739,7 +739,7 @@ function currentSectionPickBanEvents({
 	const preSetLength = maps.customFlow?.preSet.length ?? 0;
 	const postGameLength = maps.customFlow?.postGame.length ?? 0;
 
-	if (pickBanEvents.length <= preSetLength) {
+	if (pickBanEvents.length < preSetLength) {
 		return pickBanEvents;
 	}
 
