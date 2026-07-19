@@ -411,7 +411,9 @@ export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 		url:
 			s.status === "booked"
 				? href("/scrims/:id", { id: String(s.id) })
-				: href("/scrims"),
+				: s.status === "requestPending"
+					? `${href("/scrims")}?pendingRequestPostId=${s.id}`
+					: href("/scrims"),
 		logoUrl: s.opponentAvatarUrl ?? SCRIMS_ICON_URL,
 		startTime: s.at,
 		type: "scrim" as const,

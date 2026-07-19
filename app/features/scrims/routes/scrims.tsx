@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useLoaderData } from "react-router";
+import { useLoaderData, useSearchParams } from "react-router";
 import * as R from "remeda";
 import type { z } from "zod";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -61,6 +61,22 @@ export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const isHydrated = useHydrated();
+	const [searchParams] = useSearchParams();
+
+	const rawPendingRequestPostId = searchParams.get("pendingRequestPostId");
+	const autoScrollToPostId = rawPendingRequestPostId
+		? Number(rawPendingRequestPostId)
+		: null;
+
+	// kept in state because the search param is cleared after the auto scroll
+	const [pendingRequestPostId, setPendingRequestPostId] =
+		React.useState(autoScrollToPostId);
+	if (
+		autoScrollToPostId !== null &&
+		autoScrollToPostId !== pendingRequestPostId
+	) {
+		setPendingRequestPostId(autoScrollToPostId);
+	}
 
 	if (!isHydrated)
 		return (
@@ -90,12 +106,15 @@ export default function ScrimsPage() {
 				</div>
 			</div>
 			<SendouTabs
+				key={pendingRequestPostId}
 				defaultSelectedKey={
-					data.posts.owned.length > 0
-						? "owned"
-						: data.posts.booked.length > 0
-							? "booked"
-							: "available"
+					pendingRequestPostId !== null
+						? "available"
+						: data.posts.owned.length > 0
+							? "owned"
+							: data.posts.booked.length > 0
+								? "booked"
+								: "available"
 				}
 			>
 				{user ? (
@@ -132,6 +151,8 @@ export default function ScrimsPage() {
 						<ScrimsDaySeparatedCards
 							posts={data.posts.neutral}
 							filters={data.filters}
+							pendingRequestPostId={pendingRequestPostId}
+							autoScrollToPostId={autoScrollToPostId}
 						/>
 					) : (
 						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
@@ -169,9 +190,13 @@ export default function ScrimsPage() {
 function ScrimsDaySeparatedCards({
 	posts,
 	filters,
+	pendingRequestPostId,
+	autoScrollToPostId,
 }: {
 	posts: ScrimPost[];
 	filters: ScrimFilters;
+	pendingRequestPostId: number | null;
+	autoScrollToPostId: number | null;
 }) {
 	const postsByDay = R.groupBy(posts, (post) =>
 		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
@@ -182,7 +207,13 @@ function ScrimsDaySeparatedCards({
 			{Object.entries(postsByDay)
 				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([day, dayPosts]) => (
-					<ScrimsDaySection key={day} posts={dayPosts!} filters={filters} />
+					<ScrimsDaySection
+						key={day}
+						posts={dayPosts!}
+						filters={filters}
+						pendingRequestPostId={pendingRequestPostId}
+						autoScrollToPostId={autoScrollToPostId}
+					/>
 				))}
 		</div>
 	);
@@ -191,13 +222,19 @@ function ScrimsDaySeparatedCards({
 function ScrimsDaySection({
 	posts,
 	filters,
+	pendingRequestPostId,
+	autoScrollToPostId,
 }: {
 	posts: ScrimPost[];
 	filters: ScrimFilters;
+	pendingRequestPostId: number | null;
+	autoScrollToPostId: number | null;
 }) {
 	const user = useUser();
 	const [showFiltered, setShowFiltered] = React.useState(false);
-	const [showRequestPending, setShowRequestPending] = React.useState(false);
+	const [showRequestPending, setShowRequestPending] = React.useState(
+		pendingRequestPostId !== null,
+	);
 
 	const filteredPosts = posts.filter((post) =>
 		Scrim.applyFilters(post, filters),
@@ -259,6 +296,7 @@ function ScrimsDaySection({
 							post={post}
 							action={getAction()}
 							isFilteredOut={isFilteredOut}
+							autoScrollIntoView={post.id === autoScrollToPostId}
 						/>
 					);
 				})}
