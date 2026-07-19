@@ -34,6 +34,10 @@
 	aspect-ratio: 1 / 1;
 }
 
+.trophyDetailsWrapper {
+	container-type: inline-size;
+}
+
 .trophyDetailsContainer {
 	border: var(--border-style);
 	border-radius: var(--radius-box);
@@ -157,5 +161,6 @@
 	.trophyDetails {
 		border-top: 0;
 		border-left: var(--border-style);
+		height: 60cqw;
 	}
 }
