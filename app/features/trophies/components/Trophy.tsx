@@ -95,6 +95,8 @@ export function Trophy({
 			return;
 		}
 
+		if (modelState === null) return;
+
 		const viewer = new PicoCAD2Viewer({
 			canvas,
 			context,
@@ -151,7 +153,7 @@ export function Trophy({
 		</div>
 	) : null;
 
-	if (error) {
+	if (error || modelState === null) {
 		return (
 			<div className={clsx(style.container, className)} style={containerStyle}>
 				<div className={clsx(style.trophy, style.error)}>

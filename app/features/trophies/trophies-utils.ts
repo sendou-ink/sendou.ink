@@ -48,10 +48,19 @@ export function compressTrophyModel(model: string) {
 	return btoa(binary);
 }
 
+/** Decompresses a base64 deflate-compressed trophy model, returning `null` if the input is corrupt. */
 export function decompressTrophyModel(modelBase64: string) {
-	const binary = atob(modelBase64);
-	const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-	return inflateRaw(bytes, { to: "string" });
+	try {
+		const binary = atob(modelBase64);
+		const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+		const model = inflateRaw(bytes, { to: "string" });
+
+		if (!model) return null;
+
+		return model;
+	} catch {
+		return null;
+	}
 }
 
 export function useTrophyTermsAgreement() {
