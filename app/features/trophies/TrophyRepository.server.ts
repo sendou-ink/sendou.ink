@@ -55,6 +55,7 @@ const withRecentTournament = (eb: ExpressionBuilder<DB, "Trophy">) =>
 					.as("startTime"),
 			])
 			.whereRef("CalendarEvent.trophyId", "=", "Trophy.id")
+			.where("CalendarEvent.hidden", "=", 0)
 			.orderBy(
 				(eb2) =>
 					eb2
@@ -353,6 +354,7 @@ export async function findWinsByOwner({
 		])
 		.where("TrophyOwner.trophyId", "=", trophyId)
 		.where("TrophyOwner.userId", "=", userId)
+		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("startTime", "desc")
 		.execute();
 
