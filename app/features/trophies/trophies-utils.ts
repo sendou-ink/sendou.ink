@@ -1,6 +1,6 @@
-import { deflateRaw, inflateRaw } from "pako";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Role } from "~/modules/permissions/types";
+import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import {
 	SUPPORTER_TROPHY_CODE,
 	XP_TROPHY_CODE_PREFIX,
@@ -40,27 +40,11 @@ export function canEditTrophy(
 }
 
 export function compressTrophyModel(model: string) {
-	const compressed = deflateRaw(model);
-	let binary = "";
-	for (const byte of compressed) {
-		binary += String.fromCharCode(byte);
-	}
-	return btoa(binary);
+	return compressToBase64(model);
 }
 
-/** Decompresses a base64 deflate-compressed trophy model, returning `null` if the input is corrupt. */
 export function decompressTrophyModel(modelBase64: string) {
-	try {
-		const binary = atob(modelBase64);
-		const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-		const model = inflateRaw(bytes, { to: "string" });
-
-		if (!model) return null;
-
-		return model;
-	} catch {
-		return null;
-	}
+	return decompressFromBase64(modelBase64);
 }
 
 export function useTrophyTermsAgreement() {

@@ -1,4 +1,4 @@
-import { deflateRaw, inflateRaw } from "pako";
+import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
 
 export function tierListItemId(item: TierListItem) {
@@ -53,29 +53,14 @@ export function getNextNthForItem(
 }
 
 export function compress<T>(obj: T) {
-	const bytes = deflateRaw(JSON.stringify(obj), { level: 9 });
-	let binary = "";
-
-	for (const byte of bytes) {
-		binary += String.fromCharCode(byte);
-	}
-
-	return btoa(binary)
-		.replace(/\+/g, "-")
-		.replace(/\//g, "_")
-		.replace(/=+$/, "");
+	return compressToBase64(JSON.stringify(obj), { urlSafe: true });
 }
 
 export function decompress<T>(compressed: string) {
+	const json = decompressFromBase64(compressed);
+	if (json === null) return null;
+
 	try {
-		const base64 = compressed.replace(/-/g, "+").replace(/_/g, "/");
-		const json = inflateRaw(
-			Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)),
-			{ to: "string" },
-		);
-
-		if (!json) return null;
-
 		return JSON.parse(json) as T;
 	} catch {
 		return null;
