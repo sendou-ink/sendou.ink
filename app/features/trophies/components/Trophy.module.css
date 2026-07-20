@@ -2,6 +2,24 @@
 	position: relative;
 }
 
+.tile {
+	border: var(--border-width) solid var(--tier-bg);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, 100px);
+	justify-content: center;
+	gap: var(--s-2);
+}
+
+.placeholder {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+}
+
 .tierPill {
 	position: absolute;
 	top: -1px;

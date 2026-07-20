@@ -33,6 +33,8 @@ import { BannedUsersList } from "~/features/tournament-organization/components/B
 import {
 	Trophy,
 	TrophyContextProvider,
+	TrophyGrid,
+	TrophyPlaceholder,
 } from "~/features/trophies/components/Trophy";
 import { TrophyShowcaseModal } from "~/features/trophies/components/TrophyShowcase";
 import { TrophyTournamentHistory } from "~/features/trophies/components/TrophyTournamentHistory";
@@ -305,7 +307,7 @@ function RewardsPanel({
 					<Divider className="mt-2" smallText>
 						{t("trophies:title")}
 					</Divider>
-					<TrophyGrid trophies={trophies} />
+					<RewardsTrophyGrid trophies={trophies} />
 				</>
 			) : null}
 			{badges.length > 0 ? (
@@ -739,7 +741,7 @@ function EventLeaderboardRow({
 	);
 }
 
-function TrophyGrid({
+function RewardsTrophyGrid({
 	trophies,
 }: {
 	trophies: SerializeFrom<typeof loader>["trophies"];
@@ -751,7 +753,7 @@ function TrophyGrid({
 
 	return (
 		<TrophyContextProvider>
-			<div className={styles.trophyGrid}>
+			<TrophyGrid>
 				{trophies.map((trophy, i) =>
 					i < visibleCount ? (
 						<button
@@ -762,18 +764,18 @@ function TrophyGrid({
 							aria-label={trophy.name}
 						>
 							<Trophy
+								tile
 								model={trophy.model}
-								className={styles.trophyGridItem}
 								tier={trophy.tier}
 								tentativeTier={trophy.tentativeTier}
 								preview
 							/>
 						</button>
 					) : (
-						<div key={trophy.id} className={styles.trophyGridPlaceholder} />
+						<TrophyPlaceholder key={trophy.id} />
 					),
 				)}
-			</div>
+			</TrophyGrid>
 			{openTrophy ? (
 				<TrophyShowcaseModal
 					trophy={openTrophy}

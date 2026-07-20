@@ -201,30 +201,12 @@
 	}
 }
 
-.trophyGrid {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, 100px);
-	justify-content: center;
-	gap: var(--s-2);
-}
-
 .trophyGridButton {
 	all: unset;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-}
-
-.trophyGridItem {
-	border: var(--border-width) solid var(--tier-bg);
-	border-radius: var(--radius-field);
-	background-color: var(--color-bg-high);
-}
-
-.trophyGridPlaceholder {
-	width: 100%;
-	aspect-ratio: 1 / 1;
 }
 
 .trophyModalTournaments {

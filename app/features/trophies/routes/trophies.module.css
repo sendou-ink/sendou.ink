@@ -15,25 +15,6 @@
 	gap: var(--s-4);
 }
 
-.trophiesList {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, 100px);
-	justify-content: center;
-	gap: var(--s-2);
-}
-
-.trophy {
-	border: var(--border-width) solid var(--tier-bg);
-	border-radius: var(--radius-field);
-	background-color: var(--color-bg-high);
-}
-
-.placeholder {
-	width: 100%;
-	height: auto;
-	aspect-ratio: 1 / 1;
-}
-
 .trophyDetailsContainer {
 	border: var(--border-style);
 	border-radius: var(--radius-box);

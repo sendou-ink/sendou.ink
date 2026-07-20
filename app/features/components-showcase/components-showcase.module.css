@@ -26,9 +26,6 @@
 
 .trophyExample {
 	width: 140px;
-	border: var(--border-width) solid var(--tier-bg, var(--color-border));
-	border-radius: var(--radius-field);
-	background-color: var(--color-bg-high);
 }
 
 .trophyExampleSmall {

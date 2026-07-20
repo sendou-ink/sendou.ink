@@ -20,7 +20,7 @@ import {
 	parseSpecialTrophyCode,
 	useProgressiveRender,
 } from "../trophies-utils";
-import { Trophy, TrophyContextProvider } from "./Trophy";
+import { Trophy, TrophyContextProvider, TrophyPlaceholder } from "./Trophy";
 import styles from "./TrophyDisplay.module.css";
 import { TrophyShowcaseModal } from "./TrophyShowcase";
 
@@ -81,7 +81,7 @@ export function TrophyDisplay({
 								aria-label={trophy.name}
 							>
 								<Trophy
-									className={styles.trophy}
+									tile
 									model={trophy.model}
 									tier={trophy.tier ?? null}
 									preview={!!openTrophy}
@@ -89,7 +89,7 @@ export function TrophyDisplay({
 								/>
 							</button>
 						) : (
-							<div key={trophy.id} className={styles.placeholder} />
+							<TrophyPlaceholder key={trophy.id} />
 						),
 					)}
 				</div>

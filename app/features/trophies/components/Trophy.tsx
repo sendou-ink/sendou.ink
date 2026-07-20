@@ -58,10 +58,19 @@ export function TrophyContextProvider({
 	return <TrophyCtx.Provider value={value}>{children}</TrophyCtx.Provider>;
 }
 
+export function TrophyGrid({ children }: { children: React.ReactNode }) {
+	return <div className={style.grid}>{children}</div>;
+}
+
+export function TrophyPlaceholder() {
+	return <div className={style.placeholder} />;
+}
+
 export function Trophy({
 	model,
 	className,
 	preview,
+	tile,
 	tier,
 	tentativeTier,
 	disableCameraControls,
@@ -69,6 +78,8 @@ export function Trophy({
 	model: string;
 	className?: string;
 	preview?: boolean;
+	/** Frames the trophy in the tier colored (falling back to neutral) box used by trophy grids */
+	tile?: boolean;
 	tier?: number | null;
 	tentativeTier?: number | null;
 	disableCameraControls?: boolean;
@@ -137,6 +148,9 @@ export function Trophy({
 	};
 
 	const effectiveTier = tier ?? tentativeTier ?? null;
+	const containerClassName = clsx(style.container, className, {
+		[style.tile]: tile,
+	});
 	const containerStyle = effectiveTier
 		? ({
 				"--tier-bg": `var(--tier-bg-${effectiveTier})`,
@@ -155,7 +169,7 @@ export function Trophy({
 
 	if (error || modelState === null) {
 		return (
-			<div className={clsx(style.container, className)} style={containerStyle}>
+			<div className={containerClassName} style={containerStyle}>
 				<div className={clsx(style.trophy, style.error)}>
 					<Ban size={48} />
 				</div>
@@ -166,14 +180,14 @@ export function Trophy({
 
 	if (isLoadingSharedContext) {
 		return (
-			<div className={clsx(style.container, className)}>
+			<div className={containerClassName} style={containerStyle}>
 				<div className={style.trophy} />
 			</div>
 		);
 	}
 
 	return (
-		<div className={clsx(style.container, className)} style={containerStyle}>
+		<div className={containerClassName} style={containerStyle}>
 			<canvas
 				ref={canvasRef}
 				className={clsx(style.trophy, {

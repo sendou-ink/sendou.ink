@@ -13,7 +13,12 @@ import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BADGES_PAGE, navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";
-import { Trophy, TrophyContextProvider } from "../components/Trophy";
+import {
+	Trophy,
+	TrophyContextProvider,
+	TrophyGrid,
+	TrophyPlaceholder,
+} from "../components/Trophy";
 import { loader } from "../loaders/trophies.server";
 import { useProgressiveRender } from "../trophies-utils";
 import styles from "./trophies.module.css";
@@ -63,13 +68,13 @@ export default function TrophiesPage() {
 						value={inputValue}
 						onChange={(e) => setInputValue(e.target.value)}
 					/>
-					<div className={styles.trophiesList}>
+					<TrophyGrid>
 						<TrophyContextProvider>
 							{filteredTrophies.map((trophy, i) =>
 								i < visibleCount ? (
 									<NavLink to={String(trophy.id)} key={trophy.id}>
 										<Trophy
-											className={styles.trophy}
+											tile
 											model={trophy.model}
 											tier={trophy.tier}
 											tentativeTier={trophy.tentativeTier}
@@ -77,11 +82,11 @@ export default function TrophiesPage() {
 										/>
 									</NavLink>
 								) : (
-									<div key={trophy.id} className={styles.placeholder} />
+									<TrophyPlaceholder key={trophy.id} />
 								),
 							)}
 						</TrophyContextProvider>
-					</div>
+					</TrophyGrid>
 				</div>
 				<p className={styles.badgesLink}>
 					{t("trophies:lookingForBadges")}{" "}
