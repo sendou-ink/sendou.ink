@@ -80,6 +80,12 @@ export function Trophy({
 	const viewerRef = useRef<PicoCAD2Viewer | null>(null);
 	const [error, setError] = useState<boolean>(false);
 
+	const prevModelRef = useRef(model);
+	if (prevModelRef.current !== model) {
+		prevModelRef.current = model;
+		setError(false);
+	}
+
 	const modelState = decompressTrophyModel(model);
 
 	const canvasRef = (canvas: HTMLCanvasElement | null) => {
