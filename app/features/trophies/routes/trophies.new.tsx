@@ -25,6 +25,7 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
+import { useDebounce } from "~/hooks/useDebounce";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -347,16 +348,12 @@ function ModelField({
 	const [previewModel, setPreviewModel] = React.useState(() =>
 		value ? compressTrophyModel(value) : "",
 	);
-	const timerRef = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
-	const handleChange = (newValue: string) => {
-		onChange(newValue);
-		clearTimeout(timerRef.current);
-
-		timerRef.current = setTimeout(() => {
-			setPreviewModel(newValue ? compressTrophyModel(newValue) : "");
-		}, 500);
-	};
+	useDebounce(
+		() => setPreviewModel(value ? compressTrophyModel(value) : ""),
+		500,
+		[value],
+	);
 
 	return (
 		<div>
@@ -367,7 +364,7 @@ function ModelField({
 				id={name}
 				className={styles.modelTextarea}
 				value={value ?? ""}
-				onChange={(e) => handleChange(e.target.value)}
+				onChange={(e) => onChange(e.target.value)}
 				spellCheck={false}
 			/>
 			<FormMessage type="info">
