@@ -26,6 +26,7 @@ export function upsert(
 				oc.columns(["reportedUserId", "reporterUserId"]).doUpdateSet({
 					category: args.category,
 					description: args.description,
+					matchId: args.matchId,
 					createdAt: databaseTimestampNow(),
 				}),
 			)
@@ -65,6 +66,7 @@ export function findAllByReportedUserId(reportedUserId: number) {
 			"UserReport.id",
 			"UserReport.category",
 			"UserReport.description",
+			"UserReport.matchId",
 			"UserReport.createdAt",
 			"UserReport.reporterUserId",
 			"User.username as reporterUsername",

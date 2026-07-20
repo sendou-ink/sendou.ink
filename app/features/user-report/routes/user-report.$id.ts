@@ -9,10 +9,8 @@ import {
 } from "~/utils/remix.server";
 import { sendUserReportWebhook } from "../core/discord-webhook.server";
 import * as UserReportRepository from "../UserReportRepository.server";
-import {
-	reportUserParamsSchema,
-	reportUserSchema,
-} from "../user-report-schemas";
+import { reportUserParamsSchema } from "../user-report-schemas";
+import { reportUserSchemaServer } from "../user-report-schemas.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
@@ -28,7 +26,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		await UserRepository.findLeanById(reportedUserId),
 	);
 
-	const result = await parseFormData({ request, schema: reportUserSchema });
+	const result = await parseFormData({
+		request,
+		schema: reportUserSchemaServer,
+	});
 	if (!result.success) {
 		return { fieldErrors: result.fieldErrors };
 	}
@@ -38,6 +39,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		reporterUserId: user.id,
 		category: result.data.category,
 		description: result.data.description,
+		matchId: result.data.matchId,
 	});
 
 	const reportCounts =
@@ -48,6 +50,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		reporter: user,
 		category: result.data.category,
 		description: result.data.description,
+		matchId: result.data.matchId,
 		isUpdate,
 		reportCounts,
 	});

@@ -12,7 +12,7 @@ import { USER_REPORT_CATEGORY_LABELS } from "~/features/user-report/user-report-
 import { SendouForm } from "~/form";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import invariant from "~/utils/invariant";
-import { userPage } from "~/utils/urls";
+import { sendouQMatchPage, userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.admin.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.admin.server";
@@ -230,6 +230,14 @@ function Reports() {
 							- {formatDistanceToNow(report.createdAt)}
 						</summary>
 						<p className="ml-2 whitespace-pre-wrap">{report.description}</p>
+						{report.matchId !== null ? (
+							<Link
+								className="ml-2 text-xs"
+								to={sendouQMatchPage(report.matchId)}
+							>
+								SendouQ match #{report.matchId}
+							</Link>
+						) : null}
 					</details>
 				))}
 			</div>

@@ -563,10 +563,18 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 				<span className={clsx(styles.stat, styles.xpStat)}>
 					{primary ? (
 						<span className={styles.xpPrimary}>
-							{primary.isVerified ? (
-								<BadgeCheck className={styles.xpVerifiedIconLarge} />
-							) : null}
-							<DivImage region={primary.region} />
+							<span className={styles.xpPrimaryIcons}>
+								{primary.isVerified ? (
+									<BadgeCheck
+										className={
+											primary.region === "WEST"
+												? styles.xpVerifiedIconSmall
+												: styles.xpVerifiedIconLarge
+										}
+									/>
+								) : null}
+								<DivImage region={primary.region} />
+							</span>
 							{primary.points}
 							{t("user:card.xp")}
 						</span>

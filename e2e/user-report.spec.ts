@@ -1,5 +1,6 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { LFG_PAGE } from "~/utils/urls";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { LFG_PAGE, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -40,5 +41,25 @@ test.describe("User report", () => {
 		await expect(page.getByText(description)).not.toBeVisible();
 		await reportsList.locator("summary").first().click();
 		await expect(page.getByText(description)).toBeVisible();
+	});
+
+	test("prefills the match id when reporting from a match page", async ({
+		page,
+	}) => {
+		await seed(page, "IN_SQ_MATCH");
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: SENDOUQ_PAGE });
+		await expect(page).toHaveURL(/\/q\/match\/\d+/);
+		const matchId = page.url().split("/match/")[1];
+
+		await navigate({
+			page,
+			url: `${sendouQMatchPage(Number(matchId))}?tab=rosters`,
+		});
+
+		await page.getByRole("button", { name: /N-ZAP/ }).first().click();
+		await page.getByTestId("report-user-button").click();
+
+		await expect(page.getByLabel("Match ID")).toHaveValue(matchId);
 	});
 });

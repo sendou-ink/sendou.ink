@@ -32,6 +32,7 @@
 	"actions.contact": "",
 	"deleteModal.title": "",
 	"cancelRequestModal.title": "",
+	"cancelRequestModal.requester": "",
 	"cancelModal.scrim.title": "",
 	"cancelModal.scrim.reasonLabel": "",
 	"cancelModal.scrim.reasonExplanation": "",

@@ -781,6 +781,8 @@ export interface TournamentRoundMaps {
 }
 
 export const WHO_SIDES = [
+	"RANDOM",
+	"RANDOM_OTHER",
 	"ALPHA",
 	"BRAVO",
 	"HIGHER_SEED",
@@ -793,6 +795,7 @@ export type WhoSide = (typeof WHO_SIDES)[number];
 export const ACTION_TYPES = [
 	"ROLL",
 	"PICK",
+	"PICK_NO_MODE_REPEAT",
 	"BAN",
 	"MODE_PICK",
 	"MODE_BAN",
@@ -1350,6 +1353,7 @@ export interface UserReport {
 	reporterUserId: number;
 	category: UserReportCategory;
 	description: string;
+	matchId: number | null;
 	createdAt: Generated<number>;
 }
 

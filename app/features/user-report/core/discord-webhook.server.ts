@@ -1,6 +1,6 @@
 import type { UserReportCategory } from "~/db/tables";
 import { logger } from "~/utils/logger";
-import { SENDOU_INK_BASE_URL, userPage } from "~/utils/urls";
+import { SENDOU_INK_BASE_URL, sendouQMatchPage, userPage } from "~/utils/urls";
 import { USER_REPORT_CATEGORY_LABELS } from "../user-report-constants";
 
 const EMBED_DESCRIPTION_MAX_LENGTH = 1000;
@@ -15,6 +15,7 @@ export function sendUserReportWebhook(args: {
 	reporter: { username: string; discordId: string; customUrl: string | null };
 	category: UserReportCategory;
 	description: string;
+	matchId: number | null;
 	isUpdate: boolean;
 	reportCounts: { lastMonth: number; lastYear: number };
 }) {
@@ -50,6 +51,14 @@ export function sendUserReportWebhook(args: {
 						name: "Description",
 						value: truncate(args.description),
 					},
+					...(args.matchId !== null
+						? [
+								{
+									name: "SendouQ match",
+									value: `[#${args.matchId}](${SENDOU_INK_BASE_URL}${sendouQMatchPage(args.matchId)})`,
+								},
+							]
+						: []),
 					{
 						name: "Reports against this user",
 						value: `Last month: ${args.reportCounts.lastMonth} • Last year: ${args.reportCounts.lastYear}`,

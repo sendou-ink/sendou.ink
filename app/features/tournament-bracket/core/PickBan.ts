@@ -14,6 +14,7 @@ import type {
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import { assertUnreachable } from "~/utils/types";
 import type { TournamentDataTeam } from "./Tournament.server";
 
@@ -43,12 +44,14 @@ export function turnOf({
 	teams,
 	mapList,
 	pickBanEventCount,
+	matchId,
 }: {
 	results: Array<{ winnerTeamId: number }>;
 	maps: TournamentRoundMaps;
 	teams: [PickBanTeam, PickBanTeam];
 	mapList?: TournamentMapListMap[] | null;
 	pickBanEventCount?: number;
+	matchId: number;
 }): TurnOfResult | null {
 	if (!maps.pickBan) return null;
 
@@ -101,7 +104,7 @@ export function turnOf({
 			return { teamId: team.id, action: "PICK" };
 		}
 		case "CUSTOM": {
-			return turnOfCustom({ results, maps, teams, pickBanEventCount });
+			return turnOfCustom({ results, maps, teams, pickBanEventCount, matchId });
 		}
 		default: {
 			assertUnreachable(maps.pickBan);
@@ -114,11 +117,13 @@ function turnOfCustom({
 	maps,
 	teams,
 	pickBanEventCount,
+	matchId,
 }: {
 	results: Array<{ winnerTeamId: number }>;
 	maps: TournamentRoundMaps;
 	teams: [PickBanTeam, PickBanTeam];
 	pickBanEventCount?: number;
+	matchId: number;
 }): TurnOfResult | null {
 	if (
 		isSetOverByResults({ count: maps.count, results, countType: maps.type })
@@ -148,6 +153,12 @@ function turnOfCustom({
 		side: step.side!,
 		teams,
 		results,
+		randomTeamIndex: randomWhoTeamIndex({
+			matchId,
+			eventIndex: eventCount,
+			preSetLength: preSet.length,
+			postGameLength: postGame.length,
+		}),
 	});
 
 	const consecutiveInfo = resolveConsecutiveStepInfo({
@@ -282,12 +293,28 @@ export function resolveTeamFromSide({
 	side,
 	teams,
 	results,
+	randomTeamIndex,
 }: {
 	side: WhoSide;
 	teams: [PickBanTeam, PickBanTeam];
 	results: Array<{ winnerTeamId: number }>;
+	/**
+	 * The team index (0 or 1) the per-map coin flip landed on. Required when
+	 * `side` is RANDOM or RANDOM_OTHER. Compute with {@link randomWhoTeamIndex}.
+	 */
+	randomTeamIndex?: 0 | 1;
 }): number {
 	switch (side) {
+		case "RANDOM":
+		case "RANDOM_OTHER": {
+			invariant(
+				randomTeamIndex !== undefined,
+				"resolveTeamFromSide: randomTeamIndex required for RANDOM sides",
+			);
+			const teamIndex =
+				side === "RANDOM" ? randomTeamIndex : 1 - randomTeamIndex;
+			return teams[teamIndex].id;
+		}
 		case "ALPHA":
 			return teams[0].id;
 		case "BRAVO":
@@ -312,6 +339,32 @@ export function resolveTeamFromSide({
 }
 
 /**
+ * Resolves which of the two teams (0 or 1) the "RANDOM" side maps to for the
+ * given event via a deterministic per-map coin flip. A single flip covers one
+ * decision group: all pre-set steps share one flip, and each post-game cycle
+ * (one per map) has its own. "RANDOM_OTHER" is the complement of this index.
+ */
+export function randomWhoTeamIndex({
+	matchId,
+	eventIndex,
+	preSetLength,
+	postGameLength,
+}: {
+	matchId: number;
+	eventIndex: number;
+	preSetLength: number;
+	postGameLength: number;
+}): 0 | 1 {
+	const drawKey =
+		eventIndex < preSetLength
+			? "pre"
+			: `post-${postGameCycleIndex({ eventIndex, preSetLength, postGameLength })}`;
+
+	const { randomInteger } = seededRandom(`random-who-${matchId}-${drawKey}`);
+	return randomInteger(2) as 0 | 1;
+}
+
+/**
  * Resolves which team is responsible for the pick/ban event at a given index,
  * across all pick/ban variants (BAN_2, COUNTERPICK, COUNTERPICK_MODE_REPEAT_OK,
  * CUSTOM). Returns null when the setup is not pick/ban or the team cannot be
@@ -322,11 +375,13 @@ export function teamOfEvent({
 	maps,
 	teams,
 	results,
+	matchId,
 }: {
 	eventIndex: number;
 	maps: TournamentRoundMaps;
 	teams: [PickBanTeam, PickBanTeam];
 	results: Array<{ winnerTeamId: number }>;
+	matchId: number;
 }): number | null {
 	if (!maps.pickBan) return null;
 
@@ -374,7 +429,17 @@ export function teamOfEvent({
 				});
 			}
 
-			return resolveTeamFromSide({ side: step.side, teams, results });
+			return resolveTeamFromSide({
+				side: step.side,
+				teams,
+				results,
+				randomTeamIndex: randomWhoTeamIndex({
+					matchId,
+					eventIndex,
+					preSetLength: preSet.length,
+					postGameLength: postGame.length,
+				}),
+			});
 		}
 		default: {
 			assertUnreachable(maps.pickBan);
@@ -403,6 +468,7 @@ export function currentTurnSessionStartedAt({
 	matchStartedAt,
 	maps,
 	teams,
+	matchId,
 }: {
 	currentTurn: TurnOfResult | null;
 	events: Array<{ createdAt: number }>;
@@ -410,6 +476,7 @@ export function currentTurnSessionStartedAt({
 	matchStartedAt: number | null;
 	maps: TournamentRoundMaps;
 	teams: [PickBanTeam, PickBanTeam];
+	matchId: number;
 }): number | null {
 	if (!currentTurn || matchStartedAt == null) return null;
 
@@ -430,6 +497,7 @@ export function currentTurnSessionStartedAt({
 				maps,
 				teams,
 				results,
+				matchId,
 			});
 			if (teamMadeIt === currentTurn.teamId) continue;
 		}
@@ -647,7 +715,24 @@ function unavailableModes({
 			.filter((e) => e.type === "MODE_BAN" && e.mode !== null)
 			.map((e) => e.mode!);
 
-		return new Set([...preSetModeBans, ...currentSectionModeBans]);
+		const currentStep = maps.customFlow
+			? resolveCurrentStep({
+					eventCount: events.length,
+					preSet: maps.customFlow.preSet,
+					postGame: maps.customFlow.postGame,
+					resultsCount: results.length,
+				})
+			: null;
+		const noModeRepeatModes =
+			currentStep?.action === "PICK_NO_MODE_REPEAT"
+				? results.map((result) => result.mode)
+				: [];
+
+		return new Set([
+			...preSetModeBans,
+			...currentSectionModeBans,
+			...noModeRepeatModes,
+		]);
 	}
 
 	// COUNTERPICK: can't pick the same mode last won on
@@ -671,7 +756,7 @@ function currentSectionPickBanEvents({
 	const preSetLength = maps.customFlow?.preSet.length ?? 0;
 	const postGameLength = maps.customFlow?.postGame.length ?? 0;
 
-	if (pickBanEvents.length <= preSetLength) {
+	if (pickBanEvents.length < preSetLength) {
 		return pickBanEvents;
 	}
 
@@ -692,6 +777,12 @@ function currentSectionPickBanEvents({
 const BEFORE_SET_INVALID_WHO: ReadonlySet<WhoSide> = new Set([
 	"WINNER",
 	"LOSER",
+]);
+
+/** Actions where a team picks a map (as opposed to ROLL which has no picker). */
+const MAP_PICK_ACTIONS: ReadonlySet<ActionType> = new Set([
+	"PICK",
+	"PICK_NO_MODE_REPEAT",
 ]);
 
 export const CUSTOM_FLOW_VALIDATION_ERRORS = {
@@ -732,8 +823,8 @@ export function validateCustomFlowSection(
 	if (
 		!lastStep ||
 		(lastStep.action &&
-			lastStep.action !== "PICK" &&
-			lastStep.action !== "ROLL")
+			lastStep.action !== "ROLL" &&
+			!MAP_PICK_ACTIONS.has(lastStep.action))
 	) {
 		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.LAST_STEP_MUST_BE_PICK_OR_ROLL);
 	}
@@ -753,14 +844,16 @@ export function validateCustomFlowSection(
 	}
 
 	const mapPickCount = steps.filter(
-		(s) => s.action === "PICK" || s.action === "ROLL",
+		(s) => s.action === "ROLL" || (s.action && MAP_PICK_ACTIONS.has(s.action)),
 	).length;
 	if (mapPickCount > 1) {
 		errors.push(CUSTOM_FLOW_VALIDATION_ERRORS.TOO_MANY_MAP_PICKS);
 	}
 
 	const modePickStep = steps.find((s) => s.action === "MODE_PICK");
-	const mapPickStep = steps.find((s) => s.action === "PICK");
+	const mapPickStep = steps.find(
+		(s) => s.action && MAP_PICK_ACTIONS.has(s.action),
+	);
 	if (
 		modePickStep?.side &&
 		mapPickStep?.side &&
