@@ -1,25 +1,23 @@
 import clsx from "clsx";
-import { Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { DotPagination } from "~/components/DotPagination";
 import { WeaponImage } from "~/components/Image";
-import { TierPill } from "~/components/TierPill";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { usePagination } from "~/hooks/usePagination";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import { tournamentPage, trophyWinsPage } from "~/utils/urls";
+import { trophyWinsPage } from "~/utils/urls";
 import type { TrophyWinsLoaderData } from "../routes/trophies.$id.wins.$userId";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "../trophies-constants";
 import {
 	parseSpecialTrophyCode,
 	useProgressiveRender,
 } from "../trophies-utils";
+import { TournamentSummaryRow } from "./TournamentSummaryRow";
 import { Trophy, TrophyContextProvider, TrophyPlaceholder } from "./Trophy";
 import styles from "./TrophyDisplay.module.css";
 import { TrophyShowcaseModal } from "./TrophyShowcase";
@@ -169,40 +167,9 @@ function TrophyWinDetails({
 	win: TrophyWinsLoaderData["wins"][number];
 	userCards: TrophyWinsLoaderData["userCards"];
 }) {
-	const { formatter } = useDateTimeFormat({
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	});
-
 	return (
 		<div className={styles.win}>
-			<Link to={tournamentPage(win.tournamentId)} className={styles.winHeader}>
-				<img
-					src={win.logoUrl}
-					alt=""
-					width={32}
-					height={32}
-					className={styles.winLogo}
-				/>
-				<div className="stack xxs">
-					<span className={styles.winName}>
-						<p>{win.name}</p>
-						{win.tier ? <TierPill tier={win.tier} /> : null}
-					</span>
-					<div className={styles.winMeta}>
-						<span className={styles.winMetaItem}>
-							<Users className={styles.winMetaIcon} />
-							{win.teamsCount}
-						</span>
-						{win.startTime ? (
-							<span className={styles.winMetaItem}>
-								{formatter.format(win.startTime)}
-							</span>
-						) : null}
-					</div>
-				</div>
-			</Link>
+			<TournamentSummaryRow tournament={win} className={styles.winHeader} />
 			<div className={styles.winDetails}>
 				{win.members.length > 0 ? (
 					<div className={styles.winMembers}>

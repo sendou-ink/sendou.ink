@@ -78,7 +78,6 @@ export function Trophy({
 	model: string;
 	className?: string;
 	preview?: boolean;
-	/** Frames the trophy in the tier colored (falling back to neutral) box used by trophy grids */
 	tile?: boolean;
 	tier?: number | null;
 	tentativeTier?: number | null;
