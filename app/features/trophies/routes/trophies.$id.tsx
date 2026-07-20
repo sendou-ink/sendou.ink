@@ -1,7 +1,8 @@
 import clsx from "clsx";
 import { Trans, useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { tournamentOrganizationPage, userPage } from "~/utils/urls";
 import { TrophyShowcase } from "../components/TrophyShowcase";
 import { TrophyTournamentHistory } from "../components/TrophyTournamentHistory";
@@ -10,6 +11,24 @@ import { parseSpecialTrophyCode } from "../trophies-utils";
 import styles from "./trophies.module.css";
 
 export { loader };
+
+export const meta: MetaFunction = (args) => {
+	const data = args.loaderData as SerializeFrom<typeof loader> | null;
+
+	if (!data) return [];
+
+	const ownerCount = data.trophy.owners.reduce(
+		(sum, owner) => sum + owner.count,
+		0,
+	);
+
+	return metaTags({
+		title: data.trophy.name,
+		ogTitle: `${data.trophy.name} (Splatoon trophy)`,
+		description: `See who owns the ${data.trophy.name} trophy on sendou.ink. Awarded ${ownerCount} time${ownerCount === 1 ? "" : "s"} so far.`,
+		location: args.location,
+	});
+};
 
 export default function TrophyDetailsPage() {
 	const { t } = useTranslation(["trophies"]);
