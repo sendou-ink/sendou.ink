@@ -10,8 +10,10 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import {
+	calendarEventStartTime,
 	commonUserSelect,
 	tournamentLogoWithDefault,
+	tournamentTeamCount,
 } from "~/utils/kysely.server";
 import { peakXpOverallSql } from "../top-search/XRankPlacementRepository.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
@@ -48,22 +50,11 @@ const withRecentTournament = (eb: ExpressionBuilder<DB, "Trophy">) =>
 				"Tournament.tier",
 				"CalendarEvent.name",
 				"CalendarEvent.organizationId",
-				eb2
-					.selectFrom("CalendarEventDate")
-					.select((eb3) => eb3.fn.min<number>("startTime").as("startTime"))
-					.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
-					.as("startTime"),
+				calendarEventStartTime(eb2).as("startTime"),
 			])
 			.whereRef("CalendarEvent.trophyId", "=", "Trophy.id")
 			.where("CalendarEvent.hidden", "=", 0)
-			.orderBy(
-				(eb2) =>
-					eb2
-						.selectFrom("CalendarEventDate")
-						.select((eb3) => eb3.fn.min<number>("startTime").as("startTime"))
-						.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id"),
-				"desc",
-			)
+			.orderBy((eb2) => calendarEventStartTime(eb2), "desc")
 			.limit(1),
 	).as("recentTournament");
 
@@ -286,17 +277,8 @@ export async function findTournamentsByTrophyId(trophyId: number) {
 			"CalendarEvent.organizationId",
 			"Tournament.tier",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
-			eb
-				.selectFrom("CalendarEventDate")
-				.select((eb2) => eb2.fn.min<number>("startTime").as("startTime"))
-				.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
-				.as("startTime"),
-			eb
-				.selectFrom("TournamentTeam")
-				.select((eb2) => eb2.fn.countAll<number>().as("count"))
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.as("teamsCount"),
+			calendarEventStartTime(eb).as("startTime"),
+			tournamentTeamCount(eb).as("teamsCount"),
 		])
 		.where("CalendarEvent.trophyId", "=", trophyId)
 		.where("CalendarEvent.hidden", "=", 0)
@@ -340,17 +322,8 @@ export async function findWinsByOwner({
 			"TrophyOwner.tier",
 			"CalendarEvent.name",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
-			eb
-				.selectFrom("CalendarEventDate")
-				.select((eb2) => eb2.fn.min<number>("startTime").as("startTime"))
-				.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
-				.as("startTime"),
-			eb
-				.selectFrom("TournamentTeam")
-				.select((eb2) => eb2.fn.countAll<number>().as("count"))
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.as("teamsCount"),
+			calendarEventStartTime(eb).as("startTime"),
+			tournamentTeamCount(eb).as("teamsCount"),
 		])
 		.where("TrophyOwner.trophyId", "=", trophyId)
 		.where("TrophyOwner.userId", "=", userId)
