@@ -23,16 +23,19 @@
 }
 
 .tierX {
+	--_polished-bg: var(--tier-bg-1);
 	background-color: var(--tier-bg-1);
 	color: hsl(45, 100%, 12%);
 }
 
 .tierSPlus {
+	--_polished-bg: var(--tier-bg-2);
 	background-color: var(--tier-bg-2);
 	color: hsl(280, 100%, 94%);
 }
 
 .tierS {
+	--_polished-bg: var(--tier-bg-3);
 	background-color: var(--tier-bg-3);
 	color: hsl(280, 100%, 95%);
 }
@@ -65,4 +68,50 @@
 .tierC {
 	background-color: var(--tier-bg-9);
 	color: hsl(220, 15%, 95%);
+}
+
+.polished {
+	position: relative;
+	overflow: hidden;
+	background-image: linear-gradient(
+		160deg,
+		hsl(from var(--_polished-bg) calc(h + 2) s calc(l + 14)),
+		var(--_polished-bg) 50%,
+		hsl(from var(--_polished-bg) calc(h - 3) s calc(l - 9))
+	);
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			115deg,
+			transparent 35%,
+			hsl(0, 0%, 100%, 0.5) 50%,
+			transparent 65%
+		);
+		transform: translateX(-100%);
+		animation: shine-sweep 6s ease-in-out infinite;
+	}
+}
+
+@keyframes shine-sweep {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	12% {
+		transform: translateX(100%);
+	}
+
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.polished::after {
+		animation: none;
+		visibility: hidden;
+	}
 }
