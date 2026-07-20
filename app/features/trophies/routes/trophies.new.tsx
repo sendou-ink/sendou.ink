@@ -346,7 +346,7 @@ function ModelField({
 	value: string;
 	onChange: (value: string) => void;
 }) {
-	const { t } = useTranslation(["forms"]);
+	const { t } = useTranslation(["forms", "trophies"]);
 	const [previewModel, setPreviewModel] = React.useState(() =>
 		value ? compressTrophyModel(value) : "",
 	);
@@ -386,15 +386,27 @@ function ModelField({
 			</FormMessage>
 			{error ? <FormMessage type="error">{error}</FormMessage> : null}
 			{previewModel ? (
-				<>
-					<Trophy
-						model={previewModel}
-						className={styles.trophyPreview}
-						preview
-						tier={1}
-					/>
-					<Trophy model={previewModel} className={styles.trophyPreview} />
-				</>
+				<TrophyContextProvider>
+					<div className={styles.previewThemes}>
+						{(["light", "dark"] as const).map((theme) => (
+							<div
+								key={theme}
+								className={clsx(styles.previewTheme, `${theme}-preview`)}
+							>
+								<span className={styles.previewThemeLabel}>
+									{t(`trophies:new.form.preview.${theme}`)}
+								</span>
+								<Trophy
+									model={previewModel}
+									className={styles.trophyPreview}
+									preview
+									tier={1}
+								/>
+								<Trophy model={previewModel} className={styles.trophyPreview} />
+							</div>
+						))}
+					</div>
+				</TrophyContextProvider>
 			) : null}
 		</div>
 	);

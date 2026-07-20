@@ -59,6 +59,35 @@
 	}
 }
 
+.previewThemes {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--s-4);
+	margin-top: var(--s-4);
+}
+
+.previewTheme {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+
+	& .trophyPreview {
+		margin-top: 0;
+		width: 100%;
+	}
+}
+
+.previewThemeLabel {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
 .descriptionTextarea {
 	min-height: 120px;
 }
