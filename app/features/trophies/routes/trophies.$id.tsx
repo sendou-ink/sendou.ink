@@ -1,8 +1,8 @@
 import clsx from "clsx";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
-import { userPage } from "~/utils/urls";
+import { tournamentOrganizationPage, userPage } from "~/utils/urls";
 import { TrophyShowcase } from "../components/TrophyShowcase";
 import { TrophyTournamentHistory } from "../components/TrophyTournamentHistory";
 import { loader } from "../loaders/trophies.$id.server";
@@ -28,23 +28,48 @@ export default function TrophyDetailsPage() {
 				<p className={styles.trophyName}>{trophy.name}</p>
 				{trophy.organization ? (
 					<p className={styles.trophyMeta}>
-						{t("trophies:details.organization", {
-							name: trophy.organization.name,
-						})}
+						<Trans
+							t={t}
+							i18nKey="trophies:details.organization"
+							values={{ name: trophy.organization.name }}
+						>
+							Organization:
+							<Link
+								to={tournamentOrganizationPage({
+									organizationSlug: trophy.organization.slug,
+								})}
+							>
+								{trophy.organization.name}
+							</Link>
+						</Trans>
 					</p>
 				) : null}
 				{trophy.creator ? (
 					<p className={styles.trophyMeta}>
-						{t("trophies:details.createdBy", {
-							name: trophy.creator.username,
-						})}
+						<Trans
+							t={t}
+							i18nKey="trophies:details.createdBy"
+							values={{ name: trophy.creator.username }}
+						>
+							Created by
+							<Link to={userPage(trophy.creator)}>
+								{trophy.creator.username}
+							</Link>
+						</Trans>
 					</p>
 				) : null}
 				{trophy.manager ? (
 					<p className={styles.trophyMeta}>
-						{t("trophies:details.managedBy", {
-							name: trophy.manager.username,
-						})}
+						<Trans
+							t={t}
+							i18nKey="trophies:details.managedBy"
+							values={{ name: trophy.manager.username }}
+						>
+							Managed by
+							<Link to={userPage(trophy.manager)}>
+								{trophy.manager.username}
+							</Link>
+						</Trans>
 					</p>
 				) : null}
 				{special ? (

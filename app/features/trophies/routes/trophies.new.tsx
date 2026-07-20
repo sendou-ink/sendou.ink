@@ -4,6 +4,7 @@ import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
 	Form,
+	Link,
 	type MetaFunction,
 	useFetcher,
 	useLoaderData,
@@ -33,6 +34,8 @@ import {
 	PICOCAD2_WEB_VIEWER_URL,
 	SENDOU_INK_DISCORD_URL,
 	TROPHIES_PAGE,
+	tournamentOrganizationPage,
+	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/trophies.new.server";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
@@ -662,8 +665,29 @@ function TrophyListRow({
 					) : null}
 					<span className={styles.pendingName}>{pending.name}</span>
 					<span className={styles.pendingMeta}>
-						{pending.submitterUsername}
-						{pending.organizationName ? ` • ${pending.organizationName}` : ""}
+						{pending.submitterDiscordId ? (
+							<Link to={userPage({ discordId: pending.submitterDiscordId })}>
+								{pending.submitterUsername}
+							</Link>
+						) : (
+							pending.submitterUsername
+						)}
+						{pending.organizationName ? (
+							<>
+								{" • "}
+								{pending.organizationSlug ? (
+									<Link
+										to={tournamentOrganizationPage({
+											organizationSlug: pending.organizationSlug,
+										})}
+									>
+										{pending.organizationName}
+									</Link>
+								) : (
+									pending.organizationName
+								)}
+							</>
+						) : null}
 					</span>
 				</div>
 				{analysis ? (

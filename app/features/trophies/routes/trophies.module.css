@@ -45,7 +45,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	padding: 0;
-	font-size: var(--font-sm);
+	font-size: var(--font-xs);
 	gap: var(--s-2);
 
 	& > li {
