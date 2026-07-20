@@ -36,6 +36,14 @@ export function up(db) {
 		).run();
 
 		db.prepare(
+			/*sql*/ `create index "trophy_owner_user_id" on "TrophyOwner"("userId")`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `create index "trophy_owner_trophy_id" on "TrophyOwner"("trophyId", "userId")`,
+		).run();
+
+		db.prepare(
 			/*sql*/ `
       create table "SpecialTrophyOwner" (
         "trophyId" integer not null,
@@ -91,6 +99,10 @@ export function up(db) {
 
 		db.prepare(
 			/*sql*/ `alter table "CalendarEvent" add column "trophyId" integer references "Trophy"("id") on delete set null`,
+		).run();
+
+		db.prepare(
+			/*sql*/ `create index "calendar_event_trophy_id" on "CalendarEvent"("trophyId")`,
 		).run();
 
 		db.prepare(
