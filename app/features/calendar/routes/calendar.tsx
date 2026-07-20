@@ -64,6 +64,7 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
+// xxx: sunday first conditional i18n?
 export default function CalendarPage() {
 	const { t } = useTranslation(["calendar", "common"]);
 	const data = useLoaderData<typeof loader>();
@@ -71,7 +72,11 @@ export default function CalendarPage() {
 	const { previous, shown, next, current } = daysForCalendar(data.dateViewed);
 
 	return (
-		<Main bigger className="stack lg">
+		<Main
+			breakoutContainer
+			className={clsx("stack lg", styles.container)}
+			style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME } as React.CSSProperties}
+		>
 			<div className={styles.buttonsContainer}>
 				<div className={styles.navigateButtonsContainer}>
 					<NavigateButton
@@ -110,8 +115,9 @@ export default function CalendarPage() {
 				</div>
 			</div>
 			<div
+				key={`${shown[0].year}-${shown[0].month}-${shown[0].day}`}
+				ref={scrollCurrentDayToCenter}
 				className={clsx(styles.columnsContainer, "scrollbar")}
-				style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME }}
 			>
 				{shown.map((date) => (
 					<DayEventsColumn
@@ -119,6 +125,11 @@ export default function CalendarPage() {
 						date={date.day}
 						month={date.month}
 						year={date.year}
+						isCurrent={
+							date.day === current.day &&
+							date.month === current.month &&
+							date.year === current.year
+						}
 						eventTimes={data.eventTimes.filter((event) => {
 							const eventDate = new Date(event.at);
 
@@ -207,21 +218,41 @@ function CalendarDatePicker({
 	);
 }
 
+// xxx: verify works
+function scrollCurrentDayToCenter(container: HTMLDivElement | null) {
+	if (!container) return;
+
+	const currentColumn = container.querySelector<HTMLElement>(
+		"[data-current-column]",
+	);
+	if (!currentColumn) return;
+
+	const containerRect = container.getBoundingClientRect();
+	const columnRect = currentColumn.getBoundingClientRect();
+
+	container.scrollLeft +=
+		columnRect.left -
+		containerRect.left -
+		(containerRect.width - columnRect.width) / 2;
+}
+
 function DayEventsColumn({
 	date,
 	month,
 	year,
+	isCurrent,
 	eventTimes,
 }: {
 	date: number;
 	month: number;
 	year: number;
+	isCurrent: boolean;
 	eventTimes: CalendarLoaderData["eventTimes"];
 }) {
 	const eventTimesCollapsed = useCollapsableEvents(eventTimes);
 
 	return (
-		<div>
+		<div data-current-column={isCurrent || undefined}>
 			<DayHeader date={date} month={month} year={year} />
 			<div className={styles.dayEvents}>
 				{eventTimesCollapsed.map((eventTime, i) => {
