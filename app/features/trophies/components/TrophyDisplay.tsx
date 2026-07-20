@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
-import { SendouButton } from "~/components/elements/Button";
+import { DotPagination } from "~/components/DotPagination";
 import { WeaponImage } from "~/components/Image";
 import { TierPill } from "~/components/TierPill";
 import { UserCard } from "~/features/user-card/components/UserCard";
@@ -94,10 +94,12 @@ export function TrophyDisplay({
 					)}
 				</div>
 				{!everythingVisible ? (
-					<TrophyPagination
+					<DotPagination
 						pagesCount={pagesCount}
 						currentPage={currentPage}
 						setPage={setPage}
+						ariaLabelPrefix="Trophies"
+						data-testid="trophy-pagination-button"
 					/>
 				) : null}
 			</div>
@@ -241,37 +243,6 @@ function TrophyWinDetails({
 					</div>
 				) : null}
 			</div>
-		</div>
-	);
-}
-
-interface TrophyPaginationProps {
-	pagesCount: number;
-	currentPage: number;
-	setPage: (page: number) => void;
-}
-
-function TrophyPagination({
-	pagesCount,
-	currentPage,
-	setPage,
-}: TrophyPaginationProps) {
-	return (
-		<div className={styles.pagination}>
-			{Array.from({ length: pagesCount }, (_, i) => (
-				<SendouButton
-					key={i}
-					variant="minimal"
-					aria-label={`Trophies page ${i + 1}`}
-					onPress={() => setPage(i + 1)}
-					className={clsx(styles.paginationButton, {
-						[styles.paginationButtonActive]: currentPage === i + 1,
-					})}
-					data-testid="trophy-pagination-button"
-				>
-					{i + 1}
-				</SendouButton>
-			))}
 		</div>
 	);
 }

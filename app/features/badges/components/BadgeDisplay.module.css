@@ -46,29 +46,5 @@
 }
 
 .pagination {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-3);
-	justify-content: center;
-	align-items: center;
-	max-width: 20rem;
-	margin: 0 auto;
 	margin-block-start: var(--s-2);
-}
-
-.paginationButton {
-	background-color: var(--color-bg);
-	border-radius: 100%;
-	padding: var(--s-1);
-	height: 24px;
-	width: 24px;
-	border: var(--border-style);
-	font-size: var(--font-xs);
-	color: var(--color-text-high);
-}
-
-.paginationButtonActive {
-	color: var(--color-text-accent);
-	background-color: var(--color-bg-high);
-	border-color: var(--color-border-high);
 }
