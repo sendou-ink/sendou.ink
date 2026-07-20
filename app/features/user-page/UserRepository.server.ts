@@ -494,6 +494,18 @@ export function findAllPlusServerMembers() {
 		.execute();
 }
 
+export async function existingUserIds(userIds: Array<number>) {
+	if (userIds.length === 0) return [];
+
+	const rows = await db
+		.selectFrom("User")
+		.select("User.id")
+		.where("User.id", "in", userIds)
+		.execute();
+
+	return rows.map((row) => row.id);
+}
+
 export async function findChatUsersByUserIds(userIds: number[]) {
 	const users = await db
 		.selectFrom("User")

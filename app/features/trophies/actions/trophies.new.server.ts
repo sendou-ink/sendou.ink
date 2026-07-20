@@ -1,6 +1,12 @@
 import type { ActionFunction } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
+import { ADMIN_ID, QA_IDS, STAFF_IDS } from "~/features/admin/admin-constants";
+import {
+	type AuthenticatedUser,
+	requireUser,
+} from "~/features/auth/core/user.server";
+import { notify } from "~/features/notifications/core/notify.server";
 import { clearTrophiesCache } from "~/features/trophies/loaders/trophies.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -70,6 +76,11 @@ export const action: ActionFunction = async ({ request }) => {
 				managerId: data.managerId,
 			});
 
+			await notifyReviewersOfSubmission({
+				trophyName: data.name,
+				submitter: user,
+			});
+
 			return null;
 		}
 
@@ -86,6 +97,11 @@ export const action: ActionFunction = async ({ request }) => {
 			description: data.description ?? "",
 			organizationId: data.organizationId,
 			submitterUserId: user.id,
+		});
+
+		await notifyReviewersOfSubmission({
+			trophyName: data.name,
+			submitter: user,
 		});
 
 		return null;
@@ -128,6 +144,17 @@ export const action: ActionFunction = async ({ request }) => {
 				reason: data.reason,
 				declinedByUserId: user.id,
 			});
+
+			if (pending.submitterUserId !== user.id) {
+				notify({
+					userIds: [pending.submitterUserId],
+					notification: {
+						type: "TROPHY_SUBMISSION_DECLINED",
+						meta: { trophyName: pending.name },
+					},
+				});
+			}
+
 			return null;
 		}
 		case "APPROVE": {
@@ -158,6 +185,16 @@ export const action: ActionFunction = async ({ request }) => {
 
 			if (inserted) {
 				clearTrophiesCache();
+
+				if (pending.submitterUserId !== user.id) {
+					notify({
+						userIds: [pending.submitterUserId],
+						notification: {
+							type: "TROPHY_SUBMISSION_ACCEPTED",
+							meta: { trophyName: pending.name, trophyId: inserted.id },
+						},
+					});
+				}
 			}
 
 			return null;
@@ -167,3 +204,23 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 	}
 };
+
+async function notifyReviewersOfSubmission({
+	trophyName,
+	submitter,
+}: {
+	trophyName: string;
+	submitter: AuthenticatedUser;
+}) {
+	const reviewerIds = await UserRepository.existingUserIds(
+		[ADMIN_ID, ...QA_IDS].filter((id) => id !== submitter.id),
+	);
+
+	notify({
+		userIds: reviewerIds,
+		notification: {
+			type: "TROPHY_SUBMITTED",
+			meta: { trophyName, submitterUsername: submitter.username },
+		},
+	});
+}
