@@ -219,13 +219,8 @@ export async function findByOwnerUserId(userId: number) {
 		patronTier,
 		trophies: rows
 			.filter((row) => !hiddenSet.has(row.id))
-			.map(
-				({
-					favoriteTrophyIds: _,
-					hiddenTrophyIds: __,
-					patronTier: ___,
-					...trophy
-				}) => trophy,
+			.map((row) =>
+				R.omit(row, ["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"]),
 			),
 	}).trophies;
 }
@@ -233,13 +228,8 @@ export async function findByOwnerUserId(userId: number) {
 export async function findByOwnerUserIdIncludingHidden(userId: number) {
 	const rows = await findOwnedTrophies(userId);
 
-	return rows.map(
-		({
-			favoriteTrophyIds: _,
-			hiddenTrophyIds: __,
-			patronTier: ___,
-			...trophy
-		}) => trophy,
+	return rows.map((row) =>
+		R.omit(row, ["favoriteTrophyIds", "hiddenTrophyIds", "patronTier"]),
 	);
 }
 
