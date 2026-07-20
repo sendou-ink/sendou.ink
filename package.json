@@ -40,8 +40,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.1084.0",
-		"@aws-sdk/lib-storage": "3.1084.0",
+		"@aws-sdk/client-s3": "3.1085.0",
+		"@aws-sdk/lib-storage": "3.1085.0",
 		"@date-fns/tz": "1.5.0",
 		"@dnd-kit/core": "6.3.1",
 		"@dnd-kit/modifiers": "9.0.0",
@@ -53,7 +53,7 @@
 		"@react-router/node": "8.2.0",
 		"@react-router/serve": "8.1.0",
 		"@remix-run/form-data-parser": "0.17.4",
-		"@sentry/react-router": "10.64.0",
+		"@sentry/react-router": "10.65.0",
 		"@tldraw/tldraw": "3.12.1",
 		"@zumer/snapdom": "2.15.0",
 		"better-sqlite3": "12.11.1",
@@ -115,7 +115,7 @@
 		"babel-plugin-react-compiler": "19.1.0-rc.3",
 		"cross-env": "10.1.0",
 		"i18next-locales-sync": "2.1.1",
-		"knip": "6.25.0",
+		"knip": "6.26.0",
 		"ley": "0.8.1",
 		"sql-formatter": "15.8.2",
 		"typescript": "7.0.2",
