@@ -257,10 +257,7 @@ function UpdateTrophyForm({
 }: {
 	trophy: NewTrophyLoaderData["editableTrophies"][number];
 }) {
-	const decompressedModel = React.useMemo(
-		() => decompressTrophyModel(trophy.model) ?? "",
-		[trophy.model],
-	);
+	const decompressedModel = decompressTrophyModel(trophy.model) ?? "";
 
 	return (
 		<SendouForm

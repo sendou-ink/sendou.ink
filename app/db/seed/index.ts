@@ -1624,7 +1624,7 @@ function trophyWinsTournament() {
 	for (const p of placements) {
 		const teamId = t(p.teamSeed);
 
-		teamMembers.get(teamId)!.forEach((userId, memberIndex) => {
+		for (const [memberIndex, userId] of teamMembers.get(teamId)!.entries()) {
 			const setResults = p.setResults.map((result) =>
 				memberIndex > 0 && faker.number.float(1) > 0.75 ? null : result,
 			);
@@ -1644,7 +1644,7 @@ function trophyWinsTournament() {
 				setResults: JSON.stringify(setResults),
 				spDiff,
 			});
-		});
+		}
 	}
 
 	const trophyOwnerStm = sql.prepare(

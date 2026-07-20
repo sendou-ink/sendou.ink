@@ -344,9 +344,9 @@ function NewTrophyReceiversSelector({
 						<div className="stack horizontal sm items-end">
 							<ParticipationPill setResults={member.setResults} />
 						</div>
-						{i !== firstPlaceStanding.members.length - 1 && (
+						{i !== firstPlaceStanding.members.length - 1 ? (
 							<Divider className="mt-3" />
-						)}
+						) : null}
 					</div>
 				);
 			})}
