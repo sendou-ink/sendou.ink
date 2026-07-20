@@ -6,6 +6,7 @@ import {
 	textFieldRequired,
 } from "~/form/fields";
 import { _action, id } from "~/utils/zod";
+import { analyzeTrophyModel } from "./core/model-analysis";
 import {
 	TROPHY_DECLINE_REASON_MAX_LENGTH,
 	TROPHY_DECLINE_REASON_MIN_LENGTH,
@@ -15,6 +16,38 @@ import {
 	TROPHY_NAME_MIN_LENGTH,
 } from "./trophies-constants";
 
+const trophyModelField = () =>
+	customField(
+		{ initialValue: "" },
+		z
+			.string()
+			.trim()
+			.min(1)
+			.max(TROPHY_MODEL_MAX_LENGTH)
+			.superRefine((model, ctx) => {
+				const analysis = analyzeTrophyModel(model);
+
+				if (!analysis) {
+					ctx.addIssue({ code: "custom", message: "Invalid model state" });
+					return;
+				}
+
+				if (!analysis.cameraTargetCentered) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Camera target X and Z must be 0",
+					});
+				}
+
+				if (!analysis.backgroundIsAlpha) {
+					ctx.addIssue({
+						code: "custom",
+						message: "Background color must be the alpha color",
+					});
+				}
+			}),
+	);
+
 export const createTrophyFormSchema = z.object({
 	_action: stringConstant("CREATE"),
 	name: textFieldRequired({
@@ -22,10 +55,7 @@ export const createTrophyFormSchema = z.object({
 		minLength: TROPHY_NAME_MIN_LENGTH,
 		maxLength: TROPHY_NAME_MAX_LENGTH,
 	}),
-	model: customField(
-		{ initialValue: "" },
-		z.string().trim().min(1).max(TROPHY_MODEL_MAX_LENGTH),
-	),
+	model: trophyModelField(),
 	organizationId: customField({ initialValue: null }, id),
 	description: textAreaOptional({
 		label: "labels.trophyInformation",
@@ -41,10 +71,7 @@ export const updateTrophyFormSchema = z.object({
 		minLength: TROPHY_NAME_MIN_LENGTH,
 		maxLength: TROPHY_NAME_MAX_LENGTH,
 	}),
-	model: customField(
-		{ initialValue: "" },
-		z.string().trim().min(1).max(TROPHY_MODEL_MAX_LENGTH),
-	),
+	model: trophyModelField(),
 	organizationId: customField({ initialValue: null }, id),
 	managerId: customField({ initialValue: null }, id),
 	description: textAreaOptional({

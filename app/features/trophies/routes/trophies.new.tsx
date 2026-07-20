@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { Clipboard, Trash2 } from "lucide-react";
+import { Check, Clipboard, Dot, Trash2, TriangleAlert, X } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
@@ -37,12 +37,19 @@ import {
 import { action } from "../actions/trophies.new.server";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
 import {
+	analyzeTrophyModel,
+	type TrophyModelAnalysis,
+} from "../core/model-analysis";
+import {
 	loader,
 	type NewTrophyLoaderData,
 } from "../loaders/trophies.new.server";
 import {
 	TROPHY_APPROVALS_REQUIRED,
 	TROPHY_DECLINE_REASON_MAX_LENGTH,
+	TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
+	TROPHY_MODEL_RECOMMENDED_MAX_EFFECTS,
+	TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
 	TROPHY_PENDING_PER_USER_LIMIT,
 } from "../trophies-constants";
 import {
@@ -345,15 +352,9 @@ function ModelField({
 	onChange: (value: string) => void;
 }) {
 	const { t } = useTranslation(["forms", "trophies"]);
-	const [previewModel, setPreviewModel] = React.useState(() =>
-		value ? compressTrophyModel(value) : "",
-	);
+	const [preview, setPreview] = React.useState(() => buildModelPreview(value));
 
-	useDebounce(
-		() => setPreviewModel(value ? compressTrophyModel(value) : ""),
-		500,
-		[value],
-	);
+	useDebounce(() => setPreview(buildModelPreview(value)), 500, [value]);
 
 	return (
 		<div>
@@ -379,7 +380,7 @@ function ModelField({
 				</a>
 			</FormMessage>
 			{error ? <FormMessage type="error">{error}</FormMessage> : null}
-			{previewModel ? (
+			{preview.compressedModel ? (
 				<TrophyContextProvider>
 					<div className={styles.previewThemes}>
 						{(["light", "dark"] as const).map((theme) => (
@@ -391,18 +392,147 @@ function ModelField({
 									{t(`trophies:new.form.preview.${theme}`)}
 								</span>
 								<Trophy
-									model={previewModel}
+									model={preview.compressedModel}
 									className={styles.trophyPreview}
 									preview
 									tier={1}
 								/>
-								<Trophy model={previewModel} className={styles.trophyPreview} />
+								<Trophy
+									model={preview.compressedModel}
+									className={styles.trophyPreview}
+								/>
 							</div>
 						))}
 					</div>
 				</TrophyContextProvider>
 			) : null}
+			<ModelSpecs analysis={preview.analysis} />
 		</div>
+	);
+}
+
+function buildModelPreview(model: string) {
+	if (!model) return { compressedModel: "", analysis: null };
+
+	return {
+		compressedModel: compressTrophyModel(model),
+		analysis: analyzeTrophyModel(model),
+	};
+}
+
+function ModelSpecs({ analysis }: { analysis: TrophyModelAnalysis | null }) {
+	const { t } = useTranslation(["trophies"]);
+
+	const enforcedStatus = (passes: boolean) =>
+		analysis ? (passes ? "pass" : "fail") : null;
+	const recommendedStatus = (withinLimit: boolean) =>
+		analysis ? (withinLimit ? "pass" : "warn") : null;
+
+	return (
+		<div className={styles.modelSpecs}>
+			<div>
+				<div className={styles.termsGroupTitle}>
+					{t("trophies:new.specs.required")}
+				</div>
+				<ul className={styles.specList}>
+					<SpecItem status={enforcedStatus(!!analysis?.cameraTargetCentered)}>
+						{t("trophies:new.specs.cameraTarget")}
+					</SpecItem>
+					<SpecItem status={enforcedStatus(!!analysis?.backgroundIsAlpha)}>
+						{t("trophies:new.specs.background")}
+					</SpecItem>
+					<SpecItem>{t("trophies:new.specs.centered")}</SpecItem>
+					<SpecItem>{t("trophies:new.specs.zoom")}</SpecItem>
+					<SpecItem>{t("trophies:new.specs.angles")}</SpecItem>
+				</ul>
+			</div>
+			<div>
+				<div className={styles.termsGroupTitle}>
+					{t("trophies:new.specs.recommended")}
+				</div>
+				<ul className={styles.specList}>
+					<SpecItem
+						status={recommendedStatus(
+							!!analysis &&
+								analysis.drawCalls <= TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
+						)}
+						detail={
+							analysis
+								? t("trophies:new.specs.currentValue", {
+										value: analysis.drawCalls,
+									})
+								: undefined
+						}
+					>
+						{t("trophies:new.specs.drawCalls", {
+							value: TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
+						})}
+					</SpecItem>
+					<SpecItem
+						status={recommendedStatus(
+							!!analysis &&
+								analysis.polyCount <= TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
+						)}
+						detail={
+							analysis
+								? t("trophies:new.specs.currentValue", {
+										value: analysis.polyCount,
+									})
+								: undefined
+						}
+					>
+						{t("trophies:new.specs.polys", {
+							value: TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
+						})}
+					</SpecItem>
+					<SpecItem
+						status={recommendedStatus(
+							!!analysis &&
+								analysis.effectsCount <= TROPHY_MODEL_RECOMMENDED_MAX_EFFECTS,
+						)}
+						detail={
+							analysis
+								? t("trophies:new.specs.currentValue", {
+										value: analysis.effectsCount,
+									})
+								: undefined
+						}
+					>
+						{t("trophies:new.specs.effects", {
+							value: TROPHY_MODEL_RECOMMENDED_MAX_EFFECTS,
+						})}
+					</SpecItem>
+				</ul>
+			</div>
+		</div>
+	);
+}
+
+function SpecItem({
+	children,
+	status,
+	detail,
+}: {
+	children: React.ReactNode;
+	status?: "pass" | "fail" | "warn" | null;
+	detail?: string;
+}) {
+	return (
+		<li className={styles.specItem}>
+			{status === "pass" ? (
+				<Check className={clsx(styles.specIcon, styles.specIconPass)} />
+			) : status === "fail" ? (
+				<X className={clsx(styles.specIcon, styles.specIconFail)} />
+			) : status === "warn" ? (
+				<TriangleAlert className={clsx(styles.specIcon, styles.specIconWarn)} />
+			) : (
+				<Dot className={styles.specIcon} />
+			)}
+			<span>
+				{children}
+				{detail ? <span className={styles.specDetail}> {detail}</span> : null}
+			</span>
+		</li>
 	);
 }
 
@@ -502,6 +632,10 @@ function TrophyListRow({
 
 	const [previewOpen, setPreviewOpen] = React.useState(false);
 
+	const analysis = analyzeTrophyModel(
+		decompressTrophyModel(pending.model) ?? "",
+	);
+
 	return (
 		<div className={styles.pendingItem}>
 			<button
@@ -532,6 +666,50 @@ function TrophyListRow({
 						{pending.organizationName ? ` • ${pending.organizationName}` : ""}
 					</span>
 				</div>
+				{analysis ? (
+					<div className={styles.pendingSpecs}>
+						<span
+							className={clsx({
+								[styles.pendingSpecsWarn]:
+									analysis.drawCalls > TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
+							})}
+						>
+							{t("trophies:new.specs.stats.drawCalls", {
+								value: analysis.drawCalls,
+							})}
+						</span>
+						<span
+							className={clsx({
+								[styles.pendingSpecsWarn]:
+									analysis.polyCount > TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
+							})}
+						>
+							{t("trophies:new.specs.stats.polys", {
+								value: analysis.polyCount,
+							})}
+						</span>
+						<span
+							className={clsx({
+								[styles.pendingSpecsWarn]:
+									analysis.effectsCount > TROPHY_MODEL_RECOMMENDED_MAX_EFFECTS,
+							})}
+						>
+							{t("trophies:new.specs.stats.effects", {
+								value: analysis.effectsCount,
+							})}
+						</span>
+						{!analysis.cameraTargetCentered ? (
+							<span className={styles.pendingSpecsError}>
+								{t("trophies:new.specs.stats.cameraTargetOff")}
+							</span>
+						) : null}
+						{!analysis.backgroundIsAlpha ? (
+							<span className={styles.pendingSpecsError}>
+								{t("trophies:new.specs.stats.backgroundNotAlpha")}
+							</span>
+						) : null}
+					</div>
+				) : null}
 				{pending.target ? (
 					<PendingTrophyDiff pending={pending} target={pending.target} />
 				) : null}

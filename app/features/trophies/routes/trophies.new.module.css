@@ -88,6 +88,78 @@
 	color: var(--color-text-high);
 }
 
+.modelSpecs {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	margin-top: var(--s-4);
+	padding: var(--s-3);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-sm);
+}
+
+.specList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding: 0;
+	margin-top: var(--s-1);
+
+	& > li {
+		list-style: none;
+	}
+}
+
+.specItem {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--s-1-5);
+}
+
+.specIcon {
+	width: 16px;
+	height: 16px;
+	flex-shrink: 0;
+	margin-top: 2px;
+	color: var(--color-text-high);
+}
+
+.specIconPass {
+	color: var(--color-success);
+}
+
+.specIconFail {
+	color: var(--color-error);
+}
+
+.specIconWarn {
+	color: var(--color-warning);
+}
+
+.specDetail {
+	color: var(--color-text-high);
+}
+
+.pendingSpecs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1) var(--s-2);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.pendingSpecsWarn {
+	color: var(--color-warning);
+	font-weight: var(--weight-semi);
+}
+
+.pendingSpecsError {
+	color: var(--color-error);
+	font-weight: var(--weight-semi);
+}
+
 .descriptionTextarea {
 	min-height: 120px;
 }
