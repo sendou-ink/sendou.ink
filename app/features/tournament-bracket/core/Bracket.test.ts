@@ -819,3 +819,180 @@ describe("double elimination standings - projected ties", () => {
 		}
 	});
 });
+
+// 8-team DE with the whole winners bracket + losers round 1 played out and only
+// one of the two losers round 2 matches reported, leaving later losers rounds
+// and the grand finals not yet started
+const partiallyPlayedDoubleElimination = () => {
+	const storage = new InMemoryDatabase();
+	const manager = new BracketsManager(storage);
+
+	manager.create({
+		name: "DE",
+		tournamentId: 1,
+		type: "double_elimination",
+		seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+		settings: { grandFinal: "double", seedOrdering: ["natural"] },
+	});
+
+	const groupId = (number: number) =>
+		storage.select<any>("group")!.find((g) => g.number === number)!.id;
+	const winnersGroupId = groupId(1);
+	const losersGroupId = groupId(2);
+
+	const losersRoundId = (number: number) =>
+		storage
+			.select<any>("round")!
+			.find((r) => r.group_id === losersGroupId && r.number === number)!.id;
+
+	let winnersReady = readyMatches(
+		storage,
+		(m) => m.group_id === winnersGroupId,
+	);
+	while (winnersReady.length) {
+		for (const match of winnersReady) {
+			reportLowerIdWinner(storage, manager, match.id);
+		}
+		winnersReady = readyMatches(storage, (m) => m.group_id === winnersGroupId);
+	}
+
+	for (const match of readyMatches(
+		storage,
+		(m) => m.round_id === losersRoundId(1),
+	)) {
+		reportLowerIdWinner(storage, manager, match.id);
+	}
+
+	const losersRound2 = readyMatches(
+		storage,
+		(m) => m.round_id === losersRoundId(2),
+	);
+	invariant(losersRound2.length === 2, "Expected two losers round 2 matches");
+	reportLowerIdWinner(storage, manager, losersRound2[0].id);
+
+	return testTournament({
+		ctx: {
+			settings: {
+				bracketProgression: [
+					{
+						type: "double_elimination",
+						name: "DE",
+						requiresCheckIn: false,
+						settings: {},
+						sources: [],
+					},
+				],
+			},
+		},
+		data: manager.get.tournamentData(1),
+	});
+};
+
+describe("Bracket.roundSettingsLocked", () => {
+	const clearMatchResults = (bracket: { data: { match: any[] } }) => {
+		for (const match of bracket.data.match) {
+			match.startedAt = null;
+			if (match.opponent1) match.opponent1.result = undefined;
+			if (match.opponent2) match.opponent2.result = undefined;
+		}
+	};
+
+	it("does not lock any round of a not started (preview) bracket", () => {
+		const tournament = new Tournament({
+			...PADDLING_POOL_255(),
+			simulateBrackets: false,
+		});
+		// second bracket is a not yet started single elimination top cut
+		const bracket = tournament.bracketByIdx(1)!;
+
+		expect(bracket.preview).toBe(true);
+		expect(
+			bracket.data.round.every(
+				(round) => !bracket.roundSettingsLocked(round.id),
+			),
+		).toBe(true);
+	});
+
+	it("locks a round-robin round across every group sharing its number once any of them started", () => {
+		const tournament = new Tournament({
+			...PADDLING_POOL_255(),
+			simulateBrackets: false,
+		});
+		const bracket = tournament.bracketByIdx(0)!;
+		expect(bracket.type).toBe("round_robin");
+
+		clearMatchResults(bracket);
+		expect(
+			bracket.data.round.every(
+				(round) => !bracket.roundSettingsLocked(round.id),
+			),
+		).toBe(true);
+
+		// start a single match of one group's first round
+		const firstRound = bracket.data.round.find((round) => round.number === 1)!;
+		const matchToStart = bracket.data.match.find(
+			(match) =>
+				match.round_id === firstRound.id &&
+				match.opponent1?.id &&
+				match.opponent2?.id,
+		)!;
+		matchToStart.opponent1!.result = "win";
+
+		// every group's first round is locked, as they share one map list
+		const firstRoundIds = bracket.data.round
+			.filter((round) => round.number === 1)
+			.map((round) => round.id);
+		expect(
+			firstRoundIds.every((roundId) => bracket.roundSettingsLocked(roundId)),
+		).toBe(true);
+		expect(firstRoundIds.length).toBeGreaterThan(1);
+
+		// rounds with a different number stay editable
+		const secondRoundIds = bracket.data.round
+			.filter((round) => round.number === 2)
+			.map((round) => round.id);
+		expect(
+			secondRoundIds.every((roundId) => !bracket.roundSettingsLocked(roundId)),
+		).toBe(true);
+	});
+
+	it("locks an elimination round once any of its own matches started but keeps same-numbered rounds in other groups independent", () => {
+		const tournament = partiallyPlayedDoubleElimination();
+		const bracket = tournament.bracketByIdx(0)!;
+
+		const groupNumberById = new Map(
+			bracket.data.group.map((group) => [group.id, group.number]),
+		);
+		const withGroupNumber = bracket.data.round.map((round) => ({
+			id: round.id,
+			number: round.number,
+			groupNumber: groupNumberById.get(round.group_id),
+			locked: bracket.roundSettingsLocked(round.id),
+		}));
+
+		const winnersRounds = withGroupNumber.filter((r) => r.groupNumber === 1);
+		const losersRounds = withGroupNumber.filter((r) => r.groupNumber === 2);
+
+		// the whole winners bracket has been played out, so all of it is locked
+		expect(winnersRounds.every((round) => round.locked)).toBe(true);
+
+		// a losers round with only one of its matches reported is still locked
+		// (any started match locks the round) while a later, not started losers
+		// round stays editable
+		expect(losersRounds.some((round) => round.locked)).toBe(true);
+		expect(losersRounds.some((round) => !round.locked)).toBe(true);
+
+		// elimination does not share settings across groups: at least one round
+		// number is locked in the winners bracket yet editable in the losers bracket
+		const lockedWinnersNumbers = new Set(
+			winnersRounds
+				.filter((round) => round.locked)
+				.map((round) => round.number),
+		);
+		expect(
+			losersRounds.some(
+				(round) => lockedWinnersNumbers.has(round.number) && !round.locked,
+			),
+		).toBe(true);
+	});
+});

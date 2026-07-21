@@ -444,6 +444,96 @@ test.describe("Tournament bracket", () => {
 		).toHaveCount(3);
 	});
 
+	test("edits a not-started round's maps on an ongoing bracket", async ({
+		page,
+	}) => {
+		test.slow();
+		const tournamentId = 4;
+
+		await seed(page, "SMALL_SOS");
+		await impersonate(page);
+
+		// start the Groups stage (round robin)
+		await navigate({ page, url: tournamentBracketsPage({ tournamentId }) });
+		await page.getByTestId("finalize-bracket-button").click();
+		await submit(page, "confirm-finalize-bracket-button");
+		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+
+		// xxx: i guess we can just hard code
+		// grab a match id from a given round column of the round robin viewer
+		const matchIdInRound = async (roundName: string) => {
+			const id = await page
+				.getByText(roundName, { exact: true })
+				.first()
+				.locator("xpath=ancestor::div[.//*[@data-match-id]][1]")
+				.locator("[data-match-id]")
+				.first()
+				.getAttribute("data-match-id");
+			return Number(id);
+		};
+
+		const roundTwoMatchId = await matchIdInRound("Round 2");
+
+		// round robin round 1 matches are ongoing as soon as the bracket starts, so
+		// round 1 is already locked without reporting anything
+		await navigate({
+			page,
+			url: `${tournamentAdminPage(tournamentId)}/brackets`,
+		});
+		await page.getByRole("button", { name: "Edit round settings" }).click();
+
+		const dialogRound = (name: string) =>
+			page
+				.getByRole("heading", { name, exact: true })
+				.locator(
+					"xpath=ancestor::div[.//button[@data-testid='increase-map-count-button']][1]",
+				);
+
+		await expect(
+			dialogRound("Round 1").getByText("Already started"),
+		).toBeVisible();
+
+		// the map count is one value shared by every round in a round robin, so a
+		// single started round (round 1) freezes the count steppers on all rounds
+		for (const roundName of ["Round 1", "Round 2", "Round 3"]) {
+			await expect(
+				dialogRound(roundName).getByTestId("increase-map-count-button"),
+			).toBeDisabled();
+		}
+
+		// the individual maps of a not-started round are still editable: swap round
+		// 2's first map for a different stage
+		const roundTwoFirstMap = dialogRound("Round 2")
+			.locator('button[aria-haspopup="listbox"]')
+			.first();
+		await expect(roundTwoFirstMap).toBeEnabled();
+		const previousStage = (await roundTwoFirstMap.innerText()).trim();
+
+		await roundTwoFirstMap.click();
+		const options = page.getByRole("listbox").getByRole("option");
+		await expect(options.first()).toBeVisible();
+		const optionTexts = await options.allInnerTexts();
+		const differentIndex = optionTexts.findIndex(
+			(text) => text.trim() && text.trim() !== previousStage,
+		);
+		expect(differentIndex).toBeGreaterThanOrEqual(0);
+		const newStage = optionTexts[differentIndex].trim();
+		await options.nth(differentIndex).click();
+		// wait for the selection to settle before submitting the form
+		await expect(roundTwoFirstMap).toContainText(newStage);
+
+		await submit(page, "confirm-finalize-bracket-button");
+
+		// the swapped map shows on a round 2 match's map list on its admin tab
+		await navigate({ page, url: tournamentBracketsPage({ tournamentId }) });
+		await navigateToMatch(page, roundTwoMatchId);
+		await goToTab(page, "admin");
+		await page.getByRole("button", { name: "Show maplist" }).click();
+		await expect(
+			page.getByRole("dialog").getByText(newStage).first(),
+		).toBeVisible();
+	});
+
 	test("changes SOS format and progresses with it & adds a member to another team", async ({
 		page,
 	}) => {

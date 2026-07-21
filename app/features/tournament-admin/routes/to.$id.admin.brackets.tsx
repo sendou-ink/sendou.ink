@@ -1,6 +1,7 @@
 import * as React from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
+import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { Redirect } from "~/components/Redirect";
@@ -8,12 +9,19 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { BracketMapListDialog } from "~/features/tournament-bracket/components/BracketMapListDialog";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { useHydrated } from "~/hooks/useHydrated";
 import { tournamentAdminPage } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
 
+import { loader } from "../loaders/to.$id.admin.brackets.server";
+
+export { loader };
+
+// xxx: when saving a bit jank as the modal does not close
 export default function TournamentAdminBracketsPage() {
 	const tournament = useTournament();
 	const user = useUser();
@@ -40,6 +48,12 @@ export default function TournamentAdminBracketsPage() {
 					<BracketProgressionEdit />
 				</>
 			) : null}
+			{tournament.isOrganizer(user) && !tournament.ctx.isFinalized ? (
+				<>
+					<Divider smallText>Edit round settings</Divider>
+					<RoundSettingsEdit />
+				</>
+			) : null}
 			{!tournament.isLeagueSignup ? (
 				<>
 					<Divider smallText>Bracket reset</Divider>
@@ -52,6 +66,79 @@ export default function TournamentAdminBracketsPage() {
 					<ReopenTournament />
 				</>
 			) : null}
+		</div>
+	);
+}
+
+function RoundSettingsEdit() {
+	const tournament = useTournament();
+	const { roundMaps } = useLoaderData<typeof loader>();
+	const isHydrated = useHydrated();
+	const [editingBracketIdx, setEditingBracketIdx] = React.useState<
+		number | null
+	>(null);
+	const [selectedBracketIdx, setSelectedBracketIdx] = React.useState(
+		() => tournament.brackets.find((b) => !b.preview)?.idx ?? 0,
+	);
+
+	const inProgressBrackets = tournament.brackets.filter(
+		(b) => !b.preview && b.ongoingMatches().length > 0,
+	);
+
+	if (inProgressBrackets.length === 0) {
+		return <div className="text-lighter text-sm">No brackets in progress</div>;
+	}
+
+	const editingBracket =
+		editingBracketIdx !== null
+			? tournament.bracketByIdx(editingBracketIdx)
+			: null;
+
+	// xxx: icon for button?
+	return (
+		<div>
+			{isHydrated && editingBracket ? (
+				<BracketMapListDialog
+					close={() => setEditingBracketIdx(null)}
+					bracket={editingBracket}
+					bracketIdx={editingBracketIdx!}
+					isEditing
+					liveRoundMaps={roundMaps
+						.filter((round) => round.stageId === editingBracket.id)
+						.map((round) => ({
+							roundId: round.roundId,
+							groupId: round.groupId,
+							number: round.number,
+							maps: round.maps,
+						}))}
+				/>
+			) : null}
+			<div className="stack horizontal sm items-end">
+				<div className="flex-same-size">
+					<label htmlFor="round-settings-bracket">Bracket</label>
+					<select
+						id="round-settings-bracket"
+						value={selectedBracketIdx}
+						onChange={(e) => setSelectedBracketIdx(Number(e.target.value))}
+					>
+						{inProgressBrackets.map((bracket) => (
+							<option key={bracket.idx} value={bracket.idx}>
+								{bracket.name}
+							</option>
+						))}
+					</select>
+				</div>
+				<SendouButton
+					variant="outlined"
+					onPress={() => setEditingBracketIdx(selectedBracketIdx)}
+				>
+					Edit round settings
+				</SendouButton>
+			</div>
+			<FormMessage type="info" className="mt-2">
+				Change the map settings of rounds that haven't started yet. Rounds that
+				are already underway can't be edited.
+			</FormMessage>
 		</div>
 	);
 }
