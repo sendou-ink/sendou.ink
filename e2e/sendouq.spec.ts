@@ -4,6 +4,7 @@ import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_PREPARING_PAGE,
+	SETTINGS_PAGE,
 	sendouQInviteLink,
 } from "~/utils/urls";
 import {
@@ -13,6 +14,7 @@ import {
 	seed,
 	submit,
 	test,
+	waitForPOSTResponse,
 } from "./helpers/playwright";
 
 test.describe("SendouQ", () => {
@@ -139,5 +141,33 @@ test.describe("SendouQ", () => {
 		await expect(
 			combinedGroup.getByTestId("sendouq-group-card-member"),
 		).toHaveCount(2);
+	});
+
+	test("Changing match preferences cancels pending requests", async ({
+		page,
+	}) => {
+		await seed(page);
+
+		// Sendou (ADMIN) is in a full group. Challenge another full group.
+		await impersonate(page, ADMIN_ID);
+		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
+		await waitForPOSTResponse(page, () =>
+			page.getByRole("button", { name: "Challenge" }).first().click(),
+		);
+
+		// The challenge is now pending and can be undone
+		await expect(page.getByRole("button", { name: "Undo" })).toHaveCount(1);
+
+		// Changing a matchmaking preference (noScreen) last second must undo the
+		// pending request so it can't be matched on terms the challenger never saw
+		await navigate({ page, url: `${SETTINGS_PAGE}?tab=match-profile` });
+		await page
+			.getByRole("switch", { name: /Avoid Splattercolor Screen/i })
+			.click({ force: true });
+		await submit(page);
+
+		// The pending challenge has been undone
+		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
+		await expect(page.getByRole("button", { name: "Undo" })).toHaveCount(0);
 	});
 });
