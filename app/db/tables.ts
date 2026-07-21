@@ -322,6 +322,7 @@ export interface GroupMatch {
 	memento: JSONColumnTypeNullable<ParsedMemento>;
 	cancelRequestedByUserId: number | null;
 	cancelAcceptedByUserId: number | null;
+	noScreen: Generated<DBBoolean>;
 }
 
 export interface GroupMatchContinueVote {
