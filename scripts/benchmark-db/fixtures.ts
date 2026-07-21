@@ -56,6 +56,11 @@ export interface Fixtures {
 	badgeOwnerUserId: number | null;
 	badgeAuthorId: number | null;
 	badgeManagerUserId: number | null;
+	trophy: {
+		heavyTrophyId: number;
+		ownerUserId: number;
+		wins: { trophyId: number; userId: number };
+	} | null;
 	manyUserIds: number[] | null;
 	notification: { userId: number; type: Tables["Notification"]["type"] } | null;
 	heavyAssociation: {
@@ -137,6 +142,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		badgeOwnerUserId: await resolveBadgeOwnerUserId(),
 		badgeAuthorId: await resolveBadgeAuthorId(),
 		badgeManagerUserId: await resolveBadgeManagerUserId(),
+		trophy: await resolveTrophy(),
 		manyUserIds: await resolveManyUserIds(heavyTournamentId),
 		notification: await resolveNotification(),
 		heavyAssociation: await resolveHeavyAssociation(),
@@ -732,6 +738,45 @@ async function resolveBadgeManagerUserId() {
 		.executeTakeFirst();
 
 	return row?.userId ?? null;
+}
+
+async function resolveTrophy() {
+	const heavyTrophyRow = await db
+		.selectFrom("TrophyOwner")
+		.select(({ fn }) => ["trophyId", fn.countAll<number>().as("count")])
+		.groupBy("trophyId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!heavyTrophyRow) return null;
+
+	const ownerRow = await db
+		.selectFrom("TrophyOwner")
+		.select(({ fn }) => ["userId", fn.countAll<number>().as("count")])
+		.groupBy("userId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!ownerRow) return null;
+
+	const winsRow = await db
+		.selectFrom("TrophyOwner")
+		.select(({ fn }) => [
+			"trophyId",
+			"userId",
+			fn.countAll<number>().as("count"),
+		])
+		.groupBy(["trophyId", "userId"])
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!winsRow) return null;
+
+	return {
+		heavyTrophyId: heavyTrophyRow.trophyId,
+		ownerUserId: ownerRow.userId,
+		wins: { trophyId: winsRow.trophyId, userId: winsRow.userId },
+	};
 }
 
 async function resolveManyUserIds(heavyTournamentId: number | null) {

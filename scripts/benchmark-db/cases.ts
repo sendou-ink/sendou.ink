@@ -38,6 +38,7 @@ import * as TournamentMatchVodRepository from "~/features/tournament-bracket/Tou
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
@@ -899,6 +900,21 @@ export function buildCases(fx: Fixtures): {
 		fx.tournamentTeamPair,
 		(teamIds) =>
 			TournamentTeamRepository.findRecentlyPlayedMapsByIds({ teamIds }),
+	);
+
+	// TrophyRepository
+	addStatic("TrophyRepository.all", () => TrophyRepository.all());
+	add("TrophyRepository.findById", fx.trophy, (trophy) =>
+		TrophyRepository.findById(trophy.heavyTrophyId),
+	);
+	add("TrophyRepository.findByOwnerUserId", fx.trophy, (trophy) =>
+		TrophyRepository.findByOwnerUserId(trophy.ownerUserId),
+	);
+	add("TrophyRepository.findTournamentsByTrophyId", fx.trophy, (trophy) =>
+		TrophyRepository.findTournamentsByTrophyId(trophy.heavyTrophyId),
+	);
+	add("TrophyRepository.findWinsByOwner", fx.trophy, (trophy) =>
+		TrophyRepository.findWinsByOwner(trophy.wins),
 	);
 
 	// UserCardRepository
