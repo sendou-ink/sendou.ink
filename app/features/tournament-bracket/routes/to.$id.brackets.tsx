@@ -180,6 +180,15 @@ export default function TournamentBracketsPage() {
 			)} rounds of the losers bracket can play in this bracket`;
 		}
 
+		if (
+			tournament.brackets[0].type === "single_elimination" &&
+			bracket.isUnderground
+		) {
+			return `Teams that get eliminated in the first ${Math.abs(
+				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
+			)} rounds can play in this bracket`;
+		}
+
 		const advanceThreshold = tournament.brackets[0].settings?.advanceThreshold;
 		if (
 			advanceThreshold &&

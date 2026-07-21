@@ -231,7 +231,7 @@
 	"progression.error.DUPLICATE_BRACKET_NAME": "Duplicate bracket name",
 	"progression.error.NAME_MISSING": "Bracket name missing",
 	"progression.error.NEGATIVE_PROGRESSION": "Negative progression only possible for double elimination",
-	"progression.error.NO_SE_SOURCE": "Single elimination is not a valid source bracket",
+	"progression.error.NO_SE_POSITIVE": "",
 	"progression.error.NO_DE_POSITIVE": "Double elimination is not valid for positive progression",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "",
