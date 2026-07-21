@@ -128,7 +128,7 @@ const customPickBanFlow = z
 	})
 	.nullish();
 
-const tournamentRoundMaps = z.object({
+export const tournamentRoundMaps = z.object({
 	roundId: z.number().int().min(0),
 	groupId: z.number().int().min(0),
 	list: z

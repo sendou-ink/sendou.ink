@@ -91,7 +91,7 @@ export function generateTournamentRoundMaplist(
 	return result;
 }
 
-function getFilteredRounds(
+export function getFilteredRounds(
 	rounds: Round[],
 	type: Tables["TournamentStage"]["type"],
 ) {

@@ -498,6 +498,31 @@ export async function findPreparedMapsById(tournamentId: number) {
 	);
 }
 
+/**
+ * Full map lists (including the picked stages and any custom pick/ban flow) of
+ * every round belonging to the tournament's stages. Unlike the trimmed round
+ * data carried by the bracket, this is what is needed to seed the round
+ * settings editor with the currently in-use maps.
+ */
+export function findRoundMapsByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("TournamentRound")
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentRound.stageId",
+		)
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.select([
+			"TournamentRound.id as roundId",
+			"TournamentRound.stageId",
+			"TournamentRound.groupId",
+			"TournamentRound.number",
+			"TournamentRound.maps",
+		])
+		.execute();
+}
+
 export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 	return db
 		.selectFrom("CalendarEventDate")

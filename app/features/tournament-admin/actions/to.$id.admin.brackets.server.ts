@@ -1,12 +1,15 @@
 import type { ActionFunction } from "react-router";
+import { sql } from "~/db/sql";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
+import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { roundMapsFromInput } from "~/features/tournament-match/core/mapList.server";
 import {
 	errorToastIfFalsy,
 	parseParams,
@@ -83,6 +86,37 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 
 			message = "Tournament progression updated";
+			break;
+		}
+		case "EDIT_ROUND_MAPS": {
+			requireTournamentOrganizer(tournament, user);
+			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
+
+			const bracket = tournament.bracketByIdx(data.bracketIdx);
+			errorToastIfFalsy(bracket, "Bracket not found");
+			errorToastIfFalsy(!bracket.preview, "Bracket has not started");
+
+			// the bracket already exists, so the live rounds are both the "virtual"
+			// (input) and the real (DB) rounds; roundMapsFromInput handles fanning a
+			// single row out across all rr/swiss groups sharing the round number
+			const resolvedMaps = roundMapsFromInput({
+				virtualRounds: bracket.data.round,
+				roundsFromDB: bracket.data.round,
+				maps: data.maps,
+				bracket,
+			});
+
+			// never touch rounds that have already started, even if a stale or
+			// tampered client submitted them
+			const editableMaps = resolvedMaps.filter(
+				(map) => !bracket.roundSettingsLocked(map.roundId),
+			);
+
+			sql.transaction(() => {
+				updateRoundMaps(editableMaps);
+			})();
+
+			message = "Round settings updated";
 			break;
 		}
 		case "REOPEN_TOURNAMENT": {

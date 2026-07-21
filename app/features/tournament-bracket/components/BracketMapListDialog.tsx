@@ -46,35 +46,51 @@ import type { Tournament } from "../core/Tournament";
 import {
 	type BracketMapCounts,
 	generateTournamentRoundMaplist,
+	getFilteredRounds,
 	type TournamentRoundMapList,
 } from "../core/toMapList";
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
+
+/** Full map lists of a live bracket's rounds, used to seed the editing mode. */
+export interface LiveRoundMaps {
+	roundId: number;
+	groupId: number;
+	number: number;
+	maps: TournamentRoundMaps;
+}
 
 export function BracketMapListDialog({
 	close,
 	bracket,
 	bracketIdx,
 	isPreparing,
+	isEditing,
+	liveRoundMaps,
 }: {
 	close: () => void;
 	bracket: Bracket;
 	bracketIdx: number;
 	isPreparing?: boolean;
+	/** Edit round settings of an already started bracket (started rounds stay locked). */
+	isEditing?: boolean;
+	liveRoundMaps?: LiveRoundMaps[];
 }) {
 	const { t } = useTranslation(["common"]);
 	const fetcher = useFetcher();
 	const tournament = useTournament();
+	// xxx: maybe check if prepared maps and live round maps concept can be unified?
 	const untrimmedPreparedMaps = useBracketPreparedMaps(bracketIdx);
 
 	useCloseModalOnSubmit(fetcher, close);
 
 	const bracketTeamsCount = bracket.participantTournamentTeamIds.length;
 
-	const preparedMaps =
-		!isPreparing &&
-		(bracket.type === "single_elimination" ||
-			bracket.type === "double_elimination")
+	const preparedMaps = isEditing
+		? undefined
+		: !isPreparing &&
+				(bracket.type === "single_elimination" ||
+					bracket.type === "double_elimination")
 			? // we are about to start bracket, "trim" prepared map for actual
 				PreparedMaps.trimPreparedEliminationMaps({
 					preparedMaps: untrimmedPreparedMaps,
@@ -98,6 +114,12 @@ export function BracketMapListDialog({
 	});
 	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
 		() => {
+			// when editing an ongoing bracket each round is edited on its own row so
+			// the finals and 3rd place match are never linked
+			if (isEditing) {
+				return false;
+			}
+
 			if (
 				!tournament.bracketManagerSettings(
 					bracket.settings,
@@ -149,10 +171,14 @@ export function BracketMapListDialog({
 	const defaultRoundBestOfs = bracket.defaultRoundBestOfs(bracketData);
 
 	const [countType, setCountType] = React.useState<TournamentRoundMaps["type"]>(
-		preparedMaps?.maps[0].type ?? "BEST_OF",
+		preparedMaps?.maps[0].type ?? liveRoundMaps?.[0]?.maps.type ?? "BEST_OF",
 	);
 
 	const [maps, setMaps] = React.useState(() => {
+		if (isEditing && liveRoundMaps) {
+			return seededEditingMaps({ bracket, liveRoundMaps });
+		}
+
 		if (preparedMaps) {
 			return new Map(preparedMaps.maps.map((map) => [map.roundId, map]));
 		}
@@ -173,7 +199,9 @@ export function BracketMapListDialog({
 			"COUNTERPICK",
 	);
 	const [customFlow, setCustomFlow] = React.useState<CustomPickBanFlow | null>(
-		preparedMaps?.maps.find((m) => m.customFlow)?.customFlow ?? null,
+		preparedMaps?.maps.find((m) => m.customFlow)?.customFlow ??
+			liveRoundMaps?.find((m) => m.maps.customFlow)?.maps.customFlow ??
+			null,
 	);
 	const [hoveredMap, setHoveredMap] = React.useState<string | null>(null);
 
@@ -316,6 +344,25 @@ export function BracketMapListDialog({
 	const globalSelections =
 		bracket.type === "round_robin" || bracket.type === "swiss";
 
+	// the pick/ban style and custom flow are shared across the whole bracket, so
+	// they can't be changed once a round already using a custom flow has started
+	const startedCustomFlowLocked = Boolean(
+		isEditing &&
+			liveRoundMaps?.some(
+				(round) =>
+					round.maps.pickBan === "CUSTOM" &&
+					bracket.roundSettingsLocked(round.roundId),
+			),
+	);
+
+	// in round robin/swiss the map count and pick/ban are a single value shared by
+	// every round, so a single started round freezes those controls on all rounds
+	const linkedControlsLocked = Boolean(
+		isEditing &&
+			globalSelections &&
+			bracket.data.round.some((round) => bracket.roundSettingsLocked(round.id)),
+	);
+
 	const needsToPickEliminationTeamCount =
 		(bracket.type === "single_elimination" ||
 			bracket.type === "double_elimination") &&
@@ -323,7 +370,11 @@ export function BracketMapListDialog({
 
 	return (
 		<SendouDialog
-			heading={`Maplist selection (${bracket.name})`}
+			heading={
+				isEditing
+					? `Edit round settings (${bracket.name})`
+					: `Maplist selection (${bracket.name})`
+			}
 			isOpen
 			onClose={close}
 			isFullScreen
@@ -426,6 +477,7 @@ export function BracketMapListDialog({
 									<PickBanSelect
 										pickBanStyle={pickBanStyle}
 										isOneModeOnly={tournament.modesIncluded.length === 1}
+										isDisabled={startedCustomFlowLocked}
 										onPickBanStyleChange={(newPickBanStyle) => {
 											let newRoundsWithPickBan = roundsWithPickBan;
 											if (globalSelections) {
@@ -463,7 +515,7 @@ export function BracketMapListDialog({
 										}}
 									/>
 								) : null}
-								{globalSelections ? (
+								{globalSelections && !isEditing ? (
 									<GlobalCountTypeSelect
 										defaultValue={countType}
 										onSetCountType={setCountType}
@@ -480,7 +532,8 @@ export function BracketMapListDialog({
 								) : null}
 							</div>
 							{tournament.ctx.toSetMapPool.length > 0 &&
-							!needsToPickEliminationTeamCount ? (
+							!needsToPickEliminationTeamCount &&
+							!isEditing ? (
 								<SendouButton
 									size="small"
 									icon={<RefreshCcw />}
@@ -505,7 +558,11 @@ export function BracketMapListDialog({
 							) : null}
 						</div>
 						{pickBanStyle === "CUSTOM" && !needsToPickEliminationTeamCount ? (
-							<CustomFlowBuilder value={customFlow} onChange={setCustomFlow} />
+							<CustomFlowBuilder
+								value={customFlow}
+								onChange={setCustomFlow}
+								disabled={startedCustomFlowLocked}
+							/>
 						) : null}
 						{needsToPickEliminationTeamCount ? (
 							<div className="text-center text-lg font-bold my-24">
@@ -524,20 +581,30 @@ export function BracketMapListDialog({
 										invariant(roundMaps, "Expected maps to be defined");
 
 										const showUnlinkButton =
+											!isEditing &&
 											bracket.type === "single_elimination" &&
 											thirdPlaceMatchLinked === true &&
 											round.name ===
 												TOURNAMENT.ROUND_NAMES.FINALS_THIRD_PLACE_MATCH_UNIFIED;
 										const showLinkButton =
+											!isEditing &&
 											bracket.type === "single_elimination" &&
 											thirdPlaceMatchLinked === false &&
 											round.name === TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH;
+
+										const locked = isEditing
+											? bracket.roundSettingsLocked(round.id)
+											: false;
 
 										return (
 											<RoundMapList
 												key={round.id}
 												name={round.name}
 												maps={roundMaps}
+												locked={locked}
+												countLocked={
+													globalSelections ? linkedControlsLocked : locked
+												}
 												onHoverMap={setHoveredMap}
 												unlink={
 													showUnlinkButton
@@ -680,10 +747,16 @@ export function BracketMapListDialog({
 								) : (
 									<SubmitButton
 										testId="confirm-finalize-bracket-button"
-										_action={isPreparing ? "PREPARE_MAPS" : "START_BRACKET"}
+										_action={
+											isEditing
+												? "EDIT_ROUND_MAPS"
+												: isPreparing
+													? "PREPARE_MAPS"
+													: "START_BRACKET"
+										}
 										className="mx-auto mt-4"
 									>
-										{isPreparing
+										{isPreparing || isEditing
 											? t("common:actions.save")
 											: "Start the bracket"}
 									</SubmitButton>
@@ -802,6 +875,37 @@ function teamCountAdjustedBracketData({
 	}
 }
 
+/** Seeds the round settings editor with the maps a live bracket currently uses. */
+function seededEditingMaps({
+	bracket,
+	liveRoundMaps,
+}: {
+	bracket: Bracket;
+	liveRoundMaps: LiveRoundMaps[];
+}): Map<number, Omit<TournamentRoundMaps, "type">> {
+	// for rr/swiss only one group's rounds represent the shared per-round settings
+	const representativeRounds = getFilteredRounds(
+		bracket.data.round,
+		bracket.type,
+	);
+
+	return new Map(
+		representativeRounds.map((round) => {
+			const live = liveRoundMaps.find((m) => m.roundId === round.id)?.maps;
+
+			return [
+				round.id,
+				{
+					count:
+						live?.count ?? round.maps?.count ?? TOURNAMENT.AVAILABLE_BEST_OF[1],
+					pickBan: live?.pickBan ?? undefined,
+					list: live?.list ?? null,
+				},
+			];
+		}),
+	);
+}
+
 function EliminationTeamCountSelect({
 	count,
 	realCount,
@@ -868,10 +972,12 @@ function GlobalCountTypeSelect({
 function PickBanSelect({
 	pickBanStyle,
 	isOneModeOnly,
+	isDisabled,
 	onPickBanStyleChange,
 }: {
 	pickBanStyle: NonNullable<TournamentRoundMaps["pickBan"]>;
 	isOneModeOnly: boolean;
+	isDisabled?: boolean;
 	onPickBanStyleChange: (
 		pickBanStyle: NonNullable<TournamentRoundMaps["pickBan"]>,
 	) => void;
@@ -898,6 +1004,7 @@ function PickBanSelect({
 				className={styles.pickBanSelect}
 				id="pick-ban-style"
 				value={pickBanStyle}
+				disabled={isDisabled}
 				onChange={(e) =>
 					onPickBanStyleChange(
 						e.target.value as NonNullable<TournamentRoundMaps["pickBan"]>,
@@ -921,6 +1028,8 @@ const serializedMapMode = (
 function RoundMapList({
 	name,
 	maps,
+	locked,
+	countLocked,
 	onHoverMap,
 	onCountChange,
 	onPickBanChange,
@@ -931,6 +1040,11 @@ function RoundMapList({
 }: {
 	name: string;
 	maps: Omit<TournamentRoundMaps, "type">;
+	/** This exact round has started: its map picks & indicator are frozen. */
+	locked?: boolean;
+	/** The count & pick/ban are frozen (for rr/swiss these are shared, so a
+	 * started round locks them on every round, not only the started one). */
+	countLocked?: boolean;
 	onHoverMap: (map: string | null) => void;
 	onCountChange: (count: number) => void;
 	onPickBanChange: (hasPickBan: boolean) => void;
@@ -946,13 +1060,18 @@ function RoundMapList({
 
 	return (
 		<div>
-			<h3>{name}</h3>
+			<div className="stack horizontal sm items-center">
+				<h3>{name}</h3>
+				{locked ? (
+					<span className="text-xs text-lighter">Already started</span>
+				) : null}
+			</div>
 			<div className={styles.roundControls}>
 				<button
 					type="button"
 					className={styles.roundButton}
 					onClick={() => onCountChange(Math.max(minCount, maps.count - 2))}
-					disabled={maps.count <= minCount}
+					disabled={countLocked || maps.count <= minCount}
 				>
 					<Minus />
 				</button>
@@ -963,7 +1082,7 @@ function RoundMapList({
 					type="button"
 					className={styles.roundButton}
 					onClick={() => onCountChange(Math.min(maxCount, maps.count + 2))}
-					disabled={maps.count >= maxCount}
+					disabled={countLocked || maps.count >= maxCount}
 					data-testid="increase-map-count-button"
 				>
 					<Plus />
@@ -976,6 +1095,7 @@ function RoundMapList({
 					})}
 					onClick={() => onPickBanChange(!maps.pickBan)}
 					title="Toggle counterpick/ban"
+					disabled={countLocked}
 				>
 					<MousePointerClick />
 				</button>
@@ -1024,6 +1144,7 @@ function RoundMapList({
 										key={i}
 										map={map}
 										number={i + 1}
+										disabled={locked}
 										onHoverMap={onHoverMap}
 										hoveredMap={hoveredMap}
 										onMapChange={(map) => {
@@ -1062,12 +1183,14 @@ function RoundMapList({
 function MapListRow({
 	map,
 	number,
+	disabled,
 	onHoverMap,
 	hoveredMap,
 	onMapChange,
 }: {
 	map: NonNullable<TournamentRoundMaps["list"]>[number];
 	number: number;
+	disabled?: boolean;
 	onHoverMap: (map: string | null) => void;
 	hoveredMap: string | null;
 	onMapChange: (map: NonNullable<TournamentRoundMaps["list"]>[number]) => void;
@@ -1107,6 +1230,7 @@ function MapListRow({
 			<span className="text-sm text-lighter font-semi-bold">{number}.</span>
 			<SendouSelect
 				aria-label="Map"
+				isDisabled={disabled}
 				items={items}
 				selectedKey={serializedMapMode(map)}
 				onSelectionChange={(key) => {

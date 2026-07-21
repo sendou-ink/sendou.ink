@@ -487,7 +487,41 @@ export abstract class Bracket {
 		return ongoingMatchIds;
 	}
 
+	/**
+	 * Whether the map settings of a round can no longer be edited because play in
+	 * it has begun. A round counts as started once any of its matches has started
+	 * (has a start time or a reported result).
+	 *
+	 * In round-robin and Swiss every group shares one map list per round number,
+	 * so such a round locks if *any* group sharing that number has started.
+	 */
+	roundSettingsLocked(roundId: number): boolean {
+		const round = this.data.round.find((r) => r.id === roundId);
+		if (!round) return true;
+
+		const settingsSharedAcrossGroups =
+			this.type === "round_robin" || this.type === "swiss";
+		const lockedRoundIds = settingsSharedAcrossGroups
+			? this.data.round
+					.filter((r) => r.number === round.number)
+					.map((r) => r.id)
+			: [roundId];
+
+		return this.data.match.some(
+			(match) =>
+				lockedRoundIds.includes(match.round_id) && matchHasStarted(match),
+		);
+	}
+
 	defaultRoundBestOfs(_data: TournamentManagerDataSet): BracketMapCounts {
 		throw new Error("not implemented");
 	}
+}
+
+function matchHasStarted(match: TournamentManagerDataSet["match"][number]) {
+	return (
+		typeof match.startedAt === "number" ||
+		match.opponent1?.result === "win" ||
+		match.opponent2?.result === "win"
+	);
 }

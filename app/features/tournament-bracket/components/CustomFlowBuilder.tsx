@@ -103,9 +103,12 @@ interface PartialStep {
 export function CustomFlowBuilder({
 	value,
 	onChange,
+	disabled,
 }: {
 	value: CustomPickBanFlow | null;
 	onChange: (flow: CustomPickBanFlow | null) => void;
+	/** Render the flow read-only (e.g. a round using it has already started). */
+	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const [preSetSteps, setPreSetSteps] = React.useState<PartialStep[]>(() =>
@@ -272,12 +275,12 @@ export function CustomFlowBuilder({
 		<DndContext
 			sensors={sensors}
 			collisionDetection={pointerWithin}
-			onDragStart={handleDragStart}
-			onDragOver={handleDragOver}
-			onDragEnd={handleDragEnd}
+			onDragStart={disabled ? undefined : handleDragStart}
+			onDragOver={disabled ? undefined : handleDragOver}
+			onDragEnd={disabled ? undefined : handleDragEnd}
 		>
 			<div className={styles.container}>
-				<ChipPalette />
+				{disabled ? null : <ChipPalette />}
 
 				{isMobile ? (
 					<SendouTabs>
@@ -296,6 +299,7 @@ export function CustomFlowBuilder({
 								onStepsChange={updatePreSetSteps}
 								errors={preSetErrors}
 								dragOverInfo={dragOverInfo}
+								disabled={disabled}
 							/>
 						</SendouTabPanel>
 						<SendouTabPanel id="postGame">
@@ -305,6 +309,7 @@ export function CustomFlowBuilder({
 								onStepsChange={updatePostGameSteps}
 								errors={postGameErrors}
 								dragOverInfo={dragOverInfo}
+								disabled={disabled}
 							/>
 						</SendouTabPanel>
 					</SendouTabs>
@@ -317,6 +322,7 @@ export function CustomFlowBuilder({
 							onStepsChange={updatePreSetSteps}
 							errors={preSetErrors}
 							dragOverInfo={dragOverInfo}
+							disabled={disabled}
 						/>
 						<StepListSection
 							title={t("tournament:customFlow.afterMap")}
@@ -325,6 +331,7 @@ export function CustomFlowBuilder({
 							onStepsChange={updatePostGameSteps}
 							errors={postGameErrors}
 							dragOverInfo={dragOverInfo}
+							disabled={disabled}
 						/>
 					</div>
 				)}
@@ -408,6 +415,7 @@ function StepListSection({
 	onStepsChange,
 	errors,
 	dragOverInfo,
+	disabled,
 }: {
 	title?: string;
 	section: "preSet" | "postGame";
@@ -415,6 +423,7 @@ function StepListSection({
 	onStepsChange: (steps: PartialStep[]) => void;
 	errors: string[];
 	dragOverInfo: { overId: string; valid: boolean } | null;
+	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["tournament"]);
 
@@ -446,19 +455,22 @@ function StepListSection({
 							canRemove={steps.length > 1}
 							onRemove={() => removeStep(i)}
 							dragOverInfo={dragOverInfo}
+							disabled={disabled}
 						/>
 					))}
 				</div>
 			</SortableContext>
-			<SendouButton
-				className={styles.addStepButton}
-				size="small"
-				variant="outlined"
-				icon={<Plus />}
-				onPress={addStep}
-			>
-				{t("tournament:customFlow.addStep")}
-			</SendouButton>
+			{disabled ? null : (
+				<SendouButton
+					className={styles.addStepButton}
+					size="small"
+					variant="outlined"
+					icon={<Plus />}
+					onPress={addStep}
+				>
+					{t("tournament:customFlow.addStep")}
+				</SendouButton>
+			)}
 			{errors.map((error) => (
 				<div key={error} className={styles.validationError}>
 					{error}
@@ -475,6 +487,7 @@ function StepRow({
 	canRemove,
 	onRemove,
 	dragOverInfo,
+	disabled,
 }: {
 	step: PartialStep;
 	index: number;
@@ -482,6 +495,7 @@ function StepRow({
 	canRemove: boolean;
 	onRemove: () => void;
 	dragOverInfo: { overId: string; valid: boolean } | null;
+	disabled?: boolean;
 }) {
 	const sortableId = `row-${section}-${index}`;
 	const {
@@ -491,7 +505,7 @@ function StepRow({
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: sortableId });
+	} = useSortable({ id: sortableId, disabled });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -511,14 +525,16 @@ function StepRow({
 				[styles.stepRowDragging]: isDragging,
 			})}
 		>
-			<button
-				type="button"
-				className={styles.dragHandle}
-				{...listeners}
-				{...attributes}
-			>
-				<GripVertical size={16} />
-			</button>
+			{disabled ? null : (
+				<button
+					type="button"
+					className={styles.dragHandle}
+					{...listeners}
+					{...attributes}
+				>
+					<GripVertical size={16} />
+				</button>
+			)}
 			{isRoll ? null : (
 				<DropZone
 					id={whoDropId}
@@ -535,16 +551,18 @@ function StepRow({
 				label={step.action ? t(ACTION_I18N_KEYS[step.action]) : undefined}
 				dragOverInfo={dragOverInfo}
 			/>
-			<button
-				type="button"
-				className={clsx(styles.removeButton, {
-					[styles.removeButtonHidden]: !canRemove,
-				})}
-				onClick={onRemove}
-				aria-label="Remove step"
-			>
-				<X size={14} />
-			</button>
+			{disabled ? null : (
+				<button
+					type="button"
+					className={clsx(styles.removeButton, {
+						[styles.removeButtonHidden]: !canRemove,
+					})}
+					onClick={onRemove}
+					aria-label="Remove step"
+				>
+					<X size={14} />
+				</button>
+			)}
 		</div>
 	);
 }
