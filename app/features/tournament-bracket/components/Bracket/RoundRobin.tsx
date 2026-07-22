@@ -1,4 +1,4 @@
-import type { Match as MatchType } from "~/modules/brackets-model";
+import type { Match as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import styles from "./bracket.module.css";

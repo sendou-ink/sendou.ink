@@ -56,7 +56,7 @@ export function TournamentMatchActionTab({
 
 	const withPoints = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectResultsWithPoints;
+	).collectsKos;
 
 	const count = data.match.roundMaps.count;
 	const countType = data.match.roundMaps.type;

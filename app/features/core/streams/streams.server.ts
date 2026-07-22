@@ -1,7 +1,7 @@
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
+import { MatchStatus as Status } from "~/features/tournament-bracket/core/engine/types";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { Status } from "~/modules/brackets-model";
 import { cache } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { tournamentStreamsPage } from "~/utils/urls";

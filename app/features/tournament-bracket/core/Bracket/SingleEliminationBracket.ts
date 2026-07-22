@@ -1,7 +1,9 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { Round } from "~/modules/brackets-model";
+import type {
+	Round,
+	TournamentManagerDataSet,
+} from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";

@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";

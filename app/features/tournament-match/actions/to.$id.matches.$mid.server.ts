@@ -1,5 +1,5 @@
 import type { ActionFunction } from "react-router";
-import { sql } from "~/db/sql";
+import { db, sql } from "~/db/sql";
 import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -7,7 +7,8 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
-import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	clearTournamentDataCache,
@@ -92,8 +93,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			"Unauthorized",
 		);
 	};
-
-	const manager = getServerTournamentManager();
 
 	const scores: [number, number] = [
 		match.opponentOne?.score ?? 0,
@@ -181,7 +180,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!;
 			errorToastIfFalsy(
-				!bracket.collectResultsWithPoints || data.points,
+				// xxx: just have data.ko from now on? and update error
+				!bracket.collectsKos || data.points,
 				"Points are required for this bracket",
 			);
 
@@ -212,9 +212,14 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			try {
-				sql.transaction(() => {
-					manager.update.match({
-						id: match.id,
+				await db.transaction().execute(async (trx) => {
+					const bracketData = await BracketRepository.findByTournamentId(
+						tournamentId,
+						trx,
+					);
+					const reported = Engine.reportResult(bracketData, {
+						matchId: match.id,
+						// xxx: should we be able to know that inside reportResult? no need to pass if we track best of etc.
 						opponent1: {
 							score: scores[0],
 							result: setOver && scores[0] > scores[1] ? "win" : undefined,
@@ -224,6 +229,20 @@ export const action: ActionFunction = async ({ params, request }) => {
 							result: setOver && scores[1] > scores[0] ? "win" : undefined,
 						},
 					});
+					let changedMatches = reported.changedMatches;
+					if (setOver) {
+						const droppedResult = endDroppedTeamMatches({
+							tournament,
+							data: reported.data,
+						});
+						endedDroppedMatchIds = droppedResult.endedMatchIds;
+						changedMatches = [
+							...changedMatches,
+							...droppedResult.changedMatches,
+						];
+					}
+
+					await BracketRepository.applyMatchChanges(changedMatches, trx);
 
 					const result = insertTournamentMatchGameResult({
 						matchId: match.id,
@@ -251,14 +270,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 							tournamentTeamId: match.opponentTwo!.id!,
 						});
 					}
-
-					if (setOver) {
-						endedDroppedMatchIds = endDroppedTeamMatches({
-							tournament,
-							manager,
-						});
-					}
-				})();
+				});
 			} catch (error) {
 				// another request already reported this game in the race window,
 				// let their page refresh to pick up the already-recorded result
@@ -370,11 +382,16 @@ export const action: ActionFunction = async ({ params, request }) => {
 				return unplayedPicks[0] ? [unplayedPicks[0].number] : [];
 			})();
 
-			sql.transaction(() => {
+			await db.transaction().execute(async (trx) => {
 				deleteTournamentMatchGameResultById(lastResult.id);
 
-				manager.update.match({
-					id: match.id,
+				const bracketData = await BracketRepository.findByTournamentId(
+					tournamentId,
+					trx,
+				);
+				// xxx: i guess reportResult should not be needed here? just "Engine.resetMatchResults"
+				const reported = Engine.reportResult(bracketData, {
+					matchId: match.id,
 					opponent1: {
 						score: shouldReset ? undefined : scores[0],
 					},
@@ -383,14 +400,18 @@ export const action: ActionFunction = async ({ params, request }) => {
 					},
 				});
 
+				let changedMatches = reported.changedMatches;
 				if (shouldReset) {
-					manager.reset.matchResults(match.id);
+					const reset = Engine.resetMatchResults(reported.data, match.id);
+					changedMatches = [...changedMatches, ...reset.changedMatches];
 				}
+
+				await BracketRepository.applyMatchChanges(changedMatches, trx);
 
 				for (const number of pickBanEventNumbersToDelete) {
 					deletePickBanEvent({ matchId, number });
 				}
-			})();
+			});
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -674,7 +695,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const bracketFormat = tournament.bracketByIdx(
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!.type;
-			sql.transaction(() => {
+			await db.transaction().execute(async (trx) => {
+				// xxx: feels hacky
 				// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
 				if (bracketFormat !== "round_robin") {
 					for (const followingMatch of followingMatches) {
@@ -682,6 +704,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 					}
 				}
 
+				// xxx: feels hacky
 				// when the set was force-ended early no extra result was inserted for
 				// the forced win, so the last result is a genuinely played game and must
 				// be kept to avoid desyncing the score from the results
@@ -689,8 +712,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 					deleteTournamentMatchGameResultById(lastResult.id);
 				}
 
-				manager.update.match({
-					id: match.id,
+				const bracketData = await BracketRepository.findByTournamentId(
+					tournamentId,
+					trx,
+				);
+				const reported = Engine.reportResult(bracketData, {
+					matchId: match.id,
 					opponent1: {
 						score: endedEarly ? scoreOne : scores[0],
 						result: undefined,
@@ -700,7 +727,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 						result: undefined,
 					},
 				});
-			})();
+				await BracketRepository.applyMatchChanges(reported.changedMatches, trx);
+			});
 
 			// the teams advanced into following matches are being pulled back out,
 			// so those "waiting for teams" pages need to revalidate too
@@ -810,9 +838,14 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!data.winnerTeamId}`,
 			);
 
-			sql.transaction(() => {
-				manager.update.match({
-					id: match.id,
+			await db.transaction().execute(async (trx) => {
+				// xxx: this find -> report -> enddroppedteam -> apply is repeated in quite a few places, helper?
+				const bracketData = await BracketRepository.findByTournamentId(
+					tournamentId,
+					trx,
+				);
+				const reported = Engine.reportResult(bracketData, {
+					matchId: match.id,
 					opponent1: {
 						score: match.opponentOne?.score,
 						result: winnerTeamId === match.opponentOne!.id ? "win" : "loss",
@@ -823,11 +856,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 					},
 				});
 
-				endedDroppedMatchIds = endDroppedTeamMatches({
+				const droppedResult = endDroppedTeamMatches({
 					tournament,
-					manager,
+					data: reported.data,
 				});
-			})();
+				endedDroppedMatchIds = droppedResult.endedMatchIds;
+
+				await BracketRepository.applyMatchChanges(
+					[...reported.changedMatches, ...droppedResult.changedMatches],
+					trx,
+				);
+			});
 
 			// the set ended early so no further games will be played; trim weapons
 			// reported in advance for map indexes beyond the games actually played

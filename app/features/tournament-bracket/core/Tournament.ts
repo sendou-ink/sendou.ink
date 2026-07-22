@@ -13,9 +13,12 @@ import {
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
+import type {
+	Match,
+	Stage,
+	TournamentManagerDataSet,
+} from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { Match, Stage } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
@@ -31,9 +34,8 @@ import {
 	groupNumberToLetters,
 } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
-import { getTournamentManager } from "./brackets-manager";
+import * as Engine from "./engine";
 import { getRounds } from "./rounds";
-import * as Swiss from "./Swiss";
 import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
@@ -124,6 +126,7 @@ export class Tournament {
 						type,
 					}),
 				);
+			// xxx: lets aim to get rid of this else if
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
 					? this.resolveTeamsFromSources(sources, bracketIdx)
@@ -148,9 +151,10 @@ export class Tournament {
 						requiresCheckIn,
 						startTime: startTime ? databaseTimestampToDate(startTime) : null,
 						settings: settings ?? null,
-						data: Swiss.create({
+						data: Engine.create({
 							tournamentId: this.ctx.id,
 							name,
+							type: "swiss",
 							seeding: checkedInTeams,
 							settings: this.bracketManagerSettings(
 								settings,
@@ -385,8 +389,7 @@ export class Tournament {
 		);
 
 		const bracketReplays = (candidateTeams: number[]) => {
-			const manager = getTournamentManager();
-			manager.create({
+			const matches = Engine.create({
 				tournamentId: this.ctx.id,
 				name: "X",
 				type: bracket.type as Exclude<
@@ -399,9 +402,7 @@ export class Tournament {
 					bracket.type,
 					candidateTeams.length,
 				),
-			});
-
-			const matches = manager.get.tournamentData(this.ctx.id).match;
+			}).match;
 			const replays: [number, number][] = [];
 			for (const match of matches) {
 				if (!match.opponent1?.id || !match.opponent2?.id) continue;

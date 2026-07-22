@@ -3,7 +3,7 @@
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type { Round } from "~/modules/brackets-model";
+import type { Round } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";

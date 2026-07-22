@@ -6,13 +6,13 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import {
 	clearTournamentDataCache,
-	tournamentManagerData,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
 import { canDeleteCalendarEvent } from "../calendar-utils";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 
 export const action: ActionFunction = async ({ params }) => {
 	const user = requireUser();
@@ -25,7 +25,7 @@ export const action: ActionFunction = async ({ params }) => {
 
 	if (event.tournamentId) {
 		errorToastIfFalsy(
-			tournamentManagerData(event.tournamentId).stage.length === 0,
+			(await BracketRepository.findByTournamentId(event.tournamentId)).stage.length === 0,
 			"Tournament has already started",
 		);
 	} else {

@@ -15,11 +15,9 @@ import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
-import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
@@ -1049,30 +1047,6 @@ export function addPickBanEvent(
 	return db.insertInto("TournamentMatchPickBanEvent").values(values).execute();
 }
 
-export function resetBracket(tournamentStageId: number) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("TournamentMatch")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentRound")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentGroup")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentStage")
-			.where("id", "=", tournamentStageId)
-			.execute();
-	});
-}
-
 export function reopenTournament(tournamentId: number) {
 	return db.transaction().execute(async (trx) => {
 		await trx
@@ -1306,49 +1280,6 @@ export function finalizeWithoutSummary(tournamentId: number) {
 		.updateTable("Tournament")
 		.set({ isFinalized: 1 })
 		.where("id", "=", tournamentId)
-		.execute();
-}
-
-export type TournamentRepositoryInsertableMatch = Omit<
-	Insertable<DB["TournamentMatch"]>,
-	"status" | "chatCode"
->;
-
-export function insertSwissMatches(
-	matches: TournamentRepositoryInsertableMatch[],
-) {
-	if (matches.length === 0) {
-		throw new Error("No matches to insert");
-	}
-
-	return db
-		.insertInto("TournamentMatch")
-		.values(
-			matches.map((match) => ({
-				groupId: match.groupId,
-				number: match.number,
-				opponentOne: match.opponentOne,
-				opponentTwo: match.opponentTwo,
-				roundId: match.roundId,
-				stageId: match.stageId,
-				status: Status.Ready,
-				chatCode: shortNanoid(),
-			})),
-		)
-		.execute();
-}
-
-export function deleteSwissMatches({
-	groupId,
-	roundId,
-}: {
-	groupId: number;
-	roundId: number;
-}) {
-	return db
-		.deleteFrom("TournamentMatch")
-		.where("groupId", "=", groupId)
-		.where("roundId", "=", roundId)
 		.execute();
 }
 

@@ -29,8 +29,8 @@ import {
 	useTournamentPreparedMaps,
 } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";

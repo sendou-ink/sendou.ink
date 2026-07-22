@@ -351,7 +351,7 @@ function EditReportedScoresSection({
 
 	const withPoints = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectResultsWithPoints;
+	).collectsKos;
 
 	return (
 		<div className={styles.editSection}>
