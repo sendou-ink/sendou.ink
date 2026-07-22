@@ -819,3 +819,77 @@ describe("double elimination standings - projected ties", () => {
 		}
 	});
 });
+
+describe("single elimination source - underground", () => {
+	// 8-team SE played out fully. The four first-round losers tie for last, so
+	// sourcing [-1] should feed exactly those teams into an underground bracket.
+	const playedSingleEliminationTournament = () => {
+		const storage = new InMemoryDatabase();
+		const manager = new BracketsManager(storage);
+
+		manager.create({
+			name: "SE",
+			tournamentId: 1,
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: {},
+		});
+
+		const winnersGroupId = Math.min(
+			...storage.select<any>("group")!.map((g) => g.id),
+		);
+		const firstRoundId = Math.min(
+			...storage
+				.select<any>("round")!
+				.filter((r) => r.group_id === winnersGroupId)
+				.map((r) => r.id),
+		);
+
+		// lower id wins, so the higher id in each first-round match is the loser
+		const firstRoundLoserIds = readyMatches(
+			storage,
+			(m) => m.round_id === firstRoundId,
+		).map((m) => Math.max(m.opponent1.id, m.opponent2.id));
+
+		let ready = readyMatches(storage, (m) => m.group_id === winnersGroupId);
+		while (ready.length) {
+			for (const match of ready) {
+				reportLowerIdWinner(storage, manager, match.id);
+			}
+			ready = readyMatches(storage, (m) => m.group_id === winnersGroupId);
+		}
+
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "SE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data: manager.get.tournamentData(1),
+		});
+
+		return { tournament, firstRoundLoserIds };
+	};
+
+	it("sources the first-round losers when placements are [-1]", () => {
+		const { tournament, firstRoundLoserIds } =
+			playedSingleEliminationTournament();
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [-1] });
+
+		expect(relevantMatchesFinished).toBe(true);
+		expect([...teams].sort((a, b) => a - b)).toEqual(
+			[...firstRoundLoserIds].sort((a, b) => a - b),
+		);
+	});
+});

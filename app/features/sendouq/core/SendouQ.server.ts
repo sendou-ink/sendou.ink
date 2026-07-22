@@ -183,7 +183,6 @@ class SendouQClass {
 			return {
 				...group,
 				chatCode: isTeamMember ? group.chatCode : undefined,
-				noScreen: this.#groupNoScreen(group),
 				tier: match.memento?.groups[group.id]?.tier,
 				skillDifference: match.memento?.groups[group.id]?.skillDifference,
 				matchmade: Boolean(group.matchmade),
@@ -234,6 +233,7 @@ class SendouQClass {
 		return {
 			...match,
 			chatCode: isMatchInsider ? match.chatCode : undefined,
+			noScreen: Boolean(match.noScreen),
 			currentMap,
 			groupAlpha: alphaCensored,
 			groupBravo: bravoCensored,
