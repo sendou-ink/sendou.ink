@@ -1364,12 +1364,17 @@ function trophyOwners() {
 const TROPHY_TOURNAMENT_ID = 9;
 const TROPHY_EVENT_ID = 209;
 const TROPHY_TEAM_ID_OFFSET = 800;
+const TROPHY_STAGE_ID = 0;
+const TROPHY_GROUP_ID = 0;
+const TROPHY_ROUND_ID_OFFSET = -3;
+const TROPHY_MATCH_ID_OFFSET = -7;
+const TROPHY_GAME_RESULT_ID_OFFSET = -14;
 
 function trophyWinsTournament() {
 	sql
 		.prepare(
-			`insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized")
-			 values ($id, $mapPickingStyle, $settings, 1)`,
+			`insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized", "tier")
+			 values ($id, $mapPickingStyle, $settings, 1, 3)`,
 		)
 		.run({
 			id: TROPHY_TOURNAMENT_ID,
@@ -1476,44 +1481,40 @@ function trophyWinsTournament() {
 	}
 
 	// Bracket structure
-	const stageId = (
-		sql
-			.prepare(
-				`insert into "TournamentStage" ("tournamentId", "name", "number", "type", "settings")
-				 values ($tournamentId, $name, $number, $type, $settings) returning id`,
-			)
-			.get({
-				tournamentId: TROPHY_TOURNAMENT_ID,
-				name: "Bracket",
-				number: 1,
-				type: "single_elimination",
-				settings: JSON.stringify({ thirdPlaceMatch: false }),
-			}) as { id: number }
-	).id;
+	const stageId = TROPHY_STAGE_ID;
+	sql
+		.prepare(
+			`insert into "TournamentStage" ("id", "tournamentId", "name", "number", "type", "settings")
+			 values ($id, $tournamentId, $name, $number, $type, $settings)`,
+		)
+		.run({
+			id: stageId,
+			tournamentId: TROPHY_TOURNAMENT_ID,
+			name: "Bracket",
+			number: 1,
+			type: "single_elimination",
+			settings: JSON.stringify({ thirdPlaceMatch: false }),
+		});
 
-	const groupId = (
-		sql
-			.prepare(
-				`insert into "TournamentGroup" ("stageId", "number")
-				 values ($stageId, $number) returning id`,
-			)
-			.get({ stageId, number: 1 }) as { id: number }
-	).id;
+	const groupId = TROPHY_GROUP_ID;
+	sql
+		.prepare(
+			`insert into "TournamentGroup" ("id", "stageId", "number")
+			 values ($id, $stageId, $number)`,
+		)
+		.run({ id: groupId, stageId, number: 1 });
 
 	const roundMaps = JSON.stringify({ count: 3, type: "BEST_OF" });
 
 	const roundIds: number[] = [];
 	for (let r = 1; r <= 3; r++) {
-		const roundId = (
-			sql
-				.prepare(
-					`insert into "TournamentRound" ("stageId", "groupId", "number", "maps")
-					 values ($stageId, $groupId, $number, $maps) returning id`,
-				)
-				.get({ stageId, groupId, number: r, maps: roundMaps }) as {
-				id: number;
-			}
-		).id;
+		const roundId = TROPHY_ROUND_ID_OFFSET + r;
+		sql
+			.prepare(
+				`insert into "TournamentRound" ("id", "stageId", "groupId", "number", "maps")
+				 values ($id, $stageId, $groupId, $number, $maps)`,
+			)
+			.run({ id: roundId, stageId, groupId, number: r, maps: roundMaps });
 		roundIds.push(roundId);
 	}
 
@@ -1531,13 +1532,13 @@ function trophyWinsTournament() {
 	];
 
 	const matchInsertStm = sql.prepare(
-		`insert into "TournamentMatch" ("stageId", "groupId", "roundId", "number", "status", "opponentOne", "opponentTwo")
-		 values ($stageId, $groupId, $roundId, $number, $status, $opponentOne, $opponentTwo) returning id`,
+		`insert into "TournamentMatch" ("id", "stageId", "groupId", "roundId", "number", "status", "opponentOne", "opponentTwo")
+		 values ($id, $stageId, $groupId, $roundId, $number, $status, $opponentOne, $opponentTwo)`,
 	);
 
 	const gameResultInsertStm = sql.prepare(
-		`insert into "TournamentMatchGameResult" ("matchId", "mode", "number", "reporterId", "source", "stageId", "winnerTeamId")
-		 values ($matchId, $mode, $number, $reporterId, $source, $stageId, $winnerTeamId)`,
+		`insert into "TournamentMatchGameResult" ("id", "matchId", "mode", "number", "reporterId", "source", "stageId", "winnerTeamId")
+		 values ($id, $matchId, $mode, $number, $reporterId, $source, $stageId, $winnerTeamId)`,
 	);
 
 	const reportedWeaponStm = sql.prepare(
@@ -1558,36 +1559,39 @@ function trophyWinsTournament() {
 		return pool;
 	};
 
-	for (const m of matches) {
-		const matchId = (
-			matchInsertStm.get({
-				stageId,
-				groupId,
-				roundId: roundIds[m.round],
-				number: m.number,
-				status: 4,
-				opponentOne: JSON.stringify({
-					id: m.team1,
-					score: m.winner === m.team1 ? 2 : 0,
-					result: m.winner === m.team1 ? "win" : "loss",
-				}),
-				opponentTwo: JSON.stringify({
-					id: m.team2,
-					score: m.winner === m.team2 ? 2 : 0,
-					result: m.winner === m.team2 ? "win" : "loss",
-				}),
-			}) as { id: number }
-		).id;
+	let gameResultId = TROPHY_GAME_RESULT_ID_OFFSET;
+	for (const [matchIndex, m] of matches.entries()) {
+		const matchId = TROPHY_MATCH_ID_OFFSET + matchIndex + 1;
+		matchInsertStm.run({
+			id: matchId,
+			stageId,
+			groupId,
+			roundId: roundIds[m.round],
+			number: m.number,
+			status: 4,
+			opponentOne: JSON.stringify({
+				id: m.team1,
+				score: m.winner === m.team1 ? 2 : 0,
+				result: m.winner === m.team1 ? "win" : "loss",
+			}),
+			opponentTwo: JSON.stringify({
+				id: m.team2,
+				score: m.winner === m.team2 ? 2 : 0,
+				result: m.winner === m.team2 ? "win" : "loss",
+			}),
+		});
 
 		// 2 game results (2-0 sweep) with weapons reported for every player
 		for (let g = 1; g <= 2; g++) {
+			gameResultId += 1;
 			gameResultInsertStm.run({
+				id: gameResultId,
 				matchId,
 				mode: "SZ",
 				number: g,
 				reporterId: ADMIN_ID,
 				source: "DEFAULT",
-				stageId: 1,
+				stageId,
 				winnerTeamId: m.winner,
 			});
 
@@ -2068,7 +2072,7 @@ function calendarEventWithToTools(
 		LUTI: [],
 	}[event];
 	const tier = {
-		PICNIC: 3,
+		PICNIC: null,
 		ITZ: null,
 		PP: null,
 		SOS: null,

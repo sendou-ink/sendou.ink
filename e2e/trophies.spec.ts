@@ -116,6 +116,11 @@ test.describe("Trophies", () => {
 
 		await page.getByRole("tab", { name: "Reviewed" }).click();
 		await expect(page.getByText(declinedName)).toBeVisible();
-		await expect(page.getByText("Declined by Sendou")).toBeVisible();
+		await expect(
+			page
+				.getByText(declinedName)
+				.locator("../../..")
+				.getByText("Declined by Sendou"),
+		).toBeVisible();
 	});
 });

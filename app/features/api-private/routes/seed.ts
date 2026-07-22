@@ -62,6 +62,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 const REG_OPEN_TOURNAMENT_IDS = [1, 3];
+const FINISHED_IN_THE_PAST_EVENT_IDS = [209];
 
 const SEED_REFERENCE_TIMESTAMP = 1767440151;
 
@@ -83,6 +84,8 @@ function adjustSeedDatesToCurrent(variation: SeedVariation) {
 		.all() as Array<{ id: number; tournamentId: number }>;
 
 	for (const { id, tournamentId } of tournamentEventIds) {
+		if (FINISHED_IN_THE_PAST_EVENT_IDS.includes(id)) continue;
+
 		const isRegOpen =
 			variation === "REG_OPEN" &&
 			REG_OPEN_TOURNAMENT_IDS.includes(tournamentId);
