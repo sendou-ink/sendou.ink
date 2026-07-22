@@ -24,9 +24,6 @@ export type GroupType =
 // xxx: just simplify since we dont expose the option?
 export type GrandFinalType = "none" | "simple" | "double";
 
-// xxx: simplify because we don't have double?
-export type RoundRobinMode = "simple" | "double";
-
 // xxx: what can we delete here?
 export type SeedOrdering =
 	| "natural"
@@ -87,9 +84,6 @@ export interface StageSettings {
 
 	/** Number of groups in a round-robin stage. */
 	groupCount?: number;
-
-	/** The mode for the round-robin stage. */
-	roundRobinMode?: RoundRobinMode;
 
 	/**
 	 * Whether to generate a bipartite round-robin where teams are split into two

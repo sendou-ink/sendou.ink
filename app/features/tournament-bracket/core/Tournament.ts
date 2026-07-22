@@ -126,7 +126,7 @@ export class Tournament {
 						type,
 					}),
 				);
-			// xxx: lets aim to get rid of this else if
+				// xxx: lets aim to get rid of this else if
 			} else if (type === "swiss") {
 				const { teams, relevantMatchesFinished } = sources
 					? this.resolveTeamsFromSources(sources, bracketIdx)

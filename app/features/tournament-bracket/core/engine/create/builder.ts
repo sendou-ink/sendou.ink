@@ -41,9 +41,6 @@ export class StageCreator {
 		if (!Number.isInteger(input.tournamentId))
 			throw Error("You must provide a tournament id for the stage.");
 
-		if (input.type === "round_robin")
-			this.settings.roundRobinMode = this.settings.roundRobinMode || "simple";
-
 		if (input.type === "single_elimination")
 			this.settings.consolationFinal = this.settings.consolationFinal || false;
 
@@ -93,10 +90,7 @@ export class StageCreator {
 			(slot) => slot !== null && slot !== undefined,
 		);
 
-		const rounds = helpers.makeRoundRobinMatches(
-			presentSlots,
-			this.settings.roundRobinMode,
-		);
+		const rounds = helpers.makeRoundRobinMatches(presentSlots);
 
 		for (let i = 0; i < rounds.length; i++)
 			this.createRound(stageId, groupId, i + 1, rounds[0].length, rounds[i]);

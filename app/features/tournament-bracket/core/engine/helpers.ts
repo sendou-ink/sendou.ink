@@ -9,7 +9,6 @@ import type {
 	ParticipantResult,
 	ParticipantSlot,
 	Result,
-	RoundRobinMode,
 	Seeding,
 	SeedOrdering,
 	Side,
@@ -36,18 +35,35 @@ export function splitByParity<T>(array: T[]): ParitySplit<T> {
  * @param participants The participants to distribute.
  * @param mode The round-robin mode.
  */
-export function makeRoundRobinMatches<T>(
-	participants: T[],
-	mode: RoundRobinMode = "simple",
-): [T, T][][] {
-	const distribution = makeRoundRobinDistribution(participants);
+export function makeRoundRobinMatches<T>(participants: T[]): [T, T][][] {
+	const n = participants.length;
+	const n1 = n % 2 === 0 ? n : n + 1;
+	const roundCount = n1 - 1;
+	const matchPerRound = n1 / 2;
 
-	if (mode === "simple") return distribution;
+	const rounds: [T, T][][] = [];
 
-	// Reverse rounds and their content.
-	const symmetry = distribution.map((round) => [...round].reverse()).reverse();
+	for (let roundId = 0; roundId < roundCount; roundId++) {
+		const matches: [T, T][] = [];
 
-	return [...distribution, ...symmetry];
+		for (let matchId = 0; matchId < matchPerRound; matchId++) {
+			if (matchId === 0 && n % 2 === 1) continue;
+
+			const opponentsIds = [
+				(roundId - matchId - 1 + n1) % (n1 - 1),
+				matchId === 0 ? n1 - 1 : (roundId + matchId) % (n1 - 1),
+			];
+
+			matches.push([
+				participants[opponentsIds[0]],
+				participants[opponentsIds[1]],
+			]);
+		}
+
+		rounds.push(matches);
+	}
+
+	return rounds;
 }
 
 /**
@@ -141,46 +157,6 @@ export function makeAbDivisionGroups<T>(
 	}
 
 	return groups;
-}
-
-/**
- * Distributes participants in rounds for a round-robin group.
- *
- * Conditions:
- * - Each participant plays each other once.
- * - Each participant plays once in each round.
- *
- * @param participants The participants to distribute.
- */
-function makeRoundRobinDistribution<T>(participants: T[]): [T, T][][] {
-	const n = participants.length;
-	const n1 = n % 2 === 0 ? n : n + 1;
-	const roundCount = n1 - 1;
-	const matchPerRound = n1 / 2;
-
-	const rounds: [T, T][][] = [];
-
-	for (let roundId = 0; roundId < roundCount; roundId++) {
-		const matches: [T, T][] = [];
-
-		for (let matchId = 0; matchId < matchPerRound; matchId++) {
-			if (matchId === 0 && n % 2 === 1) continue;
-
-			const opponentsIds = [
-				(roundId - matchId - 1 + n1) % (n1 - 1),
-				matchId === 0 ? n1 - 1 : (roundId + matchId) % (n1 - 1),
-			];
-
-			matches.push([
-				participants[opponentsIds[0]],
-				participants[opponentsIds[1]],
-			]);
-		}
-
-		rounds.push(matches);
-	}
-
-	return rounds;
 }
 
 /**

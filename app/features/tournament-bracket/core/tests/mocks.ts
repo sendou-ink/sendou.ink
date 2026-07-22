@@ -11,7 +11,6 @@ export const PADDLING_POOL_257 = () =>
 					settings: {
 						groupCount: 9,
 						seedOrdering: ["groups.seed_optimized"],
-						roundRobinMode: "simple",
 						size: 35,
 					},
 					tournament_id: 27,
@@ -6825,7 +6824,6 @@ export const PADDLING_POOL_255 = () =>
 					settings: {
 						groupCount: 9,
 						seedOrdering: ["groups.seed_optimized"],
-						roundRobinMode: "simple",
 						size: 35,
 					},
 					tournament_id: 18,

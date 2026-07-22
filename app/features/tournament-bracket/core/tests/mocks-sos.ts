@@ -13,7 +13,6 @@ export const SWIM_OR_SINK_167 = (
 				settings: {
 					groupCount: 11,
 					seedOrdering: ["groups.seed_optimized"],
-					roundRobinMode: "simple",
 					size: 44,
 				},
 				tournament_id: 672,

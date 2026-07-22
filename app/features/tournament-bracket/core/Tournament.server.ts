@@ -12,7 +12,6 @@ import type { Unwrapped } from "~/utils/types";
 import { RunningTournaments } from "./RunningTournaments.server";
 import { Tournament } from "./Tournament";
 
-
 const combinedTournamentData = async (tournamentId: number) => {
 	const ctx = await TournamentRepository.findById(tournamentId);
 	if (!ctx) return null;

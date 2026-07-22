@@ -443,7 +443,7 @@ function createRoundRobinData(): TournamentManagerDataSet {
 				number: 1,
 				type: "round_robin",
 				tournament_id: 1,
-				settings: { groupCount: 2, roundRobinMode: "simple", size: 6 },
+				settings: { groupCount: 2, size: 6 },
 			},
 		],
 		group: [
