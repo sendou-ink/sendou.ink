@@ -121,34 +121,47 @@ async function globalSetup(_config: FullConfig) {
 		const port = E2E_BASE_PORT + i;
 		const dbPath = `db-test-e2e-${i}.sqlite3`;
 
-		// Ensure database exists with migrations
-		if (!fs.existsSync(dbPath)) {
-			// biome-ignore lint/suspicious/noConsole: CLI script output
-			console.log(`Setting up database for worker ${i}: ${dbPath}`);
-			execSync(`DB_PATH=${dbPath} pnpm run migrate up`, { stdio: "inherit" });
-		}
+		// Ensure database has the latest migrations. The `start` script does this
+		// too but it is replicated here so the server spawn below can skip the
+		// script's inline env vars which do not work on Windows.
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log(`Setting up database for worker ${i}: ${dbPath}`);
+		execSync("pnpm run migrate up", {
+			stdio: "inherit",
+			env: { ...process.env, DB_PATH: dbPath },
+		});
 
 		// Start server
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(`Starting server for worker ${i} on port ${port}...`);
-		const serverProcess = spawn("pnpm", ["start"], {
-			env: {
-				...process.env,
-				DB_PATH: dbPath,
-				PORT: String(port),
-				DISCORD_CLIENT_ID: "123",
-				DISCORD_CLIENT_SECRET: "secret",
-				SESSION_SECRET: "secret",
-				VITE_SITE_DOMAIN: `http://localhost:${port}`,
-				VITE_E2E_TEST_RUN: "true",
-				STORAGE_END_POINT: "http://127.0.0.1:9000",
-				STORAGE_ACCESS_KEY: "minio-user",
-				STORAGE_SECRET: "minio-password",
-				STORAGE_REGION: "us-east-1",
-				STORAGE_BUCKET: "sendou",
+		const serverProcess = spawn(
+			process.execPath,
+			[
+				"--import",
+				"./instrument.server.mjs",
+				"./node_modules/@react-router/serve/bin.cjs",
+				"./build/server/index.js",
+			],
+			{
+				env: {
+					...process.env,
+					NODE_ENV: "production",
+					DB_PATH: dbPath,
+					PORT: String(port),
+					DISCORD_CLIENT_ID: "123",
+					DISCORD_CLIENT_SECRET: "secret",
+					SESSION_SECRET: "secret",
+					VITE_SITE_DOMAIN: `http://localhost:${port}`,
+					VITE_E2E_TEST_RUN: "true",
+					STORAGE_END_POINT: "http://127.0.0.1:9000",
+					STORAGE_ACCESS_KEY: "minio-user",
+					STORAGE_SECRET: "minio-password",
+					STORAGE_REGION: "us-east-1",
+					STORAGE_BUCKET: "sendou",
+				},
+				detached: false,
 			},
-			detached: false,
-		});
+		);
 
 		SERVER_PROCESSES.push(serverProcess);
 

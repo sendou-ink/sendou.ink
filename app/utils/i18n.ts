@@ -30,6 +30,7 @@ const ALL_NAMESPACES = [
 	"front",
 	"friends",
 	"settings",
+	"trophies",
 	"params",
 ] as const;
 assertType<Namespace, (typeof ALL_NAMESPACES)[number]>();

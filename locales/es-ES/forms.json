@@ -1,5 +1,10 @@
 {
 	"submit": "Finalizar",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyManager": "",
+	"labels.trophyInformation": "",
 	"labels.name": "Nombre",
 	"labels.bio": "Biografía",
 	"labels.logo": "",
@@ -37,6 +42,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "Solo aplica si estás en el lobby como líder de grupo. Otros líderes de grupo aún pueden añadirte.",
 	"bottomTexts.noScreen": "Afecta a torneos, scrims y SendouQ.",
 	"bottomTexts.spoilerFreeMode": "",
+	"bottomTexts.trophyModel": "",
 	"bottomTexts.languageClockTimeNote": "",
 	"options.clockFormat.auto": "Automático",
 	"options.clockFormat.24h": "24 horas",
@@ -65,6 +71,7 @@
 	"errors.notAllowedCharacters": "Contiene caracteres no permitidos",
 	"errors.atLeastOneOption": "Debe seleccionarse al menos una opción",
 	"errors.duplicateName": "Ya existe un equipo con ese nombre",
+	"errors.trophyNameTaken": "",
 	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "El nombre no puede ser solo caracteres especiales",
 	"errors.customRoleRequired": "",
@@ -263,6 +270,8 @@
 	"labels.profileStickSens": "Sens de palanca",
 	"labels.profileCountry": "País/Región",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Mostrar usuario de Discord",
 	"labels.profileCommissionsOpen": "Comisiones abiertas",
 	"labels.profileCommissionText": "Info de comisiones",
@@ -380,5 +389,6 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"errors.trophyWithBadges": ""
 }

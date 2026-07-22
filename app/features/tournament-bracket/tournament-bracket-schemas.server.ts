@@ -203,6 +203,14 @@ const badgeReceivers = z.array(
 	}),
 );
 
+export type TournamentTrophyReceiver = z.infer<typeof trophyReceiver>;
+
+const trophyReceiver = z.object({
+	trophyId: id,
+	userIds: z.array(id).min(1).max(50),
+});
+
 export const finalizeTournamentActionSchema = z.object({
 	badgeReceivers: z.preprocess(safeJSONParse, badgeReceivers.nullish()),
+	trophyReceiver: z.preprocess(safeJSONParse, trophyReceiver.nullish()),
 });

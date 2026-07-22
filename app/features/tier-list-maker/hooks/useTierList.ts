@@ -4,7 +4,6 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import JSONCrush from "jsoncrush";
 import * as React from "react";
 import { useSearchParams } from "react-router";
 import { z } from "zod";
@@ -31,7 +30,12 @@ import {
 	tierListItemTypeSchema,
 	tierListStateSerializedSchema,
 } from "../tier-list-maker-schemas";
-import { addItemToTier, getNextNthForItem } from "../tier-list-maker-utils";
+import {
+	addItemToTier,
+	compress,
+	decompress,
+	getNextNthForItem,
+} from "../tier-list-maker-utils";
 
 export type TierListPlacementMode = "track" | "click";
 
@@ -517,11 +521,10 @@ function useSearchParamTiersState() {
 
 		try {
 			if (param) {
-				const uncrushed = JSONCrush.uncrush(param);
+				const decompressed = decompress<unknown>(param);
+				if (decompressed === null) throw new Error("Failed to decompress");
 
-				const parsed = tierListStateSerializedSchema.parse(
-					JSON.parse(uncrushed),
-				);
+				const parsed = tierListStateSerializedSchema.parse(decompressed);
 
 				return {
 					tiers: parsed.tiers,
@@ -539,12 +542,14 @@ function useSearchParamTiersState() {
 	const persistTiersStateToParams = (state: TierListState) => {
 		const searchParams = new URLSearchParams(window.location.search);
 
-		const serializedState = JSON.stringify({
-			tiers: state.tiers,
-			tierItems: Array.from(state.tierItems.entries()),
-		});
+		searchParams.set(
+			TIER_SEARCH_PARAM_NAME,
+			compress({
+				tiers: state.tiers,
+				tierItems: Array.from(state.tierItems.entries()),
+			}),
+		);
 
-		searchParams.set(TIER_SEARCH_PARAM_NAME, JSONCrush.crush(serializedState));
 		window.history.replaceState(
 			{},
 			"",

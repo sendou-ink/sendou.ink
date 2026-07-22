@@ -1,3 +1,15 @@
+:root {
+	--tier-bg-1: hsl(45, 100%, 47%);
+	--tier-bg-2: hsl(280, 90%, 44%);
+	--tier-bg-3: hsl(280, 65%, 52%);
+	--tier-bg-4: hsl(212, 95%, 44%);
+	--tier-bg-5: hsl(212, 80%, 51%);
+	--tier-bg-6: hsl(145, 80%, 34%);
+	--tier-bg-7: hsl(145, 60%, 41%);
+	--tier-bg-8: hsl(220, 10%, 40%);
+	--tier-bg-9: hsl(220, 8%, 49%);
+}
+
 .pill {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
@@ -11,46 +23,95 @@
 }
 
 .tierX {
-	background-color: hsl(45, 100%, 30%);
-	color: hsl(45, 100%, 90%);
+	--_polished-bg: var(--tier-bg-1);
+	background-color: var(--tier-bg-1);
+	color: hsl(45, 100%, 12%);
 }
 
 .tierSPlus {
-	background-color: hsl(280, 60%, 35%);
-	color: hsl(280, 80%, 90%);
+	--_polished-bg: var(--tier-bg-2);
+	background-color: var(--tier-bg-2);
+	color: hsl(280, 100%, 94%);
 }
 
 .tierS {
-	background-color: hsl(280, 50%, 40%);
-	color: hsl(280, 70%, 92%);
+	--_polished-bg: var(--tier-bg-3);
+	background-color: var(--tier-bg-3);
+	color: hsl(280, 100%, 95%);
 }
 
 .tierAPlus {
-	background-color: hsl(210, 60%, 35%);
-	color: hsl(210, 80%, 90%);
+	background-color: var(--tier-bg-4);
+	color: hsl(212, 100%, 93%);
 }
 
 .tierA {
-	background-color: hsl(210, 50%, 40%);
-	color: hsl(210, 70%, 92%);
+	background-color: var(--tier-bg-5);
+	color: hsl(212, 100%, 95%);
 }
 
 .tierBPlus {
-	background-color: hsl(140, 45%, 32%);
-	color: hsl(140, 60%, 90%);
+	background-color: var(--tier-bg-6);
+	color: hsl(145, 85%, 92%);
 }
 
 .tierB {
-	background-color: hsl(140, 35%, 38%);
-	color: hsl(140, 50%, 92%);
+	background-color: var(--tier-bg-7);
+	color: hsl(145, 75%, 94%);
 }
 
 .tierCPlus {
-	background-color: hsl(0, 0%, 35%);
-	color: hsl(0, 0%, 90%);
+	background-color: var(--tier-bg-8);
+	color: hsl(220, 15%, 92%);
 }
 
 .tierC {
-	background-color: hsl(0, 0%, 40%);
-	color: hsl(0, 0%, 92%);
+	background-color: var(--tier-bg-9);
+	color: hsl(220, 15%, 95%);
+}
+
+.polished {
+	position: relative;
+	overflow: hidden;
+	background-image: linear-gradient(
+		160deg,
+		hsl(from var(--_polished-bg) calc(h + 2) s calc(l + 14)),
+		var(--_polished-bg) 50%,
+		hsl(from var(--_polished-bg) calc(h - 3) s calc(l - 9))
+	);
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			115deg,
+			transparent 35%,
+			hsl(0, 0%, 100%, 0.5) 50%,
+			transparent 65%
+		);
+		transform: translateX(-100%);
+		animation: shine-sweep 6s ease-in-out infinite;
+	}
+}
+
+@keyframes shine-sweep {
+	0% {
+		transform: translateX(-100%);
+	}
+
+	12% {
+		transform: translateX(100%);
+	}
+
+	100% {
+		transform: translateX(100%);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.polished::after {
+		animation: none;
+		visibility: hidden;
+	}
 }

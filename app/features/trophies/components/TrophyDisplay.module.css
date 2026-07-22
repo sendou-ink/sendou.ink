@@ -1,0 +1,122 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	margin-inline: auto;
+	width: max-content;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(3, 100px);
+	justify-content: center;
+	gap: var(--s-2);
+	padding: var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+}
+
+.trophyButton {
+	all: unset;
+	cursor: pointer;
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.win {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	opacity: 1;
+	transition: opacity 0.2s ease;
+
+	@starting-style {
+		opacity: 0;
+	}
+}
+
+.winHeader {
+	margin-top: var(--s-2);
+}
+
+.winDetails {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding-inline: var(--s-2);
+}
+
+.winMembers {
+	display: flex;
+	flex-direction: column;
+}
+
+.winMember {
+	display: grid;
+	grid-template-columns: 100px 1fr max-content;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	border-radius: var(--radius-field);
+	padding: var(--s-1);
+
+	& > * {
+		min-width: 0;
+		max-width: 100%;
+	}
+
+	&:nth-child(odd) {
+		background-color: var(--color-bg-high);
+	}
+}
+
+@container (width >= 560px) and (width <= 750px) {
+	.winMember {
+		grid-template-columns: 1fr 1fr;
+		grid-template-rows: auto auto;
+		justify-items: center;
+
+		& > button {
+			grid-column: 1 / -1;
+		}
+	}
+}
+
+.winMemberUser {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-weight: var(--weight-semi);
+	min-width: 0;
+}
+
+.winMemberName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.winMemberWeapons {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--s-1);
+}
+
+.specialDescription {
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+	padding-top: var(--s-2);
+}
+
+.winSp {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	padding: var(--s-1);
+}

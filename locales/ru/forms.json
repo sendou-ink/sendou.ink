@@ -1,5 +1,10 @@
 {
 	"submit": "Опубликовать",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyManager": "",
+	"labels.trophyInformation": "",
 	"labels.name": "Название",
 	"labels.bio": "Описание",
 	"labels.logo": "",
@@ -37,6 +42,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "",
 	"bottomTexts.noScreen": "",
 	"bottomTexts.spoilerFreeMode": "",
+	"bottomTexts.trophyModel": "",
 	"bottomTexts.languageClockTimeNote": "",
 	"options.clockFormat.auto": "",
 	"options.clockFormat.24h": "",
@@ -65,6 +71,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Уже существует команда с таким названием",
+	"errors.trophyNameTaken": "",
 	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
@@ -263,6 +270,8 @@
 	"labels.profileStickSens": "Чувствительность стика",
 	"labels.profileCountry": "Страна/Регион",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Показать пользовательское имя Discord",
 	"labels.profileCommissionsOpen": "Коммишены открыты",
 	"labels.profileCommissionText": "Информация о коммишенах",
@@ -380,5 +389,6 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"errors.trophyWithBadges": ""
 }

@@ -18,6 +18,8 @@
 	"forms.tags.placeholder": "タグを選択",
 	"forms.badges": "優勝賞品のバッジ",
 	"forms.badges.placeholder": "バッジを選択する",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "選択可能なステージ",
 	"forms.participantCount": "参加人数",
 	"forms.reportResultsHeader": "{{eventName}} の結果報告",

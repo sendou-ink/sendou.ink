@@ -20,6 +20,8 @@
 	"forms.tags.placeholder": "Choose a tag",
 	"forms.badges": "Badge prizes",
 	"forms.badges.placeholder": "Choose a badge prize",
+	"forms.trophy": "Trophy prize",
+	"forms.trophy.placeholder": "Choose a trophy prize",
 	"forms.mapPool": "Map pool",
 	"forms.participantCount": "Participant count",
 	"forms.reportResultsHeader": "Reporting results for {{eventName}}",

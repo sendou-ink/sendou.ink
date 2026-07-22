@@ -166,6 +166,10 @@ interface FormFieldBadges<T extends string> extends FormFieldBase<T> {
 	maxCount?: number;
 }
 
+interface FormFieldTrophies<T extends string> extends FormFieldBase<T> {
+	maxCount?: number;
+}
+
 interface FormFieldSelectDynamic<T extends string> extends FormFieldBase<T> {
 	clearable: boolean;
 	searchable?: boolean;
@@ -211,6 +215,7 @@ export type FormField<V extends string = string> =
 	| FormFieldTournamentSearch<"tournament-search">
 	| FormFieldTeamSearch<"team-search">
 	| FormFieldBadges<"badges">
+	| FormFieldTrophies<"trophies">
 	| FormFieldStageSelect<"stage-select">
 	| FormFieldWeaponSelect<"weapon-select">;
 
@@ -241,6 +246,13 @@ export type BadgeOption = {
 	displayName: string;
 	code: string;
 	hue: number | null;
+};
+
+export type TrophyOption = {
+	id: number;
+	name: string;
+	model: string;
+	tier: number | null;
 };
 
 export type SelectOption = {

@@ -11,6 +11,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { requireRole } from "~/modules/permissions/guards.server";
@@ -61,6 +62,16 @@ export const action: ActionFunction = async ({ request }) => {
 		);
 	}
 
+	if (data.trophyId) {
+		const trophyOrganizationId = await TrophyRepository.findOrganizationIdById(
+			data.trophyId,
+		);
+		if (trophyOrganizationId !== organizationId) {
+			errorToast("Trophy does not belong to the selected organization");
+		}
+		data.badges = [];
+	}
+
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
 
 	const dates =
@@ -90,6 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
 		badges: data.badges.filter((badge) =>
 			managedBadges.some((mb) => mb.id === badge),
 		),
+		trophyId: data.trophyId ?? null,
 		// resolved by parseFormDataWithImages from the `image()` field
 		avatarImgId: data.avatarImgId ?? undefined,
 		toToolsEnabled: Number(data.toToolsEnabled),

@@ -20,6 +20,7 @@ import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
@@ -56,6 +57,7 @@ export const handle: SendouRouteHandle = {
 		"weapons",
 		"gear",
 		"game-badges",
+		"trophies",
 	],
 };
 
@@ -231,7 +233,17 @@ export function OldUserInfoPage() {
 			<ExtraInfos />
 			<WeaponPool />
 			<TopPlacements />
-			<BadgeDisplay badges={data.user.badges} key={layoutData.user.id} />
+			{data.trophies.length > 0 ? (
+				<TrophyDisplay
+					trophies={data.trophies}
+					userId={layoutData.user.id}
+					key={`trophies-${layoutData.user.id}`}
+				/>
+			) : null}
+			<BadgeDisplay
+				badges={data.user.badges}
+				key={`badges-${layoutData.user.id}`}
+			/>
 			{data.user.bio && <article>{data.user.bio}</article>}
 		</div>
 	);

@@ -1,5 +1,10 @@
 {
 	"submit": "Submit",
+	"labels.trophyName": "Name",
+	"labels.trophyModel": "3D model state",
+	"labels.trophyOrganization": "Organization",
+	"labels.trophyManager": "Manager",
+	"labels.trophyInformation": "Additional information",
 	"labels.name": "Name",
 	"labels.bio": "Bio",
 	"labels.logo": "Logo",
@@ -37,6 +42,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "When on, only your friends can add you to a scrim pickup.",
 	"bottomTexts.noScreen": "Affects tournaments, scrims and SendouQ",
 	"bottomTexts.spoilerFreeMode": "Hides tournament results from the last week",
+	"bottomTexts.trophyModel": "The 3D model state exported from the",
 	"bottomTexts.languageClockTimeNote": "Clock and time formats use your browser language setting",
 	"options.clockFormat.auto": "Automatic",
 	"options.clockFormat.24h": "24-hour",
@@ -65,6 +71,7 @@
 	"errors.notAllowedCharacters": "Contains not allowed characters",
 	"errors.atLeastOneOption": "At least one option must be selected",
 	"errors.duplicateName": "There is already a team with this name",
+	"errors.trophyNameTaken": "A trophy with this name already exists",
 	"errors.duplicateOrgName": "There is already an organization with this name",
 	"errors.noOnlySpecialCharacters": "Name can't be only special characters",
 	"errors.customRoleRequired": "Enter a name for the custom role",
@@ -263,6 +270,8 @@
 	"labels.profileStickSens": "R-stick sens",
 	"labels.profileCountry": "Country/Region",
 	"labels.profileFavoriteBadges": "Favorite badges",
+	"labels.profileFavoriteTrophies": "Favorite trophies",
+	"labels.profileHiddenTrophies": "Hidden trophies",
 	"labels.profileShowDiscordUniqueName": "Show Discord username",
 	"labels.profileCommissionsOpen": "Commissions open",
 	"labels.profileCommissionText": "Commission info",
@@ -380,5 +389,6 @@
 	"errors.allModePool": "Map pool must contain a map for each ranked mode if using \"Prepicked by teams - All modes\"",
 	"errors.bracketUrlRequired": "Bracket URL is required",
 	"errors.bracketProgressionRequired": "Bracket progression must be set for tournaments",
-	"errors.maxMembersRange": "Max team size must be between 4 and 10"
+	"errors.maxMembersRange": "Max team size must be between 4 and 10",
+	"errors.trophyWithBadges": "Cannot combine trophy and badges"
 }

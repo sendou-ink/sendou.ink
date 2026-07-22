@@ -20,6 +20,8 @@
 	"forms.tags.placeholder": "Wähle einen Tag",
 	"forms.badges": "Abzeichen-Preis",
 	"forms.badges.placeholder": "Wähle ein Abzeichen für das Event",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Arenen-Pool",
 	"forms.participantCount": "Anzahl Teilnehmer",
 	"forms.reportResultsHeader": "Berichten der Ergebnisse von {{eventName}}",

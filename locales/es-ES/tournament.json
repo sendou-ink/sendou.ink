@@ -136,6 +136,8 @@
 	"actions.finalize.error.BADGE_NOT_ASSIGNED": "No todas las insignias han sido asignadas a equipos",
 	"actions.finalize.error.DUPLICATE_TOURNAMENT_TEAM_ID": "La misma insignia fue asignada a varios equipos",
 	"actions.finalize.error.BADGE_NOT_FOUND": "Insignia inesperada no encontrada",
+	"actions.finalize.error.TROPHY_NOT_FOUND": "",
+	"actions.finalize.error.TROPHY_NOT_ASSIGNED": "",
 	"actions.finalize.assignBadgesLater": "Asignar insignias manualmente más tarde",
 	"finalize.receivingTeam.label": "Equipo receptor",
 	"finalize.receivingTeam.placeholder": "Seleccionar equipo...",

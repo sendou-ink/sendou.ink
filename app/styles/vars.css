@@ -80,7 +80,8 @@ cannot use currentColor inside data URLs
 Any changes here NEED to be reflected in oklch-gamut.ts as well
 */
 html.dark,
-html.dark [data-custom-theme] {
+html.dark [data-custom-theme],
+.dark-preview {
 	--color-base-0: oklch(100% var(--_base-c-0) var(--_base-h));
 	--color-base-1: oklch(95% var(--_base-c-1) var(--_base-h));
 	--color-base-2: oklch(90% var(--_base-c-2) var(--_base-h));
@@ -131,7 +132,8 @@ html.dark [data-custom-theme] {
 }
 
 html.light,
-html.light [data-custom-theme] {
+html.light [data-custom-theme],
+.light-preview {
 	--color-base-0: oklch(17% var(--_base-c-7) var(--_base-h));
 	--color-base-1: oklch(25% var(--_base-c-6) var(--_base-h));
 	--color-base-2: oklch(32% var(--_base-c-5) var(--_base-h));
@@ -186,7 +188,9 @@ These are the vars you mainly want to use
 */
 html,
 /* biome-ignore lint/style/noDescendingSpecificity: [data-custom-theme] re-declares theme vars for card subtrees; different properties than the html.dark/light blocks so no real override */
-[data-custom-theme] {
+[data-custom-theme],
+.dark-preview,
+.light-preview {
 	--color-text: var(--color-base-0);
 	--color-text-high: var(--color-base-3);
 	--color-text-inverse: var(--color-base-7);

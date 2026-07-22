@@ -22,6 +22,8 @@
 	"forms.tags.placeholder": "Scegli un tag",
 	"forms.badges": "Medaglie in palio",
 	"forms.badges.placeholder": "Scegli una medaglia come premio",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Pool di scenari",
 	"forms.participantCount": "Numero partecipante",
 	"forms.reportResultsHeader": "Reporting results for {{eventName}}",

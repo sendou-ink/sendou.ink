@@ -22,6 +22,7 @@ function makeEvent(
 		type: "calendar",
 		normalizedTeamCount: 0,
 		badges: [],
+		trophy: null,
 		logoUrl: null,
 		name: "",
 		url: "",

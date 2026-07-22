@@ -14,7 +14,10 @@ import { actorId } from "~/features/auth/core/user.server";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
-import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import type {
+	TournamentBadgeReceivers,
+	TournamentTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
@@ -1109,11 +1112,13 @@ export function finalize({
 	summary,
 	season,
 	badgeReceivers = [],
+	trophyReceiver,
 }: {
 	tournamentId: number;
 	summary: TournamentSummary;
 	season?: number;
 	badgeReceivers?: TournamentBadgeReceivers;
+	trophyReceiver?: TournamentTrophyReceiver;
 }) {
 	const seasonValue = season ?? null;
 
@@ -1264,6 +1269,29 @@ export function finalize({
 			await trx
 				.insertInto("TournamentBadgeOwner")
 				.values(badgeOwners)
+				.execute();
+		}
+
+		if (trophyReceiver && trophyReceiver.userIds.length > 0) {
+			const tournamentRow = await trx
+				.selectFrom("Tournament")
+				.select("tier")
+				.where("id", "=", tournamentId)
+				.executeTakeFirst();
+
+			await trx
+				.insertInto("TrophyOwner")
+				.values(
+					trophyReceiver.userIds.map((userId) => ({
+						tournamentId,
+						trophyId: trophyReceiver.trophyId,
+						userId,
+						tier: tournamentRow?.tier ?? null,
+					})),
+				)
+				.onConflict((oc) =>
+					oc.columns(["tournamentId", "userId", "trophyId"]).doNothing(),
+				)
 				.execute();
 		}
 

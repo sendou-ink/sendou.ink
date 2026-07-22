@@ -1,5 +1,10 @@
 {
 	"submit": "Enviar",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyManager": "",
+	"labels.trophyInformation": "",
 	"labels.name": "Nome",
 	"labels.bio": "Bio",
 	"labels.logo": "",
@@ -37,6 +42,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "",
 	"bottomTexts.noScreen": "",
 	"bottomTexts.spoilerFreeMode": "",
+	"bottomTexts.trophyModel": "",
 	"bottomTexts.languageClockTimeNote": "",
 	"options.clockFormat.auto": "",
 	"options.clockFormat.24h": "",
@@ -65,6 +71,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Já existe um time com esse nome",
+	"errors.trophyNameTaken": "",
 	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
@@ -263,6 +270,8 @@
 	"labels.profileStickSens": "Sensibilidade do Analógico Direito",
 	"labels.profileCountry": "País/Região",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Mostrar nome de usuário Discord",
 	"labels.profileCommissionsOpen": "Comissões abertas",
 	"labels.profileCommissionText": "Info sobre comissões",
@@ -380,5 +389,6 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"errors.trophyWithBadges": ""
 }

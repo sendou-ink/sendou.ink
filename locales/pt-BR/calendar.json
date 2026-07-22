@@ -22,6 +22,8 @@
 	"forms.tags.placeholder": "Escolha uma marcação",
 	"forms.badges": "Prêmio(s) de insígnia",
 	"forms.badges.placeholder": "Escolha um prêmio de insígnia",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Conjunto de mapas",
 	"forms.participantCount": "Contagem de participantes",
 	"forms.reportResultsHeader": "Declarando resultados para o(a) {{eventName}}",

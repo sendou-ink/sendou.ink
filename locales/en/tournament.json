@@ -134,6 +134,8 @@
 	"actions.finalize.error.BADGE_NOT_ASSIGNED": "Not all badges have been assigned to teams",
 	"actions.finalize.error.DUPLICATE_TOURNAMENT_TEAM_ID": "Same badge assigned to multiple teams",
 	"actions.finalize.error.BADGE_NOT_FOUND": "Unexpected badge not found",
+	"actions.finalize.error.TROPHY_NOT_FOUND": "Unexpected trophy not found",
+	"actions.finalize.error.TROPHY_NOT_ASSIGNED": "Trophy has no receivers selected",
 	"actions.finalize.assignBadgesLater": "Assign badges later manually",
 	"finalize.receivingTeam.label": "Receiving team",
 	"finalize.receivingTeam.placeholder": "Select team…",

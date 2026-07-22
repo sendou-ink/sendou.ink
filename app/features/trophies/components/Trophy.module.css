@@ -1,0 +1,58 @@
+.container {
+	position: relative;
+}
+
+.tile {
+	border: var(--border-width) solid var(--tier-bg);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-high);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, 100px);
+	justify-content: center;
+	gap: var(--s-2);
+}
+
+.placeholder {
+	width: 100%;
+	aspect-ratio: 1 / 1;
+}
+
+.tierPill {
+	position: absolute;
+	top: -1px;
+	right: -1px;
+
+	> * {
+		border-radius: 0 var(--radius-field) 0 var(--radius-field);
+	}
+}
+
+.trophy {
+	width: 100% !important;
+	height: auto !important;
+	aspect-ratio: 1 / 1;
+	opacity: 1;
+	transition: opacity 0.2s ease;
+
+	@starting-style {
+		opacity: 0;
+	}
+}
+
+.interactive {
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+.error {
+	color: var(--color-text-high);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}

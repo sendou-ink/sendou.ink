@@ -73,6 +73,7 @@ export const ALL_WIDGETS = {
 			defaultSettings: { searchParams: "" },
 		}),
 	],
+	trophies: [defineWidget({ id: "trophies-owned", slot: "main" })],
 	badges: [
 		defineWidget({ id: "badges-owned", slot: "main" }),
 		defineWidget({ id: "badges-authored", slot: "main" }),

@@ -36,19 +36,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		);
 	}
 
-	const badges = (
-		await CalendarRepository.findById(tournament.ctx.eventId, {
-			includeBadgePrizes: true,
-		})
-	)?.badgePrizes?.sort((a, b) => a.id - b.id);
+	const event = await CalendarRepository.findById(tournament.ctx.eventId, {
+		includeBadgePrizes: true,
+		includeTrophy: true,
+	});
 
 	invariant(
-		badges,
+		event?.badgePrizes,
 		`Tournament ${tournament.ctx.id} event not found for badges`,
 	);
 
+	const badges = event.badgePrizes.sort((a, b) => a.id - b.id);
+
 	return {
 		badges,
+		trophy: event.trophy,
 		standings: await standingsWithSetParticipation(tournament),
 	};
 };

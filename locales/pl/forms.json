@@ -1,5 +1,10 @@
 {
 	"submit": "Złóż",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyManager": "",
+	"labels.trophyInformation": "",
 	"labels.name": "Imię",
 	"labels.bio": "Opis",
 	"labels.logo": "",
@@ -37,6 +42,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "",
 	"bottomTexts.noScreen": "",
 	"bottomTexts.spoilerFreeMode": "",
+	"bottomTexts.trophyModel": "",
 	"bottomTexts.languageClockTimeNote": "",
 	"options.clockFormat.auto": "",
 	"options.clockFormat.24h": "",
@@ -65,6 +71,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Istnieje już drużyna o tym imieniu",
+	"errors.trophyNameTaken": "",
 	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
@@ -263,6 +270,8 @@
 	"labels.profileStickSens": "R-stick sens",
 	"labels.profileCountry": "Kraj/region",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "",
 	"labels.profileCommissionsOpen": "",
 	"labels.profileCommissionText": "",
@@ -380,5 +389,6 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"errors.trophyWithBadges": ""
 }

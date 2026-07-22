@@ -20,6 +20,8 @@
 	"forms.tags.placeholder": "Kies een tag",
 	"forms.badges": "Badge prijzen",
 	"forms.badges.placeholder": "Kies een badge prijs",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Beschikbare levels",
 	"forms.participantCount": "Aantal deelnemers",
 	"forms.reportResultsHeader": "Uitslagen doorgeven voor {{eventName}}",

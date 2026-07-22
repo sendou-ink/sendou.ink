@@ -1,5 +1,10 @@
 {
 	"submit": "送信",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyManager": "",
+	"labels.trophyInformation": "",
 	"labels.name": "名前",
 	"labels.bio": "自己紹介",
 	"labels.logo": "",
@@ -37,6 +42,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "",
 	"bottomTexts.noScreen": "",
 	"bottomTexts.spoilerFreeMode": "",
+	"bottomTexts.trophyModel": "",
 	"bottomTexts.languageClockTimeNote": "",
 	"options.clockFormat.auto": "",
 	"options.clockFormat.24h": "",
@@ -65,6 +71,7 @@
 	"errors.notAllowedCharacters": "",
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "そのチーム名はすでに使用されています",
+	"errors.trophyNameTaken": "",
 	"errors.duplicateOrgName": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
@@ -263,6 +270,8 @@
 	"labels.profileStickSens": "右スティック感度",
 	"labels.profileCountry": "国/地域",
 	"labels.profileFavoriteBadges": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "Discord のユーザー名を表示する",
 	"labels.profileCommissionsOpen": "依頼を受付中",
 	"labels.profileCommissionText": "依頼に関する情報",
@@ -380,5 +389,6 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"errors.trophyWithBadges": ""
 }

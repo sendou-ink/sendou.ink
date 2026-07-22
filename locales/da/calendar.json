@@ -20,6 +20,8 @@
 	"forms.tags.placeholder": "Vælg et tag",
 	"forms.badges": "Præmiemærker",
 	"forms.badges.placeholder": "Vælg et premiemærke",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Banepulje",
 	"forms.participantCount": "Antal deltagere",
 	"forms.reportResultsHeader": "Viser resultater for {{eventName}}",

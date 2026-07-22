@@ -1,7 +1,7 @@
 import type { UserWithPlusTier } from "~/db/tables";
 import { userDiscordIdIsAged } from "~/utils/users";
 import type { Role } from "./types";
-import { isAdmin, isDev, isStaff, isSupporter } from "./utils";
+import { isAdmin, isDev, isQa, isStaff, isSupporter } from "./utils";
 
 export function userRoles(
 	user: Pick<
@@ -28,6 +28,10 @@ export function userRoles(
 
 	if (isDev(user)) {
 		result.push("DEV");
+	}
+
+	if (isQa(user)) {
+		result.push("QA");
 	}
 
 	if (typeof user.patronTier === "number") {

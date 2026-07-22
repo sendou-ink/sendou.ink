@@ -1,5 +1,10 @@
 {
 	"submit": "确认",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyManager": "",
+	"labels.trophyInformation": "",
 	"labels.name": "队伍名称",
 	"labels.bio": "简介",
 	"labels.logo": "队徽",
@@ -37,6 +42,7 @@
 	"bottomTexts.disallowScrimPickupsFromUntrusted": "仅当您作为小组队长位于大厅中时生效。其他小组队长仍然可以拉您进房。",
 	"bottomTexts.noScreen": "此设置将应用于赛事、对抗战和 SendouQ。",
 	"bottomTexts.spoilerFreeMode": "隐藏过去一周内的赛事结果。",
+	"bottomTexts.trophyModel": "",
 	"bottomTexts.languageClockTimeNote": "时钟和时间格式将根据您的浏览器语言设置显示。",
 	"options.clockFormat.auto": "自动",
 	"options.clockFormat.24h": "24 小时制",
@@ -65,6 +71,7 @@
 	"errors.notAllowedCharacters": "包含非法字符",
 	"errors.atLeastOneOption": "请至少选择一个选项",
 	"errors.duplicateName": "该队伍名称已被占用",
+	"errors.trophyNameTaken": "",
 	"errors.duplicateOrgName": "该组织名称已被占用",
 	"errors.noOnlySpecialCharacters": "名称不能仅由特殊字符组成",
 	"errors.customRoleRequired": "请输入自定义职责的名称",
@@ -263,6 +270,8 @@
 	"labels.profileStickSens": "右摇杆操作灵敏度",
 	"labels.profileCountry": "国家/地区",
 	"labels.profileFavoriteBadges": "喜爱的徽章",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
 	"labels.profileShowDiscordUniqueName": "显示 Discord 用户名",
 	"labels.profileCommissionsOpen": "委托开放中",
 	"labels.profileCommissionText": "委托信息",
@@ -380,5 +389,6 @@
 	"errors.allModePool": "如果使用“由队伍预选 - 所有模式”，场地池必须包含可用于每个蛮颓比赛模式的场地",
 	"errors.bracketUrlRequired": "必须填写对战表 URL",
 	"errors.bracketProgressionRequired": "必须为赛事设置对战表晋级规则",
-	"errors.maxMembersRange": "队伍人数上限必须介于 4 到 10 人之间"
+	"errors.maxMembersRange": "队伍人数上限必须介于 4 到 10 人之间",
+	"errors.trophyWithBadges": ""
 }

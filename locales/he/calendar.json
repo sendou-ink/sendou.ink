@@ -22,6 +22,8 @@
 	"forms.tags.placeholder": "בחירת תג",
 	"forms.badges": "פרסי תגים",
 	"forms.badges.placeholder": "בחירת פרס תג",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "מאגר מפות",
 	"forms.participantCount": "כמות משתתפים",
 	"forms.reportResultsHeader": "דיווח תוצאות עבור {{eventName}}",

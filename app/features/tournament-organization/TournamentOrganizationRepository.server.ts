@@ -212,6 +212,26 @@ export function searchByName({
 		.execute();
 }
 
+export function findOneById(id: number) {
+	return db
+		.selectFrom("TournamentOrganization")
+		.leftJoin(
+			"UserSubmittedImage",
+			"UserSubmittedImage.id",
+			"TournamentOrganization.avatarImgId",
+		)
+		.select(({ eb }) => [
+			"TournamentOrganization.id",
+			"TournamentOrganization.name",
+			"TournamentOrganization.slug",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"avatarUrl",
+			),
+		])
+		.where("TournamentOrganization.id", "=", id)
+		.executeTakeFirst();
+}
+
 interface FindEventsByMonthArgs {
 	month: number;
 	year: number;

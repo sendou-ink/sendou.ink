@@ -155,6 +155,51 @@ export type BadgeOwner = {
 	count: number;
 };
 
+export interface Trophy {
+	id: GeneratedAlways<number>;
+	name: string;
+	model: string;
+	/** Identifies special trophies, null for regular trophies. */
+	code: Generated<string | null>;
+	organizationId: number | null;
+	creatorId: number | null;
+	managerId: number | null;
+}
+
+export interface TrophyOwner {
+	trophyId: number;
+	userId: number;
+	tournamentId: number;
+	tier: number | null;
+}
+
+export interface SpecialTrophyOwner {
+	trophyId: number;
+	userId: number;
+	createdAt: number;
+}
+
+export interface PendingTrophy {
+	id: GeneratedAlways<number>;
+	name: string;
+	model: string;
+	description: string;
+	organizationId: number | null;
+	submitterUserId: number;
+	createdAt: number;
+	declineReason: string | null;
+	declinedAt: number | null;
+	declinedByUserId: number | null;
+	targetTrophyId: number | null;
+	managerId: number | null;
+}
+
+export interface PendingTrophyApproval {
+	pendingTrophyId: number;
+	userId: number;
+	createdAt: number;
+}
+
 export interface Build {
 	clothesGearSplId: number | null;
 	description: string | null;
@@ -216,6 +261,7 @@ export interface CalendarEvent {
 	tournamentId: number | null;
 	organizationId: number | null;
 	avatarImgId: number | null;
+	trophyId: number | null;
 }
 
 export interface CalendarEventBadge {
@@ -1128,6 +1174,8 @@ export interface User {
 	discordUniqueName: string | null;
 	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
 	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
+	favoriteTrophyIds: ColumnType<number[] | null, string | null, string | null>;
+	hiddenTrophyIds: ColumnType<number[] | null, string | null, string | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
 	isArtist: Generated<DBBoolean | null>;
@@ -1572,6 +1620,11 @@ export interface DB {
 	TournamentOrganizationBannedUser: TournamentOrganizationBannedUser;
 	TournamentStreamer: TournamentStreamer;
 	TournamentMatchVod: TournamentMatchVod;
+	Trophy: Trophy;
+	TrophyOwner: TrophyOwner;
+	SpecialTrophyOwner: SpecialTrophyOwner;
+	PendingTrophy: PendingTrophy;
+	PendingTrophyApproval: PendingTrophyApproval;
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;

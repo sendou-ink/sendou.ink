@@ -16,7 +16,17 @@ async function globalTeardown(_config: FullConfig) {
 
 	for (const server of servers) {
 		if (server && !server.killed) {
-			server.kill("SIGTERM");
+			if (process.platform === "win32" && server.pid) {
+				// the server is spawned through a shell on Windows so the whole
+				// process tree needs to be killed to not leave the ports occupied
+				try {
+					execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: "pipe" });
+				} catch {
+					// Ignore errors, process might already be gone
+				}
+			} else {
+				server.kill("SIGTERM");
+			}
 		}
 	}
 

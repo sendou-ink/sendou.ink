@@ -66,6 +66,8 @@ export const SPR_INFO_URL =
 	"https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf";
 export const SPLATOON3_INK_SCHEDULES_URL =
 	"https://splatoon3.ink/data/schedules.json";
+export const PICOCAD2_WEB_VIEWER_URL =
+	"https://picocad2-web-viewer.hfcred.workers.dev/";
 
 export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
@@ -83,6 +85,8 @@ export const FAQ_PAGE = "/faq";
 export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
+export const TROPHIES_PAGE = "/trophies";
+export const NEW_TROPHY_PAGE = "/trophies/new";
 export const BUILDS_PAGE = "/builds";
 export const TEAM_SEARCH_PAGE = "/t";
 export const NEW_TEAM_PAGE = "/t/new";
@@ -153,6 +157,14 @@ export const userCardFriendshipPage = (
 export const userCardNotePage = (userId: number) => `/user-card/${userId}/note`;
 
 export const userReportPage = (userId: number) => `/user-report/${userId}`;
+
+export const trophyPage = (trophyId: number) => `${TROPHIES_PAGE}/${trophyId}`;
+
+export const trophyWinsPage = (args: { trophyId: number; userId: number }) =>
+	`${TROPHIES_PAGE}/${args.trophyId}/wins/${args.userId}`;
+
+export const trophyTournamentsPage = (trophyId: number) =>
+	`${TROPHIES_PAGE}/${trophyId}/tournaments`;
 
 interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];

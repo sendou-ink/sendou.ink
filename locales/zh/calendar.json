@@ -18,6 +18,8 @@
 	"forms.tags.placeholder": "选择标签",
 	"forms.badges": "徽章奖励",
 	"forms.badges.placeholder": "选择一项徽章奖励",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "场地池",
 	"forms.participantCount": "参赛者数量",
 	"forms.reportResultsHeader": "汇报 {{eventName}} 的结果",

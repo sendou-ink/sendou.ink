@@ -134,6 +134,34 @@ export function tournamentLogoWithDefault(
 	);
 }
 
+/**
+ * Subquery resolving to the event's earliest `CalendarEventDate` start time, or `null` when it has
+ * no dates. Correlates on `"CalendarEvent"."id"`. Alias it `.as("startTime")` when selecting it
+ * directly. Can also be passed to `orderBy` as is.
+ */
+export function calendarEventStartTime(
+	eb: ExpressionBuilder<Tables, "CalendarEvent">,
+) {
+	return eb
+		.selectFrom("CalendarEventDate")
+		.select((eb2) => eb2.fn.min<number>("startTime").as("startTime"))
+		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id");
+}
+
+/**
+ * Subquery counting a tournament's non-placeholder teams. Correlates on `"Tournament"."id"`.
+ * Alias it `.as("teamsCount")` when selecting it directly.
+ */
+export function tournamentTeamCount(
+	eb: ExpressionBuilder<Tables, "Tournament">,
+) {
+	return eb
+		.selectFrom("TournamentTeam")
+		.select((eb2) => eb2.fn.countAll<number>().as("count"))
+		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where("TournamentTeam.isPlaceholder", "=", 0);
+}
+
 /** Concats the file name (a bit misleadingly called `url` in the DB schema) with the root URL, giving the full URL for the image */
 export function concatUserSubmittedImagePrefix<T extends string | null>(
 	expr: Expression<T>,

@@ -1,4 +1,7 @@
-import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import type {
+	TournamentBadgeReceivers,
+	TournamentTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
 
@@ -109,6 +112,26 @@ export function validateBadgeReceivers({
 	const uniqueTournamentTeamIds = new Set(tournamentTeamIds);
 	if (tournamentTeamIds.length !== uniqueTournamentTeamIds.size) {
 		return "DUPLICATE_TOURNAMENT_TEAM_ID";
+	}
+
+	return null;
+}
+
+export function validateTrophyReceiver({
+	trophyReceiver,
+	trophy,
+}: {
+	trophyReceiver: TournamentTrophyReceiver | null;
+	trophy: { id: number } | null;
+}) {
+	if (!trophy) return null;
+
+	if (!trophyReceiver || trophyReceiver.trophyId !== trophy.id) {
+		return "TROPHY_NOT_FOUND";
+	}
+
+	if (trophyReceiver.userIds.length === 0) {
+		return "TROPHY_NOT_ASSIGNED";
 	}
 
 	return null;

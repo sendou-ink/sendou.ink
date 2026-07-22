@@ -32,9 +32,15 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
+import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import {
+	SUPPORTER_TROPHY_CODE,
+	XP_TROPHY_CODE_PREFIX,
+} from "~/features/trophies/trophies-constants";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import {
@@ -93,6 +99,7 @@ import {
 	STAFF_TEST_ID,
 } from "./constants";
 import placements from "./placements.json";
+import trophies from "./trophies.json";
 
 const SENDOUQ_DEFAULT_MAPS: Record<
 	ModeShort,
@@ -252,6 +259,12 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	splatoonRotations,
 	variation === "FINALIZED_BRACKET" ? finalizedBracket : undefined,
 	variation === "AB_RR" ? abDivisionsTournament : undefined,
+	trophiesToDb,
+	trophyOwners,
+	trophyWinsTournament,
+	pendingTrophiesToDb,
+	assignTrophyToTournament,
+	specialTrophies,
 ];
 
 export async function seed(variation?: SeedVariation | null) {
@@ -666,6 +679,11 @@ function wipeDB() {
 		"ModNote",
 		"Friendship",
 		"FriendRequest",
+		"PendingTrophyApproval",
+		"PendingTrophy",
+		"TrophyOwner",
+		"SpecialTrophyOwner",
+		"Trophy",
 		"User",
 		"PlusSuggestion",
 		"PlusVote",
@@ -1257,6 +1275,541 @@ function badgeManagers() {
 	}
 }
 
+function trophiesToDb() {
+	const insertTrophyStm = sql.prepare(
+		`insert into "Trophy" ("name", "model", "organizationId", "creatorId", "managerId") values ($name, $model, $organizationId, $creatorId, $managerId)`,
+	);
+
+	for (const [name, model] of Object.entries(trophies)) {
+		insertTrophyStm.run({
+			name,
+			model,
+			organizationId: 1,
+			creatorId: ADMIN_ID,
+			managerId: NZAP_TEST_ID,
+		});
+	}
+}
+
+function trophyOwners() {
+	const trophyIds = (
+		sql.prepare(`select "id" from "Trophy"`).all() as any[]
+	).map((t) => t.id) as number[];
+
+	const tournamentIds = (
+		sql.prepare(`select "id" from "Tournament"`).all() as any[]
+	).map((t) => t.id) as number[];
+
+	let userIds = (
+		sql
+			.prepare(
+				`select "id" from "User" where id != ${NZAP_TEST_ID} and id != ${ADMIN_ID}`,
+			)
+			.all() as any[]
+	).map((u) => u.id) as number[];
+
+	const insertTrophyOwnerStm = sql.prepare(
+		`insert into "TrophyOwner" ("trophyId", "userId", "tournamentId", "tier") values ($trophyId, $userId, $tournamentId, $tier)`,
+	);
+
+	const randomTier = () =>
+		faker.helpers.maybe(() => faker.number.int({ min: 1, max: 9 }), {
+			probability: 0.85,
+		}) ?? null;
+
+	const usedCombinations = new Set<string>();
+	const insertOwner = (
+		trophyId: number,
+		userId: number,
+		tournamentId: number,
+	) => {
+		const key = `${trophyId}-${userId}-${tournamentId}`;
+		if (usedCombinations.has(key)) return;
+		usedCombinations.add(key);
+		insertTrophyOwnerStm.run({
+			trophyId,
+			userId,
+			tournamentId,
+			tier: randomTier(),
+		});
+	};
+
+	for (const trophyId of trophyIds) {
+		userIds = faker.helpers.shuffle(userIds);
+		const ownerCount = faker.number.int({ min: 1, max: 8 });
+
+		for (let i = 0; i < ownerCount; i++) {
+			const userId = userIds.shift()!;
+			const copies = faker.number.int({ min: 1, max: 3 });
+			const shuffledTournaments = faker.helpers.shuffle([...tournamentIds]);
+
+			for (let j = 0; j < copies && j < shuffledTournaments.length; j++) {
+				insertOwner(trophyId, userId, shuffledTournaments[j]);
+			}
+
+			userIds.push(userId);
+		}
+	}
+
+	for (const trophyId of trophyIds) {
+		const shuffledTournaments = faker.helpers.shuffle([...tournamentIds]);
+		const copies = faker.number.int({ min: 1, max: 3 });
+
+		for (let i = 0; i < copies && i < shuffledTournaments.length; i++) {
+			insertOwner(trophyId, ADMIN_ID, shuffledTournaments[i]);
+		}
+	}
+}
+
+const TROPHY_TOURNAMENT_ID = 9;
+const TROPHY_EVENT_ID = 209;
+const TROPHY_TEAM_ID_OFFSET = 800;
+const TROPHY_STAGE_ID = 0;
+const TROPHY_GROUP_ID = 0;
+const TROPHY_ROUND_ID_OFFSET = -3;
+const TROPHY_MATCH_ID_OFFSET = -7;
+const TROPHY_GAME_RESULT_ID_OFFSET = -14;
+
+function trophyWinsTournament() {
+	sql
+		.prepare(
+			`insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized", "tier")
+			 values ($id, $mapPickingStyle, $settings, 1, 3)`,
+		)
+		.run({
+			id: TROPHY_TOURNAMENT_ID,
+			mapPickingStyle: "AUTO_ALL",
+			settings: JSON.stringify({
+				isRanked: true,
+				bracketProgression: [
+					{
+						type: "single_elimination",
+						name: "Bracket",
+						requiresCheckIn: false,
+						settings: { thirdPlaceMatch: false },
+					},
+				],
+			}),
+		});
+
+	sql
+		.prepare(
+			`insert into "CalendarEvent" ("id", "name", "description", "discordInviteCode", "bracketUrl", "authorId", "tournamentId", "trophyId")
+			 values ($id, $name, $description, $discordInviteCode, $bracketUrl, $authorId, $tournamentId, $trophyId)`,
+		)
+		.run({
+			id: TROPHY_EVENT_ID,
+			name: "Trophy Cup",
+			description: "Finished tournament with a trophy prize",
+			discordInviteCode: "test",
+			bracketUrl: "https://example.com",
+			authorId: ADMIN_ID,
+			tournamentId: TROPHY_TOURNAMENT_ID,
+			trophyId: 1,
+		});
+
+	sql
+		.prepare(
+			`insert into "CalendarEventDate" ("eventId", "startTime")
+			 values ($eventId, $startTime)`,
+		)
+		.run({
+			eventId: TROPHY_EVENT_ID,
+			startTime: dateToDatabaseTimestamp(
+				new Date(Date.now() - 1000 * 60 * 60 * 24 * 21),
+			),
+		});
+
+	const userIds = userIdsInAscendingOrderById();
+	const teamNames = [
+		"Splat Society",
+		"Ink Theory",
+		"Booyah Brigade",
+		"Chargers Anonymous",
+		"Squid Parts",
+		"Woomy Council",
+		"Roller Coalition",
+		"Last Splash",
+	];
+	const teamMembers = new Map<number, number[]>();
+
+	for (let i = 0; i < 8; i++) {
+		const teamId = TROPHY_TEAM_ID_OFFSET + i + 1;
+
+		sql
+			.prepare(
+				`insert into "TournamentTeam" ("id", "name", "createdAt", "tournamentId", "inviteCode", "seed")
+				 values ($id, $name, $createdAt, $tournamentId, $inviteCode, $seed)`,
+			)
+			.run({
+				id: teamId,
+				name: teamNames[i],
+				createdAt: dateToDatabaseTimestamp(new Date()),
+				tournamentId: TROPHY_TOURNAMENT_ID,
+				inviteCode: shortNanoid(),
+				seed: i + 1,
+			});
+
+		sql
+			.prepare(
+				`insert into "TournamentTeamCheckIn" ("tournamentTeamId", "checkedInAt")
+				 values ($tournamentTeamId, $checkedInAt)`,
+			)
+			.run({
+				tournamentTeamId: teamId,
+				checkedInAt: dateToDatabaseTimestamp(new Date()),
+			});
+
+		const members: number[] = [];
+		for (let j = 0; j < 4; j++) {
+			const userId = userIds.shift()!;
+			members.push(userId);
+
+			sql
+				.prepare(
+					`insert into "TournamentTeamMember" ("tournamentTeamId", "userId", "createdAt", "role")
+					 values ($tournamentTeamId, $userId, $createdAt, $role)`,
+				)
+				.run({
+					tournamentTeamId: teamId,
+					userId,
+					createdAt: dateToDatabaseTimestamp(new Date()),
+					role: j === 0 ? "OWNER" : "REGULAR",
+				});
+		}
+		teamMembers.set(teamId, members);
+	}
+
+	// Bracket structure
+	const stageId = TROPHY_STAGE_ID;
+	sql
+		.prepare(
+			`insert into "TournamentStage" ("id", "tournamentId", "name", "number", "type", "settings")
+			 values ($id, $tournamentId, $name, $number, $type, $settings)`,
+		)
+		.run({
+			id: stageId,
+			tournamentId: TROPHY_TOURNAMENT_ID,
+			name: "Bracket",
+			number: 1,
+			type: "single_elimination",
+			settings: JSON.stringify({ thirdPlaceMatch: false }),
+		});
+
+	const groupId = TROPHY_GROUP_ID;
+	sql
+		.prepare(
+			`insert into "TournamentGroup" ("id", "stageId", "number")
+			 values ($id, $stageId, $number)`,
+		)
+		.run({ id: groupId, stageId, number: 1 });
+
+	const roundMaps = JSON.stringify({ count: 3, type: "BEST_OF" });
+
+	const roundIds: number[] = [];
+	for (let r = 1; r <= 3; r++) {
+		const roundId = TROPHY_ROUND_ID_OFFSET + r;
+		sql
+			.prepare(
+				`insert into "TournamentRound" ("id", "stageId", "groupId", "number", "maps")
+				 values ($id, $stageId, $groupId, $number, $maps)`,
+			)
+			.run({ id: roundId, stageId, groupId, number: r, maps: roundMaps });
+		roundIds.push(roundId);
+	}
+
+	const t = (seed: number) => TROPHY_TEAM_ID_OFFSET + seed;
+
+	// SE 8-team bracket: standard seeding, higher seed always wins
+	const matches = [
+		{ round: 0, number: 1, team1: t(1), team2: t(8), winner: t(1) },
+		{ round: 0, number: 2, team1: t(4), team2: t(5), winner: t(4) },
+		{ round: 0, number: 3, team1: t(2), team2: t(7), winner: t(2) },
+		{ round: 0, number: 4, team1: t(3), team2: t(6), winner: t(3) },
+		{ round: 1, number: 1, team1: t(1), team2: t(4), winner: t(1) },
+		{ round: 1, number: 2, team1: t(2), team2: t(3), winner: t(2) },
+		{ round: 2, number: 1, team1: t(1), team2: t(2), winner: t(1) },
+	];
+
+	const matchInsertStm = sql.prepare(
+		`insert into "TournamentMatch" ("id", "stageId", "groupId", "roundId", "number", "status", "opponentOne", "opponentTwo")
+		 values ($id, $stageId, $groupId, $roundId, $number, $status, $opponentOne, $opponentTwo)`,
+	);
+
+	const gameResultInsertStm = sql.prepare(
+		`insert into "TournamentMatchGameResult" ("id", "matchId", "mode", "number", "reporterId", "source", "stageId", "winnerTeamId")
+		 values ($id, $matchId, $mode, $number, $reporterId, $source, $stageId, $winnerTeamId)`,
+	);
+
+	const reportedWeaponStm = sql.prepare(
+		`insert into "ReportedWeapon" ("tournamentMatchId", "mapIndex", "weaponSplId", "userId", "createdAt")
+		 values ($tournamentMatchId, $mapIndex, $weaponSplId, $userId, $createdAt)`,
+	);
+
+	const weaponPools = new Map<number, number[]>();
+	const weaponPoolFor = (userId: number) => {
+		const existing = weaponPools.get(userId);
+		if (existing) return existing;
+
+		const pool = faker.helpers.arrayElements(canonicalMainWeaponIds, {
+			min: 1,
+			max: 3,
+		});
+		weaponPools.set(userId, pool);
+		return pool;
+	};
+
+	let gameResultId = TROPHY_GAME_RESULT_ID_OFFSET;
+	for (const [matchIndex, m] of matches.entries()) {
+		const matchId = TROPHY_MATCH_ID_OFFSET + matchIndex + 1;
+		matchInsertStm.run({
+			id: matchId,
+			stageId,
+			groupId,
+			roundId: roundIds[m.round],
+			number: m.number,
+			status: 4,
+			opponentOne: JSON.stringify({
+				id: m.team1,
+				score: m.winner === m.team1 ? 2 : 0,
+				result: m.winner === m.team1 ? "win" : "loss",
+			}),
+			opponentTwo: JSON.stringify({
+				id: m.team2,
+				score: m.winner === m.team2 ? 2 : 0,
+				result: m.winner === m.team2 ? "win" : "loss",
+			}),
+		});
+
+		// 2 game results (2-0 sweep) with weapons reported for every player
+		for (let g = 1; g <= 2; g++) {
+			gameResultId += 1;
+			gameResultInsertStm.run({
+				id: gameResultId,
+				matchId,
+				mode: "SZ",
+				number: g,
+				reporterId: ADMIN_ID,
+				source: "DEFAULT",
+				stageId,
+				winnerTeamId: m.winner,
+			});
+
+			for (const teamId of [m.team1, m.team2]) {
+				for (const userId of teamMembers.get(teamId)!) {
+					reportedWeaponStm.run({
+						tournamentMatchId: matchId,
+						mapIndex: g - 1,
+						weaponSplId: faker.helpers.arrayElement(weaponPoolFor(userId)),
+						userId,
+						createdAt: dateToDatabaseTimestamp(new Date()),
+					});
+				}
+			}
+		}
+	}
+
+	const placements = [
+		{ teamSeed: 1, placement: 1, setResults: ["W", "W", "W"] },
+		{ teamSeed: 2, placement: 2, setResults: ["W", "W", "L"] },
+		{ teamSeed: 3, placement: 3, setResults: ["W", "L"] },
+		{ teamSeed: 4, placement: 3, setResults: ["W", "L"] },
+		{ teamSeed: 5, placement: 5, setResults: ["L"] },
+		{ teamSeed: 6, placement: 5, setResults: ["L"] },
+		{ teamSeed: 7, placement: 5, setResults: ["L"] },
+		{ teamSeed: 8, placement: 5, setResults: ["L"] },
+	];
+
+	const resultInsertStm = sql.prepare(
+		`insert into "TournamentResult" ("tournamentId", "tournamentTeamId", "userId", "placement", "participantCount", "setResults", "spDiff")
+		 values ($tournamentId, $tournamentTeamId, $userId, $placement, $participantCount, $setResults, $spDiff)`,
+	);
+
+	for (const p of placements) {
+		const teamId = t(p.teamSeed);
+
+		for (const [memberIndex, userId] of teamMembers.get(teamId)!.entries()) {
+			const setResults = p.setResults.map((result) =>
+				memberIndex > 0 && faker.number.float(1) > 0.75 ? null : result,
+			);
+			const spDiff =
+				Math.round(
+					(p.placement === 1
+						? faker.number.float({ min: 80, max: 220 })
+						: faker.number.float({ min: -120, max: 60 })) * 10,
+				) / 10;
+
+			resultInsertStm.run({
+				tournamentId: TROPHY_TOURNAMENT_ID,
+				tournamentTeamId: teamId,
+				userId,
+				placement: p.placement,
+				participantCount: 8,
+				setResults: JSON.stringify(setResults),
+				spDiff,
+			});
+		}
+	}
+
+	const trophyOwnerStm = sql.prepare(
+		`insert into "TrophyOwner" ("trophyId", "userId", "tournamentId", "tier")
+		 values ($trophyId, $userId, $tournamentId, $tier)`,
+	);
+	for (const userId of teamMembers.get(t(1))!) {
+		trophyOwnerStm.run({
+			trophyId: 1,
+			userId,
+			tournamentId: TROPHY_TOURNAMENT_ID,
+			tier: 3,
+		});
+	}
+}
+
+function pendingTrophiesToDb() {
+	const userIds = (
+		sql
+			.prepare(
+				`select "id" from "User" where id != ${ADMIN_ID} order by random() limit 10`,
+			)
+			.all() as any[]
+	).map((u) => u.id) as number[];
+
+	const orgIds = (
+		sql
+			.prepare(`select "id" from "TournamentOrganization" limit 5`)
+			.all() as any[]
+	).map((o) => o.id) as number[];
+
+	const trophyEntries = Object.entries(trophies);
+
+	const insertPendingStm = sql.prepare(
+		`insert into "PendingTrophy" ("name", "model", "description", "organizationId", "submitterUserId", "createdAt", "declineReason", "declinedAt", "declinedByUserId") values ($name, $model, $description, $organizationId, $submitterUserId, $createdAt, $declineReason, $declinedAt, $declinedByUserId)`,
+	);
+
+	const insertApprovalStm = sql.prepare(
+		`insert into "PendingTrophyApproval" ("pendingTrophyId", "userId", "createdAt") values ($pendingTrophyId, $userId, $createdAt)`,
+	);
+
+	const now = Math.floor(Date.now() / 1000);
+
+	// 5 pending
+	for (let i = 0; i < 5; i++) {
+		const [trophyName, model] = trophyEntries[i % trophyEntries.length];
+		insertPendingStm.run({
+			name: `Pending ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - i * 3600,
+			declineReason: null,
+			declinedAt: null,
+			declinedByUserId: null,
+		});
+	}
+
+	// 2 with one approval
+	for (let i = 0; i < 2; i++) {
+		const [trophyName, model] = trophyEntries[(i + 5) % trophyEntries.length];
+		const { lastInsertRowid } = insertPendingStm.run({
+			name: `Partial ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - (i + 5) * 3600,
+			declineReason: null,
+			declinedAt: null,
+			declinedByUserId: null,
+		});
+
+		insertApprovalStm.run({
+			pendingTrophyId: Number(lastInsertRowid),
+			userId: ADMIN_ID,
+			createdAt: now - i * 1800,
+		});
+	}
+
+	// 3 fully approved
+	for (let i = 0; i < 3; i++) {
+		const [trophyName, model] = trophyEntries[(i + 7) % trophyEntries.length];
+		const { lastInsertRowid } = insertPendingStm.run({
+			name: `Accepted ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - (i + 7) * 3600,
+			declineReason: null,
+			declinedAt: null,
+			declinedByUserId: null,
+		});
+
+		insertApprovalStm.run({
+			pendingTrophyId: Number(lastInsertRowid),
+			userId: ADMIN_ID,
+			createdAt: now - (i + 1) * 1800,
+		});
+		insertApprovalStm.run({
+			pendingTrophyId: Number(lastInsertRowid),
+			userId: NZAP_TEST_ID,
+			createdAt: now - i * 1800,
+		});
+	}
+
+	// 3 declined
+	for (let i = 0; i < 3; i++) {
+		const [trophyName, model] = trophyEntries[(i + 10) % trophyEntries.length];
+		insertPendingStm.run({
+			name: `Declined ${trophyName} ${i + 1}`,
+			model,
+			description: faker.lorem.sentence(),
+			organizationId: faker.helpers.arrayElement(orgIds),
+			submitterUserId: faker.helpers.arrayElement(userIds),
+			createdAt: now - (i + 10) * 3600,
+			declineReason: faker.lorem.sentence(),
+			declinedAt: now - i * 1800,
+			declinedByUserId: ADMIN_ID,
+		});
+	}
+}
+
+function assignTrophyToTournament() {
+	const PICNIC_EVENT_ID = 201;
+	sql
+		.prepare(`delete from "CalendarEventBadge" where "eventId" = ?`)
+		.run(PICNIC_EVENT_ID);
+	sql
+		.prepare(`update "CalendarEvent" set "trophyId" = 1 where "id" = ?`)
+		.run(PICNIC_EVENT_ID);
+}
+
+async function specialTrophies() {
+	const models = Object.values(trophies);
+
+	const insertSpecialTrophyStm = sql.prepare(
+		`insert into "Trophy" ("name", "model", "code", "organizationId", "creatorId", "managerId") values ($name, $model, $code, null, null, null)`,
+	);
+
+	insertSpecialTrophyStm.run({
+		name: "Supporter",
+		model: models[0 % models.length],
+		code: SUPPORTER_TROPHY_CODE,
+	});
+	insertSpecialTrophyStm.run({
+		name: "3000 X Power",
+		model: models[1 % models.length],
+		code: `${XP_TROPHY_CODE_PREFIX}3000`,
+	});
+	insertSpecialTrophyStm.run({
+		name: "2600 X Power",
+		model: models[2 % models.length],
+		code: `${XP_TROPHY_CODE_PREFIX}2600`,
+	});
+
+	await TrophyRepository.syncSpecialTrophies();
+}
+
 function patrons() {
 	const userIds = (
 		sql
@@ -1518,6 +2071,14 @@ function calendarEventWithToTools(
 		DEPTHS: [9, 10],
 		LUTI: [],
 	}[event];
+	const tier = {
+		PICNIC: null,
+		ITZ: null,
+		PP: null,
+		SOS: null,
+		DEPTHS: null,
+		LUTI: null,
+	}[event];
 
 	const settings: Tables["Tournament"]["settings"] =
 		event === "DEPTHS"
@@ -1668,11 +2229,13 @@ function calendarEventWithToTools(
       insert into "Tournament" (
         "id",
         "mapPickingStyle",
-        "settings"
+        "settings",
+        "tier"
       ) values (
         $id,
         $mapPickingStyle,
-        $settings
+        $settings,
+        $tier
       ) returning *
       `,
 		)
@@ -1685,6 +2248,7 @@ function calendarEventWithToTools(
 					: event === "ITZ"
 						? "AUTO_SZ"
 						: "AUTO_ALL",
+			tier,
 		});
 
 	sql
@@ -2510,7 +3074,7 @@ const addPlacementStm = sql.prepare(/* sql */ `
   )
 `);
 
-function xRankPlacements() {
+async function xRankPlacements() {
 	sql.transaction(() => {
 		for (const [i, placement] of placements.entries()) {
 			const userId = () => {
@@ -2528,6 +3092,8 @@ function xRankPlacements() {
 			addPlacementStm.run(placement);
 		}
 	})();
+
+	await XRankPlacementRepository.refreshAllPeakXp();
 }
 
 const addArtStm = sql.prepare(/* sql */ `

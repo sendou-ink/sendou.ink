@@ -1,0 +1,64 @@
+.mainContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.badgesLink {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+}
+
+.trophiesListContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.trophyDetailsContainer {
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	overflow: clip;
+}
+
+@container (width < 560px) {
+	.trophyDetails {
+		height: 512px;
+	}
+}
+
+.divider {
+	margin-top: var(--s-1);
+}
+
+.trophyName {
+	font-weight: var(--weight-bold);
+	font-size: var(--font-lg);
+}
+
+.trophyMeta {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.owners {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 0;
+	font-size: var(--font-xs);
+	gap: var(--s-2);
+
+	& > li {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+		list-style: none;
+		border-right: var(--border-style);
+		padding-right: var(--s-2);
+	}
+}
+
+.ownerCount {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}

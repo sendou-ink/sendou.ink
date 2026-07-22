@@ -5,6 +5,8 @@ export const ADMIN_ID = process.env.NODE_ENV === "test" ? 1 : 274;
 export const STAFF_IDS = [11329, 9719, 9342, 20774, 23094];
 //                      hfcRed
 export const DEV_IDS = [27883];
+//                               hfcRed Dreamy Cafy
+export const QA_IDS: number[] = [27883, 38781, 10654];
 
 export const STAFF_DISCORD_IDS = [
 	"138757634500067328",
