@@ -3,6 +3,7 @@ import { Ban } from "lucide-react";
 import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { TierPill } from "~/components/TierPill";
+import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { decompressTrophyModel } from "../trophies-utils";
 import style from "./Trophy.module.css";
 
@@ -121,7 +122,10 @@ export function Trophy({
 			return;
 		}
 
-		if (preview) {
+		// e2e runs render with software WebGL where continuous render loops
+		// starve the main thread and stall tests, so
+		// trophies draw a single static frame there
+		if (preview || IS_E2E_TEST_RUN) {
 			viewer.draw();
 			viewer.dispose();
 			return;
