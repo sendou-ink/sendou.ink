@@ -142,20 +142,20 @@ export class RoundRobinBracket extends Bracket {
 
 			const updateTeam = ({
 				teamId,
-				setWins,
-				setLosses,
-				mapWins,
-				mapLosses,
-				points,
-				koCount,
+				setWins = 0,
+				setLosses = 0,
+				mapWins = 0,
+				mapLosses = 0,
+				points = 0,
+				koCount = 0,
 			}: {
 				teamId: number;
-				setWins: number;
-				setLosses: number;
-				mapWins: number;
-				mapLosses: number;
-				points: number;
-				koCount: number;
+				setWins?: number;
+				setLosses?: number;
+				mapWins?: number;
+				mapLosses?: number;
+				points?: number;
+				koCount?: number;
 			}) => {
 				const team = teams.find((team) => team.id === teamId);
 				if (team) {
@@ -184,6 +184,12 @@ export class RoundRobinBracket extends Bracket {
 					match.opponent1?.result !== "win" &&
 					match.opponent2?.result !== "win"
 				) {
+					if (match.opponent1?.id) {
+						updateTeam({ teamId: match.opponent1.id });
+					}
+					if (match.opponent2?.id) {
+						updateTeam({ teamId: match.opponent2.id });
+					}
 					continue;
 				}
 

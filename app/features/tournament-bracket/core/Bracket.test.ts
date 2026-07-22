@@ -149,14 +149,15 @@ describe("swiss standings - losses against tied", () => {
 		expect(teamWithBye?.stats?.setLosses).toBe(0);
 	});
 
-	it("team with only unfinished matches should not be in the current standings", () => {
+	it("team with only unfinished matches should be sorted in seed order", () => {
 		const tournament = inProgressSwissTestTournament();
 
 		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
 
 		const playingTeam = standings.find((standing) => standing.team.id === 1);
 
-		expect(playingTeam).toBe(undefined);
+		// BYE is placement 1 because the bracket has started, so seed 1 is at placement 2
+		expect(playingTeam?.placement).toBe(2);
 	});
 });
 
