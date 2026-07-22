@@ -342,7 +342,7 @@ function createDoubleEliminationData(): TournamentManagerDataSet {
 				number: 1,
 				type: "double_elimination",
 				tournament_id: 1,
-				settings: { size: 4, grandFinal: "double" },
+				settings: { size: 4 },
 			},
 		],
 		group: [

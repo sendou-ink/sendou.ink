@@ -23,7 +23,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				name: "Beta Bracket",
 				number: 2,
 				settings: {
-					grandFinal: "double",
 					size: 16,
 					seedOrdering: [
 						"space_between",
@@ -41,7 +40,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				name: "Alpha Bracket",
 				number: 3,
 				settings: {
-					grandFinal: "double",
 					size: 16,
 					seedOrdering: [
 						"space_between",
@@ -59,7 +57,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				name: "Gamma Bracket",
 				number: 4,
 				settings: {
-					grandFinal: "double",
 					size: 16,
 					seedOrdering: [
 						"space_between",

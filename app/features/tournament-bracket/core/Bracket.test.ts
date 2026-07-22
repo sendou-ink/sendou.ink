@@ -717,7 +717,7 @@ describe("double elimination standings - projected ties", () => {
 			tournamentId: 1,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: { grandFinal: "double", seedOrdering: ["natural"] },
+			settings: { seedOrdering: ["natural"] },
 		});
 
 		const groupId = (number: number) =>

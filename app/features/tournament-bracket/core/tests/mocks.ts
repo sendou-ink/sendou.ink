@@ -14213,7 +14213,6 @@ export const IN_THE_ZONE_32 = ({
 					name: "Main bracket",
 					number: 1,
 					settings: {
-						grandFinal: "double",
 						size: 32,
 						seedOrdering: [
 							"space_between",

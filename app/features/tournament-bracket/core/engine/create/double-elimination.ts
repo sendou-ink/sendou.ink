@@ -6,8 +6,8 @@ import { ordering } from "./seeding";
 /**
  * Creates a double elimination stage.
  *
- * One upper bracket (winner bracket, WB), one lower bracket (loser bracket, LB) and optionally a grand final
- * between the winner of both bracket, which can be simple or double.
+ * One upper bracket (winner bracket, WB), one lower bracket (loser bracket, LB) and a double grand final
+ * between the winner of both brackets.
  */
 export function createDoubleElimination(creator: StageCreator): void {
 	if (
@@ -71,7 +71,7 @@ function createWithoutSkipFirstRound(
 }
 
 /**
- * Creates a grand final (none, simple or double) for winners of both bracket in a double elimination stage.
+ * Creates a double grand final for winners of both brackets in a double elimination stage.
  */
 function createGrandFinal(
 	creator: StageCreator,
@@ -79,15 +79,10 @@ function createGrandFinal(
 	winnerWb: ParticipantSlot,
 	winnerLb: ParticipantSlot,
 ): void {
-	// No Grand Final by default.
-	const grandFinal = creator.settings.grandFinal;
-	if (grandFinal === "none") return;
-
-	// One duel by default.
-	const finalDuels: Duel[] = [[winnerWb, winnerLb]];
-
-	// Second duel.
-	if (grandFinal === "double") finalDuels.push([{ id: null }, { id: null }]);
+	const finalDuels: Duel[] = [
+		[winnerWb, winnerLb],
+		[{ id: null }, { id: null }],
+	];
 
 	creator.createUniqueMatchBracket(stageId, 3, finalDuels);
 }

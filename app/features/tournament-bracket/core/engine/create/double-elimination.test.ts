@@ -14,7 +14,7 @@ describe("Create double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-			settings: { seedOrdering: ["natural"], grandFinal: "simple" },
+			settings: { seedOrdering: ["natural"] },
 		});
 
 		const stage = bracket.stage();
@@ -22,8 +22,8 @@ describe("Create double elimination stage", () => {
 		expect(stage.type).toBe("double_elimination");
 
 		expect(bracket.groups().length).toBe(3);
-		expect(bracket.rounds().length).toBe(4 + 6 + 1);
-		expect(bracket.matches().length).toBe(30);
+		expect(bracket.rounds().length).toBe(4 + 6 + 2);
+		expect(bracket.matches().length).toBe(31);
 	});
 
 	test("should create a tournament with 256+ tournaments", () => {
@@ -41,7 +41,7 @@ describe("Create double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: { grandFinal: "double", seedOrdering: ["natural"] },
+			settings: { seedOrdering: ["natural"] },
 		});
 
 		expect(bracket.groups().length).toBe(3);

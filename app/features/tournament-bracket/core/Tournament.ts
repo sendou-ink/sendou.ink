@@ -533,6 +533,7 @@ export class Tournament {
 		);
 	}
 
+	// xxx: could all of this be internal to Engine (except user input)
 	/** Provides settings for the brackets-manager module with our selected defaults */
 	bracketManagerSettings(
 		selectedSettings: TournamentStageSettings | null,
@@ -552,9 +553,7 @@ export class Tournament {
 				};
 			}
 			case "double_elimination": {
-				return {
-					grandFinal: "double",
-				};
+				return {};
 			}
 			case "round_robin": {
 				const teamsPerGroup =

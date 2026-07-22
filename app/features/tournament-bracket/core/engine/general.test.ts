@@ -15,7 +15,7 @@ describe("BYE handling", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, null, null, null],
-			settings: { seedOrdering: ["natural"], grandFinal: "simple" },
+			settings: { seedOrdering: ["natural"] },
 		});
 
 		expect(bracket.match(2).opponent1?.id).toBe(1);
@@ -82,7 +82,6 @@ describe("Position checks", () => {
 			type: "double_elimination",
 			settings: {
 				size: 8,
-				grandFinal: "simple",
 				seedOrdering: ["natural"],
 			},
 		});

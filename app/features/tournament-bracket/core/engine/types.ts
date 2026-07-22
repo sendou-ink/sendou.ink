@@ -21,9 +21,6 @@ export type GroupType =
 	| "loser_bracket"
 	| "final_group";
 
-// xxx: just simplify since we dont expose the option?
-export type GrandFinalType = "none" | "simple" | "double";
-
 // xxx: what can we delete here?
 export type SeedOrdering =
 	| "natural"
@@ -110,10 +107,6 @@ export interface StageSettings {
 	/** Whether to skip the first round of the WB of a double elimination stage. */
 	// xxx: delete?
 	skipFirstRound?: boolean;
-
-	/** Optional grand final between WB and LB winners. */
-	// xxx: delete?
-	grandFinal?: GrandFinalType;
 
 	// xxx: just have roundCount and use groupCount from RR?
 	swiss?: {

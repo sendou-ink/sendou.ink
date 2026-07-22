@@ -15,7 +15,7 @@ describe("Previous and next match update in double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-			settings: { seedOrdering: ["natural"], grandFinal: "simple" },
+			settings: { seedOrdering: ["natural"] },
 		});
 
 		const before = bracket.match(8); // First match of WB round 2
@@ -62,7 +62,7 @@ describe("Previous and next match update in double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, null],
-			settings: { grandFinal: "simple" },
+			settings: {},
 		});
 
 		bracket.updateMatch({
@@ -98,7 +98,7 @@ describe("Previous and next match update in double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
-			settings: { grandFinal: "double" },
+			settings: {},
 		});
 
 		bracket.updateMatch({
@@ -165,7 +165,7 @@ describe("Previous and next match update in double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
-			settings: { grandFinal: "double" },
+			settings: {},
 		});
 
 		bracket.updateMatch({
@@ -193,7 +193,6 @@ describe("Previous and next match update in double elimination stage", () => {
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 			settings: {
 				seedOrdering: ["natural", "reverse", "reverse"],
-				grandFinal: "simple",
 			},
 		});
 
@@ -283,7 +282,6 @@ describe("Skip first round", () => {
 			settings: {
 				seedOrdering: ["natural"],
 				skipFirstRound: true,
-				grandFinal: "double",
 			},
 		});
 	});

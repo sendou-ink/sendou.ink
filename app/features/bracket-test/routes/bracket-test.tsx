@@ -299,7 +299,7 @@ function generateBracketData(
 		format === "single_elimination"
 			? { consolationFinal: false }
 			: format === "double_elimination"
-				? { grandFinal: "double" as const }
+				? {}
 				: {
 						groupCount: Math.ceil(teamIds.length / 4),
 						seedOrdering: ["groups.seed_optimized" as const],

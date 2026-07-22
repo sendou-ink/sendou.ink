@@ -43,9 +43,6 @@ export class StageCreator {
 
 		if (input.type === "single_elimination")
 			this.settings.consolationFinal = this.settings.consolationFinal || false;
-
-		if (input.type === "double_elimination")
-			this.settings.grandFinal = this.settings.grandFinal || "none";
 	}
 
 	insertGroup(group: Omit<GroupData, "id">): number {
