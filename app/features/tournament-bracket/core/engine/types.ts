@@ -104,10 +104,6 @@ export interface StageSettings {
 	/** Optional final between semi-final losers. */
 	consolationFinal?: boolean;
 
-	/** Whether to skip the first round of the WB of a double elimination stage. */
-	// xxx: delete?
-	skipFirstRound?: boolean;
-
 	// xxx: just have roundCount and use groupCount from RR?
 	swiss?: {
 		groupCount: number;
@@ -206,12 +202,6 @@ export type Duel = [ParticipantSlot, ParticipantSlot];
 
 /** The side of an opponent. */
 export type Side = "opponent1" | "opponent2";
-
-/** The result of an array which was split by parity. */
-export interface ParitySplit<T> {
-	even: T[];
-	odd: T[];
-}
 
 /** Type of an object implementing every ordering method. */
 export type OrderingMap = Record<

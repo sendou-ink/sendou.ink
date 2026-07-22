@@ -5,7 +5,6 @@ import type {
 	GroupType,
 	MatchData,
 	MatchResults,
-	ParitySplit,
 	ParticipantResult,
 	ParticipantSlot,
 	Result,
@@ -16,18 +15,6 @@ import type {
 	StageType,
 } from "./types";
 import { MatchStatus } from "./types";
-
-/**
- * Splits an array in two parts: one with even indices and the other with odd indices.
- *
- * @param array The array to split.
- */
-export function splitByParity<T>(array: T[]): ParitySplit<T> {
-	return {
-		even: array.filter((_, i) => i % 2 === 0),
-		odd: array.filter((_, i) => i % 2 === 1),
-	};
-}
 
 /**
  * Makes a list of rounds containing the matches of a round-robin group.

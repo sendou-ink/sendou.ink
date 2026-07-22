@@ -174,17 +174,13 @@ export class Propagator {
 		}
 
 		const winnerSide = helpers.getMatchResult(match);
-		const actualRoundNumber =
-			stage.settings.skipFirstRound && matchLocation === "winner_bracket"
-				? roundNumber + 1
-				: roundNumber;
 
 		if (winnerSide)
 			this.applyToNextMatches(
 				helpers.setNextOpponent,
 				match,
 				matchLocation,
-				actualRoundNumber,
+				roundNumber,
 				roundCount,
 				nextMatches,
 				winnerSide,
@@ -194,7 +190,7 @@ export class Propagator {
 				helpers.resetNextOpponent,
 				match,
 				matchLocation,
-				actualRoundNumber,
+				roundNumber,
 				roundCount,
 				nextMatches,
 			);
@@ -392,7 +388,7 @@ export class Propagator {
 		roundNumber: number,
 	): MatchData[] {
 		if (matchLocation === "loser_bracket")
-			return this.getPreviousMatchesLB(match, stage, roundNumber);
+			return this.getPreviousMatchesLB(match, roundNumber);
 
 		if (matchLocation === "final_group")
 			return this.getPreviousMatchesFinal(match, stage, roundNumber);
@@ -492,24 +488,16 @@ export class Propagator {
 	 * Gets the matches leading to a given match from the loser bracket.
 	 *
 	 * @param match The current match.
-	 * @param stage The parent stage.
 	 * @param roundNumber Number of the round.
 	 */
 	private getPreviousMatchesLB(
 		match: MatchData,
-		stage: StageData,
 		roundNumber: number,
 	): MatchData[] {
-		if (stage.settings.skipFirstRound && roundNumber === 1) return [];
-
 		if (helpers.hasBye(match)) return []; // Shortcut because we are coming from propagateByes().
 
 		const winnerBracket = this.getUpperBracket(match.stage_id);
-		const actualRoundNumberWB = Math.ceil((roundNumber + 1) / 2);
-
-		const roundNumberWB = stage.settings.skipFirstRound
-			? actualRoundNumberWB - 1
-			: actualRoundNumberWB;
+		const roundNumberWB = Math.ceil((roundNumber + 1) / 2);
 
 		if (roundNumber === 1)
 			return this.getMatchesBeforeFirstRoundLB(
@@ -652,11 +640,7 @@ export class Propagator {
 			// Only one match in the stage, there is no loser bracket.
 			return [];
 
-		const actualRoundNumber = stage.settings.skipFirstRound
-			? roundNumber + 1
-			: roundNumber;
-		const roundNumberLB =
-			actualRoundNumber > 1 ? (actualRoundNumber - 1) * 2 : 1;
+		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
 
 		const participantCount = stage.settings.size!;
 		const method = helpers.getLoserOrdering(
