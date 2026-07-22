@@ -33,6 +33,30 @@ describe("extractYoutubeIdFromVideoUrl", () => {
 		expect(result).toBe("dQw4w9WgXcQ");
 	});
 
+	it("should strip share tracking params from a shortened YouTube URL", () => {
+		const url = "https://youtu.be/fuj_pSAbU-A?si=mAzDxgrIJWLO1ykq";
+		const result = extractYoutubeIdFromVideoUrl(url);
+		expect(result).toBe("fuj_pSAbU-A");
+	});
+
+	it("should strip extra query params from a standard YouTube URL", () => {
+		const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120";
+		const result = extractYoutubeIdFromVideoUrl(url);
+		expect(result).toBe("dQw4w9WgXcQ");
+	});
+
+	it("should strip query params from a YouTube live URL", () => {
+		const url = "https://www.youtube.com/live/dQw4w9WgXcQ?feature=shared";
+		const result = extractYoutubeIdFromVideoUrl(url);
+		expect(result).toBe("dQw4w9WgXcQ");
+	});
+
+	it("should strip url fragments", () => {
+		const url = "https://youtu.be/dQw4w9WgXcQ#t=1m";
+		const result = extractYoutubeIdFromVideoUrl(url);
+		expect(result).toBe("dQw4w9WgXcQ");
+	});
+
 	it("should return null for an invalid YouTube URL", () => {
 		const url = "https://www.example.com/watch?v=dQw4w9WgXcQ";
 		const result = extractYoutubeIdFromVideoUrl(url);
