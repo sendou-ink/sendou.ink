@@ -14,7 +14,12 @@ import type {
 	StandardBracketResults,
 } from "../types";
 import { MatchStatus } from "../types";
-import { balanceByes, defaultMinorOrdering, ordering } from "./seeding";
+import {
+	balanceByes,
+	defaultMinorOrdering,
+	ordering,
+	padSeedingToPowerOfTwo,
+} from "./seeding";
 
 /**
  * Accumulates the rows of a stage being created. Pure port of the old
@@ -32,7 +37,11 @@ export class StageCreator {
 	constructor(input: CreateBracketInput) {
 		this.input = input;
 		this.settings = structuredClone(input.settings) ?? {};
-		this.seeding = input.seeding ? [...input.seeding] : undefined;
+		const seeding = input.seeding ? [...input.seeding] : undefined;
+		this.seeding =
+			seeding && input.type !== "round_robin"
+				? padSeedingToPowerOfTwo(seeding)
+				: seeding;
 		this.seedOrdering = this.settings.seedOrdering || [];
 		this.data = { stage: [], group: [], round: [], match: [] };
 

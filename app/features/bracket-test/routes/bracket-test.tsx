@@ -9,7 +9,6 @@ import type { Tables } from "~/db/tables";
 import type { Bracket as BracketType } from "~/features/tournament-bracket/core/Bracket";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
-import { fillWithNullTillPowerOfTwo } from "~/features/tournament-bracket/tournament-bracket-utils";
 import styles from "../bracket-test.module.css";
 
 type FormatType = Tables["TournamentStage"]["type"];
@@ -292,9 +291,6 @@ function generateBracketData(
 		});
 	}
 
-	const seeding =
-		format === "round_robin" ? teamIds : fillWithNullTillPowerOfTwo(teamIds);
-
 	const settings =
 		format === "single_elimination"
 			? { consolationFinal: false }
@@ -309,7 +305,7 @@ function generateBracketData(
 		tournamentId: 1,
 		name: "Test Bracket",
 		type: format,
-		seeding,
+		seeding: teamIds,
 		settings,
 	});
 }

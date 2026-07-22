@@ -176,6 +176,15 @@ export function balanceByes(
 }
 
 /**
+ * Pads the seeding with BYEs (`null`) until its length is a power of two.
+ *
+ * @param seeding The seeding of the stage.
+ */
+export function padSeedingToPowerOfTwo(seeding: Seeding): Seeding {
+	return setArraySize(seeding, getNearestPowerOfTwo(seeding.length), null);
+}
+
+/**
  * Sets the size of an array with a placeholder if the size is bigger.
  *
  * @param array The original array.

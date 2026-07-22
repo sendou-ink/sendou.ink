@@ -141,18 +141,20 @@ describe("Special cases", () => {
 		).toThrow("You must provide a tournament id for the stage.");
 	});
 
-	test("should throw if the participant count of a stage is not a power of two", () => {
-		expect(() =>
-			bracket.create({
-				name: "Example",
-				tournamentId: 0,
-				type: "single_elimination",
-				seeding: [1, 2, 3, 4, 5, 6, 7],
-			}),
-		).toThrow(
-			"The library only supports a participant count which is a power of two.",
-		);
+	test("should pad the seeding with BYEs to the next power of two", () => {
+		bracket.create({
+			name: "Example",
+			tournamentId: 0,
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7],
+			settings: { seedOrdering: ["natural"] },
+		});
 
+		expect(bracket.match(3).opponent1?.id).toBe(7);
+		expect(bracket.match(3).opponent2).toBe(null);
+	});
+
+	test("should throw if the size of a stage is not a power of two", () => {
 		expect(() =>
 			bracket.create({
 				name: "Example",

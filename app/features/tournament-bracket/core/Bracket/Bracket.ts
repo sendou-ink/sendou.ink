@@ -8,7 +8,6 @@ import type {
 } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { fillWithNullTillPowerOfTwo } from "../../tournament-bracket-utils";
 import * as AbDivisions from "../AbDivisions";
 import * as Engine from "../engine";
 import * as Progression from "../Progression";
@@ -308,10 +307,7 @@ export abstract class Bracket {
 				tournamentId: virtualTournamentId,
 				name: "Virtual",
 				type: this.type,
-				seeding:
-					this.type === "round_robin"
-						? teams
-						: fillWithNullTillPowerOfTwo(teams),
+				seeding: teams,
 				settings: abDivisions
 					? settings
 					: {

@@ -33,10 +33,7 @@ import {
 	tournamentFromDB,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas.server";
-import {
-	fillWithNullTillPowerOfTwo,
-	tournamentWebsocketRoom,
-} from "../tournament-bracket-utils";
+import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = requireUser();
@@ -109,11 +106,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				// xxx: will we really need name?
 				name: bracket.name,
 				type: bracket.type,
-				// xxx: this could be implementation detail
-				seeding:
-					bracket.type === "round_robin" || bracket.type === "swiss"
-						? seeding
-						: fillWithNullTillPowerOfTwo(seeding),
+				seeding,
 				settings,
 				abDivisions,
 			});

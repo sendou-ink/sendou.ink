@@ -29,10 +29,7 @@ import {
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import {
-	fillWithNullTillPowerOfTwo,
-	groupNumberToLetters,
-} from "../tournament-bracket-utils";
+import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
 import * as Engine from "./engine";
 import { getRounds } from "./rounds";
@@ -396,7 +393,7 @@ export class Tournament {
 					TournamentStage["type"],
 					"round_robin" | "swiss"
 				>,
-				seeding: fillWithNullTillPowerOfTwo(candidateTeams),
+				seeding: candidateTeams,
 				settings: this.bracketManagerSettings(
 					settings,
 					bracket.type,
