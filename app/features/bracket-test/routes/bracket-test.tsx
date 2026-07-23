@@ -7,10 +7,8 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
 import type { Bracket as BracketType } from "~/features/tournament-bracket/core/Bracket";
-import { getTournamentManager } from "~/features/tournament-bracket/core/brackets-manager";
-import * as Swiss from "~/features/tournament-bracket/core/Swiss";
-import { fillWithNullTillPowerOfTwo } from "~/features/tournament-bracket/tournament-bracket-utils";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import * as Engine from "~/features/tournament-bracket/core/engine";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import styles from "../bracket-test.module.css";
 
 type FormatType = Tables["TournamentStage"]["type"];
@@ -282,37 +280,27 @@ function generateBracketData(
 	teamIds: number[],
 ): TournamentManagerDataSet {
 	if (format === "swiss") {
-		return Swiss.create({
+		return Engine.create({
 			tournamentId: 1,
 			name: "Test Bracket",
+			type: "swiss",
 			seeding: teamIds,
-			settings: {
-				swiss: { groupCount: 1, roundCount: 5 },
-			},
+			settings: { groupCount: 1, roundCount: 5 },
 		});
 	}
 
-	const manager = getTournamentManager();
-	const seeding =
-		format === "round_robin" ? teamIds : fillWithNullTillPowerOfTwo(teamIds);
-
 	const settings =
 		format === "single_elimination"
-			? { consolationFinal: false }
+			? { thirdPlaceMatch: false }
 			: format === "double_elimination"
-				? { grandFinal: "double" as const }
-				: {
-						groupCount: Math.ceil(teamIds.length / 4),
-						seedOrdering: ["groups.seed_optimized" as const],
-					};
+				? null
+				: { teamsPerGroup: 4 };
 
-	manager.create({
+	return Engine.create({
 		tournamentId: 1,
 		name: "Test Bracket",
 		type: format,
-		seeding,
+		seeding: teamIds,
 		settings,
 	});
-
-	return manager.get.tournamentData(1);
 }

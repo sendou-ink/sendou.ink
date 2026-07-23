@@ -2,19 +2,15 @@ import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { cutToNDecimalPlaces } from "../../../../utils/number";
-import { calculateTeamStatus } from "../Swiss";
+import { calculateTeamStatus } from "../engine/swiss/team-status";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing, type TeamTrackRecord } from "./Bracket";
 
 export class SwissBracket extends Bracket {
-	get collectResultsWithPoints() {
-		return false;
-	}
-
 	source({
 		placements,
 		advanceThreshold,
@@ -438,7 +434,6 @@ export class SwissBracket extends Bracket {
 								opponentMapWinPercentage: this.trackRecordToWinPercentage(
 									team.opponentMaps,
 								),
-								points: 0,
 							},
 						};
 					}),

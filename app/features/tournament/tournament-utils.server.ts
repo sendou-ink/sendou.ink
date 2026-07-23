@@ -1,5 +1,5 @@
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import type { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { logger } from "~/utils/logger";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
@@ -69,68 +69,36 @@ export async function requireSendouQParticipationIfNeeded({
 
 /**
  * Ends all unfinished matches involving dropped teams by awarding wins to their opponents.
- * If both teams in a match have dropped, a random winner is selected.
+ * If both teams in a match have dropped, a random winner is selected. Pure over the given
+ * bracket data — the caller persists the returned changedMatches.
  *
  * @param tournament - The tournament instance
- * @param manager - The bracket manager instance used to update matches
+ * @param data - The bracket data to end matches in (fresh rows or the previous engine result)
  * @param droppedTeamId - Optional team ID to filter matches for a specific dropped team.
  *                        If omitted, processes all matches with any dropped team.
  */
 export function endDroppedTeamMatches({
 	tournament,
-	manager,
+	data,
 	droppedTeamId,
 }: {
 	tournament: Tournament;
-	manager: ReturnType<typeof getServerTournamentManager>;
+	data: Engine.BracketData;
 	droppedTeamId?: number;
 }) {
-	const stageData = manager.get.tournamentData(tournament.ctx.id);
+	const droppedTeamIds = tournament.ctx.teams
+		.filter((team) => team.droppedOut)
+		.map((team) => team.id);
+	if (typeof droppedTeamId === "number") droppedTeamIds.push(droppedTeamId);
 
-	const endedMatchIds: number[] = [];
+	const result = Engine.endDroppedTeamMatches(data, droppedTeamIds);
 
-	for (const match of stageData.match) {
-		if (!match.opponent1?.id || !match.opponent2?.id) continue;
-		if (match.opponent1.result === "win" || match.opponent2.result === "win")
-			continue;
-
-		const team1 = tournament.teamById(match.opponent1.id);
-		const team2 = tournament.teamById(match.opponent2.id);
-
-		const team1Dropped =
-			team1?.droppedOut || match.opponent1.id === droppedTeamId;
-		const team2Dropped =
-			team2?.droppedOut || match.opponent2.id === droppedTeamId;
-
-		if (!team1Dropped && !team2Dropped) continue;
-
-		const winnerTeamId = (() => {
-			if (team1Dropped && !team2Dropped) return match.opponent2.id;
-			if (!team1Dropped && team2Dropped) return match.opponent1.id;
-			return Math.random() < 0.5 ? match.opponent1.id : match.opponent2.id;
-		})();
-
+	// xxx: maybe move to caller? or repository function
+	for (const matchId of result.endedMatchIds) {
 		logger.info(
-			`Ending match with dropped team: Match ID: ${match.id}; Team1 dropped: ${team1Dropped}; Team2 dropped: ${team2Dropped}; Winner: ${winnerTeamId}`,
+			`Ending match with dropped team: Match ID: ${matchId}; Dropped team ids: ${droppedTeamIds.join(", ")}`,
 		);
-
-		manager.update.match(
-			{
-				id: match.id,
-				opponent1: {
-					score: match.opponent1.score,
-					result: winnerTeamId === match.opponent1.id ? "win" : "loss",
-				},
-				opponent2: {
-					score: match.opponent2.score,
-					result: winnerTeamId === match.opponent2.id ? "win" : "loss",
-				},
-			},
-			true,
-		);
-
-		endedMatchIds.push(match.id);
 	}
 
-	return endedMatchIds;
+	return result;
 }

@@ -1,6 +1,6 @@
 import type { Pronouns } from "~/db/tables";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import type { DataTypes, ValueToArray } from "~/modules/brackets-manager/types";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 
 /** GET /api/user/{userId|discordId} */
 
@@ -368,7 +368,10 @@ export interface GetTournamentBracketStandingsResponse {
 			setLosses: number;
 			mapWins: number;
 			mapLosses: number;
-			points: number;
+			/** @deprecated points are no longer tracked, see koCount instead */
+			points?: number;
+			/** (round robin only) how many knockout wins the team has */
+			koCount?: number;
 			winsAgainstTied: number;
 			lossesAgainstTied?: number;
 			buchholzSets?: number;
@@ -537,7 +540,7 @@ type TournamentBracket = {
 	name: string;
 };
 
-type TournamentBracketData = ValueToArray<DataTypes>;
+type TournamentBracketData = TournamentManagerDataSet;
 
 /** POST /api/tournament/{id}/seeds */
 

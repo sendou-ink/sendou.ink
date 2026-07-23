@@ -13,10 +13,10 @@ import type { Notification as NotificationValue } from "~/features/notifications
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
+import type { ParticipantResult } from "~/features/tournament-bracket/core/engine/types";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
-import type { ParticipantResult } from "~/modules/brackets-model";
 import type {
 	Ability,
 	BuildAbilitiesTuple,

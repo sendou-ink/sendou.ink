@@ -13,9 +13,11 @@ import {
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
+import type {
+	Match,
+	TournamentManagerDataSet,
+} from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { Match, Stage } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
@@ -26,14 +28,10 @@ import {
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import {
-	fillWithNullTillPowerOfTwo,
-	groupNumberToLetters,
-} from "../tournament-bracket-utils";
+import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
-import { getTournamentManager } from "./brackets-manager";
+import * as Engine from "./engine";
 import { getRounds } from "./rounds";
-import * as Swiss from "./Swiss";
 import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
@@ -122,51 +120,6 @@ export class Tournament {
 							),
 						},
 						type,
-					}),
-				);
-			} else if (type === "swiss") {
-				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: this.resolveTeamsFromSignups(bracketIdx);
-
-				const { checkedInTeams, notCheckedInTeams } =
-					this.divideTeamsToCheckedInAndNotCheckedIn({
-						teams,
-						bracketIdx,
-						usesRegularCheckIn: !sources,
-						requiresCheckIn,
-					});
-
-				this.brackets.push(
-					createBracket({
-						id: -1 * bracketIdx,
-						idx: bracketIdx,
-						tournament: this,
-						seeding: checkedInTeams,
-						preview: true,
-						name,
-						requiresCheckIn,
-						startTime: startTime ? databaseTimestampToDate(startTime) : null,
-						settings: settings ?? null,
-						data: Swiss.create({
-							tournamentId: this.ctx.id,
-							name,
-							seeding: checkedInTeams,
-							settings: this.bracketManagerSettings(
-								settings,
-								type,
-								checkedInTeams.length,
-							),
-						}),
-						type,
-						sources,
-						createdAt: null,
-						canBeStarted:
-							(!startTime || startTime < databaseTimestampNow()) &&
-							checkedInTeams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START &&
-							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
-						teamsPendingCheckIn:
-							bracketIdx !== 0 ? notCheckedInTeams : undefined,
 					}),
 				);
 			} else {
@@ -385,23 +338,16 @@ export class Tournament {
 		);
 
 		const bracketReplays = (candidateTeams: number[]) => {
-			const manager = getTournamentManager();
-			manager.create({
+			const matches = Engine.create({
 				tournamentId: this.ctx.id,
 				name: "X",
 				type: bracket.type as Exclude<
 					TournamentStage["type"],
 					"round_robin" | "swiss"
 				>,
-				seeding: fillWithNullTillPowerOfTwo(candidateTeams),
-				settings: this.bracketManagerSettings(
-					settings,
-					bracket.type,
-					candidateTeams.length,
-				),
-			});
-
-			const matches = manager.get.tournamentData(this.ctx.id).match;
+				seeding: candidateTeams,
+				settings,
+			}).match;
 			const replays: [number, number][] = [];
 			for (const match of matches) {
 				if (!match.opponent1?.id || !match.opponent2?.id) continue;
@@ -530,61 +476,6 @@ export class Tournament {
 				notCheckedInTeams: number[];
 			},
 		);
-	}
-
-	/** Provides settings for the brackets-manager module with our selected defaults */
-	bracketManagerSettings(
-		selectedSettings: TournamentStageSettings | null,
-		type: Tables["TournamentStage"]["type"],
-		participantsCount: number,
-	): Stage["settings"] {
-		switch (type) {
-			case "single_elimination": {
-				if (participantsCount < 4) {
-					return { consolationFinal: false };
-				}
-
-				return {
-					consolationFinal:
-						selectedSettings?.thirdPlaceMatch ??
-						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
-				};
-			}
-			case "double_elimination": {
-				return {
-					grandFinal: "double",
-				};
-			}
-			case "round_robin": {
-				const teamsPerGroup =
-					selectedSettings?.teamsPerGroup ??
-					TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
-
-				return {
-					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: ["groups.seed_optimized"],
-					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
-					...(this.isLeagueDivision ? { independentRounds: true } : {}),
-				};
-			}
-			case "swiss": {
-				return {
-					swiss:
-						selectedSettings?.groupCount && selectedSettings.roundCount
-							? {
-									groupCount: selectedSettings.groupCount,
-									roundCount: selectedSettings.roundCount,
-								}
-							: {
-									groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
-									roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
-								},
-				};
-			}
-			default: {
-				assertUnreachable(type);
-			}
-		}
 	}
 
 	/** Is tournament ranked (affects SP/Skill). For tournament to be ranked the organizer needs to enable it and it needs to fit the conditions e.g. it needs to happen when a ranked season is active. */

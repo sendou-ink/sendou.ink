@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import type { Match } from "~/modules/brackets-model";
+import type { Match } from "~/features/tournament-bracket/core/engine/types";
 import { Tournament } from "./Tournament";
 import {
 	IN_THE_ZONE_32,

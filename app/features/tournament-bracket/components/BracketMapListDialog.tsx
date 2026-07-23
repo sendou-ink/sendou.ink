@@ -29,8 +29,8 @@ import {
 	useTournamentPreparedMaps,
 } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
@@ -40,6 +40,7 @@ import { calendarEditPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { logger } from "../../../utils/logger";
 import type { Bracket } from "../core/Bracket";
+import * as Engine from "../core/engine";
 import * as PreparedMaps from "../core/PreparedMaps";
 import { getRounds } from "../core/rounds";
 import type { Tournament } from "../core/Tournament";
@@ -99,11 +100,11 @@ export function BracketMapListDialog({
 	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
 		() => {
 			if (
-				!tournament.bracketManagerSettings(
-					bracket.settings,
-					bracket.type,
-					eliminationTeamCount ?? 2,
-				).consolationFinal
+				!Engine.hasThirdPlaceMatch({
+					type: bracket.type,
+					settings: bracket.settings,
+					participantsCount: eliminationTeamCount ?? 2,
+				})
 			) {
 				return true; // default to true if not applicable or elimination team count not yet set (initial state)
 			}

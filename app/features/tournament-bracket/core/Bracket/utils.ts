@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 
 /**
  * Maps each round_id to the cumulative number of teams eliminated by the end of

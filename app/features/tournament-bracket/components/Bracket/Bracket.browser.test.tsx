@@ -2,7 +2,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import styles from "~/features/tournament-bracket/components/Bracket/bracket.module.css";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { EliminationBracketSide } from "./Elimination";
 import { Bracket } from "./index";
@@ -117,7 +117,7 @@ function createSingleEliminationData(): TournamentManagerDataSet {
 				number: 1,
 				type: "single_elimination",
 				tournament_id: 1,
-				settings: { size: 8 },
+				settings: {},
 			},
 		],
 		group: [{ id: 1, number: 1, stage_id: 1 }],
@@ -228,7 +228,7 @@ function createByeHeavySingleEliminationData(): TournamentManagerDataSet {
 				number: 1,
 				type: "single_elimination",
 				tournament_id: 1,
-				settings: { size: 8 },
+				settings: {},
 			},
 		],
 		group: [{ id: 1, number: 1, stage_id: 1 }],
@@ -342,7 +342,7 @@ function createDoubleEliminationData(): TournamentManagerDataSet {
 				number: 1,
 				type: "double_elimination",
 				tournament_id: 1,
-				settings: { size: 4, grandFinal: "double" },
+				settings: {},
 			},
 		],
 		group: [
@@ -443,7 +443,7 @@ function createRoundRobinData(): TournamentManagerDataSet {
 				number: 1,
 				type: "round_robin",
 				tournament_id: 1,
-				settings: { groupCount: 2, roundRobinMode: "simple", size: 6 },
+				settings: { groupCount: 2 },
 			},
 		],
 		group: [
@@ -673,7 +673,7 @@ function createLargeSingleEliminationData(options?: {
 				number: 1,
 				type: "single_elimination",
 				tournament_id: 1,
-				settings: { size: 16 },
+				settings: {},
 			},
 		],
 		group: [{ id: 1, number: 1, stage_id: 1 }],

@@ -12,8 +12,8 @@ import {
 import { useUser } from "../../../auth/core/user";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket, Standing } from "../../core/Bracket";
+import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
-import * as Swiss from "../../core/Swiss";
 import styles from "./bracket.module.css";
 
 export function PlacementsTable({
@@ -60,7 +60,6 @@ export function PlacementsTable({
 				stats: {
 					mapLosses: 0,
 					mapWins: 0,
-					points: 0,
 					koCount: 0,
 					setLosses: 0,
 					setWins: 0,

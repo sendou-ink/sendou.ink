@@ -9,8 +9,8 @@ import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import { defaultBracketSettings } from "../../tournament/tournament-utils";
 import styles from "./BracketProgressionSelector.module.css";
 

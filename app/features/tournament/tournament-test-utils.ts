@@ -2,7 +2,8 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
-import { getServerTournamentManager } from "../tournament-bracket/core/brackets-manager/manager.server";
+import * as BracketRepository from "../tournament-bracket/BracketRepository.server";
+import * as Engine from "../tournament-bracket/core/engine";
 import { tournamentFromDB } from "../tournament-bracket/core/Tournament.server";
 import { updateRoundMaps } from "./queries/updateRoundMaps.server";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
@@ -99,8 +100,6 @@ export async function dbInsertTournamentTeam({
  * Assumes that the tournament has only one bracket and one round.
  */
 export async function dbStartTournament(seeding: number[], tournamentId = 1) {
-	const manager = getServerTournamentManager();
-
 	const tournament = await tournamentFromDB({
 		tournamentId,
 		user: undefined,
@@ -112,18 +111,15 @@ export async function dbStartTournament(seeding: number[], tournamentId = 1) {
 
 	const bracket = tournament.bracketByIdx(0)!;
 
-	const settings = tournament.bracketManagerSettings(
-		bracket.settings,
-		bracket.type,
-		seeding.length,
-	);
-
-	manager.create({
+	await BracketRepository.insertBracket({
 		tournamentId: tournament.ctx.id,
-		name: bracket.name,
-		type: bracket.type,
-		seeding,
-		settings,
+		bracket: Engine.create({
+			tournamentId: tournament.ctx.id,
+			name: bracket.name,
+			type: bracket.type,
+			seeding,
+			settings: bracket.settings,
+		}),
 	});
 
 	// assuming here every tournament has only one round

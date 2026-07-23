@@ -2,27 +2,22 @@ import { sub } from "date-fns";
 import { ServerConfig } from "~/config.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfFalsy } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
-import { getServerTournamentManager } from "./brackets-manager/manager.server";
 import { RunningTournaments } from "./RunningTournaments.server";
 import { Tournament } from "./Tournament";
-
-const manager = getServerTournamentManager();
-
-export const tournamentManagerData = (tournamentId: number) =>
-	manager.get.tournamentData(tournamentId);
 
 const combinedTournamentData = async (tournamentId: number) => {
 	const ctx = await TournamentRepository.findById(tournamentId);
 	if (!ctx) return null;
 
 	return {
-		data: tournamentManagerData(tournamentId),
+		data: await BracketRepository.findByTournamentId(tournamentId),
 		ctx,
 	};
 };

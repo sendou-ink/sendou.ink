@@ -2,13 +2,14 @@ import { sub } from "date-fns";
 import * as R from "remeda";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { Round } from "~/modules/brackets-model";
+import type {
+	Round,
+	TournamentManagerDataSet,
+} from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { fillWithNullTillPowerOfTwo } from "../../tournament-bracket-utils";
 import * as AbDivisions from "../AbDivisions";
-import { getTournamentManager } from "../brackets-manager";
+import * as Engine from "../engine";
 import * as Progression from "../Progression";
 import type { OptionalIdObject, Tournament } from "../Tournament";
 import type { TournamentDataTeam } from "../Tournament.server";
@@ -44,7 +45,6 @@ export interface Standing {
 		setLosses: number;
 		mapWins: number;
 		mapLosses: number;
-		points: number;
 		koCount?: number;
 		winsAgainstTied: number;
 		lossesAgainstTied?: number;
@@ -125,9 +125,7 @@ export abstract class Bracket {
 			return;
 
 		try {
-			const manager = getTournamentManager();
-
-			manager.importData(this.data);
+			let data = this.data as Engine.BracketData;
 
 			const teamOrder = this.teamOrderForSimulation();
 
@@ -141,7 +139,7 @@ export abstract class Bracket {
 				matchesToResolve = false;
 				loopCount++;
 
-				for (const match of manager.export().match) {
+				for (const match of data.match) {
 					if (!match) continue;
 					// we have a result already
 					if (
@@ -176,8 +174,8 @@ export abstract class Bracket {
 							? 1
 							: 2;
 
-					manager.update.match({
-						id: match.id,
+					data = Engine.reportResult(data, {
+						matchId: match.id,
 						opponent1: {
 							score: winner === 1 ? 1 : 0,
 							result: winner === 1 ? "win" : undefined,
@@ -186,11 +184,11 @@ export abstract class Bracket {
 							score: winner === 2 ? 1 : 0,
 							result: winner === 2 ? "win" : undefined,
 						},
-					});
+					}).data;
 				}
 			}
 
-			this.simulatedData = manager.export();
+			this.simulatedData = data;
 		} catch (e) {
 			logger.error("Bracket.createdSimulation: ", e);
 		}
@@ -243,7 +241,8 @@ export abstract class Bracket {
 			.find((match) => match.id === matchId);
 	}
 
-	get collectResultsWithPoints() {
+	/** Whether reporting a game in this bracket also records if the game was a KO win. */
+	get collectsKos() {
 		return false;
 	}
 
@@ -290,49 +289,41 @@ export abstract class Bracket {
 		});
 	}
 
-	generateMatchesData(teams: number[]) {
-		const manager = getTournamentManager();
-
+	generateMatchesData(teams: number[]): TournamentManagerDataSet {
 		const virtualTournamentId = 1;
 
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
-			const settings = this.tournament.bracketManagerSettings(
-				this.settings,
-				this.type,
-				teams.length,
-			);
 			const abDivisions =
 				this.type === "round_robin" && this.settings?.hasAbDivisions === true
-					? this.abDivisionsForPreview(teams, settings.groupCount)
+					? this.abDivisionsForPreview(
+							teams,
+							Engine.roundRobinGroupCount(this.settings, teams.length),
+						)
 					: undefined;
 
-			manager.create({
+			return Engine.create({
 				tournamentId: virtualTournamentId,
 				name: "Virtual",
 				type: this.type,
-				seeding:
-					this.type === "round_robin"
-						? teams
-						: fillWithNullTillPowerOfTwo(teams),
+				seeding: teams,
 				settings: abDivisions
-					? settings
+					? this.settings
 					: {
-							...settings,
+							...this.settings,
 							hasAbDivisions: false,
 						},
+				independentRounds: this.tournament.isLeagueDivision,
 				abDivisions,
 			});
 		}
 
-		return manager.get.tournamentData(virtualTournamentId);
+		return { stage: [], group: [], round: [], match: [] };
 	}
 
 	private abDivisionsForPreview(
 		teams: number[],
-		groupCount: number | undefined,
+		groupCount: number,
 	): (0 | 1)[] | undefined {
-		if (!groupCount) return undefined;
-
 		const assignments = teams.map((teamId) => {
 			const team = this.tournament.teamById(teamId);
 			return team?.abDivision ?? null;

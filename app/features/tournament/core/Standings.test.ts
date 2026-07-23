@@ -1,11 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { EngineBracket } from "~/features/tournament-bracket/core/engine/test-utils";
 import {
 	progressions,
 	testTournament,
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
-import { BracketsManager } from "~/modules/brackets-manager";
-import { InMemoryDatabase } from "~/modules/brackets-memory-db";
 import invariant from "~/utils/invariant";
 import {
 	matchesPlayed,
@@ -158,28 +157,27 @@ describe("matchesPlayed", () => {
 });
 
 function roundRobinToSingleEliminationTournament() {
-	const storage = new InMemoryDatabase();
-	const manager = new BracketsManager(storage);
+	const bracket = new EngineBracket();
 
-	manager.create({
+	bracket.create({
 		name: "Main Bracket",
 		tournamentId: 1,
 		type: "round_robin",
 		seeding: [1, 2, 3, 4],
-		settings: { groupCount: 1, seedOrdering: ["groups.seed_optimized"] },
+		settings: { groupCount: 1 },
 	});
-	manager.create({
+	bracket.create({
 		name: "B1",
 		tournamentId: 1,
 		type: "single_elimination",
 		seeding: [1, 2],
-		settings: { seedOrdering: ["natural"] },
+		settings: {},
 	});
 
 	// play every match across both brackets, lower id always wins
 	while (true) {
-		const pending = storage
-			.select<any>("match")!
+		const pending = bracket
+			.matches()
 			.find(
 				(m) =>
 					typeof m.opponent1?.id === "number" &&
@@ -189,8 +187,8 @@ function roundRobinToSingleEliminationTournament() {
 			);
 		if (!pending) break;
 
-		const winnerIsOpp1 = pending.opponent1.id < pending.opponent2.id;
-		manager.update.match({
+		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
+		bracket.updateMatch({
 			id: pending.id,
 			opponent1: winnerIsOpp1 ? { score: 2, result: "win" } : { score: 0 },
 			opponent2: winnerIsOpp1 ? { score: 0 } : { score: 2, result: "win" },
@@ -209,25 +207,24 @@ function roundRobinToSingleEliminationTournament() {
 				tournamentCtxTeam(4, { startingBracketIdx: 0, seed: 4 }),
 			],
 		},
-		data: manager.get.tournamentData(1),
+		data: bracket.data!,
 	});
 }
 
 function singleEliminationTournament() {
-	const storage = new InMemoryDatabase();
-	const manager = new BracketsManager(storage);
+	const bracket = new EngineBracket();
 
-	manager.create({
+	bracket.create({
 		name: "Main Bracket",
 		tournamentId: 1,
 		type: "single_elimination",
 		seeding: [1, 2, 3, 4],
-		settings: { seedOrdering: ["natural"] },
+		settings: {},
 	});
 
 	while (true) {
-		const pending = storage
-			.select<any>("match")!
+		const pending = bracket
+			.matches()
 			.find(
 				(m) =>
 					typeof m.opponent1?.id === "number" &&
@@ -237,8 +234,8 @@ function singleEliminationTournament() {
 			);
 		if (!pending) break;
 
-		const winnerIsOpp1 = pending.opponent1.id < pending.opponent2.id;
-		manager.update.match({
+		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
+		bracket.updateMatch({
 			id: pending.id,
 			opponent1: winnerIsOpp1 ? { score: 2, result: "win" } : { score: 0 },
 			opponent2: winnerIsOpp1 ? { score: 0 } : { score: 2, result: "win" },
@@ -257,15 +254,14 @@ function singleEliminationTournament() {
 				tournamentCtxTeam(4, { seed: 4 }),
 			],
 		},
-		data: manager.get.tournamentData(1),
+		data: bracket.data!,
 	});
 }
 
 function abDivisionsTournament() {
-	const storage = new InMemoryDatabase();
-	const manager = new BracketsManager(storage);
+	const bracket = new EngineBracket();
 
-	manager.create({
+	bracket.create({
 		name: "AB RR",
 		tournamentId: 1,
 		type: "round_robin",
@@ -274,7 +270,6 @@ function abDivisionsTournament() {
 		settings: {
 			groupCount: 1,
 			hasAbDivisions: true,
-			seedOrdering: ["groups.seed_optimized"],
 		},
 	});
 
@@ -284,15 +279,15 @@ function abDivisionsTournament() {
 		"2-3": 2,
 		"3-4": 3,
 	};
-	for (const match of storage.select<any>("match")!) {
-		const a = match.opponent1.id as number;
-		const b = match.opponent2.id as number;
+	for (const match of bracket.matches()) {
+		const a = match.opponent1!.id as number;
+		const b = match.opponent2!.id as number;
 		const key = a < b ? `${a}-${b}` : `${b}-${a}`;
 		const winnerId = winnerByMatchup[key];
 		invariant(winnerId, `unexpected matchup ${key}`);
 		const loserScore = key === "2-3" || key === "3-4" ? 1 : 0;
-		const winnerIsOpp1 = match.opponent1.id === winnerId;
-		manager.update.match({
+		const winnerIsOpp1 = match.opponent1!.id === winnerId;
+		bracket.updateMatch({
 			id: match.id,
 			opponent1: winnerIsOpp1
 				? { score: 2, result: "win" }
@@ -303,7 +298,7 @@ function abDivisionsTournament() {
 		});
 	}
 
-	const data = manager.get.tournamentData(1);
+	const data = bracket.data!;
 
 	return testTournament({
 		ctx: {

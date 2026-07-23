@@ -4,10 +4,8 @@ import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import {
-	clearTournamentDataCache,
-	tournamentManagerData,
-} from "~/features/tournament-bracket/core/Tournament.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
+import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
@@ -25,7 +23,8 @@ export const action: ActionFunction = async ({ params }) => {
 
 	if (event.tournamentId) {
 		errorToastIfFalsy(
-			tournamentManagerData(event.tournamentId).stage.length === 0,
+			(await BracketRepository.findByTournamentId(event.tournamentId)).stage
+				.length === 0,
 			"Tournament has already started",
 		);
 	} else {

@@ -1,11 +1,12 @@
 import type { ActionFunction } from "react-router";
 import * as R from "remeda";
+import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
-import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -116,7 +117,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			const endedMatchIds = await dropTeamOut({
 				tournament,
-				manager: getServerTournamentManager(),
 				teamId: data.teamId,
 			});
 
@@ -152,11 +152,9 @@ export const action: ActionFunction = async ({ request, params }) => {
  */
 async function dropTeamOut({
 	tournament,
-	manager,
 	teamId,
 }: {
 	tournament: Awaited<ReturnType<typeof tournamentFromDB>>;
-	manager: ReturnType<typeof getServerTournamentManager>;
 	teamId: number;
 }) {
 	const droppingTeam = tournament.teamById(teamId);
@@ -176,10 +174,18 @@ async function dropTeamOut({
 		});
 	}
 
-	const endedMatchIds = endDroppedTeamMatches({
-		tournament,
-		manager,
-		droppedTeamId: teamId,
+	const endedMatchIds = await db.transaction().execute(async (trx) => {
+		const droppedResult = endDroppedTeamMatches({
+			tournament,
+			data: await BracketRepository.findByTournamentId(tournament.ctx.id, trx),
+			droppedTeamId: teamId,
+		});
+		await BracketRepository.applyMatchChanges(
+			droppedResult.changedMatches,
+			trx,
+		);
+
+		return droppedResult.endedMatchIds;
 	});
 
 	await TournamentTeamRepository.dropOut({

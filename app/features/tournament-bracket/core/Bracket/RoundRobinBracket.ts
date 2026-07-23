@@ -1,14 +1,13 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
 
 export class RoundRobinBracket extends Bracket {
-	get collectResultsWithPoints() {
+	get collectsKos() {
 		return true;
 	}
 
@@ -136,7 +135,6 @@ export class RoundRobinBracket extends Bracket {
 				mapWins: number;
 				mapLosses: number;
 				winsAgainstTied: number;
-				points: number;
 				koCount: number;
 			}[] = [];
 
@@ -146,7 +144,6 @@ export class RoundRobinBracket extends Bracket {
 				setLosses,
 				mapWins,
 				mapLosses,
-				points,
 				koCount,
 			}: {
 				teamId: number;
@@ -154,7 +151,6 @@ export class RoundRobinBracket extends Bracket {
 				setLosses: number;
 				mapWins: number;
 				mapLosses: number;
-				points: number;
 				koCount: number;
 			}) => {
 				const team = teams.find((team) => team.id === teamId);
@@ -163,7 +159,6 @@ export class RoundRobinBracket extends Bracket {
 					team.setLosses += setLosses;
 					team.mapWins += mapWins;
 					team.mapLosses += mapLosses;
-					team.points += points;
 					team.koCount += koCount;
 				} else {
 					teams.push({
@@ -173,7 +168,6 @@ export class RoundRobinBracket extends Bracket {
 						mapWins,
 						mapLosses,
 						winsAgainstTied: 0,
-						points,
 						koCount,
 					});
 				}
@@ -212,15 +206,6 @@ export class RoundRobinBracket extends Bracket {
 						"RoundRobinBracket.standings: winner or loser id not found",
 				);
 
-				if (
-					typeof winner.totalPoints !== "number" ||
-					typeof loser.totalPoints !== "number"
-				) {
-					logger.warn(
-						"RoundRobinBracket.standings: winner or loser points not found",
-					);
-				}
-
 				// note: score might be missing in the case the set was ended early. In the future we might want to handle this differently than defaulting both to 0.
 
 				updateTeam({
@@ -229,7 +214,6 @@ export class RoundRobinBracket extends Bracket {
 					setLosses: 0,
 					mapWins: winner.score ?? 0,
 					mapLosses: loser.score ?? 0,
-					points: winner.totalPoints ?? 0,
 					koCount: winner.totalKos ?? 0,
 				});
 				updateTeam({
@@ -238,7 +222,6 @@ export class RoundRobinBracket extends Bracket {
 					setLosses: 1,
 					mapWins: loser.score ?? 0,
 					mapLosses: winner.score ?? 0,
-					points: loser.totalPoints ?? 0,
 					koCount: loser.totalKos ?? 0,
 				});
 			}
@@ -275,7 +258,6 @@ export class RoundRobinBracket extends Bracket {
 					mapWins: 0,
 					mapLosses: 0,
 					winsAgainstTied: 0,
-					points: 0,
 					koCount: 0,
 				});
 			}
@@ -306,8 +288,8 @@ export class RoundRobinBracket extends Bracket {
 						if (a.mapLosses < b.mapLosses) return -1;
 						if (a.mapLosses > b.mapLosses) return 1;
 
-						if (a.points > b.points) return -1;
-						if (a.points < b.points) return 1;
+						if (a.koCount > b.koCount) return -1;
+						if (a.koCount < b.koCount) return 1;
 
 						const aSeed = Number(this.tournament.teamById(a.id)?.seed);
 						const bSeed = Number(this.tournament.teamById(b.id)?.seed);
@@ -327,7 +309,6 @@ export class RoundRobinBracket extends Bracket {
 								setLosses: team.setLosses,
 								mapWins: team.mapWins,
 								mapLosses: team.mapLosses,
-								points: team.points,
 								koCount: team.koCount,
 								winsAgainstTied: team.winsAgainstTied,
 							},
