@@ -68,13 +68,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const groupCount = new Set(bracket.data.round.map((r) => r.group_id))
 				.size;
 
-			const settings = tournament.bracketManagerSettings(
-				bracket.settings,
-				bracket.type,
-				seeding.length,
-			);
+			const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
+				type: bracket.type,
+				settings: bracket.settings,
+				participantsCount: seeding.length,
+			});
 
-			const maps = settings.consolationFinal
+			const maps = hasThirdPlaceMatch
 				? adjustLinkedRounds({
 						maps: data.maps,
 						thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
@@ -107,7 +107,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				name: bracket.name,
 				type: bracket.type,
 				seeding,
-				settings,
+				settings: bracket.settings,
+				independentRounds: tournament.isLeagueDivision,
 				abDivisions,
 			});
 
@@ -219,11 +220,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Bracket has started, preparing maps no longer possible",
 			);
 
-			const hasThirdPlaceMatch = tournament.bracketManagerSettings(
-				bracket.settings,
-				bracket.type,
-				data.eliminationTeamCount ?? (bracket.seeding ?? []).length,
-			).consolationFinal;
+			const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
+				type: bracket.type,
+				settings: bracket.settings,
+				participantsCount:
+					data.eliminationTeamCount ?? (bracket.seeding ?? []).length,
+			});
 
 			await TournamentRepository.upsertPreparedMaps({
 				bracketIdx: data.bracketIdx,

@@ -118,7 +118,7 @@ describe("Create a round-robin stage", () => {
 			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5],
-			settings: { groupCount: 2, seedOrdering: ["groups.seed_optimized"] },
+			settings: { groupCount: 2 },
 		});
 
 		const isRealMatch = (match: {
@@ -160,15 +160,14 @@ describe("Create a round-robin stage", () => {
 		expect(bracket.matches().length).toBe(4 * 3 * 2);
 	});
 
-	test("should create a round-robin stage with effort balanced", () => {
+	test("should order the groups with snake seeding", () => {
 		bracket.create({
-			name: "Example with effort balanced",
+			name: "Example with snake seeding",
 			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {
 				groupCount: 2,
-				seedOrdering: ["groups.seed_optimized"],
 			},
 		});
 
@@ -195,7 +194,6 @@ describe("Create a round-robin stage", () => {
 				settings: {
 					groupCount: 0,
 					size: 4,
-					seedOrdering: ["groups.seed_optimized"],
 				},
 			}),
 		).toThrow("You must provide a strictly positive group count.");
@@ -218,7 +216,6 @@ describe("Create a round-robin stage", () => {
 			settings: {
 				groupCount: 1,
 				hasAbDivisions: true,
-				seedOrdering: ["groups.seed_optimized"],
 			},
 		});
 
@@ -271,7 +268,6 @@ describe("Create a round-robin stage", () => {
 			settings: {
 				groupCount: 1,
 				hasAbDivisions: true,
-				seedOrdering: ["groups.seed_optimized"],
 			},
 		});
 

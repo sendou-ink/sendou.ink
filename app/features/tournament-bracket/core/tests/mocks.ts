@@ -10,7 +10,6 @@ export const PADDLING_POOL_257 = () =>
 					number: 1,
 					settings: {
 						groupCount: 9,
-						seedOrdering: ["groups.seed_optimized"],
 						size: 35,
 					},
 					tournament_id: 27,
@@ -6823,7 +6822,6 @@ export const PADDLING_POOL_255 = () =>
 					number: 1,
 					settings: {
 						groupCount: 9,
-						seedOrdering: ["groups.seed_optimized"],
 						size: 35,
 					},
 					tournament_id: 18,
@@ -14214,13 +14212,6 @@ export const IN_THE_ZONE_32 = ({
 					number: 1,
 					settings: {
 						size: 32,
-						seedOrdering: [
-							"space_between",
-							"natural",
-							"reverse",
-							"half_shift",
-							"natural",
-						],
 					},
 					tournament_id: 11,
 					type: "double_elimination",

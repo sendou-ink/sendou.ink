@@ -293,14 +293,12 @@ export abstract class Bracket {
 		const virtualTournamentId = 1;
 
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
-			const settings = this.tournament.bracketManagerSettings(
-				this.settings,
-				this.type,
-				teams.length,
-			);
 			const abDivisions =
 				this.type === "round_robin" && this.settings?.hasAbDivisions === true
-					? this.abDivisionsForPreview(teams, settings.groupCount)
+					? this.abDivisionsForPreview(
+							teams,
+							Engine.roundRobinGroupCount(this.settings, teams.length),
+						)
 					: undefined;
 
 			return Engine.create({
@@ -309,11 +307,12 @@ export abstract class Bracket {
 				type: this.type,
 				seeding: teams,
 				settings: abDivisions
-					? settings
+					? this.settings
 					: {
-							...settings,
+							...this.settings,
 							hasAbDivisions: false,
 						},
+				independentRounds: this.tournament.isLeagueDivision,
 				abDivisions,
 			});
 		}
@@ -323,10 +322,8 @@ export abstract class Bracket {
 
 	private abDivisionsForPreview(
 		teams: number[],
-		groupCount: number | undefined,
+		groupCount: number,
 	): (0 | 1)[] | undefined {
-		if (!groupCount) return undefined;
-
 		const assignments = teams.map((teamId) => {
 			const team = this.tournament.teamById(teamId);
 			return team?.abDivision ?? null;

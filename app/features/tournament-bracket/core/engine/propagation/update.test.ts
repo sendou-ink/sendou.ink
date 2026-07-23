@@ -9,7 +9,7 @@ const example = {
 	tournamentId: 0,
 	type: "double_elimination" as const,
 	seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-	settings: { seedOrdering: ["natural" as const] },
+	settings: {},
 };
 
 describe("Update matches", () => {
@@ -82,7 +82,7 @@ describe("Update matches", () => {
 
 		const nextMatch = bracket.match(8);
 		expect(nextMatch.status).toBe(TournamentMatchStatus.Waiting);
-		expect(nextMatch.opponent1?.id).toBe(2);
+		expect(nextMatch.opponent1?.id).toBe(16);
 	});
 
 	test("should update the status of the next match", () => {
@@ -208,7 +208,7 @@ describe("Give opponent IDs when updating", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 	});
 
@@ -216,7 +216,7 @@ describe("Give opponent IDs when updating", () => {
 		bracket.updateMatch({
 			id: 0,
 			opponent1: {
-				id: 2,
+				id: 4,
 				score: 10,
 			},
 			opponent2: {
@@ -235,7 +235,7 @@ describe("Give opponent IDs when updating", () => {
 		bracket.updateMatch({
 			id: 0,
 			opponent1: {
-				id: 2,
+				id: 4,
 				score: 10,
 			},
 		});

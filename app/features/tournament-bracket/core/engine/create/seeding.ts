@@ -1,7 +1,5 @@
 // https://web.archive.org/web/20200601102344/https://tl.net/forum/sc2-tournaments/202139-superior-double-elimination-losers-bracket-seeding
 
-// xxx: some can probably be removed
-
 import invariant from "~/utils/invariant";
 import type { OrderingMap, Seeding, SeedOrdering } from "../types";
 
@@ -50,61 +48,6 @@ export const ordering: OrderingMap = {
 			});
 		}
 	},
-	inner_outer: <T>(array: T[]) => {
-		if (array.length === 2) return array;
-
-		const size = array.length / 4;
-
-		const innerPart = [
-			array.slice(size, 2 * size),
-			array.slice(2 * size, 3 * size),
-		]; // [_, X, X, _]
-		const outerPart = [array.slice(0, size), array.slice(3 * size, 4 * size)]; // [X, _, _, X]
-
-		const methods = {
-			inner(part: T[][]): T[] {
-				return [part[0].pop()!, part[1].shift()!];
-			},
-			outer(part: T[][]): T[] {
-				return [part[0].shift()!, part[1].pop()!];
-			},
-		};
-
-		const result: T[] = [];
-
-		/**
-		 * Adds a part (inner or outer) of a part.
-		 *
-		 * @param part The part to process.
-		 * @param method The method to use.
-		 */
-		function add(part: T[][], method: "inner" | "outer"): void {
-			if (part[0].length > 0 && part[1].length > 0)
-				result.push(...methods[method](part));
-		}
-
-		for (let i = 0; i < size / 2; i++) {
-			add(outerPart, "outer"); // Outer part's outer
-			add(innerPart, "inner"); // Inner part's inner
-			add(outerPart, "inner"); // Outer part's inner
-			add(innerPart, "outer"); // Inner part's outer
-		}
-
-		return result;
-	},
-	"groups.effort_balanced": <T>(array: T[], groupCount: number) => {
-		const result: T[] = [];
-		let i = 0;
-		let j = 0;
-
-		while (result.length < array.length) {
-			result.push(array[i]);
-			i += groupCount;
-			if (i >= array.length) i = ++j;
-		}
-
-		return result;
-	},
 	"groups.seed_optimized": <T>(array: T[], groupCount: number) => {
 		const groups = Array.from(Array(groupCount), (_): T[] => []);
 
@@ -119,9 +62,6 @@ export const ordering: OrderingMap = {
 		}
 
 		return groups.flat();
-	},
-	"groups.bracket_optimized": () => {
-		throw Error("Not implemented.");
 	},
 };
 
@@ -142,38 +82,6 @@ export const defaultMinorOrdering: { [key: number]: SeedOrdering[] } = {
 		"natural",
 	],
 };
-
-/**
- * Balances BYEs to prevents having BYE against BYE in matches.
- *
- * @param seeding The seeding of the stage.
- * @param participantCount The number of participants in the stage.
- */
-export function balanceByes(
-	seeding: Seeding,
-	participantCount?: number,
-): Seeding {
-	const nonNullSeeding = seeding.filter((v) => v !== null);
-	const size = participantCount || getNearestPowerOfTwo(nonNullSeeding.length);
-
-	if (nonNullSeeding.length < size / 2) {
-		const flat = nonNullSeeding.flatMap((v) => [v, null]);
-		return setArraySize(flat, size, null);
-	}
-
-	const nonNullCount = nonNullSeeding.length;
-	const nullCount = size - nonNullCount;
-	const againstEachOther = nonNullSeeding
-		.slice(0, nonNullCount - nullCount)
-		.filter((_, i) => i % 2 === 0)
-		.map((_, i) => [nonNullSeeding[2 * i], nonNullSeeding[2 * i + 1]]);
-	const againstNull = nonNullSeeding
-		.slice(nonNullCount - nullCount, nonNullCount)
-		.map((v) => [v, null]);
-	const flat = [...againstEachOther.flat(), ...againstNull.flat()];
-
-	return setArraySize(flat, size, null);
-}
 
 /**
  * Pads the seeding with BYEs (`null`) until its length is a power of two.

@@ -103,10 +103,8 @@ describe("swiss standings - losses against tied", () => {
 			type: "swiss",
 			seeding: [1, 2, 3],
 			settings: {
-				swiss: {
-					groupCount: 1,
-					roundCount: 5,
-				},
+				groupCount: 1,
+				roundCount: 5,
 			},
 		});
 
@@ -241,7 +239,6 @@ describe("round robin standings - dropped out teams", () => {
 			seeding: [1, 2, 3, 4],
 			settings: {
 				groupCount: 1,
-				seedOrdering: ["groups.seed_optimized"],
 			},
 		});
 
@@ -418,7 +415,6 @@ describe("round robin A/B divisions standings", () => {
 			settings: {
 				groupCount: 1,
 				hasAbDivisions: true,
-				seedOrdering: ["groups.seed_optimized"],
 			},
 		});
 
@@ -717,7 +713,7 @@ describe("double elimination standings - projected ties", () => {
 			tournamentId: 1,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		const groupId = (number: number) =>

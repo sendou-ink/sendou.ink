@@ -111,12 +111,6 @@ export async function dbStartTournament(seeding: number[], tournamentId = 1) {
 
 	const bracket = tournament.bracketByIdx(0)!;
 
-	const settings = tournament.bracketManagerSettings(
-		bracket.settings,
-		bracket.type,
-		seeding.length,
-	);
-
 	await BracketRepository.insertBracket({
 		tournamentId: tournament.ctx.id,
 		bracket: Engine.create({
@@ -124,7 +118,7 @@ export async function dbStartTournament(seeding: number[], tournamentId = 1) {
 			name: bracket.name,
 			type: bracket.type,
 			seeding,
-			settings,
+			settings: bracket.settings,
 		}),
 	});
 

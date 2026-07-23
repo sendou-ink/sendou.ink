@@ -164,14 +164,14 @@ function roundRobinToSingleEliminationTournament() {
 		tournamentId: 1,
 		type: "round_robin",
 		seeding: [1, 2, 3, 4],
-		settings: { groupCount: 1, seedOrdering: ["groups.seed_optimized"] },
+		settings: { groupCount: 1 },
 	});
 	bracket.create({
 		name: "B1",
 		tournamentId: 1,
 		type: "single_elimination",
 		seeding: [1, 2],
-		settings: { seedOrdering: ["natural"] },
+		settings: {},
 	});
 
 	// play every match across both brackets, lower id always wins
@@ -219,7 +219,7 @@ function singleEliminationTournament() {
 		tournamentId: 1,
 		type: "single_elimination",
 		seeding: [1, 2, 3, 4],
-		settings: { seedOrdering: ["natural"] },
+		settings: {},
 	});
 
 	while (true) {
@@ -270,7 +270,6 @@ function abDivisionsTournament() {
 		settings: {
 			groupCount: 1,
 			hasAbDivisions: true,
-			seedOrdering: ["groups.seed_optimized"],
 		},
 	});
 

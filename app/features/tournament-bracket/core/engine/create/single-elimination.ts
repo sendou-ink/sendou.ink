@@ -8,12 +8,6 @@ import { ordering } from "./seeding";
  * One bracket and optionally a consolation final between semi-final losers.
  */
 export function createSingleElimination(creator: StageCreator): void {
-	if (
-		Array.isArray(creator.settings.seedOrdering) &&
-		creator.settings.seedOrdering.length !== 1
-	)
-		throw Error("You must specify one seed ordering method.");
-
 	const slots = creator.getSlots();
 	const stage = creator.createStage();
 	const method = creator.getStandardBracketFirstRoundOrdering();

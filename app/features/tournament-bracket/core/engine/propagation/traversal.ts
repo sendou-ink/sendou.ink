@@ -649,10 +649,7 @@ export class Propagator {
 		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
 
 		const participantCount = stage.settings.size!;
-		const method = helpers.getLoserOrdering(
-			stage.settings.seedOrdering!,
-			roundNumberLB,
-		);
+		const method = helpers.getLoserOrdering(participantCount, roundNumberLB);
 		const actualMatchNumberLB = helpers.findLoserMatchNumber(
 			participantCount,
 			roundNumberLB,

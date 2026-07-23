@@ -15,7 +15,6 @@ import {
 } from "~/features/tournament/tournament-utils";
 import type {
 	Match,
-	Stage,
 	TournamentManagerDataSet,
 } from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -347,11 +346,7 @@ export class Tournament {
 					"round_robin" | "swiss"
 				>,
 				seeding: candidateTeams,
-				settings: this.bracketManagerSettings(
-					settings,
-					bracket.type,
-					candidateTeams.length,
-				),
+				settings,
 			}).match;
 			const replays: [number, number][] = [];
 			for (const match of matches) {
@@ -481,60 +476,6 @@ export class Tournament {
 				notCheckedInTeams: number[];
 			},
 		);
-	}
-
-	// xxx: could all of this be internal to Engine (except user input)
-	/** Provides settings for the brackets-manager module with our selected defaults */
-	bracketManagerSettings(
-		selectedSettings: TournamentStageSettings | null,
-		type: Tables["TournamentStage"]["type"],
-		participantsCount: number,
-	): Stage["settings"] {
-		switch (type) {
-			case "single_elimination": {
-				if (participantsCount < 4) {
-					return { consolationFinal: false };
-				}
-
-				return {
-					consolationFinal:
-						selectedSettings?.thirdPlaceMatch ??
-						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
-				};
-			}
-			case "double_elimination": {
-				return {};
-			}
-			case "round_robin": {
-				const teamsPerGroup =
-					selectedSettings?.teamsPerGroup ??
-					TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
-
-				return {
-					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: ["groups.seed_optimized"],
-					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
-					...(this.isLeagueDivision ? { independentRounds: true } : {}),
-				};
-			}
-			case "swiss": {
-				return {
-					swiss:
-						selectedSettings?.groupCount && selectedSettings.roundCount
-							? {
-									groupCount: selectedSettings.groupCount,
-									roundCount: selectedSettings.roundCount,
-								}
-							: {
-									groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
-									roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
-								},
-				};
-			}
-			default: {
-				assertUnreachable(type);
-			}
-		}
 	}
 
 	/** Is tournament ranked (affects SP/Skill). For tournament to be ranked the organizer needs to enable it and it needs to fit the conditions e.g. it needs to happen when a ranked season is active. */

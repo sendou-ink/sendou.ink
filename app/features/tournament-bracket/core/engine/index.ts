@@ -5,6 +5,7 @@
  */
 
 export { create } from "./create";
+export { hasThirdPlaceMatch, roundRobinGroupCount } from "./create/settings";
 export { endDroppedTeamMatches } from "./propagation/dropped-teams";
 export { reportResult } from "./propagation/report-result";
 export { resetMatchResults } from "./propagation/reset-result";

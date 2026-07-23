@@ -14,7 +14,7 @@ describe("Create double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		const stage = bracket.stage();
@@ -41,7 +41,7 @@ describe("Create double elimination stage", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		expect(bracket.groups().length).toBe(3);

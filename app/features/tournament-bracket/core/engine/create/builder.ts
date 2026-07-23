@@ -1,11 +1,11 @@
 import * as helpers from "../helpers";
 import type {
 	BracketData,
-	CreateBracketInput,
 	Duel,
 	GroupData,
 	MatchData,
 	ParticipantSlot,
+	ResolvedCreateBracketInput,
 	RoundData,
 	Seeding,
 	SeedOrdering,
@@ -15,7 +15,6 @@ import type {
 } from "../types";
 import { MatchStatus } from "../types";
 import {
-	balanceByes,
 	defaultMinorOrdering,
 	ordering,
 	padSeedingToPowerOfTwo,
@@ -28,13 +27,12 @@ import {
  * being written to storage.
  */
 export class StageCreator {
-	readonly input: CreateBracketInput;
+	readonly input: ResolvedCreateBracketInput;
 	settings: StageSettings;
 	seeding: Seeding | undefined;
-	readonly seedOrdering: SeedOrdering[];
 	readonly data: BracketData;
 
-	constructor(input: CreateBracketInput) {
+	constructor(input: ResolvedCreateBracketInput) {
 		this.input = input;
 		this.settings = structuredClone(input.settings) ?? {};
 		const seeding = input.seeding ? [...input.seeding] : undefined;
@@ -42,7 +40,6 @@ export class StageCreator {
 			seeding && input.type !== "round_robin"
 				? padSeedingToPowerOfTwo(seeding)
 				: seeding;
-		this.seedOrdering = this.settings.seedOrdering || [];
 		this.data = { stage: [], group: [], round: [], match: [] };
 
 		if (!input.name) throw Error("You must provide a name for the stage.");
@@ -359,9 +356,6 @@ export class StageCreator {
 		helpers.ensureNoDuplicates(this.seeding);
 		this.seeding = helpers.fixSeeding(this.seeding, size);
 
-		if (this.input.type !== "round_robin" && this.settings.balanceByes)
-			this.seeding = balanceByes(this.seeding, this.settings.size);
-
 		return this.getSlotsUsingIds(this.seeding, positions);
 	}
 
@@ -390,68 +384,21 @@ export class StageCreator {
 	}
 
 	/**
-	 * Safely gets an ordering by its index in the stage input settings.
-	 */
-	getOrdering(
-		orderingIndex: number,
-		stageType: "elimination" | "groups",
-		defaultMethod: SeedOrdering,
-	): SeedOrdering {
-		if (!this.settings.seedOrdering) {
-			this.seedOrdering.push(defaultMethod);
-			return defaultMethod;
-		}
-
-		const method = this.settings.seedOrdering[orderingIndex];
-		if (!method) {
-			this.seedOrdering.push(defaultMethod);
-			return defaultMethod;
-		}
-
-		if (stageType === "elimination" && method.match(/^groups\./))
-			throw Error(
-				"You must specify a seed ordering method without a 'groups' prefix",
-			);
-
-		if (
-			stageType === "groups" &&
-			method !== "natural" &&
-			!method.match(/^groups\./)
-		)
-			throw Error(
-				"You must specify a seed ordering method with a 'groups' prefix",
-			);
-
-		return method;
-	}
-
-	/**
-	 * Returns the ordering method for the groups in a round-robin stage.
-	 */
-	getRoundRobinOrdering(): SeedOrdering {
-		return this.getOrdering(0, "groups", "groups.effort_balanced");
-	}
-
-	/**
 	 * Returns the ordering method for the first round of the upper bracket of an elimination stage.
 	 */
 	getStandardBracketFirstRoundOrdering(): SeedOrdering {
-		return this.getOrdering(0, "elimination", "space_between");
+		return "space_between";
 	}
 
 	/**
-	 * Safely gets the only major ordering for the lower bracket.
+	 * The only major ordering for the lower bracket.
 	 */
 	private getMajorOrdering(participantCount: number): SeedOrdering {
-		return this.getOrdering(
-			1,
-			"elimination",
-			defaultMinorOrdering[participantCount]?.[0] || "natural",
-		);
+		return defaultMinorOrdering[participantCount]?.[0] || "natural";
 	}
 
 	/**
-	 * Safely gets a minor ordering for the lower bracket by its index.
+	 * A minor ordering for the lower bracket by its index.
 	 */
 	private getMinorOrdering(
 		participantCount: number,
@@ -461,11 +408,7 @@ export class StageCreator {
 		// No ordering for the last minor round. There is only one participant to order.
 		if (index === minorRoundCount - 1) return undefined;
 
-		return this.getOrdering(
-			2 + index,
-			"elimination",
-			defaultMinorOrdering[participantCount]?.[1 + index] || "natural",
-		);
+		return defaultMinorOrdering[participantCount]?.[1 + index] || "natural";
 	}
 
 	/**
@@ -484,19 +427,5 @@ export class StageCreator {
 		this.data.stage.push(stage);
 
 		return stage;
-	}
-
-	/**
-	 * Ensures that the seed ordering list is stored even if it was not given in the first place.
-	 */
-	ensureSeedOrdering(): void {
-		if (this.settings.seedOrdering?.length === this.seedOrdering.length) return;
-
-		const stage = this.data.stage[0];
-
-		stage.settings = {
-			...stage.settings,
-			seedOrdering: this.seedOrdering,
-		};
 	}
 }

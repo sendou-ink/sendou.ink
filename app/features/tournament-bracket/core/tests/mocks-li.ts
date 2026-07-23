@@ -24,12 +24,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				number: 2,
 				settings: {
 					size: 16,
-					seedOrdering: [
-						"space_between",
-						"natural",
-						"reverse_half_shift",
-						"reverse",
-					],
 				},
 				tournament_id: 815,
 				type: "double_elimination",
@@ -41,12 +35,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				number: 3,
 				settings: {
 					size: 16,
-					seedOrdering: [
-						"space_between",
-						"natural",
-						"reverse_half_shift",
-						"reverse",
-					],
 				},
 				tournament_id: 815,
 				type: "double_elimination",
@@ -58,12 +46,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				number: 4,
 				settings: {
 					size: 16,
-					seedOrdering: [
-						"space_between",
-						"natural",
-						"reverse_half_shift",
-						"reverse",
-					],
 				},
 				tournament_id: 815,
 				type: "double_elimination",

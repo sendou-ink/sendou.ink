@@ -1,14 +1,18 @@
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
-import type { CreateBracketInput, CreatedBracket, MatchData } from "../types";
+import type {
+	CreatedBracket,
+	MatchData,
+	ResolvedCreateBracketInput,
+} from "../types";
 import { MatchStatus } from "../types";
 
 /**
  * Creates a Swiss bracket data set: all rounds up front, matches for round 1 only.
  * Ported from the old core/Swiss.ts create()/firstRoundMatches().
  */
-export function createSwiss(input: CreateBracketInput): CreatedBracket {
+export function createSwiss(input: ResolvedCreateBracketInput): CreatedBracket {
 	const swissSettings = input.settings?.swiss;
 
 	const groupCount =
@@ -56,7 +60,7 @@ function firstRoundMatches({
 	groupCount,
 	roundCount,
 }: {
-	seeding: CreateBracketInput["seeding"];
+	seeding: ResolvedCreateBracketInput["seeding"];
 	groupCount: number;
 	roundCount: number;
 }): MatchData[] {

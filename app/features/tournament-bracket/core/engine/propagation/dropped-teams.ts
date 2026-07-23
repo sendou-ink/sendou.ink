@@ -4,9 +4,8 @@ import { Propagator } from "./traversal";
 
 /**
  * Ends all unfinished matches involving dropped teams by awarding wins to
- * their opponents. Ported from tournament-utils.server.ts. `randomPick` is
- * injected so the engine stays deterministic/testable (caller passes a
- * Math.random-backed impl in production).
+ * their opponents. Ported from tournament-utils.server.ts. When both teams in
+ * a match have dropped, a random winner is picked.
  *
  * Matches that only gain a dropped opponent through propagation caused by this
  * call are not ended (same as the old implementation, which iterated a
@@ -14,14 +13,11 @@ import { Propagator } from "./traversal";
  */
 export function endDroppedTeamMatches(
 	data: BracketData,
-	args: {
-		droppedTeamIds: number[];
-		randomPick: (a: number, b: number) => number;
-	},
+	droppedTeamIds: number[],
 ): DroppedTeamsResult {
 	const store = new Store(data);
 	const propagator = new Propagator(store);
-	const droppedTeamIds = new Set(args.droppedTeamIds);
+	const droppedTeamIdsSet = new Set(droppedTeamIds);
 
 	const endedMatchIds: number[] = [];
 
@@ -30,15 +26,15 @@ export function endDroppedTeamMatches(
 		if (match.opponent1.result === "win" || match.opponent2.result === "win")
 			continue;
 
-		const team1Dropped = droppedTeamIds.has(match.opponent1.id);
-		const team2Dropped = droppedTeamIds.has(match.opponent2.id);
+		const team1Dropped = droppedTeamIdsSet.has(match.opponent1.id);
+		const team2Dropped = droppedTeamIdsSet.has(match.opponent2.id);
 
 		if (!team1Dropped && !team2Dropped) continue;
 
 		const winnerTeamId = (() => {
 			if (team1Dropped && !team2Dropped) return match.opponent2.id;
 			if (!team1Dropped && team2Dropped) return match.opponent1.id;
-			return args.randomPick(match.opponent1.id, match.opponent2.id);
+			return Math.random() < 0.5 ? match.opponent1.id : match.opponent2.id;
 		})();
 
 		const stored = store.select("match", match.id);

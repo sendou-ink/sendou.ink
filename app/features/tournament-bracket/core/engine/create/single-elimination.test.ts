@@ -14,7 +14,7 @@ describe("Create single elimination stage", () => {
 			tournamentId: 0,
 			type: "single_elimination" as const,
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-			settings: { seedOrdering: ["natural" as const] },
+			settings: {},
 		};
 
 		bracket.create(example);
@@ -34,13 +34,13 @@ describe("Create single elimination stage", () => {
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, null, 3, 4, null, null, 7, 8],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
-		expect(bracket.match(4).opponent1?.id).toBe(1);
-		expect(bracket.match(4).opponent2?.id).toBe(null);
-		expect(bracket.match(5).opponent1).toBe(null);
-		expect(bracket.match(5).opponent2?.id).toBe(null);
+		expect(bracket.match(4).opponent1?.id).toBe(null);
+		expect(bracket.match(4).opponent2?.id).toBe(4);
+		expect(bracket.match(5).opponent1?.id).toBe(7);
+		expect(bracket.match(5).opponent2?.id).toBe(3);
 	});
 
 	test("should create a single elimination stage with consolation final", () => {
@@ -49,7 +49,7 @@ describe("Create single elimination stage", () => {
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: { consolationFinal: true, seedOrdering: ["natural"] },
+			settings: { consolationFinal: true },
 		});
 
 		expect(bracket.groups().length).toBe(2);
@@ -63,14 +63,14 @@ describe("Create single elimination stage", () => {
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [null, null, null, 4, 5, 6, 7, 8],
-			settings: { consolationFinal: true, seedOrdering: ["natural"] },
+			settings: { consolationFinal: true },
 		});
 
-		expect(bracket.match(4).opponent1).toBe(null);
-		expect(bracket.match(4).opponent2?.id).toBe(4);
+		expect(bracket.match(4).opponent1?.id).toBe(8);
+		expect(bracket.match(4).opponent2?.id).toBe(null);
 
 		// Consolation final
-		expect(bracket.match(7).opponent1).toBe(null);
+		expect(bracket.match(7).opponent1?.id).toBe(null);
 		expect(bracket.match(7).opponent2?.id).toBe(null);
 	});
 
@@ -80,7 +80,7 @@ describe("Create single elimination stage", () => {
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		expect(bracket.groups().length).toBe(1);

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import { createResolved } from "./create";
 import * as Engine from "./index";
 import { EngineBracket } from "./test-utils";
 
@@ -15,7 +16,7 @@ describe("BYE handling", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, null, null, null],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		expect(bracket.match(2).opponent1?.id).toBe(1);
@@ -38,28 +39,6 @@ describe("BYE handling", () => {
 			type: "double_elimination",
 			seeding: [1, 2],
 			settings: {
-				seedOrdering: ["natural"],
-				balanceByes: false, // Default value.
-				size: 4,
-			},
-		});
-
-		expect(bracket.match(0).opponent1?.id).toBe(1);
-		expect(bracket.match(0).opponent2?.id).toBe(2);
-
-		expect(bracket.match(1).opponent1).toBe(null);
-		expect(bracket.match(1).opponent2).toBe(null);
-	});
-
-	test("should balance BYEs in the seeding", () => {
-		bracket.create({
-			name: "Example with BYEs",
-			tournamentId: 0,
-			type: "double_elimination",
-			seeding: [1, 2],
-			settings: {
-				seedOrdering: ["natural"],
-				balanceByes: true,
 				size: 4,
 			},
 		});
@@ -82,7 +61,6 @@ describe("Position checks", () => {
 			type: "double_elimination",
 			settings: {
 				size: 8,
-				seedOrdering: ["natural"],
 			},
 		});
 	});
@@ -102,7 +80,7 @@ describe("Position checks", () => {
 	test("should have a position where we need the origin of a participant", () => {
 		const matchFromWbRound1 = bracket.match(0);
 		expect(matchFromWbRound1.opponent1?.position).toBe(1);
-		expect(matchFromWbRound1.opponent2?.position).toBe(2);
+		expect(matchFromWbRound1.opponent2?.position).toBe(8);
 
 		const matchFromLbRound1 = bracket.match(7);
 		expect(matchFromLbRound1.opponent1?.position).toBe(1);
@@ -123,21 +101,21 @@ describe("Special cases", () => {
 
 	test("should throw if the name of the stage is not provided", () => {
 		expect(() =>
-			Engine.create({
+			createResolved({
 				tournamentId: 0,
 				type: "single_elimination",
 				settings: {},
-			} as Engine.CreateBracketInput),
+			} as Engine.ResolvedCreateBracketInput),
 		).toThrow("You must provide a name for the stage.");
 	});
 
 	test("should throw if the tournament id of the stage is not provided", () => {
 		expect(() =>
-			Engine.create({
+			createResolved({
 				name: "Example",
 				type: "single_elimination",
 				settings: {},
-			} as Engine.CreateBracketInput),
+			} as Engine.ResolvedCreateBracketInput),
 		).toThrow("You must provide a tournament id for the stage.");
 	});
 
@@ -147,11 +125,11 @@ describe("Special cases", () => {
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
-		expect(bracket.match(3).opponent1?.id).toBe(7);
-		expect(bracket.match(3).opponent2).toBe(null);
+		expect(bracket.match(0).opponent1?.id).toBe(1);
+		expect(bracket.match(0).opponent2).toBe(null);
 	});
 
 	test("should throw if the size of a stage is not a power of two", () => {
@@ -199,15 +177,7 @@ describe("Seeding and ordering in elimination", () => {
 			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
-			settings: {
-				seedOrdering: [
-					"inner_outer",
-					"reverse",
-					"pair_flip",
-					"half_shift",
-					"reverse",
-				],
-			},
+			settings: {},
 		});
 	});
 
@@ -217,8 +187,8 @@ describe("Seeding and ordering in elimination", () => {
 		expect(firstRoundMatchWB.opponent2?.position).toBe(16);
 
 		const firstRoundMatchLB = bracket.match(15);
-		expect(firstRoundMatchLB.opponent1?.position).toBe(8);
-		expect(firstRoundMatchLB.opponent2?.position).toBe(7);
+		expect(firstRoundMatchLB.opponent1?.position).toBe(1);
+		expect(firstRoundMatchLB.opponent2?.position).toBe(2);
 
 		const secondRoundMatchLB = bracket.match(19);
 		expect(secondRoundMatchLB.opponent1?.position).toBe(2);
@@ -240,13 +210,15 @@ describe("Reset match", () => {
 	});
 
 	test("should reset results of a match", () => {
+		// Seeds 1 and 2 are placed into the same first-round match (positions 1
+		// and 8) so that match 0 is a real two-team match under the default
+		// space_between ordering, while the rest of the bracket is BYEs.
 		bracket.create({
 			name: "Example",
 			tournamentId: 0,
 			type: "single_elimination",
-			seeding: [1, 2],
+			seeding: [1, null, null, null, null, null, null, 2],
 			settings: {
-				seedOrdering: ["natural"],
 				size: 8,
 			},
 		});
@@ -292,9 +264,7 @@ describe("Reset match", () => {
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
-			settings: {
-				seedOrdering: ["natural"],
-			},
+			settings: {},
 		});
 
 		bracket.updateMatch({
@@ -321,12 +291,12 @@ describe("Reset match", () => {
 
 describe("Engine data immutability", () => {
 	test("engine operations return new data and leave the input untouched", () => {
-		const initial = Engine.create({
+		const initial = createResolved({
 			name: "Example",
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		const snapshot = structuredClone(initial);
@@ -347,12 +317,12 @@ describe("Engine data immutability", () => {
 	});
 
 	test("changedMatches contains only genuinely changed rows", () => {
-		const initial = Engine.create({
+		const initial = createResolved({
 			name: "Example",
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
-			settings: { seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		const afterReport = Engine.reportResult(initial, {

@@ -1,4 +1,4 @@
-import { ordering } from "./create/seeding";
+import { defaultMinorOrdering, ordering } from "./create/seeding";
 import type {
 	DeepPartial,
 	Duel,
@@ -1067,15 +1067,14 @@ function getLoserRoundLoserCount(
 /**
  * Returns the ordering method of a round of a loser bracket.
  *
- * @param seedOrdering The list of seed orderings.
+ * @param participantCount The number of participants in the stage.
  * @param roundNumber Number of the round.
  */
 export function getLoserOrdering(
-	seedOrdering: SeedOrdering[],
+	participantCount: number,
 	roundNumber: number,
 ): SeedOrdering | undefined {
-	const orderingIndex = 1 + Math.floor(roundNumber / 2);
-	return seedOrdering[orderingIndex];
+	return defaultMinorOrdering[participantCount]?.[Math.floor(roundNumber / 2)];
 }
 
 /**

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TournamentStageSettings } from "~/db/tables";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	LOW_INK_AUGUST_2025,
@@ -17,12 +18,12 @@ const Swiss = {
 		tournamentId: number;
 		name: string;
 		seeding: number[];
-		settings?: Engine.StageSettings;
+		settings?: TournamentStageSettings;
 	}) =>
 		Engine.create({
 			...args,
 			type: "swiss",
-			settings: args.settings ?? {},
+			settings: args.settings ?? null,
 		}),
 };
 
@@ -62,10 +63,8 @@ describe("Swiss", () => {
 			const data = Swiss.create(
 				createArgsWithDefaults({
 					settings: {
-						swiss: {
-							groupCount: 1,
-							roundCount: 4,
-						},
+						groupCount: 1,
+						roundCount: 4,
 					},
 				}),
 			);
@@ -77,10 +76,8 @@ describe("Swiss", () => {
 			const data = Swiss.create(
 				createArgsWithDefaults({
 					settings: {
-						swiss: {
-							groupCount: 2,
-							roundCount: 5,
-						},
+						groupCount: 2,
+						roundCount: 5,
 					},
 				}),
 			);

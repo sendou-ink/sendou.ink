@@ -1,4 +1,8 @@
-import type { Tables, TournamentRoundMaps } from "~/db/tables";
+import type {
+	Tables,
+	TournamentRoundMaps,
+	TournamentStageSettings,
+} from "~/db/tables";
 
 /**
  * Match/set outcome for one side. Upstream brackets-model also had "draw" —
@@ -21,18 +25,14 @@ export type GroupType =
 	| "loser_bracket"
 	| "final_group";
 
-// xxx: what can we delete here?
 export type SeedOrdering =
 	| "natural"
 	| "reverse"
 	| "half_shift"
 	| "reverse_half_shift"
 	| "pair_flip"
-	| "inner_outer"
 	| "space_between"
-	| "groups.effort_balanced"
-	| "groups.seed_optimized"
-	| "groups.bracket_optimized";
+	| "groups.seed_optimized";
 
 /** The seeding for a stage. Each element is a participant id or a BYE: `null`. */
 export type Seeding = (number | null)[];
@@ -61,23 +61,6 @@ export interface StageSettings {
 	// xxx: why not inferred?
 	/** The number of participants. */
 	size?: number;
-
-	/**
-	 * A list of ordering methods to apply to the seeding.
-	 *
-	 * - For a round-robin stage: 1 item required (**with** `"groups."` prefix).
-	 * - For a simple elimination stage, 1 item required (**without** `"groups."` prefix).
-	 * - For a double elimination stage, 1 item required, 3+ items supported (**without** `"groups."` prefix).
-	 *   - Item 1 (required) - Used to distribute in WB round 1.
-	 *   - Item 2 - Used to distribute WB losers in LB round 1.
-	 *   - Items 3+ - Used to distribute WB losers in LB minor rounds (1 per round).
-	 */
-	// xxx: make implementation detail?
-	seedOrdering?: SeedOrdering[];
-
-	/** Whether to balance BYEs in the seeding of an elimination stage. */
-	// xxx: make implementation detail?
-	balanceByes?: boolean;
 
 	/** Number of groups in a round-robin stage. */
 	groupCount?: number;
@@ -233,13 +216,30 @@ export interface CreateBracketInput {
 	tournamentId: number;
 	name: string;
 	type: StageType;
-	/** Team ids in seed order; `null` = BYE. When omitted, `settings.size` must be given (TBD slots). */
-	seeding?: Seeding;
-	settings: StageSettings;
+	/** Team ids in seed order; `null` = BYE. */
+	seeding: Seeding;
+	/** User-selected settings; the engine derives its internal stage settings (defaults, group counts, seed ordering) from these. */
+	settings: TournamentStageSettings | null;
+	/** (Round robin only) Whether matches are playable independently of rounds (league divisions). */
+	independentRounds?: boolean;
 	/** Parallel to seeding; required when settings.hasAbDivisions. 0 = A, 1 = B. */
 	abDivisions?: (0 | 1)[];
 	/** Stage number within the tournament. Defaults to 1 (local data; the repository assigns the real number on insert). */
 	number?: number;
+}
+
+/**
+ * Engine-internal variant of {@link CreateBracketInput}: settings are the
+ * already-resolved internal {@link StageSettings} and seeding may be omitted
+ * in favor of `settings.size` (TBD slots).
+ */
+export interface ResolvedCreateBracketInput
+	extends Omit<
+		CreateBracketInput,
+		"seeding" | "settings" | "independentRounds"
+	> {
+	seeding?: Seeding;
+	settings: StageSettings;
 }
 
 /** Mirrors the old manager.update.match() partial-update input. */
@@ -312,6 +312,5 @@ export interface DroppedTeamsResult extends EngineResult {
 
 // xxx: just rename
 export type TournamentManagerDataSet = BracketData;
-export type Stage = StageData;
 export type Round = RoundData;
 export type Match = MatchData;

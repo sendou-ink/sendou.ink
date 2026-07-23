@@ -65,15 +65,11 @@ function getRoundRobinGroups(creator: StageCreator): ParticipantSlot[][] {
 		return helpers.makeGroups(slots, creator.settings.groupCount);
 	}
 
-	if (
-		Array.isArray(creator.settings.seedOrdering) &&
-		creator.settings.seedOrdering.length !== 1
-	)
-		throw Error("You must specify one seed ordering method.");
-
-	const method = creator.getRoundRobinOrdering();
 	const slots = creator.getSlots();
-	const ordered = ordering[method](slots, creator.settings.groupCount);
+	const ordered = ordering["groups.seed_optimized"](
+		slots,
+		creator.settings.groupCount,
+	);
 	return helpers.makeGroups(ordered, creator.settings.groupCount);
 }
 

@@ -1,13 +1,14 @@
 // Test-only harness giving the pure engine a stateful surface similar to the
 // old BracketsManager, so the vendored test suite could be ported 1:1.
 
+import { createResolved } from "./create";
 import * as Engine from "./index";
 import type {
 	BracketData,
-	CreateBracketInput,
 	GroupData,
 	MatchData,
 	ParticipantResult,
+	ResolvedCreateBracketInput,
 	RoundData,
 	StageData,
 } from "./types";
@@ -23,10 +24,13 @@ export class EngineBracket {
 	data: BracketData | undefined;
 
 	create(
-		input: Omit<CreateBracketInput, "settings"> &
-			Partial<Pick<CreateBracketInput, "settings">>,
+		input: Omit<ResolvedCreateBracketInput, "settings"> &
+			Partial<Pick<ResolvedCreateBracketInput, "settings">>,
 	): void {
-		const created = Engine.create({ ...input, settings: input.settings ?? {} });
+		const created = createResolved({
+			...input,
+			settings: input.settings ?? {},
+		});
 
 		if (!this.data) {
 			this.data = created;

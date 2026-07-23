@@ -91,10 +91,7 @@ export function endDroppedTeamMatches({
 		.map((team) => team.id);
 	if (typeof droppedTeamId === "number") droppedTeamIds.push(droppedTeamId);
 
-	const result = Engine.endDroppedTeamMatches(data, {
-		droppedTeamIds,
-		randomPick: (a, b) => (Math.random() < 0.5 ? a : b), // xxx: why randomPick a param like this?
-	});
+	const result = Engine.endDroppedTeamMatches(data, droppedTeamIds);
 
 	// xxx: maybe move to caller? or repository function
 	for (const matchId of result.endedMatchIds) {

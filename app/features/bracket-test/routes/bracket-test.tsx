@@ -285,21 +285,16 @@ function generateBracketData(
 			name: "Test Bracket",
 			type: "swiss",
 			seeding: teamIds,
-			settings: {
-				swiss: { groupCount: 1, roundCount: 5 },
-			},
+			settings: { groupCount: 1, roundCount: 5 },
 		});
 	}
 
 	const settings =
 		format === "single_elimination"
-			? { consolationFinal: false }
+			? { thirdPlaceMatch: false }
 			: format === "double_elimination"
-				? {}
-				: {
-						groupCount: Math.ceil(teamIds.length / 4),
-						seedOrdering: ["groups.seed_optimized" as const],
-					};
+				? null
+				: { teamsPerGroup: 4 };
 
 	return Engine.create({
 		tournamentId: 1,

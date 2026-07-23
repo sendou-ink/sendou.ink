@@ -10,12 +10,6 @@ import { ordering } from "./seeding";
  * between the winner of both brackets.
  */
 export function createDoubleElimination(creator: StageCreator): void {
-	if (
-		Array.isArray(creator.settings.seedOrdering) &&
-		creator.settings.seedOrdering.length < 1
-	)
-		throw Error("You must specify at least one seed ordering method.");
-
 	const slots = creator.getSlots();
 	const stage = creator.createStage();
 	const method = creator.getStandardBracketFirstRoundOrdering();
