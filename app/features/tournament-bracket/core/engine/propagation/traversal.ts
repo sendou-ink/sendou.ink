@@ -91,10 +91,16 @@ export class Propagator {
 		// Don't update related matches if it's a simple score update.
 		if (!statusChanged && !resultChanged) return;
 
-		if (!helpers.isRoundRobin(stage) && !helpers.isSwiss(stage)) {
-			this.updateRelatedMatches(stored, statusChanged, resultChanged);
-		} else if (helpers.isRoundRobin(stage) && resultChanged) {
-			this.unlockNextRoundRobinRound(stored);
+		switch (stage.type) {
+			case "single_elimination":
+			case "double_elimination":
+				this.updateRelatedMatches(stored, statusChanged, resultChanged);
+				break;
+			case "round_robin":
+				if (resultChanged) this.unlockNextRoundRobinRound(stored);
+				break;
+			case "swiss":
+				break;
 		}
 	}
 
