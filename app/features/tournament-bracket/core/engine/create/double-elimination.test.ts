@@ -31,7 +31,7 @@ describe("Create double elimination stage", () => {
 			name: "Example with 256 participants",
 			tournamentId: 0,
 			type: "double_elimination",
-			settings: { size: 256 },
+			seeding: Array.from({ length: 256 }, (_, i) => i + 1),
 		});
 	});
 

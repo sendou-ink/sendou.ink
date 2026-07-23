@@ -58,10 +58,6 @@ export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
  * TournamentStage.settings today (the old brackets-model StageSettings).
  */
 export interface StageSettings {
-	// xxx: why not inferred?
-	/** The number of participants. */
-	size?: number;
-
 	/** Number of groups in a round-robin stage. */
 	groupCount?: number;
 
@@ -230,15 +226,10 @@ export interface CreateBracketInput {
 
 /**
  * Engine-internal variant of {@link CreateBracketInput}: settings are the
- * already-resolved internal {@link StageSettings} and seeding may be omitted
- * in favor of `settings.size` (TBD slots).
+ * already-resolved internal {@link StageSettings}.
  */
 export interface ResolvedCreateBracketInput
-	extends Omit<
-		CreateBracketInput,
-		"seeding" | "settings" | "independentRounds"
-	> {
-	seeding?: Seeding;
+	extends Omit<CreateBracketInput, "settings" | "independentRounds"> {
 	settings: StageSettings;
 }
 

@@ -22,9 +22,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				id: 1429,
 				name: "Beta Bracket",
 				number: 2,
-				settings: {
-					size: 16,
-				},
+				settings: {},
 				tournament_id: 815,
 				type: "double_elimination",
 				createdAt: 1734286247,
@@ -33,9 +31,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				id: 1430,
 				name: "Alpha Bracket",
 				number: 3,
-				settings: {
-					size: 16,
-				},
+				settings: {},
 				tournament_id: 815,
 				type: "double_elimination",
 				createdAt: 1734286249,
@@ -44,9 +40,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				id: 1431,
 				name: "Gamma Bracket",
 				number: 4,
-				settings: {
-					size: 16,
-				},
+				settings: {},
 				tournament_id: 815,
 				type: "double_elimination",
 				createdAt: 1734286340,

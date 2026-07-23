@@ -8,7 +8,6 @@ import type {
 	ParticipantResult,
 	ParticipantSlot,
 	Result,
-	Seeding,
 	SeedOrdering,
 	Side,
 	StageData,
@@ -295,27 +294,6 @@ export function ensureNoDuplicates<T>(array: (T | null)[]): void {
 }
 
 /**
- * Fixes the seeding by enlarging it if it's not complete.
- *
- * @param seeding The seeding of the stage.
- * @param participantCount The number of participants in the stage.
- */
-export function fixSeeding(
-	seeding: Seeding,
-	participantCount: number,
-): Seeding {
-	if (seeding.length > participantCount)
-		throw Error(
-			"The seeding has more participants than the size of the stage.",
-		);
-
-	if (seeding.length < participantCount)
-		return Array.from(Array(participantCount), (_, i) => seeding[i] || null);
-
-	return seeding;
-}
-
-/**
  * Ensures that the participant count is valid.
  *
  * @param stageType Type of the stage to test.
@@ -325,11 +303,6 @@ export function ensureValidSize(
 	stageType: StageType,
 	participantCount: number,
 ): void {
-	if (participantCount === 0)
-		throw Error(
-			"Impossible to create an empty stage. If you want an empty seeding, just set the size of the stage.",
-		);
-
 	if (participantCount < 2)
 		throw Error("Impossible to create a stage with less than 2 participants.");
 

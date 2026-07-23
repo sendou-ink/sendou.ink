@@ -144,14 +144,14 @@ describe("Create a round-robin stage", () => {
 		expect(realMatchRound.number).toBe(1);
 	});
 
-	test("should create a round-robin stage with to be determined participants", () => {
+	test("should create a round-robin stage split across multiple groups", () => {
 		bracket.create({
 			name: "Example",
 			tournamentId: 0,
 			type: "round_robin",
+			seeding: Array.from({ length: 16 }, (_, i) => i + 1),
 			settings: {
 				groupCount: 4,
-				size: 16,
 			},
 		});
 
@@ -181,6 +181,7 @@ describe("Create a round-robin stage", () => {
 				name: "Example",
 				tournamentId: 0,
 				type: "round_robin",
+				seeding: [1, 2, 3, 4],
 			}),
 		).toThrow("You must specify a group count for round-robin stages.");
 	});
@@ -191,9 +192,9 @@ describe("Create a round-robin stage", () => {
 				name: "Example",
 				tournamentId: 0,
 				type: "round_robin",
+				seeding: [1, 2, 3, 4],
 				settings: {
 					groupCount: 0,
-					size: 4,
 				},
 			}),
 		).toThrow("You must provide a strictly positive group count.");

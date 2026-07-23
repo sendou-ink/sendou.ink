@@ -31,7 +31,7 @@ export function create(input: CreateBracketInput): CreatedBracket {
 /**
  * Engine-internal `create` taking already-resolved internal stage settings.
  * Tests use this to control knobs that are an implementation detail to the
- * app (seed ordering, byes balancing, TBD slots via `settings.size`).
+ * app (seed ordering, byes balancing).
  */
 export function createResolved(
 	input: ResolvedCreateBracketInput,

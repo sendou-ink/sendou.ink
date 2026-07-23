@@ -21,7 +21,7 @@ export function createDoubleElimination(creator: StageCreator): void {
 		ordered,
 	);
 
-	if (helpers.isDoubleEliminationNecessary(creator.settings.size!)) {
+	if (helpers.isDoubleEliminationNecessary(slots.length)) {
 		const winnerLb = creator.createLowerBracket(stage.id, 2, losersWb);
 		createGrandFinal(creator, stage.id, winnerWb, winnerLb);
 	}

@@ -417,7 +417,7 @@ export class Propagator {
 		roundNumber: number,
 	): MatchData[] {
 		if (stage.type === "single_elimination")
-			return this.getPreviousMatchesFinalSingleElimination(match, stage);
+			return this.getPreviousMatchesFinalSingleElimination(match);
 
 		return this.getPreviousMatchesFinalDoubleElimination(match, roundNumber);
 	}
@@ -426,15 +426,13 @@ export class Propagator {
 	 * Gets the matches leading to the given match, which is in a final group (consolation final).
 	 *
 	 * @param match The current match.
-	 * @param stage The parent stage.
 	 */
 	private getPreviousMatchesFinalSingleElimination(
 		match: MatchData,
-		stage: StageData,
 	): MatchData[] {
 		const upperBracket = this.getUpperBracket(match.stage_id);
 		const upperBracketRoundCount = helpers.getUpperBracketRoundCount(
-			stage.settings.size!,
+			this.participantCount(match.stage_id),
 		);
 
 		const semiFinalsRound = this.store.selectFirst("round", {
@@ -648,7 +646,7 @@ export class Propagator {
 
 		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
 
-		const participantCount = stage.settings.size!;
+		const participantCount = this.participantCount(match.stage_id);
 		const method = helpers.getLoserOrdering(participantCount, roundNumberLB);
 		const actualMatchNumberLB = helpers.findLoserMatchNumber(
 			participantCount,
@@ -858,6 +856,26 @@ export class Propagator {
 		});
 		if (!winnerBracket) throw Error("Winner bracket not found.");
 		return winnerBracket;
+	}
+
+	/**
+	 * Gets the participant count of an elimination stage, derived from its upper
+	 * bracket's first round (two participants per match, BYEs included).
+	 *
+	 * @param stageId ID of the stage.
+	 */
+	private participantCount(stageId: number): number {
+		const upperBracket = this.getUpperBracket(stageId);
+		const firstRound = this.store.selectFirst("round", {
+			group_id: upperBracket.id,
+			number: 1,
+		});
+		if (!firstRound) throw Error("First round not found.");
+
+		const firstRoundMatches = this.store.selectAll("match", {
+			round_id: firstRound.id,
+		});
+		return firstRoundMatches.length * 2;
 	}
 
 	/**

@@ -10,7 +10,6 @@ export const PADDLING_POOL_257 = () =>
 					number: 1,
 					settings: {
 						groupCount: 9,
-						size: 35,
 					},
 					tournament_id: 27,
 					type: "round_robin",
@@ -6822,7 +6821,6 @@ export const PADDLING_POOL_255 = () =>
 					number: 1,
 					settings: {
 						groupCount: 9,
-						size: 35,
 					},
 					tournament_id: 18,
 					type: "round_robin",
@@ -14210,9 +14208,7 @@ export const IN_THE_ZONE_32 = ({
 					id: 16,
 					name: "Main bracket",
 					number: 1,
-					settings: {
-						size: 32,
-					},
+					settings: {},
 					tournament_id: 11,
 					type: "double_elimination",
 				},

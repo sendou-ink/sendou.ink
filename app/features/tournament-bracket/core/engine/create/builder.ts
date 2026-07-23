@@ -29,23 +29,21 @@ import {
 export class StageCreator {
 	readonly input: ResolvedCreateBracketInput;
 	settings: StageSettings;
-	seeding: Seeding | undefined;
+	seeding: Seeding;
 	readonly data: BracketData;
 
 	constructor(input: ResolvedCreateBracketInput) {
-		this.input = input;
-		this.settings = structuredClone(input.settings) ?? {};
-		const seeding = input.seeding ? [...input.seeding] : undefined;
-		this.seeding =
-			seeding && input.type !== "round_robin"
-				? padSeedingToPowerOfTwo(seeding)
-				: seeding;
-		this.data = { stage: [], group: [], round: [], match: [] };
-
 		if (!input.name) throw Error("You must provide a name for the stage.");
 
 		if (!Number.isInteger(input.tournamentId))
 			throw Error("You must provide a tournament id for the stage.");
+
+		this.input = input;
+		this.settings = structuredClone(input.settings) ?? {};
+		const seeding = [...input.seeding];
+		this.seeding =
+			input.type !== "round_robin" ? padSeedingToPowerOfTwo(seeding) : seeding;
+		this.data = { stage: [], group: [], round: [], match: [] };
 
 		if (input.type === "single_elimination")
 			this.settings.consolationFinal = this.settings.consolationFinal || false;
@@ -161,7 +159,7 @@ export class StageCreator {
 		number: number,
 		losers: ParticipantSlot[][],
 	): ParticipantSlot {
-		const participantCount = this.settings.size!;
+		const participantCount = this.seeding.length;
 		const roundPairCount = helpers.getRoundPairCount(participantCount);
 
 		let losersId = 0;
@@ -330,31 +328,13 @@ export class StageCreator {
 	}
 
 	/**
-	 * Returns a list of slots.
-	 * - If `seeding` was given, uses it.
-	 * - If `size` was given, only returns a list of empty slots.
+	 * Returns the list of slots from the seeding.
 	 *
 	 * @param positions An optional list of positions (seeds) for a manual ordering.
 	 */
 	getSlots(positions?: number[]): ParticipantSlot[] {
-		const size = this.settings.size || this.seeding?.length || 0;
-		helpers.ensureValidSize(this.input.type, size);
-
-		if (size && !this.seeding)
-			return Array.from(Array(size), (_: ParticipantSlot, i) => ({
-				id: null,
-				position: i + 1,
-			}));
-
-		if (!this.seeding) throw Error("Either size or seeding must be given.");
-
-		this.settings = {
-			...this.settings,
-			size, // Always set the size.
-		};
-
+		helpers.ensureValidSize(this.input.type, this.seeding.length);
 		helpers.ensureNoDuplicates(this.seeding);
-		this.seeding = helpers.fixSeeding(this.seeding, size);
 
 		return this.getSlotsUsingIds(this.seeding, positions);
 	}

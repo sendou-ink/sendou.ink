@@ -37,10 +37,8 @@ describe("BYE handling", () => {
 			name: "Example with BYEs",
 			tournamentId: 0,
 			type: "double_elimination",
-			seeding: [1, 2],
-			settings: {
-				size: 4,
-			},
+			seeding: [1, 2, null, null],
+			settings: {},
 		});
 
 		expect(bracket.match(0).opponent1?.id).toBe(1);
@@ -59,9 +57,8 @@ describe("Position checks", () => {
 			name: "Example with double grand final",
 			tournamentId: 0,
 			type: "double_elimination",
-			settings: {
-				size: 8,
-			},
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: {},
 		});
 	});
 
@@ -132,37 +129,22 @@ describe("Special cases", () => {
 		expect(bracket.match(0).opponent2).toBe(null);
 	});
 
-	test("should throw if the size of a stage is not a power of two", () => {
-		expect(() =>
-			bracket.create({
-				name: "Example",
-				tournamentId: 0,
-				type: "single_elimination",
-				settings: { size: 3 },
-			}),
-		).toThrow(
-			"The library only supports a participant count which is a power of two.",
-		);
-	});
-
 	test("should throw if the participant count of a stage is less than two", () => {
 		expect(() =>
 			bracket.create({
 				name: "Example",
 				tournamentId: 0,
 				type: "single_elimination",
-				settings: { size: 0 },
+				seeding: [],
 			}),
-		).toThrow(
-			"Impossible to create an empty stage. If you want an empty seeding, just set the size of the stage.",
-		);
+		).toThrow("Impossible to create a stage with less than 2 participants.");
 
 		expect(() =>
 			bracket.create({
 				name: "Example",
 				tournamentId: 0,
 				type: "single_elimination",
-				settings: { size: 1 },
+				seeding: [1],
 			}),
 		).toThrow("Impossible to create a stage with less than 2 participants.");
 	});
@@ -218,9 +200,7 @@ describe("Reset match", () => {
 			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, null, null, null, null, null, null, 2],
-			settings: {
-				size: 8,
-			},
+			settings: {},
 		});
 
 		bracket.updateMatch({
