@@ -13,7 +13,10 @@ import type { Notification as NotificationValue } from "~/features/notifications
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
-import type { ParticipantResult } from "~/features/tournament-bracket/core/engine/types";
+import type {
+	ParticipantResult,
+	StageSettings,
+} from "~/features/tournament-bracket/core/engine/types";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
@@ -665,8 +668,8 @@ export interface TournamentMatch {
 	groupId: number;
 	id: GeneratedAlways<number>;
 	number: number;
-	opponentOne: JSONColumnType<ParticipantResult>;
-	opponentTwo: JSONColumnType<ParticipantResult>;
+	opponentOne: JSONColumnTypeNullable<ParticipantResult>;
+	opponentTwo: JSONColumnTypeNullable<ParticipantResult>;
 	roundId: number;
 	stageId: number;
 	status: (typeof TournamentMatchStatus)[keyof typeof TournamentMatchStatus];
@@ -809,7 +812,7 @@ export interface TournamentStage {
 	id: GeneratedAlways<number>;
 	name: string;
 	number: number;
-	settings: string;
+	settings: JSONColumnType<StageSettings>;
 	tournamentId: number;
 	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
 	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(

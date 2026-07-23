@@ -5,13 +5,11 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import type {
 	BracketData,
-	CreatedBracket,
 	GeneratedRound,
 	MatchData,
 	MatchStatus,
 	ParticipantResult,
 	RoundData,
-	StageSettings,
 } from "./core/engine/types";
 import { MatchStatus as MatchStatusValues } from "./core/engine/types";
 
@@ -90,7 +88,7 @@ export async function findByTournamentId(
 			tournament_id: stage.tournamentId,
 			name: stage.name,
 			type: stage.type,
-			settings: parseColumn<StageSettings>(stage.settings) ?? {},
+			settings: stage.settings ?? {},
 			number: stage.number,
 			createdAt: stage.createdAt,
 		})),
@@ -99,25 +97,19 @@ export async function findByTournamentId(
 			stage_id: group.stageId,
 			number: group.number,
 		})),
-		round: rounds.map((round) => {
-			const maps = parseColumn<
-				NonNullable<BracketData["round"][number]["maps"]>
-			>(round.maps);
-
-			return {
-				id: round.id,
-				stage_id: round.stageId,
-				group_id: round.groupId,
-				number: round.number,
-				maps: maps
-					? {
-							count: maps.count,
-							type: maps.type,
-							pickBan: maps.pickBan,
-						}
-					: null,
-			};
-		}),
+		round: rounds.map((round) => ({
+			id: round.id,
+			stage_id: round.stageId,
+			group_id: round.groupId,
+			number: round.number,
+			maps: round.maps
+				? {
+						count: round.maps.count,
+						type: round.maps.type,
+						pickBan: round.maps.pickBan,
+					}
+				: null,
+		})),
 		match: matches.map((match) => ({
 			id: match.id,
 			stage_id: match.stageId,
@@ -143,7 +135,7 @@ export async function findByTournamentId(
 export async function insertBracket(
 	args: {
 		tournamentId: number;
-		bracket: CreatedBracket;
+		bracket: BracketData;
 	},
 	trx: DbOrTrx = db,
 ): Promise<{ stageId: number; rounds: RoundData[] }> {
@@ -311,15 +303,14 @@ export function resetBracket(tournamentStageId: number) {
 }
 
 function hydrateOpponent(
-	raw: unknown,
+	opponent: (ParticipantResult & { totalPoints?: number }) | null,
 	kosTotal: number | null,
 ): ParticipantResult | null {
-	const parsed = parseColumn<ParticipantResult & { totalPoints?: number }>(raw);
-	if (!parsed) return null;
+	if (!opponent) return null;
 
 	// old write paths serialized the aggregated fields into the JSON; they are
 	// stale residue and must not shadow the fresh aggregation
-	const { totalPoints, totalKos, ...persisted } = parsed;
+	const { totalPoints, totalKos, ...persisted } = opponent;
 
 	return {
 		...persisted,
@@ -327,27 +318,13 @@ function hydrateOpponent(
 	};
 }
 
-/** Opponents are stored as JSON with the SQL-aggregated fields stripped ("null" string for BYEs). */
-function serializeOpponent(opponent: ParticipantResult | null): string {
-	if (!opponent) return "null";
+/** Opponents are stored as JSON with the SQL-aggregated fields stripped (NULL for BYEs). */
+function serializeOpponent(opponent: ParticipantResult | null): string | null {
+	if (!opponent) return null;
 
 	const { totalKos, totalPoints, ...persisted } =
 		opponent as ParticipantResult & {
 			totalPoints?: number;
 		};
 	return JSON.stringify(persisted);
-}
-
-// xxx: we could db migrate this to be unnecessary?
-/**
- * Columns can arrive as raw JSON strings or already parsed by
- * FastParseJSONResultsPlugin (which leaves the "null" string untouched).
- */
-function parseColumn<T>(raw: unknown): T | null {
-	if (raw == null) return null;
-	if (typeof raw === "string") {
-		if (raw === "null") return null;
-		return JSON.parse(raw) as T;
-	}
-	return raw as T;
 }

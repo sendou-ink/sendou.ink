@@ -1,3 +1,4 @@
+import invariant from "~/utils/invariant";
 import type { BracketData, EngineResult, ReportResultInput } from "../types";
 import { Store } from "./store";
 import { Propagator } from "./traversal";
@@ -17,7 +18,7 @@ export function reportResult(
 	const propagator = new Propagator(store);
 
 	const stored = store.select("match", input.matchId);
-	if (!stored) throw Error("Match not found."); // xxx: use invariant
+	invariant(stored, "Match not found");
 
 	propagator.updateMatch(
 		stored,

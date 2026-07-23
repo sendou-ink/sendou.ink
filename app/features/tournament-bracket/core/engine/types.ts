@@ -277,9 +277,6 @@ export interface EngineResult {
 	changedMatches: MatchData[];
 }
 
-/** Result of Engine.create — nothing persisted yet, ids are local (0..n-1 per table). */
-export interface CreatedBracket extends BracketData {} // xxx: empty extends?
-
 /** Matches to INSERT when a new round is generated (swiss). */
 export interface GeneratedRound {
 	groupId: number;

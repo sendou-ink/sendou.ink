@@ -265,7 +265,7 @@ describe("Tournament match page", () => {
 		it("should 404 when accessing a BYE match", async () => {
 			await db
 				.updateTable("TournamentMatch")
-				.set({ opponentTwo: JSON.stringify(null) })
+				.set({ opponentTwo: null })
 				.where("id", "=", 1)
 				.execute();
 

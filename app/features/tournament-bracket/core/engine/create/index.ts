@@ -1,6 +1,6 @@
 import type {
+	BracketData,
 	CreateBracketInput,
-	CreatedBracket,
 	ResolvedCreateBracketInput,
 } from "../types";
 import { StageCreator } from "./builder";
@@ -16,7 +16,7 @@ import { createSwiss } from "./swiss";
  * (0..n-1 per table); the repository maps them to real row ids on insert.
  * For swiss this includes the empty future rounds + round 1 matches.
  */
-export function create(input: CreateBracketInput): CreatedBracket {
+export function create(input: CreateBracketInput): BracketData {
 	return createResolved({
 		tournamentId: input.tournamentId,
 		name: input.name,
@@ -33,9 +33,7 @@ export function create(input: CreateBracketInput): CreatedBracket {
  * Tests use this to control knobs that are an implementation detail to the
  * app (seed ordering, byes balancing).
  */
-export function createResolved(
-	input: ResolvedCreateBracketInput,
-): CreatedBracket {
+export function createResolved(input: ResolvedCreateBracketInput): BracketData {
 	if (input.type === "swiss") return createSwiss(input);
 
 	const creator = new StageCreator(input);
