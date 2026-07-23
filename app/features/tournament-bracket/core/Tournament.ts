@@ -123,53 +123,6 @@ export class Tournament {
 						type,
 					}),
 				);
-				// xxx: lets aim to get rid of this else if
-			} else if (type === "swiss") {
-				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: this.resolveTeamsFromSignups(bracketIdx);
-
-				const { checkedInTeams, notCheckedInTeams } =
-					this.divideTeamsToCheckedInAndNotCheckedIn({
-						teams,
-						bracketIdx,
-						usesRegularCheckIn: !sources,
-						requiresCheckIn,
-					});
-
-				this.brackets.push(
-					createBracket({
-						id: -1 * bracketIdx,
-						idx: bracketIdx,
-						tournament: this,
-						seeding: checkedInTeams,
-						preview: true,
-						name,
-						requiresCheckIn,
-						startTime: startTime ? databaseTimestampToDate(startTime) : null,
-						settings: settings ?? null,
-						data: Engine.create({
-							tournamentId: this.ctx.id,
-							name,
-							type: "swiss",
-							seeding: checkedInTeams,
-							settings: this.bracketManagerSettings(
-								settings,
-								type,
-								checkedInTeams.length,
-							),
-						}),
-						type,
-						sources,
-						createdAt: null,
-						canBeStarted:
-							(!startTime || startTime < databaseTimestampNow()) &&
-							checkedInTeams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START &&
-							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
-						teamsPendingCheckIn:
-							bracketIdx !== 0 ? notCheckedInTeams : undefined,
-					}),
-				);
 			} else {
 				const { teams, relevantMatchesFinished } = sources
 					? this.resolveTeamsFromSources(sources, bracketIdx)
