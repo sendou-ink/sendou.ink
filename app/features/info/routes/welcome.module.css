@@ -1,0 +1,58 @@
+.heroFigure {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+
+	& figcaption {
+		align-self: flex-end;
+	}
+}
+
+.heroContainer {
+	position: relative;
+	border-radius: var(--radius-box);
+	overflow: hidden;
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background-color: var(--color-second);
+		opacity: 0.3;
+		pointer-events: none;
+	}
+}
+
+.heroImg {
+	width: 100%;
+	height: auto;
+	aspect-ratio: 1 / 1;
+	object-fit: cover;
+	object-position: center 50%;
+	transform: scale(1.4);
+	transform-origin: 87% 60%;
+	display: block;
+}
+
+.paragraph {
+	line-height: 1.75;
+}
+
+.pagePill {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5) var(--s-2);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	vertical-align: middle;
+	transition: background-color 0.15s ease-out;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}

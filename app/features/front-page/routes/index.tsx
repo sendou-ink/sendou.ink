@@ -14,6 +14,7 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
 import { Config } from "~/config";
+import { useUser } from "~/features/auth/core/user";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
@@ -29,6 +30,7 @@ import {
 	navIconUrl,
 	SENDOUQ_PAGE,
 	sqHeaderGuyImageUrl,
+	WELCOME_PAGE,
 } from "~/utils/urls";
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
 
@@ -41,6 +43,7 @@ export const handle: SendouRouteHandle = {
 export default function FrontPage() {
 	return (
 		<Main className={styles.frontPageContainer}>
+			<WelcomeBanner />
 			<LeagueBanner />
 			<SeasonBanner />
 			<SplatoonRotations />
@@ -140,6 +143,20 @@ function SeasonCard() {
 				{isInFuture ? t("front:sq.prepare") : t("front:sq.participate")}
 			</Link>
 		</div>
+	);
+}
+
+function WelcomeBanner() {
+	const { t } = useTranslation(["front"]);
+	const user = useUser();
+
+	if (user) return null;
+
+	return (
+		<Link to={WELCOME_PAGE} className={styles.welcomeBanner}>
+			{t("front:welcomeBanner")}
+			<ArrowRightIcon />
+		</Link>
 	);
 }
 

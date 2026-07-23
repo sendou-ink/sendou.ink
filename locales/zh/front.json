@@ -3,6 +3,7 @@
 	"nav.tools": "工具",
 	"nav.community": "社区",
 	"nav.weapons": "武器",
+	"welcomeBanner": "",
 	"sq.season": "第 {{nth}} 赛季",
 	"sq.prepare": "立即准备！",
 	"sq.participate": "立即参加！",
