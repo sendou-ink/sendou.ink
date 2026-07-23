@@ -10,6 +10,7 @@ import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.se
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	type TournamentDataTeam,
@@ -46,8 +47,6 @@ import { insertTournamentMatchGameResultParticipant } from "../queries/insertTou
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import {
-	isSetOverByScore,
-	matchEndedEarly,
 	matchIsLocked,
 	tournamentMatchWebsocketRoom,
 } from "../tournament-match-utils";
@@ -161,18 +160,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 			];
 			invariant(currentMap, "Can't resolve current map");
 
-			const scoreToIncrement = () => {
-				if (data.winnerTeamId === match.opponentOne?.id) return 0;
-				if (data.winnerTeamId === match.opponentTwo?.id) return 1;
-
-				errorToastIfFalsy(false, "Winner team id is invalid");
-			};
+			const winnerSide = data.winnerTeamId === match.opponentOne.id ? 0 : 1;
 
 			errorToastIfFalsy(
 				!data.points ||
 					data.points[0] === data.points[1] ||
-					(scoreToIncrement() === 0 && data.points[0] > data.points[1]) ||
-					(scoreToIncrement() === 1 && data.points[1] > data.points[0]),
+					(winnerSide === 0 && data.points[0] > data.points[1]) ||
+					(winnerSide === 1 && data.points[1] > data.points[0]),
 				"Points are invalid (winner must have more points than loser)",
 			);
 
@@ -184,14 +178,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				!bracket.collectsKos || data.points,
 				"Points are required for this bracket",
 			);
-
-			scores[scoreToIncrement()]++;
-
-			const setOver = isSetOverByScore({
-				count: match.roundMaps?.count ?? match.bestOf,
-				countType: match.roundMaps?.type ?? "BEST_OF",
-				scores,
-			});
 
 			const teamOneRoster = tournamentTeamToActiveRosterUserIds(
 				tournament.teamById(match.opponentOne.id!)!,
@@ -212,65 +198,47 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			try {
-				await db.transaction().execute(async (trx) => {
-					const bracketData = await BracketRepository.findByTournamentId(
+				const { result: reported, endedMatchIds } =
+					await executeBracketOperation({
 						tournamentId,
-						trx,
-					);
-					const reported = Engine.reportResult(bracketData, {
-						matchId: match.id,
-						// xxx: should we be able to know that inside reportResult? no need to pass if we track best of etc.
-						opponent1: {
-							score: scores[0],
-							result: setOver && scores[0] > scores[1] ? "win" : undefined,
-						},
-						opponent2: {
-							score: scores[1],
-							result: setOver && scores[1] > scores[0] ? "win" : undefined,
+						tournament,
+						operation: (bracketData) =>
+							Engine.reportGameResult(bracketData, {
+								matchId: match.id,
+								winnerTeamId: data.winnerTeamId,
+							}),
+						endDroppedTeams: (result) => result.setOver,
+						inTransaction: () => {
+							const result = insertTournamentMatchGameResult({
+								matchId: match.id,
+								mode: currentMap.mode,
+								stageId: currentMap.stageId,
+								reporterId: user.id,
+								winnerTeamId: data.winnerTeamId,
+								number: data.position + 1,
+								source: String(currentMap.source),
+								opponentOnePoints: data.points?.[0] ?? null,
+								opponentTwoPoints: data.points?.[1] ?? null,
+							});
+
+							for (const userId of teamOneRoster) {
+								insertTournamentMatchGameResultParticipant({
+									matchGameResultId: result.id,
+									userId,
+									tournamentTeamId: match.opponentOne!.id!,
+								});
+							}
+							for (const userId of teamTwoRoster) {
+								insertTournamentMatchGameResultParticipant({
+									matchGameResultId: result.id,
+									userId,
+									tournamentTeamId: match.opponentTwo!.id!,
+								});
+							}
 						},
 					});
-					let changedMatches = reported.changedMatches;
-					if (setOver) {
-						const droppedResult = endDroppedTeamMatches({
-							tournament,
-							data: reported.data,
-						});
-						endedDroppedMatchIds = droppedResult.endedMatchIds;
-						changedMatches = [
-							...changedMatches,
-							...droppedResult.changedMatches,
-						];
-					}
-
-					await BracketRepository.applyMatchChanges(changedMatches, trx);
-
-					const result = insertTournamentMatchGameResult({
-						matchId: match.id,
-						mode: currentMap.mode,
-						stageId: currentMap.stageId,
-						reporterId: user.id,
-						winnerTeamId: data.winnerTeamId,
-						number: data.position + 1,
-						source: String(currentMap.source),
-						opponentOnePoints: data.points?.[0] ?? null,
-						opponentTwoPoints: data.points?.[1] ?? null,
-					});
-
-					for (const userId of teamOneRoster) {
-						insertTournamentMatchGameResultParticipant({
-							matchGameResultId: result.id,
-							userId,
-							tournamentTeamId: match.opponentOne!.id!,
-						});
-					}
-					for (const userId of teamTwoRoster) {
-						insertTournamentMatchGameResultParticipant({
-							matchGameResultId: result.id,
-							userId,
-							tournamentTeamId: match.opponentTwo!.id!,
-						});
-					}
-				});
+				endedDroppedMatchIds = endedMatchIds;
+				setIsOver = reported.setOver;
 			} catch (error) {
 				// another request already reported this game in the race window,
 				// let their page refresh to pick up the already-recorded result
@@ -280,7 +248,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				throw error;
 			}
 
-			if (setOver) {
+			if (setIsOver) {
 				// the set ended, so weapons reported in advance for map indexes
 				// beyond the games actually played are trimmed
 				await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
@@ -291,7 +259,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
-			setIsOver = setOver;
 
 			break;
 		}
@@ -336,14 +303,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const lastResult = results[results.length - 1];
 			invariant(lastResult, "Last result is missing");
 
-			const shouldReset = results.length === 1;
-
-			if (lastResult.winnerTeamId === match.opponentOne?.id) {
-				scores[0]--;
-			} else {
-				scores[1]--;
-			}
-
 			logger.info(
 				`Undoing score: Position: ${data.position}; User ID: ${user.id}; Match ID: ${match.id}`,
 			);
@@ -382,35 +341,22 @@ export const action: ActionFunction = async ({ params, request }) => {
 				return unplayedPicks[0] ? [unplayedPicks[0].number] : [];
 			})();
 
-			await db.transaction().execute(async (trx) => {
-				deleteTournamentMatchGameResultById(lastResult.id);
+			await executeBracketOperation({
+				tournamentId,
+				tournament,
+				operation: (bracketData) =>
+					Engine.undoGameResult(bracketData, {
+						matchId: match.id,
+						lastGameWinnerTeamId: lastResult.winnerTeamId,
+					}),
+				endDroppedTeams: false,
+				inTransaction: () => {
+					deleteTournamentMatchGameResultById(lastResult.id);
 
-				const bracketData = await BracketRepository.findByTournamentId(
-					tournamentId,
-					trx,
-				);
-				// xxx: i guess reportResult should not be needed here? just "Engine.resetMatchResults"
-				const reported = Engine.reportResult(bracketData, {
-					matchId: match.id,
-					opponent1: {
-						score: shouldReset ? undefined : scores[0],
-					},
-					opponent2: {
-						score: shouldReset ? undefined : scores[1],
-					},
-				});
-
-				let changedMatches = reported.changedMatches;
-				if (shouldReset) {
-					const reset = Engine.resetMatchResults(reported.data, match.id);
-					changedMatches = [...changedMatches, ...reset.changedMatches];
-				}
-
-				await BracketRepository.applyMatchChanges(changedMatches, trx);
-
-				for (const number of pickBanEventNumbersToDelete) {
-					deletePickBanEvent({ matchId, number });
-				}
+					for (const number of pickBanEventNumbersToDelete) {
+						deletePickBanEvent({ matchId, number });
+					}
+				},
 			});
 
 			emitMatchUpdate = true;
@@ -654,11 +600,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "REOPEN_MATCH": {
-			const scoreOne = match.opponentOne?.score ?? 0;
-			const scoreTwo = match.opponentTwo?.score ?? 0;
-			invariant(typeof scoreOne === "number", "Score one is missing");
-			invariant(typeof scoreTwo === "number", "Score two is missing");
-
 			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 			errorToastIfFalsy(
 				tournament.matchCanBeReopened(match.id),
@@ -669,66 +610,37 @@ export const action: ActionFunction = async ({ params, request }) => {
 				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
 
-			const endedEarly = matchEndedEarly({
-				opponentOne: { score: scoreOne, result: match.opponentOne?.result },
-				opponentTwo: { score: scoreTwo, result: match.opponentTwo?.result },
-				count: match.roundMaps.count,
-				countType: match.roundMaps.type,
-			});
-
-			if (!endedEarly) {
-				invariant(scoreOne !== scoreTwo, "Scores are equal");
-				invariant(lastResult, "Last result is missing");
-
-				if (lastResult.winnerTeamId === match.opponentOne?.id) {
-					scores[0]--;
-				} else {
-					scores[1]--;
-				}
-			}
-
-			logger.info(
-				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${endedEarly}`,
-			);
-
 			const followingMatches = tournament.followingMatches(match.id);
 			const bracketFormat = tournament.bracketByIdx(
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!.type;
-			await db.transaction().execute(async (trx) => {
-				// xxx: feels hacky
-				// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
-				if (bracketFormat !== "round_robin") {
-					for (const followingMatch of followingMatches) {
-						deleteMatchPickBanEvents(followingMatch.id);
+			const { result: reopened } = await executeBracketOperation({
+				tournamentId,
+				tournament,
+				operation: (bracketData) => Engine.reopenMatch(bracketData, match.id),
+				endDroppedTeams: false,
+				inTransaction: (result) => {
+					// xxx: feels hacky, not kysely
+					// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
+					if (bracketFormat !== "round_robin") {
+						for (const followingMatch of followingMatches) {
+							deleteMatchPickBanEvents(followingMatch.id);
+						}
 					}
-				}
 
-				// xxx: feels hacky
-				// when the set was force-ended early no extra result was inserted for
-				// the forced win, so the last result is a genuinely played game and must
-				// be kept to avoid desyncing the score from the results
-				if (!endedEarly && lastResult) {
-					deleteTournamentMatchGameResultById(lastResult.id);
-				}
-
-				const bracketData = await BracketRepository.findByTournamentId(
-					tournamentId,
-					trx,
-				);
-				const reported = Engine.reportResult(bracketData, {
-					matchId: match.id,
-					opponent1: {
-						score: endedEarly ? scoreOne : scores[0],
-						result: undefined,
-					},
-					opponent2: {
-						score: endedEarly ? scoreTwo : scores[1],
-						result: undefined,
-					},
-				});
-				await BracketRepository.applyMatchChanges(reported.changedMatches, trx);
+					// when the set was force-ended early no extra result was inserted for
+					// the forced win, so the last result is a genuinely played game and must
+					// be kept to avoid desyncing the score from the results
+					if (!result.endedEarly) {
+						invariant(lastResult, "Last result is missing");
+						deleteTournamentMatchGameResultById(lastResult.id);
+					}
+				},
 			});
+
+			logger.info(
+				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${reopened.endedEarly}`,
+			);
 
 			// the teams advanced into following matches are being pulled back out,
 			// so those "waiting for teams" pages need to revalidate too
@@ -838,35 +750,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!data.winnerTeamId}`,
 			);
 
-			await db.transaction().execute(async (trx) => {
-				// xxx: this find -> report -> enddroppedteam -> apply is repeated in quite a few places, helper?
-				const bracketData = await BracketRepository.findByTournamentId(
-					tournamentId,
-					trx,
-				);
-				const reported = Engine.reportResult(bracketData, {
-					matchId: match.id,
-					opponent1: {
-						score: match.opponentOne?.score,
-						result: winnerTeamId === match.opponentOne!.id ? "win" : "loss",
-					},
-					opponent2: {
-						score: match.opponentTwo?.score,
-						result: winnerTeamId === match.opponentTwo!.id ? "win" : "loss",
-					},
-				});
-
-				const droppedResult = endDroppedTeamMatches({
-					tournament,
-					data: reported.data,
-				});
-				endedDroppedMatchIds = droppedResult.endedMatchIds;
-
-				await BracketRepository.applyMatchChanges(
-					[...reported.changedMatches, ...droppedResult.changedMatches],
-					trx,
-				);
+			const { endedMatchIds } = await executeBracketOperation({
+				tournamentId,
+				tournament,
+				operation: (bracketData) =>
+					Engine.endSet(bracketData, {
+						matchId: match.id,
+						winnerTeamId,
+					}),
+				endDroppedTeams: true,
 			});
+			endedDroppedMatchIds = endedMatchIds;
 
 			// the set ended early so no further games will be played; trim weapons
 			// reported in advance for map indexes beyond the games actually played
@@ -981,4 +875,56 @@ function canReportTournamentScore({
 		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
 
 	return !matchIsOver && (isMemberOfATeamInTheMatch || isOrganizer);
+}
+
+/**
+ * Runs an engine operation against freshly hydrated bracket data and persists
+ * the resulting match changes, all in one transaction: hydrate → operate →
+ * (end dropped teams' matches) → apply changes → extra statements.
+ */
+async function executeBracketOperation<T extends Engine.EngineResult>({
+	tournamentId,
+	tournament,
+	operation,
+	endDroppedTeams,
+	inTransaction,
+}: {
+	tournamentId: number;
+	tournament: Tournament;
+	operation: (bracketData: Engine.BracketData) => T;
+	/** Whether unfinished matches of dropped out teams should be ended after the operation (resolved from its result when given a function). */
+	endDroppedTeams: boolean | ((result: T) => boolean);
+	/** Extra statements to run inside the same transaction, after the match changes have been applied. */
+	inTransaction?: (result: T) => void | Promise<void>;
+}): Promise<{ result: T; endedMatchIds: number[] }> {
+	let result!: T;
+	let endedMatchIds: number[] = [];
+
+	await db.transaction().execute(async (trx) => {
+		const bracketData = await BracketRepository.findByTournamentId(
+			tournamentId,
+			trx,
+		);
+		result = operation(bracketData);
+
+		let changedMatches = result.changedMatches;
+
+		const shouldEndDroppedTeamMatches =
+			typeof endDroppedTeams === "function"
+				? endDroppedTeams(result)
+				: endDroppedTeams;
+		if (shouldEndDroppedTeamMatches) {
+			const droppedResult = endDroppedTeamMatches({
+				tournament,
+				data: result.data,
+			});
+			endedMatchIds = droppedResult.endedMatchIds;
+			changedMatches = [...changedMatches, ...droppedResult.changedMatches];
+		}
+
+		await BracketRepository.applyMatchChanges(changedMatches, trx);
+		await inTransaction?.(result);
+	});
+
+	return { result, endedMatchIds };
 }

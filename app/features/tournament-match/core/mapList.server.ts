@@ -1,8 +1,6 @@
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
-import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
-import type { Round } from "~/features/tournament-bracket/core/engine/types";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
@@ -12,7 +10,6 @@ import type {
 	TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
-import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 
@@ -239,77 +236,4 @@ function resolveFreshTeamPickedMapList(
 			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		});
 	}
-}
-
-export function roundMapsFromInput({
-	roundsFromDB,
-	virtualRounds,
-	maps,
-	bracket,
-}: {
-	roundsFromDB: Round[];
-	virtualRounds: Round[];
-	maps: (TournamentRoundMaps & { roundId: number })[];
-	bracket: Bracket;
-}) {
-	const expandedMaps =
-		bracket.type === "round_robin" || bracket.type === "swiss"
-			? expandMaps({ maps, virtualRounds })
-			: maps;
-
-	const virtualGroupIdToReal = (virtualGroupId: number) => {
-		const minRealGroupId = Math.min(...roundsFromDB.map((r) => r.group_id));
-		const minVirtualGroupId = Math.min(...virtualRounds.map((r) => r.group_id));
-
-		return virtualGroupId - minVirtualGroupId + minRealGroupId;
-	};
-
-	return expandedMaps.map((map) => {
-		const virtualRound = virtualRounds.find((r) => r.id === map.roundId);
-		invariant(
-			virtualRound,
-			`No virtual round found for map with round id: ${map.roundId}`,
-		);
-
-		const realRoundId = roundsFromDB.find(
-			(r) =>
-				r.number === virtualRound.number &&
-				r.group_id === virtualGroupIdToReal(virtualRound.group_id),
-		)?.id;
-		invariant(realRoundId, "No real round found for virtual round");
-
-		return { ...map, roundId: realRoundId };
-	});
-}
-
-function expandMaps({
-	virtualRounds,
-	maps,
-}: {
-	virtualRounds: Round[];
-	maps: (TournamentRoundMaps & { roundId: number })[];
-}) {
-	const result: typeof maps = [];
-
-	const mapsByNumber = maps.reduce(
-		(acc, map) => {
-			const number = virtualRounds.find((r) => r.id === map.roundId)?.number;
-			invariant(number, "No number found for round id");
-
-			acc.set(number, map);
-			return acc;
-		},
-		new Map() as Map<number, (typeof maps)[number]>,
-	);
-	for (const round of virtualRounds) {
-		const maps = mapsByNumber.get(round.number);
-		invariant(maps, "No maps found for round number");
-
-		result.push({
-			...maps,
-			roundId: round.id,
-		});
-	}
-
-	return result;
 }

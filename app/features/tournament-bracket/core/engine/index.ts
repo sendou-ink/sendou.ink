@@ -9,5 +9,13 @@ export { hasThirdPlaceMatch, roundRobinGroupCount } from "./create/settings";
 export { endDroppedTeamMatches } from "./propagation/dropped-teams";
 export { reportResult } from "./propagation/report-result";
 export { resetMatchResults } from "./propagation/reset-result";
+export {
+	endSet,
+	isSetOverByScore,
+	matchEndedEarly,
+	reopenMatch,
+	reportGameResult,
+	undoGameResult,
+} from "./propagation/set";
 export { generateRound } from "./swiss/pairing";
 export * from "./types";

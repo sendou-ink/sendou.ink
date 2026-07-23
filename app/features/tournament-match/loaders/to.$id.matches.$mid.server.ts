@@ -7,6 +7,7 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
+import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import { MatchStatus as Status } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
@@ -23,7 +24,6 @@ import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
-import { matchEndedEarly } from "../tournament-match-utils";
 
 export type TournamentMatchLoaderData = SerializeFrom<typeof loader>;
 

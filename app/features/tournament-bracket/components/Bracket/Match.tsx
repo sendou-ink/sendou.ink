@@ -11,7 +11,7 @@ import {
 	useTournament,
 	useTournamentVods,
 } from "~/features/tournament/routes/to.$id";
-import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
+import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";

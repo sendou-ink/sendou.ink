@@ -1,5 +1,4 @@
 import type { ActionFunction } from "react-router";
-import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -7,11 +6,9 @@ import {
 	calculateTournamentTierFromTeams,
 	MIN_TEAMS_FOR_TIERING,
 } from "~/features/tournament/core/tiering";
-import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { roundMapsFromInput } from "~/features/tournament-match/core/mapList.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -110,23 +107,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 				settings: bracket.settings,
 				independentRounds: tournament.isLeagueDivision,
 				abDivisions,
+				maps,
 			});
 
-			await db.transaction().execute(async (trx) => {
-				const { rounds } = await BracketRepository.insertBracket(
-					{ tournamentId, bracket: createdBracket },
-					trx,
-				);
-
-				// xxx: should not be separate
-				updateRoundMaps(
-					roundMapsFromInput({
-						virtualRounds: bracket.data.round,
-						roundsFromDB: rounds,
-						maps,
-						bracket,
-					}),
-				);
+			await BracketRepository.insertBracket({
+				tournamentId,
+				bracket: createdBracket,
 			});
 
 			// persist maps as prepared even if they weren't initially so sibling brackets can reuse them

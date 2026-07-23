@@ -9,11 +9,11 @@ import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponRepo
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
-import { isSetOverByScore } from "../tournament-match-utils";
 
 export function TournamentMatchActionTab({
 	data,

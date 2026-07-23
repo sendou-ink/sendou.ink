@@ -9,7 +9,6 @@ import type {
 	MatchData,
 	MatchStatus,
 	ParticipantResult,
-	RoundData,
 } from "./core/engine/types";
 import { MatchStatus as MatchStatusValues } from "./core/engine/types";
 
@@ -102,13 +101,7 @@ export async function findByTournamentId(
 			stage_id: round.stageId,
 			group_id: round.groupId,
 			number: round.number,
-			maps: round.maps
-				? {
-						count: round.maps.count,
-						type: round.maps.type,
-						pickBan: round.maps.pickBan,
-					}
-				: null,
+			maps: round.maps ?? null,
 		})),
 		match: matches.map((match) => ({
 			id: match.id,
@@ -128,91 +121,80 @@ export async function findByTournamentId(
  * Persists Engine.create output in one transaction. Inserts stage → groups →
  * rounds → matches, translating the engine's local ids to real row ids. The
  * stage number is assigned from the existing stages of the tournament.
- *
- * @returns the created stage id and the created round rows (with real ids),
- * needed for the round map-list assignment.
  */
-export async function insertBracket(
-	args: {
-		tournamentId: number;
-		bracket: BracketData;
-	},
-	trx: DbOrTrx = db,
-): Promise<{ stageId: number; rounds: RoundData[] }> {
+export function insertBracket(args: {
+	tournamentId: number;
+	bracket: BracketData;
+}): Promise<{ stageId: number }> {
 	const stageInput = args.bracket.stage[0];
 	if (!stageInput) throw new Error("Bracket has no stage");
 
-	const stage = await trx
-		.insertInto("TournamentStage")
-		.values({
-			tournamentId: args.tournamentId,
-			name: stageInput.name,
-			type: stageInput.type,
-			settings: JSON.stringify(stageInput.settings),
-			number: kyselySql<number>`(select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = ${args.tournamentId})`,
-			createdAt: databaseTimestampNow(),
-		})
-		.returning(["id"])
-		.executeTakeFirstOrThrow();
-
-	const groupIdMapping = new Map<number, number>();
-	const roundIdMapping = new Map<number, number>();
-	const insertedRounds: RoundData[] = [];
-
-	for (const group of args.bracket.group) {
-		const inserted = await trx
-			.insertInto("TournamentGroup")
+	return db.transaction().execute(async (trx) => {
+		const stage = await trx
+			.insertInto("TournamentStage")
 			.values({
-				stageId: stage.id,
-				number: group.number,
+				tournamentId: args.tournamentId,
+				name: stageInput.name,
+				type: stageInput.type,
+				settings: JSON.stringify(stageInput.settings),
+				number: kyselySql<number>`(select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = ${args.tournamentId})`,
+				createdAt: databaseTimestampNow(),
 			})
 			.returning(["id"])
 			.executeTakeFirstOrThrow();
 
-		groupIdMapping.set(group.id, inserted.id);
-	}
+		const groupIdMapping = new Map<number, number>();
+		const roundIdMapping = new Map<number, number>();
 
-	for (const round of args.bracket.round) {
-		const inserted = await trx
-			.insertInto("TournamentRound")
-			.values({
-				stageId: stage.id,
-				groupId: groupIdMapping.get(round.group_id)!,
-				number: round.number,
-				// the maps column is filled right after bracket creation; typed
-				// non-null but nullable at the DB level
-				maps: kyselySql<string>`null`,
-			})
-			.returning(["id"])
-			.executeTakeFirstOrThrow();
+		for (const group of args.bracket.group) {
+			const inserted = await trx
+				.insertInto("TournamentGroup")
+				.values({
+					stageId: stage.id,
+					number: group.number,
+				})
+				.returning(["id"])
+				.executeTakeFirstOrThrow();
 
-		roundIdMapping.set(round.id, inserted.id);
-		insertedRounds.push({
-			id: inserted.id,
-			stage_id: stage.id,
-			group_id: groupIdMapping.get(round.group_id)!,
-			number: round.number,
-		});
-	}
+			groupIdMapping.set(group.id, inserted.id);
+		}
 
-	for (const match of args.bracket.match) {
-		await trx
-			.insertInto("TournamentMatch")
-			.values({
-				stageId: stage.id,
-				groupId: groupIdMapping.get(match.group_id)!,
-				roundId: roundIdMapping.get(match.round_id)!,
-				number: match.number,
-				status: match.status,
-				opponentOne: serializeOpponent(match.opponent1),
-				opponentTwo: serializeOpponent(match.opponent2),
-				chatCode: shortNanoid(),
-				startedAt: null,
-			})
-			.execute();
-	}
+		for (const round of args.bracket.round) {
+			if (!round.maps) throw new Error("Round is missing maps");
 
-	return { stageId: stage.id, rounds: insertedRounds };
+			const inserted = await trx
+				.insertInto("TournamentRound")
+				.values({
+					stageId: stage.id,
+					groupId: groupIdMapping.get(round.group_id)!,
+					number: round.number,
+					maps: JSON.stringify(round.maps),
+				})
+				.returning(["id"])
+				.executeTakeFirstOrThrow();
+
+			roundIdMapping.set(round.id, inserted.id);
+		}
+
+		for (const match of args.bracket.match) {
+			await trx
+				.insertInto("TournamentMatch")
+				.values({
+					stageId: stage.id,
+					groupId: groupIdMapping.get(match.group_id)!,
+					roundId: roundIdMapping.get(match.round_id)!,
+					number: match.number,
+					status: match.status,
+					opponentOne: serializeOpponent(match.opponent1),
+					opponentTwo: serializeOpponent(match.opponent2),
+					chatCode: shortNanoid(),
+					startedAt: null,
+				})
+				.execute();
+		}
+
+		return { stageId: stage.id };
+	});
 }
 
 /**

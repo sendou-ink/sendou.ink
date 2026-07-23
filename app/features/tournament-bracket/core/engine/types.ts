@@ -138,7 +138,7 @@ export interface RoundData {
 	stage_id: number;
 	group_id: number;
 	number: number;
-	maps?: Pick<TournamentRoundMaps, "count" | "type" | "pickBan"> | null;
+	maps?: TournamentRoundMaps | null;
 }
 
 /** Only contains information about match status and results. */
@@ -222,7 +222,20 @@ export interface CreateBracketInput {
 	abDivisions?: (0 | 1)[];
 	/** Stage number within the tournament. Defaults to 1 (local data; the repository assigns the real number on insert). */
 	number?: number;
+	/**
+	 * Per-round map info to assign onto the created rounds, keyed by the local
+	 * round ids of an identically created bracket (the preview the maps were
+	 * picked against). For round robin and swiss one entry per distinct round
+	 * number — groups share map lists.
+	 */
+	maps?: RoundMapsInput[];
 }
+
+/** One round's map info as picked by the organizer against a bracket preview. */
+export type RoundMapsInput = TournamentRoundMaps & {
+	roundId: number;
+	groupId?: number;
+};
 
 /**
  * Engine-internal variant of {@link CreateBracketInput}: settings are the
