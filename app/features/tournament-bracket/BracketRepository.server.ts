@@ -1,4 +1,10 @@
-import { type Kysely, sql as kyselySql, type Transaction } from "kysely";
+import {
+	type Kysely,
+	sql as kyselySql,
+	type RawBuilder,
+	type Transaction,
+} from "kysely";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -7,7 +13,6 @@ import type {
 	BracketData,
 	GeneratedRound,
 	MatchData,
-	MatchStatus,
 	ParticipantResult,
 } from "./core/engine/types";
 import { MatchStatus as MatchStatusValues } from "./core/engine/types";
@@ -21,100 +26,126 @@ type DbOrTrx = Kysely<DB> | Transaction<DB>;
  * inside their transaction (propagation must be computed from fresh rows, not
  * the cached Tournament instance).
  */
-// xxx: one query with json helpers
 export async function findByTournamentId(
 	tournamentId: number,
 	trx: DbOrTrx = db,
 ): Promise<BracketData> {
-	const stages = await trx
-		.selectFrom("TournamentStage")
-		.selectAll()
-		.where("tournamentId", "=", tournamentId)
-		.orderBy("id", "asc")
-		.execute();
+	const { stage, group, round, match } = await trx
+		.selectNoFrom((eb) => [
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentStage")
+					.select([
+						"TournamentStage.id",
+						"TournamentStage.tournamentId as tournament_id",
+						"TournamentStage.name",
+						"TournamentStage.type",
+						"TournamentStage.settings",
+						"TournamentStage.number",
+						"TournamentStage.createdAt",
+					])
+					.where("TournamentStage.tournamentId", "=", tournamentId)
+					.orderBy("TournamentStage.id", "asc"),
+			).as("stage"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentGroup")
+					.innerJoin(
+						"TournamentStage",
+						"TournamentStage.id",
+						"TournamentGroup.stageId",
+					)
+					.select([
+						"TournamentGroup.id",
+						"TournamentGroup.stageId as stage_id",
+						"TournamentGroup.number",
+					])
+					.where("TournamentStage.tournamentId", "=", tournamentId)
+					.orderBy("TournamentGroup.stageId", "asc")
+					.orderBy("TournamentGroup.id", "asc"),
+			).as("group"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentRound")
+					.innerJoin(
+						"TournamentStage",
+						"TournamentStage.id",
+						"TournamentRound.stageId",
+					)
+					.select([
+						"TournamentRound.id",
+						"TournamentRound.stageId as stage_id",
+						"TournamentRound.groupId as group_id",
+						"TournamentRound.number",
+						"TournamentRound.maps",
+					])
+					.where("TournamentStage.tournamentId", "=", tournamentId)
+					.orderBy("TournamentRound.stageId", "asc")
+					.orderBy("TournamentRound.id", "asc"),
+			).as("round"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentMatch")
+					.innerJoin(
+						"TournamentStage",
+						"TournamentStage.id",
+						"TournamentMatch.stageId",
+					)
+					.leftJoin(
+						"TournamentMatchGameResult",
+						"TournamentMatch.id",
+						"TournamentMatchGameResult.matchId",
+					)
+					.select([
+						"TournamentMatch.id",
+						"TournamentMatch.stageId as stage_id",
+						"TournamentMatch.groupId as group_id",
+						"TournamentMatch.roundId as round_id",
+						"TournamentMatch.number",
+						"TournamentMatch.status",
+						"TournamentMatch.startedAt",
+						// totalKos is re-aggregated fresh from the game results; the
+						// totalKos/totalPoints that old write paths persisted into the
+						// opponent JSON is stale residue and gets stripped/overwritten
+						serializedOpponentWithKos("opponentOne").as("opponent1"),
+						serializedOpponentWithKos("opponentTwo").as("opponent2"),
+					])
+					.where("TournamentStage.tournamentId", "=", tournamentId)
+					.groupBy("TournamentMatch.id")
+					.orderBy("TournamentMatch.stageId", "asc")
+					.orderBy("TournamentMatch.id", "asc"),
+			).as("match"),
+		])
+		.executeTakeFirstOrThrow();
 
-	if (stages.length === 0) {
-		return { stage: [], group: [], round: [], match: [] };
-	}
+	return { stage, group, round, match };
+}
 
-	const stageIds = stages.map((stage) => stage.id);
+/**
+ * Builds the opponent JSON with the freshly aggregated KO count: strips the
+ * legacy `totalPoints` and overwrites `totalKos` with the SQL sum over the
+ * match's game results. Resolves to `null` for BYEs (the column is `null`).
+ */
+function serializedOpponentWithKos(
+	column: "opponentOne" | "opponentTwo",
+): RawBuilder<ParticipantResult | null> {
+	const [winnerPoints, loserPoints] =
+		column === "opponentOne"
+			? (["opponentOnePoints", "opponentTwoPoints"] as const)
+			: (["opponentTwoPoints", "opponentOnePoints"] as const);
 
-	const [groups, rounds, matches] = await Promise.all([
-		trx
-			.selectFrom("TournamentGroup")
-			.selectAll()
-			.where("stageId", "in", stageIds)
-			.orderBy("stageId", "asc")
-			.orderBy("id", "asc")
-			.execute(),
-		trx
-			.selectFrom("TournamentRound")
-			.selectAll()
-			.where("stageId", "in", stageIds)
-			.orderBy("stageId", "asc")
-			.orderBy("id", "asc")
-			.execute(),
-		trx
-			.selectFrom("TournamentMatch")
-			.leftJoin(
-				"TournamentMatchGameResult",
-				"TournamentMatch.id",
-				"TournamentMatchGameResult.matchId",
-			)
-			.selectAll("TournamentMatch")
-			.select([
-				kyselySql<
-					number | null
-				>`sum(case when "TournamentMatchGameResult"."opponentOnePoints" = 100 and "TournamentMatchGameResult"."opponentTwoPoints" = 0 then 1 else 0 end)`.as(
-					"opponentOneKosTotal",
-				),
-				kyselySql<
-					number | null
-				>`sum(case when "TournamentMatchGameResult"."opponentTwoPoints" = 100 and "TournamentMatchGameResult"."opponentOnePoints" = 0 then 1 else 0 end)`.as(
-					"opponentTwoKosTotal",
-				),
-			])
-			.where("TournamentMatch.stageId", "in", stageIds)
-			.groupBy("TournamentMatch.id")
-			.orderBy("TournamentMatch.stageId", "asc")
-			.orderBy("TournamentMatch.id", "asc")
-			.execute(),
-	]);
-
-	return {
-		stage: stages.map((stage) => ({
-			id: stage.id,
-			tournament_id: stage.tournamentId,
-			name: stage.name,
-			type: stage.type,
-			settings: stage.settings ?? {},
-			number: stage.number,
-			createdAt: stage.createdAt,
-		})),
-		group: groups.map((group) => ({
-			id: group.id,
-			stage_id: group.stageId,
-			number: group.number,
-		})),
-		round: rounds.map((round) => ({
-			id: round.id,
-			stage_id: round.stageId,
-			group_id: round.groupId,
-			number: round.number,
-			maps: round.maps ?? null,
-		})),
-		match: matches.map((match) => ({
-			id: match.id,
-			stage_id: match.stageId,
-			group_id: match.groupId,
-			round_id: match.roundId,
-			number: match.number,
-			status: match.status as MatchStatus,
-			opponent1: hydrateOpponent(match.opponentOne, match.opponentOneKosTotal),
-			opponent2: hydrateOpponent(match.opponentTwo, match.opponentTwoKosTotal),
-			startedAt: match.startedAt,
-		})),
-	};
+	return kyselySql<ParticipantResult | null>`json_set(
+		json_remove(${kyselySql.ref(`TournamentMatch.${column}`)}, '$.totalPoints'),
+		'$.totalKos',
+		sum(
+			case
+				when ${kyselySql.ref(`TournamentMatchGameResult.${winnerPoints}`)} = 100
+					and ${kyselySql.ref(`TournamentMatchGameResult.${loserPoints}`)} = 0
+				then 1
+				else 0
+			end
+		)
+	)`;
 }
 
 /**
@@ -282,22 +313,6 @@ export function resetBracket(tournamentStageId: number) {
 			.where("id", "=", tournamentStageId)
 			.execute();
 	});
-}
-
-function hydrateOpponent(
-	opponent: (ParticipantResult & { totalPoints?: number }) | null,
-	kosTotal: number | null,
-): ParticipantResult | null {
-	if (!opponent) return null;
-
-	// old write paths serialized the aggregated fields into the JSON; they are
-	// stale residue and must not shadow the fresh aggregation
-	const { totalPoints, totalKos, ...persisted } = opponent;
-
-	return {
-		...persisted,
-		totalKos: kosTotal ?? undefined,
-	};
 }
 
 /** Opponents are stored as JSON with the SQL-aggregated fields stripped (NULL for BYEs). */

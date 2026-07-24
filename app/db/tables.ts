@@ -661,7 +661,7 @@ export const TournamentMatchStatus = {
 
 	/** The match is completed. */
 	Completed: 4,
-};
+} as const;
 
 export interface TournamentMatch {
 	chatCode: string | null;
