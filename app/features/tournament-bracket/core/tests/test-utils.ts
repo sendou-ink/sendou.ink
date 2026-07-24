@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";
@@ -47,7 +47,7 @@ export const testTournament = ({
 	},
 	ctx,
 }: {
-	data?: TournamentManagerDataSet;
+	data?: BracketData;
 	ctx?: Partial<TournamentData["ctx"]>;
 }) => {
 	const participant = R.pipe(

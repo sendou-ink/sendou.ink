@@ -8,7 +8,7 @@ import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
 import type { Bracket as BracketType } from "~/features/tournament-bracket/core/Bracket";
 import * as Engine from "~/features/tournament-bracket/core/engine";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import styles from "../bracket-test.module.css";
 
 type FormatType = Tables["TournamentStage"]["type"];
@@ -202,7 +202,7 @@ function generateTeams(count: number) {
 	}));
 }
 
-function countRounds(data: TournamentManagerDataSet, isDoubleElim: boolean) {
+function countRounds(data: BracketData, isDoubleElim: boolean) {
 	const totalRounds = Math.max(...data.round.map((r) => r.number));
 
 	if (!isDoubleElim) return { totalRounds, wbRounds: 0, lbRounds: 0 };
@@ -217,7 +217,7 @@ function countRounds(data: TournamentManagerDataSet, isDoubleElim: boolean) {
 }
 
 function simulateCompletedRoundsByGroup(
-	data: TournamentManagerDataSet,
+	data: BracketData,
 	wbCompleted: number,
 	lbCompleted: number,
 ) {
@@ -237,10 +237,7 @@ function simulateCompletedRoundsByGroup(
 	markMatchesCompleted(data, completedRoundIds);
 }
 
-function simulateCompletedRounds(
-	data: TournamentManagerDataSet,
-	completedRounds: number,
-) {
+function simulateCompletedRounds(data: BracketData, completedRounds: number) {
 	if (completedRounds <= 0) return;
 
 	const roundsByNumber = new Map<number, number[]>();
@@ -261,7 +258,7 @@ function simulateCompletedRounds(
 }
 
 function markMatchesCompleted(
-	data: TournamentManagerDataSet,
+	data: BracketData,
 	completedRoundIds: Set<number>,
 ) {
 	for (const match of data.match) {
@@ -278,7 +275,7 @@ function markMatchesCompleted(
 function generateBracketData(
 	format: FormatType,
 	teamIds: number[],
-): TournamentManagerDataSet {
+): BracketData {
 	if (format === "swiss") {
 		return Engine.create({
 			tournamentId: 1,

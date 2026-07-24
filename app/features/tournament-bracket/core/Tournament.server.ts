@@ -3,7 +3,7 @@ import { ServerConfig } from "~/config.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { isAdmin } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -42,7 +42,7 @@ function dataMapped({
 	ctx,
 	user,
 }: {
-	data: TournamentManagerDataSet;
+	data: BracketData;
 	ctx: TournamentRepository.FindById;
 	user?: { id: number };
 }) {

@@ -1,9 +1,9 @@
 import * as R from "remeda";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { TOURNAMENT } from "../../tournament/tournament-constants";
 
 export function getRounds(args: {
-	bracketData: TournamentManagerDataSet;
+	bracketData: BracketData;
 	type: "winners" | "losers" | "single";
 }) {
 	const groupIds = args.bracketData.group.flatMap((group) => {

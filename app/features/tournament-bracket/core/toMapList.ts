@@ -3,7 +3,7 @@
 import type { Tables, TournamentRoundMaps } from "~/db/tables";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type { Round } from "~/features/tournament-bracket/core/engine/types";
+import type { RoundData } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
@@ -17,7 +17,7 @@ export type BracketMapCounts = Map<
 
 export interface GenerateTournamentRoundMaplistArgs {
 	pool: Array<{ mode: ModeShort; stageId: StageId }>;
-	rounds: Round[];
+	rounds: RoundData[];
 	mapCounts: BracketMapCounts;
 	type: Tables["TournamentStage"]["type"];
 	roundsWithPickBan: Set<number>;
@@ -92,7 +92,7 @@ export function generateTournamentRoundMaplist(
 }
 
 function getFilteredRounds(
-	rounds: Round[],
+	rounds: RoundData[],
 	type: Tables["TournamentStage"]["type"],
 ) {
 	if (type !== "round_robin" && type !== "swiss") return rounds;
@@ -104,7 +104,7 @@ function getFilteredRounds(
 	return rounds.filter((x) => x.group_id === fullestGroupId);
 }
 
-function fullestGroupIdByRounds(rounds: Round[]) {
+function fullestGroupIdByRounds(rounds: RoundData[]) {
 	const roundCountByGroup = new Map<number, number>();
 	for (const round of rounds) {
 		roundCountByGroup.set(
@@ -122,7 +122,10 @@ function fullestGroupIdByRounds(rounds: Round[]) {
 	return fullestGroupId;
 }
 
-function sortRounds(rounds: Round[], type: Tables["TournamentStage"]["type"]) {
+function sortRounds(
+	rounds: RoundData[],
+	type: Tables["TournamentStage"]["type"],
+) {
 	const groupIds = rounds.map((x) => x.group_id);
 	const minGroupId = Math.min(...groupIds);
 	const maxGroupId = Math.max(...groupIds);
@@ -151,7 +154,7 @@ function sortRounds(rounds: Round[], type: Tables["TournamentStage"]["type"]) {
 }
 
 function resolveRoundMapCount(
-	round: Round,
+	round: RoundData,
 	counts: BracketMapCounts,
 	type: Tables["TournamentStage"]["type"],
 ) {

@@ -29,7 +29,7 @@ import {
 	useTournamentPreparedMaps,
 } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -715,7 +715,7 @@ function inferMapCounts({
 	tournamentRoundMapList,
 }: {
 	bracket: Bracket;
-	data: TournamentManagerDataSet;
+	data: BracketData;
 	tournamentRoundMapList: TournamentRoundMapList;
 }) {
 	const result: BracketMapCounts = new Map();

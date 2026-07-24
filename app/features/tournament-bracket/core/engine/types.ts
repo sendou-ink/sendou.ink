@@ -110,7 +110,7 @@ export interface ParticipantResult {
 }
 
 /* ------------------------------------------------------------------ */
-/* Bracket data — identical shape to the old TournamentManagerDataSet  */
+/* Bracket data — identical shape to the old BracketData  */
 /* ------------------------------------------------------------------ */
 
 export interface StageData {
@@ -301,13 +301,3 @@ export interface GeneratedRound {
 export interface DroppedTeamsResult extends EngineResult {
 	endedMatchIds: number[];
 }
-
-/* ------------------------------------------------------------------ */
-/* Aliases kept from the old brackets-manager/brackets-model modules   */
-/* so imports could move over without a mechanical rename.             */
-/* ------------------------------------------------------------------ */
-
-// xxx: just rename
-export type TournamentManagerDataSet = BracketData;
-export type Round = RoundData;
-export type Match = MatchData;

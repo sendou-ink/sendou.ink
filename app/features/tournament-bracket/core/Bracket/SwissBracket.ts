@@ -2,7 +2,7 @@ import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { cutToNDecimalPlaces } from "../../../../utils/number";
@@ -471,7 +471,7 @@ export class SwissBracket extends Bracket {
 		return "swiss";
 	}
 
-	defaultRoundBestOfs(data: TournamentManagerDataSet) {
+	defaultRoundBestOfs(data: BracketData) {
 		const result: BracketMapCounts = new Map();
 
 		for (const round of data.round) {

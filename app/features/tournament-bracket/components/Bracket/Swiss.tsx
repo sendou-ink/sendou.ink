@@ -8,7 +8,7 @@ import {
 	useBracketExpanded,
 	useTournament,
 } from "~/features/tournament/routes/to.$id";
-import type { Match as MatchType } from "~/features/tournament-bracket/core/engine/types";
+import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import styles from "../../tournament-bracket.module.css";

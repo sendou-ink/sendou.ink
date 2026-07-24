@@ -1,8 +1,8 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type {
-	Round,
-	TournamentManagerDataSet,
+	BracketData,
+	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
@@ -14,7 +14,7 @@ export class DoubleEliminationBracket extends Bracket {
 		return "double_elimination";
 	}
 
-	defaultRoundBestOfs(data: TournamentManagerDataSet) {
+	defaultRoundBestOfs(data: BracketData) {
 		const result: BracketMapCounts = new Map();
 
 		for (const group of data.group) {
@@ -22,7 +22,7 @@ export class DoubleEliminationBracket extends Bracket {
 				(round) => round.group_id === group.id,
 			);
 
-			const defaultOfRound = (round: Round) => {
+			const defaultOfRound = (round: RoundData) => {
 				if (group.number === 3) return 5;
 				if (group.number === 2) {
 					const lastRoundNumber = Math.max(
@@ -228,13 +228,13 @@ export class DoubleEliminationBracket extends Bracket {
 
 	source({ placements }: { placements: number[] }) {
 		invariant(placements.length > 0, "Empty placements not supported");
-		const resolveLosersGroupId = (data: TournamentManagerDataSet) => {
+		const resolveLosersGroupId = (data: BracketData) => {
 			const minGroupId = Math.min(...data.round.map((round) => round.group_id));
 
 			return minGroupId + 1;
 		};
 		const placementsToRoundsIds = (
-			data: TournamentManagerDataSet,
+			data: BracketData,
 			losersGroupId: number,
 		) => {
 			const firstRoundIsOnlyByes = () => {

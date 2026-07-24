@@ -14,8 +14,8 @@ import {
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
 import type {
-	Match,
-	TournamentManagerDataSet,
+	BracketData,
+	MatchData,
 } from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -75,7 +75,7 @@ export class Tournament {
 		this.initBrackets(data);
 	}
 
-	private initBrackets(data: TournamentManagerDataSet) {
+	private initBrackets(data: BracketData) {
 		for (const [
 			bracketIdx,
 			{
@@ -1191,7 +1191,7 @@ export class Tournament {
 		matchBracket,
 		bracketIdx,
 	}: {
-		match: Match;
+		match: MatchData;
 		matchBracket: Bracket;
 		bracketIdx: number;
 	}) {

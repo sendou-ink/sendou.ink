@@ -2,7 +2,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import styles from "~/features/tournament-bracket/components/Bracket/bracket.module.css";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { EliminationBracketSide } from "./Elimination";
 import { Bracket } from "./index";
@@ -108,7 +108,7 @@ vi.mock("~/features/tournament/routes/to.$id", () => ({
 	useStreamingParticipants: () => [],
 }));
 
-function createSingleEliminationData(): TournamentManagerDataSet {
+function createSingleEliminationData(): BracketData {
 	return {
 		stage: [
 			{
@@ -219,7 +219,7 @@ function createSingleEliminationData(): TournamentManagerDataSet {
 	};
 }
 
-function createByeHeavySingleEliminationData(): TournamentManagerDataSet {
+function createByeHeavySingleEliminationData(): BracketData {
 	return {
 		stage: [
 			{
@@ -333,7 +333,7 @@ function createByeHeavySingleEliminationData(): TournamentManagerDataSet {
 	};
 }
 
-function createDoubleEliminationData(): TournamentManagerDataSet {
+function createDoubleEliminationData(): BracketData {
 	return {
 		stage: [
 			{
@@ -434,7 +434,7 @@ function createDoubleEliminationData(): TournamentManagerDataSet {
 	};
 }
 
-function createRoundRobinData(): TournamentManagerDataSet {
+function createRoundRobinData(): BracketData {
 	return {
 		stage: [
 			{
@@ -559,7 +559,7 @@ function createRoundRobinData(): TournamentManagerDataSet {
 	};
 }
 
-function createSwissData(): TournamentManagerDataSet {
+function createSwissData(): BracketData {
 	return {
 		stage: [
 			{
@@ -662,7 +662,7 @@ function createSwissData(): TournamentManagerDataSet {
 
 function createLargeSingleEliminationData(options?: {
 	ongoingRoundIdx?: number;
-}): TournamentManagerDataSet {
+}): BracketData {
 	const { ongoingRoundIdx } = options ?? {};
 
 	return {
@@ -816,7 +816,7 @@ function createLargeSingleEliminationData(options?: {
 
 function createMockBracket(
 	type: "single_elimination" | "double_elimination" | "round_robin" | "swiss",
-	data: TournamentManagerDataSet,
+	data: BracketData,
 ): BracketType {
 	return {
 		id: 1,

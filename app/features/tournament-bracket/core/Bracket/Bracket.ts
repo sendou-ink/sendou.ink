@@ -3,8 +3,8 @@ import * as R from "remeda";
 import type { Tables, TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type {
-	Round,
-	TournamentManagerDataSet,
+	BracketData,
+	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -19,7 +19,7 @@ export interface CreateBracketArgs {
 	id: number;
 	idx: number;
 	preview: boolean;
-	data?: TournamentManagerDataSet;
+	data?: BracketData;
 	type: Tables["TournamentStage"]["type"];
 	canBeStarted?: boolean;
 	name: string;
@@ -63,7 +63,7 @@ export abstract class Bracket {
 	idx;
 	preview;
 	data;
-	simulatedData: TournamentManagerDataSet | undefined;
+	simulatedData: BracketData | undefined;
 	canBeStarted;
 	name;
 	teamsPendingCheckIn;
@@ -266,7 +266,7 @@ export abstract class Bracket {
 		return this.standings;
 	}
 
-	winnersSourceRound(_roundNumber: number): Round | undefined {
+	winnersSourceRound(_roundNumber: number): RoundData | undefined {
 		return;
 	}
 
@@ -289,7 +289,7 @@ export abstract class Bracket {
 		});
 	}
 
-	generateMatchesData(teams: number[]): TournamentManagerDataSet {
+	generateMatchesData(teams: number[]): BracketData {
 		const virtualTournamentId = 1;
 
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
@@ -478,7 +478,7 @@ export abstract class Bracket {
 		return ongoingMatchIds;
 	}
 
-	defaultRoundBestOfs(_data: TournamentManagerDataSet): BracketMapCounts {
+	defaultRoundBestOfs(_data: BracketData): BracketMapCounts {
 		throw new Error("not implemented");
 	}
 }

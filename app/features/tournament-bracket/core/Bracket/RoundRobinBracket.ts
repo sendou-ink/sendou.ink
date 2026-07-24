@@ -1,7 +1,7 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
@@ -336,7 +336,7 @@ export class RoundRobinBracket extends Bracket {
 		return "round_robin";
 	}
 
-	defaultRoundBestOfs(data: TournamentManagerDataSet) {
+	defaultRoundBestOfs(data: BracketData) {
 		const result: BracketMapCounts = new Map();
 
 		for (const round of data.round) {

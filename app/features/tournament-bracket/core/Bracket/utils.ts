@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
 /**
  * Maps each round_id to the cumulative number of teams eliminated by the end of
@@ -9,7 +9,7 @@ import type { TournamentManagerDataSet } from "~/features/tournament-bracket/cor
  * placement even while some of their round's matches are still in progress.
  */
 export function cumulativeEliminationsByRound(
-	matches: TournamentManagerDataSet["match"],
+	matches: BracketData["match"],
 ): Map<number, number> {
 	const result = new Map<number, number>();
 

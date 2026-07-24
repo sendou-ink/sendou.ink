@@ -1,6 +1,6 @@
 import type { Pronouns } from "~/db/tables";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import type { TournamentManagerDataSet } from "~/features/tournament-bracket/core/engine/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
 /** GET /api/user/{userId|discordId} */
 
@@ -540,7 +540,7 @@ type TournamentBracket = {
 	name: string;
 };
 
-type TournamentBracketData = TournamentManagerDataSet;
+type TournamentBracketData = BracketData;
 
 /** POST /api/tournament/{id}/seeds */
 

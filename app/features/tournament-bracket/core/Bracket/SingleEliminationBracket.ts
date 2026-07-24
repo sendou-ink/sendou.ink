@@ -1,8 +1,8 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type {
-	Round,
-	TournamentManagerDataSet,
+	BracketData,
+	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
@@ -14,7 +14,7 @@ export class SingleEliminationBracket extends Bracket {
 		return "single_elimination";
 	}
 
-	defaultRoundBestOfs(data: TournamentManagerDataSet) {
+	defaultRoundBestOfs(data: BracketData) {
 		const result: BracketMapCounts = new Map();
 
 		const maxRoundNumber = Math.max(...data.round.map((round) => round.number));
@@ -23,7 +23,7 @@ export class SingleEliminationBracket extends Bracket {
 				(round) => round.group_id === group.id,
 			);
 
-			const defaultOfRound = (round: Round) => {
+			const defaultOfRound = (round: RoundData) => {
 				// 3rd place match
 				if (group.number === 2) return 5;
 
