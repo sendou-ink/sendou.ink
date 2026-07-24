@@ -1,6 +1,7 @@
+import type { Transaction } from "kysely";
 import type { ActionFunction } from "react-router";
 import { db, sql } from "~/db/sql";
-import { TournamentMatchStatus } from "~/db/tables";
+import { type DB, TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -16,7 +17,6 @@ import {
 	type TournamentDataTeam,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { deletePickBanEvent } from "~/features/tournament-bracket/queries/deletePickBanEvent.server";
 import {
 	matchPageParamsSchema,
 	matchSchema,
@@ -39,9 +39,7 @@ import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
-import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
-import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
 import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
@@ -350,11 +348,14 @@ export const action: ActionFunction = async ({ params, request }) => {
 						lastGameWinnerTeamId: lastResult.winnerTeamId,
 					}),
 				endDroppedTeams: false,
-				inTransaction: () => {
-					deleteTournamentMatchGameResultById(lastResult.id);
+				inTransaction: async (_result, trx) => {
+					await TournamentMatchRepository.deleteResultById(lastResult.id, trx);
 
 					for (const number of pickBanEventNumbersToDelete) {
-						deletePickBanEvent({ matchId, number });
+						await TournamentMatchRepository.deletePickBanEvent(
+							{ matchId, number },
+							trx,
+						);
 					}
 				},
 			});
@@ -619,12 +620,14 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournament,
 				operation: (bracketData) => Engine.reopenMatch(bracketData, match.id),
 				endDroppedTeams: false,
-				inTransaction: (result) => {
-					// xxx: feels hacky, not kysely
+				inTransaction: async (result, trx) => {
 					// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
 					if (bracketFormat !== "round_robin") {
 						for (const followingMatch of followingMatches) {
-							deleteMatchPickBanEvents(followingMatch.id);
+							await TournamentMatchRepository.deletePickBanEventsByMatchId(
+								followingMatch.id,
+								trx,
+							);
 						}
 					}
 
@@ -633,7 +636,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 					// be kept to avoid desyncing the score from the results
 					if (!result.endedEarly) {
 						invariant(lastResult, "Last result is missing");
-						deleteTournamentMatchGameResultById(lastResult.id);
+						await TournamentMatchRepository.deleteResultById(
+							lastResult.id,
+							trx,
+						);
 					}
 				},
 			});
@@ -895,7 +901,7 @@ async function executeBracketOperation<T extends Engine.EngineResult>({
 	/** Whether unfinished matches of dropped out teams should be ended after the operation (resolved from its result when given a function). */
 	endDroppedTeams: boolean | ((result: T) => boolean);
 	/** Extra statements to run inside the same transaction, after the match changes have been applied. */
-	inTransaction?: (result: T) => void | Promise<void>;
+	inTransaction?: (result: T, trx: Transaction<DB>) => void | Promise<void>;
 }): Promise<{ result: T; endedMatchIds: number[] }> {
 	let result!: T;
 	let endedMatchIds: number[] = [];
@@ -923,7 +929,7 @@ async function executeBracketOperation<T extends Engine.EngineResult>({
 		}
 
 		await BracketRepository.applyMatchChanges(changedMatches, trx);
-		await inTransaction?.(result);
+		await inTransaction?.(result, trx);
 	});
 
 	return { result, endedMatchIds };

@@ -1,7 +1,11 @@
-import { sql } from "kysely";
+import { sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import { TournamentMatchStatus, type TournamentRoundMaps } from "~/db/tables";
+import {
+	type DB,
+	TournamentMatchStatus,
+	type TournamentRoundMaps,
+} from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { customAvatarUrl } from "~/utils/kysely.server";
@@ -137,6 +141,37 @@ export function findResultsByMatchId(matchId: number) {
 		])
 		.where("TournamentMatchGameResult.matchId", "=", matchId)
 		.orderBy("TournamentMatchGameResult.number", "asc")
+		.execute();
+}
+
+/** Deletes a single game result by its id. */
+export function deleteResultById(id: number, trx?: Transaction<DB>) {
+	return (trx ?? db)
+		.deleteFrom("TournamentMatchGameResult")
+		.where("TournamentMatchGameResult.id", "=", id)
+		.execute();
+}
+
+/** Deletes all pick/ban events belonging to a match. */
+export function deletePickBanEventsByMatchId(
+	matchId: number,
+	trx?: Transaction<DB>,
+) {
+	return (trx ?? db)
+		.deleteFrom("TournamentMatchPickBanEvent")
+		.where("TournamentMatchPickBanEvent.matchId", "=", matchId)
+		.execute();
+}
+
+/** Deletes a single pick/ban event by its match and event number. */
+export function deletePickBanEvent(
+	args: { matchId: number; number: number },
+	trx?: Transaction<DB>,
+) {
+	return (trx ?? db)
+		.deleteFrom("TournamentMatchPickBanEvent")
+		.where("TournamentMatchPickBanEvent.matchId", "=", args.matchId)
+		.where("TournamentMatchPickBanEvent.number", "=", args.number)
 		.execute();
 }
 
