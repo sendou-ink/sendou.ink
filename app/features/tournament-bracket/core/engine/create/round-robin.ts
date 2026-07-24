@@ -53,18 +53,6 @@ function getRoundRobinGroups(creator: StageCreator): ParticipantSlot[][] {
 	if (creator.settings.groupCount <= 0)
 		throw Error("You must provide a strictly positive group count.");
 
-	if (creator.settings.manualOrdering) {
-		if (creator.settings.manualOrdering.length !== creator.settings.groupCount)
-			throw Error(
-				"Group count in the manual ordering does not correspond to the given group count.",
-			);
-
-		const positions = creator.settings.manualOrdering.flat();
-		const slots = creator.getSlots(positions);
-
-		return helpers.makeGroups(slots, creator.settings.groupCount);
-	}
-
 	const slots = creator.getSlots();
 	const ordered = ordering["groups.seed_optimized"](
 		slots,

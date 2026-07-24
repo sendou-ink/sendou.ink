@@ -329,38 +329,23 @@ export class StageCreator {
 
 	/**
 	 * Returns the list of slots from the seeding.
-	 *
-	 * @param positions An optional list of positions (seeds) for a manual ordering.
 	 */
-	getSlots(positions?: number[]): ParticipantSlot[] {
+	getSlots(): ParticipantSlot[] {
 		helpers.ensureValidSize(this.input.type, this.seeding.length);
 		helpers.ensureNoDuplicates(this.seeding);
 
-		return this.getSlotsUsingIds(this.seeding, positions);
+		return this.getSlotsUsingIds(this.seeding);
 	}
 
 	/**
 	 * Returns the list of slots with a seeding containing IDs.
 	 */
-	private getSlotsUsingIds(
-		seeding: Seeding,
-		positions?: number[],
-	): ParticipantSlot[] {
-		if (positions && positions.length !== seeding.length) {
-			throw Error(
-				"Not enough seeds in at least one group of the manual ordering.",
-			);
-		}
-
-		const slots = seeding.map((slot, i) => {
+	private getSlotsUsingIds(seeding: Seeding): ParticipantSlot[] {
+		return seeding.map((slot, i) => {
 			if (slot === null) return null; // BYE.
 
 			return { id: slot, position: i + 1 };
 		});
-
-		if (!positions) return slots;
-
-		return positions.map((position) => slots[position - 1]);
 	}
 
 	/**

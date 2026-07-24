@@ -28,69 +28,6 @@ describe("Create a round-robin stage", () => {
 		expect(bracket.matches().length).toBe(12);
 	});
 
-	test("should create a round-robin stage with a manual seeding", () => {
-		const manualOrdering = [
-			[1, 4, 6, 7],
-			[2, 3, 5, 8],
-		];
-
-		bracket.create({
-			name: "Example",
-			tournamentId: 0,
-			type: "round_robin",
-			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: {
-				groupCount: 2,
-				manualOrdering,
-			},
-		});
-
-		for (let groupIndex = 0; groupIndex < 2; groupIndex++) {
-			const matches = bracket.matches({ group_id: groupIndex });
-			const participants = [
-				matches[0].opponent1?.position,
-				matches[1].opponent2?.position,
-				matches[1].opponent1?.position,
-				matches[0].opponent2?.position,
-			];
-
-			expect(participants).toEqual(manualOrdering[groupIndex]);
-		}
-	});
-
-	test("should throw if manual ordering has invalid counts", () => {
-		expect(() =>
-			bracket.create({
-				name: "Example",
-				tournamentId: 0,
-				type: "round_robin",
-				seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-				settings: {
-					groupCount: 2,
-					manualOrdering: [[1, 4, 6, 7]],
-				},
-			}),
-		).toThrow(
-			"Group count in the manual ordering does not correspond to the given group count.",
-		);
-
-		expect(() =>
-			bracket.create({
-				name: "Example",
-				tournamentId: 0,
-				type: "round_robin",
-				seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-				settings: {
-					groupCount: 2,
-					manualOrdering: [
-						[1, 4],
-						[2, 3],
-					],
-				},
-			}),
-		).toThrow("Not enough seeds in at least one group of the manual ordering.");
-	});
-
 	test("should drop empty slots instead of creating BYE matches", () => {
 		bracket.create({
 			name: "Example",

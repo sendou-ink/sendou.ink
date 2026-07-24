@@ -93,7 +93,6 @@ export function endDroppedTeamMatches({
 
 	const result = Engine.endDroppedTeamMatches(data, droppedTeamIds);
 
-	// xxx: maybe move to caller? or repository function
 	for (const matchId of result.endedMatchIds) {
 		logger.info(
 			`Ending match with dropped team: Match ID: ${matchId}; Dropped team ids: ${droppedTeamIds.join(", ")}`,

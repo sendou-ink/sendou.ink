@@ -67,10 +67,6 @@ export interface StageSettings {
 	 */
 	hasAbDivisions?: boolean;
 
-	/** A list of seeds per group for a round-robin stage to be manually ordered. */
-	// xxx: delete?
-	manualOrdering?: number[][];
-
 	/**
 	 * Whether matches in a round-robin stage are playable independently of each other.
 	 *
