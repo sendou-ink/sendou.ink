@@ -222,10 +222,10 @@ describe("Update scores in a round-robin stage", () => {
 
 		// Find the actual match (not BYE vs BYE which doesn't exist)
 		const round1RealMatch = allMatches.find(
-			(m) => m.round_id === allRounds[0].id && m.opponent1 && m.opponent2,
+			(m) => m.roundId === allRounds[0].id && m.opponent1 && m.opponent2,
 		)!;
 		const round2RealMatch = allMatches.find(
-			(m) => m.round_id === allRounds[1].id && m.opponent1 && m.opponent2,
+			(m) => m.roundId === allRounds[1].id && m.opponent1 && m.opponent2,
 		)!;
 
 		expect(bracket.matchStatus(round1RealMatch.id)).toBe("STARTED");

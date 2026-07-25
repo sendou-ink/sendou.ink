@@ -58,7 +58,7 @@ export class EngineBracket {
 				...created.group.map((group) => ({
 					...group,
 					id: group.id + offsets.group,
-					stage_id: group.stage_id + offsets.stage,
+					stageId: group.stageId + offsets.stage,
 				})),
 			],
 			round: [
@@ -66,8 +66,8 @@ export class EngineBracket {
 				...created.round.map((round) => ({
 					...round,
 					id: round.id + offsets.round,
-					stage_id: round.stage_id + offsets.stage,
-					group_id: round.group_id + offsets.group,
+					stageId: round.stageId + offsets.stage,
+					groupId: round.groupId + offsets.group,
 				})),
 			],
 			match: [
@@ -75,9 +75,9 @@ export class EngineBracket {
 				...created.match.map((match) => ({
 					...match,
 					id: match.id + offsets.match,
-					stage_id: match.stage_id + offsets.stage,
-					group_id: match.group_id + offsets.group,
-					round_id: match.round_id + offsets.round,
+					stageId: match.stageId + offsets.stage,
+					groupId: match.groupId + offsets.group,
+					roundId: match.roundId + offsets.round,
 				})),
 			],
 		};

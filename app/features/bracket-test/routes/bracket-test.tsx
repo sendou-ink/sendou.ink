@@ -210,8 +210,8 @@ function countRounds(data: BracketData, isDoubleElim: boolean) {
 	const wbGroupId = data.group.find((g) => g.number === 1)?.id;
 	const lbGroupId = data.group.find((g) => g.number === 2)?.id;
 
-	const wbRounds = data.round.filter((r) => r.group_id === wbGroupId).length;
-	const lbRounds = data.round.filter((r) => r.group_id === lbGroupId).length;
+	const wbRounds = data.round.filter((r) => r.groupId === wbGroupId).length;
+	const lbRounds = data.round.filter((r) => r.groupId === lbGroupId).length;
 
 	return { totalRounds, wbRounds, lbRounds };
 }
@@ -226,10 +226,10 @@ function simulateCompletedRoundsByGroup(
 
 	const completedRoundIds = new Set<number>();
 	for (const round of data.round) {
-		if (round.group_id === wbGroupId && round.number <= wbCompleted) {
+		if (round.groupId === wbGroupId && round.number <= wbCompleted) {
 			completedRoundIds.add(round.id);
 		}
-		if (round.group_id === lbGroupId && round.number <= lbCompleted) {
+		if (round.groupId === lbGroupId && round.number <= lbCompleted) {
 			completedRoundIds.add(round.id);
 		}
 	}
@@ -262,7 +262,7 @@ function markMatchesCompleted(
 	completedRoundIds: Set<number>,
 ) {
 	for (const match of data.match) {
-		if (!completedRoundIds.has(match.round_id)) continue;
+		if (!completedRoundIds.has(match.roundId)) continue;
 		// skip BYE matches (opponent slot is null entirely)
 		if (match.opponent1 === null || match.opponent2 === null) continue;
 

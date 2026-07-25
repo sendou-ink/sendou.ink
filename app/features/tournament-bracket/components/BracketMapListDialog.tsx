@@ -210,12 +210,12 @@ export function BracketMapListDialog({
 		if (bracket.type === "single_elimination") {
 			const rounds = getRounds({ type: "single", bracketData });
 
-			const hasThirdPlaceMatch = rounds.some((round) => round.group_id === 1);
+			const hasThirdPlaceMatch = rounds.some((round) => round.groupId === 1);
 
 			if (!thirdPlaceMatchLinked || !hasThirdPlaceMatch) return rounds;
 
 			return rounds
-				.filter((round) => round.group_id !== 1)
+				.filter((round) => round.groupId !== 1)
 				.map((round) =>
 					round.name === "Finals"
 						? {
@@ -343,7 +343,7 @@ export function BracketMapListDialog({
 						Array.from(maps.entries()).map(([key, value]) => ({
 							...value,
 							roundId: key,
-							groupId: rounds.find((r) => r.id === key)?.group_id,
+							groupId: rounds.find((r) => r.id === key)?.groupId,
 							type: countType,
 							customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
 						})),
@@ -580,14 +580,14 @@ export function BracketMapListDialog({
 													);
 
 													const groupInfo = newMapCounts.get(
-														bracketRound.group_id,
+														bracketRound.groupId,
 													);
 													invariant(
 														groupInfo,
 														"Expected group info to be defined",
 													);
 													const oldMapInfo = newMapCounts
-														.get(bracketRound.group_id)
+														.get(bracketRound.groupId)
 														?.get(bracketRound.number);
 													invariant(
 														oldMapInfo,
@@ -723,7 +723,7 @@ function inferMapCounts({
 	for (const [groupId, value] of bracket.defaultRoundBestOfs(data).entries()) {
 		for (const roundNumber of value.keys()) {
 			const roundId = data.round.find(
-				(round) => round.group_id === groupId && round.number === roundNumber,
+				(round) => round.groupId === groupId && round.number === roundNumber,
 			)?.id;
 			invariant(typeof roundId === "number", "Expected roundId to be defined");
 

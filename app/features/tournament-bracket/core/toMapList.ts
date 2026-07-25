@@ -9,7 +9,7 @@ import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 
 export type BracketMapCounts = Map<
-	// round.group_id ->
+	// round.groupId ->
 	number,
 	// round.number ->
 	Map<number, { count: number; type: "BEST_OF" }>
@@ -101,19 +101,19 @@ function getFilteredRounds(
 	// (e.g. groups of 3 and 2). Use the group with the most rounds: it covers
 	// every round number and its map list is shared with the smaller groups.
 	const fullestGroupId = fullestGroupIdByRounds(rounds);
-	return rounds.filter((x) => x.group_id === fullestGroupId);
+	return rounds.filter((x) => x.groupId === fullestGroupId);
 }
 
 function fullestGroupIdByRounds(rounds: RoundData[]) {
 	const roundCountByGroup = new Map<number, number>();
 	for (const round of rounds) {
 		roundCountByGroup.set(
-			round.group_id,
-			(roundCountByGroup.get(round.group_id) ?? 0) + 1,
+			round.groupId,
+			(roundCountByGroup.get(round.groupId) ?? 0) + 1,
 		);
 	}
 
-	let fullestGroupId = rounds[0].group_id;
+	let fullestGroupId = rounds[0].groupId;
 	for (const [groupId, count] of roundCountByGroup) {
 		if (count > roundCountByGroup.get(fullestGroupId)!)
 			fullestGroupId = groupId;
@@ -126,7 +126,7 @@ function sortRounds(
 	rounds: RoundData[],
 	type: Tables["TournamentStage"]["type"],
 ) {
-	const groupIds = rounds.map((x) => x.group_id);
+	const groupIds = rounds.map((x) => x.groupId);
 	const minGroupId = Math.min(...groupIds);
 	const maxGroupId = Math.max(...groupIds);
 
@@ -140,13 +140,13 @@ function sortRounds(
 	return rounds.toSorted((a, b) => {
 		if (type === "double_elimination") {
 			const rankDiff =
-				doubleEliminationGroupRank(a.group_id) -
-				doubleEliminationGroupRank(b.group_id);
+				doubleEliminationGroupRank(a.groupId) -
+				doubleEliminationGroupRank(b.groupId);
 			if (rankDiff !== 0) return rankDiff;
 		}
 		if (type === "single_elimination") {
 			// finals and 3rd place match last
-			if (a.group_id !== b.group_id) return a.group_id - b.group_id;
+			if (a.groupId !== b.groupId) return a.groupId - b.groupId;
 		}
 
 		return a.number - b.number;
@@ -163,12 +163,12 @@ function resolveRoundMapCount(
 	const groupId =
 		type === "round_robin" || type === "swiss"
 			? fullestGroupIdByCounts(counts)
-			: round.group_id;
+			: round.groupId;
 
 	const count = counts.get(groupId)?.get(round.number)?.count;
 	if (typeof count === "undefined") {
 		logger.warn(
-			`No map count found for round ${round.number} (group ${round.group_id})`,
+			`No map count found for round ${round.number} (group ${round.groupId})`,
 		);
 		return 5;
 	}

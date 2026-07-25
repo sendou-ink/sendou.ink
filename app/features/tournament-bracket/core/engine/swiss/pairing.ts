@@ -28,7 +28,7 @@ export function generateRound(
 ): Result<GeneratedRound, string> {
 	// lets consider only this groups matches
 	// in the case that there are more than one group
-	const groupsMatches = data.match.filter((m) => m.group_id === args.groupId);
+	const groupsMatches = data.match.filter((m) => m.groupId === args.groupId);
 
 	if (groupsMatches.length === 0) return err("No matches found for group");
 	if (data.stage[0]?.type !== "swiss") return err("Bracket is not Swiss type");
@@ -100,9 +100,9 @@ export function generateRound(
 	const newRoundId = data.round
 		.slice()
 		.sort((a, b) => a.id - b.id)
-		.filter((r) => r.group_id === args.groupId)
+		.filter((r) => r.groupId === args.groupId)
 		.find(
-			(r) => r.id > Math.max(...groupsMatches.map((match) => match.round_id)),
+			(r) => r.id > Math.max(...groupsMatches.map((match) => match.roundId)),
 		)?.id;
 	invariant(newRoundId, "newRoundId not found");
 

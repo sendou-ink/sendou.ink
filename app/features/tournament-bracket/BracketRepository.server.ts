@@ -56,7 +56,7 @@ export async function findByTournamentId(
 					)
 					.select([
 						"TournamentGroup.id",
-						"TournamentGroup.stageId as stage_id",
+						"TournamentGroup.stageId",
 						"TournamentGroup.number",
 					])
 					.where("TournamentStage.tournamentId", "=", tournamentId)
@@ -73,8 +73,8 @@ export async function findByTournamentId(
 					)
 					.select([
 						"TournamentRound.id",
-						"TournamentRound.stageId as stage_id",
-						"TournamentRound.groupId as group_id",
+						"TournamentRound.stageId",
+						"TournamentRound.groupId",
 						"TournamentRound.number",
 						"TournamentRound.maps",
 					])
@@ -97,9 +97,9 @@ export async function findByTournamentId(
 					)
 					.select([
 						"TournamentMatch.id",
-						"TournamentMatch.stageId as stage_id",
-						"TournamentMatch.groupId as group_id",
-						"TournamentMatch.roundId as round_id",
+						"TournamentMatch.stageId",
+						"TournamentMatch.groupId",
+						"TournamentMatch.roundId",
 						"TournamentMatch.number",
 						"TournamentMatch.startedAt",
 						"TournamentMatch.winnerSide",
@@ -192,7 +192,7 @@ export function insertBracket(args: {
 				.insertInto("TournamentRound")
 				.values({
 					stageId: stage.id,
-					groupId: groupIdMapping.get(round.group_id)!,
+					groupId: groupIdMapping.get(round.groupId)!,
 					number: round.number,
 					maps: JSON.stringify(round.maps),
 				})
@@ -209,8 +209,8 @@ export function insertBracket(args: {
 				.insertInto("TournamentMatch")
 				.values({
 					stageId: stage.id,
-					groupId: groupIdMapping.get(match.group_id)!,
-					roundId: roundIdMapping.get(match.round_id)!,
+					groupId: groupIdMapping.get(match.groupId)!,
+					roundId: roundIdMapping.get(match.roundId)!,
 					number: match.number,
 					opponentOne: serializeOpponent(match.opponent1),
 					opponentTwo: serializeOpponent(match.opponent2),

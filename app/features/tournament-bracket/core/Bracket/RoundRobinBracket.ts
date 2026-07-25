@@ -96,7 +96,7 @@ export class RoundRobinBracket extends Bracket {
 		const placements: (Standing & { groupId: number })[] = [];
 		for (const groupId of groupIds) {
 			const matches = this.data.match.filter(
-				(match) => match.group_id === groupId,
+				(match) => match.groupId === groupId,
 			);
 
 			const groupIsFinished = matches.every(
@@ -336,12 +336,12 @@ export class RoundRobinBracket extends Bracket {
 		const result: BracketMapCounts = new Map();
 
 		for (const round of data.round) {
-			if (!result.get(round.group_id)) {
-				result.set(round.group_id, new Map());
+			if (!result.get(round.groupId)) {
+				result.set(round.groupId, new Map());
 			}
 
 			result
-				.get(round.group_id)!
+				.get(round.groupId)!
 				.set(round.number, { count: 3, type: "BEST_OF" });
 		}
 

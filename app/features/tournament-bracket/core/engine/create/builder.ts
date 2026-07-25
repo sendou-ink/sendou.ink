@@ -72,7 +72,7 @@ export class StageCreator {
 		slots: ParticipantSlot[],
 	): void {
 		const groupId = this.insertGroup({
-			stage_id: stageId,
+			stageId: stageId,
 			number,
 		});
 
@@ -101,7 +101,7 @@ export class StageCreator {
 		slotsB: ParticipantSlot[],
 	): void {
 		const groupId = this.insertGroup({
-			stage_id: stageId,
+			stageId: stageId,
 			number,
 		});
 
@@ -123,7 +123,7 @@ export class StageCreator {
 	): StandardBracketResults {
 		const roundCount = helpers.getUpperBracketRoundCount(slots.length);
 		const groupId = this.insertGroup({
-			stage_id: stageId,
+			stageId: stageId,
 			number,
 		});
 
@@ -162,7 +162,7 @@ export class StageCreator {
 		const ordered = ordering[method](losers[losersId++]);
 
 		const groupId = this.insertGroup({
-			stage_id: stageId,
+			stageId: stageId,
 			number,
 		});
 
@@ -204,7 +204,7 @@ export class StageCreator {
 		duels: Duel[],
 	): void {
 		const groupId = this.insertGroup({
-			stage_id: stageId,
+			stageId: stageId,
 			number,
 		});
 
@@ -224,8 +224,8 @@ export class StageCreator {
 	): void {
 		const roundId = this.insertRound({
 			number: roundNumber,
-			stage_id: stageId,
-			group_id: groupId,
+			stageId: stageId,
+			groupId: groupId,
 		});
 
 		for (let i = 0; i < matchCount; i++) {
@@ -256,9 +256,9 @@ export class StageCreator {
 
 		this.insertMatch({
 			number: matchNumber,
-			stage_id: stageId,
-			group_id: groupId,
-			round_id: roundId,
+			stageId: stageId,
+			groupId: groupId,
+			roundId: roundId,
 			opponent1,
 			opponent2,
 			winnerSide: null,

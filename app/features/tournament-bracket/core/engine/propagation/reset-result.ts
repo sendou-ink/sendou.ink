@@ -23,14 +23,14 @@ export function resetMatchResults(
 	const stored = store.select("match", matchId);
 	if (!stored) throw Error("Match not found.");
 
-	const stage = store.select("stage", stored.stage_id);
+	const stage = store.select("stage", stored.stageId);
 	if (!stage) throw Error("Stage not found.");
 
-	const group = store.select("group", stored.group_id);
+	const group = store.select("group", stored.groupId);
 	if (!group) throw Error("Group not found.");
 
 	const { roundNumber, roundCount } = propagator.getRoundPositionalInfo(
-		stored.round_id,
+		stored.roundId,
 	);
 	const matchLocation = helpers.getMatchLocation(stage.type, group.number);
 	const nextMatches =

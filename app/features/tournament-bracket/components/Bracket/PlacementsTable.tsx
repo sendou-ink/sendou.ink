@@ -32,7 +32,7 @@ export function PlacementsTable({
 		.filter((s) => s.groupId === groupId);
 
 	const missingTeams = bracket.data.match.reduce((acc, cur) => {
-		if (cur.group_id !== groupId) return acc;
+		if (cur.groupId !== groupId) return acc;
 
 		if (
 			cur.opponent1?.id &&

@@ -57,15 +57,15 @@ describe("Create a round-robin stage", () => {
 		}) => match.opponent1?.id != null && match.opponent2?.id != null;
 
 		const shortGroup = bracket.groups().find((group) => {
-			const matches = bracket.matches({ group_id: group.id });
+			const matches = bracket.matches({ groupId: group.id });
 			return matches.filter(isRealMatch).length === 1;
 		})!;
 
-		const rounds = bracket.rounds({ group_id: shortGroup.id });
-		const matches = bracket.matches({ group_id: shortGroup.id });
+		const rounds = bracket.rounds({ groupId: shortGroup.id });
+		const matches = bracket.matches({ groupId: shortGroup.id });
 		const realMatch = matches.find(isRealMatch)!;
 		const realMatchRound = rounds.find(
-			(round) => round.id === realMatch.round_id,
+			(round) => round.id === realMatch.roundId,
 		)!;
 
 		// No BYE matches and no empty rounds, just the single match in round 1.

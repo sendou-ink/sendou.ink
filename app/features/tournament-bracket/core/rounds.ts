@@ -17,8 +17,8 @@ export function getRounds(args: {
 	const rounds = args.bracketData.round
 		.flatMap((round) => {
 			if (
-				typeof round.group_id === "number" &&
-				!groupIds.includes(round.group_id)
+				typeof round.groupId === "number" &&
+				!groupIds.includes(round.groupId)
 			) {
 				return [];
 			}
@@ -30,7 +30,7 @@ export function getRounds(args: {
 			const grandFinalsMatch =
 				args.type === "winners"
 					? args.bracketData.match.find(
-							(match) => match.round_id === rounds[rounds.length - 2]?.id,
+							(match) => match.roundId === rounds[rounds.length - 2]?.id,
 						)
 					: undefined;
 
@@ -40,7 +40,7 @@ export function getRounds(args: {
 			}
 
 			const matches = args.bracketData.match.filter(
-				(match) => match.round_id === round.id,
+				(match) => match.roundId === round.id,
 			);
 
 			const atLeastOneNonByeMatch = matches.some(
@@ -52,7 +52,7 @@ export function getRounds(args: {
 
 	const hasThirdPlaceMatch =
 		args.type === "single" &&
-		R.unique(args.bracketData.match.map((m) => m.group_id)).length > 1;
+		R.unique(args.bracketData.match.map((m) => m.groupId)).length > 1;
 	const namedRounds = rounds.map((round, i) => {
 		const name = () => {
 			if (

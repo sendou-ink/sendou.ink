@@ -96,13 +96,13 @@ function isWaitingForPreviousRound(
 	match: MatchData,
 	context: BracketContext,
 ): boolean {
-	if (!context.hasDependentRoundsByStageId.get(match.stage_id)) return false;
+	if (!context.hasDependentRoundsByStageId.get(match.stageId)) return false;
 
-	const round = context.roundsById.get(match.round_id);
+	const round = context.roundsById.get(match.roundId);
 	if (!round || round.number === 1) return false;
 
 	const previousRound = context.roundByGroupAndNumber.get(
-		roundKey(round.group_id, round.number - 1),
+		roundKey(round.groupId, round.number - 1),
 	);
 	if (!previousRound) return false;
 
@@ -131,16 +131,16 @@ function bracketContext(data: BracketData): BracketContext {
 	const roundByGroupAndNumber = new Map<string, RoundData>();
 	for (const round of data.round) {
 		roundsById.set(round.id, round);
-		roundByGroupAndNumber.set(roundKey(round.group_id, round.number), round);
+		roundByGroupAndNumber.set(roundKey(round.groupId, round.number), round);
 	}
 
 	const matchesByRoundId = new Map<number, MatchData[]>();
 	for (const match of data.match) {
-		const matches = matchesByRoundId.get(match.round_id);
+		const matches = matchesByRoundId.get(match.roundId);
 		if (matches) {
 			matches.push(match);
 		} else {
-			matchesByRoundId.set(match.round_id, [match]);
+			matchesByRoundId.set(match.roundId, [match]);
 		}
 	}
 

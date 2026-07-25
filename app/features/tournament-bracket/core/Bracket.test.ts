@@ -546,7 +546,7 @@ describe("single elimination standings - third place match", () => {
 			);
 			const thirdPlaceMatch = bracket
 				.matches()
-				.find((match) => match.group_id === thirdPlaceGroupId);
+				.find((match) => match.groupId === thirdPlaceGroupId);
 			invariant(thirdPlaceMatch, "Third place match not found");
 			thirdPlaceWinnerId = thirdPlaceMatch.opponent1!.id!;
 			thirdPlaceLoserId = thirdPlaceMatch.opponent2!.id!;
@@ -703,27 +703,24 @@ describe("double elimination standings - projected ties", () => {
 		const losersRoundId = (number: number) =>
 			bracket
 				.rounds()
-				.find((r) => r.group_id === losersGroupId && r.number === number)!.id;
+				.find((r) => r.groupId === losersGroupId && r.number === number)!.id;
 
 		// play out the entire winners bracket so all losers feed in
 		let winnersReady = readyMatches(
 			bracket,
-			(m) => m.group_id === winnersGroupId,
+			(m) => m.groupId === winnersGroupId,
 		);
 		while (winnersReady.length) {
 			for (const match of winnersReady) {
 				reportLowerIdWinner(bracket, match.id);
 			}
-			winnersReady = readyMatches(
-				bracket,
-				(m) => m.group_id === winnersGroupId,
-			);
+			winnersReady = readyMatches(bracket, (m) => m.groupId === winnersGroupId);
 		}
 
 		// losers round 1: both matches -> two teams eliminated, tied 7th/8th
 		for (const match of readyMatches(
 			bracket,
-			(m) => m.round_id === losersRoundId(1),
+			(m) => m.roundId === losersRoundId(1),
 		)) {
 			reportLowerIdWinner(bracket, match.id);
 		}
@@ -731,7 +728,7 @@ describe("double elimination standings - projected ties", () => {
 		// losers round 2: report only one of the two matches
 		const losersRound2 = readyMatches(
 			bracket,
-			(m) => m.round_id === losersRoundId(2),
+			(m) => m.roundId === losersRoundId(2),
 		);
 		invariant(losersRound2.length === 2, "Expected two losers round 2 matches");
 

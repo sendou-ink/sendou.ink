@@ -19,7 +19,7 @@ export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 
 	const group = nullFilledArray(groupCount).map((_, i) => ({
 		id: i,
-		stage_id: 0,
+		stageId: 0,
 		number: i + 1,
 	}));
 
@@ -34,9 +34,9 @@ export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 		round: group.flatMap((g) =>
 			nullFilledArray(roundCount).map((_, i) => ({
 				id: roundId++,
-				group_id: g.id,
+				groupId: g.id,
 				number: i + 1,
-				stage_id: 0,
+				stageId: 0,
 			})),
 		),
 		stage: [
@@ -96,9 +96,9 @@ function firstRoundMatches({
 
 			result.push({
 				id: matchId++,
-				group_id: groupIdx,
-				stage_id: 0,
-				round_id: roundId,
+				groupId: groupIdx,
+				stageId: 0,
+				roundId: roundId,
 				number: i + 1,
 				opponent1: {
 					id: upper,
@@ -113,9 +113,9 @@ function firstRoundMatches({
 		if (bye) {
 			result.push({
 				id: matchId++,
-				group_id: groupIdx,
-				stage_id: 0,
-				round_id: roundId,
+				groupId: groupIdx,
+				stageId: 0,
+				roundId: roundId,
 				number: upperHalf.length + 1,
 				opponent1: {
 					id: bye,

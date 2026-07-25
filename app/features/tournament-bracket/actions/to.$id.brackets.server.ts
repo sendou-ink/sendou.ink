@@ -62,8 +62,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Bracket is not ready to be started",
 			);
 
-			const groupCount = new Set(bracket.data.round.map((r) => r.group_id))
-				.size;
+			const groupCount = new Set(bracket.data.round.map((r) => r.groupId)).size;
 
 			const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
 				type: bracket.type,
@@ -241,8 +240,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			errorToastIfErr(round);
 
 			const stageId = bracket.data.match.find(
-				(match) => match.group_id === data.groupId,
-			)?.stage_id;
+				(match) => match.groupId === data.groupId,
+			)?.stageId;
 			errorToastIfFalsy(stageId, "No matches found for group");
 
 			await BracketRepository.insertRoundMatches({

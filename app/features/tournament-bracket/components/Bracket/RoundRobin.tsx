@@ -14,11 +14,11 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 	return (
 		<div className="stack xl">
 			{groups.map(({ groupName, groupId }) => {
-				const rounds = bracket.data.round.filter((r) => r.group_id === groupId);
+				const rounds = bracket.data.round.filter((r) => r.groupId === groupId);
 
 				const allMatchesFinished = rounds.every((round) => {
 					const matches = bracket.data.match.filter(
-						(match) => match.round_id === round.id,
+						(match) => match.roundId === round.id,
 					);
 
 					return matches.every(
@@ -37,7 +37,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 								const bestOf = round.maps?.count;
 
 								const matches = bracket.data.match.filter(
-									(match) => match.round_id === round.id,
+									(match) => match.roundId === round.id,
 								);
 
 								const someMatchOngoing = matches.some(
@@ -107,7 +107,7 @@ function getGroups(bracket: BracketType) {
 
 	for (const group of bracket.data.group) {
 		const matches = bracket.data.match.filter(
-			(match) => match.group_id === group.id,
+			(match) => match.groupId === group.id,
 		);
 
 		result.push({

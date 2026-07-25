@@ -219,7 +219,7 @@ function MatchRow({
 		const opponentScore = opponent!.score;
 
 		// Display W/L as the score might not reflect the winner set in the early ending
-		const round = bracket.data.round.find((r) => r.id === match.round_id);
+		const round = bracket.data.round.find((r) => r.id === match.roundId);
 		if (
 			round?.maps &&
 			matchEndedEarly({
@@ -433,7 +433,7 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 	);
 	if (isLocked) return null;
 
-	const round = bracket.data.round.find((r) => r.id === match.round_id);
+	const round = bracket.data.round.find((r) => r.id === match.roundId);
 	const bestOf = round?.maps?.count;
 	if (!bestOf) return null;
 

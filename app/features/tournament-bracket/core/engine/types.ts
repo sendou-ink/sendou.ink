@@ -100,14 +100,14 @@ export interface StageData {
 
 export interface GroupData {
 	id: number;
-	stage_id: number;
+	stageId: number;
 	number: number;
 }
 
 export interface RoundData {
 	id: number;
-	stage_id: number;
-	group_id: number;
+	stageId: number;
+	groupId: number;
 	number: number;
 	maps?: TournamentRoundMaps | null;
 }
@@ -125,9 +125,9 @@ export interface MatchResults {
 
 export interface MatchData extends MatchResults {
 	id: number;
-	stage_id: number;
-	group_id: number;
-	round_id: number;
+	stageId: number;
+	groupId: number;
+	roundId: number;
 	number: number;
 	startedAt?: number | null;
 }

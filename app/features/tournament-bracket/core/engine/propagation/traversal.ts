@@ -40,13 +40,13 @@ export class Propagator {
 	 */
 	updateRelatedMatches(match: MatchData): void {
 		const { roundNumber, roundCount } = this.getRoundPositionalInfo(
-			match.round_id,
+			match.roundId,
 		);
 
-		const stage = this.store.select("stage", match.stage_id);
+		const stage = this.store.select("stage", match.stageId);
 		if (!stage) throw Error("Stage not found.");
 
-		const group = this.store.select("group", match.group_id);
+		const group = this.store.select("group", match.groupId);
 		if (!group) throw Error("Group not found.");
 
 		const matchLocation = helpers.getMatchLocation(stage.type, group.number);
@@ -69,7 +69,7 @@ export class Propagator {
 		if (!force && matchStatus(this.store.data, stored.id) === "PENDING")
 			throw Error("The match is locked.");
 
-		const stage = this.store.select("stage", stored.stage_id);
+		const stage = this.store.select("stage", stored.stageId);
 		if (!stage) throw Error("Stage not found.");
 
 		const resultChanged = helpers.setMatchResults(stored, input);
@@ -240,7 +240,7 @@ export class Propagator {
 		if (!round) throw Error("Round not found.");
 
 		const rounds = this.store.selectAll("round", {
-			group_id: round.group_id,
+			groupId: round.groupId,
 		});
 
 		return {
@@ -303,14 +303,14 @@ export class Propagator {
 		roundNumber: number,
 		roundCount: number,
 	): (MatchData | null)[] {
-		const loserBracket = this.getLoserBracket(match.stage_id);
+		const loserBracket = this.getLoserBracket(match.stageId);
 		if (loserBracket === null)
 			// Only one match in the stage, there is no loser bracket.
 			return [];
 
 		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
 
-		const participantCount = this.participantCount(match.stage_id);
+		const participantCount = this.participantCount(match.stageId);
 		const method = helpers.getLoserOrdering(participantCount, roundNumberLB);
 		const actualMatchNumberLB = helpers.findLoserMatchNumber(
 			participantCount,
@@ -355,7 +355,7 @@ export class Propagator {
 		if (stageType === "double_elimination" && roundNumber === roundCount)
 			return [this.getFirstMatchFinal(match, stageType)];
 
-		return [this.getDiagonalMatch(match.group_id, roundNumber, match.number)];
+		return [this.getDiagonalMatch(match.groupId, roundNumber, match.number)];
 	}
 
 	/**
@@ -375,14 +375,14 @@ export class Propagator {
 		if (roundNumber === roundCount - 1) {
 			const final = this.getFirstMatchFinal(match, stageType);
 			return [
-				this.getDiagonalMatch(match.group_id, roundNumber, match.number),
+				this.getDiagonalMatch(match.groupId, roundNumber, match.number),
 				...(final ? [final] : []),
 			];
 		}
 
 		if (roundNumber === roundCount) return [];
 
-		return [this.getDiagonalMatch(match.group_id, roundNumber, match.number)];
+		return [this.getDiagonalMatch(match.groupId, roundNumber, match.number)];
 	}
 
 	/**
@@ -420,7 +420,7 @@ export class Propagator {
 		match: MatchData,
 		stageType: StageType,
 	): MatchData | null {
-		const finalGroupId = this.getFinalGroupId(match.stage_id, stageType);
+		const finalGroupId = this.getFinalGroupId(match.stageId, stageType);
 		if (finalGroupId === null) return null;
 
 		return this.findMatch(finalGroupId, 1, 1);
@@ -446,7 +446,7 @@ export class Propagator {
 			return [];
 		}
 
-		return [this.findMatch(match.group_id, roundNumber + 1, 1)];
+		return [this.findMatch(match.groupId, roundNumber + 1, 1)];
 	}
 
 	/**
@@ -459,7 +459,7 @@ export class Propagator {
 		match: MatchData,
 		roundNumber: number,
 	): MatchData[] {
-		return [this.getParallelMatch(match.group_id, roundNumber, match.number)];
+		return [this.getParallelMatch(match.groupId, roundNumber, match.number)];
 	}
 
 	/**
@@ -472,7 +472,7 @@ export class Propagator {
 		match: MatchData,
 		roundNumber: number,
 	): MatchData[] {
-		return [this.getDiagonalMatch(match.group_id, roundNumber, match.number)];
+		return [this.getDiagonalMatch(match.groupId, roundNumber, match.number)];
 	}
 
 	/**
@@ -490,7 +490,7 @@ export class Propagator {
 				? 2 /* Consolation final */
 				: 3; /* Grand final */
 		const finalGroup = this.store.selectFirst("group", {
-			stage_id: stageId,
+			stageId: stageId,
 			number: groupNumber,
 		});
 		if (!finalGroup) return null;
@@ -504,7 +504,7 @@ export class Propagator {
 	 */
 	private getUpperBracket(stageId: number): GroupData {
 		const winnerBracket = this.store.selectFirst("group", {
-			stage_id: stageId,
+			stageId: stageId,
 			number: 1,
 		});
 		if (!winnerBracket) throw Error("Winner bracket not found.");
@@ -520,13 +520,13 @@ export class Propagator {
 	private participantCount(stageId: number): number {
 		const upperBracket = this.getUpperBracket(stageId);
 		const firstRound = this.store.selectFirst("round", {
-			group_id: upperBracket.id,
+			groupId: upperBracket.id,
 			number: 1,
 		});
 		if (!firstRound) throw Error("First round not found.");
 
 		const firstRoundMatches = this.store.selectAll("match", {
-			round_id: firstRound.id,
+			roundId: firstRound.id,
 		});
 		return firstRoundMatches.length * 2;
 	}
@@ -537,7 +537,7 @@ export class Propagator {
 	 * @param stageId ID of the stage.
 	 */
 	private getLoserBracket(stageId: number): GroupData | null {
-		return this.store.selectFirst("group", { stage_id: stageId, number: 2 });
+		return this.store.selectFirst("group", { stageId: stageId, number: 2 });
 	}
 
 	/**
@@ -591,14 +591,14 @@ export class Propagator {
 		matchNumber: number,
 	): MatchData {
 		const round = this.store.selectFirst("round", {
-			group_id: groupId,
+			groupId: groupId,
 			number: roundNumber,
 		});
 
 		if (!round) throw Error("Round not found.");
 
 		const match = this.store.selectFirst("match", {
-			round_id: round.id,
+			roundId: round.id,
 			number: matchNumber,
 		});
 

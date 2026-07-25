@@ -260,9 +260,7 @@ function resolveJoinInfo({
 	);
 	const bracket = tournament.brackets[bracketIdx];
 	const bracketMatch = bracket?.data.match.find((m) => m.id === data.match.id);
-	const group = bracket?.data.group.find(
-		(g) => g.id === bracketMatch?.group_id,
-	);
+	const group = bracket?.data.group.find((g) => g.id === bracketMatch?.groupId);
 
 	const poolCode = tournament.resolvePoolCode({
 		hostingTeamId: hostingTeam.id,

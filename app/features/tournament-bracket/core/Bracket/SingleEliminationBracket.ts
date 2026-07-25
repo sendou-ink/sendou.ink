@@ -20,7 +20,7 @@ export class SingleEliminationBracket extends Bracket {
 		const maxRoundNumber = Math.max(...data.round.map((round) => round.number));
 		for (const group of data.group) {
 			const roundsOfGroup = data.round.filter(
-				(round) => round.group_id === group.id,
+				(round) => round.groupId === group.id,
 			);
 
 			const defaultOfRound = (round: RoundData) => {
@@ -42,7 +42,7 @@ export class SingleEliminationBracket extends Bracket {
 			for (const round of roundsOfGroup) {
 				const atLeastOneNonByeMatch = data.match.some(
 					(match) =>
-						match.round_id === round.id && match.opponent1 && match.opponent2,
+						match.roundId === round.id && match.opponent1 && match.opponent2,
 				);
 
 				if (!atLeastOneNonByeMatch) continue;
@@ -61,7 +61,7 @@ export class SingleEliminationBracket extends Bracket {
 	}
 
 	private hasThirdPlaceMatch() {
-		return R.unique(this.data.match.map((m) => m.group_id)).length > 1;
+		return R.unique(this.data.match.map((m) => m.groupId)).length > 1;
 	}
 
 	get standings(): Standing[] {
@@ -73,15 +73,15 @@ export class SingleEliminationBracket extends Bracket {
 			}
 
 			const thirdPlaceMatch = this.data.match.find(
-				(m) => m.group_id === Math.max(...this.data.group.map((g) => g.id)),
+				(m) => m.groupId === Math.max(...this.data.group.map((g) => g.id)),
 			);
 
 			return this.data.match.filter(
-				(m) => m.group_id !== thirdPlaceMatch?.group_id,
+				(m) => m.groupId !== thirdPlaceMatch?.groupId,
 			);
 		})();
 
-		for (const match of matches.sort((a, b) => a.round_id - b.round_id)) {
+		for (const match of matches.sort((a, b) => a.roundId - b.roundId)) {
 			if (!match.winnerSide) {
 				continue;
 			}
@@ -90,7 +90,7 @@ export class SingleEliminationBracket extends Bracket {
 				match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 			invariant(loser?.id, "Loser id not found");
 
-			teams.push({ id: loser.id, lostAt: match.round_id });
+			teams.push({ id: loser.id, lostAt: match.roundId });
 		}
 
 		const teamCountWhoDidntLoseYet =
@@ -137,7 +137,7 @@ export class SingleEliminationBracket extends Bracket {
 		}
 
 		const thirdPlaceMatch = this.hasThirdPlaceMatch()
-			? this.data.match.find((m) => m.group_id !== matches[0].group_id)
+			? this.data.match.find((m) => m.groupId !== matches[0].groupId)
 			: undefined;
 		const thirdPlaceMatchWinner =
 			thirdPlaceMatch?.winnerSide === "opponent1"

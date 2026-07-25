@@ -71,7 +71,7 @@ describe("Swiss", () => {
 
 			expect(data.round).toHaveLength(10);
 
-			const matchGroupIds = data.match.map((m) => m.group_id);
+			const matchGroupIds = data.match.map((m) => m.groupId);
 			expect(matchGroupIds).toContain(0);
 			expect(matchGroupIds).toContain(1);
 		});

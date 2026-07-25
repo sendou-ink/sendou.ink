@@ -91,7 +91,7 @@ export class Tournament {
 
 			if (inProgressStage) {
 				const match = data.match.filter(
-					(match) => match.stage_id === inProgressStage.id,
+					(match) => match.stageId === inProgressStage.id,
 				);
 
 				this.brackets.push(
@@ -109,14 +109,14 @@ export class Tournament {
 						data: {
 							...data,
 							group: data.group.filter(
-								(group) => group.stage_id === inProgressStage.id,
+								(group) => group.stageId === inProgressStage.id,
 							),
 							match,
 							stage: data.stage.filter(
 								(stage) => stage.id === inProgressStage.id,
 							),
 							round: data.round.filter(
-								(round) => round.stage_id === inProgressStage.id,
+								(round) => round.stageId === inProgressStage.id,
 							),
 						},
 						type,
@@ -670,7 +670,7 @@ export class Tournament {
 
 			return this.brackets[0].data.round.every((round) => {
 				const hasMatches = this.brackets[0].data.match.some(
-					(match) => match.round_id === round.id,
+					(match) => match.roundId === round.id,
 				);
 
 				return hasMatches;
@@ -850,19 +850,19 @@ export class Tournament {
 
 					if (bracket.type === "round_robin") {
 						const group = bracket.data.group.find(
-							(group) => group.id === match.group_id,
+							(group) => group.id === match.groupId,
 						);
 						const round = bracket.data.round.find(
-							(round) => round.id === match.round_id,
+							(round) => round.id === match.roundId,
 						);
 
 						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
 					} else if (bracket.type === "swiss") {
 						const group = bracket.data.group.find(
-							(group) => group.id === match.group_id,
+							(group) => group.id === match.groupId,
 						);
 						const round = bracket.data.round.find(
-							(round) => round.id === match.round_id,
+							(round) => round.id === match.roundId,
 						);
 
 						const oneGroupOnly = bracket.data.group.length === 1;
@@ -883,7 +883,7 @@ export class Tournament {
 										...getRounds({ type: "losers", bracketData: bracket.data }),
 									];
 
-						const round = rounds.find((round) => round.id === match.round_id);
+						const round = rounds.find((round) => round.id === match.roundId);
 
 						if (round) {
 							const specifier = () => {
@@ -1243,8 +1243,7 @@ export class Tournament {
 		return bracket.data.match
 			.filter(
 				// only interested in matches of the same bracket & not the match  itself
-				(match2) =>
-					match2.stage_id === match.stage_id && match2.id !== match.id,
+				(match2) => match2.stageId === match.stageId && match2.id !== match.id,
 			)
 			.filter((match2) => {
 				const hasSameParticipant =
@@ -1254,7 +1253,7 @@ export class Tournament {
 					match2.opponent2?.id === match.opponent2?.id;
 
 				const comesAfter =
-					match2.group_id > match.group_id || match2.round_id > match.round_id;
+					match2.groupId > match.groupId || match2.roundId > match.roundId;
 
 				return hasSameParticipant && comesAfter;
 			});

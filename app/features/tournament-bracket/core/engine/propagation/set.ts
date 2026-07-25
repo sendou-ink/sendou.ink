@@ -178,7 +178,7 @@ function findMatch(data: BracketData, matchId: number): MatchData {
 
 function findMatchWithMaps(data: BracketData, matchId: number) {
 	const match = findMatch(data, matchId);
-	const round = data.round.find((round) => round.id === match.round_id);
+	const round = data.round.find((round) => round.id === match.roundId);
 	invariant(round?.maps, "Round of the match has no maps");
 
 	return { match, maps: round.maps };

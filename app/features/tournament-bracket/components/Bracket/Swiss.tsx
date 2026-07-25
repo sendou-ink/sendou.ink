@@ -44,7 +44,7 @@ export function SwissBracket({
 	const selectedGroup = groups.find((g) => g.groupId === selectedGroupId)!;
 
 	const rounds = bracket.data.round.filter(
-		(r) => r.group_id === selectedGroupId,
+		(r) => r.groupId === selectedGroupId,
 	);
 
 	// when bracket starts we go from "virtual id" to a real one
@@ -63,7 +63,7 @@ export function SwissBracket({
 		for (const round of rounds) {
 			const matches = bracket.data.match.filter(
 				(match) =>
-					match.round_id === round.id && match.group_id === selectedGroupId,
+					match.roundId === round.id && match.groupId === selectedGroupId,
 			);
 
 			if (matches.length === 0 || someMatchOngoing(matches)) {
@@ -80,7 +80,7 @@ export function SwissBracket({
 		for (const round of rounds) {
 			const matches = bracket.data.match.filter(
 				(match) =>
-					match.round_id === round.id && match.group_id === selectedGroupId,
+					match.roundId === round.id && match.groupId === selectedGroupId,
 			);
 
 			if (someMatchOngoing(matches) && matches.length > 0) {
@@ -123,8 +123,7 @@ export function SwissBracket({
 					{rounds.map((round, roundI) => {
 						const matches = bracket.data.match.filter(
 							(match) =>
-								match.round_id === round.id &&
-								match.group_id === selectedGroupId,
+								match.roundId === round.id && match.groupId === selectedGroupId,
 						);
 
 						if (
@@ -278,7 +277,7 @@ function getGroups(bracket: BracketType) {
 
 	for (const group of bracket.data.group) {
 		const matches = bracket.data.match.filter(
-			(match) => match.group_id === group.id,
+			(match) => match.groupId === group.id,
 		);
 
 		result.push({
