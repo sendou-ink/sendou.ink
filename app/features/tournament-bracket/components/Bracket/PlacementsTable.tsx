@@ -330,7 +330,7 @@ function StandingsTable({
 										{s.team.name}
 									</Link>{" "}
 									{s.team.droppedOut ? (
-										<span className="text-warning text-xxxs font-bold">
+										<span className="text-warning text-xxs font-bold">
 											Drop-out
 										</span>
 									) : null}

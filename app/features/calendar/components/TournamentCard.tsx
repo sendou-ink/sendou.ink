@@ -216,7 +216,7 @@ function TournamentFirstPlacerWithMembers({
 					<span className={styles.firstPlacersTeamName}>
 						{censored ? "???" : placer.teamName}
 					</span>
-					<div className="text-xxxs text-lighter font-bold text-uppercase">
+					<div className="text-xxs text-lighter font-bold text-uppercase">
 						{t("front:showcase.card.winner")}
 						{placer.div ? ` (${placer.div})` : null}
 					</div>
@@ -255,7 +255,7 @@ function TournamentFirstPlacerTeamNameOnly({
 			<span className={styles.firstPlacersTeamName}>
 				{censored ? "???" : placer.teamName}
 			</span>
-			<div className="text-xxxs text-lighter font-bold text-uppercase">
+			<div className="text-xxs text-lighter font-bold text-uppercase">
 				{t("front:showcase.card.winner")}
 				{placer.div ? ` (${placer.div})` : null}
 			</div>

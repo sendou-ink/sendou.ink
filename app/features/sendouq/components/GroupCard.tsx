@@ -279,7 +279,7 @@ function GroupMember({
 							<span className={styles.name}>
 								{member.inGameName ? (
 									<>
-										<span className="text-lighter font-bold text-xxxs">
+										<span className="text-lighter font-bold text-xxs">
 											{t("user:ign.short")}:
 										</span>{" "}
 										{inGameNameWithoutDiscriminator(member.inGameName)}
@@ -291,7 +291,7 @@ function GroupMember({
 						</span>
 					</UserCard>
 					{member.pronouns ? (
-						<span className="text-lighter ml-1 text-xxxs">
+						<span className="text-lighter ml-1 text-xxs">
 							{member.pronouns.subject}/{member.pronouns.object}
 						</span>
 					) : null}
