@@ -44,16 +44,16 @@ importers:
         version: 3.12.2
       '@react-router/node':
         specifier: 8.2.0
-        version: 8.2.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+        version: 8.2.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
       '@react-router/serve':
         specifier: 8.1.0
-        version: 8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+        version: 8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
       '@remix-run/form-data-parser':
         specifier: 0.17.4
         version: 0.17.4
       '@sentry/react-router':
         specifier: 10.65.0
-        version: 10.65.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@react-router/node@8.2.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
+        version: 10.65.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@react-router/node@8.2.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)
       '@tldraw/tldraw':
         specifier: 3.12.1
         version: 3.12.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -154,8 +154,8 @@ importers:
         specifier: 17.0.10
         version: 17.0.10(i18next@26.3.6(typescript@7.0.2))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@7.0.2)
       react-router:
-        specifier: 8.2.0
-        version: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        specifier: 8.3.0
+        version: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       react-use-draggable-scroll:
         specifier: 0.4.7
         version: 0.4.7(react@19.2.7)
@@ -170,7 +170,7 @@ importers:
         version: 3.4.1(remix-auth@4.2.0)
       remix-i18next:
         specifier: 8.0.0
-        version: 8.0.0(i18next@26.3.6(typescript@7.0.2))(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
+        version: 8.0.0(i18next@26.3.6(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))
       slugify:
         specifier: 1.6.9
         version: 1.6.9
@@ -198,7 +198,7 @@ importers:
         version: 1.61.1
       '@react-router/dev':
         specifier: 8.2.0
-        version: 8.2.0(@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0))
+        version: 8.2.0(@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0))
       '@types/better-sqlite3':
         specifier: 7.6.13
         version: 7.6.13
@@ -4144,8 +4144,8 @@ packages:
       '@types/react':
         optional: true
 
-  react-router@8.2.0:
-    resolution: {integrity: sha512-uP1LgGNHyilL1u+ZkecQk74DJOKOb6q4NLNYLRJcD/fjoogftNb5/Rj/07o/QBFsY/5MbAKPm1peTCQuVPv9cQ==}
+  react-router@8.3.0:
+    resolution: {integrity: sha512-qyPMvW83jGIct3yiieisxdk9M745anqhpIMKN5m1t6yBMfgVPpt77aHOqs5fUlEJRMCGffg9BaQLH9oPVOL7xQ==}
     engines: {node: '>=22.22.0'}
     peerDependencies:
       react: '>=19.2.7'
@@ -5905,7 +5905,7 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@react-router/dev@8.2.0(@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0))':
+  '@react-router/dev@8.2.0(@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/generator': 7.29.7
@@ -5914,7 +5914,7 @@ snapshots:
       '@babel/preset-typescript': 7.29.7(@babel/core@7.29.7)
       '@babel/traverse': 7.29.7
       '@babel/types': 7.29.7
-      '@react-router/node': 8.2.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+      '@react-router/node': 8.2.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
       '@remix-run/node-fetch-server': 0.13.3
       babel-dead-code-elimination: 1.0.12
       chokidar: 5.0.0
@@ -5930,49 +5930,49 @@ snapshots:
       pkg-types: 2.3.1
       prettier: 3.9.5
       react-refresh: 0.18.0
-      react-router: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-router: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       semver: 7.8.5
       tinyglobby: 0.2.17
       valibot: 1.4.2(typescript@7.0.2)
       vite: 8.1.5(@types/node@26.1.1)(jiti@2.7.0)(yaml@2.9.0)
     optionalDependencies:
-      '@react-router/serve': 8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+      '@react-router/serve': 8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
       typescript: 7.0.2
     transitivePeerDependencies:
       - babel-plugin-macros
       - supports-color
 
-  '@react-router/express@8.1.0(express@5.2.1)(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
+  '@react-router/express@8.1.0(express@5.2.1)(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
     dependencies:
-      '@react-router/node': 8.1.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+      '@react-router/node': 8.1.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
       express: 5.2.1
-      react-router: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-router: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     optionalDependencies:
       typescript: 7.0.2
 
-  '@react-router/node@8.1.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
+  '@react-router/node@8.1.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
     dependencies:
       '@remix-run/node-fetch-server': 0.13.3
-      react-router: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-router: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     optionalDependencies:
       typescript: 7.0.2
 
-  '@react-router/node@8.2.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
+  '@react-router/node@8.2.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
     dependencies:
       '@remix-run/node-fetch-server': 0.13.3
-      react-router: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-router: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     optionalDependencies:
       typescript: 7.0.2
 
-  '@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
+  '@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)':
     dependencies:
-      '@react-router/express': 8.1.0(express@5.2.1)(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
-      '@react-router/node': 8.1.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+      '@react-router/express': 8.1.0(express@5.2.1)(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+      '@react-router/node': 8.1.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
       '@remix-run/node-fetch-server': 0.13.3
       compression: 1.8.1
       express: 5.2.1
       morgan: 1.10.1
-      react-router: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-router: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       source-map-support: 0.5.21
     transitivePeerDependencies:
       - supports-color
@@ -6173,11 +6173,11 @@ snapshots:
       '@sentry/conventions': 0.15.1
       '@sentry/core': 10.65.0
 
-  '@sentry/react-router@10.65.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@react-router/node@8.2.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)':
+  '@sentry/react-router@10.65.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@react-router/node@8.2.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.220.0(@opentelemetry/api@1.9.1)
-      '@react-router/node': 8.2.0(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
+      '@react-router/node': 8.2.0(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(typescript@7.0.2)
       '@sentry/browser': 10.65.0
       '@sentry/cli': 2.58.6
       '@sentry/conventions': 0.15.1
@@ -6187,7 +6187,7 @@ snapshots:
       '@sentry/vite-plugin': 5.4.0
       glob: 13.0.6
       react: 19.2.7
-      react-router: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-router: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
     transitivePeerDependencies:
       - '@opentelemetry/core'
       - '@opentelemetry/exporter-trace-otlp-http'
@@ -8812,7 +8812,7 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.17
 
-  react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
+  react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7):
     dependencies:
       cookie-es: 3.1.1
       react: 19.2.7
@@ -8864,10 +8864,10 @@ snapshots:
 
   remix-auth@4.2.0: {}
 
-  remix-i18next@8.0.0(i18next@26.3.6(typescript@7.0.2))(react-router@8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)):
+  remix-i18next@8.0.0(i18next@26.3.6(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)):
     dependencies:
       i18next: 26.3.6(typescript@7.0.2)
-      react-router: 8.2.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react-router: 8.3.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
 
   require-directory@2.1.1: {}
 
