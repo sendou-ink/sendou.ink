@@ -1,4 +1,4 @@
-import { add, sub } from "date-fns";
+import { add, startOfWeek, sub } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import type { UserPreferences } from "~/db/tables";
 import { getUser } from "~/features/auth/core/user.server";
@@ -28,10 +28,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
 			).getTime()
 		: Date.now();
 
+	const weekStart = startOfWeek(new Date(date), { weekStartsOn: 1 });
 	const events = await CalendarRepository.findAllBetweenTwoTimestamps({
 		// add a bit of tolerance to the timestamps to account for timezones
-		startTime: sub(new Date(date), { hours: 24 }),
-		endTime: add(new Date(date), { days: DAYS_SHOWN_AT_A_TIME + 1 }),
+		startTime: sub(weekStart, { hours: 24 }),
+		endTime: add(weekStart, { days: DAYS_SHOWN_AT_A_TIME + 1 }),
 	});
 
 	const filters = resolveFilters(args.request, user?.preferences);
