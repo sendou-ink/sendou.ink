@@ -399,8 +399,7 @@ function EditReportedScoreRow({
 		previousFetcherStateRef.current = fetcher.state;
 	}, [fetcher.state, fetcher.data]);
 
-	const isKo =
-		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100;
+	const isKo = Boolean(result.ko);
 
 	if (!editing) {
 		return (
@@ -471,9 +470,7 @@ function EditReportedScoreForm({
 				.map((p) => p.userId),
 		];
 	});
-	const [isKO, setIsKO] = React.useState(
-		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100,
-	);
+	const [isKO, setIsKO] = React.useState(Boolean(result.ko));
 
 	const formValid = checkedPlayers.every(
 		(team) => team.length === minMembersPerTeam,

@@ -692,6 +692,8 @@ export interface TournamentMatchPickBanEvent {
 export interface TournamentMatchGameResult {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
+	/** Whether the game ended in a knockout. `null` if not collected for this bracket. */
+	ko: DBBoolean | null;
 	matchId: number;
 	mode: ModeShort;
 	number: number;
@@ -699,8 +701,6 @@ export interface TournamentMatchGameResult {
 	source: string;
 	stageId: StageId;
 	winnerTeamId: number;
-	opponentOnePoints: number | null;
-	opponentTwoPoints: number | null;
 }
 
 export interface TournamentMatchGameResultParticipant {

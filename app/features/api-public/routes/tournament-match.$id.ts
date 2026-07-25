@@ -52,8 +52,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 							"TournamentMatchGameResult.mode",
 							"TournamentMatchGameResult.winnerTeamId",
 							"TournamentMatchGameResult.source",
-							"TournamentMatchGameResult.opponentOnePoints",
-							"TournamentMatchGameResult.opponentTwoPoints",
+							"TournamentMatchGameResult.ko",
 							jsonArrayFrom(
 								innerEb
 									.selectFrom("TournamentMatchGameResultParticipant")
@@ -106,10 +105,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				participatedUserIds: playedMap.participants.map((p) => p.userId),
 				winnerTeamId: playedMap.winnerTeamId,
 				source: parseSource(playedMap.source),
-				points:
-					playedMap.opponentOnePoints && playedMap.opponentTwoPoints
-						? [playedMap.opponentOnePoints, playedMap.opponentTwoPoints]
-						: null,
+				ko: playedMap.ko !== null ? Boolean(playedMap.ko) : null,
 			}));
 		}
 
@@ -147,7 +143,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				participatedUserIds: null,
 				winnerTeamId: null,
 				source: mapListMap.source,
-				points: null,
+				ko: null,
 			};
 		});
 	};

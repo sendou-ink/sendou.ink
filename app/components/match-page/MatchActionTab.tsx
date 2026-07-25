@@ -219,11 +219,7 @@ function SetEndingConfirmation({
 		timestamp: Date.now(),
 		winner: winnerSide,
 		rosters: setEnding.currentRosters,
-		points: withKo
-			? isKo
-				? [winnerSide === "ALPHA" ? 100 : 0, winnerSide === "BRAVO" ? 100 : 0]
-				: [0, 0]
-			: undefined,
+		ko: withKo ? isKo : undefined,
 	};
 
 	const updatedScore = {

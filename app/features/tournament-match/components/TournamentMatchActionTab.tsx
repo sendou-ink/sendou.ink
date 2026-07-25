@@ -271,13 +271,7 @@ function buildSetEndingData({
 				alpha: alphaParticipants,
 				bravo: bravoParticipants,
 			},
-			points:
-				result.opponentOnePoints != null && result.opponentTwoPoints != null
-					? ([result.opponentOnePoints, result.opponentTwoPoints] as [
-							number,
-							number,
-						])
-					: undefined,
+			ko: result.ko != null ? Boolean(result.ko) : undefined,
 		};
 	});
 

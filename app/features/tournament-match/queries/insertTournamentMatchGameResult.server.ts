@@ -3,9 +3,9 @@ import type { Tables } from "~/db/tables";
 
 const stm = sql.prepare(/* sql */ `
   insert into "TournamentMatchGameResult"
-    ("matchId", "stageId", "mode", "winnerTeamId", "reporterId", "number", "source", "opponentOnePoints", "opponentTwoPoints")
+    ("matchId", "stageId", "mode", "winnerTeamId", "reporterId", "number", "source", "ko")
   values
-    (@matchId, @stageId, @mode, @winnerTeamId, @reporterId, @number, @source, @opponentOnePoints, @opponentTwoPoints)
+    (@matchId, @stageId, @mode, @winnerTeamId, @reporterId, @number, @source, @ko)
   returning *
 `);
 

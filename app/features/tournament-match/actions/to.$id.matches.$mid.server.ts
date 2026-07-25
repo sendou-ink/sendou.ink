@@ -42,7 +42,7 @@ import { resolveMapList } from "../core/mapList.server";
 import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
 import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
 import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
-import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
+import { updateMatchGameResultKo } from "../queries/updateMatchGameResultKo.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import {
 	matchIsLocked,
@@ -158,8 +158,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			];
 			invariant(currentMap, "Can't resolve current map");
 
-			const winnerSide = data.winnerTeamId === match.opponentOne.id ? 0 : 1;
-
 			const bracket = tournament.bracketByIdx(
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!;
@@ -167,10 +165,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				!bracket.collectsKos || typeof data.ko === "boolean",
 				"KO status is required for this bracket",
 			);
-
-			const points = bracket.collectsKos
-				? koToPoints({ ko: Boolean(data.ko), winnerSide })
-				: null;
 
 			const teamOneRoster = tournamentTeamToActiveRosterUserIds(
 				tournament.teamById(match.opponentOne.id!)!,
@@ -210,8 +204,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 								winnerTeamId: data.winnerTeamId,
 								number: data.position + 1,
 								source: String(currentMap.source),
-								opponentOnePoints: points?.[0] ?? null,
-								opponentTwoPoints: points?.[1] ?? null,
+								ko: bracket.collectsKos ? Number(Boolean(data.ko)) : null,
 							});
 
 							for (const userId of teamOneRoster) {
@@ -390,12 +383,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid roster",
 			);
 
-			const hadKoRecorded = typeof result.opponentOnePoints === "number";
-			const hasKoSubmitted = typeof data.ko === "boolean";
-			errorToastIfFalsy(hadKoRecorded === hasKoSubmitted, "KO status mismatch");
+			const bracket = tournament.bracketByIdx(
+				tournament.matchIdToBracketIdx(match.id)!,
+			)!;
+			errorToastIfFalsy(
+				!bracket.collectsKos || typeof data.ko === "boolean",
+				"KO status is required for this bracket",
+			);
 
-			const wasKo =
-				result.opponentOnePoints === 100 || result.opponentTwoPoints === 100;
+			const wasKo = Boolean(result.ko);
 			if (typeof data.ko === "boolean" && data.ko !== wasKo) {
 				// changing the KO status at this point could retroactively change who advanced from the group
 				errorToastIfFalsy(
@@ -406,15 +402,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			sql.transaction(() => {
 				if (typeof data.ko === "boolean") {
-					const points = koToPoints({
-						ko: data.ko,
-						winnerSide: result.winnerTeamId === match.opponentOne!.id ? 0 : 1,
-					});
-
-					updateMatchGameResultPoints({
+					updateMatchGameResultKo({
 						matchGameResultId: result.id,
-						opponentOnePoints: points[0],
-						opponentTwoPoints: points[1],
+						ko: data.ko,
 					});
 				}
 
@@ -852,19 +842,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	return null;
 };
-
-/** KO status is stored as points: the KO winner gets 100 and the loser 0, a game that was not a KO is stored as 0-0. */
-function koToPoints({
-	ko,
-	winnerSide,
-}: {
-	ko: boolean;
-	winnerSide: 0 | 1;
-}): [number, number] {
-	if (!ko) return [0, 0];
-
-	return winnerSide === 0 ? [100, 0] : [0, 100];
-}
 
 function canReportTournamentScore({
 	match,

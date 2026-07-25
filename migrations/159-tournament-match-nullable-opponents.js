@@ -110,6 +110,26 @@ export function up(db) {
 			`,
 		).run();
 
+		db.prepare(
+			/* sql */ `alter table "TournamentMatchGameResult" add "ko" integer`,
+		).run();
+
+		db.prepare(
+			/* sql */ `
+				update "TournamentMatchGameResult"
+				set "ko" = 1
+				where ("opponentOnePoints" = 100 and "opponentTwoPoints" = 0)
+					or ("opponentOnePoints" = 0 and "opponentTwoPoints" = 100)
+			`,
+		).run();
+
+		db.prepare(
+			/* sql */ `alter table "TournamentMatchGameResult" drop column "opponentOnePoints"`,
+		).run();
+		db.prepare(
+			/* sql */ `alter table "TournamentMatchGameResult" drop column "opponentTwoPoints"`,
+		).run();
+
 		db.pragma("foreign_key_check");
 	})();
 

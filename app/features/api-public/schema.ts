@@ -526,8 +526,8 @@ export type MapListMap = {
 		| "ROLL";
 	winnerTeamId: number | null;
 	participatedUserIds: Array<number> | null;
-	/** (round robin only) points of the match used for tiebreaker purposes. e.g. [100, 0] indicates a knockout. */
-	points: [number, number] | null;
+	/** (round robin only) whether the map ended in a knockout. `null` if not tracked. */
+	ko: boolean | null;
 };
 
 type TournamentMatchTeam = {

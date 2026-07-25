@@ -105,8 +105,7 @@ export function findResultById(id: number) {
 		.select([
 			"TournamentMatchGameResult.id",
 			"TournamentMatchGameResult.matchId",
-			"TournamentMatchGameResult.opponentOnePoints",
-			"TournamentMatchGameResult.opponentTwoPoints",
+			"TournamentMatchGameResult.ko",
 			"TournamentMatchGameResult.winnerTeamId",
 		])
 		.where("TournamentMatchGameResult.id", "=", id)
@@ -123,8 +122,7 @@ export function findResultsByMatchId(matchId: number) {
 			"TournamentMatchGameResult.mode",
 			"TournamentMatchGameResult.source",
 			"TournamentMatchGameResult.createdAt",
-			"TournamentMatchGameResult.opponentOnePoints",
-			"TournamentMatchGameResult.opponentTwoPoints",
+			"TournamentMatchGameResult.ko",
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentMatchGameResultParticipant")

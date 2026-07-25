@@ -128,18 +128,13 @@ export async function findByTournamentId(
 function serializedOpponentWithKos(
 	column: "opponentOne" | "opponentTwo",
 ): RawBuilder<ParticipantResult | null> {
-	const [winnerPoints, loserPoints] =
-		column === "opponentOne"
-			? (["opponentOnePoints", "opponentTwoPoints"] as const)
-			: (["opponentTwoPoints", "opponentOnePoints"] as const);
-
 	return kyselySql<ParticipantResult | null>`json_set(
 		json_remove(${kyselySql.ref(`TournamentMatch.${column}`)}, '$.totalPoints'),
 		'$.totalKos',
 		sum(
 			case
-				when ${kyselySql.ref(`TournamentMatchGameResult.${winnerPoints}`)} = 100
-					and ${kyselySql.ref(`TournamentMatchGameResult.${loserPoints}`)} = 0
+				when "TournamentMatchGameResult"."ko" = 1
+					and "TournamentMatchGameResult"."winnerTeamId" = ${kyselySql.ref(`TournamentMatch.${column}`)} ->> '$.id'
 				then 1
 				else 0
 			end

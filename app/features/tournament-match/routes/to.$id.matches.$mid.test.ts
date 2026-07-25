@@ -130,8 +130,7 @@ describe("Tournament match page", () => {
 				),
 				"Result participants should only include active roster user ids",
 			).toBeTruthy();
-			expect(result.opponentOnePoints).toBe(null);
-			expect(result.opponentTwoPoints).toBe(null);
+			expect(result.ko).toBe(null);
 			expect(result.winnerTeamId).toBe(1);
 		});
 

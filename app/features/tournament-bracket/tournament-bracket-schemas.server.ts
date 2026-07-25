@@ -31,7 +31,6 @@ const reportedMatchPosition = z.preprocess(
 		.max(Math.max(...TOURNAMENT.AVAILABLE_BEST_OF) - 1),
 );
 
-// TODO: KO is stored as points (100-0, 0-100 or 0-0). If we decide that this KO only approach is solid then we can do a proper data model migration
 const ko = z.preprocess(safeJSONParse, z.boolean().nullish());
 export const matchSchema = z.union([
 	z.object({
