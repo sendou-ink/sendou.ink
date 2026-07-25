@@ -7,8 +7,6 @@ describe("Update scores in a round-robin stage", () => {
 	beforeEach(() => {
 		bracket.reset();
 		bracket.create({
-			name: "Example scores",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			settings: { groupCount: 1 },
@@ -94,8 +92,6 @@ describe("Update scores in a round-robin stage", () => {
 	test("should leave every match Ready when independentRounds is set", () => {
 		bracket.reset();
 		bracket.create({
-			name: "Independent rounds",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			settings: { groupCount: 1, independentRounds: true },
@@ -122,8 +118,6 @@ describe("Update scores in a round-robin stage", () => {
 		// The two real teams only meet in round 3, preceded by two BYE rounds
 		// that can never be reported. The real match must still be playable.
 		bracket.create({
-			name: "Two teams in a three-slot group",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, null],
 			settings: { groupCount: 1 },
@@ -148,8 +142,6 @@ describe("Update scores in a round-robin stage", () => {
 		bracket.reset();
 		// Create a round robin with 3 teams (odd number creates rounds where one team doesn't play)
 		bracket.create({
-			name: "Example with BYEs",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3],
 			settings: { groupCount: 1 },

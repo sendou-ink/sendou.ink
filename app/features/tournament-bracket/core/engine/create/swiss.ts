@@ -45,10 +45,8 @@ export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 		stage: [
 			{
 				id: 0,
-				name: input.name,
 				number: 1,
 				settings: input.settings ?? {},
-				tournament_id: input.tournamentId,
 				type: "swiss",
 			},
 		],

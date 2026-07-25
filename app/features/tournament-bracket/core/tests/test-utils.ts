@@ -57,54 +57,65 @@ export const testTournament = ({
 		R.unique<number[]>,
 	);
 
-	return new Tournament({
-		data,
-		ctx: {
-			eventId: 1,
-			id: 1,
-			tags: null,
-			organization: null,
-			tier: null,
-			tentativeTier: null,
-			parentTournamentId: null,
-			parentTournamentName: null,
-			hasRules: false,
-			logoUrl: "/test.avif",
-			discordUrl: null,
-			startTime: 1705858842,
-			isFinalized: 0,
-			name: "test",
-			castTwitchAccounts: [],
-			bracketProgressionOverrides: [],
-			staff: [],
-			tieBreakerMapPool: [],
-			toSetMapPool: [],
-			participatedUsers: [],
-			castStreams: [],
-			mapPickingStyle: "AUTO_SZ",
-			settings: {
-				bracketProgression: [
-					{
-						name: "Main Bracket",
-						type: "double_elimination",
-						requiresCheckIn: false,
-						settings: {},
-					},
-				],
-			},
-			castedMatchesInfo: null,
-			teams: nTeams(participant.length, Math.min(...participant)),
-			author: {
-				customUrl: null,
-				customAvatarUrl: null,
-				discordAvatar: null,
-				discordId: "123",
-				username: "test",
-				pronouns: null,
-				id: 1,
-			},
-			...ctx,
+	const tournamentCtx: TournamentData["ctx"] = {
+		eventId: 1,
+		id: 1,
+		tags: null,
+		organization: null,
+		tier: null,
+		tentativeTier: null,
+		parentTournamentId: null,
+		parentTournamentName: null,
+		hasRules: false,
+		logoUrl: "/test.avif",
+		discordUrl: null,
+		startTime: 1705858842,
+		isFinalized: 0,
+		name: "test",
+		castTwitchAccounts: [],
+		bracketProgressionOverrides: [],
+		staff: [],
+		tieBreakerMapPool: [],
+		toSetMapPool: [],
+		participatedUsers: [],
+		castStreams: [],
+		mapPickingStyle: "AUTO_SZ",
+		settings: {
+			bracketProgression: [
+				{
+					name: "Main Bracket",
+					type: "double_elimination",
+					requiresCheckIn: false,
+					settings: {},
+				},
+			],
 		},
+		castedMatchesInfo: null,
+		teams: nTeams(participant.length, Math.min(...participant)),
+		author: {
+			customUrl: null,
+			customAvatarUrl: null,
+			discordAvatar: null,
+			discordId: "123",
+			username: "test",
+			pronouns: null,
+			id: 1,
+		},
+		...ctx,
+	};
+
+	return new Tournament({
+		// engine created data has no stage names, the database assigns them from the bracket progression
+		data: {
+			...data,
+			stage: data.stage.map((stage, stageIdx) => ({
+				...stage,
+				name:
+					stage.name ??
+					tournamentCtx.settings.bracketProgression[stageIdx]?.name,
+			})),
+		},
+		ctx: tournamentCtx,
 	});
 };
 

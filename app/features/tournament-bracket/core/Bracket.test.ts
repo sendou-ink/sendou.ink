@@ -98,8 +98,6 @@ describe("swiss standings - losses against tied", () => {
 
 	const inProgressSwissTestTournament = () => {
 		const data = Engine.create({
-			tournamentId: 1,
-			name: "Swiss",
 			type: "swiss",
 			seeding: [1, 2, 3],
 			settings: {
@@ -233,8 +231,6 @@ describe("round robin standings - dropped out teams", () => {
 		const bracket = new EngineBracket();
 
 		bracket.create({
-			name: "RR",
-			tournamentId: 1,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			settings: {
@@ -407,8 +403,6 @@ describe("round robin A/B divisions standings", () => {
 		const bracket = new EngineBracket();
 
 		bracket.create({
-			name: "AB RR",
-			tournamentId: 1,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			abDivisions: [0, 1, 0, 1],
@@ -529,8 +523,6 @@ describe("single elimination standings - third place match", () => {
 		const bracket = new EngineBracket();
 
 		bracket.create({
-			name: "SE",
-			tournamentId: 1,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: { consolationFinal: true },
@@ -650,8 +642,6 @@ describe("single elimination standings - projected ties", () => {
 		const bracket = new EngineBracket();
 
 		bracket.create({
-			name: "SE",
-			tournamentId: 1,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},
@@ -709,8 +699,6 @@ describe("double elimination standings - projected ties", () => {
 		const bracket = new EngineBracket();
 
 		bracket.create({
-			name: "DE",
-			tournamentId: 1,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {},

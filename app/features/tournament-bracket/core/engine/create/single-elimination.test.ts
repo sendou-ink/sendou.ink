@@ -10,8 +10,6 @@ describe("Create single elimination stage", () => {
 
 	test("should create a single elimination stage", () => {
 		const example = {
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination" as const,
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 			settings: {},
@@ -20,7 +18,6 @@ describe("Create single elimination stage", () => {
 		bracket.create(example);
 
 		const stage = bracket.stage();
-		expect(stage.name).toBe(example.name);
 		expect(stage.type).toBe(example.type);
 
 		expect(bracket.groups().length).toBe(1);
@@ -30,8 +27,6 @@ describe("Create single elimination stage", () => {
 
 	test("should create a single elimination stage with BYEs", () => {
 		bracket.create({
-			name: "Example with BYEs",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, null, 3, 4, null, null, 7, 8],
 			settings: {},
@@ -45,8 +40,6 @@ describe("Create single elimination stage", () => {
 
 	test("should create a single elimination stage with consolation final", () => {
 		bracket.create({
-			name: "Example with consolation final",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: { consolationFinal: true },
@@ -59,8 +52,6 @@ describe("Create single elimination stage", () => {
 
 	test("should create a single elimination stage with consolation final and BYEs", () => {
 		bracket.create({
-			name: "Example with consolation final and BYEs",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [null, null, null, 4, 5, 6, 7, 8],
 			settings: { consolationFinal: true },
@@ -76,8 +67,6 @@ describe("Create single elimination stage", () => {
 
 	test("should create a single elimination stage with Bo3 matches", () => {
 		bracket.create({
-			name: "Example with Bo3 matches",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {},
@@ -91,8 +80,6 @@ describe("Create single elimination stage", () => {
 	test("should throw if the seeding has duplicate participants", () => {
 		expect(() =>
 			bracket.create({
-				name: "Example",
-				tournamentId: 0,
 				type: "single_elimination",
 				seeding: [
 					1,

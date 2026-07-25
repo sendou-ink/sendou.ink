@@ -10,15 +10,12 @@ describe("Create double elimination stage", () => {
 
 	test("should create a double elimination stage", () => {
 		bracket.create({
-			name: "Amateur",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 			settings: {},
 		});
 
 		const stage = bracket.stage();
-		expect(stage.name).toBe("Amateur");
 		expect(stage.type).toBe("double_elimination");
 
 		expect(bracket.groups().length).toBe(3);
@@ -28,8 +25,6 @@ describe("Create double elimination stage", () => {
 
 	test("should create a tournament with 256+ tournaments", () => {
 		bracket.create({
-			name: "Example with 256 participants",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: Array.from({ length: 256 }, (_, i) => i + 1),
 		});
@@ -37,8 +32,6 @@ describe("Create double elimination stage", () => {
 
 	test("should create a tournament with a double grand final", () => {
 		bracket.create({
-			name: "Example with double grand final",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {},

@@ -10,8 +10,6 @@ describe("Create a round-robin stage", () => {
 
 	test("should create a round-robin stage", () => {
 		const example = {
-			name: "Example",
-			tournamentId: 0,
 			type: "round_robin" as const,
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: { groupCount: 2 },
@@ -20,7 +18,6 @@ describe("Create a round-robin stage", () => {
 		bracket.create(example);
 
 		const stage = bracket.stage();
-		expect(stage.name).toBe(example.name);
 		expect(stage.type).toBe(example.type);
 
 		expect(bracket.groups().length).toBe(2);
@@ -30,8 +27,6 @@ describe("Create a round-robin stage", () => {
 
 	test("should drop empty slots instead of creating BYE matches", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5, null, null, null],
 			settings: { groupCount: 2 },
@@ -51,8 +46,6 @@ describe("Create a round-robin stage", () => {
 		// clean single-round single-match group, not padded with BYE-only rounds
 		// that strand the real match in a later round.
 		bracket.create({
-			name: "Uneven groups",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5],
 			settings: { groupCount: 2 },
@@ -83,8 +76,6 @@ describe("Create a round-robin stage", () => {
 
 	test("should create a round-robin stage split across multiple groups", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: Array.from({ length: 16 }, (_, i) => i + 1),
 			settings: {
@@ -99,8 +90,6 @@ describe("Create a round-robin stage", () => {
 
 	test("should order the groups with snake seeding", () => {
 		bracket.create({
-			name: "Example with snake seeding",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {
@@ -115,8 +104,6 @@ describe("Create a round-robin stage", () => {
 	test("should throw if no group count given", () => {
 		expect(() =>
 			bracket.create({
-				name: "Example",
-				tournamentId: 0,
 				type: "round_robin",
 				seeding: [1, 2, 3, 4],
 			}),
@@ -126,8 +113,6 @@ describe("Create a round-robin stage", () => {
 	test("should throw if the group count is not strictly positive", () => {
 		expect(() =>
 			bracket.create({
-				name: "Example",
-				tournamentId: 0,
 				type: "round_robin",
 				seeding: [1, 2, 3, 4],
 				settings: {
@@ -146,8 +131,6 @@ describe("Create a round-robin stage", () => {
 		)[];
 
 		bracket.create({
-			name: "AB Example",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding,
 			abDivisions,
@@ -183,8 +166,6 @@ describe("Create a round-robin stage", () => {
 	test("throws when A/B divisions are requested but abDivisions is missing", () => {
 		expect(() =>
 			bracket.create({
-				name: "Missing AB",
-				tournamentId: 0,
 				type: "round_robin",
 				seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
 				settings: {
@@ -198,8 +179,6 @@ describe("Create a round-robin stage", () => {
 	test("creates an A/B divisions round-robin with uneven (±1) divisions and a single group", () => {
 		const seeding = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 		bracket.create({
-			name: "Uneven AB",
-			tournamentId: 0,
 			type: "round_robin",
 			seeding,
 			abDivisions: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
@@ -217,8 +196,6 @@ describe("Create a round-robin stage", () => {
 	test("throws when A/B divisions are uneven with multiple groups", () => {
 		expect(() =>
 			bracket.create({
-				name: "Uneven AB multi-group",
-				tournamentId: 0,
 				type: "round_robin",
 				seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
 				abDivisions: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],

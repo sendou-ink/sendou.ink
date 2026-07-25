@@ -33,11 +33,6 @@ export class StageCreator {
 	readonly data: BracketData;
 
 	constructor(input: ResolvedCreateBracketInput) {
-		if (!input.name) throw Error("You must provide a name for the stage.");
-
-		if (!Number.isInteger(input.tournamentId))
-			throw Error("You must provide a tournament id for the stage.");
-
 		this.input = input;
 		this.settings = structuredClone(input.settings) ?? {};
 		const seeding = [...input.seeding];
@@ -382,8 +377,6 @@ export class StageCreator {
 	createStage(): StageData {
 		const stage: StageData = {
 			id: 0,
-			tournament_id: this.input.tournamentId,
-			name: this.input.name,
 			type: this.input.type,
 			number: this.input.number ?? 1,
 			settings: this.settings,

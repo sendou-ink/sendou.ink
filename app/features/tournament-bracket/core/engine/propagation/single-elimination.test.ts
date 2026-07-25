@@ -11,8 +11,6 @@ describe("Previous and next match update", () => {
 
 	test("should determine matches in consolation final", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: { consolationFinal: true },
@@ -38,8 +36,6 @@ describe("Previous and next match update", () => {
 
 	test("should play both the final and consolation final in parallel", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: { consolationFinal: true },

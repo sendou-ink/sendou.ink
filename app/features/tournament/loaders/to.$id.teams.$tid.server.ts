@@ -29,6 +29,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		const stage = tournament.data.stage.find((s) => s.id === round.stage_id);
 		const group = tournament.data.group.find((g) => g.id === round.group_id);
 		invariant(stage && group, "Stage or group not found for round");
+		invariant(stage.name, "Stage from the database is missing a name");
 
 		return {
 			stageId: stage.id,

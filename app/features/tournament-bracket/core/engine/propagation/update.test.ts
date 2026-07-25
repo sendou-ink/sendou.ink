@@ -5,8 +5,6 @@ import { EngineBracket } from "../test-utils";
 const bracket = new EngineBracket();
 
 const example = {
-	name: "Amateur",
-	tournamentId: 0,
 	type: "double_elimination" as const,
 	seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 	settings: {},
@@ -204,8 +202,6 @@ describe("Give opponent IDs when updating", () => {
 		bracket.reset();
 
 		bracket.create({
-			name: "Amateur",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},

@@ -290,8 +290,6 @@ export abstract class Bracket {
 	}
 
 	generateMatchesData(teams: number[]): BracketData {
-		const virtualTournamentId = 1;
-
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
 			const abDivisions =
 				this.type === "round_robin" && this.settings?.hasAbDivisions === true
@@ -302,8 +300,6 @@ export abstract class Bracket {
 					: undefined;
 
 			return Engine.create({
-				tournamentId: virtualTournamentId,
-				name: "Virtual",
 				type: this.type,
 				seeding: teams,
 				settings: abDivisions

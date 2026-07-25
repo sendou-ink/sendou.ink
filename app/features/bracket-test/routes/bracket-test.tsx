@@ -278,8 +278,6 @@ function generateBracketData(
 ): BracketData {
 	if (format === "swiss") {
 		return Engine.create({
-			tournamentId: 1,
-			name: "Test Bracket",
 			type: "swiss",
 			seeding: teamIds,
 			settings: { groupCount: 1, roundCount: 5 },
@@ -294,8 +292,6 @@ function generateBracketData(
 				: { teamsPerGroup: 4 };
 
 	return Engine.create({
-		tournamentId: 1,
-		name: "Test Bracket",
 		type: format,
 		seeding: teamIds,
 		settings,

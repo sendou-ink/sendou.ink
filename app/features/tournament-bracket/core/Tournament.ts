@@ -339,8 +339,6 @@ export class Tournament {
 
 		const bracketReplays = (candidateTeams: number[]) => {
 			const matches = Engine.create({
-				tournamentId: this.ctx.id,
-				name: "X",
 				type: bracket.type as Exclude<
 					TournamentStage["type"],
 					"round_robin" | "swiss"

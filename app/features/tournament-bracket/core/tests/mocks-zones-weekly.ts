@@ -14,7 +14,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 						roundCount: 4,
 					},
 				},
-				tournament_id: 891,
 				type: "swiss",
 				createdAt: 1734685232,
 			},

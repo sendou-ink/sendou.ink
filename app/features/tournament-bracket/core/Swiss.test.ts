@@ -14,12 +14,7 @@ import * as TeamStatus from "./engine/swiss/team-status";
 const Swiss = {
 	...TeamStatus,
 	pairUp,
-	create: (args: {
-		tournamentId: number;
-		name: string;
-		seeding: number[];
-		settings?: TournamentStageSettings;
-	}) =>
+	create: (args: { seeding: number[]; settings?: TournamentStageSettings }) =>
 		Engine.create({
 			...args,
 			type: "swiss",
@@ -32,21 +27,13 @@ describe("Swiss", () => {
 		args: Partial<Parameters<typeof Swiss.create>[0]> = {},
 	): Parameters<typeof Swiss.create>[0] => {
 		return {
-			name: "Swiss Tournament",
 			seeding: [1, 2, 3, 4],
 			settings: {},
-			tournamentId: 1,
 			...args,
 		};
 	};
 
 	describe("create()", () => {
-		it("attaches the correct tournament id to the data", () => {
-			const data = Swiss.create(createArgsWithDefaults());
-
-			expect(data.stage[0].tournament_id).toBe(1);
-		});
-
 		it("creates a swiss bracket with correct amount of initial matches", () => {
 			const data = Swiss.create(createArgsWithDefaults());
 

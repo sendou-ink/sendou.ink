@@ -13,7 +13,6 @@ export const SWIM_OR_SINK_167 = (
 				settings: {
 					groupCount: 11,
 				},
-				tournament_id: 672,
 				type: "round_robin",
 				createdAt: 1730941256,
 			},

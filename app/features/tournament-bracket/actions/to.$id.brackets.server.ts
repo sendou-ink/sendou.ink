@@ -98,10 +98,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			const createdBracket = Engine.create({
-				// xxx: will we really need tournamentId here?
-				tournamentId,
-				// xxx: will we really need name?
-				name: bracket.name,
 				type: bracket.type,
 				seeding,
 				settings: bracket.settings,
@@ -112,6 +108,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			await BracketRepository.insertBracket({
 				tournamentId,
+				name: bracket.name,
 				bracket: createdBracket,
 			});
 

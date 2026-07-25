@@ -115,8 +115,8 @@ export interface ParticipantResult {
 
 export interface StageData {
 	id: number;
-	tournament_id: number;
-	name: string;
+	/** Only set on stages read from the database, the engine does not create names. */
+	name?: string;
 	type: StageType;
 	settings: StageSettings;
 	number: number;
@@ -205,8 +205,6 @@ export interface StandardBracketResults {
 /* ------------------------------------------------------------------ */
 
 export interface CreateBracketInput {
-	tournamentId: number;
-	name: string;
 	type: StageType;
 	/** Team ids in seed order; `null` = BYE. */
 	seeding: Seeding;

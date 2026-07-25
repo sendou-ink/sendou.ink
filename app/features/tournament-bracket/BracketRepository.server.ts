@@ -37,7 +37,6 @@ export async function findByTournamentId(
 					.selectFrom("TournamentStage")
 					.select([
 						"TournamentStage.id",
-						"TournamentStage.tournamentId as tournament_id",
 						"TournamentStage.name",
 						"TournamentStage.type",
 						"TournamentStage.settings",
@@ -155,6 +154,7 @@ function serializedOpponentWithKos(
  */
 export function insertBracket(args: {
 	tournamentId: number;
+	name: string;
 	bracket: BracketData;
 }): Promise<{ stageId: number }> {
 	const stageInput = args.bracket.stage[0];
@@ -165,7 +165,7 @@ export function insertBracket(args: {
 			.insertInto("TournamentStage")
 			.values({
 				tournamentId: args.tournamentId,
-				name: stageInput.name,
+				name: args.name,
 				type: stageInput.type,
 				settings: JSON.stringify(stageInput.settings),
 				number: kyselySql<number>`(select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = ${args.tournamentId})`,

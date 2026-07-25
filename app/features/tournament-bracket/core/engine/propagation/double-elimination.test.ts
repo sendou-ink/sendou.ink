@@ -11,8 +11,6 @@ describe("Previous and next match update in double elimination stage", () => {
 
 	test("should end a match and determine next matches", () => {
 		bracket.create({
-			name: "Amateur",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 			settings: {},
@@ -58,8 +56,6 @@ describe("Previous and next match update in double elimination stage", () => {
 
 	test("should propagate winner when BYE is already in next match in loser bracket", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, null],
 			settings: {},
@@ -94,8 +90,6 @@ describe("Previous and next match update in double elimination stage", () => {
 
 	test("should determine matches in grand final", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},
@@ -161,8 +155,6 @@ describe("Previous and next match update in double elimination stage", () => {
 
 	test("should determine next matches and reset them", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},
@@ -187,8 +179,6 @@ describe("Previous and next match update in double elimination stage", () => {
 
 	test("should choose the correct previous and next matches based on losers ordering", () => {
 		bracket.create({
-			name: "Amateur",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 			settings: {},
@@ -220,8 +210,6 @@ describe("Previous and next match update in double elimination stage", () => {
 
 	test("should send the losers to the right LB matches in round 1", () => {
 		bracket.create({
-			name: "Example with natural loser ordering",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {},

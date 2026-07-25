@@ -12,8 +12,6 @@ describe("BYE handling", () => {
 
 	test("should propagate BYEs through the brackets", () => {
 		bracket.create({
-			name: "Example with BYEs",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, null, null, null],
 			settings: {},
@@ -34,8 +32,6 @@ describe("BYE handling", () => {
 
 	test("should handle incomplete seeding during creation", () => {
 		bracket.create({
-			name: "Example with BYEs",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, null, null],
 			settings: {},
@@ -54,8 +50,6 @@ describe("Position checks", () => {
 		bracket.reset();
 
 		bracket.create({
-			name: "Example with double grand final",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {},
@@ -96,30 +90,8 @@ describe("Special cases", () => {
 		bracket.reset();
 	});
 
-	test("should throw if the name of the stage is not provided", () => {
-		expect(() =>
-			createResolved({
-				tournamentId: 0,
-				type: "single_elimination",
-				settings: {},
-			} as Engine.ResolvedCreateBracketInput),
-		).toThrow("You must provide a name for the stage.");
-	});
-
-	test("should throw if the tournament id of the stage is not provided", () => {
-		expect(() =>
-			createResolved({
-				name: "Example",
-				type: "single_elimination",
-				settings: {},
-			} as Engine.ResolvedCreateBracketInput),
-		).toThrow("You must provide a tournament id for the stage.");
-	});
-
 	test("should pad the seeding with BYEs to the next power of two", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7],
 			settings: {},
@@ -132,8 +104,6 @@ describe("Special cases", () => {
 	test("should throw if the participant count of a stage is less than two", () => {
 		expect(() =>
 			bracket.create({
-				name: "Example",
-				tournamentId: 0,
 				type: "single_elimination",
 				seeding: [],
 			}),
@@ -141,8 +111,6 @@ describe("Special cases", () => {
 
 		expect(() =>
 			bracket.create({
-				name: "Example",
-				tournamentId: 0,
 				type: "single_elimination",
 				seeding: [1],
 			}),
@@ -155,8 +123,6 @@ describe("Seeding and ordering in elimination", () => {
 		bracket.reset();
 
 		bracket.create({
-			name: "Amateur",
-			tournamentId: 0,
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
 			settings: {},
@@ -196,8 +162,6 @@ describe("Reset match", () => {
 		// and 8) so that match 0 is a real two-team match under the default
 		// space_between ordering, while the rest of the bracket is BYEs.
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, null, null, null, null, null, null, 2],
 			settings: {},
@@ -240,8 +204,6 @@ describe("Reset match", () => {
 
 	test("should throw when at least one of the following match is locked", () => {
 		bracket.create({
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},
@@ -272,8 +234,6 @@ describe("Reset match", () => {
 describe("Engine data immutability", () => {
 	test("engine operations return new data and leave the input untouched", () => {
 		const initial = createResolved({
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},
@@ -298,8 +258,6 @@ describe("Engine data immutability", () => {
 
 	test("changedMatches contains only genuinely changed rows", () => {
 		const initial = createResolved({
-			name: "Example",
-			tournamentId: 0,
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},

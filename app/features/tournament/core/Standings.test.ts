@@ -160,15 +160,11 @@ function roundRobinToSingleEliminationTournament() {
 	const bracket = new EngineBracket();
 
 	bracket.create({
-		name: "Main Bracket",
-		tournamentId: 1,
 		type: "round_robin",
 		seeding: [1, 2, 3, 4],
 		settings: { groupCount: 1 },
 	});
 	bracket.create({
-		name: "B1",
-		tournamentId: 1,
 		type: "single_elimination",
 		seeding: [1, 2],
 		settings: {},
@@ -215,8 +211,6 @@ function singleEliminationTournament() {
 	const bracket = new EngineBracket();
 
 	bracket.create({
-		name: "Main Bracket",
-		tournamentId: 1,
 		type: "single_elimination",
 		seeding: [1, 2, 3, 4],
 		settings: {},
@@ -262,8 +256,6 @@ function abDivisionsTournament() {
 	const bracket = new EngineBracket();
 
 	bracket.create({
-		name: "AB RR",
-		tournamentId: 1,
 		type: "round_robin",
 		seeding: [1, 2, 3, 4],
 		abDivisions: [0, 1, 0, 1],

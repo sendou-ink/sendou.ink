@@ -21,8 +21,6 @@ import { createSwiss } from "./swiss";
  */
 export function create(input: CreateBracketInput): BracketData {
 	const data = createResolved({
-		tournamentId: input.tournamentId,
-		name: input.name,
 		type: input.type,
 		seeding: input.seeding,
 		settings: resolveStageSettings(input),
