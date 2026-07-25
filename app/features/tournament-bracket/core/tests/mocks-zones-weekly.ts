@@ -77,16 +77,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18248,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 18266,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13715,
 				stage_id: 1457,
 				startedAt: 1734685232,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 38585,
@@ -95,16 +94,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18037,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 18212,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13715,
 				stage_id: 1457,
 				startedAt: 1734685232,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 38586,
@@ -113,16 +111,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18255,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 18019,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13715,
 				stage_id: 1457,
 				startedAt: 1734685232,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 38587,
@@ -135,6 +132,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13715,
 				stage_id: 1457,
 				startedAt: 1734685232,
+				winnerSide: null,
 			},
 			{
 				id: 38588,
@@ -143,16 +141,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18248,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 18210,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13716,
 				stage_id: 1457,
 				startedAt: 1734687519,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 38589,
@@ -161,16 +158,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18037,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 18255,
 					score: 2,
-					result: "loss",
 				},
 				round_id: 13716,
 				stage_id: 1457,
 				startedAt: 1734687519,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 38590,
@@ -179,16 +175,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18266,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 18212,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13716,
 				stage_id: 1457,
 				startedAt: 1734687519,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 38591,
@@ -201,6 +196,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13716,
 				stage_id: 1457,
 				startedAt: 1734687519,
+				winnerSide: null,
 			},
 			{
 				id: 38592,
@@ -209,16 +205,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18248,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 18037,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13717,
 				stage_id: 1457,
 				startedAt: 1734689680,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 38593,
@@ -227,16 +222,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18019,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 18266,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13717,
 				stage_id: 1457,
 				startedAt: 1734689680,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 38594,
@@ -245,16 +239,15 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent1: {
 					id: 18210,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 18255,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13717,
 				stage_id: 1457,
 				startedAt: 1734689680,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 38595,
@@ -267,6 +260,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				round_id: 13717,
 				stage_id: 1457,
 				startedAt: 1734689680,
+				winnerSide: null,
 			},
 		],
 	},

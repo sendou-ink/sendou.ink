@@ -700,11 +700,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				match.opponentOne?.id && match.opponentTwo?.id,
 				"Teams are missing",
 			);
-			errorToastIfFalsy(
-				match.opponentOne?.result !== "win" &&
-					match.opponentTwo?.result !== "win",
-				"Match is already over",
-			);
+			errorToastIfFalsy(!match.winnerSide, "Match is already over");
 
 			// Determine winner (random if not specified)
 			const winnerTeamId = (() => {
@@ -848,10 +844,7 @@ function canReportTournamentScore({
 	isMemberOfATeamInTheMatch: boolean;
 	isOrganizer: boolean;
 }) {
-	const matchIsOver =
-		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
-
-	return !matchIsOver && (isMemberOfATeamInTheMatch || isOrganizer);
+	return !match.winnerSide && (isMemberOfATeamInTheMatch || isOrganizer);
 }
 
 /**

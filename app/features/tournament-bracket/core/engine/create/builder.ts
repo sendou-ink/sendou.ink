@@ -261,6 +261,7 @@ export class StageCreator {
 			round_id: roundId,
 			opponent1,
 			opponent2,
+			winnerSide: null,
 		});
 	}
 

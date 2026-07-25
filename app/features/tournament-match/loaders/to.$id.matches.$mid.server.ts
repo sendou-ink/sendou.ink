@@ -59,8 +59,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const reportedWeapons =
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
 
-	const matchIsOver =
-		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+	const matchIsOver = Boolean(match.winnerSide);
 
 	if (
 		!matchIsOver &&
@@ -142,14 +141,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const endedEarly = matchIsOver
 		? matchEndedEarly({
-				opponentOne: {
-					score: match.opponentOne?.score,
-					result: match.opponentOne?.result,
-				},
-				opponentTwo: {
-					score: match.opponentTwo?.score,
-					result: match.opponentTwo?.result,
-				},
+				opponentOne: match.opponentOne,
+				opponentTwo: match.opponentTwo,
+				winnerSide: match.winnerSide,
 				count: match.roundMaps.count,
 				countType: match.roundMaps.type,
 			})

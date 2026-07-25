@@ -178,16 +178,16 @@ function roundRobinToSingleEliminationTournament() {
 				(m) =>
 					typeof m.opponent1?.id === "number" &&
 					typeof m.opponent2?.id === "number" &&
-					m.opponent1.result !== "win" &&
-					m.opponent2.result !== "win",
+					!m.winnerSide,
 			);
 		if (!pending) break;
 
 		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
 		bracket.updateMatch({
 			id: pending.id,
-			opponent1: winnerIsOpp1 ? { score: 2, result: "win" } : { score: 0 },
-			opponent2: winnerIsOpp1 ? { score: 0 } : { score: 2, result: "win" },
+			opponent1: { score: winnerIsOpp1 ? 2 : 0 },
+			opponent2: { score: winnerIsOpp1 ? 0 : 2 },
+			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 		});
 	}
 
@@ -223,16 +223,16 @@ function singleEliminationTournament() {
 				(m) =>
 					typeof m.opponent1?.id === "number" &&
 					typeof m.opponent2?.id === "number" &&
-					m.opponent1.result !== "win" &&
-					m.opponent2.result !== "win",
+					!m.winnerSide,
 			);
 		if (!pending) break;
 
 		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
 		bracket.updateMatch({
 			id: pending.id,
-			opponent1: winnerIsOpp1 ? { score: 2, result: "win" } : { score: 0 },
-			opponent2: winnerIsOpp1 ? { score: 0 } : { score: 2, result: "win" },
+			opponent1: { score: winnerIsOpp1 ? 2 : 0 },
+			opponent2: { score: winnerIsOpp1 ? 0 : 2 },
+			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 		});
 	}
 
@@ -281,12 +281,9 @@ function abDivisionsTournament() {
 		const winnerIsOpp1 = match.opponent1!.id === winnerId;
 		bracket.updateMatch({
 			id: match.id,
-			opponent1: winnerIsOpp1
-				? { score: 2, result: "win" }
-				: { score: loserScore },
-			opponent2: winnerIsOpp1
-				? { score: loserScore }
-				: { score: 2, result: "win" },
+			opponent1: { score: winnerIsOpp1 ? 2 : loserScore },
+			opponent2: { score: winnerIsOpp1 ? loserScore : 2 },
+			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 		});
 	}
 

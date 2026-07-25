@@ -42,6 +42,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				"TournamentMatch.id",
 				"TournamentMatch.opponentOne",
 				"TournamentMatch.opponentTwo",
+				"TournamentMatch.winnerSide",
 				"Tournament.mapPickingStyle",
 				"TournamentRound.maps",
 				jsonArrayFrom(
@@ -93,7 +94,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			return null;
 		}
 
-		if (opponentOne.result === "win" || opponentTwo.result === "win") {
+		if (match.winnerSide) {
 			return match.playedMapList.map((playedMap) => ({
 				map: {
 					mode: playedMap.mode,

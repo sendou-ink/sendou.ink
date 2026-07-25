@@ -34,7 +34,7 @@ export function getRounds(args: {
 						)
 					: undefined;
 
-			if (isBracketReset && grandFinalsMatch?.opponent1?.result === "win") {
+			if (isBracketReset && grandFinalsMatch?.winnerSide === "opponent1") {
 				showingBracketReset = false;
 				return false;
 			}

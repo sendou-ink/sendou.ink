@@ -5,10 +5,9 @@ import { Propagator } from "./traversal";
 
 /**
  * Applies a result to a match and propagates:
- * winner/loser advancement (SE/DE), BYE cascades, forfeit wins, grand final
- * + bracket reset, next-round unlocking (RR), no downstream propagation for
- * swiss/RR completed matches. Throws on locked/completed matches unless
- * input.force.
+ * winner/loser advancement (SE/DE), BYE cascades, grand final + bracket reset,
+ * next-round unlocking (RR), no downstream propagation for swiss/RR completed
+ * matches. Throws on locked/completed matches unless input.force.
  */
 export function reportResult(
 	data: BracketData,
@@ -22,7 +21,11 @@ export function reportResult(
 
 	propagator.updateMatch(
 		stored,
-		{ opponent1: input.opponent1, opponent2: input.opponent2 },
+		{
+			opponent1: input.opponent1,
+			opponent2: input.opponent2,
+			winnerSide: input.winnerSide,
+		},
 		input.force,
 	);
 

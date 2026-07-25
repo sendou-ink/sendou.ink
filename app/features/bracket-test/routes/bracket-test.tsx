@@ -266,8 +266,9 @@ function markMatchesCompleted(
 		// skip BYE matches (opponent slot is null entirely)
 		if (match.opponent1 === null || match.opponent2 === null) continue;
 
-		match.opponent1 = { ...match.opponent1, score: 2, result: "win" };
-		match.opponent2 = { ...match.opponent2, score: 0, result: "loss" };
+		match.opponent1 = { ...match.opponent1, score: 2 };
+		match.opponent2 = { ...match.opponent2, score: 0 };
+		match.winnerSide = "opponent1";
 	}
 }
 

@@ -15,6 +15,7 @@ import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type {
 	ParticipantResult,
+	Side,
 	StageSettings,
 } from "~/features/tournament-bracket/core/engine/types";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -657,6 +658,8 @@ export interface TournamentMatch {
 	stageId: number;
 	// set when the match becomes playable i.e. its status is "STARTED"
 	startedAt: number | null;
+	/** The side that won the set. `null` while the match has no winner. */
+	winnerSide: Side | null;
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */

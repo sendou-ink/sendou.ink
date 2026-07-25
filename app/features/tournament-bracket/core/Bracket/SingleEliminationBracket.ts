@@ -82,15 +82,12 @@ export class SingleEliminationBracket extends Bracket {
 		})();
 
 		for (const match of matches.sort((a, b) => a.round_id - b.round_id)) {
-			if (
-				match.opponent1?.result !== "win" &&
-				match.opponent2?.result !== "win"
-			) {
+			if (!match.winnerSide) {
 				continue;
 			}
 
 			const loser =
-				match.opponent1?.result === "win" ? match.opponent2 : match.opponent1;
+				match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 			invariant(loser?.id, "Loser id not found");
 
 			teams.push({ id: loser.id, lostAt: match.round_id });
@@ -143,9 +140,9 @@ export class SingleEliminationBracket extends Bracket {
 			? this.data.match.find((m) => m.group_id !== matches[0].group_id)
 			: undefined;
 		const thirdPlaceMatchWinner =
-			thirdPlaceMatch?.opponent1?.result === "win"
+			thirdPlaceMatch?.winnerSide === "opponent1"
 				? thirdPlaceMatch.opponent1
-				: thirdPlaceMatch?.opponent2?.result === "win"
+				: thirdPlaceMatch?.winnerSide === "opponent2"
 					? thirdPlaceMatch.opponent2
 					: undefined;
 

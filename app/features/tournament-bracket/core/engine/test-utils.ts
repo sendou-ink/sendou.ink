@@ -11,6 +11,7 @@ import type {
 	ParticipantResult,
 	ResolvedCreateBracketInput,
 	RoundData,
+	Side,
 	StageData,
 } from "./types";
 
@@ -18,6 +19,7 @@ interface UpdateMatchInput {
 	id: number;
 	opponent1?: Partial<ParticipantResult>;
 	opponent2?: Partial<ParticipantResult>;
+	winnerSide?: Side;
 }
 
 export class EngineBracket {
@@ -94,6 +96,7 @@ export class EngineBracket {
 			matchId: input.id,
 			opponent1: input.opponent1,
 			opponent2: input.opponent2,
+			winnerSide: input.winnerSide,
 			force,
 		}).data;
 	}

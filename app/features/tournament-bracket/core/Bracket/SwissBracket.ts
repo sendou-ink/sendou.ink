@@ -41,12 +41,7 @@ export class SwissBracket extends Bracket {
 			if (roundsMatches.length === 0) return false;
 
 			return roundsMatches.every((match) => {
-				if (
-					match.opponent1 &&
-					match.opponent2 &&
-					match.opponent1?.result !== "win" &&
-					match.opponent2?.result !== "win"
-				) {
+				if (match.opponent1 && match.opponent2 && !match.winnerSide) {
 					return false;
 				}
 
@@ -113,8 +108,7 @@ export class SwissBracket extends Bracket {
 					match.opponent1 === null ||
 					match.opponent2 === null ||
 					// match was played out
-					match.opponent1?.result === "win" ||
-					match.opponent2?.result === "win",
+					match.winnerSide,
 			);
 
 			if (!groupIsFinished && !includeUnfinishedGroups) continue;
@@ -191,18 +185,15 @@ export class SwissBracket extends Bracket {
 					]);
 				}
 
-				if (
-					match.opponent1?.result !== "win" &&
-					match.opponent2?.result !== "win"
-				) {
+				if (!match.winnerSide) {
 					continue;
 				}
 
 				const winner =
-					match.opponent1?.result === "win" ? match.opponent1 : match.opponent2;
+					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
 
 				const loser =
-					match.opponent1?.result === "win" ? match.opponent2 : match.opponent1;
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 
 				if (!winner || !loser) continue;
 
@@ -319,9 +310,7 @@ export class SwissBracket extends Bracket {
 							(match.opponent1?.id === team2.id &&
 								match.opponent2?.id === team.id);
 
-						const isFinished =
-							match.opponent1?.result === "win" ||
-							match.opponent2?.result === "win";
+						const isFinished = Boolean(match.winnerSide);
 
 						return isBetweenTeams && isFinished;
 					});
@@ -331,9 +320,9 @@ export class SwissBracket extends Bracket {
 
 					const wonTheirMatch =
 						(finishedMatchBetweenTeams.opponent1!.id === team.id &&
-							finishedMatchBetweenTeams.opponent1!.result === "win") ||
+							finishedMatchBetweenTeams.winnerSide === "opponent1") ||
 						(finishedMatchBetweenTeams.opponent2!.id === team.id &&
-							finishedMatchBetweenTeams.opponent2!.result === "win");
+							finishedMatchBetweenTeams.winnerSide === "opponent2");
 
 					if (wonTheirMatch) {
 						team.winsAgainstTied++;

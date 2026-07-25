@@ -1,9 +1,11 @@
 import * as R from "remeda";
 import type { TournamentRoundMaps } from "~/db/tables";
 import invariant from "~/utils/invariant";
-import type { BracketData, EngineResult, MatchData, Result } from "../types";
+import type { BracketData, EngineResult, MatchData, Side } from "../types";
 import { reportResult } from "./report-result";
 import { resetMatchResults } from "./reset-result";
+
+const SIDES = ["opponent1", "opponent2"] as const satisfies Side[];
 
 /**
  * Records one game win for the given team, resolving from the round's map
@@ -27,14 +29,9 @@ export function reportGameResult(
 
 	const reported = reportResult(data, {
 		matchId: input.matchId,
-		opponent1: {
-			score: scores[0],
-			result: setOver && scores[0] > scores[1] ? "win" : undefined,
-		},
-		opponent2: {
-			score: scores[1],
-			result: setOver && scores[1] > scores[0] ? "win" : undefined,
-		},
+		opponent1: { score: scores[0] },
+		opponent2: { score: scores[1] },
+		winnerSide: setOver ? higherScoringSide(scores) : undefined,
 	});
 
 	return { ...reported, setOver };
@@ -84,18 +81,12 @@ export function endSet(
 	input: { matchId: number; winnerTeamId: number },
 ): EngineResult {
 	const match = findMatch(data, input.matchId);
-	const winnerSide = sideOfTeam(match, input.winnerTeamId);
 
 	return reportResult(data, {
 		matchId: input.matchId,
-		opponent1: {
-			score: match.opponent1?.score,
-			result: winnerSide === 0 ? "win" : "loss",
-		},
-		opponent2: {
-			score: match.opponent2?.score,
-			result: winnerSide === 1 ? "win" : "loss",
-		},
+		opponent1: { score: match.opponent1?.score },
+		opponent2: { score: match.opponent2?.score },
+		winnerSide: SIDES[sideOfTeam(match, input.winnerTeamId)],
 	});
 }
 
@@ -112,20 +103,12 @@ export function reopenMatch(
 ): EngineResult & { endedEarly: boolean } {
 	const { match, maps } = findMatchWithMaps(data, matchId);
 
-	invariant(
-		match.opponent1?.result === "win" || match.opponent2?.result === "win",
-		"Match has no result to reopen",
-	);
+	invariant(match.winnerSide, "Match has no result to reopen");
 
 	const endedEarly = matchEndedEarly({
-		opponentOne: {
-			score: match.opponent1?.score,
-			result: match.opponent1?.result,
-		},
-		opponentTwo: {
-			score: match.opponent2?.score,
-			result: match.opponent2?.result,
-		},
+		opponentOne: match.opponent1,
+		opponentTwo: match.opponent2,
+		winnerSide: match.winnerSide,
 		count: maps.count,
 		countType: maps.type,
 	});
@@ -133,13 +116,13 @@ export function reopenMatch(
 	const scores = currentScores(match);
 	if (!endedEarly) {
 		invariant(scores[0] !== scores[1], "Scores are equal");
-		scores[match.opponent1?.result === "win" ? 0 : 1]--;
+		scores[SIDES.indexOf(match.winnerSide)]--;
 	}
 
 	const reported = reportResult(data, {
 		matchId,
-		opponent1: { score: scores[0], result: undefined },
-		opponent2: { score: scores[1], result: undefined },
+		opponent1: { score: scores[0] },
+		opponent2: { score: scores[1] },
 	});
 
 	return { ...reported, endedEarly };
@@ -167,21 +150,21 @@ export function isSetOverByScore({
 export function matchEndedEarly({
 	opponentOne,
 	opponentTwo,
+	winnerSide,
 	count,
 	countType,
 }: {
-	opponentOne: { score?: number; result?: Result };
-	opponentTwo: { score?: number; result?: Result };
+	opponentOne: { score?: number } | null;
+	opponentTwo: { score?: number } | null;
+	winnerSide: Side | null;
 	count: number;
 	countType: TournamentRoundMaps["type"];
 }) {
-	if (opponentOne.result !== "win" && opponentTwo.result !== "win") {
-		return false;
-	}
+	if (!winnerSide) return false;
 
 	const scores: [number, number] = [
-		opponentOne.score ?? 0,
-		opponentTwo.score ?? 0,
+		opponentOne?.score ?? 0,
+		opponentTwo?.score ?? 0,
 	];
 
 	return !isSetOverByScore({ scores, count, countType });
@@ -203,6 +186,14 @@ function findMatchWithMaps(data: BracketData, matchId: number) {
 
 function currentScores(match: MatchData): [number, number] {
 	return [match.opponent1?.score ?? 0, match.opponent2?.score ?? 0];
+}
+
+/** The side that won more games, `undefined` if both won as many. */
+function higherScoringSide(scores: [number, number]): Side | undefined {
+	if (scores[0] > scores[1]) return "opponent1";
+	if (scores[1] > scores[0]) return "opponent2";
+
+	return undefined;
 }
 
 function sideOfTeam(match: MatchData, teamId: number): 0 | 1 {

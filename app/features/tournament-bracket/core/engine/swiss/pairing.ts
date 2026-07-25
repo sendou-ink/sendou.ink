@@ -122,7 +122,7 @@ function everyMatchOver(matches: MatchData[]) {
 		// bye
 		if (!match.opponent1 || !match.opponent2) continue;
 
-		if (match.opponent1.result !== "win" && match.opponent2.result !== "win") {
+		if (!match.winnerSide) {
 			return false;
 		}
 	}

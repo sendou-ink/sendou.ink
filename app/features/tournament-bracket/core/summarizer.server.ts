@@ -76,6 +76,7 @@ export function tournamentSummary({
 		const endedEarly = matchEndedEarly({
 			opponentOne: match.opponentOne,
 			opponentTwo: match.opponentTwo,
+			winnerSide: match.winnerSide,
 			count: match.roundMaps.count,
 			countType: match.roundMaps.type,
 		});
@@ -209,9 +210,9 @@ function calculateIndividualPlayerSkills({
  */
 function matchToSetMostPlayedUsers(match: AllMatchResult) {
 	const winner =
-		match.opponentOne.result === "win" ? match.opponentOne : match.opponentTwo;
+		match.winnerSide === "opponent1" ? match.opponentOne : match.opponentTwo;
 	const loser =
-		match.opponentOne.result === "win" ? match.opponentTwo : match.opponentOne;
+		match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
 
 	// Handle dropped team sets without game results - use active roster or member list
 	if (match.maps.length === 0) {
@@ -285,13 +286,9 @@ function calculateTeamSkills({
 
 	for (const match of results) {
 		const winner =
-			match.opponentOne.result === "win"
-				? match.opponentOne
-				: match.opponentTwo;
+			match.winnerSide === "opponent1" ? match.opponentOne : match.opponentTwo;
 		const loser =
-			match.opponentOne.result === "win"
-				? match.opponentTwo
-				: match.opponentOne;
+			match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
 
 		// Handle dropped team sets without game results - use active roster or member list
 		let winnerTeamIdentifier: string;
@@ -535,11 +532,11 @@ function playerResultDeltas(
 			for (const otherParticipant of mostPopularParticipants) {
 				if (ownerParticipant.userId === otherParticipant.userId) continue;
 
-				const result =
+				const ownerSide =
 					match.opponentOne.id === ownerParticipant.tournamentTeamId
-						? match.opponentOne.result
-						: match.opponentTwo.result;
-				const won = result === "win";
+						? "opponent1"
+						: "opponent2";
+				const won = match.winnerSide === ownerSide;
 
 				addPlayerResult({
 					ownerUserId: ownerParticipant.userId,

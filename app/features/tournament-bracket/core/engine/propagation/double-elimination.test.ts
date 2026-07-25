@@ -20,20 +20,23 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		bracket.updateMatch({
 			id: 0, // First match of WB round 1
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		bracket.updateMatch({
 			id: 1, // Second match of WB round 1
 			opponent1: { score: 13 },
-			opponent2: { score: 16, result: "win" },
+			opponent2: { score: 16 },
+			winnerSide: "opponent2",
 		});
 
 		bracket.updateMatch({
 			id: 15, // First match of LB round 1
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 10 },
+			winnerSide: "opponent1",
 		});
 
 		expect(
@@ -62,15 +65,16 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		bracket.updateMatch({
 			id: 1, // Second match of WB round 1
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		const loserId = bracket.match(1).opponent2?.id;
 		let matchSemiLB = bracket.match(3);
 
 		expect(matchSemiLB.opponent2?.id).toBe(loserId);
-		expect(matchSemiLB.opponent2?.result).toBe("win");
+		expect(matchSemiLB.winnerSide).toBe("opponent2");
 		expect(bracket.matchStatus(3)).toBe("COMPLETED");
 
 		expect(
@@ -81,7 +85,7 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		matchSemiLB = bracket.match(3);
 		expect(matchSemiLB.opponent2?.id).toBeNull();
-		expect(matchSemiLB.opponent2?.result).toBeUndefined();
+		expect(matchSemiLB.winnerSide).toBeNull();
 		expect(bracket.matchStatus(3)).toBe("PENDING");
 
 		expect(bracket.match(4).opponent2?.id).toBeNull(); // Propagated winner is removed.
@@ -96,20 +100,23 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		bracket.updateMatch({
 			id: 0, // First match of WB round 1
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		bracket.updateMatch({
 			id: 1, // Second match of WB round 1
 			opponent1: { score: 13 },
-			opponent2: { score: 16, result: "win" },
+			opponent2: { score: 16 },
+			winnerSide: "opponent2",
 		});
 
 		bracket.updateMatch({
 			id: 2, // WB Final
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 9 },
+			winnerSide: "opponent1",
 		});
 
 		expect(
@@ -118,14 +125,16 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		bracket.updateMatch({
 			id: 3, // Only match of LB round 1
-			opponent1: { score: 12, result: "win" }, // Team 4
+			opponent1: { score: 12 },
 			opponent2: { score: 8 },
+			winnerSide: "opponent1", // Team 4
 		});
 
 		bracket.updateMatch({
 			id: 4, // LB Final
-			opponent1: { score: 14, result: "win" }, // Team 3
+			opponent1: { score: 14 },
 			opponent2: { score: 7 },
+			winnerSide: "opponent1", // Team 3
 		});
 
 		expect(
@@ -135,7 +144,8 @@ describe("Previous and next match update in double elimination stage", () => {
 		bracket.updateMatch({
 			id: 5, // Grand Final round 1
 			opponent1: { score: 10 },
-			opponent2: { score: 16, result: "win" }, // Team 3
+			opponent2: { score: 16 },
+			winnerSide: "opponent2", // Team 3
 		});
 
 		expect(
@@ -147,8 +157,9 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		bracket.updateMatch({
 			id: 6, // Grand Final round 2
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 10 },
+			winnerSide: "opponent1",
 		});
 	});
 
@@ -161,8 +172,9 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		bracket.updateMatch({
 			id: 0, // First match of WB round 1
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		const beforeReset = bracket.match(3); // Determined opponent for LB round 1
@@ -183,26 +195,26 @@ describe("Previous and next match update in double elimination stage", () => {
 			settings: {},
 		});
 
-		bracket.updateMatch({ id: 0, opponent1: { result: "win" } }); // WB 1.1
+		bracket.updateMatch({ id: 0, winnerSide: "opponent1" }); // WB 1.1
 		expect(
 			bracket.match(15).opponent1?.id, // Determined opponent for first match of LB round 1 (natural ordering for losers)
 		).toBe(bracket.match(0).opponent2?.id); // Loser of first match round 1
 
-		bracket.updateMatch({ id: 1, opponent1: { result: "win" } }); // WB 1.2
+		bracket.updateMatch({ id: 1, winnerSide: "opponent1" }); // WB 1.2
 		expect(
 			bracket.match(15).opponent2?.id, // Determined opponent for first match of LB round 1 (natural ordering for losers)
 		).toBe(bracket.match(1).opponent2?.id); // Loser of second match round 1
 
-		bracket.updateMatch({ id: 8, opponent1: { result: "win" } }); // WB 2.1
+		bracket.updateMatch({ id: 8, winnerSide: "opponent1" }); // WB 2.1
 		expect(
 			bracket.match(20).opponent1?.id, // Determined opponent for first match of LB round 2
 		).toBe(bracket.match(8).opponent2?.id); // Loser of first match round 2
 
-		bracket.updateMatch({ id: 6, opponent1: { result: "win" } }); // WB 1.7
-		bracket.updateMatch({ id: 7, opponent1: { result: "win" } }); // WB 1.8
-		bracket.updateMatch({ id: 11, opponent1: { result: "win" } }); // WB 2.4
-		bracket.updateMatch({ id: 15, opponent1: { result: "win" } }); // LB 1.1
-		bracket.updateMatch({ id: 18, opponent1: { result: "win" } }); // LB 1.4
+		bracket.updateMatch({ id: 6, winnerSide: "opponent1" }); // WB 1.7
+		bracket.updateMatch({ id: 7, winnerSide: "opponent1" }); // WB 1.8
+		bracket.updateMatch({ id: 11, winnerSide: "opponent1" }); // WB 2.4
+		bracket.updateMatch({ id: 15, winnerSide: "opponent1" }); // LB 1.1
+		bracket.updateMatch({ id: 18, winnerSide: "opponent1" }); // LB 1.4
 
 		expect(bracket.matchStatus(8)).toBe("COMPLETED"); // WB 2.1
 	});
@@ -222,7 +234,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		// Match of position 1.
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { result: "win" }, // Loser id: 8.
+			winnerSide: "opponent1", // Loser id: 8.
 		});
 
 		expect(bracket.match(7).opponent1?.id).toBe(8);
@@ -230,7 +242,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		// Match of position 2.
 		bracket.updateMatch({
 			id: 1,
-			opponent1: { result: "win" }, // Loser id: 5.
+			winnerSide: "opponent1", // Loser id: 5.
 		});
 
 		expect(bracket.match(7).opponent2?.id).toBe(5);
@@ -238,7 +250,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		// Match of position 3.
 		bracket.updateMatch({
 			id: 2,
-			opponent1: { result: "win" }, // Loser id: 7.
+			winnerSide: "opponent1", // Loser id: 7.
 		});
 
 		expect(bracket.match(8).opponent1?.id).toBe(7);
@@ -246,7 +258,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		// Match of position 4.
 		bracket.updateMatch({
 			id: 3,
-			opponent1: { result: "win" }, // Loser id: 6.
+			winnerSide: "opponent1", // Loser id: 6.
 		});
 
 		expect(bracket.match(8).opponent2?.id).toBe(6);

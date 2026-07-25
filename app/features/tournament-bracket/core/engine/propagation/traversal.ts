@@ -441,7 +441,7 @@ export class Propagator {
 		if (
 			roundNumber === roundCount ||
 			// avoid putting teams to bracket reset if tournament is over
-			match.opponent1?.result === "win"
+			match.winnerSide === "opponent1"
 		) {
 			return [];
 		}

@@ -17,14 +17,16 @@ describe("Previous and next match update", () => {
 
 		bracket.updateMatch({
 			id: 0, // First match of round 1
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		bracket.updateMatch({
 			id: 1, // Second match of round 1
 			opponent1: { score: 13 },
-			opponent2: { score: 16, result: "win" },
+			opponent2: { score: 16 },
+			winnerSide: "opponent2",
 		});
 
 		expect(bracket.match(3).opponent1?.id).toBe(bracket.match(0).opponent2?.id);
@@ -42,14 +44,16 @@ describe("Previous and next match update", () => {
 
 		bracket.updateMatch({
 			id: 0, // First match of round 1
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		bracket.updateMatch({
 			id: 1, // Second match of round 1
 			opponent1: { score: 13 },
-			opponent2: { score: 16, result: "win" },
+			opponent2: { score: 16 },
+			winnerSide: "opponent2",
 		});
 
 		bracket.updateMatch({
@@ -72,16 +76,18 @@ describe("Previous and next match update", () => {
 
 		bracket.updateMatch({
 			id: 3, // Consolation final
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 9 },
+			winnerSide: "opponent1",
 		});
 
 		expect(bracket.matchStatus(2)).toBe("STARTED");
 
 		bracket.updateMatch({
 			id: 2, // Final
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 9 },
+			winnerSide: "opponent1",
 		});
 	});
 });

@@ -23,8 +23,7 @@ export function endDroppedTeamMatches(
 
 	for (const match of data.match) {
 		if (!match.opponent1?.id || !match.opponent2?.id) continue;
-		if (match.opponent1.result === "win" || match.opponent2.result === "win")
-			continue;
+		if (match.winnerSide) continue;
 
 		const team1Dropped = droppedTeamIdsSet.has(match.opponent1.id);
 		const team2Dropped = droppedTeamIdsSet.has(match.opponent2.id);
@@ -43,14 +42,10 @@ export function endDroppedTeamMatches(
 		propagator.updateMatch(
 			stored,
 			{
-				opponent1: {
-					score: match.opponent1.score,
-					result: winnerTeamId === match.opponent1.id ? "win" : "loss",
-				},
-				opponent2: {
-					score: match.opponent2.score,
-					result: winnerTeamId === match.opponent2.id ? "win" : "loss",
-				},
+				opponent1: { score: match.opponent1.score },
+				opponent2: { score: match.opponent2.score },
+				winnerSide:
+					winnerTeamId === match.opponent1.id ? "opponent1" : "opponent2",
 			},
 			true,
 		);

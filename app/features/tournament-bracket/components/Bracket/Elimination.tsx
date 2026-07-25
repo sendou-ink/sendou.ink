@@ -36,11 +36,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 					(match) => match.round_id === round.id,
 				);
 				return !roundMatches.some(
-					(match) =>
-						match.opponent1 &&
-						match.opponent2 &&
-						match.opponent1.result !== "win" &&
-						match.opponent2.result !== "win",
+					(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
 				);
 			})
 			.map((round) => round.id),
@@ -93,11 +89,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 					: 0;
 
 				const someMatchOngoing = matches.some(
-					(match) =>
-						match.opponent1 &&
-						match.opponent2 &&
-						match.opponent1.result !== "win" &&
-						match.opponent2.result !== "win",
+					(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
 				);
 
 				if (hiddenRoundIds.has(round.id)) {

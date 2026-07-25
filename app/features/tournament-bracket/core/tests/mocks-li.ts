@@ -623,16 +623,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16805,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17769,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37410,
@@ -641,16 +640,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16814,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16803,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37411,
@@ -659,16 +657,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16825,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17056,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37412,
@@ -677,16 +674,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17368,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37413,
@@ -695,16 +691,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17431,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37414,
@@ -713,16 +708,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17155,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17468,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37415,
@@ -731,16 +725,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16828,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17482,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37416,
@@ -749,16 +742,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16878,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17626,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37417,
@@ -767,16 +759,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16996,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17634,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37418,
@@ -785,16 +776,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17168,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17698,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37419,
@@ -803,16 +793,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17292,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17750,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37420,
@@ -821,16 +810,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17505,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17202,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37421,
@@ -839,16 +827,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17659,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17444,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37422,
@@ -857,16 +844,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17765,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17606,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37423,
@@ -875,16 +861,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16872,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17669,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37424,
@@ -893,16 +878,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17067,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17697,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37425,
@@ -911,16 +895,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17256,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17768,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37426,
@@ -929,16 +912,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17529,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16915,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37427,
@@ -947,16 +929,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17650,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17265,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37428,
@@ -965,16 +946,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17731,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17485,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13348,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37429,
@@ -983,16 +963,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16806,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16802,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37430,
@@ -1001,16 +980,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16821,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37431,
@@ -1019,16 +997,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16863,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17138,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37432,
@@ -1037,16 +1014,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16974,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17411,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37433,
@@ -1055,16 +1031,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17119,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17434,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37434,
@@ -1073,16 +1048,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17561,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17479,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37435,
@@ -1091,16 +1065,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16830,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17500,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37436,
@@ -1109,16 +1082,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16887,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17633,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37437,
@@ -1127,16 +1099,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17148,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17641,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37438,
@@ -1145,16 +1116,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17280,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17713,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37439,
@@ -1163,16 +1133,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17423,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17191,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37440,
@@ -1181,16 +1150,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17513,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17208,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37441,
@@ -1199,16 +1167,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17710,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17457,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37442,
@@ -1217,16 +1184,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16870,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17636,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37443,
@@ -1235,16 +1201,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17052,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17654,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37444,
@@ -1253,16 +1218,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17188,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17723,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37445,
@@ -1271,16 +1235,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17354,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16832,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37446,
@@ -1289,16 +1252,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17609,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17179,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37447,
@@ -1307,16 +1269,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17707,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17438,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37448,
@@ -1325,16 +1286,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17749,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17770,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13354,
 				stage_id: 1420,
 				startedAt: 1734199362,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37449,
@@ -1343,16 +1303,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16825,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17650,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37450,
@@ -1361,16 +1320,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17529,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37451,
@@ -1379,16 +1337,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17256,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37452,
@@ -1397,16 +1354,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17155,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16872,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37453,
@@ -1415,16 +1371,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16828,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17765,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37454,
@@ -1433,16 +1388,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16878,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17505,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37455,
@@ -1451,16 +1405,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16996,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17292,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37456,
@@ -1469,16 +1422,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16805,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17698,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37457,
@@ -1487,16 +1439,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16814,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17731,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37458,
@@ -1505,16 +1456,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17659,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17067,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37459,
@@ -1523,16 +1473,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17168,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17444,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37460,
@@ -1541,16 +1490,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17769,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16803,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37461,
@@ -1559,16 +1507,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17056,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17265,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37462,
@@ -1577,16 +1524,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17368,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16915,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37463,
@@ -1595,16 +1541,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17431,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17768,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37464,
@@ -1613,16 +1558,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17468,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17697,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37465,
@@ -1631,16 +1575,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17482,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17669,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37466,
@@ -1649,16 +1592,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17634,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17606,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37467,
@@ -1667,16 +1609,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17750,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17202,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37468,
@@ -1689,6 +1630,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				round_id: 13349,
 				stage_id: 1420,
 				startedAt: 1734201461,
+				winnerSide: null,
 			},
 			{
 				id: 37469,
@@ -1697,16 +1639,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16806,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17749,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37470,
@@ -1715,16 +1656,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17707,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37471,
@@ -1733,16 +1673,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16974,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17609,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37472,
@@ -1751,16 +1690,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17119,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17188,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37473,
@@ -1769,16 +1707,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17561,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16870,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37474,
@@ -1787,16 +1724,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16830,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17710,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37475,
@@ -1805,16 +1741,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16887,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17513,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37476,
@@ -1823,16 +1758,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17280,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17423,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37477,
@@ -1841,16 +1775,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16863,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17354,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37478,
@@ -1859,16 +1792,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17148,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17052,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37479,
@@ -1877,16 +1809,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17138,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16832,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37480,
@@ -1895,16 +1826,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17641,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17654,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37481,
@@ -1913,16 +1843,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16802,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17770,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37482,
@@ -1931,16 +1860,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16821,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17438,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37483,
@@ -1949,16 +1877,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17411,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17179,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37484,
@@ -1967,16 +1894,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17434,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17723,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37485,
@@ -1985,16 +1911,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17479,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17636,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37486,
@@ -2003,16 +1928,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17500,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17457,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37487,
@@ -2021,16 +1945,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17633,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17208,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37488,
@@ -2039,16 +1962,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17713,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17191,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13355,
 				stage_id: 1420,
 				startedAt: 1734201464,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37489,
@@ -2057,16 +1979,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17292,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37490,
@@ -2075,16 +1996,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16814,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17698,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37491,
@@ -2093,16 +2013,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16825,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17067,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37492,
@@ -2111,16 +2030,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16872,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37493,
@@ -2129,16 +2047,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16828,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17505,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37494,
@@ -2147,16 +2064,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17256,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17650,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37495,
@@ -2165,16 +2081,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17168,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17765,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37496,
@@ -2183,16 +2098,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16803,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16878,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37497,
@@ -2201,16 +2115,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17431,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16996,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37498,
@@ -2219,16 +2132,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17731,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17697,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37499,
@@ -2237,16 +2149,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17155,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17750,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37500,
@@ -2255,16 +2166,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17529,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17368,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37501,
@@ -2273,16 +2183,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16805,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17482,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37502,
@@ -2291,16 +2200,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17485,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17659,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37503,
@@ -2309,16 +2217,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17265,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17634,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37504,
@@ -2327,16 +2234,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17769,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17444,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37505,
@@ -2345,16 +2251,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17056,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16915,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37506,
@@ -2363,16 +2268,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17202,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17768,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37507,
@@ -2381,16 +2285,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17606,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17669,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13350,
 				stage_id: 1420,
 				startedAt: 1734203865,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37508,
@@ -2399,16 +2302,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16806,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17119,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37509,
@@ -2417,16 +2319,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17148,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37510,
@@ -2435,16 +2336,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16974,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16887,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37511,
@@ -2453,16 +2353,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17561,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16830,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37512,
@@ -2471,16 +2370,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16832,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17423,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37513,
@@ -2489,16 +2387,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17354,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17707,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37514,
@@ -2507,16 +2404,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17280,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17609,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37515,
@@ -2525,16 +2421,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17710,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17513,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37516,
@@ -2543,16 +2438,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16821,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16870,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37517,
@@ -2561,16 +2455,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17188,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16863,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37518,
@@ -2579,16 +2472,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17749,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17479,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37519,
@@ -2597,16 +2489,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16802,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17434,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37520,
@@ -2615,16 +2506,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17052,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17411,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37521,
@@ -2633,16 +2523,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17457,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17713,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37522,
@@ -2651,16 +2540,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17641,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17208,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37523,
@@ -2669,16 +2557,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17138,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17633,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37524,
@@ -2687,16 +2574,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17500,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17770,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37525,
@@ -2705,16 +2591,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17636,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17438,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37526,
@@ -2723,16 +2608,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17723,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17179,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13356,
 				stage_id: 1420,
 				startedAt: 1734203867,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37591,
@@ -2741,16 +2625,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16806,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17561,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37592,
@@ -2759,16 +2642,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17280,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16887,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37593,
@@ -2777,16 +2659,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17423,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37594,
@@ -2795,16 +2676,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17354,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17119,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37595,
@@ -2813,16 +2693,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17148,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17513,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37596,
@@ -2831,16 +2710,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16974,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16830,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37597,
@@ -2849,16 +2727,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16870,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17749,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37598,
@@ -2867,16 +2744,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17434,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16863,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37599,
@@ -2885,16 +2761,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17713,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17411,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37600,
@@ -2903,16 +2778,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16821,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17208,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37601,
@@ -2921,16 +2795,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16832,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17188,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37602,
@@ -2939,16 +2812,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17707,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17710,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37603,
@@ -2957,16 +2829,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17633,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17609,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37604,
@@ -2975,16 +2846,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17479,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16802,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37605,
@@ -2993,16 +2863,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17457,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17052,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37606,
@@ -3011,16 +2880,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17636,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17723,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37607,
@@ -3029,16 +2897,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17641,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17500,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37608,
@@ -3047,16 +2914,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17138,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17770,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37609,
@@ -3065,16 +2931,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17179,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17438,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13357,
 				stage_id: 1420,
 				startedAt: 1734205934,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37610,
@@ -3083,16 +2948,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16814,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16828,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37611,
@@ -3101,16 +2965,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16825,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16910,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37612,
@@ -3119,16 +2982,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17292,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16872,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37613,
@@ -3137,16 +2999,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16803,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37614,
@@ -3155,16 +3016,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17482,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17155,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37615,
@@ -3173,16 +3033,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17067,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17368,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37616,
@@ -3191,16 +3050,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17698,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17505,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37617,
@@ -3209,16 +3067,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17168,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17256,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37618,
@@ -3227,16 +3084,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17765,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17697,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37619,
@@ -3245,16 +3101,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16996,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17650,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37620,
@@ -3263,16 +3118,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17634,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17659,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37621,
@@ -3281,16 +3135,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17529,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17431,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37622,
@@ -3299,16 +3152,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17750,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16878,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37623,
@@ -3317,16 +3169,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17731,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16805,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37624,
@@ -3335,16 +3186,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17769,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17265,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37625,
@@ -3353,16 +3203,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17485,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17056,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37626,
@@ -3371,16 +3220,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17606,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17768,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37627,
@@ -3389,16 +3237,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17202,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16915,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37628,
@@ -3407,16 +3254,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17444,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17669,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13351,
 				stage_id: 1420,
 				startedAt: 1734205937,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37629,
@@ -3425,16 +3271,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16828,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37630,
@@ -3443,16 +3288,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17155,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17292,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37631,
@@ -3461,16 +3305,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16825,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16984,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37632,
@@ -3479,16 +3322,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16814,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16872,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37633,
@@ -3497,16 +3339,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17505,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17168,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37634,
@@ -3515,16 +3356,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16803,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17067,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37635,
@@ -3533,16 +3373,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17659,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17697,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37636,
@@ -3551,16 +3390,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17368,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17256,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37637,
@@ -3569,16 +3407,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17698,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17482,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37638,
@@ -3587,16 +3424,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16878,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17485,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37639,
@@ -3605,16 +3441,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17650,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17529,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37640,
@@ -3623,16 +3458,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17769,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16996,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37641,
@@ -3641,16 +3475,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17634,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17768,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37642,
@@ -3659,16 +3492,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17765,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16805,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37643,
@@ -3677,16 +3509,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17265,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17444,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37644,
@@ -3695,16 +3526,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17750,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17731,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37645,
@@ -3713,16 +3543,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17669,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17056,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37646,
@@ -3731,16 +3560,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17202,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17606,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37647,
@@ -3753,6 +3581,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				round_id: 13352,
 				stage_id: 1420,
 				startedAt: 1734207931,
+				winnerSide: null,
 			},
 			{
 				id: 37648,
@@ -3761,16 +3590,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17423,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16887,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37649,
@@ -3779,16 +3607,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16806,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37650,
@@ -3797,16 +3624,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17119,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17513,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37651,
@@ -3815,16 +3641,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17749,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17561,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37652,
@@ -3833,16 +3658,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17434,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17713,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37653,
@@ -3851,16 +3675,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17354,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16830,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37654,
@@ -3869,16 +3692,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17280,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17208,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37655,
@@ -3887,16 +3709,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17148,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17710,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37656,
@@ -3905,16 +3726,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16802,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16974,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37657,
@@ -3923,16 +3743,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16863,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16870,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37658,
@@ -3941,16 +3760,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17411,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17188,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37659,
@@ -3959,16 +3777,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17457,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17723,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37660,
@@ -3977,16 +3794,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16821,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17609,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37661,
@@ -3995,16 +3811,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16832,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17707,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37662,
@@ -4013,16 +3828,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17179,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17052,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37663,
@@ -4031,16 +3845,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17636,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17641,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37664,
@@ -4049,16 +3862,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17138,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17500,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37665,
@@ -4067,16 +3879,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17438,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17770,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13358,
 				stage_id: 1420,
 				startedAt: 1734207933,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37666,
@@ -4085,16 +3896,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17659,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16828,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37667,
@@ -4103,16 +3913,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17505,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37668,
@@ -4121,16 +3930,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17650,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17292,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37669,
@@ -4139,16 +3947,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16825,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16872,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37670,
@@ -4157,16 +3964,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16814,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37671,
@@ -4175,16 +3981,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17155,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17768,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37672,
@@ -4193,16 +3998,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17168,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16878,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37673,
@@ -4211,16 +4015,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16996,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17697,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37674,
@@ -4229,16 +4032,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17067,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17698,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37675,
@@ -4247,16 +4049,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16803,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17368,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37676,
@@ -4265,16 +4066,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17256,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17765,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37677,
@@ -4283,16 +4083,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17482,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17529,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37678,
@@ -4301,16 +4100,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17750,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17634,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37679,
@@ -4319,16 +4117,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17769,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17485,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37680,
@@ -4337,16 +4134,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17265,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17202,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37681,
@@ -4355,16 +4151,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16805,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17056,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37682,
@@ -4373,16 +4168,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17606,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17444,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37683,
@@ -4391,16 +4185,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17669,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17731,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13353,
 				stage_id: 1420,
 				startedAt: 1734210194,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37684,
@@ -4409,16 +4202,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17561,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37685,
@@ -4427,16 +4219,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17434,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16806,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37686,
@@ -4445,16 +4236,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16830,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17423,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37687,
@@ -4463,16 +4253,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17749,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17513,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37688,
@@ -4481,16 +4270,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16887,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17710,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37689,
@@ -4499,16 +4287,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17280,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16974,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37690,
@@ -4517,16 +4304,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17713,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17354,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37691,
@@ -4535,16 +4321,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17208,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16863,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37692,
@@ -4553,16 +4338,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17188,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17609,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37693,
@@ -4571,16 +4355,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17411,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17457,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37694,
@@ -4589,16 +4372,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17723,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16870,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37695,
@@ -4607,16 +4389,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17707,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16802,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37696,
@@ -4625,16 +4406,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16832,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17641,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37697,
@@ -4643,16 +4423,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17500,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17052,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37698,
@@ -4661,16 +4440,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17179,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16821,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37699,
@@ -4679,16 +4457,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17636,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17770,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37700,
@@ -4697,16 +4474,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17438,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17138,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13359,
 				stage_id: 1420,
 				startedAt: 1734210198,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37875,
@@ -4716,17 +4492,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16984,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17749,
 					position: 16,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37876,
@@ -4736,17 +4511,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17208,
 					position: 8,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17659,
 					position: 9,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37877,
@@ -4756,17 +4530,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17280,
 					position: 4,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17697,
 					position: 13,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37878,
@@ -4776,17 +4549,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17155,
 					position: 5,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17710,
 					position: 12,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37879,
@@ -4796,17 +4568,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17561,
 					position: 2,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17768,
 					position: 15,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37880,
@@ -4816,17 +4587,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17067,
 					position: 7,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17713,
 					position: 10,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37881,
@@ -4836,17 +4606,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17168,
 					position: 3,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16974,
 					position: 14,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37882,
@@ -4856,17 +4625,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17457,
 					position: 6,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17650,
 					position: 11,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13452,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37883,
@@ -4875,16 +4643,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17208,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13453,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37884,
@@ -4893,16 +4660,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17280,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17710,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13453,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37885,
@@ -4911,16 +4677,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17561,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17713,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13453,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37886,
@@ -4929,16 +4694,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17168,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17457,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13453,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37887,
@@ -4947,16 +4711,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17710,
 					score: 2,
-					result: "loss",
 				},
 				round_id: 13454,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37888,
@@ -4965,16 +4728,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17561,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17168,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13454,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37889,
@@ -4983,16 +4745,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16984,
 					score: 2,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17561,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13455,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37890,
@@ -5002,17 +4763,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17749,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17659,
 					position: 2,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13456,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37891,
@@ -5022,17 +4782,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17697,
 					position: 3,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17155,
 					position: 4,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13456,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37892,
@@ -5042,17 +4801,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17768,
 					position: 5,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17067,
 					position: 6,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13456,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37893,
@@ -5062,17 +4820,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16974,
 					position: 7,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17650,
 					position: 8,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13456,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37894,
@@ -5082,16 +4839,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17280,
 					position: 2,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17749,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13457,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37895,
@@ -5101,16 +4857,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17208,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17155,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13457,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37896,
@@ -5120,16 +4875,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17457,
 					position: 4,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17067,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13457,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37897,
@@ -5139,16 +4893,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17713,
 					position: 3,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16974,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13457,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37898,
@@ -5157,16 +4910,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17749,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17208,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13458,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37899,
@@ -5175,16 +4927,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17067,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16974,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13458,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37900,
@@ -5194,16 +4945,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17168,
 					position: 2,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17749,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13459,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37901,
@@ -5213,16 +4963,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17710,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16974,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13459,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37902,
@@ -5231,16 +4980,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17749,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17710,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13460,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37903,
@@ -5250,16 +4998,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16984,
 					position: 1,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17710,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13461,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37904,
@@ -5268,17 +5015,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17561,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16984,
 					position: 1,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13462,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37905,
@@ -5293,6 +5039,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				round_id: 13463,
 				stage_id: 1429,
 				startedAt: null,
+				winnerSide: null,
 			},
 			{
 				id: 37906,
@@ -5302,17 +5049,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16828,
 					position: 1,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17188,
 					position: 16,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37907,
@@ -5322,17 +5068,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16887,
 					position: 8,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17505,
 					position: 9,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37908,
@@ -5342,17 +5087,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16829,
 					position: 4,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16872,
 					position: 13,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37909,
@@ -5362,17 +5106,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17292,
 					position: 5,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17423,
 					position: 12,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37910,
@@ -5382,17 +5125,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16806,
 					position: 2,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16803,
 					position: 15,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37911,
@@ -5402,17 +5144,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16825,
 					position: 7,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17513,
 					position: 10,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37912,
@@ -5422,17 +5163,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16910,
 					position: 3,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17434,
 					position: 14,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37913,
@@ -5442,17 +5182,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16830,
 					position: 6,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16996,
 					position: 11,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13464,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37914,
@@ -5461,16 +5200,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17188,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16887,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13465,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37915,
@@ -5479,16 +5217,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17423,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13465,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37916,
@@ -5497,16 +5234,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16803,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16825,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13465,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37917,
@@ -5515,16 +5251,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16830,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13465,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37918,
@@ -5533,16 +5268,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16887,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16829,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13466,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37919,
@@ -5551,16 +5285,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16803,
 					score: 2,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16910,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13466,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37920,
@@ -5569,16 +5302,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16829,
 					score: 2,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16910,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13467,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37921,
@@ -5588,17 +5320,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16828,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17505,
 					position: 2,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13468,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37922,
@@ -5608,17 +5339,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16872,
 					position: 3,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17292,
 					position: 4,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13468,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37923,
@@ -5628,17 +5358,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16806,
 					position: 5,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17513,
 					position: 6,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13468,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37924,
@@ -5648,17 +5377,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17434,
 					position: 7,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16996,
 					position: 8,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13468,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37925,
@@ -5668,16 +5396,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17423,
 					position: 2,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16828,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13469,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37926,
@@ -5687,16 +5414,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17188,
 					position: 1,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17292,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13469,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37927,
@@ -5706,16 +5432,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16830,
 					position: 4,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16806,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13469,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37928,
@@ -5725,16 +5450,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16825,
 					position: 3,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16996,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13469,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37929,
@@ -5743,16 +5467,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16828,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17292,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13470,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37930,
@@ -5761,16 +5484,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16830,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16996,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13470,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37931,
@@ -5780,16 +5502,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16803,
 					position: 2,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17292,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13471,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37932,
@@ -5799,16 +5520,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16887,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16996,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13471,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37933,
@@ -5817,16 +5537,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16803,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16887,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13472,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37934,
@@ -5836,16 +5555,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16829,
 					position: 1,
 					score: 2,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16803,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13473,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37935,
@@ -5854,17 +5572,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16803,
 					position: 1,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13474,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37936,
@@ -5873,16 +5590,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16910,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 16803,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13475,
 				stage_id: 1430,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37937,
@@ -5892,17 +5608,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17368,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16821,
 					position: 16,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37938,
@@ -5912,17 +5627,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17500,
 					position: 8,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17634,
 					position: 9,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37939,
@@ -5932,17 +5646,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17609,
 					position: 4,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17529,
 					position: 13,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37940,
@@ -5952,17 +5665,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17769,
 					position: 5,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17411,
 					position: 12,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37941,
@@ -5972,17 +5684,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17354,
 					position: 2,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16805,
 					position: 15,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37942,
@@ -5992,17 +5703,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17698,
 					position: 7,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16870,
 					position: 10,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37943,
@@ -6012,17 +5722,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17765,
 					position: 3,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17138,
 					position: 14,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37944,
@@ -6032,17 +5741,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16802,
 					position: 6,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17202,
 					position: 11,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13476,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37945,
@@ -6051,16 +5759,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17368,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17634,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13477,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37946,
@@ -6069,16 +5776,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17529,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17769,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13477,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37947,
@@ -6087,16 +5793,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17354,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17698,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13477,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37948,
@@ -6105,16 +5810,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17765,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16802,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13477,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37949,
@@ -6123,16 +5827,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17634,
 					score: 3,
-					result: "win",
 				},
 				opponent2: {
 					id: 17529,
 					score: 2,
-					result: "loss",
 				},
 				round_id: 13478,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37950,
@@ -6141,16 +5844,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17354,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17765,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13478,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37951,
@@ -6159,16 +5861,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17634,
 					score: 2,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17765,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13479,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37952,
@@ -6178,17 +5879,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16821,
 					position: 1,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17500,
 					position: 2,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13480,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37953,
@@ -6198,17 +5898,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17609,
 					position: 3,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17411,
 					position: 4,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13480,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37954,
@@ -6218,17 +5917,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16805,
 					position: 5,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16870,
 					position: 6,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13480,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37955,
@@ -6238,17 +5936,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17138,
 					position: 7,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17202,
 					position: 8,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13480,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37956,
@@ -6258,16 +5955,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17769,
 					position: 2,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17500,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13481,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37957,
@@ -6277,16 +5973,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17368,
 					position: 1,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17609,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13481,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37958,
@@ -6296,16 +5991,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 16802,
 					position: 4,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 16805,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13481,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37959,
@@ -6315,16 +6009,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17698,
 					position: 3,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17202,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13481,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37960,
@@ -6333,16 +6026,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17769,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17609,
 					score: 2,
-					result: "win",
 				},
 				round_id: 13482,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37961,
@@ -6351,16 +6043,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 16805,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17698,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13482,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37962,
@@ -6370,16 +6061,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17354,
 					position: 2,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17609,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13483,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37963,
@@ -6389,16 +6079,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17529,
 					position: 1,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 16805,
 					score: 1,
-					result: "loss",
 				},
 				round_id: 13483,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37964,
@@ -6407,16 +6096,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17354,
 					score: 2,
-					result: "win",
 				},
 				opponent2: {
 					id: 17529,
 					score: 0,
-					result: "loss",
 				},
 				round_id: 13484,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent1",
 			},
 			{
 				id: 37965,
@@ -6426,16 +6114,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 					id: 17634,
 					position: 1,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17354,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13485,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37966,
@@ -6444,17 +6131,16 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17765,
 					score: 1,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17354,
 					position: 1,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13486,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 			{
 				id: 37967,
@@ -6463,16 +6149,15 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				opponent1: {
 					id: 17765,
 					score: 0,
-					result: "loss",
 				},
 				opponent2: {
 					id: 17354,
 					score: 3,
-					result: "win",
 				},
 				round_id: 13487,
 				stage_id: 1431,
 				startedAt: null,
+				winnerSide: "opponent2",
 			},
 		],
 	},

@@ -169,21 +169,22 @@ describe("Reset match", () => {
 
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		let match = bracket.match(0);
 		expect(match.opponent1?.score).toBe(16);
 		expect(match.opponent2?.score).toBe(12);
-		expect(match.opponent1?.result).toBe("win");
+		expect(match.winnerSide).toBe("opponent1");
 
 		let semi1 = bracket.match(4);
-		expect(semi1.opponent1?.result).toBe("win");
+		expect(semi1.winnerSide).toBe("opponent1");
 		expect(semi1.opponent2).toBe(null);
 
 		let final = bracket.match(6);
-		expect(final.opponent1?.result).toBe("win");
+		expect(final.winnerSide).toBe("opponent1");
 		expect(final.opponent2).toBe(null);
 
 		bracket.resetMatchResults(0); // Score stays as is.
@@ -191,14 +192,14 @@ describe("Reset match", () => {
 		match = bracket.match(0);
 		expect(match.opponent1?.score).toBe(16);
 		expect(match.opponent2?.score).toBe(12);
-		expect(match.opponent1?.result).toBe(undefined);
+		expect(match.winnerSide).toBe(null);
 
 		semi1 = bracket.match(4);
-		expect(semi1.opponent1?.result).toBe(undefined);
+		expect(semi1.winnerSide).toBe(null);
 		expect(semi1.opponent2).toBe(null);
 
 		final = bracket.match(6);
-		expect(final.opponent1?.result).toBe(undefined);
+		expect(final.winnerSide).toBe(null);
 		expect(final.opponent2).toBe(null);
 	});
 
@@ -211,20 +212,23 @@ describe("Reset match", () => {
 
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		bracket.updateMatch({
 			id: 1,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		bracket.updateMatch({
 			id: 2,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		expect(() => bracket.resetMatchResults(0)).toThrow("The match is locked.");
@@ -243,17 +247,18 @@ describe("Engine data immutability", () => {
 
 		const afterReport = Engine.reportResult(initial, {
 			matchId: 0,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		expect(initial).toEqual(snapshot);
-		expect(afterReport.data.match[0].opponent1?.result).toBe("win");
+		expect(afterReport.data.match[0].winnerSide).toBe("opponent1");
 
 		const afterReset = Engine.resetMatchResults(afterReport.data, 0);
 
-		expect(afterReport.data.match[0].opponent1?.result).toBe("win");
-		expect(afterReset.data.match[0].opponent1?.result).toBe(undefined);
+		expect(afterReport.data.match[0].winnerSide).toBe("opponent1");
+		expect(afterReset.data.match[0].winnerSide).toBeNull();
 	});
 
 	test("changedMatches contains only genuinely changed rows", () => {
@@ -265,8 +270,9 @@ describe("Engine data immutability", () => {
 
 		const afterReport = Engine.reportResult(initial, {
 			matchId: 0,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		const changedIds = afterReport.changedMatches.map((match) => match.id);

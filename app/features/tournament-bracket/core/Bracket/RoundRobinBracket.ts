@@ -105,8 +105,7 @@ export class RoundRobinBracket extends Bracket {
 					match.opponent1 === null ||
 					match.opponent2 === null ||
 					// match was played out
-					match.opponent1?.result === "win" ||
-					match.opponent2?.result === "win",
+					match.winnerSide,
 			);
 
 			if (!groupIsFinished && !includeUnfinishedGroups) continue;
@@ -174,10 +173,7 @@ export class RoundRobinBracket extends Bracket {
 			};
 
 			for (const match of matches) {
-				if (
-					match.opponent1?.result !== "win" &&
-					match.opponent2?.result !== "win"
-				) {
+				if (!match.winnerSide) {
 					continue;
 				}
 
@@ -193,10 +189,10 @@ export class RoundRobinBracket extends Bracket {
 				}
 
 				const winner =
-					match.opponent1?.result === "win" ? match.opponent1 : match.opponent2;
+					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
 
 				const loser =
-					match.opponent1?.result === "win" ? match.opponent2 : match.opponent1;
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 
 				if (!winner || !loser) continue;
 
@@ -237,10 +233,10 @@ export class RoundRobinBracket extends Bracket {
 						(match) =>
 							(match.opponent1?.id === team.id &&
 								match.opponent2?.id === team2.id &&
-								match.opponent1?.result === "win") ||
+								match.winnerSide === "opponent1") ||
 							(match.opponent1?.id === team2.id &&
 								match.opponent2?.id === team.id &&
-								match.opponent2?.result === "win"),
+								match.winnerSide === "opponent2"),
 					);
 
 					if (wonTheirMatch) {

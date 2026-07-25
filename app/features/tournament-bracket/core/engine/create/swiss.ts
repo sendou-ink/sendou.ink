@@ -106,6 +106,7 @@ function firstRoundMatches({
 				opponent2: {
 					id: lower,
 				},
+				winnerSide: null,
 			});
 		}
 
@@ -120,6 +121,7 @@ function firstRoundMatches({
 					id: bye,
 				},
 				opponent2: null,
+				winnerSide: null,
 			});
 		}
 	}

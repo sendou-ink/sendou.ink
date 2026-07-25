@@ -2,6 +2,7 @@ import { sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, TournamentRoundMaps } from "~/db/tables";
+import type { Side } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { customAvatarUrl } from "~/utils/kysely.server";
@@ -15,12 +16,6 @@ const opponentOneScore = sql<
 const opponentTwoScore = sql<
 	number | null
 >`"TournamentMatch"."opponentTwo" ->> '$.score'`;
-const opponentOneResult = sql<
-	"win" | "loss"
->`"TournamentMatch"."opponentOne" ->> '$.result'`;
-const opponentTwoResult = sql<
-	"win" | "loss"
->`"TournamentMatch"."opponentTwo" ->> '$.result'`;
 
 export type FindMatchById = NonNullable<Unwrapped<typeof findMatchById>>;
 export async function findMatchById(id: number) {
@@ -42,6 +37,7 @@ export async function findMatchById(id: number) {
 			"TournamentMatch.groupId",
 			"TournamentMatch.opponentOne",
 			"TournamentMatch.opponentTwo",
+			"TournamentMatch.winnerSide",
 			"TournamentMatch.chatCode",
 			"TournamentMatch.startedAt",
 			"Tournament.mapPickingStyle",
@@ -171,7 +167,6 @@ export function deletePickBanEvent(
 interface AllMatchResultOpponent {
 	id: number;
 	score: number;
-	result: "win" | "loss";
 	droppedOut: boolean;
 	activeRosterUserIds: number[] | null;
 	memberUserIds: number[];
@@ -179,6 +174,7 @@ interface AllMatchResultOpponent {
 export interface AllMatchResult {
 	opponentOne: AllMatchResultOpponent;
 	opponentTwo: AllMatchResultOpponent;
+	winnerSide: Side;
 	roundMaps: TournamentRoundMaps;
 	maps: Array<{
 		stageId: StageId;
@@ -222,8 +218,7 @@ export async function allResultsByTournamentId(
 			sql<number>`"TournamentMatch"."opponentTwo" ->> '$.score'`.as(
 				"opponentTwoScore",
 			),
-			opponentOneResult.as("opponentOneResult"),
-			opponentTwoResult.as("opponentTwoResult"),
+			"TournamentMatch.winnerSide",
 			"TournamentRound.maps as roundMaps",
 			"Team1.droppedOut as opponentOneDroppedOut",
 			"Team2.droppedOut as opponentTwoDroppedOut",
@@ -271,7 +266,7 @@ export async function allResultsByTournamentId(
 			).as("maps"),
 		])
 		.where("TournamentStage.tournamentId", "=", tournamentId)
-		.where(opponentOneResult, "is not", null)
+		.where("TournamentMatch.winnerSide", "is not", null)
 		// strictly speaking the order by condition is not accurate, future improvement would be to add order conditions that match the tournament structure
 		.orderBy("TournamentMatch.id", "asc")
 		.execute();
@@ -280,7 +275,6 @@ export async function allResultsByTournamentId(
 		const opponentOne: AllMatchResultOpponent = {
 			id: row.opponentOneId,
 			score: row.opponentOneScore,
-			result: row.opponentOneResult,
 			droppedOut: row.opponentOneDroppedOut === 1,
 			activeRosterUserIds: row.opponentOneActiveRoster,
 			memberUserIds: row.opponentOneMembers.map((member) => member.userId),
@@ -288,15 +282,17 @@ export async function allResultsByTournamentId(
 		const opponentTwo: AllMatchResultOpponent = {
 			id: row.opponentTwoId,
 			score: row.opponentTwoScore,
-			result: row.opponentTwoResult,
 			droppedOut: row.opponentTwoDroppedOut === 1,
 			activeRosterUserIds: row.opponentTwoActiveRoster,
 			memberUserIds: row.opponentTwoMembers.map((member) => member.userId),
 		};
 
+		invariant(row.winnerSide, "Match has no winner");
+
 		return {
 			opponentOne,
 			opponentTwo,
+			winnerSide: row.winnerSide,
 			roundMaps: row.roundMaps,
 			maps: row.maps.map((map) => {
 				invariant(map.participants.length > 0, "No participants found");
@@ -449,12 +445,7 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 				eb(opponentTwoId, "=", tournamentTeamId),
 			]),
 		)
-		.where((eb) =>
-			eb.or([
-				eb(opponentOneResult, "is not", null),
-				eb(opponentTwoResult, "is not", null),
-			]),
-		)
+		.where("TournamentMatch.winnerSide", "is not", null)
 		.where((eb) =>
 			eb.exists(
 				eb

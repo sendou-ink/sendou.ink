@@ -1015,10 +1015,7 @@ export class Tournament {
 				const isParticipant =
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id;
 				const isNotFinished =
-					match.opponent1 &&
-					match.opponent2 &&
-					match.opponent1?.result !== "win" &&
-					match.opponent2?.result !== "win";
+					match.opponent1 && match.opponent2 && !match.winnerSide;
 				const isWaitingForTeam =
 					(match.opponent1 && match.opponent1.id === null) ||
 					(match.opponent2 && match.opponent2.id === null);
@@ -1036,8 +1033,7 @@ export class Tournament {
 							(match) =>
 								(match.opponent1?.id === otherTeam.id ||
 									match.opponent2?.id === otherTeam.id) &&
-								match.opponent1?.result !== "win" &&
-								match.opponent2?.result !== "win",
+								!match.winnerSide,
 						)?.id !== match.id;
 
 					if (otherTeamBusyWithPreviousMatch) {

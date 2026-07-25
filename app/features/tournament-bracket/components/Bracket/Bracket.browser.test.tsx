@@ -150,8 +150,9 @@ function createSingleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 1, score: 2, result: "win" },
-				opponent2: { id: 8, score: 0, result: "loss" },
+				opponent1: { id: 1, score: 2 },
+				opponent2: { id: 8, score: 0 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 2,
@@ -159,8 +160,9 @@ function createSingleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 4, score: 2, result: "win" },
-				opponent2: { id: 5, score: 1, result: "loss" },
+				opponent1: { id: 4, score: 2 },
+				opponent2: { id: 5, score: 1 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 3,
@@ -168,8 +170,9 @@ function createSingleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 3, score: 0, result: "loss" },
-				opponent2: { id: 6, score: 2, result: "win" },
+				opponent1: { id: 3, score: 0 },
+				opponent2: { id: 6, score: 2 },
+				winnerSide: "opponent2",
 			},
 			{
 				id: 4,
@@ -177,8 +180,9 @@ function createSingleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 2, score: 2, result: "win" },
-				opponent2: { id: 7, score: 0, result: "loss" },
+				opponent1: { id: 2, score: 2 },
+				opponent2: { id: 7, score: 0 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 5,
@@ -186,8 +190,9 @@ function createSingleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 2,
-				opponent1: { id: 1, score: 2, result: "win" },
-				opponent2: { id: 4, score: 1, result: "loss" },
+				opponent1: { id: 1, score: 2 },
+				opponent2: { id: 4, score: 1 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 6,
@@ -195,8 +200,9 @@ function createSingleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 2,
-				opponent1: { id: 6, score: 1, result: "loss" },
-				opponent2: { id: 2, score: 2, result: "win" },
+				opponent1: { id: 6, score: 1 },
+				opponent2: { id: 2, score: 2 },
+				winnerSide: "opponent2",
 			},
 			{
 				id: 7,
@@ -206,6 +212,7 @@ function createSingleEliminationData(): BracketData {
 				round_id: 3,
 				opponent1: { id: 1 },
 				opponent2: { id: 2 },
+				winnerSide: null,
 			},
 		],
 	};
@@ -256,6 +263,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				round_id: 1,
 				opponent1: { id: 1 },
 				opponent2: null,
+				winnerSide: null,
 			},
 			{
 				id: 2,
@@ -265,6 +273,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				round_id: 1,
 				opponent1: { id: 4, score: 1 },
 				opponent2: { id: 5, score: 1 },
+				winnerSide: null,
 			},
 			{
 				id: 3,
@@ -274,6 +283,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				round_id: 1,
 				opponent1: { id: 2 },
 				opponent2: null,
+				winnerSide: null,
 			},
 			{
 				id: 4,
@@ -283,6 +293,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				round_id: 1,
 				opponent1: { id: 3 },
 				opponent2: null,
+				winnerSide: null,
 			},
 			// Round 2 - Semis
 			{
@@ -293,6 +304,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				round_id: 2,
 				opponent1: { id: 1 },
 				opponent2: { id: null },
+				winnerSide: null,
 			},
 			{
 				id: 6,
@@ -302,6 +314,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				round_id: 2,
 				opponent1: { id: 2 },
 				opponent2: { id: 3 },
+				winnerSide: null,
 			},
 			// Round 3 - Finals
 			{
@@ -312,6 +325,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				round_id: 3,
 				opponent1: { id: null },
 				opponent2: { id: null },
+				winnerSide: null,
 			},
 		],
 	};
@@ -369,8 +383,9 @@ function createDoubleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 1, score: 2, result: "win" },
-				opponent2: { id: 4, score: 0, result: "loss" },
+				opponent1: { id: 1, score: 2 },
+				opponent2: { id: 4, score: 0 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 2,
@@ -378,8 +393,9 @@ function createDoubleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 2, score: 2, result: "win" },
-				opponent2: { id: 3, score: 1, result: "loss" },
+				opponent1: { id: 2, score: 2 },
+				opponent2: { id: 3, score: 1 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 3,
@@ -389,6 +405,7 @@ function createDoubleEliminationData(): BracketData {
 				round_id: 2,
 				opponent1: { id: 1 },
 				opponent2: { id: 2 },
+				winnerSide: null,
 			},
 			{
 				id: 4,
@@ -396,8 +413,9 @@ function createDoubleEliminationData(): BracketData {
 				stage_id: 1,
 				group_id: 2,
 				round_id: 3,
-				opponent1: { id: 4, score: 1, result: "loss" },
-				opponent2: { id: 3, score: 2, result: "win" },
+				opponent1: { id: 4, score: 1 },
+				opponent2: { id: 3, score: 2 },
+				winnerSide: "opponent2",
 			},
 			{
 				id: 5,
@@ -407,6 +425,7 @@ function createDoubleEliminationData(): BracketData {
 				round_id: 4,
 				opponent1: { id: 3 },
 				opponent2: { id: null },
+				winnerSide: null,
 			},
 		],
 	};
@@ -478,8 +497,9 @@ function createRoundRobinData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 1, score: 2, result: "win" },
-				opponent2: { id: 2, score: 0, result: "loss" },
+				opponent1: { id: 1, score: 2 },
+				opponent2: { id: 2, score: 0 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 2,
@@ -487,8 +507,9 @@ function createRoundRobinData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 2,
-				opponent1: { id: 1, score: 2, result: "win" },
-				opponent2: { id: 3, score: 1, result: "loss" },
+				opponent1: { id: 1, score: 2 },
+				opponent2: { id: 3, score: 1 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 3,
@@ -498,6 +519,7 @@ function createRoundRobinData(): BracketData {
 				round_id: 3,
 				opponent1: { id: 2 },
 				opponent2: { id: 3 },
+				winnerSide: null,
 			},
 			{
 				id: 4,
@@ -505,8 +527,9 @@ function createRoundRobinData(): BracketData {
 				stage_id: 1,
 				group_id: 2,
 				round_id: 4,
-				opponent1: { id: 4, score: 2, result: "win" },
-				opponent2: { id: 5, score: 1, result: "loss" },
+				opponent1: { id: 4, score: 2 },
+				opponent2: { id: 5, score: 1 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 5,
@@ -516,6 +539,7 @@ function createRoundRobinData(): BracketData {
 				round_id: 5,
 				opponent1: { id: 4 },
 				opponent2: { id: 6 },
+				winnerSide: null,
 			},
 			{
 				id: 6,
@@ -525,6 +549,7 @@ function createRoundRobinData(): BracketData {
 				round_id: 6,
 				opponent1: { id: 5 },
 				opponent2: { id: 6 },
+				winnerSide: null,
 			},
 		],
 	};
@@ -572,8 +597,9 @@ function createSwissData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 1, score: 2, result: "win" },
-				opponent2: { id: 8, score: 0, result: "loss" },
+				opponent1: { id: 1, score: 2 },
+				opponent2: { id: 8, score: 0 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 2,
@@ -581,8 +607,9 @@ function createSwissData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 2, score: 2, result: "win" },
-				opponent2: { id: 7, score: 1, result: "loss" },
+				opponent1: { id: 2, score: 2 },
+				opponent2: { id: 7, score: 1 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 3,
@@ -590,8 +617,9 @@ function createSwissData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 3, score: 1, result: "loss" },
-				opponent2: { id: 6, score: 2, result: "win" },
+				opponent1: { id: 3, score: 1 },
+				opponent2: { id: 6, score: 2 },
+				winnerSide: "opponent2",
 			},
 			{
 				id: 4,
@@ -599,8 +627,9 @@ function createSwissData(): BracketData {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 4, score: 0, result: "loss" },
-				opponent2: { id: 5, score: 2, result: "win" },
+				opponent1: { id: 4, score: 0 },
+				opponent2: { id: 5, score: 2 },
+				winnerSide: "opponent2",
 			},
 			{
 				id: 5,
@@ -610,6 +639,7 @@ function createSwissData(): BracketData {
 				round_id: 2,
 				opponent1: { id: 1 },
 				opponent2: { id: 2 },
+				winnerSide: null,
 			},
 			{
 				id: 6,
@@ -619,6 +649,7 @@ function createSwissData(): BracketData {
 				round_id: 2,
 				opponent1: { id: 5 },
 				opponent2: { id: 6 },
+				winnerSide: null,
 			},
 		],
 	};
@@ -678,14 +709,9 @@ function createLargeSingleEliminationData(options?: {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1:
-					ongoingRoundIdx === 0
-						? { id: 1, score: 1 }
-						: { id: 1, score: 2, result: "win" },
-				opponent2:
-					ongoingRoundIdx === 0
-						? { id: 8, score: 1 }
-						: { id: 8, score: 0, result: "loss" },
+				opponent1: { id: 1, score: ongoingRoundIdx === 0 ? 1 : 2 },
+				opponent2: { id: 8, score: ongoingRoundIdx === 0 ? 1 : 0 },
+				winnerSide: ongoingRoundIdx === 0 ? null : "opponent1",
 			},
 			{
 				id: 2,
@@ -693,8 +719,9 @@ function createLargeSingleEliminationData(options?: {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 2, score: 2, result: "win" },
-				opponent2: { id: 7, score: 0, result: "loss" },
+				opponent1: { id: 2, score: 2 },
+				opponent2: { id: 7, score: 0 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 3,
@@ -702,8 +729,9 @@ function createLargeSingleEliminationData(options?: {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 3, score: 2, result: "win" },
-				opponent2: { id: 6, score: 1, result: "loss" },
+				opponent1: { id: 3, score: 2 },
+				opponent2: { id: 6, score: 1 },
+				winnerSide: "opponent1",
 			},
 			{
 				id: 4,
@@ -711,8 +739,9 @@ function createLargeSingleEliminationData(options?: {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 1,
-				opponent1: { id: 4, score: 2, result: "win" },
-				opponent2: { id: 5, score: 0, result: "loss" },
+				opponent1: { id: 4, score: 2 },
+				opponent2: { id: 5, score: 0 },
+				winnerSide: "opponent1",
 			},
 			// Round 2 - 4 matches (all completed unless ongoingRoundIdx === 1)
 			{
@@ -721,14 +750,9 @@ function createLargeSingleEliminationData(options?: {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 2,
-				opponent1:
-					ongoingRoundIdx === 1
-						? { id: 1, score: 1 }
-						: { id: 1, score: 2, result: "win" },
-				opponent2:
-					ongoingRoundIdx === 1
-						? { id: 2, score: 1 }
-						: { id: 2, score: 1, result: "loss" },
+				opponent1: { id: 1, score: ongoingRoundIdx === 1 ? 1 : 2 },
+				opponent2: { id: 2, score: 1 },
+				winnerSide: ongoingRoundIdx === 1 ? null : "opponent1",
 			},
 			{
 				id: 6,
@@ -736,8 +760,9 @@ function createLargeSingleEliminationData(options?: {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 2,
-				opponent1: { id: 3, score: 1, result: "loss" },
-				opponent2: { id: 4, score: 2, result: "win" },
+				opponent1: { id: 3, score: 1 },
+				opponent2: { id: 4, score: 2 },
+				winnerSide: "opponent2",
 			},
 			// Round 3 - Semifinals (completed unless ongoingRoundIdx === 2)
 			{
@@ -746,14 +771,9 @@ function createLargeSingleEliminationData(options?: {
 				stage_id: 1,
 				group_id: 1,
 				round_id: 3,
-				opponent1:
-					ongoingRoundIdx === 2
-						? { id: 1, score: 1 }
-						: { id: 1, score: 2, result: "win" },
-				opponent2:
-					ongoingRoundIdx === 2
-						? { id: 4, score: 1 }
-						: { id: 4, score: 0, result: "loss" },
+				opponent1: { id: 1, score: ongoingRoundIdx === 2 ? 1 : 2 },
+				opponent2: { id: 4, score: ongoingRoundIdx === 2 ? 1 : 0 },
+				winnerSide: ongoingRoundIdx === 2 ? null : "opponent1",
 			},
 			// Round 4 - Finals (ongoing by default)
 			{
@@ -764,6 +784,7 @@ function createLargeSingleEliminationData(options?: {
 				round_id: 4,
 				opponent1: { id: 1 },
 				opponent2: { id: 4 },
+				winnerSide: null,
 			},
 		],
 	};

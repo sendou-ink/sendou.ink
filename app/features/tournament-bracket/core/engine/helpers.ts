@@ -7,7 +7,6 @@ import type {
 	MatchResults,
 	ParticipantResult,
 	ParticipantSlot,
-	Result,
 	SeedOrdering,
 	Side,
 	StageData,
@@ -386,19 +385,13 @@ export function byeLoser(opponents: Duel, index: number): ParticipantSlot {
 export function getMatchResult(match: MatchResults): Side | null {
 	if (!isMatchCompleted(match)) return null;
 
-	if (match.opponent1 === null && match.opponent2 === null) return null;
+	if (match.winnerSide) return match.winnerSide;
 
-	let winner: Side | null = null;
+	// a BYE that has not been propagated yet
+	if (match.opponent1 === null && match.opponent2 !== null) return "opponent2";
+	if (match.opponent2 === null && match.opponent1 !== null) return "opponent1";
 
-	if (match.opponent1?.result === "win" || match.opponent2 === null)
-		winner = "opponent1";
-
-	if (match.opponent2?.result === "win" || match.opponent1 === null) {
-		if (winner !== null) throw Error("There are two winners.");
-		winner = "opponent2";
-	}
-
-	return winner;
+	return null;
 }
 
 /**
@@ -436,21 +429,7 @@ export function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
  * @param match Partial match results.
  */
 export function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
-	return isMatchByeCompleted(match) || isMatchWinCompleted(match);
-}
-
-/**
- * Checks if a match is completed because of a win.
- *
- * @param match Partial match results.
- */
-function isMatchWinCompleted(match: DeepPartial<MatchResults>): boolean {
-	return (
-		match.opponent1?.result === "win" ||
-		match.opponent2?.result === "win" ||
-		match.opponent1?.result === "loss" ||
-		match.opponent2?.result === "loss"
-	);
+	return isMatchByeCompleted(match) || Boolean(match.winnerSide);
 }
 
 /**
@@ -509,18 +488,12 @@ export function setMatchResults(
 }
 
 /**
- * Resets the results of a match. (forfeit, result)
+ * Resets the results of a match.
  *
  * @param stored A reference to what will be updated in the storage.
  */
 export function resetMatchResults(stored: MatchResults): void {
-	if (stored.opponent1) {
-		stored.opponent1.result = undefined;
-	}
-
-	if (stored.opponent2) {
-		stored.opponent2.result = undefined;
-	}
+	stored.winnerSide = null;
 }
 
 /**
@@ -559,14 +532,13 @@ function setExtraFields(
 		"round_id",
 		"opponent1",
 		"opponent2",
+		"winnerSide",
 	];
 
 	const ignoredOpponentKeys: Array<keyof ParticipantResult> = [
 		"id",
 		"score",
 		"position",
-		"forfeit",
-		"result",
 	];
 
 	partialAssign(stored, match, ignoredKeys);
@@ -657,6 +629,7 @@ export function setNextOpponent(
 		id: getOpponentId(match!, currentSide!), // This implementation of SetNextOpponent always has those arguments.
 		position: nextMatch[nextSide]?.position, // Keep position.
 	};
+	nextMatch.winnerSide = null; // A match whose opponents changed can't keep its winner.
 }
 
 /**
@@ -671,6 +644,7 @@ export function resetNextOpponent(nextMatch: MatchData, nextSide: Side): void {
 		id: null,
 		position: nextMatch[nextSide]?.position, // Keep position.
 	};
+	nextMatch.winnerSide = null; // A match whose opponents changed can't keep its winner.
 }
 
 /**
@@ -729,7 +703,7 @@ function setScores(
 }
 
 /**
- * Completes a match and handles results and forfeits.
+ * Completes a match, resolving the winner of a match against a BYE.
  *
  * @param stored A reference to what will be updated in the storage.
  * @param match Input of the update.
@@ -738,53 +712,14 @@ function setCompleted(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
 ): void {
-	setResults(stored, match, "win", "loss");
-	setResults(stored, match, "loss", "win");
-
-	if (stored.opponent1 && !stored.opponent2) stored.opponent1.result = "win"; // Win against opponent 2 BYE.
-
-	if (!stored.opponent1 && stored.opponent2) stored.opponent2.result = "win"; // Win against opponent 1 BYE.
-}
-
-/**
- * Enforces the symmetry between opponents.
- *
- * Sets an opponent's result to something, based on the result on the other opponent.
- *
- * @param stored A reference to what will be updated in the storage.
- * @param match Input of the update.
- * @param check A result to check in each opponent.
- * @param change A result to set in each other opponent if `check` is correct.
- */
-function setResults(
-	stored: MatchResults,
-	match: DeepPartial<MatchResults>,
-	check: Result,
-	change: Result,
-): void {
-	if (match.opponent1 && match.opponent2) {
-		if (match.opponent1.result === "win" && match.opponent2.result === "win")
-			throw Error("There are two winners.");
-
-		if (match.opponent1.result === "loss" && match.opponent2.result === "loss")
-			throw Error("There are two losers.");
+	if (match.winnerSide) {
+		stored.winnerSide = match.winnerSide;
+		return;
 	}
 
-	if (match.opponent1?.result === check) {
-		if (stored.opponent1) stored.opponent1.result = check;
-		else stored.opponent1 = { id: null, result: check };
+	if (stored.opponent1 && !stored.opponent2) stored.winnerSide = "opponent1"; // Win against opponent 2 BYE.
 
-		if (stored.opponent2) stored.opponent2.result = change;
-		else stored.opponent2 = { id: null, result: change };
-	}
-
-	if (match.opponent2?.result === check) {
-		if (stored.opponent2) stored.opponent2.result = check;
-		else stored.opponent2 = { id: null, result: check };
-
-		if (stored.opponent1) stored.opponent1.result = change;
-		else stored.opponent1 = { id: null, result: change };
-	}
+	if (!stored.opponent1 && stored.opponent2) stored.winnerSide = "opponent2"; // Win against opponent 1 BYE.
 }
 
 /**

@@ -5,10 +5,10 @@ import type {
 } from "~/db/tables";
 
 /**
- * Match/set outcome for one side. Upstream brackets-model also had "draw" —
+ * The side of an opponent. Upstream brackets-model also allowed a draw —
  * intentionally dropped, draws are impossible in our formats.
  */
-export type Result = "win" | "loss";
+export type Side = "opponent1" | "opponent2";
 
 export type StageType = Tables["TournamentStage"]["type"];
 
@@ -74,9 +74,6 @@ export interface ParticipantResult {
 	/** Seed position this slot was filled from. */
 	position?: number;
 
-	/** If this participant forfeits, the other automatically wins. */
-	forfeit?: boolean;
-
 	/** The current score of the participant. */
 	score?: number;
 
@@ -85,9 +82,6 @@ export interface ParticipantResult {
 	 * intentionally gone — scoring is KO-only.
 	 */
 	totalKos?: number;
-
-	/** Tells what is the result of a duel for this participant. */
-	result?: Result;
 }
 
 /* ------------------------------------------------------------------ */
@@ -121,6 +115,12 @@ export interface RoundData {
 export interface MatchResults {
 	opponent1: ParticipantResult | null;
 	opponent2: ParticipantResult | null;
+
+	/**
+	 * The side that won the set, `null` while the match has no winner. A match
+	 * won against a BYE gets it set once the BYE is propagated.
+	 */
+	winnerSide: Side | null;
 }
 
 export interface MatchData extends MatchResults {
@@ -153,9 +153,6 @@ export type ParticipantSlot = { id: number | null; position?: number } | null;
 
 /** The engine only handles duels. It's one participant versus another participant. */
 export type Duel = [ParticipantSlot, ParticipantSlot];
-
-/** The side of an opponent. */
-export type Side = "opponent1" | "opponent2";
 
 /** Type of an object implementing every ordering method. */
 export type OrderingMap = Record<
@@ -222,12 +219,10 @@ export interface ResolvedCreateBracketInput
 /** Mirrors the old manager.update.match() partial-update input. */
 export interface ReportResultInput {
 	matchId: number;
-	opponent1?: Partial<
-		Pick<ParticipantResult, "id" | "score" | "result" | "forfeit">
-	>;
-	opponent2?: Partial<
-		Pick<ParticipantResult, "id" | "score" | "result" | "forfeit">
-	>;
+	opponent1?: Partial<Pick<ParticipantResult, "id" | "score">>;
+	opponent2?: Partial<Pick<ParticipantResult, "id" | "score">>;
+	/** The winner of the set. Leaving it out marks the match as not decided (yet). */
+	winnerSide?: Side;
 	/**
 	 * Bypasses the "match is locked/completed" guard. The old library's `true`
 	 * second argument to manager.update.match(), used by endDroppedTeamMatches.

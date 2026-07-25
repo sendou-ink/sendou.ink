@@ -56,11 +56,7 @@ export function SwissBracket({
 
 	const someMatchOngoing = (matches: MatchType[]) =>
 		matches.some(
-			(match) =>
-				match.opponent1 &&
-				match.opponent2 &&
-				match.opponent1.result !== "win" &&
-				match.opponent2.result !== "win",
+			(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
 		);
 
 	const allRoundsFinished = () => {
@@ -143,11 +139,7 @@ export function SwissBracket({
 						const bestOf = round.maps?.count;
 
 						const ongoingMatches = matches.filter(
-							(m) =>
-								m.opponent1 &&
-								m.opponent2 &&
-								!m.opponent1.result &&
-								!m.opponent2.result,
+							(m) => m.opponent1 && m.opponent2 && !m.winnerSide,
 						);
 						const startedAtValues = ongoingMatches
 							.map((m) => m.startedAt)

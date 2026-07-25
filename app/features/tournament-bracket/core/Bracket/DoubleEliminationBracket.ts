@@ -83,10 +83,7 @@ export class DoubleEliminationBracket extends Bracket {
 		const teams: { id: number; lostAt: number }[] = [];
 
 		for (const match of losersMatches) {
-			if (
-				match.opponent1?.result !== "win" &&
-				match.opponent2?.result !== "win"
-			) {
+			if (!match.winnerSide) {
 				continue;
 			}
 
@@ -94,7 +91,7 @@ export class DoubleEliminationBracket extends Bracket {
 			if (!match.opponent1 || !match.opponent2) continue;
 
 			const loser =
-				match.opponent1?.result === "win" ? match.opponent2 : match.opponent1;
+				match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 			invariant(loser?.id, "Loser id not found");
 
 			teams.push({ id: loser.id, lostAt: match.round_id });
@@ -140,10 +137,10 @@ export class DoubleEliminationBracket extends Bracket {
 		// if opponent1 won in DE it means that bracket reset is not played
 		if (
 			grandFinalMatches[0].opponent1 &&
-			(noLosersRounds || grandFinalMatches[0].opponent1.result === "win")
+			(noLosersRounds || grandFinalMatches[0].winnerSide === "opponent1")
 		) {
 			const loser =
-				grandFinalMatches[0].opponent1.result === "win"
+				grandFinalMatches[0].winnerSide === "opponent1"
 					? "opponent2"
 					: "opponent1";
 			const winner = loser === "opponent1" ? "opponent2" : "opponent1";
@@ -166,12 +163,9 @@ export class DoubleEliminationBracket extends Bracket {
 				team: winnerTeam,
 				placement: 1,
 			});
-		} else if (
-			grandFinalMatches[1].opponent1?.result === "win" ||
-			grandFinalMatches[1].opponent2?.result === "win"
-		) {
+		} else if (grandFinalMatches[1].winnerSide) {
 			const loser =
-				grandFinalMatches[1].opponent1?.result === "win"
+				grandFinalMatches[1].winnerSide === "opponent1"
 					? "opponent2"
 					: "opponent1";
 			const winner = loser === "opponent1" ? "opponent2" : "opponent1";
@@ -213,14 +207,11 @@ export class DoubleEliminationBracket extends Bracket {
 			if (match.opponent1 === null || match.opponent2 === null) {
 				continue;
 			}
-			if (
-				match.opponent1?.result !== "win" &&
-				match.opponent2?.result !== "win"
-			) {
+			if (!match.winnerSide) {
 				return false;
 			}
 
-			lastWinner = match.opponent1?.result === "win" ? 1 : 2;
+			lastWinner = match.winnerSide === "opponent1" ? 1 : 2;
 		}
 
 		return true;
@@ -291,16 +282,13 @@ export class DoubleEliminationBracket extends Bracket {
 				if (!match.opponent1 || !match.opponent2) {
 					continue;
 				}
-				if (
-					match.opponent1?.result !== "win" &&
-					match.opponent2?.result !== "win"
-				) {
+				if (!match.winnerSide) {
 					relevantMatchesFinished = false;
 					continue;
 				}
 
 				const loser =
-					match.opponent1?.result === "win" ? match.opponent2 : match.opponent1;
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 				invariant(loser?.id, "Loser id not found");
 
 				teams.push(loser.id);

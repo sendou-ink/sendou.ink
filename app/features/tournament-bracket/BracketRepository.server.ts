@@ -102,6 +102,7 @@ export async function findByTournamentId(
 						"TournamentMatch.roundId as round_id",
 						"TournamentMatch.number",
 						"TournamentMatch.startedAt",
+						"TournamentMatch.winnerSide",
 						// totalKos is re-aggregated fresh from the game results; the
 						// totalKos/totalPoints that old write paths persisted into the
 						// opponent JSON is stale residue and gets stripped/overwritten
@@ -213,6 +214,7 @@ export function insertBracket(args: {
 					number: match.number,
 					opponentOne: serializeOpponent(match.opponent1),
 					opponentTwo: serializeOpponent(match.opponent2),
+					winnerSide: match.winnerSide,
 					chatCode: shortNanoid(),
 					startedAt:
 						statuses.get(match.id) === "STARTED"
@@ -241,6 +243,7 @@ export async function applyMatchChanges(
 			.set({
 				opponentOne: serializeOpponent(match.opponent1),
 				opponentTwo: serializeOpponent(match.opponent2),
+				winnerSide: match.winnerSide,
 			})
 			.where("id", "=", match.id)
 			.execute();
@@ -320,6 +323,7 @@ export async function insertRoundMatches(
 				number: match.number,
 				opponentOne: serializeOpponent(match.opponent1),
 				opponentTwo: serializeOpponent(match.opponent2),
+				winnerSide: null,
 				chatCode: shortNanoid(),
 				// swiss rounds are only generated once they can be played
 				startedAt:

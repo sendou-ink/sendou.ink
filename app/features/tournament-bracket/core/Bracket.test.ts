@@ -248,12 +248,9 @@ describe("round robin standings - dropped out teams", () => {
 			const winnerIsOpp1 = match.opponent1?.id === winnerId;
 			bracket.updateMatch({
 				id: match.id,
-				opponent1: winnerIsOpp1
-					? { score: winnerScore, result: "win" }
-					: { score: loserScore },
-				opponent2: winnerIsOpp1
-					? { score: loserScore }
-					: { score: winnerScore, result: "win" },
+				opponent1: { score: winnerIsOpp1 ? winnerScore : loserScore },
+				opponent2: { score: winnerIsOpp1 ? loserScore : winnerScore },
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 			});
 		};
 
@@ -263,12 +260,8 @@ describe("round robin standings - dropped out teams", () => {
 			const match = bracket.match(matchId);
 			bracket.updateMatch({
 				id: match.id,
-				opponent1: {
-					result: match.opponent1?.id === winnerId ? "win" : "loss",
-				},
-				opponent2: {
-					result: match.opponent2?.id === winnerId ? "win" : "loss",
-				},
+				winnerSide:
+					match.opponent1?.id === winnerId ? "opponent1" : "opponent2",
 			});
 		};
 
@@ -422,12 +415,9 @@ describe("round robin A/B divisions standings", () => {
 			const winnerIsOpp1 = match.opponent1?.id === winnerId;
 			bracket.updateMatch({
 				id: match.id,
-				opponent1: winnerIsOpp1
-					? { score: winnerScore, result: "win" }
-					: { score: loserScore },
-				opponent2: winnerIsOpp1
-					? { score: loserScore }
-					: { score: winnerScore, result: "win" },
+				opponent1: { score: winnerIsOpp1 ? winnerScore : loserScore },
+				opponent2: { score: winnerIsOpp1 ? loserScore : winnerScore },
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 			});
 		};
 
@@ -531,8 +521,9 @@ describe("single elimination standings - third place match", () => {
 		const reportLowerTeamIdAsWinner = (matchId: number) => {
 			bracket.updateMatch({
 				id: matchId,
-				opponent1: { score: 2, result: "win" },
+				opponent1: { score: 2 },
 				opponent2: { score: 0 },
+				winnerSide: "opponent1",
 			});
 		};
 
@@ -614,8 +605,9 @@ const reportLowerIdWinner = (bracket: EngineBracket, matchId: number) => {
 	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;
 	bracket.updateMatch({
 		id: matchId,
-		opponent1: opponent1Lower ? { score: 2, result: "win" } : { score: 0 },
-		opponent2: opponent1Lower ? { score: 0 } : { score: 2, result: "win" },
+		opponent1: { score: opponent1Lower ? 2 : 0 },
+		opponent2: { score: opponent1Lower ? 0 : 2 },
+		winnerSide: opponent1Lower ? "opponent1" : "opponent2",
 	});
 };
 
@@ -630,8 +622,7 @@ const readyMatches = (
 				predicate(match) &&
 				match.opponent1?.id != null &&
 				match.opponent2?.id != null &&
-				match.opponent1.result == null &&
-				match.opponent2.result == null,
+				match.winnerSide == null,
 		);
 
 describe("single elimination standings - projected ties", () => {

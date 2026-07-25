@@ -74,13 +74,12 @@ const createMatch = async (args: {
 			opponentOne: JSON.stringify({
 				id: args.teamOneId,
 				score: 2,
-				result: "win",
 			}),
 			opponentTwo: JSON.stringify({
 				id: args.teamTwoId,
 				score: 0,
-				result: "loss",
 			}),
+			winnerSide: "opponent1",
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();

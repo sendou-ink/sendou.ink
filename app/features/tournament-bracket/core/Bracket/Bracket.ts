@@ -143,10 +143,7 @@ export abstract class Bracket {
 				for (const match of data.match) {
 					if (!match) continue;
 					// we have a result already
-					if (
-						match.opponent1?.result === "win" ||
-						match.opponent2?.result === "win"
-					) {
+					if (match.winnerSide) {
 						continue;
 					}
 					// no opponent yet, let's simulate this in a coming loop
@@ -177,14 +174,9 @@ export abstract class Bracket {
 
 					data = Engine.reportResult(data, {
 						matchId: match.id,
-						opponent1: {
-							score: winner === 1 ? 1 : 0,
-							result: winner === 1 ? "win" : undefined,
-						},
-						opponent2: {
-							score: winner === 2 ? 1 : 0,
-							result: winner === 2 ? "win" : undefined,
-						},
+						opponent1: { score: winner === 1 ? 1 : 0 },
+						opponent2: { score: winner === 2 ? 1 : 0 },
+						winnerSide: winner === 1 ? "opponent1" : "opponent2",
 					}).data;
 				}
 			}
@@ -199,11 +191,7 @@ export abstract class Bracket {
 		const result = new Map(this.tournament.ctx.teams.map((t, i) => [t.id, i]));
 
 		for (const match of this.data.match) {
-			if (
-				!match.opponent1?.id ||
-				!match.opponent2?.id ||
-				(match.opponent1?.result !== "win" && match.opponent2?.result !== "win")
-			) {
+			if (!match.opponent1?.id || !match.opponent2?.id || !match.winnerSide) {
 				continue;
 			}
 
@@ -214,11 +202,11 @@ export abstract class Bracket {
 				continue;
 			}
 
-			if (opponent1Seed < opponent2Seed && match.opponent1?.result === "win") {
+			if (opponent1Seed < opponent2Seed && match.winnerSide === "opponent1") {
 				continue;
 			}
 
-			if (opponent2Seed < opponent1Seed && match.opponent2?.result === "win") {
+			if (opponent2Seed < opponent1Seed && match.winnerSide === "opponent2") {
 				continue;
 			}
 
@@ -376,10 +364,7 @@ export abstract class Bracket {
 			if (match.opponent1 === null || match.opponent2 === null) {
 				continue;
 			}
-			if (
-				match.opponent1?.result !== "win" &&
-				match.opponent2?.result !== "win"
-			) {
+			if (!match.winnerSide) {
 				return false;
 			}
 		}
@@ -470,10 +455,7 @@ export abstract class Bracket {
 			(a, b) => a.number - b.number,
 		)) {
 			if (!match.opponent1?.id || !match.opponent2?.id) continue;
-			if (
-				match.opponent1.result === "win" ||
-				match.opponent2.result === "win"
-			) {
+			if (match.winnerSide) {
 				continue;
 			}
 

@@ -46,36 +46,34 @@ describe("Update matches", () => {
 
 	test("should end the match by only setting the winner", () => {
 		const before = bracket.match(0);
-		expect(before.opponent1?.result).toBeFalsy();
+		expect(before.winnerSide).toBeFalsy();
 
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { result: "win" },
+			winnerSide: "opponent1",
 		});
 
 		const after = bracket.match(0);
 		expect(bracket.matchStatus(0)).toBe("COMPLETED");
-		expect(after.opponent1?.result).toBe("win");
-		expect(after.opponent2?.result).toBe("loss");
+		expect(after.winnerSide).toBe("opponent1");
 	});
 
 	test("should change the winner of the match and update in the next match", () => {
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { result: "win" },
+			winnerSide: "opponent1",
 		});
 
 		expect(bracket.match(8).opponent1?.id).toBe(1);
 
 		bracket.updateMatch({
 			id: 0,
-			opponent2: { result: "win" },
+			winnerSide: "opponent2",
 		});
 
 		const after = bracket.match(0);
 		expect(bracket.matchStatus(0)).toBe("COMPLETED");
-		expect(after.opponent1?.result).toBe("loss");
-		expect(after.opponent2?.result).toBe("win");
+		expect(after.winnerSide).toBe("opponent2");
 
 		const nextMatch = bracket.match(8);
 		expect(bracket.matchStatus(8)).toBe("PENDING");
@@ -85,60 +83,45 @@ describe("Update matches", () => {
 	test("should update the status of the next match", () => {
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { result: "win" },
+			winnerSide: "opponent1",
 		});
 
 		expect(bracket.matchStatus(8)).toBe("PENDING");
 
 		bracket.updateMatch({
 			id: 1,
-			opponent1: { result: "win" },
+			winnerSide: "opponent1",
 		});
 
 		expect(bracket.matchStatus(8)).toBe("STARTED");
 	});
 
-	test("should end the match by setting winner and loser", () => {
-		bracket.updateMatch({
-			id: 0,
-			opponent1: { result: "win" },
-			opponent2: { result: "loss" },
-		});
-
-		const after = bracket.match(0);
-		expect(bracket.matchStatus(0)).toBe("COMPLETED");
-		expect(after.opponent1?.result).toBe("win");
-		expect(after.opponent2?.result).toBe("loss");
-	});
-
 	test("should remove results from a match without score", () => {
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { result: "win" },
-			opponent2: { result: "loss" },
+			winnerSide: "opponent1",
 		});
 
 		bracket.resetMatchResults(0);
 
 		const after = bracket.match(0);
 		expect(bracket.matchStatus(0)).toBe("STARTED");
-		expect(after.opponent1?.result).toBeFalsy();
-		expect(after.opponent2?.result).toBeFalsy();
+		expect(after.winnerSide).toBeFalsy();
 	});
 
 	test("should remove results from a match with score", () => {
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { score: 16, result: "win" },
-			opponent2: { score: 12, result: "loss" },
+			opponent1: { score: 16 },
+			opponent2: { score: 12 },
+			winnerSide: "opponent1",
 		});
 
 		bracket.resetMatchResults(0);
 
 		const after = bracket.match(0);
 		expect(bracket.matchStatus(0)).toBe("STARTED");
-		expect(after.opponent1?.result).toBeFalsy();
-		expect(after.opponent2?.result).toBeFalsy();
+		expect(after.winnerSide).toBeFalsy();
 	});
 
 	test("should not set the other score to 0 if only one given", () => {
@@ -159,35 +142,16 @@ describe("Update matches", () => {
 		bracket.updateMatch({
 			id: 1,
 			opponent1: { score: 6 },
-			opponent2: { result: "win", score: 3 },
+			opponent2: { score: 3 },
+			winnerSide: "opponent2",
 		});
 
 		const after = bracket.match(1);
 		expect(bracket.matchStatus(1)).toBe("COMPLETED");
 
-		expect(after.opponent1?.result).toBe("loss");
+		expect(after.winnerSide).toBe("opponent2");
 		expect(after.opponent1?.score).toBe(6);
-
-		expect(after.opponent2?.result).toBe("win");
 		expect(after.opponent2?.score).toBe(3);
-	});
-
-	test("should throw if two winners", () => {
-		expect(() =>
-			bracket.updateMatch({
-				id: 3,
-				opponent1: { result: "win" },
-				opponent2: { result: "win" },
-			}),
-		).toThrow("There are two winners.");
-
-		expect(() =>
-			bracket.updateMatch({
-				id: 3,
-				opponent1: { result: "loss" },
-				opponent2: { result: "loss" },
-			}),
-		).toThrow("There are two losers.");
 	});
 });
 

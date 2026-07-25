@@ -16,38 +16,44 @@ describe("Update scores in a round-robin stage", () => {
 	test("should set all the scores", () => {
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { score: 16, result: "win" }, // POCEBLO
+			opponent1: { score: 16 },
 			opponent2: { score: 9 }, // AQUELLEHEURE?!
+			winnerSide: "opponent1", // POCEBLO
 		});
 
 		bracket.updateMatch({
 			id: 1,
 			opponent1: { score: 3 }, // Ballec Squad
-			opponent2: { score: 16, result: "win" }, // twitch.tv/mrs_fly
+			opponent2: { score: 16 },
+			winnerSide: "opponent2", // twitch.tv/mrs_fly
 		});
 
 		bracket.updateMatch({
 			id: 2,
-			opponent1: { score: 16, result: "win" }, // twitch.tv/mrs_fly
+			opponent1: { score: 16 },
 			opponent2: { score: 0 }, // AQUELLEHEURE?!
+			winnerSide: "opponent1", // twitch.tv/mrs_fly
 		});
 
 		bracket.updateMatch({
 			id: 3,
-			opponent1: { score: 16, result: "win" }, // POCEBLO
+			opponent1: { score: 16 },
 			opponent2: { score: 2 }, // Ballec Squad
+			winnerSide: "opponent1", // POCEBLO
 		});
 
 		bracket.updateMatch({
 			id: 4,
-			opponent1: { score: 16, result: "win" }, // Ballec Squad
+			opponent1: { score: 16 },
 			opponent2: { score: 12 }, // AQUELLEHEURE?!
+			winnerSide: "opponent1", // Ballec Squad
 		});
 
 		bracket.updateMatch({
 			id: 5,
 			opponent1: { score: 4 }, // twitch.tv/mrs_fly
-			opponent2: { score: 16, result: "win" }, // POCEBLO
+			opponent2: { score: 16 },
+			winnerSide: "opponent2", // POCEBLO
 		});
 	});
 
@@ -66,8 +72,9 @@ describe("Update scores in a round-robin stage", () => {
 		// Complete first match of round 1 (1 vs 2)
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { score: 16, result: "win" }, // Team 1 wins
+			opponent1: { score: 16 },
 			opponent2: { score: 9 }, // Team 2 loses
+			winnerSide: "opponent1", // Team 1 wins
 		});
 
 		// Round 2 Match 1 (1 vs 3) should still be locked because team 3 hasn't finished
@@ -79,7 +86,8 @@ describe("Update scores in a round-robin stage", () => {
 		bracket.updateMatch({
 			id: 1,
 			opponent1: { score: 3 }, // Team 3 loses
-			opponent2: { score: 16, result: "win" }, // Team 4 wins
+			opponent2: { score: 16 },
+			winnerSide: "opponent2", // Team 4 wins
 		});
 
 		// Now both matches in round 2 should be unlocked
@@ -92,13 +100,15 @@ describe("Update scores in a round-robin stage", () => {
 	test("should lock the next round again if a result of the previous round is reset", () => {
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 9 },
+			winnerSide: "opponent1",
 		});
 		bracket.updateMatch({
 			id: 1,
 			opponent1: { score: 3 },
-			opponent2: { score: 16, result: "win" },
+			opponent2: { score: 16 },
+			winnerSide: "opponent2",
 		});
 
 		expect(bracket.matchStatus(2)).toBe("STARTED");
@@ -111,13 +121,15 @@ describe("Update scores in a round-robin stage", () => {
 	test("should keep a started next round match playable if a result of the previous round is reset (issue #2690)", () => {
 		bracket.updateMatch({
 			id: 0,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 9 },
+			winnerSide: "opponent1",
 		});
 		bracket.updateMatch({
 			id: 1,
 			opponent1: { score: 3 },
-			opponent2: { score: 16, result: "win" },
+			opponent2: { score: 16 },
+			winnerSide: "opponent2",
 		});
 
 		// team 1 and team 3 start playing their round 2 match
@@ -133,8 +145,9 @@ describe("Update scores in a round-robin stage", () => {
 		expect(() =>
 			bracket.updateMatch({
 				id: 2,
-				opponent1: { score: 2, result: "win" },
+				opponent1: { score: 2 },
 				opponent2: { score: 0 },
+				winnerSide: "opponent1",
 			}),
 		).not.toThrow();
 	});
@@ -156,8 +169,9 @@ describe("Update scores in a round-robin stage", () => {
 		expect(() =>
 			bracket.updateMatch({
 				id: round2Match.id,
-				opponent1: { score: 16, result: "win" },
+				opponent1: { score: 16 },
 				opponent2: { score: 4 },
+				winnerSide: "opponent1",
 			}),
 		).not.toThrow();
 	});
@@ -182,8 +196,9 @@ describe("Update scores in a round-robin stage", () => {
 		expect(() =>
 			bracket.updateMatch({
 				id: realMatch.id,
-				opponent1: { score: 16, result: "win" },
+				opponent1: { score: 16 },
 				opponent2: { score: 9 },
+				winnerSide: "opponent1",
 			}),
 		).not.toThrow();
 	});
@@ -220,8 +235,9 @@ describe("Update scores in a round-robin stage", () => {
 		// Team 1 didn't play in round 1
 		bracket.updateMatch({
 			id: round1RealMatch.id,
-			opponent1: { score: 16, result: "win" },
+			opponent1: { score: 16 },
 			opponent2: { score: 9 },
+			winnerSide: "opponent1",
 		});
 
 		// The real match in round 2 (teams 1 vs 3) should now be unlocked

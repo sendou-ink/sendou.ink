@@ -12,6 +12,7 @@ export function up(db) {
 					"number" integer not null,
 					"opponentOne" text,
 					"opponentTwo" text,
+					"winnerSide" text check ("winnerSide" in ('opponent1','opponent2')),
 					"chatCode" text,
 					"startedAt" integer,
 					foreign key ("roundId") references "TournamentRound"("id") on delete cascade,
@@ -24,15 +25,19 @@ export function up(db) {
 
 		db.prepare(
 			/* sql */ `
-				insert into "TournamentMatch_new" ("id", "roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "chatCode", "startedAt")
+				insert into "TournamentMatch_new" ("id", "roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "winnerSide", "chatCode", "startedAt")
 				select
 					"id",
 					"roundId",
 					"stageId",
 					"groupId",
 					"number",
-					case when "opponentOne" = 'null' then null else "opponentOne" end,
-					case when "opponentTwo" = 'null' then null else "opponentTwo" end,
+					case when "opponentOne" = 'null' then null else json_remove("opponentOne", '$.result', '$.forfeit') end,
+					case when "opponentTwo" = 'null' then null else json_remove("opponentTwo", '$.result', '$.forfeit') end,
+					case
+						when "opponentOne" ->> '$.result' = 'win' then 'opponent1'
+						when "opponentTwo" ->> '$.result' = 'win' then 'opponent2'
+					end,
 					"chatCode",
 					"startedAt"
 				from "TournamentMatch"
