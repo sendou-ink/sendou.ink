@@ -1,6 +1,8 @@
 import { add, sub } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { DuplicateEntryError } from "~/utils/errors";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as ScrimPostRepository from "./ScrimPostRepository.server";
 
@@ -282,5 +284,87 @@ describe("findUserScrims", () => {
 
 		expect(postOwnerScrims).toHaveLength(1);
 		expect(postOwnerScrims[0]!.status).toBe("booked");
+	});
+});
+
+describe("insertRequest", () => {
+	beforeEach(async () => {
+		await dbInsertUsers(5);
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	const insertTeamRequest = ({
+		scrimPostId,
+		teamId,
+		userId,
+	}: {
+		scrimPostId: number;
+		teamId: number;
+		userId: number;
+	}) =>
+		ScrimPostRepository.insertRequest({
+			scrimPostId,
+			teamId,
+			message: null,
+			at: null,
+			users: [{ userId, isOwner: 1 }],
+		});
+
+	test("throws if the team already has a request for the post", async () => {
+		const postId = await insertPost({
+			at: BOOKED_AT,
+			users: [{ userId: 1, isOwner: 1 }],
+		});
+		const team = await TeamRepository.create({
+			name: "Team Olive",
+			ownerUserId: 2,
+			isMainTeam: true,
+		});
+
+		await insertTeamRequest({
+			scrimPostId: postId,
+			teamId: team.id,
+			userId: 2,
+		});
+
+		await expect(
+			insertTeamRequest({ scrimPostId: postId, teamId: team.id, userId: 3 }),
+		).rejects.toThrowError(DuplicateEntryError);
+
+		const post = await ScrimPostRepository.findById(postId);
+		expect(post!.requests).toHaveLength(1);
+	});
+
+	test("allows the team to request another post", async () => {
+		const postId = await insertPost({
+			at: BOOKED_AT,
+			users: [{ userId: 1, isOwner: 1 }],
+		});
+		const otherPostId = await insertPost({
+			at: BOOKED_AT,
+			users: [{ userId: 4, isOwner: 1 }],
+		});
+		const team = await TeamRepository.create({
+			name: "Team Olive",
+			ownerUserId: 2,
+			isMainTeam: true,
+		});
+
+		await insertTeamRequest({
+			scrimPostId: postId,
+			teamId: team.id,
+			userId: 2,
+		});
+		await insertTeamRequest({
+			scrimPostId: otherPostId,
+			teamId: team.id,
+			userId: 2,
+		});
+
+		const otherPost = await ScrimPostRepository.findById(otherPostId);
+		expect(otherPost!.requests).toHaveLength(1);
 	});
 });

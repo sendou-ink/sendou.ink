@@ -1,93 +1,58 @@
 import type { UserReportCategory } from "~/db/tables";
-import { logger } from "~/utils/logger";
-import { SENDOU_INK_BASE_URL, sendouQMatchPage, userPage } from "~/utils/urls";
+import {
+	sendModDiscordWebhook,
+	truncateEmbedValue,
+	userAdminPageLink,
+	userPageLink,
+	type WebhookUser,
+} from "~/modules/discord-webhook.server";
+import { SENDOU_INK_BASE_URL, sendouQMatchPage } from "~/utils/urls";
 import { USER_REPORT_CATEGORY_LABELS } from "../user-report-constants";
-
-const EMBED_DESCRIPTION_MAX_LENGTH = 1000;
 
 /**
  * Posts a rich embed about a new/updated user report to the mod channel Discord webhook.
- * Fire-and-forget: meant to be called without awaiting, never throws, skipped with a log
- * line when `USER_REPORT_DISCORD_WEBHOOK_URL` is unset (e.g. in development).
+ * Fire-and-forget (see `sendModDiscordWebhook`).
  */
 export function sendUserReportWebhook(args: {
-	reportedUser: { id: number; username: string };
-	reporter: { username: string; discordId: string; customUrl: string | null };
+	reportedUser: WebhookUser;
+	reporter: WebhookUser;
 	category: UserReportCategory;
 	description: string;
 	matchId: number | null;
 	isUpdate: boolean;
 	reportCounts: { lastMonth: number; lastYear: number };
 }) {
-	const webhookUrl = process.env.USER_REPORT_DISCORD_WEBHOOK_URL;
-	if (!webhookUrl) {
-		logger.info(
-			"USER_REPORT_DISCORD_WEBHOOK_URL not set, skipping user report webhook",
-		);
-		return;
-	}
-
-	const reportedUserAdminUrl = `${SENDOU_INK_BASE_URL}/u/${args.reportedUser.id}/admin`;
-	const reporterUrl = `${SENDOU_INK_BASE_URL}${userPage(args.reporter)}`;
-
-	const body = {
-		embeds: [
+	sendModDiscordWebhook({
+		title: args.isUpdate ? "User report updated" : "New user report",
+		fields: [
 			{
-				title: args.isUpdate ? "User report updated" : "New user report",
-				fields: [
-					{
-						name: "Reported user",
-						value: `[${args.reportedUser.username}](${reportedUserAdminUrl})`,
-					},
-					{
-						name: "Reporter",
-						value: `[${args.reporter.username}](${reporterUrl})`,
-					},
-					{
-						name: "Category",
-						value: USER_REPORT_CATEGORY_LABELS[args.category],
-					},
-					{
-						name: "Description",
-						value: truncate(args.description),
-					},
-					...(args.matchId !== null
-						? [
-								{
-									name: "SendouQ match",
-									value: `[#${args.matchId}](${SENDOU_INK_BASE_URL}${sendouQMatchPage(args.matchId)})`,
-								},
-							]
-						: []),
-					{
-						name: "Reports against this user",
-						value: `Last month: ${args.reportCounts.lastMonth} • Last year: ${args.reportCounts.lastYear}`,
-					},
-				],
-				timestamp: new Date().toISOString(),
+				name: "Reported user",
+				value: userAdminPageLink(args.reportedUser),
+			},
+			{
+				name: "Reporter",
+				value: userPageLink(args.reporter),
+			},
+			{
+				name: "Category",
+				value: USER_REPORT_CATEGORY_LABELS[args.category],
+			},
+			{
+				name: "Description",
+				value: truncateEmbedValue(args.description),
+			},
+			...(args.matchId !== null
+				? [
+						{
+							name: "SendouQ match",
+							value: `[#${args.matchId}](${SENDOU_INK_BASE_URL}${sendouQMatchPage(args.matchId)})`,
+						},
+					]
+				: []),
+			{
+				name: "Reports against this user",
+				value: `Last month: ${args.reportCounts.lastMonth} • Last year: ${args.reportCounts.lastYear}`,
 			},
 		],
-	};
-
-	fetch(webhookUrl, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify(body),
-	})
-		.then((response) => {
-			if (!response.ok) {
-				logger.error(
-					`User report webhook responded with status ${response.status}`,
-				);
-			}
-		})
-		.catch((error) => {
-			logger.error("Failed to send user report webhook", error);
-		});
-}
-
-function truncate(description: string) {
-	if (description.length <= EMBED_DESCRIPTION_MAX_LENGTH) return description;
-
-	return `${description.slice(0, EMBED_DESCRIPTION_MAX_LENGTH)}…`;
+	});
 }

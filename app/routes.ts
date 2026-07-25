@@ -208,6 +208,7 @@ export default [
 	]),
 
 	route("/faq", "features/info/routes/faq.tsx"),
+	route("/welcome", "features/info/routes/welcome.tsx"),
 	route("/contributions", "features/info/routes/contributions.tsx"),
 	route("/support", "features/info/routes/support.tsx"),
 

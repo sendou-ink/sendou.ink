@@ -744,6 +744,70 @@ describe("double elimination standings - projected ties", () => {
 	});
 });
 
+describe("single elimination source - underground", () => {
+	// 8-team SE played out fully. The four first-round losers tie for last, so
+	// sourcing [-1] should feed exactly those teams into an underground bracket.
+	const playedSingleEliminationTournament = () => {
+		let data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: {},
+		});
+
+		const winnersGroupId = data.group.find((group) => group.number === 1)!.id;
+		const firstRoundId = data.round.find(
+			(round) => round.groupId === winnersGroupId && round.number === 1,
+		)!.id;
+
+		// lower id wins, so the higher id in each first-round match is the loser
+		const firstRoundLoserIds = readyMatches(
+			data,
+			(match) => match.roundId === firstRoundId,
+		).map((match) => Math.max(match.opponent1!.id!, match.opponent2!.id!));
+
+		let ready = readyMatches(data, (match) => match.groupId === winnersGroupId);
+		while (ready.length) {
+			for (const match of ready) {
+				data = reportLowerIdWinner(data, match.id);
+			}
+			ready = readyMatches(data, (match) => match.groupId === winnersGroupId);
+		}
+
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "SE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+
+		return { tournament, firstRoundLoserIds };
+	};
+
+	it("sources the first-round losers when placements are [-1]", () => {
+		const { tournament, firstRoundLoserIds } =
+			playedSingleEliminationTournament();
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [-1] });
+
+		expect(relevantMatchesFinished).toBe(true);
+		expect([...teams].sort((a, b) => a - b)).toEqual(
+			[...firstRoundLoserIds].sort((a, b) => a - b),
+		);
+	});
+});
+
 function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
 	const match = matchById(data, matchId);
 	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;

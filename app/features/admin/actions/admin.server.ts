@@ -8,12 +8,17 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
+	notFoundIfFalsy,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { _action, actualNumber, friendCode } from "~/utils/zod";
+import {
+	sendUserBannedWebhook,
+	sendUserUnbannedWebhook,
+} from "../core/discord-webhook.server";
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -124,14 +129,26 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "BAN_USER": {
 			requireRole("STAFF");
 
+			const bannedUser = notFoundIfFalsy(
+				await UserRepository.findLeanById(data.user),
+			);
+			const banExpiresAt = data.duration ? new Date(data.duration) : null;
+
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
 				userId: data.user,
-				banned: data.duration ? new Date(data.duration) : 1,
+				banned: banExpiresAt ?? 1,
 				bannedByUserId: user.id,
 			});
 
 			await refreshBannedCache();
+
+			sendUserBannedWebhook({
+				bannedUser,
+				bannedBy: user,
+				reason: data.reason ?? null,
+				expiresAt: banExpiresAt,
+			});
 
 			message = "User banned";
 			break;
@@ -139,12 +156,21 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "UNBAN_USER": {
 			requireRole("STAFF");
 
+			const unbannedUser = notFoundIfFalsy(
+				await UserRepository.findLeanById(data.user),
+			);
+
 			await AdminRepository.unbanUser({
 				userId: data.user,
 				unbannedByUserId: user.id,
 			});
 
 			await refreshBannedCache();
+
+			sendUserUnbannedWebhook({
+				unbannedUser,
+				unbannedBy: user,
+			});
 
 			message = "User unbanned";
 			break;

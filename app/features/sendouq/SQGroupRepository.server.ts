@@ -675,6 +675,11 @@ export function deleteLike({
 	});
 }
 
+/** Deletes every like where the given group is the liker or the target. */
+export function deleteAllLikesByGroupId(groupId: number) {
+	return db.transaction().execute((trx) => deleteLikesByGroupId(groupId, trx));
+}
+
 export function leaveGroup(userId: number) {
 	return db.transaction().execute(async (trx) => {
 		const userGroup = await trx

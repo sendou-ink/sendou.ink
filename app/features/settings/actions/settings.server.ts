@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import { cancelActiveGroupLikes } from "~/features/sendouq/core/likes.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
@@ -59,13 +60,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_MATCH_PROFILE": {
-			await MatchProfileRepository.updateOwnMatchProfile({
-				mapModePreferences: data.mapModePreferences,
-				vc: data.vc,
-				languages: data.languages,
-				weaponPool: data.weaponPool,
-				noScreen: Number(data.noScreen),
-			});
+			const { mapModePreferencesChanged, noScreenChanged } =
+				await MatchProfileRepository.updateOwnMatchProfile({
+					mapModePreferences: data.mapModePreferences,
+					vc: data.vc,
+					languages: data.languages,
+					weaponPool: data.weaponPool,
+					noScreen: Number(data.noScreen),
+				});
+
+			// Challenges are made based on the modes/preferences shown at that
+			// moment, so changing them must undo pending requests to/from the group.
+			if (mapModePreferencesChanged || noScreenChanged) {
+				await cancelActiveGroupLikes(user.id);
+			}
 			break;
 		}
 		default: {

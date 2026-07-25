@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables, UserMapModePreferences } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -56,20 +57,29 @@ export async function updateOwnMatchProfile({
 	noScreen: number;
 }) {
 	const userId = actorId();
-	const currentPreferences = (
-		await db
-			.selectFrom("User")
-			.select("mapModePreferences")
-			.where("id", "=", userId)
-			.executeTakeFirstOrThrow()
-	).mapModePreferences;
+	const current = await db
+		.selectFrom("User")
+		.select(["mapModePreferences", "noScreen"])
+		.where("id", "=", userId)
+		.executeTakeFirstOrThrow();
 
 	const mergedPool = mergeExcludedModePreferences(
 		mapModePreferences.pool,
-		currentPreferences?.pool,
+		current.mapModePreferences?.pool,
 	);
 
-	return db.transaction().execute(async (trx) => {
+	const newMapModePreferences: UserMapModePreferences = {
+		...mapModePreferences,
+		pool: mergedPool,
+	};
+
+	const mapModePreferencesChanged = !R.isDeepEqual(
+		newMapModePreferences,
+		current.mapModePreferences,
+	);
+	const noScreenChanged = current.noScreen !== noScreen;
+
+	await db.transaction().execute(async (trx) => {
 		await trx
 			.deleteFrom("UserWeaponPool")
 			.where("userId", "=", userId)
@@ -92,10 +102,7 @@ export async function updateOwnMatchProfile({
 		await trx
 			.updateTable("User")
 			.set({
-				mapModePreferences: JSON.stringify({
-					...mapModePreferences,
-					pool: mergedPool,
-				}),
+				mapModePreferences: JSON.stringify(newMapModePreferences),
 				vc,
 				languages: languages.length > 0 ? languages.join(",") : null,
 				noScreen,
@@ -103,6 +110,8 @@ export async function updateOwnMatchProfile({
 			.where("id", "=", userId)
 			.execute();
 	});
+
+	return { mapModePreferencesChanged, noScreenChanged };
 }
 
 /**

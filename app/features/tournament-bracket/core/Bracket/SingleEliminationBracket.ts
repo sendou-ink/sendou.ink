@@ -14,11 +14,6 @@ export class SingleEliminationBracket extends Bracket {
 		return "single_elimination";
 	}
 
-	/** Unreachable: bracket progression validation rejects single elimination as a source. */
-	source(): never {
-		throw new Error("Single elimination bracket can't be a source");
-	}
-
 	defaultRoundBestOfs(data: BracketData) {
 		const result: BracketMapCounts = new Map();
 
@@ -164,5 +159,59 @@ export class SingleEliminationBracket extends Bracket {
 			.sort((a, b) => a.placement - b.placement);
 
 		return this.standingsWithoutNonParticipants(resultWithThirdPlaceTiebroken);
+	}
+
+	source({ placements }: { placements: number[] }) {
+		invariant(placements.length > 0, "Empty placements not supported");
+		invariant(
+			placements.every((placement) => placement < 0),
+			"Positive placements in SE not implemented",
+		);
+
+		// third place match lives in a separate (higher) group; the winners
+		// group teams get eliminated from is the lowest group id
+		const mainGroupId = Math.min(...this.data.group.map((group) => group.id));
+
+		const orderedRoundsIds = this.data.round
+			.filter((round) => round.groupId === mainGroupId)
+			.map((round) => round.id)
+			.sort((a, b) => a - b);
+
+		const amountOfRounds = Math.abs(Math.min(...placements));
+
+		const sourceRoundsIds = orderedRoundsIds.slice(0, amountOfRounds).sort(
+			// teams who made it further in the bracket get higher seed
+			(a, b) => b - a,
+		);
+
+		const teams: number[] = [];
+		let relevantMatchesFinished = true;
+		for (const roundId of sourceRoundsIds) {
+			const roundsMatches = this.data.match.filter(
+				(match) => match.roundId === roundId,
+			);
+
+			for (const match of roundsMatches) {
+				// BYE
+				if (!match.opponent1 || !match.opponent2) {
+					continue;
+				}
+				if (!match.winnerSide) {
+					relevantMatchesFinished = false;
+					continue;
+				}
+
+				const loser =
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+				invariant(loser?.id, "Loser id not found");
+
+				teams.push(loser.id);
+			}
+		}
+
+		return {
+			relevantMatchesFinished,
+			teams,
+		};
 	}
 }

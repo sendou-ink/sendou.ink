@@ -13,7 +13,10 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import { ConcurrentModificationError } from "~/utils/errors";
+import {
+	ConcurrentModificationError,
+	DuplicateEntryError,
+} from "~/utils/errors";
 import { logger } from "~/utils/logger";
 import {
 	actionError,
@@ -92,18 +95,25 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				}
 			}
 
-			await ScrimPostRepository.insertRequest({
-				scrimPostId: data.scrimPostId,
-				teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
-				message: data.message,
-				at: data.at ? dateToDatabaseTimestamp(data.at) : null,
-				users: (
-					await usersListForPost({ authorId: user.id, from: data.from })
-				).map((userId) => ({
-					userId,
-					isOwner: Number(user.id === userId),
-				})),
-			});
+			try {
+				await ScrimPostRepository.insertRequest({
+					scrimPostId: data.scrimPostId,
+					teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
+					message: data.message,
+					at: data.at ? dateToDatabaseTimestamp(data.at) : null,
+					users: (
+						await usersListForPost({ authorId: user.id, from: data.from })
+					).map((userId) => ({
+						userId,
+						isOwner: Number(user.id === userId),
+					})),
+				});
+			} catch (error) {
+				if (error instanceof DuplicateEntryError) {
+					errorToast("Your team has already requested this scrim");
+				}
+				throw error;
+			}
 
 			notify({
 				userIds: post.users

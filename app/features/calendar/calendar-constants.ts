@@ -86,8 +86,8 @@ export const REG_CLOSES_AT_OPTIONS = [
 
 export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
 
-/** How many days are shown at the /calendar page at a time */
-export const DAYS_SHOWN_AT_A_TIME = 4;
+/** How many days are shown at the /calendar page at a time (full week from Monday to Sunday) */
+export const DAYS_SHOWN_AT_A_TIME = 7;
 
 /** Tags not shown on the tournament cards */
 export const EXCLUDED_TAGS: Array<CalendarEventTag> = ["CARDS", "SR"];

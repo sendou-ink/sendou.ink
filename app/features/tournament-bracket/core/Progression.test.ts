@@ -917,7 +917,7 @@ describe("validatedSources - other rules", () => {
 		expect((error as any).bracketIdx).toEqual(1);
 	});
 
-	it("handles NO_SE_SOURCE", () => {
+	it("handles NO_SE_POSITIVE", () => {
 		const error = getValidatedBrackets([
 			{
 				settings: {},
@@ -935,8 +935,29 @@ describe("validatedSources - other rules", () => {
 			},
 		]) as Progression.ValidationError;
 
-		expect(error.type).toBe("NO_SE_SOURCE");
+		expect(error.type).toBe("NO_SE_POSITIVE");
 		expect((error as any).bracketIdx).toEqual(1);
+	});
+
+	it("allows single elimination to source an underground bracket", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {},
+				type: "single_elimination",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "-1",
+					},
+				],
+			},
+		]);
+
+		expect(Progression.isBrackets(result)).toBe(true);
 	});
 
 	it("handles NO_DE_POSITIVE", () => {
@@ -1278,6 +1299,21 @@ describe("isUnderground", () => {
 		);
 	});
 
+	it("handles SE w/ underground bracket", () => {
+		expect(
+			Progression.isUnderground(
+				0,
+				progressions.singleEliminationWithUnderground,
+			),
+		).toBe(false);
+		expect(
+			Progression.isUnderground(
+				1,
+				progressions.singleEliminationWithUnderground,
+			),
+		).toBe(true);
+	});
+
 	it("throws if given idx is out of bounds", () => {
 		expect(() =>
 			Progression.isUnderground(1, progressions.singleElimination),
@@ -1347,6 +1383,14 @@ describe("bracketIdxsForStandings", () => {
 				progressions.doubleEliminationWithUnderground,
 			),
 		).toEqual([0]); // missing 1 because it's underground when DE is the source
+	});
+
+	it("handles SE w/ underground bracket", () => {
+		expect(
+			Progression.bracketIdxsForStandings(
+				progressions.singleEliminationWithUnderground,
+			),
+		).toEqual([0]); // missing 1 because it's underground when SE is the source
 	});
 });
 

@@ -90,9 +90,9 @@ export type ValidationError =
 			type: "NEGATIVE_PROGRESSION";
 			bracketIdx: number;
 	  }
-	// single elimination is not a valid source bracket (might change in the future)
+	// no SE positive placements (single elimination can only source underground brackets)
 	| {
-			type: "NO_SE_SOURCE";
+			type: "NO_SE_POSITIVE";
 			bracketIdx: number;
 	  }
 	// no DE positive placements (might change in the future)
@@ -287,10 +287,10 @@ export function bracketsToValidationError(
 		};
 	}
 
-	faultyBracketIdx = noSingleEliminationAsSource(brackets);
+	faultyBracketIdx = noSingleEliminationPositive(brackets);
 	if (typeof faultyBracketIdx === "number") {
 		return {
-			type: "NO_SE_SOURCE",
+			type: "NO_SE_POSITIVE",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -671,11 +671,14 @@ function negativeProgression(brackets: ParsedBracket[]) {
 	return null;
 }
 
-function noSingleEliminationAsSource(brackets: ParsedBracket[]) {
+function noSingleEliminationPositive(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		for (const source of bracket.sources ?? []) {
 			const sourceBracket = brackets[source.bracketIdx];
-			if (sourceBracket.type === "single_elimination") {
+			if (
+				sourceBracket.type === "single_elimination" &&
+				source.placements.some((placement) => placement > 0)
+			) {
 				return bracketIdx;
 			}
 		}
@@ -944,7 +947,8 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 
 			return !sources.some(
 				(source) =>
-					progression[source.bracketIdx].type === "double_elimination",
+					progression[source.bracketIdx].type === "double_elimination" ||
+					progression[source.bracketIdx].type === "single_elimination",
 			);
 		},
 	);

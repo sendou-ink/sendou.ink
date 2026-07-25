@@ -56,6 +56,7 @@ export async function findById(id: number) {
 			"GroupMatch.memento",
 			"GroupMatch.cancelRequestedByUserId",
 			"GroupMatch.cancelAcceptedByUserId",
+			"GroupMatch.noScreen",
 
 			exists(
 				selectFrom("Skill")
@@ -476,6 +477,14 @@ export function create({
 			throw new SendouQError("Can't leave group when already in a match");
 		}
 
+		const memberPreferringNoScreen = await trx
+			.selectFrom("GroupMember")
+			.innerJoin("User", "User.id", "GroupMember.userId")
+			.select("User.id")
+			.where("GroupMember.groupId", "in", [alphaGroupId, bravoGroupId])
+			.where("User.noScreen", "=", 1)
+			.executeTakeFirst();
+
 		const match = await trx
 			.insertInto("GroupMatch")
 			.values({
@@ -483,6 +492,7 @@ export function create({
 				bravoGroupId,
 				chatCode: shortNanoid(),
 				memento: JSON.stringify(memento),
+				noScreen: memberPreferringNoScreen ? 1 : 0,
 			})
 			.returningAll()
 			.executeTakeFirstOrThrow();

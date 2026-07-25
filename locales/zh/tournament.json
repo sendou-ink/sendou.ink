@@ -227,7 +227,7 @@
 	"progression.error.DUPLICATE_BRACKET_NAME": "对战表名称重复",
 	"progression.error.NAME_MISSING": "缺少对战表名称",
 	"progression.error.NEGATIVE_PROGRESSION": "负序晋级仅在双败淘汰赛中可行",
-	"progression.error.NO_SE_SOURCE": "单败淘汰赛不是有效的来源对战表",
+	"progression.error.NO_SE_POSITIVE": "",
 	"progression.error.NO_DE_POSITIVE": "双败淘汰赛不适用于正序晋级",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "包含提前晋级/淘汰的瑞士轮对战表必须导向另一个对战表",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "A/B 分组只能在循环赛对战表中启用",
