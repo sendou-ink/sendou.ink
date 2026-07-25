@@ -12,12 +12,13 @@ const RANGE_COMPARISONS: [MainWeaponId, MainWeaponId][] = [
 ];
 
 describe("weapon range comparisons", () => {
-	test.each(
-		RANGE_COMPARISONS,
-	)("weapon %i has more range than weapon %i", (longerId, shorterId) => {
-		const [longer] = getWeaponsWithRange([longerId]);
-		const [shorter] = getWeaponsWithRange([shorterId]);
+	test.each(RANGE_COMPARISONS)(
+		"weapon %i has more range than weapon %i",
+		(longerId, shorterId) => {
+			const [longer] = getWeaponsWithRange([longerId]);
+			const [shorter] = getWeaponsWithRange([shorterId]);
 
-		expect(longer.range).toBeGreaterThan(shorter.range);
-	});
+			expect(longer.range).toBeGreaterThan(shorter.range);
+		},
+	);
 });
