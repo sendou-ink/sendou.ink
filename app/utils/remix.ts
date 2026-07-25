@@ -28,6 +28,7 @@ interface OpenGraphArgs {
 	/** Optionally override location pathname. */
 	url?: string;
 	image?: {
+		/** Absolute URL of the image. */
 		url: string;
 		dimensions?: {
 			width: number;
@@ -80,21 +81,11 @@ export function metaTags(args: OpenGraphArgs) {
 		},
 		{
 			property: "og:url",
-			content: `${ROOT_URL}${args.location.pathname}`,
+			content: `${ROOT_URL}${args.url ?? args.location.pathname}`,
 		},
 		{
 			property: "og:image",
-			content: (() => {
-				if (args.image?.url.startsWith("http")) {
-					return args.image.url;
-				}
-
-				if (args.image) {
-					return `${ROOT_URL}${args.image.url}`;
-				}
-
-				return `${ROOT_URL}${COMMON_PREVIEW_IMAGE}`;
-			})(),
+			content: args.image?.url ?? COMMON_PREVIEW_IMAGE,
 		},
 	].filter((val) => val !== null);
 
