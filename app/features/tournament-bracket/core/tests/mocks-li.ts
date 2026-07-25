@@ -9,10 +9,8 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				name: "Group Stage",
 				number: 1,
 				settings: {
-					swiss: {
-						groupCount: 2,
-						roundCount: 6,
-					},
+					groupCount: 2,
+					roundCount: 6,
 				},
 				type: "swiss",
 				createdAt: 1734199362,

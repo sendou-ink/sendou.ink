@@ -9,10 +9,8 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				name: "Main Bracket",
 				number: 1,
 				settings: {
-					swiss: {
-						groupCount: 1,
-						roundCount: 4,
-					},
+					groupCount: 1,
+					roundCount: 4,
 				},
 				type: "swiss",
 				createdAt: 1734685232,

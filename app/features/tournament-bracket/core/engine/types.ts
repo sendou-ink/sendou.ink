@@ -58,8 +58,11 @@ export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
  * TournamentStage.settings today (the old brackets-model StageSettings).
  */
 export interface StageSettings {
-	/** Number of groups in a round-robin stage. */
+	/** Number of groups in a round robin or swiss stage. */
 	groupCount?: number;
+
+	/** Number of rounds in a swiss stage. */
+	roundCount?: number;
 
 	/**
 	 * Whether to generate a bipartite round-robin where teams are split into two
@@ -78,12 +81,6 @@ export interface StageSettings {
 
 	/** Optional final between semi-final losers. */
 	consolationFinal?: boolean;
-
-	// xxx: just have roundCount and use groupCount from RR?
-	swiss?: {
-		groupCount: number;
-		roundCount: number;
-	};
 }
 
 export interface ParticipantResult {

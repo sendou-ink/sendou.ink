@@ -130,6 +130,20 @@ export function up(db) {
 			/* sql */ `alter table "TournamentMatchGameResult" drop column "opponentTwoPoints"`,
 		).run();
 
+		db.prepare(
+			/* sql */ `
+				update "TournamentStage"
+				set "settings" = json_patch(
+					json_remove("settings", '$.swiss'),
+					json_object(
+						'groupCount', "settings" ->> '$.swiss.groupCount',
+						'roundCount', "settings" ->> '$.swiss.roundCount'
+					)
+				)
+				where "settings" ->> '$.swiss' is not null
+			`,
+		).run();
+
 		db.pragma("foreign_key_check");
 	})();
 

@@ -13,12 +13,10 @@ import { MatchStatus } from "../types";
  * Ported from the old core/Swiss.ts create()/firstRoundMatches().
  */
 export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
-	const swissSettings = input.settings?.swiss;
-
 	const groupCount =
-		swissSettings?.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT;
+		input.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT;
 	const roundCount =
-		swissSettings?.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT;
+		input.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT;
 
 	const group = nullFilledArray(groupCount).map((_, i) => ({
 		id: i,
@@ -46,7 +44,7 @@ export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 			{
 				id: 0,
 				number: 1,
-				settings: input.settings ?? {},
+				settings: input.settings,
 				type: "swiss",
 			},
 		],

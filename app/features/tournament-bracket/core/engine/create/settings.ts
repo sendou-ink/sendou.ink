@@ -32,16 +32,10 @@ export function resolveStageSettings(input: CreateBracketInput): StageSettings {
 		}
 		case "swiss": {
 			return {
-				swiss:
-					settings?.groupCount && settings.roundCount
-						? {
-								groupCount: settings.groupCount,
-								roundCount: settings.roundCount,
-							}
-						: {
-								groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
-								roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
-							},
+				groupCount:
+					settings?.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+				roundCount:
+					settings?.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
 			};
 		}
 		default: {
