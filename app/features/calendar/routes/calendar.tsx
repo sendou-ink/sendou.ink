@@ -25,7 +25,7 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
-import { dayMonthYearToDate, dayMonthYearToDateValue } from "~/utils/dates";
+import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -125,7 +125,7 @@ export default function CalendarPage() {
 						date={date.day}
 						month={date.month}
 						year={date.year}
-						isToday={isToday(dayMonthYearToDate(date))}
+						isToday={isToday(new Date(date.year, date.month, date.day))}
 						eventTimes={data.eventTimes.filter((event) => {
 							const eventDate = new Date(event.at);
 
