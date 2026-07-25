@@ -8,7 +8,6 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
-import { MatchStatus as Status } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
@@ -156,12 +155,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			})
 		: false;
 
+	const status = tournament.matchStatusById(matchId);
+
 	if (
 		match.chatCode &&
 		!matchIsOver &&
 		match.opponentOne?.id &&
 		match.opponentTwo?.id &&
-		match.status > Status.Locked
+		status !== "PENDING"
 	) {
 		// only add global chat for active roster (or all if not yet set i.e. first match)
 		// if roster changed mid-set the subs can still see the chat on the match page
@@ -225,7 +226,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
 			},
 		})),
-		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
+		match: {
+			...match,
+			status,
+			chatCode: hasPermsToSeeChat ? match.chatCode : undefined,
+		},
 		results,
 		reportedWeapons,
 		mapList,

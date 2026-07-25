@@ -86,7 +86,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13715,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734685232,
 			},
 			{
@@ -105,7 +104,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13715,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734685232,
 			},
 			{
@@ -124,7 +122,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13715,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734685232,
 			},
 			{
@@ -137,7 +134,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent2: null,
 				round_id: 13715,
 				stage_id: 1457,
-				status: 2,
 				startedAt: 1734685232,
 			},
 			{
@@ -156,7 +152,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13716,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734687519,
 			},
 			{
@@ -175,7 +170,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13716,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734687519,
 			},
 			{
@@ -194,7 +188,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13716,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734687519,
 			},
 			{
@@ -207,7 +200,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent2: null,
 				round_id: 13716,
 				stage_id: 1457,
-				status: 2,
 				startedAt: 1734687519,
 			},
 			{
@@ -226,7 +218,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13717,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734689680,
 			},
 			{
@@ -245,7 +236,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13717,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734689680,
 			},
 			{
@@ -264,7 +254,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				},
 				round_id: 13717,
 				stage_id: 1457,
-				status: 4,
 				startedAt: 1734689680,
 			},
 			{
@@ -277,7 +266,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				opponent2: null,
 				round_id: 13717,
 				stage_id: 1457,
-				status: 2,
 				startedAt: 1734689680,
 			},
 		],

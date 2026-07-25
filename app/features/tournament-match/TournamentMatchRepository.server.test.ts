@@ -71,9 +71,16 @@ const createMatch = async (args: {
 			groupId: args.groupId,
 			roundId: args.roundId,
 			number: args.number,
-			status: 4,
-			opponentOne: JSON.stringify({ id: args.teamOneId, score: 2 }),
-			opponentTwo: JSON.stringify({ id: args.teamTwoId, score: 0 }),
+			opponentOne: JSON.stringify({
+				id: args.teamOneId,
+				score: 2,
+				result: "win",
+			}),
+			opponentTwo: JSON.stringify({
+				id: args.teamTwoId,
+				score: 0,
+				result: "loss",
+			}),
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();

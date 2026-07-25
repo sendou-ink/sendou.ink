@@ -1,6 +1,5 @@
 import * as helpers from "../helpers";
 import type { BracketData, EngineResult } from "../types";
-import { MatchStatus } from "../types";
 import { Store } from "./store";
 import { Propagator } from "./traversal";
 
@@ -44,7 +43,7 @@ export function resetMatchResults(
 		nextMatches.some(
 			(match) =>
 				match &&
-				match.status >= MatchStatus.Running &&
+				(helpers.isMatchStarted(match) || helpers.isMatchCompleted(match)) &&
 				!helpers.isMatchByeCompleted(match),
 		)
 	)
@@ -54,7 +53,7 @@ export function resetMatchResults(
 	propagator.applyMatchUpdate(stored);
 
 	if (!helpers.isRoundRobin(stage) && !helpers.isSwiss(stage))
-		propagator.updateRelatedMatches(stored, true, true);
+		propagator.updateRelatedMatches(stored);
 
 	return { data: store.data, changedMatches: store.changedMatches() };
 }

@@ -1,5 +1,4 @@
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
-import { MatchStatus as Status } from "~/features/tournament-bracket/core/engine/types";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { cache } from "~/utils/cache.server";
@@ -70,17 +69,11 @@ function deriveCurrentRound(tournament: Tournament): string {
 		if (bracket.isUnderground) continue;
 
 		for (const match of bracket.data.match) {
-			const isActive =
-				match.status === Status.Ready || match.status === Status.Running;
-			const hasParticipants = match.opponent1 && match.opponent2;
-			const isNotFinished =
-				!match.opponent1?.result && !match.opponent2?.result;
+			if (bracket.matchStatus(match.id) !== "STARTED") continue;
 
-			if (isActive && hasParticipants && isNotFinished) {
-				const context = tournament.matchContextNamesById(match.id);
-				if (context?.roundNameWithoutMatchIdentifier) {
-					return context.roundNameWithoutMatchIdentifier;
-				}
+			const context = tournament.matchContextNamesById(match.id);
+			if (context?.roundNameWithoutMatchIdentifier) {
+				return context.roundNameWithoutMatchIdentifier;
 			}
 		}
 

@@ -438,8 +438,8 @@ function finalizedBracket() {
 	];
 
 	const matchInsertStm = sql.prepare(
-		`insert into "TournamentMatch" ("stageId", "groupId", "roundId", "number", "status", "opponentOne", "opponentTwo")
-		 values ($stageId, $groupId, $roundId, $number, $status, $opponentOne, $opponentTwo) returning id`,
+		`insert into "TournamentMatch" ("stageId", "groupId", "roundId", "number", "opponentOne", "opponentTwo")
+		 values ($stageId, $groupId, $roundId, $number, $opponentOne, $opponentTwo) returning id`,
 	);
 
 	const gameResultInsertStm = sql.prepare(
@@ -454,7 +454,6 @@ function finalizedBracket() {
 				groupId,
 				roundId: roundIds[m.round],
 				number: m.number,
-				status: 4,
 				opponentOne: JSON.stringify({
 					id: m.team1,
 					score: m.winner === m.team1 ? 2 : 0,

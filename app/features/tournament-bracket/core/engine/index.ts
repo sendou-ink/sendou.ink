@@ -17,5 +17,6 @@ export {
 	reportGameResult,
 	undoGameResult,
 } from "./propagation/set";
+export * from "./status";
 export { generateRound } from "./swiss/pairing";
 export * from "./types";

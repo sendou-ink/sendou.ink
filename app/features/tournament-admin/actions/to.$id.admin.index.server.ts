@@ -175,13 +175,18 @@ async function dropTeamOut({
 	}
 
 	const endedMatchIds = await db.transaction().execute(async (trx) => {
+		// xxx: we already load tournament so not needed?
+		const bracketData = await BracketRepository.findByTournamentId(
+			tournament.ctx.id,
+			trx,
+		);
 		const droppedResult = endDroppedTeamMatches({
 			tournament,
-			data: await BracketRepository.findByTournamentId(tournament.ctx.id, trx),
+			data: bracketData,
 			droppedTeamId: teamId,
 		});
 		await BracketRepository.applyMatchChanges(
-			droppedResult.changedMatches,
+			{ previousData: bracketData, result: droppedResult },
 			trx,
 		);
 

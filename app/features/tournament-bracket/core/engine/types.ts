@@ -37,22 +37,6 @@ export type SeedOrdering =
 /** The seeding for a stage. Each element is a participant id or a BYE: `null`. */
 export type Seeding = (number | null)[];
 
-// xxx: are all of these really in use? particularly what is the difference between Locked and Waiting for us. Waiting sems redundant. Also difference between Ready and Running, surely Running is enough?
-/** Same values as the old brackets-model Status — persisted in TournamentMatch.status. */
-export const MatchStatus = {
-	/** The two matches leading to this one are not completed yet. */
-	Locked: 0,
-	/** One participant is ready and waiting for the other one. */
-	Waiting: 1,
-	/** Both participants are ready to start. */
-	Ready: 2,
-	/** The match is running. */
-	Running: 3,
-	/** The match is completed. */
-	Completed: 4,
-} as const;
-export type MatchStatus = (typeof MatchStatus)[keyof typeof MatchStatus];
-
 /**
  * The possible settings for a stage. Same shape as what is persisted in
  * TournamentStage.settings today (the old brackets-model StageSettings).
@@ -134,9 +118,7 @@ export interface RoundData {
 	maps?: TournamentRoundMaps | null;
 }
 
-/** Only contains information about match status and results. */
 export interface MatchResults {
-	status: MatchStatus;
 	opponent1: ParticipantResult | null;
 	opponent2: ParticipantResult | null;
 }
@@ -277,7 +259,7 @@ export interface SwissStanding {
  */
 export interface EngineResult {
 	data: BracketData;
-	/** Matches whose row must be UPDATEd (status/opponents changed). */
+	/** Matches whose row must be UPDATEd (opponents changed). */
 	changedMatches: MatchData[];
 }
 

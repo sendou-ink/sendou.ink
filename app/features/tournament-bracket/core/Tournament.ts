@@ -628,6 +628,20 @@ export class Tournament {
 		);
 	}
 
+	/** Status of the given match, derived from the state of its bracket. */
+	matchStatusById(matchId: number) {
+		for (const bracket of this.brackets) {
+			// preview brackets have locally generated match ids that can collide with real ones
+			if (bracket.preview) continue;
+
+			if (bracket.data.match.some((match) => match.id === matchId)) {
+				return bracket.matchStatus(matchId);
+			}
+		}
+
+		throw new Error("Match not found");
+	}
+
 	matchIdToBracketIdx(matchId: number) {
 		const idx = this.brackets.findIndex((bracket) =>
 			bracket.data.match.some((match) => match.id === matchId),

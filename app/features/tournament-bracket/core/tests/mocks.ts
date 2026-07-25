@@ -237,7 +237,6 @@ export const PADDLING_POOL_257 = () =>
 					opponent2: null,
 					round_id: 386,
 					stage_id: 28,
-					status: 2,
 				},
 				{
 					id: 1719,
@@ -257,7 +256,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 386,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1720,
@@ -270,7 +268,6 @@ export const PADDLING_POOL_257 = () =>
 					opponent2: null,
 					round_id: 387,
 					stage_id: 28,
-					status: 2,
 				},
 				{
 					id: 1721,
@@ -290,7 +287,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 387,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1722,
@@ -303,7 +299,6 @@ export const PADDLING_POOL_257 = () =>
 					opponent2: null,
 					round_id: 388,
 					stage_id: 28,
-					status: 2,
 				},
 				{
 					id: 1723,
@@ -323,7 +318,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 388,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1724,
@@ -343,7 +337,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 389,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1725,
@@ -363,7 +356,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 389,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1726,
@@ -383,7 +375,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 390,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1727,
@@ -403,7 +394,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 390,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1728,
@@ -423,7 +413,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 391,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1729,
@@ -443,7 +432,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 391,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1730,
@@ -463,7 +451,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 392,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1731,
@@ -483,7 +470,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 392,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1732,
@@ -503,7 +489,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 393,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1733,
@@ -523,7 +508,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 393,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1734,
@@ -543,7 +527,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 394,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1735,
@@ -563,7 +546,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 394,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1736,
@@ -583,7 +565,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 395,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1737,
@@ -603,7 +584,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 395,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1738,
@@ -623,7 +603,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 396,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1739,
@@ -643,7 +622,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 396,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1740,
@@ -663,7 +641,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 397,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1741,
@@ -683,7 +660,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 397,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1742,
@@ -703,7 +679,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 398,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1743,
@@ -723,7 +698,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 398,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1744,
@@ -743,7 +717,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 399,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1745,
@@ -763,7 +736,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 399,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1746,
@@ -783,7 +755,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 400,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1747,
@@ -803,7 +774,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 400,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1748,
@@ -823,7 +793,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 401,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1749,
@@ -843,7 +812,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 401,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1750,
@@ -863,7 +831,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 402,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1751,
@@ -883,7 +850,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 402,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1752,
@@ -903,7 +869,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 403,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1753,
@@ -923,7 +888,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 403,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1754,
@@ -943,7 +907,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 404,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1755,
@@ -963,7 +926,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 404,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1756,
@@ -983,7 +945,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 405,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1757,
@@ -1003,7 +964,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 405,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1758,
@@ -1023,7 +983,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 406,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1759,
@@ -1043,7 +1002,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 406,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1760,
@@ -1063,7 +1021,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 407,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1761,
@@ -1083,7 +1040,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 407,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1762,
@@ -1103,7 +1059,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 408,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1763,
@@ -1123,7 +1078,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 408,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1764,
@@ -1143,7 +1097,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 409,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1765,
@@ -1163,7 +1116,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 409,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1766,
@@ -1183,7 +1135,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 410,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1767,
@@ -1203,7 +1154,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 410,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1768,
@@ -1223,7 +1173,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 411,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1769,
@@ -1243,7 +1192,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 411,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1770,
@@ -1263,7 +1211,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 412,
 					stage_id: 28,
-					status: 4,
 				},
 				{
 					id: 1771,
@@ -1283,7 +1230,6 @@ export const PADDLING_POOL_257 = () =>
 					},
 					round_id: 412,
 					stage_id: 28,
-					status: 4,
 				},
 			],
 		},
@@ -7075,7 +7021,6 @@ export const PADDLING_POOL_255 = () =>
 					opponent2: null,
 					round_id: 285,
 					stage_id: 20,
-					status: 2,
 					startedAt: null,
 				},
 				{
@@ -7096,7 +7041,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 285,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7110,7 +7054,6 @@ export const PADDLING_POOL_255 = () =>
 					opponent2: null,
 					round_id: 286,
 					stage_id: 20,
-					status: 2,
 					startedAt: null,
 				},
 				{
@@ -7131,7 +7074,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 286,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7145,7 +7087,6 @@ export const PADDLING_POOL_255 = () =>
 					opponent2: null,
 					round_id: 287,
 					stage_id: 20,
-					status: 2,
 					startedAt: null,
 				},
 				{
@@ -7166,7 +7107,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 287,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7187,7 +7127,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 288,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7208,7 +7147,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 288,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7229,7 +7167,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 289,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7250,7 +7187,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 289,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7271,7 +7207,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 290,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7292,7 +7227,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 290,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7313,7 +7247,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 291,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7334,7 +7267,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 291,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7355,7 +7287,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 292,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7376,7 +7307,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 292,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7397,7 +7327,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 293,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7418,7 +7347,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 293,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7439,7 +7367,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 294,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7460,7 +7387,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 294,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7481,7 +7407,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 295,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7502,7 +7427,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 295,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7523,7 +7447,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 296,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7544,7 +7467,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 296,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7565,7 +7487,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 297,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7586,7 +7507,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 297,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7607,7 +7527,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 298,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7628,7 +7547,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 298,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7649,7 +7567,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 299,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7670,7 +7587,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 299,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7691,7 +7607,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 300,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7712,7 +7627,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 300,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7733,7 +7647,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 301,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7754,7 +7667,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 301,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7775,7 +7687,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 302,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7796,7 +7707,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 302,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7817,7 +7727,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 303,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7838,7 +7747,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 303,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7859,7 +7767,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 304,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7880,7 +7787,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 304,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7901,7 +7807,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 305,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7922,7 +7827,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 305,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7943,7 +7847,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 306,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7964,7 +7867,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 306,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -7985,7 +7887,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 307,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8006,7 +7907,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 307,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8027,7 +7927,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 308,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8048,7 +7947,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 308,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8069,7 +7967,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 309,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8090,7 +7987,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 309,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8111,7 +8007,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 310,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8132,7 +8027,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 310,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8153,7 +8047,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 311,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 				{
@@ -8174,7 +8067,6 @@ export const PADDLING_POOL_255 = () =>
 					},
 					round_id: 311,
 					stage_id: 20,
-					status: 4,
 					startedAt: null,
 				},
 			],
@@ -13759,7 +13651,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 698,
 			position: 1,
@@ -13772,7 +13663,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 2,
 		opponent1: {
 			id: 674,
 			position: 16,
@@ -13788,7 +13678,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 697,
 			position: 8,
@@ -13801,7 +13690,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 709,
 			position: 9,
@@ -13814,7 +13702,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 724,
 			position: 4,
@@ -13827,7 +13714,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 719,
 			position: 13,
@@ -13840,7 +13726,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 713,
 			position: 5,
@@ -13853,7 +13738,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 702,
 			position: 12,
@@ -13866,7 +13750,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 718,
 			position: 2,
@@ -13879,7 +13762,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 2,
 		opponent1: {
 			id: 720,
 			position: 15,
@@ -13895,7 +13777,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 722,
 			position: 7,
@@ -13908,7 +13789,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 673,
 			position: 10,
@@ -13921,7 +13801,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 716,
 			position: 3,
@@ -13934,7 +13813,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 715,
 			position: 14,
@@ -13947,7 +13825,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 677,
 			position: 6,
@@ -13960,7 +13837,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 0,
-		status: 0,
 		opponent1: {
 			id: 678,
 			position: 11,
@@ -13973,7 +13849,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 1,
 		opponent1: {
 			id: 698,
 		},
@@ -13987,7 +13862,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 2,
 		opponent1: {
 			id: 697,
 		},
@@ -14001,7 +13875,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 2,
 		opponent1: {
 			id: 724,
 		},
@@ -14015,7 +13888,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 2,
 		opponent1: {
 			id: 713,
 		},
@@ -14029,7 +13901,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 1,
 		opponent1: {
 			id: 718,
 		},
@@ -14043,7 +13914,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 2,
 		opponent1: {
 			id: 722,
 		},
@@ -14057,7 +13927,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 2,
 		opponent1: {
 			id: 716,
 		},
@@ -14071,7 +13940,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 1,
-		status: 2,
 		opponent1: {
 			id: 677,
 		},
@@ -14085,7 +13953,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 2,
-		status: 0,
 		opponent1: {
 			id: null,
 		},
@@ -14099,7 +13966,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 2,
-		status: 0,
 		opponent1: {
 			id: null,
 		},
@@ -14113,7 +13979,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 2,
-		status: 0,
 		opponent1: {
 			id: null,
 		},
@@ -14127,7 +13992,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 2,
-		status: 0,
 		opponent1: {
 			id: null,
 		},
@@ -14141,7 +14005,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 3,
-		status: 0,
 		opponent1: {
 			id: null,
 		},
@@ -14155,7 +14018,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 3,
-		status: 0,
 		opponent1: {
 			id: null,
 		},
@@ -14169,7 +14031,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 0,
 		round_id: 4,
-		status: 0,
 		opponent1: {
 			id: null,
 		},
@@ -14183,7 +14044,6 @@ export const PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES = () => [
 		stage_id: 0,
 		group_id: 1,
 		round_id: 5,
-		status: 0,
 		opponent1: {
 			id: null,
 			position: 1,
@@ -14338,7 +14198,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1235,
@@ -14358,7 +14217,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1236,
@@ -14378,7 +14236,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1237,
@@ -14398,7 +14255,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1238,
@@ -14418,7 +14274,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1239,
@@ -14438,7 +14293,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1240,
@@ -14458,7 +14312,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1241,
@@ -14478,7 +14331,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1242,
@@ -14498,7 +14350,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1243,
@@ -14518,7 +14369,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1244,
@@ -14538,7 +14388,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1245,
@@ -14558,7 +14407,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1246,
@@ -14578,7 +14426,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1247,
@@ -14598,7 +14445,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1248,
@@ -14618,7 +14464,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1249,
@@ -14638,7 +14483,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 238,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1250,
@@ -14656,7 +14500,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1251,
@@ -14674,7 +14517,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1252,
@@ -14692,7 +14534,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1253,
@@ -14710,7 +14551,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1254,
@@ -14728,7 +14568,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1255,
@@ -14746,7 +14585,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1256,
@@ -14764,7 +14602,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1257,
@@ -14782,7 +14619,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 239,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1258,
@@ -14800,7 +14636,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 240,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1259,
@@ -14818,7 +14653,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 240,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1260,
@@ -14836,7 +14670,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 240,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1261,
@@ -14854,7 +14687,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 240,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1262,
@@ -14872,7 +14704,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 241,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1263,
@@ -14890,7 +14721,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 241,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1264,
@@ -14908,7 +14738,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 242,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1265,
@@ -14928,7 +14757,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1266,
@@ -14948,7 +14776,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1267,
@@ -14968,7 +14795,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1268,
@@ -14988,7 +14814,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1269,
@@ -15008,7 +14833,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1270,
@@ -15028,7 +14852,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1271,
@@ -15048,7 +14871,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1272,
@@ -15068,7 +14890,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 243,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1273,
@@ -15087,7 +14908,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1274,
@@ -15106,7 +14926,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1275,
@@ -15125,7 +14944,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1276,
@@ -15144,7 +14962,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1277,
@@ -15163,7 +14980,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1278,
@@ -15182,7 +14998,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1279,
@@ -15201,7 +15016,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1280,
@@ -15220,7 +15034,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 244,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1281,
@@ -15238,7 +15051,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 245,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1282,
@@ -15256,7 +15068,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 245,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1283,
@@ -15274,7 +15085,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 245,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1284,
@@ -15292,7 +15102,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 245,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1285,
@@ -15311,7 +15120,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 246,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1286,
@@ -15330,7 +15138,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 246,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1287,
@@ -15349,7 +15156,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 246,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1288,
@@ -15368,7 +15174,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 246,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1289,
@@ -15386,7 +15191,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 247,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1290,
@@ -15404,7 +15208,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 247,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1291,
@@ -15423,7 +15226,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 248,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1292,
@@ -15442,7 +15244,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 248,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1293,
@@ -15460,7 +15261,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 249,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1294,
@@ -15479,7 +15279,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 250,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1295,
@@ -15498,7 +15297,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 251,
 					stage_id: 16,
-					status: 4,
 				},
 				{
 					id: 1296,
@@ -15512,7 +15310,6 @@ export const IN_THE_ZONE_32 = ({
 					},
 					round_id: 252,
 					stage_id: 16,
-					status: 2,
 				},
 			],
 		},

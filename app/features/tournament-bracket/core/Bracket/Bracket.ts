@@ -74,6 +74,7 @@ export abstract class Bracket {
 	settings;
 	requiresCheckIn;
 	startTime;
+	private _matchStatuses: Map<number, Engine.MatchStatus> | undefined;
 
 	constructor({
 		id,
@@ -434,6 +435,23 @@ export abstract class Bracket {
 				name,
 			};
 		});
+	}
+
+	/** Statuses of every match of the bracket, keyed by match id. */
+	matchStatuses() {
+		if (!this._matchStatuses) {
+			this._matchStatuses = Engine.matchStatuses(this.data);
+		}
+
+		return this._matchStatuses;
+	}
+
+	/** Status of one match of the bracket. */
+	matchStatus(matchId: number) {
+		const status = this.matchStatuses().get(matchId);
+		invariant(status, `Match not found: ${matchId}`);
+
+		return status;
 	}
 
 	/**

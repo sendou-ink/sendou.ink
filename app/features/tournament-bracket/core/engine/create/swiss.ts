@@ -6,7 +6,6 @@ import type {
 	MatchData,
 	ResolvedCreateBracketInput,
 } from "../types";
-import { MatchStatus } from "../types";
 
 /**
  * Creates a Swiss bracket data set: all rounds up front, matches for round 1 only.
@@ -107,7 +106,6 @@ function firstRoundMatches({
 				opponent2: {
 					id: lower,
 				},
-				status: MatchStatus.Ready,
 			});
 		}
 
@@ -122,7 +120,6 @@ function firstRoundMatches({
 					id: bye,
 				},
 				opponent2: null,
-				status: MatchStatus.Ready,
 			});
 		}
 	}

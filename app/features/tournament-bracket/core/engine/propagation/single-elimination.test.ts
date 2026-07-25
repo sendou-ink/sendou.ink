@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { TournamentMatchStatus } from "~/db/tables";
 import { EngineBracket } from "../test-utils";
 
 const bracket = new EngineBracket();
@@ -30,8 +29,8 @@ describe("Previous and next match update", () => {
 
 		expect(bracket.match(3).opponent1?.id).toBe(bracket.match(0).opponent2?.id);
 		expect(bracket.match(3).opponent2?.id).toBe(bracket.match(1).opponent1?.id);
-		expect(bracket.match(2).status).toBe(TournamentMatchStatus.Ready);
-		expect(bracket.match(3).status).toBe(TournamentMatchStatus.Ready);
+		expect(bracket.matchStatus(2)).toBe("STARTED");
+		expect(bracket.matchStatus(3)).toBe("STARTED");
 	});
 
 	test("should play both the final and consolation final in parallel", () => {
@@ -59,8 +58,8 @@ describe("Previous and next match update", () => {
 			opponent2: { score: 9 },
 		});
 
-		expect(bracket.match(2).status).toBe(TournamentMatchStatus.Running);
-		expect(bracket.match(3).status).toBe(TournamentMatchStatus.Ready);
+		expect(bracket.matchStatus(2)).toBe("STARTED");
+		expect(bracket.matchStatus(3)).toBe("STARTED");
 
 		bracket.updateMatch({
 			id: 3, // Consolation final
@@ -68,8 +67,8 @@ describe("Previous and next match update", () => {
 			opponent2: { score: 9 },
 		});
 
-		expect(bracket.match(2).status).toBe(TournamentMatchStatus.Running);
-		expect(bracket.match(3).status).toBe(TournamentMatchStatus.Running);
+		expect(bracket.matchStatus(2)).toBe("STARTED");
+		expect(bracket.matchStatus(3)).toBe("STARTED");
 
 		bracket.updateMatch({
 			id: 3, // Consolation final
@@ -77,7 +76,7 @@ describe("Previous and next match update", () => {
 			opponent2: { score: 9 },
 		});
 
-		expect(bracket.match(2).status).toBe(TournamentMatchStatus.Running);
+		expect(bracket.matchStatus(2)).toBe("STARTED");
 
 		bracket.updateMatch({
 			id: 2, // Final

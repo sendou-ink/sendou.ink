@@ -9,13 +9,13 @@ import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
+import { matchStatuses } from "./core/engine/status";
 import type {
 	BracketData,
+	EngineResult,
 	GeneratedRound,
-	MatchData,
 	ParticipantResult,
 } from "./core/engine/types";
-import { MatchStatus as MatchStatusValues } from "./core/engine/types";
 
 type DbOrTrx = Kysely<DB> | Transaction<DB>;
 
@@ -101,7 +101,6 @@ export async function findByTournamentId(
 						"TournamentMatch.groupId as group_id",
 						"TournamentMatch.roundId as round_id",
 						"TournamentMatch.number",
-						"TournamentMatch.status",
 						"TournamentMatch.startedAt",
 						// totalKos is re-aggregated fresh from the game results; the
 						// totalKos/totalPoints that old write paths persisted into the
@@ -202,6 +201,8 @@ export function insertBracket(args: {
 			roundIdMapping.set(round.id, inserted.id);
 		}
 
+		const statuses = matchStatuses(args.bracket);
+
 		for (const match of args.bracket.match) {
 			await trx
 				.insertInto("TournamentMatch")
@@ -210,11 +211,13 @@ export function insertBracket(args: {
 					groupId: groupIdMapping.get(match.group_id)!,
 					roundId: roundIdMapping.get(match.round_id)!,
 					number: match.number,
-					status: match.status,
 					opponentOne: serializeOpponent(match.opponent1),
 					opponentTwo: serializeOpponent(match.opponent2),
 					chatCode: shortNanoid(),
-					startedAt: null,
+					startedAt:
+						statuses.get(match.id) === "STARTED"
+							? databaseTimestampNow()
+							: null,
 				})
 				.execute();
 		}
@@ -224,22 +227,73 @@ export function insertBracket(args: {
 }
 
 /**
- * UPDATEs the given matches' status/opponentOne/opponentTwo. Called with
- * EngineResult.changedMatches, inside the caller's transaction.
+ * UPDATEs the opponents of the changed matches and keeps startedAt in sync with
+ * the statuses that the new state implies. Called inside the caller's
+ * transaction with the bracket data the operation was computed from.
  */
 export async function applyMatchChanges(
-	changes: MatchData[],
+	args: { previousData: BracketData; result: EngineResult },
 	trx: DbOrTrx = db,
 ): Promise<void> {
-	for (const match of changes) {
+	for (const match of args.result.changedMatches) {
 		await trx
 			.updateTable("TournamentMatch")
 			.set({
-				status: match.status,
 				opponentOne: serializeOpponent(match.opponent1),
 				opponentTwo: serializeOpponent(match.opponent2),
 			})
 			.where("id", "=", match.id)
+			.execute();
+	}
+
+	await syncStartedAt(args.previousData, args.result.data, trx);
+}
+
+/**
+ * A match starts when it stops being pending, which can also happen as a side
+ * effect of another match's result (the teams of a round robin round becoming
+ * free, an opponent advancing). Matches that were already started keep the
+ * timestamp they got, and one that goes back to pending loses it.
+ */
+async function syncStartedAt(
+	previousData: BracketData,
+	data: BracketData,
+	trx: DbOrTrx,
+): Promise<void> {
+	const previousStatuses = matchStatuses(previousData);
+	const statuses = matchStatuses(data);
+
+	const wasPending = (matchId: number) =>
+		previousStatuses.get(matchId) === "PENDING";
+	const isPending = (matchId: number) => statuses.get(matchId) === "PENDING";
+
+	const startedMatchIds = data.match
+		.filter(
+			(match) =>
+				wasPending(match.id) && !isPending(match.id) && !match.startedAt,
+		)
+		.map((match) => match.id);
+
+	const pendingMatchIds = data.match
+		.filter(
+			(match) =>
+				!wasPending(match.id) && isPending(match.id) && match.startedAt,
+		)
+		.map((match) => match.id);
+
+	if (startedMatchIds.length > 0) {
+		await trx
+			.updateTable("TournamentMatch")
+			.set({ startedAt: databaseTimestampNow() })
+			.where("id", "in", startedMatchIds)
+			.execute();
+	}
+
+	if (pendingMatchIds.length > 0) {
+		await trx
+			.updateTable("TournamentMatch")
+			.set({ startedAt: null })
+			.where("id", "in", pendingMatchIds)
 			.execute();
 	}
 }
@@ -264,10 +318,14 @@ export async function insertRoundMatches(
 				groupId: args.round.groupId,
 				roundId: args.round.roundId,
 				number: match.number,
-				status: MatchStatusValues.Ready,
 				opponentOne: serializeOpponent(match.opponent1),
 				opponentTwo: serializeOpponent(match.opponent2),
 				chatCode: shortNanoid(),
+				// swiss rounds are only generated once they can be played
+				startedAt:
+					match.opponent1?.id && match.opponent2?.id
+						? databaseTimestampNow()
+						: null,
 			})),
 		)
 		.execute();

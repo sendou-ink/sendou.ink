@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { TournamentMatchStatus } from "~/db/tables";
 import { EngineBracket } from "../test-utils";
 
 const bracket = new EngineBracket();
@@ -72,7 +71,7 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		expect(matchSemiLB.opponent2?.id).toBe(loserId);
 		expect(matchSemiLB.opponent2?.result).toBe("win");
-		expect(matchSemiLB.status).toBe(TournamentMatchStatus.Completed);
+		expect(bracket.matchStatus(3)).toBe("COMPLETED");
 
 		expect(
 			bracket.match(4).opponent2?.id, // Propagated winner in LB Final because of the BYE.
@@ -83,7 +82,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		matchSemiLB = bracket.match(3);
 		expect(matchSemiLB.opponent2?.id).toBeNull();
 		expect(matchSemiLB.opponent2?.result).toBeUndefined();
-		expect(matchSemiLB.status).toBe(TournamentMatchStatus.Locked);
+		expect(bracket.matchStatus(3)).toBe("PENDING");
 
 		expect(bracket.match(4).opponent2?.id).toBeNull(); // Propagated winner is removed.
 	});
@@ -143,8 +142,8 @@ describe("Previous and next match update in double elimination stage", () => {
 			bracket.match(6).opponent2?.id, // Determined opponent for the grand final (round 2)
 		).toBe(bracket.match(1).opponent2?.id); // Winner of LB Final
 
-		expect(bracket.match(5).status).toBe(TournamentMatchStatus.Completed); // Grand final (round 1)
-		expect(bracket.match(6).status).toBe(TournamentMatchStatus.Ready); // Grand final (round 2)
+		expect(bracket.matchStatus(5)).toBe("COMPLETED"); // Grand final (round 1)
+		expect(bracket.matchStatus(6)).toBe("STARTED"); // Grand final (round 2)
 
 		bracket.updateMatch({
 			id: 6, // Grand Final round 2
@@ -205,7 +204,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		bracket.updateMatch({ id: 15, opponent1: { result: "win" } }); // LB 1.1
 		bracket.updateMatch({ id: 18, opponent1: { result: "win" } }); // LB 1.4
 
-		expect(bracket.match(8).status).toBe(TournamentMatchStatus.Completed); // WB 2.1
+		expect(bracket.matchStatus(8)).toBe("COMPLETED"); // WB 2.1
 	});
 
 	test("should send the losers to the right LB matches in round 1", () => {

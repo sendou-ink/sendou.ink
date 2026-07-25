@@ -1,11 +1,7 @@
 import { sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import {
-	type DB,
-	TournamentMatchStatus,
-	type TournamentRoundMaps,
-} from "~/db/tables";
+import type { DB, TournamentRoundMaps } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { customAvatarUrl } from "~/utils/kysely.server";
@@ -48,7 +44,6 @@ export async function findMatchById(id: number) {
 			"TournamentMatch.opponentTwo",
 			"TournamentMatch.chatCode",
 			"TournamentMatch.startedAt",
-			"TournamentMatch.status",
 			"Tournament.mapPickingStyle",
 			"TournamentRound.id as roundId",
 			"TournamentRound.maps as roundMaps",
@@ -454,7 +449,12 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 				eb(opponentTwoId, "=", tournamentTeamId),
 			]),
 		)
-		.where("TournamentMatch.status", ">=", TournamentMatchStatus.Completed)
+		.where((eb) =>
+			eb.or([
+				eb(opponentOneResult, "is not", null),
+				eb(opponentTwoResult, "is not", null),
+			]),
+		)
 		.where((eb) =>
 			eb.exists(
 				eb

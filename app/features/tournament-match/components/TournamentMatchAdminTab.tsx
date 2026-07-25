@@ -14,9 +14,9 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { Label } from "~/components/Label";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { SubmitButton } from "~/components/SubmitButton";
-import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
@@ -78,7 +78,7 @@ function AdminCastSection({
 	matchStatus,
 }: {
 	matchId: number;
-	matchStatus: number;
+	matchStatus: MatchStatus;
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
@@ -95,10 +95,7 @@ function AdminCastSection({
 		castedMatchesInfo?.lockedMatches?.some((lm) => lm.matchId === matchId) ??
 		false;
 
-	const canLock =
-		(matchStatus === TournamentMatchStatus.Locked ||
-			matchStatus === TournamentMatchStatus.Waiting) &&
-		!isLocked;
+	const canLock = matchStatus === "PENDING" && !isLocked;
 	const canUnlock = !isMatchStarted && isLocked;
 
 	return (

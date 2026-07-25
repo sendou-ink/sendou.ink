@@ -13,7 +13,6 @@ import type {
 	StageSettings,
 	StandardBracketResults,
 } from "../types";
-import { MatchStatus } from "../types";
 import {
 	defaultMinorOrdering,
 	ordering,
@@ -230,7 +229,7 @@ export class StageCreator {
 		});
 
 		for (let i = 0; i < matchCount; i++) {
-			this.createMatch(stageId, groupId, roundId, i + 1, roundNumber, duels[i]);
+			this.createMatch(stageId, groupId, roundId, i + 1, duels[i]);
 		}
 	}
 
@@ -242,7 +241,6 @@ export class StageCreator {
 		groupId: number,
 		roundId: number,
 		matchNumber: number,
-		roundNumber: number,
 		opponents: Duel,
 	): void {
 		const opponent1 = helpers.toResultWithPosition(opponents[0]);
@@ -256,24 +254,11 @@ export class StageCreator {
 		)
 			return;
 
-		let status = helpers.getMatchStatus(opponents);
-
-		// In round-robin, only the first round is ready to play at the beginning.
-		// other matches have teams set but they are busy playing the first round.
-		if (
-			this.input.type === "round_robin" &&
-			roundNumber > 1 &&
-			!this.settings.independentRounds
-		) {
-			status = MatchStatus.Locked;
-		}
-
 		this.insertMatch({
 			number: matchNumber,
 			stage_id: stageId,
 			group_id: groupId,
 			round_id: roundId,
-			status,
 			opponent1,
 			opponent2,
 		});

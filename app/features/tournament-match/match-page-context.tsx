@@ -1,7 +1,6 @@
 import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { resolveRoomPass } from "~/components/match-page/utils";
-import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
@@ -102,9 +101,7 @@ export function MatchPageProvider({
 		scores,
 	});
 
-	const waitingForPreviousMatch =
-		data.match.status === TournamentMatchStatus.Locked ||
-		data.match.status === TournamentMatchStatus.Waiting;
+	const waitingForPreviousMatch = data.match.status === "PENDING";
 
 	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 

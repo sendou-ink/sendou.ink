@@ -13,7 +13,6 @@ import type {
 	StageData,
 	StageType,
 } from "./types";
-import { MatchStatus } from "./types";
 
 /**
  * Makes a list of rounds containing the matches of a round-robin group.
@@ -421,11 +420,11 @@ export function getOtherSide(side: Side): Side {
 }
 
 /**
- * Checks if a match is started.
+ * Checks if a match has had at least one game reported.
  *
  * @param match Partial match results.
  */
-function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
+export function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
 	return (
 		match.opponent1?.score !== undefined || match.opponent2?.score !== undefined
 	);
@@ -436,7 +435,7 @@ function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
  *
  * @param match Partial match results.
  */
-function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
+export function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
 	return isMatchByeCompleted(match) || isMatchWinCompleted(match);
 }
 
@@ -470,17 +469,6 @@ export function isMatchByeCompleted(match: DeepPartial<MatchResults>): boolean {
 }
 
 /**
- * Checks if a match's results can't be updated.
- *
- * @param match The match to check.
- */
-export function isMatchUpdateLocked(match: MatchResults): boolean {
-	return (
-		match.status === MatchStatus.Locked || match.status === MatchStatus.Waiting
-	);
-}
-
-/**
  * Indicates whether a match has at least one BYE or not.
  *
  * @param match Partial match results.
@@ -490,93 +478,38 @@ export function hasBye(match: DeepPartial<MatchResults>): boolean {
 }
 
 /**
- * Returns the status of a match based on the opponents of a match.
- *
- * @param opponents The opponents of a match.
- */
-export function getMatchStatus(opponents: Duel): MatchStatus;
-
-/**
- * Returns the status of a match based on the results of a match.
- *
- * @param match Partial match results.
- */
-export function getMatchStatus(match: MatchResults): MatchStatus;
-
-/**
- * Returns the status of a match based on information about it.
- *
- * @param arg The opponents or partial results of the match.
- */
-export function getMatchStatus(arg: Duel | MatchResults): MatchStatus {
-	const match = Array.isArray(arg)
-		? {
-				opponent1: arg[0],
-				opponent2: arg[1],
-			}
-		: arg;
-
-	if (hasBye(match))
-		// At least one BYE.
-		return MatchStatus.Locked;
-
-	if (match.opponent1?.id === null && match.opponent2?.id === null)
-		// Two TBD opponents.
-		return MatchStatus.Locked;
-
-	if (match.opponent1?.id === null || match.opponent2?.id === null)
-		// One TBD opponent.
-		return MatchStatus.Waiting;
-
-	if (isMatchCompleted(match)) return MatchStatus.Completed;
-
-	if (isMatchStarted(match)) return MatchStatus.Running;
-
-	return MatchStatus.Ready;
-}
-
-/**
  * Updates a match results based on an input.
  *
  * @param stored A reference to what will be updated in the storage.
  * @param match Input of the update.
+ * @returns `true` if the match was completed or un-completed by the update.
  */
 export function setMatchResults(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
-): {
-	statusChanged: boolean;
-	resultChanged: boolean;
-} {
+): boolean {
 	const completed = isMatchCompleted(match);
 	const currentlyCompleted = isMatchCompleted(stored);
 
 	setExtraFields(stored, match);
 	handleOpponentsInversion(stored, match);
+	setScores(stored, match);
 
-	const statusChanged = setScores(stored, match);
-
-	if (completed && currentlyCompleted) {
-		// Ensure everything is good.
+	if (completed) {
 		setCompleted(stored, match);
-		return { statusChanged: false, resultChanged: true };
+		return true;
 	}
 
-	if (completed && !currentlyCompleted) {
-		setCompleted(stored, match);
-		return { statusChanged: true, resultChanged: true };
-	}
-
-	if (!completed && currentlyCompleted) {
+	if (currentlyCompleted) {
 		resetMatchResults(stored);
-		return { statusChanged: true, resultChanged: true };
+		return true;
 	}
 
-	return { statusChanged, resultChanged: false };
+	return false;
 }
 
 /**
- * Resets the results of a match. (status, forfeit, result)
+ * Resets the results of a match. (forfeit, result)
  *
  * @param stored A reference to what will be updated in the storage.
  */
@@ -588,8 +521,6 @@ export function resetMatchResults(stored: MatchResults): void {
 	if (stored.opponent2) {
 		stored.opponent2.result = undefined;
 	}
-
-	stored.status = getMatchStatus(stored);
 }
 
 /**
@@ -626,7 +557,6 @@ function setExtraFields(
 		"stage_id",
 		"group_id",
 		"round_id",
-		"status",
 		"opponent1",
 		"opponent2",
 	];
@@ -653,19 +583,6 @@ function setExtraFields(
 function getOpponentId(match: MatchResults, side: Side): number | null {
 	const opponent = match[side];
 	return opponent?.id ?? null;
-}
-
-/**
- * Gets the origin position of a side of a match.
- *
- * @param match The match.
- * @param side The side.
- */
-export function getOriginPosition(match: MatchData, side: Side): number {
-	const matchNumber = match[side]?.position;
-	if (matchNumber === undefined) throw Error("Position is undefined.");
-
-	return matchNumber;
 }
 
 /**
@@ -740,8 +657,6 @@ export function setNextOpponent(
 		id: getOpponentId(match!, currentSide!), // This implementation of SetNextOpponent always has those arguments.
 		position: nextMatch[nextSide]?.position, // Keep position.
 	};
-
-	nextMatch.status = getMatchStatus(nextMatch);
 }
 
 /**
@@ -756,8 +671,6 @@ export function resetNextOpponent(nextMatch: MatchData, nextSide: Side): void {
 		id: null,
 		position: nextMatch[nextSide]?.position, // Keep position.
 	};
-
-	nextMatch.status = MatchStatus.Locked;
 }
 
 /**
@@ -803,29 +716,16 @@ function invertOpponents(match: DeepPartial<MatchResults>): void {
  *
  * @param stored A reference to what will be updated in the storage.
  * @param match Input of the update.
- * @returns `true` if the status of the match changed, `false` otherwise.
  */
 function setScores(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
-): boolean {
-	// Skip if no score update.
-	if (
-		match.opponent1?.score === stored.opponent1?.score &&
-		match.opponent2?.score === stored.opponent2?.score
-	)
-		return false;
-
-	const oldStatus = stored.status;
-	stored.status = MatchStatus.Running;
-
+): void {
 	if (match.opponent1 && stored.opponent1)
 		stored.opponent1.score = match.opponent1.score;
 
 	if (match.opponent2 && stored.opponent2)
 		stored.opponent2.score = match.opponent2.score;
-
-	return stored.status !== oldStatus;
 }
 
 /**
@@ -838,8 +738,6 @@ function setCompleted(
 	stored: MatchResults,
 	match: DeepPartial<MatchResults>,
 ): void {
-	stored.status = MatchStatus.Completed;
-
 	setResults(stored, match, "win", "loss");
 	setResults(stored, match, "loss", "win");
 

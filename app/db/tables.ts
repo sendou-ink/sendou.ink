@@ -646,23 +646,6 @@ export interface TournamentGroup {
 	stageId: number;
 }
 
-export const TournamentMatchStatus = {
-	/** The two matches leading to this one are not completed yet. */
-	Locked: 0,
-
-	/** One participant is ready and waiting for the other one. */
-	Waiting: 1,
-
-	/** Both participants are ready to start. */
-	Ready: 2,
-
-	/** The match is running. */
-	Running: 3,
-
-	/** The match is completed. */
-	Completed: 4,
-} as const;
-
 export interface TournamentMatch {
 	chatCode: string | null;
 	groupId: number;
@@ -672,9 +655,7 @@ export interface TournamentMatch {
 	opponentTwo: JSONColumnTypeNullable<ParticipantResult>;
 	roundId: number;
 	stageId: number;
-	status: (typeof TournamentMatchStatus)[keyof typeof TournamentMatchStatus];
-	// set when match becomes ongoing (both teams ready and no earlier matches for either team)
-	// for swiss: set at creation time
+	// set when the match becomes playable i.e. its status is "STARTED"
 	startedAt: number | null;
 }
 

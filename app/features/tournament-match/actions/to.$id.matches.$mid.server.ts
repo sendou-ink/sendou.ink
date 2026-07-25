@@ -1,7 +1,7 @@
 import type { Transaction } from "kysely";
 import type { ActionFunction } from "react-router";
 import { db, sql } from "~/db/sql";
-import { type DB, TournamentMatchStatus } from "~/db/tables";
+import type { DB } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -76,8 +76,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		);
 
 		errorToastIfFalsy(
-			match.status !== TournamentMatchStatus.Locked &&
-				match.status !== TournamentMatchStatus.Waiting,
+			tournament.matchStatusById(match.id) !== "PENDING",
 			"Match is locked, waiting for teams to finish their previous matches",
 		);
 
@@ -665,11 +664,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid Twitch account",
 			);
 
-			// can't lock if match status is not Locked or Waiting (team(s) busy with previous match), let's update their view to reflect that
-			if (
-				match.status !== TournamentMatchStatus.Locked &&
-				match.status !== TournamentMatchStatus.Waiting
-			) {
+			// can't lock if the match can already be played, let's update their view to reflect that
+			if (tournament.matchStatusById(match.id) !== "PENDING") {
 				return null;
 			}
 
@@ -888,7 +884,7 @@ async function executeBracketOperation<T extends Engine.EngineResult>({
 		);
 		result = operation(bracketData);
 
-		let changedMatches = result.changedMatches;
+		let applied: Engine.EngineResult = result;
 
 		const shouldEndDroppedTeamMatches =
 			typeof endDroppedTeams === "function"
@@ -900,10 +896,19 @@ async function executeBracketOperation<T extends Engine.EngineResult>({
 				data: result.data,
 			});
 			endedMatchIds = droppedResult.endedMatchIds;
-			changedMatches = [...changedMatches, ...droppedResult.changedMatches];
+			applied = {
+				data: droppedResult.data,
+				changedMatches: [
+					...result.changedMatches,
+					...droppedResult.changedMatches,
+				],
+			};
 		}
 
-		await BracketRepository.applyMatchChanges(changedMatches, trx);
+		await BracketRepository.applyMatchChanges(
+			{ previousData: bracketData, result: applied },
+			trx,
+		);
 		await inTransaction?.(result, trx);
 	});
 

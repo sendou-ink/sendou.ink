@@ -3,6 +3,7 @@
 
 import { createResolved } from "./create";
 import * as Engine from "./index";
+import type { MatchStatus } from "./status";
 import type {
 	BracketData,
 	GroupData,
@@ -17,7 +18,6 @@ interface UpdateMatchInput {
 	id: number;
 	opponent1?: Partial<ParticipantResult>;
 	opponent2?: Partial<ParticipantResult>;
-	status?: number;
 }
 
 export class EngineBracket {
@@ -130,6 +130,10 @@ export class EngineBracket {
 		const match = this.currentData().match.find((m) => m.id === id);
 		if (!match) throw Error(`Match ${id} not found`);
 		return match;
+	}
+
+	matchStatus(id: number): MatchStatus {
+		return Engine.matchStatus(this.currentData(), id);
 	}
 
 	private currentData(): BracketData {

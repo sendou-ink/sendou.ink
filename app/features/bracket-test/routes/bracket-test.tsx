@@ -268,7 +268,6 @@ function markMatchesCompleted(
 
 		match.opponent1 = { ...match.opponent1, score: 2, result: "win" };
 		match.opponent2 = { ...match.opponent2, score: 0, result: "loss" };
-		match.status = 4;
 	}
 }
 

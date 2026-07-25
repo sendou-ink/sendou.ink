@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import { TournamentMatchStatus } from "~/db/tables";
 import { EngineBracket } from "../test-utils";
 
 const bracket = new EngineBracket();
@@ -17,8 +16,7 @@ describe("Update matches", () => {
 	});
 
 	test("should start a match", () => {
-		const before = bracket.match(0);
-		expect(before.status).toBe(TournamentMatchStatus.Ready);
+		expect(bracket.matchStatus(0)).toBe("STARTED");
 
 		bracket.updateMatch({
 			id: 0,
@@ -27,10 +25,11 @@ describe("Update matches", () => {
 		});
 
 		const after = bracket.match(0);
-		expect(after.status).toBe(TournamentMatchStatus.Running);
+		expect(bracket.matchStatus(0)).toBe("STARTED");
+		expect(after.opponent1?.score).toBe(0);
 	});
 
-	test("should update the scores for a match and set it to running", () => {
+	test("should update the scores for a match", () => {
 		bracket.updateMatch({
 			id: 0,
 			opponent1: { score: 2 },
@@ -38,7 +37,7 @@ describe("Update matches", () => {
 		});
 
 		const after = bracket.match(0);
-		expect(after.status).toBe(TournamentMatchStatus.Running);
+		expect(bracket.matchStatus(0)).toBe("STARTED");
 		expect(after.opponent1?.score).toBe(2);
 
 		// Id should stay. It shouldn't be overwritten.
@@ -55,7 +54,7 @@ describe("Update matches", () => {
 		});
 
 		const after = bracket.match(0);
-		expect(after.status).toBe(TournamentMatchStatus.Completed);
+		expect(bracket.matchStatus(0)).toBe("COMPLETED");
 		expect(after.opponent1?.result).toBe("win");
 		expect(after.opponent2?.result).toBe("loss");
 	});
@@ -74,12 +73,12 @@ describe("Update matches", () => {
 		});
 
 		const after = bracket.match(0);
-		expect(after.status).toBe(TournamentMatchStatus.Completed);
+		expect(bracket.matchStatus(0)).toBe("COMPLETED");
 		expect(after.opponent1?.result).toBe("loss");
 		expect(after.opponent2?.result).toBe("win");
 
 		const nextMatch = bracket.match(8);
-		expect(nextMatch.status).toBe(TournamentMatchStatus.Waiting);
+		expect(bracket.matchStatus(8)).toBe("PENDING");
 		expect(nextMatch.opponent1?.id).toBe(16);
 	});
 
@@ -89,22 +88,17 @@ describe("Update matches", () => {
 			opponent1: { result: "win" },
 		});
 
-		expect(bracket.match(8).status).toBe(TournamentMatchStatus.Waiting);
+		expect(bracket.matchStatus(8)).toBe("PENDING");
 
 		bracket.updateMatch({
 			id: 1,
 			opponent1: { result: "win" },
 		});
 
-		expect(bracket.match(8).status).toBe(TournamentMatchStatus.Ready);
+		expect(bracket.matchStatus(8)).toBe("STARTED");
 	});
 
 	test("should end the match by setting winner and loser", () => {
-		bracket.updateMatch({
-			id: 0,
-			status: TournamentMatchStatus.Running,
-		});
-
 		bracket.updateMatch({
 			id: 0,
 			opponent1: { result: "win" },
@@ -112,7 +106,7 @@ describe("Update matches", () => {
 		});
 
 		const after = bracket.match(0);
-		expect(after.status).toBe(TournamentMatchStatus.Completed);
+		expect(bracket.matchStatus(0)).toBe("COMPLETED");
 		expect(after.opponent1?.result).toBe("win");
 		expect(after.opponent2?.result).toBe("loss");
 	});
@@ -127,7 +121,7 @@ describe("Update matches", () => {
 		bracket.resetMatchResults(0);
 
 		const after = bracket.match(0);
-		expect(after.status).toBe(TournamentMatchStatus.Ready);
+		expect(bracket.matchStatus(0)).toBe("STARTED");
 		expect(after.opponent1?.result).toBeFalsy();
 		expect(after.opponent2?.result).toBeFalsy();
 	});
@@ -142,7 +136,7 @@ describe("Update matches", () => {
 		bracket.resetMatchResults(0);
 
 		const after = bracket.match(0);
-		expect(after.status).toBe(TournamentMatchStatus.Running);
+		expect(bracket.matchStatus(0)).toBe("STARTED");
 		expect(after.opponent1?.result).toBeFalsy();
 		expect(after.opponent2?.result).toBeFalsy();
 	});
@@ -156,7 +150,7 @@ describe("Update matches", () => {
 		});
 
 		const after = bracket.match(1);
-		expect(after.status).toBe(TournamentMatchStatus.Running);
+		expect(bracket.matchStatus(1)).toBe("STARTED");
 		expect(after.opponent1?.score).toBe(1);
 		expect(after.opponent2?.score).toBeFalsy();
 	});
@@ -169,7 +163,7 @@ describe("Update matches", () => {
 		});
 
 		const after = bracket.match(1);
-		expect(after.status).toBe(TournamentMatchStatus.Completed);
+		expect(bracket.matchStatus(1)).toBe("COMPLETED");
 
 		expect(after.opponent1?.result).toBe("loss");
 		expect(after.opponent1?.score).toBe(6);

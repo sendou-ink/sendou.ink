@@ -250,7 +250,7 @@ describe("Tournament match page", () => {
 			await setActiveRosterAction();
 			await db
 				.updateTable("TournamentMatch")
-				.set({ status: 0 })
+				.set({ opponentOne: JSON.stringify({ id: null }) })
 				.where("id", "=", 1)
 				.execute();
 

@@ -58,10 +58,10 @@ describe("Update scores in a round-robin stage", () => {
 		// Round 3: Match 4 (1 vs 4), Match 5 (2 vs 3)
 
 		// Initially, only round 1 matches should be ready
-		expect(bracket.match(0).status).toBe(2); // Ready (1 vs 2)
-		expect(bracket.match(1).status).toBe(2); // Ready (3 vs 4)
-		expect(bracket.match(2).status).toBe(0); // Locked (1 vs 3)
-		expect(bracket.match(3).status).toBe(0); // Locked (2 vs 4)
+		expect(bracket.matchStatus(0)).toBe("STARTED"); // Ready (1 vs 2)
+		expect(bracket.matchStatus(1)).toBe("STARTED"); // Ready (3 vs 4)
+		expect(bracket.matchStatus(2)).toBe("PENDING"); // Locked (1 vs 3)
+		expect(bracket.matchStatus(3)).toBe("PENDING"); // Locked (2 vs 4)
 
 		// Complete first match of round 1 (1 vs 2)
 		bracket.updateMatch({
@@ -72,8 +72,8 @@ describe("Update scores in a round-robin stage", () => {
 
 		// Round 2 Match 1 (1 vs 3) should still be locked because team 3 hasn't finished
 		// Round 2 Match 2 (2 vs 4) should still be locked because team 4 hasn't finished
-		expect(bracket.match(2).status).toBe(0); // Still Locked
-		expect(bracket.match(3).status).toBe(0); // Still Locked
+		expect(bracket.matchStatus(2)).toBe("PENDING"); // Still Locked
+		expect(bracket.matchStatus(3)).toBe("PENDING"); // Still Locked
 
 		// Complete second match of round 1 (3 vs 4)
 		bracket.updateMatch({
@@ -85,8 +85,58 @@ describe("Update scores in a round-robin stage", () => {
 		// Now both matches in round 2 should be unlocked
 		// Match 2 (1 vs 3): both team 1 and team 3 have finished round 1
 		// Match 3 (2 vs 4): both team 2 and team 4 have finished round 1
-		expect(bracket.match(2).status).toBe(2); // Ready
-		expect(bracket.match(3).status).toBe(2); // Ready
+		expect(bracket.matchStatus(2)).toBe("STARTED"); // Ready
+		expect(bracket.matchStatus(3)).toBe("STARTED"); // Ready
+	});
+
+	test("should lock the next round again if a result of the previous round is reset", () => {
+		bracket.updateMatch({
+			id: 0,
+			opponent1: { score: 16, result: "win" },
+			opponent2: { score: 9 },
+		});
+		bracket.updateMatch({
+			id: 1,
+			opponent1: { score: 3 },
+			opponent2: { score: 16, result: "win" },
+		});
+
+		expect(bracket.matchStatus(2)).toBe("STARTED");
+
+		bracket.resetMatchResults(0);
+
+		expect(bracket.matchStatus(2)).toBe("PENDING");
+	});
+
+	test("should keep a started next round match playable if a result of the previous round is reset (issue #2690)", () => {
+		bracket.updateMatch({
+			id: 0,
+			opponent1: { score: 16, result: "win" },
+			opponent2: { score: 9 },
+		});
+		bracket.updateMatch({
+			id: 1,
+			opponent1: { score: 3 },
+			opponent2: { score: 16, result: "win" },
+		});
+
+		// team 1 and team 3 start playing their round 2 match
+		bracket.updateMatch({
+			id: 2,
+			opponent1: { score: 1 },
+			opponent2: { score: 0 },
+		});
+
+		bracket.resetMatchResults(0);
+
+		expect(bracket.matchStatus(2)).toBe("STARTED");
+		expect(() =>
+			bracket.updateMatch({
+				id: 2,
+				opponent1: { score: 2, result: "win" },
+				opponent2: { score: 0 },
+			}),
+		).not.toThrow();
 	});
 
 	test("should leave every match Ready when independentRounds is set", () => {
@@ -98,7 +148,7 @@ describe("Update scores in a round-robin stage", () => {
 		});
 
 		for (const match of bracket.matches()) {
-			expect(match.status).toBe(2);
+			expect(bracket.matchStatus(match.id)).toBe("STARTED");
 		}
 
 		// reporting a round-2 match before round-1 finishes must not throw
@@ -127,7 +177,7 @@ describe("Update scores in a round-robin stage", () => {
 			.matches()
 			.find((m) => m.opponent1?.id && m.opponent2?.id)!;
 
-		expect(realMatch.status).toBe(2); // Ready
+		expect(bracket.matchStatus(realMatch.id)).toBe("STARTED");
 
 		expect(() =>
 			bracket.updateMatch({
@@ -163,8 +213,8 @@ describe("Update scores in a round-robin stage", () => {
 			(m) => m.round_id === allRounds[1].id && m.opponent1 && m.opponent2,
 		)!;
 
-		expect(round1RealMatch.status).toBe(2); // Ready
-		expect(round2RealMatch.status).toBe(0); // Locked initially
+		expect(bracket.matchStatus(round1RealMatch.id)).toBe("STARTED");
+		expect(bracket.matchStatus(round2RealMatch.id)).toBe("PENDING"); // initially
 
 		// Complete the only real match in round 1 (teams 3 vs 2)
 		// Team 1 didn't play in round 1
@@ -177,6 +227,6 @@ describe("Update scores in a round-robin stage", () => {
 		// The real match in round 2 (teams 1 vs 3) should now be unlocked
 		// because team 1 didn't play in round 1 (considered ready)
 		// and team 3 just finished their match
-		expect(bracket.match(round2RealMatch.id).status).toBe(2); // Ready
+		expect(bracket.matchStatus(round2RealMatch.id)).toBe("STARTED");
 	});
 });
