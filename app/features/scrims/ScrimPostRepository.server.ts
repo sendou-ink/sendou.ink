@@ -4,7 +4,10 @@ import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { ConcurrentModificationError } from "~/utils/errors";
+import {
+	ConcurrentModificationError,
+	DuplicateEntryError,
+} from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import {
 	commonUserSelect,
@@ -80,10 +83,30 @@ type InsertRequestArgs = Pick<
 	>;
 };
 
+/**
+ * Inserts a new request to a scrim post.
+ *
+ * @throws {DuplicateEntryError} If the team already has a request for the post
+ */
 export function insertRequest(args: InsertRequestArgs) {
 	invariant(args.users.length > 0, "At least one user must be provided");
 
 	return db.transaction().execute(async (trx) => {
+		if (typeof args.teamId === "number") {
+			const existingTeamRequest = await trx
+				.selectFrom("ScrimPostRequest")
+				.select("id")
+				.where("scrimPostId", "=", args.scrimPostId)
+				.where("teamId", "=", args.teamId)
+				.executeTakeFirst();
+
+			if (existingTeamRequest) {
+				throw new DuplicateEntryError(
+					"Team already has a request for this scrim post",
+				);
+			}
+		}
+
 		const newRequest = await trx
 			.insertInto("ScrimPostRequest")
 			.values({
