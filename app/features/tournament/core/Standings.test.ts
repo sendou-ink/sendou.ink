@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { EngineBracket } from "~/features/tournament-bracket/core/engine/test-utils";
+import * as Engine from "~/features/tournament-bracket/core/engine";
+import { createResolved } from "~/features/tournament-bracket/core/engine/create";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import {
+	mergeStages,
 	progressions,
 	testTournament,
 	tournamentCtxTeam,
@@ -157,39 +160,20 @@ describe("matchesPlayed", () => {
 });
 
 function roundRobinToSingleEliminationTournament() {
-	const bracket = new EngineBracket();
-
-	bracket.create({
-		type: "round_robin",
-		seeding: [1, 2, 3, 4],
-		settings: { groupCount: 1 },
-	});
-	bracket.create({
-		type: "single_elimination",
-		seeding: [1, 2],
-		settings: {},
-	});
-
-	// play every match across both brackets, lower id always wins
-	while (true) {
-		const pending = bracket
-			.matches()
-			.find(
-				(m) =>
-					typeof m.opponent1?.id === "number" &&
-					typeof m.opponent2?.id === "number" &&
-					!m.winnerSide,
-			);
-		if (!pending) break;
-
-		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
-		bracket.updateMatch({
-			id: pending.id,
-			opponent1: { score: winnerIsOpp1 ? 2 : 0 },
-			opponent2: { score: winnerIsOpp1 ? 0 : 2 },
-			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
-		});
-	}
+	const data = playOutLowerIdWins(
+		mergeStages(
+			createResolved({
+				type: "round_robin",
+				seeding: [1, 2, 3, 4],
+				settings: { groupCount: 1 },
+			}),
+			createResolved({
+				type: "single_elimination",
+				seeding: [1, 2],
+				settings: {},
+			}),
+		),
+	);
 
 	return testTournament({
 		ctx: {
@@ -203,38 +187,18 @@ function roundRobinToSingleEliminationTournament() {
 				tournamentCtxTeam(4, { startingBracketIdx: 0, seed: 4 }),
 			],
 		},
-		data: bracket.data!,
+		data,
 	});
 }
 
 function singleEliminationTournament() {
-	const bracket = new EngineBracket();
-
-	bracket.create({
-		type: "single_elimination",
-		seeding: [1, 2, 3, 4],
-		settings: {},
-	});
-
-	while (true) {
-		const pending = bracket
-			.matches()
-			.find(
-				(m) =>
-					typeof m.opponent1?.id === "number" &&
-					typeof m.opponent2?.id === "number" &&
-					!m.winnerSide,
-			);
-		if (!pending) break;
-
-		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
-		bracket.updateMatch({
-			id: pending.id,
-			opponent1: { score: winnerIsOpp1 ? 2 : 0 },
-			opponent2: { score: winnerIsOpp1 ? 0 : 2 },
-			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
-		});
-	}
+	const data = playOutLowerIdWins(
+		createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: {},
+		}),
+	);
 
 	return testTournament({
 		ctx: {
@@ -248,14 +212,12 @@ function singleEliminationTournament() {
 				tournamentCtxTeam(4, { seed: 4 }),
 			],
 		},
-		data: bracket.data!,
+		data,
 	});
 }
 
 function abDivisionsTournament() {
-	const bracket = new EngineBracket();
-
-	bracket.create({
+	let data = createResolved({
 		type: "round_robin",
 		seeding: [1, 2, 3, 4],
 		abDivisions: [0, 1, 0, 1],
@@ -271,7 +233,7 @@ function abDivisionsTournament() {
 		"2-3": 2,
 		"3-4": 3,
 	};
-	for (const match of bracket.matches()) {
+	for (const match of data.match) {
 		const a = match.opponent1!.id as number;
 		const b = match.opponent2!.id as number;
 		const key = a < b ? `${a}-${b}` : `${b}-${a}`;
@@ -279,15 +241,13 @@ function abDivisionsTournament() {
 		invariant(winnerId, `unexpected matchup ${key}`);
 		const loserScore = key === "2-3" || key === "3-4" ? 1 : 0;
 		const winnerIsOpp1 = match.opponent1!.id === winnerId;
-		bracket.updateMatch({
-			id: match.id,
+		data = Engine.reportResult(data, {
+			matchId: match.id,
 			opponent1: { score: winnerIsOpp1 ? 2 : loserScore },
 			opponent2: { score: winnerIsOpp1 ? loserScore : 2 },
 			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
-		});
+		}).data;
 	}
-
-	const data = bracket.data!;
 
 	return testTournament({
 		ctx: {
@@ -310,4 +270,29 @@ function abDivisionsTournament() {
 		},
 		data,
 	});
+}
+
+/** Plays every match of the bracket data, the lower team id always winning. */
+function playOutLowerIdWins(data: BracketData) {
+	let played = data;
+
+	while (true) {
+		const pending = played.match.find(
+			(match) =>
+				typeof match.opponent1?.id === "number" &&
+				typeof match.opponent2?.id === "number" &&
+				!match.winnerSide,
+		);
+		if (!pending) break;
+
+		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
+		played = Engine.reportResult(played, {
+			matchId: pending.id,
+			opponent1: { score: winnerIsOpp1 ? 2 : 0 },
+			opponent2: { score: winnerIsOpp1 ? 0 : 2 },
+			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+		}).data;
+	}
+
+	return played;
 }

@@ -2,7 +2,8 @@ import * as R from "remeda";
 import { describe, expect, it } from "vitest";
 import invariant from "../../../utils/invariant";
 import * as Engine from "./engine";
-import { EngineBracket } from "./engine/test-utils";
+import { createResolved } from "./engine/create";
+import type { BracketData, MatchData } from "./engine/types";
 import { Tournament } from "./Tournament";
 import { PADDLING_POOL_255 } from "./tests/mocks";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";
@@ -228,9 +229,7 @@ describe("round robin standings - dropped out teams", () => {
 		skipMatchups?: string[];
 		forfeitMatchups?: string[];
 	} = {}) => {
-		const bracket = new EngineBracket();
-
-		bracket.create({
+		let data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			settings: {
@@ -244,25 +243,25 @@ describe("round robin standings - dropped out teams", () => {
 			winnerScore: number,
 			loserScore: number,
 		) => {
-			const match = bracket.match(matchId);
+			const match = matchById(data, matchId);
 			const winnerIsOpp1 = match.opponent1?.id === winnerId;
-			bracket.updateMatch({
-				id: match.id,
+			data = Engine.reportResult(data, {
+				matchId,
 				opponent1: { score: winnerIsOpp1 ? winnerScore : loserScore },
 				opponent2: { score: winnerIsOpp1 ? loserScore : winnerScore },
 				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
-			});
+			}).data;
 		};
 
 		// Mimics endDroppedTeamMatches: sets a winner via result only, with no
 		// score recorded on either side (the match was never actually played).
 		const forfeitMatch = (matchId: number, winnerId: number) => {
-			const match = bracket.match(matchId);
-			bracket.updateMatch({
-				id: match.id,
+			const match = matchById(data, matchId);
+			data = Engine.reportResult(data, {
+				matchId,
 				winnerSide:
 					match.opponent1?.id === winnerId ? "opponent1" : "opponent2",
-			});
+			}).data;
 		};
 
 		// Team 1 beat everyone, team 2 beat 3 and 4, team 3 beat 4.
@@ -274,7 +273,7 @@ describe("round robin standings - dropped out teams", () => {
 			"2-4": 2,
 			"3-4": 3,
 		};
-		for (const match of bracket.matches()) {
+		for (const match of data.match) {
 			const a = match.opponent1!.id as number;
 			const b = match.opponent2!.id as number;
 			const key = a < b ? `${a}-${b}` : `${b}-${a}`;
@@ -287,8 +286,6 @@ describe("round robin standings - dropped out teams", () => {
 				setResult(match.id, winnerId, 2, 0);
 			}
 		}
-
-		const data = bracket.data!;
 
 		return testTournament({
 			ctx: {
@@ -393,9 +390,7 @@ describe("round robin standings - dropped out teams", () => {
 
 describe("round robin A/B divisions standings", () => {
 	const abDivisionsTournament = () => {
-		const bracket = new EngineBracket();
-
-		bracket.create({
+		let data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			abDivisions: [0, 1, 0, 1],
@@ -411,14 +406,14 @@ describe("round robin A/B divisions standings", () => {
 			winnerScore: number,
 			loserScore: number,
 		) => {
-			const match = bracket.match(matchId);
+			const match = matchById(data, matchId);
 			const winnerIsOpp1 = match.opponent1?.id === winnerId;
-			bracket.updateMatch({
-				id: match.id,
+			data = Engine.reportResult(data, {
+				matchId,
 				opponent1: { score: winnerIsOpp1 ? winnerScore : loserScore },
 				opponent2: { score: winnerIsOpp1 ? loserScore : winnerScore },
 				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
-			});
+			}).data;
 		};
 
 		const winnerByMatchup: Record<string, number> = {
@@ -427,7 +422,7 @@ describe("round robin A/B divisions standings", () => {
 			"2-3": 2,
 			"3-4": 3,
 		};
-		for (const match of bracket.matches()) {
+		for (const match of data.match) {
 			const a = match.opponent1!.id as number;
 			const b = match.opponent2!.id as number;
 			const key = a < b ? `${a}-${b}` : `${b}-${a}`;
@@ -436,8 +431,6 @@ describe("round robin A/B divisions standings", () => {
 			const loserScore = key === "2-3" || key === "3-4" ? 1 : 0;
 			setResult(match.id, winnerId, 2, loserScore);
 		}
-
-		const data = bracket.data!;
 
 		return testTournament({
 			ctx: {
@@ -510,26 +503,24 @@ describe("single elimination standings - third place match", () => {
 	}: {
 		thirdPlaceMatchReported: boolean;
 	}) => {
-		const bracket = new EngineBracket();
-
-		bracket.create({
+		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: { consolationFinal: true },
 		});
 
 		const reportLowerTeamIdAsWinner = (matchId: number) => {
-			bracket.updateMatch({
-				id: matchId,
+			data = Engine.reportResult(data, {
+				matchId,
 				opponent1: { score: 2 },
 				opponent2: { score: 0 },
 				winnerSide: "opponent1",
-			});
+			}).data;
 		};
 
-		const semifinals = bracket
-			.matches()
-			.filter((match) => match.opponent1?.id && match.opponent2?.id);
+		const semifinals = data.match.filter(
+			(match) => match.opponent1?.id && match.opponent2?.id,
+		);
 		invariant(semifinals.length === 2, "Expected two semifinal matches");
 
 		const semifinalLoserIds: number[] = [];
@@ -542,11 +533,11 @@ describe("single elimination standings - third place match", () => {
 		let thirdPlaceLoserId: number | undefined;
 		if (thirdPlaceMatchReported) {
 			const thirdPlaceGroupId = Math.max(
-				...bracket.groups().map((group) => group.id),
+				...data.group.map((group) => group.id),
 			);
-			const thirdPlaceMatch = bracket
-				.matches()
-				.find((match) => match.groupId === thirdPlaceGroupId);
+			const thirdPlaceMatch = data.match.find(
+				(match) => match.groupId === thirdPlaceGroupId,
+			);
 			invariant(thirdPlaceMatch, "Third place match not found");
 			thirdPlaceWinnerId = thirdPlaceMatch.opponent1!.id!;
 			thirdPlaceLoserId = thirdPlaceMatch.opponent2!.id!;
@@ -567,7 +558,7 @@ describe("single elimination standings - third place match", () => {
 					],
 				},
 			},
-			data: bracket.data!,
+			data,
 		});
 
 		return { tournament, thirdPlaceWinnerId, thirdPlaceLoserId };
@@ -600,47 +591,20 @@ describe("single elimination standings - third place match", () => {
 	});
 });
 
-const reportLowerIdWinner = (bracket: EngineBracket, matchId: number) => {
-	const match = bracket.match(matchId);
-	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;
-	bracket.updateMatch({
-		id: matchId,
-		opponent1: { score: opponent1Lower ? 2 : 0 },
-		opponent2: { score: opponent1Lower ? 0 : 2 },
-		winnerSide: opponent1Lower ? "opponent1" : "opponent2",
-	});
-};
-
-const readyMatches = (
-	bracket: EngineBracket,
-	predicate: (match: ReturnType<EngineBracket["matches"]>[number]) => boolean,
-) =>
-	bracket
-		.matches()
-		.filter(
-			(match) =>
-				predicate(match) &&
-				match.opponent1?.id != null &&
-				match.opponent2?.id != null &&
-				match.winnerSide == null,
-		);
-
 describe("single elimination standings - projected ties", () => {
 	// Two semifinal losers tie for 3rd (no consolation final). Reports only one
 	// semifinal so the other is still in progress, mirroring the projected
 	// standings bug where the finished team is shown one placement too low.
 	const partialSingleEliminationTournament = () => {
-		const bracket = new EngineBracket();
-
-		bracket.create({
+		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},
 		});
 
-		const semifinals = bracket
-			.matches()
-			.filter((match) => match.opponent1?.id && match.opponent2?.id);
+		const semifinals = data.match.filter(
+			(match) => match.opponent1?.id && match.opponent2?.id,
+		);
 		invariant(semifinals.length === 2, "Expected two semifinal matches");
 
 		const decided = semifinals[0];
@@ -648,7 +612,7 @@ describe("single elimination standings - projected ties", () => {
 			decided.opponent1!.id!,
 			decided.opponent2!.id!,
 		);
-		reportLowerIdWinner(bracket, decided.id);
+		data = reportLowerIdWinner(data, decided.id);
 
 		const tournament = testTournament({
 			ctx: {
@@ -664,7 +628,7 @@ describe("single elimination standings - projected ties", () => {
 					],
 				},
 			},
-			data: bracket.data!,
+			data,
 		});
 
 		return { tournament, decidedLoserId };
@@ -687,47 +651,42 @@ describe("double elimination standings - projected ties", () => {
 	// losers round 2 matches so its loser should already project to tied 5th
 	// while the sibling match is still unfinished.
 	const partialDoubleEliminationTournament = () => {
-		const bracket = new EngineBracket();
-
-		bracket.create({
+		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 			settings: {},
 		});
 
 		const groupId = (number: number) =>
-			bracket.groups().find((g) => g.number === number)!.id;
+			data.group.find((group) => group.number === number)!.id;
 		const winnersGroupId = groupId(1);
 		const losersGroupId = groupId(2);
 
 		const losersRoundId = (number: number) =>
-			bracket
-				.rounds()
-				.find((r) => r.groupId === losersGroupId && r.number === number)!.id;
+			data.round.find(
+				(round) => round.groupId === losersGroupId && round.number === number,
+			)!.id;
 
 		// play out the entire winners bracket so all losers feed in
-		let winnersReady = readyMatches(
-			bracket,
-			(m) => m.groupId === winnersGroupId,
-		);
+		let winnersReady = readyMatches(data, (m) => m.groupId === winnersGroupId);
 		while (winnersReady.length) {
 			for (const match of winnersReady) {
-				reportLowerIdWinner(bracket, match.id);
+				data = reportLowerIdWinner(data, match.id);
 			}
-			winnersReady = readyMatches(bracket, (m) => m.groupId === winnersGroupId);
+			winnersReady = readyMatches(data, (m) => m.groupId === winnersGroupId);
 		}
 
 		// losers round 1: both matches -> two teams eliminated, tied 7th/8th
 		for (const match of readyMatches(
-			bracket,
+			data,
 			(m) => m.roundId === losersRoundId(1),
 		)) {
-			reportLowerIdWinner(bracket, match.id);
+			data = reportLowerIdWinner(data, match.id);
 		}
 
 		// losers round 2: report only one of the two matches
 		const losersRound2 = readyMatches(
-			bracket,
+			data,
 			(m) => m.roundId === losersRoundId(2),
 		);
 		invariant(losersRound2.length === 2, "Expected two losers round 2 matches");
@@ -741,7 +700,7 @@ describe("double elimination standings - projected ties", () => {
 			losersRound2[1].opponent1!.id,
 			losersRound2[1].opponent2!.id,
 		];
-		reportLowerIdWinner(bracket, decided.id);
+		data = reportLowerIdWinner(data, decided.id);
 
 		const tournament = testTournament({
 			ctx: {
@@ -757,7 +716,7 @@ describe("double elimination standings - projected ties", () => {
 					],
 				},
 			},
-			data: bracket.data!,
+			data,
 		});
 
 		return { tournament, decidedLoserId, stillPlayingTeamIds };
@@ -784,3 +743,35 @@ describe("double elimination standings - projected ties", () => {
 		}
 	});
 });
+
+function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
+	const match = matchById(data, matchId);
+	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;
+
+	return Engine.reportResult(data, {
+		matchId,
+		opponent1: { score: opponent1Lower ? 2 : 0 },
+		opponent2: { score: opponent1Lower ? 0 : 2 },
+		winnerSide: opponent1Lower ? "opponent1" : "opponent2",
+	}).data;
+}
+
+function readyMatches(
+	data: BracketData,
+	predicate: (match: MatchData) => boolean,
+) {
+	return data.match.filter(
+		(match) =>
+			predicate(match) &&
+			match.opponent1?.id != null &&
+			match.opponent2?.id != null &&
+			match.winnerSide == null,
+	);
+}
+
+function matchById(data: BracketData, id: number) {
+	const found = data.match.find((match) => match.id === id);
+	if (!found) throw new Error(`Match ${id} not found`);
+
+	return found;
+}

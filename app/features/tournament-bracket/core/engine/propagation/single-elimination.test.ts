@@ -1,93 +1,102 @@
-import { beforeEach, describe, expect, test } from "vitest";
-import { EngineBracket } from "../test-utils";
-
-const bracket = new EngineBracket();
+import { describe, expect, test } from "vitest";
+import { createResolved } from "../create";
+import * as Engine from "../index";
+import type { BracketData } from "../types";
 
 describe("Previous and next match update", () => {
-	beforeEach(() => {
-		bracket.reset();
-	});
-
 	test("should determine matches in consolation final", () => {
-		bracket.create({
+		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: { consolationFinal: true },
 		});
 
-		bracket.updateMatch({
-			id: 0, // First match of round 1
+		data = Engine.reportResult(data, {
+			matchId: 0, // First match of round 1
 			opponent1: { score: 16 },
 			opponent2: { score: 12 },
 			winnerSide: "opponent1",
-		});
+		}).data;
 
-		bracket.updateMatch({
-			id: 1, // Second match of round 1
+		data = Engine.reportResult(data, {
+			matchId: 1, // Second match of round 1
 			opponent1: { score: 13 },
 			opponent2: { score: 16 },
 			winnerSide: "opponent2",
-		});
+		}).data;
 
-		expect(bracket.match(3).opponent1?.id).toBe(bracket.match(0).opponent2?.id);
-		expect(bracket.match(3).opponent2?.id).toBe(bracket.match(1).opponent1?.id);
-		expect(bracket.matchStatus(2)).toBe("STARTED");
-		expect(bracket.matchStatus(3)).toBe("STARTED");
+		expect(matchById(data, 3).opponent1?.id).toBe(
+			matchById(data, 0).opponent2?.id,
+		);
+		expect(matchById(data, 3).opponent2?.id).toBe(
+			matchById(data, 1).opponent1?.id,
+		);
+		expect(Engine.matchStatus(data, 2)).toBe("STARTED");
+		expect(Engine.matchStatus(data, 3)).toBe("STARTED");
 	});
 
 	test("should play both the final and consolation final in parallel", () => {
-		bracket.create({
+		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: { consolationFinal: true },
 		});
 
-		bracket.updateMatch({
-			id: 0, // First match of round 1
+		data = Engine.reportResult(data, {
+			matchId: 0, // First match of round 1
 			opponent1: { score: 16 },
 			opponent2: { score: 12 },
 			winnerSide: "opponent1",
-		});
+		}).data;
 
-		bracket.updateMatch({
-			id: 1, // Second match of round 1
+		data = Engine.reportResult(data, {
+			matchId: 1, // Second match of round 1
 			opponent1: { score: 13 },
 			opponent2: { score: 16 },
 			winnerSide: "opponent2",
-		});
+		}).data;
 
-		bracket.updateMatch({
-			id: 2, // Final
+		data = Engine.reportResult(data, {
+			matchId: 2, // Final
 			opponent1: { score: 12 },
 			opponent2: { score: 9 },
-		});
+		}).data;
 
-		expect(bracket.matchStatus(2)).toBe("STARTED");
-		expect(bracket.matchStatus(3)).toBe("STARTED");
+		expect(Engine.matchStatus(data, 2)).toBe("STARTED");
+		expect(Engine.matchStatus(data, 3)).toBe("STARTED");
 
-		bracket.updateMatch({
-			id: 3, // Consolation final
+		data = Engine.reportResult(data, {
+			matchId: 3, // Consolation final
 			opponent1: { score: 12 },
 			opponent2: { score: 9 },
-		});
+		}).data;
 
-		expect(bracket.matchStatus(2)).toBe("STARTED");
-		expect(bracket.matchStatus(3)).toBe("STARTED");
+		expect(Engine.matchStatus(data, 2)).toBe("STARTED");
+		expect(Engine.matchStatus(data, 3)).toBe("STARTED");
 
-		bracket.updateMatch({
-			id: 3, // Consolation final
+		data = Engine.reportResult(data, {
+			matchId: 3, // Consolation final
 			opponent1: { score: 16 },
 			opponent2: { score: 9 },
 			winnerSide: "opponent1",
-		});
+		}).data;
 
-		expect(bracket.matchStatus(2)).toBe("STARTED");
+		expect(Engine.matchStatus(data, 2)).toBe("STARTED");
 
-		bracket.updateMatch({
-			id: 2, // Final
-			opponent1: { score: 16 },
-			opponent2: { score: 9 },
-			winnerSide: "opponent1",
-		});
+		expect(() =>
+			Engine.reportResult(data, {
+				matchId: 2, // Final
+				opponent1: { score: 16 },
+				opponent2: { score: 9 },
+				winnerSide: "opponent1",
+			}),
+		).not.toThrow();
 	});
 });
+
+function matchById(data: BracketData, id: number) {
+	const found = data.match.find((match) => match.id === id);
+	if (!found) throw new Error(`Match ${id} not found`);
+
+	return found;
+}

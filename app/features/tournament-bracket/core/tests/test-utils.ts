@@ -119,6 +119,58 @@ export const testTournament = ({
 	});
 };
 
+/**
+ * Combines separately created brackets into the bracket data of one tournament,
+ * offsetting the local ids of every bracket after the first the same way the
+ * database does when a new stage is added to an existing tournament.
+ */
+export const mergeStages = (...brackets: BracketData[]): BracketData => {
+	const merged: BracketData = { stage: [], group: [], round: [], match: [] };
+
+	for (const bracket of brackets) {
+		const offsets = {
+			stage: merged.stage.length,
+			group: merged.group.length,
+			round: merged.round.length,
+			match: merged.match.length,
+		};
+
+		merged.stage.push(
+			...bracket.stage.map((stage) => ({
+				...stage,
+				id: stage.id + offsets.stage,
+				number: offsets.stage + 1,
+			})),
+		);
+		merged.group.push(
+			...bracket.group.map((group) => ({
+				...group,
+				id: group.id + offsets.group,
+				stageId: group.stageId + offsets.stage,
+			})),
+		);
+		merged.round.push(
+			...bracket.round.map((round) => ({
+				...round,
+				id: round.id + offsets.round,
+				stageId: round.stageId + offsets.stage,
+				groupId: round.groupId + offsets.group,
+			})),
+		);
+		merged.match.push(
+			...bracket.match.map((match) => ({
+				...match,
+				id: match.id + offsets.match,
+				stageId: match.stageId + offsets.stage,
+				groupId: match.groupId + offsets.group,
+				roundId: match.roundId + offsets.round,
+			})),
+		);
+	}
+
+	return merged;
+};
+
 const DEFAULT_PROGRESSION_ARGS = {
 	requiresCheckIn: false,
 	settings: {},
