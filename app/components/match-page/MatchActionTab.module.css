@@ -21,7 +21,7 @@
 	}
 }
 
-.withPoints {
+.withKo {
 	grid-template-areas:
 		"header header header"
 		"actions actions actions"

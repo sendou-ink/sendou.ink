@@ -349,7 +349,7 @@ function EditReportedScoresSection({
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
-	const withPoints = tournament.bracketByIdxOrDefault(
+	const withKo = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
 	).collectsKos;
 
@@ -363,7 +363,7 @@ function EditReportedScoresSection({
 						index={index}
 						result={result}
 						teams={teams}
-						withPoints={withPoints}
+						withKo={withKo}
 					/>
 				))}
 			</div>
@@ -375,12 +375,12 @@ function EditReportedScoreRow({
 	index,
 	result,
 	teams,
-	withPoints,
+	withKo,
 }: {
 	index: number;
 	result: TournamentMatchLoaderData["results"][number];
 	teams: [TournamentDataTeam, TournamentDataTeam];
-	withPoints: boolean;
+	withKo: boolean;
 }) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();
@@ -433,7 +433,7 @@ function EditReportedScoreRow({
 			fetcher={fetcher}
 			result={result}
 			teams={teams}
-			withPoints={withPoints}
+			withKo={withKo}
 			minMembersPerTeam={tournament.minMembersPerTeam}
 			onCancel={() => setEditing(false)}
 			index={index}
@@ -445,7 +445,7 @@ function EditReportedScoreForm({
 	fetcher,
 	result,
 	teams,
-	withPoints,
+	withKo,
 	minMembersPerTeam,
 	onCancel,
 	index,
@@ -453,7 +453,7 @@ function EditReportedScoreForm({
 	fetcher: ReturnType<typeof useFetcher>;
 	result: TournamentMatchLoaderData["results"][number];
 	teams: [TournamentDataTeam, TournamentDataTeam];
-	withPoints: boolean;
+	withKo: boolean;
 	minMembersPerTeam: number;
 	onCancel: () => void;
 	index: number;
@@ -474,13 +474,6 @@ function EditReportedScoreForm({
 	const [isKO, setIsKO] = React.useState(
 		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100,
 	);
-
-	const team0Won = result.winnerTeamId === teams[0].id;
-	const points: [number, number] = isKO
-		? team0Won
-			? [100, 0]
-			: [0, 100]
-		: [0, 0];
 
 	const formValid = checkedPlayers.every(
 		(team) => team.length === minMembersPerTeam,
@@ -536,9 +529,9 @@ function EditReportedScoreForm({
 				name="rosters"
 				value={JSON.stringify(checkedPlayers)}
 			/>
-			{withPoints ? (
+			{withKo ? (
 				<>
-					<input type="hidden" name="points" value={JSON.stringify(points)} />
+					<input type="hidden" name="ko" value={String(isKO)} />
 					<label className="stack horizontal sm items-center mx-auto">
 						<input
 							type="checkbox"

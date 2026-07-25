@@ -160,22 +160,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const winnerSide = data.winnerTeamId === match.opponentOne.id ? 0 : 1;
 
-			errorToastIfFalsy(
-				!data.points ||
-					data.points[0] === data.points[1] ||
-					(winnerSide === 0 && data.points[0] > data.points[1]) ||
-					(winnerSide === 1 && data.points[1] > data.points[0]),
-				"Points are invalid (winner must have more points than loser)",
-			);
-
 			const bracket = tournament.bracketByIdx(
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!;
 			errorToastIfFalsy(
-				// xxx: just have data.ko from now on? and update error
-				!bracket.collectsKos || data.points,
-				"Points are required for this bracket",
+				!bracket.collectsKos || typeof data.ko === "boolean",
+				"KO status is required for this bracket",
 			);
+
+			const points = bracket.collectsKos
+				? koToPoints({ ko: Boolean(data.ko), winnerSide })
+				: null;
 
 			const teamOneRoster = tournamentTeamToActiveRosterUserIds(
 				tournament.teamById(match.opponentOne.id!)!,
@@ -215,8 +210,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 								winnerTeamId: data.winnerTeamId,
 								number: data.position + 1,
 								source: String(currentMap.source),
-								opponentOnePoints: data.points?.[0] ?? null,
-								opponentTwoPoints: data.points?.[1] ?? null,
+								opponentOnePoints: points?.[0] ?? null,
+								opponentTwoPoints: points?.[1] ?? null,
 							});
 
 							for (const userId of teamOneRoster) {
@@ -395,41 +390,31 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid roster",
 			);
 
-			const hadPoints = typeof result.opponentOnePoints === "number";
-			const willHavePoints = typeof data.points?.[0] === "number";
-			errorToastIfFalsy(
-				(hadPoints && willHavePoints) || (!hadPoints && !willHavePoints),
-				"Points mismatch",
-			);
+			const hadKoRecorded = typeof result.opponentOnePoints === "number";
+			const hasKoSubmitted = typeof data.ko === "boolean";
+			errorToastIfFalsy(hadKoRecorded === hasKoSubmitted, "KO status mismatch");
 
-			if (data.points) {
-				if (data.points[0] !== result.opponentOnePoints) {
-					// changing points at this point could retroactively change who advanced from the group
-					errorToastIfFalsy(
-						tournament.matchCanBeReopened(match.id),
-						"Bracket has progressed",
-					);
-				}
-
-				if (data.points[0] === 100) {
-					errorToastIfFalsy(
-						result.winnerTeamId === match.opponentOne!.id,
-						"KO winner must match the result winner",
-					);
-				} else if (data.points[1] === 100) {
-					errorToastIfFalsy(
-						result.winnerTeamId === match.opponentTwo!.id,
-						"KO winner must match the result winner",
-					);
-				}
+			const wasKo =
+				result.opponentOnePoints === 100 || result.opponentTwoPoints === 100;
+			if (typeof data.ko === "boolean" && data.ko !== wasKo) {
+				// changing the KO status at this point could retroactively change who advanced from the group
+				errorToastIfFalsy(
+					tournament.matchCanBeReopened(match.id),
+					"Bracket has progressed",
+				);
 			}
 
 			sql.transaction(() => {
-				if (data.points) {
+				if (typeof data.ko === "boolean") {
+					const points = koToPoints({
+						ko: data.ko,
+						winnerSide: result.winnerTeamId === match.opponentOne!.id ? 0 : 1,
+					});
+
 					updateMatchGameResultPoints({
 						matchGameResultId: result.id,
-						opponentOnePoints: data.points[0],
-						opponentTwoPoints: data.points[1],
+						opponentOnePoints: points[0],
+						opponentTwoPoints: points[1],
 					});
 				}
 
@@ -867,6 +852,19 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	return null;
 };
+
+/** KO status is stored as points: the KO winner gets 100 and the loser 0, a game that was not a KO is stored as 0-0. */
+function koToPoints({
+	ko,
+	winnerSide,
+}: {
+	ko: boolean;
+	winnerSide: 0 | 1;
+}): [number, number] {
+	if (!ko) return [0, 0];
+
+	return winnerSide === 0 ? [100, 0] : [0, 100];
+}
 
 function canReportTournamentScore({
 	match,

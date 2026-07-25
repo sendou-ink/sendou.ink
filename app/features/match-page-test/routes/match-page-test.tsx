@@ -290,7 +290,7 @@ export default function MatchPageTestRoute() {
 							ownTeamId={1}
 							stageId={4}
 							mode="SZ"
-							withPoints={true}
+							withKo={true}
 							actionButtons={
 								<SendouButton
 									variant="minimal-destructive"

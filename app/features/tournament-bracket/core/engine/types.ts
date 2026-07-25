@@ -37,7 +37,7 @@ export type SeedOrdering =
 /** The seeding for a stage. Each element is a participant id or a BYE: `null`. */
 export type Seeding = (number | null)[];
 
-// xxx: are all of these really in use?
+// xxx: are all of these really in use? particularly what is the difference between Locked and Waiting for us. Waiting sems redundant. Also difference between Ready and Running, surely Running is enough?
 /** Same values as the old brackets-model Status — persisted in TournamentMatch.status. */
 export const MatchStatus = {
 	/** The two matches leading to this one are not completed yet. */

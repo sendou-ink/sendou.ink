@@ -54,7 +54,7 @@ export function TournamentMatchActionTab({
 
 	if (!teamOne || !teamTwo) return null;
 
-	const withPoints = tournament.bracketByIdxOrDefault(
+	const withKo = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
 	).collectsKos;
 
@@ -113,16 +113,16 @@ export function TournamentMatchActionTab({
 			ownTeamId={ownTeamId}
 			stageId={currentMap.stageId}
 			mode={currentMap.mode}
-			withPoints={withPoints}
+			withKo={withKo}
 			setEnding={setEnding}
 			isSubmitting={reportFetcher.state !== "idle"}
-			onSubmit={({ winnerId, points }) => {
+			onSubmit={({ winnerId, ko }) => {
 				reportFetcher.submit(
 					{
 						_action: "REPORT_SCORE",
 						winnerTeamId: String(winnerId),
 						position: String(scoreSum),
-						...(points ? { points: JSON.stringify(points) } : {}),
+						...(typeof ko === "boolean" ? { ko: String(ko) } : {}),
 					},
 					{ method: "post" },
 				);

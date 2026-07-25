@@ -74,7 +74,7 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 			ownTeamId={ownTeamId}
 			stageId={map.stageId}
 			mode={map.mode}
-			withPoints={false}
+			withKo={false}
 			isSubmitting={fetcher.state !== "idle"}
 			onSubmit={({ winnerId }) => {
 				fetcher.submit(
