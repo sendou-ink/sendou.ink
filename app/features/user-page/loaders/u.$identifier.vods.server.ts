@@ -4,13 +4,13 @@ import * as VodRepository from "~/features/vods/VodRepository.server";
 import { VODS_PAGE_BATCH_SIZE } from "~/features/vods/vods-constants";
 import { userVodsSearchParamsSchema } from "~/features/vods/vods-schemas";
 import {
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseSearchParams,
 	redirectIfPageOutOfBounds,
 } from "~/utils/remix.server";
 
 export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
-	const userId = notFoundIfFalsy(
+	const userId = notFoundIfNullish(
 		await UserRepository.identifierToUserId(params.identifier!),
 	).id;
 

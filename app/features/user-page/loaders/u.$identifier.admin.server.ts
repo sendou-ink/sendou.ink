@@ -6,7 +6,7 @@ import * as UserReportRepository from "~/features/user-report/UserReportReposito
 import { requireRole } from "~/modules/permissions/guards.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import { convertSnowflakeToDate } from "~/utils/users";
 
 const REPORT_GRAPH_MONTHS = 12;
@@ -16,7 +16,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	requireRole("STAFF");
 
-	const user = notFoundIfFalsy(
+	const user = notFoundIfNullish(
 		await UserRepository.findLayoutDataByIdentifier(params.identifier!),
 	);
 
@@ -24,7 +24,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		`User ${loggedInUser.username} (#${loggedInUser.id}) is viewing admin tab for user ${user.username} (#${user.id})`,
 	);
 
-	const userData = notFoundIfFalsy(
+	const userData = notFoundIfNullish(
 		await UserRepository.findModInfoById(user.id),
 	);
 

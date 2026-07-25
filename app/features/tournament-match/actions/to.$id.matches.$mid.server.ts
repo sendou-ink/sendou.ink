@@ -29,7 +29,7 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
@@ -57,7 +57,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		params,
 		schema: matchPageParamsSchema,
 	});
-	const match = notFoundIfFalsy(
+	const match = notFoundIfNullish(
 		await TournamentMatchRepository.findMatchById(matchId),
 	);
 

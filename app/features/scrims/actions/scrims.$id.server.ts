@@ -5,7 +5,7 @@ import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
@@ -23,7 +23,7 @@ import { parseMapPoolInput } from "../scrims-utils";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = parseParams({ params, schema: idObject });
-	const post = notFoundIfFalsy(await ScrimPostRepository.findById(id));
+	const post = notFoundIfNullish(await ScrimPostRepository.findById(id));
 	const user = requireUser();
 
 	const data = await parseRequestPayload({

@@ -10,15 +10,10 @@ import { ServerConfig } from "~/config.server";
 import { logger } from "./logger";
 import { currentRequestPathname } from "./request-context.server";
 
-export function notFoundIfFalsy<T>(value: T | null | undefined): T {
-	if (!value) throw new Response(null, { status: 404 });
-
-	return value;
-}
-
-export function notFoundIfNullLike<T>(value: T | null | undefined): T {
-	if (value === null || value === undefined)
+export function notFoundIfNullish<T>(value: T | null | undefined): T {
+	if (value === null || value === undefined) {
 		throw new Response(null, { status: 404 });
+	}
 
 	return value;
 }

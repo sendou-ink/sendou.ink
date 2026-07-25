@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";
 
@@ -10,7 +10,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		params,
 		schema: idObject,
 	});
-	const badge = notFoundIfFalsy(await BadgeRepository.findById(id));
+	const badge = notFoundIfNullish(await BadgeRepository.findById(id));
 
 	return {
 		badge,

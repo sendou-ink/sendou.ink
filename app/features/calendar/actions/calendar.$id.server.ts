@@ -9,7 +9,7 @@ import {
 	tournamentManagerData,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
 import { canDeleteCalendarEvent } from "../calendar-utils";
@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ params }) => {
 	const parsedParams = z
 		.object({ id: z.preprocess(actualNumber, id) })
 		.parse(params);
-	const event = notFoundIfFalsy(
+	const event = notFoundIfNullish(
 		await CalendarRepository.findById(parsedParams.id),
 	);
 

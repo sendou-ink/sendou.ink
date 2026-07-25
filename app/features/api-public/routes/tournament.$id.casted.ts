@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetCastedTournamentMatchesResponse } from "../schema";
 
@@ -15,7 +15,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const tournament = notFoundIfFalsy(
+	const tournament = notFoundIfNullish(
 		await db
 			.selectFrom("Tournament")
 			.select(["Tournament.castedMatchesInfo"])

@@ -8,7 +8,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
@@ -129,7 +129,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "BAN_USER": {
 			requireRole("STAFF");
 
-			const bannedUser = notFoundIfFalsy(
+			const bannedUser = notFoundIfNullish(
 				await UserRepository.findLeanById(data.user),
 			);
 			const banExpiresAt = data.duration ? new Date(data.duration) : null;
@@ -156,7 +156,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "UNBAN_USER": {
 			requireRole("STAFF");
 
-			const unbannedUser = notFoundIfFalsy(
+			const unbannedUser = notFoundIfNullish(
 				await UserRepository.findLeanById(data.user),
 			);
 

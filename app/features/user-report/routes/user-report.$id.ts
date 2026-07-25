@@ -4,7 +4,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
 import { sendUserReportWebhook } from "../core/discord-webhook.server";
@@ -22,7 +22,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	errorToastIfFalsy(reportedUserId !== user.id, "Can't report yourself");
 
-	const reportedUser = notFoundIfFalsy(
+	const reportedUser = notFoundIfNullish(
 		await UserRepository.findLeanById(reportedUserId),
 	);
 

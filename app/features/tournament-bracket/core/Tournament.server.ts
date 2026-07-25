@@ -6,7 +6,7 @@ import { getTentativeTier } from "~/features/tournament-organization/core/tentat
 import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { getServerTournamentManager } from "./brackets-manager/manager.server";
 import { RunningTournaments } from "./RunningTournaments.server";
@@ -91,7 +91,7 @@ export async function tournamentFromDB(args: {
 	user: { id: number } | undefined;
 	tournamentId: number;
 }) {
-	const data = notFoundIfFalsy(await tournamentData(args));
+	const data = notFoundIfNullish(await tournamentData(args));
 
 	const tournament = new Tournament({ ...data, simulateBrackets: false });
 	syncTournamentToRegistry(tournament);
@@ -103,7 +103,7 @@ export async function tournamentFromDBCached(args: {
 	user: { id: number } | undefined;
 	tournamentId: number;
 }) {
-	const data = notFoundIfFalsy(await tournamentDataCached(args));
+	const data = notFoundIfNullish(await tournamentDataCached(args));
 
 	return new Tournament({ ...data, simulateBrackets: false });
 }
@@ -122,14 +122,14 @@ export async function tournamentDataCached({
 	tournamentId: number;
 }) {
 	if (ServerConfig.disableCache) {
-		return notFoundIfFalsy(await tournamentData({ user, tournamentId }));
+		return notFoundIfNullish(await tournamentData({ user, tournamentId }));
 	}
 
 	if (!tournamentDataCache.has(tournamentId)) {
 		tournamentDataCache.set(tournamentId, combinedTournamentData(tournamentId));
 	}
 
-	const data = notFoundIfFalsy(await tournamentDataCache.get(tournamentId));
+	const data = notFoundIfNullish(await tournamentDataCache.get(tournamentId));
 
 	return dataMapped({ user, ...data });
 }

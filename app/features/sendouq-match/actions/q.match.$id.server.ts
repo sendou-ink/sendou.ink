@@ -19,7 +19,7 @@ import { logger } from "~/utils/logger";
 import {
 	errorToast,
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
@@ -39,7 +39,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: matchSchema,
 	});
 
-	const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+	const match = notFoundIfNullish(await SQMatchRepository.findById(matchId));
 	const isStaff = user.roles.includes("STAFF");
 	const isParticipant = [
 		...match.groupAlpha.members,

@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetSendouqMatchResponse, MapListMap } from "../schema";
 
@@ -16,7 +16,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+	const match = notFoundIfNullish(await SQMatchRepository.findById(matchId));
 
 	const t = await getFixedTForLanguage("en", ["game-misc"]);
 

@@ -6,7 +6,7 @@ import { adminTabActionSchema } from "~/features/user-page/user-page-schemas";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
 	badRequestIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -21,7 +21,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: adminTabActionSchema,
 	});
 
-	const user = notFoundIfFalsy(
+	const user = notFoundIfNullish(
 		await UserRepository.findLayoutDataByIdentifier(params.identifier!),
 	);
 

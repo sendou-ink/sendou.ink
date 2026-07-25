@@ -7,7 +7,7 @@ import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatReposi
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import {
 	seasonsSearchParamsSchema,
 	userParamsSchema,
@@ -24,7 +24,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		Object.fromEntries(url.searchParams),
 	);
 
-	const user = notFoundIfFalsy(
+	const user = notFoundIfNullish(
 		await UserRepository.identifierToUserId(identifier),
 	);
 	const seasonsParticipatedIn =

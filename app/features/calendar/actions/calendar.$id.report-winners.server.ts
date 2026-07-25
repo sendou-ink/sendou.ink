@@ -4,7 +4,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	safeParseRequestFormData,
 } from "~/utils/remix.server";
@@ -30,7 +30,7 @@ export const action: ActionFunction = async (args) => {
 		};
 	}
 
-	const event = notFoundIfFalsy(await CalendarRepository.findById(params.id));
+	const event = notFoundIfNullish(await CalendarRepository.findById(params.id));
 	errorToastIfFalsy(
 		canReportCalendarEventWinners({
 			user,

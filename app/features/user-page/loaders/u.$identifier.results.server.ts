@@ -3,7 +3,7 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseSafeSearchParams,
 	redirectIfPageOutOfBounds,
 } from "~/utils/remix.server";
@@ -21,7 +21,7 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		schema: userResultsPageSearchParamsSchema,
 	});
 
-	const userId = notFoundIfFalsy(
+	const userId = notFoundIfNullish(
 		await UserRepository.identifierToUserId(params.identifier!),
 	).id;
 	const hasHighlightedResults =

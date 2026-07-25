@@ -4,7 +4,7 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	successToast,
 } from "~/utils/remix.server";
@@ -18,7 +18,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const placements = notFoundIfFalsy(
+	const placements = notFoundIfNullish(
 		await XRankPlacementRepository.findPlacementsByPlayerId(id),
 	);
 	const currentLinkedUserDiscordId = placements[0].discordId;

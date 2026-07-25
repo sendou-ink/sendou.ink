@@ -8,7 +8,7 @@ import { peakXpOverallSql } from "~/features/top-search/XRankPlacementRepository
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { safeNumberParse } from "~/utils/number";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { badgeUrl } from "~/utils/urls";
 import type { GetUserResponse } from "../schema";
 
@@ -20,7 +20,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const t = await getFixedTForLanguage("en", ["weapons"]);
 	const { identifier } = parseParams({ params, schema: paramsSchema });
 
-	const user = notFoundIfFalsy(
+	const user = notFoundIfNullish(
 		await db
 			.selectFrom("User")
 			.leftJoin("PlusTier", "PlusTier.userId", "User.id")

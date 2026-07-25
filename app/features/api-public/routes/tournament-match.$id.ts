@@ -8,7 +8,7 @@ import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tourn
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { logger } from "~/utils/logger";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentMatchResponse } from "../schema";
 
@@ -23,7 +23,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const match = notFoundIfFalsy(
+	const match = notFoundIfNullish(
 		await db
 			.selectFrom("TournamentMatch")
 			.innerJoin(

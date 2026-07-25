@@ -1,10 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const { id: userId } = notFoundIfFalsy(
+	const { id: userId } = notFoundIfNullish(
 		await UserRepository.identifierToUserId(params.identifier!),
 	);
 
@@ -17,14 +17,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (widgetsEnabled) {
 		return {
 			type: "new" as const,
-			widgets: notFoundIfFalsy(
+			widgets: notFoundIfNullish(
 				await UserRepository.widgetsByUserId(params.identifier!),
 			),
 			...userCards,
 		};
 	}
 
-	const user = notFoundIfFalsy(
+	const user = notFoundIfNullish(
 		await UserRepository.findProfileByIdentifier(params.identifier!),
 	);
 

@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import { actualNumber, id } from "~/utils/zod";
 import * as VodRepository from "../VodRepository.server";
 import { canEditVideo, vodToVideoBeingAdded } from "../vods-utils";
@@ -21,7 +21,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		return { vodToEdit: null };
 	}
 
-	const vod = notFoundIfFalsy(await VodRepository.findVodById(params.data.vod));
+	const vod = notFoundIfNullish(
+		await VodRepository.findVodById(params.data.vod),
+	);
 	const vodToEdit = vodToVideoBeingAdded(vod);
 
 	if (
