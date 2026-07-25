@@ -27,11 +27,11 @@
 .heroImg {
 	width: 100%;
 	height: auto;
-	aspect-ratio: 1 / 1;
+	aspect-ratio: 2 / 1;
 	object-fit: cover;
 	object-position: center 50%;
-	transform: scale(1.4);
-	transform-origin: 87% 60%;
+	transform: scale(1.2);
+	transform-origin: 80% 60%;
 	display: block;
 }
 

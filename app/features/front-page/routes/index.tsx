@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { subMonths } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
@@ -21,6 +22,7 @@ import { SplatoonRotations } from "~/features/front-page/components/SplatoonRota
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import styles from "~/styles/front.module.css";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BLANK_IMAGE_URL,
@@ -43,7 +45,6 @@ export const handle: SendouRouteHandle = {
 export default function FrontPage() {
 	return (
 		<Main className={styles.frontPageContainer}>
-			<WelcomeBanner />
 			<LeagueBanner />
 			<SeasonBanner />
 			<SplatoonRotations />
@@ -150,7 +151,11 @@ function WelcomeBanner() {
 	const { t } = useTranslation(["front"]);
 	const user = useUser();
 
-	if (user) return null;
+	const isNewUser =
+		typeof user?.createdAt === "number" &&
+		databaseTimestampToDate(user.createdAt) > subMonths(new Date(), 6);
+
+	if (user && !isNewUser) return null;
 
 	return (
 		<Link to={WELCOME_PAGE} className={styles.welcomeBanner}>
@@ -357,6 +362,7 @@ function DiscoverFeatures() {
 					</Link>
 				))}
 			</nav>
+			<WelcomeBanner />
 			<PWAInstallBanner />
 		</div>
 	);
