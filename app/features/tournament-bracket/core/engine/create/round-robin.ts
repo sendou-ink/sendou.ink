@@ -1,6 +1,6 @@
-import * as helpers from "../helpers";
 import type { ParticipantSlot } from "../types";
 import type { StageCreator } from "./builder";
+import * as helpers from "./helpers";
 import { ordering } from "./seeding";
 
 /**

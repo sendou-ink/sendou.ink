@@ -1,13 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { ordering } from "./create/seeding";
 import {
-	assertAbDivisionRoundRobin,
-	assertRoundRobin,
 	makeAbDivisionGroups,
 	makeAbDivisionRoundRobinMatches,
 	makeGroups,
 	makeRoundRobinMatches,
 } from "./helpers";
+import { ordering } from "./seeding";
 
 describe("Round-robin groups", () => {
 	test("should place participants in groups", () => {
@@ -335,3 +333,98 @@ describe("Seed ordering methods", () => {
 		).toEqual([1, 4, 5, 8, 2, 3, 6, 7]);
 	});
 });
+
+/**
+ * A helper to assert our generated round-robin is correct.
+ *
+ * @param input The input seeding.
+ * @param output The resulting distribution of seeds in groups.
+ */
+function assertRoundRobin(input: number[], output: [number, number][][]): void {
+	const n = input.length;
+	const matchPerRound = Math.floor(n / 2);
+	const roundCount = n % 2 === 0 ? n - 1 : n;
+
+	if (output.length !== roundCount) throw Error("Round count is wrong");
+	if (!output.every((round) => round.length === matchPerRound))
+		throw Error("Not every round has the good number of matches");
+
+	const checkAllOpponents = Object.fromEntries(
+		input.map((element) => [element, new Set<number>()]),
+	) as Record<number, Set<number>>;
+
+	for (const round of output) {
+		const checkUnique = new Set<number>();
+
+		for (const match of round) {
+			if (match.length !== 2) throw Error("One match is not a pair");
+
+			if (checkUnique.has(match[0]))
+				throw Error("This team is already playing");
+			checkUnique.add(match[0]);
+
+			if (checkUnique.has(match[1]))
+				throw Error("This team is already playing");
+			checkUnique.add(match[1]);
+
+			if (checkAllOpponents[match[0]].has(match[1]))
+				throw Error("The team has already matched this team");
+			checkAllOpponents[match[0]].add(match[1]);
+
+			if (checkAllOpponents[match[1]].has(match[0]))
+				throw Error("The team has already matched this team");
+			checkAllOpponents[match[1]].add(match[0]);
+		}
+	}
+}
+
+/**
+ * A helper to assert our generated bipartite round-robin is correct.
+ *
+ * @param divisionA Seeds in division A (ordered by seed).
+ * @param divisionB Seeds in division B (ordered by seed).
+ * @param output The resulting rounds of matches.
+ */
+function assertAbDivisionRoundRobin(
+	divisionA: number[],
+	divisionB: number[],
+	output: [number, number][][],
+): void {
+	const roundCount = Math.max(divisionA.length, divisionB.length);
+	const matchesPerRound = Math.min(divisionA.length, divisionB.length);
+
+	if (output.length !== roundCount) throw Error("Round count is wrong");
+	if (!output.every((round) => round.length === matchesPerRound))
+		throw Error("Not every round has the good number of matches");
+
+	const aSet = new Set(divisionA);
+	const bSet = new Set(divisionB);
+	const seenPairings = new Set<string>();
+
+	for (const round of output) {
+		const playingInRound = new Set<number>();
+
+		for (const match of round) {
+			if (match.length !== 2) throw Error("One match is not a pair");
+
+			const [a, b] = match;
+
+			if (!aSet.has(a)) throw Error(`${a} is not a division A participant`);
+			if (!bSet.has(b)) throw Error(`${b} is not a division B participant`);
+
+			if (playingInRound.has(a)) throw Error("This team is already playing");
+			playingInRound.add(a);
+
+			if (playingInRound.has(b)) throw Error("This team is already playing");
+			playingInRound.add(b);
+
+			const pairingKey = `${a}-${b}`;
+			if (seenPairings.has(pairingKey))
+				throw Error("The teams have already been paired");
+			seenPairings.add(pairingKey);
+		}
+	}
+
+	if (seenPairings.size !== divisionA.length * divisionB.length)
+		throw Error("Not every A vs B pairing was generated");
+}

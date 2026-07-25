@@ -1,5 +1,10 @@
-import * as helpers from "../helpers";
+import {
+	isMatchByeCompleted,
+	isMatchCompleted,
+	isMatchStarted,
+} from "../status";
 import type { BracketData, EngineResult } from "../types";
+import * as helpers from "./helpers";
 import { Store } from "./store";
 import { Propagator } from "./traversal";
 
@@ -43,8 +48,8 @@ export function resetMatchResults(
 		nextMatches.some(
 			(match) =>
 				match &&
-				(helpers.isMatchStarted(match) || helpers.isMatchCompleted(match)) &&
-				!helpers.isMatchByeCompleted(match),
+				(isMatchStarted(match) || isMatchCompleted(match)) &&
+				!isMatchByeCompleted(match),
 		)
 	)
 		throw Error("The match is locked.");

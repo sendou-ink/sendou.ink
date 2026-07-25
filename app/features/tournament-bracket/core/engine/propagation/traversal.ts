@@ -1,5 +1,3 @@
-import type { SetNextOpponent } from "../helpers";
-import * as helpers from "../helpers";
 import { matchStatus } from "../status";
 import type {
 	GroupData,
@@ -10,6 +8,8 @@ import type {
 	StageData,
 	StageType,
 } from "../types";
+import type { SetNextOpponent } from "./helpers";
+import * as helpers from "./helpers";
 import type { Store } from "./store";
 
 interface RoundPositionalInfo {

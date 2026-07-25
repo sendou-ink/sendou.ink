@@ -1,5 +1,4 @@
-import { isMatchCompleted, isMatchStarted } from "./helpers";
-import type { BracketData, MatchData, RoundData } from "./types";
+import type { BracketData, MatchData, MatchResults, RoundData } from "./types";
 
 /**
  * The state of a match. Never persisted, always derived from the opponents of
@@ -30,6 +29,41 @@ export function matchStatus(data: BracketData, matchId: number): MatchStatus {
 	if (!match) throw new Error(`Match not found: ${matchId}`);
 
 	return resolveStatus(match, bracketContext(data));
+}
+
+/**
+ * Checks if a match has had at least one game reported.
+ *
+ * @param match A match's results.
+ */
+export function isMatchStarted(match: MatchResults): boolean {
+	return (
+		match.opponent1?.score !== undefined || match.opponent2?.score !== undefined
+	);
+}
+
+/**
+ * Checks if a match is completed.
+ *
+ * @param match A match's results.
+ */
+export function isMatchCompleted(match: MatchResults): boolean {
+	return isMatchByeCompleted(match) || Boolean(match.winnerSide);
+}
+
+/**
+ * Checks if a match is completed because of at least one BYE.
+ *
+ * A match "BYE vs. TBD" isn't considered completed yet.
+ *
+ * @param match A match's results.
+ */
+export function isMatchByeCompleted(match: MatchResults): boolean {
+	return (
+		(match.opponent1 === null && match.opponent2?.id !== null) || // BYE vs. someone
+		(match.opponent2 === null && match.opponent1?.id !== null) || // someone vs. BYE
+		(match.opponent1 === null && match.opponent2 === null)
+	); // BYE vs. BYE
 }
 
 interface BracketContext {

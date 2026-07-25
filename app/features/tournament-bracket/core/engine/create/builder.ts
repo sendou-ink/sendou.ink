@@ -1,4 +1,3 @@
-import * as helpers from "../helpers";
 import type {
 	BracketData,
 	Duel,
@@ -13,6 +12,7 @@ import type {
 	StageSettings,
 	StandardBracketResults,
 } from "../types";
+import * as helpers from "./helpers";
 import {
 	defaultMinorOrdering,
 	ordering,
