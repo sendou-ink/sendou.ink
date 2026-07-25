@@ -395,6 +395,7 @@ export async function findLeanById(id: number) {
 		.where("User.id", "=", id)
 		.select(({ eb }) => [
 			...commonUserSelect(eb),
+			"User.createdAt",
 			"User.customTheme",
 			"User.isArtist",
 			"User.isVideoAdder",

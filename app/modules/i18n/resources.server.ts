@@ -24,6 +24,7 @@ import tournamentDa from "../../../locales/da/tournament.json";
 import userDa from "../../../locales/da/user.json";
 import vodsDa from "../../../locales/da/vods.json";
 import weaponsDa from "../../../locales/da/weapons.json";
+import welcomeDa from "../../../locales/da/welcome.json";
 import analyzerDe from "../../../locales/de/analyzer.json";
 import artDe from "../../../locales/de/art.json";
 import badgesDe from "../../../locales/de/badges.json";
@@ -50,6 +51,7 @@ import tournamentDe from "../../../locales/de/tournament.json";
 import userDe from "../../../locales/de/user.json";
 import vodsDe from "../../../locales/de/vods.json";
 import weaponsDe from "../../../locales/de/weapons.json";
+import welcomeDe from "../../../locales/de/welcome.json";
 import analyzer from "../../../locales/en/analyzer.json";
 import art from "../../../locales/en/art.json";
 import badges from "../../../locales/en/badges.json";
@@ -76,6 +78,7 @@ import tournament from "../../../locales/en/tournament.json";
 import user from "../../../locales/en/user.json";
 import vods from "../../../locales/en/vods.json";
 import weapons from "../../../locales/en/weapons.json";
+import welcomeEn from "../../../locales/en/welcome.json";
 import analyzerEsEs from "../../../locales/es-ES/analyzer.json";
 import artEsEs from "../../../locales/es-ES/art.json";
 import badgesEsEs from "../../../locales/es-ES/badges.json";
@@ -102,6 +105,7 @@ import tournamentEsEs from "../../../locales/es-ES/tournament.json";
 import userEsEs from "../../../locales/es-ES/user.json";
 import vodsEsEs from "../../../locales/es-ES/vods.json";
 import weaponsEsEs from "../../../locales/es-ES/weapons.json";
+import welcomeEsEs from "../../../locales/es-ES/welcome.json";
 import analyzerEsUs from "../../../locales/es-US/analyzer.json";
 import artEsUs from "../../../locales/es-US/art.json";
 import badgesEsUs from "../../../locales/es-US/badges.json";
@@ -128,6 +132,7 @@ import tournamentEsUs from "../../../locales/es-US/tournament.json";
 import userEsUs from "../../../locales/es-US/user.json";
 import vodsEsUs from "../../../locales/es-US/vods.json";
 import weaponsEsUs from "../../../locales/es-US/weapons.json";
+import welcomeEsUs from "../../../locales/es-US/welcome.json";
 import analyzerFrCa from "../../../locales/fr-CA/analyzer.json";
 import artFrCa from "../../../locales/fr-CA/art.json";
 import badgesFrCa from "../../../locales/fr-CA/badges.json";
@@ -154,6 +159,7 @@ import tournamentFrCa from "../../../locales/fr-CA/tournament.json";
 import userFrCa from "../../../locales/fr-CA/user.json";
 import vodsFrCa from "../../../locales/fr-CA/vods.json";
 import weaponsFrCa from "../../../locales/fr-CA/weapons.json";
+import welcomeFrCa from "../../../locales/fr-CA/welcome.json";
 import analyzerFrEu from "../../../locales/fr-EU/analyzer.json";
 import artFrEu from "../../../locales/fr-EU/art.json";
 import badgesFrEu from "../../../locales/fr-EU/badges.json";
@@ -180,6 +186,7 @@ import tournamentFrEu from "../../../locales/fr-EU/tournament.json";
 import userFrEu from "../../../locales/fr-EU/user.json";
 import vodsFrEu from "../../../locales/fr-EU/vods.json";
 import weaponsFrEu from "../../../locales/fr-EU/weapons.json";
+import welcomeFrEu from "../../../locales/fr-EU/welcome.json";
 import analyzerHe from "../../../locales/he/analyzer.json";
 import artHe from "../../../locales/he/art.json";
 import badgesHe from "../../../locales/he/badges.json";
@@ -206,6 +213,7 @@ import tournamentHe from "../../../locales/he/tournament.json";
 import userHe from "../../../locales/he/user.json";
 import vodsHe from "../../../locales/he/vods.json";
 import weaponsHe from "../../../locales/he/weapons.json";
+import welcomeHe from "../../../locales/he/welcome.json";
 import analyzerIt from "../../../locales/it/analyzer.json";
 import artIt from "../../../locales/it/art.json";
 import badgesIt from "../../../locales/it/badges.json";
@@ -232,6 +240,7 @@ import tournamentIt from "../../../locales/it/tournament.json";
 import userIt from "../../../locales/it/user.json";
 import vodsIt from "../../../locales/it/vods.json";
 import weaponsIt from "../../../locales/it/weapons.json";
+import welcomeIt from "../../../locales/it/welcome.json";
 import analyzerJa from "../../../locales/ja/analyzer.json";
 import artJa from "../../../locales/ja/art.json";
 import badgesJa from "../../../locales/ja/badges.json";
@@ -258,6 +267,7 @@ import tournamentJa from "../../../locales/ja/tournament.json";
 import userJa from "../../../locales/ja/user.json";
 import vodsJa from "../../../locales/ja/vods.json";
 import weaponsJa from "../../../locales/ja/weapons.json";
+import welcomeJa from "../../../locales/ja/welcome.json";
 import analyzerKo from "../../../locales/ko/analyzer.json";
 import artKo from "../../../locales/ko/art.json";
 import badgesKo from "../../../locales/ko/badges.json";
@@ -284,6 +294,7 @@ import tournamentKo from "../../../locales/ko/tournament.json";
 import userKo from "../../../locales/ko/user.json";
 import vodsKo from "../../../locales/ko/vods.json";
 import weaponsKo from "../../../locales/ko/weapons.json";
+import welcomeKo from "../../../locales/ko/welcome.json";
 import analyzerNl from "../../../locales/nl/analyzer.json";
 import artNl from "../../../locales/nl/art.json";
 import badgesNl from "../../../locales/nl/badges.json";
@@ -310,6 +321,7 @@ import tournamentNl from "../../../locales/nl/tournament.json";
 import userNl from "../../../locales/nl/user.json";
 import vodsNl from "../../../locales/nl/vods.json";
 import weaponsNl from "../../../locales/nl/weapons.json";
+import welcomeNl from "../../../locales/nl/welcome.json";
 import analyzerPl from "../../../locales/pl/analyzer.json";
 import artPl from "../../../locales/pl/art.json";
 import badgesPl from "../../../locales/pl/badges.json";
@@ -336,6 +348,7 @@ import tournamentPl from "../../../locales/pl/tournament.json";
 import userPl from "../../../locales/pl/user.json";
 import vodsPl from "../../../locales/pl/vods.json";
 import weaponsPl from "../../../locales/pl/weapons.json";
+import welcomePl from "../../../locales/pl/welcome.json";
 import analyzerPtBr from "../../../locales/pt-BR/analyzer.json";
 import artPtBr from "../../../locales/pt-BR/art.json";
 import badgesPtBr from "../../../locales/pt-BR/badges.json";
@@ -362,6 +375,7 @@ import tournamentPtBr from "../../../locales/pt-BR/tournament.json";
 import userPtBr from "../../../locales/pt-BR/user.json";
 import vodsPtBr from "../../../locales/pt-BR/vods.json";
 import weaponsPtBr from "../../../locales/pt-BR/weapons.json";
+import welcomePtBr from "../../../locales/pt-BR/welcome.json";
 import analyzerRu from "../../../locales/ru/analyzer.json";
 import artRu from "../../../locales/ru/art.json";
 import badgesRu from "../../../locales/ru/badges.json";
@@ -388,6 +402,7 @@ import tournamentRu from "../../../locales/ru/tournament.json";
 import userRu from "../../../locales/ru/user.json";
 import vodsRu from "../../../locales/ru/vods.json";
 import weaponsRu from "../../../locales/ru/weapons.json";
+import welcomeRu from "../../../locales/ru/welcome.json";
 import analyzerZh from "../../../locales/zh/analyzer.json";
 import artZh from "../../../locales/zh/art.json";
 import badgesZh from "../../../locales/zh/badges.json";
@@ -414,6 +429,7 @@ import tournamentZh from "../../../locales/zh/tournament.json";
 import userZh from "../../../locales/zh/user.json";
 import vodsZh from "../../../locales/zh/vods.json";
 import weaponsZh from "../../../locales/zh/weapons.json";
+import welcomeZh from "../../../locales/zh/welcome.json";
 
 export const resources = {
 	"es-US": {
@@ -443,6 +459,7 @@ export const resources = {
 		team: teamEsUs,
 		"tier-list-maker": tierListMakerEsUs,
 		analyzer: analyzerEsUs,
+		welcome: welcomeEsUs,
 	},
 	en: {
 		gear: gear,
@@ -471,6 +488,7 @@ export const resources = {
 		team: team,
 		"tier-list-maker": tierListMaker,
 		analyzer: analyzer,
+		welcome: welcomeEn,
 	},
 	ko: {
 		gear: gearKo,
@@ -499,6 +517,7 @@ export const resources = {
 		team: teamKo,
 		"tier-list-maker": tierListMakerKo,
 		analyzer: analyzerKo,
+		welcome: welcomeKo,
 	},
 	de: {
 		gear: gearDe,
@@ -527,6 +546,7 @@ export const resources = {
 		team: teamDe,
 		"tier-list-maker": tierListMakerDe,
 		analyzer: analyzerDe,
+		welcome: welcomeDe,
 	},
 	nl: {
 		gear: gearNl,
@@ -555,6 +575,7 @@ export const resources = {
 		team: teamNl,
 		"tier-list-maker": tierListMakerNl,
 		analyzer: analyzerNl,
+		welcome: welcomeNl,
 	},
 	"pt-BR": {
 		gear: gearPtBr,
@@ -583,6 +604,7 @@ export const resources = {
 		team: teamPtBr,
 		"tier-list-maker": tierListMakerPtBr,
 		analyzer: analyzerPtBr,
+		welcome: welcomePtBr,
 	},
 	zh: {
 		gear: gearZh,
@@ -611,6 +633,7 @@ export const resources = {
 		team: teamZh,
 		"tier-list-maker": tierListMakerZh,
 		analyzer: analyzerZh,
+		welcome: welcomeZh,
 	},
 	"fr-CA": {
 		gear: gearFrCa,
@@ -639,6 +662,7 @@ export const resources = {
 		team: teamFrCa,
 		"tier-list-maker": tierListMakerFrCa,
 		analyzer: analyzerFrCa,
+		welcome: welcomeFrCa,
 	},
 	ru: {
 		gear: gearRu,
@@ -667,6 +691,7 @@ export const resources = {
 		team: teamRu,
 		"tier-list-maker": tierListMakerRu,
 		analyzer: analyzerRu,
+		welcome: welcomeRu,
 	},
 	it: {
 		gear: gearIt,
@@ -695,6 +720,7 @@ export const resources = {
 		team: teamIt,
 		"tier-list-maker": tierListMakerIt,
 		analyzer: analyzerIt,
+		welcome: welcomeIt,
 	},
 	ja: {
 		gear: gearJa,
@@ -723,6 +749,7 @@ export const resources = {
 		team: teamJa,
 		"tier-list-maker": tierListMakerJa,
 		analyzer: analyzerJa,
+		welcome: welcomeJa,
 	},
 	da: {
 		gear: gearDa,
@@ -751,6 +778,7 @@ export const resources = {
 		team: teamDa,
 		"tier-list-maker": tierListMakerDa,
 		analyzer: analyzerDa,
+		welcome: welcomeDa,
 	},
 	"es-ES": {
 		gear: gearEsEs,
@@ -779,6 +807,7 @@ export const resources = {
 		team: teamEsEs,
 		"tier-list-maker": tierListMakerEsEs,
 		analyzer: analyzerEsEs,
+		welcome: welcomeEsEs,
 	},
 	he: {
 		gear: gearHe,
@@ -807,6 +836,7 @@ export const resources = {
 		team: teamHe,
 		"tier-list-maker": tierListMakerHe,
 		analyzer: analyzerHe,
+		welcome: welcomeHe,
 	},
 	"fr-EU": {
 		gear: gearFrEu,
@@ -835,6 +865,7 @@ export const resources = {
 		team: teamFrEu,
 		"tier-list-maker": tierListMakerFrEu,
 		analyzer: analyzerFrEu,
+		welcome: welcomeFrEu,
 	},
 	pl: {
 		gear: gearPl,
@@ -863,6 +894,7 @@ export const resources = {
 		team: teamPl,
 		"tier-list-maker": tierListMakerPl,
 		analyzer: analyzerPl,
+		welcome: welcomePl,
 	},
 };
 

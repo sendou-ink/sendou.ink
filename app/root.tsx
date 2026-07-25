@@ -140,6 +140,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						languages: user.languages ? user.languages.split(",") : [],
 						plusTier: user.plusTier,
 						roles: user.roles,
+						createdAt: user.createdAt,
 					}
 				: undefined,
 			customTheme: isSupporter(user) ? user?.customTheme : undefined,
