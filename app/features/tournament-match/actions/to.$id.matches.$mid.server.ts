@@ -1,6 +1,6 @@
 import type { Transaction } from "kysely";
 import type { ActionFunction } from "react-router";
-import { db, sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -39,10 +39,6 @@ import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
-import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
-import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
-import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
-import { updateMatchGameResultKo } from "../queries/updateMatchGameResultKo.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import {
 	matchIsLocked,
@@ -194,32 +190,37 @@ export const action: ActionFunction = async ({ params, request }) => {
 								winnerTeamId: data.winnerTeamId,
 							}),
 						endDroppedTeams: (result) => result.setOver,
-						inTransaction: () => {
-							const result = insertTournamentMatchGameResult({
-								matchId: match.id,
-								mode: currentMap.mode,
-								stageId: currentMap.stageId,
-								reporterId: user.id,
-								winnerTeamId: data.winnerTeamId,
-								number: data.position + 1,
-								source: String(currentMap.source),
-								ko: bracket.collectsKos ? Number(Boolean(data.ko)) : null,
-							});
+						inTransaction: async (_result, trx) => {
+							const result = await TournamentMatchRepository.insertResult(
+								{
+									matchId: match.id,
+									mode: currentMap.mode,
+									stageId: currentMap.stageId,
+									reporterId: user.id,
+									winnerTeamId: data.winnerTeamId,
+									number: data.position + 1,
+									source: String(currentMap.source),
+									ko: bracket.collectsKos ? Number(Boolean(data.ko)) : null,
+								},
+								trx,
+							);
 
-							for (const userId of teamOneRoster) {
-								insertTournamentMatchGameResultParticipant({
-									matchGameResultId: result.id,
-									userId,
-									tournamentTeamId: match.opponentOne!.id!,
-								});
-							}
-							for (const userId of teamTwoRoster) {
-								insertTournamentMatchGameResultParticipant({
-									matchGameResultId: result.id,
-									userId,
-									tournamentTeamId: match.opponentTwo!.id!,
-								});
-							}
+							await TournamentMatchRepository.setParticipants(
+								{
+									resultId: result.id,
+									participants: [
+										...teamOneRoster.map((userId) => ({
+											userId,
+											tournamentTeamId: match.opponentOne!.id!,
+										})),
+										...teamTwoRoster.map((userId) => ({
+											userId,
+											tournamentTeamId: match.opponentTwo!.id!,
+										})),
+									],
+								},
+								trx,
+							);
 						},
 					});
 				endedDroppedMatchIds = endedMatchIds;
@@ -399,31 +400,31 @@ export const action: ActionFunction = async ({ params, request }) => {
 				);
 			}
 
-			sql.transaction(() => {
+			await db.transaction().execute(async (trx) => {
 				if (typeof data.ko === "boolean") {
-					updateMatchGameResultKo({
-						matchGameResultId: result.id,
-						ko: data.ko,
-					});
+					await TournamentMatchRepository.updateResultKo(
+						{ id: result.id, ko: data.ko },
+						trx,
+					);
 				}
 
-				deleteParticipantsByMatchGameResultId(result.id);
-
-				for (const userId of data.rosters[0]) {
-					insertTournamentMatchGameResultParticipant({
-						matchGameResultId: result.id,
-						userId,
-						tournamentTeamId: match.opponentOne!.id!,
-					});
-				}
-				for (const userId of data.rosters[1]) {
-					insertTournamentMatchGameResultParticipant({
-						matchGameResultId: result.id,
-						userId,
-						tournamentTeamId: match.opponentTwo!.id!,
-					});
-				}
-			})();
+				await TournamentMatchRepository.setParticipants(
+					{
+						resultId: result.id,
+						participants: [
+							...data.rosters[0].map((userId) => ({
+								userId,
+								tournamentTeamId: match.opponentOne!.id!,
+							})),
+							...data.rosters[1].map((userId) => ({
+								userId,
+								tournamentTeamId: match.opponentTwo!.id!,
+							})),
+						],
+					},
+					trx,
+				);
+			});
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;

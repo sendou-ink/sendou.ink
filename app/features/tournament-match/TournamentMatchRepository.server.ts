@@ -1,4 +1,4 @@
-import { sql, type Transaction } from "kysely";
+import { type Insertable, sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, TournamentRoundMaps } from "~/db/tables";
@@ -130,6 +130,63 @@ export function findResultsByMatchId(matchId: number) {
 		])
 		.where("TournamentMatchGameResult.matchId", "=", matchId)
 		.orderBy("TournamentMatchGameResult.number", "asc")
+		.execute();
+}
+
+/** Inserts a single game result, returning the id it was given. */
+export function insertResult(
+	args: Insertable<DB["TournamentMatchGameResult"]>,
+	trx?: Transaction<DB>,
+) {
+	return (trx ?? db)
+		.insertInto("TournamentMatchGameResult")
+		.values(args)
+		.returning("id")
+		.executeTakeFirstOrThrow();
+}
+
+/** Updates the KO status of a single game result. */
+export function updateResultKo(
+	args: { id: number; ko: boolean },
+	trx?: Transaction<DB>,
+) {
+	return (trx ?? db)
+		.updateTable("TournamentMatchGameResult")
+		.set({ ko: Number(args.ko) })
+		.where("TournamentMatchGameResult.id", "=", args.id)
+		.execute();
+}
+
+/** Sets the players who participated in a game result, replacing any existing ones. */
+export async function setParticipants(
+	args: {
+		resultId: number;
+		participants: Array<
+			Pick<
+				Insertable<DB["TournamentMatchGameResultParticipant"]>,
+				"userId" | "tournamentTeamId"
+			>
+		>;
+	},
+	trx: Transaction<DB>,
+) {
+	await trx
+		.deleteFrom("TournamentMatchGameResultParticipant")
+		.where(
+			"TournamentMatchGameResultParticipant.matchGameResultId",
+			"=",
+			args.resultId,
+		)
+		.execute();
+
+	await trx
+		.insertInto("TournamentMatchGameResultParticipant")
+		.values(
+			args.participants.map((participant) => ({
+				...participant,
+				matchGameResultId: args.resultId,
+			})),
+		)
 		.execute();
 }
 
