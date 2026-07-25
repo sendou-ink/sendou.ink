@@ -175,7 +175,6 @@ async function dropTeamOut({
 	}
 
 	const endedMatchIds = await db.transaction().execute(async (trx) => {
-		// xxx: we already load tournament so not needed?
 		const bracketData = await BracketRepository.findByTournamentId(
 			tournament.ctx.id,
 			trx,
