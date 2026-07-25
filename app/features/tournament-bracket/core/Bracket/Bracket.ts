@@ -126,7 +126,7 @@ export abstract class Bracket {
 			return;
 
 		try {
-			let data = this.data as Engine.BracketData;
+			let data = this.data;
 
 			const teamOrder = this.teamOrderForSimulation();
 
@@ -141,7 +141,6 @@ export abstract class Bracket {
 				loopCount++;
 
 				for (const match of data.match) {
-					if (!match) continue;
 					// we have a result already
 					if (match.winnerSide) {
 						continue;
@@ -225,9 +224,7 @@ export abstract class Bracket {
 	simulatedMatch(matchId: number) {
 		if (!this.simulatedData) return;
 
-		return this.simulatedData.match
-			.filter(Boolean)
-			.find((match) => match.id === matchId);
+		return this.simulatedData.match.find((match) => match.id === matchId);
 	}
 
 	/** Whether reporting a game in this bracket also records if the game was a KO win. */
@@ -235,12 +232,17 @@ export abstract class Bracket {
 		return false;
 	}
 
-	get type(): Tables["TournamentStage"]["type"] {
-		throw new Error("not implemented");
-	}
+	abstract get type(): Tables["TournamentStage"]["type"];
 
-	get standings(): Standing[] {
-		throw new Error("not implemented");
+	abstract get standings(): Standing[];
+
+	/**
+	 * How many rounds a swiss bracket has. Comes from the bracket's own stage
+	 * settings rather than `settings` (the progression's, editable at any time),
+	 * so it can't drift from the bracket that actually exists.
+	 */
+	get swissRoundCount() {
+		return Engine.swissRoundCount(this.data);
 	}
 
 	get participantTournamentTeamIds() {
@@ -397,16 +399,14 @@ export abstract class Bracket {
 		return this.teamsPendingCheckIn.includes(team.id);
 	}
 
-	source(_options: {
+	abstract source(options: {
 		placements: number[];
 		advanceThreshold?: number;
 		rest?: boolean;
 	}): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
-	} {
-		throw new Error("not implemented");
-	}
+	};
 
 	teamsWithNames(teams: { id: number }[]) {
 		return teams.map((team) => {
@@ -474,7 +474,5 @@ export abstract class Bracket {
 		return ongoingMatchIds;
 	}
 
-	defaultRoundBestOfs(_data: BracketData): BracketMapCounts {
-		throw new Error("not implemented");
-	}
+	abstract defaultRoundBestOfs(data: BracketData): BracketMapCounts;
 }

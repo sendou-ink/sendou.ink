@@ -1,8 +1,8 @@
 import blossom from "edmonds-blossom-fixed";
 import { err, ok, type Result } from "neverthrow";
 import * as R from "remeda";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import invariant from "~/utils/invariant";
+import { swissRoundCount } from "../create/settings";
 import type {
 	BracketData,
 	GeneratedRound,
@@ -23,7 +23,7 @@ export function generateRound(
 	args: {
 		groupId: number;
 		standings: SwissStanding[];
-		settings: { advanceThreshold?: number; roundCount?: number } | null;
+		settings: { advanceThreshold?: number } | null;
 	},
 ): Result<GeneratedRound, string> {
 	// lets consider only this groups matches
@@ -52,8 +52,7 @@ export function generateRound(
 
 	// filter out teams that have advanced or been eliminated if early advance/elimination is enabled
 	if (typeof args.settings?.advanceThreshold === "number") {
-		const roundCount =
-			args.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT;
+		const roundCount = swissRoundCount(data);
 		const advanceThreshold = args.settings.advanceThreshold;
 
 		standingsWithoutDropouts = standingsWithoutDropouts.filter((standing) => {

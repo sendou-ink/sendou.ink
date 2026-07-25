@@ -65,6 +65,10 @@ export const ordering: OrderingMap = {
 	},
 };
 
+/** The ordering method for the first round of the upper bracket of an elimination stage. */
+export const STANDARD_BRACKET_FIRST_ROUND_ORDERING: SeedOrdering =
+	"space_between";
+
 export const defaultMinorOrdering: { [key: number]: SeedOrdering[] } = {
 	// 1 or 2: Not possible.
 	4: ["natural", "reverse"],

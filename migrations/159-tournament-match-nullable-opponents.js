@@ -32,8 +32,8 @@ export function up(db) {
 					"stageId",
 					"groupId",
 					"number",
-					case when "opponentOne" = 'null' then null else json_remove("opponentOne", '$.result', '$.forfeit') end,
-					case when "opponentTwo" = 'null' then null else json_remove("opponentTwo", '$.result', '$.forfeit') end,
+					case when "opponentOne" = 'null' then null else json_remove("opponentOne", '$.result', '$.forfeit', '$.totalPoints', '$.totalKos') end,
+					case when "opponentTwo" = 'null' then null else json_remove("opponentTwo", '$.result', '$.forfeit', '$.totalPoints', '$.totalKos') end,
 					case
 						when "opponentOne" ->> '$.result' = 'win' then 'opponent1'
 						when "opponentTwo" ->> '$.result' = 'win' then 'opponent2'

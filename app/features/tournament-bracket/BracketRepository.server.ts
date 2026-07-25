@@ -103,9 +103,7 @@ export async function findByTournamentId(
 						"TournamentMatch.number",
 						"TournamentMatch.startedAt",
 						"TournamentMatch.winnerSide",
-						// totalKos is re-aggregated fresh from the game results; the
-						// totalKos/totalPoints that old write paths persisted into the
-						// opponent JSON is stale residue and gets stripped/overwritten
+						// totalKos is never persisted, it is aggregated fresh from the game results
 						serializedOpponentWithKos("opponentOne").as("opponent1"),
 						serializedOpponentWithKos("opponentTwo").as("opponent2"),
 					])
@@ -121,15 +119,15 @@ export async function findByTournamentId(
 }
 
 /**
- * Builds the opponent JSON with the freshly aggregated KO count: strips the
- * legacy `totalPoints` and overwrites `totalKos` with the SQL sum over the
- * match's game results. Resolves to `null` for BYEs (the column is `null`).
+ * Builds the opponent JSON with the freshly aggregated KO count: sets
+ * `totalKos` to the SQL sum over the match's game results. Resolves to `null`
+ * for BYEs (the column is `null`).
  */
 function serializedOpponentWithKos(
 	column: "opponentOne" | "opponentTwo",
 ): RawBuilder<ParticipantResult | null> {
 	return kyselySql<ParticipantResult | null>`json_set(
-		json_remove(${kyselySql.ref(`TournamentMatch.${column}`)}, '$.totalPoints'),
+		${kyselySql.ref(`TournamentMatch.${column}`)},
 		'$.totalKos',
 		sum(
 			case
@@ -376,9 +374,6 @@ export function resetBracket(tournamentStageId: number) {
 function serializeOpponent(opponent: ParticipantResult | null): string | null {
 	if (!opponent) return null;
 
-	const { totalKos, totalPoints, ...persisted } =
-		opponent as ParticipantResult & {
-			totalPoints?: number;
-		};
+	const { totalKos, ...persisted } = opponent;
 	return JSON.stringify(persisted);
 }

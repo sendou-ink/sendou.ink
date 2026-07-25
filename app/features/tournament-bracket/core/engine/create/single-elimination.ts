@@ -1,6 +1,6 @@
 import type { Duel, ParticipantSlot } from "../types";
 import type { StageCreator } from "./builder";
-import { ordering } from "./seeding";
+import { ordering, STANDARD_BRACKET_FIRST_ROUND_ORDERING } from "./seeding";
 
 /**
  * Creates a single elimination stage.
@@ -10,8 +10,7 @@ import { ordering } from "./seeding";
 export function createSingleElimination(creator: StageCreator): void {
 	const slots = creator.getSlots();
 	const stage = creator.createStage();
-	const method = creator.getStandardBracketFirstRoundOrdering();
-	const ordered = ordering[method](slots);
+	const ordered = ordering[STANDARD_BRACKET_FIRST_ROUND_ORDERING](slots);
 
 	const { losers } = creator.createStandardBracket(stage.id, 1, ordered);
 	createConsolationFinal(creator, stage.id, losers);

@@ -10,7 +10,6 @@ import {
 	tournamentTeamPage,
 } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
-import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket, Standing } from "../../core/Bracket";
 import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
@@ -87,8 +86,7 @@ export function PlacementsTable({
 				advanceThreshold: bracket.settings.advanceThreshold,
 				losses: stats.setLosses,
 				wins: stats.setWins,
-				roundCount:
-					bracket.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+				roundCount: bracket.swissRoundCount,
 			}) === "advanced"
 				? bracket.tournament.brackets.find((otherBracket) =>
 						otherBracket.sources?.some(
@@ -288,9 +286,7 @@ function StandingsTable({
 							advanceThreshold: bracket.settings.advanceThreshold,
 							losses: s.stats.setLosses,
 							wins: s.stats.setWins,
-							roundCount:
-								bracket.settings.roundCount ??
-								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+							roundCount: bracket.swissRoundCount,
 						}) === "eliminated";
 
 					if (renderQualifiedRow) qualifiedRowRendered = true;

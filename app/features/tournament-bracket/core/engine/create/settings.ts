@@ -1,7 +1,12 @@
 import type { TournamentStageSettings } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { assertUnreachable } from "~/utils/types";
-import type { CreateBracketInput, StageSettings, StageType } from "../types";
+import type {
+	BracketData,
+	CreateBracketInput,
+	StageSettings,
+	StageType,
+} from "../types";
 
 /**
  * Resolves the user-selected settings into the engine's internal stage
@@ -42,6 +47,18 @@ export function resolveStageSettings(input: CreateBracketInput): StageSettings {
 			assertUnreachable(type);
 		}
 	}
+}
+
+/**
+ * How many rounds a swiss bracket was created with. Read off the stage's own
+ * settings (resolved and persisted when the bracket was created) so that later
+ * edits to the tournament's bracket progression can't change the advance and
+ * elimination math of a bracket that already exists.
+ */
+export function swissRoundCount(data: BracketData): number {
+	return (
+		data.stage[0]?.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT
+	);
 }
 
 /** Whether the bracket will include a third place match. Only possible for single elimination with at least 4 participants. */

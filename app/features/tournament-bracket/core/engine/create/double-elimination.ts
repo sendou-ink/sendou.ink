@@ -1,7 +1,7 @@
 import type { Duel, ParticipantSlot } from "../types";
 import type { StageCreator } from "./builder";
 import * as helpers from "./helpers";
-import { ordering } from "./seeding";
+import { ordering, STANDARD_BRACKET_FIRST_ROUND_ORDERING } from "./seeding";
 
 /**
  * Creates a double elimination stage.
@@ -12,8 +12,7 @@ import { ordering } from "./seeding";
 export function createDoubleElimination(creator: StageCreator): void {
 	const slots = creator.getSlots();
 	const stage = creator.createStage();
-	const method = creator.getStandardBracketFirstRoundOrdering();
-	const ordered = ordering[method](slots);
+	const ordered = ordering[STANDARD_BRACKET_FIRST_ROUND_ORDERING](slots);
 
 	const { losers: losersWb, winner: winnerWb } = creator.createStandardBracket(
 		stage.id,

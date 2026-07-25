@@ -1,7 +1,6 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -59,9 +58,7 @@ export class SwissBracket extends Bracket {
 							advanceThreshold,
 							wins: standing.stats?.setWins ?? 0,
 							losses: standing.stats?.setLosses ?? 0,
-							roundCount:
-								this.settings?.roundCount ??
-								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+							roundCount: this.swissRoundCount,
 						}),
 					}))
 					.filter((t) => t.status === "advanced")

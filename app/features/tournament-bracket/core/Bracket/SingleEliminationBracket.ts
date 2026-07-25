@@ -14,6 +14,11 @@ export class SingleEliminationBracket extends Bracket {
 		return "single_elimination";
 	}
 
+	/** Unreachable: bracket progression validation rejects single elimination as a source. */
+	source(): never {
+		throw new Error("Single elimination bracket can't be a source");
+	}
+
 	defaultRoundBestOfs(data: BracketData) {
 		const result: BracketMapCounts = new Map();
 

@@ -330,13 +330,6 @@ export class StageCreator {
 	}
 
 	/**
-	 * Returns the ordering method for the first round of the upper bracket of an elimination stage.
-	 */
-	getStandardBracketFirstRoundOrdering(): SeedOrdering {
-		return "space_between";
-	}
-
-	/**
 	 * The only major ordering for the lower bracket.
 	 */
 	private getMajorOrdering(participantCount: number): SeedOrdering {
