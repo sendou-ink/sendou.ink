@@ -2,10 +2,10 @@ import type { SetNextOpponent } from "../helpers";
 import * as helpers from "../helpers";
 import { matchStatus } from "../status";
 import type {
-	DeepPartial,
 	GroupData,
 	GroupType,
 	MatchData,
+	MatchResultsInput,
 	Side,
 	StageData,
 	StageType,
@@ -55,15 +55,15 @@ export class Propagator {
 	}
 
 	/**
-	 * Updates a match based on a partial match.
+	 * Updates a match based on a reported result.
 	 *
 	 * @param stored A reference to what will be updated in the storage.
-	 * @param match Input of the update.
+	 * @param input Input of the update.
 	 * @param force Whether to force update matches that can't be played yet.
 	 */
 	updateMatch(
 		stored: MatchData,
-		match: DeepPartial<MatchData>,
+		input: MatchResultsInput,
 		force?: boolean,
 	): void {
 		if (!force && matchStatus(this.store.data, stored.id) === "PENDING")
@@ -72,7 +72,7 @@ export class Propagator {
 		const stage = this.store.select("stage", stored.stage_id);
 		if (!stage) throw Error("Stage not found.");
 
-		const resultChanged = helpers.setMatchResults(stored, match);
+		const resultChanged = helpers.setMatchResults(stored, input);
 		this.applyMatchUpdate(stored);
 
 		// Don't propagate if it's a simple score update.
@@ -220,7 +220,7 @@ export class Propagator {
 	 * @param match The current match.
 	 */
 	propagateByeWinners(match: MatchData): void {
-		helpers.setMatchResults(match, match); // BYE propagation is only in non round-robin stages.
+		helpers.resolveByeWinner(match); // BYE propagation is only in non round-robin stages.
 		this.applyMatchUpdate(match);
 
 		if (helpers.hasBye(match)) this.updateRelatedMatches(match);

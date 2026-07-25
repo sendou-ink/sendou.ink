@@ -8,18 +8,14 @@ import type {
 	BracketData,
 	GroupData,
 	MatchData,
-	ParticipantResult,
+	MatchResultsInput,
 	ResolvedCreateBracketInput,
 	RoundData,
-	Side,
 	StageData,
 } from "./types";
 
-interface UpdateMatchInput {
+interface UpdateMatchInput extends MatchResultsInput {
 	id: number;
-	opponent1?: Partial<ParticipantResult>;
-	opponent2?: Partial<ParticipantResult>;
-	winnerSide?: Side;
 }
 
 export class EngineBracket {

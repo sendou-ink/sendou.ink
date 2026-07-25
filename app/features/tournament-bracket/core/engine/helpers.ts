@@ -1,11 +1,10 @@
 import { defaultMinorOrdering, ordering } from "./create/seeding";
 import type {
-	DeepPartial,
 	Duel,
 	GroupType,
 	MatchData,
 	MatchResults,
-	ParticipantResult,
+	MatchResultsInput,
 	ParticipantSlot,
 	SeedOrdering,
 	Side,
@@ -415,9 +414,9 @@ export function getOtherSide(side: Side): Side {
 /**
  * Checks if a match has had at least one game reported.
  *
- * @param match Partial match results.
+ * @param match A match's results.
  */
-export function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
+export function isMatchStarted(match: MatchResults): boolean {
 	return (
 		match.opponent1?.score !== undefined || match.opponent2?.score !== undefined
 	);
@@ -426,9 +425,9 @@ export function isMatchStarted(match: DeepPartial<MatchResults>): boolean {
 /**
  * Checks if a match is completed.
  *
- * @param match Partial match results.
+ * @param match A match's results.
  */
-export function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
+export function isMatchCompleted(match: MatchResults): boolean {
 	return isMatchByeCompleted(match) || Boolean(match.winnerSide);
 }
 
@@ -437,9 +436,9 @@ export function isMatchCompleted(match: DeepPartial<MatchResults>): boolean {
  *
  * A match "BYE vs. TBD" isn't considered completed yet.
  *
- * @param match Partial match results.
+ * @param match A match's results.
  */
-export function isMatchByeCompleted(match: DeepPartial<MatchResults>): boolean {
+export function isMatchByeCompleted(match: MatchResults): boolean {
 	return (
 		(match.opponent1 === null && match.opponent2?.id !== null) || // BYE vs. someone
 		(match.opponent2 === null && match.opponent1?.id !== null) || // someone vs. BYE
@@ -450,9 +449,9 @@ export function isMatchByeCompleted(match: DeepPartial<MatchResults>): boolean {
 /**
  * Indicates whether a match has at least one BYE or not.
  *
- * @param match Partial match results.
+ * @param match A match's results.
  */
-export function hasBye(match: DeepPartial<MatchResults>): boolean {
+export function hasBye(match: MatchResults): boolean {
 	return match.opponent1 === null || match.opponent2 === null;
 }
 
@@ -460,22 +459,19 @@ export function hasBye(match: DeepPartial<MatchResults>): boolean {
  * Updates a match results based on an input.
  *
  * @param stored A reference to what will be updated in the storage.
- * @param match Input of the update.
+ * @param input Input of the update.
  * @returns `true` if the match was completed or un-completed by the update.
  */
 export function setMatchResults(
 	stored: MatchResults,
-	match: DeepPartial<MatchResults>,
+	input: MatchResultsInput,
 ): boolean {
-	const completed = isMatchCompleted(match);
 	const currentlyCompleted = isMatchCompleted(stored);
 
-	setExtraFields(stored, match);
-	handleOpponentsInversion(stored, match);
-	setScores(stored, match);
+	setScores(stored, input);
 
-	if (completed) {
-		setCompleted(stored, match);
+	if (input.winnerSide) {
+		stored.winnerSide = input.winnerSide;
 		return true;
 	}
 
@@ -497,53 +493,20 @@ export function resetMatchResults(stored: MatchResults): void {
 }
 
 /**
- * Passes user-defined extra fields to the stored match.
+ * Completes a match that is decided by a BYE, marking the side that has an
+ * opponent as the winner. Does nothing to a match that is not decided by a BYE.
  *
- * @param stored A reference to what will be updated in the storage.
- * @param match Input of the update.
+ * @param match A reference to what will be updated in the storage.
  */
-function setExtraFields(
-	stored: MatchResults,
-	match: DeepPartial<MatchResults>,
-): void {
-	const partialAssign = (
-		target: unknown,
-		update: unknown,
-		ignoredKeys: string[],
-	): void => {
-		if (!target || !update) return;
+export function resolveByeWinner(match: MatchResults): void {
+	if (match.winnerSide) return;
+	if (!isMatchByeCompleted(match)) return;
 
-		const retainedKeys = Object.keys(update).filter(
-			(key) => !ignoredKeys.includes(key),
-		);
-
-		for (const key of retainedKeys) {
-			(target as Record<string, unknown>)[key] = (
-				update as Record<string, unknown>
-			)[key];
-		}
-	};
-
-	const ignoredKeys: Array<keyof MatchData> = [
-		"id",
-		"number",
-		"stage_id",
-		"group_id",
-		"round_id",
-		"opponent1",
-		"opponent2",
-		"winnerSide",
-	];
-
-	const ignoredOpponentKeys: Array<keyof ParticipantResult> = [
-		"id",
-		"score",
-		"position",
-	];
-
-	partialAssign(stored, match, ignoredKeys);
-	partialAssign(stored.opponent1, match.opponent1, ignoredOpponentKeys);
-	partialAssign(stored.opponent2, match.opponent2, ignoredOpponentKeys);
+	if (match.opponent1 && !match.opponent2) {
+		match.winnerSide = "opponent1";
+	} else if (!match.opponent1 && match.opponent2) {
+		match.winnerSide = "opponent2";
+	}
 }
 
 /**
@@ -648,78 +611,17 @@ export function resetNextOpponent(nextMatch: MatchData, nextSide: Side): void {
 }
 
 /**
- * Inverts opponents if requested by the input.
- *
- * @param stored A reference to what will be updated in the storage.
- * @param match Input of the update.
- */
-function handleOpponentsInversion(
-	stored: MatchResults,
-	match: DeepPartial<MatchResults>,
-): void {
-	const id1 = match.opponent1?.id;
-	const id2 = match.opponent2?.id;
-
-	const storedId1 = stored.opponent1?.id;
-	const storedId2 = stored.opponent2?.id;
-
-	if (Number.isInteger(id1) && id1 !== storedId1 && id1 !== storedId2)
-		throw Error("The given opponent1 ID does not exist in this match.");
-
-	if (Number.isInteger(id2) && id2 !== storedId1 && id2 !== storedId2)
-		throw Error("The given opponent2 ID does not exist in this match.");
-
-	if (
-		(Number.isInteger(id1) && id1 === storedId2) ||
-		(Number.isInteger(id2) && id2 === storedId1)
-	)
-		invertOpponents(match);
-}
-
-/**
- * Inverts `opponent1` and `opponent2` in a match.
- *
- * @param match A match to update.
- */
-function invertOpponents(match: DeepPartial<MatchResults>): void {
-	[match.opponent1, match.opponent2] = [match.opponent2, match.opponent1];
-}
-
-/**
  * Updates the scores of a match.
  *
  * @param stored A reference to what will be updated in the storage.
- * @param match Input of the update.
+ * @param input Input of the update.
  */
-function setScores(
-	stored: MatchResults,
-	match: DeepPartial<MatchResults>,
-): void {
-	if (match.opponent1 && stored.opponent1)
-		stored.opponent1.score = match.opponent1.score;
+function setScores(stored: MatchResults, input: MatchResultsInput): void {
+	if (input.opponent1 && stored.opponent1)
+		stored.opponent1.score = input.opponent1.score;
 
-	if (match.opponent2 && stored.opponent2)
-		stored.opponent2.score = match.opponent2.score;
-}
-
-/**
- * Completes a match, resolving the winner of a match against a BYE.
- *
- * @param stored A reference to what will be updated in the storage.
- * @param match Input of the update.
- */
-function setCompleted(
-	stored: MatchResults,
-	match: DeepPartial<MatchResults>,
-): void {
-	if (match.winnerSide) {
-		stored.winnerSide = match.winnerSide;
-		return;
-	}
-
-	if (stored.opponent1 && !stored.opponent2) stored.winnerSide = "opponent1"; // Win against opponent 2 BYE.
-
-	if (!stored.opponent1 && stored.opponent2) stored.winnerSide = "opponent2"; // Win against opponent 1 BYE.
+	if (input.opponent2 && stored.opponent2)
+		stored.opponent2.score = input.opponent2.score;
 }
 
 /**

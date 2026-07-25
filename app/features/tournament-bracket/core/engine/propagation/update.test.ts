@@ -155,64 +155,6 @@ describe("Update matches", () => {
 	});
 });
 
-describe("Give opponent IDs when updating", () => {
-	beforeEach(() => {
-		bracket.reset();
-
-		bracket.create({
-			type: "double_elimination",
-			seeding: [1, 2, 3, 4],
-			settings: {},
-		});
-	});
-
-	test("should update the right opponents based on their IDs", () => {
-		bracket.updateMatch({
-			id: 0,
-			opponent1: {
-				id: 4,
-				score: 10,
-			},
-			opponent2: {
-				id: 1,
-				score: 5,
-			},
-		});
-
-		// Actual results must be inverted.
-		const after = bracket.match(0);
-		expect(after.opponent1?.score).toBe(5);
-		expect(after.opponent2?.score).toBe(10);
-	});
-
-	test("should update the right opponent based on its ID, the other one is the remaining one", () => {
-		bracket.updateMatch({
-			id: 0,
-			opponent1: {
-				id: 4,
-				score: 10,
-			},
-		});
-
-		// Actual results must be inverted.
-		const after = bracket.match(0);
-		expect(after.opponent1?.score).toBeFalsy();
-		expect(after.opponent2?.score).toBe(10);
-	});
-
-	test("should throw when the given opponent ID does not exist in the match", () => {
-		expect(() =>
-			bracket.updateMatch({
-				id: 0,
-				opponent1: {
-					id: 3, // Belongs to match id 1.
-					score: 10,
-				},
-			}),
-		).toThrow(/The given opponent[12] ID does not exist in this match./);
-	});
-});
-
 describe("Locked matches", () => {
 	beforeEach(() => {
 		bracket.reset();

@@ -160,13 +160,6 @@ export type OrderingMap = Record<
 	<T>(array: T[], ...args: number[]) => T[]
 >;
 
-/** Makes an object type deeply partial. */
-export type DeepPartial<T> = T extends object
-	? {
-			[P in keyof T]?: DeepPartial<T[P]>;
-		}
-	: T;
-
 /** Contains the losers and the winner of a standard bracket. */
 export interface StandardBracketResults {
 	/** The list of losers for each round of the bracket. */
@@ -216,13 +209,22 @@ export interface ResolvedCreateBracketInput
 	settings: StageSettings;
 }
 
-/** Mirrors the old manager.update.match() partial-update input. */
-export interface ReportResultInput {
-	matchId: number;
-	opponent1?: Partial<Pick<ParticipantResult, "id" | "score">>;
-	opponent2?: Partial<Pick<ParticipantResult, "id" | "score">>;
+/**
+ * A result to apply to a match. The opponents of a match are decided by the
+ * bracket, never by a reported result, so only the scores and the winner can be
+ * given.
+ */
+export interface MatchResultsInput {
+	/** Games won by the opponent. Leaving the score out clears it. */
+	opponent1?: { score?: number };
+	opponent2?: { score?: number };
 	/** The winner of the set. Leaving it out marks the match as not decided (yet). */
 	winnerSide?: Side;
+}
+
+/** A {@link MatchResultsInput} targeted at one match of the bracket. */
+export interface ReportResultInput extends MatchResultsInput {
+	matchId: number;
 	/**
 	 * Bypasses the "match is locked/completed" guard. The old library's `true`
 	 * second argument to manager.update.match(), used by endDroppedTeamMatches.
