@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { isToday } from "date-fns";
 import {
 	Calendar,
 	ChevronLeft,
@@ -24,7 +25,7 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
-import { dayMonthYearToDateValue } from "~/utils/dates";
+import { dayMonthYearToDate, dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -64,7 +65,6 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-// xxx: sunday first conditional i18n?
 export default function CalendarPage() {
 	const { t } = useTranslation(["calendar", "common"]);
 	const data = useLoaderData<typeof loader>();
@@ -116,7 +116,7 @@ export default function CalendarPage() {
 			</div>
 			<div
 				key={`${shown[0].year}-${shown[0].month}-${shown[0].day}`}
-				ref={scrollCurrentDayToCenter}
+				ref={scrollTodayToCenter}
 				className={clsx(styles.columnsContainer, "scrollbar")}
 			>
 				{shown.map((date) => (
@@ -125,11 +125,7 @@ export default function CalendarPage() {
 						date={date.day}
 						month={date.month}
 						year={date.year}
-						isCurrent={
-							date.day === current.day &&
-							date.month === current.month &&
-							date.year === current.year
-						}
+						isToday={isToday(dayMonthYearToDate(date))}
 						eventTimes={data.eventTimes.filter((event) => {
 							const eventDate = new Date(event.at);
 
@@ -213,22 +209,24 @@ function CalendarDatePicker({
 				className={styles.calendar}
 				value={dayMonthYearToDateValue(dayMonthYear)}
 				onChange={onChange}
+				firstDayOfWeek="mon"
+				weekSelection
 			/>
 		</SendouPopover>
 	);
 }
 
-// xxx: verify works
-function scrollCurrentDayToCenter(container: HTMLDivElement | null) {
+/** Centers today's column, leaving weeks that don't contain today scrolled to their first day. */
+function scrollTodayToCenter(container: HTMLDivElement | null) {
 	if (!container) return;
 
-	const currentColumn = container.querySelector<HTMLElement>(
-		"[data-current-column]",
+	const todayColumn = container.querySelector<HTMLElement>(
+		"[data-today-column]",
 	);
-	if (!currentColumn) return;
+	if (!todayColumn) return;
 
 	const containerRect = container.getBoundingClientRect();
-	const columnRect = currentColumn.getBoundingClientRect();
+	const columnRect = todayColumn.getBoundingClientRect();
 
 	container.scrollLeft +=
 		columnRect.left -
@@ -240,20 +238,20 @@ function DayEventsColumn({
 	date,
 	month,
 	year,
-	isCurrent,
+	isToday,
 	eventTimes,
 }: {
 	date: number;
 	month: number;
 	year: number;
-	isCurrent: boolean;
+	isToday: boolean;
 	eventTimes: CalendarLoaderData["eventTimes"];
 }) {
 	const eventTimesCollapsed = useCollapsableEvents(eventTimes);
 
 	return (
-		<div data-current-column={isCurrent || undefined}>
-			<DayHeader date={date} month={month} year={year} />
+		<div data-today-column={isToday || undefined}>
+			<DayHeader date={date} month={month} year={year} isToday={isToday} />
 			<div className={styles.dayEvents}>
 				{eventTimesCollapsed.map((eventTime, i) => {
 					return (
@@ -277,16 +275,20 @@ function DayEventsColumn({
 	);
 }
 
-function DayHeader(props: { date: number; month: number; year: number }) {
+function DayHeader(props: {
+	date: number;
+	month: number;
+	year: number;
+	isToday: boolean;
+}) {
 	const date = new Date(props.year, props.month, props.date);
-	const isToday = date.toDateString() === new Date().toDateString();
 
 	return (
 		<div
 			className={clsx(styles.dayHeader, {
-				[styles.dayHeaderToday]: isToday,
+				[styles.dayHeaderToday]: props.isToday,
 			})}
-			data-testid={isToday ? "today-header" : undefined}
+			data-testid={props.isToday ? "today-header" : undefined}
 		>
 			<LocaleTime
 				date={date}
