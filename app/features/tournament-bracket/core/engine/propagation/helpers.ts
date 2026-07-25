@@ -74,7 +74,7 @@ export function setMatchResults(
 	}
 
 	if (currentlyCompleted) {
-		resetMatchResults(stored);
+		clearWinner(stored);
 		return true;
 	}
 
@@ -82,11 +82,11 @@ export function setMatchResults(
 }
 
 /**
- * Resets the results of a match.
+ * Clears the winner of a match, marking it as not completed.
  *
  * @param stored A reference to what will be updated in the storage.
  */
-export function resetMatchResults(stored: MatchResults): void {
+export function clearWinner(stored: MatchResults): void {
 	stored.winnerSide = null;
 }
 

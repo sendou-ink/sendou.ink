@@ -54,7 +54,7 @@ export function resetMatchResults(
 	)
 		throw Error("The match is locked.");
 
-	helpers.resetMatchResults(stored);
+	helpers.clearWinner(stored);
 	propagator.applyMatchUpdate(stored);
 
 	if (!helpers.isRoundRobin(stage) && !helpers.isSwiss(stage))
