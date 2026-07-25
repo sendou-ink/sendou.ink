@@ -20,13 +20,13 @@ export function resetMatchResults(
 	const store = new Store(data);
 	const propagator = new Propagator(store);
 
-	const stored = store.select("match", matchId);
+	const stored = store.matchById(matchId);
 	if (!stored) throw Error("Match not found.");
 
-	const stage = store.select("stage", stored.stageId);
+	const stage = store.stageById(stored.stageId);
 	if (!stage) throw Error("Stage not found.");
 
-	const group = store.select("group", stored.groupId);
+	const group = store.groupById(stored.groupId);
 	if (!group) throw Error("Group not found.");
 
 	const { roundNumber, roundCount } = propagator.getRoundPositionalInfo(
@@ -55,7 +55,7 @@ export function resetMatchResults(
 		throw Error("The match is locked.");
 
 	helpers.clearWinner(stored);
-	propagator.applyMatchUpdate(stored);
+	store.markMatchChanged(stored);
 
 	if (!helpers.isRoundRobin(stage) && !helpers.isSwiss(stage))
 		propagator.updateRelatedMatches(stored);

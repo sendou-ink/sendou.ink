@@ -36,7 +36,7 @@ export function endDroppedTeamMatches(
 			return Math.random() < 0.5 ? match.opponent1.id : match.opponent2.id;
 		})();
 
-		const stored = store.select("match", match.id);
+		const stored = store.matchById(match.id);
 		if (!stored) throw Error("Match not found.");
 
 		propagator.updateMatch(

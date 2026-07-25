@@ -19,8 +19,8 @@ interface RoundPositionalInfo {
 
 /**
  * Resolves the matches following another match and applies result propagation
- * to them. Port of the old base/getter.ts + base/updater.ts, reading and
- * writing a Store instead of storage.
+ * to them. Port of the old base/getter.ts + base/updater.ts, mutating the rows
+ * of a Store instead of writing to storage.
  */
 export class Propagator {
 	readonly store: Store;
@@ -43,10 +43,10 @@ export class Propagator {
 			match.roundId,
 		);
 
-		const stage = this.store.select("stage", match.stageId);
+		const stage = this.store.stageById(match.stageId);
 		if (!stage) throw Error("Stage not found.");
 
-		const group = this.store.select("group", match.groupId);
+		const group = this.store.groupById(match.groupId);
 		if (!group) throw Error("Group not found.");
 
 		const matchLocation = helpers.getMatchLocation(stage.type, group.number);
@@ -57,7 +57,7 @@ export class Propagator {
 	/**
 	 * Updates a match based on a reported result.
 	 *
-	 * @param stored A reference to what will be updated in the storage.
+	 * @param stored The match row of the store that is mutated.
 	 * @param input Input of the update.
 	 * @param force Whether to force update matches that can't be played yet.
 	 */
@@ -69,11 +69,11 @@ export class Propagator {
 		if (!force && matchStatus(this.store.data, stored.id) === "PENDING")
 			throw Error("The match is locked.");
 
-		const stage = this.store.select("stage", stored.stageId);
+		const stage = this.store.stageById(stored.stageId);
 		if (!stage) throw Error("Stage not found.");
 
 		const resultChanged = helpers.setMatchResults(stored, input);
-		this.applyMatchUpdate(stored);
+		this.store.markMatchChanged(stored);
 
 		// Don't propagate if it's a simple score update.
 		if (!resultChanged) return;
@@ -84,15 +84,6 @@ export class Propagator {
 		) {
 			this.updateRelatedMatches(stored);
 		}
-	}
-
-	/**
-	 * Updates the opponents of a match.
-	 *
-	 * @param match A match.
-	 */
-	applyMatchUpdate(match: MatchData): void {
-		this.store.updateMatch(match);
 	}
 
 	/**
@@ -169,7 +160,7 @@ export class Propagator {
 			if (!nextMatches[0]) throw Error("First next match is null.");
 			setNextOpponent(nextMatches[0], "opponent1", match, "opponent1");
 			setNextOpponent(nextMatches[0], "opponent2", match, "opponent2");
-			this.applyMatchUpdate(nextMatches[0]);
+			this.store.markMatchChanged(nextMatches[0]);
 			return;
 		}
 
@@ -197,7 +188,7 @@ export class Propagator {
 				match,
 				winnerSide && helpers.getOtherSide(winnerSide),
 			);
-			this.applyMatchUpdate(nextMatches[1]);
+			this.store.markMatchChanged(nextMatches[1]);
 		} else {
 			const nextSideLB = helpers.getNextSideLoserBracket(
 				match.number,
@@ -221,7 +212,7 @@ export class Propagator {
 	 */
 	propagateByeWinners(match: MatchData): void {
 		helpers.resolveByeWinner(match); // BYE propagation is only in non round-robin stages.
-		this.applyMatchUpdate(match);
+		this.store.markMatchChanged(match);
 
 		if (helpers.hasBye(match)) this.updateRelatedMatches(match);
 	}
@@ -236,16 +227,12 @@ export class Propagator {
 	 * @param roundId ID of the round.
 	 */
 	getRoundPositionalInfo(roundId: number): RoundPositionalInfo {
-		const round = this.store.select("round", roundId);
+		const round = this.store.roundById(roundId);
 		if (!round) throw Error("Round not found.");
-
-		const rounds = this.store.selectAll("round", {
-			groupId: round.groupId,
-		});
 
 		return {
 			roundNumber: round.number,
-			roundCount: rounds.length,
+			roundCount: this.store.roundCountInGroup(round.groupId),
 		};
 	}
 
@@ -489,10 +476,7 @@ export class Propagator {
 			stageType === "single_elimination"
 				? 2 /* Consolation final */
 				: 3; /* Grand final */
-		const finalGroup = this.store.selectFirst("group", {
-			stageId: stageId,
-			number: groupNumber,
-		});
+		const finalGroup = this.store.groupByNumber(stageId, groupNumber);
 		if (!finalGroup) return null;
 		return finalGroup.id;
 	}
@@ -503,10 +487,7 @@ export class Propagator {
 	 * @param stageId ID of the stage.
 	 */
 	private getUpperBracket(stageId: number): GroupData {
-		const winnerBracket = this.store.selectFirst("group", {
-			stageId: stageId,
-			number: 1,
-		});
+		const winnerBracket = this.store.groupByNumber(stageId, 1);
 		if (!winnerBracket) throw Error("Winner bracket not found.");
 		return winnerBracket;
 	}
@@ -519,16 +500,10 @@ export class Propagator {
 	 */
 	private participantCount(stageId: number): number {
 		const upperBracket = this.getUpperBracket(stageId);
-		const firstRound = this.store.selectFirst("round", {
-			groupId: upperBracket.id,
-			number: 1,
-		});
+		const firstRound = this.store.roundByNumber(upperBracket.id, 1);
 		if (!firstRound) throw Error("First round not found.");
 
-		const firstRoundMatches = this.store.selectAll("match", {
-			roundId: firstRound.id,
-		});
-		return firstRoundMatches.length * 2;
+		return this.store.matchCountInRound(firstRound.id) * 2;
 	}
 
 	/**
@@ -537,7 +512,7 @@ export class Propagator {
 	 * @param stageId ID of the stage.
 	 */
 	private getLoserBracket(stageId: number): GroupData | null {
-		return this.store.selectFirst("group", { stageId: stageId, number: 2 });
+		return this.store.groupByNumber(stageId, 2);
 	}
 
 	/**
@@ -590,17 +565,11 @@ export class Propagator {
 		roundNumber: number,
 		matchNumber: number,
 	): MatchData {
-		const round = this.store.selectFirst("round", {
-			groupId: groupId,
-			number: roundNumber,
-		});
+		const round = this.store.roundByNumber(groupId, roundNumber);
 
 		if (!round) throw Error("Round not found.");
 
-		const match = this.store.selectFirst("match", {
-			roundId: round.id,
-			number: matchNumber,
-		});
+		const match = this.store.matchByNumber(round.id, matchNumber);
 
 		if (!match) throw Error("Match not found.");
 

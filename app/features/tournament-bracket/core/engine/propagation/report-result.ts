@@ -16,7 +16,7 @@ export function reportResult(
 	const store = new Store(data);
 	const propagator = new Propagator(store);
 
-	const stored = store.select("match", input.matchId);
+	const stored = store.matchById(input.matchId);
 	invariant(stored, "Match not found");
 
 	propagator.updateMatch(
