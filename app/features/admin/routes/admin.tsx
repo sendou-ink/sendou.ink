@@ -141,7 +141,6 @@ function AdminActions() {
 			{isStaff ? <BanUser /> : null}
 			{isStaff ? <UnbanUser /> : null}
 			{isAdmin ? <RefreshPlusTiers /> : null}
-			{isAdmin ? <CleanUp /> : null}
 		</div>
 	);
 }
@@ -441,19 +440,6 @@ function RefreshPlusTiers() {
 			<h2>Refresh Plus Tiers</h2>
 			<SubmitButton type="submit" _action="REFRESH" state={fetcher.state}>
 				Refresh
-			</SubmitButton>
-		</fetcher.Form>
-	);
-}
-
-function CleanUp() {
-	const fetcher = useFetcher();
-
-	return (
-		<fetcher.Form method="post">
-			<h2>DB Clean up</h2>
-			<SubmitButton type="submit" _action="CLEAN_UP" state={fetcher.state}>
-				Clean up
 			</SubmitButton>
 		</fetcher.Form>
 	);

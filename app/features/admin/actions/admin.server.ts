@@ -82,15 +82,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			message = "Patron status updated";
 			break;
 		}
-		case "CLEAN_UP": {
-			requireRole("ADMIN");
-
-			// on purpose sync
-			AdminRepository.cleanUp();
-
-			message = "Clean up done";
-			break;
-		}
 		case "ARTIST": {
 			requireRole("STAFF");
 
@@ -211,9 +202,6 @@ export const adminActionSchema = z.union([
 	}),
 	z.object({
 		_action: _action("REFRESH"),
-	}),
-	z.object({
-		_action: _action("CLEAN_UP"),
 	}),
 	z.object({
 		_action: _action("FORCE_PATRON"),
