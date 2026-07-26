@@ -9,11 +9,11 @@ import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponRepo
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
-import { isSetOverByScore } from "../tournament-match-utils";
 
 export function TournamentMatchActionTab({
 	data,
@@ -54,9 +54,9 @@ export function TournamentMatchActionTab({
 
 	if (!teamOne || !teamTwo) return null;
 
-	const withPoints = tournament.bracketByIdxOrDefault(
+	const withKo = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectResultsWithPoints;
+	).collectsKos;
 
 	const count = data.match.roundMaps.count;
 	const countType = data.match.roundMaps.type;
@@ -113,16 +113,16 @@ export function TournamentMatchActionTab({
 			ownTeamId={ownTeamId}
 			stageId={currentMap.stageId}
 			mode={currentMap.mode}
-			withPoints={withPoints}
+			withKo={withKo}
 			setEnding={setEnding}
 			isSubmitting={reportFetcher.state !== "idle"}
-			onSubmit={({ winnerId, points }) => {
+			onSubmit={({ winnerId, ko }) => {
 				reportFetcher.submit(
 					{
 						_action: "REPORT_SCORE",
 						winnerTeamId: String(winnerId),
 						position: String(scoreSum),
-						...(points ? { points: JSON.stringify(points) } : {}),
+						...(typeof ko === "boolean" ? { ko: String(ko) } : {}),
 					},
 					{ method: "post" },
 				);
@@ -271,13 +271,7 @@ function buildSetEndingData({
 				alpha: alphaParticipants,
 				bravo: bravoParticipants,
 			},
-			points:
-				result.opponentOnePoints != null && result.opponentTwoPoints != null
-					? ([result.opponentOnePoints, result.opponentTwoPoints] as [
-							number,
-							number,
-						])
-					: undefined,
+			ko: result.ko != null ? Boolean(result.ko) : undefined,
 		};
 	});
 

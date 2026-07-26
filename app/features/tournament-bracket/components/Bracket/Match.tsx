@@ -11,7 +11,7 @@ import {
 	useTournament,
 	useTournamentVods,
 } from "~/features/tournament/routes/to.$id";
-import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
+import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
@@ -88,8 +88,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 		return "";
 	};
 
-	const isOver =
-		match.opponent1?.result === "win" || match.opponent2?.result === "win";
+	const isOver = Boolean(match.winnerSide);
 	const matchVods = isOver ? vods.filter((v) => v.matchId === match.id) : [];
 	const hasStreams = () => {
 		if (isOver || !match.opponent1?.id || !match.opponent2?.id) return false;
@@ -218,27 +217,29 @@ function MatchRow({
 		if (!match.opponent1?.id || !match.opponent2?.id || isPreview) return null;
 
 		const opponentScore = opponent!.score;
-		const opponentResult = opponent!.result;
 
 		// Display W/L as the score might not reflect the winner set in the early ending
-		const round = bracket.data.round.find((r) => r.id === match.round_id);
+		const round = bracket.data.round.find((r) => r.id === match.roundId);
 		if (
 			round?.maps &&
 			matchEndedEarly({
 				opponentOne: match.opponent1,
 				opponentTwo: match.opponent2,
+				winnerSide: match.winnerSide,
 				count: round.maps.count,
 				countType: round.maps.type,
 			})
 		) {
-			if (opponentResult === "win") return "W";
-			if (opponentResult === "loss") return "L";
+			return match.winnerSide === opponentKey ? "W" : "L";
 		}
 
 		return opponentScore ?? 0;
 	};
 
-	const isLoser = spoilerCensor ? false : opponent?.result === "loss";
+	const isLoser =
+		spoilerCensor || !match.winnerSide
+			? false
+			: match.winnerSide !== opponentKey;
 
 	const { team, simulated } = (() => {
 		if (opponent?.id) {
@@ -424,8 +425,7 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 	if (tournament.isLeagueDivision) return null;
 	if (!match.startedAt) return null;
 
-	const isOver =
-		match.opponent1?.result === "win" || match.opponent2?.result === "win";
+	const isOver = Boolean(match.winnerSide);
 	if (isOver) return null;
 
 	const isLocked = tournament.ctx.castedMatchesInfo?.lockedMatches?.some(
@@ -433,7 +433,7 @@ function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 	);
 	if (isLocked) return null;
 
-	const round = bracket.data.round.find((r) => r.id === match.round_id);
+	const round = bracket.data.round.find((r) => r.id === match.roundId);
 	const bestOf = round?.maps?.count;
 	if (!bestOf) return null;
 

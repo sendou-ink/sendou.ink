@@ -128,7 +128,7 @@ function trimMapsByTeamCount({
 	const result = { ...preparedMaps };
 	for (const groupId of groupIds) {
 		const actualRoundsForGroup = actualRounds.filter(
-			(r) => r.group_id === groupId,
+			(r) => r.groupId === groupId,
 		);
 
 		const preparedRoundsForGroup = preparedMaps.maps.filter(

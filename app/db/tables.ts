@@ -40,20 +40,21 @@ import type {
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type {
+	TOURNAMENT_STAGE_TYPES,
 	TournamentAuditLogType,
 	TournamentMapPickingStyle,
 	TournamentStaffRole,
 } from "~/features/tournament/tournament-constants";
+import type {
+	ParticipantResult,
+	Side,
+	StageSettings,
+} from "~/features/tournament-bracket/core/engine/types";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import type { HideableUserCardStat } from "~/features/user-card/user-card-types";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { BuildSort } from "~/features/user-page/user-page-constants";
 import type { UserReportCategory } from "~/features/user-report/user-report-constants";
-import type {
-	ParticipantResult,
-	StageType,
-	Status,
-} from "~/modules/brackets-model";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
@@ -493,14 +494,14 @@ export interface TournamentMatch {
 	groupId: number;
 	id: GeneratedAlways<number>;
 	number: number;
-	opponentOne: JSONColumnType<ParticipantResult>;
-	opponentTwo: JSONColumnType<ParticipantResult>;
+	opponentOne: JSONColumnTypeNullable<ParticipantResult>;
+	opponentTwo: JSONColumnTypeNullable<ParticipantResult>;
 	roundId: number;
 	stageId: number;
-	status: Status;
-	// set when match becomes ongoing (both teams ready and no earlier matches for either team)
-	// for swiss: set at creation time
+	// set when the match becomes playable i.e. its status is "STARTED"
 	startedAt: number | null;
+	/** The side that won the set. `null` while the match has no winner. */
+	winnerSide: Side | null;
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
@@ -517,6 +518,8 @@ export interface TournamentMatchPickBanEvent {
 export interface TournamentMatchGameResult {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
+	/** Whether the game ended in a knockout. `null` if not collected for this bracket. */
+	ko: DBBoolean | null;
 	matchId: number;
 	mode: ModeShort;
 	number: number;
@@ -524,8 +527,6 @@ export interface TournamentMatchGameResult {
 	source: string;
 	stageId: StageId;
 	winnerTeamId: number;
-	opponentOnePoints: number | null;
-	opponentTwoPoints: number | null;
 }
 
 export interface TournamentMatchGameResultParticipant {
@@ -572,9 +573,9 @@ export interface TournamentStage {
 	id: GeneratedAlways<number>;
 	name: string;
 	number: number;
-	settings: string;
+	settings: JSONColumnType<StageSettings>;
 	tournamentId: number;
-	type: StageType;
+	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
 	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(
 	createdAt: number | null;
 }

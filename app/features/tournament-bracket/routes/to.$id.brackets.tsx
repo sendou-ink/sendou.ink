@@ -321,7 +321,7 @@ function getAbDivisionsStartError(
 		return null;
 	}
 
-	const groupCount = new Set(bracket.data.round.map((r) => r.group_id)).size;
+	const groupCount = new Set(bracket.data.round.map((r) => r.groupId)).size;
 	const abDivisionsBySeedOrder = bracket.seeding.map(
 		(teamId) => tournament.teamById(teamId)?.abDivision,
 	);

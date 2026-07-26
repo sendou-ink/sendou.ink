@@ -10,7 +10,6 @@ import {
 	groupNumberToLetters,
 	tournamentTeamToActiveRosterUserIds,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
-import { Status } from "~/modules/brackets-model";
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
 
@@ -102,8 +101,7 @@ export function MatchPageProvider({
 		scores,
 	});
 
-	const waitingForPreviousMatch =
-		data.match.status === Status.Locked || data.match.status === Status.Waiting;
+	const waitingForPreviousMatch = data.match.status === "PENDING";
 
 	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 
@@ -262,9 +260,7 @@ function resolveJoinInfo({
 	);
 	const bracket = tournament.brackets[bracketIdx];
 	const bracketMatch = bracket?.data.match.find((m) => m.id === data.match.id);
-	const group = bracket?.data.group.find(
-		(g) => g.id === bracketMatch?.group_id,
-	);
+	const group = bracket?.data.group.find((g) => g.id === bracketMatch?.groupId);
 
 	const poolCode = tournament.resolvePoolCode({
 		hostingTeamId: hostingTeam.id,

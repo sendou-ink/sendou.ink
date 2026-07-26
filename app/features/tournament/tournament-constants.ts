@@ -1,5 +1,4 @@
 import { Config } from "~/config";
-import type { StageType } from "~/modules/brackets-model";
 import { TEAM } from "../team/team-constants";
 
 export const TOURNAMENT = {
@@ -41,7 +40,7 @@ export const TOURNAMENT_STAGE_TYPES = [
 	"double_elimination",
 	"round_robin",
 	"swiss",
-] as const satisfies readonly StageType[];
+] as const;
 
 // AUTO = style where teams pick their map pool ahead of time and the map lists are automatically made for each round
 // could also have the traditional style where TO picks the maps later

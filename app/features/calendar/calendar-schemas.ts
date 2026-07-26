@@ -4,8 +4,8 @@ import {
 	TOURNAMENT,
 	TOURNAMENT_STAGE_TYPES,
 } from "~/features/tournament/tournament-constants";
+import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import {
 	array,
 	checkboxGroup,
