@@ -66,20 +66,19 @@ test.describe("VoDs page", () => {
 
 		await submit(page);
 
-		const now = new Date();
-		const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
-		await page.getByText(formattedDate).isVisible();
-		await page.getByTestId("weapon-img-4001").isVisible();
-		await page.getByTestId("weapon-img-6010").isVisible();
+		const formattedDate = `${VIDEO_DATE.getMonth() + 1}/${VIDEO_DATE.getDate()}/${VIDEO_DATE.getFullYear()}`;
+		await expect(page.getByText(formattedDate)).toBeVisible();
+		await expect(page.getByTestId("weapon-img-4001")).toBeVisible();
+		await expect(page.getByTestId("weapon-img-6010")).toBeVisible();
 
 		await page.getByTestId("copy-timestamps-button").click();
-		await page.getByText("0:00 Intro").isVisible();
-		await page
-			.getByText("0:20 Zink Mini Splatling / TC Hammerhead Bridge")
-			.isVisible();
-		await page
-			.getByText("5:55 Tenta Brella / RM Museum d'Alfonsino")
-			.isVisible();
+		await expect(page.getByRole("dialog").getByRole("textbox")).toHaveValue(
+			[
+				"0:00 Intro",
+				"0:20 Zink Mini Splatling / TC Hammerhead Bridge",
+				"5:55 Tenta Brella / RM Museum d'Alfonsino",
+			].join("\n"),
+		);
 	});
 
 	test("adds video (cast)", async ({ page }) => {
@@ -129,9 +128,9 @@ test.describe("VoDs page", () => {
 		await submit(page);
 
 		for (let i = 0; i < 8; i++) {
-			await page
-				.getByTestId(`weapon-img-${i < 4 ? 200 : 6010}-${i}`)
-				.isVisible();
+			await expect(
+				page.getByTestId(`weapon-img-${i < 4 ? 200 : 6010}-${i}`),
+			).toBeVisible();
 		}
 	});
 
@@ -155,7 +154,7 @@ test.describe("VoDs page", () => {
 
 		await expect(page).toHaveURL(vodVideoPage(1));
 
-		await page.getByTestId("weapon-img-200-4").isVisible();
+		await expect(page.getByTestId("weapon-img-200")).toBeVisible();
 	});
 
 	test("operates vod filters", async ({ page }) => {

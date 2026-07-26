@@ -195,7 +195,9 @@ test.describe("SendouQ match page", () => {
 		await voteNo(page);
 
 		await expect(page.getByText("You declined to continue")).toBeVisible();
-		await page.getByRole("button", { name: "Rejoin queue" }).click();
+		await waitForPOSTResponse(page, async () => {
+			await page.getByRole("button", { name: "Rejoin queue" }).click();
+		});
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
