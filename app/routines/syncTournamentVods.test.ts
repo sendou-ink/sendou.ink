@@ -307,7 +307,7 @@ async function seedTournamentWithMatches({
 		.run();
 
 	const insertTournamentMatchStm = sql.prepare(
-		/*sql*/ `insert into "TournamentMatch" ("id", "roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "status", "startedAt") values (?, 1, 1, 1, ?, ?, ?, 4, ?)`,
+		/*sql*/ `insert into "TournamentMatch" ("id", "roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "startedAt") values (?, 1, 1, 1, ?, ?, ?, ?)`,
 	);
 
 	insertTournamentMatchStm.run(

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import {
 	array,
 	checkboxGroup,

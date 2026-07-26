@@ -2,9 +2,9 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
-import { getServerTournamentManager } from "../tournament-bracket/core/brackets-manager/manager.server";
+import * as BracketRepository from "../tournament-bracket/BracketRepository.server";
+import * as Engine from "../tournament-bracket/core/engine";
 import { tournamentFromDB } from "../tournament-bracket/core/Tournament.server";
-import { updateRoundMaps } from "./queries/updateRoundMaps.server";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
 /**
@@ -96,11 +96,9 @@ export async function dbInsertTournamentTeam({
 
 /**
  * Starts a tournament with the given seeding and tournament ID.
- * Assumes that the tournament has only one bracket and one round.
+ * Assumes that the tournament has only one bracket.
  */
 export async function dbStartTournament(seeding: number[], tournamentId = 1) {
-	const manager = getServerTournamentManager();
-
 	const tournament = await tournamentFromDB({
 		tournamentId,
 		user: undefined,
@@ -112,34 +110,26 @@ export async function dbStartTournament(seeding: number[], tournamentId = 1) {
 
 	const bracket = tournament.bracketByIdx(0)!;
 
-	const settings = tournament.bracketManagerSettings(
-		bracket.settings,
-		bracket.type,
-		seeding.length,
-	);
-
-	manager.create({
-		tournamentId: tournament.ctx.id,
-		name: bracket.name,
+	const createInput: Engine.CreateBracketInput = {
 		type: bracket.type,
 		seeding,
-		settings,
-	});
+		settings: bracket.settings,
+	};
 
-	// assuming here every tournament has only one round
-	const roundId = tournamentId === 1 ? 1 : 2;
-
-	updateRoundMaps([
-		{
-			count: 3,
-			roundId,
-			type: "BEST_OF",
-			list: ([1, 2, 3] as const).map((stageId) => ({
-				pickBan: false,
-				mode: "SZ",
-				stageId,
-				source: "TO",
+	await BracketRepository.insertBracket({
+		tournamentId: tournament.ctx.id,
+		name: bracket.name,
+		bracket: Engine.create({
+			...createInput,
+			maps: Engine.create(createInput).round.map((round) => ({
+				roundId: round.id,
+				count: 3,
+				type: "BEST_OF",
+				list: ([1, 2, 3] as const).map((stageId) => ({
+					mode: "SZ",
+					stageId,
+				})),
 			})),
-		},
-	]);
+		}),
+	});
 }

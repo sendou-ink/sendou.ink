@@ -58,7 +58,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				? (map.source as MapListMap["source"])
 				: Number(map.source),
 			participatedUserIds: null,
-			points: null,
+			ko: null,
 		})),
 		teamAlpha: {
 			id: match.groupAlpha.id,

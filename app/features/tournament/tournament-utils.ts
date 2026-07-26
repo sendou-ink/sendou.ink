@@ -203,7 +203,7 @@ export function resolveLeagueRoundStartDate(
 
 	const round = bracket?.data.round.find((r) => r.id === roundId);
 	const onlyRelevantRounds = bracket?.data.round.filter(
-		(r) => r.group_id === round?.group_id,
+		(r) => r.groupId === round?.groupId,
 	);
 
 	const roundIdx = onlyRelevantRounds?.findIndex((r) => r.id === roundId);

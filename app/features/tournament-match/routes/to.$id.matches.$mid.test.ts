@@ -130,8 +130,7 @@ describe("Tournament match page", () => {
 				),
 				"Result participants should only include active roster user ids",
 			).toBeTruthy();
-			expect(result.opponentOnePoints).toBe(null);
-			expect(result.opponentTwoPoints).toBe(null);
+			expect(result.ko).toBe(null);
 			expect(result.winnerTeamId).toBe(1);
 		});
 
@@ -251,7 +250,7 @@ describe("Tournament match page", () => {
 			await setActiveRosterAction();
 			await db
 				.updateTable("TournamentMatch")
-				.set({ status: 0 })
+				.set({ opponentOne: JSON.stringify({ id: null }) })
 				.where("id", "=", 1)
 				.execute();
 
@@ -265,7 +264,7 @@ describe("Tournament match page", () => {
 		it("should 404 when accessing a BYE match", async () => {
 			await db
 				.updateTable("TournamentMatch")
-				.set({ opponentTwo: JSON.stringify(null) })
+				.set({ opponentTwo: null })
 				.where("id", "=", 1)
 				.execute();
 

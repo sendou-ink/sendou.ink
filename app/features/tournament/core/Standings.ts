@@ -126,8 +126,7 @@ export function matchesPlayed({
 					match.opponent1 &&
 					match.opponent2 &&
 					(match.opponent1?.id === teamId || match.opponent2?.id === teamId) &&
-					(match.opponent1.result === "win" ||
-						match.opponent2?.result === "win"),
+					match.winnerSide,
 			)
 			.map((match) => ({
 				...match,
@@ -141,17 +140,15 @@ export function matchesPlayed({
 		)!;
 		const team = tournament.teamById(opponentId);
 
-		const result =
-			match.opponent1?.id === teamId
-				? match.opponent1.result
-				: match.opponent2?.result;
+		const teamSide = match.opponent1?.id === teamId ? "opponent1" : "opponent2";
+		const result: "win" | "loss" =
+			match.winnerSide === teamSide ? "win" : "loss";
 
 		return {
 			id: match.id,
 			// defensive fallback
 			vsSeed: team?.seed ?? 0,
-			// defensive fallback
-			result: result ?? "win",
+			result,
 			bracketIdx: match.bracketIdx,
 		};
 	});

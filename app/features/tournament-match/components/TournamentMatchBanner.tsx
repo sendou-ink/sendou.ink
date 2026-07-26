@@ -256,9 +256,7 @@ function TournamentMatchBannerTopRow({
 			score={{
 				alpha: scores[0],
 				bravo: scores[1],
-				isFinal:
-					data.match.opponentOne?.result === "win" ||
-					data.match.opponentTwo?.result === "win",
+				isFinal: Boolean(data.match.winnerSide),
 				count: data.match.roundMaps.count,
 				bestOf: data.match.roundMaps.type === "BEST_OF",
 			}}
@@ -529,10 +527,10 @@ function resolveDroppedOutTeamName({
 	if (!data.matchIsOver || data.results.length > 0) return null;
 
 	const droppedOutId =
-		data.match.opponentOne?.result === "loss"
-			? data.match.opponentOne.id
-			: data.match.opponentTwo?.result === "loss"
-				? data.match.opponentTwo.id
+		data.match.winnerSide === "opponent2"
+			? data.match.opponentOne?.id
+			: data.match.winnerSide === "opponent1"
+				? data.match.opponentTwo?.id
 				: null;
 	if (!droppedOutId) return null;
 

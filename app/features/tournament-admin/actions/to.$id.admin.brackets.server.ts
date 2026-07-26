@@ -2,6 +2,7 @@ import type { ActionFunction } from "react-router";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
@@ -57,7 +58,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Some bracket that sources teams from this bracket has started",
 			);
 
-			await TournamentRepository.resetBracket(data.stageId);
+			await BracketRepository.resetBracket(data.stageId);
 
 			message = "Bracket reset";
 			break;

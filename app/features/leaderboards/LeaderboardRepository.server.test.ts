@@ -92,7 +92,6 @@ const createTournamentMatch = async ({
 			groupId: group.id,
 			roundId: round.id,
 			number: 1,
-			status: 4,
 			opponentOne: JSON.stringify({ id: null }),
 			opponentTwo: JSON.stringify({ id: null }),
 		})

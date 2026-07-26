@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { TournamentStageSettings } from "~/db/tables";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	LOW_INK_AUGUST_2025,
@@ -6,28 +7,33 @@ import {
 } from "~/features/tournament-bracket/core/tests/mocks-swiss";
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
 import invariant from "~/utils/invariant";
-import * as Swiss from "./Swiss";
+import * as Engine from "./engine";
+import { pairUp } from "./engine/swiss/pairing";
+import * as TeamStatus from "./engine/swiss/team-status";
+
+const Swiss = {
+	...TeamStatus,
+	pairUp,
+	create: (args: { seeding: number[]; settings?: TournamentStageSettings }) =>
+		Engine.create({
+			...args,
+			type: "swiss",
+			settings: args.settings ?? null,
+		}),
+};
 
 describe("Swiss", () => {
 	const createArgsWithDefaults = (
 		args: Partial<Parameters<typeof Swiss.create>[0]> = {},
 	): Parameters<typeof Swiss.create>[0] => {
 		return {
-			name: "Swiss Tournament",
 			seeding: [1, 2, 3, 4],
 			settings: {},
-			tournamentId: 1,
 			...args,
 		};
 	};
 
 	describe("create()", () => {
-		it("attaches the correct tournament id to the data", () => {
-			const data = Swiss.create(createArgsWithDefaults());
-
-			expect(data.stage[0].tournament_id).toBe(1);
-		});
-
 		it("creates a swiss bracket with correct amount of initial matches", () => {
 			const data = Swiss.create(createArgsWithDefaults());
 
@@ -44,10 +50,8 @@ describe("Swiss", () => {
 			const data = Swiss.create(
 				createArgsWithDefaults({
 					settings: {
-						swiss: {
-							groupCount: 1,
-							roundCount: 4,
-						},
+						groupCount: 1,
+						roundCount: 4,
 					},
 				}),
 			);
@@ -59,17 +63,15 @@ describe("Swiss", () => {
 			const data = Swiss.create(
 				createArgsWithDefaults({
 					settings: {
-						swiss: {
-							groupCount: 2,
-							roundCount: 5,
-						},
+						groupCount: 2,
+						roundCount: 5,
 					},
 				}),
 			);
 
 			expect(data.round).toHaveLength(10);
 
-			const matchGroupIds = data.match.map((m) => m.group_id);
+			const matchGroupIds = data.match.map((m) => m.groupId);
 			expect(matchGroupIds).toContain(0);
 			expect(matchGroupIds).toContain(1);
 		});
@@ -114,17 +116,18 @@ describe("Swiss", () => {
 
 			const bracket = tournament.bracketByIdx(0)!;
 
-			const matches = Swiss.generateMatchUps({
-				bracket,
+			const matches = Engine.generateRound(bracket.data as Engine.BracketData, {
 				groupId: 4443,
-			})._unsafeUnwrap();
+				standings: bracket.standings,
+				settings: bracket.settings,
+			})._unsafeUnwrap().matches;
 
 			it("finds new opponents for each team in the last round", () => {
 				for (const match of matches) {
-					if (match.opponentTwo === "null") continue;
+					if (match.opponent2 === null) continue;
 
-					const opponent1 = JSON.parse(match.opponentOne).id as number;
-					const opponent2 = JSON.parse(match.opponentTwo).id as number;
+					const opponent1 = match.opponent1!.id as number;
+					const opponent2 = match.opponent2.id as number;
 
 					const existingMatch = bracket.data.match.find(
 						(m) =>
@@ -138,16 +141,16 @@ describe("Swiss", () => {
 			});
 
 			it("generates a bye", () => {
-				const byes = matches.filter((match) => match.opponentTwo === "null");
+				const byes = matches.filter((match) => match.opponent2 === null);
 				expect(byes).toHaveLength(1);
 			});
 
 			it("every pair is max one set win from each other", () => {
 				for (const match of matches) {
-					if (match.opponentTwo === "null") continue;
+					if (match.opponent2 === null) continue;
 
-					const opponent1 = JSON.parse(match.opponentOne).id as number;
-					const opponent2 = JSON.parse(match.opponentTwo).id as number;
+					const opponent1 = match.opponent1!.id as number;
+					const opponent2 = match.opponent2.id as number;
 
 					const opponent1Stats = bracket.standings.find(
 						(s) => s.team.id === opponent1,
