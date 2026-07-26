@@ -171,11 +171,9 @@ async function retryPost(
 }
 
 export async function submit(page: Page, testId?: string) {
-	const postPromise = page.waitForResponse(
-		(res) => res.request().method() === "POST",
-	);
-	await page.getByTestId(testId ?? "submit-button").click();
-	const postRes = await postPromise;
+	const postRes = await waitForPOSTResponse(page, async () => {
+		await page.getByTestId(testId ?? "submit-button").click();
+	});
 
 	// Remix returns 202 from action endpoints when the action threw/returned a
 	// redirect. The fetcher then drives a client-side navigation and, once
@@ -199,8 +197,9 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 
 	// React Aria buttons fire their handler on press end. Occasionally a click
 	// registers the press start (the button goes `:active`) but the press never
-	// completes into a submit, so no POST fires. Re-issue the action when the
-	// expected POST doesn't arrive within the per-attempt window.
+	// completes into a submit, so no POST fires. The match page revalidating on
+	// a websocket message mid-click is one way this happens. Re-issue the action
+	// when the expected POST doesn't arrive within the per-attempt window.
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		const responsePromise = page.waitForResponse(
 			(res) => res.request().method() === "POST",
@@ -208,12 +207,13 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 		);
 		await cb();
 		try {
-			await responsePromise;
-			return;
+			return await responsePromise;
 		} catch (error) {
 			if (attempt === MAX_ATTEMPTS) throw error;
 		}
 	}
+
+	throw new Error("waitForPOSTResponse: unreachable");
 }
 
 export function isNotVisible(locator: Locator) {
