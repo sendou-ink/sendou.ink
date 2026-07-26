@@ -80,7 +80,7 @@ You should aim to colocate code that "changes together" as much as possible. Fea
 - **queries/**: (deprecated) Database queries, should use repository instead
 - **loaders/**: React Router loaders per route
 - **routes/**: React Router route files (re-export the action/loader & default export the route component)
-- **FeatureRepository.server.ts**: Database queries & mappers
+- **FeatureRepository.server.ts**: Database queries & mappers (see `repositories.md`)
 - **feature-constants.ts**: Constant values
 - **feature-hooks**: React hooks
 - **feature-schemas.ts**: Zod schemas for validating form values, params, payloads
@@ -169,7 +169,7 @@ Use a load testing tool like `autocannon` to ensure new features scale.
 
 Sendou.ink uses SQLite3 for its database solution. See for example ["Consider SQLite"](https://blog.wesleyac.com/posts/consider-sqlite) for motivation why to pick SQLite for a web project over something like PostgreSQL. Tldr; for a project of this scale it gets you far, low latency when accessing data store & simplifies testing when your database is just a file on the filesystem. When writing code it should be kept in mind that writes to the database are not concurrent so abusing the database can lead to the whole web server process freezing essentially.
 
-Check `database-relations.md` for more information about the database relations and `database-schemas.md` for how columns should be typed. See `tables.ts` for documentation on tables and columns.
+Check `database-relations.md` for more information about the database relations and `database-schemas.md` for how columns should be typed. See `tables.ts` for documentation on tables and columns. All queries live in repositories, see `repositories.md` for the conventions they follow.
 
 ### React guidelines
 
