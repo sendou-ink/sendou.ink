@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { PreparedMaps } from "~/db/tables";
+import type { PreparedMaps } from "~/db/tables-json";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Bracket } from "./Bracket";

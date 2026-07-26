@@ -1,7 +1,8 @@
 import type { Transaction } from "kysely";
 import { ordinal } from "openskill";
 import { db } from "~/db/sql";
-import type { DB, ParsedMemento, Tables } from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables-json";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { MementoSkillDifferences } from "./core/skills.server";

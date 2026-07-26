@@ -1,5 +1,5 @@
-import type { ApiTokenType } from "~/db/tables";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
+import type { ApiTokenType } from "~/features/api/api-types";
 
 type CachedToken = { type: ApiTokenType; userId: number };
 

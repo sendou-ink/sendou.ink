@@ -1,9 +1,9 @@
 import { ordinal, type Rating } from "openskill";
+import type { Tables } from "~/db/tables";
 import type {
 	GroupSkillDifference,
-	Tables,
 	UserSkillDifference,
-} from "~/db/tables";
+} from "~/db/tables-json";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {

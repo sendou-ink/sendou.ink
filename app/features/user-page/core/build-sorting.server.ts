@@ -1,5 +1,5 @@
-import type { BuildSort } from "~/db/tables";
 import type * as BuildRepository from "~/features/builds/BuildRepository.server";
+import type { BuildSort } from "~/features/user-page/user-page-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";

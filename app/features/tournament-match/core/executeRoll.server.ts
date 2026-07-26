@@ -1,4 +1,4 @@
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";

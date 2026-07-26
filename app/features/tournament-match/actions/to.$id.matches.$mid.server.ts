@@ -1,6 +1,5 @@
 import type { ActionFunction } from "react-router";
 import { sql } from "~/db/sql";
-import { TournamentMatchStatus } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -24,6 +23,7 @@ import {
 	tournamentWebsocketRoom,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { Status } from "~/modules/brackets-model";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -78,8 +78,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		);
 
 		errorToastIfFalsy(
-			match.status !== TournamentMatchStatus.Locked &&
-				match.status !== TournamentMatchStatus.Waiting,
+			match.status !== Status.Locked && match.status !== Status.Waiting,
 			"Match is locked, waiting for teams to finish their previous matches",
 		);
 
@@ -745,10 +744,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			// can't lock if match status is not Locked or Waiting (team(s) busy with previous match), let's update their view to reflect that
-			if (
-				match.status !== TournamentMatchStatus.Locked &&
-				match.status !== TournamentMatchStatus.Waiting
-			) {
+			if (match.status !== Status.Locked && match.status !== Status.Waiting) {
 				return null;
 			}
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db, sql } from "~/db/sql";
-import type { CastedMatchesInfo } from "~/db/tables";
+import type { CastedMatchesInfo } from "~/db/tables-json";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 
 const { mockGetUsersByLogin, mockGetArchiveVideos } = vi.hoisted(() => ({

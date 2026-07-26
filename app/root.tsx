@@ -28,7 +28,7 @@ import {
 	useSearchParams,
 } from "react-router";
 import { Config } from "~/config";
-import type { CustomTheme } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";

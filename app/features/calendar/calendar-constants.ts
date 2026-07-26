@@ -1,4 +1,4 @@
-import type { CalendarEventTag } from "~/db/tables";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 
 export const tags = {
 	SPECIAL: {

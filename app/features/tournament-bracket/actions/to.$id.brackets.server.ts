@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { sql } from "~/db/sql";
+import type { PreparedMaps } from "~/db/tables-json";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -23,7 +24,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
-import type { PreparedMaps } from "../../../db/tables";
 import * as AbDivisions from "../core/AbDivisions";
 import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
 import * as PreparedMapsUtils from "../core/PreparedMaps";

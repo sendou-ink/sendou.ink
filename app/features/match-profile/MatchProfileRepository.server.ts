@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { Tables, UserMapModePreferences } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";

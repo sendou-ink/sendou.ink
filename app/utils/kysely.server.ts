@@ -48,6 +48,11 @@ export type CommonUser = Pick<
 	"id" | "username" | "discordId" | "discordAvatar" | "customUrl"
 > & { customAvatarUrl: string | null };
 
+/** Represents User joined with PlusTier table */
+export type UserWithPlusTier = Tables["User"] & {
+	plusTier: Tables["PlusTier"]["tier"] | null;
+};
+
 const userChatNameHueRaw = sql<
 	string | null
 >`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme" ->> '--_chat-h', null)`;

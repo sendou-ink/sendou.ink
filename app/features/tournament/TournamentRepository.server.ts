@@ -3,13 +3,12 @@ import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ordinal } from "openskill";
 import { db } from "~/db/sql";
+import type { DB, Tables } from "~/db/tables";
 import type {
 	CastedMatchesInfo,
-	DB,
 	PreparedMaps,
-	Tables,
 	TournamentSettings,
-} from "~/db/tables";
+} from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";

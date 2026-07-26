@@ -36,6 +36,7 @@ import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { USER_REPORT_CATEGORIES } from "~/features/user-report/user-report-constants";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import {
 	secondsToHoursMinutesSecondString,
@@ -76,12 +77,8 @@ import {
 	SEED_TEAM_IMAGES,
 	SEED_TOURNAMENT_IMAGES,
 } from "../../../scripts/seed-art-urls";
-import {
-	type ParsedMemento,
-	type Tables,
-	USER_REPORT_CATEGORIES,
-	type UserMapModePreferences,
-} from "../tables";
+import type { Tables } from "../tables";
+import type { ParsedMemento, UserMapModePreferences } from "../tables-json";
 import {
 	ADMIN_TEST_AVATAR,
 	AMOUNT_OF_CALENDAR_EVENTS,

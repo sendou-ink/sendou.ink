@@ -2,7 +2,7 @@
  * Contains the types which are persisted in the chosen storage.
  *----------------------------------------------------------------*/
 
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { StageSettings } from "./input";
 import type { MatchResults } from "./other";
 import type { StageType } from "./unions";

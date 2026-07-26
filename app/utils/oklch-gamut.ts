@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { CustomTheme } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
 import type { themeInputSchema } from "~/utils/zod";
 
 export type ThemeInput = z.infer<typeof themeInputSchema>;

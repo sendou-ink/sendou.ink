@@ -1,9 +1,9 @@
 import type { TFunction } from "i18next";
 import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
+import type { NotificationSubscription } from "~/db/tables-json";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { APP_ICON_URL } from "~/utils/urls";
-import type { NotificationSubscription } from "../../../db/tables";
 import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";

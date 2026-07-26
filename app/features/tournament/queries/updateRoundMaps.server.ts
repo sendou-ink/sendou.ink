@@ -1,5 +1,5 @@
 import { sql } from "~/db/sql";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 
 const stm = sql.prepare(/*sql*/ `
   update "TournamentRound"

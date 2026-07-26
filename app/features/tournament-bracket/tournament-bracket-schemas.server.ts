@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { ACTION_TYPES, WHO_SIDES } from "~/db/tables";
+import {
+	ACTION_TYPES,
+	WHO_SIDES,
+} from "~/features/tournament-bracket/tournament-bracket-constants";
 import {
 	_action,
 	checkboxValueToBoolean,

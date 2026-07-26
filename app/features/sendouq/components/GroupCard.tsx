@@ -11,7 +11,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { ParsedMemento } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";

@@ -9,7 +9,10 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LocaleTime } from "~/components/LocaleTime";
-import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
+import type {
+	GroupSkillDifference,
+	UserSkillDifference,
+} from "~/db/tables-json";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,

@@ -10,13 +10,10 @@ import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type {
-	CalendarEventTag,
-	DB,
-	Tables,
-	TournamentSettings,
-} from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
+import type { TournamentSettings } from "~/db/tables-json";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import {

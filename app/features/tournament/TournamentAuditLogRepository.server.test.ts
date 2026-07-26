@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
-import type { Tables, TournamentAuditLogMetadata } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentAuditLogMetadata } from "~/db/tables-json";
 import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 

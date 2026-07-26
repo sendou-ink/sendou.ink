@@ -1,6 +1,6 @@
 import { add, startOfWeek, sub } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
-import type { UserPreferences } from "~/db/tables";
+import type { UserPreferences } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import {

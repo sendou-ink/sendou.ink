@@ -23,7 +23,7 @@ import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomR
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import {
 	isLeagueRoundLocked,

@@ -3,13 +3,8 @@ import type { Expression, ExpressionBuilder } from "kysely";
 import { sql } from "kysely";
 import { jsonBuildObject, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type {
-	CustomTheme,
-	HideableUserCardStat,
-	PeakXP,
-	Tables,
-	XRankPlacementRegion,
-} from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { CustomTheme, PeakXP } from "~/db/tables-json";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import { LFG } from "~/features/lfg/lfg-constants";
@@ -17,6 +12,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
@@ -25,6 +21,7 @@ import {
 } from "~/utils/kysely.server";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import type {
+	HideableUserCardStat,
 	UserCardData,
 	UserCardStat,
 	UserCardStatXPValue,

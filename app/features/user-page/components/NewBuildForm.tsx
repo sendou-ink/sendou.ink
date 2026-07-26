@@ -2,12 +2,14 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { GearSelect } from "~/components/GearSelect";
-import type { GearType } from "~/db/tables";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/types";
+import type {
+	BuildAbilitiesTupleWithUnknown,
+	GearType,
+} from "~/modules/in-game-lists/types";
 import { newBuildSchema } from "../user-page-schemas";
 
 interface NewBuildFormProps {

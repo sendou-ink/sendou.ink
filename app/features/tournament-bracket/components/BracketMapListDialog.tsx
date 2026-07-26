@@ -23,7 +23,7 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables";
+import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables-json";
 import {
 	useTournament,
 	useTournamentPreparedMaps,

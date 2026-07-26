@@ -1,5 +1,6 @@
 import { ordinal } from "openskill";
 import * as R from "remeda";
+import type { WinLossParticipationArray } from "~/db/tables-json";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import {
 	identifierToUserIds,
@@ -12,7 +13,7 @@ import type { AllMatchResult } from "~/features/tournament-match/TournamentMatch
 import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import type { Tables, WinLossParticipationArray } from "../../../db/tables";
+import type { Tables } from "../../../db/tables";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
 import type { ParsedBracket } from "./Progression";

@@ -1,7 +1,8 @@
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import { TournamentMatchStatus, type TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
+import { Status } from "~/modules/brackets-model";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { customAvatarUrl } from "~/utils/kysely.server";
@@ -429,7 +430,7 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 				eb(opponentTwoId, "=", tournamentTeamId),
 			]),
 		)
-		.where("TournamentMatch.status", ">=", TournamentMatchStatus.Completed)
+		.where("TournamentMatch.status", ">=", Status.Completed)
 		.where((eb) =>
 			eb.exists(
 				eb

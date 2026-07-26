@@ -1,7 +1,8 @@
-import type { Tables, UserWithPlusTier } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import { isAdmin } from "~/modules/permissions/utils";
 import { allTruthy } from "~/utils/arrays";
+import type { UserWithPlusTier } from "~/utils/kysely.server";
 import * as Seasons from "../mmr/core/Seasons";
 import { isVotingActive } from "../plus-voting/core";
 

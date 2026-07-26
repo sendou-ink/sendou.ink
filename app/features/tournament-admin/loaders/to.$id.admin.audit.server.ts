@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 import { AUDIT_LOG_PAGE_SIZE } from "~/features/tournament/TournamentAuditLogRepository.server";
+import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/features/tournament/tournament-constants";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	forbidden,

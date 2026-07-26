@@ -1,7 +1,10 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import type { MemberRole, MemberRoleType } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { TOURNAMENT_STAFF_ROLES } from "~/db/tables";
+import { TOURNAMENT_STAFF_ROLES } from "~/features/tournament/tournament-constants";
 import {
 	array,
 	fieldset,

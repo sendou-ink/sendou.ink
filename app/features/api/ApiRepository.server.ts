@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { db } from "~/db/sql";
-import type { ApiTokenType } from "~/db/tables";
+import type { ApiTokenType } from "~/features/api/api-types";
 
 const API_TOKEN_LENGTH = 20;
 

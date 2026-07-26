@@ -14,10 +14,10 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { Label } from "~/components/Label";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { SubmitButton } from "~/components/SubmitButton";
-import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import { Status } from "~/modules/brackets-model";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
 import { OrganizerMatchMapListDialog } from "./OrganizerMatchMapListDialog";
@@ -96,8 +96,7 @@ function AdminCastSection({
 		false;
 
 	const canLock =
-		(matchStatus === TournamentMatchStatus.Locked ||
-			matchStatus === TournamentMatchStatus.Waiting) &&
+		(matchStatus === Status.Locked || matchStatus === Status.Waiting) &&
 		!isLocked;
 	const canUnlock = !isMatchStarted && isLocked;
 

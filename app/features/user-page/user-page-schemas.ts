@@ -1,7 +1,10 @@
 import { z } from "zod";
-import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import {
+	OBJECT_PRONOUNS,
+	SUBJECT_PRONOUNS,
+} from "~/features/user-page/user-page-constants";
 import {
 	badges,
 	checkboxGroup,

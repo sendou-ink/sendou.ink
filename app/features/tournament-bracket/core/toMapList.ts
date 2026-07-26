@@ -1,6 +1,7 @@
 /** Map list generation logic for "TO pick" as in the map list is defined beforehand by TO and teams don't pick */
 
-import type { Tables, TournamentRoundMaps } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { Round } from "~/modules/brackets-model";

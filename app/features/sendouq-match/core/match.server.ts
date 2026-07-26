@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { ParsedMemento, UserMapModePreferences } from "~/db/tables";
+import type { ParsedMemento, UserMapModePreferences } from "~/db/tables-json";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {

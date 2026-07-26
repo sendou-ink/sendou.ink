@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import * as R from "remeda";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";

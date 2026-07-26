@@ -3,15 +3,10 @@ import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type {
-	BuildSort,
-	CustomTheme,
-	DB,
-	Tables,
-	TablesInsertable,
-	UserPreferences,
-} from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import type { CustomTheme, UserPreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
+import type { BuildSort } from "~/features/user-page/user-page-constants";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";

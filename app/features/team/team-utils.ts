@@ -1,4 +1,8 @@
-import type { MemberRole, MemberRoleType, Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
 import type * as TeamRepository from "./TeamRepository.server";
 import { NON_PLAYER_TEAM_ROLES, TEAM } from "./team-constants";
 

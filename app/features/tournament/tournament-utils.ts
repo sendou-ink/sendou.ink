@@ -1,14 +1,14 @@
 import { sub } from "date-fns";
 import * as R from "remeda";
+import type {
+	CastedMatchesInfo,
+	TournamentStageSettings,
+} from "~/db/tables-json";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
-import type {
-	CastedMatchesInfo,
-	Tables,
-	TournamentStageSettings,
-} from "../../db/tables";
+import type { Tables } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "../match-profile/banned-maps";

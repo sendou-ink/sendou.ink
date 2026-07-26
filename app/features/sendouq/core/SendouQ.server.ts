@@ -1,6 +1,7 @@
 import { isWithinInterval, sub } from "date-fns";
 import * as R from "remeda";
-import type { DBBoolean, ParsedMemento, Tables } from "~/db/tables";
+import type { DBBoolean, Tables } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables-json";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";

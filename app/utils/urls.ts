@@ -1,6 +1,7 @@
 import slugify from "slugify";
 import { Config } from "~/config";
-import type { GearType, Preference, Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { Preference } from "~/db/tables-json";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
 import { serializeBuild } from "~/features/build-analyzer/core/serializer";
@@ -14,6 +15,7 @@ import type {
 	AbilityWithUnknown,
 	BrandId,
 	BuildAbilitiesTupleWithUnknown,
+	GearType,
 	MainWeaponId,
 	ModeShort,
 	ModeShortWithSpecial,

@@ -1,9 +1,9 @@
 import { type ActionFunction, redirect } from "react-router";
 import { z } from "zod";
-import { BUILD_SORT_IDENTIFIERS } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { BUILD_SORT_IDENTIFIERS } from "~/features/user-page/user-page-constants";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { userBuildsPage } from "~/utils/urls";

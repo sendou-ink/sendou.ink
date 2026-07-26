@@ -2,15 +2,17 @@ import clsx from "clsx";
 import { Lock, MessageCircleMore, SquarePen, Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
+	GearType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
+import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
 	analyzerPage,

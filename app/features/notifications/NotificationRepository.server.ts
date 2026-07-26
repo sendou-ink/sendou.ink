@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { db } from "~/db/sql";
-import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
+import type { TablesInsertable } from "~/db/tables";
+import type { NotificationSubscription } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import { NOTIFICATIONS } from "./notifications-contants";

@@ -1,4 +1,5 @@
-import type { Tables, TournamentRoundMaps } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";

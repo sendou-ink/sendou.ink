@@ -5,13 +5,13 @@ import {
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
 import { Image } from "~/components/Image";
-import type { GearType } from "~/db/tables";
 import { brandIds } from "~/modules/in-game-lists/brand-ids";
 import {
 	clothesGearBrandGrouped,
 	headGearBrandGrouped,
 	shoesGearBrandGrouped,
 } from "~/modules/in-game-lists/gear-ids";
+import type { GearType } from "~/modules/in-game-lists/types";
 import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";

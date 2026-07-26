@@ -35,14 +35,13 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import type { CustomPickBanFlow, CustomPickBanStep } from "~/db/tables-json";
 import {
 	ACTION_TYPES,
 	type ActionType,
-	type CustomPickBanFlow,
-	type CustomPickBanStep,
 	WHO_SIDES,
 	type WhoSide,
-} from "~/db/tables";
+} from "~/features/tournament-bracket/tournament-bracket-constants";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import {
 	type CustomFlowValidationError,

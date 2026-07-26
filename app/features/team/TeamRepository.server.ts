@@ -1,7 +1,8 @@
 import { type Insertable, sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { CustomTheme, DB, Tables } from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import { NON_PLAYER_TEAM_ROLES } from "~/features/team/team-constants";

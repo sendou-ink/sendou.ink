@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
-import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
+import {
+	TOURNAMENT_ORGANIZATION,
+	TOURNAMENT_ORGANIZATION_ROLES,
+} from "~/features/tournament-organization/tournament-organization-constants";
 import {
 	array,
 	badges,

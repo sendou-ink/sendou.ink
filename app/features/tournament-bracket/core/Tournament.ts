@@ -1,8 +1,5 @@
-import type {
-	Tables,
-	TournamentStage,
-	TournamentStageSettings,
-} from "~/db/tables";
+import type { Tables, TournamentStage } from "~/db/tables";
+import type { TournamentStageSettings } from "~/db/tables-json";
 import {
 	LEAGUES,
 	TOURNAMENT,
