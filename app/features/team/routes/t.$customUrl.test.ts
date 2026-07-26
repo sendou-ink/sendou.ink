@@ -36,8 +36,8 @@ describe("Secondary teams", () => {
 	beforeEach(async () => {
 		await dbInsertUsers();
 	});
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("first team created becomes main team", async () => {

@@ -75,8 +75,8 @@ describe("TournamentRepository.finalize", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("matchesCount on a new season's Skill row does not include prior seasons", async () => {

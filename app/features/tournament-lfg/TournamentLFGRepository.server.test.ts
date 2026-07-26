@@ -21,8 +21,8 @@ describe("createPlaceholderTeam", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("creates a placeholder team with owner member", async () => {
@@ -55,8 +55,8 @@ describe("findLookingTeamsByTournamentId", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns looking teams for given tournament", async () => {
@@ -114,8 +114,8 @@ describe("addLike / deleteLike", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("adds a like between two teams", async () => {
@@ -178,8 +178,8 @@ describe("allLikesByTeamId", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("separates likes into given and received", async () => {
@@ -221,8 +221,8 @@ describe("startLooking", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	const createRegisteredTeam = async (
@@ -309,8 +309,8 @@ describe("mergeTeams", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("merges two teams, other team is deleted", async () => {
@@ -492,8 +492,8 @@ describe("updateTeamNote", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("sets and clears a team note", async () => {
@@ -527,8 +527,8 @@ describe("updateMemberRole", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("changes role from REGULAR to MANAGER", async () => {
@@ -575,8 +575,8 @@ describe("updateStayAsSub", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("toggles isStayAsSub on/off", async () => {
@@ -612,8 +612,8 @@ describe("leaveLfg", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes placeholder team when last member leaves", async () => {
@@ -682,8 +682,8 @@ describe("getSubsForTournament", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns userIds with isStayAsSub", async () => {

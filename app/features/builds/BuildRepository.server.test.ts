@@ -119,8 +119,8 @@ describe("BuildRepository.create — computeBuildData", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	describe("abilitiesSignature & ability sums", () => {
@@ -328,8 +328,8 @@ describe("BuildRepository.popularAbilitiesByWeaponId", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts each user at most once across signature buckets", async () => {

@@ -67,9 +67,9 @@ describe("Plus voting", () => {
 		vi.useFakeTimers();
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		vi.useRealTimers();
-		dbReset();
+		await dbReset();
 	});
 
 	test("gives correct amount of plus tiers", async () => {
@@ -316,8 +316,8 @@ describe("Account migration", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("migrates a blank account", async () => {

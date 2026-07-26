@@ -24,8 +24,8 @@ describe("notify()", () => {
 		clearSentNotificationsForTesting();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("different recipients receive same notification", async () => {
@@ -215,8 +215,8 @@ describe("notify() - web push notifications", () => {
 		mockWebPushEnabled.value = false;
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("sends web push notification when user has subscription", async () => {

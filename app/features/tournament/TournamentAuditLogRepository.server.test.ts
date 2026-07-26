@@ -47,8 +47,8 @@ describe("TournamentAuditLogRepository", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("insert creates a stable history row from the live team", async () => {

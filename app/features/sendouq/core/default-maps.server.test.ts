@@ -26,9 +26,9 @@ describe("getDefaultMapWeights()", () => {
 		await dbInsertUsers(10);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		vi.restoreAllMocks();
-		dbReset();
+		await dbReset();
 	});
 
 	test("returns empty map when no season is found", async () => {

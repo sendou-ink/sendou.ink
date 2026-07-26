@@ -106,8 +106,8 @@ describe("SendouQ match creation", () => {
 		await refreshSendouQInstance();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("adds pools to memento", async () => {

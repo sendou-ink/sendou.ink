@@ -10,8 +10,8 @@ const authorAndTarget = async () => {
 };
 
 describe("PrivateUserNoteRepository", () => {
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	describe("upsertOwnNote", () => {

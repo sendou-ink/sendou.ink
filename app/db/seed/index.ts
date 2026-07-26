@@ -1,9 +1,10 @@
 import { faker } from "@faker-js/faker";
 import { add, sub } from "date-fns";
+import { sql } from "kysely";
 import { nanoid } from "nanoid";
 import * as R from "remeda";
 import { Config } from "~/config";
-import { db, sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import type { DBBoolean } from "~/db/tables";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
@@ -32,7 +33,9 @@ import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
+import type { TournamentMapPickingStyle } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
@@ -254,7 +257,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 ];
 
 export async function seed(variation?: SeedVariation | null) {
-	wipeDB();
+	await wipeDB();
 
 	for (const seedFunc of basicSeeds(variation)) {
 		if (!seedFunc) continue;
@@ -271,59 +274,48 @@ const FINALIZED_TOURNAMENT_ID = 7;
 const FINALIZED_EVENT_ID = 207;
 const FINALIZED_TEAM_ID_OFFSET = 600;
 
-function finalizedBracket() {
+async function finalizedBracket() {
 	// Tournament
-	sql
-		.prepare(
-			`insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized")
-			 values ($id, $mapPickingStyle, $settings, 1)`,
-		)
-		.run({
-			id: FINALIZED_TOURNAMENT_ID,
-			mapPickingStyle: "AUTO_ALL",
-			settings: JSON.stringify({
-				bracketProgression: [
-					{
-						type: "single_elimination",
-						name: "Bracket",
-						requiresCheckIn: false,
-						settings: { thirdPlaceMatch: false },
-					},
-				],
-			}),
-		});
+	await insertTournamentWithId({
+		id: FINALIZED_TOURNAMENT_ID,
+		mapPickingStyle: "AUTO_ALL",
+		settings: JSON.stringify({
+			bracketProgression: [
+				{
+					type: "single_elimination",
+					name: "Bracket",
+					requiresCheckIn: false,
+					settings: { thirdPlaceMatch: false },
+				},
+			],
+		}),
+		isFinalized: 1,
+	});
 
 	// CalendarEvent
-	sql
-		.prepare(
-			`insert into "CalendarEvent" ("id", "name", "description", "discordInviteCode", "bracketUrl", "authorId", "tournamentId")
-			 values ($id, $name, $description, $discordInviteCode, $bracketUrl, $authorId, $tournamentId)`,
-		)
-		.run({
-			id: FINALIZED_EVENT_ID,
-			name: "In The Zone 1",
-			description: "Finalized tournament for testing",
-			discordInviteCode: "test",
-			bracketUrl: "https://example.com",
-			authorId: ADMIN_ID,
-			tournamentId: FINALIZED_TOURNAMENT_ID,
-		});
+	await insertCalendarEventWithId({
+		id: FINALIZED_EVENT_ID,
+		name: "In The Zone 1",
+		description: "Finalized tournament for testing",
+		discordInviteCode: "test",
+		bracketUrl: "https://example.com",
+		authorId: ADMIN_ID,
+		tournamentId: FINALIZED_TOURNAMENT_ID,
+	});
 
 	// CalendarEventDate — recent start time (within 7-day spoiler window)
-	sql
-		.prepare(
-			`insert into "CalendarEventDate" ("eventId", "startsAt")
-			 values ($eventId, $startTime)`,
-		)
-		.run({
+	await db
+		.insertInto("CalendarEventDate")
+		.values({
 			eventId: FINALIZED_EVENT_ID,
-			startTime: dateToDatabaseTimestamp(
+			startsAt: dateToDatabaseTimestamp(
 				new Date(Date.now() - 1000 * 60 * 60 * 2),
 			),
-		});
+		})
+		.execute();
 
 	// 8 teams with 4 members each
-	const userIds = userIdsInAscendingOrderById();
+	const userIds = await userIdsInAscendingOrderById();
 	const teamNames = [
 		"Alpha",
 		"Bravo",
@@ -338,83 +330,65 @@ function finalizedBracket() {
 	for (let i = 0; i < 8; i++) {
 		const teamId = FINALIZED_TEAM_ID_OFFSET + i + 1;
 
-		sql
-			.prepare(
-				`insert into "TournamentTeam" ("id", "name", "createdAt", "tournamentId", "inviteCode", "seed")
-				 values ($id, $name, $createdAt, $tournamentId, $inviteCode, $seed)`,
-			)
-			.run({
-				id: teamId,
-				name: teamNames[i],
-				createdAt: dateToDatabaseTimestamp(new Date()),
-				tournamentId: FINALIZED_TOURNAMENT_ID,
-				inviteCode: shortNanoid(),
-				seed: i + 1,
-			});
+		await insertTournamentTeamWithId({
+			id: teamId,
+			name: teamNames[i],
+			createdAt: dateToDatabaseTimestamp(new Date()),
+			tournamentId: FINALIZED_TOURNAMENT_ID,
+			inviteCode: shortNanoid(),
+			seed: i + 1,
+		});
 
-		sql
-			.prepare(
-				`insert into "TournamentTeamCheckIn" ("tournamentTeamId", "checkedInAt")
-				 values ($tournamentTeamId, $checkedInAt)`,
-			)
-			.run({
+		await db
+			.insertInto("TournamentTeamCheckIn")
+			.values({
 				tournamentTeamId: teamId,
 				checkedInAt: dateToDatabaseTimestamp(new Date()),
-			});
+			})
+			.execute();
 
 		for (let j = 0; j < 4; j++) {
-			sql
-				.prepare(
-					`insert into "TournamentTeamMember" ("tournamentTeamId", "userId", "createdAt", "role")
-					 values ($tournamentTeamId, $userId, $createdAt, $role)`,
-				)
-				.run({
+			await db
+				.insertInto("TournamentTeamMember")
+				.values({
 					tournamentTeamId: teamId,
 					userId: userIds.shift()!,
 					createdAt: dateToDatabaseTimestamp(new Date()),
 					role: j === 0 ? "OWNER" : "REGULAR",
-				});
+				})
+				.execute();
 		}
 	}
 
 	// Bracket structure
-	const stageId = (
-		sql
-			.prepare(
-				`insert into "TournamentStage" ("tournamentId", "name", "number", "type", "settings")
-				 values ($tournamentId, $name, $number, $type, $settings) returning id`,
-			)
-			.get({
-				tournamentId: FINALIZED_TOURNAMENT_ID,
-				name: "Bracket",
-				number: 1,
-				type: "single_elimination",
-				settings: JSON.stringify({ thirdPlaceMatch: false }),
-			}) as { id: number }
-	).id;
+	const { id: stageId } = await db
+		.insertInto("TournamentStage")
+		.values({
+			tournamentId: FINALIZED_TOURNAMENT_ID,
+			name: "Bracket",
+			number: 1,
+			type: "single_elimination",
+			settings: JSON.stringify({ thirdPlaceMatch: false }),
+		})
+		.returning("id")
+		.executeTakeFirstOrThrow();
 
-	const groupId = (
-		sql
-			.prepare(
-				`insert into "TournamentGroup" ("stageId", "number")
-				 values ($stageId, $number) returning id`,
-			)
-			.get({ stageId, number: 1 }) as { id: number }
-	).id;
+	const { id: groupId } = await db
+		.insertInto("TournamentGroup")
+		.values({ stageId, number: 1 })
+		.returning("id")
+		.executeTakeFirstOrThrow();
 
 	const roundMaps = JSON.stringify({ count: 3, type: "BEST_OF" });
 
 	const roundIds: number[] = [];
 	for (let r = 1; r <= 3; r++) {
-		const roundId = (
-			sql
-				.prepare(
-					`insert into "TournamentRound" ("stageId", "groupId", "number", "maps")
-					 values ($stageId, $groupId, $number, $maps) returning id`,
-				)
-				.get({ stageId, groupId, number: r, maps: roundMaps }) as { id: number }
-		).id;
-		roundIds.push(roundId);
+		const round = await db
+			.insertInto("TournamentRound")
+			.values({ stageId, groupId, number: r, maps: roundMaps })
+			.returning("id")
+			.executeTakeFirstOrThrow();
+		roundIds.push(round.id);
 	}
 
 	const t = (seed: number) => FINALIZED_TEAM_ID_OFFSET + seed;
@@ -436,19 +410,10 @@ function finalizedBracket() {
 		{ round: 2, number: 1, team1: t(1), team2: t(2), winner: t(1) },
 	];
 
-	const matchInsertStm = sql.prepare(
-		`insert into "TournamentMatch" ("stageId", "groupId", "roundId", "number", "opponentOne", "opponentTwo", "winnerSide")
-		 values ($stageId, $groupId, $roundId, $number, $opponentOne, $opponentTwo, $winnerSide) returning id`,
-	);
-
-	const gameResultInsertStm = sql.prepare(
-		`insert into "TournamentMatchGameResult" ("matchId", "mode", "number", "reporterId", "source", "stageId", "winnerTeamId")
-		 values ($matchId, $mode, $number, $reporterId, $source, $stageId, $winnerTeamId)`,
-	);
-
 	for (const m of matches) {
-		const matchId = (
-			matchInsertStm.get({
+		const { id: matchId } = await db
+			.insertInto("TournamentMatch")
+			.values({
 				stageId,
 				groupId,
 				roundId: roundIds[m.round],
@@ -462,20 +427,24 @@ function finalizedBracket() {
 					score: m.winner === m.team2 ? 2 : 0,
 				}),
 				winnerSide: m.winner === m.team1 ? "opponent1" : "opponent2",
-			}) as { id: number }
-		).id;
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
 
 		// 2 game results (2-0 sweep)
 		for (let g = 1; g <= 2; g++) {
-			gameResultInsertStm.run({
-				matchId,
-				mode: "SZ",
-				number: g,
-				reporterId: ADMIN_ID,
-				source: "DEFAULT",
-				stageId: 1,
-				winnerTeamId: m.winner,
-			});
+			await db
+				.insertInto("TournamentMatchGameResult")
+				.values({
+					matchId,
+					mode: "SZ",
+					number: g,
+					reporterId: ADMIN_ID,
+					source: "DEFAULT",
+					stageId: 1,
+					winnerTeamId: m.winner,
+				})
+				.execute();
 		}
 	}
 
@@ -491,29 +460,27 @@ function finalizedBracket() {
 		{ teamSeed: 8, placement: 5, setResults: ["L"] },
 	];
 
-	const resultInsertStm = sql.prepare(
-		`insert into "TournamentResult" ("tournamentId", "tournamentTeamId", "userId", "placement", "participantCount", "setResults")
-		 values ($tournamentId, $tournamentTeamId, $userId, $placement, $participantCount, $setResults)`,
-	);
-
 	// Insert one result row per team member
 	for (const p of placements) {
 		const teamId = t(p.teamSeed);
-		const members = sql
-			.prepare(
-				`select "userId" from "TournamentTeamMember" where "tournamentTeamId" = ?`,
-			)
-			.all(teamId) as Array<{ userId: number }>;
+		const members = await db
+			.selectFrom("TournamentTeamMember")
+			.select("userId")
+			.where("tournamentTeamId", "=", teamId)
+			.execute();
 
 		for (const member of members) {
-			resultInsertStm.run({
-				tournamentId: FINALIZED_TOURNAMENT_ID,
-				tournamentTeamId: teamId,
-				userId: member.userId,
-				placement: p.placement,
-				participantCount: 8,
-				setResults: JSON.stringify(p.setResults),
-			});
+			await db
+				.insertInto("TournamentResult")
+				.values({
+					tournamentId: FINALIZED_TOURNAMENT_ID,
+					tournamentTeamId: teamId,
+					userId: member.userId,
+					placement: p.placement,
+					participantCount: 8,
+					setResults: JSON.stringify(p.setResults),
+				})
+				.execute();
 		}
 	}
 }
@@ -523,102 +490,78 @@ const AB_RR_EVENT_ID = 208;
 const AB_RR_TEAM_ID_OFFSET = 700;
 const AB_RR_TEAM_COUNT = 12;
 
-function abDivisionsTournament() {
-	sql
-		.prepare(
-			`insert into "Tournament" ("id", "mapPickingStyle", "settings")
-			 values ($id, $mapPickingStyle, $settings)`,
-		)
-		.run({
-			id: AB_RR_TOURNAMENT_ID,
-			mapPickingStyle: "AUTO_ALL",
-			settings: JSON.stringify({
-				bracketProgression: [
-					{
-						type: "round_robin",
-						name: "Groups stage",
-						requiresCheckIn: false,
-						settings: {
-							hasAbDivisions: true,
-							teamsPerGroup: AB_RR_TEAM_COUNT,
-						},
+async function abDivisionsTournament() {
+	await insertTournamentWithId({
+		id: AB_RR_TOURNAMENT_ID,
+		mapPickingStyle: "AUTO_ALL",
+		settings: JSON.stringify({
+			bracketProgression: [
+				{
+					type: "round_robin",
+					name: "Groups stage",
+					requiresCheckIn: false,
+					settings: {
+						hasAbDivisions: true,
+						teamsPerGroup: AB_RR_TEAM_COUNT,
 					},
-				],
-			}),
-		});
+				},
+			],
+		}),
+	});
 
-	sql
-		.prepare(
-			`insert into "CalendarEvent" ("id", "name", "description", "discordInviteCode", "bracketUrl", "authorId", "tournamentId")
-			 values ($id, $name, $description, $discordInviteCode, $bracketUrl, $authorId, $tournamentId)`,
-		)
-		.run({
-			id: AB_RR_EVENT_ID,
-			name: "A/B Divisions Cup",
-			description: "Bipartite round robin tournament for testing",
-			discordInviteCode: "abrr",
-			bracketUrl: "https://example.com",
-			authorId: ADMIN_ID,
-			tournamentId: AB_RR_TOURNAMENT_ID,
-		});
+	await insertCalendarEventWithId({
+		id: AB_RR_EVENT_ID,
+		name: "A/B Divisions Cup",
+		description: "Bipartite round robin tournament for testing",
+		discordInviteCode: "abrr",
+		bracketUrl: "https://example.com",
+		authorId: ADMIN_ID,
+		tournamentId: AB_RR_TOURNAMENT_ID,
+	});
 
-	sql
-		.prepare(
-			`insert into "CalendarEventDate" ("eventId", "startsAt")
-			 values ($eventId, $startTime)`,
-		)
-		.run({
+	await db
+		.insertInto("CalendarEventDate")
+		.values({
 			eventId: AB_RR_EVENT_ID,
-			startTime: dateToDatabaseTimestamp(new Date(Date.now() - 1000 * 60 * 30)),
-		});
+			startsAt: dateToDatabaseTimestamp(new Date(Date.now() - 1000 * 60 * 30)),
+		})
+		.execute();
 
-	const userIds = userIdsInAscendingOrderById();
+	const userIds = await userIdsInAscendingOrderById();
 	const now = dateToDatabaseTimestamp(new Date());
 
 	for (let i = 0; i < AB_RR_TEAM_COUNT; i++) {
 		const teamId = AB_RR_TEAM_ID_OFFSET + i + 1;
 
-		sql
-			.prepare(
-				`insert into "TournamentTeam" ("id", "name", "createdAt", "tournamentId", "inviteCode", "seed")
-				 values ($id, $name, $createdAt, $tournamentId, $inviteCode, $seed)`,
-			)
-			.run({
-				id: teamId,
-				name: `AB Team ${i + 1}`,
-				createdAt: now,
-				tournamentId: AB_RR_TOURNAMENT_ID,
-				inviteCode: shortNanoid(),
-				seed: i + 1,
-			});
+		await insertTournamentTeamWithId({
+			id: teamId,
+			name: `AB Team ${i + 1}`,
+			createdAt: now,
+			tournamentId: AB_RR_TOURNAMENT_ID,
+			inviteCode: shortNanoid(),
+			seed: i + 1,
+		});
 
-		sql
-			.prepare(
-				`insert into "TournamentTeamCheckIn" ("tournamentTeamId", "checkedInAt")
-				 values ($tournamentTeamId, $checkedInAt)`,
-			)
-			.run({
-				tournamentTeamId: teamId,
-				checkedInAt: now,
-			});
+		await db
+			.insertInto("TournamentTeamCheckIn")
+			.values({ tournamentTeamId: teamId, checkedInAt: now })
+			.execute();
 
 		for (let j = 0; j < 4; j++) {
-			sql
-				.prepare(
-					`insert into "TournamentTeamMember" ("tournamentTeamId", "userId", "createdAt", "role")
-					 values ($tournamentTeamId, $userId, $createdAt, $role)`,
-				)
-				.run({
+			await db
+				.insertInto("TournamentTeamMember")
+				.values({
 					tournamentTeamId: teamId,
 					userId: userIds.shift()!,
 					createdAt: now,
 					role: j === 0 ? "OWNER" : "REGULAR",
-				});
+				})
+				.execute();
 		}
 	}
 }
 
-function wipeDB() {
+async function wipeDB() {
 	const tablesToDelete = [
 		"ScrimPost",
 		"TournamentOrganizationBannedUser",
@@ -677,11 +620,12 @@ function wipeDB() {
 	for (const table of tablesToDelete) {
 		if (table === "Tournament") {
 			// foreign key constraint reasons
-			sql
-				.prepare("delete from Tournament where parentTournamentId is not null")
-				.run();
+			await db
+				.deleteFrom("Tournament")
+				.where("parentTournamentId", "is not", null)
+				.execute();
 		}
-		sql.prepare(`delete from "${table}"`).run();
+		await sql`delete from ${sql.table(table)}`.execute(db);
 	}
 }
 
@@ -696,48 +640,54 @@ async function adminUser() {
 	});
 }
 
-function fixAdminId() {
-	sql.prepare(`delete from user where id = ${ADMIN_ID}`).run();
+async function fixAdminId() {
+	await db.deleteFrom("User").where("id", "=", ADMIN_ID).execute();
 	// make admin same ID as prod for easy switching
-	sql.prepare(`update "User" set "id" = ${ADMIN_ID} where id = 1`).run();
+	await sql`update "User" set "id" = ${ADMIN_ID} where id = 1`.execute(db);
 }
 
-function makeAdminPatron() {
-	sql
-		.prepare(
-			`update "User" set "patronTier" = 2, "patronStartedAt" = 1674663454 where id = 1`,
-		)
-		.run();
+async function makeAdminPatron() {
+	await db
+		.updateTable("User")
+		.set({ patronTier: 2, patronStartedAt: 1674663454 })
+		.where("id", "=", 1)
+		.execute();
 }
 
-function makeAdminVideoAdder() {
-	sql.prepare(`update "User" set "isVideoAdder" = 1 where id = 1`).run();
+async function makeAdminVideoAdder() {
+	await db
+		.updateTable("User")
+		.set({ isVideoAdder: 1 })
+		.where("id", "=", 1)
+		.execute();
 }
 
-function makeAdminTournamentOrganizer() {
-	sql
-		.prepare(`update "User" set "isTournamentOrganizer" = 1 where id = 1`)
-		.run();
+async function makeAdminTournamentOrganizer() {
+	await db
+		.updateTable("User")
+		.set({ isTournamentOrganizer: 1 })
+		.where("id", "=", 1)
+		.execute();
 }
 
-function makeArtists() {
-	sql
-		.prepare(
-			`update "User" set "isArtist" = 1 where id in (${ADMIN_ID}, ${NZAP_TEST_ID})`,
-		)
-		.run();
+async function makeArtists() {
+	await db
+		.updateTable("User")
+		.set({ isArtist: 1 })
+		.where("id", "in", [ADMIN_ID, NZAP_TEST_ID])
+		.execute();
 }
 
-function adminUserWeaponPool() {
+async function adminUserWeaponPool() {
 	for (const [i, weaponSplId] of [200, 1100, 2000, 4000].entries()) {
-		sql
-			.prepare(
-				`
-      insert into "UserWeapon" ("userId", "weaponSplId", "order")
-        values ($userId, $weaponSplId, $order)
-    `,
-			)
-			.run({ userId: ADMIN_ID, weaponSplId, order: i + 1 });
+		await db
+			.insertInto("UserWeapon")
+			.values({
+				userId: ADMIN_ID,
+				weaponSplId: weaponSplId as MainWeaponId,
+				order: i + 1,
+			})
+			.execute();
 	}
 }
 
@@ -787,13 +737,11 @@ function staffUser() {
 	});
 }
 
-function fixStaffUserId() {
-	sql.prepare(`delete from user where id = ${STAFF_TEST_ID}`).run();
-	sql
-		.prepare(
-			`update "User" set "id" = ${STAFF_TEST_ID} where "discordId" = '${STAFF_TEST_DISCORD_ID}'`,
-		)
-		.run();
+async function fixStaffUserId() {
+	await db.deleteFrom("User").where("id", "=", STAFF_TEST_ID).execute();
+	await sql`update "User" set "id" = ${STAFF_TEST_ID} where "discordId" = ${STAFF_TEST_DISCORD_ID}`.execute(
+		db,
+	);
 }
 
 async function users() {
@@ -824,37 +772,31 @@ async function userProfiles() {
 			inGameName: "N-ZAP#5678",
 		},
 	]) {
-		sql
-			.prepare(
-				`
-        UPDATE "User" SET 
-          country = $country,
-          customUrl = $customUrl,
-          motionSens = $motionSens,
-          stickSens = $stickSens,
-          inGameName = $inGameName
-        WHERE id = $userId`,
-			)
-			.run(args);
+		const { userId, ...profile } = args;
+
+		await db
+			.updateTable("User")
+			.set(profile)
+			.where("id", "=", userId)
+			.execute();
 	}
 
 	for (let id = 2; id < 500; id++) {
 		if (id === ADMIN_ID || id === NZAP_TEST_ID) continue;
 		if (faker.number.float(1) < 0.25) continue; // 75% have bio
 
-		sql
-			.prepare(
-				`UPDATE "User" SET bio = $bio, country = $country WHERE id = $id`,
-			)
-			.run({
-				id,
+		await db
+			.updateTable("User")
+			.set({
 				bio: faker.lorem.paragraphs(
 					faker.helpers.arrayElement([1, 1, 1, 2, 3, 4]),
 					"\n\n",
 				),
 				country:
 					faker.number.float(1) > 0.5 ? faker.location.countryCode() : null,
-			});
+			})
+			.where("id", "=", id)
+			.execute();
 	}
 
 	for (let id = 2; id < 500; id++) {
@@ -864,26 +806,15 @@ async function userProfiles() {
 		const weapons = faker.helpers.shuffle(mainWeaponIds);
 
 		for (let j = 0; j < faker.helpers.arrayElement([1, 2, 3, 4, 5]); j++) {
-			sql
-				.prepare(
-					/* sql */ `insert into "UserWeapon" (
-          "userId",
-          "weaponSplId",
-          "order",
-          "isFavorite"
-        ) values (
-          @userId,
-          @weaponSplId,
-          @order,
-          @isFavorite
-        )`,
-				)
-				.run({
+			await db
+				.insertInto("UserWeapon")
+				.values({
 					userId: id,
 					weaponSplId: weapons.pop()!,
 					order: j + 1,
 					isFavorite: faker.number.float(1) > 0.8 ? 1 : 0,
-				});
+				})
+				.execute();
 		}
 	}
 
@@ -918,19 +849,9 @@ async function userCardData() {
 
 		const guaranteed = id <= USER_CARD_SEEDED_USER_ID_CEILING;
 
-		sql
-			.prepare(
-				/* sql */ `
-        update "User"
-        set
-          "shortBio" = @shortBio,
-          "div" = @div,
-          "bannerPresetImg" = @bannerPresetImg,
-          "unverifiedPeakXP" = @unverifiedPeakXP
-        where "id" = @id`,
-			)
-			.run({
-				id,
+		await db
+			.updateTable("User")
+			.set({
 				shortBio:
 					guaranteed || faker.number.float(1) > 0.4
 						? faker.lorem.sentence()
@@ -942,7 +863,9 @@ async function userCardData() {
 				bannerPresetImg: randomBannerPresetImg(),
 				unverifiedPeakXP:
 					guaranteed || faker.number.float(1) > 0.6 ? randomPeakXp() : null,
-			});
+			})
+			.where("id", "=", id)
+			.execute();
 	}
 }
 
@@ -1010,9 +933,7 @@ async function userMapModePreferences() {
 }
 
 async function userMatchProfileWeaponPool() {
-	const users = sql.prepare('SELECT id FROM "User" LIMIT 500').all() as {
-		id: number;
-	}[];
+	const users = await db.selectFrom("User").select("id").limit(500).execute();
 
 	for (const { id } of users) {
 		if (id === NZAP_TEST_ID) continue; // no weapons for N-ZAP
@@ -1033,34 +954,34 @@ async function userMatchProfileWeaponPool() {
 	}
 }
 
-function seedingSkills() {
-	const users = sql.prepare('SELECT id FROM "User" LIMIT 500').all() as {
-		id: number;
-	}[];
+async function seedingSkills() {
+	const users = await db.selectFrom("User").select("id").limit(500).execute();
 
 	for (const { id: userId } of users) {
 		if (faker.number.float() < 0.7) {
 			const mu = faker.number.float({ min: 22, max: 45 });
 			const sigma = faker.number.float({ min: 4, max: 8 });
-			const ordinal = mu - 3 * sigma;
 
-			sql
-				.prepare(
-					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'RANKED', ?, ?, ?)`,
-				)
-				.run(userId, mu, sigma, ordinal);
+			await db
+				.insertInto("SeedingSkill")
+				.values({ userId, type: "RANKED", mu, sigma, ordinal: mu - 3 * sigma })
+				.execute();
 		}
 
 		if (faker.number.float() < 0.5) {
 			const mu = faker.number.float({ min: 22, max: 42 });
 			const sigma = faker.number.float({ min: 4, max: 8 });
-			const ordinal = mu - 3 * sigma;
 
-			sql
-				.prepare(
-					`INSERT INTO "SeedingSkill" ("userId", "type", "mu", "sigma", "ordinal") VALUES (?, 'UNRANKED', ?, ?, ?)`,
-				)
-				.run(userId, mu, sigma, ordinal);
+			await db
+				.insertInto("SeedingSkill")
+				.values({
+					userId,
+					type: "UNRANKED",
+					mu,
+					sigma,
+					ordinal: mu - 3 * sigma,
+				})
+				.execute();
 		}
 	}
 }
@@ -1194,26 +1115,35 @@ async function syncPlusTiers() {
 		.execute();
 }
 
-function getAvailableBadgeIds() {
-	return faker.helpers.shuffle(
-		(sql.prepare(`select "id" from "Badge"`).all() as any[]).map((b) => b.id),
-	);
+async function getAvailableBadgeIds() {
+	const badges = await db.selectFrom("Badge").select("id").execute();
+
+	return faker.helpers.shuffle(badges.map((b) => b.id));
 }
 
-function badgesToUsers() {
-	const availableBadgeIds = getAvailableBadgeIds();
+const givePatron = (userId: number, patronTier: number, startedAt: Date) =>
+	db
+		.updateTable("User")
+		.set({
+			patronTier,
+			patronStartedAt: dateToDatabaseTimestamp(startedAt),
+		})
+		.where("id", "=", userId)
+		.execute();
+
+const giveTournamentBadge = (badgeId: number, userId: number) =>
+	db.insertInto("TournamentBadgeOwner").values({ badgeId, userId }).execute();
+
+async function badgesToUsers() {
+	const availableBadgeIds = await getAvailableBadgeIds();
 
 	let userIds = (
-		sql
-			.prepare(
-				`select "id" from "User" where id != ${NZAP_TEST_ID} and id != ${ADMIN_ID}`,
-			)
-			.all() as any[]
-	).map((u) => u.id) as number[];
-
-	const insertTournamentBadgeOwnerStm = sql.prepare(
-		`insert into "TournamentBadgeOwner" ("badgeId", "userId") values ($id, $userId)`,
-	);
+		await db
+			.selectFrom("User")
+			.select("id")
+			.where("id", "not in", [NZAP_TEST_ID, ADMIN_ID])
+			.execute()
+	).map((u) => u.id);
 
 	for (const id of availableBadgeIds) {
 		userIds = faker.helpers.shuffle(userIds);
@@ -1228,72 +1158,69 @@ function badgesToUsers() {
 		) {
 			const userToGetABadge = userIds.shift()!;
 
-			insertTournamentBadgeOwnerStm.run({ id, userId: userToGetABadge });
+			await giveTournamentBadge(id, userToGetABadge);
 
 			userIds.push(userToGetABadge);
 		}
 	}
 
 	for (const badgeId of nullFilledArray(20).map((_, i) => i + 1)) {
-		insertTournamentBadgeOwnerStm.run({ id: badgeId, userId: ADMIN_ID });
+		await giveTournamentBadge(badgeId, ADMIN_ID);
 	}
 
 	for (const badgeId of [5, 6, 7]) {
-		insertTournamentBadgeOwnerStm.run({ id: badgeId, userId: NZAP_TEST_ID });
+		await giveTournamentBadge(badgeId, NZAP_TEST_ID);
 	}
 }
 
-function badgeManagers() {
+async function badgeManagers() {
 	// make N-ZAP user manager of several badges
-	for (let id = 1; id <= 10; id++) {
-		sql
-			.prepare(
-				`insert into "BadgeManager" ("badgeId", "userId") values ($id, $userId)`,
-			)
-			.run({ id, userId: NZAP_TEST_ID });
+	for (let badgeId = 1; badgeId <= 10; badgeId++) {
+		await db
+			.insertInto("BadgeManager")
+			.values({ badgeId, userId: NZAP_TEST_ID })
+			.execute();
 	}
 }
 
-function patrons() {
+async function patrons() {
 	const userIds = (
-		sql
-			.prepare(`select "id" from "User" order by random() limit 50`)
-			.all() as any[]
+		await db
+			.selectFrom("User")
+			.select("id")
+			.orderBy(sql`random()`)
+			.limit(50)
+			.execute()
 	)
 		.map((u) => u.id)
 		.filter(
 			(id) =>
 				id !== NZAP_TEST_ID && id !== ADMIN_ID && id !== ORG_ADMIN_TEST_ID,
-		) as number[];
+		);
 
-	const givePatronStm = sql.prepare(
-		`update user set "patronTier" = $patronTier, "patronStartedAt" = $patronStartedAt where id = $id`,
-	);
 	for (const id of userIds) {
-		givePatronStm.run({
+		await givePatron(
 			id,
-			patronStartedAt: dateToDatabaseTimestamp(faker.date.past()),
-			patronTier: faker.helpers.arrayElement([1, 1, 2, 2, 2, 3, 3, 4]),
-		});
+			faker.helpers.arrayElement([1, 1, 2, 2, 2, 3, 3, 4]),
+			faker.date.past(),
+		);
 	}
 
-	givePatronStm.run({
-		id: ADMIN_ID,
-		patronStartedAt: dateToDatabaseTimestamp(faker.date.past()),
-		patronTier: 2,
-	});
+	await givePatron(ADMIN_ID, 2, faker.date.past());
 
 	// Give ORG_ADMIN_TEST_ID API access without patron status
 	// so they don't get TOURNAMENT_ADDER role
-	sql
-		.prepare(`update user set "isApiAccesser" = 1 where id = ?`)
-		.run(ORG_ADMIN_TEST_ID);
+	await db
+		.updateTable("User")
+		.set({ isApiAccesser: 1 })
+		.where("id", "=", ORG_ADMIN_TEST_ID)
+		.execute();
 }
 
-function userIdsInRandomOrder(specialLast = false) {
+async function userIdsInRandomOrder(specialLast = false) {
 	const rows = (
-		sql.prepare(`select "id" from "User" order by random()`).all() as any[]
-	).map((u) => u.id) as number[];
+		await db.selectFrom("User").select("id").orderBy(sql`random()`).execute()
+	).map((u) => u.id);
 
 	if (!specialLast) return rows;
 
@@ -1304,61 +1231,39 @@ function userIdsInRandomOrder(specialLast = false) {
 	];
 }
 
-function userIdsInAscendingOrderById() {
+async function userIdsInAscendingOrderById() {
 	const ids = (
-		sql.prepare(`select "id" from "User" order by id asc`).all() as any[]
-	).map((u) => u.id) as number[];
+		await db.selectFrom("User").select("id").orderBy("id", "asc").execute()
+	).map((u) => u.id);
 
 	return [ADMIN_ID, ...ids.filter((id) => id !== ADMIN_ID)];
 }
 
-function calendarEvents() {
-	const userIds = userIdsInRandomOrder();
+async function calendarEvents() {
+	const userIds = await userIdsInRandomOrder();
 
 	for (let id = 1; id <= AMOUNT_OF_CALENDAR_EVENTS; id++) {
 		const shuffledTags = faker.helpers.shuffle(Object.keys(tags));
 
-		sql
-			.prepare(
-				`
-      insert into "CalendarEvent" (
-        "id",
-        "name",
-        "description",
-        "discordInviteCode",
-        "bracketUrl",
-        "authorId",
-        "tags"
-      ) values (
-        $id,
-        $name,
-        $description,
-        $discordInviteCode,
-        $bracketUrl,
-        $authorId,
-        $tags
-      )
-      `,
-			)
-			.run({
-				id,
-				name: randomTeamName(),
-				description: faker.lorem.paragraph(),
-				discordInviteCode: faker.lorem.word(),
-				bracketUrl: faker.internet.url(),
-				authorId: id === 1 ? NZAP_TEST_ID : (userIds.pop() ?? null),
-				tags:
-					faker.number.float(1) > 0.2
-						? shuffledTags
-								.slice(
-									0,
-									faker.helpers.arrayElement([
-										1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 5, 6,
-									]),
-								)
-								.join(",")
-						: null,
-			});
+		await insertCalendarEventWithId({
+			id,
+			name: randomTeamName(),
+			description: faker.lorem.paragraph(),
+			discordInviteCode: faker.lorem.word(),
+			bracketUrl: faker.internet.url(),
+			authorId: id === 1 ? NZAP_TEST_ID : (userIds.pop() ?? null),
+			tags:
+				faker.number.float(1) > 0.2
+					? shuffledTags
+							.slice(
+								0,
+								faker.helpers.arrayElement([
+									1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 5, 6,
+								]),
+							)
+							.join(",")
+					: null,
+		});
 
 		const twoDayEvent = faker.number.float(1) > 0.9;
 		const startTime =
@@ -1367,83 +1272,59 @@ function calendarEvents() {
 				: faker.date.recent({ days: 42 });
 		startTime.setMinutes(0, 0, 0);
 
-		sql
-			.prepare(
-				`
-        insert into "CalendarEventDate" (
-          "eventId",
-          "startsAt"
-        ) values (
-          $eventId,
-          $startTime
-        )
-      `,
-			)
-			.run({
-				eventId: id,
-				startTime: dateToDatabaseTimestamp(startTime),
-			});
+		await db
+			.insertInto("CalendarEventDate")
+			.values({ eventId: id, startsAt: dateToDatabaseTimestamp(startTime) })
+			.execute();
 
 		if (twoDayEvent) {
 			startTime.setDate(startTime.getDate() + 1);
 
-			sql
-				.prepare(
-					`
-          insert into "CalendarEventDate" (
-            "eventId",
-            "startsAt"
-          ) values (
-            $eventId,
-            $startTime
-          )
-        `,
-				)
-				.run({
-					eventId: id,
-					startTime: dateToDatabaseTimestamp(startTime),
-				});
+			await db
+				.insertInto("CalendarEventDate")
+				.values({ eventId: id, startsAt: dateToDatabaseTimestamp(startTime) })
+				.execute();
 		}
 	}
 }
 
-const addCalendarEventBadgeStm = sql.prepare(
-	/*sql */ `insert into "CalendarEventBadge" 
-          ("eventId", "badgeId") 
-          values ($eventId, $badgeId)`,
-);
+const addCalendarEventBadge = (eventId: number, badgeId: number) =>
+	db.insertInto("CalendarEventBadge").values({ eventId, badgeId }).execute();
 
-function calendarEventBadges() {
+async function calendarEventBadges() {
 	for (let eventId = 1; eventId <= AMOUNT_OF_CALENDAR_EVENTS; eventId++) {
 		if (faker.number.float(1) > 0.25) continue;
 
-		const availableBadgeIds = getAvailableBadgeIds();
+		const availableBadgeIds = await getAvailableBadgeIds();
 
 		for (
 			let i = 0;
 			i < faker.helpers.arrayElement([1, 1, 1, 1, 2, 2, 3]);
 			i++
 		) {
-			addCalendarEventBadgeStm.run({
-				eventId,
-				badgeId: availableBadgeIds.pop(),
-			});
+			await addCalendarEventBadge(eventId, availableBadgeIds.pop()!);
 		}
 	}
 }
 
 async function calendarEventResults() {
-	let userIds = userIdsInRandomOrder();
-	const eventIdsOfPast = new Set<number>(
+	let userIds = await userIdsInRandomOrder();
+	const eventIdsOfPast = new Set(
 		(
-			sql
-				.prepare(
-					`select "CalendarEvent"."id" 
-          from "CalendarEvent" 
-          join "CalendarEventDate" on "CalendarEventDate"."eventId" = "CalendarEvent"."id"
-          where "CalendarEventDate"."startsAt" < $startTime`,
+			await db
+				.selectFrom("CalendarEvent")
+				.innerJoin(
+					"CalendarEventDate",
+					"CalendarEventDate.eventId",
+					"CalendarEvent.id",
 				)
-				.all({ startTime: dateToDatabaseTimestamp(new Date()) }) as any[]
+				.select("CalendarEvent.id")
+				.where(
+					"CalendarEventDate.startsAt",
+					"<",
+					dateToDatabaseTimestamp(new Date()),
+				)
+				.execute()
 		).map((r) => r.id),
 	);
 
@@ -1474,12 +1355,12 @@ async function calendarEventResults() {
 				})),
 		});
 
-		userIds = userIdsInRandomOrder();
+		userIds = await userIdsInRandomOrder();
 	}
 }
 
 const TO_TOOLS_CALENDAR_EVENT_ID = 201;
-function calendarEventWithToTools(
+async function calendarEventWithToTools(
 	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" | "LUTI" = "PICNIC",
 	registrationOpen = false,
 ) {
@@ -1659,97 +1540,45 @@ function calendarEventWithToTools(
 									],
 								};
 
-	sql
-		.prepare(
-			`
-      insert into "Tournament" (
-        "id",
-        "mapPickingStyle",
-        "settings"
-      ) values (
-        $id,
-        $mapPickingStyle,
-        $settings
-      ) returning *
-      `,
-		)
-		.run({
-			id: tournamentId,
-			settings: JSON.stringify(settings),
-			mapPickingStyle:
-				event === "SOS" || event === "LUTI"
-					? "TO"
-					: event === "ITZ"
-						? "AUTO_SZ"
-						: "AUTO_ALL",
-		});
+	await insertTournamentWithId({
+		id: tournamentId,
+		settings: JSON.stringify(settings),
+		mapPickingStyle:
+			event === "SOS" || event === "LUTI"
+				? "TO"
+				: event === "ITZ"
+					? "AUTO_SZ"
+					: "AUTO_ALL",
+	});
 
-	sql
-		.prepare(
-			`
-      insert into "CalendarEvent" (
-        "id",
-        "name",
-        "description",
-        "discordInviteCode",
-        "bracketUrl",
-        "authorId",
-        "tournamentId",
-				"organizationId",
-				"avatarImgId"
-      ) values (
-        $id,
-        $name,
-        $description,
-        $discordInviteCode,
-        $bracketUrl,
-        $authorId,
-        $tournamentId,
-				$organizationId,
-				$avatarImgId
-      )
-      `,
-		)
-		.run({
-			id: eventId,
-			name,
-			description: faker.lorem.paragraph(),
-			discordInviteCode: faker.lorem.word(),
-			bracketUrl: faker.internet.url(),
-			authorId: ADMIN_ID,
-			tournamentId,
-			organizationId: event === "PICNIC" ? 1 : null,
-			avatarImgId: getTournamentImageId(tournamentId),
-		});
+	await insertCalendarEventWithId({
+		id: eventId,
+		name,
+		description: faker.lorem.paragraph(),
+		discordInviteCode: faker.lorem.word(),
+		bracketUrl: faker.internet.url(),
+		authorId: ADMIN_ID,
+		tournamentId,
+		organizationId: event === "PICNIC" ? 1 : null,
+		avatarImgId: getTournamentImageId(tournamentId),
+	});
 
 	const halfAnHourFromNow = new Date(Date.now() + 1000 * 60 * 30);
 
-	sql
-		.prepare(
-			`
-        insert into "CalendarEventDate" (
-          "eventId",
-          "startsAt"
-        ) values (
-          $eventId,
-          $startTime
-        )
-      `,
-		)
-		.run({
+	await db
+		.insertInto("CalendarEventDate")
+		.values({
 			eventId,
-			startTime: dateToDatabaseTimestamp(
+			startsAt: dateToDatabaseTimestamp(
 				registrationOpen
 					? halfAnHourFromNow
 					: new Date(Date.now() - 1000 * 60 * 60),
 			),
-		});
+		})
+		.execute();
 
 	for (const badgeId of badges) {
-		addCalendarEventBadgeStm.run({
-			eventId,
-			badgeId,
-		});
+		await addCalendarEventBadge(eventId, badgeId);
 	}
 }
 
@@ -1759,64 +1588,38 @@ const tiebreakerPicks = new MapPool([
 	{ mode: "RM", stageId: 3 },
 	{ mode: "CB", stageId: 4 },
 ]);
-function calendarEventWithToToolsTieBreakerMapPool() {
+async function calendarEventWithToToolsTieBreakerMapPool() {
 	for (const tieBreakerCalendarEventId of [
 		TO_TOOLS_CALENDAR_EVENT_ID, // PICNIC
 		TO_TOOLS_CALENDAR_EVENT_ID + 2, // Paddling Pool
 		TO_TOOLS_CALENDAR_EVENT_ID + 4, // The Depths
 	]) {
 		for (const { mode, stageId } of tiebreakerPicks.stageModePairs) {
-			sql
-				.prepare(
-					`
-          insert into "MapPoolMap" (
-            "tieBreakerCalendarEventId",
-            "stageId",
-            "mode"
-          ) values (
-            $tieBreakerCalendarEventId,
-            $stageId,
-            $mode
-          )
-        `,
-				)
-				.run({
-					tieBreakerCalendarEventId,
-					stageId,
-					mode,
-				});
+			await db
+				.insertInto("MapPoolMap")
+				.values({ tieBreakerCalendarEventId, stageId, mode })
+				.execute();
 		}
 	}
 }
 
-function calendarEventWithToToolsToSetMapPool() {
+async function calendarEventWithToToolsToSetMapPool() {
 	const stages = [
 		...SENDOUQ_DEFAULT_MAPS.SZ.map((stageId) => ({ mode: "SZ", stageId })),
 		...SENDOUQ_DEFAULT_MAPS.TC.map((stageId) => ({ mode: "TC", stageId })),
 		...SENDOUQ_DEFAULT_MAPS.RM.map((stageId) => ({ mode: "RM", stageId })),
 		...SENDOUQ_DEFAULT_MAPS.CB.map((stageId) => ({ mode: "CB", stageId })),
-	];
+	] as Array<{ mode: ModeShort; stageId: StageId }>;
 
 	for (const { mode, stageId } of stages) {
-		sql
-			.prepare(
-				`
-        insert into "MapPoolMap" (
-          "calendarEventId",
-          "stageId",
-          "mode"
-        ) values (
-          $calendarEventId,
-          $stageId,
-          $mode
-        )
-      `,
-			)
-			.run({
+		await db
+			.insertInto("MapPoolMap")
+			.values({
 				calendarEventId: TO_TOOLS_CALENDAR_EVENT_ID + 3,
 				stageId,
 				mode,
-			});
+			})
+			.execute();
 	}
 }
 
@@ -1828,11 +1631,11 @@ const availablePairs = rankedModesShort
 		availableStages.map((stageId) => ({ mode, stageId: stageId })),
 	)
 	.filter((pair) => !tiebreakerPicks.has(pair));
-function calendarEventWithToToolsTeams(
+async function calendarEventWithToToolsTeams(
 	event: "PICNIC" | "ITZ" | "PP" | "SOS" | "DEPTHS" | "LUTI" = "PICNIC",
 	isSmall = false,
 ) {
-	const userIds = userIdsInAscendingOrderById();
+	const userIds = await userIdsInAscendingOrderById();
 	const names = Array.from(
 		new Set(new Array(100).fill(null).map(() => validTournamentTeamName())),
 	).concat("Chimera");
@@ -1861,53 +1664,24 @@ function calendarEventWithToToolsTeams(
 		const name = names.pop();
 		invariant(name, "tournament team name is falsy");
 
-		sql
-			.prepare(
-				`
-      insert into "TournamentTeam" (
-        "id",
-        "name",
-        "createdAt",
-        "tournamentId",
-        "inviteCode",
-        "seed"
-      ) values (
-        $id,
-        $name,
-        $createdAt,
-        $tournamentId,
-        $inviteCode,
-        $seed
-      )
-      `,
-			)
-			.run({
-				id: teamId,
-				name,
-				createdAt: dateToDatabaseTimestamp(new Date()),
-				tournamentId,
-				inviteCode: shortNanoid(),
-				seed: id,
-			});
+		await insertTournamentTeamWithId({
+			id: teamId,
+			name,
+			createdAt: dateToDatabaseTimestamp(new Date()),
+			tournamentId,
+			inviteCode: shortNanoid(),
+			seed: id,
+		});
 
 		// in PICNIC & PP Chimera is not checked in + in LUTI no check-ins at all
 		if (teamId !== 1 && teamId !== 201 && event !== "LUTI") {
-			sql
-				.prepare(
-					`
-      insert into "TournamentTeamCheckIn" (
-        "tournamentTeamId",
-        "checkedInAt"
-      ) values (
-        $tournamentTeamId,
-        $checkedInAt
-      )
-      `,
-				)
-				.run({
+			await db
+				.insertInto("TournamentTeamCheckIn")
+				.values({
 					tournamentTeamId: teamId,
 					checkedInAt: dateToDatabaseTimestamp(new Date()),
-				});
+				})
+				.execute();
 		}
 
 		for (let i = 0; i < (id < 10 ? 4 : 5); i++) {
@@ -1922,28 +1696,15 @@ function calendarEventWithToToolsTeams(
 			const yesterday = new Date();
 			yesterday.setDate(yesterday.getDate() - 1);
 
-			sql
-				.prepare(
-					`
-      insert into "TournamentTeamMember" (
-        "tournamentTeamId",
-        "userId",
-        "createdAt",
-        "role"
-      ) values (
-        $tournamentTeamId,
-        $userId,
-        $createdAt,
-        $role
-      )
-      `,
-				)
-				.run({
+			await db
+				.insertInto("TournamentTeamMember")
+				.values({
 					tournamentTeamId: id + teamIdAddition,
 					userId,
 					createdAt: dateToDatabaseTimestamp(yesterday),
 					role: i === 0 ? "OWNER" : "REGULAR",
-				});
+				})
+				.execute();
 		}
 
 		if (
@@ -1976,25 +1737,14 @@ function calendarEventWithToToolsTeams(
 				stageUsedCounts[pair.stageId] =
 					(stageUsedCounts[pair.stageId] ?? 0) + 1;
 
-				sql
-					.prepare(
-						`
-        insert into "MapPoolMap" (
-          "tournamentTeamId",
-          "stageId",
-          "mode"
-        ) values (
-          $tournamentTeamId,
-          $stageId,
-          $mode
-        )
-        `,
-					)
-					.run({
+				await db
+					.insertInto("MapPoolMap")
+					.values({
 						tournamentTeamId: id + teamIdAddition,
 						stageId: pair.stageId,
 						mode: pair.mode,
-					});
+					})
+					.execute();
 
 				if (pair.mode === "SZ") SZ++;
 				if (pair.mode === "TC") TC++;
@@ -2006,7 +1756,7 @@ function calendarEventWithToToolsTeams(
 }
 
 async function tournamentLfgGroups() {
-	const availableUsers = userIdsInAscendingOrderById().slice(300);
+	const availableUsers = (await userIdsInAscendingOrderById()).slice(300);
 
 	const MAX_GROUP_SIZE = 6;
 
@@ -2185,7 +1935,7 @@ async function adminBuilds() {
 async function manySplattershotBuilds() {
 	// ensure 500 has at least one splattershot build for x placement test
 	const users = [
-		...userIdsInRandomOrder().filter(
+		...(await userIdsInRandomOrder()).filter(
 			(id) => id !== 500 && id !== ADMIN_ID && id !== NZAP_TEST_ID,
 		),
 		500,
@@ -2251,23 +2001,19 @@ async function manySplattershotBuilds() {
 	}
 }
 
-const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
-	sql
-		.prepare(
-			/* sql */ `
-      insert into "AllTeam" ("name", "customUrl", "inviteCode", "bio", "avatarImgId")
-       values (
-          'Alliance Rogue',
-          'alliance-rogue',
-          '${shortNanoid()}',
-          '${faker.lorem.paragraph()}',
-          ${getTeamImageId(1)}
-       )
-  `,
-		)
-		.run();
+const detailedTeam = (seedVariation?: SeedVariation | null) => async () => {
+	await db
+		.insertInto("AllTeam")
+		.values({
+			name: "Alliance Rogue",
+			customUrl: "alliance-rogue",
+			inviteCode: shortNanoid(),
+			bio: faker.lorem.paragraph(),
+			avatarImgId: getTeamImageId(1),
+		})
+		.execute();
 
-	const userIds = userIdsInRandomOrder(true).filter(
+	const userIds = (await userIdsInRandomOrder(true)).filter(
 		(id) => id !== NZAP_TEST_ID,
 	);
 	if (seedVariation === "NZAP_IN_TEAM") {
@@ -2276,21 +2022,17 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 	for (let i = 0; i < 5; i++) {
 		const userId = i === 0 ? ADMIN_ID : userIds.shift()!;
 
-		sql
-			.prepare(
-				/*sql*/ `
-      insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "leftAt", "order")
-        values (
-          1,
-          ${userId},
-          ${i === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
-          ${i === 0 ? 1 : 0},
-          ${i < 4 ? "null" : "1672587342"},
-          ${i}
-        )
-    `,
-			)
-			.run();
+		await db
+			.insertInto("AllTeamMember")
+			.values({
+				teamId: 1,
+				userId,
+				role: i === 0 ? "CAPTAIN" : "FRONTLINE",
+				isOwner: i === 0 ? 1 : 0,
+				leftAt: i < 4 ? null : 1672587342,
+				order: i,
+			})
+			.execute();
 	}
 
 	const teamPreferences: UserMapModePreferences = {
@@ -2301,26 +2043,19 @@ const detailedTeam = (seedVariation?: SeedVariation | null) => () => {
 		})),
 	};
 
-	sql
-		.prepare(
-			/*sql*/ `update "AllTeam" set "mapModePreferences" = ? where "id" = 1`,
-		)
-		.run(JSON.stringify(teamPreferences));
+	await db
+		.updateTable("AllTeam")
+		.set({ mapModePreferences: JSON.stringify(teamPreferences) })
+		.where("id", "=", 1)
+		.execute();
 };
 
-function otherTeams() {
+async function otherTeams() {
 	const usersInTeam = (
-		sql
-			.prepare(
-				/*sql */ `select
-    "userId"
-    from "AllTeamMember"
-    `,
-			)
-			.all() as any[]
+		await db.selectFrom("AllTeamMember").select("userId").execute()
 	).map((row) => row.userId);
 
-	const userIds = userIdsInRandomOrder().filter(
+	const userIds = (await userIdsInRandomOrder()).filter(
 		(u) => !usersInTeam.includes(u) && u !== NZAP_TEST_ID,
 	);
 
@@ -2328,52 +2063,32 @@ function otherTeams() {
 		const teamName = i === 3 ? "Team Olive" : randomTeamName();
 		const teamCustomUrl = mySlugify(teamName);
 
-		sql
-			.prepare(
-				/* sql */ `
-      insert into "AllTeam" ("id", "name", "customUrl", "inviteCode", "bio")
-       values (
-          @id,
-          @name,
-          @customUrl,
-          @inviteCode,
-          @bio
-       )
-    `,
-			)
-			.run({
-				id: i,
-				name: teamName,
-				customUrl: teamCustomUrl,
-				inviteCode: shortNanoid(),
-				bio: faker.lorem.paragraph(),
-			});
+		await sql`
+			insert into "AllTeam" ("id", "name", "customUrl", "inviteCode", "bio")
+			values (${i}, ${teamName}, ${teamCustomUrl}, ${shortNanoid()}, ${faker.lorem.paragraph()})
+		`.execute(db);
 
 		const numMembers = faker.helpers.arrayElement([
 			1, 2, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 7, 7, 8,
 		]);
 		for (let j = 0; j < numMembers; j++) {
-			const userId = userIds.shift()!;
-
-			sql
-				.prepare(
-					/*sql*/ `
-        insert into "AllTeamMember" ("teamId", "userId", "role", "isOwner", "order")
-          values (
-            ${i},
-            ${userId},
-            ${j === 0 ? "'CAPTAIN'" : "'FRONTLINE'"},
-            ${j === 0 ? 1 : 0},
-            ${j}
-          )
-      `,
-				)
-				.run();
+			await db
+				.insertInto("AllTeamMember")
+				.values({
+					teamId: i,
+					userId: userIds.shift()!,
+					role: j === 0 ? "CAPTAIN" : "FRONTLINE",
+					isOwner: j === 0 ? 1 : 0,
+					order: j,
+				})
+				.execute();
 		}
 	}
 }
 
 async function realVideo() {
+	const userIds = await userIdsInRandomOrder();
+
 	for (let i = 0; i < 5; i++) {
 		await VodRepository.insert({
 			type: "TOURNAMENT",
@@ -2383,7 +2098,7 @@ async function realVideo() {
 			title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
 			pov: {
 				type: "USER",
-				userId: faker.helpers.arrayElement(userIdsInRandomOrder()),
+				userId: faker.helpers.arrayElement(userIds),
 			},
 			isValidated: true,
 			matches: [
@@ -2468,47 +2183,8 @@ async function realVideoCast() {
 }
 
 // some copy+paste from placements script
-const addPlayerStm = sql.prepare(/* sql */ `
-  insert into "SplatoonPlayer" ("splId", "userId")
-  values (@splId, @userId)
-  on conflict ("splId") do nothing
-`);
-
-const addPlacementStm = sql.prepare(/* sql */ `
-  insert into "XRankPlacement" (
-    "weaponSplId",
-    "name",
-    "nameDiscriminator",
-    "power",
-    "rank",
-    "title",
-    "badges",
-    "bannerSplId",
-    "playerId",
-    "month",
-    "year",
-    "region",
-    "mode"
-  )
-  values (
-    @weaponSplId,
-    @name,
-    @nameDiscriminator,
-    @power,
-    @rank,
-    @title,
-    @badges,
-    @bannerSplId,
-    (select "id" from "SplatoonPlayer" where "splId" = @playerSplId),
-    @month,
-    @year,
-    @region,
-    @mode
-  )
-`);
-
 function xRankPlacements() {
-	sql.transaction(() => {
+	return db.transaction().execute(async (trx) => {
 		for (const [i, placement] of placements.entries()) {
 			const userId = () => {
 				// admin
@@ -2518,60 +2194,49 @@ function xRankPlacements() {
 
 				return null;
 			};
-			addPlayerStm.run({
-				splId: placement.playerSplId,
-				userId: userId(),
-			});
-			addPlacementStm.run(placement);
+
+			await trx
+				.insertInto("SplatoonPlayer")
+				.values({ splId: placement.playerSplId, userId: userId() })
+				.onConflict((oc) => oc.column("splId").doNothing())
+				.execute();
+
+			const { playerSplId, ...rest } = placement;
+			await trx
+				.insertInto("XRankPlacement")
+				.values({
+					...rest,
+					mode: rest.mode as ModeShort,
+					region: rest.region as Tables["XRankPlacement"]["region"],
+					weaponSplId: rest.weaponSplId as MainWeaponId,
+					playerId: (eb) =>
+						eb
+							.selectFrom("SplatoonPlayer")
+							.select("SplatoonPlayer.id")
+							.where("splId", "=", playerSplId),
+				})
+				.execute();
 		}
-	})();
+	});
 }
 
-const addArtStm = sql.prepare(/* sql */ `
-  insert into "Art" (
-    "imgId",
-    "authorId",
-    "isShowcase",
-    "description"
-  )
-  values (
-    @imgId,
-    @authorId,
-    @isShowcase,
-    @description
-  ) returning *
-`);
-const addUnvalidatedUserSubmittedImageStm = sql.prepare(/* sql */ `
-  insert into "UnvalidatedUserSubmittedImage" (
-    "validatedAt",
-    "url",
-    "submitterUserId"
-  ) values (
-    @validatedAt,
-    @url,
-    @submitterUserId
-  ) returning *
-`);
+const addUnvalidatedUserSubmittedImage = (url: string, authorId: number) =>
+	db
+		.insertInto("UnvalidatedUserSubmittedImage")
+		.values({
+			validatedAt: dateToDatabaseTimestamp(new Date()),
+			url,
+			submitterUserId: authorId,
+		})
+		.returning("id")
+		.executeTakeFirstOrThrow();
 
 const teamAndTournamentImages = new Map<string, number>();
 
-function insertTeamAndTournamentImages() {
-	for (const { filename } of SEED_TEAM_IMAGES) {
-		const result = addUnvalidatedUserSubmittedImageStm.get({
-			validatedAt: dateToDatabaseTimestamp(new Date()),
-			url: filename,
-			submitterUserId: ADMIN_ID,
-		}) as Tables["UserSubmittedImage"];
-		teamAndTournamentImages.set(filename, result.id);
-	}
-
-	for (const { filename } of SEED_TOURNAMENT_IMAGES) {
-		const result = addUnvalidatedUserSubmittedImageStm.get({
-			validatedAt: dateToDatabaseTimestamp(new Date()),
-			url: filename,
-			submitterUserId: ADMIN_ID,
-		}) as Tables["UserSubmittedImage"];
-		teamAndTournamentImages.set(filename, result.id);
+async function insertTeamAndTournamentImages() {
+	for (const { filename } of [...SEED_TEAM_IMAGES, ...SEED_TOURNAMENT_IMAGES]) {
+		const image = await addUnvalidatedUserSubmittedImage(filename, ADMIN_ID);
+		teamAndTournamentImages.set(filename, image.id);
 	}
 }
 
@@ -2588,23 +2253,13 @@ function getTournamentImageId(tournamentId: number): number | null {
 	if (!tournamentImage) return null;
 	return teamAndTournamentImages.get(tournamentImage.filename) ?? null;
 }
-const addArtUserMetadataStm = sql.prepare(/* sql */ `
-  insert into "ArtUserMetadata" (
-    "artId",
-    "userId"
-  )
-  values (
-    @artId,
-    @userId
-  )
-`);
 const artImgFilenames = Array.from({ length: SEED_ART_URLS.length }, (_, i) =>
 	getArtFilename(i),
 );
 
-function arts() {
+async function arts() {
 	const artUsers = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-	const allUsers = userIdsInRandomOrder();
+	const allUsers = await userIdsInRandomOrder();
 	const urls = [...artImgFilenames];
 
 	for (const userId of artUsers) {
@@ -2612,19 +2267,19 @@ function arts() {
 			const url = urls.pop()!;
 			if (!url) break;
 
-			const addedArt = addArtStm.get({
-				imgId: (
-					addUnvalidatedUserSubmittedImageStm.get({
-						validatedAt: dateToDatabaseTimestamp(new Date()),
-						url,
-						submitterUserId: userId,
-					}) as Tables["UserSubmittedImage"]
-				).id,
-				authorId: userId,
-				isShowcase: i === 0 ? 1 : 0,
-				description:
-					faker.number.float(1) > 0.5 ? faker.lorem.paragraph() : null,
-			}) as Tables["Art"];
+			const image = await addUnvalidatedUserSubmittedImage(url, userId);
+
+			const addedArt = await db
+				.insertInto("Art")
+				.values({
+					imgId: image.id,
+					authorId: userId,
+					isShowcase: i === 0 ? 1 : 0,
+					description:
+						faker.number.float(1) > 0.5 ? faker.lorem.paragraph() : null,
+				})
+				.returning("id")
+				.executeTakeFirstOrThrow();
 
 			if (i === 1) {
 				for (
@@ -2632,33 +2287,29 @@ function arts() {
 					i < faker.helpers.arrayElement([1, 1, 1, 1, 2, 4]);
 					i++
 				) {
-					addArtUserMetadataStm.run({
-						artId: addedArt.id,
-						userId: i === 0 ? NZAP_TEST_ID : (allUsers.pop() ?? null),
-					});
+					await db
+						.insertInto("ArtUserMetadata")
+						.values({
+							artId: addedArt.id,
+							userId: i === 0 ? NZAP_TEST_ID : allUsers.pop()!,
+						})
+						.execute();
 				}
 			}
 		}
 	}
 }
 
-const updateCommissionStm = sql.prepare(/* sql */ `
-  update "User"
-  set
-    "commissionsOpen" = @commissionsOpen,
-    "commissionText" = @commissionText
-  where id = @userId
-`);
-function commissionsOpen() {
-	const allUsers = userIdsInRandomOrder();
+async function commissionsOpen() {
+	const allUsers = await userIdsInRandomOrder();
 
 	for (const userId of allUsers) {
 		if (faker.number.float(1) > 0.5) {
-			updateCommissionStm.run({
-				commissionsOpen: 1,
-				commissionText: faker.lorem.paragraph(),
-				userId,
-			});
+			await db
+				.updateTable("User")
+				.set({ commissionsOpen: 1, commissionText: faker.lorem.paragraph() })
+				.where("id", "=", userId)
+				.execute();
 		}
 	}
 }
@@ -2669,7 +2320,7 @@ async function groups(variation?: SeedVariation | null) {
 		return teamMapPrefsGroups();
 	}
 
-	const users = userIdsInAscendingOrderById()
+	const users = (await userIdsInAscendingOrderById())
 		.slice(0, 100)
 		.filter((id) => id !== ADMIN_ID && id !== NZAP_TEST_ID);
 	users.push(NZAP_TEST_ID);
@@ -2700,18 +2351,7 @@ async function groups(variation?: SeedVariation | null) {
 
 		for (let j = 0; j < amountOfAdditionalMembers(); j++) {
 			const memberId = users.pop()!;
-			sql
-				.prepare(
-					/* sql */ `
-        insert into "GroupMember" ("groupId", "userId", "role")
-        values (@groupId, @userId, @role)
-      `,
-				)
-				.run({
-					groupId: group.id,
-					userId: memberId,
-					role: "REGULAR",
-				});
+			await addGroupMember(group.id, memberId);
 
 			if (i === 0) nzapGroupMemberIds.push(memberId);
 			if (i === 1) sendouGroupMemberIds.push(memberId);
@@ -2728,16 +2368,16 @@ async function groups(variation?: SeedVariation | null) {
 	if (variation === "IN_SQ_MATCH") {
 		// Sendou's side tests the matchmade cascade vote flow, NZAP's side
 		// tests the trusted one-click flow.
-		sql
-			.prepare(
-				/* sql */ `update "Group" set "matchmade" = @matchmade where "id" = @id`,
-			)
-			.run({ matchmade: 1, id: sendouGroupId });
-		sql
-			.prepare(
-				/* sql */ `update "Group" set "matchmade" = @matchmade where "id" = @id`,
-			)
-			.run({ matchmade: 0, id: nzapGroupId });
+		await db
+			.updateTable("Group")
+			.set({ matchmade: 1 })
+			.where("id", "=", sendouGroupId)
+			.execute();
+		await db
+			.updateTable("Group")
+			.set({ matchmade: 0 })
+			.where("id", "=", nzapGroupId)
+			.execute();
 
 		const mapList = randomMapList(sendouGroupId, nzapGroupId);
 		const memento = buildSeedMemento({
@@ -2800,15 +2440,17 @@ async function groups(variation?: SeedVariation | null) {
 
 async function teamMapPrefsGroups() {
 	const arMemberIds = (
-		sql
-			.prepare(
-				/*sql*/ `select "userId" from "AllTeamMember" where "teamId" = 1 and "leftAt" is null and "userId" != ?`,
-			)
-			.all(ADMIN_ID) as any[]
-	).map((row: any) => row.userId as number);
+		await db
+			.selectFrom("AllTeamMember")
+			.select("userId")
+			.where("teamId", "=", 1)
+			.where("leftAt", "is", null)
+			.where("userId", "!=", ADMIN_ID)
+			.execute()
+	).map((row) => row.userId);
 
 	const arMemberSet = new Set(arMemberIds);
-	const users = userIdsInAscendingOrderById()
+	const users = (await userIdsInAscendingOrderById())
 		.slice(0, 100)
 		.filter(
 			(id) => id !== ADMIN_ID && id !== NZAP_TEST_ID && !arMemberSet.has(id),
@@ -2819,18 +2461,7 @@ async function teamMapPrefsGroups() {
 		userId: NZAP_TEST_ID,
 	});
 	for (let j = 0; j < 3; j++) {
-		sql
-			.prepare(
-				/* sql */ `
-				insert into "GroupMember" ("groupId", "userId", "role")
-				values (@groupId, @userId, @role)
-			`,
-			)
-			.run({
-				groupId: nzapGroup.id,
-				userId: users.pop()!,
-				role: "REGULAR",
-			});
+		await addGroupMember(nzapGroup.id, users.pop()!);
 	}
 
 	const adminGroup = await SQGroupRepository.createGroup({
@@ -2838,23 +2469,14 @@ async function teamMapPrefsGroups() {
 		userId: ADMIN_ID,
 	});
 	for (const memberId of arMemberIds) {
-		sql
-			.prepare(
-				/* sql */ `
-				insert into "GroupMember" ("groupId", "userId", "role")
-				values (@groupId, @userId, @role)
-			`,
-			)
-			.run({
-				groupId: adminGroup.id,
-				userId: memberId,
-				role: "REGULAR",
-			});
+		await addGroupMember(adminGroup.id, memberId);
 	}
 
-	sql
-		.prepare(/*sql*/ `update "Group" set "teamId" = 1 where "id" = ?`)
-		.run(adminGroup.id);
+	await db
+		.updateTable("Group")
+		.set({ teamId: 1 })
+		.where("id", "=", adminGroup.id)
+		.execute();
 }
 
 const randomMapList = (
@@ -2994,22 +2616,23 @@ const MATCHES_COUNT = 500;
 const AMOUNT_OF_USERS_WITH_SKILLS = 100;
 
 async function playedMatches() {
-	const _groupMembers = (() => {
-		return new Array(AMOUNT_OF_USERS_WITH_SKILLS).fill(null).map(() => {
-			const users = faker.helpers.shuffle(
-				userIdsInAscendingOrderById().slice(0, AMOUNT_OF_USERS_WITH_SKILLS),
-			);
+	const userIdsWithSkills = (await userIdsInAscendingOrderById()).slice(
+		0,
+		AMOUNT_OF_USERS_WITH_SKILLS,
+	);
+
+	const _groupMembers = new Array(AMOUNT_OF_USERS_WITH_SKILLS)
+		.fill(null)
+		.map(() => {
+			const users = faker.helpers.shuffle(userIdsWithSkills);
 
 			return new Array(4).fill(null).map(() => users.pop()!);
 		});
-	})();
-	const defaultWeapons = Object.fromEntries(
-		userIdsInAscendingOrderById()
-			.slice(0, AMOUNT_OF_USERS_WITH_SKILLS)
-			.map((id) => {
-				const weapons = faker.helpers.shuffle([...mainWeaponIds]);
-				return [id, weapons[0]];
-			}),
+	const defaultWeapons: Record<number, MainWeaponId> = Object.fromEntries(
+		userIdsWithSkills.map((id) => {
+			const weapons = faker.helpers.shuffle([...mainWeaponIds]);
+			return [id, weapons[0]];
+		}),
 	);
 
 	let matchDate = new Date(Date.UTC(2023, 9, 15, 0, 0, 0, 0));
@@ -3063,18 +2686,11 @@ async function playedMatches() {
 		});
 
 		// update match createdAt to the past
-		sql
-			.prepare(
-				/* sql */ `
-      update "GroupMatch"
-      set "createdAt" = @createdAt
-      where "id" = @id
-    `,
-			)
-			.run({
-				createdAt: dateToDatabaseTimestamp(matchDate),
-				id: match.id,
-			});
+		await db
+			.updateTable("GroupMatch")
+			.set({ createdAt: dateToDatabaseTimestamp(matchDate) })
+			.where("id", "=", match.id)
+			.execute();
 
 		if (faker.number.float(1) > 0.95) {
 			// increment date by 1 day
@@ -3140,23 +2756,20 @@ async function playedMatches() {
 	// skills are inserted with createdAt of the current time, but matches are
 	// backdated above. Sync skill createdAt to the match date so the season
 	// progression chart on the user seasons page has data spread across days.
-	sql
-		.prepare(
-			/* sql */ `
-      update "Skill"
-      set "createdAt" = (
-        select "createdAt"
-        from "GroupMatch"
-        where "GroupMatch"."id" = "Skill"."groupMatchId"
-      )
-      where "groupMatchId" is not null
-    `,
-		)
-		.run();
+	await db
+		.updateTable("Skill")
+		.set((eb) => ({
+			createdAt: eb
+				.selectFrom("GroupMatch")
+				.select("GroupMatch.createdAt")
+				.whereRef("GroupMatch.id", "=", "Skill.groupMatchId"),
+		}))
+		.where("groupMatchId", "is not", null)
+		.execute();
 }
 
 async function friendCodes() {
-	const allUsers = userIdsInRandomOrder();
+	const allUsers = await userIdsInRandomOrder();
 
 	for (const userId of allUsers) {
 		const friendCode = "####-####-####".replace(/#+/g, (m) =>
@@ -3200,7 +2813,7 @@ async function userReports() {
 }
 
 async function lfgPosts() {
-	const allUsers = userIdsInRandomOrder(true).slice(0, 100);
+	const allUsers = (await userIdsInRandomOrder(true)).slice(0, 100);
 
 	allUsers.unshift(NZAP_TEST_ID);
 
@@ -3223,7 +2836,7 @@ async function lfgPosts() {
 }
 
 async function scrimPosts() {
-	const allUsers = userIdsInRandomOrder(true);
+	const allUsers = await userIdsInRandomOrder(true);
 
 	// Only schedule admin's scrim at least 1 hour in the future, others can be 'now'
 	const date = (isAdmin = false) => {
@@ -3411,7 +3024,7 @@ async function scrimPostRequests() {
 }
 
 async function associations() {
-	const allUsers = userIdsInRandomOrder(true);
+	const allUsers = await userIdsInRandomOrder(true);
 
 	for (let i = 0; i < 3; i++) {
 		await AssociationRepository.insert({
@@ -3525,18 +3138,11 @@ async function notifications() {
 	);
 
 	for (let i = 0; i < values.length - 1; i++) {
-		sql
-			.prepare(
-				/* sql */ `
-			update "Notification"
-			set "createdAt" = @createdAt
-			where "id" = @id
-		`,
-			)
-			.run({
-				createdAt: dateToDatabaseTimestamp(createdAts[i]),
-				id: i + 1,
-			});
+		await db
+			.updateTable("Notification")
+			.set({ createdAt: dateToDatabaseTimestamp(createdAts[i]) })
+			.where("id", "=", i + 1)
+			.execute();
 	}
 }
 
@@ -3581,13 +3187,12 @@ async function organization() {
 		badges: [],
 	});
 
-	sql
-		.prepare(
-			`UPDATE "TournamentOrganizationSeries"
-			SET "tierHistory" = '[3, 4, 3]'
-			WHERE "organizationId" = 1 AND "name" = 'PICNIC'`,
-		)
-		.run();
+	await db
+		.updateTable("TournamentOrganizationSeries")
+		.set({ tierHistory: JSON.stringify([3, 4, 3]) })
+		.where("organizationId", "=", 1)
+		.where("name", "=", "PICNIC")
+		.execute();
 }
 
 const SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS = [150, 151, 152, 153];
@@ -3596,14 +3201,13 @@ const SENDOU_FRIEND_IDS_OTHER = [102, 103];
 
 async function friendships(variation?: SeedVariation | null) {
 	const insertFriendship = (idA: number, idB: number) =>
-		sql
-			.prepare(
-				/* sql */ `
-				insert into "Friendship" ("userOneId", "userTwoId")
-				values (@userOneId, @userTwoId)
-			`,
-			)
-			.run({ userOneId: Math.min(idA, idB), userTwoId: Math.max(idA, idB) });
+		db
+			.insertInto("Friendship")
+			.values({
+				userOneId: Math.min(idA, idB),
+				userTwoId: Math.max(idA, idB),
+			})
+			.execute();
 
 	const allFriendIds = [
 		...SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS,
@@ -3612,14 +3216,14 @@ async function friendships(variation?: SeedVariation | null) {
 	];
 
 	for (const friendId of allFriendIds) {
-		insertFriendship(ADMIN_ID, friendId);
+		await insertFriendship(ADMIN_ID, friendId);
 	}
 
 	// friendships between some looking-group owners so their user cards show mutual friends with the
 	// admin, while others (e.g. 153 and the additional members) intentionally have none
-	insertFriendship(150, 151);
-	insertFriendship(150, 152);
-	insertFriendship(151, 152);
+	await insertFriendship(150, 151);
+	await insertFriendship(150, 152);
+	await insertFriendship(151, 152);
 
 	if (variation === "NO_SQ_GROUPS" || variation === "TEAM_MAP_PREFS") return;
 
@@ -3636,24 +3240,13 @@ async function friendships(variation?: SeedVariation | null) {
 		);
 
 		for (const memberId of additionalMembers) {
-			sql
-				.prepare(
-					/* sql */ `
-					insert into "GroupMember" ("groupId", "userId", "role")
-					values (@groupId, @userId, @role)
-				`,
-				)
-				.run({
-					groupId: group.id,
-					userId: memberId + (friendId - 150) * 10,
-					role: "REGULAR",
-				});
+			await addGroupMember(group.id, memberId + (friendId - 150) * 10);
 		}
 	}
 }
 
-function liveStreams() {
-	const userIds = userIdsInAscendingOrderById();
+async function liveStreams() {
+	const userIds = await userIdsInAscendingOrderById();
 
 	// Add deterministic streams for E2E testing
 	// Users 6 and 7 are in ITZ tournament team 102
@@ -3665,19 +3258,15 @@ function liveStreams() {
 	];
 
 	for (const stream of deterministicStreams) {
-		sql
-			.prepare(
-				`
-			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
-			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
-			`,
-			)
-			.run({
+		await db
+			.insertInto("LiveStream")
+			.values({
 				userId: stream.userId,
 				viewerCount: stream.viewerCount,
 				thumbnailUrl: "https://picsum.photos/320/180",
 				twitch: stream.twitch,
-			});
+			})
+			.execute();
 	}
 
 	const streamingUserIds = [
@@ -3703,23 +3292,14 @@ function liveStreams() {
 		});
 
 		const twitch = `fake_${nanoid()}`.toLowerCase();
-		sql
-			.prepare(
-				`
-			insert into "LiveStream" ("userId", "viewerCount", "thumbnailUrl", "twitch")
-			values ($userId, $viewerCount, $thumbnailUrl, $twitch)
-			`,
-			)
-			.run({
-				userId,
-				viewerCount,
-				thumbnailUrl,
-				twitch,
-			});
+		await db
+			.insertInto("LiveStream")
+			.values({ userId, viewerCount, thumbnailUrl, twitch })
+			.execute();
 	}
 }
 
-function splatoonRotations() {
+async function splatoonRotations() {
 	const nowUnix = Math.floor(Date.now() / 1000);
 	const TWO_HOURS = 2 * 60 * 60;
 
@@ -3774,17 +3354,68 @@ function splatoonRotations() {
 		const slot = i % ROTATIONS_PER_TYPE;
 		const rotation = rotationData[i];
 
-		sql
-			.prepare(
-				`
-			insert into "SplatoonRotation" ("type", "mode", "stageId1", "stageId2", "startsAt", "endsAt")
-			values ($type, $mode, $stageId1, $stageId2, $startTime, $endTime)
-			`,
-			)
-			.run({
+		await db
+			.insertInto("SplatoonRotation")
+			.values({
 				...rotation,
-				startTime: slotStart(slot),
-				endTime: slotEnd(slot),
-			});
+				type: rotation.type as SplatoonRotationType,
+				startsAt: slotStart(slot),
+				endsAt: slotEnd(slot),
+			})
+			.execute();
 	}
+}
+
+const addGroupMember = (groupId: number, userId: number) =>
+	db
+		.insertInto("GroupMember")
+		.values({ groupId, userId, role: "REGULAR" })
+		.execute();
+
+/**
+ * Ids of these rows are seeded explicitly so that tests can rely on them, which
+ * the query builder disallows for always generated columns.
+ */
+function insertTournamentWithId(values: {
+	id: number;
+	mapPickingStyle: TournamentMapPickingStyle;
+	settings: string;
+	isFinalized?: DBBoolean;
+}) {
+	return sql`
+		insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized")
+		values (${values.id}, ${values.mapPickingStyle}, ${values.settings}, ${values.isFinalized ?? 0})
+	`.execute(db);
+}
+
+function insertCalendarEventWithId(values: {
+	id: number;
+	name: string;
+	description: string;
+	discordInviteCode: string;
+	bracketUrl: string;
+	authorId: number | null;
+	tournamentId?: number | null;
+	organizationId?: number | null;
+	avatarImgId?: number | null;
+	tags?: string | null;
+}) {
+	return sql`
+		insert into "CalendarEvent" ("id", "name", "description", "discordInviteCode", "bracketUrl", "authorId", "tournamentId", "organizationId", "avatarImgId", "tags")
+		values (${values.id}, ${values.name}, ${values.description}, ${values.discordInviteCode}, ${values.bracketUrl}, ${values.authorId}, ${values.tournamentId ?? null}, ${values.organizationId ?? null}, ${values.avatarImgId ?? null}, ${values.tags ?? null})
+	`.execute(db);
+}
+
+function insertTournamentTeamWithId(values: {
+	id: number;
+	name: string;
+	createdAt: number;
+	tournamentId: number;
+	inviteCode: string;
+	seed: number;
+}) {
+	return sql`
+		insert into "TournamentTeam" ("id", "name", "createdAt", "tournamentId", "inviteCode", "seed")
+		values (${values.id}, ${values.name}, ${values.createdAt}, ${values.tournamentId}, ${values.inviteCode}, ${values.seed})
+	`.execute(db);
 }

@@ -21,8 +21,8 @@ describe("findByUserId", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns organizations where user is a member", async () => {
@@ -108,8 +108,8 @@ describe("countActiveParticipants", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts distinct participants across the organization's events in the window", async () => {

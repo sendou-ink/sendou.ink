@@ -1,7 +1,8 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import Database from "better-sqlite3";
+import { sql } from "kysely";
+import { createDatabaseConnection } from "~/db/sql";
 import { SEED_VARIATIONS } from "../app/features/api-private/constants";
 
 const E2E_SEEDS_DIR = "e2e/seeds";
@@ -54,9 +55,8 @@ async function generatePreSeededDatabases() {
 			{ stdio: "inherit" },
 		);
 
-		const db = new Database(outputPath);
-		db.pragma("wal_checkpoint(TRUNCATE)");
-		db.close();
+		await using seedDb = createDatabaseConnection(outputPath);
+		await sql`PRAGMA wal_checkpoint(TRUNCATE)`.execute(seedDb);
 
 		const stats = fs.statSync(outputPath);
 		// biome-ignore lint/suspicious/noConsole: CLI script output

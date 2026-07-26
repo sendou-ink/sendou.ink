@@ -123,8 +123,8 @@ describe("findByTournamentTeamId", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("preserves stage order: matches from an earlier stage come first even when later stage has lower group numbers", async () => {

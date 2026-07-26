@@ -42,8 +42,8 @@ describe("UserCardRepository.userCards", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("returns an empty map when given no user ids", async () => {

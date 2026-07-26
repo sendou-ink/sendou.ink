@@ -152,8 +152,8 @@ describe("seasonPopularUsersWeapon", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns user's most reported SendouQ weapon", async () => {

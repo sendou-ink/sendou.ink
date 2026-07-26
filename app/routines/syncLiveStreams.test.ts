@@ -44,13 +44,13 @@ function addRunningTournament(
 let timeOffset = 0;
 
 describe("syncLiveStreams tournament streamers", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(
 			add(new Date("2025-01-15T12:00:00Z"), { minutes: timeOffset }),
 		);
 		timeOffset += 31;
-		dbReset();
+		await dbReset();
 		RunningTournaments.clear();
 		mockGetStreams.mockReset();
 	});

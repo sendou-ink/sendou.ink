@@ -28,8 +28,8 @@ describe("findForGroups", () => {
 		await dbInsertUsers(4);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns empty array without querying when no group ids given", async () => {
@@ -79,8 +79,8 @@ describe("cast", () => {
 		await dbInsertUsers(4);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("updates existing vote on conflict instead of inserting a duplicate", async () => {

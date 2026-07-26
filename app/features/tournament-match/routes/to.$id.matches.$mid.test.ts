@@ -100,8 +100,8 @@ describe("Tournament match page", () => {
 		await dbStartTournament([1, 2]);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	describe("results", () => {

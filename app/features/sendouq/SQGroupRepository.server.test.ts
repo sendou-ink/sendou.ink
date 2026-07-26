@@ -62,8 +62,8 @@ describe("createGroup", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("records implicit no-vote on previous matchmade group when user creates a new group", async () => {
@@ -142,8 +142,8 @@ describe("addMember", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("records implicit no-vote on previous matchmade group when user joins another group", async () => {

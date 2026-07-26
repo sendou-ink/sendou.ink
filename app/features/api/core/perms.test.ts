@@ -12,8 +12,8 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		await dbInsertUsers(10);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("both functions grant access for isApiAccesser flag", async () => {

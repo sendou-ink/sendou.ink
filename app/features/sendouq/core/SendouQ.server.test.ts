@@ -87,8 +87,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(4);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns 'default' when user not in any group", async () => {
@@ -136,8 +136,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(8);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns group when user is a member", async () => {
@@ -200,8 +200,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(4);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns group when invite code is valid", async () => {
@@ -241,8 +241,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(12);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns empty array when no groups exist", async () => {
@@ -429,8 +429,8 @@ describe("SendouQ", () => {
 				await dbInsertUsers(20);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("returns empty array when user not in a group", async () => {
@@ -554,8 +554,8 @@ describe("SendouQ", () => {
 				await dbInsertUsers(12);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("marks group as replay when 3+ members overlap", async () => {
@@ -650,8 +650,8 @@ describe("SendouQ", () => {
 				await dbInsertUsers(12);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("full groups have members undefined", async () => {
@@ -698,8 +698,8 @@ describe("SendouQ", () => {
 				await dbInsertUsers(10);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("groups with closer skill sorted first", async () => {

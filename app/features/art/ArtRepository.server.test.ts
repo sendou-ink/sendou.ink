@@ -26,8 +26,8 @@ describe("findShowcaseArts", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("shows one art per artist", async () => {
@@ -86,8 +86,8 @@ describe("findAllTags", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns all art tags", async () => {
@@ -129,8 +129,8 @@ describe("unlinkUserFromArt", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("removes user link from art", async () => {
@@ -159,8 +159,8 @@ describe("findShowcaseArtsByTag", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns arts filtered by tag", async () => {
@@ -233,8 +233,8 @@ describe("findRecentlyUploadedArts", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns recently uploaded arts", async () => {
@@ -253,8 +253,8 @@ describe("findArtsByUserId", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns authored art", async () => {
@@ -290,8 +290,8 @@ describe("deleteById", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes art by id", async () => {
@@ -321,8 +321,8 @@ describe("deleteOrphanTags", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes tags with no associated art", async () => {
@@ -371,8 +371,8 @@ describe("insert", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("inserts art with all metadata", async () => {
@@ -410,8 +410,8 @@ describe("update", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("updates art metadata", async () => {

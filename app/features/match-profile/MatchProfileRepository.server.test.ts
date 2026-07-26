@@ -42,8 +42,8 @@ describe("updateOwnMatchProfile", () => {
 			.execute();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("reports no change when nothing matchmaking-relevant changed", async () => {

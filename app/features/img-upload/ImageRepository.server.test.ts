@@ -64,8 +64,8 @@ describe("findById", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("finds image by id", async () => {
@@ -100,8 +100,8 @@ describe("deleteImageById", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes image by id", async () => {
@@ -136,8 +136,8 @@ describe("countUnvalidatedArt", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts unvalidated art by author", async () => {
@@ -171,8 +171,8 @@ describe("countAllUnvalidated", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts unvalidated images used in art", async () => {
@@ -224,8 +224,8 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts unvalidated images connected to art by submitter", async () => {
@@ -275,8 +275,8 @@ describe("validateImage", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("marks image as validated", async () => {
@@ -307,8 +307,8 @@ describe("unvalidatedImages", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("fetches unvalidated images with submitter info", async () => {

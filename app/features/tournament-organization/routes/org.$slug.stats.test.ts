@@ -19,9 +19,9 @@ describe("org stats loader", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		vi.useRealTimers();
-		dbReset();
+		await dbReset();
 	});
 
 	test("throws when the user is not an org admin", async () => {

@@ -109,7 +109,7 @@ export interface TeamMember {
 	order: Generated<number>;
 	teamId: number;
 	userId: number;
-	isMainTeam: DBBoolean;
+	isMainTeam: Generated<DBBoolean>;
 }
 
 export interface Art {

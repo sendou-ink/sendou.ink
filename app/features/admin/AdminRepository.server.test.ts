@@ -8,8 +8,8 @@ describe("allBannedUsers", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns empty Map when no users are banned", async () => {
@@ -101,8 +101,8 @@ describe("banUser", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("permanently bans user (banned = 1)", async () => {
@@ -216,8 +216,8 @@ describe("unbanUser", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("unbans a previously banned user", async () => {

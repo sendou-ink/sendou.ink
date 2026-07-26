@@ -45,8 +45,8 @@ describe("findPendingOverlapsForUsers", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns a specific-time pending post in window with its member ids", async () => {
@@ -212,8 +212,8 @@ describe("findUserScrims", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("passed-over requester does not see the scrim booked between the post and another team", async () => {
@@ -292,8 +292,8 @@ describe("insertRequest", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	const insertTeamRequest = ({

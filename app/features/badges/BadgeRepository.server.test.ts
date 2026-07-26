@@ -10,8 +10,8 @@ describe("syncXPBadges", () => {
 		await insertXPBadges();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("assigns badge to user with qualifying peakXp", async () => {

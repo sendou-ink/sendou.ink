@@ -4,8 +4,8 @@ import * as AdminRepository from "../admin/AdminRepository.server";
 import * as UserRepository from "./UserRepository.server";
 
 describe("UserRepository", () => {
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("created user has createdAt field", async () => {

@@ -91,8 +91,8 @@ describe("lockMatchWithoutSkillChange", () => {
 		await dbInsertUsers(8);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("inserts dummy skill to lock match", async () => {
@@ -117,8 +117,8 @@ describe("cancelMatch", () => {
 		await dbInsertUsers(8);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("first cancel report sets group inactive", async () => {

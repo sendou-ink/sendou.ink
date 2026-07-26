@@ -7,8 +7,8 @@ describe("create", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("creates a login link with correct userId", async () => {
@@ -30,8 +30,8 @@ describe("del", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes a login link by code", async () => {
@@ -49,8 +49,8 @@ describe("findValidByCode", () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns userId for valid code", async () => {
