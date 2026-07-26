@@ -26,6 +26,7 @@ import {
 	tournamentWebsocketRoom,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -199,7 +200,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 									reporterId: user.id,
 									winnerTeamId: data.winnerTeamId,
 									number: data.position + 1,
-									source: String(currentMap.source),
+									source: serializeMaplistSource(currentMap.source),
 									ko: bracket.collectsKos
 										? toDBBoolean(Boolean(data.ko))
 										: null,

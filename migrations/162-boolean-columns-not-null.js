@@ -7,6 +7,16 @@ const NULLABLE_BOOLEAN_COLUMNS = [
 	{ table: "User", column: "commissionsOpen" },
 ];
 
+const COMMA_SEPARATED_STRING_COLUMNS = [
+	{ table: "CalendarEvent", column: "tags" },
+	{ table: "User", column: "languages" },
+	{ table: "LFGPost", column: "languages" },
+];
+
+const COMMA_SEPARATED_NUMBER_COLUMNS = [
+	{ table: "TournamentSub", column: "okWeapons" },
+];
+
 const RENAMED_TIMESTAMP_COLUMNS = [
 	{ table: "CalendarEventDate", from: "startTime", to: "startsAt" },
 	{ table: "ExternalStream", from: "startTime", to: "startsAt" },
@@ -58,6 +68,41 @@ export function up(db) {
 				/*sql*/ `alter table "${table}" rename column "${from}" to "${to}"`,
 			).run();
 		}
+
+		for (const { table, column } of COMMA_SEPARATED_STRING_COLUMNS) {
+			db.prepare(
+				/*sql*/ `update "${table}" set "${column}" = null where "${column}" = ''`,
+			).run();
+
+			db.prepare(
+				/*sql*/ `
+					update "${table}"
+						set "${column}" = '["' || replace("${column}", ',', '","') || '"]'
+						where "${column}" is not null
+				`,
+			).run();
+		}
+
+		for (const { table, column } of COMMA_SEPARATED_NUMBER_COLUMNS) {
+			db.prepare(
+				/*sql*/ `update "${table}" set "${column}" = null where "${column}" = ''`,
+			).run();
+
+			db.prepare(
+				/*sql*/ `
+					update "${table}"
+						set "${column}" = '[' || "${column}" || ']'
+						where "${column}" is not null
+				`,
+			).run();
+		}
+
+		db.prepare(
+			/*sql*/ `
+				update "TournamentSub"
+					set "bestWeapons" = iif("bestWeapons" = '', '[]', '[' || "bestWeapons" || ']')
+			`,
+		).run();
 
 		db.prepare(
 			/*sql*/ "drop index calendar_event_date_event_id_start_time",

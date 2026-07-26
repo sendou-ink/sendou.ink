@@ -3,6 +3,7 @@ import { ordinal } from "openskill";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
+import type { SkillTeamIdentifier } from "./mmr-utils";
 
 export type CurrentSkill = Pick<
 	Tables["Skill"],
@@ -46,9 +47,10 @@ export async function currentTeamSkills({
 	identifiers,
 }: {
 	season: number;
-	identifiers: Array<string>;
+	identifiers: Array<SkillTeamIdentifier>;
 }) {
-	if (identifiers.length === 0) return new Map<string, CurrentSkill>();
+	if (identifiers.length === 0)
+		return new Map<SkillTeamIdentifier, CurrentSkill>();
 
 	const rows = await db
 		.selectFrom(
@@ -60,8 +62,8 @@ export async function currentTeamSkills({
 		.where("rn", "=", 1)
 		.execute();
 
-	return new Map<string, CurrentSkill>(
-		rows.map((row) => [row.identifier as string, row]),
+	return new Map<SkillTeamIdentifier, CurrentSkill>(
+		rows.map((row) => [row.identifier as SkillTeamIdentifier, row]),
 	);
 }
 

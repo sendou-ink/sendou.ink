@@ -3,7 +3,6 @@ import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -79,13 +78,10 @@ export const action: ActionFunction = async ({ request }) => {
 			: data.discordInviteCode,
 		tags:
 			data.tags.length > 0
-				? data.tags
-						.toSorted(
-							(a, b) =>
-								CALENDAR_EVENT.TAGS.indexOf(a as CalendarEventTag) -
-								CALENDAR_EVENT.TAGS.indexOf(b as CalendarEventTag),
-						)
-						.join(",")
+				? data.tags.toSorted(
+						(a, b) =>
+							CALENDAR_EVENT.TAGS.indexOf(a) - CALENDAR_EVENT.TAGS.indexOf(b),
+					)
 				: null,
 		badges: data.badges.filter((badge) =>
 			managedBadges.some((mb) => mb.id === badge),

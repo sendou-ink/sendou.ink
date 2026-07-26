@@ -3,7 +3,6 @@ import type {
 	Expression,
 	ExpressionBuilder,
 	NotNull,
-	SqlBool,
 	Transaction,
 } from "kysely";
 import { sql } from "kysely";
@@ -13,7 +12,6 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { TournamentSettings } from "~/db/tables-json";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
-import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import {
@@ -222,9 +220,7 @@ function findAllBetweenTwoTimestampsMapped(
 }> {
 	const mapped: Array<CalendarEvent & { startsAt: number }> = rows.map(
 		(row) => {
-			const tags = row.tags
-				? (row.tags.split(",") as CalendarEvent["tags"])
-				: [];
+			const tags = row.tags ?? [];
 
 			const isPastEvent =
 				databaseTimestampToDate(row.startsAt) < sub(new Date(), { days: 1 });
@@ -341,7 +337,7 @@ export async function findById(
 
 	return {
 		...firstRow,
-		tags: tagsArray(firstRow),
+		tags: firstRow.tags ?? [],
 		startTimes: [firstRow, ...rest].map((row) => row.startsAt),
 		startsAt: undefined,
 	};
@@ -365,18 +361,6 @@ export async function findRecentTournamentsByAuthorId(authorId: number) {
 		.orderBy("CalendarEvent.id", "desc")
 		.limit(10)
 		.execute();
-}
-
-function tagsArray(args: {
-	hasBadge: SqlBool;
-	tags?: Tables["CalendarEvent"]["tags"];
-	tournamentId: Tables["CalendarEvent"]["tournamentId"];
-}) {
-	const tags = (
-		args.tags ? args.tags.split(",") : []
-	) as Array<CalendarEventTag>;
-
-	return tags;
 }
 
 export async function findResultsByEventId(eventId: number) {
@@ -530,7 +514,7 @@ export async function create(args: CreateArgs) {
 			.values({
 				name: args.name,
 				authorId: args.authorId,
-				tags: args.tags,
+				tags: args.tags ? JSON.stringify(args.tags) : null,
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,
@@ -601,7 +585,7 @@ export async function update(args: UpdateArgs) {
 			.updateTable("CalendarEvent")
 			.set({
 				name: args.name,
-				tags: args.tags,
+				tags: args.tags ? JSON.stringify(args.tags) : null,
 				description: args.description,
 				discordInviteCode: args.discordInviteCode,
 				bracketUrl: args.bracketUrl,

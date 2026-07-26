@@ -23,7 +23,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return {
 		team: userProfileData?.team,
 		weaponPool: userProfileData?.weapons,
-		languages: postToEdit?.languages?.split(",") ?? userMatchProfile.languages,
+		languages: postToEdit?.languages ?? userMatchProfile.languages,
 		postToEdit,
 		userPostTypes: userPostTypes(allPosts, user.id),
 	};

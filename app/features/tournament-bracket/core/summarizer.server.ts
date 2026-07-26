@@ -6,6 +6,7 @@ import {
 	identifierToUserIds,
 	ordinalToSp,
 	rate,
+	type SkillTeamIdentifier,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
 import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
@@ -60,7 +61,7 @@ type RatingWithMatchesCount = {
  */
 export function summaryRatingTargets(results: AllMatchResult[]) {
 	const userIds = new Set<number>();
-	const identifiers = new Set<string>();
+	const identifiers = new Set<SkillTeamIdentifier>();
 
 	const addIdentifier = (teamUserIds: number[]) => {
 		// non-full teams never make it as far as being looked up (`userIdsToIdentifier` throws)
@@ -124,8 +125,8 @@ export function tournamentSummary({
 	results: AllMatchResult[];
 	teams: TeamsArg;
 	finalStandings: Standing[];
-	queryCurrentTeamRating: (identifier: string) => Rating;
-	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
+	queryCurrentTeamRating: (identifier: SkillTeamIdentifier) => Rating;
+	queryTeamPlayerRatingAverage: (identifier: SkillTeamIdentifier) => Rating;
 	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 	queryCurrentSeedingRating: (userId: number) => Rating;
 	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
@@ -192,8 +193,8 @@ export function tournamentSummary({
 
 function calculateSkills(args: {
 	results: AllMatchResult[];
-	queryCurrentTeamRating: (identifier: string) => Rating;
-	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
+	queryCurrentTeamRating: (identifier: SkillTeamIdentifier) => Rating;
+	queryTeamPlayerRatingAverage: (identifier: SkillTeamIdentifier) => Rating;
 	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 }) {
 	const result: TournamentSummary["skills"] = [];
@@ -332,12 +333,12 @@ function calculateTeamSkills({
 	queryTeamPlayerRatingAverage,
 }: {
 	results: AllMatchResult[];
-	queryCurrentTeamRating: (identifier: string) => Rating;
-	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
+	queryCurrentTeamRating: (identifier: SkillTeamIdentifier) => Rating;
+	queryTeamPlayerRatingAverage: (identifier: SkillTeamIdentifier) => Rating;
 }) {
-	const teamRatings = new Map<string, Rating>();
-	const teamMatchesCount = new Map<string, number>();
-	const getTeamRating = (identifier: string) => {
+	const teamRatings = new Map<SkillTeamIdentifier, Rating>();
+	const teamMatchesCount = new Map<SkillTeamIdentifier, number>();
+	const getTeamRating = (identifier: SkillTeamIdentifier) => {
 		const existingRating = teamRatings.get(identifier);
 		if (existingRating) return existingRating;
 
@@ -351,8 +352,8 @@ function calculateTeamSkills({
 			match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
 
 		// Handle dropped team sets without game results - use active roster or member list
-		let winnerTeamIdentifier: string;
-		let loserTeamIdentifier: string;
+		let winnerTeamIdentifier: SkillTeamIdentifier;
+		let loserTeamIdentifier: SkillTeamIdentifier;
 
 		if (match.maps.length === 0) {
 			// Use activeRosterUserIds if set, otherwise fall back to memberUserIds
@@ -552,8 +553,8 @@ function playerResultDeltas(
 		}
 
 		const mostPopularParticipants = (() => {
-			const alphaIdentifiers: string[] = [];
-			const bravoIdentifiers: string[] = [];
+			const alphaIdentifiers: SkillTeamIdentifier[] = [];
+			const bravoIdentifiers: SkillTeamIdentifier[] = [];
 
 			for (const map of match.maps) {
 				const alphaUserIds = map.participants

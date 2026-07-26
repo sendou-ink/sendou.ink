@@ -30,7 +30,9 @@ import type {
 } from "~/db/tables-json";
 import type { ApiTokenType } from "~/features/api/api-types";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
+import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import type {
@@ -55,13 +57,17 @@ import type { HideableUserCardStat } from "~/features/user-card/user-card-types"
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { BuildSort } from "~/features/user-page/user-page-constants";
 import type { UserReportCategory } from "~/features/user-report/user-report-constants";
+import type { videoMatchTypes } from "~/features/vods/vods-constants";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeShort,
+	RankedModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import type { DBTournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
 type Generated<T> =
@@ -211,7 +217,7 @@ export interface CalendarEvent {
 	discordUrl: GeneratedAlways<string | null>;
 	name: string;
 	participantCount: number | null;
-	tags: string | null;
+	tags: JSONColumnTypeNullable<CalendarEventTag[]>;
 	hidden: Generated<DBBoolean>;
 	tournamentId: number | null;
 	organizationId: number | null;
@@ -290,7 +296,7 @@ export interface GroupMatchMap {
 	mode: ModeShort;
 	reportedAt: number | null;
 	reportedByUserId: number | null;
-	source: string;
+	source: DBTournamentMaplistSource;
 	stageId: StageId;
 	winnerGroupId: number | null;
 }
@@ -327,7 +333,7 @@ export interface LFGPost {
 	authorId: number;
 	teamId: number | null;
 	plusTierVisibility: number | null;
-	languages: string | null;
+	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	updatedAt: Generated<number>;
 	createdAt: Generated<number>;
 }
@@ -357,7 +363,8 @@ export interface PlayerResult {
 	season: number;
 	setLosses: number;
 	setWins: number;
-	type: string;
+	/** Was `otherUserId` on the same team as `ownerUserId` for these results? */
+	type: "MATE" | "ENEMY";
 }
 
 export interface PlusSuggestion {
@@ -410,7 +417,8 @@ export interface ReportedWeapon {
 export interface Skill {
 	groupMatchId: number | null;
 	id: GeneratedAlways<number>;
-	identifier: string | null;
+	/** Set for team ratings, `null` for the solo ratings identified by `userId` instead. */
+	identifier: SkillTeamIdentifier | null;
 	matchesCount: number;
 	mu: number;
 	ordinal: number;
@@ -535,7 +543,7 @@ export interface TournamentMatchGameResult {
 	mode: ModeShort;
 	number: number;
 	reporterId: number;
-	source: string;
+	source: DBTournamentMaplistSource;
 	stageId: StageId;
 	winnerTeamId: number;
 }
@@ -592,12 +600,12 @@ export interface TournamentStage {
 
 /** Tournament sub post, shown in a list of subs available for teams to pick from. */
 export interface TournamentSub {
-	bestWeapons: string;
+	bestWeapons: JSONColumnType<MainWeaponId[]>;
 	/** 0 = no, 1 = yes, 2 = listen only */
 	canVc: number;
 	createdAt: Generated<number>;
 	message: string | null;
-	okWeapons: string | null;
+	okWeapons: JSONColumnTypeNullable<MainWeaponId[]>;
 	tournamentId: number;
 	userId: number;
 	visibility: "+1" | "+2" | "+3" | "ALL";
@@ -768,7 +776,7 @@ export interface UnvalidatedVideo {
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	title: string;
-	type: string;
+	type: (typeof videoMatchTypes)[number];
 	validatedAt: number | null;
 	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
 	youtubePublishedAt: number;
@@ -798,14 +806,14 @@ export interface User {
 	username: ColumnType<string, never, never>;
 	discordUniqueName: string | null;
 	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
-	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
+	favoriteBadgeIds: JSONColumnTypeNullable<number[]>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
 	isArtist: Generated<DBBoolean>;
 	isVideoAdder: Generated<DBBoolean>;
 	isTournamentOrganizer: Generated<DBBoolean>;
 	isApiAccesser: Generated<DBBoolean>;
-	languages: string | null;
+	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	motionSens: number | null;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronStartedAt: number | null;
@@ -932,7 +940,7 @@ export interface TournamentMatchVod {
 	id: GeneratedAlways<number>;
 	matchId: number;
 	userId: number | null;
-	platform: string;
+	platform: "TWITCH";
 	account: string;
 	platformVideoId: string;
 	timestampSeconds: number;
@@ -973,7 +981,7 @@ export interface Video {
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	title: string;
-	type: "SCRIM" | "TOURNAMENT" | "MATCHMAKING" | "CAST" | "SENDOUQ";
+	type: (typeof videoMatchTypes)[number];
 	/** Never `null` in practice, the view filters unvalidated rows out. */
 	validatedAt: number | null;
 	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
@@ -1133,7 +1141,7 @@ export interface NotificationUserSubscription {
 export interface SplatoonRotation {
 	id: GeneratedAlways<number>;
 	type: SplatoonRotationType;
-	mode: string;
+	mode: RankedModeShort;
 	stageId1: number;
 	stageId2: number;
 	startsAt: number;

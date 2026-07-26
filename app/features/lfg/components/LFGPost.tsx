@@ -18,6 +18,7 @@ import {
 } from "~/features/user-card/components/UserCard";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { lfgNewPostPage } from "~/utils/urls";
@@ -93,9 +94,9 @@ function TeamLFGPost({
 						<PostTeamLogoHeader team={post.team} />
 						<div className="stack horizontal items-center sm">
 							{isHydrated && <PostTimezonePill timezone={post.timezone} />}
-							{post.languages && (
+							{post.languages ? (
 								<PostLanguagePill languages={post.languages} />
-							)}
+							) : null}
 						</div>
 					</div>
 					<Divider />
@@ -263,7 +264,7 @@ function PostPills({
 	postId,
 }: {
 	timezone?: string | null;
-	languages?: string | null;
+	languages?: UnifiedLanguageCode[] | null;
 	canEdit?: boolean;
 	postId: number;
 }) {
@@ -279,9 +280,7 @@ function PostPills({
 				<PostTimezonePill timezone={timezone} />
 			)}
 			{!isHydrated && <PostTimezonePillPlaceholder />}
-			{typeof languages === "string" && (
-				<PostLanguagePill languages={languages} />
-			)}
+			{languages ? <PostLanguagePill languages={languages} /> : null}
 			{canEdit && <PostEditButton id={postId} />}
 		</div>
 	);
@@ -316,11 +315,9 @@ function PostTimezonePill({ timezone }: { timezone: string }) {
 	);
 }
 
-function PostLanguagePill({ languages }: { languages: string }) {
+function PostLanguagePill({ languages }: { languages: UnifiedLanguageCode[] }) {
 	return (
-		<div className={styles.pill}>
-			{languages.replace(/,/g, " / ").toUpperCase()}
-		</div>
+		<div className={styles.pill}>{languages.join(" / ").toUpperCase()}</div>
 	);
 }
 

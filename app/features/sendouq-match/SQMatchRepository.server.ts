@@ -7,6 +7,7 @@ import type { DB } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -506,7 +507,7 @@ export function create({
 					index: i,
 					mode: map.mode,
 					stageId: map.stageId,
-					source: String(map.source),
+					source: serializeMaplistSource(map.source),
 				})),
 			)
 			.execute();

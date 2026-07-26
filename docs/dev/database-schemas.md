@@ -54,6 +54,8 @@ The payload type lives with its feature and is imported by `tables.ts`. Only pay
 
 Type the column as the union of allowed values, either inline (`"PREPARING" | "ACTIVE" | "INACTIVE"`) or as a type imported from the feature's constants file (`TournamentStaffRole`, `LFGType`). Never `string`. Prefer a union over a lookup table when the values are code-level concepts that ship with a release.
 
+When the column is a known set *plus* an open-ended value (an id in string form, say), keep that member as `string & {}` — see `DBTournamentMaplistSource`. Never `` `${number}` ``: Kysely treats it as a numeric string and rewrites it to `number` inside `jsonArrayFrom`/`jsonObjectFrom`, so the column would read back as a number through nested selections while SQLite still returns a string.
+
 ## Views
 
 Two naming conventions pair a base table with a filtered view: the `All` prefix (`AllTeam` table / `Team` view) and the `Unvalidated` prefix (`UnvalidatedVideo` / `Video`). Write to the prefixed table, read from the view. Both share one interface, so document per-column which fields are meaningless when read through the view. Mark view entries in the `DB` interface as read-only.

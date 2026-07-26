@@ -33,7 +33,6 @@ import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
 import type { TournamentMapPickingStyle } from "~/features/tournament/tournament-constants";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
@@ -46,6 +45,7 @@ import {
 	secondsToHoursMinutesSecondString,
 	youtubeIdToYoutubeUrl,
 } from "~/features/vods/vods-utils";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import {
 	clothesGearIds,
@@ -819,7 +819,8 @@ async function userProfiles() {
 	}
 
 	for (let id = 1; id < 500; id++) {
-		const defaultLanguages = faker.number.float(1) > 0.1 ? ["en"] : [];
+		const defaultLanguages: UnifiedLanguageCode[] =
+			faker.number.float(1) > 0.1 ? ["en"] : [];
 		if (faker.number.float(1) > 0.9) defaultLanguages.push("es");
 		if (faker.number.float(1) > 0.9) defaultLanguages.push("fr");
 		if (faker.number.float(1) > 0.9) defaultLanguages.push("de");
@@ -1254,14 +1255,14 @@ async function calendarEvents() {
 			authorId: id === 1 ? NZAP_TEST_ID : (userIds.pop() ?? null),
 			tags:
 				faker.number.float(1) > 0.2
-					? shuffledTags
-							.slice(
+					? JSON.stringify(
+							shuffledTags.slice(
 								0,
 								faker.helpers.arrayElement([
 									1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4, 5, 6,
 								]),
-							)
-							.join(",")
+							),
+						)
 					: null,
 		});
 
@@ -3346,7 +3347,7 @@ async function splatoonRotations() {
 		{ type: "X", mode: "SZ", stageId1: 0, stageId2: 23 },
 		{ type: "X", mode: "RM", stageId1: 3, stageId2: 6 },
 		{ type: "X", mode: "CB", stageId1: 9, stageId2: 21 },
-	];
+	] as const;
 
 	const ROTATIONS_PER_TYPE = 12;
 
@@ -3358,7 +3359,6 @@ async function splatoonRotations() {
 			.insertInto("SplatoonRotation")
 			.values({
 				...rotation,
-				type: rotation.type as SplatoonRotationType,
 				startsAt: slotStart(slot),
 				endsAt: slotEnd(slot),
 			})

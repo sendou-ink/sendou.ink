@@ -3,7 +3,10 @@ import { ordinal } from "openskill";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
-import { identifierToUserIds } from "~/features/mmr/mmr-utils";
+import {
+	identifierToUserIds,
+	type SkillTeamIdentifier,
+} from "~/features/mmr/mmr-utils";
 import { databaseTimestampNow } from "~/utils/dates";
 import type { MementoSkillDifferences } from "./core/skills.server";
 
@@ -85,7 +88,7 @@ export async function createMatchSkills(
 async function insertSkillWithOrdinal(
 	skill: {
 		groupMatchId: number | null;
-		identifier: string | null;
+		identifier: SkillTeamIdentifier | null;
 		mu: number;
 		season: number;
 		sigma: number;

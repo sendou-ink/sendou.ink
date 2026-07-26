@@ -6169,7 +6169,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		tier: null,
 		tentativeTier: null,
 		discordUrl: "https://discord.gg/F7RaNUR",
-		tags: "LOW",
+		tags: ["LOW"],
 		settings: {
 			bracketProgression: [
 				{

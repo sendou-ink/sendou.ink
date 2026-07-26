@@ -11,7 +11,7 @@ import { ModeImage, StageImage } from "~/components/Image";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { StageId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -185,7 +185,7 @@ function RotationCard({
 	return (
 		<div className={styles.rotationCard}>
 			<div className={styles.rotationCardType}>
-				<ModeImage mode={displayRotation.mode as RankedModeShort} width={20} />
+				<ModeImage mode={displayRotation.mode} width={20} />
 				{t(`front:${ROTATION_TYPE_LABELS[type]}` as any)}
 			</div>
 			{current && progress !== null ? (
@@ -242,7 +242,7 @@ function RotationCard({
 								compact
 							/>
 						)}
-						<ModeImage mode={shownNext.mode as RankedModeShort} width={16} />{" "}
+						<ModeImage mode={shownNext.mode} width={16} />{" "}
 						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId1}` as any))},{" "}
 						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId2}` as any))}
 					</div>

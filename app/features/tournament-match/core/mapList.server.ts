@@ -5,8 +5,10 @@ import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
+import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
 import type {
+	DBTournamentMaplistSource,
 	TournamentMapListMap,
 	TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator/types";
@@ -108,22 +110,16 @@ export function mapListFromResults(
 	results: Array<{
 		mode: ModeShort;
 		stageId: StageId;
-		source: string;
+		source: DBTournamentMaplistSource;
 	}>,
 ): TournamentMapListMap[] {
-	return results.map((result) => {
-		const parsedSource: TournamentMaplistSource = /^\d+$/.test(result.source)
-			? Number(result.source)
-			: (result.source as TournamentMaplistSource);
-
-		return {
-			mode: result.mode,
-			stageId: result.stageId,
-			source: parsedSource,
-			// Banned maps are not relevant for completed matches
-			bannedByTournamentTeamId: undefined,
-		};
-	});
+	return results.map((result) => ({
+		mode: result.mode,
+		stageId: result.stageId,
+		source: parseMaplistSource(result.source),
+		// Banned maps are not relevant for completed matches
+		bannedByTournamentTeamId: undefined,
+	}));
 }
 
 function resolveBannedByTeamId(

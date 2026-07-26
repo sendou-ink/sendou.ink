@@ -1,7 +1,7 @@
 import { rating } from "openskill";
 import type { Tables } from "~/db/tables";
 import invariant from "~/utils/invariant";
-import { identifierToUserIds } from "./mmr-utils";
+import { identifierToUserIds, type SkillTeamIdentifier } from "./mmr-utils";
 import * as SkillRepository from "./SkillRepository.server";
 
 type Rating = Pick<Tables["Skill"], "mu" | "sigma">;
@@ -23,7 +23,7 @@ export async function seasonRatings({
 }: {
 	season: number;
 	userIds: Array<number>;
-	identifiers: Array<string>;
+	identifiers: Array<SkillTeamIdentifier>;
 }) {
 	const [userSkills, teamSkills] = await Promise.all([
 		SkillRepository.currentUserSkills({ season, userIds }),
@@ -45,7 +45,7 @@ export async function seasonRatings({
 		return { rating: rating(skill), matchesCount: skill.matchesCount };
 	};
 
-	const team = (identifier: string): RatingWithMatchesCount => {
+	const team = (identifier: SkillTeamIdentifier): RatingWithMatchesCount => {
 		invariant(
 			loadedIdentifiers.has(identifier),
 			`Rating of team ${identifier} was not loaded`,
@@ -57,7 +57,7 @@ export async function seasonRatings({
 		return { rating: rating(skill), matchesCount: skill.matchesCount };
 	};
 
-	const teamPlayerAverage = (identifier: string): Rating => {
+	const teamPlayerAverage = (identifier: SkillTeamIdentifier): Rating => {
 		const playerRatings = identifierToUserIds(identifier).map(
 			(userId) => user(userId).rating,
 		);

@@ -85,7 +85,7 @@ class SendouQClass {
 
 				return {
 					...member,
-					languages: member.languages?.split(",") || [],
+					languages: member.languages ?? [],
 					skill: !skill || skill.approximate ? ("CALCULATING" as const) : skill,
 					mapModePreferences: undefined,
 					noScreen: undefined,

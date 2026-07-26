@@ -22,6 +22,7 @@ import {
 } from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
@@ -35,7 +36,7 @@ export type LFGGroupMember = {
 	discordAvatar: string | null;
 	customAvatarUrl: string | null;
 	customUrl: string | null;
-	languages: string[];
+	languages: UnifiedLanguageCode[];
 	vc: "YES" | "NO" | "LISTEN_ONLY" | null;
 	pronouns: Pronouns | null;
 	role: "OWNER" | "MANAGER" | "REGULAR";

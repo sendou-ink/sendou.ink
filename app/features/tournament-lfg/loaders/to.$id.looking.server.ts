@@ -117,10 +117,7 @@ async function subsMode({
 		const member = group.members[0];
 		const weapons = parseWeapons(member.weapons);
 
-		const languages =
-			typeof member.languages === "string"
-				? member.languages.split(",").filter(Boolean)
-				: [];
+		const languages = member.languages ?? [];
 
 		return {
 			teamId: group.id,
@@ -202,10 +199,7 @@ function transformMembers(
 	>[number]["members"],
 ): LFGGroupMember[] {
 	return rawMembers.map((m) => {
-		const languages =
-			typeof m.languages === "string"
-				? m.languages.split(",").filter(Boolean)
-				: [];
+		const languages = m.languages ?? [];
 
 		const weapons = parseWeapons(m.weapons);
 		const pronouns = parsePronouns(m.pronouns);

@@ -7,6 +7,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
@@ -78,16 +79,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		user: undefined,
 	});
 
-	const parseSource = (
-		rawSource: string,
-	): NonNullable<GetTournamentMatchResponse["mapList"]>[number]["source"] => {
-		const parsed = Number(rawSource);
-		if (Number.isNaN(parsed)) {
-			return rawSource as "DEFAULT" | "TIEBREAKER" | "BOTH";
-		}
-
-		return parsed;
-	};
 	const mapList = async (): Promise<GetTournamentMatchResponse["mapList"]> => {
 		const { opponentOne, opponentTwo } = match;
 		if (!opponentOne?.id || !opponentTwo?.id) {
@@ -105,7 +96,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				},
 				participatedUserIds: playedMap.participants.map((p) => p.userId),
 				winnerTeamId: playedMap.winnerTeamId,
-				source: parseSource(playedMap.source),
+				source: parseMaplistSource(playedMap.source),
 				ko: playedMap.ko !== null ? Boolean(playedMap.ko) : null,
 			}));
 		}

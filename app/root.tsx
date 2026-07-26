@@ -137,7 +137,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
 						preferences: user.preferences ?? {},
-						languages: user.languages ? user.languages.split(",") : [],
+						languages: user.languages ?? [],
 						plusTier: user.plusTier,
 						roles: user.roles,
 						createdAt: user.createdAt,

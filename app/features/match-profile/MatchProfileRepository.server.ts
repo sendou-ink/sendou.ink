@@ -9,8 +9,8 @@ import { modesShort } from "~/modules/in-game-lists/modes";
 import { matchProfileWeapons } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 
-export async function settingsByUserId(userId: number) {
-	const preferences = await db
+export function settingsByUserId(userId: number) {
+	return db
 		.selectFrom("User")
 		.select(({ eb }) => [
 			"User.mapModePreferences",
@@ -21,25 +21,19 @@ export async function settingsByUserId(userId: number) {
 		])
 		.where("id", "=", userId)
 		.executeTakeFirstOrThrow();
-
-	return {
-		...preferences,
-		languages: preferences.languages?.split(",") as
-			| UnifiedLanguageCode[]
-			| undefined,
-	};
 }
 
 export function updateVoiceChat(args: {
 	userId: number;
 	vc: Tables["User"]["vc"];
-	languages: string[];
+	languages: UnifiedLanguageCode[];
 }) {
 	return db
 		.updateTable("User")
 		.set({
 			vc: args.vc,
-			languages: args.languages.length > 0 ? args.languages.join(",") : null,
+			languages:
+				args.languages.length > 0 ? JSON.stringify(args.languages) : null,
 		})
 		.where("User.id", "=", args.userId)
 		.execute();
@@ -54,7 +48,7 @@ export async function updateOwnMatchProfile({
 }: {
 	mapModePreferences: UserMapModePreferences;
 	vc: Tables["User"]["vc"];
-	languages: string[];
+	languages: UnifiedLanguageCode[];
 	weaponPool: WeaponPoolItem[];
 	noScreen: DBBoolean;
 }) {
@@ -106,7 +100,7 @@ export async function updateOwnMatchProfile({
 			.set({
 				mapModePreferences: JSON.stringify(newMapModePreferences),
 				vc,
-				languages: languages.length > 0 ? languages.join(",") : null,
+				languages: languages.length > 0 ? JSON.stringify(languages) : null,
 				noScreen,
 			})
 			.where("id", "=", userId)
