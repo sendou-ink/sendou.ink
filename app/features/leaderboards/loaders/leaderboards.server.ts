@@ -87,7 +87,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	return {
 		userLeaderboard: filteredLeaderboard ?? userLeaderboard,
 		ownEntryPeek: showOwnEntryPeek
-			? ownEntryPeek({
+			? await ownEntryPeek({
 					leaderboard: fullUserLeaderboard,
 					season,
 					userId: user.id,

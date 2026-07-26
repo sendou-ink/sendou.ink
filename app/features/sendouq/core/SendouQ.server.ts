@@ -57,14 +57,12 @@ class SendouQClass {
 	constructor(
 		groups: DBGroupRow[],
 		recentMatches: DBRecentlyFinishedMatchRow[],
-	) {
-		const season = Seasons.currentOrPrevious();
-		const {
+		{
 			intervals,
 			userSkills: calculatedUserSkills,
 			isAccurateTiers,
-		} = userSkills(season!.nth);
-
+		}: Awaited<ReturnType<typeof userSkills>>,
+	) {
 		this.#recentMatches = recentMatches;
 		this.#isAccurateTiers = isAccurateTiers;
 		this.#userSkills = calculatedUserSkills;
@@ -589,17 +587,25 @@ class SendouQClass {
 	}
 }
 
-const groups = await SQGroupRepository.findCurrentGroups();
-const recentMatches = await SQGroupRepository.findRecentlyFinishedMatches();
 /** Global instance of the SendouQ manager. Manages all active groups and matchmaking state. */
-export let SendouQ = new SendouQClass(groups, recentMatches);
+export let SendouQ = await freshSendouQInstance();
 
 /**
  * Refreshes the global SendouQ instance with the latest data from the database.
  * Should be called after any database changes that affect groups or matches.
  */
 export async function refreshSendouQInstance() {
-	const groups = await SQGroupRepository.findCurrentGroups();
-	const recentMatches = await SQGroupRepository.findRecentlyFinishedMatches();
-	SendouQ = new SendouQClass(groups, recentMatches);
+	SendouQ = await freshSendouQInstance();
+}
+
+async function freshSendouQInstance() {
+	const season = Seasons.currentOrPrevious();
+
+	const [groups, recentMatches, skills] = await Promise.all([
+		SQGroupRepository.findCurrentGroups(),
+		SQGroupRepository.findRecentlyFinishedMatches(),
+		userSkills(season!.nth),
+	]);
+
+	return new SendouQClass(groups, recentMatches, skills);
 }

@@ -354,8 +354,8 @@ type SeasonResult = {
 };
 
 /**
- * Resolves one finished season's data for the requested users. `userSkills` is a synchronous
- * in-memory cache, so we read tiers first and only fetch the (DB-backed) leaderboard when at least
+ * Resolves one finished season's data for the requested users. `userSkills` is an in-memory
+ * cache, so we read tiers first and only fetch the (DB-backed) leaderboard when at least
  * one requested user reached Leviathan+ that season—placements are surfaced for that rank only, so
  * the common case of regular users never touches the leaderboard cache at all.
  */
@@ -363,7 +363,7 @@ async function seasonResult(
 	season: number,
 	userIds: Array<number>,
 ): Promise<SeasonResult> {
-	const skills = userSkills(season).userSkills;
+	const skills = (await userSkills(season)).userSkills;
 
 	const anyLeviathanPlus = userIds.some((id) => {
 		const skill = skills[id];

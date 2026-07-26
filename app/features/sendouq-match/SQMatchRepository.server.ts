@@ -1091,7 +1091,7 @@ async function finalizeMatch({
 	confirmedByUserId: number;
 	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
 }) {
-	const { newSkills, differences } = calculateMatchSkills({
+	const { newSkills, differences } = await calculateMatchSkills({
 		groupMatchId: match.id,
 		winner: (match.groupAlpha.id === winnerGroupId
 			? match.groupAlpha

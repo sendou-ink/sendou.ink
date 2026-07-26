@@ -326,8 +326,8 @@ describe("SendouQ", () => {
 		});
 
 		describe("tier sorting", () => {
-			beforeEach(() => {
-				refreshUserSkills(1);
+			beforeEach(async () => {
+				await refreshUserSkills(1);
 			});
 
 			test("sorts full groups by tier when viewer has a tier", async () => {
@@ -694,7 +694,7 @@ describe("SendouQ", () => {
 
 		describe("skill-based sorting", () => {
 			beforeEach(async () => {
-				refreshUserSkills(1);
+				await refreshUserSkills(1);
 				await dbInsertUsers(10);
 			});
 

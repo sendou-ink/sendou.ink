@@ -26,7 +26,7 @@ export const NotifySeasonStartRoutine = new Routine({
 			return;
 		}
 
-		const lastSeasonsUsers = userSkills(season.nth - 1).userSkills;
+		const lastSeasonsUsers = (await userSkills(season.nth - 1)).userSkills;
 
 		await notify({
 			notification: {

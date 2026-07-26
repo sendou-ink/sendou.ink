@@ -20,21 +20,23 @@ export const loader = async () => {
 
 	return {
 		posts,
-		tiersMap: postsUsersTiersMap(posts),
+		tiersMap: await postsUsersTiersMap(posts),
 		...(await UserCardRepository.userCards({
 			userIds: cardUserIds,
 		})),
 	};
 };
 
-function postsUsersTiersMap(
+async function postsUsersTiersMap(
 	posts: Unpacked<ReturnType<typeof LFGRepository.posts>>,
 ) {
 	const latestSeason = Seasons.currentOrPrevious()!.nth;
 	const previousSeason = latestSeason - 1;
 
-	const latestSeasonSkills = userSkills(latestSeason).userSkills;
-	const previousSeasonSkills = userSkills(previousSeason).userSkills;
+	const [
+		{ userSkills: latestSeasonSkills },
+		{ userSkills: previousSeasonSkills },
+	] = await Promise.all([userSkills(latestSeason), userSkills(previousSeason)]);
 
 	const uniqueUsers = new Set<number>();
 	for (const post of posts) {

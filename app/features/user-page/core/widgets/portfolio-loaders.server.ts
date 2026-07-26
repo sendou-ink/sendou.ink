@@ -43,7 +43,7 @@ export const WIDGET_LOADERS = {
 		let maxOrdinal = Number.NEGATIVE_INFINITY;
 
 		for (const season of seasonsParticipatedIn) {
-			const { userSkills } = _userSkills(season);
+			const { userSkills } = await _userSkills(season);
 			const skillData = userSkills[userId];
 
 			if (!skillData || skillData.approximate) {

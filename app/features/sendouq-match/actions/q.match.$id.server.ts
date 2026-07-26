@@ -80,7 +80,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (result.status === "MATCH_FINALIZED") {
 					try {
-						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 					} catch (error) {
 						logger.warn("Error refreshing user skills", error);
 					}
@@ -370,7 +370,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (result.shouldRefreshCaches) {
 					try {
-						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 					} catch (error) {
 						logger.warn("Error refreshing user skills", error);
 					}

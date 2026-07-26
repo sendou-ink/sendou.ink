@@ -365,10 +365,10 @@ type CreateMatchMementoArgs = {
 	};
 	mapList: TournamentMapListMap[];
 };
-export function createMatchMemento(
+export async function createMatchMemento(
 	args: CreateMatchMementoArgs,
-): Omit<ParsedMemento, "mapPreferences"> {
-	const skills = userSkills(Seasons.currentOrPrevious()!.nth);
+): Promise<Omit<ParsedMemento, "mapPreferences">> {
+	const skills = await userSkills(Seasons.currentOrPrevious()!.nth);
 
 	const ownWithTier = args.own.group;
 	const theirWithTier = args.their.group;

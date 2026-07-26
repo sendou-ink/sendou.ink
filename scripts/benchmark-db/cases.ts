@@ -336,6 +336,30 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// MmrSkillRepository (app/features/mmr)
+	add("MmrSkillRepository.currentUserSkills", fx.skillBatch, (skillBatch) =>
+		MmrSkillRepository.currentUserSkills({
+			season: skillBatch.season,
+			userIds: skillBatch.userIds,
+		}),
+	);
+	add("MmrSkillRepository.currentTeamSkills", fx.skillBatch, (skillBatch) =>
+		MmrSkillRepository.currentTeamSkills({
+			season: skillBatch.season,
+			identifiers: skillBatch.identifiers,
+		}),
+	);
+	add(
+		"MmrSkillRepository.orderedUserOrdinalsBySeason",
+		fx.skillBatch,
+		(skillBatch) =>
+			MmrSkillRepository.orderedUserOrdinalsBySeason(skillBatch.season),
+	);
+	add("MmrSkillRepository.seedingSkills", fx.skillBatch, (skillBatch) =>
+		MmrSkillRepository.seedingSkills({
+			type: "RANKED",
+			userIds: skillBatch.userIds,
+		}),
+	);
 	add("MmrSkillRepository.seasonProgressionByUserId", fx.sq, (sq) =>
 		MmrSkillRepository.seasonProgressionByUserId(sq),
 	);

@@ -38,7 +38,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		? parsedSearchParams.data
 		: {};
 
-	const { isAccurateTiers, userSkills } = _userSkills(season);
+	const { isAccurateTiers, userSkills } = await _userSkills(season);
 	const { tier, ordinal, approximate } = userSkills[user.id] ?? {
 		approximate: false,
 		ordinal: 0,

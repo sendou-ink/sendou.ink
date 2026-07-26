@@ -73,7 +73,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const season = Seasons.currentOrPrevious(new Date())!.nth;
 
-	const { isAccurateTiers, userSkills } = _userSkills(season);
+	const { isAccurateTiers, userSkills } = await _userSkills(season);
 	const skill = isAccurateTiers ? userSkills[user.id] : null;
 
 	const result: GetUserResponse = {

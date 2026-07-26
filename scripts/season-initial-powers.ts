@@ -70,11 +70,13 @@ const TIER_TO_NEW_TIER: Record<TierName, TierName> = {
 // - For +3 members, consider the last 2 seasons
 // - For non-plus members, consider the last season only
 const getAllSkills = async () => {
-	const skills = [
-		freshUserSkills(nth - 1).userSkills,
-		freshUserSkills(nth - 2).userSkills,
-		freshUserSkills(nth - 3).userSkills,
-	];
+	const skills = (
+		await Promise.all([
+			freshUserSkills(nth - 1),
+			freshUserSkills(nth - 2),
+			freshUserSkills(nth - 3),
+		])
+	).map((seasonSkills) => seasonSkills.userSkills);
 
 	const plusServerMembers = await db
 		.selectFrom("PlusTier")

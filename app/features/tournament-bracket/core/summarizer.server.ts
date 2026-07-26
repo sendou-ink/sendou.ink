@@ -50,6 +50,65 @@ type RatingWithMatchesCount = {
 	matchesCount: number;
 };
 
+/**
+ * Users and teams whose current ratings `tournamentSummary` may look up, for the caller to
+ * load up front.
+ *
+ * A superset: which of a set's teams and players actually get looked up depends on who
+ * played the most maps of the set, and ties there are broken at random. Enumerating every
+ * candidate keeps that decision inside `tournamentSummary`.
+ */
+export function summaryRatingTargets(results: AllMatchResult[]) {
+	const userIds = new Set<number>();
+	const identifiers = new Set<string>();
+
+	const addIdentifier = (teamUserIds: number[]) => {
+		// non-full teams never make it as far as being looked up (`userIdsToIdentifier` throws)
+		if (teamUserIds.length !== 4) return;
+
+		identifiers.add(userIdsToIdentifier(teamUserIds));
+	};
+
+	for (const match of results) {
+		const winner =
+			match.winnerSide === "opponent1" ? match.opponentOne : match.opponentTwo;
+		const loser =
+			match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
+
+		if (match.maps.length === 0) {
+			for (const opponent of [winner, loser]) {
+				const roster =
+					opponent.activeRosterUserIds ?? opponent.memberUserIds ?? [];
+
+				for (const userId of roster) userIds.add(userId);
+				addIdentifier(roster);
+			}
+			continue;
+		}
+
+		for (const map of match.maps) {
+			for (const participant of map.participants)
+				userIds.add(participant.userId);
+
+			addIdentifier(
+				map.participants
+					.filter((p) => p.tournamentTeamId === winner.id)
+					.map((p) => p.userId),
+			);
+			addIdentifier(
+				map.participants
+					.filter((p) => p.tournamentTeamId !== winner.id)
+					.map((p) => p.userId),
+			);
+		}
+	}
+
+	return {
+		userIds: Array.from(userIds),
+		identifiers: Array.from(identifiers),
+	};
+}
+
 export function tournamentSummary({
 	results,
 	teams,

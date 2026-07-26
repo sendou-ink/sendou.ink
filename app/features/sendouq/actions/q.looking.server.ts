@@ -178,7 +178,7 @@ export const action: ActionFunction = async ({ request }) => {
 					alphaGroupId: ownGroup.id,
 					bravoGroupId: theirGroup.id,
 					mapList,
-					memento: createMatchMemento({
+					memento: await createMatchMemento({
 						own: { group: ownGroup, preferences: ownGroupPreferences },
 						their: { group: theirGroup, preferences: theirGroupPreferences },
 						mapList,
