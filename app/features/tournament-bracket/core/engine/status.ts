@@ -1,4 +1,12 @@
-import type { BracketData, MatchData, MatchResults, RoundData } from "./types";
+import * as R from "remeda";
+import type { TournamentRoundMaps } from "~/db/tables";
+import type {
+	BracketData,
+	MatchData,
+	MatchResults,
+	RoundData,
+	Side,
+} from "./types";
 
 /**
  * The state of a match. Never persisted, always derived from the opponents of
@@ -64,6 +72,66 @@ export function isMatchByeCompleted(match: MatchResults): boolean {
 		(match.opponent2 === null && match.opponent1?.id !== null) || // someone vs. BYE
 		(match.opponent1 === null && match.opponent2 === null)
 	); // BYE vs. BYE
+}
+
+/** Whether a set is decided given the games each side has won and the round's count settings. */
+export function isSetOverByScore({
+	scores,
+	count,
+	countType,
+}: {
+	scores: [number, number];
+	count: number;
+	countType: TournamentRoundMaps["type"];
+}) {
+	if (countType === "PLAY_ALL") {
+		return R.sum(scores) === count;
+	}
+
+	const matchOverAtXWins = Math.ceil(count / 2);
+	return scores[0] === matchOverAtXWins || scores[1] === matchOverAtXWins;
+}
+
+/**
+ * The side the scores decide as the winner of the set, `undefined` while the
+ * set is not over yet (or a play all set ended in a tie).
+ */
+export function winnerSideByScore(args: {
+	scores: [number, number];
+	count: number;
+	countType: TournamentRoundMaps["type"];
+}): Side | undefined {
+	if (!isSetOverByScore(args)) return undefined;
+
+	const [scoreOne, scoreTwo] = args.scores;
+	if (scoreOne > scoreTwo) return "opponent1";
+	if (scoreTwo > scoreOne) return "opponent2";
+
+	return undefined;
+}
+
+/** Whether a completed match was ended before the set was decided by the games played (e.g. by an organizer force-ending it). */
+export function matchEndedEarly({
+	opponentOne,
+	opponentTwo,
+	winnerSide,
+	count,
+	countType,
+}: {
+	opponentOne: { score?: number } | null;
+	opponentTwo: { score?: number } | null;
+	winnerSide: Side | null;
+	count: number;
+	countType: TournamentRoundMaps["type"];
+}) {
+	if (!winnerSide) return false;
+
+	const scores: [number, number] = [
+		opponentOne?.score ?? 0,
+		opponentTwo?.score ?? 0,
+	];
+
+	return !isSetOverByScore({ scores, count, countType });
 }
 
 interface BracketContext {

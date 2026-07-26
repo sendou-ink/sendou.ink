@@ -1,4 +1,4 @@
-import { matchStatus } from "../status";
+import { matchStatus, winnerSideByScore } from "../status";
 import type {
 	GroupData,
 	GroupType,
@@ -72,7 +72,11 @@ export class Propagator {
 		const stage = this.store.stageById(stored.stageId);
 		if (!stage) throw Error("Stage not found.");
 
-		const resultChanged = helpers.setMatchResults(stored, input);
+		const resultChanged = helpers.setMatchResults(
+			stored,
+			input.scores,
+			input.winnerSide ?? this.winnerSideAfter(stored, input.scores),
+		);
 		this.store.markMatchChanged(stored);
 
 		// Don't propagate if it's a simple score update.
@@ -84,6 +88,25 @@ export class Propagator {
 		) {
 			this.updateRelatedMatches(stored);
 		}
+	}
+
+	/**
+	 * The winner the scores decide once the input has been applied. `undefined`
+	 * when the set is not over or the round has no map count to decide it by
+	 * (a bracket created without map lists).
+	 */
+	private winnerSideAfter(
+		stored: MatchData,
+		scores: MatchResultsInput["scores"],
+	): Side | undefined {
+		const maps = this.store.roundById(stored.roundId)?.maps;
+		if (!maps) return undefined;
+
+		return winnerSideByScore({
+			scores: scoresAfter(stored, scores),
+			count: maps.count,
+			countType: maps.type,
+		});
 	}
 
 	/**
@@ -575,4 +598,15 @@ export class Propagator {
 
 		return match;
 	}
+}
+
+function scoresAfter(
+	stored: MatchData,
+	scores: MatchResultsInput["scores"],
+): [number, number] {
+	if (scores === undefined) {
+		return [stored.opponent1?.score ?? 0, stored.opponent2?.score ?? 0];
+	}
+
+	return scores ?? [0, 0];
 }

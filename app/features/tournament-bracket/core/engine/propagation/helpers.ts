@@ -57,19 +57,21 @@ export function hasBye(match: MatchResults): boolean {
  * Updates a match results based on an input.
  *
  * @param stored A reference to what will be updated in the storage.
- * @param input Input of the update.
+ * @param scores Games won by each side. `undefined` keeps them, `null` clears them.
+ * @param winnerSide The resolved winner of the set, if any.
  * @returns `true` if the match was completed or un-completed by the update.
  */
 export function setMatchResults(
 	stored: MatchResults,
-	input: MatchResultsInput,
+	scores: MatchResultsInput["scores"],
+	winnerSide: Side | undefined,
 ): boolean {
 	const currentlyCompleted = isMatchCompleted(stored);
 
-	setScores(stored, input);
+	setScores(stored, scores);
 
-	if (input.winnerSide) {
-		stored.winnerSide = input.winnerSide;
+	if (winnerSide) {
+		stored.winnerSide = winnerSide;
 		return true;
 	}
 
@@ -287,14 +289,16 @@ function getSide(matchNumber: number): Side {
  * Updates the scores of a match.
  *
  * @param stored A reference to what will be updated in the storage.
- * @param input Input of the update.
+ * @param scores Games won by each side. `undefined` keeps them, `null` clears them.
  */
-function setScores(stored: MatchResults, input: MatchResultsInput): void {
-	if (input.opponent1 && stored.opponent1)
-		stored.opponent1.score = input.opponent1.score;
+function setScores(
+	stored: MatchResults,
+	scores: MatchResultsInput["scores"],
+): void {
+	if (scores === undefined) return;
 
-	if (input.opponent2 && stored.opponent2)
-		stored.opponent2.score = input.opponent2.score;
+	if (stored.opponent1) stored.opponent1.score = scores?.[0];
+	if (stored.opponent2) stored.opponent2.score = scores?.[1];
 }
 
 /**

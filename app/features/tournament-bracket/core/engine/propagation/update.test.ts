@@ -21,8 +21,7 @@ describe("Update matches", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 0,
-			opponent1: { score: 0 },
-			opponent2: { score: 0 },
+			scores: [0, 0],
 		}).data;
 
 		expect(Engine.matchStatus(data, 0)).toBe("STARTED");
@@ -32,8 +31,7 @@ describe("Update matches", () => {
 	test("should update the scores for a match", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
-			opponent1: { score: 2 },
-			opponent2: { score: 1 },
+			scores: [2, 1],
 		}).data;
 
 		const after = matchById(data, 0);
@@ -107,8 +105,7 @@ describe("Update matches", () => {
 	test("should remove results from a match with score", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 
@@ -118,25 +115,24 @@ describe("Update matches", () => {
 		expect(matchById(data, 0).winnerSide).toBeFalsy();
 	});
 
-	test("should not set the other score to 0 if only one given", () => {
-		// It shouldn't be our decision to set the other score to 0.
-
+	test("should keep the scores as they are if none given", () => {
 		data = Engine.reportResult(data, {
 			matchId: 1,
-			opponent1: { score: 1 },
+			scores: [1, 0],
 		}).data;
+
+		data = Engine.reportResult(data, { matchId: 1 }).data;
 
 		const after = matchById(data, 1);
 		expect(Engine.matchStatus(data, 1)).toBe("STARTED");
 		expect(after.opponent1?.score).toBe(1);
-		expect(after.opponent2?.score).toBeFalsy();
+		expect(after.opponent2?.score).toBe(0);
 	});
 
 	test("should end the match by setting the winner and the scores", () => {
 		data = Engine.reportResult(data, {
 			matchId: 1,
-			opponent1: { score: 6 },
-			opponent2: { score: 3 },
+			scores: [6, 3],
 			winnerSide: "opponent2",
 		}).data;
 

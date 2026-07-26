@@ -215,21 +215,22 @@ export interface ResolvedCreateBracketInput
  * given.
  */
 export interface MatchResultsInput {
-	/** Games won by the opponent. Leaving the score out clears it. */
-	opponent1?: { score?: number };
-	opponent2?: { score?: number };
-	/** The winner of the set. Leaving it out marks the match as not decided (yet). */
+	/**
+	 * Games won by each side. Leaving it out keeps the current scores, `null`
+	 * clears them.
+	 */
+	scores?: [number, number] | null;
+	/**
+	 * Ends the set with this side as the winner even when the scores don't
+	 * decide it (an organizer force-ending a set, a team dropping out). Leaving
+	 * it out resolves the winner from the scores and the round's map count.
+	 */
 	winnerSide?: Side;
 }
 
 /** A {@link MatchResultsInput} targeted at one match of the bracket. */
 export interface ReportResultInput extends MatchResultsInput {
 	matchId: number;
-	/**
-	 * Bypasses the "match is locked/completed" guard. The old library's `true`
-	 * second argument to manager.update.match(), used by endDroppedTeamMatches.
-	 */
-	force?: boolean;
 }
 
 /** The subset of a standing the swiss round generation needs. */

@@ -42,8 +42,6 @@ export function endDroppedTeamMatches(
 		propagator.updateMatch(
 			stored,
 			{
-				opponent1: { score: match.opponent1.score },
-				opponent2: { score: match.opponent2.score },
 				winnerSide:
 					winnerTeamId === match.opponent1.id ? "opponent1" : "opponent2",
 			},

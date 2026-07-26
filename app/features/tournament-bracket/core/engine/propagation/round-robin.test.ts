@@ -15,42 +15,36 @@ describe("Update scores in a round-robin stage", () => {
 	});
 
 	test("should set all the scores", () => {
-		const results = [
+		const results: Engine.ReportResultInput[] = [
 			{
 				matchId: 0,
-				opponent1: { score: 16 },
-				opponent2: { score: 9 }, // AQUELLEHEURE?!
-				winnerSide: "opponent1" as const, // POCEBLO
+				scores: [16, 9], // AQUELLEHEURE?!
+				winnerSide: "opponent1", // POCEBLO
 			},
 			{
 				matchId: 1,
-				opponent1: { score: 3 }, // Ballec Squad
-				opponent2: { score: 16 },
-				winnerSide: "opponent2" as const, // twitch.tv/mrs_fly
+				scores: [3, 16], // Ballec Squad
+				winnerSide: "opponent2", // twitch.tv/mrs_fly
 			},
 			{
 				matchId: 2,
-				opponent1: { score: 16 },
-				opponent2: { score: 0 }, // AQUELLEHEURE?!
-				winnerSide: "opponent1" as const, // twitch.tv/mrs_fly
+				scores: [16, 0], // AQUELLEHEURE?!
+				winnerSide: "opponent1", // twitch.tv/mrs_fly
 			},
 			{
 				matchId: 3,
-				opponent1: { score: 16 },
-				opponent2: { score: 2 }, // Ballec Squad
-				winnerSide: "opponent1" as const, // POCEBLO
+				scores: [16, 2], // Ballec Squad
+				winnerSide: "opponent1", // POCEBLO
 			},
 			{
 				matchId: 4,
-				opponent1: { score: 16 },
-				opponent2: { score: 12 }, // AQUELLEHEURE?!
-				winnerSide: "opponent1" as const, // Ballec Squad
+				scores: [16, 12], // AQUELLEHEURE?!
+				winnerSide: "opponent1", // Ballec Squad
 			},
 			{
 				matchId: 5,
-				opponent1: { score: 4 }, // twitch.tv/mrs_fly
-				opponent2: { score: 16 },
-				winnerSide: "opponent2" as const, // POCEBLO
+				scores: [4, 16], // twitch.tv/mrs_fly
+				winnerSide: "opponent2", // POCEBLO
 			},
 		];
 
@@ -80,8 +74,7 @@ describe("Update scores in a round-robin stage", () => {
 		// Complete first match of round 1 (1 vs 2)
 		data = Engine.reportResult(data, {
 			matchId: 0,
-			opponent1: { score: 16 },
-			opponent2: { score: 9 }, // Team 2 loses
+			scores: [16, 9], // Team 2 loses
 			winnerSide: "opponent1", // Team 1 wins
 		}).data;
 
@@ -93,8 +86,7 @@ describe("Update scores in a round-robin stage", () => {
 		// Complete second match of round 1 (3 vs 4)
 		data = Engine.reportResult(data, {
 			matchId: 1,
-			opponent1: { score: 3 }, // Team 3 loses
-			opponent2: { score: 16 },
+			scores: [3, 16], // Team 3 loses
 			winnerSide: "opponent2", // Team 4 wins
 		}).data;
 
@@ -108,14 +100,12 @@ describe("Update scores in a round-robin stage", () => {
 	test("should lock the next round again if a result of the previous round is reset", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
-			opponent1: { score: 16 },
-			opponent2: { score: 9 },
+			scores: [16, 9],
 			winnerSide: "opponent1",
 		}).data;
 		data = Engine.reportResult(data, {
 			matchId: 1,
-			opponent1: { score: 3 },
-			opponent2: { score: 16 },
+			scores: [3, 16],
 			winnerSide: "opponent2",
 		}).data;
 
@@ -129,22 +119,19 @@ describe("Update scores in a round-robin stage", () => {
 	test("should keep a started next round match playable if a result of the previous round is reset (issue #2690)", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
-			opponent1: { score: 16 },
-			opponent2: { score: 9 },
+			scores: [16, 9],
 			winnerSide: "opponent1",
 		}).data;
 		data = Engine.reportResult(data, {
 			matchId: 1,
-			opponent1: { score: 3 },
-			opponent2: { score: 16 },
+			scores: [3, 16],
 			winnerSide: "opponent2",
 		}).data;
 
 		// team 1 and team 3 start playing their round 2 match
 		data = Engine.reportResult(data, {
 			matchId: 2,
-			opponent1: { score: 1 },
-			opponent2: { score: 0 },
+			scores: [1, 0],
 		}).data;
 
 		data = Engine.resetMatchResults(data, 0).data;
@@ -153,8 +140,7 @@ describe("Update scores in a round-robin stage", () => {
 		expect(() =>
 			Engine.reportResult(data, {
 				matchId: 2,
-				opponent1: { score: 2 },
-				opponent2: { score: 0 },
+				scores: [2, 0],
 				winnerSide: "opponent1",
 			}),
 		).not.toThrow();
@@ -175,8 +161,7 @@ describe("Update scores in a round-robin stage", () => {
 		expect(() =>
 			Engine.reportResult(data, {
 				matchId: 2,
-				opponent1: { score: 16 },
-				opponent2: { score: 4 },
+				scores: [16, 4],
 				winnerSide: "opponent1",
 			}),
 		).not.toThrow();
@@ -201,8 +186,7 @@ describe("Update scores in a round-robin stage", () => {
 		expect(() =>
 			Engine.reportResult(data, {
 				matchId: realMatch.id,
-				opponent1: { score: 16 },
-				opponent2: { score: 9 },
+				scores: [16, 9],
 				winnerSide: "opponent1",
 			}),
 		).not.toThrow();
@@ -242,8 +226,7 @@ describe("Update scores in a round-robin stage", () => {
 		// Team 1 didn't play in round 1
 		data = Engine.reportResult(data, {
 			matchId: round1RealMatch.id,
-			opponent1: { score: 16 },
-			opponent2: { score: 9 },
+			scores: [16, 9],
 			winnerSide: "opponent1",
 		}).data;
 

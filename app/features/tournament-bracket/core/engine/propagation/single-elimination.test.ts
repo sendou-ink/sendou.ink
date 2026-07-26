@@ -13,15 +13,13 @@ describe("Previous and next match update", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 0, // First match of round 1
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 1, // Second match of round 1
-			opponent1: { score: 13 },
-			opponent2: { score: 16 },
+			scores: [13, 16],
 			winnerSide: "opponent2",
 		}).data;
 
@@ -44,22 +42,19 @@ describe("Previous and next match update", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 0, // First match of round 1
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 1, // Second match of round 1
-			opponent1: { score: 13 },
-			opponent2: { score: 16 },
+			scores: [13, 16],
 			winnerSide: "opponent2",
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 2, // Final
-			opponent1: { score: 12 },
-			opponent2: { score: 9 },
+			scores: [12, 9],
 		}).data;
 
 		expect(Engine.matchStatus(data, 2)).toBe("STARTED");
@@ -67,8 +62,7 @@ describe("Previous and next match update", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 3, // Consolation final
-			opponent1: { score: 12 },
-			opponent2: { score: 9 },
+			scores: [12, 9],
 		}).data;
 
 		expect(Engine.matchStatus(data, 2)).toBe("STARTED");
@@ -76,8 +70,7 @@ describe("Previous and next match update", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 3, // Consolation final
-			opponent1: { score: 16 },
-			opponent2: { score: 9 },
+			scores: [16, 9],
 			winnerSide: "opponent1",
 		}).data;
 
@@ -86,8 +79,7 @@ describe("Previous and next match update", () => {
 		expect(() =>
 			Engine.reportResult(data, {
 				matchId: 2, // Final
-				opponent1: { score: 16 },
-				opponent2: { score: 9 },
+				scores: [16, 9],
 				winnerSide: "opponent1",
 			}),
 		).not.toThrow();

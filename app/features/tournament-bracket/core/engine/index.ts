@@ -15,8 +15,6 @@ export { reportResult } from "./propagation/report-result";
 export { resetMatchResults } from "./propagation/reset-result";
 export {
 	endSet,
-	isSetOverByScore,
-	matchEndedEarly,
 	reopenMatch,
 	reportGameResult,
 	undoGameResult,

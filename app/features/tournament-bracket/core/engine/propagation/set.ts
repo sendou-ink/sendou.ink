@@ -1,6 +1,5 @@
-import * as R from "remeda";
-import type { TournamentRoundMaps } from "~/db/tables";
 import invariant from "~/utils/invariant";
+import { isSetOverByScore, matchEndedEarly } from "../status";
 import type { BracketData, EngineResult, MatchData, Side } from "../types";
 import { reportResult } from "./report-result";
 import { resetMatchResults } from "./reset-result";
@@ -21,20 +20,16 @@ export function reportGameResult(
 	const scores = currentScores(match);
 	scores[sideOfTeam(match, input.winnerTeamId)]++;
 
-	const setOver = isSetOverByScore({
-		scores,
-		count: maps.count,
-		countType: maps.type,
-	});
+	const reported = reportResult(data, { matchId: input.matchId, scores });
 
-	const reported = reportResult(data, {
-		matchId: input.matchId,
-		opponent1: { score: scores[0] },
-		opponent2: { score: scores[1] },
-		winnerSide: setOver ? higherScoringSide(scores) : undefined,
-	});
-
-	return { ...reported, setOver };
+	return {
+		...reported,
+		setOver: isSetOverByScore({
+			scores,
+			count: maps.count,
+			countType: maps.type,
+		}),
+	};
 }
 
 /**
@@ -57,8 +52,7 @@ export function undoGameResult(
 
 	const reported = reportResult(data, {
 		matchId: input.matchId,
-		opponent1: { score: shouldReset ? undefined : scores[0] },
-		opponent2: { score: shouldReset ? undefined : scores[1] },
+		scores: shouldReset ? null : scores,
 	});
 
 	if (!shouldReset) return reported;
@@ -84,8 +78,6 @@ export function endSet(
 
 	return reportResult(data, {
 		matchId: input.matchId,
-		opponent1: { score: match.opponent1?.score },
-		opponent2: { score: match.opponent2?.score },
 		winnerSide: SIDES[sideOfTeam(match, input.winnerTeamId)],
 	});
 }
@@ -119,55 +111,9 @@ export function reopenMatch(
 		scores[SIDES.indexOf(match.winnerSide)]--;
 	}
 
-	const reported = reportResult(data, {
-		matchId,
-		opponent1: { score: scores[0] },
-		opponent2: { score: scores[1] },
-	});
+	const reported = reportResult(data, { matchId, scores });
 
 	return { ...reported, endedEarly };
-}
-
-/** Whether a set is decided given the games each side has won and the round's count settings. */
-export function isSetOverByScore({
-	scores,
-	count,
-	countType,
-}: {
-	scores: [number, number];
-	count: number;
-	countType: TournamentRoundMaps["type"];
-}) {
-	if (countType === "PLAY_ALL") {
-		return R.sum(scores) === count;
-	}
-
-	const matchOverAtXWins = Math.ceil(count / 2);
-	return scores[0] === matchOverAtXWins || scores[1] === matchOverAtXWins;
-}
-
-/** Whether a completed match was ended before the set was decided by the games played (e.g. by an organizer force-ending it). */
-export function matchEndedEarly({
-	opponentOne,
-	opponentTwo,
-	winnerSide,
-	count,
-	countType,
-}: {
-	opponentOne: { score?: number } | null;
-	opponentTwo: { score?: number } | null;
-	winnerSide: Side | null;
-	count: number;
-	countType: TournamentRoundMaps["type"];
-}) {
-	if (!winnerSide) return false;
-
-	const scores: [number, number] = [
-		opponentOne?.score ?? 0,
-		opponentTwo?.score ?? 0,
-	];
-
-	return !isSetOverByScore({ scores, count, countType });
 }
 
 function findMatch(data: BracketData, matchId: number): MatchData {
@@ -186,14 +132,6 @@ function findMatchWithMaps(data: BracketData, matchId: number) {
 
 function currentScores(match: MatchData): [number, number] {
 	return [match.opponent1?.score ?? 0, match.opponent2?.score ?? 0];
-}
-
-/** The side that won more games, `undefined` if both won as many. */
-function higherScoringSide(scores: [number, number]): Side | undefined {
-	if (scores[0] > scores[1]) return "opponent1";
-	if (scores[1] > scores[0]) return "opponent2";
-
-	return undefined;
 }
 
 function sideOfTeam(match: MatchData, teamId: number): 0 | 1 {

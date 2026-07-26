@@ -247,8 +247,10 @@ describe("round robin standings - dropped out teams", () => {
 			const winnerIsOpp1 = match.opponent1?.id === winnerId;
 			data = Engine.reportResult(data, {
 				matchId,
-				opponent1: { score: winnerIsOpp1 ? winnerScore : loserScore },
-				opponent2: { score: winnerIsOpp1 ? loserScore : winnerScore },
+				scores: [
+					winnerIsOpp1 ? winnerScore : loserScore,
+					winnerIsOpp1 ? loserScore : winnerScore,
+				],
 				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 			}).data;
 		};
@@ -410,8 +412,10 @@ describe("round robin A/B divisions standings", () => {
 			const winnerIsOpp1 = match.opponent1?.id === winnerId;
 			data = Engine.reportResult(data, {
 				matchId,
-				opponent1: { score: winnerIsOpp1 ? winnerScore : loserScore },
-				opponent2: { score: winnerIsOpp1 ? loserScore : winnerScore },
+				scores: [
+					winnerIsOpp1 ? winnerScore : loserScore,
+					winnerIsOpp1 ? loserScore : winnerScore,
+				],
 				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 			}).data;
 		};
@@ -512,8 +516,7 @@ describe("single elimination standings - third place match", () => {
 		const reportLowerTeamIdAsWinner = (matchId: number) => {
 			data = Engine.reportResult(data, {
 				matchId,
-				opponent1: { score: 2 },
-				opponent2: { score: 0 },
+				scores: [2, 0],
 				winnerSide: "opponent1",
 			}).data;
 		};
@@ -814,8 +817,7 @@ function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
 
 	return Engine.reportResult(data, {
 		matchId,
-		opponent1: { score: opponent1Lower ? 2 : 0 },
-		opponent2: { score: opponent1Lower ? 0 : 2 },
+		scores: [opponent1Lower ? 2 : 0, opponent1Lower ? 0 : 2],
 		winnerSide: opponent1Lower ? "opponent1" : "opponent2",
 	}).data;
 }

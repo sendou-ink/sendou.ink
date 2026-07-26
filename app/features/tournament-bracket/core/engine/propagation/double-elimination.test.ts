@@ -16,22 +16,19 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 0, // First match of WB round 1
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 1, // Second match of WB round 1
-			opponent1: { score: 13 },
-			opponent2: { score: 16 },
+			scores: [13, 16],
 			winnerSide: "opponent2",
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 15, // First match of LB round 1
-			opponent1: { score: 16 },
-			opponent2: { score: 10 },
+			scores: [16, 10],
 			winnerSide: "opponent1",
 		}).data;
 
@@ -61,8 +58,7 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 1, // Second match of WB round 1
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 
@@ -94,22 +90,19 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 0, // First match of WB round 1
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 1, // Second match of WB round 1
-			opponent1: { score: 13 },
-			opponent2: { score: 16 },
+			scores: [13, 16],
 			winnerSide: "opponent2",
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 2, // WB Final
-			opponent1: { score: 16 },
-			opponent2: { score: 9 },
+			scores: [16, 9],
 			winnerSide: "opponent1",
 		}).data;
 
@@ -119,15 +112,13 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 3, // Only match of LB round 1
-			opponent1: { score: 12 },
-			opponent2: { score: 8 },
+			scores: [12, 8],
 			winnerSide: "opponent1", // Team 4
 		}).data;
 
 		data = Engine.reportResult(data, {
 			matchId: 4, // LB Final
-			opponent1: { score: 14 },
-			opponent2: { score: 7 },
+			scores: [14, 7],
 			winnerSide: "opponent1", // Team 3
 		}).data;
 
@@ -137,8 +128,7 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 5, // Grand Final round 1
-			opponent1: { score: 10 },
-			opponent2: { score: 16 },
+			scores: [10, 16],
 			winnerSide: "opponent2", // Team 3
 		}).data;
 
@@ -152,8 +142,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		expect(() =>
 			Engine.reportResult(data, {
 				matchId: 6, // Grand Final round 2
-				opponent1: { score: 16 },
-				opponent2: { score: 10 },
+				scores: [16, 10],
 				winnerSide: "opponent1",
 			}),
 		).not.toThrow();
@@ -168,8 +157,7 @@ describe("Previous and next match update in double elimination stage", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 0, // First match of WB round 1
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 

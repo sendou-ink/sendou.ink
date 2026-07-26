@@ -157,8 +157,7 @@ describe("Reset match", () => {
 
 		data = Engine.reportResult(data, {
 			matchId: 0,
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		}).data;
 
@@ -195,8 +194,7 @@ describe("Reset match", () => {
 		for (const matchId of [0, 1, 2]) {
 			data = Engine.reportResult(data, {
 				matchId,
-				opponent1: { score: 16 },
-				opponent2: { score: 12 },
+				scores: [16, 12],
 				winnerSide: "opponent1",
 			}).data;
 		}
@@ -219,8 +217,7 @@ describe("Engine data immutability", () => {
 
 		const afterReport = Engine.reportResult(initial, {
 			matchId: 0,
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		});
 
@@ -242,8 +239,7 @@ describe("Engine data immutability", () => {
 
 		const afterReport = Engine.reportResult(initial, {
 			matchId: 0,
-			opponent1: { score: 16 },
-			opponent2: { score: 12 },
+			scores: [16, 12],
 			winnerSide: "opponent1",
 		});
 

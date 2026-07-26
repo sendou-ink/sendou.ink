@@ -243,8 +243,7 @@ function abDivisionsTournament() {
 		const winnerIsOpp1 = match.opponent1!.id === winnerId;
 		data = Engine.reportResult(data, {
 			matchId: match.id,
-			opponent1: { score: winnerIsOpp1 ? 2 : loserScore },
-			opponent2: { score: winnerIsOpp1 ? loserScore : 2 },
+			scores: [winnerIsOpp1 ? 2 : loserScore, winnerIsOpp1 ? loserScore : 2],
 			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 		}).data;
 	}
@@ -288,8 +287,7 @@ function playOutLowerIdWins(data: BracketData) {
 		const winnerIsOpp1 = pending.opponent1!.id! < pending.opponent2!.id!;
 		played = Engine.reportResult(played, {
 			matchId: pending.id,
-			opponent1: { score: winnerIsOpp1 ? 2 : 0 },
-			opponent2: { score: winnerIsOpp1 ? 0 : 2 },
+			scores: [winnerIsOpp1 ? 2 : 0, winnerIsOpp1 ? 0 : 2],
 			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
 		}).data;
 	}

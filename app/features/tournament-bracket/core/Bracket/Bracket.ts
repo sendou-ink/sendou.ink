@@ -173,8 +173,7 @@ export abstract class Bracket {
 
 					data = Engine.reportResult(data, {
 						matchId: match.id,
-						opponent1: { score: winner === 1 ? 1 : 0 },
-						opponent2: { score: winner === 2 ? 1 : 0 },
+						scores: winner === 1 ? [1, 0] : [0, 1],
 						winnerSide: winner === 1 ? "opponent1" : "opponent2",
 					}).data;
 				}
