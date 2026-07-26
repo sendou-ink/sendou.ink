@@ -72,6 +72,7 @@ type Generated<T> =
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
 export type DBBoolean = number;
 
+/** Shape shared by the `AllTeam` table and the `Team` view. See {@link DB} for which to select from. */
 export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
@@ -79,6 +80,7 @@ export interface Team {
 	createdAt: Generated<number>;
 	customUrl: string;
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
+	/** Soft delete marker. Always `null` when selected via the `Team` view, which filters these rows out. */
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
@@ -89,10 +91,15 @@ export interface Team {
 	tag: string | null;
 }
 
+/**
+ * Shape shared by the `AllTeamMember` table and the `TeamMember` &
+ * `TeamMemberWithSecondary` views. See {@link DB} for which to select from.
+ */
 export interface TeamMember {
 	createdAt: Generated<number>;
 	isOwner: Generated<number>;
 	isManager: Generated<number>;
+	/** Always `null` when selected via the `TeamMember` or `TeamMemberWithSecondary` views, which filter these rows out. */
 	leftAt: number | null;
 	role: MemberRole | null;
 	customRole: string | null;
@@ -145,6 +152,7 @@ export interface BadgeManager {
 	userId: number;
 }
 
+/** Read-only. See {@link DB} for how this view is composed. */
 export interface BadgeOwner {
 	badgeId: number;
 	userId: number;
@@ -379,6 +387,7 @@ export interface PlusVote {
 	year: number;
 }
 
+/** Read-only. See {@link DB} for how this view is composed. */
 export interface PlusVotingResult {
 	votedId: number;
 	tier: number;
@@ -833,10 +842,12 @@ export interface UserResultHighlight {
 	userId: number;
 }
 
+/** Read-only. See {@link DB} for how this view relates to `UnvalidatedUserSubmittedImage`. */
 export interface UserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number | null;
 	url: string;
+	/** Never `null` in practice, the view filters unvalidated rows out. */
 	validatedAt: number | null;
 }
 
@@ -954,12 +965,14 @@ export interface UserReport {
 	createdAt: Generated<number>;
 }
 
+/** Read-only. See {@link DB} for how this view relates to `UnvalidatedVideo`. */
 export interface Video {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	title: string;
 	type: "SCRIM" | "TOURNAMENT" | "MATCHMAKING" | "CAST" | "SENDOUQ";
+	/** Never `null` in practice, the view filters unvalidated rows out. */
 	validatedAt: number | null;
 	youtubeDate: number;
 	youtubeId: string;
@@ -1127,8 +1140,22 @@ export interface SplatoonRotation {
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 
+/**
+ * Every table and view available to query.
+ *
+ * Some entries are SQL **views**, not tables. They are marked below and can not
+ * be inserted into or updated. Two naming conventions exist for the
+ * table/view pairing, both meaning "base table vs. filtered view":
+ * - `All` prefix on the table: `AllTeam` (table) / `Team` (view)
+ * - `Unvalidated` prefix on the table: `UnvalidatedVideo` (table) / `Video` (view)
+ *
+ * In both cases write to the prefixed table and read from the unprefixed view
+ * unless you specifically want the filtered-out rows.
+ */
 export interface DB {
+	/** Table backing the `Team` view. Includes soft-deleted teams. */
 	AllTeam: Team;
+	/** Table backing the `TeamMember` & `TeamMemberWithSecondary` views. Includes members who have left and members of deleted teams. */
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
 	Art: Art;
@@ -1138,6 +1165,7 @@ export interface DB {
 	TaggedArt: TaggedArt;
 	Badge: Badge;
 	BadgeManager: BadgeManager;
+	/** VIEW, read-only. `TournamentBadgeOwner` rows plus a synthetic patron badge row per patron of tier 2+. */
 	BadgeOwner: BadgeOwner;
 	TournamentBadgeOwner: TournamentBadgeOwner;
 	BanLog: BanLog;
@@ -1168,14 +1196,18 @@ export interface DB {
 	PlusSuggestion: PlusSuggestion;
 	PlusTier: PlusTier;
 	PlusVote: PlusVote;
+	/** VIEW, read-only. `PlusVote` rows aggregated per (votedId, tier, month, year) with the average score. */
 	PlusVotingResult: PlusVotingResult;
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
 	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
+	/** VIEW over `AllTeam`, excludes soft-deleted teams. Insert/update via `AllTeam`. */
 	Team: Team;
+	/** VIEW over `AllTeamMember`, excludes members who have left, members of deleted teams, and members whose secondary team this is. Insert/update via `AllTeamMember`. */
 	TeamMember: TeamMember;
+	/** VIEW over `AllTeamMember`, same as `TeamMember` but also includes rows where this is the member's secondary (i.e. non-main) team. Insert/update via `AllTeamMember`. */
 	TeamMemberWithSecondary: TeamMember;
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
@@ -1205,11 +1237,14 @@ export interface DB {
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;
+	/** Table backing the `UserSubmittedImage` view. Includes images awaiting validation. */
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
+	/** Table backing the `Video` view. Includes videos awaiting validation. */
 	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;
 	UserSearch: UserSearch;
 	UserResultHighlight: UserResultHighlight;
+	/** VIEW over `UnvalidatedUserSubmittedImage`, excludes images awaiting validation. Insert/update via `UnvalidatedUserSubmittedImage`. */
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
 	UserWeaponPool: UserWeaponPool;
@@ -1217,6 +1252,7 @@ export interface DB {
 	UserFriendCode: UserFriendCode;
 	UserWidget: UserWidget;
 	UserReport: UserReport;
+	/** VIEW over `UnvalidatedVideo`, excludes videos awaiting validation. Insert/update via `UnvalidatedVideo`. */
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;
