@@ -70,7 +70,7 @@ type Generated<T> =
 		: ColumnType<T, T | undefined, T>;
 
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
-export type DBBoolean = number;
+export type DBBoolean = 0 | 1;
 
 /** Shape shared by the `AllTeam` table and the `Team` view. See {@link DB} for which to select from. */
 export interface Team {
@@ -97,8 +97,8 @@ export interface Team {
  */
 export interface TeamMember {
 	createdAt: Generated<number>;
-	isOwner: Generated<number>;
-	isManager: Generated<number>;
+	isOwner: Generated<DBBoolean>;
+	isManager: Generated<DBBoolean>;
 	/** Always `null` when selected via the `TeamMember` or `TeamMemberWithSecondary` views, which filter these rows out. */
 	leftAt: number | null;
 	role: MemberRole | null;
@@ -164,9 +164,9 @@ export interface Build {
 	description: string | null;
 	headGearSplId: number | null;
 	id: GeneratedAlways<number>;
+	isPrivate: Generated<DBBoolean>;
 	modes: JSONColumnTypeNullable<ModeShort[]>;
 	ownerId: number;
-	private: DBBoolean | null;
 	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
@@ -258,7 +258,7 @@ export interface GroupLike {
 	createdAt: Generated<number>;
 	likerGroupId: number;
 	targetGroupId: number;
-	isRechallenge: DBBoolean | null;
+	isRechallenge: Generated<DBBoolean>;
 }
 
 export interface GroupMatch {
@@ -644,7 +644,7 @@ export interface TournamentTeamCheckIn {
 	bracketIdx: number | null;
 	tournamentTeamId: number;
 	/** Indicates that this bracket defaults to checked in and this team has been explicitly checked out from it */
-	isCheckOut: Generated<number>;
+	isCheckOut: Generated<DBBoolean>;
 }
 
 export interface TournamentTeamMember {
@@ -712,7 +712,7 @@ export interface TournamentOrganizationSeries {
 	name: string;
 	description: string | null;
 	substringMatches: JSONColumnType<string[]>;
-	showLeaderboard: Generated<number>;
+	showLeaderboard: Generated<DBBoolean>;
 	tierHistory: JSONColumnTypeNullable<TournamentTierNumber[]>;
 }
 
@@ -781,7 +781,7 @@ export interface User {
 	bio: string | null;
 	/** Shown on user card */
 	shortBio: string | null;
-	commissionsOpen: Generated<number | null>;
+	commissionsOpen: Generated<DBBoolean>;
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
@@ -799,10 +799,10 @@ export interface User {
 	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
-	isArtist: Generated<DBBoolean | null>;
-	isVideoAdder: Generated<DBBoolean | null>;
-	isTournamentOrganizer: Generated<DBBoolean | null>;
-	isApiAccesser: Generated<DBBoolean | null>;
+	isArtist: Generated<DBBoolean>;
+	isVideoAdder: Generated<DBBoolean>;
+	isTournamentOrganizer: Generated<DBBoolean>;
+	isApiAccesser: Generated<DBBoolean>;
 	languages: string | null;
 	motionSens: number | null;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
@@ -1072,7 +1072,7 @@ export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
 	/** User is the author of the post */
-	isOwner: number;
+	isOwner: DBBoolean;
 }
 
 export interface ScrimPostRequest {

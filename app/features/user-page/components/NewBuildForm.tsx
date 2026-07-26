@@ -75,7 +75,7 @@ export function NewBuildForm({
 					<FormField name="title" />
 					<FormField name="description" />
 					<FormField name="modes" />
-					<FormField name="private" />
+					<FormField name="isPrivate" />
 				</>
 			)}
 		</SendouForm>

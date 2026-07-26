@@ -6,6 +6,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToast, parseRequestPayload } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { settingsActionSchema } from "../settings-schemas.server";
 
@@ -66,7 +67,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					vc: data.vc,
 					languages: data.languages,
 					weaponPool: data.weaponPool,
-					noScreen: Number(data.noScreen),
+					noScreen: toDBBoolean(data.noScreen),
 				});
 
 			// Challenges are made based on the modes/preferences shown at that

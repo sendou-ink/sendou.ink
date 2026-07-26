@@ -39,7 +39,7 @@ const baseArgs = (
 	shoesGearSplId: null,
 	weaponSplIds: [SPLATTERSHOT],
 	abilities: ABILITIES,
-	private: 0,
+	isPrivate: 0,
 	...overrides,
 });
 
@@ -80,7 +80,7 @@ const insertXRankPlacement = async (
 const buildById = (id: number) =>
 	db
 		.selectFrom("Build")
-		.select(["abilitiesSignature", "private"])
+		.select(["abilitiesSignature", "isPrivate"])
 		.where("id", "=", id)
 		.executeTakeFirstOrThrow();
 
@@ -142,14 +142,14 @@ describe("BuildRepository.create — computeBuildData", () => {
 		});
 
 		test("does not insert BuildAbilitySum rows for private builds", async () => {
-			await BuildRepository.create(baseArgs({ private: 1 }));
+			await BuildRepository.create(baseArgs({ isPrivate: 1 }));
 
 			const sums = await buildAbilitySumsByBuildId(await onlyBuildId());
 			expect(sums).toHaveLength(0);
 		});
 
 		test("still writes abilitiesSignature for private builds", async () => {
-			await BuildRepository.create(baseArgs({ private: 1 }));
+			await BuildRepository.create(baseArgs({ isPrivate: 1 }));
 
 			const build = await buildById(await onlyBuildId());
 			expect(build.abilitiesSignature).toBe(EXPECTED_SIGNATURE);
@@ -187,7 +187,7 @@ describe("BuildRepository.create — computeBuildData", () => {
 		});
 
 		test("does not insert any rows for private builds", async () => {
-			await BuildRepository.create(baseArgs({ private: 1 }));
+			await BuildRepository.create(baseArgs({ isPrivate: 1 }));
 
 			const rows = await buildWeaponAbilitiesByBuildId(await onlyBuildId());
 			expect(rows).toHaveLength(0);
@@ -231,7 +231,7 @@ describe("BuildRepository.create — computeBuildData", () => {
 				{ userId: OWNER_ID, plusTier: 1 },
 			]);
 
-			await BuildRepository.create(baseArgs({ private: 1 }));
+			await BuildRepository.create(baseArgs({ isPrivate: 1 }));
 
 			const [weapon] = await buildWeaponsByBuildId(await onlyBuildId());
 			expect(weapon.sortValue).toBeNull();
@@ -354,7 +354,7 @@ describe("BuildRepository.popularAbilitiesByWeaponId", () => {
 
 	test("only counts public builds", async () => {
 		await BuildRepository.create(baseArgs({ ownerId: 1 }));
-		await BuildRepository.create(baseArgs({ ownerId: 2, private: 1 }));
+		await BuildRepository.create(baseArgs({ ownerId: 2, isPrivate: 1 }));
 
 		const rows = await BuildRepository.popularAbilitiesByWeaponId(SPLATTERSHOT);
 

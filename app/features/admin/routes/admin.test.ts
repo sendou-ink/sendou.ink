@@ -441,7 +441,7 @@ describe("Account migration", () => {
 			modes: null,
 			weaponSplIds: [1],
 			description: null,
-			private: 0,
+			isPrivate: 0,
 		});
 
 		const buildsBefore = await BuildRepository.allByUserId(2);

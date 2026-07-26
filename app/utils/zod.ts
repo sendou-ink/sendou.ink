@@ -1,5 +1,6 @@
 import type { ZodType } from "zod";
 import { z } from "zod";
+import type { DBBoolean } from "~/db/tables";
 import {
 	abilities,
 	type abilitiesShort,
@@ -29,7 +30,12 @@ export const nonEmptyString = z.string().trim().min(1, {
 	message: "Required",
 });
 
-export const dbBoolean = z.coerce.number().min(0).max(1).int();
+export const dbBoolean = z.coerce
+	.number()
+	.int()
+	.min(0)
+	.max(1)
+	.transform((value): DBBoolean => (value === 0 ? 0 : 1));
 
 // matches #RGB and #RRGGBB only (no alpha) https://stackoverflow.com/a/1636354
 const hexCodeWithoutAlphaRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
@@ -426,7 +432,7 @@ export function checkboxValueToBoolean(value: unknown) {
 	return value === "on";
 }
 
-export function checkboxValueToDbBoolean(value: unknown) {
+export function checkboxValueToDbBoolean(value: unknown): DBBoolean {
 	if (checkboxValueToBoolean(value)) return 1;
 
 	return 0;

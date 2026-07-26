@@ -42,7 +42,7 @@ interface BuildProps {
 		| "headGearSplId"
 		| "shoesGearSplId"
 		| "updatedAt"
-		| "private"
+		| "isPrivate"
 	> & {
 		abilities: BuildAbilitiesTuple;
 		modes: ModeShort[] | null;
@@ -75,7 +75,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 
 	return (
 		<div
-			className={clsx(styles.card, { [styles.private]: build.private })}
+			className={clsx(styles.card, { [styles.private]: build.isPrivate })}
 			data-testid="build-card"
 		>
 			<div>
@@ -115,7 +115,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 						</>
 					) : null}
 					<div className="stack horizontal sm items-center">
-						{build.private ? (
+						{build.isPrivate ? (
 							<div className={styles.privateText}>
 								<Lock size={16} /> {t("common:build.private")}
 							</div>

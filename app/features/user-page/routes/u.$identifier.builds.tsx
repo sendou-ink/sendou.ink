@@ -69,9 +69,9 @@ export default function UserBuildsPage() {
 		weaponFilter === "ALL"
 			? data.builds
 			: weaponFilter === "PUBLIC"
-				? data.builds.filter((build) => !build.private)
+				? data.builds.filter((build) => !build.isPrivate)
 				: weaponFilter === "PRIVATE"
-					? data.builds.filter((build) => build.private)
+					? data.builds.filter((build) => build.isPrivate)
 					: data.builds.filter((build) =>
 							build.weapons
 								.map((wpn) => wpn.weaponSplId)
@@ -130,7 +130,7 @@ function BuildsFilters({
 	if (data.builds.length === 0) return null;
 
 	const privateBuildsCount = data.builds.filter(
-		(build) => build.private,
+		(build) => build.isPrivate,
 	).length;
 	const publicBuildsCount = data.builds.length - privateBuildsCount;
 

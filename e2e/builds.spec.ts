@@ -83,7 +83,7 @@ test.describe("Builds", () => {
 		await page.getByTestId("edit-build").first().click();
 
 		const form = createFormHelpers(page, newBuildBaseSchema);
-		await form.check("private");
+		await form.check("isPrivate");
 
 		await form.submit();
 

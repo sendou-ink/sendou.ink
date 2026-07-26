@@ -21,7 +21,7 @@ export interface ListedArt {
 		username: Tables["User"]["username"];
 		discordAvatar: Tables["User"]["discordAvatar"];
 		customAvatarUrl: string | null;
-		commissionsOpen?: Tables["User"]["commissionsOpen"];
+		commissionsOpen: Tables["User"]["commissionsOpen"];
 	};
 }
 

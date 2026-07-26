@@ -22,7 +22,7 @@ const mockBuild = (
 		shoesGearSplId: 0,
 		description: null,
 		modes: ["SZ"],
-		private: 0,
+		isPrivate: 0,
 		title: "",
 		updatedAt: databaseTimestampNow(),
 		weapons: [{ weaponSplId: 0, isTop500: 0 }],
@@ -78,10 +78,10 @@ describe("sortBuilds()", () => {
 
 	it("sorts by both PUBLIC_BUILD and PRIVATE_BUILD", () => {
 		const builds = [
-			mockBuild({ id: 1, private: 1 }),
-			mockBuild({ id: 2, private: 0 }),
-			mockBuild({ id: 3, private: 1 }),
-			mockBuild({ id: 4, private: 0 }),
+			mockBuild({ id: 1, isPrivate: 1 }),
+			mockBuild({ id: 2, isPrivate: 0 }),
+			mockBuild({ id: 3, isPrivate: 1 }),
+			mockBuild({ id: 4, isPrivate: 0 }),
 		];
 
 		const sortedBuilds1 = sortBuilds({
@@ -411,9 +411,9 @@ describe("sortBuilds()", () => {
 
 	it("sorts by PUBLIC_BUILD", () => {
 		const builds = [
-			mockBuild({ id: 1, private: 1 }),
-			mockBuild({ id: 2, private: 1 }),
-			mockBuild({ id: 3, private: 0 }),
+			mockBuild({ id: 1, isPrivate: 1 }),
+			mockBuild({ id: 2, isPrivate: 1 }),
+			mockBuild({ id: 3, isPrivate: 0 }),
 		];
 
 		const sortedBuilds = sortBuilds({
@@ -429,9 +429,9 @@ describe("sortBuilds()", () => {
 
 	it("sorts by PRIVATE_BUILD", () => {
 		const builds = [
-			mockBuild({ id: 1, private: 0 }),
-			mockBuild({ id: 2, private: 1 }),
-			mockBuild({ id: 3, private: 1 }),
+			mockBuild({ id: 1, isPrivate: 0 }),
+			mockBuild({ id: 2, isPrivate: 1 }),
+			mockBuild({ id: 3, isPrivate: 1 }),
 		];
 
 		const sortedBuilds = sortBuilds({

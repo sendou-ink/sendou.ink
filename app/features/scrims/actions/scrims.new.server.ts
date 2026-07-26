@@ -8,6 +8,7 @@ import { parseFormData } from "~/form/parse.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
@@ -94,7 +95,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		users: (await usersListForPost({ authorId: user.id, from: data.from })).map(
 			(userId) => ({
 				userId,
-				isOwner: Number(user.id === userId),
+				isOwner: toDBBoolean(user.id === userId),
 			}),
 		),
 	});

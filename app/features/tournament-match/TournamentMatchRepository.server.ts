@@ -7,6 +7,7 @@ import type { Side } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { customAvatarUrl } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
@@ -153,7 +154,7 @@ export function updateResultKo(
 ) {
 	return (trx ?? db)
 		.updateTable("TournamentMatchGameResult")
-		.set({ ko: Number(args.ko) })
+		.set({ ko: toDBBoolean(args.ko) })
 		.where("TournamentMatchGameResult.id", "=", args.id)
 		.execute();
 }

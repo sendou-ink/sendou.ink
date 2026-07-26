@@ -24,6 +24,7 @@ import {
 	errorToastIfFalsy,
 	parseRequestPayload,
 } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
@@ -105,7 +106,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						await usersListForPost({ authorId: user.id, from: data.from })
 					).map((userId) => ({
 						userId,
-						isOwner: Number(user.id === userId),
+						isOwner: toDBBoolean(user.id === userId),
 					})),
 				});
 			} catch (error) {

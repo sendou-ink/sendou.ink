@@ -62,7 +62,7 @@
 - down migrations are not needed, only up migrations
 - every database id is of type number
 - if we are working on a branch by default we should add to the migration this branch added instead of creating a brand new one
-- `/app/db/tables.ts` contains all tables and columns available
+- `/app/db/tables.ts` contains all tables and columns available, see [database-schemas.md](./docs/dev/database-schemas.md) for how columns should be typed (booleans, timestamps, JSON, enums, SQLite migration quirks)
 - `db.sqlite3` is development database
 - `db-test.sqlite3` is the unit test database (should be blank sans migrations ran)
 - `db-prod.sqlite3` is a copy of the production environment db which can be freely experimented with

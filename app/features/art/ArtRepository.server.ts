@@ -297,7 +297,7 @@ export async function findArtsByUserId(
 				username: row.username,
 				discordAvatar: row.discordAvatar,
 				customAvatarUrl: row.customAvatarUrl,
-				commissionsOpen: row.commissionsOpen ?? undefined,
+				commissionsOpen: row.commissionsOpen,
 			},
 		})),
 		...authored.map((row) => ({

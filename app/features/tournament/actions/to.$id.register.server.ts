@@ -16,6 +16,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import { registerSchema } from "../tournament-schemas.server";
@@ -86,7 +87,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					team: {
 						id: ownTeam.id,
 						name,
-						prefersNotToHost: Number(data.prefersNotToHost),
+						prefersNotToHost: toDBBoolean(data.prefersNotToHost),
 						teamId: linkedTeamId,
 					},
 				});
@@ -121,7 +122,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				await TournamentTeamRepository.create({
 					team: {
 						name,
-						prefersNotToHost: Number(data.prefersNotToHost),
+						prefersNotToHost: toDBBoolean(data.prefersNotToHost),
 						teamId: linkedTeamId,
 					},
 					userId: user.id,

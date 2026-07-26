@@ -330,7 +330,7 @@ export const newBuildBaseSchema = z.object({
 		label: "labels.buildModes",
 		items: modeItems,
 	}),
-	private: toggle({
+	isPrivate: toggle({
 		label: "labels.buildPrivate",
 		bottomText: "bottomTexts.buildPrivate",
 	}),

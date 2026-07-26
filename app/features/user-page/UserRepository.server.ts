@@ -113,7 +113,7 @@ export function findLayoutDataByIdentifier(
 				.where((eb) =>
 					eb.or(
 						[
-							eb("Build.private", "=", 0),
+							eb("Build.isPrivate", "=", 0),
 							loggedInUserId ? eb("Build.ownerId", "=", loggedInUserId) : null,
 						].filter((filter) => filter !== null),
 					),

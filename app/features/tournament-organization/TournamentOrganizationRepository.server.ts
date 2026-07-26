@@ -20,6 +20,7 @@ import {
 	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
 
@@ -557,7 +558,7 @@ export function update({
 						name: s.name,
 						description: s.description,
 						substringMatches: JSON.stringify([s.name.toLowerCase()]),
-						showLeaderboard: Number(s.showLeaderboard),
+						showLeaderboard: toDBBoolean(s.showLeaderboard),
 					})),
 				)
 				.returning(["id", "substringMatches"])
@@ -736,7 +737,7 @@ export function updateIsEstablished(
 ) {
 	return db
 		.updateTable("TournamentOrganization")
-		.set({ isEstablished: Number(isEstablished) })
+		.set({ isEstablished: toDBBoolean(isEstablished) })
 		.where("id", "=", organizationId)
 		.execute();
 }

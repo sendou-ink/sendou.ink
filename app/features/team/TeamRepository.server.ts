@@ -16,6 +16,7 @@ import {
 	tournamentLogoOrNull,
 	userProfileWeapons,
 } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
 
 export function findAllUndisbanded() {
@@ -361,7 +362,7 @@ export async function create(
 				userId: args.ownerUserId,
 				teamId: team.id,
 				isOwner: 1,
-				isMainTeam: Number(args.isMainTeam),
+				isMainTeam: toDBBoolean(args.isMainTeam),
 			})
 			.execute();
 
@@ -538,7 +539,7 @@ export function joinTeam({
 			throw new Error("Trying to exceed allowed team count");
 		}
 
-		const isMainTeam = Number(teamCount === 0);
+		const isMainTeam = toDBBoolean(teamCount === 0);
 
 		const maxOrder = await trx
 			.selectFrom("AllTeamMember")

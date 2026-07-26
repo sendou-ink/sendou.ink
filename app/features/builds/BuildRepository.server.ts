@@ -45,7 +45,7 @@ export async function allByUserId(
 			"Build.clothesGearSplId",
 			"Build.shoesGearSplId",
 			"Build.updatedAt",
-			"Build.private",
+			"Build.isPrivate",
 			"Build.abilities",
 			jsonArrayFrom(
 				eb
@@ -56,7 +56,7 @@ export async function allByUserId(
 			).as("weapons"),
 		])
 		.where("Build.ownerId", "=", userId)
-		.$if(!showPrivate, (qb) => qb.where("Build.private", "=", 0))
+		.$if(!showPrivate, (qb) => qb.where("Build.isPrivate", "=", 0))
 		.$if(typeof limit === "number", (qb) => qb.limit(limit!))
 		.orderBy("Build.updatedAt", "desc")
 		.execute();
@@ -74,7 +74,7 @@ interface CreateArgs {
 	shoesGearSplId: number | null;
 	weaponSplIds: Array<BuildWeapon["weaponSplId"]>;
 	abilities: BuildAbilitiesTuple;
-	private: TablesInsertable["Build"]["private"];
+	isPrivate: TablesInsertable["Build"]["isPrivate"];
 }
 
 export async function create(args: CreateArgs) {
@@ -92,7 +92,7 @@ export async function create(args: CreateArgs) {
 				headGearSplId: args.headGearSplId,
 				clothesGearSplId: args.clothesGearSplId,
 				shoesGearSplId: args.shoesGearSplId,
-				private: args.private,
+				isPrivate: args.isPrivate,
 				abilities: JSON.stringify(args.abilities),
 				abilitiesSignature: computed.abilitiesSignature,
 				updatedAt,
@@ -134,7 +134,7 @@ export async function update(args: CreateArgs & { id: number }) {
 				headGearSplId: args.headGearSplId,
 				clothesGearSplId: args.clothesGearSplId,
 				shoesGearSplId: args.shoesGearSplId,
-				private: args.private,
+				isPrivate: args.isPrivate,
 				abilities: JSON.stringify(args.abilities),
 				abilitiesSignature: computed.abilitiesSignature,
 				updatedAt,
@@ -230,7 +230,7 @@ export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
 					"=",
 					canonicalWeaponSplId(weaponSplId),
 				)
-				.where("Build.private", "=", 0)
+				.where("Build.isPrivate", "=", 0)
 				.where("Build.abilitiesSignature", "is not", null)
 				.groupBy("Build.ownerId"),
 		)
@@ -276,7 +276,7 @@ export async function allByWeaponId(
 			"Build.clothesGearSplId",
 			"Build.shoesGearSplId",
 			"Build.updatedAt",
-			"Build.private",
+			"Build.isPrivate",
 			"Build.abilities",
 			"PlusTier.tier as plusTier",
 			commonUserJsonObject(eb).as("owner"),
@@ -313,7 +313,7 @@ export async function recalculateAllSortValues(userId?: number) {
 			.set({
 				sortValue: sql<number | null>`(
 					select case
-						when "b"."private" = 1 then null
+						when "b"."isPrivate" = 1 then null
 						else coalesce(
 							(select "tier" from "PlusTier" where "userId" = "b"."ownerId"),
 							4
@@ -451,7 +451,9 @@ async function computeBuildData(
 	for (const weaponSplId of args.weaponSplIds) {
 		sortValueByWeaponSplId.set(
 			weaponSplId,
-			args.private ? null : tier * 2 + (top500Weapons.has(weaponSplId) ? 0 : 1),
+			args.isPrivate
+				? null
+				: tier * 2 + (top500Weapons.has(weaponSplId) ? 0 : 1),
 		);
 	}
 
@@ -513,7 +515,7 @@ async function insertBuildChildrenInTrx({
 	// Private builds are excluded from the sum tables so the stats queries can
 	// run as pure covering-index scans. Visibility flips are handled implicitly
 	// by `update`'s delete-then-reinsert.
-	if (args.private) return;
+	if (args.isPrivate) return;
 
 	await trx
 		.insertInto("BuildAbilitySum")

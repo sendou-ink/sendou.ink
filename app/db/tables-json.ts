@@ -5,6 +5,7 @@
  * and are imported by `tables.ts` directly.
  */
 
+import type { DBBoolean } from "~/db/tables";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
@@ -46,7 +47,7 @@ export interface UserMapModePreferences {
 
 export interface WeaponPoolEntry {
 	weaponSplId: MainWeaponId;
-	isFavorite: number;
+	isFavorite: DBBoolean;
 }
 
 export interface UserPreferences {

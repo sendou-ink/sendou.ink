@@ -1,12 +1,13 @@
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
+import type { DBBoolean, Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { matchProfileWeapons } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 
 export async function settingsByUserId(userId: number) {
 	const preferences = await db
@@ -55,7 +56,7 @@ export async function updateOwnMatchProfile({
 	vc: Tables["User"]["vc"];
 	languages: string[];
 	weaponPool: WeaponPoolItem[];
-	noScreen: number;
+	noScreen: DBBoolean;
 }) {
 	const userId = actorId();
 	const current = await db
@@ -94,7 +95,7 @@ export async function updateOwnMatchProfile({
 						userId,
 						sortOrder: i,
 						weaponSplId: wpn.id,
-						isFavorite: Number(wpn.isFavorite),
+						isFavorite: toDBBoolean(wpn.isFavorite),
 					})),
 				)
 				.execute();

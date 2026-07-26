@@ -35,7 +35,7 @@ import {
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
+import { errorIsSqliteUniqueConstraintFailure, toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
@@ -200,7 +200,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 									winnerTeamId: data.winnerTeamId,
 									number: data.position + 1,
 									source: String(currentMap.source),
-									ko: bracket.collectsKos ? Number(Boolean(data.ko)) : null,
+									ko: bracket.collectsKos
+										? toDBBoolean(Boolean(data.ko))
+										: null,
 								},
 								trx,
 							);

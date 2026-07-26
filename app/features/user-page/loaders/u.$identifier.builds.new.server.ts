@@ -74,7 +74,7 @@ function resolveDefaultValues(
 		title: buildToEdit?.title,
 		description: buildToEdit?.description ?? null,
 		modes: buildToEdit?.modes ?? [],
-		private: Boolean(buildToEdit?.private),
+		isPrivate: Boolean(buildToEdit?.isPrivate),
 	};
 
 	function resolveDefaultWeapons(): WeaponPoolItem[] {

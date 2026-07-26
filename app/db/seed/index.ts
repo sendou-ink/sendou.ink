@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import * as R from "remeda";
 import { Config } from "~/config";
 import { db, sql } from "~/db/sql";
+import type { DBBoolean } from "~/db/tables";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
@@ -69,6 +70,7 @@ import {
 } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
+import { toDBBoolean } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 import { mySlugify, navIconUrl, sendouQMatchPage } from "~/utils/urls";
 import {
@@ -1024,7 +1026,7 @@ async function userMatchProfileWeaponPool() {
 			userId: id,
 			sortOrder: i,
 			weaponSplId,
-			isFavorite: faker.number.float(1) > 0.7 ? 1 : 0,
+			isFavorite: toDBBoolean(faker.number.float(1) > 0.7),
 		}));
 
 		await db.insertInto("UserWeaponPool").values(weaponPool).execute();
@@ -2141,7 +2143,7 @@ async function adminBuilds() {
 				faker.word.noun(),
 			)}`,
 			ownerId: ADMIN_ID,
-			private: 0,
+			isPrivate: 0,
 			description:
 				faker.number.float(1) < 0.75 ? faker.lorem.paragraph() : null,
 			headGearSplId: randomOrderHeadGear[0],
@@ -2204,7 +2206,7 @@ async function manySplattershotBuilds() {
 		const ownerId = users.pop()!;
 
 		await BuildRepository.create({
-			private: 0,
+			isPrivate: 0,
 			title: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
 				faker.word.noun(),
 			)}`,
@@ -2760,12 +2762,14 @@ async function groups(variation?: SeedVariation | null) {
 			nzapGroupMemberIds[2],
 		].filter((id): id is number => typeof id === "number");
 		for (const userId of guaranteedWeaponPoolUserIds) {
-			const weapons: Array<{ weaponSplId: MainWeaponId; isFavorite: number }> =
-				[
-					{ weaponSplId: 0, isFavorite: 1 },
-					{ weaponSplId: 2000, isFavorite: 0 },
-					{ weaponSplId: 4000, isFavorite: 0 },
-				];
+			const weapons: Array<{
+				weaponSplId: MainWeaponId;
+				isFavorite: DBBoolean;
+			}> = [
+				{ weaponSplId: 0, isFavorite: 1 },
+				{ weaponSplId: 2000, isFavorite: 0 },
+				{ weaponSplId: 4000, isFavorite: 0 },
+			];
 			await db
 				.insertInto("UserWeaponPool")
 				.values(
@@ -3277,18 +3281,25 @@ async function scrimPosts() {
 	const users = () => {
 		const count = faker.helpers.arrayElement([4, 4, 4, 4, 4, 4, 5, 5, 5, 6]);
 
-		const result: Array<{ userId: number; isOwner: number }> = [];
+		const result: Array<{ userId: number; isOwner: DBBoolean }> = [];
 		for (let i = 0; i < count; i++) {
 			const user = allUsers.shift()!;
 
 			result.push({
 				userId: user,
-				isOwner: Number(i === 0),
+				isOwner: toDBBoolean(i === 0),
 			});
 		}
 
 		return result;
 	};
+
+	const usersWithOwner = (
+		ownerUserId: number,
+	): Array<{ userId: number; isOwner: DBBoolean }> => [
+		...users().map((u) => ({ ...u, isOwner: 0 as const })),
+		{ userId: ownerUserId, isOwner: 1 },
+	];
 
 	// Deterministic post 1: admin (Sendou) vs N-ZAP. The e2e map-by-map test
 	// navigates straight to /scrims/1 and relies on this being an accepted
@@ -3301,18 +3312,14 @@ async function scrimPosts() {
 		teamId: null,
 		text: null,
 		visibility: null,
-		users: users()
-			.map((u) => ({ ...u, isOwner: 0 }))
-			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+		users: usersWithOwner(ADMIN_ID),
 		managedByAnyone: true,
 		maps: null,
 		mapsTournamentId: 4,
 	});
 	await ScrimPostRepository.insertRequest({
 		scrimPostId: adminVsNzapPostId,
-		users: users()
-			.map((u) => ({ ...u, isOwner: 0 }))
-			.concat({ userId: NZAP_TEST_ID, isOwner: 1 }),
+		users: usersWithOwner(NZAP_TEST_ID),
 		message: null,
 	});
 	await ScrimPostRepository.acceptRequest(1);
@@ -3355,9 +3362,7 @@ async function scrimPosts() {
 				? faker.lorem.sentences({ min: 1, max: 5 })
 				: null,
 		visibility: null,
-		users: users()
-			.map((u) => ({ ...u, isOwner: 0 }))
-			.concat({ userId: ADMIN_ID, isOwner: 1 }),
+		users: usersWithOwner(ADMIN_ID),
 		managedByAnyone: true,
 		maps: maps(),
 		mapsTournamentId: null,
