@@ -44,7 +44,7 @@ export function SplatoonRotations() {
 	const nowUnixLive = useNowUnix(data.now);
 
 	const allInThePast = data.rotations.every(
-		(rotation) => rotation.endTime <= nowUnixLive,
+		(rotation) => rotation.endsAt <= nowUnixLive,
 	);
 	if (allInThePast) return null;
 
@@ -63,8 +63,8 @@ export function SplatoonRotations() {
 		if (activeFilter !== "ALL" && rotation.mode !== activeFilter) continue;
 
 		const isCurrent =
-			rotation.startTime <= nowUnixLive && rotation.endTime > nowUnixLive;
-		const isNext = rotation.startTime > nowUnixLive;
+			rotation.startsAt <= nowUnixLive && rotation.endsAt > nowUnixLive;
+		const isNext = rotation.startsAt > nowUnixLive;
 
 		if (!isCurrent && !isNext) continue;
 
@@ -173,8 +173,8 @@ function RotationCard({
 	const progress = current
 		? rotationProgress(
 				now,
-				databaseTimestampToDate(current.startTime),
-				databaseTimestampToDate(current.endTime),
+				databaseTimestampToDate(current.startsAt),
+				databaseTimestampToDate(current.endsAt),
 			)
 		: null;
 	const displayRotation = current ?? next;
@@ -195,7 +195,7 @@ function RotationCard({
 						style={{ width: `${progress * 100}%` }}
 					/>
 					<span className={styles.rotationCardProgressText}>
-						{formatDistanceToNow(current.endTime)}
+						{formatDistanceToNow(current.endsAt)}
 					</span>
 				</div>
 			) : null}
@@ -208,7 +208,7 @@ function RotationCard({
 				>
 					<span className={styles.rotationCardProgressText}>
 						<NextLabel
-							startTime={databaseTimestampToDate(next.startTime)}
+							startTime={databaseTimestampToDate(next.startsAt)}
 							now={now}
 						/>
 					</span>
@@ -233,11 +233,11 @@ function RotationCard({
 			<div className={styles.rotationCardNext}>
 				{shownNext ? (
 					<div className={styles.rotationCardNextInfo}>
-						{current && shownNext.startTime === current.endTime ? (
+						{current && shownNext.startsAt === current.endsAt ? (
 							t("front:rotations.nextLabel")
 						) : (
 							<NextLabel
-								startTime={databaseTimestampToDate(shownNext.startTime)}
+								startTime={databaseTimestampToDate(shownNext.startsAt)}
 								now={now}
 								compact
 							/>

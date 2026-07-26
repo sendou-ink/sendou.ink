@@ -233,7 +233,7 @@ const tournamentResultsSubQuery = (
 			"TournamentResult.setResults",
 			"TournamentResult.tournamentId",
 			"TournamentResult.tournamentTeamId",
-			"CalendarEventDate.startTime as tournamentStartTime",
+			"CalendarEventDate.startsAt as tournamentStartTime",
 			"CalendarEvent.name as tournamentName",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 		])

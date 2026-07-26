@@ -101,7 +101,7 @@ export function getMemberRoleType(member: {
  * - They are not a past member who was part of the team during the result's start time.
  */
 export function subsOfResult<T extends { id: number }>(
-	result: { participants: Array<T>; startTime: number },
+	result: { participants: Array<T>; startsAt: number },
 	members: Array<Pick<Tables["TeamMember"], "userId" | "createdAt" | "leftAt">>,
 ) {
 	const currentMembers = members.filter((member) => !member.leftAt);
@@ -113,9 +113,9 @@ export function subsOfResult<T extends { id: number }>(
 			pastMembers.some(
 				(member) =>
 					member.userId === cur.id &&
-					member.createdAt < result.startTime &&
+					member.createdAt < result.startsAt &&
 					member.leftAt &&
-					member.leftAt > result.startTime,
+					member.leftAt > result.startsAt,
 			)
 		) {
 			return acc;

@@ -46,7 +46,7 @@ export async function seedOrgEventWithParticipants({
 
 	await db
 		.insertInto("CalendarEventDate")
-		.values({ eventId: event.id, startTime })
+		.values({ eventId: event.id, startsAt: startTime })
 		.execute();
 
 	const team = await db

@@ -139,18 +139,18 @@ export function validateCounterPickMapPool(
 
 export function tournamentIsRanked({
 	isSetAsRanked,
-	startTime,
+	startsAt,
 	minMembersPerTeam,
 	isTest,
 }: {
 	isSetAsRanked?: boolean;
-	startTime: Date;
+	startsAt: Date;
 	minMembersPerTeam: number;
 	isTest: boolean;
 }) {
 	if (isTest) return false;
 
-	const seasonIsActive = Boolean(Seasons.current(startTime));
+	const seasonIsActive = Boolean(Seasons.current(startsAt));
 	if (!seasonIsActive) return false;
 
 	// 1v1, 2v2 and 3v3 are always considered "gimmicky"
@@ -160,7 +160,7 @@ export function tournamentIsRanked({
 }
 
 /**
- * Whether a tournament's startTime falls inside the active weapon-reporting window
+ * Whether a tournament's start time falls inside the active weapon-reporting window
  * for late (post-finalization) reporting.
  *
  * - In-season: window is `(previousSeason.ends, now]` — current season plus the off-season immediately before it.

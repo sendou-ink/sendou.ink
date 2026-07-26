@@ -300,12 +300,12 @@ function RegistrationProgress({
 
 	const regClosesBeforeStart =
 		tournament.registrationClosesAt.getTime() !==
-		tournament.ctx.startTime.getTime();
+		tournament.ctx.startsAt.getTime();
 
 	const registrationClosesAtString =
 		registrationClosesFormatter.format(
 			tournament.isLeagueSignup
-				? tournament.ctx.startTime
+				? tournament.ctx.startsAt
 				: tournament.registrationClosesAt,
 		) ?? "";
 

@@ -67,7 +67,7 @@ export async function findById(id: number) {
 				.as("parentTournamentName"),
 			"Tournament.tier",
 			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"Tournament.isFinalized",
 			jsonObjectFrom(
 				eb
@@ -549,7 +549,7 @@ export function forShowcase() {
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"CalendarEvent.hidden",
 			eb
 				.selectFrom("TournamentTeam")
@@ -567,7 +567,7 @@ export function forShowcase() {
 				.where((eb) =>
 					eb.or([
 						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-						eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
+						eb("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
 					]),
 				)
 				.select(({ fn }) => [
@@ -639,8 +639,8 @@ export function forShowcase() {
 				.select(({ fn }) => [fn.countAll<number>().as("count")])
 				.as("vodCount"),
 		])
-		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
-		.orderBy("CalendarEventDate.startTime", "asc")
+		.where("CalendarEventDate.startsAt", ">", databaseTimestampWeekAgo())
+		.orderBy("CalendarEventDate.startsAt", "asc")
 		.$narrowType<{ teamsCount: NotNull }>()
 		.execute();
 }
@@ -670,15 +670,11 @@ export function findAllBetweenTwoTimestamps({
 		.innerJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
 		.select(["Tournament.id as tournamentId"])
 		.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">",
 			dateToDatabaseTimestamp(startTime),
 		)
-		.where(
-			"CalendarEventDate.startTime",
-			"<=",
-			dateToDatabaseTimestamp(endTime),
-		)
+		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
 		.where("CalendarEvent.hidden", "=", 0)
 		.execute();
 }
@@ -1304,17 +1300,17 @@ export async function searchByName({
 		.select((eb) => [
 			"Tournament.id",
 			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 		])
 		.where("CalendarEvent.name", "like", `%${query}%`)
 		.where("CalendarEvent.hidden", "=", 0)
-		.orderBy("CalendarEventDate.startTime", "desc")
+		.orderBy("CalendarEventDate.startsAt", "desc")
 		.limit(limit);
 
 	if (minStartTime) {
 		sqlQuery = sqlQuery.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">=",
 			dateToDatabaseTimestamp(minStartTime),
 		);
@@ -1322,7 +1318,7 @@ export async function searchByName({
 
 	if (maxStartTime) {
 		sqlQuery = sqlQuery.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"<=",
 			dateToDatabaseTimestamp(maxStartTime),
 		);
@@ -1398,8 +1394,8 @@ export async function findRunningTournamentIds() {
 		)
 		.select("Tournament.id")
 		.where("Tournament.isFinalized", "=", 0)
-		.where("CalendarEventDate.startTime", "<", dateToDatabaseTimestamp(now))
-		.where("CalendarEventDate.startTime", ">", dateToDatabaseTimestamp(cutoff))
+		.where("CalendarEventDate.startsAt", "<", dateToDatabaseTimestamp(now))
+		.where("CalendarEventDate.startsAt", ">", dateToDatabaseTimestamp(cutoff))
 		.where((eb) =>
 			eb.exists(
 				eb

@@ -644,9 +644,9 @@ async function resolveHeavyOrg() {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
-		.select(["CalendarEvent.name", "CalendarEventDate.startTime"])
+		.select(["CalendarEvent.name", "CalendarEventDate.startsAt"])
 		.where("CalendarEvent.organizationId", "=", orgRow.id)
-		.orderBy("CalendarEventDate.startTime", "desc")
+		.orderBy("CalendarEventDate.startsAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
 	if (!latestEvent) return null;

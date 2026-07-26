@@ -226,7 +226,7 @@ export interface CalendarEventBadge {
 export interface CalendarEventDate {
 	eventId: number;
 	id: GeneratedAlways<number>;
-	startTime: number;
+	startsAt: number;
 }
 
 export interface CalendarEventResultPlayer {
@@ -329,7 +329,7 @@ export interface LFGPost {
 	plusTierVisibility: number | null;
 	languages: string | null;
 	updatedAt: Generated<number>;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface MapPoolMap {
@@ -362,7 +362,7 @@ export interface PlayerResult {
 
 export interface PlusSuggestion {
 	authorId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	month: number;
 	suggestedId: number;
@@ -382,7 +382,8 @@ export interface PlusVote {
 	month: number;
 	score: number;
 	tier: number;
-	validAfter: number;
+	/** When the vote stops being secret and starts counting towards the results i.e. the end of the voting range. */
+	becomesValidAt: number;
 	votedId: number;
 	year: number;
 }
@@ -417,6 +418,7 @@ export interface Skill {
 	season: number;
 	tournamentId: number | null;
 	userId: number | null;
+	/** Can be null because we did not always save this. */
 	createdAt: number | null;
 }
 
@@ -521,7 +523,7 @@ export interface TournamentMatchPickBanEvent {
 	matchId: number;
 	authorId: number | null;
 	number: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface TournamentMatchGameResult {
@@ -585,8 +587,7 @@ export interface TournamentStage {
 	settings: JSONColumnType<StageSettings>;
 	tournamentId: number;
 	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
-	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(
-	createdAt: number | null;
+	createdAt: Generated<number>;
 }
 
 /** Tournament sub post, shown in a list of subs available for teams to pick from. */
@@ -681,7 +682,7 @@ export interface TournamentAuditLog {
 	/** References {@link TournamentTeamHistory.id} so the team name stays resolvable after the team is hard-deleted. */
 	tournamentTeamHistoryId: number | null;
 	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
-	createdAt: number;
+	createdAt: Generated<number>;
 }
 
 export interface TournamentOrganization {
@@ -769,7 +770,8 @@ export interface UnvalidatedVideo {
 	title: string;
 	type: string;
 	validatedAt: number | null;
-	youtubeDate: number;
+	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
+	youtubePublishedAt: number;
 	youtubeId: string;
 }
 
@@ -806,9 +808,9 @@ export interface User {
 	languages: string | null;
 	motionSens: number | null;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
-	patronSince: number | null;
+	patronStartedAt: number | null;
 	patronTier: number | null;
-	patronTill: number | null;
+	patronExpiresAt: number | null;
 	showDiscordUniqueName: Generated<DBBoolean>;
 	stickSens: number | null;
 	twitch: string | null;
@@ -886,7 +888,7 @@ export interface UserFriendCode {
 	friendCode: string;
 	userId: number;
 	submitterUserId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface UserWidget {
@@ -899,7 +901,7 @@ export interface ApiToken {
 	userId: number;
 	token: string;
 	type: Generated<ApiTokenType>;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface LiveStream {
@@ -922,7 +924,7 @@ export interface ExternalStream {
 	name: string;
 	url: string;
 	avatarImgId: number | null;
-	startTime: number;
+	startsAt: number;
 	createdAt: Generated<number>;
 }
 
@@ -943,7 +945,7 @@ export interface BanLog {
 	banned: number | null;
 	bannedReason: string | null;
 	bannedByUserId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface ModNote {
@@ -951,7 +953,7 @@ export interface ModNote {
 	userId: number;
 	authorId: number;
 	text: string;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 	isDeleted: Generated<DBBoolean>;
 }
 
@@ -974,7 +976,8 @@ export interface Video {
 	type: "SCRIM" | "TOURNAMENT" | "MATCHMAKING" | "CAST" | "SENDOUQ";
 	/** Never `null` in practice, the view filters unvalidated rows out. */
 	validatedAt: number | null;
-	youtubeDate: number;
+	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
+	youtubePublishedAt: number;
 	youtubeId: string;
 }
 
@@ -1014,9 +1017,9 @@ export interface XRankPlacement {
 export interface ScrimPost {
 	id: GeneratedAlways<number>;
 	/** When is the scrim scheduled to happen */
-	at: number;
-	/** Optional end of time range indicating team accepts scrims starting between at and rangeEnd */
-	rangeEnd: number | null;
+	startsAt: number;
+	/** Optional end of time range indicating team accepts scrims starting between startsAt and rangeEndsAt */
+	rangeEndsAt: number | null;
 	/** Highest LUTI div accepted */
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
@@ -1043,7 +1046,7 @@ export interface ScrimPost {
 	maps: "SZ" | "ALL" | "RANKED" | null;
 	/** If set, specifies the maps of a tournament to play */
 	mapsTournamentId: number | null;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 	updatedAt: Generated<number>;
 }
 
@@ -1080,10 +1083,10 @@ export interface ScrimPostRequest {
 	scrimPostId: number;
 	teamId: number | null;
 	message: string | null;
-	/** Specific time selected by requester (required when post has rangeEnd) */
-	at: number | null;
+	/** Specific time selected by requester (required when post has rangeEndsAt) */
+	startsAt: number | null;
 	isAccepted: Generated<DBBoolean>;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface ScrimPostRequestUser {
@@ -1097,7 +1100,7 @@ export interface Association {
 	id: GeneratedAlways<number>;
 	name: string;
 	inviteCode: string;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface AssociationMember {
@@ -1111,7 +1114,7 @@ export interface Notification {
 	type: NotificationValue["type"];
 	meta: JSONColumnTypeNullable<Record<string, number | string>>;
 	pictureUrl: string | null;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface NotificationUser {
@@ -1133,8 +1136,8 @@ export interface SplatoonRotation {
 	mode: string;
 	stageId1: number;
 	stageId2: number;
-	startTime: number;
-	endTime: number;
+	startsAt: number;
+	endsAt: number;
 }
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };

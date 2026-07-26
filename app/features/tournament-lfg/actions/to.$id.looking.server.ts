@@ -82,7 +82,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 							id: tournamentId,
 							name: tournament.ctx.name,
 							logoUrl: tournament.ctx.logoUrl,
-							startTime: tournament.ctx.startTime,
+							startTime: tournament.ctx.startsAt,
 						},
 					});
 				}
@@ -211,7 +211,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						id: tournamentId,
 						name: tournament.ctx.name,
 						logoUrl: tournament.ctx.logoUrl,
-						startTime: tournament.ctx.startTime,
+						startTime: tournament.ctx.startsAt,
 					},
 				});
 			}

@@ -95,7 +95,7 @@ export async function findVods({
 	}
 	const result = await query
 		.groupBy("Video.id")
-		.orderBy("Video.youtubeDate", "desc")
+		.orderBy("Video.youtubePublishedAt", "desc")
 		.limit(limit)
 		.offset(offset)
 		.execute();
@@ -163,7 +163,7 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 		.select([
 			"id",
 			"title",
-			"youtubeDate",
+			"youtubePublishedAt",
 			"youtubeId",
 			"type",
 			"submitterUserId",
@@ -259,7 +259,7 @@ export async function insert(
 		const video = {
 			title: args.title,
 			type: args.type,
-			youtubeDate: dayMonthYearToDatabaseTimestamp(args.date),
+			youtubePublishedAt: dayMonthYearToDatabaseTimestamp(args.date),
 			eventId: args.eventId ?? null,
 			youtubeId,
 			submitterUserId: args.submitterUserId,

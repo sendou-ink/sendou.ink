@@ -74,9 +74,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 			await AdminRepository.forcePatron({
 				id: data.user,
-				patronSince: new Date(),
+				patronStartedAt: new Date(),
 				patronTier: data.patronTier,
-				patronTill: new Date(data.patronTill),
+				patronExpiresAt: new Date(data.patronExpiresAt),
 			});
 
 			message = "Patron status updated";
@@ -207,7 +207,7 @@ export const adminActionSchema = z.union([
 		_action: _action("FORCE_PATRON"),
 		user: z.preprocess(actualNumber, z.number().positive()),
 		patronTier: z.preprocess(actualNumber, z.number()),
-		patronTill: z.string(),
+		patronExpiresAt: z.string(),
 	}),
 	z.object({
 		_action: _action("VIDEO_ADDER"),

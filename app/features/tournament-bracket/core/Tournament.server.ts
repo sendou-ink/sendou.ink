@@ -144,7 +144,7 @@ function mostRecentStartTime(tournament: Tournament) {
 		.filter((b) => b.startTime)
 		.map((b) => databaseTimestampToDate(b.startTime!));
 
-	const allStartTimes = [tournament.ctx.startTime, ...bracketStartTimes];
+	const allStartTimes = [tournament.ctx.startsAt, ...bracketStartTimes];
 
 	return allStartTimes
 		.filter((t) => t <= new Date())

@@ -137,6 +137,6 @@ async function seriesStuff({
 				: null,
 		eventsCount: events.length,
 		logoUrl: events[0].logoUrl,
-		established: events.at(-1)!.startTime,
+		established: events.at(-1)!.startsAt,
 	};
 }

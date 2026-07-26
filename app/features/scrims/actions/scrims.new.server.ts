@@ -57,8 +57,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const resolvedDivs = data.divs ? resolveDivs(data.divs) : null;
 
 	await ScrimPostRepository.insert({
-		at: dateToDatabaseTimestamp(data.at),
-		rangeEnd: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
+		startsAt: dateToDatabaseTimestamp(data.at),
+		rangeEndsAt: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
 		maxDiv: resolvedDivs?.[0] ? serializeLutiDiv(resolvedDivs[0]) : null,
 		minDiv: resolvedDivs?.[1] ? serializeLutiDiv(resolvedDivs[1]) : null,
 		text: data.postText,

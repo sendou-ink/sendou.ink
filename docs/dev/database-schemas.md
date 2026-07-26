@@ -25,14 +25,18 @@ Counter-examples that look like booleans but aren't: `User.banned` (`1` = permab
 ## Generated vs. GeneratedAlways
 
 - `Generated<T>` — column has a DB default, so it's optional on insert but you may still pass a value (`createdAt`, every boolean flag).
-- `GeneratedAlways<T>` — never insertable or updatable: primary keys, computed columns, `createdAt` columns whose value should never be supplied by app code.
+- `GeneratedAlways<T>` — never insertable or updatable: primary keys and computed columns (`User.username`, the `UserSearch` FTS columns).
 - Plain `T` — required on every insert.
+
+Pick by what the DB allows, not by what app code happens to do today: if the column has a default it is `Generated<T>`, even when nothing currently overrides it.
 
 ## Timestamps
 
 Unix seconds as `number`, named `*At`. Never ISO strings, never milliseconds.
 
-Columns with `default (strftime('%s', 'now'))` are `Generated<number>`; use `GeneratedAlways<number>` when app code should never set them. Nullable `*At` columns double as markers (`deletedAt`, `validatedAt`, `leftAt`) — document that meaning in JSDoc.
+Name every instant with an `*At` suffix, including future ones: `startsAt`, `endsAt`, `expiresAt`, `becomesValidAt`. Not `startTime`, `youtubeDate` or a bare `at`. Domain objects and repository return shapes that carry a column's value keep the column's name; form fields, query range bounds and external API payloads are free to use their own names.
+
+Every `createdAt` gets `default (strftime('%s', 'now'))` and is typed `Generated<number>`. The two nullable ones (`User`, `Skill`) predate the column existing and have no backfillable value — JSDoc says so on each. Other nullable `*At` columns double as markers (`deletedAt`, `validatedAt`, `leftAt`) — document that meaning in JSDoc too.
 
 Convert with `~/utils/dates`: `dateToDatabaseTimestamp`, `databaseTimestampToDate`, `databaseTimestampNow`.
 
@@ -63,7 +67,7 @@ Non-obvious columns get a JSDoc comment: what `null` means, what a magic number 
 - SQLite can't add `not null` to an existing column. To tighten one: add `"<col>_new" integer not null default 0`, `update ... set "<col>_new" = coalesce("<col>", 0)`, drop the old column, rename the new one. See `migrations/162-boolean-columns-not-null.js`.
 - `drop column` fails if the column is indexed, part of a constraint, or referenced by a trigger, view, generated column or partial index. Check `sqlite_master` first.
 - Only when that isn't enough, rebuild the table: `pragma foreign_keys = OFF`, create `X_new`, copy, drop, rename, recreate every index, then `pragma foreign_key_check` inside the transaction. See `migrations/161-tournament-match-nullable-opponents.js`.
-- New columns can't be added with a non-constant default, so `createdAt` added later ends up nullable (see `TournamentStage.createdAt`).
+- New columns can't be added with a non-constant default, so a `createdAt` added later starts out nullable. Backfill it and rebuild the table in the same migration rather than leaving the nullability behind — see the `TournamentStage` rebuild in `migrations/162-boolean-columns-not-null.js`.
 
 ## After changing the schema
 

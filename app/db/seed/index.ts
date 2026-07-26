@@ -312,7 +312,7 @@ function finalizedBracket() {
 	// CalendarEventDate — recent start time (within 7-day spoiler window)
 	sql
 		.prepare(
-			`insert into "CalendarEventDate" ("eventId", "startTime")
+			`insert into "CalendarEventDate" ("eventId", "startsAt")
 			 values ($eventId, $startTime)`,
 		)
 		.run({
@@ -564,7 +564,7 @@ function abDivisionsTournament() {
 
 	sql
 		.prepare(
-			`insert into "CalendarEventDate" ("eventId", "startTime")
+			`insert into "CalendarEventDate" ("eventId", "startsAt")
 			 values ($eventId, $startTime)`,
 		)
 		.run({
@@ -705,7 +705,7 @@ function fixAdminId() {
 function makeAdminPatron() {
 	sql
 		.prepare(
-			`update "User" set "patronTier" = 2, "patronSince" = 1674663454 where id = 1`,
+			`update "User" set "patronTier" = 2, "patronStartedAt" = 1674663454 where id = 1`,
 		)
 		.run();
 }
@@ -1117,7 +1117,7 @@ async function lastMonthsVoting() {
 			year,
 			score: 1,
 			tier: idToPlusTier(id),
-			validAfter: dateToDatabaseTimestamp(fiveMinutesAgo),
+			becomesValidAt: dateToDatabaseTimestamp(fiveMinutesAgo),
 			votedId: id,
 		});
 	}
@@ -1129,7 +1129,7 @@ async function lastMonthsVoting() {
 			year,
 			score: -1,
 			tier: idToPlusTier(id),
-			validAfter: dateToDatabaseTimestamp(fiveMinutesAgo),
+			becomesValidAt: dateToDatabaseTimestamp(fiveMinutesAgo),
 			votedId: id,
 		});
 	}
@@ -1267,19 +1267,19 @@ function patrons() {
 		) as number[];
 
 	const givePatronStm = sql.prepare(
-		`update user set "patronTier" = $patronTier, "patronSince" = $patronSince where id = $id`,
+		`update user set "patronTier" = $patronTier, "patronStartedAt" = $patronStartedAt where id = $id`,
 	);
 	for (const id of userIds) {
 		givePatronStm.run({
 			id,
-			patronSince: dateToDatabaseTimestamp(faker.date.past()),
+			patronStartedAt: dateToDatabaseTimestamp(faker.date.past()),
 			patronTier: faker.helpers.arrayElement([1, 1, 2, 2, 2, 3, 3, 4]),
 		});
 	}
 
 	givePatronStm.run({
 		id: ADMIN_ID,
-		patronSince: dateToDatabaseTimestamp(faker.date.past()),
+		patronStartedAt: dateToDatabaseTimestamp(faker.date.past()),
 		patronTier: 2,
 	});
 
@@ -1372,7 +1372,7 @@ function calendarEvents() {
 				`
         insert into "CalendarEventDate" (
           "eventId",
-          "startTime"
+          "startsAt"
         ) values (
           $eventId,
           $startTime
@@ -1392,7 +1392,7 @@ function calendarEvents() {
 					`
           insert into "CalendarEventDate" (
             "eventId",
-            "startTime"
+            "startsAt"
           ) values (
             $eventId,
             $startTime
@@ -1441,7 +1441,7 @@ async function calendarEventResults() {
 					`select "CalendarEvent"."id" 
           from "CalendarEvent" 
           join "CalendarEventDate" on "CalendarEventDate"."eventId" = "CalendarEvent"."id"
-          where "CalendarEventDate"."startTime" < $startTime`,
+          where "CalendarEventDate"."startsAt" < $startTime`,
 				)
 				.all({ startTime: dateToDatabaseTimestamp(new Date()) }) as any[]
 		).map((r) => r.id),
@@ -1729,7 +1729,7 @@ function calendarEventWithToTools(
 			`
         insert into "CalendarEventDate" (
           "eventId",
-          "startTime"
+          "startsAt"
         ) values (
           $eventId,
           $startTime
@@ -3306,8 +3306,8 @@ async function scrimPosts() {
 	// scrim with admin on the ALPHA side and N-ZAP on the BRAVO side.
 	const adminVsNzapAt = date(true);
 	const adminVsNzapPostId = await ScrimPostRepository.insert({
-		at: adminVsNzapAt,
-		rangeEnd: null,
+		startsAt: adminVsNzapAt,
+		rangeEndsAt: null,
 		isScheduledForFuture: true,
 		teamId: null,
 		text: null,
@@ -3329,8 +3329,8 @@ async function scrimPosts() {
 		const atTime = date();
 		const hasRangeEnd = Math.random() > 0.5;
 		await ScrimPostRepository.insert({
-			at: atTime,
-			rangeEnd: hasRangeEnd
+			startsAt: atTime,
+			rangeEndsAt: hasRangeEnd
 				? dateToDatabaseTimestamp(
 						add(databaseTimestampToDate(atTime), {
 							hours: faker.helpers.rangeToNumber({ min: 1, max: 3 }),
@@ -3355,7 +3355,7 @@ async function scrimPosts() {
 
 	const adminPostAtTime = date(true); // admin's scrim is always at least 1 hour in the future
 	const adminPostId = await ScrimPostRepository.insert({
-		at: adminPostAtTime,
+		startsAt: adminPostAtTime,
 		isScheduledForFuture: true,
 		text:
 			faker.number.float(1) > 0.5
@@ -3777,7 +3777,7 @@ function splatoonRotations() {
 		sql
 			.prepare(
 				`
-			insert into "SplatoonRotation" ("type", "mode", "stageId1", "stageId2", "startTime", "endTime")
+			insert into "SplatoonRotation" ("type", "mode", "stageId1", "stageId2", "startsAt", "endsAt")
 			values ($type, $mode, $stageId1, $stageId2, $startTime, $endTime)
 			`,
 			)

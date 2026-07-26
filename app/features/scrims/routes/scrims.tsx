@@ -199,7 +199,7 @@ function ScrimsDaySeparatedCards({
 	autoScrollToPostId: number | null;
 }) {
 	const postsByDay = R.groupBy(posts, (post) =>
-		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
 	return (
@@ -251,7 +251,7 @@ function ScrimsDaySection({
 			<div className="stack xxs">
 				<h2 className="text-sm">
 					<LocaleTime
-						date={posts[0].at}
+						date={posts[0].startsAt}
 						options={{
 							day: "numeric",
 							month: "numeric",
@@ -368,7 +368,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 	const user = useUser();
 
 	const postsByDay = R.groupBy(posts, (post) =>
-		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
 	return (
@@ -380,7 +380,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
 								<LocaleTime
-									date={posts![0].at}
+									date={posts![0].startsAt}
 									options={{
 										day: "numeric",
 										month: "numeric",
@@ -410,7 +410,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 														<ScrimRequestCard
 															key={request.id}
 															request={request}
-															postStartTime={post.at}
+															postStartTime={post.startsAt}
 															canAccept={Boolean(
 																user &&
 																	post.permissions.MANAGE_REQUESTS.includes(
@@ -438,7 +438,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 
 function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 	const postsByDay = R.groupBy(posts, (post) =>
-		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
 	return (
@@ -450,7 +450,7 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
 								<LocaleTime
-									date={posts![0].at}
+									date={posts![0].startsAt}
 									options={{
 										day: "numeric",
 										month: "numeric",
@@ -470,7 +470,7 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 											{acceptedRequest ? (
 												<ScrimRequestCard
 													request={acceptedRequest}
-													postStartTime={post.at}
+													postStartTime={post.startsAt}
 													canAccept={false}
 													showFooter={false}
 												/>

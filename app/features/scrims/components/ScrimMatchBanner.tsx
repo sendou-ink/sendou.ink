@@ -78,7 +78,7 @@ function ScrimMatchBannerTopRow() {
 
 	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
 	const scheduledAt = databaseTimestampToDate(
-		acceptedRequest?.at ?? data.post.at,
+		acceptedRequest?.startsAt ?? data.post.startsAt,
 	);
 
 	return (

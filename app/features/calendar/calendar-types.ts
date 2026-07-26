@@ -44,7 +44,7 @@ export interface CalendarEvent extends CommonEvent {
 
 export interface ShowcaseCalendarEvent extends CommonEvent {
 	type: "showcase";
-	startTime: number;
+	startsAt: number;
 	/** Id of the organization the event belongs to, if any */
 	organizationId: number | null;
 	/** Tournament is hidden from the public (test tournament) */

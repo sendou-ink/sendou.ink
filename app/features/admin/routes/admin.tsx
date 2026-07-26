@@ -370,7 +370,7 @@ function ForcePatron() {
 
 				<div className="flex-same-size">
 					<label>Patron till</label>
-					<input name="patronTill" type="date" />
+					<input name="patronExpiresAt" type="date" />
 				</div>
 			</div>
 			<div className="stack horizontal md">

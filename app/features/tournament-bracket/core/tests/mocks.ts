@@ -1250,7 +1250,7 @@ export const PADDLING_POOL_257 = () =>
 			name: "Paddling Pool 257",
 			hasRules: false,
 			logoUrl: "/test.avif",
-			startTime: 1709748000,
+			startsAt: 1709748000,
 			author: {
 				id: 860,
 				username: "공주 Alice",
@@ -8033,7 +8033,7 @@ export const PADDLING_POOL_255 = () =>
 			name: "Paddling Pool 255",
 			hasRules: false,
 			logoUrl: "/test.avif",
-			startTime: 1708538400,
+			startsAt: 1708538400,
 			author: {
 				id: 860,
 				username: "공주 Alice",
@@ -15193,7 +15193,7 @@ export const IN_THE_ZONE_32 = ({
 			name: "In The Zone 32",
 			hasRules: false,
 			logoUrl: "/test.avif",
-			startTime: 1707588000,
+			startsAt: 1707588000,
 			author: {
 				id: 274,
 				username: "Sendou",

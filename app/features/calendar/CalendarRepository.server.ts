@@ -149,7 +149,7 @@ const withTeamsCount = (
 		.where((eb) =>
 			eb.or([
 				eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-				eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
+				eb("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
 			]),
 		)
 		.select(({ fn }) => [fn.countAll<number>().as("teamsCount")]);
@@ -176,10 +176,10 @@ function findAllBetweenTwoTimestampsQuery({
 			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEvent.tags",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			// events get grouped to their closest :00 or :30 so for example users can't make their event start at :59 to make it show at the top
-			sql<number>`(("CalendarEventDate"."startTime" + 900) / 1800) * 1800`.as(
-				"normalizedStartTime",
+			sql<number>`(("CalendarEventDate"."startsAt" + 900) / 1800) * 1800`.as(
+				"normalizedStartsAt",
 			),
 			withOrganization(eb).as("organization"),
 			withTeamsCount(eb).as("teamsCount"),
@@ -205,15 +205,11 @@ function findAllBetweenTwoTimestampsQuery({
 		])
 		.where("CalendarEvent.hidden", "=", 0)
 		.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">=",
 			dateToDatabaseTimestamp(startTime),
 		)
-		.where(
-			"CalendarEventDate.startTime",
-			"<=",
-			dateToDatabaseTimestamp(endTime),
-		)
+		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
 		.$narrowType<{ teamsCount: NotNull }>()
 		.execute();
 }
@@ -224,14 +220,14 @@ function findAllBetweenTwoTimestampsMapped(
 	at: number;
 	events: Array<CalendarEvent>;
 }> {
-	const mapped: Array<CalendarEvent & { startTime: number }> = rows.map(
+	const mapped: Array<CalendarEvent & { startsAt: number }> = rows.map(
 		(row) => {
 			const tags = row.tags
 				? (row.tags.split(",") as CalendarEvent["tags"])
 				: [];
 
 			const isPastEvent =
-				databaseTimestampToDate(row.startTime) < sub(new Date(), { days: 1 });
+				databaseTimestampToDate(row.startsAt) < sub(new Date(), { days: 1 });
 			const tentativeTier =
 				row.tier === null &&
 				row.organizationId !== null &&
@@ -241,7 +237,7 @@ function findAllBetweenTwoTimestampsMapped(
 					: null;
 
 			return {
-				at: databaseTimestampToJavascriptTimestamp(row.startTime),
+				at: databaseTimestampToJavascriptTimestamp(row.startsAt),
 				type: "calendar",
 				id: row.eventId,
 				url: row.tournamentId
@@ -265,11 +261,11 @@ function findAllBetweenTwoTimestampsMapped(
 							: null,
 				badges: row.badges,
 				logoUrl: row.logoUrl,
-				startTime: row.normalizedStartTime,
+				startsAt: row.normalizedStartsAt,
 				isRanked: row.tournamentSettings
 					? tournamentIsRanked({
 							isSetAsRanked: row.tournamentSettings.isRanked,
-							startTime: databaseTimestampToDate(row.startTime),
+							startsAt: databaseTimestampToDate(row.startsAt),
 							minMembersPerTeam: row.tournamentSettings.minMembersPerTeam ?? 4,
 							isTest: row.tournamentSettings.isTest ?? false,
 						})
@@ -280,7 +276,7 @@ function findAllBetweenTwoTimestampsMapped(
 		},
 	);
 
-	const grouped = R.groupBy(mapped, (row) => row.startTime);
+	const grouped = R.groupBy(mapped, (row) => row.startsAt);
 	const dates = Object.keys(grouped)
 		.map((dbTimestamp) => ({
 			at: databaseTimestampToDate(Number(dbTimestamp)).getTime(),
@@ -327,7 +323,7 @@ export async function findById(
 			"CalendarEvent.avatarImgId",
 			"Tournament.mapPickingStyle",
 			"User.id as authorId",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"CalendarEventDate.eventId",
 			"User.username",
 			"User.discordId",
@@ -338,7 +334,7 @@ export async function findById(
 			),
 		])
 		.where("CalendarEvent.id", "=", id)
-		.orderBy("CalendarEventDate.startTime", "asc")
+		.orderBy("CalendarEventDate.startsAt", "asc")
 		.execute();
 
 	if (!firstRow) return null;
@@ -346,8 +342,8 @@ export async function findById(
 	return {
 		...firstRow,
 		tags: tagsArray(firstRow),
-		startTimes: [firstRow, ...rest].map((row) => row.startTime),
-		startTime: undefined,
+		startTimes: [firstRow, ...rest].map((row) => row.startsAt),
+		startsAt: undefined,
 	};
 }
 
@@ -363,7 +359,7 @@ export async function findRecentTournamentsByAuthorId(authorId: number) {
 		.select([
 			"CalendarEvent.id",
 			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 		])
 		.where("CalendarEvent.authorId", "=", authorId)
 		.orderBy("CalendarEvent.id", "desc")
@@ -425,7 +421,7 @@ type CreateArgs = Pick<
 	| "bracketUrl"
 	| "organizationId"
 > & {
-	startTimes: Array<Tables["CalendarEventDate"]["startTime"]>;
+	startTimes: Array<Tables["CalendarEventDate"]["startsAt"]>;
 	badges: Array<Tables["CalendarEventBadge"]["badgeId"]>;
 	mapPoolMaps?: Array<Pick<Tables["MapPoolMap"], "mode" | "stageId">>;
 	isFullTournament: boolean;
@@ -750,7 +746,7 @@ function createDatesInTrx({
 }) {
 	return trx
 		.insertInto("CalendarEventDate")
-		.values(startTimes.map((startTime) => ({ startTime, eventId })))
+		.values(startTimes.map((startsAt) => ({ startsAt, eventId })))
 		.execute();
 }
 

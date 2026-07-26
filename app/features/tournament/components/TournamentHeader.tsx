@@ -24,7 +24,7 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 
 	const startTimes = R.uniqueBy(
 		[
-			tournament.ctx.startTime,
+			tournament.ctx.startsAt,
 			...tournament.ctx.settings.bracketProgression
 				.filter((b) => b.startTime)
 				.map((b) => databaseTimestampToDate(b.startTime!)),

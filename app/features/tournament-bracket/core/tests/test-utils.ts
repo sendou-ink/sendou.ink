@@ -69,7 +69,7 @@ export const testTournament = ({
 		hasRules: false,
 		logoUrl: "/test.avif",
 		discordUrl: null,
-		startTime: 1705858842,
+		startsAt: 1705858842,
 		isFinalized: 0,
 		name: "test",
 		castTwitchAccounts: [],

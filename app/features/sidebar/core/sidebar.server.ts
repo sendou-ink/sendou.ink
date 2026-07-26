@@ -43,7 +43,7 @@ export type SidebarEvent = {
 	name: string;
 	url: string;
 	logoUrl: string | null;
-	startTime: number;
+	startsAt: number;
 	type: "tournament" | "scrim";
 	scrimStatus?: "booked" | "looking" | "requestPending";
 };
@@ -116,7 +116,7 @@ export async function resolveSidebarData(userId: number | null) {
 	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
 
 	const events = [...tournamentEvents, ...savedEvents, ...scrimEvents]
-		.sort((a, b) => a.startTime - b.startTime)
+		.sort((a, b) => a.startsAt - b.startsAt)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
 	const friends = resolveFriends(friendsWithActivity);
@@ -170,7 +170,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 				imageUrl: externalStream.avatarUrl ?? BLANK_IMAGE_URL,
 				url: externalStream.url,
 				subtitle: "",
-				startsAt: externalStream.startTime,
+				startsAt: externalStream.startsAt,
 				tier: null,
 			},
 			score: StreamRanking.EXTERNAL_STREAM_SCORE,
@@ -245,8 +245,8 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	for (const event of upcomingTournaments) {
 		const effectiveTier = event.tier ?? event.tentativeTier;
 		if (effectiveTier === null) continue;
-		if (event.startTime < nowTimestamp) continue;
-		if (event.startTime > threeDaysFromNow) continue;
+		if (event.startsAt < nowTimestamp) continue;
+		if (event.startsAt > threeDaysFromNow) continue;
 		if (event.hidden) continue;
 
 		const membersPerTeam = event.minMembersPerTeam ?? 4;
@@ -258,7 +258,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 				imageUrl: event.logoUrl ?? BLANK_IMAGE_URL,
 				url: event.url,
 				subtitle: "",
-				startsAt: event.startTime,
+				startsAt: event.startsAt,
 				tier: (event.tier as TournamentTierNumber) ?? null,
 				membersPerTeam,
 				tentativeTier: event.tentativeTier ?? undefined,
@@ -397,7 +397,7 @@ export function tournamentToSidebarEvent(
 		name: t.name,
 		url: t.url,
 		logoUrl: t.logoUrl,
-		startTime: t.startTime,
+		startsAt: t.startsAt,
 		type: "tournament" as const,
 	};
 }
@@ -415,7 +415,7 @@ export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 					? `${href("/scrims")}?pendingRequestPostId=${s.id}`
 					: href("/scrims"),
 		logoUrl: s.opponentAvatarUrl ?? SCRIMS_ICON_URL,
-		startTime: s.at,
+		startsAt: s.startsAt,
 		type: "scrim" as const,
 		scrimStatus: s.status,
 	};

@@ -472,7 +472,7 @@ export function findAllPatrons() {
 		.select(["User.id", "User.discordId", "User.username", "User.patronTier"])
 		.where("User.patronTier", "is not", null)
 		.orderBy("User.patronTier", "desc")
-		.orderBy("User.patronSince", "asc")
+		.orderBy("User.patronStartedAt", "asc")
 		.execute();
 }
 
@@ -507,9 +507,9 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	return eb
 		.selectFrom("CalendarEventDate")
-		.select(({ fn }) => [fn.max("CalendarEventDate.startTime").as("startTime")])
+		.select(({ fn }) => [fn.max("CalendarEventDate.startsAt").as("startsAt")])
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
-		.as("startTime");
+		.as("startsAt");
 };
 
 const baseCalendarEventResultsQuery = (userId: number) =>
@@ -669,8 +669,8 @@ export function findResultsByUserId(
 
 	let query = calendarEventResultsQuery
 		.unionAll(tournamentResultsQuery)
-		.orderBy("startTime", "desc")
-		.$narrowType<{ startTime: NotNull }>();
+		.orderBy("startsAt", "desc")
+		.$narrowType<{ startsAt: NotNull }>();
 
 	if (limit !== undefined) {
 		query = query.limit(limit);
@@ -973,14 +973,14 @@ export async function inGameNameByUserId(userId: number) {
 	)?.inGameName;
 }
 
-export async function patronSinceByUserId(userId: number) {
+export async function patronStartedAtByUserId(userId: number) {
 	return (
 		await db
 			.selectFrom("User")
-			.select("User.patronSince")
+			.select("User.patronStartedAt")
 			.where("id", "=", userId)
 			.executeTakeFirst()
-	)?.patronSince;
+	)?.patronStartedAt;
 }
 
 export async function joinOrderByUserId(userId: number) {
@@ -1248,7 +1248,7 @@ export function updateOwnBuildSorting(buildSorting: BuildSort[] | null) {
 }
 
 export type UpdatePatronDataArgs = Array<
-	Pick<Tables["User"], "discordId" | "patronTier" | "patronSince">
+	Pick<Tables["User"], "discordId" | "patronTier" | "patronStartedAt">
 >;
 export function updatePatronData(users: UpdatePatronDataArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -1256,13 +1256,13 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 			.updateTable("User")
 			.set({
 				patronTier: null,
-				patronSince: null,
-				patronTill: null,
+				patronStartedAt: null,
+				patronExpiresAt: null,
 			})
 			.where((eb) =>
 				eb.or([
-					eb("patronTill", "<", dateToDatabaseTimestamp(new Date())),
-					eb("patronTill", "is", null),
+					eb("patronExpiresAt", "<", dateToDatabaseTimestamp(new Date())),
+					eb("patronExpiresAt", "is", null),
 				]),
 			)
 			.execute();
@@ -1272,8 +1272,8 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 				.updateTable("User")
 				.set({
 					patronTier: user.patronTier,
-					patronSince: user.patronSince,
-					patronTill: null,
+					patronStartedAt: user.patronStartedAt,
+					patronExpiresAt: null,
 				})
 				.where("User.discordId", "=", user.discordId)
 				.execute();

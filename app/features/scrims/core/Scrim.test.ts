@@ -108,14 +108,14 @@ describe("sideDisplayName", () => {
 
 describe("applyFilters", () => {
 	function createPostForFilters(
-		at: Date,
-		rangeEnd?: Date,
+		startsAt: Date,
+		rangeEndsAt?: Date,
 		divs?: { min: string; max: string },
 	): ScrimPost {
 		return {
 			id: 1,
-			at: dateToDatabaseTimestamp(at),
-			rangeEnd: rangeEnd ? dateToDatabaseTimestamp(rangeEnd) : null,
+			startsAt: dateToDatabaseTimestamp(startsAt),
+			rangeEndsAt: rangeEndsAt ? dateToDatabaseTimestamp(rangeEndsAt) : null,
 			divs: divs ? { min: divs.min as any, max: divs.max as any } : null,
 			users: [],
 			requests: [],

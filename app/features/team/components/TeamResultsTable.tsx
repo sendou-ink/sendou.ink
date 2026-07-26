@@ -44,7 +44,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 							</td>
 							<td className="whitespace-nowrap">
 								<LocaleTime
-									date={result.startTime}
+									date={result.startsAt}
 									options={{
 										day: "numeric",
 										month: "numeric",

@@ -5,7 +5,7 @@ import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 
 export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
-	const dateObj = databaseTimestampToDate(vod.youtubeDate);
+	const dateObj = databaseTimestampToDate(vod.youtubePublishedAt);
 
 	return {
 		title: vod.title,

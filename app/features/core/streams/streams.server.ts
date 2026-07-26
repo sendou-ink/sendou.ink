@@ -39,7 +39,7 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 			imageUrl: tournament.ctx.logoUrl,
 			url: tournamentStreamsPage(tournament.ctx.id),
 			subtitle: deriveCurrentRound(tournament),
-			startsAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
+			startsAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
 			tier: tournament.ctx.tier,
 			membersPerTeam: tournament.minMembersPerTeam,
 		});

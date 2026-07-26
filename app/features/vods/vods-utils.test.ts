@@ -223,7 +223,7 @@ describe("generateYoutubeTimestamps", () => {
 });
 
 describe("vodToVideoBeingAdded", () => {
-	// youtubeDate is stored as noon UTC of the chosen day (see
+	// youtubePublishedAt is stored as noon UTC of the chosen day (see
 	// dayMonthYearToDatabaseTimestamp), so reading the day/month/year back out
 	// must also use UTC. Force a timezone east of UTC+12 where local time has
 	// already rolled over to the next day, making the bug deterministic.
@@ -242,7 +242,7 @@ describe("vodToVideoBeingAdded", () => {
 			title: "Test VOD",
 			type: "TOURNAMENT",
 			youtubeId: "dQw4w9WgXcQ",
-			youtubeDate: dayMonthYearToDatabaseTimestamp(date),
+			youtubePublishedAt: dayMonthYearToDatabaseTimestamp(date),
 			submitterUserId: 1,
 			matches: [],
 		};

@@ -6248,7 +6248,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		mapPickingStyle: "TO",
 		hasRules: true,
 		name: "Low Ink December 2024",
-		startTime: 1734199200,
+		startsAt: 1734199200,
 		organization: {
 			id: 3,
 			name: "Inkling Performance Labs",

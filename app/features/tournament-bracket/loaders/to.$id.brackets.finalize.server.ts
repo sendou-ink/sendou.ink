@@ -60,7 +60,7 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 	);
 	invariant(results.length > 0, "No results found");
 
-	const season = Seasons.current(tournament.ctx.startTime)?.nth;
+	const season = Seasons.current(tournament.ctx.startsAt)?.nth;
 
 	const seedingSkillCountsFor = tournament.skillCountsFor;
 

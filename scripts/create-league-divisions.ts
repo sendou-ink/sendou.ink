@@ -75,7 +75,7 @@ async function main() {
 			name: `${tournament.ctx.name} - ${div.startsWith("Division") ? div : `Division ${div}`}`,
 			organizationId: tournament.ctx.organization?.id ?? null,
 			rules: tournament.ctx.rules,
-			startTimes: [dateToDatabaseTimestamp(tournament.ctx.startTime)],
+			startTimes: [dateToDatabaseTimestamp(tournament.ctx.startsAt)],
 			tags: null,
 			tournamentToCopyId: tournament.ctx.id,
 			avatarImgId: calendarEvent.avatarImgId ?? undefined,

@@ -261,7 +261,7 @@ export async function findResultsById(teamId: number) {
 			"results.participantCount",
 			"results.tournamentTeamId",
 			"CalendarEvent.name as tournamentName",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"Tournament.tier",
 			tournamentLogoOrNull(eb).as("logoUrl"),
 			jsonArrayFrom(
@@ -285,7 +285,7 @@ export async function findResultsById(teamId: number) {
 					.select((eb) => commonUserSelect(eb)),
 			).as("participants"),
 		])
-		.orderBy("CalendarEventDate.startTime", "desc")
+		.orderBy("CalendarEventDate.startsAt", "desc")
 		.execute();
 
 	const members = await allMembersById(teamId);

@@ -485,11 +485,11 @@ function EventsList({
 	const events = filteredByMonth
 		? data.events.filter(
 				(event) =>
-					databaseTimestampToDate(event.startTime).getMonth() === data.month,
+					databaseTimestampToDate(event.startsAt).getMonth() === data.month,
 			)
 		: data.events;
-	const pastEvents = events.filter((event) => event.startTime < now);
-	const upcomingEvents = events.filter((event) => event.startTime >= now);
+	const pastEvents = events.filter((event) => event.startsAt < now);
+	const upcomingEvents = events.filter((event) => event.startsAt >= now);
 
 	return (
 		<div className="w-full stack xs">
@@ -540,7 +540,7 @@ function EventInfo({
 				<div>
 					<div>{event.name}</div>
 					<LocaleTime
-						date={event.startTime}
+						date={event.startsAt}
 						options={{
 							day: "numeric",
 							month: "numeric",

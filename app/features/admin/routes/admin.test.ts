@@ -35,7 +35,7 @@ const voteArgs = ({
 	authorId,
 	month,
 	tier: 1,
-	validAfter: dateToDatabaseTimestamp(new Date("2021-12-11T00:00:00.000Z")),
+	becomesValidAt: dateToDatabaseTimestamp(new Date("2021-12-11T00:00:00.000Z")),
 	year,
 });
 

@@ -37,7 +37,7 @@ export async function allPlusTiersFromLatestVoting() {
 	const latestVoting = await db
 		.selectFrom("PlusVote")
 		.select(["PlusVote.year", "PlusVote.month"])
-		.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
+		.where("PlusVote.becomesValidAt", "<", sql<number>`strftime('%s', 'now')`)
 		.orderBy("PlusVote.year", "desc")
 		.orderBy("PlusVote.month", "desc")
 		.limit(1)
@@ -201,7 +201,13 @@ export async function hasVoted(args: {
 
 export type UpsertManyPlusVotesArgs = Pick<
 	TablesInsertable["PlusVote"],
-	"month" | "year" | "tier" | "authorId" | "votedId" | "score" | "validAfter"
+	| "month"
+	| "year"
+	| "tier"
+	| "authorId"
+	| "votedId"
+	| "score"
+	| "becomesValidAt"
 >[];
 export function upsertMany(votes: UpsertManyPlusVotesArgs) {
 	const firstVote = votes[0];

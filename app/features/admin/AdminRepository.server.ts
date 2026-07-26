@@ -291,15 +291,15 @@ export async function linkUserAndPlayer({
 export function forcePatron(args: {
 	id: number;
 	patronTier: Tables["User"]["patronTier"];
-	patronSince: Date;
-	patronTill: Date;
+	patronStartedAt: Date;
+	patronExpiresAt: Date;
 }) {
 	return db
 		.updateTable("User")
 		.set({
 			patronTier: args.patronTier,
-			patronSince: dateToDatabaseTimestamp(args.patronSince),
-			patronTill: dateToDatabaseTimestamp(args.patronTill),
+			patronStartedAt: dateToDatabaseTimestamp(args.patronStartedAt),
+			patronExpiresAt: dateToDatabaseTimestamp(args.patronExpiresAt),
 		})
 		.where("User.id", "=", args.id)
 		.execute();

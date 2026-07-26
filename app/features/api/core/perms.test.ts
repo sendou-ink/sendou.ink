@@ -46,8 +46,8 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		await AdminRepository.forcePatron({
 			id: 1,
 			patronTier: 2,
-			patronSince: new Date(),
-			patronTill: add(new Date(), { months: 3 }),
+			patronStartedAt: new Date(),
+			patronExpiresAt: add(new Date(), { months: 3 }),
 		});
 
 		await ApiRepository.generateToken(1, "read");
@@ -64,8 +64,8 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		await AdminRepository.forcePatron({
 			id: 1,
 			patronTier: 1,
-			patronSince: new Date(),
-			patronTill: add(new Date(), { months: 3 }),
+			patronStartedAt: new Date(),
+			patronExpiresAt: add(new Date(), { months: 3 }),
 		});
 
 		await ApiRepository.generateToken(1, "read");

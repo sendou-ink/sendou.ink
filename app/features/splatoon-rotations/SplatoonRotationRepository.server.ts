@@ -36,9 +36,9 @@ function queryAll() {
 			"SplatoonRotation.mode",
 			"SplatoonRotation.stageId1",
 			"SplatoonRotation.stageId2",
-			"SplatoonRotation.startTime",
-			"SplatoonRotation.endTime",
+			"SplatoonRotation.startsAt",
+			"SplatoonRotation.endsAt",
 		])
-		.orderBy("SplatoonRotation.startTime", "asc")
+		.orderBy("SplatoonRotation.startsAt", "asc")
 		.execute();
 }

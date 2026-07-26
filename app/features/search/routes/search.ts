@@ -98,7 +98,7 @@ async function searchByType({
 				id: t.id,
 				name: t.name,
 				logoUrl: t.logoUrl,
-				startTime: t.startTime,
+				startsAt: t.startsAt,
 			}));
 		}
 	}

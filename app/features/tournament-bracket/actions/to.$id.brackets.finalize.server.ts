@@ -218,7 +218,7 @@ function resolveFinalizationSeason(tournament: Tournament) {
 	// league divisions might be running for many weeks
 	const attributionDate = tournament.isLeagueDivision
 		? new Date()
-		: tournament.ctx.startTime;
+		: tournament.ctx.startsAt;
 	const season = Seasons.current(attributionDate);
 	if (!season) return undefined;
 

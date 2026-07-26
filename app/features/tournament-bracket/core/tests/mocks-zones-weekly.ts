@@ -303,7 +303,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		parentTournamentId: null,
 		parentTournamentName: null,
 		name: "Zones Weekly 38",
-		startTime: 1734685200,
+		startsAt: 1734685200,
 		isFinalized: 0,
 		organization: null,
 		logoUrl: "tournament-logo-hfX5gzVyrt5QCV8fiQA4n-1716906622859.webp",

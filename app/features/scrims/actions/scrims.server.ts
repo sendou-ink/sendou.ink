@@ -74,17 +74,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				errorToastIfFalsy(canSeePost, "Post not found");
 			}
 
-			if (post.rangeEnd && !data.at) {
+			if (post.rangeEndsAt && !data.at) {
 				return actionError<typeof newRequestSchema>({
 					msg: "Please select a time for the scrim",
 					field: "at",
 				});
 			}
 
-			if (post.rangeEnd && data.at) {
+			if (post.rangeEndsAt && data.at) {
 				const validTimeOptions = generateTimeOptions(
-					databaseTimestampToDate(post.at),
-					databaseTimestampToDate(post.rangeEnd),
+					databaseTimestampToDate(post.startsAt),
+					databaseTimestampToDate(post.rangeEndsAt),
 				);
 				const requestTime = data.at.getTime();
 
@@ -101,7 +101,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					scrimPostId: data.scrimPostId,
 					teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
 					message: data.message,
-					at: data.at ? dateToDatabaseTimestamp(data.at) : null,
+					startsAt: data.at ? dateToDatabaseTimestamp(data.at) : null,
 					users: (
 						await usersListForPost({ authorId: user.id, from: data.from })
 					).map((userId) => ({
@@ -154,15 +154,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				ChatSystemMessage.setMetadata({
 					chatCode: fullPost.chatCode,
 					header: datePlaceholder(
-						databaseTimestampToDate(request.at ?? post.at),
+						databaseTimestampToDate(request.startsAt ?? post.startsAt),
 					),
 					subtitle: "Scrim",
 					url: scrimPage(post.id),
 					imageUrl: `${navIconUrl("scrims")}.avif`,
 					participantUserIds: Scrim.participantIdsListFromAccepted(fullPost),
-					expiresAt: add(databaseTimestampToDate(request.at ?? post.at), {
-						hours: 3,
-					}),
+					expiresAt: add(
+						databaseTimestampToDate(request.startsAt ?? post.startsAt),
+						{
+							hours: 3,
+						},
+					),
 				});
 			}
 
@@ -218,7 +221,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 							defaultSeenUserIds: [user.id],
 							notification: {
 								type: "SCRIM_AUTO_DELETED",
-								meta: { at: removed.at },
+								meta: { at: removed.startsAt },
 							},
 						});
 					}

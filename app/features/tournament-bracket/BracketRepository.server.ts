@@ -162,7 +162,6 @@ export function insertBracket(args: {
 				type: stageInput.type,
 				settings: JSON.stringify(stageInput.settings),
 				number: kyselySql<number>`(select coalesce(max("number"), 0) + 1 from "TournamentStage" where "tournamentId" = ${args.tournamentId})`,
-				createdAt: databaseTimestampNow(),
 			})
 			.returning(["id"])
 			.executeTakeFirstOrThrow();

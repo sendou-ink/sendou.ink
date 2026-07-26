@@ -37,7 +37,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const friendCodeVisibilityDays = tournament.ctx.parentTournamentId ? 120 : 30;
 	const tournamentStartedRecently = isAfter(
-		databaseTimestampToDate(tournament.ctx.startTime),
+		databaseTimestampToDate(tournament.ctx.startsAt),
 		subDays(new Date(), friendCodeVisibilityDays),
 	);
 	const isTournamentAdmin =
@@ -73,7 +73,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const showVods =
 		tournament.ctx.isFinalized &&
 		isAfter(
-			databaseTimestampToDate(tournament.ctx.startTime),
+			databaseTimestampToDate(tournament.ctx.startsAt),
 			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
 

@@ -1014,8 +1014,8 @@ export function buildCases(fx: Fixtures): {
 	add("UserRepository.inGameNameByUserId", fx.heavyUser, (user) =>
 		UserRepository.inGameNameByUserId(user.id),
 	);
-	add("UserRepository.patronSinceByUserId", fx.heavyUser, (user) =>
-		UserRepository.patronSinceByUserId(user.id),
+	add("UserRepository.patronStartedAtByUserId", fx.heavyUser, (user) =>
+		UserRepository.patronStartedAtByUserId(user.id),
 	);
 	add("UserRepository.joinOrderByUserId", fx.heavyUser, (user) =>
 		UserRepository.joinOrderByUserId(user.id),

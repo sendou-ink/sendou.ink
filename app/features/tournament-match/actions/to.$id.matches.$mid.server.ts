@@ -767,7 +767,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournamentMatchId: matchId,
 				mapIndex: data.mapIndex,
 				weaponSplId: data.weaponSplId,
-				createdAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
+				createdAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
 			});
 
 			break;

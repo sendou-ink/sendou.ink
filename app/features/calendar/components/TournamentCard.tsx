@@ -36,7 +36,7 @@ export function TournamentCard({
 	const isHostedOnSendouInk = typeof tournament.isRanked === "boolean";
 
 	const startDate = isShowcase
-		? databaseTimestampToDate(tournament.startTime)
+		? databaseTimestampToDate(tournament.startsAt)
 		: null;
 
 	return (

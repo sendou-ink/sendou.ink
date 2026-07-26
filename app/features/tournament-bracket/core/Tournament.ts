@@ -66,7 +66,7 @@ export class Tournament {
 				? // after the start the teams who did not check-in are irrelevant
 					teamsInSeedOrder.filter((team) => team.checkIns.length > 0)
 				: teamsInSeedOrder,
-			startTime: databaseTimestampToDate(ctx.startTime),
+			startsAt: databaseTimestampToDate(ctx.startsAt),
 		};
 
 		this.initBrackets(data);
@@ -477,7 +477,7 @@ export class Tournament {
 	get ranked() {
 		return tournamentIsRanked({
 			isSetAsRanked: this.ctx.settings.isRanked,
-			startTime: this.ctx.startTime,
+			startsAt: this.ctx.startsAt,
 			minMembersPerTeam: this.minMembersPerTeam,
 			isTest: this.isTest,
 		});
@@ -726,7 +726,7 @@ export class Tournament {
 		return (
 			!this.ctx.settings.regClosesAt ||
 			this.ctx.settings.regClosesAt ===
-				dateToDatabaseTimestamp(this.ctx.startTime) ||
+				dateToDatabaseTimestamp(this.ctx.startsAt) ||
 			this.registrationOpen
 		);
 	}
@@ -753,7 +753,7 @@ export class Tournament {
 
 	/** Has the regular check-in (check-in for the whole tournament) ended? */
 	get regularCheckInHasEnded() {
-		return this.ctx.startTime < new Date();
+		return this.ctx.startsAt < new Date();
 	}
 
 	/** Has the regular check-in (check-in for the whole tournament) started? Note it is also considered started if it has ended. */
@@ -763,21 +763,21 @@ export class Tournament {
 
 	/** Date when the regular check-in is scheduled to start. */
 	get regularCheckInStartsAt() {
-		const result = new Date(this.ctx.startTime);
+		const result = new Date(this.ctx.startsAt);
 		result.setMinutes(result.getMinutes() - 60);
 		return result;
 	}
 
 	/** Date when the regular check-in is scheduled to start. */
 	get regularCheckInEndsAt() {
-		return this.ctx.startTime;
+		return this.ctx.startsAt;
 	}
 
 	/** Date when the tournament registration is scheduled to end. This can be set by the organizer. */
 	get registrationClosesAt() {
 		return this.ctx.settings.regClosesAt
 			? databaseTimestampToDate(this.ctx.settings.regClosesAt)
-			: this.ctx.startTime;
+			: this.ctx.startsAt;
 	}
 
 	/** Is the tournament registration open at this time? */
@@ -789,11 +789,11 @@ export class Tournament {
 
 	/** Can participants submit/undo their own weapon reports right now?
 	 * Always open while the tournament is running; once finalized it stays open only for tournaments
-	 * whose startTime is inside the current-season-plus-adjacent-off-season window. */
+	 * whose start time is inside the current-season-plus-adjacent-off-season window. */
 	get weaponReportingOpen() {
 		if (!this.ctx.isFinalized) return true;
 		return tournamentInWeaponReportingWindow({
-			tournamentStartTime: this.ctx.startTime,
+			tournamentStartTime: this.ctx.startsAt,
 		});
 	}
 

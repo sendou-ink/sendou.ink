@@ -154,8 +154,8 @@ describe("UserRepository", () => {
 			await AdminRepository.forcePatron({
 				id,
 				patronTier: 1,
-				patronSince: now,
-				patronTill: oneYearFromNow,
+				patronStartedAt: now,
+				patronExpiresAt: oneYearFromNow,
 			});
 
 			const user = await UserRepository.findLeanById(id);
@@ -178,8 +178,8 @@ describe("UserRepository", () => {
 			await AdminRepository.forcePatron({
 				id,
 				patronTier: 2,
-				patronSince: now,
-				patronTill: oneYearFromNow,
+				patronStartedAt: now,
+				patronExpiresAt: oneYearFromNow,
 			});
 
 			const user = await UserRepository.findLeanById(id);
@@ -305,8 +305,8 @@ describe("UserRepository", () => {
 			await AdminRepository.forcePatron({
 				id,
 				patronTier: 2,
-				patronSince: now,
-				patronTill: oneYearFromNow,
+				patronStartedAt: now,
+				patronExpiresAt: oneYearFromNow,
 			});
 
 			await AdminRepository.makeArtistByUserId(id);

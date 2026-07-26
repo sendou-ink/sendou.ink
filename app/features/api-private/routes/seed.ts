@@ -88,7 +88,7 @@ function adjustSeedDatesToCurrent(variation: SeedVariation) {
 			REG_OPEN_TOURNAMENT_IDS.includes(tournamentId);
 
 		sql
-			.prepare(`UPDATE "CalendarEventDate" SET startTime = ? WHERE eventId = ?`)
+			.prepare(`UPDATE "CalendarEventDate" SET startsAt = ? WHERE eventId = ?`)
 			.run(isRegOpen ? halfAnHourFromNow : oneHourAgo, id);
 	}
 
@@ -103,17 +103,17 @@ function adjustSeedDatesToCurrent(variation: SeedVariation) {
 	const scrimTimeOffset = now - SEED_REFERENCE_TIMESTAMP;
 	sql
 		.prepare(
-			`UPDATE "ScrimPost" SET "at" = "at" + ?, "createdAt" = "createdAt" + ?`,
+			`UPDATE "ScrimPost" SET "startsAt" = "startsAt" + ?, "createdAt" = "createdAt" + ?`,
 		)
 		.run(scrimTimeOffset, scrimTimeOffset);
 	sql
 		.prepare(
-			`UPDATE "ScrimPost" SET "rangeEnd" = "rangeEnd" + ? WHERE "rangeEnd" IS NOT NULL`,
+			`UPDATE "ScrimPost" SET "rangeEndsAt" = "rangeEndsAt" + ? WHERE "rangeEndsAt" IS NOT NULL`,
 		)
 		.run(scrimTimeOffset);
 	sql
 		.prepare(
-			`UPDATE "ScrimPostRequest" SET "at" = "at" + ? WHERE "at" IS NOT NULL`,
+			`UPDATE "ScrimPostRequest" SET "startsAt" = "startsAt" + ? WHERE "startsAt" IS NOT NULL`,
 		)
 		.run(scrimTimeOffset);
 }

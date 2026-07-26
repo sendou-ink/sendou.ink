@@ -1752,7 +1752,7 @@ export const SWIM_OR_SINK_167 = (
 		mapPickingStyle: "TO",
 		hasRules: true,
 		name: "Swim or Sink 167",
-		startTime: 1730941200,
+		startsAt: 1730941200,
 		organization: {
 			id: 3,
 			name: "Inkling Performance Labs",

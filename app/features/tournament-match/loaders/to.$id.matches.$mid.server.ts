@@ -199,7 +199,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			? true
 			: !chatAccessible({
 					expiresAfterDays: tournament.isLeagueDivision ? 30 : 7,
-					comparedTo: tournament.ctx.startTime,
+					comparedTo: tournament.ctx.startsAt,
 				});
 
 	const visibleChatCode =

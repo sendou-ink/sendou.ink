@@ -52,7 +52,7 @@ const regOpenTournamentTeamsByJoinedUserId = (userId: number) =>
 		.where(
 			sql`coalesce(
       "Tournament"."settings" ->> 'regClosesAt', 
-      "CalendarEventDate"."startTime"
+      "CalendarEventDate"."startsAt"
     )`,
 			">",
 			databaseTimestampNow(),
@@ -375,7 +375,7 @@ async function registrationClosedNow(
 		.select(
 			sql<number>`coalesce(
 				"Tournament"."settings" ->> 'regClosesAt',
-				min("CalendarEventDate"."startTime")
+				min("CalendarEventDate"."startsAt")
 			)`.as("regClosesAt"),
 		)
 		.where("Tournament.id", "=", tournamentId)

@@ -12,7 +12,7 @@ const RETENTION_SECONDS = 24 * 60 * 60;
 export function insert(
 	args: Pick<
 		TablesInsertable["ExternalStream"],
-		"name" | "url" | "avatarImgId" | "startTime"
+		"name" | "url" | "avatarImgId" | "startsAt"
 	>,
 ) {
 	return db.insertInto("ExternalStream").values(args).execute();
@@ -36,12 +36,12 @@ export function all() {
 			"ExternalStream.id",
 			"ExternalStream.name",
 			"ExternalStream.url",
-			"ExternalStream.startTime",
+			"ExternalStream.startsAt",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
 			),
 		])
-		.orderBy("ExternalStream.startTime", "asc")
+		.orderBy("ExternalStream.startsAt", "asc")
 		.execute();
 }
 
@@ -58,13 +58,13 @@ export function forSidebar() {
 			"ExternalStream.id",
 			"ExternalStream.name",
 			"ExternalStream.url",
-			"ExternalStream.startTime",
+			"ExternalStream.startsAt",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
 			),
 		])
 		.where(
-			"ExternalStream.startTime",
+			"ExternalStream.startsAt",
 			">=",
 			databaseTimestampNow() - SIDEBAR_VISIBLE_SECONDS,
 		)
@@ -75,6 +75,6 @@ export function forSidebar() {
 export function deleteOld() {
 	return db
 		.deleteFrom("ExternalStream")
-		.where("startTime", "<", databaseTimestampNow() - RETENTION_SECONDS)
+		.where("startsAt", "<", databaseTimestampNow() - RETENTION_SECONDS)
 		.executeTakeFirst();
 }

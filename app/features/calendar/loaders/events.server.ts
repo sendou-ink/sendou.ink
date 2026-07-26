@@ -29,19 +29,19 @@ export const loader = async () => {
 
 	const registered = tournamentsData.participatingFor
 		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startTime - b.startTime);
+		.sort((a, b) => a.startsAt - b.startsAt);
 
 	const hosting = tournamentsData.organizingFor
 		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startTime - b.startTime);
+		.sort((a, b) => a.startsAt - b.startsAt);
 
 	const scrims = scrimsData
 		.map(scrimToSidebarEvent)
-		.sort((a, b) => a.startTime - b.startTime);
+		.sort((a, b) => a.startsAt - b.startsAt);
 
 	const saved = savedTournaments
 		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startTime - b.startTime);
+		.sort((a, b) => a.startsAt - b.startsAt);
 
 	const userOrganizationIds = new Set(userOrganizations.map((org) => org.id));
 	const organization = upcomingTournaments
@@ -52,7 +52,7 @@ export const loader = async () => {
 				userOrganizationIds.has(tournament.organizationId),
 		)
 		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startTime - b.startTime);
+		.sort((a, b) => a.startsAt - b.startsAt);
 
 	return { registered, hosting, scrims, saved, organization };
 };
