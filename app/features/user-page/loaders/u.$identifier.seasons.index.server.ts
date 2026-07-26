@@ -42,7 +42,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 				page,
 			}),
 			currentPage: page,
-			pages: await SQMatchRepository.seasonResultPagesByUserId({
+			pagesCount: await SQMatchRepository.seasonResultPagesByUserId({
 				season,
 				userId: user.id,
 			}),

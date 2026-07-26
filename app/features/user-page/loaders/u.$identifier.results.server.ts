@@ -4,8 +4,8 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	notFoundIfNullish,
+	paginate,
 	parseSafeSearchParams,
-	redirectIfPageOutOfBounds,
 } from "~/utils/remix.server";
 import {
 	HIGHLIGHTS_RESULTS_MAX,
@@ -60,15 +60,10 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		}),
 	]);
 
-	const pagesCount = Math.ceil(totalCount / RESULTS_PER_PAGE);
-
-	redirectIfPageOutOfBounds({ url, page, pagesCount });
-
 	return {
 		results: {
 			value: results,
-			currentPage: page,
-			pages: pagesCount,
+			...paginate({ url, page, pageSize: RESULTS_PER_PAGE, totalCount }),
 		},
 		hasHighlightedResults,
 	};

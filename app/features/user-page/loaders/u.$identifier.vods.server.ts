@@ -5,8 +5,8 @@ import { VODS_PAGE_BATCH_SIZE } from "~/features/vods/vods-constants";
 import { userVodsSearchParamsSchema } from "~/features/vods/vods-schemas";
 import {
 	notFoundIfNullish,
+	paginate,
 	parseSearchParams,
-	redirectIfPageOutOfBounds,
 } from "~/utils/remix.server";
 
 export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
@@ -28,13 +28,8 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		VodRepository.countVods({ userId }),
 	]);
 
-	const pagesCount = Math.max(1, Math.ceil(totalCount / VODS_PAGE_BATCH_SIZE));
-
-	redirectIfPageOutOfBounds({ url, page, pagesCount });
-
 	return {
 		vods,
-		currentPage: page,
-		pagesCount,
+		...paginate({ url, page, pageSize: VODS_PAGE_BATCH_SIZE, totalCount }),
 	};
 };

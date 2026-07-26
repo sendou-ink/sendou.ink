@@ -6,7 +6,6 @@ import {
 	type ShouldRevalidateFunction,
 	useLoaderData,
 	useMatches,
-	useSearchParams,
 } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { WeaponImage } from "~/components/Image";
@@ -16,6 +15,7 @@ import type {
 	SeasonGroupMatch,
 	SeasonTournamentResult,
 } from "~/features/sendouq-match/SQMatchRepository.server";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
@@ -57,22 +57,20 @@ export default function UserSeasonsSets() {
 		);
 	}
 
-	return <Results results={data.results} seasonViewed={data.season} />;
+	return <Results results={data.results} />;
 }
 
 function Results({
-	seasonViewed,
 	results,
 }: {
-	seasonViewed: number;
 	results: UserSeasonsSetsLoaderData["results"];
 }) {
-	const [, setSearchParams] = useSearchParams();
 	const ref = React.useRef<HTMLDivElement>(null);
 
-	const setPage = (page: number) => {
-		setSearchParams({ page: String(page), season: String(seasonViewed) });
-	};
+	const pagination = useSearchParamPagination({
+		currentPage: results.currentPage,
+		pagesCount: results.pagesCount,
+	});
 
 	React.useEffect(() => {
 		if (results.currentPage === 1) return;
@@ -117,15 +115,7 @@ function Results({
 						);
 					})}
 				</div>
-				{results.pages > 1 ? (
-					<Pagination
-						currentPage={results.currentPage}
-						pagesCount={results.pages}
-						nextPage={() => setPage(results.currentPage + 1)}
-						previousPage={() => setPage(results.currentPage - 1)}
-						setPage={(page) => setPage(page)}
-					/>
-				) : null}
+				{results.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 			</div>
 		</div>
 	);

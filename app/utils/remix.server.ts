@@ -57,25 +57,33 @@ export function parseSearchParams<T extends z.ZodTypeAny>({
 }
 
 /**
+ * Resolves the pagination state of a loader whose current page comes from the
+ * `page` search param. `pagesCount` is at minimum 1 so empty result sets stay
+ * on page 1.
+ *
  * If the requested `page` exceeds `pagesCount`, throws a redirect to the last
- * available page (preserving other search params). `pagesCount` is normalized
- * to a minimum of 1 so empty result sets stay on page 1.
+ * available page (preserving other search params).
  */
-export function redirectIfPageOutOfBounds({
+export function paginate({
 	url,
 	page,
-	pagesCount,
+	pageSize,
+	totalCount,
 }: {
 	url: URL;
 	page: number;
-	pagesCount: number;
-}): void {
-	const safePagesCount = Math.max(1, pagesCount);
-	if (page <= safePagesCount) return;
+	pageSize: number;
+	totalCount: number;
+}): { currentPage: number; pagesCount: number } {
+	const pagesCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
-	const searchParams = new URLSearchParams(url.searchParams);
-	searchParams.set("page", String(safePagesCount));
-	throw redirect(`${url.pathname}?${searchParams.toString()}`);
+	if (page > pagesCount) {
+		const searchParams = new URLSearchParams(url.searchParams);
+		searchParams.set("page", String(pagesCount));
+		throw redirect(`${url.pathname}?${searchParams.toString()}`);
+	}
+
+	return { currentPage: page, pagesCount };
 }
 
 export function parseSafeSearchParams<T extends z.ZodTypeAny>({

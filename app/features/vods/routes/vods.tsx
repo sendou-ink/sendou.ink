@@ -5,6 +5,7 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
@@ -50,12 +51,10 @@ export default function VodsSearchPage() {
 		});
 	};
 
-	const setPage = (page: number) => {
-		setSearchParams((params) => {
-			params.set("page", String(page));
-			return params;
-		});
-	};
+	const pagination = useSearchParamPagination({
+		currentPage: data.currentPage,
+		pagesCount: data.pagesCount,
+	});
 
 	return (
 		<Main className="stack lg" bigger>
@@ -67,15 +66,7 @@ export default function VodsSearchPage() {
 							<VodListing key={vod.id} vod={vod} />
 						))}
 					</div>
-					{data.pagesCount > 1 ? (
-						<Pagination
-							currentPage={data.currentPage}
-							pagesCount={data.pagesCount}
-							nextPage={() => setPage(data.currentPage + 1)}
-							previousPage={() => setPage(data.currentPage - 1)}
-							setPage={setPage}
-						/>
-					) : null}
+					{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 				</>
 			) : (
 				<div className="text-lg text-lighter">{t("vods:noVods")}</div>
