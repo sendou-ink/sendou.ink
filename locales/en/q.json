@@ -174,7 +174,7 @@
 	"match.timeline.loss": "Loss",
 	"match.timeline.out": "Out",
 	"match.timeline.in": "In",
-	"match.timeline.live": "LIVE",
+	"match.timeline.ongoing": "ONGOING",
 	"match.timeline.picked": "Picked",
 	"match.timeline.explainer.picked": "Map picked by this team",
 	"match.timeline.explainer.pick": "Map or mode picked",

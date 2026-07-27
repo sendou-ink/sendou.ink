@@ -174,7 +174,7 @@
 	"match.timeline.loss": "负",
 	"match.timeline.out": "下场",
 	"match.timeline.in": "上场",
-	"match.timeline.live": "直播中",
+	"match.timeline.ongoing": "",
 	"match.timeline.picked": "已选",
 	"match.timeline.explainer.picked": "此场地由该队伍选择",
 	"match.timeline.explainer.pick": "已选场地或模式",

@@ -1049,6 +1049,7 @@ export class Tournament {
 						type: "MATCH",
 						matchId: match.id,
 						opponent: otherTeam.name,
+						opponentId: otherTeam.id,
 					} as const;
 				}
 
