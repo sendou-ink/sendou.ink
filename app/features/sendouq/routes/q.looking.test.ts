@@ -6,37 +6,20 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import { dbReset, withUserId, wrappedAction } from "~/utils/Test";
 import { refreshSendouQInstance } from "../core/SendouQ.server";
+import { FULL_GROUP_SIZE } from "../q-constants";
 import type { lookingSchema } from "../q-schemas.server";
+import * as SQGroupRepository from "../SQGroupRepository.server";
 import { action as rawLookingAction } from "./q.looking";
-
-const createGroup = async (userIds: number[]) => {
-	const group = await db
-		.insertInto("Group")
-		.values({
-			inviteCode: "1234",
-			status: "ACTIVE",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	await db
-		.insertInto("GroupMember")
-		.values(
-			userIds.map((userId, i) => ({
-				groupId: group.id,
-				userId,
-				role: i === 0 ? "OWNER" : "REGULAR",
-			})),
-		)
-		.execute();
-};
 
 const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
 	{ mode: "SZ", preference: "PREFER" },
@@ -46,63 +29,77 @@ const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
 ];
 
 const prepareGroups = async () => {
-	await dbInsertUsers(8);
-	await createGroup([1, 2, 3, 4]);
-	await createGroup([5, 6, 7, 8]);
-	await db
-		.insertInto("GroupLike")
-		.values({ likerGroupId: 2, targetGroupId: 1 })
-		.execute();
+	const owner = await UserFactory.createAdmin();
+	const others = await UserFactory.createMany(FULL_GROUP_SIZE * 2 - 1);
 
-	await insertMapModePreferences(1, {
+	const ownGroup = await SQGroupFactory.create({
+		userId: owner.id,
+		additionalMemberUserIds: others
+			.slice(0, FULL_GROUP_SIZE - 1)
+			.map((user) => user.id),
+	});
+
+	const [theirOwner, ...theirMembers] = others.slice(FULL_GROUP_SIZE - 1);
+	const theirGroup = await SQGroupFactory.create({
+		userId: theirOwner.id,
+		additionalMemberUserIds: theirMembers.map((user) => user.id),
+	});
+
+	await SQGroupRepository.insertLike({
+		likerGroupId: theirGroup.id,
+		targetGroupId: ownGroup.id,
+	});
+
+	await setMapModePreferences(owner.id, {
 		modes: SZ_ONLY_PREFERENCE,
 		pool: [{ mode: "SZ", stages: [...stageIds].slice(0, 7) }],
 	});
 
-	await insertMapModePreferences(5, {
+	await setMapModePreferences(theirOwner.id, {
 		modes: SZ_ONLY_PREFERENCE,
 		pool: [
 			{ mode: "SZ", stages: [...stageIds].slice(0, 20).reverse().slice(0, 7) },
 		],
 	});
+
+	return { owner, ownGroup, theirGroup, teammate: others[0] };
 };
 
-const insertMapModePreferences = (
+const setMapModePreferences = (
 	userId: number,
-	preferences: UserMapModePreferences,
-) => {
-	return db
-		.updateTable("User")
-		.set({
-			mapModePreferences: JSON.stringify(preferences),
-		})
-		.where("User.id", "=", userId)
-		.execute();
-};
+	mapModePreferences: UserMapModePreferences,
+) =>
+	withUserId(userId, () =>
+		MatchProfileRepository.updateOwnMatchProfile({
+			mapModePreferences,
+			vc: "NO",
+			languages: [],
+			weaponPool: [],
+			noScreen: 0,
+		}),
+	);
 
 const lookingAction = wrappedAction<typeof lookingSchema>({
 	action: rawLookingAction,
 });
 
-const createMatch = () =>
-	lookingAction(
-		{
-			_action: "MATCH_UP",
-			targetGroupId: 2,
-		},
-		{ user: "admin" },
-	);
-
 const findMatch = () =>
-	db
-		.selectFrom("GroupMatch")
-		.selectAll()
-		.where("id", "=", 1)
-		.executeTakeFirstOrThrow();
+	db.selectFrom("GroupMatch").selectAll().executeTakeFirstOrThrow();
 
 describe("SendouQ match creation", () => {
+	let groups: Awaited<ReturnType<typeof prepareGroups>>;
+
+	const createMatch = () =>
+		lookingAction(
+			{
+				_action: "MATCH_UP",
+				targetGroupId: groups.theirGroup.id,
+			},
+			{ user: "admin" },
+		);
+
 	beforeEach(async () => {
-		await prepareGroups();
+		groups = await prepareGroups();
 		await refreshSendouQInstance();
 	});
 
@@ -124,7 +121,7 @@ describe("SendouQ match creation", () => {
 	});
 
 	test("doesn't add pool where mode is avoided", async () => {
-		await insertMapModePreferences(1, {
+		await setMapModePreferences(groups.owner.id, {
 			modes: [
 				{ mode: "SZ", preference: "AVOID" },
 				{ mode: "TC", preference: "PREFER" },
@@ -148,7 +145,9 @@ describe("SendouQ match creation", () => {
 
 		expect(pools.length).toBe(2);
 		expect(
-			pools.find((p) => p.userId === 1)!.pool.every((p) => p.mode !== "SZ"),
+			pools
+				.find((p) => p.userId === groups.owner.id)!
+				.pool.every((p) => p.mode !== "SZ"),
 		).toBe(true);
 	});
 
@@ -163,7 +162,7 @@ describe("SendouQ match creation", () => {
 	});
 
 	test("adds mode preferences to memento including neutral", async () => {
-		await insertMapModePreferences(2, {
+		await setMapModePreferences(groups.teammate.id, {
 			modes: [{ mode: "TC", preference: "PREFER" }],
 			pool: [],
 		});

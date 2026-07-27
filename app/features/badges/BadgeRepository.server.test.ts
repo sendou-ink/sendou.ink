@@ -1,12 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbReset } from "~/utils/Test";
 import * as BadgeRepository from "./BadgeRepository.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 
 describe("syncXPBadges", () => {
+	let user: { id: number };
+
 	beforeEach(async () => {
-		await dbInsertUsers(3);
+		user = await UserFactory.create();
 		await insertXPBadges();
 	});
 
@@ -15,17 +18,25 @@ describe("syncXPBadges", () => {
 	});
 
 	test("assigns badge to user with qualifying peakXp", async () => {
-		await insertSplatoonPlayer({ splId: "abc123", userId: 1, peakXp: 3000 });
+		await insertSplatoonPlayer({
+			splId: "abc123",
+			userId: user.id,
+			peakXp: 3000,
+		});
 
 		await BadgeRepository.syncXPBadges();
 
 		const badge = await findBadgeByCode("3000");
 		expect(badge?.owners).toHaveLength(1);
-		expect(badge?.owners[0].id).toBe(1);
+		expect(badge?.owners[0].id).toBe(user.id);
 	});
 
 	test("assigns highest qualifying badge when peakXp exceeds threshold", async () => {
-		await insertSplatoonPlayer({ splId: "abc123", userId: 1, peakXp: 3250 });
+		await insertSplatoonPlayer({
+			splId: "abc123",
+			userId: user.id,
+			peakXp: 3250,
+		});
 
 		await BadgeRepository.syncXPBadges();
 
@@ -37,7 +48,11 @@ describe("syncXPBadges", () => {
 	});
 
 	test("does not assign badge when peakXp is below minimum threshold", async () => {
-		await insertSplatoonPlayer({ splId: "abc123", userId: 1, peakXp: 2500 });
+		await insertSplatoonPlayer({
+			splId: "abc123",
+			userId: user.id,
+			peakXp: 2500,
+		});
 
 		await BadgeRepository.syncXPBadges();
 

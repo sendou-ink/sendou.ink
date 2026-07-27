@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { dbReset, wrappedAction } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import type { createTeamSchema } from "../team-schemas";
 
@@ -10,7 +11,7 @@ const action = wrappedAction<typeof createTeamSchema>({
 
 describe("team creation", () => {
 	beforeEach(async () => {
-		await dbInsertUsers();
+		await UserFactory.createRegular();
 	});
 	afterEach(async () => {
 		await dbReset();

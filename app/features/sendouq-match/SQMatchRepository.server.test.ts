@@ -1,65 +1,39 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
+import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
-import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { dbReset, withUserId } from "~/utils/Test";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
-const createGroup = async (userIds: number[]) => {
-	const groupResult = await SQGroupRepository.insert({
-		status: "ACTIVE",
-		userId: userIds[0],
+const setupMatch = async () => {
+	const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
+	const alphaMembers = users.slice(0, FULL_GROUP_SIZE);
+	const bravoMembers = users.slice(FULL_GROUP_SIZE);
+
+	const alphaGroup = await createGroup(alphaMembers);
+	const bravoGroup = await createGroup(bravoMembers);
+
+	const match = await SQMatchFactory.create({
+		alphaGroupId: alphaGroup.id,
+		bravoGroupId: bravoGroup.id,
 	});
 
-	for (let i = 1; i < userIds.length; i++) {
-		await SQGroupRepository.insertMember(groupResult.id, {
-			userId: userIds[i],
-			role: "REGULAR",
-		});
-	}
-
-	return groupResult.id;
+	return {
+		match,
+		alphaGroupId: alphaGroup.id,
+		bravoGroupId: bravoGroup.id,
+		alphaMembers,
+		bravoMembers,
+	};
 };
 
-const createMatch = async (alphaGroupId: number, bravoGroupId: number) => {
-	const match = await db
-		.insertInto("GroupMatch")
-		.values({
-			alphaGroupId,
-			bravoGroupId,
-			chatCode: "test-chat-code",
-		})
-		.returningAll()
-		.executeTakeFirstOrThrow();
-
-	const mapList: Array<{
-		mode: ModeShort;
-		stageId: StageId;
-	}> = [
-		{ mode: "SZ", stageId: 1 },
-		{ mode: "TC", stageId: 2 },
-		{ mode: "RM", stageId: 3 },
-		{ mode: "CB", stageId: 4 },
-		{ mode: "SZ", stageId: 5 },
-		{ mode: "TC", stageId: 6 },
-		{ mode: "RM", stageId: 7 },
-	];
-
-	await db
-		.insertInto("GroupMatchMap")
-		.values(
-			mapList.map((map, i) => ({
-				matchId: match.id,
-				index: i,
-				mode: map.mode,
-				stageId: map.stageId,
-				source: "TIEBREAKER",
-			})),
-		)
-		.execute();
-
-	return match;
-};
+const createGroup = ([owner, ...members]: Array<{ id: number }>) =>
+	SQGroupFactory.create({
+		userId: owner.id,
+		additionalMemberUserIds: members.map((member) => member.id),
+	});
 
 const fetchMapResults = async (matchId: number) => {
 	return db
@@ -87,18 +61,12 @@ const fetchSkills = async (matchId: number) => {
 };
 
 describe("lockMatchWithoutSkillChange", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(8);
-	});
-
 	afterEach(async () => {
 		await dbReset();
 	});
 
 	test("inserts dummy skill to lock match", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
+		const { match } = await setupMatch();
 
 		await SQMatchRepository.lockMatchWithoutSkillChange(match.id);
 
@@ -113,8 +81,10 @@ describe("lockMatchWithoutSkillChange", () => {
 });
 
 describe("cancelMatch", () => {
+	let setup: Awaited<ReturnType<typeof setupMatch>>;
+
 	beforeEach(async () => {
-		await dbInsertUsers(8);
+		setup = await setupMatch();
 	});
 
 	afterEach(async () => {
@@ -122,68 +92,56 @@ describe("cancelMatch", () => {
 	});
 
 	test("first cancel report sets group inactive", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		const result = await withUserId(1, () =>
+		const result = await withUserId(setup.alphaMembers[0].id, () =>
 			SQMatchRepository.cancelMatch({
-				matchId: match.id,
+				matchId: setup.match.id,
 			}),
 		);
 
 		expect(result.status).toBe("CANCEL_REPORTED");
 		expect(result.shouldRefreshCaches).toBe(false);
 
-		const alphaGroup = await fetchGroup(alphaGroupId);
+		const alphaGroup = await fetchGroup(setup.alphaGroupId);
 		expect(alphaGroup?.status).toBe("INACTIVE");
 	});
 
 	test("matching cancel confirms and locks match", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		await withUserId(1, () =>
+		await withUserId(setup.alphaMembers[0].id, () =>
 			SQMatchRepository.cancelMatch({
-				matchId: match.id,
+				matchId: setup.match.id,
 			}),
 		);
 
-		const result = await withUserId(5, () =>
+		const result = await withUserId(setup.bravoMembers[0].id, () =>
 			SQMatchRepository.cancelMatch({
-				matchId: match.id,
+				matchId: setup.match.id,
 			}),
 		);
 
 		expect(result.status).toBe("CANCEL_CONFIRMED");
 		expect(result.shouldRefreshCaches).toBe(true);
 
-		const alphaGroup = await fetchGroup(alphaGroupId);
-		const bravoGroup = await fetchGroup(bravoGroupId);
+		const alphaGroup = await fetchGroup(setup.alphaGroupId);
+		const bravoGroup = await fetchGroup(setup.bravoGroupId);
 		expect(alphaGroup?.status).toBe("INACTIVE");
 		expect(bravoGroup?.status).toBe("INACTIVE");
 
-		const skills = await fetchSkills(match.id);
+		const skills = await fetchSkills(setup.match.id);
 		expect(skills).toHaveLength(1);
 		expect(skills[0].season).toBe(-1);
 	});
 
 	test("cant cancel after score reported", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
 		await SQMatchRepository.reportMapWinner({
-			matchId: match.id,
-			winnerId: alphaGroupId,
-			reportedByUserId: 1,
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.alphaMembers[0].id,
 			reportedCount: 0,
 		});
 
-		const result = await withUserId(5, () =>
+		const result = await withUserId(setup.bravoMembers[0].id, () =>
 			SQMatchRepository.cancelMatch({
-				matchId: match.id,
+				matchId: setup.match.id,
 			}),
 		);
 
@@ -192,14 +150,9 @@ describe("cancelMatch", () => {
 	});
 
 	test("admin cancel locks match without applying SP changes", async () => {
-		const alphaGroupId = await createGroup([1, 2, 3, 4]);
-		const bravoGroupId = await createGroup([5, 6, 7, 8]);
-		const match = await createMatch(alphaGroupId, bravoGroupId);
-
-		const adminUserId = 1;
-		const result = await withUserId(adminUserId, () =>
+		const result = await withUserId(setup.alphaMembers[0].id, () =>
 			SQMatchRepository.cancelMatch({
-				matchId: match.id,
+				matchId: setup.match.id,
 				isAdminReport: true,
 			}),
 		);
@@ -207,18 +160,18 @@ describe("cancelMatch", () => {
 		expect(result.status).toBe("CANCEL_CONFIRMED");
 		expect(result.shouldRefreshCaches).toBe(true);
 
-		const alphaGroup = await fetchGroup(alphaGroupId);
-		const bravoGroup = await fetchGroup(bravoGroupId);
+		const alphaGroup = await fetchGroup(setup.alphaGroupId);
+		const bravoGroup = await fetchGroup(setup.bravoGroupId);
 		expect(alphaGroup?.status).toBe("INACTIVE");
 		expect(bravoGroup?.status).toBe("INACTIVE");
 
-		const skills = await fetchSkills(match.id);
+		const skills = await fetchSkills(setup.match.id);
 		const realSkills = skills.filter((s) => s.season !== -1);
 		expect(realSkills).toHaveLength(0);
 		expect(skills).toHaveLength(1);
 		expect(skills[0].season).toBe(-1);
 
-		const maps = await fetchMapResults(match.id);
+		const maps = await fetchMapResults(setup.match.id);
 		for (const map of maps) {
 			expect(map.winnerGroupId).toBeNull();
 		}

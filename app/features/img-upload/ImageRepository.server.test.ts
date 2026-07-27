@@ -1,11 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { databaseTimestampNow } from "~/utils/dates";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
+import { dbReset, withUserId } from "~/utils/Test";
 import * as ArtRepository from "../art/ArtRepository.server";
 import * as CalendarRepository from "../calendar/CalendarRepository.server";
 import * as ImageRepository from "./ImageRepository.server";
 
 let imageCounter = 0;
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 const createImage = async ({
 	submitterUserId,
@@ -61,7 +65,7 @@ const createCalendarEvent = async (authorId: number, avatarImgId?: number) => {
 describe("findById", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -69,7 +73,7 @@ describe("findById", () => {
 	});
 
 	test("finds image by id", async () => {
-		const img = await createImage({ submitterUserId: 1 });
+		const img = await createImage({ submitterUserId: userId(1) });
 
 		const result = await ImageRepository.findById(img.id);
 
@@ -78,8 +82,8 @@ describe("findById", () => {
 	});
 
 	test("finds image with calendar event data", async () => {
-		const img = await createImage({ submitterUserId: 1 });
-		await createCalendarEvent(1, img.id);
+		const img = await createImage({ submitterUserId: userId(1) });
+		await createCalendarEvent(userId(1), img.id);
 
 		const result = await ImageRepository.findById(img.id);
 
@@ -97,7 +101,7 @@ describe("findById", () => {
 describe("deleteById", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		await dbInsertUsers(2);
+		users = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -105,7 +109,7 @@ describe("deleteById", () => {
 	});
 
 	test("deletes image by id", async () => {
-		const img = await createImage({ submitterUserId: 1 });
+		const img = await createImage({ submitterUserId: userId(1) });
 
 		await ImageRepository.deleteById(img.id);
 
@@ -114,9 +118,12 @@ describe("deleteById", () => {
 	});
 
 	test("deletes associated art when deleting image", async () => {
-		const art = await createArtImage({ authorId: 1, validatedAt: Date.now() });
+		const art = await createArtImage({
+			authorId: userId(1),
+			validatedAt: Date.now(),
+		});
 
-		const artsBefore = await ArtRepository.findArtsByUserId(1);
+		const artsBefore = await ArtRepository.findArtsByUserId(userId(1));
 		expect(artsBefore).toHaveLength(1);
 		expect(artsBefore[0].id).toBe(art.id);
 
@@ -125,7 +132,7 @@ describe("deleteById", () => {
 		const result = await ImageRepository.findById(art.imgId);
 		expect(result).toBeUndefined();
 
-		const artsAfter = await ArtRepository.findArtsByUserId(1);
+		const artsAfter = await ArtRepository.findArtsByUserId(userId(1));
 		expect(artsAfter).toHaveLength(0);
 	});
 });
@@ -133,7 +140,7 @@ describe("deleteById", () => {
 describe("countUnvalidatedArt", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -141,25 +148,25 @@ describe("countUnvalidatedArt", () => {
 	});
 
 	test("counts unvalidated art by author", async () => {
-		await createArtImage({ authorId: 1 });
-		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: userId(1) });
+		await createArtImage({ authorId: userId(1) });
 
-		const count = await ImageRepository.countUnvalidatedArt(1);
+		const count = await ImageRepository.countUnvalidatedArt(userId(1));
 
 		expect(count).toBe(2);
 	});
 
 	test("does not count validated art", async () => {
-		await createArtImage({ authorId: 1 });
-		await createArtImage({ authorId: 1, validatedAt: Date.now() });
+		await createArtImage({ authorId: userId(1) });
+		await createArtImage({ authorId: userId(1), validatedAt: Date.now() });
 
-		const count = await ImageRepository.countUnvalidatedArt(1);
+		const count = await ImageRepository.countUnvalidatedArt(userId(1));
 
 		expect(count).toBe(1);
 	});
 
 	test("returns 0 when author has no unvalidated art", async () => {
-		const count = await ImageRepository.countUnvalidatedArt(1);
+		const count = await ImageRepository.countUnvalidatedArt(userId(1));
 
 		expect(count).toBe(0);
 	});
@@ -168,7 +175,7 @@ describe("countUnvalidatedArt", () => {
 describe("countAllUnvalidated", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -176,7 +183,7 @@ describe("countAllUnvalidated", () => {
 	});
 
 	test("counts unvalidated images used in art", async () => {
-		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: userId(1) });
 
 		const count = await ImageRepository.countAllUnvalidated();
 
@@ -184,8 +191,8 @@ describe("countAllUnvalidated", () => {
 	});
 
 	test("counts unvalidated images used in calendar events", async () => {
-		const img = await createImage({ submitterUserId: 1 });
-		await createCalendarEvent(1, img.id);
+		const img = await createImage({ submitterUserId: userId(1) });
+		await createCalendarEvent(userId(1), img.id);
 
 		const count = await ImageRepository.countAllUnvalidated();
 
@@ -193,7 +200,7 @@ describe("countAllUnvalidated", () => {
 	});
 
 	test("does not count validated images", async () => {
-		await createArtImage({ authorId: 1, validatedAt: Date.now() });
+		await createArtImage({ authorId: userId(1), validatedAt: Date.now() });
 
 		const count = await ImageRepository.countAllUnvalidated();
 
@@ -201,10 +208,10 @@ describe("countAllUnvalidated", () => {
 	});
 
 	test("counts multiple unvalidated images across different types", async () => {
-		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: userId(1) });
 
-		const img = await createImage({ submitterUserId: 1 });
-		await createCalendarEvent(1, img.id);
+		const img = await createImage({ submitterUserId: userId(1) });
+		await createCalendarEvent(userId(1), img.id);
 
 		const count = await ImageRepository.countAllUnvalidated();
 
@@ -221,7 +228,7 @@ describe("countAllUnvalidated", () => {
 describe("countUnvalidatedBySubmitterUserId", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -229,41 +236,51 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 	});
 
 	test("counts unvalidated images connected to art by submitter", async () => {
-		await createArtImage({ authorId: 1 });
-		await createArtImage({ authorId: 1 });
+		await createArtImage({ authorId: userId(1) });
+		await createArtImage({ authorId: userId(1) });
 
-		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
+		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(
+			userId(1),
+		);
 
 		expect(count).toBe(2);
 	});
 
 	test("does not count orphan images not connected to anything", async () => {
-		await createImage({ submitterUserId: 1 });
+		await createImage({ submitterUserId: userId(1) });
 
-		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
+		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(
+			userId(1),
+		);
 
 		expect(count).toBe(0);
 	});
 
 	test("does not count validated images", async () => {
-		await createArtImage({ authorId: 1, validatedAt: Date.now() });
+		await createArtImage({ authorId: userId(1), validatedAt: Date.now() });
 
-		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
+		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(
+			userId(1),
+		);
 
 		expect(count).toBe(0);
 	});
 
 	test("does not count images from other submitters", async () => {
-		await createArtImage({ authorId: 1 });
-		await createArtImage({ authorId: 2 });
+		await createArtImage({ authorId: userId(1) });
+		await createArtImage({ authorId: userId(2) });
 
-		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
+		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(
+			userId(1),
+		);
 
 		expect(count).toBe(1);
 	});
 
 	test("returns 0 when user has no unvalidated images", async () => {
-		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(1);
+		const count = await ImageRepository.countUnvalidatedBySubmitterUserId(
+			userId(1),
+		);
 
 		expect(count).toBe(0);
 	});
@@ -272,7 +289,7 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 describe("validateById", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		await dbInsertUsers(2);
+		users = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -280,7 +297,7 @@ describe("validateById", () => {
 	});
 
 	test("marks image as validated", async () => {
-		const img = await createImage({ submitterUserId: 1 });
+		const img = await createImage({ submitterUserId: userId(1) });
 
 		await ImageRepository.validateById(img.id);
 
@@ -289,7 +306,7 @@ describe("validateById", () => {
 	});
 
 	test("validated image is not included in unvalidated count", async () => {
-		const art = await createArtImage({ authorId: 1 });
+		const art = await createArtImage({ authorId: userId(1) });
 
 		const countBefore = await ImageRepository.countAllUnvalidated();
 		expect(countBefore).toBe(1);
@@ -304,7 +321,9 @@ describe("validateById", () => {
 describe("findAllUnvalidated", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3, (index) => ({
+			discordName: `user${index + 1}`,
+		}));
 	});
 
 	afterEach(async () => {
@@ -314,7 +333,7 @@ describe("findAllUnvalidated", () => {
 	test("fetches unvalidated images with submitter info", async () => {
 		imageCounter++;
 		const filename = `art-${imageCounter}.png`;
-		await withUserId(1, () =>
+		await withUserId(userId(1), () =>
 			ArtRepository.insert({
 				url: filename,
 				validatedAt: null,
@@ -327,13 +346,13 @@ describe("findAllUnvalidated", () => {
 		const result = await ImageRepository.findAllUnvalidated();
 
 		expect(result).toHaveLength(1);
-		expect(result[0].submitterUserId).toBe(1);
+		expect(result[0].submitterUserId).toBe(userId(1));
 		expect(result[0].username).toBe("user1");
 		expect(result[0].url).toBe(`http://127.0.0.1:9000/sendou/${filename}`);
 	});
 
 	test("does not fetch validated images", async () => {
-		await createArtImage({ authorId: 1, validatedAt: Date.now() });
+		await createArtImage({ authorId: userId(1), validatedAt: Date.now() });
 
 		const result = await ImageRepository.findAllUnvalidated();
 
@@ -341,11 +360,11 @@ describe("findAllUnvalidated", () => {
 	});
 
 	test("fetches images from art and calendar events", async () => {
-		await createArtImage({ authorId: 1 });
-		await createArtImage({ authorId: 2 });
+		await createArtImage({ authorId: userId(1) });
+		await createArtImage({ authorId: userId(2) });
 
-		const img = await createImage({ submitterUserId: 3 });
-		await createCalendarEvent(3, img.id);
+		const img = await createImage({ submitterUserId: userId(3) });
+		await createCalendarEvent(userId(3), img.id);
 
 		const result = await ImageRepository.findAllUnvalidated();
 
@@ -354,7 +373,7 @@ describe("findAllUnvalidated", () => {
 
 	test("respects the max unvalidated images to show at once for approval limit constant", async () => {
 		for (let i = 0; i < 10; i++) {
-			await createArtImage({ authorId: 1 });
+			await createArtImage({ authorId: userId(1) });
 		}
 
 		const result = await ImageRepository.findAllUnvalidated();

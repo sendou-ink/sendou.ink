@@ -1,10 +1,15 @@
 import { add } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbReset } from "~/utils/Test";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
+
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 const { mockNotify } = vi.hoisted(() => ({
 	mockNotify: vi.fn(),
@@ -17,7 +22,7 @@ vi.mock("~/features/notifications/core/notify.server", () => ({
 async function createTestTournament({
 	name,
 	startTime,
-	authorId = 1,
+	authorId = userId(1),
 	discordInviteCode = "test-discord",
 }: {
 	name: string;
@@ -61,7 +66,7 @@ describe("NotifyCheckInStartRoutine", () => {
 		vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 		await dbReset();
 		clearAllTournamentDataCache();
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 		mockNotify.mockClear();
 	});
 
@@ -158,7 +163,7 @@ describe("NotifyCheckInStartRoutine", () => {
 		await createTestTournament({
 			name: "Tournament B",
 			startTime: fortyFiveMinutesFromNow,
-			authorId: 2,
+			authorId: userId(2),
 			discordInviteCode: "test-discord-2",
 		});
 

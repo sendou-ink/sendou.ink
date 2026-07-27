@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import { dbReset, wrappedAction } from "~/utils/Test";
 import type { userEditProfileBaseSchema } from "../user-page-schemas";
 import { action as editUserProfileAction } from "./u.$identifier.edit";
 
@@ -28,8 +29,10 @@ const DEFAULT_FIELDS = {
 };
 
 describe("user page editing", () => {
+	let userId: number;
+
 	beforeEach(async () => {
-		await dbInsertUsers();
+		userId = (await UserFactory.createRegular()).id;
 	});
 	afterEach(async () => {
 		await dbReset();
@@ -40,7 +43,7 @@ describe("user page editing", () => {
 			{
 				...DEFAULT_FIELDS,
 			},
-			{ user: "regular", params: { identifier: "2" } },
+			{ user: "regular", params: { identifier: String(userId) } },
 		);
 
 		expect(response.status).toBe(302);

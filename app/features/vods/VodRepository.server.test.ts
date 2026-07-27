@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbReset } from "~/utils/Test";
 import * as VodRepository from "./VodRepository.server";
 
 let vodCounter = 0;
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 const createVod = async ({
 	submitterUserId,
@@ -58,7 +62,7 @@ const createVod = async ({
 describe("findByUserId", () => {
 	beforeEach(async () => {
 		vodCounter = 0;
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 	});
 
 	afterEach(async () => {
@@ -66,29 +70,29 @@ describe("findByUserId", () => {
 	});
 
 	test("returns vods for a specific user", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1 });
-		await createVod({ submitterUserId: 1, povUserId: 2 });
-		await createVod({ submitterUserId: 1, povUserId: 3 });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(2) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(3) });
 
-		const result = await VodRepository.findByUserId(2);
+		const result = await VodRepository.findByUserId(userId(2));
 
 		expect(result).toHaveLength(1);
 	});
 
 	test("returns empty array when user has no vods", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1 });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
 
-		const result = await VodRepository.findByUserId(2);
+		const result = await VodRepository.findByUserId(userId(2));
 
 		expect(result).toHaveLength(0);
 	});
 
 	test("respects the limit parameter", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1 });
-		await createVod({ submitterUserId: 1, povUserId: 1 });
-		await createVod({ submitterUserId: 1, povUserId: 1 });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
 
-		const result = await VodRepository.findByUserId(1, 2);
+		const result = await VodRepository.findByUserId(userId(1), 2);
 
 		expect(result).toHaveLength(2);
 	});
@@ -97,7 +101,7 @@ describe("findByUserId", () => {
 describe("findVods", () => {
 	beforeEach(async () => {
 		vodCounter = 0;
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 	});
 
 	afterEach(async () => {
@@ -106,13 +110,13 @@ describe("findVods", () => {
 
 	test("filters by weapon", async () => {
 		const vodId = await createVod({
-			submitterUserId: 1,
-			povUserId: 1,
+			submitterUserId: userId(1),
+			povUserId: userId(1),
 			weaponSplIds: [1000],
 		});
 		await createVod({
-			submitterUserId: 1,
-			povUserId: 1,
+			submitterUserId: userId(1),
+			povUserId: userId(1),
 			weaponSplIds: [2000],
 		});
 
@@ -123,9 +127,21 @@ describe("findVods", () => {
 	});
 
 	test("filters by mode", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1, mode: "TW" });
-		await createVod({ submitterUserId: 1, povUserId: 1, mode: "SZ" });
-		await createVod({ submitterUserId: 1, povUserId: 1, mode: "TC" });
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			mode: "TW",
+		});
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			mode: "SZ",
+		});
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			mode: "TC",
+		});
 
 		const result = await VodRepository.findVods({ mode: "SZ" });
 
@@ -133,9 +149,21 @@ describe("findVods", () => {
 	});
 
 	test("filters by stageId", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1, stageId: 0 });
-		await createVod({ submitterUserId: 1, povUserId: 1, stageId: 1 });
-		await createVod({ submitterUserId: 1, povUserId: 1, stageId: 2 });
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			stageId: 0,
+		});
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			stageId: 1,
+		});
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			stageId: 2,
+		});
 
 		const result = await VodRepository.findVods({ stageId: 1 });
 
@@ -143,9 +171,21 @@ describe("findVods", () => {
 	});
 
 	test("filters by type", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1, type: "TOURNAMENT" });
-		await createVod({ submitterUserId: 1, povUserId: 1, type: "CAST" });
-		await createVod({ submitterUserId: 1, povUserId: 1, type: "SCRIM" });
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			type: "TOURNAMENT",
+		});
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			type: "CAST",
+		});
+		await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+			type: "SCRIM",
+		});
 
 		const result = await VodRepository.findVods({ type: "CAST" });
 
@@ -153,9 +193,9 @@ describe("findVods", () => {
 	});
 
 	test("returns all vods when no filters provided", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1 });
-		await createVod({ submitterUserId: 1, povUserId: 2 });
-		await createVod({ submitterUserId: 1, povUserId: 3 });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(2) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(3) });
 
 		const result = await VodRepository.findVods({});
 
@@ -163,9 +203,9 @@ describe("findVods", () => {
 	});
 
 	test("respects limit parameter", async () => {
-		await createVod({ submitterUserId: 1, povUserId: 1 });
-		await createVod({ submitterUserId: 1, povUserId: 1 });
-		await createVod({ submitterUserId: 1, povUserId: 1 });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
+		await createVod({ submitterUserId: userId(1), povUserId: userId(1) });
 
 		const result = await VodRepository.findVods({ limit: 2 });
 
@@ -176,7 +216,7 @@ describe("findVods", () => {
 describe("findVodById", () => {
 	beforeEach(async () => {
 		vodCounter = 0;
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 	});
 
 	afterEach(async () => {
@@ -190,7 +230,10 @@ describe("findVodById", () => {
 	});
 
 	test("correctly resolves pov from user", async () => {
-		const vodId = await createVod({ submitterUserId: 1, povUserId: 1 });
+		const vodId = await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+		});
 
 		const result = await VodRepository.findVodById(vodId);
 
@@ -201,7 +244,7 @@ describe("findVodById", () => {
 
 	test("correctly resolves pov from player name", async () => {
 		const vodId = await createVod({
-			submitterUserId: 1,
+			submitterUserId: userId(1),
 			povName: "PlayerName",
 		});
 
@@ -215,7 +258,7 @@ describe("findVodById", () => {
 describe("insert", () => {
 	beforeEach(async () => {
 		vodCounter = 0;
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 	});
 
 	afterEach(async () => {
@@ -240,8 +283,8 @@ describe("insert", () => {
 				},
 			],
 			type: "TOURNAMENT",
-			pov: { type: "USER", userId: 1 },
-			submitterUserId: 1,
+			pov: { type: "USER", userId: userId(1) },
+			submitterUserId: userId(1),
 			isValidated: true,
 		});
 
@@ -257,8 +300,8 @@ describe("insert", () => {
 
 	test("extracts YouTube ID from URL correctly", async () => {
 		const vodId = await createVod({
-			submitterUserId: 1,
-			povUserId: 1,
+			submitterUserId: userId(1),
+			povUserId: userId(1),
 		});
 
 		const result = await VodRepository.findVodById(vodId);
@@ -285,7 +328,7 @@ describe("insert", () => {
 			],
 			type: "TOURNAMENT",
 			pov: { type: "NAME", name: "TestPlayer" },
-			submitterUserId: 1,
+			submitterUserId: userId(1),
 			isValidated: true,
 		});
 
@@ -312,8 +355,8 @@ describe("insert", () => {
 				},
 			],
 			type: "TOURNAMENT",
-			pov: { type: "USER", userId: 1 },
-			submitterUserId: 1,
+			pov: { type: "USER", userId: userId(1) },
+			submitterUserId: userId(1),
 			isValidated: true,
 		});
 
@@ -327,7 +370,7 @@ describe("insert", () => {
 describe("update", () => {
 	beforeEach(async () => {
 		vodCounter = 0;
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 	});
 
 	afterEach(async () => {
@@ -335,7 +378,10 @@ describe("update", () => {
 	});
 
 	test("updates vod metadata", async () => {
-		const vodId = await createVod({ submitterUserId: 1, povUserId: 1 });
+		const vodId = await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+		});
 
 		await VodRepository.update({
 			id: vodId,
@@ -355,8 +401,8 @@ describe("update", () => {
 				},
 			],
 			type: "CAST",
-			pov: { type: "USER", userId: 2 },
-			submitterUserId: 1,
+			pov: { type: "USER", userId: userId(2) },
+			submitterUserId: userId(1),
 			isValidated: true,
 		});
 
@@ -391,8 +437,8 @@ describe("update", () => {
 				},
 			],
 			type: "TOURNAMENT",
-			pov: { type: "USER", userId: 1 },
-			submitterUserId: 1,
+			pov: { type: "USER", userId: userId(1) },
+			submitterUserId: userId(1),
 			isValidated: true,
 		});
 
@@ -414,8 +460,8 @@ describe("update", () => {
 				},
 			],
 			type: "TOURNAMENT",
-			pov: { type: "USER", userId: 1 },
-			submitterUserId: 1,
+			pov: { type: "USER", userId: userId(1) },
+			submitterUserId: userId(1),
 			isValidated: true,
 		});
 
@@ -429,7 +475,7 @@ describe("update", () => {
 describe("deleteById", () => {
 	beforeEach(async () => {
 		vodCounter = 0;
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 	});
 
 	afterEach(async () => {
@@ -437,7 +483,10 @@ describe("deleteById", () => {
 	});
 
 	test("deletes vod by id", async () => {
-		const vodId = await createVod({ submitterUserId: 1, povUserId: 1 });
+		const vodId = await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+		});
 
 		await VodRepository.deleteById(vodId);
 
@@ -446,8 +495,14 @@ describe("deleteById", () => {
 	});
 
 	test("only deletes the specified vod", async () => {
-		const firstVodId = await createVod({ submitterUserId: 1, povUserId: 1 });
-		const secondVodId = await createVod({ submitterUserId: 1, povUserId: 1 });
+		const firstVodId = await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+		});
+		const secondVodId = await createVod({
+			submitterUserId: userId(1),
+			povUserId: userId(1),
+		});
 
 		await VodRepository.deleteById(firstVodId);
 

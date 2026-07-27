@@ -1,14 +1,17 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbReset } from "~/utils/Test";
 import * as AdminRepository from "../admin/AdminRepository.server";
 import * as BuildRepository from "./BuildRepository.server";
 
-const OWNER_ID = 1;
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 // Splattershot (40) is the canonical base, Hero Shot Replica (45) is an alt skin
 // that should be folded to 40 by the canonical id mapping.
@@ -30,7 +33,7 @@ const EXPECTED_SIGNATURE = "ISM_38,ISS_19";
 const baseArgs = (
 	overrides: Partial<Parameters<typeof BuildRepository.insert>[0]> = {},
 ): Parameters<typeof BuildRepository.insert>[0] => ({
-	ownerId: OWNER_ID,
+	ownerId: userId(1),
 	title: "Test Build",
 	description: null,
 	modes: null,
@@ -116,7 +119,7 @@ const onlyBuildId = async () => {
 
 describe("BuildRepository.insert — computeBuildData", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
+		users = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -217,7 +220,7 @@ describe("BuildRepository.insert — computeBuildData", () => {
 
 		test("uses owner's PlusTier (tier 2 → sortValue = 5)", async () => {
 			await AdminRepository.replacePlusTiers([
-				{ userId: OWNER_ID, plusTier: 2 },
+				{ userId: userId(1), plusTier: 2 },
 			]);
 
 			await BuildRepository.insert(baseArgs());
@@ -228,7 +231,7 @@ describe("BuildRepository.insert — computeBuildData", () => {
 
 		test("is null for private builds regardless of tier", async () => {
 			await AdminRepository.replacePlusTiers([
-				{ userId: OWNER_ID, plusTier: 1 },
+				{ userId: userId(1), plusTier: 1 },
 			]);
 
 			await BuildRepository.insert(baseArgs({ isPrivate: 1 }));
@@ -238,7 +241,7 @@ describe("BuildRepository.insert — computeBuildData", () => {
 		});
 
 		test("subtracts 1 when the weapon is top500 for the owner", async () => {
-			const playerId = await insertSplatoonPlayer(OWNER_ID, "owner-spl-id");
+			const playerId = await insertSplatoonPlayer(userId(1), "owner-spl-id");
 			await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
 
 			await BuildRepository.insert(
@@ -257,9 +260,9 @@ describe("BuildRepository.insert — computeBuildData", () => {
 
 		test("combines top500 with the owner's PlusTier", async () => {
 			await AdminRepository.replacePlusTiers([
-				{ userId: OWNER_ID, plusTier: 1 },
+				{ userId: userId(1), plusTier: 1 },
 			]);
-			const playerId = await insertSplatoonPlayer(OWNER_ID, "owner-spl-id");
+			const playerId = await insertSplatoonPlayer(userId(1), "owner-spl-id");
 			await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
 
 			await BuildRepository.insert(baseArgs());
@@ -270,7 +273,7 @@ describe("BuildRepository.insert — computeBuildData", () => {
 	});
 
 	test("findAllByWeaponId.weapons[].isTop500 matches the sortValue formula", async () => {
-		const playerId = await insertSplatoonPlayer(OWNER_ID, "owner-spl-id");
+		const playerId = await insertSplatoonPlayer(userId(1), "owner-spl-id");
 		await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
 
 		await BuildRepository.insert(
@@ -325,7 +328,7 @@ describe("BuildRepository.findAllPopularAbilitiesByWeaponId", () => {
 	];
 
 	beforeEach(async () => {
-		await dbInsertUsers(2);
+		users = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -336,13 +339,13 @@ describe("BuildRepository.findAllPopularAbilitiesByWeaponId", () => {
 		// Each user has two Splattershot builds with different signatures.
 		// Without per-user dedup, both users would inflate both buckets and
 		// the total count across rows would be 4 instead of <=2.
-		await BuildRepository.insert(baseArgs({ ownerId: 1 }));
+		await BuildRepository.insert(baseArgs({ ownerId: userId(1) }));
 		await BuildRepository.insert(
-			baseArgs({ ownerId: 1, abilities: SS_ABILITIES }),
+			baseArgs({ ownerId: userId(1), abilities: SS_ABILITIES }),
 		);
-		await BuildRepository.insert(baseArgs({ ownerId: 2 }));
+		await BuildRepository.insert(baseArgs({ ownerId: userId(2) }));
 		await BuildRepository.insert(
-			baseArgs({ ownerId: 2, abilities: SS_ABILITIES }),
+			baseArgs({ ownerId: userId(2), abilities: SS_ABILITIES }),
 		);
 
 		const rows =
@@ -354,8 +357,10 @@ describe("BuildRepository.findAllPopularAbilitiesByWeaponId", () => {
 	});
 
 	test("only counts public builds", async () => {
-		await BuildRepository.insert(baseArgs({ ownerId: 1 }));
-		await BuildRepository.insert(baseArgs({ ownerId: 2, isPrivate: 1 }));
+		await BuildRepository.insert(baseArgs({ ownerId: userId(1) }));
+		await BuildRepository.insert(
+			baseArgs({ ownerId: userId(2), isPrivate: 1 }),
+		);
 
 		const rows =
 			await BuildRepository.findAllPopularAbilitiesByWeaponId(SPLATTERSHOT);
@@ -365,9 +370,9 @@ describe("BuildRepository.findAllPopularAbilitiesByWeaponId", () => {
 	});
 
 	test("folds alt skins via canonicalWeaponSplId", async () => {
-		await BuildRepository.insert(baseArgs({ ownerId: 1 }));
+		await BuildRepository.insert(baseArgs({ ownerId: userId(1) }));
 		await BuildRepository.insert(
-			baseArgs({ ownerId: 2, weaponSplIds: [HERO_SHOT_REPLICA] }),
+			baseArgs({ ownerId: userId(2), weaponSplIds: [HERO_SHOT_REPLICA] }),
 		);
 
 		const rows =

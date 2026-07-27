@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbReset } from "~/utils/Test";
 import * as TournamentMatchRepository from "./TournamentMatchRepository.server";
+
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 const createTournament = () =>
 	db
@@ -90,7 +95,7 @@ const createMatch = async (args: {
 			matchId: match.id,
 			mode: "SZ",
 			number: 1,
-			reporterId: 1,
+			reporterId: userId(1),
 			source: "TO",
 			stageId: 1,
 			winnerTeamId: args.teamOneId,
@@ -103,12 +108,12 @@ const createMatch = async (args: {
 				.values([
 					{
 						matchGameResultId: result.id,
-						userId: 1,
+						userId: userId(1),
 						tournamentTeamId: args.teamOneId,
 					},
 					{
 						matchGameResultId: result.id,
-						userId: 2,
+						userId: userId(2),
 						tournamentTeamId: args.teamTwoId,
 					},
 				])
@@ -120,7 +125,7 @@ const createMatch = async (args: {
 
 describe("findByTournamentTeamId", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
+		users = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -137,14 +142,14 @@ describe("findByTournamentTeamId", () => {
 		const teamB = await createTeam(tournament.id, "B");
 
 		// Insert team members so we have someone to attribute results to
-		for (const userId of [1, 2]) {
+		for (const id of [userId(1), userId(2)]) {
 			await db
 				.insertInto("TournamentTeamMember")
-				.values({ tournamentTeamId: teamA.id, userId, role: "OWNER" })
+				.values({ tournamentTeamId: teamA.id, userId: id, role: "OWNER" })
 				.execute();
 			await db
 				.insertInto("TournamentTeamMember")
-				.values({ tournamentTeamId: teamB.id, userId, role: "OWNER" })
+				.values({ tournamentTeamId: teamB.id, userId: id, role: "OWNER" })
 				.execute();
 		}
 

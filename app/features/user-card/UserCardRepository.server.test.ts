@@ -1,8 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset, withNoUser, withUserId } from "~/utils/Test";
+import { dbReset, withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
+
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 const insertVerifiedXp = async (
 	userId: number,
@@ -39,7 +44,7 @@ const findXpStat = (card: UserCardData | undefined) =>
 
 describe("UserCardRepository.findAllByUserIds", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
+		users = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -62,19 +67,22 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			.set({ div: "1" })
 			.where("id", "=", 1)
 			.execute();
-		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
-		await insertVerifiedXp(1, 2500);
+		await db
+			.insertInto("PlusTier")
+			.values({ userId: userId(1), tier: 2 })
+			.execute();
+		await insertVerifiedXp(userId(1), 2500);
 
 		const { userCards } = await withNoUser(() =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [1, 2],
+				userIds: [userId(1), userId(2)],
 			}),
 		);
 
 		expect(userCards.size).toBe(2);
 
-		const card = userCards.get(1);
-		expect(card?.id).toBe(1);
+		const card = userCards.get(userId(1));
+		expect(card?.id).toBe(userId(1));
 		expect(card?.freeAgentPostId).toBeNull();
 
 		const statTypes = card?.stats.map((stat) => stat.type) ?? [];
@@ -100,8 +108,8 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("surfaces self-reported peak XP only when it beats the verified XP", async () => {
-		await insertVerifiedXp(1, 2500);
-		await withUserId(1, () =>
+		await insertVerifiedXp(userId(1), 2500);
+		await withUserId(userId(1), () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -112,7 +120,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toMatchObject({
@@ -125,8 +133,8 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("ignores self-reported peak XP that does not beat the verified XP", async () => {
-		await insertVerifiedXp(1, 2500);
-		await withUserId(1, () =>
+		await insertVerifiedXp(userId(1), 2500);
+		await withUserId(userId(1), () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -137,7 +145,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toMatchObject({
@@ -147,8 +155,8 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("ignores self-reported peak XP more than 200 above the verified XP", async () => {
-		await insertVerifiedXp(1, 2500);
-		await withUserId(1, () =>
+		await insertVerifiedXp(userId(1), 2500);
+		await withUserId(userId(1), () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -159,7 +167,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toMatchObject({
@@ -169,7 +177,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("ignores self-reported peak XP when there is no verified XP", async () => {
-		await withUserId(1, () =>
+		await withUserId(userId(1), () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -180,17 +188,20 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toBeUndefined();
 	});
 
 	it("persists edited card fields and surfaces hidden stats", async () => {
-		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
-		await insertVerifiedXp(1, 2500);
+		await db
+			.insertInto("PlusTier")
+			.values({ userId: userId(1), tier: 2 })
+			.execute();
+		await insertVerifiedXp(userId(1), 2500);
 
-		await withUserId(1, () =>
+		await withUserId(userId(1), () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: "hello",
 				bannerPresetImg: "#ff4655",
@@ -200,9 +211,9 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(1, () =>
+		const { userCards } = await withUserId(userId(1), () =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [1],
+				userIds: [userId(1)],
 			}),
 		);
 		const card = userCards.get(1);
@@ -221,9 +232,9 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("keeps hidden stats in `stats` when includeHiddenStats is set", async () => {
-		await insertVerifiedXp(1, 2500);
+		await insertVerifiedXp(userId(1), 2500);
 
-		await withUserId(1, () =>
+		await withUserId(userId(1), () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -233,9 +244,9 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(1, () =>
+		const { userCards } = await withUserId(userId(1), () =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [1],
+				userIds: [userId(1)],
 				includeHiddenStats: true,
 			}),
 		);
@@ -250,11 +261,15 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	it("produces a URL banner when an uploaded banner image is set", async () => {
 		const image = await db
 			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({ url: "banner.webp", submitterUserId: 1, validatedAt: 1 })
+			.values({
+				url: "banner.webp",
+				submitterUserId: userId(1),
+				validatedAt: 1,
+			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
-		await withUserId(1, () =>
+		await withUserId(userId(1), () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -264,9 +279,9 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(1, () =>
+		const { userCards } = await withUserId(userId(1), () =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [1],
+				userIds: [userId(1)],
 			}),
 		);
 

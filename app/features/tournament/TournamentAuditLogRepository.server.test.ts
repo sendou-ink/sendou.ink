@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { TournamentAuditLogMetadata } from "~/db/tables-json";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
+import { dbReset, withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
+
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 const createTournament = () =>
 	db
@@ -44,7 +49,7 @@ const insertEvent = ({
 
 describe("TournamentAuditLogRepository", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -57,7 +62,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: team.id,
 		});
 
@@ -76,15 +81,15 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: team.id,
-			subjectUserId: 1,
+			subjectUserId: userId(1),
 		});
 		await insertEvent({
 			type: "MEMBER_ADDED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: team.id,
-			subjectUserId: 2,
+			subjectUserId: userId(2),
 		});
 
 		const events = await TournamentAuditLogRepository.findByTournamentId({
@@ -108,7 +113,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_UNREGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: team.id,
 		});
 
@@ -133,7 +138,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_UNREGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: teamA.id,
 		});
 
@@ -148,7 +153,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: teamB.id,
 		});
 
@@ -175,17 +180,17 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: teamA.id,
 		});
 		await insertEvent({
 			type: "TEAM_CHECKED_IN",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: teamA.id,
 		});
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: teamB.id,
 		});
 
@@ -226,7 +231,7 @@ describe("TournamentAuditLogRepository", () => {
 		for (let i = 0; i < 3; i++) {
 			await insertEvent({
 				type: "TEAM_CHECKED_IN",
-				actorUserId: 1,
+				actorUserId: userId(1),
 				tournamentTeamId: team.id,
 			});
 		}
@@ -252,7 +257,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_CHECKED_IN",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: team.id,
 			metadata: { bracketIdx: 2 },
 		});
@@ -272,9 +277,9 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "UPDATE_IN_GAME_NAME",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: team.id,
-			subjectUserId: 2,
+			subjectUserId: userId(2),
 			metadata: { inGameName: "New IGN#1234" },
 		});
 
@@ -295,7 +300,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: 1,
+			actorUserId: userId(1),
 			tournamentTeamId: team.id,
 		});
 

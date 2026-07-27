@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbReset } from "~/utils/Test";
 import * as LeaderboardRepository from "./LeaderboardRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "./leaderboards-constants";
 
@@ -148,8 +149,10 @@ const reportTournamentWeapons = async (args: {
 };
 
 describe("findSeasonPopularUsersWeapon", () => {
+	let users: Array<{ id: number }>;
+
 	beforeEach(async () => {
-		await dbInsertUsers(2);
+		users = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -158,7 +161,7 @@ describe("findSeasonPopularUsersWeapon", () => {
 
 	test("returns user's most reported SendouQ weapon", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD,
 		});
@@ -166,12 +169,12 @@ describe("findSeasonPopularUsersWeapon", () => {
 		const result =
 			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10 });
+		expect(result).toEqual({ [users[0].id]: 10 });
 	});
 
 	test("requires more reports than the threshold", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 10,
 			count: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 		});
@@ -184,7 +187,7 @@ describe("findSeasonPopularUsersWeapon", () => {
 
 	test("counts weapons reported in finalized tournaments", async () => {
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
 		});
@@ -192,12 +195,12 @@ describe("findSeasonPopularUsersWeapon", () => {
 		const result =
 			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 1000 });
+		expect(result).toEqual({ [users[0].id]: 1000 });
 	});
 
 	test("ignores weapons reported in unfinalized tournaments", async () => {
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
 			isFinalized: false,
@@ -212,9 +215,13 @@ describe("findSeasonPopularUsersWeapon", () => {
 	test("combines SendouQ and tournament reports of the same weapon", async () => {
 		const half = Math.ceil(OVER_THRESHOLD / 2);
 
-		await reportSendouqWeapons({ userId: 1, weaponSplId: 10, count: half });
+		await reportSendouqWeapons({
+			userId: users[0].id,
+			weaponSplId: 10,
+			count: half,
+		});
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD - half,
 		});
@@ -222,22 +229,22 @@ describe("findSeasonPopularUsersWeapon", () => {
 		const result =
 			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10 });
+		expect(result).toEqual({ [users[0].id]: 10 });
 	});
 
 	test("picks the most reported weapon across both sources", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 0,
 			count: OVER_THRESHOLD + 1,
 		});
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD - 3,
 		});
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD - 3,
 		});
@@ -245,17 +252,17 @@ describe("findSeasonPopularUsersWeapon", () => {
 		const result =
 			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10 });
+		expect(result).toEqual({ [users[0].id]: 10 });
 	});
 
 	test("returns weapons of multiple users", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD,
 		});
 		await reportTournamentWeapons({
-			userId: 2,
+			userId: users[1].id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
 		});
@@ -263,18 +270,18 @@ describe("findSeasonPopularUsersWeapon", () => {
 		const result =
 			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10, 2: 1000 });
+		expect(result).toEqual({ [users[0].id]: 10, [users[1].id]: 1000 });
 	});
 
 	test("ignores reports outside the season", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: users[0].id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD,
 			matchCreatedAt: OUT_OF_SEASON_TIMESTAMP,
 		});
 		await reportTournamentWeapons({
-			userId: 2,
+			userId: users[1].id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
 			createdAt: OUT_OF_SEASON_TIMESTAMP,

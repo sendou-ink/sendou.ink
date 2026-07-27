@@ -1,10 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { dbReset } from "~/utils/Test";
 import * as ApiRepository from "./ApiRepository.server";
+
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
 
 describe("findTokenByUserId", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -12,27 +17,27 @@ describe("findTokenByUserId", () => {
 	});
 
 	test("returns undefined when user has no token", async () => {
-		const result = await ApiRepository.findTokenByUserId(1, "read");
+		const result = await ApiRepository.findTokenByUserId(userId(1), "read");
 
 		expect(result).toBeUndefined();
 	});
 
 	test("finds existing token for user", async () => {
-		await ApiRepository.generateToken(1, "read");
+		await ApiRepository.generateToken(userId(1), "read");
 
-		const result = await ApiRepository.findTokenByUserId(1, "read");
+		const result = await ApiRepository.findTokenByUserId(userId(1), "read");
 
 		expect(result).toBeDefined();
-		expect(result?.userId).toBe(1);
+		expect(result?.userId).toBe(userId(1));
 		expect(result?.token).toBeDefined();
 	});
 
 	test("returns correct token for specific user", async () => {
-		const token1 = await ApiRepository.generateToken(1, "read");
-		const token2 = await ApiRepository.generateToken(2, "read");
+		const token1 = await ApiRepository.generateToken(userId(1), "read");
+		const token2 = await ApiRepository.generateToken(userId(2), "read");
 
-		const result1 = await ApiRepository.findTokenByUserId(1, "read");
-		const result2 = await ApiRepository.findTokenByUserId(2, "read");
+		const result1 = await ApiRepository.findTokenByUserId(userId(1), "read");
+		const result2 = await ApiRepository.findTokenByUserId(userId(2), "read");
 
 		expect(result1?.token).toBe(token1.token);
 		expect(result2?.token).toBe(token2.token);
@@ -40,11 +45,14 @@ describe("findTokenByUserId", () => {
 	});
 
 	test("finds correct token by type", async () => {
-		await ApiRepository.generateToken(1, "read");
-		await ApiRepository.generateToken(1, "write");
+		await ApiRepository.generateToken(userId(1), "read");
+		await ApiRepository.generateToken(userId(1), "write");
 
-		const readResult = await ApiRepository.findTokenByUserId(1, "read");
-		const writeResult = await ApiRepository.findTokenByUserId(1, "write");
+		const readResult = await ApiRepository.findTokenByUserId(userId(1), "read");
+		const writeResult = await ApiRepository.findTokenByUserId(
+			userId(1),
+			"write",
+		);
 
 		expect(readResult).toBeDefined();
 		expect(writeResult).toBeDefined();
@@ -56,7 +64,7 @@ describe("findTokenByUserId", () => {
 
 describe("generateToken", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -64,7 +72,7 @@ describe("generateToken", () => {
 	});
 
 	test("creates new token for user", async () => {
-		const result = await ApiRepository.generateToken(1, "read");
+		const result = await ApiRepository.generateToken(userId(1), "read");
 
 		expect(result.token).toBeDefined();
 		expect(typeof result.token).toBe("string");
@@ -72,19 +80,22 @@ describe("generateToken", () => {
 	});
 
 	test("deletes existing token before creating new one", async () => {
-		const firstToken = await ApiRepository.generateToken(1, "read");
-		const secondToken = await ApiRepository.generateToken(1, "read");
+		const firstToken = await ApiRepository.generateToken(userId(1), "read");
+		const secondToken = await ApiRepository.generateToken(userId(1), "read");
 
 		expect(firstToken.token).not.toBe(secondToken.token);
 
-		const storedToken = await ApiRepository.findTokenByUserId(1, "read");
+		const storedToken = await ApiRepository.findTokenByUserId(
+			userId(1),
+			"read",
+		);
 		expect(storedToken?.token).toBe(secondToken.token);
 	});
 
 	test("generates unique tokens for different users", async () => {
-		const token1 = await ApiRepository.generateToken(1, "read");
-		const token2 = await ApiRepository.generateToken(2, "read");
-		const token3 = await ApiRepository.generateToken(3, "read");
+		const token1 = await ApiRepository.generateToken(userId(1), "read");
+		const token2 = await ApiRepository.generateToken(userId(2), "read");
+		const token3 = await ApiRepository.generateToken(userId(3), "read");
 
 		expect(token1.token).not.toBe(token2.token);
 		expect(token1.token).not.toBe(token3.token);
@@ -92,12 +103,18 @@ describe("generateToken", () => {
 	});
 
 	test("replaces only the specific user's token", async () => {
-		const user1FirstToken = await ApiRepository.generateToken(1, "read");
-		const user2Token = await ApiRepository.generateToken(2, "read");
-		const user1SecondToken = await ApiRepository.generateToken(1, "read");
+		const user1FirstToken = await ApiRepository.generateToken(
+			userId(1),
+			"read",
+		);
+		const user2Token = await ApiRepository.generateToken(userId(2), "read");
+		const user1SecondToken = await ApiRepository.generateToken(
+			userId(1),
+			"read",
+		);
 
-		const result1 = await ApiRepository.findTokenByUserId(1, "read");
-		const result2 = await ApiRepository.findTokenByUserId(2, "read");
+		const result1 = await ApiRepository.findTokenByUserId(userId(1), "read");
+		const result2 = await ApiRepository.findTokenByUserId(userId(2), "read");
 
 		expect(result1?.token).toBe(user1SecondToken.token);
 		expect(result1?.token).not.toBe(user1FirstToken.token);
@@ -105,11 +122,14 @@ describe("generateToken", () => {
 	});
 
 	test("allows same user to have both read and write tokens", async () => {
-		const readToken = await ApiRepository.generateToken(1, "read");
-		const writeToken = await ApiRepository.generateToken(1, "write");
+		const readToken = await ApiRepository.generateToken(userId(1), "read");
+		const writeToken = await ApiRepository.generateToken(userId(1), "write");
 
-		const readResult = await ApiRepository.findTokenByUserId(1, "read");
-		const writeResult = await ApiRepository.findTokenByUserId(1, "write");
+		const readResult = await ApiRepository.findTokenByUserId(userId(1), "read");
+		const writeResult = await ApiRepository.findTokenByUserId(
+			userId(1),
+			"write",
+		);
 
 		expect(readResult?.token).toBe(readToken.token);
 		expect(writeResult?.token).toBe(writeToken.token);
@@ -118,7 +138,7 @@ describe("generateToken", () => {
 
 describe("findAllApiTokens", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(1);
+		users = await UserFactory.createMany(1);
 	});
 
 	afterEach(async () => {
@@ -132,7 +152,7 @@ describe("findAllApiTokens", () => {
 	});
 
 	test("returns array of token objects with type", async () => {
-		await ApiRepository.generateToken(1, "read");
+		await ApiRepository.generateToken(userId(1), "read");
 
 		const result = await ApiRepository.findAllApiTokens();
 

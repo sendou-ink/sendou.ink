@@ -7,6 +7,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 }));
 
 import type { z } from "zod";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
 import {
@@ -18,7 +19,6 @@ import type { matchSchema } from "~/features/tournament-bracket/tournament-brack
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
-	dbInsertUsers,
 	dbReset,
 	wrappedAction,
 	wrappedLoader,
@@ -87,7 +87,7 @@ const removeMemberAction = ({
 
 describe("Tournament match page", () => {
 	beforeEach(async () => {
-		dbInsertUsers(10);
+		await UserFactory.createMany(10);
 		await dbInsertTournament();
 		await dbInsertTournamentTeam({
 			membersCount: 6,

@@ -1,9 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import { db } from "~/db/sql";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as AdminRepository from "~/features/admin/AdminRepository.server";
+import invariant from "~/utils/invariant";
 import {
 	assertResponseErrored,
-	dbInsertUsers,
 	dbReset,
 	withUserId,
 	wrappedAction,
@@ -33,9 +34,22 @@ async function loadTeams() {
 	return { team: mainTeam, secondaryTeams };
 }
 
+async function joinTeam(customUrl: string) {
+	const team = await TeamRepository.findByCustomUrl(customUrl);
+	invariant(team, `No team with the custom url ${customUrl}`);
+
+	return withUserId(REGULAR_USER_TEST_ID, () =>
+		TeamRepository.insertOwnMembership({
+			teamId: team.id,
+			maxTeamsAllowed: 2,
+		}),
+	);
+}
+
 describe("Secondary teams", () => {
 	beforeEach(async () => {
-		await dbInsertUsers();
+		await UserFactory.createAdmin();
+		await UserFactory.createRegular();
 	});
 	afterEach(async () => {
 		await dbReset();
@@ -107,12 +121,7 @@ describe("Secondary teams", () => {
 	it("only the team owner (or admin) can delete a team", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "admin" });
 
-		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.insertOwnMembership({
-				teamId: 1,
-				maxTeamsAllowed: 2,
-			}),
-		);
+		await joinTeam("team-1");
 
 		const response = await teamPageAction(
 			{ _action: "DELETE_TEAM" },
@@ -130,18 +139,8 @@ describe("Secondary teams", () => {
 		await createTeamAction({ name: "Team 1" }, { user: "admin" });
 		await createTeamAction({ name: "Team 2" }, { user: "admin" });
 
-		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.insertOwnMembership({
-				teamId: 1,
-				maxTeamsAllowed: 2,
-			}),
-		);
-		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.insertOwnMembership({
-				teamId: 2,
-				maxTeamsAllowed: 2,
-			}),
-		);
+		await joinTeam("team-1");
+		await joinTeam("team-2");
 
 		const { team, secondaryTeams } = await loadTeams();
 
@@ -178,11 +177,12 @@ describe("Secondary teams", () => {
 	});
 
 	const makeUserPatron = () =>
-		db
-			.updateTable("User")
-			.set({ patronTier: 2 })
-			.where("id", "=", REGULAR_USER_TEST_ID)
-			.execute();
+		AdminRepository.forcePatron({
+			id: REGULAR_USER_TEST_ID,
+			patronTier: 2,
+			patronStartedAt: new Date(),
+			patronExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+		});
 
 	it("creates more than 2 teams as patron", async () => {
 		await makeUserPatron();

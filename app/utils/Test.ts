@@ -214,7 +214,7 @@ async function authHeader(
  * @example
  * describe("My integration test", () => {
  *   beforeEach(async () => {
- *     await dbInsertUsers(2);
+ *     await UserFactory.createMany(2);
  *   });
  *
  *   afterEach(async () => {
@@ -249,30 +249,3 @@ export const dbReset = async () => {
 
 	resetFactories();
 };
-
-/**
- * Inserts a specified number of user records into the "User" table in the database for integration testing.
- * 1) id: 1, discordName: "user1", discordId: "0"
- * 2) id: 2, discordName: "user2", discordId: "1"
- * 3) etc.
- *
- * @param count - The number of users to insert. Defaults to 2 if not provided.
- *
- * @example
- * // Inserts 5 users into the database
- * await dbInsertUsers(5);
- *
- * // Inserts 2 users (default)
- * await dbInsertUsers();
- */
-export const dbInsertUsers = (count = 2) =>
-	db
-		.insertInto("User")
-		.values(
-			Array.from({ length: count }).map((_, i) => ({
-				id: i + 1,
-				discordName: `user${i + 1}`,
-				discordId: String(i),
-			})),
-		)
-		.execute();

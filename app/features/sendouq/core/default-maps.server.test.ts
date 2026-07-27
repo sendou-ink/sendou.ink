@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
+import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import type { StageId } from "~/modules/in-game-lists/types";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { dbReset } from "~/utils/Test";
 import { SENDOUQ_BEST_OF } from "../q-constants";
 import {
 	clearCacheForTesting,
@@ -20,10 +22,12 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 }));
 
 describe("getDefaultMapWeights()", () => {
+	let users: Array<{ id: number }>;
+
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		clearCacheForTesting();
-		await dbInsertUsers(10);
+		users = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -60,7 +64,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0] }],
@@ -93,7 +97,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 2,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0] }],
@@ -119,7 +123,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0] }],
@@ -144,7 +148,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [
@@ -154,7 +158,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: 2,
+					userId: users[1].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [
@@ -190,7 +194,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0, 1, 2] }],
@@ -217,7 +221,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [{ mode: "SZ", preference: "AVOID" }],
 						pool: [
@@ -227,7 +231,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: 2,
+					userId: users[1].id,
 					mapModePreferences: {
 						modes: [{ mode: "SZ", preference: "AVOID" }],
 						pool: [
@@ -237,7 +241,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: 3,
+					userId: users[2].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [
@@ -273,14 +277,14 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [],
 						pool: undefined as any,
 					},
 				},
 				{
-					userId: 2,
+					userId: users[1].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0, 1, 2] }],
@@ -307,7 +311,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [
 							{
@@ -319,7 +323,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: 2,
+					userId: users[1].id,
 					mapModePreferences: {
 						modes: [
 							{
@@ -331,7 +335,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: 3,
+					userId: users[2].id,
 					mapModePreferences: {
 						modes: [
 							{
@@ -375,7 +379,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: 1,
+					userId: users[0].id,
 					mapModePreferences: {
 						modes: [],
 						pool: [
@@ -404,7 +408,9 @@ describe("getDefaultMapWeights()", () => {
 	});
 });
 
-// using db directly here instead of repositories as inserting skills would be too much of a hassle
+// preferences are written directly rather than through `updateOwnMatchProfile`
+// because that merges with the user's existing pool, and these tests are about
+// what `getDefaultMapWeights` makes of preferences exactly as stored
 async function insertUserMapModePreferencesForSeason({
 	seasonNth,
 	userPreferences,
@@ -422,16 +428,11 @@ async function insertUserMapModePreferencesForSeason({
 			.where("id", "=", userId)
 			.execute();
 
-		await db
-			.insertInto("Skill")
-			.values({
-				userId,
-				season: seasonNth,
-				mu: 25,
-				sigma: 8.333,
-				ordinal: 0,
-				matchesCount: 10,
-			})
-			.execute();
+		await SkillRepository.addInitialSkill({
+			userId,
+			season: seasonNth,
+			mu: 25,
+			sigma: 8.333,
+		});
 	}
 }

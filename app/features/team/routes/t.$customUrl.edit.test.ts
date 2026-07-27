@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { dbReset, wrappedAction } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
 import type { createTeamSchema, editTeamFormSchema } from "../team-schemas";
@@ -24,7 +25,7 @@ const DEFAULT_FIELDS = {
 
 describe("team creation", () => {
 	beforeEach(async () => {
-		await dbInsertUsers();
+		await UserFactory.createRegular();
 	});
 	afterEach(async () => {
 		await dbReset();

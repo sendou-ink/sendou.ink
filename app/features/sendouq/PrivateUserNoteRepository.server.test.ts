@@ -1,12 +1,18 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { dbInsertUsers, dbReset, withUser } from "~/utils/Test";
+import { dbReset, withUser } from "~/utils/Test";
 import * as PrivateUserNoteRepository from "./PrivateUserNoteRepository.server";
 
 const authorAndTarget = async () => {
-	await dbInsertUsers(2);
-	const author = (await UserRepository.findLeanById(1))!;
-	return { author };
+	const { id: authorId } = await UserFactory.create();
+	const target = await UserFactory.create();
+
+	return {
+		// xxx: why needed, is create not returning it?
+		author: (await UserRepository.findLeanById(authorId))!,
+		targetId: target.id,
+	};
 };
 
 describe("PrivateUserNoteRepository", () => {
@@ -15,16 +21,12 @@ describe("PrivateUserNoteRepository", () => {
 	});
 
 	describe("upsertOwnNote", () => {
-		beforeEach(async () => {
-			await authorAndTarget();
-		});
-
 		test("stamps the acting user as the author", async () => {
-			const author = (await UserRepository.findLeanById(1))!;
+			const { author, targetId } = await authorAndTarget();
 
 			await withUser(author, () =>
 				PrivateUserNoteRepository.upsertOwnNote({
-					targetId: 2,
+					targetId,
 					sentiment: "POSITIVE",
 					text: "good teammate",
 				}),
@@ -36,25 +38,25 @@ describe("PrivateUserNoteRepository", () => {
 
 			expect(notes).toHaveLength(1);
 			expect(notes[0]).toMatchObject({
-				targetUserId: 2,
+				targetUserId: targetId,
 				sentiment: "POSITIVE",
 				text: "good teammate",
 			});
 		});
 
 		test("updates an existing note on conflict", async () => {
-			const author = (await UserRepository.findLeanById(1))!;
+			const { author, targetId } = await authorAndTarget();
 
 			await withUser(author, () =>
 				PrivateUserNoteRepository.upsertOwnNote({
-					targetId: 2,
+					targetId,
 					sentiment: "POSITIVE",
 					text: "first",
 				}),
 			);
 			await withUser(author, () =>
 				PrivateUserNoteRepository.upsertOwnNote({
-					targetId: 2,
+					targetId,
 					sentiment: "NEGATIVE",
 					text: "second",
 				}),
@@ -71,22 +73,18 @@ describe("PrivateUserNoteRepository", () => {
 	});
 
 	describe("deleteOwnNote", () => {
-		beforeEach(async () => {
-			await authorAndTarget();
-		});
-
 		test("deletes the acting user's note", async () => {
-			const author = (await UserRepository.findLeanById(1))!;
+			const { author, targetId } = await authorAndTarget();
 
 			await withUser(author, () =>
 				PrivateUserNoteRepository.upsertOwnNote({
-					targetId: 2,
+					targetId,
 					sentiment: "NEUTRAL",
 					text: "note",
 				}),
 			);
 			await withUser(author, () =>
-				PrivateUserNoteRepository.deleteOwnNoteById(2),
+				PrivateUserNoteRepository.deleteOwnNoteById(targetId),
 			);
 
 			const notes = await withUser(author, () =>

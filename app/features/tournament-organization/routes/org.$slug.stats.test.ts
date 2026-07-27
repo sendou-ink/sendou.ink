@@ -1,22 +1,27 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
-import { dbInsertUsers, dbReset, wrappedLoader } from "~/utils/Test";
+import { dbReset, wrappedLoader } from "~/utils/Test";
 import { loader } from "../loaders/org.$slug.stats.server";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "../test-utils";
 import { ESTABLISHED_ORG } from "../tournament-organization-constants";
 
+let users: Array<{ id: number }>;
+
+const userId = (position: number) => users[position - 1].id;
+
 const statsLoader = wrappedLoader<SerializeFrom<typeof loader>>({ loader });
 
 const createOrg = () =>
-	TournamentOrganizationRepository.insert({ ownerId: 1, name: "Org" });
+	TournamentOrganizationRepository.insert({ ownerId: userId(1), name: "Org" });
 
 describe("org stats loader", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date(2026, 0, 15));
-		await dbInsertUsers(5);
+		users = await UserFactory.createMany(5);
 	});
 
 	afterEach(async () => {
@@ -70,13 +75,13 @@ describe("org stats loader", () => {
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
 			startTime: dateToDatabaseTimestamp(new Date(2025, 11, 10)),
-			participantUserIds: [1, 2, 3],
+			participantUserIds: [userId(1), userId(2), userId(3)],
 		});
 		// an event in the current month is ignored
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
 			startTime: dateToDatabaseTimestamp(new Date(2026, 0, 5)),
-			participantUserIds: [1, 2, 3, 4, 5],
+			participantUserIds: users.map((user) => user.id),
 		});
 
 		const data = await statsLoader({
