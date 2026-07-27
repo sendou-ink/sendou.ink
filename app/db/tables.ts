@@ -193,14 +193,14 @@ export interface BuildWeapon {
 	sortValue: number | null;
 }
 
-/** Per-build ability point sums across all gear slots. Used to compute global `abilityPointAverages`. */
+/** Per-build ability point sums across all gear slots. Used to compute global `findAllAbilityPointAverages`. */
 export interface BuildAbilitySum {
 	buildId: number;
 	ability: Ability;
 	abilityPoints: number;
 }
 
-/** Per-weapon, per-build ability point sums. Used to compute per-weapon `abilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
+/** Per-weapon, per-build ability point sums. Used to compute per-weapon `findAllAbilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
 export interface BuildWeaponAbility {
 	canonicalWeaponSplId: MainWeaponId;
 	buildId: number;

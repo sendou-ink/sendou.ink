@@ -11,7 +11,7 @@ import {
 
 export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 	const userId = notFoundIfNullish(
-		await UserRepository.identifierToUserId(params.identifier!),
+		await UserRepository.findIdByIdentifier(params.identifier!),
 	).id;
 
 	const { page } = parseSearchParams({

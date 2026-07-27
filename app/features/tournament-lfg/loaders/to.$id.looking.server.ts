@@ -76,7 +76,7 @@ async function lookingMode({
 	const otherGroups = groups.filter((g) => g.id !== ownGroup?.id);
 
 	const likes = ownGroup
-		? await TournamentLFGRepository.allLikesByTeamId(ownGroup.id)
+		? await TournamentLFGRepository.findAllLikesByTeamId(ownGroup.id)
 		: { given: [], received: [] };
 
 	const ownTeam = await resolveOwnTeam({
@@ -92,7 +92,7 @@ async function lookingMode({
 
 	return {
 		mode: "looking" as const,
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: cardUserIds,
 		})),
 		groups: otherGroups,
@@ -137,7 +137,7 @@ async function subsMode({
 
 	return {
 		mode: "subs" as const,
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: subs.map((sub) => sub.userId),
 		})),
 		subs,

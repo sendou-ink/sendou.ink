@@ -29,7 +29,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		upcomingSeason,
 		groupInvitedTo,
 		friendCode: user
-			? await UserRepository.currentFriendCodeByUserId(user.id)
+			? await UserRepository.findCurrentFriendCodeByUserId(user.id)
 			: undefined,
 	};
 };

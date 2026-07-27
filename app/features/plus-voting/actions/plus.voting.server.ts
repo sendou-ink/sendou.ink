@@ -26,7 +26,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	invariant(user.plusTier, "User should have plusTier");
 
-	const usersForVoting = await PlusVotingRepository.usersForVoting({
+	const usersForVoting = await PlusVotingRepository.findAllUsersForVoting({
 		id: user.id,
 		plusTier: user.plusTier,
 	});

@@ -93,7 +93,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	];
 
 	const pickBanEvents = match.roundMaps?.pickBan
-		? await TournamentRepository.pickBanEventsByMatchId(match.id)
+		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 		: [];
 
 	const mapList =
@@ -299,9 +299,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const pickBanEventNumbersToDelete = await (async () => {
 				if (!match.roundMaps?.pickBan) return [];
 
-				const pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
-					match.id,
-				);
+				const pickBanEvents =
+					await TournamentRepository.findPickBanEventsByMatchId(match.id);
 
 				if (match.roundMaps.pickBan === "CUSTOM") {
 					const customFlow = match.roundMaps.customFlow;
@@ -452,7 +451,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			const currentPickBanEvents =
-				await TournamentRepository.pickBanEventsByMatchId(match.id);
+				await TournamentRepository.findPickBanEventsByMatchId(match.id);
 
 			const turnOfResult = PickBan.turnOf({
 				results,
@@ -541,7 +540,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			try {
-				await TournamentRepository.addPickBanEvent({
+				await TournamentRepository.insertPickBanEvent({
 					authorId: user.id,
 					matchId: match.id,
 					stageId: isModeAction ? null : data.stageId!,
@@ -560,9 +559,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			// Chain roll after action for CUSTOM flow
 			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
-				const updatedEvents = await TournamentRepository.pickBanEventsByMatchId(
-					match.id,
-				);
+				const updatedEvents =
+					await TournamentRepository.findPickBanEventsByMatchId(match.id);
 				await executeRoll({
 					matchId: match.id,
 					maps: match.roundMaps,

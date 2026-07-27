@@ -22,10 +22,10 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	);
 
 	const user = notFoundIfNullish(
-		await UserRepository.identifierToUserId(identifier),
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(user.id);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
@@ -36,13 +36,13 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 
 	return {
 		results: {
-			value: await SQMatchRepository.seasonResultsByUserId({
+			value: await SQMatchRepository.findSeasonResultsByUserId({
 				season,
 				userId: user.id,
 				page,
 			}),
 			currentPage: page,
-			pagesCount: await SQMatchRepository.seasonResultPagesByUserId({
+			pagesCount: await SQMatchRepository.countSeasonResultPagesByUserId({
 				season,
 				userId: user.id,
 			}),

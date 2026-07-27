@@ -10,26 +10,38 @@ import {
 import { databaseTimestampNow } from "~/utils/dates";
 import type { MementoSkillDifferences } from "./core/skills.server";
 
-export async function createMatchSkills(
-	{
-		groupMatchId,
-		skills,
-		oldMatchMemento,
-		differences,
-	}: {
-		groupMatchId: number;
-		skills: Pick<
-			Tables["Skill"],
-			"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
-		>[];
-		oldMatchMemento: ParsedMemento | null;
-		differences: MementoSkillDifferences;
-	},
+interface InsertMatchSkillsArgs {
+	groupMatchId: number;
+	skills: Pick<
+		Tables["Skill"],
+		"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
+	>[];
+	oldMatchMemento: ParsedMemento | null;
+	differences: MementoSkillDifferences;
+}
+
+/**
+ * Inserts the new skill rows resulting from a match, their team memberships and the match's memento
+ * updated with the resulting skill differences.
+ */
+export async function insertMatchSkills(
+	args: InsertMatchSkillsArgs,
 	trx?: Transaction<DB>,
 ) {
-	const executor = trx ?? db;
+	if (trx) return insertMatchSkillsInTransaction(args, trx);
+
+	return db
+		.transaction()
+		.execute((newTrx) => insertMatchSkillsInTransaction(args, newTrx));
+}
+
+async function insertMatchSkillsInTransaction(
+	{ groupMatchId, skills, oldMatchMemento, differences }: InsertMatchSkillsArgs,
+	executor: Transaction<DB>,
+) {
 	const createdAt = databaseTimestampNow();
 
+	const teamUsers: Array<{ skillId: number; userId: number }> = [];
 	for (const skill of skills) {
 		const insertedSkill = await insertSkillWithOrdinal(
 			{
@@ -42,16 +54,17 @@ export async function createMatchSkills(
 
 		if (insertedSkill.identifier) {
 			for (const userId of identifierToUserIds(insertedSkill.identifier)) {
-				await executor
-					.insertInto("SkillTeamUser")
-					.values({
-						skillId: insertedSkill.id,
-						userId,
-					})
-					.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
-					.execute();
+				teamUsers.push({ skillId: insertedSkill.id, userId });
 			}
 		}
+	}
+
+	if (teamUsers.length > 0) {
+		await executor
+			.insertInto("SkillTeamUser")
+			.values(teamUsers)
+			.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+			.execute();
 	}
 
 	if (!oldMatchMemento) return;
@@ -96,7 +109,7 @@ async function insertSkillWithOrdinal(
 		createdAt: number;
 		ordinal: number;
 	},
-	executor: Transaction<DB> | typeof db,
+	executor: Transaction<DB>,
 ) {
 	const isUserSkill = skill.userId !== null;
 	const isTeamSkill = skill.identifier !== null;

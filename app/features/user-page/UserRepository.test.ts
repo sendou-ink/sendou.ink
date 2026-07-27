@@ -69,7 +69,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const result = await UserRepository.joinOrderByUserId(id);
+		const result = await UserRepository.findJoinOrderByUserId(id);
 
 		expect(result?.joinOrder).toBe(1);
 	});
@@ -87,12 +87,12 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
-			1,
-		);
-		expect((await UserRepository.joinOrderByUserId(secondId))?.joinOrder).toBe(
-			2,
-		);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
+		).toBe(1);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(secondId))?.joinOrder,
+		).toBe(2);
 
 		await UserRepository.upsert({
 			discordId: "1",
@@ -100,9 +100,9 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
-			1,
-		);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
+		).toBe(1);
 	});
 
 	describe("userRoles", () => {

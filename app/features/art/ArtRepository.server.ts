@@ -10,7 +10,7 @@ import {
 import { seededRandom } from "~/utils/random";
 import type { ListedArt } from "./art-types";
 
-export function unlinkSelfFromArt(artId: number) {
+export function unlinkOwnFromArt(artId: number) {
 	return db
 		.deleteFrom("ArtUserMetadata")
 		.where("artId", "=", artId)
@@ -364,11 +364,7 @@ export async function insert(args: InsertArtArgs) {
 				.execute();
 		}
 
-		await insertTags(trx, {
-			tags: args.tags,
-			authorId,
-			artId: art.id,
-		});
+		await insertTags({ tags: args.tags, authorId, artId: art.id }, trx);
 
 		return art;
 	});
@@ -415,18 +411,13 @@ export async function update(id: number, args: UpdateArtArgs) {
 
 		await trx.deleteFrom("TaggedArt").where("artId", "=", id).execute();
 
-		await insertTags(trx, {
-			tags: args.tags,
-			authorId,
-			artId: id,
-		});
+		await insertTags({ tags: args.tags, authorId, artId: id }, trx);
 
 		return id;
 	});
 }
 
 async function insertTags(
-	trx: Transaction<DB>,
 	{
 		tags,
 		authorId,
@@ -436,25 +427,37 @@ async function insertTags(
 		authorId: number;
 		artId: number;
 	},
+	trx: Transaction<DB>,
 ) {
-	for (const tag of tags) {
-		let tagId = tag.id;
-		if (!tagId) {
+	if (tags.length === 0) return;
+
+	const newTagNames = tags
+		.filter((tag) => !tag.id)
+		.map((tag) => {
 			if (!tag.name) {
 				throw new Error("tag name must be provided if no id");
 			}
+			return tag.name;
+		});
 
-			const newTag = await trx
-				.insertInto("ArtTag")
-				.values({
-					name: tag.name,
-					authorId,
-				})
-				.returningAll()
-				.executeTakeFirstOrThrow();
-			tagId = newTag.id;
-		}
+	const newTagIds =
+		newTagNames.length > 0
+			? (
+					await trx
+						.insertInto("ArtTag")
+						.values(newTagNames.map((name) => ({ name, authorId })))
+						.returning("ArtTag.id")
+						.execute()
+				).map((tag) => tag.id)
+			: [];
 
-		await trx.insertInto("TaggedArt").values({ artId, tagId }).execute();
-	}
+	const tagIds = [
+		...tags.flatMap((tag) => (tag.id ? [tag.id] : [])),
+		...newTagIds,
+	];
+
+	await trx
+		.insertInto("TaggedArt")
+		.values(tagIds.map((tagId) => ({ artId, tagId })))
+		.execute();
 }

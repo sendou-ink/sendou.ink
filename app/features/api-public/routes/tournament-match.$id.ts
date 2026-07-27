@@ -102,7 +102,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		}
 
 		const pickBanEvents = match.maps?.pickBan
-			? await TournamentRepository.pickBanEventsByMatchId(match.id)
+			? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 			: [];
 
 		return resolveMapList({

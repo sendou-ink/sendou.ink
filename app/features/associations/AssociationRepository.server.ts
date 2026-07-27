@@ -177,7 +177,7 @@ export function refreshInviteCode(associationId: number) {
 		.execute();
 }
 
-export function addMember({
+export function insertMember({
 	associationId,
 	userId,
 }: {
@@ -190,7 +190,7 @@ export function addMember({
 		.execute();
 }
 
-export function removeMember({
+export function deleteMember({
 	associationId,
 	userId,
 }: {
@@ -204,6 +204,6 @@ export function removeMember({
 		.execute();
 }
 
-export function del(associationId: number) {
+export function deleteById(associationId: number) {
 	return db.deleteFrom("Association").where("id", "=", associationId).execute();
 }

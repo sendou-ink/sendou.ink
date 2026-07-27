@@ -25,7 +25,7 @@ async function createTestTournament({
 	authorId?: number;
 	discordInviteCode?: string;
 }) {
-	return CalendarRepository.create({
+	return CalendarRepository.insert({
 		isFullTournament: true,
 		authorId,
 		badges: [],

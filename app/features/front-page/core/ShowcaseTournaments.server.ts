@@ -176,7 +176,7 @@ async function cachedTournaments() {
 		cache,
 		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
-			const tournaments = await TournamentRepository.forShowcase();
+			const tournaments = await TournamentRepository.findAllForShowcase();
 			const mapped = tournaments.map(mapTournamentFromDB);
 
 			return deleteExtraResults(mapped);
@@ -246,7 +246,7 @@ async function tournamentsToParticipationInfoMap(
 ): Promise<Map<CommonUser["id"], ParticipationInfo>> {
 	const tournamentIds = tournaments.map((tournament) => tournament.id);
 	const tournamentsWithUsers =
-		await TournamentRepository.relatedUsersByTournamentIds(tournamentIds);
+		await TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds);
 
 	const result: Map<CommonUser["id"], ParticipationInfo> = new Map();
 

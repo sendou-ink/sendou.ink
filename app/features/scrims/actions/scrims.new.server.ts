@@ -115,7 +115,7 @@ export const usersListForPost = async ({
 	}
 
 	const teamId = from.teamId;
-	const team = (await TeamRepository.teamsByMemberUserId(authorId)).find(
+	const team = (await TeamRepository.findAllByMemberUserId(authorId)).find(
 		(team) => team.id === teamId,
 	);
 	errorToastIfFalsy(team, "User is not a member of this team");
@@ -156,7 +156,7 @@ async function validatePickup(userIds: number[], authorId: number) {
 async function validatePickupFriends(userIds: number[], authorId: number) {
 	const unconsentingUsers: string[] = [];
 
-	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId);
+	const friendsData = await SQGroupRepository.findFriendsAndTeammates(authorId);
 
 	for (const userId of userIds) {
 		const user = await UserRepository.findLeanById(userId);

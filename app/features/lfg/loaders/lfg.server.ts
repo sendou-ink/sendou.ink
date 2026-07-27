@@ -9,7 +9,7 @@ import * as LFGRepository from "../LFGRepository.server";
 
 export const loader = async () => {
 	const user = getUser();
-	const posts = await LFGRepository.posts(user);
+	const posts = await LFGRepository.findAllPosts(user);
 
 	const cardUserIds = R.unique(
 		posts.flatMap((post) => [
@@ -21,14 +21,14 @@ export const loader = async () => {
 	return {
 		posts,
 		tiersMap: await postsUsersTiersMap(posts),
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: cardUserIds,
 		})),
 	};
 };
 
 async function postsUsersTiersMap(
-	posts: Unpacked<ReturnType<typeof LFGRepository.posts>>,
+	posts: Unpacked<ReturnType<typeof LFGRepository.findAllPosts>>,
 ) {
 	const latestSeason = Seasons.currentOrPrevious()!.nth;
 	const previousSeason = latestSeason - 1;

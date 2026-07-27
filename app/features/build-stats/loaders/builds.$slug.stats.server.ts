@@ -22,7 +22,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		key: "all-ability-point-counts",
 		cache,
 		async getFreshValue() {
-			return BuildRepository.abilityPointAverages();
+			return BuildRepository.findAllAbilityPointAverages();
 		},
 	});
 
@@ -32,7 +32,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		async getFreshValue() {
 			return abilityPointCountsToAverages({
 				allAbilities,
-				weaponAbilities: await BuildRepository.abilityPointAverages(weaponId),
+				weaponAbilities:
+					await BuildRepository.findAllAbilityPointAverages(weaponId),
 			});
 		},
 	});

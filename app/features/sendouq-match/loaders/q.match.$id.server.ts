@@ -35,7 +35,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const match = SendouQ.mapMatch(matchUnmapped, user);
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: matchUsers,
 			include: { friendCode: isStaff || isParticipant },
 		})),

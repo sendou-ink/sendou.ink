@@ -22,7 +22,7 @@ export const loader = async () => {
 	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
 		ScrimPostRepository.findUserScrims(user.id),
-		SavedCalendarEventRepository.upcoming(user.id),
+		SavedCalendarEventRepository.findAllUpcomingByUserId(user.id),
 		ShowcaseTournaments.upcomingTournaments(),
 		TournamentOrganizationRepository.findByUserId(user.id),
 	]);

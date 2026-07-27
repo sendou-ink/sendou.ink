@@ -72,9 +72,10 @@ export async function notify({
 		logger.error("Failed to notify users", e);
 	}
 
-	const subscriptions = await NotificationRepository.subscriptionsByUserIds(
-		dededuplicatedUserIds,
-	);
+	const subscriptions =
+		await NotificationRepository.findAllSubscriptionsByUserIds(
+			dededuplicatedUserIds,
+		);
 	if (subscriptions.length > 0) {
 		const t = await getFixedTForLanguage("en-US", ["common"]);
 

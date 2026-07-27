@@ -5,12 +5,14 @@ import { notFoundIfNullish } from "~/utils/remix.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: userId } = notFoundIfNullish(
-		await UserRepository.identifierToUserId(params.identifier!),
+		await UserRepository.findIdByIdentifier(params.identifier!),
 	);
 
-	const userCards = await UserCardRepository.userCards({ userIds: [userId] });
+	const userCards = await UserCardRepository.findAllByUserIds({
+		userIds: [userId],
+	});
 
-	const widgetsEnabled = await UserRepository.widgetsEnabledByIdentifier(
+	const widgetsEnabled = await UserRepository.findEnabledWidgetsByIdentifier(
 		params.identifier!,
 	);
 
@@ -18,7 +20,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		return {
 			type: "new" as const,
 			widgets: notFoundIfNullish(
-				await UserRepository.widgetsByUserId(params.identifier!),
+				await UserRepository.findWidgetsByUserId(params.identifier!),
 			),
 			...userCards,
 		};

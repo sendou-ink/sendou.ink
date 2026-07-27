@@ -17,7 +17,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		),
 	);
 
-	const widgetsEnabled = await UserRepository.widgetsEnabledByIdentifier(
+	const widgetsEnabled = await UserRepository.findEnabledWidgetsByIdentifier(
 		params.identifier!,
 	);
 

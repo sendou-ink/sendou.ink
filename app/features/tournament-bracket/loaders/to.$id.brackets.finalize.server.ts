@@ -55,7 +55,7 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 	const standingsResult = Standings.tournamentStandings(tournament);
 	const finalStandings = Standings.flattenStandings(standingsResult);
 
-	const results = await TournamentMatchRepository.allResultsByTournamentId(
+	const results = await TournamentMatchRepository.findAllResultsByTournamentId(
 		tournament.ctx.id,
 	);
 	invariant(results.length > 0, "No results found");

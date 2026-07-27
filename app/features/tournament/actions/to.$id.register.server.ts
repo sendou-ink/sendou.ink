@@ -119,7 +119,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					userId: user.id,
 					tournamentId,
 				});
-				await TournamentTeamRepository.create({
+				await TournamentTeamRepository.insert({
 					team: {
 						name,
 						prefersNotToHost: toDBBoolean(data.prefersNotToHost),
@@ -129,7 +129,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournamentId,
 					avatarImgId,
 				});
-				await SavedCalendarEventRepository.unsave({
+				await SavedCalendarEventRepository.unsaveByUserId({
 					userId: user.id,
 					tournamentId,
 				});
@@ -256,7 +256,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
-				(await SQGroupRepository.friendsAndTeammates(user.id)).friends.some(
+				(await SQGroupRepository.findFriendsAndTeammates(user.id)).friends.some(
 					(friendPlayer) => friendPlayer.id === data.userId,
 				),
 				"Not a friend",
@@ -286,7 +286,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				newTeamId: ownTeam.id,
 			});
 
-			await SavedCalendarEventRepository.unsave({
+			await SavedCalendarEventRepository.unsaveByUserId({
 				userId: data.userId,
 				tournamentId,
 			});
@@ -327,7 +327,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 
-			await TournamentTeamRepository.del(ownTeam.id);
+			await TournamentTeamRepository.deleteById(ownTeam.id);
 
 			for (const member of ownTeam.members) {
 				ShowcaseTournaments.removeFromCached({

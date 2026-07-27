@@ -7,7 +7,7 @@ import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as ApiRepository from "../ApiRepository.server";
 import { checkUserHasApiAccess } from "./perms";
 
-describe("Permission logic consistency between allApiTokens and checkUserHasApiAccess", () => {
+describe("Permission logic consistency between findAllApiTokens and checkUserHasApiAccess", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(10);
 	});
@@ -20,7 +20,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		await AdminRepository.makeApiAccesserByUserId(1);
 
 		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		const tokens = await ApiRepository.findAllApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
 		const hasAccess = await checkUserHasApiAccess(user!);
@@ -33,7 +33,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		await AdminRepository.makeTournamentOrganizerByUserId(1);
 
 		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		const tokens = await ApiRepository.findAllApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
 		const hasAccess = await checkUserHasApiAccess(user!);
@@ -51,7 +51,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		});
 
 		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		const tokens = await ApiRepository.findAllApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
 		const hasAccess = await checkUserHasApiAccess(user!);
@@ -69,7 +69,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		});
 
 		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		const tokens = await ApiRepository.findAllApiTokens();
 
 		const user = await UserRepository.findLeanById(1);
 		const hasAccess = await checkUserHasApiAccess(user!);
@@ -79,7 +79,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions grant access for ADMIN/ORGANIZER/STREAMER of established org", async () => {
-		const org = await TournamentOrganizationRepository.create({
+		const org = await TournamentOrganizationRepository.insert({
 			ownerId: 1,
 			name: "Test Org",
 		});
@@ -102,7 +102,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 			});
 
 			await ApiRepository.generateToken(userId, "read");
-			const tokens = await ApiRepository.allApiTokens();
+			const tokens = await ApiRepository.findAllApiTokens();
 
 			const user = await UserRepository.findLeanById(userId);
 			const hasAccess = await checkUserHasApiAccess(user!);
@@ -113,7 +113,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions deny access for MEMBER of established org", async () => {
-		const org = await TournamentOrganizationRepository.create({
+		const org = await TournamentOrganizationRepository.insert({
 			ownerId: 1,
 			name: "Test Org",
 		});
@@ -132,7 +132,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		});
 
 		await ApiRepository.generateToken(2, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		const tokens = await ApiRepository.findAllApiTokens();
 
 		const user = await UserRepository.findLeanById(2);
 		const hasAccess = await checkUserHasApiAccess(user!);
@@ -142,7 +142,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions deny access for ADMIN of non-established org", async () => {
-		const org = await TournamentOrganizationRepository.create({
+		const org = await TournamentOrganizationRepository.insert({
 			ownerId: 1,
 			name: "Test Org",
 		});
@@ -159,7 +159,7 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 		});
 
 		await ApiRepository.generateToken(2, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		const tokens = await ApiRepository.findAllApiTokens();
 
 		const user = await UserRepository.findLeanById(2);
 		const hasAccess = await checkUserHasApiAccess(user!);

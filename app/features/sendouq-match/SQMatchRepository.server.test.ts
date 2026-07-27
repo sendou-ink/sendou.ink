@@ -6,13 +6,13 @@ import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
 const createGroup = async (userIds: number[]) => {
-	const groupResult = await SQGroupRepository.createGroup({
+	const groupResult = await SQGroupRepository.insert({
 		status: "ACTIVE",
 		userId: userIds[0],
 	});
 
 	for (let i = 1; i < userIds.length; i++) {
-		await SQGroupRepository.addMember(groupResult.id, {
+		await SQGroupRepository.insertMember(groupResult.id, {
 			userId: userIds[i],
 			role: "REGULAR",
 		});

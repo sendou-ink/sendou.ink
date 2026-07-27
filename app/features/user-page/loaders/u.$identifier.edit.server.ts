@@ -19,8 +19,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		identifier,
 		true,
 	))!;
-	const preferences = await UserRepository.preferencesByUserId(user.id);
-	const friendCodeResult = await UserRepository.currentFriendCodeByUserId(
+	const preferences = await UserRepository.findPreferencesByUserId(user.id);
+	const friendCodeResult = await UserRepository.findCurrentFriendCodeByUserId(
 		user.id,
 	);
 

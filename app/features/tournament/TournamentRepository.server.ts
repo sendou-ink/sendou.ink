@@ -495,7 +495,7 @@ export async function findPreparedMapsById(tournamentId: number) {
 	);
 }
 
-export function relatedUsersByTournamentIds(tournamentIds: number[]) {
+export function findRelatedUsersByTournamentIds(tournamentIds: number[]) {
 	return db
 		.selectFrom("CalendarEventDate")
 		.innerJoin("CalendarEvent", "CalendarEventDate.eventId", "CalendarEvent.id")
@@ -530,9 +530,9 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 		.execute();
 }
 
-export type ForShowcase = Unwrapped<typeof forShowcase>;
+export type ForShowcase = Unwrapped<typeof findAllForShowcase>;
 
-export function forShowcase() {
+export function findAllForShowcase() {
 	return db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -679,7 +679,7 @@ export function findAllBetweenTwoTimestamps({
 		.execute();
 }
 
-export function topThreeResultsByTournamentId(tournamentId: number) {
+export function findTopThreeResultsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentResult")
 		.select(({ eb }) => [
@@ -698,7 +698,7 @@ export function topThreeResultsByTournamentId(tournamentId: number) {
 		.execute();
 }
 
-export async function friendCodesByTournamentId(tournamentId: number) {
+export async function findFriendCodesByTournamentId(tournamentId: number) {
 	const values = await db
 		.selectFrom("TournamentTeam")
 		.innerJoin(
@@ -1021,7 +1021,7 @@ export function setMatchAsCasted({
 	});
 }
 
-export function pickBanEventsByMatchId(matchId: number) {
+export function findPickBanEventsByMatchId(matchId: number) {
 	return db
 		.selectFrom("TournamentMatchPickBanEvent")
 		.select([
@@ -1036,7 +1036,7 @@ export function pickBanEventsByMatchId(matchId: number) {
 		.execute();
 }
 
-export function addPickBanEvent(
+export function insertPickBanEvent(
 	values: Insertable<DB["TournamentMatchPickBanEvent"]>,
 ) {
 	return db.insertInto("TournamentMatchPickBanEvent").values(values).execute();
@@ -1087,6 +1087,7 @@ export function finalize({
 	const seasonValue = season ?? null;
 
 	return db.transaction().execute(async (trx) => {
+		const skillTeamUsers: Array<{ skillId: number; userId: number }> = [];
 		for (const skill of summary.skills) {
 			invariant(seasonValue !== null, "Season missing for skill");
 			// A skill row keys on either userId (solo) or identifier (team), never
@@ -1131,13 +1132,17 @@ export function finalize({
 
 			if (insertedSkill.identifier) {
 				for (const userId of identifierToUserIds(insertedSkill.identifier)) {
-					await trx
-						.insertInto("SkillTeamUser")
-						.values({ skillId: insertedSkill.id, userId })
-						.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
-						.execute();
+					skillTeamUsers.push({ skillId: insertedSkill.id, userId });
 				}
 			}
+		}
+
+		if (skillTeamUsers.length > 0) {
+			await trx
+				.insertInto("SkillTeamUser")
+				.values(skillTeamUsers)
+				.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+				.execute();
 		}
 
 		// SeedingSkill has `on conflict replace` set in its migration
@@ -1156,18 +1161,20 @@ export function finalize({
 				.execute();
 		}
 
-		for (const mapResultDelta of summary.mapResultDeltas) {
+		if (summary.mapResultDeltas.length > 0) {
 			invariant(seasonValue !== null, "Season missing for map result");
 			await trx
 				.insertInto("MapResult")
-				.values({
-					mode: mapResultDelta.mode,
-					stageId: mapResultDelta.stageId,
-					userId: mapResultDelta.userId,
-					wins: mapResultDelta.wins,
-					losses: mapResultDelta.losses,
-					season: seasonValue,
-				})
+				.values(
+					summary.mapResultDeltas.map((mapResultDelta) => ({
+						mode: mapResultDelta.mode,
+						stageId: mapResultDelta.stageId,
+						userId: mapResultDelta.userId,
+						wins: mapResultDelta.wins,
+						losses: mapResultDelta.losses,
+						season: seasonValue,
+					})),
+				)
 				.onConflict((oc) =>
 					oc
 						.columns(["userId", "stageId", "mode", "season"])
@@ -1179,20 +1186,22 @@ export function finalize({
 				.execute();
 		}
 
-		for (const playerResultDelta of summary.playerResultDeltas) {
+		if (summary.playerResultDeltas.length > 0) {
 			invariant(seasonValue !== null, "Season missing for player result");
 			await trx
 				.insertInto("PlayerResult")
-				.values({
-					ownerUserId: playerResultDelta.ownerUserId,
-					otherUserId: playerResultDelta.otherUserId,
-					mapWins: playerResultDelta.mapWins,
-					mapLosses: playerResultDelta.mapLosses,
-					setWins: playerResultDelta.setWins,
-					setLosses: playerResultDelta.setLosses,
-					type: playerResultDelta.type,
-					season: seasonValue,
-				})
+				.values(
+					summary.playerResultDeltas.map((playerResultDelta) => ({
+						ownerUserId: playerResultDelta.ownerUserId,
+						otherUserId: playerResultDelta.otherUserId,
+						mapWins: playerResultDelta.mapWins,
+						mapLosses: playerResultDelta.mapLosses,
+						setWins: playerResultDelta.setWins,
+						setLosses: playerResultDelta.setLosses,
+						type: playerResultDelta.type,
+						season: seasonValue,
+					})),
+				)
 				.onConflict((oc) =>
 					oc
 						.columns(["ownerUserId", "otherUserId", "type", "season"])
@@ -1236,25 +1245,27 @@ export function finalize({
 				.execute();
 		}
 
-		for (const tournamentResult of summary.tournamentResults) {
-			const setResults = summary.setResults.get(tournamentResult.userId);
+		const tournamentResults = summary.tournamentResults
+			.map((tournamentResult) => ({
+				tournamentResult,
+				setResults: summary.setResults.get(tournamentResult.userId),
+			}))
+			.filter(({ setResults }) => !setResults?.every((result) => !result))
+			.map(({ tournamentResult, setResults }) => ({
+				tournamentId,
+				userId: tournamentResult.userId,
+				placement: tournamentResult.placement,
+				participantCount: tournamentResult.participantCount,
+				tournamentTeamId: tournamentResult.tournamentTeamId,
+				setResults: JSON.stringify(setResults ?? []),
+				spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
+				div: tournamentResult.div,
+			}));
 
-			if (setResults?.every((result) => !result)) {
-				continue;
-			}
-
+		if (tournamentResults.length > 0) {
 			await trx
 				.insertInto("TournamentResult")
-				.values({
-					tournamentId,
-					userId: tournamentResult.userId,
-					placement: tournamentResult.placement,
-					participantCount: tournamentResult.participantCount,
-					tournamentTeamId: tournamentResult.tournamentTeamId,
-					setResults: JSON.stringify(setResults ?? []),
-					spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
-					div: tournamentResult.div,
-				})
+				.values(tournamentResults)
 				.execute();
 		}
 

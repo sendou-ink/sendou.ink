@@ -131,7 +131,7 @@ export function insertRequest(args: InsertRequestArgs) {
 	});
 }
 
-export function del(scrimPostId: number) {
+export function deleteById(scrimPostId: number) {
 	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
 }
 

@@ -312,7 +312,7 @@ function allMembersById(teamId: number) {
 		.execute();
 }
 
-export async function teamsByMemberUserId(
+export async function findAllByMemberUserId(
 	userId: number,
 	trx?: Transaction<DB>,
 ) {
@@ -337,7 +337,7 @@ export async function teamsByMemberUserId(
 		.execute();
 }
 
-export async function create(
+export async function insert(
 	args: Pick<Insertable<Tables["Team"]>, "name"> & {
 		ownerUserId: number;
 		isMainTeam: boolean;
@@ -444,7 +444,7 @@ export async function updateCustomTheme({
 export function switchOwnMainTeam(teamId: number) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const currentTeams = await teamsByMemberUserId(userId, trx);
+		const currentTeams = await findAllByMemberUserId(userId, trx);
 
 		const teamToSwitchTo = currentTeams.find((team) => team.id === teamId);
 		invariant(teamToSwitchTo, "User is not a member of this team");
@@ -468,7 +468,7 @@ export function switchOwnMainTeam(teamId: number) {
 	});
 }
 
-export function del(teamId: number) {
+export function deleteById(teamId: number) {
 	return db.transaction().execute(async (trx) => {
 		const members = await trx
 			.selectFrom("TeamMember")
@@ -478,7 +478,7 @@ export function del(teamId: number) {
 
 		// switch main team to another if they at least one secondary team
 		for (const member of members) {
-			const currentTeams = await teamsByMemberUserId(member.userId, trx);
+			const currentTeams = await findAllByMemberUserId(member.userId, trx);
 
 			const teamToSwitchTo = currentTeams.find((team) => team.id !== teamId);
 
@@ -524,7 +524,7 @@ export function resetInviteCode(teamId: number) {
 		.execute();
 }
 
-export function joinTeam({
+export function insertOwnMembership({
 	teamId,
 	maxTeamsAllowed,
 }: {
@@ -533,7 +533,7 @@ export function joinTeam({
 }) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		const teamCount = (await teamsByMemberUserId(userId, trx)).length;
+		const teamCount = (await findAllByMemberUserId(userId, trx)).length;
 
 		if (teamCount >= maxTeamsAllowed) {
 			throw new Error("Trying to exceed allowed team count");
@@ -629,7 +629,7 @@ async function memberLeave(
 		newOwnerUserId,
 	}: { userId: number; teamId: number; newOwnerUserId?: number },
 ) {
-	const currentTeams = await teamsByMemberUserId(userId, trx);
+	const currentTeams = await findAllByMemberUserId(userId, trx);
 
 	const teamToLeave = currentTeams.find((team) => team.id === teamId);
 	invariant(teamToLeave, "User is not a member of this team");

@@ -13,7 +13,7 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
-import * as MmrSkillRepository from "~/features/mmr/SkillRepository.server";
+import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
@@ -79,26 +79,28 @@ export function buildCases(fx: Fixtures): {
 	}
 
 	// AdminRepository
-	addStatic("AdminRepository.allBannedUsers", () =>
-		AdminRepository.allBannedUsers(),
+	addStatic("AdminRepository.findAllBannedUsers", () =>
+		AdminRepository.findAllBannedUsers(),
 	);
-	add("AdminRepository.findModeNoteById", fx.modNoteId, (id) =>
-		AdminRepository.findModeNoteById(id),
+	add("AdminRepository.findModNoteById", fx.modNoteId, (id) =>
+		AdminRepository.findModNoteById(id),
 	);
 
 	// ExternalStreamRepository
-	addStatic("ExternalStreamRepository.all", () =>
-		ExternalStreamRepository.all(),
+	addStatic("ExternalStreamRepository.findAll", () =>
+		ExternalStreamRepository.findAll(),
 	);
-	addStatic("ExternalStreamRepository.forSidebar", () =>
-		ExternalStreamRepository.forSidebar(),
+	addStatic("ExternalStreamRepository.findAllForSidebar", () =>
+		ExternalStreamRepository.findAllForSidebar(),
 	);
 
 	// ApiRepository
 	add("ApiRepository.findTokenByUserId", fx.apiTokenUserId, (userId) =>
 		ApiRepository.findTokenByUserId(userId, "read"),
 	);
-	addStatic("ApiRepository.allApiTokens", () => ApiRepository.allApiTokens());
+	addStatic("ApiRepository.findAllApiTokens", () =>
+		ApiRepository.findAllApiTokens(),
+	);
 
 	// ArtRepository
 	addStatic("ArtRepository.findShowcaseArts", () =>
@@ -147,7 +149,7 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// BadgeRepository
-	addStatic("BadgeRepository.all", () => BadgeRepository.all());
+	addStatic("BadgeRepository.findAll", () => BadgeRepository.findAll());
 	add("BadgeRepository.findById", fx.heavyBadgeId, (badgeId) =>
 		BadgeRepository.findById(badgeId),
 	);
@@ -165,30 +167,31 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// BuildRepository
-	add("BuildRepository.allByUserId", fx.heavyBuildUserId, (userId) =>
-		BuildRepository.allByUserId(userId, {
+	add("BuildRepository.findAllByUserId", fx.heavyBuildUserId, (userId) =>
+		BuildRepository.findAllByUserId(userId, {
 			showPrivate: true,
 			sortAbilities: true,
 		}),
 	);
-	add("BuildRepository.ownerIdById", fx.buildId, (buildId) =>
-		BuildRepository.ownerIdById(buildId),
+	add("BuildRepository.findOwnerIdById", fx.buildId, (buildId) =>
+		BuildRepository.findOwnerIdById(buildId),
 	);
-	addStatic("BuildRepository.abilityPointAverages.all", () =>
-		BuildRepository.abilityPointAverages(),
-	);
-	add(
-		"BuildRepository.abilityPointAverages.byWeapon",
-		fx.heavyWeaponSplId,
-		(weaponSplId) => BuildRepository.abilityPointAverages(weaponSplId),
+	addStatic("BuildRepository.findAllAbilityPointAverages.all", () =>
+		BuildRepository.findAllAbilityPointAverages(),
 	);
 	add(
-		"BuildRepository.popularAbilitiesByWeaponId",
+		"BuildRepository.findAllAbilityPointAverages.byWeapon",
 		fx.heavyWeaponSplId,
-		(weaponSplId) => BuildRepository.popularAbilitiesByWeaponId(weaponSplId),
+		(weaponSplId) => BuildRepository.findAllAbilityPointAverages(weaponSplId),
 	);
-	add("BuildRepository.allByWeaponId", fx.heavyWeaponSplId, (weaponSplId) =>
-		BuildRepository.allByWeaponId(weaponSplId, {
+	add(
+		"BuildRepository.findAllPopularAbilitiesByWeaponId",
+		fx.heavyWeaponSplId,
+		(weaponSplId) =>
+			BuildRepository.findAllPopularAbilitiesByWeaponId(weaponSplId),
+	);
+	add("BuildRepository.findAllByWeaponId", fx.heavyWeaponSplId, (weaponSplId) =>
+		BuildRepository.findAllByWeaponId(weaponSplId, {
 			limit: 60,
 			sortAbilities: true,
 		}),
@@ -276,8 +279,8 @@ export function buildCases(fx: Fixtures): {
 	addStatic("ImageRepository.countAllUnvalidated", () =>
 		ImageRepository.countAllUnvalidated(),
 	);
-	addStatic("ImageRepository.unvalidatedImages", () =>
-		ImageRepository.unvalidatedImages(),
+	addStatic("ImageRepository.findAllUnvalidated", () =>
+		ImageRepository.findAllUnvalidated(),
 	);
 	add(
 		"ImageRepository.countUnvalidatedBySubmitterUserId",
@@ -286,40 +289,42 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// LeaderboardRepository
-	add("LeaderboardRepository.teamLeaderboardBySeason", fx.sq, (sq) =>
-		LeaderboardRepository.teamLeaderboardBySeason({
+	add("LeaderboardRepository.findTeamLeaderboardBySeason", fx.sq, (sq) =>
+		LeaderboardRepository.findTeamLeaderboardBySeason({
 			season: sq.season,
 			onlyOneEntryPerUser: true,
 		}),
 	);
-	add("LeaderboardRepository.userHasEnoughSqMatches", fx.sq, (sq) =>
-		LeaderboardRepository.userHasEnoughSqMatches(sq.userId),
+	add("LeaderboardRepository.hasEnoughSqMatchesByUserId", fx.sq, (sq) =>
+		LeaderboardRepository.hasEnoughSqMatchesByUserId(sq.userId),
 	);
-	add("LeaderboardRepository.seasonsParticipatedInByUserId", fx.sq, (sq) =>
-		LeaderboardRepository.seasonsParticipatedInByUserId(sq.userId),
+	add("LeaderboardRepository.findSeasonsParticipatedInByUserId", fx.sq, (sq) =>
+		LeaderboardRepository.findSeasonsParticipatedInByUserId(sq.userId),
 	);
-	addStatic("LeaderboardRepository.allXPLeaderboard", () =>
-		LeaderboardRepository.allXPLeaderboard(),
+	addStatic("LeaderboardRepository.findAllXPLeaderboard", () =>
+		LeaderboardRepository.findAllXPLeaderboard(),
 	);
-	addStatic("LeaderboardRepository.modeXPLeaderboard", () =>
-		LeaderboardRepository.modeXPLeaderboard("SZ"),
+	addStatic("LeaderboardRepository.findModeXPLeaderboard", () =>
+		LeaderboardRepository.findModeXPLeaderboard("SZ"),
 	);
 	add(
-		"LeaderboardRepository.weaponXPLeaderboard",
+		"LeaderboardRepository.findWeaponXPLeaderboard",
 		fx.heavyWeaponSplId,
-		(weaponSplId) => LeaderboardRepository.weaponXPLeaderboard(weaponSplId),
+		(weaponSplId) => LeaderboardRepository.findWeaponXPLeaderboard(weaponSplId),
 	);
-	add("LeaderboardRepository.userSPLeaderboard", fx.sq, (sq) =>
-		LeaderboardRepository.userSPLeaderboard(sq.season),
+	add("LeaderboardRepository.findUserSPLeaderboard", fx.sq, (sq) =>
+		LeaderboardRepository.findUserSPLeaderboard(sq.season),
 	);
-	add("LeaderboardRepository.seasonPopularUsersWeapon", fx.sq, (sq) =>
-		LeaderboardRepository.seasonPopularUsersWeapon(sq.season),
+	add("LeaderboardRepository.findSeasonPopularUsersWeapon", fx.sq, (sq) =>
+		LeaderboardRepository.findSeasonPopularUsersWeapon(sq.season),
 	);
 
 	// LFGRepository
-	addStatic("LFGRepository.posts.anon", () => LFGRepository.posts());
-	add("LFGRepository.posts.loggedIn", fx.heavyUser, (user) =>
-		LFGRepository.posts({ id: user.id, plusTier: 1 }),
+	addStatic("LFGRepository.findAllPosts.anon", () =>
+		LFGRepository.findAllPosts(),
+	);
+	add("LFGRepository.findAllPosts.loggedIn", fx.heavyUser, (user) =>
+		LFGRepository.findAllPosts({ id: user.id, plusTier: 1 }),
 	);
 	add("LFGRepository.findByAuthorUserId", fx.lfgAuthorId, (authorId) =>
 		LFGRepository.findByAuthorUserId(authorId),
@@ -331,37 +336,37 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// MatchProfileRepository
-	add("MatchProfileRepository.settingsByUserId", fx.heavyUser, (user) =>
-		MatchProfileRepository.settingsByUserId(user.id),
+	add("MatchProfileRepository.findSettingsByUserId", fx.heavyUser, (user) =>
+		MatchProfileRepository.findSettingsByUserId(user.id),
 	);
 
-	// MmrSkillRepository (app/features/mmr)
-	add("MmrSkillRepository.currentUserSkills", fx.skillBatch, (skillBatch) =>
-		MmrSkillRepository.currentUserSkills({
+	// SkillRepository (app/features/mmr)
+	add("SkillRepository.findCurrentUserSkills", fx.skillBatch, (skillBatch) =>
+		SkillRepository.findCurrentUserSkills({
 			season: skillBatch.season,
 			userIds: skillBatch.userIds,
 		}),
 	);
-	add("MmrSkillRepository.currentTeamSkills", fx.skillBatch, (skillBatch) =>
-		MmrSkillRepository.currentTeamSkills({
+	add("SkillRepository.findCurrentTeamSkills", fx.skillBatch, (skillBatch) =>
+		SkillRepository.findCurrentTeamSkills({
 			season: skillBatch.season,
 			identifiers: skillBatch.identifiers,
 		}),
 	);
 	add(
-		"MmrSkillRepository.orderedUserOrdinalsBySeason",
+		"SkillRepository.findOrderedUserOrdinalsBySeason",
 		fx.skillBatch,
 		(skillBatch) =>
-			MmrSkillRepository.orderedUserOrdinalsBySeason(skillBatch.season),
+			SkillRepository.findOrderedUserOrdinalsBySeason(skillBatch.season),
 	);
-	add("MmrSkillRepository.seedingSkills", fx.skillBatch, (skillBatch) =>
-		MmrSkillRepository.seedingSkills({
+	add("SkillRepository.findSeedingSkills", fx.skillBatch, (skillBatch) =>
+		SkillRepository.findSeedingSkills({
 			type: "RANKED",
 			userIds: skillBatch.userIds,
 		}),
 	);
-	add("MmrSkillRepository.seasonProgressionByUserId", fx.sq, (sq) =>
-		MmrSkillRepository.seasonProgressionByUserId(sq),
+	add("SkillRepository.findSeasonProgressionByUserId", fx.sq, (sq) =>
+		SkillRepository.findSeasonProgressionByUserId(sq),
 	);
 
 	// NotificationRepository
@@ -372,9 +377,9 @@ export function buildCases(fx: Fixtures): {
 		NotificationRepository.findAllByType(notification.type),
 	);
 	add(
-		"NotificationRepository.subscriptionsByUserIds",
+		"NotificationRepository.findAllSubscriptionsByUserIds",
 		fx.manyUserIds,
-		(userIds) => NotificationRepository.subscriptionsByUserIds(userIds),
+		(userIds) => NotificationRepository.findAllSubscriptionsByUserIds(userIds),
 	);
 
 	// PlusSuggestionRepository
@@ -385,14 +390,16 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// PlusVotingRepository
-	addStatic("PlusVotingRepository.allPlusTiersFromLatestVoting", () =>
-		PlusVotingRepository.allPlusTiersFromLatestVoting(),
+	addStatic("PlusVotingRepository.findAllPlusTiersFromLatestVoting", () =>
+		PlusVotingRepository.findAllPlusTiersFromLatestVoting(),
 	);
-	add("PlusVotingRepository.resultsByMonthYear", fx.plusVoting, (voting) =>
-		PlusVotingRepository.resultsByMonthYear(voting),
+	add("PlusVotingRepository.findResultsByMonthYear", fx.plusVoting, (voting) =>
+		PlusVotingRepository.findResultsByMonthYear(voting),
 	);
-	add("PlusVotingRepository.usersForVoting", fx.plusTierOneUser, (user) =>
-		PlusVotingRepository.usersForVoting(user),
+	add(
+		"PlusVotingRepository.findAllUsersForVoting",
+		fx.plusTierOneUser,
+		(user) => PlusVotingRepository.findAllUsersForVoting(user),
 	);
 	add("PlusVotingRepository.hasVoted", fx.plusVoting, (voting) =>
 		PlusVotingRepository.hasVoted({
@@ -457,17 +464,20 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// PlayerStatRepository
-	add("PlayerStatRepository.seasonMapWinrateByUserId", fx.sq, (sq) =>
-		PlayerStatRepository.seasonMapWinrateByUserId(sq),
+	add("PlayerStatRepository.findSeasonMapWinrateByUserId", fx.sq, (sq) =>
+		PlayerStatRepository.findSeasonMapWinrateByUserId(sq),
 	);
-	add("PlayerStatRepository.seasonSetWinrateByUserId", fx.sq, (sq) =>
-		PlayerStatRepository.seasonSetWinrateByUserId(sq),
+	add("PlayerStatRepository.findSeasonSetWinrateByUserId", fx.sq, (sq) =>
+		PlayerStatRepository.findSeasonSetWinrateByUserId(sq),
 	);
-	add("PlayerStatRepository.seasonStagesByUserId", fx.sq, (sq) =>
-		PlayerStatRepository.seasonStagesByUserId(sq),
+	add("PlayerStatRepository.findSeasonStagesByUserId", fx.sq, (sq) =>
+		PlayerStatRepository.findSeasonStagesByUserId(sq),
 	);
-	add("PlayerStatRepository.seasonMatesEnemiesByUserId", fx.sq, (sq) =>
-		PlayerStatRepository.seasonMatesEnemiesByUserId({ ...sq, type: "MATE" }),
+	add("PlayerStatRepository.findSeasonMatesEnemiesByUserId", fx.sq, (sq) =>
+		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
+			...sq,
+			type: "MATE",
+		}),
 	);
 
 	// ReportedWeaponRepository
@@ -481,14 +491,16 @@ export function buildCases(fx: Fixtures): {
 		fx.heavyTournamentMatchId,
 		(matchId) => ReportedWeaponRepository.findByTournamentMatchId(matchId),
 	);
-	add("ReportedWeaponRepository.seasonReportedWeaponsByUserId", fx.sq, (sq) =>
-		ReportedWeaponRepository.seasonReportedWeaponsByUserId(sq),
+	add(
+		"ReportedWeaponRepository.findSeasonReportedWeaponsByUserId",
+		fx.sq,
+		(sq) => ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(sq),
 	);
 	add(
-		"ReportedWeaponRepository.weaponUsageStats",
+		"ReportedWeaponRepository.findAllWeaponUsageStats",
 		both(fx.sq, fx.heavyStageModeCombo),
 		([sq, combo]) =>
-			ReportedWeaponRepository.weaponUsageStats({
+			ReportedWeaponRepository.findAllWeaponUsageStats({
 				userId: sq.userId,
 				season: sq.season,
 				mode: combo.mode,
@@ -500,36 +512,37 @@ export function buildCases(fx: Fixtures): {
 	add("SQMatchRepository.findById", fx.heavyGroupMatchId, (matchId) =>
 		SQMatchRepository.findById(matchId),
 	);
-	add("SQMatchRepository.seasonResultPagesByUserId", fx.sq, (sq) =>
-		SQMatchRepository.seasonResultPagesByUserId(sq),
+	add("SQMatchRepository.countSeasonResultPagesByUserId", fx.sq, (sq) =>
+		SQMatchRepository.countSeasonResultPagesByUserId(sq),
 	);
-	add("SQMatchRepository.seasonResultsByUserId", fx.sq, (sq) =>
-		SQMatchRepository.seasonResultsByUserId({ ...sq, page: 1 }),
+	add("SQMatchRepository.findSeasonResultsByUserId", fx.sq, (sq) =>
+		SQMatchRepository.findSeasonResultsByUserId({ ...sq, page: 1 }),
 	);
-	add("SQMatchRepository.seasonCanceledMatchesByUserId", fx.sq, (sq) =>
-		SQMatchRepository.seasonCanceledMatchesByUserId(sq),
+	add("SQMatchRepository.findSeasonCanceledMatchesByUserId", fx.sq, (sq) =>
+		SQMatchRepository.findSeasonCanceledMatchesByUserId(sq),
 	);
 
 	// QStreamsRepository
-	addStatic("QStreamsRepository.activeMatchPlayers", () =>
-		QStreamsRepository.activeMatchPlayers(),
+	addStatic("QStreamsRepository.findAllActiveMatchPlayers", () =>
+		QStreamsRepository.findAllActiveMatchPlayers(),
 	);
 
 	// PrivateUserNoteRepository (relies on the benchmark's actor context)
-	addStatic("PrivateUserNoteRepository.ownNotes.all", () =>
-		PrivateUserNoteRepository.ownNotes(),
+	addStatic("PrivateUserNoteRepository.findAllOwn.all", () =>
+		PrivateUserNoteRepository.findAllOwn(),
 	);
 	add(
-		"PrivateUserNoteRepository.ownNotes.byTargets",
+		"PrivateUserNoteRepository.findAllOwn.byTargets",
 		fx.manyUserIds,
-		(userIds) => PrivateUserNoteRepository.ownNotes(userIds),
+		(userIds) => PrivateUserNoteRepository.findAllOwn(userIds),
 	);
 
 	// SQGroupRepository
 	add(
-		"SQGroupRepository.mapModePreferencesByGroupId",
+		"SQGroupRepository.findMapModePreferencesByGroupId",
 		fx.heavyGroupIds,
-		(groupIds) => SQGroupRepository.mapModePreferencesByGroupId(groupIds[0]),
+		(groupIds) =>
+			SQGroupRepository.findMapModePreferencesByGroupId(groupIds[0]),
 	);
 	addStatic("SQGroupRepository.findCurrentGroups", () =>
 		SQGroupRepository.findCurrentGroups(),
@@ -537,14 +550,14 @@ export function buildCases(fx: Fixtures): {
 	addStatic("SQGroupRepository.findActiveGroupMembers", () =>
 		SQGroupRepository.findActiveGroupMembers(),
 	);
-	add("SQGroupRepository.allLikesByGroupId", fx.heavyGroupIds, (groupIds) =>
-		SQGroupRepository.allLikesByGroupId(groupIds[0]),
+	add("SQGroupRepository.findAllLikesByGroupId", fx.heavyGroupIds, (groupIds) =>
+		SQGroupRepository.findAllLikesByGroupId(groupIds[0]),
 	);
-	add("SQGroupRepository.friendsAndTeammates", fx.sq, (sq) =>
-		SQGroupRepository.friendsAndTeammates(sq.userId),
+	add("SQGroupRepository.findFriendsAndTeammates", fx.sq, (sq) =>
+		SQGroupRepository.findFriendsAndTeammates(sq.userId),
 	);
-	add("SQGroupRepository.mapModePreferencesBySeasonNth", fx.sq, (sq) =>
-		SQGroupRepository.mapModePreferencesBySeasonNth(sq.season),
+	add("SQGroupRepository.findAllMapModePreferencesBySeasonNth", fx.sq, (sq) =>
+		SQGroupRepository.findAllMapModePreferencesBySeasonNth(sq.season),
 	);
 	addStatic("SQGroupRepository.findRecentlyFinishedMatches", () =>
 		SQGroupRepository.findRecentlyFinishedMatches(),
@@ -579,16 +592,19 @@ export function buildCases(fx: Fixtures): {
 	add("TeamRepository.findResultsById", fx.heavyTeam, (team) =>
 		TeamRepository.findResultsById(team.id),
 	);
-	add("TeamRepository.teamsByMemberUserId", fx.heavyTeam, (team) =>
-		TeamRepository.teamsByMemberUserId(team.memberUserId),
+	add("TeamRepository.findAllByMemberUserId", fx.heavyTeam, (team) =>
+		TeamRepository.findAllByMemberUserId(team.memberUserId),
 	);
 
 	// XRankPlacementRepository
 	add("XRankPlacementRepository.isPlayerLinkedByUserId", fx.xrank, (xrank) =>
 		XRankPlacementRepository.isPlayerLinkedByUserId(xrank.userId),
 	);
-	add("XRankPlacementRepository.peakVerifiedXpByUserId", fx.xrank, (xrank) =>
-		XRankPlacementRepository.peakVerifiedXpByUserId(xrank.userId),
+	add(
+		"XRankPlacementRepository.findPeakVerifiedXpByUserId",
+		fx.xrank,
+		(xrank) =>
+			XRankPlacementRepository.findPeakVerifiedXpByUserId(xrank.userId),
 	);
 	add("XRankPlacementRepository.findPlacementsOfMonth", fx.xrank, (xrank) =>
 		XRankPlacementRepository.findPlacementsOfMonth({
@@ -604,8 +620,8 @@ export function buildCases(fx: Fixtures): {
 	add("XRankPlacementRepository.findPlacementsByUserId", fx.xrank, (xrank) =>
 		XRankPlacementRepository.findPlacementsByUserId(xrank.userId),
 	);
-	addStatic("XRankPlacementRepository.monthYears", () =>
-		XRankPlacementRepository.monthYears(),
+	addStatic("XRankPlacementRepository.findAllMonthYears", () =>
+		XRankPlacementRepository.findAllMonthYears(),
 	);
 	add("XRankPlacementRepository.findPeaksByUserId", fx.xrank, (xrank) =>
 		XRankPlacementRepository.findPeaksByUserId(xrank.userId, "both"),
@@ -652,14 +668,14 @@ export function buildCases(fx: Fixtures): {
 	add("TournamentLFGRepository.findSubGroups", fx.lfgTournament, (lfg) =>
 		TournamentLFGRepository.findSubGroups(lfg.tournamentId),
 	);
-	add("TournamentLFGRepository.allLikesByTeamId", fx.lfgTournament, (lfg) =>
-		TournamentLFGRepository.allLikesByTeamId(lfg.teamId),
+	add("TournamentLFGRepository.findAllLikesByTeamId", fx.lfgTournament, (lfg) =>
+		TournamentLFGRepository.findAllLikesByTeamId(lfg.teamId),
 	);
 	add(
-		"TournamentLFGRepository.getSubsForTournament",
+		"TournamentLFGRepository.findAllSubsByTournamentId",
 		fx.subsTournamentId,
 		(tournamentId) =>
-			TournamentLFGRepository.getSubsForTournament(tournamentId),
+			TournamentLFGRepository.findAllSubsByTournamentId(tournamentId),
 	);
 
 	// TournamentMatchRepository
@@ -679,16 +695,18 @@ export function buildCases(fx: Fixtures): {
 		(matchId) => TournamentMatchRepository.findResultsByMatchId(matchId),
 	);
 	add(
-		"TournamentMatchRepository.allResultsByTournamentId",
+		"TournamentMatchRepository.findAllResultsByTournamentId",
 		fx.heavyTournamentId,
 		(tournamentId) =>
-			TournamentMatchRepository.allResultsByTournamentId(tournamentId),
+			TournamentMatchRepository.findAllResultsByTournamentId(tournamentId),
 	);
 	add(
-		"TournamentMatchRepository.userParticipationByTournamentId",
+		"TournamentMatchRepository.findUserParticipationByTournamentId",
 		fx.heavyTournamentId,
 		(tournamentId) =>
-			TournamentMatchRepository.userParticipationByTournamentId(tournamentId),
+			TournamentMatchRepository.findUserParticipationByTournamentId(
+				tournamentId,
+			),
 	);
 	add(
 		"TournamentMatchRepository.findByTournamentTeamId",
@@ -752,10 +770,12 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 	add(
-		"TournamentOrganizationRepository.allBannedUsersByOrganizationId",
+		"TournamentOrganizationRepository.findAllBannedUsersByOrganizationId",
 		fx.heavyOrg,
 		(org) =>
-			TournamentOrganizationRepository.allBannedUsersByOrganizationId(org.id),
+			TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
+				org.id,
+			),
 	);
 	add(
 		"TournamentOrganizationRepository.isUserBannedByOrganization",
@@ -792,8 +812,10 @@ export function buildCases(fx: Fixtures): {
 	add("SavedCalendarEventRepository.countByUserId", fx.heavyUser, (user) =>
 		SavedCalendarEventRepository.countByUserId(user.id),
 	);
-	add("SavedCalendarEventRepository.upcoming", fx.heavyUser, (user) =>
-		SavedCalendarEventRepository.upcoming(user.id),
+	add(
+		"SavedCalendarEventRepository.findAllUpcomingByUserId",
+		fx.heavyUser,
+		(user) => SavedCalendarEventRepository.findAllUpcomingByUserId(user.id),
 	);
 
 	// TournamentAuditLogRepository
@@ -875,13 +897,13 @@ export function buildCases(fx: Fixtures): {
 		(tournamentId) => TournamentRepository.findPreparedMapsById(tournamentId),
 	);
 	add(
-		"TournamentRepository.relatedUsersByTournamentIds",
+		"TournamentRepository.findRelatedUsersByTournamentIds",
 		fx.recentTournamentIds,
 		(tournamentIds) =>
-			TournamentRepository.relatedUsersByTournamentIds(tournamentIds),
+			TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds),
 	);
-	addStatic("TournamentRepository.forShowcase", () =>
-		TournamentRepository.forShowcase(),
+	addStatic("TournamentRepository.findAllForShowcase", () =>
+		TournamentRepository.findAllForShowcase(),
 	);
 	add(
 		"TournamentRepository.findAllBetweenTwoTimestamps",
@@ -889,21 +911,21 @@ export function buildCases(fx: Fixtures): {
 		(window) => TournamentRepository.findAllBetweenTwoTimestamps(window),
 	);
 	add(
-		"TournamentRepository.topThreeResultsByTournamentId",
+		"TournamentRepository.findTopThreeResultsByTournamentId",
 		fx.heavyTournamentId,
 		(tournamentId) =>
-			TournamentRepository.topThreeResultsByTournamentId(tournamentId),
+			TournamentRepository.findTopThreeResultsByTournamentId(tournamentId),
 	);
 	add(
-		"TournamentRepository.friendCodesByTournamentId",
+		"TournamentRepository.findFriendCodesByTournamentId",
 		fx.heavyTournamentId,
 		(tournamentId) =>
-			TournamentRepository.friendCodesByTournamentId(tournamentId),
+			TournamentRepository.findFriendCodesByTournamentId(tournamentId),
 	);
 	add(
-		"TournamentRepository.pickBanEventsByMatchId",
+		"TournamentRepository.findPickBanEventsByMatchId",
 		fx.heavyTournamentMatchId,
-		(matchId) => TournamentRepository.pickBanEventsByMatchId(matchId),
+		(matchId) => TournamentRepository.findPickBanEventsByMatchId(matchId),
 	);
 	addStatic("TournamentRepository.searchByName", () =>
 		TournamentRepository.searchByName(SEARCH_QUERY),
@@ -926,23 +948,23 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// UserCardRepository
-	add("UserCardRepository.userCards", fx.manyUserIds, (userIds) =>
-		UserCardRepository.userCards({
+	add("UserCardRepository.findAllByUserIds", fx.manyUserIds, (userIds) =>
+		UserCardRepository.findAllByUserIds({
 			userIds,
 			include: { friendCode: true },
 			includeHiddenStats: true,
 		}),
 	);
-	add("UserCardRepository.cardEditExtras", fx.heavyUser, (user) =>
-		UserCardRepository.cardEditExtras(user.id),
+	add("UserCardRepository.findCardEditExtrasByUserId", fx.heavyUser, (user) =>
+		UserCardRepository.findCardEditExtrasByUserId(user.id),
 	);
 
 	// UserRepository
-	add("UserRepository.identifierToUserId", fx.heavyUser, (user) =>
-		UserRepository.identifierToUserId(user.identifier),
+	add("UserRepository.findIdByIdentifier", fx.heavyUser, (user) =>
+		UserRepository.findIdByIdentifier(user.identifier),
 	);
-	add("UserRepository.identifierToBuildFields", fx.heavyUser, (user) =>
-		UserRepository.identifierToBuildFields(user.identifier),
+	add("UserRepository.findBuildFieldsByIdentifier", fx.heavyUser, (user) =>
+		UserRepository.findBuildFieldsByIdentifier(user.identifier),
 	);
 	add("UserRepository.findLayoutDataByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findLayoutDataByIdentifier(user.identifier, user.id),
@@ -950,20 +972,20 @@ export function buildCases(fx: Fixtures): {
 	add("UserRepository.findProfileByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findProfileByIdentifier(user.identifier),
 	);
-	add("UserRepository.ownedBadgesByUserId", fx.badgeOwnerUserId, (userId) =>
-		UserRepository.ownedBadgesByUserId(userId),
+	add("UserRepository.findOwnedBadgesByUserId", fx.badgeOwnerUserId, (userId) =>
+		UserRepository.findOwnedBadgesByUserId(userId),
 	);
-	add("UserRepository.widgetsEnabledByIdentifier", fx.heavyUser, (user) =>
-		UserRepository.widgetsEnabledByIdentifier(user.identifier),
+	add("UserRepository.findEnabledWidgetsByIdentifier", fx.heavyUser, (user) =>
+		UserRepository.findEnabledWidgetsByIdentifier(user.identifier),
 	);
-	add("UserRepository.preferencesByUserId", fx.heavyUser, (user) =>
-		UserRepository.preferencesByUserId(user.id),
+	add("UserRepository.findPreferencesByUserId", fx.heavyUser, (user) =>
+		UserRepository.findPreferencesByUserId(user.id),
 	);
-	add("UserRepository.storedWidgetsByUserId", fx.heavyUser, (user) =>
-		UserRepository.storedWidgetsByUserId(user.id),
+	add("UserRepository.findStoredWidgetsByUserId", fx.heavyUser, (user) =>
+		UserRepository.findStoredWidgetsByUserId(user.id),
 	);
-	add("UserRepository.widgetsByUserId", fx.heavyUser, (user) =>
-		UserRepository.widgetsByUserId(user.identifier),
+	add("UserRepository.findWidgetsByUserId", fx.heavyUser, (user) =>
+		UserRepository.findWidgetsByUserId(user.identifier),
 	);
 	add("UserRepository.findByCustomUrl", fx.userCustomUrl, (customUrl) =>
 		UserRepository.findByCustomUrl(customUrl),
@@ -1002,32 +1024,32 @@ export function buildCases(fx: Fixtures): {
 	add("UserRepository.searchExact", fx.userCustomUrl, (customUrl) =>
 		UserRepository.searchExact({ customUrl }),
 	);
-	add("UserRepository.currentFriendCodeByUserId", fx.heavyUser, (user) =>
-		UserRepository.currentFriendCodeByUserId(user.id),
+	add("UserRepository.findCurrentFriendCodeByUserId", fx.heavyUser, (user) =>
+		UserRepository.findCurrentFriendCodeByUserId(user.id),
 	);
-	add("UserRepository.friendCodesByUserId", fx.heavyUser, (user) =>
-		UserRepository.friendCodesByUserId(user.id),
+	add("UserRepository.findFriendCodesByUserId", fx.heavyUser, (user) =>
+		UserRepository.findFriendCodesByUserId(user.id),
 	);
-	addStatic("UserRepository.allCurrentFriendCodes", () =>
-		UserRepository.allCurrentFriendCodes(),
+	addStatic("UserRepository.findAllCurrentFriendCodes", () =>
+		UserRepository.findAllCurrentFriendCodes(),
 	);
-	add("UserRepository.inGameNameByUserId", fx.heavyUser, (user) =>
-		UserRepository.inGameNameByUserId(user.id),
+	add("UserRepository.findInGameNameByUserId", fx.heavyUser, (user) =>
+		UserRepository.findInGameNameByUserId(user.id),
 	);
-	add("UserRepository.patronStartedAtByUserId", fx.heavyUser, (user) =>
-		UserRepository.patronStartedAtByUserId(user.id),
+	add("UserRepository.findPatronStartedAtByUserId", fx.heavyUser, (user) =>
+		UserRepository.findPatronStartedAtByUserId(user.id),
 	);
-	add("UserRepository.joinOrderByUserId", fx.heavyUser, (user) =>
-		UserRepository.joinOrderByUserId(user.id),
+	add("UserRepository.findJoinOrderByUserId", fx.heavyUser, (user) =>
+		UserRepository.findJoinOrderByUserId(user.id),
 	);
-	add("UserRepository.commissionsByUserId", fx.heavyUser, (user) =>
-		UserRepository.commissionsByUserId(user.id),
+	add("UserRepository.findCommissionsByUserId", fx.heavyUser, (user) =>
+		UserRepository.findCommissionsByUserId(user.id),
 	);
 	add("UserRepository.anyUserPrefersNoScreen", fx.manyUserIds, (userIds) =>
 		UserRepository.anyUserPrefersNoScreen(userIds),
 	);
-	add("UserRepository.socialLinksByUserId", fx.heavyUser, (user) =>
-		UserRepository.socialLinksByUserId(user.id),
+	add("UserRepository.findSocialLinksByUserId", fx.heavyUser, (user) =>
+		UserRepository.findSocialLinksByUserId(user.id),
 	);
 	add(
 		"UserRepository.findIdsByTwitchUsernames",
@@ -1035,8 +1057,8 @@ export function buildCases(fx: Fixtures): {
 		(twitchUsernames) =>
 			UserRepository.findIdsByTwitchUsernames(twitchUsernames),
 	);
-	add("UserRepository.weaponPoolByUserId", fx.heavyUser, (user) =>
-		UserRepository.weaponPoolByUserId(user.id),
+	add("UserRepository.findWeaponPoolByUserId", fx.heavyUser, (user) =>
+		UserRepository.findWeaponPoolByUserId(user.id),
 	);
 
 	// VodRepository

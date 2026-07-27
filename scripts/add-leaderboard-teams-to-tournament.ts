@@ -50,7 +50,7 @@ async function main() {
 	const season = Seasons.currentOrPrevious();
 	invariant(season, "No current or previous season found");
 
-	const leaderboard = await LeaderboardRepository.teamLeaderboardBySeason({
+	const leaderboard = await LeaderboardRepository.findTeamLeaderboardBySeason({
 		season: season.nth,
 		onlyOneEntryPerUser: true,
 	});
@@ -84,7 +84,9 @@ async function main() {
 			invariant(user.friendCode, `User ${member.username} has no friend code`);
 
 			if (tournament.ctx.settings.requireInGameNames) {
-				const inGameName = await UserRepository.inGameNameByUserId(member.id);
+				const inGameName = await UserRepository.findInGameNameByUserId(
+					member.id,
+				);
 				invariant(
 					inGameName,
 					`User ${member.username} has no in-game name (required by tournament)`,
@@ -107,7 +109,7 @@ async function main() {
 		const tournamentTeam = await userAsyncLocalStorage.run(
 			{ user: adminUser },
 			() =>
-				TournamentTeamRepository.create({
+				TournamentTeamRepository.insert({
 					team: {
 						name: teamName,
 						prefersNotToHost: 0,

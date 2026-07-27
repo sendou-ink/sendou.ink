@@ -24,7 +24,8 @@ const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 });
 
 async function loadTeams() {
-	const teams = await TeamRepository.teamsByMemberUserId(REGULAR_USER_TEST_ID);
+	const teams =
+		await TeamRepository.findAllByMemberUserId(REGULAR_USER_TEST_ID);
 
 	const mainTeam = teams.find((t) => t.isMainTeam);
 	const secondaryTeams = teams.filter((t) => !t.isMainTeam);
@@ -107,7 +108,7 @@ describe("Secondary teams", () => {
 		await createTeamAction({ name: "Team 1" }, { user: "admin" });
 
 		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.joinTeam({
+			TeamRepository.insertOwnMembership({
 				teamId: 1,
 				maxTeamsAllowed: 2,
 			}),
@@ -130,13 +131,13 @@ describe("Secondary teams", () => {
 		await createTeamAction({ name: "Team 2" }, { user: "admin" });
 
 		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.joinTeam({
+			TeamRepository.insertOwnMembership({
 				teamId: 1,
 				maxTeamsAllowed: 2,
 			}),
 		);
 		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.joinTeam({
+			TeamRepository.insertOwnMembership({
 				teamId: 2,
 				maxTeamsAllowed: 2,
 			}),

@@ -8,7 +8,7 @@ import { userIsBanned } from "../../ban/core/banned.server";
 
 export async function plusTiersFromVotingAndLeaderboard() {
 	const newMembersFromVoting =
-		await PlusVotingRepository.allPlusTiersFromLatestVoting();
+		await PlusVotingRepository.findAllPlusTiersFromLatestVoting();
 	const newMembersFromLeaderboard = await fromLeaderboard(newMembersFromVoting);
 	return [
 		...newMembersFromLeaderboard,
@@ -40,7 +40,7 @@ async function fromLeaderboard(
 	}
 
 	const leaderboard = addPendingPlusTiers(
-		await LeaderboardRepository.userSPLeaderboard(lastCompletedSeason.nth),
+		await LeaderboardRepository.findUserSPLeaderboard(lastCompletedSeason.nth),
 		newMembersFromVoting,
 		lastCompletedSeason.nth,
 	);

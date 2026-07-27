@@ -28,7 +28,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		await UserRepository.findModInfoById(user.id),
 	);
 
-	const friendCodes = await UserRepository.friendCodesByUserId(user.id);
+	const friendCodes = await UserRepository.findFriendCodesByUserId(user.id);
 
 	const reports = await UserReportRepository.findAllByReportedUserId(user.id);
 

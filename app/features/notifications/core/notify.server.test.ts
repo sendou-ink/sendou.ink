@@ -230,7 +230,7 @@ describe("notify() - web push notifications", () => {
 
 		vi.spyOn(
 			NotificationRepository,
-			"subscriptionsByUserIds",
+			"findAllSubscriptionsByUserIds",
 		).mockResolvedValue([
 			{
 				id: 1,
@@ -282,7 +282,7 @@ describe("notify() - web push notifications", () => {
 
 		vi.spyOn(
 			NotificationRepository,
-			"subscriptionsByUserIds",
+			"findAllSubscriptionsByUserIds",
 		).mockResolvedValue([
 			{
 				id: 1,
@@ -328,7 +328,7 @@ describe("notify() - web push notifications", () => {
 
 		vi.spyOn(
 			NotificationRepository,
-			"subscriptionsByUserIds",
+			"findAllSubscriptionsByUserIds",
 		).mockResolvedValue([
 			{
 				id: 1,
@@ -358,7 +358,7 @@ describe("notify() - web push notifications", () => {
 
 		vi.spyOn(
 			NotificationRepository,
-			"subscriptionsByUserIds",
+			"findAllSubscriptionsByUserIds",
 		).mockResolvedValue([
 			{
 				id: 1,

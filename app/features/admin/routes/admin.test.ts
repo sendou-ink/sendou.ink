@@ -334,12 +334,12 @@ describe("Account migration", () => {
 	});
 
 	it("two accounts with teams results in an error", async () => {
-		await TeamRepository.create({
+		await TeamRepository.insert({
 			name: "Team 1",
 			ownerUserId: 1,
 			isMainTeam: true,
 		});
-		await TeamRepository.create({
+		await TeamRepository.insert({
 			name: "Team 2",
 			ownerUserId: 2,
 			isMainTeam: true,
@@ -358,12 +358,12 @@ describe("Account migration", () => {
 			.executeTakeFirst();
 
 	it("deletes past team membership status of the new user", async () => {
-		await TeamRepository.create({
+		await TeamRepository.insert({
 			name: "Team 1",
 			ownerUserId: 2,
 			isMainTeam: true,
 		});
-		await TeamRepository.del(1);
+		await TeamRepository.deleteById(1);
 
 		const membershipBeforeMigration = await membershipOf(2);
 		expect(membershipBeforeMigration).toBeDefined();
@@ -376,13 +376,13 @@ describe("Account migration", () => {
 	});
 
 	it("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
-		await TeamRepository.create({
+		await TeamRepository.insert({
 			name: "Team 1",
 			ownerUserId: 2,
 			isMainTeam: true,
 		});
 		await withUserId(1, () =>
-			TeamRepository.joinTeam({
+			TeamRepository.insertOwnMembership({
 				teamId: 1,
 				maxTeamsAllowed: 1,
 			}),
@@ -427,7 +427,7 @@ describe("Account migration", () => {
 	});
 
 	it("deletes builds from the new user when migrating", async () => {
-		await BuildRepository.create({
+		await BuildRepository.insert({
 			title: "Test build",
 			ownerId: 2,
 			headGearSplId: 1,
@@ -444,7 +444,7 @@ describe("Account migration", () => {
 			isPrivate: 0,
 		});
 
-		const buildsBefore = await BuildRepository.allByUserId(2);
+		const buildsBefore = await BuildRepository.findAllByUserId(2);
 
 		expect(buildsBefore.length).toBe(1);
 
@@ -454,7 +454,7 @@ describe("Account migration", () => {
 		expect(oldUser).toBeNull();
 
 		for (const userId of [1, 2]) {
-			const buildsAfter = await BuildRepository.allByUserId(userId);
+			const buildsAfter = await BuildRepository.findAllByUserId(userId);
 			expect(buildsAfter.length).toBe(0);
 		}
 	});

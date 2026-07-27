@@ -87,7 +87,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					});
 				}
 			} else {
-				await TournamentLFGRepository.createPlaceholderTeam({
+				await TournamentLFGRepository.insertPlaceholderTeam({
 					tournamentId,
 					userId: user.id,
 					isStayAsSub: data.stayAsSub ?? false,
@@ -110,7 +110,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const targetGroup = groups.find((g) => g.id === data.targetTeamId);
 			if (!targetGroup) return null;
 
-			await TournamentLFGRepository.addLike({
+			await TournamentLFGRepository.insertLike({
 				likerTeamId: ownGroup.id,
 				targetTeamId: data.targetTeamId,
 			});
@@ -159,7 +159,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const theirGroup = groups.find((g) => g.id === data.targetTeamId);
 			if (!theirGroup) return null;
 
-			const theirLikes = await TournamentLFGRepository.allLikesByTeamId(
+			const theirLikes = await TournamentLFGRepository.findAllLikesByTeamId(
 				data.targetTeamId,
 			);
 			if (!theirLikes.given.some((like) => like.teamId === ownGroup.id)) {
@@ -318,7 +318,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 			errorToastIfFalsy(!hasExistingSubPost, "Already have a sub post");
 
-			await TournamentLFGRepository.createPlaceholderTeam({
+			await TournamentLFGRepository.insertPlaceholderTeam({
 				tournamentId,
 				userId: user.id,
 				isStayAsSub: true,

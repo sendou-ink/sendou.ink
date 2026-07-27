@@ -51,7 +51,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	}
 
 	let pickBanEvents = match.roundMaps?.pickBan
-		? await TournamentRepository.pickBanEventsByMatchId(match.id)
+		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 		: [];
 
 	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
@@ -88,7 +88,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 				});
 				if (rollExecuted) {
-					pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
+					pickBanEvents = await TournamentRepository.findPickBanEventsByMatchId(
 						match.id,
 					);
 				}
@@ -214,7 +214,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		!isLeagueRoundLocked(tournament, match.roundId);
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: match.players.map((p) => p.id),
 			include: {
 				friendCode: isParticipant || isSiteStaff || isTournamentStaff,

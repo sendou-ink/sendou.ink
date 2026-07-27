@@ -21,7 +21,7 @@ import {
 import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
 
-export async function allByUserId(
+export async function findAllByUserId(
 	userId: number,
 	options: {
 		showPrivate?: boolean;
@@ -77,9 +77,9 @@ interface CreateArgs {
 	isPrivate: TablesInsertable["Build"]["isPrivate"];
 }
 
-export async function create(args: CreateArgs) {
+export async function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
-		const computed = await computeBuildData(trx, args);
+		const computed = await computeBuildData(args, trx);
 		const updatedAt = dateToDatabaseTimestamp(new Date());
 
 		const { id: buildId } = await trx
@@ -100,13 +100,7 @@ export async function create(args: CreateArgs) {
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
-		await insertBuildChildrenInTrx({
-			trx,
-			buildId,
-			args,
-			computed,
-			updatedAt,
-		});
+		await insertBuildChildren({ buildId, args, computed, updatedAt }, trx);
 
 		const { count } = await trx
 			.selectFrom("Build")
@@ -122,7 +116,7 @@ export async function create(args: CreateArgs) {
 
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
-		const computed = await computeBuildData(trx, args);
+		const computed = await computeBuildData(args, trx);
 		const updatedAt = dateToDatabaseTimestamp(new Date());
 
 		await trx
@@ -155,13 +149,10 @@ export async function update(args: CreateArgs & { id: number }) {
 			.where("buildId", "=", args.id)
 			.execute();
 
-		await insertBuildChildrenInTrx({
+		await insertBuildChildren(
+			{ buildId: args.id, args, computed, updatedAt },
 			trx,
-			buildId: args.id,
-			args,
-			computed,
-			updatedAt,
-		});
+		);
 	});
 }
 
@@ -169,7 +160,7 @@ export function deleteById(id: number) {
 	return db.deleteFrom("Build").where("id", "=", id).execute();
 }
 
-export async function ownerIdById(buildId: number) {
+export async function findOwnerIdById(buildId: number) {
 	const result = await db
 		.selectFrom("Build")
 		.select("ownerId")
@@ -179,7 +170,9 @@ export async function ownerIdById(buildId: number) {
 	return result?.ownerId ?? null;
 }
 
-export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
+export async function findAllAbilityPointAverages(
+	weaponSplId?: MainWeaponId | null,
+) {
 	// Sum tables only contain rows for public builds,
 	// so the queries below need no private filter and no `Build` join.
 	if (typeof weaponSplId === "number") {
@@ -210,7 +203,9 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 		.execute();
 }
 
-export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
+export async function findAllPopularAbilitiesByWeaponId(
+	weaponSplId: MainWeaponId,
+) {
 	// One signature per user — otherwise a user with several builds for the
 	// same weapon (e.g. three different Slosher loadouts) would inflate three
 	// different signature buckets. The CTE picks each user's most recently
@@ -249,14 +244,14 @@ export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
 }
 
 export type AverageAbilityPointsResult = Awaited<
-	ReturnType<typeof abilityPointAverages>
+	ReturnType<typeof findAllAbilityPointAverages>
 >[number];
 
 export type PopularBuildsRow = Awaited<
-	ReturnType<typeof popularAbilitiesByWeaponId>
+	ReturnType<typeof findAllPopularAbilitiesByWeaponId>
 >[number];
 
-export async function allByWeaponId(
+export async function findAllByWeaponId(
 	weaponId: MainWeaponId,
 	options: { limit: number; sortAbilities?: boolean },
 ) {
@@ -416,8 +411,8 @@ interface ComputedBuildData {
 }
 
 async function computeBuildData(
-	trx: Transaction<DB>,
 	args: CreateArgs,
+	trx: Transaction<DB>,
 ): Promise<ComputedBuildData> {
 	const abilitySums = computeAbilitySums(args.abilities);
 
@@ -486,19 +481,20 @@ function serializeSignature(sums: Array<[Ability, number]>): string {
 		.join(",");
 }
 
-async function insertBuildChildrenInTrx({
-	trx,
-	buildId,
-	args,
-	computed,
-	updatedAt,
-}: {
-	trx: Transaction<DB>;
-	buildId: number;
-	args: CreateArgs;
-	computed: ComputedBuildData;
-	updatedAt: number;
-}) {
+async function insertBuildChildren(
+	{
+		buildId,
+		args,
+		computed,
+		updatedAt,
+	}: {
+		buildId: number;
+		args: CreateArgs;
+		computed: ComputedBuildData;
+		updatedAt: number;
+	},
+	trx: Transaction<DB>,
+) {
 	await trx
 		.insertInto("BuildWeapon")
 		.values(

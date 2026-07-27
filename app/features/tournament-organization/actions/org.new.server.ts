@@ -29,7 +29,7 @@ export const action: ActionFunction = async ({ request }) => {
 		`You are already a member of ${TOURNAMENT_ORGANIZATION.MAX_MEMBER_OF_COUNT} organizations. Leave one before creating a new one.`,
 	);
 
-	const org = await TournamentOrganizationRepository.create({
+	const org = await TournamentOrganizationRepository.insert({
 		name: result.data.name,
 		ownerId: user.id,
 	});

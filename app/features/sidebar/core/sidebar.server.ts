@@ -90,7 +90,7 @@ export async function resolveSidebarData(userId: number | null) {
 		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
 		FriendRepository.findByUserIdWithActivity(userId),
-		SavedCalendarEventRepository.upcoming(userId),
+		SavedCalendarEventRepository.findAllUpcomingByUserId(userId),
 		FriendRepository.findPendingReceivedRequestIds(userId),
 	]);
 
@@ -150,7 +150,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 			getSendouQSidebarStreams(),
 			LiveStreamRepository.findXRankStreams(),
 			ShowcaseTournaments.upcomingTournaments(),
-			ExternalStreamRepository.forSidebar(),
+			ExternalStreamRepository.findAllForSidebar(),
 		]);
 
 	const seenUsernames = new Set([

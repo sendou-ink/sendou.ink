@@ -28,7 +28,7 @@ export function upsertMapResults(
 }
 
 /** Aggregated map win/loss record for a user in a given season. */
-export async function seasonMapWinrateByUserId({
+export async function findSeasonMapWinrateByUserId({
 	userId,
 	season,
 }: {
@@ -50,7 +50,7 @@ export async function seasonMapWinrateByUserId({
 }
 
 /** Aggregated set win/loss record for a user in a given season. */
-export async function seasonSetWinrateByUserId({
+export async function findSeasonSetWinrateByUserId({
 	userId,
 	season,
 }: {
@@ -73,7 +73,7 @@ export async function seasonSetWinrateByUserId({
 }
 
 /** Per-stage per-mode win/loss breakdown for a user in a given season. */
-export async function seasonStagesByUserId({
+export async function findSeasonStagesByUserId({
 	userId,
 	season,
 }: {
@@ -108,7 +108,7 @@ export async function seasonStagesByUserId({
 }
 
 /** Mates or enemies for a user in a given season, ordered by most maps played together. */
-export async function seasonMatesEnemiesByUserId({
+export async function findSeasonMatesEnemiesByUserId({
 	userId,
 	season,
 	type,

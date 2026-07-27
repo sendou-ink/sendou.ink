@@ -305,7 +305,7 @@ export function forcePatron(args: {
 		.execute();
 }
 
-export async function allBannedUsers() {
+export async function findAllBannedUsers() {
 	const rows = await db
 		.selectFrom("User")
 		.select(["User.id as userId", "User.banned", "User.bannedReason"])
@@ -397,7 +397,7 @@ export function addModNote(
 		.execute();
 }
 
-export function findModeNoteById(id: number) {
+export function findModNoteById(id: number) {
 	return db
 		.selectFrom("ModNote")
 		.selectAll()

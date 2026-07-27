@@ -36,10 +36,10 @@ import { isValidUnverifiedXp } from "./user-card-utils";
  * cards (resolved from request context via `actorIdOrNull()`, or `null` when anonymous) scopes the
  * per-viewer `privateNote`.
  *
- * Designed to be spread into a route loader (`{ ...(await userCards(...)) }`) so the `UserCard`
+ * Designed to be spread into a route loader (`{ ...(await findAllByUserIds(...)) }`) so the `UserCard`
  * component can resolve its own data from the route tree by id.
  */
-export async function userCards({
+export async function findAllByUserIds({
 	userIds,
 	include,
 	includeHiddenStats = false,
@@ -93,7 +93,7 @@ export async function userCards({
  * image (id + preview url, for the image field's default value), the self-reported peak XP, and the
  * hidden stat types (to pre-check the visibility toggles).
  */
-export async function cardEditExtras(userId: number) {
+export async function findCardEditExtrasByUserId(userId: number) {
 	const row = await db
 		.selectFrom("User")
 		.select((eb) => [
@@ -165,7 +165,7 @@ const BANNER_PRESET_COLOR_CASE = `case "User"."id" % ${PRESET_COLORS.length}\n${
 /**
  * Kysely expression building the JSON object for all DB-resident `UserCard` fields of a single user.
  * Designed to be composed both standalone (one user) and inside a batched list query (see
- * {@link userCards}). `"User"` must be in scope at the call site.
+ * {@link findAllByUserIds}). `"User"` must be in scope at the call site.
  *
  * SEASON stats (tier + leaderboard placement) are NOT included here — they live in the in-memory
  * `userSkills`/leaderboard caches and are merged in an app-layer enrich pass. `banner` is returned as

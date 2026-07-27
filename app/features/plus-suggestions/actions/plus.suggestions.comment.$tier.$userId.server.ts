@@ -41,7 +41,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		"No permissions to add this comment",
 	);
 
-	await PlusSuggestionRepository.create({
+	await PlusSuggestionRepository.insert({
 		authorId: user.id,
 		suggestedId: result.data.suggestedId,
 		text: result.data.comment,

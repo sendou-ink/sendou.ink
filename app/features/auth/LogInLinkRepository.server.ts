@@ -7,7 +7,7 @@ const LOG_IN_LINK_LENGTH = 12;
 const LOG_IN_LINK_VALID_FOR_MINUTES = 10;
 
 /** Creates a new login link for a user with 10-minute expiration */
-export function create(userId: number) {
+export function insert(userId: number) {
 	return db
 		.insertInto("LogInLink")
 		.values({
@@ -22,7 +22,7 @@ export function create(userId: number) {
 }
 
 /** Deletes a login link by its code */
-export function del(code: string) {
+export function deleteByCode(code: string) {
 	return db.deleteFrom("LogInLink").where("code", "=", code).execute();
 }
 

@@ -16,11 +16,11 @@ import {
 	concatUserSubmittedImagePrefix,
 	customAvatarUrl,
 	tournamentLogoOrNull,
+	userByIdentifierQuery,
 	userChatNameHue,
 	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
-import { safeNumberParse } from "~/utils/number";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
 import type { ChatUser } from "../chat/chat-types";
 import { sortBadgesByFavorites } from "./core/badge-sorting.server";
@@ -29,31 +29,12 @@ import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
 
-export const identifierToUserIdQuery = (identifier: string) =>
-	db
-		.selectFrom("User")
-		.select("User.id")
-		.where((eb) => {
-			// we don't want to parse discord id's as numbers (length = 18)
-			const parsedId =
-				identifier.length < 10 ? safeNumberParse(identifier) : null;
-			if (parsedId) {
-				return eb("User.id", "=", parsedId);
-			}
-
-			if (/^\d+$/.test(identifier)) {
-				return eb("User.discordId", "=", identifier);
-			}
-
-			return eb("User.customUrl", "=", identifier);
-		});
-
-export function identifierToUserId(identifier: string) {
-	return identifierToUserIdQuery(identifier).executeTakeFirst();
+export function findIdByIdentifier(identifier: string) {
+	return userByIdentifierQuery(identifier).executeTakeFirst();
 }
 
-export async function identifierToBuildFields(identifier: string) {
-	const row = await identifierToUserIdQuery(identifier)
+export async function findBuildFieldsByIdentifier(identifier: string) {
+	const row = await userByIdentifierQuery(identifier)
 		.select(({ eb }) => [
 			"User.buildSorting",
 			jsonArrayFrom(
@@ -80,7 +61,7 @@ export function findLayoutDataByIdentifier(
 	identifier: string,
 	loggedInUserId?: number,
 ) {
-	return identifierToUserIdQuery(identifier)
+	return userByIdentifierQuery(identifier)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select((eb) => [
 			...commonUserSelect(eb),
@@ -158,7 +139,7 @@ export async function findProfileByIdentifier(
 	identifier: string,
 	forceShowDiscordUniqueName?: boolean,
 ) {
-	const row = await identifierToUserIdQuery(identifier)
+	const row = await userByIdentifierQuery(identifier)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(({ eb }) => [
 			"User.twitch",
@@ -230,7 +211,7 @@ export async function findProfileByIdentifier(
 	// queried separately with a constant userId instead of correlating to
 	// "User"."id" so that SQLite can push the predicate down into both arms
 	// of the BadgeOwner view
-	const badges = await ownedBadgesByUserId(row.id);
+	const badges = await findOwnedBadgesByUserId(row.id);
 
 	return {
 		...row,
@@ -252,7 +233,7 @@ export async function findProfileByIdentifier(
  * to an outer "User"."id" would prevent SQLite from pushing the predicate
  * down into both arms of the BadgeOwner view, materializing the full view.
  */
-export function ownedBadgesByUserId(userId: number) {
+export function findOwnedBadgesByUserId(userId: number) {
 	return db
 		.selectFrom("BadgeOwner")
 		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
@@ -268,8 +249,8 @@ export function ownedBadgesByUserId(userId: number) {
 		.execute();
 }
 
-export async function widgetsEnabledByIdentifier(identifier: string) {
-	const row = await identifierToUserIdQuery(identifier)
+export async function findEnabledWidgetsByIdentifier(identifier: string) {
+	const row = await userByIdentifierQuery(identifier)
 		.select(["User.preferences", "User.patronTier"])
 		.executeTakeFirst();
 
@@ -279,7 +260,7 @@ export async function widgetsEnabledByIdentifier(identifier: string) {
 	return row?.preferences?.newProfileEnabled === true;
 }
 
-export async function preferencesByUserId(userId: number) {
+export async function findPreferencesByUserId(userId: number) {
 	const row = await db
 		.selectFrom("User")
 		.select("User.preferences")
@@ -311,7 +292,7 @@ export async function upsertWidgets(
 	});
 }
 
-export async function storedWidgetsByUserId(
+export async function findStoredWidgetsByUserId(
 	userId: number,
 ): Promise<Array<Tables["UserWidget"]["widget"]>> {
 	const rows = await db
@@ -324,10 +305,10 @@ export async function storedWidgetsByUserId(
 	return rows.map((row) => row.widget);
 }
 
-export async function widgetsByUserId(
+export async function findWidgetsByUserId(
 	identifier: string,
 ): Promise<LoadedWidget[] | null> {
-	const user = await identifierToUserId(identifier);
+	const user = await findIdByIdentifier(identifier);
 
 	if (!user) return null;
 
@@ -904,7 +885,7 @@ export function searchExact(args: {
 	return query.execute();
 }
 
-export async function currentFriendCodeByUserId(userId: number) {
+export async function findCurrentFriendCodeByUserId(userId: number) {
 	return db
 		.selectFrom("UserFriendCode")
 		.select([
@@ -919,7 +900,7 @@ export async function currentFriendCodeByUserId(userId: number) {
 }
 
 /** Returns all friend codes submitted by a user (both present and past) */
-export async function friendCodesByUserId(userId: number) {
+export async function findFriendCodesByUserId(userId: number) {
 	return db
 		.selectFrom("UserFriendCode")
 		.leftJoin("User", "User.id", "UserFriendCode.submitterUserId")
@@ -935,7 +916,7 @@ export async function friendCodesByUserId(userId: number) {
 
 let cachedFriendCodes: Set<string> | null = null;
 
-export async function allCurrentFriendCodes() {
+export async function findAllCurrentFriendCodes() {
 	if (cachedFriendCodes) {
 		return cachedFriendCodes;
 	}
@@ -963,7 +944,7 @@ export async function allCurrentFriendCodes() {
 	return friendCodes;
 }
 
-export async function inGameNameByUserId(userId: number) {
+export async function findInGameNameByUserId(userId: number) {
 	return (
 		await db
 			.selectFrom("User")
@@ -973,7 +954,7 @@ export async function inGameNameByUserId(userId: number) {
 	)?.inGameName;
 }
 
-export async function patronStartedAtByUserId(userId: number) {
+export async function findPatronStartedAtByUserId(userId: number) {
 	return (
 		await db
 			.selectFrom("User")
@@ -983,7 +964,7 @@ export async function patronStartedAtByUserId(userId: number) {
 	)?.patronStartedAt;
 }
 
-export async function joinOrderByUserId(userId: number) {
+export async function findJoinOrderByUserId(userId: number) {
 	const row = await db
 		.selectFrom("User")
 		.select("User.joinOrder")
@@ -998,7 +979,7 @@ export async function joinOrderByUserId(userId: number) {
 	};
 }
 
-export async function commissionsByUserId(userId: number) {
+export async function findCommissionsByUserId(userId: number) {
 	return await db
 		.selectFrom("User")
 		.select([
@@ -1325,7 +1306,7 @@ export async function anyUserPrefersNoScreen(
 	return Boolean(result);
 }
 
-export async function socialLinksByUserId(userId: number) {
+export async function findSocialLinksByUserId(userId: number) {
 	const user = await db
 		.selectFrom("User")
 		.select([
@@ -1375,7 +1356,7 @@ export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
 }
 
 /** Returns weapon pool entries with ten-star status for the given user. */
-export function weaponPoolByUserId(userId: number) {
+export function findWeaponPoolByUserId(userId: number) {
 	return db
 		.selectFrom("UserWeaponPool")
 		.leftJoin("TenStarWeapon", (join) =>

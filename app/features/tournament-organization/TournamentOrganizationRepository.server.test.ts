@@ -10,7 +10,7 @@ const createOrganization = async ({
 	ownerId: number;
 	name: string;
 }) => {
-	return TournamentOrganizationRepository.create({
+	return TournamentOrganizationRepository.insert({
 		ownerId,
 		name,
 	});

@@ -28,7 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	if (data.unverifiedXpPoints) {
 		const verifiedPeakXp =
-			await XRankPlacementRepository.peakVerifiedXpByUserId(user.id);
+			await XRankPlacementRepository.findPeakVerifiedXpByUserId(user.id);
 		if (
 			!isValidUnverifiedXp({
 				unverified: data.unverifiedXpPoints,

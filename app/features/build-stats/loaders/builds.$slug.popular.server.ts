@@ -25,7 +25,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		ttl: ttl(IN_MILLISECONDS.ONE_HOUR),
 		async getFreshValue() {
 			return popularBuilds(
-				await BuildRepository.popularAbilitiesByWeaponId(weaponId),
+				await BuildRepository.findAllPopularAbilitiesByWeaponId(weaponId),
 			);
 		},
 	});

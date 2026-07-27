@@ -53,7 +53,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"Can't delete an accepted scrim, cancel it instead",
 			);
 
-			await ScrimPostRepository.del(post.id);
+			await ScrimPostRepository.deleteById(post.id);
 
 			break;
 		}
@@ -215,7 +215,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					}
 
 					for (const removed of posts) {
-						await ScrimPostRepository.del(removed.id);
+						await ScrimPostRepository.deleteById(removed.id);
 						notify({
 							userIds: removed.memberIds,
 							defaultSeenUserIds: [user.id],

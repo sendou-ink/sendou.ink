@@ -1066,7 +1066,7 @@ async function lastMonthSuggestions() {
 	const { month, year } = lastCompletedVoting(new Date());
 
 	for (const id of usersSuggested) {
-		await PlusSuggestionRepository.create({
+		await PlusSuggestionRepository.insert({
 			authorId: ADMIN_ID,
 			month,
 			year,
@@ -1093,7 +1093,7 @@ async function thisMonthsSuggestions() {
 			invariant(suggester);
 			invariant(suggester.plusTier);
 
-			await PlusSuggestionRepository.create({
+			await PlusSuggestionRepository.insert({
 				authorId: suggester.userId,
 				month,
 				year,
@@ -1106,7 +1106,7 @@ async function thisMonthsSuggestions() {
 }
 
 async function syncPlusTiers() {
-	const tiers = await PlusVotingRepository.allPlusTiersFromLatestVoting();
+	const tiers = await PlusVotingRepository.findAllPlusTiersFromLatestVoting();
 
 	if (tiers.length === 0) return;
 
@@ -1763,7 +1763,7 @@ async function tournamentLfgGroups() {
 
 	// Add admin's friends to tournament LFG so sidebar shows tournament friends
 	for (const friendId of SENDOU_FRIEND_IDS_IN_TOURNAMENT_LFG) {
-		await TournamentLFGRepository.createPlaceholderTeam({
+		await TournamentLFGRepository.insertPlaceholderTeam({
 			tournamentId: 1,
 			userId: friendId,
 		});
@@ -1777,7 +1777,7 @@ async function tournamentLfgGroups() {
 		userIndex += 8;
 
 		// Group 1: solo placeholder, has note, isStayAsSub=1
-		const { id: team1Id } = await TournamentLFGRepository.createPlaceholderTeam(
+		const { id: team1Id } = await TournamentLFGRepository.insertPlaceholderTeam(
 			{
 				tournamentId,
 				userId: users[0],
@@ -1790,7 +1790,7 @@ async function tournamentLfgGroups() {
 		});
 
 		// Group 2: solo placeholder
-		const { id: team2Id } = await TournamentLFGRepository.createPlaceholderTeam(
+		const { id: team2Id } = await TournamentLFGRepository.insertPlaceholderTeam(
 			{
 				tournamentId,
 				userId: users[1],
@@ -1798,7 +1798,7 @@ async function tournamentLfgGroups() {
 		);
 
 		// Group 3: solo placeholder
-		const { id: team3Id } = await TournamentLFGRepository.createPlaceholderTeam(
+		const { id: team3Id } = await TournamentLFGRepository.insertPlaceholderTeam(
 			{
 				tournamentId,
 				userId: users[2],
@@ -1806,7 +1806,7 @@ async function tournamentLfgGroups() {
 		);
 
 		// Group 4: solo placeholder
-		const { id: team4Id } = await TournamentLFGRepository.createPlaceholderTeam(
+		const { id: team4Id } = await TournamentLFGRepository.insertPlaceholderTeam(
 			{
 				tournamentId,
 				userId: users[3],
@@ -1815,12 +1815,12 @@ async function tournamentLfgGroups() {
 
 		// Group 5: 2-member group (merged from two placeholders)
 		const { id: mergeTarget1 } =
-			await TournamentLFGRepository.createPlaceholderTeam({
+			await TournamentLFGRepository.insertPlaceholderTeam({
 				tournamentId,
 				userId: users[4],
 			});
 		const { id: mergeSource1 } =
-			await TournamentLFGRepository.createPlaceholderTeam({
+			await TournamentLFGRepository.insertPlaceholderTeam({
 				tournamentId,
 				userId: users[5],
 			});
@@ -1832,12 +1832,12 @@ async function tournamentLfgGroups() {
 
 		// Group 6: 2-member group (merged from two placeholders)
 		const { id: mergeTarget2 } =
-			await TournamentLFGRepository.createPlaceholderTeam({
+			await TournamentLFGRepository.insertPlaceholderTeam({
 				tournamentId,
 				userId: users[6],
 			});
 		const { id: mergeSource2 } =
-			await TournamentLFGRepository.createPlaceholderTeam({
+			await TournamentLFGRepository.insertPlaceholderTeam({
 				tournamentId,
 				userId: users[7],
 			});
@@ -1848,17 +1848,17 @@ async function tournamentLfgGroups() {
 		});
 
 		// Team 1 -> Team 2 (one-way like)
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1Id,
 			targetTeamId: team2Id,
 		});
 		// Team 2 -> Team 1 (mutual — tests invitation UI)
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team2Id,
 			targetTeamId: team1Id,
 		});
 		// Team 3 -> Team 4 (one-way like)
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team3Id,
 			targetTeamId: team4Id,
 		});
@@ -1889,7 +1889,7 @@ async function adminBuilds() {
 			adminWeaponPool.filter((id) => id !== 40).slice(),
 		);
 
-		await BuildRepository.create({
+		await BuildRepository.insert({
 			title: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
 				faker.word.noun(),
 			)}`,
@@ -1956,7 +1956,7 @@ async function manySplattershotBuilds() {
 
 		const ownerId = users.pop()!;
 
-		await BuildRepository.create({
+		await BuildRepository.insert({
 			isPrivate: 0,
 			title: `${R.capitalize(faker.word.adjective())} ${R.capitalize(
 				faker.word.noun(),
@@ -2333,7 +2333,7 @@ async function groups(variation?: SeedVariation | null) {
 
 	for (let i = 0; i < 25; i++) {
 		const ownerId = users.pop()!;
-		const group = await SQGroupRepository.createGroup({
+		const group = await SQGroupRepository.insert({
 			status: "ACTIVE",
 			userId: ownerId,
 		});
@@ -2389,7 +2389,7 @@ async function groups(variation?: SeedVariation | null) {
 			bravoMemberIds: nzapGroupMemberIds,
 		});
 
-		const createdMatch = await SQMatchRepository.create({
+		const createdMatch = await SQMatchRepository.insert({
 			alphaGroupId: sendouGroupId,
 			bravoGroupId: nzapGroupId,
 			mapList,
@@ -2457,7 +2457,7 @@ async function teamMapPrefsGroups() {
 			(id) => id !== ADMIN_ID && id !== NZAP_TEST_ID && !arMemberSet.has(id),
 		);
 
-	const nzapGroup = await SQGroupRepository.createGroup({
+	const nzapGroup = await SQGroupRepository.insert({
 		status: "ACTIVE",
 		userId: NZAP_TEST_ID,
 	});
@@ -2465,7 +2465,7 @@ async function teamMapPrefsGroups() {
 		await addGroupMember(nzapGroup.id, users.pop()!);
 	}
 
-	const adminGroup = await SQGroupRepository.createGroup({
+	const adminGroup = await SQGroupRepository.insert({
 		status: "ACTIVE",
 		userId: ADMIN_ID,
 	});
@@ -2658,14 +2658,14 @@ async function playedMatches() {
 		// -> create groups
 		for (let i = 0; i < 2; i++) {
 			const users = i === 0 ? [...groupAlphaMembers] : [...groupBravoMembers];
-			const group = await SQGroupRepository.createGroup({
+			const group = await SQGroupRepository.insert({
 				status: "ACTIVE",
 				userId: users.pop()!,
 			});
 
 			// -> add regular members of groups
 			for (let i = 0; i < 3; i++) {
-				await SQGroupRepository.addMember(group.id, {
+				await SQGroupRepository.insertMember(group.id, {
 					userId: users.pop()!,
 				});
 			}
@@ -2679,7 +2679,7 @@ async function playedMatches() {
 
 		invariant(groupAlpha !== 0 && groupBravo !== 0, "groups not created");
 
-		const match = await SQMatchRepository.create({
+		const match = await SQMatchRepository.insert({
 			alphaGroupId: groupAlpha,
 			bravoGroupId: groupBravo,
 			mapList: randomMapList(groupAlpha, groupBravo),
@@ -2730,7 +2730,7 @@ async function playedMatches() {
 			finishedMatch.mapList.map((_, mapIndex) => ({ mapIndex, user: u })),
 		);
 
-		await ReportedWeaponRepository.createMany(
+		await ReportedWeaponRepository.insertMany(
 			mapsWithUsers.map((mu) => {
 				const weapon = () => {
 					if (faker.number.float(1) < 0.9) return defaultWeapons[mu.user];
@@ -3038,7 +3038,7 @@ async function associations() {
 			j < faker.helpers.arrayElement([4, 6, 8, 10, 12, 24, 32]);
 			j++
 		) {
-			await AssociationRepository.addMember({
+			await AssociationRepository.insertMember({
 				associationId: i + 1,
 				userId: i === 2 && j === 0 ? ADMIN_ID : allUsers.shift()!,
 			});
@@ -3148,7 +3148,7 @@ async function notifications() {
 }
 
 async function organization() {
-	await TournamentOrganizationRepository.create({
+	await TournamentOrganizationRepository.insert({
 		ownerId: ADMIN_ID,
 		name: "sendou.ink",
 	});
@@ -3229,7 +3229,7 @@ async function friendships(variation?: SeedVariation | null) {
 	if (variation === "NO_SQ_GROUPS" || variation === "TEAM_MAP_PREFS") return;
 
 	for (const friendId of SENDOU_FRIEND_IDS_IN_LOOKING_GROUPS) {
-		const group = await SQGroupRepository.createGroup({
+		const group = await SQGroupRepository.insert({
 			status: "ACTIVE",
 			userId: friendId,
 		});

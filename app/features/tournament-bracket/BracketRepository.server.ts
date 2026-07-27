@@ -1,9 +1,4 @@
-import {
-	type Kysely,
-	sql as kyselySql,
-	type RawBuilder,
-	type Transaction,
-} from "kysely";
+import { sql as kyselySql, type RawBuilder, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
@@ -17,8 +12,6 @@ import type {
 	ParticipantResult,
 } from "./core/engine/types";
 
-type DbOrTrx = Kysely<DB> | Transaction<DB>;
-
 /**
  * Loads the full BracketData for a tournament (all stages). Includes the
  * score/totalKos aggregation over TournamentMatchGameResult. Direct replacement
@@ -28,9 +21,11 @@ type DbOrTrx = Kysely<DB> | Transaction<DB>;
  */
 export async function findByTournamentId(
 	tournamentId: number,
-	trx: DbOrTrx = db,
+	trx?: Transaction<DB>,
 ): Promise<BracketData> {
-	const { stage, group, round, match } = await trx
+	const executor = trx ?? db;
+
+	const { stage, group, round, match } = await executor
 		.selectNoFrom((eb) => [
 			jsonArrayFrom(
 				eb
@@ -166,45 +161,52 @@ export function insertBracket(args: {
 			.returning(["id"])
 			.executeTakeFirstOrThrow();
 
-		const groupIdMapping = new Map<number, number>();
-		const roundIdMapping = new Map<number, number>();
-
-		for (const group of args.bracket.group) {
-			const inserted = await trx
-				.insertInto("TournamentGroup")
-				.values({
-					stageId: stage.id,
-					number: group.number,
-				})
-				.returning(["id"])
-				.executeTakeFirstOrThrow();
-
-			groupIdMapping.set(group.id, inserted.id);
+		if (
+			args.bracket.group.length === 0 ||
+			args.bracket.round.length === 0 ||
+			args.bracket.match.length === 0
+		) {
+			throw new Error("Bracket is missing groups, rounds or matches");
 		}
 
-		for (const round of args.bracket.round) {
-			if (!round.maps) throw new Error("Round is missing maps");
+		const insertedGroups = await trx
+			.insertInto("TournamentGroup")
+			.values(
+				args.bracket.group.map((group) => ({
+					stageId: stage.id,
+					number: group.number,
+				})),
+			)
+			.returning(["id"])
+			.execute();
 
-			const inserted = await trx
-				.insertInto("TournamentRound")
-				.values({
+		const groupIdMapping = zipInsertedIds(args.bracket.group, insertedGroups);
+
+		if (args.bracket.round.some((round) => !round.maps)) {
+			throw new Error("Round is missing maps");
+		}
+
+		const insertedRounds = await trx
+			.insertInto("TournamentRound")
+			.values(
+				args.bracket.round.map((round) => ({
 					stageId: stage.id,
 					groupId: groupIdMapping.get(round.groupId)!,
 					number: round.number,
 					maps: JSON.stringify(round.maps),
-				})
-				.returning(["id"])
-				.executeTakeFirstOrThrow();
+				})),
+			)
+			.returning(["id"])
+			.execute();
 
-			roundIdMapping.set(round.id, inserted.id);
-		}
+		const roundIdMapping = zipInsertedIds(args.bracket.round, insertedRounds);
 
 		const statuses = matchStatuses(args.bracket);
 
-		for (const match of args.bracket.match) {
-			await trx
-				.insertInto("TournamentMatch")
-				.values({
+		await trx
+			.insertInto("TournamentMatch")
+			.values(
+				args.bracket.match.map((match) => ({
 					stageId: stage.id,
 					groupId: groupIdMapping.get(match.groupId)!,
 					roundId: roundIdMapping.get(match.roundId)!,
@@ -217,9 +219,9 @@ export function insertBracket(args: {
 						statuses.get(match.id) === "STARTED"
 							? databaseTimestampNow()
 							: null,
-				})
-				.execute();
-		}
+				})),
+			)
+			.execute();
 
 		return { stageId: stage.id };
 	});
@@ -232,7 +234,7 @@ export function insertBracket(args: {
  */
 export async function applyMatchChanges(
 	args: { previousData: BracketData; result: EngineResult },
-	trx: DbOrTrx = db,
+	trx: Transaction<DB>,
 ): Promise<void> {
 	for (const match of args.result.changedMatches) {
 		await trx
@@ -258,7 +260,7 @@ export async function applyMatchChanges(
 async function syncStartedAt(
 	previousData: BracketData,
 	data: BracketData,
-	trx: DbOrTrx,
+	trx: Transaction<DB>,
 ): Promise<void> {
 	const previousStatuses = matchStatuses(previousData);
 	const statuses = matchStatuses(data);
@@ -304,13 +306,15 @@ export async function insertRoundMatches(
 		stageId: number;
 		round: GeneratedRound;
 	},
-	trx: DbOrTrx = db,
+	trx?: Transaction<DB>,
 ): Promise<void> {
 	if (args.round.matches.length === 0) {
 		throw new Error("No matches to insert");
 	}
 
-	await trx
+	const executor = trx ?? db;
+
+	await executor
 		.insertInto("TournamentMatch")
 		.values(
 			args.round.matches.map((match) => ({
@@ -375,4 +379,19 @@ function serializeOpponent(opponent: ParticipantResult | null): string | null {
 
 	const { totalKos, ...persisted } = opponent;
 	return JSON.stringify(persisted);
+}
+
+/**
+ * Lines the ids of a multi-row insert back up with the rows they were inserted for. SQLite assigns
+ * ids in insertion order, but RETURNING makes no ordering promise, so the ids are sorted first.
+ */
+function zipInsertedIds(
+	sources: Array<{ id: number }>,
+	inserted: Array<{ id: number }>,
+) {
+	const insertedIds = inserted.map((row) => row.id).sort((a, b) => a - b);
+
+	return new Map(
+		sources.map((source, i) => [source.id, insertedIds[i]] as const),
+	);
 }

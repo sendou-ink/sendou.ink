@@ -90,7 +90,7 @@ export function deleteOld() {
 		.executeTakeFirst();
 }
 
-export function addOwnSubscription(subscription: NotificationSubscription) {
+export function insertOwnSubscription(subscription: NotificationSubscription) {
 	return db
 		.insertInto("NotificationUserSubscription")
 		.values({
@@ -100,7 +100,7 @@ export function addOwnSubscription(subscription: NotificationSubscription) {
 		.execute();
 }
 
-export function subscriptionsByUserIds(userIds: number[]) {
+export function findAllSubscriptionsByUserIds(userIds: number[]) {
 	return db
 		.selectFrom("NotificationUserSubscription")
 		.select(["id", "subscription"])

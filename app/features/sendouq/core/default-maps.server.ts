@@ -59,7 +59,7 @@ async function calculateSeasonDefaultMaps(
 	seasonNth: number,
 ): Promise<Map<string, number>> {
 	const activeUsersWithPreferences =
-		await SQGroupRepository.mapModePreferencesBySeasonNth(seasonNth);
+		await SQGroupRepository.findAllMapModePreferencesBySeasonNth(seasonNth);
 
 	const mapModeCounts = new Map<string, number>();
 

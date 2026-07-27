@@ -47,7 +47,7 @@ export async function eventLeaderboards(
 async function tournamentPoints(
 	event: EventLeaderboardEvent & { tournamentId: number },
 ): Promise<Map<number, LeaderboardInfo>> {
-	const results = await TournamentRepository.topThreeResultsByTournamentId(
+	const results = await TournamentRepository.findTopThreeResultsByTournamentId(
 		event.tournamentId,
 	);
 

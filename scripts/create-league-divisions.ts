@@ -64,7 +64,7 @@ async function main() {
 	for (const [div, divsTeams] of grouped) {
 		logger.info(`Creating division ${div}...`);
 
-		const createdEvent = await CalendarRepository.create({
+		const createdEvent = await CalendarRepository.insert({
 			parentTournamentId: tournament.ctx.id,
 			authorId: tournament.ctx.author.id,
 			bracketProgression: tournament.ctx.settings.bracketProgression,

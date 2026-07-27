@@ -25,10 +25,10 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	);
 
 	const user = notFoundIfNullish(
-		await UserRepository.identifierToUserId(identifier),
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(user.id);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
@@ -49,23 +49,23 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		seasonsParticipatedIn,
 		currentOrdinal: !approximate ? ordinal : undefined,
 		winrates: {
-			maps: await PlayerStatRepository.seasonMapWinrateByUserId({
+			maps: await PlayerStatRepository.findSeasonMapWinrateByUserId({
 				season,
 				userId: user.id,
 			}),
-			sets: await PlayerStatRepository.seasonSetWinrateByUserId({
+			sets: await PlayerStatRepository.findSeasonSetWinrateByUserId({
 				season,
 				userId: user.id,
 			}),
 		},
-		skills: await SkillRepository.seasonProgressionByUserId({
+		skills: await SkillRepository.findSeasonProgressionByUserId({
 			season,
 			userId: user.id,
 		}),
 		tier,
 		isAccurateTiers,
 		canceled: loggedInUser.roles.includes("STAFF")
-			? await SQMatchRepository.seasonCanceledMatchesByUserId({
+			? await SQMatchRepository.findSeasonCanceledMatchesByUserId({
 					season,
 					userId: user.id,
 				})

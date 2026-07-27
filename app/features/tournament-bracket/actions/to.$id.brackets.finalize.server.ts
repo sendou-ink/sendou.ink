@@ -59,7 +59,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
 	const results =
-		await TournamentMatchRepository.allResultsByTournamentId(tournamentId);
+		await TournamentMatchRepository.findAllResultsByTournamentId(tournamentId);
 	invariant(results.length > 0, "No results found");
 
 	const season = resolveFinalizationSeason(tournament);

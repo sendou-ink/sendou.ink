@@ -37,7 +37,7 @@ export const action: ActionFunction = async ({ request }) => {
 			...commonArgs,
 		});
 	} else {
-		await BuildRepository.create(commonArgs);
+		await BuildRepository.insert(commonArgs);
 	}
 
 	return redirect(userBuildsPage(user));

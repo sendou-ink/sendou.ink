@@ -31,7 +31,7 @@ describe("PrivateUserNoteRepository", () => {
 			);
 
 			const notes = await withUser(author, () =>
-				PrivateUserNoteRepository.ownNotes(),
+				PrivateUserNoteRepository.findAllOwn(),
 			);
 
 			expect(notes).toHaveLength(1);
@@ -61,7 +61,7 @@ describe("PrivateUserNoteRepository", () => {
 			);
 
 			const notes = await withUser(author, () =>
-				PrivateUserNoteRepository.ownNotes(),
+				PrivateUserNoteRepository.findAllOwn(),
 			);
 
 			expect(notes).toHaveLength(1);
@@ -90,14 +90,14 @@ describe("PrivateUserNoteRepository", () => {
 			);
 
 			const notes = await withUser(author, () =>
-				PrivateUserNoteRepository.ownNotes(),
+				PrivateUserNoteRepository.findAllOwn(),
 			);
 
 			expect(notes).toHaveLength(0);
 		});
 	});
 
-	test("ownNotes throws when called without an acting user", () => {
-		expect(() => PrivateUserNoteRepository.ownNotes()).toThrow();
+	test("findAllOwn throws when called without an acting user", () => {
+		expect(() => PrivateUserNoteRepository.findAllOwn()).toThrow();
 	});
 });

@@ -23,7 +23,7 @@ const fetchVotes = (groupId: number) =>
 		.where("groupId", "=", groupId)
 		.execute();
 
-describe("findForGroups", () => {
+describe("findAllByGroupIds", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(4);
 	});
@@ -33,7 +33,7 @@ describe("findForGroups", () => {
 	});
 
 	test("returns empty array without querying when no group ids given", async () => {
-		const result = await GroupMatchContinueVoteRepository.findForGroups([]);
+		const result = await GroupMatchContinueVoteRepository.findAllByGroupIds([]);
 		expect(result).toEqual([]);
 	});
 
@@ -43,25 +43,25 @@ describe("findForGroups", () => {
 		const groupC = await insertGroup();
 
 		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId: groupA,
-				isContinuing: 1,
+				isContinuing: true,
 			}),
 		);
 		await withUserId(2, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId: groupB,
-				isContinuing: 0,
+				isContinuing: false,
 			}),
 		);
 		await withUserId(3, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId: groupC,
-				isContinuing: 1,
+				isContinuing: true,
 			}),
 		);
 
-		const result = await GroupMatchContinueVoteRepository.findForGroups([
+		const result = await GroupMatchContinueVoteRepository.findAllByGroupIds([
 			groupA,
 			groupB,
 		]);
@@ -87,15 +87,15 @@ describe("cast", () => {
 		const groupId = await insertGroup();
 
 		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId,
-				isContinuing: 1,
+				isContinuing: true,
 			}),
 		);
 		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId,
-				isContinuing: 0,
+				isContinuing: false,
 			}),
 		);
 
@@ -109,28 +109,28 @@ describe("cast", () => {
 		const groupB = await insertGroup();
 
 		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId: groupA,
-				isContinuing: 1,
+				isContinuing: true,
 			}),
 		);
 		await withUserId(2, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId: groupA,
-				isContinuing: 1,
+				isContinuing: true,
 			}),
 		);
 		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId: groupB,
-				isContinuing: 1,
+				isContinuing: true,
 			}),
 		);
 
 		await withUserId(3, () =>
-			GroupMatchContinueVoteRepository.cast({
+			GroupMatchContinueVoteRepository.castOwnVote({
 				groupId: groupA,
-				isContinuing: 0,
+				isContinuing: false,
 			}),
 		);
 

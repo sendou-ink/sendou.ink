@@ -31,7 +31,7 @@ export const action: ActionFunction = async ({ params, url }) => {
 		"Invite code is invalid",
 	);
 
-	await TeamRepository.joinTeam({
+	await TeamRepository.insertOwnMembership({
 		maxTeamsAllowed:
 			user.patronTier && user.patronTier >= 2
 				? TEAM.MAX_TEAM_COUNT_PATRON

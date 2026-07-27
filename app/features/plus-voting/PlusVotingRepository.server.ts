@@ -31,7 +31,7 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 	ReturnType<typeof resultsByMonthYearQuery>
 >;
 
-export async function allPlusTiersFromLatestVoting() {
+export async function findAllPlusTiersFromLatestVoting() {
 	// resolving month & year separately first allows SQLite to push the
 	// filtering down into the PlusVotingResult view's aggregation
 	const latestVoting = await db
@@ -61,8 +61,8 @@ export async function allPlusTiersFromLatestVoting() {
 	return PlusVoting.computeFreshPlusTiers(withPassed);
 }
 
-export type ResultsByMonthYearItem = Unwrapped<typeof resultsByMonthYear>;
-export async function resultsByMonthYear(args: MonthYear) {
+export type ResultsByMonthYearItem = Unwrapped<typeof findResultsByMonthYear>;
+export async function findResultsByMonthYear(args: MonthYear) {
 	const rows = await resultsByMonthYearQuery(args).execute();
 
 	const passedMap = new Map<
@@ -133,7 +133,7 @@ export type UsersForVoting = {
 	suggestion?: PlusSuggestionRepository.FindAllByMonthItem;
 }[];
 
-export async function usersForVoting(loggedInUser: {
+export async function findAllUsersForVoting(loggedInUser: {
 	id: number;
 	plusTier: number;
 }) {

@@ -20,7 +20,7 @@ export async function cancelActiveGroupLikes(userId: number) {
 	if (ownGroup.status !== "ACTIVE" || ownGroup.matchId) return;
 	if (ownGroup.members.length !== FULL_GROUP_SIZE) return;
 
-	const likes = await SQGroupRepository.allLikesByGroupId(ownGroup.id);
+	const likes = await SQGroupRepository.findAllLikesByGroupId(ownGroup.id);
 	const affectedGroupIds = R.unique([
 		...likes.given.map((like) => like.groupId),
 		...likes.received.map((like) => like.groupId),

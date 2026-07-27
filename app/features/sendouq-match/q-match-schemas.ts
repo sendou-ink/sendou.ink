@@ -13,7 +13,7 @@ export const matchSchema = z.union([
 	}),
 	z.object({
 		_action: _action("CAST_CONTINUE_VOTE"),
-		isContinuing: z.enum(["0", "1"]).transform((v) => Number(v) as 0 | 1),
+		isContinuing: z.enum(["0", "1"]).transform((v) => v === "1"),
 	}),
 	z.object({
 		_action: _action("REPORT_WEAPON"),

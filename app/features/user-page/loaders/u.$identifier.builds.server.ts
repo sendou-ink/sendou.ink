@@ -14,10 +14,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const loggedInUser = getUser();
 	const { identifier } = userParamsSchema.parse(params);
 	const user = notFoundIfNullish(
-		await UserRepository.identifierToBuildFields(identifier),
+		await UserRepository.findBuildFieldsByIdentifier(identifier),
 	);
 
-	const builds = await BuildRepository.allByUserId(user.id, {
+	const builds = await BuildRepository.findAllByUserId(user.id, {
 		showPrivate: loggedInUser?.id === user.id,
 		sortAbilities:
 			loggedInUser?.id !== user.id &&

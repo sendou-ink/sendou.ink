@@ -25,7 +25,8 @@ export async function cachedFullUserLeaderboard(season: number) {
 		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
-			const leaderboard = await LeaderboardRepository.userSPLeaderboard(season);
+			const leaderboard =
+				await LeaderboardRepository.findUserSPLeaderboard(season);
 			const withTiers = await addTiers(leaderboard, season);
 
 			const shouldAddPendingPlusTier =
@@ -41,7 +42,7 @@ export async function cachedFullUserLeaderboard(season: number) {
 
 			return addWeapons(
 				withPendingPlusTiers,
-				await LeaderboardRepository.seasonPopularUsersWeapon(season),
+				await LeaderboardRepository.findSeasonPopularUsersWeapon(season),
 			);
 		},
 	});

@@ -34,7 +34,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			requirePermission(organization, "BAN");
 
 			const allBannedUsers =
-				await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
+				await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
 					organization.id,
 				);
 			const currentlyBannedUsers = allBannedUsers.filter(
@@ -104,7 +104,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				errorToast("Cannot leave as the sole admin of the organization");
 			}
 
-			await TournamentOrganizationRepository.removeOwnMembership(
+			await TournamentOrganizationRepository.deleteOwnMembership(
 				organization.id,
 			);
 

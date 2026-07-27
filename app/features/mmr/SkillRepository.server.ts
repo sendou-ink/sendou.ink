@@ -14,7 +14,7 @@ export type CurrentSkill = Pick<
  * Season's latest skill of each given user, keyed by user id. Users without a skill
  * row that season are absent from the map.
  */
-export async function currentUserSkills({
+export async function findCurrentUserSkills({
 	season,
 	userIds,
 }: {
@@ -42,7 +42,7 @@ export async function currentUserSkills({
  * Season's latest skill of each given team, keyed by team identifier. Teams without a
  * skill row that season are absent from the map.
  */
-export async function currentTeamSkills({
+export async function findCurrentTeamSkills({
 	season,
 	identifiers,
 }: {
@@ -70,7 +70,7 @@ export async function currentTeamSkills({
 /**
  * Ordinals of the season's latest skill of every user who has one, best first.
  */
-export async function orderedUserOrdinalsBySeason(season: number) {
+export async function findOrderedUserOrdinalsBySeason(season: number) {
 	// The latest row per user is picked via SQLite's bare column rule: with a `max()`
 	// aggregate the other selected columns come from the row that produced the max.
 	// A self-join against a `max(id)` subquery is avoided because it lets the planner
@@ -102,7 +102,7 @@ export async function orderedUserOrdinalsBySeason(season: number) {
  * Seeding skills of the given users for one seeding type, keyed by user id. Users without
  * a seeding skill of that type are absent from the map.
  */
-export async function seedingSkills({
+export async function findSeedingSkills({
 	type,
 	userIds,
 }: {
@@ -152,7 +152,7 @@ export async function addInitialSkill(
 		.execute();
 }
 
-export async function seasonProgressionByUserId({
+export async function findSeasonProgressionByUserId({
 	userId,
 	season,
 }: {

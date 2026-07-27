@@ -27,7 +27,7 @@ const createGroup = async (
 ) => {
 	const { status = "ACTIVE", inviteCode } = options;
 
-	const groupResult = await SQGroupRepository.createGroup({
+	const groupResult = await SQGroupRepository.insert({
 		status,
 		userId: userIds[0],
 	});
@@ -41,7 +41,7 @@ const createGroup = async (
 	}
 
 	for (let i = 1; i < userIds.length; i++) {
-		await SQGroupRepository.addMember(groupResult.id, {
+		await SQGroupRepository.insertMember(groupResult.id, {
 			userId: userIds[i],
 			role: "REGULAR",
 		});

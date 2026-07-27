@@ -21,7 +21,7 @@ export async function dbInsertTournament({
 	/** Event start time as a database timestamp (seconds). Defaults to now. */
 	startTime?: number | null;
 } = {}) {
-	return CalendarRepository.create({
+	return CalendarRepository.insert({
 		isFullTournament: true,
 		authorId: 1,
 		badges: [],
@@ -67,7 +67,7 @@ export async function dbInsertTournamentTeam({
 	tournamentId?: number;
 }) {
 	const tournamentTeam = await withUserId(ownerId, () =>
-		TournamentTeamRepository.create({
+		TournamentTeamRepository.insert({
 			team: {
 				name: `Test Team ${ownerId}`,
 				prefersNotToHost: 0,

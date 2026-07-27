@@ -61,7 +61,7 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 
 /**
  * Click-to-open trigger that shows a popover with the user's card. Card data is resolved from the
- * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.userCards`);
+ * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.findAllByUserIds`);
  * pass `data` directly to bypass the lookup (e.g. the components showcase). When no card data exists
  * for the user, the `children` are rendered plain without a trigger.
  *
@@ -182,7 +182,7 @@ export function UserCard({
 
 /**
  * Resolves a user's `UserCardData` from any matched route loader that spread `{ userCards }`
- * (see `UserCardRepository.userCards`). Returns `undefined` when no loader on the current route
+ * (see `UserCardRepository.findAllByUserIds`). Returns `undefined` when no loader on the current route
  * tree carries data for the given user.
  */
 export function useUserCardData(

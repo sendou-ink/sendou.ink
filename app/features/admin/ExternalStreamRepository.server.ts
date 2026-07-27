@@ -24,7 +24,7 @@ export function deleteById(id: number) {
 }
 
 /** Lists all external streams (for the admin management page), soonest start time first. */
-export function all() {
+export function findAll() {
 	return db
 		.selectFrom("ExternalStream")
 		.leftJoin(
@@ -46,7 +46,7 @@ export function all() {
 }
 
 /** External streams that should currently show in the sidebar (started under 6h ago or upcoming). */
-export function forSidebar() {
+export function findAllForSidebar() {
 	return db
 		.selectFrom("ExternalStream")
 		.leftJoin(

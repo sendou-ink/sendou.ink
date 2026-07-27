@@ -83,7 +83,7 @@ async function insertSplatoonPlayer(args: {
 }
 
 async function findBadgeByCode(code: string) {
-	const badges = await BadgeRepository.all();
+	const badges = await BadgeRepository.findAll();
 	const badge = badges.find((b) => b.code === code);
 	if (!badge) return null;
 	return BadgeRepository.findById(badge.id);

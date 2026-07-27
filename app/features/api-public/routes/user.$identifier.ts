@@ -4,9 +4,9 @@ import { z } from "zod";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
-import { peakXpOverallSql } from "~/features/top-search/XRankPlacementRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import { peakXpOverallSql } from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { badgeUrl } from "~/utils/urls";
@@ -69,7 +69,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
-	const badges = await UserRepository.ownedBadgesByUserId(user.id);
+	const badges = await UserRepository.findOwnedBadgesByUserId(user.id);
 
 	const season = Seasons.currentOrPrevious(new Date())!.nth;
 

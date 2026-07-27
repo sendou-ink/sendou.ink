@@ -9,7 +9,7 @@ import { modesShort } from "~/modules/in-game-lists/modes";
 import { matchProfileWeapons } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 
-export function settingsByUserId(userId: number) {
+export function findSettingsByUserId(userId: number) {
 	return db
 		.selectFrom("User")
 		.select(({ eb }) => [

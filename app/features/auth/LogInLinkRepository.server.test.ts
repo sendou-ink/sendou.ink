@@ -12,14 +12,14 @@ describe("create", () => {
 	});
 
 	test("creates a login link with correct userId", async () => {
-		const link = await LogInLinkRepository.create(1);
+		const link = await LogInLinkRepository.insert(1);
 
 		expect(link.userId).toBe(1);
 	});
 
 	test("creates a login link with future expiration", async () => {
 		const beforeCreation = Math.floor(Date.now() / 1000);
-		const link = await LogInLinkRepository.create(1);
+		const link = await LogInLinkRepository.insert(1);
 
 		expect(link.expiresAt).toBeGreaterThan(beforeCreation);
 	});
@@ -35,9 +35,9 @@ describe("del", () => {
 	});
 
 	test("deletes a login link by code", async () => {
-		const link = await LogInLinkRepository.create(1);
+		const link = await LogInLinkRepository.insert(1);
 
-		await LogInLinkRepository.del(link.code);
+		await LogInLinkRepository.deleteByCode(link.code);
 
 		const result = await LogInLinkRepository.findValidByCode(link.code);
 		expect(result).toBeUndefined();
@@ -54,7 +54,7 @@ describe("findValidByCode", () => {
 	});
 
 	test("returns userId for valid code", async () => {
-		const link = await LogInLinkRepository.create(1);
+		const link = await LogInLinkRepository.insert(1);
 
 		const result = await LogInLinkRepository.findValidByCode(link.code);
 

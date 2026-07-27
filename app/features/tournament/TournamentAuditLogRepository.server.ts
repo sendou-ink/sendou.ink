@@ -28,7 +28,7 @@ interface InsertArgs {
  * row exists for the team, so the event remains readable even after the team is
  * hard-deleted.
  */
-export async function insert(trx: Transaction<DB>, args: InsertArgs) {
+export async function insert(args: InsertArgs, trx: Transaction<DB>) {
 	const team = await trx
 		.selectFrom("TournamentTeam")
 		.select([
@@ -41,11 +41,14 @@ export async function insert(trx: Transaction<DB>, args: InsertArgs) {
 
 	const tournamentTeamHistoryId =
 		team.tournamentTeamHistoryId ??
-		(await createTeamHistory(trx, {
-			tournamentTeamId: args.tournamentTeamId,
-			tournamentId: team.tournamentId,
-			name: team.name,
-		}));
+		(await insertTeamHistory(
+			{
+				tournamentTeamId: args.tournamentTeamId,
+				tournamentId: team.tournamentId,
+				name: team.name,
+			},
+			trx,
+		));
 
 	await trx
 		.insertInto("TournamentAuditLog")
@@ -61,18 +64,18 @@ export async function insert(trx: Transaction<DB>, args: InsertArgs) {
 }
 
 /**
- * Creates a fresh history row for a team and links it back from the team, so a
+ * Inserts a fresh history row for a team and links it back from the team, so a
  * `TournamentTeam.id` reused by SQLite after a hard-deletion always gets its own
  * history row instead of inheriting the deleted team's identity. Returns the new
  * history id.
  */
-async function createTeamHistory(
-	trx: Transaction<DB>,
+async function insertTeamHistory(
 	{
 		tournamentTeamId,
 		tournamentId,
 		name,
 	}: { tournamentTeamId: number; tournamentId: number; name: string },
+	trx: Transaction<DB>,
 ) {
 	const { id } = await trx
 		.insertInto("TournamentTeamHistory")

@@ -18,7 +18,9 @@ export type TournamentLoaderData = {
 	streamsCount: number;
 	hasChildTournaments: boolean;
 	friendCodes:
-		| Awaited<ReturnType<typeof TournamentRepository.friendCodesByTournamentId>>
+		| Awaited<
+				ReturnType<typeof TournamentRepository.findFriendCodesByTournamentId>
+		  >
 		| undefined;
 	preparedMaps:
 		| Awaited<ReturnType<typeof TournamentRepository.findPreparedMapsById>>
@@ -82,7 +84,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament,
 		hasChildTournaments,
 		friendCodes: showFriendCodes
-			? await TournamentRepository.friendCodesByTournamentId(tournamentId)
+			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
 			: undefined,
 		preparedMaps:
 			isTournamentOrganizer && !tournament.ctx.isFinalized

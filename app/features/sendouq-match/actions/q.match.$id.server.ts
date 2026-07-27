@@ -137,7 +137,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					errorToastIfFalsy(!currentGroup, "Member is already in a group");
 				}
 
-				await SQGroupRepository.createGroupFromPrevious({
+				await SQGroupRepository.insertFromPrevious({
 					previousGroupId: data.previousGroupId,
 					members: previousGroup.members.map((m) => ({
 						id: m.id,
@@ -182,7 +182,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				const votingResult = await db.transaction().execute(async (trx) => {
 					const existingVotes =
-						await GroupMatchContinueVoteRepository.findForGroups(
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
 							[viewerGroup.id],
 							trx,
 						);
@@ -191,7 +191,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						return null;
 					}
 
-					await GroupMatchContinueVoteRepository.cast(
+					await GroupMatchContinueVoteRepository.castOwnVote(
 						{
 							groupId: viewerGroup.id,
 							isContinuing: data.isContinuing,
@@ -200,7 +200,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					);
 
 					return RejoinVote.result(
-						await GroupMatchContinueVoteRepository.findForGroups(
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
 							[viewerGroup.id],
 							trx,
 						),
@@ -213,7 +213,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						.map((m) => ({ id: m.id, role: m.role }));
 
 					try {
-						await SQGroupRepository.createGroupFromPrevious({
+						await SQGroupRepository.insertFromPrevious({
 							previousGroupId: viewerGroup.id,
 							members: survivors,
 							status: "ACTIVE",

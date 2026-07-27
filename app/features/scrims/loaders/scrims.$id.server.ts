@@ -37,7 +37,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const mapByMap = await resolveMapByMap({ post, user });
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: participantIds,
 			include: { friendCode: true },
 		})),

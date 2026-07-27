@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod/v4";
-import { identifierToUserIdQuery } from "~/features/user-page/UserRepository.server";
+import { userByIdentifierQuery } from "~/utils/kysely.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import type { GetUserIdsResponse } from "../schema";
 
@@ -12,7 +12,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { identifier } = parseParams({ params, schema: paramsSchema });
 
 	const user = notFoundIfNullish(
-		await identifierToUserIdQuery(identifier)
+		await userByIdentifierQuery(identifier)
 			.select(["User.discordId", "User.customUrl"])
 			.executeTakeFirst(),
 	);

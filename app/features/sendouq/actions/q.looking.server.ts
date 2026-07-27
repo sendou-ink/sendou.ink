@@ -63,7 +63,7 @@ export const action: ActionFunction = async ({ request }) => {
 			case "LIKE": {
 				if (!isGroupManager()) return null;
 
-				await SQGroupRepository.addLike({
+				await SQGroupRepository.insertLike({
 					likerGroupId: currentGroup.id,
 					targetGroupId: data.targetGroupId,
 				});
@@ -101,7 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
 			case "GROUP_UP": {
 				if (!isGroupManager()) return null;
 
-				const allLikes = await SQGroupRepository.allLikesByGroupId(
+				const allLikes = await SQGroupRepository.findAllLikesByGroupId(
 					data.targetGroupId,
 				);
 				if (!allLikes.given.some((like) => like.groupId === currentGroup.id)) {
@@ -156,9 +156,11 @@ export const action: ActionFunction = async ({ request }) => {
 				if (!ownGroup || !theirGroup) return null;
 
 				const ownGroupPreferences =
-					await SQGroupRepository.mapModePreferencesByGroupId(ownGroup.id);
+					await SQGroupRepository.findMapModePreferencesByGroupId(ownGroup.id);
 				const theirGroupPreferences =
-					await SQGroupRepository.mapModePreferencesByGroupId(theirGroup.id);
+					await SQGroupRepository.findMapModePreferencesByGroupId(
+						theirGroup.id,
+					);
 
 				const modesIncluded = resolveFutureMatchModes(ownGroup, theirGroup);
 
@@ -174,7 +176,7 @@ export const action: ActionFunction = async ({ request }) => {
 					modesIncluded,
 				);
 
-				const createdMatch = await SQMatchRepository.create({
+				const createdMatch = await SQMatchRepository.insert({
 					alphaGroupId: ownGroup.id,
 					bravoGroupId: theirGroup.id,
 					mapList,

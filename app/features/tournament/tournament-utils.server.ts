@@ -59,7 +59,8 @@ export async function requireSendouQParticipationIfNeeded({
 }) {
 	if (!tournament.ctx.settings.requireSendouQParticipation) return;
 
-	const hasEnough = await LeaderboardRepository.userHasEnoughSqMatches(userId);
+	const hasEnough =
+		await LeaderboardRepository.hasEnoughSqMatchesByUserId(userId);
 
 	errorToastIfFalsy(
 		hasEnough,

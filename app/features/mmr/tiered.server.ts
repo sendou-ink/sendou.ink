@@ -26,7 +26,7 @@ export async function freshUserSkills(season: number): Promise<{
 	intervals: SkillTierInterval[];
 	isAccurateTiers: boolean;
 }> {
-	const points = await SkillRepository.orderedUserOrdinalsBySeason(season);
+	const points = await SkillRepository.findOrderedUserOrdinalsBySeason(season);
 
 	const { intervals, isAccurateTiers } = skillTierIntervals(points, "user");
 

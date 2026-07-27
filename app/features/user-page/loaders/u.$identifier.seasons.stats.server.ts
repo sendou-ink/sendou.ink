@@ -23,10 +23,10 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	);
 
 	const user = notFoundIfNullish(
-		await UserRepository.identifierToUserId(identifier),
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(user.id);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
@@ -39,21 +39,21 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		season,
 		stages:
 			info === "stages"
-				? await PlayerStatRepository.seasonStagesByUserId({
+				? await PlayerStatRepository.findSeasonStagesByUserId({
 						season,
 						userId: user.id,
 					})
 				: null,
 		weapons:
 			info === "weapons"
-				? await ReportedWeaponRepository.seasonReportedWeaponsByUserId({
+				? await ReportedWeaponRepository.findSeasonReportedWeaponsByUserId({
 						season,
 						userId: user.id,
 					})
 				: null,
 		players:
 			info === "enemies" || info === "mates"
-				? await PlayerStatRepository.seasonMatesEnemiesByUserId({
+				? await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
 						season,
 						userId: user.id,
 						type: info === "enemies" ? "ENEMY" : "MATE",

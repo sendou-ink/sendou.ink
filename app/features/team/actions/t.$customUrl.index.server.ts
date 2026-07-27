@@ -60,7 +60,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"You are not the team owner",
 			);
 
-			await TeamRepository.del(team.id);
+			await TeamRepository.deleteById(team.id);
 			throw redirect("/");
 		}
 		default: {

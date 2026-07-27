@@ -287,32 +287,41 @@ export async function insert(
 				.executeTakeFirstOrThrow();
 			videoId = result.id;
 		}
-		for (const match of args.matches) {
-			const videoMatchResult = await trx
-				.insertInto("VideoMatch")
-				.values({
-					videoId: videoId,
+		if (args.matches.length === 0) return { ...video, id: videoId };
+
+		const insertedMatches = await trx
+			.insertInto("VideoMatch")
+			.values(
+				args.matches.map((match) => ({
+					videoId,
 					startsAt: hoursMinutesSecondsStringToSeconds(match.startsAt),
 					stageId: match.stageId,
 					mode: match.mode,
-				})
-				.returning("VideoMatch.id")
-				.executeTakeFirstOrThrow();
-			const matchId = videoMatchResult.id;
+				})),
+			)
+			.returning("VideoMatch.id")
+			.execute();
 
-			for (const [i, weaponSplId] of match.weapons.entries()) {
-				await trx
-					.insertInto("VideoMatchPlayer")
-					.values({
-						videoMatchId: matchId,
-						playerUserId: args.pov?.type === "USER" ? args.pov.userId : null,
-						playerName: args.pov?.type === "NAME" ? args.pov.name : null,
-						weaponSplId,
-						player: i + 1,
-					})
-					.executeTakeFirstOrThrow();
-			}
+		// SQLite assigns ids in insertion order, but RETURNING makes no ordering
+		// promise, so sort to line the new ids back up with args.matches
+		const matchIds = insertedMatches
+			.map((match) => match.id)
+			.sort((a, b) => a - b);
+
+		const players = args.matches.flatMap((match, matchIdx) =>
+			match.weapons.map((weaponSplId, weaponIdx) => ({
+				videoMatchId: matchIds[matchIdx],
+				playerUserId: args.pov?.type === "USER" ? args.pov.userId : null,
+				playerName: args.pov?.type === "NAME" ? args.pov.name : null,
+				weaponSplId,
+				player: weaponIdx + 1,
+			})),
+		);
+
+		if (players.length > 0) {
+			await trx.insertInto("VideoMatchPlayer").values(players).execute();
 		}
+
 		return { ...video, id: videoId };
 	});
 }

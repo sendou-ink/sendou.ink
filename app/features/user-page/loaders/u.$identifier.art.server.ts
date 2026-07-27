@@ -11,7 +11,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const { identifier } = userParamsSchema.parse(params);
 	const user = notFoundIfNullish(
-		await UserRepository.identifierToUserId(identifier),
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 
 	const arts = await ArtRepository.findArtsByUserId(user.id);

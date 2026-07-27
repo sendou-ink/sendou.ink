@@ -8,7 +8,7 @@ import { roundToNDecimalPlaces } from "~/utils/number";
 
 export const loader = async () => {
 	const user = getUser();
-	const results = await PlusVotingRepository.resultsByMonthYear(
+	const results = await PlusVotingRepository.findResultsByMonthYear(
 		lastCompletedVoting(new Date()),
 	);
 

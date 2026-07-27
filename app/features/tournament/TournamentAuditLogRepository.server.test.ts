@@ -39,7 +39,7 @@ const insertEvent = ({
 	withUserId(actorUserId, () =>
 		db
 			.transaction()
-			.execute((trx) => TournamentAuditLogRepository.insert(trx, args)),
+			.execute((trx) => TournamentAuditLogRepository.insert(args, trx)),
 	);
 
 describe("TournamentAuditLogRepository", () => {

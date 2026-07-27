@@ -18,7 +18,7 @@ import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import { SendouQError } from "./q-utils.server";
 
-export async function mapModePreferencesByGroupId(groupId: number) {
+export async function findMapModePreferencesByGroupId(groupId: number) {
 	const group = await db
 		.selectFrom("Group")
 		.leftJoin("AllTeam", "AllTeam.id", "Group.teamId")
@@ -139,7 +139,7 @@ type CreateGroupArgs = {
 	status: Exclude<Tables["Group"]["status"], "INACTIVE">;
 	userId: number;
 };
-export async function createGroup(args: CreateGroupArgs) {
+export async function insert(args: CreateGroupArgs) {
 	return db.transaction().execute(async (trx) => {
 		const createdGroup = await trx
 			.insertInto("Group")
@@ -181,7 +181,7 @@ type CreateGroupFromPreviousGroupArgs = {
 	}[];
 	status?: Exclude<Tables["Group"]["status"], "INACTIVE">;
 };
-export async function createGroupFromPrevious(
+export async function insertFromPrevious(
 	args: CreateGroupFromPreviousGroupArgs,
 ) {
 	const status = args.status ?? "PREPARING";
@@ -344,7 +344,7 @@ async function isGroupCorrect(
 	return true;
 }
 
-export async function addMember(
+export async function insertMember(
 	groupId: number,
 	{
 		userId,
@@ -378,7 +378,7 @@ export async function addMember(
 	return { chatCodeToRevalidate };
 }
 
-export async function allLikesByGroupId(groupId: number) {
+export async function findAllLikesByGroupId(groupId: number) {
 	const rows = await db
 		.selectFrom("GroupLike")
 		.select([
@@ -425,7 +425,7 @@ export function rechallenge({
 		.execute();
 }
 
-export async function friendsAndTeammates(userId: number) {
+export async function findFriendsAndTeammates(userId: number) {
 	const teams = await db
 		.selectFrom("TeamMemberWithSecondary")
 		.innerJoin("Team", "Team.id", "TeamMemberWithSecondary.teamId")
@@ -551,30 +551,36 @@ export async function closeExpiredContinueVotes() {
 			.groupBy("Group.id")
 			.execute();
 
-		const chatCodesToRevalidate: string[] = [];
+		const chatCodesToRevalidate = eligibleGroups
+			.map((group) => group.matchChatCode)
+			.filter((chatCode) => chatCode !== null);
 
-		for (const { groupId, matchChatCode } of eligibleGroups) {
+		if (eligibleGroups.length > 0) {
 			const members = await trx
 				.selectFrom("GroupMember")
-				.select("GroupMember.userId")
-				.where("GroupMember.groupId", "=", groupId)
-				.execute();
-
-			await trx
-				.insertInto("GroupMatchContinueVote")
-				.values(
-					members.map((m) => ({
-						groupId,
-						userId: m.userId,
-						isContinuing: 0 as const,
-					})),
-				)
-				.onConflict((oc) =>
-					oc.columns(["groupId", "userId"]).doUpdateSet({ isContinuing: 0 }),
+				.select(["GroupMember.groupId", "GroupMember.userId"])
+				.where(
+					"GroupMember.groupId",
+					"in",
+					eligibleGroups.map((group) => group.groupId),
 				)
 				.execute();
 
-			if (matchChatCode) chatCodesToRevalidate.push(matchChatCode);
+			if (members.length > 0) {
+				await trx
+					.insertInto("GroupMatchContinueVote")
+					.values(
+						members.map((member) => ({
+							groupId: member.groupId,
+							userId: member.userId,
+							isContinuing: 0 as const,
+						})),
+					)
+					.onConflict((oc) =>
+						oc.columns(["groupId", "userId"]).doUpdateSet({ isContinuing: 0 }),
+					)
+					.execute();
+			}
 		}
 
 		return {
@@ -584,7 +590,7 @@ export async function closeExpiredContinueVotes() {
 	});
 }
 
-export async function mapModePreferencesBySeasonNth(seasonNth: number) {
+export async function findAllMapModePreferencesBySeasonNth(seasonNth: number) {
 	return db
 		.selectFrom("User")
 		.select("User.mapModePreferences")
@@ -631,7 +637,7 @@ export async function findRecentlyFinishedMatches() {
 	}));
 }
 
-export function addLike({
+export function insertLike({
 	likerGroupId,
 	targetGroupId,
 }: {

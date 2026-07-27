@@ -38,7 +38,7 @@ export function generateToken(userId: number, type: ApiTokenType) {
 }
 
 /** Retrieves all valid API tokens and their types from users with API access. */
-export async function allApiTokens() {
+export async function findAllApiTokens() {
 	const tokens = await db
 		.selectFrom("ApiToken")
 		.innerJoin("User", "User.id", "ApiToken.userId")

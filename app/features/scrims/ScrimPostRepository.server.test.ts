@@ -318,7 +318,7 @@ describe("insertRequest", () => {
 			startsAt: BOOKED_AT,
 			users: [{ userId: 1, isOwner: 1 }],
 		});
-		const team = await TeamRepository.create({
+		const team = await TeamRepository.insert({
 			name: "Team Olive",
 			ownerUserId: 2,
 			isMainTeam: true,
@@ -347,7 +347,7 @@ describe("insertRequest", () => {
 			startsAt: BOOKED_AT,
 			users: [{ userId: 4, isOwner: 1 }],
 		});
-		const team = await TeamRepository.create({
+		const team = await TeamRepository.insert({
 			name: "Team Olive",
 			ownerUserId: 2,
 			isMainTeam: true,

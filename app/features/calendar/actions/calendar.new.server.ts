@@ -175,7 +175,7 @@ export const action: ActionFunction = async ({ request }) => {
 		return "AUTO_ALL" as const;
 	};
 	const { eventId: createdEventId, tournamentId: createdTournamentId } =
-		await CalendarRepository.create({
+		await CalendarRepository.insert({
 			mapPoolMaps: deserializedMaps,
 			isFullTournament: data.toToolsEnabled,
 			mapPickingStyle: mapPickingStyle(),

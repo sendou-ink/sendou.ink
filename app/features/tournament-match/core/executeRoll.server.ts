@@ -20,7 +20,7 @@ export async function executeRoll({
 	matchId: number;
 	maps: TournamentRoundMaps;
 	pickBanEvents: Awaited<
-		ReturnType<typeof TournamentRepository.pickBanEventsByMatchId>
+		ReturnType<typeof TournamentRepository.findPickBanEventsByMatchId>
 	>;
 	results: Awaited<ReturnType<typeof findResultsByMatchId>>;
 	tournamentId: number;
@@ -59,7 +59,7 @@ export async function executeRoll({
 	const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
 
 	try {
-		await TournamentRepository.addPickBanEvent({
+		await TournamentRepository.insertPickBanEvent({
 			authorId: null,
 			matchId,
 			stageId: selectedMap.stageId,

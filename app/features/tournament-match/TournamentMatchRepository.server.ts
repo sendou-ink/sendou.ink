@@ -247,7 +247,7 @@ export interface AllMatchResult {
 	}>;
 }
 
-export async function allResultsByTournamentId(
+export async function findAllResultsByTournamentId(
 	tournamentId: number,
 ): Promise<AllMatchResult[]> {
 	const rows = await db
@@ -376,7 +376,9 @@ export async function allResultsByTournamentId(
 	});
 }
 
-export async function userParticipationByTournamentId(tournamentId: number) {
+export async function findUserParticipationByTournamentId(
+	tournamentId: number,
+) {
 	return db
 		.with("playerMatches", (db) =>
 			db

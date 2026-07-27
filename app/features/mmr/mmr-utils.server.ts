@@ -26,8 +26,8 @@ export async function seasonRatings({
 	identifiers: Array<SkillTeamIdentifier>;
 }) {
 	const [userSkills, teamSkills] = await Promise.all([
-		SkillRepository.currentUserSkills({ season, userIds }),
-		SkillRepository.currentTeamSkills({ season, identifiers }),
+		SkillRepository.findCurrentUserSkills({ season, userIds }),
+		SkillRepository.findCurrentTeamSkills({ season, identifiers }),
 	]);
 
 	const loadedUserIds = new Set(userIds);
@@ -89,7 +89,7 @@ export async function seedingRatings({
 	type: Tables["SeedingSkill"]["type"];
 	userIds: Array<number>;
 }) {
-	const skills = await SkillRepository.seedingSkills({ type, userIds });
+	const skills = await SkillRepository.findSeedingSkills({ type, userIds });
 
 	return (userId: number): Rating => skills.get(userId) ?? rating();
 }

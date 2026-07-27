@@ -35,7 +35,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		}
 		case "DELETE_MOD_NOTE": {
 			const note = badRequestIfFalsy(
-				await AdminRepository.findModeNoteById(data.noteId),
+				await AdminRepository.findModNoteById(data.noteId),
 			);
 
 			if (note.authorId !== loggedInUser.id) {

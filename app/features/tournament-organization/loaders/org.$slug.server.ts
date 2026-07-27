@@ -82,7 +82,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		year,
 		bannedUsers:
 			user?.id && organization.permissions.BAN.includes(user.id)
-				? await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
+				? await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
 						organization.id,
 					)
 				: null,

@@ -3,7 +3,7 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as AdminRepository from "./AdminRepository.server";
 
-describe("allBannedUsers", () => {
+describe("findAllBannedUsers", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(5);
 	});
@@ -13,7 +13,7 @@ describe("allBannedUsers", () => {
 	});
 
 	test("returns empty Map when no users are banned", async () => {
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(0);
 	});
@@ -26,7 +26,7 @@ describe("allBannedUsers", () => {
 			bannedByUserId: 2,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(1);
 		expect(result.get(1)).toBeDefined();
@@ -49,7 +49,7 @@ describe("allBannedUsers", () => {
 			bannedByUserId: 3,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(2);
 		expect(result.get(1)?.userId).toBe(1);
@@ -64,7 +64,7 @@ describe("allBannedUsers", () => {
 			bannedByUserId: 2,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(1);
 		expect(result.get(1)).toBeDefined();
@@ -88,7 +88,7 @@ describe("allBannedUsers", () => {
 			bannedByUserId: 3,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(2);
 		expect(result.get(1)?.banned).toBe(1);
@@ -113,7 +113,7 @@ describe("banUser", () => {
 			bannedByUserId: 2,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.get(1)?.banned).toBe(1);
 		expect(result.get(1)?.bannedReason).toBe("Test permanent ban");
@@ -129,7 +129,7 @@ describe("banUser", () => {
 			bannedByUserId: 2,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.get(1)?.banned).toBeGreaterThan(1);
 		expect(result.get(1)?.bannedReason).toBe("Test temporary ban");
@@ -145,7 +145,7 @@ describe("banUser", () => {
 			bannedByUserId: 2,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.get(1)?.bannedReason).toBe(reason);
 	});
@@ -180,7 +180,7 @@ describe("banUser", () => {
 	});
 
 	test("updates existing user correctly", async () => {
-		const bannedUsers = await AdminRepository.allBannedUsers();
+		const bannedUsers = await AdminRepository.findAllBannedUsers();
 		expect(bannedUsers.size).toBe(0);
 
 		await AdminRepository.banUser({
@@ -190,7 +190,7 @@ describe("banUser", () => {
 			bannedByUserId: 2,
 		});
 
-		let result = await AdminRepository.allBannedUsers();
+		let result = await AdminRepository.findAllBannedUsers();
 		expect(result.size).toBe(1);
 
 		await AdminRepository.banUser({
@@ -200,7 +200,7 @@ describe("banUser", () => {
 			bannedByUserId: 2,
 		});
 
-		result = await AdminRepository.allBannedUsers();
+		result = await AdminRepository.findAllBannedUsers();
 		expect(result.size).toBe(1);
 		expect(result.get(1)?.bannedReason).toBe("Updated ban reason");
 
@@ -228,7 +228,7 @@ describe("unbanUser", () => {
 			bannedByUserId: 2,
 		});
 
-		let result = await AdminRepository.allBannedUsers();
+		let result = await AdminRepository.findAllBannedUsers();
 		expect(result.size).toBe(1);
 
 		await AdminRepository.unbanUser({
@@ -236,7 +236,7 @@ describe("unbanUser", () => {
 			unbannedByUserId: 2,
 		});
 
-		result = await AdminRepository.allBannedUsers();
+		result = await AdminRepository.findAllBannedUsers();
 		expect(result.size).toBe(0);
 	});
 
@@ -276,7 +276,7 @@ describe("unbanUser", () => {
 			unbannedByUserId: 2,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(0);
 	});
@@ -296,7 +296,7 @@ describe("unbanUser", () => {
 			unbannedByUserId: 2,
 		});
 
-		const result = await AdminRepository.allBannedUsers();
+		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(0);
 	});

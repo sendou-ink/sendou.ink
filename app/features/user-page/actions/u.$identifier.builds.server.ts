@@ -26,7 +26,9 @@ export const action: ActionFunction = async ({ request }) => {
 
 	switch (data._action) {
 		case "DELETE_BUILD": {
-			const ownerId = await BuildRepository.ownerIdById(data.buildToDeleteId);
+			const ownerId = await BuildRepository.findOwnerIdById(
+				data.buildToDeleteId,
+			);
 
 			errorToastIfFalsy(ownerId === user.id, "Build to delete not found");
 

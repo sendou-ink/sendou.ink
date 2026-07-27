@@ -31,9 +31,9 @@ import {
 	summarizeMaps,
 	summarizePlayerResults,
 } from "./core/summarizer.server";
+import * as MatchSkillRepository from "./MatchSkillRepository.server";
 import * as PlayerStatRepository from "./PlayerStatRepository.server";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
-import * as SkillRepository from "./SkillRepository.server";
 
 /** Whether a GroupMatch with the given id exists. */
 export async function exists(id: number) {
@@ -181,7 +181,7 @@ function groupWithTeamAndMembers(
 /**
  * Retrieves the pages count of results for a specific user and season. Counting both SendouQ matches and ranked tournaments.
  */
-export async function seasonResultPagesByUserId({
+export async function countSeasonResultPagesByUserId({
 	userId,
 	season,
 }: {
@@ -298,19 +298,19 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 };
 
 export type SeasonGroupMatch = Extract<
-	Unpacked<Unpacked<ReturnType<typeof seasonResultsByUserId>>>,
+	Unpacked<Unpacked<ReturnType<typeof findSeasonResultsByUserId>>>,
 	{ type: "GROUP_MATCH" }
 >["groupMatch"];
 
 export type SeasonTournamentResult = Extract<
-	Unpacked<Unpacked<ReturnType<typeof seasonResultsByUserId>>>,
+	Unpacked<Unpacked<ReturnType<typeof findSeasonResultsByUserId>>>,
 	{ type: "TOURNAMENT_RESULT" }
 >["tournamentResult"];
 
 /**
  * Retrieves results of given user, competitive season & page. Both SendouQ matches and ranked tournaments.
  */
-export async function seasonResultsByUserId({
+export async function findSeasonResultsByUserId({
 	userId,
 	season,
 	page = 1,
@@ -414,7 +414,7 @@ export async function seasonResultsByUserId({
 		.filter((result) => result !== null);
 }
 
-export async function seasonCanceledMatchesByUserId({
+export async function findSeasonCanceledMatchesByUserId({
 	userId,
 	season,
 }: {
@@ -452,7 +452,7 @@ export async function seasonCanceledMatchesByUserId({
 		.execute();
 }
 
-export function create({
+export function insert({
 	alphaGroupId,
 	bravoGroupId,
 	mapList,
@@ -1125,7 +1125,7 @@ async function finalizeMatch({
 			summarizePlayerResults({ match, members, winners }),
 			trx,
 		);
-		await SkillRepository.createMatchSkills(
+		await MatchSkillRepository.insertMatchSkills(
 			{
 				skills: newSkills,
 				differences,

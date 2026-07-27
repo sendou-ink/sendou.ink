@@ -94,7 +94,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			await TournamentTeamRepository.del(team.id);
+			await TournamentTeamRepository.deleteById(team.id);
 
 			for (const member of team.members) {
 				ShowcaseTournaments.removeFromCached({

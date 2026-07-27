@@ -29,7 +29,7 @@ interface CreateArgs {
 	name: string;
 }
 
-export function create(args: CreateArgs) {
+export function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
 		const org = await trx
 			.insertInto("TournamentOrganization")
@@ -632,7 +632,7 @@ export function update({
 	});
 }
 
-export function removeOwnMembership(organizationId: number) {
+export function deleteOwnMembership(organizationId: number) {
 	return db
 		.deleteFrom("TournamentOrganizationMember")
 		.where("organizationId", "=", organizationId)
@@ -672,7 +672,7 @@ export function unbanUser({
 /**
  * Returns all banned users for a specific tournament organization
  */
-export function allBannedUsersByOrganizationId(organizationId: number) {
+export function findAllBannedUsersByOrganizationId(organizationId: number) {
 	return db
 		.selectFrom("TournamentOrganizationBannedUser")
 		.innerJoin("User", "User.id", "TournamentOrganizationBannedUser.userId")

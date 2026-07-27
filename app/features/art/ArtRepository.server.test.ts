@@ -144,7 +144,7 @@ describe("unlinkUserFromArt", () => {
 			}),
 		);
 
-		await withUserId(2, () => ArtRepository.unlinkSelfFromArt(art.id));
+		await withUserId(2, () => ArtRepository.unlinkOwnFromArt(art.id));
 
 		const result = await ArtRepository.findArtsByUserId(2, {
 			includeAuthored: false,

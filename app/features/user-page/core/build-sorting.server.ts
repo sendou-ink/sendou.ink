@@ -6,7 +6,7 @@ import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
 interface SortBuildsArgs {
-	builds: Awaited<ReturnType<typeof BuildRepository.allByUserId>>;
+	builds: Awaited<ReturnType<typeof BuildRepository.findAllByUserId>>;
 	buildSorting: BuildSort[] | null;
 	weaponPool: MainWeaponId[];
 }

@@ -14,9 +14,9 @@ const createTournament = () =>
 		.executeTakeFirstOrThrow();
 
 const createPlaceholder = (tournamentId: number, userId: number) =>
-	TournamentLFGRepository.createPlaceholderTeam({ tournamentId, userId });
+	TournamentLFGRepository.insertPlaceholderTeam({ tournamentId, userId });
 
-describe("createPlaceholderTeam", () => {
+describe("insertPlaceholderTeam", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
@@ -109,7 +109,7 @@ describe("findLookingTeamsByTournamentId", () => {
 	});
 });
 
-describe("addLike / deleteLike", () => {
+describe("insertLike / deleteLike", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
@@ -123,12 +123,12 @@ describe("addLike / deleteLike", () => {
 		const team1 = await createPlaceholder(tournament.id, 1);
 		const team2 = await createPlaceholder(tournament.id, 2);
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
 		expect(likes.given[0].teamId).toBe(team2.id);
@@ -139,16 +139,16 @@ describe("addLike / deleteLike", () => {
 		const team1 = await createPlaceholder(tournament.id, 1);
 		const team2 = await createPlaceholder(tournament.id, 2);
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
 	});
@@ -158,7 +158,7 @@ describe("addLike / deleteLike", () => {
 		const team1 = await createPlaceholder(tournament.id, 1);
 		const team2 = await createPlaceholder(tournament.id, 2);
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
@@ -167,13 +167,13 @@ describe("addLike / deleteLike", () => {
 			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(0);
 	});
 });
 
-describe("allLikesByTeamId", () => {
+describe("findAllLikesByTeamId", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(3);
 	});
@@ -188,16 +188,16 @@ describe("allLikesByTeamId", () => {
 		const team2 = await createPlaceholder(tournament.id, 2);
 		const team3 = await createPlaceholder(tournament.id, 3);
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team3.id,
 			targetTeamId: team1.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
 		expect(likes.given[0].teamId).toBe(team2.id);
@@ -209,7 +209,7 @@ describe("allLikesByTeamId", () => {
 		const tournament = await createTournament();
 		const team = await createPlaceholder(tournament.id, 1);
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team.id);
 
 		expect(likes.given).toHaveLength(0);
 		expect(likes.received).toHaveLength(0);
@@ -436,11 +436,11 @@ describe("mergeTeams", () => {
 		const team2 = await createPlaceholder(tournament.id, 2);
 		const team3 = await createPlaceholder(tournament.id, 3);
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team3.id,
 		});
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team3.id,
 			targetTeamId: team1.id,
 		});
@@ -451,7 +451,7 @@ describe("mergeTeams", () => {
 			maxGroupSize: 4,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(0);
 		expect(likes.received).toHaveLength(0);
@@ -590,7 +590,7 @@ describe("updateStayAsSub", () => {
 			}),
 		);
 
-		let subs = await TournamentLFGRepository.getSubsForTournament(
+		let subs = await TournamentLFGRepository.findAllSubsByTournamentId(
 			tournament.id,
 		);
 		expect(subs).toContain(1);
@@ -602,7 +602,9 @@ describe("updateStayAsSub", () => {
 			}),
 		);
 
-		subs = await TournamentLFGRepository.getSubsForTournament(tournament.id);
+		subs = await TournamentLFGRepository.findAllSubsByTournamentId(
+			tournament.id,
+		);
 		expect(subs).not.toContain(1);
 	});
 });
@@ -677,7 +679,7 @@ describe("leaveLfg", () => {
 	});
 });
 
-describe("getSubsForTournament", () => {
+describe("findAllSubsByTournamentId", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
@@ -688,14 +690,14 @@ describe("getSubsForTournament", () => {
 
 	test("returns userIds with isStayAsSub", async () => {
 		const tournament = await createTournament();
-		await TournamentLFGRepository.createPlaceholderTeam({
+		await TournamentLFGRepository.insertPlaceholderTeam({
 			tournamentId: tournament.id,
 			userId: 1,
 			isStayAsSub: true,
 		});
 		await createPlaceholder(tournament.id, 2);
 
-		const subs = await TournamentLFGRepository.getSubsForTournament(
+		const subs = await TournamentLFGRepository.findAllSubsByTournamentId(
 			tournament.id,
 		);
 
@@ -706,7 +708,7 @@ describe("getSubsForTournament", () => {
 		const tournament = await createTournament();
 		await createPlaceholder(tournament.id, 1);
 
-		const subs = await TournamentLFGRepository.getSubsForTournament(
+		const subs = await TournamentLFGRepository.findAllSubsByTournamentId(
 			tournament.id,
 		);
 
