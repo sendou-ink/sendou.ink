@@ -245,6 +245,12 @@ function TournamentMatchBannerTopRow({
 	const startedAt = databaseTimestampToDate(data.match.startedAt);
 	const totalMinutes = differenceInMinutes(currentTime, startedAt);
 
+	const lastResultCreatedAt = data.results.at(-1)?.createdAt;
+	const endedAt =
+		typeof lastResultCreatedAt === "number"
+			? databaseTimestampToDate(lastResultCreatedAt)
+			: null;
+
 	const currentMinutes = resolveCurrentMinutes({
 		data,
 		tournament,
@@ -262,7 +268,7 @@ function TournamentMatchBannerTopRow({
 			}}
 		>
 			{data.matchIsOver ? (
-				<MatchBannerStartedAt time={startedAt} />
+				<MatchBannerStartedAt time={startedAt} endTime={endedAt} />
 			) : (
 				<MatchBannerTimer time={{ currentMinutes, totalMinutes }} />
 			)}

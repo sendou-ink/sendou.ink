@@ -154,7 +154,14 @@ function SendouQMatchBannerTopRow({
 			}}
 		>
 			{data.match.isLocked || awaitingConfirmation ? (
-				<MatchBannerStartedAt time={startedAt} />
+				<MatchBannerStartedAt
+					time={startedAt}
+					endTime={
+						lastMapReportedAt
+							? databaseTimestampToDate(lastMapReportedAt)
+							: null
+					}
+				/>
 			) : (
 				<MatchBannerTimer
 					time={{
