@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { dbReset, withUserId } from "~/utils/Test";
@@ -7,17 +9,20 @@ import * as TournamentLFGRepository from "./TournamentLFGRepository.server";
 const users = UserFactory.pool();
 
 const createTournament = () =>
-	db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	TournamentFactory.create({ authorId: users.id(1) });
 
 const createPlaceholder = (tournamentId: number, userId: number) =>
 	TournamentLFGRepository.insertPlaceholderTeam({ tournamentId, userId });
+
+const createRegisteredTeam = (
+	tournamentId: number,
+	[owner, ...members]: number[],
+) =>
+	TournamentTeamFactory.create({
+		tournamentId,
+		userId: owner,
+		additionalMemberUserIds: members,
+	});
 
 describe("insertPlaceholderTeam", () => {
 	beforeEach(async () => {
@@ -93,7 +98,7 @@ describe("findLookingTeamsByTournamentId", () => {
 		);
 		const members = groups[0].members;
 
-		expect(members[0].id).toBe(1);
+		expect(members[0].id).toBe(users.id(1));
 		expect(members[0].username).toBeDefined();
 		expect(members[0].role).toBe("OWNER");
 	});
@@ -227,36 +232,6 @@ describe("startLooking", () => {
 	afterEach(async () => {
 		await dbReset();
 	});
-
-	const createRegisteredTeam = async (
-		tournamentId: number,
-		memberUserIds: number[],
-	) => {
-		const team = await db
-			.insertInto("TournamentTeam")
-			.values({
-				tournamentId,
-				name: "Real Team",
-				inviteCode: `inv-${tournamentId}-${memberUserIds.join("-")}`,
-				isLooking: 0,
-				isPlaceholder: 0,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		for (const [idx, userId] of memberUserIds.entries()) {
-			await db
-				.insertInto("TournamentTeamMember")
-				.values({
-					tournamentTeamId: team.id,
-					userId,
-					role: idx === 0 ? "OWNER" : "REGULAR",
-				})
-				.execute();
-		}
-
-		return team;
-	};
 
 	test("generates chatCode for a 2+ member team", async () => {
 		const tournament = await createTournament();
@@ -546,16 +521,12 @@ describe("updateMemberRole", () => {
 
 	test("changes role from REGULAR to MANAGER", async () => {
 		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, users.id(1));
-
-		await db
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: team.id,
-				userId: users.id(2),
-				role: "REGULAR",
-			})
-			.execute();
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+			additionalMemberUserIds: [users.id(2)],
+		});
+		await TournamentLFGRepository.startLooking(team.id);
 
 		await TournamentLFGRepository.updateMemberRole({
 			userId: users.id(2),
@@ -650,26 +621,8 @@ describe("leaveLfg", () => {
 	test("sets isLooking=0 for non-placeholder team", async () => {
 		const tournament = await createTournament();
 
-		const team = await db
-			.insertInto("TournamentTeam")
-			.values({
-				tournamentId: tournament.id,
-				name: "Real Team",
-				inviteCode: "abc",
-				isLooking: 1,
-				isPlaceholder: 0,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		await db
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: team.id,
-				userId: users.id(1),
-				role: "OWNER",
-			})
-			.execute();
+		const team = await createRegisteredTeam(tournament.id, [users.id(1)]);
+		await TournamentLFGRepository.startLooking(team.id);
 
 		await TournamentLFGRepository.leaveLfg({
 			userId: users.id(1),

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -43,19 +44,16 @@ const createGroupMatch = async (createdAt: number) => {
 };
 
 const createTournamentMatch = async ({
+	authorId,
 	isFinalized,
 }: {
+	authorId: number;
 	isFinalized: boolean;
 }) => {
-	const tournament = await db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-			isFinalized: isFinalized ? 1 : 0,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	const tournament = await TournamentFactory.create(
+		{ authorId },
+		{ isFinalized },
+	);
 
 	const stage = await db
 		.insertInto("TournamentStage")
@@ -131,6 +129,7 @@ const reportTournamentWeapons = async (args: {
 	createdAt?: number;
 }) => {
 	const match = await createTournamentMatch({
+		authorId: args.userId,
 		isFinalized: args.isFinalized ?? true,
 	});
 

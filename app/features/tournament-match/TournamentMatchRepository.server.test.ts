@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { dbReset } from "~/utils/Test";
@@ -8,25 +10,16 @@ let teamOneMember: { id: number };
 let teamTwoMember: { id: number };
 
 const createTournament = () =>
-	db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	TournamentFactory.create({ authorId: teamOneMember.id });
 
+/** Both users are on both teams, so that either team's results can be attributed. */
 const createTeam = (tournamentId: number, name: string) =>
-	db
-		.insertInto("TournamentTeam")
-		.values({
-			tournamentId,
-			name,
-			inviteCode: `inv-${tournamentId}-${name}`,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	TournamentTeamFactory.create({
+		tournamentId,
+		userId: teamOneMember.id,
+		additionalMemberUserIds: [teamTwoMember.id],
+		team: { name, prefersNotToHost: 0, teamId: null },
+	});
 
 const createStage = (tournamentId: number, name: string, number: number) =>
 	db
@@ -139,18 +132,6 @@ describe("findByTournamentTeamId", () => {
 		const tournament = await createTournament();
 		const teamA = await createTeam(tournament.id, "A");
 		const teamB = await createTeam(tournament.id, "B");
-
-		// Insert team members so we have someone to attribute results to
-		for (const id of [teamOneMember.id, teamTwoMember.id]) {
-			await db
-				.insertInto("TournamentTeamMember")
-				.values({ tournamentTeamId: teamA.id, userId: id, role: "OWNER" })
-				.execute();
-			await db
-				.insertInto("TournamentTeamMember")
-				.values({ tournamentTeamId: teamB.id, userId: id, role: "OWNER" })
-				.execute();
-		}
 
 		const stage1 = await createStage(tournament.id, "Stage 1", 1);
 		const stage1Group = await createGroup(stage1.id, 8);

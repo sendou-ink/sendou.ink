@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
@@ -9,25 +11,7 @@ import * as TournamentRepository from "./TournamentRepository.server";
 let player: { id: number };
 
 const createTournament = () =>
-	db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-const createTeam = (tournamentId: number) =>
-	db
-		.insertInto("TournamentTeam")
-		.values({
-			tournamentId,
-			name: "team",
-			inviteCode: `inv-${tournamentId}`,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	TournamentFactory.create({ authorId: player.id });
 
 const insertPriorSkill = (args: {
 	userId: number;
@@ -150,7 +134,10 @@ describe("TournamentRepository.finalize", () => {
 		await insertPriorSkill({ userId: player.id, season: 0, matchesCount: 100 });
 
 		const { id: tournamentId } = await createTournament();
-		const { id: tournamentTeamId } = await createTeam(tournamentId);
+		const { id: tournamentTeamId } = await TournamentTeamFactory.create({
+			tournamentId,
+			userId: player.id,
+		});
 
 		await TournamentRepository.finalize({
 			tournamentId,

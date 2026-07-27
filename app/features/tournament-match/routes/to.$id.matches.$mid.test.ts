@@ -7,14 +7,12 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 }));
 
 import type { z } from "zod";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
-import {
-	dbInsertTournament,
-	dbInsertTournamentTeam,
-	dbStartTournament,
-} from "~/features/tournament/tournament-test-utils";
+import { dbStartTournament } from "~/features/tournament/tournament-test-utils";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
@@ -85,19 +83,26 @@ const removeMemberAction = ({
 		{ user: "admin", params: { id: "1", teamId: String(teamId) } },
 	);
 
+const createTeam = (
+	tournamentId: number,
+	[owner, ...members]: number[],
+): Promise<{ id: number }> =>
+	TournamentTeamFactory.create(
+		{
+			tournamentId,
+			userId: owner,
+			additionalMemberUserIds: members,
+		},
+		{ isCheckedIn: true },
+	);
+
 describe("Tournament match page", () => {
 	beforeEach(async () => {
 		await UserFactory.createMany(10);
-		await dbInsertTournament();
-		await dbInsertTournamentTeam({
-			membersCount: 6,
-			ownerId: 1,
-		});
-		await dbInsertTournamentTeam({
-			membersCount: 4,
-			ownerId: 7,
-		});
-		await dbStartTournament([1, 2]);
+		const tournament = await TournamentFactory.create({ authorId: 1 });
+		const teamOne = await createTeam(tournament.id, [1, 2, 3, 4, 5, 6]);
+		const teamTwo = await createTeam(tournament.id, [7, 8, 9, 10]);
+		await dbStartTournament([teamOne.id, teamTwo.id], tournament.id);
 	});
 
 	afterEach(async () => {
@@ -219,26 +224,18 @@ describe("Tournament match page", () => {
 		});
 
 		it("should not require setting active roster if both teams have no subs", async () => {
-			await dbInsertTournament();
-			await dbInsertTournamentTeam({
-				membersCount: 4,
-				ownerId: 1,
-				tournamentId: 2,
-			});
-			await dbInsertTournamentTeam({
-				membersCount: 4,
-				ownerId: 5,
-				tournamentId: 2,
-			});
-			await dbStartTournament([3, 4], 2);
+			const tournament = await TournamentFactory.create({ authorId: 1 });
+			const teamOne = await createTeam(tournament.id, [1, 2, 3, 4]);
+			const teamTwo = await createTeam(tournament.id, [5, 6, 7, 8]);
+			await dbStartTournament([teamOne.id, teamTwo.id], tournament.id);
 
 			const res = await reportScoreAction({
 				position: 0,
 				params: {
-					id: "2",
+					id: String(tournament.id),
 					mid: "2",
 				},
-				winnerTeamId: 3,
+				winnerTeamId: teamOne.id,
 			});
 
 			expect(res).toBe(null);

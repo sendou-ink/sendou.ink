@@ -7,6 +7,7 @@ import type {
 import { expect } from "vitest";
 import type { z } from "zod";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
+import { actAs } from "~/db/seed/core/actAs";
 import { resetFactories } from "~/db/seed/core/defineFactory";
 import { db } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -40,10 +41,7 @@ export function withUser<T>(user: AuthenticatedUser, fn: () => T): T {
  * matters (repositories read the actor solely via `actorId()` / `actorIdOrNull()`).
  */
 export function withUserId<T>(id: number, fn: () => T): T {
-	return userAsyncLocalStorage.run(
-		{ user: { id } as unknown as AuthenticatedUser },
-		fn,
-	);
+	return actAs(id, fn);
 }
 
 /**

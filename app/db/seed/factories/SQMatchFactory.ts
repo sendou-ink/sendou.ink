@@ -12,7 +12,7 @@ type Options = {
 
 /** Creates SendouQ matches. Both groups have to be full, as they are when the
  * matchmaking UI creates a match. */
-export const { create, createMany } = defineFactory({
+export const { create } = defineFactory({
 	defaults: () => ({
 		mapList: SplatoonFaker.mapList(SENDOUQ_BEST_OF).map((map) => ({
 			...map,

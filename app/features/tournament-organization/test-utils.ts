@@ -1,6 +1,8 @@
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import { db } from "~/db/sql";
-import invariant from "../../utils/invariant";
-import { dbInsertTournament } from "../tournament/tournament-test-utils";
+import { withUserId } from "~/utils/Test";
+import * as TournamentTeamRepository from "../tournament/TournamentTeamRepository.server";
 
 /**
  * Seeds a played tournament hosted by `organizationId`, starting at `startTime`
@@ -25,55 +27,39 @@ export async function seedOrgEventWithParticipants({
 	participantUserIds: number[];
 	checkIn?: "in" | "out" | "none";
 }) {
-	const { tournamentId } = await dbInsertTournament({
+	const [ownerUserId, ...memberUserIds] = participantUserIds;
+
+	const tournament = await TournamentFactory.create({
+		authorId: ownerUserId,
 		organizationId,
-		startTime,
+		startTimes: [startTime],
 	});
 
-	invariant(tournamentId, "Expected tournamentId to be defined");
+	const team = await TournamentTeamFactory.create(
+		{
+			tournamentId: tournament.id,
+			userId: ownerUserId,
+			additionalMemberUserIds: memberUserIds,
+		},
+		{ isCheckedIn: checkIn === "in" },
+	);
 
-	const event = await db
-		.insertInto("CalendarEvent")
-		.values({
-			authorId: participantUserIds[0],
-			name: `Event ${tournamentId}`,
-			bracketUrl: "https://example.com/bracket",
-			organizationId,
-			tournamentId,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	await db
-		.insertInto("CalendarEventDate")
-		.values({ eventId: event.id, startsAt: startTime })
-		.execute();
-
-	const team = await db
-		.insertInto("TournamentTeam")
-		.values({
-			tournamentId,
-			name: `Team ${tournamentId}`,
-			inviteCode: `inv-${tournamentId}`,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	if (checkIn !== "none") {
-		await db
-			.insertInto("TournamentTeamCheckIn")
-			.values({
+	if (checkIn === "out") {
+		// a check out leaves a row of its own only when it concerns one bracket,
+		// otherwise checking out simply undoes the check in
+		await withUserId(ownerUserId, async () => {
+			await TournamentTeamRepository.checkIn(team.id, { bracketIdx: 0 });
+			await TournamentTeamRepository.checkOut({
 				tournamentTeamId: team.id,
-				checkedInAt: startTime,
-				isCheckOut: checkIn === "out" ? 1 : 0,
-			})
-			.execute();
+				bracketIdx: 0,
+			});
+		});
 	}
 
 	const stage = await db
 		.insertInto("TournamentStage")
 		.values({
-			tournamentId,
+			tournamentId: tournament.id,
 			name: "Stage",
 			number: 1,
 			type: "single_elimination",
@@ -118,7 +104,7 @@ export async function seedOrgEventWithParticipants({
 			matchId: match.id,
 			mode: "SZ",
 			number: 1,
-			reporterId: participantUserIds[0],
+			reporterId: ownerUserId,
 			source: "TO",
 			stageId: 1,
 			winnerTeamId: team.id,
@@ -137,5 +123,5 @@ export async function seedOrgEventWithParticipants({
 		)
 		.execute();
 
-	return { tournamentId, teamId: team.id };
+	return { tournamentId: tournament.id, teamId: team.id };
 }

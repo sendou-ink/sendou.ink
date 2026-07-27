@@ -18,7 +18,7 @@ type Options = {
  * creates with the group; the members named by `additionalMemberUserIds` join it
  * the way they do in production. Invite and chat codes are the repository's own.
  */
-export const { create, createMany } = defineFactory({
+export const { create } = defineFactory({
 	defaults: () => ({
 		status: "ACTIVE" as const,
 		additionalMemberUserIds: [],
