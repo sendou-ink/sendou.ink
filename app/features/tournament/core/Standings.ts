@@ -257,7 +257,11 @@ function tournamentStandingsForBracket(
 
 		const standings = standingsToMergeable({
 			alreadyIncludedTeamIds,
-			standings: bracket.standings,
+			standings: tiebrokenByUndergroundBrackets({
+				tournament,
+				bracketIdx: idx,
+				standings: bracket.standings,
+			}),
 			teamsAboveFromAnotherBracketsCount: alreadyIncludedTeamIds.size,
 		});
 		result.push(...standings);
@@ -267,6 +271,85 @@ function tournamentStandingsForBracket(
 		}
 		for (const teamId of bracket.teamsPendingCheckIn ?? []) {
 			alreadyIncludedTeamIds.add(teamId);
+		}
+	}
+
+	return result;
+}
+
+/**
+ * Underground brackets are left out of the standings but the teams playing them are tied in their source
+ * bracket (e.g. everyone who lost the quarterfinals shares the same placement), so their underground run
+ * decides the order within each such tie. Teams that skipped the underground bracket stay tied last.
+ *
+ * An underground bracket that is still in progress is ignored, as the teams still alive in it have no
+ * placement yet and would sort below the teams it already eliminated.
+ */
+function tiebrokenByUndergroundBrackets({
+	tournament,
+	bracketIdx,
+	standings,
+}: {
+	tournament: Tournament;
+	bracketIdx: number;
+	standings: Standing[];
+}): Standing[] {
+	const undergroundPlacements = new Map<number, number>();
+
+	for (const undergroundIdx of Progression.undergroundBracketIdxs(
+		bracketIdx,
+		tournament.ctx.settings.bracketProgression,
+	)) {
+		const underground = tournament.bracketByIdx(undergroundIdx);
+		if (!underground?.everyMatchOver) continue;
+
+		for (const standing of underground.standings) {
+			if (undergroundPlacements.has(standing.team.id)) continue;
+
+			undergroundPlacements.set(standing.team.id, standing.placement);
+		}
+	}
+
+	if (undergroundPlacements.size === 0) return standings;
+
+	const result: Standing[] = [];
+
+	for (const tied of groupedByPlacement(standings)) {
+		const sorted = R.sortBy(
+			tied,
+			(standing) =>
+				undergroundPlacements.get(standing.team.id) ?? Number.POSITIVE_INFINITY,
+		);
+
+		let placement = tied[0].placement;
+		let previousUndergroundPlacement: number | null = null;
+
+		for (const [index, standing] of sorted.entries()) {
+			const undergroundPlacement =
+				undergroundPlacements.get(standing.team.id) ?? null;
+
+			if (index > 0 && undergroundPlacement !== previousUndergroundPlacement) {
+				placement = tied[0].placement + index;
+			}
+			previousUndergroundPlacement = undergroundPlacement;
+
+			result.push({ ...standing, placement });
+		}
+	}
+
+	return result;
+}
+
+function groupedByPlacement(standings: Standing[]): Standing[][] {
+	const result: Standing[][] = [];
+
+	for (const standing of standings) {
+		const previous = result.at(-1);
+
+		if (previous && previous[0].placement === standing.placement) {
+			previous.push(standing);
+		} else {
+			result.push([standing]);
 		}
 	}
 

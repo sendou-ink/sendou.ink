@@ -336,4 +336,46 @@ export const progressions = {
 			],
 		},
 	],
+	swissToTwoSingleEliminationsWithUnderground: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "swiss",
+			settings: {
+				groupCount: 1,
+			},
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Alpha",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2, 3, 4, 5, 6, 7, 8],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Beta",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [9, 10, 11, 12, 13, 14, 15, 16],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Alpha UG",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [-1],
+				},
+			],
+		},
+	],
 } satisfies Record<string, Progression.ParsedBracket[]>;
