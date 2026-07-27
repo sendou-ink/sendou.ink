@@ -1,10 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { dbReset } from "~/utils/Test";
 import * as LogInLinkRepository from "./LogInLinkRepository.server";
 
 describe("create", () => {
+	let userId: number;
+
 	beforeEach(async () => {
-		await dbInsertUsers(1);
+		userId = (await UserFactory.create()).id;
 	});
 
 	afterEach(async () => {
@@ -12,22 +15,24 @@ describe("create", () => {
 	});
 
 	test("creates a login link with correct userId", async () => {
-		const link = await LogInLinkRepository.insert(1);
+		const link = await LogInLinkRepository.insert(userId);
 
-		expect(link.userId).toBe(1);
+		expect(link.userId).toBe(userId);
 	});
 
 	test("creates a login link with future expiration", async () => {
 		const beforeCreation = Math.floor(Date.now() / 1000);
-		const link = await LogInLinkRepository.insert(1);
+		const link = await LogInLinkRepository.insert(userId);
 
 		expect(link.expiresAt).toBeGreaterThan(beforeCreation);
 	});
 });
 
 describe("del", () => {
+	let userId: number;
+
 	beforeEach(async () => {
-		await dbInsertUsers(1);
+		userId = (await UserFactory.create()).id;
 	});
 
 	afterEach(async () => {
@@ -35,7 +40,7 @@ describe("del", () => {
 	});
 
 	test("deletes a login link by code", async () => {
-		const link = await LogInLinkRepository.insert(1);
+		const link = await LogInLinkRepository.insert(userId);
 
 		await LogInLinkRepository.deleteByCode(link.code);
 
@@ -45,8 +50,10 @@ describe("del", () => {
 });
 
 describe("findValidByCode", () => {
+	let userId: number;
+
 	beforeEach(async () => {
-		await dbInsertUsers(1);
+		userId = (await UserFactory.create()).id;
 	});
 
 	afterEach(async () => {
@@ -54,11 +61,11 @@ describe("findValidByCode", () => {
 	});
 
 	test("returns userId for valid code", async () => {
-		const link = await LogInLinkRepository.insert(1);
+		const link = await LogInLinkRepository.insert(userId);
 
 		const result = await LogInLinkRepository.findValidByCode(link.code);
 
-		expect(result?.userId).toBe(1);
+		expect(result?.userId).toBe(userId);
 	});
 
 	test("returns undefined for non-existent code", async () => {

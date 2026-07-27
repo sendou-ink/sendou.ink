@@ -7,6 +7,7 @@ import type {
 import { expect } from "vitest";
 import type { z } from "zod";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
+import { resetFactories } from "~/db/seed/core/defineFactory";
 import { db } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
@@ -223,6 +224,7 @@ async function authHeader(
  *   // tests go here
  * });
  */
+// xxx: make it automatic
 export const dbReset = async () => {
 	// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
 	// deleted from directly; the fts index stays in sync via the User triggers
@@ -244,6 +246,8 @@ export const dbReset = async () => {
 		await sql`DELETE FROM ${sql.table(table.name)}`.execute(db);
 	}
 	await sql`PRAGMA foreign_keys = ON`.execute(db);
+
+	resetFactories();
 };
 
 /**
