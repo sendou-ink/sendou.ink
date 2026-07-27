@@ -23,6 +23,7 @@
 	"stat.specialPoints": "스페셜 필요 포인트",
 	"stat.specialLost": "쓰러졌을 때 잃는 스페셜 포인트",
 	"stat.specialLostSplattedByRP": "페널티 유저에게 쓰러졌을 대 잃는 스페셜 포인트",
+	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "사용 이후 잉크 회복 불가 시간",
 	"stat.subWeaponInkConsumptionPercentage": "잉크 소모 비율",
 	"stat.squidFormInkRecoverySeconds": "잉크 완전 회복 시간 (오징어의 모습)",

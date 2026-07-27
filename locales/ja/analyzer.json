@@ -23,6 +23,7 @@
 	"stat.specialPoints": "スペシャルポイント",
 	"stat.specialLost": "やられた場合に失うスペシャルポイント数",
 	"stat.specialLostSplattedByRP": "復活ペナルティアップ付きでやられた場合に失うスペシャルポイント数",
+	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "インクロック",
 	"stat.subWeaponInkConsumptionPercentage": "インクタンク消費量(%)",
 	"stat.squidFormInkRecoverySeconds": "インクタンクの完全回復までの時間(イカ状態)",
