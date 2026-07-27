@@ -7,9 +7,7 @@ import { DuplicateEntryError } from "~/utils/errors";
 import { dbReset } from "~/utils/Test";
 import * as ScrimPostRepository from "./ScrimPostRepository.server";
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+const users = UserFactory.pool();
 
 const BOOKED_AT = add(new Date(), { hours: 10 });
 
@@ -47,7 +45,7 @@ function insertPost({
 
 describe("findPendingOverlapsForUsers", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(5);
+		await users.create(5);
 	});
 
 	afterEach(async () => {
@@ -58,31 +56,33 @@ describe("findPendingOverlapsForUsers", () => {
 		const postId = await insertPost({
 			startsAt: BOOKED_AT,
 			users: [
-				{ userId: userId(1), isOwner: 1 },
-				{ userId: userId(2), isOwner: 0 },
+				{ userId: users.id(1), isOwner: 1 },
+				{ userId: users.id(2), isOwner: 0 },
 			],
 		});
 
 		const { posts } = await ScrimPostRepository.findPendingOverlapsForUsers({
-			userIds: [userId(1)],
+			userIds: [users.id(1)],
 			...WINDOW,
 			excludePostId: -1,
 		});
 
 		expect(posts).toHaveLength(1);
 		expect(posts[0]!.id).toBe(postId);
-		expect(posts[0]!.memberIds.sort()).toEqual([userId(1), userId(2)].sort());
+		expect(posts[0]!.memberIds.sort()).toEqual(
+			[users.id(1), users.id(2)].sort(),
+		);
 	});
 
 	test("returns a ranged post whose interval overlaps the window even if its start is outside", async () => {
 		const postId = await insertPost({
 			startsAt: sub(BOOKED_AT, { hours: 2 }),
 			rangeEndsAt: BOOKED_AT,
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 
 		const { posts } = await ScrimPostRepository.findPendingOverlapsForUsers({
-			userIds: [userId(1)],
+			userIds: [users.id(1)],
 			...WINDOW,
 			excludePostId: -1,
 		});
@@ -94,11 +94,11 @@ describe("findPendingOverlapsForUsers", () => {
 		await insertPost({
 			startsAt: sub(BOOKED_AT, { hours: 5 }),
 			rangeEndsAt: sub(BOOKED_AT, { hours: 3 }),
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 
 		const { posts } = await ScrimPostRepository.findPendingOverlapsForUsers({
-			userIds: [userId(1)],
+			userIds: [users.id(1)],
 			...WINDOW,
 			excludePostId: -1,
 		});
@@ -109,11 +109,11 @@ describe("findPendingOverlapsForUsers", () => {
 	test("excludes the just-booked post even when it overlaps", async () => {
 		const postId = await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 
 		const { posts } = await ScrimPostRepository.findPendingOverlapsForUsers({
-			userIds: [userId(1)],
+			userIds: [users.id(1)],
 			...WINDOW,
 			excludePostId: postId,
 		});
@@ -124,11 +124,11 @@ describe("findPendingOverlapsForUsers", () => {
 	test("does not return posts that involve none of the given users", async () => {
 		await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(3), isOwner: 1 }],
+			users: [{ userId: users.id(3), isOwner: 1 }],
 		});
 
 		const { posts } = await ScrimPostRepository.findPendingOverlapsForUsers({
-			userIds: [userId(1), userId(2)],
+			userIds: [users.id(1), users.id(2)],
 			...WINDOW,
 			excludePostId: -1,
 		});
@@ -139,21 +139,21 @@ describe("findPendingOverlapsForUsers", () => {
 	test("excludes already-accepted (booked) posts", async () => {
 		const postId = await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: postId,
 			teamId: null,
 			message: null,
 			startsAt: dbTs(BOOKED_AT),
-			users: [{ userId: userId(3), isOwner: 1 }],
+			users: [{ userId: users.id(3), isOwner: 1 }],
 		});
 		const post = await ScrimPostRepository.findById(postId);
 		await ScrimPostRepository.acceptRequest(post!.requests[0]!.id);
 
 		const { posts, requestIds } =
 			await ScrimPostRepository.findPendingOverlapsForUsers({
-				userIds: [userId(1), userId(3)],
+				userIds: [users.id(1), users.id(3)],
 				...WINDOW,
 				excludePostId: -1,
 			});
@@ -165,21 +165,21 @@ describe("findPendingOverlapsForUsers", () => {
 	test("returns pending request ids whose effective time falls in the window", async () => {
 		const postId = await insertPost({
 			startsAt: add(BOOKED_AT, { hours: 3 }),
-			users: [{ userId: userId(3), isOwner: 1 }],
+			users: [{ userId: users.id(3), isOwner: 1 }],
 		});
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: postId,
 			teamId: null,
 			message: null,
 			startsAt: dbTs(BOOKED_AT),
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 		const post = await ScrimPostRepository.findById(postId);
 		const requestId = post!.requests[0]!.id;
 
 		const { posts, requestIds } =
 			await ScrimPostRepository.findPendingOverlapsForUsers({
-				userIds: [userId(1)],
+				userIds: [users.id(1)],
 				...WINDOW,
 				excludePostId: -1,
 			});
@@ -191,19 +191,19 @@ describe("findPendingOverlapsForUsers", () => {
 	test("does not return pending requests whose effective time is outside the window", async () => {
 		const postId = await insertPost({
 			startsAt: add(BOOKED_AT, { hours: 3 }),
-			users: [{ userId: userId(3), isOwner: 1 }],
+			users: [{ userId: users.id(3), isOwner: 1 }],
 		});
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: postId,
 			teamId: null,
 			message: null,
 			startsAt: dbTs(add(BOOKED_AT, { hours: 3 })),
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 
 		const { requestIds } =
 			await ScrimPostRepository.findPendingOverlapsForUsers({
-				userIds: [userId(1)],
+				userIds: [users.id(1)],
 				...WINDOW,
 				excludePostId: -1,
 			});
@@ -214,7 +214,7 @@ describe("findPendingOverlapsForUsers", () => {
 
 describe("findUserScrims", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(5);
+		await users.create(5);
 	});
 
 	afterEach(async () => {
@@ -224,7 +224,7 @@ describe("findUserScrims", () => {
 	test("passed-over requester does not see the scrim booked between the post and another team", async () => {
 		const postId = await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(3), isOwner: 1 }],
+			users: [{ userId: users.id(3), isOwner: 1 }],
 		});
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: postId,
@@ -232,8 +232,8 @@ describe("findUserScrims", () => {
 			message: null,
 			startsAt: null,
 			users: [
-				{ userId: userId(1), isOwner: 1 },
-				{ userId: userId(2), isOwner: 0 },
+				{ userId: users.id(1), isOwner: 1 },
+				{ userId: users.id(2), isOwner: 0 },
 			],
 		});
 		await ScrimPostRepository.insertRequest({
@@ -242,19 +242,20 @@ describe("findUserScrims", () => {
 			message: null,
 			startsAt: null,
 			users: [
-				{ userId: userId(4), isOwner: 1 },
-				{ userId: userId(5), isOwner: 0 },
+				{ userId: users.id(4), isOwner: 1 },
+				{ userId: users.id(5), isOwner: 0 },
 			],
 		});
 
 		const post = await ScrimPostRepository.findById(postId);
 		const acceptedRequest = post!.requests.find((request) =>
-			request.users.some((user) => user.id === 4),
+			request.users.some((user) => user.id === users.id(4)),
 		);
 		await ScrimPostRepository.acceptRequest(acceptedRequest!.id);
 
-		const passedOverRequesterScrims =
-			await ScrimPostRepository.findUserScrims(1);
+		const passedOverRequesterScrims = await ScrimPostRepository.findUserScrims(
+			users.id(1),
+		);
 
 		expect(passedOverRequesterScrims).toHaveLength(0);
 	});
@@ -262,30 +263,32 @@ describe("findUserScrims", () => {
 	test("post owner sees the accepted request's side as the opponent", async () => {
 		const postId = await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(3), isOwner: 1 }],
+			users: [{ userId: users.id(3), isOwner: 1 }],
 		});
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: postId,
 			teamId: null,
 			message: null,
 			startsAt: null,
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 		await ScrimPostRepository.insertRequest({
 			scrimPostId: postId,
 			teamId: null,
 			message: null,
 			startsAt: null,
-			users: [{ userId: userId(4), isOwner: 1 }],
+			users: [{ userId: users.id(4), isOwner: 1 }],
 		});
 
 		const post = await ScrimPostRepository.findById(postId);
 		const acceptedRequest = post!.requests.find((request) =>
-			request.users.some((user) => user.id === 4),
+			request.users.some((user) => user.id === users.id(4)),
 		);
 		await ScrimPostRepository.acceptRequest(acceptedRequest!.id);
 
-		const postOwnerScrims = await ScrimPostRepository.findUserScrims(3);
+		const postOwnerScrims = await ScrimPostRepository.findUserScrims(
+			users.id(3),
+		);
 
 		expect(postOwnerScrims).toHaveLength(1);
 		expect(postOwnerScrims[0]!.status).toBe("booked");
@@ -294,7 +297,7 @@ describe("findUserScrims", () => {
 
 describe("insertRequest", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(5);
+		await users.create(5);
 	});
 
 	afterEach(async () => {
@@ -321,25 +324,25 @@ describe("insertRequest", () => {
 	test("throws if the team already has a request for the post", async () => {
 		const postId = await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 		const team = await TeamRepository.insert({
 			name: "Team Olive",
-			ownerUserId: 2,
+			ownerUserId: users.id(2),
 			isMainTeam: true,
 		});
 
 		await insertTeamRequest({
 			scrimPostId: postId,
 			teamId: team.id,
-			userId: userId(2),
+			userId: users.id(2),
 		});
 
 		await expect(
 			insertTeamRequest({
 				scrimPostId: postId,
 				teamId: team.id,
-				userId: userId(3),
+				userId: users.id(3),
 			}),
 		).rejects.toThrowError(DuplicateEntryError);
 
@@ -350,27 +353,27 @@ describe("insertRequest", () => {
 	test("allows the team to request another post", async () => {
 		const postId = await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(1), isOwner: 1 }],
+			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
 		const otherPostId = await insertPost({
 			startsAt: BOOKED_AT,
-			users: [{ userId: userId(4), isOwner: 1 }],
+			users: [{ userId: users.id(4), isOwner: 1 }],
 		});
 		const team = await TeamRepository.insert({
 			name: "Team Olive",
-			ownerUserId: 2,
+			ownerUserId: users.id(2),
 			isMainTeam: true,
 		});
 
 		await insertTeamRequest({
 			scrimPostId: postId,
 			teamId: team.id,
-			userId: userId(2),
+			userId: users.id(2),
 		});
 		await insertTeamRequest({
 			scrimPostId: otherPostId,
 			teamId: team.id,
-			userId: userId(2),
+			userId: users.id(2),
 		});
 
 		const otherPost = await ScrimPostRepository.findById(otherPostId);

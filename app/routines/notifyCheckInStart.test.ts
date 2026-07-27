@@ -7,9 +7,8 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { dbReset } from "~/utils/Test";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+let author: { id: number };
+let otherAuthor: { id: number };
 
 const { mockNotify } = vi.hoisted(() => ({
 	mockNotify: vi.fn(),
@@ -22,7 +21,7 @@ vi.mock("~/features/notifications/core/notify.server", () => ({
 async function createTestTournament({
 	name,
 	startTime,
-	authorId = userId(1),
+	authorId = author.id,
 	discordInviteCode = "test-discord",
 }: {
 	name: string;
@@ -66,7 +65,7 @@ describe("NotifyCheckInStartRoutine", () => {
 		vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 		await dbReset();
 		clearAllTournamentDataCache();
-		users = await UserFactory.createMany(5);
+		[author, otherAuthor] = await UserFactory.createMany(2);
 		mockNotify.mockClear();
 	});
 
@@ -163,7 +162,7 @@ describe("NotifyCheckInStartRoutine", () => {
 		await createTestTournament({
 			name: "Tournament B",
 			startTime: fortyFiveMinutesFromNow,
-			authorId: userId(2),
+			authorId: otherAuthor.id,
 			discordInviteCode: "test-discord-2",
 		});
 

@@ -5,10 +5,7 @@ import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { clearSentNotificationsForTesting, notify } from "./notify.server";
 
-let users: Array<{ id: number }>;
-
-// xxx: this helper quite duplicated?
-const userId = (position: number) => users[position - 1].id;
+const users = UserFactory.pool();
 
 const { mockSendNotification, mockWebPushEnabled } = vi.hoisted(() => ({
 	mockSendNotification: vi.fn(),
@@ -26,7 +23,7 @@ vi.mock("./webPush.server", () => ({
 
 describe("notify()", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(20);
+		await users.create(20);
 		clearSentNotificationsForTesting();
 	});
 
@@ -36,7 +33,7 @@ describe("notify()", () => {
 
 	test("different recipients receive same notification", async () => {
 		await notify({
-			userIds: [userId(1), userId(2)],
+			userIds: [users.id(1), users.id(2)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
 				meta: { fromUsername: "alice" },
@@ -44,7 +41,7 @@ describe("notify()", () => {
 		});
 
 		await notify({
-			userIds: [userId(3), userId(4)],
+			userIds: [users.id(3), users.id(4)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
 				meta: { fromUsername: "alice" },
@@ -52,16 +49,16 @@ describe("notify()", () => {
 		});
 
 		const user1Notifications = await NotificationRepository.findByUserId(
-			userId(1),
+			users.id(1),
 		);
 		const user2Notifications = await NotificationRepository.findByUserId(
-			userId(2),
+			users.id(2),
 		);
 		const user3Notifications = await NotificationRepository.findByUserId(
-			userId(3),
+			users.id(3),
 		);
 		const user4Notifications = await NotificationRepository.findByUserId(
-			userId(4),
+			users.id(4),
 		);
 
 		expect(user1Notifications).toHaveLength(1);
@@ -75,7 +72,7 @@ describe("notify()", () => {
 
 	test("same recipients and notification deduplicates", async () => {
 		await notify({
-			userIds: [userId(5), userId(6)],
+			userIds: [users.id(5), users.id(6)],
 			notification: {
 				type: "BADGE_ADDED",
 				meta: { badgeName: "Test", badgeId: 1 },
@@ -83,7 +80,7 @@ describe("notify()", () => {
 		});
 
 		await notify({
-			userIds: [userId(5), userId(6)],
+			userIds: [users.id(5), users.id(6)],
 			notification: {
 				type: "BADGE_ADDED",
 				meta: { badgeName: "Test", badgeId: 1 },
@@ -91,10 +88,10 @@ describe("notify()", () => {
 		});
 
 		const user5Notifications = await NotificationRepository.findByUserId(
-			userId(5),
+			users.id(5),
 		);
 		const user6Notifications = await NotificationRepository.findByUserId(
-			userId(6),
+			users.id(6),
 		);
 
 		expect(user5Notifications).toHaveLength(1);
@@ -103,7 +100,7 @@ describe("notify()", () => {
 
 	test("user ID order doesn't affect deduplication", async () => {
 		await notify({
-			userIds: [userId(7), userId(8), userId(9)],
+			userIds: [users.id(7), users.id(8), users.id(9)],
 			notification: {
 				type: "SEASON_STARTED",
 				meta: { seasonNth: 1 },
@@ -111,7 +108,7 @@ describe("notify()", () => {
 		});
 
 		await notify({
-			userIds: [userId(9), userId(7), userId(8)],
+			userIds: [users.id(9), users.id(7), users.id(8)],
 			notification: {
 				type: "SEASON_STARTED",
 				meta: { seasonNth: 1 },
@@ -119,13 +116,13 @@ describe("notify()", () => {
 		});
 
 		const user7Notifications = await NotificationRepository.findByUserId(
-			userId(7),
+			users.id(7),
 		);
 		const user8Notifications = await NotificationRepository.findByUserId(
-			userId(8),
+			users.id(8),
 		);
 		const user9Notifications = await NotificationRepository.findByUserId(
-			userId(9),
+			users.id(9),
 		);
 
 		expect(user7Notifications).toHaveLength(1);
@@ -134,7 +131,7 @@ describe("notify()", () => {
 	});
 
 	test("bulk notifications (>10 users) bypass deduplication", async () => {
-		const userIds = users.slice(0, 11).map((user) => user.id);
+		const userIds = users.ids(11);
 
 		await notify({
 			userIds,
@@ -153,10 +150,10 @@ describe("notify()", () => {
 		});
 
 		const user1Notifications = await NotificationRepository.findByUserId(
-			userId(1),
+			users.id(1),
 		);
 		const user11Notifications = await NotificationRepository.findByUserId(
-			userId(11),
+			users.id(11),
 		);
 
 		expect(user1Notifications).toHaveLength(2);
@@ -165,7 +162,7 @@ describe("notify()", () => {
 
 	test("different notification types don't deduplicate", async () => {
 		await notify({
-			userIds: [userId(10), userId(11)],
+			userIds: [users.id(10), users.id(11)],
 			notification: {
 				type: "SCRIM_SCHEDULED",
 				meta: { id: 1, opponentTeamName: "Alpha" },
@@ -173,7 +170,7 @@ describe("notify()", () => {
 		});
 
 		await notify({
-			userIds: [userId(10), userId(11)],
+			userIds: [users.id(10), users.id(11)],
 			notification: {
 				type: "SCRIM_CANCELED",
 				meta: { id: 1, opponentTeamName: "Alpha" },
@@ -181,10 +178,10 @@ describe("notify()", () => {
 		});
 
 		const user10Notifications = await NotificationRepository.findByUserId(
-			userId(10),
+			users.id(10),
 		);
 		const user11Notifications = await NotificationRepository.findByUserId(
-			userId(11),
+			users.id(11),
 		);
 
 		expect(user10Notifications).toHaveLength(2);
@@ -196,7 +193,7 @@ describe("notify()", () => {
 
 	test("different notification meta don't deduplicate", async () => {
 		await notify({
-			userIds: [userId(12), userId(13)],
+			userIds: [users.id(12), users.id(13)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
 				meta: { fromUsername: "bob" },
@@ -204,7 +201,7 @@ describe("notify()", () => {
 		});
 
 		await notify({
-			userIds: [userId(12), userId(13)],
+			userIds: [users.id(12), users.id(13)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
 				meta: { fromUsername: "charlie" },
@@ -212,10 +209,10 @@ describe("notify()", () => {
 		});
 
 		const user12Notifications = await NotificationRepository.findByUserId(
-			userId(12),
+			users.id(12),
 		);
 		const user13Notifications = await NotificationRepository.findByUserId(
-			userId(13),
+			users.id(13),
 		);
 
 		expect(user12Notifications).toHaveLength(2);
@@ -228,7 +225,13 @@ describe("notify()", () => {
 
 	test("duplicate user IDs in input array are deduplicated", async () => {
 		await notify({
-			userIds: [userId(14), userId(14), userId(15), userId(15), userId(15)],
+			userIds: [
+				users.id(14),
+				users.id(14),
+				users.id(15),
+				users.id(15),
+				users.id(15),
+			],
 			notification: {
 				type: "PLUS_VOTING_STARTED",
 				meta: { seasonNth: 2 },
@@ -236,10 +239,10 @@ describe("notify()", () => {
 		});
 
 		const user14Notifications = await NotificationRepository.findByUserId(
-			userId(14),
+			users.id(14),
 		);
 		const user15Notifications = await NotificationRepository.findByUserId(
-			userId(15),
+			users.id(15),
 		);
 
 		expect(user14Notifications).toHaveLength(1);
@@ -249,7 +252,7 @@ describe("notify()", () => {
 
 describe("notify() - web push notifications", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(20);
+		await users.create(20);
 		clearSentNotificationsForTesting();
 		mockSendNotification.mockClear();
 		mockWebPushEnabled.value = false;
@@ -281,7 +284,7 @@ describe("notify() - web push notifications", () => {
 		mockWebPushEnabled.value = true;
 
 		await notify({
-			userIds: [userId(1)],
+			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
 				meta: { fromUsername: "alice" },
@@ -337,7 +340,7 @@ describe("notify() - web push notifications", () => {
 		mockWebPushEnabled.value = true;
 
 		await notify({
-			userIds: [userId(1), userId(2)],
+			userIds: [users.id(1), users.id(2)],
 			notification: {
 				type: "BADGE_ADDED",
 				meta: { badgeName: "Test", badgeId: 1 },
@@ -377,7 +380,7 @@ describe("notify() - web push notifications", () => {
 		]);
 
 		await notify({
-			userIds: [userId(1)],
+			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
 				meta: { fromUsername: "alice" },
@@ -409,7 +412,7 @@ describe("notify() - web push notifications", () => {
 		mockWebPushEnabled.value = true;
 
 		await notify({
-			userIds: [userId(1)],
+			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_SCHEDULED",
 				meta: { id: 1, opponentTeamName: "Sendou's pickup" },

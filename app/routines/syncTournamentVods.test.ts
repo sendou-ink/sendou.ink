@@ -23,9 +23,7 @@ vi.mock("~/modules/twitch/utils.server", () => ({
 	hasTwitchEnvVars: () => true,
 }));
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+const users = UserFactory.pool();
 
 const TOURNAMENT_ID = 1;
 const MATCH_START_SECONDS = 1700000000;
@@ -35,7 +33,7 @@ describe("syncTournamentVods", () => {
 		await dbReset();
 		mockGetUsersByLogin.mockReset();
 		mockGetArchiveVideos.mockReset();
-		users = await UserFactory.createMany(5);
+		await users.create(5);
 	});
 
 	afterEach(async () => {
@@ -44,9 +42,9 @@ describe("syncTournamentVods", () => {
 
 	test("player streamer gets VODs only for matches they participated in", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("player_stream", userId(1));
-		await seedTournamentTeamAndGameResult(1, [userId(1), userId(2)]);
-		await seedTournamentTeamAndGameResult(2, [userId(3), userId(4)]);
+		await seedStreamer("player_stream", users.id(1));
+		await seedTournamentTeamAndGameResult(1, [users.id(1), users.id(2)]);
+		await seedTournamentTeamAndGameResult(2, [users.id(3), users.id(4)]);
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-1", login: "player_stream" },
@@ -58,7 +56,7 @@ describe("syncTournamentVods", () => {
 		const vods = await findAllVods();
 		expect(vods).toHaveLength(1);
 		expect(vods[0].matchId).toBe(1);
-		expect(vods[0].userId).toBe(userId(1));
+		expect(vods[0].userId).toBe(users.id(1));
 		expect(vods[0].account).toBe("player_stream");
 	});
 
@@ -120,8 +118,8 @@ describe("syncTournamentVods", () => {
 				],
 			},
 		});
-		await seedStreamer("dual_stream", userId(1));
-		await seedTournamentTeamAndGameResult(1, [userId(1), userId(2)]);
+		await seedStreamer("dual_stream", users.id(1));
+		await seedTournamentTeamAndGameResult(1, [users.id(1), users.id(2)]);
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-d", login: "dual_stream" },
@@ -132,7 +130,7 @@ describe("syncTournamentVods", () => {
 
 		const vods = await findAllVods();
 		expect(vods).toHaveLength(1);
-		expect(vods[0].userId).toBe(userId(1));
+		expect(vods[0].userId).toBe(users.id(1));
 	});
 
 	test("no VODs inserted when no Twitch videos match", async () => {
@@ -169,8 +167,8 @@ describe("syncTournamentVods", () => {
 
 	test("returns hadApiError=true when getArchiveVideos throws for a streamer", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("player_stream", userId(1));
-		await seedTournamentTeamAndGameResult(1, [userId(1), userId(2)]);
+		await seedStreamer("player_stream", users.id(1));
+		await seedTournamentTeamAndGameResult(1, [users.id(1), users.id(2)]);
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-1", login: "player_stream" },
@@ -184,8 +182,8 @@ describe("syncTournamentVods", () => {
 
 	test("returns hadApiError=false when getArchiveVideos returns empty (no vods found)", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("player_stream", userId(1));
-		await seedTournamentTeamAndGameResult(1, [userId(1), userId(2)]);
+		await seedStreamer("player_stream", users.id(1));
+		await seedTournamentTeamAndGameResult(1, [users.id(1), users.id(2)]);
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-1", login: "player_stream" },
@@ -226,10 +224,10 @@ describe("syncTournamentVods", () => {
 
 	test("still inserts vods from successful streamers when another streamer's API call fails", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("good_stream", userId(1));
-		await seedStreamer("bad_stream", userId(3));
-		await seedTournamentTeamAndGameResult(1, [userId(1), userId(2)]);
-		await seedTournamentTeamAndGameResult(2, [userId(3), userId(4)]);
+		await seedStreamer("good_stream", users.id(1));
+		await seedStreamer("bad_stream", users.id(3));
+		await seedTournamentTeamAndGameResult(1, [users.id(1), users.id(2)]);
+		await seedTournamentTeamAndGameResult(2, [users.id(3), users.id(4)]);
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-g", login: "good_stream" },

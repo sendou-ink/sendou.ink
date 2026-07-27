@@ -5,9 +5,8 @@ import { dbReset, withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+let owner: { id: number };
+let other: { id: number };
 
 const insertVerifiedXp = async (
 	userId: number,
@@ -44,7 +43,7 @@ const findXpStat = (card: UserCardData | undefined) =>
 
 describe("UserCardRepository.findAllByUserIds", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(2);
+		[owner, other] = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -65,24 +64,24 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		await db
 			.updateTable("User")
 			.set({ div: "1" })
-			.where("id", "=", 1)
+			.where("id", "=", owner.id)
 			.execute();
 		await db
 			.insertInto("PlusTier")
-			.values({ userId: userId(1), tier: 2 })
+			.values({ userId: owner.id, tier: 2 })
 			.execute();
-		await insertVerifiedXp(userId(1), 2500);
+		await insertVerifiedXp(owner.id, 2500);
 
 		const { userCards } = await withNoUser(() =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [userId(1), userId(2)],
+				userIds: [owner.id, other.id],
 			}),
 		);
 
 		expect(userCards.size).toBe(2);
 
-		const card = userCards.get(userId(1));
-		expect(card?.id).toBe(userId(1));
+		const card = userCards.get(owner.id);
+		expect(card?.id).toBe(owner.id);
 		expect(card?.freeAgentPostId).toBeNull();
 
 		const statTypes = card?.stats.map((stat) => stat.type) ?? [];
@@ -104,12 +103,12 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		});
 
 		// user 2 has none of the optional fields -> no stats
-		expect(userCards.get(2)?.stats).toHaveLength(0);
+		expect(userCards.get(other.id)?.stats).toHaveLength(0);
 	});
 
 	it("surfaces self-reported peak XP only when it beats the verified XP", async () => {
-		await insertVerifiedXp(userId(1), 2500);
-		await withUserId(userId(1), () =>
+		await insertVerifiedXp(owner.id, 2500);
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -120,10 +119,10 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toMatchObject({
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
 			type: "XP",
 			values: [
 				{ isVerified: false, region: "WEST", points: 2600 },
@@ -133,8 +132,8 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("ignores self-reported peak XP that does not beat the verified XP", async () => {
-		await insertVerifiedXp(userId(1), 2500);
-		await withUserId(userId(1), () =>
+		await insertVerifiedXp(owner.id, 2500);
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -145,18 +144,18 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toMatchObject({
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
 	});
 
 	it("ignores self-reported peak XP more than 200 above the verified XP", async () => {
-		await insertVerifiedXp(userId(1), 2500);
-		await withUserId(userId(1), () =>
+		await insertVerifiedXp(owner.id, 2500);
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -167,17 +166,17 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toMatchObject({
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
 	});
 
 	it("ignores self-reported peak XP when there is no verified XP", async () => {
-		await withUserId(userId(1), () =>
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -188,20 +187,20 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.findAllByUserIds({ userIds: [userId(1)] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toBeUndefined();
+		expect(findXpStat(userCards.get(owner.id))).toBeUndefined();
 	});
 
 	it("persists edited card fields and surfaces hidden stats", async () => {
 		await db
 			.insertInto("PlusTier")
-			.values({ userId: userId(1), tier: 2 })
+			.values({ userId: owner.id, tier: 2 })
 			.execute();
-		await insertVerifiedXp(userId(1), 2500);
+		await insertVerifiedXp(owner.id, 2500);
 
-		await withUserId(userId(1), () =>
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: "hello",
 				bannerPresetImg: "#ff4655",
@@ -211,12 +210,12 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(userId(1), () =>
+		const { userCards } = await withUserId(owner.id, () =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [userId(1)],
+				userIds: [owner.id],
 			}),
 		);
-		const card = userCards.get(1);
+		const card = userCards.get(owner.id);
 
 		expect(card?.shortBio).toBe("hello");
 		expect(card?.banner).toMatchObject({ type: "COLOR", hexCode: "#ff4655" });
@@ -227,14 +226,16 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			value: 2,
 		});
 
-		const extras = await UserCardRepository.findCardEditExtrasByUserId(1);
+		const extras = await UserCardRepository.findCardEditExtrasByUserId(
+			owner.id,
+		);
 		expect(extras.hiddenCardStats).toEqual(["XP"]);
 	});
 
 	it("keeps hidden stats in `stats` when includeHiddenStats is set", async () => {
-		await insertVerifiedXp(userId(1), 2500);
+		await insertVerifiedXp(owner.id, 2500);
 
-		await withUserId(userId(1), () =>
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -244,13 +245,13 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(userId(1), () =>
+		const { userCards } = await withUserId(owner.id, () =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [userId(1)],
+				userIds: [owner.id],
 				includeHiddenStats: true,
 			}),
 		);
-		const card = userCards.get(1);
+		const card = userCards.get(owner.id);
 
 		expect(findXpStat(card)).toMatchObject({
 			type: "XP",
@@ -263,13 +264,13 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			.insertInto("UnvalidatedUserSubmittedImage")
 			.values({
 				url: "banner.webp",
-				submitterUserId: userId(1),
+				submitterUserId: owner.id,
 				validatedAt: 1,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
-		await withUserId(userId(1), () =>
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -279,13 +280,13 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(userId(1), () =>
+		const { userCards } = await withUserId(owner.id, () =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [userId(1)],
+				userIds: [owner.id],
 			}),
 		);
 
-		const banner = userCards.get(1)?.banner;
+		const banner = userCards.get(owner.id)?.banner;
 		expect(banner?.type).toBe("URL");
 		expect(banner).toHaveProperty("url");
 	});

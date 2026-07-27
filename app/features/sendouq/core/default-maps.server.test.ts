@@ -22,12 +22,12 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 }));
 
 describe("getDefaultMapWeights()", () => {
-	let users: Array<{ id: number }>;
+	const users = UserFactory.pool();
 
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		clearCacheForTesting();
-		users = await UserFactory.createMany(3);
+		await users.create(3);
 	});
 
 	afterEach(async () => {
@@ -64,7 +64,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0] }],
@@ -97,7 +97,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 2,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0] }],
@@ -123,7 +123,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0] }],
@@ -148,7 +148,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [],
 						pool: [
@@ -158,7 +158,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: users[1].id,
+					userId: users.id(2),
 					mapModePreferences: {
 						modes: [],
 						pool: [
@@ -194,7 +194,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0, 1, 2] }],
@@ -221,7 +221,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [{ mode: "SZ", preference: "AVOID" }],
 						pool: [
@@ -231,7 +231,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: users[1].id,
+					userId: users.id(2),
 					mapModePreferences: {
 						modes: [{ mode: "SZ", preference: "AVOID" }],
 						pool: [
@@ -241,7 +241,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: users[2].id,
+					userId: users.id(3),
 					mapModePreferences: {
 						modes: [],
 						pool: [
@@ -277,14 +277,14 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [],
 						pool: undefined as any,
 					},
 				},
 				{
-					userId: users[1].id,
+					userId: users.id(2),
 					mapModePreferences: {
 						modes: [],
 						pool: [{ mode: "SZ", stages: [0, 1, 2] }],
@@ -311,7 +311,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [
 							{
@@ -323,7 +323,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: users[1].id,
+					userId: users.id(2),
 					mapModePreferences: {
 						modes: [
 							{
@@ -335,7 +335,7 @@ describe("getDefaultMapWeights()", () => {
 					},
 				},
 				{
-					userId: users[2].id,
+					userId: users.id(3),
 					mapModePreferences: {
 						modes: [
 							{
@@ -379,7 +379,7 @@ describe("getDefaultMapWeights()", () => {
 			seasonNth: 1,
 			userPreferences: [
 				{
-					userId: users[0].id,
+					userId: users.id(1),
 					mapModePreferences: {
 						modes: [],
 						pool: [

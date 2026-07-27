@@ -4,17 +4,12 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dbReset } from "~/utils/Test";
 import * as AdminRepository from "./AdminRepository.server";
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+const users = UserFactory.pool();
 
 // the ban log records who banned by their Discord id, so the tests give the users
 // one they can name
-const createUsers = async (count: number) => {
-	users = await UserFactory.createMany(count, (index) => ({
-		discordId: String(index),
-	}));
-};
+const createUsers = (count: number) =>
+	users.create(count, (index) => ({ discordId: String(index) }));
 
 describe("findAllBannedUsers", () => {
 	beforeEach(async () => {
@@ -33,79 +28,79 @@ describe("findAllBannedUsers", () => {
 
 	test("returns Map with single banned user", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Test ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(1);
-		expect(result.get(userId(1))).toBeDefined();
-		expect(result.get(userId(1))?.userId).toBe(userId(1));
-		expect(result.get(userId(1))?.banned).toBe(1);
-		expect(result.get(userId(1))?.bannedReason).toBe("Test ban");
+		expect(result.get(users.id(1))).toBeDefined();
+		expect(result.get(users.id(1))?.userId).toBe(users.id(1));
+		expect(result.get(users.id(1))?.banned).toBe(1);
+		expect(result.get(users.id(1))?.bannedReason).toBe("Test ban");
 	});
 
 	test("returns Map with multiple banned users", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Reason 1",
-			bannedByUserId: userId(3),
+			bannedByUserId: users.id(3),
 		});
 		await AdminRepository.banUser({
-			userId: userId(2),
+			userId: users.id(2),
 			banned: 1,
 			bannedReason: "Reason 2",
-			bannedByUserId: userId(3),
+			bannedByUserId: users.id(3),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(2);
-		expect(result.get(userId(1))?.userId).toBe(userId(1));
-		expect(result.get(userId(2))?.userId).toBe(userId(2));
+		expect(result.get(users.id(1))?.userId).toBe(users.id(1));
+		expect(result.get(users.id(2))?.userId).toBe(users.id(2));
 	});
 
 	test("excludes non-banned users from results", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Test ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(1);
-		expect(result.get(userId(1))).toBeDefined();
-		expect(result.get(userId(2))).toBeUndefined();
-		expect(result.get(userId(3))).toBeUndefined();
+		expect(result.get(users.id(1))).toBeDefined();
+		expect(result.get(users.id(2))).toBeUndefined();
+		expect(result.get(users.id(3))).toBeUndefined();
 	});
 
 	test("includes both permanently and temporarily banned users", async () => {
 		const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Permanent ban",
-			bannedByUserId: userId(3),
+			bannedByUserId: users.id(3),
 		});
 		await AdminRepository.banUser({
-			userId: userId(2),
+			userId: users.id(2),
 			banned: futureDate,
 			bannedReason: "Temporary ban",
-			bannedByUserId: userId(3),
+			bannedByUserId: users.id(3),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(2);
-		expect(result.get(userId(1))?.banned).toBe(1);
-		expect(result.get(userId(2))?.banned).toBeGreaterThan(1);
+		expect(result.get(users.id(1))?.banned).toBe(1);
+		expect(result.get(users.id(2))?.banned).toBeGreaterThan(1);
 	});
 });
 
@@ -120,58 +115,58 @@ describe("banUser", () => {
 
 	test("permanently bans user (banned = 1)", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Test permanent ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
 
-		expect(result.get(userId(1))?.banned).toBe(1);
-		expect(result.get(userId(1))?.bannedReason).toBe("Test permanent ban");
+		expect(result.get(users.id(1))?.banned).toBe(1);
+		expect(result.get(users.id(1))?.bannedReason).toBe("Test permanent ban");
 	});
 
 	test("temporarily bans user (banned = Date)", async () => {
 		const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: futureDate,
 			bannedReason: "Test temporary ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
 
-		expect(result.get(userId(1))?.banned).toBeGreaterThan(1);
-		expect(result.get(userId(1))?.bannedReason).toBe("Test temporary ban");
+		expect(result.get(users.id(1))?.banned).toBeGreaterThan(1);
+		expect(result.get(users.id(1))?.bannedReason).toBe("Test temporary ban");
 	});
 
 	test("sets bannedReason correctly", async () => {
 		const reason = "Violating terms of service";
 
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: reason,
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
 
-		expect(result.get(userId(1))?.bannedReason).toBe(reason);
+		expect(result.get(users.id(1))?.bannedReason).toBe(reason);
 	});
 
 	test("creates BanLog entry when bannedByUserId is provided", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Test ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
-		const modInfo = await UserRepository.findModInfoById(userId(1));
+		const modInfo = await UserRepository.findModInfoById(users.id(1));
 
 		expect(modInfo?.banLogs).toHaveLength(1);
 		expect(modInfo?.banLogs[0].banned).toBe(1);
@@ -181,13 +176,13 @@ describe("banUser", () => {
 
 	test("does not create BanLog when bannedByUserId is null (automatic ban)", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Automatic ban",
 			bannedByUserId: null,
 		});
 
-		const modInfo = await UserRepository.findModInfoById(userId(1));
+		const modInfo = await UserRepository.findModInfoById(users.id(1));
 
 		expect(modInfo?.banLogs).toHaveLength(0);
 	});
@@ -197,27 +192,27 @@ describe("banUser", () => {
 		expect(bannedUsers.size).toBe(0);
 
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "First ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		let result = await AdminRepository.findAllBannedUsers();
 		expect(result.size).toBe(1);
 
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Updated ban reason",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		result = await AdminRepository.findAllBannedUsers();
 		expect(result.size).toBe(1);
-		expect(result.get(userId(1))?.bannedReason).toBe("Updated ban reason");
+		expect(result.get(users.id(1))?.bannedReason).toBe("Updated ban reason");
 
-		const modInfo = await UserRepository.findModInfoById(userId(1));
+		const modInfo = await UserRepository.findModInfoById(users.id(1));
 		expect(modInfo?.banLogs).toHaveLength(2);
 		expect(modInfo?.banLogs[0].bannedReason).toBe("First ban");
 		expect(modInfo?.banLogs[1].bannedReason).toBe("Updated ban reason");
@@ -235,18 +230,18 @@ describe("unbanUser", () => {
 
 	test("unbans a previously banned user", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Test ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		let result = await AdminRepository.findAllBannedUsers();
 		expect(result.size).toBe(1);
 
 		await AdminRepository.unbanUser({
-			userId: userId(1),
-			unbannedByUserId: userId(2),
+			userId: users.id(1),
+			unbannedByUserId: users.id(2),
 		});
 
 		result = await AdminRepository.findAllBannedUsers();
@@ -255,18 +250,18 @@ describe("unbanUser", () => {
 
 	test("creates BanLog entry with correct unbannedByUserId", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Test ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		await AdminRepository.unbanUser({
-			userId: userId(1),
-			unbannedByUserId: userId(3),
+			userId: users.id(1),
+			unbannedByUserId: users.id(3),
 		});
 
-		const modInfo = await UserRepository.findModInfoById(userId(1));
+		const modInfo = await UserRepository.findModInfoById(users.id(1));
 
 		expect(modInfo?.banLogs).toHaveLength(2);
 
@@ -278,15 +273,15 @@ describe("unbanUser", () => {
 
 	test("can unban permanently banned user", async () => {
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: 1,
 			bannedReason: "Permanent ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		await AdminRepository.unbanUser({
-			userId: userId(1),
-			unbannedByUserId: userId(2),
+			userId: users.id(1),
+			unbannedByUserId: users.id(2),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();
@@ -298,15 +293,15 @@ describe("unbanUser", () => {
 		const futureDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7);
 
 		await AdminRepository.banUser({
-			userId: userId(1),
+			userId: users.id(1),
 			banned: futureDate,
 			bannedReason: "Temporary ban",
-			bannedByUserId: userId(2),
+			bannedByUserId: users.id(2),
 		});
 
 		await AdminRepository.unbanUser({
-			userId: userId(1),
-			unbannedByUserId: userId(2),
+			userId: users.id(1),
+			unbannedByUserId: users.id(2),
 		});
 
 		const result = await AdminRepository.findAllBannedUsers();

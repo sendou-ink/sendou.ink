@@ -8,20 +8,21 @@ import * as TournamentOrganizationRepository from "../TournamentOrganizationRepo
 import { seedOrgEventWithParticipants } from "../test-utils";
 import { ESTABLISHED_ORG } from "../tournament-organization-constants";
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+const users = UserFactory.pool();
 
 const statsLoader = wrappedLoader<SerializeFrom<typeof loader>>({ loader });
 
 const createOrg = () =>
-	TournamentOrganizationRepository.insert({ ownerId: userId(1), name: "Org" });
+	TournamentOrganizationRepository.insert({
+		ownerId: users.id(1),
+		name: "Org",
+	});
 
 describe("org stats loader", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date(2026, 0, 15));
-		users = await UserFactory.createMany(5);
+		await users.create(5);
 	});
 
 	afterEach(async () => {
@@ -75,13 +76,13 @@ describe("org stats loader", () => {
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
 			startTime: dateToDatabaseTimestamp(new Date(2025, 11, 10)),
-			participantUserIds: [userId(1), userId(2), userId(3)],
+			participantUserIds: [users.id(1), users.id(2), users.id(3)],
 		});
 		// an event in the current month is ignored
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
 			startTime: dateToDatabaseTimestamp(new Date(2026, 0, 5)),
-			participantUserIds: users.map((user) => user.id),
+			participantUserIds: users.ids(),
 		});
 
 		const data = await statsLoader({

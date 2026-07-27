@@ -6,9 +6,8 @@ import type { TournamentAuditLogMetadata } from "~/db/tables-json";
 import { dbReset, withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+let actor: { id: number };
+let subject: { id: number };
 
 const createTournament = () =>
 	db
@@ -49,7 +48,7 @@ const insertEvent = ({
 
 describe("TournamentAuditLogRepository", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(3);
+		[actor, subject] = await UserFactory.createMany(3);
 	});
 
 	afterEach(async () => {
@@ -62,7 +61,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
 		});
 
@@ -81,15 +80,15 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
-			subjectUserId: userId(1),
+			subjectUserId: actor.id,
 		});
 		await insertEvent({
 			type: "MEMBER_ADDED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
-			subjectUserId: userId(2),
+			subjectUserId: subject.id,
 		});
 
 		const events = await TournamentAuditLogRepository.findByTournamentId({
@@ -101,8 +100,8 @@ describe("TournamentAuditLogRepository", () => {
 		expect(events).toHaveLength(2);
 		// newest first
 		expect(events[0].type).toBe("MEMBER_ADDED");
-		expect(events[0].actor?.id).toBe(1);
-		expect(events[0].subject?.id).toBe(2);
+		expect(events[0].actor?.id).toBe(actor.id);
+		expect(events[0].subject?.id).toBe(subject.id);
 		expect(events[0].team?.name).toBe("Team Olive");
 		expect(events[1].type).toBe("TEAM_REGISTERED");
 	});
@@ -113,7 +112,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_UNREGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
 		});
 
@@ -138,7 +137,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_UNREGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: teamA.id,
 		});
 
@@ -153,7 +152,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: teamB.id,
 		});
 
@@ -180,17 +179,17 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: teamA.id,
 		});
 		await insertEvent({
 			type: "TEAM_CHECKED_IN",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: teamA.id,
 		});
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: teamB.id,
 		});
 
@@ -231,7 +230,7 @@ describe("TournamentAuditLogRepository", () => {
 		for (let i = 0; i < 3; i++) {
 			await insertEvent({
 				type: "TEAM_CHECKED_IN",
-				actorUserId: userId(1),
+				actorUserId: actor.id,
 				tournamentTeamId: team.id,
 			});
 		}
@@ -257,7 +256,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_CHECKED_IN",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
 			metadata: { bracketIdx: 2 },
 		});
@@ -277,9 +276,9 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "UPDATE_IN_GAME_NAME",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
-			subjectUserId: userId(2),
+			subjectUserId: subject.id,
 			metadata: { inGameName: "New IGN#1234" },
 		});
 
@@ -290,7 +289,7 @@ describe("TournamentAuditLogRepository", () => {
 		});
 
 		expect(events[0].type).toBe("UPDATE_IN_GAME_NAME");
-		expect(events[0].subject?.id).toBe(2);
+		expect(events[0].subject?.id).toBe(subject.id);
 		expect(events[0].metadata?.inGameName).toBe("New IGN#1234");
 	});
 
@@ -300,7 +299,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_REGISTERED",
-			actorUserId: userId(1),
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
 		});
 

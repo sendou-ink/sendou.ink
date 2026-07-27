@@ -4,9 +4,7 @@ import { dbReset, withUserId } from "~/utils/Test";
 import * as ArtRepository from "./ArtRepository.server";
 
 let imageCounter = 0;
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+const users = UserFactory.pool();
 
 const createArt = async ({ authorId }: { authorId: number }) => {
 	imageCounter++;
@@ -27,7 +25,7 @@ const createArt = async ({ authorId }: { authorId: number }) => {
 describe("findShowcaseArts", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(5);
+		await users.create(5);
 	});
 
 	afterEach(async () => {
@@ -35,9 +33,9 @@ describe("findShowcaseArts", () => {
 	});
 
 	test("shows one art per artist", async () => {
-		await createArt({ authorId: userId(1) });
-		await createArt({ authorId: userId(2) });
-		await createArt({ authorId: userId(3) });
+		await createArt({ authorId: users.id(1) });
+		await createArt({ authorId: users.id(2) });
+		await createArt({ authorId: users.id(3) });
 
 		const result = await ArtRepository.findShowcaseArts();
 
@@ -48,8 +46,8 @@ describe("findShowcaseArts", () => {
 
 	test("prioritizes showcase art over regular art for same artist", async () => {
 		// first create art should be showcase
-		const id = await createArt({ authorId: userId(1) });
-		await createArt({ authorId: userId(1) });
+		const id = await createArt({ authorId: users.id(1) });
+		await createArt({ authorId: users.id(1) });
 
 		const result = await ArtRepository.findShowcaseArts();
 
@@ -57,9 +55,9 @@ describe("findShowcaseArts", () => {
 	});
 
 	test("shows only one art per artist even with multiple pieces", async () => {
-		await createArt({ authorId: userId(1) });
-		await createArt({ authorId: userId(1) });
-		await createArt({ authorId: userId(1) });
+		await createArt({ authorId: users.id(1) });
+		await createArt({ authorId: users.id(1) });
+		await createArt({ authorId: users.id(1) });
 
 		const result = await ArtRepository.findShowcaseArts();
 
@@ -67,8 +65,8 @@ describe("findShowcaseArts", () => {
 	});
 
 	test("shows artist even if no showcase art exists", async () => {
-		const showcaseArtId = await createArt({ authorId: userId(1) });
-		const nonShowcaseArtId = await createArt({ authorId: userId(1) });
+		const showcaseArtId = await createArt({ authorId: users.id(1) });
+		const nonShowcaseArtId = await createArt({ authorId: users.id(1) });
 
 		await ArtRepository.deleteById(showcaseArtId);
 
@@ -87,7 +85,7 @@ describe("findShowcaseArts", () => {
 describe("findAllTags", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(1);
+		await users.create(1);
 	});
 
 	afterEach(async () => {
@@ -96,7 +94,7 @@ describe("findAllTags", () => {
 
 	test("returns all art tags", async () => {
 		imageCounter++;
-		await withUserId(userId(1), () =>
+		await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: `https://example.com/image-1-${imageCounter}.png`,
 				validatedAt: Date.now(),
@@ -130,7 +128,7 @@ describe("findAllTags", () => {
 describe("unlinkUserFromArt", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(2);
+		await users.create(2);
 	});
 
 	afterEach(async () => {
@@ -138,19 +136,19 @@ describe("unlinkUserFromArt", () => {
 	});
 
 	test("removes user link from art", async () => {
-		const art = await withUserId(userId(1), () =>
+		const art = await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
 				description: null,
-				linkedUsers: [userId(2)],
+				linkedUsers: [users.id(2)],
 				tags: [],
 			}),
 		);
 
-		await withUserId(userId(2), () => ArtRepository.unlinkOwnFromArt(art.id));
+		await withUserId(users.id(2), () => ArtRepository.unlinkOwnFromArt(art.id));
 
-		const result = await ArtRepository.findArtsByUserId(userId(2), {
+		const result = await ArtRepository.findArtsByUserId(users.id(2), {
 			includeAuthored: false,
 		});
 		expect(result).toHaveLength(0);
@@ -160,7 +158,7 @@ describe("unlinkUserFromArt", () => {
 describe("findShowcaseArtsByTag", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(3);
+		await users.create(3);
 	});
 
 	afterEach(async () => {
@@ -168,7 +166,7 @@ describe("findShowcaseArtsByTag", () => {
 	});
 
 	test("returns arts filtered by tag", async () => {
-		const art1 = await withUserId(userId(1), () =>
+		const art1 = await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
@@ -178,7 +176,7 @@ describe("findShowcaseArtsByTag", () => {
 			}),
 		);
 
-		await withUserId(userId(2), () =>
+		await withUserId(users.id(2), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-2.png",
 				validatedAt: Date.now(),
@@ -200,7 +198,7 @@ describe("findShowcaseArtsByTag", () => {
 	});
 
 	test("shows only one art per artist", async () => {
-		await withUserId(userId(1), () =>
+		await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
@@ -213,7 +211,7 @@ describe("findShowcaseArtsByTag", () => {
 		const tags = await ArtRepository.findAllTags();
 		const characterTag = tags.find((t) => t.name === "Character");
 
-		await withUserId(userId(1), () =>
+		await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-2.png",
 				validatedAt: Date.now(),
@@ -234,7 +232,7 @@ describe("findShowcaseArtsByTag", () => {
 describe("findRecentlyUploadedArts", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(3);
+		await users.create(3);
 	});
 
 	afterEach(async () => {
@@ -242,7 +240,7 @@ describe("findRecentlyUploadedArts", () => {
 	});
 
 	test("returns recently uploaded arts", async () => {
-		const artId = await createArt({ authorId: userId(1) });
+		const artId = await createArt({ authorId: users.id(1) });
 
 		const result = await ArtRepository.findRecentlyUploadedArts();
 
@@ -254,7 +252,7 @@ describe("findRecentlyUploadedArts", () => {
 describe("findArtsByUserId", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(3);
+		await users.create(3);
 	});
 
 	afterEach(async () => {
@@ -262,26 +260,26 @@ describe("findArtsByUserId", () => {
 	});
 
 	test("returns authored art", async () => {
-		const artId = await createArt({ authorId: userId(1) });
+		const artId = await createArt({ authorId: users.id(1) });
 
-		const result = await ArtRepository.findArtsByUserId(userId(1));
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
 
 		expect(result).toHaveLength(1);
 		expect(result[0].id).toBe(artId);
 	});
 
 	test("returns tagged art", async () => {
-		const art = await withUserId(userId(1), () =>
+		const art = await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
 				description: null,
-				linkedUsers: [userId(2)],
+				linkedUsers: [users.id(2)],
 				tags: [],
 			}),
 		);
 
-		const result = await ArtRepository.findArtsByUserId(userId(2));
+		const result = await ArtRepository.findArtsByUserId(users.id(2));
 
 		expect(result).toHaveLength(1);
 		expect(result[0].id).toBe(art.id);
@@ -291,7 +289,7 @@ describe("findArtsByUserId", () => {
 describe("deleteById", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(1);
+		await users.create(1);
 	});
 
 	afterEach(async () => {
@@ -299,21 +297,21 @@ describe("deleteById", () => {
 	});
 
 	test("deletes art by id", async () => {
-		const artId = await createArt({ authorId: userId(1) });
+		const artId = await createArt({ authorId: users.id(1) });
 
 		await ArtRepository.deleteById(artId);
 
-		const result = await ArtRepository.findArtsByUserId(userId(1));
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
 		expect(result).toHaveLength(0);
 	});
 
 	test("deletes only the specified art", async () => {
-		const firstArtId = await createArt({ authorId: userId(1) });
-		const secondArtId = await createArt({ authorId: userId(1) });
+		const firstArtId = await createArt({ authorId: users.id(1) });
+		const secondArtId = await createArt({ authorId: users.id(1) });
 
 		await ArtRepository.deleteById(firstArtId);
 
-		const result = await ArtRepository.findArtsByUserId(userId(1));
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
 		expect(result).toHaveLength(1);
 		expect(result[0].id).toBe(secondArtId);
 	});
@@ -322,7 +320,7 @@ describe("deleteById", () => {
 describe("deleteOrphanTags", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(1);
+		await users.create(1);
 	});
 
 	afterEach(async () => {
@@ -330,7 +328,7 @@ describe("deleteOrphanTags", () => {
 	});
 
 	test("deletes tags with no associated art", async () => {
-		const art = await withUserId(userId(1), () =>
+		const art = await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
@@ -350,7 +348,7 @@ describe("deleteOrphanTags", () => {
 	});
 
 	test("does not delete tags that are still linked to art", async () => {
-		await withUserId(userId(1), () =>
+		await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
@@ -372,7 +370,7 @@ describe("deleteOrphanTags", () => {
 describe("insert", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(2);
+		await users.create(2);
 	});
 
 	afterEach(async () => {
@@ -380,17 +378,17 @@ describe("insert", () => {
 	});
 
 	test("inserts art with all metadata", async () => {
-		const art = await withUserId(userId(1), () =>
+		const art = await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
 				description: "Test description",
-				linkedUsers: [userId(2)],
+				linkedUsers: [users.id(2)],
 				tags: [{ name: "Character" }],
 			}),
 		);
 
-		const result = await ArtRepository.findArtsByUserId(userId(1));
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
 
 		expect(result).toHaveLength(1);
 		expect(result[0].id).toBe(art.id);
@@ -400,9 +398,9 @@ describe("insert", () => {
 	});
 
 	test("sets first art as showcase", async () => {
-		await createArt({ authorId: userId(1) });
+		await createArt({ authorId: users.id(1) });
 
-		const result = await ArtRepository.findArtsByUserId(userId(1));
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
 
 		expect(result[0].isShowcase).toBe(true);
 	});
@@ -411,7 +409,7 @@ describe("insert", () => {
 describe("update", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
-		users = await UserFactory.createMany(3);
+		await users.create(3);
 	});
 
 	afterEach(async () => {
@@ -419,35 +417,35 @@ describe("update", () => {
 	});
 
 	test("updates art metadata", async () => {
-		const art = await withUserId(userId(1), () =>
+		const art = await withUserId(users.id(1), () =>
 			ArtRepository.insert({
 				url: "https://example.com/image-1.png",
 				validatedAt: Date.now(),
 				description: "Original",
-				linkedUsers: [userId(2)],
+				linkedUsers: [users.id(2)],
 				tags: [{ name: "Character" }],
 			}),
 		);
 
 		await ArtRepository.update(art.id, {
 			description: "Updated",
-			linkedUsers: [userId(3)],
+			linkedUsers: [users.id(3)],
 			tags: [{ name: "Weapon" }],
 			isShowcase: 1,
 		});
 
-		const result = await ArtRepository.findArtsByUserId(userId(1));
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
 
 		expect(result[0].description).toBe("Updated");
 		expect(result[0].linkedUsers).toHaveLength(1);
-		expect(result[0].linkedUsers?.[0].id).toBe(userId(3));
+		expect(result[0].linkedUsers?.[0].id).toBe(users.id(3));
 		expect(result[0].tags).toHaveLength(1);
 		expect(result[0].tags?.[0].name).toBe("Weapon");
 	});
 
 	test("unsets other showcase art when setting new showcase", async () => {
-		const firstArtId = await createArt({ authorId: userId(1) });
-		const secondArtId = await createArt({ authorId: userId(1) });
+		const firstArtId = await createArt({ authorId: users.id(1) });
+		const secondArtId = await createArt({ authorId: users.id(1) });
 
 		await ArtRepository.update(secondArtId, {
 			description: null,
@@ -456,7 +454,7 @@ describe("update", () => {
 			isShowcase: 1,
 		});
 
-		const result = await ArtRepository.findArtsByUserId(userId(1));
+		const result = await ArtRepository.findArtsByUserId(users.id(1));
 
 		expect(result).toHaveLength(2);
 		const showcaseArt = result.find((art) => art.id === secondArtId);

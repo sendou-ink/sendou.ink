@@ -4,9 +4,8 @@ import { db } from "~/db/sql";
 import { dbReset } from "~/utils/Test";
 import * as TournamentMatchRepository from "./TournamentMatchRepository.server";
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+let teamOneMember: { id: number };
+let teamTwoMember: { id: number };
 
 const createTournament = () =>
 	db
@@ -95,7 +94,7 @@ const createMatch = async (args: {
 			matchId: match.id,
 			mode: "SZ",
 			number: 1,
-			reporterId: userId(1),
+			reporterId: teamOneMember.id,
 			source: "TO",
 			stageId: 1,
 			winnerTeamId: args.teamOneId,
@@ -108,12 +107,12 @@ const createMatch = async (args: {
 				.values([
 					{
 						matchGameResultId: result.id,
-						userId: userId(1),
+						userId: teamOneMember.id,
 						tournamentTeamId: args.teamOneId,
 					},
 					{
 						matchGameResultId: result.id,
-						userId: userId(2),
+						userId: teamTwoMember.id,
 						tournamentTeamId: args.teamTwoId,
 					},
 				])
@@ -125,7 +124,7 @@ const createMatch = async (args: {
 
 describe("findByTournamentTeamId", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(2);
+		[teamOneMember, teamTwoMember] = await UserFactory.createMany(2);
 	});
 
 	afterEach(async () => {
@@ -142,7 +141,7 @@ describe("findByTournamentTeamId", () => {
 		const teamB = await createTeam(tournament.id, "B");
 
 		// Insert team members so we have someone to attribute results to
-		for (const id of [userId(1), userId(2)]) {
+		for (const id of [teamOneMember.id, teamTwoMember.id]) {
 			await db
 				.insertInto("TournamentTeamMember")
 				.values({ tournamentTeamId: teamA.id, userId: id, role: "OWNER" })

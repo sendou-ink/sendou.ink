@@ -17,22 +17,17 @@ import { action } from "./admin";
 
 const adminAction = wrappedAction<typeof adminActionSchema>({ action });
 
-let users: Array<{ id: number }>;
-
-const userId = (position: number) => users[position - 1].id;
+const users = UserFactory.pool();
 
 // account migration is asserted through Discord ids, so the tests give the users
 // one they can name
-const createUsers = async (count = 2) => {
-	users = await UserFactory.createMany(count, (index) => ({
-		discordId: String(index),
-	}));
-};
+const createUsers = (count = 2) =>
+	users.create(count, (index) => ({ discordId: String(index) }));
 
 const voteArgs = ({
 	score,
 	votedId,
-	authorId = userId(1),
+	authorId = users.id(1),
 	month = 6,
 	year = 2021,
 }: {
@@ -94,7 +89,7 @@ describe("Plus voting", () => {
 
 				return voteArgs({
 					score: id <= 5 ? -1 : 1,
-					votedId: userId(id),
+					votedId: users.id(id),
 				});
 			}),
 		);
@@ -113,9 +108,9 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany(
 			Array.from({ length: 10 }).map((_, i) => {
 				return voteArgs({
-					authorId: userId(i + 1),
+					authorId: users.id(i + 1),
 					score: i < 4 ? -1 : 1,
-					votedId: userId(1),
+					votedId: users.id(1),
 				});
 			}),
 		);
@@ -134,9 +129,9 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany(
 			Array.from({ length: 10 }).map((_, i) => {
 				return voteArgs({
-					authorId: userId(i + 1),
+					authorId: users.id(i + 1),
 					score: i < 6 ? -1 : 1,
-					votedId: userId(1),
+					votedId: users.id(1),
 				});
 			}),
 		);
@@ -155,9 +150,9 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany(
 			Array.from({ length: 10 }).map((_, i) => {
 				return voteArgs({
-					authorId: userId(i + 1),
+					authorId: users.id(i + 1),
 					score: i < 5 ? -1 : 1,
-					votedId: userId(1),
+					votedId: users.id(1),
 				});
 			}),
 		);
@@ -174,10 +169,10 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany([
 			voteArgs({
 				score: 1,
-				votedId: userId(1),
+				votedId: users.id(1),
 			}),
 		]);
-		await createLeaderboard([userId(2)]);
+		await createLeaderboard([users.id(2)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -188,12 +183,12 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers(11);
-		await createLeaderboard(users.map((user) => user.id));
+		await createLeaderboard(users.ids());
 
 		await db
 			.updateTable("User")
 			.set({ plusSkippedForSeasonNth: 1 })
-			.where("User.id", "=", userId(1))
+			.where("User.id", "=", users.id(1))
 			.execute();
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
@@ -206,12 +201,12 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers(11);
-		await createLeaderboard(users.map((user) => user.id));
+		await createLeaderboard(users.ids());
 
 		await db
 			.updateTable("User")
 			.set({ plusSkippedForSeasonNth: 0 })
-			.where("User.id", "=", userId(1))
+			.where("User.id", "=", users.id(1))
 			.execute();
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
@@ -227,10 +222,10 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany([
 			voteArgs({
 				score: 1,
-				votedId: userId(1),
+				votedId: users.id(1),
 			}),
 		]);
-		await createLeaderboard([userId(2)]);
+		await createLeaderboard([users.id(2)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -242,7 +237,7 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2023-11-20T00:00:00.000Z"));
 
 		await createUsers(60);
-		await createLeaderboard(users.map((user) => user.id));
+		await createLeaderboard(users.ids());
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -258,10 +253,10 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany([
 			voteArgs({
 				score: -1,
-				votedId: userId(1),
+				votedId: users.id(1),
 			}),
 		]);
-		await createLeaderboard([userId(1)]);
+		await createLeaderboard([users.id(1)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -275,10 +270,10 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany([
 			voteArgs({
 				score: -1,
-				votedId: userId(1),
+				votedId: users.id(1),
 			}),
 		]);
-		await createLeaderboard([userId(1)]);
+		await createLeaderboard([users.id(1)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -292,7 +287,7 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany([
 			voteArgs({
 				score: 1,
-				votedId: userId(1),
+				votedId: users.id(1),
 				month: 11,
 				year: 2023,
 			}),
@@ -301,7 +296,7 @@ describe("Plus voting", () => {
 		await PlusVotingRepository.upsertMany([
 			voteArgs({
 				score: -1,
-				votedId: userId(1),
+				votedId: users.id(1),
 				month: 2,
 				year: 2024,
 			}),
@@ -317,8 +312,8 @@ const migrateUserAction = () =>
 	adminAction(
 		{
 			_action: "MIGRATE",
-			"old-user": userId(1),
-			"new-user": userId(2),
+			"old-user": users.id(1),
+			"new-user": users.id(2),
 		},
 		{ user: "admin" },
 	);
@@ -342,18 +337,18 @@ describe("Account migration", () => {
 		const newUser = await UserRepository.findProfileByIdentifier("1");
 
 		expect(oldUser).toBeNull();
-		expect(newUser?.id).toBe(userId(1)); // took the old user's id
+		expect(newUser?.id).toBe(users.id(1)); // took the old user's id
 	});
 
 	it("two accounts with teams results in an error", async () => {
 		await TeamRepository.insert({
 			name: "Team 1",
-			ownerUserId: userId(1),
+			ownerUserId: users.id(1),
 			isMainTeam: true,
 		});
 		await TeamRepository.insert({
 			name: "Team 2",
-			ownerUserId: userId(2),
+			ownerUserId: users.id(2),
 			isMainTeam: true,
 		});
 
@@ -372,17 +367,17 @@ describe("Account migration", () => {
 	it("deletes past team membership status of the new user", async () => {
 		await TeamRepository.insert({
 			name: "Team 1",
-			ownerUserId: userId(2),
+			ownerUserId: users.id(2),
 			isMainTeam: true,
 		});
 		await TeamRepository.deleteById(1);
 
-		const membershipBeforeMigration = await membershipOf(userId(2));
+		const membershipBeforeMigration = await membershipOf(users.id(2));
 		expect(membershipBeforeMigration).toBeDefined();
 
 		await migrateUserAction();
 
-		const membershipAfterMigration = await membershipOf(userId(2));
+		const membershipAfterMigration = await membershipOf(users.id(2));
 
 		expect(membershipAfterMigration).toBeUndefined();
 	});
@@ -390,38 +385,41 @@ describe("Account migration", () => {
 	it("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
 		await TeamRepository.insert({
 			name: "Team 1",
-			ownerUserId: userId(2),
+			ownerUserId: users.id(2),
 			isMainTeam: true,
 		});
-		await withUserId(userId(1), () =>
+		await withUserId(users.id(1), () =>
 			TeamRepository.insertOwnMembership({
 				teamId: 1,
 				maxTeamsAllowed: 1,
 			}),
 		);
-		await TeamRepository.handleMemberLeaving({ teamId: 1, userId: userId(1) });
+		await TeamRepository.handleMemberLeaving({
+			teamId: 1,
+			userId: users.id(1),
+		});
 
-		for (const id of [userId(1), userId(2)]) {
+		for (const id of [users.id(1), users.id(2)]) {
 			const membership = await membershipOf(id);
 			expect(membership).toBeDefined();
 		}
 
 		await migrateUserAction();
 
-		const membershipOldUser = await membershipOf(userId(1));
-		const membershipNewUser = await membershipOf(userId(2));
+		const membershipOldUser = await membershipOf(users.id(1));
+		const membershipNewUser = await membershipOf(users.id(2));
 
 		expect(membershipOldUser).toBeDefined();
 		expect(membershipNewUser).toBeUndefined();
 	});
 
 	it("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {
-		await withUserId(userId(1), () =>
+		await withUserId(users.id(1), () =>
 			UserRepository.updateOwnProfile({
 				weapons: [{ weaponSplId: 1, isFavorite: 1 }],
 			}),
 		);
-		await withUserId(userId(2), () =>
+		await withUserId(users.id(2), () =>
 			UserRepository.updateOwnProfile({
 				weapons: [{ weaponSplId: 10 }],
 			}),
@@ -441,7 +439,7 @@ describe("Account migration", () => {
 	it("deletes builds from the new user when migrating", async () => {
 		await BuildRepository.insert({
 			title: "Test build",
-			ownerId: userId(2),
+			ownerId: users.id(2),
 			headGearSplId: 1,
 			clothesGearSplId: 1,
 			shoesGearSplId: 1,
@@ -456,7 +454,7 @@ describe("Account migration", () => {
 			isPrivate: 0,
 		});
 
-		const buildsBefore = await BuildRepository.findAllByUserId(userId(2));
+		const buildsBefore = await BuildRepository.findAllByUserId(users.id(2));
 
 		expect(buildsBefore.length).toBe(1);
 
@@ -465,7 +463,7 @@ describe("Account migration", () => {
 		const oldUser = await UserRepository.findProfileByIdentifier("0");
 		expect(oldUser).toBeNull();
 
-		for (const id of [userId(1), userId(2)]) {
+		for (const id of [users.id(1), users.id(2)]) {
 			const buildsAfter = await BuildRepository.findAllByUserId(id);
 			expect(buildsAfter.length).toBe(0);
 		}

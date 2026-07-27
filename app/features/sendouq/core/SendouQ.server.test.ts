@@ -20,14 +20,8 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 	currentOrPrevious: mockSeasonCurrentOrPrevious,
 }));
 
-let users: Array<{ id: number }>;
-
 /** Users are interchangeable here, so tests name them by 1-based position. */
-const userId = (position: number) => users[position - 1].id;
-
-const createUsers = async (count: number) => {
-	users = await UserFactory.createMany(count);
-};
+const users = UserFactory.pool();
 
 const createGroup = async (
 	memberPositions: number[],
@@ -40,12 +34,12 @@ const createGroup = async (
 
 	const groupResult = await SQGroupRepository.insert({
 		status,
-		userId: userId(ownerPosition),
+		userId: users.id(ownerPosition),
 	});
 
 	for (const position of restPositions) {
 		await SQGroupRepository.insertMember(groupResult.id, {
-			userId: userId(position),
+			userId: users.id(position),
 			role: "REGULAR",
 		});
 	}
@@ -54,7 +48,7 @@ const createGroup = async (
 };
 
 const inviteCodeOf = (position: number) =>
-	SendouQ.findOwnGroup(userId(position))!.inviteCode;
+	SendouQ.findOwnGroup(users.id(position))!.inviteCode;
 
 // arbitrary ordinals can't be written through a repository: production only ever
 // derives them from mu and sigma when a match is reported
@@ -62,7 +56,7 @@ const insertSkill = async (position: number, ordinal: number, season = 1) => {
 	await db
 		.insertInto("Skill")
 		.values({
-			userId: userId(position),
+			userId: users.id(position),
 			season,
 			mu: 25,
 			sigma: 8.333,
@@ -75,7 +69,7 @@ const insertSkill = async (position: number, ordinal: number, season = 1) => {
 describe("SendouQ", () => {
 	describe("currentViewByUserId", () => {
 		beforeEach(async () => {
-			await createUsers(8);
+			await users.create(8);
 		});
 
 		afterEach(async () => {
@@ -85,7 +79,7 @@ describe("SendouQ", () => {
 		test("returns 'default' when user not in any group", async () => {
 			await refreshSendouQInstance();
 
-			const view = SendouQ.currentViewByUserId(userId(1));
+			const view = SendouQ.currentViewByUserId(users.id(1));
 
 			expect(view).toBe("default");
 		});
@@ -94,7 +88,7 @@ describe("SendouQ", () => {
 			await createGroup([1], { status: "PREPARING" });
 			await refreshSendouQInstance();
 
-			const view = SendouQ.currentViewByUserId(userId(1));
+			const view = SendouQ.currentViewByUserId(users.id(1));
 
 			expect(view).toBe("preparing");
 		});
@@ -110,7 +104,7 @@ describe("SendouQ", () => {
 
 			await refreshSendouQInstance();
 
-			const view = SendouQ.currentViewByUserId(userId(1));
+			const view = SendouQ.currentViewByUserId(users.id(1));
 
 			expect(view).toBe("match");
 		});
@@ -119,7 +113,7 @@ describe("SendouQ", () => {
 			await createGroup([1], { status: "ACTIVE" });
 			await refreshSendouQInstance();
 
-			const view = SendouQ.currentViewByUserId(userId(1));
+			const view = SendouQ.currentViewByUserId(users.id(1));
 
 			expect(view).toBe("looking");
 		});
@@ -127,7 +121,7 @@ describe("SendouQ", () => {
 
 	describe("findOwnGroup", () => {
 		beforeEach(async () => {
-			await createUsers(8);
+			await users.create(8);
 		});
 
 		afterEach(async () => {
@@ -138,17 +132,17 @@ describe("SendouQ", () => {
 			await createGroup([1, 2, 3]);
 			await refreshSendouQInstance();
 
-			const group = SendouQ.findOwnGroup(userId(1));
+			const group = SendouQ.findOwnGroup(users.id(1));
 
 			expect(group).toBeDefined();
-			expect(group?.members.some((m) => m.id === userId(1))).toBe(true);
+			expect(group?.members.some((m) => m.id === users.id(1))).toBe(true);
 		});
 
 		test("returns undefined when user not in any group", async () => {
 			await createGroup([1, 2, 3]);
 			await refreshSendouQInstance();
 
-			const group = SendouQ.findOwnGroup(userId(4));
+			const group = SendouQ.findOwnGroup(users.id(4));
 
 			expect(group).toBeUndefined();
 		});
@@ -157,10 +151,10 @@ describe("SendouQ", () => {
 			await createGroup([1, 2]);
 			await refreshSendouQInstance();
 
-			const group = SendouQ.findOwnGroup(userId(1));
+			const group = SendouQ.findOwnGroup(users.id(1));
 
 			expect(group).toBeDefined();
-			const member = group?.members.find((m) => m.id === userId(1));
+			const member = group?.members.find((m) => m.id === users.id(1));
 			expect(member?.role).toBe("OWNER");
 		});
 
@@ -168,10 +162,10 @@ describe("SendouQ", () => {
 			await createGroup([1, 2]);
 			await refreshSendouQInstance();
 
-			const group = SendouQ.findOwnGroup(userId(2));
+			const group = SendouQ.findOwnGroup(users.id(2));
 
 			expect(group).toBeDefined();
-			const member = group?.members.find((m) => m.id === userId(2));
+			const member = group?.members.find((m) => m.id === users.id(2));
 			expect(member?.role).toBe("REGULAR");
 		});
 
@@ -181,17 +175,17 @@ describe("SendouQ", () => {
 			await createGroup([5, 6]);
 			await refreshSendouQInstance();
 
-			const group = SendouQ.findOwnGroup(userId(5));
+			const group = SendouQ.findOwnGroup(users.id(5));
 
 			expect(group).toBeDefined();
-			expect(group?.members.some((m) => m.id === userId(5))).toBe(true);
-			expect(group?.members.some((m) => m.id === userId(1))).toBe(false);
+			expect(group?.members.some((m) => m.id === users.id(5))).toBe(true);
+			expect(group?.members.some((m) => m.id === users.id(1))).toBe(false);
 		});
 	});
 
 	describe("findGroupByInviteCode", () => {
 		beforeEach(async () => {
-			await createUsers(4);
+			await users.create(4);
 		});
 
 		afterEach(async () => {
@@ -226,13 +220,13 @@ describe("SendouQ", () => {
 			const group = SendouQ.findGroupByInviteCode(inviteCodeOf(2));
 
 			expect(group).toBeDefined();
-			expect(group?.members[0].id).toBe(userId(2));
+			expect(group?.members[0].id).toBe(users.id(2));
 		});
 	});
 
 	describe("previewGroups", () => {
 		beforeEach(async () => {
-			await createUsers(12);
+			await users.create(12);
 		});
 
 		afterEach(async () => {
@@ -242,7 +236,7 @@ describe("SendouQ", () => {
 		test("returns empty array when no groups exist", async () => {
 			await refreshSendouQInstance();
 
-			const groups = SendouQ.previewGroups(userId(1));
+			const groups = SendouQ.previewGroups(users.id(1));
 
 			expect(groups).toEqual([]);
 		});
@@ -251,7 +245,7 @@ describe("SendouQ", () => {
 			await createGroup([1, 2, 3, 4]);
 			await refreshSendouQInstance();
 
-			const groups = SendouQ.previewGroups(userId(1));
+			const groups = SendouQ.previewGroups(users.id(1));
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeUndefined();
@@ -261,7 +255,7 @@ describe("SendouQ", () => {
 			await createGroup([1, 2]);
 			await refreshSendouQInstance();
 
-			const groups = SendouQ.previewGroups(userId(1));
+			const groups = SendouQ.previewGroups(users.id(1));
 
 			expect(groups).toHaveLength(1);
 			expect(groups[0].members).toBeDefined();
@@ -273,7 +267,7 @@ describe("SendouQ", () => {
 			await createGroup([3, 4, 5, 6]);
 			await refreshSendouQInstance();
 
-			const groups = SendouQ.previewGroups(userId(1));
+			const groups = SendouQ.previewGroups(users.id(1));
 
 			expect(groups).toHaveLength(2);
 			for (const group of groups) {
@@ -288,7 +282,7 @@ describe("SendouQ", () => {
 			await createGroup([7, 8, 9]);
 			await refreshSendouQInstance();
 
-			const groups = SendouQ.previewGroups(userId(1));
+			const groups = SendouQ.previewGroups(users.id(1));
 
 			expect(groups).toHaveLength(3);
 
@@ -304,7 +298,7 @@ describe("SendouQ", () => {
 			await createGroup([5, 6]);
 			await refreshSendouQInstance();
 
-			const groups = SendouQ.previewGroups(userId(1));
+			const groups = SendouQ.previewGroups(users.id(1));
 
 			const fullGroup = groups.find((g) => g.members === undefined);
 			const partialGroup = groups.find((g) => g.members !== undefined);
@@ -348,7 +342,7 @@ describe("SendouQ", () => {
 					.execute();
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.previewGroups(userId(1));
+				const groups = SendouQ.previewGroups(users.id(1));
 
 				expect(groups).toHaveLength(2);
 				expect(groups[0].id).toBe(group1Id);
@@ -375,12 +369,12 @@ describe("SendouQ", () => {
 					.execute();
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.previewGroups(userId(1));
+				const groups = SendouQ.previewGroups(users.id(1));
 
 				expect(groups).toHaveLength(3);
-				expect(groups[0].members![0].id).toBe(userId(4));
-				expect(groups[1].members![0].id).toBe(userId(2));
-				expect(groups[2].members![0].id).toBe(userId(3));
+				expect(groups[0].members![0].id).toBe(users.id(4));
+				expect(groups[1].members![0].id).toBe(users.id(2));
+				expect(groups[2].members![0].id).toBe(users.id(3));
 			});
 
 			test("full groups are sorted last regardless of tier", async () => {
@@ -395,7 +389,7 @@ describe("SendouQ", () => {
 				const partialGroupId = await createGroup([6]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.previewGroups(userId(1));
+				const groups = SendouQ.previewGroups(users.id(1));
 
 				expect(groups).toHaveLength(2);
 				expect(groups[0].id).toBe(partialGroupId);
@@ -410,7 +404,7 @@ describe("SendouQ", () => {
 				await createGroup([3]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.previewGroups(userId(1));
+				const groups = SendouQ.previewGroups(users.id(1));
 
 				expect(groups).toHaveLength(2);
 			});
@@ -420,7 +414,7 @@ describe("SendouQ", () => {
 	describe("lookingGroups", () => {
 		describe("filtering", () => {
 			beforeEach(async () => {
-				await createUsers(20);
+				await users.create(20);
 			});
 
 			afterEach(async () => {
@@ -431,7 +425,7 @@ describe("SendouQ", () => {
 				await createGroup([1, 2, 3, 4]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(5));
+				const groups = SendouQ.lookingGroups(users.id(5));
 
 				expect(groups).toEqual([]);
 			});
@@ -444,10 +438,10 @@ describe("SendouQ", () => {
 				await createGroup([4], { status: "ACTIVE" });
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups).toHaveLength(1);
-				expect(groups[0].members![0].id).toBe(userId(4));
+				expect(groups[0].members![0].id).toBe(users.id(4));
 			});
 
 			test("only returns groups without matchId", async () => {
@@ -463,7 +457,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].id).toBe(lookingGroup);
@@ -474,10 +468,12 @@ describe("SendouQ", () => {
 				await createGroup([3, 4]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups).toHaveLength(1);
-				expect(groups[0].members?.some((m) => m.id === userId(1))).toBe(false);
+				expect(groups[0].members?.some((m) => m.id === users.id(1))).toBe(
+					false,
+				);
 			});
 
 			test("own group size 4 only shows size 4 groups", async () => {
@@ -488,7 +484,7 @@ describe("SendouQ", () => {
 				await createGroup([11, 12, 13, 14]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members).toBeUndefined();
@@ -502,11 +498,11 @@ describe("SendouQ", () => {
 				await createGroup([10, 11, 12, 13]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups).toHaveLength(1);
 				expect(groups[0].members).toHaveLength(1);
-				expect(groups[0].members![0].id).toBe(userId(4));
+				expect(groups[0].members![0].id).toBe(users.id(4));
 			});
 
 			test("own group size 2 shows size 1 and 2 groups", async () => {
@@ -517,7 +513,7 @@ describe("SendouQ", () => {
 				await createGroup([9, 10, 11, 12]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups).toHaveLength(2);
 				const groupSizes = groups.map((g) => g.members!.length);
@@ -533,7 +529,7 @@ describe("SendouQ", () => {
 				await createGroup([8, 9, 10, 11]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups).toHaveLength(3);
 				const groupSizes = groups.map((g) => g.members!.length);
@@ -545,7 +541,7 @@ describe("SendouQ", () => {
 
 		describe("replay detection", () => {
 			beforeEach(async () => {
-				await createUsers(12);
+				await users.create(12);
 			});
 
 			afterEach(async () => {
@@ -561,7 +557,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				const fullGroups = groups.filter((g) => g.members === undefined);
 				expect(fullGroups.some((g) => g.isReplay)).toBe(true);
@@ -575,7 +571,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				for (const group of groups) {
 					expect(group.isReplay).toBe(false);
@@ -588,7 +584,7 @@ describe("SendouQ", () => {
 				await createGroup([3]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				for (const group of groups) {
 					expect(group.isReplay).toBe(false);
@@ -603,10 +599,10 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				const partialGroup = groups.find((g) =>
-					g.members?.some((m) => m.id === userId(5)),
+					g.members?.some((m) => m.id === users.id(5)),
 				);
 				expect(partialGroup?.isReplay).toBe(false);
 			});
@@ -614,7 +610,7 @@ describe("SendouQ", () => {
 
 		describe("censoring", () => {
 			beforeEach(async () => {
-				await createUsers(12);
+				await users.create(12);
 			});
 
 			afterEach(async () => {
@@ -626,7 +622,7 @@ describe("SendouQ", () => {
 				await createGroup([5, 6, 7, 8]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				const fullGroup = groups.find((g) => g.members === undefined);
 				expect(fullGroup).toBeDefined();
@@ -637,7 +633,7 @@ describe("SendouQ", () => {
 				await createGroup([2, 3]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				const partialGroup = groups.find((g) => g.members?.length === 2);
 				expect(partialGroup).toBeDefined();
@@ -650,7 +646,7 @@ describe("SendouQ", () => {
 				await createGroup([3, 4, 5, 6]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				for (const group of groups) {
 					expect(group).not.toHaveProperty("inviteCode");
@@ -662,7 +658,7 @@ describe("SendouQ", () => {
 		describe("skill-based sorting", () => {
 			beforeEach(async () => {
 				await refreshUserSkills(1);
-				await createUsers(10);
+				await users.create(10);
 			});
 
 			afterEach(async () => {
@@ -686,9 +682,9 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
-				expect(groups[0].members![0].id).toBe(userId(2));
+				expect(groups[0].members![0].id).toBe(users.id(2));
 			});
 
 			test("full groups sorted by average skill", async () => {
@@ -709,7 +705,7 @@ describe("SendouQ", () => {
 
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
 				expect(groups.length).toBeGreaterThan(0);
 				expect(groups[0].id).toBe(closerGroup);
@@ -740,10 +736,10 @@ describe("SendouQ", () => {
 				await createGroup([1]);
 				await refreshSendouQInstance();
 
-				const groups = SendouQ.lookingGroups(userId(1));
+				const groups = SendouQ.lookingGroups(users.id(1));
 
-				expect(groups[0].members![0].id).toBe(userId(3));
-				expect(groups[1].members![0].id).toBe(userId(2));
+				expect(groups[0].members![0].id).toBe(users.id(3));
+				expect(groups[1].members![0].id).toBe(users.id(2));
 			});
 		});
 	});
