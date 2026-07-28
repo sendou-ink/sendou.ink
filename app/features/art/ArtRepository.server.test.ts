@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as ArtFactory from "~/db/seed/factories/ArtFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { databaseTimestampNow } from "~/utils/dates";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as ArtRepository from "./ArtRepository.server";
 
 const users = UserFactory.pool();
@@ -10,10 +10,6 @@ const users = UserFactory.pool();
 describe("findShowcaseArts", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("shows one art per artist", async () => {
@@ -71,10 +67,6 @@ describe("findAllTags", () => {
 		await users.create(1);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("returns all art tags", async () => {
 		await ArtFactory.create({
 			authorId: users.id(1),
@@ -103,10 +95,6 @@ describe("unlinkUserFromArt", () => {
 		await users.create(2);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("removes user link from art", async () => {
 		const art = await ArtFactory.create({
 			authorId: users.id(1),
@@ -125,10 +113,6 @@ describe("unlinkUserFromArt", () => {
 describe("findShowcaseArtsByTag", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns arts filtered by tag", async () => {
@@ -180,10 +164,6 @@ describe("findRecentlyUploadedArts", () => {
 		await users.create(3);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("returns recently uploaded arts", async () => {
 		const art = await ArtFactory.create({ authorId: users.id(1) });
 
@@ -197,10 +177,6 @@ describe("findRecentlyUploadedArts", () => {
 describe("findArtsByUserId", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns authored art", async () => {
@@ -230,10 +206,6 @@ describe("deleteById", () => {
 		await users.create(1);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("deletes art by id", async () => {
 		const art = await ArtFactory.create({ authorId: users.id(1) });
 
@@ -259,10 +231,6 @@ describe("deleteById", () => {
 describe("deleteOrphanTags", () => {
 	beforeEach(async () => {
 		await users.create(1);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("deletes tags with no associated art", async () => {
@@ -298,10 +266,6 @@ describe("deleteOrphanTags", () => {
 describe("insert", () => {
 	beforeEach(async () => {
 		await users.create(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("inserts art with all metadata", async () => {
@@ -344,10 +308,6 @@ describe("insert", () => {
 describe("update", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("updates art metadata", async () => {

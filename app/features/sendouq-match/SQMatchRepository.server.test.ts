@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
 const setupMatch = async () => {
@@ -61,10 +61,6 @@ const fetchSkills = async (matchId: number) => {
 };
 
 describe("lockMatchWithoutSkillChange", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("inserts dummy skill to lock match", async () => {
 		const { match } = await setupMatch();
 
@@ -85,10 +81,6 @@ describe("cancelMatch", () => {
 
 	beforeEach(async () => {
 		setup = await setupMatch();
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("first cancel report sets group inactive", async () => {

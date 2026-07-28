@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
-import { db } from "~/db/sql";
-import { dbReset, withNoUser, withUserId } from "~/utils/Test";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
 
@@ -30,10 +30,6 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		[owner, other] = await UserFactory.createMany(2);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	it("returns an empty map when given no user ids", async () => {
 		const { userCards } = await withNoUser(() =>
 			UserCardRepository.findAllByUserIds({
@@ -46,11 +42,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 
 	it("keys cards by user id and builds the stats array from db fields", async () => {
 		const plusMember = await UserFactory.create(null, { plusTier: 2 });
-		await db
-			.updateTable("User")
-			.set({ div: "1" })
-			.where("id", "=", plusMember.id)
-			.execute();
+		await UserRepository.updateManyDivs([{ userId: plusMember.id, div: "1" }]);
 		await insertVerifiedXp(plusMember.id, 2500);
 
 		const { userCards } = await withNoUser(() =>

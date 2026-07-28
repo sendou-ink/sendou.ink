@@ -1,17 +1,12 @@
-import { afterEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { dbReset } from "~/utils/Test";
 import * as ApiRepository from "../ApiRepository.server";
 import { checkUserHasApiAccess } from "./perms";
 
 describe("Permission logic consistency between findAllApiTokens and checkUserHasApiAccess", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("both functions grant access for isApiAccesser flag", async () => {
 		const { id } = await UserFactory.create(null, { roles: ["API_ACCESSER"] });
 

@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { dbReset, wrappedAction } from "~/utils/Test";
+import { wrappedAction } from "~/utils/Test";
 import type { userEditProfileBaseSchema } from "../user-page-schemas";
 import { action as editUserProfileAction } from "./u.$identifier.edit";
 
@@ -33,9 +33,6 @@ describe("user page editing", () => {
 
 	beforeEach(async () => {
 		userId = (await UserFactory.createRegular()).id;
-	});
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	it("saves profile with default fields", async () => {

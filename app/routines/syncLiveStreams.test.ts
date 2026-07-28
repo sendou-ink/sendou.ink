@@ -6,7 +6,6 @@ import {
 	testTournament,
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
-import { dbReset } from "~/utils/Test";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 
 const { mockGetStreams } = vi.hoisted(() => ({
@@ -50,7 +49,6 @@ describe("syncLiveStreams tournament streamers", () => {
 			add(new Date("2025-01-15T12:00:00Z"), { minutes: timeOffset }),
 		);
 		timeOffset += 31;
-		await dbReset();
 		RunningTournaments.clear();
 		mockGetStreams.mockReset();
 	});

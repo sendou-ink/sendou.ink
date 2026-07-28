@@ -9,6 +9,7 @@ import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { FastParseJSONResultsPlugin } from "./parse-json-results-plugin";
 import type { DB } from "./tables";
+import { WriteTrackerPlugin } from "./write-tracker";
 
 const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
 
@@ -47,7 +48,7 @@ export const db = new Kysely<DB>({
 		database: sql,
 	}),
 	log,
-	plugins: [new FastParseJSONResultsPlugin()],
+	plugins: [new FastParseJSONResultsPlugin(), new WriteTrackerPlugin()],
 });
 
 /**

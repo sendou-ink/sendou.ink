@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
@@ -18,7 +18,6 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { dbReset } from "~/utils/Test";
 import * as LeaderboardRepository from "./LeaderboardRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "./leaderboards-constants";
 
@@ -125,10 +124,6 @@ describe("findSeasonPopularUsersWeapon", () => {
 	beforeEach(async () => {
 		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
 		[player, otherPlayer, ...groupFillers] = users;
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns user's most reported SendouQ weapon", async () => {

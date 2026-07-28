@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
-import { dbReset } from "~/utils/Test";
 import * as BadgeRepository from "./BadgeRepository.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 
@@ -16,10 +15,6 @@ describe("syncXPBadges", () => {
 			code: String(SPLATOON_3_XP_BADGE_VALUES[i]),
 			displayName: `${SPLATOON_3_XP_BADGE_VALUES[i]}+ XP`,
 		}));
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("assigns badge to user with qualifying peakXp", async () => {

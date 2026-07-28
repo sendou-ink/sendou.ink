@@ -4,7 +4,6 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { dbReset } from "~/utils/Test";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 
 let author: { id: number };
@@ -22,7 +21,6 @@ describe("NotifyCheckInStartRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
-		await dbReset();
 		clearAllTournamentDataCache();
 		[author, otherAuthor] = await UserFactory.createMany(2);
 		mockNotify.mockClear();

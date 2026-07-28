@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { dbReset, withUser } from "~/utils/Test";
+import { withUser } from "~/utils/Test";
 import * as PrivateUserNoteRepository from "./PrivateUserNoteRepository.server";
 
 const authorAndTarget = async () => {
@@ -16,10 +16,6 @@ const authorAndTarget = async () => {
 };
 
 describe("PrivateUserNoteRepository", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	describe("upsertOwnNote", () => {
 		test("stamps the acting user as the author", async () => {
 			const { author, targetId } = await authorAndTarget();

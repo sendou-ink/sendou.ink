@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset } from "~/utils/Test";
 import * as ApiRepository from "./ApiRepository.server";
 
 const users = UserFactory.pool();
@@ -8,10 +7,6 @@ const users = UserFactory.pool();
 describe("findTokenByUserId", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns undefined when user has no token", async () => {
@@ -66,10 +61,6 @@ describe("findTokenByUserId", () => {
 describe("generateToken", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("creates new token for user", async () => {
@@ -143,10 +134,6 @@ describe("generateToken", () => {
 describe("findAllApiTokens", () => {
 	beforeEach(async () => {
 		await users.create(1);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns empty array when no tokens exist", async () => {

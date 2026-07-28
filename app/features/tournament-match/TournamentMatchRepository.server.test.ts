@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
-import { dbReset } from "~/utils/Test";
 import * as TournamentMatchRepository from "./TournamentMatchRepository.server";
 
 const TEAMS_PER_POOL = 2;
@@ -32,10 +31,6 @@ const users = UserFactory.pool();
 describe("findByTournamentTeamId", () => {
 	beforeEach(async () => {
 		await users.create(TEAM_COUNT);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("preserves stage order: matches from an earlier stage come first even when later stage has lower group numbers", async () => {

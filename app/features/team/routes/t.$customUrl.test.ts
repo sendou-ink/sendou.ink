@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { assertResponseErrored, dbReset, wrappedAction } from "~/utils/Test";
+import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import * as TeamRepository from "../TeamRepository.server";
@@ -43,9 +43,6 @@ describe("Secondary teams", () => {
 	beforeEach(async () => {
 		await UserFactory.createAdmin();
 		await UserFactory.createRegular();
-	});
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	it("first team created becomes main team", async () => {
@@ -168,9 +165,6 @@ describe("Secondary teams", () => {
 describe("Secondary teams as patron", () => {
 	beforeEach(async () => {
 		await UserFactory.createRegular(null, { patronTier: 2 });
-	});
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	it("creates more than 2 teams as patron", async () => {

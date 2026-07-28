@@ -1,8 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as FriendRequestFactory from "~/db/seed/factories/FriendRequestFactory";
 import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as FriendRepository from "./FriendRepository.server";
 
 const users = UserFactory.pool();
@@ -15,10 +15,6 @@ const createUsers = (count: number) =>
 describe("insertFriendRequest / findFriendRequestBetween", () => {
 	beforeEach(async () => {
 		await createUsers(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("finds request from sender to receiver", async () => {
@@ -70,10 +66,6 @@ describe("findPendingSentRequests / findPendingReceivedRequests", () => {
 		await createUsers(3);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("sent request appears in sender's sent requests", async () => {
 		await FriendRequestFactory.create({
 			senderId: users.id(1),
@@ -121,10 +113,6 @@ describe("countPendingSentRequests", () => {
 		await createUsers(4);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("returns 0 with no requests", async () => {
 		const count = await FriendRepository.countPendingSentRequests(users.id(1));
 
@@ -146,10 +134,6 @@ describe("countPendingSentRequests", () => {
 describe("deleteFriendRequest", () => {
 	beforeEach(async () => {
 		await createUsers(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("deletes request by sender", async () => {
@@ -194,10 +178,6 @@ describe("deleteFriendRequestByReceiver", () => {
 		await createUsers(3);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("deletes request by receiver", async () => {
 		const request = await FriendRequestFactory.create({
 			senderId: users.id(1),
@@ -220,10 +200,6 @@ describe("deleteFriendRequestByReceiver", () => {
 describe("insertFriendship / findFriendship / findFriendIds", () => {
 	beforeEach(async () => {
 		await createUsers(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("creates friendship and removes friend request", async () => {
@@ -306,10 +282,6 @@ describe("deleteFriendship", () => {
 		await createUsers(3);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("removes friendship", async () => {
 		const friendship = await FriendshipFactory.create({
 			userOneId: users.id(1),
@@ -350,10 +322,6 @@ describe("findFriendRequestByIdAndReceiver", () => {
 		await createUsers(3);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("returns sender ID when request exists for receiver", async () => {
 		const request = await FriendRequestFactory.create({
 			senderId: users.id(1),
@@ -387,10 +355,6 @@ describe("findFriendRequestByIdAndReceiver", () => {
 describe("findMutualFriends", () => {
 	beforeEach(async () => {
 		await createUsers(4);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns mutual friend when two users share a common friend", async () => {
@@ -434,10 +398,6 @@ describe("findMutualFriends", () => {
 describe("findByUserIdWithActivity", () => {
 	beforeEach(async () => {
 		await createUsers(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns friends with friendshipId and createdAt", async () => {

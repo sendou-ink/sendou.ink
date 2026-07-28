@@ -4,7 +4,6 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import type { StageId } from "~/modules/in-game-lists/types";
-import { dbReset } from "~/utils/Test";
 import { SENDOUQ_BEST_OF } from "../q-constants";
 import {
 	clearCacheForTesting,
@@ -29,7 +28,6 @@ describe("getDefaultMapWeights()", () => {
 
 	afterEach(async () => {
 		vi.restoreAllMocks();
-		await dbReset();
 	});
 
 	test("returns empty map when no season is found", async () => {
@@ -377,8 +375,9 @@ async function createUsersWithPreferences({
 async function createUserWithPoollessPreferences(seasonNth: number) {
 	const user = await UserFactory.create();
 
-	// written directly because every write of the column since the map pool was
-	// added stores one, so only rows predating it can be missing it
+	// every write of the column since the map pool was added stores one, so only rows
+	// predating it can be missing it
+	// biome-ignore lint/plugin: no production write leaves out the pool
 	await db
 		.updateTable("User")
 		.set({ mapModePreferences: JSON.stringify({ modes: [] }) })

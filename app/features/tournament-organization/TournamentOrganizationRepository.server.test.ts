@@ -1,7 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset } from "~/utils/Test";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "./test-utils";
 
@@ -10,10 +9,6 @@ const users = UserFactory.pool();
 describe("findByUserId", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns organizations where user is a member", async () => {
@@ -78,10 +73,6 @@ describe("countActiveParticipants", () => {
 
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("counts distinct participants across the organization's events in the window", async () => {

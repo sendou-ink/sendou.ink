@@ -1,11 +1,10 @@
 import { add, sub } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { DuplicateEntryError } from "~/utils/errors";
-import { dbReset } from "~/utils/Test";
 import * as ScrimPostRepository from "./ScrimPostRepository.server";
 
 const users = UserFactory.pool();
@@ -22,10 +21,6 @@ const WINDOW = {
 describe("findPendingOverlapsForUsers", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns a specific-time pending post in window with its member ids", async () => {
@@ -201,10 +196,6 @@ describe("findUserScrims", () => {
 		await users.create(5);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("passed-over requester does not see the scrim booked between the post and another team", async () => {
 		await ScrimPostFactory.create(
 			{
@@ -263,10 +254,6 @@ describe("findUserScrims", () => {
 describe("insertRequest", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	const insertTeamRequest = ({

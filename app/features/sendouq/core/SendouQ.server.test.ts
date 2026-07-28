@@ -1,12 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { subSeconds } from "date-fns";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { backdate } from "~/db/seed/core/backdate";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { db } from "~/db/sql";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
-import { databaseTimestampNow } from "~/utils/dates";
-import { dbReset } from "~/utils/Test";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -49,6 +48,19 @@ const createGroup = async (
 	return groupResult.id;
 };
 
+/**
+ * Gives every group the same `latestActionAt`, so the sort comparator's recency
+ * tie-breaker stays neutral and the assertion does not depend on whether the group
+ * inserts straddle a second boundary (which they can on slow CI).
+ */
+const alignLatestActionAt = async (groupIds: number[]) => {
+	const at = new Date();
+
+	for (const groupId of groupIds) {
+		await backdate("Group", groupId, { latestActionAt: at });
+	}
+};
+
 const inviteCodeOf = (position: number) =>
 	SendouQ.findOwnGroup(users.id(position))!.inviteCode;
 
@@ -63,10 +75,6 @@ describe("SendouQ", () => {
 	describe("currentViewByUserId", () => {
 		beforeEach(async () => {
 			await users.create(8);
-		});
-
-		afterEach(async () => {
-			await dbReset();
 		});
 
 		test("returns 'default' when user not in any group", async () => {
@@ -115,10 +123,6 @@ describe("SendouQ", () => {
 	describe("findOwnGroup", () => {
 		beforeEach(async () => {
 			await users.create(8);
-		});
-
-		afterEach(async () => {
-			await dbReset();
 		});
 
 		test("returns group when user is a member", async () => {
@@ -181,10 +185,6 @@ describe("SendouQ", () => {
 			await users.create(4);
 		});
 
-		afterEach(async () => {
-			await dbReset();
-		});
-
 		test("returns group when invite code is valid", async () => {
 			await createGroup([1]);
 			await refreshSendouQInstance();
@@ -220,10 +220,6 @@ describe("SendouQ", () => {
 	describe("previewGroups", () => {
 		beforeEach(async () => {
 			await users.create(12);
-		});
-
-		afterEach(async () => {
-			await dbReset();
 		});
 
 		test("returns empty array when no groups exist", async () => {
@@ -324,15 +320,7 @@ describe("SendouQ", () => {
 
 				const group1Id = await createGroup([2, 3, 4, 5]);
 				const group2Id = await createGroup([6, 7, 8, 9]);
-				// Force identical latestActionAt so the sort comparator's
-				// recency tie-breaker stays neutral and the assertion does
-				// not depend on whether the group inserts straddle a
-				// millisecond boundary (which they can on slow CI).
-				await db
-					.updateTable("Group")
-					.set({ latestActionAt: databaseTimestampNow() })
-					.where("id", "in", [group1Id, group2Id])
-					.execute();
+				await alignLatestActionAt([group1Id, group2Id]);
 				await refreshSendouQInstance();
 
 				const groups = SendouQ.previewGroups(users.id(1));
@@ -351,15 +339,7 @@ describe("SendouQ", () => {
 				const g4Id = await createGroup([4]);
 				const g2Id = await createGroup([2]);
 				const g3Id = await createGroup([3]);
-				// Force identical latestActionAt so the sort comparator's
-				// recency tie-breaker stays neutral and the assertion does
-				// not depend on whether the group inserts straddle a
-				// millisecond boundary (which they can on slow CI).
-				await db
-					.updateTable("Group")
-					.set({ latestActionAt: databaseTimestampNow() })
-					.where("id", "in", [g4Id, g2Id, g3Id])
-					.execute();
+				await alignLatestActionAt([g4Id, g2Id, g3Id]);
 				await refreshSendouQInstance();
 
 				const groups = SendouQ.previewGroups(users.id(1));
@@ -408,10 +388,6 @@ describe("SendouQ", () => {
 		describe("filtering", () => {
 			beforeEach(async () => {
 				await users.create(20);
-			});
-
-			afterEach(async () => {
-				await dbReset();
 			});
 
 			test("returns empty array when user not in a group", async () => {
@@ -537,10 +513,6 @@ describe("SendouQ", () => {
 				await users.create(12);
 			});
 
-			afterEach(async () => {
-				await dbReset();
-			});
-
 			test("marks group as replay when 3+ members overlap", async () => {
 				await playOutMatchBetween([1, 2, 3, 4], [5, 6, 7, 8]);
 
@@ -606,10 +578,6 @@ describe("SendouQ", () => {
 				await users.create(12);
 			});
 
-			afterEach(async () => {
-				await dbReset();
-			});
-
 			test("full groups have members undefined", async () => {
 				await createGroup([1, 2, 3, 4]);
 				await createGroup([5, 6, 7, 8]);
@@ -654,24 +622,18 @@ describe("SendouQ", () => {
 				await users.create(10);
 			});
 
-			afterEach(async () => {
-				await dbReset();
-			});
-
 			test("groups with closer skill sorted first", async () => {
 				await createSkill(1, 1000);
 				await createSkill(2, 1050);
 				await createSkill(3, 500);
 				await createSkill(4, 2000);
 
-				await createGroup([1]);
-				await createGroup([2]);
-				await createGroup([3]);
-				await createGroup([4]);
-				await db
-					.updateTable("Group")
-					.set({ latestActionAt: databaseTimestampNow() })
-					.execute();
+				await alignLatestActionAt([
+					await createGroup([1]),
+					await createGroup([2]),
+					await createGroup([3]),
+					await createGroup([4]),
+				]);
 
 				await refreshSendouQInstance();
 
@@ -710,21 +672,15 @@ describe("SendouQ", () => {
 				await createSkill(3, 1000);
 
 				const group1Id = await createGroup([2]);
-				await new Promise((resolve) => setTimeout(resolve, 10));
 				const group2Id = await createGroup([3]);
 
-				const currentTimeInSeconds = Math.floor(Date.now() / 1000);
-				await db
-					.updateTable("Group")
-					.set({ latestActionAt: currentTimeInSeconds - 100 })
-					.where("id", "=", group1Id)
-					.execute();
-
-				await db
-					.updateTable("Group")
-					.set({ latestActionAt: currentTimeInSeconds - 50 })
-					.where("id", "=", group2Id)
-					.execute();
+				const now = new Date();
+				await backdate("Group", group1Id, {
+					latestActionAt: subSeconds(now, 100),
+				});
+				await backdate("Group", group2Id, {
+					latestActionAt: subSeconds(now, 50),
+				});
 
 				await createGroup([1]);
 				await refreshSendouQInstance();

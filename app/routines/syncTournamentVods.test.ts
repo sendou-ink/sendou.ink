@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentStreamerFactory from "~/db/seed/factories/TournamentStreamerFactory";
@@ -7,7 +7,6 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { dbReset } from "~/utils/Test";
 
 const { mockGetUsersByLogin, mockGetArchiveVideos } = vi.hoisted(() => ({
 	mockGetUsersByLogin: vi.fn(),
@@ -50,14 +49,9 @@ let teams: Array<{ id: number; ownerUserId: number }>;
 
 describe("syncTournamentVods", () => {
 	beforeEach(async () => {
-		await dbReset();
 		mockGetUsersByLogin.mockReset();
 		mockGetArchiveVideos.mockReset();
 		await users.create(TEAM_COUNT);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("player streamer gets VODs only for matches they participated in", async () => {
@@ -224,7 +218,9 @@ describe("syncTournamentVods", () => {
 		await seedTournamentWithMatches();
 		await seedStreamer("player_stream", playerOf(firstMatch.winnerTeamId));
 
-		// clear startedAt on all matches
+		// clear startedAt on all matches: a played match that was never started is a
+		// state no production write leaves behind
+		// biome-ignore lint/plugin: written rather than seeded, see above
 		await db.updateTable("TournamentMatch").set({ startedAt: null }).execute();
 
 		await runProcessOneTournament();

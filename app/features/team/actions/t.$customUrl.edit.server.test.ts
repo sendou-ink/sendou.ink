@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
@@ -7,7 +7,7 @@ import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import invariant from "~/utils/invariant";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
-import { dbReset, wrappedAction } from "~/utils/Test";
+import { wrappedAction } from "~/utils/Test";
 import type { editTeamActionSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
 
@@ -52,9 +52,6 @@ describe("team page editing", () => {
 			name: "Team 1",
 			ownerUserId: REGULAR_USER_TEST_ID,
 		});
-	});
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	it("sets a custom theme via UPDATE_CUSTOM_THEME", async () => {

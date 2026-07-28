@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { dbReset } from "~/utils/Test";
 import type { TournamentSummary } from "../tournament-bracket/core/summarizer.server";
 import * as TournamentRepository from "./TournamentRepository.server";
 
@@ -41,9 +40,6 @@ describe("TournamentRepository.finalize", () => {
 	beforeEach(async () => {
 		// four users so that the "1-2-3-4" team identifier the tests use names real ones
 		[player] = await UserFactory.createMany(4);
-	});
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("matchesCount on a new season's Skill row does not include prior seasons", async () => {

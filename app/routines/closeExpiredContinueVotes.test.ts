@@ -14,7 +14,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 
 let alphaUserIds: number[];
@@ -64,7 +64,6 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
-		await dbReset();
 
 		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
 		alphaUserIds = users.slice(0, FULL_GROUP_SIZE).map((user) => user.id);

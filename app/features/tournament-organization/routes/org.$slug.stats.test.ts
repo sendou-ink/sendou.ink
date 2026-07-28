@@ -3,7 +3,7 @@ import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOr
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
-import { dbReset, wrappedLoader } from "~/utils/Test";
+import { wrappedLoader } from "~/utils/Test";
 import { loader } from "../loaders/org.$slug.stats.server";
 import { seedOrgEventWithParticipants } from "../test-utils";
 import { ESTABLISHED_ORG } from "../tournament-organization-constants";
@@ -24,7 +24,6 @@ describe("org stats loader", () => {
 
 	afterEach(async () => {
 		vi.useRealTimers();
-		await dbReset();
 	});
 
 	test("throws when the user is not an org admin", async () => {

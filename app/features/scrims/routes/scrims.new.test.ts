@@ -1,8 +1,8 @@
 import { add } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { SerializeFrom } from "~/utils/remix";
-import { dbReset, wrappedAction, wrappedLoader } from "~/utils/Test";
+import { wrappedAction, wrappedLoader } from "~/utils/Test";
 import { action } from "../actions/scrims.new.server";
 import { loader } from "../loaders/scrims.server";
 import type { scrimsNewFormSchema } from "../scrims-schemas";
@@ -40,10 +40,6 @@ describe("New scrim post action", () => {
 	beforeEach(async () => {
 		await UserFactory.createRegular();
 		pickupMembers = await UserFactory.createMany(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("scrim post made for now has isScheduledForFuture = false", async () => {

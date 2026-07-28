@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { TournamentAuditLogMetadata } from "~/db/tables-json";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
@@ -53,10 +53,6 @@ const insertEvent = ({
 describe("TournamentAuditLogRepository", () => {
 	beforeEach(async () => {
 		[actor, subject] = await UserFactory.createMany(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("insert creates a stable history row from the live team", async () => {

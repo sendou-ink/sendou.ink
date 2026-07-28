@@ -9,12 +9,7 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import {
-	assertResponseErrored,
-	dbReset,
-	withUserId,
-	wrappedAction,
-} from "~/utils/Test";
+import { assertResponseErrored, withUserId, wrappedAction } from "~/utils/Test";
 import type { adminActionSchema } from "../actions/admin.server";
 import { action } from "./admin";
 
@@ -43,6 +38,17 @@ const createLeaderboard = (userIds: number[]) =>
 		{ matchesCount: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD },
 	);
 
+/** Marks a user as skipping the plus server for the given season. */
+const skipPlusForSeason = (userId: number, seasonNth: number) =>
+	// the app only ever reads the column; the one thing that sets it is
+	// `scripts/skip-plus.ts`, itself a raw update with no repository function behind it
+	// biome-ignore lint/plugin: no production write reaches the column
+	db
+		.updateTable("User")
+		.set({ plusSkippedForSeasonNth: seasonNth })
+		.where("User.id", "=", userId)
+		.execute();
+
 describe("Plus voting", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
@@ -50,7 +56,6 @@ describe("Plus voting", () => {
 
 	afterEach(async () => {
 		vi.useRealTimers();
-		await dbReset();
 	});
 
 	test("gives correct amount of plus tiers", async () => {
@@ -141,11 +146,7 @@ describe("Plus voting", () => {
 		await createUsers(11);
 		await createLeaderboard(users.ids());
 
-		await db
-			.updateTable("User")
-			.set({ plusSkippedForSeasonNth: 1 })
-			.where("User.id", "=", users.id(1))
-			.execute();
+		await skipPlusForSeason(users.id(1), 1);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -159,11 +160,7 @@ describe("Plus voting", () => {
 		await createUsers(11);
 		await createLeaderboard(users.ids());
 
-		await db
-			.updateTable("User")
-			.set({ plusSkippedForSeasonNth: 0 })
-			.where("User.id", "=", users.id(1))
-			.execute();
+		await skipPlusForSeason(users.id(1), 0);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -272,10 +269,6 @@ const migrateUserAction = () =>
 describe("Account migration", () => {
 	beforeEach(async () => {
 		await createUsers(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	it("migrates a blank account", async () => {

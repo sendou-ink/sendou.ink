@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
@@ -7,7 +7,6 @@ import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import { dbReset } from "~/utils/Test";
 import * as BuildRepository from "./BuildRepository.server";
 
 let owner: { id: number };
@@ -99,10 +98,6 @@ const buildWeaponAbilitiesByBuildId = (buildId: number) =>
 describe("BuildRepository.insert — computeBuildData", () => {
 	beforeEach(async () => {
 		[owner, otherOwner] = await UserFactory.createMany(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	describe("abilitiesSignature & ability sums", () => {
@@ -305,10 +300,6 @@ describe("BuildRepository.findAllPopularAbilitiesByWeaponId", () => {
 
 	beforeEach(async () => {
 		[owner, otherOwner] = await UserFactory.createMany(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("counts each user at most once across signature buckets", async () => {

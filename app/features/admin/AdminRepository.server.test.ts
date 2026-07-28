@@ -1,7 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { dbReset } from "~/utils/Test";
 import * as AdminRepository from "./AdminRepository.server";
 
 const users = UserFactory.pool();
@@ -14,10 +13,6 @@ const createUsers = (count: number) =>
 describe("findAllBannedUsers", () => {
 	beforeEach(async () => {
 		await createUsers(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns empty Map when no users are banned", async () => {
@@ -107,10 +102,6 @@ describe("findAllBannedUsers", () => {
 describe("banUser", () => {
 	beforeEach(async () => {
 		await createUsers(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("permanently bans user (banned = 1)", async () => {
@@ -222,10 +213,6 @@ describe("banUser", () => {
 describe("unbanUser", () => {
 	beforeEach(async () => {
 		await createUsers(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("unbans a previously banned user", async () => {

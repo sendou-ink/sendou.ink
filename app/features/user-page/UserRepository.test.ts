@@ -1,13 +1,8 @@
-import { afterEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset } from "~/utils/Test";
 import * as UserRepository from "./UserRepository.server";
 
 describe("UserRepository", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("created user has createdAt field", async () => {
 		await UserRepository.upsert({
 			discordId: "1",

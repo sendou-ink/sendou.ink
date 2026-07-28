@@ -71,5 +71,11 @@
 		"parser": {
 			"cssModules": true
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.test.ts", "**/*.test.tsx"],
+			"plugins": ["./biome-plugins/no-raw-db-writes-in-tests.grit"]
+		}
+	]
 }

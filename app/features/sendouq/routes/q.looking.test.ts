@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
@@ -14,7 +14,7 @@ import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
-import { dbReset, withUserId, wrappedAction } from "~/utils/Test";
+import { withUserId, wrappedAction } from "~/utils/Test";
 import { refreshSendouQInstance } from "../core/SendouQ.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { lookingSchema } from "../q-schemas.server";
@@ -101,10 +101,6 @@ describe("SendouQ match creation", () => {
 	beforeEach(async () => {
 		groups = await prepareGroups();
 		await refreshSendouQInstance();
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("adds pools to memento", async () => {

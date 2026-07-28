@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
 
 const createGroup = async () => {
@@ -20,10 +20,6 @@ const castVote = (userId: number, groupId: number, isContinuing: boolean) =>
 	);
 
 describe("findAllByGroupIds", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("returns empty array without querying when no group ids given", async () => {
 		const result = await GroupMatchContinueVoteRepository.findAllByGroupIds([]);
 		expect(result).toEqual([]);
@@ -53,10 +49,6 @@ describe("findAllByGroupIds", () => {
 });
 
 describe("cast", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("updates existing vote on conflict instead of inserting a duplicate", async () => {
 		const voter = await UserFactory.create();
 		const groupId = await createGroup();

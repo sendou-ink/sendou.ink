@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset } from "~/utils/Test";
 import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { clearSentNotificationsForTesting, notify } from "./notify.server";
@@ -25,10 +24,6 @@ describe("notify()", () => {
 	beforeEach(async () => {
 		await users.create(20);
 		clearSentNotificationsForTesting();
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("different recipients receive same notification", async () => {
@@ -256,10 +251,6 @@ describe("notify() - web push notifications", () => {
 		clearSentNotificationsForTesting();
 		mockSendNotification.mockClear();
 		mockWebPushEnabled.value = false;
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("sends web push notification when user has subscription", async () => {

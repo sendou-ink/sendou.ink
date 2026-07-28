@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as TournamentLFGRepository from "./TournamentLFGRepository.server";
 
 const users = UserFactory.pool();
@@ -27,10 +27,6 @@ const createRegisteredTeam = (
 describe("insertPlaceholderTeam", () => {
 	beforeEach(async () => {
 		await users.create(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("creates a placeholder team with owner member", async () => {
@@ -61,10 +57,6 @@ describe("insertPlaceholderTeam", () => {
 describe("findLookingTeamsByTournamentId", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns looking teams for given tournament", async () => {
@@ -120,10 +112,6 @@ describe("findLookingTeamsByTournamentId", () => {
 describe("insertLike / deleteLike", () => {
 	beforeEach(async () => {
 		await users.create(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("adds a like between two teams", async () => {
@@ -186,10 +174,6 @@ describe("findAllLikesByTeamId", () => {
 		await users.create(3);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("separates likes into given and received", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
@@ -227,10 +211,6 @@ describe("findAllLikesByTeamId", () => {
 describe("startLooking", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("generates chatCode for a 2+ member team", async () => {
@@ -278,6 +258,9 @@ describe("startLooking", () => {
 			users.id(1),
 			users.id(2),
 		]);
+		// the only production write of the column is `startLooking` itself, which
+		// invents a random code
+		// biome-ignore lint/plugin: no production write sets a known chatCode
 		await db
 			.updateTable("TournamentTeam")
 			.set({ chatCode: "existing-code" })
@@ -293,10 +276,6 @@ describe("startLooking", () => {
 describe("mergeTeams", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("merges two teams, other team is deleted", async () => {
@@ -403,6 +382,7 @@ describe("mergeTeams", () => {
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
+		// biome-ignore lint/plugin: as above, a known chatCode has no production write
 		await db
 			.updateTable("TournamentTeam")
 			.set({ chatCode: "other-code" })
@@ -450,7 +430,9 @@ describe("mergeTeams", () => {
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		// user 2 was looking before user 1 i.e. has an older createdAt
+		// user 2 was looking before user 1 i.e. has an older createdAt. The column
+		// defaults in SQL, and the table has no id of its own for `backdate` to key on
+		// biome-ignore lint/plugin: no production write sets the timestamp
 		await db
 			.updateTable("TournamentTeamMember")
 			.set({ createdAt: 1000 })
@@ -478,10 +460,6 @@ describe("mergeTeams", () => {
 describe("updateTeamNote", () => {
 	beforeEach(async () => {
 		await users.create(1);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("sets and clears a team note", async () => {
@@ -513,10 +491,6 @@ describe("updateTeamNote", () => {
 describe("updateMemberRole", () => {
 	beforeEach(async () => {
 		await users.create(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("changes role from REGULAR to MANAGER", async () => {
@@ -559,10 +533,6 @@ describe("updateStayAsSub", () => {
 		await users.create(1);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("toggles isStayAsSub on/off", async () => {
 		const tournament = await createTournament();
 		const team = await createPlaceholder(tournament.id, users.id(1));
@@ -596,10 +566,6 @@ describe("updateStayAsSub", () => {
 describe("leaveLfg", () => {
 	beforeEach(async () => {
 		await users.create(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("deletes placeholder team when last member leaves", async () => {
@@ -648,10 +614,6 @@ describe("leaveLfg", () => {
 describe("findAllSubsByTournamentId", () => {
 	beforeEach(async () => {
 		await users.create(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns userIds with isStayAsSub", async () => {

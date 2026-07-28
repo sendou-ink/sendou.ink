@@ -1,7 +1,7 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { UserMapModePreferences } from "~/db/tables-json";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as MatchProfileRepository from "./MatchProfileRepository.server";
 
 let userId: number;
@@ -38,10 +38,6 @@ describe("updateOwnMatchProfile", () => {
 			matchProfile: { mapModePreferences: PREFERENCES, noScreen: 0 },
 		});
 		userId = user.id;
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("reports no change when nothing matchmaking-relevant changed", async () => {

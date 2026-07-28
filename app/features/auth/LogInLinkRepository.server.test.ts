@@ -1,6 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset } from "~/utils/Test";
 import * as LogInLinkRepository from "./LogInLinkRepository.server";
 
 describe("create", () => {
@@ -8,10 +7,6 @@ describe("create", () => {
 
 	beforeEach(async () => {
 		userId = (await UserFactory.create()).id;
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("creates a login link with correct userId", async () => {
@@ -35,10 +30,6 @@ describe("del", () => {
 		userId = (await UserFactory.create()).id;
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("deletes a login link by code", async () => {
 		const link = await LogInLinkRepository.insert(userId);
 
@@ -54,10 +45,6 @@ describe("findValidByCode", () => {
 
 	beforeEach(async () => {
 		userId = (await UserFactory.create()).id;
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns userId for valid code", async () => {

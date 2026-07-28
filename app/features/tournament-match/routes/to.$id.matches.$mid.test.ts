@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
@@ -16,7 +16,6 @@ import type { matchSchema } from "~/features/tournament-bracket/tournament-brack
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
-	dbReset,
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
@@ -102,10 +101,6 @@ describe("Tournament match page", () => {
 		await createTeam(tournament.id, [1, 2, 3, 4, 5, 6]);
 		await createTeam(tournament.id, [7, 8, 9, 10]);
 		await TournamentFactory.startBracket(tournament.id);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	describe("results", () => {
@@ -244,9 +239,9 @@ describe("Tournament match page", () => {
 	describe("locked match", () => {
 		it("should return error when reporting score for a match waiting on previous matches", async () => {
 			await setActiveRosterAction();
-			// written directly rather than seeded: the state under test is one an
-			// earlier match of a larger bracket puts this row in, not one the match
-			// was created in
+			// the state under test is one an earlier match of a larger bracket puts this
+			// row in, not one the match was created in
+			// biome-ignore lint/plugin: written rather than seeded, see above
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentOne: JSON.stringify({ id: null }) })
@@ -263,6 +258,7 @@ describe("Tournament match page", () => {
 		// as above: a BYE and a TBD opponent are states the surrounding bracket
 		// produces, so they are written here rather than seeded
 		it("should 404 when accessing a BYE match", async () => {
+			// biome-ignore lint/plugin: as above
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentTwo: null })
@@ -273,6 +269,7 @@ describe("Tournament match page", () => {
 		});
 
 		it("should not 404 when an opponent is a TBD placeholder waiting for an earlier match", async () => {
+			// biome-ignore lint/plugin: as above
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentTwo: JSON.stringify({ id: null }) })

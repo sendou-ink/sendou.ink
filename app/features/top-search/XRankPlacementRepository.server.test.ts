@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { dbReset } from "~/utils/Test";
 import * as XRankPlacementRepository from "./XRankPlacementRepository.server";
 
 const SPLATTERSHOT: MainWeaponId = 40;
@@ -22,14 +21,6 @@ const findTenStarWeapons = () =>
 	db.selectFrom("TenStarWeapon").selectAll().execute();
 
 describe("refreshAllPeakXp", () => {
-	beforeEach(async () => {
-		await dbReset();
-	});
-
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("sets peakXp to max power for each player", async () => {
 		for (const power of [2500, 2700, 2600]) {
 			await XRankPlacementFactory.create({ playerSplId: "player-1", power });
@@ -93,12 +84,7 @@ describe("refreshTenStarWeapons", () => {
 	let user: { id: number };
 
 	beforeEach(async () => {
-		await dbReset();
 		user = await UserFactory.create();
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("JPN placement qualifies regardless of rank", async () => {
@@ -192,14 +178,6 @@ describe("refreshTenStarWeapons", () => {
 });
 
 describe("refreshTenStarWeapons with userId", () => {
-	beforeEach(async () => {
-		await dbReset();
-	});
-
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("only affects the target user", async () => {
 		const [user1, user2] = await UserFactory.createMany(2);
 

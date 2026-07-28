@@ -1,7 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as VodFactory from "~/db/seed/factories/VodFactory";
-import { dbReset } from "~/utils/Test";
 import * as VodRepository from "./VodRepository.server";
 
 const users = UserFactory.pool();
@@ -9,10 +8,6 @@ const users = UserFactory.pool();
 describe("findByUserId", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("returns vods for a specific user", async () => {
@@ -60,10 +55,6 @@ describe("findByUserId", () => {
 describe("findVods", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("filters by weapon", async () => {
@@ -140,10 +131,6 @@ describe("findVodById", () => {
 		await users.create(5);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("returns null when vod doesn't exist", async () => {
 		const result = await VodRepository.findVodById(999);
 
@@ -179,10 +166,6 @@ describe("findVodById", () => {
 describe("insert", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("inserts vod with all metadata", async () => {
@@ -301,10 +284,6 @@ describe("update", () => {
 		await users.create(5);
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("updates vod metadata", async () => {
 		const vod = await VodFactory.create({
 			submitterUserId: users.id(1),
@@ -383,10 +362,6 @@ describe("update", () => {
 describe("deleteById", () => {
 	beforeEach(async () => {
 		await users.create(5);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("deletes vod by id", async () => {

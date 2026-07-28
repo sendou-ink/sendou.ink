@@ -10,6 +10,7 @@ import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { actAs } from "~/db/seed/core/actAs";
 import { resetFactories } from "~/db/seed/core/defineFactory";
 import { db } from "~/db/sql";
+import { markDatabaseClean } from "~/db/write-tracker";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
@@ -209,20 +210,9 @@ async function authHeader(
  * Resets all data in the database by deleting all rows from every table,
  * except for SQLite system tables and the 'migrations' table.
  *
- * @example
- * describe("My integration test", () => {
- *   beforeEach(async () => {
- *     await UserFactory.createMany(2);
- *   });
- *
- *   afterEach(async () => {
- *     await dbReset();
- *   });
- *
- *   // tests go here
- * });
+ * Tests do not call this — `app/test-setup.ts` runs it after every test that wrote
+ * anything. Call it by hand only to wipe *within* a test.
  */
-// xxx: make it automatic
 export const dbReset = async () => {
 	// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
 	// deleted from directly; the fts index stays in sync via the User triggers
@@ -246,4 +236,6 @@ export const dbReset = async () => {
 	await sql`PRAGMA foreign_keys = ON`.execute(db);
 
 	resetFactories();
+	// last, because the deletes above are themselves writes
+	markDatabaseClean();
 };

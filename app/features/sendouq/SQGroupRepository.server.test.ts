@@ -1,9 +1,9 @@
-import { afterEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
-import { dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import * as SQGroupRepository from "./SQGroupRepository.server";
 
@@ -48,10 +48,6 @@ const castYesVote = (userId: number, groupId: number) =>
 	);
 
 describe("insert", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("records implicit no-vote on previous matchmade group when user creates a new group", async () => {
 		const { alphaGroupId, alphaMembers, matchChatCode } =
 			await setupConcludedMatch();
@@ -123,10 +119,6 @@ describe("insert", () => {
 });
 
 describe("insertMember", () => {
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("records implicit no-vote on previous matchmade group when user joins another group", async () => {
 		const { alphaGroupId, alphaMembers, matchChatCode } =
 			await setupConcludedMatch();

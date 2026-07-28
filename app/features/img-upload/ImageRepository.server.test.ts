@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as ArtFactory from "~/db/seed/factories/ArtFactory";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dbReset } from "~/utils/Test";
 import * as ArtRepository from "../art/ArtRepository.server";
 import * as ImageRepository from "./ImageRepository.server";
 
@@ -17,10 +16,6 @@ const createUnvalidatedArt = (authorId: number) =>
 describe("findById", () => {
 	beforeEach(async () => {
 		submitter = await UserFactory.create();
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("finds image by id", async () => {
@@ -57,10 +52,6 @@ describe("deleteById", () => {
 		submitter = await UserFactory.create();
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("deletes image by id", async () => {
 		const img = await ImageFactory.create({ submitterUserId: submitter.id });
 
@@ -92,10 +83,6 @@ describe("countUnvalidatedArt", () => {
 		submitter = await UserFactory.create();
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("counts unvalidated art by author", async () => {
 		await createUnvalidatedArt(submitter.id);
 		await createUnvalidatedArt(submitter.id);
@@ -124,10 +111,6 @@ describe("countUnvalidatedArt", () => {
 describe("countAllUnvalidated", () => {
 	beforeEach(async () => {
 		submitter = await UserFactory.create();
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("counts unvalidated images used in art", async () => {
@@ -182,10 +165,6 @@ describe("countAllUnvalidated", () => {
 describe("countUnvalidatedBySubmitterUserId", () => {
 	beforeEach(async () => {
 		[submitter, otherSubmitter] = await UserFactory.createMany(2);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("counts unvalidated images connected to art by submitter", async () => {
@@ -244,10 +223,6 @@ describe("validateById", () => {
 		submitter = await UserFactory.create();
 	});
 
-	afterEach(async () => {
-		await dbReset();
-	});
-
 	test("marks image as validated", async () => {
 		const img = await ImageFactory.create({ submitterUserId: submitter.id });
 
@@ -276,10 +251,6 @@ describe("findAllUnvalidated", () => {
 			3,
 			(index) => ({ discordName: `user${index + 1}` }),
 		);
-	});
-
-	afterEach(async () => {
-		await dbReset();
 	});
 
 	test("fetches unvalidated images with submitter info", async () => {
