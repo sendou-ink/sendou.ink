@@ -61,13 +61,15 @@ test.describe("Art", () => {
 		await navigate({ page, url: "/u/nzap/art" });
 
 		const form = createFormHelpers(page, artFormSchema);
-		const editNewestArt = () =>
-			page.locator('a[href^="/art/new?art="]').first().click();
 
-		await editNewestArt();
+		await page.locator('a[href^="/art/new?art="]').first().click();
+		await expect(page).toHaveURL(/\/art\/new\?art=\d+/);
+		const artId = new URL(page.url()).searchParams.get("art");
 
 		// the already uploaded image is shown but can't be swapped
-		await expect(page.locator('form img[src*="-small."]')).toBeVisible();
+		// only rendering is asserted as seeded art images are not available
+		// in every environment
+		await expect(page.locator('form img[src*="-small."]')).toBeAttached();
 		await expect(page.locator('input[type="file"]')).toHaveCount(0);
 
 		await form.fill("description", "Squid drawing");
@@ -75,7 +77,7 @@ test.describe("Art", () => {
 
 		await expect(page).toHaveURL(/\/u\/.*\/art/);
 
-		await editNewestArt();
+		await page.locator(`a[href="/art/new?art=${artId}"]`).click();
 
 		await expect(page.getByLabel(form.getLabel("description"))).toHaveValue(
 			"Squid drawing",
