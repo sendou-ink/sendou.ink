@@ -12,7 +12,6 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
-import { dbStartTournament } from "~/features/tournament/tournament-test-utils";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
@@ -100,9 +99,9 @@ describe("Tournament match page", () => {
 	beforeEach(async () => {
 		await UserFactory.createMany(10);
 		const tournament = await TournamentFactory.create({ authorId: 1 });
-		const teamOne = await createTeam(tournament.id, [1, 2, 3, 4, 5, 6]);
-		const teamTwo = await createTeam(tournament.id, [7, 8, 9, 10]);
-		await dbStartTournament([teamOne.id, teamTwo.id], tournament.id);
+		await createTeam(tournament.id, [1, 2, 3, 4, 5, 6]);
+		await createTeam(tournament.id, [7, 8, 9, 10]);
+		await TournamentFactory.startBracket(tournament.id);
 	});
 
 	afterEach(async () => {
@@ -226,8 +225,8 @@ describe("Tournament match page", () => {
 		it("should not require setting active roster if both teams have no subs", async () => {
 			const tournament = await TournamentFactory.create({ authorId: 1 });
 			const teamOne = await createTeam(tournament.id, [1, 2, 3, 4]);
-			const teamTwo = await createTeam(tournament.id, [5, 6, 7, 8]);
-			await dbStartTournament([teamOne.id, teamTwo.id], tournament.id);
+			await createTeam(tournament.id, [5, 6, 7, 8]);
+			await TournamentFactory.startBracket(tournament.id);
 
 			const res = await reportScoreAction({
 				position: 0,
@@ -245,6 +244,9 @@ describe("Tournament match page", () => {
 	describe("locked match", () => {
 		it("should return error when reporting score for a match waiting on previous matches", async () => {
 			await setActiveRosterAction();
+			// written directly rather than seeded: the state under test is one an
+			// earlier match of a larger bracket puts this row in, not one the match
+			// was created in
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentOne: JSON.stringify({ id: null }) })
@@ -258,6 +260,8 @@ describe("Tournament match page", () => {
 	});
 
 	describe("BYE matches", () => {
+		// as above: a BYE and a TBD opponent are states the surrounding bracket
+		// produces, so they are written here rather than seeded
 		it("should 404 when accessing a BYE match", async () => {
 			await db
 				.updateTable("TournamentMatch")

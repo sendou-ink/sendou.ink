@@ -15,7 +15,7 @@ type Options = {
  * registered; the members named by `additionalMemberUserIds` are added to it the
  * way they are in production. Invite code and in-game names are the repository's own.
  */
-export const { create } = defineFactory({
+export const { create, createMany } = defineFactory({
 	defaults: () => ({
 		team: {
 			name: faker.company.name(),

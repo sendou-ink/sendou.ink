@@ -1,8 +1,21 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	removeRoom: vi.fn(),
+	setMetadata: vi.fn(),
+}));
+
+import { backdate } from "~/db/seed/core/backdate";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
+import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentReportedWeaponFactory from "~/db/seed/factories/TournamentReportedWeaponFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { dbReset } from "~/utils/Test";
@@ -12,37 +25,39 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "./leaderboards-constants";
 const SEASON = Seasons.currentOrPrevious()!.nth;
 const SEASON_RANGE = Seasons.nthToDateRange(SEASON);
 const OVER_THRESHOLD = MATCHES_COUNT_NEEDED_FOR_LEADERBOARD + 1;
-const IN_SEASON_TIMESTAMP = dateToDatabaseTimestamp(SEASON_RANGE.starts);
-const OUT_OF_SEASON_TIMESTAMP = dateToDatabaseTimestamp(
-	new Date(SEASON_RANGE.starts.getTime() - 60 * 1000),
-);
+const IN_SEASON = SEASON_RANGE.starts;
+const OUT_OF_SEASON = new Date(SEASON_RANGE.starts.getTime() - 60 * 1000);
 
-const createGroup = () =>
-	db
-		.insertInto("Group")
-		.values({
-			status: "INACTIVE",
-			inviteCode: "test-invite-code",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+let player: { id: number };
+let otherPlayer: { id: number };
+/** The other players of the SendouQ groups the two report their weapons in. */
+let groupFillers: Array<{ id: number }>;
 
-const createGroupMatch = async (createdAt: number) => {
-	const alphaGroup = await createGroup();
-	const bravoGroup = await createGroup();
+const createSendouqMatch = async (createdAt: Date) => {
+	const alpha = await createGroup([
+		player,
+		otherPlayer,
+		...groupFillers.slice(0, 2),
+	]);
+	const bravo = await createGroup(groupFillers.slice(2));
 
-	return db
-		.insertInto("GroupMatch")
-		.values({
-			alphaGroupId: alphaGroup.id,
-			bravoGroupId: bravoGroup.id,
-			chatCode: "test-chat-code",
-			createdAt,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	// played out so that the groups go inactive and the same users can queue again
+	const match = await SQMatchFactory.create(
+		{ alphaGroupId: alpha.id, bravoGroupId: bravo.id },
+		{ isConcluded: true },
+	);
+	await backdate("GroupMatch", match.id, { createdAt });
+
+	return match;
 };
 
+const createGroup = ([owner, ...members]: Array<{ id: number }>) =>
+	SQGroupFactory.create({
+		userId: owner.id,
+		additionalMemberUserIds: members.map((member) => member.id),
+	});
+
+/** A played tournament match, its two teams being the reporter and somebody else. */
 const createTournamentMatch = async ({
 	authorId,
 	isFinalized,
@@ -51,74 +66,38 @@ const createTournamentMatch = async ({
 	isFinalized: boolean;
 }) => {
 	const tournament = await TournamentFactory.create(
-		{ authorId },
+		{ authorId, minMembersPerTeam: 1 },
 		{ isFinalized },
 	);
-
-	const stage = await db
-		.insertInto("TournamentStage")
-		.values({
+	await TournamentTeamFactory.createMany(
+		2,
+		(index) => ({
 			tournamentId: tournament.id,
-			name: "Main bracket",
-			number: 1,
-			type: "double_elimination",
-			settings: "{}",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+			userId: index === 0 ? authorId : groupFillers[index].id,
+		}),
+		{ isCheckedIn: true },
+	);
+	await TournamentFactory.startBracket(tournament.id);
 
-	const group = await db
-		.insertInto("TournamentGroup")
-		.values({ stageId: stage.id, number: 1 })
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	const [match] = await TournamentFactory.playMatches(tournament.id);
 
-	const round = await db
-		.insertInto("TournamentRound")
-		.values({
-			stageId: stage.id,
-			groupId: group.id,
-			number: 1,
-			maps: JSON.stringify({ count: 3, type: "BEST_OF" }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	return db
-		.insertInto("TournamentMatch")
-		.values({
-			stageId: stage.id,
-			groupId: group.id,
-			roundId: round.id,
-			number: 1,
-			opponentOne: JSON.stringify({ id: null }),
-			opponentTwo: JSON.stringify({ id: null }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	return match;
 };
 
 const reportSendouqWeapons = async (args: {
 	userId: number;
 	weaponSplId: MainWeaponId;
 	count: number;
-	matchCreatedAt?: number;
+	matchCreatedAt?: Date;
 }) => {
-	const match = await createGroupMatch(
-		args.matchCreatedAt ?? IN_SEASON_TIMESTAMP,
-	);
+	const match = await createSendouqMatch(args.matchCreatedAt ?? IN_SEASON);
 
-	await db
-		.insertInto("ReportedWeapon")
-		.values(
-			Array.from({ length: args.count }, (_, mapIndex) => ({
-				groupMatchId: match.id,
-				mapIndex,
-				userId: args.userId,
-				weaponSplId: args.weaponSplId,
-			})),
-		)
-		.execute();
+	await SQReportedWeaponFactory.createMany(args.count, (mapIndex) => ({
+		groupMatchId: match.id,
+		mapIndex,
+		userId: args.userId,
+		weaponSplId: args.weaponSplId,
+	}));
 };
 
 const reportTournamentWeapons = async (args: {
@@ -126,33 +105,26 @@ const reportTournamentWeapons = async (args: {
 	weaponSplId: MainWeaponId;
 	count: number;
 	isFinalized?: boolean;
-	createdAt?: number;
+	createdAt?: Date;
 }) => {
 	const match = await createTournamentMatch({
 		authorId: args.userId,
 		isFinalized: args.isFinalized ?? true,
 	});
 
-	await db
-		.insertInto("ReportedWeapon")
-		.values(
-			Array.from({ length: args.count }, (_, mapIndex) => ({
-				tournamentMatchId: match.id,
-				mapIndex,
-				userId: args.userId,
-				weaponSplId: args.weaponSplId,
-				createdAt: args.createdAt ?? IN_SEASON_TIMESTAMP,
-			})),
-		)
-		.execute();
+	await TournamentReportedWeaponFactory.createMany(args.count, (mapIndex) => ({
+		tournamentMatchId: match.id,
+		mapIndex,
+		userId: args.userId,
+		weaponSplId: args.weaponSplId,
+		createdAt: dateToDatabaseTimestamp(args.createdAt ?? IN_SEASON),
+	}));
 };
 
 describe("findSeasonPopularUsersWeapon", () => {
-	let player: { id: number };
-	let otherPlayer: { id: number };
-
 	beforeEach(async () => {
-		[player, otherPlayer] = await UserFactory.createMany(2);
+		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
+		[player, otherPlayer, ...groupFillers] = users;
 	});
 
 	afterEach(async () => {
@@ -278,13 +250,13 @@ describe("findSeasonPopularUsersWeapon", () => {
 			userId: player.id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD,
-			matchCreatedAt: OUT_OF_SEASON_TIMESTAMP,
+			matchCreatedAt: OUT_OF_SEASON,
 		});
 		await reportTournamentWeapons({
 			userId: otherPlayer.id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
-			createdAt: OUT_OF_SEASON_TIMESTAMP,
+			createdAt: OUT_OF_SEASON,
 		});
 
 		const result =
