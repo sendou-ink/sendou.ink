@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as FriendRequestFactory from "~/db/seed/factories/FriendRequestFactory";
+import * as FriendshipFactory from "~/db/seed/factories/FriendshipFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dbReset, withUserId } from "~/utils/Test";
 import * as FriendRepository from "./FriendRepository.server";
@@ -9,36 +11,6 @@ const users = UserFactory.pool();
 // they can name
 const createUsers = (count: number) =>
 	users.create(count, (index) => ({ discordId: String(index) }));
-
-const createFriendRequest = async ({
-	senderId,
-	receiverId,
-}: {
-	senderId: number;
-	receiverId: number;
-}) => {
-	await FriendRepository.insertFriendRequest({ senderId, receiverId });
-	const request = await FriendRepository.findFriendRequestBetween({
-		senderId,
-		receiverId,
-	});
-	return request!.id;
-};
-
-const createFriendship = async ({
-	senderId,
-	receiverId,
-}: {
-	senderId: number;
-	receiverId: number;
-}) => {
-	const requestId = await createFriendRequest({ senderId, receiverId });
-	await FriendRepository.insertFriendship({
-		userOneId: senderId,
-		userTwoId: receiverId,
-		friendRequestId: requestId,
-	});
-};
 
 describe("insertFriendRequest / findFriendRequestBetween", () => {
 	beforeEach(async () => {
@@ -103,7 +75,7 @@ describe("findPendingSentRequests / findPendingReceivedRequests", () => {
 	});
 
 	test("sent request appears in sender's sent requests", async () => {
-		await FriendRepository.insertFriendRequest({
+		await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
@@ -115,7 +87,7 @@ describe("findPendingSentRequests / findPendingReceivedRequests", () => {
 	});
 
 	test("sent request appears in receiver's received requests", async () => {
-		await FriendRepository.insertFriendRequest({
+		await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
@@ -125,11 +97,11 @@ describe("findPendingSentRequests / findPendingReceivedRequests", () => {
 		);
 
 		expect(result).toHaveLength(1);
-		expect(result[0].senderId).toBe(1);
+		expect(result[0].senderId).toBe(users.id(1));
 	});
 
 	test("does not appear in wrong user's requests", async () => {
-		await FriendRepository.insertFriendRequest({
+		await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
@@ -160,18 +132,10 @@ describe("countPendingSentRequests", () => {
 	});
 
 	test("returns correct count after inserting multiple requests", async () => {
-		await FriendRepository.insertFriendRequest({
+		await FriendRequestFactory.createMany(3, (index) => ({
 			senderId: users.id(1),
-			receiverId: users.id(2),
-		});
-		await FriendRepository.insertFriendRequest({
-			senderId: users.id(1),
-			receiverId: users.id(3),
-		});
-		await FriendRepository.insertFriendRequest({
-			senderId: users.id(1),
-			receiverId: users.id(4),
-		});
+			receiverId: users.id(index + 2),
+		}));
 
 		const count = await FriendRepository.countPendingSentRequests(users.id(1));
 
@@ -189,13 +153,13 @@ describe("deleteFriendRequest", () => {
 	});
 
 	test("deletes request by sender", async () => {
-		const requestId = await createFriendRequest({
+		const request = await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
 
 		await FriendRepository.deleteFriendRequest({
-			id: requestId,
+			id: request.id,
 			senderId: users.id(1),
 		});
 
@@ -207,13 +171,13 @@ describe("deleteFriendRequest", () => {
 	});
 
 	test("does not delete when wrong senderId is used", async () => {
-		const requestId = await createFriendRequest({
+		const request = await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
 
 		await FriendRepository.deleteFriendRequest({
-			id: requestId,
+			id: request.id,
 			senderId: users.id(3),
 		});
 
@@ -235,13 +199,13 @@ describe("deleteFriendRequestByReceiver", () => {
 	});
 
 	test("deletes request by receiver", async () => {
-		const requestId = await createFriendRequest({
+		const request = await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
 
 		await FriendRepository.deleteFriendRequestByReceiver({
-			id: requestId,
+			id: request.id,
 			receiverId: users.id(2),
 		});
 
@@ -263,7 +227,7 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 	});
 
 	test("creates friendship and removes friend request", async () => {
-		const requestId = await createFriendRequest({
+		const request = await FriendRequestFactory.create({
 			senderId: users.id(2),
 			receiverId: users.id(1),
 		});
@@ -271,7 +235,7 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 		await FriendRepository.insertFriendship({
 			userOneId: users.id(2),
 			userTwoId: users.id(1),
-			friendRequestId: requestId,
+			friendRequestId: request.id,
 		});
 
 		const friendship = await FriendRepository.findFriendship({
@@ -288,7 +252,7 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 	});
 
 	test("normalizes IDs so userOneId < userTwoId", async () => {
-		const requestId = await createFriendRequest({
+		const request = await FriendRequestFactory.create({
 			senderId: users.id(3),
 			receiverId: users.id(1),
 		});
@@ -296,7 +260,7 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 		await FriendRepository.insertFriendship({
 			userOneId: users.id(3),
 			userTwoId: users.id(1),
-			friendRequestId: requestId,
+			friendRequestId: request.id,
 		});
 
 		const friendship = await FriendRepository.findFriendship({
@@ -307,7 +271,10 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 	});
 
 	test("findFriendIds returns friend's ID", async () => {
-		await createFriendship({ senderId: users.id(1), receiverId: users.id(2) });
+		await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(2),
+		});
 
 		const friendIds = await FriendRepository.findFriendIds(users.id(1));
 
@@ -316,7 +283,10 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 	});
 
 	test("findFriendIds returns friend ID from both sides", async () => {
-		await createFriendship({ senderId: users.id(1), receiverId: users.id(2) });
+		await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(2),
+		});
 
 		const friendIdsOfUser2 = await FriendRepository.findFriendIds(users.id(2));
 
@@ -341,15 +311,13 @@ describe("deleteFriendship", () => {
 	});
 
 	test("removes friendship", async () => {
-		await createFriendship({ senderId: users.id(1), receiverId: users.id(2) });
-
-		const friendship = await FriendRepository.findFriendship({
+		const friendship = await FriendshipFactory.create({
 			userOneId: users.id(1),
 			userTwoId: users.id(2),
 		});
 
 		await withUserId(users.id(1), () =>
-			FriendRepository.deleteOwnFriendshipById(friendship!.id),
+			FriendRepository.deleteOwnFriendshipById(friendship.id),
 		);
 
 		const result = await FriendRepository.findFriendship({
@@ -360,15 +328,13 @@ describe("deleteFriendship", () => {
 	});
 
 	test("does not delete friendship user is not part of", async () => {
-		await createFriendship({ senderId: users.id(1), receiverId: users.id(2) });
-
-		const friendship = await FriendRepository.findFriendship({
+		const friendship = await FriendshipFactory.create({
 			userOneId: users.id(1),
 			userTwoId: users.id(2),
 		});
 
 		await withUserId(users.id(3), () =>
-			FriendRepository.deleteOwnFriendshipById(friendship!.id),
+			FriendRepository.deleteOwnFriendshipById(friendship.id),
 		);
 
 		const result = await FriendRepository.findFriendship({
@@ -389,28 +355,28 @@ describe("findFriendRequestByIdAndReceiver", () => {
 	});
 
 	test("returns sender ID when request exists for receiver", async () => {
-		const requestId = await createFriendRequest({
+		const request = await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
 
 		const result = await FriendRepository.findFriendRequestByIdAndReceiver({
-			id: requestId,
+			id: request.id,
 			receiverId: users.id(2),
 		});
 
 		expect(result).toBeDefined();
-		expect(result!.senderId).toBe(1);
+		expect(result!.senderId).toBe(users.id(1));
 	});
 
 	test("returns undefined for wrong receiver", async () => {
-		const requestId = await createFriendRequest({
+		const request = await FriendRequestFactory.create({
 			senderId: users.id(1),
 			receiverId: users.id(2),
 		});
 
 		const result = await FriendRepository.findFriendRequestByIdAndReceiver({
-			id: requestId,
+			id: request.id,
 			receiverId: users.id(3),
 		});
 
@@ -428,8 +394,14 @@ describe("findMutualFriends", () => {
 	});
 
 	test("returns mutual friend when two users share a common friend", async () => {
-		await createFriendship({ senderId: users.id(1), receiverId: users.id(3) });
-		await createFriendship({ senderId: users.id(2), receiverId: users.id(3) });
+		await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(3),
+		});
+		await FriendshipFactory.create({
+			userOneId: users.id(2),
+			userTwoId: users.id(3),
+		});
 
 		const mutuals = await FriendRepository.findMutualFriends({
 			loggedInUserId: users.id(1),
@@ -441,8 +413,14 @@ describe("findMutualFriends", () => {
 	});
 
 	test("returns empty array when no common friends", async () => {
-		await createFriendship({ senderId: users.id(1), receiverId: users.id(3) });
-		await createFriendship({ senderId: users.id(2), receiverId: users.id(4) });
+		await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(3),
+		});
+		await FriendshipFactory.create({
+			userOneId: users.id(2),
+			userTwoId: users.id(4),
+		});
 
 		const mutuals = await FriendRepository.findMutualFriends({
 			loggedInUserId: users.id(1),
@@ -463,7 +441,10 @@ describe("findByUserIdWithActivity", () => {
 	});
 
 	test("returns friends with friendshipId and createdAt", async () => {
-		await createFriendship({ senderId: users.id(1), receiverId: users.id(2) });
+		await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(2),
+		});
 
 		const result = await FriendRepository.findByUserIdWithActivity(users.id(1));
 

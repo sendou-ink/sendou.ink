@@ -4,13 +4,19 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
+	MainWeaponId,
 	ModeWithStage,
 } from "~/modules/in-game-lists/types";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { faker } from "./faker";
 
 const STACKABLE_ABILITIES = abilities
 	.filter((ability) => ability.type === "STACKABLE")
 	.map((ability) => ability.name);
+
+export function mainWeapon(): MainWeaponId {
+	return faker.helpers.arrayElement(mainWeaponIds);
+}
 
 /**
  * A map list of `count` maps, rotating through the ranked modes and never repeating

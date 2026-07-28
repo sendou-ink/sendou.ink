@@ -1,5 +1,4 @@
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 import * as SplatoonFaker from "../core/SplatoonFaker";
@@ -17,7 +16,7 @@ export const { create } = defineFactory({
 		headGearSplId: null,
 		clothesGearSplId: null,
 		shoesGearSplId: null,
-		weaponSplIds: [faker.helpers.arrayElement(mainWeaponIds)],
+		weaponSplIds: [SplatoonFaker.mainWeapon()],
 		abilities: SplatoonFaker.buildAbilities(),
 		isPrivate: 0 as const,
 	}),

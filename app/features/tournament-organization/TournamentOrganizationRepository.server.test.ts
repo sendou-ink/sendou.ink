@@ -1,23 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dbReset } from "~/utils/Test";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "./test-utils";
 
 const users = UserFactory.pool();
-
-const createOrganization = async ({
-	ownerId,
-	name,
-}: {
-	ownerId: number;
-	name: string;
-}) => {
-	return TournamentOrganizationRepository.insert({
-		ownerId,
-		name,
-	});
-};
 
 describe("findByUserId", () => {
 	beforeEach(async () => {
@@ -29,13 +17,8 @@ describe("findByUserId", () => {
 	});
 
 	test("returns organizations where user is a member", async () => {
-		const org1 = await createOrganization({
+		const [org1, org2] = await TournamentOrganizationFactory.createMany(2, {
 			ownerId: users.id(1),
-			name: "Test Organization 1",
-		});
-		const org2 = await createOrganization({
-			ownerId: users.id(1),
-			name: "Test Organization 2",
 		});
 
 		const result = await TournamentOrganizationRepository.findByUserId(
@@ -49,35 +32,18 @@ describe("findByUserId", () => {
 	});
 
 	test("filters organizations by role when roles parameter is provided", async () => {
-		const org1 = await createOrganization({
+		const org1 = await TournamentOrganizationFactory.create({
 			ownerId: users.id(1),
-			name: "Test Organization 1",
 		});
-		const org2 = await createOrganization({
-			ownerId: users.id(2),
-			name: "Test Organization 2",
-		});
-
-		const org2Data = await TournamentOrganizationRepository.findBySlug(
-			org2.slug,
+		await TournamentOrganizationFactory.create(
+			{ ownerId: users.id(2) },
+			{ members: [{ userId: users.id(1), role: "ORGANIZER" }] },
 		);
 
-		await TournamentOrganizationRepository.update({
-			id: org2.id,
-			name: org2Data!.name,
-			description: org2Data!.description,
-			socials: org2Data!.socials,
-			members: [
-				{ userId: users.id(2), role: "ADMIN", roleDisplayName: null },
-				{ userId: users.id(1), role: "ORGANIZER", roleDisplayName: null },
-			],
-			series: [],
-			badges: [],
-		});
-
-		const adminOrgs = await TournamentOrganizationRepository.findByUserId(1, {
-			roles: ["ADMIN"],
-		});
+		const adminOrgs = await TournamentOrganizationRepository.findByUserId(
+			users.id(1),
+			{ roles: ["ADMIN"] },
+		);
 		const allOrgs = await TournamentOrganizationRepository.findByUserId(
 			users.id(1),
 		);
@@ -88,10 +54,7 @@ describe("findByUserId", () => {
 	});
 
 	test("returns empty array when user is not a member of any organization", async () => {
-		await createOrganization({
-			ownerId: users.id(1),
-			name: "Test Organization",
-		});
+		await TournamentOrganizationFactory.create({ ownerId: users.id(1) });
 
 		const result = await TournamentOrganizationRepository.findByUserId(
 			users.id(2),
@@ -122,7 +85,9 @@ describe("countActiveParticipants", () => {
 	});
 
 	test("counts distinct participants across the organization's events in the window", async () => {
-		const org = await createOrganization({ ownerId: users.id(1), name: "Org" });
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
 
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
@@ -140,7 +105,9 @@ describe("countActiveParticipants", () => {
 	});
 
 	test("excludes teams that did not check in", async () => {
-		const org = await createOrganization({ ownerId: users.id(1), name: "Org" });
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
 
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
@@ -153,7 +120,9 @@ describe("countActiveParticipants", () => {
 	});
 
 	test("excludes teams that checked out", async () => {
-		const org = await createOrganization({ ownerId: users.id(1), name: "Org" });
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
 
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
@@ -166,7 +135,9 @@ describe("countActiveParticipants", () => {
 	});
 
 	test("excludes events outside the time window", async () => {
-		const org = await createOrganization({ ownerId: users.id(1), name: "Org" });
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
 
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
@@ -178,10 +149,11 @@ describe("countActiveParticipants", () => {
 	});
 
 	test("excludes other organizations' events", async () => {
-		const org = await createOrganization({ ownerId: users.id(1), name: "Org" });
-		const otherOrg = await createOrganization({
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+		const otherOrg = await TournamentOrganizationFactory.create({
 			ownerId: users.id(2),
-			name: "Other",
 		});
 
 		await seedOrgEventWithParticipants({
@@ -194,7 +166,9 @@ describe("countActiveParticipants", () => {
 	});
 
 	test("returns 0 when the organization has no events", async () => {
-		const org = await createOrganization({ ownerId: users.id(1), name: "Org" });
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
 
 		expect(await countForOrg(org.id)).toBe(0);
 	});

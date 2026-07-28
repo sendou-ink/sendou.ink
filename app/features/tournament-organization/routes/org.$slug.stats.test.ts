@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { dbReset, wrappedLoader } from "~/utils/Test";
 import { loader } from "../loaders/org.$slug.stats.server";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "../test-utils";
 import { ESTABLISHED_ORG } from "../tournament-organization-constants";
 
@@ -13,10 +13,7 @@ const users = UserFactory.pool();
 const statsLoader = wrappedLoader<SerializeFrom<typeof loader>>({ loader });
 
 const createOrg = () =>
-	TournamentOrganizationRepository.insert({
-		ownerId: users.id(1),
-		name: "Org",
-	});
+	TournamentOrganizationFactory.create({ ownerId: users.id(1) });
 
 describe("org stats loader", () => {
 	beforeEach(async () => {
