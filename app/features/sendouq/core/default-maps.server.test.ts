@@ -22,12 +22,9 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 }));
 
 describe("getDefaultMapWeights()", () => {
-	const users = UserFactory.pool();
-
 	beforeEach(async () => {
 		vi.clearAllMocks();
 		clearCacheForTesting();
-		await users.create(3);
 	});
 
 	afterEach(async () => {
@@ -60,15 +57,12 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [],
-						pool: [{ mode: "SZ", stages: [0] }],
-					},
+					modes: [],
+					pool: [{ mode: "SZ", stages: [0] }],
 				},
 			],
 		});
@@ -93,15 +87,12 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 2,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [],
-						pool: [{ mode: "SZ", stages: [0] }],
-					},
+					modes: [],
+					pool: [{ mode: "SZ", stages: [0] }],
 				},
 			],
 		});
@@ -119,15 +110,12 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [],
-						pool: [{ mode: "SZ", stages: [0] }],
-					},
+					modes: [],
+					pool: [{ mode: "SZ", stages: [0] }],
 				},
 			],
 		});
@@ -144,28 +132,22 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [],
-						pool: [
-							{ mode: "SZ", stages: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-							{ mode: "TC", stages: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-						],
-					},
+					modes: [],
+					pool: [
+						{ mode: "SZ", stages: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+						{ mode: "TC", stages: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+					],
 				},
 				{
-					userId: users.id(2),
-					mapModePreferences: {
-						modes: [],
-						pool: [
-							{ mode: "SZ", stages: [0, 1, 2, 3, 4, 5, 6] },
-							{ mode: "TC", stages: [1, 2, 3, 4, 5, 6, 7] },
-						],
-					},
+					modes: [],
+					pool: [
+						{ mode: "SZ", stages: [0, 1, 2, 3, 4, 5, 6] },
+						{ mode: "TC", stages: [1, 2, 3, 4, 5, 6, 7] },
+					],
 				},
 			],
 		});
@@ -190,15 +172,12 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [],
-						pool: [{ mode: "SZ", stages: [0, 1, 2] }],
-					},
+					modes: [],
+					pool: [{ mode: "SZ", stages: [0, 1, 2] }],
 				},
 			],
 		});
@@ -217,38 +196,29 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [{ mode: "SZ", preference: "AVOID" }],
-						pool: [
-							{ mode: "SZ", stages: [0, 1, 2] },
-							{ mode: "TC", stages: [0, 1, 2] },
-						],
-					},
+					modes: [{ mode: "SZ", preference: "AVOID" }],
+					pool: [
+						{ mode: "SZ", stages: [0, 1, 2] },
+						{ mode: "TC", stages: [0, 1, 2] },
+					],
 				},
 				{
-					userId: users.id(2),
-					mapModePreferences: {
-						modes: [{ mode: "SZ", preference: "AVOID" }],
-						pool: [
-							{ mode: "SZ", stages: [0, 1, 2] },
-							{ mode: "TC", stages: [0, 1, 2] },
-						],
-					},
+					modes: [{ mode: "SZ", preference: "AVOID" }],
+					pool: [
+						{ mode: "SZ", stages: [0, 1, 2] },
+						{ mode: "TC", stages: [0, 1, 2] },
+					],
 				},
 				{
-					userId: users.id(3),
-					mapModePreferences: {
-						modes: [],
-						pool: [
-							{ mode: "SZ", stages: [3, 4, 5] },
-							{ mode: "TC", stages: [0, 1, 2] },
-						],
-					},
+					modes: [],
+					pool: [
+						{ mode: "SZ", stages: [3, 4, 5] },
+						{ mode: "TC", stages: [0, 1, 2] },
+					],
 				},
 			],
 		});
@@ -273,22 +243,13 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUserWithPoollessPreferences(1);
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [],
-						pool: undefined as any,
-					},
-				},
-				{
-					userId: users.id(2),
-					mapModePreferences: {
-						modes: [],
-						pool: [{ mode: "SZ", stages: [0, 1, 2] }],
-					},
+					modes: [],
+					pool: [{ mode: "SZ", stages: [0, 1, 2] }],
 				},
 			],
 		});
@@ -307,44 +268,35 @@ describe("getDefaultMapWeights()", () => {
 
 		const FROM_ZERO_TO_SIX = Array.from({ length: 7 }, (_, i) => i as StageId);
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [
-							{
-								mode: "SZ",
-								preference: "PREFER",
-							},
-						],
-						pool: [{ mode: "SZ", stages: [1, 2, 3, 4, 5, 6, 7] }],
-					},
+					modes: [
+						{
+							mode: "SZ",
+							preference: "PREFER",
+						},
+					],
+					pool: [{ mode: "SZ", stages: [1, 2, 3, 4, 5, 6, 7] }],
 				},
 				{
-					userId: users.id(2),
-					mapModePreferences: {
-						modes: [
-							{
-								mode: "SZ",
-								preference: "PREFER",
-							},
-						],
-						pool: [{ mode: "SZ", stages: FROM_ZERO_TO_SIX }],
-					},
+					modes: [
+						{
+							mode: "SZ",
+							preference: "PREFER",
+						},
+					],
+					pool: [{ mode: "SZ", stages: FROM_ZERO_TO_SIX }],
 				},
 				{
-					userId: users.id(3),
-					mapModePreferences: {
-						modes: [
-							{
-								mode: "SZ",
-								preference: "PREFER",
-							},
-						],
-						pool: [{ mode: "SZ", stages: FROM_ZERO_TO_SIX }],
-					},
+					modes: [
+						{
+							mode: "SZ",
+							preference: "PREFER",
+						},
+					],
+					pool: [{ mode: "SZ", stages: FROM_ZERO_TO_SIX }],
 				},
 			],
 		});
@@ -375,20 +327,17 @@ describe("getDefaultMapWeights()", () => {
 			ends: new Date("2023-12-31"),
 		});
 
-		await insertUserMapModePreferencesForSeason({
+		await createUsersWithPreferences({
 			seasonNth: 1,
-			userPreferences: [
+			preferences: [
 				{
-					userId: users.id(1),
-					mapModePreferences: {
-						modes: [],
-						pool: [
-							{ mode: "SZ", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
-							{ mode: "TC", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
-							{ mode: "RM", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
-							{ mode: "CB", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
-						],
-					},
+					modes: [],
+					pool: [
+						{ mode: "SZ", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
+						{ mode: "TC", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
+						{ mode: "RM", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
+						{ mode: "CB", stages: [0, 1, 2, 3, 4, 5, 6, 7] },
+					],
 				},
 			],
 		});
@@ -408,26 +357,33 @@ describe("getDefaultMapWeights()", () => {
 	});
 });
 
-// preferences are written directly rather than through `updateOwnMatchProfile`
-// because that merges with the user's existing pool, and these tests are about
-// what `getDefaultMapWeights` makes of preferences exactly as stored
-async function insertUserMapModePreferencesForSeason({
+/** One user per given preferences, each of them ranked in the given season. */
+async function createUsersWithPreferences({
 	seasonNth,
-	userPreferences,
+	preferences,
 }: {
 	seasonNth: number;
-	userPreferences: Array<{
-		userId: number;
-		mapModePreferences: UserMapModePreferences;
-	}>;
+	preferences: Array<UserMapModePreferences>;
 }) {
-	for (const { userId, mapModePreferences } of userPreferences) {
-		await db
-			.updateTable("User")
-			.set({ mapModePreferences: JSON.stringify(mapModePreferences) })
-			.where("id", "=", userId)
-			.execute();
+	for (const mapModePreferences of preferences) {
+		const user = await UserFactory.create(null, {
+			matchProfile: { mapModePreferences },
+		});
 
-		await SkillFactory.create({ userId, season: seasonNth });
+		await SkillFactory.create({ userId: user.id, season: seasonNth });
 	}
+}
+
+async function createUserWithPoollessPreferences(seasonNth: number) {
+	const user = await UserFactory.create();
+
+	// written directly because every write of the column since the map pool was
+	// added stores one, so only rows predating it can be missing it
+	await db
+		.updateTable("User")
+		.set({ mapModePreferences: JSON.stringify({ modes: [] }) })
+		.where("id", "=", user.id)
+		.execute();
+
+	await SkillFactory.create({ userId: user.id, season: seasonNth });
 }

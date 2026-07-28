@@ -4,14 +4,20 @@ import type { Tables } from "~/db/tables";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import { REGULAR_USER_TEST_ID } from "../constants";
+import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";
 import { faker, unique } from "../core/faker";
 import { pinUserId } from "../core/pinUserId";
 
 type UpsertArgs = Parameters<typeof UserRepository.upsert>[0];
+
+type MatchProfileArgs = Parameters<
+	typeof MatchProfileRepository.updateOwnMatchProfile
+>[0];
 
 type Role = "ARTIST" | "VIDEO_ADDER" | "TOURNAMENT_ORGANIZER" | "API_ACCESSER";
 
@@ -20,9 +26,19 @@ type Options = {
 	/** Patron who started supporting now and has a year left of it. */
 	patronTier?: NonNullable<Tables["User"]["patronTier"]>;
 	roles?: Array<Role>;
+	/** SendouQ match profile, submitted as the user themselves. */
+	matchProfile?: Partial<MatchProfileArgs>;
 };
 
 const PATRONAGE_LENGTH = { years: 1 };
+
+const EMPTY_MATCH_PROFILE: MatchProfileArgs = {
+	mapModePreferences: { modes: [], pool: [] },
+	vc: "NO",
+	languages: [],
+	weaponPool: [],
+	noScreen: 0,
+};
 
 const GRANT_ROLE: Record<Role, (userId: number) => Promise<unknown>> = {
 	ARTIST: AdminRepository.makeArtistByUserId,
@@ -31,8 +47,8 @@ const GRANT_ROLE: Record<Role, (userId: number) => Promise<unknown>> = {
 	API_ACCESSER: AdminRepository.makeApiAccesserByUserId,
 };
 
-/** Creates users. Columns outside `UserRepository.upsert` (profile fields, patron
- * status, plus tier) are set by the repository function that owns them. */
+/** Creates users. Columns outside `UserRepository.upsert` (patron status, plus tier,
+ * match profile) are set by the repository function that owns them. */
 export const { create, createMany } = defineFactory({
 	defaults: ({ seq }) => ({
 		discordId: String(seq),
@@ -44,7 +60,7 @@ export const { create, createMany } = defineFactory({
 		bsky: null,
 	}),
 	insert: UserRepository.upsert,
-	applyOptions: (user, options: Options) => grantPrivileges(user.id, options),
+	applyOptions: (user, options: Options) => applyUserOptions(user.id, options),
 });
 
 /**
@@ -62,7 +78,7 @@ export async function createAdmin(
 
 	// after pinning, so that rows keyed by the user id don't point at the old one
 	if (options) {
-		await grantPrivileges(id, options);
+		await applyUserOptions(id, options);
 	}
 
 	return { id };
@@ -84,7 +100,7 @@ export async function createRegular(
 
 	// after pinning, so that rows keyed by the user id don't point at the old one
 	if (options) {
-		await grantPrivileges(id, options);
+		await applyUserOptions(id, options);
 	}
 
 	return { id };
@@ -131,9 +147,9 @@ export function pool() {
 	};
 }
 
-async function grantPrivileges(
+async function applyUserOptions(
 	userId: number,
-	{ plusTier, patronTier, roles }: Options,
+	{ plusTier, patronTier, roles, matchProfile }: Options,
 ) {
 	if (typeof plusTier === "number") {
 		await setPlusTier(userId, plusTier);
@@ -150,6 +166,15 @@ async function grantPrivileges(
 
 	for (const role of roles ?? []) {
 		await GRANT_ROLE[role](userId);
+	}
+
+	if (matchProfile) {
+		await actAs(userId, () =>
+			MatchProfileRepository.updateOwnMatchProfile({
+				...EMPTY_MATCH_PROFILE,
+				...matchProfile,
+			}),
+		);
 	}
 }
 

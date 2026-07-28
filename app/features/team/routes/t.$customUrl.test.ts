@@ -1,13 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import invariant from "~/utils/invariant";
-import {
-	assertResponseErrored,
-	dbReset,
-	withUserId,
-	wrappedAction,
-} from "~/utils/Test";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { assertResponseErrored, dbReset, wrappedAction } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import * as TeamRepository from "../TeamRepository.server";
@@ -33,17 +29,15 @@ async function loadTeams() {
 	return { team: mainTeam, secondaryTeams };
 }
 
-async function joinTeam(customUrl: string) {
-	const team = await TeamRepository.findByCustomUrl(customUrl);
-	invariant(team, `No team with the custom url ${customUrl}`);
-
-	return withUserId(REGULAR_USER_TEST_ID, () =>
-		TeamRepository.insertOwnMembership({
-			teamId: team.id,
-			maxTeamsAllowed: 2,
-		}),
-	);
-}
+/** A team the regular user is a member but not the owner of. */
+const createTeamWithRegularMember = (
+	overrides: Partial<Parameters<typeof TeamFactory.create>[0]> = {},
+) =>
+	TeamFactory.create({
+		ownerUserId: ADMIN_ID,
+		additionalMemberUserIds: [REGULAR_USER_TEST_ID],
+		...overrides,
+	});
 
 describe("Secondary teams", () => {
 	beforeEach(async () => {
@@ -118,9 +112,7 @@ describe("Secondary teams", () => {
 	});
 
 	it("only the team owner (or admin) can delete a team", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "admin" });
-
-		await joinTeam("team-1");
+		await createTeamWithRegularMember({ name: "Team 1" });
 
 		const response = await teamPageAction(
 			{ _action: "DELETE_TEAM" },
@@ -134,12 +126,9 @@ describe("Secondary teams", () => {
 	});
 
 	it("when leaving the main team, the secondary team becomes main", async () => {
-		// has to be made by "admin" because can't leave team you own
-		await createTeamAction({ name: "Team 1" }, { user: "admin" });
-		await createTeamAction({ name: "Team 2" }, { user: "admin" });
-
-		await joinTeam("team-1");
-		await joinTeam("team-2");
+		// owned by the admin because you can't leave a team you own
+		await createTeamWithRegularMember({ name: "Team 1" });
+		await createTeamWithRegularMember({ name: "Team 2", isMainTeam: false });
 
 		const { team, secondaryTeams } = await loadTeams();
 

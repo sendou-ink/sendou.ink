@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
+import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
@@ -336,16 +338,8 @@ describe("Account migration", () => {
 	});
 
 	it("two accounts with teams results in an error", async () => {
-		await TeamRepository.insert({
-			name: "Team 1",
-			ownerUserId: users.id(1),
-			isMainTeam: true,
-		});
-		await TeamRepository.insert({
-			name: "Team 2",
-			ownerUserId: users.id(2),
-			isMainTeam: true,
-		});
+		await TeamFactory.create({ ownerUserId: users.id(1) });
+		await TeamFactory.create({ ownerUserId: users.id(2) });
 
 		const response = await migrateUserAction();
 
@@ -360,12 +354,8 @@ describe("Account migration", () => {
 			.executeTakeFirst();
 
 	it("deletes past team membership status of the new user", async () => {
-		await TeamRepository.insert({
-			name: "Team 1",
-			ownerUserId: users.id(2),
-			isMainTeam: true,
-		});
-		await TeamRepository.deleteById(1);
+		const team = await TeamFactory.create({ ownerUserId: users.id(2) });
+		await TeamRepository.deleteById(team.id);
 
 		const membershipBeforeMigration = await membershipOf(users.id(2));
 		expect(membershipBeforeMigration).toBeDefined();
@@ -378,19 +368,12 @@ describe("Account migration", () => {
 	});
 
 	it("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
-		await TeamRepository.insert({
-			name: "Team 1",
+		const team = await TeamFactory.create({
 			ownerUserId: users.id(2),
-			isMainTeam: true,
+			additionalMemberUserIds: [users.id(1)],
 		});
-		await withUserId(users.id(1), () =>
-			TeamRepository.insertOwnMembership({
-				teamId: 1,
-				maxTeamsAllowed: 1,
-			}),
-		);
 		await TeamRepository.handleMemberLeaving({
-			teamId: 1,
+			teamId: team.id,
 			userId: users.id(1),
 		});
 
@@ -432,22 +415,7 @@ describe("Account migration", () => {
 	});
 
 	it("deletes builds from the new user when migrating", async () => {
-		await BuildRepository.insert({
-			title: "Test build",
-			ownerId: users.id(2),
-			headGearSplId: 1,
-			clothesGearSplId: 1,
-			shoesGearSplId: 1,
-			abilities: [
-				["SCU", "SCU", "SCU", "SCU"],
-				["SCU", "SCU", "SCU", "SCU"],
-				["SCU", "SCU", "SCU", "SCU"],
-			],
-			modes: null,
-			weaponSplIds: [1],
-			description: null,
-			isPrivate: 0,
-		});
+		await BuildFactory.create({ ownerId: users.id(2) });
 
 		const buildsBefore = await BuildRepository.findAllByUserId(users.id(2));
 

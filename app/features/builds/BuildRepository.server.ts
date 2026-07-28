@@ -111,6 +111,8 @@ export async function insert(args: CreateArgs) {
 		if (count > BUILD.MAX_COUNT) {
 			throw new LimitReachedError("Max amount of builds reached");
 		}
+
+		return { id: buildId };
 	});
 }
 

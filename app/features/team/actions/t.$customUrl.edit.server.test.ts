@@ -1,21 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import invariant from "~/utils/invariant";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { dbReset, wrappedAction } from "~/utils/Test";
-import { action as teamIndexPageAction } from "../actions/t.new.server";
-import type { createTeamSchema } from "../team-schemas";
 import type { editTeamActionSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
-
-const createTeamAction = wrappedAction<typeof createTeamSchema>({
-	action: teamIndexPageAction,
-	isJsonSubmission: true,
-});
 
 const editTeamProfileAction = wrappedAction<typeof editTeamActionSchema>({
 	action: _editTeamProfileAction,
@@ -54,7 +48,10 @@ describe("team page editing", () => {
 	beforeEach(async () => {
 		// a patron because setting a custom theme is a patron only feature
 		await UserFactory.createRegular(null, { patronTier: 2 });
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
+		await TeamFactory.create({
+			name: "Team 1",
+			ownerUserId: REGULAR_USER_TEST_ID,
+		});
 	});
 	afterEach(async () => {
 		await dbReset();

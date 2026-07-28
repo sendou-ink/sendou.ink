@@ -1,7 +1,7 @@
 import { add, sub } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { DuplicateEntryError } from "~/utils/errors";
 import { dbReset } from "~/utils/Test";
@@ -326,11 +326,7 @@ describe("insertRequest", () => {
 			startsAt: BOOKED_AT,
 			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
-		const team = await TeamRepository.insert({
-			name: "Team Olive",
-			ownerUserId: users.id(2),
-			isMainTeam: true,
-		});
+		const team = await TeamFactory.create({ ownerUserId: users.id(2) });
 
 		await insertTeamRequest({
 			scrimPostId: postId,
@@ -359,11 +355,7 @@ describe("insertRequest", () => {
 			startsAt: BOOKED_AT,
 			users: [{ userId: users.id(4), isOwner: 1 }],
 		});
-		const team = await TeamRepository.insert({
-			name: "Team Olive",
-			ownerUserId: users.id(2),
-			isMainTeam: true,
-		});
+		const team = await TeamFactory.create({ ownerUserId: users.id(2) });
 
 		await insertTeamRequest({
 			scrimPostId: postId,
