@@ -71,7 +71,7 @@
 		"kysely": "0.29.0",
 		"lucide-react": "1.24.0",
 		"markdown-to-jsx": "9.8.2",
-		"nanoid": "5.1.16",
+		"nanoid": "6.0.0",
 		"neverthrow": "8.2.0",
 		"node-cron": "4.6.0",
 		"nprogress": "0.2.0",
