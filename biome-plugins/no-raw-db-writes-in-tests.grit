@@ -4,7 +4,13 @@ language js
 // exercises the same write paths the app does. A raw write is only allowed when
 // no production write reaches the state at all, and then it has to say so:
 // `// biome-ignore lint/plugin: <why no production write can do this>`
-`db.$method($_)` as $write where {
+`$connection.$method($_)` as $write where {
+	// `trx` too, so that a write inside a test's own `db.transaction()` block is
+	// caught the same way the ones on the singleton are
+	$connection <: or {
+		`db`,
+		`trx`
+	},
 	$method <: or {
 		`insertInto`,
 		`updateTable`,
