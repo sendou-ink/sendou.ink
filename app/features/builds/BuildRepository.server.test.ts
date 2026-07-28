@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
 import type {
 	BuildAbilitiesTuple,
@@ -57,39 +58,14 @@ const createBuild = (
 		...overrides,
 	});
 
-const insertSplatoonPlayer = async (userId: number, splId: string) => {
-	const { id } = await db
-		.insertInto("SplatoonPlayer")
-		.values({ splId, userId })
-		.returning("id")
-		.executeTakeFirstOrThrow();
-	return id;
-};
-
-const insertXRankPlacement = async (
-	playerId: number,
-	weaponSplId: MainWeaponId,
-	rank: number,
-) => {
-	await db
-		.insertInto("XRankPlacement")
-		.values({
-			playerId,
-			weaponSplId,
-			badges: "[]",
-			bannerSplId: 1,
-			mode: "SZ",
-			month: 1,
-			year: 2024,
-			name: "Test Player",
-			nameDiscriminator: "0000",
-			power: 2500,
-			rank,
-			region: "WEST",
-			title: "Test",
-		})
-		.execute();
-};
+/** Puts the user in the top 500 with the given weapon, which builds sort by. */
+const makeTop500 = (userId: number, weaponSplId: MainWeaponId) =>
+	XRankPlacementFactory.create({
+		playerSplId: `player-${userId}`,
+		playerUserId: userId,
+		weaponSplId,
+		rank: 1,
+	});
 
 const buildById = (id: number) =>
 	db
@@ -244,8 +220,7 @@ describe("BuildRepository.insert — computeBuildData", () => {
 		});
 
 		test("subtracts 1 when the weapon is top500 for the owner", async () => {
-			const playerId = await insertSplatoonPlayer(owner.id, "owner-spl-id");
-			await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
+			await makeTop500(owner.id, SPLATTERSHOT);
 
 			const { id } = await BuildRepository.insert(
 				baseArgs({ weaponSplIds: [SPLATTERSHOT, SPLATTERSHOT_NOUVEAU] }),
@@ -263,8 +238,7 @@ describe("BuildRepository.insert — computeBuildData", () => {
 
 		test("combines top500 with the owner's PlusTier", async () => {
 			const plusOwner = await UserFactory.create(null, { plusTier: 1 });
-			const playerId = await insertSplatoonPlayer(plusOwner.id, "owner-spl-id");
-			await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
+			await makeTop500(plusOwner.id, SPLATTERSHOT);
 
 			const { id } = await BuildRepository.insert(
 				baseArgs({ ownerId: plusOwner.id }),
@@ -276,8 +250,7 @@ describe("BuildRepository.insert — computeBuildData", () => {
 	});
 
 	test("findAllByWeaponId.weapons[].isTop500 matches the sortValue formula", async () => {
-		const playerId = await insertSplatoonPlayer(owner.id, "owner-spl-id");
-		await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
+		await makeTop500(owner.id, SPLATTERSHOT);
 
 		await createBuild({
 			ownerId: owner.id,

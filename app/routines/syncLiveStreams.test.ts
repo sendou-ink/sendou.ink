@@ -256,8 +256,7 @@ describe("syncLiveStreams tournament streamers", () => {
 		const rowsAfterFirst = await findAllTournamentStreamers();
 		expect(rowsAfterFirst).toHaveLength(1);
 
-		// clear DB and add a different tournament — if throttle works, nothing new is inserted
-		await db.deleteFrom("TournamentStreamer").execute();
+		// add a different tournament — if throttle works, nothing new is inserted
 		RunningTournaments.clear();
 
 		mockGetStreams.mockResolvedValue([
@@ -296,6 +295,7 @@ describe("syncLiveStreams tournament streamers", () => {
 		await SyncLiveStreamsRoutine.run();
 
 		const rowsAfterSecond = await findAllTournamentStreamers();
-		expect(rowsAfterSecond).toHaveLength(0);
+		expect(rowsAfterSecond).toHaveLength(1);
+		expect(rowsAfterSecond[0].twitchAccount).toBe("streamer_a");
 	});
 });

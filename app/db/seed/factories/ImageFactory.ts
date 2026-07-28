@@ -1,6 +1,11 @@
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import { defineFactory } from "../core/defineFactory";
 
+type Options = {
+	/** Has an admin approved the image, making it show wherever it is used? */
+	isValidated: boolean;
+};
+
 /**
  * Creates user submitted images, unvalidated as the repository function makes them.
  * An image on its own is an orphan — the queries counting images for approval only
@@ -14,4 +19,9 @@ export const { create } = defineFactory({
 		validatedAt: null,
 	}),
 	insert: ImageRepository.insert,
+	applyOptions: async (image, { isValidated }: Options) => {
+		if (!isValidated) return;
+
+		await ImageRepository.validateById(image.id);
+	},
 });

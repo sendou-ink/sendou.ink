@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
 import { dbReset, withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
@@ -8,35 +10,17 @@ import type { UserCardData } from "./user-card-types";
 let owner: { id: number };
 let other: { id: number };
 
-const insertVerifiedXp = async (
+const insertVerifiedXp = (
 	userId: number,
 	power: number,
 	region: "WEST" | "JPN" = "WEST",
-) => {
-	const player = await db
-		.insertInto("SplatoonPlayer")
-		.values({ splId: `spl-${userId}`, userId })
-		.returning("id")
-		.executeTakeFirstOrThrow();
-	await db
-		.insertInto("XRankPlacement")
-		.values({
-			playerId: player.id,
-			weaponSplId: 0,
-			badges: "[]",
-			bannerSplId: 1,
-			mode: "SZ",
-			month: 1,
-			year: 2024,
-			name: "Test Player",
-			nameDiscriminator: "0000",
-			power,
-			rank: 1,
-			region,
-			title: "Test",
-		})
-		.execute();
-};
+) =>
+	XRankPlacementFactory.create({
+		playerSplId: `player-${userId}`,
+		playerUserId: userId,
+		power,
+		region,
+	});
 
 const findXpStat = (card: UserCardData | undefined) =>
 	card?.stats.find((stat) => stat.type === "XP");
@@ -254,15 +238,10 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("produces a URL banner when an uploaded banner image is set", async () => {
-		const image = await db
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({
-				url: "banner.webp",
-				submitterUserId: owner.id,
-				validatedAt: 1,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
+		const image = await ImageFactory.create(
+			{ submitterUserId: owner.id },
+			{ isValidated: true },
+		);
 
 		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({

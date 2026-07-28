@@ -6,6 +6,70 @@ import { modesShort } from "~/modules/in-game-lists/modes";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { peakXpOverallSql } from "~/utils/kysely.server";
 
+export type XRankPlacementInsertArgs = Omit<
+	Tables["XRankPlacement"],
+	"id" | "playerId"
+> & {
+	/** In-game id of the player the placement belongs to. */
+	playerSplId: string;
+	/**
+	 * Site user whose results these are, for a source that already knows the pairing.
+	 * A player claiming their own results afterwards goes through
+	 * `AdminRepository.linkUserAndPlayer`, which also refreshes what the link derives.
+	 */
+	playerUserId?: number;
+};
+
+/**
+ * Adds the given placements, creating a `SplatoonPlayer` row for every in-game id
+ * not seen before. Returns the placement ids in insertion order.
+ */
+export function insertMany(placements: XRankPlacementInsertArgs[]) {
+	return db.transaction().execute(async (trx) => {
+		const ids: number[] = [];
+
+		for (const { playerSplId, playerUserId, ...placement } of placements) {
+			await trx
+				.insertInto("SplatoonPlayer")
+				.values({ splId: playerSplId, userId: playerUserId ?? null })
+				.onConflict((oc) =>
+					playerUserId
+						? oc.column("splId").doUpdateSet({ userId: playerUserId })
+						: oc.column("splId").doNothing(),
+				)
+				.execute();
+
+			const inserted = await trx
+				.insertInto("XRankPlacement")
+				.values({
+					...placement,
+					playerId: (eb) =>
+						eb
+							.selectFrom("SplatoonPlayer")
+							.select("SplatoonPlayer.id")
+							.where("splId", "=", playerSplId),
+				})
+				.returning("id")
+				.executeTakeFirstOrThrow();
+
+			ids.push(inserted.id);
+		}
+
+		return ids;
+	});
+}
+
+/** Removes every placement of the given month, before its results are read in anew. */
+export function deleteAllByMonthYear(
+	args: Pick<Tables["XRankPlacement"], "month" | "year">,
+) {
+	return db
+		.deleteFrom("XRankPlacement")
+		.where("month", "=", args.month)
+		.where("year", "=", args.year)
+		.execute();
+}
+
 export function unlinkPlayerByUserId(userId: number) {
 	return db
 		.updateTable("SplatoonPlayer")

@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { db } from "~/db/sql";
+import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
+import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { dbReset } from "~/utils/Test";
 import * as BadgeRepository from "./BadgeRepository.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
@@ -10,7 +12,10 @@ describe("syncXPBadges", () => {
 
 	beforeEach(async () => {
 		user = await UserFactory.create();
-		await insertXPBadges();
+		await BadgeFactory.createMany(SPLATOON_3_XP_BADGE_VALUES.length, (i) => ({
+			code: String(SPLATOON_3_XP_BADGE_VALUES[i]),
+			displayName: `${SPLATOON_3_XP_BADGE_VALUES[i]}+ XP`,
+		}));
 	});
 
 	afterEach(async () => {
@@ -18,11 +23,7 @@ describe("syncXPBadges", () => {
 	});
 
 	test("assigns badge to user with qualifying peakXp", async () => {
-		await insertSplatoonPlayer({
-			splId: "abc123",
-			userId: user.id,
-			peakXp: 3000,
-		});
+		await givePeakXp(user.id, 3000);
 
 		await BadgeRepository.syncXPBadges();
 
@@ -32,11 +33,7 @@ describe("syncXPBadges", () => {
 	});
 
 	test("assigns highest qualifying badge when peakXp exceeds threshold", async () => {
-		await insertSplatoonPlayer({
-			splId: "abc123",
-			userId: user.id,
-			peakXp: 3250,
-		});
+		await givePeakXp(user.id, 3250);
 
 		await BadgeRepository.syncXPBadges();
 
@@ -48,11 +45,7 @@ describe("syncXPBadges", () => {
 	});
 
 	test("does not assign badge when peakXp is below minimum threshold", async () => {
-		await insertSplatoonPlayer({
-			splId: "abc123",
-			userId: user.id,
-			peakXp: 2500,
-		});
+		await givePeakXp(user.id, 2500);
 
 		await BadgeRepository.syncXPBadges();
 
@@ -61,40 +54,15 @@ describe("syncXPBadges", () => {
 	});
 });
 
-async function insertXPBadges() {
-	await db
-		.insertInto("Badge")
-		.values(
-			SPLATOON_3_XP_BADGE_VALUES.map((value) => ({
-				code: String(value),
-				displayName: `${value}+ XP`,
-				hue: null,
-				authorId: null,
-			})),
-		)
-		.execute();
-}
+/** Gives the user a linked X Rank player whose one placement is worth `power`. */
+async function givePeakXp(userId: number, power: number) {
+	await XRankPlacementFactory.create({
+		playerSplId: `player-${userId}`,
+		playerUserId: userId,
+		power,
+	});
 
-async function insertSplatoonPlayer(args: {
-	splId: string;
-	userId: number | null;
-	peakXp: number | null;
-}) {
-	await db
-		.insertInto("SplatoonPlayer")
-		.values({
-			splId: args.splId,
-			userId: args.userId,
-			peakXp:
-				args.peakXp === null
-					? null
-					: JSON.stringify({
-							overall: args.peakXp,
-							tentatek: args.peakXp,
-							takoroka: null,
-						}),
-		})
-		.execute();
+	await XRankPlacementRepository.refreshAllPeakXp();
 }
 
 async function findBadgeByCode(code: string) {

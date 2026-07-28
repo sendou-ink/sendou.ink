@@ -1,3 +1,4 @@
+import { sub } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
@@ -6,66 +7,51 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
+import { backdate } from "~/db/seed/core/backdate";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
+import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import { dbReset } from "~/utils/Test";
+import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
+import { dbReset, withUserId } from "~/utils/Test";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 
 let alphaUserIds: number[];
 let bravoUserIds: number[];
 
-const insertGroup = async ({
-	matchmade,
-	userIds,
+const setupMatch = async ({
+	isMatchmade,
+	confirmedAt,
 }: {
-	matchmade: 0 | 1;
-	userIds: readonly number[];
+	isMatchmade: boolean;
+	confirmedAt: Date;
 }) => {
-	const group = await db
-		.insertInto("Group")
-		.values({
-			chatCode: `chat-${Math.random().toString(36).slice(2, 10)}`,
-			inviteCode: `inv-${Math.random().toString(36).slice(2, 10)}`,
-			status: "INACTIVE",
-			matchmade,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	const alphaGroup = await createGroup(alphaUserIds, isMatchmade);
+	const bravoGroup = await createGroup(bravoUserIds, isMatchmade);
 
-	await db
-		.insertInto("GroupMember")
-		.values(
-			userIds.map((userId, i) => ({
-				groupId: group.id,
-				userId,
-				role: i === 0 ? ("OWNER" as const) : ("REGULAR" as const),
-			})),
-		)
-		.execute();
+	const match = await SQMatchFactory.create(
+		{ alphaGroupId: alphaGroup.id, bravoGroupId: bravoGroup.id },
+		{ isConcluded: true },
+	);
+	await backdate("GroupMatch", match.id, { confirmedAt });
 
-	return group.id;
+	return { alphaGroupId: alphaGroup.id, bravoGroupId: bravoGroup.id };
 };
 
-const insertMatch = async ({
-	alphaGroupId,
-	bravoGroupId,
-	confirmedAtSeconds,
-}: {
-	alphaGroupId: number;
-	bravoGroupId: number;
-	confirmedAtSeconds: number;
-}) => {
-	await db
-		.insertInto("GroupMatch")
-		.values({
-			alphaGroupId,
-			bravoGroupId,
-			chatCode: "test-match-chat",
-			confirmedAt: confirmedAtSeconds,
-		})
-		.execute();
-};
+const createGroup = ([owner, ...members]: number[], isMatchmade: boolean) =>
+	SQGroupFactory.create(
+		{ userId: owner, additionalMemberUserIds: members },
+		{ isMatchmade },
+	);
+
+const castContinueVote = (groupId: number, userId: number) =>
+	withUserId(userId, () =>
+		GroupMatchContinueVoteRepository.castOwnVote({
+			groupId,
+			isContinuing: true,
+		}),
+	);
 
 const fetchVotes = (groupId: number) =>
 	db
@@ -89,29 +75,13 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 		vi.useRealTimers();
 	});
 
-	const nowSeconds = () => Math.floor(Date.now() / 1000);
-
 	test("flips all non-NO members to NO for matchmade groups whose match confirmed over 1h ago", async () => {
-		const alphaGroupId = await insertGroup({
-			matchmade: 1,
-			userIds: alphaUserIds,
+		const { alphaGroupId, bravoGroupId } = await setupMatch({
+			isMatchmade: true,
+			confirmedAt: sub(new Date(), { hours: 2 }),
 		});
-		const bravoGroupId = await insertGroup({
-			matchmade: 1,
-			userIds: bravoUserIds,
-		});
-		await insertMatch({
-			alphaGroupId,
-			bravoGroupId,
-			confirmedAtSeconds: nowSeconds() - 60 * 60 * 2,
-		});
-		await db
-			.insertInto("GroupMatchContinueVote")
-			.values([
-				{ groupId: alphaGroupId, userId: alphaUserIds[0], isContinuing: 1 },
-				{ groupId: alphaGroupId, userId: alphaUserIds[1], isContinuing: 1 },
-			])
-			.execute();
+		await castContinueVote(alphaGroupId, alphaUserIds[0]);
+		await castContinueVote(alphaGroupId, alphaUserIds[1]);
 
 		await CloseExpiredContinueVotesRoutine.run();
 
@@ -129,27 +99,11 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 	});
 
 	test("leaves matches confirmed under 1h ago untouched", async () => {
-		const alphaGroupId = await insertGroup({
-			matchmade: 1,
-			userIds: alphaUserIds,
+		const { alphaGroupId, bravoGroupId } = await setupMatch({
+			isMatchmade: true,
+			confirmedAt: sub(new Date(), { minutes: 30 }),
 		});
-		const bravoGroupId = await insertGroup({
-			matchmade: 1,
-			userIds: bravoUserIds,
-		});
-		await insertMatch({
-			alphaGroupId,
-			bravoGroupId,
-			confirmedAtSeconds: nowSeconds() - 60 * 30,
-		});
-		await db
-			.insertInto("GroupMatchContinueVote")
-			.values({
-				groupId: alphaGroupId,
-				userId: alphaUserIds[0],
-				isContinuing: 1,
-			})
-			.execute();
+		await castContinueVote(alphaGroupId, alphaUserIds[0]);
 
 		await CloseExpiredContinueVotesRoutine.run();
 
@@ -160,18 +114,9 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 	});
 
 	test("does not touch non-matchmade groups even if match confirmed long ago", async () => {
-		const alphaGroupId = await insertGroup({
-			matchmade: 0,
-			userIds: alphaUserIds,
-		});
-		const bravoGroupId = await insertGroup({
-			matchmade: 0,
-			userIds: bravoUserIds,
-		});
-		await insertMatch({
-			alphaGroupId,
-			bravoGroupId,
-			confirmedAtSeconds: nowSeconds() - 60 * 60 * 2,
+		const { alphaGroupId, bravoGroupId } = await setupMatch({
+			isMatchmade: false,
+			confirmedAt: sub(new Date(), { hours: 2 }),
 		});
 
 		await CloseExpiredContinueVotesRoutine.run();
@@ -181,29 +126,13 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 	});
 
 	test("skips groups whose cascade is fully resolved (every member already has a vote row)", async () => {
-		const alphaGroupId = await insertGroup({
-			matchmade: 1,
-			userIds: alphaUserIds,
+		const { alphaGroupId } = await setupMatch({
+			isMatchmade: true,
+			confirmedAt: sub(new Date(), { hours: 2 }),
 		});
-		const bravoGroupId = await insertGroup({
-			matchmade: 1,
-			userIds: bravoUserIds,
-		});
-		await insertMatch({
-			alphaGroupId,
-			bravoGroupId,
-			confirmedAtSeconds: nowSeconds() - 60 * 60 * 2,
-		});
-		await db
-			.insertInto("GroupMatchContinueVote")
-			.values(
-				alphaUserIds.map((userId) => ({
-					groupId: alphaGroupId,
-					userId,
-					isContinuing: 1 as const,
-				})),
-			)
-			.execute();
+		for (const userId of alphaUserIds) {
+			await castContinueVote(alphaGroupId, userId);
+		}
 
 		await CloseExpiredContinueVotesRoutine.run();
 

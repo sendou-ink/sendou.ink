@@ -1,5 +1,6 @@
 import { sql } from "kysely";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as TournamentStreamerFactory from "~/db/seed/factories/TournamentStreamerFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { CastedMatchesInfo } from "~/db/tables-json";
@@ -360,10 +361,11 @@ async function seedStreamer(
 	twitchAccount: string,
 	userId: number | null = null,
 ) {
-	await db
-		.insertInto("TournamentStreamer")
-		.values({ tournamentId: TOURNAMENT_ID, twitchAccount, userId })
-		.execute();
+	await TournamentStreamerFactory.create({
+		tournamentId: TOURNAMENT_ID,
+		twitchAccount,
+		userId,
+	});
 }
 
 function findAllVods() {
