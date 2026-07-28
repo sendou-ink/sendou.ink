@@ -1,5 +1,3 @@
-import type { FileUpload } from "@remix-run/form-data-parser";
-import { parseFormData as parseMultipartFormData } from "@remix-run/form-data-parser";
 import type { Namespace, TFunction } from "i18next";
 import type { Ok, Result } from "neverthrow";
 import type { Params, UIMatch } from "react-router";
@@ -117,28 +115,6 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 		return await schema.parseAsync(formDataObj);
 	} catch (e) {
 		logger.error("Error parsing request payload", e);
-
-		throw errorToastRedirect("Validation failed");
-	}
-}
-
-/**
- * @deprecated - use parseFormData from /app/form/parse.server.ts (with SendouForm) or parseRequestPayload (without SendouForm)
- *
- * Parse formData with the given schema. Throws a request to show an error toast if it fails.
- */
-export async function parseFormData<T extends z.ZodTypeAny>({
-	formData,
-	schema,
-}: {
-	formData: FormData;
-	schema: T;
-}): Promise<z.infer<T>> {
-	const formDataObj = formDataToObject(formData);
-	try {
-		return await schema.parseAsync(formDataObj);
-	} catch (e) {
-		logger.error("Error parsing form data", e);
 
 		throw errorToastRedirect("Validation failed");
 	}
@@ -339,54 +315,4 @@ export function privatelyCachedJson<T>(dataValue: T) {
 	return data(dataValue, {
 		headers: { "Cache-Control": "private, max-age=5" },
 	});
-}
-
-const DEFAULT_MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
-
-type FileUploadHandler = (
-	fileUpload: FileUpload,
-) => Promise<string | null | undefined>;
-type ParseFormDataOptions = { maxFileSize?: number };
-
-export function safeParseMultipartFormData(
-	request: Request,
-	uploadHandler?: FileUploadHandler,
-): Promise<FormData>;
-export function safeParseMultipartFormData(
-	request: Request,
-	options?: ParseFormDataOptions,
-	uploadHandler?: FileUploadHandler,
-): Promise<FormData>;
-export async function safeParseMultipartFormData(
-	request: Request,
-	optionsOrHandler?: ParseFormDataOptions | FileUploadHandler,
-	uploadHandler?: FileUploadHandler,
-): Promise<FormData> {
-	const maxFileSize =
-		typeof optionsOrHandler === "object" && optionsOrHandler?.maxFileSize
-			? optionsOrHandler.maxFileSize
-			: DEFAULT_MAX_FILE_SIZE_BYTES;
-
-	try {
-		if (typeof optionsOrHandler === "function") {
-			return await parseMultipartFormData(request, optionsOrHandler);
-		}
-		return await parseMultipartFormData(
-			request,
-			optionsOrHandler,
-			uploadHandler,
-		);
-	} catch (err) {
-		if (
-			err instanceof Error &&
-			(err.name === "MaxFileSizeExceededError" ||
-				(err.cause instanceof Error &&
-					err.cause.name === "MaxFileSizeExceededError"))
-		) {
-			throw errorToastRedirect(
-				`File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`,
-			);
-		}
-		throw err;
-	}
 }

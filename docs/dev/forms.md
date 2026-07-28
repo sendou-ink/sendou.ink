@@ -316,10 +316,12 @@ const badgeOptions = badges.map((b) => ({
 pipeline and the `UnvalidatedUserSubmittedImage` admin-validation / supporter auto-validation
 flow, while keeping `SendouForm`'s single-submit `application/json` model unchanged.
 
-> **Art upload is out of scope.** Art stays on its dedicated multipart route (`/art/new`): it
-> produces two derived assets (full + thumbnail), preserves aspect ratio, keeps the original
-> format, allows up to 5MB, and has its own `Art` table. Any future "large / aspect-preserving
-> / multi-derivative" upload should likewise stay off this field.
+> **Art upload is out of scope.** Art (`/art/new`) preserves aspect ratio, keeps the original
+> format, produces two derived assets (full + thumbnail) and stores them on its own `Art` table
+> rather than as a `UserSubmittedImage` id. It therefore uses a `customField` with its own
+> renderer (`ArtImageFormField`) and its own server resolver (`uploadArtImage`), while still
+> submitting as base64 within `SendouForm`'s single JSON submit. Any future "aspect-preserving /
+> multi-derivative" upload should likewise stay off this field and follow that pattern.
 
 ### Schema
 
