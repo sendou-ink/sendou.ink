@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
+import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
@@ -153,8 +154,7 @@ describe("team page editing", () => {
 		const team = await TeamRepository.findByCustomUrl("team-1");
 		invariant(team, "No team with the custom url team-1");
 
-		const image = await ImageRepository.insert({
-			url: "https://example.com/test-avatar.jpg",
+		const image = await ImageFactory.create({
 			submitterUserId: REGULAR_USER_TEST_ID,
 		});
 
