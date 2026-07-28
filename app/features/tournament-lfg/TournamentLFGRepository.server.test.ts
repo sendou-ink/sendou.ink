@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -12,17 +13,7 @@ const createTournament = () =>
 	TournamentFactory.create({ authorId: users.id(1) });
 
 const createPlaceholder = (tournamentId: number, userId: number) =>
-	TournamentLFGRepository.insertPlaceholderTeam({ tournamentId, userId });
-
-const createRegisteredTeam = (
-	tournamentId: number,
-	[owner, ...members]: number[],
-) =>
-	TournamentTeamFactory.create({
-		tournamentId,
-		userId: owner,
-		additionalMemberUserIds: members,
-	});
+	TournamentLFGTeamFactory.create({ tournamentId, userId });
 
 describe("insertPlaceholderTeam", () => {
 	beforeEach(async () => {
@@ -31,7 +22,10 @@ describe("insertPlaceholderTeam", () => {
 
 	test("creates a placeholder team with owner member", async () => {
 		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, users.id(1));
+		const team = await TournamentLFGRepository.insertPlaceholderTeam({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+		});
 
 		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
@@ -43,7 +37,10 @@ describe("insertPlaceholderTeam", () => {
 
 	test("owner has OWNER role", async () => {
 		const tournament = await createTournament();
-		await createPlaceholder(tournament.id, users.id(1));
+		await TournamentLFGRepository.insertPlaceholderTeam({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+		});
 
 		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
@@ -215,10 +212,10 @@ describe("startLooking", () => {
 
 	test("generates chatCode for a 2+ member team", async () => {
 		const tournament = await createTournament();
-		const team = await createRegisteredTeam(tournament.id, [
-			users.id(1),
-			users.id(2),
-		]);
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1), users.id(2)],
+		});
 
 		const pickup = await TournamentLFGRepository.startLooking(team.id);
 
@@ -238,7 +235,10 @@ describe("startLooking", () => {
 
 	test("returns null when team has only 1 member", async () => {
 		const tournament = await createTournament();
-		const team = await createRegisteredTeam(tournament.id, [users.id(1)]);
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1)],
+		});
 
 		const pickup = await TournamentLFGRepository.startLooking(team.id);
 
@@ -254,10 +254,10 @@ describe("startLooking", () => {
 
 	test("reuses existing chatCode if already set", async () => {
 		const tournament = await createTournament();
-		const team = await createRegisteredTeam(tournament.id, [
-			users.id(1),
-			users.id(2),
-		]);
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1), users.id(2)],
+		});
 		// the only production write of the column is `startLooking` itself, which
 		// invents a random code
 		// biome-ignore lint/plugin: no production write sets a known chatCode
@@ -495,12 +495,13 @@ describe("updateMemberRole", () => {
 
 	test("changes role from REGULAR to MANAGER", async () => {
 		const tournament = await createTournament();
-		const team = await TournamentTeamFactory.create({
-			tournamentId: tournament.id,
-			userId: users.id(1),
-			additionalMemberUserIds: [users.id(2)],
-		});
-		await TournamentLFGRepository.startLooking(team.id);
+		const team = await TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds: [users.id(1), users.id(2)],
+			},
+			{ isLooking: true },
+		);
 
 		await TournamentLFGRepository.updateMemberRole({
 			userId: users.id(2),
@@ -587,8 +588,10 @@ describe("leaveLfg", () => {
 	test("sets isLooking=0 for non-placeholder team", async () => {
 		const tournament = await createTournament();
 
-		const team = await createRegisteredTeam(tournament.id, [users.id(1)]);
-		await TournamentLFGRepository.startLooking(team.id);
+		const team = await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds: [users.id(1)] },
+			{ isLooking: true },
+		);
 
 		await TournamentLFGRepository.leaveLfg({
 			userId: users.id(1),
@@ -618,7 +621,7 @@ describe("findAllSubsByTournamentId", () => {
 
 	test("returns userIds with isStayAsSub", async () => {
 		const tournament = await createTournament();
-		await TournamentLFGRepository.insertPlaceholderTeam({
+		await TournamentLFGTeamFactory.create({
 			tournamentId: tournament.id,
 			userId: users.id(1),
 			isStayAsSub: true,

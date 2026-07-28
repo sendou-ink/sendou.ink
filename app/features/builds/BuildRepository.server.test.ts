@@ -59,12 +59,7 @@ const createBuild = (
 
 /** Puts the user in the top 500 with the given weapon, which builds sort by. */
 const makeTop500 = (userId: number, weaponSplId: MainWeaponId) =>
-	XRankPlacementFactory.create({
-		playerSplId: `player-${userId}`,
-		playerUserId: userId,
-		weaponSplId,
-		rank: 1,
-	});
+	XRankPlacementFactory.create({ playerUserId: userId, weaponSplId, rank: 1 });
 
 const buildById = (id: number) =>
 	db

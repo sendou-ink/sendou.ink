@@ -37,10 +37,6 @@ export type Factory<Args, Row, Defaults, Options> = {
 	createMany: (
 		...args: CreateManyParams<Args, Defaults, Options>
 	) => Promise<Row[]>;
-	/** A preset: the same factory with an extra layer of defaults. */
-	variant: <VariantDefaults extends Partial<Args>>(
-		defaults: VariantDefaults,
-	) => Factory<Args, Row, Defaults & VariantDefaults, Options>;
 };
 
 const sequenceResets = new Set<() => void>();
@@ -63,14 +59,15 @@ const sequenceResets = new Set<() => void>();
 export function defineFactory<
 	Args,
 	Row,
-	Defaults extends Partial<Args>,
+	Defaults extends Partial<Args> = Record<never, never>,
 	Options = never,
 >({
 	defaults,
 	insert,
 	applyOptions,
 }: {
-	defaults: (ctx: { seq: number }) => Defaults;
+	/** Omitted by a factory whose every argument is a foreign key it must not invent. */
+	defaults?: (ctx: { seq: number }) => Defaults;
 	insert: (args: Args) => Promise<Row>;
 	applyOptions?: (row: Row, options: Options) => Promise<void>;
 }): Factory<Args, Row, Defaults, Options> {
@@ -89,38 +86,29 @@ export function defineFactory<
 		return row;
 	};
 
-	const factoryWith = <PresetDefaults extends Partial<Args>>(
-		presetDefaults: PresetDefaults,
-	): Factory<Args, Row, Defaults & PresetDefaults, Options> => {
-		// `create` requires everything the two default layers don't supply, so the merge
-		// is a complete `Args` — something the compiler can't work out from the spread
-		const build = (overrides: Partial<Args>) =>
-			({
-				...defaults({ seq: ++seq }),
-				...presetDefaults,
-				...overrides,
-			}) as Args;
+	// `create` requires everything `defaults` doesn't supply, so the merge is a
+	// complete `Args` — something the compiler can't work out from the spread
+	const build = (overrides: Partial<Args>) =>
+		({
+			...defaults?.({ seq: ++seq }),
+			...overrides,
+		}) as Args;
 
-		return {
-			create: (...args) => insertOne(build(args[0] ?? {}), args[1]),
-			createMany: async (...args) => {
-				const [count, overrides, options] = args;
-				const rows: Row[] = [];
+	return {
+		create: (...args) => insertOne(build(args[0] ?? {}), args[1]),
+		createMany: async (...args) => {
+			const [count, overrides, options] = args;
+			const rows: Row[] = [];
 
-				for (let index = 0; index < count; index++) {
-					rows.push(
-						await insertOne(build(overridesAt(overrides, index)), options),
-					);
-				}
+			for (let index = 0; index < count; index++) {
+				rows.push(
+					await insertOne(build(overridesAt(overrides, index)), options),
+				);
+			}
 
-				return rows;
-			},
-			variant: (variantDefaults) =>
-				factoryWith({ ...presetDefaults, ...variantDefaults }),
-		};
+			return rows;
+		},
 	};
-
-	return factoryWith({});
 }
 
 /**

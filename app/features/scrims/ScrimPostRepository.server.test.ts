@@ -24,7 +24,7 @@ describe("findPendingOverlapsForUsers", () => {
 	});
 
 	test("returns a specific-time pending post in window with its member ids", async () => {
-		const postId = await ScrimPostFactory.create({
+		const { id: postId } = await ScrimPostFactory.create({
 			startsAt: dbTs(BOOKED_AT),
 			users: [
 				{ userId: users.id(1), isOwner: 1 },
@@ -46,7 +46,7 @@ describe("findPendingOverlapsForUsers", () => {
 	});
 
 	test("returns a ranged post whose interval overlaps the window even if its start is outside", async () => {
-		const postId = await ScrimPostFactory.create({
+		const { id: postId } = await ScrimPostFactory.create({
 			startsAt: dbTs(sub(BOOKED_AT, { hours: 2 })),
 			rangeEndsAt: dbTs(BOOKED_AT),
 			users: [{ userId: users.id(1), isOwner: 1 }],
@@ -78,7 +78,7 @@ describe("findPendingOverlapsForUsers", () => {
 	});
 
 	test("excludes the just-booked post even when it overlaps", async () => {
-		const postId = await ScrimPostFactory.create({
+		const { id: postId } = await ScrimPostFactory.create({
 			startsAt: dbTs(BOOKED_AT),
 			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
@@ -136,7 +136,7 @@ describe("findPendingOverlapsForUsers", () => {
 	});
 
 	test("returns pending request ids whose effective time falls in the window", async () => {
-		const postId = await ScrimPostFactory.create(
+		const { id: postId } = await ScrimPostFactory.create(
 			{
 				startsAt: dbTs(add(BOOKED_AT, { hours: 3 })),
 				users: [{ userId: users.id(3), isOwner: 1 }],
@@ -274,11 +274,11 @@ describe("insertRequest", () => {
 		});
 
 	test("throws if the team already has a request for the post", async () => {
-		const postId = await ScrimPostFactory.create({
+		const { id: postId } = await ScrimPostFactory.create({
 			startsAt: dbTs(BOOKED_AT),
 			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
-		const team = await TeamFactory.create({ ownerUserId: users.id(2) });
+		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
 
 		await insertTeamRequest({
 			scrimPostId: postId,
@@ -299,15 +299,15 @@ describe("insertRequest", () => {
 	});
 
 	test("allows the team to request another post", async () => {
-		const postId = await ScrimPostFactory.create({
+		const { id: postId } = await ScrimPostFactory.create({
 			startsAt: dbTs(BOOKED_AT),
 			users: [{ userId: users.id(1), isOwner: 1 }],
 		});
-		const otherPostId = await ScrimPostFactory.create({
+		const { id: otherPostId } = await ScrimPostFactory.create({
 			startsAt: dbTs(BOOKED_AT),
 			users: [{ userId: users.id(4), isOwner: 1 }],
 		});
-		const team = await TeamFactory.create({ ownerUserId: users.id(2) });
+		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
 
 		await insertTeamRequest({
 			scrimPostId: postId,

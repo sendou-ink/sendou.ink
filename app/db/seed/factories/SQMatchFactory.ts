@@ -1,17 +1,38 @@
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import invariant from "~/utils/invariant";
+import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import * as SplatoonFaker from "../core/SplatoonFaker";
+import * as SQGroupFactory from "./SQGroupFactory";
+
+type InsertArgs = Omit<
+	Parameters<typeof SQMatchRepository.insert>[0],
+	"alphaGroupId" | "bravoGroupId"
+> & {
+	/** Members of the alpha group, the first of them its owner. */
+	alphaUserIds: number[];
+	/** Members of the bravo group, the first of them its owner. */
+	bravoUserIds: number[];
+	/** Were the two groups made in the matchmaking UI, rather than by inviting? */
+	isMatchmade?: boolean;
+};
 
 type Options = {
 	/** Play the match out, alpha winning every map, up to both teams having agreed
 	 * on the score. Leaves both groups inactive, as a real concluded match does. */
-	isConcluded: boolean;
+	isConcluded?: boolean;
+	/** When the match was made, for one that should look older than now. */
+	createdAt?: Date;
+	/** When the two groups had agreed on the score. Needs `isConcluded`. */
+	confirmedAt?: Date;
 };
 
-/** Creates SendouQ matches. Both groups have to be full, as they are when the
- * matchmaking UI creates a match. */
+/**
+ * Creates SendouQ matches together with the two groups playing them: a match is
+ * only ever made out of two full groups, the way the matchmaking UI makes one, so
+ * the groups are not the caller's to bring. Both are returned with the match.
+ */
 export const { create } = defineFactory({
 	defaults: () => ({
 		mapList: SplatoonFaker.mapList(SENDOUQ_BEST_OF).map((map) => ({
@@ -20,11 +41,38 @@ export const { create } = defineFactory({
 		})),
 		memento: { users: {}, groups: {}, pools: [] },
 	}),
-	insert: SQMatchRepository.insert,
-	applyOptions: async (match, { isConcluded }: Options) => {
-		if (!isConcluded) return;
+	insert: async ({
+		alphaUserIds,
+		bravoUserIds,
+		isMatchmade,
+		...args
+	}: InsertArgs) => {
+		const alphaGroup = await SQGroupFactory.create(
+			{ memberUserIds: alphaUserIds },
+			{ isMatchmade },
+		);
+		const bravoGroup = await SQGroupFactory.create(
+			{ memberUserIds: bravoUserIds },
+			{ isMatchmade },
+		);
 
-		await playOutMatch(match.id);
+		const match = await SQMatchRepository.insert({
+			...args,
+			alphaGroupId: alphaGroup.id,
+			bravoGroupId: bravoGroup.id,
+		});
+
+		return { ...match, alphaGroup, bravoGroup };
+	},
+	applyOptions: async (
+		match,
+		{ isConcluded, createdAt, confirmedAt }: Options,
+	) => {
+		if (isConcluded) {
+			await playOutMatch(match.id);
+		}
+
+		await backdate("GroupMatch", match.id, { createdAt, confirmedAt });
 	},
 });
 

@@ -23,7 +23,7 @@ const createTeam = (
 	TournamentTeamFactory.create(
 		{
 			tournamentId,
-			userId: actor.id,
+			memberUserIds: [actor.id],
 			team: { name, prefersNotToHost: 0, teamId: null },
 		},
 		options,
@@ -72,8 +72,7 @@ describe("TournamentAuditLogRepository", () => {
 		const tournament = await createTournament();
 		await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
-			userId: actor.id,
-			additionalMemberUserIds: [subject.id],
+			memberUserIds: [actor.id, subject.id],
 			team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
 		});
 

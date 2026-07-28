@@ -12,10 +12,10 @@ import {
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import { reportScore } from "~/features/tournament-match/core/reportScore.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
-import { databaseTimestampNow } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
-import { faker } from "../core/faker";
+import { eventDefaults } from "./CalendarEventFactory";
+import * as TournamentTeamFactory from "./TournamentTeamFactory";
 
 const SINGLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
 	{
@@ -49,7 +49,7 @@ type Options = {
 	/** Mark the tournament finished without recording any results. For cases that
 	 * only need the flag; a tournament with real results is finalized by
 	 * `TournamentRepository.finalize` with a summary. */
-	isFinalized: boolean;
+	isFinalized?: boolean;
 };
 
 /**
@@ -61,15 +61,7 @@ type Options = {
  */
 export const { create } = defineFactory({
 	defaults: () => ({
-		name: faker.company.name(),
-		description: null,
-		discordInviteCode: null,
-		bracketUrl: faker.internet.url(),
-		organizationId: null,
-		tags: null,
-		badges: [],
-		rules: null,
-		startTimes: [databaseTimestampNow()],
+		...eventDefaults(),
 		mapPickingStyle: "TO" as const,
 		bracketProgression: SINGLE_ELIMINATION,
 	}),
@@ -91,11 +83,43 @@ export const { create } = defineFactory({
 });
 
 /**
+ * Creates a tournament that has been played. Every entry of `teamRosters` registers
+ * as a team owned by the first of its users and checks in, the first bracket is
+ * started off that seeding, and every match of it is played out.
+ *
+ * Returns the teams and the matches played alongside the tournament, so that a
+ * progression can carry on: start its next bracket and play that too.
+ */
+export async function createPlayed(
+	overrides: Parameters<typeof create>[0],
+	{ teamRosters, ...options }: Options & { teamRosters: number[][] },
+) {
+	const tournament = await create(overrides, options);
+
+	const teams: Awaited<ReturnType<typeof TournamentTeamFactory.create>>[] = [];
+	for (const memberUserIds of teamRosters) {
+		teams.push(
+			await TournamentTeamFactory.create(
+				{ tournamentId: tournament.id, memberUserIds },
+				{ isCheckedIn: true },
+			),
+		);
+	}
+
+	await startBracket(tournament.id);
+	const matches = await playMatches(tournament.id);
+
+	return { ...tournament, teams, matches };
+}
+
+/**
  * Starts one of the tournament's brackets, seeded by the teams that are in it —
  * the same teams the organizer would see offered on the bracket page.
  *
  * Later brackets of a progression are started by calling this again once the
  * matches they source their teams from have been played.
+ *
+ * Returns the matches the bracket was created with, in the generator's own order.
  */
 export async function startBracket(
 	tournamentId: number,
@@ -125,6 +149,12 @@ export async function startBracket(
 	});
 
 	clearTournamentDataCache(tournamentId);
+
+	const started = await tournamentFromDB({ tournamentId, user: undefined });
+	const startedBracket = started.bracketByIdx(bracketIdx);
+	invariant(startedBracket, `Bracket at index ${bracketIdx} was not created`);
+
+	return startedBracket.data.match.map((match) => ({ id: match.id }));
 }
 
 interface PlayedMatch {

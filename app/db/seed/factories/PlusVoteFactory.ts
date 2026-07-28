@@ -36,5 +36,7 @@ export const { create, createMany } = defineFactory({
 			.execute();
 
 		await PlusVotingRepository.upsertMany([...alreadyCast, vote]);
+
+		return vote;
 	},
 });

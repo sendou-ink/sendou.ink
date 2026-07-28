@@ -18,7 +18,6 @@ import { withUserId, wrappedAction } from "~/utils/Test";
 import { refreshSendouQInstance } from "../core/SendouQ.server";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { lookingSchema } from "../q-schemas.server";
-import * as SQGroupRepository from "../SQGroupRepository.server";
 import { action as rawLookingAction } from "./q.looking";
 
 const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
@@ -29,40 +28,40 @@ const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
 ];
 
 const prepareGroups = async () => {
-	const owner = await UserFactory.createAdmin();
-	const others = await UserFactory.createMany(FULL_GROUP_SIZE * 2 - 1);
-
-	const ownGroup = await SQGroupFactory.create({
-		userId: owner.id,
-		additionalMemberUserIds: others
-			.slice(0, FULL_GROUP_SIZE - 1)
-			.map((user) => user.id),
+	const owner = await UserFactory.createAdmin(null, {
+		matchProfile: {
+			mapModePreferences: {
+				modes: SZ_ONLY_PREFERENCE,
+				pool: [{ mode: "SZ", stages: [...stageIds].slice(0, 7) }],
+			},
+		},
 	});
+	const ownMembers = await UserFactory.createMany(FULL_GROUP_SIZE - 1);
 
-	const [theirOwner, ...theirMembers] = others.slice(FULL_GROUP_SIZE - 1);
+	const theirOwner = await UserFactory.create(null, {
+		matchProfile: {
+			mapModePreferences: {
+				modes: SZ_ONLY_PREFERENCE,
+				pool: [
+					{
+						mode: "SZ",
+						stages: [...stageIds].slice(0, 20).reverse().slice(0, 7),
+					},
+				],
+			},
+		},
+	});
+	const theirMembers = await UserFactory.createMany(FULL_GROUP_SIZE - 1);
+
 	const theirGroup = await SQGroupFactory.create({
-		userId: theirOwner.id,
-		additionalMemberUserIds: theirMembers.map((user) => user.id),
+		memberUserIds: [theirOwner.id, ...theirMembers.map((user) => user.id)],
 	});
+	const ownGroup = await SQGroupFactory.create(
+		{ memberUserIds: [owner.id, ...ownMembers.map((user) => user.id)] },
+		{ likedByGroupIds: [theirGroup.id] },
+	);
 
-	await SQGroupRepository.insertLike({
-		likerGroupId: theirGroup.id,
-		targetGroupId: ownGroup.id,
-	});
-
-	await setMapModePreferences(owner.id, {
-		modes: SZ_ONLY_PREFERENCE,
-		pool: [{ mode: "SZ", stages: [...stageIds].slice(0, 7) }],
-	});
-
-	await setMapModePreferences(theirOwner.id, {
-		modes: SZ_ONLY_PREFERENCE,
-		pool: [
-			{ mode: "SZ", stages: [...stageIds].slice(0, 20).reverse().slice(0, 7) },
-		],
-	});
-
-	return { owner, ownGroup, theirGroup, teammate: others[0] };
+	return { owner, ownGroup, theirGroup, teammate: ownMembers[0] };
 };
 
 const setMapModePreferences = (

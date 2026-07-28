@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ApiRepository from "./ApiRepository.server";
 
@@ -16,7 +17,7 @@ describe("findTokenByUserId", () => {
 	});
 
 	test("finds existing token for user", async () => {
-		await ApiRepository.generateToken(users.id(1), "read");
+		await ApiTokenFactory.create({ userId: users.id(1), type: "read" });
 
 		const result = await ApiRepository.findTokenByUserId(users.id(1), "read");
 
@@ -26,8 +27,14 @@ describe("findTokenByUserId", () => {
 	});
 
 	test("returns correct token for specific user", async () => {
-		const token1 = await ApiRepository.generateToken(users.id(1), "read");
-		const token2 = await ApiRepository.generateToken(users.id(2), "read");
+		const token1 = await ApiTokenFactory.create({
+			userId: users.id(1),
+			type: "read",
+		});
+		const token2 = await ApiTokenFactory.create({
+			userId: users.id(2),
+			type: "read",
+		});
 
 		const result1 = await ApiRepository.findTokenByUserId(users.id(1), "read");
 		const result2 = await ApiRepository.findTokenByUserId(users.id(2), "read");
@@ -38,8 +45,8 @@ describe("findTokenByUserId", () => {
 	});
 
 	test("finds correct token by type", async () => {
-		await ApiRepository.generateToken(users.id(1), "read");
-		await ApiRepository.generateToken(users.id(1), "write");
+		await ApiTokenFactory.create({ userId: users.id(1), type: "read" });
+		await ApiTokenFactory.create({ userId: users.id(1), type: "write" });
 
 		const readResult = await ApiRepository.findTokenByUserId(
 			users.id(1),
@@ -143,7 +150,7 @@ describe("findAllApiTokens", () => {
 	});
 
 	test("returns array of token objects with type", async () => {
-		await ApiRepository.generateToken(users.id(1), "read");
+		await ApiTokenFactory.create({ userId: users.id(1), type: "read" });
 
 		const result = await ApiRepository.findAllApiTokens();
 

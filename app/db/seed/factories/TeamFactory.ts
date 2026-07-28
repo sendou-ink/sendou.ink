@@ -1,28 +1,41 @@
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { TEAM } from "~/features/team/team-constants";
+import invariant from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";
+import * as ImageFactory from "./ImageFactory";
 
-type InsertArgs = Parameters<typeof TeamRepository.insert>[0] & {
-	additionalMemberUserIds: number[];
+type InsertArgs = Omit<
+	Parameters<typeof TeamRepository.insert>[0],
+	"ownerUserId"
+> & {
+	/** The team's members, the first of them its owner. */
+	memberUserIds: number[];
+};
+
+type Options = {
+	/** Gives the team a logo, submitted by its owner the way one is in production. */
+	hasAvatar?: boolean;
 };
 
 /**
- * Creates teams. `ownerUserId` is the owner, whose membership the repository creates
- * with the team; the members named by `additionalMemberUserIds` join it the way they
- * do in production, within the team count a non-patron is allowed. Custom url and
- * invite code are the repository's own, the custom url following from the name.
+ * Creates teams. The first of `memberUserIds` is the owner, whose membership the
+ * repository creates with the team; the rest join it the way they do in production,
+ * within the team count a non-patron is allowed. Custom url and invite code are the
+ * repository's own, the custom url following from the name.
  */
 export const { create } = defineFactory({
 	defaults: ({ seq }) => ({
 		name: `Team ${seq}`,
 		isMainTeam: true,
-		additionalMemberUserIds: [],
 	}),
-	insert: async ({ additionalMemberUserIds, ...args }: InsertArgs) => {
-		const team = await TeamRepository.insert(args);
+	insert: async ({ memberUserIds, ...args }: InsertArgs) => {
+		const [ownerUserId, ...otherMemberUserIds] = memberUserIds;
+		invariant(ownerUserId, "A team needs at least an owner");
 
-		for (const userId of additionalMemberUserIds) {
+		const team = await TeamRepository.insert({ ...args, ownerUserId });
+
+		for (const userId of otherMemberUserIds) {
 			await actAs(userId, () =>
 				TeamRepository.insertOwnMembership({
 					teamId: team.id,
@@ -31,6 +44,25 @@ export const { create } = defineFactory({
 			);
 		}
 
-		return team;
+		return { ...team, name: args.name, ownerUserId, memberUserIds };
+	},
+	applyOptions: async (team, { hasAvatar }: Options) => {
+		if (!hasAvatar) return;
+
+		const image = await ImageFactory.create({
+			submitterUserId: team.ownerUserId,
+		});
+
+		// the team edit page saves the whole profile at once; everything besides the
+		// name is still empty on a team the repository has only just inserted
+		await TeamRepository.update({
+			id: team.id,
+			name: team.name,
+			bio: null,
+			bsky: null,
+			tag: null,
+			avatarImgId: image.id,
+			bannerImgId: null,
+		});
 	},
 });

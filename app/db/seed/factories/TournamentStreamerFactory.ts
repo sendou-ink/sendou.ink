@@ -1,9 +1,10 @@
-import type { Tables } from "~/db/tables";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import invariant from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
 
-type InsertArgs = Omit<Tables["TournamentStreamer"], "id">;
+type InsertArgs = Parameters<
+	typeof LiveStreamRepository.insertTournamentStreamers
+>[0][number];
 
 export const { create } = defineFactory({
 	defaults: ({ seq }) => ({

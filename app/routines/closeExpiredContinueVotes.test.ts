@@ -7,14 +7,11 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
-import { backdate } from "~/db/seed/core/backdate";
-import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
+import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
-import { withUserId } from "~/utils/Test";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 
 let alphaUserIds: number[];
@@ -27,31 +24,19 @@ const setupMatch = async ({
 	isMatchmade: boolean;
 	confirmedAt: Date;
 }) => {
-	const alphaGroup = await createGroup(alphaUserIds, isMatchmade);
-	const bravoGroup = await createGroup(bravoUserIds, isMatchmade);
-
 	const match = await SQMatchFactory.create(
-		{ alphaGroupId: alphaGroup.id, bravoGroupId: bravoGroup.id },
-		{ isConcluded: true },
+		{ alphaUserIds, bravoUserIds, isMatchmade },
+		{ isConcluded: true, confirmedAt },
 	);
-	await backdate("GroupMatch", match.id, { confirmedAt });
 
-	return { alphaGroupId: alphaGroup.id, bravoGroupId: bravoGroup.id };
+	return {
+		alphaGroupId: match.alphaGroup.id,
+		bravoGroupId: match.bravoGroup.id,
+	};
 };
 
-const createGroup = ([owner, ...members]: number[], isMatchmade: boolean) =>
-	SQGroupFactory.create(
-		{ userId: owner, additionalMemberUserIds: members },
-		{ isMatchmade },
-	);
-
 const castContinueVote = (groupId: number, userId: number) =>
-	withUserId(userId, () =>
-		GroupMatchContinueVoteRepository.castOwnVote({
-			groupId,
-			isContinuing: true,
-		}),
-	);
+	GroupMatchContinueVoteFactory.create({ userId, groupId });
 
 const fetchVotes = (groupId: number) =>
 	db

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
@@ -14,13 +13,7 @@ const insertVerifiedXp = (
 	userId: number,
 	power: number,
 	region: "WEST" | "JPN" = "WEST",
-) =>
-	XRankPlacementFactory.create({
-		playerSplId: `player-${userId}`,
-		playerUserId: userId,
-		power,
-		region,
-	});
+) => XRankPlacementFactory.create({ playerUserId: userId, power, region });
 
 const findXpStat = (card: UserCardData | undefined) =>
 	card?.stats.find((stat) => stat.type === "XP");
@@ -41,8 +34,10 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("keys cards by user id and builds the stats array from db fields", async () => {
-		const plusMember = await UserFactory.create(null, { plusTier: 2 });
-		await UserRepository.updateManyDivs([{ userId: plusMember.id, div: "1" }]);
+		const plusMember = await UserFactory.create(null, {
+			plusTier: 2,
+			div: "1",
+		});
 		await insertVerifiedXp(plusMember.id, 2500);
 
 		const { userCards } = await withNoUser(() =>

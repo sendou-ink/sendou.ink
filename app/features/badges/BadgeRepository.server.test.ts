@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
-import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import * as BadgeRepository from "./BadgeRepository.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 
@@ -50,15 +49,11 @@ describe("syncXPBadges", () => {
 });
 
 /** Gives the user a linked X Rank player whose one placement is worth `power`. */
-async function givePeakXp(userId: number, power: number) {
-	await XRankPlacementFactory.create({
-		playerSplId: `player-${userId}`,
-		playerUserId: userId,
-		power,
-	});
-
-	await XRankPlacementRepository.refreshAllPeakXp();
-}
+const givePeakXp = (userId: number, power: number) =>
+	XRankPlacementFactory.create(
+		{ playerUserId: userId, power },
+		{ refreshPeakXp: true },
+	);
 
 async function findBadgeByCode(code: string) {
 	const badges = await BadgeRepository.findAll();

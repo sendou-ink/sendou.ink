@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
-import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as TournamentMatchRepository from "./TournamentMatchRepository.server";
@@ -36,19 +35,15 @@ describe("findByTournamentTeamId", () => {
 	test("preserves stage order: matches from an earlier stage come first even when later stage has lower group numbers", async () => {
 		// the pools stage numbers its groups 1..2 while the final is group 1 of its
 		// own stage, so the team page has to order by stage before group
-		const tournament = await TournamentFactory.create({
-			authorId: users.id(1),
-			bracketProgression: POOLS_TO_FINAL,
-			minMembersPerTeam: 1,
-		});
-		await TournamentTeamFactory.createMany(
-			TEAM_COUNT,
-			(index) => ({ tournamentId: tournament.id, userId: users.id(index + 1) }),
-			{ isCheckedIn: true },
+		const tournament = await TournamentFactory.createPlayed(
+			{
+				authorId: users.id(1),
+				bracketProgression: POOLS_TO_FINAL,
+				minMembersPerTeam: 1,
+			},
+			{ teamRosters: users.ids(TEAM_COUNT).map((userId) => [userId]) },
 		);
-
-		await TournamentFactory.startBracket(tournament.id);
-		const poolMatches = await TournamentFactory.playMatches(tournament.id);
+		const poolMatches = tournament.matches;
 
 		await TournamentFactory.startBracket(tournament.id, { bracketIdx: 1 });
 		const [finalMatch] = await TournamentFactory.playMatches(tournament.id);

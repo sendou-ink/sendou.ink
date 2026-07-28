@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { withUserId } from "~/utils/Test";
@@ -6,7 +7,7 @@ import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepos
 
 const createGroup = async () => {
 	const owner = await UserFactory.create();
-	const group = await SQGroupFactory.create({ userId: owner.id });
+	const group = await SQGroupFactory.create({ memberUserIds: [owner.id] });
 
 	return group.id;
 };
@@ -15,9 +16,7 @@ const fetchVotes = (groupId: number) =>
 	GroupMatchContinueVoteRepository.findAllByGroupIds([groupId]);
 
 const castVote = (userId: number, groupId: number, isContinuing: boolean) =>
-	withUserId(userId, () =>
-		GroupMatchContinueVoteRepository.castOwnVote({ groupId, isContinuing }),
-	);
+	GroupMatchContinueVoteFactory.create({ userId, groupId, isContinuing });
 
 describe("findAllByGroupIds", () => {
 	test("returns empty array without querying when no group ids given", async () => {
@@ -49,12 +48,18 @@ describe("findAllByGroupIds", () => {
 });
 
 describe("cast", () => {
+	/** The subject of this block, so it goes through the repository directly. */
+	const cast = (userId: number, groupId: number, isContinuing: boolean) =>
+		withUserId(userId, () =>
+			GroupMatchContinueVoteRepository.castOwnVote({ groupId, isContinuing }),
+		);
+
 	test("updates existing vote on conflict instead of inserting a duplicate", async () => {
 		const voter = await UserFactory.create();
 		const groupId = await createGroup();
 
-		await castVote(voter.id, groupId, true);
-		await castVote(voter.id, groupId, false);
+		await cast(voter.id, groupId, true);
+		await cast(voter.id, groupId, false);
 
 		const votes = await fetchVotes(groupId);
 		expect(votes).toHaveLength(1);
@@ -66,11 +71,11 @@ describe("cast", () => {
 		const groupA = await createGroup();
 		const groupB = await createGroup();
 
-		await castVote(voters[0].id, groupA, true);
-		await castVote(voters[1].id, groupA, true);
-		await castVote(voters[0].id, groupB, true);
+		await cast(voters[0].id, groupA, true);
+		await cast(voters[1].id, groupA, true);
+		await cast(voters[0].id, groupB, true);
 
-		await castVote(voters[2].id, groupA, false);
+		await cast(voters[2].id, groupA, false);
 
 		const groupAVotes = await fetchVotes(groupA);
 		expect(groupAVotes).toHaveLength(1);

@@ -8,18 +8,24 @@ type InsertArgs = Omit<
 	"isFullTournament" | "bracketProgression" | "mapPickingStyle"
 >;
 
+/**
+ * What every calendar event is defaulted to, tournaments included — a tournament is
+ * a calendar event with one attached, see `TournamentFactory`.
+ */
+export const eventDefaults = () => ({
+	name: faker.company.name(),
+	description: null,
+	discordInviteCode: null,
+	bracketUrl: faker.internet.url(),
+	organizationId: null,
+	tags: null,
+	badges: [],
+	rules: null,
+	startTimes: [databaseTimestampNow()],
+});
+
 export const { create } = defineFactory({
-	defaults: () => ({
-		name: faker.company.name(),
-		description: null,
-		discordInviteCode: null,
-		bracketUrl: faker.internet.url(),
-		organizationId: null,
-		tags: null,
-		badges: [],
-		rules: null,
-		startTimes: [databaseTimestampNow()],
-	}),
+	defaults: eventDefaults,
 	insert: async (args: InsertArgs) => {
 		const { eventId } = await CalendarRepository.insert({
 			...args,

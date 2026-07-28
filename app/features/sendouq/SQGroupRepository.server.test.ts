@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
+import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
-import { withUserId } from "~/utils/Test";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import * as SQGroupRepository from "./SQGroupRepository.server";
 
@@ -11,41 +11,28 @@ const setupConcludedMatch = async () => {
 	const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
 	const alphaMembers = users.slice(0, FULL_GROUP_SIZE);
 
-	const alphaGroup = await createMatchmadeGroup(alphaMembers);
-	const bravoGroup = await createMatchmadeGroup(users.slice(FULL_GROUP_SIZE));
-
 	const match = await SQMatchFactory.create(
-		{ alphaGroupId: alphaGroup.id, bravoGroupId: bravoGroup.id },
+		{
+			alphaUserIds: alphaMembers.map((member) => member.id),
+			bravoUserIds: users.slice(FULL_GROUP_SIZE).map((member) => member.id),
+			isMatchmade: true,
+		},
 		{ isConcluded: true },
 	);
 
 	return {
-		alphaGroupId: alphaGroup.id,
-		bravoGroupId: bravoGroup.id,
+		alphaGroupId: match.alphaGroup.id,
+		bravoGroupId: match.bravoGroup.id,
 		matchChatCode: match.chatCode,
 		alphaMembers,
 	};
 };
 
-const createMatchmadeGroup = ([owner, ...members]: Array<{ id: number }>) =>
-	SQGroupFactory.create(
-		{
-			userId: owner.id,
-			additionalMemberUserIds: members.map((member) => member.id),
-		},
-		{ isMatchmade: true },
-	);
-
 const fetchVotes = (groupId: number) =>
 	GroupMatchContinueVoteRepository.findAllByGroupIds([groupId]);
 
 const castYesVote = (userId: number, groupId: number) =>
-	withUserId(userId, () =>
-		GroupMatchContinueVoteRepository.castOwnVote({
-			groupId,
-			isContinuing: true,
-		}),
-	);
+	GroupMatchContinueVoteFactory.create({ userId, groupId });
 
 describe("insert", () => {
 	test("records implicit no-vote on previous matchmade group when user creates a new group", async () => {
@@ -126,7 +113,7 @@ describe("insertMember", () => {
 
 		const newGroup = await SQGroupFactory.create({
 			status: "PREPARING",
-			userId: newOwner.id,
+			memberUserIds: [newOwner.id],
 		});
 
 		const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(

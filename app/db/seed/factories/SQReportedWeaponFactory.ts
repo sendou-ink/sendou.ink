@@ -7,6 +7,13 @@ type InsertArgs = Parameters<typeof ReportedWeaponRepository.upsertOwn>[0] & {
 	userId: number;
 };
 
+/**
+ * Creates the weapons a SendouQ match's players report having used. `userId` is the
+ * player whose weapon it was, on whose behalf it is reported.
+ *
+ * `mapIndex` is not defaulted: it is what identifies the row, so a second weapon
+ * without one would replace the first rather than add to it.
+ */
 export const { createMany } = defineFactory({
 	defaults: () => ({
 		weaponSplId: SplatoonFaker.mainWeapon(),

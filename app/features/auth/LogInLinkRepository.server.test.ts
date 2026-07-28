@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as LogInLinkFactory from "~/db/seed/factories/LogInLinkFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as LogInLinkRepository from "./LogInLinkRepository.server";
 
@@ -31,7 +32,7 @@ describe("del", () => {
 	});
 
 	test("deletes a login link by code", async () => {
-		const link = await LogInLinkRepository.insert(userId);
+		const link = await LogInLinkFactory.create({ userId });
 
 		await LogInLinkRepository.deleteByCode(link.code);
 
@@ -48,7 +49,7 @@ describe("findValidByCode", () => {
 	});
 
 	test("returns userId for valid code", async () => {
-		const link = await LogInLinkRepository.insert(userId);
+		const link = await LogInLinkFactory.create({ userId });
 
 		const result = await LogInLinkRepository.findValidByCode(link.code);
 

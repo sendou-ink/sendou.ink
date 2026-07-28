@@ -1,5 +1,4 @@
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
-import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { withUserId } from "~/utils/Test";
 import * as TournamentTeamRepository from "../tournament/TournamentTeamRepository.server";
@@ -25,31 +24,25 @@ export async function seedOrgEventWithParticipants({
 	participantUserIds: number[];
 	checkIn?: "in" | "out" | "none";
 }) {
-	const [ownerUserId, ...memberUserIds] = participantUserIds;
+	const [ownerUserId] = participantUserIds;
 	const asOwner = <T>(fn: () => T) => withUserId(ownerUserId, fn);
 
-	const tournament = await TournamentFactory.create({
-		authorId: ownerUserId,
-		organizationId,
-		startTimes: [startTime],
-		minMembersPerTeam: participantUserIds.length,
-	});
+	const opponentUserIds = (
+		await UserFactory.createMany(participantUserIds.length)
+	).map((user) => user.id);
 
-	const team = await TournamentTeamFactory.create(
+	const {
+		id: tournamentId,
+		teams: [team, opponent],
+	} = await TournamentFactory.createPlayed(
 		{
-			tournamentId: tournament.id,
-			userId: ownerUserId,
-			additionalMemberUserIds: memberUserIds,
+			authorId: ownerUserId,
+			organizationId,
+			startTimes: [startTime],
+			minMembersPerTeam: participantUserIds.length,
 		},
-		{ isCheckedIn: true },
+		{ teamRosters: [participantUserIds, opponentUserIds] },
 	);
-	const opponent = await createOpponent(
-		tournament.id,
-		participantUserIds.length,
-	);
-
-	await TournamentFactory.startBracket(tournament.id);
-	await TournamentFactory.playMatches(tournament.id);
 
 	// the opponent exists only to give the participants somebody to play, so it
 	// leaves no check in behind to be counted as one of the event's own teams
@@ -85,18 +78,5 @@ export async function seedOrgEventWithParticipants({
 		});
 	}
 
-	return { tournamentId: tournament.id, teamId: team.id };
-}
-
-async function createOpponent(tournamentId: number, memberCount: number) {
-	const [owner, ...members] = await UserFactory.createMany(memberCount);
-
-	return TournamentTeamFactory.create(
-		{
-			tournamentId,
-			userId: owner.id,
-			additionalMemberUserIds: members.map((member) => member.id),
-		},
-		{ isCheckedIn: true },
-	);
+	return { tournamentId, teamId: team.id };
 }

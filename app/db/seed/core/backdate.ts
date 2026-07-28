@@ -27,6 +27,9 @@ export async function backdate<T extends BackdatableTable>(
 	const assignments: RawBuilder<unknown>[] = [];
 
 	for (const [column, date] of Object.entries(timestamps)) {
+		// so that a caller passing its own optional dates through needs no filtering
+		if (!date) continue;
+
 		assignments.push(
 			sql`${sql.ref(column)} = ${dateToDatabaseTimestamp(date as Date)}`,
 		);

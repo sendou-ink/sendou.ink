@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentStreamerFactory from "~/db/seed/factories/TournamentStreamerFactory";
-import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
@@ -254,21 +253,17 @@ async function seedTournamentWithMatches({
 }: {
 	castedOn?: { match: "first" | "second"; twitchAccount: string };
 } = {}) {
-	const tournament = await TournamentFactory.create({
-		authorId: users.id(1),
-		bracketProgression: DOUBLE_ELIMINATION,
-		minMembersPerTeam: 1,
-	});
-	tournamentId = tournament.id;
-
-	teams = await TournamentTeamFactory.createMany(
-		TEAM_COUNT,
-		(index) => ({ tournamentId, userId: users.id(index + 1) }),
-		{ isCheckedIn: true },
+	const tournament = await TournamentFactory.createPlayed(
+		{
+			authorId: users.id(1),
+			bracketProgression: DOUBLE_ELIMINATION,
+			minMembersPerTeam: 1,
+		},
+		{ teamRosters: users.ids(TEAM_COUNT).map((userId) => [userId]) },
 	);
-
-	await TournamentFactory.startBracket(tournamentId);
-	[firstMatch, secondMatch] = await TournamentFactory.playMatches(tournamentId);
+	tournamentId = tournament.id;
+	teams = tournament.teams;
+	[firstMatch, secondMatch] = tournament.matches;
 
 	await backdate("TournamentMatch", firstMatch.id, {
 		startedAt: new Date(MATCH_START_SECONDS * 1000),

@@ -2,6 +2,7 @@ import { subSeconds } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
@@ -24,28 +25,21 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 /** Users are interchangeable here, so tests name them by 1-based position. */
 const users = UserFactory.pool();
 
+const userIds = (positions: number[]) =>
+	positions.map((position) => users.id(position));
+
 const createGroup = async (
 	memberPositions: number[],
 	options: {
 		status?: "PREPARING" | "ACTIVE";
 	} = {},
 ) => {
-	const { status = "ACTIVE" } = options;
-	const [ownerPosition, ...restPositions] = memberPositions;
-
-	const groupResult = await SQGroupRepository.insert({
-		status,
-		userId: users.id(ownerPosition),
+	const group = await SQGroupFactory.create({
+		status: options.status ?? "ACTIVE",
+		memberUserIds: userIds(memberPositions),
 	});
 
-	for (const position of restPositions) {
-		await SQGroupRepository.insertMember(groupResult.id, {
-			userId: users.id(position),
-			role: "REGULAR",
-		});
-	}
-
-	return groupResult.id;
+	return group.id;
 };
 
 /**
@@ -95,12 +89,9 @@ describe("SendouQ", () => {
 		});
 
 		test("returns 'match' when user in ACTIVE group with matchId", async () => {
-			const groupId1 = await createGroup([1, 2, 3, 4]);
-			const groupId2 = await createGroup([5, 6, 7, 8]);
-
 			await SQMatchFactory.create({
-				alphaGroupId: groupId1,
-				bravoGroupId: groupId2,
+				alphaUserIds: userIds([1, 2, 3, 4]),
+				bravoUserIds: userIds([5, 6, 7, 8]),
 			});
 
 			await refreshSendouQInstance();
@@ -415,14 +406,11 @@ describe("SendouQ", () => {
 
 			test("only returns groups without matchId", async () => {
 				await createGroup([1, 2, 3, 4]);
-				const matchedGroup1 = await createGroup([5, 6, 7, 8]);
-				const matchedGroup2 = await createGroup([9, 10, 11, 12]);
-				const lookingGroup = await createGroup([13, 14, 15, 16]);
-
 				await SQMatchFactory.create({
-					alphaGroupId: matchedGroup1,
-					bravoGroupId: matchedGroup2,
+					alphaUserIds: userIds([5, 6, 7, 8]),
+					bravoUserIds: userIds([9, 10, 11, 12]),
 				});
+				const lookingGroup = await createGroup([13, 14, 15, 16]);
 
 				await refreshSendouQInstance();
 
@@ -695,15 +683,14 @@ describe("SendouQ", () => {
 });
 
 /** Leaves both groups inactive with a freshly concluded match between them. */
-async function playOutMatchBetween(
+const playOutMatchBetween = (
 	alphaPositions: number[],
 	bravoPositions: number[],
-) {
-	const alphaGroupId = await createGroup(alphaPositions);
-	const bravoGroupId = await createGroup(bravoPositions);
-
-	await SQMatchFactory.create(
-		{ alphaGroupId, bravoGroupId },
+) =>
+	SQMatchFactory.create(
+		{
+			alphaUserIds: userIds(alphaPositions),
+			bravoUserIds: userIds(bravoPositions),
+		},
 		{ isConcluded: true },
 	);
-}

@@ -9,7 +9,7 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { assertResponseErrored, withUserId, wrappedAction } from "~/utils/Test";
+import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { adminActionSchema } from "../actions/admin.server";
 import { action } from "./admin";
 
@@ -285,8 +285,8 @@ describe("Account migration", () => {
 	});
 
 	it("two accounts with teams results in an error", async () => {
-		await TeamFactory.create({ ownerUserId: users.id(1) });
-		await TeamFactory.create({ ownerUserId: users.id(2) });
+		await TeamFactory.create({ memberUserIds: [users.id(1)] });
+		await TeamFactory.create({ memberUserIds: [users.id(2)] });
 
 		const response = await migrateUserAction();
 
@@ -301,7 +301,7 @@ describe("Account migration", () => {
 			.executeTakeFirst();
 
 	it("deletes past team membership status of the new user", async () => {
-		const team = await TeamFactory.create({ ownerUserId: users.id(2) });
+		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
 		await TeamRepository.deleteById(team.id);
 
 		const membershipBeforeMigration = await membershipOf(users.id(2));
@@ -316,8 +316,7 @@ describe("Account migration", () => {
 
 	it("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
 		const team = await TeamFactory.create({
-			ownerUserId: users.id(2),
-			additionalMemberUserIds: [users.id(1)],
+			memberUserIds: [users.id(2), users.id(1)],
 		});
 		await TeamRepository.handleMemberLeaving({
 			teamId: team.id,
@@ -339,16 +338,10 @@ describe("Account migration", () => {
 	});
 
 	it("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {
-		await withUserId(users.id(1), () =>
-			UserRepository.updateOwnProfile({
-				weapons: [{ weaponSplId: 1, isFavorite: 1 }],
-			}),
-		);
-		await withUserId(users.id(2), () =>
-			UserRepository.updateOwnProfile({
-				weapons: [{ weaponSplId: 10 }],
-			}),
-		);
+		await UserFactory.grant(users.id(1), {
+			weapons: [{ weaponSplId: 1, isFavorite: 1 }],
+		});
+		await UserFactory.grant(users.id(2), { weapons: [{ weaponSplId: 10 }] });
 
 		await migrateUserAction();
 

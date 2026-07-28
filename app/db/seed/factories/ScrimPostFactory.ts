@@ -21,8 +21,6 @@ type Options = {
 /**
  * Creates scrim posts. `users` is the side offering the scrim, one of them its owner.
  * The requests made to the post, and which of them booked it, are `options`.
- *
- * @returns id of the new post
  */
 export const { create } = defineFactory({
 	defaults: () => ({
@@ -38,11 +36,13 @@ export const { create } = defineFactory({
 		managedByAnyone: false,
 		isScheduledForFuture: false,
 	}),
-	insert: ScrimPostRepository.insert,
-	applyOptions: async (scrimPostId, { requests }: Options) => {
+	insert: async (args: Parameters<typeof ScrimPostRepository.insert>[0]) => ({
+		id: await ScrimPostRepository.insert(args),
+	}),
+	applyOptions: async (post, { requests }: Options) => {
 		for (const request of requests ?? []) {
 			const requestId = await ScrimPostRepository.insertRequest({
-				scrimPostId,
+				scrimPostId: post.id,
 				teamId: null,
 				message: null,
 				startsAt: request.startsAt ?? null,

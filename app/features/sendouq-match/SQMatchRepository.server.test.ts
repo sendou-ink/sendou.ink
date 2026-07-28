@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -12,28 +11,19 @@ const setupMatch = async () => {
 	const alphaMembers = users.slice(0, FULL_GROUP_SIZE);
 	const bravoMembers = users.slice(FULL_GROUP_SIZE);
 
-	const alphaGroup = await createGroup(alphaMembers);
-	const bravoGroup = await createGroup(bravoMembers);
-
 	const match = await SQMatchFactory.create({
-		alphaGroupId: alphaGroup.id,
-		bravoGroupId: bravoGroup.id,
+		alphaUserIds: alphaMembers.map((member) => member.id),
+		bravoUserIds: bravoMembers.map((member) => member.id),
 	});
 
 	return {
 		match,
-		alphaGroupId: alphaGroup.id,
-		bravoGroupId: bravoGroup.id,
+		alphaGroupId: match.alphaGroup.id,
+		bravoGroupId: match.bravoGroup.id,
 		alphaMembers,
 		bravoMembers,
 	};
 };
-
-const createGroup = ([owner, ...members]: Array<{ id: number }>) =>
-	SQGroupFactory.create({
-		userId: owner.id,
-		additionalMemberUserIds: members.map((member) => member.id),
-	});
 
 const fetchMapResults = async (matchId: number) => {
 	return db

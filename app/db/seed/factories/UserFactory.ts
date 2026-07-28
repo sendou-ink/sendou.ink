@@ -28,6 +28,12 @@ type Options = {
 	roles?: Array<Role>;
 	/** SendouQ match profile, submitted as the user themselves. */
 	matchProfile?: Partial<MatchProfileArgs>;
+	/** Ban as an admin lays one down: `1` for good, or the date it lifts on. */
+	ban?: Omit<Parameters<typeof AdminRepository.banUser>[0], "userId">;
+	/** Division the user played their last season in. */
+	div?: NonNullable<Tables["User"]["div"]>;
+	/** Weapon pool, submitted as the user themselves. */
+	weapons?: Parameters<typeof UserRepository.updateOwnProfile>[0]["weapons"];
 };
 
 const PATRONAGE_LENGTH = { years: 1 };
@@ -60,7 +66,7 @@ export const { create, createMany } = defineFactory({
 		bsky: null,
 	}),
 	insert: UserRepository.upsert,
-	applyOptions: (user, options: Options) => applyUserOptions(user.id, options),
+	applyOptions: (user, options: Options) => grant(user.id, options),
 });
 
 /**
@@ -69,20 +75,10 @@ export const { create, createMany } = defineFactory({
  *
  * Has to be created before any other user, see {@link pinUserId}.
  */
-export async function createAdmin(
+export const createAdmin = (
 	overrides?: Partial<UpsertArgs> | null,
 	options?: Options,
-) {
-	const user = await create(overrides);
-	const id = await pinUserId(user.id, ADMIN_ID);
-
-	// after pinning, so that rows keyed by the user id don't point at the old one
-	if (options) {
-		await applyUserOptions(id, options);
-	}
-
-	return { id };
-}
+) => createPinned(ADMIN_ID, overrides, options);
 
 /**
  * Creates the user that `wrappedAction({ user: "regular" })` submits as. Has no
@@ -91,16 +87,22 @@ export async function createAdmin(
  *
  * Has to be created before any user without a pinned id, see {@link pinUserId}.
  */
-export async function createRegular(
+export const createRegular = (
+	overrides?: Partial<UpsertArgs> | null,
+	options?: Options,
+) => createPinned(REGULAR_USER_TEST_ID, overrides, options);
+
+async function createPinned(
+	pinnedId: number,
 	overrides?: Partial<UpsertArgs> | null,
 	options?: Options,
 ) {
 	const user = await create(overrides);
-	const id = await pinUserId(user.id, REGULAR_USER_TEST_ID);
+	const id = await pinUserId(user.id, pinnedId);
 
 	// after pinning, so that rows keyed by the user id don't point at the old one
 	if (options) {
-		await applyUserOptions(id, options);
+		await grant(id, options);
 	}
 
 	return { id };
@@ -147,9 +149,14 @@ export function pool() {
 	};
 }
 
-async function applyUserOptions(
+/**
+ * What `create`'s second argument does, applied to a user that already exists — for
+ * the tests whose users come from shared setup, or that want two of them given
+ * different things.
+ */
+export async function grant(
 	userId: number,
-	{ plusTier, patronTier, roles, matchProfile }: Options,
+	{ plusTier, patronTier, roles, matchProfile, ban, div, weapons }: Options,
 ) {
 	if (typeof plusTier === "number") {
 		await setPlusTier(userId, plusTier);
@@ -175,6 +182,20 @@ async function applyUserOptions(
 				...matchProfile,
 			}),
 		);
+	}
+
+	if (ban) {
+		await AdminRepository.banUser({ userId, ...ban });
+	}
+
+	if (div) {
+		await UserRepository.updateManyDivs([{ userId, div }]);
+	}
+
+	if (weapons) {
+		// the profile page saves every field at once; everything besides the weapons
+		// is still empty on a user the repository has only just upserted
+		await actAs(userId, () => UserRepository.updateOwnProfile({ weapons }));
 	}
 }
 

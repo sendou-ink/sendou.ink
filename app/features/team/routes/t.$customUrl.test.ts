@@ -34,9 +34,15 @@ const createTeamWithRegularMember = (
 	overrides: Partial<Parameters<typeof TeamFactory.create>[0]> = {},
 ) =>
 	TeamFactory.create({
-		ownerUserId: ADMIN_ID,
-		additionalMemberUserIds: [REGULAR_USER_TEST_ID],
+		memberUserIds: [ADMIN_ID, REGULAR_USER_TEST_ID],
 		...overrides,
+	});
+
+const createTeamOwnedByRegular = (name: string, isMainTeam = true) =>
+	TeamFactory.create({
+		name,
+		isMainTeam,
+		memberUserIds: [REGULAR_USER_TEST_ID],
 	});
 
 describe("Secondary teams", () => {
@@ -75,12 +81,12 @@ describe("Secondary teams", () => {
 	});
 
 	it("sets main team (2 team)", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-		await createTeamAction({ name: "Team 2" }, { user: "regular" });
+		await createTeamOwnedByRegular("Team 1");
+		const secondary = await createTeamOwnedByRegular("Team 2", false);
 
 		await teamPageAction(
 			{ _action: "MAKE_MAIN_TEAM" },
-			{ user: "regular", params: { customUrl: "team-2" } },
+			{ user: "regular", params: { customUrl: secondary.customUrl } },
 		);
 
 		const { team } = await loadTeams();
@@ -89,8 +95,8 @@ describe("Secondary teams", () => {
 	});
 
 	it("when deleting the main team, the secondary team becomes main", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-		await createTeamAction({ name: "Team 2" }, { user: "regular" });
+		const main = await createTeamOwnedByRegular("Team 1");
+		await createTeamOwnedByRegular("Team 2", false);
 
 		await teamPageAction(
 			{
@@ -98,7 +104,7 @@ describe("Secondary teams", () => {
 			},
 			{
 				user: "regular",
-				params: { customUrl: "team-1" },
+				params: { customUrl: main.customUrl },
 			},
 		);
 
@@ -109,22 +115,21 @@ describe("Secondary teams", () => {
 	});
 
 	it("only the team owner (or admin) can delete a team", async () => {
-		await createTeamWithRegularMember({ name: "Team 1" });
+		const { customUrl } = await createTeamWithRegularMember({ name: "Team 1" });
 
 		const response = await teamPageAction(
 			{ _action: "DELETE_TEAM" },
-			{ user: "regular", params: { customUrl: "team-1" } },
+			{ user: "regular", params: { customUrl } },
 		);
 
 		assertResponseErrored(response);
 
-		const team = await TeamRepository.findByCustomUrl("team-1");
-		expect(team).toBeTruthy();
+		expect(await TeamRepository.findByCustomUrl(customUrl)).toBeTruthy();
 	});
 
 	it("when leaving the main team, the secondary team becomes main", async () => {
 		// owned by the admin because you can't leave a team you own
-		await createTeamWithRegularMember({ name: "Team 1" });
+		const main = await createTeamWithRegularMember({ name: "Team 1" });
 		await createTeamWithRegularMember({ name: "Team 2", isMainTeam: false });
 
 		const { team, secondaryTeams } = await loadTeams();
@@ -138,7 +143,7 @@ describe("Secondary teams", () => {
 			},
 			{
 				user: "regular",
-				params: { customUrl: "team-1" },
+				params: { customUrl: main.customUrl },
 			},
 		);
 

@@ -6,13 +6,10 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
-import { backdate } from "~/db/seed/core/backdate";
-import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentReportedWeaponFactory from "~/db/seed/factories/TournamentReportedWeaponFactory";
-import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
@@ -32,29 +29,17 @@ let otherPlayer: { id: number };
 /** The other players of the SendouQ groups the two report their weapons in. */
 let groupFillers: Array<{ id: number }>;
 
-const createSendouqMatch = async (createdAt: Date) => {
-	const alpha = await createGroup([
-		player,
-		otherPlayer,
-		...groupFillers.slice(0, 2),
-	]);
-	const bravo = await createGroup(groupFillers.slice(2));
-
+const createSendouqMatch = (createdAt: Date) =>
 	// played out so that the groups go inactive and the same users can queue again
-	const match = await SQMatchFactory.create(
-		{ alphaGroupId: alpha.id, bravoGroupId: bravo.id },
-		{ isConcluded: true },
+	SQMatchFactory.create(
+		{
+			alphaUserIds: [player, otherPlayer, ...groupFillers.slice(0, 2)].map(
+				(user) => user.id,
+			),
+			bravoUserIds: groupFillers.slice(2).map((user) => user.id),
+		},
+		{ isConcluded: true, createdAt },
 	);
-	await backdate("GroupMatch", match.id, { createdAt });
-
-	return match;
-};
-
-const createGroup = ([owner, ...members]: Array<{ id: number }>) =>
-	SQGroupFactory.create({
-		userId: owner.id,
-		additionalMemberUserIds: members.map((member) => member.id),
-	});
 
 /** A played tournament match, its two teams being the reporter and somebody else. */
 const createTournamentMatch = async ({
@@ -64,23 +49,12 @@ const createTournamentMatch = async ({
 	authorId: number;
 	isFinalized: boolean;
 }) => {
-	const tournament = await TournamentFactory.create(
+	const { matches } = await TournamentFactory.createPlayed(
 		{ authorId, minMembersPerTeam: 1 },
-		{ isFinalized },
+		{ isFinalized, teamRosters: [[authorId], [groupFillers[1].id]] },
 	);
-	await TournamentTeamFactory.createMany(
-		2,
-		(index) => ({
-			tournamentId: tournament.id,
-			userId: index === 0 ? authorId : groupFillers[index].id,
-		}),
-		{ isCheckedIn: true },
-	);
-	await TournamentFactory.startBracket(tournament.id);
 
-	const [match] = await TournamentFactory.playMatches(tournament.id);
-
-	return match;
+	return matches[0];
 };
 
 const reportSendouqWeapons = async (args: {

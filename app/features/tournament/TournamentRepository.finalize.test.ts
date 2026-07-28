@@ -124,7 +124,7 @@ describe("TournamentRepository.finalize", () => {
 		const { id: tournamentId } = await createTournament();
 		const { id: tournamentTeamId } = await TournamentTeamFactory.create({
 			tournamentId,
-			userId: player.id,
+			memberUserIds: [player.id],
 		});
 
 		await TournamentRepository.finalize({

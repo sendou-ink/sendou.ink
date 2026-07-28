@@ -15,7 +15,6 @@ import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
 import {
-	type AuthenticatedUser,
 	getUserFromRequest,
 	userAsyncLocalStorage,
 } from "~/features/auth/core/user-context.server";
@@ -29,17 +28,10 @@ export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 
 /**
  * Runs `fn` inside the user AsyncLocalStorage store so that repository functions
- * resolving the actor via `actorId()` / `actorIdOrNull()` see `user` as the acting
- * user. Use in direct repository unit tests, which run outside a request.
- */
-export function withUser<T>(user: AuthenticatedUser, fn: () => T): T {
-	return userAsyncLocalStorage.run({ user }, fn);
-}
-
-/**
- * Like {@link withUser} but takes only a user id, building a minimal acting-user
- * context. Convenient for repository data-setup in tests where only the actor's id
- * matters (repositories read the actor solely via `actorId()` / `actorIdOrNull()`).
+ * resolving the actor via `actorId()` / `actorIdOrNull()` see the user as the acting
+ * one. Use in direct repository unit tests, which run outside a request.
+ *
+ * An id is all it takes: repositories read the actor solely through `actorId()`.
  */
 export function withUserId<T>(id: number, fn: () => T): T {
 	return actAs(id, fn);
