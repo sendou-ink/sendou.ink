@@ -86,6 +86,7 @@ type InsertRequestArgs = Pick<
 /**
  * Inserts a new request to a scrim post.
  *
+ * @returns id of the new request
  * @throws {DuplicateEntryError} If the team already has a request for the post
  */
 export function insertRequest(args: InsertRequestArgs) {
@@ -128,6 +129,8 @@ export function insertRequest(args: InsertRequestArgs) {
 				})),
 			)
 			.execute();
+
+		return newRequest.id;
 	});
 }
 

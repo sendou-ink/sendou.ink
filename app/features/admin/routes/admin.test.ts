@@ -1,15 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
+import * as PlusVoteFactory from "~/db/seed/factories/PlusVoteFactory";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
-import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	assertResponseErrored,
 	dbReset,
@@ -27,28 +26,6 @@ const users = UserFactory.pool();
 // one they can name
 const createUsers = (count = 2) =>
 	users.create(count, (index) => ({ discordId: String(index) }));
-
-const voteArgs = ({
-	score,
-	votedId,
-	authorId = users.id(1),
-	month = 6,
-	year = 2021,
-}: {
-	score: number;
-	votedId: number;
-	authorId?: number;
-	month?: number;
-	year?: number;
-}) => ({
-	score,
-	votedId,
-	authorId,
-	month,
-	tier: 1,
-	becomesValidAt: dateToDatabaseTimestamp(new Date("2021-12-11T00:00:00.000Z")),
-	year,
-});
 
 const countPlusTierMembers = (tier = 1) =>
 	db
@@ -80,16 +57,11 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2023-12-12T00:00:00.000Z"));
 
 		await createUsers(10);
-		await PlusVotingRepository.upsertMany(
-			Array.from({ length: 10 }).map((_, i) => {
-				const id = i + 1;
-
-				return voteArgs({
-					score: id <= 5 ? -1 : 1,
-					votedId: users.id(id),
-				});
-			}),
-		);
+		await PlusVoteFactory.createMany(10, (index) => ({
+			authorId: users.id(1),
+			votedId: users.id(index + 1),
+			score: index < 5 ? -1 : 1,
+		}));
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -102,15 +74,11 @@ describe("Plus voting", () => {
 		await createUsers(10);
 
 		// 60% - auto-pass
-		await PlusVotingRepository.upsertMany(
-			Array.from({ length: 10 }).map((_, i) => {
-				return voteArgs({
-					authorId: users.id(i + 1),
-					score: i < 4 ? -1 : 1,
-					votedId: users.id(1),
-				});
-			}),
-		);
+		await PlusVoteFactory.createMany(10, (index) => ({
+			authorId: users.id(index + 1),
+			votedId: users.id(1),
+			score: index < 4 ? -1 : 1,
+		}));
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -123,15 +91,11 @@ describe("Plus voting", () => {
 		await createUsers(10);
 
 		// 40% - auto-fail
-		await PlusVotingRepository.upsertMany(
-			Array.from({ length: 10 }).map((_, i) => {
-				return voteArgs({
-					authorId: users.id(i + 1),
-					score: i < 6 ? -1 : 1,
-					votedId: users.id(1),
-				});
-			}),
-		);
+		await PlusVoteFactory.createMany(10, (index) => ({
+			authorId: users.id(index + 1),
+			votedId: users.id(1),
+			score: index < 6 ? -1 : 1,
+		}));
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -144,15 +108,11 @@ describe("Plus voting", () => {
 		await createUsers(10);
 
 		// 50% - middle zone, should pass (quota=50 for tier 1)
-		await PlusVotingRepository.upsertMany(
-			Array.from({ length: 10 }).map((_, i) => {
-				return voteArgs({
-					authorId: users.id(i + 1),
-					score: i < 5 ? -1 : 1,
-					votedId: users.id(1),
-				});
-			}),
-		);
+		await PlusVoteFactory.createMany(10, (index) => ({
+			authorId: users.id(index + 1),
+			votedId: users.id(1),
+			score: index < 5 ? -1 : 1,
+		}));
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
@@ -163,12 +123,11 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers();
-		await PlusVotingRepository.upsertMany([
-			voteArgs({
-				score: 1,
-				votedId: users.id(1),
-			}),
-		]);
+		await PlusVoteFactory.create({
+			authorId: users.id(1),
+			votedId: users.id(1),
+			score: 1,
+		});
 		await createLeaderboard([users.id(2)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
@@ -216,12 +175,11 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2024-02-15T00:00:00.000Z"));
 
 		await createUsers();
-		await PlusVotingRepository.upsertMany([
-			voteArgs({
-				score: 1,
-				votedId: users.id(1),
-			}),
-		]);
+		await PlusVoteFactory.create({
+			authorId: users.id(1),
+			votedId: users.id(1),
+			score: 1,
+		});
 		await createLeaderboard([users.id(2)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
@@ -247,12 +205,11 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2023-11-29T00:00:00.000Z"));
 
 		await createUsers(1);
-		await PlusVotingRepository.upsertMany([
-			voteArgs({
-				score: -1,
-				votedId: users.id(1),
-			}),
-		]);
+		await PlusVoteFactory.create({
+			authorId: users.id(1),
+			votedId: users.id(1),
+			score: -1,
+		});
 		await createLeaderboard([users.id(1)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
@@ -264,12 +221,11 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2023-12-29T00:00:00.000Z"));
 
 		await createUsers(1);
-		await PlusVotingRepository.upsertMany([
-			voteArgs({
-				score: -1,
-				votedId: users.id(1),
-			}),
-		]);
+		await PlusVoteFactory.create({
+			authorId: users.id(1),
+			votedId: users.id(1),
+			score: -1,
+		});
 		await createLeaderboard([users.id(1)]);
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
@@ -281,23 +237,21 @@ describe("Plus voting", () => {
 		vi.setSystemTime(new Date("2024-02-15T00:00:00.000Z"));
 
 		await createUsers(1);
-		await PlusVotingRepository.upsertMany([
-			voteArgs({
-				score: 1,
-				votedId: users.id(1),
-				month: 11,
-				year: 2023,
-			}),
-		]);
+		await PlusVoteFactory.create({
+			authorId: users.id(1),
+			votedId: users.id(1),
+			score: 1,
+			month: 11,
+			year: 2023,
+		});
 
-		await PlusVotingRepository.upsertMany([
-			voteArgs({
-				score: -1,
-				votedId: users.id(1),
-				month: 2,
-				year: 2024,
-			}),
-		]);
+		await PlusVoteFactory.create({
+			authorId: users.id(1),
+			votedId: users.id(1),
+			score: -1,
+			month: 2,
+			year: 2024,
+		});
 
 		await adminAction({ _action: "REFRESH" }, { user: "admin" });
 
