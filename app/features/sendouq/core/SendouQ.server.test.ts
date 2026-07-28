@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { dbReset } from "~/utils/Test";
@@ -50,21 +52,12 @@ const createGroup = async (
 const inviteCodeOf = (position: number) =>
 	SendouQ.findOwnGroup(users.id(position))!.inviteCode;
 
-// arbitrary ordinals can't be written through a repository: production only ever
-// derives them from mu and sigma when a match is reported
-const insertSkill = async (position: number, ordinal: number, season = 1) => {
-	await db
-		.insertInto("Skill")
-		.values({
-			userId: users.id(position),
-			season,
-			mu: 25,
-			sigma: 8.333,
-			ordinal,
-			matchesCount: 10,
-		})
-		.execute();
-};
+/** Ranks a user: a higher `mu` is a higher ordinal, and with it a higher tier. */
+const createSkill = (position: number, mu: number) =>
+	SkillFactory.create(
+		{ userId: users.id(position), mu },
+		{ matchesCount: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD },
+	);
 
 describe("SendouQ", () => {
 	describe("currentViewByUserId", () => {
@@ -319,15 +312,15 @@ describe("SendouQ", () => {
 			});
 
 			test("sorts full groups by tier when viewer has a tier", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 500);
-				await insertSkill(3, 500);
-				await insertSkill(4, 500);
-				await insertSkill(5, 500);
-				await insertSkill(6, 2000);
-				await insertSkill(7, 2000);
-				await insertSkill(8, 2000);
-				await insertSkill(9, 2000);
+				await createSkill(1, 1000);
+				await createSkill(2, 500);
+				await createSkill(3, 500);
+				await createSkill(4, 500);
+				await createSkill(5, 500);
+				await createSkill(6, 2000);
+				await createSkill(7, 2000);
+				await createSkill(8, 2000);
+				await createSkill(9, 2000);
 
 				const group1Id = await createGroup([2, 3, 4, 5]);
 				const group2Id = await createGroup([6, 7, 8, 9]);
@@ -350,10 +343,10 @@ describe("SendouQ", () => {
 			});
 
 			test("sorts partial groups by tier relative to viewer", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 500);
-				await insertSkill(3, 2000);
-				await insertSkill(4, 1050);
+				await createSkill(1, 1000);
+				await createSkill(2, 500);
+				await createSkill(3, 2000);
+				await createSkill(4, 1050);
 
 				const g4Id = await createGroup([4]);
 				const g2Id = await createGroup([2]);
@@ -378,12 +371,12 @@ describe("SendouQ", () => {
 			});
 
 			test("full groups are sorted last regardless of tier", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 1100);
-				await insertSkill(3, 1100);
-				await insertSkill(4, 1100);
-				await insertSkill(5, 1100);
-				await insertSkill(6, 500);
+				await createSkill(1, 1000);
+				await createSkill(2, 1100);
+				await createSkill(3, 1100);
+				await createSkill(4, 1100);
+				await createSkill(5, 1100);
+				await createSkill(6, 500);
 
 				const fullGroupId = await createGroup([2, 3, 4, 5]);
 				const partialGroupId = await createGroup([6]);
@@ -397,8 +390,8 @@ describe("SendouQ", () => {
 			});
 
 			test("handles viewer without skill gracefully", async () => {
-				await insertSkill(2, 500);
-				await insertSkill(3, 2000);
+				await createSkill(2, 500);
+				await createSkill(3, 2000);
 
 				await createGroup([2]);
 				await createGroup([3]);
@@ -666,10 +659,10 @@ describe("SendouQ", () => {
 			});
 
 			test("groups with closer skill sorted first", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 1050);
-				await insertSkill(3, 500);
-				await insertSkill(4, 2000);
+				await createSkill(1, 1000);
+				await createSkill(2, 1050);
+				await createSkill(3, 500);
+				await createSkill(4, 2000);
 
 				await createGroup([1]);
 				await createGroup([2]);
@@ -688,16 +681,16 @@ describe("SendouQ", () => {
 			});
 
 			test("full groups sorted by average skill", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 1000);
-				await insertSkill(3, 1000);
-				await insertSkill(4, 1000);
-				await insertSkill(5, 1100);
-				await insertSkill(6, 1100);
-				await insertSkill(7, 1100);
-				await insertSkill(8, 1100);
-				await insertSkill(9, 500);
-				await insertSkill(10, 500);
+				await createSkill(1, 1000);
+				await createSkill(2, 1000);
+				await createSkill(3, 1000);
+				await createSkill(4, 1000);
+				await createSkill(5, 1100);
+				await createSkill(6, 1100);
+				await createSkill(7, 1100);
+				await createSkill(8, 1100);
+				await createSkill(9, 500);
+				await createSkill(10, 500);
 
 				await createGroup([1, 2, 3, 4]);
 				const closerGroup = await createGroup([5, 6, 7, 8]);
@@ -712,9 +705,9 @@ describe("SendouQ", () => {
 			});
 
 			test("newer groups sorted first when skill is equal", async () => {
-				await insertSkill(1, 1000);
-				await insertSkill(2, 1000);
-				await insertSkill(3, 1000);
+				await createSkill(1, 1000);
+				await createSkill(2, 1000);
+				await createSkill(3, 1000);
 
 				const group1Id = await createGroup([2]);
 				await new Promise((resolve) => setTimeout(resolve, 10));

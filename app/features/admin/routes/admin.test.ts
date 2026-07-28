@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
+import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -54,20 +56,13 @@ const countPlusTierMembers = (tier = 1) =>
 		.executeTakeFirstOrThrow()
 		.then((row) => row.count);
 
+/** Ranks the given users, the first of them topping the leaderboard. */
 const createLeaderboard = (userIds: number[]) =>
-	db
-		.insertInto("Skill")
-		.values(
-			userIds.map((userId, i) => ({
-				matchesCount: 10,
-				mu: 25,
-				sigma: 8.333333333333334,
-				ordinal: 0.5 - i * 0.001,
-				userId,
-				season: 1,
-			})),
-		)
-		.execute();
+	SkillFactory.createMany(
+		userIds.length,
+		(index) => ({ userId: userIds[index], mu: userIds.length - index }),
+		{ matchesCount: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD },
+	);
 
 describe("Plus voting", () => {
 	beforeEach(() => {

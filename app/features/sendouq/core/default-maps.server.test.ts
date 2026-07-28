@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
-import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dbReset } from "~/utils/Test";
 import { SENDOUQ_BEST_OF } from "../q-constants";
@@ -428,11 +428,6 @@ async function insertUserMapModePreferencesForSeason({
 			.where("id", "=", userId)
 			.execute();
 
-		await SkillRepository.addInitialSkill({
-			userId,
-			season: seasonNth,
-			mu: 25,
-			sigma: 8.333,
-		});
+		await SkillFactory.create({ userId, season: seasonNth });
 	}
 }

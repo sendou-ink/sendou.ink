@@ -3,7 +3,6 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import { dbReset } from "~/utils/Test";
 import type { TournamentSummary } from "../tournament-bracket/core/summarizer.server";
 import * as TournamentRepository from "./TournamentRepository.server";
@@ -12,23 +11,6 @@ let player: { id: number };
 
 const createTournament = () =>
 	TournamentFactory.create({ authorId: player.id });
-
-const insertPriorSkill = (args: {
-	userId: number;
-	season: number;
-	matchesCount: number;
-}) =>
-	db
-		.insertInto("Skill")
-		.values({
-			userId: args.userId,
-			season: args.season,
-			matchesCount: args.matchesCount,
-			mu: 25,
-			sigma: 8.333,
-			ordinal: 0,
-		})
-		.execute();
 
 const emptySummary = (
 	skills: TournamentSummary["skills"],
@@ -42,22 +24,18 @@ const emptySummary = (
 	setResults: new Map(),
 });
 
-const insertPriorTeamSkill = (args: {
-	identifier: SkillTeamIdentifier;
-	season: number;
-	matchesCount: number;
-}) =>
-	db
-		.insertInto("Skill")
-		.values({
-			identifier: args.identifier,
-			season: args.season,
-			matchesCount: args.matchesCount,
-			mu: 25,
-			sigma: 8.333,
-			ordinal: 0,
-		})
-		.execute();
+/** Puts a skill on record for season 0, the way the season's own tournaments did. */
+const finalizePriorSeason = async (
+	skill: TournamentSummary["skills"][number],
+) => {
+	const { id: tournamentId } = await createTournament();
+
+	await TournamentRepository.finalize({
+		tournamentId,
+		season: 0,
+		summary: emptySummary([skill]),
+	});
+};
 
 describe("TournamentRepository.finalize", () => {
 	beforeEach(async () => {
@@ -69,7 +47,13 @@ describe("TournamentRepository.finalize", () => {
 	});
 
 	test("matchesCount on a new season's Skill row does not include prior seasons", async () => {
-		await insertPriorSkill({ userId: player.id, season: 0, matchesCount: 100 });
+		await finalizePriorSeason({
+			userId: player.id,
+			identifier: null,
+			mu: 25,
+			sigma: 8.333,
+			matchesCount: 100,
+		});
 
 		const { id: tournamentId } = await createTournament();
 
@@ -98,9 +82,11 @@ describe("TournamentRepository.finalize", () => {
 	});
 
 	test("team matchesCount on a new season's Skill row does not include prior seasons", async () => {
-		await insertPriorTeamSkill({
+		await finalizePriorSeason({
+			userId: null,
 			identifier: "1-2-3-4",
-			season: 0,
+			mu: 25,
+			sigma: 8.333,
 			matchesCount: 100,
 		});
 
@@ -131,7 +117,13 @@ describe("TournamentRepository.finalize", () => {
 	});
 
 	test("finalizes and records placements when season is undefined (between-seasons tournament)", async () => {
-		await insertPriorSkill({ userId: player.id, season: 0, matchesCount: 100 });
+		await finalizePriorSeason({
+			userId: player.id,
+			identifier: null,
+			mu: 25,
+			sigma: 8.333,
+			matchesCount: 100,
+		});
 
 		const { id: tournamentId } = await createTournament();
 		const { id: tournamentTeamId } = await TournamentTeamFactory.create({
