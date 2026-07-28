@@ -5,10 +5,11 @@ type RequiredArgs<Args, Defaults> = Omit<Args, keyof Defaults>;
 
 type CreateArgs<Args, Defaults> = RequiredArgs<Args, Defaults> & Partial<Args>;
 
+/** `null` says "all defaults", for when only `options` is of interest. */
 type CreateParams<Args, Defaults, Options> = [
 	keyof RequiredArgs<Args, Defaults>,
 ] extends [never]
-	? [overrides?: Partial<Args>, options?: Options]
+	? [overrides?: Partial<Args> | null, options?: Options]
 	: [overrides: CreateArgs<Args, Defaults>, options?: Options];
 
 type CreateManyParams<Args, Defaults, Options> = [
@@ -16,7 +17,7 @@ type CreateManyParams<Args, Defaults, Options> = [
 ] extends [never]
 	? [
 			count: number,
-			overrides?: ManyOverrides<Args, Defaults>,
+			overrides?: ManyOverrides<Args, Defaults> | null,
 			options?: Options,
 		]
 	: [
@@ -135,7 +136,7 @@ export function resetFactories() {
 }
 
 function overridesAt<Args, Defaults>(
-	overrides: ManyOverrides<Args, Defaults> | undefined,
+	overrides: ManyOverrides<Args, Defaults> | null | undefined,
 	index: number,
 ): Partial<Args> {
 	if (!overrides) return {};

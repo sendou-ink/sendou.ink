@@ -6,7 +6,6 @@ import type {
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
 import { dbReset } from "~/utils/Test";
-import * as AdminRepository from "../admin/AdminRepository.server";
 import * as BuildRepository from "./BuildRepository.server";
 
 let owner: { id: number };
@@ -218,22 +217,20 @@ describe("BuildRepository.insert — computeBuildData", () => {
 		});
 
 		test("uses owner's PlusTier (tier 2 → sortValue = 5)", async () => {
-			await AdminRepository.replacePlusTiers([
-				{ userId: owner.id, plusTier: 2 },
-			]);
+			const plusOwner = await UserFactory.create(null, { plusTier: 2 });
 
-			await BuildRepository.insert(baseArgs());
+			await BuildRepository.insert(baseArgs({ ownerId: plusOwner.id }));
 
 			const [weapon] = await buildWeaponsByBuildId(await onlyBuildId());
 			expect(weapon.sortValue).toBe(5);
 		});
 
 		test("is null for private builds regardless of tier", async () => {
-			await AdminRepository.replacePlusTiers([
-				{ userId: owner.id, plusTier: 1 },
-			]);
+			const plusOwner = await UserFactory.create(null, { plusTier: 1 });
 
-			await BuildRepository.insert(baseArgs({ isPrivate: 1 }));
+			await BuildRepository.insert(
+				baseArgs({ ownerId: plusOwner.id, isPrivate: 1 }),
+			);
 
 			const [weapon] = await buildWeaponsByBuildId(await onlyBuildId());
 			expect(weapon.sortValue).toBeNull();
@@ -258,13 +255,11 @@ describe("BuildRepository.insert — computeBuildData", () => {
 		});
 
 		test("combines top500 with the owner's PlusTier", async () => {
-			await AdminRepository.replacePlusTiers([
-				{ userId: owner.id, plusTier: 1 },
-			]);
-			const playerId = await insertSplatoonPlayer(owner.id, "owner-spl-id");
+			const plusOwner = await UserFactory.create(null, { plusTier: 1 });
+			const playerId = await insertSplatoonPlayer(plusOwner.id, "owner-spl-id");
 			await insertXRankPlacement(playerId, SPLATTERSHOT, 1);
 
-			await BuildRepository.insert(baseArgs());
+			await BuildRepository.insert(baseArgs({ ownerId: plusOwner.id }));
 
 			const [weapon] = await buildWeaponsByBuildId(await onlyBuildId());
 			expect(weapon.sortValue).toBe(2);

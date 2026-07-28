@@ -61,27 +61,24 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("keys cards by user id and builds the stats array from db fields", async () => {
+		const plusMember = await UserFactory.create(null, { plusTier: 2 });
 		await db
 			.updateTable("User")
 			.set({ div: "1" })
-			.where("id", "=", owner.id)
+			.where("id", "=", plusMember.id)
 			.execute();
-		await db
-			.insertInto("PlusTier")
-			.values({ userId: owner.id, tier: 2 })
-			.execute();
-		await insertVerifiedXp(owner.id, 2500);
+		await insertVerifiedXp(plusMember.id, 2500);
 
 		const { userCards } = await withNoUser(() =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [owner.id, other.id],
+				userIds: [plusMember.id, other.id],
 			}),
 		);
 
 		expect(userCards.size).toBe(2);
 
-		const card = userCards.get(owner.id);
-		expect(card?.id).toBe(owner.id);
+		const card = userCards.get(plusMember.id);
+		expect(card?.id).toBe(plusMember.id);
 		expect(card?.freeAgentPostId).toBeNull();
 
 		const statTypes = card?.stats.map((stat) => stat.type) ?? [];
@@ -194,13 +191,10 @@ describe("UserCardRepository.findAllByUserIds", () => {
 	});
 
 	it("persists edited card fields and surfaces hidden stats", async () => {
-		await db
-			.insertInto("PlusTier")
-			.values({ userId: owner.id, tier: 2 })
-			.execute();
-		await insertVerifiedXp(owner.id, 2500);
+		const plusMember = await UserFactory.create(null, { plusTier: 2 });
+		await insertVerifiedXp(plusMember.id, 2500);
 
-		await withUserId(owner.id, () =>
+		await withUserId(plusMember.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: "hello",
 				bannerPresetImg: "#ff4655",
@@ -210,12 +204,12 @@ describe("UserCardRepository.findAllByUserIds", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(owner.id, () =>
+		const { userCards } = await withUserId(plusMember.id, () =>
 			UserCardRepository.findAllByUserIds({
-				userIds: [owner.id],
+				userIds: [plusMember.id],
 			}),
 		);
-		const card = userCards.get(owner.id);
+		const card = userCards.get(plusMember.id);
 
 		expect(card?.shortBio).toBe("hello");
 		expect(card?.banner).toMatchObject({ type: "COLOR", hexCode: "#ff4655" });
@@ -227,7 +221,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		});
 
 		const extras = await UserCardRepository.findCardEditExtrasByUserId(
-			owner.id,
+			plusMember.id,
 		);
 		expect(extras.hiddenCardStats).toEqual(["XP"]);
 	});

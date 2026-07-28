@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import invariant from "~/utils/invariant";
 import {
 	assertResponseErrored,
@@ -175,18 +174,17 @@ describe("Secondary teams", () => {
 
 		assertResponseErrored(response);
 	});
+});
 
-	const makeUserPatron = () =>
-		AdminRepository.forcePatron({
-			id: REGULAR_USER_TEST_ID,
-			patronTier: 2,
-			patronStartedAt: new Date(),
-			patronExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-		});
+describe("Secondary teams as patron", () => {
+	beforeEach(async () => {
+		await UserFactory.createRegular(null, { patronTier: 2 });
+	});
+	afterEach(async () => {
+		await dbReset();
+	});
 
 	it("creates more than 2 teams as patron", async () => {
-		await makeUserPatron();
-
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 		await createTeamAction({ name: "Team 3" }, { user: "regular" });

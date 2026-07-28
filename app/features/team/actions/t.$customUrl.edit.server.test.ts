@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import invariant from "~/utils/invariant";
@@ -51,17 +50,10 @@ const VALID_CUSTOM_THEME = {
 const expectedStoredTheme = () =>
 	JSON.parse(JSON.stringify(clampThemeToGamut(VALID_CUSTOM_THEME)));
 
-const makeUserPatron = () =>
-	AdminRepository.forcePatron({
-		id: REGULAR_USER_TEST_ID,
-		patronTier: 2,
-		patronStartedAt: new Date(),
-		patronExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
-	});
-
 describe("team page editing", () => {
 	beforeEach(async () => {
-		await UserFactory.createRegular();
+		// a patron because setting a custom theme is a patron only feature
+		await UserFactory.createRegular(null, { patronTier: 2 });
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 	});
 	afterEach(async () => {
@@ -69,8 +61,6 @@ describe("team page editing", () => {
 	});
 
 	it("sets a custom theme via UPDATE_CUSTOM_THEME", async () => {
-		await makeUserPatron();
-
 		const response = await editTeamProfileAction(
 			{
 				_action: "UPDATE_CUSTOM_THEME",
@@ -86,8 +76,6 @@ describe("team page editing", () => {
 	});
 
 	it("clears a custom theme via UPDATE_CUSTOM_THEME with null", async () => {
-		await makeUserPatron();
-
 		await editTeamProfileAction(
 			{
 				_action: "UPDATE_CUSTOM_THEME",
@@ -111,8 +99,6 @@ describe("team page editing", () => {
 	});
 
 	it("prevents setting an invalid custom theme", async () => {
-		await makeUserPatron();
-
 		const response = await editTeamProfileAction(
 			{
 				_action: "UPDATE_CUSTOM_THEME",
@@ -128,8 +114,6 @@ describe("team page editing", () => {
 	});
 
 	it("preserves an existing custom theme when editing the team profile", async () => {
-		await makeUserPatron();
-
 		await editTeamProfileAction(
 			{
 				_action: "UPDATE_CUSTOM_THEME",
