@@ -255,7 +255,7 @@
 	"options.artSource.MADE-OF": "",
 	"labels.tierListUrl": "",
 	"labels.plusTier": "",
-	"labels.comment": "",
+	"labels.comment": "Commentaire",
 	"errors.plusAlreadySuggested": "",
 	"errors.plusAlreadyMember": "",
 	"errors.plusCannotSuggest": "",
@@ -385,5 +385,10 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"labels.sentiment": "Avis",
+	"bottomTexts.sentiment": "Les avis positifs ou négatifs affectent leur tri dans la file d'attente",
+	"options.sentiment.POSITIVE": "Positif",
+	"options.sentiment.NEUTRAL": "Neutre",
+	"options.sentiment.NEGATIVE": "Negatif"
 }

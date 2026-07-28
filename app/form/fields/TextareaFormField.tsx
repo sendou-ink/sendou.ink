@@ -5,6 +5,7 @@ import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type TextareaFormFieldProps = FormFieldProps<"text-area"> & {
 	disabled?: boolean;
+	autoFocus?: boolean;
 	value: string;
 	onChange: (value: string) => void;
 };
@@ -18,6 +19,7 @@ export function TextareaFormField({
 	onBlur,
 	required,
 	disabled,
+	autoFocus,
 	value,
 	onChange,
 }: TextareaFormFieldProps) {
@@ -37,10 +39,13 @@ export function TextareaFormField({
 		>
 			<textarea
 				id={id}
+				ref={autoFocus ? moveCaretToEnd : undefined}
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				onBlur={() => onBlur?.()}
 				disabled={disabled}
+				// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
+				autoFocus={autoFocus}
 				{...ariaAttributes({
 					id,
 					bottomText,
@@ -50,4 +55,13 @@ export function TextareaFormField({
 			/>
 		</FormFieldWrapper>
 	);
+}
+
+/**
+ * Autofocusing a textarea leaves the caret before any existing text, which is the wrong place when
+ * editing something already written. Defined at module level so the ref identity stays stable and
+ * React only runs it on mount.
+ */
+function moveCaretToEnd(element: HTMLTextAreaElement | null) {
+	element?.setSelectionRange(element.value.length, element.value.length);
 }

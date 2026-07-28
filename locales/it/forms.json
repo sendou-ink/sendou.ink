@@ -255,7 +255,7 @@
 	"options.artSource.MADE-OF": "",
 	"labels.tierListUrl": "",
 	"labels.plusTier": "",
-	"labels.comment": "",
+	"labels.comment": "Commento",
 	"errors.plusAlreadySuggested": "",
 	"errors.plusAlreadyMember": "",
 	"errors.plusCannotSuggest": "",
@@ -385,5 +385,10 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"labels.sentiment": "Sentimento",
+	"bottomTexts.sentiment": "Sentimenti positivi o negativi influenzano il loro ordinamento per te in coda",
+	"options.sentiment.POSITIVE": "Positivo",
+	"options.sentiment.NEUTRAL": "Neutrale",
+	"options.sentiment.NEGATIVE": "Negativo"
 }

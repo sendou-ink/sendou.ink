@@ -6,6 +6,7 @@ import { FormFieldWrapper } from "./FormFieldWrapper";
 
 type InputFormFieldProps = FormFieldProps<"text-field"> & {
 	disabled?: boolean;
+	autoFocus?: boolean;
 	value: string;
 	onChange: (value: string) => void;
 };
@@ -22,6 +23,7 @@ export function InputFormField({
 	required,
 	inputType = "text",
 	disabled,
+	autoFocus,
 	value,
 	onChange,
 }: InputFormFieldProps) {
@@ -52,6 +54,8 @@ export function InputFormField({
 					onBlur={() => onBlur?.()}
 					maxLength={maxLength}
 					disabled={disabled}
+					// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
+					autoFocus={autoFocus}
 					placeholder={translatedPlaceholder}
 					{...ariaAttributes({
 						id,

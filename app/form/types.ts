@@ -57,6 +57,7 @@ interface FormFieldItem<V extends string> {
 }
 
 interface FormFieldItemWithImage<V extends string> extends FormFieldItem<V> {
+	/** Full image url (including the file extension) shown next to the item's label. */
 	imgSrc?: string;
 }
 
@@ -278,6 +279,8 @@ export type TypedFormFieldProps<
 	name: TName;
 	label?: string;
 	disabled?: boolean;
+	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
+	autoFocus?: boolean;
 	maxCount?: number;
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:
@@ -295,6 +298,8 @@ export type FlexibleFormFieldProps = {
 	name: NestedPath;
 	label?: string;
 	disabled?: boolean;
+	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
+	autoFocus?: boolean;
 	maxCount?: number;
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
 	children?:

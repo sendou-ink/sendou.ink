@@ -255,7 +255,7 @@
 	"options.artSource.MADE-OF": "Sobre mí",
 	"labels.tierListUrl": "URL de Tier List",
 	"labels.plusTier": "",
-	"labels.comment": "",
+	"labels.comment": "Comentario",
 	"errors.plusAlreadySuggested": "",
 	"errors.plusAlreadyMember": "",
 	"errors.plusCannotSuggest": "",
@@ -385,5 +385,10 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"labels.sentiment": "Opinión",
+	"bottomTexts.sentiment": "Opinión positiva o negativa afecta el orden de otros en la fila",
+	"options.sentiment.POSITIVE": "Positivo",
+	"options.sentiment.NEUTRAL": "Neutral",
+	"options.sentiment.NEGATIVE": "Negativo"
 }

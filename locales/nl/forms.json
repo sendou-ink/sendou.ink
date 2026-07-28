@@ -385,5 +385,10 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"labels.sentiment": "",
+	"bottomTexts.sentiment": "",
+	"options.sentiment.POSITIVE": "",
+	"options.sentiment.NEUTRAL": "",
+	"options.sentiment.NEGATIVE": ""
 }

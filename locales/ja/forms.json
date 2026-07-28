@@ -255,7 +255,7 @@
 	"options.artSource.MADE-OF": "",
 	"labels.tierListUrl": "",
 	"labels.plusTier": "",
-	"labels.comment": "",
+	"labels.comment": "コメント",
 	"errors.plusAlreadySuggested": "",
 	"errors.plusAlreadyMember": "",
 	"errors.plusCannotSuggest": "",
@@ -385,5 +385,10 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"labels.sentiment": "想い",
+	"bottomTexts.sentiment": "正、負の想いは列の中の順番を左右します。",
+	"options.sentiment.POSITIVE": "正",
+	"options.sentiment.NEUTRAL": "普通",
+	"options.sentiment.NEGATIVE": "負"
 }

@@ -385,5 +385,10 @@
 	"errors.allModePool": "如果使用“由队伍预选 - 所有模式”，场地池必须包含可用于每个蛮颓比赛模式的场地",
 	"errors.bracketUrlRequired": "必须填写对战表 URL",
 	"errors.bracketProgressionRequired": "必须为赛事设置对战表晋级规则",
-	"errors.maxMembersRange": "队伍人数上限必须介于 4 到 10 人之间"
+	"errors.maxMembersRange": "队伍人数上限必须介于 4 到 10 人之间",
+	"labels.sentiment": "评价",
+	"bottomTexts.sentiment": "正面或负面评价会影响对方在您的匹配列表中的排序",
+	"options.sentiment.POSITIVE": "正面",
+	"options.sentiment.NEUTRAL": "中立",
+	"options.sentiment.NEGATIVE": "负面"
 }

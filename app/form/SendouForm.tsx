@@ -6,6 +6,7 @@ import type { FetcherWithComponents } from "react-router";
 import { useFetcher, useLocation } from "react-router";
 import { isPlainObject } from "remeda";
 import type { z } from "zod";
+import type { SendouButtonProps } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
 import { FormField as FormFieldComponent } from "./FormField";
@@ -90,6 +91,9 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	method?: "post" | "get";
 	_action?: string;
 	submitButtonTestId?: string;
+	/** Styling of the submit button, for forms embedded somewhere the default button is too heavy. */
+	submitButtonVariant?: SendouButtonProps["variant"];
+	submitButtonSize?: SendouButtonProps["size"];
 	autoSubmit?: boolean;
 	autoApply?: boolean;
 	revalidateRoot?: boolean;
@@ -151,6 +155,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 	method = "post",
 	_action,
 	submitButtonTestId,
+	submitButtonVariant,
+	submitButtonSize,
 	autoSubmit,
 	autoApply,
 	revalidateRoot,
@@ -318,6 +324,8 @@ export function SendouForm<T extends z.ZodRawShape>({
 						_action={_action}
 						testId={submitButtonTestId}
 						state={fetcher.state}
+						variant={submitButtonVariant}
+						size={submitButtonSize}
 					>
 						{submitButtonText ?? t("submit")}
 					</SubmitButton>

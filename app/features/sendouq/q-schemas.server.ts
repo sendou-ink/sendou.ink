@@ -2,13 +2,12 @@ import { z } from "zod";
 import {
 	_action,
 	deduplicate,
-	falsyToNull,
 	friendCode,
 	id,
 	modeShort,
 	stageId,
 } from "~/utils/zod";
-import { SENDOUQ } from "./q-constants";
+import { updateGroupNoteSchema } from "./q-schemas";
 
 export const frontPageSchema = z.union([
 	z.object({
@@ -73,13 +72,7 @@ export const lookingSchema = z.union([
 	z.object({
 		_action: _action("REFRESH_GROUP"),
 	}),
-	z.object({
-		_action: _action("UPDATE_NOTE"),
-		value: z.preprocess(
-			falsyToNull,
-			z.string().max(SENDOUQ.OWN_PUBLIC_NOTE_MAX_LENGTH).nullable(),
-		),
-	}),
+	updateGroupNoteSchema,
 ]);
 
 export const weaponUsageSearchParamsSchema = z.object({

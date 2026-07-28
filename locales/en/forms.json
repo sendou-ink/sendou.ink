@@ -385,5 +385,10 @@
 	"errors.allModePool": "Map pool must contain a map for each ranked mode if using \"Prepicked by teams - All modes\"",
 	"errors.bracketUrlRequired": "Bracket URL is required",
 	"errors.bracketProgressionRequired": "Bracket progression must be set for tournaments",
-	"errors.maxMembersRange": "Max team size must be between 4 and 10"
+	"errors.maxMembersRange": "Max team size must be between 4 and 10",
+	"labels.sentiment": "Sentiment",
+	"bottomTexts.sentiment": "Positive or negative sentiment affects their sorting for you in the queue",
+	"options.sentiment.POSITIVE": "Positive",
+	"options.sentiment.NEUTRAL": "Neutral",
+	"options.sentiment.NEGATIVE": "Negative"
 }

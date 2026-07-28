@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Image } from "~/components/Image";
 import type { FormFieldItemsWithImage, FormFieldProps } from "../types";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
@@ -61,7 +60,7 @@ export function RadioGroupFormField<V extends string>({
 							className="stack horizontal sm items-center mb-0 whitespace-nowrap"
 						>
 							{item.imgSrc ? (
-								<Image path={item.imgSrc} width={24} height={24} alt="" />
+								<img src={item.imgSrc} width={24} height={24} alt="" />
 							) : null}
 							{item.resolvedLabel}
 						</label>
@@ -131,7 +130,7 @@ export function CheckboxGroupFormField<V extends string>({
 							className="stack horizontal sm items-center mb-0 whitespace-nowrap"
 						>
 							{item.imgSrc ? (
-								<Image path={item.imgSrc} width={24} height={24} alt="" />
+								<img src={item.imgSrc} width={24} height={24} alt="" />
 							) : null}
 							{item.resolvedLabel}
 						</label>

@@ -55,6 +55,8 @@ interface FormFieldProps {
 	name: string;
 	label?: string;
 	disabled?: boolean;
+	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
+	autoFocus?: boolean;
 	maxCount?: number;
 	field?: z.ZodType;
 	children?:
@@ -70,6 +72,7 @@ export function FormField({
 	name,
 	label,
 	disabled,
+	autoFocus,
 	maxCount,
 	field,
 	children,
@@ -185,6 +188,7 @@ export function FormField({
 				{...commonProps}
 				{...formField}
 				disabled={isDisabled}
+				autoFocus={autoFocus}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -221,6 +225,7 @@ export function FormField({
 				{...commonProps}
 				{...formField}
 				disabled={isDisabled}
+				autoFocus={autoFocus}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>

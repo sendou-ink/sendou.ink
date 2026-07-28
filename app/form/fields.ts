@@ -61,8 +61,17 @@ type WithTypedTranslationKeys<T> = Omit<
 	placeholder?: FormsTranslationKey;
 };
 
+type TypedItemLabel<V extends string> = {
+	label: FormsTranslationKey | (() => string);
+	value: V;
+};
+
 type WithTypedItemLabels<T, V extends string> = Omit<T, "items"> & {
-	items: Array<{ label: FormsTranslationKey | (() => string); value: V }>;
+	items: Array<TypedItemLabel<V>>;
+};
+
+type WithTypedItemLabelsWithImage<T, V extends string> = Omit<T, "items"> & {
+	items: Array<TypedItemLabel<V> & { imgSrc?: string }>;
 };
 
 type WithTypedDualSelectFields<T, V extends string> = Omit<
@@ -89,8 +98,8 @@ function prefixKey(key: FormsTranslationKey | undefined): string | undefined {
 	return key ? `forms:${key}` : undefined;
 }
 
-function prefixItems<V extends string>(
-	items: Array<{ label: FormsTranslationKey | (() => string); value: V }>,
+function prefixItems<V extends string, T extends TypedItemLabel<V>>(
+	items: Array<T>,
 ) {
 	return items.map((item) => ({
 		...item,
@@ -488,7 +497,7 @@ export function dualSelectOptional<V extends string>(
 
 export function radioGroup<V extends string>(
 	args: WithTypedTranslationKeys<
-		WithTypedItemLabels<
+		WithTypedItemLabelsWithImage<
 			Omit<FormFieldInputGroup<"radio-group", V>, "type" | "initialValue">,
 			V
 		>
@@ -615,7 +624,7 @@ export function dayMonthYearRequired(args: DateTimeArgs) {
 
 export function checkboxGroup<V extends string>(
 	args: WithTypedTranslationKeys<
-		WithTypedItemLabels<
+		WithTypedItemLabelsWithImage<
 			Omit<FormFieldInputGroup<"checkbox-group", V>, "type" | "initialValue">,
 			V
 		>

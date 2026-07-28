@@ -255,7 +255,7 @@
 	"options.artSource.MADE-OF": "",
 	"labels.tierListUrl": "",
 	"labels.plusTier": "",
-	"labels.comment": "",
+	"labels.comment": "Comentário",
 	"errors.plusAlreadySuggested": "",
 	"errors.plusAlreadyMember": "",
 	"errors.plusCannotSuggest": "",
@@ -385,5 +385,10 @@
 	"errors.allModePool": "",
 	"errors.bracketUrlRequired": "",
 	"errors.bracketProgressionRequired": "",
-	"errors.maxMembersRange": ""
+	"errors.maxMembersRange": "",
+	"labels.sentiment": "Sentimento",
+	"bottomTexts.sentiment": "O sentimento positivo ou negativo afeta a separação ou junção dele(a) de você na fila",
+	"options.sentiment.POSITIVE": "Positivo",
+	"options.sentiment.NEUTRAL": "Neutro",
+	"options.sentiment.NEGATIVE": "Negativo"
 }
