@@ -224,18 +224,6 @@ export function successToastWithRedirect({
 	return redirect(`${url}?__success=${message}`);
 }
 
-export type ActionError = { field: string; msg: string; isError: true };
-
-export function actionError<T extends z.ZodTypeAny>({
-	msg,
-	field,
-}: {
-	msg: string;
-	field: (keyof z.infer<T> & string) | `${keyof z.infer<T> & string}.root`;
-}): ActionError {
-	return { msg, field, isError: true };
-}
-
 export type Breadcrumb =
 	| {
 			imgPath: string;
