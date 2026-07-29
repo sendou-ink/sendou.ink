@@ -4,7 +4,6 @@ import type { Tables } from "~/db/tables";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import {
-	CONTROLLERS,
 	getWidgetFormSchema,
 	TIMEZONE_OPTIONS,
 } from "../core/widgets/widget-form-schemas";
@@ -134,20 +133,11 @@ function SensFields() {
 	const { t } = useTranslation(["user"]);
 	const { values, setValue, onFieldChange } = useFormFieldContext();
 
-	const controller =
-		(values.controller as (typeof CONTROLLERS)[number]) ?? "s2-pro-con";
 	const motionSens = (values.motionSens as number | null) ?? null;
 	const stickSens = (values.stickSens as number | null) ?? null;
 
 	const rawSensToString = (sens: number) =>
 		`${sens > 0 ? "+" : ""}${sens / 10}`;
-
-	const handleControllerChange = (
-		newController: (typeof CONTROLLERS)[number],
-	) => {
-		setValue("controller", newController);
-		onFieldChange?.("controller", newController);
-	};
 
 	const handleMotionSensChange = (sens: number | null) => {
 		setValue("motionSens", sens);
@@ -161,25 +151,7 @@ function SensFields() {
 
 	return (
 		<div className="stack md">
-			<div>
-				<label htmlFor="controller">{t("widgets.forms.controller")}</label>
-				<select
-					id="controller"
-					value={controller}
-					onChange={(e) =>
-						handleControllerChange(
-							e.target.value as (typeof CONTROLLERS)[number],
-						)
-					}
-					className={clsx(styles.sensSelect)}
-				>
-					{CONTROLLERS.map((ctrl) => (
-						<option key={ctrl} value={ctrl}>
-							{t(`user:controllers.${ctrl}`)}
-						</option>
-					))}
-				</select>
-			</div>
+			<FormField name="controller" />
 
 			<div className="stack horizontal md">
 				<div>

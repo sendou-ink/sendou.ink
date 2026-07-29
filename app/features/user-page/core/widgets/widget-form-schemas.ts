@@ -80,15 +80,17 @@ export const peakXpWeaponSchema = z.object({
 	}),
 });
 
-export const CONTROLLERS = [
-	"s1-pro-con",
-	"s2-pro-con",
-	"grip",
-	"handheld",
-] as const;
+const CONTROLLERS = ["s1-pro-con", "s2-pro-con", "grip", "handheld"] as const;
 
 export const sensSchema = z.object({
-	controller: customField({ initialValue: "s2-pro-con" }, z.enum(CONTROLLERS)),
+	controller: select({
+		label: "labels.controller",
+		items: CONTROLLERS.map((controller) => ({
+			value: controller,
+			label: `options.controller.${controller}` as const,
+		})),
+		initialValue: "s2-pro-con",
+	}),
 	motionSens: customField({ initialValue: null }, z.number().nullable()),
 	stickSens: customField({ initialValue: null }, z.number().nullable()),
 });

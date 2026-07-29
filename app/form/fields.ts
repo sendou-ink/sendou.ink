@@ -409,7 +409,10 @@ export function select<V extends string>(
 			Omit<FormFieldSelect<"select", V>, "type" | "initialValue" | "clearable">,
 			V
 		>
-	>,
+	> & {
+		/** Value selected when the form has no default value for the field. Defaults to the first item. */
+		initialValue?: V;
+	},
 ) {
 	return itemsSchema(args.items).register(formRegistry, {
 		...args,
@@ -417,7 +420,7 @@ export function select<V extends string>(
 		bottomText: prefixKey(args.bottomText),
 		items: prefixItems(args.items),
 		type: "select",
-		initialValue: args.items[0].value,
+		initialValue: args.initialValue ?? args.items[0].value,
 		clearable: false,
 	});
 }

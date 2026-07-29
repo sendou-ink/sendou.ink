@@ -357,10 +357,9 @@ export const scrimsNewFormSchema = z
 			label: "labels.scrimMaps",
 			items: [...mapsItems],
 		}),
-		mapsTournamentId: customField(
-			{ initialValue: null },
-			z.preprocess(falsyToNull, id.nullable()),
-		),
+		mapsTournamentId: tournamentSearchOptional({
+			label: "labels.scrimMapsTournament",
+		}),
 	})
 	.superRefine((post, ctx) => {
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
