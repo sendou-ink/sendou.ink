@@ -398,5 +398,18 @@
 	"bottomTexts.sentiment": "Positive or negative sentiment affects their sorting for you in the queue",
 	"options.sentiment.POSITIVE": "Positive",
 	"options.sentiment.NEUTRAL": "Neutral",
-	"options.sentiment.NEGATIVE": "Negative"
+	"options.sentiment.NEGATIVE": "Negative",
+	"labels.adminOldUser": "Old user",
+	"labels.adminNewUser": "New user",
+	"labels.adminPlayerId": "Player ID",
+	"labels.friendCode": "Friend code",
+	"labels.patronTier": "Patron tier",
+	"labels.patronExpiresAt": "Patron until",
+	"labels.reason": "Reason",
+	"bottomTexts.adminMigrateNewUser": "Data on the new user will be deleted (e.g. builds)",
+	"errors.invalidFriendCode": "Invalid friend code",
+	"options.patronTier.1": "Support",
+	"options.patronTier.2": "Supporter",
+	"options.patronTier.3": "Supporter+",
+	"placeholders.friendCode": "1234-5678-9012"
 }

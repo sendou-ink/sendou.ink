@@ -398,5 +398,18 @@
 	"bottomTexts.sentiment": "Sentimenti positivi o negativi influenzano il loro ordinamento per te in coda",
 	"options.sentiment.POSITIVE": "Positivo",
 	"options.sentiment.NEUTRAL": "Neutrale",
-	"options.sentiment.NEGATIVE": "Negativo"
+	"options.sentiment.NEGATIVE": "Negativo",
+	"labels.adminOldUser": "",
+	"labels.adminNewUser": "",
+	"labels.adminPlayerId": "",
+	"labels.friendCode": "",
+	"labels.patronTier": "",
+	"labels.patronExpiresAt": "",
+	"labels.reason": "",
+	"bottomTexts.adminMigrateNewUser": "",
+	"errors.invalidFriendCode": "",
+	"options.patronTier.1": "",
+	"options.patronTier.2": "",
+	"options.patronTier.3": "",
+	"placeholders.friendCode": ""
 }

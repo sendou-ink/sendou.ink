@@ -398,5 +398,18 @@
 	"bottomTexts.sentiment": "正面或负面评价会影响对方在您的匹配列表中的排序",
 	"options.sentiment.POSITIVE": "正面",
 	"options.sentiment.NEUTRAL": "中立",
-	"options.sentiment.NEGATIVE": "负面"
+	"options.sentiment.NEGATIVE": "负面",
+	"labels.adminOldUser": "",
+	"labels.adminNewUser": "",
+	"labels.adminPlayerId": "",
+	"labels.friendCode": "",
+	"labels.patronTier": "",
+	"labels.patronExpiresAt": "",
+	"labels.reason": "",
+	"bottomTexts.adminMigrateNewUser": "",
+	"errors.invalidFriendCode": "",
+	"options.patronTier.1": "",
+	"options.patronTier.2": "",
+	"options.patronTier.3": "",
+	"placeholders.friendCode": ""
 }

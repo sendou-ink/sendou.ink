@@ -258,22 +258,32 @@ export function numberField(
 			| "inputType"
 			| "maxLength"
 		>
-	> & { maxLength?: number },
+	> & { maxLength?: number; min?: number; max?: number },
 ) {
-	return z.coerce
+	let schema = z.coerce
 		.number()
 		.int({ message: "forms:errors.mustBeWholeNumber" })
-		.nonnegative()
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			required: true,
-			type: "text-field",
-			inputType: "number",
-			initialValue: "",
-			maxLength: args.maxLength ?? 10,
-		});
+		.nonnegative();
+
+	// an empty field coerces to 0, so `min` is also what makes a required number
+	// field reject being left blank
+	if (typeof args.min === "number") {
+		schema = schema.min(args.min, { message: "forms:errors.numberOutOfRange" });
+	}
+	if (typeof args.max === "number") {
+		schema = schema.max(args.max, { message: "forms:errors.numberOutOfRange" });
+	}
+
+	return schema.register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		required: true,
+		type: "text-field",
+		inputType: "number",
+		initialValue: "",
+		maxLength: args.maxLength ?? 10,
+	});
 }
 
 export function numberFieldOptional(

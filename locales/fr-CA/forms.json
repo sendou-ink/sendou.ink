@@ -398,5 +398,18 @@
 	"bottomTexts.sentiment": "",
 	"options.sentiment.POSITIVE": "",
 	"options.sentiment.NEUTRAL": "",
-	"options.sentiment.NEGATIVE": ""
+	"options.sentiment.NEGATIVE": "",
+	"labels.adminOldUser": "",
+	"labels.adminNewUser": "",
+	"labels.adminPlayerId": "",
+	"labels.friendCode": "",
+	"labels.patronTier": "",
+	"labels.patronExpiresAt": "",
+	"labels.reason": "",
+	"bottomTexts.adminMigrateNewUser": "",
+	"errors.invalidFriendCode": "",
+	"options.patronTier.1": "",
+	"options.patronTier.2": "",
+	"options.patronTier.3": "",
+	"placeholders.friendCode": ""
 }

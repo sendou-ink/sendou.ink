@@ -398,5 +398,18 @@
 	"bottomTexts.sentiment": "Положительное или отрицательное мнение повлияет на их сортировку в очереди только для вас",
 	"options.sentiment.POSITIVE": "Положительное",
 	"options.sentiment.NEUTRAL": "Нейтральное",
-	"options.sentiment.NEGATIVE": "Отрицательное"
+	"options.sentiment.NEGATIVE": "Отрицательное",
+	"labels.adminOldUser": "",
+	"labels.adminNewUser": "",
+	"labels.adminPlayerId": "",
+	"labels.friendCode": "",
+	"labels.patronTier": "",
+	"labels.patronExpiresAt": "",
+	"labels.reason": "",
+	"bottomTexts.adminMigrateNewUser": "",
+	"errors.invalidFriendCode": "",
+	"options.patronTier.1": "",
+	"options.patronTier.2": "",
+	"options.patronTier.3": "",
+	"placeholders.friendCode": ""
 }
