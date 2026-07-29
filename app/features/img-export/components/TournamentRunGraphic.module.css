@@ -20,3 +20,26 @@
 .roundName {
 	text-align: center;
 }
+
+.seriesWin {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	text-align: center;
+}
+
+.seriesWinName {
+	font-size: var(--font-sm);
+	line-height: 1.2;
+}
+
+.seriesWinDate {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.seriesTitlesCount {
+	color: var(--graphic-first);
+}

@@ -1884,6 +1884,17 @@ function TournamentRunGraphicSection({ id }: { id: string }) {
 						matches={RUN_GRAPHIC_MATCHES}
 						teamsCount={74}
 						playersCount={349}
+						seriesWins={{
+							totalCount: 4,
+							first: {
+								name: "Low Ink May 2023",
+								startTime: new Date("2023-05-20T18:00:00Z"),
+							},
+							latest: {
+								name: "Low Ink February 2026",
+								startTime: new Date("2026-02-21T18:00:00Z"),
+							},
+						}}
 					/>
 				</ComponentRow>
 			</div>
