@@ -785,7 +785,11 @@ function TrophyListRow({
 								size="small"
 								shape="square"
 								icon={<Clipboard size={16} />}
-								onPress={() => navigator.clipboard.writeText(pending.model)}
+								onPress={() =>
+									navigator.clipboard.writeText(
+										decompressTrophyModel(pending.model ?? "{}") ?? "",
+									)
+								}
 							/>
 						</>
 					) : null}
