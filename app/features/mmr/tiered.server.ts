@@ -128,7 +128,9 @@ function skillTierIntervals(
 		const accPercentile = previousPercentiles + currentTier.percentile;
 
 		if (currentPercentile > accPercentile) {
-			const previousPoints = points[i - 1];
+			// with few enough players the very first one already exceeds the top
+			// tier's share, and there is nobody below them to close the tier at
+			const previousPoints = points[i - 1] ?? points[i];
 			const thisTier = result[result.length - 1];
 			thisTier.neededOrdinal = previousPoints.ordinal;
 
