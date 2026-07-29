@@ -180,6 +180,7 @@ function ImagePreview({
 			onClick={onClick}
 			onLoad={() => setImageLoaded(true)}
 			className={enablePreview ? styles.thumbnail : undefined}
+			data-testid="art-image"
 		/>
 	);
 

@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { userPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { TeamPage } from "../team/team-page";
+import { TopSearchPlayerPage } from "../top-search/top-search-player-page";
 
 export class UserPage {
 	private readonly page: Page;
@@ -12,6 +13,7 @@ export class UserPage {
 		this.locators = {
 			mainTeamLink: page.getByTestId("main-team-link"),
 			secondaryTeamsTrigger: page.getByTestId("secondary-team-trigger"),
+			placementsBox: page.getByTestId("placements-box"),
 		};
 	}
 
@@ -22,5 +24,11 @@ export class UserPage {
 	async openMainTeam() {
 		await this.locators.mainTeamLink.click();
 		return new TeamPage(this.page);
+	}
+
+	/** The X Rank summary, shown only for a user with a linked player. */
+	async openPlacements() {
+		await this.locators.placementsBox.click();
+		return new TopSearchPlayerPage(this.page);
 	}
 }

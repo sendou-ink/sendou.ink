@@ -31,12 +31,17 @@ export async function loadFactories(parallelIndex: number) {
 
 	return {
 		backdate: (await import("~/db/seed/core/backdate")).backdate,
+		ArtFactory: await import("~/db/seed/factories/ArtFactory"),
 		AssociationFactory: await import("~/db/seed/factories/AssociationFactory"),
+		BadgeFactory: await import("~/db/seed/factories/BadgeFactory"),
 		BuildFactory: await import("~/db/seed/factories/BuildFactory"),
 		CalendarEventFactory: await import(
 			"~/db/seed/factories/CalendarEventFactory"
 		),
 		FriendshipFactory: await import("~/db/seed/factories/FriendshipFactory"),
+		NotificationFactory: await import(
+			"~/db/seed/factories/NotificationFactory"
+		),
 		ScrimPostFactory: await import("~/db/seed/factories/ScrimPostFactory"),
 		SQGroupFactory: await import("~/db/seed/factories/SQGroupFactory"),
 		SQMatchFactory: await import("~/db/seed/factories/SQMatchFactory"),
@@ -49,6 +54,10 @@ export async function loadFactories(parallelIndex: number) {
 			"~/db/seed/factories/TournamentTeamFactory"
 		),
 		UserFactory: await import("~/db/seed/factories/UserFactory"),
+		VodFactory: await import("~/db/seed/factories/VodFactory"),
+		XRankPlacementFactory: await import(
+			"~/db/seed/factories/XRankPlacementFactory"
+		),
 	};
 }
 

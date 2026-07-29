@@ -1,41 +1,48 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { expect, impersonate, navigate, test } from "./helpers/playwright";
+import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { NewArtPage } from "./pages/art/new-art-page";
+import { ImageValidationPage } from "./pages/img-upload/image-validation-page";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const TEST_IMAGE_PATH = path.join(__dirname, "fixtures/test-image.png");
 
 test.describe("Art", () => {
 	test("uploads art as NZAP, admin approves, art displays on user page", async ({
 		page,
+		factories,
 	}) => {
-		// await seed(page);
+		await factories.UserFactory.grant(NZAP_TEST_ID, { roles: ["ARTIST"] });
+
 		await impersonate(page, NZAP_TEST_ID);
 
-		await navigate({ page, url: "/art/new" });
+		const newArt = new NewArtPage(page);
+		await newArt.goto();
+		await newArt.selectImage(TEST_IMAGE_PATH);
 
-		const testImagePath = path.join(__dirname, "fixtures/test-image.png");
-		await page.locator('input[type="file"]').setInputFiles(testImagePath);
+		await expect(newArt.locators.preview).toBeVisible();
 
-		await expect(page.locator("form img")).toBeVisible();
-
-		await page.getByRole("button", { name: "Save" }).click();
+		const userArt = await newArt.save();
 
 		await expect(page).toHaveURL(/\/u\/.*\/art/);
-		await expect(page.getByText(/pending moderator approval/i)).toBeVisible();
+		await expect(userArt.locators.pendingApprovalText).toBeVisible();
 
 		await impersonate(page);
-		await navigate({ page, url: "/upload/admin" });
 
-		await expect(page.locator("img").first()).toBeVisible();
+		const imageValidation = new ImageValidationPage(page);
+		await imageValidation.goto();
 
-		await page.getByRole("button", { name: /All .* above ok/ }).click();
+		await expect(imageValidation.locators.images.first()).toBeVisible();
 
-		await expect(page.getByText("All validated!")).toBeVisible();
+		await imageValidation.approveAll();
 
-		await navigate({ page, url: "/u/nzap/art" });
+		await expect(imageValidation.locators.allValidatedText).toBeVisible();
 
-		const artImage = page.locator("img").first();
+		await userArt.goto(NZAP_TEST_DISCORD_ID);
+
+		const artImage = userArt.image(0);
 		await expect(artImage).toBeVisible();
 
 		const box = await artImage.boundingBox();
