@@ -2016,6 +2016,10 @@ function SeasonSummaryGraphicSection({ id }: { id: string }) {
 								{ name: "sunni" },
 								{ name: "Isabel T.J.", countryCode: "ES" },
 							],
+							team: {
+								name: "Alliance Rogue",
+								logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/Yu_tgElCa5D48CcyFPF3Y-1756077173431.webp`,
+							},
 						}}
 						topMates={[
 							{

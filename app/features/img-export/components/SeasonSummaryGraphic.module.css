@@ -225,16 +225,39 @@
 }
 
 .teamRankRow {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) auto;
+	display: flex;
 	align-items: center;
 	gap: var(--s-3);
+}
+
+.teamRankInfo {
+	min-width: 0;
+}
+
+.teamRankTitle {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-2);
+}
+
+.teamRankName {
+	overflow: hidden;
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .teamRankSp {
 	font-size: var(--font-md);
 	font-weight: var(--weight-extra);
 	font-variant-numeric: tabular-nums;
+
+	&.teamRankSpSecondary {
+		font-size: var(--font-sm);
+		font-weight: var(--weight-semi);
+		color: var(--graphic-text-dim);
+	}
 }
 
 .playersInline {

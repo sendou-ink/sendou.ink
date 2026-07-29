@@ -98,6 +98,10 @@ export function SeasonSummaryGraphic({
 		rank: number;
 		sp: number;
 		mates: GraphicPlayer[];
+		team?: {
+			name: string;
+			logoUrl?: string;
+		};
 	};
 	topMates: Array<{
 		player: GraphicPlayer;
@@ -176,8 +180,27 @@ export function SeasonSummaryGraphic({
 			</div>
 			{teamRank ? (
 				<div className={clsx(graphicStyles.box, styles.teamRankRow)}>
-					<div>
-						<div className={styles.teamRankSp}>{teamRank.sp.toFixed(1)}SP</div>
+					{teamRank.team ? (
+						<Avatar
+							url={teamRank.team.logoUrl}
+							identiconInput={teamRank.team.name}
+							size="sm"
+							alt=""
+						/>
+					) : null}
+					<div className={styles.teamRankInfo}>
+						<div className={styles.teamRankTitle}>
+							{teamRank.team ? (
+								<div className={styles.teamRankName}>{teamRank.team.name}</div>
+							) : null}
+							<div
+								className={clsx(styles.teamRankSp, {
+									[styles.teamRankSpSecondary]: Boolean(teamRank.team),
+								})}
+							>
+								{teamRank.sp.toFixed(1)}SP
+							</div>
+						</div>
 						<div
 							className={clsx(styles.playersInline, styles.playersInlineStart)}
 						>
