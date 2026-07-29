@@ -139,11 +139,12 @@ export const action: ActionFunction = async ({ request }) => {
 				"Cannot decline an accepted trophy",
 			);
 
-			await TrophyRepository.declinePending({
+			const declined = await TrophyRepository.declinePending({
 				id: data.pendingTrophyId,
 				reason: data.reason,
 				declinedByUserId: user.id,
 			});
+			errorToastIfFalsy(declined, "Cannot decline an accepted trophy");
 
 			if (pending.submitterUserId !== user.id) {
 				notify({
