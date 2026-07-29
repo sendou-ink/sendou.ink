@@ -1,8 +1,5 @@
 import type { Page } from "@playwright/test";
-import {
-	NZAP_TEST_DISCORD_ID,
-	STAFF_TEST_DISCORD_ID,
-} from "~/db/seed/constants";
+import { NZAP_TEST_DISCORD_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 
 export type Factories = Awaited<ReturnType<typeof loadFactories>>;
