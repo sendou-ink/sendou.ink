@@ -8,6 +8,8 @@ import {
 
 const TERMS_AGREED_SESSION_STORAGE_KEY = "trophyTermsAgreed";
 
+const DECOMPRESSED_MODEL_CACHE_MAX_CHARS = 16 * 1024 * 1024;
+
 type SpecialTrophyKind = { type: "supporter" } | { type: "xp"; value: number };
 
 export function parseSpecialTrophyCode(
@@ -49,8 +51,34 @@ export function compressTrophyModel(model: string) {
 	return compressToBase64(model);
 }
 
+const decompressedModelCache = new Map<string, string | null>();
+let decompressedModelCacheChars = 0;
+
 export function decompressTrophyModel(modelBase64: string) {
-	return decompressFromBase64(modelBase64);
+	const cached = decompressedModelCache.get(modelBase64);
+	if (cached !== undefined) {
+		decompressedModelCache.delete(modelBase64);
+		decompressedModelCache.set(modelBase64, cached);
+		return cached;
+	}
+
+	const decompressed = decompressFromBase64(modelBase64);
+	decompressedModelCache.set(modelBase64, decompressed);
+	decompressedModelCacheChars += cacheEntryChars(modelBase64, decompressed);
+
+	for (const [oldestKey, oldestValue] of decompressedModelCache) {
+		if (
+			decompressedModelCacheChars <= DECOMPRESSED_MODEL_CACHE_MAX_CHARS ||
+			decompressedModelCache.size === 1
+		) {
+			break;
+		}
+
+		decompressedModelCache.delete(oldestKey);
+		decompressedModelCacheChars -= cacheEntryChars(oldestKey, oldestValue);
+	}
+
+	return decompressed;
 }
 
 export function useTrophyTermsAgreement() {
@@ -83,6 +111,10 @@ function getTermsAgreedSnapshot() {
 
 function getTermsAgreedServerSnapshot() {
 	return false;
+}
+
+function cacheEntryChars(key: string, value: string | null) {
+	return key.length + (value?.length ?? 0);
 }
 
 export function useProgressiveRender(total: number, resetKey: string) {
