@@ -82,6 +82,7 @@ export function TrophyDisplay({
 									model={trophy.model}
 									tier={trophy.tier ?? null}
 									preview={!!openTrophy}
+									staticOnSoftwareRendering
 									disableCameraControls
 								/>
 							</button>

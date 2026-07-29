@@ -82,6 +82,7 @@ export function Trophy({
 	tier,
 	tentativeTier,
 	disableCameraControls,
+	staticOnSoftwareRendering,
 }: {
 	model: string;
 	className?: string;
@@ -90,6 +91,7 @@ export function Trophy({
 	tier?: number | null;
 	tentativeTier?: number | null;
 	disableCameraControls?: boolean;
+	staticOnSoftwareRendering?: boolean;
 }) {
 	const ctxValue = useContext(TrophyCtx);
 	const context = ctxValue?.context;
@@ -133,10 +135,15 @@ export function Trophy({
 				return;
 			}
 
-			// e2e runs render with software WebGL where continuous render loops
-			// starve the main thread and stall tests, so
-			// trophies draw a single static frame there
-			if (preview || IS_E2E_TEST_RUN) {
+			// continuous render loops starve the main thread when WebGL is
+			// software rendered, so e2e runs (which always render on CPU) draw a
+			// single static frame, as do surfaces showing many loops at once on
+			// devices without GPU acceleration
+			if (
+				preview ||
+				IS_E2E_TEST_RUN ||
+				(staticOnSoftwareRendering && isSoftwareRendering())
+			) {
 				viewer.draw();
 				viewer.dispose();
 				return;
@@ -160,7 +167,13 @@ export function Trophy({
 				},
 			});
 		},
-		[modelState, context, preview, disableCameraControls],
+		[
+			modelState,
+			context,
+			preview,
+			staticOnSoftwareRendering,
+			disableCameraControls,
+		],
 	);
 
 	const effectiveTier = tier ?? tentativeTier ?? null;
@@ -213,4 +226,19 @@ export function Trophy({
 			{tierPill}
 		</div>
 	);
+}
+
+let softwareRenderingDetected: boolean | undefined;
+
+function isSoftwareRendering() {
+	if (softwareRenderingDetected !== undefined) return softwareRenderingDetected;
+	if (typeof document === "undefined") return false;
+
+	const gl = document
+		.createElement("canvas")
+		.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
+	softwareRenderingDetected = !gl;
+	gl?.getExtension("WEBGL_lose_context")?.loseContext();
+
+	return softwareRenderingDetected;
 }
