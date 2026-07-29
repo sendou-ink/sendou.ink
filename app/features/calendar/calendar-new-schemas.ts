@@ -7,6 +7,7 @@ import {
 	customField,
 	datetime,
 	datetimeOptional,
+	hidden,
 	idConstantOptional,
 	image,
 	numberFieldOptional,
@@ -31,7 +32,7 @@ const calendarEventDateField = datetime({
 
 export const calendarNewBaseSchema = z.object({
 	// discriminates between a calendar event and a tournament; seeded from the loader, no visible control
-	toToolsEnabled: customField({ initialValue: false }, z.boolean()),
+	toToolsEnabled: hidden(z.boolean(), false),
 	eventToEditId: idConstantOptional(),
 	tournamentToCopyId: idConstantOptional(),
 	name: textField({

@@ -654,30 +654,45 @@ export function weaponPool(
 	});
 }
 
-export function stringConstant<T extends string>(value: T) {
+/**
+ * Field that renders no control at all. Use it for values the form needs to
+ * submit but the user never edits, e.g. a discriminator seeded from the loader.
+ *
+ * Pass `initialValue` to hardcode the starting value. Omitting it makes the
+ * field require a matching entry in the form's `defaultValues`.
+ */
+export function hidden<T extends z.ZodType>(
+	schema: T,
+	initialValue: z.input<T>,
+): T;
+export function hidden<T extends z.ZodType>(schema: T): RequiresDefault<T>;
+export function hidden<T extends z.ZodType>(
+	schema: T,
+	initialValue?: z.input<T>,
+) {
 	// @ts-expect-error Complex generic type with registry
-	return z.literal(value).register(formRegistry, {
-		type: "string-constant",
-		initialValue: value,
-	});
+	return schema.register(formRegistry, {
+		type: "hidden",
+		initialValue,
+	}) as never;
+}
+
+export function stringConstant<T extends string>(value: T) {
+	return hidden(z.literal(value), value);
 }
 
 export function idConstant<T extends number>(value: T): z.ZodLiteral<T>;
 export function idConstant(): RequiresDefault<z.ZodNumber>;
 export function idConstant<T extends number>(value?: T) {
-	const schema = value !== undefined ? z.literal(value) : id.clone();
-	return schema.register(formRegistry, {
-		type: "id-constant",
-		initialValue: value,
-	}) as never;
+	return (
+		value !== undefined ? hidden(z.literal(value), value) : hidden(id.clone())
+	) as never;
 }
 
 export function idConstantOptional<T extends number>(value?: T) {
-	const schema = value ? z.literal(value).optional() : id.optional();
-	return schema.register(formRegistry, {
-		type: "id-constant",
-		initialValue: value,
-	});
+	return value
+		? hidden(z.literal(value).optional(), value)
+		: hidden(id.optional(), undefined);
 }
 
 export function array<S extends z.ZodType>(

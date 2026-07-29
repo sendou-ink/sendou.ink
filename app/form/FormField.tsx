@@ -417,10 +417,7 @@ export function FormField({
 		);
 	}
 
-	if (
-		formField.type === "string-constant" ||
-		formField.type === "id-constant"
-	) {
+	if (formField.type === "hidden") {
 		return null;
 	}
 

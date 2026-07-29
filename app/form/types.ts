@@ -13,7 +13,8 @@ interface FormFieldBase<T extends string> {
 	initialValue: unknown;
 }
 
-type FormFieldConstant<T extends string> = Omit<
+/** A field that never renders a control. Its value is seeded from the schema's `initialValue` or the form's `defaultValues`. */
+type FormFieldHidden<T extends string> = Omit<
 	FormFieldBase<T>,
 	"label" | "bottomText"
 >;
@@ -196,8 +197,7 @@ export type FormField<V extends string = string> =
 	| FormFieldDatetime<"date">
 	| FormFieldWeaponPool<"weapon-pool">
 	| FormFieldImage<"image">
-	| FormFieldConstant<"string-constant">
-	| FormFieldConstant<"id-constant">
+	| FormFieldHidden<"hidden">
 	| FormFieldArray<"array", z.ZodType>
 	| FormFieldTimeRange<"time-range">
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
