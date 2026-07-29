@@ -18,7 +18,7 @@ export function LocaleTab() {
 					defaultValues={{
 						newValue: user.preferences.clockFormat ?? "auto",
 					}}
-					autoSubmit
+					mode="autoSubmit"
 					revalidateRoot
 					fullWidth
 				>

@@ -13,13 +13,13 @@ import {
 
 async function banUser(
 	page: Page,
-	options: { duration?: string; reason?: string },
+	options: { expiresAt?: Date; reason?: string },
 ) {
 	const banForm = page
 		.locator("form")
 		.filter({ has: page.locator("h2", { hasText: /^Ban user$/ }) });
 
-	const comboboxButton = banForm.getByLabel("User");
+	const comboboxButton = banForm.getByLabel(/^User/);
 	await expect(comboboxButton).not.toBeDisabled();
 	await comboboxButton.click();
 
@@ -29,11 +29,28 @@ async function banUser(
 	const option = page.getByTestId("user-search-item").first();
 	await option.click();
 
-	if (options.duration) {
-		await banForm.locator('input[name="duration"]').fill(options.duration);
+	if (options.expiresAt) {
+		const expiresAt = options.expiresAt;
+		const fillSegment = (segment: string, value: string) =>
+			banForm
+				.getByRole("spinbutton", {
+					name: new RegExp(`^${segment}, Ban expiration date`),
+				})
+				.fill(value);
+
+		const hours = expiresAt.getHours();
+		await fillSegment("year", String(expiresAt.getFullYear()));
+		await fillSegment("month", String(expiresAt.getMonth() + 1));
+		await fillSegment("day", String(expiresAt.getDate()));
+		await fillSegment("hour", String(hours % 12 || 12));
+		await fillSegment(
+			"minute",
+			String(expiresAt.getMinutes()).padStart(2, "0"),
+		);
+		await fillSegment("AM/PM", hours >= 12 ? "PM" : "AM");
 	}
 	if (options.reason) {
-		await banForm.locator('input[name="reason"]').fill(options.reason);
+		await banForm.getByLabel("Reason").fill(options.reason);
 	}
 
 	await waitForPOSTResponse(page, () =>
@@ -46,7 +63,7 @@ async function unbanUser(page: Page) {
 		.locator("form")
 		.filter({ has: page.locator("h2", { hasText: /^Unban user$/ }) });
 
-	const comboboxButton = unbanForm.getByLabel("User");
+	const comboboxButton = unbanForm.getByLabel(/^User/);
 	await expect(comboboxButton).not.toBeDisabled();
 	await comboboxButton.click();
 
@@ -113,11 +130,8 @@ test.describe("User banning", () => {
 
 		// Set ban to expire tomorrow (well in the future)
 		const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-		const year = tomorrow.getFullYear();
-		const month = String(tomorrow.getMonth() + 1).padStart(2, "0");
-		const day = String(tomorrow.getDate()).padStart(2, "0");
-		const formattedDate = `${year}-${month}-${day}T12:00`;
-		await banUser(page, { duration: formattedDate, reason: "Temporary ban" });
+		tomorrow.setHours(12, 0, 0, 0);
+		await banUser(page, { expiresAt: tomorrow, reason: "Temporary ban" });
 
 		// 2. As the banned user, verify redirected to suspended page
 		await impersonate(page, NZAP_TEST_ID);

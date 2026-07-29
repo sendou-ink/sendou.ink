@@ -42,7 +42,7 @@ export function InGameNameFormField({
 				onChange={onChange}
 				onBlur={() => onBlur?.()}
 				disabled={disabled}
-				{...ariaAttributes({ id, bottomText, error, required })}
+				{...ariaAttributes({ name, bottomText, error, required })}
 			/>
 		</FormFieldWrapper>
 	);

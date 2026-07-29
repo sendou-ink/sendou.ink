@@ -152,33 +152,6 @@ export async function parseBody<T extends z.ZodTypeAny>({
 	return parsed.data;
 }
 
-export async function safeParseRequestFormData<T extends z.ZodTypeAny>({
-	request,
-	schema,
-}: {
-	request: Request;
-	schema: T;
-}): Promise<
-	{ success: true; data: z.infer<T> } | { success: false; errors: string[] }
-> {
-	const parsed = schema.safeParse(formDataToObject(await request.formData()));
-
-	// this implementation is somewhat redundant but it's the only way I got types to work nice
-	if (!parsed.success) {
-		return {
-			success: false,
-			errors: parsed.error.issues.map(
-				(issue: { message: string }) => issue.message,
-			),
-		};
-	}
-
-	return {
-		success: true,
-		data: parsed.data,
-	};
-}
-
 export function formDataToObject(formData: FormData) {
 	const result: Record<string, string | string[]> = {};
 
@@ -249,18 +222,6 @@ export function successToastWithRedirect({
 	url: string;
 }) {
 	return redirect(`${url}?__success=${message}`);
-}
-
-export type ActionError = { field: string; msg: string; isError: true };
-
-export function actionError<T extends z.ZodTypeAny>({
-	msg,
-	field,
-}: {
-	msg: string;
-	field: (keyof z.infer<T> & string) | `${keyof z.infer<T> & string}.root`;
-}): ActionError {
-	return { msg, field, isError: true };
 }
 
 export type Breadcrumb =

@@ -13,10 +13,10 @@ import {
 	radioGroup,
 	select,
 	selectOptional,
+	textArea,
 	textAreaOptional,
-	textAreaRequired,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	timeRangeOptional,
 	toggle as toggleField,
 	userSearch,
@@ -46,7 +46,7 @@ function renderForm(
 		defaultValues?: Record<string, unknown>;
 		title?: string;
 		submitButtonText?: string;
-		autoSubmit?: boolean;
+		mode?: "autoSubmit";
 	},
 ) {
 	const props: ComponentProps<typeof SendouForm<z.ZodRawShape>> = {
@@ -54,10 +54,10 @@ function renderForm(
 		defaultValues: options?.defaultValues,
 		title: options?.title,
 		submitButtonText: options?.submitButtonText,
-		autoSubmit: options?.autoSubmit,
-		children: ({ names }) => (
+		mode: options?.mode,
+		children: (
 			<>
-				{Object.keys(names).map((name) => (
+				{Object.keys(schema.shape).map((name) => (
 					<FormField key={name} name={name} />
 				))}
 			</>
@@ -85,7 +85,7 @@ describe("SendouForm", () => {
 	describe("basic form rendering", () => {
 		test("renders form with title", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema, { title: "Test Form" });
@@ -95,7 +95,7 @@ describe("SendouForm", () => {
 
 		test("renders submit button with default text", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -107,7 +107,7 @@ describe("SendouForm", () => {
 
 		test("renders submit button with custom text", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema, {
@@ -119,12 +119,12 @@ describe("SendouForm", () => {
 				.toBeVisible();
 		});
 
-		test("hides submit button when autoSubmit is true", async () => {
+		test("hides submit button in autoSubmit mode", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
-			const screen = await renderForm(schema, { autoSubmit: true });
+			const screen = await renderForm(schema, { mode: "autoSubmit" });
 
 			const submitButton = screen.container.querySelector(
 				'button[type="submit"]',
@@ -136,7 +136,7 @@ describe("SendouForm", () => {
 	describe("text field", () => {
 		test("renders with label", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -146,7 +146,7 @@ describe("SendouForm", () => {
 
 		test("typing updates value", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -159,7 +159,7 @@ describe("SendouForm", () => {
 
 		test("shows error on blur when required field is empty", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -175,7 +175,7 @@ describe("SendouForm", () => {
 
 		test("shows error on submit when required field is empty", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -189,7 +189,7 @@ describe("SendouForm", () => {
 
 		test("clears error when valid value is entered after submit", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -221,7 +221,7 @@ describe("SendouForm", () => {
 
 		test("initializes with default value", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const screen = await renderForm(schema, {
@@ -312,7 +312,7 @@ describe("SendouForm", () => {
 
 		test("required text area shows error when empty", async () => {
 			const schema = z.object({
-				bio: textAreaRequired({ label: "labels.bio", maxLength: 500 }),
+				bio: textArea({ label: "labels.bio", maxLength: 500 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -599,8 +599,8 @@ describe("SendouForm", () => {
 	describe("validation", () => {
 		test("validates multiple fields on submit", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
-				bio: textAreaRequired({ label: "labels.bio", maxLength: 500 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
+				bio: textArea({ label: "labels.bio", maxLength: 500 }),
 			});
 
 			const screen = await renderForm(schema);
@@ -618,7 +618,7 @@ describe("SendouForm", () => {
 	describe("default values", () => {
 		test("initializes multiple fields with default values", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
 			});
 
@@ -659,7 +659,7 @@ describe("SendouForm", () => {
 	describe("server error fallback", () => {
 		test("shows fallback error when server returns error for field without DOM element", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			mockFetcherData = {
@@ -677,7 +677,7 @@ describe("SendouForm", () => {
 
 		test("does not show fallback error when server error has corresponding DOM element", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			mockFetcherData = {
@@ -741,7 +741,7 @@ describe("SendouForm", () => {
 		test("calls onApply with form values instead of fetcher.submit", async () => {
 			const onApply = vi.fn();
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const router = createMemoryRouter(
@@ -754,7 +754,7 @@ describe("SendouForm", () => {
 								defaultValues={{ name: "Test Value" }}
 								onApply={onApply}
 							>
-								{({ names }) => <FormField name={names.name} />}
+								<FormField name="name" />
 							</SendouForm>
 						),
 					},
@@ -771,7 +771,7 @@ describe("SendouForm", () => {
 		test("does not call onApply when validation fails", async () => {
 			const onApply = vi.fn();
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 			});
 
 			const router = createMemoryRouter(
@@ -780,7 +780,7 @@ describe("SendouForm", () => {
 						path: "/",
 						element: (
 							<SendouForm schema={schema} onApply={onApply}>
-								{({ names }) => <FormField name={names.name} />}
+								<FormField name="name" />
 							</SendouForm>
 						),
 					},
@@ -804,7 +804,7 @@ describe("SendouForm", () => {
 				member: fieldset({
 					label: "labels.member",
 					fields: z.object({
-						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						name: textField({ label: "labels.name", maxLength: 100 }),
 					}),
 				}),
 			});
@@ -819,7 +819,7 @@ describe("SendouForm", () => {
 				member: fieldset({
 					label: "labels.member",
 					fields: z.object({
-						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						name: textField({ label: "labels.name", maxLength: 100 }),
 						bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
 					}),
 				}),
@@ -836,7 +836,7 @@ describe("SendouForm", () => {
 				member: fieldset({
 					label: "labels.member",
 					fields: z.object({
-						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						name: textField({ label: "labels.name", maxLength: 100 }),
 					}),
 				}),
 			});
@@ -854,7 +854,7 @@ describe("SendouForm", () => {
 				member: fieldset({
 					label: "labels.member",
 					fields: z.object({
-						name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+						name: textField({ label: "labels.name", maxLength: 100 }),
 					}),
 				}),
 			});
@@ -876,7 +876,7 @@ describe("SendouForm", () => {
 					label: "labels.urls",
 					min: 0,
 					max: 5,
-					field: textFieldRequired({ maxLength: 100 }),
+					field: textField({ maxLength: 100 }),
 				}),
 			});
 
@@ -893,7 +893,7 @@ describe("SendouForm", () => {
 					label: "labels.urls",
 					min: 0,
 					max: 5,
-					field: textFieldRequired({ maxLength: 100 }),
+					field: textField({ maxLength: 100 }),
 				}),
 			});
 
@@ -914,7 +914,7 @@ describe("SendouForm", () => {
 					label: "labels.urls",
 					min: 0,
 					max: 5,
-					field: textFieldRequired({ maxLength: 100 }),
+					field: textField({ maxLength: 100 }),
 				}),
 			});
 
@@ -939,7 +939,7 @@ describe("SendouForm", () => {
 					label: "labels.urls",
 					min: 0,
 					max: 5,
-					field: textFieldRequired({ maxLength: 100 }),
+					field: textField({ maxLength: 100 }),
 				}),
 			});
 
@@ -959,7 +959,7 @@ describe("SendouForm", () => {
 					label: "labels.urls",
 					min: 0,
 					max: 5,
-					field: textFieldRequired({ maxLength: 100 }),
+					field: textField({ maxLength: 100 }),
 				}),
 			});
 
@@ -985,7 +985,7 @@ describe("SendouForm", () => {
 					label: "labels.urls",
 					min: 0,
 					max: 2,
-					field: textFieldRequired({ maxLength: 100 }),
+					field: textField({ maxLength: 100 }),
 				}),
 			});
 
@@ -1007,7 +1007,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1029,7 +1029,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1056,7 +1056,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1078,7 +1078,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1109,7 +1109,7 @@ describe("SendouForm", () => {
 					sortable: true,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1147,7 +1147,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1173,7 +1173,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 							role: select({
 								label: "labels.staffRole",
 								items: [
@@ -1222,7 +1222,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1251,7 +1251,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 							role: select({
 								label: "labels.staffRole",
 								items: [
@@ -1270,7 +1270,7 @@ describe("SendouForm", () => {
 						path: "/",
 						element: (
 							<SendouForm schema={schema} onApply={onApply}>
-								{({ names }) => <FormField name={names.staff} />}
+								<FormField name="staff" />
 							</SendouForm>
 						),
 					},
@@ -1296,7 +1296,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 							description: textAreaOptional({
 								label: "labels.description",
 								maxLength: 500,
@@ -1324,7 +1324,7 @@ describe("SendouForm", () => {
 					max: 10,
 					field: fieldset({
 						fields: z.object({
-							name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+							name: textField({ label: "labels.name", maxLength: 100 }),
 						}),
 					}),
 				}),
@@ -1416,12 +1416,8 @@ describe("SendouForm", () => {
 						path: "/",
 						element: (
 							<SendouForm schema={schema} defaultValues={defaultValues}>
-								{({ names }) => (
-									<>
-										<FormField name={names.members} />
-										<ValueCapture />
-									</>
-								)}
+								<FormField name="members" />
+								<ValueCapture />
 							</SendouForm>
 						),
 					},
@@ -1459,7 +1455,7 @@ describe("SendouForm", () => {
 	describe("render isolation", () => {
 		test("typing in one field does not re-render sibling fields", async () => {
 			const schema = z.object({
-				name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+				name: textField({ label: "labels.name", maxLength: 100 }),
 				bio: textFieldOptional({ label: "labels.bio", maxLength: 100 }),
 			});
 

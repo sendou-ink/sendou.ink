@@ -5,7 +5,7 @@ import {
 	idConstantOptional,
 	selectDynamic,
 	selectDynamicOptional,
-	textAreaRequired,
+	textArea,
 } from "~/form/fields";
 import { LFG, TIMEZONES } from "./lfg-constants";
 
@@ -14,7 +14,7 @@ export const lfgNewSchema = z
 		postId: idConstantOptional(),
 		type: selectDynamic({ label: "labels.type" }),
 		timezone: selectDynamic({ label: "labels.timezone" }),
-		postText: textAreaRequired({
+		postText: textArea({
 			label: "labels.text",
 			maxLength: LFG.MAX_TEXT_LENGTH,
 		}),

@@ -7,11 +7,8 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDBCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import {
-	errorToastIfFalsy,
-	parseParams,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
@@ -22,10 +19,16 @@ import { setPickupChatMetadata } from "../tournament-lfg-utils.server";
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: lookingSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	const findOwnGroup = async () => {
 		const groups =

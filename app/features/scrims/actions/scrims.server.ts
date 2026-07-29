@@ -8,6 +8,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { datePlaceholder } from "~/features/chat/chat-utils";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	databaseTimestampToDate,
@@ -18,29 +19,31 @@ import {
 	DuplicateEntryError,
 } from "~/utils/errors";
 import { logger } from "~/utils/logger";
-import {
-	actionError,
-	errorToast,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { SCRIM } from "../scrims-constants";
-import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
+import { scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: scrimsActionSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+
 	switch (data._action) {
 		case "DELETE_POST": {
 			const post = await findPost({
@@ -75,10 +78,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}
 
 			if (post.rangeEndsAt && !data.at) {
-				return actionError<typeof newRequestSchema>({
-					msg: "Please select a time for the scrim",
-					field: "at",
-				});
+				return {
+					fieldErrors: { at: "Please select a time for the scrim" },
+				};
 			}
 
 			if (post.rangeEndsAt && data.at) {
@@ -89,10 +91,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				const requestTime = data.at.getTime();
 
 				if (!validTimeOptions.includes(requestTime)) {
-					return actionError<typeof newRequestSchema>({
-						msg: "Selected time must be one of the available options",
-						field: "at",
-					});
+					return {
+						fieldErrors: {
+							at: "Selected time must be one of the available options",
+						},
+					};
 				}
 			}
 

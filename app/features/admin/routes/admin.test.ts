@@ -12,10 +12,13 @@ import {
 	withUserId,
 	wrappedAction,
 } from "~/utils/Test";
-import type { adminActionSchema } from "../actions/admin.server";
+import type { adminActionSchema } from "../admin-schemas";
 import { action } from "./admin";
 
-const adminAction = wrappedAction<typeof adminActionSchema>({ action });
+const adminAction = wrappedAction<typeof adminActionSchema>({
+	action,
+	isJsonSubmission: true,
+});
 
 const voteArgs = ({
 	score,
@@ -305,8 +308,8 @@ const migrateUserAction = () =>
 	adminAction(
 		{
 			_action: "MIGRATE",
-			"old-user": 1,
-			"new-user": 2,
+			oldUser: 1,
+			newUser: 2,
 		},
 		{ user: "admin" },
 	);

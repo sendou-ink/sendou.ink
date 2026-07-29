@@ -12,6 +12,7 @@ export function BadgesSelector({
 	children,
 	maxCount,
 	showSelect = true,
+	disabled,
 }: {
 	options: BadgeDisplayProps["badges"];
 	selectedBadges: number[];
@@ -20,6 +21,7 @@ export function BadgesSelector({
 	children?: React.ReactNode;
 	maxCount?: number;
 	showSelect?: boolean;
+	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
 
@@ -35,7 +37,7 @@ export function BadgesSelector({
 
 							return aIdx - bIdx;
 						})}
-					onChange={onChange}
+					onChange={disabled ? undefined : onChange}
 					key={selectedBadges.join(",")}
 				>
 					{children}
@@ -56,7 +58,9 @@ export function BadgesSelector({
 						onChange={(e) =>
 							onChange([...selectedBadges, Number(e.target.value)])
 						}
-						disabled={Boolean(maxCount && selectedBadges.length >= maxCount)}
+						disabled={
+							disabled || Boolean(maxCount && selectedBadges.length >= maxCount)
+						}
 						data-testid="badges-selector"
 					>
 						<option>{t("common:badges.selector.select")}</option>

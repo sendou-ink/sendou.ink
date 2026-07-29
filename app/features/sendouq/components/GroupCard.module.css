@@ -81,10 +81,6 @@
 	height: 24px;
 }
 
-.noteTextarea {
-	height: 4rem !important;
-}
-
 .futureMatchMode {
 	border-radius: 100%;
 	background-color: var(--color-bg);

@@ -12,6 +12,7 @@ type DatetimeFormFieldProps = Omit<
 	value: Date | undefined;
 	onChange: (value: Date | undefined) => void;
 	granularity?: "day" | "minute";
+	disabled?: boolean;
 };
 
 export function DatetimeFormField({
@@ -24,6 +25,7 @@ export function DatetimeFormField({
 	value,
 	onChange,
 	granularity = "minute",
+	disabled,
 }: DatetimeFormFieldProps) {
 	const { translatedLabel, translatedError, translatedBottomText } =
 		useTranslatedTexts({ label, error, bottomText });
@@ -58,6 +60,7 @@ export function DatetimeFormField({
 				errorId={errorMessageId(name)}
 				bottomText={translatedBottomText}
 				isRequired={required}
+				isDisabled={disabled}
 				value={
 					value
 						? granularity === "day"

@@ -8,8 +8,8 @@ import {
 	selectOptional,
 	stringConstant,
 	textAreaOptional,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	toggle,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
@@ -26,7 +26,7 @@ const teamNameValidate = {
 } as const;
 
 export const createTeamSchema = z.object({
-	name: textFieldRequired({
+	name: textField({
 		label: "labels.name",
 		minLength: TEAM.NAME_MIN_LENGTH,
 		maxLength: TEAM.NAME_MAX_LENGTH,
@@ -36,7 +36,7 @@ export const createTeamSchema = z.object({
 
 export const editTeamFormSchema = z.object({
 	_action: stringConstant("EDIT"),
-	name: textFieldRequired({
+	name: textField({
 		label: "labels.name",
 		bottomText: "bottomTexts.name",
 		minLength: TEAM.NAME_MIN_LENGTH,
