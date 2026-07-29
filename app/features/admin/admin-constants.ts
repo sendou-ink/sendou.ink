@@ -1,8 +1,5 @@
 export const BAN_REASON_MAX_LENGTH = 200;
 
-/** Length of a friend code with the optional "SW-" prefix included */
-export const FRIEND_CODE_MAX_LENGTH = 17;
-
 export const ADMIN_DISCORD_ID = "79237403620945920";
 export const ADMIN_ID = process.env.NODE_ENV === "test" ? 1 : 274;
 

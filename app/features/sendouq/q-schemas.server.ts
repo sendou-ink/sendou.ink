@@ -1,13 +1,6 @@
 import { z } from "zod";
-import {
-	_action,
-	deduplicate,
-	friendCode,
-	id,
-	modeShort,
-	stageId,
-} from "~/utils/zod";
-import { updateGroupNoteSchema } from "./q-schemas";
+import { _action, deduplicate, id, modeShort, stageId } from "~/utils/zod";
+import { addFriendCodeSchema, updateGroupNoteSchema } from "./q-schemas";
 
 export const frontPageSchema = z.union([
 	z.object({
@@ -17,10 +10,7 @@ export const frontPageSchema = z.union([
 	z.object({
 		_action: _action("JOIN_TEAM"),
 	}),
-	z.object({
-		_action: _action("ADD_FRIEND_CODE"),
-		friendCode,
-	}),
+	addFriendCodeSchema,
 ]);
 
 export const preparingSchema = z.union([

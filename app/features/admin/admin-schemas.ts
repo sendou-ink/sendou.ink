@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { FRIEND_CODE_REGEXP } from "~/features/sendouq/q-constants";
+import { friendCodeField } from "~/features/sendouq/q-schemas";
 import {
 	datetimeOptional,
 	datetimeRequired,
@@ -12,27 +12,13 @@ import {
 	userSearch,
 } from "~/form/fields";
 import { friendCode, id } from "~/utils/zod";
-import {
-	BAN_REASON_MAX_LENGTH,
-	FRIEND_CODE_MAX_LENGTH,
-} from "./admin-constants";
+import { BAN_REASON_MAX_LENGTH } from "./admin-constants";
 
 export const adminActionSearchParamsSchema = z.object({
 	friendCode,
 });
 
 const userField = userSearch({ label: "labels.user" });
-
-const friendCodeField = textFieldRequired({
-	label: "labels.friendCode",
-	maxLength: FRIEND_CODE_MAX_LENGTH,
-	leftAddon: "SW-",
-	placeholder: "placeholders.friendCode",
-	regExp: {
-		pattern: FRIEND_CODE_REGEXP,
-		message: "forms:errors.invalidFriendCode",
-	},
-});
 
 export const friendCodeSearchSchema = z.object({
 	friendCode: friendCodeField,
