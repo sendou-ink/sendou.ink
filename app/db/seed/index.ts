@@ -262,6 +262,7 @@ const basicSeeds = (variation?: SeedVariation | null) => [
 	trophiesToDb,
 	trophyOwners,
 	trophyWinsTournament,
+	upcomingTrophyTournament,
 	pendingTrophiesToDb,
 	assignTrophyToTournament,
 	specialTrophies,
@@ -1663,6 +1664,60 @@ function trophyWinsTournament() {
 			tier: 3,
 		});
 	}
+}
+
+const UPCOMING_TROPHY_TOURNAMENT_ID = 10;
+const UPCOMING_TROPHY_EVENT_ID = 210;
+
+function upcomingTrophyTournament() {
+	sql
+		.prepare(
+			`insert into "Tournament" ("id", "mapPickingStyle", "settings")
+			 values ($id, $mapPickingStyle, $settings)`,
+		)
+		.run({
+			id: UPCOMING_TROPHY_TOURNAMENT_ID,
+			mapPickingStyle: "AUTO_ALL",
+			settings: JSON.stringify({
+				isRanked: true,
+				bracketProgression: [
+					{
+						type: "single_elimination",
+						name: "Bracket",
+						requiresCheckIn: false,
+						settings: { thirdPlaceMatch: false },
+					},
+				],
+			}),
+		});
+
+	sql
+		.prepare(
+			`insert into "CalendarEvent" ("id", "name", "description", "discordInviteCode", "bracketUrl", "authorId", "tournamentId", "trophyId")
+			 values ($id, $name, $description, $discordInviteCode, $bracketUrl, $authorId, $tournamentId, $trophyId)`,
+		)
+		.run({
+			id: UPCOMING_TROPHY_EVENT_ID,
+			name: "Trophy Cup 2",
+			description: "Upcoming tournament with a trophy prize",
+			discordInviteCode: "test",
+			bracketUrl: "https://example.com",
+			authorId: ADMIN_ID,
+			tournamentId: UPCOMING_TROPHY_TOURNAMENT_ID,
+			trophyId: 1,
+		});
+
+	sql
+		.prepare(
+			`insert into "CalendarEventDate" ("eventId", "startTime")
+			 values ($eventId, $startTime)`,
+		)
+		.run({
+			eventId: UPCOMING_TROPHY_EVENT_ID,
+			startTime: dateToDatabaseTimestamp(
+				new Date(Date.now() + 1000 * 60 * 60 * 24 * 10),
+			),
+		});
 }
 
 function pendingTrophiesToDb() {

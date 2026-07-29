@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as TrophyRepository from "./TrophyRepository.server";
 
@@ -117,6 +119,63 @@ describe("trophy approvals", () => {
 	});
 });
 
+describe("trophy list tiers", () => {
+	let trophyId: number;
+
+	beforeEach(async () => {
+		await dbInsertUsers(2);
+
+		const trophy = await db
+			.insertInto("Trophy")
+			.values({
+				name: "Tiered Trophy",
+				model: "model",
+				creatorId: 1,
+				managerId: 1,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+		trophyId = trophy.id;
+	});
+
+	afterEach(() => {
+		dbReset();
+	});
+
+	test("an upcoming tournament without tier info does not hide the earned tier", async () => {
+		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
+		await insertTrophyTournament({ trophyId, tier: null, startInDays: 10 });
+
+		const trophy = (await TrophyRepository.all()).find(
+			(row) => row.name === "Tiered Trophy",
+		);
+
+		expect(trophy?.tier).toBe(3);
+	});
+
+	test("uses the most recent tier when multiple tournaments have one", async () => {
+		await insertTrophyTournament({ trophyId, tier: 5, startInDays: -30 });
+		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -7 });
+
+		const trophy = (await TrophyRepository.all()).find(
+			(row) => row.name === "Tiered Trophy",
+		);
+
+		expect(trophy?.tier).toBe(3);
+	});
+
+	test("has no tier when no linked tournament has tier info", async () => {
+		await insertTrophyTournament({ trophyId, tier: null, startInDays: 10 });
+
+		const trophy = (await TrophyRepository.all()).find(
+			(row) => row.name === "Tiered Trophy",
+		);
+
+		expect(trophy?.tier).toBe(null);
+		expect(trophy?.tentativeTier).toBe(null);
+	});
+});
+
 async function trophyCount() {
 	const { count } = await db
 		.selectFrom("Trophy")
@@ -124,4 +183,46 @@ async function trophyCount() {
 		.executeTakeFirstOrThrow();
 
 	return count;
+}
+
+async function insertTrophyTournament({
+	trophyId,
+	tier,
+	startInDays,
+}: {
+	trophyId: number;
+	tier: TournamentTierNumber | null;
+	startInDays: number;
+}) {
+	const tournament = await db
+		.insertInto("Tournament")
+		.values({
+			mapPickingStyle: "AUTO_ALL",
+			settings: JSON.stringify({ bracketProgression: [] }),
+			tier,
+		})
+		.returning("id")
+		.executeTakeFirstOrThrow();
+
+	const event = await db
+		.insertInto("CalendarEvent")
+		.values({
+			name: `Tournament ${tournament.id}`,
+			bracketUrl: "https://example.com",
+			authorId: 1,
+			tournamentId: tournament.id,
+			trophyId,
+		})
+		.returning("id")
+		.executeTakeFirstOrThrow();
+
+	await db
+		.insertInto("CalendarEventDate")
+		.values({
+			eventId: event.id,
+			startTime: dateToDatabaseTimestamp(
+				new Date(Date.now() + startInDays * 24 * 60 * 60 * 1000),
+			),
+		})
+		.execute();
 }

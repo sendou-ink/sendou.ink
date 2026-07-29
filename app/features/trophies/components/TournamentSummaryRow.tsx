@@ -1,8 +1,12 @@
 import { clsx } from "clsx";
 import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { TierPill } from "~/components/TierPill";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
+import { useHydrated } from "~/hooks/useHydrated";
+import { databaseTimestampToDate } from "~/utils/dates";
 import { tournamentPage } from "~/utils/urls";
 import styles from "./TournamentSummaryRow.module.css";
 
@@ -21,11 +25,19 @@ export function TournamentSummaryRow({
 	};
 	className?: string;
 }) {
+	const { t } = useTranslation(["trophies"]);
+	const isHydrated = useHydrated();
+	const formatDistanceToNow = useFormatDistanceToNow();
 	const { formatter } = useDateTimeFormat({
 		day: "numeric",
 		month: "short",
 		year: "numeric",
 	});
+
+	const isUpcoming = Boolean(
+		tournament.startTime &&
+			databaseTimestampToDate(tournament.startTime) > new Date(),
+	);
 
 	return (
 		<Link
@@ -47,6 +59,11 @@ export function TournamentSummaryRow({
 					) : tournament.tentativeTier ? (
 						<TierPill tier={tournament.tentativeTier} isTentative />
 					) : null}
+					{isUpcoming ? (
+						<span className={styles.upcomingPill}>
+							{t("trophies:details.upcoming")}
+						</span>
+					) : null}
 				</span>
 				<div className={styles.meta}>
 					<span className={styles.metaItem}>
@@ -54,9 +71,26 @@ export function TournamentSummaryRow({
 						{tournament.teamsCount}
 					</span>
 					{tournament.startTime ? (
-						<span className={styles.metaItem}>
-							{formatter.format(tournament.startTime)}
-						</span>
+						isUpcoming ? (
+							<time
+								className={clsx(styles.metaItem, {
+									invisible: !isHydrated,
+								})}
+								dateTime={databaseTimestampToDate(
+									tournament.startTime,
+								).toISOString()}
+							>
+								{isHydrated
+									? formatDistanceToNow(tournament.startTime, {
+											addSuffix: true,
+										})
+									: "Placeholder"}
+							</time>
+						) : (
+							<span className={styles.metaItem}>
+								{formatter.format(tournament.startTime)}
+							</span>
+						)
 					) : null}
 				</div>
 			</div>

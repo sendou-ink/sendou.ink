@@ -35,14 +35,14 @@ type TrophyRecentTournament = {
 export async function all() {
 	const rows = await db
 		.selectFrom("Trophy")
-		.select((eb) => ["id", "name", "model", withRecentTournament(eb)])
+		.select((eb) => ["id", "name", "model", withRecentTournaments(eb)])
 		.execute();
 
 	return sortByEffectiveTier(rows.map(addEffectiveTier));
 }
 
-const withRecentTournament = (eb: ExpressionBuilder<DB, "Trophy">) =>
-	jsonObjectFrom(
+const withRecentTournaments = (eb: ExpressionBuilder<DB, "Trophy">) =>
+	jsonArrayFrom(
 		eb
 			.selectFrom("CalendarEvent")
 			.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
@@ -54,30 +54,36 @@ const withRecentTournament = (eb: ExpressionBuilder<DB, "Trophy">) =>
 			])
 			.whereRef("CalendarEvent.trophyId", "=", "Trophy.id")
 			.where("CalendarEvent.hidden", "=", 0)
-			.orderBy((eb2) => calendarEventStartTime(eb2), "desc")
-			.limit(1),
-	).as("recentTournament");
+			.orderBy((eb2) => calendarEventStartTime(eb2), "desc"),
+	).as("recentTournaments");
 
 function addEffectiveTier<
-	T extends { recentTournament: TrophyRecentTournament | null },
->({ recentTournament, ...rest }: T) {
-	if (!recentTournament) {
-		return { ...rest, tier: null, tentativeTier: null };
+	T extends { recentTournaments: Array<TrophyRecentTournament> },
+>({ recentTournaments, ...rest }: T) {
+	for (const tournament of recentTournaments) {
+		const tierInfo = tournamentTierInfo(tournament);
+		if (tierInfo.tier !== null || tierInfo.tentativeTier !== null) {
+			return { ...rest, ...tierInfo };
+		}
 	}
 
+	return { ...rest, tier: null, tentativeTier: null };
+}
+
+function tournamentTierInfo(tournament: TrophyRecentTournament) {
 	const isPastEvent =
-		recentTournament.startTime !== null &&
-		databaseTimestampToDate(recentTournament.startTime) <
+		tournament.startTime !== null &&
+		databaseTimestampToDate(tournament.startTime) <
 			sub(new Date(), { days: 1 });
 
 	const tentativeTier =
-		recentTournament.tier === null &&
-		recentTournament.organizationId !== null &&
+		tournament.tier === null &&
+		tournament.organizationId !== null &&
 		!isPastEvent
-			? getTentativeTier(recentTournament.organizationId, recentTournament.name)
+			? getTentativeTier(tournament.organizationId, tournament.name)
 			: null;
 
-	return { ...rest, tier: recentTournament.tier, tentativeTier };
+	return { tier: tournament.tier, tentativeTier };
 }
 
 function sortByEffectiveTier<
@@ -146,7 +152,7 @@ const withSpecialOwners = (eb: ExpressionBuilder<DB, "Trophy">) => {
 export async function findByOrganizationId(organizationId: number) {
 	const rows = await db
 		.selectFrom("Trophy")
-		.select((eb) => ["id", "name", "model", withRecentTournament(eb)])
+		.select((eb) => ["id", "name", "model", withRecentTournaments(eb)])
 		.where("organizationId", "=", organizationId)
 		.execute();
 
@@ -275,25 +281,14 @@ export async function findTournamentsByTrophyId(trophyId: number) {
 		.orderBy("startTime", "desc")
 		.execute();
 
-	return rows.map((row) => {
-		const isPastEvent =
-			row.startTime !== null &&
-			databaseTimestampToDate(row.startTime) < sub(new Date(), { days: 1 });
-		const tentativeTier =
-			row.tier === null && row.organizationId !== null && !isPastEvent
-				? getTentativeTier(row.organizationId, row.name)
-				: null;
-
-		return {
-			tournamentId: row.tournamentId,
-			name: row.name,
-			tier: row.tier,
-			tentativeTier,
-			logoUrl: row.logoUrl,
-			startTime: row.startTime,
-			teamsCount: row.teamsCount,
-		};
-	});
+	return rows.map((row) => ({
+		tournamentId: row.tournamentId,
+		name: row.name,
+		logoUrl: row.logoUrl,
+		startTime: row.startTime,
+		teamsCount: row.teamsCount,
+		...tournamentTierInfo(row),
+	}));
 }
 
 export async function findWinsByOwner({

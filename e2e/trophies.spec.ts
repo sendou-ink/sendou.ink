@@ -52,6 +52,18 @@ test.describe("Trophies", () => {
 		await expect(
 			page.locator("main").locator("a[href^='/u/']").first(),
 		).toBeVisible();
+
+		await page.getByRole("textbox").fill("Wellstring");
+		await expect(
+			page.locator("a[href='/trophies/1']").getByTestId("tentative-tier"),
+		).toBeVisible();
+		await page.locator("a[href='/trophies/1']").click();
+
+		const upcomingTournamentRow = page
+			.locator("main")
+			.locator("a[href='/to/10']");
+		await expect(upcomingTournamentRow.getByText("Upcoming")).toBeVisible();
+		await expect(upcomingTournamentRow.getByText("in 10 days")).toBeVisible();
 	});
 
 	test("submits a new trophy after agreeing to terms", async ({ page }) => {
