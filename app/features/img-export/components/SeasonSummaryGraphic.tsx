@@ -286,7 +286,9 @@ export function SeasonSummaryGraphic({
 											{mate.player.countryCode ? (
 												<Flag countryCode={mate.player.countryCode} tiny />
 											) : null}
-											{mate.player.name}
+											<span className={styles.mateNameText}>
+												{mate.player.name}
+											</span>
 										</div>
 										<div
 											className={clsx(graphicStyles.boxLabel, styles.mateSets)}
@@ -317,8 +319,12 @@ export function SeasonSummaryGraphic({
 									ownScore={set.ownScore}
 									opponentScore={set.opponentScore}
 								/>
-								<div>
-									<div className={graphicStyles.boxLabel}>{set.context}</div>
+								<div className={styles.setInfo}>
+									<div
+										className={clsx(graphicStyles.boxLabel, styles.setContext)}
+									>
+										{set.context}
+									</div>
 									<div
 										className={clsx(
 											styles.playersInline,
@@ -356,7 +362,7 @@ export function SeasonSummaryGraphic({
 							size="sm"
 							alt=""
 						/>
-						<div>
+						<div className={styles.tournamentInfo}>
 							<div className={styles.tournamentName}>{bestTournament.name}</div>
 							<div className={styles.tournamentMeta}>
 								{t("calendar:count.teams", {

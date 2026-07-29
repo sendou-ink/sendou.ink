@@ -36,16 +36,28 @@
 	gap: var(--s-3);
 }
 
+.headerText {
+	min-width: 0;
+}
+
 .headerTitleRow {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+
+	& > :not(.headerTitle) {
+		flex-shrink: 0;
+	}
 }
 
 .headerTitle {
+	min-width: 0;
+	overflow: hidden;
 	font-size: var(--font-lg);
 	font-weight: var(--weight-extra);
 	line-height: 1.15;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .headerSubtitle {
@@ -56,6 +68,7 @@
 
 .headerTrailing {
 	display: flex;
+	flex-shrink: 0;
 	align-items: center;
 	gap: var(--s-2);
 	margin-left: auto;
@@ -134,8 +147,11 @@
 }
 
 .teamName {
+	overflow: hidden;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .avatarCell {
@@ -202,6 +218,7 @@
 	flex-direction: column;
 	align-items: center;
 	gap: var(--s-0-5);
+	min-width: 0;
 	padding: var(--s-1-5) var(--s-3);
 	background-color: var(--graphic-row-bg);
 	border: 1.5px solid var(--graphic-row-border);
@@ -209,6 +226,7 @@
 }
 
 .statValue {
+	max-width: 100%;
 	font-size: var(--font-lg);
 	font-weight: var(--weight-extra);
 	font-variant-numeric: tabular-nums;

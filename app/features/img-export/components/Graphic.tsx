@@ -52,7 +52,7 @@ export function GraphicHeader({
 				size="sm"
 				alt=""
 			/>
-			<div>
+			<div className={styles.headerText}>
 				<div className={styles.headerTitleRow}>{titleRow}</div>
 				{subtitle}
 			</div>

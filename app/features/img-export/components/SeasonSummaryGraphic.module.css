@@ -213,6 +213,12 @@
 	font-weight: var(--weight-extra);
 }
 
+.mateNameText {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 .mateSets {
 	margin-left: auto;
 	white-space: nowrap;
@@ -259,6 +265,16 @@
 	margin-top: var(--s-1);
 }
 
+.setInfo {
+	min-width: 0;
+}
+
+.setContext {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
 .setSp {
 	display: flex;
 	flex-direction: column;
@@ -280,9 +296,16 @@
 	gap: var(--s-3);
 }
 
+.tournamentInfo {
+	min-width: 0;
+}
+
 .tournamentName {
+	overflow: hidden;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .tournamentMeta {

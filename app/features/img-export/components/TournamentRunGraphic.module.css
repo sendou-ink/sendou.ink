@@ -26,12 +26,17 @@
 	flex-direction: column;
 	align-items: center;
 	gap: var(--s-0-5);
+	max-width: 100%;
 	text-align: center;
 }
 
 .seriesWinName {
+	max-width: 100%;
+	overflow: hidden;
 	font-size: var(--font-sm);
 	line-height: 1.2;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }
 
 .seriesWinDate {
