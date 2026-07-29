@@ -122,6 +122,7 @@ export const tierListSchema = z.object({
 		label: "labels.tierListUrl",
 		leftAddon: "/tier-list-maker?",
 		maxLength: 500,
+		transformValue: pastedTierListUrlToSearchParams,
 	}),
 });
 
@@ -161,4 +162,15 @@ const WIDGET_FORM_SCHEMAS: Record<string, z.ZodObject<z.ZodRawShape>> = {
 
 export function getWidgetFormSchema(widgetId: string) {
 	return WIDGET_FORM_SCHEMAS[widgetId];
+}
+
+/** Lets the user paste a whole tier list maker URL instead of only its query string. */
+function pastedTierListUrlToSearchParams(value: string) {
+	if (!value.includes("/tier-list-maker")) return value;
+
+	try {
+		return new URL(value, "https://sendou.ink").search.substring(1);
+	} catch {
+		return value;
+	}
 }

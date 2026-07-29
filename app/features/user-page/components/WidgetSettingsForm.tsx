@@ -90,13 +90,7 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 		case "links":
 			return <FormField name="links" />;
 		case "tier-list":
-			return (
-				<FormField name="searchParams">
-					{(props: CustomFieldRenderProps) => (
-						<TierListField {...(props as CustomFieldRenderProps<string>)} />
-					)}
-				</FormField>
-			);
+			return <FormField name="searchParams" />;
 		case "game-badges":
 			return (
 				<FormField name="badgeIds">
@@ -195,44 +189,6 @@ function SensFields() {
 						))}
 					</select>
 				</div>
-			</div>
-		</div>
-	);
-}
-
-function TierListField({ value, onChange }: CustomFieldRenderProps<string>) {
-	const { t } = useTranslation(["user"]);
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const inputValue = e.target.value;
-
-		if (inputValue.includes("/tier-list-maker")) {
-			try {
-				const url = new URL(inputValue, "https://sendou.ink");
-				const extractedSearchParams = url.search.substring(1);
-				onChange(extractedSearchParams);
-				return;
-			} catch {
-				// not a valid URL, just use the value as-is
-			}
-		}
-
-		onChange(inputValue);
-	};
-
-	return (
-		<div>
-			<label htmlFor="tier-list-searchParams">
-				{t("widgets.forms.tierListUrl")}
-			</label>
-			<div className="input-container">
-				<div className="input-addon">/tier-list-maker?</div>
-				<input
-					className="in-container"
-					id="tier-list-searchParams"
-					value={value ?? ""}
-					onChange={handleChange}
-				/>
 			</div>
 		</div>
 	);

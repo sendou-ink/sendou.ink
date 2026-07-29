@@ -71,6 +71,7 @@
 	"errors.customRoleRequired": "Enter a name for the custom role",
 	"labels.weaponPool": "Weapon pool",
 	"placeholders.weaponPoolFull": "Pool full - remove a weapon to add more",
+	"placeholders.vodStartTimestamp": "10:22",
 	"labels.voiceChat": "Can voice chat",
 	"labels.languages": "Your languages",
 	"options.voiceChat.yes": "Yes",

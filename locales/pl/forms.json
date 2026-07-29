@@ -71,6 +71,7 @@
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Pula broni",
 	"placeholders.weaponPoolFull": "",
+	"placeholders.vodStartTimestamp": "",
 	"labels.voiceChat": "",
 	"labels.languages": "",
 	"options.voiceChat.yes": "",

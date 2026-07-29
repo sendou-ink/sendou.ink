@@ -118,6 +118,7 @@ const povSchema = z.union([
 const matchFieldsetSchema = z.object({
 	startsAt: textField({
 		label: "labels.vodStartTimestamp",
+		placeholder: "placeholders.vodStartTimestamp",
 		maxLength: 10,
 		regExp: {
 			pattern: HOURS_MINUTES_SECONDS_REGEX,

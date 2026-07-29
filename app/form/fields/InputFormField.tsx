@@ -16,6 +16,7 @@ export function InputFormField({
 	label,
 	bottomText,
 	leftAddon,
+	transformValue,
 	placeholder,
 	maxLength,
 	error,
@@ -50,7 +51,11 @@ export function InputFormField({
 					className={leftAddon ? "in-container" : undefined}
 					type={inputType}
 					value={value}
-					onChange={(e) => onChange(e.target.value)}
+					onChange={(e) =>
+						onChange(
+							transformValue ? transformValue(e.target.value) : e.target.value,
+						)
+					}
 					onBlur={() => onBlur?.()}
 					maxLength={maxLength}
 					disabled={disabled}

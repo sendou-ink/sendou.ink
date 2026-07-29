@@ -66,7 +66,15 @@ interface FormFieldProps {
 	options?: unknown;
 	/** For `array` fields: hide the remove button for items where this returns false. */
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
+	/**
+	 * Runs after the new value has been stored. For side effects on other fields;
+	 * to change what gets stored use the field schema's own options instead.
+	 */
+	onValueChange?: (newValue: unknown) => void;
 }
+
+/** Field types that render `children`. Any other type would silently discard it. */
+const FIELD_TYPES_WITH_RENDER_PROP = ["custom", "array"];
 
 export function FormField({
 	name,
@@ -78,6 +86,7 @@ export function FormField({
 	children,
 	options,
 	canRemoveItem,
+	onValueChange,
 }: FormFieldProps) {
 	const context = useOptionalFormFieldContext();
 	const isDisabled = disabled ?? context?.readOnly ?? false;
@@ -169,6 +178,11 @@ export function FormField({
 		runValidation(latestValue ?? value);
 	};
 
+	// Read through a ref so an inline `onValueChange` does not destabilize
+	// `handleChange`, which fields rely on to skip re-rendering.
+	const latestOnValueChange = React.useRef(onValueChange);
+	latestOnValueChange.current = onValueChange;
+
 	const handleChange = React.useCallback(
 		(newValue: unknown) => {
 			if (!context) return;
@@ -182,11 +196,21 @@ export function FormField({
 				context.revalidateAll(context.store.values);
 			}
 			context.onFieldChange?.(name, newValue);
+			latestOnValueChange.current?.(newValue);
 		},
 		[context, name],
 	);
 
 	const displayedError = serverError ?? clientError;
+
+	if (
+		typeof children === "function" &&
+		!FIELD_TYPES_WITH_RENDER_PROP.includes(formField.type)
+	) {
+		throw new Error(
+			`Field "${name}" is of type "${formField.type}" which renders itself, so its render function child would never run. Remove the child or change the field to customField().`,
+		);
+	}
 
 	const commonProps = { name, error: displayedError, onBlur: handleBlur };
 

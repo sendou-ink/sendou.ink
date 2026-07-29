@@ -22,6 +22,11 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	minLength?: number;
 	maxLength: number;
 	toLowerCase?: boolean;
+	/**
+	 * Normalizes what the user types before it is stored, e.g. reducing a pasted
+	 * full URL down to the part the field actually holds.
+	 */
+	transformValue?: (value: string) => string;
 	leftAddon?: string;
 	placeholder?: string;
 	required: boolean;
@@ -274,6 +279,7 @@ export type TypedFormFieldProps<
 	autoFocus?: boolean;
 	maxCount?: number;
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
+	onValueChange?: (newValue: unknown) => void;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -293,6 +299,7 @@ export type FlexibleFormFieldProps = {
 	autoFocus?: boolean;
 	maxCount?: number;
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
+	onValueChange?: (newValue: unknown) => void;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);

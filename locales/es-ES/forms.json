@@ -71,6 +71,7 @@
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Selección de armas",
 	"placeholders.weaponPoolFull": "Selección llena - elimina un arma para añadir más",
+	"placeholders.vodStartTimestamp": "",
 	"labels.voiceChat": "Puede usar chat de voz",
 	"labels.languages": "Tus idiomas",
 	"options.voiceChat.yes": "Sí",
