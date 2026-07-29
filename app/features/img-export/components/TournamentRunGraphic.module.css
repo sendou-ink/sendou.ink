@@ -1,0 +1,22 @@
+.ownTeamRow {
+	grid-template-columns: 2.75rem 1fr auto;
+	background:
+		linear-gradient(to right, oklch(83% 0.0816 253 / 0.16), transparent 40%),
+		var(--graphic-row-bg);
+	border-color: oklch(83% 0.0816 253 / 0.35);
+}
+
+.matchRow {
+	grid-template-columns: 5.5rem 2.75rem 1fr auto;
+}
+
+.matchLeading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.roundName {
+	text-align: center;
+}

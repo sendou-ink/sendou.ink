@@ -14,22 +14,26 @@ import { TierImage, WeaponImage } from "~/components/Image";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { TierPill } from "~/components/TierPill";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import {
-	GraphicContainer,
-	GraphicFooter,
-	GraphicPlacementCell,
-	GraphicSiteUrl,
-} from "~/features/tournament/components/TournamentResultsGraphic";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { stageBannerImageUrl, userSeasonsPage } from "~/utils/urls";
+import {
+	GRAPHIC_DATE_FORMAT_OPTIONS,
+	GraphicContainer,
+	GraphicFooter,
+	GraphicHeader,
+	GraphicPlacementCell,
+	type GraphicPlayer,
+	GraphicPlayerChip,
+	GraphicScore,
+	GraphicSectionDivider,
+	GraphicSiteUrl,
+	GraphicStat,
+	GraphicStatsRow,
+	GraphicWonLost,
+} from "./Graphic";
+import graphicStyles from "./Graphic.module.css";
 import styles from "./SeasonSummaryGraphic.module.css";
-
-const DATE_RANGE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
-	day: "numeric",
-	month: "long",
-	year: "numeric",
-};
 
 const CHART_WIDTH = 672;
 const CHART_HEIGHT = 170;
@@ -37,15 +41,10 @@ const CHART_MARGIN = { top: 26, right: 14, bottom: 22, left: 14 };
 const CHART_POINTS_NEEDED = 2;
 const CHART_PEAK_LABEL_CLAMP = 48;
 
-export interface SeasonSummaryGraphicPlayer {
-	name: string;
-	countryCode?: string;
-}
-
 export type SeasonSummaryGraphicActivity = "sq" | "tournament" | "both";
 
 export interface SeasonSummaryGraphicBestSet {
-	opponentPlayers: SeasonSummaryGraphicPlayer[];
+	opponentPlayers: GraphicPlayer[];
 	ownScore: number;
 	opponentScore: number;
 	/** Average SP of the opposing players at the time the set was played */
@@ -98,10 +97,10 @@ export function SeasonSummaryGraphic({
 	teamRank?: {
 		rank: number;
 		sp: number;
-		mates: SeasonSummaryGraphicPlayer[];
+		mates: GraphicPlayer[];
 	};
 	topMates: Array<{
-		player: SeasonSummaryGraphicPlayer;
+		player: GraphicPlayer;
 		avatarUrl?: string;
 		setsCount: number;
 	}>;
@@ -129,32 +128,32 @@ export function SeasonSummaryGraphic({
 
 	return (
 		<GraphicContainer>
-			<header className={styles.header}>
-				<Avatar
-					url={user.avatarUrl}
-					identiconInput={user.name}
-					size="sm"
-					alt=""
-				/>
-				<div>
-					<div className={styles.userNameRow}>
+			<GraphicHeader
+				avatarUrl={user.avatarUrl}
+				identiconInput={user.name}
+				titleRow={
+					<>
 						{user.countryCode ? (
 							<Flag countryCode={user.countryCode} tiny />
 						) : null}
-						<span className={styles.userName}>{user.name}</span>
-					</div>
+						<span className={graphicStyles.headerTitle}>{user.name}</span>
+					</>
+				}
+				subtitle={
 					<LocaleTimeRange
 						from={seasonDateRange.starts}
 						to={seasonDateRange.ends}
-						options={DATE_RANGE_FORMAT_OPTIONS}
-						className={styles.dateRange}
+						options={GRAPHIC_DATE_FORMAT_OPTIONS}
+						className={graphicStyles.headerSubtitle}
 					/>
-				</div>
-				<div className={styles.seasonBadge}>
-					{t("user:seasons.season")} {season}
-				</div>
-			</header>
-			<div className={clsx(styles.box, styles.hero)}>
+				}
+				trailing={
+					<div className={styles.seasonBadge}>
+						{t("user:seasons.season")} {season}
+					</div>
+				}
+			/>
+			<div className={clsx(graphicStyles.box, styles.hero)}>
 				<TierImage tier={tier} width={92} />
 				<div>
 					<div className={styles.heroTierName}>
@@ -169,63 +168,63 @@ export function SeasonSummaryGraphic({
 				{typeof soloRank === "number" ? (
 					<div className={styles.rankBlock}>
 						<div className={styles.rankValue}>#{soloRank}</div>
-						<div className={styles.boxLabel}>
+						<div className={graphicStyles.boxLabel}>
 							{t("user:seasons.summary.soloRank")}
 						</div>
 					</div>
 				) : null}
 			</div>
 			{teamRank ? (
-				<div className={clsx(styles.box, styles.teamRankRow)}>
+				<div className={clsx(graphicStyles.box, styles.teamRankRow)}>
 					<div>
 						<div className={styles.teamRankSp}>{teamRank.sp.toFixed(1)}SP</div>
 						<div
 							className={clsx(styles.playersInline, styles.playersInlineStart)}
 						>
 							{teamRank.mates.map((mate) => (
-								<PlayerChip key={mate.name} player={mate} />
+								<GraphicPlayerChip key={mate.name} player={mate} />
 							))}
 						</div>
 					</div>
 					<div className={styles.rankBlock}>
 						<div className={styles.rankValue}>#{teamRank.rank}</div>
-						<div className={styles.boxLabel}>
+						<div className={graphicStyles.boxLabel}>
 							{t("user:seasons.summary.teamRank")}
 						</div>
 					</div>
 				</div>
 			) : null}
-			<div className={styles.statsRow}>
-				<Stat label={t("user:seasons.summary.sets")}>
-					<WonLost won={setsWon} lost={setsLost} />
-				</Stat>
-				<Stat label={t("user:seasons.summary.maps")}>
-					<WonLost won={mapsWon} lost={mapsLost} />
-				</Stat>
+			<GraphicStatsRow>
+				<GraphicStat label={t("user:seasons.summary.sets")}>
+					<GraphicWonLost won={setsWon} lost={setsLost} />
+				</GraphicStat>
+				<GraphicStat label={t("user:seasons.summary.maps")}>
+					<GraphicWonLost won={mapsWon} lost={mapsLost} />
+				</GraphicStat>
 				{clutch && clutch.total > 0 ? (
-					<Stat label={t("user:seasons.summary.clutch")}>
-						<WonLost won={clutch.won} lost={clutch.total - clutch.won} />
-					</Stat>
+					<GraphicStat label={t("user:seasons.summary.clutch")}>
+						<GraphicWonLost won={clutch.won} lost={clutch.total - clutch.won} />
+					</GraphicStat>
 				) : null}
-				<Stat label={t("user:seasons.summary.winStreak")}>
+				<GraphicStat label={t("user:seasons.summary.winStreak")}>
 					{longestWinStreak}
-				</Stat>
-			</div>
+				</GraphicStat>
+			</GraphicStatsRow>
 			{spProgression.length >= CHART_POINTS_NEEDED ? (
-				<div className={styles.box}>
+				<div className={graphicStyles.box}>
 					<SpChart points={spProgression} />
 				</div>
 			) : null}
 			{bestStage ? (
 				<div
-					className={clsx(styles.box, styles.bestStageRow)}
+					className={clsx(graphicStyles.box, styles.bestStageRow)}
 					style={
 						{
 							"--best-stage-banner": `url(${stageBannerImageUrl(bestStage.stageId)})`,
 						} as React.CSSProperties
 					}
 				>
-					<div className={styles.boxLabel}>
+					<div className={graphicStyles.boxLabel}>
 						{t("user:seasons.summary.bestStage")}
 					</div>
 					<div className={styles.bestStageName}>
@@ -237,8 +236,8 @@ export function SeasonSummaryGraphic({
 				</div>
 			) : null}
 			<div className={styles.middleGrid}>
-				<div className={clsx(styles.box, styles.activityBox)}>
-					<div className={styles.boxLabel}>
+				<div className={clsx(graphicStyles.box, styles.activityBox)}>
+					<div className={graphicStyles.boxLabel}>
 						{t("user:seasons.summary.activity")}
 					</div>
 					<ActivityCalendar
@@ -249,8 +248,8 @@ export function SeasonSummaryGraphic({
 				</div>
 				<div className={styles.sideStack}>
 					{topWeapons.length > 0 ? (
-						<div className={styles.box}>
-							<div className={styles.boxLabel}>
+						<div className={graphicStyles.box}>
+							<div className={graphicStyles.boxLabel}>
 								{t("user:seasons.summary.topWeapons")}
 							</div>
 							<div className={styles.weaponsRow}>
@@ -261,7 +260,7 @@ export function SeasonSummaryGraphic({
 											variant="badge"
 											size={52}
 										/>
-										<div className={styles.boxLabel}>
+										<div className={graphicStyles.boxLabel}>
 											{Math.round(weapon.usagePercentage)}%
 										</div>
 									</div>
@@ -270,8 +269,8 @@ export function SeasonSummaryGraphic({
 						</div>
 					) : null}
 					{topMates.length > 0 ? (
-						<div className={styles.box}>
-							<div className={styles.boxLabel}>
+						<div className={graphicStyles.box}>
+							<div className={graphicStyles.boxLabel}>
 								{t("user:seasons.summary.topMates")}
 							</div>
 							<div className={styles.matesList}>
@@ -289,7 +288,9 @@ export function SeasonSummaryGraphic({
 											) : null}
 											{mate.player.name}
 										</div>
-										<div className={clsx(styles.boxLabel, styles.mateSets)}>
+										<div
+											className={clsx(graphicStyles.boxLabel, styles.mateSets)}
+										>
 											{t("user:seasons.summary.count.sets", {
 												count: mate.setsCount,
 											})}
@@ -303,20 +304,21 @@ export function SeasonSummaryGraphic({
 			</div>
 			{bestSets.length > 0 ? (
 				<>
-					<div className={styles.sectionDivider}>
+					<GraphicSectionDivider>
 						{t("user:seasons.summary.bestWins")}
-					</div>
+					</GraphicSectionDivider>
 					<ol className={styles.bestSetsList}>
 						{bestSets.map((set, index) => (
 							<li
 								key={`${index}-${set.context}`}
-								className={clsx(styles.box, styles.bestSetRow)}
+								className={clsx(graphicStyles.box, styles.bestSetRow)}
 							>
-								<div className={styles.score}>
-									{set.ownScore}-{set.opponentScore}
-								</div>
+								<GraphicScore
+									ownScore={set.ownScore}
+									opponentScore={set.opponentScore}
+								/>
 								<div>
-									<div className={styles.boxLabel}>{set.context}</div>
+									<div className={graphicStyles.boxLabel}>{set.context}</div>
 									<div
 										className={clsx(
 											styles.playersInline,
@@ -324,7 +326,7 @@ export function SeasonSummaryGraphic({
 										)}
 									>
 										{set.opponentPlayers.map((player) => (
-											<PlayerChip key={player.name} player={player} />
+											<GraphicPlayerChip key={player.name} player={player} />
 										))}
 									</div>
 								</div>
@@ -332,7 +334,7 @@ export function SeasonSummaryGraphic({
 									<div className={styles.setSpValue}>
 										{set.opponentSp.toFixed(1)}
 									</div>
-									<div className={styles.boxLabel}>
+									<div className={graphicStyles.boxLabel}>
 										{t("user:seasons.summary.opponentSp")}
 									</div>
 								</div>
@@ -343,10 +345,10 @@ export function SeasonSummaryGraphic({
 			) : null}
 			{bestTournament ? (
 				<>
-					<div className={styles.sectionDivider}>
+					<GraphicSectionDivider>
 						{t("user:seasons.summary.bestTournament")}
-					</div>
-					<div className={clsx(styles.box, styles.tournamentRow)}>
+					</GraphicSectionDivider>
+					<div className={clsx(graphicStyles.box, styles.tournamentRow)}>
 						<GraphicPlacementCell placement={bestTournament.placement} />
 						<Avatar
 							url={bestTournament.logoUrl}
@@ -377,42 +379,6 @@ export function SeasonSummaryGraphic({
 				<GraphicSiteUrl path={userSeasonsPage({ user, season })} />
 			</GraphicFooter>
 		</GraphicContainer>
-	);
-}
-
-function Stat({
-	label,
-	children,
-}: {
-	label: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<div className={clsx(styles.box, styles.stat)}>
-			<div className={styles.boxLabel}>{label}</div>
-			<div className={styles.statValue}>{children}</div>
-		</div>
-	);
-}
-
-function WonLost({ won, lost }: { won: number; lost: number }) {
-	return (
-		<>
-			<span className={styles.statWin}>{won}</span>
-			<span className={styles.statSeparator}>-</span>
-			<span className={styles.statLoss}>{lost}</span>
-		</>
-	);
-}
-
-function PlayerChip({ player }: { player: SeasonSummaryGraphicPlayer }) {
-	return (
-		<div className={styles.player}>
-			{player.countryCode ? (
-				<Flag countryCode={player.countryCode} tiny />
-			) : null}
-			<span>{player.name}</span>
-		</div>
 	);
 }
 
@@ -554,7 +520,7 @@ function ActivityLegend() {
 	const { t } = useTranslation(["user"]);
 
 	return (
-		<div className={clsx(styles.calendarLegend, styles.boxLabel)}>
+		<div className={clsx(styles.calendarLegend, graphicStyles.boxLabel)}>
 			<div className={styles.calendarLegendItem}>
 				<div className={clsx(styles.calendarCell, styles.calendarSq)} />
 				SendouQ

@@ -3,83 +3,28 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { SpecialWeaponImage, WeaponImage } from "~/components/Image";
-import { LocaleTime } from "~/components/LocaleTime";
-import { TierPill } from "~/components/TierPill";
 import { weaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { ordinalSuffix } from "~/utils/i18n";
-import { tournamentPage } from "~/utils/urls";
-import styles from "./TournamentResultsGraphic.module.css";
+import styles from "./Graphic.module.css";
 
-const DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+export const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
 	day: "numeric",
 	month: "long",
 	year: "numeric",
 };
 
+export interface GraphicPlayer {
+	name: string;
+	countryCode?: string;
+}
+
 export interface GraphicTeam {
 	name: string;
 	logoUrl?: string;
 	seed?: number;
-	players: Array<{ name: string; countryCode?: string }>;
+	players: GraphicPlayer[];
 	weapons: MainWeaponId[];
-}
-
-export interface TournamentResultsGraphicTeam extends GraphicTeam {
-	placement: number;
-}
-
-export function TournamentResultsGraphic({
-	tournamentId,
-	tournamentName,
-	startTime,
-	logoUrl,
-	tier,
-	organization,
-	teams,
-	teamsCount,
-	playersCount,
-}: {
-	tournamentId: number;
-	tournamentName: string;
-	startTime: Date;
-	logoUrl?: string;
-	tier?: number;
-	organization?: { name: string; avatarUrl?: string };
-	teams: TournamentResultsGraphicTeam[];
-	teamsCount: number;
-	playersCount: number;
-}) {
-	const { t } = useTranslation(["calendar"]);
-
-	return (
-		<GraphicContainer>
-			<GraphicHeader
-				tournamentName={tournamentName}
-				startTime={startTime}
-				logoUrl={logoUrl}
-				tier={tier}
-				organization={organization}
-			/>
-			<GraphicTeamsList>
-				{teams.map((team) => (
-					<GraphicTeamRow
-						key={`${team.placement}-${team.name}`}
-						team={team}
-						highlighted={team.placement === 1}
-						leading={<GraphicPlacementCell placement={team.placement} />}
-					/>
-				))}
-			</GraphicTeamsList>
-			<GraphicFooter>
-				<div>
-					{t("calendar:count.teams", { count: teamsCount })} ·{" "}
-					{t("calendar:count.players", { count: playersCount })}
-				</div>
-				<GraphicSiteUrl path={tournamentPage(tournamentId)} />
-			</GraphicFooter>
-		</GraphicContainer>
-	);
 }
 
 export function GraphicContainer({ children }: { children: React.ReactNode }) {
@@ -87,42 +32,32 @@ export function GraphicContainer({ children }: { children: React.ReactNode }) {
 }
 
 export function GraphicHeader({
-	tournamentName,
-	startTime,
-	logoUrl,
-	tier,
-	organization,
+	avatarUrl,
+	identiconInput,
+	titleRow,
+	subtitle,
+	trailing,
 }: {
-	tournamentName: string;
-	startTime: Date;
-	logoUrl?: string;
-	tier?: number;
-	organization?: { name: string; avatarUrl?: string };
+	avatarUrl?: string;
+	identiconInput: string;
+	titleRow: React.ReactNode;
+	subtitle: React.ReactNode;
+	trailing?: React.ReactNode;
 }) {
 	return (
 		<header className={styles.header}>
-			<Avatar url={logoUrl} identiconInput={tournamentName} size="sm" alt="" />
+			<Avatar
+				url={avatarUrl}
+				identiconInput={identiconInput}
+				size="sm"
+				alt=""
+			/>
 			<div>
-				<div className={styles.tournamentNameRow}>
-					<div className={styles.tournamentName}>{tournamentName}</div>
-					{typeof tier === "number" ? <TierPill tier={tier} /> : null}
-				</div>
-				<LocaleTime
-					date={startTime}
-					options={DATE_FORMAT_OPTIONS}
-					className={styles.tournamentDate}
-				/>
+				<div className={styles.headerTitleRow}>{titleRow}</div>
+				{subtitle}
 			</div>
-			{organization ? (
-				<div className={styles.organization}>
-					<span className={styles.organizationName}>{organization.name}</span>
-					<Avatar
-						url={organization.avatarUrl}
-						identiconInput={organization.name}
-						size="xs"
-						alt=""
-					/>
-				</div>
+			{trailing ? (
+				<div className={styles.headerTrailing}>{trailing}</div>
 			) : null}
 		</header>
 	);
@@ -167,12 +102,7 @@ export function GraphicTeamRow({
 				<div className={styles.teamName}>{team.name}</div>
 				<div className={styles.playersList}>
 					{team.players.map((player) => (
-						<div key={player.name} className={styles.player}>
-							{player.countryCode ? (
-								<Flag countryCode={player.countryCode} tiny />
-							) : null}
-							<span className={styles.playerName}>{player.name}</span>
-						</div>
+						<GraphicPlayerChip key={player.name} player={player} />
 					))}
 				</div>
 			</div>
@@ -193,6 +123,17 @@ export function GraphicTeamRow({
 	);
 }
 
+export function GraphicPlayerChip({ player }: { player: GraphicPlayer }) {
+	return (
+		<div className={styles.player}>
+			{player.countryCode ? (
+				<Flag countryCode={player.countryCode} tiny />
+			) : null}
+			<span className={styles.playerName}>{player.name}</span>
+		</div>
+	);
+}
+
 export function GraphicPlacementCell({ placement }: { placement: number }) {
 	const { i18n } = useTranslation();
 
@@ -204,6 +145,64 @@ export function GraphicPlacementCell({ placement }: { placement: number }) {
 			<span className={styles.placementSuffix}>{suffix}</span>
 		</div>
 	);
+}
+
+export function GraphicStatsRow({ children }: { children: React.ReactNode }) {
+	return <div className={styles.statsRow}>{children}</div>;
+}
+
+export function GraphicStat({
+	label,
+	children,
+}: {
+	label: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<div className={styles.stat}>
+			<div className={styles.boxLabel}>{label}</div>
+			<div className={styles.statValue}>{children}</div>
+		</div>
+	);
+}
+
+export function GraphicWonLost({ won, lost }: { won: number; lost: number }) {
+	return (
+		<>
+			<span className={styles.statWin}>{won}</span>
+			<span className={styles.statSeparator}>-</span>
+			<span className={styles.statLoss}>{lost}</span>
+		</>
+	);
+}
+
+export function GraphicScore({
+	ownScore,
+	opponentScore,
+}: {
+	ownScore: number;
+	opponentScore: number;
+}) {
+	return (
+		<div
+			className={clsx(
+				styles.score,
+				ownScore > opponentScore ? styles.scoreWin : styles.scoreLoss,
+			)}
+		>
+			{ownScore}-{opponentScore}
+		</div>
+	);
+}
+
+export function GraphicSectionDivider({
+	children,
+	as: Element = "div",
+}: {
+	children: React.ReactNode;
+	as?: "div" | "li";
+}) {
+	return <Element className={styles.sectionDivider}>{children}</Element>;
 }
 
 export function GraphicFooter({ children }: { children: React.ReactNode }) {

@@ -1,7 +1,7 @@
 # Season summary export — wiring plan
 
 Plan for hooking `SeasonSummaryGraphic` (currently showcase-only, see
-`app/features/user-page/components/SeasonSummaryGraphic.tsx`) up to the
+`app/features/img-export/components/SeasonSummaryGraphic.tsx`) up to the
 `/u/:identifier/seasons` page as an exportable image.
 
 ## Spec
@@ -63,7 +63,7 @@ Tier-dominant composite, placement quality breaks ties between adjacent tiers:
 score = (10 - tier) * 3 + log2(teamsCount / placement)
 ```
 
-Pure helper (e.g. `app/features/user-page/core/season-summary.ts`) with unit
+Pure helper (e.g. `app/features/img-export/core/season-summary.ts`) with unit
 tests. Same module can house the streak computation and best-stage pick.
 
 ## Export mechanism (shared decision with tournament graphics)

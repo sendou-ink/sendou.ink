@@ -50,20 +50,20 @@ import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Table } from "~/components/Table";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import {
-	TournamentResultsGraphic,
-	type TournamentResultsGraphicTeam,
-} from "~/features/tournament/components/TournamentResultsGraphic";
-import {
-	TournamentRunGraphic,
-	type TournamentRunGraphicMatch,
-} from "~/features/tournament/components/TournamentRunGraphic";
-import { UserCard } from "~/features/user-card/components/UserCard";
-import type { UserCardData } from "~/features/user-card/user-card-types";
-import {
 	SeasonSummaryGraphic,
 	type SeasonSummaryGraphicActivity,
 	type SeasonSummaryGraphicBestSet,
-} from "~/features/user-page/components/SeasonSummaryGraphic";
+} from "~/features/img-export/components/SeasonSummaryGraphic";
+import {
+	TournamentResultsGraphic,
+	type TournamentResultsGraphicTeam,
+} from "~/features/img-export/components/TournamentResultsGraphic";
+import {
+	TournamentRunGraphic,
+	type TournamentRunGraphicMatch,
+} from "~/features/img-export/components/TournamentRunGraphic";
+import { UserCard } from "~/features/user-card/components/UserCard";
+import type { UserCardData } from "~/features/user-card/user-card-types";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";

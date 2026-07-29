@@ -6,13 +6,20 @@ import * as R from "remeda";
 import { tournamentTeamPage } from "~/utils/urls";
 import {
 	GraphicContainer,
-	GraphicFooter,
-	GraphicHeader,
 	GraphicPlacementCell,
-	GraphicSiteUrl,
+	GraphicScore,
+	GraphicSectionDivider,
+	GraphicStat,
+	GraphicStatsRow,
 	type GraphicTeam,
 	GraphicTeamRow,
 	GraphicTeamsList,
+	GraphicWonLost,
+} from "./Graphic";
+import graphicStyles from "./Graphic.module.css";
+import {
+	TournamentGraphicFooter,
+	TournamentGraphicHeader,
 	type TournamentResultsGraphicTeam,
 } from "./TournamentResultsGraphic";
 import styles from "./TournamentRunGraphic.module.css";
@@ -52,7 +59,7 @@ export function TournamentRunGraphic({
 	teamsCount: number;
 	playersCount: number;
 }) {
-	const { t } = useTranslation(["calendar", "tournament"]);
+	const { t } = useTranslation(["tournament"]);
 
 	const setsWon = matches.filter(
 		(match) => match.ownScore > match.opponentScore,
@@ -63,7 +70,7 @@ export function TournamentRunGraphic({
 
 	return (
 		<GraphicContainer>
-			<GraphicHeader
+			<TournamentGraphicHeader
 				tournamentName={tournamentName}
 				startTime={startTime}
 				logoUrl={logoUrl}
@@ -71,20 +78,20 @@ export function TournamentRunGraphic({
 				organization={organization}
 			/>
 			<GraphicTeamRow as="div" team={team} className={styles.ownTeamRow} />
-			<div className={styles.statsRow}>
-				<Stat label={t("tournament:team.placement")}>
+			<GraphicStatsRow>
+				<GraphicStat label={t("tournament:team.placement")}>
 					<GraphicPlacementCell placement={team.placement} />
-				</Stat>
+				</GraphicStat>
 				{typeof seed === "number" ? (
-					<Stat label={t("tournament:team.seed")}>{seed}</Stat>
+					<GraphicStat label={t("tournament:team.seed")}>{seed}</GraphicStat>
 				) : null}
-				<Stat label={t("tournament:run.sets")}>
-					<WonLost won={setsWon} lost={setsLost} />
-				</Stat>
-				<Stat label={t("tournament:run.maps")}>
-					<WonLost won={mapsWon} lost={mapsLost} />
-				</Stat>
-			</div>
+				<GraphicStat label={t("tournament:run.sets")}>
+					<GraphicWonLost won={setsWon} lost={setsLost} />
+				</GraphicStat>
+				<GraphicStat label={t("tournament:run.maps")}>
+					<GraphicWonLost won={mapsWon} lost={mapsLost} />
+				</GraphicStat>
+			</GraphicStatsRow>
 			<GraphicTeamsList>
 				{matches.map((match, index) => {
 					const previousMatch = matches[index - 1];
@@ -94,20 +101,24 @@ export function TournamentRunGraphic({
 					return (
 						<React.Fragment key={`${index}-${match.opponent.name}`}>
 							{qualifiedForBracket ? (
-								<li className={styles.bracketDivider}>
+								<GraphicSectionDivider as="li">
 									<ArrowDown size={14} />
 									{t("tournament:run.qualifiedFor", {
 										bracket: match.bracketName,
 									})}
-								</li>
+								</GraphicSectionDivider>
 							) : null}
 							<GraphicTeamRow
 								className={styles.matchRow}
 								team={match.opponent}
 								leading={
 									<div className={styles.matchLeading}>
-										<div className={styles.roundName}>{match.roundName}</div>
-										<ScoreCell
+										<div
+											className={clsx(graphicStyles.boxLabel, styles.roundName)}
+										>
+											{match.roundName}
+										</div>
+										<GraphicScore
 											ownScore={match.ownScore}
 											opponentScore={match.opponentScore}
 										/>
@@ -118,59 +129,11 @@ export function TournamentRunGraphic({
 					);
 				})}
 			</GraphicTeamsList>
-			<GraphicFooter>
-				<div>
-					{t("calendar:count.teams", { count: teamsCount })} ·{" "}
-					{t("calendar:count.players", { count: playersCount })}
-				</div>
-				<GraphicSiteUrl
-					path={tournamentTeamPage({ tournamentId, tournamentTeamId })}
-				/>
-			</GraphicFooter>
+			<TournamentGraphicFooter
+				teamsCount={teamsCount}
+				playersCount={playersCount}
+				path={tournamentTeamPage({ tournamentId, tournamentTeamId })}
+			/>
 		</GraphicContainer>
-	);
-}
-
-function Stat({
-	label,
-	children,
-}: {
-	label: string;
-	children: React.ReactNode;
-}) {
-	return (
-		<div className={styles.stat}>
-			<div className={styles.statLabel}>{label}</div>
-			<div className={styles.statValue}>{children}</div>
-		</div>
-	);
-}
-
-function WonLost({ won, lost }: { won: number; lost: number }) {
-	return (
-		<>
-			<span className={styles.statWin}>{won}</span>
-			<span className={styles.statSeparator}>-</span>
-			<span className={styles.statLoss}>{lost}</span>
-		</>
-	);
-}
-
-function ScoreCell({
-	ownScore,
-	opponentScore,
-}: {
-	ownScore: number;
-	opponentScore: number;
-}) {
-	return (
-		<div
-			className={clsx(
-				styles.score,
-				ownScore > opponentScore ? styles.scoreWin : styles.scoreLoss,
-			)}
-		>
-			{ownScore}-{opponentScore}
-		</div>
 	);
 }

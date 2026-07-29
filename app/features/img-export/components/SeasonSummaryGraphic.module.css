@@ -1,49 +1,9 @@
-.header {
-	display: flex;
-	align-items: center;
-	gap: var(--s-3);
-}
-
-.userNameRow {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-}
-
-.userName {
-	font-size: var(--font-lg);
-	font-weight: var(--weight-extra);
-	line-height: 1.15;
-}
-
-.dateRange {
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	color: var(--graphic-text-dim);
-}
-
 .seasonBadge {
-	margin-left: auto;
 	font-size: var(--font-md);
 	font-weight: var(--weight-extra);
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
 	color: var(--graphic-accent);
-}
-
-.box {
-	padding: var(--s-2) var(--s-3);
-	background-color: var(--graphic-row-bg);
-	border: 1.5px solid var(--graphic-row-border);
-	border-radius: var(--radius-box);
-}
-
-.boxLabel {
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-semi);
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	color: var(--graphic-text-dim);
 }
 
 .hero {
@@ -88,39 +48,6 @@
 	font-weight: var(--weight-extra);
 	font-variant-numeric: tabular-nums;
 	color: var(--graphic-accent);
-}
-
-.statsRow {
-	display: grid;
-	grid-auto-flow: column;
-	grid-auto-columns: 1fr;
-	gap: var(--s-2);
-}
-
-.stat {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: var(--s-0-5);
-	padding: var(--s-1-5) var(--s-3);
-}
-
-.statValue {
-	font-size: var(--font-lg);
-	font-weight: var(--weight-extra);
-	font-variant-numeric: tabular-nums;
-}
-
-.statSeparator {
-	color: var(--graphic-text-dim);
-}
-
-.statWin {
-	color: var(--graphic-win);
-}
-
-.statLoss {
-	color: var(--graphic-loss);
 }
 
 .bestStageRow {
@@ -311,36 +238,6 @@
 	gap: var(--s-0-5) var(--s-3);
 }
 
-.player {
-	display: flex;
-	align-items: center;
-	gap: var(--s-1-5);
-	min-width: 0;
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	color: var(--graphic-text-dim);
-}
-
-.sectionDivider {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--s-1-5);
-	font-size: var(--font-xs);
-	font-weight: var(--weight-extra);
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-	color: var(--graphic-accent);
-
-	&::before,
-	&::after {
-		content: "";
-		flex: 1;
-		height: 1px;
-		background-color: var(--graphic-row-border);
-	}
-}
-
 .bestSetsList {
 	display: flex;
 	flex-direction: column;
@@ -355,14 +252,6 @@
 	grid-template-columns: 3.25rem 1fr auto;
 	align-items: center;
 	gap: var(--s-3);
-}
-
-.score {
-	font-size: var(--font-md);
-	font-weight: var(--weight-extra);
-	font-variant-numeric: tabular-nums;
-	text-align: center;
-	color: var(--graphic-win);
 }
 
 .playersInlineStart {
