@@ -83,6 +83,7 @@ export function Trophy({
 	tentativeTier,
 	disableCameraControls,
 	staticOnSoftwareRendering,
+	pill,
 }: {
 	model: string;
 	className?: string;
@@ -92,6 +93,7 @@ export function Trophy({
 	tentativeTier?: number | null;
 	disableCameraControls?: boolean;
 	staticOnSoftwareRendering?: boolean;
+	pill?: React.ReactNode;
 }) {
 	const ctxValue = useContext(TrophyCtx);
 	const context = ctxValue?.context;
@@ -183,6 +185,7 @@ export function Trophy({
 	const containerStyle = effectiveTier
 		? ({
 				"--tier-bg": `var(--tier-bg-${effectiveTier})`,
+				"--tier-text": `var(--tier-text-${effectiveTier})`,
 			} as React.CSSProperties)
 		: undefined;
 
@@ -196,6 +199,12 @@ export function Trophy({
 		</div>
 	) : null;
 
+	const cornerPill = pill ? (
+		<div className={style.cornerPill} data-testid="trophy-corner-pill">
+			{pill}
+		</div>
+	) : null;
+
 	if (error || modelState === null) {
 		return (
 			<div className={containerClassName} style={containerStyle}>
@@ -203,6 +212,7 @@ export function Trophy({
 					<Ban size={48} />
 				</div>
 				{tierPill}
+				{cornerPill}
 			</div>
 		);
 	}
@@ -224,6 +234,7 @@ export function Trophy({
 				})}
 			/>
 			{tierPill}
+			{cornerPill}
 		</div>
 	);
 }

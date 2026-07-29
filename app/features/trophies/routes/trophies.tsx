@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { CalendarClock, Search } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,7 +20,10 @@ import {
 	TrophyPlaceholder,
 } from "../components/Trophy";
 import { loader } from "../loaders/trophies.server";
-import { useProgressiveRender } from "../trophies-utils";
+import {
+	hasUpcomingTournamentSoon,
+	useProgressiveRender,
+} from "../trophies-utils";
 import styles from "./trophies.module.css";
 
 export { loader };
@@ -79,6 +82,17 @@ export default function TrophiesPage() {
 											tier={trophy.tier}
 											tentativeTier={trophy.tentativeTier}
 											preview
+											pill={
+												hasUpcomingTournamentSoon(
+													trophy.upcomingTournamentAt,
+												) ? (
+													<CalendarClock
+														size={16}
+														role="img"
+														aria-label={t("trophies:details.upcoming")}
+													/>
+												) : undefined
+											}
 										/>
 									</NavLink>
 								) : (

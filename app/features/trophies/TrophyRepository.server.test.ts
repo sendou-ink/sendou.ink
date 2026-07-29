@@ -174,6 +174,77 @@ describe("trophy list tiers", () => {
 		expect(trophy?.tier).toBe(null);
 		expect(trophy?.tentativeTier).toBe(null);
 	});
+
+	test("returns the start time of the next upcoming tournament", async () => {
+		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
+		await insertTrophyTournament({ trophyId, tier: null, startInDays: 20 });
+		await insertTrophyTournament({ trophyId, tier: null, startInDays: 10 });
+
+		const trophy = (await TrophyRepository.all()).find(
+			(row) => row.name === "Tiered Trophy",
+		);
+
+		const expected = dateToDatabaseTimestamp(
+			new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
+		);
+		expect(
+			Math.abs((trophy?.upcomingTournamentAt ?? 0) - expected),
+		).toBeLessThan(10);
+	});
+
+	test("sorts trophies with an upcoming tournament first within the same tier", async () => {
+		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
+
+		const upcoming = await db
+			.insertInto("Trophy")
+			.values({
+				name: "Upcoming Trophy",
+				model: "model",
+				creatorId: 1,
+				managerId: 1,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+		await insertTrophyTournament({
+			trophyId: upcoming.id,
+			tier: 3,
+			startInDays: -14,
+		});
+		await insertTrophyTournament({
+			trophyId: upcoming.id,
+			tier: null,
+			startInDays: 10,
+		});
+
+		const distant = await db
+			.insertInto("Trophy")
+			.values({
+				name: "Distant Trophy",
+				model: "model",
+				creatorId: 1,
+				managerId: 1,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+		await insertTrophyTournament({
+			trophyId: distant.id,
+			tier: 3,
+			startInDays: -7,
+		});
+		await insertTrophyTournament({
+			trophyId: distant.id,
+			tier: null,
+			startInDays: 5 * 7,
+		});
+
+		const names = (await TrophyRepository.all()).map((row) => row.name);
+
+		expect(names).toEqual([
+			"Upcoming Trophy",
+			"Tiered Trophy",
+			"Distant Trophy",
+		]);
+	});
 });
 
 async function trophyCount() {

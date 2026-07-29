@@ -1,8 +1,11 @@
+import { addWeeks } from "date-fns";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Role } from "~/modules/permissions/types";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
+import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	SUPPORTER_TROPHY_CODE,
+	TROPHY_UPCOMING_HIGHLIGHT_WEEKS,
 	XP_TROPHY_CODE_PREFIX,
 } from "./trophies-constants";
 
@@ -45,6 +48,20 @@ export function canEditTrophy(
 	if (!user) return false;
 	if (canEditAnyTrophy(user)) return true;
 	return trophy.managerId === user.id;
+}
+
+export function hasUpcomingTournamentSoon(
+	upcomingTournamentAt: number | null | undefined,
+) {
+	if (!upcomingTournamentAt) return false;
+
+	const startTime = databaseTimestampToDate(upcomingTournamentAt);
+	const now = new Date();
+
+	return (
+		startTime > now &&
+		startTime <= addWeeks(now, TROPHY_UPCOMING_HIGHLIGHT_WEEKS)
+	);
 }
 
 export function compressTrophyModel(model: string) {

@@ -57,6 +57,9 @@ test.describe("Trophies", () => {
 		await expect(
 			page.locator("a[href='/trophies/1']").getByTestId("tentative-tier"),
 		).toBeVisible();
+		await expect(
+			page.locator("a[href='/trophies/1']").getByTestId("trophy-corner-pill"),
+		).toBeVisible();
 		await page.locator("a[href='/trophies/1']").click();
 
 		const upcomingTournamentRow = page

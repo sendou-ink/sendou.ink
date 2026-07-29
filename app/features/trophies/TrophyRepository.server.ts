@@ -23,7 +23,10 @@ import {
 	TROPHY_APPROVALS_REQUIRED,
 	XP_TROPHY_CODE_PREFIX,
 } from "./trophies-constants";
-import { parseSpecialTrophyCode } from "./trophies-utils";
+import {
+	hasUpcomingTournamentSoon,
+	parseSpecialTrophyCode,
+} from "./trophies-utils";
 
 type TrophyRecentTournament = {
 	tier: number | null;
@@ -60,14 +63,29 @@ const withRecentTournaments = (eb: ExpressionBuilder<DB, "Trophy">) =>
 function addEffectiveTier<
 	T extends { recentTournaments: Array<TrophyRecentTournament> },
 >({ recentTournaments, ...rest }: T) {
+	const upcomingTournamentAt = nextUpcomingStartTime(recentTournaments);
+
 	for (const tournament of recentTournaments) {
 		const tierInfo = tournamentTierInfo(tournament);
 		if (tierInfo.tier !== null || tierInfo.tentativeTier !== null) {
-			return { ...rest, ...tierInfo };
+			return { ...rest, ...tierInfo, upcomingTournamentAt };
 		}
 	}
 
-	return { ...rest, tier: null, tentativeTier: null };
+	return { ...rest, tier: null, tentativeTier: null, upcomingTournamentAt };
+}
+
+function nextUpcomingStartTime(tournaments: Array<TrophyRecentTournament>) {
+	const now = dateToDatabaseTimestamp(new Date());
+
+	// ordered newest first, so the last future start time is the next one up
+	const futureStartTimes = tournaments
+		.map((tournament) => tournament.startTime)
+		.filter(
+			(startTime): startTime is number => startTime !== null && startTime > now,
+		);
+
+	return futureStartTimes.at(-1) ?? null;
 }
 
 function tournamentTierInfo(tournament: TrophyRecentTournament) {
@@ -87,11 +105,17 @@ function tournamentTierInfo(tournament: TrophyRecentTournament) {
 }
 
 function sortByEffectiveTier<
-	T extends { id: number; tier: number | null; tentativeTier: number | null },
+	T extends {
+		id: number;
+		tier: number | null;
+		tentativeTier: number | null;
+		upcomingTournamentAt: number | null;
+	},
 >(rows: T[]) {
 	return R.sortBy(
 		rows,
 		(row) => row.tier ?? row.tentativeTier ?? Number.MAX_SAFE_INTEGER,
+		(row) => (hasUpcomingTournamentSoon(row.upcomingTournamentAt) ? 0 : 1),
 		(row) => row.id,
 	);
 }

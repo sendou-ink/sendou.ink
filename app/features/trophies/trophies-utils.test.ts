@@ -1,6 +1,11 @@
+import { addWeeks, subDays } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { decompressFromBase64 } from "~/utils/compression";
-import { decompressTrophyModel } from "./trophies-utils";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	decompressTrophyModel,
+	hasUpcomingTournamentSoon,
+} from "./trophies-utils";
 
 vi.mock("~/utils/compression", () => ({
 	compressToBase64: vi.fn((value: string) => value),
@@ -53,6 +58,36 @@ describe("decompressTrophyModel", () => {
 
 		decompressTrophyModel("lru-b");
 		expect(callsFor("lru-b")).toBe(2);
+	});
+});
+
+describe("hasUpcomingTournamentSoon", () => {
+	test("false for a trophy without an upcoming tournament", () => {
+		expect(hasUpcomingTournamentSoon(null)).toBe(false);
+	});
+
+	test("true for a start time within the window", () => {
+		expect(
+			hasUpcomingTournamentSoon(
+				dateToDatabaseTimestamp(addWeeks(new Date(), 2)),
+			),
+		).toBe(true);
+	});
+
+	test("false for a start time in the past", () => {
+		expect(
+			hasUpcomingTournamentSoon(
+				dateToDatabaseTimestamp(subDays(new Date(), 1)),
+			),
+		).toBe(false);
+	});
+
+	test("false for a start time beyond the window", () => {
+		expect(
+			hasUpcomingTournamentSoon(
+				dateToDatabaseTimestamp(addWeeks(new Date(), 5)),
+			),
+		).toBe(false);
 	});
 });
 

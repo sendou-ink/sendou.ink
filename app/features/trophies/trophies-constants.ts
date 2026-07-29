@@ -17,5 +17,7 @@ export const TROPHY_PENDING_PER_USER_LIMIT = 5;
 
 export const SMALL_TROPHIES_PER_DISPLAY_PAGE = 6;
 
+export const TROPHY_UPCOMING_HIGHLIGHT_WEEKS = 4;
+
 export const SUPPORTER_TROPHY_CODE = "supporter";
 export const XP_TROPHY_CODE_PREFIX = "xp-";

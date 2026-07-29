@@ -27,6 +27,7 @@ type TrophyItem = {
 	model: string;
 	tier?: number | null;
 	code?: string | null;
+	count?: number | null;
 };
 
 export interface TrophyDisplayProps {
@@ -84,6 +85,11 @@ export function TrophyDisplay({
 									preview={!!openTrophy}
 									staticOnSoftwareRendering
 									disableCameraControls
+									pill={
+										trophy.count && trophy.count > 1
+											? `×${trophy.count}`
+											: undefined
+									}
 								/>
 							</button>
 						) : (
