@@ -9,6 +9,8 @@
 	--graphic-first: oklch(87% 0.13 85);
 	--graphic-second: oklch(83% 0.015 268);
 	--graphic-third: oklch(74% 0.09 55);
+	--graphic-win: oklch(82% 0.14 155);
+	--graphic-loss: oklch(72% 0.16 25);
 
 	--color-bg-higher: oklch(30% 0.06 268);
 
@@ -127,6 +129,20 @@
 	font-weight: var(--weight-extra);
 }
 
+.avatarCell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.teamSeed {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	color: var(--graphic-text-dim);
+}
+
 .playersList {
 	display: grid;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -156,6 +172,13 @@
 	padding: var(--s-1-5);
 	background-color: oklch(0% 0 0 / 0.3);
 	border-radius: var(--radius-field);
+}
+
+.weaponKit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
 }
 
 .footer {

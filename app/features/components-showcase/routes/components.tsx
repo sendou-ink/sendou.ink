@@ -53,6 +53,10 @@ import {
 	TournamentResultsGraphic,
 	type TournamentResultsGraphicTeam,
 } from "~/features/tournament/components/TournamentResultsGraphic";
+import {
+	TournamentRunGraphic,
+	type TournamentRunGraphicMatch,
+} from "~/features/tournament/components/TournamentRunGraphic";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import type { CustomFieldRenderProps } from "~/form/FormField";
@@ -63,7 +67,7 @@ import styles from "../components-showcase.module.css";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "q", "calendar"],
+	i18n: ["user", "q", "calendar", "tournament"],
 };
 
 export const SECTIONS = [
@@ -94,6 +98,11 @@ export const SECTIONS = [
 		title: "Tournament Results Graphic",
 		id: "tournament-results-graphic",
 		component: TournamentResultsGraphicSection,
+	},
+	{
+		title: "Tournament Run Graphic",
+		id: "tournament-run-graphic",
+		component: TournamentRunGraphicSection,
 	},
 	{
 		title: "Form Messages",
@@ -1752,6 +1761,119 @@ function TournamentResultsGraphicSection({ id }: { id: string }) {
 						teams={RESULTS_GRAPHIC_TEAMS}
 						teamsCount={32}
 						playersCount={130}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const RUN_GRAPHIC_SWISS = "Day 1 - Swiss";
+const RUN_GRAPHIC_ALPHA = "Day 2 - Alpha Bracket";
+
+const RUN_GRAPHIC_MATCHES: TournamentRunGraphicMatch[] = [
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[7], seed: 48 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "Swiss 1",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[5], seed: 3 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "Swiss 2",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[1], seed: 6 },
+		ownScore: 1,
+		opponentScore: 2,
+		roundName: "Swiss 3",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[3], seed: 15 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "Swiss 4",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[6], seed: 19 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "Swiss 5",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[4], seed: 26 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "Swiss 6",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[2], seed: 22 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "WB Round 1",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[5], seed: 3 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "WB Round 2",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[6], seed: 19 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "WB Semis",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[3], seed: 15 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "WB Finals",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[1], seed: 6 },
+		ownScore: 3,
+		opponentScore: 1,
+		roundName: "Grand Finals",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+];
+
+function TournamentRunGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Tournament Run Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Team run export image">
+					<TournamentRunGraphic
+						tournamentId={3938}
+						tournamentTeamId={73362}
+						tournamentName="Low Ink June 2026"
+						startTime={new Date(1781974800 * 1000)}
+						tier={5}
+						logoUrl={`${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-zWk5C1kvQtEWrd7d2c_KS-1735836299376.webp`}
+						organization={{
+							name: "Inkling Performance Labs",
+							avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp`,
+						}}
+						team={RESULTS_GRAPHIC_TEAMS[0]}
+						seed={11}
+						matches={RUN_GRAPHIC_MATCHES}
+						teamsCount={74}
+						playersCount={349}
 					/>
 				</ComponentRow>
 			</div>
