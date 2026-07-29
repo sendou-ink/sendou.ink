@@ -114,13 +114,16 @@ export async function selectUser({
 	userName,
 	labelName,
 	exact = false,
+	within,
 }: {
 	page: Page;
 	userName: string;
 	labelName: string;
 	exact?: boolean;
+	/** Scopes the combobox lookup, for pages carrying the label on more than one element. */
+	within?: Locator;
 }) {
-	const comboboxButton = page.getByLabel(labelName, { exact });
+	const comboboxButton = (within ?? page).getByLabel(labelName, { exact });
 	const searchInput = page.getByTestId("user-search-input");
 	const option = page.getByTestId("user-search-item").first();
 

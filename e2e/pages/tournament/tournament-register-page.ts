@@ -5,22 +5,28 @@ import { registerTeamFormSchema } from "~/features/tournament/tournament-registe
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { tournamentRegisterPage } from "~/utils/urls";
-import { clickNavTab, navigate, submit } from "../../helpers/playwright";
+import { navigate, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
-import { TournamentBracketsPage } from "./tournament-brackets-page";
+import { TournamentNav } from "./tournament-nav";
 
 /** Stage the counterpick picking starts from, leaving the lowest ids to tiebreakers. */
 const FIRST_COUNTERPICK_STAGE_ID = 5;
 
 export class TournamentRegisterPage {
 	private readonly page: Page;
+	readonly nav;
 	readonly form;
+	readonly locators;
 
 	constructor(page: Page) {
 		this.page = page;
+		this.nav = new TournamentNav(page);
 		this.form = createFormHelpers(page, registerTeamFormSchema, {
 			submitTestId: "save-team-button",
 		});
+		this.locators = {
+			fillRosterHeading: page.getByText("Fill roster"),
+		};
 	}
 
 	async goto(tournamentId: number) {
@@ -70,8 +76,7 @@ export class TournamentRegisterPage {
 		return submit(this.page, "check-in-button");
 	}
 
-	async openBrackets() {
-		await clickNavTab(this.page, "brackets-tab");
-		return new TournamentBracketsPage(this.page);
+	openBrackets() {
+		return this.nav.openBrackets();
 	}
 }

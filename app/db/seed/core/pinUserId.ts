@@ -29,5 +29,11 @@ export async function pinUserId(userId: number, pinnedId: number) {
 		db,
 	);
 
+	// the search index is kept in sync by triggers that don't watch `id`, so its
+	// entry would keep pointing at the id the user just moved off of
+	await sql`insert into "UserSearch"("UserSearch") values ('rebuild')`.execute(
+		db,
+	);
+
 	return pinnedId;
 }
