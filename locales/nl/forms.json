@@ -416,5 +416,8 @@
 	"options.patronTier.1": "",
 	"options.patronTier.2": "",
 	"options.patronTier.3": "",
-	"placeholders.friendCode": ""
+	"placeholders.friendCode": "",
+	"unsavedChanges.title": "",
+	"unsavedChanges.body": "",
+	"unsavedChanges.discard": ""
 }

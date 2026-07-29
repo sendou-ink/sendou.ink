@@ -6,6 +6,7 @@ import styles from "./UserSearchFormField.module.css";
 type TeamSearchFormFieldProps = FormFieldProps<"team-search"> &
 	TeamSearchFieldOptions & {
 		onChange: (value: number | null) => void;
+		disabled?: boolean;
 	};
 
 export function TeamSearchFormField({
@@ -18,6 +19,7 @@ export function TeamSearchFormField({
 	onBlur,
 	onTeamSelected,
 	initialTeam,
+	disabled,
 }: TeamSearchFormFieldProps) {
 	const { translatedLabel } = useTranslatedTexts({
 		label,
@@ -35,6 +37,7 @@ export function TeamSearchFormField({
 					onBlur={() => onBlur?.()}
 					label={translatedLabel}
 					isRequired={required}
+					isDisabled={disabled}
 				/>
 				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 			</div>

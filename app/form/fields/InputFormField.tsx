@@ -58,7 +58,7 @@ export function InputFormField({
 					autoFocus={autoFocus}
 					placeholder={translatedPlaceholder}
 					{...ariaAttributes({
-						id,
+						name,
 						bottomText,
 						error,
 						required,

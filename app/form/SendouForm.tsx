@@ -13,6 +13,7 @@ import { FormField as FormFieldComponent } from "./FormField";
 import { getFormFieldMetadata } from "./fields";
 import styles from "./SendouForm.module.css";
 import type { TypedFormFieldComponent } from "./types";
+import { useUnsavedChangesChecker } from "./UnsavedChangesGuard";
 import {
 	buildFieldPath,
 	errorMessageId,
@@ -56,9 +57,12 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 interface FormStore {
 	values: Record<string, unknown>;
 	clientErrors: Partial<Record<string, string>>;
+	/** Has the user edited any field since mount / the last successful submit? */
+	dirty: boolean;
 	subscribe: (listener: () => void) => () => void;
 	setValues: (values: Record<string, unknown>) => void;
 	setClientErrors: (errors: Partial<Record<string, string>>) => void;
+	setDirty: (dirty: boolean) => void;
 }
 
 type FormFieldContextValue = Omit<
@@ -227,6 +231,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 		store.setValues(buildInitialValues(schema, defaultValues));
 		store.setClientErrors({});
+		store.setDirty(false);
 		setHasSubmitted(false);
 		setFallbackError(null);
 	}, [locationKey]);
@@ -255,12 +260,16 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 		setFallbackError(null);
 
-		const firstErrorField = errorEntries[0][0];
-		const firstErrorElement = document.getElementById(
-			errorMessageId(firstErrorField),
+		const firstError = findFirstErrorElementInDomOrder(
+			errorEntries.map(([fieldName]) => fieldName),
 		);
-		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+		if (firstError) focusAndScrollToError(firstError);
 	}, [fetcher.data, t]);
+
+	const hasUnsavedChangesRef = React.useRef<() => boolean>(() => false);
+	hasUnsavedChangesRef.current = () =>
+		mode === "submit" && !readOnly && store.dirty && fetcher.state === "idle";
+	useUnsavedChangesChecker(hasUnsavedChangesRef);
 
 	const previousFetcherStateRef = React.useRef(fetcher.state);
 	React.useEffect(() => {
@@ -269,10 +278,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 			fetcher.state === "idle" &&
 			!fetcher.data?.fieldErrors
 		) {
+			store.setDirty(false);
 			onSuccess?.();
 		}
 		previousFetcherStateRef.current = fetcher.state;
-	}, [fetcher.state, fetcher.data, onSuccess]);
+	}, [fetcher.state, fetcher.data, onSuccess, store]);
 
 	const contextValue = React.useMemo<FormFieldContextValue>(
 		() => ({
@@ -372,6 +382,7 @@ function createFormStore(
 	const store: FormStore = {
 		values: initialValues,
 		clientErrors: initialClientErrors,
+		dirty: false,
 		subscribe(listener) {
 			listeners.add(listener);
 			return () => listeners.delete(listener);
@@ -383,6 +394,10 @@ function createFormStore(
 		setClientErrors(errors) {
 			store.clientErrors = errors;
 			notify();
+		},
+		// Read only at navigation time (unsaved-changes guard), so no notify.
+		setDirty(dirty) {
+			store.dirty = dirty;
 		},
 	};
 
@@ -414,20 +429,19 @@ function createFormActions({
 	setFallbackError,
 }: FormActionDeps) {
 	const scrollToFirstError = (errors: Record<string, string>) => {
-		const firstErrorField = Object.keys(errors)[0];
-		if (!firstErrorField) return;
+		const errorFieldNames = Object.keys(errors);
+		if (errorFieldNames.length === 0) return;
 
-		const errorElement = document.getElementById(
-			errorMessageId(firstErrorField),
-		);
-		if (errorElement) {
-			errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+		const firstError = findFirstErrorElementInDomOrder(errorFieldNames);
+		if (firstError) {
+			focusAndScrollToError(firstError);
 			setFallbackError(null);
 		} else {
-			const firstError = errors[firstErrorField];
+			const firstErrorField = errorFieldNames[0];
+			const firstErrorMessage = errors[firstErrorField];
 			setFallbackError(
-				firstError
-					? `${latest.current.t(firstError)} (${firstErrorField})`
+				firstErrorMessage
+					? `${latest.current.t(firstErrorMessage)} (${firstErrorField})`
 					: null,
 			);
 		}
@@ -495,6 +509,7 @@ function createFormActions({
 	};
 
 	const setValue = (name: string, newValue: unknown) => {
+		store.setDirty(true);
 		if (name.includes(".") || name.includes("[")) {
 			store.setValues(
 				setNestedValue(
@@ -512,6 +527,7 @@ function createFormActions({
 		name: string,
 		updater: (prev: unknown) => unknown,
 	) => {
+		store.setDirty(true);
 		store.setValues({ ...store.values, [name]: updater(store.values[name]) });
 	};
 
@@ -524,6 +540,10 @@ function createFormActions({
 	const submitToServer = (valuesToSubmit: Record<string, unknown>) => {
 		if (!validateAndPrepare()) return;
 
+		// Cleared before `onApply` because it may navigate synchronously (e.g.
+		// calendar filters set search params) — the blocker would otherwise still
+		// see the form as dirty and block that navigation.
+		store.setDirty(false);
 		latest.current.onApply?.(store.values);
 
 		submitValues(valuesToSubmit);
@@ -553,6 +573,10 @@ function createFormActions({
 
 		const { onApply } = latest.current;
 		if (onApply) {
+			// Cleared before `onApply` because it may navigate synchronously (e.g.
+			// calendar filters set search params) — the blocker would otherwise
+			// still see the form as dirty and block that navigation.
+			store.setDirty(false);
 			onApply(store.values);
 		} else {
 			submitValues(store.values);
@@ -697,4 +721,55 @@ export function useFormFieldContext(): FormContextValue {
 
 export function useOptionalFormFieldContext() {
 	return React.useContext(FormContext);
+}
+
+/**
+ * "First" error means first in DOM order, not first in error-map insertion
+ * order — validation collects errors in schema order which does not have to
+ * match the rendered field order.
+ */
+function findFirstErrorElementInDomOrder(errorFieldNames: string[]) {
+	const errorElements = errorFieldNames.flatMap((name) => {
+		const element = document.getElementById(errorMessageId(name));
+		return element ? [{ name, element }] : [];
+	});
+
+	errorElements.sort((a, b) =>
+		a.element.compareDocumentPosition(b.element) &
+		Node.DOCUMENT_POSITION_FOLLOWING
+			? -1
+			: 1,
+	);
+
+	return errorElements.at(0);
+}
+
+/**
+ * Moves focus to the failing field so keyboard and screen reader users are
+ * taken to the problem, not just scrolled past it. Prefers the control that
+ * references the error via `aria-errormessage`, then any focusable control in
+ * the same wrapper, and as a last resort the error message element itself.
+ */
+function focusAndScrollToError({
+	name,
+	element,
+}: {
+	name: string;
+	element: HTMLElement;
+}) {
+	const control = document.querySelector<HTMLElement>(
+		`[aria-errormessage="${errorMessageId(name)}"]`,
+	);
+	const focusTarget =
+		control ??
+		element.parentElement?.querySelector<HTMLElement>(
+			"input, select, textarea, button",
+		) ??
+		element;
+
+	if (focusTarget === element) {
+		element.setAttribute("tabindex", "-1");
+	}
+	focusTarget.focus({ preventScroll: true });
+	element.scrollIntoView({ behavior: "smooth", block: "center" });
 }

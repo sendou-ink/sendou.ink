@@ -249,6 +249,8 @@ export type CustomFieldRenderProps<TValue = unknown> = {
 	error: string | undefined;
 	value: TValue;
 	onChange: (value: TValue) => void;
+	/** True when the field's `disabled` prop is set or the whole form is `readOnly`. */
+	disabled?: boolean;
 };
 
 /** Non-generic version for internal use to avoid excessive type instantiation */
@@ -257,6 +259,7 @@ type FormFieldChildrenProps = {
 	error: string | undefined;
 	value: unknown;
 	onChange: (value: unknown) => void;
+	disabled?: boolean;
 };
 
 /** Props for a typed FormField based on field name and schema */

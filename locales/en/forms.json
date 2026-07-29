@@ -416,5 +416,8 @@
 	"options.patronTier.1": "Support",
 	"options.patronTier.2": "Supporter",
 	"options.patronTier.3": "Supporter+",
-	"placeholders.friendCode": "1234-5678-9012"
+	"placeholders.friendCode": "1234-5678-9012",
+	"unsavedChanges.title": "Unsaved changes",
+	"unsavedChanges.body": "Are you sure you want to leave? Changes you made will not be saved.",
+	"unsavedChanges.discard": "Leave page"
 }

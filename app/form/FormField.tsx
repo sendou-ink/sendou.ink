@@ -156,8 +156,16 @@ export function FormField({
 		context.setClientError(name, validationError);
 	};
 
+	// After the first submit, changes revalidate the whole form — except array
+	// appends, which stay silent so a freshly added empty item doesn't error
+	// immediately. Blur is the moment the user leaves such an item, so
+	// revalidating here surfaces its error without waiting for the next submit.
 	const handleBlur = (latestValue?: unknown) => {
-		if (hasSubmitted) return;
+		if (!context) return;
+		if (hasSubmitted) {
+			context.revalidateAll(context.store.values);
+			return;
+		}
 		runValidation(latestValue ?? value);
 	};
 
@@ -237,6 +245,7 @@ export function FormField({
 			<SelectFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as string | null}
 				onChange={handleChange as (v: string | null) => void}
 			/>
@@ -252,6 +261,7 @@ export function FormField({
 			<SelectFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				items={selectOptions.map((opt) => ({
 					value: opt.value,
 					label: opt.label,
@@ -267,6 +277,7 @@ export function FormField({
 			<DualSelectFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as [string | null, string | null]}
 				onChange={handleChange as (v: [string | null, string | null]) => void}
 			/>
@@ -278,6 +289,7 @@ export function FormField({
 			<RadioGroupFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
@@ -293,6 +305,7 @@ export function FormField({
 			<RadioGroupFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				items={radioItems}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
@@ -305,6 +318,7 @@ export function FormField({
 			<CheckboxGroupFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as string[]}
 				onChange={handleChange as (v: string[]) => void}
 			/>
@@ -316,6 +330,7 @@ export function FormField({
 			<DatetimeFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				granularity={formField.type === "date" ? "day" : "minute"}
 				value={value as Date | undefined}
 				onChange={handleChange as (v: Date | undefined) => void}
@@ -328,6 +343,7 @@ export function FormField({
 			<TimeRangeFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as { start: string; end: string } | null}
 				onChange={
 					handleChange as (v: { start: string; end: string } | null) => void
@@ -341,6 +357,7 @@ export function FormField({
 			<WeaponPoolFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as WeaponPoolItem[]}
 				onChange={handleChange as (v: WeaponPoolItem[]) => void}
 			/>
@@ -370,6 +387,7 @@ export function FormField({
 					error: displayedError,
 					value,
 					onChange: handleChange,
+					disabled: isDisabled,
 				})}
 			</>
 		);
@@ -398,6 +416,7 @@ export function FormField({
 			<ArrayFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as unknown[]}
 				onChange={handleChange as (v: unknown[]) => void}
 				isObjectArray={isObjectArray}
@@ -438,7 +457,12 @@ export function FormField({
 					}
 
 					return (
-						<FormField key={idx} name={itemName} field={formField.field} />
+						<FormField
+							key={idx}
+							name={itemName}
+							field={formField.field}
+							disabled={disabled}
+						/>
 					);
 				}}
 			/>
@@ -446,7 +470,9 @@ export function FormField({
 	}
 
 	if (formField.type === "fieldset") {
-		return <FieldsetFormField {...commonProps} {...formField} />;
+		return (
+			<FieldsetFormField {...commonProps} {...formField} disabled={disabled} />
+		);
 	}
 
 	if (formField.type === "user-search") {
@@ -455,6 +481,7 @@ export function FormField({
 			<UserSearchFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
 				onUserSelected={userOptions?.onUserSelected}
@@ -470,6 +497,7 @@ export function FormField({
 			<TournamentSearchFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
 				pastOnly={tournamentOptions?.pastOnly}
@@ -483,6 +511,7 @@ export function FormField({
 			<TeamSearchFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				onChange={handleChange as (v: number | null) => void}
 				onTeamSelected={teamOptions?.onTeamSelected}
 				initialTeam={teamOptions?.initialTeam}
@@ -498,6 +527,7 @@ export function FormField({
 			<BadgesFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as number[]}
 				onChange={handleChange as (v: number[]) => void}
 				options={options as BadgeOption[]}
@@ -511,6 +541,7 @@ export function FormField({
 			<StageSelectFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as StageId | null}
 				onChange={handleChange as (v: StageId) => void}
 			/>
@@ -522,6 +553,7 @@ export function FormField({
 			<WeaponSelectFormField
 				{...commonProps}
 				{...formField}
+				disabled={isDisabled}
 				value={value as MainWeaponId | null}
 				onChange={handleChange as (v: MainWeaponId | null) => void}
 			/>

@@ -10,6 +10,7 @@ type RadioGroupFormFieldProps<V extends string> = Omit<
 	items: FormFieldItemsWithImage<V>;
 	value: V;
 	onChange: (value: V) => void;
+	disabled?: boolean;
 };
 
 export function RadioGroupFormField<V extends string>({
@@ -22,6 +23,7 @@ export function RadioGroupFormField<V extends string>({
 	value,
 	onChange,
 	minLength,
+	disabled,
 }: RadioGroupFormFieldProps<V>) {
 	const id = React.useId();
 
@@ -54,6 +56,7 @@ export function RadioGroupFormField<V extends string>({
 							checked={value === item.value}
 							onChange={() => onChange(item.value)}
 							onBlur={() => onBlur?.()}
+							disabled={disabled}
 						/>
 						<label
 							htmlFor={`${id}-${item.value}`}
@@ -78,6 +81,7 @@ type CheckboxGroupFormFieldProps<V extends string> = Omit<
 	items: FormFieldItemsWithImage<V>;
 	value: V[];
 	onChange: (value: V[]) => void;
+	disabled?: boolean;
 };
 
 export function CheckboxGroupFormField<V extends string>({
@@ -90,6 +94,7 @@ export function CheckboxGroupFormField<V extends string>({
 	value,
 	onChange,
 	minLength,
+	disabled,
 }: CheckboxGroupFormFieldProps<V>) {
 	const id = React.useId();
 
@@ -124,6 +129,7 @@ export function CheckboxGroupFormField<V extends string>({
 							checked={value.includes(item.value)}
 							onChange={(e) => handleChange(item.value, e.target.checked)}
 							onClick={() => onBlur?.()}
+							disabled={disabled}
 						/>
 						<label
 							htmlFor={`${id}-${item.value}`}

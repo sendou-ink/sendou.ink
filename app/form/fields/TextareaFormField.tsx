@@ -47,7 +47,7 @@ export function TextareaFormField({
 				// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
 				autoFocus={autoFocus}
 				{...ariaAttributes({
-					id,
+					name,
 					bottomText,
 					error,
 					required,

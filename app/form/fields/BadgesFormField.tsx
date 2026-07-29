@@ -8,6 +8,7 @@ type BadgesFormFieldProps = Omit<FormFieldProps<"badges">, "onBlur"> & {
 	onChange: (value: number[]) => void;
 	onBlur?: () => void;
 	options: BadgeOption[];
+	disabled?: boolean;
 };
 
 export function BadgesFormField({
@@ -20,6 +21,7 @@ export function BadgesFormField({
 	onChange,
 	onBlur,
 	options,
+	disabled,
 }: BadgesFormFieldProps) {
 	const id = React.useId();
 
@@ -37,6 +39,7 @@ export function BadgesFormField({
 				onChange={onChange}
 				onBlur={onBlur}
 				maxCount={maxCount}
+				disabled={disabled}
 			/>
 		</FormFieldWrapper>
 	);
