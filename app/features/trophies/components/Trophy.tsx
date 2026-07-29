@@ -1,7 +1,14 @@
 import { clsx } from "clsx";
 import { Ban } from "lucide-react";
 import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import {
+	createContext,
+	useCallback,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { TierPill } from "~/components/TierPill";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { decompressTrophyModel } from "../trophies-utils";
@@ -99,56 +106,62 @@ export function Trophy({
 
 	const modelState = decompressTrophyModel(model);
 
-	const canvasRef = (canvas: HTMLCanvasElement | null) => {
-		if (!canvas) {
-			viewerRef.current?.dispose();
-			viewerRef.current = null;
-			return;
-		}
+	// useCallback is needed to keep the ref callback identity stable.
+	// A new identity each render would make React detach and re-attach,
+	// disposing and rebuilding the viewer on every re-render
+	const canvasRef = useCallback(
+		(canvas: HTMLCanvasElement | null) => {
+			if (!canvas) {
+				viewerRef.current?.dispose();
+				viewerRef.current = null;
+				return;
+			}
 
-		if (modelState === null) return;
+			if (modelState === null) return;
 
-		const viewer = new PicoCAD2Viewer({
-			canvas,
-			context,
-			resolution: { width: 128, height: 128, scale: 4 },
-		});
-		viewerRef.current = viewer;
+			const viewer = new PicoCAD2Viewer({
+				canvas,
+				context,
+				resolution: { width: 128, height: 128, scale: 4 },
+			});
+			viewerRef.current = viewer;
 
-		try {
-			viewer.setState(JSON.parse(modelState));
-		} catch (_) {
-			setError(true);
-			return;
-		}
+			try {
+				viewer.setState(JSON.parse(modelState));
+			} catch (_) {
+				setError(true);
+				return;
+			}
 
-		// e2e runs render with software WebGL where continuous render loops
-		// starve the main thread and stall tests, so
-		// trophies draw a single static frame there
-		if (preview || IS_E2E_TEST_RUN) {
-			viewer.draw();
-			viewer.dispose();
-			return;
-		}
+			// e2e runs render with software WebGL where continuous render loops
+			// starve the main thread and stall tests, so
+			// trophies draw a single static frame there
+			if (preview || IS_E2E_TEST_RUN) {
+				viewer.draw();
+				viewer.dispose();
+				return;
+			}
 
-		viewer.cameraMode = "spin";
-		viewer.cameraModeSpeed = 5;
-		viewer.startRenderLoop(false);
+			viewer.cameraMode = "spin";
+			viewer.cameraModeSpeed = 5;
+			viewer.startRenderLoop(false);
 
-		if (disableCameraControls) return;
+			if (disableCameraControls) return;
 
-		viewer.enableCameraControls({
-			spinInertiaFactor: 0.95,
-			pan: false,
-			rotate: true,
-			zoom: true,
-			useFixedOnInteract: {
-				enabled: true,
-				delayBeforeRestore: 1000,
-				restoreTime: 1000,
-			},
-		});
-	};
+			viewer.enableCameraControls({
+				spinInertiaFactor: 0.95,
+				pan: false,
+				rotate: true,
+				zoom: true,
+				useFixedOnInteract: {
+					enabled: true,
+					delayBeforeRestore: 1000,
+					restoreTime: 1000,
+				},
+			});
+		},
+		[modelState, context, preview, disableCameraControls],
+	);
 
 	const effectiveTier = tier ?? tentativeTier ?? null;
 	const containerClassName = clsx(style.container, className, {
