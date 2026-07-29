@@ -3,14 +3,14 @@ import { z } from "zod";
 import {
 	array,
 	customField,
-	dayMonthYearRequired,
+	dayMonthYear as dayMonthYearField,
 	fieldset,
 	idConstantOptional,
 	radioGroup,
 	select,
 	selectOptional,
 	stageSelect,
-	textFieldRequired,
+	textField,
 	weaponPool,
 	weaponSelectOptional,
 } from "~/form/fields";
@@ -116,7 +116,7 @@ const povSchema = z.union([
 ]);
 
 const matchFieldsetSchema = z.object({
-	startsAt: textFieldRequired({
+	startsAt: textField({
 		label: "labels.vodStartTimestamp",
 		maxLength: 10,
 		regExp: {
@@ -151,7 +151,7 @@ const matchFieldsetSchema = z.object({
 
 export const vodFormBaseSchema = z.object({
 	vodToEditId: idConstantOptional(),
-	youtubeUrl: textFieldRequired({
+	youtubeUrl: textField({
 		label: "labels.vodYoutubeUrl",
 		maxLength: 200,
 		validate: {
@@ -159,11 +159,11 @@ export const vodFormBaseSchema = z.object({
 			message: "Invalid YouTube URL",
 		},
 	}),
-	title: textFieldRequired({
+	title: textField({
 		label: "labels.vodTitle",
 		maxLength: 100,
 	}),
-	date: dayMonthYearRequired({
+	date: dayMonthYearField({
 		label: "labels.vodDate",
 		max: () => add(new Date(), { days: 1 }),
 		maxMessage: "errors.dateMustNotBeFuture",

@@ -5,16 +5,16 @@ import {
 	badges,
 	checkboxGroup,
 	customField,
+	datetime,
 	datetimeOptional,
-	datetimeRequired,
 	idConstantOptional,
 	image,
 	numberFieldOptional,
 	select,
 	selectDynamicOptional,
 	textAreaOptional,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	toggle,
 } from "~/form/fields";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
@@ -23,7 +23,7 @@ import { bracketProgressionSchema } from "./calendar-schemas";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
 
 /** Single date row of the {@link calendarNewBaseSchema} `date` array (calendar events). */
-const calendarEventDateField = datetimeRequired({
+const calendarEventDateField = datetime({
 	label: "labels.date",
 	min: calendarEventMinDate,
 	max: calendarEventMaxDate,
@@ -34,7 +34,7 @@ export const calendarNewBaseSchema = z.object({
 	toToolsEnabled: customField({ initialValue: false }, z.boolean()),
 	eventToEditId: idConstantOptional(),
 	tournamentToCopyId: idConstantOptional(),
-	name: textFieldRequired({
+	name: textField({
 		label: "labels.name",
 		minLength: CALENDAR_EVENT.NAME_MIN_LENGTH,
 		maxLength: CALENDAR_EVENT.NAME_MAX_LENGTH,

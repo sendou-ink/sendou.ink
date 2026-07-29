@@ -285,7 +285,7 @@ function AdminControls() {
 				defaultValues={{
 					isEstablished: Boolean(data.organization.isEstablished),
 				}}
-				autoSubmit
+				mode="autoSubmit"
 			>
 				{({ FormField }) => <FormField name="isEstablished" />}
 			</SendouForm>

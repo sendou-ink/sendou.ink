@@ -1,14 +1,14 @@
 import { z } from "zod";
 import { friendCodeField } from "~/features/sendouq/q-schemas";
 import {
+	datetime,
 	datetimeOptional,
-	datetimeRequired,
 	image,
 	numberField,
 	select,
 	stringConstant,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	userSearch,
 } from "~/form/fields";
 import { friendCode, id } from "~/utils/zod";
@@ -76,7 +76,7 @@ export const forcePatronSchema = z.object({
 			{ value: "3", label: "options.patronTier.3" },
 		],
 	}),
-	patronExpiresAt: datetimeRequired({ label: "labels.patronExpiresAt" }),
+	patronExpiresAt: datetime({ label: "labels.patronExpiresAt" }),
 });
 
 export const banUserSchema = z.object({
@@ -119,14 +119,14 @@ export const adminActionSchema = z.union([
 
 export const createExternalStreamSchema = z.object({
 	_action: stringConstant("CREATE"),
-	name: textFieldRequired({ label: "labels.name", maxLength: 64 }),
-	url: textFieldRequired({
+	name: textField({ label: "labels.name", maxLength: 64 }),
+	url: textField({
 		label: "labels.link",
 		maxLength: 200,
 		validate: "url",
 	}),
 	avatar: image({ label: "labels.logo", autoValidate: true }),
-	startTime: datetimeRequired({ label: "labels.startTime" }),
+	startTime: datetime({ label: "labels.startTime" }),
 });
 
 const deleteExternalStreamSchema = z.object({

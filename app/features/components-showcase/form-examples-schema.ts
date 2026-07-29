@@ -2,9 +2,9 @@ import { z } from "zod";
 import {
 	checkboxGroup,
 	customField,
+	datetime,
 	datetimeOptional,
-	datetimeRequired,
-	dayMonthYearRequired,
+	dayMonthYear,
 	dualSelectOptional,
 	image,
 	numberFieldOptional,
@@ -13,10 +13,10 @@ import {
 	selectDynamicOptional,
 	selectOptional,
 	stageSelect,
+	textArea,
 	textAreaOptional,
-	textAreaRequired,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	timeRangeOptional,
 	toggle,
 	userSearchOptional,
@@ -26,7 +26,7 @@ import {
 
 export const formFieldsShowcaseSchema = z.object({
 	// Text fields
-	requiredText: textFieldRequired({
+	requiredText: textField({
 		label: "labels.name",
 		maxLength: 100,
 	}),
@@ -39,7 +39,7 @@ export const formFieldsShowcaseSchema = z.object({
 	}),
 
 	// Text areas
-	requiredTextArea: textAreaRequired({
+	requiredTextArea: textArea({
 		label: "labels.description",
 		maxLength: 500,
 	}),
@@ -119,13 +119,13 @@ export const formFieldsShowcaseSchema = z.object({
 	}),
 
 	// Date & Time
-	requiredDatetime: datetimeRequired({
+	requiredDatetime: datetime({
 		label: "labels.startTime",
 	}),
 	optionalDatetime: datetimeOptional({
 		label: "labels.vodDate",
 	}),
-	birthDate: dayMonthYearRequired({
+	birthDate: dayMonthYear({
 		label: "labels.banUserExpiresAt",
 	}),
 	availableTime: timeRangeOptional({

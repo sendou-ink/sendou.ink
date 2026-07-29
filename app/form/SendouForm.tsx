@@ -38,7 +38,6 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	setClientError: (name: string, error: string | undefined) => void;
 	clearServerError: (name: string) => void;
 	onFieldChange?: (name: string, newValue: unknown) => void;
-	hideRequiredIndicator: boolean;
 	readOnly: boolean;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
@@ -73,14 +72,11 @@ const FormContext = React.createContext<FormFieldContextValue | null>(null);
 
 export const EMPTY_FORM_STORE = createFormStore({}, {});
 
-type FormNames<T extends z.ZodRawShape> = {
-	[K in keyof T]: K;
-};
-
 export interface FormRenderProps<T extends z.ZodRawShape> {
-	names: FormNames<T>;
 	FormField: TypedFormFieldComponent<T>;
 }
+
+export type FormMode = "submit" | "autoSubmit" | "client";
 
 type BaseFormProps<T extends z.ZodRawShape> = {
 	children: React.ReactNode | ((props: FormRenderProps<T>) => React.ReactNode);
@@ -88,15 +84,15 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	title?: React.ReactNode;
 	submitButtonText?: React.ReactNode;
 	action?: string;
-	method?: "post" | "get";
-	_action?: string;
 	submitButtonTestId?: string;
 	/** Styling of the submit button, for forms embedded somewhere the default button is too heavy. */
 	submitButtonVariant?: SendouButtonProps["variant"];
 	submitButtonSize?: SendouButtonProps["size"];
-	autoSubmit?: boolean;
-	autoApply?: boolean;
 	revalidateRoot?: boolean;
+	/**
+	 * Replaces the default form layout classes entirely (it does not merge with
+	 * them), so `fullWidth` has no effect when this is set.
+	 */
 	className?: string;
 	/**
 	 * When true, opts out of the default centered, max-width layout so the form
@@ -105,17 +101,10 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	 */
 	fullWidth?: boolean;
 	/**
-	 * When true, fields don't show the red `*` required indicator next to their
-	 * label. Useful on pages where every field is required and the asterisk only
-	 * adds noise (e.g. the settings page).
-	 */
-	hideRequiredIndicator?: boolean;
-	/**
 	 * When true, renders the form for viewing only: every field is disabled and
 	 * the submit button is hidden.
 	 */
 	readOnly?: boolean;
-	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
 	/**
 	 * Called once after a server submission completes successfully (the action
@@ -125,22 +114,43 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	onSuccess?: () => void;
 };
 
+/**
+ * How submitting works:
+ * - `"submit"` (default): the user submits via the submit button. Values go to
+ *   the server, or to `onApply` when provided.
+ * - `"autoSubmit"`: no submit button; every change that passes validation is
+ *   sent to the server.
+ * - `"client"`: no submit button and no `<form>` element; every change is
+ *   passed to `onApply` and field errors are computed already on mount.
+ */
+type FormModeProps<T extends z.ZodRawShape> =
+	| {
+			mode?: "submit";
+			/** When set, a valid submit is handed to this callback instead of being sent to the server. */
+			onApply?: (values: z.infer<z.ZodObject<T>>) => void;
+	  }
+	| { mode: "autoSubmit"; onApply?: never }
+	| { mode: "client"; onApply: (values: z.infer<z.ZodObject<T>>) => void };
+
+export type FormDefaultValues<T extends z.ZodRawShape> = Partial<
+	z.input<z.ZodObject<T>>
+>;
+
 type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
+	FormModeProps<T> &
 	(HasRequiredDefaults<T> extends true
 		? {
-				defaultValues: Partial<z.input<z.ZodObject<T>>> &
+				defaultValues: FormDefaultValues<T> &
 					Record<RequiredDefaultKeys<T>, unknown>;
 			}
-		: { defaultValues?: Partial<z.input<z.ZodObject<T>>> | null });
+		: { defaultValues?: FormDefaultValues<T> | null });
 
 interface LatestFormProps {
 	schema: z.ZodObject<z.ZodRawShape>;
 	onApply: ((values: Record<string, unknown>) => void) | undefined;
-	method: "post" | "get";
 	action: string | undefined;
 	revalidateRoot: boolean | undefined;
-	autoSubmit: boolean | undefined;
-	autoApply: boolean | undefined;
+	mode: FormMode;
 	fetcher: FetcherWithComponents<{ fieldErrors?: Record<string, string> }>;
 	t: (key: string) => string;
 }
@@ -152,18 +162,14 @@ export function SendouForm<T extends z.ZodRawShape>({
 	title,
 	submitButtonText,
 	action,
-	method = "post",
-	_action,
 	submitButtonTestId,
 	submitButtonVariant,
 	submitButtonSize,
-	autoSubmit,
-	autoApply,
 	revalidateRoot,
 	className,
 	fullWidth,
-	hideRequiredIndicator = false,
 	readOnly = false,
+	mode = "submit",
 	onApply,
 	secondarySubmit,
 	onSuccess,
@@ -181,7 +187,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 		const initialValues = buildInitialValues(schema, defaultValues);
 		storeRef.current = createFormStore(
 			initialValues,
-			autoApply ? computeTopLevelFieldErrors(schema, initialValues) : {},
+			mode === "client"
+				? computeTopLevelFieldErrors(schema, initialValues)
+				: {},
 		);
 	}
 	const store = storeRef.current;
@@ -189,11 +197,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const latestProps: LatestFormProps = {
 		schema: schema as z.ZodObject<z.ZodRawShape>,
 		onApply: onApply as unknown as LatestFormProps["onApply"],
-		method,
 		action,
 		revalidateRoot,
-		autoSubmit,
-		autoApply,
+		mode,
 		fetcher,
 		t: t as unknown as LatestFormProps["t"],
 	};
@@ -276,9 +282,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			hasSubmitted,
 			setClientError: actions.setClientError,
 			clearServerError: actions.clearServerError,
-			onFieldChange:
-				autoSubmit || autoApply ? actions.onFieldChange : undefined,
-			hideRequiredIndicator,
+			onFieldChange: mode !== "submit" ? actions.onFieldChange : undefined,
 			readOnly,
 			setValue: actions.setValue,
 			setValueFromPrev: actions.setValueFromPrev,
@@ -292,9 +296,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			defaultValues,
 			visibleServerErrors,
 			hasSubmitted,
-			autoSubmit,
-			autoApply,
-			hideRequiredIndicator,
+			mode,
 			readOnly,
 			fetcher.state,
 			store,
@@ -302,14 +304,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 		],
 	);
 
-	const names = Object.fromEntries(
-		Object.keys(schema.shape).map((key) => [key, key]),
-	) as FormNames<T>;
-
 	const resolvedChildren =
 		typeof children === "function"
 			? children({
-					names,
 					FormField: FormFieldComponent as TypedFormFieldComponent<T>,
 				})
 			: children;
@@ -318,10 +315,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 		<>
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
-			{autoSubmit || autoApply || readOnly ? null : (
+			{mode !== "submit" || readOnly ? null : (
 				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
 					<SubmitButton
-						_action={_action}
 						testId={submitButtonTestId}
 						state={fetcher.state}
 						variant={submitButtonVariant}
@@ -345,11 +341,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 	return (
 		<FormContext.Provider value={contextValue}>
-			{autoApply && onApply ? (
+			{mode === "client" ? (
 				<div className={resolvedClassName}>{formContent}</div>
 			) : (
 				<form
-					method={method}
+					method="post"
 					action={action}
 					className={resolvedClassName}
 					noValidate
@@ -455,12 +451,12 @@ function createFormActions({
 	};
 
 	const submitValues = (values: Record<string, unknown>) => {
-		const { fetcher, method, action, revalidateRoot } = latest.current;
+		const { fetcher, action, revalidateRoot } = latest.current;
 		const submitted = revalidateRoot
 			? { ...values, revalidateRoot: true }
 			: values;
 		fetcher.submit(submitted as Record<string, string>, {
-			method,
+			method: "post",
 			action,
 			encType: "application/json",
 		});
@@ -534,7 +530,7 @@ function createFormActions({
 	};
 
 	const onFieldChange = (changedName: string, changedValue: unknown) => {
-		const { schema, autoSubmit, autoApply, onApply } = latest.current;
+		const { schema, mode, onApply } = latest.current;
 		const isNestedPath = changedName.includes(".") || changedName.includes("[");
 		const updatedValues = isNestedPath
 			? setNestedValue(store.values, changedName, changedValue)
@@ -544,9 +540,9 @@ function createFormActions({
 		store.setClientErrors(newErrors);
 		const hasFieldErrors = Object.keys(newErrors).length > 0;
 
-		if (autoApply && onApply) {
-			onApply(updatedValues);
-		} else if (autoSubmit && !hasFieldErrors) {
+		if (mode === "client") {
+			onApply?.(updatedValues);
+		} else if (mode === "autoSubmit" && !hasFieldErrors) {
 			submitValues(updatedValues);
 		}
 	};
@@ -689,7 +685,6 @@ export function useFormFieldContext(): FormContextValue {
 		setClientError: context.setClientError,
 		clearServerError: context.clearServerError,
 		onFieldChange: context.onFieldChange,
-		hideRequiredIndicator: context.hideRequiredIndicator,
 		readOnly: context.readOnly,
 		values,
 		setValue: context.setValue,

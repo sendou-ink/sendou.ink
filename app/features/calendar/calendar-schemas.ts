@@ -14,8 +14,8 @@ import {
 	numberField,
 	numberFieldOptional,
 	radioGroup,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	toggle,
 	userSearchOptional,
 } from "~/form/fields";
@@ -226,7 +226,7 @@ const reportedPlayersSchema = z
 
 const reportedTeamFieldset = fieldset({
 	fields: z.object({
-		teamName: textFieldRequired({
+		teamName: textField({
 			label: "labels.teamName",
 			maxLength: CALENDAR_EVENT_RESULT.MAX_TEAM_NAME_LENGTH,
 		}),

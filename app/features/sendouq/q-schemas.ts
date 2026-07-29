@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-	stringConstant,
-	textAreaOptional,
-	textFieldRequired,
-} from "~/form/fields";
+import { stringConstant, textAreaOptional, textField } from "~/form/fields";
 import {
 	FRIEND_CODE_MAX_LENGTH,
 	FRIEND_CODE_REGEXP,
@@ -22,7 +18,7 @@ export const updateGroupNoteSchema = z.object({
  * Friend code as the user typed it, with the "SW-" prefix and dashes optional.
  * Pass through `normalizeFriendCode` before storing it.
  */
-export const friendCodeField = textFieldRequired({
+export const friendCodeField = textField({
 	label: "labels.friendCode",
 	maxLength: FRIEND_CODE_MAX_LENGTH,
 	leftAddon: "SW-",

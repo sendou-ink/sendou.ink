@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { select, textAreaRequired, textFieldOptional } from "~/form/fields";
+import { select, textArea, textFieldOptional } from "~/form/fields";
 import { id } from "~/utils/zod";
 import { USER_REPORT } from "./user-report-constants";
 
@@ -17,7 +17,7 @@ export const reportUserSchema = z.object({
 			{ label: "options.userReportCategory.OTHER", value: "OTHER" },
 		],
 	}),
-	description: textAreaRequired({
+	description: textArea({
 		label: "labels.description",
 		maxLength: USER_REPORT.DESCRIPTION_MAX_LENGTH,
 	}),

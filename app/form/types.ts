@@ -1,7 +1,6 @@
 import type { z } from "zod";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
 
@@ -17,9 +16,7 @@ interface FormFieldBase<T extends string> {
 type FormFieldConstant<T extends string> = Omit<
 	FormFieldBase<T>,
 	"label" | "bottomText"
-> & {
-	value: string | number | null;
-};
+>;
 
 interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	minLength?: number;
@@ -117,13 +114,6 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	disableAltSkinDuplicates?: boolean;
 }
 
-interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
-	modes?: ModeShort[];
-	minCount?: number;
-	maxCount?: number;
-	disableBannedMaps?: boolean;
-}
-
 interface FormFieldImage<T extends string> extends FormFieldBase<T> {
 	dimensions?: ImageFieldDimensions;
 	/** Validate uploaded images immediately, bypassing the moderator queue (e.g. trusted org logos). */
@@ -200,8 +190,6 @@ export type FormField<V extends string = string> =
 	| FormFieldDatetime<"datetime">
 	| FormFieldDatetime<"date">
 	| FormFieldWeaponPool<"weapon-pool">
-	| FormFieldMapPool<"map-pool">
-	| FormFieldBase<"theme">
 	| FormFieldImage<"image">
 	| FormFieldConstant<"string-constant">
 	| FormFieldConstant<"id-constant">

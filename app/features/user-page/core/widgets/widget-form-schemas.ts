@@ -8,8 +8,8 @@ import {
 	select,
 	selectDynamic,
 	stageSelect,
-	textAreaRequired,
-	textFieldRequired,
+	textArea,
+	textField,
 	weaponSelect,
 } from "~/form/fields";
 import type { SelectOption } from "~/form/types";
@@ -17,34 +17,34 @@ import { GAME_BADGE_IDS } from "~/modules/in-game-lists/game-badge-ids";
 import { USER } from "../../user-page-constants";
 
 export const bioSchema = z.object({
-	bio: textAreaRequired({
+	bio: textArea({
 		label: "labels.bio",
 		maxLength: USER.BIO_MAX_LENGTH,
 	}),
 });
 
 export const bioMdSchema = z.object({
-	bio: textAreaRequired({
+	bio: textArea({
 		label: "labels.bio",
-		bottomText: "bottomTexts.bioMarkdown" as never,
+		bottomText: "bottomTexts.bioMarkdown",
 		maxLength: USER.BIO_MD_MAX_LENGTH,
 	}),
 });
 
 export const xRankPeaksSchema = z.object({
 	division: select({
-		label: "labels.division" as never,
+		label: "labels.division",
 		items: [
-			{ value: "both", label: "options.division.both" as never },
-			{ value: "tentatek", label: "options.division.tentatek" as never },
-			{ value: "takoroka", label: "options.division.takoroka" as never },
+			{ value: "both", label: "options.division.both" },
+			{ value: "tentatek", label: "options.division.tentatek" },
+			{ value: "takoroka", label: "options.division.takoroka" },
 		],
 	}),
 });
 
 export const timezoneSchema = z.object({
 	timezone: selectDynamic({
-		label: "labels.timezone" as never,
+		label: "labels.timezone",
 	}),
 });
 
@@ -55,28 +55,28 @@ export const TIMEZONE_OPTIONS: SelectOption[] = TIMEZONES.map((tz) => ({
 
 export const favoriteStageSchema = z.object({
 	stageId: stageSelect({
-		label: "labels.favoriteStage" as never,
+		label: "labels.favoriteStage",
 	}),
 });
 
 export const peakXpUnverifiedSchema = z.object({
 	peakXp: numberField({
-		label: "labels.peakXp" as never,
+		label: "labels.peakXp",
 		minLength: 4,
 		maxLength: 4,
 	}),
 	division: select({
-		label: "labels.division" as never,
+		label: "labels.division",
 		items: [
-			{ value: "tentatek", label: "options.division.tentatek" as never },
-			{ value: "takoroka", label: "options.division.takoroka" as never },
+			{ value: "tentatek", label: "options.division.tentatek" },
+			{ value: "takoroka", label: "options.division.takoroka" },
 		],
 	}),
 });
 
 export const peakXpWeaponSchema = z.object({
 	weaponSplId: weaponSelect({
-		label: "labels.weapon" as never,
+		label: "labels.weapon",
 	}),
 });
 
@@ -97,10 +97,10 @@ export const sensSchema = z.object({
 
 export const artSchema = z.object({
 	source: select({
-		label: "labels.artSource" as never,
+		label: "labels.artSource",
 		items: ART_SOURCES.map((source) => ({
 			value: source,
-			label: `options.artSource.${source}` as never,
+			label: `options.artSource.${source}`,
 		})),
 	}),
 });
@@ -110,7 +110,7 @@ export const linksSchema = z.object({
 		label: "labels.urls",
 		min: 1,
 		max: 10,
-		field: textFieldRequired({
+		field: textField({
 			maxLength: 150,
 			validate: "url",
 		}),
@@ -118,8 +118,8 @@ export const linksSchema = z.object({
 });
 
 export const tierListSchema = z.object({
-	searchParams: textFieldRequired({
-		label: "labels.tierListUrl" as never,
+	searchParams: textField({
+		label: "labels.tierListUrl",
 		leftAddon: "/tier-list-maker?",
 		maxLength: 500,
 	}),

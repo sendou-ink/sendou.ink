@@ -2,7 +2,7 @@ import { add, sub } from "date-fns";
 import { z } from "zod";
 import {
 	customField,
-	datetimeRequired,
+	datetime,
 	dualSelectOptional,
 	idConstant,
 	radioGroupDynamic,
@@ -11,8 +11,8 @@ import {
 	selectOptional,
 	stageSelect,
 	stringConstant,
+	textArea,
 	textAreaOptional,
-	textAreaRequired,
 	textFieldOptional,
 	timeRangeOptional,
 	toggle,
@@ -79,7 +79,7 @@ const cancelRequestSchema = z.object({
 
 export const cancelScrimFormSchema = z.object({
 	_action: stringConstant("CANCEL_SCRIM"),
-	reason: textAreaRequired({
+	reason: textArea({
 		label: "labels.scrimCancelReason",
 		bottomText: "bottomTexts.scrimCancelReasonHelp",
 		maxLength: SCRIM.CANCEL_REASON_MAX_LENGTH,
@@ -309,7 +309,7 @@ const mapsItems = [
 
 export const scrimsNewFormSchema = z
 	.object({
-		at: datetimeRequired({
+		at: datetime({
 			label: "labels.start",
 			bottomText: "bottomTexts.scrimStart",
 			min: () => sub(new Date(), { days: 1 }),

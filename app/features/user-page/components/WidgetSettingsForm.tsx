@@ -54,7 +54,7 @@ function WidgetSettingsFormInner({
 		<SendouForm
 			schema={schema}
 			defaultValues={defaultValues}
-			autoApply
+			mode="client"
 			onApply={handleApply}
 			className="stack md"
 		>
