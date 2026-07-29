@@ -3,11 +3,11 @@ import { isDatabaseDirty } from "~/db/write-tracker";
 
 // Wipes the database after any test that wrote to it, so no test has to remember to.
 // The flag keeps this free for the tests that never touch the database — importing
-// `~/utils/Test` would open the connection for them too, hence the dynamic import.
+// `~/db/reset` would open the connection for them too, hence the dynamic import.
 afterEach(async () => {
 	if (!isDatabaseDirty()) return;
 
-	const { dbReset } = await import("~/utils/Test");
+	const { dbReset } = await import("~/db/reset");
 	await dbReset();
 });
 

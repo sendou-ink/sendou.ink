@@ -6,13 +6,8 @@ import type { ActionFunction } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
-import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
-import { refreshBannedCache } from "~/features/ban/core/banned.server";
-import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
-import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
-import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
-import { cache } from "~/utils/cache.server";
 import { parseRequestPayload } from "~/utils/remix.server";
+import { refreshCaches } from "../core/refresh-caches.server";
 
 const E2E_SEEDS_DIR = "e2e/seeds";
 const PRE_SEEDED_DB_PATH = path.join(E2E_SEEDS_DIR, "db-seed.sqlite3");
@@ -41,12 +36,7 @@ export const action: ActionFunction = async ({ request }) => {
 		await seed();
 	}
 
-	clearAllTournamentDataCache();
-	cache.clear();
-	await refreshBannedCache();
-	await refreshSendouQInstance();
-	await refreshTentativeTiersCache();
-	await refreshApiTokensCache();
+	await refreshCaches();
 
 	return Response.json(null);
 };

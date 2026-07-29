@@ -1,16 +1,31 @@
 import type { Locator, Page } from "@playwright/test";
+import { subDays } from "date-fns";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import { newBuildBaseSchema } from "~/features/user-page/user-page-schemas";
-import type { GearType } from "~/modules/in-game-lists/types";
+import type {
+	BuildAbilitiesTuple,
+	GearType,
+} from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
 import { expect, impersonate, navigate, test } from "./helpers/playwright";
 import { createFormHelpers } from "./helpers/playwright-form";
 
+const ABILITIES_WITH_ISM: BuildAbilitiesTuple = [
+	["ISM", "ISM", "ISM", "ISM"],
+	["SSU", "SSU", "SSU", "SSU"],
+	["RSU", "RSU", "RSU", "RSU"],
+];
+
+const ABILITIES_WITHOUT_ISM: BuildAbilitiesTuple = [
+	["SSU", "SSU", "SSU", "SSU"],
+	["RSU", "RSU", "RSU", "RSU"],
+	["QR", "QR", "QR", "QR"],
+];
+
 test.describe("Builds", () => {
 	test("adds a build", async ({ page }) => {
-		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
@@ -62,8 +77,15 @@ test.describe("Builds", () => {
 		);
 	});
 
-	test("makes build private", async ({ page }) => {
-		// await seed(page);
+	test("makes build private", async ({ page, factories }) => {
+		// backdating one build makes the updatedAt sort deterministic
+		const [olderBuild] = await factories.BuildFactory.createMany(2, {
+			ownerId: ADMIN_ID,
+		});
+		await factories.backdate("Build", olderBuild.id, {
+			updatedAt: subDays(new Date(), 1),
+		});
+
 		await impersonate(page);
 		await navigate({
 			page,
@@ -82,7 +104,7 @@ test.describe("Builds", () => {
 		await form.submit();
 
 		await expect(page.getByTestId("user-builds-tab")).toContainText(
-			"Builds (50)",
+			"Builds (2)",
 		);
 		await expect(page.getByTestId("build-card").first()).toContainText(
 			"Private",
@@ -99,15 +121,27 @@ test.describe("Builds", () => {
 			url: userBuildsPage({ discordId: ADMIN_DISCORD_ID }),
 		});
 		await expect(page.getByTestId("user-builds-tab")).toContainText(
-			"Builds (49)",
+			"Builds (1)",
 		);
 		await expect(page.getByTestId("build-card").first()).not.toContainText(
 			"Private",
 		);
 	});
 
-	test("filters builds", async ({ page }) => {
-		// await seed(page);
+	test("filters builds", async ({ page, factories }) => {
+		await factories.BuildFactory.createMany(3, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+			modes: ["TC"],
+			abilities: ABILITIES_WITH_ISM,
+		});
+		await factories.BuildFactory.createMany(2, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+			modes: ["SZ"],
+			abilities: ABILITIES_WITHOUT_ISM,
+		});
+
 		await navigate({
 			page,
 			url: BUILDS_PAGE,
@@ -135,7 +169,7 @@ test.describe("Builds", () => {
 		await page.getByTestId("add-filter-button").click();
 		await page.getByTestId("menu-item-mode").click();
 		await page.getByLabel("Tower Control").click();
-		await expect(page.getByTestId("build-mode-TC")).toHaveCount(24);
+		await expect(page.getByTestId("build-mode-TC")).toHaveCount(3);
 		await page.getByTestId("delete-filter-button").click();
 		await expect(page.getByTestId("build-card").first()).toBeVisible();
 
@@ -147,7 +181,7 @@ test.describe("Builds", () => {
 		await page.getByTestId("date-select").selectOption("CUSTOM");
 		await expect(page.getByTestId("date-input")).toBeVisible();
 		// no change in count since all builds in test data are new
-		await expect(page.getByTestId("build-card")).toHaveCount(24);
+		await expect(page.getByTestId("build-card")).toHaveCount(5);
 	});
 });
 

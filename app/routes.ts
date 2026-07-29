@@ -329,6 +329,7 @@ export default [
 	]),
 
 	route("/patrons", "features/api-private/routes/patrons.ts"),
+	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/seed", "features/api-private/routes/seed.ts"),
 	route("/users", "features/api-private/routes/users.ts"),
 

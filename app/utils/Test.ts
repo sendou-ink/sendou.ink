@@ -1,4 +1,3 @@
-import { sql } from "kysely";
 import type {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
@@ -8,9 +7,6 @@ import { expect } from "vitest";
 import type { z } from "zod";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { actAs } from "~/db/seed/core/actAs";
-import { resetFactories } from "~/db/seed/core/defineFactory";
-import { db } from "~/db/sql";
-import { markDatabaseClean } from "~/db/write-tracker";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
@@ -197,37 +193,3 @@ async function authHeader(
 
 	return [["Cookie", await authSessionStorage.commitSession(session)]];
 }
-
-/**
- * Resets all data in the database by deleting all rows from every table,
- * except for SQLite system tables and the 'migrations' table.
- *
- * Tests do not call this — `app/test-setup.ts` runs it after every test that wrote
- * anything. Call it by hand only to wipe *within* a test.
- */
-export const dbReset = async () => {
-	// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
-	// deleted from directly; the fts index stays in sync via the User triggers
-	const { rows: tables } = await sql<{ name: string }>`
-		SELECT name FROM sqlite_master
-		WHERE type='table'
-		AND name NOT LIKE 'sqlite_%'
-		AND name NOT LIKE 'migrations'
-		AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
-		AND NOT EXISTS (
-			SELECT 1 FROM sqlite_master AS vt
-			WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
-			AND sqlite_master.name LIKE vt.name || '_%'
-		)
-	`.execute(db);
-
-	await sql`PRAGMA foreign_keys = OFF`.execute(db);
-	for (const table of tables) {
-		await sql`DELETE FROM ${sql.table(table.name)}`.execute(db);
-	}
-	await sql`PRAGMA foreign_keys = ON`.execute(db);
-
-	resetFactories();
-	// last, because the deletes above are themselves writes
-	markDatabaseClean();
-};

@@ -7,6 +7,13 @@ import {
 } from "@playwright/test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { tournamentBracketsPage } from "~/utils/urls";
+import {
+	assertFlushed,
+	type Factories,
+	flushIfDirty,
+	loadFactories,
+	resetForTest,
+} from "./factories";
 
 try {
 	process.loadEnvFile();
@@ -18,9 +25,14 @@ export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 500;
 type WorkerFixtures = {
 	workerPort: number;
 	workerBaseURL: string;
+	factories: Factories;
 };
 
-export const test = base.extend<object, WorkerFixtures>({
+type TestFixtures = {
+	resetDatabase: undefined;
+};
+
+export const test = base.extend<TestFixtures, WorkerFixtures>({
 	workerPort: [
 		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
@@ -38,6 +50,24 @@ export const test = base.extend<object, WorkerFixtures>({
 	baseURL: async ({ workerBaseURL }, use) => {
 		await use(workerBaseURL);
 	},
+	factories: [
+		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
+		async ({}, use, workerInfo) => {
+			await use(await loadFactories(workerInfo.parallelIndex));
+		},
+		{ scope: "worker" },
+	],
+	resetDatabase: [
+		async ({ page, factories }, use) => {
+			await resetForTest(page, factories);
+
+			await use(undefined);
+
+			// fails loudly instead of leaving the next test to guess
+			await assertFlushed();
+		},
+		{ auto: true },
+	],
 });
 
 export { expect };
@@ -119,6 +149,8 @@ export async function selectTournament({
 
 /** page.goto that waits for the page to be hydrated before proceeding */
 export async function navigate({ page, url }: { page: Page; url: string }) {
+	await flushIfDirty(page);
+
 	// Rewrite absolute URLs with localhost to use the worker's baseURL
 	// This handles invite links and other URLs embedded with VITE_SITE_DOMAIN
 	let targetUrl = url;
@@ -151,6 +183,8 @@ async function retryPost(
 	url: string,
 	options?: Parameters<Page["request"]["post"]>[1],
 ) {
+	await flushIfDirty(page);
+
 	const MAX_ATTEMPTS = 3;
 
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -242,6 +276,8 @@ function watchForDataGetAfterPOST(page: Page) {
 }
 
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
+	await flushIfDirty(page);
+
 	const MAX_ATTEMPTS = 3;
 	const PER_ATTEMPT_TIMEOUT = 10_000;
 
