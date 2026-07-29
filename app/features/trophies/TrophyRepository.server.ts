@@ -329,7 +329,7 @@ export async function findWinsByOwner({
 
 	const ownResults = await db
 		.selectFrom("TournamentResult")
-		.select(["tournamentId", "tournamentTeamId", "spDiff"])
+		.select(["tournamentId", "tournamentTeamId"])
 		.where("userId", "=", userId)
 		.where("tournamentId", "in", tournamentIds)
 		.execute();
@@ -405,7 +405,6 @@ export async function findWinsByOwner({
 
 		return {
 			...tournament,
-			spDiff: ownResult?.spDiff ?? null,
 			members: R.sortBy(
 				members,
 				(member) => (member.id === userId ? 0 : 1),

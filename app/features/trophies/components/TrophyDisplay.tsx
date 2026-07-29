@@ -9,7 +9,6 @@ import { WeaponImage } from "~/components/Image";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
 import { usePagination } from "~/hooks/usePagination";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { trophyWinsPage } from "~/utils/urls";
 import type { TrophyWinsLoaderData } from "../routes/trophies.$id.wins.$userId";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "../trophies-constants";
@@ -197,16 +196,6 @@ function TrophyWinDetails({
 								<ParticipationPill setResults={member.setResults} />
 							</div>
 						))}
-					</div>
-				) : null}
-				{win.spDiff ? (
-					<div className={styles.winSp}>
-						{win.spDiff > 0 ? (
-							<span className="text-success">▲</span>
-						) : (
-							<span className="text-warning">▼</span>
-						)}
-						{Math.abs(roundToNDecimalPlaces(win.spDiff))}SP
 					</div>
 				) : null}
 			</div>
