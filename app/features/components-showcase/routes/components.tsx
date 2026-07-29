@@ -59,6 +59,11 @@ import {
 } from "~/features/tournament/components/TournamentRunGraphic";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
+import {
+	SeasonSummaryGraphic,
+	type SeasonSummaryGraphicActivity,
+	type SeasonSummaryGraphicBestSet,
+} from "~/features/user-page/components/SeasonSummaryGraphic";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
@@ -103,6 +108,11 @@ export const SECTIONS = [
 		title: "Tournament Run Graphic",
 		id: "tournament-run-graphic",
 		component: TournamentRunGraphicSection,
+	},
+	{
+		title: "Season Summary Graphic",
+		id: "season-summary-graphic",
+		component: SeasonSummaryGraphicSection,
 	},
 	{
 		title: "Form Messages",
@@ -1874,6 +1884,161 @@ function TournamentRunGraphicSection({ id }: { id: string }) {
 						matches={RUN_GRAPHIC_MATCHES}
 						teamsCount={74}
 						playersCount={349}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const SEASON_SUMMARY_DAYS: Array<
+	[date: string, sp: number, activity: SeasonSummaryGraphicActivity]
+> = [
+	["2026-03-02", 1875.2, "sq"],
+	["2026-03-03", 1922.7, "sq"],
+	["2026-03-06", 1898.4, "sq"],
+	["2026-03-08", 1961.3, "tournament"],
+	["2026-03-10", 2004.9, "sq"],
+	["2026-03-12", 1987.1, "sq"],
+	["2026-03-14", 2043.6, "sq"],
+	["2026-03-17", 2071.2, "sq"],
+	["2026-03-19", 2055.8, "sq"],
+	["2026-03-22", 2102.4, "both"],
+	["2026-03-25", 2138.9, "sq"],
+	["2026-03-26", 2117.3, "sq"],
+	["2026-03-29", 2164.0, "tournament"],
+	["2026-04-02", 2189.5, "sq"],
+	["2026-04-05", 2151.2, "tournament"],
+	["2026-04-06", 2208.8, "sq"],
+	["2026-04-09", 2247.3, "sq"],
+	["2026-04-12", 2231.6, "both"],
+	["2026-04-15", 2278.1, "sq"],
+	["2026-04-16", 2296.4, "sq"],
+	["2026-04-19", 2263.7, "tournament"],
+	["2026-04-21", 2312.9, "sq"],
+	["2026-04-24", 2340.2, "sq"],
+	["2026-04-26", 2371.8, "both"],
+	["2026-04-28", 2355.4, "sq"],
+	["2026-05-01", 2389.7, "sq"],
+	["2026-05-03", 2410.8, "tournament"],
+	["2026-05-05", 2384.2, "sq"],
+	["2026-05-08", 2401.5, "sq"],
+	["2026-05-10", 2368.9, "both"],
+	["2026-05-11", 2352.6, "sq"],
+	["2026-05-14", 2377.3, "sq"],
+	["2026-05-16", 2341.5, "sq"],
+];
+
+const SEASON_SUMMARY_BEST_SETS: SeasonSummaryGraphicBestSet[] = [
+	{
+		context: "SendouQ",
+		ownScore: 4,
+		opponentScore: 2,
+		opponentSp: 2489.3,
+		opponentPlayers: [
+			{ name: "Yeti" },
+			{ name: "まるお", countryCode: "JP" },
+			{ name: "Silver", countryCode: "FR" },
+			{ name: "Chara", countryCode: "US" },
+		],
+	},
+	{
+		context: "In The Zone 50",
+		ownScore: 3,
+		opponentScore: 2,
+		opponentSp: 2451.0,
+		opponentPlayers: [
+			{ name: "zyf", countryCode: "US" },
+			{ name: "Blopwher", countryCode: "US" },
+			{ name: "Stans", countryCode: "US" },
+			{ name: "Miner", countryCode: "ET" },
+		],
+	},
+	{
+		context: "SendouQ",
+		ownScore: 4,
+		opponentScore: 3,
+		opponentSp: 2413.7,
+		opponentPlayers: [
+			{ name: "Andre", countryCode: "TT" },
+			{ name: "Devin", countryCode: "DE" },
+			{ name: "kiki", countryCode: "IE" },
+			{ name: "Reiyu", countryCode: "DO" },
+		],
+	},
+];
+
+function SeasonSummaryGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Season Summary Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Season summary export image">
+					<SeasonSummaryGraphic
+						user={{
+							name: "Sendou",
+							discordId: "79237403620945920",
+							customUrl: "sendou",
+							countryCode: "FI",
+							avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/dBYwiLjlhVBwW-oyyNJkC-1721997877357.webp`,
+						}}
+						season={8}
+						seasonDateRange={{
+							starts: new Date("2026-03-02T17:00:00.000Z"),
+							ends: new Date("2026-05-17T20:59:59.999Z"),
+						}}
+						tier={{ name: "DIAMOND", isPlus: true }}
+						sp={2341.5}
+						setsWon={41}
+						setsLost={18}
+						mapsWon={132}
+						mapsLost={77}
+						longestWinStreak={9}
+						clutch={{ won: 8, total: 12 }}
+						soloRank={14}
+						teamRank={{
+							rank: 12,
+							sp: 2502.4,
+							mates: [
+								{ name: "Grey", countryCode: "FR" },
+								{ name: "sunni" },
+								{ name: "Isabel T.J.", countryCode: "ES" },
+							],
+						}}
+						topMates={[
+							{
+								player: { name: "Grey", countryCode: "FR" },
+								setsCount: 23,
+							},
+							{ player: { name: "sunni" }, setsCount: 17 },
+							{
+								player: { name: "まるお", countryCode: "JP" },
+								setsCount: 9,
+							},
+						]}
+						bestStage={{ stageId: 14, winratePercentage: 78 }}
+						spProgression={SEASON_SUMMARY_DAYS.map(([date, sp]) => ({
+							date,
+							sp,
+						}))}
+						activeDays={SEASON_SUMMARY_DAYS.map(([date, , activity]) => ({
+							date,
+							activity,
+						}))}
+						bestSets={SEASON_SUMMARY_BEST_SETS}
+						bestTournament={{
+							name: "In The Zone 50",
+							logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-itz.png`,
+							tier: 2,
+							placement: 2,
+							teamsCount: 32,
+						}}
+						topWeapons={[
+							{ weaponSplId: 40, usagePercentage: 46 },
+							{ weaponSplId: 1001, usagePercentage: 31 },
+							{ weaponSplId: 2070, usagePercentage: 12 },
+						]}
 					/>
 				</ComponentRow>
 			</div>

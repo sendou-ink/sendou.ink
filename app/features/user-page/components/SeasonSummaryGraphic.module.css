@@ -1,0 +1,403 @@
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.userNameRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.userName {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	line-height: 1.15;
+}
+
+.dateRange {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.seasonBadge {
+	margin-left: auto;
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--graphic-accent);
+}
+
+.box {
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+}
+
+.boxLabel {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--graphic-text-dim);
+}
+
+.hero {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	background:
+		linear-gradient(to right, oklch(83% 0.0816 253 / 0.16), transparent 40%),
+		var(--graphic-row-bg);
+	border-color: oklch(83% 0.0816 253 / 0.35);
+}
+
+.heroTierName {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	line-height: 1.1;
+}
+
+.heroSp {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.heroPeak {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.rankBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	margin-left: auto;
+	padding-right: var(--s-2);
+}
+
+.rankValue {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	color: var(--graphic-accent);
+}
+
+.statsRow {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	gap: var(--s-2);
+}
+
+.stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: var(--s-1-5) var(--s-3);
+}
+
+.statValue {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.statSeparator {
+	color: var(--graphic-text-dim);
+}
+
+.statWin {
+	color: var(--graphic-win);
+}
+
+.statLoss {
+	color: var(--graphic-loss);
+}
+
+.bestStageRow {
+	background-image:
+		linear-gradient(to right, var(--graphic-row-bg) 35%, transparent 80%),
+		var(--best-stage-banner);
+	background-origin: border-box;
+	background-position: right center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.bestStageName {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+}
+
+.bestStageWinrate {
+	font-weight: var(--weight-extra);
+	color: var(--graphic-accent);
+}
+
+.chart {
+	display: block;
+	width: 100%;
+}
+
+.chartLine {
+	fill: none;
+	stroke: var(--graphic-accent);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.chartGridLine {
+	stroke: var(--graphic-row-border);
+	stroke-width: 1;
+}
+
+.chartLabel {
+	font-size: 10px;
+	font-weight: var(--weight-semi);
+	fill: var(--graphic-text-dim);
+}
+
+.chartPeakLabel {
+	font-size: 11px;
+	font-weight: var(--weight-extra);
+	fill: var(--graphic-text);
+}
+
+.chartDot {
+	fill: var(--graphic-accent);
+	stroke: var(--graphic-row-bg);
+	stroke-width: 2;
+}
+
+.middleGrid {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	gap: var(--s-2);
+}
+
+.sideStack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.activityBox {
+	/* categorical palette, all-pairs CVD separation validated against the dark surface */
+	--activity-none: oklch(100% 0 0 / 0.06);
+	--activity-sq: oklch(70% 0.11 253);
+	--activity-tournament: oklch(75% 0.12 85);
+	--activity-both: oklch(94% 0.02 253);
+}
+
+.calendar {
+	display: grid;
+	grid-auto-flow: column;
+	grid-template-rows: repeat(7, auto);
+	justify-content: center;
+	gap: 4px;
+	margin-top: var(--s-4);
+}
+
+.calendarCell {
+	width: 18px;
+	height: 18px;
+	border-radius: 3px;
+	background-color: var(--activity-none);
+
+	&.calendarCellHidden {
+		visibility: hidden;
+	}
+
+	&.calendarSq {
+		background-color: var(--activity-sq);
+	}
+
+	&.calendarTournament {
+		background-color: var(--activity-tournament);
+	}
+
+	&.calendarBoth {
+		background-color: var(--activity-both);
+	}
+}
+
+.calendarLegend {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2-5);
+	margin-top: var(--s-3);
+}
+
+.calendarLegendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+
+	& .calendarCell {
+		width: 10px;
+		height: 10px;
+	}
+}
+
+.weaponsRow {
+	display: flex;
+	justify-content: space-evenly;
+	gap: var(--s-3);
+	margin-top: var(--s-1-5);
+}
+
+.weaponUsage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.matesList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	margin-top: var(--s-1-5);
+}
+
+.mateRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.mateName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.mateSets {
+	margin-left: auto;
+	white-space: nowrap;
+}
+
+.teamRankRow {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.teamRankSp {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.playersInline {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: var(--s-0-5) var(--s-3);
+}
+
+.player {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.sectionDivider {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--graphic-accent);
+
+	&::before,
+	&::after {
+		content: "";
+		flex: 1;
+		height: 1px;
+		background-color: var(--graphic-row-border);
+	}
+}
+
+.bestSetsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bestSetRow {
+	display: grid;
+	grid-template-columns: 3.25rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.score {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+	color: var(--graphic-win);
+}
+
+.playersInlineStart {
+	justify-content: flex-start;
+	margin-top: var(--s-1);
+}
+
+.setSp {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: 0 var(--s-2);
+}
+
+.setSpValue {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.tournamentRow {
+	display: grid;
+	grid-template-columns: 3.25rem 2.75rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.tournamentName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.tournamentMeta {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
