@@ -23,4 +23,9 @@ export class TournamentBracketsPage {
 	teamName(name: string) {
 		return this.page.getByText(name);
 	}
+
+	/** The tab labels drop the "bracket" suffix of the bracket's name. */
+	bracketTab(name: string) {
+		return this.page.getByRole("tab", { name });
+	}
 }

@@ -19,6 +19,10 @@ export class CalendarNewEventPage {
 			noTournamentPermissionsAlert: page.getByText(
 				"No permissions to add tournaments",
 			),
+			addBracketButton: page.getByTestId("add-bracket-button"),
+			bracketNameInputs: page.getByLabel("Bracket's name"),
+			bracketFormatSelects: page.getByLabel("Format"),
+			placementsInputs: page.getByTestId("placements-input"),
 		};
 	}
 
@@ -28,5 +32,52 @@ export class CalendarNewEventPage {
 
 	async gotoNewTournament() {
 		await navigate({ page: this.page, url: TOURNAMENT_NEW_PAGE });
+	}
+
+	// the `date` datetime inputs use the array item's label ("Date"), not the
+	// array's own label, so they're driven directly rather than via the form helper
+	async setFirstDate(date: Date) {
+		const fill = (segment: string, value: string) =>
+			this.page
+				.getByRole("spinbutton", { name: new RegExp(`^${segment}, Date`) })
+				.first()
+				.fill(value);
+
+		const hours = date.getHours();
+		await fill("year", String(date.getFullYear()));
+		await fill("month", String(date.getMonth() + 1));
+		await fill("day", String(date.getDate()));
+		await fill("hour", String(hours % 12 || 12));
+		await fill("minute", date.getMinutes().toString().padStart(2, "0"));
+		await fill("AM/PM", hours >= 12 ? "PM" : "AM");
+	}
+
+	// the TO map pool grid exposes each map as a mode button inside a group labelled
+	// by its stage name
+	async pickMapPool(maps: Array<{ stage: string; mode: string }>) {
+		for (const { stage, mode } of maps) {
+			await this.page
+				.getByRole("group", { name: stage })
+				.getByRole("button", { name: mode })
+				.click();
+		}
+	}
+
+	// a freshly added bracket is already a follow-up (sources default on), so it only
+	// needs its name, format and source placements filled in
+	async addFollowUpBracket({
+		name,
+		format,
+		placements,
+	}: {
+		name: string;
+		format: string;
+		placements: string;
+	}) {
+		await this.locators.addBracketButton.click();
+
+		await this.locators.bracketNameInputs.last().fill(name);
+		await this.locators.bracketFormatSelects.last().selectOption(format);
+		await this.locators.placementsInputs.last().fill(placements);
 	}
 }
