@@ -210,11 +210,19 @@
 }
 
 .editingBadge {
-	height: var(--selector-size-xs);
 	padding: 0 var(--s-1-5);
 	border-radius: var(--radius-selector);
 	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.notManagerBadge {
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-warning-low);
+	color: var(--color-warning-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 }

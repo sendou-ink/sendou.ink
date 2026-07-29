@@ -663,9 +663,20 @@ function TrophyListRow({
 							{t("trophies:new.update.editing")}
 						</span>
 					) : null}
+					{pending.target &&
+					pending.submitterUserId !== pending.target.managerId ? (
+						<span className={styles.notManagerBadge}>
+							{t("trophies:new.pending.notFromManager")} (
+							{pending.submitterUsername})
+						</span>
+					) : null}
 					<span className={styles.pendingName}>{pending.name}</span>
 					<span className={styles.pendingMeta}>
-						{pending.submitterDiscordId ? (
+						{pending.manager?.discordId ? (
+							<Link to={userPage({ discordId: pending.manager.discordId })}>
+								{pending.manager.username}
+							</Link>
+						) : pending.submitterDiscordId ? (
 							<Link to={userPage({ discordId: pending.submitterDiscordId })}>
 								{pending.submitterUsername}
 							</Link>

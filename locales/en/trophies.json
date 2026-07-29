@@ -53,6 +53,7 @@
 	"new.update.before": "Before",
 	"new.update.after": "After",
 	"new.pending.empty": "No pending trophies",
+	"new.pending.notFromManager": "Not submitted by the trophy's manager",
 	"new.pending.approve": "Approve",
 	"new.pending.approved": "Approved",
 	"new.pending.approvalProgress": "{{current}}/{{required}} approvals",

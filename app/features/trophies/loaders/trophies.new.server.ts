@@ -3,7 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
 import * as TrophyRepository from "../TrophyRepository.server";
 import { TROPHY_APPROVALS_REQUIRED } from "../trophies-constants";
-import { canReviewTrophies } from "../trophies-utils";
+import { canEditAnyTrophy, canReviewTrophies } from "../trophies-utils";
 
 export type NewTrophyLoaderData = SerializeFrom<typeof loader>;
 
@@ -16,7 +16,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 			? TrophyRepository.allPending()
 			: TrophyRepository.pendingBySubmitter(user.id),
 		TrophyRepository.unreviewedCountBySubmitter(user.id),
-		canReview
+		canEditAnyTrophy(user)
 			? TrophyRepository.findAllForEditing()
 			: TrophyRepository.findManagedBy(user.id),
 	]);

@@ -53,6 +53,7 @@
 	"new.update.before": "",
 	"new.update.after": "",
 	"new.pending.empty": "",
+	"new.pending.notFromManager": "",
 	"new.pending.approve": "",
 	"new.pending.approved": "",
 	"new.pending.approvalProgress": "",
