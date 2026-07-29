@@ -635,8 +635,8 @@ function TrophyListRow({
 
 	const [previewOpen, setPreviewOpen] = React.useState(false);
 
-	const analysis = analyzeTrophyModel(
-		decompressTrophyModel(pending.model) ?? "",
+	const [analysis] = React.useState(() =>
+		analyzeTrophyModel(decompressTrophyModel(pending.model) ?? ""),
 	);
 
 	return (
