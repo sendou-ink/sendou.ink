@@ -1,0 +1,166 @@
+.container {
+	/* fixed dark palette so the exported image ignores the viewer's theme */
+	--graphic-bg: oklch(15% 0.03 268);
+	--graphic-row-bg: oklch(22% 0.052 268);
+	--graphic-row-border: oklch(100% 0 0 / 0.06);
+	--graphic-text: oklch(96% 0.01 268);
+	--graphic-text-dim: oklch(72% 0.04 268);
+	--graphic-accent: oklch(83% 0.0816 253);
+	--graphic-first: oklch(87% 0.13 85);
+	--graphic-second: oklch(83% 0.015 268);
+	--graphic-third: oklch(74% 0.09 55);
+
+	--color-bg-higher: oklch(30% 0.06 268);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	width: 720px;
+	padding: var(--s-6);
+	background:
+		radial-gradient(
+			ellipse 90% 45% at 50% -5%,
+			oklch(35% 0.09 253 / 0.55),
+			transparent 70%
+		),
+		var(--graphic-bg);
+	color: var(--graphic-text);
+	border-radius: var(--radius-box);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.tournamentName {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	line-height: 1.15;
+}
+
+.tournamentDate {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.organization {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin-left: auto;
+}
+
+.organizationName {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.teamsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.teamRow {
+	display: grid;
+	grid-template-columns: 3rem 2.75rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--graphic-row-bg);
+	border: 1px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+
+	&.teamRowFirst {
+		background:
+			linear-gradient(to right, oklch(87% 0.13 85 / 0.08), transparent 60%),
+			var(--graphic-row-bg);
+		border-color: oklch(87% 0.13 85 / 0.4);
+	}
+}
+
+.placement {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+	color: var(--graphic-text-dim);
+}
+
+.placementSuffix {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-extra);
+	vertical-align: super;
+}
+
+.placementFirst {
+	color: var(--graphic-first);
+}
+
+.placementSecond {
+	color: var(--graphic-second);
+}
+
+.placementThird {
+	color: var(--graphic-third);
+}
+
+.teamInfo {
+	min-width: 0;
+}
+
+.teamName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.playersList {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--s-0-5) var(--s-3);
+	margin-top: var(--s-1);
+}
+
+.player {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.playerName {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.weapons {
+	display: flex;
+	gap: var(--s-1);
+	padding: var(--s-1-5);
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: var(--radius-field);
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	color: var(--graphic-text-dim);
+}
+
+.footerAccent {
+	color: var(--graphic-accent);
+}

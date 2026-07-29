@@ -49,6 +49,10 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Table } from "~/components/Table";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import {
+	TournamentResultsGraphic,
+	type TournamentResultsGraphicTeam,
+} from "~/features/tournament/components/TournamentResultsGraphic";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import type { CustomFieldRenderProps } from "~/form/FormField";
@@ -59,7 +63,7 @@ import styles from "../components-showcase.module.css";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "q"],
+	i18n: ["user", "q", "calendar"],
 };
 
 export const SECTIONS = [
@@ -86,6 +90,11 @@ export const SECTIONS = [
 	{ title: "Pagination", id: "pagination", component: PaginationSection },
 	{ title: "Avatar", id: "avatar", component: AvatarSection },
 	{ title: "User Card", id: "user-card", component: UserCardSection },
+	{
+		title: "Tournament Results Graphic",
+		id: "tournament-results-graphic",
+		component: TournamentResultsGraphicSection,
+	},
 	{
 		title: "Form Messages",
 		id: "form-messages",
@@ -1619,6 +1628,130 @@ function UserCardSection({ id }: { id: string }) {
 			<div className="stack md">
 				<ComponentRow label="Click the trigger">
 					<UserCard data={USER_CARD_DATA}>Sendou</UserCard>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const RESULTS_GRAPHIC_IMG_ROOT =
+	"https://sendou.nyc3.cdn.digitaloceanspaces.com";
+
+const RESULTS_GRAPHIC_TEAMS: TournamentResultsGraphicTeam[] = [
+	{
+		placement: 1,
+		name: "Besto Friendo",
+		players: [
+			{ name: "Yeti" },
+			{ name: "まるお", countryCode: "JP" },
+			{ name: "🪄", countryCode: "FR" },
+			{ name: "Grey", countryCode: "FR" },
+		],
+		weapons: [40, 2070, 8010, 5030],
+	},
+	{
+		placement: 2,
+		name: "輝く",
+		players: [
+			{ name: "Ali", countryCode: "CA" },
+			{ name: "w" },
+			{ name: "へでる" },
+			{ name: "メガチャーレム" },
+		],
+		weapons: [210, 40, 2010, 1120],
+	},
+	{
+		placement: 3,
+		name: "Small Bubbler",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/pickup-logo-867qQb75XxqndbJDbJzk3-1774655417856.webp`,
+		players: [
+			{ name: "Omegα" },
+			{ name: "shadowind", countryCode: "US" },
+			{ name: "Max", countryCode: "US" },
+			{ name: "y0shell", countryCode: "GB" },
+		],
+		weapons: [5010, 2030, 1010, 0],
+	},
+	{
+		placement: 4,
+		name: "For fun.",
+		players: [
+			{ name: "Len. 🕷", countryCode: "VN" },
+			{ name: "Jovan", countryCode: "NG" },
+			{ name: "swish", countryCode: "US" },
+			{ name: "prosper", countryCode: "NG" },
+		],
+		weapons: [240, 5040, 1030, 2070],
+	},
+	{
+		placement: 5,
+		name: "It’s too much",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/pickup-logo-1R_1LhuEk6jecMsRWwCl--1774679643780.webp`,
+		players: [
+			{ name: "Coolaceeeee  ^_^", countryCode: "JP" },
+			{ name: "illusion" },
+			{ name: "sunni" },
+			{ name: "Chiva", countryCode: "MX" },
+		],
+		weapons: [1001, 220, 40, 2010],
+	},
+	{
+		placement: 5,
+		name: "ezmd",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/Yu_tgElCa5D48CcyFPF3Y-1756077173431.webp`,
+		players: [
+			{ name: "Silver", countryCode: "FR" },
+			{ name: "Devin", countryCode: "DE" },
+			{ name: "kiki", countryCode: "IE" },
+			{ name: "Reiyu", countryCode: "DO" },
+		],
+		weapons: [5011, 2000, 8020, 260],
+	},
+	{
+		placement: 7,
+		name: "healthy diet food groups",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/OYhoGpd7lIRyyBawAfRx9-1673646086021.webp`,
+		players: [
+			{ name: "zyf", countryCode: "US" },
+			{ name: "Blopwher", countryCode: "US" },
+			{ name: "Stans", countryCode: "US" },
+			{ name: "Miner", countryCode: "ET" },
+		],
+		weapons: [1100, 2040, 10, 5000],
+	},
+	{
+		placement: 7,
+		name: "WIT CHECK",
+		players: [
+			{ name: "Andre", countryCode: "TT" },
+			{ name: "Isabel T.J.", countryCode: "ES" },
+			{ name: "Chara", countryCode: "US" },
+			{ name: "Basil", countryCode: "US" },
+		],
+		weapons: [200, 1020, 2060, 5020],
+	},
+];
+
+function TournamentResultsGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Tournament Results Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Top 8 export image">
+					<TournamentResultsGraphic
+						tournamentId={3435}
+						tournamentName="In The Zone 50"
+						startTime={new Date(1774720800 * 1000)}
+						logoUrl={`${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-itz.png`}
+						organization={{
+							name: "sendou.ink",
+							avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/dBYwiLjlhVBwW-oyyNJkC-1721997877357.webp`,
+						}}
+						teams={RESULTS_GRAPHIC_TEAMS}
+						teamsCount={32}
+						playersCount={130}
+					/>
 				</ComponentRow>
 			</div>
 		</Section>
