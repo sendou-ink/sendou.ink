@@ -1743,6 +1743,7 @@ function TournamentResultsGraphicSection({ id }: { id: string }) {
 						tournamentId={3435}
 						tournamentName="In The Zone 50"
 						startTime={new Date(1774720800 * 1000)}
+						tier={2}
 						logoUrl={`${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-itz.png`}
 						organization={{
 							name: "sendou.ink",

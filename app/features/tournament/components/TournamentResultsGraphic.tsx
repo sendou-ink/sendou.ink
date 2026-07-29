@@ -4,6 +4,7 @@ import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
+import { TierPill } from "~/components/TierPill";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { ordinalSuffix } from "~/utils/i18n";
 import { tournamentPage } from "~/utils/urls";
@@ -28,6 +29,7 @@ export function TournamentResultsGraphic({
 	tournamentName,
 	startTime,
 	logoUrl,
+	tier,
 	organization,
 	teams,
 	teamsCount,
@@ -37,6 +39,7 @@ export function TournamentResultsGraphic({
 	tournamentName: string;
 	startTime: Date;
 	logoUrl?: string;
+	tier?: number;
 	organization?: { name: string; avatarUrl?: string };
 	teams: TournamentResultsGraphicTeam[];
 	teamsCount: number;
@@ -54,7 +57,10 @@ export function TournamentResultsGraphic({
 					alt=""
 				/>
 				<div>
-					<div className={styles.tournamentName}>{tournamentName}</div>
+					<div className={styles.tournamentNameRow}>
+						<div className={styles.tournamentName}>{tournamentName}</div>
+						{typeof tier === "number" ? <TierPill tier={tier} /> : null}
+					</div>
 					<LocaleTime
 						date={startTime}
 						options={DATE_FORMAT_OPTIONS}

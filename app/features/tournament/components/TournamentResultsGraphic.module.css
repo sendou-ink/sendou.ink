@@ -34,6 +34,12 @@
 	gap: var(--s-3);
 }
 
+.tournamentNameRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
 .tournamentName {
 	font-size: var(--font-lg);
 	font-weight: var(--weight-extra);
