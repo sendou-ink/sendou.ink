@@ -81,12 +81,12 @@
 	gap: var(--s-3);
 	padding: var(--s-2) var(--s-3);
 	background-color: var(--graphic-row-bg);
-	border: 1px solid var(--graphic-row-border);
+	border: 1.5px solid var(--graphic-row-border);
 	border-radius: var(--radius-box);
 
 	&.teamRowFirst {
 		background:
-			linear-gradient(to right, oklch(87% 0.13 85 / 0.08), transparent 60%),
+			linear-gradient(to right, oklch(87% 0.13 85 / 0.18), transparent 40%),
 			var(--graphic-row-bg);
 		border-color: oklch(87% 0.13 85 / 0.4);
 	}
