@@ -4,7 +4,6 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	selectWeapon,
 	test,
 } from "./helpers/playwright";
@@ -13,7 +12,7 @@ test.describe("Build Analyzer", () => {
 	test("analyzes a build and links to new build page with same abilities", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: ANALYZER_URL });
 

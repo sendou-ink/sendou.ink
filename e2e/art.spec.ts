@@ -1,13 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,7 +9,7 @@ test.describe("Art", () => {
 	test("uploads art as NZAP, admin approves, art displays on user page", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 
 		await navigate({ page, url: "/art/new" });

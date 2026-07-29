@@ -12,7 +12,6 @@ import {
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -24,7 +23,6 @@ import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { FRIEND_CODE_REGEXP_PATTERN } from "~/features/sendouq/q-constants";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
@@ -47,6 +45,7 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
+// xxx: should seed be just in the dropdown menu?
 export default function AdminPage() {
 	const isStaff = useHasRole("STAFF");
 
@@ -454,20 +453,7 @@ function Seed() {
 			method="post"
 			action={SEED_URL}
 		>
-			<div className="stack horizontal md items-end">
-				<SubmitButton state={fetcher.state}>Seed</SubmitButton>
-				<SendouSelect
-					label="Variation"
-					name="variation"
-					defaultSelectedKey="DEFAULT"
-				>
-					{SEED_VARIATIONS.map((variation) => (
-						<SendouSelectItem key={variation} id={variation}>
-							{variation}
-						</SendouSelectItem>
-					))}
-				</SendouSelect>
-			</div>
+			<SubmitButton state={fetcher.state}>Seed</SubmitButton>
 		</fetcher.Form>
 	);
 }

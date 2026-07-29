@@ -6,7 +6,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	test,
 	waitForPOSTResponse,
 } from "./helpers/playwright";
@@ -65,7 +64,7 @@ test.describe("User banning", () => {
 	test("banned user is redirected to suspended page and cannot access site", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		// 1. As admin, ban NZAP user
 		await impersonate(page, ADMIN_ID);
@@ -105,7 +104,7 @@ test.describe("User banning", () => {
 	test("timed ban shows expiration date on suspended page", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		// 1. As admin, ban NZAP user with a future duration
 		await impersonate(page, ADMIN_ID);

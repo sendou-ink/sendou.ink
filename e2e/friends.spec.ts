@@ -4,7 +4,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	selectUser,
 	submit,
 	test,
@@ -15,7 +14,7 @@ test.describe("Friends", () => {
 	test("send friend request, accept it, then delete friend", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: FRIENDS_PAGE });
 

@@ -3,14 +3,13 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	submit,
 	test,
 } from "./helpers/playwright";
 
 test.describe("LFG", () => {
 	test("adds a new lfg post", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -30,7 +29,7 @@ test.describe("LFG", () => {
 	});
 
 	test("creates post with custom languages", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -53,7 +52,7 @@ test.describe("LFG", () => {
 	});
 
 	test("edits post languages", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -95,7 +94,7 @@ test.describe("LFG", () => {
 	});
 
 	test("filters posts by language", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,

@@ -11,7 +11,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	submit,
 	test,
 	waitForPOSTResponse,
@@ -21,7 +20,7 @@ test.describe("SendouQ", () => {
 	test("Group preparation flow - add friends and users via invite link", async ({
 		page,
 	}) => {
-		await seed(page, "NO_SQ_GROUPS");
+		// await seed(page, "NO_SQ_GROUPS");
 		await impersonate(page, ADMIN_ID);
 
 		// Create preparing group
@@ -96,7 +95,7 @@ test.describe("SendouQ", () => {
 	});
 
 	test("Request flow - partial groups morph together", async ({ page }) => {
-		await seed(page, "NO_SQ_GROUPS");
+		// await seed(page, "NO_SQ_GROUPS");
 
 		// ADMIN creates a solo group
 		await impersonate(page, ADMIN_ID);
@@ -146,7 +145,7 @@ test.describe("SendouQ", () => {
 	test("Changing match preferences cancels pending requests", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		// Sendou (ADMIN) is in a full group. Challenge another full group.
 		await impersonate(page, ADMIN_ID);

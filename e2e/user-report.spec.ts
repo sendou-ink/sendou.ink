@@ -5,7 +5,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	submit,
 	test,
 } from "./helpers/playwright";
@@ -16,7 +15,7 @@ test.describe("User report", () => {
 	test("reports a user from the card and shows it on the admin page", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, REPORTER_ID);
 		await navigate({ page, url: LFG_PAGE });
 
@@ -46,7 +45,7 @@ test.describe("User report", () => {
 	test("prefills the match id when reporting from a match page", async ({
 		page,
 	}) => {
-		await seed(page, "IN_SQ_MATCH");
+		// await seed(page, "IN_SQ_MATCH");
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: SENDOUQ_PAGE });
 		await expect(page).toHaveURL(/\/q\/match\/\d+/);

@@ -1,7 +1,12 @@
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import { tags } from "~/features/calendar/calendar-constants";
 import { databaseTimestampNow } from "~/utils/dates";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
+
+type EventTags = NonNullable<
+	Parameters<typeof CalendarRepository.insert>[0]["tags"]
+>;
 
 type InsertArgs = Omit<
 	Parameters<typeof CalendarRepository.insert>[0],
@@ -14,15 +19,24 @@ type InsertArgs = Omit<
  */
 export const eventDefaults = () => ({
 	name: faker.company.name(),
-	description: null,
-	discordInviteCode: null,
+	description: faker.number.float(1) < 0.4 ? faker.lorem.paragraph() : null,
+	discordInviteCode: faker.number.float(1) < 0.3 ? faker.lorem.word() : null,
 	bracketUrl: faker.internet.url(),
 	organizationId: null,
-	tags: null,
+	tags: fakeTags(),
 	badges: [],
 	rules: null,
 	startTimes: [databaseTimestampNow()],
 });
+
+function fakeTags(): EventTags | null {
+	if (faker.number.float(1) < 0.5) return null;
+
+	return faker.helpers.arrayElements(Object.keys(tags) as EventTags, {
+		min: 1,
+		max: 3,
+	});
+}
 
 export const { create } = defineFactory({
 	defaults: eventDefaults,

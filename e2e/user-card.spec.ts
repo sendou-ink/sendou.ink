@@ -5,7 +5,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	selectUser,
 	submit,
 	test,
@@ -14,7 +13,7 @@ import {
 
 test.describe("User card", () => {
 	test("edits banner and bio from the looking page", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
 
@@ -45,7 +44,7 @@ test.describe("User card friend request", () => {
 	test("receiver sees add friend button that accepts the incoming request", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: FRIENDS_PAGE });
 
@@ -75,7 +74,7 @@ test.describe("User card friend request", () => {
 	test("sender still sees pending state on the receiver's card", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: FRIENDS_PAGE });
 

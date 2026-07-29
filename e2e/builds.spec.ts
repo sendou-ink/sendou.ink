@@ -5,18 +5,12 @@ import { newBuildBaseSchema } from "~/features/user-page/user-page-schemas";
 import type { GearType } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { BUILDS_PAGE, userBuildsPage, userNewBuildPage } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
 import { createFormHelpers } from "./helpers/playwright-form";
 
 test.describe("Builds", () => {
 	test("adds a build", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
@@ -69,7 +63,7 @@ test.describe("Builds", () => {
 	});
 
 	test("makes build private", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -113,7 +107,7 @@ test.describe("Builds", () => {
 	});
 
 	test("filters builds", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await navigate({
 			page,
 			url: BUILDS_PAGE,

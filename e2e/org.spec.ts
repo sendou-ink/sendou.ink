@@ -15,7 +15,6 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	submit,
 	test,
 	waitForPOSTResponse,
@@ -28,7 +27,7 @@ const url = tournamentOrganizationPage({
 
 test.describe("Tournament Organization", () => {
 	test("can create a new organization", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 
@@ -45,7 +44,7 @@ test.describe("Tournament Organization", () => {
 	test("user can be promoted to admin gaining org controls and can edit tournaments", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		const editButtonLocator = page.getByTestId("edit-org-button");
 
@@ -106,7 +105,7 @@ test.describe("Tournament Organization", () => {
 	test("banned player cannot join a tournament of that organization", async ({
 		page,
 	}) => {
-		await seed(page, "REG_OPEN");
+		// await seed(page, "REG_OPEN");
 
 		// 1. As admin, ban NZAP user from the organization
 		await impersonate(page, ADMIN_ID);
@@ -212,7 +211,7 @@ test.describe("Tournament Organization", () => {
 	test("allows member of established org to create tournament", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		await impersonate(page, ORG_ADMIN_TEST_ID);
 		await navigate({

@@ -7,7 +7,6 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	selectUser,
 	startBracket,
 	test,
@@ -51,7 +50,7 @@ async function addStaffer(page: Page, role?: string) {
 
 test.describe("Tournament staff", () => {
 	test("gives and takes away staff role", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 
 		await navigate({
@@ -78,7 +77,7 @@ test.describe("Tournament staff", () => {
 	test("gives organizer role which allows another user to TO", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 
 		await navigate({

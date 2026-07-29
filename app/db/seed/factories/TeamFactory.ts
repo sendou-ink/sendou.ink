@@ -16,6 +16,8 @@ type InsertArgs = Omit<
 type Options = {
 	/** Gives the team a logo, submitted by its owner the way one is in production. */
 	hasAvatar?: boolean;
+	/** Filename of the logo; one seeded to the local image storage renders in dev. */
+	avatarUrl?: string;
 };
 
 /**
@@ -46,12 +48,15 @@ export const { create } = defineFactory({
 
 		return { ...team, name: args.name, ownerUserId, memberUserIds };
 	},
-	applyOptions: async (team, { hasAvatar }: Options) => {
-		if (!hasAvatar) return;
+	applyOptions: async (team, { hasAvatar, avatarUrl }: Options) => {
+		if (!hasAvatar && !avatarUrl) return;
 
-		const image = await ImageFactory.create({
-			submitterUserId: team.ownerUserId,
-		});
+		const image = await ImageFactory.create(
+			avatarUrl
+				? { submitterUserId: team.ownerUserId, url: avatarUrl }
+				: { submitterUserId: team.ownerUserId },
+			{ isValidated: true },
+		);
 
 		// the team edit page saves the whole profile at once; everything besides the
 		// name is still empty on a team the repository has only just inserted

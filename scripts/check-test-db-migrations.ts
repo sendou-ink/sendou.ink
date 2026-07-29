@@ -12,11 +12,8 @@ const ROOT_DIR = path.join(__dirname, "..");
 
 const MIGRATIONS_DIR = path.join(ROOT_DIR, "migrations");
 const DB_FILES = [
+	// xxx: how can we get rid of having to remember to keep db-test.sqlite3 up to date?
 	path.join(ROOT_DIR, "db-test.sqlite3"),
-	...fs
-		.readdirSync(path.join(ROOT_DIR, "e2e", "seeds"))
-		.filter((f) => f.startsWith("db-seed-") && f.endsWith(".sqlite3"))
-		.map((f) => path.join(ROOT_DIR, "e2e", "seeds", f)),
 ];
 
 const migrationFilesOnDisk = fs

@@ -1,15 +1,9 @@
 import { EVENTS_PAGE } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
 
 test.describe("Events", () => {
 	test("filters between tabs and navigates to an event", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: EVENTS_PAGE });
 

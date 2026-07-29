@@ -8,7 +8,6 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	submit,
 	test,
 	waitForPOSTResponse,
@@ -20,7 +19,7 @@ const goToEditPage = (page: Page) =>
 
 test.describe("User page", () => {
 	test("uses badge pagination", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await navigate({
 			page,
 			url: userPage({ discordId: NZAP_TEST_DISCORD_ID }),
@@ -48,7 +47,7 @@ test.describe("User page", () => {
 	test("customize which badge is shown as big by default as normal user", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
@@ -67,7 +66,7 @@ test.describe("User page", () => {
 	test("customize big badge + small badge first page order as supporter", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -85,7 +84,7 @@ test.describe("User page", () => {
 	});
 
 	test("edits user profile", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -115,7 +114,7 @@ test.describe("User page", () => {
 	});
 
 	test("customizes theme colors and resets them", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		const htmlElement = page.locator("html");
@@ -153,7 +152,7 @@ test.describe("User page", () => {
 	});
 
 	test("edits weapon pool", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,

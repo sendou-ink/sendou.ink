@@ -6,7 +6,6 @@ import {
 	type Response,
 } from "@playwright/test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import type { SeedVariation } from "~/features/api-private/routes/seed";
 import { tournamentBracketsPage } from "~/utils/urls";
 
 try {
@@ -135,12 +134,6 @@ export async function navigate({ page, url }: { page: Page; url: string }) {
 /** Waits and expects the page to be hydrated (click handlers etc. ready for testing) */
 export async function expectIsHydrated(page: Page) {
 	await expect(page.getByTestId("hydrated")).toHaveCount(1);
-}
-
-export async function seed(page: Page, variation?: SeedVariation) {
-	return retryPost(page, "seed", "/seed", {
-		form: { variation: variation ?? "DEFAULT", source: "e2e" },
-	});
 }
 
 export function impersonate(page: Page, userId = ADMIN_ID) {
@@ -293,8 +286,8 @@ export async function clickNavTab(page: Page, testId: string) {
 	await visibleTab.click();
 }
 
+// xxx: should be removed
 export const startBracket = async (page: Page, tournamentId = 2) => {
-	await seed(page);
 	await impersonate(page);
 
 	await navigate({

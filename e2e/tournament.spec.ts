@@ -12,14 +12,13 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	submit,
 	test,
 } from "./helpers/playwright";
 
 test.describe("Tournament", () => {
 	test("registers for tournament", async ({ page }) => {
-		await seed(page, "REG_OPEN");
+		// await seed(page, "REG_OPEN");
 		await impersonate(page);
 
 		await navigate({
@@ -56,7 +55,7 @@ test.describe("Tournament", () => {
 	});
 
 	test("checks in and appears on the bracket", async ({ page }) => {
-		await seed(page, "REG_OPEN");
+		// await seed(page, "REG_OPEN");
 		await impersonate(page);
 
 		await navigate({
@@ -78,7 +77,7 @@ test.describe("Tournament", () => {
 	});
 
 	test("adjusts seeds", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({

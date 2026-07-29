@@ -10,7 +10,6 @@ import {
 	impersonate,
 	modalClickConfirmButton,
 	navigate,
-	seed,
 	selectTournament,
 	selectUser,
 	submit,
@@ -25,7 +24,7 @@ test.describe("Tournament admin team management", () => {
 	test("edits a registration, checks a team in and out, unregisters it and records it in the audit log", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		// --- Edit registration: rename the first team ---
@@ -88,7 +87,7 @@ test.describe("Tournament admin team management", () => {
 	});
 
 	test("adds a new team and records it in the audit log", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -120,7 +119,7 @@ test.describe("Tournament admin team management", () => {
 	test("imports a roster from another tournament into the registration form", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -158,7 +157,7 @@ test.describe("Tournament admin team management", () => {
 	});
 
 	test("exports the team list", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: tournamentAdminPage(TOURNAMENT_ID) });
 
@@ -186,7 +185,7 @@ test.describe("Tournament admin team management", () => {
 	test("filters the team list by name and by captain Discord id", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: tournamentAdminPage(TOURNAMENT_ID) });
 

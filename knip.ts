@@ -5,8 +5,6 @@ const config = {
 	},
 	tags: ["-lintignore"],
 	ignoreBinaries: ["lsof"],
-	// cwd relative path inside an execSync command, which knip resolves relative to the file instead
-	ignoreUnresolved: ["scripts/seed-single-variation.ts"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
 		"migrations/**/*.js",

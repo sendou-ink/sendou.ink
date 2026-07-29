@@ -1,3 +1,4 @@
+import { db } from "~/db/sql";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import invariant from "~/utils/invariant";
@@ -73,8 +74,26 @@ export const { create } = defineFactory({
 		}
 
 		await backdate("GroupMatch", match.id, { createdAt, confirmedAt });
+
+		if (createdAt) {
+			await backdateSkills(match.id, createdAt);
+		}
 	},
 });
+
+/** Concluding stamps the skill rows *now*; move them to when the match was played
+ * so the season progression chart spreads over days. */
+async function backdateSkills(matchId: number, createdAt: Date) {
+	const skills = await db
+		.selectFrom("Skill")
+		.select("id")
+		.where("groupMatchId", "=", matchId)
+		.execute();
+
+	for (const skill of skills) {
+		await backdate("Skill", skill.id, { createdAt });
+	}
+}
 
 async function playOutMatch(matchId: number) {
 	const match = await SQMatchRepository.findById(matchId);

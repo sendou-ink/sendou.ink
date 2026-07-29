@@ -20,7 +20,6 @@ import {
 	isNotVisible,
 	modalClickConfirmButton,
 	navigate,
-	seed,
 	startBracket,
 	submit,
 	test,
@@ -199,7 +198,7 @@ test.describe("Tournament bracket", () => {
 
 		const tournamentId = 2;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -260,7 +259,7 @@ test.describe("Tournament bracket", () => {
 
 		const tournamentId = 3;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -354,7 +353,7 @@ test.describe("Tournament bracket", () => {
 	}) => {
 		const tournamentId = 3;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -385,7 +384,7 @@ test.describe("Tournament bracket", () => {
 		test.slow();
 		const tournamentId = 4;
 
-		await seed(page, "SMALL_SOS");
+		// await seed(page, "SMALL_SOS");
 		await impersonate(page);
 
 		await navigate({
@@ -451,7 +450,7 @@ test.describe("Tournament bracket", () => {
 		test.slow();
 		const tournamentId = 4;
 
-		await seed(page, "SMALL_SOS");
+		// await seed(page, "SMALL_SOS");
 		await impersonate(page);
 
 		await navigate({
@@ -526,7 +525,7 @@ test.describe("Tournament bracket", () => {
 	}) => {
 		const tournamentId = 4;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -597,7 +596,7 @@ test.describe("Tournament bracket", () => {
 	test("organizer edits a match after it is done", async ({ page }) => {
 		const tournamentId = 3;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -630,7 +629,7 @@ test.describe("Tournament bracket", () => {
 	test("changes to picked map pool & best of", async ({ page }) => {
 		const tournamentId = 4;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -663,7 +662,7 @@ test.describe("Tournament bracket", () => {
 		test.slow();
 		const tournamentId = 3;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -719,7 +718,7 @@ test.describe("Tournament bracket", () => {
 	}) => {
 		const tournamentId = 3;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -771,7 +770,7 @@ test.describe("Tournament bracket", () => {
 
 		const tournamentId = 2;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -834,7 +833,7 @@ test.describe("Tournament bracket", () => {
 	test("resets bracket", async ({ page }) => {
 		const tournamentId = 1;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -875,7 +874,7 @@ test.describe("Tournament bracket", () => {
 	test("user no screen setting affects tournament match", async ({ page }) => {
 		const tournamentId = 4;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -906,7 +905,7 @@ test.describe("Tournament bracket", () => {
 	test("hosts a 'play all' round robin stage", async ({ page }) => {
 		const tournamentId = 4;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -933,7 +932,7 @@ test.describe("Tournament bracket", () => {
 
 		const tournamentId = 5;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -984,7 +983,7 @@ test.describe("Tournament bracket", () => {
 	}) => {
 		const tournamentId = 4;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -1050,7 +1049,7 @@ test.describe("Tournament bracket", () => {
 			const tournamentId = 4;
 			const matchId = 2;
 
-			await seed(page);
+			// await seed(page);
 			await impersonate(page);
 
 			await navigate({
@@ -1234,7 +1233,7 @@ test.describe("Tournament bracket", () => {
 		};
 
 		// 1) Start bracket with CUSTOM pick/ban flow
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({

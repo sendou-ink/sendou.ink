@@ -4,19 +4,25 @@ import { faker } from "../core/faker";
 import * as SplatoonFaker from "../core/SplatoonFaker";
 
 /**
- * Creates builds. `ownerId` is whose build it is. Gear and modes are left empty, the
- * ability and weapon rows every build listing is read through being what the
- * repository derives from `abilities` and `weaponSplIds`.
+ * Creates builds. `ownerId` is whose build it is. The ability and weapon rows every
+ * build listing is read through are what the repository derives from `abilities` and
+ * `weaponSplIds`; a multi-weapon build is `weaponSplIds` with more than one entry.
  */
-export const { create } = defineFactory({
+const NO_GEAR = {
+	headGearSplId: null,
+	clothesGearSplId: null,
+	shoesGearSplId: null,
+};
+
+export const { create, createMany } = defineFactory({
 	defaults: () => ({
 		title: faker.lorem.words(3),
-		description: null,
-		modes: null,
-		headGearSplId: null,
-		clothesGearSplId: null,
-		shoesGearSplId: null,
-		weaponSplIds: [SplatoonFaker.mainWeapon()],
+		description: faker.number.float(1) < 0.4 ? faker.lorem.paragraph() : null,
+		modes: faker.number.float(1) < 0.7 ? SplatoonFaker.modes() : null,
+		...(faker.number.float(1) < 0.85 ? SplatoonFaker.gear() : NO_GEAR),
+		weaponSplIds: SplatoonFaker.mainWeapons(
+			faker.helpers.arrayElement([1, 1, 1, 1, 2, 2, 3, 4, 5]),
+		),
 		abilities: SplatoonFaker.buildAbilities(),
 		isPrivate: 0 as const,
 	}),

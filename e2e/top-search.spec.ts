@@ -1,9 +1,9 @@
 import { topSearchPage, userPage } from "~/utils/urls";
-import { expect, navigate, seed, test } from "./helpers/playwright";
+import { expect, navigate, test } from "./helpers/playwright";
 
 test.describe("Top search", () => {
 	test("views different x rank placements", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 
 		await navigate({
 			page,
@@ -17,7 +17,7 @@ test.describe("Top search", () => {
 	test("navigates from user page to x search player page to x search", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		await navigate({
 			page,

@@ -15,7 +15,6 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	test,
 } from "./helpers/playwright";
 import { createFormHelpers } from "./helpers/playwright-form";
@@ -75,7 +74,7 @@ test.describe("Calendar", () => {
 	test("applies filters and operates hidden events toggle", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await navigate({
 			page,
 			url: calendarPage(),
@@ -118,7 +117,7 @@ test.describe("Calendar", () => {
 	});
 
 	test("sets default filters", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
@@ -148,7 +147,7 @@ test.describe("Calendar", () => {
 	});
 
 	test("navigates view more buttons", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await navigate({
 			page,
 			url: calendarPage(),
@@ -179,7 +178,7 @@ test.describe("Calendar", () => {
 		const gb = await openWith("en-GB");
 
 		try {
-			await seed(ca.page);
+			// await seed(ca.page);
 
 			await navigate({ page: ca.page, url: calendarPage() });
 			await navigate({ page: gb.page, url: calendarPage() });
@@ -200,7 +199,7 @@ test.describe("Calendar", () => {
 	});
 
 	test("creates a new calendar event", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: CALENDAR_NEW_PAGE });
 
@@ -218,7 +217,7 @@ test.describe("Calendar", () => {
 	test("creates a new tournament with a map pool and follow-up bracket", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: TOURNAMENT_NEW_PAGE });
 

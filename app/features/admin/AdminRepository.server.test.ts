@@ -142,7 +142,7 @@ describe("banUser", () => {
 		expect(modInfo?.banLogs).toHaveLength(1);
 		expect(modInfo?.banLogs[0].banned).toBe(1);
 		expect(modInfo?.banLogs[0].bannedReason).toBe("Test ban");
-		expect(modInfo?.banLogs[0].discordId).toBe("1");
+		expect(modInfo?.banLogs[0].id).toBe(users.id(2));
 	});
 
 	test("does not create BanLog when bannedByUserId is null (automatic ban)", async () => {
@@ -235,7 +235,7 @@ describe("unbanUser", () => {
 		const unbanLog = modInfo?.banLogs.find((log) => log.banned === 0);
 		expect(unbanLog).toBeDefined();
 		expect(unbanLog?.bannedReason).toBeNull();
-		expect(unbanLog?.discordId).toBe("2");
+		expect(unbanLog?.id).toBe(unbanner.id);
 	});
 
 	test("can unban permanently banned user", async () => {

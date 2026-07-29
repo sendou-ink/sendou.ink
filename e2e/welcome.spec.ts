@@ -1,10 +1,10 @@
-import { expect, navigate, seed, test } from "./helpers/playwright";
+import { expect, navigate, test } from "./helpers/playwright";
 
 test.describe("Welcome", () => {
 	test("navigates to the welcome page via the front page banner when not logged in", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await navigate({ page, url: "/" });
 
 		await page

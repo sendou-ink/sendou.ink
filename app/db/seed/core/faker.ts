@@ -1,4 +1,4 @@
-import { en, Faker } from "@faker-js/faker";
+import { base, en, Faker } from "@faker-js/faker";
 
 const FAKER_SEED = 5800;
 const MAX_UNIQUE_ATTEMPTS = 100;
@@ -7,10 +7,23 @@ const MAX_UNIQUE_ATTEMPTS = 100;
  * Faker instance dedicated to seeding. Deliberately not the global singleton, so
  * that app code or a test drawing from `faker` cannot shift what the seed produces.
  */
-export const faker = new Faker({ locale: en });
+export const faker = new Faker({ locale: [en, base] });
 faker.seed(FAKER_SEED);
 
 const usedUniqueValues = new Set<unknown>();
+
+const seededFakers: Faker[] = [faker];
+
+/** A deterministic faker for another locale, reseeded by `resetFaker` with the rest. */
+export function createSeededFaker(
+	locale: ConstructorParameters<typeof Faker>[0]["locale"],
+) {
+	const instance = new Faker({ locale });
+	instance.seed(FAKER_SEED);
+	seededFakers.push(instance);
+
+	return instance;
+}
 
 /**
  * Draws from `generate` until it produces a value that has not been drawn before,
@@ -33,8 +46,10 @@ export function unique<T>(generate: () => T): T {
 	);
 }
 
-/** Reseeds the faker instance and forgets every value drawn via `unique`. */
+/** Reseeds every faker instance and forgets every value drawn via `unique`. */
 export function resetFaker() {
-	faker.seed(FAKER_SEED);
+	for (const instance of seededFakers) {
+		instance.seed(FAKER_SEED);
+	}
 	usedUniqueValues.clear();
 }

@@ -1,5 +1,6 @@
 import { sub } from "date-fns";
 import { db } from "~/db/sql";
+import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { lastCompletedVoting } from "~/features/plus-voting/core/voting-time";
 import type { UpsertManyPlusVotesArgs } from "~/features/plus-voting/PlusVotingRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
@@ -40,3 +41,11 @@ export const { create, createMany } = defineFactory({
 		return vote;
 	},
 });
+
+/** Recounts the plus tiers from the latest completed voting, as the monthly sync does. */
+export async function syncTiers() {
+	const tiers = await PlusVotingRepository.findAllPlusTiersFromLatestVoting();
+	if (tiers.length === 0) return;
+
+	await AdminRepository.replacePlusTiers(tiers);
+}

@@ -10,7 +10,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	selectUser,
 	submit,
 	test,
@@ -22,7 +21,7 @@ const TEST_POOL_SERIALIZED = "sz:3a14000;tc:2c98000";
 
 test.describe("Scrims", () => {
 	test("creates a new scrim & deletes it", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
 			page,
@@ -67,7 +66,7 @@ test.describe("Scrims", () => {
 	test("requests an existing scrim post & cancels the request", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
 			page,
@@ -105,7 +104,7 @@ test.describe("Scrims", () => {
 	});
 
 	test("accepts a request", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
 			page,
@@ -129,7 +128,7 @@ test.describe("Scrims", () => {
 	test("auto-cancels overlapping pending scrims when a scrim is booked", async ({
 		page,
 	}) => {
-		await seed(page, "NO_SCRIMS");
+		// await seed(page, "NO_SCRIMS");
 		await impersonate(page);
 
 		const bookedAt = new Date();
@@ -169,7 +168,7 @@ test.describe("Scrims", () => {
 	});
 
 	test("cancels a scrim and shows canceled status", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
 			page,
@@ -200,7 +199,7 @@ test.describe("Scrims", () => {
 	test("creates scrim with start time and tournament maps, accepts with time and message", async ({
 		page,
 	}) => {
-		await seed(page, "NO_SCRIMS");
+		// await seed(page, "NO_SCRIMS");
 		await impersonate(page);
 		await navigate({
 			page,
@@ -290,7 +289,7 @@ test.describe("Scrims", () => {
 	test("map-by-map: lists, report, undo, replay, change list, stats", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		const scrimUrl = scrimPage(1);
 

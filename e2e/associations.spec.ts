@@ -6,14 +6,13 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	submit,
 	test,
 } from "./helpers/playwright";
 
 test.describe("Associations", () => {
 	test("creates a new association", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,
@@ -32,7 +31,7 @@ test.describe("Associations", () => {
 	});
 
 	test("deletes an association", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
 			page,
@@ -49,7 +48,7 @@ test.describe("Associations", () => {
 	});
 
 	test("joins and leaves an association", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({
 			page,

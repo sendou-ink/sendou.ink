@@ -4,14 +4,13 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	selectUser,
 	test,
 } from "./helpers/playwright";
 
 test.describe("Badges", () => {
 	test("adds a badge owner sending a notification", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({
 			page,

@@ -408,7 +408,7 @@ describe("findByUserIdWithActivity", () => {
 
 		const result = await FriendRepository.findByUserIdWithActivity(users.id(1));
 
-		const friendRow = result.find((r) => r.discordId === "1");
+		const friendRow = result.find((r) => r.id === users.id(2));
 		expect(friendRow).toBeDefined();
 		expect(friendRow!.friendshipId).toBeTypeOf("number");
 		expect(friendRow!.friendshipCreatedAt).toBeTypeOf("number");

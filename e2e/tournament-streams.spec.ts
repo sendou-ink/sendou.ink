@@ -7,7 +7,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	startBracket,
 	submit,
 	test,
@@ -23,7 +22,7 @@ test.describe("Tournament streams", () => {
 	test("can set cast twitch accounts in admin", async ({ page }) => {
 		const tournamentId = 2;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -118,7 +117,7 @@ test.describe("Tournament streams", () => {
 		// Match 2 involves team 102 which has 4 players (no roster selection needed)
 		const matchId = 2;
 
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		// Set up cast twitch account (test_cast_stream exists as live stream in seed)

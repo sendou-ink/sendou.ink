@@ -8,10 +8,15 @@ type Member = {
 	role: Tables["TournamentOrganizationMember"]["role"];
 };
 
+type UpdateArgs = Parameters<typeof TournamentOrganizationRepository.update>[0];
+
 type Options = {
 	/** Members besides the owner, who is an admin of the organization regardless. */
 	members?: Array<Member>;
 	isEstablished?: boolean;
+	description?: string | null;
+	socials?: string[] | null;
+	series?: UpdateArgs["series"];
 };
 
 /**
@@ -23,37 +28,46 @@ export const { create, createMany } = defineFactory({
 		name: `Organization ${seq}`,
 	}),
 	insert: TournamentOrganizationRepository.insert,
-	applyOptions: async (org, { members, isEstablished }: Options) => {
+	applyOptions: async (
+		org,
+		{ members, isEstablished, description, socials, series }: Options,
+	) => {
 		if (isEstablished) {
 			await TournamentOrganizationRepository.updateIsEstablished(org.id, true);
 		}
 
-		if (members) {
-			await addMembers(org.slug, members);
+		if (members || description !== undefined || socials || series) {
+			await applyUpdate(org.slug, { members, description, socials, series });
 		}
 	},
 });
 
-async function addMembers(slug: string, members: Array<Member>) {
+async function applyUpdate(
+	slug: string,
+	{ members, description, socials, series }: Omit<Options, "isEstablished">,
+) {
 	const org = await TournamentOrganizationRepository.findBySlug(slug);
 	invariant(org, "Organization not found");
 
-	// the org edit page saves the whole member list at once, so the memberships that
-	// exist already are read back and sent along with the new ones
+	// the org edit page saves everything at once, so what exists already is read
+	// back and sent along
 	await TournamentOrganizationRepository.update({
 		id: org.id,
 		name: org.name,
-		description: org.description,
-		socials: org.socials,
+		description: description !== undefined ? description : org.description,
+		socials: socials ?? org.socials,
 		members: [
 			...org.members.map((member) => ({
 				userId: member.id,
 				role: member.role,
 				roleDisplayName: member.roleDisplayName,
 			})),
-			...members.map((member) => ({ ...member, roleDisplayName: null })),
+			...(members ?? []).map((member) => ({
+				...member,
+				roleDisplayName: null,
+			})),
 		],
-		series: [],
+		series: series ?? [],
 		badges: [],
 	});
 }

@@ -5,15 +5,29 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
-import { REGULAR_USER_TEST_ID } from "../constants";
+import { toDBBoolean } from "~/utils/sql";
+import {
+	ORG_ADMIN_TEST_ID,
+	REGULAR_USER_TEST_ID,
+	STAFF_TEST_ID,
+} from "../constants";
 import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";
 import { faker, unique } from "../core/faker";
 import { pinUserId } from "../core/pinUserId";
+import * as SplatoonFaker from "../core/SplatoonFaker";
 
-type UpsertArgs = Parameters<typeof UserRepository.upsert>[0];
+type UpsertArgs = Parameters<typeof UserRepository.upsert>[0] & {
+	/** Profile fields, saved as the profile page saves them. `null` for a bare profile. */
+	profile?: Partial<ProfileArgs> | null;
+	/** Nintendo friend code, `null` for a user who never submitted one. */
+	friendCode?: string | null;
+};
+
+type ProfileArgs = Parameters<typeof UserRepository.updateOwnProfile>[0];
 
 type MatchProfileArgs = Parameters<
 	typeof MatchProfileRepository.updateOwnMatchProfile
@@ -34,6 +48,20 @@ type Options = {
 	div?: NonNullable<Tables["User"]["div"]>;
 	/** Weapon pool, submitted as the user themselves. */
 	weapons?: Parameters<typeof UserRepository.updateOwnProfile>[0]["weapons"];
+	/** User card fields, submitted as the user themselves. */
+	card?: Partial<CardArgs>;
+	/** Profile page widgets, replacing whatever the user had. */
+	widgets?: Parameters<typeof UserRepository.upsertWidgets>[1];
+};
+
+type CardArgs = Parameters<typeof UserCardRepository.updateOwnCard>[0];
+
+const EMPTY_CARD: CardArgs = {
+	shortBio: null,
+	bannerPresetImg: null,
+	bannerImgId: null,
+	unverifiedPeakXP: null,
+	hiddenCardStats: [],
 };
 
 const PATRONAGE_LENGTH = { years: 1 };
@@ -57,17 +85,102 @@ const GRANT_ROLE: Record<Role, (userId: number) => Promise<unknown>> = {
  * match profile) are set by the repository function that owns them. */
 export const { create, createMany } = defineFactory({
 	defaults: ({ seq }) => ({
-		discordId: String(seq),
+		discordId: fakeDiscordId(seq),
 		discordName: unique(() => faker.internet.username()),
 		discordUniqueName: null,
 		discordAvatar: null,
 		twitch: null,
 		youtubeId: null,
 		bsky: null,
+		profile: fakeProfile(),
+		friendCode: fakeFriendCode(),
 	}),
-	insert: UserRepository.upsert,
+	insert: async ({ profile, friendCode, ...args }: UpsertArgs) => {
+		const user = await UserRepository.upsert(args);
+
+		if (profile && Object.keys(profile).length > 0) {
+			await updateProfile(user.id, profile);
+		}
+
+		if (friendCode) {
+			await UserRepository.insertFriendCode({
+				userId: user.id,
+				submitterUserId: user.id,
+				friendCode,
+			});
+		}
+
+		return user;
+	},
 	applyOptions: (user, options: Options) => grant(user.id, options),
 });
+
+function fakeFriendCode() {
+	return `${faker.string.numeric(4)}-${faker.string.numeric(4)}-${faker.string.numeric(4)}`;
+}
+
+/** A real-looking Discord snowflake: 42 bits of timestamp, `seq` in the low 22.
+ * Must stay 10+ characters — `userByIdentifierQuery` resolves shorter numeric
+ * identifiers as row ids, which would break `/u/<discordId>` links. */
+function fakeDiscordId(seq: number) {
+	const DISCORD_EPOCH_MS = 1420070400000n;
+	const FAKE_CREATED_AT_MS = 1685577600000n; // 2023-06-01
+
+	return String(((FAKE_CREATED_AT_MS - DISCORD_EPOCH_MS) << 22n) + BigInt(seq));
+}
+
+/** Saves profile fields as the user, for a user that already exists. */
+export function updateProfile(userId: number, profile: Partial<ProfileArgs>) {
+	return actAs(userId, () =>
+		UserRepository.updateOwnProfile({ weapons: [], ...profile }),
+	);
+}
+
+/** Country biased the way the player base is: US and the big European scenes
+ * first, anything possible. */
+export function fakeCountry() {
+	return faker.helpers.weightedArrayElement([
+		{ value: "US", weight: 30 },
+		{ value: "FR", weight: 8 },
+		{ value: "DE", weight: 8 },
+		{ value: "GB", weight: 7 },
+		{ value: "ES", weight: 5 },
+		{ value: "IT", weight: 5 },
+		{ value: "NL", weight: 4 },
+		{ value: faker.location.countryCode(), weight: 33 },
+	]);
+}
+
+function fakeProfile(): Partial<ProfileArgs> | null {
+	if (faker.number.float(1) < 0.2) return null;
+
+	const chance = (probability: number) => faker.number.float(1) < probability;
+
+	return {
+		country: fakeCountry(),
+		bio: chance(0.4)
+			? faker.lorem.paragraphs(faker.helpers.arrayElement([1, 1, 2, 3]), "\n\n")
+			: undefined,
+		inGameName: chance(0.5) ? SplatoonFaker.inGameName() : undefined,
+		motionSens: chance(0.3)
+			? faker.helpers.arrayElement([-50, -30, -10, 0, 10, 30, 50])
+			: undefined,
+		stickSens: chance(0.3)
+			? faker.helpers.arrayElement([-50, -20, 0, 20, 50])
+			: undefined,
+		pronouns: chance(0.2)
+			? faker.helpers.arrayElement(["he/him", "she/her", "they/them"])
+			: undefined,
+		weapons: chance(0.6)
+			? SplatoonFaker.mainWeapons(
+					faker.helpers.arrayElement([1, 2, 3, 4, 5]),
+				).map((weaponSplId) => ({
+					weaponSplId,
+					isFavorite: toDBBoolean(faker.number.float(1) < 0.2),
+				}))
+			: [],
+	};
+}
 
 /**
  * Creates the admin user, on the id the app's permission logic treats as an admin.
@@ -92,15 +205,45 @@ export const createRegular = (
 	options?: Options,
 ) => createPinned(REGULAR_USER_TEST_ID, overrides, options);
 
+/** Creates the user on the id org permission checks treat as an org admin. */
+export const createOrgAdmin = (
+	overrides?: Partial<UpsertArgs> | null,
+	options?: Options,
+) => createPinned(ORG_ADMIN_TEST_ID, overrides, options);
+
+/** Creates the user on the id the app's permission logic treats as staff. Create
+ * after every unpinned user, so the ids in between stay free. */
+export const createStaff = (
+	overrides?: Partial<UpsertArgs> | null,
+	options?: Options,
+) => createPinned(STAFF_TEST_ID, overrides, options);
+
 async function createPinned(
 	pinnedId: number,
 	overrides?: Partial<UpsertArgs> | null,
 	options?: Options,
 ) {
-	const user = await create(overrides);
+	// rows keyed by the user id have to wait until after the pinning changes it
+	const { profile, friendCode, ...upsertOverrides } = overrides ?? {};
+	const user = await create({
+		...upsertOverrides,
+		profile: null,
+		friendCode: null,
+	});
 	const id = await pinUserId(user.id, pinnedId);
 
-	// after pinning, so that rows keyed by the user id don't point at the old one
+	if (profile && Object.keys(profile).length > 0) {
+		await updateProfile(id, profile);
+	}
+
+	if (friendCode) {
+		await UserRepository.insertFriendCode({
+			userId: id,
+			submitterUserId: id,
+			friendCode,
+		});
+	}
+
 	if (options) {
 		await grant(id, options);
 	}
@@ -156,8 +299,24 @@ export function pool() {
  */
 export async function grant(
 	userId: number,
-	{ plusTier, patronTier, roles, matchProfile, ban, div, weapons }: Options,
+	{
+		plusTier,
+		patronTier,
+		roles,
+		matchProfile,
+		ban,
+		div,
+		weapons,
+		card,
+		widgets,
+	}: Options,
 ) {
+	if (card) {
+		await actAs(userId, () =>
+			UserCardRepository.updateOwnCard({ ...EMPTY_CARD, ...card }),
+		);
+	}
+
 	if (typeof plusTier === "number") {
 		await setPlusTier(userId, plusTier);
 	}
@@ -196,6 +355,10 @@ export async function grant(
 		// the profile page saves every field at once; everything besides the weapons
 		// is still empty on a user the repository has only just upserted
 		await actAs(userId, () => UserRepository.updateOwnProfile({ weapons }));
+	}
+
+	if (widgets) {
+		await UserRepository.upsertWidgets(userId, widgets);
 	}
 }
 

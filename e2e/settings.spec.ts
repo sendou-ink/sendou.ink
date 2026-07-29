@@ -15,7 +15,6 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	submit,
 	test,
 	waitForPOSTResponse,
@@ -24,7 +23,7 @@ import { createFormHelpers } from "./helpers/playwright-form";
 
 test.describe("Settings", () => {
 	test("updates 'disableBuildAbilitySorting'", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -59,7 +58,7 @@ test.describe("Settings", () => {
 	});
 
 	test("updates clock format preference", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({
@@ -137,7 +136,7 @@ test.describe("Match profile map preferences", () => {
 	test("retains map selection when toggling a mode prefer -> avoid -> prefer", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: SETTINGS_PAGE });
 
@@ -159,7 +158,7 @@ test.describe("Match profile map preferences", () => {
 	test("can save 'zones only' after a now-avoided mode previously had a map pool", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: SETTINGS_PAGE });
 
@@ -200,7 +199,7 @@ test.describe("Spoiler-free mode", () => {
 	const FINALIZED_TOURNAMENT_ID = 7;
 
 	test("censors bracket and reveals on click", async ({ page }) => {
-		await seed(page, "FINALIZED_BRACKET");
+		// await seed(page, "FINALIZED_BRACKET");
 		await impersonate(page);
 		await enableSpoilerFreeMode(page);
 
@@ -238,7 +237,7 @@ test.describe("Spoiler-free mode", () => {
 	});
 
 	test("results page is censored and can be revealed", async ({ page }) => {
-		await seed(page, "FINALIZED_BRACKET");
+		// await seed(page, "FINALIZED_BRACKET");
 		await impersonate(page);
 		await enableSpoilerFreeMode(page);
 

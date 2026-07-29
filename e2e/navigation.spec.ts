@@ -1,14 +1,8 @@
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
 
 test.describe("Navigation", () => {
 	test("desktop navigation", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 
@@ -65,7 +59,7 @@ test.describe("Navigation", () => {
 
 	test("mobile navigation", async ({ page }) => {
 		await page.setViewportSize({ width: 375, height: 667 });
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 
@@ -140,7 +134,7 @@ test.describe("Navigation", () => {
 
 	test("tablet navigation", async ({ page }) => {
 		await page.setViewportSize({ width: 768, height: 1024 });
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 

@@ -10,7 +10,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	selectWeapon,
 	test,
 	waitForPOSTResponse,
@@ -253,7 +252,7 @@ function matchActionUrl(matchId: string) {
 }
 
 async function seedMatchAndGetId(page: Page) {
-	await seed(page, "IN_SQ_MATCH");
+	// await seed(page, "IN_SQ_MATCH");
 	await impersonate(page, ADMIN_ID);
 	await navigate({ page, url: SENDOUQ_PAGE });
 	await expect(page).toHaveURL(/\/q\/match\/\d+/);

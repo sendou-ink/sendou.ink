@@ -1,14 +1,8 @@
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
 
 test.describe("Global search", () => {
 	test("searches for users and organizations", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 
@@ -30,7 +24,7 @@ test.describe("Global search", () => {
 	});
 
 	test("searches for weapons", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 

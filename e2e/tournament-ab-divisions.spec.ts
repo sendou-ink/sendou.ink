@@ -3,7 +3,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	submit,
 	test,
 } from "./helpers/playwright";
@@ -17,7 +16,7 @@ test.describe("Tournament A/B divisions", () => {
 	}) => {
 		test.slow();
 
-		await seed(page, "AB_RR");
+		// await seed(page, "AB_RR");
 		await impersonate(page);
 
 		await navigate({

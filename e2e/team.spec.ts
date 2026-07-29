@@ -11,7 +11,6 @@ import {
 	isNotVisible,
 	modalClickConfirmButton,
 	navigate,
-	seed,
 	submit,
 	test,
 	waitForPOSTResponse,
@@ -20,7 +19,7 @@ import { createFormHelpers } from "./helpers/playwright-form";
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
 
@@ -39,7 +38,7 @@ test.describe("New team creation", () => {
 
 test.describe("Team page", () => {
 	test("edit team info", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
@@ -64,7 +63,7 @@ test.describe("Team page", () => {
 	});
 
 	test("kicks a member & changes a role", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
@@ -93,7 +92,7 @@ test.describe("Team page", () => {
 	});
 
 	test("sets a custom role for a member", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
@@ -114,7 +113,7 @@ test.describe("Team page", () => {
 	});
 
 	test("reorders members via move buttons", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
@@ -161,7 +160,7 @@ test.describe("Team page", () => {
 	});
 
 	test("deletes team", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
@@ -173,7 +172,7 @@ test.describe("Team page", () => {
 	});
 
 	test("resets invite code, joins team, leaves, rejoins", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
 
@@ -205,7 +204,7 @@ test.describe("Team page", () => {
 	test("joins a secondary team, makes main team & leaves making the seconary team the main one", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("team-olive") });
 
@@ -241,7 +240,7 @@ test.describe("Team page", () => {
 	test("makes another user editor, who can edit the page & becomes owner after the original leaves", async ({
 		page,
 	}) => {
-		await seed(page, "NZAP_IN_TEAM");
+		// await seed(page, "NZAP_IN_TEAM");
 		await impersonate(page, ADMIN_ID);
 		await navigate({ page, url: teamPage("alliance-rogue") });
 

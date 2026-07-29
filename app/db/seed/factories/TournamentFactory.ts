@@ -5,6 +5,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as Engine from "~/features/tournament-bracket/core/engine";
+import { finalizeTournament } from "~/features/tournament-bracket/core/finalizeTournament.server";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -110,6 +111,25 @@ export async function createPlayed(
 	const matches = await playMatches(tournament.id);
 
 	return { ...tournament, teams, matches };
+}
+
+// xxx: do we really want to chain different methods or just have some isFinalized in the create?
+/**
+ * Finalizes a fully played tournament with a real summary, the same way the
+ * organizer's finalize button does: results on profiles, badges awarded to
+ * `badgeReceivers`, skills and leaderboard entries.
+ */
+export async function finalize(
+	tournamentId: number,
+	{
+		badgeReceivers,
+	}: {
+		badgeReceivers?: Parameters<typeof finalizeTournament>[0]["badgeReceivers"];
+	} = {},
+) {
+	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+
+	await finalizeTournament({ tournament, badgeReceivers });
 }
 
 /**

@@ -3,7 +3,6 @@ import {
 	expect,
 	impersonate,
 	navigate,
-	seed,
 	submit,
 	test,
 } from "./helpers/playwright";
@@ -12,7 +11,7 @@ test.describe("Tournament tiers", () => {
 	test("shows tentative tier before bracket starts and confirmed tier after", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		await navigate({ page, url: calendarPage() });
 

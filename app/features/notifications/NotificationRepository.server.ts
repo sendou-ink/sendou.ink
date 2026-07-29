@@ -32,6 +32,8 @@ export function insert(
 				})),
 			)
 			.execute();
+
+		return inserted;
 	});
 }
 

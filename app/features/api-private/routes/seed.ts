@@ -1,12 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { startOfToday, subHours } from "date-fns";
-import { type NotNull, sql } from "kysely";
+import { sql } from "kysely";
 import type { ActionFunction } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
-import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
@@ -16,40 +15,30 @@ import { cache } from "~/utils/cache.server";
 import { parseRequestPayload } from "~/utils/remix.server";
 
 const E2E_SEEDS_DIR = "e2e/seeds";
+const PRE_SEEDED_DB_PATH = path.join(E2E_SEEDS_DIR, "db-seed.sqlite3");
 
 const seedSchema = z.object({
-	variation: z.enum(SEED_VARIATIONS).nullish(),
 	source: z.enum(["e2e"]).nullish(),
 });
-
-export type SeedVariation = NonNullable<
-	z.infer<typeof seedSchema>["variation"]
->;
 
 export const action: ActionFunction = async ({ request }) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		throw new Response(null, { status: 400 });
 	}
 
-	const { variation, source } = await parseRequestPayload({
+	const { source } = await parseRequestPayload({
 		request,
 		schema: seedSchema,
 	});
 
-	const variationName = variation ?? "DEFAULT";
-	const preSeededDbPath = path.join(
-		E2E_SEEDS_DIR,
-		`db-seed-${variationName}.sqlite3`,
-	);
-
-	const usePreSeeded = source === "e2e" && fs.existsSync(preSeededDbPath);
+	const usePreSeeded = source === "e2e" && fs.existsSync(PRE_SEEDED_DB_PATH);
 
 	if (usePreSeeded) {
-		await restoreFromPreSeeded(preSeededDbPath);
-		await adjustSeedDatesToCurrent(variationName);
+		await restoreFromPreSeeded(PRE_SEEDED_DB_PATH);
+		await adjustSeedDatesToCurrent();
 	} else {
 		const { seed } = await import("~/db/seed");
-		await seed(variation);
+		await seed();
 	}
 
 	clearAllTournamentDataCache();
@@ -62,13 +51,10 @@ export const action: ActionFunction = async ({ request }) => {
 	return Response.json(null);
 };
 
-const REG_OPEN_TOURNAMENT_IDS = [1, 3];
-
 const SEED_REFERENCE_TIMESTAMP = 1767440151;
 
-// TODO: do this cleaner
-async function adjustSeedDatesToCurrent(variation: SeedVariation) {
-	const halfAnHourFromNow = Math.floor((Date.now() + 1000 * 60 * 30) / 1000);
+// xxx: do this cleaner, we now have backdate so why not used?
+async function adjustSeedDatesToCurrent() {
 	// clamped to the start of today so that within the first hour after midnight
 	// the event does not fall onto the previous calendar day (calendar renders today onward)
 	const oneHourAgo = Math.floor(
@@ -79,19 +65,14 @@ async function adjustSeedDatesToCurrent(variation: SeedVariation) {
 
 	const tournamentEventIds = await db
 		.selectFrom("CalendarEvent")
-		.select(["id", "tournamentId"])
+		.select(["id"])
 		.where("tournamentId", "is not", null)
-		.$narrowType<{ tournamentId: NotNull }>()
 		.execute();
 
-	for (const { id, tournamentId } of tournamentEventIds) {
-		const isRegOpen =
-			variation === "REG_OPEN" &&
-			REG_OPEN_TOURNAMENT_IDS.includes(tournamentId);
-
+	for (const { id } of tournamentEventIds) {
 		await db
 			.updateTable("CalendarEventDate")
-			.set({ startsAt: isRegOpen ? halfAnHourFromNow : oneHourAgo })
+			.set({ startsAt: oneHourAgo })
 			.where("eventId", "=", id)
 			.execute();
 	}

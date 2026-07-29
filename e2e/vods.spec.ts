@@ -5,7 +5,6 @@ import {
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
 	selectStage,
 	selectUser,
 	selectWeapon,
@@ -18,7 +17,7 @@ const VIDEO_DATE = new Date(2024, 4, 15, 12, 0); // May 15, 2024 at 12:00
 
 test.describe("VoDs page", () => {
 	test("adds video (pov)", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -82,7 +81,7 @@ test.describe("VoDs page", () => {
 	});
 
 	test("adds video (cast)", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -135,7 +134,7 @@ test.describe("VoDs page", () => {
 	});
 
 	test("edits vod", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,
@@ -158,7 +157,7 @@ test.describe("VoDs page", () => {
 	});
 
 	test("operates vod filters", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 		await navigate({
 			page,

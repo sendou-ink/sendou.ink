@@ -2,13 +2,7 @@ import type { Page } from "@playwright/test";
 import { ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { tournamentTeamPage } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
 
 const ITZ_TOURNAMENT_ID = 2;
 const ITZ_TEAM_ID = 101;
@@ -48,7 +42,7 @@ test.describe("Public API", () => {
 	test("OPTIONS preflight request returns 204 with CORS headers", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		const response = await page.request.fetch("/api/tournament/1", {
 			method: "OPTIONS",
@@ -63,7 +57,7 @@ test.describe("Public API", () => {
 	});
 
 	test("GET request includes CORS headers in response", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 
 		const response = await page.request.fetch("/api/tournament/1");
 
@@ -73,7 +67,7 @@ test.describe("Public API", () => {
 	test("GET user IDs endpoint works without authentication", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 
 		const response = await page.request.fetch(`/api/user/${ADMIN_ID}/ids`);
 
@@ -84,7 +78,7 @@ test.describe("Public API", () => {
 	});
 
 	test("creates read API token and calls public endpoint", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page);
 
 		await navigate({ page, url: "/api" });
@@ -114,7 +108,7 @@ test.describe("Public API", () => {
 	});
 
 	test("returns active SendouQ match for user", async ({ page }) => {
-		await seed(page, "IN_SQ_MATCH");
+		// await seed(page, "IN_SQ_MATCH");
 		await impersonate(page);
 
 		const token = await generateReadToken(page);
@@ -139,7 +133,7 @@ test.describe("Public API", () => {
 
 test.describe("Public API - Write endpoints", () => {
 	test("adds member to tournament team via API", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 
 		const token = await generateWriteToken(page);
@@ -172,7 +166,7 @@ test.describe("Public API - Write endpoints", () => {
 	});
 
 	test("removes member from tournament team via API", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 
 		const token = await generateWriteToken(page);
@@ -221,7 +215,7 @@ test.describe("Public API - Write endpoints", () => {
 	});
 
 	test("returns 401 for invalid token", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 
 		const response = await page.request.fetch(
 			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/add-member`,
@@ -243,7 +237,7 @@ test.describe("Public API - Write endpoints", () => {
 	test("returns 403 when using read token for write endpoint", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 
 		await navigate({ page, url: "/api" });
@@ -280,7 +274,7 @@ test.describe("Public API - Write endpoints", () => {
 	});
 
 	test("updates tournament seeds via API", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 
 		const token = await generateWriteToken(page);
@@ -327,7 +321,7 @@ test.describe("Public API - Write endpoints", () => {
 	});
 
 	test("updates tournament starting brackets via API", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 
 		const token = await generateWriteToken(page);
@@ -362,7 +356,7 @@ test.describe("Public API - Write endpoints", () => {
 	});
 
 	test("updates member IGN via API", async ({ page }) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ADMIN_ID);
 
 		const token = await generateWriteToken(page);
@@ -385,7 +379,7 @@ test.describe("Public API - Write endpoints", () => {
 	test("returns 400 when user is not the organizer of this tournament", async ({
 		page,
 	}) => {
-		await seed(page);
+		// await seed(page);
 		await impersonate(page, ORG_ADMIN_TEST_ID);
 
 		const token = await generateWriteToken(page);
