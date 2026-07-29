@@ -211,17 +211,19 @@ export function TournamentMatchBanner({
 					/>
 				</MatchBanner>
 			) : null}
-			<MatchBannerBottomRow
-				games={resolveBannerGames({ data })}
-				activeRosters={
-					opponentOne?.id && opponentTwo?.id
-						? {
-								alpha: activeRosterByTeamId(opponentOne.id),
-								bravo: activeRosterByTeamId(opponentTwo.id),
-							}
-						: null
-				}
-			/>
+			{data.matchIsOver ? null : (
+				<MatchBannerBottomRow
+					games={resolveBannerGames({ data })}
+					activeRosters={
+						opponentOne?.id && opponentTwo?.id
+							? {
+									alpha: activeRosterByTeamId(opponentOne.id),
+									bravo: activeRosterByTeamId(opponentTwo.id),
+								}
+							: null
+					}
+				/>
+			)}
 		</MatchBannerContainer>
 	);
 }
@@ -557,8 +559,6 @@ function resolveBannerGames({
 			.map((map) => ({
 				mode: map.mode as ModeShort | null,
 			})) ?? [];
-
-	if (data.matchIsOver) return playedAndScheduled;
 
 	const placeholderCount = Math.max(
 		0,
