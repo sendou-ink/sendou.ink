@@ -32,6 +32,11 @@ export async function loadFactories(parallelIndex: number) {
 	return {
 		backdate: (await import("~/db/seed/core/backdate")).backdate,
 		BuildFactory: await import("~/db/seed/factories/BuildFactory"),
+		FriendshipFactory: await import("~/db/seed/factories/FriendshipFactory"),
+		TournamentFactory: await import("~/db/seed/factories/TournamentFactory"),
+		TournamentTeamFactory: await import(
+			"~/db/seed/factories/TournamentTeamFactory"
+		),
 		UserFactory: await import("~/db/seed/factories/UserFactory"),
 	};
 }
