@@ -18,8 +18,20 @@ export class BuildFormPage {
 		await navigate({ page: this.page, url: userNewBuildPage({ discordId }) });
 	}
 
+	gearSelect(type: GearType) {
+		return this.page.getByTestId(`${type}-gear-select`);
+	}
+
+	ability(ability: Ability) {
+		return this.page.getByTestId(`${ability}-ability`);
+	}
+
+	weaponPoolItem(weaponName: string) {
+		return this.page.getByRole("listitem").getByText(weaponName);
+	}
+
 	async selectGear(type: GearType, name: string) {
-		await this.page.getByTestId(`${type}-gear-select`).click();
+		await this.gearSelect(type).click();
 		await this.page.getByPlaceholder("Search gear...").fill(name);
 		await this.page
 			.getByRole("listbox", { name: "Suggestions" })
