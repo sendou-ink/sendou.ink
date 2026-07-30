@@ -366,8 +366,8 @@ function uniqueOpponentRoster() {
 
 /**
  * The user's ranked tournament results of a season with the tournament's tier,
- * field size and the average skill (ordinal) of its top 8 placing players, for
- * picking their best tournament run.
+ * field size and the average end of season skill (ordinal) of its top 8 placing
+ * players, for picking their best tournament run.
  */
 export async function findSeasonTournamentRunsByUserId({
 	userId,
@@ -392,24 +392,31 @@ export async function findSeasonTournamentRunsByUserId({
 			"CalendarEvent.name",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			eb
-				.selectFrom("TournamentResult as TopEightResult")
-				.innerJoin("Skill as TopEightSkill", (join) =>
-					join
-						.onRef("TopEightSkill.userId", "=", "TopEightResult.userId")
-						.onRef(
-							"TopEightSkill.tournamentId",
-							"=",
-							"TopEightResult.tournamentId",
-						),
+				.selectFrom(
+					eb
+						.selectFrom("Skill as TopEightSkill")
+						.select((seb) => [
+							"TopEightSkill.ordinal",
+							// bare column with max(): the ordinal comes from the season's last skill row of that user
+							seb.fn.max("TopEightSkill.id").as("latestId"),
+						])
+						.where("TopEightSkill.season", "=", season)
+						.where("TopEightSkill.userId", "in", (ieb) =>
+							ieb
+								.selectFrom("TournamentResult as TopEightResult")
+								.select("TopEightResult.userId")
+								.whereRef("TopEightResult.tournamentId", "=", "Tournament.id")
+								.where(
+									"TopEightResult.placement",
+									"<=",
+									TOURNAMENT_FIELD_STRENGTH_PLACEMENT,
+								),
+						)
+						.groupBy("TopEightSkill.userId")
+						.as("TopEightLatestSkill"),
 				)
 				.select(({ fn }) =>
-					fn.avg<number>("TopEightSkill.ordinal").as("average"),
-				)
-				.whereRef("TopEightResult.tournamentId", "=", "Tournament.id")
-				.where(
-					"TopEightResult.placement",
-					"<=",
-					TOURNAMENT_FIELD_STRENGTH_PLACEMENT,
+					fn.avg<number>("TopEightLatestSkill.ordinal").as("average"),
 				)
 				.as("topEightAvgOrdinal"),
 		])

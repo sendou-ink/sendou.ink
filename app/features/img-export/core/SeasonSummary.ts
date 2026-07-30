@@ -93,7 +93,7 @@ export interface TournamentRun {
 	tier: number | null;
 	placement: number;
 	teamsCount: number;
-	/** Average SP of the players who placed in the tournament's top 8. Null when none of them had a calculated skill. */
+	/** Average end of season SP of the players who placed in the tournament's top 8. Null when none of them had a calculated skill. */
 	topEightAvgSp: number | null;
 }
 

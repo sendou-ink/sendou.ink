@@ -476,15 +476,10 @@ function SpChart({ points }: { points: Array<{ date: string; sp: number }> }) {
 			aria-label="SP"
 		>
 			<defs>
+				{/* presentation attributes, not CSS: the image export does not style elements inside defs */}
 				<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-					<stop
-						offset="0"
-						style={{ stopColor: "var(--graphic-accent)", stopOpacity: 0.3 }}
-					/>
-					<stop
-						offset="1"
-						style={{ stopColor: "var(--graphic-accent)", stopOpacity: 0 }}
-					/>
+					<stop offset="0" stopColor="currentColor" stopOpacity={0.3} />
+					<stop offset="1" stopColor="currentColor" stopOpacity={0} />
 				</linearGradient>
 			</defs>
 			<line
