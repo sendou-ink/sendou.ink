@@ -1,6 +1,7 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
+import { ensureMigratedDb } from "../scripts/ensure-test-db";
 import { E2E_BASE_PORT } from "./helpers/playwright";
 
 const DEBUG = process.env.E2E_DEBUG === "true";
@@ -176,12 +177,7 @@ async function globalSetup(config: FullConfig) {
 		const port = E2E_BASE_PORT + i;
 		const dbPath = `db-test-e2e-${i}.sqlite3`;
 
-		// Ensure database exists with migrations
-		if (!fs.existsSync(dbPath)) {
-			// biome-ignore lint/suspicious/noConsole: CLI script output
-			console.log(`Setting up database for worker ${i}: ${dbPath}`);
-			execSync(`DB_PATH=${dbPath} pnpm run migrate up`, { stdio: "inherit" });
-		}
+		ensureMigratedDb(dbPath);
 
 		// Start server
 		// biome-ignore lint/suspicious/noConsole: CLI script output

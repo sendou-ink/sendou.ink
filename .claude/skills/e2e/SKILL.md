@@ -9,7 +9,7 @@ description: Run, debug, and manage Playwright e2e tests. Use when running e2e t
 
 - Tests live in `e2e/*.spec.ts`, config in `playwright.config.ts`
 - Page objects live in `e2e/pages/<feature>/` — every spec uses them; conventions in `docs/dev/e2e-page-objects.md`, gotchas in `docs/dev/e2e-page-objects-migration.md`
-- Global setup (`e2e/global-setup.ts`) builds the app (skipped when no build input changed since the last e2e build — tracked via `.e2e-build-marker`), creates per-worker databases, and starts one server per worker
+- Global setup (`e2e/global-setup.ts`) builds the app (skipped when no build input changed since the last e2e build — tracked via `.e2e-build-marker`), creates/migrates per-worker databases (via `scripts/ensure-test-db.ts`: pending migrations are applied, drifted databases are rebuilt), and starts one server per worker
 - Port calculation: `E2E_BASE_PORT = PORT (from .env) + 500`. Default PORT is typically 4001, so base port = 4501. Worker N uses port base+N
 - Worker count: `E2E_WORKERS` env, defaulting to `min(8, max(4, cores - 2))`
 - Worker databases: `db-test-e2e-<N>.sqlite3` in the project root; every test starts from a wiped database holding only the admin (Sendou) and N-ZAP users, and builds its own data with the `factories` fixture
@@ -19,15 +19,15 @@ description: Run, debug, and manage Playwright e2e tests. Use when running e2e t
 
 Before running tests, check for these common issues:
 
-1. **Stale worker databases** — Files matching `db-test-e2e-*.sqlite3` in the project root can cause "table already exists" migration errors if the schema has changed since they were created. Delete them (`rm -f db-test-e2e-*.sqlite3`); global setup recreates them.
-
-2. **Port conflicts** — Check if anything is already listening on the e2e ports (base port + worker index):
+1. **Port conflicts** — Check if anything is already listening on the e2e ports (base port + worker index):
    ```
    lsof -i :4501-4508 2>/dev/null
    ```
    If ports are occupied by leftover e2e servers, kill them. If occupied by something else, warn the user.
 
-3. **Docker running** — MinIO requires Docker. Check with `docker info` if there are storage-related failures.
+2. **Docker running** — MinIO requires Docker. Check with `docker info` if there are storage-related failures.
+
+Stale worker databases (`db-test-e2e-*.sqlite3`) are handled automatically: global setup applies pending migrations and rebuilds databases whose migration history has drifted.
 
 ## Running tests
 
@@ -63,7 +63,7 @@ Follow this funnel when tests fail:
 
 ### Step 2: Check infrastructure issues
 Common infrastructure errors and fixes:
-- **"table already exists"** → Stale worker DBs. Run `rm -f db-test-e2e-*.sqlite3`
+- **"table already exists"** → Should not happen anymore (global setup rebuilds drifted worker DBs); if it does, `rm -f db-test-e2e-*.sqlite3` and investigate `scripts/ensure-test-db.ts`
 - **"Server on port X did not start within timeout"** → Port conflict or app build error. Check ports with `lsof -i :<port>` and check for build errors
 - **"MinIO failed to start"** → Docker not running or compose issue. Check `docker info`
 - **"Test ended with database writes the server never saw"** → A factory call was not followed by a helper that talks to the server; add a `navigate`/`impersonate` after the writes

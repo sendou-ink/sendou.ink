@@ -11,7 +11,6 @@ translation-progress.md
 notes.md
 
 db*.sqlite3*
-!db-test.sqlite3
 dump
 
 .DS_Store

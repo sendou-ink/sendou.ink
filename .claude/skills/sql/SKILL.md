@@ -11,7 +11,7 @@ description: Help write, debug, and explore SQLite database queries using Kysely
 |------|---------|-------------|
 | `db.sqlite3` | Development database | Writing/testing new features, running the dev server |
 | `db-prod.sqlite3` | Copy of production database | Exploring real data, investigating bugs, verifying assumptions about data shape |
-| `db-test.sqlite3` | Unit test database (blank + migrations) | Unit tests only |
+| `db-test.sqlite3` | Unit test database (blank + migrations, created automatically by test runs) | Unit tests only |
 
 `db-prod.sqlite3` can be modified if the task requires it. **Never modify `db-copy.sqlite3`** — it is the untouched backup.
 
