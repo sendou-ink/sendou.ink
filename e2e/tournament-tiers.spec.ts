@@ -33,11 +33,10 @@ test.describe("Tournament tiers", () => {
 			},
 		);
 
-		// xxx: should be an option
 		// a finalized earlier edition: its tier seeds the series' tier history and
 		// playing it out gives every player the seeding skill the confirmed tier
 		// of the next edition is calculated from
-		const playedTournament = await factories.TournamentFactory.createPlayed(
+		await factories.TournamentFactory.createPlayed(
 			{
 				name: "PICNIC 1",
 				authorId: NZAP_TEST_ID,
@@ -46,15 +45,8 @@ test.describe("Tournament tiers", () => {
 				tags: null,
 				isRanked: false,
 			},
-			{ teamRosters: rosters, tier: HISTORY_TIER },
+			{ teamRosters: rosters, tier: HISTORY_TIER, playedOut: "all" },
 		);
-		let playedMatches: unknown[];
-		do {
-			playedMatches = await factories.TournamentFactory.playMatches(
-				playedTournament.id,
-			);
-		} while (playedMatches.length > 0);
-		await factories.TournamentFactory.finalize(playedTournament.id);
 
 		const tournament = await factories.TournamentFactory.create({
 			name: "PICNIC 2",

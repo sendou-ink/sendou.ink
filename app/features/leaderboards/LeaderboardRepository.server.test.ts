@@ -51,7 +51,10 @@ const createTournamentMatch = async ({
 }) => {
 	const { matches } = await TournamentFactory.createPlayed(
 		{ authorId, minMembersPerTeam: 1 },
-		{ isFinalized, teamRosters: [[authorId], [groupFillers[1].id]] },
+		{
+			playedOut: isFinalized ? "all" : 0,
+			teamRosters: [[authorId], [groupFillers[1].id]],
+		},
 	);
 
 	return matches[0];

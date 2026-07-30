@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as Standings from "~/features/tournament/core/Standings";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -48,13 +49,13 @@ type InsertArgs = Omit<
 >;
 
 type Options = {
-	/** Mark the tournament finished without recording any results. For cases that
-	 * only need the flag; a tournament with real results is finalized by
-	 * `TournamentRepository.finalize` with a summary. */
-	isFinalized?: boolean;
 	/** Confirmed tier, as starting the first bracket computes one. */
 	tier?: TournamentTierNumber;
 };
+
+/** Brackets to play out fully: one by its idx in the progression, several, or
+ * `"all"` for every bracket followed by finalizing the tournament. */
+type PlayedBrackets = number | number[] | "all";
 
 /**
  * Creates tournaments. Aggregate factory: the `CalendarEvent` wrapping the
@@ -79,31 +80,32 @@ export const { create } = defineFactory({
 
 		return { id: tournamentId, eventId };
 	},
-	applyOptions: async (tournament, { isFinalized, tier }: Options) => {
-		if (tier) {
-			await TournamentRepository.updateTournamentTier({
-				tournamentId: tournament.id,
-				tier,
-			});
-		}
+	applyOptions: async (tournament, { tier }: Options) => {
+		if (!tier) return;
 
-		if (!isFinalized) return;
-
-		await TournamentRepository.finalizeWithoutSummary(tournament.id);
+		await TournamentRepository.updateTournamentTier({
+			tournamentId: tournament.id,
+			tier,
+		});
 	},
 });
 
 /**
  * Creates a tournament that has been played. Every entry of `teamRosters` registers
- * as a team owned by the first of its users and checks in, the first bracket is
- * started off that seeding, and every match of it is played out.
+ * as a team owned by the first of its users and checks in, and the brackets
+ * `playedOut` names are played out off that seeding — the first bracket when not
+ * given, `"all"` for the whole tournament played and finalized.
  *
  * Returns the teams and the matches played alongside the tournament, so that a
- * progression can carry on: start its next bracket and play that too.
+ * test can carry on from wherever `playedOut` left the tournament.
  */
 export async function createPlayed(
 	overrides: Parameters<typeof create>[0],
-	{ teamRosters, ...options }: Options & { teamRosters: number[][] },
+	{
+		teamRosters,
+		playedOut = 0,
+		...options
+	}: Options & { teamRosters: number[][]; playedOut?: PlayedBrackets },
 ) {
 	const tournament = await create(overrides, options);
 
@@ -117,29 +119,46 @@ export async function createPlayed(
 		);
 	}
 
-	await startBracket(tournament.id);
-	const matches = await playMatches(tournament.id);
+	const matches = await playOut(tournament.id, playedOut);
 
 	return { ...tournament, teams, matches };
 }
 
-// xxx: do we really want to chain different methods or just have some isFinalized in the create?
 /**
- * Finalizes a fully played tournament with a real summary, the same way the
- * organizer's finalize button does: results on profiles, badges awarded to
- * `badgeReceivers`, skills and leaderboard entries.
+ * Plays brackets out fully, in the order given: each is started and every match of
+ * it played. `"all"` plays every bracket of the progression and then finalizes the
+ * tournament the same way the organizer's finalize button does: results on
+ * profiles, the tournament's badges awarded to its winning team, skills and
+ * leaderboard entries.
+ *
+ * Returns the matches played, in play order.
  */
-export async function finalize(
+export async function playOut(
 	tournamentId: number,
-	{
-		badgeReceivers,
-	}: {
-		badgeReceivers?: Parameters<typeof finalizeTournament>[0]["badgeReceivers"];
-	} = {},
-) {
+	brackets: PlayedBrackets = 0,
+): Promise<PlayedMatch[]> {
 	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+	const bracketIdxs =
+		brackets === "all"
+			? tournament.ctx.settings.bracketProgression.map((_, idx) => idx)
+			: [brackets].flat();
 
-	await finalizeTournament({ tournament, badgeReceivers });
+	const matches: PlayedMatch[] = [];
+	for (const bracketIdx of bracketIdxs) {
+		await startBracket(tournamentId, { bracketIdx });
+
+		let playedThisPass: PlayedMatch[];
+		do {
+			playedThisPass = await playMatches(tournamentId);
+			matches.push(...playedThisPass);
+		} while (playedThisPass.length > 0);
+	}
+
+	if (brackets === "all") {
+		await finalize(tournamentId);
+	}
+
+	return matches;
 }
 
 /**
@@ -189,6 +208,8 @@ export async function startBracket(
 
 interface PlayedMatch {
 	id: number;
+	/** Index of the bracket the match belongs to in the progression. */
+	bracketIdx: number;
 	/** Number of the bracket group the match belongs to, e.g. its round robin pool. */
 	groupNumber: number;
 	winnerTeamId: number;
@@ -202,9 +223,8 @@ interface PlayedMatch {
  * participation rows end up exactly as they do when the teams play it.
  *
  * One pass only: matches the played ones advance teams into are left for the next
- * call, so a caller can stop after any round.
+ * call, so a caller can stop after any round. `playOut` plays to the end.
  */
-// xxx: later optional param to play all matches of the bracket out?
 export async function playMatches(
 	tournamentId: number,
 ): Promise<PlayedMatch[]> {
@@ -213,7 +233,7 @@ export async function playMatches(
 	const played = playableMatches(tournament);
 	for (const match of played) {
 		await setActiveRosters(tournamentId, match);
-		await playOut(tournamentId, match);
+		await playOutMatch(tournamentId, match);
 	}
 
 	clearTournamentDataCache(tournamentId);
@@ -237,28 +257,29 @@ function roundMapsFor(
 function playableMatches(
 	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
 ): PlayedMatch[] {
-	return tournament.brackets
-		.filter((bracket) => !bracket.preview)
-		.flatMap((bracket) => {
-			const groupNumbers = new Map(
-				bracket.data.group.map((group) => [group.id, group.number]),
-			);
+	return tournament.brackets.flatMap((bracket, bracketIdx) => {
+		if (bracket.preview) return [];
 
-			return bracket.data.match
-				.filter((match) => bracket.matchStatus(match.id) === "STARTED")
-				.flatMap((match) =>
-					match.opponent1?.id && match.opponent2?.id
-						? [
-								{
-									id: match.id,
-									groupNumber: groupNumbers.get(match.groupId)!,
-									winnerTeamId: match.opponent1.id,
-									loserTeamId: match.opponent2.id,
-								},
-							]
-						: [],
-				);
-		});
+		const groupNumbers = new Map(
+			bracket.data.group.map((group) => [group.id, group.number]),
+		);
+
+		return bracket.data.match
+			.filter((match) => bracket.matchStatus(match.id) === "STARTED")
+			.flatMap((match) =>
+				match.opponent1?.id && match.opponent2?.id
+					? [
+							{
+								id: match.id,
+								bracketIdx,
+								groupNumber: groupNumbers.get(match.groupId)!,
+								winnerTeamId: match.opponent1.id,
+								loserTeamId: match.opponent2.id,
+							},
+						]
+					: [],
+			);
+	});
 }
 
 async function setActiveRosters(tournamentId: number, match: PlayedMatch) {
@@ -284,7 +305,7 @@ async function setActiveRosters(tournamentId: number, match: PlayedMatch) {
 	}
 }
 
-async function playOut(tournamentId: number, match: PlayedMatch) {
+async function playOutMatch(tournamentId: number, match: PlayedMatch) {
 	let position = 0;
 	let setOver = false;
 
@@ -314,6 +335,38 @@ async function playOut(tournamentId: number, match: PlayedMatch) {
 		setOver = reported.setOver;
 		position++;
 	}
+}
+
+async function finalize(tournamentId: number) {
+	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+
+	await finalizeTournament({
+		tournament,
+		badgeReceivers: await winnersAsBadgeReceivers(tournament),
+	});
+}
+
+/** The tournament's badges all go to the winning team, as the organizer typically assigns them. */
+async function winnersAsBadgeReceivers(
+	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
+) {
+	const badges = (
+		await CalendarRepository.findById(tournament.ctx.eventId, {
+			includeBadgePrizes: true,
+		})
+	)?.badgePrizes;
+	if (!badges?.length) return undefined;
+
+	const winner = Standings.flattenStandings(
+		Standings.tournamentStandings(tournament),
+	).find((standing) => standing.placement === 1);
+	invariant(winner, "Tournament to award badges for has no winner");
+
+	return badges.map((badge) => ({
+		badgeId: badge.id,
+		tournamentTeamId: winner.team.id,
+		userIds: winner.team.members.map((member) => member.userId),
+	}));
 }
 
 async function findMatch(matchId: number) {

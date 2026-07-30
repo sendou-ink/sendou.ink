@@ -245,8 +245,10 @@ function twitchVideo({
 }
 
 /**
- * A double elimination bracket of four one-player teams, its first round played
- * and optionally streamed by a cast account.
+ * A played out double elimination bracket of four one-player teams, its first
+ * round backdated to the times the VODs are matched against and optionally
+ * streamed by a cast account. Later matches start at the current time, far from
+ * any mocked VOD.
  */
 async function seedTournamentWithMatches({
 	castedOn,

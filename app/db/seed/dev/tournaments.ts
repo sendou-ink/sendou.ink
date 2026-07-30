@@ -257,7 +257,7 @@ async function seedPlayedAwaitingFinalization({ users, rosters }: Ctx) {
 		mapPool: () => counterpickMapPool("AUTO_ALL"),
 	});
 
-	await playOut(tournament.id, DOUBLE_ELIMINATION);
+	await TournamentFactory.playOut(tournament.id);
 }
 
 /** #6 single elim with third place match, TO maps — finalized, badge awarded. */
@@ -280,26 +280,13 @@ async function seedFinalizedSingleElim({
 		badges: [badgeId],
 	});
 
-	const teams = await registerTeams({
+	await registerTeams({
 		tournamentId: tournament.id,
 		rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
 		isCheckedIn: true,
 	});
 
-	const winnerTeamId = await playOut(tournament.id, SINGLE_ELIMINATION);
-	const winners = teams.find((team) => team.id === winnerTeamId);
-
-	await TournamentFactory.finalize(tournament.id, {
-		badgeReceivers: winners
-			? [
-					{
-						badgeId,
-						tournamentTeamId: winners.id,
-						userIds: winners.memberUserIds,
-					},
-				]
-			: undefined,
-	});
+	await TournamentFactory.playOut(tournament.id, "all");
 }
 
 /** #7 round robin → SE, AUTO_SZ, ranked — finalized. */
@@ -321,8 +308,7 @@ async function seedFinalizedRoundRobin({ users, rosters }: Ctx) {
 		mapPool: () => counterpickMapPool("AUTO_SZ"),
 	});
 
-	await playOut(tournament.id, ROUND_ROBIN_TO_SINGLE_ELIMINATION);
-	await TournamentFactory.finalize(tournament.id);
+	await TournamentFactory.playOut(tournament.id, "all");
 }
 
 /** #8 1v1 — reg open, exercises small-roster registration UI. */
@@ -364,8 +350,7 @@ async function seedFinalizedTwoVersusTwo({ users, rosters }: Ctx) {
 		mapPool: () => counterpickMapPool("AUTO_SZ"),
 	});
 
-	await playOut(tournament.id, SINGLE_ELIMINATION);
-	await TournamentFactory.finalize(tournament.id);
+	await TournamentFactory.playOut(tournament.id, "all");
 }
 
 /** #10 invitational double elim, TO maps — pre-bracket, no open reg. */
@@ -418,9 +403,10 @@ async function seedHistoricalTournaments({
 			bracketProgression: progression,
 			teamsPerGroup: 4,
 			isRanked: isRecent,
+			badges: badgeId ? [badgeId] : [],
 		});
 
-		const teams = await registerTeams({
+		await registerTeams({
 			tournamentId: tournament.id,
 			rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
 			isCheckedIn: true,
@@ -428,21 +414,7 @@ async function seedHistoricalTournaments({
 			mapPool: () => counterpickMapPool(isRecent ? "AUTO_SZ" : "AUTO_ALL"),
 		});
 
-		const winnerTeamId = await playOut(tournament.id, progression);
-		const winners = teams.find((team) => team.id === winnerTeamId);
-
-		await TournamentFactory.finalize(tournament.id, {
-			badgeReceivers:
-				badgeId && winners
-					? [
-							{
-								badgeId,
-								tournamentTeamId: winners.id,
-								userIds: winners.memberUserIds,
-							},
-						]
-					: undefined,
-		});
+		await TournamentFactory.playOut(tournament.id, "all");
 	}
 }
 
@@ -492,36 +464,6 @@ async function registerTeams({
 	}
 
 	return teams;
-}
-
-/** Starts and plays every bracket of the progression; returns the winner's team id. */
-async function playOut(tournamentId: number, progression: Progression) {
-	const standingsBracketIdx = finalStandingsBracketIdx(progression);
-	let winnerTeamId: number | undefined;
-
-	for (let bracketIdx = 0; bracketIdx < progression.length; bracketIdx++) {
-		await TournamentFactory.startBracket(tournamentId, { bracketIdx });
-
-		while (true) {
-			const played = await TournamentFactory.playMatches(tournamentId);
-			if (played.length === 0) break;
-
-			if (bracketIdx === standingsBracketIdx) {
-				winnerTeamId = played[played.length - 1].winnerTeamId;
-			}
-		}
-	}
-
-	return winnerTeamId;
-}
-
-/** The bracket first place comes out of: the one sourcing the groups winners, or the first. */
-function finalStandingsBracketIdx(progression: Progression) {
-	const index = progression.findIndex((bracket) =>
-		bracket.sources?.some((source) => source.placements.includes(1)),
-	);
-
-	return index === -1 ? 0 : index;
 }
 
 function rosterBuilder(users: SeededUsers) {

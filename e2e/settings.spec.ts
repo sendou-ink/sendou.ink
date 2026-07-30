@@ -188,7 +188,6 @@ test.describe("Spoiler-free mode", () => {
 const TEAM_COUNT = 4;
 const TEAM_SIZE = 4;
 
-// xxx: this should be an option of create instead
 async function createFinalizedTournament(factories: Factories) {
 	const users = await factories.UserFactory.createMany(TEAM_COUNT * TEAM_SIZE);
 	const teamRosters = Array.from({ length: TEAM_COUNT }, (_, teamIndex) =>
@@ -197,13 +196,8 @@ async function createFinalizedTournament(factories: Factories) {
 			.map((user) => user.id),
 	);
 
-	const tournament = await factories.TournamentFactory.createPlayed(
+	return factories.TournamentFactory.createPlayed(
 		{ authorId: ADMIN_ID },
-		{ teamRosters },
+		{ teamRosters, playedOut: "all" },
 	);
-	// createPlayed plays one round; the final becomes playable only after it
-	await factories.TournamentFactory.playMatches(tournament.id);
-	await factories.TournamentFactory.finalize(tournament.id);
-
-	return tournament;
 }

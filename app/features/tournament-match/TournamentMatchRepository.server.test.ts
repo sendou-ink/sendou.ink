@@ -41,12 +41,17 @@ describe("findByTournamentTeamId", () => {
 				bracketProgression: POOLS_TO_FINAL,
 				minMembersPerTeam: 1,
 			},
-			{ teamRosters: users.ids(TEAM_COUNT).map((userId) => [userId]) },
+			{
+				teamRosters: users.ids(TEAM_COUNT).map((userId) => [userId]),
+				playedOut: [0, 1],
+			},
 		);
-		const poolMatches = tournament.matches;
-
-		await TournamentFactory.startBracket(tournament.id, { bracketIdx: 1 });
-		const [finalMatch] = await TournamentFactory.playMatches(tournament.id);
+		const poolMatches = tournament.matches.filter(
+			(match) => match.bracketIdx === 0,
+		);
+		const finalMatch = tournament.matches.find(
+			(match) => match.bracketIdx === 1,
+		)!;
 
 		const lastPoolMatch = poolMatches.find(
 			(match) => match.groupNumber === POOL_COUNT,
