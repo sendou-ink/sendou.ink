@@ -1,22 +1,26 @@
+import {
+	IN_GAME_NAME,
+	sanitizeInGameName,
+} from "~/features/user-page/in-game-name";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import {
 	clothesGearIds,
 	headGearIds,
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
-import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
 	MainWeaponId,
-	ModeShort,
 	ModeWithStage,
 } from "~/modules/in-game-lists/types";
 import {
 	canonicalWeaponSplId,
 	mainWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
+import invariant from "~/utils/invariant";
 import { faker } from "./faker";
 
 const STACKABLE_ABILITIES = abilities
@@ -46,23 +50,20 @@ export function gear() {
 	};
 }
 
-// xxx: prolly inline
-/** A non-empty subset of the modes, e.g. the ones a build is made for. */
-export function modes(): ModeShort[] {
-	return faker.helpers.arrayElements(modesShort, { min: 1, max: 3 });
-}
-
-const IN_GAME_NAME_MAX_LENGTH = 10;
-
-// xxx: match the actual rules for this
-/** An in-game name with its discriminator, e.g. `Agent 4#1859`. */
+/**
+ * An in-game name with its discriminator, e.g. `Agent 4#1859`. `name` is sanitized and
+ * truncated the way the real thing is, so the result always passes `inGameNameIsValid`.
+ */
 export function inGameName(name = faker.person.firstName()): string {
-	const tag = faker.string.alphanumeric({
-		length: faker.helpers.arrayElement([4, 5]),
+	const discriminator = faker.string.alphanumeric({
+		length: {
+			min: IN_GAME_NAME.DISCRIMINATOR_MIN_LENGTH,
+			max: IN_GAME_NAME.DISCRIMINATOR_MAX_LENGTH,
+		},
 		casing: "lower",
 	});
 
-	return `${[...name].slice(0, IN_GAME_NAME_MAX_LENGTH).join("")}#${tag}`;
+	return `${sanitizedName(name)}#${discriminator}`;
 }
 
 /**
@@ -84,6 +85,16 @@ export function mapList(count: number): ModeWithStage[] {
  */
 export function buildAbilities(): BuildAbilitiesTuple {
 	return [gearAbilities(), gearAbilities(), gearAbilities()];
+}
+
+function sanitizedName(name: string): string {
+	const characters = [...sanitizeInGameName(name)].slice(
+		0,
+		IN_GAME_NAME.NAME_MAX_LENGTH,
+	);
+	invariant(characters.length > 0, `No valid in-game name characters: ${name}`);
+
+	return characters.join("");
 }
 
 function gearAbilities(): [Ability, Ability, Ability, Ability] {
