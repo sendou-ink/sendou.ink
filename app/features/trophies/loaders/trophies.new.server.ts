@@ -3,12 +3,20 @@ import { requireUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
 import * as TrophyRepository from "../TrophyRepository.server";
 import { TROPHY_APPROVALS_REQUIRED } from "../trophies-constants";
-import { canEditAnyTrophy, canReviewTrophies } from "../trophies-utils";
+import {
+	canAccessTrophies,
+	canEditAnyTrophy,
+	canReviewTrophies,
+} from "../trophies-utils";
 
 export type NewTrophyLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async (_args: LoaderFunctionArgs) => {
 	const user = requireUser();
+	if (!canAccessTrophies(user)) {
+		throw new Response(null, { status: 404 });
+	}
+
 	const canReview = canReviewTrophies(user);
 
 	const [rawItems, ownUnreviewedCount, editableTrophies] = await Promise.all([

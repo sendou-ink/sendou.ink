@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import {
 	CALENDAR_NEW_PAGE,
 	lfgNewPostPage,
@@ -98,12 +99,14 @@ export function AnythingAdder({ compact }: { compact?: boolean }) {
 			imagePath: navIconUrl("plus"),
 			href: plusSuggestionsNewPage(),
 		},
-		{
-			id: "trophy",
-			children: t("header.adder.trophy"),
-			imagePath: navIconUrl("trophies"),
-			href: NEW_TROPHY_PAGE,
-		},
+		canAccessTrophies(user)
+			? {
+					id: "trophy",
+					children: t("header.adder.trophy"),
+					imagePath: navIconUrl("trophies"),
+					href: NEW_TROPHY_PAGE,
+				}
+			: null,
 	].filter((item) => item !== null);
 
 	return (

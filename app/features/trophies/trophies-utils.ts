@@ -5,6 +5,7 @@ import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	SUPPORTER_TROPHY_CODE,
+	TROPHIES_RELEASED,
 	TROPHY_UPCOMING_HIGHLIGHT_WEEKS,
 	XP_TROPHY_CODE_PREFIX,
 } from "./trophies-constants";
@@ -27,6 +28,14 @@ export function parseSpecialTrophyCode(
 	}
 
 	return null;
+}
+
+// Feature flag
+export function canAccessTrophies(user?: { roles: Array<Role> } | null) {
+	if (TROPHIES_RELEASED) return true;
+	if (!user) return false;
+
+	return user.roles.includes("ADMIN") || user.roles.includes("QA");
 }
 
 export function canReviewTrophies(user?: { roles: Array<Role> } | null) {

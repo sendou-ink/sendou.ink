@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getUser } from "~/features/auth/core/user.server";
 import { calculateTentativeTier } from "~/features/tournament/core/tiering";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
@@ -81,7 +82,9 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		series: await seriesInfo(),
 		month,
 		year,
-		trophies: await TrophyRepository.findByOrganizationId(organization.id),
+		trophies: canAccessTrophies(user)
+			? await TrophyRepository.findByOrganizationId(organization.id)
+			: [],
 		bannedUsers:
 			user?.id && organization.permissions.BAN.includes(user.id)
 				? await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(

@@ -17,8 +17,23 @@ const VALID_TROPHY_MODEL =
 	decompressFromBase64(trophies["Chris P. Bacon"]) ?? "";
 
 test.describe("Trophies", () => {
+	test("hides trophies from users without early access", async ({ page }) => {
+		await seed(page);
+		await impersonate(page, NZAP_TEST_ID);
+
+		const response = await page.goto(TROPHIES_PAGE);
+		expect(response?.status()).toBe(404);
+
+		await navigate({
+			page,
+			url: userPage({ discordId: ADMIN_DISCORD_ID, customUrl: "sendou" }),
+		});
+		await isNotVisible(page.getByTestId("trophy-display"));
+	});
+
 	test("shows trophy wins via user page trophy display", async ({ page }) => {
 		await seed(page);
+		await impersonate(page);
 		await navigate({
 			page,
 			url: userPage({ discordId: ADMIN_DISCORD_ID, customUrl: "sendou" }),
@@ -38,6 +53,7 @@ test.describe("Trophies", () => {
 
 	test("browses trophy details from the trophies list", async ({ page }) => {
 		await seed(page);
+		await impersonate(page);
 		await navigate({ page, url: TROPHIES_PAGE });
 
 		const trophyLinks = page.locator("a[href^='/trophies/']");
@@ -71,7 +87,7 @@ test.describe("Trophies", () => {
 
 	test("submits a new trophy after agreeing to terms", async ({ page }) => {
 		await seed(page);
-		await impersonate(page, NZAP_TEST_ID);
+		await impersonate(page);
 		await navigate({ page, url: NEW_TROPHY_PAGE });
 
 		const nameInput = page.getByLabel("Name").first();

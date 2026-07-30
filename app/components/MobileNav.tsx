@@ -20,6 +20,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import type { RootLoaderData } from "~/root";
@@ -397,25 +398,29 @@ function MenuOverlay({
 
 					<nav aria-label={t("front:mobileNav.menu")}>
 						<ul className={styles.navGrid}>
-							{navItems.map((item) => (
-								<li key={item.name}>
-									<Link
-										to={`/${item.url}`}
-										className={styles.navItem}
-										onClick={onClose}
-									>
-										<div className={styles.navItemImage}>
-											<Image
-												path={navIconUrl(item.name)}
-												height={32}
-												width={32}
-												alt=""
-											/>
-										</div>
-										<span>{t(`common:pages.${item.name}` as any)}</span>
-									</Link>
-								</li>
-							))}
+							{navItems
+								.filter(
+									(item) => item.name !== "trophies" || canAccessTrophies(user),
+								)
+								.map((item) => (
+									<li key={item.name}>
+										<Link
+											to={`/${item.url}`}
+											className={styles.navItem}
+											onClick={onClose}
+										>
+											<div className={styles.navItemImage}>
+												<Image
+													path={navIconUrl(item.name)}
+													height={32}
+													width={32}
+													alt=""
+												/>
+											</div>
+											<span>{t(`common:pages.${item.name}` as any)}</span>
+										</Link>
+									</li>
+								))}
 						</ul>
 					</nav>
 

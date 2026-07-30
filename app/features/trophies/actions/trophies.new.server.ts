@@ -20,6 +20,7 @@ import {
 	trophyFormSchema,
 } from "../trophies-schemas";
 import {
+	canAccessTrophies,
 	canEditTrophy,
 	canReviewTrophies,
 	compressTrophyModel,
@@ -27,6 +28,9 @@ import {
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
+	if (!canAccessTrophies(user)) {
+		throw new Response(null, { status: 404 });
+	}
 
 	const isJson = request.headers.get("Content-Type") === "application/json";
 
