@@ -10,10 +10,15 @@ export class TournamentTeamsPage {
 		this.page = page;
 		this.locators = {
 			teamNames: page.getByTestId("team-name"),
+			teamMemberNames: page.getByTestId("team-member-name"),
 		};
 	}
 
 	async goto(tournamentId: number) {
 		await navigate({ page: this.page, url: tournamentTeamsPage(tournamentId) });
+	}
+
+	memberNamed(name: string) {
+		return this.locators.teamMemberNames.getByText(name);
 	}
 }

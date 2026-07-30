@@ -6,7 +6,6 @@ import {
 	type Response,
 } from "@playwright/test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { tournamentBracketsPage } from "~/utils/urls";
 import {
 	assertFlushed,
 	type Factories,
@@ -315,25 +314,31 @@ export function modalClickConfirmButton(page: Page) {
 
 /**
  * Clicks a tournament nav tab by its testId, opening the overflow ("More") menu
- * first when the tab has collapsed into it on the current viewport.
+ * first when the tab has collapsed into it on the current viewport. Retried as a
+ * whole because the nav can re-collapse between the visibility check and the click.
  */
+// xxx: timeouts?
 export async function clickNavTab(page: Page, testId: string) {
 	const visibleTab = page.locator(`[data-testid="${testId}"]:visible`);
-	if ((await visibleTab.count()) === 0) {
-		await page.getByRole("button", { name: "More" }).click();
-	}
-	await visibleTab.click();
+	await expect(async () => {
+		if ((await visibleTab.count()) === 0) {
+			await page.getByRole("button", { name: "More" }).click();
+		}
+		await visibleTab.click({ timeout: 2_000 });
+	}).toPass({ timeout: 15_000 });
 }
 
-// xxx: should be removed
-export const startBracket = async (page: Page, tournamentId = 2) => {
-	await impersonate(page);
-
-	await navigate({
-		page,
-		url: tournamentBracketsPage({ tournamentId }),
-	});
-
-	await page.getByTestId("finalize-bracket-button").click();
-	await submit(page, "confirm-finalize-bracket-button");
-};
+// xxx: timeout??? anyway can we isolate websocket events? avoiding shared skalop
+/**
+ * Clicks `trigger` until `expected` is visible, for clicks that open a popover or
+ * dialog — a revalidation re-render (e.g. another worker's websocket event) can
+ * swallow the press.
+ */
+export async function clickUntilVisible(trigger: Locator, expected: Locator) {
+	await expect(async () => {
+		if (!(await expected.isVisible())) {
+			await trigger.click({ timeout: 2_000 });
+		}
+		await expect(expected).toBeVisible({ timeout: 2_000 });
+	}).toPass({ timeout: 15_000 });
+}

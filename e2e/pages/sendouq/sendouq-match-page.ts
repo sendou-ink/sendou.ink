@@ -2,14 +2,16 @@ import type { Page } from "@playwright/test";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { sendouQMatchPage } from "~/utils/urls";
 import {
+	clickUntilVisible,
 	expect,
 	navigate,
 	selectWeapon,
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
+import { UserCard } from "../user/user-card";
 
 type Side = "ALPHA" | "BRAVO";
-type Tab = "action" | "result";
+type Tab = "action" | "result" | "rosters";
 
 const MAPS_TO_WIN = Math.ceil(SENDOUQ_BEST_OF / 2);
 
@@ -70,6 +72,13 @@ export class SendouQMatchPage {
 		return this.page.getByRole("img", { name }).first();
 	}
 
+	openUserCard(name: string | RegExp) {
+		return UserCard.open(
+			this.page,
+			this.page.getByRole("button", { name }).first(),
+		);
+	}
+
 	/** Reports the winner of every map of the set, `winner` winning all of them. */
 	async reportSweep(winner: Side) {
 		for (let i = 0; i < MAPS_TO_WIN - 1; i++) {
@@ -123,7 +132,10 @@ export class SendouQMatchPage {
 	}
 
 	async requestCancel() {
-		await this.locators.requestCancelButton.click();
+		await clickUntilVisible(
+			this.locators.requestCancelButton,
+			this.page.getByTestId("confirm-button"),
+		);
 		await this.confirmDialog();
 	}
 

@@ -1,16 +1,39 @@
 import type { Page } from "@playwright/test";
 import { tournamentAdminPage } from "~/utils/urls";
-import { navigate } from "../../helpers/playwright";
+import {
+	modalClickConfirmButton,
+	navigate,
+	submit,
+	waitForPOSTResponse,
+} from "../../helpers/playwright";
 import { CalendarNewEventPage } from "../calendar/calendar-new-event-page";
+import { TournamentAdminStaffPage } from "./tournament-admin-staff-page";
+import { TournamentAdminStreamPage } from "./tournament-admin-stream-page";
+import { TournamentNav } from "./tournament-nav";
 
+/** `/to/:id/admin` — the teams list and the admin sub-page tabs. */
 export class TournamentAdminPage {
 	private readonly page: Page;
+	readonly nav;
 	readonly locators;
 
 	constructor(page: Page) {
 		this.page = page;
+		this.nav = new TournamentNav(page);
 		this.locators = {
 			editEventInfoButton: page.getByTestId("edit-event-info-button"),
+			searchInput: page.getByLabel("Search teams"),
+			teamRows: page.getByTestId("team-row"),
+			teamNames: page.getByTestId("team-name"),
+			noSearchResultsText: page.getByText("No registrations match your search"),
+			exportButton: page.getByRole("button", { name: "Export" }),
+			exportDialogHeading: page.getByRole("heading", {
+				name: "Export participants",
+			}),
+			downloadButton: page.getByRole("button", { name: "Download" }),
+			unregisterDialogHeading: page.getByRole("heading", {
+				name: /Unregister .* and delete its registration info\?/,
+			}),
 		};
 	}
 
@@ -21,5 +44,93 @@ export class TournamentAdminPage {
 	async editEventInfo() {
 		await this.locators.editEventInfoButton.click();
 		return new CalendarNewEventPage(this.page);
+	}
+
+	adminTab(name: string) {
+		return this.page.getByRole("tab", { name });
+	}
+
+	async openStaff() {
+		await this.adminTab("Staff").click();
+		return new TournamentAdminStaffPage(this.page);
+	}
+
+	async openStream() {
+		await this.adminTab("Stream").click();
+		return new TournamentAdminStreamPage(this.page);
+	}
+
+	teamName(name: string) {
+		return this.locators.teamNames.filter({ hasText: name });
+	}
+
+	async searchTeams(query: string) {
+		await this.locators.searchInput.fill(query);
+	}
+
+	private teamRowActions(nth: number) {
+		return this.locators.teamRows.nth(nth).getByLabel("Actions");
+	}
+
+	async checkTeamIn(nth: number) {
+		await this.teamRowActions(nth).click();
+		await waitForPOSTResponse(this.page, async () => {
+			await this.page.getByRole("menuitem", { name: /^Check in/ }).click();
+		});
+	}
+
+	async dropOutTeam(nth: number) {
+		await this.teamRowActions(nth).click();
+		await this.page.getByRole("menuitem", { name: "Drop out" }).click();
+		await modalClickConfirmButton(this.page);
+	}
+
+	/** Checks a team in to a bracket that requires its own check-in, matched by its
+	 * stable team id rather than the row index which shifts after the start. */
+	async checkTeamInToBracket(tournamentTeamId: number, bracketName: string) {
+		await this.page
+			.locator(`[data-testid="team-row"][data-team-id="${tournamentTeamId}"]`)
+			.getByLabel("Actions")
+			.click();
+		await waitForPOSTResponse(this.page, async () => {
+			await this.page
+				.getByRole("menuitem", { name: `Check in (${bracketName})` })
+				.click();
+		});
+	}
+
+	/** Resets a bracket from the admin Brackets tab, typing out its name to confirm. */
+	async resetBracket(bracketName: string) {
+		await this.adminTab("Brackets").click();
+		await this.page
+			.getByLabel(`Type bracket name ("${bracketName}") to confirm`)
+			.fill(bracketName);
+		await submit(this.page, "reset-bracket-button");
+	}
+
+	async checkTeamOut(nth: number) {
+		await this.teamRowActions(nth).click();
+		await waitForPOSTResponse(this.page, async () => {
+			await this.page.getByRole("menuitem", { name: /^Check out/ }).click();
+		});
+	}
+
+	async unregisterTeam(nth: number) {
+		await this.teamRowActions(nth).click();
+		await this.page.getByRole("menuitem", { name: "Unregister" }).click();
+	}
+
+	confirmUnregister() {
+		return modalClickConfirmButton(this.page);
+	}
+
+	async openExportDialog() {
+		await this.locators.exportButton.click();
+	}
+
+	async downloadExport() {
+		const downloadPromise = this.page.waitForEvent("download");
+		await this.locators.downloadButton.click();
+		return downloadPromise;
 	}
 }

@@ -6,9 +6,14 @@ const DRAG_TARGET_Y = 500;
 
 export class TournamentSeedsPage {
 	private readonly page: Page;
+	readonly locators;
 
 	constructor(page: Page) {
 		this.page = page;
+		this.locators = {
+			setAbDivisionsButton: page.getByTestId("set-ab-divisions"),
+			abDivisionRadioGroups: page.getByTestId("ab-division-radio-group"),
+		};
 	}
 
 	async goto(tournamentId: number) {
@@ -34,5 +39,35 @@ export class TournamentSeedsPage {
 
 	save() {
 		return submit(this.page);
+	}
+
+	async openAbDivisionsDialog() {
+		await this.locators.setAbDivisionsButton.click();
+	}
+
+	async openStartingBracketsDialog() {
+		await this.page.getByTestId("set-starting-brackets").click();
+	}
+
+	async setStartingBracket(nth: number, bracketName: string) {
+		await this.page
+			.getByTestId("starting-bracket-select")
+			.nth(nth)
+			.selectOption(bracketName);
+	}
+
+	saveStartingBrackets() {
+		return submit(this.page, "set-starting-brackets-submit-button");
+	}
+
+	async assignAbDivision(nth: number, division: "A" | "B") {
+		await this.locators.abDivisionRadioGroups
+			.nth(nth)
+			.getByText(division, { exact: true })
+			.click();
+	}
+
+	saveAbDivisions() {
+		return submit(this.page, "set-ab-divisions-submit-button");
 	}
 }

@@ -1,20 +1,15 @@
-import { expect, navigate, test } from "./helpers/playwright";
+import { expect, test } from "./helpers/playwright";
+import { FrontPage } from "./pages/front-page/front-page";
 
 test.describe("Welcome", () => {
 	test("navigates to the welcome page via the front page banner when not logged in", async ({
 		page,
 	}) => {
-		// await seed(page);
-		await navigate({ page, url: "/" });
+		const front = new FrontPage(page);
+		await front.goto();
 
-		await page
-			.getByRole("link", { name: "New to competitive Splatoon? Start here!" })
-			.click();
+		const welcome = await front.openWelcomeBanner();
 
-		await expect(
-			page.getByRole("heading", {
-				name: "Introduction to competitive Splatoon and sendou.ink",
-			}),
-		).toBeVisible();
+		await expect(welcome.locators.heading).toBeVisible();
 	});
 });

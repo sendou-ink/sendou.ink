@@ -44,6 +44,10 @@ export class FriendsPage {
 		);
 	}
 
+	friendButton(name: string) {
+		return this.page.getByRole("button", { name });
+	}
+
 	friend(name: string) {
 		return new FriendMenu(this.page, name);
 	}

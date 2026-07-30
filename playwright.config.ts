@@ -1,7 +1,10 @@
+import os from "node:os";
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
 
-const WORKER_COUNT = Number(process.env.E2E_WORKERS) || 4;
+const WORKER_COUNT =
+	Number(process.env.E2E_WORKERS) ||
+	Math.min(8, Math.max(4, os.cpus().length - 2));
 
 /**
  * See https://playwright.dev/docs/test-configuration.

@@ -1,83 +1,183 @@
-import type { Locator, Page } from "@playwright/test";
+import { subMinutes } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
-import { updateMatchProfileSchema } from "~/features/settings/match-profile-schemas";
-import {
-	NOTIFICATIONS_URL,
-	SETTINGS_PAGE,
-	tournamentAdminPage,
-	tournamentAdminRegistrationEditPage,
-	tournamentBracketsPage,
-	tournamentMatchPage,
-	tournamentPage,
-	tournamentTeamsPage,
-	userResultsPage,
-} from "~/utils/urls";
-import {
-	clickNavTab,
-	expect,
-	impersonate,
-	isNotVisible,
-	modalClickConfirmButton,
-	navigate,
-	startBracket,
-	submit,
-	test,
-	waitForPOSTResponse,
-} from "./helpers/playwright";
-import { createFormHelpers } from "./helpers/playwright-form";
-import {
-	backToBracket,
-	expectScore,
-	goToTab,
-	navigateToMatch,
-	pickBanMap,
-	reportResult,
-	undoLastReport,
-} from "./helpers/tournament-match";
+import type { TournamentSettings } from "~/db/tables-json";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { NotificationsPage } from "./pages/notifications/notifications-page";
+import { MatchProfilePage } from "./pages/settings/match-profile-page";
+import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
+import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentJoinPage } from "./pages/tournament/tournament-join-page";
+import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
+import { TournamentPage } from "./pages/tournament/tournament-page";
+import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
+import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
+import { UserResultsPage } from "./pages/user/user-results-page";
+
+// xxx: quite a lot of overlap (doing the same actions over and over again when they were already tested -> take shortcuts via factories to make tests faster?)
+
+// xxx: tournament-bracket-elim, tournament-bracket-swiss etc. and pick ban as separate and general another?
+
+const ROSTER_SIZE = 4;
+
+type BracketProgression = TournamentSettings["bracketProgression"];
+
+const DOUBLE_ELIMINATION: BracketProgression = [
+	{
+		type: "double_elimination",
+		name: "Main bracket",
+		requiresCheckIn: false,
+		settings: {},
+	},
+];
+
+/* Match & round layout of a 4 team double elimination in a fresh database:
+ * WB R1 = matches 1 & 2, WB final = 3, LB final (round id 3) = match 4. */
+const DE_LOSERS_ROUND_ID = 3;
+
+const ROUND_ROBIN: BracketProgression = [
+	{
+		type: "round_robin",
+		name: "Groups stage",
+		requiresCheckIn: false,
+		settings: {},
+	},
+];
+
+/* Single group of 4 teams plays: R1 = matches 1 (team 1 vs. 4) & 2 (team 3 vs. 2),
+ * R2 = matches 3 (team 2 vs. 4) & 4 (team 1 vs. 3), R3 = matches 5 & 6 (team 2 vs. 1). */
+
+const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
+	{
+		type: "round_robin",
+		name: "Groups stage",
+		requiresCheckIn: false,
+		settings: {},
+	},
+	{
+		type: "single_elimination",
+		name: "Final stage",
+		requiresCheckIn: false,
+		settings: {},
+		sources: [{ bracketIdx: 0, placements: [1, 2] }],
+	},
+	{
+		type: "single_elimination",
+		name: "Underground bracket",
+		requiresCheckIn: true,
+		settings: {},
+		sources: [{ bracketIdx: 0, placements: [3, 4] }],
+	},
+];
+
+const SOS_BRACKETS: BracketProgression = [
+	{
+		type: "round_robin",
+		name: "Groups stage",
+		requiresCheckIn: false,
+		settings: {},
+	},
+	{
+		type: "single_elimination",
+		name: "Great White",
+		requiresCheckIn: false,
+		settings: {},
+		sources: [{ bracketIdx: 0, placements: [1] }],
+	},
+	{
+		type: "single_elimination",
+		name: "Hammerhead",
+		requiresCheckIn: false,
+		settings: {},
+		sources: [{ bracketIdx: 0, placements: [2] }],
+	},
+	{
+		type: "single_elimination",
+		name: "Mako",
+		requiresCheckIn: false,
+		settings: {},
+		sources: [{ bracketIdx: 0, placements: [3] }],
+	},
+	{
+		type: "single_elimination",
+		name: "Lantern",
+		requiresCheckIn: false,
+		settings: {},
+		sources: [{ bracketIdx: 0, placements: [4] }],
+	},
+];
+
+const SWISS_TO_TOP_CUT: BracketProgression = [
+	{
+		type: "swiss",
+		name: "Swiss",
+		requiresCheckIn: false,
+		settings: { groupCount: 2, roundCount: 4 },
+	},
+	{
+		type: "single_elimination",
+		name: "Top Cut",
+		requiresCheckIn: false,
+		settings: { thirdPlaceMatch: false },
+		sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
+	},
+];
+
+const TO_MAP_POOL = ([1, 2, 3, 4, 6, 7, 8, 10] as StageId[]).flatMap(
+	(stageId) =>
+		(["SZ", "TC", "RM", "CB"] as ModeShort[]).map((mode) => ({
+			mode,
+			stageId,
+		})),
+);
 
 test.describe("Tournament bracket", () => {
-	test("sets active roster as regular member", async ({ page }) => {
-		const tournamentId = 1;
-		// User 37 is owner of team 10 (seed 10) which has 5 players
-		// Team 10 vs Team 9 (seed 9) is match 2 in WB Round 1
-		const matchId = 2;
-		await startBracket(page, tournamentId);
-
-		await impersonate(page, 37);
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId, matchId }),
+	test("sets active roster as regular member", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
 		});
+		// the team with subs is created second, making it the bravo side of the match
+		const [, teamWithSub] = await createTeams(factories, tournament.id, [
+			{},
+			{ rosterSize: 5 },
+		]);
+		// xxx: should be an option
+		const [match] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
 
-		await expect(page.getByTestId("active-roster-needed-text")).toBeVisible();
+		await impersonate(page, teamWithSub.ownerUserId);
 
-		// Team 10 (5 players) is opponentTwo in match 2 → bravo side.
+		const matchPage = new TournamentMatchPage(page);
+		await matchPage.goto({ tournamentId: tournament.id, matchId: match.id });
+
+		await expect(matchPage.locators.activeRosterNeededText).toBeVisible();
+
 		// The roster tab opens in editing mode by default when active roster is missing.
-		await goToTab(page, "rosters");
-		await page.getByTestId("player-checkbox-bravo-0").click();
-		await page.getByTestId("player-checkbox-bravo-1").click();
-		await page.getByTestId("player-checkbox-bravo-2").click();
-		await page.getByTestId("player-checkbox-bravo-3").click();
-		await submit(page, "save-active-roster-button-bravo");
+		await matchPage.openTab("rosters");
+		await matchPage.playerCheckbox("bravo", 0).click();
+		await matchPage.playerCheckbox("bravo", 1).click();
+		await matchPage.playerCheckbox("bravo", 2).click();
+		await matchPage.playerCheckbox("bravo", 3).click();
+		await matchPage.saveActiveRoster("bravo");
 
 		// did it persist?
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId, matchId }),
-		});
-		await isNotVisible(page.getByTestId("active-roster-needed-text"));
+		await matchPage.goto({ tournamentId: tournament.id, matchId: match.id });
+		await isNotVisible(matchPage.locators.activeRosterNeededText);
 
-		await goToTab(page, "rosters");
-		await page.getByTestId("edit-active-roster-button-bravo").click();
+		await matchPage.openTab("rosters");
+		await matchPage.editActiveRosterButton("bravo").click();
 		// Swap player 3 out for player 4
-		await page.getByTestId("player-checkbox-bravo-3").click();
-		await page.getByTestId("player-checkbox-bravo-4").click();
-		await submit(page, "save-active-roster-button-bravo");
+		await matchPage.playerCheckbox("bravo", 3).click();
+		await matchPage.playerCheckbox("bravo", 4).click();
+		await matchPage.saveActiveRoster("bravo");
 
-		await expect(
-			page.getByTestId("edit-active-roster-button-bravo"),
-		).toBeVisible();
+		await expect(matchPage.editActiveRosterButton("bravo")).toBeVisible();
 	});
 
 	// 1) Report winner of N-ZAP's first match
@@ -87,473 +187,426 @@ test.describe("Tournament bracket", () => {
 	// 5) Undo score of first losers match
 	// 6) Try to reopen N-ZAP's first match and succeed
 	// 7) As N-ZAP, undo all scores and switch to different team sweeping
-	test("reports score and sees bracket update", async ({ page }) => {
+	test("reports score and sees bracket update", async ({ page, factories }) => {
 		test.slow();
-		const tournamentId = 2;
-		await startBracket(page);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
+		});
+		const teams = await createTeams(factories, tournament.id, [
+			{ members: [NZAP_TEST_ID] },
+			// xxx: hmm lol
+			{},
+			{},
+			{},
+		]);
+		const matches = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+		const nzapsMatchId = matches[0].id;
+		const adjacentMatchId = matches[1].id;
+		const losersMatchId = matches[3].id;
 
 		await impersonate(page);
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 
 		// 1)
-		await navigateToMatch(page, 5);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		let match = await brackets.openMatch(nzapsMatchId);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
 		// 2)
-		await impersonate(page);
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-		await navigateToMatch(page, 6);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		match = await brackets.openMatch(adjacentMatchId);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
 		// 3)
-		await navigateToMatch(page, 18);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 1, setEnds: false });
-		await backToBracket(page);
+		match = await brackets.openMatch(losersMatchId);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, setEnds: false });
+		await match.backToBracket();
 
 		// 4)
-		await navigateToMatch(page, 5);
-		await goToTab(page, "admin");
-		await isNotVisible(page.getByTestId("reopen-match-button"));
-		await backToBracket(page);
+		match = await brackets.openMatch(nzapsMatchId);
+		await match.openTab("admin");
+		await isNotVisible(match.locators.reopenMatchButton);
+		await match.backToBracket();
 
 		// 5)
-		await navigateToMatch(page, 18);
-		await goToTab(page, "action");
-		await undoLastReport(page);
-		await expectScore(page, [0, 0]);
-		await backToBracket(page);
+		match = await brackets.openMatch(losersMatchId);
+		await match.openTab("action");
+		await match.undoLastReport();
+		await expect(match.score([0, 0])).toBeVisible();
+		await match.backToBracket();
 
 		// 6)
-		await navigateToMatch(page, 5);
-		await goToTab(page, "admin");
-		await submit(page, "reopen-match-button");
-		await expectScore(page, [1, 0]);
+		match = await brackets.openMatch(nzapsMatchId);
+		await match.openTab("admin");
+		await match.reopen();
+		await expect(match.score([1, 0])).toBeVisible();
 
 		// 7)
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-		await navigateToMatch(page, 5);
-		await goToTab(page, "action");
-		await undoLastReport(page);
-		await expectScore(page, [0, 0]);
-		await reportResult(page, { mapsToReport: 2, winner: 2 });
-		await backToBracket(page);
+		await brackets.goto(tournament.id);
+		match = await brackets.openMatch(nzapsMatchId);
+		await match.openTab("action");
+		await match.undoLastReport();
+		await expect(match.score([0, 0])).toBeVisible();
+		await match.reportResult({ mapsToReport: 2, winner: 2 });
+		await match.backToBracket();
 		await expect(
-			page.locator("[data-round-id='5'] [data-participant-id='102']"),
+			brackets.participantInRound(DE_LOSERS_ROUND_ID, teams[0].id),
 		).toBeVisible();
 	});
 
-	test("adds a sub mid tournament (from non checked in team)", async ({
-		page,
-	}) => {
-		const tournamentId = 1;
-		await startBracket(page, tournamentId);
-
-		// captain of the first team
-		await impersonate(page, 5);
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
+	test("adds a sub mid tournament", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
 		});
+		const teams = await createTeams(factories, tournament.id, teamSeeds(3));
+		await factories.TournamentFactory.startBracket(tournament.id);
+		const sub = await factories.UserFactory.create();
 
-		await page.getByTestId("add-sub-button").click();
-		await page.getByTestId("copy-invite-link-button").click();
+		// captain of the last seeded team
+		await impersonate(page, teams[2].ownerUserId);
 
-		const inviteLinkProd: string = await page.evaluate(
-			"navigator.clipboard.readText()",
-		);
-		const inviteLink = inviteLinkProd.replace(
-			"https://sendou.ink",
-			"http://localhost:6173",
-		);
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: inviteLink,
-		});
+		const inviteLink = await brackets.copySubInviteLink();
 
-		await submit(page);
+		await impersonate(page, sub.id);
+
+		const join = new TournamentJoinPage(page);
+		await join.gotoViaInviteLink(inviteLink);
+		await join.join();
+
 		await expect(page).toHaveURL(/brackets/);
 	});
 
 	test("completes and finalizes a small tournament with badge assigning", async ({
 		page,
+		factories,
 	}) => {
 		test.slow();
 
-		const tournamentId = 2;
+		const badges = await factories.BadgeFactory.createMany(2);
+		const tournament = await factories.TournamentFactory.create({
+			name: "In The Zone 22",
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
+			mapPoolMaps: TO_MAP_POOL,
+			badges: badges.map((badge) => badge.id),
+		});
+		const teams = await createTeams(factories, tournament.id, [
+			{ members: [ADMIN_ID] },
+			{},
+		]);
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		// check out teams 103-116 (rows are sorted by seed)
-		await checkOutTeamRows(page, 2, 15);
+		const match = await brackets.openMatch(1);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const finalizeDialog = await brackets.openFinalizeTournamentDialog();
+		await finalizeDialog.selectBadgeReceiver(0, teams[0].id);
+		await finalizeDialog.selectBadgeReceiver(1, teams[1].id);
+		await finalizeDialog.confirm();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
-
-		await navigateToMatch(page, 1);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
-
-		await page.getByTestId("finalize-tournament-button").click();
-
-		await page.getByLabel("Receiving team").first().selectOption("101");
-		await page.getByLabel("Receiving team").last().selectOption("102");
-
-		await submit(page, "confirm-button");
-
-		await page.getByTestId("results-tab").click();
+		const results = await brackets.nav.openResults();
 		// seed performance rating shows up after tournament is finalized
-		await expect(page.getByTestId("spr-header")).toBeVisible();
+		await expect(results.locators.sprHeader).toBeVisible();
 
-		await navigate({
-			page,
-			url: userResultsPage({ discordId: ADMIN_DISCORD_ID }),
-		});
+		const userResults = new UserResultsPage(page);
+		await userResults.goto(ADMIN_DISCORD_ID);
 
-		await expect(
-			page.getByTestId("tournament-name-cell").getByText("In The Zone 22"),
-		).toBeVisible();
+		await expect(userResults.tournamentName("In The Zone 22")).toBeVisible();
 
-		await navigate({
-			page,
-			url: NOTIFICATIONS_URL,
-		});
+		const notifications = new NotificationsPage(page);
+		await notifications.goto();
 
-		await expect(page.getByTestId("notification-item").first()).toContainText(
+		await expect(notifications.locators.items.first()).toContainText(
 			"New badge",
 		);
 	});
 
+	// xxx: does this and every other test need so big tournaments?
 	test("completes and finalizes a small tournament (RR->SE w/ underground bracket)", async ({
 		page,
+		factories,
 	}) => {
 		test.setTimeout(150_000);
 
-		const tournamentId = 3;
+		const badges = await factories.BadgeFactory.createMany(2);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: RR_TO_SE_WITH_UNDERGROUND,
+			mapPoolMaps: TO_MAP_POOL,
+			badges: badges.map((badge) => badge.id),
+		});
+		// groups of 3 and 4; playing every match with the alpha side winning drops
+		// teams 5, 6 and 7 into the underground bracket's placements
+		const teams = await createTeams(factories, tournament.id, teamSeeds(7));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		// check out teams 202-209 (rows are sorted by seed)
-		await checkOutTeamRows(page, 1, 8);
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({
-				tournamentId,
-			}),
-		});
-
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
-
-		for (const id of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
-			await navigateToMatch(page, id);
-			await goToTab(page, "action");
-			await reportResult(page, { mapsToReport: 2 });
-			await backToBracket(page);
+		for (const matchId of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+			const match = await brackets.openMatch(matchId);
+			await match.openTab("action");
+			await match.reportResult({ mapsToReport: 2 });
+			await match.backToBracket();
 		}
 
 		// captain of one of the underground bracket teams
-		await impersonate(page, 57);
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		await impersonate(page, teams[4].ownerUserId);
+		await brackets.goto(tournament.id);
 
-		await page.getByRole("tab", { name: "Underground" }).click();
-		await submit(page, "check-in-bracket-button");
+		await brackets.bracketTab("Underground").click();
+		await brackets.checkInBracket();
 
 		await impersonate(page);
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
 
-		// check team 216 in to the underground bracket — match on the stable team
-		// id rather than the seeded (faker-generated) team name or the row index,
-		// neither of which is stable after the start
-		await adminTeamRowAction(
-			page,
-			page.locator('[data-testid="team-row"][data-team-id="216"]'),
-			"Check in (Underground bracket)",
-		);
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		await admin.checkTeamInToBracket(teams[6].id, "Underground bracket");
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId, bracketIdx: 2 }),
-		});
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		await brackets.goto(tournament.id, 2);
+		await brackets.finalize();
 
-		await navigateToMatch(page, 10);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 3 });
+		const undergroundMatch = await brackets.openMatch(10);
+		await undergroundMatch.openTab("action");
+		await undergroundMatch.reportResult({ mapsToReport: 3 });
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId, bracketIdx: 1 }),
-		});
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		await brackets.goto(tournament.id, 1);
+		await brackets.finalize();
 		for (const matchId of [11, 12, 13, 14]) {
-			await navigateToMatch(page, matchId);
-			await goToTab(page, "action");
-			await reportResult(page, { mapsToReport: 3 });
+			const match = await brackets.openMatch(matchId);
+			await match.openTab("action");
+			await match.reportResult({ mapsToReport: 3 });
 
-			await backToBracket(page);
+			await match.backToBracket();
 		}
-		await page.getByTestId("finalize-tournament-button").click();
-		await page.getByTestId("assign-badges-later-switch").click();
-		await submit(page, "confirm-button");
+		const finalizeDialog = await brackets.openFinalizeTournamentDialog();
+		await finalizeDialog.assignBadgesLater();
+		await finalizeDialog.confirm();
 
 		// after finalizing the tournament, the admin tab disappears so the
 		// reopen action is no longer reachable
-		await navigateToMatch(page, 11);
-		await isNotVisible(page.getByRole("tab", { name: "Admin" }));
-		await isNotVisible(page.getByTestId("reopen-match-button"));
-		await backToBracket(page);
+		const match = await brackets.openMatch(11);
+		await isNotVisible(match.locators.adminTab);
+		await isNotVisible(match.locators.reopenMatchButton);
+		await match.backToBracket();
 	});
 
 	test("starts a round robin bracket with unevenly sized groups (5 teams)", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 3;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: RR_TO_SE_WITH_UNDERGROUND,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		// 5 checked in teams -> groups of 3 and 2 with different round counts
+		await createTeams(factories, tournament.id, teamSeeds(5));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
-
-		// leave 5 checked in teams -> groups of 3 and 2 with different round counts
-		await checkOutTeamRows(page, 6, 15);
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({
-				tournamentId,
-			}),
-		});
-
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
 		// bracket starts without an "Invalid map count" error -> matches are rendered
-		await expect(page.locator("[data-match-id]").first()).toBeVisible();
+		await expect(brackets.locators.matches.first()).toBeVisible();
 	});
 
 	test("shows tournament results on user profile after finalized tournament", async ({
 		page,
+		factories,
 	}) => {
 		test.slow();
-		const tournamentId = 4;
+		const tournament = await factories.TournamentFactory.create({
+			name: "Swim or Sink 101",
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: SOS_BRACKETS,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(2));
 
-		// await seed(page, "SMALL_SOS");
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
-		// check out teams 303 & 304 (rows are sorted by seed)
-		await checkOutTeamRows(page, 2, 3);
-
-		await page.getByTestId("edit-event-info-button").click();
+		const eventEdit = await admin.editEventInfo();
 		for (let i = 0; i < 3; i++) {
-			await page.getByTestId("delete-bracket-button").last().click();
+			await eventEdit.deleteLastBracket();
 		}
-		await page.getByTestId("placements-input").last().fill("1,2");
-		await submit(page);
+		await eventEdit.fillLastPlacements("1,2");
+		await eventEdit.save();
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		await navigateToMatch(page, 1);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		const groupsMatch = await brackets.openMatch(1);
+		await groupsMatch.openTab("action");
+		await groupsMatch.reportResult({ mapsToReport: 2 });
+		await groupsMatch.backToBracket();
 
-		await page.getByRole("tab", { name: "Great White" }).click();
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		await brackets.bracketTab("Great White").click();
+		await brackets.finalize();
 
-		await navigateToMatch(page, 2);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 3 });
-		await backToBracket(page);
+		const finalsMatch = await brackets.openMatch(2);
+		await finalsMatch.openTab("action");
+		await finalsMatch.reportResult({ mapsToReport: 3 });
+		await finalsMatch.backToBracket();
 
-		await page.getByTestId("finalize-tournament-button").click();
-		await page.getByRole("button", { name: "Finalize" }).click();
+		const finalizeDialog = await brackets.openFinalizeTournamentDialog();
+		await finalizeDialog.confirm();
 
-		await page.getByTestId("results-tab").click();
-		await page.getByTestId("result-team-name").first().click();
-		await page.getByTestId("team-member-name").first().click();
+		const results = await brackets.nav.openResults();
+		await results.expandTeam(0);
+		const userPage = await results.openMember(0);
 
-		await page.getByTestId("user-seasons-tab").click();
-		await expect(page.getByTestId("seasons-tournament-result")).toBeVisible();
+		await userPage.openSeasons();
+		await expect(userPage.locators.seasonsTournamentResult).toBeVisible();
 
-		await page.getByTestId("user-results-tab").click();
+		const userResults = await userPage.openResults();
 		await expect(
-			page.getByTestId("tournament-name-cell").first(),
+			userResults.locators.tournamentNameCells.first(),
 		).toContainText("Swim or Sink 101");
 
-		await page.getByTestId("mates-button").first().click();
-		await expect(
-			page.locator('[data-testid="mates-cell-placement-0"] li'),
-		).toHaveCount(3);
+		await userResults.openMates(0);
+		await expect(userResults.matesListItems(0)).toHaveCount(3);
 	});
 
 	test("changes SOS format and progresses with it & adds a member to another team", async ({
 		page,
+		factories,
 	}) => {
 		test.slow();
-		const tournamentId = 4;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: SOS_BRACKETS,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		// the to-be double registrant plays in Sendou's team; the admin add
+		// flow requires a friend code, which the admin user itself lacks
+		const doubleRegistrant = await factories.UserFactory.create({
+			discordName: "Duplicate Dave",
+		});
+		const teams = await createTeams(factories, tournament.id, [
+			{ members: [ADMIN_ID, doubleRegistrant.id] },
+			{},
+			{},
+			{},
+		]);
 
-		// await seed(page, "SMALL_SOS");
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
-		await page.getByTestId("edit-event-info-button").click();
-		await page.getByTestId("delete-bracket-button").last().click();
-		await page.getByTestId("placements-input").last().fill("3,4");
+		const eventEdit = await admin.editEventInfo();
+		await eventEdit.deleteLastBracket();
+		await eventEdit.fillLastPlacements("3,4");
+		await eventEdit.save();
 
-		await submit(page);
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
 		// every match of the group but one that Sendou's team is not part of
 		for (const matchId of [1, 2, 3, 4, 6]) {
-			await navigateToMatch(page, matchId);
-			await goToTab(page, "action");
-			await reportResult(page, { mapsToReport: 2 });
-			await backToBracket(page);
+			const match = await brackets.openMatch(matchId);
+			await match.openTab("action");
+			await match.reportResult({ mapsToReport: 2 });
+			await match.backToBracket();
 		}
 
-		await expect(page.getByText("Waiting on group to finish")).toBeVisible();
+		await expect(brackets.locators.waitingOnGroupText).toBeVisible();
 
-		await navigateToMatch(page, 5);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		const lastGroupsMatch = await brackets.openMatch(5);
+		await lastGroupsMatch.openTab("action");
+		await lastGroupsMatch.reportResult({ mapsToReport: 2 });
+		await lastGroupsMatch.backToBracket();
 
-		await page.getByRole("tab", { name: "Hammerhead" }).click();
-		await isNotVisible(page.getByTestId("brackets-viewer"));
+		await brackets.bracketTab("Hammerhead").click();
+		await isNotVisible(brackets.locators.bracketsViewer);
 
-		await page.getByRole("tab", { name: "Mako" }).click();
-		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
+		await brackets.bracketTab("Mako").click();
+		await expect(brackets.locators.bracketsViewer).toBeVisible();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		await brackets.finalize();
 
-		await navigateToMatch(page, 7);
-		await expect(page.getByTestId("back-to-bracket-button")).toBeVisible();
+		const makoMatch = await brackets.openMatch(7);
+		await expect(makoMatch.locators.backToBracketButton).toBeVisible();
 
-		// add Sendou to team 303 (a team in the Mako bracket)
-		await navigate({
-			page,
-			url: tournamentAdminRegistrationEditPage(tournamentId, 303),
-		});
-		await page.getByRole("button", { name: "Add", exact: true }).click();
-		await page.getByLabel("Player").last().click();
-		await page.getByTestId("user-search-input").fill("Sendou");
-		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
-		await page.keyboard.press("Enter");
-		await submit(page);
+		// add a player of the first team also to the third team (a team in the Mako bracket)
+		const registration = new TournamentAdminRegistrationPage(page);
+		await registration.gotoEdit(tournament.id, teams[2].id);
+		await registration.addMember("Duplicate Dave");
+		await registration.save();
 
-		await navigate({
-			page,
-			url: tournamentTeamsPage(tournamentId),
-		});
+		const teamsPage = new TournamentTeamsPage(page);
+		await teamsPage.goto(tournament.id);
 
-		await expect(
-			page.getByTestId("team-member-name").getByText("Sendou"),
-		).toHaveCount(2);
+		await expect(teamsPage.memberNamed("Duplicate Dave")).toHaveCount(2);
 	});
 
 	test("conducts a tournament with many starting brackets", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 4;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: SOS_BRACKETS,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(16));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
-		await page.getByTestId("edit-event-info-button").click();
-		await page.getByTestId("delete-bracket-button").last().click();
+		const eventEdit = await admin.editEventInfo();
+		await eventEdit.deleteLastBracket();
+		await eventEdit.toggleFollowUpBracketSwitches();
 
-		for (const toggle of await page
-			.getByTestId("follow-up-bracket-switch")
-			.all()) {
-			await toggle.click();
-		}
+		await eventEdit.setBracketFormat(0, "Single-elimination");
+		await eventEdit.setBracketFormat(1, "Single-elimination");
+		await eventEdit.setBracketFormat(2, "Swiss");
+		await eventEdit.setBracketFormat(3, "Swiss");
 
-		await page.getByLabel("Format").first().selectOption("Single-elimination");
-		await page.getByLabel("Format").nth(1).selectOption("Single-elimination");
-		await page.getByLabel("Format").nth(2).selectOption("Swiss");
-		await page.getByLabel("Format").nth(3).selectOption("Swiss");
+		await eventEdit.save();
 
-		await submit(page);
-
-		await navigate({
-			page,
-			url: `${tournamentAdminPage(tournamentId)}/seeds`,
-		});
-		await page.getByTestId("set-starting-brackets").click();
+		const seeds = new TournamentSeedsPage(page);
+		await seeds.goto(tournament.id);
+		await seeds.openStartingBracketsDialog();
 
 		for (let i = 0; i < 16; i++) {
 			let bracketName: string;
@@ -567,146 +620,151 @@ test.describe("Tournament bracket", () => {
 				bracketName = "Mako";
 			}
 
-			await page
-				.getByTestId("starting-bracket-select")
-				.nth(i)
-				.selectOption(bracketName);
+			await seeds.setStartingBracket(i, bracketName);
 		}
 
-		await submit(page, "set-starting-brackets-submit-button");
+		await seeds.saveStartingBrackets();
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 		for (const bracketName of [
 			"Groups stage",
 			"Great White",
 			"Hammerhead",
 			"Mako",
 		]) {
-			await page.getByRole("tab", { name: bracketName }).click();
-			await page.getByTestId("finalize-bracket-button").click();
-			await submit(page, "confirm-finalize-bracket-button");
+			await brackets.bracketTab(bracketName).click();
+			await brackets.finalize();
 		}
 
-		await expect(page.locator('[data-match-id="11"]')).toBeVisible();
+		await expect(brackets.match(11)).toBeVisible();
 	});
 
-	test("organizer edits a match after it is done", async ({ page }) => {
-		const tournamentId = 3;
+	test("organizer edits a match after it is done", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: ROUND_ROBIN,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, [
+			{ rosterSize: 5 },
+			{ rosterSize: 5 },
+		]);
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentPage(tournamentId),
-		});
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
 
-		await page.getByTestId("brackets-tab").click();
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		const brackets = await tournamentPage.nav.openBrackets();
+		await brackets.finalize();
 
-		await navigateToMatch(page, 1);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
+		const match = await brackets.openMatch(1);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
 
-		await goToTab(page, "admin");
-		await page.getByTestId("edit-result-0-button").click();
+		await match.openTab("admin");
+		await match.editResultButton(0).click();
 		// Swap player 3 out for player 4 on the alpha (winner) team
-		await page.getByTestId("edit-result-player-checkbox-alpha-3").click();
-		await page.getByTestId("edit-result-player-checkbox-alpha-4").click();
+		await match.editResultPlayerCheckbox("alpha", 3).click();
+		await match.editResultPlayerCheckbox("alpha", 4).click();
 		// Toggle KO so we can verify the edit went through (RR collects KO).
-		await page.getByLabel("KO").check();
-		await submit(page, "save-result-0-button");
+		await match.locators.koCheckbox.check();
+		await match.saveResult(0);
 
 		// Edit returns to read-only view, now showing the KO label
-		await expect(page.getByTestId("edit-result-0-button")).toBeVisible();
-		await expect(page.getByText(/\(KO\)/).first()).toBeVisible();
+		await expect(match.editResultButton(0)).toBeVisible();
+		await expect(match.locators.koResultText).toBeVisible();
 	});
 
-	test("changes to picked map pool & best of", async ({ page }) => {
-		const tournamentId = 4;
+	test("changes to picked map pool & best of", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: ROUND_ROBIN,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(2));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
-		await page.getByTestId("edit-event-info-button").click();
+		const eventEdit = await admin.editEventInfo();
+		await eventEdit.clearMapPool();
+		await eventEdit.selectMapPoolTemplate("preset:CB");
+		await eventEdit.save();
 
-		await page.getByRole("button", { name: "Clear" }).click();
-		await page.getByLabel("Template").selectOption("preset:CB");
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		const mapListDialog = await brackets.openFinalizeDialog();
+		await mapListDialog.increaseMapCount("first");
+		await mapListDialog.confirm();
 
-		await submit(page);
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-		await page.getByTestId("finalize-bracket-button").click();
-		await page.getByTestId("increase-map-count-button").first().click();
-		await submit(page, "confirm-finalize-bracket-button");
-
-		await navigateToMatch(page, 1);
+		const match = await brackets.openMatch(1);
 		// Bo5 of clam blitz: one mode icon + ×5 count text
-		await expect(page.getByTestId("mode-progress-CB")).toBeVisible();
-		await expect(page.getByText("×5")).toBeVisible();
+		await expect(match.modeProgress("CB")).toBeVisible();
+		await expect(match.mapCountText(5)).toBeVisible();
 	});
 
-	test("reopens round robin match and changes score", async ({ page }) => {
+	test("reopens round robin match and changes score", async ({
+		page,
+		factories,
+	}) => {
 		test.slow();
-		const tournamentId = 3;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: ROUND_ROBIN,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
-
-		// needs also to be completed so 6 unlocks
-		await navigateToMatch(page, 4);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		// needs also to be completed so the second round unlocks
+		let match = await brackets.openMatch(1);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
 		// set situation where match A is completed and its participants also completed their follow up matches B & C
 		// and then we go back and change the winner of A
-		await navigateToMatch(page, 5);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		match = await brackets.openMatch(2);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		await navigateToMatch(page, 6);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		match = await brackets.openMatch(3);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		await navigateToMatch(page, 7);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		match = await brackets.openMatch(4);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		await navigateToMatch(page, 5);
-		await goToTab(page, "admin");
-		await submit(page, "reopen-match-button");
+		match = await brackets.openMatch(2);
+		await match.openTab("admin");
+		await match.reopen();
 		// Wait for the reopen to be reflected before switching tabs: switching
 		// tabs is a `defaultShouldRevalidate: false` navigation that would abort
 		// the still-in-flight post-reopen loader revalidation, leaving the match
 		// stuck as "over" so the action tab never appears.
-		await isNotVisible(page.getByTestId("reopen-match-button"));
-		await goToTab(page, "action");
-		await undoLastReport(page);
-		await reportResult(page, {
+		await isNotVisible(match.locators.reopenMatchButton);
+		await match.openTab("action");
+		await match.undoLastReport();
+		await match.reportResult({
 			mapsToReport: 2,
 			winner: 2,
 			setEnds: true,
@@ -715,507 +773,500 @@ test.describe("Tournament bracket", () => {
 
 	test("reopening round robin match does not lock already-unlocked matches (issue #2690)", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 3;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: ROUND_ROBIN,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		// Complete R1 matches (1 and 2) to unlock R2 matches
+		let match = await brackets.openMatch(1);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		// Use Group B which has 4 teams and 2 matches per round
-		// Group B Round 1: Match 4, Match 5
-		// Group B Round 2: Match 6, Match 7
+		match = await brackets.openMatch(2);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		// Complete R1 matches in group B (matches 4 and 5) to unlock R2 matches
-		await navigateToMatch(page, 4);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
-
-		await navigateToMatch(page, 5);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
-
-		// Match 6 is R2 in group B - should now be unlocked since R1 is complete
+		// Match 3 is R2 - should now be unlocked since R1 is complete
 		// Start it but don't complete it
-		await navigateToMatch(page, 6);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 1, setEnds: false });
-		await backToBracket(page);
+		match = await brackets.openMatch(3);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, setEnds: false });
+		await match.backToBracket();
 
-		// Reopen match 4 (R1 match) - simulating a score misreport correction
-		await navigateToMatch(page, 4);
-		await goToTab(page, "admin");
-		await submit(page, "reopen-match-button");
-		await backToBracket(page);
+		// Reopen match 1 (R1 match) - simulating a score misreport correction
+		match = await brackets.openMatch(1);
+		await match.openTab("admin");
+		await match.reopen();
+		await match.backToBracket();
 
 		// Verify the R2 match that was already in progress is still playable
 		// Before the fix, this would become locked and unplayable
-		await navigateToMatch(page, 6);
-		await expectScore(page, [1, 0]);
-		await goToTab(page, "action");
-		await expect(page.getByTestId("winner-radio-1")).toBeVisible();
+		match = await brackets.openMatch(3);
+		await expect(match.score([1, 0])).toBeVisible();
+		await match.openTab("action");
+		await expect(match.winnerRadio(1)).toBeVisible();
 	});
 
-	test("locks/unlocks matches & sets match as casted", async ({ page }) => {
+	test("locks/unlocks matches & sets match as casted", async ({
+		page,
+		factories,
+	}) => {
 		test.slow();
 
-		const tournamentId = 2;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
-		// check out teams 103-114 (rows are sorted by seed)
-		await checkOutTeamRows(page, 2, 13);
-
-		await page.getByRole("tab", { name: "Stream" }).click();
+		const stream = await admin.openStream();
 		// an empty array field already renders one placeholder input
-		await page.getByPlaceholder("dappleproductions").fill("test");
-		await submit(page, "save-cast-twitch-accounts-button");
+		await stream.fillAccount(0, "test");
+		await stream.save();
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		let match = await brackets.openMatch(1);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		await navigateToMatch(page, 1);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
-
-		await navigateToMatch(page, 3);
-		await goToTab(page, "admin");
+		// match 3 is the winners' final the winner of match 1 waits in
+		match = await brackets.openMatch(3);
+		await match.openTab("admin");
 		// Picking a chip auto-submits the cast channel; lock the match afterwards.
-		await waitForPOSTResponse(page, async () => {
-			await page.locator('label[for$="-test"]').click();
-		});
-		await submit(page, "cast-info-submit-button");
-		await backToBracket(page);
+		await match.setCastedBy("test");
+		await match.submitCastInfo();
+		await match.backToBracket();
 
-		await navigateToMatch(page, 2);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		match = await brackets.openMatch(2);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		await expect(page.getByText("🔒 CAST")).toBeVisible();
-		await navigateToMatch(page, 3);
-		await goToTab(page, "admin");
+		await expect(brackets.locators.castBadges.first()).toBeVisible();
+		match = await brackets.openMatch(3);
+		await match.openTab("admin");
 		// Lock state is signalled by the toggle being "Unlock" instead of "Lock"
-		await expect(page.getByRole("button", { name: "Unlock" })).toBeVisible();
+		await expect(match.locators.unlockButton).toBeVisible();
 		// A locked match still needs to show the pool & room pass so players can join
-		await expect(page.getByText("Pool", { exact: true })).toBeVisible();
-		await expect(page.getByTestId("room-pass")).toBeVisible();
-		await submit(page, "cast-info-submit-button");
-		await expect(page.getByTestId("stage-banner")).toBeVisible();
+		await expect(match.locators.poolLabel).toBeVisible();
+		await expect(match.locators.roomPass).toBeVisible();
+		await match.submitCastInfo();
+		await expect(match.locators.stageBanner).toBeVisible();
 
 		// Cast channel "test" persists across unlock; the bracket badge flips
 		// from 🔒 CAST to 🔴 LIVE once the match is unlocked and ongoing.
-		await backToBracket(page);
-		await expect(page.getByText("🔴 LIVE")).toBeVisible();
+		await match.backToBracket();
+		await expect(brackets.locators.liveBadges.first()).toBeVisible();
 	});
 
-	test("resets bracket", async ({ page }) => {
-		const tournamentId = 1;
+	test("resets bracket", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		// the top seed has not checked in, leaving 15 teams and a first round bye
+		await createTeams(factories, tournament.id, [
+			{ isCheckedIn: false },
+			...teamSeeds(15),
+		]);
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		await isNotVisible(brackets.match(1));
+		const match = await brackets.openMatch(2);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
 
-		await isNotVisible(page.locator('[data-match-id="1"]'));
-		await navigateToMatch(page, 2);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
+		const admin = await match.nav.openAdmin();
+		await admin.resetBracket("Main bracket");
 
-		await clickNavTab(page, "admin-tab");
-		await page.getByRole("tab", { name: "Brackets" }).click();
-		await page
-			.getByLabel('Type bracket name ("Main bracket") to confirm')
-			.fill("Main bracket");
-		await submit(page, "reset-bracket-button");
+		await admin.adminTab("Teams").click();
+		// check the top seed back in
+		await admin.checkTeamIn(0);
 
-		await page.getByRole("tab", { name: "Teams" }).click();
-		// check team 1 (seed 1) back in
-		await adminTeamRowAction(
-			page,
-			page.getByTestId("team-row").first(),
-			/^Check in/,
-		);
-
-		await page.getByTestId("brackets-tab").click();
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		const bracketsAfterReset = await admin.nav.openBrackets();
+		await bracketsAfterReset.finalize();
 		// bye is gone
-		await expect(page.locator('[data-match-id="1"]')).toBeVisible();
+		await expect(bracketsAfterReset.match(1)).toBeVisible();
 	});
 
-	test("user no screen setting affects tournament match", async ({ page }) => {
-		const tournamentId = 4;
+	test("user no screen setting affects tournament match", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: ROUND_ROBIN,
+			mapPoolMaps: TO_MAP_POOL,
+			enableNoScreenToggle: true,
+		});
+		await createTeams(factories, tournament.id, [
+			{ members: [ADMIN_ID] },
+			{},
+			{},
+			{},
+		]);
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: SETTINGS_PAGE,
-		});
+		const matchProfile = new MatchProfilePage(page);
+		await matchProfile.goto();
+		await matchProfile.form.check("noScreen");
+		await matchProfile.save();
 
-		const form = createFormHelpers(page, updateMatchProfileSchema);
-		await form.check("noScreen");
-		await waitForPOSTResponse(page, () => form.submit());
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		// match 1 has Sendou's team in it, match 2 does not
+		const ownMatch = await brackets.openMatch(1);
+		await expect(ownMatch.locators.screenBanned).toBeVisible();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
-
-		await navigateToMatch(page, 1);
-		await expect(page.getByTestId("screen-banned")).toBeVisible();
-
-		await backToBracket(page);
-		await navigateToMatch(page, 2);
-		await expect(page.getByTestId("screen-allowed")).toBeVisible();
+		await ownMatch.backToBracket();
+		const otherMatch = await brackets.openMatch(2);
+		await expect(otherMatch.locators.screenAllowed).toBeVisible();
 	});
 
-	test("hosts a 'play all' round robin stage", async ({ page }) => {
-		const tournamentId = 4;
+	test("hosts a 'play all' round robin stage", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: ROUND_ROBIN,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(2));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		const mapListDialog = await brackets.openFinalizeDialog();
+		await mapListDialog.setCountType("PLAY_ALL");
+		await mapListDialog.confirm();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await page
-			.getByLabel("Count type", { exact: true })
-			.selectOption("PLAY_ALL");
-		await submit(page, "confirm-finalize-bracket-button");
-
-		await navigateToMatch(page, 1);
-		await expect(page.getByText("Play all 3")).toBeVisible();
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 3 });
+		const match = await brackets.openMatch(1);
+		await expect(match.playAllText(3)).toBeVisible();
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 3 });
 	});
 
 	test("swiss tournament with bracket advancing/unadvancing & dropping out a team", async ({
 		page,
+		factories,
 	}) => {
 		test.slow();
 
-		const tournamentId = 5;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: SWISS_TO_TOP_CUT,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(16));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
 		// report all group A round 1 scores
-		for (const id of [1, 2, 3, 4]) {
-			await navigateToMatch(page, id);
-			await goToTab(page, "action");
-			await reportResult(page, { mapsToReport: 2 });
-			await backToBracket(page);
+		for (const matchId of [1, 2, 3, 4]) {
+			const match = await brackets.openMatch(matchId);
+			await match.openTab("action");
+			await match.reportResult({ mapsToReport: 2 });
+			await match.backToBracket();
 		}
 
 		// test that we can change to view different group
-		await expect(page.getByTestId("start-round-button")).toBeVisible();
-		await page.getByTestId("group-B-button").click();
-		await isNotVisible(page.getByTestId("start-round-button"));
-		await page.getByTestId("group-A-button").click();
+		await expect(brackets.locators.startRoundButton).toBeVisible();
+		await brackets.openGroup("B");
+		await isNotVisible(brackets.locators.startRoundButton);
+		await brackets.openGroup("A");
 
-		await submit(page, "start-round-button");
-		await expect(page.locator(`[data-match-id="9"]`)).toBeVisible();
+		await brackets.startRound();
+		await expect(brackets.match(9)).toBeVisible();
 
-		await clickNavTab(page, "admin-tab");
+		const admin = await brackets.nav.openAdmin();
+		// drop out the top seed, playing in group A
+		await admin.dropOutTeam(0);
 
-		// drop out team 401 (seed 1)
-		await page.getByTestId("team-row").nth(0).getByLabel("Actions").click();
-		await page.getByRole("menuitem", { name: "Drop out" }).click();
-		await modalClickConfirmButton(page);
+		await brackets.goto(tournament.id);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-
-		await page.getByTestId("reset-round-button").click();
-		await submit(page, "confirm-button");
-		await submit(page, "start-round-button");
-		await expect(page.getByTestId("bye-team")).toBeVisible();
+		await brackets.resetRound();
+		await brackets.startRound();
+		await expect(brackets.locators.byeTeam).toBeVisible();
 	});
 
 	test("prepares maps (including third place match linking)", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 4;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: SOS_BRACKETS,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
 
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 
-		await page.getByRole("tab", { name: "Great White" }).click();
+		await brackets.bracketTab("Great White").click();
 
-		await page.getByTestId("prepare-maps-button").click();
+		const prepareDialog = await brackets.openPrepareMapsDialog();
+		await prepareDialog.setExpectedTeams(8);
+		await prepareDialog.confirm();
 
-		await page.getByLabel("Expected teams").selectOption("8");
+		await brackets.goto(tournament.id);
+		await brackets.bracketTab("Great White").click();
 
-		await submit(page, "confirm-finalize-bracket-button");
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-
-		await page.getByRole("tab", { name: "Great White" }).click();
-
-		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
+		await expect(brackets.locators.preparedMapsCheckIcon).toBeVisible();
 
 		// we did not prepare maps for group stage
-		await page.getByRole("tab", { name: "Groups stage" }).click();
+		await brackets.bracketTab("Groups stage").click();
 
-		await isNotVisible(page.getByTestId("prepared-maps-check-icon"));
+		await isNotVisible(brackets.locators.preparedMapsCheckIcon);
 
 		// should reuse prepared maps from Great White
-		await page.getByRole("tab", { name: "Hammerhead" }).click();
+		await brackets.bracketTab("Hammerhead").click();
 
-		await expect(page.getByTestId("prepared-maps-check-icon")).toBeVisible();
+		await expect(brackets.locators.preparedMapsCheckIcon).toBeVisible();
 
 		// finally, test third place match linking
-		await page.getByRole("tab", { name: "Great White" }).click();
+		await brackets.bracketTab("Great White").click();
 
-		await page.getByTestId("prepare-maps-button").click();
+		const unlinkDialog = await brackets.openPrepareMapsDialog();
+		await unlinkDialog.unlinkFinalsThirdPlaceMatch();
+		await unlinkDialog.increaseMapCount("last");
+		await unlinkDialog.confirm();
 
-		await page.getByTestId("unlink-finals-3rd-place-match-button").click();
+		await brackets.goto(tournament.id);
+		await brackets.bracketTab("Great White").click();
 
-		await page.getByTestId("increase-map-count-button").last().click();
-
-		await submit(page, "confirm-finalize-bracket-button");
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-
-		await page.getByRole("tab", { name: "Great White" }).click();
-
-		await page.getByTestId("prepare-maps-button").click();
+		const relinkDialog = await brackets.openPrepareMapsDialog();
 
 		// link button should be visible because we unlinked and made finals and third place match maps different earlier
-		await expect(
-			page.getByTestId("link-finals-3rd-place-match-button"),
-		).toBeVisible();
+		await expect(relinkDialog.locators.linkFinalsButton).toBeVisible();
 	});
 
 	for (const pickBan of ["COUNTERPICK", "BAN_2"]) {
-		test(`ban/pick ${pickBan}`, async ({ page }) => {
-			const tournamentId = 4;
+		test(`ban/pick ${pickBan}`, async ({ page, factories }) => {
+			const tournament = await factories.TournamentFactory.create({
+				authorId: ADMIN_ID,
+				startTimes: startedTournamentTimes(),
+				bracketProgression: ROUND_ROBIN,
+				mapPoolMaps: TO_MAP_POOL,
+			});
+			const teams = await createTeams(factories, tournament.id, teamSeeds(4));
+			// match 2 of the group has the third team as alpha and the second as bravo
 			const matchId = 2;
+			const teamOneCaptainId = teams[2].ownerUserId;
+			const teamTwoCaptainId = teams[1].ownerUserId;
 
-			// await seed(page);
 			await impersonate(page);
 
-			await navigate({
-				page,
-				url: tournamentBracketsPage({ tournamentId }),
-			});
+			const brackets = new TournamentBracketsPage(page);
+			await brackets.goto(tournament.id);
+			const mapListDialog = await brackets.openFinalizeDialog();
+			await mapListDialog.setPickBan(pickBan);
+			await mapListDialog.confirm();
 
-			await page.getByTestId("finalize-bracket-button").click();
-			await page.getByLabel("Pick/ban").selectOption(pickBan);
-
-			await submit(page, "confirm-finalize-bracket-button");
-
-			const teamOneCaptainId = 33;
-			const teamTwoCaptainId = 29;
+			const match = new TournamentMatchPage(page);
 
 			if (pickBan === "BAN_2") {
-				for (const id of [teamTwoCaptainId, teamOneCaptainId]) {
-					await impersonate(page, id);
-					await navigate({
-						page,
-						url: tournamentMatchPage({ tournamentId, matchId }),
-					});
-					await goToTab(page, "action");
+				for (const captainId of [teamTwoCaptainId, teamOneCaptainId]) {
+					await impersonate(page, captainId);
+					await match.goto({ tournamentId: tournament.id, matchId });
+					await match.openTab("action");
 
-					await pickBanMap(page);
+					await match.pickBan();
 				}
 
 				// once both teams banned the ban prompt is gone and the actual map
 				// banner takes over.
-				await expect(page.getByTestId("stage-banner")).toBeVisible();
+				await expect(match.locators.stageBanner).toBeVisible();
 			}
 
 			await impersonate(page, teamOneCaptainId);
+			await match.goto({ tournamentId: tournament.id, matchId });
 
-			await navigate({
-				page,
-				url: tournamentMatchPage({ tournamentId, matchId }),
-			});
-
-			await goToTab(page, "action");
-			await reportResult(page, { mapsToReport: 1, winner: 2, setEnds: false });
+			await match.openTab("action");
+			await match.reportResult({ mapsToReport: 1, winner: 2, setEnds: false });
 
 			if (pickBan === "COUNTERPICK") {
-				await pickBanMap(page);
+				await match.pickBan();
 			}
 
 			await impersonate(page, teamTwoCaptainId);
+			await match.goto({ tournamentId: tournament.id, matchId });
 
-			await navigate({
-				page,
-				url: tournamentMatchPage({ tournamentId, matchId }),
-			});
-
-			await goToTab(page, "action");
-			await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
+			await match.openTab("action");
+			await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
 
 			if (pickBan === "COUNTERPICK") {
-				await pickBanMap(page);
+				await match.pickBan();
 
-				await undoLastReport(page);
-				await expect(page.getByText("Select the winner")).toBeVisible();
-				await reportResult(page, {
+				await match.undoLastReport();
+				await expect(match.locators.selectWinnerText).toBeVisible();
+				await match.reportResult({
 					mapsToReport: 1,
 					winner: 1,
 					setEnds: false,
 				});
-				await pickBanMap(page, "last");
-				await expect(
-					page.getByText("Counterpick", { exact: true }),
-				).toBeVisible();
-				await expect(page.getByText("1-1")).toBeVisible();
+				await match.pickBan("last");
+				await expect(match.locators.counterpickText).toBeVisible();
+				await expect(match.score([1, 1])).toBeVisible();
 			}
 		});
 	}
 
 	test("can end set early when past time limit and shows timer on bracket and match page", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 2;
-		const matchId = 5;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+		});
+		await createTeams(factories, tournament.id, teamSeeds(2));
+		const [{ id: matchId }] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
 
-		await startBracket(page, tournamentId);
-		await navigateToMatch(page, matchId);
+		await impersonate(page);
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		let match = await brackets.openMatch(matchId);
 
 		await page.clock.install({ time: new Date() });
 
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
 
-		await expect(page.getByTestId("match-timer")).toBeVisible();
+		await expect(match.locators.matchTimer).toBeVisible();
 
-		await backToBracket(page);
+		await match.backToBracket();
 
-		const bracketMatch = page.locator('[data-match-id="5"]');
-		await expect(bracketMatch).toBeVisible();
+		await expect(brackets.match(matchId)).toBeVisible();
 
 		// Verify timer shows on bracket page (timer is a sibling of the match link)
-		const matchWrapper = bracketMatch.locator("..");
-		await expect(matchWrapper.getByTestId("bracket-match-timer")).toBeVisible();
+		await expect(brackets.matchTimer(matchId)).toBeVisible();
 
 		// Fast forward time past limit (30 minutes for Bo3 = 26min limit)
 		await page.clock.fastForward("30:00");
 		await page.reload();
 
-		await navigateToMatch(page, matchId);
+		match = await brackets.openMatch(matchId);
 
-		await goToTab(page, "admin");
-		await page.getByRole("button", { name: "End set" }).click();
-		await page.getByRole("radio", { name: /Random/ }).check();
-		await submit(page, "end-set-button");
+		await match.openTab("admin");
+		await match.endSetWithRandomWinner();
 
 		// Match is now finalized (no longer ongoing) → "Final" appears in banner
-		await expect(page.getByTestId("match-final")).toBeVisible();
+		await expect(match.locators.finalBanner).toBeVisible();
 	});
 
 	test("dropping team out ends ongoing match early and auto-forfeits losers bracket match", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 2;
-
-		await startBracket(page, tournamentId);
-
-		// 1) Report partial score on match 5 (winners bracket)
-		await navigateToMatch(page, 5);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
-		await backToBracket(page);
-
-		// 2) Drop team 102 (one of the teams in match 5) via admin
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
 		});
-		// drop out team 102 (seed 2)
-		await page.getByTestId("team-row").nth(1).getByLabel("Actions").click();
-		await page.getByRole("menuitem", { name: "Drop out" }).click();
-		await modalClickConfirmButton(page);
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		const matches = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+		const ongoingMatchId = matches[0].id;
+		const adjacentMatchId = matches[1].id;
+		const losersMatchId = matches[3].id;
+
+		await impersonate(page);
+
+		// 1) Report partial score on the first winners bracket match
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		let match = await brackets.openMatch(ongoingMatchId);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
+		await match.backToBracket();
+
+		// 2) Drop the fourth team (the bravo side of the ongoing match) via admin
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		await admin.dropOutTeam(3);
 
 		// 3) Verify the ongoing match ended early (no longer ongoing → "Final")
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId, matchId: 5 }),
-		});
-		await expect(page.getByTestId("match-final")).toBeVisible();
-		await backToBracket(page);
+		await match.goto({ tournamentId: tournament.id, matchId: ongoingMatchId });
+		await expect(match.locators.finalBanner).toBeVisible();
+		await match.backToBracket();
 
-		// 4) Complete the adjacent match (match 6) so its loser goes to losers bracket
-		await navigateToMatch(page, 6);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 2 });
-		await backToBracket(page);
+		// 4) Complete the adjacent match so its loser goes to losers bracket
+		match = await brackets.openMatch(adjacentMatchId);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
 
-		// 5) The losers bracket match (match 18) should now have teams:
-		//    - Loser of match 5 (team 102, dropped)
-		//    - Loser of match 6
-		//    It should have ended early since team 102 is dropped
-		await navigateToMatch(page, 18);
-		await expect(page.getByTestId("match-final")).toBeVisible();
+		// 5) The losers bracket match should now have teams:
+		//    - Loser of the first match (the dropped team)
+		//    - Loser of the adjacent match
+		//    It should have ended early since the dropped team is in it
+		match = await brackets.openMatch(losersMatchId);
+		await expect(match.locators.finalBanner).toBeVisible();
 	});
 
-	test("ban/pick CUSTOM flow", async ({ page }) => {
+	test("ban/pick CUSTOM flow", async ({ page, factories }) => {
 		test.slow();
-		const tournamentId = 4;
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: ROUND_ROBIN,
+			mapPoolMaps: TO_MAP_POOL,
+		});
+		const teams = await createTeams(factories, tournament.id, teamSeeds(4));
+		// match 2 of the group has the third team (lower seed) as alpha and the
+		// second team (higher seed) as bravo
 		const matchId = 2;
-		const higherSeedCaptainId = 29;
-		const lowerSeedCaptainId = 33;
+		const higherSeedCaptainId = teams[1].ownerUserId;
+		const lowerSeedCaptainId = teams[2].ownerUserId;
 
 		const customFlow = {
 			preSet: [
@@ -1233,129 +1284,123 @@ test.describe("Tournament bracket", () => {
 		};
 
 		// 1) Start bracket with CUSTOM pick/ban flow
-		// await seed(page);
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await page.getByLabel("Pick/ban").selectOption("CUSTOM");
-		await expect(page.getByText("Before set")).toBeVisible();
+		const mapListDialog = await brackets.openFinalizeDialog();
+		await mapListDialog.setPickBan("CUSTOM");
+		await expect(mapListDialog.locators.beforeSetText).toBeVisible();
+		await mapListDialog.confirmWithCustomFlow(customFlow);
 
-		await waitForPOSTResponse(page, async () => {
-			await page.evaluate((cfStr) => {
-				const input = document.querySelector(
-					'input[name="maps"]',
-				) as HTMLInputElement;
-				const maps = JSON.parse(input.value);
-				const cf = JSON.parse(cfStr);
-				for (const m of maps) {
-					if (m.pickBan === "CUSTOM") {
-						m.customFlow = cf;
-					}
-				}
-				input.value = JSON.stringify(maps);
-
-				const form = input.closest("form")!;
-				const btn = document.createElement("button");
-				btn.type = "submit";
-				btn.name = "_action";
-				btn.value = "START_BRACKET";
-				btn.style.display = "none";
-				form.appendChild(btn);
-				btn.click();
-			}, JSON.stringify(customFlow));
-		});
+		const match = new TournamentMatchPage(page);
 
 		// 2) PreSet: Higher seed bans 2 maps
 		await impersonate(page, higherSeedCaptainId);
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId, matchId }),
-		});
-		await goToTab(page, "action");
+		await match.goto({ tournamentId: tournament.id, matchId });
+		await match.openTab("action");
 
-		await pickBanMap(page);
+		await match.pickBan();
 
-		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
-		await pickBanMap(page);
+		await expect(match.locators.lastBanText).toBeVisible();
+		await match.pickBan();
 
 		// 3) PreSet: Lower seed bans 2 maps
 		await impersonate(page, lowerSeedCaptainId);
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId, matchId }),
-		});
-		await goToTab(page, "action");
+		await match.goto({ tournamentId: tournament.id, matchId });
+		await match.openTab("action");
 
-		await pickBanMap(page);
+		await match.pickBan();
 
-		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
-		await pickBanMap(page);
+		await expect(match.locators.lastBanText).toBeVisible();
+		await match.pickBan();
 
 		// 4) Roll auto-executed after last ban; report game 1 score
-		await expect(page.getByTestId("stage-banner")).toBeVisible();
-		await goToTab(page, "action");
+		await expect(match.locators.stageBanner).toBeVisible();
+		await match.openTab("action");
 
-		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
-		await expectScore(page, [1, 0]);
+		await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
+		await expect(match.score([1, 0])).toBeVisible();
 
-		// 5) PostGame: Winner (team 1, captain 33) bans 2 maps
-		await expect(page.getByText(/Ban a map/)).toBeVisible();
-		await pickBanMap(page);
+		// 5) PostGame: Winner (the alpha team, whose captain is still impersonated) bans 2 maps
+		await expect(match.locators.banAMapText).toBeVisible();
+		await match.pickBan();
 
-		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
-		await pickBanMap(page);
+		await expect(match.locators.lastBanText).toBeVisible();
+		await match.pickBan();
 
-		// PostGame: Loser (team 2, captain 29) picks a map
+		// PostGame: Loser (the bravo team) picks a map
 		await impersonate(page, higherSeedCaptainId);
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId, matchId }),
-		});
-		await goToTab(page, "action");
+		await match.goto({ tournamentId: tournament.id, matchId });
+		await match.openTab("action");
 
-		await expect(page.getByText(/Pick a map/)).toBeVisible();
-		await pickBanMap(page);
+		await expect(match.locators.pickAMapText).toBeVisible();
+		await match.pickBan();
 
 		// 6) Undo game 1 score — also deletes postGame pick/ban events
-		await expect(page.getByTestId("stage-banner")).toBeVisible();
-		await undoLastReport(page);
+		await expect(match.locators.stageBanner).toBeVisible();
+		await match.undoLastReport();
 
-		await expectScore(page, [0, 0]);
-		await expect(page.getByTestId("stage-banner")).toBeVisible();
+		await expect(match.score([0, 0])).toBeVisible();
+		await expect(match.locators.stageBanner).toBeVisible();
 
 		// 7) Re-report game 1 and verify postGame cycle restarts
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
-		await expectScore(page, [1, 0]);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
+		await expect(match.score([1, 0])).toBeVisible();
 
-		await expect(page.getByText(/Ban a map/)).toBeVisible();
+		await expect(match.locators.banAMapText).toBeVisible();
 	});
 });
 
-/** Opens the admin team list row's actions menu and clicks the given menu item, waiting for the resulting POST. */
-async function adminTeamRowAction(
-	page: Page,
-	row: Locator,
-	menuItemName: string | RegExp,
-) {
-	await row.getByLabel("Actions").click();
-	await waitForPOSTResponse(page, () =>
-		page.getByRole("menuitem", { name: menuItemName }).click(),
-	);
+type TeamSeed = {
+	/** Users put on the roster ahead of freshly created filler users. */
+	members?: number[];
+	rosterSize?: number;
+	isCheckedIn?: boolean;
+};
+
+/** `count` checked in teams with full rosters of fresh users. */
+function teamSeeds(count: number): TeamSeed[] {
+	return Array.from({ length: count }, () => ({}));
 }
 
-/** Checks out the admin team list rows in the given inclusive index range (rows are sorted by seed). */
-async function checkOutTeamRows(page: Page, fromIdx: number, toIdx: number) {
-	for (let i = fromIdx; i <= toIdx; i++) {
-		await adminTeamRowAction(
-			page,
-			page.getByTestId("team-row").nth(i),
-			/^Check out/,
+/** Registers a team per seed, named by seeding order ("Team 1", "Team 2", ...). */
+async function createTeams(
+	factories: Factories,
+	tournamentId: number,
+	seeds: TeamSeed[],
+) {
+	const teams = [];
+	for (const [i, seed] of seeds.entries()) {
+		const presetMembers = seed.members ?? [];
+		const rosterSize = seed.rosterSize ?? ROSTER_SIZE;
+		const fillerUsers = await factories.UserFactory.createMany(
+			rosterSize - presetMembers.length,
+		);
+		teams.push(
+			await factories.TournamentTeamFactory.create(
+				{
+					tournamentId,
+					team: {
+						name: `Team ${i + 1}`,
+						prefersNotToHost: 0 as const,
+						teamId: null,
+					},
+					memberUserIds: [
+						...presetMembers,
+						...fillerUsers.map((user) => user.id),
+					],
+				},
+				{ isCheckedIn: seed.isCheckedIn ?? true },
+			),
 		);
 	}
+	return teams;
+}
+
+/** A start time in the past: check-in is over and brackets can be started from the UI. */
+function startedTournamentTimes() {
+	return [dateToDatabaseTimestamp(subMinutes(new Date(), 30))];
 }

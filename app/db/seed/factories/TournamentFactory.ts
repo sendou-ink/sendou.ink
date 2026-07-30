@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
@@ -51,6 +52,8 @@ type Options = {
 	 * only need the flag; a tournament with real results is finalized by
 	 * `TournamentRepository.finalize` with a summary. */
 	isFinalized?: boolean;
+	/** Confirmed tier, as starting the first bracket computes one. */
+	tier?: TournamentTierNumber;
 };
 
 /**
@@ -76,7 +79,14 @@ export const { create } = defineFactory({
 
 		return { id: tournamentId, eventId };
 	},
-	applyOptions: async (tournament, { isFinalized }: Options) => {
+	applyOptions: async (tournament, { isFinalized, tier }: Options) => {
+		if (tier) {
+			await TournamentRepository.updateTournamentTier({
+				tournamentId: tournament.id,
+				tier,
+			});
+		}
+
 		if (!isFinalized) return;
 
 		await TournamentRepository.finalizeWithoutSummary(tournament.id);

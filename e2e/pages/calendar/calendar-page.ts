@@ -29,6 +29,18 @@ export class CalendarPage {
 		await navigate({ page: this.page, url: calendarPage() });
 	}
 
+	tournamentCard(name: string) {
+		return this.locators.tournamentCards.filter({ hasText: name });
+	}
+
+	tentativeTierPill(tournamentName: string) {
+		return this.tournamentCard(tournamentName).getByTestId("tentative-tier");
+	}
+
+	confirmedTierPill(tournamentName: string) {
+		return this.tournamentCard(tournamentName).getByTestId("confirmed-tier");
+	}
+
 	async reload() {
 		await this.page.reload();
 		await expectIsHydrated(this.page);

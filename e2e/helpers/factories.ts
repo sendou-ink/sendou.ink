@@ -40,6 +40,8 @@ export async function loadFactories(parallelIndex: number) {
 			"~/db/seed/factories/CalendarEventFactory"
 		),
 		FriendshipFactory: await import("~/db/seed/factories/FriendshipFactory"),
+		LFGPostFactory: await import("~/db/seed/factories/LFGPostFactory"),
+		LiveStreamFactory: await import("~/db/seed/factories/LiveStreamFactory"),
 		NotificationFactory: await import(
 			"~/db/seed/factories/NotificationFactory"
 		),
@@ -55,6 +57,7 @@ export async function loadFactories(parallelIndex: number) {
 			"~/db/seed/factories/TournamentTeamFactory"
 		),
 		UserFactory: await import("~/db/seed/factories/UserFactory"),
+		UserReportFactory: await import("~/db/seed/factories/UserReportFactory"),
 		VodFactory: await import("~/db/seed/factories/VodFactory"),
 		XRankPlacementFactory: await import(
 			"~/db/seed/factories/XRankPlacementFactory"

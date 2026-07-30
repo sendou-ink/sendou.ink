@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { LFG_PAGE } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
+import { UserCard } from "../user/user-card";
 import { NewLFGPostPage } from "./new-lfg-post-page";
 
 export class LFGPage {
@@ -27,6 +28,13 @@ export class LFGPage {
 	/** The languages of a post, rendered as one pill e.g. "JA / KO". */
 	languagePill(languages: string) {
 		return this.page.getByText(languages, { exact: true });
+	}
+
+	openUserCard(name: string) {
+		return UserCard.open(
+			this.page,
+			this.page.getByRole("button", { name }).first(),
+		);
 	}
 
 	async editFirstPost() {

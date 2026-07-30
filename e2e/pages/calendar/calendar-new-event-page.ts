@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { calendarNewBaseSchema } from "~/features/calendar/calendar-new-schemas";
 import { CALENDAR_NEW_PAGE, TOURNAMENT_NEW_PAGE } from "~/utils/urls";
-import { navigate } from "../../helpers/playwright";
+import { navigate, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 
 /** `/calendar/new`, also used for adding tournaments and editing existing events. */
@@ -23,6 +23,10 @@ export class CalendarNewEventPage {
 			bracketNameInputs: page.getByLabel("Bracket's name"),
 			bracketFormatSelects: page.getByLabel("Format"),
 			placementsInputs: page.getByTestId("placements-input"),
+			deleteBracketButtons: page.getByTestId("delete-bracket-button"),
+			followUpBracketSwitches: page.getByTestId("follow-up-bracket-switch"),
+			mapPoolTemplateSelect: page.getByLabel("Template"),
+			clearMapPoolButton: page.getByRole("button", { name: "Clear" }),
 		};
 	}
 
@@ -61,6 +65,37 @@ export class CalendarNewEventPage {
 				.getByRole("button", { name: mode })
 				.click();
 		}
+	}
+
+	async deleteLastBracket() {
+		await this.locators.deleteBracketButtons.last().click();
+	}
+
+	async fillLastPlacements(placements: string) {
+		await this.locators.placementsInputs.last().fill(placements);
+	}
+
+	async setBracketFormat(nth: number, formatLabel: string) {
+		await this.locators.bracketFormatSelects.nth(nth).selectOption(formatLabel);
+	}
+
+	/** Toggles every bracket's follow-up switch, making them starting brackets. */
+	async toggleFollowUpBracketSwitches() {
+		for (const bracketSwitch of await this.locators.followUpBracketSwitches.all()) {
+			await bracketSwitch.click();
+		}
+	}
+
+	async clearMapPool() {
+		await this.locators.clearMapPoolButton.click();
+	}
+
+	async selectMapPoolTemplate(value: string) {
+		await this.locators.mapPoolTemplateSelect.selectOption(value);
+	}
+
+	save() {
+		return submit(this.page);
 	}
 
 	// a freshly added bracket is already a follow-up (sources default on), so it only

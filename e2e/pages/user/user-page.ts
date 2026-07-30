@@ -3,6 +3,8 @@ import { userPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { TeamPage } from "../team/team-page";
 import { TopSearchPlayerPage } from "../top-search/top-search-player-page";
+import { UserEditProfilePage } from "./user-edit-profile-page";
+import { UserResultsPage } from "./user-results-page";
 
 export class UserPage {
 	private readonly page: Page;
@@ -14,11 +16,39 @@ export class UserPage {
 			mainTeamLink: page.getByTestId("main-team-link"),
 			secondaryTeamsTrigger: page.getByTestId("secondary-team-trigger"),
 			placementsBox: page.getByTestId("placements-box"),
+			badgeDisplay: page.getByTestId("badge-display"),
+			badgePaginationButtons: page.getByTestId("badge-pagination-button"),
+			editProfileButton: page.getByText("Edit", { exact: true }),
+			seasonsTab: page.getByTestId("user-seasons-tab"),
+			resultsTab: page.getByTestId("user-results-tab"),
+			seasonsTournamentResult: page.getByTestId("seasons-tournament-result"),
 		};
 	}
 
 	async goto(discordId: string) {
 		await navigate({ page: this.page, url: userPage({ discordId }) });
+	}
+
+	badgeImage(displayName: string) {
+		return this.page.getByAltText(displayName, { exact: true });
+	}
+
+	flag(countryCode: string) {
+		return this.page.getByTestId(`flag-${countryCode}`);
+	}
+
+	/** A weapon of the profile's weapon pool, `position` counting from one. */
+	weaponPoolImage(weaponSplId: number, position: number) {
+		return this.page.getByTestId(`${weaponSplId}-${position}`);
+	}
+
+	text(content: string) {
+		return this.page.getByText(content);
+	}
+
+	async openEditProfile() {
+		await this.locators.editProfileButton.click();
+		return new UserEditProfilePage(this.page);
 	}
 
 	async openMainTeam() {
@@ -30,5 +60,14 @@ export class UserPage {
 	async openPlacements() {
 		await this.locators.placementsBox.click();
 		return new TopSearchPlayerPage(this.page);
+	}
+
+	async openSeasons() {
+		await this.locators.seasonsTab.click();
+	}
+
+	async openResults() {
+		await this.locators.resultsTab.click();
+		return new UserResultsPage(this.page);
 	}
 }

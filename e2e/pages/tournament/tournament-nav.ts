@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { clickNavTab } from "../../helpers/playwright";
 import { TournamentAdminPage } from "./tournament-admin-page";
 import { TournamentBracketsPage } from "./tournament-brackets-page";
+import { TournamentResultsPage } from "./tournament-results-page";
 
 /** Tabs shared by every tournament page, some of which collapse into a "More" menu. */
 export class TournamentNav {
@@ -23,5 +24,10 @@ export class TournamentNav {
 	async openAdmin() {
 		await clickNavTab(this.page, "admin-tab");
 		return new TournamentAdminPage(this.page);
+	}
+
+	async openResults() {
+		await clickNavTab(this.page, "results-tab");
+		return new TournamentResultsPage(this.page);
 	}
 }
