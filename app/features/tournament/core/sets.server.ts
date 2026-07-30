@@ -1,9 +1,8 @@
 import type { Tables } from "~/db/tables";
 import type { FindByTournamentTeamIdItem } from "~/features/tournament-match/TournamentMatchRepository.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { sourceTypes } from "~/modules/tournament-map-list-generator/constants";
+import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
-import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
 export interface AllRoundsItem {
@@ -134,7 +133,7 @@ export function tournamentTeamSets({
 				stageId: match.stageId,
 				modeShort: match.mode,
 				result: match.wasWinner ? "win" : "loss",
-				source: parseTournamentMaplistSource(match.source),
+				source: parseMaplistSource(match.source),
 			})),
 			score: flipScoreIfNeeded(set),
 			opponent: {
@@ -144,18 +143,6 @@ export function tournamentTeamSets({
 			},
 		};
 	});
-}
-
-function parseTournamentMaplistSource(source: string): TournamentMaplistSource {
-	if (sourceTypes.includes(source as any)) {
-		return source as TournamentMaplistSource;
-	}
-
-	const parsed = Number(source);
-
-	invariant(!Number.isNaN(parsed), `Invalid source: ${source}`);
-
-	return parsed;
 }
 
 function flipScoreIfNeeded(set: FindByTournamentTeamIdItem): [number, number] {

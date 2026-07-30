@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
-import type { UserMapModePreferences } from "~/db/tables";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as MatchProfileRepository from "./MatchProfileRepository.server";
 
@@ -42,8 +42,8 @@ describe("updateOwnMatchProfile", () => {
 			.execute();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("reports no change when nothing matchmaking-relevant changed", async () => {

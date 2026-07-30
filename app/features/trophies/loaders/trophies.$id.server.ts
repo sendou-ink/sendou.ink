@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import * as TrophyRepository from "../TrophyRepository.server";
 
@@ -10,7 +10,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const [trophy, tournaments] = await Promise.all([
-		TrophyRepository.findById(id).then(notFoundIfFalsy),
+		TrophyRepository.findById(id).then(notFoundIfNullish),
 		TrophyRepository.findTournamentsByTrophyId(id),
 	]);
 

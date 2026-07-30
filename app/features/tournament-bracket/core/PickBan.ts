@@ -1,10 +1,9 @@
 import * as R from "remeda";
+import type { CustomPickBanStep, TournamentRoundMaps } from "~/db/tables-json";
 import type {
 	ActionType,
-	CustomPickBanStep,
-	TournamentRoundMaps,
 	WhoSide,
-} from "~/db/tables";
+} from "~/features/tournament-bracket/tournament-bracket-constants";
 import { isSetOverByResults } from "~/features/tournament-match/tournament-match-utils";
 import type {
 	ModeShort,

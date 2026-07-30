@@ -1,4 +1,4 @@
-import { sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
@@ -20,10 +20,9 @@ invariant(
 	"hue must be between -360 and 360",
 );
 
-sql
-	.prepare(
-		"insert into badge (code, displayName, hue) values ($code, $displayName, $hue)",
-	)
-	.run({ code, displayName, hue: parsedHue ?? null });
+await db
+	.insertInto("Badge")
+	.values({ code, displayName, hue: parsedHue ?? null })
+	.execute();
 
 logger.info(`Added new badge: ${displayName}`);

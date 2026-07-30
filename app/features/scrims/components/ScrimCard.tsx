@@ -57,8 +57,8 @@ export function ScrimPostCard({
 	const isPickup = !post.team?.name;
 	const teamName = post.team?.name ?? owner.username;
 
-	const flexTimeDisplay = post.rangeEnd
-		? formatFlexTimeDisplay(post.at, post.rangeEnd)
+	const flexTimeDisplay = post.rangeEndsAt
+		? formatFlexTimeDisplay(post.startsAt, post.rangeEndsAt)
 		: null;
 
 	useEffect(() => {
@@ -109,7 +109,7 @@ export function ScrimPostCard({
 				<ScrimInfoItem label="Start">
 					<ScrimStartTimeDisplay
 						isScheduledForFuture={post.isScheduledForFuture}
-						startTimestamp={post.at}
+						startTimestamp={post.startsAt}
 						createdAtTimestamp={post.createdAt}
 						canceled={post.canceled}
 					/>
@@ -486,13 +486,13 @@ function ScrimActionButtons({
 									<div className="text-lighter">{userRequest.message}</div>
 								</div>
 							) : null}
-							{userRequest.at ? (
+							{userRequest.startsAt ? (
 								<div>
 									<div className="text-sm font-semi-bold mb-1">
 										{t("scrims:requestModal.at.label")}
 									</div>
 									<LocaleTime
-										date={userRequest.at}
+										date={userRequest.startsAt}
 										options={{
 											hour: "numeric",
 											minute: "2-digit",
@@ -576,8 +576,8 @@ export function ScrimRequestCard({
 	const isPickup = !request.team?.name;
 	const teamName = request.team?.name ?? owner.username;
 
-	const confirmedTime = request.at
-		? databaseTimestampToDate(request.at)
+	const confirmedTime = request.startsAt
+		? databaseTimestampToDate(request.startsAt)
 		: databaseTimestampToDate(postStartTime);
 
 	return (

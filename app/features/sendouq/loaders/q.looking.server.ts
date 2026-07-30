@@ -41,13 +41,13 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	]);
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: cardUserIds,
 		})),
 		groups: groupsToShow,
 		ownGroup,
 		likes: ownGroup
-			? await SQGroupRepository.allLikesByGroupId(ownGroup.id)
+			? await SQGroupRepository.findAllLikesByGroupId(ownGroup.id)
 			: {
 					given: [],
 					received: [],

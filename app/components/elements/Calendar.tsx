@@ -17,14 +17,22 @@ import styles from "./Calendar.module.css";
 export interface SendouCalendarProps<T extends DateValue>
 	extends CalendarProps<T> {
 	className?: string;
+	/** Highlights the whole week row rather than a single day, for pickers where choosing a day means choosing the week it belongs to. */
+	weekSelection?: boolean;
 }
 
 export function SendouCalendar<T extends DateValue>({
 	className,
+	weekSelection,
 	...rest
 }: SendouCalendarProps<T>) {
 	return (
-		<Calendar className={clsx(className, styles.root)} {...rest}>
+		<Calendar
+			className={clsx(className, styles.root, {
+				[styles.weekSelection]: weekSelection,
+			})}
+			{...rest}
+		>
 			<header className={styles.header}>
 				<Button slot="previous" className={styles.navButton}>
 					<ChevronLeft className={styles.navIcon} />

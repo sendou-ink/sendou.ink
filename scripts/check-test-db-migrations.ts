@@ -3,7 +3,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
+import { sql } from "kysely";
+import { createDatabaseConnection } from "~/db/sql";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,11 +34,10 @@ for (const dbPath of DB_FILES) {
 		continue;
 	}
 
-	const db = new Database(dbPath, { readonly: true });
-	const rows = db
-		.prepare("SELECT name FROM migrations ORDER BY id ASC")
-		.all() as Array<{ name: string }>;
-	db.close();
+	await using db = createDatabaseConnection(dbPath, { readonly: true });
+	const { rows } = await sql<{
+		name: string;
+	}>`SELECT name FROM migrations ORDER BY id ASC`.execute(db);
 
 	const migrationsInDb = new Set(rows.map((r) => r.name));
 	const missingMigrations = migrationFilesOnDisk.filter(

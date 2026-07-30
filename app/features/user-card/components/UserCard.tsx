@@ -23,8 +23,8 @@ import { Image, TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placement } from "~/components/Placement";
-import type { XRankPlacementRegion } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
 import { ReportUserDialog } from "~/features/user-report/components/ReportUserDialog";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
@@ -61,7 +61,7 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 
 /**
  * Click-to-open trigger that shows a popover with the user's card. Card data is resolved from the
- * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.userCards`);
+ * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.findAllByUserIds`);
  * pass `data` directly to bypass the lookup (e.g. the components showcase). When no card data exists
  * for the user, the `children` are rendered plain without a trigger.
  *
@@ -182,7 +182,7 @@ export function UserCard({
 
 /**
  * Resolves a user's `UserCardData` from any matched route loader that spread `{ userCards }`
- * (see `UserCardRepository.userCards`). Returns `undefined` when no loader on the current route
+ * (see `UserCardRepository.findAllByUserIds`). Returns `undefined` when no loader on the current route
  * tree carries data for the given user.
  */
 export function useUserCardData(

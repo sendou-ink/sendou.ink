@@ -12,10 +12,10 @@ import {
 import {
 	calendarEventStartTime,
 	commonUserSelect,
+	peakXpOverallSql,
 	tournamentLogoWithDefault,
 	tournamentTeamCount,
 } from "~/utils/kysely.server";
-import { peakXpOverallSql } from "../top-search/XRankPlacementRepository.server";
 import { getTentativeTier } from "../tournament-organization/core/tentativeTiers.server";
 import { sortTrophiesByFavorites } from "../user-page/core/trophy-sorting.server";
 import {

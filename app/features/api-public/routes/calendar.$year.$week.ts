@@ -24,7 +24,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const result: GetCalendarWeekResponse = events.map((event) => ({
 		name: event.name,
-		startTime: databaseTimestampToDate(event.startTime).toISOString(),
+		startTime: databaseTimestampToDate(event.startsAt).toISOString(),
 		tournamentId: event.tournamentId,
 		tournamentUrl: event.tournamentId
 			? `https://sendou.ink/to/${event.tournamentId}/brackets`
@@ -48,19 +48,15 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 		.select([
 			"Tournament.id as tournamentId",
 			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 		])
 		.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">=",
 			dateToDatabaseTimestamp(startTime),
 		)
-		.where(
-			"CalendarEventDate.startTime",
-			"<=",
-			dateToDatabaseTimestamp(endTime),
-		)
+		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
 		.where("CalendarEvent.hidden", "=", 0)
-		.orderBy("CalendarEventDate.startTime", "asc")
+		.orderBy("CalendarEventDate.startsAt", "asc")
 		.execute();
 }

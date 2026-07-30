@@ -1,19 +1,13 @@
 import { z } from "zod";
-import { TOURNAMENT_STAFF_ROLES } from "~/db/tables";
-import {
-	array,
-	fieldset,
-	select,
-	textFieldRequired,
-	userSearch,
-} from "~/form/fields";
+import { TOURNAMENT_STAFF_ROLES } from "~/features/tournament/tournament-constants";
+import { array, fieldset, select, textField, userSearch } from "~/form/fields";
 
 export const adminStreamFormSchema = z.object({
 	castTwitchAccounts: array({
 		label: "labels.castTwitchAccounts",
 		bottomText: "bottomTexts.castTwitchAccounts",
 		max: 5,
-		field: textFieldRequired({
+		field: textField({
 			maxLength: 100,
 			placeholder: "placeholders.castTwitchAccounts",
 		}),

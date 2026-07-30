@@ -9,8 +9,11 @@ import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
-import { BUILD_SORT_IDENTIFIERS, type BuildSort } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import {
+	BUILD_SORT_IDENTIFIERS,
+	type BuildSort,
+} from "~/features/user-page/user-page-constants";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
@@ -66,9 +69,9 @@ export default function UserBuildsPage() {
 		weaponFilter === "ALL"
 			? data.builds
 			: weaponFilter === "PUBLIC"
-				? data.builds.filter((build) => !build.private)
+				? data.builds.filter((build) => !build.isPrivate)
 				: weaponFilter === "PRIVATE"
-					? data.builds.filter((build) => build.private)
+					? data.builds.filter((build) => build.isPrivate)
 					: data.builds.filter((build) =>
 							build.weapons
 								.map((wpn) => wpn.weaponSplId)
@@ -127,7 +130,7 @@ function BuildsFilters({
 	if (data.builds.length === 0) return null;
 
 	const privateBuildsCount = data.builds.filter(
-		(build) => build.private,
+		(build) => build.isPrivate,
 	).length;
 	const publicBuildsCount = data.builds.length - privateBuildsCount;
 

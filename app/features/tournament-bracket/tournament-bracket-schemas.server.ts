@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { ACTION_TYPES, WHO_SIDES } from "~/db/tables";
+import {
+	ACTION_TYPES,
+	WHO_SIDES,
+} from "~/features/tournament-bracket/tournament-bracket-constants";
 import {
 	_action,
 	checkboxValueToBoolean,
@@ -31,36 +34,13 @@ const reportedMatchPosition = z.preprocess(
 		.max(Math.max(...TOURNAMENT.AVAILABLE_BEST_OF) - 1),
 );
 
-const point = z.number().int().min(0).max(100);
-const points = z.preprocess(
-	safeJSONParse,
-	z
-		.tuple([point, point])
-		.nullish()
-		.refine(
-			(val) => {
-				if (!val) return true;
-				const [p1, p2] = val;
-
-				// KO
-				if (p1 === 100 && p2 === 0) return true;
-				if (p2 === 100 && p1 === 0) return true;
-				// ...or no points sent at all (TODO: if we decide that this KO only approach is solid then we can do a proper data model migration)
-				if (p1 === 0 && p2 === 0) return true;
-
-				return false;
-			},
-			{
-				message: "Invalid points. Valid: 100-0, 0-100 or 0-0.",
-			},
-		),
-);
+const ko = z.preprocess(safeJSONParse, z.boolean().nullish());
 export const matchSchema = z.union([
 	z.object({
 		_action: _action("REPORT_SCORE"),
 		winnerTeamId: id,
 		position: reportedMatchPosition,
-		points,
+		ko,
 	}),
 	z.object({
 		_action: _action("SET_ACTIVE_ROSTER"),
@@ -80,7 +60,7 @@ export const matchSchema = z.union([
 		_action: _action("UPDATE_REPORTED_SCORE"),
 		rosters: bothTeamPlayerIds,
 		resultId: id,
-		points,
+		ko,
 	}),
 	z.object({
 		_action: _action("REOPEN_MATCH"),

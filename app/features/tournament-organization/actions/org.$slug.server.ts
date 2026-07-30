@@ -1,6 +1,7 @@
 import { isFuture } from "date-fns";
 import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { parseFormData } from "~/form/parse.server";
 import {
 	requirePermission,
 	requireRole,
@@ -10,11 +11,7 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import {
-	errorToast,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
@@ -24,17 +21,23 @@ import { organizationFromParams } from "../tournament-organization-utils.server"
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
 	const organization = await organizationFromParams(params);
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: orgPageActionSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	switch (data._action) {
 		case "BAN_USER": {
 			requirePermission(organization, "BAN");
 
 			const allBannedUsers =
-				await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
+				await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
 					organization.id,
 				);
 			const currentlyBannedUsers = allBannedUsers.filter(
@@ -104,7 +107,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				errorToast("Cannot leave as the sole admin of the organization");
 			}
 
-			await TournamentOrganizationRepository.removeOwnMembership(
+			await TournamentOrganizationRepository.deleteOwnMembership(
 				organization.id,
 			);
 

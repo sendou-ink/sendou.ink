@@ -1,6 +1,7 @@
 import slugify from "slugify";
 import { Config } from "~/config";
-import type { GearType, Preference, Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { Preference } from "~/db/tables-json";
 import type { ArtSource } from "~/features/art/art-types";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
 import { serializeBuild } from "~/features/build-analyzer/core/serializer";
@@ -14,6 +15,7 @@ import type {
 	AbilityWithUnknown,
 	BrandId,
 	BuildAbilitiesTupleWithUnknown,
+	GearType,
 	MainWeaponId,
 	ModeShort,
 	ModeShortWithSpecial,
@@ -82,6 +84,7 @@ export const ADMIN_PAGE = "/admin";
 export const API_PAGE = "/api";
 export const ARTICLES_MAIN_PAGE = "/a";
 export const FAQ_PAGE = "/faq";
+export const WELCOME_PAGE = "/welcome";
 export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
@@ -132,6 +135,7 @@ export const SENDOU_LOVE_EMOJI_PATH = `${STATIC_ASSETS_URL}/img/layout/sendou_lo
 export const FIRST_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/first.svg`;
 export const SECOND_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/second.svg`;
 export const THIRD_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/third.svg`;
+export const WELCOME_HERO_IMAGE_PATH = `${STATIC_ASSETS_URL}/img/welcome-hero.webp`;
 
 export const APP_ICON_URL = `${STATIC_ASSETS_URL}/img/app-icon.png`;
 export const pwaSplashScreenImageUrl = (fileName: string) =>

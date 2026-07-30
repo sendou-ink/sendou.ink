@@ -3,9 +3,11 @@ import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { DB, ParsedMemento } from "~/db/tables";
+import type { DB } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -29,9 +31,9 @@ import {
 	summarizeMaps,
 	summarizePlayerResults,
 } from "./core/summarizer.server";
+import * as MatchSkillRepository from "./MatchSkillRepository.server";
 import * as PlayerStatRepository from "./PlayerStatRepository.server";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
-import * as SkillRepository from "./SkillRepository.server";
 
 /** Whether a GroupMatch with the given id exists. */
 export async function exists(id: number) {
@@ -179,7 +181,7 @@ function groupWithTeamAndMembers(
 /**
  * Retrieves the pages count of results for a specific user and season. Counting both SendouQ matches and ranked tournaments.
  */
-export async function seasonResultPagesByUserId({
+export async function countSeasonResultPagesByUserId({
 	userId,
 	season,
 }: {
@@ -232,7 +234,7 @@ const tournamentResultsSubQuery = (
 			"TournamentResult.setResults",
 			"TournamentResult.tournamentId",
 			"TournamentResult.tournamentTeamId",
-			"CalendarEventDate.startTime as tournamentStartTime",
+			"CalendarEventDate.startsAt as tournamentStartTime",
 			"CalendarEvent.name as tournamentName",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 		])
@@ -296,19 +298,19 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 };
 
 export type SeasonGroupMatch = Extract<
-	Unpacked<Unpacked<ReturnType<typeof seasonResultsByUserId>>>,
+	Unpacked<Unpacked<ReturnType<typeof findSeasonResultsByUserId>>>,
 	{ type: "GROUP_MATCH" }
 >["groupMatch"];
 
 export type SeasonTournamentResult = Extract<
-	Unpacked<Unpacked<ReturnType<typeof seasonResultsByUserId>>>,
+	Unpacked<Unpacked<ReturnType<typeof findSeasonResultsByUserId>>>,
 	{ type: "TOURNAMENT_RESULT" }
 >["tournamentResult"];
 
 /**
  * Retrieves results of given user, competitive season & page. Both SendouQ matches and ranked tournaments.
  */
-export async function seasonResultsByUserId({
+export async function findSeasonResultsByUserId({
 	userId,
 	season,
 	page = 1,
@@ -412,7 +414,7 @@ export async function seasonResultsByUserId({
 		.filter((result) => result !== null);
 }
 
-export async function seasonCanceledMatchesByUserId({
+export async function findSeasonCanceledMatchesByUserId({
 	userId,
 	season,
 }: {
@@ -450,7 +452,7 @@ export async function seasonCanceledMatchesByUserId({
 		.execute();
 }
 
-export function create({
+export function insert({
 	alphaGroupId,
 	bravoGroupId,
 	mapList,
@@ -505,7 +507,7 @@ export function create({
 					index: i,
 					mode: map.mode,
 					stageId: map.stageId,
-					source: String(map.source),
+					source: serializeMaplistSource(map.source),
 				})),
 			)
 			.execute();
@@ -1090,7 +1092,7 @@ async function finalizeMatch({
 	confirmedByUserId: number;
 	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
 }) {
-	const { newSkills, differences } = calculateMatchSkills({
+	const { newSkills, differences } = await calculateMatchSkills({
 		groupMatchId: match.id,
 		winner: (match.groupAlpha.id === winnerGroupId
 			? match.groupAlpha
@@ -1123,7 +1125,7 @@ async function finalizeMatch({
 			summarizePlayerResults({ match, members, winners }),
 			trx,
 		);
-		await SkillRepository.createMatchSkills(
+		await MatchSkillRepository.insertMatchSkills(
 			{
 				skills: newSkills,
 				differences,

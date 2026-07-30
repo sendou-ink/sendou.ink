@@ -59,8 +59,8 @@ describe("team page editing", () => {
 		await dbInsertUsers();
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 	});
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("sets a custom theme via UPDATE_CUSTOM_THEME", async () => {

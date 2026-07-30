@@ -40,7 +40,7 @@ const createArtImage = async ({
 };
 
 const createCalendarEvent = async (authorId: number, avatarImgId?: number) => {
-	return CalendarRepository.create({
+	return CalendarRepository.insert({
 		isFullTournament: false,
 		authorId,
 		badges: [],
@@ -64,8 +64,8 @@ describe("findById", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("finds image by id", async () => {
@@ -94,20 +94,20 @@ describe("findById", () => {
 	});
 });
 
-describe("deleteImageById", () => {
+describe("deleteById", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes image by id", async () => {
 		const img = await createImage({ submitterUserId: 1 });
 
-		await ImageRepository.deleteImageById(img.id);
+		await ImageRepository.deleteById(img.id);
 
 		const result = await ImageRepository.findById(img.id);
 		expect(result).toBeUndefined();
@@ -120,7 +120,7 @@ describe("deleteImageById", () => {
 		expect(artsBefore).toHaveLength(1);
 		expect(artsBefore[0].id).toBe(art.id);
 
-		await ImageRepository.deleteImageById(art.imgId);
+		await ImageRepository.deleteById(art.imgId);
 
 		const result = await ImageRepository.findById(art.imgId);
 		expect(result).toBeUndefined();
@@ -136,8 +136,8 @@ describe("countUnvalidatedArt", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts unvalidated art by author", async () => {
@@ -171,8 +171,8 @@ describe("countAllUnvalidated", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts unvalidated images used in art", async () => {
@@ -224,8 +224,8 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("counts unvalidated images connected to art by submitter", async () => {
@@ -269,20 +269,20 @@ describe("countUnvalidatedBySubmitterUserId", () => {
 	});
 });
 
-describe("validateImage", () => {
+describe("validateById", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("marks image as validated", async () => {
 		const img = await createImage({ submitterUserId: 1 });
 
-		await ImageRepository.validateImage(img.id);
+		await ImageRepository.validateById(img.id);
 
 		const result = await ImageRepository.findById(img.id);
 		expect(result).toBeDefined();
@@ -294,21 +294,21 @@ describe("validateImage", () => {
 		const countBefore = await ImageRepository.countAllUnvalidated();
 		expect(countBefore).toBe(1);
 
-		await ImageRepository.validateImage(art.imgId);
+		await ImageRepository.validateById(art.imgId);
 
 		const countAfter = await ImageRepository.countAllUnvalidated();
 		expect(countAfter).toBe(0);
 	});
 });
 
-describe("unvalidatedImages", () => {
+describe("findAllUnvalidated", () => {
 	beforeEach(async () => {
 		imageCounter = 0;
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("fetches unvalidated images with submitter info", async () => {
@@ -324,7 +324,7 @@ describe("unvalidatedImages", () => {
 			}),
 		);
 
-		const result = await ImageRepository.unvalidatedImages();
+		const result = await ImageRepository.findAllUnvalidated();
 
 		expect(result).toHaveLength(1);
 		expect(result[0].submitterUserId).toBe(1);
@@ -335,7 +335,7 @@ describe("unvalidatedImages", () => {
 	test("does not fetch validated images", async () => {
 		await createArtImage({ authorId: 1, validatedAt: Date.now() });
 
-		const result = await ImageRepository.unvalidatedImages();
+		const result = await ImageRepository.findAllUnvalidated();
 
 		expect(result).toHaveLength(0);
 	});
@@ -347,7 +347,7 @@ describe("unvalidatedImages", () => {
 		const img = await createImage({ submitterUserId: 3 });
 		await createCalendarEvent(3, img.id);
 
-		const result = await ImageRepository.unvalidatedImages();
+		const result = await ImageRepository.findAllUnvalidated();
 
 		expect(result).toHaveLength(3);
 	});
@@ -357,13 +357,13 @@ describe("unvalidatedImages", () => {
 			await createArtImage({ authorId: 1 });
 		}
 
-		const result = await ImageRepository.unvalidatedImages();
+		const result = await ImageRepository.findAllUnvalidated();
 
 		expect(result.length).toBe(5);
 	});
 
 	test("returns empty array when no unvalidated images exist", async () => {
-		const result = await ImageRepository.unvalidatedImages();
+		const result = await ImageRepository.findAllUnvalidated();
 
 		expect(result).toHaveLength(0);
 	});

@@ -62,8 +62,17 @@ type WithTypedTranslationKeys<T> = Omit<
 	placeholder?: FormsTranslationKey;
 };
 
+type TypedItemLabel<V extends string> = {
+	label: FormsTranslationKey | (() => string);
+	value: V;
+};
+
 type WithTypedItemLabels<T, V extends string> = Omit<T, "items"> & {
-	items: Array<{ label: FormsTranslationKey | (() => string); value: V }>;
+	items: Array<TypedItemLabel<V>>;
+};
+
+type WithTypedItemLabelsWithImage<T, V extends string> = Omit<T, "items"> & {
+	items: Array<TypedItemLabel<V> & { imgSrc?: string }>;
 };
 
 type WithTypedDualSelectFields<T, V extends string> = Omit<
@@ -90,8 +99,8 @@ function prefixKey(key: FormsTranslationKey | undefined): string | undefined {
 	return key ? `forms:${key}` : undefined;
 }
 
-function prefixItems<V extends string>(
-	items: Array<{ label: FormsTranslationKey | (() => string); value: V }>,
+function prefixItems<V extends string, T extends TypedItemLabel<V>>(
+	items: Array<T>,
 ) {
 	return items.map((item) => ({
 		...item,
@@ -128,52 +137,46 @@ export function customField<T extends z.ZodType>(
 	});
 }
 
-export function textFieldOptional(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "text-field" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
+type TextFieldArgs = WithTypedTranslationKeys<
+	Omit<
+		Extract<FormField, { type: "text-field" }>,
+		"type" | "initialValue" | "required"
+	>
+>;
+
+export function textFieldOptional(args: TextFieldArgs) {
 	const schema =
 		args.validate === "url"
 			? z.url()
 			: safeNullableStringSchema({ min: args.minLength, max: args.maxLength });
 
-	return textFieldRefined(schema, args).register(formRegistry, {
-		...args,
-		label: prefixKey(args.label),
-		bottomText: prefixKey(args.bottomText),
-		placeholder: prefixKey(args.placeholder),
-		required: false,
-		type: "text-field",
-		initialValue: "",
-	});
+	return registerTextField(schema, args, false);
 }
 
-export function textFieldRequired(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "text-field" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
+export function textField(args: TextFieldArgs) {
 	const schema =
 		args.validate === "url"
 			? z.string().url()
 			: safeStringSchema({ min: args.minLength, max: args.maxLength });
 
-	return textFieldRefined(schema, args).register(formRegistry, {
+	return registerTextField(schema, args, true);
+}
+
+function registerTextField<T extends z.ZodType<string | null>>(
+	schema: T,
+	args: TextFieldArgs,
+	required: boolean,
+): T {
+	const refined = textFieldRefined(schema, args) as z.ZodType<string | null>;
+	return refined.register(formRegistry, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		placeholder: prefixKey(args.placeholder),
-		required: true,
+		required,
 		type: "text-field",
 		initialValue: "",
-	});
+	}) as T;
 }
 
 function textFieldRefined<T extends z.ZodType<string | null>>(
@@ -239,102 +242,97 @@ export function inGameName(
 	});
 }
 
+type NumberFieldArgs = WithTypedTranslationKeys<
+	Omit<
+		Extract<FormField, { type: "text-field" }>,
+		| "type"
+		| "initialValue"
+		| "required"
+		| "validate"
+		| "inputType"
+		| "maxLength"
+	>
+> & { maxLength?: number };
+
 export function numberField(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "text-field" }>,
-			| "type"
-			| "initialValue"
-			| "required"
-			| "validate"
-			| "inputType"
-			| "maxLength"
-		>
-	> & { maxLength?: number },
+	args: NumberFieldArgs & { min?: number; max?: number },
 ) {
-	return z.coerce
-		.number()
-		.int({ message: "forms:errors.mustBeWholeNumber" })
-		.nonnegative()
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			required: true,
-			type: "text-field",
-			inputType: "number",
-			initialValue: "",
-			maxLength: args.maxLength ?? 10,
-		});
+	let schema = numberSchema();
+
+	// an empty field coerces to 0, so `min` is also what makes a required number
+	// field reject being left blank
+	if (typeof args.min === "number") {
+		schema = schema.min(args.min, { message: "forms:errors.numberOutOfRange" });
+	}
+	if (typeof args.max === "number") {
+		schema = schema.max(args.max, { message: "forms:errors.numberOutOfRange" });
+	}
+
+	return schema.register(formRegistry, numberFieldMetadata(args, true));
 }
 
-export function numberFieldOptional(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "text-field" }>,
-			| "type"
-			| "initialValue"
-			| "required"
-			| "validate"
-			| "inputType"
-			| "maxLength"
-		>
-	> & { maxLength?: number },
-) {
-	return z.coerce
-		.number()
-		.int({ message: "forms:errors.mustBeWholeNumber" })
-		.nonnegative()
+export function numberFieldOptional(args: NumberFieldArgs) {
+	return numberSchema()
 		.optional()
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			required: false,
-			type: "text-field",
-			inputType: "number",
-			initialValue: "",
-			maxLength: args.maxLength ?? 10,
-		});
+		.register(formRegistry, numberFieldMetadata(args, false));
 }
 
-export function textAreaOptional(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "text-area" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
-	return safeNullableStringSchema({ max: args.maxLength }).register(
-		formRegistry,
-		{
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			required: false,
-			type: "text-area",
-			initialValue: "",
-		},
-	);
+function numberSchema() {
+	return z.coerce
+		.number()
+		.int({ message: "forms:errors.mustBeWholeNumber" })
+		.nonnegative();
 }
 
-export function textAreaRequired(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "text-area" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
-	return safeStringSchema({ max: args.maxLength }).register(formRegistry, {
+function numberFieldMetadata(args: NumberFieldArgs, required: boolean) {
+	return {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
-		required: true,
+		required,
+		type: "text-field" as const,
+		inputType: "number" as const,
+		initialValue: "",
+		maxLength: args.maxLength ?? 10,
+	};
+}
+
+type TextAreaArgs = WithTypedTranslationKeys<
+	Omit<
+		Extract<FormField, { type: "text-area" }>,
+		"type" | "initialValue" | "required"
+	>
+>;
+
+export function textAreaOptional(args: TextAreaArgs) {
+	return registerTextArea(
+		safeNullableStringSchema({ max: args.maxLength }),
+		args,
+		false,
+	);
+}
+
+export function textArea(args: TextAreaArgs) {
+	return registerTextArea(
+		safeStringSchema({ max: args.maxLength }),
+		args,
+		true,
+	);
+}
+
+function registerTextArea<T extends z.ZodType<string | null>>(
+	schema: T,
+	args: TextAreaArgs,
+	required: boolean,
+): T {
+	return (schema as z.ZodType<string | null>).register(formRegistry, {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		required,
 		type: "text-area",
 		initialValue: "",
-	});
+	}) as T;
 }
 
 export function toggle(
@@ -391,7 +389,10 @@ export function select<V extends string>(
 			Omit<FormFieldSelect<"select", V>, "type" | "initialValue" | "clearable">,
 			V
 		>
-	>,
+	> & {
+		/** Value selected when the form has no default value for the field. Defaults to the first item. */
+		initialValue?: V;
+	},
 ) {
 	return itemsSchema(args.items).register(formRegistry, {
 		...args,
@@ -399,7 +400,7 @@ export function select<V extends string>(
 		bottomText: prefixKey(args.bottomText),
 		items: prefixItems(args.items),
 		type: "select",
-		initialValue: args.items[0].value,
+		initialValue: args.initialValue ?? args.items[0].value,
 		clearable: false,
 	});
 }
@@ -489,7 +490,7 @@ export function dualSelectOptional<V extends string>(
 
 export function radioGroup<V extends string>(
 	args: WithTypedTranslationKeys<
-		WithTypedItemLabels<
+		WithTypedItemLabelsWithImage<
 			Omit<FormFieldInputGroup<"radio-group", V>, "type" | "initialValue">,
 			V
 		>
@@ -530,93 +531,73 @@ type DateTimeArgs = WithTypedTranslationKeys<
 	maxMessage?: FormsTranslationKey;
 };
 
-export function datetimeRequired(args: DateTimeArgs) {
+function boundedDate(args: DateTimeArgs, schema: z.ZodDate) {
 	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
 	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
 
+	return schema
+		.refine((d) => d >= resolveMin(), {
+			message: `forms:${args.minMessage ?? "errors.dateTooEarly"}`,
+		})
+		.refine((d) => d <= resolveMax(), {
+			message: `forms:${args.maxMessage ?? "errors.dateTooLate"}`,
+		});
+}
+
+function datetimeMetadata(
+	args: DateTimeArgs,
+	overrides: { type: "datetime" | "date"; required: boolean },
+) {
+	return {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		initialValue: null,
+		...overrides,
+	};
+}
+
+export function datetime(args: DateTimeArgs) {
 	return z
 		.preprocess(
 			date,
-			z
-				.date({ message: "forms:errors.required" })
-				.refine((d) => d >= resolveMin(), {
-					message: `forms:${args.minMessage ?? "errors.dateTooEarly"}`,
-				})
-				.refine((d) => d <= resolveMax(), {
-					message: `forms:${args.maxMessage ?? "errors.dateTooLate"}`,
-				}),
+			boundedDate(args, z.date({ message: "forms:errors.required" })),
 		)
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "datetime",
-			initialValue: null,
-			required: true,
-		});
+		.register(
+			formRegistry,
+			datetimeMetadata(args, { type: "datetime", required: true }),
+		);
 }
 
 export function datetimeOptional(args: DateTimeArgs) {
-	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
-	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
-
 	return z
-		.preprocess(
-			date,
-			z
-				.date()
-				.refine((d) => d >= resolveMin(), {
-					message: `forms:${args.minMessage ?? "errors.dateTooEarly"}`,
-				})
-				.refine((d) => d <= resolveMax(), {
-					message: `forms:${args.maxMessage ?? "errors.dateTooLate"}`,
-				})
-				.nullish(),
-		)
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "datetime",
-			initialValue: null,
-			required: false,
-		});
+		.preprocess(date, boundedDate(args, z.date()).nullish())
+		.register(
+			formRegistry,
+			datetimeMetadata(args, { type: "datetime", required: false }),
+		);
 }
 
-export function dayMonthYearRequired(args: DateTimeArgs) {
-	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
-	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
-
+export function dayMonthYear(args: DateTimeArgs) {
 	return z
 		.preprocess(
 			date,
-			z
-				.date({ message: "forms:errors.required" })
-				.refine((d) => d >= resolveMin(), {
-					message: `forms:${args.minMessage ?? "errors.dateTooEarly"}`,
-				})
-				.refine((d) => d <= resolveMax(), {
-					message: `forms:${args.maxMessage ?? "errors.dateTooLate"}`,
-				}),
+			boundedDate(args, z.date({ message: "forms:errors.required" })),
 		)
 		.transform((d) => ({
 			day: d.getDate(),
 			month: d.getMonth(),
 			year: d.getFullYear(),
 		}))
-		.register(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "date",
-			initialValue: null,
-			required: true,
-		});
+		.register(
+			formRegistry,
+			datetimeMetadata(args, { type: "date", required: true }),
+		);
 }
 
 export function checkboxGroup<V extends string>(
 	args: WithTypedTranslationKeys<
-		WithTypedItemLabels<
+		WithTypedItemLabelsWithImage<
 			Omit<FormFieldInputGroup<"checkbox-group", V>, "type" | "initialValue">,
 			V
 		>
@@ -674,33 +655,45 @@ export function weaponPool(
 	});
 }
 
-export function stringConstant<T extends string>(value: T) {
+/**
+ * Field that renders no control at all. Use it for values the form needs to
+ * submit but the user never edits, e.g. a discriminator seeded from the loader.
+ *
+ * Pass `initialValue` to hardcode the starting value. Omitting it makes the
+ * field require a matching entry in the form's `defaultValues`.
+ */
+export function hidden<T extends z.ZodType>(
+	schema: T,
+	initialValue: z.input<T>,
+): T;
+export function hidden<T extends z.ZodType>(schema: T): RequiresDefault<T>;
+export function hidden<T extends z.ZodType>(
+	schema: T,
+	initialValue?: z.input<T>,
+) {
 	// @ts-expect-error Complex generic type with registry
-	return z.literal(value).register(formRegistry, {
-		type: "string-constant",
-		initialValue: value,
-		value,
-	});
+	return schema.register(formRegistry, {
+		type: "hidden",
+		initialValue,
+	}) as never;
+}
+
+export function stringConstant<T extends string>(value: T) {
+	return hidden(z.literal(value), value);
 }
 
 export function idConstant<T extends number>(value: T): z.ZodLiteral<T>;
 export function idConstant(): RequiresDefault<z.ZodNumber>;
 export function idConstant<T extends number>(value?: T) {
-	const schema = value !== undefined ? z.literal(value) : id.clone();
-	return schema.register(formRegistry, {
-		type: "id-constant",
-		initialValue: value,
-		value: value ?? null,
-	}) as never;
+	return (
+		value !== undefined ? hidden(z.literal(value), value) : hidden(id.clone())
+	) as never;
 }
 
 export function idConstantOptional<T extends number>(value?: T) {
-	const schema = value ? z.literal(value).optional() : id.optional();
-	return schema.register(formRegistry, {
-		type: "id-constant",
-		initialValue: value,
-		value: value ?? null,
-	});
+	return value
+		? hidden(z.literal(value).optional(), value)
+		: hidden(id.optional(), undefined);
 }
 
 export function array<S extends z.ZodType>(
@@ -765,40 +758,30 @@ export function fieldset<S extends z.ZodRawShape>(
 	});
 }
 
-export function userSearch(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "user-search" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
-	return id.clone().register(formRegistry, {
-		...args,
-		label: prefixKey(args.label),
-		bottomText: prefixKey(args.bottomText),
-		type: "user-search",
-		initialValue: null,
-		required: true,
-	});
+type UserSearchArgs = WithTypedTranslationKeys<
+	Omit<
+		Extract<FormField, { type: "user-search" }>,
+		"type" | "initialValue" | "required"
+	>
+>;
+
+export function userSearch(args: UserSearchArgs) {
+	return id.clone().register(formRegistry, userSearchMetadata(args, true));
 }
 
-export function userSearchOptional(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "user-search" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
-	return id.optional().register(formRegistry, {
+export function userSearchOptional(args: UserSearchArgs) {
+	return id.optional().register(formRegistry, userSearchMetadata(args, false));
+}
+
+function userSearchMetadata(args: UserSearchArgs, required: boolean) {
+	return {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
-		type: "user-search",
+		type: "user-search" as const,
 		initialValue: null,
-		required: false,
-	});
+		required,
+	};
 }
 
 export function tournamentSearchOptional(
@@ -891,38 +874,30 @@ export function stageSelect(
 	});
 }
 
-export function weaponSelect(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "weapon-select" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
-	return weaponSplId.register(formRegistry, {
-		...args,
-		label: prefixKey(args.label),
-		bottomText: prefixKey(args.bottomText),
-		type: "weapon-select",
-		initialValue: null,
-		required: true,
-	});
+type WeaponSelectArgs = WithTypedTranslationKeys<
+	Omit<
+		Extract<FormField, { type: "weapon-select" }>,
+		"type" | "initialValue" | "required"
+	>
+>;
+
+export function weaponSelect(args: WeaponSelectArgs) {
+	return weaponSplId.register(formRegistry, weaponSelectMetadata(args, true));
 }
 
-export function weaponSelectOptional(
-	args: WithTypedTranslationKeys<
-		Omit<
-			Extract<FormField, { type: "weapon-select" }>,
-			"type" | "initialValue" | "required"
-		>
-	>,
-) {
-	return weaponSplId.optional().register(formRegistry, {
+export function weaponSelectOptional(args: WeaponSelectArgs) {
+	return weaponSplId
+		.optional()
+		.register(formRegistry, weaponSelectMetadata(args, false));
+}
+
+function weaponSelectMetadata(args: WeaponSelectArgs, required: boolean) {
+	return {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
-		type: "weapon-select",
+		type: "weapon-select" as const,
 		initialValue: null,
-		required: false,
-	});
+		required,
+	};
 }

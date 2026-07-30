@@ -33,7 +33,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		mapPool: ownTeam.mapPool,
-		friendPlayers: await SQGroupRepository.friendsAndTeammates(user.id),
+		friendPlayers: await SQGroupRepository.findFriendsAndTeammates(user.id),
 		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 		isSaved: false,
 	};

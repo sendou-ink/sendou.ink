@@ -9,7 +9,7 @@ export const loader = async () => {
 	const user = requireUser();
 
 	return {
-		teams: await TeamRepository.teamsByMemberUserId(user.id),
+		teams: await TeamRepository.findAllByMemberUserId(user.id),
 		associations: await AssociationRepository.findByMemberUserId(user.id),
 	};
 };

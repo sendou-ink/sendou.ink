@@ -14,11 +14,12 @@ import {
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import {
 	type FriendActivityType,
-	isLiveFriendActivity,
+	isInProgressFriendActivity,
 } from "~/features/friends/friends-constants";
 import {
 	type FriendActivity,
 	resolveFriendActivity,
+	resolveSendouQMatchStreams,
 } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
@@ -43,7 +44,7 @@ export type SidebarEvent = {
 	name: string;
 	url: string;
 	logoUrl: string | null;
-	startTime: number;
+	startsAt: number;
 	type: "tournament" | "scrim";
 	scrimStatus?: "booked" | "looking" | "requestPending";
 };
@@ -60,6 +61,7 @@ export type SidebarFriend = {
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
+	streamUrl: string | null;
 };
 
 const MAX_EVENTS_VISIBLE = 5;
@@ -86,12 +88,14 @@ export async function resolveSidebarData(userId: number | null) {
 		friendsWithActivity,
 		savedTournaments,
 		incomingFriendRequestIds,
+		streamedSendouQMatches,
 	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
 		FriendRepository.findByUserIdWithActivity(userId),
-		SavedCalendarEventRepository.upcoming(userId),
+		SavedCalendarEventRepository.findAllUpcomingByUserId(userId),
 		FriendRepository.findPendingReceivedRequestIds(userId),
+		resolveSendouQMatchStreams(),
 	]);
 
 	const seenTournamentIds = new Set<number>();
@@ -116,10 +120,10 @@ export async function resolveSidebarData(userId: number | null) {
 	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
 
 	const events = [...tournamentEvents, ...savedEvents, ...scrimEvents]
-		.sort((a, b) => a.startTime - b.startTime)
+		.sort((a, b) => a.startsAt - b.startsAt)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
-	const friends = resolveFriends(friendsWithActivity);
+	const friends = resolveFriends(friendsWithActivity, streamedSendouQMatches);
 
 	const savedTournamentIds = savedTournaments.map((t) => t.id);
 
@@ -150,7 +154,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 			getSendouQSidebarStreams(),
 			LiveStreamRepository.findXRankStreams(),
 			ShowcaseTournaments.upcomingTournaments(),
-			ExternalStreamRepository.forSidebar(),
+			ExternalStreamRepository.findAllForSidebar(),
 		]);
 
 	const seenUsernames = new Set([
@@ -170,7 +174,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 				imageUrl: externalStream.avatarUrl ?? BLANK_IMAGE_URL,
 				url: externalStream.url,
 				subtitle: "",
-				startsAt: externalStream.startTime,
+				startsAt: externalStream.startsAt,
 				tier: null,
 			},
 			score: StreamRanking.EXTERNAL_STREAM_SCORE,
@@ -245,8 +249,8 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 	for (const event of upcomingTournaments) {
 		const effectiveTier = event.tier ?? event.tentativeTier;
 		if (effectiveTier === null) continue;
-		if (event.startTime < nowTimestamp) continue;
-		if (event.startTime > threeDaysFromNow) continue;
+		if (event.startsAt < nowTimestamp) continue;
+		if (event.startsAt > threeDaysFromNow) continue;
 		if (event.hidden) continue;
 
 		const membersPerTeam = event.minMembersPerTeam ?? 4;
@@ -258,7 +262,7 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 				imageUrl: event.logoUrl ?? BLANK_IMAGE_URL,
 				url: event.url,
 				subtitle: "",
-				startsAt: event.startTime,
+				startsAt: event.startsAt,
 				tier: (event.tier as TournamentTierNumber) ?? null,
 				membersPerTeam,
 				tentativeTier: event.tentativeTier ?? undefined,
@@ -277,7 +281,20 @@ type FriendWithActivity = Awaited<
 	ReturnType<typeof FriendRepository.findByUserIdWithActivity>
 >[number];
 
-function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
+function resolveFriends(
+	friendsWithActivity: FriendWithActivity[],
+	streamedSendouQMatches: ReadonlyMap<number, string>,
+) {
+	const activityForRow = (row: FriendWithActivity) =>
+		resolveFriendActivity({
+			friendId: row.id,
+			tournamentId: row.tournamentId,
+			tournamentName: row.tournamentName,
+			teamMemberCount: row.teamMemberCount,
+			tournamentMinTeamSize: row.tournamentMinTeamSize,
+			sendouQMatchStreams: streamedSendouQMatches,
+		});
+
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 	const friendRows = unique.filter((f) => f.friendshipId !== null);
 	const teamMemberRows = unique.filter((f) => f.friendshipId === null);
@@ -297,7 +314,7 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 
 		const sidebarFriend = rowToSidebarFriend(friend, activity);
 
-		if (isLiveFriendActivity(activity.type)) {
+		if (isInProgressFriendActivity(activity.type)) {
 			activeFriends.push(sidebarFriend);
 		} else if (activity.type === "SENDOUQ") {
 			sendouqFriends.push(sidebarFriend);
@@ -360,16 +377,6 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	return result.slice(0, MAX_FRIENDS_VISIBLE);
 }
 
-function activityForRow(row: FriendWithActivity): FriendActivity {
-	return resolveFriendActivity({
-		friendId: row.id,
-		tournamentId: row.tournamentId,
-		tournamentName: row.tournamentName,
-		teamMemberCount: row.teamMemberCount,
-		tournamentMinTeamSize: row.tournamentMinTeamSize,
-	});
-}
-
 function rowToSidebarFriend(
 	row: FriendWithActivity,
 	activity: FriendActivity | null,
@@ -386,6 +393,7 @@ function rowToSidebarFriend(
 		activityType: activity?.type ?? null,
 		matchId: activity?.matchId ?? null,
 		tournamentId: activity?.tournamentId ?? row.tournamentId,
+		streamUrl: activity?.streamUrl ?? null,
 	};
 }
 
@@ -397,7 +405,7 @@ export function tournamentToSidebarEvent(
 		name: t.name,
 		url: t.url,
 		logoUrl: t.logoUrl,
-		startTime: t.startTime,
+		startsAt: t.startsAt,
 		type: "tournament" as const,
 	};
 }
@@ -415,7 +423,7 @@ export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 					? `${href("/scrims")}?pendingRequestPostId=${s.id}`
 					: href("/scrims"),
 		logoUrl: s.opponentAvatarUrl ?? SCRIMS_ICON_URL,
-		startTime: s.at,
+		startsAt: s.startsAt,
 		type: "scrim" as const,
 		scrimStatus: s.status,
 	};

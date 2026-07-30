@@ -43,12 +43,12 @@ export function participantIdsListFromAccepted(post: ScrimPost) {
 
 /**
  * Returns the actual start time of the scrim.
- * When the post has a time range (rangeEnd is set), returns the accepted request's specific time if available.
+ * When the post has a time range (rangeEndsAt is set), returns the accepted request's specific time if available.
  * Otherwise returns the post's start time.
  */
 export function getStartTime(post: ScrimPost): number {
 	const acceptedRequest = post.requests.find((r) => r.isAccepted);
-	return acceptedRequest?.at ?? post.at;
+	return acceptedRequest?.startsAt ?? post.startsAt;
 }
 
 /**
@@ -91,14 +91,14 @@ export function applyFilters(post: ScrimPost, filters: ScrimFilters): boolean {
 		}
 	}
 
-	const timeFilters = isWeekend(databaseTimestampToDate(post.at))
+	const timeFilters = isWeekend(databaseTimestampToDate(post.startsAt))
 		? filters.weekendTimes
 		: filters.weekdayTimes;
 
 	if (timeFilters) {
-		const startDate = databaseTimestampToDate(post.at);
-		const endDate = post.rangeEnd
-			? databaseTimestampToDate(post.rangeEnd)
+		const startDate = databaseTimestampToDate(post.startsAt);
+		const endDate = post.rangeEndsAt
+			? databaseTimestampToDate(post.rangeEndsAt)
 			: startDate;
 
 		const startTimeString = format(startDate, "HH:mm");

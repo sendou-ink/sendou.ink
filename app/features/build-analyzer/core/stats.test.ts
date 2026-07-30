@@ -90,6 +90,58 @@ describe("Analyze build", () => {
 		).toBeGreaterThan(analyzedJr.stats.subWeaponInkConsumptionPercentage.value);
 	});
 
+	test("Tenacity special charge time is only calculated with Tenacity in the build", () => {
+		const analyzed = buildStats({
+			weaponSplId: 0,
+			hasTacticooler: false,
+		});
+
+		const analyzedWithTenacity = buildStats({
+			weaponSplId: 0,
+			mainOnlyAbilities: ["T"],
+			hasTacticooler: false,
+		});
+
+		expect(analyzed.stats.tenacitySecondsToSpecial).toBeUndefined();
+		expect(analyzedWithTenacity.stats.tenacitySecondsToSpecial).toBeDefined();
+	});
+
+	test("Tenacity special charge time is not affected by Special Charge Up", () => {
+		const analyzed = buildStats({
+			weaponSplId: 0,
+			mainOnlyAbilities: ["T"],
+			hasTacticooler: false,
+		});
+
+		const analyzedWithSCU = buildStats({
+			weaponSplId: 0,
+			abilityPoints: new Map([["SCU", 57]]),
+			mainOnlyAbilities: ["T"],
+			hasTacticooler: false,
+		});
+
+		expect(
+			analyzedWithSCU.stats.specialPoint.value,
+			"Special Charge Up should lower the points needed for special",
+		).toBeLessThan(analyzed.stats.specialPoint.value);
+		expect(analyzedWithSCU.stats.tenacitySecondsToSpecial).toEqual(
+			analyzed.stats.tenacitySecondsToSpecial,
+		);
+	});
+
+	test("Tenacity fills the special gauge faster the more players the team is down", () => {
+		const analyzed = buildStats({
+			weaponSplId: 0,
+			mainOnlyAbilities: ["T"],
+			hasTacticooler: false,
+		});
+
+		const secondsToSpecial = analyzed.stats.tenacitySecondsToSpecial!;
+
+		expect(secondsToSpecial[2]).toBeLessThan(secondsToSpecial[1]);
+		expect(secondsToSpecial[3]).toBeLessThan(secondsToSpecial[2]);
+	});
+
 	const subPowerApToQuickSuperJumpAp = new Map([
 		[0, 0],
 		[3, 4],

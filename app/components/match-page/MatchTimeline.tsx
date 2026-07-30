@@ -9,7 +9,10 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LocaleTime } from "~/components/LocaleTime";
-import type { GroupSkillDifference, UserSkillDifference } from "~/db/tables";
+import type {
+	GroupSkillDifference,
+	UserSkillDifference,
+} from "~/db/tables-json";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
@@ -48,8 +51,8 @@ export interface TimelineMap {
 		alpha: Array<MainWeaponId | null>;
 		bravo: Array<MainWeaponId | null>;
 	};
-	/** Optional point values [alpha, bravo] */
-	points?: [number, number];
+	/** Whether the game ended in a knockout. Undefined if not collected. */
+	ko?: boolean;
 	/** Side that picked this map (counterpick / postGame map PICK). Renders a click indicator next to that side's WIN/LOSS label. */
 	pickedBy?: MatchSide;
 }
@@ -182,7 +185,7 @@ function TimelineHeader({
 				) : null}
 				{isOngoing ? (
 					<span className={styles.headerScoreLive}>
-						{t("q:match.timeline.live")}
+						{t("q:match.timeline.ongoing")}
 					</span>
 				) : null}
 			</div>
@@ -210,15 +213,12 @@ function TimelineHeader({
 function TimelineMapRow({ map }: { map: TimelineMap }) {
 	const { t } = useTranslation(["game-misc"]);
 
-	const alphaPoints = map.points?.[0];
-	const bravoPoints = map.points?.[1];
-
 	return (
 		<div className={styles.mapEvent}>
 			<div className={styles.mapSide}>
 				<SideResult
 					result={map.winner === "ALPHA" ? "WIN" : "LOSS"}
-					points={alphaPoints}
+					isKo={map.ko && map.winner === "ALPHA"}
 					weapons={map.weapons?.alpha}
 					isPicked={map.pickedBy === "ALPHA"}
 				/>
@@ -242,7 +242,7 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 			<div className={styles.mapSide}>
 				<SideResult
 					result={map.winner === "BRAVO" ? "WIN" : "LOSS"}
-					points={bravoPoints}
+					isKo={map.ko && map.winner === "BRAVO"}
 					weapons={map.weapons?.bravo}
 					isPicked={map.pickedBy === "BRAVO"}
 				/>
@@ -253,12 +253,12 @@ function TimelineMapRow({ map }: { map: TimelineMap }) {
 
 function SideResult({
 	result,
-	points,
+	isKo,
 	weapons,
 	isPicked,
 }: {
 	result: "WIN" | "LOSS";
-	points?: number;
+	isKo?: boolean;
 	weapons?: Array<MainWeaponId | null>;
 	isPicked?: boolean;
 }) {
@@ -288,7 +288,7 @@ function SideResult({
 						? t("q:match.timeline.win")
 						: t("q:match.timeline.loss")}
 				</span>
-				{points === 100 ? (
+				{isKo ? (
 					<span className={styles.resultPoints}>{t("q:match.action.ko")}</span>
 				) : null}
 			</div>

@@ -1,14 +1,14 @@
 import { sub } from "date-fns";
 import * as R from "remeda";
+import type {
+	CastedMatchesInfo,
+	TournamentStageSettings,
+} from "~/db/tables-json";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
-import type {
-	CastedMatchesInfo,
-	Tables,
-	TournamentStageSettings,
-} from "../../db/tables";
+import type { Tables } from "../../db/tables";
 import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "../match-profile/banned-maps";
@@ -139,18 +139,18 @@ export function validateCounterPickMapPool(
 
 export function tournamentIsRanked({
 	isSetAsRanked,
-	startTime,
+	startsAt,
 	minMembersPerTeam,
 	isTest,
 }: {
 	isSetAsRanked?: boolean;
-	startTime: Date;
+	startsAt: Date;
 	minMembersPerTeam: number;
 	isTest: boolean;
 }) {
 	if (isTest) return false;
 
-	const seasonIsActive = Boolean(Seasons.current(startTime));
+	const seasonIsActive = Boolean(Seasons.current(startsAt));
 	if (!seasonIsActive) return false;
 
 	// 1v1, 2v2 and 3v3 are always considered "gimmicky"
@@ -160,7 +160,7 @@ export function tournamentIsRanked({
 }
 
 /**
- * Whether a tournament's startTime falls inside the active weapon-reporting window
+ * Whether a tournament's start time falls inside the active weapon-reporting window
  * for late (post-finalization) reporting.
  *
  * - In-season: window is `(previousSeason.ends, now]` — current season plus the off-season immediately before it.
@@ -203,7 +203,7 @@ export function resolveLeagueRoundStartDate(
 
 	const round = bracket?.data.round.find((r) => r.id === roundId);
 	const onlyRelevantRounds = bracket?.data.round.filter(
-		(r) => r.group_id === round?.group_id,
+		(r) => r.groupId === round?.groupId,
 	);
 
 	const roundIdx = onlyRelevantRounds?.findIndex((r) => r.id === roundId);

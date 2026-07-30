@@ -7,13 +7,15 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
+import { normalizeFriendCode } from "~/utils/zod";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import {
 	JOIN_CODE_SEARCH_PARAM_KEY,
@@ -30,10 +32,16 @@ import {
 
 export const action: ActionFunction = async ({ request, url }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: frontPageSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	try {
 		switch (data._action) {
@@ -45,7 +53,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				await validateCanJoinQ(user);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.createGroup({
+				const { chatCodeToRevalidate } = await SQGroupRepository.insert({
 					status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 					userId: user.id,
 				});
@@ -86,7 +94,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 					"Invite code doesn't match any active team",
 				);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.addMember(
+				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
 					groupInvitedTo.id,
 					{
 						userId: user.id,
@@ -136,17 +144,19 @@ export const action: ActionFunction = async ({ request, url }) => {
 			}
 			case "ADD_FRIEND_CODE": {
 				errorToastIfFalsy(
-					!(await UserRepository.currentFriendCodeByUserId(user.id)),
+					!(await UserRepository.findCurrentFriendCodeByUserId(user.id)),
 					"Friend code already set",
 				);
 
+				const friendCode = normalizeFriendCode(data.friendCode);
+
 				const isTakenFriendCode = (
-					await UserRepository.allCurrentFriendCodes()
-				).has(data.friendCode);
+					await UserRepository.findAllCurrentFriendCodes()
+				).has(friendCode);
 
 				await UserRepository.insertFriendCode({
 					userId: user.id,
-					friendCode: data.friendCode,
+					friendCode,
 					submitterUserId: user.id,
 				});
 
@@ -183,7 +193,9 @@ export const action: ActionFunction = async ({ request, url }) => {
 };
 
 async function validateCanJoinQ(user: { id: number; discordId: string }) {
-	const friendCode = await UserRepository.currentFriendCodeByUserId(user.id);
+	const friendCode = await UserRepository.findCurrentFriendCodeByUserId(
+		user.id,
+	);
 	errorToastIfFalsy(friendCode, "No friend code");
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,

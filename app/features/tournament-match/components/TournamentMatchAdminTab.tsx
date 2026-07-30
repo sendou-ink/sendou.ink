@@ -14,9 +14,9 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { Label } from "~/components/Label";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { SubmitButton } from "~/components/SubmitButton";
-import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
@@ -78,7 +78,7 @@ function AdminCastSection({
 	matchStatus,
 }: {
 	matchId: number;
-	matchStatus: number;
+	matchStatus: MatchStatus;
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
@@ -95,10 +95,7 @@ function AdminCastSection({
 		castedMatchesInfo?.lockedMatches?.some((lm) => lm.matchId === matchId) ??
 		false;
 
-	const canLock =
-		(matchStatus === TournamentMatchStatus.Locked ||
-			matchStatus === TournamentMatchStatus.Waiting) &&
-		!isLocked;
+	const canLock = matchStatus === "PENDING" && !isLocked;
 	const canUnlock = !isMatchStarted && isLocked;
 
 	return (
@@ -349,9 +346,9 @@ function EditReportedScoresSection({
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
-	const withPoints = tournament.bracketByIdxOrDefault(
+	const withKo = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectResultsWithPoints;
+	).collectsKos;
 
 	return (
 		<div className={styles.editSection}>
@@ -363,7 +360,7 @@ function EditReportedScoresSection({
 						index={index}
 						result={result}
 						teams={teams}
-						withPoints={withPoints}
+						withKo={withKo}
 					/>
 				))}
 			</div>
@@ -375,12 +372,12 @@ function EditReportedScoreRow({
 	index,
 	result,
 	teams,
-	withPoints,
+	withKo,
 }: {
 	index: number;
 	result: TournamentMatchLoaderData["results"][number];
 	teams: [TournamentDataTeam, TournamentDataTeam];
-	withPoints: boolean;
+	withKo: boolean;
 }) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();
@@ -399,8 +396,7 @@ function EditReportedScoreRow({
 		previousFetcherStateRef.current = fetcher.state;
 	}, [fetcher.state, fetcher.data]);
 
-	const isKo =
-		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100;
+	const isKo = Boolean(result.ko);
 
 	if (!editing) {
 		return (
@@ -433,7 +429,7 @@ function EditReportedScoreRow({
 			fetcher={fetcher}
 			result={result}
 			teams={teams}
-			withPoints={withPoints}
+			withKo={withKo}
 			minMembersPerTeam={tournament.minMembersPerTeam}
 			onCancel={() => setEditing(false)}
 			index={index}
@@ -445,7 +441,7 @@ function EditReportedScoreForm({
 	fetcher,
 	result,
 	teams,
-	withPoints,
+	withKo,
 	minMembersPerTeam,
 	onCancel,
 	index,
@@ -453,7 +449,7 @@ function EditReportedScoreForm({
 	fetcher: ReturnType<typeof useFetcher>;
 	result: TournamentMatchLoaderData["results"][number];
 	teams: [TournamentDataTeam, TournamentDataTeam];
-	withPoints: boolean;
+	withKo: boolean;
 	minMembersPerTeam: number;
 	onCancel: () => void;
 	index: number;
@@ -471,16 +467,7 @@ function EditReportedScoreForm({
 				.map((p) => p.userId),
 		];
 	});
-	const [isKO, setIsKO] = React.useState(
-		result.opponentOnePoints === 100 || result.opponentTwoPoints === 100,
-	);
-
-	const team0Won = result.winnerTeamId === teams[0].id;
-	const points: [number, number] = isKO
-		? team0Won
-			? [100, 0]
-			: [0, 100]
-		: [0, 0];
+	const [isKO, setIsKO] = React.useState(Boolean(result.ko));
 
 	const formValid = checkedPlayers.every(
 		(team) => team.length === minMembersPerTeam,
@@ -536,9 +523,9 @@ function EditReportedScoreForm({
 				name="rosters"
 				value={JSON.stringify(checkedPlayers)}
 			/>
-			{withPoints ? (
+			{withKo ? (
 				<>
-					<input type="hidden" name="points" value={JSON.stringify(points)} />
+					<input type="hidden" name="ko" value={String(isKO)} />
 					<label className="stack horizontal sm items-center mx-auto">
 						<input
 							type="checkbox"

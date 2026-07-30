@@ -32,7 +32,7 @@ type CreatePlaceholderTeamArgs = {
 	isStayAsSub?: boolean;
 	lfgNote?: string;
 };
-export function createPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
+export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 	return db.transaction().execute(async (trx) => {
 		const createdTeam = await trx
 			.insertInto("TournamentTeam")
@@ -242,7 +242,7 @@ export function mergeTeams({
 	});
 }
 
-export async function addLike({
+export async function insertLike({
 	likerTeamId,
 	targetTeamId,
 }: {
@@ -279,7 +279,7 @@ export function deleteLike({
 		.execute();
 }
 
-export async function allLikesByTeamId(teamId: number) {
+export async function findAllLikesByTeamId(teamId: number) {
 	const rows = await db
 		.selectFrom("TournamentLFGLike")
 		.select(["TournamentLFGLike.likerTeamId", "TournamentLFGLike.targetTeamId"])
@@ -399,7 +399,7 @@ export function leaveLfg({
 	});
 }
 
-export async function getSubsForTournament(tournamentId: number) {
+export async function findAllSubsByTournamentId(tournamentId: number) {
 	const rows = await db
 		.selectFrom("TournamentTeamMember")
 		.innerJoin(

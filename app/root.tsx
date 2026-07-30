@@ -28,7 +28,7 @@ import {
 	useSearchParams,
 } from "react-router";
 import { Config } from "~/config";
-import type { CustomTheme } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
@@ -52,6 +52,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
@@ -137,9 +138,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
 						preferences: user.preferences ?? {},
-						languages: user.languages ? user.languages.split(",") : [],
+						languages: user.languages ?? [],
 						plusTier: user.plusTier,
 						roles: user.roles,
+						createdAt: user.createdAt,
 					}
 				: undefined,
 			customTheme: isSupporter(user) ? user?.customTheme : undefined,
@@ -235,6 +237,7 @@ function Document({
 					<RouterProvider navigate={navigate} useHref={useHref}>
 						<I18nProvider locale={language}>
 							<SendouToastRegion />
+							<UnsavedChangesGuard />
 							<MyFuse data={data} />
 							<ChatProvider user={data?.user}>
 								<Layout data={data}>{children}</Layout>

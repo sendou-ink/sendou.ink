@@ -30,7 +30,7 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
-import type { SeedingSnapshot } from "~/db/tables";
+import type { SeedingSnapshot } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";

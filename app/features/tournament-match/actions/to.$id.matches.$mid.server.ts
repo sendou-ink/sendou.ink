@@ -1,20 +1,22 @@
+import type { Transaction } from "kysely";
 import type { ActionFunction } from "react-router";
-import { sql } from "~/db/sql";
-import { TournamentMatchStatus } from "~/db/tables";
+import { db } from "~/db/sql";
+import type { DB } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
-import { getServerTournamentManager } from "~/features/tournament-bracket/core/brackets-manager/manager.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	type TournamentDataTeam,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { deletePickBanEvent } from "~/features/tournament-bracket/queries/deletePickBanEvent.server";
 import {
 	matchPageParamsSchema,
 	matchSchema,
@@ -24,29 +26,22 @@ import {
 	tournamentWebsocketRoom,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
+import { errorIsSqliteUniqueConstraintFailure, toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
 import { resolveMapList } from "../core/mapList.server";
-import { deleteMatchPickBanEvents } from "../queries/deleteMatchPickBanEvents.server";
-import { deleteParticipantsByMatchGameResultId } from "../queries/deleteParticipantsByMatchGameResultId.server";
-import { deleteTournamentMatchGameResultById } from "../queries/deleteTournamentMatchGameResultById.server";
-import { insertTournamentMatchGameResult } from "../queries/insertTournamentMatchGameResult.server";
-import { insertTournamentMatchGameResultParticipant } from "../queries/insertTournamentMatchGameResultParticipant.server";
-import { updateMatchGameResultPoints } from "../queries/updateMatchGameResultPoints.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 import {
-	isSetOverByScore,
-	matchEndedEarly,
 	matchIsLocked,
 	tournamentMatchWebsocketRoom,
 } from "../tournament-match-utils";
@@ -57,7 +52,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		params,
 		schema: matchPageParamsSchema,
 	});
-	const match = notFoundIfFalsy(
+	const match = notFoundIfNullish(
 		await TournamentMatchRepository.findMatchById(matchId),
 	);
 
@@ -78,8 +73,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		);
 
 		errorToastIfFalsy(
-			match.status !== TournamentMatchStatus.Locked &&
-				match.status !== TournamentMatchStatus.Waiting,
+			tournament.matchStatusById(match.id) !== "PENDING",
 			"Match is locked, waiting for teams to finish their previous matches",
 		);
 
@@ -93,15 +87,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 		);
 	};
 
-	const manager = getServerTournamentManager();
-
 	const scores: [number, number] = [
 		match.opponentOne?.score ?? 0,
 		match.opponentTwo?.score ?? 0,
 	];
 
 	const pickBanEvents = match.roundMaps?.pickBan
-		? await TournamentRepository.pickBanEventsByMatchId(match.id)
+		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 		: [];
 
 	const mapList =
@@ -162,36 +154,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 			];
 			invariant(currentMap, "Can't resolve current map");
 
-			const scoreToIncrement = () => {
-				if (data.winnerTeamId === match.opponentOne?.id) return 0;
-				if (data.winnerTeamId === match.opponentTwo?.id) return 1;
-
-				errorToastIfFalsy(false, "Winner team id is invalid");
-			};
-
-			errorToastIfFalsy(
-				!data.points ||
-					data.points[0] === data.points[1] ||
-					(scoreToIncrement() === 0 && data.points[0] > data.points[1]) ||
-					(scoreToIncrement() === 1 && data.points[1] > data.points[0]),
-				"Points are invalid (winner must have more points than loser)",
-			);
-
 			const bracket = tournament.bracketByIdx(
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!;
 			errorToastIfFalsy(
-				!bracket.collectResultsWithPoints || data.points,
-				"Points are required for this bracket",
+				!bracket.collectsKos || typeof data.ko === "boolean",
+				"KO status is required for this bracket",
 			);
-
-			scores[scoreToIncrement()]++;
-
-			const setOver = isSetOverByScore({
-				count: match.roundMaps?.count ?? match.bestOf,
-				countType: match.roundMaps?.type ?? "BEST_OF",
-				scores,
-			});
 
 			const teamOneRoster = tournamentTeamToActiveRosterUserIds(
 				tournament.teamById(match.opponentOne.id!)!,
@@ -212,53 +181,53 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			try {
-				sql.transaction(() => {
-					manager.update.match({
-						id: match.id,
-						opponent1: {
-							score: scores[0],
-							result: setOver && scores[0] > scores[1] ? "win" : undefined,
-						},
-						opponent2: {
-							score: scores[1],
-							result: setOver && scores[1] > scores[0] ? "win" : undefined,
+				const { result: reported, endedMatchIds } =
+					await executeBracketOperation({
+						tournamentId,
+						tournament,
+						operation: (bracketData) =>
+							Engine.reportGameResult(bracketData, {
+								matchId: match.id,
+								winnerTeamId: data.winnerTeamId,
+							}),
+						endDroppedTeams: (result) => result.setOver,
+						inTransaction: async (_result, trx) => {
+							const result = await TournamentMatchRepository.insertResult(
+								{
+									matchId: match.id,
+									mode: currentMap.mode,
+									stageId: currentMap.stageId,
+									reporterId: user.id,
+									winnerTeamId: data.winnerTeamId,
+									number: data.position + 1,
+									source: serializeMaplistSource(currentMap.source),
+									ko: bracket.collectsKos
+										? toDBBoolean(Boolean(data.ko))
+										: null,
+								},
+								trx,
+							);
+
+							await TournamentMatchRepository.setParticipants(
+								{
+									resultId: result.id,
+									participants: [
+										...teamOneRoster.map((userId) => ({
+											userId,
+											tournamentTeamId: match.opponentOne!.id!,
+										})),
+										...teamTwoRoster.map((userId) => ({
+											userId,
+											tournamentTeamId: match.opponentTwo!.id!,
+										})),
+									],
+								},
+								trx,
+							);
 						},
 					});
-
-					const result = insertTournamentMatchGameResult({
-						matchId: match.id,
-						mode: currentMap.mode,
-						stageId: currentMap.stageId,
-						reporterId: user.id,
-						winnerTeamId: data.winnerTeamId,
-						number: data.position + 1,
-						source: String(currentMap.source),
-						opponentOnePoints: data.points?.[0] ?? null,
-						opponentTwoPoints: data.points?.[1] ?? null,
-					});
-
-					for (const userId of teamOneRoster) {
-						insertTournamentMatchGameResultParticipant({
-							matchGameResultId: result.id,
-							userId,
-							tournamentTeamId: match.opponentOne!.id!,
-						});
-					}
-					for (const userId of teamTwoRoster) {
-						insertTournamentMatchGameResultParticipant({
-							matchGameResultId: result.id,
-							userId,
-							tournamentTeamId: match.opponentTwo!.id!,
-						});
-					}
-
-					if (setOver) {
-						endedDroppedMatchIds = endDroppedTeamMatches({
-							tournament,
-							manager,
-						});
-					}
-				})();
+				endedDroppedMatchIds = endedMatchIds;
+				setIsOver = reported.setOver;
 			} catch (error) {
 				// another request already reported this game in the race window,
 				// let their page refresh to pick up the already-recorded result
@@ -268,7 +237,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				throw error;
 			}
 
-			if (setOver) {
+			if (setIsOver) {
 				// the set ended, so weapons reported in advance for map indexes
 				// beyond the games actually played are trimmed
 				await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
@@ -279,7 +248,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
-			setIsOver = setOver;
 
 			break;
 		}
@@ -324,14 +292,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const lastResult = results[results.length - 1];
 			invariant(lastResult, "Last result is missing");
 
-			const shouldReset = results.length === 1;
-
-			if (lastResult.winnerTeamId === match.opponentOne?.id) {
-				scores[0]--;
-			} else {
-				scores[1]--;
-			}
-
 			logger.info(
 				`Undoing score: Position: ${data.position}; User ID: ${user.id}; Match ID: ${match.id}`,
 			);
@@ -339,9 +299,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const pickBanEventNumbersToDelete = await (async () => {
 				if (!match.roundMaps?.pickBan) return [];
 
-				const pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
-					match.id,
-				);
+				const pickBanEvents =
+					await TournamentRepository.findPickBanEventsByMatchId(match.id);
 
 				if (match.roundMaps.pickBan === "CUSTOM") {
 					const customFlow = match.roundMaps.customFlow;
@@ -370,27 +329,26 @@ export const action: ActionFunction = async ({ params, request }) => {
 				return unplayedPicks[0] ? [unplayedPicks[0].number] : [];
 			})();
 
-			sql.transaction(() => {
-				deleteTournamentMatchGameResultById(lastResult.id);
+			await executeBracketOperation({
+				tournamentId,
+				tournament,
+				operation: (bracketData) =>
+					Engine.undoGameResult(bracketData, {
+						matchId: match.id,
+						lastGameWinnerTeamId: lastResult.winnerTeamId,
+					}),
+				endDroppedTeams: false,
+				inTransaction: async (_result, trx) => {
+					await TournamentMatchRepository.deleteResultById(lastResult.id, trx);
 
-				manager.update.match({
-					id: match.id,
-					opponent1: {
-						score: shouldReset ? undefined : scores[0],
-					},
-					opponent2: {
-						score: shouldReset ? undefined : scores[1],
-					},
-				});
-
-				if (shouldReset) {
-					manager.reset.matchResults(match.id);
-				}
-
-				for (const number of pickBanEventNumbersToDelete) {
-					deletePickBanEvent({ matchId, number });
-				}
-			})();
+					for (const number of pickBanEventNumbersToDelete) {
+						await TournamentMatchRepository.deletePickBanEvent(
+							{ matchId, number },
+							trx,
+						);
+					}
+				},
+			});
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -427,61 +385,48 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid roster",
 			);
 
-			const hadPoints = typeof result.opponentOnePoints === "number";
-			const willHavePoints = typeof data.points?.[0] === "number";
+			const bracket = tournament.bracketByIdx(
+				tournament.matchIdToBracketIdx(match.id)!,
+			)!;
 			errorToastIfFalsy(
-				(hadPoints && willHavePoints) || (!hadPoints && !willHavePoints),
-				"Points mismatch",
+				!bracket.collectsKos || typeof data.ko === "boolean",
+				"KO status is required for this bracket",
 			);
 
-			if (data.points) {
-				if (data.points[0] !== result.opponentOnePoints) {
-					// changing points at this point could retroactively change who advanced from the group
-					errorToastIfFalsy(
-						tournament.matchCanBeReopened(match.id),
-						"Bracket has progressed",
-					);
-				}
-
-				if (data.points[0] === 100) {
-					errorToastIfFalsy(
-						result.winnerTeamId === match.opponentOne!.id,
-						"KO winner must match the result winner",
-					);
-				} else if (data.points[1] === 100) {
-					errorToastIfFalsy(
-						result.winnerTeamId === match.opponentTwo!.id,
-						"KO winner must match the result winner",
-					);
-				}
+			const wasKo = Boolean(result.ko);
+			if (typeof data.ko === "boolean" && data.ko !== wasKo) {
+				// changing the KO status at this point could retroactively change who advanced from the group
+				errorToastIfFalsy(
+					tournament.matchCanBeReopened(match.id),
+					"Bracket has progressed",
+				);
 			}
 
-			sql.transaction(() => {
-				if (data.points) {
-					updateMatchGameResultPoints({
-						matchGameResultId: result.id,
-						opponentOnePoints: data.points[0],
-						opponentTwoPoints: data.points[1],
-					});
+			await db.transaction().execute(async (trx) => {
+				if (typeof data.ko === "boolean") {
+					await TournamentMatchRepository.updateResultKo(
+						{ id: result.id, ko: data.ko },
+						trx,
+					);
 				}
 
-				deleteParticipantsByMatchGameResultId(result.id);
-
-				for (const userId of data.rosters[0]) {
-					insertTournamentMatchGameResultParticipant({
-						matchGameResultId: result.id,
-						userId,
-						tournamentTeamId: match.opponentOne!.id!,
-					});
-				}
-				for (const userId of data.rosters[1]) {
-					insertTournamentMatchGameResultParticipant({
-						matchGameResultId: result.id,
-						userId,
-						tournamentTeamId: match.opponentTwo!.id!,
-					});
-				}
-			})();
+				await TournamentMatchRepository.setParticipants(
+					{
+						resultId: result.id,
+						participants: [
+							...data.rosters[0].map((userId) => ({
+								userId,
+								tournamentTeamId: match.opponentOne!.id!,
+							})),
+							...data.rosters[1].map((userId) => ({
+								userId,
+								tournamentTeamId: match.opponentTwo!.id!,
+							})),
+						],
+					},
+					trx,
+				);
+			});
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -506,7 +451,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 
 			const currentPickBanEvents =
-				await TournamentRepository.pickBanEventsByMatchId(match.id);
+				await TournamentRepository.findPickBanEventsByMatchId(match.id);
 
 			const turnOfResult = PickBan.turnOf({
 				results,
@@ -595,7 +540,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			})();
 
 			try {
-				await TournamentRepository.addPickBanEvent({
+				await TournamentRepository.insertPickBanEvent({
 					authorId: user.id,
 					matchId: match.id,
 					stageId: isModeAction ? null : data.stageId!,
@@ -614,9 +559,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			// Chain roll after action for CUSTOM flow
 			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
-				const updatedEvents = await TournamentRepository.pickBanEventsByMatchId(
-					match.id,
-				);
+				const updatedEvents =
+					await TournamentRepository.findPickBanEventsByMatchId(match.id);
 				await executeRoll({
 					matchId: match.id,
 					maps: match.roundMaps,
@@ -633,11 +577,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "REOPEN_MATCH": {
-			const scoreOne = match.opponentOne?.score ?? 0;
-			const scoreTwo = match.opponentTwo?.score ?? 0;
-			invariant(typeof scoreOne === "number", "Score one is missing");
-			invariant(typeof scoreTwo === "number", "Score two is missing");
-
 			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
 			errorToastIfFalsy(
 				tournament.matchCanBeReopened(match.id),
@@ -648,59 +587,42 @@ export const action: ActionFunction = async ({ params, request }) => {
 				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			const lastResult = results[results.length - 1];
 
-			const endedEarly = matchEndedEarly({
-				opponentOne: { score: scoreOne, result: match.opponentOne?.result },
-				opponentTwo: { score: scoreTwo, result: match.opponentTwo?.result },
-				count: match.roundMaps.count,
-				countType: match.roundMaps.type,
-			});
-
-			if (!endedEarly) {
-				invariant(scoreOne !== scoreTwo, "Scores are equal");
-				invariant(lastResult, "Last result is missing");
-
-				if (lastResult.winnerTeamId === match.opponentOne?.id) {
-					scores[0]--;
-				} else {
-					scores[1]--;
-				}
-			}
-
-			logger.info(
-				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${endedEarly}`,
-			);
-
 			const followingMatches = tournament.followingMatches(match.id);
 			const bracketFormat = tournament.bracketByIdx(
 				tournament.matchIdToBracketIdx(match.id)!,
 			)!.type;
-			sql.transaction(() => {
-				// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
-				if (bracketFormat !== "round_robin") {
-					for (const followingMatch of followingMatches) {
-						deleteMatchPickBanEvents(followingMatch.id);
+			const { result: reopened } = await executeBracketOperation({
+				tournamentId,
+				tournament,
+				operation: (bracketData) => Engine.reopenMatch(bracketData, match.id),
+				endDroppedTeams: false,
+				inTransaction: async (result, trx) => {
+					// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
+					if (bracketFormat !== "round_robin") {
+						for (const followingMatch of followingMatches) {
+							await TournamentMatchRepository.deletePickBanEventsByMatchId(
+								followingMatch.id,
+								trx,
+							);
+						}
 					}
-				}
 
-				// when the set was force-ended early no extra result was inserted for
-				// the forced win, so the last result is a genuinely played game and must
-				// be kept to avoid desyncing the score from the results
-				if (!endedEarly && lastResult) {
-					deleteTournamentMatchGameResultById(lastResult.id);
-				}
+					// when the set was force-ended early no extra result was inserted for
+					// the forced win, so the last result is a genuinely played game and must
+					// be kept to avoid desyncing the score from the results
+					if (!result.endedEarly) {
+						invariant(lastResult, "Last result is missing");
+						await TournamentMatchRepository.deleteResultById(
+							lastResult.id,
+							trx,
+						);
+					}
+				},
+			});
 
-				manager.update.match({
-					id: match.id,
-					opponent1: {
-						score: endedEarly ? scoreOne : scores[0],
-						result: undefined,
-					},
-					opponent2: {
-						score: endedEarly ? scoreTwo : scores[1],
-						result: undefined,
-					},
-				});
-			})();
+			logger.info(
+				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${reopened.endedEarly}`,
+			);
 
 			// the teams advanced into following matches are being pulled back out,
 			// so those "waiting for teams" pages need to revalidate too
@@ -744,11 +666,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid Twitch account",
 			);
 
-			// can't lock if match status is not Locked or Waiting (team(s) busy with previous match), let's update their view to reflect that
-			if (
-				match.status !== TournamentMatchStatus.Locked &&
-				match.status !== TournamentMatchStatus.Waiting
-			) {
+			// can't lock if the match can already be played, let's update their view to reflect that
+			if (tournament.matchStatusById(match.id) !== "PENDING") {
 				return null;
 			}
 
@@ -783,11 +702,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				match.opponentOne?.id && match.opponentTwo?.id,
 				"Teams are missing",
 			);
-			errorToastIfFalsy(
-				match.opponentOne?.result !== "win" &&
-					match.opponentTwo?.result !== "win",
-				"Match is already over",
-			);
+			errorToastIfFalsy(!match.winnerSide, "Match is already over");
 
 			// Determine winner (random if not specified)
 			const winnerTeamId = (() => {
@@ -810,24 +725,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Ending set by organizer: User ID: ${user.id}; Match ID: ${match.id}; Winner: ${winnerTeamId}; Random: ${!data.winnerTeamId}`,
 			);
 
-			sql.transaction(() => {
-				manager.update.match({
-					id: match.id,
-					opponent1: {
-						score: match.opponentOne?.score,
-						result: winnerTeamId === match.opponentOne!.id ? "win" : "loss",
-					},
-					opponent2: {
-						score: match.opponentTwo?.score,
-						result: winnerTeamId === match.opponentTwo!.id ? "win" : "loss",
-					},
-				});
-
-				endedDroppedMatchIds = endDroppedTeamMatches({
-					tournament,
-					manager,
-				});
-			})();
+			const { endedMatchIds } = await executeBracketOperation({
+				tournamentId,
+				tournament,
+				operation: (bracketData) =>
+					Engine.endSet(bracketData, {
+						matchId: match.id,
+						winnerTeamId,
+					}),
+				endDroppedTeams: true,
+			});
+			endedDroppedMatchIds = endedMatchIds;
 
 			// the set ended early so no further games will be played; trim weapons
 			// reported in advance for map indexes beyond the games actually played
@@ -858,7 +766,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournamentMatchId: matchId,
 				mapIndex: data.mapIndex,
 				weaponSplId: data.weaponSplId,
-				createdAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
+				createdAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
 			});
 
 			break;
@@ -938,8 +846,66 @@ function canReportTournamentScore({
 	isMemberOfATeamInTheMatch: boolean;
 	isOrganizer: boolean;
 }) {
-	const matchIsOver =
-		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+	return !match.winnerSide && (isMemberOfATeamInTheMatch || isOrganizer);
+}
 
-	return !matchIsOver && (isMemberOfATeamInTheMatch || isOrganizer);
+/**
+ * Runs an engine operation against freshly hydrated bracket data and persists
+ * the resulting match changes, all in one transaction: hydrate → operate →
+ * (end dropped teams' matches) → apply changes → extra statements.
+ */
+async function executeBracketOperation<T extends Engine.EngineResult>({
+	tournamentId,
+	tournament,
+	operation,
+	endDroppedTeams,
+	inTransaction,
+}: {
+	tournamentId: number;
+	tournament: Tournament;
+	operation: (bracketData: Engine.BracketData) => T;
+	/** Whether unfinished matches of dropped out teams should be ended after the operation (resolved from its result when given a function). */
+	endDroppedTeams: boolean | ((result: T) => boolean);
+	/** Extra statements to run inside the same transaction, after the match changes have been applied. */
+	inTransaction?: (result: T, trx: Transaction<DB>) => void | Promise<void>;
+}): Promise<{ result: T; endedMatchIds: number[] }> {
+	let result!: T;
+	let endedMatchIds: number[] = [];
+
+	await db.transaction().execute(async (trx) => {
+		const bracketData = await BracketRepository.findByTournamentId(
+			tournamentId,
+			trx,
+		);
+		result = operation(bracketData);
+
+		let applied: Engine.EngineResult = result;
+
+		const shouldEndDroppedTeamMatches =
+			typeof endDroppedTeams === "function"
+				? endDroppedTeams(result)
+				: endDroppedTeams;
+		if (shouldEndDroppedTeamMatches) {
+			const droppedResult = endDroppedTeamMatches({
+				tournament,
+				data: result.data,
+			});
+			endedMatchIds = droppedResult.endedMatchIds;
+			applied = {
+				data: droppedResult.data,
+				changedMatches: [
+					...result.changedMatches,
+					...droppedResult.changedMatches,
+				],
+			};
+		}
+
+		await BracketRepository.applyMatchChanges(
+			{ previousData: bracketData, result: applied },
+			trx,
+		);
+		await inTransaction?.(result, trx);
+	});
+
+	return { result, endedMatchIds };
 }

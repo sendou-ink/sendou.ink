@@ -70,7 +70,7 @@ export function findTournamentsNeedingVodSync() {
 		.where(({ or, and, eb }) =>
 			or([
 				and([
-					eb("CalendarEventDate.startTime", ">", oneDayAgo),
+					eb("CalendarEventDate.startsAt", ">", oneDayAgo),
 					eb("Tournament.vodsSyncCount", "=", 0),
 				]),
 				and([
@@ -122,7 +122,7 @@ export function deleteObsolete() {
 					"CalendarEvent.id",
 				)
 				.select("TournamentMatch.id")
-				.where("CalendarEventDate.startTime", "<", cutoff),
+				.where("CalendarEventDate.startsAt", "<", cutoff),
 		)
 		.executeTakeFirst();
 }

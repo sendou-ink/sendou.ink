@@ -11,7 +11,7 @@ import type {
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
 
-export function createMany(
+export function insertMany(
 	weapons: TablesInsertable["ReportedWeapon"][],
 	trx?: Transaction<DB>,
 ) {
@@ -197,7 +197,7 @@ export async function findByTournamentMatchId(matchId: number) {
  * Aggregates a user's reported weapons across both SendouQ matches and
  * finalized tournaments that fall within the given season's date range.
  */
-export async function seasonReportedWeaponsByUserId({
+export async function findSeasonReportedWeaponsByUserId({
 	userId,
 	season,
 }: {
@@ -268,7 +268,7 @@ export interface WeaponUsageStat {
  * Reports how often a user and the mates/enemies they played against used each
  * weapon on a given stage and mode during a season, along with win/loss counts.
  */
-export async function weaponUsageStats({
+export async function findAllWeaponUsageStats({
 	userId,
 	mode,
 	stageId,

@@ -1,9 +1,23 @@
+.container {
+	--column-width: 225px;
+	--columns-gap: var(--s-6);
+	--columns-width: calc(
+		var(--columns-count) *
+		var(--column-width) +
+		(var(--columns-count) - 1) *
+		var(--columns-gap)
+	);
+}
+
 .buttonsContainer {
 	display: flex;
 	justify-content: space-between;
 	gap: var(--s-6);
 	align-items: start;
 	flex-wrap: wrap-reverse;
+	width: 100%;
+	max-width: var(--columns-width);
+	margin-inline: auto;
 }
 
 .navigateButtonsContainer {
@@ -81,8 +95,9 @@
 
 .columnsContainer {
 	display: grid;
-	grid-template-columns: repeat(var(--columns-count), 225px);
-	gap: var(--s-12);
+	grid-template-columns: repeat(var(--columns-count), var(--column-width));
+	gap: var(--columns-gap);
+	justify-content: safe center;
 	overflow-x: auto;
 }
 

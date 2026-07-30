@@ -1,4 +1,6 @@
-import type { CustomTheme, Tables, XRankPlacementRegion } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import type { StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TieredSkill } from "../mmr/tiered.server";
@@ -64,6 +66,9 @@ export type UserCardStat =
 			value: TieredSkill["tier"];
 			top: number | null;
 	  };
+
+/** Card stat types that a user can hide from their card. */
+export type HideableUserCardStat = Extract<UserCardStat["type"], "XP" | "DIV">;
 
 export interface UserCardStatXPValue {
 	isVerified: boolean;

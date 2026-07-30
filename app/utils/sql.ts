@@ -1,3 +1,10 @@
+import type { DBBoolean } from "~/db/tables";
+
+/** Converts a JS boolean to the 0/1 representation SQLite stores booleans as. */
+export function toDBBoolean(value: boolean): DBBoolean {
+	return value ? 1 : 0;
+}
+
 export function errorIsSqliteForeignKeyConstraintFailure(
 	error: unknown,
 ): error is Error {

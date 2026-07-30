@@ -1,4 +1,4 @@
-import type { UserReportCategory } from "~/db/tables";
+import type { UserReportCategory } from "~/features/user-report/user-report-constants";
 import {
 	sendModDiscordWebhook,
 	truncateEmbedValue,

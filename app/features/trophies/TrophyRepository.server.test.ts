@@ -25,9 +25,7 @@ describe("trophy approvals", () => {
 		pendingTrophyId = pending.id;
 	});
 
-	afterEach(() => {
-		dbReset();
-	});
+	afterEach(() => dbReset());
 
 	test("creates the trophy exactly once when approvals exceed the required count", async () => {
 		expect(
@@ -138,9 +136,7 @@ describe("trophy list tiers", () => {
 		trophyId = trophy.id;
 	});
 
-	afterEach(() => {
-		dbReset();
-	});
+	afterEach(() => dbReset());
 
 	test("an upcoming tournament without tier info does not hide the earned tier", async () => {
 		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
@@ -291,7 +287,7 @@ async function insertTrophyTournament({
 		.insertInto("CalendarEventDate")
 		.values({
 			eventId: event.id,
-			startTime: dateToDatabaseTimestamp(
+			startsAt: dateToDatabaseTimestamp(
 				new Date(Date.now() + startInDays * 24 * 60 * 60 * 1000),
 			),
 		})

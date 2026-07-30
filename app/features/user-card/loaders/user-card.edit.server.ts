@@ -8,13 +8,13 @@ export const loader = async () => {
 
 	const [{ userCards }, extras, hasLinkedPlayer, verifiedPeakXp] =
 		await Promise.all([
-			UserCardRepository.userCards({
+			UserCardRepository.findAllByUserIds({
 				userIds: [user.id],
 				includeHiddenStats: true,
 			}),
-			UserCardRepository.cardEditExtras(user.id),
+			UserCardRepository.findCardEditExtrasByUserId(user.id),
 			XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
-			XRankPlacementRepository.peakVerifiedXpByUserId(user.id),
+			XRankPlacementRepository.findPeakVerifiedXpByUserId(user.id),
 		]);
 
 	const card = userCards.get(user.id);

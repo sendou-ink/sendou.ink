@@ -105,7 +105,7 @@ function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
 			...commonUserSelect(eb),
 			"CalendarEvent.name as tournamentName",
 			"TournamentTeam.tournamentId",
-			"CalendarEventDate.startTime as tournamentStartTime",
+			"CalendarEventDate.startsAt as tournamentStartTime",
 			sql<
 				number | null
 			>`(SELECT COUNT(*) FROM "TournamentTeamMember" "ttm" WHERE "ttm"."tournamentTeamId" = "TournamentTeam"."id")`.as(

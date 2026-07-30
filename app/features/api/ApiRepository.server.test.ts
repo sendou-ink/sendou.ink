@@ -7,8 +7,8 @@ describe("findTokenByUserId", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns undefined when user has no token", async () => {
@@ -59,8 +59,8 @@ describe("generateToken", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("creates new token for user", async () => {
@@ -116,17 +116,17 @@ describe("generateToken", () => {
 	});
 });
 
-describe("allApiTokens", () => {
+describe("findAllApiTokens", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(1);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns empty array when no tokens exist", async () => {
-		const result = await ApiRepository.allApiTokens();
+		const result = await ApiRepository.findAllApiTokens();
 
 		expect(result).toEqual([]);
 	});
@@ -134,7 +134,7 @@ describe("allApiTokens", () => {
 	test("returns array of token objects with type", async () => {
 		await ApiRepository.generateToken(1, "read");
 
-		const result = await ApiRepository.allApiTokens();
+		const result = await ApiRepository.findAllApiTokens();
 
 		expect(Array.isArray(result)).toBe(true);
 		expect(

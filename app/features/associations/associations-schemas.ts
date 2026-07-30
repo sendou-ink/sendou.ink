@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { textFieldRequired } from "~/form/fields";
+import { textField } from "~/form/fields";
 import { _action, id, inviteCode } from "~/utils/zod";
 import { ASSOCIATION } from "./associations-constants";
 
 export const createNewAssociationSchema = z.object({
-	name: textFieldRequired({
+	name: textField({
 		label: "labels.name",
 		maxLength: 100,
 	}),

@@ -1,4 +1,4 @@
-import { sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
@@ -12,8 +12,10 @@ invariant(
 	"displayName of badge must have at least one uppercase letter",
 );
 
-sql
-	.prepare("update badge set displayName = @newName where id = @id")
-	.run({ id, newName });
+await db
+	.updateTable("Badge")
+	.set({ displayName: newName })
+	.where("id", "=", Number(id))
+	.execute();
 
 logger.info(`Added updated name. New name: ${newName}`);

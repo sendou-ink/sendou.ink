@@ -32,6 +32,7 @@ const ALL_NAMESPACES = [
 	"settings",
 	"trophies",
 	"params",
+	"welcome",
 ] as const;
 assertType<Namespace, (typeof ALL_NAMESPACES)[number]>();
 assertType<(typeof ALL_NAMESPACES)[number], Namespace>();

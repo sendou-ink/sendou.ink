@@ -25,7 +25,7 @@ export const action: ActionFunction = async ({ request }) => {
 					await ImageRepository.findById(imageId),
 				);
 
-				await ImageRepository.validateImage(imageId);
+				await ImageRepository.validateById(imageId);
 
 				if (image.tournamentId) {
 					clearTournamentDataCache(imageId);
@@ -34,7 +34,7 @@ export const action: ActionFunction = async ({ request }) => {
 			break;
 		}
 		case "REJECT": {
-			await ImageRepository.deleteImageById(data.imageId);
+			await ImageRepository.deleteById(data.imageId);
 
 			return successToast("The image was deleted");
 		}

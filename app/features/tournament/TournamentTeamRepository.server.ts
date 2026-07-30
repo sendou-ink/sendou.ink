@@ -1,7 +1,7 @@
 import type { Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -52,7 +52,7 @@ const regOpenTournamentTeamsByJoinedUserId = (userId: number) =>
 		.where(
 			sql`coalesce(
       "Tournament"."settings" ->> 'regClosesAt', 
-      "CalendarEventDate"."startTime"
+      "CalendarEventDate"."startsAt"
     )`,
 			">",
 			databaseTimestampNow(),
@@ -76,12 +76,15 @@ export function updateMemberInGameName({
 			.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
 			.execute();
 
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "UPDATE_IN_GAME_NAME",
-			tournamentTeamId,
-			subjectUserId: userId,
-			metadata: { inGameName },
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "UPDATE_IN_GAME_NAME",
+				tournamentTeamId,
+				subjectUserId: userId,
+				metadata: { inGameName },
+			},
+			trx,
+		);
 	});
 }
 
@@ -114,7 +117,7 @@ export async function updateOwnMemberInGameNameForNonStarted(
 	return tournamentTeams.map((t) => t.tournamentId);
 }
 
-export function create({
+export function insert({
 	team,
 	avatarImgId = null,
 	userId,
@@ -145,7 +148,7 @@ export function create({
 
 		const isSub = (await registrationClosedNow(trx, tournamentId)) ? 1 : 0;
 
-		const inGameName = await resolveInGameName(trx, tournamentId, userId);
+		const inGameName = await resolveInGameName({ tournamentId, userId }, trx);
 
 		await trx
 			.insertInto("TournamentTeamMember")
@@ -158,34 +161,41 @@ export function create({
 			})
 			.execute();
 
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "TEAM_REGISTERED",
-			tournamentTeamId: tournamentTeam.id,
-			subjectUserId: userId,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "TEAM_REGISTERED",
+				tournamentTeamId: tournamentTeam.id,
+				subjectUserId: userId,
+			},
+			trx,
+		);
 
-		for (const memberUserId of additionalMemberUserIds) {
-			const memberInGameName = await resolveInGameName(
-				trx,
-				tournamentId,
-				memberUserId,
-			);
-
-			await trx
-				.insertInto("TournamentTeamMember")
-				.values({
+		if (additionalMemberUserIds.length > 0) {
+			const members: Array<TablesInsertable["TournamentTeamMember"]> = [];
+			for (const memberUserId of additionalMemberUserIds) {
+				members.push({
 					tournamentTeamId: tournamentTeam.id,
 					userId: memberUserId,
-					inGameName: memberInGameName,
+					inGameName: await resolveInGameName(
+						{ tournamentId, userId: memberUserId },
+						trx,
+					),
 					isSub,
-				})
-				.execute();
+				});
+			}
 
-			await TournamentAuditLogRepository.insert(trx, {
-				type: "MEMBER_ADDED",
-				tournamentTeamId: tournamentTeam.id,
-				subjectUserId: memberUserId,
-			});
+			await trx.insertInto("TournamentTeamMember").values(members).execute();
+
+			for (const memberUserId of additionalMemberUserIds) {
+				await TournamentAuditLogRepository.insert(
+					{
+						type: "MEMBER_ADDED",
+						tournamentTeamId: tournamentTeam.id,
+						subjectUserId: memberUserId,
+					},
+					trx,
+				);
+			}
 		}
 
 		return tournamentTeam;
@@ -277,11 +287,14 @@ export function upsertRegistration({
 		}
 
 		for (const userId of membersToRemove) {
-			await TournamentAuditLogRepository.insert(trx, {
-				type: "MEMBER_REMOVED",
-				tournamentTeamId: id,
-				subjectUserId: userId,
-			});
+			await TournamentAuditLogRepository.insert(
+				{
+					type: "MEMBER_REMOVED",
+					tournamentTeamId: id,
+					subjectUserId: userId,
+				},
+				trx,
+			);
 
 			await trx
 				.deleteFrom("TournamentTeamMember")
@@ -296,28 +309,37 @@ export function upsertRegistration({
 				? 1
 				: 0;
 
-		for (const userId of membersToAdd) {
-			const isOwner = isNew && userId === ownerUserId;
-			const inGameName =
-				inGameNameUpdates.find((member) => member.userId === userId)
-					?.inGameName ?? (await resolveInGameName(trx, tournamentId, userId));
-
-			await trx
-				.insertInto("TournamentTeamMember")
-				.values({
+		if (membersToAdd.length > 0) {
+			const members: Array<TablesInsertable["TournamentTeamMember"]> = [];
+			for (const userId of membersToAdd) {
+				const isOwner = isNew && userId === ownerUserId;
+				members.push({
 					tournamentTeamId: id,
 					userId,
-					inGameName,
+					inGameName:
+						inGameNameUpdates.find((member) => member.userId === userId)
+							?.inGameName ??
+						(await resolveInGameName({ tournamentId, userId }, trx)),
 					isSub,
 					...(isOwner ? { role: "OWNER" as const } : {}),
-				})
-				.execute();
+				});
+			}
 
-			await TournamentAuditLogRepository.insert(trx, {
-				type: isOwner ? "TEAM_REGISTERED" : "MEMBER_ADDED",
-				tournamentTeamId: id,
-				subjectUserId: userId,
-			});
+			await trx.insertInto("TournamentTeamMember").values(members).execute();
+
+			for (const userId of membersToAdd) {
+				await TournamentAuditLogRepository.insert(
+					{
+						type:
+							isNew && userId === ownerUserId
+								? "TEAM_REGISTERED"
+								: "MEMBER_ADDED",
+						tournamentTeamId: id,
+						subjectUserId: userId,
+					},
+					trx,
+				);
+			}
 		}
 
 		// after adds so a newly added member can be designated owner
@@ -345,12 +367,15 @@ export function upsertRegistration({
 				.where("TournamentTeamMember.userId", "=", userId)
 				.execute();
 
-			await TournamentAuditLogRepository.insert(trx, {
-				type: "UPDATE_IN_GAME_NAME",
-				tournamentTeamId: id,
-				subjectUserId: userId,
-				metadata: { inGameName },
-			});
+			await TournamentAuditLogRepository.insert(
+				{
+					type: "UPDATE_IN_GAME_NAME",
+					tournamentTeamId: id,
+					subjectUserId: userId,
+					metadata: { inGameName },
+				},
+				trx,
+			);
 		}
 	});
 }
@@ -375,7 +400,7 @@ async function registrationClosedNow(
 		.select(
 			sql<number>`coalesce(
 				"Tournament"."settings" ->> 'regClosesAt',
-				min("CalendarEventDate"."startTime")
+				min("CalendarEventDate"."startsAt")
 			)`.as("regClosesAt"),
 		)
 		.where("Tournament.id", "=", tournamentId)
@@ -385,9 +410,8 @@ async function registrationClosedNow(
 }
 
 async function resolveInGameName(
+	{ tournamentId, userId }: { tournamentId: number; userId: number },
 	trx: Transaction<DB>,
-	tournamentId: number,
-	userId: number,
 ) {
 	const tournament = await trx
 		.selectFrom("Tournament")
@@ -635,11 +659,14 @@ export function checkIn(
 			})
 			.execute();
 
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "TEAM_CHECKED_IN",
-			tournamentTeamId,
-			metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "TEAM_CHECKED_IN",
+				tournamentTeamId,
+				metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
+			},
+			trx,
+		);
 	});
 }
 
@@ -673,11 +700,14 @@ export function checkOut({
 				.execute();
 		}
 
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "TEAM_CHECKED_OUT",
-			tournamentTeamId,
-			metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "TEAM_CHECKED_OUT",
+				tournamentTeamId,
+				metadata: typeof bracketIdx === "number" ? { bracketIdx } : null,
+			},
+			trx,
+		);
 	});
 }
 
@@ -703,10 +733,13 @@ export function dropOut({
 			.where("id", "=", tournamentTeamId)
 			.execute();
 
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "TEAM_DROPPED_OUT",
-			tournamentTeamId,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "TEAM_DROPPED_OUT",
+				tournamentTeamId,
+			},
+			trx,
+		);
 	});
 }
 
@@ -720,10 +753,13 @@ export function undoDropOut(tournamentTeamId: number) {
 			.where("id", "=", tournamentTeamId)
 			.execute();
 
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "TEAM_DROP_OUT_UNDONE",
-			tournamentTeamId,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "TEAM_DROP_OUT_UNDONE",
+				tournamentTeamId,
+			},
+			trx,
+		);
 	});
 }
 
@@ -740,10 +776,13 @@ export function join({
 }) {
 	return db.transaction().execute(async (trx) => {
 		if (previousTeamIdToDelete) {
-			await TournamentAuditLogRepository.insert(trx, {
-				type: "TEAM_UNREGISTERED",
-				tournamentTeamId: previousTeamIdToDelete,
-			});
+			await TournamentAuditLogRepository.insert(
+				{
+					type: "TEAM_UNREGISTERED",
+					tournamentTeamId: previousTeamIdToDelete,
+				},
+				trx,
+			);
 			await trx
 				.deleteFrom("TournamentTeam")
 				.where("TournamentTeam.id", "=", previousTeamIdToDelete)
@@ -758,7 +797,7 @@ export function join({
 				.executeTakeFirstOrThrow()
 		).tournamentId;
 
-		const inGameName = await resolveInGameName(trx, tournamentId, userId);
+		const inGameName = await resolveInGameName({ tournamentId, userId }, trx);
 		const isSub = (await registrationClosedNow(trx, tournamentId)) ? 1 : 0;
 
 		await trx
@@ -771,20 +810,26 @@ export function join({
 			})
 			.execute();
 
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "MEMBER_ADDED",
-			tournamentTeamId: newTeamId,
-			subjectUserId: userId,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "MEMBER_ADDED",
+				tournamentTeamId: newTeamId,
+				subjectUserId: userId,
+			},
+			trx,
+		);
 	});
 }
 
-export function del(tournamentTeamId: number) {
+export function deleteById(tournamentTeamId: number) {
 	return db.transaction().execute(async (trx) => {
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "TEAM_UNREGISTERED",
-			tournamentTeamId,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "TEAM_UNREGISTERED",
+				tournamentTeamId,
+			},
+			trx,
+		);
 
 		await trx
 			.deleteFrom("MapPoolMap")
@@ -807,11 +852,14 @@ export function leave({
 	userId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		await TournamentAuditLogRepository.insert(trx, {
-			type: "MEMBER_REMOVED",
-			tournamentTeamId: teamId,
-			subjectUserId: userId,
-		});
+		await TournamentAuditLogRepository.insert(
+			{
+				type: "MEMBER_REMOVED",
+				tournamentTeamId: teamId,
+				subjectUserId: userId,
+			},
+			trx,
+		);
 
 		await trx
 			.deleteFrom("TournamentTeamMember")

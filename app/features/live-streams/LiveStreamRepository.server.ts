@@ -1,7 +1,6 @@
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
-import { peakXpOverallSql } from "~/features/top-search/XRankPlacementRepository.server";
-import { commonUserSelect } from "~/utils/kysely.server";
+import { commonUserSelect, peakXpOverallSql } from "~/utils/kysely.server";
 import * as StreamRanking from "../sidebar/core/StreamRanking";
 
 export function replaceAll(

@@ -1,4 +1,4 @@
-import { sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
@@ -35,7 +35,7 @@ void main();
 async function main() {
 	const placements: Placements = [];
 
-	wipeMonthYearPlacements(resolveMonthYear(jsonNumber));
+	await wipeMonthYearPlacements(resolveMonthYear(jsonNumber));
 	for (const mode of modes) {
 		for (const region of regions) {
 			for (const includeWeapon of [false]) {
@@ -51,7 +51,7 @@ async function main() {
 		}
 	}
 
-	addPlacements(placements);
+	await addPlacements(placements);
 	await XRankPlacementRepository.refreshAllPeakXp();
 	await BadgeRepository.syncXPBadges();
 	await BuildRepository.recalculateAllSortValues();
@@ -140,52 +140,28 @@ function resolveMonthYear(number: number) {
 	};
 }
 
-const addPlayerStm = sql.prepare(/* sql */ `
-  insert into "SplatoonPlayer" ("splId")
-  values (@splId)
-  on conflict ("splId") do nothing
-`);
-
-const addPlacementStm = sql.prepare(/* sql */ `
-  insert into "XRankPlacement" (
-    "weaponSplId",
-    "name",
-    "nameDiscriminator",
-    "power",
-    "rank",
-    "title",
-    "badges",
-    "bannerSplId",
-    "playerId",
-    "month",
-    "year",
-    "region",
-    "mode"
-  )
-  values (
-    @weaponSplId,
-    @name,
-    @nameDiscriminator,
-    @power,
-    @rank,
-    @title,
-    @badges,
-    @bannerSplId,
-    (select "id" from "SplatoonPlayer" where "splId" = @playerSplId),
-    @month,
-    @year,
-    @region,
-    @mode
-  )
-`);
-
 function addPlacements(placements: Placements) {
-	sql.transaction(() => {
-		for (const placement of placements) {
-			addPlayerStm.run({ splId: placement.playerSplId });
-			addPlacementStm.run(placement);
+	return db.transaction().execute(async (trx) => {
+		for (const { playerSplId, ...placement } of placements) {
+			await trx
+				.insertInto("SplatoonPlayer")
+				.values({ splId: playerSplId })
+				.onConflict((oc) => oc.column("splId").doNothing())
+				.execute();
+
+			await trx
+				.insertInto("XRankPlacement")
+				.values({
+					...placement,
+					playerId: (eb) =>
+						eb
+							.selectFrom("SplatoonPlayer")
+							.select("SplatoonPlayer.id")
+							.where("splId", "=", playerSplId),
+				})
+				.execute();
 		}
-	})();
+	});
 }
 
 function wipeMonthYearPlacements({
@@ -195,11 +171,9 @@ function wipeMonthYearPlacements({
 	month: number;
 	year: number;
 }) {
-	const wipeMonthYearPlacementsStm = sql.prepare(/* sql */ `
-  delete from "XRankPlacement"
-    where "month" = @month
-    and "year" = @year
-`);
-
-	wipeMonthYearPlacementsStm.run({ month, year });
+	return db
+		.deleteFrom("XRankPlacement")
+		.where("month", "=", month)
+		.where("year", "=", year)
+		.execute();
 }

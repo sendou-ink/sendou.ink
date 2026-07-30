@@ -86,7 +86,7 @@ function useFacts(
 
 	const showsEstimatedTier = !tournament.ctx.tier && !tournament.hasStarted;
 
-	const rankedSeason = Seasons.current(tournament.ctx.startTime);
+	const rankedSeason = Seasons.current(tournament.ctx.startsAt);
 
 	return [
 		{

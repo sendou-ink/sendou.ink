@@ -1,9 +1,12 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import type { MemberRole, MemberRoleType } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
 import { parseFormData } from "~/form/parse.server";
-import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
@@ -15,7 +18,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
 
 	const { customUrl } = teamParamsSchema.parse(params);
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfNullish(
+		await TeamRepository.findByCustomUrl(customUrl),
+	);
 	errorToastIfFalsy(
 		isTeamManager({ team, user }) || user.roles.includes("ADMIN"),
 		"Only team manager or owner can manage roster",

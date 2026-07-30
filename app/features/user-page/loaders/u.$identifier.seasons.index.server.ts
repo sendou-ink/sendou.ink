@@ -4,7 +4,7 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import {
 	seasonsSearchParamsSchema,
 	userParamsSchema,
@@ -21,11 +21,11 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		Object.fromEntries(url.searchParams),
 	);
 
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(identifier),
+	const user = notFoundIfNullish(
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(user.id);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
@@ -36,13 +36,13 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 
 	return {
 		results: {
-			value: await SQMatchRepository.seasonResultsByUserId({
+			value: await SQMatchRepository.findSeasonResultsByUserId({
 				season,
 				userId: user.id,
 				page,
 			}),
 			currentPage: page,
-			pages: await SQMatchRepository.seasonResultPagesByUserId({
+			pagesCount: await SQMatchRepository.countSeasonResultPagesByUserId({
 				season,
 				userId: user.id,
 			}),

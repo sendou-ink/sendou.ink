@@ -4,18 +4,16 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import {
-	queryCurrentTeamRating,
-	queryCurrentUserRating,
-	queryCurrentUserSeedingRating,
-	queryTeamPlayerRatingAverage,
-} from "~/features/mmr/mmr-utils.server";
+import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import {
+	summaryRatingTargets,
+	tournamentSummary,
+} from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
@@ -75,7 +73,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
 	const results =
-		await TournamentMatchRepository.allResultsByTournamentId(tournamentId);
+		await TournamentMatchRepository.findAllResultsByTournamentId(tournamentId);
 	invariant(results.length > 0, "No results found");
 
 	const season = resolveFinalizationSeason(tournament);
@@ -95,25 +93,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		if (!trophyReceiverValid) errorToast("Invalid trophy receiver");
 	}
 
+	const calculateSeasonalStats =
+		tournament.ranked && typeof season === "number";
+	const ratingTargets = summaryRatingTargets(results);
+	const ratings = calculateSeasonalStats
+		? await seasonRatings({ season, ...ratingTargets })
+		: null;
+	const seedingRating = seedingSkillCountsFor
+		? await seedingRatings({
+				type: seedingSkillCountsFor,
+				userIds: ratingTargets.userIds,
+			})
+		: null;
+
 	const summary = tournamentSummary({
 		teams: tournament.ctx.teams,
 		finalStandings,
 		results,
-		calculateSeasonalStats: tournament.ranked && typeof season === "number",
-		queryCurrentTeamRating: (identifier) =>
-			queryCurrentTeamRating({ identifier, season: season! }).rating,
-		queryCurrentUserRating: (userId) =>
-			queryCurrentUserRating({ userId, season: season! }),
+		calculateSeasonalStats,
+		queryCurrentTeamRating: (identifier) => ratings!.team(identifier).rating,
+		queryCurrentUserRating: (userId) => ratings!.user(userId),
 		queryTeamPlayerRatingAverage: (identifier) =>
-			queryTeamPlayerRatingAverage({
-				identifier,
-				season: season!,
-			}),
-		queryCurrentSeedingRating: (userId) =>
-			queryCurrentUserSeedingRating({
-				userId,
-				type: seedingSkillCountsFor!,
-			}),
+			ratings!.teamPlayerAverage(identifier),
+		queryCurrentSeedingRating: (userId) => seedingRating!(userId),
 		seedingSkillCountsFor,
 		progression: tournament.ctx.settings.bracketProgression,
 	});
@@ -143,7 +145,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	if (tournament.ranked && typeof season === "number") {
 		try {
-			refreshUserSkills(season);
+			await refreshUserSkills(season);
 		} catch (error) {
 			logger.warn("Error refreshing user skills", error);
 		}
@@ -297,7 +299,7 @@ function resolveFinalizationSeason(tournament: Tournament) {
 	// league divisions might be running for many weeks
 	const attributionDate = tournament.isLeagueDivision
 		? new Date()
-		: tournament.ctx.startTime;
+		: tournament.ctx.startsAt;
 	const season = Seasons.current(attributionDate);
 	if (!season) return undefined;
 

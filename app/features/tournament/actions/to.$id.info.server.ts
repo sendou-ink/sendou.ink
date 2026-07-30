@@ -35,7 +35,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "UNSAVE_TOURNAMENT": {
-			await SavedCalendarEventRepository.unsave({
+			await SavedCalendarEventRepository.unsaveByUserId({
 				userId: user.id,
 				tournamentId,
 			});

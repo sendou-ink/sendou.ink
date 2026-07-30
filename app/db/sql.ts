@@ -12,7 +12,7 @@ import type { DB } from "./tables";
 
 const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
 
-export const sql = new Database(
+const sql = new Database(
 	ServerConfig.isTest ? migratedEmptyDb : ServerConfig.dbPath,
 );
 
@@ -49,6 +49,24 @@ export const db = new Kysely<DB>({
 	log,
 	plugins: [new FastParseJSONResultsPlugin()],
 });
+
+/**
+ * Opens a connection to a SQLite file other than the application database.
+ * Only for tooling that needs to inspect or maintain database files directly
+ * (e.g. e2e seed databases). Declare it with `await using` so the connection
+ * is closed when it goes out of scope.
+ */
+export function createDatabaseConnection(
+	dbPath: string,
+	options?: { readonly?: boolean },
+) {
+	return new Kysely<DB>({
+		dialect: new SqliteDialect({
+			database: new Database(dbPath, options),
+		}),
+		plugins: [new FastParseJSONResultsPlugin()],
+	});
+}
 
 function log(event: LogEvent) {
 	if (Config.sentry.enabled && event.level === "query") {

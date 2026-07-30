@@ -18,6 +18,7 @@ type ArrayFormFieldProps = Omit<FormFieldProps<"array">, "field"> & {
 	itemInitialValue?: unknown;
 	addable?: boolean;
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
+	disabled?: boolean;
 };
 
 export function ArrayFormField({
@@ -35,6 +36,7 @@ export function ArrayFormField({
 	itemInitialValue,
 	addable = true,
 	canRemoveItem,
+	disabled,
 }: ArrayFormFieldProps) {
 	const { t } = useTranslation(["common"]);
 	const { translatedLabel, translatedBottomText, translatedError } =
@@ -93,6 +95,7 @@ export function ArrayFormField({
 	// so it shouldn't offer a remove button (you can't go below one visible row
 	// anyway). A lone edited row stays removable so the only item can be cleared.
 	const canRemoveAt = (index: number) =>
+		!disabled &&
 		(canRemoveItem ? canRemoveItem(value[index], index) : true) &&
 		count > min &&
 		(count > minVisible || !isPristineItem(value[index]));
@@ -112,7 +115,7 @@ export function ArrayFormField({
 
 	// Sorting is only offered for object arrays; primitive arrays are rendered
 	// inline without the fieldset header that carries the reorder controls.
-	const isSortable = Boolean(sortable) && isObjectArray;
+	const isSortable = Boolean(sortable) && isObjectArray && !disabled;
 
 	const handleMoveAt = (index: number, direction: 1 | -1) => {
 		const target = index + direction;
@@ -176,7 +179,7 @@ export function ArrayFormField({
 					variant="outlined"
 					icon={<Plus />}
 					onPress={handleAdd}
-					isDisabled={count >= max}
+					isDisabled={count >= max || disabled}
 					className="m-0-auto"
 				>
 					{t("common:actions.add")}

@@ -4,8 +4,8 @@ import * as AdminRepository from "../admin/AdminRepository.server";
 import * as UserRepository from "./UserRepository.server";
 
 describe("UserRepository", () => {
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("created user has createdAt field", async () => {
@@ -69,7 +69,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const result = await UserRepository.joinOrderByUserId(id);
+		const result = await UserRepository.findJoinOrderByUserId(id);
 
 		expect(result?.joinOrder).toBe(1);
 	});
@@ -87,12 +87,12 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
-			1,
-		);
-		expect((await UserRepository.joinOrderByUserId(secondId))?.joinOrder).toBe(
-			2,
-		);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
+		).toBe(1);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(secondId))?.joinOrder,
+		).toBe(2);
 
 		await UserRepository.upsert({
 			discordId: "1",
@@ -100,9 +100,9 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
-			1,
-		);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
+		).toBe(1);
 	});
 
 	describe("userRoles", () => {
@@ -154,8 +154,8 @@ describe("UserRepository", () => {
 			await AdminRepository.forcePatron({
 				id,
 				patronTier: 1,
-				patronSince: now,
-				patronTill: oneYearFromNow,
+				patronStartedAt: now,
+				patronExpiresAt: oneYearFromNow,
 			});
 
 			const user = await UserRepository.findLeanById(id);
@@ -178,8 +178,8 @@ describe("UserRepository", () => {
 			await AdminRepository.forcePatron({
 				id,
 				patronTier: 2,
-				patronSince: now,
-				patronTill: oneYearFromNow,
+				patronStartedAt: now,
+				patronExpiresAt: oneYearFromNow,
 			});
 
 			const user = await UserRepository.findLeanById(id);
@@ -305,8 +305,8 @@ describe("UserRepository", () => {
 			await AdminRepository.forcePatron({
 				id,
 				patronTier: 2,
-				patronSince: now,
-				patronTill: oneYearFromNow,
+				patronStartedAt: now,
+				patronExpiresAt: oneYearFromNow,
 			});
 
 			await AdminRepository.makeArtistByUserId(id);

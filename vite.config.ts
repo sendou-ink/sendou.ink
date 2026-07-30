@@ -101,7 +101,6 @@ export default defineConfig((config) => {
 				"@dnd-kit/utilities",
 				"@epic-web/cachified",
 				"@internationalized/date",
-				"@remix-run/form-data-parser",
 				"@tldraw/tldraw",
 				"@zumer/snapdom",
 				"better-sqlite3",

@@ -4,7 +4,6 @@ import type { Tables } from "~/db/tables";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import {
-	CONTROLLERS,
 	getWidgetFormSchema,
 	TIMEZONE_OPTIONS,
 } from "../core/widgets/widget-form-schemas";
@@ -55,7 +54,7 @@ function WidgetSettingsFormInner({
 		<SendouForm
 			schema={schema}
 			defaultValues={defaultValues}
-			autoApply
+			mode="client"
 			onApply={handleApply}
 			className="stack md"
 		>
@@ -91,13 +90,7 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 		case "links":
 			return <FormField name="links" />;
 		case "tier-list":
-			return (
-				<FormField name="searchParams">
-					{(props: CustomFieldRenderProps) => (
-						<TierListField {...(props as CustomFieldRenderProps<string>)} />
-					)}
-				</FormField>
-			);
+			return <FormField name="searchParams" />;
 		case "game-badges":
 			return (
 				<FormField name="badgeIds">
@@ -134,20 +127,11 @@ function SensFields() {
 	const { t } = useTranslation(["user"]);
 	const { values, setValue, onFieldChange } = useFormFieldContext();
 
-	const controller =
-		(values.controller as (typeof CONTROLLERS)[number]) ?? "s2-pro-con";
 	const motionSens = (values.motionSens as number | null) ?? null;
 	const stickSens = (values.stickSens as number | null) ?? null;
 
 	const rawSensToString = (sens: number) =>
 		`${sens > 0 ? "+" : ""}${sens / 10}`;
-
-	const handleControllerChange = (
-		newController: (typeof CONTROLLERS)[number],
-	) => {
-		setValue("controller", newController);
-		onFieldChange?.("controller", newController);
-	};
 
 	const handleMotionSensChange = (sens: number | null) => {
 		setValue("motionSens", sens);
@@ -161,25 +145,7 @@ function SensFields() {
 
 	return (
 		<div className="stack md">
-			<div>
-				<label htmlFor="controller">{t("widgets.forms.controller")}</label>
-				<select
-					id="controller"
-					value={controller}
-					onChange={(e) =>
-						handleControllerChange(
-							e.target.value as (typeof CONTROLLERS)[number],
-						)
-					}
-					className={clsx(styles.sensSelect)}
-				>
-					{CONTROLLERS.map((ctrl) => (
-						<option key={ctrl} value={ctrl}>
-							{t(`user:controllers.${ctrl}`)}
-						</option>
-					))}
-				</select>
-			</div>
+			<FormField name="controller" />
 
 			<div className="stack horizontal md">
 				<div>
@@ -223,44 +189,6 @@ function SensFields() {
 						))}
 					</select>
 				</div>
-			</div>
-		</div>
-	);
-}
-
-function TierListField({ value, onChange }: CustomFieldRenderProps<string>) {
-	const { t } = useTranslation(["user"]);
-
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const inputValue = e.target.value;
-
-		if (inputValue.includes("/tier-list-maker")) {
-			try {
-				const url = new URL(inputValue, "https://sendou.ink");
-				const extractedSearchParams = url.search.substring(1);
-				onChange(extractedSearchParams);
-				return;
-			} catch {
-				// not a valid URL, just use the value as-is
-			}
-		}
-
-		onChange(inputValue);
-	};
-
-	return (
-		<div>
-			<label htmlFor="tier-list-searchParams">
-				{t("widgets.forms.tierListUrl")}
-			</label>
-			<div className="input-container">
-				<div className="input-addon">/tier-list-maker?</div>
-				<input
-					className="in-container"
-					id="tier-list-searchParams"
-					value={value ?? ""}
-					onChange={handleChange}
-				/>
 			</div>
 		</div>
 	);

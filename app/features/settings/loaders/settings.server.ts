@@ -9,7 +9,9 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 		return { matchProfile: null };
 	}
 
-	const matchProfile = await MatchProfileRepository.settingsByUserId(user.id);
+	const matchProfile = await MatchProfileRepository.findSettingsByUserId(
+		user.id,
+	);
 
 	return { matchProfile };
 };

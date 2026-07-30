@@ -1,5 +1,5 @@
 import type { ActionFunction } from "react-router";
-import { sql } from "~/db/sql";
+import type { PreparedMaps } from "~/db/tables-json";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -7,12 +7,9 @@ import {
 	calculateTournamentTierFromTeams,
 	MIN_TEAMS_FOR_TIERING,
 } from "~/features/tournament/core/tiering";
-import { createSwissBracketInTransaction } from "~/features/tournament/queries/createSwissBracketInTransaction.server";
-import { updateRoundMaps } from "~/features/tournament/queries/updateRoundMaps.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import { roundMapsFromInput } from "~/features/tournament-match/core/mapList.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -23,21 +20,17 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
-import type { PreparedMaps } from "../../../db/tables";
+import * as BracketRepository from "../BracketRepository.server";
 import * as AbDivisions from "../core/AbDivisions";
-import { getServerTournamentManager } from "../core/brackets-manager/manager.server";
+import * as Engine from "../core/engine";
 import * as PreparedMapsUtils from "../core/PreparedMaps";
-import * as Swiss from "../core/Swiss";
 import type { Tournament } from "../core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas.server";
-import {
-	fillWithNullTillPowerOfTwo,
-	tournamentWebsocketRoom,
-} from "../tournament-bracket-utils";
+import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = requireUser();
@@ -47,7 +40,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 	});
 	const tournament = await tournamentFromDB({ tournamentId, user });
 	const data = await parseRequestPayload({ request, schema: bracketSchema });
-	const manager = getServerTournamentManager();
 
 	let emitTournamentUpdate = false;
 
@@ -70,16 +62,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Bracket is not ready to be started",
 			);
 
-			const groupCount = new Set(bracket.data.round.map((r) => r.group_id))
-				.size;
+			const groupCount = new Set(bracket.data.round.map((r) => r.groupId)).size;
 
-			const settings = tournament.bracketManagerSettings(
-				bracket.settings,
-				bracket.type,
-				seeding.length,
-			);
+			const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
+				type: bracket.type,
+				settings: bracket.settings,
+				participantsCount: seeding.length,
+			});
 
-			const maps = settings.consolationFinal
+			const maps = hasThirdPlaceMatch
 				? adjustLinkedRounds({
 						maps: data.maps,
 						thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
@@ -105,38 +96,20 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Invalid map count",
 			);
 
-			sql.transaction(() => {
-				const stage =
-					bracket.type === "swiss"
-						? createSwissBracketInTransaction(
-								Swiss.create({
-									name: bracket.name,
-									seeding,
-									tournamentId,
-									settings,
-								}),
-							)
-						: manager.create({
-								tournamentId,
-								name: bracket.name,
-								type: bracket.type,
-								seeding:
-									bracket.type === "round_robin"
-										? seeding
-										: fillWithNullTillPowerOfTwo(seeding),
-								settings,
-								abDivisions,
-							});
+			const createdBracket = Engine.create({
+				type: bracket.type,
+				seeding,
+				settings: bracket.settings,
+				independentRounds: tournament.isLeagueDivision,
+				abDivisions,
+				maps,
+			});
 
-				updateRoundMaps(
-					roundMapsFromInput({
-						virtualRounds: bracket.data.round,
-						roundsFromDB: manager.get.stageData(stage.id).round,
-						maps,
-						bracket,
-					}),
-				);
-			})();
+			await BracketRepository.insertBracket({
+				tournamentId,
+				name: bracket.name,
+				bracket: createdBracket,
+			});
 
 			// persist maps as prepared even if they weren't initially so sibling brackets can reuse them
 			const existingPreparedMaps =
@@ -229,11 +202,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Bracket has started, preparing maps no longer possible",
 			);
 
-			const hasThirdPlaceMatch = tournament.bracketManagerSettings(
-				bracket.settings,
-				bracket.type,
-				data.eliminationTeamCount ?? (bracket.seeding ?? []).length,
-			).consolationFinal;
+			const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
+				type: bracket.type,
+				settings: bracket.settings,
+				participantsCount:
+					data.eliminationTeamCount ?? (bracket.seeding ?? []).length,
+			});
 
 			await TournamentRepository.upsertPreparedMaps({
 				bracketIdx: data.bracketIdx,
@@ -257,14 +231,23 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			errorToastIfFalsy(bracket, "Bracket not found");
 
-			const matches = Swiss.generateMatchUps({
-				bracket,
+			const round = Engine.generateRound(bracket.data, {
 				groupId: data.groupId,
+				standings: bracket.standings,
+				settings: bracket.settings,
 			});
 
-			errorToastIfErr(matches);
+			errorToastIfErr(round);
 
-			await TournamentRepository.insertSwissMatches(matches.value);
+			const stageId = bracket.data.match.find(
+				(match) => match.groupId === data.groupId,
+			)?.stageId;
+			errorToastIfFalsy(stageId, "No matches found for group");
+
+			await BracketRepository.insertRoundMatches({
+				stageId,
+				round: round.value,
+			});
 
 			emitTournamentUpdate = true;
 
@@ -281,7 +264,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 			errorToastIfFalsyNoFollowUpBrackets(tournament);
 
-			await TournamentRepository.deleteSwissMatches({
+			await BracketRepository.deleteRoundMatches({
 				groupId: data.groupId,
 				roundId: data.roundId,
 			});

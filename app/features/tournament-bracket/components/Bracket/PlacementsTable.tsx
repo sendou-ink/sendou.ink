@@ -10,10 +10,9 @@ import {
 	tournamentTeamPage,
 } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
-import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket, Standing } from "../../core/Bracket";
+import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
-import * as Swiss from "../../core/Swiss";
 import styles from "./bracket.module.css";
 
 export function PlacementsTable({
@@ -32,7 +31,7 @@ export function PlacementsTable({
 		.filter((s) => s.groupId === groupId);
 
 	const missingTeams = bracket.data.match.reduce((acc, cur) => {
-		if (cur.group_id !== groupId) return acc;
+		if (cur.groupId !== groupId) return acc;
 
 		if (
 			cur.opponent1?.id &&
@@ -60,7 +59,6 @@ export function PlacementsTable({
 				stats: {
 					mapLosses: 0,
 					mapWins: 0,
-					points: 0,
 					koCount: 0,
 					setLosses: 0,
 					setWins: 0,
@@ -88,8 +86,7 @@ export function PlacementsTable({
 				advanceThreshold: bracket.settings.advanceThreshold,
 				losses: stats.setLosses,
 				wins: stats.setWins,
-				roundCount:
-					bracket.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+				roundCount: bracket.swissRoundCount,
 			}) === "advanced"
 				? bracket.tournament.brackets.find((otherBracket) =>
 						otherBracket.sources?.some(
@@ -289,9 +286,7 @@ function StandingsTable({
 							advanceThreshold: bracket.settings.advanceThreshold,
 							losses: s.stats.setLosses,
 							wins: s.stats.setWins,
-							roundCount:
-								bracket.settings.roundCount ??
-								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+							roundCount: bracket.swissRoundCount,
 						}) === "eliminated";
 
 					if (renderQualifiedRow) qualifiedRowRendered = true;
@@ -330,7 +325,7 @@ function StandingsTable({
 										{s.team.name}
 									</Link>{" "}
 									{s.team.droppedOut ? (
-										<span className="text-warning text-xxxs font-bold">
+										<span className="text-warning text-xxs font-bold">
 											Drop-out
 										</span>
 									) : null}

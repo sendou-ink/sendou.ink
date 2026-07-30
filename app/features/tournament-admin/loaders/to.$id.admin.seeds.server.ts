@@ -23,7 +23,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		seedingSnapshot:
 			await TournamentRepository.findSeedingSnapshotById(tournamentId),
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds,
 		})),
 	};

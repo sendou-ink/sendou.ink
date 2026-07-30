@@ -1,15 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 import { AUDIT_LOG_PAGE_SIZE } from "~/features/tournament/TournamentAuditLogRepository.server";
+import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/features/tournament/tournament-constants";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	forbidden,
+	paginate,
 	parseParams,
 	parseSearchParams,
-	redirectIfPageOutOfBounds,
 } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 
@@ -48,16 +48,11 @@ export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 		TournamentAuditLogRepository.findTeamsByTournamentId(tournamentId),
 	]);
 
-	const pagesCount = Math.max(1, Math.ceil(totalCount / AUDIT_LOG_PAGE_SIZE));
-
-	redirectIfPageOutOfBounds({ url, page, pagesCount });
-
 	return {
 		auditLog: {
 			events,
 			teams,
-			currentPage: page,
-			pagesCount,
+			...paginate({ url, page, pageSize: AUDIT_LOG_PAGE_SIZE, totalCount }),
 		},
 	};
 };

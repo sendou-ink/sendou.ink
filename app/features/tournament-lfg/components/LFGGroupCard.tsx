@@ -12,7 +12,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { Pronouns } from "~/db/tables";
+import type { Pronouns } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -22,6 +22,7 @@ import {
 } from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
@@ -35,7 +36,7 @@ export type LFGGroupMember = {
 	discordAvatar: string | null;
 	customAvatarUrl: string | null;
 	customUrl: string | null;
-	languages: string[];
+	languages: UnifiedLanguageCode[];
 	vc: "YES" | "NO" | "LISTEN_ONLY" | null;
 	pronouns: Pronouns | null;
 	role: "OWNER" | "MANAGER" | "REGULAR";
@@ -217,7 +218,7 @@ function LFGGroupMemberRow({
 						</span>
 					</UserCard>
 					{member.pronouns ? (
-						<span className="text-lighter ml-1 text-xxxs">
+						<span className="text-lighter ml-1 text-xxs">
 							{member.pronouns.subject}/{member.pronouns.object}
 						</span>
 					) : null}

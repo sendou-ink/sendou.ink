@@ -20,6 +20,7 @@ import {
 	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "./tournament-organization-constants";
 
@@ -28,7 +29,7 @@ interface CreateArgs {
 	name: string;
 }
 
-export function create(args: CreateArgs) {
+export function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
 		const org = await trx
 			.insertInto("TournamentOrganization")
@@ -250,7 +251,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 			"CalendarEvent.id as eventId",
 			"CalendarEvent.name",
 			"CalendarEvent.tournamentId",
-			eb.fn.min("CalendarEventDate.startTime").as("startTime"),
+			eb.fn.min("CalendarEventDate.startsAt").as("startsAt"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
@@ -366,16 +367,16 @@ export async function findEventsByMonth({
 
 	const events = await findEventsBaseQuery(organizationId)
 		.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">=",
 			dateToDatabaseTimestamp(firstDayOfTheMonth),
 		)
 		.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"<=",
 			dateToDatabaseTimestamp(lastDayOfTheMonth),
 		)
-		.orderBy("CalendarEventDate.startTime", "asc")
+		.orderBy("CalendarEventDate.startsAt", "asc")
 		.execute();
 
 	return events.map(mapEvent);
@@ -406,7 +407,7 @@ const findSeriesEventsBaseQuery = ({
 				),
 			),
 		)
-		.orderBy("CalendarEventDate.startTime", "desc");
+		.orderBy("CalendarEventDate.startsAt", "desc");
 
 export async function findPaginatedEventsBySeries({
 	organizationId,
@@ -477,8 +478,8 @@ export async function countActiveParticipants({
 		)
 		.select(({ fn }) => fn.count<number>("tmgrp.userId").distinct().as("count"))
 		.where("ce.organizationId", "=", organizationId)
-		.where("ced.startTime", ">=", startTime)
-		.where("ced.startTime", "<", endTime)
+		.where("ced.startsAt", ">=", startTime)
+		.where("ced.startsAt", "<", endTime)
 		.where("ttci.checkedInAt", "is not", null)
 		.where("ttci.isCheckOut", "=", 0)
 		.executeTakeFirst();
@@ -577,7 +578,7 @@ export function update({
 						name: s.name,
 						description: s.description,
 						substringMatches: JSON.stringify([s.name.toLowerCase()]),
-						showLeaderboard: Number(s.showLeaderboard),
+						showLeaderboard: toDBBoolean(s.showLeaderboard),
 					})),
 				)
 				.returning(["id", "substringMatches"])
@@ -599,12 +600,12 @@ export function update({
 					"Tournament.id as tournamentId",
 					"CalendarEvent.name",
 					"Tournament.tier",
-					"CalendarEventDate.startTime",
+					"CalendarEventDate.startsAt",
 				])
 				.where("Tournament.isFinalized", "=", 1)
 				.where("CalendarEvent.organizationId", "=", id)
 				.where("CalendarEvent.hidden", "=", 0)
-				.orderBy("CalendarEventDate.startTime", "asc")
+				.orderBy("CalendarEventDate.startsAt", "asc")
 				.execute();
 
 			for (const s of insertedSeries) {
@@ -651,7 +652,7 @@ export function update({
 	});
 }
 
-export function removeOwnMembership(organizationId: number) {
+export function deleteOwnMembership(organizationId: number) {
 	return db
 		.deleteFrom("TournamentOrganizationMember")
 		.where("organizationId", "=", organizationId)
@@ -691,7 +692,7 @@ export function unbanUser({
 /**
  * Returns all banned users for a specific tournament organization
  */
-export function allBannedUsersByOrganizationId(organizationId: number) {
+export function findAllBannedUsersByOrganizationId(organizationId: number) {
 	return db
 		.selectFrom("TournamentOrganizationBannedUser")
 		.innerJoin("User", "User.id", "TournamentOrganizationBannedUser.userId")
@@ -756,7 +757,7 @@ export function updateIsEstablished(
 ) {
 	return db
 		.updateTable("TournamentOrganization")
-		.set({ isEstablished: Number(isEstablished) })
+		.set({ isEstablished: toDBBoolean(isEstablished) })
 		.where("id", "=", organizationId)
 		.execute();
 }

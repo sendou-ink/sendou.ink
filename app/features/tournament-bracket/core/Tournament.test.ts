@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from "vitest";
-import type { Match } from "~/modules/brackets-model";
+import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
 import { Tournament } from "./Tournament";
 import {
 	IN_THE_ZONE_32,
@@ -117,7 +117,10 @@ describe("Follow-up bracket progression", () => {
 		).toBe(AMOUNT_OF_BEST_VS_BEST);
 	});
 
-	const validateNoRematches = (rrMatches: Match[], topCutMatches: Match[]) => {
+	const validateNoRematches = (
+		rrMatches: MatchData[],
+		topCutMatches: MatchData[],
+	) => {
 		for (const topCutMatch of topCutMatches) {
 			if (!topCutMatch.opponent1?.id || !topCutMatch.opponent2?.id) {
 				continue;

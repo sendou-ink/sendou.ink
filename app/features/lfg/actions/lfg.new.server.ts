@@ -51,7 +51,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			type,
 			teamId: shouldIncludeTeam ? team?.id : null,
 			plusTierVisibility,
-			languages: data.languages.length > 0 ? data.languages.join(",") : null,
+			languages:
+				data.languages.length > 0 ? JSON.stringify(data.languages) : null,
 		});
 	} else {
 		await LFGRepository.insertPost({
@@ -61,7 +62,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			teamId: shouldIncludeTeam ? team?.id : null,
 			authorId: user.id,
 			plusTierVisibility,
-			languages: data.languages.length > 0 ? data.languages.join(",") : null,
+			languages:
+				data.languages.length > 0 ? JSON.stringify(data.languages) : null,
 		});
 	}
 
@@ -75,7 +77,7 @@ const validateCanUpdatePost = async ({
 	postId: number;
 	user: { id: number; plusTier: number | null };
 }) => {
-	const posts = await LFGRepository.posts(user);
+	const posts = await LFGRepository.findAllPosts(user);
 	const post = posts.find((post) => post.id === postId);
 	errorToastIfFalsy(post, "Post to update not found");
 	errorToastIfFalsy(

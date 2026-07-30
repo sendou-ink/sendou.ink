@@ -1,4 +1,15 @@
-import { LFG_TYPES, type Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+
+export const LFG_TYPES = [
+	"PLAYER_FOR_TEAM",
+	"PLAYER_FOR_COACH",
+	"TEAM_FOR_PLAYER",
+	"TEAM_FOR_COACH",
+	"TEAM_FOR_SCRIM",
+	"COACH_FOR_TEAM",
+] as const;
+
+export type LFGType = (typeof LFG_TYPES)[number];
 
 export const LFG = {
 	MIN_TEXT_LENGTH: 1,

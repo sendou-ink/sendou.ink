@@ -13,7 +13,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	if (!userId || !userIsBanned(userId)) return redirect("/");
 
-	const bannedStatus = (await AdminRepository.allBannedUsers()).get(userId);
+	const bannedStatus = (await AdminRepository.findAllBannedUsers()).get(userId);
 
 	if (!bannedStatus) {
 		await refreshBannedCache();

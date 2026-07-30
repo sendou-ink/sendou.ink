@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
+import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import type { TournamentSummary } from "../tournament-bracket/core/summarizer.server";
 import * as TournamentRepository from "./TournamentRepository.server";
@@ -55,7 +56,7 @@ const emptySummary = (
 });
 
 const insertPriorTeamSkill = (args: {
-	identifier: string;
+	identifier: SkillTeamIdentifier;
 	season: number;
 	matchesCount: number;
 }) =>
@@ -73,10 +74,10 @@ const insertPriorTeamSkill = (args: {
 
 describe("TournamentRepository.finalize", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
+		await dbInsertUsers(4);
 	});
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("matchesCount on a new season's Skill row does not include prior seasons", async () => {
@@ -110,7 +111,7 @@ describe("TournamentRepository.finalize", () => {
 
 	test("team matchesCount on a new season's Skill row does not include prior seasons", async () => {
 		await insertPriorTeamSkill({
-			identifier: "1-2",
+			identifier: "1-2-3-4",
 			season: 0,
 			matchesCount: 100,
 		});
@@ -123,7 +124,7 @@ describe("TournamentRepository.finalize", () => {
 			summary: emptySummary([
 				{
 					userId: null,
-					identifier: "1-2",
+					identifier: "1-2-3-4",
 					mu: 25,
 					sigma: 8.333,
 					matchesCount: 5,
@@ -134,7 +135,7 @@ describe("TournamentRepository.finalize", () => {
 		const inserted = await db
 			.selectFrom("Skill")
 			.select("matchesCount")
-			.where("identifier", "=", "1-2")
+			.where("identifier", "=", "1-2-3-4")
 			.where("season", "=", 1)
 			.executeTakeFirstOrThrow();
 

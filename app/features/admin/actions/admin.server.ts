@@ -1,20 +1,20 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
-	notFoundIfFalsy,
-	parseRequestPayload,
+	notFoundIfNullish,
 	successToast,
 } from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
-import { _action, actualNumber, friendCode } from "~/utils/zod";
+import { normalizeFriendCode } from "~/utils/zod";
+import { adminActionSchema } from "../admin-schemas";
 import {
 	sendUserBannedWebhook,
 	sendUserUnbannedWebhook,
@@ -22,10 +22,16 @@ import {
 import { plusTiersFromVotingAndLeaderboard } from "../core/plus-tier.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: adminActionSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 	const user = requireUser();
 
 	let message: string;
@@ -35,8 +41,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 			try {
 				const errorMessage = await AdminRepository.migrate({
-					oldUserId: data["old-user"],
-					newUserId: data["new-user"],
+					oldUserId: data.oldUser,
+					newUserId: data.newUser,
 				});
 
 				if (errorMessage) {
@@ -74,21 +80,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 			await AdminRepository.forcePatron({
 				id: data.user,
-				patronSince: new Date(),
-				patronTier: data.patronTier,
-				patronTill: new Date(data.patronTill),
+				patronStartedAt: new Date(),
+				patronTier: Number(data.patronTier),
+				patronExpiresAt: data.patronExpiresAt,
 			});
 
 			message = "Patron status updated";
-			break;
-		}
-		case "CLEAN_UP": {
-			requireRole("ADMIN");
-
-			// on purpose sync
-			AdminRepository.cleanUp();
-
-			message = "Clean up done";
 			break;
 		}
 		case "ARTIST": {
@@ -129,10 +126,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "BAN_USER": {
 			requireRole("STAFF");
 
-			const bannedUser = notFoundIfFalsy(
+			const bannedUser = notFoundIfNullish(
 				await UserRepository.findLeanById(data.user),
 			);
-			const banExpiresAt = data.duration ? new Date(data.duration) : null;
+			const banExpiresAt = data.expiresAt ?? null;
 
 			await AdminRepository.banUser({
 				bannedReason: data.reason ?? null,
@@ -156,7 +153,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "UNBAN_USER": {
 			requireRole("STAFF");
 
-			const unbannedUser = notFoundIfFalsy(
+			const unbannedUser = notFoundIfNullish(
 				await UserRepository.findLeanById(data.user),
 			);
 
@@ -179,7 +176,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			requireRole("STAFF");
 
 			await UserRepository.insertFriendCode({
-				friendCode: data.friendCode,
+				friendCode: normalizeFriendCode(data.friendCode),
 				submitterUserId: user.id,
 				userId: data.user,
 			});
@@ -202,59 +199,3 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	return successToast(message);
 };
-
-export const adminActionSchema = z.union([
-	z.object({
-		_action: _action("MIGRATE"),
-		"old-user": z.preprocess(actualNumber, z.number().positive()),
-		"new-user": z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("REFRESH"),
-	}),
-	z.object({
-		_action: _action("CLEAN_UP"),
-	}),
-	z.object({
-		_action: _action("FORCE_PATRON"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-		patronTier: z.preprocess(actualNumber, z.number()),
-		patronTill: z.string(),
-	}),
-	z.object({
-		_action: _action("VIDEO_ADDER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("TOURNAMENT_ORGANIZER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("ARTIST"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("LINK_PLAYER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-		playerId: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("BAN_USER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-		reason: z.string().nullish(),
-		duration: z.string().nullish(),
-	}),
-	z.object({
-		_action: _action("UNBAN_USER"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("UPDATE_FRIEND_CODE"),
-		friendCode,
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-	z.object({
-		_action: _action("API_ACCESS"),
-		user: z.preprocess(actualNumber, z.number().positive()),
-	}),
-]);

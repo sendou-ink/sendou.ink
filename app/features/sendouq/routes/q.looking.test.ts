@@ -7,7 +7,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 }));
 
 import { db } from "~/db/sql";
-import type { UserMapModePreferences } from "~/db/tables";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
@@ -106,8 +106,8 @@ describe("SendouQ match creation", () => {
 		await refreshSendouQInstance();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("adds pools to memento", async () => {

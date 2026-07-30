@@ -13,6 +13,7 @@ import {
 	SENDOU_LOVE_EMOJI_PATH,
 	SUPPORT_PAGE,
 	userPage,
+	WELCOME_PAGE,
 } from "~/utils/urls";
 
 declare const __GIT_COMMIT__: string;
@@ -37,6 +38,7 @@ export function Footer() {
 			<div className={styles.linkList}>
 				<Link to={CONTRIBUTIONS_PAGE}>{t("pages.contributors")}</Link>
 				<Link to={FAQ_PAGE}>{t("pages.faq")}</Link>
+				<Link to={WELCOME_PAGE}>{t("pages.welcome")}</Link>
 				<Link to={API_PAGE}>{t("pages.api")}</Link>
 				{showPrivacySettings ? <div data-fuse-privacy-tool /> : null}
 			</div>

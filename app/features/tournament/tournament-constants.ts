@@ -35,6 +35,42 @@ export const TOURNAMENT = {
 	},
 } as const;
 
+export const TOURNAMENT_STAGE_TYPES = [
+	"single_elimination",
+	"double_elimination",
+	"round_robin",
+	"swiss",
+] as const;
+
+// AUTO = style where teams pick their map pool ahead of time and the map lists are automatically made for each round
+// could also have the traditional style where TO picks the maps later
+export type TournamentMapPickingStyle =
+	| "TO"
+	| "AUTO_ALL"
+	| "AUTO_SZ"
+	| "AUTO_TC"
+	| "AUTO_RM"
+	| "AUTO_CB";
+
+export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
+
+export type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
+
+export const TOURNAMENT_AUDIT_LOG_TYPES = [
+	"MEMBER_ADDED",
+	"MEMBER_REMOVED",
+	"TEAM_REGISTERED",
+	"TEAM_UNREGISTERED",
+	"TEAM_CHECKED_IN",
+	"TEAM_CHECKED_OUT",
+	"TEAM_DROPPED_OUT",
+	"TEAM_DROP_OUT_UNDONE",
+	"UPDATE_IN_GAME_NAME",
+] as const;
+
+export type TournamentAuditLogType =
+	(typeof TOURNAMENT_AUDIT_LOG_TYPES)[number];
+
 export const LEAGUES =
 	process.env.NODE_ENV === "development" && !Config.prodMode
 		? {

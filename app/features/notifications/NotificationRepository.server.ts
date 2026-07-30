@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { db } from "~/db/sql";
-import type { NotificationSubscription, TablesInsertable } from "~/db/tables";
+import type { TablesInsertable } from "~/db/tables";
+import type { NotificationSubscription } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import { NOTIFICATIONS } from "./notifications-contants";
@@ -89,7 +90,7 @@ export function deleteOld() {
 		.executeTakeFirst();
 }
 
-export function addOwnSubscription(subscription: NotificationSubscription) {
+export function insertOwnSubscription(subscription: NotificationSubscription) {
 	return db
 		.insertInto("NotificationUserSubscription")
 		.values({
@@ -99,7 +100,7 @@ export function addOwnSubscription(subscription: NotificationSubscription) {
 		.execute();
 }
 
-export function subscriptionsByUserIds(userIds: number[]) {
+export function findAllSubscriptionsByUserIds(userIds: number[]) {
 	return db
 		.selectFrom("NotificationUserSubscription")
 		.select(["id", "subscription"])

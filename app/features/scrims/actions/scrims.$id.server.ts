@@ -1,13 +1,13 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	errorToast,
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
-	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
@@ -23,13 +23,19 @@ import { parseMapPoolInput } from "../scrims-utils";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { id } = parseParams({ params, schema: idObject });
-	const post = notFoundIfFalsy(await ScrimPostRepository.findById(id));
+	const post = notFoundIfNullish(await ScrimPostRepository.findById(id));
 	const user = requireUser();
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: scrimIdActionSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	requirePermission(post, "MANAGE_TRACKING");
 

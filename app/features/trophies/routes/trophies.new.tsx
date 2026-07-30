@@ -201,10 +201,10 @@ function TrophyTermsGate({ children }: { children: React.ReactNode }) {
 function NewTrophyForm() {
 	return (
 		<SendouForm schema={createTrophyFormSchema}>
-			{({ names, FormField }) => (
+			{({ FormField }) => (
 				<>
-					<FormField name={names.name} />
-					<FormField name={names.organizationId}>
+					<FormField name="name" />
+					<FormField name="organizationId">
 						{({ error, value, onChange }: CustomFieldRenderProps) => (
 							<OrganizationField
 								error={error}
@@ -213,7 +213,7 @@ function NewTrophyForm() {
 							/>
 						)}
 					</FormField>
-					<FormField name={names.model}>
+					<FormField name="model">
 						{({ name, error, value, onChange }: CustomFieldRenderProps) => (
 							<ModelField
 								name={name}
@@ -223,7 +223,7 @@ function NewTrophyForm() {
 							/>
 						)}
 					</FormField>
-					<FormField name={names.description} />
+					<FormField name="description" />
 				</>
 			)}
 		</SendouForm>
@@ -282,10 +282,10 @@ function UpdateTrophyForm({
 				description: "",
 			}}
 		>
-			{({ names, FormField }) => (
+			{({ FormField }) => (
 				<>
-					<FormField name={names.name} />
-					<FormField name={names.organizationId}>
+					<FormField name="name" />
+					<FormField name="organizationId">
 						{({ error, value, onChange }: CustomFieldRenderProps) => (
 							<OrganizationField
 								error={error}
@@ -294,7 +294,7 @@ function UpdateTrophyForm({
 							/>
 						)}
 					</FormField>
-					<FormField name={names.managerId}>
+					<FormField name="managerId">
 						{({ error, value, onChange }: CustomFieldRenderProps) => (
 							<ManagerField
 								error={error}
@@ -303,7 +303,7 @@ function UpdateTrophyForm({
 							/>
 						)}
 					</FormField>
-					<FormField name={names.model}>
+					<FormField name="model">
 						{({ name, error, value, onChange }: CustomFieldRenderProps) => (
 							<ModelField
 								name={name}
@@ -313,7 +313,7 @@ function UpdateTrophyForm({
 							/>
 						)}
 					</FormField>
-					<FormField name={names.description} />
+					<FormField name="description" />
 				</>
 			)}
 		</SendouForm>

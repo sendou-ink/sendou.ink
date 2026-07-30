@@ -34,7 +34,7 @@ export async function reportMapAndGenerateNext(
 			.where("reportedAt", "is", null)
 			.execute();
 
-		await tryGenerateAndInsertNextMapInTrx(trx, args.scrimPostId);
+		await tryGenerateAndInsertNextMap(args.scrimPostId, trx);
 	});
 }
 
@@ -116,9 +116,9 @@ export function findMapsByScrimPostId(scrimPostId: number) {
  * insert see a consistent snapshot and no two concurrent report/submit actions
  * can insert a "next" map at the same index.
  */
-export async function tryGenerateAndInsertNextMapInTrx(
-	trx: Transaction<DB>,
+export async function tryGenerateAndInsertNextMap(
 	scrimPostId: number,
+	trx: Transaction<DB>,
 ): Promise<void> {
 	const mapLists = await ScrimMapListRepository.findMapListsByScrimPostId(
 		scrimPostId,

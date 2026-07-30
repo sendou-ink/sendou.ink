@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import type { UserPreferences } from "~/db/tables";
+import type { UserPreferences } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { useHydrated } from "../useHydrated";
 

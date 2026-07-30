@@ -106,8 +106,8 @@ export async function fetchRotations(): Promise<
 				mode,
 				stageId1,
 				stageId2,
-				startTime: Math.floor(new Date(node.startTime).getTime() / 1000),
-				endTime: Math.floor(new Date(node.endTime).getTime() / 1000),
+				startsAt: Math.floor(new Date(node.startTime).getTime() / 1000),
+				endsAt: Math.floor(new Date(node.endTime).getTime() / 1000),
 			});
 		}
 	}
@@ -127,8 +127,8 @@ export async function fetchRotations(): Promise<
 			mode,
 			stageId1,
 			stageId2,
-			startTime: Math.floor(new Date(node.startTime).getTime() / 1000),
-			endTime: Math.floor(new Date(node.endTime).getTime() / 1000),
+			startsAt: Math.floor(new Date(node.startTime).getTime() / 1000),
+			endsAt: Math.floor(new Date(node.endTime).getTime() / 1000),
 		});
 	}
 

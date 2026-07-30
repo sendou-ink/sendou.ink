@@ -5,7 +5,7 @@ import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";
 
 export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
-	const dateObj = databaseTimestampToDate(vod.youtubeDate);
+	const dateObj = databaseTimestampToDate(vod.youtubePublishedAt);
 
 	return {
 		title: vod.title,
@@ -52,7 +52,7 @@ export function canEditVideo({
 
 export function extractYoutubeIdFromVideoUrl(url: string): string | null {
 	const match = url.match(
-		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&/?]+)/,
+		/^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|live\/)|youtu\.be\/)([^&/?#]+)/,
 	);
 	return match ? match[1] : null;
 }

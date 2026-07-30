@@ -1,5 +1,5 @@
 import type { Transaction } from "kysely";
-import { db, sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
@@ -8,35 +8,6 @@ import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementR
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-
-const removeOldLikesStm = sql.prepare(/*sql*/ `
-  delete from 
-    "GroupLike"
-    where 
-      "GroupLike"."createdAt" < cast(strftime('%s', datetime('now', 'start of day', '-7 days')) as int)
-`);
-
-const removeOldGroupStm = sql.prepare(/*sql*/ `
-  delete from
-    "Group"
-  where "Group"."id" in (
-    select "Group"."id"
-    from "Group"
-    left join "GroupMatch" on "Group"."id" = "GroupMatch"."alphaGroupId" or "Group"."id" = "GroupMatch"."bravoGroupId"
-      where "Group"."status" = 'INACTIVE'
-        and "GroupMatch"."id" is null
-  )
-`);
-
-const cleanUpStm = sql.prepare(/*sql*/ `
-  vacuum
-`);
-
-export const cleanUp = () => {
-	removeOldLikesStm.run();
-	removeOldGroupStm.run();
-	cleanUpStm.run();
-};
 
 /**
  * Migrates user-related data. Takes data from the "old user" and remaps it to the Discord ID of the "new user". Used when user switches their Discord accounts.
@@ -322,15 +293,15 @@ export async function linkUserAndPlayer({
 export async function forcePatron(args: {
 	id: number;
 	patronTier: Tables["User"]["patronTier"];
-	patronSince: Date;
-	patronTill: Date;
+	patronStartedAt: Date;
+	patronExpiresAt: Date;
 }) {
 	await db
 		.updateTable("User")
 		.set({
 			patronTier: args.patronTier,
-			patronSince: dateToDatabaseTimestamp(args.patronSince),
-			patronTill: dateToDatabaseTimestamp(args.patronTill),
+			patronStartedAt: dateToDatabaseTimestamp(args.patronStartedAt),
+			patronExpiresAt: dateToDatabaseTimestamp(args.patronExpiresAt),
 		})
 		.where("User.id", "=", args.id)
 		.execute();
@@ -338,7 +309,7 @@ export async function forcePatron(args: {
 	await TrophyRepository.syncSpecialTrophies();
 }
 
-export async function allBannedUsers() {
+export async function findAllBannedUsers() {
 	const rows = await db
 		.selectFrom("User")
 		.select(["User.id as userId", "User.banned", "User.bannedReason"])
@@ -430,7 +401,7 @@ export function addModNote(
 		.execute();
 }
 
-export function findModeNoteById(id: number) {
+export function findModNoteById(id: number) {
 	return db
 		.selectFrom("ModNote")
 		.selectAll()

@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { PreparedMaps } from "~/db/tables";
+import type { PreparedMaps } from "~/db/tables-json";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import type { Bracket } from "./Bracket";
@@ -128,7 +128,7 @@ function trimMapsByTeamCount({
 	const result = { ...preparedMaps };
 	for (const groupId of groupIds) {
 		const actualRoundsForGroup = actualRounds.filter(
-			(r) => r.group_id === groupId,
+			(r) => r.groupId === groupId,
 		);
 
 		const preparedRoundsForGroup = preparedMaps.maps.filter(

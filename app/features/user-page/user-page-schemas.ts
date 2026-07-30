@@ -1,8 +1,11 @@
 import { z } from "zod";
-import { OBJECT_PRONOUNS, SUBJECT_PRONOUNS } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
+import {
+	OBJECT_PRONOUNS,
+	SUBJECT_PRONOUNS,
+} from "~/features/user-page/user-page-constants";
 import {
 	badges,
 	checkboxGroup,
@@ -13,10 +16,10 @@ import {
 	inGameName,
 	selectDynamicOptional,
 	stringConstant,
+	textArea,
 	textAreaOptional,
-	textAreaRequired,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	toggle,
 	trophies,
 	weaponPool,
@@ -186,7 +189,7 @@ export const editHighlightsActionSchema = z.object({
 
 export const addModNoteSchema = z.object({
 	_action: stringConstant("ADD_MOD_NOTE"),
-	value: textAreaRequired({
+	value: textArea({
 		label: "labels.text",
 		bottomText: "bottomTexts.modNote",
 		maxLength: USER.MOD_NOTE_MAX_LENGTH,
@@ -324,7 +327,7 @@ export const newBuildBaseSchema = z.object({
 		},
 		abilitiesSchema,
 	),
-	title: textFieldRequired({
+	title: textField({
 		label: "labels.buildTitle",
 		maxLength: 50,
 	}),
@@ -336,7 +339,7 @@ export const newBuildBaseSchema = z.object({
 		label: "labels.buildModes",
 		items: modeItems,
 	}),
-	private: toggle({
+	isPrivate: toggle({
 		label: "labels.buildPrivate",
 		bottomText: "bottomTexts.buildPrivate",
 	}),

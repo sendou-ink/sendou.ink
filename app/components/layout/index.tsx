@@ -320,7 +320,7 @@ export function Layout({
 						imageUrl={event.logoUrl ?? undefined}
 						subtitle={
 							isHydrated ? (
-								formatRelativeDate(event.startTime)
+								formatRelativeDate(event.startsAt)
 							) : (
 								<span className="invisible">Placeholder</span>
 							)

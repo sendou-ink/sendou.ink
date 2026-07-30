@@ -28,7 +28,7 @@ export function PreferencesTab() {
 					defaultValues={{
 						newValue: user.preferences.disableBuildAbilitySorting ?? false,
 					}}
-					autoSubmit
+					mode="autoSubmit"
 					revalidateRoot
 					fullWidth
 				>
@@ -40,7 +40,7 @@ export function PreferencesTab() {
 						newValue:
 							user.preferences.disallowScrimPickupsFromUntrusted ?? false,
 					}}
-					autoSubmit
+					mode="autoSubmit"
 					revalidateRoot
 					fullWidth
 				>
@@ -51,7 +51,7 @@ export function PreferencesTab() {
 					defaultValues={{
 						newValue: user.preferences.spoilerFreeMode ?? false,
 					}}
-					autoSubmit
+					mode="autoSubmit"
 					revalidateRoot
 					fullWidth
 				>

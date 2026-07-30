@@ -19,7 +19,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const wins = await TrophyRepository.findWinsByOwner({ trophyId, userId });
 
-	const { userCards } = await UserCardRepository.userCards({
+	const { userCards } = await UserCardRepository.findAllByUserIds({
 		userIds: R.unique(wins.flatMap((win) => win.members.map((m) => m.id))),
 	});
 

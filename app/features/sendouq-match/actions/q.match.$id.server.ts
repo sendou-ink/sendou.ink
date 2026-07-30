@@ -19,7 +19,7 @@ import { logger } from "~/utils/logger";
 import {
 	errorToast,
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
@@ -39,7 +39,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: matchSchema,
 	});
 
-	const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+	const match = notFoundIfNullish(await SQMatchRepository.findById(matchId));
 	const isStaff = user.roles.includes("STAFF");
 	const isParticipant = [
 		...match.groupAlpha.members,
@@ -80,7 +80,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (result.status === "MATCH_FINALIZED") {
 					try {
-						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 					} catch (error) {
 						logger.warn("Error refreshing user skills", error);
 					}
@@ -137,7 +137,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					errorToastIfFalsy(!currentGroup, "Member is already in a group");
 				}
 
-				await SQGroupRepository.createGroupFromPrevious({
+				await SQGroupRepository.insertFromPrevious({
 					previousGroupId: data.previousGroupId,
 					members: previousGroup.members.map((m) => ({
 						id: m.id,
@@ -182,7 +182,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				const votingResult = await db.transaction().execute(async (trx) => {
 					const existingVotes =
-						await GroupMatchContinueVoteRepository.findForGroups(
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
 							[viewerGroup.id],
 							trx,
 						);
@@ -191,7 +191,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						return null;
 					}
 
-					await GroupMatchContinueVoteRepository.cast(
+					await GroupMatchContinueVoteRepository.castOwnVote(
 						{
 							groupId: viewerGroup.id,
 							isContinuing: data.isContinuing,
@@ -200,7 +200,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					);
 
 					return RejoinVote.result(
-						await GroupMatchContinueVoteRepository.findForGroups(
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
 							[viewerGroup.id],
 							trx,
 						),
@@ -213,7 +213,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						.map((m) => ({ id: m.id, role: m.role }));
 
 					try {
-						await SQGroupRepository.createGroupFromPrevious({
+						await SQGroupRepository.insertFromPrevious({
 							previousGroupId: viewerGroup.id,
 							members: survivors,
 							status: "ACTIVE",
@@ -370,7 +370,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (result.shouldRefreshCaches) {
 					try {
-						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 					} catch (error) {
 						logger.warn("Error refreshing user skills", error);
 					}

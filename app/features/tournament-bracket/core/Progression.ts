@@ -1,5 +1,6 @@
 import * as R from "remeda";
-import type { Tables, TournamentStageSettings } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentStageSettings } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	databaseTimestampToDate,
@@ -930,11 +931,18 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 	const bracketsToConsider = bracketsReachableFrom(0, progression);
 
 	const withoutIntermediateBrackets = bracketsToConsider.filter(
-		(bracket, bracketIdx) => {
+		(bracketIdx) => {
 			if (bracketIdx === 0) return true;
 
+			// underground brackets don't make their source bracket an intermediate one
+			const undergrounds = new Set(
+				undergroundBracketIdxs(bracketIdx, progression),
+			);
+
 			return progression.every(
-				(b) => !b.sources?.some((s) => s.bracketIdx === bracket),
+				(b, idx) =>
+					undergrounds.has(idx) ||
+					!b.sources?.some((s) => s.bracketIdx === bracketIdx),
 			);
 		},
 	);
@@ -1030,6 +1038,23 @@ export function destinationsFromBracketIdx(
 	}
 
 	return destinations;
+}
+
+/**
+ * Returns the indexes of the underground brackets sourced from the given bracket.
+ * An underground bracket is one that takes teams eliminated from its source bracket (negative placements).
+ */
+export function undergroundBracketIdxs(
+	bracketIdx: number,
+	progression: ParsedBracket[],
+): number[] {
+	return destinationsFromBracketIdx(bracketIdx, progression).filter((idx) =>
+		progression[idx].sources?.some(
+			(source) =>
+				source.bracketIdx === bracketIdx &&
+				source.placements.some((placement) => placement < 0),
+		),
+	);
 }
 
 export function destinationByPlacement({

@@ -13,7 +13,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	});
 
 	return {
-		usage: await ReportedWeaponRepository.weaponUsageStats({
+		usage: await ReportedWeaponRepository.findAllWeaponUsageStats({
 			mode: data.modeShort,
 			season: data.season,
 			stageId: data.stageId,

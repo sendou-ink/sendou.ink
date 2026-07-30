@@ -42,7 +42,7 @@ export async function updatePatreonData(): Promise<void> {
 		).map((discordId) => ({
 			discordId,
 			patronTier: 4,
-			patronSince: dateToDatabaseTimestamp(new Date()),
+			patronStartedAt: dateToDatabaseTimestamp(new Date()),
 		})),
 	];
 
@@ -132,7 +132,7 @@ function parsePatronData({
 
 		patronsWithIds.push({
 			patreonId: patron.relationships.user.data.id,
-			patronSince: dateToDatabaseTimestamp(
+			patronStartedAt: dateToDatabaseTimestamp(
 				new Date(patron.attributes.pledge_relationship_start ?? Date.now()),
 			),
 			patronTier: idToTierNumber(tier),
@@ -164,7 +164,7 @@ function parsePatronData({
 		}
 
 		result.patrons.push({
-			patronSince: patronData.patronSince,
+			patronStartedAt: patronData.patronStartedAt,
 			discordId,
 			patronTier: patronData.patronTier,
 		});

@@ -57,13 +57,13 @@ const fetchVotes = (groupId: number) =>
 		.where("groupId", "=", groupId)
 		.execute();
 
-describe("createGroup", () => {
+describe("insert", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("records implicit no-vote on previous matchmade group when user creates a new group", async () => {
@@ -72,7 +72,7 @@ describe("createGroup", () => {
 		const votesBefore = await fetchVotes(alphaGroupId);
 		expect(votesBefore).toHaveLength(0);
 
-		const result = await SQGroupRepository.createGroup({
+		const result = await SQGroupRepository.insert({
 			status: "ACTIVE",
 			userId: 1,
 		});
@@ -92,7 +92,7 @@ describe("createGroup", () => {
 			.values({ groupId: alphaGroupId, userId: 1, isContinuing: 1 })
 			.execute();
 
-		const result = await SQGroupRepository.createGroup({
+		const result = await SQGroupRepository.insert({
 			status: "ACTIVE",
 			userId: 1,
 		});
@@ -114,7 +114,7 @@ describe("createGroup", () => {
 		const votesBefore = await fetchVotes(alphaGroupId);
 		expect(votesBefore[0].userId).toBe(2);
 
-		await SQGroupRepository.createGroup({ status: "ACTIVE", userId: 1 });
+		await SQGroupRepository.insert({ status: "ACTIVE", userId: 1 });
 
 		const votes = await fetchVotes(alphaGroupId);
 		expect(votes).toHaveLength(1);
@@ -123,7 +123,7 @@ describe("createGroup", () => {
 	});
 
 	test("does not record any vote when user has no previous matchmade group", async () => {
-		const result = await SQGroupRepository.createGroup({
+		const result = await SQGroupRepository.insert({
 			status: "ACTIVE",
 			userId: 1,
 		});
@@ -137,24 +137,24 @@ describe("createGroup", () => {
 	});
 });
 
-describe("addMember", () => {
+describe("insertMember", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("records implicit no-vote on previous matchmade group when user joins another group", async () => {
 		const { alphaGroupId } = await setupConcludedMatch();
 
-		const newGroup = await SQGroupRepository.createGroup({
+		const newGroup = await SQGroupRepository.insert({
 			status: "PREPARING",
 			userId: 5,
 		});
 
-		const { chatCodeToRevalidate } = await SQGroupRepository.addMember(
+		const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
 			newGroup.id,
 			{ userId: 1 },
 		);

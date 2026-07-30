@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentResponse } from "../schema";
 
@@ -14,7 +14,7 @@ const paramsSchema = z.object({
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id } = parseParams({ params, schema: paramsSchema });
 
-	const tournament = notFoundIfFalsy(
+	const tournament = notFoundIfNullish(
 		await db
 			.selectFrom("Tournament")
 			.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
@@ -26,7 +26,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.select(({ eb, exists, selectFrom }) => [
 				"CalendarEvent.name",
 				"CalendarEvent.organizationId",
-				"CalendarEventDate.startTime",
+				"CalendarEventDate.startsAt",
 				"Tournament.settings",
 				exists(
 					selectFrom("TournamentResult")
@@ -61,7 +61,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const result: GetTournamentResponse = {
 		name: tournament.name,
-		startTime: databaseTimestampToDate(tournament.startTime).toISOString(),
+		startTime: databaseTimestampToDate(tournament.startsAt).toISOString(),
 		url: `https://sendou.ink/to/${id}/brackets`,
 		logoUrl: tournament.logoUrl,
 		teams: {

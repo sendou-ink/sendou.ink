@@ -3,7 +3,7 @@ import {
 	customField,
 	stringConstant,
 	textAreaOptional,
-	textFieldRequired,
+	textField,
 } from "~/form/fields";
 import { _action, id } from "~/utils/zod";
 import { analyzeTrophyModel } from "./core/model-analysis";
@@ -50,7 +50,7 @@ const trophyModelField = () =>
 
 export const createTrophyFormSchema = z.object({
 	_action: stringConstant("CREATE"),
-	name: textFieldRequired({
+	name: textField({
 		label: "labels.trophyName",
 		minLength: TROPHY_NAME_MIN_LENGTH,
 		maxLength: TROPHY_NAME_MAX_LENGTH,
@@ -66,7 +66,7 @@ export const createTrophyFormSchema = z.object({
 export const updateTrophyFormSchema = z.object({
 	_action: stringConstant("UPDATE"),
 	targetTrophyId: customField({ initialValue: null }, id),
-	name: textFieldRequired({
+	name: textField({
 		label: "labels.trophyName",
 		minLength: TROPHY_NAME_MIN_LENGTH,
 		maxLength: TROPHY_NAME_MAX_LENGTH,

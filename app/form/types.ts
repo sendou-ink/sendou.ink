@@ -1,7 +1,6 @@
 import type { z } from "zod";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
 
@@ -14,17 +13,21 @@ interface FormFieldBase<T extends string> {
 	initialValue: unknown;
 }
 
-type FormFieldConstant<T extends string> = Omit<
+/** A field that never renders a control. Its value is seeded from the schema's `initialValue` or the form's `defaultValues`. */
+type FormFieldHidden<T extends string> = Omit<
 	FormFieldBase<T>,
 	"label" | "bottomText"
-> & {
-	value: string | number | null;
-};
+>;
 
 interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	minLength?: number;
 	maxLength: number;
 	toLowerCase?: boolean;
+	/**
+	 * Normalizes what the user types before it is stored, e.g. reducing a pasted
+	 * full URL down to the part the field actually holds.
+	 */
+	transformValue?: (value: string) => string;
 	leftAddon?: string;
 	placeholder?: string;
 	required: boolean;
@@ -57,6 +60,7 @@ interface FormFieldItem<V extends string> {
 }
 
 interface FormFieldItemWithImage<V extends string> extends FormFieldItem<V> {
+	/** Full image url (including the file extension) shown next to the item's label. */
 	imgSrc?: string;
 }
 
@@ -114,13 +118,6 @@ interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	allowDuplicates?: boolean;
 	/** Treat alt-skin variants of an already-picked weapon as duplicates (e.g. picking Splattershot also disables Hero Shot Replica) */
 	disableAltSkinDuplicates?: boolean;
-}
-
-interface FormFieldMapPool<T extends string> extends FormFieldBase<T> {
-	modes?: ModeShort[];
-	minCount?: number;
-	maxCount?: number;
-	disableBannedMaps?: boolean;
 }
 
 interface FormFieldImage<T extends string> extends FormFieldBase<T> {
@@ -203,11 +200,8 @@ export type FormField<V extends string = string> =
 	| FormFieldDatetime<"datetime">
 	| FormFieldDatetime<"date">
 	| FormFieldWeaponPool<"weapon-pool">
-	| FormFieldMapPool<"map-pool">
-	| FormFieldBase<"theme">
 	| FormFieldImage<"image">
-	| FormFieldConstant<"string-constant">
-	| FormFieldConstant<"id-constant">
+	| FormFieldHidden<"hidden">
 	| FormFieldArray<"array", z.ZodType>
 	| FormFieldTimeRange<"time-range">
 	| FormFieldFieldset<"fieldset", z.ZodRawShape>
@@ -272,6 +266,8 @@ export type CustomFieldRenderProps<TValue = unknown> = {
 	error: string | undefined;
 	value: TValue;
 	onChange: (value: TValue) => void;
+	/** True when the field's `disabled` prop is set or the whole form is `readOnly`. */
+	disabled?: boolean;
 };
 
 /** Non-generic version for internal use to avoid excessive type instantiation */
@@ -280,6 +276,7 @@ type FormFieldChildrenProps = {
 	error: string | undefined;
 	value: unknown;
 	onChange: (value: unknown) => void;
+	disabled?: boolean;
 };
 
 /** Props for a typed FormField based on field name and schema */
@@ -290,8 +287,11 @@ export type TypedFormFieldProps<
 	name: TName;
 	label?: string;
 	disabled?: boolean;
+	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
+	autoFocus?: boolean;
 	maxCount?: number;
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
+	onValueChange?: (newValue: unknown) => void;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -307,8 +307,11 @@ export type FlexibleFormFieldProps = {
 	name: NestedPath;
 	label?: string;
 	disabled?: boolean;
+	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
+	autoFocus?: boolean;
 	maxCount?: number;
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
+	onValueChange?: (newValue: unknown) => void;
 	children?:
 		| ((props: FormFieldChildrenProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);

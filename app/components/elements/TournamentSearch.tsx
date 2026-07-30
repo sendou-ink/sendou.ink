@@ -99,7 +99,7 @@ function TournamentItem({ item }: { item: TournamentSearchItem }) {
 			<div className={searchSelectStyles.itemTextsContainer}>
 				<span>{item.name}</span>
 				<LocaleTime
-					date={item.startTime}
+					date={item.startsAt}
 					options={{
 						day: "numeric",
 						month: "numeric",

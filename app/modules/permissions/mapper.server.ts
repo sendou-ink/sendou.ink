@@ -1,4 +1,4 @@
-import type { UserWithPlusTier } from "~/db/tables";
+import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { userDiscordIdIsAged } from "~/utils/users";
 import type { Role } from "./types";
 import { isAdmin, isDev, isQa, isStaff, isSupporter } from "./utils";

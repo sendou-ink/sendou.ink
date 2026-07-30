@@ -17,7 +17,7 @@ export function saveOwn(tournamentId: number) {
 		.execute();
 }
 
-export function unsave({
+export function unsaveByUserId({
 	userId,
 	tournamentId,
 }: {
@@ -78,7 +78,7 @@ async function findCalendarEventIdsByUserId(userId: number): Promise<number[]> {
 	return rows.map((r) => r.calendarEventId);
 }
 
-export async function upcoming(
+export async function findAllUpcomingByUserId(
 	userId: number,
 ): Promise<ShowcaseCalendarEvent[]> {
 	const [savedCalendarEventIds, tournaments] = await Promise.all([

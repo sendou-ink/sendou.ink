@@ -33,7 +33,7 @@ export const loader = async () => {
 			cachedLeaderboards(),
 			SplatoonRotationRepository.findAll(),
 			user
-				? MatchProfileRepository.settingsByUserId(user.id).then(
+				? MatchProfileRepository.findSettingsByUserId(user.id).then(
 						(s) => s.weaponPool ?? null,
 					)
 				: Promise.resolve(null),
@@ -71,7 +71,7 @@ function cachedLeaderboards(): Promise<{
 			const season = Seasons.currentOrPrevious()?.nth ?? 1;
 
 			const [team, user] = await Promise.all([
-				LeaderboardRepository.teamLeaderboardBySeason({
+				LeaderboardRepository.findTeamLeaderboardBySeason({
 					season,
 					onlyOneEntryPerUser: true,
 				}),

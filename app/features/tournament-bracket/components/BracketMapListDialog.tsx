@@ -23,14 +23,14 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables";
+import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables-json";
 import {
 	useTournament,
 	useTournamentPreparedMaps,
 } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
@@ -40,6 +40,7 @@ import { calendarEditPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { logger } from "../../../utils/logger";
 import type { Bracket } from "../core/Bracket";
+import * as Engine from "../core/engine";
 import * as PreparedMaps from "../core/PreparedMaps";
 import { getRounds } from "../core/rounds";
 import type { Tournament } from "../core/Tournament";
@@ -99,11 +100,11 @@ export function BracketMapListDialog({
 	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
 		() => {
 			if (
-				!tournament.bracketManagerSettings(
-					bracket.settings,
-					bracket.type,
-					eliminationTeamCount ?? 2,
-				).consolationFinal
+				!Engine.hasThirdPlaceMatch({
+					type: bracket.type,
+					settings: bracket.settings,
+					participantsCount: eliminationTeamCount ?? 2,
+				})
 			) {
 				return true; // default to true if not applicable or elimination team count not yet set (initial state)
 			}
@@ -209,12 +210,12 @@ export function BracketMapListDialog({
 		if (bracket.type === "single_elimination") {
 			const rounds = getRounds({ type: "single", bracketData });
 
-			const hasThirdPlaceMatch = rounds.some((round) => round.group_id === 1);
+			const hasThirdPlaceMatch = rounds.some((round) => round.groupId === 1);
 
 			if (!thirdPlaceMatchLinked || !hasThirdPlaceMatch) return rounds;
 
 			return rounds
-				.filter((round) => round.group_id !== 1)
+				.filter((round) => round.groupId !== 1)
 				.map((round) =>
 					round.name === "Finals"
 						? {
@@ -342,7 +343,7 @@ export function BracketMapListDialog({
 						Array.from(maps.entries()).map(([key, value]) => ({
 							...value,
 							roundId: key,
-							groupId: rounds.find((r) => r.id === key)?.group_id,
+							groupId: rounds.find((r) => r.id === key)?.groupId,
 							type: countType,
 							customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
 						})),
@@ -579,14 +580,14 @@ export function BracketMapListDialog({
 													);
 
 													const groupInfo = newMapCounts.get(
-														bracketRound.group_id,
+														bracketRound.groupId,
 													);
 													invariant(
 														groupInfo,
 														"Expected group info to be defined",
 													);
 													const oldMapInfo = newMapCounts
-														.get(bracketRound.group_id)
+														.get(bracketRound.groupId)
 														?.get(bracketRound.number);
 													invariant(
 														oldMapInfo,
@@ -714,7 +715,7 @@ function inferMapCounts({
 	tournamentRoundMapList,
 }: {
 	bracket: Bracket;
-	data: TournamentManagerDataSet;
+	data: BracketData;
 	tournamentRoundMapList: TournamentRoundMapList;
 }) {
 	const result: BracketMapCounts = new Map();
@@ -722,7 +723,7 @@ function inferMapCounts({
 	for (const [groupId, value] of bracket.defaultRoundBestOfs(data).entries()) {
 		for (const roundNumber of value.keys()) {
 			const roundId = data.round.find(
-				(round) => round.group_id === groupId && round.number === roundNumber,
+				(round) => round.groupId === groupId && round.number === roundNumber,
 			)?.id;
 			invariant(typeof roundId === "number", "Expected roundId to be defined");
 

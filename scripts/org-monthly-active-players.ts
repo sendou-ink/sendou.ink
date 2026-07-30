@@ -78,8 +78,8 @@ async function getParticipantsForOrgInMonth(
 		)
 		.select(({ fn }) => fn.count<number>("tmgrp.userId").distinct().as("count"))
 		.where("ce.organizationId", "=", organizationId)
-		.where("ced.startTime", ">=", startTimestamp)
-		.where("ced.startTime", "<", endTimestamp)
+		.where("ced.startsAt", ">=", startTimestamp)
+		.where("ced.startsAt", "<", endTimestamp)
 		.where("ttci.checkedInAt", "is not", null)
 		.where("ttci.isCheckOut", "=", 0)
 		.executeTakeFirst();
@@ -98,7 +98,7 @@ async function getOrgsWithRecentTournaments(
 		.select("ce.organizationId")
 		.distinct()
 		.where("ce.organizationId", "is not", null)
-		.where("ced.startTime", ">=", earliestTimestamp)
+		.where("ced.startsAt", ">=", earliestTimestamp)
 		.execute();
 
 	return orgs.map((org) => org.organizationId!);

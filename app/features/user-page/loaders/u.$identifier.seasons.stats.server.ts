@@ -5,7 +5,7 @@ import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatReposi
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import {
 	seasonsSearchParamsSchema,
 	userParamsSchema,
@@ -22,11 +22,11 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		Object.fromEntries(url.searchParams),
 	);
 
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(identifier),
+	const user = notFoundIfNullish(
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(user.id);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
@@ -39,21 +39,21 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		season,
 		stages:
 			info === "stages"
-				? await PlayerStatRepository.seasonStagesByUserId({
+				? await PlayerStatRepository.findSeasonStagesByUserId({
 						season,
 						userId: user.id,
 					})
 				: null,
 		weapons:
 			info === "weapons"
-				? await ReportedWeaponRepository.seasonReportedWeaponsByUserId({
+				? await ReportedWeaponRepository.findSeasonReportedWeaponsByUserId({
 						season,
 						userId: user.id,
 					})
 				: null,
 		players:
 			info === "enemies" || info === "mates"
-				? await PlayerStatRepository.seasonMatesEnemiesByUserId({
+				? await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
 						season,
 						userId: user.id,
 						type: info === "enemies" ? "ENEMY" : "MATE",
