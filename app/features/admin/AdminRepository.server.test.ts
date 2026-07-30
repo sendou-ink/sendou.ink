@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as AdminRepository from "./AdminRepository.server";
 
@@ -264,5 +266,60 @@ describe("unbanUser", () => {
 		const result = await AdminRepository.findAllBannedUsers();
 
 		expect(result.size).toBe(0);
+	});
+});
+
+describe("replacePlusTiers", () => {
+	// tier * 2 + 1, so tier 1 is 3 and the tier 4 users default to is 9
+	const TIER_1_SORT_VALUE = 3;
+	const NO_TIER_SORT_VALUE = 9;
+	const SPLATTERSHOT = 40;
+
+	const createBuild = (ownerId: number) =>
+		BuildFactory.create({
+			ownerId,
+			weaponSplIds: [SPLATTERSHOT],
+			isPrivate: 0,
+		});
+
+	const sortValueByBuildId = async (buildId: number) => {
+		const buildWeapon = await db
+			.selectFrom("BuildWeapon")
+			.select("sortValue")
+			.where("buildId", "=", buildId)
+			.executeTakeFirstOrThrow();
+
+		return buildWeapon.sortValue;
+	};
+
+	beforeEach(async () => {
+		await createUsers(2);
+	});
+
+	test("refreshes the sort values of the builds a new tier applies to", async () => {
+		const build = await createBuild(users.id(1));
+
+		expect(await sortValueByBuildId(build.id)).toBe(NO_TIER_SORT_VALUE);
+
+		await AdminRepository.replacePlusTiers([
+			{ userId: users.id(1), plusTier: 1 },
+		]);
+
+		expect(await sortValueByBuildId(build.id)).toBe(TIER_1_SORT_VALUE);
+	});
+
+	test("refreshes the sort values of the builds of a user left out of the new tiers", async () => {
+		await AdminRepository.replacePlusTiers([
+			{ userId: users.id(1), plusTier: 1 },
+		]);
+		const build = await createBuild(users.id(1));
+
+		expect(await sortValueByBuildId(build.id)).toBe(TIER_1_SORT_VALUE);
+
+		await AdminRepository.replacePlusTiers([
+			{ userId: users.id(2), plusTier: 1 },
+		]);
+
+		expect(await sortValueByBuildId(build.id)).toBe(NO_TIER_SORT_VALUE);
 	});
 });

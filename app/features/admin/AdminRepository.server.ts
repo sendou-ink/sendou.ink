@@ -215,6 +215,7 @@ async function validateMigration(
 	return null;
 }
 
+/** Replaces every `PlusTier` row, also refreshing the build sort values derived from them. */
 export function replacePlusTiers(
 	plusTiers: Array<{ userId: number; plusTier: number }>,
 ) {
@@ -228,6 +229,8 @@ export function replacePlusTiers(
 				plusTiers.map(({ plusTier, userId }) => ({ userId, tier: plusTier })),
 			)
 			.execute();
+
+		await BuildRepository.recalculateAllSortValues(undefined, trx);
 	});
 }
 
