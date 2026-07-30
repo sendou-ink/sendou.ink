@@ -198,10 +198,7 @@ test.describe("Tournament bracket", () => {
 		});
 		const teams = await createTeams(factories, tournament.id, [
 			{ members: [NZAP_TEST_ID] },
-			// xxx: hmm lol
-			{},
-			{},
-			{},
+			...teamSeeds(3),
 		]);
 		const matches = await factories.TournamentFactory.startBracket(
 			tournament.id,
@@ -478,9 +475,7 @@ test.describe("Tournament bracket", () => {
 		});
 		const teams = await createTeams(factories, tournament.id, [
 			{ members: [ADMIN_ID, doubleRegistrant.id] },
-			{},
-			{},
-			{},
+			...teamSeeds(3),
 		]);
 
 		await impersonate(page);
@@ -865,9 +860,7 @@ test.describe("Tournament bracket", () => {
 		});
 		await createTeams(factories, tournament.id, [
 			{ members: [ADMIN_ID] },
-			{},
-			{},
-			{},
+			...teamSeeds(3),
 		]);
 
 		await impersonate(page);
