@@ -2,6 +2,10 @@ import os from "node:os";
 import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
 
+// app modules are imported by the test process itself (factories), and they read
+// this flag at import time. Workers inherit it from this process.
+process.env.VITE_E2E_TEST_RUN = "true";
+
 const WORKER_COUNT =
 	Number(process.env.E2E_WORKERS) ||
 	Math.min(8, Math.max(4, os.cpus().length - 2));
