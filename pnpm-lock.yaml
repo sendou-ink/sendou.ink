@@ -53,14 +53,10 @@ importers:
         version: 10.67.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@react-router/node@8.2.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@tldraw/tldraw':
         specifier: 3.12.1
-<<<<<<< HEAD
-        version: 3.12.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+        version: 3.12.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/pako':
         specifier: ^2.0.4
         version: 2.0.4
-=======
-        version: 3.12.1(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
->>>>>>> origin/main
       '@zumer/snapdom':
         specifier: 2.16.0
         version: 2.16.0
@@ -132,14 +128,10 @@ importers:
         version: 2.1.0
       partysocket:
         specifier: 1.3.0
-<<<<<<< HEAD
-        version: 1.3.0(react@19.2.7)
+        version: 1.3.0(react@19.2.8)
       picocad2-web:
         specifier: ^1.2.12
         version: 1.2.13
-=======
-        version: 1.3.0(react@19.2.8)
->>>>>>> origin/main
       qrcode.react:
         specifier: 4.2.0
         version: 4.2.0(react@19.2.8)
@@ -3327,15 +3319,9 @@ packages:
   get-tsconfig@4.14.0:
     resolution: {integrity: sha512-yTb+8DXzDREzgvYmh6s9vHsSVCHeC0G3PI5bEXNBHtmshPnO+S5O7qgLEOn0I5QvMy6kpZN8K1NKGyilLb93wA==}
 
-<<<<<<< HEAD
-  github-from-package@0.0.0:
-    resolution: {integrity: sha512-SyHy3T1v2NUXn29OsWdxmK6RwHD+vkj3v8en8AOBZ1wBQ/hCAQ5bAQTD02kW4W9tUp/3Qh6J8r9EvntiyCmOOw==}
-
   gl-matrix@3.4.4:
     resolution: {integrity: sha512-latSnyDNt/8zYUB6VIJ6PCh2jBjJX6gnDsoCZ7LyW7GkqrD51EWwa9qCoGixj8YqBtETQK/xY7OmpTF8xz1DdQ==}
 
-=======
->>>>>>> origin/main
   glob@13.0.6:
     resolution: {integrity: sha512-Wjlyrolmm8uDpm/ogGyXZXb1Z+Ca2B8NbJwqBVg0axK9GbBeoS7yGV6vjXnYdGm6X53iehEuxxbyiKp8QmN4Vw==}
     engines: {node: 18 || 20 || >=22}
@@ -4407,15 +4393,9 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
-<<<<<<< HEAD
-  tunnel-agent@0.6.0:
-    resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
-
   twgl.js@7.0.0:
     resolution: {integrity: sha512-9HHZ8emdZb2nKPU0FDIGDlkp6AD9rWFv7ThqdbmUqyBhD3WTQpLN+89w4B+YshGwD1fL6PMVpVKZqC0pikgmcA==}
 
-=======
->>>>>>> origin/main
   type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
@@ -7929,13 +7909,8 @@ snapshots:
     dependencies:
       resolve-pkg-maps: 1.0.0
 
-<<<<<<< HEAD
-  github-from-package@0.0.0: {}
-
   gl-matrix@3.4.4: {}
 
-=======
->>>>>>> origin/main
   glob@13.0.6:
     dependencies:
       minimatch: 10.2.6
@@ -9019,15 +8994,8 @@ snapshots:
 
   tslib@2.8.1: {}
 
-<<<<<<< HEAD
-  tunnel-agent@0.6.0:
-    dependencies:
-      safe-buffer: 5.2.1
-
   twgl.js@7.0.0: {}
 
-=======
->>>>>>> origin/main
   type-fest@2.19.0: {}
 
   type-is@2.1.0:
