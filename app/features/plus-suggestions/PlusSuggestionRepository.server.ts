@@ -100,7 +100,7 @@ export async function findAllByMonth(args: MonthYear) {
 	return result.sort((a, b) => b.entries[0].createdAt - a.entries[0].createdAt);
 }
 
-export function create(args: Insertable<DB["PlusSuggestion"]>) {
+export function insert(args: Insertable<DB["PlusSuggestion"]>) {
 	return db.insertInto("PlusSuggestion").values(args).execute();
 }
 

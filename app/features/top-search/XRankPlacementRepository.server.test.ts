@@ -56,13 +56,13 @@ const createXRankPlacement = async (args: {
 };
 
 describe("refreshAllPeakXp", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		placementCounter = 0;
-		dbReset();
+		await dbReset();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("sets peakXp to max power for each player", async () => {
@@ -133,13 +133,13 @@ describe("refreshAllPeakXp", () => {
 });
 
 describe("refreshTenStarWeapons", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		placementCounter = 0;
-		dbReset();
+		await dbReset();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("JPN placement qualifies regardless of rank", async () => {
@@ -248,13 +248,13 @@ describe("refreshTenStarWeapons", () => {
 });
 
 describe("refreshTenStarWeapons with userId", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		placementCounter = 0;
-		dbReset();
+		await dbReset();
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("only affects the target user", async () => {

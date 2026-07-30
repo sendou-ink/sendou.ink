@@ -3,7 +3,7 @@ import {
 	idConstant,
 	selectDynamic,
 	stringConstant,
-	textAreaRequired,
+	textArea,
 	userSearch,
 } from "~/form/fields";
 import { _action, actualNumber } from "~/utils/zod";
@@ -12,13 +12,13 @@ import { PLUS_TIERS } from "./plus-suggestions-constants";
 export const followUpCommentFormSchema = z.object({
 	tier: idConstant(),
 	suggestedId: idConstant(),
-	comment: textAreaRequired({
+	comment: textArea({
 		label: "labels.comment",
 		maxLength: 280,
 	}),
 });
 
-const suggestionTextFormFieldSchema = textAreaRequired({
+const suggestionTextFormFieldSchema = textArea({
 	label: "labels.comment",
 	maxLength: 500,
 });

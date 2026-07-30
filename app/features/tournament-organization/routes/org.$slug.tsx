@@ -133,7 +133,11 @@ function LogoHeader() {
 
 	return (
 		<div className="stack horizontal md">
-			<Avatar size="lg" url={data.organization.avatarUrl ?? undefined} />
+			<Avatar
+				size="lg"
+				url={data.organization.avatarUrl ?? undefined}
+				loading="eager"
+			/>
 			<div className="stack sm">
 				<div className="text-xl font-bold">{data.organization.name}</div>
 				{canEditOrganization || currentMember ? (
@@ -281,7 +285,7 @@ function AdminControls() {
 				defaultValues={{
 					isEstablished: Boolean(data.organization.isEstablished),
 				}}
-				autoSubmit
+				mode="autoSubmit"
 			>
 				{({ FormField }) => <FormField name="isEstablished" />}
 			</SendouForm>
@@ -481,11 +485,11 @@ function EventsList({
 	const events = filteredByMonth
 		? data.events.filter(
 				(event) =>
-					databaseTimestampToDate(event.startTime).getMonth() === data.month,
+					databaseTimestampToDate(event.startsAt).getMonth() === data.month,
 			)
 		: data.events;
-	const pastEvents = events.filter((event) => event.startTime < now);
-	const upcomingEvents = events.filter((event) => event.startTime >= now);
+	const pastEvents = events.filter((event) => event.startsAt < now);
+	const upcomingEvents = events.filter((event) => event.startsAt >= now);
 
 	return (
 		<div className="w-full stack xs">
@@ -536,7 +540,7 @@ function EventInfo({
 				<div>
 					<div>{event.name}</div>
 					<LocaleTime
-						date={event.startTime}
+						date={event.startsAt}
 						options={{
 							day: "numeric",
 							month: "numeric",

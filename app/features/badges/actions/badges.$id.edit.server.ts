@@ -7,7 +7,7 @@ import {
 	requireRole,
 } from "~/modules/permissions/guards.server";
 import { diff } from "~/utils/arrays";
-import { notFoundIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { notFoundIfNullish, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
 import { actualNumber } from "~/utils/zod";
@@ -20,7 +20,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		schema: editBadgeActionSchema,
 	});
 	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
-	const badge = notFoundIfFalsy(await BadgeRepository.findById(badgeId));
+	const badge = notFoundIfNullish(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {
 		case "MANAGERS": {

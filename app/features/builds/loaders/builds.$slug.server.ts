@@ -32,7 +32,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 
 	const filters = resolveFilters(url.searchParams.get(FILTER_SEARCH_PARAM_KEY));
 
-	const builds = await BuildRepository.allByWeaponId(weaponId, {
+	const builds = await BuildRepository.findAllByWeaponId(weaponId, {
 		limit: filters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
 		sortAbilities: !user?.preferences?.disableBuildAbilitySorting,
 	});

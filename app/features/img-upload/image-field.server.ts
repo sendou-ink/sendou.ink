@@ -7,6 +7,7 @@ import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import * as ImageRepository from "./ImageRepository.server";
+import { dataUrlToImageBuffer } from "./image-bytes.server";
 import { uploadStreamToS3 } from "./s3.server";
 import { MAX_UNVALIDATED_IMG_COUNT } from "./upload-constants";
 
@@ -44,7 +45,11 @@ export async function imageFieldValueToImgId({
 		);
 	}
 
-	const { buffer, extension } = dataUrlToImageBuffer(value.dataUrl);
+	// the client compresses to webp, but browsers without canvas webp encoding fall back to png
+	const { buffer, extension } = dataUrlToImageBuffer(value.dataUrl, [
+		"webp",
+		"png",
+	]);
 
 	const uploadedFileLocation = await uploadStreamToS3(
 		Readable.from(buffer),
@@ -62,38 +67,4 @@ export async function imageFieldValueToImgId({
 	});
 
 	return img.id;
-}
-
-function dataUrlToImageBuffer(dataUrl: string) {
-	const base64 = dataUrl.slice(dataUrl.indexOf(",") + 1);
-	const buffer = Buffer.from(base64, "base64");
-
-	const extension = imageExtensionFromMagicBytes(buffer);
-	invariant(extension, "Submitted image is not a valid webp or png");
-
-	return { buffer, extension };
-}
-
-/**
- * Resolves the image format from the buffer's magic bytes. The client compresses to webp,
- * but browsers without canvas webp encoding silently fall back to png.
- */
-function imageExtensionFromMagicBytes(buffer: Buffer): "webp" | "png" | null {
-	if (
-		buffer.length > 12 &&
-		buffer.toString("ascii", 0, 4) === "RIFF" &&
-		buffer.toString("ascii", 8, 12) === "WEBP"
-	) {
-		return "webp";
-	}
-
-	if (
-		buffer.length > 8 &&
-		buffer[0] === 0x89 &&
-		buffer.toString("ascii", 1, 4) === "PNG"
-	) {
-		return "png";
-	}
-
-	return null;
 }

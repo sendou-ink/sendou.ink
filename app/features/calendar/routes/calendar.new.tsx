@@ -142,7 +142,7 @@ function useDefaultValues() {
 
 	const regClosesAt: RegClosesAtOption = tournamentCtx?.settings.regClosesAt
 		? datesToRegClosesAt({
-				startTime: databaseTimestampToDate(tournamentCtx.startTime),
+				startTime: databaseTimestampToDate(tournamentCtx.startsAt),
 				regClosesAt: databaseTimestampToDate(
 					tournamentCtx.settings.regClosesAt,
 				),
@@ -243,7 +243,7 @@ function TemplateTournamentForm() {
 						<option value="">Select a template</option>
 						{recentTournaments.map((event) => (
 							<option key={event.id} value={event.id}>
-								{event.name} ({formatter.format(event.startTime) ?? ""})
+								{event.name} ({formatter.format(event.startsAt) ?? ""})
 							</option>
 						))}
 					</select>

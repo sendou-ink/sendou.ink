@@ -5,8 +5,9 @@ import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
 import { Table } from "~/components/Table";
-import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/features/tournament/tournament-constants";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentAdminAuditLoader } from "../loaders/to.$id.admin.audit.server";
@@ -25,17 +26,14 @@ const WHEN_FORMAT_OPTIONS = {
 export default function TournamentAdminAuditLog() {
 	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<TournamentAdminAuditLoader>();
-	const [, setSearchParams] = useSearchParams();
-
 	const auditLog = data?.auditLog;
-	if (!auditLog) return null;
 
-	const setPage = (page: number) => {
-		setSearchParams((params) => {
-			params.set("page", String(page));
-			return params;
-		});
-	};
+	const pagination = useSearchParamPagination({
+		currentPage: auditLog?.currentPage ?? 1,
+		pagesCount: auditLog?.pagesCount ?? 1,
+	});
+
+	if (!auditLog) return null;
 
 	return (
 		<div className="stack md">
@@ -62,15 +60,7 @@ export default function TournamentAdminAuditLog() {
 							))}
 						</tbody>
 					</Table>
-					{auditLog.pagesCount > 1 ? (
-						<Pagination
-							currentPage={auditLog.currentPage}
-							pagesCount={auditLog.pagesCount}
-							nextPage={() => setPage(auditLog.currentPage + 1)}
-							previousPage={() => setPage(auditLog.currentPage - 1)}
-							setPage={setPage}
-						/>
-					) : null}
+					{auditLog.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 				</>
 			)}
 		</div>

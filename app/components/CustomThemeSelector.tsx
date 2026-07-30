@@ -1,11 +1,11 @@
 import { Check, Clipboard, PencilLine } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import type { CustomTheme } from "~/db/tables-json";
 import {
 	CUSTOM_THEME_VARS,
-	type CustomTheme,
 	type CustomThemeVar,
-} from "~/db/tables";
+} from "~/features/theme/theme-constants";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import {
 	ACCENT_CHROMA_MULTIPLIERS,

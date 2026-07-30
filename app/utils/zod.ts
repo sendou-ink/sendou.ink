@@ -29,8 +29,6 @@ export const nonEmptyString = z.string().trim().min(1, {
 	message: "Required",
 });
 
-export const dbBoolean = z.coerce.number().min(0).max(1).int();
-
 // matches #RGB and #RRGGBB only (no alpha) https://stackoverflow.com/a/1636354
 const hexCodeWithoutAlphaRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
 export const hexCodeWithoutAlpha = z.string().regex(hexCodeWithoutAlphaRegex);
@@ -404,12 +402,6 @@ export function removeDuplicates(value: unknown) {
 	return Array.from(new Set(value));
 }
 
-export function toArray<T>(value: T | Array<T>) {
-	if (Array.isArray(value)) return value;
-
-	return [value];
-}
-
 export function emptyArrayToNull(value: unknown) {
 	if (Array.isArray(value) && value.length === 0) return null;
 
@@ -424,12 +416,6 @@ export function checkboxValueToBoolean(value: unknown) {
 	}
 
 	return value === "on";
-}
-
-export function checkboxValueToDbBoolean(value: unknown) {
-	if (checkboxValueToBoolean(value)) return 1;
-
-	return 0;
 }
 
 export const _action = <T extends string>(value: T) =>

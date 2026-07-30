@@ -97,7 +97,7 @@ export default function VodPage() {
 					<div className="stack horizontal sm items-center">
 						<PovUser pov={data.vod.pov} />
 						<LocaleTime
-							date={data.vod.youtubeDate}
+							date={data.vod.youtubePublishedAt}
 							options={{
 								day: "numeric",
 								month: "numeric",

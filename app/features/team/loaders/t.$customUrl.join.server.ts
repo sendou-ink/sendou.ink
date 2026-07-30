@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
@@ -13,7 +13,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(
+	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl, {
 			includeInviteCode: true,
 		}),
@@ -22,7 +22,8 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const inviteCode = url.searchParams.get("code") ?? "";
 	const realInviteCode = team.inviteCode!;
 
-	const teamCount = (await TeamRepository.teamsByMemberUserId(user.id)).length;
+	const teamCount = (await TeamRepository.findAllByMemberUserId(user.id))
+		.length;
 
 	const validation = validateInviteCode({
 		inviteCode,

@@ -31,8 +31,8 @@ describe("user page editing", () => {
 	beforeEach(async () => {
 		await dbInsertUsers();
 	});
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("saves profile with default fields", async () => {

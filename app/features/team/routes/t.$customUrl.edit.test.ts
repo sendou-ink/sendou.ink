@@ -26,8 +26,8 @@ describe("team creation", () => {
 	beforeEach(async () => {
 		await dbInsertUsers();
 	});
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("can't take another team's name via editing", async () => {

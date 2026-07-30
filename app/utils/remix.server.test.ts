@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { redirectIfPageOutOfBounds } from "./remix.server";
+import { paginate } from "./remix.server";
 
 const buildUrl = (url: string) => new URL(url);
 
@@ -13,13 +13,25 @@ const captureRedirect = (fn: () => void) => {
 	return null;
 };
 
-describe("redirectIfPageOutOfBounds()", () => {
+describe("paginate()", () => {
+	it("returns the page count rounded up", () => {
+		const result = paginate({
+			url: buildUrl("https://sendou.ink/vods?page=1"),
+			page: 1,
+			pageSize: 10,
+			totalCount: 41,
+		});
+
+		expect(result).toEqual({ currentPage: 1, pagesCount: 5 });
+	});
+
 	it("does not redirect when page is within bounds", () => {
 		const response = captureRedirect(() =>
-			redirectIfPageOutOfBounds({
+			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=2"),
 				page: 2,
-				pagesCount: 5,
+				pageSize: 10,
+				totalCount: 50,
 			}),
 		);
 
@@ -28,10 +40,11 @@ describe("redirectIfPageOutOfBounds()", () => {
 
 	it("does not redirect when page equals pagesCount", () => {
 		const response = captureRedirect(() =>
-			redirectIfPageOutOfBounds({
+			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=5"),
 				page: 5,
-				pagesCount: 5,
+				pageSize: 10,
+				totalCount: 50,
 			}),
 		);
 
@@ -40,10 +53,11 @@ describe("redirectIfPageOutOfBounds()", () => {
 
 	it("redirects to last page when page exceeds pagesCount", () => {
 		const response = captureRedirect(() =>
-			redirectIfPageOutOfBounds({
+			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=99"),
 				page: 99,
-				pagesCount: 5,
+				pageSize: 10,
+				totalCount: 50,
 			}),
 		);
 
@@ -53,12 +67,13 @@ describe("redirectIfPageOutOfBounds()", () => {
 
 	it("preserves other search params when redirecting", () => {
 		const response = captureRedirect(() =>
-			redirectIfPageOutOfBounds({
+			paginate({
 				url: buildUrl(
 					"https://sendou.ink/vods?type=TOURNAMENT&page=99&mode=SZ",
 				),
 				page: 99,
-				pagesCount: 3,
+				pageSize: 10,
+				totalCount: 25,
 			}),
 		);
 
@@ -71,24 +86,24 @@ describe("redirectIfPageOutOfBounds()", () => {
 		expect(locationUrl.searchParams.get("mode")).toBe("SZ");
 	});
 
-	it("does not redirect on page 1 when pagesCount is 0 (empty results)", () => {
-		const response = captureRedirect(() =>
-			redirectIfPageOutOfBounds({
-				url: buildUrl("https://sendou.ink/vods?page=1"),
-				page: 1,
-				pagesCount: 0,
-			}),
-		);
+	it("stays on page 1 when there are no results", () => {
+		const result = paginate({
+			url: buildUrl("https://sendou.ink/vods?page=1"),
+			page: 1,
+			pageSize: 10,
+			totalCount: 0,
+		});
 
-		expect(response).toBeNull();
+		expect(result).toEqual({ currentPage: 1, pagesCount: 1 });
 	});
 
-	it("redirects to page 1 when pagesCount is 0 and page exceeds 1", () => {
+	it("redirects to page 1 when there are no results and page exceeds 1", () => {
 		const response = captureRedirect(() =>
-			redirectIfPageOutOfBounds({
+			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=4"),
 				page: 4,
-				pagesCount: 0,
+				pageSize: 10,
+				totalCount: 0,
 			}),
 		);
 

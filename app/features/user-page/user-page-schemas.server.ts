@@ -9,7 +9,7 @@ export const newBuildSchemaServer = newBuildBaseSchema
 			if (!data.buildToEditId) return true;
 
 			const user = requireUser();
-			const ownerId = await BuildRepository.ownerIdById(data.buildToEditId);
+			const ownerId = await BuildRepository.findOwnerIdById(data.buildToEditId);
 
 			return ownerId === user.id;
 		},

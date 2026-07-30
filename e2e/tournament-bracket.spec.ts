@@ -32,6 +32,7 @@ import {
 	expectScore,
 	goToTab,
 	navigateToMatch,
+	pickBanMap,
 	reportResult,
 	undoLastReport,
 } from "./helpers/tournament-match";
@@ -471,12 +472,20 @@ test.describe("Tournament bracket", () => {
 		await page.getByTestId("finalize-bracket-button").click();
 		await submit(page, "confirm-finalize-bracket-button");
 
-		for (const matchId of [1, 2, 3, 4, 5, 6]) {
+		// every match of the group but one that Sendou's team is not part of
+		for (const matchId of [1, 2, 3, 4, 6]) {
 			await navigateToMatch(page, matchId);
 			await goToTab(page, "action");
 			await reportResult(page, { mapsToReport: 2 });
 			await backToBracket(page);
 		}
+
+		await expect(page.getByText("Waiting on group to finish")).toBeVisible();
+
+		await navigateToMatch(page, 5);
+		await goToTab(page, "action");
+		await reportResult(page, { mapsToReport: 2 });
+		await backToBracket(page);
 
 		await page.getByRole("tab", { name: "Hammerhead" }).click();
 		await isNotVisible(page.getByTestId("brackets-viewer"));
@@ -1066,8 +1075,7 @@ test.describe("Tournament bracket", () => {
 					});
 					await goToTab(page, "action");
 
-					await page.getByTestId("pick-ban-button").first().click();
-					await submit(page, "pick-ban-submit-button");
+					await pickBanMap(page);
 				}
 
 				// once both teams banned the ban prompt is gone and the actual map
@@ -1086,8 +1094,7 @@ test.describe("Tournament bracket", () => {
 			await reportResult(page, { mapsToReport: 1, winner: 2, setEnds: false });
 
 			if (pickBan === "COUNTERPICK") {
-				await page.getByTestId("pick-ban-button").first().click();
-				await submit(page, "pick-ban-submit-button");
+				await pickBanMap(page);
 			}
 
 			await impersonate(page, teamTwoCaptainId);
@@ -1101,8 +1108,7 @@ test.describe("Tournament bracket", () => {
 			await reportResult(page, { mapsToReport: 1, winner: 1, setEnds: false });
 
 			if (pickBan === "COUNTERPICK") {
-				await page.getByTestId("pick-ban-button").first().click();
-				await submit(page, "pick-ban-submit-button");
+				await pickBanMap(page);
 
 				await undoLastReport(page);
 				await expect(page.getByText("Select the winner")).toBeVisible();
@@ -1111,8 +1117,7 @@ test.describe("Tournament bracket", () => {
 					winner: 1,
 					setEnds: false,
 				});
-				await page.getByTestId("pick-ban-button").last().click();
-				await submit(page, "pick-ban-submit-button");
+				await pickBanMap(page, "last");
 				await expect(
 					page.getByText("Counterpick", { exact: true }),
 				).toBeVisible();
@@ -1274,12 +1279,10 @@ test.describe("Tournament bracket", () => {
 		});
 		await goToTab(page, "action");
 
-		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page, "pick-ban-submit-button");
+		await pickBanMap(page);
 
 		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
-		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page, "pick-ban-submit-button");
+		await pickBanMap(page);
 
 		// 3) PreSet: Lower seed bans 2 maps
 		await impersonate(page, lowerSeedCaptainId);
@@ -1289,12 +1292,10 @@ test.describe("Tournament bracket", () => {
 		});
 		await goToTab(page, "action");
 
-		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page, "pick-ban-submit-button");
+		await pickBanMap(page);
 
 		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
-		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page, "pick-ban-submit-button");
+		await pickBanMap(page);
 
 		// 4) Roll auto-executed after last ban; report game 1 score
 		await expect(page.getByTestId("stage-banner")).toBeVisible();
@@ -1305,12 +1306,10 @@ test.describe("Tournament bracket", () => {
 
 		// 5) PostGame: Winner (team 1, captain 33) bans 2 maps
 		await expect(page.getByText(/Ban a map/)).toBeVisible();
-		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page, "pick-ban-submit-button");
+		await pickBanMap(page);
 
 		await expect(page.getByText(/Ban a map \(2\/2\)/)).toBeVisible();
-		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page, "pick-ban-submit-button");
+		await pickBanMap(page);
 
 		// PostGame: Loser (team 2, captain 29) picks a map
 		await impersonate(page, higherSeedCaptainId);
@@ -1321,8 +1320,7 @@ test.describe("Tournament bracket", () => {
 		await goToTab(page, "action");
 
 		await expect(page.getByText(/Pick a map/)).toBeVisible();
-		await page.getByTestId("pick-ban-button").first().click();
-		await submit(page, "pick-ban-submit-button");
+		await pickBanMap(page);
 
 		// 6) Undo game 1 score — also deletes postGame pick/ban events
 		await expect(page.getByTestId("stage-banner")).toBeVisible();

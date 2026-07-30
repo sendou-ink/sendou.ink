@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { db } from "~/db/sql";
-import type { Tables, TournamentAuditLogMetadata } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentAuditLogMetadata } from "~/db/tables-json";
 import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 
@@ -38,7 +39,7 @@ const insertEvent = ({
 	withUserId(actorUserId, () =>
 		db
 			.transaction()
-			.execute((trx) => TournamentAuditLogRepository.insert(trx, args)),
+			.execute((trx) => TournamentAuditLogRepository.insert(args, trx)),
 	);
 
 describe("TournamentAuditLogRepository", () => {
@@ -46,8 +47,8 @@ describe("TournamentAuditLogRepository", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("insert creates a stable history row from the live team", async () => {

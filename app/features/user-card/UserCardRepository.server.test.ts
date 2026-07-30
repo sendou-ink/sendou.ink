@@ -37,18 +37,18 @@ const insertVerifiedXp = async (
 const findXpStat = (card: UserCardData | undefined) =>
 	card?.stats.find((stat) => stat.type === "XP");
 
-describe("UserCardRepository.userCards", () => {
+describe("UserCardRepository.findAllByUserIds", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("returns an empty map when given no user ids", async () => {
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({
+			UserCardRepository.findAllByUserIds({
 				userIds: [],
 			}),
 		);
@@ -66,7 +66,7 @@ describe("UserCardRepository.userCards", () => {
 		await insertVerifiedXp(1, 2500);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({
+			UserCardRepository.findAllByUserIds({
 				userIds: [1, 2],
 			}),
 		);
@@ -112,7 +112,7 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [1] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toMatchObject({
@@ -137,7 +137,7 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [1] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toMatchObject({
@@ -159,7 +159,7 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [1] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toMatchObject({
@@ -180,7 +180,7 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [1] }),
 		);
 
 		expect(findXpStat(userCards.get(1))).toBeUndefined();
@@ -201,7 +201,7 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withUserId(1, () =>
-			UserCardRepository.userCards({
+			UserCardRepository.findAllByUserIds({
 				userIds: [1],
 			}),
 		);
@@ -216,7 +216,7 @@ describe("UserCardRepository.userCards", () => {
 			value: 2,
 		});
 
-		const extras = await UserCardRepository.cardEditExtras(1);
+		const extras = await UserCardRepository.findCardEditExtrasByUserId(1);
 		expect(extras.hiddenCardStats).toEqual(["XP"]);
 	});
 
@@ -234,7 +234,7 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withUserId(1, () =>
-			UserCardRepository.userCards({
+			UserCardRepository.findAllByUserIds({
 				userIds: [1],
 				includeHiddenStats: true,
 			}),
@@ -265,7 +265,7 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withUserId(1, () =>
-			UserCardRepository.userCards({
+			UserCardRepository.findAllByUserIds({
 				userIds: [1],
 			}),
 		);

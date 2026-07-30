@@ -422,7 +422,7 @@ function InProgressTab({
 			ownTeamId={ownTeamId}
 			stageId={currentMap.stageId}
 			mode={currentMap.mode}
-			withPoints={false}
+			withKo={false}
 			isSubmitting={fetcher.state !== "idle"}
 			setEnding={setEnding}
 			onSubmit={({ winnerId }) => {

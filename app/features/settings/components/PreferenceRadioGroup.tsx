@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import type { Preference } from "~/db/tables";
+import type { Preference } from "~/db/tables-json";
 import { preferenceEmojiUrl } from "~/utils/urls";
 import styles from "./PreferenceRadioGroup.module.css";
 

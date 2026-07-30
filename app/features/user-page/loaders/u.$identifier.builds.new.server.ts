@@ -22,7 +22,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		Object.fromEntries(url.searchParams),
 	);
 
-	const usersBuilds = await BuildRepository.allByUserId(user.id, {
+	const usersBuilds = await BuildRepository.findAllByUserId(user.id, {
 		showPrivate: true,
 	});
 	const buildToEdit = usersBuilds.find(
@@ -53,7 +53,7 @@ type NewBuildDefaultValues = Partial<z.infer<typeof newBuildBaseSchema>>;
 function resolveDefaultValues(
 	searchParams: URLSearchParams,
 	buildToEdit:
-		| Awaited<ReturnType<typeof BuildRepository.allByUserId>>[number]
+		| Awaited<ReturnType<typeof BuildRepository.findAllByUserId>>[number]
 		| undefined,
 ): NewBuildDefaultValues | null {
 	const weapons = resolveDefaultWeapons();
@@ -74,7 +74,7 @@ function resolveDefaultValues(
 		title: buildToEdit?.title,
 		description: buildToEdit?.description ?? null,
 		modes: buildToEdit?.modes ?? [],
-		private: Boolean(buildToEdit?.private),
+		isPrivate: Boolean(buildToEdit?.isPrivate),
 	};
 
 	function resolveDefaultWeapons(): WeaponPoolItem[] {

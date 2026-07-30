@@ -509,7 +509,7 @@ function ResultItem({ result }: { result: SearchResult }) {
 					<div className={styles.resultTexts}>
 						<span className={styles.resultName}>{result.name}</span>
 						<LocaleTime
-							date={result.startTime}
+							date={result.startsAt}
 							options={{ day: "numeric", month: "long", year: "numeric" }}
 							className={styles.resultSecondary}
 						/>

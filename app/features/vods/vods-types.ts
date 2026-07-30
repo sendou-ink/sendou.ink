@@ -15,7 +15,7 @@ export interface Vod {
 		| string;
 	title: Tables["Video"]["title"];
 	type: Tables["Video"]["type"];
-	youtubeDate: Tables["Video"]["youtubeDate"];
+	youtubePublishedAt: Tables["Video"]["youtubePublishedAt"];
 	youtubeId: Tables["Video"]["youtubeId"];
 	matches: Array<VodMatch>;
 	submitterUserId: Tables["Video"]["submitterUserId"];
@@ -28,7 +28,7 @@ export type VodMatch = Pick<
 	weapons: Array<MainWeaponId>;
 };
 
-export type ListVod = Omit<Vod, "youtubeDate" | "matches"> & {
+export type ListVod = Omit<Vod, "youtubePublishedAt" | "matches"> & {
 	weapons: Array<MainWeaponId>;
 	type: Tables["Video"]["type"];
 };

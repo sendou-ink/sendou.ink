@@ -1,62 +1,57 @@
-import type { FileUpload } from "@remix-run/form-data-parser";
-import { nanoid } from "nanoid";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
+import * as R from "remeda";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
-import { uploadStreamToS3 } from "~/features/img-upload/s3.server";
-import { ALLOWED_IMAGE_EXTENSIONS } from "~/features/img-upload/upload-constants";
 import { notify } from "~/features/notifications/core/notify.server";
+import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
-import {
-	errorToastIfFalsy,
-	parseFormData,
-	parseRequestPayload,
-	safeParseMultipartFormData,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { userArtPage } from "~/utils/urls";
-import { NEW_ART_EXISTING_SEARCH_PARAM_KEY } from "../art-constants";
-import { editArtSchema, newArtSchema } from "../art-schemas.server";
+import { ART_FORM_MAX_BODY_BYTES } from "../art-image";
+import { uploadArtImage } from "../art-image.server";
+import { artFormSchema } from "../art-schemas";
 
-export const action: ActionFunction = async ({ request, url }) => {
+export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 	requireRole("ARTIST");
 
-	const searchParams = url.searchParams;
-	const artIdRaw = searchParams.get(NEW_ART_EXISTING_SEARCH_PARAM_KEY);
+	const result = await parseFormData({
+		request,
+		schema: artFormSchema,
+		maxBodyBytes: ART_FORM_MAX_BODY_BYTES,
+	});
 
-	// updating logic
-	if (artIdRaw) {
-		const artId = Number(artIdRaw);
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
 
+	const data = result.data;
+	const linkedUsers = R.unique(
+		data.linkedUsers.filter((userId) => typeof userId === "number"),
+	);
+
+	if (data.artId) {
 		const userArts = await ArtRepository.findArtsByUserId(user.id, {
 			includeTagged: false,
 		});
-		const existingArt = userArts.find((art) => art.id === artId);
+		const existingArt = userArts.find((art) => art.id === data.artId);
 		errorToastIfFalsy(existingArt, "Art author is someone else");
 
-		const data = await parseRequestPayload({
-			request,
-			schema: editArtSchema,
-		});
-
-		const editedArtId = await ArtRepository.update(artId, {
+		const editedArtId = await ArtRepository.update(data.artId, {
 			description: data.description,
-			isShowcase: data.isShowcase,
-			linkedUsers: data.linkedUsers,
+			isShowcase: toDBBoolean(data.isShowcase),
+			linkedUsers,
 			tags: data.tags,
 		});
 
 		const existingLinkedUserIds =
 			existingArt.linkedUsers?.map((u) => u.id) ?? [];
-		const newLinkedUsers = data.linkedUsers.filter(
-			(userId) => !existingLinkedUserIds.includes(userId),
-		);
 
 		notify({
-			userIds: newLinkedUsers,
+			userIds: R.difference(linkedUsers, existingLinkedUserIds),
 			notification: {
 				type: "TAGGED_TO_ART",
 				meta: {
@@ -67,61 +62,18 @@ export const action: ActionFunction = async ({ request, url }) => {
 			},
 		});
 	} else {
-		const preDecidedFilename = `art-${nanoid()}-${Date.now()}`;
-
-		const uploadHandler = async (fileUpload: FileUpload) => {
-			if (
-				fileUpload.fieldName === "img" ||
-				fileUpload.fieldName === "smallImg"
-			) {
-				const ending = fileUpload.name.split(".").pop()?.toLowerCase();
-				invariant(
-					ending && ending !== fileUpload.name,
-					`File missing extension: "${fileUpload.name}"`,
-				);
-				invariant(
-					ALLOWED_IMAGE_EXTENSIONS.includes(ending),
-					`Invalid file extension: "${ending}"`,
-				);
-				const newFilename = `${preDecidedFilename}${fileUpload.fieldName === "smallImg" ? "-small" : ""}.${ending}`;
-
-				const uploadedFileLocation = await uploadStreamToS3(
-					fileUpload.stream(),
-					newFilename,
-				);
-				return uploadedFileLocation;
-			}
-			return null;
-		};
-
-		const formData = await safeParseMultipartFormData(
-			request,
-			// 5MB
-			{ maxFileSize: 5 * 1024 * 1024 },
-			uploadHandler,
-		);
-		const imgSrc = formData.get("img") as string | null;
-		invariant(imgSrc);
-
-		const urlParts = imgSrc.split("/");
-		const fileName = urlParts[urlParts.length - 1];
-		invariant(fileName);
-
-		const data = await parseFormData({
-			formData,
-			schema: newArtSchema,
-		});
+		errorToastIfFalsy(data.img?.type === "NEW", "Art image is missing");
 
 		const addedArt = await ArtRepository.insert({
 			description: data.description,
-			url: fileName,
+			url: await uploadArtImage(data.img),
 			validatedAt: user.patronTier ? dateToDatabaseTimestamp(new Date()) : null,
-			linkedUsers: data.linkedUsers,
+			linkedUsers,
 			tags: data.tags,
 		});
 
 		notify({
-			userIds: data.linkedUsers,
+			userIds: linkedUsers,
 			notification: {
 				type: "TAGGED_TO_ART",
 				meta: {

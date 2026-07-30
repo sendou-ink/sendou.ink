@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 
 const organizationParamsSchema = z.object({
@@ -11,7 +11,7 @@ export async function organizationFromParams(
 	params: LoaderFunctionArgs["params"],
 ) {
 	const { slug } = parseParams({ params, schema: organizationParamsSchema });
-	return notFoundIfFalsy(
+	return notFoundIfNullish(
 		await TournamentOrganizationRepository.findBySlug(slug),
 	);
 }

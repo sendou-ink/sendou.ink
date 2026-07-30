@@ -176,7 +176,7 @@ async function cachedTournaments() {
 		cache,
 		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
-			const tournaments = await TournamentRepository.forShowcase();
+			const tournaments = await TournamentRepository.findAllForShowcase();
 			const mapped = tournaments.map(mapTournamentFromDB);
 
 			return deleteExtraResults(mapped);
@@ -190,7 +190,7 @@ function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
 		(tournament) =>
 			tournament.firstPlacers.length === 0 &&
 			!tournament.isFinalized &&
-			tournament.startTime > threeDaysAgo,
+			tournament.startsAt > threeDaysAgo,
 	);
 
 	const rankedResults = tournaments
@@ -214,7 +214,7 @@ function deleteExtraResults(tournaments: ShowcaseCalendarEvent[]) {
 
 	return {
 		results: [...rankedResultsToKeep, ...nonRankedResultsToKeep].sort(
-			(a, b) => b.startTime - a.startTime,
+			(a, b) => b.startsAt - a.startsAt,
 		),
 		upcoming: nonResults,
 	};
@@ -225,8 +225,8 @@ function resolveShowcaseTournaments(
 ): ShowcaseCalendarEvent[] {
 	const happeningDuringNextWeek = tournaments.filter(
 		(tournament) =>
-			tournament.startTime > databaseTimestampSixHoursAgo() &&
-			tournament.startTime < databaseTimestampWeekFromNow(),
+			tournament.startsAt > databaseTimestampSixHoursAgo() &&
+			tournament.startsAt < databaseTimestampWeekFromNow(),
 	);
 	const sorted = happeningDuringNextWeek.sort(
 		(a, b) => b.teamsCount - a.teamsCount,
@@ -238,7 +238,7 @@ function resolveShowcaseTournaments(
 		.filter((tournament) => !tournament.isRanked)
 		.slice(0, 6 - ranked.length);
 
-	return [...ranked, ...nonRanked].sort((a, b) => a.startTime - b.startTime);
+	return [...ranked, ...nonRanked].sort((a, b) => a.startsAt - b.startsAt);
 }
 
 async function tournamentsToParticipationInfoMap(
@@ -246,7 +246,7 @@ async function tournamentsToParticipationInfoMap(
 ): Promise<Map<CommonUser["id"], ParticipationInfo>> {
 	const tournamentIds = tournaments.map((tournament) => tournament.id);
 	const tournamentsWithUsers =
-		await TournamentRepository.relatedUsersByTournamentIds(tournamentIds);
+		await TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds);
 
 	const result: Map<CommonUser["id"], ParticipationInfo> = new Map();
 
@@ -302,7 +302,7 @@ function mapTournamentFromDB(
 		authorId: tournament.authorId,
 		organizationId: tournament.organizationId,
 		name: tournament.name,
-		startTime: tournament.startTime,
+		startsAt: tournament.startsAt,
 		teamsCount: tournament.teamsCount,
 		logoUrl: tournament.logoUrl,
 		organization: tournament.organization
@@ -313,7 +313,7 @@ function mapTournamentFromDB(
 			: null,
 		isRanked: tournamentIsRanked({
 			isSetAsRanked: tournament.settings.isRanked,
-			startTime: databaseTimestampToDate(tournament.startTime),
+			startsAt: databaseTimestampToDate(tournament.startsAt),
 			minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 			isTest: tournament.settings.isTest ?? false,
 		}),

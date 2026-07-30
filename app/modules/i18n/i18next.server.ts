@@ -88,11 +88,20 @@ export function getServerTFunction<
  * The request-scoped i18next instance, used to provide translations while
  * server-side rendering. Reads from the React Router context so it can be called
  * from `entry.server` where the request context is passed explicitly.
+ *
+ * Falls back to a shared default-language instance when the context is missing.
+ * This happens when the render is an error boundary for a request whose
+ * middleware chain threw before {@link i18nMiddleware} ran: without the fallback
+ * the missing context would throw a second error that masks the original one.
  */
 export function getI18nInstance(
 	context: Readonly<RouterContextProvider>,
 ): i18n {
-	return getInstanceFromContext(context);
+	try {
+		return getInstanceFromContext(context);
+	} catch {
+		return fallbackI18nInstance();
+	}
 }
 
 /**
@@ -117,4 +126,24 @@ function currentStore(): I18nStore {
 	const store = i18nAsyncLocalStorage.getStore();
 	invariant(store, "i18n store not found, is i18nMiddleware registered?");
 	return store;
+}
+
+let sharedFallbackInstance: i18n | undefined;
+
+function fallbackI18nInstance(): i18n {
+	if (!sharedFallbackInstance) {
+		const instance = createInstance();
+		instance.use(initReactI18next);
+		// initAsync: false makes init synchronous, which is safe here since
+		// resources are already in-memory and lets this be called from the sync
+		// getI18nInstance without awaiting.
+		instance.init({
+			...config,
+			resources,
+			lng: config.fallbackLng,
+			initAsync: false,
+		});
+		sharedFallbackInstance = instance;
+	}
+	return sharedFallbackInstance;
 }

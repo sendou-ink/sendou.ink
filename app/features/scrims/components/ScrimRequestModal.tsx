@@ -29,10 +29,10 @@ export function ScrimRequestModal({
 		minute: "numeric",
 	});
 
-	const timeOptions = post.rangeEnd
+	const timeOptions = post.rangeEndsAt
 		? generateTimeOptions(
-				databaseTimestampToDate(post.at),
-				databaseTimestampToDate(post.rangeEnd),
+				databaseTimestampToDate(post.startsAt),
+				databaseTimestampToDate(post.rangeEndsAt),
 			).map((timestamp) => ({
 				value: String(timestamp),
 				label: timeFormatter.format(new Date(timestamp)) ?? "",
@@ -55,7 +55,7 @@ export function ScrimRequestModal({
 									) as unknown as number[],
 								},
 					message: "",
-					at: post.rangeEnd && timeOptions[0] ? timeOptions[0].value : null,
+					at: post.rangeEndsAt && timeOptions[0] ? timeOptions[0].value : null,
 				}}
 			>
 				{({ FormField }) => (
@@ -74,7 +74,7 @@ export function ScrimRequestModal({
 								<WithFormField usersTeams={data.teams} {...props} />
 							)}
 						</FormField>
-						{post.rangeEnd ? (
+						{post.rangeEndsAt ? (
 							<FormField name="at" options={timeOptions} />
 						) : null}
 						<FormField name="message" />

@@ -1,19 +1,28 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import { cancelActiveGroupLikes } from "~/features/sendouq/core/likes.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
-import { errorToast, parseRequestPayload } from "~/utils/remix.server";
+import { errorToast } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { settingsActionSchema } from "../settings-schemas.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: settingsActionSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	switch (data._action) {
 		case "UPDATE_CUSTOM_THEME": {
@@ -59,13 +68,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "UPDATE_MATCH_PROFILE": {
-			await MatchProfileRepository.updateOwnMatchProfile({
-				mapModePreferences: data.mapModePreferences,
-				vc: data.vc,
-				languages: data.languages,
-				weaponPool: data.weaponPool,
-				noScreen: Number(data.noScreen),
-			});
+			const { mapModePreferencesChanged, noScreenChanged } =
+				await MatchProfileRepository.updateOwnMatchProfile({
+					mapModePreferences: data.mapModePreferences,
+					vc: data.vc,
+					languages: data.languages,
+					weaponPool: data.weaponPool,
+					noScreen: toDBBoolean(data.noScreen),
+				});
+
+			// Challenges are made based on the modes/preferences shown at that
+			// moment, so changing them must undo pending requests to/from the group.
+			if (mapModePreferencesChanged || noScreenChanged) {
+				await cancelActiveGroupLikes(user.id);
+			}
 			break;
 		}
 		default: {

@@ -3,6 +3,7 @@ import {
 	expect,
 	type Locator,
 	type Page,
+	type Response,
 } from "@playwright/test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { SeedVariation } from "~/features/api-private/routes/seed";
@@ -171,26 +172,80 @@ async function retryPost(
 }
 
 export async function submit(page: Page, testId?: string) {
-	const postPromise = page.waitForResponse(
-		(res) => res.request().method() === "POST",
-	);
-	await page.getByTestId(testId ?? "submit-button").click();
-	const postRes = await postPromise;
+	// Started before the click because the data GET can land before awaiting the
+	// POST response hands control back to us, and `page.waitForResponse` only
+	// sees responses arriving after it is called.
+	const dataGet = watchForDataGetAfterPOST(page);
 
-	// Remix returns 202 from action endpoints when the action threw/returned a
-	// redirect. The fetcher then drives a client-side navigation and, once
-	// that completes, fires a GET against the new route's data. If we return
-	// before that GET fires, a subsequent Link click can be aborted mid-flight
-	// by the queued navigation (ERR_ABORTED on the new route's .data fetch),
-	// leaving the test on the old page.
-	if (postRes.status() === 202) {
-		await page.waitForResponse(
-			(res) => res.request().method() === "GET" && res.url().includes(".data"),
-		);
+	try {
+		const postRes = await waitForPOSTResponse(page, async () => {
+			await page.getByTestId(testId ?? "submit-button").click();
+		});
+
+		// Remix returns 202 from action endpoints when the action threw/returned a
+		// redirect. The fetcher then drives a client-side navigation and, once
+		// that completes, fires a GET against the new route's data. If we return
+		// before that GET fires, a subsequent Link click can be aborted mid-flight
+		// by the queued navigation (ERR_ABORTED on the new route's .data fetch),
+		// leaving the test on the old page.
+		if (postRes.status() !== 202) return;
+
+		await dataGet.fired;
 		// Toast flash params are stripped right after via a replace navigation
 		// (without revalidation); wait for it so it can't abort a later click.
 		await expect(page).not.toHaveURL(/__(?:success|error)=/);
+	} finally {
+		dataGet.stop();
 	}
+}
+
+/**
+ * Resolves once a route data GET follows the POST, without missing one that
+ * arrives while the caller is still awaiting the POST response.
+ */
+function watchForDataGetAfterPOST(page: Page) {
+	const TIMEOUT = 15_000;
+
+	let postSeen = false;
+	let resolveFired: () => void = () => {};
+	let rejectFired: (error: Error) => void = () => {};
+
+	const fired = new Promise<void>((resolve, reject) => {
+		resolveFired = resolve;
+		rejectFired = reject;
+	});
+
+	const onResponse = (res: Response) => {
+		if (!postSeen) {
+			postSeen = res.request().method() === "POST";
+			return;
+		}
+
+		if (res.request().method() === "GET" && res.url().includes(".data")) {
+			resolveFired();
+		}
+	};
+	page.on("response", onResponse);
+
+	const timeout = setTimeout(
+		() =>
+			rejectFired(
+				new Error(
+					`submit: no route data GET followed the redirecting POST within ${TIMEOUT}ms`,
+				),
+			),
+		TIMEOUT,
+	);
+
+	return {
+		fired,
+		stop: () => {
+			clearTimeout(timeout);
+			page.off("response", onResponse);
+			// Nothing awaits `fired` when the POST wasn't a redirect
+			resolveFired();
+		},
+	};
 }
 
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
@@ -199,8 +254,9 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 
 	// React Aria buttons fire their handler on press end. Occasionally a click
 	// registers the press start (the button goes `:active`) but the press never
-	// completes into a submit, so no POST fires. Re-issue the action when the
-	// expected POST doesn't arrive within the per-attempt window.
+	// completes into a submit, so no POST fires. The match page revalidating on
+	// a websocket message mid-click is one way this happens. Re-issue the action
+	// when the expected POST doesn't arrive within the per-attempt window.
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		const responsePromise = page.waitForResponse(
 			(res) => res.request().method() === "POST",
@@ -208,12 +264,13 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 		);
 		await cb();
 		try {
-			await responsePromise;
-			return;
+			return await responsePromise;
 		} catch (error) {
 			if (attempt === MAX_ATTEMPTS) throw error;
 		}
 	}
+
+	throw new Error("waitForPOSTResponse: unreachable");
 }
 
 export function isNotVisible(locator: Locator) {

@@ -4,7 +4,8 @@ import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
-	const availableMonthYears = await XRankPlacementRepository.monthYears();
+	const availableMonthYears =
+		await XRankPlacementRepository.findAllMonthYears();
 	const { month: latestMonth, year: latestYear } = availableMonthYears[0];
 
 	const mode = (() => {

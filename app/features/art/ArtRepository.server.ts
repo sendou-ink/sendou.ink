@@ -1,4 +1,4 @@
-import type { Transaction } from "kysely";
+import { sql, type Transaction } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
@@ -10,7 +10,7 @@ import {
 import { seededRandom } from "~/utils/random";
 import type { ListedArt } from "./art-types";
 
-export function unlinkSelfFromArt(artId: number) {
+export function unlinkOwnFromArt(artId: number) {
 	return db
 		.deleteFrom("ArtUserMetadata")
 		.where("artId", "=", artId)
@@ -28,7 +28,26 @@ function getDailySeed() {
 
 export async function findShowcaseArts(): Promise<ListedArt[]> {
 	const arts = await db
-		.selectFrom("Art")
+		.selectFrom((eb) =>
+			eb
+				// each author's most recent art (showcase ones first) via SQLite's
+				// max() + bare column rule, packed into one integer since createdAt
+				// always stays below the isShowcase component
+				.selectFrom("Art")
+				.innerJoin("User", "User.id", "Art.authorId")
+				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
+				.select(({ fn }) => [
+					"Art.id as artId",
+					fn
+						.max(
+							sql<number>`"Art"."isShowcase" * 10000000000 + "Art"."createdAt"`,
+						)
+						.as("packedShowcaseCreatedAt"),
+				])
+				.groupBy("Art.authorId")
+				.as("BestOfAuthor"),
+		)
+		.innerJoin("Art", "Art.id", "BestOfAuthor.artId")
 		.innerJoin("User", "User.id", "Art.authorId")
 		.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
 		.select((eb) => [
@@ -50,31 +69,19 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 		.orderBy("User.id", "asc")
 		.execute();
 
-	const encounteredUserIds = new Set<number>();
-
-	const mappedArts = arts
-		.filter((row) => {
-			if (encounteredUserIds.has(row.userId)) {
-				return false;
-			}
-
-			encounteredUserIds.add(row.userId);
-
-			return true;
-		})
-		.map((a) => ({
-			id: a.id,
-			createdAt: a.createdAt,
-			url: a.url,
-			isShowcase: Boolean(a.isShowcase),
-			author: {
-				commissionsOpen: a.commissionsOpen,
-				discordAvatar: a.discordAvatar,
-				customAvatarUrl: a.customAvatarUrl,
-				discordId: a.discordId,
-				username: a.username,
-			},
-		}));
+	const mappedArts = arts.map((a) => ({
+		id: a.id,
+		createdAt: a.createdAt,
+		url: a.url,
+		isShowcase: Boolean(a.isShowcase),
+		author: {
+			commissionsOpen: a.commissionsOpen,
+			discordAvatar: a.discordAvatar,
+			customAvatarUrl: a.customAvatarUrl,
+			discordId: a.discordId,
+			username: a.username,
+		},
+	}));
 
 	const { seededShuffle } = seededRandom(getDailySeed());
 	return seededShuffle(mappedArts);
@@ -290,7 +297,7 @@ export async function findArtsByUserId(
 				username: row.username,
 				discordAvatar: row.discordAvatar,
 				customAvatarUrl: row.customAvatarUrl,
-				commissionsOpen: row.commissionsOpen ?? undefined,
+				commissionsOpen: row.commissionsOpen,
 			},
 		})),
 		...authored.map((row) => ({
@@ -357,11 +364,7 @@ export async function insert(args: InsertArtArgs) {
 				.execute();
 		}
 
-		await insertTags(trx, {
-			tags: args.tags,
-			authorId,
-			artId: art.id,
-		});
+		await insertTags({ tags: args.tags, authorId, artId: art.id }, trx);
 
 		return art;
 	});
@@ -408,18 +411,13 @@ export async function update(id: number, args: UpdateArtArgs) {
 
 		await trx.deleteFrom("TaggedArt").where("artId", "=", id).execute();
 
-		await insertTags(trx, {
-			tags: args.tags,
-			authorId,
-			artId: id,
-		});
+		await insertTags({ tags: args.tags, authorId, artId: id }, trx);
 
 		return id;
 	});
 }
 
 async function insertTags(
-	trx: Transaction<DB>,
 	{
 		tags,
 		authorId,
@@ -429,25 +427,37 @@ async function insertTags(
 		authorId: number;
 		artId: number;
 	},
+	trx: Transaction<DB>,
 ) {
-	for (const tag of tags) {
-		let tagId = tag.id;
-		if (!tagId) {
+	if (tags.length === 0) return;
+
+	const newTagNames = tags
+		.filter((tag) => !tag.id)
+		.map((tag) => {
 			if (!tag.name) {
 				throw new Error("tag name must be provided if no id");
 			}
+			return tag.name;
+		});
 
-			const newTag = await trx
-				.insertInto("ArtTag")
-				.values({
-					name: tag.name,
-					authorId,
-				})
-				.returningAll()
-				.executeTakeFirstOrThrow();
-			tagId = newTag.id;
-		}
+	const newTagIds =
+		newTagNames.length > 0
+			? (
+					await trx
+						.insertInto("ArtTag")
+						.values(newTagNames.map((name) => ({ name, authorId })))
+						.returning("ArtTag.id")
+						.execute()
+				).map((tag) => tag.id)
+			: [];
 
-		await trx.insertInto("TaggedArt").values({ artId, tagId }).execute();
-	}
+	const tagIds = [
+		...tags.flatMap((tag) => (tag.id ? [tag.id] : [])),
+		...newTagIds,
+	];
+
+	await trx
+		.insertInto("TaggedArt")
+		.values(tagIds.map((tagId) => ({ artId, tagId })))
+		.execute();
 }

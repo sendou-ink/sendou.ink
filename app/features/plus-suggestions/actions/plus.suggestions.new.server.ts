@@ -57,7 +57,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		"Can't make a suggestion right now",
 	);
 
-	await PlusSuggestionRepository.create({
+	await PlusSuggestionRepository.insert({
 		authorId: user.id,
 		suggestedId: suggested.id,
 		tier,

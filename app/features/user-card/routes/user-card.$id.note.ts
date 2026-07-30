@@ -1,7 +1,8 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
-import { parseParams, parseRequestPayload } from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { parseParams } from "~/utils/remix.server";
 import {
 	userCardNoteParamsSchema,
 	userCardNoteSchema,
@@ -14,10 +15,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		params,
 		schema: userCardNoteParamsSchema,
 	}).id;
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: userCardNoteSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	const isEmptySave =
 		data._action === "SAVE" &&
@@ -26,7 +33,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	if (data._action === "DELETE" || isEmptySave) {
 		await PrivateUserNoteRepository.deleteOwnNoteById(targetId);
-		return { ok: true };
+		return null;
 	}
 
 	await PrivateUserNoteRepository.upsertOwnNote({
@@ -35,5 +42,5 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		text: data.comment,
 	});
 
-	return { ok: true };
+	return null;
 };

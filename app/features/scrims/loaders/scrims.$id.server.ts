@@ -3,7 +3,7 @@ import { chatAccessible } from "~/features/chat/chat-utils";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { notFoundIfFalsy } from "../../../utils/remix.server";
+import { notFoundIfNullish } from "../../../utils/remix.server";
 import {
 	type AuthenticatedUser,
 	requireUser,
@@ -17,7 +17,7 @@ import * as ScrimPostRepository from "../ScrimPostRepository.server";
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
-	const post = notFoundIfFalsy(
+	const post = notFoundIfNullish(
 		await ScrimPostRepository.findById(Number(params.id)),
 	);
 
@@ -37,7 +37,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const mapByMap = await resolveMapByMap({ post, user });
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: participantIds,
 			include: { friendCode: true },
 		})),

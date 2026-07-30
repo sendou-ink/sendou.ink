@@ -25,8 +25,9 @@ export async function cachedFullUserLeaderboard(season: number) {
 		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 		async getFreshValue() {
-			const leaderboard = await LeaderboardRepository.userSPLeaderboard(season);
-			const withTiers = addTiers(leaderboard, season);
+			const leaderboard =
+				await LeaderboardRepository.findUserSPLeaderboard(season);
+			const withTiers = await addTiers(leaderboard, season);
 
 			const shouldAddPendingPlusTier =
 				season === Seasons.current()?.nth &&
@@ -41,17 +42,17 @@ export async function cachedFullUserLeaderboard(season: number) {
 
 			return addWeapons(
 				withPendingPlusTiers,
-				await LeaderboardRepository.seasonPopularUsersWeapon(season),
+				await LeaderboardRepository.findSeasonPopularUsersWeapon(season),
 			);
 		},
 	});
 }
 
-function addTiers<T extends UserSPLeaderboardItem>(
+async function addTiers<T extends UserSPLeaderboardItem>(
 	entries: T[],
 	season: number,
 ) {
-	const tiers = freshUserSkills(season);
+	const tiers = await freshUserSkills(season);
 
 	const encounteredTiers = new Set<string>();
 	return entries.map((entry, i) => {
@@ -144,7 +145,7 @@ export function filterByWeaponCategory<
 	);
 }
 
-export function ownEntryPeek({
+export async function ownEntryPeek({
 	leaderboard,
 	userId,
 	season,
@@ -160,9 +161,9 @@ export function ownEntryPeek({
 
 	if (!found) return null;
 
-	const withTier = addTiers([found], season)[0];
+	const withTier = (await addTiers([found], season))[0];
 
-	const { intervals } = freshUserSkills(season);
+	const { intervals } = await freshUserSkills(season);
 
 	const currentTierIndex = intervals.findIndex(
 		(interval) =>

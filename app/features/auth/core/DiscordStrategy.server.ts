@@ -93,7 +93,7 @@ export const DiscordStrategy = () => {
 					discordUserDetailsSchema.parse(discordResponses);
 
 				const isAlreadyRegistered = Boolean(
-					await UserRepository.identifierToUserId(user.id),
+					await UserRepository.findIdByIdentifier(user.id),
 				);
 
 				if (!isAlreadyRegistered && !user.verified) {

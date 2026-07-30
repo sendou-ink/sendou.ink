@@ -3,7 +3,9 @@ import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { calendarNewBaseSchema } from "~/features/calendar/calendar-new-schemas";
 import {
 	CALENDAR_NEW_PAGE,
+	calendarEventPage,
 	calendarPage,
+	calendarReportWinnersPage,
 	TOURNAMENT_NEW_PAGE,
 	tournamentBracketsPage,
 	tournamentInfoPage,
@@ -16,6 +18,8 @@ import {
 	isNotVisible,
 	navigate,
 	seed,
+	selectUser,
+	submit,
 	test,
 } from "./helpers/playwright";
 import { createFormHelpers } from "./helpers/playwright-form";
@@ -70,6 +74,9 @@ async function addFollowUpBracket(
 }
 
 const SENDOU_INK_TOURNAMENTS_COUNT = 6;
+
+/** Seeded past event that is deliberately left without reported results. */
+const EVENT_WITHOUT_RESULTS_ID = 1;
 
 test.describe("Calendar", () => {
 	test("applies filters and operates hidden events toggle", async ({
@@ -270,5 +277,49 @@ test.describe("Calendar", () => {
 			await expect(page.getByText(stage, { exact: true })).toBeVisible();
 			await expect(page.getByAltText(mode).first()).toBeVisible();
 		}
+	});
+
+	test("reports winners of a past event", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({
+			page,
+			url: calendarReportWinnersPage(EVENT_WITHOUT_RESULTS_ID),
+		});
+
+		await page.getByLabel("Participant count").fill("50");
+		await page.getByLabel("Team name").fill("Team Olive");
+		await page.getByLabel("Placing").fill("1");
+
+		// a team without any players can't be reported
+		await page.getByTestId("submit-button").click();
+		await expect(
+			page.getByText("Each team must have at least one player."),
+		).toBeVisible();
+
+		await selectUser({ page, userName: "N-ZAP", labelName: "Player 1" });
+		// a player without a sendou.ink account is reported as plain text instead
+		await page.getByRole("button", { name: "Add as text" }).nth(1).click();
+		await page.getByLabel("Player 2").fill("Player Without Account");
+
+		await submit(page);
+
+		await expect(page).toHaveURL(calendarEventPage(EVENT_WITHOUT_RESULTS_ID));
+		await expect(page.getByText("Team Olive")).toBeVisible();
+		await expect(page.getByText("Player Without Account")).toBeVisible();
+
+		// reported results are loaded back into the form for editing
+		await navigate({
+			page,
+			url: calendarReportWinnersPage(EVENT_WITHOUT_RESULTS_ID),
+		});
+
+		await expect(page.getByLabel("Participant count")).toHaveValue("50");
+		await expect(page.getByLabel("Team name")).toHaveValue("Team Olive");
+		await expect(page.getByLabel("Placing")).toHaveValue("1");
+		await expect(page.getByLabel("Player 1")).toContainText("N-ZAP");
+		await expect(page.getByLabel("Player 2")).toHaveValue(
+			"Player Without Account",
+		);
 	});
 });

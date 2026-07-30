@@ -12,8 +12,8 @@ describe("team creation", () => {
 	beforeEach(async () => {
 		await dbInsertUsers();
 	});
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	it("prevents creating a team with a duplicate name", async () => {

@@ -1,7 +1,7 @@
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 
-let bannedUsers = await AdminRepository.allBannedUsers();
+let bannedUsers = await AdminRepository.findAllBannedUsers();
 
 export function checkBanStatus(
 	banned: number | null | undefined,
@@ -22,5 +22,5 @@ export function userIsBanned(userId: number) {
 }
 
 export async function refreshBannedCache() {
-	bannedUsers = await AdminRepository.allBannedUsers();
+	bannedUsers = await AdminRepository.findAllBannedUsers();
 }

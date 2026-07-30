@@ -9,7 +9,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema: subscribeSchema,
 	});
 
-	await NotificationRepository.addOwnSubscription(data);
+	await NotificationRepository.insertOwnSubscription(data);
 
 	return null;
 };

@@ -18,6 +18,11 @@ export interface Fixtures {
 	buildId: number | null;
 	heavyWeaponSplId: MainWeaponId | null;
 	sq: { userId: number; season: number } | null;
+	skillBatch: {
+		season: number;
+		userIds: number[];
+		identifiers: string[];
+	} | null;
 	heavyGroupMatchId: number | null;
 	heavyGroupIds: [number, number] | null;
 	heavyStageModeCombo: { stageId: StageId; mode: ModeShort } | null;
@@ -106,6 +111,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		buildId: await resolveBuildId(),
 		heavyWeaponSplId: await resolveHeavyWeaponSplId(),
 		sq: await resolveSq(),
+		skillBatch: await resolveSkillBatch(),
 		heavyGroupMatchId,
 		heavyGroupIds: await resolveHeavyGroupIds(heavyGroupMatchId),
 		heavyStageModeCombo: await resolveHeavyStageModeCombo(),
@@ -280,6 +286,48 @@ async function resolveSq() {
 	if (!userRow) return null;
 
 	return { userId: userRow.userId, season: seasonRow.season };
+}
+
+/**
+ * Batch sizes a big tournament's finalization asks for: every player of the event and
+ * every roster that appeared on a map (several per set, hence far more than teams).
+ */
+const SKILL_BATCH_USERS = 300;
+const SKILL_BATCH_IDENTIFIERS = 500;
+
+async function resolveSkillBatch() {
+	const seasonRow = await db
+		.selectFrom("Skill")
+		.select(({ fn }) => ["season", fn.countAll<number>().as("count")])
+		.groupBy("season")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!seasonRow) return null;
+
+	const userRows = await db
+		.selectFrom("Skill")
+		.select("userId")
+		.distinct()
+		.where("season", "=", seasonRow.season)
+		.where("userId", "is not", null)
+		.limit(SKILL_BATCH_USERS)
+		.execute();
+
+	const identifierRows = await db
+		.selectFrom("Skill")
+		.select("identifier")
+		.distinct()
+		.where("season", "=", seasonRow.season)
+		.where("identifier", "is not", null)
+		.limit(SKILL_BATCH_IDENTIFIERS)
+		.execute();
+
+	return {
+		season: seasonRow.season,
+		userIds: userRows.map((row) => row.userId as number),
+		identifiers: identifierRows.map((row) => row.identifier as string),
+	};
 }
 
 async function resolveHeavyGroupMatchId() {
@@ -596,9 +644,9 @@ async function resolveHeavyOrg() {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
-		.select(["CalendarEvent.name", "CalendarEventDate.startTime"])
+		.select(["CalendarEvent.name", "CalendarEventDate.startsAt"])
 		.where("CalendarEvent.organizationId", "=", orgRow.id)
-		.orderBy("CalendarEventDate.startTime", "desc")
+		.orderBy("CalendarEventDate.startsAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
 	if (!latestEvent) return null;

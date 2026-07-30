@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { ParsedMemento, UserMapModePreferences } from "~/db/tables";
+import type { ParsedMemento, UserMapModePreferences } from "~/db/tables-json";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
@@ -365,10 +365,10 @@ type CreateMatchMementoArgs = {
 	};
 	mapList: TournamentMapListMap[];
 };
-export function createMatchMemento(
+export async function createMatchMemento(
 	args: CreateMatchMementoArgs,
-): Omit<ParsedMemento, "mapPreferences"> {
-	const skills = userSkills(Seasons.currentOrPrevious()!.nth);
+): Promise<Omit<ParsedMemento, "mapPreferences">> {
+	const skills = await userSkills(Seasons.currentOrPrevious()!.nth);
 
 	const ownWithTier = args.own.group;
 	const theirWithTier = args.their.group;

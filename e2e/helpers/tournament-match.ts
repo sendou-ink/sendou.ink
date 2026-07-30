@@ -76,6 +76,20 @@ const ensureActiveRostersSet = async (page: Page) => {
 };
 
 /**
+ * Selects one of the pick/ban options and submits it.
+ *
+ * Selecting and submitting are retried together as one unit because the match
+ * page revalidates on websocket messages: a re-render landing mid-click can
+ * swallow the submit press (see waitForPOSTResponse) and, if the panel
+ * remounted, the selection with it — so re-submitting alone would not be enough.
+ */
+export const pickBanMap = (page: Page, option: "first" | "last" = "first") =>
+	waitForPOSTResponse(page, async () => {
+		await page.getByTestId("pick-ban-button")[option]().click();
+		await page.getByTestId("pick-ban-submit-button").click();
+	});
+
+/**
  * Sweeps `mapsToReport` maps in a row, all won by `winner`. By default the
  * last map ends the set (the typical case — full Bo3/Bo5 sweep), and the
  * helper goes through the confirmation screen for that map. Pass

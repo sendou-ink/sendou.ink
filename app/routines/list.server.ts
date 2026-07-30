@@ -7,6 +7,7 @@ import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
 import { DeleteOldPendingFriendRequestsRoutine } from "./deleteOldPendingFriendRequests";
 import { DeleteOldTournamentAuditLogsRoutine } from "./deleteOldTournamentAuditLogs";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
+import { EvictStaleRunningTournamentsRoutine } from "./evictStaleRunningTournaments";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
@@ -34,6 +35,7 @@ export const everyHourAt30 = [
 	UpdatePatreonDataRoutine,
 	CloseExpiredContinueVotesRoutine,
 	DeleteOldExternalStreamsRoutine,
+	EvictStaleRunningTournamentsRoutine,
 ];
 
 /** List of Routines that should occur daily */

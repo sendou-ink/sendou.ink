@@ -8,8 +8,8 @@ export type ScrimSide = "ALPHA" | "BRAVO";
 
 export interface ScrimPost {
 	id: number;
-	at: number;
-	rangeEnd: number | null;
+	startsAt: number;
+	rangeEndsAt: number | null;
 	createdAt: number;
 	visibility: AssociationVisibility | null;
 	text: string | null;
@@ -53,7 +53,7 @@ export interface ScrimPostRequest {
 	users: Array<ScrimPostUser>;
 	team: ScrimPostTeam | null;
 	message: string | null;
-	at: number | null;
+	startsAt: number | null;
 	permissions: {
 		CANCEL: number[];
 	};

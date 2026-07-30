@@ -6,8 +6,8 @@ import {
 	useSearchParams,
 } from "react-router";
 import { Main } from "~/components/Main";
-import type { XRankPlacementRegion } from "~/db/tables";
 import { HowToLinkPopover } from "~/features/top-search/components/HowToLinkPopover";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";

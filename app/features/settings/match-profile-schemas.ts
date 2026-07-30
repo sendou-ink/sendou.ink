@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { UserMapModePreferences } from "~/db/tables";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import {
 	checkboxGroup,
 	customField,

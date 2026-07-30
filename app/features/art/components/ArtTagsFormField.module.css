@@ -1,0 +1,11 @@
+/* the minimal button variant keeps the full field height and its own font size, which breaks
+   the baseline when it sits inline in a line of helper text */
+.switcherButton {
+	height: auto;
+	font-size: inherit;
+}
+
+/* the new tag input is stretched to the field width, so the button must keep its own */
+.addButton {
+	flex-shrink: 0;
+}

@@ -5,7 +5,7 @@ export const loader = async () => {
 	requireRole("STAFF");
 
 	return {
-		images: await ImageRepository.unvalidatedImages(),
+		images: await ImageRepository.findAllUnvalidated(),
 		unvalidatedImgCount: await ImageRepository.countAllUnvalidated(),
 	};
 };

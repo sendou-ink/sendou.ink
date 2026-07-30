@@ -37,8 +37,8 @@ describe("insertFriendRequest / findFriendRequestBetween", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("finds request from sender to receiver", async () => {
@@ -90,8 +90,8 @@ describe("findPendingSentRequests / findPendingReceivedRequests", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("sent request appears in sender's sent requests", async () => {
@@ -137,8 +137,8 @@ describe("countPendingSentRequests", () => {
 		await dbInsertUsers(4);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns 0 with no requests", async () => {
@@ -172,8 +172,8 @@ describe("deleteFriendRequest", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes request by sender", async () => {
@@ -212,8 +212,8 @@ describe("deleteFriendRequestByReceiver", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes request by receiver", async () => {
@@ -240,8 +240,8 @@ describe("insertFriendship / findFriendship / findFriendIds", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("creates friendship and removes friend request", async () => {
@@ -318,8 +318,8 @@ describe("deleteFriendship", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("removes friendship", async () => {
@@ -366,8 +366,8 @@ describe("findFriendRequestByIdAndReceiver", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns sender ID when request exists for receiver", async () => {
@@ -405,8 +405,8 @@ describe("findMutualFriends", () => {
 		await dbInsertUsers(4);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns mutual friend when two users share a common friend", async () => {
@@ -440,8 +440,8 @@ describe("findByUserIdWithActivity", () => {
 		await dbInsertUsers(3);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns friends with friendshipId and createdAt", async () => {

@@ -6,12 +6,14 @@ import type { FetcherWithComponents } from "react-router";
 import { useFetcher, useLocation } from "react-router";
 import { isPlainObject } from "remeda";
 import type { z } from "zod";
+import type { SendouButtonProps } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { SubmitButton } from "~/components/SubmitButton";
 import { FormField as FormFieldComponent } from "./FormField";
-import { formRegistry } from "./fields";
+import { getFormFieldMetadata } from "./fields";
 import styles from "./SendouForm.module.css";
-import type { FormField, TypedFormFieldComponent } from "./types";
+import type { TypedFormFieldComponent } from "./types";
+import { useUnsavedChangesChecker } from "./UnsavedChangesGuard";
 import {
 	buildFieldPath,
 	errorMessageId,
@@ -37,7 +39,6 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 	setClientError: (name: string, error: string | undefined) => void;
 	clearServerError: (name: string) => void;
 	onFieldChange?: (name: string, newValue: unknown) => void;
-	hideRequiredIndicator: boolean;
 	readOnly: boolean;
 	values: Record<string, unknown>;
 	setValue: (name: string, value: unknown) => void;
@@ -56,9 +57,12 @@ export interface FormContextValue<T extends z.ZodRawShape = z.ZodRawShape> {
 interface FormStore {
 	values: Record<string, unknown>;
 	clientErrors: Partial<Record<string, string>>;
+	/** Has the user edited any field since mount / the last successful submit? */
+	dirty: boolean;
 	subscribe: (listener: () => void) => () => void;
 	setValues: (values: Record<string, unknown>) => void;
 	setClientErrors: (errors: Partial<Record<string, string>>) => void;
+	setDirty: (dirty: boolean) => void;
 }
 
 type FormFieldContextValue = Omit<
@@ -72,14 +76,11 @@ const FormContext = React.createContext<FormFieldContextValue | null>(null);
 
 export const EMPTY_FORM_STORE = createFormStore({}, {});
 
-type FormNames<T extends z.ZodRawShape> = {
-	[K in keyof T]: K;
-};
-
 export interface FormRenderProps<T extends z.ZodRawShape> {
-	names: FormNames<T>;
 	FormField: TypedFormFieldComponent<T>;
 }
+
+export type FormMode = "submit" | "autoSubmit" | "client";
 
 type BaseFormProps<T extends z.ZodRawShape> = {
 	children: React.ReactNode | ((props: FormRenderProps<T>) => React.ReactNode);
@@ -87,12 +88,15 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	title?: React.ReactNode;
 	submitButtonText?: React.ReactNode;
 	action?: string;
-	method?: "post" | "get";
-	_action?: string;
 	submitButtonTestId?: string;
-	autoSubmit?: boolean;
-	autoApply?: boolean;
+	/** Styling of the submit button, for forms embedded somewhere the default button is too heavy. */
+	submitButtonVariant?: SendouButtonProps["variant"];
+	submitButtonSize?: SendouButtonProps["size"];
 	revalidateRoot?: boolean;
+	/**
+	 * Replaces the default form layout classes entirely (it does not merge with
+	 * them), so `fullWidth` has no effect when this is set.
+	 */
 	className?: string;
 	/**
 	 * When true, opts out of the default centered, max-width layout so the form
@@ -101,17 +105,10 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	 */
 	fullWidth?: boolean;
 	/**
-	 * When true, fields don't show the red `*` required indicator next to their
-	 * label. Useful on pages where every field is required and the asterisk only
-	 * adds noise (e.g. the settings page).
-	 */
-	hideRequiredIndicator?: boolean;
-	/**
 	 * When true, renders the form for viewing only: every field is disabled and
 	 * the submit button is hidden.
 	 */
 	readOnly?: boolean;
-	onApply?: (values: z.infer<z.ZodObject<T>>) => void;
 	secondarySubmit?: React.ReactNode;
 	/**
 	 * Called once after a server submission completes successfully (the action
@@ -121,22 +118,43 @@ type BaseFormProps<T extends z.ZodRawShape> = {
 	onSuccess?: () => void;
 };
 
+/**
+ * How submitting works:
+ * - `"submit"` (default): the user submits via the submit button. Values go to
+ *   the server, or to `onApply` when provided.
+ * - `"autoSubmit"`: no submit button; every change that passes validation is
+ *   sent to the server.
+ * - `"client"`: no submit button and no `<form>` element; every change is
+ *   passed to `onApply` and field errors are computed already on mount.
+ */
+type FormModeProps<T extends z.ZodRawShape> =
+	| {
+			mode?: "submit";
+			/** When set, a valid submit is handed to this callback instead of being sent to the server. */
+			onApply?: (values: z.infer<z.ZodObject<T>>) => void;
+	  }
+	| { mode: "autoSubmit"; onApply?: never }
+	| { mode: "client"; onApply: (values: z.infer<z.ZodObject<T>>) => void };
+
+export type FormDefaultValues<T extends z.ZodRawShape> = Partial<
+	z.input<z.ZodObject<T>>
+>;
+
 type SendouFormProps<T extends z.ZodRawShape> = BaseFormProps<T> &
+	FormModeProps<T> &
 	(HasRequiredDefaults<T> extends true
 		? {
-				defaultValues: Partial<z.input<z.ZodObject<T>>> &
+				defaultValues: FormDefaultValues<T> &
 					Record<RequiredDefaultKeys<T>, unknown>;
 			}
-		: { defaultValues?: Partial<z.input<z.ZodObject<T>>> | null });
+		: { defaultValues?: FormDefaultValues<T> | null });
 
 interface LatestFormProps {
 	schema: z.ZodObject<z.ZodRawShape>;
 	onApply: ((values: Record<string, unknown>) => void) | undefined;
-	method: "post" | "get";
 	action: string | undefined;
 	revalidateRoot: boolean | undefined;
-	autoSubmit: boolean | undefined;
-	autoApply: boolean | undefined;
+	mode: FormMode;
 	fetcher: FetcherWithComponents<{ fieldErrors?: Record<string, string> }>;
 	t: (key: string) => string;
 }
@@ -148,16 +166,14 @@ export function SendouForm<T extends z.ZodRawShape>({
 	title,
 	submitButtonText,
 	action,
-	method = "post",
-	_action,
 	submitButtonTestId,
-	autoSubmit,
-	autoApply,
+	submitButtonVariant,
+	submitButtonSize,
 	revalidateRoot,
 	className,
 	fullWidth,
-	hideRequiredIndicator = false,
 	readOnly = false,
+	mode = "submit",
 	onApply,
 	secondarySubmit,
 	onSuccess,
@@ -175,7 +191,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 		const initialValues = buildInitialValues(schema, defaultValues);
 		storeRef.current = createFormStore(
 			initialValues,
-			autoApply ? computeTopLevelFieldErrors(schema, initialValues) : {},
+			mode === "client"
+				? computeTopLevelFieldErrors(schema, initialValues)
+				: {},
 		);
 	}
 	const store = storeRef.current;
@@ -183,11 +201,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const latestProps: LatestFormProps = {
 		schema: schema as z.ZodObject<z.ZodRawShape>,
 		onApply: onApply as unknown as LatestFormProps["onApply"],
-		method,
 		action,
 		revalidateRoot,
-		autoSubmit,
-		autoApply,
+		mode,
 		fetcher,
 		t: t as unknown as LatestFormProps["t"],
 	};
@@ -215,6 +231,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 		store.setValues(buildInitialValues(schema, defaultValues));
 		store.setClientErrors({});
+		store.setDirty(false);
 		setHasSubmitted(false);
 		setFallbackError(null);
 	}, [locationKey]);
@@ -243,12 +260,16 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 		setFallbackError(null);
 
-		const firstErrorField = errorEntries[0][0];
-		const firstErrorElement = document.getElementById(
-			errorMessageId(firstErrorField),
+		const firstError = findFirstErrorElementInDomOrder(
+			errorEntries.map(([fieldName]) => fieldName),
 		);
-		firstErrorElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+		if (firstError) focusAndScrollToError(firstError);
 	}, [fetcher.data, t]);
+
+	const hasUnsavedChangesRef = React.useRef<() => boolean>(() => false);
+	hasUnsavedChangesRef.current = () =>
+		mode === "submit" && !readOnly && store.dirty && fetcher.state === "idle";
+	useUnsavedChangesChecker(hasUnsavedChangesRef);
 
 	const previousFetcherStateRef = React.useRef(fetcher.state);
 	React.useEffect(() => {
@@ -257,10 +278,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 			fetcher.state === "idle" &&
 			!fetcher.data?.fieldErrors
 		) {
+			store.setDirty(false);
 			onSuccess?.();
 		}
 		previousFetcherStateRef.current = fetcher.state;
-	}, [fetcher.state, fetcher.data, onSuccess]);
+	}, [fetcher.state, fetcher.data, onSuccess, store]);
 
 	const contextValue = React.useMemo<FormFieldContextValue>(
 		() => ({
@@ -270,9 +292,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			hasSubmitted,
 			setClientError: actions.setClientError,
 			clearServerError: actions.clearServerError,
-			onFieldChange:
-				autoSubmit || autoApply ? actions.onFieldChange : undefined,
-			hideRequiredIndicator,
+			onFieldChange: mode !== "submit" ? actions.onFieldChange : undefined,
 			readOnly,
 			setValue: actions.setValue,
 			setValueFromPrev: actions.setValueFromPrev,
@@ -286,9 +306,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 			defaultValues,
 			visibleServerErrors,
 			hasSubmitted,
-			autoSubmit,
-			autoApply,
-			hideRequiredIndicator,
+			mode,
 			readOnly,
 			fetcher.state,
 			store,
@@ -296,14 +314,9 @@ export function SendouForm<T extends z.ZodRawShape>({
 		],
 	);
 
-	const names = Object.fromEntries(
-		Object.keys(schema.shape).map((key) => [key, key]),
-	) as FormNames<T>;
-
 	const resolvedChildren =
 		typeof children === "function"
 			? children({
-					names,
 					FormField: FormFieldComponent as TypedFormFieldComponent<T>,
 				})
 			: children;
@@ -312,12 +325,13 @@ export function SendouForm<T extends z.ZodRawShape>({
 		<>
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
-			{autoSubmit || autoApply || readOnly ? null : (
+			{mode !== "submit" || readOnly ? null : (
 				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
 					<SubmitButton
-						_action={_action}
 						testId={submitButtonTestId}
 						state={fetcher.state}
+						variant={submitButtonVariant}
+						size={submitButtonSize}
 					>
 						{submitButtonText ?? t("submit")}
 					</SubmitButton>
@@ -337,11 +351,11 @@ export function SendouForm<T extends z.ZodRawShape>({
 
 	return (
 		<FormContext.Provider value={contextValue}>
-			{autoApply && onApply ? (
+			{mode === "client" ? (
 				<div className={resolvedClassName}>{formContent}</div>
 			) : (
 				<form
-					method={method}
+					method="post"
 					action={action}
 					className={resolvedClassName}
 					noValidate
@@ -368,6 +382,7 @@ function createFormStore(
 	const store: FormStore = {
 		values: initialValues,
 		clientErrors: initialClientErrors,
+		dirty: false,
 		subscribe(listener) {
 			listeners.add(listener);
 			return () => listeners.delete(listener);
@@ -379,6 +394,10 @@ function createFormStore(
 		setClientErrors(errors) {
 			store.clientErrors = errors;
 			notify();
+		},
+		// Read only at navigation time (unsaved-changes guard), so no notify.
+		setDirty(dirty) {
+			store.dirty = dirty;
 		},
 	};
 
@@ -410,20 +429,19 @@ function createFormActions({
 	setFallbackError,
 }: FormActionDeps) {
 	const scrollToFirstError = (errors: Record<string, string>) => {
-		const firstErrorField = Object.keys(errors)[0];
-		if (!firstErrorField) return;
+		const errorFieldNames = Object.keys(errors);
+		if (errorFieldNames.length === 0) return;
 
-		const errorElement = document.getElementById(
-			errorMessageId(firstErrorField),
-		);
-		if (errorElement) {
-			errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
+		const firstError = findFirstErrorElementInDomOrder(errorFieldNames);
+		if (firstError) {
+			focusAndScrollToError(firstError);
 			setFallbackError(null);
 		} else {
-			const firstError = errors[firstErrorField];
+			const firstErrorField = errorFieldNames[0];
+			const firstErrorMessage = errors[firstErrorField];
 			setFallbackError(
-				firstError
-					? `${latest.current.t(firstError)} (${firstErrorField})`
+				firstErrorMessage
+					? `${latest.current.t(firstErrorMessage)} (${firstErrorField})`
 					: null,
 			);
 		}
@@ -447,12 +465,12 @@ function createFormActions({
 	};
 
 	const submitValues = (values: Record<string, unknown>) => {
-		const { fetcher, method, action, revalidateRoot } = latest.current;
+		const { fetcher, action, revalidateRoot } = latest.current;
 		const submitted = revalidateRoot
 			? { ...values, revalidateRoot: true }
 			: values;
 		fetcher.submit(submitted as Record<string, string>, {
-			method,
+			method: "post",
 			action,
 			encType: "application/json",
 		});
@@ -491,6 +509,7 @@ function createFormActions({
 	};
 
 	const setValue = (name: string, newValue: unknown) => {
+		store.setDirty(true);
 		if (name.includes(".") || name.includes("[")) {
 			store.setValues(
 				setNestedValue(
@@ -508,6 +527,7 @@ function createFormActions({
 		name: string,
 		updater: (prev: unknown) => unknown,
 	) => {
+		store.setDirty(true);
 		store.setValues({ ...store.values, [name]: updater(store.values[name]) });
 	};
 
@@ -520,13 +540,17 @@ function createFormActions({
 	const submitToServer = (valuesToSubmit: Record<string, unknown>) => {
 		if (!validateAndPrepare()) return;
 
+		// Cleared before `onApply` because it may navigate synchronously (e.g.
+		// calendar filters set search params) — the blocker would otherwise still
+		// see the form as dirty and block that navigation.
+		store.setDirty(false);
 		latest.current.onApply?.(store.values);
 
 		submitValues(valuesToSubmit);
 	};
 
 	const onFieldChange = (changedName: string, changedValue: unknown) => {
-		const { schema, autoSubmit, autoApply, onApply } = latest.current;
+		const { schema, mode, onApply } = latest.current;
 		const isNestedPath = changedName.includes(".") || changedName.includes("[");
 		const updatedValues = isNestedPath
 			? setNestedValue(store.values, changedName, changedValue)
@@ -536,9 +560,9 @@ function createFormActions({
 		store.setClientErrors(newErrors);
 		const hasFieldErrors = Object.keys(newErrors).length > 0;
 
-		if (autoApply && onApply) {
-			onApply(updatedValues);
-		} else if (autoSubmit && !hasFieldErrors) {
+		if (mode === "client") {
+			onApply?.(updatedValues);
+		} else if (mode === "autoSubmit" && !hasFieldErrors) {
 			submitValues(updatedValues);
 		}
 	};
@@ -549,6 +573,10 @@ function createFormActions({
 
 		const { onApply } = latest.current;
 		if (onApply) {
+			// Cleared before `onApply` because it may navigate synchronously (e.g.
+			// calendar filters set search params) — the blocker would otherwise
+			// still see the form as dirty and block that navigation.
+			store.setDirty(false);
 			onApply(store.values);
 		} else {
 			submitValues(store.values);
@@ -625,9 +653,7 @@ function buildInitialValues<T extends z.ZodRawShape>(
 	const result: Record<string, unknown> = {};
 
 	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
-		const formField = formRegistry.get(fieldSchema as z.ZodType) as
-			| FormField
-			| undefined;
+		const formField = getFormFieldMetadata(fieldSchema as z.ZodType);
 
 		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
 		if (defaultValue !== undefined) {
@@ -683,7 +709,6 @@ export function useFormFieldContext(): FormContextValue {
 		setClientError: context.setClientError,
 		clearServerError: context.clearServerError,
 		onFieldChange: context.onFieldChange,
-		hideRequiredIndicator: context.hideRequiredIndicator,
 		readOnly: context.readOnly,
 		values,
 		setValue: context.setValue,
@@ -696,4 +721,55 @@ export function useFormFieldContext(): FormContextValue {
 
 export function useOptionalFormFieldContext() {
 	return React.useContext(FormContext);
+}
+
+/**
+ * "First" error means first in DOM order, not first in error-map insertion
+ * order — validation collects errors in schema order which does not have to
+ * match the rendered field order.
+ */
+function findFirstErrorElementInDomOrder(errorFieldNames: string[]) {
+	const errorElements = errorFieldNames.flatMap((name) => {
+		const element = document.getElementById(errorMessageId(name));
+		return element ? [{ name, element }] : [];
+	});
+
+	errorElements.sort((a, b) =>
+		a.element.compareDocumentPosition(b.element) &
+		Node.DOCUMENT_POSITION_FOLLOWING
+			? -1
+			: 1,
+	);
+
+	return errorElements.at(0);
+}
+
+/**
+ * Moves focus to the failing field so keyboard and screen reader users are
+ * taken to the problem, not just scrolled past it. Prefers the control that
+ * references the error via `aria-errormessage`, then any focusable control in
+ * the same wrapper, and as a last resort the error message element itself.
+ */
+function focusAndScrollToError({
+	name,
+	element,
+}: {
+	name: string;
+	element: HTMLElement;
+}) {
+	const control = document.querySelector<HTMLElement>(
+		`[aria-errormessage="${errorMessageId(name)}"]`,
+	);
+	const focusTarget =
+		control ??
+		element.parentElement?.querySelector<HTMLElement>(
+			"input, select, textarea, button",
+		) ??
+		element;
+
+	if (focusTarget === element) {
+		element.setAttribute("tabindex", "-1");
+	}
+	focusTarget.focus({ preventScroll: true });
+	element.scrollIntoView({ behavior: "smooth", block: "center" });
 }

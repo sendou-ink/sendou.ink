@@ -1,7 +1,6 @@
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { Status } from "~/modules/brackets-model";
 import { cache } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { tournamentStreamsPage } from "~/utils/urls";
@@ -40,7 +39,7 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 			imageUrl: tournament.ctx.logoUrl,
 			url: tournamentStreamsPage(tournament.ctx.id),
 			subtitle: deriveCurrentRound(tournament),
-			startsAt: dateToDatabaseTimestamp(tournament.ctx.startTime),
+			startsAt: dateToDatabaseTimestamp(tournament.ctx.startsAt),
 			tier: tournament.ctx.tier,
 			membersPerTeam: tournament.minMembersPerTeam,
 		});
@@ -70,17 +69,11 @@ function deriveCurrentRound(tournament: Tournament): string {
 		if (bracket.isUnderground) continue;
 
 		for (const match of bracket.data.match) {
-			const isActive =
-				match.status === Status.Ready || match.status === Status.Running;
-			const hasParticipants = match.opponent1 && match.opponent2;
-			const isNotFinished =
-				!match.opponent1?.result && !match.opponent2?.result;
+			if (bracket.matchStatus(match.id) !== "STARTED") continue;
 
-			if (isActive && hasParticipants && isNotFinished) {
-				const context = tournament.matchContextNamesById(match.id);
-				if (context?.roundNameWithoutMatchIdentifier) {
-					return context.roundNameWithoutMatchIdentifier;
-				}
+			const context = tournament.matchContextNamesById(match.id);
+			if (context?.roundNameWithoutMatchIdentifier) {
+				return context.roundNameWithoutMatchIdentifier;
 			}
 		}
 

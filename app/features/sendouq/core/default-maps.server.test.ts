@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { db } from "~/db/sql";
-import type { UserMapModePreferences } from "~/db/tables";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 import { SENDOUQ_BEST_OF } from "../q-constants";
@@ -26,9 +26,9 @@ describe("getDefaultMapWeights()", () => {
 		await dbInsertUsers(10);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		vi.restoreAllMocks();
-		dbReset();
+		await dbReset();
 	});
 
 	test("returns empty map when no season is found", async () => {

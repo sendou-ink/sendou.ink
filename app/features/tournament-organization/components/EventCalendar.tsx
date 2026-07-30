@@ -44,7 +44,7 @@ export function EventCalendar({
 				))}
 				{dates.map((date, i) => {
 					const daysEvents = events.filter((event) => {
-						const startTimeDate = databaseTimestampToDate(event.startTime);
+						const startTimeDate = databaseTimestampToDate(event.startsAt);
 
 						return (
 							isHydrated &&

@@ -31,45 +31,38 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 	ReturnType<typeof resultsByMonthYearQuery>
 >;
 
-export async function allPlusTiersFromLatestVoting() {
-	const rows = await db
-		.selectFrom("PlusVotingResult")
-		.select([
-			"PlusVotingResult.votedId",
-			"PlusVotingResult.tier",
-			"PlusVotingResult.score",
-			"PlusVotingResult.wasSuggested",
-		])
-		.where(
-			"PlusVotingResult.year",
-			"=",
-			db
-				.selectFrom("PlusVote")
-				.select("PlusVote.year")
-				.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
-				.orderBy("PlusVote.year", "desc")
-				.orderBy("PlusVote.month", "desc")
-				.limit(1),
-		)
-		.where(
-			"PlusVotingResult.month",
-			"=",
-			db
-				.selectFrom("PlusVote")
-				.select("PlusVote.month")
-				.where("PlusVote.validAfter", "<", sql<number>`strftime('%s', 'now')`)
-				.orderBy("PlusVote.year", "desc")
-				.orderBy("PlusVote.month", "desc")
-				.limit(1),
-		)
-		.execute();
+export async function findAllPlusTiersFromLatestVoting() {
+	// resolving month & year separately first allows SQLite to push the
+	// filtering down into the PlusVotingResult view's aggregation
+	const latestVoting = await db
+		.selectFrom("PlusVote")
+		.select(["PlusVote.year", "PlusVote.month"])
+		.where("PlusVote.becomesValidAt", "<", sql<number>`strftime('%s', 'now')`)
+		.orderBy("PlusVote.year", "desc")
+		.orderBy("PlusVote.month", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	const rows = latestVoting
+		? await db
+				.selectFrom("PlusVotingResult")
+				.select([
+					"PlusVotingResult.votedId",
+					"PlusVotingResult.tier",
+					"PlusVotingResult.score",
+					"PlusVotingResult.wasSuggested",
+				])
+				.where("PlusVotingResult.year", "=", latestVoting.year)
+				.where("PlusVotingResult.month", "=", latestVoting.month)
+				.execute()
+		: [];
 
 	const withPassed = PlusVoting.computePassedVoting(rows);
 	return PlusVoting.computeFreshPlusTiers(withPassed);
 }
 
-export type ResultsByMonthYearItem = Unwrapped<typeof resultsByMonthYear>;
-export async function resultsByMonthYear(args: MonthYear) {
+export type ResultsByMonthYearItem = Unwrapped<typeof findResultsByMonthYear>;
+export async function findResultsByMonthYear(args: MonthYear) {
 	const rows = await resultsByMonthYearQuery(args).execute();
 
 	const passedMap = new Map<
@@ -140,7 +133,7 @@ export type UsersForVoting = {
 	suggestion?: PlusSuggestionRepository.FindAllByMonthItem;
 }[];
 
-export async function usersForVoting(loggedInUser: {
+export async function findAllUsersForVoting(loggedInUser: {
 	id: number;
 	plusTier: number;
 }) {
@@ -208,7 +201,13 @@ export async function hasVoted(args: {
 
 export type UpsertManyPlusVotesArgs = Pick<
 	TablesInsertable["PlusVote"],
-	"month" | "year" | "tier" | "authorId" | "votedId" | "score" | "validAfter"
+	| "month"
+	| "year"
+	| "tier"
+	| "authorId"
+	| "votedId"
+	| "score"
+	| "becomesValidAt"
 >[];
 export function upsertMany(votes: UpsertManyPlusVotesArgs) {
 	const firstVote = votes[0];

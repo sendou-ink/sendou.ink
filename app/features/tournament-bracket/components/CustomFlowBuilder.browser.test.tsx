@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import type { CustomPickBanFlow } from "~/db/tables";
+import type { CustomPickBanFlow } from "~/db/tables-json";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
 const defaultProps: ComponentProps<typeof CustomFlowBuilder> = {

@@ -1,3 +1,4 @@
+import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
 import type { Tables } from "~/db/tables";
 import { isAdmin } from "~/modules/permissions/utils";
 import { allTruthy } from "~/utils/arrays";
@@ -174,67 +175,30 @@ function eventStartedInThePast(
 }
 
 export function daysForCalendar(currentDate?: DayMonthYear) {
-	type DaysArray = Array<DayMonthYear>;
-
-	const previous: DaysArray = [];
-	const shown: DaysArray = [];
-	const next: DaysArray = [];
-
-	const startDate = () =>
-		currentDate
-			? new Date(currentDate.year, currentDate.month, currentDate.day)
-			: new Date();
-
-	const currentDayMonthYear = () => {
-		const now = startDate();
-
-		return {
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		};
-	};
-
-	let now = startDate();
-
-	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
-		shown.push({
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		});
-
-		now.setDate(now.getDate() + 1);
-	}
-
-	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
-		next.push({
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		});
-
-		now.setDate(now.getDate() + 1);
-	}
-
-	now = startDate();
-
-	for (let i = 0; i < DAYS_SHOWN_AT_A_TIME; i++) {
-		now.setDate(now.getDate() - 1);
-
-		previous.push({
-			day: now.getDate(),
-			month: now.getMonth(),
-			year: now.getFullYear(),
-		});
-	}
-	previous.reverse();
+	const anchor = currentDate
+		? new Date(currentDate.year, currentDate.month, currentDate.day)
+		: new Date();
+	const weekStart = startOfWeek(anchor, { weekStartsOn: 1 });
 
 	return {
-		previous,
-		shown,
-		next,
-		current: currentDayMonthYear(),
+		previous: weekDays(subWeeks(weekStart, 1)),
+		shown: weekDays(weekStart),
+		next: weekDays(addWeeks(weekStart, 1)),
+		current: dateToDayMonthYear(anchor),
+	};
+}
+
+function weekDays(weekStart: Date): Array<DayMonthYear> {
+	return Array.from({ length: DAYS_SHOWN_AT_A_TIME }, (_, i) =>
+		dateToDayMonthYear(addDays(weekStart, i)),
+	);
+}
+
+function dateToDayMonthYear(date: Date): DayMonthYear {
+	return {
+		day: date.getDate(),
+		month: date.getMonth(),
+		year: date.getFullYear(),
 	};
 }
 

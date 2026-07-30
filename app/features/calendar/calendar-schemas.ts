@@ -1,13 +1,20 @@
 import { z } from "zod";
-import { type CalendarEventTag, TOURNAMENT_STAGE_TYPES } from "~/db/tables";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
+import {
+	TOURNAMENT,
+	TOURNAMENT_STAGE_TYPES,
+} from "~/features/tournament/tournament-constants";
+import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import {
 	array,
 	checkboxGroup,
+	customField,
+	fieldset,
+	numberField,
 	numberFieldOptional,
 	radioGroup,
+	textField,
 	textFieldOptional,
 	toggle,
 	userSearchOptional,
@@ -15,12 +22,10 @@ import {
 import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import {
-	actualNumber,
 	gamesShortSchema,
 	id,
 	modeShortWithSpecial,
 	safeJSONParse,
-	toArray,
 } from "~/utils/zod";
 import { CALENDAR_EVENT, CALENDAR_EVENT_RESULT } from "./calendar-constants";
 import * as CalendarEvent from "./core/CalendarEvent";
@@ -178,66 +183,115 @@ export const calendarFiltersSearchParamsObject = z.object({
 		.catch(CalendarEvent.defaultFilters()),
 });
 
-const playersSchema = z
-	.array(
-		z.union([
-			z.string().min(1).max(CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH),
-			z.object({ id }),
-		]),
-	)
-	.nonempty({ message: "forms.errors.emptyTeam" })
+const reportedPlayerSchema = z.discriminatedUnion("type", [
+	z.object({ type: z.literal("USER"), id: id.nullable() }),
+	z.object({
+		type: z.literal("NAME"),
+		name: z
+			.string()
+			.max(CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH)
+			.nullable(),
+	}),
+]);
+
+export type ReportedPlayer = z.infer<typeof reportedPlayerSchema>;
+
+export const EMPTY_REPORTED_PLAYER: ReportedPlayer = { type: "USER", id: null };
+
+type StoredReportedPlayer = { userId: number | null; name: string | null };
+
+const reportedPlayersSchema = z
+	.array(reportedPlayerSchema)
 	.max(CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH)
+	.transform((players) =>
+		players.flatMap((player): Array<StoredReportedPlayer> => {
+			if (player.type === "USER") {
+				return player.id === null ? [] : [{ userId: player.id, name: null }];
+			}
+
+			return player.name ? [{ userId: null, name: player.name }] : [];
+		}),
+	)
+	.refine((players) => players.length > 0, {
+		message: "forms:errors.emptyTeam",
+	})
 	.refine(
-		(val) => {
-			const userIds = val.flatMap((user) =>
-				typeof user === "string" ? [] : user.id,
-			);
+		(players) => {
+			const userIds = players.flatMap((player) => player.userId ?? []);
 
 			return userIds.length === new Set(userIds).size;
 		},
-		{
-			message: "forms.errors.duplicatePlayer",
-		},
+		{ message: "forms:errors.duplicatePlayer" },
 	);
 
-export const reportWinnersActionSchema = z.object({
-	participantCount: z.preprocess(
-		actualNumber,
-		z
-			.number()
-			.int()
-			.positive()
-			.max(CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT),
-	),
-	team: z.preprocess(
-		toArray,
-		z
-			.array(
-				z.preprocess(
-					safeJSONParse,
-					z.object({
-						teamName: z
-							.string()
-							.min(1)
-							.max(CALENDAR_EVENT_RESULT.MAX_TEAM_NAME_LENGTH),
-						placement: z.preprocess(
-							actualNumber,
-							z
-								.number()
-								.int()
-								.positive()
-								.max(CALENDAR_EVENT_RESULT.MAX_TEAM_PLACEMENT),
-						),
-						players: playersSchema,
-					}),
-				),
-			)
-			.refine(
-				(val) => val.length === new Set(val.map((team) => team.teamName)).size,
-				{ message: "forms.errors.uniqueTeamName" },
-			),
-	),
+const reportedTeamFieldset = fieldset({
+	fields: z.object({
+		teamName: textField({
+			label: "labels.teamName",
+			maxLength: CALENDAR_EVENT_RESULT.MAX_TEAM_NAME_LENGTH,
+		}),
+		placement: numberField({
+			label: "labels.placement",
+			maxLength: String(CALENDAR_EVENT_RESULT.MAX_TEAM_PLACEMENT).length,
+		}),
+		players: customField(
+			{
+				initialValue: new Array(
+					CALENDAR_EVENT_RESULT.DEFAULT_PLAYERS_LENGTH,
+				).fill(EMPTY_REPORTED_PLAYER),
+			},
+			reportedPlayersSchema,
+		),
+	}),
 });
+
+export const reportWinnersFormSchema = z
+	.object({
+		participantCount: numberField({
+			label: "labels.participantCount",
+			maxLength: String(CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT).length,
+		}),
+		teams: array({
+			label: "labels.teams",
+			min: 1,
+			max: CALENDAR_EVENT_RESULT.MAX_TEAMS_COUNT,
+			field: reportedTeamFieldset,
+		}),
+	})
+	.superRefine((data, ctx) => {
+		if (
+			data.participantCount < 1 ||
+			data.participantCount > CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT
+		) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "forms:errors.numberOutOfRange",
+				path: ["participantCount"],
+			});
+		}
+
+		for (const [index, team] of data.teams.entries()) {
+			if (
+				team.placement < 1 ||
+				team.placement > CALENDAR_EVENT_RESULT.MAX_TEAM_PLACEMENT
+			) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "forms:errors.numberOutOfRange",
+					path: ["teams", index, "placement"],
+				});
+			}
+		}
+
+		const teamNames = data.teams.map((team) => team.teamName);
+		if (teamNames.length !== new Set(teamNames).size) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: "forms:errors.uniqueTeamName",
+				path: ["teams"],
+			});
+		}
+	});
 
 export const bracketProgressionSchema = z.preprocess(
 	safeJSONParse,

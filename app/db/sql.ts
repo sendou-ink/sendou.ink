@@ -1,22 +1,18 @@
 import { styleText } from "node:util";
 import * as Sentry from "@sentry/react-router";
 import Database from "better-sqlite3";
-import {
-	Kysely,
-	type LogEvent,
-	ParseJSONResultsPlugin,
-	SqliteDialect,
-} from "kysely";
+import { Kysely, type LogEvent, SqliteDialect } from "kysely";
 import { format } from "sql-formatter";
 import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { FastParseJSONResultsPlugin } from "./parse-json-results-plugin";
 import type { DB } from "./tables";
 
 const migratedEmptyDb = new Database("db-test.sqlite3").serialize();
 
-export const sql = new Database(
+const sql = new Database(
 	ServerConfig.isTest ? migratedEmptyDb : ServerConfig.dbPath,
 );
 
@@ -51,8 +47,26 @@ export const db = new Kysely<DB>({
 		database: sql,
 	}),
 	log,
-	plugins: [new ParseJSONResultsPlugin()],
+	plugins: [new FastParseJSONResultsPlugin()],
 });
+
+/**
+ * Opens a connection to a SQLite file other than the application database.
+ * Only for tooling that needs to inspect or maintain database files directly
+ * (e.g. e2e seed databases). Declare it with `await using` so the connection
+ * is closed when it goes out of scope.
+ */
+export function createDatabaseConnection(
+	dbPath: string,
+	options?: { readonly?: boolean },
+) {
+	return new Kysely<DB>({
+		dialect: new SqliteDialect({
+			database: new Database(dbPath, options),
+		}),
+		plugins: [new FastParseJSONResultsPlugin()],
+	});
+}
 
 function log(event: LogEvent) {
 	if (Config.sentry.enabled && event.level === "query") {
@@ -80,7 +94,9 @@ function logQuery(event: LogEvent) {
 	if (event.level === "query" && isSelectQuery) {
 		const from = () =>
 			(event.query.query as any).from.froms.map(
-				(f: any) => f.table.identifier.name,
+				// plain tables have the name under table, aliased tables and
+				// subqueries under alias
+				(f: any) => f.table?.identifier?.name ?? f.alias?.name ?? "unknown",
 			);
 		// biome-ignore lint/suspicious/noConsole: dev only
 		console.log(styleText("blue", `-- SQLITE QUERY to "${from()}" --`));

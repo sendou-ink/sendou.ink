@@ -19,27 +19,27 @@
 	}
 }
 
-.tabButton {
-	background-color: transparent;
-	border: none;
-	font-size: var(--font-xs);
-	border-radius: 0;
-	border-bottom: 2px solid transparent;
-	color: var(--color-text-high);
-	white-space: nowrap;
-	flex: 1;
-	transform: none !important;
-
-	& img {
-		min-width: 16px;
-		min-height: 16px;
-		margin-inline-end: var(--s-1-5);
-	}
-}
-
 .tabContainer {
 	min-width: fit-content;
 	margin-bottom: -2px;
+
+	& .tabButton {
+		background-color: transparent;
+		border: none;
+		font-size: var(--font-xs);
+		border-radius: 0;
+		border-bottom: 2px solid transparent;
+		color: var(--color-text-high);
+		white-space: nowrap;
+		flex: 1;
+		transform: none !important;
+
+		& img {
+			min-width: 16px;
+			min-height: 16px;
+			margin-inline-end: var(--s-1-5);
+		}
+	}
 
 	&:focus-visible {
 		outline: var(--focus-ring);

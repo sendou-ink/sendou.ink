@@ -27,7 +27,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				name: data.name,
 				url: data.url,
 				avatarImgId: data.avatar,
-				startTime: dateToDatabaseTimestamp(data.startTime),
+				startsAt: dateToDatabaseTimestamp(data.startTime),
 			});
 			break;
 		}

@@ -65,6 +65,8 @@ export default [
 		"features/user-card/routes/user-card.$id.note.ts",
 	),
 
+	route("/user-report/:id", "features/user-report/routes/user-report.$id.ts"),
+
 	route("/events", "features/calendar/routes/events.tsx"),
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),
@@ -206,6 +208,7 @@ export default [
 	]),
 
 	route("/faq", "features/info/routes/faq.tsx"),
+	route("/welcome", "features/info/routes/welcome.tsx"),
 	route("/contributions", "features/info/routes/contributions.tsx"),
 	route("/support", "features/info/routes/support.tsx"),
 

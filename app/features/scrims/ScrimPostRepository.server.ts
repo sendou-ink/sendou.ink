@@ -4,7 +4,10 @@ import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { ConcurrentModificationError } from "~/utils/errors";
+import {
+	ConcurrentModificationError,
+	DuplicateEntryError,
+} from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import {
 	commonUserSelect,
@@ -21,8 +24,8 @@ import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
 
 type InsertArgs = Pick<
 	TablesInsertable["ScrimPost"],
-	| "at"
-	| "rangeEnd"
+	| "startsAt"
+	| "rangeEndsAt"
 	| "maxDiv"
 	| "minDiv"
 	| "teamId"
@@ -46,8 +49,8 @@ export function insert(args: InsertArgs) {
 		const newPost = await trx
 			.insertInto("ScrimPost")
 			.values({
-				at: args.at,
-				rangeEnd: args.rangeEnd,
+				startsAt: args.startsAt,
+				rangeEndsAt: args.rangeEndsAt,
 				maxDiv: args.maxDiv,
 				minDiv: args.minDiv,
 				teamId: args.teamId,
@@ -73,24 +76,44 @@ export function insert(args: InsertArgs) {
 
 type InsertRequestArgs = Pick<
 	Insertable<Tables["ScrimPostRequest"]>,
-	"scrimPostId" | "teamId" | "message" | "at"
+	"scrimPostId" | "teamId" | "message" | "startsAt"
 > & {
 	users: Array<
 		Pick<Insertable<Tables["ScrimPostRequestUser"]>, "userId" | "isOwner">
 	>;
 };
 
+/**
+ * Inserts a new request to a scrim post.
+ *
+ * @throws {DuplicateEntryError} If the team already has a request for the post
+ */
 export function insertRequest(args: InsertRequestArgs) {
 	invariant(args.users.length > 0, "At least one user must be provided");
 
 	return db.transaction().execute(async (trx) => {
+		if (typeof args.teamId === "number") {
+			const existingTeamRequest = await trx
+				.selectFrom("ScrimPostRequest")
+				.select("id")
+				.where("scrimPostId", "=", args.scrimPostId)
+				.where("teamId", "=", args.teamId)
+				.executeTakeFirst();
+
+			if (existingTeamRequest) {
+				throw new DuplicateEntryError(
+					"Team already has a request for this scrim post",
+				);
+			}
+		}
+
 		const newRequest = await trx
 			.insertInto("ScrimPostRequest")
 			.values({
 				scrimPostId: args.scrimPostId,
 				teamId: args.teamId,
 				message: args.message,
-				at: args.at,
+				startsAt: args.startsAt,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
@@ -108,7 +131,7 @@ export function insertRequest(args: InsertRequestArgs) {
 	});
 }
 
-export function del(scrimPostId: number) {
+export function deleteById(scrimPostId: number) {
 	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
 }
 
@@ -123,8 +146,8 @@ const baseFindQuery = db
 	)
 	.select((eb) => [
 		"ScrimPost.id",
-		"ScrimPost.at",
-		"ScrimPost.rangeEnd",
+		"ScrimPost.startsAt",
+		"ScrimPost.rangeEndsAt",
 		"ScrimPost.createdAt",
 		"ScrimPost.visibility",
 		"ScrimPost.maxDiv",
@@ -174,7 +197,7 @@ const baseFindQuery = db
 					"ScrimPostRequest.isAccepted",
 					"ScrimPostRequest.createdAt",
 					"ScrimPostRequest.message",
-					"ScrimPostRequest.at",
+					"ScrimPostRequest.startsAt",
 					jsonBuildObject({
 						name: innerEb.ref("Team.name"),
 						customUrl: innerEb.ref("Team.customUrl"),
@@ -206,8 +229,8 @@ function findMany() {
 	const min = sub(new Date(), { hours: 3 });
 
 	return baseFindQuery
-		.orderBy("at", "asc")
-		.where("ScrimPost.at", ">=", dateToDatabaseTimestamp(min))
+		.orderBy("startsAt", "asc")
+		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(min))
 		.execute();
 }
 
@@ -254,8 +277,8 @@ const mapDBRowToScrimPost = (
 
 	const result = {
 		id: row.id,
-		at: row.at,
-		rangeEnd: row.rangeEnd,
+		startsAt: row.startsAt,
+		rangeEndsAt: row.rangeEndsAt,
 		createdAt: row.createdAt,
 		visibility: row.visibility,
 		text: row.text,
@@ -286,7 +309,7 @@ const mapDBRowToScrimPost = (
 				isAccepted: Boolean(request.isAccepted),
 				createdAt: request.createdAt,
 				message: request.message,
-				at: request.at,
+				startsAt: request.startsAt,
 				team: request.team.name
 					? {
 							name: request.team.name,
@@ -324,8 +347,8 @@ const mapDBRowToScrimPost = (
 
 	return {
 		...result,
-		at: Scrim.getStartTime(result),
-		rangeEnd: null,
+		startsAt: Scrim.getStartTime(result),
+		rangeEndsAt: null,
 	};
 };
 
@@ -424,8 +447,8 @@ export async function findAcceptedScrimsBetweenTwoTimestamps({
 	excludeRecentlyCreated: Date;
 }) {
 	const rows = await baseFindQuery
-		.where("ScrimPost.at", ">=", dateToDatabaseTimestamp(startTime))
-		.where("ScrimPost.at", "<", dateToDatabaseTimestamp(endTime))
+		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(startTime))
+		.where("ScrimPost.startsAt", "<", dateToDatabaseTimestamp(endTime))
 		.where("ScrimPost.canceledAt", "is", null)
 		.where(
 			"ScrimPost.createdAt",
@@ -458,7 +481,7 @@ export async function findPendingOverlapsForUsers({
 	endTime: number;
 	excludePostId: number;
 }): Promise<{
-	posts: Array<{ id: number; at: number; memberIds: number[] }>;
+	posts: Array<{ id: number; startsAt: number; memberIds: number[] }>;
 	requestIds: number[];
 }> {
 	if (userIds.length === 0) {
@@ -469,7 +492,7 @@ export async function findPendingOverlapsForUsers({
 
 	const rows = await baseFindQuery
 		.where("ScrimPost.canceledAt", "is", null)
-		.where("ScrimPost.at", ">=", now)
+		.where("ScrimPost.startsAt", ">=", now)
 		.where((eb) =>
 			eb.or([
 				eb.exists(
@@ -497,7 +520,8 @@ export async function findPendingOverlapsForUsers({
 
 	const userIdSet = new Set(userIds);
 
-	const posts: Array<{ id: number; at: number; memberIds: number[] }> = [];
+	const posts: Array<{ id: number; startsAt: number; memberIds: number[] }> =
+		[];
 	const requestIds: number[] = [];
 
 	for (const post of rows
@@ -507,18 +531,19 @@ export async function findPendingOverlapsForUsers({
 
 		const postInvolvesUser = post.users.some((u) => userIdSet.has(u.id));
 		const postIntervalOverlaps =
-			post.at <= endTime && (post.rangeEnd ?? post.at) >= startTime;
+			post.startsAt <= endTime &&
+			(post.rangeEndsAt ?? post.startsAt) >= startTime;
 		if (postInvolvesUser && postIntervalOverlaps) {
 			posts.push({
 				id: post.id,
-				at: post.at,
+				startsAt: post.startsAt,
 				memberIds: post.users.map((u) => u.id),
 			});
 		}
 
 		for (const request of post.requests) {
 			if (request.isAccepted) continue;
-			const effectiveAt = request.at ?? post.at;
+			const effectiveAt = request.startsAt ?? post.startsAt;
 			const requestInvolvesUser = request.users.some((u) =>
 				userIdSet.has(u.id),
 			);
@@ -537,7 +562,7 @@ export async function findPendingOverlapsForUsers({
 
 export type SidebarScrim = {
 	id: number;
-	at: number;
+	startsAt: number;
 	opponentName: string | null;
 	opponentAvatarUrl: string | null;
 	status: "booked" | "looking" | "requestPending";
@@ -548,7 +573,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 
 	const rows = await baseFindQuery
 		.where("ScrimPost.canceledAt", "is", null)
-		.where("ScrimPost.at", ">=", now)
+		.where("ScrimPost.startsAt", ">=", now)
 		.where((eb) =>
 			eb.or([
 				eb.exists(
@@ -572,7 +597,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 				),
 			]),
 		)
-		.orderBy("ScrimPost.at", "asc")
+		.orderBy("ScrimPost.startsAt", "asc")
 		.execute();
 
 	return rows
@@ -587,7 +612,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 			if (!isAccepted) {
 				return {
 					id: post.id,
-					at: post.at,
+					startsAt: post.startsAt,
 					opponentName: null,
 					opponentAvatarUrl: null,
 					status: userIsInPost
@@ -604,7 +629,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 
 			return {
 				id: post.id,
-				at: post.at,
+				startsAt: post.startsAt,
 				opponentName: opponentTeam?.name ?? null,
 				opponentAvatarUrl:
 					opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,

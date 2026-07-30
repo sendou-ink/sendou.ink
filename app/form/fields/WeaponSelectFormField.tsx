@@ -7,6 +7,7 @@ import styles from "./WeaponSelectFormField.module.css";
 type WeaponSelectFormFieldProps = FormFieldProps<"weapon-select"> & {
 	value: MainWeaponId | null;
 	onChange: (value: MainWeaponId | null) => void;
+	disabled?: boolean;
 };
 
 export function WeaponSelectFormField({
@@ -18,6 +19,7 @@ export function WeaponSelectFormField({
 	value,
 	onChange,
 	onBlur,
+	disabled,
 }: WeaponSelectFormFieldProps) {
 	const { translatedLabel } = useTranslatedTexts({ label });
 
@@ -32,6 +34,7 @@ export function WeaponSelectFormField({
 				}}
 				isRequired={required}
 				clearable={!required}
+				isDisabled={disabled}
 			/>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>

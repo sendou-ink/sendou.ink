@@ -89,7 +89,7 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
-	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const [imageSettled, setImageSettled] = React.useState(false);
 	const { formatter } = useDateTimeFormat({
 		year: "numeric",
 		month: "numeric",
@@ -107,11 +107,12 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				src={art.url}
 				loading="lazy"
 				className={styles.dialogImg}
-				onLoad={() => setImageLoaded(true)}
+				onLoad={() => setImageSettled(true)}
+				onError={() => setImageSettled(true)}
 			/>
 			{art.tags || art.linkedUsers ? (
 				<div
-					className={clsx(styles.tagsContainer, { invisible: !imageLoaded })}
+					className={clsx(styles.tagsContainer, { invisible: !imageSettled })}
 				>
 					{art.linkedUsers?.map((user) => (
 						<Link
@@ -136,7 +137,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			{art.description ? (
 				<div
 					className={clsx(styles.dialogDescription, {
-						invisible: !imageLoaded,
+						invisible: !imageSettled,
 					})}
 				>
 					{art.description}
@@ -167,7 +168,7 @@ function ImagePreview({
 	canEdit?: boolean;
 	showUploadDate?: boolean;
 }) {
-	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const [imageSettled, setImageSettled] = React.useState(false);
 	const { t } = useTranslation(["common", "art"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
 
@@ -178,7 +179,8 @@ function ImagePreview({
 			src={previewUrl(art.url)}
 			loading="lazy"
 			onClick={onClick}
-			onLoad={() => setImageLoaded(true)}
+			onLoad={() => setImageSettled(true)}
+			onError={() => setImageSettled(true)}
 			className={enablePreview ? styles.thumbnail : undefined}
 		/>
 	);
@@ -189,7 +191,7 @@ function ImagePreview({
 				{img}
 				<div
 					className={clsx("stack horizontal justify-between mt-2", {
-						invisible: !imageLoaded,
+						invisible: !imageSettled,
 					})}
 				>
 					<LinkButton
@@ -234,7 +236,7 @@ function ImagePreview({
 					<Link
 						to={userArtPage(art.author, "MADE-BY")}
 						className={clsx("stack sm horizontal text-xs items-center mt-1", {
-							invisible: !imageLoaded,
+							invisible: !imageSettled,
 						})}
 					>
 						<Avatar user={art.author} size="xxs" />
@@ -243,7 +245,7 @@ function ImagePreview({
 					{uploadDateText ? (
 						<div
 							className={clsx("text-xs text-lighter", {
-								invisible: !imageLoaded,
+								invisible: !imageSettled,
 							})}
 						>
 							{uploadDateText}
@@ -278,7 +280,7 @@ function ImagePreview({
 			<div className="stack horizontal justify-between">
 				<div
 					className={clsx("stack sm horizontal text-xs items-center mt-1", {
-						invisible: !imageLoaded,
+						invisible: !imageSettled,
 					})}
 				>
 					<Avatar user={art.author} size="xxs" />
@@ -287,7 +289,7 @@ function ImagePreview({
 				{uploadDateText ? (
 					<div
 						className={clsx("text-xxs mt-1 text-lighter", {
-							invisible: !imageLoaded,
+							invisible: !imageSettled,
 						})}
 					>
 						{uploadDateText}

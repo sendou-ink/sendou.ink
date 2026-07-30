@@ -7,6 +7,7 @@ type UserSearchFormFieldProps = FormFieldProps<"user-search"> &
 	UserSearchFieldOptions & {
 		value: number | null;
 		onChange: (value: number | null) => void;
+		disabled?: boolean;
 	};
 
 export function UserSearchFormField({
@@ -19,6 +20,7 @@ export function UserSearchFormField({
 	onChange,
 	onUserSelected,
 	onBlur,
+	disabled,
 }: UserSearchFormFieldProps) {
 	const { translatedLabel } = useTranslatedTexts({
 		label,
@@ -36,6 +38,7 @@ export function UserSearchFormField({
 					onBlur={() => onBlur?.()}
 					label={translatedLabel}
 					isRequired={required}
+					isDisabled={disabled}
 				/>
 				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 			</div>

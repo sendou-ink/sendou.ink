@@ -1,3 +1,9 @@
+/**
+ * The database tables, 1:1 with the {@link DB} interface at the bottom. JSON column payload
+ * shapes live either with their feature or, when they have no natural feature home, in
+ * `tables-json.ts`; domain constants live in their feature's constants file.
+ */
+
 import type {
 	ColumnType,
 	GeneratedAlways,
@@ -5,25 +11,63 @@ import type {
 	JSONColumnType,
 	Selectable,
 } from "kysely";
+import type {
+	CastedMatchesInfo,
+	CustomTheme,
+	NotificationSubscription,
+	ParsedMemento,
+	PeakXP,
+	PreparedMaps,
+	Pronouns,
+	SeedingSnapshot,
+	TournamentAuditLogMetadata,
+	TournamentRoundMaps,
+	TournamentSettings,
+	UserMapModePreferences,
+	UserPreferences,
+	WeaponPoolEntry,
+	WinLossParticipationArray,
+} from "~/db/tables-json";
+import type { ApiTokenType } from "~/features/api/api-types";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
-import type { tags } from "~/features/calendar/calendar-constants";
-import type { CalendarFilters } from "~/features/calendar/calendar-types";
-import type { TieredSkill } from "~/features/mmr/tiered.server";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
+import type { LFGType } from "~/features/lfg/lfg-constants";
+import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
-import type { ScrimFilters } from "~/features/scrims/scrims-types";
-import type { TEAM_MEMBER_ROLES } from "~/features/team/team-constants";
+import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
-import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type * as Progression from "~/features/tournament-bracket/core/Progression";
+import type {
+	TOURNAMENT_STAGE_TYPES,
+	TournamentAuditLogType,
+	TournamentMapPickingStyle,
+	TournamentStaffRole,
+} from "~/features/tournament/tournament-constants";
+import type {
+	ParticipantResult,
+	Side,
+	StageSettings,
+} from "~/features/tournament-bracket/core/engine/types";
+import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
+import type { HideableUserCardStat } from "~/features/user-card/user-card-types";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
-import type { ParticipantResult } from "~/modules/brackets-model";
+import type { BuildSort } from "~/features/user-page/user-page-constants";
+import type { UserReportCategory } from "~/features/user-report/user-report-constants";
+import type { videoMatchTypes } from "~/features/vods/vods-constants";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeShort,
+	RankedModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import type { DBTournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
 type Generated<T> =
@@ -31,51 +75,10 @@ type Generated<T> =
 		? ColumnType<S, I | undefined, U>
 		: ColumnType<T, T | undefined, T>;
 
-export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
-
-export type MemberRoleType = "PLAYER" | "OTHER";
-
 /** In SQLite booleans are presented as 0 (false) and 1 (true) */
-export type DBBoolean = number;
+export type DBBoolean = 0 | 1;
 
-export const CUSTOM_THEME_VARS = [
-	"--_base-h",
-	"--_base-c-0",
-	"--_base-c-1",
-	"--_base-c-2",
-	"--_base-c-3",
-	"--_base-c-4",
-	"--_base-c-5",
-	"--_base-c-6",
-	"--_base-c-7",
-	"--_acc-h",
-	"--_acc-c-0",
-	"--_acc-c-1",
-	"--_acc-c-2",
-	"--_acc-c-3",
-	"--_acc-c-4",
-	"--_acc-c-5",
-	"--_second-h",
-	"--_second-c-0",
-	"--_second-c-1",
-	"--_second-c-2",
-	"--_second-c-3",
-	"--_second-c-4",
-	"--_second-c-5",
-	"--_chat-h",
-	"--_radius-box",
-	"--_radius-field",
-	"--_radius-selector",
-	"--_border-width",
-	"--_size-field",
-	"--_size-selector",
-	"--_size-spacing",
-] as const;
-export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
-export type CustomTheme = Omit<Record<CustomThemeVar, number>, "--_chat-h"> & {
-	"--_chat-h": number | null;
-};
-
+/** Shape shared by the `AllTeam` table and the `Team` view. See {@link DB} for which to select from. */
 export interface Team {
 	avatarImgId: number | null;
 	bannerImgId: number | null;
@@ -83,6 +86,7 @@ export interface Team {
 	createdAt: Generated<number>;
 	customUrl: string;
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
+	/** Soft delete marker. Always `null` when selected via the `Team` view, which filters these rows out. */
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
@@ -93,10 +97,15 @@ export interface Team {
 	tag: string | null;
 }
 
+/**
+ * Shape shared by the `AllTeamMember` table and the `TeamMember` &
+ * `TeamMemberWithSecondary` views. See {@link DB} for which to select from.
+ */
 export interface TeamMember {
 	createdAt: Generated<number>;
-	isOwner: Generated<number>;
-	isManager: Generated<number>;
+	isOwner: Generated<DBBoolean>;
+	isManager: Generated<DBBoolean>;
+	/** Always `null` when selected via the `TeamMember` or `TeamMemberWithSecondary` views, which filter these rows out. */
 	leftAt: number | null;
 	role: MemberRole | null;
 	customRole: string | null;
@@ -106,7 +115,7 @@ export interface TeamMember {
 	order: Generated<number>;
 	teamId: number;
 	userId: number;
-	isMainTeam: DBBoolean;
+	isMainTeam: Generated<DBBoolean>;
 }
 
 export interface Art {
@@ -149,20 +158,21 @@ export interface BadgeManager {
 	userId: number;
 }
 
-export type BadgeOwner = {
+/** Read-only. See {@link DB} for how this view is composed. */
+export interface BadgeOwner {
 	badgeId: number;
 	userId: number;
 	count: number;
-};
+}
 
 export interface Build {
 	clothesGearSplId: number | null;
 	description: string | null;
 	headGearSplId: number | null;
 	id: GeneratedAlways<number>;
+	isPrivate: Generated<DBBoolean>;
 	modes: JSONColumnTypeNullable<ModeShort[]>;
 	ownerId: number;
-	private: DBBoolean | null;
 	shoesGearSplId: number | null;
 	title: string;
 	updatedAt: Generated<number>;
@@ -171,8 +181,6 @@ export interface Build {
 	/** Serialized ability+AP combo (e.g. `SSU_30,ISS_10`) used to group identical builds for the popular builds view. */
 	abilitiesSignature: string | null;
 }
-
-export type GearType = "HEAD" | "CLOTHES" | "SHOES";
 
 export interface BuildWeapon {
 	buildId: number;
@@ -185,22 +193,20 @@ export interface BuildWeapon {
 	sortValue: number | null;
 }
 
-/** Per-build ability point sums across all gear slots. Used to compute global `abilityPointAverages`. */
+/** Per-build ability point sums across all gear slots. Used to compute global `findAllAbilityPointAverages`. */
 export interface BuildAbilitySum {
 	buildId: number;
 	ability: Ability;
 	abilityPoints: number;
 }
 
-/** Per-weapon, per-build ability point sums. Used to compute per-weapon `abilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
+/** Per-weapon, per-build ability point sums. Used to compute per-weapon `findAllAbilityPointAverages`. One row per canonical weapon × build × ability with non-zero AP. */
 export interface BuildWeaponAbility {
 	canonicalWeaponSplId: MainWeaponId;
 	buildId: number;
 	ability: Ability;
 	abilityPoints: number;
 }
-
-export type CalendarEventTag = keyof typeof tags;
 
 export interface CalendarEvent {
 	authorId: number;
@@ -211,7 +217,7 @@ export interface CalendarEvent {
 	discordUrl: GeneratedAlways<string | null>;
 	name: string;
 	participantCount: number | null;
-	tags: string | null;
+	tags: JSONColumnTypeNullable<CalendarEventTag[]>;
 	hidden: Generated<DBBoolean>;
 	tournamentId: number | null;
 	organizationId: number | null;
@@ -226,7 +232,7 @@ export interface CalendarEventBadge {
 export interface CalendarEventDate {
 	eventId: number;
 	id: GeneratedAlways<number>;
-	startTime: number;
+	startsAt: number;
 }
 
 export interface CalendarEventResultPlayer {
@@ -258,58 +264,8 @@ export interface GroupLike {
 	createdAt: Generated<number>;
 	likerGroupId: number;
 	targetGroupId: number;
-	isRechallenge: DBBoolean | null;
+	isRechallenge: Generated<DBBoolean>;
 }
-
-type CalculatingSkill = {
-	calculated: false;
-	matchesCount: number;
-	matchesCountNeeded: number;
-	/** Freshly calculated skill */
-	newSp?: number;
-};
-export type UserSkillDifference =
-	| {
-			calculated: true;
-			spDiff: number;
-			oldSp?: number;
-			newSp?: number;
-	  }
-	| CalculatingSkill;
-export type GroupSkillDifference =
-	| {
-			calculated: true;
-			oldSp: number;
-			newSp: number;
-	  }
-	| CalculatingSkill;
-
-export type ParsedMemento = {
-	users: Record<
-		number,
-		{
-			skill?: TieredSkill | "CALCULATING";
-			skillDifference?: UserSkillDifference;
-		}
-	>;
-	groups: Record<
-		number,
-		{
-			tier?: TieredSkill["tier"];
-			skillDifference?: GroupSkillDifference;
-		}
-	>;
-	modePreferences?: Partial<
-		Record<ModeShort, Array<{ userId: number; preference?: Preference }>>
-	>;
-	/** mapPreferences of season 2 */
-	mapPreferences?: Array<{ userId: number; preference?: Preference }[]>;
-	pools: Array<{
-		userId: number;
-		pool: UserMapModePreferences["pool"];
-		teamName?: string;
-	}>;
-};
 
 export interface GroupMatch {
 	alphaGroupId: number;
@@ -322,6 +278,7 @@ export interface GroupMatch {
 	memento: JSONColumnTypeNullable<ParsedMemento>;
 	cancelRequestedByUserId: number | null;
 	cancelAcceptedByUserId: number | null;
+	noScreen: Generated<DBBoolean>;
 }
 
 export interface GroupMatchContinueVote {
@@ -339,7 +296,7 @@ export interface GroupMatchMap {
 	mode: ModeShort;
 	reportedAt: number | null;
 	reportedByUserId: number | null;
-	source: string;
+	source: DBTournamentMaplistSource;
 	stageId: StageId;
 	winnerGroupId: number | null;
 }
@@ -367,23 +324,6 @@ export interface LogInLink {
 	userId: number;
 }
 
-export type LFGType =
-	| "PLAYER_FOR_TEAM"
-	| "PLAYER_FOR_COACH"
-	| "TEAM_FOR_PLAYER"
-	| "TEAM_FOR_COACH"
-	| "TEAM_FOR_SCRIM"
-	| "COACH_FOR_TEAM";
-
-export const LFG_TYPES = [
-	"PLAYER_FOR_TEAM",
-	"PLAYER_FOR_COACH",
-	"TEAM_FOR_PLAYER",
-	"TEAM_FOR_COACH",
-	"TEAM_FOR_SCRIM",
-	"COACH_FOR_TEAM",
-] as const;
-
 export interface LFGPost {
 	id: GeneratedAlways<number>;
 	type: LFGType;
@@ -393,9 +333,9 @@ export interface LFGPost {
 	authorId: number;
 	teamId: number | null;
 	plusTierVisibility: number | null;
-	languages: string | null;
+	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	updatedAt: Generated<number>;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface MapPoolMap {
@@ -423,12 +363,13 @@ export interface PlayerResult {
 	season: number;
 	setLosses: number;
 	setWins: number;
-	type: string;
+	/** Was `otherUserId` on the same team as `ownerUserId` for these results? */
+	type: "MATE" | "ENEMY";
 }
 
 export interface PlusSuggestion {
 	authorId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	month: number;
 	suggestedId: number;
@@ -448,11 +389,13 @@ export interface PlusVote {
 	month: number;
 	score: number;
 	tier: number;
-	validAfter: number;
+	/** When the vote stops being secret and starts counting towards the results i.e. the end of the voting range. */
+	becomesValidAt: number;
 	votedId: number;
 	year: number;
 }
 
+/** Read-only. See {@link DB} for how this view is composed. */
 export interface PlusVotingResult {
 	votedId: number;
 	tier: number;
@@ -474,7 +417,8 @@ export interface ReportedWeapon {
 export interface Skill {
 	groupMatchId: number | null;
 	id: GeneratedAlways<number>;
-	identifier: string | null;
+	/** Set for team ratings, `null` for the solo ratings identified by `userId` instead. */
+	identifier: SkillTeamIdentifier | null;
 	matchesCount: number;
 	mu: number;
 	ordinal: number;
@@ -482,6 +426,7 @@ export interface Skill {
 	season: number;
 	tournamentId: number | null;
 	userId: number | null;
+	/** Can be null because we did not always save this. */
 	createdAt: number | null;
 }
 
@@ -499,77 +444,12 @@ export interface SeedingSkill {
 	type: "RANKED" | "UNRANKED";
 }
 
-export interface PeakXP {
-	/** Peak XP across all divisions */
-	overall: number;
-	/** Peak XP (Takoroka division) */
-	takoroka: number | null;
-	/** Peak XP (Tentatek division) */
-	tentatek: number | null;
-}
-
 export interface SplatoonPlayer {
 	id: GeneratedAlways<number>;
 	splId: string;
 	userId: number | null;
 	/** Players best XP across both divisions. Denormalized for performance. */
 	peakXp: JSONColumnTypeNullable<PeakXP>;
-}
-
-export interface TaggedArt {
-	artId: number;
-	tagId: number;
-}
-
-// AUTO = style where teams pick their map pool ahead of time and the map lists are automatically made for each round
-// could also have the traditional style where TO picks the maps later
-type TournamentMapPickingStyle =
-	| "TO"
-	| "AUTO_ALL"
-	| "AUTO_SZ"
-	| "AUTO_TC"
-	| "AUTO_RM"
-	| "AUTO_CB";
-
-export interface TournamentSettings {
-	bracketProgression: Progression.ParsedBracket[];
-	/** @deprecated use bracketProgression instead */
-	teamsPerGroup?: number;
-	/** @deprecated use bracketProgression instead */
-	thirdPlaceMatch?: boolean;
-	isRanked?: boolean;
-	enableNoScreenToggle?: boolean;
-	/** Enable the subs tab, default true */
-	enableSubs?: boolean;
-	requireInGameNames?: boolean;
-	isInvitational?: boolean;
-	/** Can teams add subs on their own while tournament is in progress? */
-	autonomousSubs?: boolean;
-	/** Timestamp (SQLite format) when reg closes, if missing then means closes at start time */
-	regClosesAt?: number;
-	/** @deprecated use bracketProgression instead */
-	swiss?: {
-		groupCount: number;
-		roundCount: number;
-	};
-	minMembersPerTeam?: number;
-	/** Maximum number of team members that can be registered (only applies to 4v4 tournaments) */
-	maxMembersPerTeam?: number;
-	isTest?: boolean;
-	isDraft?: boolean;
-	requireSendouQParticipation?: boolean;
-}
-
-export interface CastedMatchesInfo {
-	/** Array for matches that are locked because they are pending to be casted */
-	lockedMatches: Array<{ twitchAccount: string; matchId: number }>;
-	/** What matches are streamed currently & where */
-	castedMatches: { twitchAccount: string; matchId: number }[];
-	castedMatchHistory?: Array<{
-		twitchAccount: string;
-		matchId: number;
-		timestamp: number;
-	}>;
 }
 
 export interface Tournament {
@@ -592,21 +472,6 @@ export interface Tournament {
 	vodsLastSyncAt: Generated<number | null>;
 	/** How many times vods have been synced (automatic process that happens when tournament has concluded). */
 	vodsSyncCount: Generated<number>;
-}
-
-export interface SeedingSnapshot {
-	savedAt: number;
-	teams: Array<{
-		teamId: number;
-		members: Array<{ userId: number; username: string }>;
-	}>;
-}
-
-export interface PreparedMaps {
-	authorId: number;
-	createdAt: number;
-	maps: Array<TournamentRoundMaps & { roundId: number; groupId: number }>;
-	eliminationTeamCount?: number;
 }
 
 export interface SavedCalendarEvent {
@@ -643,36 +508,19 @@ export interface TournamentGroup {
 	stageId: number;
 }
 
-export const TournamentMatchStatus = {
-	/** The two matches leading to this one are not completed yet. */
-	Locked: 0,
-
-	/** One participant is ready and waiting for the other one. */
-	Waiting: 1,
-
-	/** Both participants are ready to start. */
-	Ready: 2,
-
-	/** The match is running. */
-	Running: 3,
-
-	/** The match is completed. */
-	Completed: 4,
-};
-
 export interface TournamentMatch {
 	chatCode: string | null;
 	groupId: number;
 	id: GeneratedAlways<number>;
 	number: number;
-	opponentOne: JSONColumnType<ParticipantResult>;
-	opponentTwo: JSONColumnType<ParticipantResult>;
+	opponentOne: JSONColumnTypeNullable<ParticipantResult>;
+	opponentTwo: JSONColumnTypeNullable<ParticipantResult>;
 	roundId: number;
 	stageId: number;
-	status: (typeof TournamentMatchStatus)[keyof typeof TournamentMatchStatus];
-	// set when match becomes ongoing (both teams ready and no earlier matches for either team)
-	// for swiss: set at creation time
+	// set when the match becomes playable i.e. its status is "STARTED"
 	startedAt: number | null;
+	/** The side that won the set. `null` while the match has no winner. */
+	winnerSide: Side | null;
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
@@ -683,21 +531,21 @@ export interface TournamentMatchPickBanEvent {
 	matchId: number;
 	authorId: number | null;
 	number: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface TournamentMatchGameResult {
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
+	/** Whether the game ended in a knockout. `null` if not collected for this bracket. */
+	ko: DBBoolean | null;
 	matchId: number;
 	mode: ModeShort;
 	number: number;
 	reporterId: number;
-	source: string;
+	source: DBTournamentMaplistSource;
 	stageId: StageId;
 	winnerTeamId: number;
-	opponentOnePoints: number | null;
-	opponentTwoPoints: number | null;
 }
 
 export interface TournamentMatchGameResultParticipant {
@@ -705,8 +553,6 @@ export interface TournamentMatchGameResultParticipant {
 	userId: number;
 	tournamentTeamId: number;
 }
-
-export type WinLossParticipationArray = Array<"W" | "L" | null>;
 
 export interface TournamentResult {
 	isHighlight: Generated<DBBoolean>;
@@ -726,43 +572,6 @@ export interface TournamentResult {
 	div: string | null;
 }
 
-export interface TournamentRoundMaps {
-	list?: Array<{ mode: ModeShort; stageId: StageId }> | null;
-	count: number;
-	type: "BEST_OF" | "PLAY_ALL";
-	pickBan?: PickBan.Type | null;
-	customFlow?: CustomPickBanFlow | null;
-}
-
-export const WHO_SIDES = [
-	"ALPHA",
-	"BRAVO",
-	"HIGHER_SEED",
-	"LOWER_SEED",
-	"WINNER",
-	"LOSER",
-] as const;
-export type WhoSide = (typeof WHO_SIDES)[number];
-
-export const ACTION_TYPES = [
-	"ROLL",
-	"PICK",
-	"BAN",
-	"MODE_PICK",
-	"MODE_BAN",
-] as const;
-export type ActionType = (typeof ACTION_TYPES)[number];
-
-export interface CustomPickBanStep {
-	action: ActionType;
-	side?: WhoSide;
-}
-
-export interface CustomPickBanFlow {
-	preSet: CustomPickBanStep[];
-	postGame: CustomPickBanStep[];
-}
-
 /**
  * A round is a logical structure used to group multiple matches together.
 
@@ -778,49 +587,25 @@ export interface TournamentRound {
 	maps: JSONColumnType<TournamentRoundMaps>;
 }
 
-// when updating this also update `defaultBracketSettings` in tournament-utils.ts
-export interface TournamentStageSettings {
-	// SE
-	thirdPlaceMatch?: boolean;
-	// RR
-	teamsPerGroup?: number;
-	/** (RR only) When true, teams are split into A and B divisions and matches only pair A-vs-B. Only valid on starting brackets. */
-	hasAbDivisions?: boolean;
-	// SWISS
-	groupCount?: number;
-	// SWISS
-	roundCount?: number;
-	/** (Swiss only) Number of wins required for a team to advance early. When set, teams advance at this win count and are eliminated at (roundCount - advanceThreshold + 1) losses. */
-	advanceThreshold?: number;
-}
-
-export const TOURNAMENT_STAGE_TYPES = [
-	"single_elimination",
-	"double_elimination",
-	"round_robin",
-	"swiss",
-] as const;
-
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */
 export interface TournamentStage {
 	id: GeneratedAlways<number>;
 	name: string;
 	number: number;
-	settings: string;
+	settings: JSONColumnType<StageSettings>;
 	tournamentId: number;
 	type: (typeof TOURNAMENT_STAGE_TYPES)[number];
-	// not Generated<> because SQLite doesn't allow altering tables to add columns with default values :(
-	createdAt: number | null;
+	createdAt: Generated<number>;
 }
 
 /** Tournament sub post, shown in a list of subs available for teams to pick from. */
 export interface TournamentSub {
-	bestWeapons: string;
+	bestWeapons: JSONColumnType<MainWeaponId[]>;
 	/** 0 = no, 1 = yes, 2 = listen only */
 	canVc: number;
 	createdAt: Generated<number>;
 	message: string | null;
-	okWeapons: string | null;
+	okWeapons: JSONColumnTypeNullable<MainWeaponId[]>;
 	tournamentId: number;
 	userId: number;
 	visibility: "+1" | "+2" | "+3" | "ALL";
@@ -831,9 +616,6 @@ export interface TournamentLFGLike {
 	targetTeamId: number;
 	createdAt: Generated<number>;
 }
-
-export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
-type TournamentStaffRole = (typeof TOURNAMENT_STAFF_ROLES)[number];
 
 export interface TournamentStaff {
 	tournamentId: number;
@@ -871,7 +653,7 @@ export interface TournamentTeamCheckIn {
 	bracketIdx: number | null;
 	tournamentTeamId: number;
 	/** Indicates that this bracket defaults to checked in and this team has been explicitly checked out from it */
-	isCheckOut: Generated<number>;
+	isCheckOut: Generated<DBBoolean>;
 }
 
 export interface TournamentTeamMember {
@@ -897,22 +679,10 @@ export interface TournamentTeamHistory {
 	name: string;
 }
 
-export const TOURNAMENT_AUDIT_LOG_TYPES = [
-	"MEMBER_ADDED",
-	"MEMBER_REMOVED",
-	"TEAM_REGISTERED",
-	"TEAM_UNREGISTERED",
-	"TEAM_CHECKED_IN",
-	"TEAM_CHECKED_OUT",
-	"TEAM_DROPPED_OUT",
-	"TEAM_DROP_OUT_UNDONE",
-	"UPDATE_IN_GAME_NAME",
-] as const;
-
 export interface TournamentAuditLog {
 	id: GeneratedAlways<number>;
 	tournamentId: number;
-	type: (typeof TOURNAMENT_AUDIT_LOG_TYPES)[number];
+	type: TournamentAuditLogType;
 	/** The user who performed the action. */
 	actorUserId: number;
 	/** The affected member, for member-level events. `null` for team-level events. */
@@ -920,13 +690,7 @@ export interface TournamentAuditLog {
 	/** References {@link TournamentTeamHistory.id} so the team name stays resolvable after the team is hard-deleted. */
 	tournamentTeamHistoryId: number | null;
 	metadata: JSONColumnTypeNullable<TournamentAuditLogMetadata>;
-	createdAt: number;
-}
-
-export interface TournamentAuditLogMetadata {
-	bracketIdx?: number;
-	/** The new in-game name, for `UPDATE_IN_GAME_NAME` events. */
-	inGameName?: string;
+	createdAt: Generated<number>;
 }
 
 export interface TournamentOrganization {
@@ -938,15 +702,6 @@ export interface TournamentOrganization {
 	avatarImgId: number | null;
 	isEstablished: Generated<DBBoolean>;
 }
-
-export const TOURNAMENT_ORGANIZATION_ROLES = [
-	"ADMIN",
-	"MEMBER",
-	"ORGANIZER",
-	"STREAMER",
-] as const;
-type TournamentOrganizationRole =
-	(typeof TOURNAMENT_ORGANIZATION_ROLES)[number];
 
 export interface TournamentOrganizationMember {
 	organizationId: number;
@@ -966,7 +721,7 @@ export interface TournamentOrganizationSeries {
 	name: string;
 	description: string | null;
 	substringMatches: JSONColumnType<string[]>;
-	showLeaderboard: Generated<number>;
+	showLeaderboard: Generated<DBBoolean>;
 	tierHistory: JSONColumnTypeNullable<TournamentTierNumber[]>;
 }
 
@@ -1021,84 +776,12 @@ export interface UnvalidatedVideo {
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	title: string;
-	type: string;
+	type: (typeof videoMatchTypes)[number];
 	validatedAt: number | null;
-	youtubeDate: number;
+	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
+	youtubePublishedAt: number;
 	youtubeId: string;
 }
-
-// missing means "neutral"
-export type Preference = "AVOID" | "PREFER";
-export interface UserMapModePreferences {
-	modes: Array<{
-		mode: ModeShort;
-		/** Users opinion on the mode, `undefined` means neutral */
-		preference?: Preference;
-	}>;
-	pool: Array<{
-		mode: ModeShort;
-		stages: StageId[];
-	}>;
-}
-
-export interface WeaponPoolEntry {
-	weaponSplId: MainWeaponId;
-	isFavorite: number;
-}
-
-export const BUILD_SORT_IDENTIFIERS = [
-	"UPDATED_AT",
-	"TOP_500",
-	"WEAPON_POOL",
-	"WEAPON_IN_GAME_ORDER",
-	"ALPHABETICAL_TITLE",
-	"MODE",
-	"HEADGEAR_ID",
-	"CLOTHES_ID",
-	"SHOES_ID",
-	"PUBLIC_BUILD",
-	"PRIVATE_BUILD",
-] as const;
-
-export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
-
-export interface UserPreferences {
-	disableBuildAbilitySorting?: boolean;
-	disallowScrimPickupsFromUntrusted?: boolean;
-	defaultCalendarFilters?: CalendarFilters;
-	defaultScrimsFilters?: ScrimFilters;
-	/**
-	 * What time format the user prefers?
-	 *
-	 * "auto" = use browser default (default value)
-	 * "24h" = 24 hour format (e.g. 14:00)
-	 * "12h" = 12 hour format (e.g. 2:00 PM)
-	 * */
-	clockFormat?: "24h" | "12h" | "auto";
-	/** Is the new widget based user page enabled? (Supporter early preview) */
-	newProfileEnabled?: boolean;
-	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
-	spoilerFreeMode?: boolean;
-	weaponReportDefaultOpen?: boolean;
-}
-
-export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
-export const OBJECT_PRONOUNS = [
-	"him",
-	"her",
-	"them",
-	"its",
-	"all",
-	...SUBJECT_PRONOUNS,
-] as const;
-
-export type Pronouns = {
-	subject: (typeof SUBJECT_PRONOUNS)[number];
-	object: (typeof OBJECT_PRONOUNS)[number];
-};
-
-/** Card stat types that can be hidden from a user's card (kept here so `User.hiddenCardStats` does not import a feature module; keep in sync with the feature's `UserCardStat["type"]`). */
-export type HideableUserCardStat = "XP" | "DIV";
 
 export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
@@ -1108,7 +791,7 @@ export interface User {
 	bio: string | null;
 	/** Shown on user card */
 	shortBio: string | null;
-	commissionsOpen: Generated<number | null>;
+	commissionsOpen: Generated<DBBoolean>;
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
@@ -1123,19 +806,19 @@ export interface User {
 	username: ColumnType<string, never, never>;
 	discordUniqueName: string | null;
 	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
-	favoriteBadgeIds: ColumnType<number[] | null, string | null, string | null>;
+	favoriteBadgeIds: JSONColumnTypeNullable<number[]>;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
-	isArtist: Generated<DBBoolean | null>;
-	isVideoAdder: Generated<DBBoolean | null>;
-	isTournamentOrganizer: Generated<DBBoolean | null>;
-	isApiAccesser: Generated<DBBoolean | null>;
-	languages: string | null;
+	isArtist: Generated<DBBoolean>;
+	isVideoAdder: Generated<DBBoolean>;
+	isTournamentOrganizer: Generated<DBBoolean>;
+	isApiAccesser: Generated<DBBoolean>;
+	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	motionSens: number | null;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
-	patronSince: number | null;
+	patronStartedAt: number | null;
 	patronTier: number | null;
-	patronTill: number | null;
+	patronExpiresAt: number | null;
 	showDiscordUniqueName: Generated<DBBoolean>;
 	stickSens: number | null;
 	twitch: string | null;
@@ -1164,20 +847,17 @@ export interface User {
 	unverifiedPeakXP: JSONColumnTypeNullable<PeakXP>;
 }
 
-/** Represents User joined with PlusTier table */
-export type UserWithPlusTier = Tables["User"] & {
-	plusTier: PlusTier["tier"] | null;
-};
-
 export interface UserResultHighlight {
 	teamId: number;
 	userId: number;
 }
 
+/** Read-only. See {@link DB} for how this view relates to `UnvalidatedUserSubmittedImage`. */
 export interface UserSubmittedImage {
 	id: GeneratedAlways<number>;
 	submitterUserId: number | null;
 	url: string;
+	/** Never `null` in practice, the view filters unvalidated rows out. */
 	validatedAt: number | null;
 }
 
@@ -1216,7 +896,7 @@ export interface UserFriendCode {
 	friendCode: string;
 	userId: number;
 	submitterUserId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface UserWidget {
@@ -1224,14 +904,12 @@ export interface UserWidget {
 	index: number;
 	widget: JSONColumnType<StoredWidget>;
 }
-export type ApiTokenType = "read" | "write";
-
 export interface ApiToken {
 	id: GeneratedAlways<number>;
 	userId: number;
 	token: string;
 	type: Generated<ApiTokenType>;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface LiveStream {
@@ -1254,7 +932,7 @@ export interface ExternalStream {
 	name: string;
 	url: string;
 	avatarImgId: number | null;
-	startTime: number;
+	startsAt: number;
 	createdAt: Generated<number>;
 }
 
@@ -1262,7 +940,7 @@ export interface TournamentMatchVod {
 	id: GeneratedAlways<number>;
 	matchId: number;
 	userId: number | null;
-	platform: string;
+	platform: "TWITCH";
 	account: string;
 	platformVideoId: string;
 	timestampSeconds: number;
@@ -1275,7 +953,7 @@ export interface BanLog {
 	banned: number | null;
 	bannedReason: string | null;
 	bannedByUserId: number;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface ModNote {
@@ -1283,18 +961,31 @@ export interface ModNote {
 	userId: number;
 	authorId: number;
 	text: string;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 	isDeleted: Generated<DBBoolean>;
 }
 
+export interface UserReport {
+	id: GeneratedAlways<number>;
+	reportedUserId: number;
+	reporterUserId: number;
+	category: UserReportCategory;
+	description: string;
+	matchId: number | null;
+	createdAt: Generated<number>;
+}
+
+/** Read-only. See {@link DB} for how this view relates to `UnvalidatedVideo`. */
 export interface Video {
 	eventId: number | null;
 	id: GeneratedAlways<number>;
 	submitterUserId: number;
 	title: string;
-	type: "SCRIM" | "TOURNAMENT" | "MATCHMAKING" | "CAST" | "SENDOUQ";
+	type: (typeof videoMatchTypes)[number];
+	/** Never `null` in practice, the view filters unvalidated rows out. */
 	validatedAt: number | null;
-	youtubeDate: number;
+	/** When the video was published on YouTube. Day precision only, stored as noon UTC of that day. */
+	youtubePublishedAt: number;
 	youtubeId: string;
 }
 
@@ -1313,9 +1004,6 @@ export interface VideoMatchPlayer {
 	videoMatchId: number;
 	weaponSplId: number;
 }
-
-/** `WEST` = Tentatek division, `JPN` = Takoroka division. */
-export type XRankPlacementRegion = "WEST" | "JPN";
 
 export interface XRankPlacement {
 	badges: string;
@@ -1337,9 +1025,9 @@ export interface XRankPlacement {
 export interface ScrimPost {
 	id: GeneratedAlways<number>;
 	/** When is the scrim scheduled to happen */
-	at: number;
-	/** Optional end of time range indicating team accepts scrims starting between at and rangeEnd */
-	rangeEnd: number | null;
+	startsAt: number;
+	/** Optional end of time range indicating team accepts scrims starting between startsAt and rangeEndsAt */
+	rangeEndsAt: number | null;
 	/** Highest LUTI div accepted */
 	maxDiv: number | null;
 	/** Lowest LUTI div accepted */
@@ -1366,7 +1054,7 @@ export interface ScrimPost {
 	maps: "SZ" | "ALL" | "RANKED" | null;
 	/** If set, specifies the maps of a tournament to play */
 	mapsTournamentId: number | null;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 	updatedAt: Generated<number>;
 }
 
@@ -1395,7 +1083,7 @@ export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
 	/** User is the author of the post */
-	isOwner: number;
+	isOwner: DBBoolean;
 }
 
 export interface ScrimPostRequest {
@@ -1403,10 +1091,10 @@ export interface ScrimPostRequest {
 	scrimPostId: number;
 	teamId: number | null;
 	message: string | null;
-	/** Specific time selected by requester (required when post has rangeEnd) */
-	at: number | null;
+	/** Specific time selected by requester (required when post has rangeEndsAt) */
+	startsAt: number | null;
 	isAccepted: Generated<DBBoolean>;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface ScrimPostRequestUser {
@@ -1420,7 +1108,7 @@ export interface Association {
 	id: GeneratedAlways<number>;
 	name: string;
 	inviteCode: string;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface AssociationMember {
@@ -1434,21 +1122,13 @@ export interface Notification {
 	type: NotificationValue["type"];
 	meta: JSONColumnTypeNullable<Record<string, number | string>>;
 	pictureUrl: string | null;
-	createdAt: GeneratedAlways<number>;
+	createdAt: Generated<number>;
 }
 
 export interface NotificationUser {
 	notificationId: number;
 	userId: number;
 	seen: Generated<DBBoolean>;
-}
-
-export interface NotificationSubscription {
-	endpoint: string;
-	keys: {
-		auth: string;
-		p256dh: string;
-	};
 }
 
 /** A subscription of user's browser indicating where push notifications can be sent to. */
@@ -1458,24 +1138,35 @@ export interface NotificationUserSubscription {
 	subscription: JSONColumnType<NotificationSubscription>;
 }
 
-export const SPLATOON_ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
-export type SplatoonRotationType = (typeof SPLATOON_ROTATION_TYPES)[number];
-
 export interface SplatoonRotation {
 	id: GeneratedAlways<number>;
 	type: SplatoonRotationType;
-	mode: string;
+	mode: RankedModeShort;
 	stageId1: number;
 	stageId2: number;
-	startTime: number;
-	endTime: number;
+	startsAt: number;
+	endsAt: number;
 }
 
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 
+/**
+ * Every table and view available to query.
+ *
+ * Some entries are SQL **views**, not tables. They are marked below and can not
+ * be inserted into or updated. Two naming conventions exist for the
+ * table/view pairing, both meaning "base table vs. filtered view":
+ * - `All` prefix on the table: `AllTeam` (table) / `Team` (view)
+ * - `Unvalidated` prefix on the table: `UnvalidatedVideo` (table) / `Video` (view)
+ *
+ * In both cases write to the prefixed table and read from the unprefixed view
+ * unless you specifically want the filtered-out rows.
+ */
 export interface DB {
+	/** Table backing the `Team` view. Includes soft-deleted teams. */
 	AllTeam: Team;
+	/** Table backing the `TeamMember` & `TeamMemberWithSecondary` views. Includes members who have left and members of deleted teams. */
 	AllTeamMember: TeamMember;
 	ApiToken: ApiToken;
 	Art: Art;
@@ -1485,6 +1176,7 @@ export interface DB {
 	TaggedArt: TaggedArt;
 	Badge: Badge;
 	BadgeManager: BadgeManager;
+	/** VIEW, read-only. `TournamentBadgeOwner` rows plus a synthetic patron badge row per patron of tier 2+. */
 	BadgeOwner: BadgeOwner;
 	TournamentBadgeOwner: TournamentBadgeOwner;
 	BanLog: BanLog;
@@ -1515,14 +1207,18 @@ export interface DB {
 	PlusSuggestion: PlusSuggestion;
 	PlusTier: PlusTier;
 	PlusVote: PlusVote;
+	/** VIEW, read-only. `PlusVote` rows aggregated per (votedId, tier, month, year) with the average score. */
 	PlusVotingResult: PlusVotingResult;
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
 	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
+	/** VIEW over `AllTeam`, excludes soft-deleted teams. Insert/update via `AllTeam`. */
 	Team: Team;
+	/** VIEW over `AllTeamMember`, excludes members who have left, members of deleted teams, and members whose secondary team this is. Insert/update via `AllTeamMember`. */
 	TeamMember: TeamMember;
+	/** VIEW over `AllTeamMember`, same as `TeamMember` but also includes rows where this is the member's secondary (i.e. non-main) team. Insert/update via `AllTeamMember`. */
 	TeamMemberWithSecondary: TeamMember;
 	Tournament: Tournament;
 	TournamentStaff: TournamentStaff;
@@ -1552,17 +1248,22 @@ export interface DB {
 	TrustRelationship: TrustRelationship;
 	Friendship: Friendship;
 	FriendRequest: FriendRequest;
+	/** Table backing the `UserSubmittedImage` view. Includes images awaiting validation. */
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
+	/** Table backing the `Video` view. Includes videos awaiting validation. */
 	UnvalidatedVideo: UnvalidatedVideo;
 	User: User;
 	UserSearch: UserSearch;
 	UserResultHighlight: UserResultHighlight;
+	/** VIEW over `UnvalidatedUserSubmittedImage`, excludes images awaiting validation. Insert/update via `UnvalidatedUserSubmittedImage`. */
 	UserSubmittedImage: UserSubmittedImage;
 	UserWeapon: UserWeapon;
 	UserWeaponPool: UserWeaponPool;
 	TenStarWeapon: TenStarWeapon;
 	UserFriendCode: UserFriendCode;
 	UserWidget: UserWidget;
+	UserReport: UserReport;
+	/** VIEW over `UnvalidatedVideo`, excludes videos awaiting validation. Insert/update via `UnvalidatedVideo`. */
 	Video: Video;
 	VideoMatch: VideoMatch;
 	VideoMatchPlayer: VideoMatchPlayer;

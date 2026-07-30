@@ -2102,14 +2102,14 @@ function FormFieldsSection({ id }: { id: string }) {
 
 			<SendouForm
 				schema={formFieldsShowcaseSchema}
-				autoSubmit
+				mode="autoSubmit"
 				className="w-full"
 			>
 				{({ FormField }) => (
 					<div className="stack lg">
 						<Divider smallText>Text Fields</Divider>
 
-						<ComponentRow label="textFieldRequired">
+						<ComponentRow label="textField">
 							<FormField name="requiredText" />
 						</ComponentRow>
 
@@ -2123,7 +2123,7 @@ function FormFieldsSection({ id }: { id: string }) {
 
 						<Divider smallText>Text Areas</Divider>
 
-						<ComponentRow label="textAreaRequired">
+						<ComponentRow label="textArea">
 							<FormField name="requiredTextArea" />
 						</ComponentRow>
 
@@ -2173,7 +2173,7 @@ function FormFieldsSection({ id }: { id: string }) {
 
 						<Divider smallText>Date & Time</Divider>
 
-						<ComponentRow label="datetimeRequired">
+						<ComponentRow label="datetime">
 							<FormField name="requiredDatetime" />
 						</ComponentRow>
 
@@ -2181,7 +2181,7 @@ function FormFieldsSection({ id }: { id: string }) {
 							<FormField name="optionalDatetime" />
 						</ComponentRow>
 
-						<ComponentRow label="dayMonthYearRequired">
+						<ComponentRow label="dayMonthYear">
 							<FormField name="birthDate" />
 						</ComponentRow>
 

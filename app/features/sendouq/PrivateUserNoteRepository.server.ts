@@ -3,7 +3,7 @@ import type { TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow } from "~/utils/dates";
 
-export function ownNotes(
+export function findAllOwn(
 	/** Which users to get notes for, if omitted all notes for the author are returned */
 	targetUserIds: number[] = [],
 ) {

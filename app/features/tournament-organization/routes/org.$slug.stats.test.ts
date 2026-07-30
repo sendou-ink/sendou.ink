@@ -10,7 +10,7 @@ import { ESTABLISHED_ORG } from "../tournament-organization-constants";
 const statsLoader = wrappedLoader<SerializeFrom<typeof loader>>({ loader });
 
 const createOrg = () =>
-	TournamentOrganizationRepository.create({ ownerId: 1, name: "Org" });
+	TournamentOrganizationRepository.insert({ ownerId: 1, name: "Org" });
 
 describe("org stats loader", () => {
 	beforeEach(async () => {
@@ -19,9 +19,9 @@ describe("org stats loader", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		vi.useRealTimers();
-		dbReset();
+		await dbReset();
 	});
 
 	test("throws when the user is not an org admin", async () => {

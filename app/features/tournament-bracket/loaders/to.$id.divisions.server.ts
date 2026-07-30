@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import type { Unwrapped } from "../../../utils/types";
 import { tournamentFromDB } from "../core/Tournament.server";
@@ -13,7 +13,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const divisions = notFoundIfFalsy(await divisionsCached(tournamentId));
+	const divisions = notFoundIfNullish(await divisionsCached(tournamentId));
 
 	return {
 		divisions,

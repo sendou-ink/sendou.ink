@@ -28,7 +28,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"Cannot remove yourself from the association",
 			);
 
-			await AssociationRepository.removeMember({
+			await AssociationRepository.deleteMember({
 				userId: data.userId,
 				associationId: data.associationId,
 			});
@@ -38,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		case "DELETE_ASSOCIATION": {
 			await validateHasManagePermissions(data.associationId);
 
-			await AssociationRepository.del(data.associationId);
+			await AssociationRepository.deleteById(data.associationId);
 
 			break;
 		}
@@ -75,7 +75,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				`Regular users can only be a member of ${maxAssociationCount} associations (supporters ${ASSOCIATION.MAX_COUNT_SUPPORTER})`,
 			);
 
-			await AssociationRepository.addMember({
+			await AssociationRepository.insertMember({
 				userId: user.id,
 				associationId: associationToJoin.id,
 			});
@@ -94,7 +94,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"You cannot leave an association you manage",
 			);
 
-			await AssociationRepository.removeMember({
+			await AssociationRepository.deleteMember({
 				userId: user.id,
 				associationId: data.associationId,
 			});

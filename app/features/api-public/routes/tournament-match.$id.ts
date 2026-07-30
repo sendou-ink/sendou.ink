@@ -7,8 +7,9 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { logger } from "~/utils/logger";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentMatchResponse } from "../schema";
 
@@ -23,7 +24,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const match = notFoundIfFalsy(
+	const match = notFoundIfNullish(
 		await db
 			.selectFrom("TournamentMatch")
 			.innerJoin(
@@ -42,6 +43,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				"TournamentMatch.id",
 				"TournamentMatch.opponentOne",
 				"TournamentMatch.opponentTwo",
+				"TournamentMatch.winnerSide",
 				"Tournament.mapPickingStyle",
 				"TournamentRound.maps",
 				jsonArrayFrom(
@@ -52,8 +54,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 							"TournamentMatchGameResult.mode",
 							"TournamentMatchGameResult.winnerTeamId",
 							"TournamentMatchGameResult.source",
-							"TournamentMatchGameResult.opponentOnePoints",
-							"TournamentMatchGameResult.opponentTwoPoints",
+							"TournamentMatchGameResult.ko",
 							jsonArrayFrom(
 								innerEb
 									.selectFrom("TournamentMatchGameResultParticipant")
@@ -78,25 +79,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		user: undefined,
 	});
 
-	const parseSource = (
-		rawSource: string,
-	): NonNullable<GetTournamentMatchResponse["mapList"]>[number]["source"] => {
-		const parsed = Number(rawSource);
-		if (Number.isNaN(parsed)) {
-			return rawSource as "DEFAULT" | "TIEBREAKER" | "BOTH";
-		}
-
-		return parsed;
-	};
 	const mapList = async (): Promise<GetTournamentMatchResponse["mapList"]> => {
-		if (!match.opponentOne.id || !match.opponentTwo.id) {
+		const { opponentOne, opponentTwo } = match;
+		if (!opponentOne?.id || !opponentTwo?.id) {
 			return null;
 		}
 
-		if (
-			match.opponentOne.result === "win" ||
-			match.opponentTwo.result === "win"
-		) {
+		if (match.winnerSide) {
 			return match.playedMapList.map((playedMap) => ({
 				map: {
 					mode: playedMap.mode,
@@ -107,22 +96,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				},
 				participatedUserIds: playedMap.participants.map((p) => p.userId),
 				winnerTeamId: playedMap.winnerTeamId,
-				source: parseSource(playedMap.source),
-				points:
-					playedMap.opponentOnePoints && playedMap.opponentTwoPoints
-						? [playedMap.opponentOnePoints, playedMap.opponentTwoPoints]
-						: null,
+				source: parseMaplistSource(playedMap.source),
+				ko: playedMap.ko !== null ? Boolean(playedMap.ko) : null,
 			}));
 		}
 
 		const pickBanEvents = match.maps?.pickBan
-			? await TournamentRepository.pickBanEventsByMatchId(match.id)
+			? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 			: [];
 
 		return resolveMapList({
 			tournamentId: match.tournamentId,
 			matchId: id,
-			teams: [match.opponentOne.id, match.opponentTwo.id],
+			teams: [opponentOne.id, opponentTwo.id],
 			mapPoolByTeamId: (teamId) => tournament.teamById(teamId)?.mapPool ?? [],
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
@@ -131,7 +117,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			recentlyPlayedMaps:
 				match.mapPickingStyle !== "TO"
 					? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
-							teamIds: [match.opponentOne.id, match.opponentTwo.id],
+							teamIds: [opponentOne.id, opponentTwo.id],
 						}).catch((error) => {
 							logger.error("Failed to fetch recently played maps", error);
 							return [];
@@ -149,7 +135,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				participatedUserIds: null,
 				winnerTeamId: null,
 				source: mapListMap.source,
-				points: null,
+				ko: null,
 			};
 		});
 	};
@@ -158,13 +144,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament.matchContextNamesById(id);
 
 	const result: GetTournamentMatchResponse = {
-		teamOne: match.opponentOne.id
+		teamOne: match.opponentOne?.id
 			? {
 					id: match.opponentOne.id,
 					score: match.opponentOne.score ?? 0,
 				}
 			: null,
-		teamTwo: match.opponentTwo.id
+		teamTwo: match.opponentTwo?.id
 			? {
 					id: match.opponentTwo.id,
 					score: match.opponentTwo.score ?? 0,

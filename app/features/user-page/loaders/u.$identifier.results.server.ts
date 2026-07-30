@@ -3,9 +3,9 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
-	notFoundIfFalsy,
+	notFoundIfNullish,
+	paginate,
 	parseSafeSearchParams,
-	redirectIfPageOutOfBounds,
 } from "~/utils/remix.server";
 import {
 	HIGHLIGHTS_RESULTS_MAX,
@@ -21,8 +21,8 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		schema: userResultsPageSearchParamsSchema,
 	});
 
-	const userId = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(params.identifier!),
+	const userId = notFoundIfNullish(
+		await UserRepository.findIdByIdentifier(params.identifier!),
 	).id;
 	const hasHighlightedResults =
 		await UserRepository.hasHighlightedResultsByUserId(userId);
@@ -60,15 +60,10 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		}),
 	]);
 
-	const pagesCount = Math.ceil(totalCount / RESULTS_PER_PAGE);
-
-	redirectIfPageOutOfBounds({ url, page, pagesCount });
-
 	return {
 		results: {
 			value: results,
-			currentPage: page,
-			pages: pagesCount,
+			...paginate({ url, page, pageSize: RESULTS_PER_PAGE, totalCount }),
 		},
 		hasHighlightedResults,
 	};

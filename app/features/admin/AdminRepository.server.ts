@@ -1,5 +1,5 @@
 import type { Transaction } from "kysely";
-import { db, sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
@@ -7,35 +7,6 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-
-const removeOldLikesStm = sql.prepare(/*sql*/ `
-  delete from 
-    "GroupLike"
-    where 
-      "GroupLike"."createdAt" < cast(strftime('%s', datetime('now', 'start of day', '-7 days')) as int)
-`);
-
-const removeOldGroupStm = sql.prepare(/*sql*/ `
-  delete from
-    "Group"
-  where "Group"."id" in (
-    select "Group"."id"
-    from "Group"
-    left join "GroupMatch" on "Group"."id" = "GroupMatch"."alphaGroupId" or "Group"."id" = "GroupMatch"."bravoGroupId"
-      where "Group"."status" = 'INACTIVE'
-        and "GroupMatch"."id" is null
-  )
-`);
-
-const cleanUpStm = sql.prepare(/*sql*/ `
-  vacuum
-`);
-
-export const cleanUp = () => {
-	removeOldLikesStm.run();
-	removeOldGroupStm.run();
-	cleanUpStm.run();
-};
 
 /**
  * Migrates user-related data. Takes data from the "old user" and remaps it to the Discord ID of the "new user". Used when user switches their Discord accounts.
@@ -94,6 +65,35 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.set({ userId: args.oldUserId })
 			.execute();
 
+		// reports between the two merged accounts would become self-reports
+		await trx
+			.deleteFrom("UserReport")
+			.where((eb) =>
+				eb.or([
+					eb.and([
+						eb("reporterUserId", "=", args.newUserId),
+						eb("reportedUserId", "=", args.oldUserId),
+					]),
+					eb.and([
+						eb("reporterUserId", "=", args.oldUserId),
+						eb("reportedUserId", "=", args.newUserId),
+					]),
+				]),
+			)
+			.execute();
+		await deleteOlderCollidingUserReports(trx, args, "reporterUserId");
+		await deleteOlderCollidingUserReports(trx, args, "reportedUserId");
+		await trx
+			.updateTable("UserReport")
+			.where("reporterUserId", "=", args.newUserId)
+			.set({ reporterUserId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("UserReport")
+			.where("reportedUserId", "=", args.newUserId)
+			.set({ reportedUserId: args.oldUserId })
+			.execute();
+
 		// special case: delete same team membership to avoid unique constraint violation
 		await trx
 			.deleteFrom("AllTeamMember")
@@ -139,6 +139,47 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 
 		return null;
 	});
+}
+
+/**
+ * Merging accounts can collide on the one-report-per-pair unique index; the newer
+ * report (by `createdAt`, id as tie-breaker) wins and the other row is dropped.
+ */
+function deleteOlderCollidingUserReports(
+	trx: Transaction<DB>,
+	args: { newUserId: number; oldUserId: number },
+	column: "reporterUserId" | "reportedUserId",
+) {
+	const otherColumn =
+		column === "reporterUserId" ? "reportedUserId" : "reporterUserId";
+
+	return trx
+		.deleteFrom("UserReport")
+		.where(column, "in", [args.newUserId, args.oldUserId])
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("UserReport as newer")
+					.select("newer.id")
+					.where(`newer.${column}`, "in", [args.newUserId, args.oldUserId])
+					.whereRef(`newer.${otherColumn}`, "=", `UserReport.${otherColumn}`)
+					.whereRef("newer.id", "!=", "UserReport.id")
+					.where((inner) =>
+						inner.or([
+							inner("newer.createdAt", ">", inner.ref("UserReport.createdAt")),
+							inner.and([
+								inner(
+									"newer.createdAt",
+									"=",
+									inner.ref("UserReport.createdAt"),
+								),
+								inner("newer.id", ">", inner.ref("UserReport.id")),
+							]),
+						]),
+					),
+			),
+		)
+		.execute();
 }
 
 async function validateMigration(
@@ -250,21 +291,21 @@ export async function linkUserAndPlayer({
 export function forcePatron(args: {
 	id: number;
 	patronTier: Tables["User"]["patronTier"];
-	patronSince: Date;
-	patronTill: Date;
+	patronStartedAt: Date;
+	patronExpiresAt: Date;
 }) {
 	return db
 		.updateTable("User")
 		.set({
 			patronTier: args.patronTier,
-			patronSince: dateToDatabaseTimestamp(args.patronSince),
-			patronTill: dateToDatabaseTimestamp(args.patronTill),
+			patronStartedAt: dateToDatabaseTimestamp(args.patronStartedAt),
+			patronExpiresAt: dateToDatabaseTimestamp(args.patronExpiresAt),
 		})
 		.where("User.id", "=", args.id)
 		.execute();
 }
 
-export async function allBannedUsers() {
+export async function findAllBannedUsers() {
 	const rows = await db
 		.selectFrom("User")
 		.select(["User.id as userId", "User.banned", "User.bannedReason"])
@@ -356,7 +397,7 @@ export function addModNote(
 		.execute();
 }
 
-export function findModeNoteById(id: number) {
+export function findModNoteById(id: number) {
 	return db
 		.selectFrom("ModNote")
 		.selectAll()

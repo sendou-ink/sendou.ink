@@ -4,7 +4,7 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy, privatelyCachedJson } from "~/utils/remix.server";
+import { notFoundIfNullish, privatelyCachedJson } from "~/utils/remix.server";
 import { sortBuilds } from "../core/build-sorting.server";
 import { userParamsSchema } from "../user-page-schemas";
 
@@ -13,11 +13,11 @@ export type UserBuildsPageData = SerializeFrom<typeof loader>;
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const loggedInUser = getUser();
 	const { identifier } = userParamsSchema.parse(params);
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToBuildFields(identifier),
+	const user = notFoundIfNullish(
+		await UserRepository.findBuildFieldsByIdentifier(identifier),
 	);
 
-	const builds = await BuildRepository.allByUserId(user.id, {
+	const builds = await BuildRepository.findAllByUserId(user.id, {
 		showPrivate: loggedInUser?.id === user.id,
 		sortAbilities:
 			loggedInUser?.id !== user.id &&

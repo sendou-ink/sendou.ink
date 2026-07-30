@@ -82,7 +82,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		year,
 		bannedUsers:
 			user?.id && organization.permissions.BAN.includes(user.id)
-				? await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
+				? await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
 						organization.id,
 					)
 				: null,
@@ -137,6 +137,6 @@ async function seriesStuff({
 				: null,
 		eventsCount: events.length,
 		logoUrl: events[0].logoUrl,
-		established: events.at(-1)!.startTime,
+		established: events.at(-1)!.startsAt,
 	};
 }

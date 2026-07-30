@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import {
 	BadgeCheck,
+	Flag,
 	Megaphone,
 	NotebookPen,
 	NotebookText,
@@ -22,9 +23,10 @@ import { Image, TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placement } from "~/components/Placement";
-import type { XRankPlacementRegion } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
+import { ReportUserDialog } from "~/features/user-report/components/ReportUserDialog";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
@@ -59,7 +61,7 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 
 /**
  * Click-to-open trigger that shows a popover with the user's card. Card data is resolved from the
- * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.userCards`);
+ * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.findAllByUserIds`);
  * pass `data` directly to bypass the lookup (e.g. the components showcase). When no card data exists
  * for the user, the `children` are rendered plain without a trigger.
  *
@@ -96,6 +98,7 @@ export function UserCard({
 	// take focus; the note view inside the card opens them
 	const [isNoteDialogOpen, setIsNoteDialogOpen] = React.useState(false);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
+	const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
 
 	const fetcher = useFetcher<UserCardFriendshipLoaderData>();
 	const friendshipLoadedRef = React.useRef(false);
@@ -123,6 +126,11 @@ export function UserCard({
 		setIsDeleteConfirmOpen(true);
 	};
 
+	const openReportDialog = () => {
+		setIsOpen(false);
+		setIsReportDialogOpen(true);
+	};
+
 	if (!data) return <>{children}</>;
 
 	return (
@@ -138,6 +146,7 @@ export function UserCard({
 							withMutualFriends={withMutualFriends}
 							onEditNote={openNoteDialog}
 							onDeleteNote={openDeleteConfirm}
+							onReport={user ? openReportDialog : undefined}
 						/>
 					</Dialog>
 				</Popover>
@@ -148,6 +157,13 @@ export function UserCard({
 					username={data.username}
 					note={data.privateNote}
 					onClose={() => setIsNoteDialogOpen(false)}
+				/>
+			) : null}
+			{isReportDialogOpen ? (
+				<ReportUserDialog
+					userId={data.id}
+					username={data.username}
+					onClose={() => setIsReportDialogOpen(false)}
 				/>
 			) : null}
 			<FormWithConfirm
@@ -166,7 +182,7 @@ export function UserCard({
 
 /**
  * Resolves a user's `UserCardData` from any matched route loader that spread `{ userCards }`
- * (see `UserCardRepository.userCards`). Returns `undefined` when no loader on the current route
+ * (see `UserCardRepository.findAllByUserIds`). Returns `undefined` when no loader on the current route
  * tree carries data for the given user.
  */
 export function useUserCardData(
@@ -194,6 +210,7 @@ function CardContent({
 	withMutualFriends,
 	onEditNote,
 	onDeleteNote,
+	onReport,
 }: {
 	data: UserCardData;
 	/** Lazy-loaded; `undefined` while the friendship fetch is in flight. */
@@ -202,6 +219,8 @@ function CardContent({
 	withMutualFriends: boolean;
 	onEditNote: () => void;
 	onDeleteNote: () => void;
+	/** Not passed for logged-out viewers, hiding the report button. */
+	onReport: (() => void) | undefined;
 }) {
 	const { t } = useTranslation(["common", "user"]);
 	const location = useLocation();
@@ -266,6 +285,16 @@ function CardContent({
 							onPress={onNoteButtonPress}
 							aria-label={t("user:card.editPrivateNote")}
 						/>
+						{onReport ? (
+							<SendouButton
+								size="miniscule"
+								shape="circle"
+								icon={<Flag />}
+								onPress={onReport}
+								aria-label="Report user"
+								data-testid="report-user-button"
+							/>
+						) : null}
 					</>
 				)}
 			</div>
@@ -534,10 +563,18 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 				<span className={clsx(styles.stat, styles.xpStat)}>
 					{primary ? (
 						<span className={styles.xpPrimary}>
-							{primary.isVerified ? (
-								<BadgeCheck className={styles.xpVerifiedIconLarge} />
-							) : null}
-							<DivImage region={primary.region} />
+							<span className={styles.xpPrimaryIcons}>
+								{primary.isVerified ? (
+									<BadgeCheck
+										className={
+											primary.region === "WEST"
+												? styles.xpVerifiedIconSmall
+												: styles.xpVerifiedIconLarge
+										}
+									/>
+								) : null}
+								<DivImage region={primary.region} />
+							</span>
 							{primary.points}
 							{t("user:card.xp")}
 						</span>

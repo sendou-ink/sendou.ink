@@ -10,6 +10,7 @@ type FieldsetFormFieldProps<S extends z.ZodRawShape> = Omit<
 > & {
 	name: string;
 	fields: z.ZodObject<S>;
+	disabled?: boolean;
 };
 
 export function FieldsetFormField<S extends z.ZodRawShape>({
@@ -18,6 +19,7 @@ export function FieldsetFormField<S extends z.ZodRawShape>({
 	bottomText,
 	error,
 	fields,
+	disabled,
 }: FieldsetFormFieldProps<S>) {
 	const fieldNames = Object.keys(fields.shape);
 	const { translatedLabel, translatedBottomText, translatedError } =
@@ -33,6 +35,7 @@ export function FieldsetFormField<S extends z.ZodRawShape>({
 					key={fieldName}
 					name={`${name}.${fieldName}`}
 					field={fields.shape[fieldName] as z.ZodType}
+					disabled={disabled}
 				/>
 			))}
 			{translatedError ? (

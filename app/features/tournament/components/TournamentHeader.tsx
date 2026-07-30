@@ -1,11 +1,11 @@
-import { Bookmark, BookmarkCheck, Share2 } from "lucide-react";
+import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
-import { CopyToClipboardPopover } from "~/components/CopyToClipboardPopover";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { DiscordIcon } from "~/components/icons/Discord";
+import { ShareUrlButton } from "~/components/ShareUrlButton";
 import TimePopover from "~/components/TimePopover";
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -24,7 +24,7 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 
 	const startTimes = R.uniqueBy(
 		[
-			tournament.ctx.startTime,
+			tournament.ctx.startsAt,
 			...tournament.ctx.settings.bracketProgression
 				.filter((b) => b.startTime)
 				.map((b) => databaseTimestampToDate(b.startTime!)),
@@ -93,7 +93,9 @@ export function TournamentHeaderActions({
 					aria-label="Discord"
 				/>
 			) : null}
-			<ShareTournamentButton tournament={tournament} />
+			<ShareUrlButton
+				url={`${SENDOU_INK_BASE_URL}${tournamentPage(tournament.ctx.id)}`}
+			/>
 		</div>
 	);
 }
@@ -165,45 +167,5 @@ function OrganizerLink({ tournament }: { tournament: Tournament }) {
 			<Avatar user={tournament.ctx.author} size="xxs" />
 			{tournament.ctx.author.username}
 		</Link>
-	);
-}
-
-function ShareTournamentButton({ tournament }: { tournament: Tournament }) {
-	const { t } = useTranslation(["common"]);
-	const url = `${SENDOU_INK_BASE_URL}${tournamentPage(tournament.ctx.id)}`;
-
-	const handleShare = () => {
-		navigator.share({ url });
-	};
-
-	if (
-		typeof navigator !== "undefined" &&
-		typeof navigator.share === "function"
-	) {
-		return (
-			<SendouButton
-				variant="outlined"
-				size="small"
-				shape="circle"
-				icon={<Share2 />}
-				onPress={handleShare}
-				aria-label={t("common:actions.share")}
-			/>
-		);
-	}
-
-	return (
-		<CopyToClipboardPopover
-			url={url}
-			trigger={
-				<SendouButton
-					variant="outlined"
-					size="small"
-					shape="circle"
-					icon={<Share2 />}
-					aria-label={t("common:actions.share")}
-				/>
-			}
-		/>
 	);
 }

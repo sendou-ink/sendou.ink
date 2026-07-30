@@ -52,7 +52,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 					ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 					staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
 					async getFreshValue() {
-						return LeaderboardRepository.teamLeaderboardBySeason({
+						return LeaderboardRepository.findTeamLeaderboardBySeason({
 							season,
 							onlyOneEntryPerUser: type !== "TEAM-ALL",
 						});
@@ -73,13 +73,13 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 
 	const xpLeaderboard =
 		type === "XP-ALL"
-			? await LeaderboardRepository.allXPLeaderboard()
+			? await LeaderboardRepository.findAllXPLeaderboard()
 			: type.startsWith("XP-MODE")
-				? await LeaderboardRepository.modeXPLeaderboard(
+				? await LeaderboardRepository.findModeXPLeaderboard(
 						type.split("-")[2] as RankedModeShort,
 					)
 				: type.startsWith("XP-WEAPON")
-					? await LeaderboardRepository.weaponXPLeaderboard(
+					? await LeaderboardRepository.findWeaponXPLeaderboard(
 							Number(type.split("-")[2]) as MainWeaponId,
 						)
 					: null;
@@ -87,7 +87,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	return {
 		userLeaderboard: filteredLeaderboard ?? userLeaderboard,
 		ownEntryPeek: showOwnEntryPeek
-			? ownEntryPeek({
+			? await ownEntryPeek({
 					leaderboard: fullUserLeaderboard,
 					season,
 					userId: user.id,

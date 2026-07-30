@@ -134,6 +134,16 @@
 	gap: var(--s-1);
 }
 
+.xpPrimaryIcons {
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.xpPrimaryIcons:empty {
+	display: none;
+}
+
 .xpVerified {
 	display: inline-flex;
 	align-items: center;

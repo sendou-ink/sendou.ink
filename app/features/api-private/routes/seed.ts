@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
+import { startOfToday, subHours } from "date-fns";
+import { type NotNull, sql } from "kysely";
 import type { ActionFunction } from "react-router";
 import { z } from "zod";
-import { sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
@@ -43,8 +45,8 @@ export const action: ActionFunction = async ({ request }) => {
 	const usePreSeeded = source === "e2e" && fs.existsSync(preSeededDbPath);
 
 	if (usePreSeeded) {
-		restoreFromPreSeeded(preSeededDbPath);
-		adjustSeedDatesToCurrent(variationName);
+		await restoreFromPreSeeded(preSeededDbPath);
+		await adjustSeedDatesToCurrent(variationName);
 	} else {
 		const { seed } = await import("~/db/seed");
 		await seed(variation);
@@ -65,88 +67,97 @@ const REG_OPEN_TOURNAMENT_IDS = [1, 3];
 const SEED_REFERENCE_TIMESTAMP = 1767440151;
 
 // TODO: do this cleaner
-function adjustSeedDatesToCurrent(variation: SeedVariation) {
+async function adjustSeedDatesToCurrent(variation: SeedVariation) {
 	const halfAnHourFromNow = Math.floor((Date.now() + 1000 * 60 * 30) / 1000);
-	const oneHourAgo = Math.floor((Date.now() - 1000 * 60 * 60) / 1000);
+	// clamped to the start of today so that within the first hour after midnight
+	// the event does not fall onto the previous calendar day (calendar renders today onward)
+	const oneHourAgo = Math.floor(
+		Math.max(subHours(new Date(), 1).getTime(), startOfToday().getTime()) /
+			1000,
+	);
 	const now = Math.floor(Date.now() / 1000);
 
-	const tournamentEventIds = sql
-		.prepare(
-			`SELECT id, tournamentId FROM "CalendarEvent" WHERE tournamentId IS NOT NULL`,
-		)
-		.all() as Array<{ id: number; tournamentId: number }>;
+	const tournamentEventIds = await db
+		.selectFrom("CalendarEvent")
+		.select(["id", "tournamentId"])
+		.where("tournamentId", "is not", null)
+		.$narrowType<{ tournamentId: NotNull }>()
+		.execute();
 
 	for (const { id, tournamentId } of tournamentEventIds) {
 		const isRegOpen =
 			variation === "REG_OPEN" &&
 			REG_OPEN_TOURNAMENT_IDS.includes(tournamentId);
 
-		sql
-			.prepare(`UPDATE "CalendarEventDate" SET startTime = ? WHERE eventId = ?`)
-			.run(isRegOpen ? halfAnHourFromNow : oneHourAgo, id);
+		await db
+			.updateTable("CalendarEventDate")
+			.set({ startsAt: isRegOpen ? halfAnHourFromNow : oneHourAgo })
+			.where("eventId", "=", id)
+			.execute();
 	}
 
-	sql
-		.prepare(
-			`UPDATE "Group" SET latestActionAt = ?, createdAt = ? WHERE status != 'INACTIVE'`,
-		)
-		.run(now, now);
+	await db
+		.updateTable("Group")
+		.set({ latestActionAt: now, createdAt: now })
+		.where("status", "!=", "INACTIVE")
+		.execute();
 
-	sql.prepare(`UPDATE "GroupLike" SET createdAt = ?`).run(now);
+	await db.updateTable("GroupLike").set({ createdAt: now }).execute();
 
 	const scrimTimeOffset = now - SEED_REFERENCE_TIMESTAMP;
-	sql
-		.prepare(
-			`UPDATE "ScrimPost" SET "at" = "at" + ?, "createdAt" = "createdAt" + ?`,
-		)
-		.run(scrimTimeOffset, scrimTimeOffset);
-	sql
-		.prepare(
-			`UPDATE "ScrimPost" SET "rangeEnd" = "rangeEnd" + ? WHERE "rangeEnd" IS NOT NULL`,
-		)
-		.run(scrimTimeOffset);
-	sql
-		.prepare(
-			`UPDATE "ScrimPostRequest" SET "at" = "at" + ? WHERE "at" IS NOT NULL`,
-		)
-		.run(scrimTimeOffset);
+	await db
+		.updateTable("ScrimPost")
+		.set((eb) => ({
+			startsAt: eb("startsAt", "+", scrimTimeOffset),
+			createdAt: eb("createdAt", "+", scrimTimeOffset),
+		}))
+		.execute();
+	await db
+		.updateTable("ScrimPost")
+		.set((eb) => ({ rangeEndsAt: eb("rangeEndsAt", "+", scrimTimeOffset) }))
+		.where("rangeEndsAt", "is not", null)
+		.execute();
+	await db
+		.updateTable("ScrimPostRequest")
+		.set((eb) => ({ startsAt: eb("startsAt", "+", scrimTimeOffset) }))
+		.where("startsAt", "is not", null)
+		.execute();
 }
 
-function restoreFromPreSeeded(sourcePath: string) {
-	sql.exec(`ATTACH DATABASE '${sourcePath}' AS source`);
+async function restoreFromPreSeeded(sourcePath: string) {
+	await sql`ATTACH DATABASE ${sourcePath} AS source`.execute(db);
 
 	try {
 		// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
 		// written to directly; the fts index stays in sync via the User triggers
 		// when its source rows are deleted and re-inserted below
-		const tables = sql
-			.prepare(
-				`SELECT name FROM source.sqlite_master
-				WHERE type='table'
-				AND name NOT LIKE 'sqlite_%'
-				AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
-				AND NOT EXISTS (
-					SELECT 1 FROM source.sqlite_master AS vt
-					WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
-					AND source.sqlite_master.name LIKE vt.name || '_%'
-				)`,
+		const { rows: tables } = await sql<{ name: string }>`
+			SELECT name FROM source.sqlite_master
+			WHERE type='table'
+			AND name NOT LIKE 'sqlite_%'
+			AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
+			AND NOT EXISTS (
+				SELECT 1 FROM source.sqlite_master AS vt
+				WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
+				AND source.sqlite_master.name LIKE vt.name || '_%'
 			)
-			.all() as Array<{ name: string }>;
+		`.execute(db);
 
-		sql.exec("PRAGMA foreign_keys = OFF");
+		await sql`PRAGMA foreign_keys = OFF`.execute(db);
 
 		for (const { name } of tables) {
-			sql.exec(`DELETE FROM main."${name}"`);
+			await sql`DELETE FROM ${sql.table(`main.${name}`)}`.execute(db);
 
 			// Get non-generated columns from main database
-			const mainColumns = sql
-				.prepare(`PRAGMA main.table_xinfo("${name}")`)
-				.all() as Array<{ name: string; hidden: number }>;
+			const { rows: mainColumns } = await sql<{
+				name: string;
+				hidden: number;
+			}>`PRAGMA main.table_xinfo(${sql.ref(name)})`.execute(db);
 
 			// Get columns from source database
-			const sourceColumns = sql
-				.prepare(`PRAGMA source.table_info("${name}")`)
-				.all() as Array<{ name: string }>;
+			const { rows: sourceColumns } = await sql<{
+				name: string;
+			}>`PRAGMA source.table_info(${sql.ref(name)})`.execute(db);
 
 			const sourceColumnNames = new Set(sourceColumns.map((c) => c.name));
 
@@ -154,18 +165,18 @@ function restoreFromPreSeeded(sourcePath: string) {
 			// Only include columns that exist in both databases
 			const nonGeneratedCols = mainColumns
 				.filter((c) => c.hidden === 0 && sourceColumnNames.has(c.name))
-				.map((c) => c.name);
+				.map((c) => sql.ref(c.name));
 
 			if (nonGeneratedCols.length > 0) {
-				const colList = nonGeneratedCols.map((c) => `"${c}"`).join(", ");
-				sql.exec(
-					`INSERT INTO main."${name}" (${colList}) SELECT ${colList} FROM source."${name}"`,
+				const colList = sql.join(nonGeneratedCols);
+				await sql`INSERT INTO ${sql.table(`main.${name}`)} (${colList}) SELECT ${colList} FROM ${sql.table(`source.${name}`)}`.execute(
+					db,
 				);
 			}
 		}
 
-		sql.exec("PRAGMA foreign_keys = ON");
+		await sql`PRAGMA foreign_keys = ON`.execute(db);
 	} finally {
-		sql.exec("DETACH DATABASE source");
+		await sql`DETACH DATABASE source`.execute(db);
 	}
 }

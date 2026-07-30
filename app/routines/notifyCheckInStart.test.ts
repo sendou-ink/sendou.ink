@@ -25,7 +25,7 @@ async function createTestTournament({
 	authorId?: number;
 	discordInviteCode?: string;
 }) {
-	return CalendarRepository.create({
+	return CalendarRepository.insert({
 		isFullTournament: true,
 		authorId,
 		badges: [],
@@ -59,7 +59,7 @@ describe("NotifyCheckInStartRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
-		dbReset();
+		await dbReset();
 		clearAllTournamentDataCache();
 		await dbInsertUsers(5);
 		mockNotify.mockClear();

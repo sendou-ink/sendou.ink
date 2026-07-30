@@ -71,9 +71,15 @@ const createMatch = async (args: {
 			groupId: args.groupId,
 			roundId: args.roundId,
 			number: args.number,
-			status: 4,
-			opponentOne: JSON.stringify({ id: args.teamOneId, score: 2 }),
-			opponentTwo: JSON.stringify({ id: args.teamTwoId, score: 0 }),
+			opponentOne: JSON.stringify({
+				id: args.teamOneId,
+				score: 2,
+			}),
+			opponentTwo: JSON.stringify({
+				id: args.teamTwoId,
+				score: 0,
+			}),
+			winnerSide: "opponent1",
 		})
 		.returning("id")
 		.executeTakeFirstOrThrow();
@@ -117,8 +123,8 @@ describe("findByTournamentTeamId", () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("preserves stage order: matches from an earlier stage come first even when later stage has lower group numbers", async () => {

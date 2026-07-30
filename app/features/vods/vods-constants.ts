@@ -1,6 +1,4 @@
-import type { Tables } from "~/db/tables";
-import { assertType } from "~/utils/types";
-
+/** The `type` column of `UnvalidatedVideo` and the `Video` view is typed off this. */
 export const videoMatchTypes = [
 	"TOURNAMENT",
 	"CAST",
@@ -8,9 +6,5 @@ export const videoMatchTypes = [
 	"MATCHMAKING",
 	"SENDOUQ",
 ] as const;
-assertType<
-	(typeof videoMatchTypes)[number],
-	Array<Tables["Video"]["type"]>[number]
->();
 
 export const VODS_PAGE_BATCH_SIZE = 24;

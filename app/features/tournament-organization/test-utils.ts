@@ -46,7 +46,7 @@ export async function seedOrgEventWithParticipants({
 
 	await db
 		.insertInto("CalendarEventDate")
-		.values({ eventId: event.id, startTime })
+		.values({ eventId: event.id, startsAt: startTime })
 		.execute();
 
 	const team = await db
@@ -106,7 +106,6 @@ export async function seedOrgEventWithParticipants({
 			groupId: group.id,
 			roundId: round.id,
 			number: 1,
-			status: 4,
 			opponentOne: JSON.stringify({ id: team.id, score: 1 }),
 			opponentTwo: JSON.stringify({ id: team.id, score: 0 }),
 		})

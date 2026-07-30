@@ -1,4 +1,3 @@
-import { seed } from "~/db/seed";
 import { db } from "~/db/sql";
 import { logger } from "~/utils/logger";
 import { seedImages } from "./seed-images";
@@ -10,6 +9,9 @@ async function main() {
 	if (dbEmpty) {
 		logger.info("🌱 Seeding database...");
 		try {
+			// Dynamically imported so we skip transforming the large
+			// seed import graph if the database is already seeded
+			const { seed } = await import("~/db/seed");
 			await seed();
 			logger.info("Database seeded successfully");
 		} catch (err) {

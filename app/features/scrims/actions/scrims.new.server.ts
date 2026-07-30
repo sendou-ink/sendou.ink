@@ -8,6 +8,7 @@ import { parseFormData } from "~/form/parse.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
@@ -56,8 +57,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const resolvedDivs = data.divs ? resolveDivs(data.divs) : null;
 
 	await ScrimPostRepository.insert({
-		at: dateToDatabaseTimestamp(data.at),
-		rangeEnd: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
+		startsAt: dateToDatabaseTimestamp(data.at),
+		rangeEndsAt: rangeEndDate ? dateToDatabaseTimestamp(rangeEndDate) : null,
 		maxDiv: resolvedDivs?.[0] ? serializeLutiDiv(resolvedDivs[0]) : null,
 		minDiv: resolvedDivs?.[1] ? serializeLutiDiv(resolvedDivs[1]) : null,
 		text: data.postText,
@@ -94,7 +95,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		users: (await usersListForPost({ authorId: user.id, from: data.from })).map(
 			(userId) => ({
 				userId,
-				isOwner: Number(user.id === userId),
+				isOwner: toDBBoolean(user.id === userId),
 			}),
 		),
 	});
@@ -114,7 +115,7 @@ export const usersListForPost = async ({
 	}
 
 	const teamId = from.teamId;
-	const team = (await TeamRepository.teamsByMemberUserId(authorId)).find(
+	const team = (await TeamRepository.findAllByMemberUserId(authorId)).find(
 		(team) => team.id === teamId,
 	);
 	errorToastIfFalsy(team, "User is not a member of this team");
@@ -155,7 +156,7 @@ async function validatePickup(userIds: number[], authorId: number) {
 async function validatePickupFriends(userIds: number[], authorId: number) {
 	const unconsentingUsers: string[] = [];
 
-	const friendsData = await SQGroupRepository.friendsAndTeammates(authorId);
+	const friendsData = await SQGroupRepository.findFriendsAndTeammates(authorId);
 
 	for (const userId of userIds) {
 		const user = await UserRepository.findLeanById(userId);

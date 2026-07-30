@@ -23,6 +23,7 @@ import tournament from "../../../locales/en/tournament.json";
 import user from "../../../locales/en/user.json";
 import vods from "../../../locales/en/vods.json";
 import weapons from "../../../locales/en/weapons.json";
+import welcome from "../../../locales/en/welcome.json";
 
 export const resources = {
 	en: {
@@ -51,5 +52,6 @@ export const resources = {
 		user,
 		vods,
 		weapons,
+		welcome,
 	},
 };

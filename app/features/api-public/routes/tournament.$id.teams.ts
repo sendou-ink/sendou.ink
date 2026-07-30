@@ -110,7 +110,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		.orderBy("TournamentTeam.createdAt", "asc")
 		.execute();
 
-	const friendCodes = await TournamentRepository.friendCodesByTournamentId(id);
+	const friendCodes =
+		await TournamentRepository.findFriendCodesByTournamentId(id);
 
 	const result: GetTournamentTeamsResponse = teams.map((team) => {
 		return {

@@ -10,7 +10,7 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
  * @returns True if the user has API access, false otherwise
  */
 export async function checkUserHasApiAccess(user: AuthenticatedUser) {
-	// NOTE: permissions logic also exists in ApiRepository.allApiTokens function
+	// NOTE: permissions logic also exists in ApiRepository.findAllApiTokens function
 	if (user.roles.includes("API_ACCESSER")) {
 		return true;
 	}

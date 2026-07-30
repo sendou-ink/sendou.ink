@@ -3,19 +3,27 @@ import { requireUser } from "~/features/auth/core/user.server";
 import { userPage } from "~/utils/urls";
 import * as FriendRepository from "../FriendRepository.server";
 import { friendActivitySortValue } from "../friends-constants";
-import { resolveFriendActivity } from "../friends-utils.server";
+import {
+	resolveFriendActivity,
+	resolveSendouQMatchStreams,
+} from "../friends-utils.server";
 
 export type FriendsLoaderData = typeof loader;
 
 export const loader = async () => {
 	const user = requireUser();
 
-	const [friendsWithActivity, pendingRequests, incomingRequests] =
-		await Promise.all([
-			FriendRepository.findByUserIdWithActivity(user.id),
-			FriendRepository.findPendingSentRequests(user.id),
-			FriendRepository.findPendingReceivedRequests(user.id),
-		]);
+	const [
+		friendsWithActivity,
+		pendingRequests,
+		incomingRequests,
+		streamedSendouQMatches,
+	] = await Promise.all([
+		FriendRepository.findByUserIdWithActivity(user.id),
+		FriendRepository.findPendingSentRequests(user.id),
+		FriendRepository.findPendingReceivedRequests(user.id),
+		resolveSendouQMatchStreams(),
+	]);
 
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 
@@ -29,6 +37,7 @@ export const loader = async () => {
 					tournamentName: friend.tournamentName,
 					teamMemberCount: friend.teamMemberCount,
 					tournamentMinTeamSize: friend.tournamentMinTeamSize,
+					sendouQMatchStreams: streamedSendouQMatches,
 				});
 
 				return {
@@ -47,6 +56,7 @@ export const loader = async () => {
 					activityType: activity.type,
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? friend.tournamentId,
+					streamUrl: activity.streamUrl,
 					friendshipCreatedAt: friend.friendshipCreatedAt,
 				};
 			}),
@@ -64,6 +74,7 @@ export const loader = async () => {
 					tournamentName: tm.tournamentName,
 					teamMemberCount: tm.teamMemberCount,
 					tournamentMinTeamSize: tm.tournamentMinTeamSize,
+					sendouQMatchStreams: streamedSendouQMatches,
 				});
 
 				return {
@@ -81,6 +92,7 @@ export const loader = async () => {
 					activityType: activity.type,
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? tm.tournamentId,
+					streamUrl: activity.streamUrl,
 				};
 			}),
 		[(tm) => friendActivitySortValue(tm.activityType), "desc"],

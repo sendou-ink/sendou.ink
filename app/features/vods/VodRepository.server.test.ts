@@ -61,8 +61,8 @@ describe("findByUserId", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns vods for a specific user", async () => {
@@ -100,8 +100,8 @@ describe("findVods", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("filters by weapon", async () => {
@@ -179,8 +179,8 @@ describe("findVodById", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns null when vod doesn't exist", async () => {
@@ -218,8 +218,8 @@ describe("insert", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("inserts vod with all metadata", async () => {
@@ -330,8 +330,8 @@ describe("update", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("updates vod metadata", async () => {
@@ -432,8 +432,8 @@ describe("deleteById", () => {
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("deletes vod by id", async () => {

@@ -16,7 +16,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const participants: GetTournamentPlayersResponse =
-		await TournamentMatchRepository.userParticipationByTournamentId(id);
+		await TournamentMatchRepository.findUserParticipationByTournamentId(id);
 
 	return Response.json(participants);
 };

@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import * as TeamRepository from "../TeamRepository.server";
 import { teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors } from "../team-utils";
@@ -10,7 +10,9 @@ export type TeamLoaderData = SerializeFrom<typeof loader>;
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfNullish(
+		await TeamRepository.findByCustomUrl(customUrl),
+	);
 
 	const results = await TeamRepository.findResultPlacementsById(team.id);
 

@@ -4,8 +4,10 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { commonUserSelect } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 
-export type ActiveMatchPlayersItem = Unwrapped<typeof activeMatchPlayers>;
-export function activeMatchPlayers() {
+export type ActiveMatchPlayersItem = Unwrapped<
+	typeof findAllActiveMatchPlayers
+>;
+export function findAllActiveMatchPlayers() {
 	const oneHourAgo = new Date(Date.now() - 1000 * 60 * 60);
 
 	return db

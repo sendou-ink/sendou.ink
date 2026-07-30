@@ -43,8 +43,8 @@ describe("New scrim post action", () => {
 		dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("scrim post made for now has isScheduledForFuture = false", async () => {

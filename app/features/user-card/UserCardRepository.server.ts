@@ -3,13 +3,8 @@ import type { Expression, ExpressionBuilder } from "kysely";
 import { sql } from "kysely";
 import { jsonBuildObject, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type {
-	CustomTheme,
-	HideableUserCardStat,
-	PeakXP,
-	Tables,
-	XRankPlacementRegion,
-} from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { CustomTheme, PeakXP } from "~/db/tables-json";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { cachedFullUserLeaderboard } from "~/features/leaderboards/core/leaderboards.server";
 import { LFG } from "~/features/lfg/lfg-constants";
@@ -17,6 +12,7 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
@@ -25,6 +21,7 @@ import {
 } from "~/utils/kysely.server";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import type {
+	HideableUserCardStat,
 	UserCardData,
 	UserCardStat,
 	UserCardStatXPValue,
@@ -39,10 +36,10 @@ import { isValidUnverifiedXp } from "./user-card-utils";
  * cards (resolved from request context via `actorIdOrNull()`, or `null` when anonymous) scopes the
  * per-viewer `privateNote`.
  *
- * Designed to be spread into a route loader (`{ ...(await userCards(...)) }`) so the `UserCard`
+ * Designed to be spread into a route loader (`{ ...(await findAllByUserIds(...)) }`) so the `UserCard`
  * component can resolve its own data from the route tree by id.
  */
-export async function userCards({
+export async function findAllByUserIds({
 	userIds,
 	include,
 	includeHiddenStats = false,
@@ -96,7 +93,7 @@ export async function userCards({
  * image (id + preview url, for the image field's default value), the self-reported peak XP, and the
  * hidden stat types (to pre-check the visibility toggles).
  */
-export async function cardEditExtras(userId: number) {
+export async function findCardEditExtrasByUserId(userId: number) {
 	const row = await db
 		.selectFrom("User")
 		.select((eb) => [
@@ -168,7 +165,7 @@ const BANNER_PRESET_COLOR_CASE = `case "User"."id" % ${PRESET_COLORS.length}\n${
 /**
  * Kysely expression building the JSON object for all DB-resident `UserCard` fields of a single user.
  * Designed to be composed both standalone (one user) and inside a batched list query (see
- * {@link userCards}). `"User"` must be in scope at the call site.
+ * {@link findAllByUserIds}). `"User"` must be in scope at the call site.
  *
  * SEASON stats (tier + leaderboard placement) are NOT included here — they live in the in-memory
  * `userSkills`/leaderboard caches and are merged in an app-layer enrich pass. `banner` is returned as
@@ -357,8 +354,8 @@ type SeasonResult = {
 };
 
 /**
- * Resolves one finished season's data for the requested users. `userSkills` is a synchronous
- * in-memory cache, so we read tiers first and only fetch the (DB-backed) leaderboard when at least
+ * Resolves one finished season's data for the requested users. `userSkills` is an in-memory
+ * cache, so we read tiers first and only fetch the (DB-backed) leaderboard when at least
  * one requested user reached Leviathan+ that season—placements are surfaced for that rank only, so
  * the common case of regular users never touches the leaderboard cache at all.
  */
@@ -366,7 +363,7 @@ async function seasonResult(
 	season: number,
 	userIds: Array<number>,
 ): Promise<SeasonResult> {
-	const skills = userSkills(season).userSkills;
+	const skills = (await userSkills(season)).userSkills;
 
 	const anyLeviathanPlus = userIds.some((id) => {
 		const skill = skills[id];

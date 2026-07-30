@@ -68,7 +68,7 @@ function ExternalStreamList() {
 							</Link>
 							<span className="text-xs text-lighter">
 								<LocaleTime
-									date={stream.startTime}
+									date={stream.startsAt}
 									inline
 									options={{
 										month: "numeric",

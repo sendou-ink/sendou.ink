@@ -15,7 +15,7 @@ This document describes the schema-based form system using `SendouForm`. Forms a
 
 ```ts
 export const myFormSchema = z.object({
-  name: textFieldRequired({
+  name: textField({
     label: "labels.name",
     maxLength: 100,
   }),
@@ -34,10 +34,10 @@ export const myFormSchema = z.object({
 
 | Builder | Description | Required Props |
 |---------|-------------|----------------|
-| `textFieldRequired` | Required text input | `label`, `maxLength` |
+| `textField` | Required text input | `label`, `maxLength` |
 | `textFieldOptional` | Optional text input | `maxLength` |
 | `numberFieldOptional` | Optional number input | - |
-| `textAreaRequired` | Required multiline text | `label`, `maxLength` |
+| `textArea` | Required multiline text | `label`, `maxLength` |
 | `textAreaOptional` | Optional multiline text | `maxLength` |
 | `toggle` | Boolean switch | `label` |
 | `select` | Required dropdown | `label`, `items` |
@@ -45,9 +45,9 @@ export const myFormSchema = z.object({
 | `selectDynamicOptional` | Dropdown with runtime options | `label` |
 | `radioGroup` | Radio button group | `label`, `items` |
 | `checkboxGroup` | Multiple selection checkboxes | `label`, `items` |
-| `datetimeRequired` | Required date/time picker | `label` |
+| `datetime` | Required date/time picker | `label` |
 | `datetimeOptional` | Optional date/time picker | `label` |
-| `dayMonthYearRequired` | Date picker (day only) | `label` |
+| `dayMonthYear` | Date picker (day only) | `label` |
 | `dualSelectOptional` | Two linked dropdowns | `fields` |
 | `timeRangeOptional` | Start/end time range | `label` |
 | `weaponPool` | Weapon selection pool | `label`, `maxCount` |
@@ -93,7 +93,7 @@ Define action discriminators with `stringConstant`:
 ```ts
 export const myFormSchema = z.object({
   _action: stringConstant("CREATE_ITEM"),
-  name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+  name: textField({ label: "labels.name", maxLength: 100 }),
 });
 ```
 
@@ -104,7 +104,7 @@ Use `idConstant` for IDs that need default values:
 ```ts
 export const editFormSchema = z.object({
   itemId: idConstant(), // Requires defaultValues
-  name: textFieldRequired({ label: "labels.name", maxLength: 100 }),
+  name: textField({ label: "labels.name", maxLength: 100 }),
 });
 ```
 
@@ -113,13 +113,13 @@ When `idConstant()` is called without a value, the schema requires `defaultValue
 ### Text Field Validation
 
 ```ts
-textFieldRequired({
+textField({
   label: "labels.url",
   maxLength: 200,
   validate: "url", // Built-in URL validation
 })
 
-textFieldRequired({
+textField({
   label: "labels.custom",
   maxLength: 100,
   validate: {
@@ -128,7 +128,7 @@ textFieldRequired({
   },
 })
 
-textFieldRequired({
+textField({
   label: "labels.pattern",
   maxLength: 10,
   regExp: {
@@ -141,7 +141,7 @@ textFieldRequired({
 ### DateTime Validation
 
 ```ts
-datetimeRequired({
+datetime({
   label: "labels.date",
   min: new Date(),
   max: add(new Date(), { days: 30 }),
@@ -175,7 +175,7 @@ dualSelectOptional({
 
 ```ts
 const itemSchema = z.object({
-  name: textFieldRequired({ label: "labels.itemName", maxLength: 50 }),
+  name: textField({ label: "labels.itemName", maxLength: 50 }),
   quantity: numberFieldOptional({ label: "labels.quantity" }),
 });
 
@@ -194,7 +194,7 @@ export const formSchema = z.object({
 Place field inside `z.union([])` to reuse across multiple schemas:
 
 ```ts
-const sharedNameField = textFieldRequired({
+const sharedNameField = textField({
   label: "labels.name",
   maxLength: 100,
 });
@@ -256,10 +256,18 @@ const data = useLoaderData<typeof loader>();
 </SendouForm>
 ```
 
+### Form Modes
+
+The `mode` prop controls how submitting works:
+
+- `"submit"` (default): the user submits via the submit button. Values go to the server, or to `onApply` when provided.
+- `"autoSubmit"`: no submit button; every change that passes validation is sent to the server.
+- `"client"`: no submit button and no `<form>` element; every change is passed to `onApply` (required in this mode) and field errors are computed already on mount.
+
 ### Auto-Submit Forms
 
 ```tsx
-<SendouForm schema={filterSchema} autoSubmit>
+<SendouForm schema={filterSchema} mode="autoSubmit">
   {({ FormField }) => (
     <FormField name="sortBy" />
   )}
@@ -267,6 +275,8 @@ const data = useLoaderData<typeof loader>();
 ```
 
 ### Client-Side Only (onApply)
+
+Submitting hands the validated values to `onApply` instead of the server:
 
 ```tsx
 <SendouForm
@@ -282,6 +292,8 @@ const data = useLoaderData<typeof loader>();
   )}
 </SendouForm>
 ```
+
+For applying every change immediately (no submit button), use `mode="client"` with `onApply`.
 
 ### Dynamic Select Options
 
@@ -316,10 +328,12 @@ const badgeOptions = badges.map((b) => ({
 pipeline and the `UnvalidatedUserSubmittedImage` admin-validation / supporter auto-validation
 flow, while keeping `SendouForm`'s single-submit `application/json` model unchanged.
 
-> **Art upload is out of scope.** Art stays on its dedicated multipart route (`/art/new`): it
-> produces two derived assets (full + thumbnail), preserves aspect ratio, keeps the original
-> format, allows up to 5MB, and has its own `Art` table. Any future "large / aspect-preserving
-> / multi-derivative" upload should likewise stay off this field.
+> **Art upload is out of scope.** Art (`/art/new`) preserves aspect ratio, keeps the original
+> format, produces two derived assets (full + thumbnail) and stores them on its own `Art` table
+> rather than as a `UserSubmittedImage` id. It therefore uses a `customField` with its own
+> renderer (`ArtImageFormField`) and its own server resolver (`uploadArtImage`), while still
+> submitting as base64 within `SendouForm`'s single JSON submit. Any future "aspect-preserving /
+> multi-derivative" upload should likewise stay off this field and follow that pattern.
 
 ### Schema
 
@@ -492,7 +506,7 @@ When you need async validation (database checks, authorization), create a separa
 
 ```ts
 import { z } from "zod";
-import { textFieldRequired, idConstantOptional } from "~/form/fields";
+import { textField, idConstantOptional } from "~/form/fields";
 
 // Shared sync validation that can be extracted for reuse
 function validateGearAllOrNone(data: {
@@ -515,7 +529,7 @@ export const gearAllOrNoneRefine = {
 // Base schema with form field builders (for UI generation)
 export const newBuildBaseSchema = z.object({
   buildToEditId: idConstantOptional(),
-  title: textFieldRequired({ label: "labels.buildTitle", maxLength: 50 }),
+  title: textField({ label: "labels.buildTitle", maxLength: 50 }),
   // ... other fields
 });
 
@@ -599,7 +613,7 @@ For complex validation involving multiple fields:
 ```ts
 export const scrimsNewFormSchema = z
   .object({
-    at: datetimeRequired({ label: "labels.start" }),
+    at: datetime({ label: "labels.start" }),
     maps: select({ label: "labels.maps", items: mapsItems }),
     mapsTournamentId: customField({ initialValue: null }, id.nullable()),
   })
@@ -720,7 +734,7 @@ import {
 ```ts
 import { z } from "zod";
 import {
-  textFieldRequired,
+  textField,
   textAreaOptional,
   select,
   toggle,
@@ -729,7 +743,7 @@ import {
 
 export const createItemSchema = z.object({
   _action: stringConstant("CREATE"),
-  name: textFieldRequired({
+  name: textField({
     label: "labels.itemName",
     maxLength: 100,
   }),

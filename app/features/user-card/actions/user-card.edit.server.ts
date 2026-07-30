@@ -1,11 +1,11 @@
 import { type ActionFunction, redirect } from "react-router";
-import type { HideableUserCardStat } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
 import * as UserCardRepository from "../UserCardRepository.server";
 import { updateUserCardSchema } from "../user-card-schemas";
+import type { HideableUserCardStat } from "../user-card-types";
 import { isValidUnverifiedXp } from "../user-card-utils";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -28,7 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	if (data.unverifiedXpPoints) {
 		const verifiedPeakXp =
-			await XRankPlacementRepository.peakVerifiedXpByUserId(user.id);
+			await XRankPlacementRepository.findPeakVerifiedXpByUserId(user.id);
 		if (
 			!isValidUnverifiedXp({
 				unverified: data.unverifiedXpPoints,

@@ -8,6 +8,7 @@ import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { useDebounce } from "~/hooks/useDebounce";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import invariant from "~/utils/invariant";
 import { userPage, userResultsEditHighlightsPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
@@ -58,12 +59,10 @@ export default function UserResultsPage() {
 		[tournamentQuery],
 	);
 
-	const setPage = (page: number) => {
-		setSearchParams((params) => {
-			params.set("page", String(page));
-			return params;
-		});
-	};
+	const pagination = useSearchParamPagination({
+		currentPage: data.results.currentPage,
+		pagesCount: data.results.pagesCount,
+	});
 
 	return (
 		<div className="stack lg">
@@ -96,15 +95,7 @@ export default function UserResultsPage() {
 				</div>
 			</div>
 			<UserResultsTable id="user-results-table" results={data.results.value} />
-			{data.results.pages > 1 ? (
-				<Pagination
-					currentPage={data.results.currentPage}
-					pagesCount={data.results.pages}
-					nextPage={() => setPage(data.results.currentPage + 1)}
-					previousPage={() => setPage(data.results.currentPage - 1)}
-					setPage={setPage}
-				/>
-			) : null}
+			{data.results.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 			{data.hasHighlightedResults ? (
 				<SendouButton
 					variant="minimal"

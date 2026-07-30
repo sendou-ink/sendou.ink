@@ -75,12 +75,15 @@ function rateConservative(
 	return [[winnerRating], [loserRating]];
 }
 
-export function userIdsToIdentifier(userIds: number[]) {
+/** The four user ids of a full team, ascending and joined by `-`. Identifies a team across matches. */
+export type SkillTeamIdentifier = `${number}-${number}-${number}-${number}`;
+
+export function userIdsToIdentifier(userIds: number[]): SkillTeamIdentifier {
 	invariant(userIds.length === 4, "userIds for identifier must be length 4");
-	return [...userIds].sort((a, b) => a - b).join("-");
+	return [...userIds].sort((a, b) => a - b).join("-") as SkillTeamIdentifier;
 }
 
-export function identifierToUserIds(identifier: string) {
+export function identifierToUserIds(identifier: SkillTeamIdentifier) {
 	return identifier.split("-").map(Number);
 }
 

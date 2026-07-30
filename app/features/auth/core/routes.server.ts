@@ -169,7 +169,7 @@ export const createLogInLinkAction: ActionFunction = async ({ request }) => {
 
 	if (data.updateOnly === "true") return null;
 
-	const createdLink = await LogInLinkRepository.create(user.id);
+	const createdLink = await LogInLinkRepository.insert(user.id);
 
 	return {
 		code: createdLink.code,
@@ -209,7 +209,7 @@ export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {
 
 	session.set(SESSION_KEY, userId);
 
-	await LogInLinkRepository.del(data.code);
+	await LogInLinkRepository.deleteByCode(data.code);
 
 	throw redirect("/", {
 		headers: { "Set-Cookie": await authSessionStorage.commitSession(session) },

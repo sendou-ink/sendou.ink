@@ -1,6 +1,7 @@
+import { sql } from "kysely";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { db, sql } from "~/db/sql";
-import type { CastedMatchesInfo } from "~/db/tables";
+import { db } from "~/db/sql";
+import type { CastedMatchesInfo } from "~/db/tables-json";
 import { dbInsertUsers, dbReset } from "~/utils/Test";
 
 const { mockGetUsersByLogin, mockGetArchiveVideos } = vi.hoisted(() => ({
@@ -26,14 +27,14 @@ const MATCH_START_SECONDS = 1700000000;
 
 describe("syncTournamentVods", () => {
 	beforeEach(async () => {
-		dbReset();
+		await dbReset();
 		mockGetUsersByLogin.mockReset();
 		mockGetArchiveVideos.mockReset();
 		await dbInsertUsers(5);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("player streamer gets VODs only for matches they participated in", async () => {
@@ -274,57 +275,45 @@ async function seedTournamentWithMatches({
 }: {
 	castedMatchesInfo?: CastedMatchesInfo;
 } = {}) {
-	sql
-		.prepare(
-			/*sql*/ `insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized", "castedMatchesInfo") values (?, 'AUTO_SZ', ?, 1, ?)`,
-		)
-		.run(
-			TOURNAMENT_ID,
-			JSON.stringify({
-				bracketProgression: [
-					{ type: "double_elimination", name: "Main Bracket" },
-				],
-			}),
-			castedMatchesInfo ? JSON.stringify(castedMatchesInfo) : null,
-		);
+	const settings = JSON.stringify({
+		bracketProgression: [{ type: "double_elimination", name: "Main Bracket" }],
+	});
+	const serializedCastedMatchesInfo = castedMatchesInfo
+		? JSON.stringify(castedMatchesInfo)
+		: null;
 
-	sql
-		.prepare(
-			/*sql*/ `insert into "TournamentStage" ("id", "tournamentId", "name", "type", "settings", "number") values (1, ?, 'Main Bracket', 'double_elimination', '{}', 0)`,
-		)
-		.run(TOURNAMENT_ID);
+	await sql`
+		insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized", "castedMatchesInfo")
+		values (${TOURNAMENT_ID}, 'AUTO_SZ', ${settings}, 1, ${serializedCastedMatchesInfo})
+	`.execute(db);
 
-	sql
-		.prepare(
-			/*sql*/ `insert into "TournamentGroup" ("id", "stageId", "number") values (1, 1, 1)`,
-		)
-		.run();
+	await sql`
+		insert into "TournamentStage" ("id", "tournamentId", "name", "type", "settings", "number")
+		values (1, ${TOURNAMENT_ID}, 'Main Bracket', 'double_elimination', '{}', 0)
+	`.execute(db);
 
-	sql
-		.prepare(
-			/*sql*/ `insert into "TournamentRound" ("id", "stageId", "groupId", "number") values (1, 1, 1, 1)`,
-		)
-		.run();
+	await sql`
+		insert into "TournamentGroup" ("id", "stageId", "number") values (1, 1, 1)
+	`.execute(db);
 
-	const insertTournamentMatchStm = sql.prepare(
-		/*sql*/ `insert into "TournamentMatch" ("id", "roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "status", "startedAt") values (?, 1, 1, 1, ?, ?, ?, 4, ?)`,
-	);
+	await sql`
+		insert into "TournamentRound" ("id", "stageId", "groupId", "number") values (1, 1, 1, 1)
+	`.execute(db);
 
-	insertTournamentMatchStm.run(
-		1,
-		1,
-		JSON.stringify({ id: 1 }),
-		JSON.stringify({ id: 2 }),
-		MATCH_START_SECONDS,
-	);
+	const insertTournamentMatch = (
+		id: number,
+		number: number,
+		opponentOneId: number,
+		opponentTwoId: number,
+		startedAt: number,
+	) =>
+		sql`
+			insert into "TournamentMatch" ("id", "roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "startedAt")
+			values (${id}, 1, 1, 1, ${number}, ${JSON.stringify({ id: opponentOneId })}, ${JSON.stringify({ id: opponentTwoId })}, ${startedAt})
+		`.execute(db);
 
-	insertTournamentMatchStm.run(
-		2,
-		2,
-		JSON.stringify({ id: 3 }),
-		JSON.stringify({ id: 4 }),
-		MATCH_START_SECONDS + 1800,
-	);
+	await insertTournamentMatch(1, 1, 1, 2, MATCH_START_SECONDS);
+	await insertTournamentMatch(2, 2, 3, 4, MATCH_START_SECONDS + 1800);
 }
 
 async function seedTournamentTeamAndGameResult(
@@ -333,25 +322,35 @@ async function seedTournamentTeamAndGameResult(
 ) {
 	const teamId = matchId * 100;
 
-	sql
-		.prepare(
-			/*sql*/ `insert or ignore into "TournamentTeam" ("id", "name", "tournamentId", "inviteCode") values (?, ?, ?, ?)`,
-		)
-		.run(teamId, `Team ${teamId}`, TOURNAMENT_ID, `code-${teamId}`);
+	await sql`
+		insert or ignore into "TournamentTeam" ("id", "name", "tournamentId", "inviteCode")
+		values (${teamId}, ${`Team ${teamId}`}, ${TOURNAMENT_ID}, ${`code-${teamId}`})
+	`.execute(db);
 
-	const { lastInsertRowid: gameResultId } = sql
-		.prepare(
-			/*sql*/ `insert into "TournamentMatchGameResult" ("matchId", "number", "stageId", "mode", "source", "winnerTeamId", "reporterId") values (?, 1, 1, 'SZ', '{}', ?, 1)`,
-		)
-		.run(matchId, teamId);
+	const gameResult = await db
+		.insertInto("TournamentMatchGameResult")
+		.values({
+			matchId,
+			number: 1,
+			stageId: 1,
+			mode: "SZ",
+			source: "{}",
+			winnerTeamId: teamId,
+			reporterId: 1,
+		})
+		.returning("id")
+		.executeTakeFirstOrThrow();
 
-	for (const userId of participantUserIds) {
-		sql
-			.prepare(
-				/*sql*/ `insert into "TournamentMatchGameResultParticipant" ("matchGameResultId", "userId", "tournamentTeamId") values (?, ?, ?)`,
-			)
-			.run(Number(gameResultId), userId, teamId);
-	}
+	await db
+		.insertInto("TournamentMatchGameResultParticipant")
+		.values(
+			participantUserIds.map((userId) => ({
+				matchGameResultId: gameResult.id,
+				userId,
+				tournamentTeamId: teamId,
+			})),
+		)
+		.execute();
 }
 
 async function seedStreamer(

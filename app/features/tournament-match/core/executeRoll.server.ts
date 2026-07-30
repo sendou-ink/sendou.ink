@@ -1,4 +1,4 @@
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
@@ -20,7 +20,7 @@ export async function executeRoll({
 	matchId: number;
 	maps: TournamentRoundMaps;
 	pickBanEvents: Awaited<
-		ReturnType<typeof TournamentRepository.pickBanEventsByMatchId>
+		ReturnType<typeof TournamentRepository.findPickBanEventsByMatchId>
 	>;
 	results: Awaited<ReturnType<typeof findResultsByMatchId>>;
 	tournamentId: number;
@@ -59,7 +59,7 @@ export async function executeRoll({
 	const selectedMap = legalMaps[randomInteger(legalMaps.length)]!;
 
 	try {
-		await TournamentRepository.addPickBanEvent({
+		await TournamentRepository.insertPickBanEvent({
 			authorId: null,
 			matchId,
 			stageId: selectedMap.stageId,

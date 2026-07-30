@@ -1,4 +1,4 @@
-import { sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
@@ -12,23 +12,24 @@ invariant(
 	"discordIds must be a comma separated list of discord ids",
 );
 
-const stm = sql.prepare(
-	/* sql */ `insert into "TournamentBadgeOwner" ("badgeId", "userId") values (@badgeId, (select "id" from "User" where "discordId" = @userId))`,
-);
-
-const userStm = sql.prepare(
-	/* sql */ `select "id" from "User" where "discordId" = @discordId`,
-);
-
 const users = discordIds.split(",");
 
-for (const userId of users) {
-	const user = userStm.get({ discordId: userId });
+for (const discordId of users) {
+	const user = await db
+		.selectFrom("User")
+		.select("id")
+		.where("discordId", "=", discordId)
+		.executeTakeFirst();
+
 	if (!user) {
-		logger.info(`User with discord id ${userId} not found`);
+		logger.info(`User with discord id ${discordId} not found`);
 		continue;
 	}
-	stm.run({ badgeId: Number(badgeId), userId });
+
+	await db
+		.insertInto("TournamentBadgeOwner")
+		.values({ badgeId: Number(badgeId), userId: user.id })
+		.execute();
 }
 
 logger.info(`Added ${users.length} owners to the badge`);

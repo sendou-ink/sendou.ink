@@ -38,7 +38,7 @@ export const action: ActionFunction = async ({ request }) => {
 				artId: data.id,
 			});
 
-			await ArtRepository.unlinkSelfFromArt(data.id);
+			await ArtRepository.unlinkOwnFromArt(data.id);
 
 			return successToast("Unlinking art successful");
 		}

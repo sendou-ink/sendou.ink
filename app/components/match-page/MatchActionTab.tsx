@@ -39,8 +39,8 @@ interface MatchActionTabProps {
 	ownTeamId: number | null;
 	stageId: StageId;
 	mode: ModeShort;
-	withPoints: boolean;
-	onSubmit?: (data: { winnerId: number; points?: [number, number] }) => void;
+	withKo: boolean;
+	onSubmit?: (data: { winnerId: number; ko?: boolean }) => void;
 	isSubmitting?: boolean;
 	setEnding?: SetEndingData;
 	actionButtons?: React.ReactNode;
@@ -52,7 +52,7 @@ export function MatchActionTab({
 	ownTeamId,
 	stageId,
 	mode,
-	withPoints,
+	withKo,
 	onSubmit,
 	isSubmitting,
 	setEnding,
@@ -73,14 +73,7 @@ export function MatchActionTab({
 
 	const submit = () => {
 		if (winnerId === null) return;
-		const submitPoints: [number, number] | undefined = withPoints
-			? isKo
-				? winnerId === teams[0].id
-					? [100, 0]
-					: [0, 100]
-				: [0, 0]
-			: undefined;
-		onSubmit?.({ winnerId, points: submitPoints });
+		onSubmit?.({ winnerId, ko: withKo ? isKo : undefined });
 	};
 
 	return (
@@ -92,14 +85,14 @@ export function MatchActionTab({
 					mode={mode}
 					winnerId={winnerId}
 					teams={teams}
-					withPoints={withPoints}
+					withKo={withKo}
 					isKo={isKo}
 					isSubmitting={isSubmitting}
 					onBack={() => setConfirming(false)}
 					onConfirm={submit}
 				/>
 			) : (
-				<div className={clsx(styles.root, { [styles.withPoints]: withPoints })}>
+				<div className={clsx(styles.root, { [styles.withKo]: withKo })}>
 					<div className={styles.title}>{t("q:match.action.selectWinner")}</div>
 					{actionButtons ? (
 						<div className={styles.actionButtons}>{actionButtons}</div>
@@ -156,7 +149,7 @@ export function MatchActionTab({
 						/>
 					</RadioGroup>
 
-					{withPoints ? (
+					{withKo ? (
 						<div className={styles.ko}>
 							<label className={styles.koLabel}>
 								<input
@@ -199,7 +192,7 @@ function SetEndingConfirmation({
 	mode,
 	winnerId,
 	teams,
-	withPoints,
+	withKo,
 	isKo,
 	isSubmitting,
 	onBack,
@@ -210,7 +203,7 @@ function SetEndingConfirmation({
 	mode: ModeShort;
 	winnerId: number;
 	teams: [ActionTabTeam, ActionTabTeam];
-	withPoints: boolean;
+	withKo: boolean;
 	isKo: boolean;
 	isSubmitting?: boolean;
 	onBack: () => void;
@@ -226,11 +219,7 @@ function SetEndingConfirmation({
 		timestamp: Date.now(),
 		winner: winnerSide,
 		rosters: setEnding.currentRosters,
-		points: withPoints
-			? isKo
-				? [winnerSide === "ALPHA" ? 100 : 0, winnerSide === "BRAVO" ? 100 : 0]
-				: [0, 0]
-			: undefined,
+		ko: withKo ? isKo : undefined,
 	};
 
 	const updatedScore = {

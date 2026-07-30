@@ -76,7 +76,7 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
-		dbReset();
+		await dbReset();
 		await dbInsertUsers(8);
 	});
 

@@ -2,15 +2,17 @@ import clsx from "clsx";
 import { Lock, MessageCircleMore, SquarePen, Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import type { GearType, Tables, UserWithPlusTier } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
+	GearType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
+import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
 	analyzerPage,
@@ -40,7 +42,7 @@ interface BuildProps {
 		| "headGearSplId"
 		| "shoesGearSplId"
 		| "updatedAt"
-		| "private"
+		| "isPrivate"
 	> & {
 		abilities: BuildAbilitiesTuple;
 		modes: ModeShort[] | null;
@@ -73,7 +75,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 
 	return (
 		<div
-			className={clsx(styles.card, { [styles.private]: build.private })}
+			className={clsx(styles.card, { [styles.private]: build.isPrivate })}
 			data-testid="build-card"
 		>
 			<div>
@@ -113,7 +115,7 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 						</>
 					) : null}
 					<div className="stack horizontal sm items-center">
-						{build.private ? (
+						{build.isPrivate ? (
 							<div className={styles.privateText}>
 								<Lock size={16} /> {t("common:build.private")}
 							</div>

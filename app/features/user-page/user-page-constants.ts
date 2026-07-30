@@ -21,7 +21,38 @@ export const SPL2_JOIN_ORDER_CUTOFF = 13_589;
 export const MATCHES_PER_SEASONS_PAGE = 8;
 export const RESULTS_PER_PAGE = 25;
 export const HIGHLIGHTS_RESULTS_MAX = 500;
+export const BUILD_SORT_IDENTIFIERS = [
+	"UPDATED_AT",
+	"TOP_500",
+	"WEAPON_POOL",
+	"WEAPON_IN_GAME_ORDER",
+	"ALPHABETICAL_TITLE",
+	"MODE",
+	"HEADGEAR_ID",
+	"CLOTHES_ID",
+	"SHOES_ID",
+	"PUBLIC_BUILD",
+	"PRIVATE_BUILD",
+] as const;
+
+export type BuildSort = (typeof BUILD_SORT_IDENTIFIERS)[number];
+
 export const DEFAULT_BUILD_SORT = ["WEAPON_POOL", "UPDATED_AT"] as const;
+
+export const SUBJECT_PRONOUNS = ["he", "she", "they", "it", "any"] as const;
+
+export type SubjectPronoun = (typeof SUBJECT_PRONOUNS)[number];
+
+export const OBJECT_PRONOUNS = [
+	"him",
+	"her",
+	"them",
+	"its",
+	"all",
+	...SUBJECT_PRONOUNS,
+] as const;
+
+export type ObjectPronoun = (typeof OBJECT_PRONOUNS)[number];
 
 /**
  * An array of ISO 3166-1 alpha-2 country codes.

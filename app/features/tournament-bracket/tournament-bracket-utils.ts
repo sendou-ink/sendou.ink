@@ -5,13 +5,6 @@ import type { Standing } from "./core/Bracket";
 export const tournamentWebsocketRoom = (tournamentId: number) =>
 	`tournament__${tournamentId}`;
 
-export function fillWithNullTillPowerOfTwo<T>(arr: T[]) {
-	const nextPowerOfTwo = 2 ** Math.ceil(Math.log2(arr.length));
-	const nullsToAdd = nextPowerOfTwo - arr.length;
-
-	return [...arr, ...new Array(nullsToAdd).fill(null)];
-}
-
 /**
  * Converts a group number to its corresponding letter representation.
  *

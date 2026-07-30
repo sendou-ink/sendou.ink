@@ -12,6 +12,7 @@ type TimeRangeFormFieldProps = Omit<FormFieldProps<"time-range">, "onBlur"> & {
 	value: TimeRange;
 	onChange: (value: TimeRange) => void;
 	onBlur?: () => void;
+	disabled?: boolean;
 };
 
 export function TimeRangeFormField({
@@ -24,6 +25,7 @@ export function TimeRangeFormField({
 	onBlur,
 	value,
 	onChange,
+	disabled,
 }: TimeRangeFormFieldProps) {
 	const startId = React.useId();
 	const endId = React.useId();
@@ -67,6 +69,7 @@ export function TimeRangeFormField({
 						value={value?.start ?? ""}
 						onChange={handleStartChange}
 						onBlur={() => onBlur?.()}
+						disabled={disabled}
 						className="size-extra-small"
 					/>
 				</FormFieldWrapper>
@@ -77,6 +80,7 @@ export function TimeRangeFormField({
 						value={value?.end ?? ""}
 						onChange={handleEndChange}
 						onBlur={() => onBlur?.()}
+						disabled={disabled}
 						className="size-extra-small"
 					/>
 				</FormFieldWrapper>

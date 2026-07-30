@@ -8,6 +8,6 @@ export const loader = async () => {
 	const { id: userId } = requireUser();
 
 	return {
-		friendsForAdding: await SQGroupRepository.friendsAndTeammates(userId),
+		friendsForAdding: await SQGroupRepository.findFriendsAndTeammates(userId),
 	};
 };

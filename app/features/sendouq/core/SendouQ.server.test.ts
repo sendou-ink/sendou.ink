@@ -27,7 +27,7 @@ const createGroup = async (
 ) => {
 	const { status = "ACTIVE", inviteCode } = options;
 
-	const groupResult = await SQGroupRepository.createGroup({
+	const groupResult = await SQGroupRepository.insert({
 		status,
 		userId: userIds[0],
 	});
@@ -41,7 +41,7 @@ const createGroup = async (
 	}
 
 	for (let i = 1; i < userIds.length; i++) {
-		await SQGroupRepository.addMember(groupResult.id, {
+		await SQGroupRepository.insertMember(groupResult.id, {
 			userId: userIds[i],
 			role: "REGULAR",
 		});
@@ -87,8 +87,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(4);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns 'default' when user not in any group", async () => {
@@ -136,8 +136,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(8);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns group when user is a member", async () => {
@@ -200,8 +200,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(4);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns group when invite code is valid", async () => {
@@ -241,8 +241,8 @@ describe("SendouQ", () => {
 			await dbInsertUsers(12);
 		});
 
-		afterEach(() => {
-			dbReset();
+		afterEach(async () => {
+			await dbReset();
 		});
 
 		test("returns empty array when no groups exist", async () => {
@@ -326,8 +326,8 @@ describe("SendouQ", () => {
 		});
 
 		describe("tier sorting", () => {
-			beforeEach(() => {
-				refreshUserSkills(1);
+			beforeEach(async () => {
+				await refreshUserSkills(1);
 			});
 
 			test("sorts full groups by tier when viewer has a tier", async () => {
@@ -429,8 +429,8 @@ describe("SendouQ", () => {
 				await dbInsertUsers(20);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("returns empty array when user not in a group", async () => {
@@ -554,8 +554,8 @@ describe("SendouQ", () => {
 				await dbInsertUsers(12);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("marks group as replay when 3+ members overlap", async () => {
@@ -650,8 +650,8 @@ describe("SendouQ", () => {
 				await dbInsertUsers(12);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("full groups have members undefined", async () => {
@@ -694,12 +694,12 @@ describe("SendouQ", () => {
 
 		describe("skill-based sorting", () => {
 			beforeEach(async () => {
-				refreshUserSkills(1);
+				await refreshUserSkills(1);
 				await dbInsertUsers(10);
 			});
 
-			afterEach(() => {
-				dbReset();
+			afterEach(async () => {
+				await dbReset();
 			});
 
 			test("groups with closer skill sorted first", async () => {
@@ -712,6 +712,10 @@ describe("SendouQ", () => {
 				await createGroup([2]);
 				await createGroup([3]);
 				await createGroup([4]);
+				await db
+					.updateTable("Group")
+					.set({ latestActionAt: databaseTimestampNow() })
+					.execute();
 
 				await refreshSendouQInstance();
 

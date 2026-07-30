@@ -1,8 +1,8 @@
 import type { z } from "zod";
-import { formRegistry } from "./fields";
+import { getFormFieldMetadata } from "./fields";
 import type { FormField } from "./types";
 
-function infoMessageId(fieldId: string) {
+export function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
 
@@ -94,12 +94,6 @@ export function setNestedValue(
 	};
 }
 
-// Casting away the registry's deep generic signature avoids "Type instantiation
-// is excessively deep" errors when looking up field metadata by schema.
-const typedRegistry = formRegistry as {
-	get(schema: z.ZodType): FormField | undefined;
-};
-
 /**
  * The default value object for a `fieldset` field, built from each sub-field's
  * own `initialValue` (e.g. a `select`'s first option). Returns `{}` for
@@ -113,7 +107,7 @@ export function fieldsetDefaults(
 	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
 	const result: Record<string, unknown> = {};
 	for (const [key, fieldSchema] of Object.entries(shape)) {
-		const fieldMeta = typedRegistry.get(fieldSchema);
+		const fieldMeta = getFormFieldMetadata(fieldSchema);
 		if (fieldMeta) result[key] = fieldMeta.initialValue;
 	}
 	return result;
@@ -142,7 +136,7 @@ export function seedArrayItemDefaults(
 	const itemSchema = getNestedSchema(schema, itemPath);
 	if (!itemSchema) return values;
 
-	const itemMeta = typedRegistry.get(itemSchema);
+	const itemMeta = getFormFieldMetadata(itemSchema);
 	if (itemMeta?.type !== "fieldset") return values;
 
 	const existing = getNestedValue(values, itemPath) as
@@ -228,7 +222,7 @@ export function validateField(
 	// array) belongs to that child — attributing it to the parent would surface
 	// the wrong message at the wrong field. Other composite fields (e.g. a custom
 	// tuple) render as a single control, so their nested issues belong to them.
-	const fieldMeta = typedRegistry.get(fieldSchema);
+	const fieldMeta = getFormFieldMetadata(fieldSchema);
 	const childrenRenderOwnErrors =
 		fieldMeta?.type === "array" || fieldMeta?.type === "fieldset";
 	const issue = childrenRenderOwnErrors
@@ -251,21 +245,38 @@ export function validateField(
 	return issue.message;
 }
 
+/**
+ * Accessibility attributes for a form control. Ids are derived from the field
+ * `name` because the error/info messages render with name-based ids
+ * (`errorMessageId`/`infoMessageId`) — a `useId()` value would point at
+ * elements that don't exist. The error id is also included in
+ * `aria-describedby` since `aria-errormessage` support in screen readers is
+ * still inconsistent.
+ */
 export function ariaAttributes({
-	id,
+	name,
 	error,
 	bottomText,
 	required,
 }: {
-	id: string;
+	name?: string;
 	error?: string;
 	bottomText?: string;
 	required?: boolean;
 }) {
+	const describedBy = name
+		? [
+				error ? errorMessageId(name) : undefined,
+				bottomText ? infoMessageId(name) : undefined,
+			]
+				.filter((id) => id !== undefined)
+				.join(" ")
+		: "";
+
 	return {
 		"aria-invalid": error ? ("true" as const) : undefined,
-		"aria-describedby": bottomText ? infoMessageId(id) : undefined,
-		"aria-errormessage": error ? errorMessageId(id) : undefined,
+		"aria-describedby": describedBy !== "" ? describedBy : undefined,
+		"aria-errormessage": error && name ? errorMessageId(name) : undefined,
 		"aria-required": required ? ("true" as const) : undefined,
 	};
 }

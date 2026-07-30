@@ -3,23 +3,20 @@ import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ordinal } from "openskill";
 import { db } from "~/db/sql";
+import type { DB, Tables } from "~/db/tables";
 import type {
 	CastedMatchesInfo,
-	DB,
 	PreparedMaps,
-	Tables,
 	TournamentSettings,
-} from "~/db/tables";
+} from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
-import { Status } from "~/modules/brackets-model";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
-import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
@@ -70,9 +67,8 @@ export async function findById(id: number) {
 				.as("parentTournamentName"),
 			"Tournament.tier",
 			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"Tournament.isFinalized",
-			"Tournament.seedingSnapshot",
 			jsonObjectFrom(
 				eb
 					.selectFrom("TournamentOrganization")
@@ -375,6 +371,19 @@ export async function findDescriptionById(tournamentId: number) {
 	return row?.description ?? null;
 }
 
+/**
+ * Loads a tournament's seeding snapshot.
+ */
+export async function findSeedingSnapshotById(tournamentId: number) {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("Tournament.seedingSnapshot")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return row?.seedingSnapshot ?? null;
+}
+
 export async function hasChildTournaments(parentTournamentId: number) {
 	const row = await db
 		.selectFrom("Tournament")
@@ -486,7 +495,7 @@ export async function findPreparedMapsById(tournamentId: number) {
 	);
 }
 
-export function relatedUsersByTournamentIds(tournamentIds: number[]) {
+export function findRelatedUsersByTournamentIds(tournamentIds: number[]) {
 	return db
 		.selectFrom("CalendarEventDate")
 		.innerJoin("CalendarEvent", "CalendarEventDate.eventId", "CalendarEvent.id")
@@ -521,9 +530,9 @@ export function relatedUsersByTournamentIds(tournamentIds: number[]) {
 		.execute();
 }
 
-export type ForShowcase = Unwrapped<typeof forShowcase>;
+export type ForShowcase = Unwrapped<typeof findAllForShowcase>;
 
-export function forShowcase() {
+export function findAllForShowcase() {
 	return db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -540,7 +549,7 @@ export function forShowcase() {
 			"CalendarEvent.authorId",
 			"CalendarEvent.name",
 			"CalendarEvent.organizationId",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"CalendarEvent.hidden",
 			eb
 				.selectFrom("TournamentTeam")
@@ -558,7 +567,7 @@ export function forShowcase() {
 				.where((eb) =>
 					eb.or([
 						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-						eb("CalendarEventDate.startTime", ">", databaseTimestampNow()),
+						eb("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
 					]),
 				)
 				.select(({ fn }) => [
@@ -630,8 +639,8 @@ export function forShowcase() {
 				.select(({ fn }) => [fn.countAll<number>().as("count")])
 				.as("vodCount"),
 		])
-		.where("CalendarEventDate.startTime", ">", databaseTimestampWeekAgo())
-		.orderBy("CalendarEventDate.startTime", "asc")
+		.where("CalendarEventDate.startsAt", ">", databaseTimestampWeekAgo())
+		.orderBy("CalendarEventDate.startsAt", "asc")
 		.$narrowType<{ teamsCount: NotNull }>()
 		.execute();
 }
@@ -661,20 +670,16 @@ export function findAllBetweenTwoTimestamps({
 		.innerJoin("Tournament", "CalendarEvent.tournamentId", "Tournament.id")
 		.select(["Tournament.id as tournamentId"])
 		.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">",
 			dateToDatabaseTimestamp(startTime),
 		)
-		.where(
-			"CalendarEventDate.startTime",
-			"<=",
-			dateToDatabaseTimestamp(endTime),
-		)
+		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
 		.where("CalendarEvent.hidden", "=", 0)
 		.execute();
 }
 
-export function topThreeResultsByTournamentId(tournamentId: number) {
+export function findTopThreeResultsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentResult")
 		.select(({ eb }) => [
@@ -693,7 +698,7 @@ export function topThreeResultsByTournamentId(tournamentId: number) {
 		.execute();
 }
 
-export async function friendCodesByTournamentId(tournamentId: number) {
+export async function findFriendCodesByTournamentId(tournamentId: number) {
 	const values = await db
 		.selectFrom("TournamentTeam")
 		.innerJoin(
@@ -1016,7 +1021,7 @@ export function setMatchAsCasted({
 	});
 }
 
-export function pickBanEventsByMatchId(matchId: number) {
+export function findPickBanEventsByMatchId(matchId: number) {
 	return db
 		.selectFrom("TournamentMatchPickBanEvent")
 		.select([
@@ -1031,34 +1036,10 @@ export function pickBanEventsByMatchId(matchId: number) {
 		.execute();
 }
 
-export function addPickBanEvent(
+export function insertPickBanEvent(
 	values: Insertable<DB["TournamentMatchPickBanEvent"]>,
 ) {
 	return db.insertInto("TournamentMatchPickBanEvent").values(values).execute();
-}
-
-export function resetBracket(tournamentStageId: number) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("TournamentMatch")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentRound")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentGroup")
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-
-		await trx
-			.deleteFrom("TournamentStage")
-			.where("id", "=", tournamentStageId)
-			.execute();
-	});
 }
 
 export function reopenTournament(tournamentId: number) {
@@ -1106,6 +1087,7 @@ export function finalize({
 	const seasonValue = season ?? null;
 
 	return db.transaction().execute(async (trx) => {
+		const skillTeamUsers: Array<{ skillId: number; userId: number }> = [];
 		for (const skill of summary.skills) {
 			invariant(seasonValue !== null, "Season missing for skill");
 			// A skill row keys on either userId (solo) or identifier (team), never
@@ -1150,13 +1132,17 @@ export function finalize({
 
 			if (insertedSkill.identifier) {
 				for (const userId of identifierToUserIds(insertedSkill.identifier)) {
-					await trx
-						.insertInto("SkillTeamUser")
-						.values({ skillId: insertedSkill.id, userId })
-						.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
-						.execute();
+					skillTeamUsers.push({ skillId: insertedSkill.id, userId });
 				}
 			}
+		}
+
+		if (skillTeamUsers.length > 0) {
+			await trx
+				.insertInto("SkillTeamUser")
+				.values(skillTeamUsers)
+				.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+				.execute();
 		}
 
 		// SeedingSkill has `on conflict replace` set in its migration
@@ -1175,18 +1161,20 @@ export function finalize({
 				.execute();
 		}
 
-		for (const mapResultDelta of summary.mapResultDeltas) {
+		if (summary.mapResultDeltas.length > 0) {
 			invariant(seasonValue !== null, "Season missing for map result");
 			await trx
 				.insertInto("MapResult")
-				.values({
-					mode: mapResultDelta.mode,
-					stageId: mapResultDelta.stageId,
-					userId: mapResultDelta.userId,
-					wins: mapResultDelta.wins,
-					losses: mapResultDelta.losses,
-					season: seasonValue,
-				})
+				.values(
+					summary.mapResultDeltas.map((mapResultDelta) => ({
+						mode: mapResultDelta.mode,
+						stageId: mapResultDelta.stageId,
+						userId: mapResultDelta.userId,
+						wins: mapResultDelta.wins,
+						losses: mapResultDelta.losses,
+						season: seasonValue,
+					})),
+				)
 				.onConflict((oc) =>
 					oc
 						.columns(["userId", "stageId", "mode", "season"])
@@ -1198,20 +1186,22 @@ export function finalize({
 				.execute();
 		}
 
-		for (const playerResultDelta of summary.playerResultDeltas) {
+		if (summary.playerResultDeltas.length > 0) {
 			invariant(seasonValue !== null, "Season missing for player result");
 			await trx
 				.insertInto("PlayerResult")
-				.values({
-					ownerUserId: playerResultDelta.ownerUserId,
-					otherUserId: playerResultDelta.otherUserId,
-					mapWins: playerResultDelta.mapWins,
-					mapLosses: playerResultDelta.mapLosses,
-					setWins: playerResultDelta.setWins,
-					setLosses: playerResultDelta.setLosses,
-					type: playerResultDelta.type,
-					season: seasonValue,
-				})
+				.values(
+					summary.playerResultDeltas.map((playerResultDelta) => ({
+						ownerUserId: playerResultDelta.ownerUserId,
+						otherUserId: playerResultDelta.otherUserId,
+						mapWins: playerResultDelta.mapWins,
+						mapLosses: playerResultDelta.mapLosses,
+						setWins: playerResultDelta.setWins,
+						setLosses: playerResultDelta.setLosses,
+						type: playerResultDelta.type,
+						season: seasonValue,
+					})),
+				)
 				.onConflict((oc) =>
 					oc
 						.columns(["ownerUserId", "otherUserId", "type", "season"])
@@ -1255,25 +1245,27 @@ export function finalize({
 				.execute();
 		}
 
-		for (const tournamentResult of summary.tournamentResults) {
-			const setResults = summary.setResults.get(tournamentResult.userId);
+		const tournamentResults = summary.tournamentResults
+			.map((tournamentResult) => ({
+				tournamentResult,
+				setResults: summary.setResults.get(tournamentResult.userId),
+			}))
+			.filter(({ setResults }) => !setResults?.every((result) => !result))
+			.map(({ tournamentResult, setResults }) => ({
+				tournamentId,
+				userId: tournamentResult.userId,
+				placement: tournamentResult.placement,
+				participantCount: tournamentResult.participantCount,
+				tournamentTeamId: tournamentResult.tournamentTeamId,
+				setResults: JSON.stringify(setResults ?? []),
+				spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
+				div: tournamentResult.div,
+			}));
 
-			if (setResults?.every((result) => !result)) {
-				continue;
-			}
-
+		if (tournamentResults.length > 0) {
 			await trx
 				.insertInto("TournamentResult")
-				.values({
-					tournamentId,
-					userId: tournamentResult.userId,
-					placement: tournamentResult.placement,
-					participantCount: tournamentResult.participantCount,
-					tournamentTeamId: tournamentResult.tournamentTeamId,
-					setResults: JSON.stringify(setResults ?? []),
-					spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
-					div: tournamentResult.div,
-				})
+				.values(tournamentResults)
 				.execute();
 		}
 
@@ -1294,49 +1286,6 @@ export function finalizeWithoutSummary(tournamentId: number) {
 		.updateTable("Tournament")
 		.set({ isFinalized: 1 })
 		.where("id", "=", tournamentId)
-		.execute();
-}
-
-export type TournamentRepositoryInsertableMatch = Omit<
-	Insertable<DB["TournamentMatch"]>,
-	"status" | "chatCode"
->;
-
-export function insertSwissMatches(
-	matches: TournamentRepositoryInsertableMatch[],
-) {
-	if (matches.length === 0) {
-		throw new Error("No matches to insert");
-	}
-
-	return db
-		.insertInto("TournamentMatch")
-		.values(
-			matches.map((match) => ({
-				groupId: match.groupId,
-				number: match.number,
-				opponentOne: match.opponentOne,
-				opponentTwo: match.opponentTwo,
-				roundId: match.roundId,
-				stageId: match.stageId,
-				status: Status.Ready,
-				chatCode: shortNanoid(),
-			})),
-		)
-		.execute();
-}
-
-export function deleteSwissMatches({
-	groupId,
-	roundId,
-}: {
-	groupId: number;
-	roundId: number;
-}) {
-	return db
-		.deleteFrom("TournamentMatch")
-		.where("groupId", "=", groupId)
-		.where("roundId", "=", roundId)
 		.execute();
 }
 
@@ -1362,17 +1311,17 @@ export async function searchByName({
 		.select((eb) => [
 			"Tournament.id",
 			"CalendarEvent.name",
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 		])
 		.where("CalendarEvent.name", "like", `%${query}%`)
 		.where("CalendarEvent.hidden", "=", 0)
-		.orderBy("CalendarEventDate.startTime", "desc")
+		.orderBy("CalendarEventDate.startsAt", "desc")
 		.limit(limit);
 
 	if (minStartTime) {
 		sqlQuery = sqlQuery.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			">=",
 			dateToDatabaseTimestamp(minStartTime),
 		);
@@ -1380,7 +1329,7 @@ export async function searchByName({
 
 	if (maxStartTime) {
 		sqlQuery = sqlQuery.where(
-			"CalendarEventDate.startTime",
+			"CalendarEventDate.startsAt",
 			"<=",
 			dateToDatabaseTimestamp(maxStartTime),
 		);
@@ -1456,8 +1405,8 @@ export async function findRunningTournamentIds() {
 		)
 		.select("Tournament.id")
 		.where("Tournament.isFinalized", "=", 0)
-		.where("CalendarEventDate.startTime", "<", dateToDatabaseTimestamp(now))
-		.where("CalendarEventDate.startTime", ">", dateToDatabaseTimestamp(cutoff))
+		.where("CalendarEventDate.startsAt", "<", dateToDatabaseTimestamp(now))
+		.where("CalendarEventDate.startsAt", ">", dateToDatabaseTimestamp(cutoff))
 		.where((eb) =>
 			eb.exists(
 				eb

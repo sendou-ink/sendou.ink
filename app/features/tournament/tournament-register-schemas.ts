@@ -18,7 +18,7 @@ export const registerTeamFormSchema = z
 			maxLength: TOURNAMENT.TEAM_NAME_MAX_LENGTH,
 		}),
 		/** Pickup team logo. Linked teams source their logo from the sendou.ink team instead. */
-		logo: image({ label: "labels.logo" }),
+		logo: image({ label: "labels.logo", autoValidate: true }),
 		prefersNotToHost: toggle({ label: "labels.regPrefersNotToHost" }),
 	})
 	.superRefine((data, ctx) => {

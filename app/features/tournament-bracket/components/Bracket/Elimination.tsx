@@ -33,14 +33,10 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 				if (roundIdx >= rounds.length - 2) return false;
 
 				const roundMatches = props.bracket.data.match.filter(
-					(match) => match.round_id === round.id,
+					(match) => match.roundId === round.id,
 				);
 				return !roundMatches.some(
-					(match) =>
-						match.opponent1 &&
-						match.opponent2 &&
-						match.opponent1.result !== "win" &&
-						match.opponent2.result !== "win",
+					(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
 				);
 			})
 			.map((round) => round.id),
@@ -50,7 +46,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 		(round) => !hiddenRoundIds.has(round.id),
 	);
 	const firstVisibleRoundMatchCount = props.bracket.data.match.filter(
-		(match) => match.round_id === firstVisibleRound?.id,
+		(match) => match.roundId === firstVisibleRound?.id,
 	).length;
 
 	const compactedFirstRoundId = resolveCompactedFirstRoundId({
@@ -73,7 +69,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 				const bestOf = round.maps?.count;
 
 				const allRoundMatches = props.bracket.data.match.filter(
-					(match) => match.round_id === round.id,
+					(match) => match.roundId === round.id,
 				);
 				const matches =
 					round.id === compactedFirstRoundId
@@ -88,16 +84,12 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 				const nextRound = rounds[roundIdx + 1];
 				const nextRoundMatchCount = nextRound
 					? props.bracket.data.match.filter(
-							(match) => match.round_id === nextRound.id,
+							(match) => match.roundId === nextRound.id,
 						).length
 					: 0;
 
 				const someMatchOngoing = matches.some(
-					(match) =>
-						match.opponent1 &&
-						match.opponent2 &&
-						match.opponent1.result !== "win" &&
-						match.opponent2.result !== "win",
+					(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
 				);
 
 				if (hiddenRoundIds.has(round.id)) {
@@ -219,10 +211,10 @@ function resolveCompactedFirstRoundId(args: {
 	if (firstRound.id !== args.firstVisibleRoundId) return null;
 
 	const firstRoundMatches = args.bracketData.match.filter(
-		(match) => match.round_id === firstRound.id,
+		(match) => match.roundId === firstRound.id,
 	);
 	const secondRoundMatchCount = args.bracketData.match.filter(
-		(match) => match.round_id === secondRound.id,
+		(match) => match.roundId === secondRound.id,
 	).length;
 	if (firstRoundMatches.length !== secondRoundMatchCount * 2) return null;
 

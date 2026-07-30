@@ -12,7 +12,7 @@ const RETENTION_SECONDS = 24 * 60 * 60;
 export function insert(
 	args: Pick<
 		TablesInsertable["ExternalStream"],
-		"name" | "url" | "avatarImgId" | "startTime"
+		"name" | "url" | "avatarImgId" | "startsAt"
 	>,
 ) {
 	return db.insertInto("ExternalStream").values(args).execute();
@@ -24,7 +24,7 @@ export function deleteById(id: number) {
 }
 
 /** Lists all external streams (for the admin management page), soonest start time first. */
-export function all() {
+export function findAll() {
 	return db
 		.selectFrom("ExternalStream")
 		.leftJoin(
@@ -36,17 +36,17 @@ export function all() {
 			"ExternalStream.id",
 			"ExternalStream.name",
 			"ExternalStream.url",
-			"ExternalStream.startTime",
+			"ExternalStream.startsAt",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
 			),
 		])
-		.orderBy("ExternalStream.startTime", "asc")
+		.orderBy("ExternalStream.startsAt", "asc")
 		.execute();
 }
 
 /** External streams that should currently show in the sidebar (started under 6h ago or upcoming). */
-export function forSidebar() {
+export function findAllForSidebar() {
 	return db
 		.selectFrom("ExternalStream")
 		.leftJoin(
@@ -58,13 +58,13 @@ export function forSidebar() {
 			"ExternalStream.id",
 			"ExternalStream.name",
 			"ExternalStream.url",
-			"ExternalStream.startTime",
+			"ExternalStream.startsAt",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
 			),
 		])
 		.where(
-			"ExternalStream.startTime",
+			"ExternalStream.startsAt",
 			">=",
 			databaseTimestampNow() - SIDEBAR_VISIBLE_SECONDS,
 		)
@@ -75,6 +75,6 @@ export function forSidebar() {
 export function deleteOld() {
 	return db
 		.deleteFrom("ExternalStream")
-		.where("startTime", "<", databaseTimestampNow() - RETENTION_SECONDS)
+		.where("startsAt", "<", databaseTimestampNow() - RETENTION_SECONDS)
 		.executeTakeFirst();
 }

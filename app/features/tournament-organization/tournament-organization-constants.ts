@@ -9,6 +9,16 @@ export const ESTABLISHED_ORG = {
 	LOSE_THRESHOLD: 100,
 };
 
+export const TOURNAMENT_ORGANIZATION_ROLES = [
+	"ADMIN",
+	"MEMBER",
+	"ORGANIZER",
+	"STREAMER",
+] as const;
+
+export type TournamentOrganizationRole =
+	(typeof TOURNAMENT_ORGANIZATION_ROLES)[number];
+
 export const TOURNAMENT_ORGANIZATION = {
 	DESCRIPTION_MAX_LENGTH: 1_000,
 	BAN_REASON_MAX_LENGTH: 200,

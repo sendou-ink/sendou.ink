@@ -92,7 +92,6 @@ const createTournamentMatch = async ({
 			groupId: group.id,
 			roundId: round.id,
 			number: 1,
-			status: 4,
 			opponentOne: JSON.stringify({ id: null }),
 			opponentTwo: JSON.stringify({ id: null }),
 		})
@@ -148,13 +147,13 @@ const reportTournamentWeapons = async (args: {
 		.execute();
 };
 
-describe("seasonPopularUsersWeapon", () => {
+describe("findSeasonPopularUsersWeapon", () => {
 	beforeEach(async () => {
 		await dbInsertUsers(2);
 	});
 
-	afterEach(() => {
-		dbReset();
+	afterEach(async () => {
+		await dbReset();
 	});
 
 	test("returns user's most reported SendouQ weapon", async () => {
@@ -164,7 +163,8 @@ describe("seasonPopularUsersWeapon", () => {
 			count: OVER_THRESHOLD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({ 1: 10 });
 	});
@@ -176,7 +176,8 @@ describe("seasonPopularUsersWeapon", () => {
 			count: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({});
 	});
@@ -188,7 +189,8 @@ describe("seasonPopularUsersWeapon", () => {
 			count: OVER_THRESHOLD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({ 1: 1000 });
 	});
@@ -201,7 +203,8 @@ describe("seasonPopularUsersWeapon", () => {
 			isFinalized: false,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({});
 	});
@@ -216,7 +219,8 @@ describe("seasonPopularUsersWeapon", () => {
 			count: OVER_THRESHOLD - half,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({ 1: 10 });
 	});
@@ -238,7 +242,8 @@ describe("seasonPopularUsersWeapon", () => {
 			count: OVER_THRESHOLD - 3,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({ 1: 10 });
 	});
@@ -255,7 +260,8 @@ describe("seasonPopularUsersWeapon", () => {
 			count: OVER_THRESHOLD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({ 1: 10, 2: 1000 });
 	});
@@ -274,7 +280,8 @@ describe("seasonPopularUsersWeapon", () => {
 			createdAt: OUT_OF_SEASON_TIMESTAMP,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({});
 	});

@@ -55,11 +55,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	);
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: cardUserIds,
 		})),
 		posts: dividePosts(posts, user?.id),
-		teams: user ? await TeamRepository.teamsByMemberUserId(user.id) : [],
+		teams: user ? await TeamRepository.findAllByMemberUserId(user.id) : [],
 		filters: filters ?? Scrim.defaultFilters(),
 	};
 };

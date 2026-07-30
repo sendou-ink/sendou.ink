@@ -6,9 +6,11 @@ export const SENDOUQ = {
 	PRIVATE_USER_NOTE_MAX_LENGTH: 280,
 } as const;
 
-export const FRIEND_CODE_REGEXP_PATTERN =
-	"^(SW-)?[0-9]{4}-?[0-9]{4}-?[0-9]{4}$";
+const FRIEND_CODE_REGEXP_PATTERN = "^(SW-)?[0-9]{4}-?[0-9]{4}-?[0-9]{4}$";
 export const FRIEND_CODE_REGEXP = new RegExp(FRIEND_CODE_REGEXP_PATTERN);
+
+/** Length of a friend code with the optional "SW-" prefix included */
+export const FRIEND_CODE_MAX_LENGTH = 17;
 
 export const FULL_GROUP_SIZE = 4;
 

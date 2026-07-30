@@ -78,3 +78,39 @@
 		outline: initial;
 	}
 }
+
+.weekSelection {
+	& .grid {
+		/* the week band has to run unbroken across the row, including the empty cells of a month's first and last week */
+		border-spacing: 0;
+	}
+
+	& tr:hover td,
+	& tr:has([data-selected]) td {
+		background-color: var(--color-bg-high);
+	}
+
+	& tr:hover td:first-child,
+	& tr:has([data-selected]) td:first-child {
+		border-start-start-radius: var(--radius-field);
+		border-end-start-radius: var(--radius-field);
+	}
+
+	& tr:hover td:last-child,
+	& tr:has([data-selected]) td:last-child {
+		border-start-end-radius: var(--radius-field);
+		border-end-end-radius: var(--radius-field);
+	}
+
+	& .cell {
+		&:hover {
+			background-color: transparent;
+		}
+
+		/* the week is what gets selected, so the day it was picked from is not called out */
+		&[data-selected] {
+			background-color: transparent;
+			color: inherit;
+		}
+	}
+}

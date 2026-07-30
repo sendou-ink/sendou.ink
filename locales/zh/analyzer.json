@@ -23,6 +23,7 @@
 	"stat.specialPoints": "特殊武器充能点数",
 	"stat.specialLost": "阵亡时的特殊武器点数损失",
 	"stat.specialLostSplattedByRP": "被死惩使用者击倒时的特殊武器点数损失",
+	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "使用后回墨间隔",
 	"stat.subWeaponInkConsumptionPercentage": "耗墨量",
 	"stat.squidFormInkRecoverySeconds": "完全回墨时间 (鱿鱼形态)",

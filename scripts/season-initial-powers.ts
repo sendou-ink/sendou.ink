@@ -1,5 +1,5 @@
 import { ordinal } from "openskill";
-import { db, sql } from "~/db/sql";
+import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
@@ -14,38 +14,33 @@ invariant(rawNth, "nth of new season needed (argument 1)");
 const nth = Number(rawNth);
 invariant(!Number.isNaN(nth), "nth of new season must be a number");
 
-const skillsExistStm = sql.prepare(/* sql */ `
-  select
-    1
-  from "Skill"
-  where
-    "season" = @season
-  limit 1
-`);
+const seasonHasSkills = async (season: number) =>
+	Boolean(
+		await db
+			.selectFrom("Skill")
+			.select("id")
+			.where("season", "=", season)
+			.limit(1)
+			.executeTakeFirst(),
+	);
 
+invariant(await seasonHasSkills(nth - 1), `No skills for season ${nth - 1}`);
 invariant(
-	skillsExistStm.get({ season: nth - 1 }),
-	`No skills for season ${nth - 1}`,
-);
-invariant(
-	!skillsExistStm.get({ season: nth }),
+	!(await seasonHasSkills(nth)),
 	`Skills for season ${nth} already exist`,
 );
 
-const activeMatchExistsStm = sql.prepare(/* sql */ `
-  select
-    "GroupMatch"."id"
-  from "GroupMatch"
-  left join "Skill" on "Skill"."groupMatchId" = "GroupMatch"."id"
-  where
-    "Skill"."id" is null
-`);
-const idsOfActiveMatches = activeMatchExistsStm
-	.all()
-	.map((row) => (row as any).id) as number[];
+const idsOfActiveMatches = (
+	await db
+		.selectFrom("GroupMatch")
+		.leftJoin("Skill", "Skill.groupMatchId", "GroupMatch.id")
+		.select("GroupMatch.id")
+		.where("Skill.id", "is", null)
+		.execute()
+).map((row) => row.id);
 
 invariant(
-	!activeMatchExistsStm.get(),
+	idsOfActiveMatches.length === 0,
 	`There are active matches: (ids: ${idsOfActiveMatches.join(", ")})`,
 );
 
@@ -70,11 +65,13 @@ const TIER_TO_NEW_TIER: Record<TierName, TierName> = {
 // - For +3 members, consider the last 2 seasons
 // - For non-plus members, consider the last season only
 const getAllSkills = async () => {
-	const skills = [
-		freshUserSkills(nth - 1).userSkills,
-		freshUserSkills(nth - 2).userSkills,
-		freshUserSkills(nth - 3).userSkills,
-	];
+	const skills = (
+		await Promise.all([
+			freshUserSkills(nth - 1),
+			freshUserSkills(nth - 2),
+			freshUserSkills(nth - 3),
+		])
+	).map((seasonSkills) => seasonSkills.userSkills);
 
 	const plusServerMembers = await db
 		.selectFrom("PlusTier")
@@ -136,28 +133,19 @@ const groupedSkills = skillsToConsider.reduce(
 	{} as Record<TierName, typeof skillsToConsider>,
 );
 
-const skillStm = sql.prepare(/* sql */ `
-  select
-    *
-  from "Skill"
-  where
-    "userId" = @userId
-    and "ordinal" = @ordinal
-`);
-const midPoints = Object.entries(groupedSkills).reduce(
-	(acc, [tier, skills]) => {
-		const midPoint = skills[Math.floor(skills.length / 2)];
-		const midPointSkill = skillStm.get({
-			userId: midPoint.userId,
-			ordinal: midPoint.ordinal,
-		}) as Tables["Skill"];
-		invariant(midPointSkill, "midPointSkill not found");
+const midPoints = {} as Record<TierName, Tables["Skill"]>;
+for (const [tier, skills] of Object.entries(groupedSkills)) {
+	const midPoint = skills[Math.floor(skills.length / 2)];
+	const midPointSkill = await db
+		.selectFrom("Skill")
+		.selectAll()
+		.where("userId", "=", midPoint.userId)
+		.where("ordinal", "=", midPoint.ordinal)
+		.executeTakeFirst();
+	invariant(midPointSkill, "midPointSkill not found");
 
-		acc[tier as TierName] = midPointSkill;
-		return acc;
-	},
-	{} as Record<TierName, Tables["Skill"]>,
-);
+	midPoints[tier as TierName] = midPointSkill;
+}
 
 const newSkills = allSkills.map((s) => {
 	const newTier = TIER_TO_NEW_TIER[s.tier.name];
