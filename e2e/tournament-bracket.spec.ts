@@ -18,8 +18,6 @@ import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
 import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 import { UserResultsPage } from "./pages/user/user-results-page";
 
-// xxx: quite a lot of overlap (doing the same actions over and over again when they were already tested -> take shortcuts via factories to make tests faster?)
-
 // xxx: tournament-bracket-elim, tournament-bracket-swiss etc. and pick ban as separate and general another?
 
 const ROSTER_SIZE = 4;
@@ -51,7 +49,7 @@ const ROUND_ROBIN: BracketProgression = [
 /* Single group of 4 teams plays: R1 = matches 1 (team 1 vs. 4) & 2 (team 3 vs. 2),
  * R2 = matches 3 (team 2 vs. 4) & 4 (team 1 vs. 3), R3 = matches 5 & 6 (team 2 vs. 1). */
 
-const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
+const RR_TO_SE: BracketProgression = [
 	{
 		type: "round_robin",
 		name: "Groups stage",
@@ -65,6 +63,10 @@ const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
 		settings: {},
 		sources: [{ bracketIdx: 0, placements: [1, 2] }],
 	},
+];
+
+const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
+	...RR_TO_SE,
 	{
 		type: "single_elimination",
 		name: "Underground bracket",
@@ -348,35 +350,22 @@ test.describe("Tournament bracket", () => {
 		page,
 		factories,
 	}) => {
-		test.setTimeout(150_000);
-
 		const badges = await factories.BadgeFactory.createMany(2);
 		const tournament = await factories.TournamentFactory.create({
 			authorId: ADMIN_ID,
 			startTimes: startedTournamentTimes(),
 			bracketProgression: RR_TO_SE_WITH_UNDERGROUND,
-			mapPoolMaps: TO_MAP_POOL,
 			badges: badges.map((badge) => badge.id),
 		});
-		// groups of 3 and 4; playing every match with the alpha side winning drops
-		// teams 5, 6 and 7 into the underground bracket's placements
+		// groups of 3 and 4; the factory plays every match with the higher seed
+		// winning, dropping teams 5, 6 and 7 into the underground bracket's placements
 		const teams = await createTeams(factories, tournament.id, teamSeeds(7));
-
-		await impersonate(page);
-
-		const brackets = new TournamentBracketsPage(page);
-		await brackets.goto(tournament.id);
-		await brackets.finalize();
-
-		for (const matchId of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
-			const match = await brackets.openMatch(matchId);
-			await match.openTab("action");
-			await match.reportResult({ mapsToReport: 2 });
-			await match.backToBracket();
-		}
+		await factories.TournamentFactory.playOut(tournament.id);
 
 		// captain of one of the underground bracket teams
 		await impersonate(page, teams[4].ownerUserId);
+
+		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
 
 		await brackets.bracketTab("Underground").click();
@@ -388,22 +377,11 @@ test.describe("Tournament bracket", () => {
 		await admin.goto(tournament.id);
 		await admin.checkTeamInToBracket(teams[6].id, "Underground bracket");
 
-		await brackets.goto(tournament.id, 2);
-		await brackets.finalize();
+		// the checked in teams meet in the underground bracket; score reporting and
+		// starting brackets from the UI are covered by other tests
+		await factories.TournamentFactory.playOut(tournament.id, [2, 1]);
 
-		const undergroundMatch = await brackets.openMatch(10);
-		await undergroundMatch.openTab("action");
-		await undergroundMatch.reportResult({ mapsToReport: 3 });
-
-		await brackets.goto(tournament.id, 1);
-		await brackets.finalize();
-		for (const matchId of [11, 12, 13, 14]) {
-			const match = await brackets.openMatch(matchId);
-			await match.openTab("action");
-			await match.reportResult({ mapsToReport: 3 });
-
-			await match.backToBracket();
-		}
+		await brackets.goto(tournament.id);
 		const finalizeDialog = await brackets.openFinalizeTournamentDialog();
 		await finalizeDialog.assignBadgesLater();
 		await finalizeDialog.confirm();
@@ -443,47 +421,28 @@ test.describe("Tournament bracket", () => {
 		page,
 		factories,
 	}) => {
-		test.slow();
-		const tournament = await factories.TournamentFactory.create({
-			name: "Swim or Sink 101",
-			authorId: ADMIN_ID,
-			startTimes: startedTournamentTimes(),
-			bracketProgression: SOS_BRACKETS,
-			mapPoolMaps: TO_MAP_POOL,
-		});
-		await createTeams(factories, tournament.id, teamSeeds(2));
+		// progression editing, score reporting and the finalize dialog are covered
+		// by other tests; only the result pages themselves are under test here
+		const players = await factories.UserFactory.createMany(ROSTER_SIZE * 2);
+		const teamRosters = [
+			players.slice(0, ROSTER_SIZE),
+			players.slice(ROSTER_SIZE),
+		].map((roster) => roster.map((player) => player.id));
+
+		const tournament = await factories.TournamentFactory.createPlayed(
+			{
+				name: "Swim or Sink 101",
+				authorId: ADMIN_ID,
+				startTimes: startedTournamentTimes(),
+				bracketProgression: RR_TO_SE,
+			},
+			{ teamRosters, playedOut: "all" },
+		);
 
 		await impersonate(page);
 
-		const admin = new TournamentAdminPage(page);
-		await admin.goto(tournament.id);
-
-		const eventEdit = await admin.editEventInfo();
-		for (let i = 0; i < 3; i++) {
-			await eventEdit.deleteLastBracket();
-		}
-		await eventEdit.fillLastPlacements("1,2");
-		await eventEdit.save();
-
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
-		await brackets.finalize();
-
-		const groupsMatch = await brackets.openMatch(1);
-		await groupsMatch.openTab("action");
-		await groupsMatch.reportResult({ mapsToReport: 2 });
-		await groupsMatch.backToBracket();
-
-		await brackets.bracketTab("Great White").click();
-		await brackets.finalize();
-
-		const finalsMatch = await brackets.openMatch(2);
-		await finalsMatch.openTab("action");
-		await finalsMatch.reportResult({ mapsToReport: 3 });
-		await finalsMatch.backToBracket();
-
-		const finalizeDialog = await brackets.openFinalizeTournamentDialog();
-		await finalizeDialog.confirm();
 
 		const results = await brackets.nav.openResults();
 		await results.expandTeam(0);
@@ -716,45 +675,26 @@ test.describe("Tournament bracket", () => {
 		page,
 		factories,
 	}) => {
-		test.slow();
 		const tournament = await factories.TournamentFactory.create({
 			authorId: ADMIN_ID,
 			startTimes: startedTournamentTimes(),
 			bracketProgression: ROUND_ROBIN,
-			mapPoolMaps: TO_MAP_POOL,
 		});
 		await createTeams(factories, tournament.id, teamSeeds(4));
+
+		// set situation where match A is completed and its participants also completed
+		// their follow up matches B & C and then we go back and change the winner of A:
+		// the two passes play rounds 1 (matches 1 & 2) and 2 (matches 3 & 4)
+		await factories.TournamentFactory.startBracket(tournament.id);
+		await factories.TournamentFactory.playMatches(tournament.id);
+		await factories.TournamentFactory.playMatches(tournament.id);
 
 		await impersonate(page);
 
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
-		await brackets.finalize();
 
-		// needs also to be completed so the second round unlocks
-		let match = await brackets.openMatch(1);
-		await match.openTab("action");
-		await match.reportResult({ mapsToReport: 2 });
-		await match.backToBracket();
-
-		// set situation where match A is completed and its participants also completed their follow up matches B & C
-		// and then we go back and change the winner of A
-		match = await brackets.openMatch(2);
-		await match.openTab("action");
-		await match.reportResult({ mapsToReport: 2 });
-		await match.backToBracket();
-
-		match = await brackets.openMatch(3);
-		await match.openTab("action");
-		await match.reportResult({ mapsToReport: 2 });
-		await match.backToBracket();
-
-		match = await brackets.openMatch(4);
-		await match.openTab("action");
-		await match.reportResult({ mapsToReport: 2 });
-		await match.backToBracket();
-
-		match = await brackets.openMatch(2);
+		const match = await brackets.openMatch(2);
 		await match.openTab("admin");
 		await match.reopen();
 		// Wait for the reopen to be reflected before switching tabs: switching
@@ -779,30 +719,21 @@ test.describe("Tournament bracket", () => {
 			authorId: ADMIN_ID,
 			startTimes: startedTournamentTimes(),
 			bracketProgression: ROUND_ROBIN,
-			mapPoolMaps: TO_MAP_POOL,
 		});
 		await createTeams(factories, tournament.id, teamSeeds(4));
+
+		// Complete R1 matches (1 and 2) to unlock R2 matches
+		await factories.TournamentFactory.startBracket(tournament.id);
+		await factories.TournamentFactory.playMatches(tournament.id);
 
 		await impersonate(page);
 
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
-		await brackets.finalize();
-
-		// Complete R1 matches (1 and 2) to unlock R2 matches
-		let match = await brackets.openMatch(1);
-		await match.openTab("action");
-		await match.reportResult({ mapsToReport: 2 });
-		await match.backToBracket();
-
-		match = await brackets.openMatch(2);
-		await match.openTab("action");
-		await match.reportResult({ mapsToReport: 2 });
-		await match.backToBracket();
 
 		// Match 3 is R2 - should now be unlocked since R1 is complete
 		// Start it but don't complete it
-		match = await brackets.openMatch(3);
+		let match = await brackets.openMatch(3);
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 1, setEnds: false });
 		await match.backToBracket();

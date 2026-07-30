@@ -31,8 +31,9 @@ const SINGLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
 	},
 ];
 
-/** Every round of a bracket the factory starts is played on these. A bracket can
- * not be created without a map list, and picking one is the organizer's job. */
+/** Every round of a bracket the factory starts is played on these, unless the
+ * caller passes a `maps` option. A bracket can not be created without a map list,
+ * and picking one is the organizer's job. */
 const ROUND_MAPS = {
 	count: 3,
 	type: "BEST_OF",
@@ -40,7 +41,10 @@ const ROUND_MAPS = {
 		mode: "SZ" as const,
 		stageId,
 	})),
-} satisfies Omit<Engine.RoundMapsInput, "roundId">;
+} satisfies RoundMaps;
+
+/** The maps every round of a factory-started bracket is played on. */
+type RoundMaps = Omit<Engine.RoundMapsInput, "roundId">;
 
 /** The wrapping calendar event is not the caller's to choose, so it is not an argument. */
 type InsertArgs = Omit<
@@ -104,8 +108,13 @@ export async function createPlayed(
 	{
 		teamRosters,
 		playedOut = 0,
+		maps,
 		...options
-	}: Options & { teamRosters: number[][]; playedOut?: PlayedBrackets },
+	}: Options & {
+		teamRosters: number[][];
+		playedOut?: PlayedBrackets;
+		maps?: RoundMaps;
+	},
 ) {
 	const tournament = await create(overrides, options);
 
@@ -119,7 +128,7 @@ export async function createPlayed(
 		);
 	}
 
-	const matches = await playOut(tournament.id, playedOut);
+	const matches = await playOut(tournament.id, playedOut, { maps });
 
 	return { ...tournament, teams, matches };
 }
@@ -136,6 +145,7 @@ export async function createPlayed(
 export async function playOut(
 	tournamentId: number,
 	brackets: PlayedBrackets = 0,
+	{ maps }: { maps?: RoundMaps } = {},
 ): Promise<PlayedMatch[]> {
 	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
 	const bracketIdxs =
@@ -145,7 +155,7 @@ export async function playOut(
 
 	const matches: PlayedMatch[] = [];
 	for (const bracketIdx of bracketIdxs) {
-		await startBracket(tournamentId, { bracketIdx });
+		await startBracket(tournamentId, { bracketIdx, maps });
 
 		let playedThisPass: PlayedMatch[];
 		do {
@@ -163,7 +173,8 @@ export async function playOut(
 
 /**
  * Starts one of the tournament's brackets, seeded by the teams that are in it —
- * the same teams the organizer would see offered on the bracket page.
+ * the same teams the organizer would see offered on the bracket page. Every round
+ * is played on `maps`, or the factory's default SZ Bo3 list.
  *
  * Later brackets of a progression are started by calling this again once the
  * matches they source their teams from have been played.
@@ -172,7 +183,10 @@ export async function playOut(
  */
 export async function startBracket(
 	tournamentId: number,
-	{ bracketIdx = 0 }: { bracketIdx?: number } = {},
+	{
+		bracketIdx = 0,
+		maps = ROUND_MAPS,
+	}: { bracketIdx?: number; maps?: RoundMaps } = {},
 ) {
 	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
 
@@ -193,7 +207,7 @@ export async function startBracket(
 		name: bracket.name,
 		bracket: Engine.create({
 			...createInput,
-			maps: roundMapsFor(Engine.create(createInput), bracket.type),
+			maps: roundMapsFor(Engine.create(createInput), bracket.type, maps),
 		}),
 	});
 
@@ -244,6 +258,7 @@ export async function playMatches(
 function roundMapsFor(
 	bracket: Engine.BracketData,
 	type: Engine.StageType,
+	maps: RoundMaps,
 ): Engine.RoundMapsInput[] {
 	// round robin and swiss share one map list per round number across their groups
 	const rounds =
@@ -251,7 +266,7 @@ function roundMapsFor(
 			? R.uniqueBy(bracket.round, (round) => round.number)
 			: bracket.round;
 
-	return rounds.map((round) => ({ roundId: round.id, ...ROUND_MAPS }));
+	return rounds.map((round) => ({ roundId: round.id, ...maps }));
 }
 
 function playableMatches(
