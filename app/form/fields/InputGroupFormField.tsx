@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Image } from "~/components/Image";
 import type { FormFieldItemsWithImage, FormFieldProps } from "../types";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 
@@ -11,6 +10,7 @@ type RadioGroupFormFieldProps<V extends string> = Omit<
 	items: FormFieldItemsWithImage<V>;
 	value: V;
 	onChange: (value: V) => void;
+	disabled?: boolean;
 };
 
 export function RadioGroupFormField<V extends string>({
@@ -23,6 +23,7 @@ export function RadioGroupFormField<V extends string>({
 	value,
 	onChange,
 	minLength,
+	disabled,
 }: RadioGroupFormFieldProps<V>) {
 	const id = React.useId();
 
@@ -55,13 +56,14 @@ export function RadioGroupFormField<V extends string>({
 							checked={value === item.value}
 							onChange={() => onChange(item.value)}
 							onBlur={() => onBlur?.()}
+							disabled={disabled}
 						/>
 						<label
 							htmlFor={`${id}-${item.value}`}
 							className="stack horizontal sm items-center mb-0 whitespace-nowrap"
 						>
 							{item.imgSrc ? (
-								<Image path={item.imgSrc} width={24} height={24} alt="" />
+								<img src={item.imgSrc} width={24} height={24} alt="" />
 							) : null}
 							{item.resolvedLabel}
 						</label>
@@ -79,6 +81,7 @@ type CheckboxGroupFormFieldProps<V extends string> = Omit<
 	items: FormFieldItemsWithImage<V>;
 	value: V[];
 	onChange: (value: V[]) => void;
+	disabled?: boolean;
 };
 
 export function CheckboxGroupFormField<V extends string>({
@@ -91,6 +94,7 @@ export function CheckboxGroupFormField<V extends string>({
 	value,
 	onChange,
 	minLength,
+	disabled,
 }: CheckboxGroupFormFieldProps<V>) {
 	const id = React.useId();
 
@@ -125,13 +129,14 @@ export function CheckboxGroupFormField<V extends string>({
 							checked={value.includes(item.value)}
 							onChange={(e) => handleChange(item.value, e.target.checked)}
 							onClick={() => onBlur?.()}
+							disabled={disabled}
 						/>
 						<label
 							htmlFor={`${id}-${item.value}`}
 							className="stack horizontal sm items-center mb-0 whitespace-nowrap"
 						>
 							{item.imgSrc ? (
-								<Image path={item.imgSrc} width={24} height={24} alt="" />
+								<img src={item.imgSrc} width={24} height={24} alt="" />
 							) : null}
 							{item.resolvedLabel}
 						</label>

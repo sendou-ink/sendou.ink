@@ -185,7 +185,7 @@ function TimelineHeader({
 				) : null}
 				{isOngoing ? (
 					<span className={styles.headerScoreLive}>
-						{t("q:match.timeline.live")}
+						{t("q:match.timeline.ongoing")}
 					</span>
 				) : null}
 			</div>

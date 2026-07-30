@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { customField, select, stringConstant, toggle } from "~/form/fields";
+import { hidden, select, stringConstant, toggle } from "~/form/fields";
 import { themeInputSchema } from "~/utils/zod";
 
 const customThemeSchema = z.object({
 	_action: stringConstant("UPDATE_CUSTOM_THEME"),
-	newValue: customField({ initialValue: null }, themeInputSchema.nullable()),
+	newValue: hidden(themeInputSchema.nullable(), null),
 });
 
 export const clockFormatSchema = z.object({

@@ -1,5 +1,4 @@
 import type { Locator, Page } from "@playwright/test";
-import { format } from "date-fns";
 import { ADMIN_PAGE } from "~/utils/urls";
 import {
 	navigate,
@@ -30,7 +29,7 @@ export class AdminBanPage {
 
 	async banUser(
 		userName: string,
-		options: { until?: Date; reason?: string } = {},
+		options: { expiresAt?: Date; reason?: string } = {},
 	) {
 		const form = this.locators.banForm;
 
@@ -41,13 +40,11 @@ export class AdminBanPage {
 			within: form,
 		});
 
-		if (options.until) {
-			await form
-				.locator('input[name="duration"]')
-				.fill(format(options.until, "yyyy-MM-dd'T'HH:mm"));
+		if (options.expiresAt) {
+			await this.fillExpiresAt(options.expiresAt);
 		}
 		if (options.reason) {
-			await form.locator('input[name="reason"]').fill(options.reason);
+			await form.getByLabel("Reason").fill(options.reason);
 		}
 
 		await this.save(form);
@@ -64,6 +61,26 @@ export class AdminBanPage {
 		});
 
 		await this.save(form);
+	}
+
+	private async fillExpiresAt(expiresAt: Date) {
+		const fillSegment = (segment: string, value: string) =>
+			this.locators.banForm
+				.getByRole("spinbutton", {
+					name: new RegExp(`^${segment}, Ban expiration date`),
+				})
+				.fill(value);
+
+		const hours = expiresAt.getHours();
+		await fillSegment("year", String(expiresAt.getFullYear()));
+		await fillSegment("month", String(expiresAt.getMonth() + 1));
+		await fillSegment("day", String(expiresAt.getDate()));
+		await fillSegment("hour", String(hours % 12 || 12));
+		await fillSegment(
+			"minute",
+			String(expiresAt.getMinutes()).padStart(2, "0"),
+		);
+		await fillSegment("AM/PM", hours >= 12 ? "PM" : "AM");
 	}
 
 	private async save(form: Locator) {

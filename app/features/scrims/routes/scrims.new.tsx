@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import type { z } from "zod";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
-import { TournamentSearch } from "~/components/elements/TournamentSearch";
 import { Label } from "~/components/Label";
 import type { CustomFieldRenderProps } from "~/form";
+import { FormField } from "~/form/FormField";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
@@ -90,7 +90,7 @@ export default function NewScrimPage() {
 
 						<FormField name="maps" />
 
-						<TournamentSearchFormField />
+						<MapsTournamentFormField />
 
 						<FormField name="postText" />
 
@@ -272,14 +272,9 @@ function AssociationSelect({
 	);
 }
 
-function TournamentSearchFormField() {
-	const { t } = useTranslation(["scrims"]);
-	const { values, setValue, clientErrors, serverErrors } =
-		useFormFieldContext();
+function MapsTournamentFormField() {
+	const { values, setValue } = useFormFieldContext();
 	const maps = values.maps as string;
-	const mapsTournamentId = values.mapsTournamentId as number | null;
-
-	const error = serverErrors.mapsTournamentId ?? clientErrors.mapsTournamentId;
 
 	const prevMaps = React.useRef(maps);
 	React.useEffect(() => {
@@ -293,19 +288,5 @@ function TournamentSearchFormField() {
 
 	if (maps !== "TOURNAMENT") return null;
 
-	return (
-		<FormFieldWrapper
-			id="mapsTournamentId"
-			name="mapsTournamentId"
-			error={error}
-		>
-			<TournamentSearch
-				label={t("scrims:forms.mapsTournament.title")}
-				initialTournamentId={mapsTournamentId ?? undefined}
-				onChange={(tournament) =>
-					setValue("mapsTournamentId", tournament?.id ?? null)
-				}
-			/>
-		</FormFieldWrapper>
-	);
+	return <FormField name="mapsTournamentId" />;
 }

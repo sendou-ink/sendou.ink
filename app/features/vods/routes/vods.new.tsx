@@ -10,7 +10,6 @@ import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import type { ArrayItemRenderContext, CustomFieldRenderProps } from "~/form";
-import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { FormRenderProps } from "~/form/SendouForm";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -240,46 +239,21 @@ function VodFormFields({
 }
 
 function TeamSizeField({ FormField }: { FormField: VodFormFieldComponent }) {
-	const { values, setValue } = useFormFieldContext();
-	const matches = values.matches as Array<Record<string, unknown>>;
+	const { setValueFromPrev } = useFormFieldContext();
 
-	const handleTeamSizeChange = (newValue: string | null) => {
-		setValue("teamSize", newValue);
-
-		if (matches && Array.isArray(matches)) {
-			const clearedMatches = matches.map((match) => ({
+	// The weapon count per match is tied to the team size, so any already picked
+	// weapons would no longer fit the new size.
+	const clearMatchWeapons = () => {
+		setValueFromPrev("matches", (prev) =>
+			((prev ?? []) as Array<Record<string, unknown>>).map((match) => ({
 				...match,
 				weaponsTeamOne: [],
 				weaponsTeamTwo: [],
-			}));
-			setValue("matches", clearedMatches);
-		}
+			})),
+		);
 	};
 
-	return (
-		<FormField name="teamSize">
-			{({ name, error, value }: CustomFieldRenderProps) => (
-				<FormFieldWrapper
-					id={name}
-					name={name}
-					label="forms:labels.vodTeamSize"
-					error={error}
-				>
-					<select
-						id={name}
-						name={name}
-						value={(value as string) ?? "4"}
-						onChange={(e) => handleTeamSizeChange(e.target.value)}
-					>
-						<option value="1">1v1</option>
-						<option value="2">2v2</option>
-						<option value="3">3v3</option>
-						<option value="4">4v4</option>
-					</select>
-				</FormFieldWrapper>
-			)}
-		</FormField>
-	);
+	return <FormField name="teamSize" onValueChange={clearMatchWeapons} />;
 }
 
 function PovFormField({ FormField }: { FormField: VodFormFieldComponent }) {
@@ -420,33 +394,19 @@ function MatchFieldsetContent({
 			</div>
 
 			<div className="stack md mt-4">
-				<FormField name={`${itemName}.startsAt`}>
-					{(props: CustomFieldRenderProps) => (
-						<FormFieldWrapper
-							id={`matches-${index}-startsAt`}
-							name={`${itemName}.startsAt`}
-							label="forms:labels.vodStartTimestamp"
-							error={props.error}
+				<div>
+					<FormField name={`${itemName}.startsAt`} />
+					{currentTime ? (
+						<SendouButton
+							variant="minimal"
+							size="miniscule"
+							onPress={() => setItemField("startsAt", currentTime)}
+							className="mt-2"
 						>
-							<input
-								id={`matches-${index}-startsAt`}
-								value={matchValues.startsAt}
-								onChange={(e) => setItemField("startsAt", e.target.value)}
-								placeholder="10:22"
-							/>
-							{currentTime ? (
-								<SendouButton
-									variant="minimal"
-									size="miniscule"
-									onPress={() => setItemField("startsAt", currentTime)}
-									className="mt-2"
-								>
-									{t("vods:forms.action.setAsCurrent", { time: currentTime })}
-								</SendouButton>
-							) : null}
-						</FormFieldWrapper>
-					)}
-				</FormField>
+							{t("vods:forms.action.setAsCurrent", { time: currentTime })}
+						</SendouButton>
+					) : null}
+				</div>
 
 				<FormField name={`${itemName}.mode`} />
 

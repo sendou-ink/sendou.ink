@@ -15,10 +15,10 @@ import {
 	inGameName,
 	selectDynamicOptional,
 	stringConstant,
+	textArea,
 	textAreaOptional,
-	textAreaRequired,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	toggle,
 	weaponPool,
 } from "~/form/fields";
@@ -180,7 +180,7 @@ export const editHighlightsActionSchema = z.object({
 
 export const addModNoteSchema = z.object({
 	_action: stringConstant("ADD_MOD_NOTE"),
-	value: textAreaRequired({
+	value: textArea({
 		label: "labels.text",
 		bottomText: "bottomTexts.modNote",
 		maxLength: USER.MOD_NOTE_MAX_LENGTH,
@@ -318,7 +318,7 @@ export const newBuildBaseSchema = z.object({
 		},
 		abilitiesSchema,
 	),
-	title: textFieldRequired({
+	title: textField({
 		label: "labels.buildTitle",
 		maxLength: 50,
 	}),

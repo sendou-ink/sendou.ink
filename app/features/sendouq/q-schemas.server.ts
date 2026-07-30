@@ -1,14 +1,6 @@
 import { z } from "zod";
-import {
-	_action,
-	deduplicate,
-	falsyToNull,
-	friendCode,
-	id,
-	modeShort,
-	stageId,
-} from "~/utils/zod";
-import { SENDOUQ } from "./q-constants";
+import { _action, deduplicate, id, modeShort, stageId } from "~/utils/zod";
+import { addFriendCodeSchema, updateGroupNoteSchema } from "./q-schemas";
 
 export const frontPageSchema = z.union([
 	z.object({
@@ -18,10 +10,7 @@ export const frontPageSchema = z.union([
 	z.object({
 		_action: _action("JOIN_TEAM"),
 	}),
-	z.object({
-		_action: _action("ADD_FRIEND_CODE"),
-		friendCode,
-	}),
+	addFriendCodeSchema,
 ]);
 
 export const preparingSchema = z.union([
@@ -73,13 +62,7 @@ export const lookingSchema = z.union([
 	z.object({
 		_action: _action("REFRESH_GROUP"),
 	}),
-	z.object({
-		_action: _action("UPDATE_NOTE"),
-		value: z.preprocess(
-			falsyToNull,
-			z.string().max(SENDOUQ.OWN_PUBLIC_NOTE_MAX_LENGTH).nullable(),
-		),
-	}),
+	updateGroupNoteSchema,
 ]);
 
 export const weaponUsageSearchParamsSchema = z.object({

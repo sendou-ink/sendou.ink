@@ -3,12 +3,9 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { adminTabActionSchema } from "~/features/user-page/user-page-schemas";
+import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
-import {
-	badRequestIfFalsy,
-	notFoundIfNullish,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { badRequestIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -16,10 +13,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	requireRole("STAFF");
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: adminTabActionSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	const user = notFoundIfNullish(
 		await UserRepository.findLayoutDataByIdentifier(params.identifier!),

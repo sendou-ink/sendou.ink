@@ -49,7 +49,7 @@ test.describe("User banning", () => {
 		const adminBan = new AdminBanPage(page);
 		await adminBan.goto();
 		await adminBan.banUser("N-ZAP", {
-			until: startOfHour(setHours(addDays(new Date(), 1), 12)),
+			expiresAt: startOfHour(setHours(addDays(new Date(), 1), 12)),
 			reason: "Temporary ban",
 		});
 

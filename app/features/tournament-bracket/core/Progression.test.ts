@@ -1392,6 +1392,14 @@ describe("bracketIdxsForStandings", () => {
 			),
 		).toEqual([0]); // missing 1 because it's underground when SE is the source
 	});
+
+	it("does not treat a bracket as intermediate just because an underground bracket sources from it", () => {
+		expect(
+			Progression.bracketIdxsForStandings(
+				progressions.swissToTwoSingleEliminationsWithUnderground,
+			),
+		).toEqual([1, 2, 0]); // missing 3 because it's underground
+	});
 });
 
 describe("startingBrackets", () => {

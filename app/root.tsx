@@ -52,6 +52,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
@@ -236,6 +237,7 @@ function Document({
 					<RouterProvider navigate={navigate} useHref={useHref}>
 						<I18nProvider locale={language}>
 							<SendouToastRegion />
+							<UnsavedChangesGuard />
 							<MyFuse data={data} />
 							<ChatProvider user={data?.user}>
 								<Layout data={data}>{children}</Layout>

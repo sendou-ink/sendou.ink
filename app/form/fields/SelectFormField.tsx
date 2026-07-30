@@ -22,6 +22,7 @@ type SelectFormFieldProps<V extends string> = Omit<
 	onBlur?: () => void;
 	clearable?: boolean;
 	searchable?: boolean;
+	disabled?: boolean;
 };
 
 export function SelectFormField<V extends string>({
@@ -36,6 +37,7 @@ export function SelectFormField<V extends string>({
 	onSelect,
 	clearable,
 	searchable,
+	disabled,
 }: SelectFormFieldProps<V>) {
 	const { t, i18n } = useTranslation(["common"]);
 	const id = React.useId();
@@ -69,6 +71,7 @@ export function SelectFormField<V extends string>({
 				onChange={onChange}
 				onBlur={onBlur}
 				clearable={clearable}
+				disabled={disabled}
 				searchPlaceholder={t("common:actions.search")}
 			/>
 		);
@@ -96,7 +99,8 @@ export function SelectFormField<V extends string>({
 				value={value ?? ""}
 				onChange={handleChange}
 				onBlur={() => onBlur?.()}
-				{...ariaAttributes({ id, error, bottomText })}
+				disabled={disabled}
+				{...ariaAttributes({ name, error, bottomText })}
 			>
 				{clearable ? <option value="">—</option> : null}
 				{itemsWithResolvedLabels.map((item) => (
@@ -119,6 +123,7 @@ function SearchableSelect<V extends string>({
 	onChange,
 	onBlur,
 	clearable,
+	disabled,
 	searchPlaceholder,
 }: {
 	name?: string;
@@ -130,6 +135,7 @@ function SearchableSelect<V extends string>({
 	onChange: (value: V | null) => void;
 	onBlur?: () => void;
 	clearable?: boolean;
+	disabled?: boolean;
 	searchPlaceholder: string;
 }) {
 	const { translatedLabel } = useTranslatedTexts({ label });
@@ -152,6 +158,7 @@ function SearchableSelect<V extends string>({
 				items={selectItems}
 				search={{ placeholder: searchPlaceholder }}
 				clearable={clearable}
+				isDisabled={disabled}
 			>
 				{(item) => (
 					<SendouSelectItem id={item.id} textValue={item.textValue}>

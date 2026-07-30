@@ -7,13 +7,15 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
+import { normalizeFriendCode } from "~/utils/zod";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import {
 	JOIN_CODE_SEARCH_PARAM_KEY,
@@ -30,10 +32,16 @@ import {
 
 export const action: ActionFunction = async ({ request, url }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: frontPageSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	try {
 		switch (data._action) {
@@ -140,13 +148,15 @@ export const action: ActionFunction = async ({ request, url }) => {
 					"Friend code already set",
 				);
 
+				const friendCode = normalizeFriendCode(data.friendCode);
+
 				const isTakenFriendCode = (
 					await UserRepository.findAllCurrentFriendCodes()
-				).has(data.friendCode);
+				).has(friendCode);
 
 				await UserRepository.insertFriendCode({
 					userId: user.id,
-					friendCode: data.friendCode,
+					friendCode,
 					submitterUserId: user.id,
 				});
 

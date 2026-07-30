@@ -10,10 +10,13 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/le
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
-import type { adminActionSchema } from "../actions/admin.server";
+import type { adminActionSchema } from "../admin-schemas";
 import { action } from "./admin";
 
-const adminAction = wrappedAction<typeof adminActionSchema>({ action });
+const adminAction = wrappedAction<typeof adminActionSchema>({
+	action,
+	isJsonSubmission: true,
+});
 
 const users = UserFactory.pool();
 
@@ -260,8 +263,8 @@ const migrateUserAction = () =>
 	adminAction(
 		{
 			_action: "MIGRATE",
-			"old-user": users.id(1),
-			"new-user": users.id(2),
+			oldUser: users.id(1),
+			newUser: users.id(2),
 		},
 		{ user: "admin" },
 	);

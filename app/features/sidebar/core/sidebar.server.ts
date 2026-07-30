@@ -14,11 +14,12 @@ import {
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import {
 	type FriendActivityType,
-	isLiveFriendActivity,
+	isInProgressFriendActivity,
 } from "~/features/friends/friends-constants";
 import {
 	type FriendActivity,
 	resolveFriendActivity,
+	resolveSendouQMatchStreams,
 } from "~/features/friends/friends-utils.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
@@ -60,6 +61,7 @@ export type SidebarFriend = {
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
+	streamUrl: string | null;
 };
 
 const MAX_EVENTS_VISIBLE = 5;
@@ -86,12 +88,14 @@ export async function resolveSidebarData(userId: number | null) {
 		friendsWithActivity,
 		savedTournaments,
 		incomingFriendRequestIds,
+		streamedSendouQMatches,
 	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
 		FriendRepository.findByUserIdWithActivity(userId),
 		SavedCalendarEventRepository.findAllUpcomingByUserId(userId),
 		FriendRepository.findPendingReceivedRequestIds(userId),
+		resolveSendouQMatchStreams(),
 	]);
 
 	const seenTournamentIds = new Set<number>();
@@ -119,7 +123,7 @@ export async function resolveSidebarData(userId: number | null) {
 		.sort((a, b) => a.startsAt - b.startsAt)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
-	const friends = resolveFriends(friendsWithActivity);
+	const friends = resolveFriends(friendsWithActivity, streamedSendouQMatches);
 
 	const savedTournamentIds = savedTournaments.map((t) => t.id);
 
@@ -277,7 +281,20 @@ type FriendWithActivity = Awaited<
 	ReturnType<typeof FriendRepository.findByUserIdWithActivity>
 >[number];
 
-function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
+function resolveFriends(
+	friendsWithActivity: FriendWithActivity[],
+	streamedSendouQMatches: ReadonlyMap<number, string>,
+) {
+	const activityForRow = (row: FriendWithActivity) =>
+		resolveFriendActivity({
+			friendId: row.id,
+			tournamentId: row.tournamentId,
+			tournamentName: row.tournamentName,
+			teamMemberCount: row.teamMemberCount,
+			tournamentMinTeamSize: row.tournamentMinTeamSize,
+			sendouQMatchStreams: streamedSendouQMatches,
+		});
+
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 	const friendRows = unique.filter((f) => f.friendshipId !== null);
 	const teamMemberRows = unique.filter((f) => f.friendshipId === null);
@@ -297,7 +314,7 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 
 		const sidebarFriend = rowToSidebarFriend(friend, activity);
 
-		if (isLiveFriendActivity(activity.type)) {
+		if (isInProgressFriendActivity(activity.type)) {
 			activeFriends.push(sidebarFriend);
 		} else if (activity.type === "SENDOUQ") {
 			sendouqFriends.push(sidebarFriend);
@@ -360,16 +377,6 @@ function resolveFriends(friendsWithActivity: FriendWithActivity[]) {
 	return result.slice(0, MAX_FRIENDS_VISIBLE);
 }
 
-function activityForRow(row: FriendWithActivity): FriendActivity {
-	return resolveFriendActivity({
-		friendId: row.id,
-		tournamentId: row.tournamentId,
-		tournamentName: row.tournamentName,
-		teamMemberCount: row.teamMemberCount,
-		tournamentMinTeamSize: row.tournamentMinTeamSize,
-	});
-}
-
 function rowToSidebarFriend(
 	row: FriendWithActivity,
 	activity: FriendActivity | null,
@@ -386,6 +393,7 @@ function rowToSidebarFriend(
 		activityType: activity?.type ?? null,
 		matchId: activity?.matchId ?? null,
 		tournamentId: activity?.tournamentId ?? row.tournamentId,
+		streamUrl: activity?.streamUrl ?? null,
 	};
 }
 

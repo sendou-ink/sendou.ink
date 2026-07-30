@@ -7,6 +7,7 @@ type TournamentSearchFormFieldProps = FormFieldProps<"tournament-search"> & {
 	value: number | null;
 	onChange: (value: number | null) => void;
 	pastOnly?: boolean;
+	disabled?: boolean;
 };
 
 export function TournamentSearchFormField({
@@ -19,6 +20,7 @@ export function TournamentSearchFormField({
 	onChange,
 	onBlur,
 	pastOnly,
+	disabled,
 }: TournamentSearchFormFieldProps) {
 	const { translatedLabel } = useTranslatedTexts({
 		label,
@@ -34,6 +36,7 @@ export function TournamentSearchFormField({
 					onBlur={() => onBlur?.()}
 					label={translatedLabel}
 					isRequired={required}
+					isDisabled={disabled}
 				/>
 				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 			</div>

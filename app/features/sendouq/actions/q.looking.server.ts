@@ -10,7 +10,8 @@ import {
 } from "~/features/sendouq-match/core/match.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
@@ -25,10 +26,17 @@ import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 // and when we return null we just force a refresh
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: lookingSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+
 	const currentGroup = SendouQ.findOwnGroup(user.id);
 	if (!currentGroup) return null;
 

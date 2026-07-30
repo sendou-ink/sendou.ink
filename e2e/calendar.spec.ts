@@ -1,9 +1,13 @@
+import { subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { calendarEventPage } from "~/utils/urls";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { CalendarEventPage } from "./pages/calendar/calendar-event-page";
 import { CalendarNewEventPage } from "./pages/calendar/calendar-new-event-page";
 import { CalendarPage } from "./pages/calendar/calendar-page";
+import { ReportWinnersPage } from "./pages/calendar/report-winners-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentInfoPage } from "./pages/tournament/tournament-info-page";
 import { TournamentRulesPage } from "./pages/tournament/tournament-rules-page";
@@ -219,5 +223,50 @@ test.describe("Calendar", () => {
 			await expect(rules.stageName(stage)).toBeVisible();
 			await expect(rules.modeImage(mode).first()).toBeVisible();
 		}
+	});
+
+	test("reports winners of a past event", async ({ page, factories }) => {
+		const event = await factories.CalendarEventFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 1))],
+		});
+
+		await impersonate(page);
+
+		const reportWinners = new ReportWinnersPage(page);
+		await reportWinners.goto(event.id);
+
+		await reportWinners.locators.participantCountInput.fill("50");
+		await reportWinners.locators.teamNameInput.fill("Team Olive");
+		await reportWinners.locators.placingInput.fill("1");
+
+		// a team without any players can't be reported
+		await reportWinners.locators.submitButton.click();
+		await expect(reportWinners.locators.emptyTeamError).toBeVisible();
+
+		await reportWinners.selectPlayer(1, "N-ZAP");
+		await reportWinners.fillPlayerAsText(2, "Player Without Account");
+
+		await reportWinners.submit();
+
+		await expect(page).toHaveURL(calendarEventPage(event.id));
+
+		const calendarEvent = new CalendarEventPage(page);
+		await expect(calendarEvent.resultRow("Team Olive")).toContainText(
+			"Player Without Account",
+		);
+
+		// reported results are loaded back into the form for editing
+		await reportWinners.goto(event.id);
+
+		await expect(reportWinners.locators.participantCountInput).toHaveValue(
+			"50",
+		);
+		await expect(reportWinners.locators.teamNameInput).toHaveValue(
+			"Team Olive",
+		);
+		await expect(reportWinners.locators.placingInput).toHaveValue("1");
+		await expect(reportWinners.player(1)).toContainText("N-ZAP");
+		await expect(reportWinners.player(2)).toHaveValue("Player Without Account");
 	});
 });
