@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import { userEditProfileBaseSchema } from "~/features/user-page/user-page-schemas";
-import { userEditProfilePage, userPage } from "~/utils/urls";
+import { userEditProfilePage, userPage, userSeasonsPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -150,6 +150,43 @@ test.describe("User page", () => {
 
 		// verify custom theme was removed
 		await expect(hasCustomTheme()).resolves.toBe(false);
+	});
+
+	test("exports season summary image as a supporter", async ({ page }) => {
+		await seed(page);
+		await impersonate(page);
+		await navigate({
+			page,
+			url: userSeasonsPage({
+				user: { discordId: ADMIN_DISCORD_ID, customUrl: "sendou" },
+			}),
+		});
+
+		await page.getByRole("button", { name: "Export image" }).click();
+
+		const dialog = page.getByRole("dialog");
+		await expect(dialog.getByText("Best win streak")).toBeVisible();
+
+		const downloadPromise = page.waitForEvent("download");
+		await dialog.getByRole("button", { name: "Download" }).click();
+		const download = await downloadPromise;
+		expect(download.suggestedFilename()).toBe("season-1-summary.png");
+	});
+
+	test("shows supporter perk explanation instead of exporting for non-supporter mid-season", async ({
+		page,
+	}) => {
+		await seed(page);
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({
+			page,
+			url: userSeasonsPage({ user: { discordId: NZAP_TEST_DISCORD_ID } }),
+		});
+
+		await page.getByRole("button", { name: "Export image" }).click();
+
+		await expect(page.getByText(/supporter perk/)).toBeVisible();
+		await isNotVisible(page.getByRole("button", { name: "Download" }));
 	});
 
 	test("edits weapon pool", async ({ page }) => {

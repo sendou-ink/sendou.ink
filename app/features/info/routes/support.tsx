@@ -22,6 +22,8 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
+// xxx: add the perk we added in this branch
+
 // 1 = support
 // 2 = supporter
 // 3 = supporter+

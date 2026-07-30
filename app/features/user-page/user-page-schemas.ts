@@ -56,6 +56,12 @@ export const seasonsSearchParamsSchema = z.object({
 		.refine((nth) => !nth || Seasons.allStarted(new Date()).includes(nth)),
 });
 
+export const seasonSummaryGraphicSearchParamsSchema = z.object({
+	season: z.coerce
+		.number()
+		.refine((nth) => Seasons.allStarted(new Date()).includes(nth)),
+});
+
 const SENS_ITEMS = [
 	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
 	40, 45, 50,

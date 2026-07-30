@@ -33,6 +33,21 @@ export function findIdByIdentifier(identifier: string) {
 	return userByIdentifierQuery(identifier).executeTakeFirst();
 }
 
+/** Country codes of the given users keyed by user id, users without a country set absent. */
+export async function findCountriesByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, string>();
+
+	const rows = await db
+		.selectFrom("User")
+		.select(["User.id", "User.country"])
+		.where("User.id", "in", userIds)
+		.where("User.country", "is not", null)
+		.$narrowType<{ country: NotNull }>()
+		.execute();
+
+	return new Map(rows.map((row) => [row.id, row.country]));
+}
+
 export async function findBuildFieldsByIdentifier(identifier: string) {
 	const row = await userByIdentifierQuery(identifier)
 		.select(({ eb }) => [

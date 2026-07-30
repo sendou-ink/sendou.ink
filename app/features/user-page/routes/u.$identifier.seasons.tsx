@@ -1,10 +1,12 @@
 import clsx from "clsx";
+import { HardDriveDownload } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import {
 	Link,
 	Outlet,
 	type ShouldRevalidateFunction,
+	useFetcher,
 	useLoaderData,
 	useLocation,
 	useMatches,
@@ -29,6 +31,9 @@ import { TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { mainStyles } from "~/components/Main";
+import { useUser } from "~/features/auth/core/user";
+import { SeasonSummaryGraphic } from "~/features/img-export/components/SeasonSummaryGraphic";
+import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -37,9 +42,11 @@ import invariant from "~/utils/invariant";
 import { isRevalidation } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	discordAvatarUrl,
 	sendouQMatchPage,
 	TIERS_PAGE,
 	userPage,
+	userSeasonSummaryGraphicPage,
 	userSeasonsPage,
 	userSeasonsStatsPage,
 } from "~/utils/urls";
@@ -48,13 +55,14 @@ import {
 	loader,
 	type UserSeasonsPageLoaderData,
 } from "../loaders/u.$identifier.seasons.server";
+import type { UserSeasonSummaryGraphicLoaderData } from "../loaders/u.$identifier.seasons.summary-graphic.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
 
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user"],
+	i18n: ["user", "calendar"],
 };
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
@@ -103,10 +111,18 @@ export default function UserSeasonsLayout() {
 				user={layoutData.user}
 				backTo={userPage(layoutData.user)}
 			/>
-			<SeasonHeader
-				seasonViewed={data.season}
-				seasonsParticipatedIn={data.seasonsParticipatedIn}
-			/>
+			<div className="stack horizontal justify-between items-start">
+				<SeasonHeader
+					seasonViewed={data.season}
+					seasonsParticipatedIn={data.seasonsParticipatedIn}
+				/>
+				<SeasonSummaryExport
+					profileUser={layoutData.user}
+					season={data.season}
+					seasonsParticipatedIn={data.seasonsParticipatedIn}
+					hasCalculatedSkill={Boolean(data.currentOrdinal)}
+				/>
+			</div>
 			{data.currentOrdinal ? (
 				<div className="stack md">
 					<Rank
@@ -173,6 +189,174 @@ function SeasonNav({
 				))}
 			</SendouTabList>
 		</SendouTabs>
+	);
+}
+
+// xxx: download button above image so it is more discoverable
+function SeasonSummaryExport({
+	profileUser,
+	season,
+	seasonsParticipatedIn,
+	hasCalculatedSkill,
+}: {
+	profileUser: UserPageLoaderData["user"];
+	season: number;
+	seasonsParticipatedIn: number[];
+	hasCalculatedSkill: boolean;
+}) {
+	const { t } = useTranslation(["user"]);
+	const loggedInUser = useUser();
+
+	if (
+		!loggedInUser ||
+		loggedInUser.id !== profileUser.id ||
+		!hasCalculatedSkill
+	) {
+		return null;
+	}
+
+	const canExport = SeasonSummary.canExportSeasonSummary({
+		loggedInUser,
+		profileUserId: profileUser.id,
+		season,
+		seasonsParticipatedIn,
+		hasCalculatedSkill,
+	});
+
+	// xxx: make sure it is unified icon with tier list maker img export
+	if (!canExport) {
+		return (
+			<SendouPopover
+				trigger={
+					<SendouButton
+						size="small"
+						variant="outlined"
+						icon={<HardDriveDownload />}
+					>
+						{t("user:seasons.summary.export")}
+					</SendouButton>
+				}
+			>
+				{t("user:seasons.summary.export.supporterPerk")}
+			</SendouPopover>
+		);
+	}
+
+	return (
+		<SeasonSummaryExportDialog
+			key={season}
+			profileUser={profileUser}
+			season={season}
+		/>
+	);
+}
+
+function SeasonSummaryExportDialog({
+	profileUser,
+	season,
+}: {
+	profileUser: UserPageLoaderData["user"];
+	season: number;
+}) {
+	const { t } = useTranslation(["user"]);
+	const [isOpen, setIsOpen] = React.useState(false);
+	const fetcher = useFetcher<UserSeasonSummaryGraphicLoaderData>();
+	const graphicRef = React.useRef<HTMLDivElement>(null);
+
+	const handleOpen = () => {
+		setIsOpen(true);
+		if (fetcher.state === "idle" && !fetcher.data) {
+			fetcher.load(userSeasonSummaryGraphicPage({ user: profileUser, season }));
+		}
+	};
+
+	const handleDownload = async () => {
+		if (!graphicRef.current) return;
+
+		const { snapdom } = await import("@zumer/snapdom");
+
+		await snapdom.download(graphicRef.current, {
+			type: "png",
+			filename: `season-${season}-summary`,
+			quality: 1,
+			scale: 1.75,
+			embedFonts: true,
+		});
+	};
+
+	const data = fetcher.data;
+
+	return (
+		<>
+			<SendouButton
+				size="small"
+				variant="outlined"
+				icon={<HardDriveDownload />}
+				onPress={handleOpen}
+			>
+				{t("user:seasons.summary.export")}
+			</SendouButton>
+			{isOpen ? (
+				<SendouDialog
+					heading={t("user:seasons.summary.export")}
+					onClose={() => setIsOpen(false)}
+					className={styles.summaryGraphicDialog}
+				>
+					{data ? (
+						<div className="stack md">
+							<div className={styles.summaryGraphicScroller}>
+								<div className={styles.summaryGraphicFrame} ref={graphicRef}>
+									<SeasonSummaryGraphic
+										user={{
+											name: profileUser.username,
+											discordId: profileUser.discordId,
+											customUrl: profileUser.customUrl ?? undefined,
+											countryCode: profileUser.country ?? undefined,
+											avatarUrl:
+												profileUser.customAvatarUrl ??
+												(profileUser.discordAvatar
+													? discordAvatarUrl({
+															discordId: profileUser.discordId,
+															discordAvatar: profileUser.discordAvatar,
+															size: "lg",
+														})
+													: undefined),
+										}}
+										// xxx: maybe some stats object instead of a million separate props
+										season={data.season}
+										seasonDateRange={Seasons.nthToDateRange(data.season)}
+										tier={data.tier}
+										sp={data.sp}
+										setsWon={data.setsWon}
+										setsLost={data.setsLost}
+										mapsWon={data.mapsWon}
+										mapsLost={data.mapsLost}
+										longestWinStreak={data.longestWinStreak}
+										clutch={data.clutch}
+										soloRank={data.soloRank}
+										teamRank={data.teamRank}
+										topMates={data.topMates}
+										bestStage={data.bestStage}
+										spProgression={data.spProgression}
+										activeDays={data.activeDays}
+										bestSets={data.bestSets}
+										bestTournament={data.bestTournament}
+										topWeapons={data.topWeapons}
+									/>
+								</div>
+							</div>
+							<SendouButton
+								icon={<HardDriveDownload />}
+								onPress={handleDownload}
+								className="mx-auto"
+							>
+								{t("user:seasons.summary.export.download")}
+							</SendouButton>
+						</div>
+					) : null}
+				</SendouDialog>
+			) : null}
+		</>
 	);
 }
 

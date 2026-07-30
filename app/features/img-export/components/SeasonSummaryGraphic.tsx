@@ -53,6 +53,10 @@ export interface SeasonSummaryGraphicBestSet {
 	context: string;
 }
 
+// xxx: tier image looks crispy when exported
+// xxx: if user has no weapons reported, the section looks empty. in this case just expand the Top teammates section to take same height as ACTIVITY and have more entries?
+// xxx: remove the dot at the end of the graph, looks not good dot at the peak should remain (so if peak at the end then dot there)
+// xxx: for top sets, show one unique roster only once test case http://localhost:6173/u/grey/seasons?season=7
 export function SeasonSummaryGraphic({
 	user,
 	season,

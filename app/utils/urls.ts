@@ -175,6 +175,13 @@ export const userSeasonsPage = ({
 	`${userPage(user)}/seasons${
 		typeof season === "number" ? `?season=${season}` : ""
 	}`;
+export const userSeasonSummaryGraphicPage = ({
+	user,
+	season,
+}: {
+	user: UserLinkArgs;
+	season: number;
+}) => `${userPage(user)}/seasons/summary-graphic?season=${season}`;
 export const userSeasonsStatsPage = ({
 	user,
 	season,

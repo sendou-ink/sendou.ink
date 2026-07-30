@@ -190,6 +190,60 @@ export async function findSeasonProgressionByUserId({
 }
 
 /**
+ * Days of the season the user played at least one set on, with whether they
+ * played SendouQ, tournaments or both that day. Dates in `yyyy-MM-dd` format.
+ */
+export async function findSeasonActiveDaysByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}): Promise<Array<{ date: string; activity: "sq" | "tournament" | "both" }>> {
+	const rows = await db
+		.selectFrom("Skill")
+		.leftJoin("GroupMatch", "GroupMatch.id", "Skill.groupMatchId")
+		.leftJoin("Tournament", "Tournament.id", "Skill.tournamentId")
+		.leftJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.leftJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select([
+			sql<string>`date(coalesce("Skill"."createdAt", "GroupMatch"."createdAt", "CalendarEventDate"."startsAt"), 'unixepoch')`.as(
+				"date",
+			),
+			// raw max over a null check: did any of the day's Skill rows come from this source?
+			sql<number>`max("Skill"."groupMatchId" is not null)`.as("playedSq"),
+			sql<number>`max("Skill"."tournamentId" is not null)`.as(
+				"playedTournament",
+			),
+		])
+		.where("Skill.userId", "=", userId)
+		.where("Skill.season", "=", season)
+		.where(({ or, eb }) =>
+			or([
+				eb("GroupMatch.id", "is not", null),
+				eb("Tournament.id", "is not", null),
+			]),
+		)
+		.groupBy("date")
+		.orderBy("date", "asc")
+		.execute();
+
+	return rows.map((row) => ({
+		date: row.date,
+		activity:
+			row.playedSq && row.playedTournament
+				? ("both" as const)
+				: row.playedSq
+					? ("sq" as const)
+					: ("tournament" as const),
+	}));
+}
+
+/**
  * Season's Skill rows tagged with a `rn` of 1 for the latest row of each partition.
  * Callers narrow the partitions before selecting, and keep only `rn = 1`.
  */

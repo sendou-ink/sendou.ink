@@ -83,6 +83,10 @@ export default [
 			"edit-widgets",
 			"features/user-page/routes/u.$identifier.edit-widgets.tsx",
 		),
+		route(
+			"seasons/summary-graphic",
+			"features/user-page/routes/u.$identifier.seasons.summary-graphic.ts",
+		),
 		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx", [
 			index("features/user-page/routes/u.$identifier.seasons.index.tsx"),
 			route(
