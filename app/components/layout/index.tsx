@@ -257,22 +257,25 @@ export function Layout({
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
 
-	React.useEffect(() => {
-		const handleResize = () => {
-			if (window.innerWidth < 600 || window.innerWidth >= 1000) {
-				setSideNavModalOpen(false);
-				setChatSidebarModalOpen(false);
-			}
-		};
+	// modals only exist in the tablet layout, close them when resizing out of
+	// it or navigating to another page (setChatOpen is left as is on purpose,
+	// it belongs to a parent component and thus cannot be set during render)
+	const prevLayoutSize = React.useRef(layoutSize);
+	const prevPathname = React.useRef(location.pathname);
+	const leftTabletLayout =
+		prevLayoutSize.current === "tablet" && layoutSize !== "tablet";
+	const pathnameChanged = prevPathname.current !== location.pathname;
+	prevLayoutSize.current = layoutSize;
+	prevPathname.current = location.pathname;
 
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
-	}, []);
-
-	React.useEffect(() => {
-		setSideNavModalOpen(false);
-		setChatSidebarModalOpen(false);
-	}, [location.pathname]);
+	if (leftTabletLayout || pathnameChanged) {
+		if (sideNavModalOpen) {
+			setSideNavModalOpen(false);
+		}
+		if (chatSidebarModalOpen) {
+			setChatSidebarModalOpen(false);
+		}
+	}
 
 	const user = useUser();
 	const { unseenIds } = useNotifications();

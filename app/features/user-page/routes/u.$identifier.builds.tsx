@@ -59,11 +59,11 @@ export default function UserBuildsPage() {
 		name: "sorting",
 		revive: (value) => value === "true" && isOwnPage,
 	});
+	// lives here so closing the dialog mid-submit doesn't unmount the fetcher,
+	// which would discard the action's redirect and skip revalidation
+	const sortingFetcher = useFetcher();
 
-	const closeSortingDialog = React.useCallback(
-		() => setChangingSorting(false),
-		[setChangingSorting],
-	);
+	const closeSortingDialog = () => setChangingSorting(false);
 
 	const builds =
 		weaponFilter === "ALL"
@@ -81,7 +81,10 @@ export default function UserBuildsPage() {
 	return (
 		<div className="stack lg">
 			{changingSorting ? (
-				<ChangeSortingDialog close={closeSortingDialog} />
+				<ChangeSortingDialog
+					close={closeSortingDialog}
+					fetcher={sortingFetcher}
+				/>
 			) : null}
 			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
 				{isOwnPage ? (
@@ -181,7 +184,13 @@ function BuildsFilters({
 }
 
 const MISSING_SORT_VALUE = "null";
-function ChangeSortingDialog({ close }: { close: () => void }) {
+function ChangeSortingDialog({
+	close,
+	fetcher,
+}: {
+	close: () => void;
+	fetcher: ReturnType<typeof useFetcher>;
+}) {
 	const data = useLoaderData<typeof loader>();
 	const [buildSorting, setBuildSorting] = React.useState<
 		ReadonlyArray<BuildSort | null>
@@ -193,13 +202,6 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 		return [...data.buildSorting, null];
 	});
 	const { t } = useTranslation(["common", "user"]);
-	const fetcher = useFetcher();
-
-	React.useEffect(() => {
-		if (fetcher.state !== "loading") return;
-
-		close();
-	}, [fetcher.state, close]);
 
 	const canAddMoreSorting = buildSorting.length < BUILD_SORT_IDENTIFIERS.length;
 
@@ -221,7 +223,7 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 
 	return (
 		<SendouDialog heading={t("user:builds.sorting.header")} onClose={close}>
-			<fetcher.Form method="post">
+			<fetcher.Form method="post" onSubmit={() => close()}>
 				<input
 					type="hidden"
 					name="buildSorting"

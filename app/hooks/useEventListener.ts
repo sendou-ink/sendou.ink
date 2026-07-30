@@ -54,7 +54,9 @@ function useEventListener<
 	element?: RefObject<T | null>,
 	options?: boolean | AddEventListenerOptions,
 ) {
-	// Create a ref that stores handler
+	// Latest-ref pattern instead of `useEffectEvent`: effect events don't update
+	// past the first render inside `React.memo`/`React.forwardRef` wrapped
+	// components (React 19.2)
 	const savedHandler = useRef(handler);
 
 	useIsomorphicLayoutEffect(() => {
@@ -67,7 +69,6 @@ function useEventListener<
 
 		if (!targetElement?.addEventListener) return;
 
-		// Create event listener that calls handler function stored in ref
 		const listener: typeof handler = (event) => savedHandler.current(event);
 
 		targetElement.addEventListener(eventName, listener, options);

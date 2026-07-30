@@ -21,6 +21,7 @@ import { Input } from "~/components/Input";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import { useDebounce } from "~/hooks/useDebounce";
+import { useHydrated } from "~/hooks/useHydrated";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	navIconUrl,
@@ -32,9 +33,9 @@ import {
 import styles from "./GlobalSearch.module.css";
 import {
 	filterWeaponResults,
-	getRecentWeapons,
 	type SelectedWeapon,
 	saveRecentWeapon,
+	useRecentWeapons,
 	WeaponDestinationMenu,
 	WeaponResultsList,
 	weaponToSelectedWeapon,
@@ -85,11 +86,20 @@ function getInitialSearchType(): SearchType {
 	return "weapons";
 }
 
+function persistSearchType(type: SearchType) {
+	try {
+		localStorage.setItem(STORAGE_KEY, type);
+	} catch {
+		// localStorage may be unavailable
+	}
+}
+
 export function GlobalSearch() {
 	const { t } = useTranslation(["common"]);
 	// TODO: use zod validated search params
 	const [searchParams, setSearchParams] = useSearchParams();
-	const [isMac, setIsMac] = React.useState(false);
+	const isHydrated = useHydrated();
+	const isMac = isHydrated && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
 
 	const searchParamOpen = searchParams.get("search") === "open";
 	const searchParamType = searchParams.get("type");
@@ -101,15 +111,11 @@ export function GlobalSearch() {
 
 	const [isOpen, setIsOpen] = React.useState(searchParamOpen);
 
-	React.useEffect(() => {
-		if (searchParamOpen) {
-			setIsOpen(true);
-		}
-	}, [searchParamOpen]);
-
-	React.useEffect(() => {
-		setIsMac(/Mac|iPhone|iPad|iPod/.test(navigator.userAgent));
-	}, []);
+	const prevSearchParamOpen = React.useRef(searchParamOpen);
+	if (searchParamOpen && !prevSearchParamOpen.current) {
+		setIsOpen(true);
+	}
+	prevSearchParamOpen.current = searchParamOpen;
 
 	React.useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -197,20 +203,13 @@ function GlobalSearchContent({
 	};
 
 	const fetcher = useFetcher<SearchLoaderData>();
+	const recentWeaponIds = useRecentWeapons();
 
 	React.useEffect(() => {
 		if (!selectedWeapon) {
 			inputRef.current?.focus();
 		}
 	}, [selectedWeapon]);
-
-	React.useEffect(() => {
-		try {
-			localStorage.setItem(STORAGE_KEY, searchType);
-		} catch {
-			// localStorage may be unavailable
-		}
-	}, [searchType]);
 
 	useDebounce(
 		() => {
@@ -237,7 +236,7 @@ function GlobalSearchContent({
 
 	const recentWeapons: SelectedWeapon[] =
 		searchType === "weapons"
-			? getRecentWeapons().map((id) => weaponToSelectedWeapon(id, t))
+			? recentWeaponIds.map((id) => weaponToSelectedWeapon(id, t))
 			: [];
 
 	const handleSelect = (key: React.Key) => {
@@ -259,6 +258,7 @@ function GlobalSearchContent({
 
 	const handleSearchTypeChange = (value: string) => {
 		setSearchType(value as SearchType);
+		persistSearchType(value as SearchType);
 		setSelectedWeapon(null);
 	};
 
@@ -277,6 +277,7 @@ function GlobalSearchContent({
 			);
 			if (matchedType) {
 				setSearchType(matchedType);
+				persistSearchType(matchedType);
 				setSelectedWeapon(null);
 				setQuery("");
 				return;

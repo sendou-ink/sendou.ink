@@ -12,6 +12,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
@@ -252,8 +253,7 @@ function CopyTimestampsButton({
 }) {
 	const { t } = useTranslation(["vods", "weapons", "game-misc", "common"]);
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const [copied, setCopied] = React.useState(false);
-	const [copyTrigger, setCopyTrigger] = React.useState(0);
+	const { copyToClipboard, copySuccess, reset } = useCopyToClipboard();
 	const [modeFormat, setModeFormat] = React.useState<"short" | "long">("short");
 	const [stageFormat, setStageFormat] = React.useState<"short" | "long">(
 		"long",
@@ -271,19 +271,7 @@ function CopyTimestampsButton({
 				: mode,
 	});
 
-	React.useEffect(() => {
-		if (copyTrigger === 0) return;
-
-		setCopied(true);
-		const timeout = setTimeout(() => setCopied(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [copyTrigger]);
-
-	const handleCopy = () => {
-		navigator.clipboard.writeText(timestamps);
-		setCopyTrigger((prev) => prev + 1);
-	};
+	const handleCopy = () => copyToClipboard(timestamps);
 
 	return (
 		<>
@@ -293,7 +281,7 @@ function CopyTimestampsButton({
 				icon={<ClipboardCopy />}
 				onPress={() => {
 					setDialogOpen(true);
-					setCopied(false);
+					reset();
 				}}
 				data-testid="copy-timestamps-button"
 			>
@@ -350,9 +338,9 @@ function CopyTimestampsButton({
 					</p>
 					<SendouButton
 						onPress={handleCopy}
-						icon={copied ? <Check /> : <Copy />}
+						icon={copySuccess ? <Check /> : <Copy />}
 					>
-						{copied
+						{copySuccess
 							? t("common:actions.copied")
 							: t("common:actions.copyToClipboard")}
 					</SendouButton>

@@ -36,17 +36,6 @@ export function ModeMapPoolPicker({
 		null,
 	);
 
-	React.useEffect(() => {
-		if (wigglingStageId === null) return;
-		const timeout = setTimeout(() => {
-			setWigglingStageId(null);
-		}, 1000);
-
-		return () => {
-			clearTimeout(timeout);
-		};
-	}, [wigglingStageId]);
-
 	const stages: (StageId | null)[] = [
 		...pool,
 		...nullFilledArray(amountToPick - pool.length),
@@ -134,6 +123,7 @@ export function ModeMapPoolPicker({
 							banned={banned}
 							tiebreaker={isTiebreaker}
 							wiggle={wigglingStageId === stageId}
+							onWiggleEnd={() => setWigglingStageId(null)}
 							disabled={disabled}
 							testId={`map-pool-${mode}-${stageId}`}
 						/>
@@ -163,6 +153,7 @@ function MapButton({
 	banned,
 	tiebreaker,
 	wiggle,
+	onWiggleEnd,
 	disabled,
 	testId,
 }: {
@@ -172,6 +163,7 @@ function MapButton({
 	banned?: boolean;
 	tiebreaker?: boolean;
 	wiggle?: boolean;
+	onWiggleEnd?: () => void;
 	disabled?: boolean;
 	testId: string;
 }) {
@@ -188,6 +180,7 @@ function MapButton({
 				})}
 				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.avif")` }}
 				onClick={onClick}
+				onAnimationEnd={wiggle ? onWiggleEnd : undefined}
 				disabled={disabled || banned}
 				type="button"
 				data-testid={testId}

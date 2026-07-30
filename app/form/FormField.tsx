@@ -522,6 +522,7 @@ export function FormField({
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
 				pastOnly={tournamentOptions?.pastOnly}
+				onTournamentSelected={tournamentOptions?.onTournamentSelected}
 			/>
 		);
 	}

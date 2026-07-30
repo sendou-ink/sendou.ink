@@ -11,6 +11,7 @@ import { Config } from "~/config";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
+import { useLastReadCounts, writeLastReadCount } from "./chat-last-read";
 import type {
 	RoomInfo,
 	RoomMetadata,
@@ -21,7 +22,6 @@ import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
 import { ChatContext } from "./useChatContext";
 
 const PING_INTERVAL_MS = 60_000;
-const LOCAL_STORAGE_PREFIX = "chat_read__";
 
 function flattenServerRoom(serverRoom: ServerRoomInfo): RoomInfo {
 	return {
@@ -77,27 +77,6 @@ function resolveObsoleteGroupRooms(rooms: RoomInfo[]): RoomInfo[] {
 		);
 }
 
-function localStorageKey(chatCode: string) {
-	return `${LOCAL_STORAGE_PREFIX}${chatCode}`;
-}
-
-function readLastReadCount(chatCode: string): number {
-	try {
-		const stored = localStorage.getItem(localStorageKey(chatCode));
-		return stored ? Number(stored) : 0;
-	} catch {
-		return 0;
-	}
-}
-
-function writeLastReadCount(chatCode: string, count: number) {
-	try {
-		localStorage.setItem(localStorageKey(chatCode), String(count));
-	} catch {
-		// localStorage may be unavailable
-	}
-}
-
 export function ChatProvider({
 	user,
 	children,
@@ -134,9 +113,6 @@ function ChatProviderInner({
 	>("CONNECTING");
 	const [chatOpen, _setChatOpen] = React.useState(false);
 	const [activeRooms, setActiveRooms] = React.useState<string[]>([]);
-	const [unreadCounts, setUnreadCounts] = React.useState<
-		Record<string, number>
-	>({});
 	const [chatLabels, setChatLabels] = React.useState<Record<number, string>>(
 		{},
 	);
@@ -144,15 +120,20 @@ function ChatProviderInner({
 
 	const ws = React.useRef<WebSocket>(undefined);
 
-	const computeUnreadCounts = React.useCallback((roomList: RoomInfo[]) => {
+	const lastReadCounts = useLastReadCounts();
+	// derived instead of stored: rooms hold the total counts and the
+	// localStorage-backed store holds the read counts, so unread can never fall
+	// out of sync with either
+	const unreadCounts = React.useMemo(() => {
 		const counts: Record<string, number> = {};
-		for (const room of roomList) {
-			const lastRead = readLastReadCount(room.chatCode);
-			const unread = Math.max(0, room.totalMessageCount - lastRead);
-			counts[room.chatCode] = unread;
+		for (const room of rooms) {
+			counts[room.chatCode] = Math.max(
+				0,
+				room.totalMessageCount - (lastReadCounts[room.chatCode] ?? 0),
+			);
 		}
-		setUnreadCounts(counts);
-	}, []);
+		return counts;
+	}, [rooms, lastReadCounts]);
 
 	const onMessage = React.useEffectEvent((e: MessageEvent) => {
 		const parsed = JSON.parse(e.data);
@@ -173,7 +154,6 @@ function ChatProviderInner({
 				Object.assign(allChatUsers, sr.metadata.chatUsers);
 			}
 			setChatUsersCache((prev) => ({ ...prev, ...allChatUsers }));
-			computeUnreadCounts(roomList);
 			return;
 		}
 
@@ -184,10 +164,6 @@ function ChatProviderInner({
 			revalidate();
 			setRooms((prev) => prev.filter((r) => r.chatCode !== removedCode));
 			setMessagesByRoom((prev) => {
-				const { [removedCode]: _, ...rest } = prev;
-				return rest;
-			});
-			setUnreadCounts((prev) => {
 				const { [removedCode]: _, ...rest } = prev;
 				return rest;
 			});
@@ -209,13 +185,6 @@ function ChatProviderInner({
 			setChatUsersCache((prev) => ({
 				...prev,
 				...serverRoom.metadata.chatUsers,
-			}));
-
-			const lastRead = readLastReadCount(serverRoom.chatCode);
-			const unread = Math.max(0, serverRoom.totalMessageCount - lastRead);
-			setUnreadCounts((prev) => ({
-				...prev,
-				[serverRoom.chatCode]: unread,
 			}));
 			return;
 		}
@@ -333,15 +302,6 @@ function ChatProviderInner({
 			const isOwnMessage = msg.userId === userId;
 			if (isOwnMessage || (activeRooms.includes(roomCode) && chatOpen)) {
 				writeLastReadCount(roomCode, msg.totalMessageCount);
-				setUnreadCounts((prev) => ({ ...prev, [roomCode]: 0 }));
-			} else {
-				setUnreadCounts((prev) => ({
-					...prev,
-					[roomCode]: Math.max(
-						0,
-						msg.totalMessageCount - readLastReadCount(roomCode),
-					),
-				}));
 			}
 		}
 	});
@@ -382,28 +342,6 @@ function ChatProviderInner({
 
 		return () => clearInterval(interval);
 	}, []);
-
-	// Listen for cross-tab localStorage changes for unread tracking
-	React.useEffect(() => {
-		const handleStorage = (e: StorageEvent) => {
-			if (!e.key?.startsWith(LOCAL_STORAGE_PREFIX)) return;
-			const chatCode = e.key.slice(LOCAL_STORAGE_PREFIX.length);
-			const parsed = Number(e.newValue);
-			const newCount = Number.isFinite(parsed) ? parsed : 0;
-
-			setUnreadCounts((prev) => {
-				const room = rooms.find((r) => r.chatCode === chatCode);
-				if (!room) return prev;
-				return {
-					...prev,
-					[chatCode]: Math.max(0, room.totalMessageCount - newCount),
-				};
-			});
-		};
-
-		window.addEventListener("storage", handleStorage);
-		return () => window.removeEventListener("storage", handleStorage);
-	}, [rooms]);
 
 	const messagesForRoom = React.useCallback(
 		(chatCode: string) => {
@@ -470,7 +408,6 @@ function ChatProviderInner({
 			const messageCount =
 				room?.totalMessageCount ?? messagesByRoom[chatCode]?.length ?? 0;
 			writeLastReadCount(chatCode, messageCount);
-			setUnreadCounts((prev) => ({ ...prev, [chatCode]: 0 }));
 		},
 		[rooms, messagesByRoom],
 	);
@@ -498,11 +435,16 @@ function ChatProviderInner({
 		[activeRooms, markAsRead, requestHistory, rooms.length, rooms[0]?.chatCode],
 	);
 
-	useFetchUnknownChatUsers({
+	const fetchedChatUsers = useFetchUnknownChatUsers({
 		messages: messagesByRoom,
 		chatUsersCache,
-		setChatUsersCache,
 	});
+	// cache spreads last: users are only API-fetched while missing from the
+	// cache, so a later WS payload for them is newer and should win
+	const chatUsers = React.useMemo(
+		() => ({ ...fetchedChatUsers, ...chatUsersCache }),
+		[chatUsersCache, fetchedChatUsers],
+	);
 
 	useChatRouteSync({
 		rooms,
@@ -517,7 +459,6 @@ function ChatProviderInner({
 		unsubscribe,
 		setRooms,
 		setMessagesByRoom,
-		setUnreadCounts,
 		requestHistory,
 		messagesByRoom,
 	});
@@ -537,7 +478,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
-			chatUsers: chatUsersCache,
+			chatUsers,
 			chatOpen,
 			setChatOpen,
 			activeRooms,
@@ -560,7 +501,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
-			chatUsersCache,
+			chatUsers,
 			chatOpen,
 			activeRooms,
 			setChatOpen,
@@ -587,7 +528,6 @@ function useChatRouteSync({
 	unsubscribe,
 	setRooms,
 	setMessagesByRoom,
-	setUnreadCounts,
 	requestHistory,
 	messagesByRoom,
 }: {
@@ -605,7 +545,6 @@ function useChatRouteSync({
 	setMessagesByRoom: React.Dispatch<
 		React.SetStateAction<Record<string, ChatMessage[]>>
 	>;
-	setUnreadCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 	requestHistory: (chatCode: string) => void;
 	messagesByRoom: Record<string, ChatMessage[]>;
 }) {
@@ -655,10 +594,6 @@ function useChatRouteSync({
 			unsubscribe(code);
 			setRooms((prev) => prev.filter((r) => r.chatCode !== code));
 			setMessagesByRoom((prev) => {
-				const { [code]: _, ...rest } = prev;
-				return rest;
-			});
-			setUnreadCounts((prev) => {
 				const { [code]: _, ...rest } = prev;
 				return rest;
 			});
@@ -748,7 +683,6 @@ function useChatRouteSync({
 		unsubscribe,
 		setRooms,
 		setMessagesByRoom,
-		setUnreadCounts,
 		requestHistory,
 		messagesByRoom,
 	]);
@@ -779,20 +713,28 @@ export function useCurrentRouteChatCodes(): string[] {
 function useFetchUnknownChatUsers({
 	messages,
 	chatUsersCache,
-	setChatUsersCache,
 }: {
 	messages: Record<string, ChatMessage[]>;
 	chatUsersCache: Record<number, ChatUser>;
-	setChatUsersCache: React.Dispatch<
-		React.SetStateAction<Record<number, ChatUser>>
-	>;
-}) {
+}): Record<number, ChatUser> {
 	const fetcher = useFetcher<Record<number, ChatUser>>();
+
+	// Accumulated across loads because `fetcher.data` only holds the latest response
+	const fetchedUsersRef = React.useRef<Record<number, ChatUser>>({});
+	const lastFetcherData = React.useRef(fetcher.data);
+	if (fetcher.data && fetcher.data !== lastFetcherData.current) {
+		lastFetcherData.current = fetcher.data;
+		fetchedUsersRef.current = { ...fetchedUsersRef.current, ...fetcher.data };
+	}
 
 	const unknownIds: number[] = [];
 	for (const msgs of Object.values(messages)) {
 		for (const msg of msgs) {
-			if (msg.userId && !chatUsersCache[msg.userId]) {
+			if (
+				msg.userId &&
+				!chatUsersCache[msg.userId] &&
+				!fetchedUsersRef.current[msg.userId]
+			) {
 				unknownIds.push(msg.userId);
 			}
 		}
@@ -800,16 +742,22 @@ function useFetchUnknownChatUsers({
 
 	const idsParam = unknownIds.sort((a, b) => a - b).join(",");
 
-	React.useEffect(() => {
-		if (!idsParam || fetcher.state !== "idle") return;
+	// Ids the API did not return would otherwise stay "unknown" and refetch forever
+	const lastRequestedIdsRef = React.useRef<string | null>(null);
 
+	React.useEffect(() => {
+		if (
+			!idsParam ||
+			idsParam === lastRequestedIdsRef.current ||
+			fetcher.state !== "idle"
+		) {
+			return;
+		}
+
+		lastRequestedIdsRef.current = idsParam;
 		logger.debug(`Fetching unknown chat users: ${idsParam}`);
 		fetcher.load(`/api/chat-users?ids=${idsParam}`);
 	}, [idsParam, fetcher.load, fetcher.state]);
 
-	React.useEffect(() => {
-		if (!fetcher.data) return;
-
-		setChatUsersCache((prev) => ({ ...prev, ...fetcher.data }));
-	}, [fetcher.data, setChatUsersCache]);
+	return fetchedUsersRef.current;
 }

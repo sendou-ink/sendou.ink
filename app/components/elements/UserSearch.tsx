@@ -22,22 +22,19 @@ interface UserSearchProps<T extends object>
 	errorText?: string;
 	initialUserId?: number;
 	onChange?: (user: UserSearchResult | null) => void;
+	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export const UserSearch = React.forwardRef(function UserSearch<
-	T extends object,
->(
-	{
-		name,
-		label,
-		bottomText,
-		errorText,
-		initialUserId,
-		onChange,
-		...rest
-	}: UserSearchProps<T>,
-	ref?: React.Ref<HTMLButtonElement>,
-) {
+export function UserSearch<T extends object>({
+	name,
+	label,
+	bottomText,
+	errorText,
+	initialUserId,
+	onChange,
+	ref,
+	...rest
+}: UserSearchProps<T>) {
 	const initialUser = useInitialUser(initialUserId);
 
 	const search = useEntitySearch<UserSearchResult>({
@@ -64,7 +61,7 @@ export const UserSearch = React.forwardRef(function UserSearch<
 			renderItem={(item) => <UserItem item={item} />}
 		/>
 	);
-});
+}
 
 function parseUserResults(
 	data: unknown,
@@ -78,16 +75,23 @@ function parseUserResults(
 		.filter((user) => user.id !== initialUser?.id);
 }
 
-/** Resolves the full user object for a preselected id so it can be displayed. */
+/**
+ * Resolves the full user object for a preselected id so it can be displayed.
+ * Loads at most once per field: later id changes come from the user picking a
+ * result, which already carries the full user object.
+ */
 function useInitialUser(initialUserId?: number) {
 	const fetcher = useFetcher<SearchLoaderData>();
+	const { load } = fetcher;
+	const hasLoadedRef = React.useRef(false);
 
 	React.useEffect(() => {
-		if (!initialUserId || fetcher.state !== "idle" || fetcher.data) {
+		if (!initialUserId || hasLoadedRef.current) {
 			return;
 		}
-		fetcher.load(`/search?q=${initialUserId}&type=users&limit=1`);
-	}, [initialUserId, fetcher]);
+		hasLoadedRef.current = true;
+		load(`/search?q=${initialUserId}&type=users&limit=1`);
+	}, [initialUserId, load]);
 
 	return fetcher.data?.results.find(
 		(result): result is UserSearchResult => result.type === "user",

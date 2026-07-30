@@ -1,10 +1,10 @@
 import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
-import * as React from "react";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import * as Deadline from "../../core/Deadline";
@@ -95,15 +95,9 @@ function RoundTimer({
 	bestOf: number;
 	matches: Array<Unpacked<TournamentData["data"]["match"]>>;
 }) {
-	const [now, setNow] = React.useState(new Date());
-
-	React.useEffect(() => {
-		const interval = setInterval(() => {
-			setNow(new Date());
-		}, 60000);
-
-		return () => clearInterval(interval);
-	}, []);
+	const now = useAutoRerender("minute", {
+		alignTo: databaseTimestampToDate(startedAt),
+	});
 
 	const elapsedMinutes = differenceInMinutes(
 		now,

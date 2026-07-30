@@ -134,7 +134,6 @@
 	"errors.invalidMapPool": "",
 	"errors.scrimTournamentRequired": "",
 	"errors.tournamentMustBeSelected": "",
-	"errors.tournamentOnlyWhenMapsIsTournament": "",
 	"errors.visibilityMustBeDifferent": "",
 	"errors.visibilityNotAllowedWhenPublic": "",
 	"errors.dateAfterScrimDate": "",

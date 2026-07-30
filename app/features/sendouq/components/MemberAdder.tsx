@@ -21,17 +21,8 @@ export function MemberAdder({
 	groupMemberIds: number[];
 }) {
 	const { t } = useTranslation(["q"]);
-	const [friend, setFriend] = React.useState<number>();
-	const fetcher = useFetcher<SendouQPreparingAction>();
 	const inviteLink = `${SENDOU_INK_BASE_URL}${sendouQInviteLink(inviteCode)}`;
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
-
-	const showMemberAddError = fetcher.data?.error === "taken";
-
-	const groupMembersJoined = groupMemberIds.join(",");
-	React.useEffect(() => {
-		setFriend(undefined);
-	}, [groupMembersJoined]);
 
 	return (
 		<div className="stack md flex-wrap justify-center">
@@ -48,6 +39,23 @@ export function MemberAdder({
 					/>
 				</div>
 			</div>
+			<AddFriendRow
+				key={groupMemberIds.join(",")}
+				groupMemberIds={groupMemberIds}
+			/>
+		</div>
+	);
+}
+
+function AddFriendRow({ groupMemberIds }: { groupMemberIds: number[] }) {
+	const { t } = useTranslation(["q"]);
+	const [friend, setFriend] = React.useState<number>();
+	const fetcher = useFetcher<SendouQPreparingAction>();
+
+	const showMemberAddError = fetcher.data?.error === "taken";
+
+	return (
+		<>
 			<fetcher.Form method="post" action={SENDOUQ_PREPARING_PAGE}>
 				<label htmlFor="players">{t("q:looking.groups.adder.quickAdd")}</label>
 				<div className="stack horizontal sm items-center">
@@ -69,7 +77,7 @@ export function MemberAdder({
 					{t("q:looking.groups.adder.error")}
 				</div>
 			) : null}
-		</div>
+		</>
 	);
 }
 
