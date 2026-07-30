@@ -39,8 +39,8 @@
 	flex-direction: column;
 	align-items: center;
 	gap: var(--s-0-5);
-	margin-left: auto;
-	padding-right: var(--s-2);
+	margin-inline-start: auto;
+	padding-inline-end: var(--s-2);
 }
 
 .rankValue {
@@ -243,7 +243,7 @@
 }
 
 .mateSets {
-	margin-left: auto;
+	margin-inline-start: auto;
 	white-space: nowrap;
 }
 

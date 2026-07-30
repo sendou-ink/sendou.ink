@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type {
 	MainWeaponId,
@@ -112,28 +113,11 @@ export function tournamentRunScore(run: TournamentRun): number {
 	);
 }
 
-function fieldStrengthScore(topEightAvgSp: number | null) {
-	if (topEightAvgSp === null) return 0;
-
-	return Math.max(
-		0,
-		(topEightAvgSp - FIELD_STRENGTH_BASELINE_SP) / FIELD_STRENGTH_SP_PER_POINT,
-	);
-}
-
 /** The best tournament run by {@link tournamentRunScore}. */
 export function bestTournamentRun<T extends TournamentRun>(
 	runs: T[],
 ): T | undefined {
-	let best: T | undefined;
-
-	for (const run of runs) {
-		if (!best || tournamentRunScore(run) > tournamentRunScore(best)) {
-			best = run;
-		}
-	}
-
-	return best;
+	return R.firstBy(runs, [tournamentRunScore, "desc"]);
 }
 
 /**
@@ -143,14 +127,11 @@ export function bestTournamentRun<T extends TournamentRun>(
 export function topWeaponUsages(
 	reportedWeapons: Array<{ weaponSplId: MainWeaponId; count: number }>,
 ): Array<{ weaponSplId: MainWeaponId; usagePercentage: number }> {
-	const totalCount = reportedWeapons.reduce(
-		(acc, weapon) => acc + weapon.count,
-		0,
-	);
+	const totalCount = R.sumBy(reportedWeapons, (weapon) => weapon.count);
 	if (totalCount === 0) return [];
 
-	return [...reportedWeapons]
-		.sort((a, b) => b.count - a.count)
+	return reportedWeapons
+		.toSorted((a, b) => b.count - a.count)
 		.slice(0, TOP_WEAPONS_COUNT)
 		.map((weapon) => ({
 			weaponSplId: weapon.weaponSplId,
@@ -196,4 +177,13 @@ export function canExportSeasonSummary({
 	if (loggedInUser.roles.includes("SUPPORTER")) return true;
 
 	return isSeasonExportableByAll(season, date);
+}
+
+function fieldStrengthScore(topEightAvgSp: number | null) {
+	if (topEightAvgSp === null) return 0;
+
+	return Math.max(
+		0,
+		(topEightAvgSp - FIELD_STRENGTH_BASELINE_SP) / FIELD_STRENGTH_SP_PER_POINT,
+	);
 }

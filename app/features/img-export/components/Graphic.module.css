@@ -73,7 +73,7 @@
 	flex-shrink: 0;
 	align-items: center;
 	gap: var(--s-2);
-	margin-left: auto;
+	margin-inline-start: auto;
 }
 
 .box {
@@ -124,12 +124,11 @@
 	font-variant-numeric: tabular-nums;
 	text-align: center;
 	color: var(--graphic-text-dim);
-}
 
-.placementSuffix {
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-extra);
-	vertical-align: super;
+	& sup {
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-extra);
+	}
 }
 
 .placementFirst {

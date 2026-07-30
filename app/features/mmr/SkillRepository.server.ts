@@ -159,33 +159,9 @@ export async function findSeasonProgressionByUserId({
 	userId: number;
 	season: number;
 }) {
-	return db
-		.selectFrom("Skill")
-		.leftJoin("GroupMatch", "GroupMatch.id", "Skill.groupMatchId")
-		.leftJoin("Tournament", "Tournament.id", "Skill.tournamentId")
-		.leftJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.leftJoin(
-			"CalendarEventDate",
-			"CalendarEvent.id",
-			"CalendarEventDate.eventId",
-		)
-		.select(({ fn }) => [
-			fn.max("Skill.ordinal").as("ordinal"),
-			sql<string>`date(coalesce("Skill"."createdAt", "GroupMatch"."createdAt", "CalendarEventDate"."startsAt"), 'unixepoch')`.as(
-				"date",
-			),
-		])
-		.where("Skill.userId", "=", userId)
-		.where("Skill.season", "=", season)
+	return seasonSkillsByDayQuery({ userId, season })
+		.select(({ fn }) => fn.max("Skill.ordinal").as("ordinal"))
 		.where("Skill.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
-		.where(({ or, eb }) =>
-			or([
-				eb("GroupMatch.id", "is not", null),
-				eb("Tournament.id", "is not", null),
-			]),
-		)
-		.groupBy("date")
-		.orderBy("date", "asc")
 		.execute();
 }
 
@@ -200,36 +176,14 @@ export async function findSeasonActiveDaysByUserId({
 	userId: number;
 	season: number;
 }): Promise<Array<{ date: string; activity: "sq" | "tournament" | "both" }>> {
-	const rows = await db
-		.selectFrom("Skill")
-		.leftJoin("GroupMatch", "GroupMatch.id", "Skill.groupMatchId")
-		.leftJoin("Tournament", "Tournament.id", "Skill.tournamentId")
-		.leftJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.leftJoin(
-			"CalendarEventDate",
-			"CalendarEvent.id",
-			"CalendarEventDate.eventId",
-		)
+	const rows = await seasonSkillsByDayQuery({ userId, season })
 		.select([
-			sql<string>`date(coalesce("Skill"."createdAt", "GroupMatch"."createdAt", "CalendarEventDate"."startsAt"), 'unixepoch')`.as(
-				"date",
-			),
 			// raw max over a null check: did any of the day's Skill rows come from this source?
 			sql<number>`max("Skill"."groupMatchId" is not null)`.as("playedSq"),
 			sql<number>`max("Skill"."tournamentId" is not null)`.as(
 				"playedTournament",
 			),
 		])
-		.where("Skill.userId", "=", userId)
-		.where("Skill.season", "=", season)
-		.where(({ or, eb }) =>
-			or([
-				eb("GroupMatch.id", "is not", null),
-				eb("Tournament.id", "is not", null),
-			]),
-		)
-		.groupBy("date")
-		.orderBy("date", "asc")
 		.execute();
 
 	return rows.map((row) => ({
@@ -265,4 +219,43 @@ function latestSkillsOfSeason(
 				.as("rn"),
 		])
 		.where("season", "=", season);
+}
+
+/**
+ * User's Skill rows of a season that came from a set played, grouped by the day
+ * it was played on (`yyyy-MM-dd`) in ascending order. Callers select what they
+ * want aggregated per day.
+ */
+function seasonSkillsByDayQuery({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}) {
+	return db
+		.selectFrom("Skill")
+		.leftJoin("GroupMatch", "GroupMatch.id", "Skill.groupMatchId")
+		.leftJoin("Tournament", "Tournament.id", "Skill.tournamentId")
+		.leftJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.leftJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select(
+			sql<string>`date(coalesce("Skill"."createdAt", "GroupMatch"."createdAt", "CalendarEventDate"."startsAt"), 'unixepoch')`.as(
+				"date",
+			),
+		)
+		.where("Skill.userId", "=", userId)
+		.where("Skill.season", "=", season)
+		.where(({ or, eb }) =>
+			or([
+				eb("GroupMatch.id", "is not", null),
+				eb("Tournament.id", "is not", null),
+			]),
+		)
+		.groupBy("date")
+		.orderBy("date", "asc");
 }

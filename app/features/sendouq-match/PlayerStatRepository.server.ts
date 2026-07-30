@@ -5,6 +5,7 @@ import {
 	type Transaction,
 } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -312,7 +313,7 @@ export async function findSeasonBestSetsByUserId({
 			.execute(),
 	]);
 
-	return [
+	const sets = [
 		...sqSets.flatMap((set) =>
 			set.avgOpponentOrdinal === null
 				? []
@@ -341,27 +342,15 @@ export async function findSeasonBestSetsByUserId({
 						},
 					],
 		),
-	]
-		.sort((a, b) => b.avgOpponentOrdinal - a.avgOpponentOrdinal)
-		.filter(uniqueOpponentRoster())
-		.slice(0, limit);
-}
+	].sort((a, b) => b.avgOpponentOrdinal - a.avgOpponentOrdinal);
 
-/** Filter predicate keeping only the first set played against each distinct set of opponents. */
-function uniqueOpponentRoster() {
-	const seenRosters = new Set<string>();
-
-	return (set: { opponentPlayers: Array<{ id: number }> }) => {
-		const roster = set.opponentPlayers
+	// keeps the best set played against each distinct set of opponents
+	return R.uniqueBy(sets, (set) =>
+		set.opponentPlayers
 			.map((player) => player.id)
-			.sort((a, b) => a - b)
-			.join("-");
-
-		if (seenRosters.has(roster)) return false;
-		seenRosters.add(roster);
-
-		return true;
-	};
+			.toSorted((a, b) => a - b)
+			.join("-"),
+	).slice(0, limit);
 }
 
 /**
