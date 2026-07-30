@@ -9,13 +9,13 @@ import type { Role } from "~/modules/permissions/types";
 const BEST_STAGE_MIN_MAPS_NEEDED = 10;
 const UNTIERED_TOURNAMENT_TIER = 10;
 const TOP_WEAPONS_COUNT = 3;
+const FIELD_STRENGTH_BASELINE_SP = 1200;
+const FIELD_STRENGTH_SP_PER_POINT = 800;
 
 export interface SetScore {
 	ownScore: number;
 	opponentScore: number;
 }
-
-// xxx: for BEST TOURNAMENT if many tied by tier, use SP average of top 8 as tiebreaker test case http://localhost:6173/u/grey/seasons?season=7
 
 /**
  * Length of the longest run of consecutive set wins in the given
@@ -93,17 +93,32 @@ export interface TournamentRun {
 	tier: number | null;
 	placement: number;
 	teamsCount: number;
+	/** Average SP of the players who placed in the tournament's top 8. Null when none of them had a calculated skill. */
+	topEightAvgSp: number | null;
 }
 
 /**
  * Composite score for ranking a user's tournament runs of a season. The
- * tournament's tier dominates; placement quality relative to the field size
- * breaks ties between adjacent tiers.
+ * tournament's tier dominates; within a tier both the user's placement quality
+ * relative to the field size and the strength of that field contribute.
  */
 export function tournamentRunScore(run: TournamentRun): number {
 	const tier = run.tier ?? UNTIERED_TOURNAMENT_TIER;
 
-	return (10 - tier) * 3 + Math.log2(run.teamsCount / run.placement);
+	return (
+		(10 - tier) * 3 +
+		Math.log2(run.teamsCount / run.placement) +
+		fieldStrengthScore(run.topEightAvgSp)
+	);
+}
+
+function fieldStrengthScore(topEightAvgSp: number | null) {
+	if (topEightAvgSp === null) return 0;
+
+	return Math.max(
+		0,
+		(topEightAvgSp - FIELD_STRENGTH_BASELINE_SP) / FIELD_STRENGTH_SP_PER_POINT,
+	);
 }
 
 /** The best tournament run by {@link tournamentRunScore}. */

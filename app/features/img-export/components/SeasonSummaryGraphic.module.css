@@ -198,6 +198,17 @@
 	margin-top: var(--s-1-5);
 }
 
+.matesBoxExpanded {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+
+	& .matesList {
+		flex: 1;
+		justify-content: space-evenly;
+	}
+}
+
 .mateRow {
 	display: flex;
 	align-items: center;

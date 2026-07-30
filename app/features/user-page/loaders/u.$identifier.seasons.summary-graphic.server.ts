@@ -17,7 +17,8 @@ import {
 } from "../user-page-schemas";
 
 const BEST_SETS_COUNT = 3;
-const TOP_MATES_COUNT = 3;
+/** The graphic shows fewer than this when it also has weapons to show */
+const TOP_MATES_COUNT = 6;
 
 export type UserSeasonSummaryGraphicLoaderData = SerializeFrom<typeof loader>;
 
@@ -96,10 +97,18 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		limit: BEST_SETS_COUNT,
 	});
 	const bestRun = SeasonSummary.bestTournamentRun(
-		await PlayerStatRepository.findSeasonTournamentRunsByUserId({
-			userId: user.id,
-			season,
-		}),
+		(
+			await PlayerStatRepository.findSeasonTournamentRunsByUserId({
+				userId: user.id,
+				season,
+			})
+		).map((run) => ({
+			...run,
+			topEightAvgSp:
+				typeof run.topEightAvgOrdinal === "number"
+					? ordinalToSp(run.topEightAvgOrdinal)
+					: null,
+		})),
 	);
 
 	return {

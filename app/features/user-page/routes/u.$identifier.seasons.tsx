@@ -192,7 +192,6 @@ function SeasonNav({
 	);
 }
 
-// xxx: download button above image so it is more discoverable
 function SeasonSummaryExport({
 	profileUser,
 	season,
@@ -223,7 +222,6 @@ function SeasonSummaryExport({
 		hasCalculatedSkill,
 	});
 
-	// xxx: make sure it is unified icon with tier list maker img export
 	if (!canExport) {
 		return (
 			<SendouPopover
@@ -281,6 +279,8 @@ function SeasonSummaryExportDialog({
 			quality: 1,
 			scale: 1.75,
 			embedFonts: true,
+			// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
+			compress: false,
 		});
 	};
 
@@ -304,6 +304,13 @@ function SeasonSummaryExportDialog({
 				>
 					{data ? (
 						<div className="stack md">
+							<SendouButton
+								icon={<HardDriveDownload />}
+								onPress={handleDownload}
+								className="mx-auto"
+							>
+								{t("user:seasons.summary.export.download")}
+							</SendouButton>
 							<div className={styles.summaryGraphicScroller}>
 								<div className={styles.summaryGraphicFrame} ref={graphicRef}>
 									<SeasonSummaryGraphic
@@ -322,36 +329,12 @@ function SeasonSummaryExportDialog({
 														})
 													: undefined),
 										}}
-										// xxx: maybe some stats object instead of a million separate props
 										season={data.season}
 										seasonDateRange={Seasons.nthToDateRange(data.season)}
-										tier={data.tier}
-										sp={data.sp}
-										setsWon={data.setsWon}
-										setsLost={data.setsLost}
-										mapsWon={data.mapsWon}
-										mapsLost={data.mapsLost}
-										longestWinStreak={data.longestWinStreak}
-										clutch={data.clutch}
-										soloRank={data.soloRank}
-										teamRank={data.teamRank}
-										topMates={data.topMates}
-										bestStage={data.bestStage}
-										spProgression={data.spProgression}
-										activeDays={data.activeDays}
-										bestSets={data.bestSets}
-										bestTournament={data.bestTournament}
-										topWeapons={data.topWeapons}
+										stats={data}
 									/>
 								</div>
 							</div>
-							<SendouButton
-								icon={<HardDriveDownload />}
-								onPress={handleDownload}
-								className="mx-auto"
-							>
-								{t("user:seasons.summary.export.download")}
-							</SendouButton>
 						</div>
 					) : null}
 				</SendouDialog>

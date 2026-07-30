@@ -22,8 +22,6 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-// xxx: add the perk we added in this branch
-
 // 1 = support
 // 2 = supporter
 // 3 = supporter+
@@ -67,6 +65,11 @@ const PERKS = [
 		tier: 2,
 		name: "previewQ",
 		extraInfo: false,
+	},
+	{
+		tier: 2,
+		name: "seasonSummaryImage",
+		extraInfo: true,
 	},
 	{
 		tier: 2,

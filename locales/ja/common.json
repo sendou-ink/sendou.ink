@@ -277,6 +277,8 @@
 	"support.perk.useBotToLogIn": "Discord ボットを使用してログイン",
 	"support.perk.useBotToLogIn.extra": "Lohi ボットから直接ログインできる URL を貰える",
 	"support.perk.earlyAccess": "たまに新機能の事前お試し",
+	"support.perk.seasonSummaryImage": "",
+	"support.perk.seasonSummaryImage.extra": "",
 	"custom.colors.title": "カスタムカラー",
 	"custom.colors.bg": "背景",
 	"custom.colors.bg-darker": "背景 暗め",

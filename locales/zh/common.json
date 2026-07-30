@@ -277,6 +277,8 @@
 	"support.perk.useBotToLogIn": "通过 Discord 机器人登录",
 	"support.perk.useBotToLogIn.extra": "向 Lohi 机器人请求一个登录链接，以此作为网站常规登录方式的备选方案",
 	"support.perk.earlyAccess": "部分新功能的优先体验权",
+	"support.perk.seasonSummaryImage": "",
+	"support.perk.seasonSummaryImage.extra": "",
 	"custom.colors.title": "自定义颜色",
 	"custom.colors.bg": "背景",
 	"custom.colors.bg-darker": "更暗背景",

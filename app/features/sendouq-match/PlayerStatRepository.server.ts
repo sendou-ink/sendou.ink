@@ -14,6 +14,9 @@ import {
 } from "~/utils/kysely.server";
 
 const BEST_SET_OPPONENTS_WITH_SKILL_NEEDED = 2;
+/** How many extra SendouQ sets to consider so that the roster deduplication still has enough left to return. */
+const BEST_SET_CANDIDATES_PER_RESULT = 10;
+const TOURNAMENT_FIELD_STRENGTH_PLACEMENT = 8;
 
 export function upsertMapResults(
 	results: Pick<
@@ -180,7 +183,8 @@ export async function findSeasonSetScoresByUserId(args: {
  * The user's won sets of a season ranked by the average opponent skill
  * (ordinal) at the time the set was played, best first. Covers both SendouQ
  * matches and ranked tournaments; tournament sets are skipped unless at least
- * two opponents have a calculated skill for that tournament.
+ * two opponents have a calculated skill for that tournament. Only the best set
+ * against any given opponent roster is included.
  */
 export async function findSeasonBestSetsByUserId({
 	userId,
@@ -229,14 +233,14 @@ export async function findSeasonBestSetsByUserId({
 					eb
 						.selectFrom("GroupMember")
 						.innerJoin("User", "User.id", "GroupMember.userId")
-						.select(["User.username", "User.country"])
+						.select(["User.id", "User.username", "User.country"])
 						.whereRef("GroupMember.groupId", "=", "SqSet.opponentGroupId")
 						.orderBy("User.username", "asc"),
 				).as("opponentPlayers"),
 			])
 			.whereRef("SqSet.ownScore", ">", "SqSet.opponentScore")
 			.orderBy("avgOpponentOrdinal", "desc")
-			.limit(limit)
+			.limit(limit * BEST_SET_CANDIDATES_PER_RESULT)
 			.execute(),
 		db
 			.selectFrom(tournamentSetsQuery({ userId, season }).as("TournamentSet"))
@@ -299,7 +303,7 @@ export async function findSeasonBestSetsByUserId({
 					jsonArrayFrom(
 						eb
 							.selectFrom("User")
-							.select(["User.username", "User.country"])
+							.select(["User.id", "User.username", "User.country"])
 							.where("User.id", "in", opponentUserIds)
 							.orderBy("User.username", "asc"),
 					).as("opponentPlayers"),
@@ -339,12 +343,31 @@ export async function findSeasonBestSetsByUserId({
 		),
 	]
 		.sort((a, b) => b.avgOpponentOrdinal - a.avgOpponentOrdinal)
+		.filter(uniqueOpponentRoster())
 		.slice(0, limit);
 }
 
+/** Filter predicate keeping only the first set played against each distinct set of opponents. */
+function uniqueOpponentRoster() {
+	const seenRosters = new Set<string>();
+
+	return (set: { opponentPlayers: Array<{ id: number }> }) => {
+		const roster = set.opponentPlayers
+			.map((player) => player.id)
+			.sort((a, b) => a - b)
+			.join("-");
+
+		if (seenRosters.has(roster)) return false;
+		seenRosters.add(roster);
+
+		return true;
+	};
+}
+
 /**
- * The user's ranked tournament results of a season with the tournament's tier
- * and field size, for picking their best tournament run.
+ * The user's ranked tournament results of a season with the tournament's tier,
+ * field size and the average skill (ordinal) of its top 8 placing players, for
+ * picking their best tournament run.
  */
 export async function findSeasonTournamentRunsByUserId({
 	userId,
@@ -368,6 +391,27 @@ export async function findSeasonTournamentRunsByUserId({
 			"Tournament.tier",
 			"CalendarEvent.name",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
+			eb
+				.selectFrom("TournamentResult as TopEightResult")
+				.innerJoin("Skill as TopEightSkill", (join) =>
+					join
+						.onRef("TopEightSkill.userId", "=", "TopEightResult.userId")
+						.onRef(
+							"TopEightSkill.tournamentId",
+							"=",
+							"TopEightResult.tournamentId",
+						),
+				)
+				.select(({ fn }) =>
+					fn.avg<number>("TopEightSkill.ordinal").as("average"),
+				)
+				.whereRef("TopEightResult.tournamentId", "=", "Tournament.id")
+				.where(
+					"TopEightResult.placement",
+					"<=",
+					TOURNAMENT_FIELD_STRENGTH_PLACEMENT,
+				)
+				.as("topEightAvgOrdinal"),
 		])
 		.where("Skill.userId", "=", userId)
 		.where("Skill.season", "=", season)

@@ -277,6 +277,8 @@
 	"support.perk.useBotToLogIn": "Log-in via Discord bot",
 	"support.perk.useBotToLogIn.extra": "Request a log-in link from the Lohi bot as an alternative to the normal website log-in",
 	"support.perk.earlyAccess": "Occasional early access to features",
+	"support.perk.seasonSummaryImage": "Export any season's summary image",
+	"support.perk.seasonSummaryImage.extra": "Export a summary image of any SendouQ season you played. Everyone can export the latest finished season's image during the off-season.",
 	"custom.colors.title": "Custom colors",
 	"custom.colors.bg": "Background",
 	"custom.colors.bg-darker": "Background darker",

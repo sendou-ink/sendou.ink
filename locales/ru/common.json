@@ -277,6 +277,8 @@
 	"support.perk.useBotToLogIn": "Лог-ин через Discord бот",
 	"support.perk.useBotToLogIn.extra": "Возможность запрость лог-ин ссылку от бота Lohi как альтернатива обычному лог-ину",
 	"support.perk.earlyAccess": "",
+	"support.perk.seasonSummaryImage": "",
+	"support.perk.seasonSummaryImage.extra": "",
 	"custom.colors.title": "Пользовательские цвета",
 	"custom.colors.bg": "Фон",
 	"custom.colors.bg-darker": "Фон темнее",

@@ -53,6 +53,7 @@ import {
 	SeasonSummaryGraphic,
 	type SeasonSummaryGraphicActivity,
 	type SeasonSummaryGraphicBestSet,
+	type SeasonSummaryGraphicStats,
 } from "~/features/img-export/components/SeasonSummaryGraphic";
 import {
 	TournamentResultsGraphic,
@@ -1979,6 +1980,58 @@ const SEASON_SUMMARY_BEST_SETS: SeasonSummaryGraphicBestSet[] = [
 	},
 ];
 
+const SEASON_SUMMARY_STATS: SeasonSummaryGraphicStats = {
+	tier: { name: "DIAMOND", isPlus: true },
+	sp: 2341.5,
+	setsWon: 41,
+	setsLost: 18,
+	mapsWon: 132,
+	mapsLost: 77,
+	longestWinStreak: 9,
+	clutch: { won: 8, total: 12 },
+	soloRank: 14,
+	teamRank: {
+		rank: 12,
+		sp: 2502.4,
+		mates: [
+			{ name: "Grey", countryCode: "FR" },
+			{ name: "sunni" },
+			{ name: "Isabel T.J.", countryCode: "ES" },
+		],
+		team: {
+			name: "Alliance Rogue",
+			logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/Yu_tgElCa5D48CcyFPF3Y-1756077173431.webp`,
+		},
+	},
+	topMates: [
+		{ player: { name: "Grey", countryCode: "FR" }, setsCount: 23 },
+		{ player: { name: "sunni" }, setsCount: 17 },
+		{ player: { name: "まるお", countryCode: "JP" }, setsCount: 9 },
+		{ player: { name: "Chara", countryCode: "US" }, setsCount: 8 },
+		{ player: { name: "Silver", countryCode: "FR" }, setsCount: 6 },
+		{ player: { name: "Yeti" }, setsCount: 4 },
+	],
+	bestStage: { stageId: 14, winratePercentage: 78 },
+	spProgression: SEASON_SUMMARY_DAYS.map(([date, sp]) => ({ date, sp })),
+	activeDays: SEASON_SUMMARY_DAYS.map(([date, , activity]) => ({
+		date,
+		activity,
+	})),
+	bestSets: SEASON_SUMMARY_BEST_SETS,
+	bestTournament: {
+		name: "In The Zone 50",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-itz.png`,
+		tier: 2,
+		placement: 2,
+		teamsCount: 32,
+	},
+	topWeapons: [
+		{ weaponSplId: 40, usagePercentage: 46 },
+		{ weaponSplId: 1001, usagePercentage: 31 },
+		{ weaponSplId: 2070, usagePercentage: 12 },
+	],
+};
+
 function SeasonSummaryGraphicSection({ id }: { id: string }) {
 	return (
 		<Section>
@@ -1999,61 +2052,7 @@ function SeasonSummaryGraphicSection({ id }: { id: string }) {
 							starts: new Date("2026-03-02T17:00:00.000Z"),
 							ends: new Date("2026-05-17T20:59:59.999Z"),
 						}}
-						tier={{ name: "DIAMOND", isPlus: true }}
-						sp={2341.5}
-						setsWon={41}
-						setsLost={18}
-						mapsWon={132}
-						mapsLost={77}
-						longestWinStreak={9}
-						clutch={{ won: 8, total: 12 }}
-						soloRank={14}
-						teamRank={{
-							rank: 12,
-							sp: 2502.4,
-							mates: [
-								{ name: "Grey", countryCode: "FR" },
-								{ name: "sunni" },
-								{ name: "Isabel T.J.", countryCode: "ES" },
-							],
-							team: {
-								name: "Alliance Rogue",
-								logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/Yu_tgElCa5D48CcyFPF3Y-1756077173431.webp`,
-							},
-						}}
-						topMates={[
-							{
-								player: { name: "Grey", countryCode: "FR" },
-								setsCount: 23,
-							},
-							{ player: { name: "sunni" }, setsCount: 17 },
-							{
-								player: { name: "まるお", countryCode: "JP" },
-								setsCount: 9,
-							},
-						]}
-						bestStage={{ stageId: 14, winratePercentage: 78 }}
-						spProgression={SEASON_SUMMARY_DAYS.map(([date, sp]) => ({
-							date,
-							sp,
-						}))}
-						activeDays={SEASON_SUMMARY_DAYS.map(([date, , activity]) => ({
-							date,
-							activity,
-						}))}
-						bestSets={SEASON_SUMMARY_BEST_SETS}
-						bestTournament={{
-							name: "In The Zone 50",
-							logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-itz.png`,
-							tier: 2,
-							placement: 2,
-							teamsCount: 32,
-						}}
-						topWeapons={[
-							{ weaponSplId: 40, usagePercentage: 46 },
-							{ weaponSplId: 1001, usagePercentage: 31 },
-							{ weaponSplId: 2070, usagePercentage: 12 },
-						]}
+						stats={SEASON_SUMMARY_STATS}
 					/>
 				</ComponentRow>
 			</div>

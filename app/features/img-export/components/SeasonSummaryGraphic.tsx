@@ -40,6 +40,9 @@ const CHART_HEIGHT = 170;
 const CHART_MARGIN = { top: 26, right: 14, bottom: 22, left: 14 };
 const CHART_POINTS_NEEDED = 2;
 const CHART_PEAK_LABEL_CLAMP = 48;
+const TOP_MATES_COUNT = 3;
+/** Without weapons the teammates box is alone next to the activity calendar, so it has room for more */
+const TOP_MATES_COUNT_WITHOUT_WEAPONS = 6;
 
 export type SeasonSummaryGraphicActivity = "sq" | "tournament" | "both";
 
@@ -53,41 +56,7 @@ export interface SeasonSummaryGraphicBestSet {
 	context: string;
 }
 
-// xxx: tier image looks crispy when exported
-// xxx: if user has no weapons reported, the section looks empty. in this case just expand the Top teammates section to take same height as ACTIVITY and have more entries?
-// xxx: remove the dot at the end of the graph, looks not good dot at the peak should remain (so if peak at the end then dot there)
-// xxx: for top sets, show one unique roster only once test case http://localhost:6173/u/grey/seasons?season=7
-export function SeasonSummaryGraphic({
-	user,
-	season,
-	seasonDateRange,
-	tier,
-	sp,
-	setsWon,
-	setsLost,
-	mapsWon,
-	mapsLost,
-	longestWinStreak,
-	clutch,
-	soloRank,
-	teamRank,
-	topMates,
-	bestStage,
-	spProgression,
-	activeDays,
-	bestSets,
-	bestTournament,
-	topWeapons,
-}: {
-	user: {
-		name: string;
-		discordId: string;
-		customUrl?: string;
-		countryCode?: string;
-		avatarUrl?: string;
-	};
-	season: number;
-	seasonDateRange: { starts: Date; ends: Date };
+export interface SeasonSummaryGraphicStats {
 	tier: { name: TierName; isPlus: boolean };
 	sp: number;
 	setsWon: number;
@@ -126,13 +95,55 @@ export function SeasonSummaryGraphic({
 		teamsCount: number;
 	};
 	topWeapons: Array<{ weaponSplId: MainWeaponId; usagePercentage: number }>;
+}
+
+export function SeasonSummaryGraphic({
+	user,
+	season,
+	seasonDateRange,
+	stats,
+}: {
+	user: {
+		name: string;
+		discordId: string;
+		customUrl?: string;
+		countryCode?: string;
+		avatarUrl?: string;
+	};
+	season: number;
+	seasonDateRange: { starts: Date; ends: Date };
+	stats: SeasonSummaryGraphicStats;
 }) {
 	const { t } = useTranslation(["user", "calendar", "game-misc"]);
+
+	const {
+		tier,
+		sp,
+		setsWon,
+		setsLost,
+		mapsWon,
+		mapsLost,
+		longestWinStreak,
+		clutch,
+		soloRank,
+		teamRank,
+		topMates,
+		bestStage,
+		spProgression,
+		activeDays,
+		bestSets,
+		bestTournament,
+		topWeapons,
+	} = stats;
 
 	const peakSp =
 		spProgression.length > 0
 			? Math.max(...spProgression.map((point) => point.sp))
 			: sp;
+	const shownMates = topMates.slice(
+		0,
+		topWeapons.length > 0 ? TOP_MATES_COUNT : TOP_MATES_COUNT_WITHOUT_WEAPONS,
+	);
 
 	return (
 		<GraphicContainer>
@@ -295,13 +306,17 @@ export function SeasonSummaryGraphic({
 							</div>
 						</div>
 					) : null}
-					{topMates.length > 0 ? (
-						<div className={graphicStyles.box}>
+					{shownMates.length > 0 ? (
+						<div
+							className={clsx(graphicStyles.box, {
+								[styles.matesBoxExpanded]: topWeapons.length === 0,
+							})}
+						>
 							<div className={graphicStyles.boxLabel}>
 								{t("user:seasons.summary.topMates")}
 							</div>
 							<div className={styles.matesList}>
-								{topMates.map((mate) => (
+								{shownMates.map((mate) => (
 									<div key={mate.player.name} className={styles.mateRow}>
 										<Avatar
 											url={mate.avatarUrl}
@@ -452,8 +467,6 @@ function SpChart({ points }: { points: Array<{ date: string; sp: number }> }) {
 		Math.max(peakX, CHART_PEAK_LABEL_CLAMP),
 		CHART_WIDTH - CHART_PEAK_LABEL_CLAMP,
 	);
-	const lastX = xAt(maxTime);
-	const lastY = yAt(points[points.length - 1].sp);
 
 	return (
 		<svg
@@ -483,7 +496,6 @@ function SpChart({ points }: { points: Array<{ date: string; sp: number }> }) {
 			/>
 			<path d={areaPath} fill={`url(#${gradientId})`} />
 			<path className={styles.chartLine} d={linePath} />
-			<circle className={styles.chartDot} cx={lastX} cy={lastY} r={3.5} />
 			<circle className={styles.chartDot} cx={peakX} cy={peakY} r={4.5} />
 			<text
 				className={styles.chartPeakLabel}

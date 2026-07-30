@@ -277,6 +277,8 @@
 	"support.perk.useBotToLogIn": "Iniciar sesión con el bot de Discord",
 	"support.perk.useBotToLogIn.extra": "Solicita un enlace de inicio de sesión al bot Lohi como alternativa a iniciar sesión desde la web.",
 	"support.perk.earlyAccess": "Acceso anticipado a nuevas funciones",
+	"support.perk.seasonSummaryImage": "",
+	"support.perk.seasonSummaryImage.extra": "",
 	"custom.colors.title": "Colores personalizados",
 	"custom.colors.bg": "Fondo",
 	"custom.colors.bg-darker": "Fondo más oscuro",

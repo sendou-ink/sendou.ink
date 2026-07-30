@@ -85,11 +85,13 @@ describe("tournamentRunScore", () => {
 			tier: 2,
 			placement: 2,
 			teamsCount: 32,
+			topEightAvgSp: null,
 		});
 		const lowerTierWin = SeasonSummary.tournamentRunScore({
 			tier: 3,
 			placement: 1,
 			teamsCount: 64,
+			topEightAvgSp: null,
 		});
 
 		expect(higherTierRun).toBeGreaterThan(lowerTierWin);
@@ -100,11 +102,13 @@ describe("tournamentRunScore", () => {
 			tier: 5,
 			placement: 1,
 			teamsCount: 16,
+			topEightAvgSp: null,
 		});
 		const runnerUp = SeasonSummary.tournamentRunScore({
 			tier: 5,
 			placement: 2,
 			teamsCount: 16,
+			topEightAvgSp: null,
 		});
 
 		expect(winner).toBeGreaterThan(runnerUp);
@@ -115,14 +119,50 @@ describe("tournamentRunScore", () => {
 			tier: null,
 			placement: 1,
 			teamsCount: 16,
+			topEightAvgSp: null,
 		});
 		const tiered = SeasonSummary.tournamentRunScore({
 			tier: 9,
 			placement: 1,
 			teamsCount: 16,
+			topEightAvgSp: null,
 		});
 
 		expect(untiered).toBeLessThan(tiered);
+	});
+
+	it("breaks a tie between identical runs of the same tier by field strength", () => {
+		const strongField = SeasonSummary.tournamentRunScore({
+			tier: 4,
+			placement: 3,
+			teamsCount: 24,
+			topEightAvgSp: 2600,
+		});
+		const weakField = SeasonSummary.tournamentRunScore({
+			tier: 4,
+			placement: 3,
+			teamsCount: 24,
+			topEightAvgSp: 1400,
+		});
+
+		expect(strongField).toBeGreaterThan(weakField);
+	});
+
+	it("does not let field strength outweigh a tier step", () => {
+		const strongerField = SeasonSummary.tournamentRunScore({
+			tier: 4,
+			placement: 3,
+			teamsCount: 24,
+			topEightAvgSp: 3000,
+		});
+		const higherTier = SeasonSummary.tournamentRunScore({
+			tier: 3,
+			placement: 3,
+			teamsCount: 24,
+			topEightAvgSp: 1200,
+		});
+
+		expect(strongerField).toBeLessThan(higherTier);
 	});
 });
 
@@ -133,9 +173,19 @@ describe("bestTournamentRun", () => {
 
 	it("picks the run with the highest score", () => {
 		const runs = [
-			{ tier: 6, placement: 1, teamsCount: 32 },
-			{ tier: 2, placement: 10, teamsCount: 32 },
-			{ tier: null, placement: 1, teamsCount: 100 },
+			{ tier: 6, placement: 1, teamsCount: 32, topEightAvgSp: 2400 },
+			{ tier: 2, placement: 10, teamsCount: 32, topEightAvgSp: 1800 },
+			{ tier: null, placement: 1, teamsCount: 100, topEightAvgSp: 2900 },
+		];
+
+		expect(SeasonSummary.bestTournamentRun(runs)).toBe(runs[1]);
+	});
+
+	it("picks the stronger field among runs tied by tier and placement", () => {
+		const runs = [
+			{ tier: 3, placement: 5, teamsCount: 32, topEightAvgSp: 1900 },
+			{ tier: 3, placement: 5, teamsCount: 32, topEightAvgSp: 2500 },
+			{ tier: 3, placement: 5, teamsCount: 32, topEightAvgSp: null },
 		];
 
 		expect(SeasonSummary.bestTournamentRun(runs)).toBe(runs[1]);
