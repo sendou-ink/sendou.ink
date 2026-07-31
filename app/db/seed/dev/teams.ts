@@ -26,7 +26,7 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 	const allianceRogue = await TeamFactory.create(
 		{
 			name: "Alliance Rogue",
-			memberUserIds: [users.adminId, ...takeMembers(4)],
+			memberUserIds: [users.nzapId, ...takeMembers(4)],
 		},
 		{ avatarUrl: "alliance-rogue.png" },
 	);

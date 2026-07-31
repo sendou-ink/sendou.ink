@@ -23,6 +23,10 @@ type Options = {
 	/** Play the match out, alpha winning every map, up to both teams having agreed
 	 * on the score. Leaves both groups inactive, as a real concluded match does. */
 	isConcluded?: boolean;
+	/** Play the match out, alpha winning every map, and report the score as alpha —
+	 * leaving bravo still to confirm it. Alpha's group goes inactive, as reporting
+	 * makes it, so its members are free to queue again. */
+	isReported?: boolean;
 	/** When the match was made, for one that should look older than now. */
 	createdAt?: Date;
 	/** When the two groups had agreed on the score. Needs `isConcluded`. */
@@ -67,10 +71,14 @@ export const { create } = defineFactory({
 	},
 	applyOptions: async (
 		match,
-		{ isConcluded, createdAt, confirmedAt }: Options,
+		{ isConcluded, isReported, createdAt, confirmedAt }: Options,
 	) => {
 		if (isConcluded) {
 			await playOutMatch(match.id);
+		}
+
+		if (isReported) {
+			await reportMatch(match.id);
 		}
 
 		await backdate("GroupMatch", match.id, { createdAt, confirmedAt });
@@ -96,12 +104,31 @@ async function backdateSkills(matchId: number, createdAt: Date) {
 }
 
 async function playOutMatch(matchId: number) {
+	const { winnerId, reportedCount } = await reportMatch(matchId);
+
+	const match = await SQMatchRepository.findById(matchId);
+	invariant(match, "Match not found");
+
+	const confirmation = await SQMatchRepository.reportMapWinner({
+		matchId,
+		winnerId,
+		reportedByUserId: match.groupBravo.members[0].id,
+		reportedCount: reportedCount + 1,
+	});
+
+	invariant(
+		confirmation.status === "MATCH_FINALIZED",
+		`Confirming the score resulted in ${confirmation.status}`,
+	);
+}
+
+/** Reports every map as alpha, up to the score being in but not yet confirmed. */
+async function reportMatch(matchId: number) {
 	const match = await SQMatchRepository.findById(matchId);
 	invariant(match, "Match not found");
 
 	const winnerId = match.groupAlpha.id;
 	const reportedByUserId = match.groupAlpha.members[0].id;
-	const confirmedByUserId = match.groupBravo.members[0].id;
 
 	let reportedCount = 0;
 	let result = await SQMatchRepository.reportMapWinner({
@@ -126,15 +153,5 @@ async function playOutMatch(matchId: number) {
 		`Reporting the deciding map resulted in ${result.status}`,
 	);
 
-	const confirmation = await SQMatchRepository.reportMapWinner({
-		matchId,
-		winnerId,
-		reportedByUserId: confirmedByUserId,
-		reportedCount: reportedCount + 1,
-	});
-
-	invariant(
-		confirmation.status === "MATCH_FINALIZED",
-		`Confirming the score resulted in ${confirmation.status}`,
-	);
+	return { winnerId, reportedCount };
 }

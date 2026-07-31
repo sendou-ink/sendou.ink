@@ -19,23 +19,26 @@ import * as SplatoonRotationFactory from "../factories/SplatoonRotationFactory";
 import * as UserReportFactory from "../factories/UserReportFactory";
 import * as XRankPlacementFactory from "../factories/XRankPlacementFactory";
 import type { SeededSendouQ } from "./sendouq";
+import type { SeededTournaments } from "./tournaments";
 import type { SeededUsers } from "./users";
 
-const ADMIN_PLAYER_SPL_ID = "qx6imlx72tfeqrhqfnmm";
+const NZAP_PLAYER_SPL_ID = "qx6imlx72tfeqrhqfnmm";
 const FRIEND_COUNT = 8;
 const STREAM_COUNT = 20;
 
 export async function seedMisc({
 	users,
 	sendouq,
+	tournaments,
 }: {
 	users: SeededUsers;
 	sendouq: SeededSendouQ;
+	tournaments: SeededTournaments;
 }) {
 	await seedXRankPlacements(users);
 	await seedArts(users);
 	await seedFriends(users);
-	await seedNotifications(users);
+	await seedNotifications(users, tournaments);
 	await seedUserReports(users, sendouq);
 
 	await LiveStreamFactory.replaceAll(
@@ -50,8 +53,8 @@ async function seedXRankPlacements(users: SeededUsers) {
 
 	for (const [i, placement] of placements.entries()) {
 		const playerUserId =
-			placement.playerSplId === ADMIN_PLAYER_SPL_ID
-				? users.adminId
+			placement.playerSplId === NZAP_PLAYER_SPL_ID
+				? users.nzapId
 				: i === 0
 					? unaffiliatedTopPlayerId
 					: undefined;
@@ -72,7 +75,7 @@ async function seedXRankPlacements(users: SeededUsers) {
 async function seedArts(users: SeededUsers) {
 	let nextUrl = 0;
 
-	for (const authorId of users.artistIds) {
+	for (const authorId of [users.nzapId, ...users.artistIds]) {
 		const artCount = faker.helpers.arrayElement([1, 2, 3, 3, 4]);
 
 		for (let i = 0; i < artCount; i++) {
@@ -84,7 +87,7 @@ async function seedArts(users: SeededUsers) {
 				linkedUsers:
 					i === 1
 						? [
-								users.nzapId,
+								...(authorId === users.nzapId ? [] : [users.nzapId]),
 								...faker.helpers.arrayElements(users.showcaseIds, {
 									min: 0,
 									max: 2,
@@ -101,7 +104,7 @@ async function seedFriends(users: SeededUsers) {
 
 	for (const friendId of friendIds) {
 		await FriendshipFactory.create({
-			userOneId: users.adminId,
+			userOneId: users.nzapId,
 			userTwoId: friendId,
 		});
 	}
@@ -118,11 +121,16 @@ async function seedFriends(users: SeededUsers) {
 
 	await FriendRequestFactory.create({
 		senderId: users.showcaseIds[FRIEND_COUNT],
-		receiverId: users.adminId,
+		receiverId: users.nzapId,
 	});
 }
 
-async function seedNotifications(users: SeededUsers) {
+async function seedNotifications(
+	users: SeededUsers,
+	tournaments: SeededTournaments,
+) {
+	const { id: tournamentId, name: tournamentName } = tournaments.regOpen;
+
 	const notifications: Notification[] = [
 		{ type: "PLUS_SUGGESTION_ADDED", meta: { tier: 1 } },
 		{ type: "SEASON_STARTED", meta: { seasonNth: 1 } },
@@ -131,18 +139,18 @@ async function seedNotifications(users: SeededUsers) {
 			meta: {
 				adderUsername: "N-ZAP",
 				teamName: "Chimera",
-				tournamentId: 1,
-				tournamentName: "Paddling Pool 253",
+				tournamentId,
+				tournamentName,
 				tournamentTeamId: 1,
 			},
 		},
 		{
 			type: "TO_BRACKET_STARTED",
 			meta: {
-				tournamentId: 1,
-				tournamentName: "Paddling Pool 253",
+				tournamentId,
+				tournamentName,
 				bracketIdx: 0,
-				bracketName: "Groups Stage",
+				bracketName: "Main Bracket",
 			},
 		},
 		{ type: "BADGE_ADDED", meta: { badgeName: "4v4 Sundaes", badgeId: 1 } },
@@ -159,7 +167,7 @@ async function seedNotifications(users: SeededUsers) {
 		{ type: "PLUS_VOTING_STARTED", meta: { seasonNth: 1 } },
 		{
 			type: "TO_CHECK_IN_OPENED",
-			meta: { tournamentId: 1, tournamentName: "Paddling Pool 253" },
+			meta: { tournamentId, tournamentName },
 			pictureUrl: `${Config.staticAssetsUrl}/img/tournament-logos/pn.avif`,
 		},
 	];

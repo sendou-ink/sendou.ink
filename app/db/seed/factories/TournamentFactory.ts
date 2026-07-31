@@ -157,11 +157,15 @@ export async function playOut(
 	for (const bracketIdx of bracketIdxs) {
 		await startBracket(tournamentId, { bracketIdx, maps });
 
-		let playedThisPass: PlayedMatch[];
-		do {
-			playedThisPass = await playMatches(tournamentId);
+		let progressed = true;
+		while (progressed) {
+			const playedThisPass = await playMatches(tournamentId);
 			matches.push(...playedThisPass);
-		} while (playedThisPass.length > 0);
+
+			progressed =
+				playedThisPass.length > 0 ||
+				(await generateNextSwissRound(tournamentId, bracketIdx));
+		}
 	}
 
 	if (brackets === "all") {
@@ -253,6 +257,57 @@ export async function playMatches(
 	clearTournamentDataCache(tournamentId);
 
 	return played;
+}
+
+/**
+ * Generates the matches of a swiss bracket's next round, each of its groups the
+ * same way the organizer's advance button does. Swiss pairs a round off the
+ * standings of the one before it, so the matches of a round only exist once the
+ * previous round has been played.
+ *
+ * Returns whether there was a round left to generate.
+ */
+async function generateNextSwissRound(
+	tournamentId: number,
+	bracketIdx: number,
+) {
+	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+
+	const bracket = tournament.bracketByIdx(bracketIdx);
+	if (bracket?.type !== "swiss" || bracket.preview) return false;
+
+	let generated = false;
+	for (const group of bracket.data.group) {
+		const groupsMatches = bracket.data.match.filter(
+			(match) => match.groupId === group.id,
+		);
+		const generatedRoundCount = new Set(
+			groupsMatches.map((match) => match.roundId),
+		).size;
+		if (generatedRoundCount >= bracket.swissRoundCount) continue;
+
+		const round = Engine.generateRound(bracket.data, {
+			groupId: group.id,
+			standings: bracket.standings,
+			settings: bracket.settings,
+		});
+		if (round.isErr()) continue;
+
+		const stageId = groupsMatches[0]?.stageId;
+		invariant(stageId, `Swiss group ${group.id} has no matches`);
+
+		await BracketRepository.insertRoundMatches({
+			stageId,
+			round: round.value,
+		});
+		generated = true;
+	}
+
+	if (generated) {
+		clearTournamentDataCache(tournamentId);
+	}
+
+	return generated;
 }
 
 function roundMapsFor(

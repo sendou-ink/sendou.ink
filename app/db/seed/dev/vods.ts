@@ -16,9 +16,9 @@ export async function seedVods(users: SeededUsers) {
 		type: "TOURNAMENT",
 		youtubeUrl: youtubeIdToYoutubeUrl(REAL_YOUTUBE_ID),
 		date: { day: 2, month: 2, year: 2023 },
-		submitterUserId: users.adminId,
+		submitterUserId: users.nzapId,
 		title: "LUTI Division X Tournament - ABBF (THRONE) vs. Ascension",
-		pov: { type: "USER", userId: users.adminId },
+		pov: { type: "USER", userId: users.nzapId },
 		matches: fakeMatches(7),
 	});
 
@@ -30,7 +30,7 @@ export async function seedVods(users: SeededUsers) {
 			type,
 			submitterUserId:
 				i % 4 === 0
-					? users.adminId
+					? users.nzapId
 					: faker.helpers.arrayElement(users.showcaseIds),
 			date: {
 				day: faker.number.int({ min: 1, max: 28 }),

@@ -1,6 +1,7 @@
 import { add } from "date-fns";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import type { Pronouns, UserPreferences } from "~/db/tables-json";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -49,8 +50,11 @@ type Options = {
 	weapons?: Parameters<typeof UserRepository.updateOwnProfile>[0]["weapons"];
 	/** User card fields, submitted as the user themselves. */
 	card?: Partial<CardArgs>;
-	/** Profile page widgets, replacing whatever the user had. */
+	/** Profile page widgets, replacing whatever the user had. Only shown to a user
+	 * who is a supporter and has `newProfileEnabled` in their `preferences`. */
 	widgets?: Parameters<typeof UserRepository.upsertWidgets>[1];
+	/** Preferences, merged into the ones the user has, as the settings pages save them. */
+	preferences?: UserPreferences;
 };
 
 type CardArgs = Parameters<typeof UserCardRepository.updateOwnCard>[0];
@@ -128,10 +132,67 @@ function fakeDiscordId(seq: number) {
 	return String(((FAKE_CREATED_AT_MS - DISCORD_EPOCH_MS) << 22n) + BigInt(seq));
 }
 
-/** Saves profile fields as the user, for a user that already exists. */
-export function updateProfile(userId: number, profile: Partial<ProfileArgs>) {
+/** Saves profile fields as the user, for a user that already exists. The profile page
+ * submits every field at once, prefilled with what the user has, so the fields the
+ * caller leaves out keep their current value instead of being cleared. */
+export async function updateProfile(
+	userId: number,
+	profile: Partial<ProfileArgs>,
+) {
+	const current = await currentProfile(userId);
+
 	return actAs(userId, () =>
-		UserRepository.updateOwnProfile({ weapons: [], ...profile }),
+		UserRepository.updateOwnProfile({ ...current, ...profile }),
+	);
+}
+
+async function currentProfile(userId: number): Promise<ProfileArgs> {
+	const user = await db
+		.selectFrom("User")
+		.select([
+			"country",
+			"bio",
+			"customUrl",
+			"customName",
+			"motionSens",
+			"stickSens",
+			"pronouns",
+			"inGameName",
+			"battlefy",
+			"showDiscordUniqueName",
+			"commissionText",
+			"commissionsOpen",
+			"favoriteBadgeIds",
+			"favoriteTrophyIds",
+			"hiddenTrophyIds",
+			"customAvatarImgId",
+		])
+		.where("id", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	const weapons = await db
+		.selectFrom("UserWeapon")
+		.select(["weaponSplId", "isFavorite"])
+		.where("userId", "=", userId)
+		.orderBy("order", "asc")
+		.execute();
+
+	return {
+		...user,
+		pronouns: user.pronouns ? JSON.stringify(user.pronouns) : null,
+		weapons,
+	};
+}
+
+/** Pronouns as the profile page saves them: the subject and object forms as one
+ * JSON object, not the `he/him` string they are displayed as. */
+export function fakePronouns() {
+	return JSON.stringify(
+		faker.helpers.arrayElement([
+			{ subject: "he", object: "him" },
+			{ subject: "she", object: "her" },
+			{ subject: "they", object: "them" },
+		] satisfies Pronouns[]),
 	);
 }
 
@@ -167,9 +228,7 @@ function fakeProfile(): Partial<ProfileArgs> | null {
 		stickSens: chance(0.3)
 			? faker.helpers.arrayElement([-50, -20, 0, 20, 50])
 			: undefined,
-		pronouns: chance(0.2)
-			? faker.helpers.arrayElement(["he/him", "she/her", "they/them"])
-			: undefined,
+		pronouns: chance(0.2) ? fakePronouns() : undefined,
 		weapons: chance(0.6)
 			? SplatoonFaker.mainWeapons(
 					faker.helpers.arrayElement([1, 2, 3, 4, 5]),
@@ -308,6 +367,7 @@ export async function grant(
 		weapons,
 		card,
 		widgets,
+		preferences,
 	}: Options,
 ) {
 	if (card) {
@@ -358,6 +418,10 @@ export async function grant(
 
 	if (widgets) {
 		await UserRepository.upsertWidgets(userId, widgets);
+	}
+
+	if (preferences) {
+		await actAs(userId, () => UserRepository.updateOwnPreferences(preferences));
 	}
 }
 

@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import invariant from "~/utils/invariant";
 import { faker } from "../core/faker";
 import * as SQGroupFactory from "../factories/SQGroupFactory";
 import * as SQMatchFactory from "../factories/SQMatchFactory";
@@ -9,9 +10,14 @@ import type { SeededUsers } from "./users";
 const RECENT_MATCH_COUNT = 300;
 const OLDER_MATCH_COUNT = 140;
 const SQUAD_COUNT = 8;
-const SQUAD_MATCH_COUNT = 60;
 const LOOKING_GROUP_COUNT = 10;
 const REPORTED_MAP_COUNT = 4;
+
+/** N-ZAP's unconfirmed match, on an id worth remembering. Every other match is
+ * created before it, so the squad matches make up the difference. */
+const NZAP_MATCH_ID = 500;
+const SQUAD_MATCH_COUNT =
+	NZAP_MATCH_ID - 1 - RECENT_MATCH_COUNT - OLDER_MATCH_COUNT;
 
 export type SeededSendouQ = {
 	recentMatchIds: number[];
@@ -46,9 +52,30 @@ export async function seedSendouQ(
 	}
 
 	await seedSquadMatches(teams);
+	await seedNzapReportedMatch(users);
 	await seedLookingGroups(users);
 
 	return { recentMatchIds };
+}
+
+/** A match N-ZAP's team has reported but the other has not confirmed, so it is the
+ * other team's to report and N-ZAP's group is free to queue again. */
+async function seedNzapReportedMatch(users: SeededUsers) {
+	const opponentIds = users.crowdIds.slice(-88, -84);
+
+	const match = await SQMatchFactory.create(
+		{
+			alphaUserIds: [users.nzapId, ...users.crowdIds.slice(-92, -89)],
+			bravoUserIds: opponentIds,
+			isMatchmade: true,
+		},
+		{ isReported: true, createdAt: sub(new Date(), { hours: 1 }) },
+	);
+
+	invariant(
+		match.id === NZAP_MATCH_ID,
+		`N-ZAP's match was created on id ${match.id}, not ${NZAP_MATCH_ID}`,
+	);
 }
 
 /** Fixed team lineups playing together repeatedly, so their identifier skills reach

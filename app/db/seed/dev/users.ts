@@ -18,8 +18,6 @@ import * as SplatoonFaker from "../core/SplatoonFaker";
 import * as showcaseNames from "../core/showcaseNames";
 import * as UserFactory from "../factories/UserFactory";
 
-// xxx: enable new bio for sendou
-
 const SHOWCASE_COUNT = 100;
 const CROWD_COUNT = 396;
 
@@ -38,6 +36,7 @@ export type SeededUsers = {
 };
 
 export async function seedUsers(): Promise<SeededUsers> {
+	// the plainest of the two profiles: no supporter perks, so the old profile page
 	const admin = await UserFactory.createAdmin(
 		{
 			discordId: ADMIN_DISCORD_ID,
@@ -45,34 +44,18 @@ export async function seedUsers(): Promise<SeededUsers> {
 			discordUniqueName: "sendou",
 			discordAvatar: ADMIN_TEST_AVATAR,
 			twitch: "Sendou",
-			youtubeId: "UCWbJLXByvsfQvTcR4HLPs5Q",
 			profile: {
 				country: "FI",
 				customUrl: "sendou",
-				motionSens: 50,
-				stickSens: 5,
 				inGameName: "Sendou#1234",
-				bio: showcaseNames.maxLengthBio(),
-				weapons: ([200, 1100, 2000, 4000] as const).map((weaponSplId) => ({
-					weaponSplId,
-					isFavorite: 0 as const,
-				})),
+				bio: showcaseNames.postText(),
+				weapons: [{ weaponSplId: 200, isFavorite: 0 }],
 			},
 			friendCode: "0109-8080-3707",
 		},
 		{
-			patronTier: 2,
 			roles: ["VIDEO_ADDER", "TOURNAMENT_ORGANIZER", "ARTIST"],
 			matchProfile: { mapModePreferences: fakePreferences(), vc: "YES" },
-			card: { shortBio: "Creator of sendou.ink" },
-			widgets: [
-				{ id: "bio", settings: { bio: "" } },
-				{ id: "badges-owned" },
-				{ id: "teams" },
-				{ id: "organizations" },
-				{ id: "peak-sp" },
-				{ id: "peak-xp" },
-			],
 		},
 	);
 
@@ -80,15 +63,42 @@ export async function seedUsers(): Promise<SeededUsers> {
 		{
 			discordId: NZAP_TEST_DISCORD_ID,
 			discordName: "N-ZAP",
+			discordUniqueName: "nzap",
 			discordAvatar: NZAP_TEST_AVATAR,
+			twitch: "nzap_stream",
+			youtubeId: "UCWbJLXByvsfQvTcR4HLPs5Q",
+			bsky: "nzap.bsky.social",
 			profile: {
 				country: "SE",
 				customUrl: "nzap",
+				motionSens: 50,
+				stickSens: 5,
+				pronouns: JSON.stringify({ subject: "they", object: "them" }),
 				inGameName: "N-ZAP#5678",
+				bio: showcaseNames.maxLengthBio(),
+				weapons: ([200, 1100, 2000, 4000] as const).map((weaponSplId) => ({
+					weaponSplId,
+					isFavorite: 0 as const,
+				})),
 			},
 			friendCode: "1234-5678-9012",
 		},
-		{ roles: ["ARTIST"] },
+		{
+			patronTier: 2,
+			roles: ["VIDEO_ADDER", "TOURNAMENT_ORGANIZER", "ARTIST"],
+			matchProfile: {
+				mapModePreferences: fakePreferences(),
+				vc: "YES",
+				languages: ["en", "ja"],
+				weaponPool: SplatoonFaker.mainWeapons(4).map((id) => ({
+					id,
+					isFavorite: false,
+				})),
+			},
+			card: { shortBio: "Supporter of sendou.ink" },
+			preferences: { newProfileEnabled: true },
+			widgets: nzapWidgets(),
+		},
 	);
 
 	const orgAdmin = await UserFactory.createOrgAdmin(null, {
@@ -165,7 +175,7 @@ async function seedShowcaseUsers() {
 				customUrl: "maximal",
 				country: "JP",
 				bio: showcaseNames.maxLengthBio(),
-				pronouns: "they/them",
+				pronouns: JSON.stringify({ subject: "they", object: "them" }),
 				motionSens: -25,
 				stickSens: 10,
 				inGameName: showcaseNames.kanaInGameName(),
@@ -230,6 +240,36 @@ async function seedShowcaseUsers() {
 	}
 
 	return { ids, artistIds, favoriteBadgeUserIds };
+}
+
+/** Widget profile of the one seeded supporter: both slots filled, and every widget
+ * whose content other modules seed onto N-ZAP. */
+function nzapWidgets(): NonNullable<
+	Parameters<typeof UserFactory.create>[1]
+>["widgets"] {
+	return [
+		{ id: "bio-md", settings: { bio: showcaseNames.maxLengthBio() } },
+		{ id: "teams" },
+		{ id: "organizations" },
+		{ id: "patron-since" },
+		{
+			id: "sens",
+			settings: { controller: "s2-pro-con", motionSens: 50, stickSens: 5 },
+		},
+		{ id: "timezone", settings: { timezone: "Europe/Stockholm" } },
+		{ id: "social-links" },
+		{ id: "weapon-pool" },
+		{ id: "badges-owned" },
+		{ id: "trophies-owned" },
+		{ id: "builds" },
+		{ id: "videos" },
+		{ id: "art", settings: { source: "ALL" } },
+		{ id: "x-rank-peaks", settings: { division: "both" } },
+		{ id: "peak-sp" },
+		{ id: "peak-xp" },
+		{ id: "friends" },
+		{ id: "highlighted-results" },
+	];
 }
 
 function showcaseOptions(): Parameters<typeof UserFactory.create>[1] {

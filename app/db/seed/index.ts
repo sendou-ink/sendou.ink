@@ -29,7 +29,7 @@ export async function seed() {
 	);
 	const teams = await runModule(() => seedTeams(users));
 	await runModule(() => seedCalendarEvents(users, badges));
-	await runModule(() =>
+	const tournaments = await runModule(() =>
 		seedTournaments({ users, organizations, badges, trophies }),
 	);
 	const sendouq = await runModule(() => seedSendouQ(users, teams));
@@ -37,7 +37,7 @@ export async function seed() {
 	await runModule(() => seedBuilds(users));
 	await runModule(() => seedScrimsAndLFG(users, teams));
 	await runModule(() => seedVods(users));
-	await runModule(() => seedMisc({ users, sendouq }));
+	await runModule(() => seedMisc({ users, sendouq, tournaments }));
 	await runModule(() => seedSpecialTrophies());
 
 	clearAllTournamentDataCache();

@@ -3,7 +3,7 @@ import * as showcaseNames from "../core/showcaseNames";
 import * as BuildFactory from "../factories/BuildFactory";
 import type { SeededUsers } from "./users";
 
-const ADMIN_BUILD_COUNT = 50;
+const NZAP_BUILD_COUNT = 50;
 const SPLATTERSHOT_ID = 40;
 const ONE_WEAPON_BUILD_COUNT = 40;
 const BUILD_HEAVY_USER_COUNT = 3;
@@ -12,8 +12,8 @@ const CROWD_BUILD_COUNT = 360;
 
 // xxx: maybe some private builds too?
 export async function seedBuilds(users: SeededUsers) {
-	await BuildFactory.createMany(ADMIN_BUILD_COUNT, () => ({
-		ownerId: users.adminId,
+	await BuildFactory.createMany(NZAP_BUILD_COUNT, () => ({
+		ownerId: users.nzapId,
 		// xxx: weird slice
 		title: showcaseNames.buildTitle().slice(0, 50),
 	}));

@@ -18,16 +18,9 @@ import type { SeededOrganization } from "./organizations";
 import type { SeededTrophies } from "./trophies";
 import type { SeededUsers } from "./users";
 
-// xxx: rethink what should be here
-
-const TOURNAMENT_NAME_STEMS = [
-	"PICNIC",
-	"Paddling Pool",
-	"In The Zone",
-	"The Depths",
-	"Swim or Sink",
-	"Leagues Under The Ink",
-];
+/** Series the played-out tournaments of the past are named off. The four the seed
+ * puts in a state worth opening are named off a series of their own. */
+const TOURNAMENT_NAME_STEMS = ["PICNIC", "The Depths", "Leagues Under The Ink"];
 
 const HISTORICAL_COUNT = 5;
 /** Showcase users seeded into every played tournament, so their results paginate. */
@@ -107,6 +100,11 @@ const SWISS_TO_SINGLE_ELIMINATION: Progression = [
 	},
 ];
 
+export type SeededTournaments = {
+	/** The one with registration still open, which the notifications are about. */
+	regOpen: { id: number; name: string };
+};
+
 export async function seedTournaments({
 	users,
 	organizations,
@@ -117,25 +115,18 @@ export async function seedTournaments({
 	organizations: SeededOrganization[];
 	badges: SeededBadges;
 	trophies: SeededTrophies;
-}) {
+}): Promise<SeededTournaments> {
 	const rosters = rosterBuilder(users);
 
-	await seedRegOpenDoubleElim({ users, organizations, rosters, trophies });
-	await seedRegClosedRoundRobin({ users, organizations, rosters });
-	await seedMidBracketDoubleElim({ users, organizations, rosters });
-	await seedSwissUnderway({ users, organizations, rosters });
-	await seedPlayedAwaitingFinalization({ users, organizations, rosters });
-	await seedFinalizedSingleElim({
+	const inTheZone = await seedInTheZone({
 		users,
 		organizations,
-		badges,
 		rosters,
 		trophies,
 	});
-	await seedFinalizedRoundRobin({ users, organizations, rosters });
-	await seedRegOpenOneVersusOne({ users });
-	await seedFinalizedTwoVersusTwo({ users, organizations, rosters });
-	await seedInvitational({ users, rosters });
+	await seedPaddlingPool({ users, organizations, rosters });
+	await seedLowInk({ users, organizations, rosters });
+	await seedSwimOrSink({ users, organizations, rosters });
 
 	await seedHistoricalTournaments({
 		users,
@@ -144,6 +135,8 @@ export async function seedTournaments({
 		rosters,
 		trophies,
 	});
+
+	return { regOpen: inTheZone };
 }
 
 type Ctx = {
@@ -152,18 +145,21 @@ type Ctx = {
 	rosters: ReturnType<typeof rosterBuilder>;
 };
 
-/** #1 double elim, 16-team cap, TO maps — reg open, partial rosters, trophy prize. */
-async function seedRegOpenDoubleElim({
+/** #1 double elim, TO maps — reg open and a couple of days out, so it has both
+ * registered teams (some of them still short of a full roster) and LFG teams. */
+async function seedInTheZone({
 	users,
 	organizations,
 	rosters,
 	trophies,
 }: Ctx & { trophies: SeededTrophies }) {
+	const name = nameFor("In The Zone");
+
 	const tournament = await TournamentFactory.create({
-		name: nameFor(0),
+		name,
 		authorId: users.adminId,
 		organizationId: organizations[0]?.id,
-		avatarFileName: "picnic.png",
+		avatarFileName: "in-the-zone.png",
 		startTimes: [dateToDatabaseTimestamp(daysFromNow(2))],
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
@@ -174,7 +170,6 @@ async function seedRegOpenDoubleElim({
 
 	const teamRosters = rosters.take({ teamCount: 10, teamSize: 4 });
 	teamRosters[0].unshift(users.adminId);
-	teamRosters[1].unshift(users.nzapId);
 
 	for (const [i, memberUserIds] of teamRosters.entries()) {
 		await TournamentTeamFactory.create({
@@ -187,43 +182,25 @@ async function seedRegOpenDoubleElim({
 	}
 
 	await seedTournamentExtras(tournament.id, users);
+
+	return { id: tournament.id, name };
 }
 
-/** #2 round robin → top cut + lower, TO maps — reg closed, bracket not started. */
-async function seedRegClosedRoundRobin({ users, rosters }: Ctx) {
+/** #2 double elim with an underground bracket, AUTO_SZ, ranked — bracket started,
+ * not a single set reported yet. */
+async function seedPaddlingPool({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
-		name: nameFor(1),
+		name: nameFor("Paddling Pool"),
 		authorId: users.adminId,
 		avatarFileName: "paddling-pool.png",
 		startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
-		mapPickingStyle: "TO",
-		mapPoolMaps: toSetMapPool(),
-		bracketProgression: ROUND_ROBIN_TO_TOP_CUT_AND_LOWER,
-		teamsPerGroup: 4,
-	});
-
-	await registerTeams({
-		tournamentId: tournament.id,
-		rosters: rosters.take({ teamCount: 12, teamSize: 4 }),
-		isCheckedIn: true,
-	});
-}
-
-/** #3 double elim, AUTO_SZ, ranked — a round or two played, matches in progress. */
-async function seedMidBracketDoubleElim({ users, rosters }: Ctx) {
-	const tournament = await TournamentFactory.create({
-		name: nameFor(2),
-		authorId: users.adminId,
-		avatarFileName: "in-the-zone.png",
-		startTimes: [dateToDatabaseTimestamp(hoursAgo(2))],
 		mapPickingStyle: "AUTO_SZ",
-		bracketProgression: DOUBLE_ELIMINATION,
+		bracketProgression: DOUBLE_ELIMINATION_WITH_UNDERGROUND,
 		isRanked: true,
 	});
 
 	const teamRosters = rosters.take({ teamCount: 12, teamSize: 4 });
-	teamRosters[0].unshift(users.adminId);
-	teamRosters[1].unshift(users.nzapId);
+	teamRosters[0].unshift(users.nzapId);
 
 	await registerTeams({
 		tournamentId: tournament.id,
@@ -233,16 +210,14 @@ async function seedMidBracketDoubleElim({ users, rosters }: Ctx) {
 	});
 
 	await TournamentFactory.startBracket(tournament.id);
-	await TournamentFactory.playMatches(tournament.id);
 }
 
-/** #4 swiss → SE, TO maps — swiss underway. */
-async function seedSwissUnderway({ users, rosters }: Ctx) {
+/** #3 swiss → SE, TO maps — swiss played to the end, the top cut waiting to be started. */
+async function seedLowInk({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
-		name: nameFor(3),
+		name: nameFor("Low Ink"),
 		authorId: users.adminId,
-		avatarFileName: "the-depths.png",
-		startTimes: [dateToDatabaseTimestamp(hoursAgo(2))],
+		startTimes: [dateToDatabaseTimestamp(hoursAgo(4))],
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
 		bracketProgression: SWISS_TO_SINGLE_ELIMINATION,
@@ -250,151 +225,37 @@ async function seedSwissUnderway({ users, rosters }: Ctx) {
 		swissRoundCount: 4,
 	});
 
+	const teamRosters = rosters.take({ teamCount: 8, teamSize: 4 });
+	teamRosters[0].unshift(users.nzapId);
+
 	await registerTeams({
 		tournamentId: tournament.id,
-		rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
+		rosters: teamRosters,
 		isCheckedIn: true,
 	});
 
-	await TournamentFactory.startBracket(tournament.id);
-	await TournamentFactory.playMatches(tournament.id);
+	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #5 double elim, 8 teams, AUTO_ALL — fully played, awaiting finalization. */
-async function seedPlayedAwaitingFinalization({ users, rosters }: Ctx) {
+/** #4 round robin → SE, TO maps — everybody checked in, first bracket not started. */
+async function seedSwimOrSink({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
-		name: nameFor(4),
+		name: nameFor("Swim or Sink"),
 		authorId: users.adminId,
 		avatarFileName: "swim-or-sink.png",
-		startTimes: [dateToDatabaseTimestamp(hoursAgo(4))],
-		mapPickingStyle: "AUTO_ALL",
-		mapPoolMaps: tiebreakerMapPool(),
-		bracketProgression: DOUBLE_ELIMINATION,
-	});
-
-	await registerTeams({
-		tournamentId: tournament.id,
-		rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
-		isCheckedIn: true,
-		mapPool: () => counterpickMapPool("AUTO_ALL"),
-	});
-
-	await TournamentFactory.playOut(tournament.id);
-}
-
-/** #6 single elim with third place match, TO maps — finalized, badge and trophy awarded. */
-async function seedFinalizedSingleElim({
-	users,
-	badges,
-	rosters,
-	trophies,
-}: Ctx & { badges: SeededBadges; trophies: SeededTrophies }) {
-	const badgeId = badges.ids[0];
-
-	const tournament = await TournamentFactory.create({
-		name: nameFor(5),
-		authorId: users.adminId,
-		avatarFileName: "luti.png",
-		startTimes: [dateToDatabaseTimestamp(hoursAgo(6))],
-		mapPickingStyle: "TO",
-		mapPoolMaps: toSetMapPool(),
-		bracketProgression: SINGLE_ELIMINATION,
-		thirdPlaceMatch: true,
-		badges: [badgeId],
-		trophyId: trophies.ids[0],
-	});
-
-	await registerTeams({
-		tournamentId: tournament.id,
-		rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
-		isCheckedIn: true,
-	});
-
-	await TournamentFactory.playOut(tournament.id, "all");
-}
-
-/** #7 round robin → SE, AUTO_SZ, ranked — finalized. */
-async function seedFinalizedRoundRobin({ users, rosters }: Ctx) {
-	const tournament = await TournamentFactory.create({
-		name: nameFor(6),
-		authorId: users.adminId,
-		startTimes: [dateToDatabaseTimestamp(daysAgo(1))],
-		mapPickingStyle: "AUTO_SZ",
-		bracketProgression: ROUND_ROBIN_TO_SINGLE_ELIMINATION,
-		teamsPerGroup: 4,
-		isRanked: true,
-	});
-
-	await registerTeams({
-		tournamentId: tournament.id,
-		rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
-		isCheckedIn: true,
-		mapPool: () => counterpickMapPool("AUTO_SZ"),
-	});
-
-	await TournamentFactory.playOut(tournament.id, "all");
-}
-
-/** #8 1v1 — reg open, exercises small-roster registration UI. */
-async function seedRegOpenOneVersusOne({ users }: Pick<Ctx, "users">) {
-	const tournament = await TournamentFactory.create({
-		name: nameFor(7),
-		authorId: users.adminId,
-		startTimes: [dateToDatabaseTimestamp(daysFromNow(1))],
-		mapPickingStyle: "AUTO_ALL",
-		mapPoolMaps: tiebreakerMapPool(),
-		bracketProgression: DOUBLE_ELIMINATION,
-		minMembersPerTeam: 1,
-	});
-
-	for (const userId of users.showcaseIds.slice(20, 36)) {
-		await TournamentTeamFactory.create({
-			tournamentId: tournament.id,
-			team: fakeTeamProfile(),
-			memberUserIds: [userId],
-		});
-	}
-}
-
-/** #9 2v2, AUTO_SZ — finalized. */
-async function seedFinalizedTwoVersusTwo({ users, rosters }: Ctx) {
-	const tournament = await TournamentFactory.create({
-		name: nameFor(8),
-		authorId: users.adminId,
-		startTimes: [dateToDatabaseTimestamp(daysAgo(2))],
-		mapPickingStyle: "AUTO_SZ",
-		bracketProgression: SINGLE_ELIMINATION,
-		minMembersPerTeam: 2,
-	});
-
-	await registerTeams({
-		tournamentId: tournament.id,
-		rosters: rosters.take({ teamCount: 8, teamSize: 2 }),
-		isCheckedIn: true,
-		mapPool: () => counterpickMapPool("AUTO_SZ"),
-	});
-
-	await TournamentFactory.playOut(tournament.id, "all");
-}
-
-/** #10 invitational double elim, TO maps — pre-bracket, no open reg. */
-async function seedInvitational({
-	users,
-	rosters,
-}: Pick<Ctx, "users" | "rosters">) {
-	const tournament = await TournamentFactory.create({
-		name: nameFor(9),
-		authorId: users.adminId,
 		startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
-		bracketProgression: DOUBLE_ELIMINATION,
-		isInvitational: true,
+		bracketProgression: ROUND_ROBIN_TO_SINGLE_ELIMINATION,
+		teamsPerGroup: 4,
 	});
+
+	const teamRosters = rosters.take({ teamCount: 12, teamSize: 4 });
+	teamRosters[0].unshift(users.nzapId);
 
 	await registerTeams({
 		tournamentId: tournament.id,
-		rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
+		rosters: teamRosters,
 		isCheckedIn: true,
 	});
 }
@@ -411,6 +272,7 @@ async function seedHistoricalTournaments({
 			{ value: ROUND_ROBIN_TO_SINGLE_ELIMINATION, weight: 3 },
 			{ value: SINGLE_ELIMINATION, weight: 1 },
 			{ value: DOUBLE_ELIMINATION_WITH_UNDERGROUND, weight: 1 },
+			{ value: ROUND_ROBIN_TO_TOP_CUT_AND_LOWER, weight: 1 },
 		]);
 		// recent ones ranked and within the front page's week-long results window
 		const isRecent = i < 3;
@@ -421,7 +283,7 @@ async function seedHistoricalTournaments({
 
 		const tournament = await TournamentFactory.create(
 			{
-				name: nameFor(10 + i),
+				name: nameFor(TOURNAMENT_NAME_STEMS[i % TOURNAMENT_NAME_STEMS.length]),
 				authorId: faker.helpers.arrayElement(users.showcaseIds),
 				startTimes: [dateToDatabaseTimestamp(startsAt)],
 				mapPickingStyle: isRecent ? "AUTO_SZ" : "AUTO_ALL",
@@ -435,9 +297,18 @@ async function seedHistoricalTournaments({
 			{ tier: ((i % 3) + 1) as TournamentTierNumber },
 		);
 
+		const teamRosters = rosters.take({ teamCount: 8, teamSize: 4 });
+		// on the top seed of the first one, so that a win of his is finalized, and
+		// further down another, so his result list is not all first places
+		if (i === 0) {
+			teamRosters[0].unshift(users.nzapId);
+		} else if (i === 2) {
+			teamRosters[5].unshift(users.nzapId);
+		}
+
 		await registerTeams({
 			tournamentId: tournament.id,
-			rosters: rosters.take({ teamCount: 8, teamSize: 4 }),
+			rosters: teamRosters,
 			isCheckedIn: true,
 			registeredAt: sub(startsAt, { days: 2 }),
 			mapPool: () => counterpickMapPool(isRecent ? "AUTO_SZ" : "AUTO_ALL"),
@@ -452,8 +323,10 @@ async function seedTournamentExtras(tournamentId: number, users: SeededUsers) {
 		await TournamentStreamerFactory.create({ tournamentId, twitchAccount });
 	}
 
+	const lfgUserIds = [users.nzapId, ...users.showcaseIds.slice(90, 95)];
+
 	const lfgTeamIds: number[] = [];
-	for (const [i, userId] of users.showcaseIds.slice(90, 96).entries()) {
+	for (const [i, userId] of lfgUserIds.entries()) {
 		const team = await TournamentLFGTeamFactory.create(
 			{ tournamentId, userId },
 			{ likedTeamIds: lfgTeamIds.slice(0, i % 3) },
@@ -532,9 +405,8 @@ function fakeTeamProfile() {
 	};
 }
 
-function nameFor(index: number) {
-	const stem = TOURNAMENT_NAME_STEMS[index % TOURNAMENT_NAME_STEMS.length];
-
+/** Series name and the edition of it this tournament is, as they are named. */
+function nameFor(stem: string) {
 	return `${stem} ${faker.number.int({ min: 2, max: 120 })}`;
 }
 
@@ -575,10 +447,6 @@ function legalStages(mode: ModeShort): StageId[] {
 
 function daysFromNow(days: number) {
 	return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-}
-
-function daysAgo(days: number) {
-	return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
 function hoursAgo(hours: number) {

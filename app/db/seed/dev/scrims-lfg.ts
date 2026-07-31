@@ -85,7 +85,7 @@ async function seedScrimPosts(users: SeededUsers, teams: SeededTeams) {
 
 async function seedLFGPosts(users: SeededUsers, teams: SeededTeams) {
 	const authorIds = [
-		users.nzapId,
+		users.adminId,
 		...faker.helpers.arrayElements(
 			[...users.showcaseIds, ...users.crowdIds],
 			LFG_POST_COUNT - 2,
@@ -99,11 +99,12 @@ async function seedLFGPosts(users: SeededUsers, teams: SeededTeams) {
 		});
 	}
 
+	// posted by the owner of the team it is looking for players for
 	await LFGPostFactory.create({
-		authorId: users.adminId,
+		authorId: users.nzapId,
 		type: "TEAM_FOR_PLAYER",
 		teamId: teams.allianceRogueId,
-		timezone: "Europe/Helsinki",
+		timezone: "Europe/Stockholm",
 	});
 }
 

@@ -59,7 +59,7 @@ export default function AdminPage() {
 	const isStaff = useHasRole("STAFF");
 
 	// is dev user or is someone impersonating another user (allow them to stop)
-	if (!isStaff) {
+	if (!isStaff && !DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		return (
 			<Main>
 				<Impersonate />
