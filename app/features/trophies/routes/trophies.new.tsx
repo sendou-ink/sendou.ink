@@ -448,6 +448,8 @@ function ModelSpecs({ analysis }: { analysis: TrophyModelAnalysis | null }) {
 					<SpecItem>{t("trophies:new.specs.centered")}</SpecItem>
 					<SpecItem>{t("trophies:new.specs.zoom")}</SpecItem>
 					<SpecItem>{t("trophies:new.specs.angles")}</SpecItem>
+					<SpecItem>{t("trophies:new.specs.noStandaloneFlag")}</SpecItem>
+					<SpecItem>{t("trophies:new.specs.noTrademarked")}</SpecItem>
 				</ul>
 			</div>
 			<div>

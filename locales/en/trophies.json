@@ -22,6 +22,8 @@
 	"new.specs.centered": "Model must be visually centered on all axes",
 	"new.specs.zoom": "Zoom must be adjusted so the model fills out the viewport as much as possible without touching any edges",
 	"new.specs.angles": "Model must be viewable from all angles",
+	"new.specs.noStandaloneFlag": "Model can't be a standalone flag",
+	"new.specs.noTrademarked": "Do not depict trademarked material",
 	"new.specs.background": "Background color must be the alpha color",
 	"new.specs.drawCalls": "Max {{value}} draw calls",
 	"new.specs.polys": "Max {{value}} polys",
