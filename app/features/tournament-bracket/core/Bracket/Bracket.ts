@@ -358,6 +358,14 @@ export abstract class Bracket {
 		);
 	}
 
+	/**
+	 * Whether the standings of this bracket are final i.e. no further match can
+	 * change them. While false the standings are provisional.
+	 */
+	get standingsAreFinal() {
+		return this.everyMatchOver;
+	}
+
 	get everyMatchOver() {
 		if (this.preview) return false;
 

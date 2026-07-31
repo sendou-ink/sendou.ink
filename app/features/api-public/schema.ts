@@ -360,6 +360,7 @@ export interface GetTournamentBracketResponse {
 /** GET /api/tournament/{tournamentId}/brackets/{bracketIndex}/standings */
 
 export interface GetTournamentBracketStandingsResponse {
+	finished: boolean;
 	standings: Array<{
 		tournamentTeamId: number;
 		placement: number;

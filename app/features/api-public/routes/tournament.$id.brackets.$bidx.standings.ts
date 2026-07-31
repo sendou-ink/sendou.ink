@@ -22,7 +22,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (bracket.preview) throw new Response(null, { status: 404 });
 
 	const result: GetTournamentBracketStandingsResponse = {
-		standings: bracket.standings.map((standing) => ({
+		finished: bracket.standingsAreFinal,
+		standings: bracket.currentStandings(true).map((standing) => ({
 			tournamentTeamId: standing.team.id,
 			placement: standing.placement,
 			groupId: standing.groupId,

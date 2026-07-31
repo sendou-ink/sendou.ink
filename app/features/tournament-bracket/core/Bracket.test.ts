@@ -146,14 +146,15 @@ describe("swiss standings - losses against tied", () => {
 		expect(teamWithBye?.stats?.setLosses).toBe(0);
 	});
 
-	it("team with only unfinished matches should not be in the current standings", () => {
+	it("team with only unfinished matches should be in the current standings with blank stats", () => {
 		const tournament = inProgressSwissTestTournament();
 
 		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
 
 		const playingTeam = standings.find((standing) => standing.team.id === 1);
 
-		expect(playingTeam).toBe(undefined);
+		expect(playingTeam?.stats?.setWins).toBe(0);
+		expect(playingTeam?.stats?.setLosses).toBe(0);
 	});
 });
 

@@ -26,56 +26,9 @@ export function PlacementsTable({
 }) {
 	const user = useUser();
 
-	const _standings = bracket
+	const standings = bracket
 		.currentStandings(true)
 		.filter((s) => s.groupId === groupId);
-
-	const missingTeams = bracket.data.match.reduce((acc, cur) => {
-		if (cur.groupId !== groupId) return acc;
-
-		if (
-			cur.opponent1?.id &&
-			!_standings.some((s) => s.team.id === cur.opponent1!.id) &&
-			!acc.includes(cur.opponent1.id)
-		) {
-			acc.push(cur.opponent1.id);
-		}
-
-		if (
-			cur.opponent2?.id &&
-			!_standings.some((s) => s.team.id === cur.opponent2!.id) &&
-			!acc.includes(cur.opponent2.id)
-		) {
-			acc.push(cur.opponent2.id);
-		}
-
-		return acc;
-	}, [] as number[]);
-
-	const standings = _standings
-		.concat(
-			missingTeams.map((id) => ({
-				team: bracket.tournament.teamById(id)!,
-				stats: {
-					mapLosses: 0,
-					mapWins: 0,
-					koCount: 0,
-					setLosses: 0,
-					setWins: 0,
-					winsAgainstTied: 0,
-					lossesAgainstTied: 0,
-				},
-				placement: Math.max(..._standings.map((s) => s.placement)) + 1,
-				groupId,
-			})),
-		)
-		.sort((a, b) => {
-			if (a.placement === b.placement && a.team.seed && b.team.seed) {
-				return a.team.seed - b.team.seed;
-			}
-
-			return a.placement - b.placement;
-		});
 
 	const destinationBracket = (standing: Standing, placement: number) => {
 		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {

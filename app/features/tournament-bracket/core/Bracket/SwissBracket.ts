@@ -31,22 +31,7 @@ export class SwissBracket extends Bracket {
 		}
 		const standings = this.standings;
 
-		const relevantMatchesFinished = this.data.round.every((round) => {
-			const roundsMatches = this.data.match.filter(
-				(match) => match.roundId === round.id,
-			);
-
-			// some round has not started yet
-			if (roundsMatches.length === 0) return false;
-
-			return roundsMatches.every((match) => {
-				if (match.opponent1 && match.opponent2 && !match.winnerSide) {
-					return false;
-				}
-
-				return true;
-			});
-		});
+		const relevantMatchesFinished = this.standingsAreFinal;
 
 		if (advanceThreshold) {
 			return {
@@ -84,6 +69,15 @@ export class SwissBracket extends Bracket {
 				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
 				.map((s) => s.team.id),
 		};
+	}
+
+	/** Swiss rounds are paired one at a time, so a round that has no matches yet can still change the standings. */
+	get standingsAreFinal() {
+		const everyRoundPaired = this.data.round.every((round) =>
+			this.data.match.some((match) => match.roundId === round.id),
+		);
+
+		return everyRoundPaired && this.everyMatchOver;
 	}
 
 	get standings(): Standing[] {
@@ -183,6 +177,13 @@ export class SwissBracket extends Bracket {
 				}
 
 				if (!match.winnerSide) {
+					// teams yet to finish a match still belong in the standings
+					if (match.opponent1?.id) {
+						updateTeam({ teamId: match.opponent1.id });
+					}
+					if (match.opponent2?.id) {
+						updateTeam({ teamId: match.opponent2.id });
+					}
 					continue;
 				}
 
