@@ -66,14 +66,22 @@ async function ensureMinioRunning(): Promise<boolean> {
 	return true;
 }
 
-function killProcessOnPort(port: number): void {
+/** Kills anything listening on the port range, returning whether something was killed. */
+function killProcessesOnPorts(firstPort: number, lastPort: number): boolean {
 	try {
-		// Try to find and kill any process on this port (macOS/Linux)
-		execSync(`lsof -ti :${port} | xargs -r kill -9 2>/dev/null || true`, {
+		const pids = execSync(`lsof -ti :${firstPort}-${lastPort} || true`, {
+			stdio: "pipe",
+		})
+			.toString()
+			.trim();
+		if (pids === "") return false;
+
+		execSync(`kill -9 ${pids.split("\n").join(" ")} 2>/dev/null || true`, {
 			stdio: "pipe",
 		});
+		return true;
 	} catch {
-		// Ignore errors - port might already be free
+		return false;
 	}
 }
 
@@ -89,7 +97,7 @@ async function waitForServer(port: number, timeout = 120000): Promise<void> {
 		} catch {
 			// Server not ready yet
 		}
-		await new Promise((resolve) => setTimeout(resolve, 250));
+		await new Promise((resolve) => setTimeout(resolve, 100));
 	}
 	throw new Error(`Server on port ${port} did not start within ${timeout}ms`);
 }
@@ -177,11 +185,14 @@ async function globalSetup(config: FullConfig) {
 	// Kill any existing processes on our ports before starting
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("Cleaning up any existing processes on e2e ports...");
-	for (let i = 0; i < workerCount; i++) {
-		killProcessOnPort(E2E_BASE_PORT + i);
+	const killedSomething = killProcessesOnPorts(
+		E2E_BASE_PORT,
+		E2E_BASE_PORT + workerCount - 1,
+	);
+	if (killedSomething) {
+		// Wait briefly for ports to be released
+		await new Promise((resolve) => setTimeout(resolve, 500));
 	}
-	// Wait briefly for ports to be released
-	await new Promise((resolve) => setTimeout(resolve, 500));
 
 	for (let i = 0; i < workerCount; i++) {
 		const port = E2E_BASE_PORT + i;
@@ -192,27 +203,35 @@ async function globalSetup(config: FullConfig) {
 		// Start server
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(`Starting server for worker ${i} on port ${port}...`);
-		const serverProcess = spawn("pnpm", ["start"], {
-			env: {
-				...process.env,
-				DB_PATH: dbPath,
-				PORT: String(port),
-				DISCORD_CLIENT_ID: "123",
-				DISCORD_CLIENT_SECRET: "secret",
-				SESSION_SECRET: "secret",
-				VITE_SITE_DOMAIN: `http://localhost:${port}`,
-				VITE_E2E_TEST_RUN: "true",
-				STORAGE_END_POINT: "http://127.0.0.1:9000",
-				STORAGE_ACCESS_KEY: "minio-user",
-				STORAGE_SECRET: "minio-password",
-				STORAGE_REGION: "us-east-1",
-				STORAGE_BUCKET: "sendou",
-				// no system messages to a shared skalop instance (see build env above)
-				SKALOP_SYSTEM_MESSAGE_URL: "",
-				SKALOP_TOKEN: "",
+		// react-router-serve directly instead of `pnpm start`: ensureMigratedDb
+		// above already migrated (the script's `migrate up` step is redundant) and
+		// the Sentry instrument import only adds request overhead with no DSN set
+		const serverProcess = spawn(
+			"node_modules/.bin/react-router-serve",
+			["./build/server/index.js"],
+			{
+				env: {
+					...process.env,
+					NODE_ENV: "production",
+					DB_PATH: dbPath,
+					PORT: String(port),
+					DISCORD_CLIENT_ID: "123",
+					DISCORD_CLIENT_SECRET: "secret",
+					SESSION_SECRET: "secret",
+					VITE_SITE_DOMAIN: `http://localhost:${port}`,
+					VITE_E2E_TEST_RUN: "true",
+					STORAGE_END_POINT: "http://127.0.0.1:9000",
+					STORAGE_ACCESS_KEY: "minio-user",
+					STORAGE_SECRET: "minio-password",
+					STORAGE_REGION: "us-east-1",
+					STORAGE_BUCKET: "sendou",
+					// no system messages to a shared skalop instance (see build env above)
+					SKALOP_SYSTEM_MESSAGE_URL: "",
+					SKALOP_TOKEN: "",
+				},
+				detached: false,
 			},
-			detached: false,
-		});
+		);
 
 		SERVER_PROCESSES.push(serverProcess);
 
