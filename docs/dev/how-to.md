@@ -22,8 +22,7 @@ export function up(db) {
 Note: No need to implement the "down" migration
 
 3) Update the typings in `app/db/tables.ts`
-4) Run `pnpm run migrate up` to apply your migration
-4) Set env var `DB_PATH=db-test.sqlite3` in `.env` file & run the `pnpm run migrate up` command again to update the database used in unit tests
+4) Run `pnpm run migrate up` to apply your migration (the unit test database `db-test.sqlite3` is created and migrated automatically when unit tests run)
 
 ## Add a new translation string
 

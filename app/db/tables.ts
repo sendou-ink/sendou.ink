@@ -644,19 +644,6 @@ export interface TournamentStage {
 	createdAt: Generated<number>;
 }
 
-/** Tournament sub post, shown in a list of subs available for teams to pick from. */
-export interface TournamentSub {
-	bestWeapons: JSONColumnType<MainWeaponId[]>;
-	/** 0 = no, 1 = yes, 2 = listen only */
-	canVc: number;
-	createdAt: Generated<number>;
-	message: string | null;
-	okWeapons: JSONColumnTypeNullable<MainWeaponId[]>;
-	tournamentId: number;
-	userId: number;
-	visibility: "+1" | "+2" | "+3" | "ALL";
-}
-
 export interface TournamentLFGLike {
 	likerTeamId: number;
 	targetTeamId: number;
@@ -1279,7 +1266,6 @@ export interface DB {
 	TournamentResult: TournamentResult;
 	TournamentRound: TournamentRound;
 	TournamentStage: TournamentStage;
-	TournamentSub: TournamentSub;
 	TournamentTeam: TournamentTeam;
 	TournamentTeamCheckIn: TournamentTeamCheckIn;
 	TournamentTeamMember: TournamentTeamMember;

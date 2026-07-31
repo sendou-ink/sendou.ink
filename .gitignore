@@ -11,8 +11,6 @@ translation-progress.md
 notes.md
 
 db*.sqlite3*
-!db-test.sqlite3
-!e2e/seeds/*.sqlite3
 dump
 
 .DS_Store
@@ -33,5 +31,6 @@ dump
 # Real baselines have pattern: *-chromium-darwin.png
 **/__screenshots__/**/*-[0-9].png
 .e2e-minio-started
+.e2e-build-marker
 
 notepad.txt

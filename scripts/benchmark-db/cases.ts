@@ -686,9 +686,9 @@ export function buildCases(fx: Fixtures): {
 	);
 	add(
 		"TournamentLFGRepository.findAllSubsByTournamentId",
-		fx.subsTournamentId,
-		(tournamentId) =>
-			TournamentLFGRepository.findAllSubsByTournamentId(tournamentId),
+		fx.lfgTournament,
+		(lfg) =>
+			TournamentLFGRepository.findAllSubsByTournamentId(lfg.tournamentId),
 	);
 
 	// TournamentMatchRepository

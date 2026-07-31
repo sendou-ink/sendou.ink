@@ -1,55 +1,62 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as TrophyRepository from "./TrophyRepository.server";
 
 describe("trophy approvals", () => {
 	let pendingTrophyId: number;
+	let reviewerIds: number[];
 
 	beforeEach(async () => {
-		await dbInsertUsers(4);
-		await db
-			.insertInto("TournamentOrganization")
-			.values({ name: "Test Org", slug: "test-org" })
-			.execute();
+		const submitter = await UserFactory.create();
+		reviewerIds = (await UserFactory.createMany(3)).map((user) => user.id);
+		const organization = await TournamentOrganizationFactory.create({
+			ownerId: submitter.id,
+		});
 
-		const pending = await TrophyRepository.createPending({
-			name: "Test Trophy",
-			model: "model",
-			description: "",
-			organizationId: 1,
-			submitterUserId: 1,
+		const pending = await TrophyFactory.createPending({
+			organizationId: organization.id,
+			submitterUserId: submitter.id,
 		});
 		pendingTrophyId = pending.id;
 	});
 
-	afterEach(() => dbReset());
-
 	test("creates the trophy exactly once when approvals exceed the required count", async () => {
+		const [first, second, third] = reviewerIds;
+
 		expect(
-			await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 }),
+			await TrophyRepository.addApproval({ pendingTrophyId, userId: first }),
 		).toBe(null);
 
 		const accepted = await TrophyRepository.addApproval({
 			pendingTrophyId,
-			userId: 3,
+			userId: second,
 		});
 		expect(accepted?.id).toBeTypeOf("number");
 
 		expect(
-			await TrophyRepository.addApproval({ pendingTrophyId, userId: 4 }),
+			await TrophyRepository.addApproval({ pendingTrophyId, userId: third }),
 		).toBe(null);
 
 		expect(await trophyCount()).toBe(1);
 	});
 
 	test("ignores repeated approvals from the same user", async () => {
-		await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 });
+		await TrophyRepository.addApproval({
+			pendingTrophyId,
+			userId: reviewerIds[0],
+		});
 
 		expect(
-			await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 }),
+			await TrophyRepository.addApproval({
+				pendingTrophyId,
+				userId: reviewerIds[0],
+			}),
 		).toBe(null);
 
 		const pending = await TrophyRepository.findPendingById(pendingTrophyId);
@@ -58,24 +65,36 @@ describe("trophy approvals", () => {
 	});
 
 	test("re-approval after acceptance does not create another trophy", async () => {
-		await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 });
-		await TrophyRepository.addApproval({ pendingTrophyId, userId: 3 });
+		await TrophyRepository.addApproval({
+			pendingTrophyId,
+			userId: reviewerIds[0],
+		});
+		await TrophyRepository.addApproval({
+			pendingTrophyId,
+			userId: reviewerIds[1],
+		});
 
 		expect(
-			await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 }),
+			await TrophyRepository.addApproval({
+				pendingTrophyId,
+				userId: reviewerIds[0],
+			}),
 		).toBe(null);
 
 		expect(await trophyCount()).toBe(1);
 	});
 
 	test("declines a pending trophy that is not accepted", async () => {
-		await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 });
+		await TrophyRepository.addApproval({
+			pendingTrophyId,
+			userId: reviewerIds[0],
+		});
 
 		expect(
 			await TrophyRepository.declinePending({
 				id: pendingTrophyId,
 				reason: "reason",
-				declinedByUserId: 3,
+				declinedByUserId: reviewerIds[1],
 			}),
 		).toBe(true);
 
@@ -85,14 +104,20 @@ describe("trophy approvals", () => {
 	});
 
 	test("does not decline an already accepted pending trophy", async () => {
-		await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 });
-		await TrophyRepository.addApproval({ pendingTrophyId, userId: 3 });
+		await TrophyRepository.addApproval({
+			pendingTrophyId,
+			userId: reviewerIds[0],
+		});
+		await TrophyRepository.addApproval({
+			pendingTrophyId,
+			userId: reviewerIds[1],
+		});
 
 		expect(
 			await TrophyRepository.declinePending({
 				id: pendingTrophyId,
 				reason: "reason",
-				declinedByUserId: 4,
+				declinedByUserId: reviewerIds[2],
 			}),
 		).toBe(false);
 
@@ -105,12 +130,18 @@ describe("trophy approvals", () => {
 		await TrophyRepository.declinePending({
 			id: pendingTrophyId,
 			reason: "reason",
-			declinedByUserId: 2,
+			declinedByUserId: reviewerIds[0],
 		});
 
-		await TrophyRepository.addApproval({ pendingTrophyId, userId: 2 });
+		await TrophyRepository.addApproval({
+			pendingTrophyId,
+			userId: reviewerIds[0],
+		});
 		expect(
-			await TrophyRepository.addApproval({ pendingTrophyId, userId: 3 }),
+			await TrophyRepository.addApproval({
+				pendingTrophyId,
+				userId: reviewerIds[1],
+			}),
 		).toBe(null);
 
 		expect(await trophyCount()).toBe(0);
@@ -118,116 +149,75 @@ describe("trophy approvals", () => {
 });
 
 describe("trophy list tiers", () => {
+	let authorId: number;
 	let trophyId: number;
 
 	beforeEach(async () => {
-		await dbInsertUsers(2);
+		const author = await UserFactory.create();
+		authorId = author.id;
 
-		const trophy = await db
-			.insertInto("Trophy")
-			.values({
-				name: "Tiered Trophy",
-				model: "model",
-				creatorId: 1,
-				managerId: 1,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
+		const trophy = await TrophyFactory.create({ name: "Tiered Trophy" });
 		trophyId = trophy.id;
 	});
 
-	afterEach(() => dbReset());
-
 	test("an upcoming tournament without tier info does not hide the earned tier", async () => {
-		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
-		await insertTrophyTournament({ trophyId, tier: null, startInDays: 10 });
+		await createTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
+		await createTrophyTournament({ trophyId, tier: null, startInDays: 10 });
 
-		const trophy = (await TrophyRepository.all()).find(
-			(row) => row.name === "Tiered Trophy",
-		);
-
-		expect(trophy?.tier).toBe(3);
+		expect(await findTrophyByName("Tiered Trophy")).toMatchObject({ tier: 3 });
 	});
 
 	test("uses the most recent tier when multiple tournaments have one", async () => {
-		await insertTrophyTournament({ trophyId, tier: 5, startInDays: -30 });
-		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -7 });
+		await createTrophyTournament({ trophyId, tier: 5, startInDays: -30 });
+		await createTrophyTournament({ trophyId, tier: 3, startInDays: -7 });
 
-		const trophy = (await TrophyRepository.all()).find(
-			(row) => row.name === "Tiered Trophy",
-		);
-
-		expect(trophy?.tier).toBe(3);
+		expect(await findTrophyByName("Tiered Trophy")).toMatchObject({ tier: 3 });
 	});
 
 	test("has no tier when no linked tournament has tier info", async () => {
-		await insertTrophyTournament({ trophyId, tier: null, startInDays: 10 });
+		await createTrophyTournament({ trophyId, tier: null, startInDays: 10 });
 
-		const trophy = (await TrophyRepository.all()).find(
-			(row) => row.name === "Tiered Trophy",
-		);
-
-		expect(trophy?.tier).toBe(null);
-		expect(trophy?.tentativeTier).toBe(null);
+		expect(await findTrophyByName("Tiered Trophy")).toMatchObject({
+			tier: null,
+			tentativeTier: null,
+		});
 	});
 
 	test("returns the start time of the next upcoming tournament", async () => {
-		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
-		await insertTrophyTournament({ trophyId, tier: null, startInDays: 20 });
-		await insertTrophyTournament({ trophyId, tier: null, startInDays: 10 });
+		await createTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
+		await createTrophyTournament({ trophyId, tier: null, startInDays: 20 });
+		await createTrophyTournament({ trophyId, tier: null, startInDays: 10 });
 
-		const trophy = (await TrophyRepository.all()).find(
-			(row) => row.name === "Tiered Trophy",
-		);
+		const trophy = await findTrophyByName("Tiered Trophy");
 
-		const expected = dateToDatabaseTimestamp(
-			new Date(Date.now() + 10 * 24 * 60 * 60 * 1000),
-		);
+		const expected = dateToDatabaseTimestamp(daysFromNow(10));
 		expect(
 			Math.abs((trophy?.upcomingTournamentAt ?? 0) - expected),
 		).toBeLessThan(10);
 	});
 
 	test("sorts trophies with an upcoming tournament first within the same tier", async () => {
-		await insertTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
+		await createTrophyTournament({ trophyId, tier: 3, startInDays: -21 });
 
-		const upcoming = await db
-			.insertInto("Trophy")
-			.values({
-				name: "Upcoming Trophy",
-				model: "model",
-				creatorId: 1,
-				managerId: 1,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-		await insertTrophyTournament({
+		const upcoming = await TrophyFactory.create({ name: "Upcoming Trophy" });
+		await createTrophyTournament({
 			trophyId: upcoming.id,
 			tier: 3,
 			startInDays: -14,
 		});
-		await insertTrophyTournament({
+		await createTrophyTournament({
 			trophyId: upcoming.id,
 			tier: null,
 			startInDays: 10,
 		});
 
-		const distant = await db
-			.insertInto("Trophy")
-			.values({
-				name: "Distant Trophy",
-				model: "model",
-				creatorId: 1,
-				managerId: 1,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-		await insertTrophyTournament({
+		const distant = await TrophyFactory.create({ name: "Distant Trophy" });
+		await createTrophyTournament({
 			trophyId: distant.id,
 			tier: 3,
 			startInDays: -7,
 		});
-		await insertTrophyTournament({
+		await createTrophyTournament({
 			trophyId: distant.id,
 			tier: null,
 			startInDays: 5 * 7,
@@ -241,7 +231,30 @@ describe("trophy list tiers", () => {
 			"Distant Trophy",
 		]);
 	});
+
+	function createTrophyTournament({
+		trophyId,
+		tier,
+		startInDays,
+	}: {
+		trophyId: number;
+		tier: TournamentTierNumber | null;
+		startInDays: number;
+	}) {
+		return TournamentFactory.create(
+			{
+				authorId,
+				startTimes: [dateToDatabaseTimestamp(daysFromNow(startInDays))],
+				trophyId,
+			},
+			tier ? { tier } : undefined,
+		);
+	}
 });
+
+async function findTrophyByName(name: string) {
+	return (await TrophyRepository.all()).find((row) => row.name === name);
+}
 
 async function trophyCount() {
 	const { count } = await db
@@ -252,44 +265,5 @@ async function trophyCount() {
 	return count;
 }
 
-async function insertTrophyTournament({
-	trophyId,
-	tier,
-	startInDays,
-}: {
-	trophyId: number;
-	tier: TournamentTierNumber | null;
-	startInDays: number;
-}) {
-	const tournament = await db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "AUTO_ALL",
-			settings: JSON.stringify({ bracketProgression: [] }),
-			tier,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	const event = await db
-		.insertInto("CalendarEvent")
-		.values({
-			name: `Tournament ${tournament.id}`,
-			bracketUrl: "https://example.com",
-			authorId: 1,
-			tournamentId: tournament.id,
-			trophyId,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	await db
-		.insertInto("CalendarEventDate")
-		.values({
-			eventId: event.id,
-			startsAt: dateToDatabaseTimestamp(
-				new Date(Date.now() + startInDays * 24 * 60 * 60 * 1000),
-			),
-		})
-		.execute();
-}
+const daysFromNow = (days: number) =>
+	new Date(Date.now() + days * 24 * 60 * 60 * 1000);

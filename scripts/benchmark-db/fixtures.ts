@@ -75,7 +75,6 @@ export interface Fixtures {
 	} | null;
 	lfgAuthorId: number | null;
 	lfgTournament: { tournamentId: number; teamId: number } | null;
-	subsTournamentId: number | null;
 	auditTournamentId: number | null;
 	xrank: {
 		userId: number;
@@ -154,7 +153,6 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		heavyAssociation: await resolveHeavyAssociation(),
 		lfgAuthorId: await resolveLfgAuthorId(),
 		lfgTournament: await resolveLfgTournament(),
-		subsTournamentId: (await resolveSubsTournamentId()) ?? heavyTournamentId,
 		auditTournamentId: (await resolveAuditTournamentId()) ?? heavyTournamentId,
 		xrank: await resolveXRank(),
 		heavyArtUserId: await resolveHeavyArtUserId(),
@@ -932,18 +930,6 @@ async function resolveLfgTournament() {
 	if (!row) return null;
 
 	return { tournamentId: row.tournamentId, teamId: row.id };
-}
-
-async function resolveSubsTournamentId() {
-	const row = await db
-		.selectFrom("TournamentSub")
-		.select(({ fn }) => ["tournamentId", fn.countAll<number>().as("count")])
-		.groupBy("tournamentId")
-		.orderBy("count", "desc")
-		.limit(1)
-		.executeTakeFirst();
-
-	return row?.tournamentId ?? null;
 }
 
 async function resolveAuditTournamentId() {

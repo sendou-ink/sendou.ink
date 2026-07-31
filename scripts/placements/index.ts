@@ -1,5 +1,3 @@
-import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
@@ -17,9 +15,7 @@ invariant(
 	"jsonNumber must be an integer (argument 1)",
 );
 
-type Placements = Array<
-	Omit<Tables["XRankPlacement"], "playerId" | "id"> & { playerSplId: string }
->;
+type Placements = XRankPlacementRepository.XRankPlacementInsertArgs[];
 
 const modes = ["splatzones", "towercontrol", "rainmaker", "clamblitz"] as const;
 const modeToShort = {
@@ -35,7 +31,9 @@ void main();
 async function main() {
 	const placements: Placements = [];
 
-	await wipeMonthYearPlacements(resolveMonthYear(jsonNumber));
+	await XRankPlacementRepository.deleteAllByMonthYear(
+		resolveMonthYear(jsonNumber),
+	);
 	for (const mode of modes) {
 		for (const region of regions) {
 			for (const includeWeapon of [false]) {
@@ -51,7 +49,7 @@ async function main() {
 		}
 	}
 
-	await addPlacements(placements);
+	await XRankPlacementRepository.insertMany(placements);
 	await XRankPlacementRepository.refreshAllPeakXp();
 	await BadgeRepository.syncXPBadges();
 	await BuildRepository.recalculateAllSortValues();
@@ -138,42 +136,4 @@ function resolveMonthYear(number: number) {
 		month: start.getMonth() + 1,
 		year: start.getFullYear(),
 	};
-}
-
-function addPlacements(placements: Placements) {
-	return db.transaction().execute(async (trx) => {
-		for (const { playerSplId, ...placement } of placements) {
-			await trx
-				.insertInto("SplatoonPlayer")
-				.values({ splId: playerSplId })
-				.onConflict((oc) => oc.column("splId").doNothing())
-				.execute();
-
-			await trx
-				.insertInto("XRankPlacement")
-				.values({
-					...placement,
-					playerId: (eb) =>
-						eb
-							.selectFrom("SplatoonPlayer")
-							.select("SplatoonPlayer.id")
-							.where("splId", "=", playerSplId),
-				})
-				.execute();
-		}
-	});
-}
-
-function wipeMonthYearPlacements({
-	month,
-	year,
-}: {
-	month: number;
-	year: number;
-}) {
-	return db
-		.deleteFrom("XRankPlacement")
-		.where("month", "=", month)
-		.where("year", "=", year)
-		.execute();
 }

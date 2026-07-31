@@ -26,7 +26,6 @@ import styles from "~/styles/front.module.css";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	BLANK_IMAGE_URL,
 	CALENDAR_PAGE,
 	LUTI_PAGE,
 	leaderboardsPage,
@@ -294,7 +293,11 @@ function Leaderboard({
 						className="stack sm horizontal items-center text-main-forced"
 					>
 						<div className="mx-1">{index + 1}</div>
-						<Avatar url={entry.avatarUrl ?? BLANK_IMAGE_URL} size="xs" />
+						<Avatar
+							url={entry.avatarUrl}
+							identiconInput={entry.name}
+							size="xs"
+						/>
 						<div className="stack items-start">
 							<div className={styles.leaderboardName}>{entry.name}</div>
 							<div className="text-xs font-semi-bold text-lighter">

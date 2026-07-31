@@ -1,7 +1,7 @@
 import type { ExpressionBuilder, NotNull } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { DB } from "~/db/tables";
+import type { DB, TablesInsertable } from "~/db/tables";
 import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
 import invariant from "~/utils/invariant";
 import { commonUserSelect, peakXpOverallSql } from "~/utils/kysely.server";
@@ -54,6 +54,20 @@ const withOwners = (eb: ExpressionBuilder<DB, "Badge">, badgeId: number) => {
 			.orderBy("count", "desc"),
 	).as("owners");
 };
+
+/** Adds a badge. `authorId` is who made it, `null` for a legacy badge. */
+export function insert(
+	args: Pick<
+		TablesInsertable["Badge"],
+		"code" | "displayName" | "hue" | "authorId"
+	>,
+) {
+	return db
+		.insertInto("Badge")
+		.values(args)
+		.returning("id")
+		.executeTakeFirstOrThrow();
+}
 
 export async function findAll() {
 	const rows = await db

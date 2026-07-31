@@ -1,254 +1,208 @@
-import { NZAP_TEST_ID, ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
+import { addHours } from "date-fns";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import {
-	banUserActionSchema,
-	newOrganizationSchema,
-	updateIsEstablishedSchema,
-} from "~/features/tournament-organization/tournament-organization-schemas";
-import {
-	TOURNAMENT_NEW_PAGE,
-	tournamentOrganizationPage,
-	tournamentPage,
-} from "~/utils/urls";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	expect,
 	impersonate,
 	isNotVisible,
 	navigate,
-	seed,
-	submit,
 	test,
 	waitForPOSTResponse,
 } from "./helpers/playwright";
-import { createFormHelpers } from "./helpers/playwright-form";
+import { CalendarNewEventPage } from "./pages/calendar/calendar-new-event-page";
+import { AnythingAdder } from "./pages/layout/anything-adder";
+import { NewOrganizationPage } from "./pages/org/new-organization-page";
+import { OrganizationPage } from "./pages/org/organization-page";
+import { TournamentPage } from "./pages/tournament/tournament-page";
 
-const url = tournamentOrganizationPage({
-	organizationSlug: "sendouink",
-});
+const ORGANIZATION_NAME = "Sendou.ink";
+const TOURNAMENT_NAME = "PICNIC #2";
+const PLAYER_NAME = "Banned Bob";
 
 test.describe("Tournament Organization", () => {
-	test("can create a new organization", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
+	test("can create a new organization", async ({ page, factories }) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+
+		await impersonate(page, organizer.id);
 		await navigate({ page, url: "/" });
 
-		await page.getByTestId("anything-adder-menu-button").first().click();
-		await page.getByTestId("menu-item-organization").click();
+		await new AnythingAdder(page).add("organization");
 
-		const form = createFormHelpers(page, newOrganizationSchema);
-		await form.fill("name", "Test Organization");
-		await submit(page);
+		const newOrganization = new NewOrganizationPage(page);
+		await newOrganization.form.fill("name", "Test Organization");
+		await newOrganization.save();
 
-		await expect(page.getByTestId("edit-org-button")).toBeVisible();
+		const organization = new OrganizationPage(page);
+		await expect(organization.locators.editButton).toBeVisible();
 	});
 
 	test("user can be promoted to admin gaining org controls and can edit tournaments", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		const org = await factories.TournamentOrganizationFactory.create(
+			{ ownerId: ADMIN_ID, name: ORGANIZATION_NAME },
+			{ members: [{ userId: NZAP_TEST_ID, role: "MEMBER" }] },
+		);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			name: TOURNAMENT_NAME,
+			organizationId: org.id,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
 
-		const editButtonLocator = page.getByTestId("edit-org-button");
+		const organization = new OrganizationPage(page);
 
 		// 1. As a regular user, verify edit controls are not visible
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url,
-		});
-		await isNotVisible(editButtonLocator);
+		await organization.goto(org.slug);
+		await isNotVisible(organization.locators.editButton);
 
 		// 2. As admin, promote user to admin
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url });
-		await editButtonLocator.click();
-		// Add member as admin - find the specific member fieldset containing N-ZAP
-		// The array field creates numbered fieldsets (#1, #2, #3) for each member
-		// Find the role select that belongs to the same fieldset as N-ZAP user select
-		const nzapFieldset = page.locator('fieldset:has(button:has-text("N-ZAP"))');
-		await nzapFieldset
-			.getByLabel("Role", { exact: true })
-			.selectOption("ADMIN");
-		await submit(page);
+		await organization.goto(org.slug);
+		const organizationEdit = await organization.openEdit();
+		await organizationEdit.setMemberRole("N-ZAP", "ADMIN");
+		await organizationEdit.save();
 
 		// Establish the organization so its admins can edit tournament event info
-		await navigate({ page, url });
-		await page.getByRole("tab", { name: "Admin" }).click();
-		const isEstablishedForm = createFormHelpers(
-			page,
-			updateIsEstablishedSchema,
-		);
-		await waitForPOSTResponse(page, () =>
-			isEstablishedForm.check("isEstablished"),
-		);
+		await organization.goto(org.slug);
+		await organization.establish();
 
 		// 3. As the promoted user, verify edit controls are visible and page can be accessed
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url,
-		});
-		await editButtonLocator.click();
-		await expect(
-			page.getByText("Editing tournament organization"),
-		).toBeVisible();
+		await organization.goto(org.slug);
+		await organization.openEdit();
+		await expect(organizationEdit.locators.title).toBeVisible();
 
 		// 4. As the promoted user, verify they can edit tournaments
-		await navigate({
-			page,
-			url: tournamentPage(1),
-		});
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
 
-		await page.getByTestId("admin-tab").click();
-		await page.getByTestId("edit-event-info-button").click();
-		await expect(page.getByLabel(/^Name *\*?$/)).toHaveValue("PICNIC #2");
+		const tournamentAdmin = await tournamentPage.nav.openAdmin();
+		const calendarEvent = await tournamentAdmin.editEventInfo();
+		await expect(calendarEvent.locators.nameInput).toHaveValue(TOURNAMENT_NAME);
 	});
 
 	test("banned player cannot join a tournament of that organization", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page, "REG_OPEN");
+		const player = await factories.UserFactory.create({
+			discordName: PLAYER_NAME,
+		});
+		const org = await factories.TournamentOrganizationFactory.create({
+			ownerId: ADMIN_ID,
+			name: ORGANIZATION_NAME,
+		});
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			name: TOURNAMENT_NAME,
+			organizationId: org.id,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
 
-		// 1. As admin, ban NZAP user from the organization
+		const organization = new OrganizationPage(page);
+		const tournamentPage = new TournamentPage(page);
+
+		// 1. As admin, ban the player from the organization
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url });
+		await organization.goto(org.slug);
+		await organization.openBannedUsers();
 
-		const bannedUsersTab = page.getByTestId("banned-users-tab");
+		const banModal = await organization.openBanModal();
+		await expect(banModal.locators.dialog).toBeVisible();
+		await banModal.selectUser(PLAYER_NAME);
+		await banModal.form.fill("privateNote", "Test reason");
+		// a future expiration date to avoid validation issues
+		await banModal.form.setDateTime("expiresAt", addHours(new Date(), 24));
+		await banModal.save();
 
-		// Go to banned users section and add NZAP to ban list
-		await bannedUsersTab.click();
-		await page.getByText("New ban", { exact: true }).click();
-		// Wait for the dialog to be visible
-		const dialog = page.getByRole("dialog");
-		await expect(dialog).toBeVisible();
-		// Find and click the UserSearch combobox (React Aria Select renders as combobox)
-		const userSearchCombobox = dialog.getByRole("button").filter({
-			has: page.locator('[class*="selectValue"]'),
-		});
-		await userSearchCombobox.click();
-		// Wait for the popover to open and fill search
-		await expect(page.getByTestId("user-search-input")).toBeVisible();
-		await page.getByTestId("user-search-input").fill("N-ZAP");
-		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
-		await page.keyboard.press("Enter");
-		// Fill the note and set expiration date
-		const banForm = createFormHelpers(page, banUserActionSchema);
-		await banForm.fill("privateNote", "Test reason");
-		// Set a future expiration date to avoid validation issues
-		const futureDate = new Date();
-		futureDate.setMonth(futureDate.getMonth() + 1);
-		await banForm.setDateTime("expiresAt", futureDate);
-		await submit(page);
-		// The added ban should be visible in the table
-		await expect(page.getByRole("table")).toContainText("Test reason");
-
-		// 2. As the banned user, try to join a tournament
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: tournamentPage(1),
-		});
-
-		// Try to create a team
-		await page.getByTestId("register-cta").click();
-
-		// Fill in team details
-		await page.getByLabel("Pick-up name").fill("Banned Team");
-		await waitForPOSTResponse(page, () =>
-			page.getByTestId("save-team-button").click(),
+		await expect(organization.locators.bannedUsersTable).toContainText(
+			"Test reason",
 		);
 
-		// Verify the team was not created (Fill roster only appears after successful registration)
-		await expect(page.getByText("Fill roster")).not.toBeVisible();
+		// 2. As the banned user, try to join a tournament
+		await impersonate(page, player.id);
+		await tournamentPage.goto(tournament.id);
+
+		const register = await tournamentPage.register();
+		await register.form.fill("pickUpName", "Banned Team");
+		await waitForPOSTResponse(page, () => register.form.submit());
+
+		// "Fill roster" only appears after a successful registration
+		await expect(register.locators.fillRosterHeading).not.toBeVisible();
 
 		// 3. As admin, remove the ban
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url });
-		await bannedUsersTab.click();
-		await page.getByRole("button", { name: "Unban" }).click();
-		await submit(page, "confirm-button");
+		await organization.goto(org.slug);
+		await organization.openBannedUsers();
+		await organization.unban();
 
 		// 4. As the unbanned user, verify they can now join a tournament
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: tournamentPage(1),
-		});
-		await page.getByTestId("register-cta").click();
+		await impersonate(page, player.id);
+		await tournamentPage.goto(tournament.id);
+		const registerAgain = await tournamentPage.register();
 
-		// Try to create a team again
-		await expect(page.getByText(/Teams \(\d+\)/)).toBeVisible();
+		const teamsTab = tournamentPage.nav.locators.teamsTab;
+		await expect(teamsTab).toContainText("Teams (0)");
 
-		const teamCountBefore = await page.getByText(/Teams \(\d+\)/).textContent();
+		await registerAgain.form.fill("pickUpName", "Unbanned Team");
+		await registerAgain.form.submit();
 
-		await page.getByLabel("Pick-up name").fill("Unbanned Team");
-		await page.getByTestId("save-team-button").click();
-
-		const countBefore = Number(teamCountBefore?.match(/\d+/)?.[0] ?? 0);
-		await expect(page.getByText(`Teams (${countBefore + 1})`)).toBeVisible();
+		await expect(teamsTab).toContainText("Teams (1)");
 
 		// 5. As admin, ban user again but with permanent ban this time
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url });
-		await bannedUsersTab.click();
-		await page.getByText("New ban", { exact: true }).click();
-		const dialog2 = page.getByRole("dialog");
-		await expect(dialog2).toBeVisible();
-		const userSearchCombobox2 = dialog2.getByRole("button").filter({
-			has: page.locator('[class*="selectValue"]'),
-		});
-		await userSearchCombobox2.click();
-		await expect(page.getByTestId("user-search-input")).toBeVisible();
-		await page.getByTestId("user-search-input").fill("N-ZAP");
-		await expect(page.getByTestId("user-search-item").first()).toBeVisible();
-		await page.keyboard.press("Enter");
-		const banForm2 = createFormHelpers(page, banUserActionSchema);
-		await banForm2.fill("privateNote", "Does not expire");
-		// Don't set expiresAt - leave empty for permanent ban
-		await submit(page);
-		// Verify "Permanent" appears in the table
-		await expect(page.getByRole("table")).toContainText("Permanent");
+		await organization.goto(org.slug);
+		await organization.openBannedUsers();
+
+		const permanentBanModal = await organization.openBanModal();
+		await expect(permanentBanModal.locators.dialog).toBeVisible();
+		await permanentBanModal.selectUser(PLAYER_NAME);
+		await permanentBanModal.form.fill("privateNote", "Does not expire");
+		// expiresAt left empty makes the ban permanent
+		await permanentBanModal.save();
+
+		await expect(organization.locators.bannedUsersTable).toContainText(
+			"Permanent",
+		);
 	});
 
 	test("allows member of established org to create tournament", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		const orgAdmin = await factories.UserFactory.create();
+		const org = await factories.TournamentOrganizationFactory.create(
+			{ ownerId: ADMIN_ID, name: ORGANIZATION_NAME },
+			{ members: [{ userId: orgAdmin.id, role: "ADMIN" }] },
+		);
 
-		await impersonate(page, ORG_ADMIN_TEST_ID);
-		await navigate({
-			page,
-			url: TOURNAMENT_NEW_PAGE,
-		});
+		const newTournament = new CalendarNewEventPage(page);
+
+		await impersonate(page, orgAdmin.id);
+		await newTournament.gotoNewTournament();
+
 		await expect(
-			page.getByText("No permissions to add tournaments"),
+			newTournament.locators.noTournamentPermissionsAlert,
 		).toBeVisible();
-		await expect(page.getByText("New tournament")).not.toBeVisible();
+		await expect(newTournament.locators.newTournamentHeading).not.toBeVisible();
 
 		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: "/org/sendouink",
-		});
+		const organization = new OrganizationPage(page);
+		await organization.goto(org.slug);
+		await organization.establish();
 
-		await page.getByRole("tab", { name: "Admin" }).click();
-
-		const isEstablishedForm = createFormHelpers(
-			page,
-			updateIsEstablishedSchema,
-		);
-		await waitForPOSTResponse(page, () =>
-			isEstablishedForm.check("isEstablished"),
-		);
-
-		await impersonate(page, ORG_ADMIN_TEST_ID);
-		await navigate({
-			page,
-			url: TOURNAMENT_NEW_PAGE,
-		});
+		await impersonate(page, orgAdmin.id);
+		await newTournament.gotoNewTournament();
 
 		await expect(
-			page.getByText("No permissions to add tournaments"),
+			newTournament.locators.noTournamentPermissionsAlert,
 		).not.toBeVisible();
-		await expect(page.getByText("New tournament")).toBeVisible();
+		await expect(newTournament.locators.newTournamentHeading).toBeVisible();
 	});
 });

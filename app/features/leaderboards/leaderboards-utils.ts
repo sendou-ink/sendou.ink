@@ -1,4 +1,4 @@
-import playerData from "./top-ten.json";
+import playerData from "./top-ten.json" with { type: "json" };
 
 export function seasonHasTopTen(season: number) {
 	return !!playerData[season];

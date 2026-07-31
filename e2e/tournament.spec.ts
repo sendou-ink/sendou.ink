@@ -1,106 +1,142 @@
-import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { StageId } from "~/modules/in-game-lists/types";
-import {
-	tournamentBracketsPage,
-	tournamentPage,
-	tournamentRegisterPage,
-	tournamentTeamsPage,
-} from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	submit,
-	test,
-} from "./helpers/playwright";
+import { addHours, addMinutes } from "date-fns";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentPage } from "./pages/tournament/tournament-page";
+import { TournamentRegisterPage } from "./pages/tournament/tournament-register-page";
+import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
+import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
+
+const TEAM_NAME = "Chimera";
+const ROSTER_SIZE = 4;
+const SEEDED_TEAM_COUNT = 8;
 
 test.describe("Tournament", () => {
-	test("registers for tournament", async ({ page }) => {
-		await seed(page, "REG_OPEN");
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: tournamentPage(1),
-		});
-
-		await page.getByTestId("register-cta").click();
-
-		await page.getByLabel("Pick-up name").fill("Chimera");
-		await page.getByTestId("save-team-button").click();
-
-		await submit(page, "add-player-button");
-		await expect(page.getByTestId("member-num-2")).toBeVisible();
-		await submit(page, "add-player-button");
-		await expect(page.getByTestId("member-num-3")).toBeVisible();
-		await submit(page, "add-player-button");
-		await expect(page.getByTestId("member-num-4")).toBeVisible();
-
-		let stage = 5;
-		for (const mode of rankedModesShort) {
-			for (let i = 0; i < 2; i++) {
-				while (BANNED_MAPS[mode].includes(stage as StageId)) {
-					stage++;
-				}
-
-				await page.getByTestId(`map-pool-${mode}-${stage}`).click();
-				stage++;
-			}
+	test("registers for tournament", async ({ page, factories }) => {
+		const [captain, ...friends] =
+			await factories.UserFactory.createMany(ROSTER_SIZE);
+		for (const friend of friends) {
+			await factories.FriendshipFactory.create({
+				userOneId: captain.id,
+				userTwoId: friend.id,
+			});
 		}
-		await submit(page, "save-map-list-button");
 
-		await expect(page.getByTestId("checkmark-icon-num-3")).toBeVisible();
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+			// teams pick their own counterpick maps
+			mapPickingStyle: "AUTO_ALL",
+		});
+
+		await impersonate(page, captain.id);
+
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		const register = await tournamentPage.register();
+
+		await register.form.fill("pickUpName", TEAM_NAME);
+		await register.form.submit();
+
+		await expect(register.member(1)).toBeVisible();
+
+		for (let memberNumber = 2; memberNumber <= ROSTER_SIZE; memberNumber++) {
+			await register.addPlayer();
+			await expect(register.member(memberNumber)).toBeVisible();
+		}
+
+		await register.pickCounterpickMaps();
+		await register.saveCounterpickMaps();
+
+		await expect(register.stepCheckmark(3)).toBeVisible();
 	});
 
-	test("checks in and appears on the bracket", async ({ page }) => {
-		await seed(page, "REG_OPEN");
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId: 3 }),
+	test("checks in and appears on the bracket", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			// check-in opens an hour before the tournament starts
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
 		});
 
-		await isNotVisible(page.getByText("Chimera"));
-
-		await navigate({
-			page,
-			url: tournamentRegisterPage(3),
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam(TEAM_NAME),
+			memberUserIds: roster.map((user) => user.id),
 		});
-		await submit(page, "check-in-button");
 
-		await page.getByTestId("brackets-tab").click();
-		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
-		await page.getByText("Chimera").nth(0).waitFor();
+		const opponents = await factories.UserFactory.createMany(2);
+		for (const [i, opponent] of opponents.entries()) {
+			await factories.TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					team: pickUpTeam(`Opponent ${i + 1}`),
+					memberUserIds: [opponent.id],
+				},
+				{ isCheckedIn: true },
+			);
+		}
+
+		await impersonate(page, roster[0].id);
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+
+		await isNotVisible(brackets.teamName(TEAM_NAME));
+
+		const register = new TournamentRegisterPage(page);
+		await register.goto(tournament.id);
+		await register.checkIn();
+
+		const bracketsAfterCheckIn = await register.openBrackets();
+
+		await expect(bracketsAfterCheckIn.locators.bracketsViewer).toBeVisible();
+		await expect(
+			bracketsAfterCheckIn.teamName(TEAM_NAME).first(),
+		).toBeVisible();
 	});
 
-	test("adjusts seeds", async ({ page }) => {
-		await seed(page);
+	test("adjusts seeds", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+
+		const captains = await factories.UserFactory.createMany(SEEDED_TEAM_COUNT);
+		const teams = [];
+		for (const [i, captain] of captains.entries()) {
+			teams.push(
+				await factories.TournamentTeamFactory.create({
+					tournamentId: tournament.id,
+					team: pickUpTeam(teamNameForSeed(i + 1)),
+					memberUserIds: [captain.id],
+				}),
+			);
+		}
+
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: `${tournamentPage(1)}/admin/seeds`,
-		});
+		const seeds = new TournamentSeedsPage(page);
+		await seeds.goto(tournament.id);
 
-		await page.getByTestId("seed-team-1-handle").hover();
-		await page.mouse.down();
-		// i think the drag & drop library might actually be a bit buggy
-		// so we have to do it in steps like this to allow for testing
-		await page.mouse.move(0, 500, { steps: 10 });
-		await page.mouse.up();
+		await seeds.dragTeamDown(teams[0].id);
+		await seeds.save();
 
-		await submit(page);
+		const teamsPage = new TournamentTeamsPage(page);
+		await teamsPage.goto(tournament.id);
 
-		await navigate({
-			page,
-			url: tournamentTeamsPage(1),
-		});
-		await expect(page.getByTestId("team-name").first()).not.toHaveText(
-			"Chimera",
+		await expect(teamsPage.locators.teamNames.first()).not.toHaveText(
+			teamNameForSeed(1),
 		);
 	});
 });
+
+function pickUpTeam(name: string) {
+	return { name, prefersNotToHost: 0 as const, teamId: null };
+}
+
+function teamNameForSeed(seed: number) {
+	return `Team ${seed}`;
+}

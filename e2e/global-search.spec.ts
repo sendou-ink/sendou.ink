@@ -1,51 +1,48 @@
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { tournamentOrganizationPage, userPage } from "~/utils/urls";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
+import { GlobalSearchDialog } from "./pages/search/global-search-dialog";
+
+const ORGANIZATION_NAME = "Sendou.ink";
 
 test.describe("Global search", () => {
-	test("searches for users and organizations", async ({ page }) => {
-		await seed(page);
+	test("searches for users and organizations", async ({ page, factories }) => {
+		const org = await factories.TournamentOrganizationFactory.create({
+			ownerId: ADMIN_ID,
+			name: ORGANIZATION_NAME,
+		});
+
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 
-		const searchDialog = page.getByRole("dialog", { name: "Search" });
+		const search = new GlobalSearchDialog(page);
 
-		await page.getByRole("button", { name: /Search/ }).click();
-		await searchDialog.waitFor({ state: "visible" });
-		await searchDialog.getByText("Users").click();
-		await page.getByPlaceholder("Search...").fill("sendou");
-		await page.getByRole("option", { name: /Sendou/ }).click();
-		await expect(page).toHaveURL(/\/u\/sendou/);
+		await search.open();
+		await search.selectType("users");
+		await search.search("sendou");
+		await search.selectOption("Sendou");
+		await expect(page).toHaveURL(userPage({ discordId: ADMIN_DISCORD_ID }));
 
-		await page.getByRole("button", { name: /Search/ }).click();
-		await searchDialog.waitFor({ state: "visible" });
-		await searchDialog.getByText("Organizations").click();
-		await page.getByPlaceholder("Search...").fill("sendou");
-		await page.getByRole("option", { name: /sendou\.ink/ }).click();
-		await expect(page).toHaveURL(/\/org\/sendouink/);
+		await search.open();
+		await search.selectType("organizations");
+		await search.search("sendou");
+		await search.selectOption(ORGANIZATION_NAME);
+		await expect(page).toHaveURL(
+			tournamentOrganizationPage({ organizationSlug: org.slug }),
+		);
 	});
 
 	test("searches for weapons", async ({ page }) => {
-		await seed(page);
 		await impersonate(page);
 		await navigate({ page, url: "/" });
 
-		const searchDialog = page.getByRole("dialog", { name: "Search" });
+		const search = new GlobalSearchDialog(page);
 
-		await page.getByRole("button", { name: /Search/ }).click();
-		await searchDialog.waitFor({ state: "visible" });
-		await page.getByPlaceholder("Search...").fill("splattershot");
-		const weaponOption = page.getByRole("option", {
-			name: "Splattershot",
-			exact: true,
-		});
-		await weaponOption.waitFor({ state: "visible" });
-		await weaponOption.click({ force: true });
-		await page.getByRole("option", { name: "Builds", exact: true }).click();
+		await search.open();
+		await search.selectType("weapons");
+		await search.search("splattershot");
+		await search.selectOption("Splattershot");
+		await search.selectOption("Builds");
 		await expect(page).toHaveURL(/\/builds\/splattershot/);
 	});
 });

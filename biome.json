@@ -5,7 +5,7 @@
 			"**",
 			"!scripts/dicts/**/*",
 			"!scripts/output/**/*",
-			"!app/db/seed/placements.json",
+			"!app/db/seed/data/placements.json",
 			"!build/**/*",
 			"!test-results/**/*",
 			"!playwright-report/**/*",
@@ -71,5 +71,15 @@
 		"parser": {
 			"cssModules": true
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": ["**/*.test.ts", "**/*.test.tsx"],
+			"plugins": ["./biome-plugins/no-raw-db-writes-in-tests.grit"]
+		},
+		{
+			"includes": ["app/db/seed/dev/**", "app/db/seed/index.ts"],
+			"plugins": ["./biome-plugins/no-raw-db-writes-in-dev-seed.grit"]
+		}
+	]
 }

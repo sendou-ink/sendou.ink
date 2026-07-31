@@ -1,0 +1,200 @@
+import type { Page } from "@playwright/test";
+import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
+import { sendouQMatchPage } from "~/utils/urls";
+import {
+	expect,
+	navigate,
+	selectWeapon,
+	waitForPOSTResponse,
+} from "../../helpers/playwright";
+import { UserCard } from "../user/user-card";
+
+type Side = "ALPHA" | "BRAVO";
+type Tab = "action" | "result" | "rosters";
+
+const MAPS_TO_WIN = Math.ceil(SENDOUQ_BEST_OF / 2);
+
+const TEAM_NAMES: Record<Side, string> = {
+	ALPHA: "Group Alpha",
+	BRAVO: "Group Bravo",
+};
+
+export class SendouQMatchPage {
+	private readonly page: Page;
+	readonly locators;
+
+	constructor(page: Page) {
+		this.page = page;
+		this.locators = {
+			reportScoreButton: page.getByTestId("report-score-button"),
+			confirmSetEndButton: page.getByTestId("confirm-set-end-button"),
+			// the weapon reporter's own submit, which has no test id of its own
+			submitWeaponButton: page
+				.getByRole("button", { name: "Submit", exact: true })
+				.last(),
+			undoReportButton: page.getByRole("button", { name: "Undo report" }),
+			reportWeaponsButton: page.getByRole("button", {
+				name: "Report used weapons",
+			}),
+			undoWeaponButton: page.getByRole("button", { name: "Undo weapon" }),
+			confirmScoreButton: page.getByRole("button", { name: "Confirm score" }),
+			requestCancelButton: page.getByRole("button", { name: "Request cancel" }),
+			cancelPendingText: page.getByText("Pending other team's confirmation"),
+			cancelPrompt: page.getByText("Accept canceling the set?"),
+			canceledText: page.getByText("Match canceled"),
+			lookAgainButton: page.getByRole("button", {
+				name: "Look again with same group",
+			}),
+			rejoinQueueButton: page.getByRole("button", { name: "Rejoin queue" }),
+			declinedText: page.getByText("You declined to continue"),
+			votedYes: page.getByLabel("voted yes"),
+			votedNo: page.getByLabel("voted no"),
+			pendingVotes: page.getByLabel("pending"),
+			selectedWinner: page.locator(
+				'[data-testid^="winner-radio-"][data-selected="true"]',
+			),
+		};
+	}
+
+	async goto(matchId: number, tab: Tab = "action") {
+		await navigate({
+			page: this.page,
+			url: `${sendouQMatchPage(matchId)}?tab=${tab}`,
+		});
+	}
+
+	score(alpha: number, bravo: number) {
+		return this.page.getByText(new RegExp(`${alpha}\\s*-\\s*${bravo}`)).first();
+	}
+
+	reportedWeaponImage(name: string) {
+		return this.page.getByRole("img", { name }).first();
+	}
+
+	openUserCard(name: string | RegExp) {
+		return UserCard.open(
+			this.page,
+			this.page.getByRole("button", { name }).first(),
+		);
+	}
+
+	/** Reports the winner of every map of the set, `winner` winning all of them. */
+	async reportSweep(winner: Side) {
+		for (let i = 0; i < MAPS_TO_WIN - 1; i++) {
+			await this.reportMapWinner(winner);
+		}
+		await this.reportSetEndingMap(winner);
+	}
+
+	async reportMapWinner(winner: Side) {
+		await this.selectMapWinner(winner);
+		await waitForPOSTResponse(this.page, async () => {
+			await this.locators.reportScoreButton.click();
+		});
+		// Wait for the action panel to remount with the new reportedCount.
+		// waitForPOSTResponse only waits for the POST itself, not the loader
+		// revalidation. MatchActionTab is keyed on reportedCount, so it (and the
+		// nested WeaponReporter) unmounts and remounts when the loader returns.
+		// Without this wait, a follow-up click can land on the about-to-unmount
+		// instance — local state set by that click (e.g. WeaponReporter's isOpen)
+		// is then thrown away on remount.
+		await expect(this.locators.selectedWinner).toHaveCount(0);
+	}
+
+	/** Reports the map that wins the set for `winner`, through its confirmation screen. */
+	async reportSetEndingMap(winner: Side) {
+		await this.selectMapWinner(winner);
+		await this.locators.reportScoreButton.click();
+		await waitForPOSTResponse(this.page, async () => {
+			await this.locators.confirmSetEndButton.click();
+		});
+	}
+
+	async undoReport() {
+		await waitForPOSTResponse(this.page, async () => {
+			await this.locators.undoReportButton.click();
+		});
+	}
+
+	async reportWeapon(name: string) {
+		await this.locators.reportWeaponsButton.click();
+		await selectWeapon({ page: this.page, name });
+		await waitForPOSTResponse(this.page, async () => {
+			await this.locators.submitWeaponButton.click();
+		});
+	}
+
+	async confirmScore() {
+		await waitForPOSTResponse(this.page, async () => {
+			await this.locators.confirmScoreButton.click();
+		});
+	}
+
+	async requestCancel() {
+		await this.locators.requestCancelButton.click();
+		await this.confirmDialog();
+	}
+
+	async respondToCancel(response: "Accept" | "Refuse") {
+		await waitForPOSTResponse(this.page, async () => {
+			await this.page.getByRole("button", { name: response }).click();
+		});
+	}
+
+	async voteYes() {
+		await waitForPOSTResponse(this.page, async () => {
+			await this.page.getByRole("button", { name: "Yes, continue" }).click();
+		});
+	}
+
+	async voteNo() {
+		await this.page.getByRole("button", { name: "No, I'm done" }).click();
+		await this.confirmDialog();
+	}
+
+	async lookAgain() {
+		await waitForPOSTResponse(this.page, async () => {
+			await this.locators.lookAgainButton.click();
+		});
+	}
+
+	async rejoinQueue() {
+		await waitForPOSTResponse(this.page, async () => {
+			await this.locators.rejoinQueueButton.click();
+		});
+	}
+
+	private async selectMapWinner(winner: Side) {
+		const teamName = TEAM_NAMES[winner];
+		// Wait for the action panel to settle before clicking. waitForPOSTResponse
+		// only waits for the POST itself; the loader revalidation that swaps in the
+		// next map's component runs after, so a previous winner can still be
+		// `data-selected="true"` here. Clicking too early hits the about-to-unmount
+		// label and the selection is lost on remount.
+		await expect(this.locators.selectedWinner).toHaveCount(0);
+		// react-aria's Radio renders a hidden input behind a span overlay; click the
+		// wrapping label so the press handler fires and updates winnerId. The press
+		// occasionally registers a press-start without a press-end (same React Aria
+		// nondeterminism as in waitForPOSTResponse), so the selection silently drops
+		// and Submit stays disabled. Re-issue the click until the radio reports
+		// selected; otherwise the Submit-click retry loop spins on a disabled button.
+		const label = this.page.locator(
+			`label:has(input[aria-label="${teamName}"])`,
+		);
+		const radio = this.page.locator(
+			`[data-testid^="winner-radio-"]:has(input[aria-label="${teamName}"])`,
+		);
+		await expect(async () => {
+			await label.click();
+			await expect(radio).toHaveAttribute("data-selected", "true", {
+				timeout: 1_000,
+			});
+		}).toPass();
+	}
+
+	private async confirmDialog() {
+		await waitForPOSTResponse(this.page, async () => {
+			await this.page.getByTestId("confirm-button").click();
+		});
+	}
+}

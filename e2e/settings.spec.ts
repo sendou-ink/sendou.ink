@@ -1,89 +1,69 @@
-import type { Page } from "@playwright/test";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { WeaponBuildsPage } from "./pages/builds/weapon-builds-page";
+import { CalendarPage } from "./pages/calendar/calendar-page";
 import {
-	clockFormatSchema,
-	disableBuildAbilitySortingSchema,
-	spoilerFreeModeSchema,
-} from "~/features/settings/settings-schemas";
-import {
-	CALENDAR_PAGE,
-	SETTINGS_PAGE,
-	tournamentBracketsPage,
-	tournamentResultsPage,
-} from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	submit,
-	test,
-	waitForPOSTResponse,
-} from "./helpers/playwright";
-import { createFormHelpers } from "./helpers/playwright-form";
+	MatchProfilePage,
+	SELECTED_MAP_CLASS,
+} from "./pages/settings/match-profile-page";
+import { SettingsPage } from "./pages/settings/settings-page";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentResultsPage } from "./pages/tournament/tournament-results-page";
+
+const LUNA_BLASTER_ID = 200;
+
+// deliberately scrambled so the sorted and unsorted renders differ
+const UNSORTED_ABILITIES: BuildAbilitiesTuple = [
+	["ISM", "SSU", "ISM", "SSU"],
+	["SSU", "ISM", "SSU", "ISM"],
+	["RSU", "QR", "QR", "QR"],
+];
 
 test.describe("Settings", () => {
-	test("updates 'disableBuildAbilitySorting'", async ({ page }) => {
-		await seed(page);
+	test("updates 'disableBuildAbilitySorting'", async ({ page, factories }) => {
+		await factories.BuildFactory.create({
+			ownerId: ADMIN_ID,
+			weaponSplIds: [LUNA_BLASTER_ID],
+			abilities: UNSORTED_ABILITIES,
+		});
+
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: "/builds/luna-blaster",
-		});
+		const weaponBuilds = new WeaponBuildsPage(page);
+		await weaponBuilds.goto("luna-blaster");
 
-		const oldContents = await page
-			.getByTestId("build-card")
-			.first()
-			.innerHTML();
+		const oldContents = await weaponBuilds.buildCard(0).root.innerHTML();
 
-		await navigate({
-			page,
-			url: `${SETTINGS_PAGE}?tab=preferences`,
-		});
+		const settings = new SettingsPage(page);
+		await settings.disableBuildAbilitySorting();
 
-		const form = createFormHelpers(page, disableBuildAbilitySortingSchema);
-		await waitForPOSTResponse(page, () => form.check("newValue"));
+		await weaponBuilds.goto("luna-blaster");
 
-		await navigate({
-			page,
-			url: "/builds/luna-blaster",
-		});
-
-		const newContents = await page
-			.getByTestId("build-card")
-			.first()
-			.innerHTML();
+		const newContents = await weaponBuilds.buildCard(0).root.innerHTML();
 
 		expect(newContents).not.toBe(oldContents);
 	});
 
-	test("updates clock format preference", async ({ page }) => {
-		await seed(page);
+	test("updates clock format preference", async ({ page, factories }) => {
+		// the clock header only renders above a day's events
+		await factories.CalendarEventFactory.create({ authorId: ADMIN_ID });
+
 		await impersonate(page);
 
-		await navigate({
-			page,
-			url: CALENDAR_PAGE,
-		});
+		const calendar = new CalendarPage(page);
+		await calendar.goto();
 
-		const clockTime = page.getByTestId("clock-header-time").first();
+		const clockTime = calendar.locators.clockHeaderTimes.first();
 		const initialTime = await clockTime.textContent();
 
 		expect(initialTime).toMatch(/AM|PM/);
 
-		await navigate({
-			page,
-			url: `${SETTINGS_PAGE}?tab=locale`,
-		});
+		const settings = new SettingsPage(page);
+		await settings.setClockFormat("24h");
 
-		const form = createFormHelpers(page, clockFormatSchema);
-		await waitForPOSTResponse(page, () => form.select("newValue", "24h"));
-
-		await navigate({
-			page,
-			url: CALENDAR_PAGE,
-		});
+		await calendar.goto();
 
 		const newTime = await clockTime.textContent();
 
@@ -93,169 +73,131 @@ test.describe("Settings", () => {
 	});
 });
 
-const AVOIDED_MODE_POOL_ERROR =
-	"Can't have map pool for a mode that was avoided";
-
-const setModePreference = (
-	page: Page,
-	mode: string,
-	preference: "Avoid" | "Neutral" | "Prefer",
-) => {
-	const name =
-		preference === "Neutral"
-			? "Neutral towards the mode"
-			: `${preference} the mode`;
-	return page
-		.getByRole("radiogroup", { name: `Select preference towards ${mode}` })
-		.getByRole("radio", { name })
-		.click({ force: true });
-};
-
-const mapButton = (page: Page, mode: string, stageId: number) =>
-	page.getByTestId(`map-pool-${mode}-${stageId}`);
-
-const selectModeTab = (page: Page, mode: string) =>
-	page.getByTestId(`map-pool-mode-tab-${mode}`).click();
-
-const SELECTED_MAP_CLASS = /mapButtonGreyedOut/;
-
-// The seeded user already has random map pools, so empty the mode's pool to get
-// a known starting state. Only currently selected (greyed, non-banned) stages
-// are clickable to deselect.
-const clearMapPool = async (page: Page, mode: string) => {
-	const picked = page.locator(
-		`[data-testid^="map-pool-${mode}-"][class*="mapButtonGreyedOut"]:not([disabled])`,
-	);
-	for (let count = await picked.count(); count > 0; count--) {
-		// the selected-state check icon overlays the button and intercepts clicks
-		await picked.first().click({ force: true });
-		await expect(picked).toHaveCount(count - 1);
-	}
-};
-
 test.describe("Match profile map preferences", () => {
 	test("retains map selection when toggling a mode prefer -> avoid -> prefer", async ({
 		page,
 	}) => {
-		await seed(page);
 		await impersonate(page);
-		await navigate({ page, url: SETTINGS_PAGE });
 
-		await setModePreference(page, "SZ", "Prefer");
-		await selectModeTab(page, "SZ");
-		await clearMapPool(page, "SZ");
-		await mapButton(page, "SZ", 1).click();
-		await expect(mapButton(page, "SZ", 1)).toHaveClass(SELECTED_MAP_CLASS);
+		const matchProfile = new MatchProfilePage(page);
+		await matchProfile.goto();
+
+		await matchProfile.setModePreference("SZ", "Prefer");
+		await matchProfile.selectModeTab("SZ");
+		await matchProfile.mapButton("SZ", 1).click();
+		await expect(matchProfile.mapButton("SZ", 1)).toHaveClass(
+			SELECTED_MAP_CLASS,
+		);
 
 		// avoiding hides the picker, but the selection should be remembered
-		await setModePreference(page, "SZ", "Avoid");
-		await isNotVisible(mapButton(page, "SZ", 1));
+		await matchProfile.setModePreference("SZ", "Avoid");
+		await isNotVisible(matchProfile.mapButton("SZ", 1));
 
-		await setModePreference(page, "SZ", "Prefer");
-		await selectModeTab(page, "SZ");
-		await expect(mapButton(page, "SZ", 1)).toHaveClass(SELECTED_MAP_CLASS);
+		await matchProfile.setModePreference("SZ", "Prefer");
+		await matchProfile.selectModeTab("SZ");
+		await expect(matchProfile.mapButton("SZ", 1)).toHaveClass(
+			SELECTED_MAP_CLASS,
+		);
 	});
 
 	test("can save 'zones only' after a now-avoided mode previously had a map pool", async ({
 		page,
 	}) => {
-		await seed(page);
 		await impersonate(page);
-		await navigate({ page, url: SETTINGS_PAGE });
+
+		const matchProfile = new MatchProfilePage(page);
+		await matchProfile.goto();
 
 		// Save a map pool for both SZ and TC (stage 2 is not banned in TC).
-		await setModePreference(page, "SZ", "Prefer");
-		await selectModeTab(page, "SZ");
-		await clearMapPool(page, "SZ");
-		await mapButton(page, "SZ", 1).click();
-		await setModePreference(page, "TC", "Prefer");
-		await selectModeTab(page, "TC");
-		await clearMapPool(page, "TC");
-		await mapButton(page, "TC", 2).click();
-		await submit(page);
+		await matchProfile.setModePreference("SZ", "Prefer");
+		await matchProfile.selectModeTab("SZ");
+		await matchProfile.mapButton("SZ", 1).click();
+		await matchProfile.setModePreference("TC", "Prefer");
+		await matchProfile.selectModeTab("TC");
+		await matchProfile.mapButton("TC", 2).click();
+		await matchProfile.save();
 
 		// Switch to "zones only" by avoiding every mode except SZ, then save.
-		await setModePreference(page, "TW", "Avoid");
-		await setModePreference(page, "TC", "Avoid");
-		await setModePreference(page, "RM", "Avoid");
-		await setModePreference(page, "CB", "Avoid");
-		await submit(page);
+		await matchProfile.setModePreference("TW", "Avoid");
+		await matchProfile.setModePreference("TC", "Avoid");
+		await matchProfile.setModePreference("RM", "Avoid");
+		await matchProfile.setModePreference("CB", "Avoid");
+		await matchProfile.save();
 
 		// Reload so the form loads the persisted preferences. The previously saved
 		// TC pool must not resurface as an invalid "pool for an avoided mode".
-		await navigate({ page, url: SETTINGS_PAGE });
+		await matchProfile.goto();
 
-		await submit(page);
-		await isNotVisible(page.getByText(AVOIDED_MODE_POOL_ERROR));
+		await matchProfile.save();
+		await isNotVisible(matchProfile.locators.avoidedModePoolError);
 	});
 });
-
-const enableSpoilerFreeMode = async (page: Page) => {
-	await navigate({ page, url: `${SETTINGS_PAGE}?tab=preferences` });
-	const form = createFormHelpers(page, spoilerFreeModeSchema);
-	await waitForPOSTResponse(page, () => form.check("newValue"));
-};
 
 test.describe("Spoiler-free mode", () => {
-	const FINALIZED_TOURNAMENT_ID = 7;
+	test("censors bracket and reveals on click", async ({ page, factories }) => {
+		const tournament = await createFinalizedTournament(factories);
 
-	test("censors bracket and reveals on click", async ({ page }) => {
-		await seed(page, "FINALIZED_BRACKET");
 		await impersonate(page);
-		await enableSpoilerFreeMode(page);
+		const settings = new SettingsPage(page);
+		await settings.enableSpoilerFreeMode();
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId: FINALIZED_TOURNAMENT_ID }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 
 		// bracket is censored — "Show results" button visible
-		const showResultsButton = page.getByRole("button", {
-			name: "Show results",
-		});
-		await expect(showResultsButton).toBeVisible();
+		await expect(brackets.locators.showResultsButton).toBeVisible();
 
-		// later rounds (SF/Finals) show "???" for team names
-		await expect(page.getByText("???").first()).toBeVisible();
+		// later rounds show "???" for team names
+		await expect(brackets.locators.censoredTeamNames.first()).toBeVisible();
 
-		// click "Show results" to reveal
-		await showResultsButton.click();
+		await brackets.locators.showResultsButton.click();
 
-		// after reveal, "Hide results" button appears
-		await expect(
-			page.getByRole("button", { name: "Hide results" }),
-		).toBeVisible();
-
-		// "???" no longer present
-		await isNotVisible(page.getByText("???"));
+		// after reveal, "Hide results" button appears and "???" is gone
+		await expect(brackets.locators.hideResultsButton).toBeVisible();
+		await isNotVisible(brackets.locators.censoredTeamNames);
 
 		// navigate to results page — sessionStorage reveal carries over
-		await navigate({
-			page,
-			url: tournamentResultsPage(FINALIZED_TOURNAMENT_ID),
-		});
-		await expect(page.getByTestId("result-team-name").first()).toBeVisible();
+		const results = new TournamentResultsPage(page);
+		await results.goto(tournament.id);
+		await expect(results.locators.resultTeamNames.first()).toBeVisible();
 	});
 
-	test("results page is censored and can be revealed", async ({ page }) => {
-		await seed(page, "FINALIZED_BRACKET");
-		await impersonate(page);
-		await enableSpoilerFreeMode(page);
+	test("results page is censored and can be revealed", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await createFinalizedTournament(factories);
 
-		await navigate({
-			page,
-			url: tournamentResultsPage(FINALIZED_TOURNAMENT_ID),
-		});
+		await impersonate(page);
+		const settings = new SettingsPage(page);
+		await settings.enableSpoilerFreeMode();
+
+		const results = new TournamentResultsPage(page);
+		await results.goto(tournament.id);
 
 		// results are censored
-		const showResultsButton = page.getByRole("button", {
-			name: "Show results",
-		});
-		await expect(showResultsButton).toBeVisible();
-		await isNotVisible(page.getByTestId("result-team-name"));
+		await expect(results.locators.showResultsButton).toBeVisible();
+		await isNotVisible(results.locators.resultTeamNames);
 
 		// reveal
-		await showResultsButton.click();
-		await expect(page.getByTestId("result-team-name").first()).toBeVisible();
+		await results.locators.showResultsButton.click();
+		await expect(results.locators.resultTeamNames.first()).toBeVisible();
 	});
 });
+
+const TEAM_COUNT = 4;
+const TEAM_SIZE = 4;
+
+async function createFinalizedTournament(factories: Factories) {
+	const users = await factories.UserFactory.createMany(TEAM_COUNT * TEAM_SIZE);
+	const teamRosters = Array.from({ length: TEAM_COUNT }, (_, teamIndex) =>
+		users
+			.slice(teamIndex * TEAM_SIZE, (teamIndex + 1) * TEAM_SIZE)
+			.map((user) => user.id),
+	);
+
+	return factories.TournamentFactory.createPlayed(
+		{ authorId: ADMIN_ID },
+		{ teamRosters, playedOut: "all" },
+	);
+}

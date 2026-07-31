@@ -1,90 +1,70 @@
-import { ANALYZER_URL } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	selectWeapon,
-	test,
-} from "./helpers/playwright";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { AnalyzerPage } from "./pages/analyzer/analyzer-page";
 
 test.describe("Build Analyzer", () => {
 	test("analyzes a build and links to new build page with same abilities", async ({
 		page,
 	}) => {
-		await seed(page);
-		await impersonate(page);
-		await navigate({ page, url: ANALYZER_URL });
+		await impersonate(page, NZAP_TEST_ID);
 
-		const newBuildPrompt = page.getByTestId("new-build-prompt");
+		const analyzer = new AnalyzerPage(page);
+		await analyzer.goto();
 
-		await isNotVisible(newBuildPrompt);
+		await isNotVisible(analyzer.locators.newBuildPrompt);
 
-		await selectWeapon({ page, name: "Splattershot" });
+		await analyzer.selectWeapon("Splattershot");
 
-		await page.getByTestId("movement-category").click();
+		await analyzer.openStatCategory("movement-category");
 
-		const swimSpeedBase = page.getByTestId("swim-speed-base");
-		const swimSpeedSplattershot = (await swimSpeedBase.textContent())!;
+		const swimSpeed = analyzer.statCard("swim-speed");
+		const swimSpeedSplattershot = (await swimSpeed.baseValue.textContent())!;
 
-		await selectWeapon({ page, name: "Luna Blaster" });
+		await analyzer.selectWeapon("Luna Blaster");
 
 		// Luna Blaster is a light weapon so it should have lower base swim speed than Splattershot
-		await expect(swimSpeedBase).not.toHaveText(swimSpeedSplattershot);
+		await expect(swimSpeed.baseValue).not.toHaveText(swimSpeedSplattershot);
 
 		// shows comparison value when you have relevant abilities selected
-		const swimSpeedBuildValueTitle = page.getByTestId("swim-speed-build-title");
-		await isNotVisible(swimSpeedBuildValueTitle);
-		await page.getByTestId("SSU-ability-button").click();
-		await swimSpeedBuildValueTitle.isVisible();
+		await isNotVisible(swimSpeed.buildValueTitle);
+		await analyzer.addAbility("SSU");
+		await expect(swimSpeed.buildValueTitle).toBeVisible();
 
 		// on new build page with preselected values
-		await newBuildPrompt.click();
-		await expect(page.getByTestId("HEAD-gear-select")).toBeVisible();
+		const buildForm = await analyzer.openNewBuildPrompt();
+		await expect(buildForm.gearSelect("HEAD")).toBeVisible();
 		// Check that Luna Blaster appears in the weapon pool list (not in dropdown options)
-		await expect(
-			page.getByRole("listitem").getByText("Luna Blaster"),
-		).toBeVisible();
-		await page.getByTestId("SSU-ability").isVisible();
+		await expect(buildForm.weaponPoolItem("Luna Blaster")).toBeVisible();
+		await expect(buildForm.ability("SSU")).toBeVisible();
 	});
 
 	test("compares builds", async ({ page }) => {
-		await navigate({ page, url: ANALYZER_URL });
+		const analyzer = new AnalyzerPage(page);
+		await analyzer.goto();
 
-		await page.getByTestId("build2-tab").click();
+		await analyzer.selectTab("build2");
 
-		const swimSpeedAbilityButtonLocator =
-			page.getByTestId("SSU-ability-button");
-		const swimSpeedAbilityLocator = page.locator(
-			"[data-testid='ability-selector'] [data-testid='SSU-ability']",
-		);
+		const swimSpeedAbility = analyzer.selectedAbility("SSU");
 
-		await swimSpeedAbilityButtonLocator.click();
-		await expect(swimSpeedAbilityLocator).toBeVisible();
+		await analyzer.addAbility("SSU");
+		await expect(swimSpeedAbility).toBeVisible();
 
 		// can't add abilities to build 2 if build 1 is empty
 		// -> they automatically go to build 1
-		await page.getByTestId("build2-tab").click();
-		await isNotVisible(swimSpeedAbilityLocator);
+		await analyzer.selectTab("build2");
+		await isNotVisible(swimSpeedAbility);
 
-		await swimSpeedAbilityButtonLocator.click();
-		await expect(swimSpeedAbilityLocator).toBeVisible();
-		await swimSpeedAbilityButtonLocator.click();
-		await expect(
-			page.locator(
-				"[data-testid='ability-selector'] [data-testid='SSU-ability']",
-			),
-		).toHaveCount(2);
+		await analyzer.addAbility("SSU");
+		await expect(swimSpeedAbility).toBeVisible();
+		await analyzer.addAbility("SSU");
+		await expect(swimSpeedAbility).toHaveCount(2);
 
-		await page.getByTestId("ap-tab").click();
-		await expect(page.getByTestId("ap-compare-1").first()).toContainText(
-			"10AP",
+		await analyzer.selectTab("ap");
+		await expect(analyzer.apComparison(1).first()).toContainText("10AP");
+		await expect(analyzer.apComparison(2).first()).toContainText("13AP");
+
+		await expect(analyzer.statCard("swim-speed").buildValueTitle).toContainText(
+			"Build 2",
 		);
-		await expect(page.getByTestId("ap-compare-2").first()).toContainText(
-			"13AP",
-		);
-
-		await page.getByTestId("swim-speed").getByText("BUILD 2").isVisible();
 	});
 });

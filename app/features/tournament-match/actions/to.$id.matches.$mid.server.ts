@@ -1,17 +1,13 @@
-import type { Transaction } from "kysely";
 import type { ActionFunction } from "react-router";
 import { db } from "~/db/sql";
-import type { DB } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
-import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as Engine from "~/features/tournament-bracket/core/engine";
+import { executeBracketOperation } from "~/features/tournament-bracket/core/executeBracketOperation.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	type TournamentDataTeam,
@@ -21,12 +17,8 @@ import {
 	matchPageParamsSchema,
 	matchSchema,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
-import {
-	tournamentTeamToActiveRosterUserIds,
-	tournamentWebsocketRoom,
-} from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
-import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -36,15 +28,13 @@ import {
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
-import { errorIsSqliteUniqueConstraintFailure, toDBBoolean } from "~/utils/sql";
+import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
-import { resolveMapList } from "../core/mapList.server";
+import { resolveMatchMapList } from "../core/mapList.server";
+import { reportScore } from "../core/reportScore.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
-import {
-	matchIsLocked,
-	tournamentMatchWebsocketRoom,
-} from "../tournament-match-utils";
+import { tournamentMatchWebsocketRoom } from "../tournament-match-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const user = requireUser();
@@ -92,33 +82,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 		match.opponentTwo?.score ?? 0,
 	];
 
-	const pickBanEvents = match.roundMaps?.pickBan
-		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
-		: [];
-
-	const mapList =
-		match.opponentOne?.id && match.opponentTwo?.id
-			? resolveMapList({
-					tournamentId,
-					matchId,
-					teams: [match.opponentOne.id, match.opponentTwo.id],
-					mapPoolByTeamId: (teamId) =>
-						tournament.teamById(teamId)?.mapPool ?? [],
-					mapPickingStyle: match.mapPickingStyle,
-					maps: match.roundMaps,
-					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-					pickBanEvents,
-					recentlyPlayedMaps:
-						match.mapPickingStyle !== "TO"
-							? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
-									teamIds: [match.opponentOne.id, match.opponentTwo.id],
-								}).catch((error) => {
-									logger.error("Failed to fetch recently played maps", error);
-									return [];
-								})
-							: undefined,
-				})
-			: null;
+	const mapList = await resolveMatchMapList({ match, tournament });
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
@@ -128,123 +92,21 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	switch (data._action) {
 		case "REPORT_SCORE": {
-			// they are trying to report score that was already reported
-			// assume that it was already reported and make their page refresh
-			if (data.position !== scores[0] + scores[1]) {
-				return null;
-			}
+			const reported = await reportScore({
+				match,
+				tournament,
+				mapList,
+				user,
+				position: data.position,
+				winnerTeamId: data.winnerTeamId,
+				ko: data.ko,
+			});
 
-			validateCanReportScore();
-			errorToastIfFalsy(
-				match.opponentOne?.id === data.winnerTeamId ||
-					match.opponentTwo?.id === data.winnerTeamId,
-				"Winner team id is invalid",
-			);
-			errorToastIfFalsy(
-				match.opponentOne && match.opponentTwo,
-				"Teams are missing",
-			);
-			errorToastIfFalsy(
-				!matchIsLocked({ matchId: match.id, tournament, scores }),
-				"Match is locked",
-			);
+			// the game was already reported, let their page refresh to pick it up
+			if (!reported) return null;
 
-			const currentMap = mapList?.filter((m) => !m.bannedByTournamentTeamId)[
-				data.position
-			];
-			invariant(currentMap, "Can't resolve current map");
-
-			const bracket = tournament.bracketByIdx(
-				tournament.matchIdToBracketIdx(match.id)!,
-			)!;
-			errorToastIfFalsy(
-				!bracket.collectsKos || typeof data.ko === "boolean",
-				"KO status is required for this bracket",
-			);
-
-			const teamOneRoster = tournamentTeamToActiveRosterUserIds(
-				tournament.teamById(match.opponentOne.id!)!,
-				tournament.minMembersPerTeam,
-			);
-			const teamTwoRoster = tournamentTeamToActiveRosterUserIds(
-				tournament.teamById(match.opponentTwo.id!)!,
-				tournament.minMembersPerTeam,
-			);
-
-			errorToastIfFalsy(teamOneRoster, "Team one has no active roster");
-			errorToastIfFalsy(teamTwoRoster, "Team two has no active roster");
-
-			errorToastIfFalsy(
-				new Set([...teamOneRoster, ...teamTwoRoster]).size ===
-					tournament.minMembersPerTeam * 2,
-				"Duplicate user in rosters",
-			);
-
-			try {
-				const { result: reported, endedMatchIds } =
-					await executeBracketOperation({
-						tournamentId,
-						tournament,
-						operation: (bracketData) =>
-							Engine.reportGameResult(bracketData, {
-								matchId: match.id,
-								winnerTeamId: data.winnerTeamId,
-							}),
-						endDroppedTeams: (result) => result.setOver,
-						inTransaction: async (_result, trx) => {
-							const result = await TournamentMatchRepository.insertResult(
-								{
-									matchId: match.id,
-									mode: currentMap.mode,
-									stageId: currentMap.stageId,
-									reporterId: user.id,
-									winnerTeamId: data.winnerTeamId,
-									number: data.position + 1,
-									source: serializeMaplistSource(currentMap.source),
-									ko: bracket.collectsKos
-										? toDBBoolean(Boolean(data.ko))
-										: null,
-								},
-								trx,
-							);
-
-							await TournamentMatchRepository.setParticipants(
-								{
-									resultId: result.id,
-									participants: [
-										...teamOneRoster.map((userId) => ({
-											userId,
-											tournamentTeamId: match.opponentOne!.id!,
-										})),
-										...teamTwoRoster.map((userId) => ({
-											userId,
-											tournamentTeamId: match.opponentTwo!.id!,
-										})),
-									],
-								},
-								trx,
-							);
-						},
-					});
-				endedDroppedMatchIds = endedMatchIds;
-				setIsOver = reported.setOver;
-			} catch (error) {
-				// another request already reported this game in the race window,
-				// let their page refresh to pick up the already-recorded result
-				if (errorIsSqliteUniqueConstraintFailure(error)) {
-					return null;
-				}
-				throw error;
-			}
-
-			if (setIsOver) {
-				// the set ended, so weapons reported in advance for map indexes
-				// beyond the games actually played are trimmed
-				await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
-					tournamentMatchId: matchId,
-					gameCount: data.position + 1,
-				});
-			}
+			endedDroppedMatchIds = reported.endedMatchIds;
+			setIsOver = reported.setOver;
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
@@ -847,65 +709,4 @@ function canReportTournamentScore({
 	isOrganizer: boolean;
 }) {
 	return !match.winnerSide && (isMemberOfATeamInTheMatch || isOrganizer);
-}
-
-/**
- * Runs an engine operation against freshly hydrated bracket data and persists
- * the resulting match changes, all in one transaction: hydrate → operate →
- * (end dropped teams' matches) → apply changes → extra statements.
- */
-async function executeBracketOperation<T extends Engine.EngineResult>({
-	tournamentId,
-	tournament,
-	operation,
-	endDroppedTeams,
-	inTransaction,
-}: {
-	tournamentId: number;
-	tournament: Tournament;
-	operation: (bracketData: Engine.BracketData) => T;
-	/** Whether unfinished matches of dropped out teams should be ended after the operation (resolved from its result when given a function). */
-	endDroppedTeams: boolean | ((result: T) => boolean);
-	/** Extra statements to run inside the same transaction, after the match changes have been applied. */
-	inTransaction?: (result: T, trx: Transaction<DB>) => void | Promise<void>;
-}): Promise<{ result: T; endedMatchIds: number[] }> {
-	let result!: T;
-	let endedMatchIds: number[] = [];
-
-	await db.transaction().execute(async (trx) => {
-		const bracketData = await BracketRepository.findByTournamentId(
-			tournamentId,
-			trx,
-		);
-		result = operation(bracketData);
-
-		let applied: Engine.EngineResult = result;
-
-		const shouldEndDroppedTeamMatches =
-			typeof endDroppedTeams === "function"
-				? endDroppedTeams(result)
-				: endDroppedTeams;
-		if (shouldEndDroppedTeamMatches) {
-			const droppedResult = endDroppedTeamMatches({
-				tournament,
-				data: result.data,
-			});
-			endedMatchIds = droppedResult.endedMatchIds;
-			applied = {
-				data: droppedResult.data,
-				changedMatches: [
-					...result.changedMatches,
-					...droppedResult.changedMatches,
-				],
-			};
-		}
-
-		await BracketRepository.applyMatchChanges(
-			{ previousData: bracketData, result: applied },
-			trx,
-		);
-		await inTransaction?.(result, trx);
-	});
-
-	return { result, endedMatchIds };
 }

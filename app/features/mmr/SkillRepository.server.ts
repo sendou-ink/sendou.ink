@@ -123,6 +123,9 @@ export async function findSeedingSkills({
 	return new Map<number, SeedingSkill>(rows.map((row) => [row.userId, row]));
 }
 
+/**
+ * Adds a user's starting skill of a season.
+ */
 export async function addInitialSkill(
 	{
 		mu,
@@ -139,7 +142,7 @@ export async function addInitialSkill(
 ) {
 	const executor = trx ?? db;
 
-	await executor
+	return executor
 		.insertInto("Skill")
 		.values({
 			mu,
@@ -149,7 +152,8 @@ export async function addInitialSkill(
 			userId,
 			matchesCount: 0,
 		})
-		.execute();
+		.returning("id")
+		.executeTakeFirstOrThrow();
 }
 
 export async function findSeasonProgressionByUserId({

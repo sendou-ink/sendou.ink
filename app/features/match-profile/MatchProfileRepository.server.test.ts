@@ -1,10 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { db } from "~/db/sql";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { UserMapModePreferences } from "~/db/tables-json";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as MatchProfileRepository from "./MatchProfileRepository.server";
 
-const USER_ID = 1;
+let userId: number;
 
 const PREFERENCES: UserMapModePreferences = {
 	modes: [{ mode: "SZ", preference: "PREFER" }],
@@ -21,7 +21,7 @@ const updateProfile = (
 		Parameters<typeof MatchProfileRepository.updateOwnMatchProfile>[0]
 	> = {},
 ) =>
-	withUserId(USER_ID, () =>
+	withUserId(userId, () =>
 		MatchProfileRepository.updateOwnMatchProfile({
 			mapModePreferences: PREFERENCES,
 			vc: "NO",
@@ -34,16 +34,10 @@ const updateProfile = (
 
 describe("updateOwnMatchProfile", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(1);
-		await db
-			.updateTable("User")
-			.set({ mapModePreferences: JSON.stringify(PREFERENCES), noScreen: 0 })
-			.where("id", "=", USER_ID)
-			.execute();
-	});
-
-	afterEach(async () => {
-		await dbReset();
+		const user = await UserFactory.create(null, {
+			matchProfile: { mapModePreferences: PREFERENCES, noScreen: 0 },
+		});
+		userId = user.id;
 	});
 
 	test("reports no change when nothing matchmaking-relevant changed", async () => {

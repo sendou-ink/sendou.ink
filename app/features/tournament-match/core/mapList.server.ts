@@ -1,8 +1,11 @@
 import type { Tables } from "~/db/tables";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
 import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
@@ -15,6 +18,7 @@ import type {
 import { syncCached } from "~/utils/cache.server";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
+import type { FindMatchById } from "../TournamentMatchRepository.server";
 
 interface ResolveCurrentMapListArgs {
 	tournamentId: number;
@@ -85,6 +89,50 @@ export function resolveMapList(
 					bannedByTournamentTeamId: undefined,
 				})),
 		);
+}
+
+/**
+ * The map list the given match is played on, `null` when it does not yet have both
+ * of its teams. Resolves the arguments {@link resolveMapList} needs out of the match
+ * and its tournament: the teams' map pools, the pick/ban events so far and, for the
+ * picking styles that avoid repeats, the maps the teams recently played.
+ */
+export async function resolveMatchMapList({
+	match,
+	tournament,
+}: {
+	match: FindMatchById;
+	tournament: Tournament;
+}): Promise<TournamentMapListMap[] | null> {
+	if (!match.opponentOne?.id || !match.opponentTwo?.id) return null;
+
+	const teams: [number, number] = [match.opponentOne.id, match.opponentTwo.id];
+
+	const pickBanEvents = match.roundMaps?.pickBan
+		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
+		: [];
+
+	const recentlyPlayedMaps =
+		match.mapPickingStyle !== "TO"
+			? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+					teamIds: teams,
+				}).catch((error) => {
+					logger.error("Failed to fetch recently played maps", error);
+					return [];
+				})
+			: undefined;
+
+	return resolveMapList({
+		tournamentId: match.tournamentId,
+		matchId: match.id,
+		teams,
+		mapPoolByTeamId: (teamId) => tournament.teamById(teamId)?.mapPool ?? [],
+		mapPickingStyle: match.mapPickingStyle,
+		maps: match.roundMaps,
+		tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+		pickBanEvents,
+		recentlyPlayedMaps,
+	});
 }
 
 function resolveCustomMapList(

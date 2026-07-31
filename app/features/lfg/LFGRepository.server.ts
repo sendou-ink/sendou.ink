@@ -104,7 +104,11 @@ const postExpiryCutoff = () =>
 export function insertPost(
 	args: Omit<TablesInsertable["LFGPost"], "updatedAt">,
 ) {
-	return db.insertInto("LFGPost").values(args).execute();
+	return db
+		.insertInto("LFGPost")
+		.values(args)
+		.returning("id")
+		.executeTakeFirstOrThrow();
 }
 
 export function updatePost(

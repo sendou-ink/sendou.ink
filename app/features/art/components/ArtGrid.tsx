@@ -182,6 +182,7 @@ function ImagePreview({
 			onLoad={() => setImageSettled(true)}
 			onError={() => setImageSettled(true)}
 			className={enablePreview ? styles.thumbnail : undefined}
+			data-testid="art-image"
 		/>
 	);
 

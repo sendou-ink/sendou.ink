@@ -1,55 +1,74 @@
-import { tournamentBracketsPage } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	submit,
-	test,
-} from "./helpers/playwright";
+import { subMinutes } from "date-fns";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
 
-const AB_RR_TOURNAMENT_ID = 8;
 const TEAMS_PER_DIVISION = 6;
+const ROSTER_SIZE = 4;
 
 test.describe("Tournament A/B divisions", () => {
 	test("assigns 6A/6B, starts bracket, renders 36 matches across 6 rounds and two standings tables", async ({
 		page,
+		factories,
 	}) => {
 		test.slow();
 
-		await seed(page, "AB_RR");
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: `/to/${AB_RR_TOURNAMENT_ID}/admin/seeds`,
+		const teamCount = TEAMS_PER_DIVISION * 2;
+		const players = await factories.UserFactory.createMany(
+			teamCount * ROSTER_SIZE,
+		);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+			mapPickingStyle: "AUTO_ALL",
+			bracketProgression: [
+				{
+					type: "round_robin",
+					name: "Groups stage",
+					requiresCheckIn: false,
+					settings: { hasAbDivisions: true, teamsPerGroup: teamCount },
+				},
+			],
 		});
+		for (let i = 0; i < teamCount; i++) {
+			await factories.TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					memberUserIds: players
+						.slice(i * ROSTER_SIZE, (i + 1) * ROSTER_SIZE)
+						.map((player) => player.id),
+				},
+				{ isCheckedIn: true },
+			);
+		}
 
-		await page.getByTestId("set-ab-divisions").click();
+		await impersonate(page, NZAP_TEST_ID);
 
-		const divisionRadioGroups = page.getByTestId("ab-division-radio-group");
-		await expect(divisionRadioGroups).toHaveCount(TEAMS_PER_DIVISION * 2);
+		const seeds = new TournamentSeedsPage(page);
+		await seeds.goto(tournament.id);
+
+		await seeds.openAbDivisionsDialog();
+
+		await expect(seeds.locators.abDivisionRadioGroups).toHaveCount(teamCount);
 
 		for (let i = 0; i < TEAMS_PER_DIVISION; i++) {
-			await divisionRadioGroups.nth(i).getByText("A", { exact: true }).click();
+			await seeds.assignAbDivision(i, "A");
 		}
-		for (let i = TEAMS_PER_DIVISION; i < TEAMS_PER_DIVISION * 2; i++) {
-			await divisionRadioGroups.nth(i).getByText("B", { exact: true }).click();
+		for (let i = TEAMS_PER_DIVISION; i < teamCount; i++) {
+			await seeds.assignAbDivision(i, "B");
 		}
 
-		await submit(page, "set-ab-divisions-submit-button");
+		await seeds.saveAbDivisions();
 
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId: AB_RR_TOURNAMENT_ID }),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await brackets.finalize();
 
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		await expect(brackets.locators.bracketsViewer).toBeVisible();
 
-		await expect(page.getByTestId("brackets-viewer")).toBeVisible();
-
-		await expect(page.locator("[data-match-id]")).toHaveCount(
+		await expect(brackets.locators.matches).toHaveCount(
 			TEAMS_PER_DIVISION * TEAMS_PER_DIVISION,
 		);
 
@@ -58,11 +77,9 @@ test.describe("Tournament A/B divisions", () => {
 			roundNumber <= TEAMS_PER_DIVISION;
 			roundNumber++
 		) {
-			await expect(
-				page.getByText(`Round ${roundNumber}`, { exact: true }).first(),
-			).toBeVisible();
+			await expect(brackets.roundLabel(roundNumber).first()).toBeVisible();
 		}
 
-		await expect(page.getByTestId("rr-standings-table")).toHaveCount(2);
+		await expect(brackets.locators.rrStandingsTables).toHaveCount(2);
 	});
 });

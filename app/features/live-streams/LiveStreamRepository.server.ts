@@ -15,10 +15,15 @@ export function replaceAll(
 	});
 }
 
+/**
+ * Adds the given accounts as streamers of their tournament. Returns the ids of the
+ * rows actually inserted, in insertion order — an account already streaming that
+ * tournament is skipped and so has no id among them.
+ */
 export function insertTournamentStreamers(
 	rows: Omit<Tables["TournamentStreamer"], "id">[],
 ) {
-	if (rows.length === 0) return;
+	if (rows.length === 0) return Promise.resolve([]);
 
 	return db
 		.insertInto("TournamentStreamer")
@@ -26,6 +31,7 @@ export function insertTournamentStreamers(
 		.onConflict((oc) =>
 			oc.columns(["twitchAccount", "tournamentId"]).doNothing(),
 		)
+		.returning("id")
 		.execute();
 }
 
