@@ -17,6 +17,12 @@ sendou@macbook ~ % curl -H "Authorization: Bearer mytoken" https://sendou.ink/ap
 {"name":"PICNIC mini","startTime":"2023-05-18T18:00:00.000Z","url":"https://sendou.ink/to/1/brackets","logoUrl":"https://sendou-assets.nyc3.cdn.digitaloceanspaces.com/img/tournament-logos/pn.avif","teams":{"checkedInCount":25,"registeredCount":31},"brackets":[{"name":"Main bracket","type":"double_elimination"}],"organizationId":1,"isFinalized":true}% 
 ```
 
+## Developing
+
+Some "copy paste" is expected to keep public API separated from internal implementations. This is why we call database on each route handler separately as an exception to how we do it in internal loaders.
+
+This API is lean on purpose and by default new endpoints will not be added. This is to keep maintenance burden low and anyway the project is not designed to support a large number of API consumers.
+
 ## Clients (unofficial)
 
 - [sendou.py (Python)](https://github.com/IPLSplatoon/sendou.py)
