@@ -50,7 +50,13 @@ beats the html class regardless of which one is in effect
 	gap: var(--s-3);
 }
 
+/*
+The image export freezes each element's width, so a shrink-to-fit box would clip its own
+text. Both sides of the header grow into the free space instead, which keeps them at the
+same place as an auto margin would but leaves their text room to breathe.
+*/
 .headerText {
+	flex: 1 1 auto;
 	min-width: 0;
 }
 
@@ -82,10 +88,11 @@ beats the html class regardless of which one is in effect
 
 .headerTrailing {
 	display: flex;
+	flex-grow: 1;
 	flex-shrink: 0;
 	align-items: center;
+	justify-content: flex-end;
 	gap: var(--s-2);
-	margin-inline-start: auto;
 }
 
 .box {
@@ -243,8 +250,10 @@ beats the html class regardless of which one is in effect
 }
 
 .statValue {
-	max-width: 100%;
+	/* full width rather than shrink-to-fit so the image export cannot clip the value */
+	width: 100%;
 	font-size: var(--font-lg);
+	text-align: center;
 	font-weight: var(--weight-extra);
 	font-variant-numeric: tabular-nums;
 }

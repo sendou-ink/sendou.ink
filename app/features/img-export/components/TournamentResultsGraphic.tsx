@@ -89,7 +89,7 @@ export function TournamentGraphicHeader({
 			identiconInput={tournamentName}
 			titleRow={
 				<>
-					<div className={graphicStyles.headerTitle}>{tournamentName}</div>
+					<span className={graphicStyles.headerTitle}>{tournamentName}</span>
 					{typeof tier === "number" ? <TierPill tier={tier} /> : null}
 				</>
 			}

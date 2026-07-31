@@ -2013,12 +2013,32 @@ const SEASON_SUMMARY_STATS: SeasonSummaryGraphicStats = {
 		},
 	},
 	topMates: [
-		{ player: { name: "Grey", countryCode: "FR" }, setsCount: 23 },
-		{ player: { name: "sunni" }, setsCount: 17 },
-		{ player: { name: "まるお", countryCode: "JP" }, setsCount: 9 },
-		{ player: { name: "Chara", countryCode: "US" }, setsCount: 8 },
-		{ player: { name: "Silver", countryCode: "FR" }, setsCount: 6 },
-		{ player: { name: "Yeti" }, setsCount: 4 },
+		{
+			player: { name: "Grey", countryCode: "FR" },
+			discordId: "289132480999030784",
+			setsCount: 23,
+		},
+		{
+			player: { name: "sunni" },
+			discordId: "437750362188120075",
+			setsCount: 17,
+		},
+		{
+			player: { name: "まるお", countryCode: "JP" },
+			discordId: "196628310288564224",
+			setsCount: 9,
+		},
+		{
+			player: { name: "Chara", countryCode: "US" },
+			discordId: "455039198672814090",
+			setsCount: 8,
+		},
+		{
+			player: { name: "Silver", countryCode: "FR" },
+			discordId: "224378380316540929",
+			setsCount: 6,
+		},
+		{ player: { name: "Yeti" }, discordId: "153113232128507904", setsCount: 4 },
 	],
 	bestStage: { stageId: 14, winratePercentage: 78 },
 	spProgression: SEASON_SUMMARY_DAYS.map(([date, sp]) => ({ date, sp })),

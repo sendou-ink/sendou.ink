@@ -73,7 +73,7 @@ export function BuildGraphic({
 					discordAvatar: owner.discordAvatar,
 					size: "lg",
 				})}
-				identiconInput={owner.username}
+				identiconInput={owner.discordId}
 				titleRow={
 					<span className={graphicStyles.headerTitle}>
 						{owner.username}

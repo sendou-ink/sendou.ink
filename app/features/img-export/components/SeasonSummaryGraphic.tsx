@@ -80,6 +80,7 @@ export interface SeasonSummaryGraphicStats {
 	};
 	topMates: Array<{
 		player: GraphicPlayer;
+		discordId: string;
 		avatarUrl?: string;
 		setsCount: number;
 	}>;
@@ -152,7 +153,7 @@ export function SeasonSummaryGraphic({
 		<GraphicContainer>
 			<GraphicHeader
 				avatarUrl={user.avatarUrl}
-				identiconInput={user.name}
+				identiconInput={user.discordId}
 				titleRow={
 					<>
 						{user.countryCode ? (
@@ -209,7 +210,9 @@ export function SeasonSummaryGraphic({
 					<div className={styles.teamRankInfo}>
 						<div className={styles.teamRankTitle}>
 							{teamRank.team ? (
-								<div className={styles.teamRankName}>{teamRank.team.name}</div>
+								<span className={styles.teamRankName}>
+									{teamRank.team.name}
+								</span>
 							) : null}
 							<div
 								className={clsx(styles.teamRankSp, {
@@ -325,7 +328,7 @@ export function SeasonSummaryGraphic({
 									<div key={mate.player.name} className={styles.mateRow}>
 										<Avatar
 											url={mate.avatarUrl}
-											identiconInput={mate.player.name}
+											identiconInput={mate.discordId}
 											size="xxs"
 											alt=""
 										/>

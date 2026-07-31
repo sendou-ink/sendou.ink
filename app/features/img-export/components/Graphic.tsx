@@ -158,14 +158,18 @@ export function GraphicTeamRow({
 	);
 }
 
+/**
+ * A chip is sized by its content, and the image export freezes each element's width. Inline
+ * elements are exempt from that, so the chip must stay a `span` or its name gets clipped.
+ */
 export function GraphicPlayerChip({ player }: { player: GraphicPlayer }) {
 	return (
-		<div className={styles.player}>
+		<span className={styles.player}>
 			{player.countryCode ? (
 				<Flag countryCode={player.countryCode} tiny />
 			) : null}
 			<span className={styles.playerName}>{player.name}</span>
-		</div>
+		</span>
 	);
 }
 

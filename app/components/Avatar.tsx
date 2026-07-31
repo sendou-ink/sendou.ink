@@ -132,22 +132,23 @@ export function Avatar({
 
 	const identiconSource = identiconInput ?? user?.discordId ?? "unknown";
 
-	const userAvatarUrl =
-		user && !isErrored
-			? resolveAvatarUrl({
-					customAvatarUrl: user.customAvatarUrl,
-					discordId: user.discordId,
-					discordAvatar: user.discordAvatar,
-					size: size === "lg" || size === "xmd" ? "lg" : "sm",
-				})
-			: undefined;
+	const userAvatarUrl = user
+		? resolveAvatarUrl({
+				customAvatarUrl: user.customAvatarUrl,
+				discordId: user.discordId,
+				discordAvatar: user.discordAvatar,
+				size: size === "lg" || size === "xmd" ? "lg" : "sm",
+			})
+		: undefined;
 
-	const src = url
-		? url
-		: (userAvatarUrl ??
-			(isClient
+	const avatarUrl = url ?? userAvatarUrl;
+
+	const src =
+		avatarUrl && !isErrored
+			? avatarUrl
+			: isClient
 				? generateIdenticon(identiconSource, dimensions[size], 7)
-				: BLANK_IMAGE_URL));
+				: BLANK_IMAGE_URL;
 
 	return (
 		<div className={clsx(styles.avatarWrapper, className)}>

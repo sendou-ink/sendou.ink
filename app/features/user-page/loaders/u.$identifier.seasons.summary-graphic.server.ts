@@ -140,6 +140,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 				name: mate.user.username,
 				countryCode: countries.get(mate.user.id),
 			},
+			discordId: mate.user.discordId,
 			avatarUrl: resolveAvatarUrl({
 				customAvatarUrl: mate.user.customAvatarUrl,
 				discordId: mate.user.discordId,
