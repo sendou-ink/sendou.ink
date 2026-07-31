@@ -1,9 +1,13 @@
 .ownTeamRow {
 	grid-template-columns: 2.75rem 1fr auto;
 	background:
-		linear-gradient(to right, oklch(83% 0.0816 253 / 0.16), transparent 40%),
+		linear-gradient(
+			to right,
+			color-mix(in oklch, var(--graphic-accent) 16%, transparent),
+			transparent 40%
+		),
 		var(--graphic-row-bg);
-	border-color: oklch(83% 0.0816 253 / 0.35);
+	border-color: color-mix(in oklch, var(--graphic-accent) 35%, transparent);
 }
 
 .matchRow {

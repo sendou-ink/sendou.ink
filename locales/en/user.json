@@ -203,7 +203,6 @@
 	"seasons.summary.count.maps_one": "{{count}} map",
 	"seasons.summary.count.maps_other": "{{count}} maps",
 	"seasons.summary.export": "Export image",
-	"seasons.summary.export.download": "Download",
 	"seasons.summary.export.supporterPerk": "Exporting this season's summary image is a supporter perk. Everyone can export the latest finished season's image during the off-season.",
 	"builds.sorting.changeButton": "Change sorting",
 	"builds.sorting.header": "Change build sorting",

@@ -436,17 +436,3 @@
 	gap: var(--s-2);
 	margin-top: var(--s-4);
 }
-
-/* doubled selector so it wins over the base modal max-width regardless of CSS module order */
-.summaryGraphicDialog.summaryGraphicDialog {
-	max-width: fit-content;
-}
-
-.summaryGraphicScroller {
-	max-width: 100%;
-	overflow-x: auto;
-}
-
-.summaryGraphicFrame {
-	width: fit-content;
-}

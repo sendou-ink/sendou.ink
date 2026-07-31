@@ -103,7 +103,13 @@ export default function UserBuildsPage() {
 			{builds.length > 0 ? (
 				<div className={styles.buildsContainer}>
 					{builds.map((build) => (
-						<BuildCard key={build.id} build={build} canEdit={isOwnPage} />
+						<BuildCard
+							key={build.id}
+							build={build}
+							owner={layoutData.user}
+							showOwner={false}
+							canEdit={isOwnPage}
+						/>
 					))}
 				</div>
 			) : (

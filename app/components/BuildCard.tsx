@@ -1,10 +1,21 @@
 import clsx from "clsx";
-import { Lock, MessageCircleMore, SquarePen, Trash } from "lucide-react";
+import {
+	HardDriveDownload,
+	Lock,
+	MessageCircleMore,
+	SquarePen,
+	Trash,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
+import {
+	BuildGraphic,
+	type BuildGraphicOwner,
+} from "~/features/img-export/components/BuildGraphic";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
@@ -48,11 +59,21 @@ interface BuildProps {
 		modes: ModeShort[] | null;
 		weapons: Array<BuildWeaponWithTop500Info>;
 	};
-	owner?: Pick<UserWithPlusTier, "discordId" | "username" | "plusTier">;
+	owner?: Pick<UserWithPlusTier, "discordId" | "username" | "plusTier"> &
+		Partial<
+			Pick<BuildGraphicOwner, "customUrl" | "discordAvatar" | "customAvatarUrl">
+		>;
+	/** Set to false when the page context already shows the owner (e.g. their own builds page) */
+	showOwner?: boolean;
 	canEdit?: boolean;
 }
 
-export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
+export function BuildCard({
+	build,
+	owner,
+	showOwner = true,
+	canEdit = false,
+}: BuildProps) {
 	const user = useUser();
 	const { t } = useTranslation(["weapons", "builds", "common", "game-misc"]);
 
@@ -100,15 +121,15 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 					</h2>
 				</div>
 				<div className={styles.dateAuthorRow}>
-					{owner && (
+					{owner && showOwner ? (
 						<>
 							<Link to={userBuildsPage(owner)} className={styles.ownerLink}>
 								{owner.username}
 							</Link>
 							<div>•</div>
 						</>
-					)}
-					{owner?.plusTier ? (
+					) : null}
+					{owner?.plusTier && showOwner ? (
 						<>
 							<span>+{owner.plusTier}</span>
 							<div>•</div>
@@ -180,6 +201,26 @@ export function BuildCard({ build, owner, canEdit = false }: BuildProps) {
 						path={navIconUrl("analyzer")}
 					/>
 				</LinkButton>
+				{owner ? (
+					<ImageExportDialog
+						trigger={
+							<SendouButton
+								shape="circle"
+								size="small"
+								variant="minimal"
+								icon={<HardDriveDownload />}
+								className={styles.smallText}
+								aria-label={t("common:imageExport.export")}
+							/>
+						}
+						heading={t("common:imageExport.export")}
+						filename={`build-${mySlugify(title)}`}
+						// xxx: analyzer
+						qrCodePath={userBuildsPage(owner)}
+					>
+						<BuildGraphic build={build} owner={owner} />
+					</ImageExportDialog>
+				) : null}
 				{description ? (
 					<SendouPopover
 						trigger={

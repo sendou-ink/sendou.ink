@@ -1,18 +1,13 @@
 .container {
-	/* fixed dark palette so the exported image ignores the viewer's theme */
-	--graphic-bg: oklch(15% 0.03 268);
-	--graphic-row-bg: oklch(22% 0.052 268);
-	--graphic-row-border: oklch(100% 0 0 / 0.06);
-	--graphic-text: oklch(96% 0.01 268);
-	--graphic-text-dim: oklch(72% 0.04 268);
-	--graphic-accent: oklch(83% 0.0816 253);
+	--graphic-row-bg: var(--color-bg-high);
+	--graphic-row-border: color-mix(in oklch, var(--color-text) 8%, transparent);
+	--graphic-text-dim: var(--color-text-high);
+	--graphic-accent: var(--color-text-accent);
 	--graphic-first: oklch(87% 0.13 85);
 	--graphic-second: oklch(83% 0.015 268);
 	--graphic-third: oklch(74% 0.09 55);
-	--graphic-win: oklch(82% 0.14 155);
-	--graphic-loss: oklch(72% 0.16 25);
-
-	--color-bg-higher: oklch(30% 0.06 268);
+	--graphic-win: var(--color-success-high);
+	--graphic-loss: var(--color-error-high);
 
 	display: flex;
 	flex-direction: column;
@@ -22,14 +17,31 @@
 	background:
 		radial-gradient(
 			ellipse 90% 45% at 50% -5%,
-			oklch(35% 0.09 253 / 0.55),
+			color-mix(in oklch, var(--color-accent) 25%, transparent),
 			transparent 70%
 		),
-		var(--graphic-bg);
-	color: var(--graphic-text);
+		var(--color-bg);
+	color: var(--color-text);
 	/* the exported image resolves fonts slightly differently, so any text allowed to wrap eventually does */
 	white-space: nowrap;
 	border-radius: var(--radius-box);
+}
+
+/*
+Zero-specificity theme scoping so that a forced [data-theme] wrapper always
+beats the html class regardless of which one is in effect
+*/
+:global(:where(html.light)) .container,
+:global(:where([data-theme="light"])) .container {
+	--graphic-first: oklch(58% 0.12 85);
+	--graphic-second: oklch(48% 0.02 268);
+	--graphic-third: oklch(50% 0.1 55);
+}
+
+:global(:where([data-theme="dark"])) .container {
+	--graphic-first: oklch(87% 0.13 85);
+	--graphic-second: oklch(83% 0.015 268);
+	--graphic-third: oklch(74% 0.09 55);
 }
 
 .header {
@@ -112,9 +124,13 @@
 
 	&.teamRowFirst {
 		background:
-			linear-gradient(to right, oklch(87% 0.13 85 / 0.18), transparent 40%),
+			linear-gradient(
+				to right,
+				color-mix(in oklch, var(--graphic-first) 18%, transparent),
+				transparent 40%
+			),
 			var(--graphic-row-bg);
-		border-color: oklch(87% 0.13 85 / 0.4);
+		border-color: color-mix(in oklch, var(--graphic-first) 40%, transparent);
 	}
 }
 
@@ -291,4 +307,19 @@
 
 .footerAccent {
 	color: var(--graphic-accent);
+}
+
+.qrCodeRow {
+	display: flex;
+	justify-content: center;
+}
+
+.qrCode {
+	padding: var(--s-1-5);
+	background-color: #fff;
+	border-radius: var(--radius-field);
+
+	& svg {
+		display: block;
+	}
 }

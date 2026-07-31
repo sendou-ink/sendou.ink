@@ -1,0 +1,21 @@
+/* doubled selector so it wins over the base modal max-width regardless of CSS module order */
+.dialog.dialog {
+	max-width: fit-content;
+}
+
+.settings {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-3) var(--s-4);
+}
+
+.scroller {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+.frame {
+	width: fit-content;
+}

@@ -1,4 +1,6 @@
 import clsx from "clsx";
+import { QRCodeSVG } from "qrcode.react";
+import * as React from "react";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { SpecialWeaponImage, WeaponImage } from "~/components/Image";
@@ -13,6 +15,11 @@ export const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
 	year: "numeric",
 };
 
+const QR_CODE_SIZE = 76;
+
+/** Full URL the graphic's QR code should link to, provided by `ImageExportDialog` (null = no QR code) */
+export const GraphicQrCodeContext = React.createContext<string | null>(null);
+
 export interface GraphicPlayer {
 	name: string;
 	countryCode?: string;
@@ -26,8 +33,27 @@ export interface GraphicTeam {
 	weapons: MainWeaponId[];
 }
 
-export function GraphicContainer({ children }: { children: React.ReactNode }) {
-	return <div className={styles.container}>{children}</div>;
+export function GraphicContainer({
+	children,
+	width,
+}: {
+	children: React.ReactNode;
+	width?: number;
+}) {
+	const qrCodeUrl = React.useContext(GraphicQrCodeContext);
+
+	return (
+		<div className={styles.container} style={width ? { width } : undefined}>
+			{children}
+			{qrCodeUrl ? (
+				<div className={styles.qrCodeRow}>
+					<div className={styles.qrCode}>
+						<QRCodeSVG value={qrCodeUrl} size={QR_CODE_SIZE} />
+					</div>
+				</div>
+			) : null}
+		</div>
+	);
 }
 
 export function GraphicHeader({

@@ -32,6 +32,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { mainStyles } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import { SeasonSummaryGraphic } from "~/features/img-export/components/SeasonSummaryGraphic";
 import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
@@ -257,89 +258,55 @@ function SeasonSummaryExportDialog({
 	season: number;
 }) {
 	const { t } = useTranslation(["user"]);
-	const [isOpen, setIsOpen] = React.useState(false);
 	const fetcher = useFetcher<UserSeasonSummaryGraphicLoaderData>();
-	const graphicRef = React.useRef<HTMLDivElement>(null);
 
 	const handleOpen = () => {
-		setIsOpen(true);
 		if (fetcher.state === "idle" && !fetcher.data) {
 			fetcher.load(userSeasonSummaryGraphicPage({ user: profileUser, season }));
 		}
 	};
 
-	const handleDownload = async () => {
-		if (!graphicRef.current) return;
-
-		const { snapdom } = await import("@zumer/snapdom");
-
-		await snapdom.download(graphicRef.current, {
-			type: "png",
-			filename: `season-${season}-summary`,
-			quality: 1,
-			scale: 1.75,
-			embedFonts: true,
-			// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
-			compress: false,
-		});
-	};
-
 	const data = fetcher.data;
 
 	return (
-		<>
-			<SendouButton
-				size="small"
-				variant="outlined"
-				icon={<HardDriveDownload />}
-				onPress={handleOpen}
-			>
-				{t("user:seasons.summary.export")}
-			</SendouButton>
-			{isOpen ? (
-				<SendouDialog
-					heading={t("user:seasons.summary.export")}
-					onClose={() => setIsOpen(false)}
-					className={styles.summaryGraphicDialog}
+		<ImageExportDialog
+			trigger={
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<HardDriveDownload />}
+					onPress={handleOpen}
 				>
-					{data ? (
-						<div className="stack md">
-							<SendouButton
-								icon={<HardDriveDownload />}
-								onPress={handleDownload}
-								className="mx-auto"
-							>
-								{t("user:seasons.summary.export.download")}
-							</SendouButton>
-							<div className={styles.summaryGraphicScroller}>
-								<div className={styles.summaryGraphicFrame} ref={graphicRef}>
-									<SeasonSummaryGraphic
-										user={{
-											name: profileUser.username,
-											discordId: profileUser.discordId,
-											customUrl: profileUser.customUrl ?? undefined,
-											countryCode: profileUser.country ?? undefined,
-											avatarUrl:
-												profileUser.customAvatarUrl ??
-												(profileUser.discordAvatar
-													? discordAvatarUrl({
-															discordId: profileUser.discordId,
-															discordAvatar: profileUser.discordAvatar,
-															size: "lg",
-														})
-													: undefined),
-										}}
-										season={data.season}
-										seasonDateRange={Seasons.nthToDateRange(data.season)}
-										stats={data}
-									/>
-								</div>
-							</div>
-						</div>
-					) : null}
-				</SendouDialog>
+					{t("user:seasons.summary.export")}
+				</SendouButton>
+			}
+			heading={t("user:seasons.summary.export")}
+			filename={`season-${season}-summary`}
+			qrCodePath={userSeasonsPage({ user: profileUser, season })}
+		>
+			{data ? (
+				<SeasonSummaryGraphic
+					user={{
+						name: profileUser.username,
+						discordId: profileUser.discordId,
+						customUrl: profileUser.customUrl ?? undefined,
+						countryCode: profileUser.country ?? undefined,
+						avatarUrl:
+							profileUser.customAvatarUrl ??
+							(profileUser.discordAvatar
+								? discordAvatarUrl({
+										discordId: profileUser.discordId,
+										discordAvatar: profileUser.discordAvatar,
+										size: "lg",
+									})
+								: undefined),
+					}}
+					season={data.season}
+					seasonDateRange={Seasons.nthToDateRange(data.season)}
+					stats={data}
+				/>
 			) : null}
-		</>
+		</ImageExportDialog>
 	);
 }
 

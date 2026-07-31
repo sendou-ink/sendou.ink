@@ -1,0 +1,64 @@
+.plusTier {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	color: var(--graphic-accent);
+}
+
+.buildTitle {
+	overflow: hidden;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	line-height: 1.2;
+	text-align: center;
+	text-overflow: ellipsis;
+}
+
+.weaponsRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-3);
+}
+
+.weapon {
+	position: relative;
+}
+
+.top500 {
+	position: absolute;
+	top: -12px;
+	right: -8px;
+	z-index: 1;
+}
+
+.weaponName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.gearGrid {
+	display: grid;
+	grid-template-columns: repeat(5, max-content);
+	gap: var(--s-2) var(--s-3);
+	place-items: center;
+	justify-content: center;
+	padding: var(--s-3);
+}
+
+.noGear {
+	grid-template-columns: repeat(4, max-content);
+}
+
+.gear {
+	background-color: color-mix(in oklch, var(--color-text) 8%, transparent);
+	border-radius: 50%;
+}
+
+.description {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	line-height: 1.4;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}

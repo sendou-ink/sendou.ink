@@ -15,8 +15,13 @@ These should not be consumed directly, only used as a base for other vars!
 
 The hue and chroma values should not be edited manually, instead
 use oklch-gamut.ts to generate valid color palettes!
+
+A subtree can force a color scheme regardless of the html class with
+[data-theme="dark"|"light"] and opt out of an active custom theme with
+[data-default-theme] (e.g. image export previews)
 */
-html {
+html,
+[data-default-theme] {
 	--_base-h: 268;
 	--_base-c-0: 0;
 	--_base-c-1: 0.02357547860966049;
@@ -80,7 +85,8 @@ cannot use currentColor inside data URLs
 Any changes here NEED to be reflected in oklch-gamut.ts as well
 */
 html.dark,
-html.dark [data-custom-theme] {
+html.dark [data-custom-theme],
+[data-theme="dark"] {
 	--color-base-0: oklch(100% var(--_base-c-0) var(--_base-h));
 	--color-base-1: oklch(95% var(--_base-c-1) var(--_base-h));
 	--color-base-2: oklch(90% var(--_base-c-2) var(--_base-h));
@@ -131,7 +137,8 @@ html.dark [data-custom-theme] {
 }
 
 html.light,
-html.light [data-custom-theme] {
+html.light [data-custom-theme],
+[data-theme="light"] {
 	--color-base-0: oklch(17% var(--_base-c-7) var(--_base-h));
 	--color-base-1: oklch(25% var(--_base-c-6) var(--_base-h));
 	--color-base-2: oklch(32% var(--_base-c-5) var(--_base-h));
@@ -185,8 +192,9 @@ html.light [data-custom-theme] {
 These are the vars you mainly want to use
 */
 html,
-/* biome-ignore lint/style/noDescendingSpecificity: [data-custom-theme] re-declares theme vars for card subtrees; different properties than the html.dark/light blocks so no real override */
-[data-custom-theme] {
+/* biome-ignore lint/style/noDescendingSpecificity: [data-custom-theme] and [data-theme] re-declare theme vars for subtrees; different properties than the html.dark/light blocks so no real override */
+[data-custom-theme],
+[data-theme] {
 	--color-text: var(--color-base-0);
 	--color-text-high: var(--color-base-3);
 	--color-text-inverse: var(--color-base-7);

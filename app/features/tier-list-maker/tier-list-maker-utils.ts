@@ -1,3 +1,7 @@
+import {
+	TIER_NAME_FONT_SIZE_BREAKPOINTS,
+	TIER_NAME_FONT_SIZE_MIN,
+} from "./tier-list-maker-constants";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
 
 export function tierListItemId(item: TierListItem) {
@@ -49,4 +53,18 @@ export function getNextNthForItem(
 			return currentMax;
 		}, 0) + 1
 	);
+}
+
+/**
+ * Resolves the font size for a tier label so that longer tier names
+ * shrink to fit inside the fixed-width label.
+ */
+export function tierNameFontSize(name: string) {
+	const length = name.length;
+	for (const breakpoint of TIER_NAME_FONT_SIZE_BREAKPOINTS) {
+		if (length <= breakpoint.maxLength) {
+			return breakpoint.fontSize;
+		}
+	}
+	return TIER_NAME_FONT_SIZE_MIN;
 }

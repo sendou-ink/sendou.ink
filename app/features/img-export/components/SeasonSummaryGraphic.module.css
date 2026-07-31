@@ -11,9 +11,13 @@
 	align-items: center;
 	gap: var(--s-4);
 	background:
-		linear-gradient(to right, oklch(83% 0.0816 253 / 0.16), transparent 40%),
+		linear-gradient(
+			to right,
+			color-mix(in oklch, var(--graphic-accent) 16%, transparent),
+			transparent 40%
+		),
 		var(--graphic-row-bg);
-	border-color: oklch(83% 0.0816 253 / 0.35);
+	border-color: color-mix(in oklch, var(--graphic-accent) 35%, transparent);
 }
 
 .heroTierName {
@@ -109,7 +113,7 @@
 .chartPeakLabel {
 	font-size: 11px;
 	font-weight: var(--weight-extra);
-	fill: var(--graphic-text);
+	fill: var(--color-text);
 }
 
 .chartDot {
@@ -132,7 +136,20 @@
 
 .activityBox {
 	/* categorical palette, all-pairs CVD separation validated against the dark surface */
-	--activity-none: oklch(100% 0 0 / 0.06);
+	--activity-none: color-mix(in oklch, var(--color-text) 8%, transparent);
+	--activity-sq: oklch(70% 0.11 253);
+	--activity-tournament: oklch(75% 0.12 85);
+	--activity-both: oklch(94% 0.02 253);
+}
+
+:global(:where(html.light)) .activityBox,
+:global(:where([data-theme="light"])) .activityBox {
+	--activity-sq: oklch(56% 0.13 253);
+	--activity-tournament: oklch(66% 0.13 85);
+	--activity-both: oklch(30% 0.04 253);
+}
+
+:global(:where([data-theme="dark"])) .activityBox {
 	--activity-sq: oklch(70% 0.11 253);
 	--activity-tournament: oklch(75% 0.12 85);
 	--activity-both: oklch(94% 0.02 253);
