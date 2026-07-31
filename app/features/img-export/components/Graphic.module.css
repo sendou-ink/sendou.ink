@@ -24,6 +24,7 @@
 	color: var(--color-text);
 	/* the exported image resolves fonts slightly differently, so any text allowed to wrap eventually does */
 	white-space: nowrap;
+	border: 1.5px solid var(--color-border-high);
 	border-radius: var(--radius-box);
 }
 

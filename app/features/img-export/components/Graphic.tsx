@@ -20,9 +20,9 @@ export const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
  * capacities of the QR versions used at the default "L" error correction level.
  */
 const QR_CODE_SIZE_BREAKPOINTS = [
-      { maxUrlLength: 106, size: 56 },
-      { maxUrlLength: 271, size: 84 },
-      { maxUrlLength: 523, size: 116 },
+	{ maxUrlLength: 106, size: 56 },
+	{ maxUrlLength: 271, size: 84 },
+	{ maxUrlLength: 523, size: 116 },
 ] as const;
 
 const QR_CODE_SIZE_MAX = 144;

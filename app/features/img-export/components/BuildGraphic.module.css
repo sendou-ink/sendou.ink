@@ -50,6 +50,10 @@
 	grid-template-columns: repeat(2, max-content);
 }
 
+.noAbilityPoints {
+	padding-block-end: 0;
+}
+
 .gear {
 	background-color: color-mix(in oklch, var(--color-text) 8%, transparent);
 	border-radius: 50%;
@@ -82,6 +86,27 @@
 	line-height: 1.8;
 	text-align: center;
 	color: color-mix(in oklch, var(--graphic-text-dim) 70%, transparent);
+}
+
+.abilityChunks {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-3);
+}
+
+.abilityChunk {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.abilityChunkCount {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
 }
 
 .description {

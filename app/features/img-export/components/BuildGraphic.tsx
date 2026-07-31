@@ -5,6 +5,7 @@ import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { Tables } from "~/db/tables";
 import type { AbilityPoints } from "~/features/build-analyzer/analyzer-types";
+import { getAbilityChunksMapAsArray } from "~/features/build-analyzer/core/abilityChunksCalc";
 import {
 	apFromMap,
 	buildToAbilityPoints,
@@ -39,6 +40,9 @@ export interface BuildGraphicOwner {
 export function BuildGraphic({
 	build,
 	owner,
+	showTitle = true,
+	showAbilityPoints = true,
+	showAbilityChunks = false,
 }: {
 	build: Pick<
 		Tables["Build"],
@@ -54,6 +58,9 @@ export function BuildGraphic({
 		weapons: Array<BuildWeaponWithTop500Info>;
 	};
 	owner: BuildGraphicOwner;
+	showTitle?: boolean;
+	showAbilityPoints?: boolean;
+	showAbilityChunks?: boolean;
 }) {
 	const { t } = useTranslation(["weapons"]);
 
@@ -98,7 +105,9 @@ export function BuildGraphic({
 						: undefined
 				}
 			/>
-			<div className={styles.buildTitle}>{build.title}</div>
+			{showTitle ? (
+				<div className={styles.buildTitle}>{build.title}</div>
+			) : null}
 			<div className={styles.weaponsRow}>
 				{build.weapons.map((weapon) => (
 					<div key={weapon.weaponSplId} className={styles.weapon}>
@@ -127,27 +136,31 @@ export function BuildGraphic({
 			<div
 				className={clsx(styles.gearGrid, {
 					[styles.noGear]: isNoGear,
+					[styles.noAbilityPoints]: !showAbilityPoints,
 				})}
 			>
 				<GearRow
 					gearType="HEAD"
 					abilities={build.abilities[0]}
 					gearId={build.headGearSplId}
-					abilityPoints={abilityPoints}
+					abilityPoints={showAbilityPoints ? abilityPoints : null}
 				/>
 				<GearRow
 					gearType="CLOTHES"
 					abilities={build.abilities[1]}
 					gearId={build.clothesGearSplId}
-					abilityPoints={abilityPoints}
+					abilityPoints={showAbilityPoints ? abilityPoints : null}
 				/>
 				<GearRow
 					gearType="SHOES"
 					abilities={build.abilities[2]}
 					gearId={build.shoesGearSplId}
-					abilityPoints={abilityPoints}
+					abilityPoints={showAbilityPoints ? abilityPoints : null}
 				/>
 			</div>
+			{showAbilityChunks ? (
+				<AbilityChunksRow abilities={build.abilities} />
+			) : null}
 			{build.description ? (
 				<div className={styles.description}>{build.description}</div>
 			) : null}
@@ -164,7 +177,8 @@ function GearRow({
 	gearType: GearType;
 	abilities: AbilityType[];
 	gearId: number | null;
-	abilityPoints: AbilityPoints;
+	/** When null the ability point labels are hidden */
+	abilityPoints: AbilityPoints | null;
 }) {
 	const { t } = useTranslation(["analyzer"]);
 
@@ -190,14 +204,33 @@ function GearRow({
 								<Ability key={index} ability={segment.ability} size="MAIN" />
 							))}
 						</div>
-						<div className={styles.abilityPointsLabel}>
-							{apFromMap({ abilityPoints, ability: segment.ability })}
-							{t("analyzer:abilityPoints.short")}
-						</div>
+						{abilityPoints ? (
+							<div className={styles.abilityPointsLabel}>
+								{apFromMap({ abilityPoints, ability: segment.ability })}
+								{t("analyzer:abilityPoints.short")}
+							</div>
+						) : null}
 					</div>
 				))}
 			</div>
 		</>
+	);
+}
+
+function AbilityChunksRow({ abilities }: { abilities: BuildAbilitiesTuple }) {
+	const abilityChunks = getAbilityChunksMapAsArray(abilities);
+
+	if (abilityChunks.length === 0) return null;
+
+	return (
+		<div className={styles.abilityChunks}>
+			{abilityChunks.map(([ability, count]) => (
+				<div key={ability} className={styles.abilityChunk}>
+					<Ability ability={ability} size="SUB" />
+					<div className={styles.abilityChunkCount}>{count}</div>
+				</div>
+			))}
+		</div>
 	);
 }
 

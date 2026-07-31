@@ -6,6 +6,7 @@ import {
 	SquarePen,
 	Trash,
 } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Tables } from "~/db/tables";
@@ -39,6 +40,7 @@ import { Ability } from "./Ability";
 import styles from "./BuildCard.module.css";
 import { LinkButton, SendouButton } from "./elements/Button";
 import { SendouPopover } from "./elements/Popover";
+import { SendouSwitch } from "./elements/Switch";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { Image } from "./Image";
 import { LocaleTime } from "./LocaleTime";
@@ -201,28 +203,7 @@ export function BuildCard({
 						path={navIconUrl("analyzer")}
 					/>
 				</LinkButton>
-				{owner ? (
-					<ImageExportDialog
-						trigger={
-							<SendouButton
-								shape="circle"
-								size="small"
-								variant="minimal"
-								icon={<HardDriveDownload />}
-								className={styles.smallText}
-								aria-label={t("common:imageExport.export")}
-							/>
-						}
-						heading={t("common:imageExport.export")}
-						filename={`build-${mySlugify(title)}`}
-						qrCodePath={analyzerPage({
-							weaponId: weapons[0].weaponSplId,
-							abilities: abilities.flat(),
-						})}
-					>
-						<BuildGraphic build={build} owner={owner} />
-					</ImageExportDialog>
-				) : null}
+				{owner ? <BuildImageExportDialog build={build} owner={owner} /> : null}
 				{description ? (
 					<SendouPopover
 						trigger={
@@ -269,6 +250,67 @@ export function BuildCard({
 				)}
 			</div>
 		</div>
+	);
+}
+
+function BuildImageExportDialog({
+	build,
+	owner,
+}: {
+	build: BuildProps["build"];
+	owner: BuildGraphicOwner;
+}) {
+	const { t } = useTranslation(["common"]);
+	const [showTitle, setShowTitle] = React.useState(true);
+	const [showAbilityPoints, setShowAbilityPoints] = React.useState(true);
+	const [showAbilityChunks, setShowAbilityChunks] = React.useState(false);
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<SendouButton
+					shape="circle"
+					size="small"
+					variant="minimal"
+					icon={<HardDriveDownload />}
+					className={styles.smallText}
+					aria-label={t("common:imageExport.export")}
+				/>
+			}
+			heading={t("common:imageExport.export")}
+			filename={`build-${mySlugify(build.title)}`}
+			qrCodePath={analyzerPage({
+				weaponId: build.weapons[0].weaponSplId,
+				abilities: build.abilities.flat(),
+			})}
+			settings={
+				<>
+					<SendouSwitch isSelected={showTitle} onChange={setShowTitle}>
+						{t("common:imageExport.buildTitle")}
+					</SendouSwitch>
+					<SendouSwitch
+						isSelected={showAbilityPoints}
+						onChange={setShowAbilityPoints}
+					>
+						{t("common:imageExport.abilityPoints")}
+					</SendouSwitch>
+					<SendouSwitch
+						isSelected={showAbilityChunks}
+						onChange={setShowAbilityChunks}
+					>
+						{t("common:imageExport.abilityChunks")}
+					</SendouSwitch>
+				</>
+			}
+		>
+			<BuildGraphic
+				build={build}
+				owner={owner}
+				showTitle={showTitle}
+				showAbilityPoints={showAbilityPoints}
+				showAbilityChunks={showAbilityChunks}
+			/>
+		</ImageExportDialog>
 	);
 }
 

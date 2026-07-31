@@ -16,6 +16,9 @@
 	overflow-x: auto;
 }
 
+/* auto margins center the frame when the settings make the dialog wider than the graphic, but
+never clip it when the graphic itself is the wider one (unlike flex centering) */
 .frame {
 	width: fit-content;
+	margin-inline: auto;
 }
