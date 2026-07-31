@@ -23,7 +23,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const result: GetTournamentBracketStandingsResponse = {
 		finished: bracket.standingsAreFinal,
-		standings: bracket.currentStandings(true).map((standing) => ({
+		standings: bracket.liveStandings.map((standing) => ({
 			tournamentTeamId: standing.team.id,
 			placement: standing.placement,
 			groupId: standing.groupId,

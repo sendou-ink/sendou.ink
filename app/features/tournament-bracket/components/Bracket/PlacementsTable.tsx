@@ -26,9 +26,7 @@ export function PlacementsTable({
 }) {
 	const user = useUser();
 
-	const standings = bracket
-		.currentStandings(true)
-		.filter((s) => s.groupId === groupId);
+	const standings = bracket.liveStandings.filter((s) => s.groupId === groupId);
 
 	const destinationBracket = (standing: Standing, placement: number) => {
 		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {

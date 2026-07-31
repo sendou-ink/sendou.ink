@@ -87,10 +87,18 @@ export class RoundRobinBracket extends Bracket {
 	}
 
 	get standings(): Standing[] {
-		return this.currentStandings();
+		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	currentStandings(includeUnfinishedGroups = false) {
+	get liveStandings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: true });
+	}
+
+	private computeStandings({
+		includeUnfinishedGroups,
+	}: {
+		includeUnfinishedGroups: boolean;
+	}): Standing[] {
 		const groupIds = this.data.group.map((group) => group.id);
 
 		const placements: (Standing & { groupId: number })[] = [];

@@ -234,6 +234,10 @@ export abstract class Bracket {
 
 	abstract get type(): Tables["TournamentStage"]["type"];
 
+	/**
+	 * Standings that are settled i.e. teams still playing are left out. Safe to
+	 * use for deciding who advances to another bracket.
+	 */
 	abstract get standings(): Standing[];
 
 	/**
@@ -253,7 +257,11 @@ export abstract class Bracket {
 		) as number[];
 	}
 
-	currentStandings(_includeUnfinishedGroups: boolean) {
+	/**
+	 * Standings including teams that are still playing. Meant for displaying the
+	 * bracket's current state, not for deciding who advances.
+	 */
+	get liveStandings(): Standing[] {
 		return this.standings;
 	}
 

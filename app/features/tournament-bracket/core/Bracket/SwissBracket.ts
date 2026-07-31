@@ -81,10 +81,18 @@ export class SwissBracket extends Bracket {
 	}
 
 	get standings(): Standing[] {
-		return this.currentStandings();
+		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	currentStandings(includeUnfinishedGroups = false) {
+	get liveStandings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: true });
+	}
+
+	private computeStandings({
+		includeUnfinishedGroups,
+	}: {
+		includeUnfinishedGroups: boolean;
+	}): Standing[] {
 		const groupIds = this.data.group.map((group) => group.id);
 
 		const placements: (Standing & { groupId: number })[] = [];
@@ -226,7 +234,7 @@ export class SwissBracket extends Bracket {
 				const winner = match.opponent1 ? match.opponent1 : match.opponent2;
 
 				if (!winner?.id) {
-					logger.warn("SwissBracket.currentStandings: winner not found");
+					logger.warn("SwissBracket.computeStandings: winner not found");
 					continue;
 				}
 
@@ -267,7 +275,7 @@ export class SwissBracket extends Bracket {
 				for (const teamId of teamsWhoPlayedAgainst) {
 					const opponent = teams.find((t) => t.id === teamId);
 					if (!opponent) {
-						logger.warn("SwissBracket.currentStandings: opponent not found", {
+						logger.warn("SwissBracket.computeStandings: opponent not found", {
 							teamId,
 						});
 						continue;

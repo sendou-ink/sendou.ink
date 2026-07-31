@@ -810,13 +810,13 @@ function createMockBracket(
 		requiresCheckIn: false,
 		startTime: null,
 		simulatedMatch: () => undefined,
-		currentStandings: () => mockCurrentStandings(data),
+		liveStandings: mockLiveStandings(data),
 		participantTournamentTeamIds: [1, 2, 3, 4, 5, 6, 7, 8],
 	} as unknown as BracketType;
 }
 
 /** Mirrors what the real implementation returns for a bracket where no match has finished yet: every participant, in seed order, with blank stats. */
-function mockCurrentStandings(data: BracketData) {
+function mockLiveStandings(data: BracketData) {
 	return data.group.flatMap((group) => {
 		const teamIds = new Set<number>();
 		for (const match of data.match) {
