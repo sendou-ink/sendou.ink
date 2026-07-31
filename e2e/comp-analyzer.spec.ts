@@ -29,7 +29,7 @@ test.describe("Composition Analyzer", () => {
 
 		await expect(compAnalyzer.locators.categorizationToggle).not.toBeVisible();
 
-		expect(page.url()).toContain("weapons=");
+		await expect(page).toHaveURL(/weapons=/);
 
 		// Weapons should still be selected after reload
 		await page.reload();
@@ -63,7 +63,7 @@ test.describe("Composition Analyzer", () => {
 
 		// Switch categorization and test URL persistence
 		await compAnalyzer.selectCategorization("sub");
-		expect(page.url()).toContain("categorization=sub");
+		await expect(page).toHaveURL(/categorization=sub/);
 
 		await page.reload();
 

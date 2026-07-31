@@ -27,11 +27,11 @@ test.describe("Weapon parameters", () => {
 
 		await expect(showAllWeaponsButton).toBeVisible();
 		await expect(weaponHeaders).toHaveCount(initialColumnCount - 1);
-		expect(page.url()).toMatch(/hidden=\d/);
+		await expect(page).toHaveURL(/hidden=\d/);
 
 		// Refresh keeps the hidden selection
 		await page.reload();
-		expect(page.url()).toMatch(/hidden=\d/);
+		await expect(page).toHaveURL(/hidden=\d/);
 		await expect(showAllWeaponsButton).toBeVisible();
 		await expect(weaponHeaders).toHaveCount(initialColumnCount - 1);
 
@@ -39,7 +39,7 @@ test.describe("Weapon parameters", () => {
 		await weaponParams.showAllWeapons();
 		await expect(showAllWeaponsButton).not.toBeVisible();
 		await expect(weaponHeaders).toHaveCount(initialColumnCount);
-		expect(page.url()).not.toMatch(/hidden=\d/);
+		await expect(page).not.toHaveURL(/hidden=\d/);
 
 		// Comparison bar graph
 		await weaponParams.openParamComparison();
@@ -81,11 +81,11 @@ test.describe("Weapon parameters", () => {
 			weaponParams.locators;
 
 		await weaponParams.openPatchHistoryTab();
-		expect(page.url()).toContain("tab=patches");
+		await expect(page).toHaveURL(/tab=patches/);
 
 		// Refresh keeps the selected tab
 		await page.reload();
-		expect(page.url()).toContain("tab=patches");
+		await expect(page).toHaveURL(/tab=patches/);
 		await expect(patchHistoryTab).toHaveAttribute("aria-selected", "true");
 
 		// Either patch columns are shown or the empty state
@@ -94,10 +94,10 @@ test.describe("Weapon parameters", () => {
 		// Toggle "Show sub & special changes" and verify it persists on refresh
 		await expect(subAndSpecialChangesSwitch).toBeChecked();
 		await weaponParams.toggleSubAndSpecialChanges();
-		expect(page.url()).toContain("kitExtras=false");
+		await expect(page).toHaveURL(/kitExtras=false/);
 
 		await page.reload();
-		expect(page.url()).toContain("kitExtras=false");
+		await expect(page).toHaveURL(/kitExtras=false/);
 		await expect(subAndSpecialChangesSwitch).not.toBeChecked();
 	});
 });

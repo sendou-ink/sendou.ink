@@ -32,6 +32,17 @@ type TestFixtures = {
 };
 
 export const test = base.extend<TestFixtures, WorkerFixtures>({
+	context: async ({ context }, use) => {
+		// Google Fonts load with display=swap and every test context re-fetches
+		// them, so the swap reflows the page mid-test (e.g. re-collapsing the
+		// tournament nav between a visibility check and a click). Block them so
+		// layout settles at first paint and stays put.
+		await context.route(
+			/^https:\/\/fonts\.(googleapis|gstatic)\.com\//,
+			(route) => route.abort(),
+		);
+		await use(context);
+	},
 	workerPort: [
 		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
@@ -201,80 +212,13 @@ async function retryPost(
 }
 
 export async function submit(page: Page, testId?: string) {
-	// Started before the click because the data GET can land before awaiting the
-	// POST response hands control back to us, and `page.waitForResponse` only
-	// sees responses arriving after it is called.
-	const dataGet = watchForDataGetAfterPOST(page);
-
-	try {
-		const postRes = await waitForPOSTResponse(page, async () => {
-			await page.getByTestId(testId ?? "submit-button").click();
-		});
-
-		// Remix returns 202 from action endpoints when the action threw/returned a
-		// redirect. The fetcher then drives a client-side navigation and, once
-		// that completes, fires a GET against the new route's data. If we return
-		// before that GET fires, a subsequent Link click can be aborted mid-flight
-		// by the queued navigation (ERR_ABORTED on the new route's .data fetch),
-		// leaving the test on the old page.
-		if (postRes.status() !== 202) return;
-
-		await dataGet.fired;
-		// Toast flash params are stripped right after via a replace navigation
-		// (without revalidation); wait for it so it can't abort a later click.
-		await expect(page).not.toHaveURL(/__(?:success|error)=/);
-	} finally {
-		dataGet.stop();
-	}
-}
-
-/**
- * Resolves once a route data GET follows the POST, without missing one that
- * arrives while the caller is still awaiting the POST response.
- */
-function watchForDataGetAfterPOST(page: Page) {
-	const TIMEOUT = 15_000;
-
-	let postSeen = false;
-	let resolveFired: () => void = () => {};
-	let rejectFired: (error: Error) => void = () => {};
-
-	const fired = new Promise<void>((resolve, reject) => {
-		resolveFired = resolve;
-		rejectFired = reject;
+	await waitForPOSTResponse(page, async () => {
+		await page.getByTestId(testId ?? "submit-button").click();
 	});
 
-	const onResponse = (res: Response) => {
-		if (!postSeen) {
-			postSeen = res.request().method() === "POST";
-			return;
-		}
-
-		if (res.request().method() === "GET" && res.url().includes(".data")) {
-			resolveFired();
-		}
-	};
-	page.on("response", onResponse);
-
-	const timeout = setTimeout(
-		() =>
-			rejectFired(
-				new Error(
-					`submit: no route data GET followed the redirecting POST within ${TIMEOUT}ms`,
-				),
-			),
-		TIMEOUT,
-	);
-
-	return {
-		fired,
-		stop: () => {
-			clearTimeout(timeout);
-			page.off("response", onResponse);
-			// Nothing awaits `fired` when the POST wasn't a redirect
-			resolveFired();
-		},
-	};
+	// Toast flash params are stripped right after via a replace navigation
+	// (without revalidation); wait for it so it can't abort a later click.
+	await expect(page).not.toHaveURL(/__(?:success|error)=/);
 }
 
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
@@ -288,6 +232,7 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	// completes into a submit, so no POST fires — e.g. when a re-render lands
 	// mid-press. Re-issue the action when the expected POST doesn't arrive
 	// within the per-attempt window.
+	let response: Response | undefined;
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		const responsePromise = page.waitForResponse(
 			(res) => res.request().method() === "POST",
@@ -295,13 +240,30 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 		);
 		await cb();
 		try {
-			return await responsePromise;
+			response = await responsePromise;
+			break;
 		} catch (error) {
 			if (attempt === MAX_ATTEMPTS) throw error;
 		}
 	}
 
-	throw new Error("waitForPOSTResponse: unreachable");
+	// The POST's revalidation (and any redirect it drives) is still in flight;
+	// an interaction landing mid-flight aborts it, and routes that opt out of
+	// revalidation on navigation (e.g. to.$id) then keep the stale data.
+	await expectRouterIdle(page);
+
+	return response!;
+}
+
+/** Waits until no navigation, revalidation or fetcher is in flight. */
+async function expectRouterIdle(page: Page) {
+	// A submit's redirect plus the target page's loaders can exceed the default
+	// expect timeout when the full suite is loading all workers.
+	await expect(page.getByTestId("hydrated")).toHaveAttribute(
+		"data-router-idle",
+		"true",
+		{ timeout: 15_000 },
+	);
 }
 
 export function isNotVisible(locator: Locator) {
@@ -314,15 +276,12 @@ export function modalClickConfirmButton(page: Page) {
 
 /**
  * Clicks a tournament nav tab by its testId, opening the overflow ("More") menu
- * first when the tab has collapsed into it on the current viewport. Retried as a
- * whole because the nav can re-collapse between the visibility check and the click.
+ * first when the tab has collapsed into it on the current viewport.
  */
 export async function clickNavTab(page: Page, testId: string) {
 	const visibleTab = page.locator(`[data-testid="${testId}"]:visible`);
-	await expect(async () => {
-		if ((await visibleTab.count()) === 0) {
-			await page.getByRole("button", { name: "More" }).click();
-		}
-		await visibleTab.click({ timeout: 2_000 });
-	}).toPass({ timeout: 15_000 });
+	if ((await visibleTab.count()) === 0) {
+		await page.getByRole("button", { name: "More" }).click();
+	}
+	await visibleTab.click();
 }
