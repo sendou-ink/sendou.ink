@@ -210,7 +210,8 @@ function SeasonSummaryExport({
 	if (
 		!loggedInUser ||
 		loggedInUser.id !== profileUser.id ||
-		!hasCalculatedSkill
+		!hasCalculatedSkill ||
+		!SeasonSummary.isSeasonFinished(season)
 	) {
 		return null;
 	}

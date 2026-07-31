@@ -290,7 +290,7 @@ describe("canExportSeasonSummary", () => {
 		).toBe(false);
 	});
 
-	it("allows a supporter to export any participated season, also mid-season", () => {
+	it("allows a supporter to export any finished participated season, also mid-season", () => {
 		expect(
 			SeasonSummary.canExportSeasonSummary({
 				...baseArgs,
@@ -299,5 +299,28 @@ describe("canExportSeasonSummary", () => {
 				date: MID_SEASON_12_DATE,
 			}),
 		).toBe(true);
+	});
+
+	it("disallows exporting an ongoing season", () => {
+		expect(
+			SeasonSummary.canExportSeasonSummary({
+				...baseArgs,
+				season: 12,
+				seasonsParticipatedIn: [12, 11, 10],
+				date: MID_SEASON_12_DATE,
+			}),
+		).toBe(false);
+	});
+
+	it("disallows a supporter exporting an ongoing season", () => {
+		expect(
+			SeasonSummary.canExportSeasonSummary({
+				...baseArgs,
+				loggedInUser: { id: 1, roles: ["SUPPORTER" as const] },
+				season: 12,
+				seasonsParticipatedIn: [12, 11, 10],
+				date: MID_SEASON_12_DATE,
+			}),
+		).toBe(false);
 	});
 });

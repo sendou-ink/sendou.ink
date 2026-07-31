@@ -139,6 +139,11 @@ export function topWeaponUsages(
 		}));
 }
 
+/** Whether the season has ended, a prerequisite for exporting its summary image. */
+export function isSeasonFinished(season: number, date = new Date()) {
+	return Seasons.allFinished(date).some((nth) => nth === season);
+}
+
 /**
  * Whether a season's summary image is exportable without the supporter perk:
  * only the latest finished season is, and only while no season is in progress.
@@ -153,8 +158,8 @@ export function isSeasonExportableByAll(season: number, date = new Date()) {
  * Whether the logged in user can export the season summary image from the
  * given profile. Only the profile owner can export, they must have
  * participated in the season and have a calculated (non-approximate) skill
- * for it. Supporters can export any of their seasons, others only per
- * {@link isSeasonExportableByAll}.
+ * for it. An ongoing season is never exportable. Supporters can export any of
+ * their finished seasons, others only per {@link isSeasonExportableByAll}.
  */
 export function canExportSeasonSummary({
 	loggedInUser,
@@ -174,6 +179,7 @@ export function canExportSeasonSummary({
 	if (!loggedInUser || loggedInUser.id !== profileUserId) return false;
 	if (!seasonsParticipatedIn.includes(season)) return false;
 	if (!hasCalculatedSkill) return false;
+	if (!isSeasonFinished(season, date)) return false;
 	if (loggedInUser.roles.includes("SUPPORTER")) return true;
 
 	return isSeasonExportableByAll(season, date);

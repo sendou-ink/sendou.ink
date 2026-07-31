@@ -25,6 +25,7 @@ import {
 	GraphicPlacementCell,
 	type GraphicPlayer,
 	GraphicPlayerChip,
+	GraphicQrCodeContext,
 	GraphicScore,
 	GraphicSectionDivider,
 	GraphicSiteUrl,
@@ -115,6 +116,7 @@ export function SeasonSummaryGraphic({
 	stats: SeasonSummaryGraphicStats;
 }) {
 	const { t } = useTranslation(["user", "calendar", "game-misc"]);
+	const qrCodeUrl = React.useContext(GraphicQrCodeContext);
 
 	const {
 		tier,
@@ -418,14 +420,20 @@ export function SeasonSummaryGraphic({
 					</div>
 				</>
 			) : null}
-			<GraphicFooter>
-				<div>
-					{t("user:seasons.summary.count.sets", { count: setsWon + setsLost })}{" "}
-					·{" "}
-					{t("user:seasons.summary.count.maps", { count: mapsWon + mapsLost })}
-				</div>
-				<GraphicSiteUrl path={userSeasonsPage({ user, season })} />
-			</GraphicFooter>
+			{qrCodeUrl ? null : (
+				<GraphicFooter>
+					<div>
+						{t("user:seasons.summary.count.sets", {
+							count: setsWon + setsLost,
+						})}{" "}
+						·{" "}
+						{t("user:seasons.summary.count.maps", {
+							count: mapsWon + mapsLost,
+						})}
+					</div>
+					<GraphicSiteUrl path={userSeasonsPage({ user, season })} />
+				</GraphicFooter>
+			)}
 		</GraphicContainer>
 	);
 }
