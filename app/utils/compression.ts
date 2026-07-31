@@ -30,7 +30,7 @@ export function decompressFromBase64(compressed: string) {
 		const base64 = compressed.replace(/-/g, "+").replace(/_/g, "/");
 		const value = inflateRaw(
 			Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)),
-			{ to: "string" },
+			{ toText: true },
 		);
 
 		if (!value) return null;
