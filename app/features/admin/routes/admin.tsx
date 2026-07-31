@@ -55,7 +55,6 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-// xxx: should seed be just in the dropdown menu?
 export default function AdminPage() {
 	const isStaff = useHasRole("STAFF");
 

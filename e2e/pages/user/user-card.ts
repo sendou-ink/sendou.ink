@@ -1,10 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { reportUserSchema } from "~/features/user-report/user-report-schemas";
-import {
-	clickUntilVisible,
-	submit,
-	waitForPOSTResponse,
-} from "../../helpers/playwright";
+import { expect, submit, waitForPOSTResponse } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { UserCardEditPage } from "./user-card-edit-page";
 
@@ -26,10 +22,11 @@ export class UserCard {
 		};
 	}
 
-	/** Opens the card popover through its trigger, retrying a swallowed press. */
+	/** Opens the card popover through its trigger. */
 	static async open(page: Page, trigger: Locator) {
 		const card = new UserCard(page);
-		await clickUntilVisible(trigger, card.locators.banner);
+		await trigger.click();
+		await expect(card.locators.banner).toBeVisible();
 		return card;
 	}
 

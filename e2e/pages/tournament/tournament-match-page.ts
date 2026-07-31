@@ -137,10 +137,10 @@ export class TournamentMatchPage {
 	/**
 	 * Selects one of the pick/ban options and submits it.
 	 *
-	 * Selecting and submitting are retried together as one unit because the match
-	 * page revalidates on websocket messages: a re-render landing mid-click can
-	 * swallow the submit press (see waitForPOSTResponse) and, if the panel
-	 * remounted, the selection with it — so re-submitting alone would not be enough.
+	 * Selecting and submitting are retried together as one unit: a re-render
+	 * landing mid-click can swallow the submit press (see waitForPOSTResponse)
+	 * and, if the panel remounted, the selection with it — so re-submitting
+	 * alone would not be enough.
 	 */
 	pickBan(option: "first" | "last" = "first") {
 		return waitForPOSTResponse(this.page, async () => {

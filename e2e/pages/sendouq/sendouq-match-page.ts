@@ -2,7 +2,6 @@ import type { Page } from "@playwright/test";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import { sendouQMatchPage } from "~/utils/urls";
 import {
-	clickUntilVisible,
 	expect,
 	navigate,
 	selectWeapon,
@@ -132,10 +131,7 @@ export class SendouQMatchPage {
 	}
 
 	async requestCancel() {
-		await clickUntilVisible(
-			this.locators.requestCancelButton,
-			this.page.getByTestId("confirm-button"),
-		);
+		await this.locators.requestCancelButton.click();
 		await this.confirmDialog();
 	}
 

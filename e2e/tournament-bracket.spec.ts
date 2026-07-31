@@ -18,8 +18,6 @@ import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
 import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 import { UserResultsPage } from "./pages/user/user-results-page";
 
-// xxx: tournament-bracket-elim, tournament-bracket-swiss etc. and pick ban as separate and general another?
-
 const ROSTER_SIZE = 4;
 
 type BracketProgression = TournamentSettings["bracketProgression"];
@@ -148,7 +146,6 @@ test.describe("Tournament bracket", () => {
 			{},
 			{ rosterSize: 5 },
 		]);
-		// xxx: should be an option
 		const [match] = await factories.TournamentFactory.startBracket(
 			tournament.id,
 		);
@@ -342,7 +339,6 @@ test.describe("Tournament bracket", () => {
 		);
 	});
 
-	// xxx: does this and every other test need so big tournaments?
 	test("completes and finalizes a small tournament (RR->SE w/ underground bracket)", async ({
 		page,
 		factories,
@@ -1073,8 +1069,9 @@ test.describe("Tournament bracket", () => {
 					winner: 1,
 					setEnds: false,
 				});
-				await match.pickBan("last");
 				await expect(match.locators.counterpickText).toBeVisible();
+				await match.pickBan("last");
+				await expect(match.locators.selectWinnerText).toBeVisible();
 				await expect(match.score([1, 1])).toBeVisible();
 			}
 		});

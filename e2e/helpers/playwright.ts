@@ -285,9 +285,9 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 
 	// React Aria buttons fire their handler on press end. Occasionally a click
 	// registers the press start (the button goes `:active`) but the press never
-	// completes into a submit, so no POST fires. The match page revalidating on
-	// a websocket message mid-click is one way this happens. Re-issue the action
-	// when the expected POST doesn't arrive within the per-attempt window.
+	// completes into a submit, so no POST fires — e.g. when a re-render lands
+	// mid-press. Re-issue the action when the expected POST doesn't arrive
+	// within the per-attempt window.
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		const responsePromise = page.waitForResponse(
 			(res) => res.request().method() === "POST",
@@ -317,7 +317,6 @@ export function modalClickConfirmButton(page: Page) {
  * first when the tab has collapsed into it on the current viewport. Retried as a
  * whole because the nav can re-collapse between the visibility check and the click.
  */
-// xxx: timeouts?
 export async function clickNavTab(page: Page, testId: string) {
 	const visibleTab = page.locator(`[data-testid="${testId}"]:visible`);
 	await expect(async () => {
@@ -325,20 +324,5 @@ export async function clickNavTab(page: Page, testId: string) {
 			await page.getByRole("button", { name: "More" }).click();
 		}
 		await visibleTab.click({ timeout: 2_000 });
-	}).toPass({ timeout: 15_000 });
-}
-
-// xxx: timeout??? anyway can we isolate websocket events? avoiding shared skalop
-/**
- * Clicks `trigger` until `expected` is visible, for clicks that open a popover or
- * dialog — a revalidation re-render (e.g. another worker's websocket event) can
- * swallow the press.
- */
-export async function clickUntilVisible(trigger: Locator, expected: Locator) {
-	await expect(async () => {
-		if (!(await expected.isVisible())) {
-			await trigger.click({ timeout: 2_000 });
-		}
-		await expect(expected).toBeVisible({ timeout: 2_000 });
 	}).toPass({ timeout: 15_000 });
 }
