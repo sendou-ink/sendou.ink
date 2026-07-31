@@ -252,6 +252,71 @@ describe("trophy list tiers", () => {
 	}
 });
 
+describe("existsByName", () => {
+	let ownerId: number;
+	let approverIds: number[];
+	let organizationId: number;
+
+	beforeEach(async () => {
+		const owner = await UserFactory.create();
+		ownerId = owner.id;
+		approverIds = (await UserFactory.createMany(2)).map((user) => user.id);
+		organizationId = (await TournamentOrganizationFactory.create({ ownerId }))
+			.id;
+	});
+
+	test("updating a trophy keeping its name does not collide with its accepted submission", async () => {
+		await TrophyFactory.createPending(
+			{ name: "Winner's Cup", organizationId, submitterUserId: ownerId },
+			{ approverUserIds: approverIds },
+		);
+
+		const trophy = await db
+			.selectFrom("Trophy")
+			.select("id")
+			.where("name", "=", "Winner's Cup")
+			.executeTakeFirstOrThrow();
+
+		expect(
+			await TrophyRepository.existsByName({
+				name: "Winner's Cup",
+				excludeTrophyId: trophy.id,
+			}),
+		).toBe(false);
+	});
+
+	test("an existing trophy's name still blocks new submissions", async () => {
+		await TrophyFactory.create({ name: "Winner's Cup" });
+
+		expect(await TrophyRepository.existsByName({ name: "Winner's Cup" })).toBe(
+			true,
+		);
+	});
+
+	test("a submission awaiting review blocks the name", async () => {
+		await TrophyFactory.createPending({
+			name: "Contested Cup",
+			organizationId,
+			submitterUserId: ownerId,
+		});
+
+		expect(await TrophyRepository.existsByName({ name: "Contested Cup" })).toBe(
+			true,
+		);
+	});
+
+	test("a declined submission does not block the name", async () => {
+		await TrophyFactory.createPending(
+			{ name: "Declined Cup", organizationId, submitterUserId: ownerId },
+			{ declinedBy: { userId: approverIds[0], reason: "reason" } },
+		);
+
+		expect(await TrophyRepository.existsByName({ name: "Declined Cup" })).toBe(
+			false,
+		);
+	});
+});
+
 describe("user deletion", () => {
 	test("keeps their trophies and drops their approvals", async () => {
 		const submitter = await UserFactory.create();

@@ -443,6 +443,10 @@ export async function findOrganizationIdById(trophyId: number) {
 	return row?.organizationId ?? null;
 }
 
+/**
+ * Checks whether a trophy name is taken by an existing trophy or a submission still
+ * awaiting review. Accepted submissions don't count.
+ */
 export async function existsByName(args: {
 	name: string;
 	excludeTrophyId?: number;
@@ -464,7 +468,22 @@ export async function existsByName(args: {
 		.selectFrom("PendingTrophy")
 		.select("id")
 		.where("name", "=", args.name)
-		.where("declinedAt", "is", null);
+		.where("declinedAt", "is", null)
+		.where((eb) =>
+			eb(
+				eb
+					.selectFrom("PendingTrophyApproval")
+					.select(({ fn }) => fn.countAll<number>().as("count"))
+					.whereRef(
+						"PendingTrophyApproval.pendingTrophyId",
+						"=",
+						"PendingTrophy.id",
+					)
+					.$asScalar(),
+				"<",
+				TROPHY_APPROVALS_REQUIRED,
+			),
+		);
 
 	if (args.excludeTrophyId !== undefined) {
 		pendingQuery = pendingQuery.where(

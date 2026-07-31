@@ -13,6 +13,12 @@ vi.mock("~/utils/compression", () => ({
 	decompressFromBase64: vi.fn((_compressed: string): string | null => null),
 }));
 
+// pinned to unreleased so the role gating stays covered whatever the real flag says
+vi.mock("./trophies-constants", async (importOriginal) => ({
+	...(await importOriginal<typeof import("./trophies-constants")>()),
+	TROPHIES_RELEASED: false,
+}));
+
 const decompressMock = vi.mocked(decompressFromBase64);
 
 const ENTRY_CHARS = 3_500_000;
