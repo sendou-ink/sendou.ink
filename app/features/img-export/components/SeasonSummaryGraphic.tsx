@@ -69,7 +69,8 @@ export interface SeasonSummaryGraphicStats {
 	clutch?: { won: number; total: number };
 	soloRank?: number;
 	teamRank?: {
-		rank: number;
+		/** Omitted when the roster is not on the main team leaderboard */
+		rank?: number;
 		sp: number;
 		mates: GraphicPlayer[];
 		team?: {
@@ -226,12 +227,14 @@ export function SeasonSummaryGraphic({
 							))}
 						</div>
 					</div>
-					<div className={styles.rankBlock}>
-						<div className={styles.rankValue}>#{teamRank.rank}</div>
-						<div className={graphicStyles.boxLabel}>
-							{t("user:seasons.summary.teamRank")}
+					{typeof teamRank.rank === "number" ? (
+						<div className={styles.rankBlock}>
+							<div className={styles.rankValue}>#{teamRank.rank}</div>
+							<div className={graphicStyles.boxLabel}>
+								{t("user:seasons.summary.teamRank")}
+							</div>
 						</div>
-					</div>
+					) : null}
 				</div>
 			) : null}
 			<GraphicStatsRow>

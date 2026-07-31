@@ -43,7 +43,7 @@ import invariant from "~/utils/invariant";
 import { isRevalidation } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	discordAvatarUrl,
+	resolveAvatarUrl,
 	sendouQMatchPage,
 	TIERS_PAGE,
 	userPage,
@@ -292,15 +292,12 @@ function SeasonSummaryExportDialog({
 						discordId: profileUser.discordId,
 						customUrl: profileUser.customUrl ?? undefined,
 						countryCode: profileUser.country ?? undefined,
-						avatarUrl:
-							profileUser.customAvatarUrl ??
-							(profileUser.discordAvatar
-								? discordAvatarUrl({
-										discordId: profileUser.discordId,
-										discordAvatar: profileUser.discordAvatar,
-										size: "lg",
-									})
-								: undefined),
+						avatarUrl: resolveAvatarUrl({
+							customAvatarUrl: profileUser.customAvatarUrl,
+							discordId: profileUser.discordId,
+							discordAvatar: profileUser.discordAvatar,
+							size: "lg",
+						}),
 					}}
 					season={data.season}
 					seasonDateRange={Seasons.nthToDateRange(data.season)}

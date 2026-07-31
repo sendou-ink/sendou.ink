@@ -16,7 +16,7 @@ import type {
 	GearType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import { discordAvatarUrl, gearImageUrl, navIconUrl } from "~/utils/urls";
+import { gearImageUrl, navIconUrl, resolveAvatarUrl } from "~/utils/urls";
 import styles from "./BuildGraphic.module.css";
 import {
 	GRAPHIC_DATE_FORMAT_OPTIONS,
@@ -67,16 +67,12 @@ export function BuildGraphic({
 	return (
 		<GraphicContainer width={BUILD_GRAPHIC_WIDTH}>
 			<GraphicHeader
-				avatarUrl={
-					owner.customAvatarUrl ??
-					(owner.discordAvatar
-						? discordAvatarUrl({
-								discordId: owner.discordId,
-								discordAvatar: owner.discordAvatar,
-								size: "lg",
-							})
-						: undefined)
-				}
+				avatarUrl={resolveAvatarUrl({
+					customAvatarUrl: owner.customAvatarUrl,
+					discordId: owner.discordId,
+					discordAvatar: owner.discordAvatar,
+					size: "lg",
+				})}
 				identiconInput={owner.username}
 				titleRow={
 					<span className={graphicStyles.headerTitle}>
@@ -123,7 +119,7 @@ export function BuildGraphic({
 				))}
 				{build.weapons.length === 1 ? (
 					<div className={styles.weaponName}>
-						{t(`weapons:MAIN_${build.weapons[0].weaponSplId}` as any)}
+						{t(`weapons:MAIN_${build.weapons[0].weaponSplId}`)}
 					</div>
 				) : null}
 			</div>
@@ -181,9 +177,7 @@ function AbilityPointsSummary({
 	);
 
 	const rows = [
-		mainOnlyAbilities.map((ability) =>
-			t(`game-misc:ABILITY_${ability}` as any),
-		),
+		mainOnlyAbilities.map((ability) => t(`game-misc:ABILITY_${ability}`)),
 		stackedAbilities.map(([, text]) => text),
 		sprinkledAbilities.map(([, text]) => text),
 	].filter((row) => row.length > 0);

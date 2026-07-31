@@ -10,7 +10,7 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { forbidden, notFoundIfNullish } from "~/utils/remix.server";
-import { discordAvatarUrl } from "~/utils/urls";
+import { resolveAvatarUrl } from "~/utils/urls";
 import {
 	seasonSummaryGraphicSearchParamsSchema,
 	userParamsSchema,
@@ -70,12 +70,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const soloRank = (
 		await LeaderboardRepository.findUserSPLeaderboard(season)
 	).find((entry) => entry.id === user.id)?.placementRank;
-	const teamEntry = (
-		await LeaderboardRepository.findTeamLeaderboardBySeason({
-			season,
-			onlyOneEntryPerUser: false,
-		})
-	).find((entry) => entry.members.some((member) => member.id === user.id));
+	const teamEntry = await findTeamEntry({ season, userId: user.id });
 
 	const mates = await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
 		userId: user.id,
@@ -87,7 +82,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		.slice(0, TOP_MATES_COUNT);
 
 	const countries = await UserRepository.findCountriesByUserIds([
-		...(teamEntry?.members.map((member) => member.id) ?? []),
+		...(teamEntry?.entry.members.map((member) => member.id) ?? []),
 		...topMates.map((mate) => mate.user.id),
 	]);
 
@@ -124,18 +119,18 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		soloRank,
 		teamRank: teamEntry
 			? {
-					rank: teamEntry.placementRank,
-					sp: teamEntry.power,
-					mates: teamEntry.members
+					rank: teamEntry.rank,
+					sp: teamEntry.entry.power,
+					mates: teamEntry.entry.members
 						.filter((member) => member.id !== user.id)
 						.map((member) => ({
 							name: member.username,
 							countryCode: countries.get(member.id),
 						})),
-					team: teamEntry.team
+					team: teamEntry.entry.team
 						? {
-								name: teamEntry.team.name,
-								logoUrl: teamEntry.team.avatarUrl ?? undefined,
+								name: teamEntry.entry.team.name,
+								logoUrl: teamEntry.entry.team.avatarUrl ?? undefined,
 							}
 						: undefined,
 				}
@@ -145,15 +140,12 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 				name: mate.user.username,
 				countryCode: countries.get(mate.user.id),
 			},
-			avatarUrl:
-				mate.user.customAvatarUrl ??
-				(mate.user.discordAvatar
-					? discordAvatarUrl({
-							discordId: mate.user.discordId,
-							discordAvatar: mate.user.discordAvatar,
-							size: "sm",
-						})
-					: undefined),
+			avatarUrl: resolveAvatarUrl({
+				customAvatarUrl: mate.user.customAvatarUrl,
+				discordId: mate.user.discordId,
+				discordAvatar: mate.user.discordAvatar,
+				size: "sm",
+			}),
 			setsCount: mate.setWins + mate.setLosses,
 		})),
 		bestStage: SeasonSummary.bestStage(
@@ -199,3 +191,37 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		),
 	};
 };
+
+async function findTeamEntry({
+	season,
+	userId,
+}: {
+	season: number;
+	userId: number;
+}) {
+	const hasUser = (entry: { members: Array<{ id: number }> }) =>
+		entry.members.some((member) => member.id === userId);
+
+	const rankedEntry = (
+		await LeaderboardRepository.findTeamLeaderboardBySeason({
+			season,
+			onlyOneEntryPerUser: true,
+		})
+	).find(hasUser);
+
+	if (rankedEntry)
+		return { entry: rankedEntry, rank: rankedEntry.placementRank };
+
+	// rosters that only show up on the "all entries" leaderboard have no
+	// placement comparable to the one shown on the main team leaderboard
+	const unrankedEntry = (
+		await LeaderboardRepository.findTeamLeaderboardBySeason({
+			season,
+			onlyOneEntryPerUser: false,
+		})
+	).find(hasUser);
+
+	if (!unrankedEntry) return undefined;
+
+	return { entry: unrankedEntry, rank: undefined };
+}
