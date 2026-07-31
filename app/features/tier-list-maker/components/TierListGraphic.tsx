@@ -1,11 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import {
-	GraphicContainer,
-	GraphicFooter,
-	GraphicSiteUrl,
-} from "~/features/img-export/components/Graphic";
-import { TIER_LIST_MAKER_URL } from "~/utils/urls";
+import { GraphicContainer } from "~/features/img-export/components/Graphic";
 import type {
 	TierListItem,
 	TierListMakerTier,
@@ -19,8 +14,6 @@ export interface TierListGraphicAuthor {
 	discordId: string;
 	discordAvatar: string | null;
 }
-
-// xxx: extra padding up top when author but not title
 
 export function TierListGraphic({
 	title,
@@ -66,10 +59,6 @@ export function TierListGraphic({
 					</div>
 				))}
 			</div>
-			<GraphicFooter>
-				<div />
-				<GraphicSiteUrl path={TIER_LIST_MAKER_URL} />
-			</GraphicFooter>
 		</GraphicContainer>
 	);
 }

@@ -30,8 +30,6 @@ interface ImageExportDialogProps {
 	children: React.ReactNode;
 }
 
-// xxx: is children always rendering which can be heavy in some cases? or not because it's a dialog
-
 /**
  * Dialog for exporting a graphic component as a .png image. Renders the given graphic
  * as a preview with generic settings (color scheme, custom theme, QR code) and downloads

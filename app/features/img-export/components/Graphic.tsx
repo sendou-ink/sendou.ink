@@ -15,7 +15,17 @@ export const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
 	year: "numeric",
 };
 
-const QR_CODE_SIZE = 76;
+/**
+ * Sizes that keep the code at roughly two pixels per module. The lengths are the byte
+ * capacities of the QR versions used at the default "L" error correction level.
+ */
+const QR_CODE_SIZE_BREAKPOINTS = [
+	{ maxUrlLength: 106, size: 76 },
+	{ maxUrlLength: 271, size: 120 },
+	{ maxUrlLength: 523, size: 160 },
+] as const;
+
+const QR_CODE_SIZE_MAX = 200;
 
 /** Full URL the graphic's QR code should link to, provided by `ImageExportDialog` (null = no QR code) */
 export const GraphicQrCodeContext = React.createContext<string | null>(null);
@@ -48,7 +58,7 @@ export function GraphicContainer({
 			{qrCodeUrl ? (
 				<div className={styles.qrCodeRow}>
 					<div className={styles.qrCode}>
-						<QRCodeSVG value={qrCodeUrl} size={QR_CODE_SIZE} />
+						<QRCodeSVG value={qrCodeUrl} size={qrCodeSize(qrCodeUrl)} />
 					</div>
 				</div>
 			) : null}
@@ -236,6 +246,15 @@ export function GraphicSiteUrl({ path }: { path: string }) {
 			{path}
 		</div>
 	);
+}
+
+function qrCodeSize(url: string) {
+	for (const breakpoint of QR_CODE_SIZE_BREAKPOINTS) {
+		if (url.length <= breakpoint.maxUrlLength) {
+			return breakpoint.size;
+		}
+	}
+	return QR_CODE_SIZE_MAX;
 }
 
 function placementAccentClass(placement: number) {

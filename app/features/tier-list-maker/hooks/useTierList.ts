@@ -23,7 +23,10 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import { assertUnreachable } from "~/utils/types";
 import { modeShort, safeJSONParse } from "~/utils/zod";
-import { DEFAULT_TIERS } from "../tier-list-maker-constants";
+import {
+	DEFAULT_TIERS,
+	TIER_LIST_SEARCH_PARAM_NAMES,
+} from "../tier-list-maker-constants";
 import {
 	type TierListItem,
 	type TierListMakerTier,
@@ -31,7 +34,11 @@ import {
 	tierListItemTypeSchema,
 	tierListStateSerializedSchema,
 } from "../tier-list-maker-schemas";
-import { addItemToTier, getNextNthForItem } from "../tier-list-maker-utils";
+import {
+	addItemToTier,
+	getNextNthForItem,
+	serializeTierListState,
+} from "../tier-list-maker-utils";
 
 export type TierListPlacementMode = "track" | "click";
 
@@ -79,13 +86,13 @@ export function useTierList() {
 	});
 
 	const [showTierHeaders, setShowTierHeaders] = useSearchParamState({
-		name: "showTierHeaders",
+		name: TIER_LIST_SEARCH_PARAM_NAMES.SHOW_TIER_HEADERS,
 		defaultValue: true,
 		revive: (value) => value === "true",
 	});
 
 	const [title, setTitle] = useSearchParamState({
-		name: "title",
+		name: TIER_LIST_SEARCH_PARAM_NAMES.TITLE,
 		defaultValue: "",
 		revive: (value) => value,
 	});
@@ -508,12 +515,10 @@ export function useTierList() {
 	};
 }
 
-const TIER_SEARCH_PARAM_NAME = "state";
-
 function useSearchParamTiersState() {
 	const [initialSearchParams] = useSearchParams();
 	const [tiers, setTiers] = React.useState<TierListState>(() => {
-		const param = initialSearchParams.get(TIER_SEARCH_PARAM_NAME);
+		const param = initialSearchParams.get(TIER_LIST_SEARCH_PARAM_NAMES.STATE);
 
 		try {
 			if (param) {
@@ -539,12 +544,10 @@ function useSearchParamTiersState() {
 	const persistTiersStateToParams = (state: TierListState) => {
 		const searchParams = new URLSearchParams(window.location.search);
 
-		const serializedState = JSON.stringify({
-			tiers: state.tiers,
-			tierItems: Array.from(state.tierItems.entries()),
-		});
-
-		searchParams.set(TIER_SEARCH_PARAM_NAME, JSONCrush.crush(serializedState));
+		searchParams.set(
+			TIER_LIST_SEARCH_PARAM_NAMES.STATE,
+			serializeTierListState(state),
+		);
 		window.history.replaceState(
 			{},
 			"",

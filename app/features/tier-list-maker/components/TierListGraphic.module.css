@@ -19,6 +19,11 @@
 	margin-top: calc(-1 * var(--s-3));
 }
 
+/* without a title the lone author credit would leave the graphic looking top heavy */
+.author:first-child {
+	margin-top: calc(-1 * var(--s-2));
+}
+
 .authorBy {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
