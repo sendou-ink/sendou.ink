@@ -104,6 +104,7 @@ export function BuildGraphic({
 							))
 						: undefined
 				}
+				alignTrailingWithTitle
 			/>
 			{showTitle ? (
 				<div className={styles.buildTitle}>{build.title}</div>
@@ -123,7 +124,7 @@ export function BuildGraphic({
 						<WeaponImage
 							weaponSplId={weapon.weaponSplId}
 							variant="badge"
-							size={64}
+							size={50}
 						/>
 					</div>
 				))}

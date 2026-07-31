@@ -72,13 +72,20 @@ export function GraphicHeader({
 	titleRow,
 	subtitle,
 	trailing,
+	alignTrailingWithTitle = false,
 }: {
 	avatarUrl?: string;
 	identiconInput: string;
 	titleRow: React.ReactNode;
 	subtitle: React.ReactNode;
 	trailing?: React.ReactNode;
+	/** Line the trailing content up with the title instead of centering it against the title and subtitle together */
+	alignTrailingWithTitle?: boolean;
 }) {
+	const trailingContent = trailing ? (
+		<div className={styles.headerTrailing}>{trailing}</div>
+	) : null;
+
 	return (
 		<header className={styles.header}>
 			<Avatar
@@ -88,12 +95,13 @@ export function GraphicHeader({
 				alt=""
 			/>
 			<div className={styles.headerText}>
-				<div className={styles.headerTitleRow}>{titleRow}</div>
+				<div className={styles.headerTitleRow}>
+					{titleRow}
+					{alignTrailingWithTitle ? trailingContent : null}
+				</div>
 				{subtitle}
 			</div>
-			{trailing ? (
-				<div className={styles.headerTrailing}>{trailing}</div>
-			) : null}
+			{alignTrailingWithTitle ? null : trailingContent}
 		</header>
 	);
 }

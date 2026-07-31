@@ -16,6 +16,31 @@ import styles from "./ImageExportDialog.module.css";
 
 const EXPORT_SCALE = 1.75;
 
+type ThemeSelection = "light" | "dark" | "light-custom" | "dark-custom";
+
+const THEME_SELECTIONS = [
+	{
+		value: "light",
+		translationKey: "common:imageExport.theme.light",
+		needsCustomTheme: false,
+	},
+	{
+		value: "dark",
+		translationKey: "common:imageExport.theme.dark",
+		needsCustomTheme: false,
+	},
+	{
+		value: "light-custom",
+		translationKey: "common:imageExport.theme.lightCustom",
+		needsCustomTheme: true,
+	},
+	{
+		value: "dark-custom",
+		translationKey: "common:imageExport.theme.darkCustom",
+		needsCustomTheme: true,
+	},
+] as const;
+
 interface ImageExportDialogProps {
 	/** Button that opens the dialog, e.g. a `SendouButton` (its own `onPress` also runs, useful for lazy loading the graphic's data) */
 	trigger: React.ReactNode;
@@ -62,12 +87,18 @@ function ImageExportDialogContent({
 	const { htmlThemeClass } = useTheme();
 	const location = useLocation();
 	const pageHasCustomTheme = usePageHasCustomTheme();
-	const [theme, setTheme] = React.useState<"light" | "dark">(
-		htmlThemeClass === "light" ? "light" : "dark",
+	const [themeSelection, setThemeSelection] = React.useState<ThemeSelection>(
+		() => {
+			const mode = htmlThemeClass === "light" ? "light" : "dark";
+
+			return pageHasCustomTheme ? `${mode}-custom` : mode;
+		},
 	);
-	const [useCustomTheme, setUseCustomTheme] = React.useState(true);
 	const [withQrCode, setWithQrCode] = React.useState(true);
 	const frameRef = React.useRef<HTMLDivElement>(null);
+
+	const theme = themeSelection.startsWith("light") ? "light" : "dark";
+	const useCustomTheme = themeSelection.endsWith("-custom");
 
 	const qrCodeUrl = `${SENDOU_INK_BASE_URL}${qrCodePath ?? `${location.pathname}${location.search}`}`;
 
@@ -90,32 +121,21 @@ function ImageExportDialogContent({
 	return (
 		<div className="stack md">
 			<div className={styles.settings}>
-				<SendouChipRadioGroup>
-					<SendouChipRadio
-						name="image-export-theme"
-						value="light"
-						checked={theme === "light"}
-						onChange={() => setTheme("light")}
-					>
-						{t("common:imageExport.theme.light")}
-					</SendouChipRadio>
-					<SendouChipRadio
-						name="image-export-theme"
-						value="dark"
-						checked={theme === "dark"}
-						onChange={() => setTheme("dark")}
-					>
-						{t("common:imageExport.theme.dark")}
-					</SendouChipRadio>
+				<SendouChipRadioGroup wrap>
+					{THEME_SELECTIONS.filter(
+						(selection) => pageHasCustomTheme || !selection.needsCustomTheme,
+					).map((selection) => (
+						<SendouChipRadio
+							key={selection.value}
+							name="image-export-theme"
+							value={selection.value}
+							checked={themeSelection === selection.value}
+							onChange={() => setThemeSelection(selection.value)}
+						>
+							{t(selection.translationKey)}
+						</SendouChipRadio>
+					))}
 				</SendouChipRadioGroup>
-				{pageHasCustomTheme ? (
-					<SendouSwitch
-						isSelected={useCustomTheme}
-						onChange={setUseCustomTheme}
-					>
-						{t("common:imageExport.useTheme")}
-					</SendouSwitch>
-				) : null}
 				<SendouSwitch isSelected={withQrCode} onChange={setWithQrCode}>
 					{t("common:imageExport.qrCode")}
 				</SendouSwitch>
