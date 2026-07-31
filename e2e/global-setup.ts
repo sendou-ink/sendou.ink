@@ -207,8 +207,8 @@ async function globalSetup(config: FullConfig) {
 		// above already migrated (the script's `migrate up` step is redundant) and
 		// the Sentry instrument import only adds request overhead with no DSN set
 		const serverProcess = spawn(
-			"node_modules/.bin/react-router-serve",
-			["./build/server/index.js"],
+			process.execPath,
+			["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"],
 			{
 				env: {
 					...process.env,

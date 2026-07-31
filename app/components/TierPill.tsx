@@ -15,6 +15,8 @@ const TIER_STYLE_CLASS: Record<number, string> = {
 	9: styles.tierC,
 };
 
+const POLISHED_TIERS = [1, 2, 3];
+
 export function TierPill({
 	tier,
 	isTentative = false,
@@ -29,7 +31,9 @@ export function TierPill({
 
 	return (
 		<div
-			className={clsx(styles.pill, tierClass)}
+			className={clsx(styles.pill, tierClass, {
+				[styles.polished]: POLISHED_TIERS.includes(tier),
+			})}
 			data-testid={isTentative ? "tentative-tier" : "confirmed-tier"}
 			title={
 				isTentative

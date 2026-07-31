@@ -13,6 +13,7 @@ import { seedScrimsAndLFG } from "./dev/scrims-lfg";
 import { seedSendouQ } from "./dev/sendouq";
 import { seedTeams } from "./dev/teams";
 import { seedTournaments } from "./dev/tournaments";
+import { seedSpecialTrophies, seedTrophies } from "./dev/trophies";
 import { seedUsers } from "./dev/users";
 import { seedVods } from "./dev/vods";
 
@@ -23,15 +24,21 @@ export async function seed() {
 	const users = await runModule(() => seedUsers());
 	const badges = await runModule(() => seedBadges(users));
 	const organizations = await runModule(() => seedOrganizations(users));
+	const trophies = await runModule(() =>
+		seedTrophies({ users, organizations }),
+	);
 	const teams = await runModule(() => seedTeams(users));
 	await runModule(() => seedCalendarEvents(users, badges));
-	await runModule(() => seedTournaments({ users, organizations, badges }));
+	await runModule(() =>
+		seedTournaments({ users, organizations, badges, trophies }),
+	);
 	const sendouq = await runModule(() => seedSendouQ(users, teams));
 	await runModule(() => seedPlus(users));
 	await runModule(() => seedBuilds(users));
 	await runModule(() => seedScrimsAndLFG(users, teams));
 	await runModule(() => seedVods(users));
 	await runModule(() => seedMisc({ users, sendouq }));
+	await runModule(() => seedSpecialTrophies());
 
 	clearAllTournamentDataCache();
 }

@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import type { TournamentSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -14,6 +15,7 @@ import * as TournamentStreamerFactory from "../factories/TournamentStreamerFacto
 import * as TournamentTeamFactory from "../factories/TournamentTeamFactory";
 import type { SeededBadges } from "./badges";
 import type { SeededOrganization } from "./organizations";
+import type { SeededTrophies } from "./trophies";
 import type { SeededUsers } from "./users";
 
 // xxx: rethink what should be here
@@ -109,25 +111,39 @@ export async function seedTournaments({
 	users,
 	organizations,
 	badges,
+	trophies,
 }: {
 	users: SeededUsers;
 	organizations: SeededOrganization[];
 	badges: SeededBadges;
+	trophies: SeededTrophies;
 }) {
 	const rosters = rosterBuilder(users);
 
-	await seedRegOpenDoubleElim({ users, organizations, rosters });
+	await seedRegOpenDoubleElim({ users, organizations, rosters, trophies });
 	await seedRegClosedRoundRobin({ users, organizations, rosters });
 	await seedMidBracketDoubleElim({ users, organizations, rosters });
 	await seedSwissUnderway({ users, organizations, rosters });
 	await seedPlayedAwaitingFinalization({ users, organizations, rosters });
-	await seedFinalizedSingleElim({ users, organizations, badges, rosters });
+	await seedFinalizedSingleElim({
+		users,
+		organizations,
+		badges,
+		rosters,
+		trophies,
+	});
 	await seedFinalizedRoundRobin({ users, organizations, rosters });
 	await seedRegOpenOneVersusOne({ users });
 	await seedFinalizedTwoVersusTwo({ users, organizations, rosters });
 	await seedInvitational({ users, rosters });
 
-	await seedHistoricalTournaments({ users, organizations, badges, rosters });
+	await seedHistoricalTournaments({
+		users,
+		organizations,
+		badges,
+		rosters,
+		trophies,
+	});
 }
 
 type Ctx = {
@@ -136,8 +152,13 @@ type Ctx = {
 	rosters: ReturnType<typeof rosterBuilder>;
 };
 
-/** #1 double elim, 16-team cap, TO maps — reg open, partial rosters. */
-async function seedRegOpenDoubleElim({ users, organizations, rosters }: Ctx) {
+/** #1 double elim, 16-team cap, TO maps — reg open, partial rosters, trophy prize. */
+async function seedRegOpenDoubleElim({
+	users,
+	organizations,
+	rosters,
+	trophies,
+}: Ctx & { trophies: SeededTrophies }) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor(0),
 		authorId: users.adminId,
@@ -148,6 +169,7 @@ async function seedRegOpenDoubleElim({ users, organizations, rosters }: Ctx) {
 		mapPoolMaps: toSetMapPool(),
 		bracketProgression: DOUBLE_ELIMINATION,
 		enableSubs: true,
+		trophyId: trophies.ids[0],
 	});
 
 	const teamRosters = rosters.take({ teamCount: 10, teamSize: 4 });
@@ -260,12 +282,13 @@ async function seedPlayedAwaitingFinalization({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id);
 }
 
-/** #6 single elim with third place match, TO maps — finalized, badge awarded. */
+/** #6 single elim with third place match, TO maps — finalized, badge and trophy awarded. */
 async function seedFinalizedSingleElim({
 	users,
 	badges,
 	rosters,
-}: Ctx & { badges: SeededBadges }) {
+	trophies,
+}: Ctx & { badges: SeededBadges; trophies: SeededTrophies }) {
 	const badgeId = badges.ids[0];
 
 	const tournament = await TournamentFactory.create({
@@ -278,6 +301,7 @@ async function seedFinalizedSingleElim({
 		bracketProgression: SINGLE_ELIMINATION,
 		thirdPlaceMatch: true,
 		badges: [badgeId],
+		trophyId: trophies.ids[0],
 	});
 
 	await registerTeams({
@@ -379,7 +403,8 @@ async function seedHistoricalTournaments({
 	users,
 	badges,
 	rosters,
-}: Ctx & { badges: SeededBadges }) {
+	trophies,
+}: Ctx & { badges: SeededBadges; trophies: SeededTrophies }) {
 	for (let i = 0; i < HISTORICAL_COUNT; i++) {
 		const progression = faker.helpers.weightedArrayElement([
 			{ value: DOUBLE_ELIMINATION, weight: 5 },
@@ -394,17 +419,21 @@ async function seedHistoricalTournaments({
 			: sub(new Date(), { months: 1 + (i % 8), days: (i * 7) % 28 });
 		const badgeId = i % 3 === 0 ? badges.ids[i % badges.ids.length] : undefined;
 
-		const tournament = await TournamentFactory.create({
-			name: nameFor(10 + i),
-			authorId: faker.helpers.arrayElement(users.showcaseIds),
-			startTimes: [dateToDatabaseTimestamp(startsAt)],
-			mapPickingStyle: isRecent ? "AUTO_SZ" : "AUTO_ALL",
-			mapPoolMaps: isRecent ? undefined : tiebreakerMapPool(),
-			bracketProgression: progression,
-			teamsPerGroup: 4,
-			isRanked: isRecent,
-			badges: badgeId ? [badgeId] : [],
-		});
+		const tournament = await TournamentFactory.create(
+			{
+				name: nameFor(10 + i),
+				authorId: faker.helpers.arrayElement(users.showcaseIds),
+				startTimes: [dateToDatabaseTimestamp(startsAt)],
+				mapPickingStyle: isRecent ? "AUTO_SZ" : "AUTO_ALL",
+				mapPoolMaps: isRecent ? undefined : tiebreakerMapPool(),
+				bracketProgression: progression,
+				teamsPerGroup: 4,
+				isRanked: isRecent,
+				badges: badgeId ? [badgeId] : [],
+				trophyId: trophies.ids[i % trophies.ids.length],
+			},
+			{ tier: ((i % 3) + 1) as TournamentTierNumber },
+		);
 
 		await registerTeams({
 			tournamentId: tournament.id,

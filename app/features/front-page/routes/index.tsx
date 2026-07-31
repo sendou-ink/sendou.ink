@@ -21,6 +21,7 @@ import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBan
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import styles from "~/styles/front.module.css";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -263,7 +264,7 @@ function ResultHighlights() {
 					>
 						{t("front:showcase.results")}
 					</h2>
-					<div className={styles.tournamentCardsSpacer}>
+					<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
 						{data.tournaments.results.map((tournament) => (
 							<TournamentCard key={tournament.id} tournament={tournament} />
 						))}
@@ -316,9 +317,12 @@ const DISCOVER_EXCLUDED_ITEMS = new Set(["settings", "luti"]);
 function DiscoverFeatures() {
 	const { t } = useTranslation(["front", "common"]);
 	const data = useLoaderData<typeof loader>();
+	const user = useUser();
 
 	const filteredNavItems = navItems.filter(
-		(item) => !DISCOVER_EXCLUDED_ITEMS.has(item.name),
+		(item) =>
+			!DISCOVER_EXCLUDED_ITEMS.has(item.name) &&
+			(item.name !== "trophies" || canAccessTrophies(user)),
 	);
 
 	return (

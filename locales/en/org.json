@@ -20,6 +20,7 @@
 	"edit.form.series.seriesName.title": "Series name",
 	"edit.form.series.showLeaderboard.title": "Show leaderboard",
 	"edit.form.badges.title": "Badges",
+	"edit.form.rewards.title": "Rewards",
 	"edit.form.errors.noUnadmin": "Can't remove yourself as an admin",
 	"banned.title": "Banned players",
 	"banned.empty": "No players are currently banned from this organization.",

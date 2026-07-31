@@ -1,3 +1,4 @@
+import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
@@ -13,6 +14,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { Trophy } from "~/features/trophies/components/Trophy";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -26,6 +28,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
 import type { RegClosesAtOption } from "../calendar-constants";
+import styles from "../calendar-new.module.css";
 import { calendarNewBaseSchema } from "../calendar-new-schemas";
 import { datesToRegClosesAt } from "../calendar-utils";
 import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
@@ -194,6 +197,7 @@ function useDefaultValues() {
 		discordInviteCode: baseEvent?.discordInviteCode ?? "",
 		tags: baseEvent?.tags ?? [],
 		badges: baseEvent?.badgePrizes?.map((b) => b.id) ?? [],
+		trophyId: baseEvent?.trophy?.id ?? null,
 		avatarImgId: existingImage(
 			baseEvent?.avatarImgId,
 			baseEvent?.tournament?.ctx.logoUrl,
@@ -291,6 +295,7 @@ function CalendarNewFields() {
 			{data.badgeOptions.length > 0 ? (
 				<FormField name="badges" options={data.badgeOptions} />
 			) : null}
+			{isTournament ? <TrophyField /> : null}
 			{isTournament ? <FormField name="avatarImgId" /> : null}
 			{isTournament ? (
 				<>
@@ -328,6 +333,97 @@ function DescriptionField({ isTournament }: { isTournament: boolean }) {
 				</FormMessage>
 			) : null}
 		</div>
+	);
+}
+
+function TrophyField() {
+	const { t } = useTranslation("calendar");
+	const data = useLoaderData<typeof loader>();
+	const { values, setValue } = useFormFieldContext();
+	const id = React.useId();
+
+	const organizationId = values.organizationId
+		? Number(values.organizationId)
+		: null;
+	const trophyId = typeof values.trophyId === "number" ? values.trophyId : null;
+	const badgeCount = (values.badges as number[]).length;
+
+	// clear the trophy when the selected organization or badges make it invalid
+	React.useEffect(() => {
+		if (!trophyId) return;
+		const trophyStillValid =
+			badgeCount === 0 &&
+			data.trophies.some(
+				(trophy) =>
+					trophy.id === trophyId && trophy.organizationId === organizationId,
+			);
+		if (!trophyStillValid) {
+			setValue("trophyId", null);
+		}
+	}, [trophyId, badgeCount, organizationId, data.trophies, setValue]);
+
+	const availableTrophies = organizationId
+		? data.trophies.filter((trophy) => trophy.organizationId === organizationId)
+		: [];
+
+	if (availableTrophies.length === 0 && trophyId === null) return null;
+
+	const selectedTrophy = trophyId
+		? data.trophies.find((trophy) => trophy.id === trophyId)
+		: null;
+
+	return (
+		<FormField name="trophyId">
+			{({ onChange }: CustomFieldRenderProps) => {
+				const handleChange = (newTrophyId: number | null) => {
+					onChange(newTrophyId);
+					if (newTrophyId) {
+						setValue("badges", []);
+					}
+				};
+
+				return (
+					<div className="stack md">
+						<div>
+							<label htmlFor={id}>{t("forms.trophy")}</label>
+							<select
+								id={id}
+								value={trophyId ?? ""}
+								onChange={(e) => {
+									const value = e.target.value;
+									handleChange(value === "" ? null : Number(value));
+								}}
+							>
+								<option value="">{t("forms.trophy.placeholder")}</option>
+								{availableTrophies.map((trophy) => (
+									<option key={trophy.id} value={trophy.id}>
+										{trophy.name}
+									</option>
+								))}
+							</select>
+						</div>
+						{selectedTrophy ? (
+							<div className="stack md items-center">
+								<Trophy
+									model={selectedTrophy.model}
+									className={styles.trophyPreview}
+								/>
+								<div className="stack horizontal md items-center">
+									<span>{selectedTrophy.name}</span>
+									<SendouButton
+										className="ml-auto"
+										onPress={() => handleChange(null)}
+										icon={<Trash />}
+										variant="minimal-destructive"
+										aria-label="Remove trophy"
+									/>
+								</div>
+							</div>
+						) : null}
+					</div>
+				);
+			}}
+		</FormField>
 	);
 }
 

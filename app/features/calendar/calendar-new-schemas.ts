@@ -19,6 +19,7 @@ import {
 	toggle,
 } from "~/form/fields";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { id } from "~/utils/zod";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import { bracketProgressionSchema } from "./calendar-schemas";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
@@ -82,6 +83,7 @@ export const calendarNewBaseSchema = z.object({
 		})),
 	}),
 	badges: badges({ label: "labels.badges", maxCount: 50 }),
+	trophyId: customField({ initialValue: null }, id.nullish()),
 	avatarImgId: image({
 		label: "labels.logo",
 		bottomText: "bottomTexts.avatarValidation",
@@ -210,6 +212,14 @@ export function calendarNewSyncRefine(
 				message: "forms:errors.allModePool",
 			});
 		}
+	}
+
+	if (data.trophyId && data.badges.length > 0) {
+		ctx.addIssue({
+			path: ["badges"],
+			code: z.ZodIssueCode.custom,
+			message: "forms:errors.trophyWithBadges",
+		});
 	}
 
 	if (

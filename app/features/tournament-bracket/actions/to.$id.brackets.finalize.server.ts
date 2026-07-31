@@ -3,14 +3,19 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as Standings from "~/features/tournament/core/Standings";
 import { finalizeTournament } from "~/features/tournament-bracket/core/finalizeTournament.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
+	type TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
-import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	validateBadgeReceivers,
+	validateTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -37,14 +42,38 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	errorToastIfFalsy(tournament.canFinalize(user), "Can't finalize tournament");
 
+	const event = await CalendarRepository.findById(tournament.ctx.eventId, {
+		includeBadgePrizes: true,
+		includeTrophy: true,
+	});
+	invariant(event, "Event not found for tournament");
+
 	const badgeOwnersValid = data.badgeReceivers
-		? await requireValidBadgeReceivers(data.badgeReceivers, tournament)
+		? requireValidBadgeReceivers({
+				badgeReceivers: data.badgeReceivers,
+				badges: event.badgePrizes ?? [],
+				tournament,
+			})
 		: true;
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
+
+	const trophyReceiver = event.trophy ? (data.trophyReceiver ?? null) : null;
+	if (event.trophy) {
+		const trophyReceiverValid = requireValidTrophyReceiver({
+			trophyReceiver,
+			trophy: event.trophy,
+			finalStandings: Standings.flattenStandings(
+				Standings.tournamentStandings(tournament),
+			),
+			tournament,
+		});
+		if (!trophyReceiverValid) errorToast("Invalid trophy receiver");
+	}
 
 	await finalizeTournament({
 		tournament,
 		badgeReceivers: data.badgeReceivers ?? undefined,
+		trophyReceiver: trophyReceiver ?? undefined,
 	});
 
 	if (data.badgeReceivers) {
@@ -53,6 +82,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		);
 
 		notifyBadgeReceivers(data.badgeReceivers);
+	}
+
+	if (trophyReceiver) {
+		logger.info(
+			`Trophy receiver for tournament id ${tournamentId}: ${JSON.stringify(trophyReceiver)}`,
+		);
 	}
 
 	// ensure RunningTournament = sidebar updates
@@ -64,17 +99,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	});
 };
 
-async function requireValidBadgeReceivers(
-	badgeReceivers: TournamentBadgeReceivers,
-	tournament: Tournament,
-) {
-	const badges = (
-		await CalendarRepository.findById(tournament.ctx.eventId, {
-			includeBadgePrizes: true,
-		})
-	)?.badgePrizes;
-	invariant(badges, "validateBadgeOwners: Event with badge prizes not found");
-
+function requireValidBadgeReceivers({
+	badgeReceivers,
+	badges,
+	tournament,
+}: {
+	badgeReceivers: TournamentBadgeReceivers;
+	badges: ReadonlyArray<{ id: number }>;
+	tournament: Tournament;
+}) {
 	const error = validateBadgeReceivers({
 		badgeReceivers,
 		badges,
@@ -83,6 +116,57 @@ async function requireValidBadgeReceivers(
 	if (error) {
 		logger.warn(
 			`validateBadgeOwners: Invalid badge receivers for tournament ${tournament.ctx.id}: ${error}`,
+		);
+		return false;
+	}
+
+	return true;
+}
+
+function requireValidTrophyReceiver({
+	trophyReceiver,
+	trophy,
+	finalStandings,
+	tournament,
+}: {
+	trophyReceiver: TournamentTrophyReceiver | null;
+	trophy: { id: number };
+	finalStandings: Array<{
+		placement: number;
+		team: { members: Array<{ userId: number }> };
+	}>;
+	tournament: Tournament;
+}) {
+	const error = validateTrophyReceiver({ trophyReceiver, trophy });
+	if (error) {
+		logger.warn(
+			`validateTrophyReceiver: Invalid trophy receiver for tournament ${tournament.ctx.id}: ${error}`,
+		);
+		return false;
+	}
+
+	if (!trophyReceiver) return true;
+
+	const firstPlace = finalStandings.find(
+		(standing) => standing.placement === 1,
+	);
+	if (!firstPlace) {
+		logger.warn(
+			`validateTrophyReceiver: No 1st place standing for tournament ${tournament.ctx.id}`,
+		);
+		return false;
+	}
+
+	const firstPlaceUserIds = new Set(
+		firstPlace.team.members.map((m) => m.userId),
+	);
+	const invalidUserId = trophyReceiver.userIds.find(
+		(userId) => !firstPlaceUserIds.has(userId),
+	);
+
+	if (invalidUserId !== undefined) {
+		logger.warn(
+			`validateTrophyReceiver: User ${invalidUserId} not in 1st place team for tournament ${tournament.ctx.id}`,
 		);
 		return false;
 	}

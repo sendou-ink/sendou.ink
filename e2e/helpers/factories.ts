@@ -56,6 +56,7 @@ export async function loadFactories(parallelIndex: number) {
 		TournamentTeamFactory: await import(
 			"~/db/seed/factories/TournamentTeamFactory"
 		),
+		TrophyFactory: await import("~/db/seed/factories/TrophyFactory"),
 		UserFactory: await import("~/db/seed/factories/UserFactory"),
 		UserReportFactory: await import("~/db/seed/factories/UserReportFactory"),
 		VodFactory: await import("~/db/seed/factories/VodFactory"),

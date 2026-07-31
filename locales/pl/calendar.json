@@ -24,6 +24,8 @@
 	"forms.tags.placeholder": "Wybierz tag",
 	"forms.badges": "Odznaki",
 	"forms.badges.placeholder": "Wybierz odznakę",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Pula map",
 	"forms.reportResultsHeader": "Zgłaszanie wyników dla {{eventName}}",
 	"forms.reportResultsInfo": "Możesz wybrać ile zgłosić wyników. Mogą to być wyniki drużyny zwyciężonej, Top 3 lub ile chcesz.",

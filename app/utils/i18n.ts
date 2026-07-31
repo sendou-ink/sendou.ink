@@ -30,6 +30,7 @@ const ALL_NAMESPACES = [
 	"front",
 	"friends",
 	"settings",
+	"trophies",
 	"params",
 	"welcome",
 ] as const;

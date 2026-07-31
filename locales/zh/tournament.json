@@ -132,6 +132,8 @@
 	"actions.finalize.error.BADGE_NOT_ASSIGNED": "尚未将所有徽章发放给队伍",
 	"actions.finalize.error.DUPLICATE_TOURNAMENT_TEAM_ID": "同一徽章被发放给了多个队伍",
 	"actions.finalize.error.BADGE_NOT_FOUND": "未找到预期的徽章",
+	"actions.finalize.error.TROPHY_NOT_FOUND": "",
+	"actions.finalize.error.TROPHY_NOT_ASSIGNED": "",
 	"actions.finalize.assignBadgesLater": "稍后手动分发徽章",
 	"finalize.receivingTeam.label": "接收队伍",
 	"finalize.receivingTeam.placeholder": "选择队伍...",

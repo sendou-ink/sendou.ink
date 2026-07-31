@@ -5,6 +5,7 @@ import { actorId } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 
@@ -286,18 +287,19 @@ export async function linkUserAndPlayer({
 		.execute();
 
 	await BadgeRepository.syncXPBadges();
+	await TrophyRepository.syncSpecialTrophies();
 
 	await BuildRepository.recalculateAllSortValues(userId);
 	await XRankPlacementRepository.refreshTenStarWeapons(userId);
 }
 
-export function forcePatron(args: {
+export async function forcePatron(args: {
 	id: number;
 	patronTier: Tables["User"]["patronTier"];
 	patronStartedAt: Date;
 	patronExpiresAt: Date;
 }) {
-	return db
+	await db
 		.updateTable("User")
 		.set({
 			patronTier: args.patronTier,
@@ -306,6 +308,8 @@ export function forcePatron(args: {
 		})
 		.where("User.id", "=", args.id)
 		.execute();
+
+	await TrophyRepository.syncSpecialTrophies();
 }
 
 export async function findAllBannedUsers() {

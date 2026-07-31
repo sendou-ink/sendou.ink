@@ -355,33 +355,38 @@ async function playOutMatch(tournamentId: number, match: PlayedMatch) {
 async function finalize(tournamentId: number) {
 	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
 
+	const event = await CalendarRepository.findById(tournament.ctx.eventId, {
+		includeBadgePrizes: true,
+		includeTrophy: true,
+	});
+	const winner = winningTeam(tournament);
+
 	await finalizeTournament({
 		tournament,
-		badgeReceivers: await winnersAsBadgeReceivers(tournament),
+		badgeReceivers: event?.badgePrizes?.length
+			? event.badgePrizes.map((badge) => ({
+					badgeId: badge.id,
+					tournamentTeamId: winner.team.id,
+					userIds: winner.team.members.map((member) => member.userId),
+				}))
+			: undefined,
+		trophyReceiver: event?.trophy
+			? {
+					trophyId: event.trophy.id,
+					userIds: winner.team.members.map((member) => member.userId),
+				}
+			: undefined,
 	});
 }
 
-/** The tournament's badges all go to the winning team, as the organizer typically assigns them. */
-async function winnersAsBadgeReceivers(
-	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
-) {
-	const badges = (
-		await CalendarRepository.findById(tournament.ctx.eventId, {
-			includeBadgePrizes: true,
-		})
-	)?.badgePrizes;
-	if (!badges?.length) return undefined;
-
+/** Whose the tournament's prizes are, as the organizer typically assigns them. */
+function winningTeam(tournament: Awaited<ReturnType<typeof tournamentFromDB>>) {
 	const winner = Standings.flattenStandings(
 		Standings.tournamentStandings(tournament),
 	).find((standing) => standing.placement === 1);
-	invariant(winner, "Tournament to award badges for has no winner");
+	invariant(winner, "Tournament to award prizes for has no winner");
 
-	return badges.map((badge) => ({
-		badgeId: badge.id,
-		tournamentTeamId: winner.team.id,
-		userIds: winner.team.members.map((member) => member.userId),
-	}));
+	return winner;
 }
 
 async function findMatch(matchId: number) {

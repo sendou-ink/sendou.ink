@@ -22,6 +22,10 @@ import selectStyles from "./Select.module.css";
 import type { EntitySearch } from "./useEntitySearch";
 
 const PLACEHOLDER_TEXTS = {
+	organizationSearch: {
+		placeholder: "common:forms.organizationSearch.placeholder",
+		noResults: "common:forms.organizationSearch.noResults",
+	},
 	teamSearch: {
 		placeholder: "common:forms.teamSearch.placeholder",
 		noResults: "common:forms.teamSearch.noResults",

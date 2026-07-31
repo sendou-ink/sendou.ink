@@ -10,21 +10,26 @@ import { refreshTentativeTiersCache } from "~/features/tournament-organization/c
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import type { TournamentBadgeReceivers } from "../tournament-bracket-schemas.server";
+import type {
+	TournamentBadgeReceivers,
+	TournamentTrophyReceiver,
+} from "../tournament-bracket-schemas.server";
 import { summaryRatingTargets, tournamentSummary } from "./summarizer.server";
 import type { Tournament } from "./Tournament";
 import { clearTournamentDataCache } from "./Tournament.server";
 
 // xxx: logs when seeding
 
-/** Finalizes a fully played tournament with a real summary: results, skills, badges
- * and leaderboard entries. */
+/** Finalizes a fully played tournament with a real summary: results, skills, badges,
+ * trophies and leaderboard entries. */
 export async function finalizeTournament({
 	tournament,
 	badgeReceivers,
+	trophyReceiver,
 }: {
 	tournament: Tournament;
 	badgeReceivers?: TournamentBadgeReceivers;
+	trophyReceiver?: TournamentTrophyReceiver;
 }) {
 	const tournamentId = tournament.ctx.id;
 
@@ -73,6 +78,7 @@ export async function finalizeTournament({
 			summary,
 			season,
 			badgeReceivers,
+			trophyReceiver,
 		});
 	} else {
 		logger.info(

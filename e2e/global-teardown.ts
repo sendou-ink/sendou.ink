@@ -20,7 +20,18 @@ async function globalTeardown(_config: FullConfig) {
 			exits.push(
 				new Promise((resolve) => server.once("exit", () => resolve())),
 			);
-			server.kill("SIGTERM");
+
+			if (process.platform === "win32" && server.pid) {
+				// the whole process tree needs to be killed on Windows to not leave
+				// the ports occupied
+				try {
+					execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: "pipe" });
+				} catch {
+					// Ignore errors, process might already be gone
+				}
+			} else {
+				server.kill("SIGTERM");
+			}
 		}
 	}
 
