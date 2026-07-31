@@ -1,13 +1,13 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
 import { Ability } from "~/components/Ability";
 import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { Tables } from "~/db/tables";
+import type { AbilityPoints } from "~/features/build-analyzer/analyzer-types";
 import {
+	apFromMap,
 	buildToAbilityPoints,
-	isMainOnlyAbility,
 } from "~/features/build-analyzer/core/utils";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import type {
@@ -26,7 +26,6 @@ import {
 import graphicStyles from "./Graphic.module.css";
 
 const BUILD_GRAPHIC_WIDTH = 380;
-const STACKED_ABILITY_MIN_AP = 10;
 
 export interface BuildGraphicOwner {
 	username: string;
@@ -56,7 +55,9 @@ export function BuildGraphic({
 	};
 	owner: BuildGraphicOwner;
 }) {
-	const { t } = useTranslation(["weapons", "game-misc"]);
+	const { t } = useTranslation(["weapons"]);
+
+	const abilityPoints = buildToAbilityPoints(build.abilities);
 
 	const isNoGear = [
 		build.headGearSplId,
@@ -132,19 +133,21 @@ export function BuildGraphic({
 					gearType="HEAD"
 					abilities={build.abilities[0]}
 					gearId={build.headGearSplId}
+					abilityPoints={abilityPoints}
 				/>
 				<GearRow
 					gearType="CLOTHES"
 					abilities={build.abilities[1]}
 					gearId={build.clothesGearSplId}
+					abilityPoints={abilityPoints}
 				/>
 				<GearRow
 					gearType="SHOES"
 					abilities={build.abilities[2]}
 					gearId={build.shoesGearSplId}
+					abilityPoints={abilityPoints}
 				/>
 			</div>
-			<AbilityPointsSummary abilities={build.abilities} />
 			{build.description ? (
 				<div className={styles.description}>{build.description}</div>
 			) : null}
@@ -152,54 +155,21 @@ export function BuildGraphic({
 	);
 }
 
-function AbilityPointsSummary({
-	abilities,
-}: {
-	abilities: BuildAbilitiesTuple;
-}) {
-	const { t } = useTranslation(["game-misc", "analyzer"]);
-
-	const mainOnlyAbilities = abilities
-		.map((row) => row[0])
-		.filter((ability) => isMainOnlyAbility(ability));
-
-	const [stackedAbilities, sprinkledAbilities] = R.pipe(
-		Array.from(buildToAbilityPoints(abilities)),
-		R.sortBy(([, abilityPoints]) => -abilityPoints),
-		R.map(
-			([ability, abilityPoints]) =>
-				[
-					abilityPoints,
-					`${abilityPoints}${t("analyzer:abilityPoints.short")} ${ability}`,
-				] as const,
-		),
-		R.partition(([abilityPoints]) => abilityPoints >= STACKED_ABILITY_MIN_AP),
-	);
-
-	const rows = [
-		mainOnlyAbilities.map((ability) => t(`game-misc:ABILITY_${ability}`)),
-		stackedAbilities.map(([, text]) => text),
-		sprinkledAbilities.map(([, text]) => text),
-	].filter((row) => row.length > 0);
-
-	return (
-		<div className={styles.abilityPoints}>
-			{rows.map((row) => (
-				<div key={row.join()}>{row.join(" / ")}</div>
-			))}
-		</div>
-	);
-}
-
 function GearRow({
 	gearType,
 	abilities,
 	gearId,
+	abilityPoints,
 }: {
 	gearType: GearType;
 	abilities: AbilityType[];
 	gearId: number | null;
+	abilityPoints: AbilityPoints;
 }) {
+	const { t } = useTranslation(["analyzer"]);
+
+	const [mainAbility, ...subAbilities] = abilities;
+
 	return (
 		<>
 			{typeof gearId === "number" ? (
@@ -211,13 +181,37 @@ function GearRow({
 					className={styles.gear}
 				/>
 			) : null}
-			{abilities.map((ability, index) => (
-				<Ability
-					key={index}
-					ability={ability}
-					size={index === 0 ? "HUGE" : "MAIN"}
-				/>
-			))}
+			<Ability ability={mainAbility} size="HUGE" />
+			<div className={styles.subAbilities}>
+				{subAbilitySegments(subAbilities).map((segment, segmentIndex) => (
+					<div key={segmentIndex} className={styles.subAbilitySegment}>
+						<div className={styles.subAbilitySegmentIcons}>
+							{Array.from({ length: segment.count }, (_, index) => (
+								<Ability key={index} ability={segment.ability} size="MAIN" />
+							))}
+						</div>
+						<div className={styles.abilityPointsLabel}>
+							{apFromMap({ abilityPoints, ability: segment.ability })}
+							{t("analyzer:abilityPoints.short")}
+						</div>
+					</div>
+				))}
+			</div>
 		</>
 	);
+}
+
+function subAbilitySegments(subAbilities: AbilityType[]) {
+	const segments: Array<{ ability: AbilityType; count: number }> = [];
+
+	for (const ability of subAbilities) {
+		const previousSegment = segments.at(-1);
+		if (previousSegment?.ability === ability) {
+			previousSegment.count++;
+		} else {
+			segments.push({ ability, count: 1 });
+		}
+	}
+
+	return segments;
 }
