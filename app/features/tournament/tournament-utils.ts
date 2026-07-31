@@ -503,48 +503,39 @@ const STAGE_TYPE_TO_SHORT_CODE: Record<
  * Builds a compact label describing the bracket progression of a tournament,
  * derived from `settings.bracketProgression`.
  *
- * Each stage type is rendered as a short code (`RR`, `SE`, `DE`, `SW`). Main progression stages are
- * arrow-separated with consecutive duplicates collapsed (e.g. two single-elimination stages still
- * render as a single `SE`).
+ * Each main progression stage is rendered as a short code (`RR`, `SE`, `DE`, `SW`), arrow-separated
+ * with consecutive duplicates collapsed (e.g. two single-elimination stages still render as a
+ * single `SE`).
  *
  * Underground brackets are not part of the main progression — they give early losers another chance
- * to play. When present the whole label is tagged `(UG)` once. An underground bracket type that does
- * not already appear in the main progression is also surfaced with `+ {code}`, while repeated
- * underground brackets of an already-shown type are collapsed away to keep the label compact.
+ * to play. They are left out of the label and instead reported via `hasUnderground` so that the
+ * caller can render a `+ UG` suffix. Their type and where they branch off from is deliberately not
+ * conveyed, keeping the label to one shape no matter how the underground brackets are set up.
  *
  * @example
  * // [{type: "round_robin"}, {type: "single_elimination"}, ...underground SE brackets]
- * bracketProgressionLabel(progression) // "RR → SE (UG)"
- * // [{type: "double_elimination"}, {type: "single_elimination", sources: [...]}]
- * bracketProgressionLabel(progression) // "DE + SE (UG)"
+ * bracketProgressionLabel(progression) // { label: "RR → SE", hasUnderground: true }
  */
-export function bracketProgressionLabel(progression: ParsedBracket[]): string {
-	if (progression.length === 0) return "";
-
+export function bracketProgressionLabel(progression: ParsedBracket[]): {
+	label: string;
+	hasUnderground: boolean;
+} {
 	const mainCodes: string[] = [];
-	const undergroundCodes: string[] = [];
+	let hasUnderground = false;
+
 	for (let i = 0; i < progression.length; i++) {
+		if (Progression.isUnderground(i, progression)) {
+			hasUnderground = true;
+			continue;
+		}
+
 		const code = STAGE_TYPE_TO_SHORT_CODE[progression[i].type];
-		const codes = Progression.isUnderground(i, progression)
-			? undergroundCodes
-			: mainCodes;
-		if (codes.at(-1) !== code) {
-			codes.push(code);
+		if (mainCodes.at(-1) !== code) {
+			mainCodes.push(code);
 		}
 	}
 
-	const mainLabel = mainCodes.join(" → ");
-
-	if (undergroundCodes.length === 0) return mainLabel;
-
-	const extraCodes = undergroundCodes.filter(
-		(code) => !mainCodes.includes(code),
-	);
-
-	const label =
-		extraCodes.length > 0 ? [mainLabel, ...extraCodes].join(" + ") : mainLabel;
-
-	return `${label} (UG)`;
+	return { label: mainCodes.join(" → "), hasUnderground };
 }
 
 /**

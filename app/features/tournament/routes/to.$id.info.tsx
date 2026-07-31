@@ -88,6 +88,10 @@ function useFacts(
 
 	const rankedSeason = Seasons.current(tournament.ctx.startsAt);
 
+	const bracketProgression = bracketProgressionLabel(
+		tournament.ctx.settings.bracketProgression,
+	);
+
 	return [
 		{
 			label: t("tournament:fact.format"),
@@ -95,8 +99,13 @@ function useFacts(
 		},
 		{
 			label: t("tournament:fact.bracket"),
-			value: bracketProgressionLabel(
-				tournament.ctx.settings.bracketProgression,
+			value: (
+				<>
+					{bracketProgression.label}
+					{bracketProgression.hasUnderground ? (
+						<span className={styles.underground}>+ UG</span>
+					) : null}
+				</>
 			),
 		},
 		{
