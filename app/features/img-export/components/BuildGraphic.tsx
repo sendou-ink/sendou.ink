@@ -16,19 +16,12 @@ import type {
 	GearType,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
-import {
-	discordAvatarUrl,
-	gearImageUrl,
-	navIconUrl,
-	userBuildsPage,
-} from "~/utils/urls";
+import { discordAvatarUrl, gearImageUrl, navIconUrl } from "~/utils/urls";
 import styles from "./BuildGraphic.module.css";
 import {
 	GRAPHIC_DATE_FORMAT_OPTIONS,
 	GraphicContainer,
-	GraphicFooter,
 	GraphicHeader,
-	GraphicSiteUrl,
 } from "./Graphic";
 import graphicStyles from "./Graphic.module.css";
 
@@ -159,10 +152,6 @@ export function BuildGraphic({
 			{build.description ? (
 				<div className={styles.description}>{build.description}</div>
 			) : null}
-			<GraphicFooter>
-				<div />
-				<GraphicSiteUrl path={userBuildsPage(owner)} />
-			</GraphicFooter>
 		</GraphicContainer>
 	);
 }
@@ -221,8 +210,8 @@ function GearRow({
 		<>
 			{typeof gearId === "number" ? (
 				<Image
-					height={56}
-					width={56}
+					height={80}
+					width={80}
 					alt=""
 					path={gearImageUrl(gearType, gearId)}
 					className={styles.gear}
@@ -232,7 +221,7 @@ function GearRow({
 				<Ability
 					key={index}
 					ability={ability}
-					size={index === 0 ? "MAIN" : "SUB"}
+					size={index === 0 ? "HUGE" : "MAIN"}
 				/>
 			))}
 		</>
