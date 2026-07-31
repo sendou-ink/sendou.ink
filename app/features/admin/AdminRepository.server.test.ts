@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import * as AdminRepository from "./AdminRepository.server";
 
 const users = UserFactory.pool();
@@ -11,6 +15,135 @@ const users = UserFactory.pool();
 // one they can name
 const createUsers = (count: number) =>
 	users.create(count, (index) => ({ discordId: String(index) }));
+
+describe("migrate", () => {
+	let oldUserId: number;
+	let newUserId: number;
+
+	beforeEach(async () => {
+		oldUserId = (await UserFactory.create()).id;
+		newUserId = (await UserFactory.create()).id;
+	});
+
+	const insertOwnership = async (args: {
+		trophyId: number;
+		tournamentId: number;
+		userId: number;
+	}) => {
+		// biome-ignore lint/plugin: awarding a trophy requires playing out a whole tournament; migrate only cares that the rows exist
+		await db.insertInto("TrophyOwner").values(args).execute();
+		// biome-ignore lint/plugin: special trophies are synced from X rank placements; migrate only cares that the rows exist
+		await db
+			.insertInto("SpecialTrophyOwner")
+			.values({
+				trophyId: args.trophyId,
+				userId: args.userId,
+				createdAt: databaseTimestampNow(),
+			})
+			.execute();
+	};
+
+	const createPendingWithApprovals = async (args: {
+		submitterUserId: number;
+		managerId: number;
+		approverUserIds: number[];
+	}) => {
+		const organization = await TournamentOrganizationFactory.create({
+			ownerId: oldUserId,
+		});
+
+		return TrophyFactory.createPending(
+			{
+				organizationId: organization.id,
+				submitterUserId: args.submitterUserId,
+				managerId: args.managerId,
+			},
+			{ approverUserIds: args.approverUserIds },
+		);
+	};
+
+	test("re-points trophy data to the remaining user", async () => {
+		const trophy = await TrophyFactory.create({
+			creatorId: newUserId,
+			managerId: newUserId,
+		});
+		const tournament = await TournamentFactory.create({ authorId: oldUserId });
+		await insertOwnership({
+			trophyId: trophy.id,
+			tournamentId: tournament.id,
+			userId: newUserId,
+		});
+		await createPendingWithApprovals({
+			submitterUserId: newUserId,
+			managerId: newUserId,
+			approverUserIds: [newUserId],
+		});
+
+		expect(await AdminRepository.migrate({ newUserId, oldUserId })).toBe(null);
+
+		const migrated = await db
+			.selectFrom("Trophy")
+			.select(["creatorId", "managerId"])
+			.where("id", "=", trophy.id)
+			.executeTakeFirstOrThrow();
+		expect(migrated).toEqual({
+			creatorId: oldUserId,
+			managerId: oldUserId,
+		});
+
+		expect(
+			await db.selectFrom("TrophyOwner").select("userId").execute(),
+		).toEqual([{ userId: oldUserId }]);
+		expect(
+			await db.selectFrom("SpecialTrophyOwner").select("userId").execute(),
+		).toEqual([{ userId: oldUserId }]);
+
+		const pending = await db
+			.selectFrom("PendingTrophy")
+			.select(["submitterUserId", "managerId"])
+			.executeTakeFirstOrThrow();
+		expect(pending).toEqual({
+			submitterUserId: oldUserId,
+			managerId: oldUserId,
+		});
+
+		expect(
+			await db.selectFrom("PendingTrophyApproval").select("userId").execute(),
+		).toEqual([{ userId: oldUserId }]);
+	});
+
+	test("drops the migrated account's duplicate rows when both accounts own the same trophy", async () => {
+		const trophy = await TrophyFactory.create({
+			creatorId: oldUserId,
+			managerId: oldUserId,
+		});
+		const tournament = await TournamentFactory.create({ authorId: oldUserId });
+		for (const userId of [oldUserId, newUserId]) {
+			await insertOwnership({
+				trophyId: trophy.id,
+				tournamentId: tournament.id,
+				userId,
+			});
+		}
+		await createPendingWithApprovals({
+			submitterUserId: oldUserId,
+			managerId: oldUserId,
+			approverUserIds: [oldUserId, newUserId],
+		});
+
+		expect(await AdminRepository.migrate({ newUserId, oldUserId })).toBe(null);
+
+		expect(
+			await db.selectFrom("TrophyOwner").select("userId").execute(),
+		).toEqual([{ userId: oldUserId }]);
+		expect(
+			await db.selectFrom("SpecialTrophyOwner").select("userId").execute(),
+		).toEqual([{ userId: oldUserId }]);
+		expect(
+			await db.selectFrom("PendingTrophyApproval").select("userId").execute(),
+		).toEqual([{ userId: oldUserId }]);
+	});
+});
 
 describe("findAllBannedUsers", () => {
 	let admin: { id: number };

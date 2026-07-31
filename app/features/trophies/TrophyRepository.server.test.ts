@@ -252,6 +252,44 @@ describe("trophy list tiers", () => {
 	}
 });
 
+describe("user deletion", () => {
+	test("keeps their trophies and drops their approvals", async () => {
+		const submitter = await UserFactory.create();
+		const deleted = await UserFactory.create();
+
+		const trophy = await TrophyFactory.create({
+			name: "Orphaned Trophy",
+			creatorId: deleted.id,
+			managerId: deleted.id,
+		});
+
+		const organization = await TournamentOrganizationFactory.create({
+			ownerId: submitter.id,
+		});
+		await TrophyFactory.createPending(
+			{
+				organizationId: organization.id,
+				submitterUserId: submitter.id,
+			},
+			{ approverUserIds: [deleted.id] },
+		);
+
+		// biome-ignore lint/plugin: no production code path deletes users, the test pins the schemas on-delete behavior
+		await db.deleteFrom("User").where("id", "=", deleted.id).execute();
+
+		const orphaned = await db
+			.selectFrom("Trophy")
+			.select(["creatorId", "managerId"])
+			.where("id", "=", trophy.id)
+			.executeTakeFirstOrThrow();
+		expect(orphaned).toEqual({ creatorId: null, managerId: null });
+
+		expect(
+			await db.selectFrom("PendingTrophyApproval").selectAll().execute(),
+		).toEqual([]);
+	});
+});
+
 async function findTrophyByName(name: string) {
 	return (await TrophyRepository.all()).find((row) => row.name === name);
 }

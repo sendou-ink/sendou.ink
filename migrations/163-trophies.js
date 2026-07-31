@@ -11,8 +11,8 @@ export function up(db) {
         "creatorId" integer,
         "managerId" integer,
         foreign key ("organizationId") references "TournamentOrganization"("id") on delete set null,
-        foreign key ("creatorId") references "User"("id"),
-        foreign key ("managerId") references "User"("id")
+        foreign key ("creatorId") references "User"("id") on delete set null,
+        foreign key ("managerId") references "User"("id") on delete set null
       ) strict
     `,
 		).run();
@@ -91,7 +91,7 @@ export function up(db) {
         "userId" integer not null,
         "createdAt" integer not null,
         foreign key ("pendingTrophyId") references "PendingTrophy"("id") on delete cascade,
-        foreign key ("userId") references "User"("id"),
+        foreign key ("userId") references "User"("id") on delete cascade,
         unique("pendingTrophyId", "userId")
       ) strict
     `,

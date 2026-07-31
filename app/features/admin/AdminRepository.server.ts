@@ -126,6 +126,92 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 			.set({ userId: args.oldUserId })
 			.execute();
 
+		// If both accounts own the same trophy, drop the
+		// migrated account's duplicate rows
+		await trx
+			.deleteFrom("TrophyOwner")
+			.where("userId", "=", args.newUserId)
+			.where((eb) =>
+				eb.exists(
+					eb
+						.selectFrom("TrophyOwner as existing")
+						.select("existing.trophyId")
+						.where("existing.userId", "=", args.oldUserId)
+						.whereRef("existing.trophyId", "=", "TrophyOwner.trophyId")
+						.whereRef("existing.tournamentId", "=", "TrophyOwner.tournamentId"),
+				),
+			)
+			.execute();
+		await trx
+			.deleteFrom("SpecialTrophyOwner")
+			.where("userId", "=", args.newUserId)
+			.where((eb) =>
+				eb(
+					"SpecialTrophyOwner.trophyId",
+					"in",
+					eb
+						.selectFrom("SpecialTrophyOwner")
+						.select("trophyId")
+						.where("userId", "=", args.oldUserId),
+				),
+			)
+			.execute();
+		await trx
+			.deleteFrom("PendingTrophyApproval")
+			.where("userId", "=", args.newUserId)
+			.where((eb) =>
+				eb(
+					"PendingTrophyApproval.pendingTrophyId",
+					"in",
+					eb
+						.selectFrom("PendingTrophyApproval")
+						.select("pendingTrophyId")
+						.where("userId", "=", args.oldUserId),
+				),
+			)
+			.execute();
+
+		await trx
+			.updateTable("TrophyOwner")
+			.where("userId", "=", args.newUserId)
+			.set({ userId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("SpecialTrophyOwner")
+			.where("userId", "=", args.newUserId)
+			.set({ userId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("Trophy")
+			.where("creatorId", "=", args.newUserId)
+			.set({ creatorId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("Trophy")
+			.where("managerId", "=", args.newUserId)
+			.set({ managerId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("PendingTrophy")
+			.where("submitterUserId", "=", args.newUserId)
+			.set({ submitterUserId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("PendingTrophy")
+			.where("managerId", "=", args.newUserId)
+			.set({ managerId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("PendingTrophy")
+			.where("declinedByUserId", "=", args.newUserId)
+			.set({ declinedByUserId: args.oldUserId })
+			.execute();
+		await trx
+			.updateTable("PendingTrophyApproval")
+			.where("userId", "=", args.newUserId)
+			.set({ userId: args.oldUserId })
+			.execute();
+
 		const deletedUser = await trx
 			.deleteFrom("User")
 			.where("User.id", "=", args.newUserId)
