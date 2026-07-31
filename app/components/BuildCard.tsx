@@ -215,8 +215,10 @@ export function BuildCard({
 						}
 						heading={t("common:imageExport.export")}
 						filename={`build-${mySlugify(title)}`}
-						// xxx: analyzer
-						qrCodePath={userBuildsPage(owner)}
+						qrCodePath={analyzerPage({
+							weaponId: weapons[0].weaponSplId,
+							abilities: abilities.flat(),
+						})}
 					>
 						<BuildGraphic build={build} owner={owner} />
 					</ImageExportDialog>
