@@ -25,7 +25,20 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		standings: bracket.standings.map((standing) => ({
 			tournamentTeamId: standing.team.id,
 			placement: standing.placement,
-			stats: standing.stats,
+			groupId: standing.groupId,
+			stats: standing.stats
+				? {
+						setWins: standing.stats.setWins,
+						setLosses: standing.stats.setLosses,
+						mapWins: standing.stats.mapWins,
+						mapLosses: standing.stats.mapLosses,
+						koCount: standing.stats.koCount,
+						winsAgainstTied: standing.stats.winsAgainstTied,
+						lossesAgainstTied: standing.stats.lossesAgainstTied,
+						opponentSetWinPercentage: standing.stats.opponentSetWinPercentage,
+						opponentMapWinPercentage: standing.stats.opponentMapWinPercentage,
+					}
+				: undefined,
 		})),
 	};
 
