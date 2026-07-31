@@ -200,3 +200,23 @@
 		fill: #1285fe;
 	}
 }
+
+.trophyGridButton {
+	all: unset;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.trophyModalTournaments {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	opacity: 1;
+	transition: opacity 0.2s ease;
+
+	@starting-style {
+		opacity: 0;
+	}
+}

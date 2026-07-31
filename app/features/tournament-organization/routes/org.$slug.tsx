@@ -6,9 +6,10 @@ import {
 	SquarePen,
 	Users,
 } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { Link, useFetcher, useLoaderData, useSearchParams } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -29,6 +30,16 @@ import { TierPill } from "~/components/TierPill";
 import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
+import {
+	Trophy,
+	TrophyContextProvider,
+	TrophyGrid,
+	TrophyPlaceholder,
+} from "~/features/trophies/components/Trophy";
+import { TrophyShowcaseModal } from "~/features/trophies/components/TrophyShowcase";
+import { TrophyTournamentHistory } from "~/features/trophies/components/TrophyTournamentHistory";
+import type { TrophyTournamentsLoaderData } from "~/features/trophies/routes/trophies.$id.tournaments";
+import { useProgressiveRender } from "~/features/trophies/trophies-utils";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
@@ -42,6 +53,7 @@ import {
 	tournamentOrganizationPage,
 	tournamentOrganizationStatsPage,
 	tournamentPage,
+	trophyTournamentsPage,
 	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/org.$slug.server";
@@ -71,7 +83,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["badges", "org"],
+	i18n: ["badges", "org", "trophies"],
 	breadcrumb: ({ match }) => {
 		const data = match.loaderData as SerializeFrom<typeof loader> | undefined;
 
@@ -209,7 +221,7 @@ function LogoHeader() {
 }
 
 function InfoTabs() {
-	const { t } = useTranslation(["org"]);
+	const { t } = useTranslation(["org", "trophies"]);
 	const data = useLoaderData<typeof loader>();
 	const isAdmin = useHasRole("ADMIN");
 	const canBanPlayers = useHasPermission(data.organization, "BAN");
@@ -217,6 +229,8 @@ function InfoTabs() {
 	const hasSocials =
 		data.organization.socials && data.organization.socials.length > 0;
 	const hasBadges = data.organization.badges.length > 0;
+	const hasTrophies = data.trophies.length > 0;
+	const hasRewards = hasBadges || hasTrophies;
 
 	return (
 		<div>
@@ -229,11 +243,11 @@ function InfoTabs() {
 						{t("org:edit.form.members.title")}
 					</SendouTab>
 					<SendouTab
-						id="badges"
-						isDisabled={!hasBadges}
-						icon={<Image path={navIconUrl("badges")} alt="" width={16} />}
+						id="rewards"
+						isDisabled={!hasRewards}
+						icon={<Image path={navIconUrl("trophies")} alt="" width={16} />}
 					>
-						{t("org:edit.form.badges.title")}
+						{t("org:edit.form.rewards.title")}
 					</SendouTab>
 					{canBanPlayers && data.bannedUsers ? (
 						<SendouTab
@@ -256,8 +270,11 @@ function InfoTabs() {
 				<SendouTabPanel id="members">
 					<MembersList />
 				</SendouTabPanel>
-				<SendouTabPanel id="badges">
-					<BadgeDisplay badges={data.organization.badges} />
+				<SendouTabPanel id="rewards">
+					<RewardsPanel
+						badges={data.organization.badges}
+						trophies={data.trophies}
+					/>
 				</SendouTabPanel>
 				{data.bannedUsers ? (
 					<SendouTabPanel id="banned-users">
@@ -270,6 +287,37 @@ function InfoTabs() {
 					</SendouTabPanel>
 				) : null}
 			</SendouTabs>
+		</div>
+	);
+}
+
+function RewardsPanel({
+	badges,
+	trophies,
+}: {
+	badges: SerializeFrom<typeof loader>["organization"]["badges"];
+	trophies: SerializeFrom<typeof loader>["trophies"];
+}) {
+	const { t } = useTranslation(["org", "trophies"]);
+
+	return (
+		<div className="stack sm">
+			{trophies.length > 0 ? (
+				<>
+					<Divider className="mt-2" smallText>
+						{t("trophies:title")}
+					</Divider>
+					<RewardsTrophyGrid trophies={trophies} />
+				</>
+			) : null}
+			{badges.length > 0 ? (
+				<>
+					<Divider className="mt-2" smallText>
+						{t("org:edit.form.badges.title")}
+					</Divider>
+					<BadgeDisplay badges={badges} />
+				</>
+			) : null}
 		</div>
 	);
 }
@@ -689,6 +737,77 @@ function EventLeaderboardRow({
 				<Placement placement={2} /> ×{entry.placements.second}
 				<Placement placement={3} /> ×{entry.placements.third}
 			</div>
+		</div>
+	);
+}
+
+function RewardsTrophyGrid({
+	trophies,
+}: {
+	trophies: SerializeFrom<typeof loader>["trophies"];
+}) {
+	const visibleCount = useProgressiveRender(trophies.length, "");
+	const [openTrophy, setOpenTrophy] = React.useState<
+		SerializeFrom<typeof loader>["trophies"][number] | null
+	>(null);
+
+	return (
+		<TrophyContextProvider>
+			<TrophyGrid>
+				{trophies.map((trophy, i) =>
+					i < visibleCount ? (
+						<button
+							key={trophy.id}
+							type="button"
+							className={styles.trophyGridButton}
+							onClick={() => setOpenTrophy(trophy)}
+							aria-label={trophy.name}
+						>
+							<Trophy
+								tile
+								model={trophy.model}
+								tier={trophy.tier}
+								tentativeTier={trophy.tentativeTier}
+								preview
+							/>
+						</button>
+					) : (
+						<TrophyPlaceholder key={trophy.id} />
+					),
+				)}
+			</TrophyGrid>
+			{openTrophy ? (
+				<TrophyShowcaseModal
+					trophy={openTrophy}
+					onClose={() => setOpenTrophy(null)}
+				>
+					<TrophyModalTournaments
+						key={openTrophy.id}
+						trophyId={openTrophy.id}
+					/>
+				</TrophyShowcaseModal>
+			) : null}
+		</TrophyContextProvider>
+	);
+}
+
+function TrophyModalTournaments({ trophyId }: { trophyId: number }) {
+	const { t } = useTranslation(["trophies"]);
+	const fetcher = useFetcher<TrophyTournamentsLoaderData>();
+
+	const loadedRef = React.useRef(false);
+	React.useEffect(() => {
+		if (loadedRef.current) return;
+		loadedRef.current = true;
+		fetcher.load(trophyTournamentsPage(trophyId));
+	}, [fetcher.load, trophyId]);
+
+	if (!fetcher.data || fetcher.data.tournaments.length === 0) return null;
+
+	return (
+		<div className={styles.trophyModalTournaments}>
+			<Divider smallText>{t("trophies:details.tournamentHistory")}</Divider>
+			<TrophyTournamentHistory tournaments={fetcher.data.tournaments} />
 		</div>
 	);
 }

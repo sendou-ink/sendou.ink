@@ -420,5 +420,15 @@
 	"placeholders.friendCode": "",
 	"unsavedChanges.title": "",
 	"unsavedChanges.body": "",
-	"unsavedChanges.discard": ""
+	"unsavedChanges.discard": "",
+	"labels.trophyName": "",
+	"labels.trophyModel": "",
+	"labels.trophyOrganization": "",
+	"labels.trophyManager": "",
+	"labels.trophyInformation": "",
+	"labels.profileFavoriteTrophies": "",
+	"labels.profileHiddenTrophies": "",
+	"bottomTexts.trophyModel": "",
+	"errors.trophyNameTaken": "",
+	"errors.trophyWithBadges": ""
 }

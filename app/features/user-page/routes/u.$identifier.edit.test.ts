@@ -19,6 +19,8 @@ const DEFAULT_FIELDS = {
 	customName: null,
 	customUrl: null,
 	favoriteBadgeIds: [],
+	favoriteTrophyIds: [],
+	hiddenTrophyIds: [],
 	inGameName: null,
 	sensitivity: [null, null] as [null, null],
 	pronouns: [null, null] as [null, null],

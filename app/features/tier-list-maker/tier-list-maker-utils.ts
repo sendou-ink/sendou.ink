@@ -1,3 +1,4 @@
+import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
 
 export function tierListItemId(item: TierListItem) {
@@ -49,4 +50,19 @@ export function getNextNthForItem(
 			return currentMax;
 		}, 0) + 1
 	);
+}
+
+export function compress<T>(obj: T) {
+	return compressToBase64(JSON.stringify(obj), { urlSafe: true });
+}
+
+export function decompress<T>(compressed: string) {
+	const json = decompressFromBase64(compressed);
+	if (json === null) return null;
+
+	try {
+		return JSON.parse(json) as T;
+	} catch {
+		return null;
+	}
 }

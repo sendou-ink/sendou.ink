@@ -156,6 +156,8 @@ export async function findProfileByIdentifier(
 			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
 			"User.favoriteBadgeIds",
+			"User.favoriteTrophyIds",
+			"User.hiddenTrophyIds",
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
@@ -467,6 +469,18 @@ export function findAllPlusServerMembers() {
 			"PlusTier.tier as plusTier",
 		])
 		.execute();
+}
+
+export async function existingUserIds(userIds: Array<number>) {
+	if (userIds.length === 0) return [];
+
+	const rows = await db
+		.selectFrom("User")
+		.select("User.id")
+		.where("User.id", "in", userIds)
+		.execute();
+
+	return rows.map((row) => row.id);
 }
 
 export async function findChatUsersByUserIds(userIds: number[]) {
@@ -1050,6 +1064,8 @@ type UpdateProfileArgs = Pick<
 > & {
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
 	favoriteBadgeIds?: number[] | null;
+	favoriteTrophyIds?: number[] | null;
+	hiddenTrophyIds?: number[] | null;
 	customAvatarImgId?: number | null;
 };
 export function updateOwnProfile(args: UpdateProfileArgs) {
@@ -1103,6 +1119,12 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				battlefy: args.battlefy,
 				favoriteBadgeIds: args.favoriteBadgeIds
 					? JSON.stringify(args.favoriteBadgeIds)
+					: null,
+				favoriteTrophyIds: args.favoriteTrophyIds
+					? JSON.stringify(args.favoriteTrophyIds)
+					: null,
+				hiddenTrophyIds: args.hiddenTrophyIds
+					? JSON.stringify(args.hiddenTrophyIds)
 					: null,
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,

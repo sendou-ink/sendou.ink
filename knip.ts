@@ -4,7 +4,7 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignoreBinaries: ["lsof"],
+	ignoreBinaries: ["lsof", "taskkill"],
 	// cwd relative path inside an execSync command, which knip resolves relative to the file instead
 	ignoreUnresolved: ["scripts/seed-single-variation.ts"],
 	entry: [

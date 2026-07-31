@@ -18,6 +18,8 @@
 	"forms.tags.placeholder": "选择标签",
 	"forms.badges": "徽章奖励",
 	"forms.badges.placeholder": "选择一项徽章奖励",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "场地池",
 	"forms.reportResultsHeader": "汇报 {{eventName}} 的结果",
 	"forms.reportResultsInfo": "您可以自定义要显示的赛事结果。可以选择仅冠军队伍、前三名或其他结果。",

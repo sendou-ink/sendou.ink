@@ -3,6 +3,7 @@ import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "~/components/Badge";
+import { DotPagination } from "~/components/DotPagination";
 import { SendouButton } from "~/components/elements/Button";
 import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
@@ -108,43 +109,15 @@ export function BadgeDisplay({
 				</div>
 			) : null}
 			{!everythingVisible ? (
-				<BadgePagination
+				<DotPagination
 					pagesCount={pagesCount}
 					currentPage={currentPage}
 					setPage={setPage}
+					ariaLabelPrefix="Badges"
+					data-testid="badge-pagination-button"
+					className={styles.pagination}
 				/>
 			) : null}
-		</div>
-	);
-}
-
-interface BadgePaginationProps {
-	pagesCount: number;
-	currentPage: number;
-	setPage: (page: number) => void;
-}
-
-function BadgePagination({
-	pagesCount,
-	currentPage,
-	setPage,
-}: BadgePaginationProps) {
-	return (
-		<div className={styles.pagination}>
-			{Array.from({ length: pagesCount }, (_, i) => (
-				<SendouButton
-					key={i}
-					variant="minimal"
-					aria-label={`Badges page ${i + 1}`}
-					onPress={() => setPage(i + 1)}
-					className={clsx(styles.paginationButton, {
-						[styles.paginationButtonActive]: currentPage === i + 1,
-					})}
-					data-testid="badge-pagination-button"
-				>
-					{i + 1}
-				</SendouButton>
-			))}
 		</div>
 	);
 }

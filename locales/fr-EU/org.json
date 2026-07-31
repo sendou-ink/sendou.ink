@@ -20,6 +20,7 @@
 	"edit.form.series.seriesName.title": "Nom de la série ",
 	"edit.form.series.showLeaderboard.title": "Montrer le leaderboard",
 	"edit.form.badges.title": "Badges",
+	"edit.form.rewards.title": "",
 	"edit.form.errors.noUnadmin": "Vous ne pouvez pas vous supprimer en tant qu'administrateur",
 	"banned.title": "",
 	"banned.empty": "",

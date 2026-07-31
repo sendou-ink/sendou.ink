@@ -20,6 +20,7 @@
 	"edit.form.series.seriesName.title": "Название серии",
 	"edit.form.series.showLeaderboard.title": "Показать таблицу лидеров",
 	"edit.form.badges.title": "Награды",
+	"edit.form.rewards.title": "",
 	"edit.form.errors.noUnadmin": "Невозможно удалить собственную роль администратора",
 	"banned.title": "",
 	"banned.empty": "",

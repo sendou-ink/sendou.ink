@@ -1,4 +1,5 @@
 import * as ArtRepository from "~/features/art/ArtRepository.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
@@ -9,6 +10,8 @@ import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
@@ -16,6 +19,11 @@ import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
 export const WIDGET_LOADERS = {
+	"trophies-owned": async (userId: number) => {
+		if (!canAccessTrophies(getUser())) return [];
+
+		return TrophyRepository.findByOwnerUserId(userId);
+	},
 	"badges-owned": async (userId: number) => {
 		return BadgeRepository.findByOwnerUserId(userId);
 	},

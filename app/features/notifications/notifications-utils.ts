@@ -2,6 +2,7 @@ import { assertUnreachable } from "~/utils/types";
 import {
 	badgePage,
 	FRIENDS_PAGE,
+	NEW_TROPHY_PAGE,
 	PLUS_VOTING_PAGE,
 	plusSuggestionPage,
 	SENDOUQ_PAGE,
@@ -12,6 +13,7 @@ import {
 	tournamentRegisterPage,
 	tournamentSubsPage,
 	tournamentTeamPage,
+	trophyPage,
 	userArtPage,
 	userEditProfilePage,
 } from "~/utils/urls";
@@ -22,6 +24,10 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "BADGE_ADDED":
 		case "BADGE_MANAGER_ADDED":
 			return "badges";
+		case "TROPHY_SUBMITTED":
+		case "TROPHY_SUBMISSION_ACCEPTED":
+		case "TROPHY_SUBMISSION_DECLINED":
+			return "trophies";
 		case "PLUS_SUGGESTION_ADDED":
 		case "PLUS_VOTING_STARTED":
 			return "plus";
@@ -58,6 +64,11 @@ export const notificationLink = (notification: Notification) => {
 			return badgePage(notification.meta.badgeId);
 		case "BADGE_MANAGER_ADDED":
 			return badgePage(notification.meta.badgeId);
+		case "TROPHY_SUBMITTED":
+		case "TROPHY_SUBMISSION_DECLINED":
+			return NEW_TROPHY_PAGE;
+		case "TROPHY_SUBMISSION_ACCEPTED":
+			return trophyPage(notification.meta.trophyId);
 		case "PLUS_SUGGESTION_ADDED":
 			return plusSuggestionPage({ tier: notification.meta.tier });
 		case "PLUS_VOTING_STARTED":

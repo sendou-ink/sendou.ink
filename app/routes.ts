@@ -110,6 +110,19 @@ export default [
 		]),
 	]),
 
+	route(
+		"/trophies/:id/wins/:userId",
+		"features/trophies/routes/trophies.$id.wins.$userId.ts",
+	),
+	route(
+		"/trophies/:id/tournaments",
+		"features/trophies/routes/trophies.$id.tournaments.ts",
+	),
+	route("/trophies", "features/trophies/routes/trophies.tsx", [
+		route(":id", "features/trophies/routes/trophies.$id.tsx"),
+	]),
+	route("/trophies/new", "features/trophies/routes/trophies.new.tsx"),
+
 	...prefix("/calendar", [
 		index("features/calendar/routes/calendar.tsx"),
 		route("new", "features/calendar/routes/calendar.new.tsx"),
