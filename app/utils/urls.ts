@@ -39,6 +39,29 @@ export const discordAvatarUrl = ({
 		discordAvatar
 	}.webp${size === "lg" ? "?size=240" : "?size=80"}`;
 
+/**
+ * Resolves the avatar image url of an user, preferring their custom avatar over
+ * the Discord one. Returns undefined if the user has neither.
+ */
+export const resolveAvatarUrl = ({
+	customAvatarUrl,
+	discordId,
+	discordAvatar,
+	size,
+}: {
+	customAvatarUrl?: string | null;
+	discordId: string;
+	discordAvatar?: string | null;
+	size: "lg" | "sm";
+}) => {
+	if (customAvatarUrl) return customAvatarUrl;
+	if (discordAvatar) {
+		return discordAvatarUrl({ discordId, discordAvatar, size });
+	}
+
+	return undefined;
+};
+
 export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
 export const BADGES_DOC_LINK =
@@ -187,6 +210,13 @@ export const userSeasonsPage = ({
 	`${userPage(user)}/seasons${
 		typeof season === "number" ? `?season=${season}` : ""
 	}`;
+export const userSeasonSummaryGraphicPage = ({
+	user,
+	season,
+}: {
+	user: UserLinkArgs;
+	season: number;
+}) => `${userPage(user)}/seasons/summary-graphic?season=${season}`;
 export const userSeasonsStatsPage = ({
 	user,
 	season,

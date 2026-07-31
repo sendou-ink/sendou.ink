@@ -14,12 +14,10 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { useTierListState } from "../contexts/TierListContext";
 import {
 	PRESET_COLORS,
-	TIER_NAME_FONT_SIZE_BREAKPOINTS,
-	TIER_NAME_FONT_SIZE_MIN,
 	TIER_NAME_MAX_LENGTH,
 } from "../tier-list-maker-constants";
 import type { TierListMakerTier } from "../tier-list-maker-schemas";
-import { tierListItemId } from "../tier-list-maker-utils";
+import { tierListItemId, tierNameFontSize } from "../tier-list-maker-utils";
 import { DraggableItem } from "./DraggableItem";
 import styles from "./TierRow.module.css";
 
@@ -38,7 +36,6 @@ export function TierRow({ tier }: TierRowProps) {
 		handleMoveTierUp,
 		handleMoveTierDown,
 		showTierHeaders,
-		screenshotMode,
 		placementMode,
 		selectedTierId,
 		setSelectedTierId,
@@ -60,8 +57,7 @@ export function TierRow({ tier }: TierRowProps) {
 	const isLastTier = tierIndex === state.tiers.length - 1;
 
 	const isClickMode = placementMode === "click";
-	const isSelected =
-		isClickMode && !screenshotMode && selectedTierId === tier.id;
+	const isSelected = isClickMode && selectedTierId === tier.id;
 
 	const selectTierProps = isClickMode
 		? {
@@ -151,18 +147,14 @@ export function TierRow({ tier }: TierRowProps) {
 
 			<div
 				ref={combinedRef}
-				style={{
-					borderRadius: screenshotMode ? "var(--radius-field)" : undefined,
-					transition: screenshotMode ? "none" : undefined,
-				}}
 				className={clsx(styles.targetZone, {
 					[styles.targetZoneOver]: isOver,
-					[styles.targetZoneSelectable]: isClickMode && !screenshotMode,
+					[styles.targetZoneSelectable]: isClickMode,
 					[styles.targetZoneSelected]: isSelected,
 				})}
 				{...selectTierProps}
 			>
-				{items.length === 0 && !screenshotMode ? (
+				{items.length === 0 ? (
 					<div className={styles.emptyMessage}>
 						{isClickMode
 							? t("tier-list-maker:clickToAdd")
@@ -180,28 +172,26 @@ export function TierRow({ tier }: TierRowProps) {
 				) : null}
 			</div>
 
-			{!screenshotMode ? (
-				<div className={styles.arrowControls}>
-					<button
-						className={clsx(styles.arrowButton, styles.arrowButtonUpper)}
-						onClick={() => handleMoveTierUp(tier.id)}
-						disabled={isFirstTier}
-						type="button"
-						aria-label="Move tier up"
-					>
-						<ChevronUp className={styles.arrowIcon} />
-					</button>
-					<button
-						className={clsx(styles.arrowButton, styles.arrowButtonLower)}
-						onClick={() => handleMoveTierDown(tier.id)}
-						disabled={isLastTier}
-						type="button"
-						aria-label="Move tier down"
-					>
-						<ChevronDown className={styles.arrowIcon} />
-					</button>
-				</div>
-			) : null}
+			<div className={styles.arrowControls}>
+				<button
+					className={clsx(styles.arrowButton, styles.arrowButtonUpper)}
+					onClick={() => handleMoveTierUp(tier.id)}
+					disabled={isFirstTier}
+					type="button"
+					aria-label="Move tier up"
+				>
+					<ChevronUp className={styles.arrowIcon} />
+				</button>
+				<button
+					className={clsx(styles.arrowButton, styles.arrowButtonLower)}
+					onClick={() => handleMoveTierDown(tier.id)}
+					disabled={isLastTier}
+					type="button"
+					aria-label="Move tier down"
+				>
+					<ChevronDown className={styles.arrowIcon} />
+				</button>
+			</div>
 		</div>
 	);
 }
@@ -247,14 +237,4 @@ function useLockedHeightWhileDragging({
 	}, [isDragging]);
 
 	return combinedRef;
-}
-
-function tierNameFontSize(name: string) {
-	const length = name.length;
-	for (const breakpoint of TIER_NAME_FONT_SIZE_BREAKPOINTS) {
-		if (length <= breakpoint.maxLength) {
-			return breakpoint.fontSize;
-		}
-	}
-	return TIER_NAME_FONT_SIZE_MIN;
 }

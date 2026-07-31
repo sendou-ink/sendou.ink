@@ -389,7 +389,8 @@ function ModelField({
 						{(["light", "dark"] as const).map((theme) => (
 							<div
 								key={theme}
-								className={clsx(styles.previewTheme, `${theme}-preview`)}
+								className={styles.previewTheme}
+								data-theme={theme}
 							>
 								<span className={styles.previewThemeLabel}>
 									{t(`trophies:new.form.preview.${theme}`)}

@@ -1,0 +1,80 @@
+.title {
+	overflow: hidden;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	line-height: 1.15;
+	text-align: center;
+	text-overflow: ellipsis;
+}
+
+.author {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1-5);
+}
+
+/* the author credit belongs visually to the title above it, counteract the container gap */
+.title + .author {
+	margin-top: calc(-1 * var(--s-3));
+}
+
+/* without a title the lone author credit would leave the graphic looking top heavy */
+.author:first-child {
+	margin-top: calc(-1 * var(--s-2));
+}
+
+.authorBy {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: lowercase;
+	color: var(--graphic-text-dim);
+}
+
+.authorName {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+}
+
+.tiers {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.tierRow {
+	display: flex;
+	align-items: stretch;
+	gap: var(--s-2);
+	min-height: 64px;
+	padding: var(--s-1-5);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+}
+
+.tierLabel {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	min-width: 68px;
+	max-width: 110px;
+	padding: var(--s-2);
+	font-weight: var(--weight-bold);
+	line-height: 1.2;
+	text-align: center;
+	/* tier label backgrounds are bright preset colors in both themes */
+	color: oklch(17% 0.03 268);
+	white-space: normal;
+	overflow-wrap: break-word;
+	border-radius: var(--radius-field);
+}
+
+.tierItems {
+	display: flex;
+	flex: 1;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+}

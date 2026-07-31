@@ -1,0 +1,335 @@
+.container {
+	--graphic-row-bg: var(--color-bg-high);
+	--graphic-row-border: color-mix(in oklch, var(--color-text) 8%, transparent);
+	--graphic-text-dim: var(--color-text-high);
+	--graphic-accent: var(--color-text-accent);
+	--graphic-first: oklch(87% 0.13 85);
+	--graphic-second: oklch(83% 0.015 268);
+	--graphic-third: oklch(74% 0.09 55);
+	--graphic-win: var(--color-success-high);
+	--graphic-loss: var(--color-error-high);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	width: 720px;
+	padding: var(--s-6);
+	background:
+		radial-gradient(
+			ellipse 90% 45% at 50% -5%,
+			color-mix(in oklch, var(--color-accent) 25%, transparent),
+			transparent 70%
+		),
+		var(--color-bg);
+	color: var(--color-text);
+	/* the exported image resolves fonts slightly differently, so any text allowed to wrap eventually does */
+	white-space: nowrap;
+	border: 1.5px solid var(--color-border-high);
+	border-radius: var(--radius-box);
+}
+
+/*
+Zero-specificity theme scoping so that a forced [data-theme] wrapper always
+beats the html class regardless of which one is in effect
+*/
+:global(:where(html.light)) .container,
+:global(:where([data-theme="light"])) .container {
+	--graphic-first: oklch(58% 0.12 85);
+	--graphic-second: oklch(48% 0.02 268);
+	--graphic-third: oklch(50% 0.1 55);
+}
+
+:global(:where([data-theme="dark"])) .container {
+	--graphic-first: oklch(87% 0.13 85);
+	--graphic-second: oklch(83% 0.015 268);
+	--graphic-third: oklch(74% 0.09 55);
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+/*
+The image export freezes each element's width, so a shrink-to-fit box would clip its own
+text. Both sides of the header grow into the free space instead, which keeps them at the
+same place as an auto margin would but leaves their text room to breathe.
+*/
+.headerText {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.headerTitleRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+
+	& > :not(.headerTitle) {
+		flex-shrink: 0;
+	}
+}
+
+.headerTitle {
+	min-width: 0;
+	overflow: hidden;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	line-height: 1.15;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.headerSubtitle {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.headerTrailing {
+	display: flex;
+	flex-grow: 1;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--s-2);
+}
+
+.box {
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+}
+
+.boxLabel {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--graphic-text-dim);
+}
+
+.teamsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.teamRow {
+	display: grid;
+	grid-template-columns: 3rem 2.75rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+
+	&.teamRowFirst {
+		background:
+			linear-gradient(
+				to right,
+				color-mix(in oklch, var(--graphic-first) 18%, transparent),
+				transparent 40%
+			),
+			var(--graphic-row-bg);
+		border-color: color-mix(in oklch, var(--graphic-first) 40%, transparent);
+	}
+}
+
+.placement {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+	color: var(--graphic-text-dim);
+
+	& sup {
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-extra);
+	}
+}
+
+.placementFirst {
+	color: var(--graphic-first);
+}
+
+.placementSecond {
+	color: var(--graphic-second);
+}
+
+.placementThird {
+	color: var(--graphic-third);
+}
+
+.teamInfo {
+	min-width: 0;
+}
+
+.teamName {
+	overflow: hidden;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.avatarCell {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.teamSeed {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	color: var(--graphic-text-dim);
+}
+
+.playersList {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--s-0-5) var(--s-3);
+	margin-top: var(--s-1);
+}
+
+.player {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.playerName {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.weapons {
+	display: flex;
+	gap: var(--s-1);
+	padding: var(--s-1-5);
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: var(--radius-field);
+}
+
+.weaponKit {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.statsRow {
+	display: grid;
+	grid-auto-flow: column;
+	grid-auto-columns: 1fr;
+	gap: var(--s-2);
+}
+
+.stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	min-width: 0;
+	padding: var(--s-1-5) var(--s-3);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+}
+
+.statValue {
+	/* full width rather than shrink-to-fit so the image export cannot clip the value */
+	width: 100%;
+	font-size: var(--font-lg);
+	text-align: center;
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.statSeparator {
+	color: var(--graphic-text-dim);
+}
+
+.statWin {
+	color: var(--graphic-win);
+}
+
+.statLoss {
+	color: var(--graphic-loss);
+}
+
+.score {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+}
+
+.scoreWin {
+	color: var(--graphic-win);
+}
+
+.scoreLoss {
+	color: var(--graphic-loss);
+}
+
+.sectionDivider {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--graphic-accent);
+
+	&::before,
+	&::after {
+		content: "";
+		flex: 1;
+		height: 1px;
+		background-color: var(--graphic-row-border);
+	}
+}
+
+.footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	color: var(--graphic-text-dim);
+}
+
+.footerAccent {
+	color: var(--graphic-accent);
+}
+
+.qrCodeRow {
+	display: flex;
+	justify-content: center;
+}
+
+.qrCode {
+	padding: var(--s-1-5);
+	background-color: #fff;
+	border-radius: var(--radius-field);
+
+	& svg {
+		display: block;
+	}
+}

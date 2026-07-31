@@ -1,9 +1,18 @@
+import { addDays } from "date-fns";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
+import * as Seasons from "~/features/mmr/core/Seasons";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { SettingsPage } from "./pages/settings/settings-page";
 import { UserEditProfilePage } from "./pages/user/user-edit-profile-page";
 import { UserPage } from "./pages/user/user-page";
+import { UserSeasonsPage } from "./pages/user/user-seasons-page";
+
+/** The only season the e2e seasons list has finished, i.e. the exportable one. */
+const FINISHED_SEASON = 0;
 
 test.describe("User page", () => {
 	test("uses badge pagination", async ({ page, factories }) => {
@@ -147,6 +156,43 @@ test.describe("User page", () => {
 		await expect(settings.hasCustomTheme()).resolves.toBe(false);
 	});
 
+	test("exports season summary image as a supporter", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
+		await playFinishedSeason(factories, ADMIN_ID);
+
+		await impersonate(page);
+
+		const seasonsPage = new UserSeasonsPage(page);
+		await seasonsPage.goto(ADMIN_DISCORD_ID);
+		await seasonsPage.openExportDialog();
+
+		await expect(seasonsPage.exportDialogText("Best win streak")).toBeVisible();
+
+		const download = await seasonsPage.downloadExportedImage();
+		expect(download.suggestedFilename()).toBe(
+			`season-${FINISHED_SEASON}-summary.png`,
+		);
+	});
+
+	test("shows supporter perk explanation instead of exporting for non-supporter mid-season", async ({
+		page,
+		factories,
+	}) => {
+		await playFinishedSeason(factories, NZAP_TEST_ID);
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const seasonsPage = new UserSeasonsPage(page);
+		await seasonsPage.goto(NZAP_TEST_DISCORD_ID);
+		await seasonsPage.openExportDialog();
+
+		await expect(seasonsPage.locators.supporterPerkExplanation).toBeVisible();
+		await isNotVisible(seasonsPage.locators.downloadButton);
+	});
+
 	test("edits weapon pool", async ({ page, factories }) => {
 		await factories.UserFactory.grant(ADMIN_ID, {
 			weapons: ([200, 1100, 2000, 4000] as const).map((weaponSplId) => ({
@@ -175,3 +221,32 @@ test.describe("User page", () => {
 		}
 	});
 });
+
+/**
+ * Plays the user through a whole season of SendouQ, ending it with a calculated
+ * (i.e. non-approximate) skill. The matches are spread over the days of the only
+ * finished season so that the season summary has something to show.
+ */
+async function playFinishedSeason(factories: Factories, userId: number) {
+	const mates = await factories.UserFactory.createMany(FULL_GROUP_SIZE - 1);
+	const enemies = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+
+	const ownGroup = [userId, ...mates.map((mate) => mate.id)];
+	const opposingGroup = enemies.map((enemy) => enemy.id);
+	const { starts } = Seasons.nthToDateRange(FINISHED_SEASON);
+
+	for (let index = 0; index < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD; index++) {
+		// alpha wins every map, so which side the user is on decides the set
+		const userWon = index % 3 !== 0;
+
+		await factories.SQMatchFactory.create(
+			{
+				alphaUserIds: userWon ? ownGroup : opposingGroup,
+				bravoUserIds: userWon ? opposingGroup : ownGroup,
+			},
+			{ isConcluded: true, createdAt: addDays(starts, index) },
+		);
+	}
+
+	await factories.reseason(FINISHED_SEASON);
+}

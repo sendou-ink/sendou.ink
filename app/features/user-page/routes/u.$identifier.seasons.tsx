@@ -1,10 +1,12 @@
 import clsx from "clsx";
+import { HardDriveDownload } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import {
 	Link,
 	Outlet,
 	type ShouldRevalidateFunction,
+	useFetcher,
 	useLoaderData,
 	useLocation,
 	useMatches,
@@ -29,6 +31,10 @@ import { TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { mainStyles } from "~/components/Main";
+import { useUser } from "~/features/auth/core/user";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
+import { SeasonSummaryGraphic } from "~/features/img-export/components/SeasonSummaryGraphic";
+import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -37,9 +43,11 @@ import invariant from "~/utils/invariant";
 import { isRevalidation } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	resolveAvatarUrl,
 	sendouQMatchPage,
 	TIERS_PAGE,
 	userPage,
+	userSeasonSummaryGraphicPage,
 	userSeasonsPage,
 	userSeasonsStatsPage,
 } from "~/utils/urls";
@@ -48,13 +56,14 @@ import {
 	loader,
 	type UserSeasonsPageLoaderData,
 } from "../loaders/u.$identifier.seasons.server";
+import type { UserSeasonSummaryGraphicLoaderData } from "../loaders/u.$identifier.seasons.summary-graphic.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
 
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user"],
+	i18n: ["user", "calendar"],
 };
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
@@ -103,10 +112,18 @@ export default function UserSeasonsLayout() {
 				user={layoutData.user}
 				backTo={userPage(layoutData.user)}
 			/>
-			<SeasonHeader
-				seasonViewed={data.season}
-				seasonsParticipatedIn={data.seasonsParticipatedIn}
-			/>
+			<div className="stack horizontal justify-between items-start">
+				<SeasonHeader
+					seasonViewed={data.season}
+					seasonsParticipatedIn={data.seasonsParticipatedIn}
+				/>
+				<SeasonSummaryExport
+					profileUser={layoutData.user}
+					season={data.season}
+					seasonsParticipatedIn={data.seasonsParticipatedIn}
+					hasCalculatedSkill={Boolean(data.currentOrdinal)}
+				/>
+			</div>
 			{data.currentOrdinal ? (
 				<div className="stack md">
 					<Rank
@@ -173,6 +190,121 @@ function SeasonNav({
 				))}
 			</SendouTabList>
 		</SendouTabs>
+	);
+}
+
+function SeasonSummaryExport({
+	profileUser,
+	season,
+	seasonsParticipatedIn,
+	hasCalculatedSkill,
+}: {
+	profileUser: UserPageLoaderData["user"];
+	season: number;
+	seasonsParticipatedIn: number[];
+	hasCalculatedSkill: boolean;
+}) {
+	const { t } = useTranslation(["user"]);
+	const loggedInUser = useUser();
+
+	if (
+		!loggedInUser ||
+		loggedInUser.id !== profileUser.id ||
+		!hasCalculatedSkill ||
+		!SeasonSummary.isSeasonFinished(season)
+	) {
+		return null;
+	}
+
+	const canExport = SeasonSummary.canExportSeasonSummary({
+		loggedInUser,
+		profileUserId: profileUser.id,
+		season,
+		seasonsParticipatedIn,
+		hasCalculatedSkill,
+	});
+
+	if (!canExport) {
+		return (
+			<SendouPopover
+				trigger={
+					<SendouButton
+						size="small"
+						variant="outlined"
+						icon={<HardDriveDownload />}
+					>
+						{t("user:seasons.summary.export")}
+					</SendouButton>
+				}
+			>
+				{t("user:seasons.summary.export.supporterPerk")}
+			</SendouPopover>
+		);
+	}
+
+	return (
+		<SeasonSummaryExportDialog
+			key={season}
+			profileUser={profileUser}
+			season={season}
+		/>
+	);
+}
+
+function SeasonSummaryExportDialog({
+	profileUser,
+	season,
+}: {
+	profileUser: UserPageLoaderData["user"];
+	season: number;
+}) {
+	const { t } = useTranslation(["user"]);
+	const fetcher = useFetcher<UserSeasonSummaryGraphicLoaderData>();
+
+	const handleOpen = () => {
+		if (fetcher.state === "idle" && !fetcher.data) {
+			fetcher.load(userSeasonSummaryGraphicPage({ user: profileUser, season }));
+		}
+	};
+
+	const data = fetcher.data;
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<HardDriveDownload />}
+					onPress={handleOpen}
+				>
+					{t("user:seasons.summary.export")}
+				</SendouButton>
+			}
+			heading={t("user:seasons.summary.export")}
+			filename={`season-${season}-summary`}
+			qrCodePath={userSeasonsPage({ user: profileUser, season })}
+		>
+			{data ? (
+				<SeasonSummaryGraphic
+					user={{
+						name: profileUser.username,
+						discordId: profileUser.discordId,
+						customUrl: profileUser.customUrl ?? undefined,
+						countryCode: profileUser.country ?? undefined,
+						avatarUrl: resolveAvatarUrl({
+							customAvatarUrl: profileUser.customAvatarUrl,
+							discordId: profileUser.discordId,
+							discordAvatar: profileUser.discordAvatar,
+							size: "lg",
+						}),
+					}}
+					season={data.season}
+					seasonDateRange={Seasons.nthToDateRange(data.season)}
+					stats={data}
+				/>
+			) : null}
+		</ImageExportDialog>
 	);
 }
 

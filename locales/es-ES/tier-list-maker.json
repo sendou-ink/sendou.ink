@@ -1,6 +1,5 @@
 {
 	"addTier": "Añadir tier",
-	"download": "Descargar (.png)",
 	"mainWeapons": "Armas principales",
 	"subWeapons": "Armas secundarias",
 	"specialWeapons": "Armas especiales",
@@ -18,7 +17,8 @@
 	"resetConfirmation": "¿Seguro que quieres reiniciar la tier list? Esto eliminará todos los elementos y restaurará las tiers por defecto.",
 	"noDuplicates": "",
 	"showTierHeaders": "Mostrar encabezados de las tiers",
-	"titlePlaceholder": "Haz clic para añadir un título...",
+	"title": "",
+	"showUsername": "",
 	"by": "Creado por",
 	"custom": "Personalizado"
 }
