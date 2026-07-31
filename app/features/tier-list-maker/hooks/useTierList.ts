@@ -4,7 +4,6 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import JSONCrush from "jsoncrush";
 import * as React from "react";
 import { useSearchParams } from "react-router";
 import { z } from "zod";
@@ -36,6 +35,7 @@ import {
 } from "../tier-list-maker-schemas";
 import {
 	addItemToTier,
+	decompress,
 	getNextNthForItem,
 	serializeTierListState,
 } from "../tier-list-maker-utils";
@@ -522,11 +522,10 @@ function useSearchParamTiersState() {
 
 		try {
 			if (param) {
-				const uncrushed = JSONCrush.uncrush(param);
+				const decompressed = decompress<unknown>(param);
+				if (decompressed === null) throw new Error("Failed to decompress");
 
-				const parsed = tierListStateSerializedSchema.parse(
-					JSON.parse(uncrushed),
-				);
+				const parsed = tierListStateSerializedSchema.parse(decompressed);
 
 				return {
 					tiers: parsed.tiers,
@@ -548,6 +547,7 @@ function useSearchParamTiersState() {
 			TIER_LIST_SEARCH_PARAM_NAMES.STATE,
 			serializeTierListState(state),
 		);
+
 		window.history.replaceState(
 			{},
 			"",

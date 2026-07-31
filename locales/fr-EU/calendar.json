@@ -22,6 +22,8 @@
 	"forms.tags.placeholder": "Choisir un tag",
 	"forms.badges": "Badge à gagner",
 	"forms.badges.placeholder": "Choisissez le badge à faire gagner",
+	"forms.trophy": "",
+	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Stages disponibles",
 	"forms.reportResultsHeader": "Déclarer les résultats pour {{eventName}}",
 	"forms.reportResultsInfo": "Les résultats déclarés peuvent être personnalisés. Vous pouvez déclarer uniquement le gagnant, le top 3, ou tout ce que vous décidez.",

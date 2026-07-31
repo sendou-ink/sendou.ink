@@ -20,6 +20,8 @@
 	"forms.tags.placeholder": "Choose a tag",
 	"forms.badges": "Badge prizes",
 	"forms.badges.placeholder": "Choose a badge prize",
+	"forms.trophy": "Trophy prize",
+	"forms.trophy.placeholder": "Choose a trophy prize",
 	"forms.mapPool": "Map pool",
 	"forms.reportResultsHeader": "Reporting results for {{eventName}}",
 	"forms.reportResultsInfo": "You choose how many results to report. It can be just the winning team, top 3 or whatever you decide.",

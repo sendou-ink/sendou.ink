@@ -50,6 +50,15 @@ export type Notification =
 			{ badgeName: string; badgeId: number }
 	  >
 	| NotificationItem<
+			"TROPHY_SUBMITTED",
+			{ trophyName: string; submitterUsername: string }
+	  >
+	| NotificationItem<
+			"TROPHY_SUBMISSION_ACCEPTED",
+			{ trophyName: string; trophyId: number }
+	  >
+	| NotificationItem<"TROPHY_SUBMISSION_DECLINED", { trophyName: string }>
+	| NotificationItem<
 			"PLUS_VOTING_STARTED",
 			{
 				seasonNth: number;

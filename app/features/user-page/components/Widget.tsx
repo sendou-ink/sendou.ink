@@ -18,6 +18,7 @@ import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
@@ -78,6 +79,8 @@ export function Widget({
 						<Markdown>{widget.data.bio}</Markdown>
 					</article>
 				);
+			case "trophies-owned":
+				return <TrophyDisplay trophies={widget.data} userId={user.id} />;
 			case "badges-owned":
 				return (
 					<BadgeDisplay badges={widget.data} key={`badges-owned-${user.id}`} />

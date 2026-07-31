@@ -7,6 +7,7 @@ import {
 	calendarFiltersSearchParamsObject,
 	calendarFiltersSearchParamsSchema,
 } from "~/features/calendar/calendar-schemas";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseSafeSearchParams, parseSearchParams } from "~/utils/remix.server";
 import { dayMonthYear } from "~/utils/zod";
@@ -38,8 +39,24 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	const filters = resolveFilters(args.request, user?.preferences);
 	const filtered = CalendarEvent.applyFilters(events, filters);
 
+	const eventTimes = canAccessTrophies(user)
+		? filtered
+		: filtered.map((time) => ({
+				...time,
+				events: {
+					shown: time.events.shown.map((event) => ({
+						...event,
+						trophy: null,
+					})),
+					hidden: time.events.hidden.map((event) => ({
+						...event,
+						trophy: null,
+					})),
+				},
+			}));
+
 	return {
-		eventTimes: filtered,
+		eventTimes,
 		dateViewed: parsed.success ? parsed.data : undefined,
 		filters,
 	};

@@ -1,4 +1,4 @@
-import JSONCrush from "jsoncrush";
+import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import { TIER_LIST_MAKER_URL } from "~/utils/urls";
 import {
 	TIER_LIST_SEARCH_PARAM_NAMES,
@@ -13,12 +13,10 @@ export function tierListItemId(item: TierListItem) {
 
 /** Compressed representation of the tier list, as stored in the page's search params. */
 export function serializeTierListState(state: TierListState) {
-	return JSONCrush.crush(
-		JSON.stringify({
-			tiers: state.tiers,
-			tierItems: Array.from(state.tierItems.entries()),
-		}),
-	);
+	return compress({
+		tiers: state.tiers,
+		tierItems: Array.from(state.tierItems.entries()),
+	});
 }
 
 /**
@@ -110,4 +108,20 @@ export function tierNameFontSize(name: string) {
 		}
 	}
 	return TIER_NAME_FONT_SIZE_MIN;
+}
+
+/** Reverses {@link serializeTierListState}, returning null if the input is not valid. */
+export function decompress<T>(compressed: string) {
+	const json = decompressFromBase64(compressed);
+	if (json === null) return null;
+
+	try {
+		return JSON.parse(json) as T;
+	} catch {
+		return null;
+	}
+}
+
+function compress<T>(obj: T) {
+	return compressToBase64(JSON.stringify(obj), { urlSafe: true });
 }

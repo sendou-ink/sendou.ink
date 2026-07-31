@@ -5,7 +5,7 @@ import { RoundRobinBracket } from "./RoundRobinBracket";
 import { SingleEliminationBracket } from "./SingleEliminationBracket";
 import { SwissBracket } from "./SwissBracket";
 
-export type { CreateBracketArgs, Standing, TeamTrackRecord } from "./Bracket";
+export type { CreateBracketArgs, Standing } from "./Bracket";
 export { Bracket } from "./Bracket";
 
 export function createBracket(

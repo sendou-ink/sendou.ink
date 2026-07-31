@@ -1,5 +1,7 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
@@ -23,10 +25,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const friendCodeResult = await UserRepository.findCurrentFriendCodeByUserId(
 		user.id,
 	);
+	const ownedTrophies = canAccessTrophies(user)
+		? await TrophyRepository.findByOwnerUserIdIncludingHidden(user.id)
+		: [];
 
 	return {
 		user: userProfile,
 		favoriteBadgeIds: userProfile.favoriteBadgeIds,
+		favoriteTrophyIds: userProfile.favoriteTrophyIds,
+		hiddenTrophyIds: userProfile.hiddenTrophyIds,
+		ownedTrophies,
 		discordUniqueName: userProfile.discordUniqueName,
 		newProfileEnabled: preferences?.newProfileEnabled ?? false,
 		friendCode: friendCodeResult?.friendCode ?? null,

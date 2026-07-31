@@ -63,6 +63,8 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 const REG_OPEN_TOURNAMENT_IDS = [1, 3];
+const FINISHED_IN_THE_PAST_EVENT_IDS = [209];
+const UPCOMING_EVENT_IDS = [210];
 
 const SEED_REFERENCE_TIMESTAMP = 1767440151;
 
@@ -76,6 +78,9 @@ async function adjustSeedDatesToCurrent(variation: SeedVariation) {
 			1000,
 	);
 	const now = Math.floor(Date.now() / 1000);
+	const tenDaysFromNow = Math.floor(
+		(Date.now() + 1000 * 60 * 60 * 24 * 10) / 1000,
+	);
 
 	const tournamentEventIds = await db
 		.selectFrom("CalendarEvent")
@@ -85,6 +90,17 @@ async function adjustSeedDatesToCurrent(variation: SeedVariation) {
 		.execute();
 
 	for (const { id, tournamentId } of tournamentEventIds) {
+		if (FINISHED_IN_THE_PAST_EVENT_IDS.includes(id)) continue;
+
+		if (UPCOMING_EVENT_IDS.includes(id)) {
+			await db
+				.updateTable("CalendarEventDate")
+				.set({ startsAt: tenDaysFromNow })
+				.where("eventId", "=", id)
+				.execute();
+			continue;
+		}
+
 		const isRegOpen =
 			variation === "REG_OPEN" &&
 			REG_OPEN_TOURNAMENT_IDS.includes(tournamentId);
