@@ -18,8 +18,6 @@ import { summaryRatingTargets, tournamentSummary } from "./summarizer.server";
 import type { Tournament } from "./Tournament";
 import { clearTournamentDataCache } from "./Tournament.server";
 
-// xxx: logs when seeding
-
 /** Finalizes a fully played tournament with a real summary: results, skills, badges,
  * trophies and leaderboard entries. */
 export async function finalizeTournament({

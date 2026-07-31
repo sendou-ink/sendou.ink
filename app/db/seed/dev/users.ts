@@ -141,7 +141,7 @@ async function seedShowcaseUsers() {
 	const artistIds: number[] = [];
 	const favoriteBadgeUserIds: number[] = [];
 
-	for (const [i, customName] of showcaseNames.DISPLAY_NAMES.entries()) {
+	for (const [i, customName] of showcaseNames.CUSTOM_NAMES.entries()) {
 		const hasKanji = /[一-龯]/u.test(customName);
 
 		const user = await UserFactory.create(
@@ -171,7 +171,7 @@ async function seedShowcaseUsers() {
 	const maximalUser = await UserFactory.create(
 		{
 			profile: {
-				customName: showcaseNames.displayName(),
+				customName: showcaseNames.customName(),
 				customUrl: "maximal",
 				country: "JP",
 				bio: showcaseNames.maxLengthBio(),
@@ -206,7 +206,7 @@ async function seedShowcaseUsers() {
 				profile: {
 					customName:
 						faker.number.float(1) < 0.6
-							? showcaseNames.displayName()
+							? showcaseNames.customName()
 							: undefined,
 					customUrl: faker.number.float(1) < 0.2 ? `showcase-${i}` : undefined,
 					country:

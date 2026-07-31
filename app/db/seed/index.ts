@@ -1,6 +1,7 @@
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
+import { withoutInfoLogs } from "~/utils/logger";
 import { resetFactories } from "./core/defineFactory";
 import { resetFaker } from "./core/faker";
 import { seedBadges } from "./dev/badges";
@@ -52,7 +53,7 @@ export async function seed() {
 function runModule<T>(module: () => Promise<T>) {
 	resetFaker();
 
-	return module();
+	return withoutInfoLogs(module);
 }
 
 async function wipeDB() {

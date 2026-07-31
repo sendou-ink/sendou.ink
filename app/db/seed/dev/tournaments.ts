@@ -548,9 +548,9 @@ function rosterBuilder(users: SeededUsers, teams: SeededTeams) {
 
 /** A name for a team put together for one tournament, taken by no other team of it. */
 function pickupTeamName(takenNames: Set<string>) {
-	let name = unique(() => showcaseNames.teamName().slice(0, 64));
+	let name = unique(() => showcaseNames.teamName());
 	while (takenNames.has(name)) {
-		name = unique(() => showcaseNames.teamName().slice(0, 64));
+		name = unique(() => showcaseNames.teamName());
 	}
 	takenNames.add(name);
 

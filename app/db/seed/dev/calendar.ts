@@ -114,7 +114,7 @@ function fakeResults(users: SeededUsers, nzapId: number | null) {
 
 	return Array.from({ length: placementCount }, (_, i) => ({
 		placement: i + 1,
-		teamName: showcaseNames.teamName().slice(0, 64),
+		teamName: showcaseNames.teamName(),
 		players: [
 			...(nzapId !== null && i === nzapPlacementIdx
 				? [{ name: null, userId: nzapId }]

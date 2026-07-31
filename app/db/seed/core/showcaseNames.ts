@@ -10,11 +10,10 @@ const fakerAr = createSeededFaker([ar, en, base]);
 
 const LOCALIZED_FAKERS = [fakerJa, fakerKo, fakerRu, fakerAr];
 
-// xxx: this is weird, USER.CUSTOM_NAME_MAX_LENGTH applies to one specific field but it has a generic name here
-/** Display names that stress the UI: length extremes, non-Latin scripts, emoji. */
-export const DISPLAY_NAMES = [
+/** Custom names that stress the UI: length extremes, non-Latin scripts, emoji. */
+export const CUSTOM_NAMES = [
 	"S",
-	"Maximum length display name".padEnd(USER.CUSTOM_NAME_MAX_LENGTH, "!"),
+	"Maximum length custom name".padEnd(USER.CUSTOM_NAME_MAX_LENGTH, "!"),
 	"イカ墨侍・銀河",
 	"오징어대장",
 	"Кальмаротрон3000",
@@ -35,7 +34,7 @@ const KANA_NAMES = [
 	"ハイカラねこ",
 ];
 
-export function displayName(): string {
+export function customName(): string {
 	return localized().person.firstName();
 }
 
