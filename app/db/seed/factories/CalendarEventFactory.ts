@@ -3,6 +3,7 @@ import { tags } from "~/features/calendar/calendar-constants";
 import { databaseTimestampNow } from "~/utils/dates";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
+import * as ImageFactory from "./ImageFactory";
 
 type EventTags = NonNullable<
 	Parameters<typeof CalendarRepository.insert>[0]["tags"]
@@ -38,11 +39,26 @@ function fakeTags(): EventTags | null {
 	});
 }
 
+type Options = {
+	/** Gives the event a logo, submitted by its author the way one is in production. */
+	hasAvatar?: boolean;
+};
+
 export const { create } = defineFactory({
 	defaults: eventDefaults,
-	insert: async (args: InsertArgs) => {
+	insert: async ({ hasAvatar, ...args }: InsertArgs & Options) => {
+		const avatarImgId = hasAvatar
+			? (
+					await ImageFactory.create(
+						{ submitterUserId: args.authorId },
+						{ isValidated: true },
+					)
+				).id
+			: args.avatarImgId;
+
 		const { eventId } = await CalendarRepository.insert({
 			...args,
+			avatarImgId,
 			isFullTournament: false,
 			bracketProgression: null,
 			// only read for events with a tournament of their own

@@ -6,6 +6,7 @@ import { resetFaker } from "./core/faker";
 import { seedBadges } from "./dev/badges";
 import { seedBuilds } from "./dev/builds";
 import { seedCalendarEvents } from "./dev/calendar";
+import { seedResultHighlights } from "./dev/highlights";
 import { seedMisc } from "./dev/misc";
 import { seedOrganizations } from "./dev/organizations";
 import { seedPlus } from "./dev/plus";
@@ -28,9 +29,14 @@ export async function seed() {
 		seedTrophies({ users, organizations }),
 	);
 	const teams = await runModule(() => seedTeams(users));
-	await runModule(() => seedCalendarEvents(users, badges));
+	const calendarEvents = await runModule(() =>
+		seedCalendarEvents(users, badges),
+	);
 	const tournaments = await runModule(() =>
-		seedTournaments({ users, organizations, badges, trophies }),
+		seedTournaments({ users, organizations, badges, teams, trophies }),
+	);
+	await runModule(() =>
+		seedResultHighlights({ users, calendarEvents, tournaments }),
 	);
 	const sendouq = await runModule(() => seedSendouQ(users, teams));
 	await runModule(() => seedPlus(users));

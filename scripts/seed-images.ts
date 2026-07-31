@@ -7,8 +7,9 @@ import { logger } from "~/utils/logger";
 import {
 	getArtFilename,
 	SEED_ART_URLS,
-	SEED_TEAM_IMAGES,
-	SEED_TOURNAMENT_IMAGES,
+	SEED_DEFAULT_TOURNAMENT_LOGO,
+	SEED_LOGO_FILENAMES,
+	SEED_NUMBERED_LOGOS,
 } from "./seed-art-urls";
 
 async function checkMinioConnection(): Promise<boolean> {
@@ -192,17 +193,22 @@ export async function seedImages(): Promise<void> {
 		`\n✅ Art image seeding complete: ${successCount} uploaded, ${skippedCount} already existed, ${failCount} failed`,
 	);
 
-	logger.info(
-		`\n📥 Processing ${SEED_TEAM_IMAGES.length} team images and ${SEED_TOURNAMENT_IMAGES.length} tournament images`,
-	);
+	const localImages = [
+		...SEED_LOGO_FILENAMES.map((filename) => ({
+			filename,
+			sourceFilename: filename,
+		})),
+		SEED_DEFAULT_TOURNAMENT_LOGO,
+		...SEED_NUMBERED_LOGOS,
+	];
 
-	const localImages = [...SEED_TEAM_IMAGES, ...SEED_TOURNAMENT_IMAGES];
+	logger.info(`\n📥 Processing ${localImages.length} logo images`);
 
 	let localSuccessCount = 0;
 	let localFailCount = 0;
 	let localSkippedCount = 0;
 
-	for (const { filename } of localImages) {
+	for (const { filename, sourceFilename } of localImages) {
 		const smallFilename = filename.replace(/\.(\w+)$/, "-small.$1");
 
 		try {
@@ -215,7 +221,7 @@ export async function seedImages(): Promise<void> {
 					`  ↷ Files ${filename} and ${smallFilename} already exist in Minio`,
 				);
 			} else {
-				const imageBuffer = await readLocalImage(filename);
+				const imageBuffer = await readLocalImage(sourceFilename);
 
 				if (!regularExists) {
 					logger.info(`  Uploading ${filename} to Minio...`);
@@ -238,6 +244,6 @@ export async function seedImages(): Promise<void> {
 	}
 
 	logger.info(
-		`\n✅ Local image seeding complete: ${localSuccessCount} uploaded, ${localSkippedCount} already existed, ${localFailCount} failed`,
+		`\n✅ Logo image seeding complete: ${localSuccessCount} uploaded, ${localSkippedCount} already existed, ${localFailCount} failed`,
 	);
 }

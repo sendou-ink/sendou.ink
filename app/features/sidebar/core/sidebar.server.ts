@@ -30,6 +30,7 @@ import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import type { CommonUser } from "~/utils/kysely.server";
 import {
 	BLANK_IMAGE_URL,
 	discordAvatarUrl,
@@ -44,6 +45,8 @@ export type SidebarEvent = {
 	name: string;
 	url: string;
 	logoUrl: string | null;
+	/** Whose avatar the event shows instead of a logo of its own. */
+	user: CommonUser | null;
 	startsAt: number;
 	type: "tournament" | "scrim";
 	scrimStatus?: "booked" | "looking" | "requestPending";
@@ -405,6 +408,7 @@ export function tournamentToSidebarEvent(
 		name: t.name,
 		url: t.url,
 		logoUrl: t.logoUrl,
+		user: null,
 		startsAt: t.startsAt,
 		type: "tournament" as const,
 	};
@@ -422,7 +426,9 @@ export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 				: s.status === "requestPending"
 					? `${href("/scrims")}?pendingRequestPostId=${s.id}`
 					: href("/scrims"),
-		logoUrl: s.opponentAvatarUrl ?? SCRIMS_ICON_URL,
+		// an opponent without a team is shown by their owner's avatar instead
+		logoUrl: s.opponentAvatarUrl ?? (s.opponentUser ? null : SCRIMS_ICON_URL),
+		user: s.opponentUser,
 		startsAt: s.startsAt,
 		type: "scrim" as const,
 		scrimStatus: s.status,

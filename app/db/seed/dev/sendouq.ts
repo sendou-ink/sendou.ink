@@ -52,20 +52,26 @@ export async function seedSendouQ(
 	}
 
 	await seedSquadMatches(teams);
-	await seedNzapReportedMatch(users);
+	await seedNzapReportedMatch(users, teams);
 	await seedLookingGroups(users);
 
 	return { recentMatchIds };
 }
 
 /** A match N-ZAP's team has reported but the other has not confirmed, so it is the
- * other team's to report and N-ZAP's group is free to queue again. */
-async function seedNzapReportedMatch(users: SeededUsers) {
+ * other team's to report and N-ZAP's group is free to queue again. His side is
+ * Alliance Rogue's lineup, so the match is one of a team against a pickup group. */
+async function seedNzapReportedMatch(users: SeededUsers, teams: SeededTeams) {
+	const allianceRogue = teams.squads.find(
+		(squad) => squad.teamId === teams.allianceRogueId,
+	);
+	invariant(allianceRogue, "Alliance Rogue has no full lineup");
+
 	const opponentIds = users.crowdIds.slice(-88, -84);
 
 	const match = await SQMatchFactory.create(
 		{
-			alphaUserIds: [users.nzapId, ...users.crowdIds.slice(-92, -89)],
+			alphaUserIds: allianceRogue.memberUserIds,
 			bravoUserIds: opponentIds,
 			isMatchmade: true,
 		},

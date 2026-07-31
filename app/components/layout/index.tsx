@@ -318,6 +318,7 @@ export function Layout({
 						key={`${event.type}-${event.id}`}
 						to={event.url}
 						imageUrl={event.logoUrl ?? undefined}
+						user={event.user ?? undefined}
 						subtitle={
 							isHydrated ? (
 								formatRelativeDate(event.startsAt)

@@ -9,22 +9,41 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { faker, unique } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
+import * as ImageFactory from "../factories/ImageFactory";
+import * as SavedCalendarEventFactory from "../factories/SavedCalendarEventFactory";
 import * as TournamentFactory from "../factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "../factories/TournamentLFGTeamFactory";
 import * as TournamentStreamerFactory from "../factories/TournamentStreamerFactory";
 import * as TournamentTeamFactory from "../factories/TournamentTeamFactory";
 import type { SeededBadges } from "./badges";
 import type { SeededOrganization } from "./organizations";
+import type { SeededTeams } from "./teams";
 import type { SeededTrophies } from "./trophies";
 import type { SeededUsers } from "./users";
 
 /** Series the played-out tournaments of the past are named off. The four the seed
  * puts in a state worth opening are named off a series of their own. */
-const TOURNAMENT_NAME_STEMS = ["PICNIC", "The Depths", "Leagues Under The Ink"];
+const TOURNAMENT_NAME_STEMS = [
+	{ name: "PICNIC", avatarFileName: "picnic.png" },
+	{ name: "The Depths", avatarFileName: "the-depths.png" },
+	{ name: "Leagues Under The Ink", avatarFileName: "luti.png" },
+];
 
 const HISTORICAL_COUNT = 5;
 /** Showcase users seeded into every played tournament, so their results paginate. */
 const CORE_PLAYER_COUNT = 8;
+/** Share of a tournament's teams that register as one of the site's teams, the rest
+ * being pickups put together for the tournament. */
+const REGISTERED_TEAM_SHARE = 0.4;
+/** Solo players looking for a team in a tournament whose registration has closed. */
+const SUB_COUNT = 7;
+
+/** One team's registration: the site team it registers as, when it is one of them. */
+type Roster = {
+	teamId: number | null;
+	name: string;
+	memberUserIds: number[];
+};
 
 type Progression = TournamentSettings["bracketProgression"];
 
@@ -103,20 +122,24 @@ const SWISS_TO_SINGLE_ELIMINATION: Progression = [
 export type SeededTournaments = {
 	/** The one with registration still open, which the notifications are about. */
 	regOpen: { id: number; name: string };
+	/** Teams N-ZAP played on in the tournaments that were played to the end. */
+	nzapTeamIds: number[];
 };
 
 export async function seedTournaments({
 	users,
 	organizations,
 	badges,
+	teams,
 	trophies,
 }: {
 	users: SeededUsers;
 	organizations: SeededOrganization[];
 	badges: SeededBadges;
+	teams: SeededTeams;
 	trophies: SeededTrophies;
 }): Promise<SeededTournaments> {
-	const rosters = rosterBuilder(users);
+	const rosters = rosterBuilder(users, teams);
 
 	const inTheZone = await seedInTheZone({
 		users,
@@ -128,7 +151,7 @@ export async function seedTournaments({
 	await seedLowInk({ users, organizations, rosters });
 	await seedSwimOrSink({ users, organizations, rosters });
 
-	await seedHistoricalTournaments({
+	const nzapTeamIds = await seedHistoricalTournaments({
 		users,
 		organizations,
 		badges,
@@ -136,7 +159,7 @@ export async function seedTournaments({
 		trophies,
 	});
 
-	return { regOpen: inTheZone };
+	return { regOpen: inTheZone, nzapTeamIds };
 }
 
 type Ctx = {
@@ -168,16 +191,20 @@ async function seedInTheZone({
 		trophyId: trophies.ids[0],
 	});
 
-	const teamRosters = rosters.take({ teamCount: 10, teamSize: 4 });
-	teamRosters[0].unshift(users.adminId);
+	const teamRosters = rosters.take({
+		teamCount: 10,
+		teamSize: 4,
+		pinned: [{ teamIdx: 0, userId: users.adminId }],
+	});
 
-	for (const [i, memberUserIds] of teamRosters.entries()) {
+	for (const [i, roster] of teamRosters.entries()) {
 		await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
-			team: fakeTeamProfile(),
+			team: fakeTeamProfile(roster),
 			// not every registered roster is full while reg is still open
-			memberUserIds: i % 3 === 2 ? memberUserIds.slice(0, 3) : memberUserIds,
-			hasAvatar: i % 4 === 0,
+			memberUserIds:
+				i % 3 === 2 ? roster.memberUserIds.slice(0, 3) : roster.memberUserIds,
+			hasAvatar: roster.teamId === null && i % 4 === 0,
 		});
 	}
 
@@ -199,8 +226,11 @@ async function seedPaddlingPool({ users, rosters }: Ctx) {
 		isRanked: true,
 	});
 
-	const teamRosters = rosters.take({ teamCount: 12, teamSize: 4 });
-	teamRosters[0].unshift(users.nzapId);
+	const teamRosters = rosters.take({
+		teamCount: 12,
+		teamSize: 4,
+		pinned: [{ teamIdx: 0, userId: users.nzapId }],
+	});
 
 	await registerTeams({
 		tournamentId: tournament.id,
@@ -210,6 +240,7 @@ async function seedPaddlingPool({ users, rosters }: Ctx) {
 	});
 
 	await TournamentFactory.startBracket(tournament.id);
+	await seedSubs(tournament.id, users);
 }
 
 /** #3 swiss → SE, TO maps — swiss played to the end, the top cut waiting to be started. */
@@ -225,8 +256,11 @@ async function seedLowInk({ users, rosters }: Ctx) {
 		swissRoundCount: 4,
 	});
 
-	const teamRosters = rosters.take({ teamCount: 8, teamSize: 4 });
-	teamRosters[0].unshift(users.nzapId);
+	const teamRosters = rosters.take({
+		teamCount: 8,
+		teamSize: 4,
+		pinned: [{ teamIdx: 0, userId: users.nzapId }],
+	});
 
 	await registerTeams({
 		tournamentId: tournament.id,
@@ -237,7 +271,8 @@ async function seedLowInk({ users, rosters }: Ctx) {
 	await TournamentFactory.playOut(tournament.id, 0);
 }
 
-/** #4 round robin → SE, TO maps — everybody checked in, first bracket not started. */
+/** #4 round robin → SE, TO maps — everybody checked in, first bracket not started.
+ * The one upcoming tournament N-ZAP is not registered in, so it is his saved one. */
 async function seedSwimOrSink({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Swim or Sink"),
@@ -251,12 +286,16 @@ async function seedSwimOrSink({ users, rosters }: Ctx) {
 	});
 
 	const teamRosters = rosters.take({ teamCount: 12, teamSize: 4 });
-	teamRosters[0].unshift(users.nzapId);
 
 	await registerTeams({
 		tournamentId: tournament.id,
 		rosters: teamRosters,
 		isCheckedIn: true,
+	});
+
+	await SavedCalendarEventFactory.create({
+		userId: users.nzapId,
+		tournamentId: tournament.id,
 	});
 }
 
@@ -266,6 +305,9 @@ async function seedHistoricalTournaments({
 	rosters,
 	trophies,
 }: Ctx & { badges: SeededBadges; trophies: SeededTrophies }) {
+	const nzapTeamIds: number[] = [];
+	const seriesLogoImgIds = new Map<string, number>();
+
 	for (let i = 0; i < HISTORICAL_COUNT; i++) {
 		const progression = faker.helpers.weightedArrayElement([
 			{ value: DOUBLE_ELIMINATION, weight: 5 },
@@ -280,11 +322,14 @@ async function seedHistoricalTournaments({
 			? sub(new Date(), { days: 1 + i, hours: 3 })
 			: sub(new Date(), { months: 1 + (i % 8), days: (i * 7) % 28 });
 		const badgeId = i % 3 === 0 ? badges.ids[i % badges.ids.length] : undefined;
+		const stem = TOURNAMENT_NAME_STEMS[i % TOURNAMENT_NAME_STEMS.length];
+		const authorId = faker.helpers.arrayElement(users.showcaseIds);
 
 		const tournament = await TournamentFactory.create(
 			{
-				name: nameFor(TOURNAMENT_NAME_STEMS[i % TOURNAMENT_NAME_STEMS.length]),
-				authorId: faker.helpers.arrayElement(users.showcaseIds),
+				name: nameFor(stem.name),
+				avatarImgId: await seriesLogoImgId(seriesLogoImgIds, stem, authorId),
+				authorId,
 				startTimes: [dateToDatabaseTimestamp(startsAt)],
 				mapPickingStyle: isRecent ? "AUTO_SZ" : "AUTO_ALL",
 				mapPoolMaps: isRecent ? undefined : tiebreakerMapPool(),
@@ -297,16 +342,20 @@ async function seedHistoricalTournaments({
 			{ tier: ((i % 3) + 1) as TournamentTierNumber },
 		);
 
-		const teamRosters = rosters.take({ teamCount: 8, teamSize: 4 });
 		// on the top seed of the first one, so that a win of his is finalized, and
 		// further down another, so his result list is not all first places
-		if (i === 0) {
-			teamRosters[0].unshift(users.nzapId);
-		} else if (i === 2) {
-			teamRosters[5].unshift(users.nzapId);
-		}
+		const nzapRosterIdx = i === 0 ? 0 : i === 2 ? 5 : null;
 
-		await registerTeams({
+		const teamRosters = rosters.take({
+			teamCount: 8,
+			teamSize: 4,
+			pinned:
+				nzapRosterIdx !== null
+					? [{ teamIdx: nzapRosterIdx, userId: users.nzapId }]
+					: [],
+		});
+
+		const teams = await registerTeams({
 			tournamentId: tournament.id,
 			rosters: teamRosters,
 			isCheckedIn: true,
@@ -314,7 +363,51 @@ async function seedHistoricalTournaments({
 			mapPool: () => counterpickMapPool(isRecent ? "AUTO_SZ" : "AUTO_ALL"),
 		});
 
+		if (nzapRosterIdx !== null) {
+			nzapTeamIds.push(teams[nzapRosterIdx].id);
+		}
+
 		await TournamentFactory.playOut(tournament.id, "all");
+	}
+
+	return nzapTeamIds;
+}
+
+/** Every edition of a series shares the one logo image of it, an image row not being
+ * allowed the url of another. */
+async function seriesLogoImgId(
+	imgIds: Map<string, number>,
+	stem: (typeof TOURNAMENT_NAME_STEMS)[number],
+	authorId: number,
+) {
+	const existing = imgIds.get(stem.name);
+	if (existing) return existing;
+
+	const image = await ImageFactory.create(
+		{ submitterUserId: authorId, url: stem.avatarFileName },
+		{ isValidated: true },
+	);
+	imgIds.set(stem.name, image.id);
+
+	return image.id;
+}
+
+/** Solo players looking to sub in a tournament whose registration has closed, the
+ * admin among them so that the state of having posted is one of the two profiles'.
+ * Drawn from the tail of the crowd, which no tournament roster reaches. */
+async function seedSubs(tournamentId: number, users: SeededUsers) {
+	const userIds = [
+		users.adminId,
+		...users.crowdIds.slice(300, 300 + SUB_COUNT - 1),
+	];
+
+	for (const [i, userId] of userIds.entries()) {
+		await TournamentLFGTeamFactory.create({
+			tournamentId,
+			userId,
+			isStayAsSub: true,
+			lfgNote: i % 3 === 0 ? undefined : showcaseNames.postText(),
+		});
 	}
 }
 
@@ -343,22 +436,23 @@ async function registerTeams({
 	mapPool,
 }: {
 	tournamentId: number;
-	rosters: number[][];
+	rosters: Roster[];
 	isCheckedIn?: boolean;
 	registeredAt?: Date;
 	mapPool?: () => MapPool;
 }) {
 	const teams = [];
-	for (const [i, memberUserIds] of rosters.entries()) {
+	for (const [i, roster] of rosters.entries()) {
 		teams.push(
 			await TournamentTeamFactory.create(
 				{
 					tournamentId,
-					team: fakeTeamProfile(),
-					memberUserIds,
+					team: fakeTeamProfile(roster),
+					memberUserIds: roster.memberUserIds,
 					mapPool: mapPool?.(),
 					registeredAt,
-					hasAvatar: i % 5 === 0,
+					// a team of the site shows its own logo when the registration has none
+					hasAvatar: roster.teamId === null && i % 5 === 0,
 				},
 				{ isCheckedIn },
 			),
@@ -368,7 +462,7 @@ async function registerTeams({
 	return teams;
 }
 
-function rosterBuilder(users: SeededUsers) {
+function rosterBuilder(users: SeededUsers, teams: SeededTeams) {
 	const corePlayers = users.showcaseIds.slice(0, CORE_PLAYER_COUNT);
 	const pool = [
 		...users.showcaseIds.slice(CORE_PLAYER_COUNT),
@@ -376,32 +470,98 @@ function rosterBuilder(users: SeededUsers) {
 	];
 
 	return {
-		/** Rosters for one tournament: core players spread over the first teams, the
-		 * rest drawn without replacement within the tournament. */
-		take({ teamCount, teamSize }: { teamCount: number; teamSize: number }) {
-			const shuffled = faker.helpers.shuffle(pool);
+		/** Rosters for one tournament: some of the site's teams registering as
+		 * themselves, core players spread over the rest, and the remaining seats drawn
+		 * without replacement within the tournament. A `pinned` user is added to a
+		 * roster of their own as its owner, and kept out of everybody else's. */
+		take({
+			teamCount,
+			teamSize,
+			pinned = [],
+		}: {
+			teamCount: number;
+			teamSize: number;
+			pinned?: Array<{ teamIdx: number; userId: number }>;
+		}): Roster[] {
+			const pinnedUserIds = new Set(pinned.map((pin) => pin.userId));
+			const registering = faker.helpers
+				.shuffle(
+					teams.squads.filter((squad) =>
+						squad.memberUserIds.every((id) => !pinnedUserIds.has(id)),
+					),
+				)
+				.slice(0, Math.round(teamCount * REGISTERED_TEAM_SHARE));
+
+			// a tournament can not have two teams of the same name
+			const takenNames = new Set(registering.map((squad) => squad.name));
+
+			const takenUserIds = new Set([
+				...pinnedUserIds,
+				...registering.flatMap((squad) => squad.memberUserIds),
+			]);
+			const isFree = (userId: number) => !takenUserIds.has(userId);
+
+			const shuffled = faker.helpers.shuffle(pool.filter(isFree));
+			const freeCorePlayers = corePlayers.filter(isFree);
+
+			// the teams of the site take the first team slots a pin does not want
+			const pinnedIdxs = new Set(pinned.map((pin) => pin.teamIdx));
+			const registeringIdxs = Array.from({ length: teamCount }, (_, i) => i)
+				.filter((i) => !pinnedIdxs.has(i))
+				.slice(0, registering.length);
 
 			return Array.from({ length: teamCount }, (_, i) => {
-				const roster: number[] = [];
-				if (teamSize >= 2 && i < corePlayers.length) {
-					roster.push(corePlayers[i]);
+				const registeringIdx = registeringIdxs.indexOf(i);
+				if (registeringIdx !== -1) {
+					const squad = registering[registeringIdx];
+
+					return {
+						teamId: squad.teamId,
+						name: squad.name,
+						memberUserIds: squad.memberUserIds.slice(0, teamSize),
+					};
 				}
 
-				while (roster.length < teamSize) {
-					roster.push(shuffled.pop()!);
+				const memberUserIds: number[] = [];
+				if (teamSize >= 2 && freeCorePlayers.length > 0) {
+					memberUserIds.push(freeCorePlayers.shift()!);
 				}
 
-				return roster;
+				while (memberUserIds.length < teamSize) {
+					memberUserIds.push(shuffled.pop()!);
+				}
+
+				const pin = pinned.find((pin) => pin.teamIdx === i);
+				if (pin) {
+					memberUserIds.unshift(pin.userId);
+				}
+
+				return {
+					teamId: null,
+					name: pickupTeamName(takenNames),
+					memberUserIds,
+				};
 			});
 		},
 	};
 }
 
-function fakeTeamProfile() {
+/** A name for a team put together for one tournament, taken by no other team of it. */
+function pickupTeamName(takenNames: Set<string>) {
+	let name = unique(() => showcaseNames.teamName().slice(0, 64));
+	while (takenNames.has(name)) {
+		name = unique(() => showcaseNames.teamName().slice(0, 64));
+	}
+	takenNames.add(name);
+
+	return name;
+}
+
+function fakeTeamProfile(roster: Roster) {
 	return {
-		name: unique(() => showcaseNames.teamName().slice(0, 64)),
+		name: roster.name,
 		prefersNotToHost: faker.number.float(1) < 0.2 ? (1 as const) : (0 as const),
-		teamId: null,
+		teamId: roster.teamId,
 	};
 }
 

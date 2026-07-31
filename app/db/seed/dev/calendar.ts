@@ -1,4 +1,5 @@
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import { faker } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
 import * as CalendarEventFactory from "../factories/CalendarEventFactory";
@@ -8,12 +9,20 @@ import type { SeededUsers } from "./users";
 
 const EVENT_COUNT = 200;
 const RESULT_TARGET_USER_RESULTS = 8;
+/** Results N-ZAP is placed in, enough for his results page to paginate. */
+const NZAP_RESULT_COUNT = 30;
+
+export type SeededCalendarEvents = {
+	/** Result teams N-ZAP played on, in the order they were reported. */
+	nzapResultTeamIds: number[];
+};
 
 export async function seedCalendarEvents(
 	users: SeededUsers,
 	badges: SeededBadges,
-) {
+): Promise<SeededCalendarEvents> {
 	const authorPool = [...users.showcaseIds, ...users.crowdIds];
+	const nzapResultTeamIds: number[] = [];
 
 	for (let i = 0; i < EVENT_COUNT; i++) {
 		const startTime = fakeStartTime(i);
@@ -26,16 +35,38 @@ export async function seedCalendarEvents(
 					? faker.helpers.arrayElements(badges.ids, { min: 1, max: 3 })
 					: [],
 			startTimes: fakeStartTimes(startTime),
+			// the rest fall back to the default logo, as an event without one does
+			hasAvatar: faker.number.float(1) < 0.4,
 		});
 
 		const isPast = startTime.getTime() < Date.now();
 		if (isPast && faker.number.float(1) < 0.6) {
-			await CalendarEventResultFactory.create({
+			const withNzap = nzapResultTeamIds.length < NZAP_RESULT_COUNT;
+
+			const result = await CalendarEventResultFactory.create({
 				eventId: event.id,
-				results: fakeResults(users),
+				results: fakeResults(users, withNzap ? users.nzapId : null),
 			});
+
+			if (withNzap) {
+				nzapResultTeamIds.push(nzapTeamId(result.teams, users.nzapId));
+			}
 		}
 	}
+
+	return { nzapResultTeamIds };
+}
+
+function nzapTeamId(
+	teams: Awaited<ReturnType<typeof CalendarEventResultFactory.create>>["teams"],
+	nzapId: number,
+) {
+	const team = teams.find((team) =>
+		team.players.some((player) => player.id === nzapId),
+	);
+	invariant(team, "N-ZAP was not placed in the results");
+
+	return team.id;
 }
 
 function fakeStartTime(index: number) {
@@ -61,9 +92,11 @@ function fakeStartTimes(startTime: Date) {
 	];
 }
 
-function fakeResults(users: SeededUsers) {
+function fakeResults(users: SeededUsers, nzapId: number | null) {
 	const placementCount = faker.helpers.arrayElement([1, 2, 3, 3, 3, 8]);
 	const usedUserIds = new Set<number>();
+	// spread over the placements, so his results are not all of the same podium spot
+	const nzapPlacementIdx = faker.number.int({ max: placementCount - 1 });
 
 	const drawUserId = () => {
 		// weighted toward the showcase set so their result lists paginate
@@ -82,15 +115,20 @@ function fakeResults(users: SeededUsers) {
 	return Array.from({ length: placementCount }, (_, i) => ({
 		placement: i + 1,
 		teamName: showcaseNames.teamName().slice(0, 64),
-		players: Array.from(
-			{ length: faker.helpers.arrayElement([1, 2, 3, 4, 4, 4, 5]) },
-			() => {
-				const isUnregisteredPlayer = faker.number.float(1) < 0.2;
+		players: [
+			...(nzapId !== null && i === nzapPlacementIdx
+				? [{ name: null, userId: nzapId }]
+				: []),
+			...Array.from(
+				{ length: faker.helpers.arrayElement([1, 2, 3, 4, 4, 4, 5]) },
+				() => {
+					const isUnregisteredPlayer = faker.number.float(1) < 0.2;
 
-				return isUnregisteredPlayer
-					? { name: faker.person.firstName(), userId: null }
-					: { name: null, userId: drawUserId() };
-			},
-		),
+					return isUnregisteredPlayer
+						? { name: faker.person.firstName(), userId: null }
+						: { name: null, userId: drawUserId() };
+				},
+			),
+		],
 	}));
 }

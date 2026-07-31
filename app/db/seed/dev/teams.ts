@@ -10,7 +10,7 @@ export type SeededTeams = {
 	allianceRogueId: number;
 	ids: number[];
 	/** Four members of a shared team, e.g. a lineup for the SQ team leaderboard. */
-	squads: Array<{ teamId: number; memberUserIds: number[] }>;
+	squads: Array<{ teamId: number; name: string; memberUserIds: number[] }>;
 };
 
 export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
@@ -35,6 +35,7 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 	const squads: SeededTeams["squads"] = [
 		{
 			teamId: allianceRogue.id,
+			name: allianceRogue.name,
 			memberUserIds: allianceRogue.memberUserIds.slice(0, 4),
 		},
 	];
@@ -49,17 +50,14 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 				name: i === 1 ? "Team Olive" : showcaseNames.teamName(),
 				memberUserIds,
 			},
-			i === 1
-				? { avatarUrl: "default.png" }
-				: faker.number.float(1) < 0.3
-					? { hasAvatar: true }
-					: undefined,
+			i === 1 || faker.number.float(1) < 0.3 ? { hasAvatar: true } : undefined,
 		);
 
 		ids.push(team.id);
 		if (memberCount >= 4) {
 			squads.push({
 				teamId: team.id,
+				name: team.name,
 				memberUserIds: memberUserIds.slice(0, 4),
 			});
 		}

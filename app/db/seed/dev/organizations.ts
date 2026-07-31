@@ -13,6 +13,7 @@ export async function seedOrganizations(
 	const created = await TournamentOrganizationFactory.create(
 		{ name: "sendou.ink", ownerId: users.adminId },
 		{
+			avatarFileName: "default.png",
 			description: "Sendou.ink official tournaments",
 			socials: [
 				"https://bsky.app/profile/sendou.ink",
