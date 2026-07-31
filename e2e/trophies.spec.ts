@@ -32,6 +32,11 @@ test.describe("Trophies", () => {
 		const userPage = new UserPage(page);
 		await userPage.goto(ADMIN_DISCORD_ID);
 		await isNotVisible(page.getByTestId("trophy-display"));
+
+		// remove once feature is released
+		const newTrophy = new NewTrophyPage(page);
+		await newTrophy.goto();
+		await expect(newTrophy.locators.agreeToTermsButton).toBeVisible();
 	});
 
 	test("shows trophy wins via user page trophy display", async ({
