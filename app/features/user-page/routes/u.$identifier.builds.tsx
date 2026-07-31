@@ -34,7 +34,7 @@ import userStyles from "../user-page.module.css";
 import styles from "./u.$identifier.builds.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["weapons", "builds", "gear"],
+	i18n: ["weapons", "builds", "gear", "analyzer"],
 };
 
 type BuildFilter = "ALL" | "PUBLIC" | "PRIVATE" | MainWeaponId;

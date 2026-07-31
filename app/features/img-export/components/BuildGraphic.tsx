@@ -1,9 +1,14 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { Ability } from "~/components/Ability";
 import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { Tables } from "~/db/tables";
+import {
+	buildToAbilityPoints,
+	isMainOnlyAbility,
+} from "~/features/build-analyzer/core/utils";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import type {
 	Ability as AbilityType,
@@ -27,7 +32,8 @@ import {
 } from "./Graphic";
 import graphicStyles from "./Graphic.module.css";
 
-const BUILD_GRAPHIC_WIDTH = 520;
+const BUILD_GRAPHIC_WIDTH = 380;
+const STACKED_ABILITY_MIN_AP = 10;
 
 export interface BuildGraphicOwner {
 	username: string;
@@ -38,10 +44,6 @@ export interface BuildGraphicOwner {
 	customAvatarUrl?: string | null;
 }
 
-// xxx: remove card below abilities
-// xxx: top 500 abilities off align
-// xxx: show aps below abilities
-// xxx: less width
 export function BuildGraphic({
 	build,
 	owner,
@@ -101,7 +103,7 @@ export function BuildGraphic({
 				trailing={
 					build.modes && build.modes.length > 0
 						? build.modes.map((mode) => (
-								<ModeImage key={mode} mode={mode} size={22} />
+								<ModeImage key={mode} mode={mode} size={24} />
 							))
 						: undefined
 				}
@@ -133,7 +135,7 @@ export function BuildGraphic({
 				) : null}
 			</div>
 			<div
-				className={clsx(graphicStyles.box, styles.gearGrid, {
+				className={clsx(styles.gearGrid, {
 					[styles.noGear]: isNoGear,
 				})}
 			>
@@ -153,16 +155,56 @@ export function BuildGraphic({
 					gearId={build.shoesGearSplId}
 				/>
 			</div>
+			<AbilityPointsSummary abilities={build.abilities} />
 			{build.description ? (
-				<div className={clsx(graphicStyles.box, styles.description)}>
-					{build.description}
-				</div>
+				<div className={styles.description}>{build.description}</div>
 			) : null}
 			<GraphicFooter>
 				<div />
 				<GraphicSiteUrl path={userBuildsPage(owner)} />
 			</GraphicFooter>
 		</GraphicContainer>
+	);
+}
+
+function AbilityPointsSummary({
+	abilities,
+}: {
+	abilities: BuildAbilitiesTuple;
+}) {
+	const { t } = useTranslation(["game-misc", "analyzer"]);
+
+	const mainOnlyAbilities = abilities
+		.map((row) => row[0])
+		.filter((ability) => isMainOnlyAbility(ability));
+
+	const [stackedAbilities, sprinkledAbilities] = R.pipe(
+		Array.from(buildToAbilityPoints(abilities)),
+		R.sortBy(([, abilityPoints]) => -abilityPoints),
+		R.map(
+			([ability, abilityPoints]) =>
+				[
+					abilityPoints,
+					`${abilityPoints}${t("analyzer:abilityPoints.short")} ${ability}`,
+				] as const,
+		),
+		R.partition(([abilityPoints]) => abilityPoints >= STACKED_ABILITY_MIN_AP),
+	);
+
+	const rows = [
+		mainOnlyAbilities.map((ability) =>
+			t(`game-misc:ABILITY_${ability}` as any),
+		),
+		stackedAbilities.map(([, text]) => text),
+		sprinkledAbilities.map(([, text]) => text),
+	].filter((row) => row.length > 0);
+
+	return (
+		<div className={styles.abilityPoints}>
+			{rows.map((row) => (
+				<div key={row.join()}>{row.join(" / ")}</div>
+			))}
+		</div>
 	);
 }
 
