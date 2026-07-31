@@ -89,6 +89,7 @@ export function EventsList({
 								key={`${event.type}-${event.id}`}
 								to={event.url}
 								imageUrl={event.logoUrl ?? undefined}
+								user={event.user ?? undefined}
 								subtitle={timeFormatter.format(event.startsAt)}
 								onClick={onClick}
 							>

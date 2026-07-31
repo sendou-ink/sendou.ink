@@ -11,15 +11,6 @@ import type {
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
 
-export function insertMany(
-	weapons: TablesInsertable["ReportedWeapon"][],
-	trx?: Transaction<DB>,
-) {
-	if (weapons.length === 0) return;
-
-	return (trx ?? db).insertInto("ReportedWeapon").values(weapons).execute();
-}
-
 export async function upsertOwn({
 	groupMatchId,
 	mapIndex,

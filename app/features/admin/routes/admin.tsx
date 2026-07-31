@@ -10,7 +10,6 @@ import {
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import {
 	SendouTab,
 	SendouTabList,
@@ -20,7 +19,6 @@ import {
 import { UserSearch } from "~/components/elements/UserSearch";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
-import { SEED_VARIATIONS } from "~/features/api-private/constants";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
@@ -61,7 +59,7 @@ export default function AdminPage() {
 	const isStaff = useHasRole("STAFF");
 
 	// is dev user or is someone impersonating another user (allow them to stop)
-	if (!isStaff) {
+	if (!isStaff && !DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		return (
 			<Main>
 				<Impersonate />
@@ -338,20 +336,7 @@ function Seed() {
 			method="post"
 			action={SEED_URL}
 		>
-			<div className="stack horizontal md items-end">
-				<SubmitButton state={fetcher.state}>Seed</SubmitButton>
-				<SendouSelect
-					label="Variation"
-					name="variation"
-					defaultSelectedKey="DEFAULT"
-				>
-					{SEED_VARIATIONS.map((variation) => (
-						<SendouSelectItem key={variation} id={variation}>
-							{variation}
-						</SendouSelectItem>
-					))}
-				</SendouSelect>
-			</div>
+			<SubmitButton state={fetcher.state}>Seed</SubmitButton>
 		</fetcher.Form>
 	);
 }

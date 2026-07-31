@@ -111,6 +111,8 @@ export async function insert(args: CreateArgs) {
 		if (count > BUILD.MAX_COUNT) {
 			throw new LimitReachedError("Max amount of builds reached");
 		}
+
+		return { id: buildId };
 	});
 }
 
@@ -300,66 +302,77 @@ export async function findAllByWeaponId(
 /** Recomputes `BuildWeapon.sortValue` for every (build, weapon) from scratch
  * (plus tier + per-weapon top500). When `userId` is provided, only the builds
  * owned by that user are recomputed. */
-export async function recalculateAllSortValues(userId?: number) {
-	await db.transaction().execute(async (trx) => {
-		// Pass 1: tier*2 + 1 for public, NULL for private.
-		await trx
-			.updateTable("BuildWeapon")
-			.set({
-				sortValue: sql<number | null>`(
-					select case
-						when "b"."isPrivate" = 1 then null
-						else coalesce(
-							(select "tier" from "PlusTier" where "userId" = "b"."ownerId"),
-							4
-						) * 2 + 1
-					end
-					from "Build" as "b"
-					where "b"."id" = "BuildWeapon"."buildId"
-				)`,
-			})
-			.$if(userId !== undefined, (qb) =>
-				qb.where((eb) =>
-					eb.exists(
-						eb
-							.selectFrom("Build as b")
-							.select("b.id")
-							.whereRef("b.id", "=", "BuildWeapon.buildId")
-							.where("b.ownerId", "=", userId!),
-					),
-				),
-			)
-			.execute();
+export async function recalculateAllSortValues(
+	userId?: number,
+	trx?: Transaction<DB>,
+) {
+	if (trx) {
+		return recalculateSortValues(trx, userId);
+	}
 
-		// Pass 2: subtract 1 where this specific weapon is top500 for the owner.
-		await trx
-			.updateTable("BuildWeapon")
-			.set({
-				sortValue: sql<number>`"BuildWeapon"."sortValue" - 1`,
-			})
-			.where("BuildWeapon.sortValue", "is not", null)
-			.where((eb) =>
-				eb.exists(
-					eb
-						.selectFrom("Build as b")
-						.innerJoin("SplatoonPlayer as sp", "sp.userId", "b.ownerId")
-						.innerJoin("XRankPlacement as xrp", (join) =>
-							join
-								.onRef("xrp.playerId", "=", "sp.id")
-								.onRef("xrp.weaponSplId", "=", "BuildWeapon.weaponSplId"),
-						)
-						.select("b.id")
-						.whereRef("b.id", "=", "BuildWeapon.buildId")
-						.$if(userId !== undefined, (qb) =>
-							qb.where("b.ownerId", "=", userId!),
-						),
-				),
-			)
-			.execute();
-	});
+	await db
+		.transaction()
+		.execute((newTrx) => recalculateSortValues(newTrx, userId));
 }
 
 // ---
+
+async function recalculateSortValues(trx: Transaction<DB>, userId?: number) {
+	// Pass 1: tier*2 + 1 for public, NULL for private.
+	await trx
+		.updateTable("BuildWeapon")
+		.set({
+			sortValue: sql<number | null>`(
+				select case
+					when "b"."isPrivate" = 1 then null
+					else coalesce(
+						(select "tier" from "PlusTier" where "userId" = "b"."ownerId"),
+						4
+					) * 2 + 1
+				end
+				from "Build" as "b"
+				where "b"."id" = "BuildWeapon"."buildId"
+			)`,
+		})
+		.$if(userId !== undefined, (qb) =>
+			qb.where((eb) =>
+				eb.exists(
+					eb
+						.selectFrom("Build as b")
+						.select("b.id")
+						.whereRef("b.id", "=", "BuildWeapon.buildId")
+						.where("b.ownerId", "=", userId!),
+				),
+			),
+		)
+		.execute();
+
+	// Pass 2: subtract 1 where this specific weapon is top500 for the owner.
+	await trx
+		.updateTable("BuildWeapon")
+		.set({
+			sortValue: sql<number>`"BuildWeapon"."sortValue" - 1`,
+		})
+		.where("BuildWeapon.sortValue", "is not", null)
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("Build as b")
+					.innerJoin("SplatoonPlayer as sp", "sp.userId", "b.ownerId")
+					.innerJoin("XRankPlacement as xrp", (join) =>
+						join
+							.onRef("xrp.playerId", "=", "sp.id")
+							.onRef("xrp.weaponSplId", "=", "BuildWeapon.weaponSplId"),
+					)
+					.select("b.id")
+					.whereRef("b.id", "=", "BuildWeapon.buildId")
+					.$if(userId !== undefined, (qb) =>
+						qb.where("b.ownerId", "=", userId!),
+					),
+			),
+		)
+		.execute();
+}
 
 function weaponIsTop500(sortValue: number | null): boolean {
 	return sortValue != null && sortValue % 2 === 0;

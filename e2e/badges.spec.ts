@@ -1,49 +1,53 @@
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { badgePage } from "~/utils/urls";
-import { NZAP_TEST_ID } from "../app/db/seed/constants";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	selectUser,
-	test,
-} from "./helpers/playwright";
+import { expect, impersonate, navigate, test } from "./helpers/playwright";
+import { BadgePage } from "./pages/badges/badge-page";
+import { NotificationPopover } from "./pages/layout/notification-popover";
+
+const BADGE_NAME = "4v4 Sundaes";
 
 test.describe("Badges", () => {
-	test("adds a badge owner sending a notification", async ({ page }) => {
-		await seed(page);
+	test("adds a badge owner sending a notification", async ({
+		page,
+		factories,
+	}) => {
+		const badge = await factories.BadgeFactory.create(
+			{ displayName: BADGE_NAME },
+			{ managerIds: [NZAP_TEST_ID] },
+		);
+		// the popover links onwards only once its peek list is full
+		for (let seasonNth = 1; seasonNth < NOTIFICATIONS.PEEK_COUNT; seasonNth++) {
+			await factories.NotificationFactory.create({
+				notification: { type: "SEASON_STARTED", meta: { seasonNth } },
+				users: [{ userId: ADMIN_ID, seen: 1 }],
+			});
+		}
+
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: badgePage(1),
-		});
 
-		await page.getByRole("link", { name: "Edit", exact: true }).click();
+		const badgeDetails = new BadgePage(page);
+		await badgeDetails.goto(badge.id);
 
-		await selectUser({
-			page,
-			userName: "Sendou",
-			labelName: "Add new owner",
-		});
+		const badgeEdit = await badgeDetails.openEdit();
+		await badgeEdit.addOwner("Sendou");
+		await badgeEdit.save();
 
-		await page.getByRole("button", { name: "Submit", exact: true }).click();
+		await expect(badgeDetails.owner("Sendou")).toBeVisible();
 
 		await impersonate(page);
-		await navigate({
-			page,
-			url: "/",
-		});
+		await navigate({ page, url: "/" });
 
-		await page.getByTestId("notifications-button").click();
-		await page.getByText("New badge (4v4 Sundaes)").click();
+		const notifications = new NotificationPopover(page);
+		await notifications.open();
+		await notifications.openNotification(`New badge (${BADGE_NAME})`);
 
-		await expect(page).toHaveURL(badgePage(1));
+		await expect(page).toHaveURL(badgePage(badge.id));
 
-		await page.getByTestId("notifications-button").click();
-		await page.getByTestId("notifications-see-all-button").click();
+		await notifications.open();
+		const allNotifications = await notifications.openAll();
 
-		await expect(
-			page.getByRole("heading", { name: "Notifications" }),
-		).toBeVisible();
+		await expect(allNotifications.locators.heading).toBeVisible();
 	});
 });

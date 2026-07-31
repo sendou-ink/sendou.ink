@@ -23,22 +23,6 @@ export function findSettingsByUserId(userId: number) {
 		.executeTakeFirstOrThrow();
 }
 
-export function updateVoiceChat(args: {
-	userId: number;
-	vc: Tables["User"]["vc"];
-	languages: UnifiedLanguageCode[];
-}) {
-	return db
-		.updateTable("User")
-		.set({
-			vc: args.vc,
-			languages:
-				args.languages.length > 0 ? JSON.stringify(args.languages) : null,
-		})
-		.where("User.id", "=", args.userId)
-		.execute();
-}
-
 export async function updateOwnMatchProfile({
 	mapModePreferences,
 	vc,

@@ -19,7 +19,7 @@ export function upsert(
 			.where("reporterUserId", "=", args.reporterUserId)
 			.executeTakeFirst();
 
-		await trx
+		const { id } = await trx
 			.insertInto("UserReport")
 			.values(args)
 			.onConflict((oc) =>
@@ -30,9 +30,10 @@ export function upsert(
 					createdAt: databaseTimestampNow(),
 				}),
 			)
-			.execute();
+			.returning("id")
+			.executeTakeFirstOrThrow();
 
-		return { isUpdate: Boolean(existing) };
+		return { id, isUpdate: Boolean(existing) };
 	});
 }
 

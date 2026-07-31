@@ -63,6 +63,7 @@ export async function addInitialSkill(args: AddInitialSkillArgs, trx?: Transacti
 - A missing row is `undefined` — what Kysely already gives us. Don't map it to `null`.
 - Return plain data. Never return a Kysely query builder or a raw `sql` fragment from a repository; shared SQL fragments live in `~/utils/kysely.server`.
 - Convert at the boundary so callers deal in domain values: take a `boolean` and write it with `toDBBoolean`, take a `Date` and write it with `dateToDatabaseTimestamp`.
+- **A write returns the inserted row's id when the row has an id** — that is, when other rows can reference it. `insert`, `upsert`, `addInitialSkill`, `insertFriendship` and friends all `.returning("id")` (or `.returningAll()` where the caller wants the row), and a bulk insert returns an array in insertion order. Writes to join and detail tables, keyed by their foreign keys rather than an id of their own (`GroupMember`, `MapPoolMap`, `PlusVote`, `AllTeamMember`), return nothing — there is no value a caller could use.
 
 ## Types
 
@@ -143,3 +144,5 @@ Not every function needs a test. Write one for:
 - Permission, visibility or ownership scoping
 
 Plain `findById`-style queries don't need one. Tests run against `db-test.sqlite3`.
+
+A test's setup goes through the factories in `app/db/seed/factories`, never a raw `db.insertInto` / `db.updateTable` — a lint rule enforces this, and [seeds.md](./seeds.md) covers the factories and the rare exceptions. Only the write a test is actually asserting about is called through its repository directly. There is no cleanup to write: the database is wiped after every test that wrote to it.

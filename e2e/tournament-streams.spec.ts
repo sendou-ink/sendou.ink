@@ -1,155 +1,147 @@
-import {
-	tournamentAdminPage,
-	tournamentBracketsPage,
-	tournamentStreamsPage,
-} from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	startBracket,
-	submit,
-	test,
-} from "./helpers/playwright";
-import {
-	backToBracket,
-	goToTab,
-	navigateToMatch,
-	reportResult,
-} from "./helpers/tournament-match";
+import { addHours, subMinutes } from "date-fns";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentStreamsPage } from "./pages/tournament/tournament-streams-page";
+
+const ROSTER_SIZE = 4;
+const CAST_ACCOUNT = "test_cast_stream";
+const STREAM_VIEWER_COUNT = 150;
 
 test.describe("Tournament streams", () => {
-	test("can set cast twitch accounts in admin", async ({ page }) => {
-		const tournamentId = 2;
-
-		await seed(page);
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
+	test("can set cast twitch accounts in admin", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
 		});
 
-		await page.getByRole("tab", { name: "Stream" }).click();
-		// an empty array field already renders one placeholder input
-		await page
-			.getByPlaceholder("dappleproductions")
-			.nth(0)
-			.fill("test_cast_stream");
-		await page.getByRole("button", { name: "Add", exact: true }).click();
-		await page
-			.getByPlaceholder("dappleproductions")
-			.nth(1)
-			.fill("another_cast");
-		await submit(page, "save-cast-twitch-accounts-button");
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		const stream = await admin.openStream();
+
+		await stream.fillAccount(0, CAST_ACCOUNT);
+		await stream.addAccountField();
+		await stream.fillAccount(1, "another_cast");
+		await stream.save();
 
 		// Verify persistence by navigating away and back
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+		await stream.goto(tournament.id);
 
-		await page.getByRole("tab", { name: "Stream" }).click();
-		await expect(page.getByPlaceholder("dappleproductions").nth(0)).toHaveValue(
-			"test_cast_stream",
-		);
-		await expect(page.getByPlaceholder("dappleproductions").nth(1)).toHaveValue(
-			"another_cast",
-		);
+		await expect(stream.accountInput(0)).toHaveValue(CAST_ACCOUNT);
+		await expect(stream.accountInput(1)).toHaveValue("another_cast");
 	});
 
 	test("can view streams on bracket popover when match is in progress", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 2;
-		// Match 2 is team 102 (seed 2) vs team 115 (seed 15)
-		// Team 102 has users 6 and 7 who have deterministic streams
-		const matchId = 2;
+		const { tournament, players } = await createStartableTournament(factories);
+		await factories.LiveStreamFactory.replaceAll([
+			{ userId: players[0].id, viewerCount: STREAM_VIEWER_COUNT },
+		]);
+		const matches = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
 
-		await startBracket(page, tournamentId);
+		await impersonate(page, NZAP_TEST_ID);
 
-		await navigateToMatch(page, matchId);
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+
+		const match = await brackets.openMatch(matches[0].id);
 		// Report partial score to set startedAt (match becomes "in progress")
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 1, setEnds: false });
-		await backToBracket(page);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, setEnds: false });
+		await match.backToBracket();
 
-		// The LIVE button should be visible since team 102 members are streaming
-		const bracketsViewer = page.getByTestId("brackets-viewer");
-		const liveButton = bracketsViewer.getByText("LIVE").first();
-		await expect(liveButton).toBeVisible();
+		// The LIVE button should be visible since a match participant is streaming
+		await expect(brackets.locators.liveBadges.first()).toBeVisible();
 
-		// Click the LIVE button to open the popover
-		await liveButton.click();
+		await brackets.locators.liveBadges.first().click();
 
-		// Verify stream popover shows the streaming player info
-		await expect(page.getByTestId("stream-popover")).toBeVisible();
-		// Multiple streams may be visible, verify at least one exists
-		await expect(page.getByTestId("tournament-stream").first()).toBeVisible();
+		await expect(brackets.locators.streamPopover).toBeVisible();
+		await expect(brackets.locators.streamPopoverStreams.first()).toBeVisible();
 	});
 
-	test("can view streams on streams page", async ({ page }) => {
-		const tournamentId = 2;
+	test("can view streams on streams page", async ({ page, factories }) => {
+		const { tournament, players } = await createStartableTournament(factories);
+		await factories.LiveStreamFactory.replaceAll([
+			{ userId: players[0].id, viewerCount: STREAM_VIEWER_COUNT },
+		]);
+		await factories.TournamentFactory.startBracket(tournament.id);
 
-		await startBracket(page, tournamentId);
+		const streams = new TournamentStreamsPage(page);
+		await streams.goto(tournament.id);
 
-		await navigate({
-			page,
-			url: tournamentStreamsPage(tournamentId),
-		});
+		await expect(streams.locators.streams.first()).toBeVisible();
 
-		// Verify TournamentStream components are visible
-		const streams = page.getByTestId("tournament-stream");
-		await expect(streams.first()).toBeVisible();
-
-		// Verify stream info is displayed (viewer count)
-		await expect(page.locator("text=150").first()).toBeVisible();
+		await expect(
+			streams.viewerCount(STREAM_VIEWER_COUNT).first(),
+		).toBeVisible();
 	});
 
 	test("cast stream shows on bracket when match is set as casted", async ({
 		page,
+		factories,
 	}) => {
-		const tournamentId = 2;
-		// Match 2 involves team 102 which has 4 players (no roster selection needed)
-		const matchId = 2;
+		const { tournament } = await createStartableTournament(factories);
+		await factories.LiveStreamFactory.replaceAll([
+			{ userId: null, twitch: CAST_ACCOUNT },
+		]);
 
-		await seed(page);
-		await impersonate(page);
+		await impersonate(page, NZAP_TEST_ID);
 
-		// Set up cast twitch account (test_cast_stream exists as live stream in seed)
-		await navigate({
-			page,
-			url: tournamentAdminPage(tournamentId),
-		});
-		await page.getByRole("tab", { name: "Stream" }).click();
-		// an empty array field already renders one placeholder input
-		await page.getByPlaceholder("dappleproductions").fill("test_cast_stream");
-		await submit(page, "save-cast-twitch-accounts-button");
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		const stream = await admin.openStream();
+		await stream.fillAccount(0, CAST_ACCOUNT);
+		await stream.save();
 
-		// Start bracket
-		await navigate({
-			page,
-			url: tournamentBracketsPage({ tournamentId }),
-		});
-		await page.getByTestId("finalize-bracket-button").click();
-		await submit(page, "confirm-finalize-bracket-button");
+		const matches = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
 
-		// Navigate to match and start it
-		await navigateToMatch(page, matchId);
-		await goToTab(page, "action");
-		await reportResult(page, { mapsToReport: 1, setEnds: false });
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 
-		// Set match as casted via chip radio
-		await goToTab(page, "admin");
-		await page.locator('label[for$="-test_cast_stream"]').click();
-		await backToBracket(page);
+		const match = await brackets.openMatch(matches[0].id);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 1, setEnds: false });
 
-		// Verify LIVE button appears (multiple may exist from player streams)
-		await expect(page.getByText("LIVE").first()).toBeVisible();
+		await match.openTab("admin");
+		await match.setCastedBy(CAST_ACCOUNT);
+		await match.backToBracket();
+
+		await expect(brackets.locators.liveBadges.first()).toBeVisible();
 	});
 });
+
+/** A started-but-bracketless tournament with two checked-in full rosters. */
+async function createStartableTournament(factories: Factories) {
+	const tournament = await factories.TournamentFactory.create({
+		authorId: NZAP_TEST_ID,
+		startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+	});
+	const players = await factories.UserFactory.createMany(ROSTER_SIZE * 2);
+	for (const roster of [
+		players.slice(0, ROSTER_SIZE),
+		players.slice(ROSTER_SIZE),
+	]) {
+		await factories.TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds: roster.map((user) => user.id),
+			},
+			{ isCheckedIn: true },
+		);
+	}
+
+	return { tournament, players };
+}

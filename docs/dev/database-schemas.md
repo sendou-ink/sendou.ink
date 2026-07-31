@@ -73,5 +73,5 @@ Non-obvious columns get a JSDoc comment: what `null` means, what a magic number 
 
 ## After changing the schema
 
-1. Run the migration against `db.sqlite3` and `db-test.sqlite3` (`DB_PATH=db-test.sqlite3 pnpm run migrate up`).
+1. Run the migration against `db.sqlite3` (`pnpm run migrate up`). The unit test database `db-test.sqlite3` is migrated automatically when unit tests run.
 2. Regenerate the e2e seeds with `pnpm run test:e2e:generate-seeds` — `pnpm run checks` fails otherwise.

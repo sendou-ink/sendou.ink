@@ -101,7 +101,11 @@ export async function findAllByMonth(args: MonthYear) {
 }
 
 export function insert(args: Insertable<DB["PlusSuggestion"]>) {
-	return db.insertInto("PlusSuggestion").values(args).execute();
+	return db
+		.insertInto("PlusSuggestion")
+		.values(args)
+		.returning("id")
+		.executeTakeFirstOrThrow();
 }
 
 export function updateTextById(id: number, text: string) {

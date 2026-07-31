@@ -19,6 +19,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
+	useFetchers,
 	useHref,
 	useLoaderData,
 	useMatches,
@@ -433,10 +434,24 @@ export const ErrorBoundary = () => {
 
 function HydrationTestIndicator() {
 	const isHydrated = useHydrated();
+	const navigation = useNavigation();
+	const revalidator = useRevalidator();
+	const fetchers = useFetchers();
 
 	if (!isHydrated) return null;
 
-	return <div style={{ display: "none" }} data-testid="hydrated" />;
+	const routerIdle =
+		navigation.state === "idle" &&
+		revalidator.state === "idle" &&
+		fetchers.every((fetcher) => fetcher.state === "idle");
+
+	return (
+		<div
+			style={{ display: "none" }}
+			data-testid="hydrated"
+			data-router-idle={routerIdle ? "true" : undefined}
+		/>
+	);
 }
 
 function Fonts() {

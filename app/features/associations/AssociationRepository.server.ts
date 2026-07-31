@@ -166,6 +166,8 @@ export function insert({ userId, ...associationArgs }: InsertArgs) {
 		if (count > maxCount) {
 			throw new LimitReachedError("Max amount of associations reached");
 		}
+
+		return association;
 	});
 }
 

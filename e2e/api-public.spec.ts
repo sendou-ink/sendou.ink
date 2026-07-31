@@ -1,55 +1,24 @@
-import type { Page } from "@playwright/test";
-import { ORG_ADMIN_TEST_ID } from "~/db/seed/constants";
+import { addHours } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { tournamentTeamPage } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { ApiPage } from "./pages/api/api-page";
+import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
 
-const ITZ_TOURNAMENT_ID = 2;
-const ITZ_TEAM_ID = 101;
-const USER_NOT_ON_ITZ_TEAM = 100;
+const ROSTER_SIZE = 4;
+const TOKEN_LENGTH = 20;
 
-async function generateReadToken(page: Page): Promise<string> {
-	await navigate({ page, url: "/api" });
-
-	await page.locator("form").first().getByRole("button").click();
-	await page.waitForURL("/api");
-
-	await page
-		.getByRole("button", { name: /reveal/i })
-		.first()
-		.click();
-	const token = await page.locator("input[readonly]").inputValue();
-
-	return token;
-}
-
-async function generateWriteToken(page: Page): Promise<string> {
-	await navigate({ page, url: "/api" });
-
-	// Click the second form (write token)
-	await page.locator("form").nth(1).getByRole("button").click();
-	await page.waitForURL("/api");
-
-	// Reveal and get the write token
-	// After generating only the write token, there's just one reveal button (for write)
-	await page.getByRole("button", { name: /reveal/i }).click();
-	const token = await page.locator("input[readonly]").inputValue();
-
-	return token;
-}
+const authorized = (token: string) => ({
+	Authorization: `Bearer ${token}`,
+	"Content-Type": "application/json",
+});
 
 test.describe("Public API", () => {
 	test("OPTIONS preflight request returns 204 with CORS headers", async ({
 		page,
 	}) => {
-		await seed(page);
-
 		const response = await page.request.fetch("/api/tournament/1", {
 			method: "OPTIONS",
 		});
@@ -63,8 +32,6 @@ test.describe("Public API", () => {
 	});
 
 	test("GET request includes CORS headers in response", async ({ page }) => {
-		await seed(page);
-
 		const response = await page.request.fetch("/api/tournament/1");
 
 		expect(response.headers()["access-control-allow-origin"]).toBe("*");
@@ -73,8 +40,6 @@ test.describe("Public API", () => {
 	test("GET user IDs endpoint works without authentication", async ({
 		page,
 	}) => {
-		await seed(page);
-
 		const response = await page.request.fetch(`/api/user/${ADMIN_ID}/ids`);
 
 		expect(response.status()).toBe(200);
@@ -83,28 +48,22 @@ test.describe("Public API", () => {
 		expect(data.discordId).toBeTruthy();
 	});
 
-	test("creates read API token and calls public endpoint", async ({ page }) => {
-		await seed(page);
+	test("creates read API token and calls public endpoint", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.grant(ADMIN_ID, { roles: ["API_ACCESSER"] });
+
 		await impersonate(page);
 
-		await navigate({ page, url: "/api" });
+		const api = new ApiPage(page);
+		await api.goto();
 
-		await page.locator("form").first().getByRole("button").click();
-		await page.waitForURL("/api");
-
-		await page
-			.getByRole("button", { name: /reveal/i })
-			.first()
-			.click();
-
-		const token = await page.locator("input[readonly]").inputValue();
-		expect(token).toBeTruthy();
-		expect(token.length).toBe(20);
+		const token = await api.generateToken("read");
+		expect(token).toHaveLength(TOKEN_LENGTH);
 
 		const response = await page.request.fetch(`/api/user/${ADMIN_ID}`, {
-			headers: {
-				Authorization: `Bearer ${token}`,
-			},
+			headers: authorized(token),
 		});
 
 		expect(response.status()).toBe(200);
@@ -113,24 +72,25 @@ test.describe("Public API", () => {
 		expect(data.name).toBe("Sendou");
 	});
 
-	test("returns active SendouQ match for user", async ({ page }) => {
-		await seed(page, "IN_SQ_MATCH");
+	test("returns active SendouQ match for user", async ({ page, factories }) => {
+		const alpha = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const bravo = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const match = await factories.SQMatchFactory.create({
+			alphaUserIds: alpha.map((user) => user.id),
+			bravoUserIds: bravo.map((user) => user.id),
+		});
+		const token = await readToken(factories, ADMIN_ID);
+
 		await impersonate(page);
 
-		const token = await generateReadToken(page);
-
 		const response = await page.request.fetch(
-			`/api/user/${ADMIN_ID}/active-match`,
-			{
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-			},
+			`/api/user/${alpha[0].id}/active-match`,
+			{ headers: authorized(token) },
 		);
 
 		expect(response.status()).toBe(200);
 		const data = await response.json();
-		expect(data.matchId).toEqual(expect.any(Number));
+		expect(data.matchId).toBe(match.id);
 		expect(data.lobby).toBe("sendouq");
 		expect(data.tournamentId).toBeNull();
 		expect(data.bracketIdx).toBeNull();
@@ -138,100 +98,83 @@ test.describe("Public API", () => {
 });
 
 test.describe("Public API - Write endpoints", () => {
-	test("adds member to tournament team via API", async ({ page }) => {
-		await seed(page);
+	test("adds member to tournament team via API", async ({
+		page,
+		factories,
+	}) => {
+		const { tournamentId, teamId, token } =
+			await organizedTournament(factories);
+		const newMember = await factories.UserFactory.create();
+
 		await impersonate(page, ADMIN_ID);
 
-		const token = await generateWriteToken(page);
-
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/add-member`,
+			`/api/tournament/${tournamentId}/teams/${teamId}/add-member`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				data: { userId: USER_NOT_ON_ITZ_TEAM },
+				headers: authorized(token),
+				data: { userId: newMember.id },
 			},
 		);
 
 		expect(response.status()).toBe(200);
 
-		// Verify in UI that member was added
-		await navigate({
-			page,
-			url: tournamentTeamPage({
-				tournamentId: ITZ_TOURNAMENT_ID,
-				tournamentTeamId: ITZ_TEAM_ID,
-			}),
-		});
+		const teamPage = new TournamentTeamPage(page);
+		await teamPage.goto(tournamentId, teamId);
 
-		// User 100 should be visible on the team page
-		await expect(page.getByTestId("team-member-name")).toHaveCount(5);
+		await expect(teamPage.locators.memberNames).toHaveCount(ROSTER_SIZE + 1);
 	});
 
-	test("removes member from tournament team via API", async ({ page }) => {
-		await seed(page);
+	test("removes member from tournament team via API", async ({
+		page,
+		factories,
+	}) => {
+		const { tournamentId, teamId, token } =
+			await organizedTournament(factories);
+		const newMember = await factories.UserFactory.create();
+
 		await impersonate(page, ADMIN_ID);
 
-		const token = await generateWriteToken(page);
-
-		// First add the member
 		await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/add-member`,
+			`/api/tournament/${tournamentId}/teams/${teamId}/add-member`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				data: { userId: USER_NOT_ON_ITZ_TEAM },
+				headers: authorized(token),
+				data: { userId: newMember.id },
 			},
 		);
 
-		// Verify member was added
-		await navigate({
-			page,
-			url: tournamentTeamPage({
-				tournamentId: ITZ_TOURNAMENT_ID,
-				tournamentTeamId: ITZ_TEAM_ID,
-			}),
-		});
-		await expect(page.getByTestId("team-member-name")).toHaveCount(5);
+		const teamPage = new TournamentTeamPage(page);
+		await teamPage.goto(tournamentId, teamId);
+		await expect(teamPage.locators.memberNames).toHaveCount(ROSTER_SIZE + 1);
 
-		// Remove the member via API
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/remove-member`,
+			`/api/tournament/${tournamentId}/teams/${teamId}/remove-member`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				data: { userId: USER_NOT_ON_ITZ_TEAM },
+				headers: authorized(token),
+				data: { userId: newMember.id },
 			},
 		);
 
 		expect(response.status()).toBe(200);
 
-		// Verify in UI that member was removed
-		await page.reload();
-		await expect(page.getByTestId("team-member-name")).toHaveCount(4);
+		await teamPage.goto(tournamentId, teamId);
+		await expect(teamPage.locators.memberNames).toHaveCount(ROSTER_SIZE);
 	});
 
-	test("returns 401 for invalid token", async ({ page }) => {
-		await seed(page);
+	test("returns 401 for invalid token", async ({ page, factories }) => {
+		const { tournamentId, teamId } = await organizedTournament(factories);
+		const newMember = await factories.UserFactory.create();
+
+		await impersonate(page, ADMIN_ID);
 
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/add-member`,
+			`/api/tournament/${tournamentId}/teams/${teamId}/add-member`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: "Bearer invalid-token-12345",
-					"Content-Type": "application/json",
-				},
-				data: { userId: USER_NOT_ON_ITZ_TEAM },
+				headers: authorized("invalid-token-12345"),
+				data: { userId: newMember.id },
 			},
 		);
 
@@ -242,35 +185,20 @@ test.describe("Public API - Write endpoints", () => {
 
 	test("returns 403 when using read token for write endpoint", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		const { tournamentId, teamId } = await organizedTournament(factories);
+		const newMember = await factories.UserFactory.create();
+		const token = await readToken(factories, ADMIN_ID);
+
 		await impersonate(page, ADMIN_ID);
 
-		await navigate({ page, url: "/api" });
-
-		// Click the first form (read token)
-		await page.locator("form").first().getByRole("button").click();
-		await page.waitForURL("/api");
-
-		// Reveal and get the read token
-		await page
-			.getByRole("button", { name: /reveal/i })
-			.first()
-			.click();
-		const readToken = await page
-			.locator("input[readonly]")
-			.first()
-			.inputValue();
-
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/add-member`,
+			`/api/tournament/${tournamentId}/teams/${teamId}/add-member`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${readToken}`,
-					"Content-Type": "application/json",
-				},
-				data: { userId: USER_NOT_ON_ITZ_TEAM },
+				headers: authorized(token),
+				data: { userId: newMember.id },
 			},
 		);
 
@@ -279,31 +207,28 @@ test.describe("Public API - Write endpoints", () => {
 		expect(data.error).toBe("Write token required");
 	});
 
-	test("updates tournament seeds via API", async ({ page }) => {
-		await seed(page);
+	test("updates tournament seeds via API", async ({ page, factories }) => {
+		const { tournamentId, token } = await organizedTournament(factories, {
+			teamCount: 3,
+		});
+
 		await impersonate(page, ADMIN_ID);
 
-		const token = await generateWriteToken(page);
-
 		const teamsResponse = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams`,
-			{
-				headers: { Authorization: `Bearer ${token}` },
-			},
+			`/api/tournament/${tournamentId}/teams`,
+			{ headers: authorized(token) },
 		);
 		expect(teamsResponse.status()).toBe(200);
 		const teams = await teamsResponse.json();
-		const tournamentTeamIds = teams.map((t: { id: number }) => t.id);
-		const reversedSeeds = [...tournamentTeamIds].reverse();
+		const reversedSeeds = teams
+			.map((team: { id: number }) => team.id)
+			.reverse();
 
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/seeds`,
+			`/api/tournament/${tournamentId}/seeds`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
+				headers: authorized(token),
 				data: { tournamentTeamIds: reversedSeeds },
 			},
 		);
@@ -311,48 +236,36 @@ test.describe("Public API - Write endpoints", () => {
 		expect(response.status()).toBe(200);
 
 		const updatedTeamsResponse = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams`,
-			{
-				headers: { Authorization: `Bearer ${token}` },
-			},
+			`/api/tournament/${tournamentId}/teams`,
+			{ headers: authorized(token) },
 		);
 		const updatedTeams = await updatedTeamsResponse.json();
 
-		for (let i = 0; i < reversedSeeds.length; i++) {
+		for (const [index, tournamentTeamId] of reversedSeeds.entries()) {
 			const team = updatedTeams.find(
-				(t: { id: number }) => t.id === reversedSeeds[i],
+				(candidate: { id: number }) => candidate.id === tournamentTeamId,
 			);
-			expect(team.seed).toBe(i + 1);
+			expect(team.seed).toBe(index + 1);
 		}
 	});
 
-	test("updates tournament starting brackets via API", async ({ page }) => {
-		await seed(page);
+	test("updates tournament starting brackets via API", async ({
+		page,
+		factories,
+	}) => {
+		const { tournamentId, teamId, token } =
+			await organizedTournament(factories);
+
 		await impersonate(page, ADMIN_ID);
 
-		const token = await generateWriteToken(page);
-
-		const teamsResponse = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams`,
-			{
-				headers: { Authorization: `Bearer ${token}` },
-			},
-		);
-		expect(teamsResponse.status()).toBe(200);
-		const teams = await teamsResponse.json();
-		const firstTeamId = teams[0].id;
-
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/starting-brackets`,
+			`/api/tournament/${tournamentId}/starting-brackets`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
+				headers: authorized(token),
 				data: {
 					startingBrackets: [
-						{ tournamentTeamId: firstTeamId, startingBracketIdx: 0 },
+						{ tournamentTeamId: teamId, startingBracketIdx: 0 },
 					],
 				},
 			},
@@ -361,21 +274,18 @@ test.describe("Public API - Write endpoints", () => {
 		expect(response.status()).toBe(200);
 	});
 
-	test("updates member IGN via API", async ({ page }) => {
-		await seed(page);
+	test("updates member IGN via API", async ({ page, factories }) => {
+		const { tournamentId, teamId, memberUserIds, token } =
+			await organizedTournament(factories);
+
 		await impersonate(page, ADMIN_ID);
 
-		const token = await generateWriteToken(page);
-
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/update-member-ign`,
+			`/api/tournament/${tournamentId}/teams/${teamId}/update-member-ign`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				data: { userId: ADMIN_ID, inGameName: "NewName#9999" },
+				headers: authorized(token),
+				data: { userId: memberUserIds[0], inGameName: "NewName#9999" },
 			},
 		);
 
@@ -384,21 +294,26 @@ test.describe("Public API - Write endpoints", () => {
 
 	test("returns 400 when user is not the organizer of this tournament", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page, ORG_ADMIN_TEST_ID);
+		const { tournamentId, teamId } = await organizedTournament(factories);
+		const outsider = await factories.UserFactory.create(null, {
+			roles: ["API_ACCESSER"],
+		});
+		const newMember = await factories.UserFactory.create();
+		const { token } = await factories.ApiTokenFactory.create({
+			userId: outsider.id,
+			type: "write",
+		});
 
-		const token = await generateWriteToken(page);
+		await impersonate(page, outsider.id);
 
 		const response = await page.request.fetch(
-			`/api/tournament/${ITZ_TOURNAMENT_ID}/teams/${ITZ_TEAM_ID}/add-member`,
+			`/api/tournament/${tournamentId}/teams/${teamId}/add-member`,
 			{
 				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-					"Content-Type": "application/json",
-				},
-				data: { userId: USER_NOT_ON_ITZ_TEAM },
+				headers: authorized(token),
+				data: { userId: newMember.id },
 			},
 		);
 
@@ -407,3 +322,50 @@ test.describe("Public API - Write endpoints", () => {
 		expect(data.error).toBe("Unauthorized");
 	});
 });
+
+/** A tournament the admin organizes, with teams registered and a write token to manage it with. */
+async function organizedTournament(
+	factories: Factories,
+	{ teamCount = 1 }: { teamCount?: number } = {},
+) {
+	await factories.UserFactory.grant(ADMIN_ID, { roles: ["API_ACCESSER"] });
+
+	const tournament = await factories.TournamentFactory.create({
+		authorId: ADMIN_ID,
+		startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+	});
+
+	const teams = [];
+	for (let teamNth = 0; teamNth < teamCount; teamNth++) {
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		teams.push(
+			await factories.TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: roster.map((user) => user.id),
+			}),
+		);
+	}
+
+	const { token } = await factories.ApiTokenFactory.create({
+		userId: ADMIN_ID,
+		type: "write",
+	});
+
+	return {
+		tournamentId: tournament.id,
+		teamId: teams[0].id,
+		memberUserIds: teams[0].memberUserIds,
+		token,
+	};
+}
+
+async function readToken(factories: Factories, userId: number) {
+	await factories.UserFactory.grant(userId, { roles: ["API_ACCESSER"] });
+
+	const { token } = await factories.ApiTokenFactory.create({
+		userId,
+		type: "read",
+	});
+
+	return token;
+}

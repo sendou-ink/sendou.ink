@@ -1,51 +1,49 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { artFormSchema } from "~/features/art/art-schemas";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	test,
-} from "./helpers/playwright";
-import { createFormHelpers } from "./helpers/playwright-form";
+import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { NewArtPage } from "./pages/art/new-art-page";
+import { UserArtPage } from "./pages/art/user-art-page";
+import { ImageValidationPage } from "./pages/img-upload/image-validation-page";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const TEST_IMAGE_PATH = path.join(__dirname, "fixtures/test-image.png");
 
 test.describe("Art", () => {
 	test("uploads art as NZAP, admin approves, art displays on user page", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		await factories.UserFactory.grant(NZAP_TEST_ID, { roles: ["ARTIST"] });
+
 		await impersonate(page, NZAP_TEST_ID);
 
-		await navigate({ page, url: "/art/new" });
+		const newArt = new NewArtPage(page);
+		await newArt.goto();
+		await newArt.selectImage(TEST_IMAGE_PATH);
 
-		const form = createFormHelpers(page, artFormSchema);
+		await expect(newArt.locators.preview).toBeVisible();
 
-		const testImagePath = path.join(__dirname, "fixtures/test-image.png");
-		await page.locator('input[type="file"]').setInputFiles(testImagePath);
-
-		await expect(page.locator("form img")).toBeVisible();
-
-		await form.submit();
+		const userArt = await newArt.save();
 
 		await expect(page).toHaveURL(/\/u\/.*\/art/);
-		await expect(page.getByText(/pending moderator approval/i)).toBeVisible();
+		await expect(userArt.locators.pendingApprovalText).toBeVisible();
 
 		await impersonate(page);
-		await navigate({ page, url: "/upload/admin" });
 
-		await expect(page.locator("img").first()).toBeVisible();
+		const imageValidation = new ImageValidationPage(page);
+		await imageValidation.goto();
 
-		await page.getByRole("button", { name: /All .* above ok/ }).click();
+		await expect(imageValidation.locators.images.first()).toBeVisible();
 
-		await expect(page.getByText("All validated!")).toBeVisible();
+		await imageValidation.approveAll();
 
-		await navigate({ page, url: "/u/nzap/art" });
+		await expect(imageValidation.locators.allValidatedText).toBeVisible();
 
-		const artImage = page.locator("img").first();
+		await userArt.goto(NZAP_TEST_DISCORD_ID);
+
+		const artImage = userArt.image(0);
 		await expect(artImage).toBeVisible();
 
 		const box = await artImage.boundingBox();
@@ -54,33 +52,33 @@ test.describe("Art", () => {
 		expect(box!.height).toBeGreaterThan(0);
 	});
 
-	test("edits already uploaded art keeping its image", async ({ page }) => {
-		await seed(page);
+	test("edits already uploaded art keeping its image", async ({
+		page,
+		factories,
+	}) => {
+		await factories.UserFactory.grant(NZAP_TEST_ID, { roles: ["ARTIST"] });
+		const art = await factories.ArtFactory.create({ authorId: NZAP_TEST_ID });
+
 		await impersonate(page, NZAP_TEST_ID);
 
-		await navigate({ page, url: "/u/nzap/art" });
+		const userArt = new UserArtPage(page);
+		await userArt.goto(NZAP_TEST_DISCORD_ID);
+		await userArt.editLink(art.id).click();
 
-		const form = createFormHelpers(page, artFormSchema);
-
-		await page.locator('a[href^="/art/new?art="]').first().click();
-		await expect(page).toHaveURL(/\/art\/new\?art=\d+/);
-		const artId = new URL(page.url()).searchParams.get("art");
+		const newArt = new NewArtPage(page);
 
 		// the already uploaded image is shown but can't be swapped
-		// only rendering is asserted as seeded art images are not available
-		// in every environment
-		await expect(page.locator('form img[src*="-small."]')).toBeAttached();
-		await expect(page.locator('input[type="file"]')).toHaveCount(0);
+		// only rendering is asserted as the factory made art has no image file
+		await expect(newArt.locators.existingImage).toBeAttached();
+		await expect(newArt.locators.fileInput).toHaveCount(0);
 
-		await form.fill("description", "Squid drawing");
-		await form.submit();
+		await newArt.form.fill("description", "Squid drawing");
+		await newArt.save();
 
 		await expect(page).toHaveURL(/\/u\/.*\/art/);
 
-		await page.locator(`a[href="/art/new?art=${artId}"]`).click();
-
-		await expect(page.getByLabel(form.getLabel("description"))).toHaveValue(
-			"Squid drawing",
-		);
+		// the saved description is loaded back into the form for editing
+		await newArt.goto(art.id);
+		await expect(newArt.locators.descriptionInput).toHaveValue("Squid drawing");
 	});
 });

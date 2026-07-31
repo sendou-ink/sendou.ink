@@ -640,7 +640,7 @@ function TrophyListRow({
 	);
 
 	return (
-		<div className={styles.pendingItem}>
+		<div className={styles.pendingItem} data-testid="pending-trophy">
 			<button
 				type="button"
 				className={styles.trophyPreviewButton}

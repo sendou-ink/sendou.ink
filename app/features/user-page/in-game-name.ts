@@ -1,6 +1,6 @@
 import type { FormsTranslationKey } from "~/form/types";
 
-const IN_GAME_NAME = {
+export const IN_GAME_NAME = {
 	NAME_MAX_LENGTH: 10,
 	DISCRIMINATOR_MIN_LENGTH: 4,
 	DISCRIMINATOR_MAX_LENGTH: 5,

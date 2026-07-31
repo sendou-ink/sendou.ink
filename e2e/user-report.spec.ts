@@ -1,65 +1,77 @@
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { subDays } from "date-fns";
+import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { LFG_PAGE, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	submit,
-	test,
-} from "./helpers/playwright";
-
-const REPORTER_ID = 30;
+import { expect, impersonate, test } from "./helpers/playwright";
+import { LFGPage } from "./pages/lfg/lfg-page";
+import { SendouQMatchPage } from "./pages/sendouq/sendouq-match-page";
+import { UserAdminPage } from "./pages/user/user-admin-page";
 
 test.describe("User report", () => {
 	test("reports a user from the card and shows it on the admin page", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page, REPORTER_ID);
-		await navigate({ page, url: LFG_PAGE });
+		const [reporter, ...earlierReporters] =
+			await factories.UserFactory.createMany(3);
+		for (const earlierReporter of earlierReporters) {
+			await factories.UserReportFactory.create(
+				{
+					reporterUserId: earlierReporter.id,
+					reportedUserId: NZAP_TEST_ID,
+				},
+				{ createdAt: subDays(new Date(), 1) },
+			);
+		}
+		await factories.LFGPostFactory.create({ authorId: NZAP_TEST_ID });
 
-		await page.getByRole("button", { name: "N-ZAP" }).first().click();
-		await page.getByTestId("report-user-button").click();
+		await impersonate(page, reporter.id);
+
+		const lfg = new LFGPage(page);
+		await lfg.goto();
+		const card = await lfg.openUserCard("N-ZAP");
+		const reportDialog = await card.openReportDialog();
 
 		const description = "Called my team mean names in the match chat";
-		await page.getByLabel("Category").selectOption("HARASSMENT");
-		await page.getByLabel("Description").fill(description);
-		await submit(page);
+		await reportDialog.form.select("category", "HARASSMENT");
+		await reportDialog.form.fill("description", description);
+		await reportDialog.send();
 
-		await expect(page.getByText("Report sent to the staff")).toBeAttached();
+		await expect(reportDialog.locators.sentToast).toBeAttached();
 
 		await impersonate(page);
-		await navigate({ page, url: `/u/${NZAP_TEST_ID}/admin` });
 
-		const reportsList = page.getByTestId("user-reports-list");
-		// 15 seeded reports + the one just made
-		await expect(page.getByText("16 total")).toBeVisible();
-		await expect(reportsList.locator("details")).toHaveCount(16);
+		const adminPage = new UserAdminPage(page);
+		await adminPage.goto(NZAP_TEST_DISCORD_ID);
 
-		await expect(page.getByText(description)).not.toBeVisible();
-		await reportsList.locator("summary").first().click();
-		await expect(page.getByText(description)).toBeVisible();
+		await expect(adminPage.totalReportsText(3)).toBeVisible();
+		await expect(adminPage.locators.reportDetails).toHaveCount(3);
+
+		await expect(adminPage.text(description)).not.toBeVisible();
+		await adminPage.openFirstReport();
+		await expect(adminPage.text(description)).toBeVisible();
 	});
 
 	test("prefills the match id when reporting from a match page", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page, "IN_SQ_MATCH");
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: SENDOUQ_PAGE });
-		await expect(page).toHaveURL(/\/q\/match\/\d+/);
-		const matchId = page.url().split("/match/")[1];
-
-		await navigate({
-			page,
-			url: `${sendouQMatchPage(Number(matchId))}?tab=rosters`,
+		const alphaMates = await factories.UserFactory.createMany(3);
+		const bravoMates = await factories.UserFactory.createMany(3);
+		const match = await factories.SQMatchFactory.create({
+			alphaUserIds: [ADMIN_ID, ...alphaMates.map((user) => user.id)],
+			bravoUserIds: [NZAP_TEST_ID, ...bravoMates.map((user) => user.id)],
 		});
 
-		await page.getByRole("button", { name: /N-ZAP/ }).first().click();
-		await page.getByTestId("report-user-button").click();
+		await impersonate(page);
 
-		await expect(page.getByLabel("Match ID")).toHaveValue(matchId);
+		const matchPage = new SendouQMatchPage(page);
+		await matchPage.goto(match.id, "rosters");
+
+		const card = await matchPage.openUserCard(/N-ZAP/);
+		const reportDialog = await card.openReportDialog();
+
+		await expect(reportDialog.locators.matchIdInput).toHaveValue(
+			String(match.id),
+		);
 	});
 });

@@ -1,339 +1,220 @@
-import type { Page } from "@playwright/test";
-import { NZAP_TEST_ID, STAFF_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_ID } from "~/features/admin/admin-constants";
-import {
-	SENDOUQ_LOOKING_PAGE,
-	SENDOUQ_PAGE,
-	sendouQMatchPage,
-} from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	selectWeapon,
-	test,
-	waitForPOSTResponse,
-} from "./helpers/playwright";
-
-/**
- * Tests for the SendouQ match page (`/q/match/$id`).
- *
- * Relies on the `IN_SQ_MATCH` seed variant which puts Sendou (ADMIN) in the
- * matchmade group (cascade rejoin vote) and NZAP in the trusted group
- * (single-click rejoin). The staff test user (Panda, id 11329) is a
- * non-participant staff member that can force-report scores.
- *
- * Member IDs are deterministic from the seed — Sendou's group members are
- * [ADMIN_ID, 95, 96, 97] and NZAP's group members are [NZAP_TEST_ID, 98, 99, 100].
- *
- */
-
-const ADMIN_GROUP_OTHER_MEMBER_IDS = [95, 96, 97] as const;
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
+import { SendouQMatchPage } from "./pages/sendouq/sendouq-match-page";
+import { SendouQPage } from "./pages/sendouq/sendouq-page";
 
 test.describe("SendouQ match page", () => {
 	test("Score reporting: report, undo, weapon report, confirm", async ({
 		page,
+		factories,
 	}) => {
-		const matchId = await seedMatchAndGetId(page);
+		const { matchId, alpha, bravo } = await createMatch(factories);
 
-		await reportMapWinner(page, "ALPHA");
-		await reportMapWinner(page, "ALPHA");
+		await impersonate(page, alpha[0].id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
 
-		const undoButton = page.getByRole("button", { name: "Undo report" });
-		await expect(undoButton).toBeVisible();
-		await waitForPOSTResponse(page, async () => {
-			await undoButton.click();
-		});
+		await match.reportMapWinner("ALPHA");
+		await match.reportMapWinner("ALPHA");
 
-		await reportMapWinner(page, "ALPHA");
+		await expect(match.locators.undoReportButton).toBeVisible();
+		await match.undoReport();
 
-		await page.getByRole("button", { name: "Report used weapons" }).click();
-		await selectWeapon({ page, name: "Splattershot" });
-		await waitForPOSTResponse(page, async () => {
-			await page
-				.getByRole("button", { name: "Submit", exact: true })
-				.last()
-				.click();
-		});
-		await expect(
-			page.getByRole("button", { name: "Undo weapon" }),
-		).toBeVisible();
+		await match.reportMapWinner("ALPHA");
 
-		await reportMapWinner(page, "BRAVO");
-		await reportMapWinner(page, "ALPHA");
-		// Set-ending map (ALPHA's 4th win): confirmation dialog
-		await selectMapWinner(page, "ALPHA");
-		await page
-			.getByRole("button", { name: "Submit", exact: true })
-			.first()
-			.click();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Confirm", exact: true }).click();
-		});
+		await match.reportWeapon("Splattershot");
+		await expect(match.locators.undoWeaponButton).toBeVisible();
 
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Confirm score" }).click();
-		});
+		await match.reportMapWinner("BRAVO");
+		await match.reportMapWinner("ALPHA");
+		await match.reportSetEndingMap("ALPHA");
 
-		await expect(page.getByText(/4\s*-\s*1/).first()).toBeVisible();
+		await impersonate(page, bravo[0].id);
+		await match.goto(matchId);
+		await match.confirmScore();
+
+		await expect(match.score(4, 1)).toBeVisible();
+
 		// Verify the reported Splattershot shows up on the result-tab timeline
 		// (the compact action-tab timeline omits per-map weapons).
-		await navigate({
-			page,
-			url: `${sendouQMatchPage(Number(matchId))}?tab=result`,
-		});
-		await expect(
-			page.getByRole("img", { name: "Splattershot" }).first(),
-		).toBeVisible();
+		await match.goto(matchId, "result");
+		await expect(match.reportedWeaponImage("Splattershot")).toBeVisible();
 	});
 
 	test("Staff score report: non-participant staff force-reports and locks match", async ({
 		page,
+		factories,
 	}) => {
-		const matchId = await seedMatchAndGetId(page);
-		await staffSweepAlpha(page, matchId);
-		await expect(page.getByText(/4\s*-\s*0/).first()).toBeVisible();
+		const { matchId } = await createMatch(factories);
+		const staff = await factories.UserFactory.createStaff();
+
+		await impersonate(page, staff.id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+
+		await match.reportSweep("ALPHA");
+
+		await expect(match.score(4, 0)).toBeVisible();
 	});
 
 	test("Staff score confirm: confirms participant's 4-0 set-ender locks match", async ({
 		page,
+		factories,
 	}) => {
-		const matchId = await seedMatchAndGetId(page);
+		const { matchId, alpha, bravo } = await createMatch(factories);
+		const staff = await factories.UserFactory.createStaff();
 
-		for (let i = 0; i < 3; i++) {
-			await reportMapWinner(page, "ALPHA");
-		}
-		// 4th ALPHA win triggers the set-ending confirmation dialog
-		await selectMapWinner(page, "ALPHA");
-		await page
-			.getByRole("button", { name: "Submit", exact: true })
-			.first()
-			.click();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Confirm", exact: true }).click();
-		});
+		await impersonate(page, alpha[0].id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
 
-		await impersonate(page, STAFF_TEST_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Confirm score" }).click();
-		});
+		await match.reportSweep("ALPHA");
 
-		await expect(page.getByText(/4\s*-\s*0/).first()).toBeVisible();
+		await impersonate(page, staff.id);
+		await match.goto(matchId);
+		await match.confirmScore();
 
-		// Match is locked; NZAP's team now sees the rejoin button
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await expect(
-			page.getByRole("button", { name: "Look again with same group" }),
-		).toBeVisible();
+		await expect(match.score(4, 0)).toBeVisible();
+
+		// match is locked; the other team now sees the rejoin button
+		await impersonate(page, bravo[0].id);
+		await match.goto(matchId);
+		await expect(match.locators.lookAgainButton).toBeVisible();
 	});
 
 	test("Cancel flow: request, refused, re-request, accepted locks match", async ({
 		page,
+		factories,
 	}) => {
-		const matchId = await seedMatchAndGetId(page);
+		const { matchId, alpha, bravo } = await createMatch(factories);
 
-		await page.getByRole("button", { name: "Request cancel" }).click();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByTestId("confirm-button").click();
-		});
-		await expect(
-			page.getByText("Pending other team's confirmation"),
-		).toBeVisible();
+		await impersonate(page, alpha[0].id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
 
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await expect(page.getByText("Accept canceling the set?")).toBeVisible();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Refuse" }).click();
-		});
+		await match.requestCancel();
+		await expect(match.locators.cancelPendingText).toBeVisible();
 
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await page.getByRole("button", { name: "Request cancel" }).click();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByTestId("confirm-button").click();
-		});
+		await impersonate(page, bravo[0].id);
+		await match.goto(matchId);
+		await expect(match.locators.cancelPrompt).toBeVisible();
+		await match.respondToCancel("Refuse");
 
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Accept" }).click();
-		});
+		await impersonate(page, alpha[0].id);
+		await match.goto(matchId);
+		await match.requestCancel();
 
-		await expect(page.getByText("Match canceled")).toBeVisible();
+		await impersonate(page, bravo[0].id);
+		await match.goto(matchId);
+		await match.respondToCancel("Accept");
+
+		await expect(match.locators.canceledText).toBeVisible();
 	});
 
-	test("Rejoin: NZAP trusted group one-click look again", async ({ page }) => {
-		const matchId = await seedMatchAndGetId(page);
-		await staffSweepAlpha(page, matchId);
-
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await waitForPOSTResponse(page, async () => {
-			await page
-				.getByRole("button", { name: "Look again with same group" })
-				.click();
+	test("Rejoin: trusted group one-click look again", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, bravo } = await createMatch(factories, {
+			isConcluded: true,
 		});
 
-		await navigate({ page, url: SENDOUQ_PAGE });
+		await impersonate(page, bravo[0].id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+		await match.lookAgain();
+
+		await new SendouQPage(page).goto();
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
 	test("Rejoin vote: 'no' shows rejoin queue button that rejoins directly", async ({
 		page,
+		factories,
 	}) => {
-		const matchId = await seedMatchAndGetId(page);
-		await staffSweepAlpha(page, matchId);
-
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await voteNo(page);
-
-		await expect(page.getByText("You declined to continue")).toBeVisible();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Rejoin queue" }).click();
+		const { matchId, alpha } = await createMatch(factories, {
+			isMatchmade: true,
+			isConcluded: true,
 		});
+
+		await impersonate(page, alpha[0].id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+		await match.voteNo();
+
+		await expect(match.locators.declinedText).toBeVisible();
+		await match.rejoinQueue();
+
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
 	test("Rejoin vote: cascade wipes yes on no, revote completes and rejoins", async ({
 		page,
+		factories,
 	}) => {
-		const matchId = await seedMatchAndGetId(page);
-		await staffSweepAlpha(page, matchId);
-
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Yes, continue" }).click();
-		});
-		await expect(page.getByLabel("voted yes")).toHaveCount(1);
-		await expect(page.getByLabel("pending")).toHaveCount(3);
-
-		const [memberB, memberC, memberD] = ADMIN_GROUP_OTHER_MEMBER_IDS;
-
-		await impersonate(page, memberB);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		await voteNo(page);
-
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: matchActionUrl(matchId) });
-		// Sendou's yes was wiped by member B's no → back to pending
-		await expect(page.getByLabel("voted no")).toHaveCount(1);
-		await expect(page.getByLabel("voted yes")).toHaveCount(0);
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("button", { name: "Yes, continue" }).click();
+		const { matchId, alpha } = await createMatch(factories, {
+			isMatchmade: true,
+			isConcluded: true,
 		});
 
-		for (const memberId of [memberC, memberD]) {
-			await impersonate(page, memberId);
-			await navigate({ page, url: matchActionUrl(matchId) });
-			await waitForPOSTResponse(page, async () => {
-				await page.getByRole("button", { name: "Yes, continue" }).click();
-			});
+		const [owner, memberB, memberC, memberD] = alpha;
+
+		await impersonate(page, owner.id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+		await match.voteYes();
+
+		await expect(match.locators.votedYes).toHaveCount(1);
+		await expect(match.locators.pendingVotes).toHaveCount(3);
+
+		await impersonate(page, memberB.id);
+		await match.goto(matchId);
+		await match.voteNo();
+
+		await impersonate(page, owner.id);
+		await match.goto(matchId);
+		// the owner's yes was wiped by member B's no → back to pending
+		await expect(match.locators.votedNo).toHaveCount(1);
+		await expect(match.locators.votedYes).toHaveCount(0);
+		await match.voteYes();
+
+		for (const member of [memberC, memberD]) {
+			await impersonate(page, member.id);
+			await match.goto(matchId);
+			await match.voteYes();
 		}
 
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: SENDOUQ_PAGE });
+		await impersonate(page, owner.id);
+		await new SendouQPage(page).goto();
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
-		const ownGroupCard = page.getByTestId("sendouq-group-card").first();
-		await expect(
-			ownGroupCard.getByTestId("sendouq-group-card-member"),
-		).toHaveCount(3);
+
+		// the member who voted no was left behind
+		const looking = new SendouQLookingPage(page);
+		await expect(looking.ownGroupCard.members).toHaveCount(3);
 	});
 });
 
-function matchActionUrl(matchId: string) {
-	return `${sendouQMatchPage(Number(matchId))}?tab=action`;
-}
+async function createMatch(
+	factories: Factories,
+	{
+		isMatchmade,
+		isConcluded,
+	}: { isMatchmade?: boolean; isConcluded?: boolean } = {},
+) {
+	const alpha = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+	const bravo = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
 
-async function seedMatchAndGetId(page: Page) {
-	await seed(page, "IN_SQ_MATCH");
-	await impersonate(page, ADMIN_ID);
-	await navigate({ page, url: SENDOUQ_PAGE });
-	await expect(page).toHaveURL(/\/q\/match\/\d+/);
-	const matchId = page.url().split("/match/")[1];
-	await navigate({ page, url: matchActionUrl(matchId) });
-	return matchId;
-}
-
-async function reportMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
-	await selectMapWinner(page, winner);
-	await waitForPOSTResponse(page, async () => {
-		await page
-			.getByRole("button", { name: "Submit", exact: true })
-			.first()
-			.click();
-	});
-	// Wait for the action panel to remount with the new reportedCount.
-	// waitForPOSTResponse only waits for the POST itself, not the loader
-	// revalidation. MatchActionTab is keyed on reportedCount, so it (and the
-	// nested WeaponReporter) unmounts and remounts when the loader returns.
-	// Without this wait, a follow-up click can land on the about-to-unmount
-	// instance — local state set by that click (e.g. WeaponReporter's isOpen)
-	// is then thrown away on remount.
-	await waitForActionPanelMounted(page);
-}
-
-async function waitForActionPanelMounted(page: Page) {
-	await expect(
-		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
-	).toHaveCount(0);
-}
-
-async function selectMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
-	const teamName = winner === "ALPHA" ? "Group Alpha" : "Group Bravo";
-	// Wait for the action panel to settle before clicking. waitForPOSTResponse
-	// only waits for the POST itself; the loader revalidation that swaps in the
-	// next map's component runs after, so a previous winner can still be
-	// `data-selected="true"` here. Clicking too early hits the about-to-unmount
-	// label and the selection is lost on remount.
-	await expect(
-		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
-	).toHaveCount(0);
-	// react-aria's Radio renders a hidden input behind a span overlay; click the
-	// wrapping label so the press handler fires and updates winnerId. The press
-	// occasionally registers a press-start without a press-end (same React Aria
-	// nondeterminism as in waitForPOSTResponse), so the selection silently drops
-	// and Submit stays disabled. Re-issue the click until the radio reports
-	// selected; otherwise the Submit-click retry loop spins on a disabled button.
-	const label = page.locator(`label:has(input[aria-label="${teamName}"])`);
-	const radio = page.locator(
-		`[data-testid^="winner-radio-"]:has(input[aria-label="${teamName}"])`,
+	const match = await factories.SQMatchFactory.create(
+		{
+			alphaUserIds: alpha.map((member) => member.id),
+			bravoUserIds: bravo.map((member) => member.id),
+			isMatchmade,
+		},
+		{ isConcluded },
 	);
-	await expect(async () => {
-		await label.click();
-		await expect(radio).toHaveAttribute("data-selected", "true", {
-			timeout: 1_000,
-		});
-	}).toPass();
-}
 
-async function voteNo(page: Page) {
-	await page.getByRole("button", { name: "No, I'm done" }).click();
-	await waitForPOSTResponse(page, async () => {
-		await page.getByTestId("confirm-button").click();
-	});
-}
-
-async function staffSweepAlpha(page: Page, matchId: string) {
-	await impersonate(page, STAFF_TEST_ID);
-	await navigate({ page, url: matchActionUrl(matchId) });
-	for (let i = 0; i < 3; i++) {
-		await reportMapWinner(page, "ALPHA");
-	}
-	// 4th ALPHA win triggers the set-ending confirmation dialog
-	await selectMapWinner(page, "ALPHA");
-	await page
-		.getByRole("button", { name: "Submit", exact: true })
-		.first()
-		.click();
-	await waitForPOSTResponse(page, async () => {
-		await page.getByRole("button", { name: "Confirm", exact: true }).click();
-	});
+	return { matchId: match.id, alpha, bravo };
 }

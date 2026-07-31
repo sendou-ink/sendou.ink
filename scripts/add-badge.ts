@@ -1,4 +1,4 @@
-import { db } from "~/db/sql";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
@@ -20,9 +20,11 @@ invariant(
 	"hue must be between -360 and 360",
 );
 
-await db
-	.insertInto("Badge")
-	.values({ code, displayName, hue: parsedHue ?? null })
-	.execute();
+await BadgeRepository.insert({
+	code,
+	displayName,
+	hue: parsedHue ?? null,
+	authorId: null,
+});
 
 logger.info(`Added new badge: ${displayName}`);

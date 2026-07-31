@@ -10,6 +10,7 @@ import {
 } from "~/utils/errors";
 import { shortNanoid } from "~/utils/id";
 import {
+	type CommonUser,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
@@ -86,6 +87,7 @@ type InsertRequestArgs = Pick<
 /**
  * Inserts a new request to a scrim post.
  *
+ * @returns id of the new request
  * @throws {DuplicateEntryError} If the team already has a request for the post
  */
 export function insertRequest(args: InsertRequestArgs) {
@@ -128,6 +130,8 @@ export function insertRequest(args: InsertRequestArgs) {
 				})),
 			)
 			.execute();
+
+		return newRequest.id;
 	});
 }
 
@@ -565,6 +569,8 @@ export type SidebarScrim = {
 	startsAt: number;
 	opponentName: string | null;
 	opponentAvatarUrl: string | null;
+	/** Owner of an opponent without a team, whose avatar stands in for a team's logo. */
+	opponentUser: CommonUser | null;
 	status: "booked" | "looking" | "requestPending";
 };
 
@@ -615,6 +621,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 					startsAt: post.startsAt,
 					opponentName: null,
 					opponentAvatarUrl: null,
+					opponentUser: null,
 					status: userIsInPost
 						? ("looking" as const)
 						: ("requestPending" as const),
@@ -630,9 +637,9 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 			return {
 				id: post.id,
 				startsAt: post.startsAt,
-				opponentName: opponentTeam?.name ?? null,
-				opponentAvatarUrl:
-					opponentTeam?.avatarUrl ?? opponentOwner?.discordAvatar ?? null,
+				opponentName: opponentTeam?.name ?? opponentOwner?.username ?? null,
+				opponentAvatarUrl: opponentTeam?.avatarUrl ?? null,
+				opponentUser: opponentTeam ? null : (opponentOwner ?? null),
 				status: "booked" as const,
 			};
 		});

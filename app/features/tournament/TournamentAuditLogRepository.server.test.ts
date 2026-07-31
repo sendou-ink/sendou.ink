@@ -1,30 +1,38 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { TournamentAuditLogMetadata } from "~/db/tables-json";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
+import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
-const createTournament = () =>
-	db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+let actor: { id: number };
+let subject: { id: number };
 
-const createTeam = (tournamentId: number, name: string) =>
-	db
-		.insertInto("TournamentTeam")
-		.values({
+const createTournament = () => TournamentFactory.create({ authorId: actor.id });
+
+/** Registering a team is itself audited, so the team comes with a `TEAM_REGISTERED` event. */
+const createTeam = (
+	tournamentId: number,
+	name: string,
+	options?: { isCheckedIn: boolean },
+) =>
+	TournamentTeamFactory.create(
+		{
 			tournamentId,
-			name,
-			inviteCode: `inv-${tournamentId}-${name}`,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+			memberUserIds: [actor.id],
+			team: { name, prefersNotToHost: 0, teamId: null },
+		},
+		options,
+	);
+
+const deleteTeam = (tournamentTeamId: number) =>
+	withUserId(actor.id, () =>
+		TournamentTeamRepository.deleteById(tournamentTeamId),
+	);
 
 const insertEvent = ({
 	actorUserId,
@@ -44,22 +52,12 @@ const insertEvent = ({
 
 describe("TournamentAuditLogRepository", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
-	});
-
-	afterEach(async () => {
-		await dbReset();
+		[actor, subject] = await UserFactory.createMany(3);
 	});
 
 	test("insert creates a stable history row from the live team", async () => {
 		const tournament = await createTournament();
 		const team = await createTeam(tournament.id, "Team Olive");
-
-		await insertEvent({
-			type: "TEAM_REGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: team.id,
-		});
 
 		const teams = await TournamentAuditLogRepository.findTeamsByTournamentId(
 			tournament.id,
@@ -72,19 +70,10 @@ describe("TournamentAuditLogRepository", () => {
 
 	test("findByTournamentId returns events newest first with resolved relations", async () => {
 		const tournament = await createTournament();
-		const team = await createTeam(tournament.id, "Team Olive");
-
-		await insertEvent({
-			type: "TEAM_REGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: team.id,
-			subjectUserId: 1,
-		});
-		await insertEvent({
-			type: "MEMBER_ADDED",
-			actorUserId: 1,
-			tournamentTeamId: team.id,
-			subjectUserId: 2,
+		await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [actor.id, subject.id],
+			team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
 		});
 
 		const events = await TournamentAuditLogRepository.findByTournamentId({
@@ -96,8 +85,8 @@ describe("TournamentAuditLogRepository", () => {
 		expect(events).toHaveLength(2);
 		// newest first
 		expect(events[0].type).toBe("MEMBER_ADDED");
-		expect(events[0].actor?.id).toBe(1);
-		expect(events[0].subject?.id).toBe(2);
+		expect(events[0].actor?.id).toBe(actor.id);
+		expect(events[0].subject?.id).toBe(subject.id);
 		expect(events[0].team?.name).toBe("Team Olive");
 		expect(events[1].type).toBe("TEAM_REGISTERED");
 	});
@@ -106,16 +95,7 @@ describe("TournamentAuditLogRepository", () => {
 		const tournament = await createTournament();
 		const team = await createTeam(tournament.id, "Team Olive");
 
-		await insertEvent({
-			type: "TEAM_UNREGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: team.id,
-		});
-
-		await db
-			.deleteFrom("TournamentTeam")
-			.where("TournamentTeam.id", "=", team.id)
-			.execute();
+		await deleteTeam(team.id);
 
 		const events = await TournamentAuditLogRepository.findByTournamentId({
 			tournamentId: tournament.id,
@@ -123,7 +103,7 @@ describe("TournamentAuditLogRepository", () => {
 			offset: 0,
 		});
 
-		expect(events).toHaveLength(1);
+		expect(events[0].type).toBe("TEAM_UNREGISTERED");
 		expect(events[0].team?.name).toBe("Team Olive");
 	});
 
@@ -131,26 +111,11 @@ describe("TournamentAuditLogRepository", () => {
 		const tournament = await createTournament();
 		const teamA = await createTeam(tournament.id, "Team A");
 
-		await insertEvent({
-			type: "TEAM_UNREGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: teamA.id,
-		});
-
-		await db
-			.deleteFrom("TournamentTeam")
-			.where("TournamentTeam.id", "=", teamA.id)
-			.execute();
+		await deleteTeam(teamA.id);
 
 		const teamB = await createTeam(tournament.id, "Team B");
 		// SQLite reuses the highest deleted rowid for the next insert
 		expect(teamB.id).toBe(teamA.id);
-
-		await insertEvent({
-			type: "TEAM_REGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: teamB.id,
-		});
 
 		const teams = await TournamentAuditLogRepository.findTeamsByTournamentId(
 			tournament.id,
@@ -163,31 +128,26 @@ describe("TournamentAuditLogRepository", () => {
 			limit: 30,
 			offset: 0,
 		});
-		const eventByType = new Map(events.map((event) => [event.type, event]));
-		expect(eventByType.get("TEAM_UNREGISTERED")?.team?.name).toBe("Team A");
-		expect(eventByType.get("TEAM_REGISTERED")?.team?.name).toBe("Team B");
+		const unregistered = events.find(
+			(event) => event.type === "TEAM_UNREGISTERED",
+		);
+		const registered = events.filter(
+			(event) => event.type === "TEAM_REGISTERED",
+		);
+		expect(unregistered?.team?.name).toBe("Team A");
+		// newest first
+		expect(registered.map((event) => event.team?.name)).toEqual([
+			"Team B",
+			"Team A",
+		]);
 	});
 
 	test("filters by event type and by team", async () => {
 		const tournament = await createTournament();
-		const teamA = await createTeam(tournament.id, "Team A");
-		const teamB = await createTeam(tournament.id, "Team B");
-
-		await insertEvent({
-			type: "TEAM_REGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: teamA.id,
+		const teamA = await createTeam(tournament.id, "Team A", {
+			isCheckedIn: true,
 		});
-		await insertEvent({
-			type: "TEAM_CHECKED_IN",
-			actorUserId: 1,
-			tournamentTeamId: teamA.id,
-		});
-		await insertEvent({
-			type: "TEAM_REGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: teamB.id,
-		});
+		await createTeam(tournament.id, "Team B");
 
 		const byType = await TournamentAuditLogRepository.findByTournamentId({
 			tournamentId: tournament.id,
@@ -223,10 +183,11 @@ describe("TournamentAuditLogRepository", () => {
 		const tournament = await createTournament();
 		const team = await createTeam(tournament.id, "Team Olive");
 
-		for (let i = 0; i < 3; i++) {
+		// two more on top of the team's own TEAM_REGISTERED
+		for (let i = 0; i < 2; i++) {
 			await insertEvent({
 				type: "TEAM_CHECKED_IN",
-				actorUserId: 1,
+				actorUserId: actor.id,
 				tournamentTeamId: team.id,
 			});
 		}
@@ -252,7 +213,7 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "TEAM_CHECKED_IN",
-			actorUserId: 1,
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
 			metadata: { bracketIdx: 2 },
 		});
@@ -272,9 +233,9 @@ describe("TournamentAuditLogRepository", () => {
 
 		await insertEvent({
 			type: "UPDATE_IN_GAME_NAME",
-			actorUserId: 1,
+			actorUserId: actor.id,
 			tournamentTeamId: team.id,
-			subjectUserId: 2,
+			subjectUserId: subject.id,
 			metadata: { inGameName: "New IGN#1234" },
 		});
 
@@ -285,19 +246,13 @@ describe("TournamentAuditLogRepository", () => {
 		});
 
 		expect(events[0].type).toBe("UPDATE_IN_GAME_NAME");
-		expect(events[0].subject?.id).toBe(2);
+		expect(events[0].subject?.id).toBe(subject.id);
 		expect(events[0].metadata?.inGameName).toBe("New IGN#1234");
 	});
 
 	test("updateTeamHistoryName keeps the preserved name current", async () => {
 		const tournament = await createTournament();
 		const team = await createTeam(tournament.id, "Old Name");
-
-		await insertEvent({
-			type: "TEAM_REGISTERED",
-			actorUserId: 1,
-			tournamentTeamId: team.id,
-		});
 
 		await db.transaction().execute((trx) =>
 			TournamentAuditLogRepository.updateTeamHistoryName(trx, {
