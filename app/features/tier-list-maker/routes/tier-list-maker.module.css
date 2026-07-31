@@ -15,12 +15,6 @@
 	margin-bottom: var(--s-6);
 }
 
-.tierListScreenshotMode {
-	padding: var(--s-4);
-	max-width: 720px;
-	min-width: 720px;
-}
-
 .filters {
 	display: flex;
 	gap: var(--s-4);
@@ -30,57 +24,4 @@
 	column-gap: var(--s-8);
 	row-gap: var(--s-2);
 	flex-wrap: wrap;
-}
-
-.titleInput {
-	grid-column: 1 / -1;
-	width: 100%;
-	padding: 0 var(--s-2) var(--s-2) var(--s-2);
-	font-size: var(--font-lg);
-	font-weight: var(--weight-bold);
-	text-align: center;
-	background: transparent;
-	border: none;
-	color: var(--color-text);
-	outline: none;
-
-	&::placeholder {
-		color: var(--color-text-high);
-		opacity: 0.3;
-	}
-
-	&:focus::placeholder {
-		opacity: 0.5;
-	}
-}
-
-.authorSection {
-	grid-column: 1 / -1;
-	display: flex;
-	flex-direction: row;
-	justify-content: center;
-	align-items: center;
-	gap: var(--s-0-5);
-	margin-bottom: var(--s-3);
-	margin-top: -15px;
-}
-
-.authorBy {
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	color: var(--color-text-high);
-	text-transform: lowercase;
-}
-
-.authorInfo {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-}
-
-.authorUsername {
-	font-weight: var(--weight-bold);
-	font-size: var(--font-xs);
-	color: var(--color-text);
-	white-space: nowrap;
 }

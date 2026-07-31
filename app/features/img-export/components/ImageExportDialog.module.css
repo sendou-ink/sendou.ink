@@ -1,0 +1,24 @@
+/* doubled selector so it wins over the base modal max-width regardless of CSS module order */
+.dialog.dialog {
+	max-width: fit-content;
+}
+
+.settings {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-3) var(--s-4);
+}
+
+.scroller {
+	max-width: 100%;
+	overflow-x: auto;
+}
+
+/* auto margins center the frame when the settings make the dialog wider than the graphic, but
+never clip it when the graphic itself is the wider one (unlike flex centering) */
+.frame {
+	width: fit-content;
+	margin-inline: auto;
+}

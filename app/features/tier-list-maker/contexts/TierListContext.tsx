@@ -1,26 +1,16 @@
 import type { ReactNode } from "react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext } from "react";
 import { useTierList } from "../hooks/useTierList";
 
-type TierListContextType = ReturnType<typeof useTierList> & {
-	screenshotMode: boolean;
-	setScreenshotMode: (value: boolean) => void;
-};
+type TierListContextType = ReturnType<typeof useTierList>;
 
 const TierListContext = createContext<TierListContextType | null>(null);
 
 export function TierListProvider({ children }: { children: ReactNode }) {
 	const state = useTierList();
-	const [screenshotMode, setScreenshotMode] = useState(false);
 
 	return (
-		<TierListContext.Provider
-			value={{
-				...state,
-				screenshotMode,
-				setScreenshotMode,
-			}}
-		>
+		<TierListContext.Provider value={state}>
 			{children}
 		</TierListContext.Provider>
 	);

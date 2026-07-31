@@ -557,7 +557,7 @@ async function resolveCalendarAuthorId() {
 async function resolveCalendarWindow() {
 	const row = await db
 		.selectFrom("CalendarEventDate")
-		.select(({ fn }) => fn.max("startTime").as("maxStartTime"))
+		.select(({ fn }) => fn.max("startsAt").as("maxStartTime"))
 		.executeTakeFirst();
 	if (typeof row?.maxStartTime !== "number") return null;
 
@@ -569,7 +569,7 @@ async function resolveCalendarWindow() {
 async function resolveScrimWindow() {
 	const row = await db
 		.selectFrom("ScrimPost")
-		.select(({ fn }) => fn.max("at").as("maxAt"))
+		.select(({ fn }) => fn.max("startsAt").as("maxAt"))
 		.executeTakeFirst();
 	if (typeof row?.maxAt !== "number") return null;
 

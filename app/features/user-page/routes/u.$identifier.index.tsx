@@ -57,6 +57,7 @@ export const handle: SendouRouteHandle = {
 		"weapons",
 		"gear",
 		"game-badges",
+		"analyzer",
 		"trophies",
 	],
 };

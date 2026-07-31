@@ -3,7 +3,7 @@ import * as React from "react";
 import type { Tables } from "~/db/tables";
 import { useHydrated } from "~/hooks/useHydrated";
 import { LRUCache } from "~/modules/cache";
-import { BLANK_IMAGE_URL, discordAvatarUrl } from "~/utils/urls";
+import { BLANK_IMAGE_URL, resolveAvatarUrl } from "~/utils/urls";
 import styles from "./Avatar.module.css";
 
 const dimensions = {
@@ -132,19 +132,23 @@ export function Avatar({
 
 	const identiconSource = identiconInput ?? user?.discordId ?? "unknown";
 
-	const src = url
-		? url
-		: user?.customAvatarUrl && !isErrored
-			? user.customAvatarUrl
-			: user?.discordAvatar && !isErrored
-				? discordAvatarUrl({
-						discordAvatar: user.discordAvatar,
-						discordId: user.discordId,
-						size: size === "lg" || size === "xmd" ? "lg" : "sm",
-					})
-				: isClient
-					? generateIdenticon(identiconSource, dimensions[size], 7)
-					: BLANK_IMAGE_URL;
+	const userAvatarUrl = user
+		? resolveAvatarUrl({
+				customAvatarUrl: user.customAvatarUrl,
+				discordId: user.discordId,
+				discordAvatar: user.discordAvatar,
+				size: size === "lg" || size === "xmd" ? "lg" : "sm",
+			})
+		: undefined;
+
+	const avatarUrl = url ?? userAvatarUrl;
+
+	const src =
+		avatarUrl && !isErrored
+			? avatarUrl
+			: isClient
+				? generateIdenticon(identiconSource, dimensions[size], 7)
+				: BLANK_IMAGE_URL;
 
 	return (
 		<div className={clsx(styles.avatarWrapper, className)}>

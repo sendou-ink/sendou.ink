@@ -34,7 +34,7 @@ import userStyles from "../user-page.module.css";
 import styles from "./u.$identifier.builds.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["weapons", "builds", "gear"],
+	i18n: ["weapons", "builds", "gear", "analyzer"],
 };
 
 type BuildFilter = "ALL" | "PUBLIC" | "PRIVATE" | MainWeaponId;
@@ -103,7 +103,13 @@ export default function UserBuildsPage() {
 			{builds.length > 0 ? (
 				<div className={styles.buildsContainer}>
 					{builds.map((build) => (
-						<BuildCard key={build.id} build={build} canEdit={isOwnPage} />
+						<BuildCard
+							key={build.id}
+							build={build}
+							owner={layoutData.user}
+							showOwner={false}
+							canEdit={isOwnPage}
+						/>
 					))}
 				</div>
 			) : (

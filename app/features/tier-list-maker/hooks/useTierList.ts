@@ -22,7 +22,10 @@ import {
 } from "~/modules/in-game-lists/weapon-ids";
 import { assertUnreachable } from "~/utils/types";
 import { modeShort, safeJSONParse } from "~/utils/zod";
-import { DEFAULT_TIERS } from "../tier-list-maker-constants";
+import {
+	DEFAULT_TIERS,
+	TIER_LIST_SEARCH_PARAM_NAMES,
+} from "../tier-list-maker-constants";
 import {
 	type TierListItem,
 	type TierListMakerTier,
@@ -32,9 +35,9 @@ import {
 } from "../tier-list-maker-schemas";
 import {
 	addItemToTier,
-	compress,
 	decompress,
 	getNextNthForItem,
+	serializeTierListState,
 } from "../tier-list-maker-utils";
 
 export type TierListPlacementMode = "track" | "click";
@@ -83,13 +86,13 @@ export function useTierList() {
 	});
 
 	const [showTierHeaders, setShowTierHeaders] = useSearchParamState({
-		name: "showTierHeaders",
+		name: TIER_LIST_SEARCH_PARAM_NAMES.SHOW_TIER_HEADERS,
 		defaultValue: true,
 		revive: (value) => value === "true",
 	});
 
 	const [title, setTitle] = useSearchParamState({
-		name: "title",
+		name: TIER_LIST_SEARCH_PARAM_NAMES.TITLE,
 		defaultValue: "",
 		revive: (value) => value,
 	});
@@ -512,12 +515,10 @@ export function useTierList() {
 	};
 }
 
-const TIER_SEARCH_PARAM_NAME = "state";
-
 function useSearchParamTiersState() {
 	const [initialSearchParams] = useSearchParams();
 	const [tiers, setTiers] = React.useState<TierListState>(() => {
-		const param = initialSearchParams.get(TIER_SEARCH_PARAM_NAME);
+		const param = initialSearchParams.get(TIER_LIST_SEARCH_PARAM_NAMES.STATE);
 
 		try {
 			if (param) {
@@ -543,11 +544,8 @@ function useSearchParamTiersState() {
 		const searchParams = new URLSearchParams(window.location.search);
 
 		searchParams.set(
-			TIER_SEARCH_PARAM_NAME,
-			compress({
-				tiers: state.tiers,
-				tierItems: Array.from(state.tierItems.entries()),
-			}),
+			TIER_LIST_SEARCH_PARAM_NAMES.STATE,
+			serializeTierListState(state),
 		);
 
 		window.history.replaceState(

@@ -1,6 +1,5 @@
 {
 	"addTier": "添加分级",
-	"download": "下载图片 (.png)",
 	"mainWeapons": "主要武器",
 	"subWeapons": "次要武器",
 	"specialWeapons": "特殊武器",
@@ -18,7 +17,8 @@
 	"resetConfirmation": "您确定要重置强度榜吗？这将移除所有项目并恢复默认分级。",
 	"noDuplicates": "",
 	"showTierHeaders": "显示分级标题",
-	"titlePlaceholder": "点击添加标题...",
+	"title": "",
+	"showUsername": "",
 	"by": "制作者: ",
 	"custom": "自定义"
 }

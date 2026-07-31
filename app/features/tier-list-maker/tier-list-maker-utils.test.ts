@@ -1,9 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { TIER_LIST_SEARCH_PARAM_NAMES } from "./tier-list-maker-constants";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
+import { tierListStateSerializedSchema } from "./tier-list-maker-schemas";
 import {
 	addItemToTier,
+	decompress,
 	getNextNthForItem,
 	tierListItemId,
+	tierListMakerPathWithState,
 } from "./tier-list-maker-utils";
 
 function makeState(
@@ -77,6 +81,68 @@ describe("getNextNthForItem", () => {
 		});
 
 		expect(getNextNthForItem(splattershot, state)).toBe(3);
+	});
+});
+
+describe("tierListMakerPathWithState", () => {
+	function parseStateFromPath(path: string): TierListState {
+		const searchParams = new URLSearchParams(path.split("?")[1]);
+		const param = searchParams.get(TIER_LIST_SEARCH_PARAM_NAMES.STATE);
+
+		const parsed = tierListStateSerializedSchema.parse(decompress(param!));
+
+		return { tiers: parsed.tiers, tierItems: new Map(parsed.tierItems) };
+	}
+
+	it("round trips the tier list state", () => {
+		const state = makeState({
+			"tier-a": [splattershot, { ...splatRoller, nth: 2 }],
+			"tier-b": [splatRoller],
+		});
+
+		const path = tierListMakerPathWithState({
+			state,
+			title: "",
+			showTierHeaders: true,
+		});
+
+		expect(parseStateFromPath(path)).toEqual(state);
+	});
+
+	it("includes the title", () => {
+		const path = tierListMakerPathWithState({
+			state: makeState(),
+			title: "Weapons ranked & sorted",
+			showTierHeaders: true,
+		});
+
+		expect(
+			new URLSearchParams(path.split("?")[1]).get(
+				TIER_LIST_SEARCH_PARAM_NAMES.TITLE,
+			),
+		).toBe("Weapons ranked & sorted");
+	});
+
+	it("only includes tier headers param when they are hidden", () => {
+		const withHeaders = tierListMakerPathWithState({
+			state: makeState(),
+			title: "",
+			showTierHeaders: true,
+		});
+		const withoutHeaders = tierListMakerPathWithState({
+			state: makeState(),
+			title: "",
+			showTierHeaders: false,
+		});
+
+		expect(withHeaders).not.toContain(
+			TIER_LIST_SEARCH_PARAM_NAMES.SHOW_TIER_HEADERS,
+		);
+		expect(
+			new URLSearchParams(withoutHeaders.split("?")[1]).get(
+				TIER_LIST_SEARCH_PARAM_NAMES.SHOW_TIER_HEADERS,
+			),
+		).toBe("false");
 	});
 });
 

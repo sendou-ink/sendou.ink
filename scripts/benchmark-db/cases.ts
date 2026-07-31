@@ -369,6 +369,9 @@ export function buildCases(fx: Fixtures): {
 	add("SkillRepository.findSeasonProgressionByUserId", fx.sq, (sq) =>
 		SkillRepository.findSeasonProgressionByUserId(sq),
 	);
+	add("SkillRepository.findSeasonActiveDaysByUserId", fx.sq, (sq) =>
+		SkillRepository.findSeasonActiveDaysByUserId(sq),
+	);
 
 	// NotificationRepository
 	add("NotificationRepository.findByUserId", fx.notification, (notification) =>
@@ -479,6 +482,15 @@ export function buildCases(fx: Fixtures): {
 			...sq,
 			type: "MATE",
 		}),
+	);
+	add("PlayerStatRepository.findSeasonSetScoresByUserId", fx.sq, (sq) =>
+		PlayerStatRepository.findSeasonSetScoresByUserId(sq),
+	);
+	add("PlayerStatRepository.findSeasonBestSetsByUserId", fx.sq, (sq) =>
+		PlayerStatRepository.findSeasonBestSetsByUserId({ ...sq, limit: 3 }),
+	);
+	add("PlayerStatRepository.findSeasonTournamentRunsByUserId", fx.sq, (sq) =>
+		PlayerStatRepository.findSeasonTournamentRunsByUserId(sq),
 	);
 
 	// ReportedWeaponRepository
@@ -978,6 +990,9 @@ export function buildCases(fx: Fixtures): {
 	// UserRepository
 	add("UserRepository.findIdByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findIdByIdentifier(user.identifier),
+	);
+	add("UserRepository.findCountriesByUserIds", fx.skillBatch, (skillBatch) =>
+		UserRepository.findCountriesByUserIds(skillBatch.userIds),
 	);
 	add("UserRepository.findBuildFieldsByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findBuildFieldsByIdentifier(user.identifier),

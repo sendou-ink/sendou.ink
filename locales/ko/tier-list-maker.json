@@ -1,6 +1,5 @@
 {
 	"addTier": "",
-	"download": "",
 	"mainWeapons": "",
 	"subWeapons": "",
 	"specialWeapons": "",
@@ -18,7 +17,8 @@
 	"resetConfirmation": "",
 	"noDuplicates": "",
 	"showTierHeaders": "",
-	"titlePlaceholder": "",
+	"title": "",
+	"showUsername": "",
 	"by": "",
 	"custom": ""
 }

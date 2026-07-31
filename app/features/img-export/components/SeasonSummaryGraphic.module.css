@@ -1,0 +1,387 @@
+.seasonBadge {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--graphic-accent);
+}
+
+.hero {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	background:
+		linear-gradient(
+			to right,
+			color-mix(in oklch, var(--graphic-accent) 16%, transparent),
+			transparent 40%
+		),
+		var(--graphic-row-bg);
+	border-color: color-mix(in oklch, var(--graphic-accent) 35%, transparent);
+}
+
+.heroTierName {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	line-height: 1.1;
+}
+
+.heroSp {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.heroPeak {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.rankBlock {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	margin-inline-start: auto;
+	padding-inline-end: var(--s-2);
+}
+
+.rankValue {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	color: var(--graphic-accent);
+}
+
+.bestStageRow {
+	background-image:
+		linear-gradient(to right, var(--graphic-row-bg) 35%, transparent 80%),
+		var(--best-stage-banner);
+	background-origin: border-box;
+	background-position: right center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}
+
+.bestStageName {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+}
+
+.bestStageWinrate {
+	font-weight: var(--weight-extra);
+	color: var(--graphic-accent);
+}
+
+.chart {
+	display: block;
+	width: 100%;
+	/* the area gradient's stops resolve their color from here via currentColor */
+	color: var(--graphic-accent);
+}
+
+.chartLine {
+	fill: none;
+	stroke: var(--graphic-accent);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.chartAreaTop {
+	stop-color: var(--graphic-accent);
+	stop-opacity: 0.3;
+}
+
+.chartAreaBottom {
+	stop-color: var(--graphic-accent);
+	stop-opacity: 0;
+}
+
+.chartGridLine {
+	stroke: var(--graphic-row-border);
+	stroke-width: 1;
+}
+
+.chartLabel {
+	font-size: 10px;
+	font-weight: var(--weight-semi);
+	fill: var(--graphic-text-dim);
+}
+
+.chartPeakLabel {
+	font-size: 11px;
+	font-weight: var(--weight-extra);
+	fill: var(--color-text);
+}
+
+.chartDot {
+	fill: var(--graphic-accent);
+	stroke: var(--graphic-row-bg);
+	stroke-width: 2;
+}
+
+.middleGrid {
+	display: grid;
+	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	gap: var(--s-2);
+}
+
+.sideStack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.activityBox {
+	/* categorical palette, all-pairs CVD separation validated against the dark surface */
+	--activity-none: color-mix(in oklch, var(--color-text) 8%, transparent);
+	--activity-sq: oklch(70% 0.11 253);
+	--activity-tournament: oklch(75% 0.12 85);
+	--activity-both: oklch(94% 0.02 253);
+}
+
+:global(:where(html.light)) .activityBox,
+:global(:where([data-theme="light"])) .activityBox {
+	--activity-sq: oklch(56% 0.13 253);
+	--activity-tournament: oklch(66% 0.13 85);
+	--activity-both: oklch(30% 0.04 253);
+}
+
+:global(:where([data-theme="dark"])) .activityBox {
+	--activity-sq: oklch(70% 0.11 253);
+	--activity-tournament: oklch(75% 0.12 85);
+	--activity-both: oklch(94% 0.02 253);
+}
+
+.calendar {
+	display: grid;
+	grid-auto-flow: column;
+	grid-template-rows: repeat(7, auto);
+	justify-content: center;
+	gap: 4px;
+	margin-top: var(--s-4);
+}
+
+.calendarCell {
+	width: 18px;
+	height: 18px;
+	border-radius: 3px;
+	background-color: var(--activity-none);
+
+	&.calendarCellHidden {
+		visibility: hidden;
+	}
+
+	&.calendarSq {
+		background-color: var(--activity-sq);
+	}
+
+	&.calendarTournament {
+		background-color: var(--activity-tournament);
+	}
+
+	&.calendarBoth {
+		background-color: var(--activity-both);
+	}
+}
+
+.calendarLegend {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2-5);
+	margin-top: var(--s-3);
+}
+
+.calendarLegendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+
+	& .calendarCell {
+		width: 10px;
+		height: 10px;
+	}
+}
+
+.weaponsRow {
+	display: flex;
+	justify-content: space-evenly;
+	gap: var(--s-3);
+	margin-top: var(--s-1-5);
+}
+
+.weaponUsage {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.matesList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	margin-top: var(--s-1-5);
+}
+
+.matesBoxExpanded {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+
+	& .matesList {
+		flex: 1;
+		justify-content: space-evenly;
+	}
+}
+
+.mateRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.mateName {
+	display: flex;
+	/* the image export freezes each element's width, so a shrink-to-fit box would clip its own text */
+	flex: 1;
+	align-items: center;
+	gap: var(--s-1-5);
+	min-width: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.mateNameText {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.mateSets {
+	margin-inline-start: auto;
+	white-space: nowrap;
+}
+
+.teamRankRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+
+	/* the info column takes the free space here, so an auto margin would leave it nothing to grow into */
+	& .rankBlock {
+		margin-inline-start: 0;
+	}
+}
+
+.teamRankInfo {
+	/* the image export freezes each element's width, so a shrink-to-fit box would clip its own text */
+	flex: 1;
+	min-width: 0;
+}
+
+.teamRankTitle {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-2);
+}
+
+.teamRankName {
+	overflow: hidden;
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.teamRankSp {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+
+	&.teamRankSpSecondary {
+		font-size: var(--font-sm);
+		font-weight: var(--weight-semi);
+		color: var(--graphic-text-dim);
+	}
+}
+
+.playersInline {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: var(--s-0-5) var(--s-3);
+}
+
+.bestSetsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.bestSetRow {
+	display: grid;
+	grid-template-columns: 3.25rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.playersInlineStart {
+	justify-content: flex-start;
+	margin-top: var(--s-1);
+}
+
+.setInfo {
+	min-width: 0;
+}
+
+.setContext {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.setSp {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: 0 var(--s-2);
+}
+
+.setSpValue {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.tournamentRow {
+	display: grid;
+	grid-template-columns: 3.25rem 2.75rem 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.tournamentInfo {
+	min-width: 0;
+}
+
+.tournamentName {
+	overflow: hidden;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.tournamentMeta {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}

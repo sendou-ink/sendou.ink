@@ -68,6 +68,11 @@ const PERKS = [
 	},
 	{
 		tier: 2,
+		name: "seasonSummaryImage",
+		extraInfo: true,
+	},
+	{
+		tier: 2,
 		name: "userShortLink",
 		extraInfo: true,
 	},
