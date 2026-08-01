@@ -188,9 +188,7 @@ function tournamentStreamUrl({
 	);
 	if (teammateAccount) return twitchUrl(teammateAccount);
 
-	const castAccount = tournament.ctx.castedMatchesInfo?.castedMatches.find(
-		(castedMatch) => castedMatch.matchId === matchId,
-	)?.twitchAccount;
+	const castAccount = liveCastAccount(tournament, matchId);
 	if (castAccount) return twitchUrl(castAccount);
 
 	const opponentAccount = streamingTwitchAccount(
@@ -199,6 +197,20 @@ function tournamentStreamUrl({
 	);
 
 	return opponentAccount ? twitchUrl(opponentAccount) : null;
+}
+
+/** Account casting the match, only when it is actually streaming right now. */
+function liveCastAccount(tournament: Tournament, matchId: number) {
+	const castAccount = tournament.ctx.castedMatchesInfo?.castedMatches.find(
+		(castedMatch) => castedMatch.matchId === matchId,
+	)?.twitchAccount;
+	if (!castAccount) return null;
+
+	const isLive = tournament.ctx.castStreams.some(
+		(stream) => stream.twitch?.toLowerCase() === castAccount.toLowerCase(),
+	);
+
+	return isLive ? castAccount : null;
 }
 
 function streamingTwitchAccount(

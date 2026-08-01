@@ -21,6 +21,9 @@ try {
 }
 export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 500;
 
+export const MOBILE_VIEWPORT = { width: 375, height: 667 };
+export const TABLET_VIEWPORT = { width: 768, height: 1024 };
+
 type WorkerFixtures = {
 	workerPort: number;
 	workerBaseURL: string;
@@ -264,6 +267,11 @@ async function expectRouterIdle(page: Page) {
 		"true",
 		{ timeout: 15_000 },
 	);
+}
+
+/** Asserts the page rendered rather than the error boundary catching something. */
+export async function expectNoErrorPage(page: Page) {
+	await expect(page.getByTestId("error-page")).toHaveCount(0);
 }
 
 export function isNotVisible(locator: Locator) {

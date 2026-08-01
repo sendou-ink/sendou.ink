@@ -235,7 +235,7 @@ function Document({
 			<body>
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<RouterProvider navigate={navigate} useHref={useHref}>
+					<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
 						<I18nProvider locale={language}>
 							<SendouToastRegion />
 							<UnsavedChangesGuard />
@@ -251,6 +251,19 @@ function Document({
 			</body>
 		</html>
 	);
+}
+
+const ABSOLUTE_URL_REGEX = /^[a-z][a-z\d+\-.]*:/i;
+
+/**
+ * Href every React Aria link (menu items, buttons, tabs) is rendered with.
+ * `useHref` resolves its argument against the current route, which would turn an
+ * absolute URL such as a Twitch link into a path of our own.
+ */
+function useExternalAwareHref(href: string) {
+	const resolved = useHref(href);
+
+	return ABSOLUTE_URL_REGEX.test(href) ? href : resolved;
 }
 
 function useTriggerToasts() {

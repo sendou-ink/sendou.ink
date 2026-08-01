@@ -1,7 +1,10 @@
-import { subMinutes } from "date-fns";
+import { addHours, subMinutes } from "date-fns";
 import type { TournamentSettings } from "~/db/tables-json";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import type { Factories } from "./factories";
 
 export const ROSTER_SIZE = 4;
@@ -165,4 +168,91 @@ export async function createTeams(
 /** A start time in the past: check-in is over and brackets can be started from the UI. */
 export function startedTournamentTimes() {
 	return [dateToDatabaseTimestamp(subMinutes(new Date(), 30))];
+}
+
+/**
+ * A tournament running an unfinished match: two checked-in teams and the bracket
+ * started, which is all it takes for both teams to be "in a match". The friend and
+ * their teammate play the opponent, and every user given is on the roster it is
+ * named for.
+ */
+export async function createInProgressMatch(
+	factories: Factories,
+	{
+		name,
+		friendId,
+		teammateId,
+		opponentId,
+		tier,
+	}: {
+		name: string;
+		friendId: number;
+		teammateId?: number;
+		opponentId?: number;
+		tier?: TournamentTierNumber;
+	},
+) {
+	const tournament = await factories.TournamentFactory.create(
+		{
+			authorId: ADMIN_ID,
+			name,
+			startTimes: startedTournamentTimes(),
+		},
+		{ tier },
+	);
+
+	const teams = await createTeams(factories, tournament.id, [
+		{ members: [friendId, ...(teammateId ? [teammateId] : [])] },
+		{ members: opponentId ? [opponentId] : [] },
+	]);
+
+	const [match] = await factories.TournamentFactory.startBracket(tournament.id);
+	invariant(match, "Starting the bracket created no match");
+
+	return { tournament, teams, matchId: match.id };
+}
+
+/** An upcoming tournament where the given user's team is looking for subs. */
+export async function createSubSeekingTournament(
+	factories: Factories,
+	{ name, subId }: { name: string; subId: number },
+) {
+	const tournament = await factories.TournamentFactory.create({
+		authorId: ADMIN_ID,
+		name,
+		startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+	});
+
+	await factories.TournamentTeamFactory.create(
+		{ tournamentId: tournament.id, memberUserIds: [subId] },
+		{ isLooking: true },
+	);
+
+	return { tournament };
+}
+
+/**
+ * A tournament where the given user is waiting for their next match: three teams
+ * in a single elimination bracket leave the top seed with a bye into the final,
+ * whose other side is still being played for.
+ */
+export async function createTournamentWithByeTeam(
+	factories: Factories,
+	{ name, waitingUserId }: { name: string; waitingUserId: number },
+) {
+	const tournament = await factories.TournamentFactory.create({
+		authorId: ADMIN_ID,
+		name,
+		startTimes: startedTournamentTimes(),
+	});
+
+	await createTeams(factories, tournament.id, [
+		{ members: [waitingUserId] },
+		{},
+		{},
+	]);
+
+	await factories.TournamentFactory.startBracket(tournament.id);
+
+	return { tournament };
 }

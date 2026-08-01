@@ -226,6 +226,38 @@ export async function startBracket(
 	return startedBracket.data.match.map((match) => ({ id: match.id }));
 }
 
+/**
+ * Marks a match as casted by a Twitch account, adding the account to the
+ * tournament's cast accounts first, the way the organizer's stream page does.
+ */
+export async function castMatch({
+	tournamentId,
+	matchId,
+	twitchAccount,
+}: {
+	tournamentId: number;
+	matchId: number;
+	twitchAccount: string;
+}) {
+	const tournament = await TournamentRepository.findById(tournamentId);
+	invariant(tournament, `Tournament ${tournamentId} not found`);
+
+	await TournamentRepository.updateCastTwitchAccounts({
+		tournamentId,
+		castTwitchAccounts: [
+			...(tournament.castTwitchAccounts ?? []),
+			twitchAccount,
+		],
+	});
+	await TournamentRepository.setMatchAsCasted({
+		tournamentId,
+		matchId,
+		twitchAccount,
+	});
+
+	clearTournamentDataCache(tournamentId);
+}
+
 interface PlayedMatch {
 	id: number;
 	/** Index of the bracket the match belongs to in the progression. */
