@@ -870,8 +870,8 @@ export interface User {
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
 	joinOrder: number | null;
-	/** User card banner default selection, hex code or stage id. Note: supporters can also upload banner (stored in UserSubmittedImage, referenced by `bannerImgId` which takes precedence) */
-	bannerPresetImg: JSONColumnTypeNullable<string | StageId>;
+	/** User card banner default selection, stored as raw text (not JSON): either a hex code (e.g. "#8b0000") or a stage id in string form (e.g. "16"). Note: supporters can also upload banner (stored in UserSubmittedImage, referenced by `bannerImgId` which takes precedence) */
+	bannerPresetImg: string | null;
 	/** Supporter-uploaded user card banner (UserSubmittedImage id). Takes precedence over `bannerPresetImg`. */
 	bannerImgId: number | null;
 	/** Card stat types the user has chosen to hide from their card. */
