@@ -1,4 +1,9 @@
-import type { Color3, ExtrasOptions, ViewerSettings } from "picocad2-web";
+import type {
+	Color3,
+	ExtrasOptions,
+	RenderStats,
+	ViewerSettings,
+} from "picocad2-web";
 
 export interface TrophyModelAnalysis {
 	cameraTargetCentered: boolean;
@@ -48,6 +53,28 @@ export function analyzeTrophyModel(model: string): TrophyModelAnalysis | null {
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * Animations can toggle meshes on and off, so the peak across frames
+ * is what the draw call and poly metrics should show.
+ */
+export function mergePeakRenderStats(
+	previous: RenderStats | null,
+	frame: RenderStats,
+) {
+	if (
+		previous &&
+		frame.drawCalls <= previous.drawCalls &&
+		frame.polyCount <= previous.polyCount
+	) {
+		return previous;
+	}
+
+	return {
+		drawCalls: Math.max(frame.drawCalls, previous?.drawCalls ?? 0),
+		polyCount: Math.max(frame.polyCount, previous?.polyCount ?? 0),
+	};
 }
 
 function isCameraTargetCentered(state: ModelState) {

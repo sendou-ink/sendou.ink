@@ -22,6 +22,8 @@
 	"new.specs.centered": "",
 	"new.specs.zoom": "",
 	"new.specs.angles": "",
+	"new.specs.noStandaloneFlag": "",
+	"new.specs.noTrademarked": "",
 	"new.specs.background": "",
 	"new.specs.drawCalls": "",
 	"new.specs.polys": "",
