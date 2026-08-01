@@ -731,6 +731,15 @@ export class Tournament {
 		);
 	}
 
+	/** Can the organizer add a new sub post on behalf of a user at this time? Unlike users
+	 * the organizer is not limited by the registration closing early. */
+	get canAddNewSubPostAsOrganizer() {
+		if (!this.lfgEnabled) return false;
+		if (this.isInvitational) return false;
+
+		return !this.everyBracketOver;
+	}
+
 	/** what is the max amount of members teams can add in total? This limit doesn't apply to the organizer adding members to a team. */
 	get maxMembersPerTeam() {
 		// special format

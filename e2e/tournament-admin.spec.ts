@@ -4,9 +4,16 @@ import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, test } from "./helpers/playwright";
+import {
+	createTeams,
+	DOUBLE_ELIMINATION,
+	startedTournamentTimes,
+	teamSeeds,
+} from "./helpers/tournament";
 import { TournamentAdminAuditPage } from "./pages/tournament/tournament-admin-audit-page";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
+import { TournamentSubsPage } from "./pages/tournament/tournament-subs-page";
 
 const ROSTER_SIZE = 4;
 const CAPTAIN_DISCORD_ID = "1234567890123456789";
@@ -140,6 +147,87 @@ test.describe("Tournament admin team management", () => {
 
 		const content = await fs.readFile(await download.path(), "utf-8");
 		expect(content).toContain("Alpha Squad");
+	});
+
+	test("adds a sub post on behalf of a user", async ({ page, factories }) => {
+		// registration is closed (start time in the past) so the subs view is shown on the looking page
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 1))],
+		});
+		await factories.UserFactory.create({
+			discordName: "Subby Sam",
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+
+		await admin.openAddSubDialog();
+		await expect(admin.locators.addSubDialogHeading).toBeVisible();
+
+		await admin.addSubForm.selectUser("userId", "Subby Sam");
+		await admin.addSubForm.fill("message", "Can play backline");
+		await admin.addSubForm.submit();
+
+		await expect(admin.locators.addSubDialogHeading).toHaveCount(0);
+
+		const subs = new TournamentSubsPage(page);
+		await subs.goto(tournament.id);
+		await expect(subs.subPostText("Subby Sam")).toBeVisible();
+		await expect(subs.subPostText("Can play backline")).toBeVisible();
+	});
+
+	test("adds a sub post on behalf of a user whose team dropped out", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
+		});
+		const dropout = await factories.UserFactory.create({
+			discordName: "Dropout Dana",
+		});
+		const droppingRest = await factories.UserFactory.createMany(
+			ROSTER_SIZE - 1,
+		);
+		await factories.TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				team: pickUpTeam("Recruiting Rays"),
+				memberUserIds: [dropout.id, ...droppingRest.map((user) => user.id)],
+			},
+			// the team was recruiting on the LFG page before it dropped out
+			{ isCheckedIn: true, isLooking: true },
+		);
+		// enough opponents that dropping out one team does not end every match
+		await createTeams(factories, tournament.id, teamSeeds(3));
+		await factories.TournamentFactory.startBracket(tournament.id);
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+
+		await admin.searchTeams("Recruiting Rays");
+		await admin.dropOutTeam(0);
+
+		await admin.openAddSubDialog();
+		await expect(admin.locators.addSubDialogHeading).toBeVisible();
+
+		await admin.addSubForm.selectUser("userId", "Dropout Dana");
+		await admin.addSubForm.fill("message", "Free to sub now");
+		await admin.addSubForm.submit();
+
+		await expect(admin.locators.addSubDialogHeading).toHaveCount(0);
+
+		const subs = new TournamentSubsPage(page);
+		await subs.goto(tournament.id);
+		await expect(subs.subPostText("Dropout Dana")).toBeVisible();
+		await expect(subs.subPostText("Free to sub now")).toBeVisible();
 	});
 
 	test("filters the team list by name and by captain Discord id", async ({

@@ -16,6 +16,7 @@ import * as React from "react";
 import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -28,9 +29,12 @@ import { Table } from "~/components/Table";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
+import { SendouForm } from "~/form/SendouForm";
 import {
 	tournamentAdminRegistrationEditPage,
 	tournamentAdminRegistrationPage,
+	tournamentSubsPage,
 	tournamentTeamPage,
 	userPage,
 } from "~/utils/urls";
@@ -81,6 +85,7 @@ export default function TournamentAdminTeamsPage() {
 							Add new team
 						</LinkButton>
 					) : null}
+					{tournament.canAddNewSubPostAsOrganizer ? <AddSubButton /> : null}
 				</div>
 				<Input
 					className={styles.searchInput}
@@ -142,6 +147,43 @@ export default function TournamentAdminTeamsPage() {
 
 			{exportOpen ? <ExportDialog close={() => setExportOpen(false)} /> : null}
 		</div>
+	);
+}
+
+function AddSubButton() {
+	const tournament = useTournament();
+	const [dialogOpen, setDialogOpen] = React.useState(false);
+
+	return (
+		<>
+			<SendouButton
+				size="small"
+				variant="outlined"
+				icon={<Plus />}
+				onPress={() => setDialogOpen(true)}
+			>
+				Add sub
+			</SendouButton>
+			{dialogOpen ? (
+				<SendouDialog
+					heading="Add sub post on behalf of a user"
+					onClose={() => setDialogOpen(false)}
+				>
+					<SendouForm
+						schema={addSubForUserFormSchema}
+						action={tournamentSubsPage(tournament.ctx.id)}
+						onSuccess={() => setDialogOpen(false)}
+					>
+						{({ FormField }) => (
+							<>
+								<FormField name="userId" />
+								<FormField name="message" />
+							</>
+						)}
+					</SendouForm>
+				</SendouDialog>
+			) : null}
+		</>
 	);
 }
 
