@@ -1,26 +1,23 @@
 import { useFetcher } from "react-router";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
-import type { WeaponReporterProps } from "./WeaponReporter";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { WeaponReporterMap, WeaponReporterProps } from "./WeaponReporter";
 
 /**
  * Wires the `<WeaponReporter />` component to the standard
  * `REPORT_WEAPON` / `UNDO_WEAPON_REPORT` fetcher actions and to the
  * locally persisted recently-reported weapons list.
  *
- * `maps` is the play order of maps the viewer can report a weapon for and
- * `pastReported` is the weapons the viewer has already reported, paired
- * with the `mapIndex` they were reported for.
+ * `maps` is the maps the viewer can report a weapon for, in play order, each
+ * carrying its `mapIndex` in the match's map list — a viewer who sat out a map
+ * simply has no entry for it. `pastReported` is the weapons the viewer has
+ * already reported, paired with the `mapIndex` they were reported for.
  */
 export function useMatchWeaponReport({
 	maps,
 	pastReported,
 }: {
-	maps: { stageId: StageId; mode: ModeShort }[];
+	maps: WeaponReporterMap[];
 	pastReported: { mapIndex: number; weaponSplId: MainWeaponId }[];
 }): WeaponReporterProps {
 	const weaponFetcher = useFetcher();
@@ -28,12 +25,8 @@ export function useMatchWeaponReport({
 		useRecentlyReportedWeapons();
 
 	const reportedMapIndexes = new Set(pastReported.map((w) => w.mapIndex));
-	const nextMapIndex = (() => {
-		for (let i = 0; i < maps.length; i++) {
-			if (!reportedMapIndexes.has(i)) return i;
-		}
-		return -1;
-	})();
+	const nextMapIndex =
+		maps.find((map) => !reportedMapIndexes.has(map.mapIndex))?.mapIndex ?? -1;
 	const undoMapIndex = pastReported.reduce(
 		(max, w) => Math.max(max, w.mapIndex),
 		-1,

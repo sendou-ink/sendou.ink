@@ -276,7 +276,11 @@ function WeaponReportSection({
 		: [];
 
 	const weaponReport = useMatchWeaponReport({
-		maps: completedMaps.map((m) => ({ stageId: m.stageId, mode: m.mode })),
+		maps: completedMaps.map((m, mapIndex) => ({
+			mapIndex,
+			stageId: m.stageId,
+			mode: m.mode,
+		})),
 		pastReported,
 	});
 
@@ -402,7 +406,7 @@ function InProgressTab({
 	const weaponReport = useMatchWeaponReport({
 		maps: data.match.mapList
 			.slice(0, reportedCount + 1)
-			.map((m) => ({ stageId: m.stageId, mode: m.mode })),
+			.map((m, mapIndex) => ({ mapIndex, stageId: m.stageId, mode: m.mode })),
 		pastReported: data.reportedWeapons
 			? data.reportedWeapons
 					.filter((w) => w.userId === user.id)
