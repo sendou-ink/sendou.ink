@@ -609,6 +609,7 @@ function Stat({ stat }: { stat: UserCardData["stats"][number] }) {
 								placement={stat.top}
 								size={14}
 								showAsSuperscript={false}
+								textOnly
 							/>
 						</span>
 					) : null}
