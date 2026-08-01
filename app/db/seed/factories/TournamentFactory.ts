@@ -215,6 +215,8 @@ export async function startBracket(
 		}),
 	});
 
+	await persistSeeds(tournament);
+
 	clearTournamentDataCache(tournamentId);
 
 	const started = await tournamentFromDB({ tournamentId, user: undefined });
@@ -308,6 +310,31 @@ async function generateNextSwissRound(
 	}
 
 	return generated;
+}
+
+/** Writes the seeds the bracket was created off, the same way starting a bracket
+ * through the site does. Without them the seeds shown are recomputed from the teams'
+ * seeding skills every time, so they drift out of sync with the started bracket as
+ * soon as those change. */
+async function persistSeeds(
+	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
+) {
+	const isAllSeedsPersisted = tournament.ctx.teams.every(
+		(team) => typeof team.seed === "number",
+	);
+	if (isAllSeedsPersisted) return;
+
+	await TournamentRepository.updateTeamSeeds({
+		tournamentId: tournament.ctx.id,
+		teamIds: tournament.ctx.teams.map((team) => team.id),
+		teamsWithMembers: tournament.ctx.teams.map((team) => ({
+			teamId: team.id,
+			members: team.members.map((member) => ({
+				userId: member.userId,
+				username: member.username,
+			})),
+		})),
+	});
 }
 
 function roundMapsFor(
