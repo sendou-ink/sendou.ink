@@ -298,7 +298,12 @@ function GroupMember({
 						</span>
 					) : null}
 				</div>
-				<div className="ml-auto stack horizontal sm items-center">
+				<div
+					className={clsx(
+						"ml-auto stack horizontal sm items-center",
+						styles.memberActions,
+					)}
+				>
 					{showActions || displayOnly ? (
 						<MemberRoleManager
 							member={member}
