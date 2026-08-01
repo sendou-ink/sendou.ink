@@ -22,10 +22,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (bracket.preview) throw new Response(null, { status: 404 });
 
 	const result: GetTournamentBracketStandingsResponse = {
-		standings: bracket.standings.map((standing) => ({
+		finished: bracket.standingsAreFinal,
+		standings: bracket.liveStandings.map((standing) => ({
 			tournamentTeamId: standing.team.id,
 			placement: standing.placement,
-			stats: standing.stats,
+			groupId: standing.groupId,
+			stats: standing.stats
+				? {
+						setWins: standing.stats.setWins,
+						setLosses: standing.stats.setLosses,
+						mapWins: standing.stats.mapWins,
+						mapLosses: standing.stats.mapLosses,
+						koCount: standing.stats.koCount,
+						winsAgainstTied: standing.stats.winsAgainstTied,
+						lossesAgainstTied: standing.stats.lossesAgainstTied,
+						opponentSetWinPercentage: standing.stats.opponentSetWinPercentage,
+						opponentMapWinPercentage: standing.stats.opponentMapWinPercentage,
+					}
+				: undefined,
 		})),
 	};
 

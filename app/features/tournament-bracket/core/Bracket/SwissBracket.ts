@@ -31,22 +31,7 @@ export class SwissBracket extends Bracket {
 		}
 		const standings = this.standings;
 
-		const relevantMatchesFinished = this.data.round.every((round) => {
-			const roundsMatches = this.data.match.filter(
-				(match) => match.roundId === round.id,
-			);
-
-			// some round has not started yet
-			if (roundsMatches.length === 0) return false;
-
-			return roundsMatches.every((match) => {
-				if (match.opponent1 && match.opponent2 && !match.winnerSide) {
-					return false;
-				}
-
-				return true;
-			});
-		});
+		const relevantMatchesFinished = this.standingsAreFinal;
 
 		if (advanceThreshold) {
 			return {
@@ -86,11 +71,28 @@ export class SwissBracket extends Bracket {
 		};
 	}
 
-	get standings(): Standing[] {
-		return this.currentStandings();
+	/** Swiss rounds are paired one at a time, so a round that has no matches yet can still change the standings. */
+	get standingsAreFinal() {
+		const everyRoundPaired = this.data.round.every((round) =>
+			this.data.match.some((match) => match.roundId === round.id),
+		);
+
+		return everyRoundPaired && this.everyMatchOver;
 	}
 
-	currentStandings(includeUnfinishedGroups = false) {
+	get standings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: false });
+	}
+
+	get liveStandings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: true });
+	}
+
+	private computeStandings({
+		includeUnfinishedGroups,
+	}: {
+		includeUnfinishedGroups: boolean;
+	}): Standing[] {
 		const groupIds = this.data.group.map((group) => group.id);
 
 		const placements: (Standing & { groupId: number })[] = [];
@@ -183,6 +185,13 @@ export class SwissBracket extends Bracket {
 				}
 
 				if (!match.winnerSide) {
+					// teams yet to finish a match still belong in the standings
+					if (match.opponent1?.id) {
+						updateTeam({ teamId: match.opponent1.id });
+					}
+					if (match.opponent2?.id) {
+						updateTeam({ teamId: match.opponent2.id });
+					}
 					continue;
 				}
 
@@ -225,7 +234,7 @@ export class SwissBracket extends Bracket {
 				const winner = match.opponent1 ? match.opponent1 : match.opponent2;
 
 				if (!winner?.id) {
-					logger.warn("SwissBracket.currentStandings: winner not found");
+					logger.warn("SwissBracket.computeStandings: winner not found");
 					continue;
 				}
 
@@ -266,7 +275,7 @@ export class SwissBracket extends Bracket {
 				for (const teamId of teamsWhoPlayedAgainst) {
 					const opponent = teams.find((t) => t.id === teamId);
 					if (!opponent) {
-						logger.warn("SwissBracket.currentStandings: opponent not found", {
+						logger.warn("SwissBracket.computeStandings: opponent not found", {
 							teamId,
 						});
 						continue;

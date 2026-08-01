@@ -810,9 +810,41 @@ function createMockBracket(
 		requiresCheckIn: false,
 		startTime: null,
 		simulatedMatch: () => undefined,
-		currentStandings: () => [],
+		liveStandings: mockLiveStandings(data),
 		participantTournamentTeamIds: [1, 2, 3, 4, 5, 6, 7, 8],
 	} as unknown as BracketType;
+}
+
+/** Mirrors what the real implementation returns for a bracket where no match has finished yet: every participant, in seed order, with blank stats. */
+function mockLiveStandings(data: BracketData) {
+	return data.group.flatMap((group) => {
+		const teamIds = new Set<number>();
+		for (const match of data.match) {
+			if (match.groupId !== group.id) continue;
+
+			if (match.opponent1?.id) teamIds.add(match.opponent1.id);
+			if (match.opponent2?.id) teamIds.add(match.opponent2.id);
+		}
+
+		return Array.from(teamIds)
+			.map((id) => mockTournament.ctx.teams.find((team) => team.id === id)!)
+			.filter(Boolean)
+			.sort((a, b) => a.seed - b.seed)
+			.map((team, i) => ({
+				team,
+				placement: i + 1,
+				groupId: group.id,
+				stats: {
+					setWins: 0,
+					setLosses: 0,
+					mapWins: 0,
+					mapLosses: 0,
+					koCount: 0,
+					winsAgainstTied: 0,
+					lossesAgainstTied: 0,
+				},
+			}));
+	});
 }
 
 function renderWithRouter(element: React.ReactNode) {

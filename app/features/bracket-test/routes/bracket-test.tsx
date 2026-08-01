@@ -88,7 +88,7 @@ export default function BracketTestLayout() {
 		requiresCheckIn: false,
 		startTime: null,
 		simulatedMatch: () => undefined,
-		currentStandings: () => [],
+		liveStandings: [],
 		participantTournamentTeamIds: teamIds,
 		everyMatchOver: false,
 		isUnderground: false,
