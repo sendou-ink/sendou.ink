@@ -95,6 +95,7 @@ function ImageExportDialogContent({
 		},
 	);
 	const [withQrCode, setWithQrCode] = React.useState(true);
+	const [isDownloading, setIsDownloading] = React.useState(false);
 	const frameRef = React.useRef<HTMLDivElement>(null);
 
 	const theme = themeSelection.startsWith("light") ? "light" : "dark";
@@ -105,20 +106,25 @@ function ImageExportDialogContent({
 	const handleDownload = async () => {
 		if (!frameRef.current) return;
 
-		const { snapdom } = await import("@zumer/snapdom");
+		setIsDownloading(true);
+		try {
+			const { snapdom } = await import("@zumer/snapdom");
 
-		const blob = await snapdom.toBlob(frameRef.current, {
-			type: "png",
-			quality: 1,
-			scale: EXPORT_SCALE,
-			// snapdom's own download helper forces this, without it the export size would vary by device
-			dpr: 1,
-			embedFonts: true,
-			// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
-			compress: false,
-		});
+			const blob = await snapdom.toBlob(frameRef.current, {
+				type: "png",
+				quality: 1,
+				scale: EXPORT_SCALE,
+				// snapdom's own download helper forces this, without it the export size would vary by device
+				dpr: 1,
+				embedFonts: true,
+				// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
+				compress: false,
+			});
 
-		await saveImage(blob, `${filename}.png`);
+			await saveImage(blob, `${filename}.png`);
+		} finally {
+			setIsDownloading(false);
+		}
 	};
 
 	return (
@@ -147,9 +153,12 @@ function ImageExportDialogContent({
 			<SendouButton
 				icon={<HardDriveDownload />}
 				onPress={handleDownload}
+				isDisabled={isDownloading}
 				className="mx-auto"
 			>
-				{t("common:imageExport.download")}
+				{isDownloading
+					? t("common:actions.loading")
+					: t("common:imageExport.download")}
 			</SendouButton>
 			<div className={styles.scroller}>
 				<div
