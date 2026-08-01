@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { Check, Clipboard, Dot, Trash2, TriangleAlert, X } from "lucide-react";
+import type { RenderStats } from "picocad2-web";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
@@ -41,6 +42,7 @@ import { action } from "../actions/trophies.new.server";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
 import {
 	analyzeTrophyModel,
+	mergePeakRenderStats,
 	type TrophyModelAnalysis,
 } from "../core/model-analysis";
 import {
@@ -356,8 +358,23 @@ function ModelField({
 }) {
 	const { t } = useTranslation(["forms", "trophies"]);
 	const [preview, setPreview] = React.useState(() => buildModelPreview(value));
+	const [peak, setPeak] = React.useState<{
+		model: string;
+		stats: RenderStats;
+	} | null>(null);
 
 	useDebounce(() => setPreview(buildModelPreview(value)), 500, [value]);
+
+	const reportRenderStats = (stats: RenderStats) => {
+		const model = preview.compressedModel;
+		setPeak((prev) => {
+			const previousStats = prev?.model === model ? prev.stats : null;
+			const merged = mergePeakRenderStats(previousStats, stats);
+			return merged === previousStats ? prev : { model, stats: merged };
+		});
+	};
+
+	const peakStats = peak?.model === preview.compressedModel ? peak.stats : null;
 
 	return (
 		<div>
@@ -404,13 +421,14 @@ function ModelField({
 								<Trophy
 									model={preview.compressedModel}
 									className={styles.trophyPreview}
+									onRenderStats={reportRenderStats}
 								/>
 							</div>
 						))}
 					</div>
 				</TrophyContextProvider>
 			) : null}
-			<ModelSpecs analysis={preview.analysis} />
+			<ModelSpecs analysis={preview.analysis} peakStats={peakStats} />
 		</div>
 	);
 }
@@ -424,13 +442,22 @@ function buildModelPreview(model: string) {
 	};
 }
 
-function ModelSpecs({ analysis }: { analysis: TrophyModelAnalysis | null }) {
+function ModelSpecs({
+	analysis,
+	peakStats,
+}: {
+	analysis: TrophyModelAnalysis | null;
+	peakStats: RenderStats | null;
+}) {
 	const { t } = useTranslation(["trophies"]);
 
 	const enforcedStatus = (passes: boolean) =>
 		analysis ? (passes ? "pass" : "fail") : null;
 	const recommendedStatus = (withinLimit: boolean) =>
 		analysis ? (withinLimit ? "pass" : "warn") : null;
+
+	const drawCalls = peakStats?.drawCalls ?? analysis?.drawCalls ?? 0;
+	const polyCount = peakStats?.polyCount ?? analysis?.polyCount ?? 0;
 
 	return (
 		<div className={styles.modelSpecs}>
@@ -459,13 +486,12 @@ function ModelSpecs({ analysis }: { analysis: TrophyModelAnalysis | null }) {
 				<ul className={styles.specList}>
 					<SpecItem
 						status={recommendedStatus(
-							!!analysis &&
-								analysis.drawCalls <= TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
+							drawCalls <= TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
 						)}
 						detail={
 							analysis
 								? t("trophies:new.specs.currentValue", {
-										value: analysis.drawCalls,
+										value: drawCalls,
 									})
 								: undefined
 						}
@@ -476,13 +502,12 @@ function ModelSpecs({ analysis }: { analysis: TrophyModelAnalysis | null }) {
 					</SpecItem>
 					<SpecItem
 						status={recommendedStatus(
-							!!analysis &&
-								analysis.polyCount <= TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
+							polyCount <= TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
 						)}
 						detail={
 							analysis
 								? t("trophies:new.specs.currentValue", {
-										value: analysis.polyCount,
+										value: polyCount,
 									})
 								: undefined
 						}
@@ -642,6 +667,13 @@ function TrophyListRow({
 		analyzeTrophyModel(decompressTrophyModel(pending.model) ?? ""),
 	);
 
+	const [peakStats, setPeakStats] = React.useState<RenderStats | null>(null);
+	const reportRenderStats = (stats: RenderStats) =>
+		setPeakStats((prev) => mergePeakRenderStats(prev, stats));
+
+	const drawCalls = peakStats?.drawCalls ?? analysis?.drawCalls ?? 0;
+	const polyCount = peakStats?.polyCount ?? analysis?.polyCount ?? 0;
+
 	return (
 		<div className={styles.pendingItem} data-testid="pending-trophy">
 			<button
@@ -657,7 +689,11 @@ function TrophyListRow({
 				onClose={() => setPreviewOpen(false)}
 				showCloseButton
 			>
-				<Trophy model={pending.model} className={styles.trophyPreview} />
+				<Trophy
+					model={pending.model}
+					className={styles.trophyPreview}
+					onRenderStats={reportRenderStats}
+				/>
 			</SendouDialog>
 			<div className={styles.pendingMain}>
 				<div className={styles.pendingHeader}>
@@ -709,21 +745,21 @@ function TrophyListRow({
 						<span
 							className={clsx({
 								[styles.pendingSpecsWarn]:
-									analysis.drawCalls > TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
+									drawCalls > TROPHY_MODEL_RECOMMENDED_MAX_DRAW_CALLS,
 							})}
 						>
 							{t("trophies:new.specs.stats.drawCalls", {
-								value: analysis.drawCalls,
+								value: drawCalls,
 							})}
 						</span>
 						<span
 							className={clsx({
 								[styles.pendingSpecsWarn]:
-									analysis.polyCount > TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
+									polyCount > TROPHY_MODEL_RECOMMENDED_MAX_POLYS,
 							})}
 						>
 							{t("trophies:new.specs.stats.polys", {
-								value: analysis.polyCount,
+								value: polyCount,
 							})}
 						</span>
 						<span

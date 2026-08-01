@@ -1,6 +1,10 @@
 import { clsx } from "clsx";
 import { Ban } from "lucide-react";
-import { PicoCAD2Context, PicoCAD2Viewer } from "picocad2-web";
+import {
+	PicoCAD2Context,
+	PicoCAD2Viewer,
+	type RenderStats,
+} from "picocad2-web";
 import {
 	createContext,
 	useCallback,
@@ -84,6 +88,7 @@ export function Trophy({
 	disableCameraControls,
 	staticOnSoftwareRendering,
 	pill,
+	onRenderStats,
 }: {
 	model: string;
 	className?: string;
@@ -94,6 +99,7 @@ export function Trophy({
 	disableCameraControls?: boolean;
 	staticOnSoftwareRendering?: boolean;
 	pill?: React.ReactNode;
+	onRenderStats?: (stats: RenderStats) => void;
 }) {
 	const ctxValue = useContext(TrophyCtx);
 	const context = ctxValue?.context;
@@ -101,6 +107,9 @@ export function Trophy({
 		ctxValue !== undefined && ctxValue.context === undefined;
 	const viewerRef = useRef<PicoCAD2Viewer | null>(null);
 	const [error, setError] = useState<boolean>(false);
+
+	const onRenderStatsRef = useRef(onRenderStats);
+	onRenderStatsRef.current = onRenderStats;
 
 	const prevModelRef = useRef(model);
 	if (prevModelRef.current !== model) {
@@ -149,6 +158,12 @@ export function Trophy({
 				viewer.draw();
 				viewer.dispose();
 				return;
+			}
+
+			if (context && onRenderStats) {
+				viewer.onFrame = () => {
+					onRenderStatsRef.current?.({ ...context.stats });
+				};
 			}
 
 			viewer.cameraMode = "spin";
