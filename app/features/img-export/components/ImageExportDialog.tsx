@@ -107,15 +107,18 @@ function ImageExportDialogContent({
 
 		const { snapdom } = await import("@zumer/snapdom");
 
-		await snapdom.download(frameRef.current, {
+		const blob = await snapdom.toBlob(frameRef.current, {
 			type: "png",
-			filename,
 			quality: 1,
 			scale: EXPORT_SCALE,
+			// snapdom's own download helper forces this, without it the export size would vary by device
+			dpr: 1,
 			embedFonts: true,
 			// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
 			compress: false,
 		});
+
+		await saveImage(blob, `${filename}.png`);
 	};
 
 	return (
@@ -165,6 +168,30 @@ function ImageExportDialogContent({
 			</div>
 		</div>
 	);
+}
+
+/** Shares the image if the platform supports it (iOS), otherwise downloads it */
+async function saveImage(blob: Blob, filename: string) {
+	const file = new File([blob], filename, { type: blob.type });
+
+	if (navigator.canShare?.({ files: [file] })) {
+		try {
+			await navigator.share({ files: [file], title: filename });
+			return;
+		} catch (e) {
+			if (e instanceof Error && e.name === "AbortError") return;
+		}
+	}
+
+	// a blob url is used over a data url because iOS Safari fails to save big data urls
+	const url = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = filename;
+	document.body.appendChild(anchor);
+	anchor.click();
+	anchor.remove();
+	URL.revokeObjectURL(url);
 }
 
 function usePageHasCustomTheme() {
