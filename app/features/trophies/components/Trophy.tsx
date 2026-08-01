@@ -153,6 +153,7 @@ export function Trophy({
 
 			viewer.cameraMode = "spin";
 			viewer.cameraModeSpeed = 5;
+			viewer.animation.setTime(0);
 			viewer.startRenderLoop(false);
 
 			if (disableCameraControls) return;
