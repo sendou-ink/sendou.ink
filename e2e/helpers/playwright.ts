@@ -24,6 +24,25 @@ export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 500;
 export const MOBILE_VIEWPORT = { width: 375, height: 667 };
 export const TABLET_VIEWPORT = { width: 768, height: 1024 };
 
+/** Registered (>=1024) ports on the WHATWG fetch bad port list: Node's fetch
+ * fails on them with "bad port" and Chromium with ERR_UNSAFE_PORT, so no worker
+ * server may listen on one (e.g. base port 6673 would put worker 6 on 6679). */
+const UNSAFE_PORTS = new Set([
+	1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 5432, 5500, 5938, 6000,
+	6566, 6665, 6666, 6667, 6668, 6669, 6679, 6697, 10080,
+]);
+
+/** The port of the given worker's server: base port + index, skipping unsafe ports. */
+export function e2eWorkerPort(workerIndex: number) {
+	let port = E2E_BASE_PORT - 1;
+	for (let i = 0; i <= workerIndex; i++) {
+		do {
+			port++;
+		} while (UNSAFE_PORTS.has(port));
+	}
+	return port;
+}
+
 type WorkerFixtures = {
 	workerPort: number;
 	workerBaseURL: string;
@@ -49,7 +68,7 @@ export const test = base.extend<TestFixtures, WorkerFixtures>({
 	workerPort: [
 		// biome-ignore lint/correctness/noEmptyPattern: Playwright requires object destructuring
 		async ({}, use, workerInfo) => {
-			const port = E2E_BASE_PORT + workerInfo.parallelIndex;
+			const port = e2eWorkerPort(workerInfo.parallelIndex);
 			await use(port);
 		},
 		{ scope: "worker" },

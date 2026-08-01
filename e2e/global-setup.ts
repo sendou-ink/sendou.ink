@@ -2,7 +2,7 @@ import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
 import { ensureMigratedDb } from "../scripts/ensure-test-db";
-import { E2E_BASE_PORT } from "./helpers/playwright";
+import { E2E_BASE_PORT, e2eWorkerPort } from "./helpers/playwright";
 
 const DEBUG = process.env.E2E_DEBUG === "true";
 const SERVER_PROCESSES: ChildProcess[] = [];
@@ -182,12 +182,13 @@ async function globalSetup(config: FullConfig) {
 	// Prepare databases and start servers for each worker
 	const serverPromises: Promise<void>[] = [];
 
-	// Kill any existing processes on our ports before starting
+	// Kill any existing processes on our ports before starting; sweep beyond the
+	// current worker count so leftovers from a run with more workers also die
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("Cleaning up any existing processes on e2e ports...");
 	const killedSomething = killProcessesOnPorts(
 		E2E_BASE_PORT,
-		E2E_BASE_PORT + workerCount - 1,
+		e2eWorkerPort(Math.max(workerCount, 8) - 1),
 	);
 	if (killedSomething) {
 		// Wait briefly for ports to be released
@@ -195,7 +196,7 @@ async function globalSetup(config: FullConfig) {
 	}
 
 	for (let i = 0; i < workerCount; i++) {
-		const port = E2E_BASE_PORT + i;
+		const port = e2eWorkerPort(i);
 		const dbPath = `db-test-e2e-${i}.sqlite3`;
 
 		ensureMigratedDb(dbPath);
@@ -255,11 +256,12 @@ async function globalSetup(config: FullConfig) {
 		);
 	}
 
+	// Store server processes globally for teardown before awaiting readiness so
+	// a failed startup still gets every already-spawned server cleaned up
+	global.__E2E_SERVERS__ = SERVER_PROCESSES;
+
 	// Wait for all servers to be ready
 	await Promise.all(serverPromises);
-
-	// Store server processes globally for teardown
-	global.__E2E_SERVERS__ = SERVER_PROCESSES;
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("\nAll servers started successfully!\n");

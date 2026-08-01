@@ -10,7 +10,7 @@ description: Run, debug, and manage Playwright e2e tests. Use when running e2e t
 - Tests live in `e2e/*.spec.ts`, config in `playwright.config.ts`
 - Page objects live in `e2e/pages/<feature>/` — every spec uses them; conventions in `docs/dev/e2e-page-objects.md`, gotchas in `docs/dev/e2e-page-objects-migration.md`
 - Global setup (`e2e/global-setup.ts`) builds the app (skipped when no build input changed since the last e2e build — tracked via `.e2e-build-marker`), creates/migrates per-worker databases (via `scripts/ensure-test-db.ts`: pending migrations are applied, drifted databases are rebuilt), and starts one server per worker
-- Port calculation: `E2E_BASE_PORT = PORT (from .env) + 500`. Default PORT is typically 4001, so base port = 4501. Worker N uses port base+N
+- Port calculation: `E2E_BASE_PORT = PORT (from .env) + 500`. Worker N uses port base+N, except ports on the WHATWG fetch bad port list (e.g. 6679) are skipped — see `e2eWorkerPort` in `e2e/helpers/playwright.ts`
 - Worker count: `E2E_WORKERS` env, defaulting to `min(8, max(4, cores - 2))`
 - Worker databases: `db-test-e2e-<N>.sqlite3` in the project root; every test starts from a wiped database holding only the admin (Sendou) and N-ZAP users, and builds its own data with the `factories` fixture
 - MinIO (S3-compatible storage) is started via Docker Compose if not already running
