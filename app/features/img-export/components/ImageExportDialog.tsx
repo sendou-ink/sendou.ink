@@ -1,4 +1,4 @@
-import { HardDriveDownload } from "lucide-react";
+import { HardDriveDownload, Share2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useMatches } from "react-router";
@@ -15,6 +15,8 @@ import { GraphicQrCodeContext } from "./Graphic";
 import styles from "./ImageExportDialog.module.css";
 
 const EXPORT_SCALE = 1.75;
+
+const COARSE_POINTER_QUERY = "(pointer: coarse)";
 
 type ThemeSelection = "light" | "dark" | "light-custom" | "dark-custom";
 
@@ -87,6 +89,7 @@ function ImageExportDialogContent({
 	const { htmlThemeClass } = useTheme();
 	const location = useLocation();
 	const pageHasCustomTheme = usePageHasCustomTheme();
+	const isMobile = useIsMobile();
 	const [themeSelection, setThemeSelection] = React.useState<ThemeSelection>(
 		() => {
 			const mode = htmlThemeClass === "light" ? "light" : "dark";
@@ -103,7 +106,28 @@ function ImageExportDialogContent({
 
 	const qrCodeUrl = `${SENDOU_INK_BASE_URL}${qrCodePath ?? `${location.pathname}${location.search}`}`;
 
-	const handleDownload = async () => {
+	// snapdom re-downloads every image at export time rather than reusing what the preview
+	// already painted, and silently drops any that fails. Warming them while the preview sits
+	// idle keeps those fetches from racing the capture's own work for the main thread.
+	// Runs after every render because settings can mount images that were not there before
+	// (e.g. the build export's ability chunks); re-running once everything is cached is ~7ms.
+	React.useEffect(() => {
+		if (isDownloading) return;
+
+		let cancelled = false;
+
+		import("@zumer/snapdom").then(({ preCache }) => {
+			if (cancelled || !frameRef.current) return;
+
+			preCache(frameRef.current).catch(() => {});
+		});
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	const handleExport = async () => {
 		if (!frameRef.current) return;
 
 		setIsDownloading(true);
@@ -119,9 +143,13 @@ function ImageExportDialogContent({
 				embedFonts: true,
 				// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
 				compress: false,
+				// names ending in a glyph outside the graphic's font (emoji, Greek, ...) get measured with
+				// one fallback font in the page and another when rasterized, so a box frozen to its exact
+				// text width ends up an ellipsis short. This re-measures the clone and pins diverging boxes
+				reconcile: true,
 			});
 
-			await saveImage(blob, `${filename}.png`);
+			await saveImage(blob, `${filename}.png`, { canShare: isMobile });
 		} finally {
 			setIsDownloading(false);
 		}
@@ -151,14 +179,16 @@ function ImageExportDialogContent({
 				{settings}
 			</div>
 			<SendouButton
-				icon={<HardDriveDownload />}
-				onPress={handleDownload}
+				icon={isMobile ? <Share2 /> : <HardDriveDownload />}
+				onPress={handleExport}
 				isDisabled={isDownloading}
 				className="mx-auto"
 			>
 				{isDownloading
 					? t("common:actions.loading")
-					: t("common:imageExport.download")}
+					: isMobile
+						? t("common:actions.share")
+						: t("common:imageExport.download")}
 			</SendouButton>
 			<div className={styles.scroller}>
 				<div
@@ -179,11 +209,18 @@ function ImageExportDialogContent({
 	);
 }
 
-/** Shares the image if the platform supports it (iOS), otherwise downloads it */
-async function saveImage(blob: Blob, filename: string) {
+/**
+ * Opens the share sheet when sharing is allowed (mobile) and the platform supports it,
+ * otherwise downloads the image
+ */
+async function saveImage(
+	blob: Blob,
+	filename: string,
+	{ canShare }: { canShare: boolean },
+) {
 	const file = new File([blob], filename, { type: blob.type });
 
-	if (navigator.canShare?.({ files: [file] })) {
+	if (canShare && navigator.canShare?.({ files: [file] })) {
 		try {
 			await navigator.share({ files: [file], title: filename });
 			return;
@@ -201,6 +238,20 @@ async function saveImage(blob: Blob, filename: string) {
 	anchor.click();
 	anchor.remove();
 	URL.revokeObjectURL(url);
+}
+
+function subscribeToPointerQuery(callback: () => void) {
+	const mediaQueryList = window.matchMedia(COARSE_POINTER_QUERY);
+	mediaQueryList.addEventListener("change", callback);
+	return () => mediaQueryList.removeEventListener("change", callback);
+}
+
+function useIsMobile() {
+	return React.useSyncExternalStore(
+		subscribeToPointerQuery,
+		() => window.matchMedia(COARSE_POINTER_QUERY).matches,
+		() => false,
+	);
 }
 
 function usePageHasCustomTheme() {

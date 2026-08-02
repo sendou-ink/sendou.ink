@@ -256,6 +256,8 @@
 }
 
 .mateNameText {
+	/* claims .mateName's free space, see .headerTitle */
+	flex: 1 1 auto;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
