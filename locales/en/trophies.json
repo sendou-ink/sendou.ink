@@ -13,6 +13,7 @@
 	"display.viewTrophyPage": "View trophy page",
 	"special.supporter.description": "Awarded for supporting sendou.ink",
 	"special.xp.description": "Awarded for reaching {{value}} X Power",
+	"new.form.creatorNotice": "The user who uploads a trophy is registered as its creator. This can not be changed. If you commissioned a trophy from someone and they want to be listed as its creator, they have to upload it themselves.",
 	"new.form.limitReached": "You have reached the limit of {{limit}} pending trophies. Delete or wait for an existing submission to be reviewed before submitting another.",
 	"new.form.preview.light": "Light mode",
 	"new.form.preview.dark": "Dark mode",
