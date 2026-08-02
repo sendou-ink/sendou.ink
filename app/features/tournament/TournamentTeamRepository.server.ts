@@ -321,7 +321,8 @@ export function upsertRegistration({
 							?.inGameName ??
 						(await resolveInGameName({ tournamentId, userId }, trx)),
 					isSub,
-					...(isOwner ? { role: "OWNER" as const } : {}),
+					// every row needs the same keys, otherwise Kysely inserts null for the missing ones
+					role: isOwner ? "OWNER" : "REGULAR",
 				});
 			}
 
