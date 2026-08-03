@@ -147,6 +147,7 @@ function extractSerializedPool(input: string): string | null {
 	if (trimmed.includes("://")) {
 		try {
 			const url = new URL(trimmed);
+			// biome-ignore lint/plugin: URL pasted by the user, not one this app routed to
 			return url.searchParams.get("pool");
 		} catch {
 			return null;

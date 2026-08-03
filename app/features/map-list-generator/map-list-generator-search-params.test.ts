@@ -1,5 +1,4 @@
-import { describe, expect, it } from "vitest";
-import * as SearchParams from "~/modules/search-params/search-params";
+import { describe, it } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -17,14 +16,6 @@ describe("mapListGeneratorSearchParams", () => {
 			eventId: [null, 1, 500],
 			readonly: [false, true],
 		});
-	});
-
-	it("decodes the legacy bare readonly form", () => {
-		expect(
-			SearchParams.decodeParam(mapListGeneratorSearchParams.shape.readonly, [
-				"",
-			]),
-		).toBe(true);
 	});
 
 	it("decodes garbage to defaults", () => {

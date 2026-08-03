@@ -23,6 +23,7 @@ import { authSessionStorage } from "./session.server";
 import { getUser } from "./user.server";
 
 export const callbackLoader: LoaderFunction = async ({ request, url }) => {
+	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
 	if (url.searchParams.get("error") === "access_denied") {
 		// The user denied the authentication request
 		// https://www.oauth.com/oauth2-servers/server-side-apps/possible-errors/
@@ -78,6 +79,7 @@ export const impersonateAction: ActionFunction = async ({ request, url }) => {
 		}
 
 		if (user.roles.includes("DEV") && !user.roles.includes("ADMIN")) {
+			// biome-ignore lint/plugin: a missing or malformed `id` must 400, not fall back to a default
 			const targetId = Number(url.searchParams.get("id"));
 			if (isAdmin({ id: targetId }) || isStaff({ id: targetId })) {
 				throw new Response("Forbidden", { status: 403 });
@@ -93,9 +95,11 @@ export const impersonateAction: ActionFunction = async ({ request, url }) => {
 
 	const realUserId = session.get(SESSION_KEY);
 
+	// biome-ignore-start lint/plugin: a missing or malformed `id` must 400, not fall back to a default
 	const rawId = url.searchParams.get("id");
 
 	const userId = Number(url.searchParams.get("id"));
+	// biome-ignore-end lint/plugin: a missing or malformed `id` must 400, not fall back to a default
 	if (!rawId || Number.isNaN(userId)) throw new Response(null, { status: 400 });
 
 	logger.info(

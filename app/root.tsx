@@ -98,6 +98,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const json = args.json as Record<string, unknown> | undefined;
 	if (json?.revalidateRoot === true) return true;
 
+	// biome-ignore lint/plugin: presence check only, before any route's definition has parsed the URL
 	if (args.nextUrl.searchParams.has("lng")) return true;
 
 	return false;
@@ -270,6 +271,7 @@ function useExternalAwareHref(href: string) {
 }
 
 function useTriggerToasts() {
+	// biome-ignore lint/plugin: app-wide toast params written by server redirects, belonging to no one feature
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 

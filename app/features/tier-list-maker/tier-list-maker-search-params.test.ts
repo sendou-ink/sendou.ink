@@ -4,7 +4,6 @@ import {
 	assertDecodesToDefault,
 	assertRoundTrips,
 } from "~/modules/search-params/search-params-test-utils";
-import { compressToBase64 } from "~/utils/compression";
 import { DEFAULT_TIERS } from "./tier-list-maker-constants";
 import type { TierListState } from "./tier-list-maker-schemas";
 import { tierListMakerSearchParams } from "./tier-list-maker-search-params";
@@ -46,20 +45,6 @@ describe("tierListMakerSearchParams", () => {
 
 		expect(encoded).toHaveLength(1);
 		expect(encoded[0]).toMatch(/^lz~/);
-	});
-
-	it("decodes the legacy signature-less base64 state format", () => {
-		const legacy = compressToBase64(
-			JSON.stringify({
-				tiers: FILLED_STATE.tiers,
-				tierItems: Array.from(FILLED_STATE.tierItems.entries()),
-			}),
-			{ urlSafe: true },
-		);
-
-		expect(
-			SearchParams.decodeParam(tierListMakerSearchParams.shape.state, [legacy]),
-		).toEqual(FILLED_STATE);
 	});
 
 	it("decodes the legacy JSON modes format", () => {

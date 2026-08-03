@@ -112,3 +112,9 @@ export const shouldRevalidate = buildsSearchParams.shouldRevalidate;
 ```
 
 Submissions, revalidator calls, pathname changes and unknown-param changes defer to the router default.
+
+## Enforcement
+
+The `no-raw-search-params` Biome plugin fails the lint on `useSearchParams()` and on `…searchParams.get/getAll/has(…)` anywhere in `app/` outside this module.
+
+The escape hatch is `// biome-ignore lint/plugin: <reason>`, for the cases the convention genuinely does not cover: URLs this app did not route to (an OAuth provider's callback params, a URL pasted by a user), and reads where the total-decoding guarantee is wrong — a param whose absence must fail the request rather than resolve to a default.

@@ -47,8 +47,7 @@
 ## Search params
 
 - all URL search param handling goes through `app/modules/search-params/`, see [search-params.md](./docs/dev/search-params.md) for the conventions
-// xxx: biome plugin to check for that?
-- never use raw `useSearchParams` or `searchParams.get()`; declare params once per feature in a `<feature>-search-params.ts` definition (every param has a default, decode never fails)
+- never use raw `useSearchParams` or `searchParams.get()`; declare params once per feature in a `<feature>-search-params.ts` definition (every param has a default, decode never fails). Enforced by the `no-raw-search-params` Biome plugin
 - every definition gets a round-trip test via `assertRoundTrips`
 
 ## Styling
