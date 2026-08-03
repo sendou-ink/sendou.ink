@@ -7,6 +7,7 @@ import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
 import { FastParseJSONResultsPlugin } from "./parse-json-results-plugin";
 import type { DB } from "./tables";
 import { WriteTrackerPlugin } from "./write-tracker";
@@ -46,7 +47,11 @@ export const db = new Kysely<DB>({
 		database: sql,
 	}),
 	log,
-	plugins: [new FastParseJSONResultsPlugin(), new WriteTrackerPlugin()],
+	plugins: [
+		new EmptyValuesNoopPlugin(),
+		new FastParseJSONResultsPlugin(),
+		new WriteTrackerPlugin(),
+	],
 });
 
 // The test database file is created and migrated by scripts/ensure-test-db.ts

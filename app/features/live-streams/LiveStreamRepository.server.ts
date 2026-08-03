@@ -7,9 +7,7 @@ export function replaceAll(streams: Omit<Tables["LiveStream"], "id">[]) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("LiveStream").execute();
 
-		if (streams.length > 0) {
-			await trx.insertInto("LiveStream").values(streams).execute();
-		}
+		await trx.insertInto("LiveStream").values(streams).execute();
 	});
 }
 
@@ -21,8 +19,6 @@ export function replaceAll(streams: Omit<Tables["LiveStream"], "id">[]) {
 export function insertTournamentStreamers(
 	rows: Omit<Tables["TournamentStreamer"], "id">[],
 ) {
-	if (rows.length === 0) return Promise.resolve([]);
-
 	return db
 		.insertInto("TournamentStreamer")
 		.values(rows)

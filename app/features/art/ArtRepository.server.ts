@@ -357,12 +357,10 @@ export async function insert(args: InsertArtArgs) {
 			.returningAll()
 			.executeTakeFirstOrThrow();
 
-		if (args.linkedUsers.length > 0) {
-			await trx
-				.insertInto("ArtUserMetadata")
-				.values(args.linkedUsers.map((userId) => ({ artId: art.id, userId })))
-				.execute();
-		}
+		await trx
+			.insertInto("ArtUserMetadata")
+			.values(args.linkedUsers.map((userId) => ({ artId: art.id, userId })))
+			.execute();
 
 		await insertTags({ tags: args.tags, authorId, artId: art.id }, trx);
 
@@ -402,12 +400,10 @@ export async function update(id: number, args: UpdateArtArgs) {
 
 		await trx.deleteFrom("ArtUserMetadata").where("artId", "=", id).execute();
 
-		if (args.linkedUsers.length > 0) {
-			await trx
-				.insertInto("ArtUserMetadata")
-				.values(args.linkedUsers.map((userId) => ({ artId: id, userId })))
-				.execute();
-		}
+		await trx
+			.insertInto("ArtUserMetadata")
+			.values(args.linkedUsers.map((userId) => ({ artId: id, userId })))
+			.execute();
 
 		await trx.deleteFrom("TaggedArt").where("artId", "=", id).execute();
 
@@ -429,8 +425,6 @@ async function insertTags(
 	},
 	trx: Transaction<DB>,
 ) {
-	if (tags.length === 0) return;
-
 	const newTagNames = tags
 		.filter((tag) => !tag.id)
 		.map((tag) => {
@@ -440,16 +434,13 @@ async function insertTags(
 			return tag.name;
 		});
 
-	const newTagIds =
-		newTagNames.length > 0
-			? (
-					await trx
-						.insertInto("ArtTag")
-						.values(newTagNames.map((name) => ({ name, authorId })))
-						.returning("ArtTag.id")
-						.execute()
-				).map((tag) => tag.id)
-			: [];
+	const newTagIds = (
+		await trx
+			.insertInto("ArtTag")
+			.values(newTagNames.map((name) => ({ name, authorId })))
+			.returning("ArtTag.id")
+			.execute()
+	).map((tag) => tag.id);
 
 	const tagIds = [
 		...tags.flatMap((tag) => (tag.id ? [tag.id] : [])),

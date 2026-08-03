@@ -566,21 +566,19 @@ export async function closeExpiredContinueVotes() {
 				)
 				.execute();
 
-			if (members.length > 0) {
-				await trx
-					.insertInto("GroupMatchContinueVote")
-					.values(
-						members.map((member) => ({
-							groupId: member.groupId,
-							userId: member.userId,
-							isContinuing: 0 as const,
-						})),
-					)
-					.onConflict((oc) =>
-						oc.columns(["groupId", "userId"]).doUpdateSet({ isContinuing: 0 }),
-					)
-					.execute();
-			}
+			await trx
+				.insertInto("GroupMatchContinueVote")
+				.values(
+					members.map((member) => ({
+						groupId: member.groupId,
+						userId: member.userId,
+						isContinuing: 0 as const,
+					})),
+				)
+				.onConflict((oc) =>
+					oc.columns(["groupId", "userId"]).doUpdateSet({ isContinuing: 0 }),
+				)
+				.execute();
 		}
 
 		return {

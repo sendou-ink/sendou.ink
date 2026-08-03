@@ -36,8 +36,6 @@ export function findVodsByTournamentId(tournamentId: number) {
 }
 
 export function insertMany(vods: Omit<Tables["TournamentMatchVod"], "id">[]) {
-	if (vods.length === 0) return;
-
 	return db
 		.insertInto("TournamentMatchVod")
 		.values(vods)

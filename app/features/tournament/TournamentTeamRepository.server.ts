@@ -531,17 +531,15 @@ export function copyFromAnotherTournament({
 			)
 			.execute();
 
-		if (oldMapPool.length > 0) {
-			await trx
-				.insertInto("MapPoolMap")
-				.values(
-					oldMapPool.map((mapPoolMap) => ({
-						...mapPoolMap,
-						tournamentTeamId: newTeam.id,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("MapPoolMap")
+			.values(
+				oldMapPool.map((mapPoolMap) => ({
+					...mapPoolMap,
+					tournamentTeamId: newTeam.id,
+				})),
+			)
+			.execute();
 	});
 }
 
@@ -893,18 +891,16 @@ export function upsertCounterpickMaps({
 			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
 			.execute();
 
-		if (mapPool.stageModePairs.length > 0) {
-			await trx
-				.insertInto("MapPoolMap")
-				.values(
-					mapPool.stageModePairs.map(({ stageId, mode }) => ({
-						tournamentTeamId,
-						stageId,
-						mode,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("MapPoolMap")
+			.values(
+				mapPool.stageModePairs.map(({ stageId, mode }) => ({
+					tournamentTeamId,
+					stageId,
+					mode,
+				})),
+			)
+			.execute();
 	});
 }
 

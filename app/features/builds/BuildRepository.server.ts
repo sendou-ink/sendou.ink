@@ -546,10 +546,8 @@ async function insertBuildChildren(
 				abilityPoints,
 			})),
 		);
-	if (weaponAbilityRows.length > 0) {
-		await trx
-			.insertInto("BuildWeaponAbility")
-			.values(weaponAbilityRows)
-			.execute();
-	}
+	await trx
+		.insertInto("BuildWeaponAbility")
+		.values(weaponAbilityRows)
+		.execute();
 }

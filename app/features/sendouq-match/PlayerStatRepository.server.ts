@@ -26,8 +26,6 @@ export function upsertMapResults(
 	>[],
 	trx?: Transaction<DB>,
 ) {
-	if (results.length === 0) return;
-
 	const executor = trx ?? db;
 
 	return executor
@@ -418,8 +416,6 @@ export function upsertPlayerResults(
 	results: Tables["PlayerResult"][],
 	trx?: Transaction<DB>,
 ) {
-	if (results.length === 0) return;
-
 	const executor = trx ?? db;
 
 	return executor

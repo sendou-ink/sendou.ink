@@ -605,8 +605,6 @@ async function replaceSpecialTrophyOwners({
 	}
 	await deleteStale.execute();
 
-	if (userIds.length === 0) return;
-
 	await trx
 		.insertInto("SpecialTrophyOwner")
 		.values(

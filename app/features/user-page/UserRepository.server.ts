@@ -294,8 +294,6 @@ export async function upsertWidgets(
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
 
-		if (widgets.length === 0) return;
-
 		await trx
 			.insertInto("UserWidget")
 			.values(
@@ -1106,19 +1104,17 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				.execute();
 		}
 
-		if (args.weapons.length > 0) {
-			await trx
-				.insertInto("UserWeapon")
-				.values(
-					args.weapons.map((weapon, i) => ({
-						userId,
-						weaponSplId: weapon.weaponSplId,
-						isFavorite: weapon.isFavorite ?? 0,
-						order: i + 1,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("UserWeapon")
+			.values(
+				args.weapons.map((weapon, i) => ({
+					userId,
+					weaponSplId: weapon.weaponSplId,
+					isFavorite: weapon.isFavorite ?? 0,
+					order: i + 1,
+				})),
+			)
+			.execute();
 
 		return trx
 			.updateTable("User")
@@ -1220,17 +1216,15 @@ export function updateOwnResultHighlights(args: UpdateResultHighlightsArgs) {
 			.where("userId", "=", userId)
 			.execute();
 
-		if (args.resultTeamIds.length > 0) {
-			await trx
-				.insertInto("UserResultHighlight")
-				.values(
-					args.resultTeamIds.map((teamId) => ({
-						userId,
-						teamId,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("UserResultHighlight")
+			.values(
+				args.resultTeamIds.map((teamId) => ({
+					userId,
+					teamId,
+				})),
+			)
+			.execute();
 
 		await trx
 			.updateTable("TournamentResult")

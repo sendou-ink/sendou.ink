@@ -45,9 +45,7 @@ export async function replaceByMatchId(
 		.where("groupMatchId", "=", matchId)
 		.execute();
 
-	if (weapons.length > 0) {
-		await executor.insertInto("ReportedWeapon").values(weapons).execute();
-	}
+	await executor.insertInto("ReportedWeapon").values(weapons).execute();
 }
 
 export async function deleteOwnByMapIndex({
