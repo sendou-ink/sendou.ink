@@ -67,6 +67,27 @@ export class TournamentBracketsPage {
 		return this.match(matchId).locator("..").getByTestId("bracket-match-timer");
 	}
 
+	/** Team names of the bracket's first round in bracket order, top to bottom;
+	 * two slots per match, a BYE slot reading as an empty string. */
+	async firstRoundTeamNames(teamCount: number): Promise<string[]> {
+		const names = this.locators.bracketsViewer
+			.locator("[data-round-id]")
+			.first()
+			.getByTestId("match-team-name");
+		await expect(names).toHaveCount(teamCount);
+		return names.allTextContents();
+	}
+
+	/** Team names of every group's standings table, in placement order per group. */
+	async groupStandingsTeamNames(groupCount: number): Promise<string[][]> {
+		await expect(this.locators.rrStandingsTables).toHaveCount(groupCount);
+		const result: string[][] = [];
+		for (const table of await this.locators.rrStandingsTables.all()) {
+			result.push(await table.locator("td:first-child a").allTextContents());
+		}
+		return result;
+	}
+
 	participantInRound(roundId: number, tournamentTeamId: number) {
 		return this.page.locator(
 			`[data-round-id="${roundId}"] [data-participant-id="${tournamentTeamId}"]`,

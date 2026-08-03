@@ -306,6 +306,7 @@ function MatchRow({
 					[styles.matchTeamNameNarrowest]: showAvatar && isBigSeedNumber,
 					invisible: !team,
 				})}
+				data-testid="match-team-name"
 			>
 				{displayedName}
 			</div>{" "}

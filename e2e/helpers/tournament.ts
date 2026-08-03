@@ -47,6 +47,24 @@ export const RR_TO_SE: BracketProgression = [
 	},
 ];
 
+/** With 16 teams: 4 round robin groups of 4 where every team advances to a 16 team
+ * single elimination — the format shape of GitHub issue #2607. */
+export const RR_TOP_4_TO_SE: BracketProgression = [
+	{
+		type: "round_robin",
+		name: "Groups stage",
+		requiresCheckIn: false,
+		settings: {},
+	},
+	{
+		type: "single_elimination",
+		name: "Final stage",
+		requiresCheckIn: false,
+		settings: { thirdPlaceMatch: false },
+		sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
+	},
+];
+
 export const RR_TO_SE_WITH_UNDERGROUND: BracketProgression = [
 	...RR_TO_SE,
 	{
