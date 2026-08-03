@@ -130,14 +130,29 @@ export class SendouQMatchPage {
 		});
 	}
 
-	async requestCancel() {
+	async requestCancel({ reason }: { reason: string }) {
 		await this.locators.requestCancelButton.click();
-		await this.confirmDialog();
+		await this.submitCancelDialog(reason);
 	}
 
-	async respondToCancel(response: "Accept" | "Refuse") {
+	async refuseCancel() {
 		await waitForPOSTResponse(this.page, async () => {
-			await this.page.getByRole("button", { name: response }).click();
+			await this.page.getByRole("button", { name: "Refuse" }).click();
+		});
+	}
+
+	async acceptCancel({ reason }: { reason: string }) {
+		await this.page.getByRole("button", { name: "Accept" }).click();
+		await this.submitCancelDialog(reason);
+	}
+
+	/** Nominates the first listed player, fills the reason and submits the cancel dialog. */
+	private async submitCancelDialog(reason: string) {
+		const dialog = this.page.getByRole("dialog");
+		await dialog.getByRole("checkbox").first().check();
+		await dialog.getByLabel("Reason").fill(reason);
+		await waitForPOSTResponse(this.page, async () => {
+			await dialog.getByTestId("cancel-match-submit").click();
 		});
 	}
 

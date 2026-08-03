@@ -2,6 +2,7 @@ import { db } from "~/db/sql";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import invariant from "~/utils/invariant";
+import { actAs } from "../core/actAs";
 import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import * as SplatoonFaker from "../core/SplatoonFaker";
@@ -19,10 +20,24 @@ type InsertArgs = Omit<
 	isMatchmade?: boolean;
 };
 
+type Group = Awaited<ReturnType<typeof SQGroupFactory.create>>;
+
+/** One team's account of why the match was canceled. */
+type CancelReport = {
+	reason: string;
+	/** Players of either team nominated as a cause of the cancellation. */
+	nominatedUserIds: number[];
+};
+
 type Options = {
 	/** Play the match out, alpha winning every map, up to both teams having agreed
 	 * on the score. Leaves both groups inactive, as a real concluded match does. */
 	isConcluded?: boolean;
+	/** Cancel the match the way the two teams do: alpha's owner requests the
+	 * cancellation and bravo's owner accepts it, each giving their own account. */
+	cancel?: { requested: CancelReport; accepted: CancelReport };
+	/** Cancel the match the way staff does, leaving neither team an account of it. */
+	canceledByStaffUserId?: number;
 	/** Play the match out, alpha winning every map, and report the score as alpha —
 	 * leaving bravo still to confirm it. Alpha's group goes inactive, as reporting
 	 * makes it, so its members are free to queue again. */
@@ -71,7 +86,14 @@ export const { create } = defineFactory({
 	},
 	applyOptions: async (
 		match,
-		{ isConcluded, isReported, createdAt, confirmedAt }: Options,
+		{
+			isConcluded,
+			isReported,
+			cancel,
+			canceledByStaffUserId,
+			createdAt,
+			confirmedAt,
+		}: Options,
 	) => {
 		if (isConcluded) {
 			await playOutMatch(match.id);
@@ -79,6 +101,14 @@ export const { create } = defineFactory({
 
 		if (isReported) {
 			await reportMatch(match.id);
+		}
+
+		if (cancel) {
+			await cancelMatch(match, cancel);
+		}
+
+		if (canceledByStaffUserId) {
+			await cancelMatchAsStaff(match.id, canceledByStaffUserId);
 		}
 
 		await backdate("GroupMatch", match.id, { createdAt, confirmedAt });
@@ -101,6 +131,44 @@ async function backdateSkills(matchId: number, createdAt: Date) {
 	for (const skill of skills) {
 		await backdate("Skill", skill.id, { createdAt });
 	}
+}
+
+async function cancelMatch(
+	match: { id: number; alphaGroup: Group; bravoGroup: Group },
+	{ requested, accepted }: { requested: CancelReport; accepted: CancelReport },
+) {
+	const request = await SQMatchRepository.requestCancelMatch({
+		matchId: match.id,
+		requestedByUserId: match.alphaGroup.ownerUserId,
+		...requested,
+	});
+
+	invariant(
+		request.status === "REQUESTED",
+		`Requesting the cancellation resulted in ${request.status}`,
+	);
+
+	const acceptance = await SQMatchRepository.acceptCancelMatch({
+		matchId: match.id,
+		acceptedByUserId: match.bravoGroup.ownerUserId,
+		...accepted,
+	});
+
+	invariant(
+		acceptance.status === "ACCEPTED",
+		`Accepting the cancellation resulted in ${acceptance.status}`,
+	);
+}
+
+async function cancelMatchAsStaff(matchId: number, staffUserId: number) {
+	const result = await actAs(staffUserId, () =>
+		SQMatchRepository.cancelMatch({ matchId, isAdminReport: true }),
+	);
+
+	invariant(
+		result.status === "CANCEL_CONFIRMED",
+		`Canceling the match as staff resulted in ${result.status}`,
+	);
 }
 
 async function playOutMatch(matchId: number) {
