@@ -189,10 +189,28 @@ describe("round robin standings", () => {
 		}
 	});
 
-	it("has ascending order from lower group id to higher group id for same placements", () => {
+	it("breaks same placement ties across groups by effective seed (own seed or best seed beaten)", () => {
 		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
+		const bracket = tournamentPP255.bracketByIdx(0)!;
 
-		const standings = tournamentPP255.bracketByIdx(0)!.standings;
+		const standings = bracket.standings;
+
+		const effectiveSeed = (tournamentTeamId: number) => {
+			let best = tournamentPP255.teamById(tournamentTeamId)!.seed!;
+			for (const match of bracket.data.match) {
+				if (!match.winnerSide) continue;
+
+				const winner =
+					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
+				const loser =
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+				if (winner?.id !== tournamentTeamId || !loser?.id) continue;
+
+				const loserSeed = tournamentPP255.teamById(loser.id)!.seed!;
+				best = Math.min(best, loserSeed);
+			}
+			return best;
+		};
 
 		const placements = R.unique(
 			standings.map((standing) => standing.placement),
@@ -212,9 +230,9 @@ describe("round robin standings", () => {
 				}
 
 				expect(
-					current.groupId,
+					effectiveSeed(current.team.id),
 					`Team with ID ${current.team.id} in wrong spot relative to ${next.team.id}`,
-				).toBeLessThan(next.groupId!);
+				).toBeLessThanOrEqual(effectiveSeed(next.team.id));
 			}
 		}
 	});
