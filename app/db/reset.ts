@@ -18,7 +18,7 @@ export const dbReset = async () => {
 		SELECT name FROM sqlite_master
 		WHERE type='table'
 		AND name NOT LIKE 'sqlite_%'
-		AND name NOT LIKE 'migrations'
+		AND name NOT LIKE 'kysely_migration%'
 		AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
 		AND NOT EXISTS (
 			SELECT 1 FROM sqlite_master AS vt
