@@ -1,16 +1,13 @@
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import {
-	type MetaFunction,
-	useLoaderData,
-	useSearchParams,
-} from "react-router";
+import { type MetaFunction, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { HowToLinkPopover } from "~/features/top-search/components/HowToLinkPopover";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userCardEditPage } from "~/utils/urls";
@@ -18,6 +15,7 @@ import { PRESET_COLORS } from "../../tier-list-maker/tier-list-maker-constants";
 import { action } from "../actions/user-card.edit.server";
 import { loader } from "../loaders/user-card.edit.server";
 import { updateUserCardSchema } from "../user-card-schemas";
+import { userCardEditSearchParams } from "../user-card-search-params";
 import { isValidUnverifiedXp } from "../user-card-utils";
 import styles from "./user-card.edit.module.css";
 
@@ -37,9 +35,7 @@ export const meta: MetaFunction = (args) => {
 export default function UserCardEditPage() {
 	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
-	const [searchParams] = useSearchParams();
-
-	const returnTo = searchParams.get("returnTo");
+	const [returnTo] = useSearchParam(userCardEditSearchParams, "returnTo");
 
 	return (
 		<Main halfWidth>

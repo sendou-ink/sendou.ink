@@ -1,9 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
-import { ART_SOURCES, type ArtSource } from "~/features/art/art-types";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
 import { useUser } from "~/features/auth/core/user";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
@@ -11,6 +10,7 @@ import { action } from "../actions/u.$identifier.art.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { userArtSearchParams } from "../user-page-search-params";
 
 export { action, loader };
 
@@ -23,16 +23,10 @@ export default function UserArtPage() {
 	const { t } = useTranslation(["art"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const [type, setType] = useSearchParamState<ArtSource>({
-		defaultValue: "ALL",
-		name: "source",
-		revive: (value) => ART_SOURCES.find((s) => s === value),
-	});
-	const [filteredTag, setFilteredTag] = useSearchParamState<string | null>({
-		defaultValue: null,
-		name: "tag",
-		revive: (value) => data.tagCounts?.find((t) => t[0] === value)?.[0],
-	});
+	const [type, setType] = useSearchParam(userArtSearchParams, "source");
+	const [tagParam, setFilteredTag] = useSearchParam(userArtSearchParams, "tag");
+	const filteredTag =
+		data.tagCounts?.find((tagCount) => tagCount[0] === tagParam)?.[0] ?? null;
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.loaderData as UserPageLoaderData;

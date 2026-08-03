@@ -2,22 +2,15 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { VODS_PAGE_BATCH_SIZE } from "~/features/vods/vods-constants";
-import { userVodsSearchParamsSchema } from "~/features/vods/vods-schemas";
-import {
-	notFoundIfNullish,
-	paginate,
-	parseSearchParams,
-} from "~/utils/remix.server";
+import { userVodsSearchParams } from "~/features/vods/vods-search-params";
+import { notFoundIfNullish, paginate } from "~/utils/remix.server";
 
 export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 	const userId = notFoundIfNullish(
 		await UserRepository.findIdByIdentifier(params.identifier!),
 	).id;
 
-	const { page } = parseSearchParams({
-		request,
-		schema: userVodsSearchParamsSchema,
-	});
+	const { page } = userVodsSearchParams.parse(request);
 
 	const [vods, totalCount] = await Promise.all([
 		VodRepository.findVods({

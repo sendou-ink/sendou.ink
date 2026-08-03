@@ -64,6 +64,7 @@ import {
 } from "./modules/i18n/i18next.server";
 import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
+import { SearchParamsProvider } from "./modules/search-params/hooks";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
@@ -235,16 +236,18 @@ function Document({
 			<body>
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
-						<I18nProvider locale={language}>
-							<SendouToastRegion />
-							<UnsavedChangesGuard />
-							<MyFuse data={data} />
-							<ChatProvider user={data?.user}>
-								<Layout data={data}>{children}</Layout>
-							</ChatProvider>
-						</I18nProvider>
-					</RouterProvider>
+					<SearchParamsProvider>
+						<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
+							<I18nProvider locale={language}>
+								<SendouToastRegion />
+								<UnsavedChangesGuard />
+								<MyFuse data={data} />
+								<ChatProvider user={data?.user}>
+									<Layout data={data}>{children}</Layout>
+								</ChatProvider>
+							</I18nProvider>
+						</RouterProvider>
+					</SearchParamsProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />

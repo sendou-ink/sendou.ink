@@ -7,7 +7,10 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isStaff } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
-import { canAccessLohiEndpoint, parseSearchParams } from "~/utils/remix.server";
+import {
+	canAccessLohiEndpoint,
+	errorToastRedirect,
+} from "~/utils/remix.server";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
@@ -142,6 +145,26 @@ async function safeReturnTo(request: Request): Promise<string | null> {
 // with the Discord due to rate limits or other reasons
 
 // only light validation here as we generally trust Lohi
+// auth flow params are infrastructure conventions and intentionally do not go
+// through app/modules/search-params/
+function parseSearchParams<T extends z.ZodTypeAny>({
+	request,
+	schema,
+}: {
+	request: Request;
+	schema: T;
+}): z.infer<T> {
+	const searchParams = Object.fromEntries(new URL(request.url).searchParams);
+
+	try {
+		return schema.parse(searchParams);
+	} catch (e) {
+		logger.error("Error parsing search params", e);
+
+		throw errorToastRedirect("Validation failed");
+	}
+}
+
 const createLogInLinkActionSchema = z.object({
 	discordId: z.string(),
 	discordAvatar: z.string().nullish(),

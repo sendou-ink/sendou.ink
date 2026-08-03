@@ -10,9 +10,10 @@ import {
 } from "~/features/tournament/routes/to.$id";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import styles from "../../tournament-bracket.module.css";
+import { tournamentBracketsSearchParams } from "../../tournament-bracket-search-params";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
@@ -32,14 +33,18 @@ export function SwissBracket({
 	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 
 	const groups = getGroups(bracket);
-	const [selectedGroupId, setSelectedGroupId] = useSearchParamState({
-		defaultValue: groups[0].groupId,
-		name: "group",
-		revive: (id) =>
-			groups.find((g) => g.groupId === Number(id))
-				? Number(id)
-				: groups[0].groupId,
-	});
+	const [selectedGroupIdParam, setSelectedGroupId] = useSearchParam(
+		tournamentBracketsSearchParams,
+		"group",
+	);
+	// when bracket starts we go from "virtual id" to a real one
+	// which would cause the admin to see empty group after starting
+	// bracket
+	const selectedGroupId =
+		typeof selectedGroupIdParam === "number" &&
+		groups.some((g) => g.groupId === selectedGroupIdParam)
+			? selectedGroupIdParam
+			: groups[0].groupId;
 	const fetcher = useFetcher();
 
 	const selectedGroup = groups.find((g) => g.groupId === selectedGroupId)!;
@@ -47,13 +52,6 @@ export function SwissBracket({
 	const rounds = bracket.data.round.filter(
 		(r) => r.groupId === selectedGroupId,
 	);
-
-	// when bracket starts we go from "virtual id" to a real one
-	// which would cause the admin to see empty group after starting
-	// bracket
-	if (!groups.some((g) => g.groupId === selectedGroupId)) {
-		setSelectedGroupId(groups[0].groupId);
-	}
 
 	const someMatchOngoing = (matches: MatchType[]) =>
 		matches.some(

@@ -1,15 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { parseSearchParams } from "~/utils/remix.server";
 import * as CalendarRepository from "../CalendarRepository.server";
-import { calendarFiltersSearchParamsObject } from "../calendar-schemas";
+import { calendarSearchParams } from "../calendar-search-params";
 import * as CalendarEvent from "../core/CalendarEvent";
 import * as ICal from "../core/ICal.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const filters = parseSearchParams({
-		request,
-		schema: calendarFiltersSearchParamsObject,
-	}).filters;
+	const { filters } = calendarSearchParams.parse(request);
 
 	const startTime = new Date();
 	const endTime = new Date(startTime);

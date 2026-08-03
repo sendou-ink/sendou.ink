@@ -25,6 +25,7 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
+import { scrimsSearchParams } from "~/features/scrims/scrims-search-params";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
@@ -424,7 +425,9 @@ export function scrimToSidebarEvent(s: SidebarScrim): SidebarEvent {
 			s.status === "booked"
 				? href("/scrims/:id", { id: String(s.id) })
 				: s.status === "requestPending"
-					? `${href("/scrims")}?pendingRequestPostId=${s.id}`
+					? scrimsSearchParams.href(href("/scrims"), {
+							pendingRequestPostId: s.id,
+						})
 					: href("/scrims"),
 		// an opponent without a team is shown by their owner's avatar instead
 		logoUrl: s.opponentAvatarUrl ?? (s.opponentUser ? null : SCRIMS_ICON_URL),

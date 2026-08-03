@@ -3,7 +3,7 @@ import type * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useFetcher, useLoaderData, useSearchParams } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import {
@@ -22,6 +22,7 @@ import type { UserCardData } from "~/features/user-card/user-card-types";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -43,6 +44,7 @@ import {
 	SENDOUQ_LOOKING_ROOM,
 	sqGroupWebsocketRoom,
 } from "../q-constants";
+import { qLookingSearchParams } from "../q-search-params";
 
 export { action, loader };
 
@@ -81,7 +83,7 @@ function QLookingPage() {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const [searchParams] = useSearchParams();
+	const [joining] = useSearchParam(qLookingSearchParams, "joining");
 
 	// Pool-shape changes (a group joining/leaving, a morph, a match starting) are
 	// broadcast to this shared room so every looking client revalidates.
@@ -93,7 +95,7 @@ function QLookingPage() {
 		Boolean(data.ownGroup),
 	);
 
-	const wasTryingToJoinAnotherTeam = searchParams.get("joining") === "true";
+	const wasTryingToJoinAnotherTeam = joining;
 
 	const showGoToSettingPrompt = () => {
 		if (!data.ownGroup) return false;

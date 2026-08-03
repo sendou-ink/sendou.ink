@@ -1,9 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseSafeSearchParams } from "~/utils/remix.server";
-import { inviteCodeObject } from "~/utils/zod";
 import * as AssociationRepository from "../AssociationRepository.server";
+import { associationsSearchParams } from "../associations-search-params";
 
 export type AssociationsLoaderData = SerializeFrom<typeof loader>;
 
@@ -35,15 +34,12 @@ async function associationToJoin(
 	request: LoaderFunctionArgs["request"],
 	userId: number,
 ) {
-	const searchParams = parseSafeSearchParams({
-		request,
-		schema: inviteCodeObject,
-	});
+	const { inviteCode } = associationsSearchParams.parse(request);
 
-	if (!searchParams.success) return null;
+	if (!inviteCode) return null;
 
 	const associationToJoin = await AssociationRepository.findByInviteCode(
-		searchParams.data.inviteCode,
+		inviteCode,
 		{
 			withMembers: true,
 		},
@@ -56,6 +52,6 @@ async function associationToJoin(
 
 	return {
 		association: associationToJoin,
-		inviteCode: searchParams.data.inviteCode,
+		inviteCode,
 	};
 }

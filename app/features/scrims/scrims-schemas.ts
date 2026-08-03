@@ -26,7 +26,6 @@ import {
 	filterOutNullishMembers,
 	id,
 	noDuplicates,
-	safeJSONParse,
 	timeString,
 } from "~/utils/zod";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
@@ -122,7 +121,7 @@ export const divsSchema = z
 		return divs;
 	});
 
-const scrimsFiltersSchema = z.object({
+export const scrimsFiltersSchema = z.object({
 	weekdayTimes: timeRangeSchema.nullable().catch(null),
 	weekendTimes: timeRangeSchema.nullable().catch(null),
 	divs: divsSchema.nullable().catch(null),
@@ -160,12 +159,6 @@ export const scrimsFiltersFormSchema = z.object({
 		endLabel: "labels.end",
 	}),
 	divs: divsFormField,
-});
-
-export const scrimsFiltersSearchParamsObject = z.object({
-	filters: z
-		.preprocess(safeJSONParse, scrimsFiltersSchema)
-		.catch({ weekdayTimes: null, weekendTimes: null, divs: null }),
 });
 
 const persistScrimFiltersSchema = z.object({

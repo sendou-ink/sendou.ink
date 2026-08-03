@@ -3,13 +3,14 @@ import { format } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import type { z } from "zod";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -27,6 +28,7 @@ import { ScrimFiltersDialog } from "../components/ScrimFiltersDialog";
 import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.server";
 import type { newRequestSchema } from "../scrims-schemas";
+import { scrimsSearchParams } from "../scrims-search-params";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
 
 export { action, loader };
@@ -61,12 +63,10 @@ export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const isHydrated = useHydrated();
-	const [searchParams] = useSearchParams();
-
-	const rawPendingRequestPostId = searchParams.get("pendingRequestPostId");
-	const autoScrollToPostId = rawPendingRequestPostId
-		? Number(rawPendingRequestPostId)
-		: null;
+	const [autoScrollToPostId] = useSearchParam(
+		scrimsSearchParams,
+		"pendingRequestPostId",
+	);
 
 	// kept in state because the search param is cleared after the auto scroll
 	const [pendingRequestPostId, setPendingRequestPostId] =

@@ -17,6 +17,7 @@ import type {
 	RoomMetadata,
 	ServerRoomInfo,
 } from "./chat-provider-types";
+import { chatUsersSearchParams } from "./chat-search-params";
 import type { ChatMessage, ChatUser } from "./chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
 import { ChatContext } from "./useChatContext";
@@ -740,24 +741,30 @@ function useFetchUnknownChatUsers({
 		}
 	}
 
-	const idsParam = unknownIds.sort((a, b) => a - b).join(",");
+	const sortedUnknownIds = unknownIds.sort((a, b) => a - b);
+	const chatUsersUrl =
+		sortedUnknownIds.length > 0
+			? chatUsersSearchParams.href("/api/chat-users", {
+					ids: sortedUnknownIds,
+				})
+			: null;
 
 	// Ids the API did not return would otherwise stay "unknown" and refetch forever
-	const lastRequestedIdsRef = React.useRef<string | null>(null);
+	const lastRequestedUrlRef = React.useRef<string | null>(null);
 
 	React.useEffect(() => {
 		if (
-			!idsParam ||
-			idsParam === lastRequestedIdsRef.current ||
+			!chatUsersUrl ||
+			chatUsersUrl === lastRequestedUrlRef.current ||
 			fetcher.state !== "idle"
 		) {
 			return;
 		}
 
-		lastRequestedIdsRef.current = idsParam;
-		logger.debug(`Fetching unknown chat users: ${idsParam}`);
-		fetcher.load(`/api/chat-users?ids=${idsParam}`);
-	}, [idsParam, fetcher.load, fetcher.state]);
+		lastRequestedUrlRef.current = chatUsersUrl;
+		logger.debug(`Fetching unknown chat users: ${chatUsersUrl}`);
+		fetcher.load(chatUsersUrl);
+	}, [chatUsersUrl, fetcher.load, fetcher.state]);
 
 	return fetchedUsersRef.current;
 }

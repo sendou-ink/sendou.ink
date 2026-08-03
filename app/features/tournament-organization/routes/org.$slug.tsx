@@ -9,7 +9,7 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useFetcher, useLoaderData, useSearchParams } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -41,6 +41,7 @@ import { TrophyTournamentHistory } from "~/features/trophies/components/TrophyTo
 import type { TrophyTournamentsLoaderData } from "~/features/trophies/routes/trophies.$id.tournaments";
 import { useProgressiveRender } from "~/features/trophies/trophies-utils";
 import { SendouForm } from "~/form/SendouForm";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
@@ -63,6 +64,7 @@ import { loader } from "../loaders/org.$slug.server";
 import styles from "../tournament-organization.module.css";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
+import { tournamentOrganizationSearchParams } from "../tournament-organization-search-params";
 
 export { action, loader };
 
@@ -655,32 +657,19 @@ function EventsPagination({
 }: {
 	series: NonNullable<SerializeFrom<typeof loader>["series"]>;
 }) {
-	const [, setSearchParams] = useSearchParams();
+	const pagesCount = Math.ceil(
+		(series.eventsCount ?? 0) / TOURNAMENT_SERIES_EVENTS_PER_PAGE,
+	);
+	const pagination = useSearchParamPagination({
+		definition: tournamentOrganizationSearchParams,
+		currentPage: series.page,
+		pagesCount,
+	});
 
 	if (!series.eventsCount) return null;
-
-	const pagesCount = Math.ceil(
-		series.eventsCount / TOURNAMENT_SERIES_EVENTS_PER_PAGE,
-	);
-
 	if (pagesCount <= 1) return null;
 
-	const setPage = (page: number) =>
-		setSearchParams((prev) => {
-			prev.set("page", String(page));
-
-			return prev;
-		});
-
-	return (
-		<Pagination
-			currentPage={series.page}
-			nextPage={() => setPage(series.page + 1)}
-			pagesCount={pagesCount}
-			previousPage={() => setPage(series.page - 1)}
-			setPage={setPage}
-		/>
-	);
+	return <Pagination {...pagination} />;
 }
 
 function EventLeaderboard({

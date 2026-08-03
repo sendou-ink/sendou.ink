@@ -44,6 +44,7 @@ import {
 	userPage,
 } from "~/utils/urls";
 import type { UserCardFriendshipLoaderData } from "../routes/user-card.$id.friendship";
+import { userCardFriendshipSearchParams } from "../user-card-search-params";
 import type {
 	UserCardData,
 	UserCardFriendship,
@@ -114,7 +115,11 @@ export function UserCard({
 		if (typeof data?.id !== "number") return;
 
 		friendshipLoadedRef.current = true;
-		fetcher.load(userCardFriendshipPage(data.id, { withMutualFriends }));
+		fetcher.load(
+			userCardFriendshipSearchParams.href(userCardFriendshipPage(data.id), {
+				mutuals: withMutualFriends,
+			}),
+		);
 	};
 
 	const friendship = fetcher.data;

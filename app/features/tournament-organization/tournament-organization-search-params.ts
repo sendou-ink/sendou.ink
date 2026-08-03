@@ -1,0 +1,23 @@
+import { z } from "zod";
+import * as SearchParams from "~/modules/search-params/search-params";
+import { SP } from "~/modules/search-params/search-params";
+
+export const tournamentOrganizationSearchParams = SearchParams.define({
+	month: SP.param(z.number().int().min(0).max(11).nullable(), {
+		default: null,
+		loader: true,
+	}),
+	year: SP.param(z.number().int().min(2020).max(2100).nullable(), {
+		default: null,
+		loader: true,
+	}),
+	series: SP.param(z.number().int().positive().nullable(), {
+		default: null,
+		loader: true,
+	}),
+	page: SP.param(z.number().int().min(1).max(100), {
+		default: 1,
+		loader: true,
+	}),
+	source: SP.param(z.string().nullable(), { default: null, loader: true }),
+});

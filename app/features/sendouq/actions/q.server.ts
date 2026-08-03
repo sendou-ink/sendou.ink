@@ -17,12 +17,9 @@ import {
 } from "~/utils/urls";
 import { normalizeFriendCode } from "~/utils/zod";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
-import {
-	JOIN_CODE_SEARCH_PARAM_KEY,
-	SENDOUQ_LOOKING_ROOM,
-	sqGroupWebsocketRoom,
-} from "../q-constants";
+import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
 import { frontPageSchema } from "../q-schemas.server";
+import { qSearchParams } from "../q-search-params";
 import { userCanJoinQueueAt } from "../q-utils";
 import {
 	SendouQError,
@@ -85,7 +82,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 			case "JOIN_TEAM": {
 				await validateCanJoinQ(user);
 
-				const code = url.searchParams.get(JOIN_CODE_SEARCH_PARAM_KEY);
+				const { join: code } = qSearchParams.parse(url);
 
 				const groupInvitedTo =
 					code && user ? SendouQ.findGroupByInviteCode(code) : undefined;

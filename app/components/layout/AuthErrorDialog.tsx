@@ -1,19 +1,19 @@
 import type { TFunction } from "i18next";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useUser } from "~/features/auth/core/user";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { SENDOU_INK_DISCORD_URL } from "~/utils/urls";
+import { authErrorSearchParams } from "./layout-search-params";
 import styles from "./UserItem.module.css";
 
 export function AuthErrorDialog() {
 	const { t } = useTranslation();
 	const isHydrated = useHydrated();
 	const user = useUser();
-	const [searchParams] = useSearchParams();
-	const authError = searchParams.get("authError");
+	const [authError] = useSearchParam(authErrorSearchParams, "authError");
 
 	if (authError == null || !isHydrated || user) return null;
 

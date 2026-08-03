@@ -6,6 +6,7 @@ import { validateInviteCode } from "../loaders/t.$customUrl.join.server";
 import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
+import { teamJoinSearchParams } from "../team-search-params";
 
 export const action: ActionFunction = async ({ params, url }) => {
 	const user = requireUser();
@@ -17,12 +18,12 @@ export const action: ActionFunction = async ({ params, url }) => {
 		}),
 	);
 
-	const inviteCode = url.searchParams.get("code") ?? "";
+	const { code } = teamJoinSearchParams.parse(url);
 	const realInviteCode = team.inviteCode!;
 
 	errorToastIfFalsy(
 		validateInviteCode({
-			inviteCode,
+			inviteCode: code ?? "",
 			realInviteCode,
 			team,
 			user,

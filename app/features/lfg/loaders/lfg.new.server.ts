@@ -1,12 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { parseSafeSearchParams } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
-import { id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";
+import { lfgNewSearchParams } from "../lfg-search-params";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = requireUser();
@@ -29,22 +27,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	};
 };
 
-const searchParamsSchema = z.object({
-	postId: id,
-});
-
 const searchParamsToBuildToEdit = (
 	request: LoaderFunctionArgs["request"],
 	userId: number,
 	allPosts: Unpacked<ReturnType<typeof LFGRepository.findAllPosts>>,
 ) => {
-	const params = parseSafeSearchParams({ request, schema: searchParamsSchema });
+	const { postId } = lfgNewSearchParams.parse(request);
 
-	if (!params.success) return;
+	if (postId === null) return;
 
-	const post = allPosts.find(
-		(p) => p.id === params.data.postId && p.author.id === userId,
-	);
+	const post = allPosts.find((p) => p.id === postId && p.author.id === userId);
 
 	return post;
 };

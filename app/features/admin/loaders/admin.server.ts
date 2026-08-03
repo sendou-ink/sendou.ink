@@ -6,8 +6,8 @@ import {
 } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isDev, isStaff } from "~/modules/permissions/utils";
-import { parseSafeSearchParams } from "~/utils/remix.server";
-import { adminActionSearchParamsSchema } from "../admin-schemas";
+import { normalizeFriendCode } from "~/utils/zod";
+import { adminSearchParams } from "../admin-search-params";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -22,17 +22,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		}
 	}
 
-	const parsedSearchParams = parseSafeSearchParams({
-		request,
-		schema: adminActionSearchParamsSchema,
-	});
+	const { friendCode } = adminSearchParams.parse(request);
 
 	return {
 		isImpersonating: await isImpersonating(request),
-		friendCodeSearchUsers: parsedSearchParams.success
-			? await UserRepository.findByFriendCode(
-					parsedSearchParams.data.friendCode,
-				)
+		friendCodeSearchUsers: friendCode
+			? await UserRepository.findByFriendCode(normalizeFriendCode(friendCode))
 			: [],
 	};
 };

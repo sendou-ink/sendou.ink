@@ -12,11 +12,12 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { usePagination } from "~/hooks/usePagination";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
+import { artGridSearchParams } from "../art-search-params";
 import type { ListedArt } from "../art-types";
 import { previewUrl } from "../art-utils";
 import styles from "./ArtGrid.module.css";
@@ -44,12 +45,7 @@ export function ArtGrid({
 		items: arts,
 		pageSize: ART_PER_PAGE,
 	});
-	const [bigArtId, setBigArtId] = useSearchParamState<number | null>({
-		defaultValue: null,
-		name: "big",
-		revive: (value) =>
-			itemsToDisplay.find((art) => art.id === Number(value))?.id,
-	});
+	const [bigArtId, setBigArtId] = useSearchParam(artGridSearchParams, "big");
 	const isHydrated = useHydrated();
 
 	if (!isHydrated) return null;

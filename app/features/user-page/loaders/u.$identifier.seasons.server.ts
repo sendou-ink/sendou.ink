@@ -8,10 +8,8 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish } from "~/utils/remix.server";
-import {
-	seasonsSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas";
+import { userParamsSchema } from "../user-page-schemas";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsPageLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
@@ -20,9 +18,7 @@ export type UserSeasonsPageLoaderData = NonNullable<
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const loggedInUser = requireUser();
 	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
+	const { season: seasonParam } = userSeasonsSearchParams.parse(url);
 
 	const user = notFoundIfNullish(
 		await UserRepository.findIdByIdentifier(identifier),
@@ -34,9 +30,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		return null;
 	}
 
-	const { season = seasonsParticipatedIn[0] } = parsedSearchParams.success
-		? parsedSearchParams.data
-		: {};
+	const season = seasonParam ?? seasonsParticipatedIn[0];
 
 	const { isAccurateTiers, userSkills } = await _userSkills(season);
 	const { tier, ordinal, approximate } = userSkills[user.id] ?? {
