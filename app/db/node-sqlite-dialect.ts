@@ -33,6 +33,28 @@ const CACHEABLE_QUERY_KINDS = new Set([
 	"MergeQueryNode",
 ]);
 
+/**
+ * Leading keywords of raw statements that can not change the schema, so the
+ * column lists the statement cache is holding stay valid across them. Raw DDL
+ * (`create`, `alter`, `drop`, ...) is not here and clears the cache.
+ */
+const SCHEMA_PRESERVING_RAW_COMMANDS = new Set([
+	"begin",
+	"commit",
+	"rollback",
+	"savepoint",
+	"release",
+	"select",
+	"with",
+	"insert",
+	"update",
+	"delete",
+	"replace",
+	"pragma",
+	"analyze",
+	"explain",
+]);
+
 const STATEMENT_CACHE_SIZE = 5000;
 
 export interface NodeSqliteDialectConfig {
@@ -217,7 +239,7 @@ class NodeSqliteConnection implements DatabaseConnection {
 
 		if (!this.#cacheStatements || !CACHEABLE_QUERY_KINDS.has(query.kind)) {
 			// a schema change invalidates every column list the cache is holding
-			if (query.kind !== "RawNode") {
+			if (query.kind !== "RawNode" || canChangeSchema(sql)) {
 				this.#cache.clear();
 			}
 
@@ -241,6 +263,15 @@ class NodeSqliteConnection implements DatabaseConnection {
 
 		return prepared;
 	}
+}
+
+function canChangeSchema(sql: string) {
+	const firstKeyword = sql
+		.trimStart()
+		.split(/[\s;(]/, 1)[0]
+		.toLowerCase();
+
+	return !SCHEMA_PRESERVING_RAW_COMMANDS.has(firstKeyword);
 }
 
 function prepare(database: DatabaseSync, sql: string): PreparedStatement {

@@ -1,5 +1,4 @@
-import { sql } from "kysely";
-import { db } from "~/db/sql";
+import { deleteAllRows } from "~/db/wipe";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { withoutInfoLogs } from "~/utils/logger";
 import { resetFactories } from "./core/defineFactory";
@@ -20,7 +19,7 @@ import { seedUsers } from "./dev/users";
 import { seedVods } from "./dev/vods";
 
 export async function seed() {
-	await wipeDB();
+	await deleteAllRows();
 	resetFactories();
 
 	const users = await runModule(() => seedUsers());
@@ -54,27 +53,4 @@ function runModule<T>(module: () => Promise<T>) {
 	resetFaker();
 
 	return withoutInfoLogs(module);
-}
-
-async function wipeDB() {
-	// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
-	// deleted from directly; the fts index stays in sync via the User triggers
-	const { rows: tables } = await sql<{ name: string }>`
-		SELECT name FROM sqlite_master
-		WHERE type='table'
-		AND name NOT LIKE 'sqlite_%'
-		AND name NOT LIKE 'migrations'
-		AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
-		AND NOT EXISTS (
-			SELECT 1 FROM sqlite_master AS vt
-			WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
-			AND sqlite_master.name LIKE vt.name || '_%'
-		)
-	`.execute(db);
-
-	await sql`PRAGMA foreign_keys = OFF`.execute(db);
-	for (const table of tables) {
-		await sql`DELETE FROM ${sql.table(table.name)}`.execute(db);
-	}
-	await sql`PRAGMA foreign_keys = ON`.execute(db);
 }
