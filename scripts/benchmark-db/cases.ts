@@ -34,6 +34,7 @@ import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalend
 import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
@@ -655,6 +656,13 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("XRankPlacementRepository.findPeaksByUserId", fx.xrank, (xrank) =>
 		XRankPlacementRepository.findPeaksByUserId(xrank.userId, "both"),
+	);
+
+	// BracketRepository
+	add(
+		"BracketRepository.findByTournamentId",
+		fx.heaviestBracketTournamentId,
+		(tournamentId) => BracketRepository.findByTournamentId(tournamentId),
 	);
 
 	// TournamentMatchVodRepository

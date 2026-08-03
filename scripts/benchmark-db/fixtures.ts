@@ -28,6 +28,8 @@ export interface Fixtures {
 	heavyGroupIds: [number, number] | null;
 	heavyStageModeCombo: { stageId: StageId; mode: ModeShort } | null;
 	heavyTournamentId: number | null;
+	/** Tournament with the most matches. Unlike `heavyTournamentId` (most teams) this one is guaranteed to have brackets. */
+	heaviestBracketTournamentId: number | null;
 	heavyTournamentMatchId: number | null;
 	tournamentMatchGameResultId: number | null;
 	heavyTournamentTeamId: number | null;
@@ -121,6 +123,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		heavyGroupIds: await resolveHeavyGroupIds(heavyGroupMatchId),
 		heavyStageModeCombo: await resolveHeavyStageModeCombo(),
 		heavyTournamentId,
+		heaviestBracketTournamentId: await resolveHeaviestBracketTournamentId(),
 		heavyTournamentMatchId: await resolveHeavyTournamentMatchId(),
 		tournamentMatchGameResultId: await resolveTournamentMatchGameResultId(),
 		heavyTournamentTeamId:
@@ -382,6 +385,26 @@ async function resolveHeavyTournamentId() {
 		.selectFrom("TournamentTeam")
 		.select(({ fn }) => ["tournamentId", fn.countAll<number>().as("count")])
 		.groupBy("tournamentId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.tournamentId ?? null;
+}
+
+async function resolveHeaviestBracketTournamentId() {
+	const row = await db
+		.selectFrom("TournamentMatch")
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.select(({ fn }) => [
+			"TournamentStage.tournamentId",
+			fn.countAll<number>().as("count"),
+		])
+		.groupBy("TournamentStage.tournamentId")
 		.orderBy("count", "desc")
 		.limit(1)
 		.executeTakeFirst();

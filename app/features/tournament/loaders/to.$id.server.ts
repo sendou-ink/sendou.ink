@@ -14,8 +14,6 @@ import { idObject } from "~/utils/zod";
 
 export type TournamentLoaderData = {
 	tournament: Awaited<ReturnType<typeof tournamentDataCached>>;
-	streamingParticipants: number[];
-	streamsCount: number;
 	hasChildTournaments: boolean;
 	friendCodes:
 		| Awaited<

@@ -101,11 +101,11 @@ export class SwissBracket extends Bracket {
 		});
 	}
 
-	get standings(): Standing[] {
+	protected calculateStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	get liveStandings(): Standing[] {
+	protected calculateLiveStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: true });
 	}
 

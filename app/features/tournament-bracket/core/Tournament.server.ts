@@ -5,7 +5,9 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
+import { LRUCache } from "~/modules/cache";
 import { isAdmin } from "~/modules/permissions/utils";
+import { IN_MILLISECONDS } from "~/utils/cache.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
@@ -88,7 +90,7 @@ export async function tournamentFromDB(args: {
 }) {
 	const data = notFoundIfNullish(await tournamentData(args));
 
-	const tournament = new Tournament({ ...data, simulateBrackets: false });
+	const tournament = new Tournament(data);
 	syncTournamentToRegistry(tournament);
 
 	return tournament;
@@ -100,15 +102,25 @@ export async function tournamentFromDBCached(args: {
 }) {
 	const data = notFoundIfNullish(await tournamentDataCached(args));
 
-	return new Tournament({ ...data, simulateBrackets: false });
+	return new Tournament(data);
 }
 
-// caching promise ensures that if many requests are made for the same tournament
-// at the same time they reuse the same resolving promise
-const tournamentDataCache = new Map<
-	number,
-	ReturnType<typeof combinedTournamentData>
->();
+const TOURNAMENT_DATA_CACHE_MAX_ENTRIES = 250;
+const TOURNAMENT_DATA_CACHE_TTL_MS = IN_MILLISECONDS.HALF_HOUR;
+
+type TournamentDataCacheEntry = {
+	storedAt: number;
+	// caching promise ensures that if many requests are made for the same tournament
+	// at the same time they reuse the same resolving promise
+	combined: ReturnType<typeof combinedTournamentData>;
+	// the vast majority of viewers are logged out and get the exact same censoring applied
+	anonymousMapped?: ReturnType<typeof dataMapped>;
+};
+
+const tournamentDataCache = new LRUCache<number, TournamentDataCacheEntry>({
+	max: TOURNAMENT_DATA_CACHE_MAX_ENTRIES,
+});
+
 export async function tournamentDataCached({
 	user,
 	tournamentId,
@@ -120,13 +132,33 @@ export async function tournamentDataCached({
 		return notFoundIfNullish(await tournamentData({ user, tournamentId }));
 	}
 
-	if (!tournamentDataCache.has(tournamentId)) {
-		tournamentDataCache.set(tournamentId, combinedTournamentData(tournamentId));
+	const entry = tournamentDataCacheEntry(tournamentId);
+	const data = notFoundIfNullish(await entry.combined);
+
+	if (user) return dataMapped({ user, ...data });
+
+	if (!entry.anonymousMapped) {
+		entry.anonymousMapped = dataMapped({ user: undefined, ...data });
 	}
 
-	const data = notFoundIfNullish(await tournamentDataCache.get(tournamentId));
+	return entry.anonymousMapped;
+}
 
-	return dataMapped({ user, ...data });
+function tournamentDataCacheEntry(tournamentId: number) {
+	const cached = tournamentDataCache.get(tournamentId);
+	if (cached && Date.now() - cached.storedAt < TOURNAMENT_DATA_CACHE_TTL_MS) {
+		return cached;
+	}
+
+	const entry: TournamentDataCacheEntry = {
+		storedAt: Date.now(),
+		combined: combinedTournamentData(tournamentId),
+	};
+	entry.combined.catch(() => tournamentDataCache.delete(tournamentId));
+
+	tournamentDataCache.set(tournamentId, entry);
+
+	return entry;
 }
 
 export function clearTournamentDataCache(tournamentId: number) {
@@ -206,7 +238,7 @@ async function primeRunningTournamentsCache() {
 		const data = await tournamentData({ user: undefined, tournamentId });
 		if (!data) continue;
 
-		const tournament = new Tournament({ ...data, simulateBrackets: false });
+		const tournament = new Tournament(data);
 		syncTournamentToRegistry(tournament);
 	}
 }

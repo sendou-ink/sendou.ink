@@ -9,10 +9,7 @@ import {
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
-import type {
-	BracketData,
-	MatchData,
-} from "~/features/tournament-bracket/core/engine/types";
+import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
@@ -39,26 +36,25 @@ export type TournamentTeamMemberProgressStatus = NonNullable<
 
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
-	brackets: Bracket[] = [];
 	ctx;
-	simulateBrackets;
+	private data;
+	private _brackets: Array<Bracket | undefined> = [];
+	private _allBrackets: Bracket[] | undefined;
+	private bracketIdxsBeingBuilt = new Set<number>();
 
 	constructor({
 		data,
 		ctx,
-		simulateBrackets = true,
 	}: {
 		data: TournamentData["data"];
 		ctx: TournamentData["ctx"];
-		/** Should the bracket results be simulated (showing how teams are expected to advance), skipping it is a performance optimization if it's not needed */
-		simulateBrackets?: boolean;
 	}) {
 		const hasStarted = data.stage.length > 0;
 		const minMembersPerTeam = ctx.settings.minMembersPerTeam ?? 4;
 
 		const teamsInSeedOrder = sortTeamsBySeeding(ctx.teams, minMembersPerTeam);
 
-		this.simulateBrackets = simulateBrackets;
+		this.data = data;
 		this.ctx = {
 			...ctx,
 			teams: hasStarted
@@ -67,103 +63,122 @@ export class Tournament {
 				: teamsInSeedOrder,
 			startsAt: databaseTimestampToDate(ctx.startsAt),
 		};
-
-		this.initBrackets(data);
 	}
 
-	private initBrackets(data: BracketData) {
-		for (const [
-			bracketIdx,
-			{
-				type,
+	/**
+	 * Every bracket of the tournament. Building a bracket is expensive (preview brackets
+	 * are generated from scratch) so prefer {@link bracketByIdx} when only one is needed.
+	 */
+	get brackets(): Bracket[] {
+		if (!this._allBrackets) {
+			this._allBrackets = this.ctx.settings.bracketProgression.map(
+				(_, bracketIdx) => this.builtBracketByIdx(bracketIdx),
+			);
+		}
+
+		return this._allBrackets;
+	}
+
+	private builtBracketByIdx(bracketIdx: number): Bracket {
+		const memoized = this._brackets[bracketIdx];
+		if (memoized) return memoized;
+
+		this.bracketIdxsBeingBuilt.add(bracketIdx);
+		try {
+			const bracket = this.buildBracket(bracketIdx);
+			this._brackets[bracketIdx] = bracket;
+
+			return bracket;
+		} finally {
+			this.bracketIdxsBeingBuilt.delete(bracketIdx);
+		}
+	}
+
+	private buildBracket(bracketIdx: number): Bracket {
+		const {
+			type,
+			name,
+			sources,
+			requiresCheckIn = false,
+			startTime = null,
+			settings,
+		} = this.ctx.settings.bracketProgression[bracketIdx];
+
+		const inProgressStage = this.data.stage.find(
+			(stage) => stage.name === name,
+		);
+
+		if (inProgressStage) {
+			return createBracket({
+				id: inProgressStage.id,
+				idx: bracketIdx,
+				tournament: this,
+				preview: false,
 				name,
 				sources,
-				requiresCheckIn = false,
-				startTime = null,
-				settings,
-			},
-		] of this.ctx.settings.bracketProgression.entries()) {
-			const inProgressStage = data.stage.find((stage) => stage.name === name);
-
-			if (inProgressStage) {
-				const match = data.match.filter(
-					(match) => match.stageId === inProgressStage.id,
-				);
-
-				this.brackets.push(
-					createBracket({
-						id: inProgressStage.id,
-						idx: bracketIdx,
-						tournament: this,
-						preview: false,
-						name,
-						sources,
-						createdAt: inProgressStage.createdAt,
-						requiresCheckIn,
-						startTime: startTime ? databaseTimestampToDate(startTime) : null,
-						settings: settings ?? null,
-						data: {
-							...data,
-							group: data.group.filter(
-								(group) => group.stageId === inProgressStage.id,
-							),
-							match,
-							stage: data.stage.filter(
-								(stage) => stage.id === inProgressStage.id,
-							),
-							round: data.round.filter(
-								(round) => round.stageId === inProgressStage.id,
-							),
-						},
-						type,
-					}),
-				);
-			} else {
-				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: this.resolveTeamsFromSignups(bracketIdx);
-
-				const { checkedInTeams, notCheckedInTeams } =
-					this.divideTeamsToCheckedInAndNotCheckedIn({
-						teams,
-						bracketIdx,
-						usesRegularCheckIn: !sources,
-						requiresCheckIn,
-					});
-
-				const checkedInTeamsWithReplaysAvoided = this.followUpBracketSeeding(
-					checkedInTeams,
-					{
-						sources,
-						type,
-					},
-				);
-
-				this.brackets.push(
-					createBracket({
-						id: -1 * bracketIdx,
-						idx: bracketIdx,
-						tournament: this,
-						seeding: checkedInTeamsWithReplaysAvoided,
-						preview: true,
-						name,
-						requiresCheckIn,
-						startTime: startTime ? databaseTimestampToDate(startTime) : null,
-						settings: settings ?? null,
-						type,
-						sources,
-						createdAt: null,
-						canBeStarted:
-							(!startTime || startTime < databaseTimestampNow()) &&
-							checkedInTeamsWithReplaysAvoided.length >=
-								TOURNAMENT.ENOUGH_TEAMS_TO_START &&
-							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
-						teamsPendingCheckIn:
-							bracketIdx !== 0 ? notCheckedInTeams : undefined,
-					}),
-				);
-			}
+				createdAt: inProgressStage.createdAt,
+				requiresCheckIn,
+				startTime: startTime ? databaseTimestampToDate(startTime) : null,
+				settings: settings ?? null,
+				data: {
+					...this.data,
+					group: this.data.group.filter(
+						(group) => group.stageId === inProgressStage.id,
+					),
+					match: this.data.match.filter(
+						(match) => match.stageId === inProgressStage.id,
+					),
+					stage: this.data.stage.filter(
+						(stage) => stage.id === inProgressStage.id,
+					),
+					round: this.data.round.filter(
+						(round) => round.stageId === inProgressStage.id,
+					),
+				},
+				type,
+			});
 		}
+
+		const { teams, relevantMatchesFinished } = sources
+			? this.resolveTeamsFromSources(sources, bracketIdx)
+			: this.resolveTeamsFromSignups(bracketIdx);
+
+		const { checkedInTeams, notCheckedInTeams } =
+			this.divideTeamsToCheckedInAndNotCheckedIn({
+				teams,
+				bracketIdx,
+				usesRegularCheckIn: !sources,
+				requiresCheckIn,
+			});
+
+		const checkedInTeamsWithReplaysAvoided = this.followUpBracketSeeding(
+			checkedInTeams,
+			{
+				sources,
+				type,
+			},
+		);
+
+		return createBracket({
+			id: -1 * bracketIdx,
+			idx: bracketIdx,
+			tournament: this,
+			seeding: checkedInTeamsWithReplaysAvoided,
+			preview: true,
+			name,
+			requiresCheckIn,
+			startTime: startTime ? databaseTimestampToDate(startTime) : null,
+			settings: settings ?? null,
+			type,
+			sources,
+			createdAt: null,
+			canBeStarted:
+				(!startTime || startTime < databaseTimestampNow()) &&
+				checkedInTeamsWithReplaysAvoided.length >=
+					TOURNAMENT.ENOUGH_TEAMS_TO_START &&
+				(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
+			teamsPendingCheckIn: bracketIdx !== 0 ? notCheckedInTeams : undefined,
+		});
 	}
 
 	private resolveTeamsFromSources(
@@ -489,7 +504,7 @@ export class Tournament {
 
 	/** Has tournament started, meaning that at least one bracket has started. Also finalized tournaments are considered started. */
 	get hasStarted() {
-		return this.brackets.some((bracket) => !bracket.preview);
+		return this.data.stage.length > 0;
 	}
 
 	/** Is every bracket over (bracket is over when every match is over). */
@@ -851,10 +866,10 @@ export class Tournament {
 
 	/** Returns a `Bracket` with the given index or the first bracket if not found. */
 	bracketByIdxOrDefault(idx: number): Bracket {
-		const bracket = this.brackets[idx];
+		const bracket = this.bracketByIdx(idx);
 		if (bracket) return bracket;
 
-		const defaultBracket = this.brackets[0];
+		const defaultBracket = this.bracketByIdx(0);
 		invariant(defaultBracket, "No brackets found");
 
 		logger.warn("Bracket not found, using fallback bracket");
@@ -863,10 +878,11 @@ export class Tournament {
 
 	/** Returns a `Bracket` with the given index or null if not found. */
 	bracketByIdx(idx: number) {
-		const bracket = this.brackets[idx];
-		if (!bracket) return null;
+		if (!this.ctx.settings.bracketProgression[idx]) return null;
+		// a bracket that sources teams from itself (directly or via another bracket) can't be built
+		if (this.bracketIdxsBeingBuilt.has(idx)) return null;
 
-		return bracket;
+		return this.builtBracketByIdx(idx);
 	}
 
 	/** Returns the team that the user is the owner of, or null if not found. Includes invite code (only owner should see this, logic in the loader function). */

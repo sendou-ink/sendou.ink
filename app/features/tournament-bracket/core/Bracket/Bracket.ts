@@ -64,7 +64,6 @@ export abstract class Bracket {
 	idx;
 	preview;
 	data;
-	simulatedData: BracketData | undefined;
 	canBeStarted;
 	name;
 	teamsPendingCheckIn;
@@ -76,6 +75,9 @@ export abstract class Bracket {
 	requiresCheckIn;
 	startTime;
 	private _matchStatuses: Map<number, Engine.MatchStatus> | undefined;
+	private _simulatedData: { value: BracketData | undefined } | undefined;
+	private _standings: Standing[] | undefined;
+	private _liveStandings: Standing[] | undefined;
 
 	constructor({
 		id,
@@ -111,10 +113,18 @@ export abstract class Bracket {
 		this.createdAt = createdAt;
 		this.requiresCheckIn = requiresCheckIn;
 		this.startTime = startTime;
+	}
 
-		if (this.tournament.simulateBrackets) {
-			this.createdSimulation();
+	/**
+	 * Bracket data with the results of the unplayed matches filled in, showing how teams are
+	 * expected to advance. Simulating is expensive so it happens on first access only.
+	 */
+	get simulatedData(): BracketData | undefined {
+		if (!this._simulatedData) {
+			this._simulatedData = { value: this.createdSimulation() };
 		}
+
+		return this._simulatedData.value;
 	}
 
 	private createdSimulation() {
@@ -180,9 +190,11 @@ export abstract class Bracket {
 				}
 			}
 
-			this.simulatedData = data;
+			return data;
 		} catch (e) {
 			logger.error("Bracket.createdSimulation: ", e);
+
+			return;
 		}
 	}
 
@@ -238,7 +250,15 @@ export abstract class Bracket {
 	 * Standings that are settled i.e. teams still playing are left out. Safe to
 	 * use for deciding who advances to another bracket.
 	 */
-	abstract get standings(): Standing[];
+	get standings(): Standing[] {
+		if (!this._standings) {
+			this._standings = this.calculateStandings();
+		}
+
+		return this._standings;
+	}
+
+	protected abstract calculateStandings(): Standing[];
 
 	/**
 	 * How many rounds a swiss bracket has. Comes from the bracket's own stage
@@ -262,6 +282,14 @@ export abstract class Bracket {
 	 * bracket's current state, not for deciding who advances.
 	 */
 	get liveStandings(): Standing[] {
+		if (!this._liveStandings) {
+			this._liveStandings = this.calculateLiveStandings();
+		}
+
+		return this._liveStandings;
+	}
+
+	protected calculateLiveStandings(): Standing[] {
 		return this.standings;
 	}
 

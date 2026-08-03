@@ -71,7 +71,7 @@ export class DoubleEliminationBracket extends Bracket {
 		);
 	}
 
-	get standings(): Standing[] {
+	protected calculateStandings(): Standing[] {
 		if (!this.enoughTeams) return [];
 
 		const losersGroupId = this.data.group.find((g) => g.number === 2)?.id;

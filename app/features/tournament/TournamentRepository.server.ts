@@ -33,13 +33,6 @@ import { updatedCastedMatchesInfo } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
-	const isSetAsRanked = await db
-		.selectFrom("Tournament")
-		.select("settings")
-		.where("id", "=", id)
-		.executeTakeFirst()
-		.then((row) => row?.settings.isRanked ?? false);
-
 	const result = await db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -190,7 +183,9 @@ export async function findById(id: number) {
 										.on(
 											"SeedingSkill.type",
 											"=",
-											isSetAsRanked ? "RANKED" : "UNRANKED",
+											sql<
+												Tables["SeedingSkill"]["type"]
+											> /*sql*/`case when json_extract("Tournament"."settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end`,
 										),
 								)
 								.leftJoin("PlusTier", "PlusTier.userId", "User.id")

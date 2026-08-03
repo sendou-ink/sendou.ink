@@ -16,7 +16,6 @@ describe("swiss standings - losses against tied", () => {
 	it("should calculate losses against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standing = tournament
@@ -31,7 +30,6 @@ describe("swiss standings - losses against tied", () => {
 	it("breaks ties on losses against tied, not wins against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -59,7 +57,6 @@ describe("swiss standings - losses against tied", () => {
 	it("ranks fewer losses against tied above a higher opponent set win %", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -84,7 +81,6 @@ describe("swiss standings - losses against tied", () => {
 	it("should ignore early dropped out teams for standings (losses against tied)", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standing = tournament
