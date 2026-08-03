@@ -23,10 +23,13 @@ jobs:
       - name: Start MinIO
         run: docker compose up -d minio
 
+      # the bucket, not the health endpoint: MinIO answers health/live while it is still
+      # bootstrapping, so a run whose bucket never got created would only surface much later
+      # as a 500 in the one test that uploads an image
       - name: Wait for MinIO to be ready
         run: |
           for i in {1..30}; do
-            if curl -sf http://127.0.0.1:9000/minio/health/live; then
+            if curl -sf -o /dev/null http://127.0.0.1:9000/sendou/; then
               echo "MinIO is ready"
               exit 0
             fi
