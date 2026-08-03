@@ -222,7 +222,7 @@ export function pairUp(players: SwissPairingTeam[]) {
 			continue;
 		}
 
-		const opponent = playerArray.find((p) => p.index === opponentIndex);
+		const opponent = playerArray[opponentIndex];
 		invariant(opponent, "Opponent not found");
 
 		pairedIndexes.add(player.index);
