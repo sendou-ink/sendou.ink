@@ -105,6 +105,7 @@ export function LFGGroupCard({
 				</div>
 				{isOwnGroup ? (
 					<LFGTeamNote
+						key={`${group.note ?? ""}-${currentMember?.isStayAsSub ?? false}`}
 						note={group.note}
 						editable={group.usersRole === "OWNER"}
 						isStayAsSub={currentMember?.isStayAsSub ?? false}
@@ -268,10 +269,6 @@ function LFGTeamNote({
 }) {
 	const { t } = useTranslation(["common", "q"]);
 	const [editing, setEditing] = React.useState(false);
-
-	React.useEffect(() => {
-		setEditing(false);
-	}, [note, isStayAsSub]);
 
 	if (editing) {
 		return (

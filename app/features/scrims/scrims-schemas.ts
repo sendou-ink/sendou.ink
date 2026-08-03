@@ -361,19 +361,18 @@ export const scrimsNewFormSchema = z
 			label: "labels.scrimMapsTournament",
 		}),
 	})
+	// a tournament pick is only meaningful when maps come from a tournament, so
+	// drop any stale selection instead of erroring on a field that is not rendered
+	.overwrite((post) =>
+		post.maps !== "TOURNAMENT" && post.mapsTournamentId
+			? { ...post, mapsTournamentId: null }
+			: post,
+	)
 	.superRefine((post, ctx) => {
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
 				message: "forms:errors.tournamentMustBeSelected",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
-			ctx.addIssue({
-				path: ["mapsTournamentId"],
-				message: "forms:errors.tournamentOnlyWhenMapsIsTournament",
 				code: z.ZodIssueCode.custom,
 			});
 		}

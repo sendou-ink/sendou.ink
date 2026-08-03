@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
+import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
@@ -359,4 +360,6 @@ export type UserSearchFieldOptions = {
 export type TournamentSearchFieldOptions = {
 	/** Restrict results to tournaments that have already started (finished/past). */
 	pastOnly?: boolean;
+	/** Exposes the resolved tournament on selection — the stored form value is only the tournament id. */
+	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };

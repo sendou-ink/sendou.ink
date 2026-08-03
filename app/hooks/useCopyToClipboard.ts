@@ -5,11 +5,12 @@ const COPY_SUCCESS_DURATION_MS = 2000;
 /**
  * Copies a string to the clipboard and exposes `copySuccess`, which stays
  * `true` for a short while after a successful copy so a confirmation (e.g. a
- * checkmark) can be flashed.
+ * checkmark) can be flashed. `reset` clears `copySuccess` immediately.
  */
 export function useCopyToClipboard(): {
 	copyToClipboard: (value: string) => void;
 	copySuccess: boolean;
+	reset: () => void;
 } {
 	const [copySuccess, setCopySuccess] = React.useState(false);
 
@@ -32,5 +33,7 @@ export function useCopyToClipboard(): {
 		);
 	};
 
-	return { copyToClipboard, copySuccess };
+	const reset = () => setCopySuccess(false);
+
+	return { copyToClipboard, copySuccess, reset };
 }

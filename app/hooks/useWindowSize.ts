@@ -1,31 +1,31 @@
-import { useState } from "react";
-import { useEventListener } from "./useEventListener";
-import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
+import * as React from "react";
 
 interface WindowSize {
 	width: number;
 	height: number;
 }
 
+function subscribe(listener: () => void) {
+	window.addEventListener("resize", listener);
+	return () => window.removeEventListener("resize", listener);
+}
+
+/**
+ * Returns the current window dimensions, re-rendering on resize. Both
+ * dimensions are `0` during server-side rendering and the initial hydration
+ * render.
+ */
 export function useWindowSize(): WindowSize {
-	const [windowSize, setWindowSize] = useState<WindowSize>({
-		width: 0,
-		height: 0,
-	});
+	const width = React.useSyncExternalStore(
+		subscribe,
+		() => window.innerWidth,
+		() => 0,
+	);
+	const height = React.useSyncExternalStore(
+		subscribe,
+		() => window.innerHeight,
+		() => 0,
+	);
 
-	const handleSize = () => {
-		setWindowSize({
-			width: window.innerWidth,
-			height: window.innerHeight,
-		});
-	};
-
-	useEventListener("resize", handleSize);
-
-	// Set size at the first client-side load
-	useIsomorphicLayoutEffect(() => {
-		handleSize();
-	}, []);
-
-	return windowSize;
+	return { width, height };
 }

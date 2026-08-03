@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { sub } from "date-fns";
-import * as React from "react";
+import type * as React from "react";
 import { ListBoxItem, type SelectProps } from "react-aria-components";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
 import { LocaleTime } from "../LocaleTime";
@@ -9,7 +9,7 @@ import searchSelectStyles from "./SearchSelect.module.css";
 import selectStyles from "./Select.module.css";
 import { useEntitySearch } from "./useEntitySearch";
 
-type TournamentSearchItem = NonNullable<
+export type TournamentSearchItem = NonNullable<
 	Extract<TournamentSearchLoaderData, { tournaments: unknown }>
 >["tournaments"][number];
 
@@ -27,23 +27,20 @@ interface TournamentSearchProps<T extends object>
 	 */
 	pastOnly?: boolean;
 	onChange?: (tournament: TournamentSearchItem | null) => void;
+	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export const TournamentSearch = React.forwardRef(function TournamentSearch<
-	T extends object,
->(
-	{
-		name,
-		label,
-		bottomText,
-		errorText,
-		initialTournamentId,
-		pastOnly,
-		onChange,
-		...rest
-	}: TournamentSearchProps<T>,
-	ref?: React.Ref<HTMLButtonElement>,
-) {
+export function TournamentSearch<T extends object>({
+	name,
+	label,
+	bottomText,
+	errorText,
+	initialTournamentId,
+	pastOnly,
+	onChange,
+	ref,
+	...rest
+}: TournamentSearchProps<T>) {
 	const search = useEntitySearch<TournamentSearchItem>({
 		buildUrl: (query) =>
 			pastOnly
@@ -69,7 +66,7 @@ export const TournamentSearch = React.forwardRef(function TournamentSearch<
 			renderItem={(item) => <TournamentItem item={item} />}
 		/>
 	);
-});
+}
 
 function parseTournamentResults(
 	data: unknown,

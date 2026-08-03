@@ -31,7 +31,10 @@ import type { RegClosesAtOption } from "../calendar-constants";
 import styles from "../calendar-new.module.css";
 import { calendarNewBaseSchema } from "../calendar-new-schemas";
 import { datesToRegClosesAt } from "../calendar-utils";
-import { BracketProgressionSelector } from "../components/BracketProgressionSelector";
+import {
+	BracketProgressionSelector,
+	defaultBracketProgression,
+} from "../components/BracketProgressionSelector";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
@@ -211,7 +214,9 @@ function useDefaultValues() {
 		maxMembersPerTeam: settings?.maxMembersPerTeam ?? undefined,
 		toToolsMode,
 		pool,
-		bracketProgression: settings?.bracketProgression ?? null,
+		bracketProgression:
+			settings?.bracketProgression ??
+			(data.isAddingTournament ? defaultBracketProgression() : null),
 		isRanked: settings?.isRanked ?? true,
 		enableNoScreenToggle: settings?.enableNoScreenToggle ?? true,
 		enableSubs: settings?.enableSubs ?? true,
@@ -456,15 +461,6 @@ function MapsSection({ isTournament }: { isTournament: boolean }) {
 	const data = useLoaderData<typeof loader>();
 	const mode = values.toToolsMode as "ALL" | "TO" | RankedModeShort;
 
-	// reset the (polymorphic) pool when switching map picking style so a previous
-	// mode's maps don't leak into the new one
-	const previousMode = React.useRef(mode);
-	React.useEffect(() => {
-		if (previousMode.current === mode) return;
-		previousMode.current = mode;
-		setValue("pool", "");
-	}, [mode, setValue]);
-
 	if (!isTournament) {
 		return <CalendarMapPoolField />;
 	}
@@ -490,7 +486,12 @@ function MapsSection({ isTournament }: { isTournament: boolean }) {
 			<Divider smallText className="mt-4">
 				Tournament maps
 			</Divider>
-			<FormField name="toToolsMode" />
+			{/* reset the (polymorphic) pool when switching map picking style so a
+			previous mode's maps don't leak into the new one */}
+			<FormField
+				name="toToolsMode"
+				onValueChange={() => setValue("pool", "")}
+			/>
 			{mode === "ALL" ? <TiebreakerMapPoolField /> : null}
 			{mode === "TO" ? <TournamentMapPoolField /> : null}
 		</div>
