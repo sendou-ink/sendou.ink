@@ -3,8 +3,6 @@ import { isDeepEqual } from "remeda";
 import { z } from "zod";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 
-// xxx: e2e test that loader: false indeed does not send a request
-
 const COMPRESSED_PREFIX = "lz~";
 const ESCAPED_PREFIX = "lz~~";
 const DECODE_CACHE_MAX_SIZE = 300;

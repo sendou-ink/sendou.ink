@@ -2,7 +2,6 @@ import { z } from "zod";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { decompressFromBase64 } from "~/utils/compression";
 import { modeShort } from "~/utils/zod";
 import { DEFAULT_TIERS } from "./tier-list-maker-constants";
 import {
@@ -19,7 +18,7 @@ const EMPTY_TIER_LIST_STATE: TierListState = {
 const tierListState = z.codec(z.string(), z.custom<TierListState>(), {
 	decode: (value, payload) => {
 		const serialized =
-			parseSerializedJson(value) ?? parseLegacySignaturelessBase64(value);
+			parseSerializedJson(value);
 		if (!serialized) {
 			payload.issues.push({
 				code: "custom",
@@ -71,12 +70,4 @@ function parseSerializedJson(value: string) {
 
 	const parsed = tierListStateSerializedSchema.safeParse(json);
 	return parsed.success ? parsed.data : null;
-}
-
-// xxx: probably legacy support not needed?
-function parseLegacySignaturelessBase64(value: string) {
-	const json = decompressFromBase64(value);
-	if (json === null) return null;
-
-	return parseSerializedJson(json);
 }

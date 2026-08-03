@@ -3,13 +3,6 @@ import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { MapPool } from "./core/map-pool";
 
-// xxx: consider where we really need to support legacy
-const presenceBoolean = z.codec(z.string(), z.boolean(), {
-	// legacy decode fallback: bare `?readonly` (empty value) counts as true
-	decode: (value) => value === "" || value === "true",
-	encode: (value) => String(value),
-});
-
 export const mapListGeneratorSearchParams = SearchParams.define({
 	pool: SP.param(z.string(), {
 		default: MapPool.ANARCHY.serialized,
@@ -21,5 +14,5 @@ export const mapListGeneratorSearchParams = SearchParams.define({
 		resets: ["pool"],
 		loader: false,
 	}),
-	readonly: SP.custom(presenceBoolean, { default: false, loader: false }),
+	readonly: SP.param(z.boolean(), { default: false, loader: false }),
 });
