@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import { FULL_GROUP_SIZE, SENDOUQ } from "~/features/sendouq/q-constants";
 import invariant from "~/utils/invariant";
 import { faker } from "../core/faker";
 import * as SQGroupFactory from "../factories/SQGroupFactory";
@@ -53,6 +54,7 @@ export async function seedSendouQ(
 
 	await seedSquadMatches(teams);
 	await seedNzapReportedMatch(users, teams);
+	await seedNzapCanceledMatches(users, teams);
 	await seedLookingGroups(users);
 
 	return { recentMatchIds };
@@ -62,16 +64,11 @@ export async function seedSendouQ(
  * other team's to report and N-ZAP's group is free to queue again. His side is
  * Alliance Rogue's lineup, so the match is one of a team against a pickup group. */
 async function seedNzapReportedMatch(users: SeededUsers, teams: SeededTeams) {
-	const allianceRogue = teams.squads.find(
-		(squad) => squad.teamId === teams.allianceRogueId,
-	);
-	invariant(allianceRogue, "Alliance Rogue has no full lineup");
-
 	const opponentIds = users.crowdIds.slice(-88, -84);
 
 	const match = await SQMatchFactory.create(
 		{
-			alphaUserIds: allianceRogue.memberUserIds,
+			alphaUserIds: allianceRogueLineup(teams),
 			bravoUserIds: opponentIds,
 			isMatchmade: true,
 		},
@@ -82,6 +79,112 @@ async function seedNzapReportedMatch(users: SeededUsers, teams: SeededTeams) {
 		match.id === NZAP_MATCH_ID,
 		`N-ZAP's match was created on id ${match.id}, not ${NZAP_MATCH_ID}`,
 	);
+}
+
+/** One canceled match of each form the cancel reports take, so that the staff-only
+ * views have every one of them to show: the two teams pointing at the same player,
+ * at different ones, and a match staff canceled without either team's account of it. */
+async function seedNzapCanceledMatches(users: SeededUsers, teams: SeededTeams) {
+	const [nzapId, ...teammateIds] = allianceRogueLineup(teams);
+	const opponentIds = users.crowdIds.slice(-104, -88);
+	const opponentGroup = (nth: number) =>
+		opponentIds.slice(nth * FULL_GROUP_SIZE, (nth + 1) * FULL_GROUP_SIZE);
+
+	await SQMatchFactory.create(
+		{
+			alphaUserIds: [nzapId, ...teammateIds],
+			bravoUserIds: opponentGroup(0),
+			isMatchmade: true,
+		},
+		{
+			cancel: {
+				requested: {
+					reason:
+						"Their player never came back to the lobby after the second map. Waited 15 minutes and then gave up.",
+					nominatedUserIds: [opponentGroup(0)[2]],
+				},
+				accepted: {
+					reason:
+						"Our teammate's console crashed and he couldn't get back online. Sorry for wasting everyone's time.",
+					nominatedUserIds: [opponentGroup(0)[2]],
+				},
+			},
+			createdAt: sub(new Date(), { days: 2, hours: 4 }),
+		},
+	);
+
+	await SQMatchFactory.create(
+		{
+			alphaUserIds: opponentGroup(1),
+			bravoUserIds: [nzapId, ...teammateIds],
+			isMatchmade: true,
+		},
+		{
+			cancel: {
+				requested: {
+					reason: "Opponent left the lobby after going down 0-2.",
+					nominatedUserIds: [nzapId],
+				},
+				accepted: {
+					reason:
+						"Power outage on my end, nothing intentional. They were flaming in chat the whole set before that.",
+					nominatedUserIds: [opponentGroup(1)[0], opponentGroup(1)[3]],
+				},
+			},
+			createdAt: sub(new Date(), { days: 9, hours: 11 }),
+		},
+	);
+
+	// a teammate owns the group, so that the report against N-ZAP is his own team's
+	await SQMatchFactory.create(
+		{
+			alphaUserIds: opponentGroup(2),
+			bravoUserIds: [...teammateIds, nzapId],
+			isMatchmade: true,
+		},
+		{
+			cancel: {
+				requested: {
+					reason: maxLengthCancelReason(),
+					nominatedUserIds: [nzapId, opponentGroup(2)[1]],
+				},
+				accepted: {
+					reason: "N-ZAP had to leave for work mid-set, our bad.",
+					nominatedUserIds: [nzapId],
+				},
+			},
+			createdAt: sub(new Date(), { days: 20, hours: 2 }),
+		},
+	);
+
+	await SQMatchFactory.create(
+		{
+			alphaUserIds: [nzapId, ...teammateIds],
+			bravoUserIds: opponentGroup(3),
+			isMatchmade: true,
+		},
+		{
+			canceledByStaffUserId: users.staffId,
+			createdAt: sub(new Date(), { days: 35, hours: 7 }),
+		},
+	);
+}
+
+/** A reason at the exact max length, for how a wall of text lays out. */
+function maxLengthCancelReason() {
+	return faker.lorem
+		.paragraphs(5)
+		.replaceAll("\n", " ")
+		.slice(0, SENDOUQ.CANCEL_REASON_MAX_LENGTH);
+}
+
+function allianceRogueLineup(teams: SeededTeams) {
+	const allianceRogue = teams.squads.find(
+		(squad) => squad.teamId === teams.allianceRogueId,
+	);
+	invariant(allianceRogue, "Alliance Rogue has no full lineup");
+
+	return allianceRogue.memberUserIds;
 }
 
 /** Fixed team lineups playing together repeatedly, so their identifier skills reach

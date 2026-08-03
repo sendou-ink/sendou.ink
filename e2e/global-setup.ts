@@ -2,7 +2,11 @@ import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
 import { ensureMigratedDb } from "../scripts/ensure-test-db";
-import { E2E_BASE_PORT, e2eWorkerPort } from "./helpers/playwright";
+import {
+	E2E_BASE_PORT,
+	e2eWebhookPort,
+	e2eWorkerPort,
+} from "./helpers/playwright";
 
 const DEBUG = process.env.E2E_DEBUG === "true";
 const SERVER_PROCESSES: ChildProcess[] = [];
@@ -239,6 +243,8 @@ async function globalSetup(config: FullConfig) {
 					// no system messages to a shared skalop instance (see build env above)
 					SKALOP_SYSTEM_MESSAGE_URL: "",
 					SKALOP_TOKEN: "",
+					// tests assert webhook payloads by listening on the worker's webhook port
+					SQ_CANCEL_DISCORD_WEBHOOK_URL: `http://localhost:${e2eWebhookPort(i)}/sq-cancel`,
 				},
 				detached: false,
 			},

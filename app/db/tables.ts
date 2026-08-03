@@ -327,6 +327,22 @@ export interface GroupMatch {
 	noScreen: Generated<DBBoolean>;
 }
 
+/** One team's account of why a SendouQ match was canceled. Staff-only information. */
+export interface GroupMatchCancelReport {
+	id: GeneratedAlways<number>;
+	groupMatchId: number;
+	groupId: number;
+	authorUserId: number;
+	reason: string;
+	createdAt: Generated<number>;
+}
+
+/** Player nominated as a cause of the cancellation in a {@link GroupMatchCancelReport}. */
+export interface GroupMatchCancelReportPlayer {
+	cancelReportId: number;
+	userId: number;
+}
+
 export interface GroupMatchContinueVote {
 	id: GeneratedAlways<number>;
 	groupId: number;
@@ -1226,10 +1242,11 @@ export interface DB {
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
 	ExternalStream: ExternalStream;
-
 	Group: Group;
 	GroupLike: GroupLike;
 	GroupMatch: GroupMatch;
+	GroupMatchCancelReport: GroupMatchCancelReport;
+	GroupMatchCancelReportPlayer: GroupMatchCancelReportPlayer;
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;

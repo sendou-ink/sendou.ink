@@ -1,7 +1,13 @@
+import http from "node:http";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
-import { expect, impersonate, test } from "./helpers/playwright";
+import {
+	e2eWebhookPort,
+	expect,
+	impersonate,
+	test,
+} from "./helpers/playwright";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 import { SendouQMatchPage } from "./pages/sendouq/sendouq-match-page";
 import { SendouQPage } from "./pages/sendouq/sendouq-page";
@@ -85,33 +91,57 @@ test.describe("SendouQ match page", () => {
 		await expect(match.locators.lookAgainButton).toBeVisible();
 	});
 
-	test("Cancel flow: request, refused, re-request, accepted locks match", async ({
+	test("Cancel flow: request, refused, re-request, accepted locks match and sends webhook", async ({
 		page,
 		factories,
-	}) => {
+	}, testInfo) => {
 		const { matchId, alpha, bravo } = await createMatch(factories);
 
 		await impersonate(page, alpha[0].id);
 		const match = new SendouQMatchPage(page);
 		await match.goto(matchId);
 
-		await match.requestCancel();
+		await match.requestCancel({ reason: "First cancel reason" });
 		await expect(match.locators.cancelPendingText).toBeVisible();
 
 		await impersonate(page, bravo[0].id);
 		await match.goto(matchId);
 		await expect(match.locators.cancelPrompt).toBeVisible();
-		await match.respondToCancel("Refuse");
+		await match.refuseCancel();
 
 		await impersonate(page, alpha[0].id);
 		await match.goto(matchId);
-		await match.requestCancel();
+		await match.requestCancel({ reason: "Requester network issues" });
 
 		await impersonate(page, bravo[0].id);
 		await match.goto(matchId);
-		await match.respondToCancel("Accept");
+		const webhook = await captureCancelWebhook(
+			e2eWebhookPort(testInfo.parallelIndex),
+			async () => {
+				await match.acceptCancel({ reason: "Accepter agrees to cancel" });
+			},
+		);
 
 		await expect(match.locators.canceledText).toBeVisible();
+
+		expect(webhook.embeds).toHaveLength(1);
+		const embed = webhook.embeds[0];
+		expect(embed.title).toBe("SendouQ match canceled");
+
+		const fieldValue = (name: string) =>
+			embed.fields.find((field) => field.name.startsWith(name))?.value;
+		expect(fieldValue("Match")).toContain(`#${matchId}`);
+		expect(fieldValue("Requesting team's reason")).toBe(
+			"Requester network issues",
+		);
+		expect(fieldValue("Accepting team's reason")).toBe(
+			"Accepter agrees to cancel",
+		);
+		// both teams nominated the first listed player
+		expect(fieldValue("Teams nominated the same players")).toBe("Yes");
+		expect(fieldValue("Times nominated in canceled matches")).toMatch(
+			/season: 1 • year: 1/,
+		);
 	});
 
 	test("Rejoin: trusted group one-click look again", async ({
@@ -196,6 +226,46 @@ test.describe("SendouQ match page", () => {
 		await expect(looking.ownGroupCard.members).toHaveCount(3);
 	});
 });
+
+interface WebhookPayload {
+	embeds: Array<{
+		title: string;
+		fields: Array<{ name: string; value: string }>;
+	}>;
+}
+
+/** Listens on the worker's webhook port for the Discord webhook the `run` callback triggers. */
+async function captureCancelWebhook(port: number, run: () => Promise<void>) {
+	const payloads: WebhookPayload[] = [];
+	const server = http.createServer((req, res) => {
+		let body = "";
+		req.on("data", (chunk) => {
+			body += chunk;
+		});
+		req.on("end", () => {
+			payloads.push(JSON.parse(body));
+			res.statusCode = 204;
+			res.end();
+		});
+	});
+	await new Promise<void>((resolve, reject) => {
+		server.once("error", reject);
+		server.listen(port, resolve);
+	});
+
+	try {
+		await run();
+		await expect
+			.poll(() => payloads.length, { timeout: 10_000 })
+			.toBeGreaterThan(0);
+	} finally {
+		await new Promise((resolve) => {
+			server.close(resolve);
+		});
+	}
+
+	return payloads[0];
+}
 
 async function createMatch(
 	factories: Factories,

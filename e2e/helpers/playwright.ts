@@ -43,6 +43,11 @@ export function e2eWorkerPort(workerIndex: number) {
 	return port;
 }
 
+/** The port a test can listen on to receive the given worker's Discord webhook calls. */
+export function e2eWebhookPort(workerIndex: number) {
+	return e2eWorkerPort(workerIndex) + 2000;
+}
+
 type WorkerFixtures = {
 	workerPort: number;
 	workerBaseURL: string;

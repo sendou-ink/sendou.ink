@@ -127,7 +127,7 @@
 	"match.cancelRequested": "Запрос об отмене матча",
 	"match.reportedBy": "Сообщено {{name}}, время -",
 	"match.cancelPendingConfirmation": "Ждёт подтверждения другой команды",
-	"match.cancelMatch.confirm": "Отменить матч? (требует подтверждения другой команды, злоупотребление может привести к бану)",
+	"match.cancelMatch.explanation": "",
 	"match.adminCancel.confirm": "",
 	"match.tabs.reportScore": "Сообщить счёт",
 	"match.errors.cantCancel": "Невозможно отменить, так как другая команда уже сообщила счёт за этот матч. Ознакомьтесь с инструкцией по оспорению на верху страницы.",

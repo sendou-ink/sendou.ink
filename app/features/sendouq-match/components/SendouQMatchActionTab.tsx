@@ -2,7 +2,9 @@ import type { TFunction } from "i18next";
 import { Ban, Check, Undo2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
+import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
@@ -11,6 +13,8 @@ import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
+import { FormField } from "~/form/FormField";
+import { SendouForm } from "~/form/SendouForm";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	resolveGroupNames,
@@ -19,6 +23,7 @@ import {
 } from "../core/match-timeline";
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
+import { acceptCancelSchema, requestCancelSchema } from "../q-match-schemas";
 import {
 	MatchmadeRejoinSection,
 	OffSeasonRejoinSection,
@@ -77,7 +82,7 @@ export function SendouQMatchActionTab({
 		cancelRequestedByGroupId != null &&
 		cancelRequestedByGroupId !== ownTeamId
 	) {
-		return <CancelRespondTab />;
+		return <CancelRespondTab data={data} />;
 	}
 
 	if (isLocked) {
@@ -128,7 +133,7 @@ function CancelPendingTab() {
 	);
 }
 
-function CancelRespondTab() {
+function CancelRespondTab({ data }: { data: SendouQMatchLoaderData }) {
 	const { t } = useTranslation(["q", "common"]);
 	const cancelFetcher = useFetcher();
 
@@ -152,22 +157,50 @@ function CancelRespondTab() {
 					>
 						{t("common:actions.refuse")}
 					</SendouButton>
-					<SendouButton
-						variant="outlined"
-						icon={<Check />}
-						isDisabled={cancelFetcher.state !== "idle"}
-						onPress={() => {
-							cancelFetcher.submit(
-								{ _action: "ACCEPT_CANCEL" },
-								{ method: "post" },
-							);
-						}}
+					<SendouDialog
+						trigger={
+							<SendouButton variant="outlined" icon={<Check />}>
+								{t("common:actions.accept")}
+							</SendouButton>
+						}
+						heading={t("q:match.cancelMatch")}
+						showCloseButton
 					>
-						{t("common:actions.accept")}
-					</SendouButton>
+						<CancelMatchForm match={data.match} action="ACCEPT_CANCEL" />
+					</SendouDialog>
 				</div>
 			</div>
 		</SendouTabPanel>
+	);
+}
+
+function CancelMatchForm({
+	match,
+	action,
+}: {
+	match: SendouQMatchLoaderData["match"];
+	action: "REQUEST_CANCEL" | "ACCEPT_CANCEL";
+}) {
+	const { t } = useTranslation(["q"]);
+
+	const playerOptions = SendouQMatch.allMembers(match).map((member) => ({
+		value: String(member.id),
+		label: () => member.username,
+	}));
+
+	const schema: z.ZodObject<z.ZodRawShape> =
+		action === "REQUEST_CANCEL" ? requestCancelSchema : acceptCancelSchema;
+
+	return (
+		<div className="stack md">
+			<p className="text-lighter text-sm">
+				{t("q:match.cancelMatch.explanation")}
+			</p>
+			<SendouForm schema={schema} submitButtonTestId="cancel-match-submit">
+				<FormField name="nominatedUserIds" options={playerOptions} />
+				<FormField name="reason" />
+			</SendouForm>
+		</div>
 	);
 }
 
@@ -460,20 +493,21 @@ function InProgressTab({
 							</SendouButton>
 						</FormWithConfirm>
 					) : (
-						<FormWithConfirm
-							fields={[["_action", "REQUEST_CANCEL"]]}
-							dialogHeading={t("q:match.cancelMatch.confirm")}
-							submitButtonText={t("common:actions.confirm")}
-							fetcher={cancelFetcher}
+						<SendouDialog
+							trigger={
+								<SendouButton
+									variant="minimal-destructive"
+									size="miniscule"
+									icon={<Ban size={16} />}
+								>
+									{t("q:match.action.requestCancel")}
+								</SendouButton>
+							}
+							heading={t("q:match.cancelMatch")}
+							showCloseButton
 						>
-							<SendouButton
-								variant="minimal-destructive"
-								size="miniscule"
-								icon={<Ban size={16} />}
-							>
-								{t("q:match.action.requestCancel")}
-							</SendouButton>
-						</FormWithConfirm>
+							<CancelMatchForm match={data.match} action="REQUEST_CANCEL" />
+						</SendouDialog>
 					)}
 					<SendouButton
 						variant="minimal-destructive"

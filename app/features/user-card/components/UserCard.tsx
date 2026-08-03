@@ -9,11 +9,12 @@ import {
 	Trash2,
 	UserPlus,
 	UserRoundCheck,
+	VenetianMask,
 } from "lucide-react";
 import * as React from "react";
 import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLocation, useMatches } from "react-router";
+import { Form, useFetcher, useLocation, useMatches } from "react-router";
 import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -33,6 +34,7 @@ import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,
 	FRIENDS_PAGE,
+	impersonateUrl,
 	LFG_PAGE,
 	navIconUrl,
 	stageBannerImageUrl,
@@ -271,6 +273,9 @@ function CardContent({
 					</LinkButton>
 				) : (
 					<>
+						{process.env.NODE_ENV === "development" ? (
+							<ImpersonateButton userId={data.id} />
+						) : null}
 						{friendship && !friendship.isFriend ? (
 							<FriendRequestButton
 								targetUserId={data.id}
@@ -496,6 +501,28 @@ function FriendRequestButton({
 				)
 			}
 		/>
+	);
+}
+
+/** Development only shortcut for logging in as the shown user. */
+function ImpersonateButton({ userId }: { userId: number }) {
+	const location = useLocation();
+
+	return (
+		<Form method="post" action={impersonateUrl(userId)} reloadDocument>
+			<input
+				type="hidden"
+				name="returnTo"
+				value={`${location.pathname}${location.search}`}
+			/>
+			<SendouButton
+				type="submit"
+				size="miniscule"
+				shape="circle"
+				icon={<VenetianMask />}
+				aria-label="Impersonate user"
+			/>
+		</Form>
 	);
 }
 
