@@ -8,6 +8,8 @@ const SCHEMA_PATH = fileURLToPath(
 
 const STATEMENT_SEPARATOR = "--> statement-breakpoint";
 
+const LAST_COLLAPSED_MIGRATION = "164-drop-tournament-sub.js";
+
 /**
  * Creates the schema as it stood when the 165 hand written migrations that came
  * before it were collapsed into this one. Only ever bootstraps an empty database:
@@ -16,6 +18,8 @@ const STATEMENT_SEPARATOR = "--> statement-breakpoint";
  * itself as run.
  */
 export async function up(db: Kysely<any>): Promise<void> {
+	await assertNotBehindCollapsePoint(db);
+
 	// left behind by ley, which tracked the migrations collapsed into this one
 	await sql`DROP TABLE IF EXISTS "migrations"`.execute(db);
 
@@ -26,6 +30,30 @@ export async function up(db: Kysely<any>): Promise<void> {
 			await sql.raw(statement).execute(trx);
 		}
 	});
+}
+
+/**
+ * A database still carrying ley's bookkeeping table is only safe to adopt as is if
+ * ley ran every migration collapsed into this one. Otherwise it would silently be
+ * left short of tables and columns this migration assumes are already there, which
+ * surfaces much later as confusing "no such table" errors at query time.
+ */
+async function assertNotBehindCollapsePoint(db: Kysely<any>) {
+	const { rows: bookkeeping } = await sql<{ name: string }>`
+		SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'migrations'
+	`.execute(db);
+
+	if (bookkeeping.length === 0) return;
+
+	const { rows: applied } = await sql<{ name: string }>`
+		SELECT name FROM "migrations" WHERE name = ${LAST_COLLAPSED_MIGRATION}
+	`.execute(db);
+
+	if (applied.length > 0) return;
+
+	throw new Error(
+		`Database has not run "${LAST_COLLAPSED_MIGRATION}", the last of the migrations collapsed into 20260803000000-initial, so it can't be migrated any further. Replace it with an up to date copy of production.`,
+	);
 }
 
 async function hasSchema(db: Kysely<any>) {

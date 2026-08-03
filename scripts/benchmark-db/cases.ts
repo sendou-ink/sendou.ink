@@ -462,9 +462,9 @@ export function buildCases(fx: Fixtures): {
 
 	// GroupMatchContinueVoteRepository
 	add(
-		"GroupMatchContinueVoteRepository.findForGroups",
+		"GroupMatchContinueVoteRepository.findAllByGroupIds",
 		fx.heavyGroupIds,
-		(groupIds) => GroupMatchContinueVoteRepository.findForGroups(groupIds),
+		(groupIds) => GroupMatchContinueVoteRepository.findAllByGroupIds(groupIds),
 	);
 
 	// PlayerStatRepository
