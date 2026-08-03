@@ -57,8 +57,9 @@
 
 ## SQL
 
-- database is Sqlite3 used with the Kysely library
+- database is Sqlite3, driven by Node's built-in `node:sqlite` through a custom Kysely dialect (`app/db/node-sqlite-dialect.ts`)
 - database code should only be written in Repository files, see [repositories.md](./docs/dev/repositories.md) for their conventions
+- migrations are Kysely migrations in `/migrations`, scaffolded with `pnpm run migrate:new "description"` and applied with `pnpm run migrate up`, see [how-to.md](./docs/dev/how-to.md)
 - down migrations are not needed, only up migrations
 - every database id is of type number
 - if we are working on a branch by default we should add to the migration this branch added instead of creating a brand new one
