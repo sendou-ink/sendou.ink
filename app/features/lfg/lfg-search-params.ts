@@ -27,8 +27,5 @@ export const lfgSearchParams = SearchParams.define({
 });
 
 export const lfgNewSearchParams = SearchParams.define({
-	postId: SP.param(z.number().int().positive().nullable(), {
-		default: null,
-		loader: true,
-	}),
+	postId: SP.param(z.number().int().positive().nullable(), { loader: true }),
 });

@@ -5,7 +5,6 @@ import { SP } from "~/modules/search-params/search-params";
 
 export const adminSearchParams = SearchParams.define({
 	friendCode: SP.param(z.string().regex(FRIEND_CODE_REGEXP).nullable(), {
-		default: null,
 		loader: true,
 	}),
 });

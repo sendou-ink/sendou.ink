@@ -5,7 +5,6 @@ import { SHORT_NANOID_LENGTH } from "~/utils/id";
 
 export const associationsSearchParams = SearchParams.define({
 	inviteCode: SP.param(z.string().length(SHORT_NANOID_LENGTH).nullable(), {
-		default: null,
 		loader: true,
 	}),
 });

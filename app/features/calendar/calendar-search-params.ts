@@ -18,34 +18,20 @@ export const calendarSearchParams = SearchParams.define({
 		default: CalendarEvent.defaultFilters(),
 		loader: true,
 	}),
-	day: SP.param(z.number().int().min(1).max(31).nullable(), {
-		default: null,
-		loader: true,
-	}),
-	month: SP.param(z.number().int().min(0).max(11).nullable(), {
-		default: null,
-		loader: true,
-	}),
+	day: SP.param(z.number().int().min(1).max(31).nullable(), { loader: true }),
+	month: SP.param(z.number().int().min(0).max(11).nullable(), { loader: true }),
 	year: SP.param(z.number().int().min(2015).max(2100).nullable(), {
-		default: null,
 		loader: true,
 	}),
 });
 
 export const calendarEventsSearchParams = SearchParams.define({
-	view: SP.param(z.enum(VIEW_FILTERS).nullable(), {
-		default: null,
-		loader: false,
-	}),
+	view: SP.param(z.enum(VIEW_FILTERS).nullable(), { loader: false }),
 });
 
 export const calendarNewSearchParams = SearchParams.define({
-	eventId: SP.param(z.number().int().positive().nullable(), {
-		default: null,
-		loader: true,
-	}),
+	eventId: SP.param(z.number().int().positive().nullable(), { loader: true }),
 	copyEventId: SP.param(z.number().int().positive().nullable(), {
-		default: null,
 		loader: true,
 	}),
 	tournament: SP.param(z.boolean(), {

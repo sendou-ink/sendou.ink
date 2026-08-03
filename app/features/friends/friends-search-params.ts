@@ -6,8 +6,5 @@ export const VIEW_FILTERS = ["friends", "team", "all"] as const;
 export type ViewFilter = (typeof VIEW_FILTERS)[number];
 
 export const friendsSearchParams = SearchParams.define({
-	view: SP.param(z.enum(VIEW_FILTERS).nullable(), {
-		default: null,
-		loader: false,
-	}),
+	view: SP.param(z.enum(VIEW_FILTERS).nullable(), { loader: false }),
 });

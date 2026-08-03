@@ -22,7 +22,6 @@ export const userResultsSearchParams = SearchParams.define({
 		loader: true,
 	}),
 	tournament: SP.param(z.string().trim().min(1).max(100).nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
@@ -40,14 +39,13 @@ export const userSeasonsSearchParams = SearchParams.define({
 		loader: true,
 	}),
 	season: SP.param(startedSeason.nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
 });
 
 export const userSeasonSummaryGraphicSearchParams = SearchParams.define({
-	season: SP.param(startedSeason.nullable(), { default: null, loader: true }),
+	season: SP.param(startedSeason.nullable(), { loader: true }),
 });
 
 const buildsWeaponFilterCodec = z.codec(
@@ -80,18 +78,12 @@ export const userBuildsSearchParams = SearchParams.define({
 
 export const userArtSearchParams = SearchParams.define({
 	source: SP.param(z.enum(ART_SOURCES), { default: "ALL", loader: false }),
-	tag: SP.param(z.string().nullable(), { default: null, loader: false }),
+	tag: SP.param(z.string().nullable(), { loader: false }),
 });
 
 export const userBuildsNewSearchParams = SearchParams.define({
-	buildId: SP.param(z.number().int().positive().nullable(), {
-		default: null,
-		loader: true,
-	}),
-	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), {
-		default: null,
-		loader: true,
-	}),
+	buildId: SP.param(z.number().int().positive().nullable(), { loader: true }),
+	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), { loader: true }),
 	build: SP.custom(serializedBuildCodec, {
 		default: EMPTY_BUILD,
 		loader: true,

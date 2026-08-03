@@ -6,12 +6,10 @@ import { SP } from "~/modules/search-params/search-params";
 export const tournamentAuditSearchParams = SearchParams.define({
 	page: SP.param(z.number().int().min(1), { default: 1, loader: true }),
 	auditType: SP.param(z.enum(TOURNAMENT_AUDIT_LOG_TYPES).nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
 	auditTeam: SP.param(z.number().int().positive().nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
@@ -19,7 +17,6 @@ export const tournamentAuditSearchParams = SearchParams.define({
 
 export const tournamentImportTeamsSearchParams = SearchParams.define({
 	fromTournamentId: SP.param(z.number().int().positive().nullable(), {
-		default: null,
 		loader: true,
 	}),
 });

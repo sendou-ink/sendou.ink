@@ -13,9 +13,7 @@ type ScalarBase = "string" | "number" | "boolean";
 
 type EncodeMode = "canonical" | "compact";
 
-interface ParamOptions<T> {
-	/** Value used when the param is missing or fails to decode. Values equal to it are omitted from the URL. Must be a static value. */
-	default: T;
+interface ParamOptionsBase {
 	/** Whether changing this param must run loaders. `false` params write through `history.replaceState` and never trigger revalidation. */
 	loader: boolean;
 	/** Param keys reset to their defaults whenever this param is written. */
@@ -23,6 +21,23 @@ interface ParamOptions<T> {
 	/** The param's canonical encoding is the compressed form. Only for params whose values are inherently large. */
 	compress?: boolean;
 }
+
+type DefaultOption<T> = {
+	/** Value used when the param is missing or fails to decode. Values equal to it are omitted from the URL. Must be a static value. */
+	default: T;
+};
+
+type ParamOptions<T> = ParamOptionsBase &
+	(unknown extends T
+		? DefaultOption<T>
+		: null extends T
+			? {
+					/** Omit it: a nullable param's default is always `null`. */
+					default?: null;
+				}
+			: DefaultOption<T>);
+
+type ResolvedParamOptions<T> = ParamOptionsBase & { default: T };
 
 export interface ParamDef<T> {
 	default: T;
@@ -232,13 +247,14 @@ export const SP = {
 	 * schema's type tree. Supported shapes: strings, numbers, booleans, string
 	 * and number enums/literals, same-base-type unions, arrays of those
 	 * (encoded as repeated keys) and a top-level `.nullable()` wrapper (`null`
-	 * encodes as param absent). Anything else is a `define()`-time error — use
-	 * `SP.json` or `SP.custom` instead.
+	 * encodes as param absent, so `default` is omitted for those). Anything else
+	 * is a `define()`-time error — use `SP.json` or `SP.custom` instead.
 	 */
 	param<S extends z.ZodType>(
 		schema: S,
 		opts: ParamOptions<z.output<S>>,
 	): ParamDef<z.output<S>> {
+		const resolved = resolveOptions(opts);
 		let core: z.ZodType = schema;
 
 		if (core instanceof z.ZodOptional) {
@@ -247,7 +263,7 @@ export const SP = {
 			);
 		}
 		if (core instanceof z.ZodNullable) {
-			if (opts.default !== null) {
+			if (resolved.default !== null) {
 				throw new Error(
 					"A .nullable() search param must have null as its default, otherwise null and the default could not be told apart in the URL",
 				);
@@ -262,7 +278,7 @@ export const SP = {
 					`Cannot derive an URL encoding for the array item schema of a search param (got ${describeSchema(core.element as z.ZodType)}). Use SP.json or SP.custom.`,
 				);
 			}
-			return arrayParam(schema, core, itemBase, opts);
+			return arrayParam(schema, core, itemBase, resolved);
 		}
 
 		const base = deriveScalarBase(core);
@@ -271,7 +287,7 @@ export const SP = {
 				`Cannot derive an URL encoding for a search param schema (got ${describeSchema(core)}). Use SP.json or SP.custom.`,
 			);
 		}
-		return scalarParam(schema, base, opts);
+		return scalarParam(schema, base, resolved);
 	},
 
 	/** Declares a param encoded as `JSON.stringify` in a single value. For objects and whole-array-as-one-param values. */
@@ -279,20 +295,22 @@ export const SP = {
 		schema: S,
 		opts: ParamOptions<z.output<S>>,
 	): ParamDef<z.output<S>> {
+		const resolved = resolveOptions(opts);
+
 		return {
-			...baseDef(opts),
+			...baseDef(resolved),
 			decodeValues: (values) => {
-				if (values.length === 0) return opts.default;
+				if (values.length === 0) return resolved.default;
 				const plain = unwrapValue(values[0]);
-				if (plain === DECODE_FAILED) return opts.default;
+				if (plain === DECODE_FAILED) return resolved.default;
 				let json: unknown;
 				try {
 					json = JSON.parse(plain);
 				} catch {
-					return opts.default;
+					return resolved.default;
 				}
 				const parsed = schema.safeParse(json);
-				return parsed.success ? parsed.data : opts.default;
+				return parsed.success ? parsed.data : resolved.default;
 			},
 			encodePlain: (value) => [JSON.stringify(value)],
 		};
@@ -307,14 +325,16 @@ export const SP = {
 		codec: z.ZodType<Value, string | null>,
 		opts: ParamOptions<Value>,
 	): ParamDef<Value> {
+		const resolved = resolveOptions(opts);
+
 		return {
-			...baseDef(opts),
+			...baseDef(resolved),
 			decodeValues: (values) => {
-				if (values.length === 0) return opts.default;
+				if (values.length === 0) return resolved.default;
 				const plain = unwrapValue(values[0]);
-				if (plain === DECODE_FAILED) return opts.default;
+				if (plain === DECODE_FAILED) return resolved.default;
 				const parsed = z.safeDecode(codec, plain);
-				return parsed.success ? parsed.data : opts.default;
+				return parsed.success ? parsed.data : resolved.default;
 			},
 			encodePlain: (value) => {
 				const encoded = z.safeEncode(codec, value);
@@ -329,8 +349,16 @@ export const SP = {
 	},
 };
 
+function resolveOptions<T>(opts: ParamOptions<T>): ResolvedParamOptions<T> {
+	const { default: defaultValue, ...rest } = opts as ParamOptionsBase & {
+		default?: T;
+	};
+
+	return { ...rest, default: (defaultValue ?? null) as T };
+}
+
 function baseDef<T>(
-	opts: ParamOptions<T>,
+	opts: ResolvedParamOptions<T>,
 ): Pick<
 	ParamDef<T>,
 	"default" | "loader" | "resets" | "compress" | "decodeCache"
@@ -347,7 +375,7 @@ function baseDef<T>(
 function scalarParam<T>(
 	schema: z.ZodType,
 	base: ScalarBase,
-	opts: ParamOptions<T>,
+	opts: ResolvedParamOptions<T>,
 ): ParamDef<T> {
 	return {
 		...baseDef(opts),
@@ -368,7 +396,7 @@ function arrayParam<T>(
 	schema: z.ZodType,
 	arraySchema: z.ZodArray,
 	itemBase: ScalarBase,
-	opts: ParamOptions<T>,
+	opts: ResolvedParamOptions<T>,
 ): ParamDef<T> {
 	const itemSchema = arraySchema.element as z.ZodType;
 

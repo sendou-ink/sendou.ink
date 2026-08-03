@@ -8,7 +8,7 @@ export const ART_TABS = {
 } as const;
 
 export const artSearchParams = SearchParams.define({
-	tag: SP.param(z.string().nullable(), { default: null, loader: true }),
+	tag: SP.param(z.string().nullable(), { loader: true }),
 	tab: SP.param(z.enum([ART_TABS.RECENTLY_UPLOADED, ART_TABS.SHOWCASE]), {
 		default: ART_TABS.RECENTLY_UPLOADED,
 		loader: false,
@@ -17,15 +17,9 @@ export const artSearchParams = SearchParams.define({
 });
 
 export const artGridSearchParams = SearchParams.define({
-	big: SP.param(z.number().int().positive().nullable(), {
-		default: null,
-		loader: false,
-	}),
+	big: SP.param(z.number().int().positive().nullable(), { loader: false }),
 });
 
 export const artNewSearchParams = SearchParams.define({
-	art: SP.param(z.number().int().positive().nullable(), {
-		default: null,
-		loader: true,
-	}),
+	art: SP.param(z.number().int().positive().nullable(), { loader: true }),
 });

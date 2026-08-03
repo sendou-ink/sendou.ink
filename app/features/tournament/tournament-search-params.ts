@@ -24,16 +24,10 @@ export const tournamentSearchSearchParams = SearchParams.define({
 		default: 25,
 		loader: true,
 	}),
-	minStartTime: SP.custom(isoDateCodec.nullable(), {
-		default: null,
-		loader: true,
-	}),
-	maxStartTime: SP.custom(isoDateCodec.nullable(), {
-		default: null,
-		loader: true,
-	}),
+	minStartTime: SP.custom(isoDateCodec.nullable(), { loader: true }),
+	maxStartTime: SP.custom(isoDateCodec.nullable(), { loader: true }),
 });
 
 export const tournamentJoinSearchParams = SearchParams.define({
-	code: SP.param(z.string().nullable(), { default: null, loader: true }),
+	code: SP.param(z.string().nullable(), { loader: true }),
 });

@@ -10,7 +10,6 @@ export const mapListGeneratorSearchParams = SearchParams.define({
 		loader: false,
 	}),
 	eventId: SP.param(z.number().int().positive().nullable(), {
-		default: null,
 		resets: ["pool"],
 		loader: false,
 	}),

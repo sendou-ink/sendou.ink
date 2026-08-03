@@ -8,7 +8,7 @@ export const userCardEditSearchParams = SearchParams.define({
 			.string()
 			.refine((value) => value.startsWith("/") && !value.startsWith("//"))
 			.nullable(),
-		{ default: null, loader: true },
+		{ loader: true },
 	),
 });
 

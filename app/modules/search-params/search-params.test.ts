@@ -19,10 +19,7 @@ const testDefinition = SearchParams.define({
 		default: "TW",
 		loader: true,
 	}),
-	season: SP.param(z.number().int().nullable(), {
-		default: null,
-		loader: true,
-	}),
+	season: SP.param(z.number().int().nullable(), { loader: true }),
 	ids: SP.param(z.array(z.number().int().positive()), {
 		default: [],
 		loader: false,
@@ -163,6 +160,20 @@ describe("SearchParams.define", () => {
 				loader: true,
 			}),
 		).toThrow(/derive/);
+	});
+
+	it("defaults .nullable() params to null without declaring it", () => {
+		const omitted = SP.param(z.number().int().nullable(), { loader: true });
+		const declared = SP.param(z.number().int().nullable(), {
+			default: null,
+			loader: true,
+		});
+
+		expect(omitted.default).toBeNull();
+		expect(SearchParams.decodeParam(omitted, [])).toBeNull();
+		expect(SearchParams.decodeParam(omitted, ["nope"])).toBeNull();
+		expect(SearchParams.encodeParam(omitted, null)).toEqual([]);
+		expect(declared.default).toBeNull();
 	});
 
 	it("rejects .optional() and non-null defaults for .nullable()", () => {

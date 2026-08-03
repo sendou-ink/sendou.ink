@@ -50,10 +50,7 @@ export const calculatorSearchParams = SearchParams.define({
 			.refine((value) => possibleApValues().includes(value)),
 		{ default: 0, loader: false },
 	),
-	dmg: SP.param(z.enum(DAMAGE_TYPE).nullable(), {
-		default: null,
-		loader: false,
-	}),
+	dmg: SP.param(z.enum(DAMAGE_TYPE).nullable(), { loader: false }),
 	multi: SP.param(z.boolean(), { default: true, loader: false }),
 });
 

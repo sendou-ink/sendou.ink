@@ -11,8 +11,5 @@ const MATCH_PAGE_TABS = [
 ] as const;
 
 export const matchPageSearchParams = SearchParams.define({
-	tab: SP.param(z.enum(MATCH_PAGE_TABS).nullable(), {
-		default: null,
-		loader: false,
-	}),
+	tab: SP.param(z.enum(MATCH_PAGE_TABS).nullable(), { loader: false }),
 });

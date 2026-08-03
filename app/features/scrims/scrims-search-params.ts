@@ -10,7 +10,6 @@ export const scrimsSearchParams = SearchParams.define({
 		loader: true,
 	}),
 	pendingRequestPostId: SP.param(z.number().int().positive().nullable(), {
-		default: null,
 		loader: false,
 	}),
 });

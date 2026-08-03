@@ -17,8 +17,7 @@ const EMPTY_TIER_LIST_STATE: TierListState = {
 
 const tierListState = z.codec(z.string(), z.custom<TierListState>(), {
 	decode: (value, payload) => {
-		const serialized =
-			parseSerializedJson(value);
+		const serialized = parseSerializedJson(value);
 		if (!serialized) {
 			payload.issues.push({
 				code: "custom",

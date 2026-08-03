@@ -12,32 +12,25 @@ export const vodsSearchParams = SearchParams.define({
 		loader: true,
 	}),
 	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
 	mode: SP.param(modeShort.nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
 	stageId: SP.param(numericEnum(stageIds).nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
 	type: SP.param(z.enum(videoMatchTypes).nullable(), {
-		default: null,
 		loader: true,
 		resets: ["page"],
 	}),
 });
 
 export const vodsNewSearchParams = SearchParams.define({
-	vod: SP.param(z.number().int().positive().nullable(), {
-		default: null,
-		loader: true,
-	}),
+	vod: SP.param(z.number().int().positive().nullable(), { loader: true }),
 });
 
 export const vodsVodSearchParams = SearchParams.define({
