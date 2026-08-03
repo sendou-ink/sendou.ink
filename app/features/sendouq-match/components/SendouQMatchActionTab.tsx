@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import { Ban, Check, Undo2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
+import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouTabPanel } from "~/components/elements/Tabs";
@@ -12,6 +13,7 @@ import { MatchTimeline } from "~/components/match-page/MatchTimeline";
 import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
+import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
@@ -181,44 +183,23 @@ function CancelMatchForm({
 }) {
 	const { t } = useTranslation(["q"]);
 
-	const playerOptions = [
-		...match.groupAlpha.members,
-		...match.groupBravo.members,
-	].map((member) => ({
+	const playerOptions = SendouQMatch.allMembers(match).map((member) => ({
 		value: String(member.id),
 		label: () => member.username,
 	}));
+
+	const schema: z.ZodObject<z.ZodRawShape> =
+		action === "REQUEST_CANCEL" ? requestCancelSchema : acceptCancelSchema;
 
 	return (
 		<div className="stack md">
 			<p className="text-lighter text-sm">
 				{t("q:match.cancelMatch.explanation")}
 			</p>
-			{action === "REQUEST_CANCEL" ? (
-				<SendouForm
-					schema={requestCancelSchema}
-					submitButtonTestId="cancel-match-submit"
-				>
-					{({ FormField }) => (
-						<>
-							<FormField name="nominatedUserIds" options={playerOptions} />
-							<FormField name="reason" />
-						</>
-					)}
-				</SendouForm>
-			) : (
-				<SendouForm
-					schema={acceptCancelSchema}
-					submitButtonTestId="cancel-match-submit"
-				>
-					{({ FormField }) => (
-						<>
-							<FormField name="nominatedUserIds" options={playerOptions} />
-							<FormField name="reason" />
-						</>
-					)}
-				</SendouForm>
-			)}
+			<SendouForm schema={schema} submitButtonTestId="cancel-match-submit">
+				<FormField name="nominatedUserIds" options={playerOptions} />
+				<FormField name="reason" />
+			</SendouForm>
 		</div>
 	);
 }

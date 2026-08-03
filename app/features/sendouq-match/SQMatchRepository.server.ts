@@ -556,9 +556,11 @@ export async function findCancelNominationCountsByUserIds({
 		.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(from))
 		.execute();
 
+	const rowsByUserId = R.groupBy(rows, (row) => row.userId);
+
 	return userIds.map((userId) => {
 		const userMatches = R.uniqueBy(
-			rows.filter((row) => row.userId === userId),
+			rowsByUserId[userId] ?? [],
 			(row) => row.groupMatchId,
 		);
 
@@ -770,6 +772,16 @@ export async function cancelMatch({
 			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
 			await lockMatchWithoutSkillChange(match.id, trx);
+			await trx
+				.updateTable("GroupMatch")
+				.set({ cancelRequestedByUserId: null })
+				.where("id", "=", matchId)
+				.execute();
+			// a pending cancel request's report is one-sided, staff canceling overrides it
+			await trx
+				.deleteFrom("GroupMatchCancelReport")
+				.where("groupMatchId", "=", matchId)
+				.execute();
 		});
 		return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
 	}

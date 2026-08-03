@@ -163,6 +163,28 @@ describe("cancelMatch", () => {
 			expect(map.winnerGroupId).toBeNull();
 		}
 	});
+
+	test("admin cancel deletes a pending cancel request's report", async () => {
+		await SQMatchRepository.requestCancelMatch({
+			matchId: setup.match.id,
+			requestedByUserId: setup.alphaMembers[0].id,
+			reason: "Reason",
+			nominatedUserIds: [setup.bravoMembers[0].id],
+		});
+
+		const result = await withUserId(setup.alphaMembers[0].id, () =>
+			SQMatchRepository.cancelMatch({
+				matchId: setup.match.id,
+				isAdminReport: true,
+			}),
+		);
+
+		expect(result.status).toBe("CANCEL_CONFIRMED");
+		expect(await fetchCancelReports(setup.match.id)).toHaveLength(0);
+
+		const match = await SQMatchRepository.findById(setup.match.id);
+		expect(match?.cancelRequestedByUserId).toBeNull();
+	});
 });
 
 const fetchCancelReports = async (matchId: number) => {

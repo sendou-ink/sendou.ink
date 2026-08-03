@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -46,10 +47,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const match = notFoundIfNullish(await SQMatchRepository.findById(matchId));
 	const isStaff = user.roles.includes("STAFF");
-	const isParticipant = [
-		...match.groupAlpha.members,
-		...match.groupBravo.members,
-	].some((m) => m.id === user.id);
+	const isParticipant = SendouQMatch.allMembers(match).some(
+		(m) => m.id === user.id,
+	);
 	errorToastIfFalsy(
 		isParticipant || isStaff,
 		"Not a participant of this match",
@@ -450,10 +450,7 @@ type MatchById = NonNullable<
 
 function parseNominatedUserIds(nominatedUserIds: string[], match: MatchById) {
 	const userIds = nominatedUserIds.map(Number);
-	const memberIds = [
-		...match.groupAlpha.members,
-		...match.groupBravo.members,
-	].map((member) => member.id);
+	const memberIds = SendouQMatch.allMembers(match).map((member) => member.id);
 	errorToastIfFalsy(
 		userIds.every((userId) => memberIds.includes(userId)),
 		"Nominated players must be participants of the match",
@@ -467,17 +464,15 @@ async function notifyStaffOfCanceledMatch(match: MatchById) {
 		const reports = await SQMatchRepository.findCancelReportsByGroupMatchId(
 			match.id,
 		);
-		const nominatedUserIds = [
-			...new Set(
-				reports.flatMap((report) =>
-					report.nominatedPlayers.map((player) => player.userId),
-				),
+		const nominatedUserIds = R.unique(
+			reports.flatMap((report) =>
+				report.nominatedPlayers.map((player) => player.userId),
 			),
-		];
+		);
 
 		sendMatchCanceledWebhook({
 			matchId: match.id,
-			members: [...match.groupAlpha.members, ...match.groupBravo.members],
+			members: SendouQMatch.allMembers(match),
 			reports,
 			nominationCounts:
 				await SQMatchRepository.findCancelNominationCountsByUserIds({
