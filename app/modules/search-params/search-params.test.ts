@@ -254,6 +254,16 @@ describe("SearchParams compression", () => {
 		).toEqual({ text: "" });
 	});
 
+	it("resolves a compression bomb to the default", () => {
+		const bomb = SearchParams.compressTransportValue(
+			JSON.stringify({ text: "a".repeat(10 * 1024 * 1024) }),
+		);
+
+		expect(SearchParams.decodeParam(testDefinition.shape.blob, [bomb])).toEqual(
+			{ text: "" },
+		);
+	});
+
 	it("compresses on demand only when it shortens the value", () => {
 		const longFilters = {
 			minValue: 1,
