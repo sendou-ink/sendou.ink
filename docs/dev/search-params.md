@@ -61,7 +61,7 @@ Note: schemas built with `z.preprocess` (like `weaponSplId`, `stageId` in `app/u
 
 Any param can arrive compressed (an `lz~` prefix followed by a deflate + base64url payload) without declaring anything — decode transparently decompresses first. Encoding stays human-readable except for `compress: true` params and on-demand compact links via `definition.href(path, values, { compress: true })` (QR codes, share links). A value is only compressed when that actually shortens it, compared as percent-encoded since that is what ends up in the URL.
 
-Since decoding happens before the value schema ever runs, a compressed arrival that inflates past 64 KiB is rejected mid-inflate and resolves to the default, so a hand-crafted URL cannot inflate to an arbitrarily large string on the server.
+Since decoding happens before the value schema ever runs, a compressed arrival that inflates past 256 KiB is rejected mid-inflate and resolves to the default, so a hand-crafted URL cannot inflate to an arbitrarily large string on the server. The limit is an order of magnitude above the largest state the app produces (a tier list holding the entire item pool serializes to ~15 KB) while capping how far a URL that fits in the request line can expand.
 
 When the href is already built and the definition behind it is not known (e.g. the QR code of `ImageExportDialog`, which compacts whatever path it is given), `SearchParams.compactHref(href)` re-encodes every param of an existing href the same way.
 

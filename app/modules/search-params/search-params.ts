@@ -6,7 +6,7 @@ import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 const COMPRESSED_PREFIX = "lz~";
 const ESCAPED_PREFIX = "lz~~";
 const DECODE_CACHE_MAX_SIZE = 300;
-const MAX_DECOMPRESSED_VALUE_BYTES = 64 * 1024;
+const MAX_DECOMPRESSED_VALUE_BYTES = 256 * 1024;
 
 const DECODE_FAILED = Symbol("DECODE_FAILED");
 
