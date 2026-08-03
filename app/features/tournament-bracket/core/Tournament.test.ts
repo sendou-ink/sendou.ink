@@ -439,3 +439,50 @@ describe("Adjusting team starting bracket", () => {
 		expect(tournament.brackets[0].participantTournamentTeamIds).toHaveLength(4);
 	});
 });
+
+describe("Resolving the team a user is a member of", () => {
+	const USER_ID = 1;
+
+	const tournamentWithTeams = (
+		teams: Array<{ id: number; createdAt: number; joinedAt: number }>,
+	) =>
+		testTournament({
+			ctx: {
+				teams: teams.map((team) =>
+					tournamentCtxTeam(team.id, {
+						createdAt: team.createdAt,
+						memberUserIds: [USER_ID],
+						memberJoinedAt: [team.joinedAt],
+					}),
+				),
+			},
+		});
+
+	it("resolves the team the user joined most recently", () => {
+		const tournament = tournamentWithTeams([
+			{ id: 1, createdAt: 1, joinedAt: 1 },
+			{ id: 2, createdAt: 2, joinedAt: 2 },
+		]);
+
+		expect(tournament.teamMemberOfByUser({ id: USER_ID })?.id).toBe(2);
+	});
+
+	it("goes by when the user joined, not by when the team was created", () => {
+		// e.g. the user's first team dropped out and the organizer added them to an
+		// older team afterwards
+		const tournament = tournamentWithTeams([
+			{ id: 1, createdAt: 100, joinedAt: 10 },
+			{ id: 2, createdAt: 1, joinedAt: 50 },
+		]);
+
+		expect(tournament.teamMemberOfByUser({ id: USER_ID })?.id).toBe(2);
+	});
+
+	it("returns null if the user is not a member of any team", () => {
+		const tournament = tournamentWithTeams([
+			{ id: 1, createdAt: 1, joinedAt: 1 },
+		]);
+
+		expect(tournament.teamMemberOfByUser({ id: USER_ID + 1 })).toBeNull();
+	});
+});

@@ -9,7 +9,10 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	tournamentFromDBCached,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
@@ -36,6 +39,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		user: undefined,
 	});
+	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
+	const teamFullById = (tournamentTeamId: number) =>
+		teamsFull.find((team) => team.id === tournamentTeamId);
 
 	const match = notFoundIfNullish(
 		await TournamentMatchRepository.findMatchById(matchId),
@@ -75,8 +81,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			resultsCount: results.length,
 		});
 		if (currentStep?.action === "ROLL") {
-			const teamOne = tournament.teamById(match.opponentOne.id);
-			const teamTwo = tournament.teamById(match.opponentTwo.id);
+			const teamOne = teamFullById(match.opponentOne.id);
+			const teamTwo = teamFullById(match.opponentTwo.id);
 			if (teamOne && teamTwo) {
 				const rollExecuted = await executeRoll({
 					matchId,
@@ -121,8 +127,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						tournamentId,
 						matchId,
 						teams: [match.opponentOne.id, match.opponentTwo.id],
-						mapPoolByTeamId: (teamId) =>
-							tournament.teamById(teamId)?.mapPool ?? [],
+						mapPoolByTeamId: (teamId) => teamFullById(teamId)?.mapPool ?? [],
 						mapPickingStyle: match.mapPickingStyle,
 						maps: match.roundMaps,
 						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
@@ -165,13 +170,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			tournamentTeamToActiveRosterUserIds(
 				teamAlpha,
 				tournament.minMembersPerTeam,
-			) ?? teamAlpha.members.map((m) => m.userId);
+			) ?? teamAlpha.memberUserIds;
 		const teamBravo = tournament.teamById(match.opponentTwo.id)!;
 		const teamBravoActiveRoster =
 			tournamentTeamToActiveRosterUserIds(
 				teamBravo,
 				tournament.minMembersPerTeam,
-			) ?? teamBravo.members.map((m) => m.userId);
+			) ?? teamBravo.memberUserIds;
 
 		const playerIds = [...teamAlphaActiveRoster, ...teamBravoActiveRoster];
 
@@ -228,6 +233,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		results,
 		reportedWeapons,
 		mapList,
+		teams: [match.opponentOne?.id, match.opponentTwo?.id].flatMap(
+			(tournamentTeamId) => {
+				const team = tournamentTeamId ? teamFullById(tournamentTeamId) : null;
+				return team ? [team] : [];
+			},
+		),
 		matchIsOver,
 		endedEarly,
 		noScreen,

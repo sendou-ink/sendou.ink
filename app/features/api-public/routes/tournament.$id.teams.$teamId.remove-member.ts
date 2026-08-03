@@ -43,18 +43,13 @@ export const action = async (args: ActionFunctionArgs) => {
 		errorToastIfFalsy(team, "Invalid team id");
 		errorToastIfFalsy(
 			team.checkIns.length === 0 ||
-				team.members.length > tournament.minMembersPerTeam,
+				team.memberUserIds.length > tournament.minMembersPerTeam,
 			"Can't remove last member from checked in team",
 		);
-		errorToastIfFalsy(
-			team.members.find((m) => m.userId === userId)?.role !== "OWNER",
-			"Cannot remove team owner",
-		);
+		errorToastIfFalsy(team.ownerUserId !== userId, "Cannot remove team owner");
 		errorToastIfFalsy(
 			!tournament.hasStarted ||
-				!tournament
-					.participatedPlayersByTeamId(teamId)
-					.some((p) => p.userId === userId),
+				!tournament.participatedPlayerUserIdsByTeamId(teamId).includes(userId),
 			"Cannot remove player that has participated in the tournament",
 		);
 

@@ -97,8 +97,7 @@ export const action = async (args: ActionFunctionArgs) => {
 				userIds: [userId],
 				notification: {
 					type: "TO_ADDED_TO_TEAM",
-					pictureUrl:
-						tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoUrl,
+					pictureUrl: team.logoUrl ?? tournament.ctx.logoUrl,
 					meta: {
 						adderUsername: user.username,
 						teamName: team.name,

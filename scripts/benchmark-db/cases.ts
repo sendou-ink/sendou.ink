@@ -885,6 +885,12 @@ export function buildCases(fx: Fixtures): {
 		TournamentRepository.findById(tournamentId),
 	);
 	add(
+		"TournamentRepository.findTeamsFullByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findTeamsFullByTournamentId(tournamentId),
+	);
+	add(
 		"TournamentRepository.findRulesById",
 		fx.heavyTournamentId,
 		(tournamentId) => TournamentRepository.findRulesById(tournamentId),
@@ -989,6 +995,11 @@ export function buildCases(fx: Fixtures): {
 		fx.tournamentTeamPair,
 		(teamIds) =>
 			TournamentTeamRepository.findRecentlyPlayedMapsByIds({ teamIds }),
+	);
+	add(
+		"TournamentTeamRepository.findMapPoolsByTeamIds",
+		fx.tournamentTeamPair,
+		(teamIds) => TournamentTeamRepository.findMapPoolsByTeamIds(teamIds),
 	);
 
 	// TrophyRepository

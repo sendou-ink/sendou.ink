@@ -52,7 +52,7 @@ export const action: ActionFunction = async ({ params, url }) => {
 		(team) => team.id === leanTeam.id,
 	);
 	const previousTeam = tournament.ctx.teams.find((team) =>
-		team.members.some((member) => member.userId === user.id),
+		team.memberUserIds.includes(user.id),
 	);
 
 	errorToastIfFalsy(

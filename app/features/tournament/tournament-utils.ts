@@ -269,7 +269,7 @@ export function validateCanJoinTeam({
 	maxTeamSize,
 }: {
 	inviteCode?: string | null;
-	teamToJoin?: { members: { userId: number }[] };
+	teamToJoin?: { memberUserIds: number[] };
 	userId?: number;
 	maxTeamSize: number;
 }) {
@@ -285,10 +285,10 @@ export function validateCanJoinTeam({
 	if (!teamToJoin) {
 		return "NO_TEAM_MATCHING_CODE";
 	}
-	if (teamToJoin.members.some((member) => member.userId === userId)) {
+	if (teamToJoin.memberUserIds.includes(userId)) {
 		return "ALREADY_JOINED";
 	}
-	if (teamToJoin.members.length >= maxTeamSize) {
+	if (teamToJoin.memberUserIds.length >= maxTeamSize) {
 		return "TEAM_FULL";
 	}
 
@@ -308,7 +308,7 @@ export function normalizedTeamCount({
 export type TeamForOrdering = {
 	id: number;
 	seed: number | null;
-	members: { length: number };
+	memberUserIds: { length: number };
 	avgSeedingSkillOrdinal: number | null;
 	createdAt: number;
 	startingBracketIdx: number | null;
@@ -327,8 +327,8 @@ export function compareTeamsForOrdering(
 		return a.seed - b.seed;
 	}
 
-	const aIsFull = a.members.length >= minMembersPerTeam;
-	const bIsFull = b.members.length >= minMembersPerTeam;
+	const aIsFull = a.memberUserIds.length >= minMembersPerTeam;
+	const bIsFull = b.memberUserIds.length >= minMembersPerTeam;
 
 	if (aIsFull && !bIsFull) {
 		return -1;

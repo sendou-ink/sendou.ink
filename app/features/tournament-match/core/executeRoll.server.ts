@@ -1,7 +1,6 @@
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { seededRandom } from "~/utils/random";
@@ -24,7 +23,7 @@ export async function executeRoll({
 	>;
 	results: Awaited<ReturnType<typeof findResultsByMatchId>>;
 	tournamentId: number;
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [PickBan.MapPoolTeam, PickBan.MapPoolTeam];
 	tieBreakerMapPool: ModeWithStage[];
 }): Promise<boolean> {
 	const customFlow = maps.customFlow;

@@ -15,7 +15,6 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { assertUnreachable } from "~/utils/types";
-import type { TournamentDataTeam } from "./Tournament.server";
 
 export const types = [
 	"COUNTERPICK",
@@ -541,11 +540,17 @@ export interface PickBanEvent {
 	mode: ModeShort | null;
 }
 
+/** A tournament team as far as map pool based pick/ban legality is concerned. */
+export type MapPoolTeam = {
+	id: number;
+	mapPool: Array<{ mode: ModeShort; stageId: StageId }> | null;
+};
+
 interface MapListWithStatusesArgs {
 	results: Array<{ mode: ModeShort; stageId: StageId; winnerTeamId: number }>;
 	maps: TournamentRoundMaps | null;
 	mapList: TournamentMapListMap[] | null;
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MapPoolTeam, MapPoolTeam];
 	pickerTeamId: number;
 	tieBreakerMapPool: ModeWithStage[];
 	toSetMapPool: Array<{ mode: ModeShort; stageId: StageId }>;

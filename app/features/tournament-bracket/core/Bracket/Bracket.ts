@@ -345,8 +345,8 @@ export abstract class Bracket {
 				...standing,
 				team: {
 					...standing.team,
-					members: standing.team.members.filter((member) =>
-						this.tournament.ctx.participatedUsers.includes(member.userId),
+					memberUserIds: standing.team.memberUserIds.filter((userId) =>
+						this.tournament.ctx.participatedUsers.includes(userId),
 					),
 				},
 			};

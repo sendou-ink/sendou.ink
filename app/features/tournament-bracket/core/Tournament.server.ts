@@ -25,7 +25,21 @@ const combinedTournamentData = async (tournamentId: number) => {
 };
 
 export type TournamentData = NonNullable<Unwrapped<typeof tournamentData>>;
-export type TournamentDataTeam = TournamentData["ctx"]["teams"][number];
+
+/**
+ * A tournament team as the tournament layout ships it: no per member profile data,
+ * map pool or invite code. See {@link tournamentTeamsFullCached} for those.
+ */
+export type TournamentDataTeam = Omit<
+	TournamentRepository.FindById["teams"][number],
+	"teamLogoUrl" | "pickupAvatarUrl" | "inviteCode"
+> & {
+	/** Logo of the linked team, falling back to the pickup avatar when it may be revealed. */
+	logoUrl: string | null;
+	/** Only set for the viewer's own team. */
+	inviteCode: string | null;
+};
+
 export async function tournamentData({
 	user,
 	tournamentId,
@@ -48,14 +62,11 @@ function dataMapped({
 	ctx: TournamentRepository.FindById;
 	user?: { id: number };
 }) {
-	const tournamentHasStarted = data.stage.length > 0;
-	const isOrganizer =
-		ctx.author.id === user?.id ||
-		ctx.staff.some(
-			(staff) => staff.id === user?.id && staff.role === "ORGANIZER",
-		) ||
-		isAdmin(user);
-	const revealInfo = tournamentHasStarted || isOrganizer;
+	const revealInfo = shouldRevealInfo({
+		tournamentHasStarted: data.stage.length > 0,
+		ctx,
+		user,
+	});
 
 	const tentativeTier =
 		!ctx.tier && ctx.organization?.id
@@ -67,21 +78,41 @@ function dataMapped({
 		ctx: {
 			...ctx,
 			tentativeTier,
-			teams: ctx.teams.map((team) => {
-				const isOwnTeam = team.members.some(
-					(member) => member.userId === user?.id,
-				);
+			teams: ctx.teams.map(
+				({ teamLogoUrl, pickupAvatarUrl, ...team }): TournamentDataTeam => {
+					const isOwnTeam =
+						typeof user?.id === "number" &&
+						team.memberUserIds.includes(user.id);
 
-				return {
-					...team,
-					mapPool: revealInfo || isOwnTeam ? team.mapPool : null,
-					pickupAvatarUrl:
-						revealInfo || isOwnTeam ? team.pickupAvatarUrl : null,
-					inviteCode: isOwnTeam ? team.inviteCode : null,
-				};
-			}),
+					return {
+						...team,
+						inviteCode: isOwnTeam ? team.inviteCode : null,
+						logoUrl:
+							teamLogoUrl ?? (revealInfo || isOwnTeam ? pickupAvatarUrl : null),
+					};
+				},
+			),
 		},
 	};
+}
+
+function shouldRevealInfo({
+	tournamentHasStarted,
+	ctx,
+	user,
+}: {
+	tournamentHasStarted: boolean;
+	ctx: Pick<TournamentRepository.FindById, "author" | "staff">;
+	user?: { id: number };
+}) {
+	const isOrganizer =
+		ctx.author.id === user?.id ||
+		ctx.staff.some(
+			(staff) => staff.id === user?.id && staff.role === "ORGANIZER",
+		) ||
+		isAdmin(user);
+
+	return tournamentHasStarted || isOrganizer;
 }
 
 export async function tournamentFromDB(args: {
@@ -161,12 +192,108 @@ function tournamentDataCacheEntry(tournamentId: number) {
 	return entry;
 }
 
+/** A tournament team with its full roster, as the views that render rosters get it. */
+export type TournamentTeamFull = Unwrapped<typeof tournamentTeamsFullCached>;
+
+type TournamentTeamsCacheEntry = {
+	storedAt: number;
+	teams: ReturnType<typeof TournamentRepository.findTeamsFullByTournamentId>;
+	anonymousCensored?: ReturnType<typeof censoredTeams>;
+};
+
+const tournamentTeamsCache = new LRUCache<number, TournamentTeamsCacheEntry>({
+	max: TOURNAMENT_DATA_CACHE_MAX_ENTRIES,
+});
+
+/**
+ * Full rosters of a tournament's teams, censored for the given viewer. Its own cache
+ * slice so that the (much smaller) tournament layout data does not have to carry them.
+ */
+export async function tournamentTeamsFullCached({
+	user,
+	tournamentId,
+}: {
+	user?: { id: number };
+	tournamentId: number;
+}) {
+	const ctx = notFoundIfNullish(await tournamentDataCached({ tournamentId }));
+
+	const revealInfo = shouldRevealInfo({
+		tournamentHasStarted: ctx.data.stage.length > 0,
+		ctx: ctx.ctx,
+		user,
+	});
+
+	if (ServerConfig.disableCache) {
+		return censoredTeams({
+			teams:
+				await TournamentRepository.findTeamsFullByTournamentId(tournamentId),
+			revealInfo,
+			user,
+		});
+	}
+
+	const entry = tournamentTeamsCacheEntry(tournamentId);
+	const teams = await entry.teams;
+
+	if (user) return censoredTeams({ teams, revealInfo, user });
+
+	if (!entry.anonymousCensored) {
+		entry.anonymousCensored = censoredTeams({ teams, revealInfo });
+	}
+
+	return entry.anonymousCensored;
+}
+
+function tournamentTeamsCacheEntry(tournamentId: number) {
+	const cached = tournamentTeamsCache.get(tournamentId);
+	if (cached && Date.now() - cached.storedAt < TOURNAMENT_DATA_CACHE_TTL_MS) {
+		return cached;
+	}
+
+	const entry: TournamentTeamsCacheEntry = {
+		storedAt: Date.now(),
+		teams: TournamentRepository.findTeamsFullByTournamentId(tournamentId),
+	};
+	entry.teams.catch(() => tournamentTeamsCache.delete(tournamentId));
+
+	tournamentTeamsCache.set(tournamentId, entry);
+
+	return entry;
+}
+
+function censoredTeams({
+	teams,
+	revealInfo,
+	user,
+}: {
+	teams: TournamentRepository.TeamFull[];
+	revealInfo: boolean;
+	user?: { id: number };
+}) {
+	return teams.map((team) => {
+		const isOwnTeam = team.members.some((member) => member.userId === user?.id);
+		const pickupAvatarUrl =
+			revealInfo || isOwnTeam ? team.pickupAvatarUrl : null;
+
+		return {
+			...team,
+			mapPool: revealInfo || isOwnTeam ? team.mapPool : null,
+			pickupAvatarUrl,
+			logoUrl: team.team?.logoUrl ?? pickupAvatarUrl,
+			inviteCode: isOwnTeam ? team.inviteCode : null,
+		};
+	});
+}
+
 export function clearTournamentDataCache(tournamentId: number) {
 	tournamentDataCache.delete(tournamentId);
+	tournamentTeamsCache.delete(tournamentId);
 }
 
 export function clearAllTournamentDataCache() {
 	tournamentDataCache.clear();
+	tournamentTeamsCache.clear();
 }
 
 const RUNNING_TOURNAMENT_MAX_AGE_HOURS = 6;

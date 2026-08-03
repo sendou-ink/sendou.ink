@@ -7,6 +7,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
+	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
@@ -45,10 +46,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 	// linked teams source their logo from the sendou.ink team, so any pickup avatar is cleared
 	const avatarImgId = linkedTeamId ? null : data.logo;
 
-	let team: NonNullable<ReturnType<typeof tournament.teamById>> | undefined;
-	if (typeof data.tournamentTeamId === "number") {
-		team = tournament.teamById(data.tournamentTeamId);
-	}
+	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
+	const team =
+		typeof data.tournamentTeamId === "number"
+			? teamsFull.find((t) => t.id === data.tournamentTeamId)
+			: undefined;
 
 	errorToastIfFalsy(team || !tournament.hasStarted, "Tournament has started");
 
@@ -119,8 +121,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			userIds: membersToAdd,
 			notification: {
 				type: "TO_ADDED_TO_TEAM",
-				pictureUrl:
-					tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoUrl,
+				pictureUrl: team.logoUrl ?? tournament.ctx.logoUrl,
 				meta: {
 					adderUsername: user.username,
 					teamName: name,

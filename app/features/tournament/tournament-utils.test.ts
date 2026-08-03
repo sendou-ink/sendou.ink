@@ -28,7 +28,7 @@ const createTeam = (
 ): TeamForOrdering => ({
 	id,
 	seed: options.seed ?? null,
-	members: { length: options.members ?? 4 },
+	memberUserIds: { length: options.members ?? 4 },
 	avgSeedingSkillOrdinal:
 		options.avgSeedingSkillOrdinal === undefined
 			? 100

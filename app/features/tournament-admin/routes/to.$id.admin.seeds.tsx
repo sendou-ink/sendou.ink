@@ -35,7 +35,7 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -60,11 +60,10 @@ const AB_DIVISION_RADIO_OPTIONS = [
 
 export default function TournamentAdminSeedsPage() {
 	const tournament = useTournament();
+	const { seedingSnapshot, teams } = useLoaderData<typeof loader>();
 	const navigation = useNavigation();
-	const [teamOrder, setTeamOrder] = React.useState(
-		tournament.ctx.teams.map((t) => t.id),
-	);
-	const [activeTeam, setActiveTeam] = React.useState<TournamentDataTeam | null>(
+	const [teamOrder, setTeamOrder] = React.useState(teams.map((t) => t.id));
+	const [activeTeam, setActiveTeam] = React.useState<TournamentTeamFull | null>(
 		null,
 	);
 	const sensors = useSensors(
@@ -84,24 +83,17 @@ export default function TournamentAdminSeedsPage() {
 		}),
 	);
 
-	const { seedingSnapshot } = useLoaderData<typeof loader>();
-	const newTeamIds = computeNewTeamIds(tournament.ctx.teams, seedingSnapshot);
-	const newPlayersByTeam = computeNewPlayers(
-		tournament.ctx.teams,
-		seedingSnapshot,
-	);
-	const removedPlayersByTeam = computeRemovedPlayers(
-		tournament.ctx.teams,
-		seedingSnapshot,
-	);
+	const newTeamIds = computeNewTeamIds(teams, seedingSnapshot);
+	const newPlayersByTeam = computeNewPlayers(teams, seedingSnapshot);
+	const removedPlayersByTeam = computeRemovedPlayers(teams, seedingSnapshot);
 
-	const teamsSorted = [...tournament.ctx.teams].sort(
+	const teamsSorted = [...teams].sort(
 		(a, b) => teamOrder.indexOf(a.id) - teamOrder.indexOf(b.id),
 	);
 
 	const isOutOfOrder = (
-		team: TournamentDataTeam,
-		previousTeam?: TournamentDataTeam,
+		team: TournamentTeamFull,
+		previousTeam?: TournamentTeamFull,
 	) => {
 		if (!previousTeam) return false;
 
@@ -115,9 +107,7 @@ export default function TournamentAdminSeedsPage() {
 		return Boolean(previousTeam.avgSeedingSkillOrdinal);
 	};
 
-	const noOrganizerSetSeeding = tournament.ctx.teams.every(
-		(team) => !team.seed,
-	);
+	const noOrganizerSetSeeding = teams.every((team) => !team.seed);
 
 	const handleSeedChange = (teamId: number, newSeed: number) => {
 		if (newSeed < 1) return;
@@ -135,7 +125,7 @@ export default function TournamentAdminSeedsPage() {
 	};
 
 	const sortAllBySp = () => {
-		const sortedTeams = [...tournament.ctx.teams].sort((a, b) => {
+		const sortedTeams = [...teams].sort((a, b) => {
 			if (
 				a.avgSeedingSkillOrdinal !== null &&
 				b.avgSeedingSkillOrdinal !== null
@@ -174,17 +164,13 @@ export default function TournamentAdminSeedsPage() {
 			</div>
 			{tournament.isMultiStartingBracket ? (
 				<StartingBracketDialog
-					key={tournament.ctx.teams
-						.map((team) => team.startingBracketIdx ?? 0)
-						.join()}
+					key={teams.map((team) => team.startingBracketIdx ?? 0).join()}
 				/>
 			) : null}
 			{hasAbDivisionsStartingBracket(tournament) ? (
 				<>
 					<AbDivisionsDialog
-						key={tournament.ctx.teams
-							.map((team) => team.abDivision ?? -1)
-							.join()}
+						key={teams.map((team) => team.abDivision ?? -1).join()}
 					/>
 					<AbDivisionImbalanceWarning />
 				</>
@@ -677,7 +663,7 @@ function RowContents({
 	removedPlayers,
 	onSeedChange,
 }: {
-	team: TournamentDataTeam;
+	team: TournamentTeamFull;
 	seed?: number;
 	teamSeedingSkill: {
 		sp: number | null;
@@ -688,7 +674,6 @@ function RowContents({
 	removedPlayers?: Array<{ userId: number; username: string }>;
 	onSeedChange?: (newSeed: number) => void;
 }) {
-	const tournament = useTournament();
 	const [draft, setDraft] = React.useState<string | null>(null);
 	const inputValue = draft ?? String(seed ?? "");
 
@@ -700,7 +685,7 @@ function RowContents({
 		setDraft(null);
 	};
 
-	const logoUrl = tournament.tournamentTeamLogoSrc(team);
+	const logoUrl = team.logoUrl;
 
 	return (
 		<>
@@ -775,7 +760,7 @@ function RowContents({
 }
 
 function computeNewTeamIds(
-	teams: TournamentDataTeam[],
+	teams: TournamentTeamFull[],
 	snapshot: SeedingSnapshot | null,
 ): Set<number> {
 	if (!snapshot) return new Set();
@@ -784,7 +769,7 @@ function computeNewTeamIds(
 }
 
 function computeNewPlayers(
-	teams: TournamentDataTeam[],
+	teams: TournamentTeamFull[],
 	snapshot: SeedingSnapshot | null,
 ): Map<number, Set<number>> {
 	const result = new Map<number, Set<number>>();
@@ -814,7 +799,7 @@ function computeNewPlayers(
 }
 
 function computeRemovedPlayers(
-	teams: TournamentDataTeam[],
+	teams: TournamentTeamFull[],
 	snapshot: SeedingSnapshot | null,
 ): Map<number, Array<{ userId: number; username: string }>> {
 	const result = new Map<number, Array<{ userId: number; username: string }>>();

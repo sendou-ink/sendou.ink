@@ -66,7 +66,6 @@ export default function BracketTestLayout() {
 		teamById: (id: number) => teams.find((t) => t.id === id) ?? null,
 		teamMemberOfByUser: () => null,
 		isOrganizer: () => false,
-		tournamentTeamLogoSrc: () => null,
 		streamingParticipantIds: [] as number[],
 		streams: [] as unknown[],
 		isLeagueDivision: false,

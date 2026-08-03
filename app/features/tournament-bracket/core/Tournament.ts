@@ -25,7 +25,7 @@ import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
 import { getRounds } from "./rounds";
 import * as Seeding from "./Seeding";
-import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
+import type { TournamentData } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
 
@@ -453,11 +453,6 @@ export class Tournament {
 		);
 	}
 
-	/** Tournament teams logo image path, either from the team or the pickup avatar uploaded specifically for this tournament */
-	tournamentTeamLogoSrc(team: TournamentDataTeam) {
-		return team.team?.logoUrl ?? team.pickupAvatarUrl;
-	}
-
 	/** Generates a Splatoon 3 pool code to join the tournament match. It tries to make it so that teams don't need to change the pool all the time, but provides different ones not to run into the in-game limit of max people in a pool at a time. */
 	resolvePoolCode({
 		hostingTeamId,
@@ -538,12 +533,13 @@ export class Tournament {
 		return { ...result, seed };
 	}
 
-	participatedPlayersByTeamId(id: number) {
+	/** User ids of the given team's members who played at least one map of the tournament. */
+	participatedPlayerUserIdsByTeamId(id: number) {
 		const team = this.teamById(id);
 		invariant(team, "Team not found");
 
-		return team.members.filter((member) =>
-			this.ctx.participatedUsers.includes(member.userId),
+		return team.memberUserIds.filter((userId) =>
+			this.ctx.participatedUsers.includes(userId),
 		);
 	}
 
@@ -615,14 +611,14 @@ export class Tournament {
 			return { isFulfilled: false, reason: "Check in has not yet started" };
 		}
 
-		if (team.members.length < this.minMembersPerTeam) {
+		if (team.memberUserIds.length < this.minMembersPerTeam) {
 			return {
 				isFulfilled: false,
 				reason: `Team needs at least ${this.minMembersPerTeam} members`,
 			};
 		}
 
-		if (this.teamsPrePickMaps && (!team.mapPool || team.mapPool.length === 0)) {
+		if (this.teamsPrePickMaps && !team.hasMapPool) {
 			return { isFulfilled: false, reason: "Team has no map pool set" };
 		}
 
@@ -885,17 +881,11 @@ export class Tournament {
 		return this.builtBracketByIdx(idx);
 	}
 
-	/** Returns the team that the user is the owner of, or null if not found. Includes invite code (only owner should see this, logic in the loader function). */
-	ownedTeamByUser(
-		user: OptionalIdObject,
-	): ((typeof this.ctx.teams)[number] & { inviteCode: string }) | null {
+	/** Returns the team that the user is the owner of, or null if not found. */
+	ownedTeamByUser(user: OptionalIdObject) {
 		if (!user) return null;
 
-		return this.ctx.teams.find((team) =>
-			team.members.some(
-				(member) => member.userId === user.id && member.role === "OWNER",
-			),
-		) as (typeof this.ctx.teams)[number] & { inviteCode: string };
+		return this.ctx.teams.find((team) => team.ownerUserId === user.id) ?? null;
 	}
 
 	/**
@@ -905,18 +895,16 @@ export class Tournament {
 	teamMemberOfByUser(user: OptionalIdObject) {
 		if (!user) return null;
 
-		const teams = this.ctx.teams.filter((team) =>
-			team.members.some((member) => member.userId === user.id),
-		);
+		let result: (typeof this.ctx.teams)[number] | null = null;
+		let latestJoinedAt = 0;
+		for (const team of this.ctx.teams) {
+			const memberIdx = team.memberUserIds.indexOf(user.id);
+			if (memberIdx === -1) continue;
 
-		let result: (typeof teams)[number] | null = null;
-		let latestCreatedAt = 0;
-		for (const team of teams) {
-			const member = team.members.find((member) => member.userId === user.id)!;
-
-			if (member.createdAt > latestCreatedAt) {
+			const joinedAt = team.memberJoinedAt[memberIdx] ?? 0;
+			if (!result || joinedAt > latestJoinedAt) {
 				result = team;
-				latestCreatedAt = member.createdAt;
+				latestJoinedAt = joinedAt;
 			}
 		}
 
@@ -1279,7 +1267,16 @@ export class Tournament {
 			thumbnailUrl: stream.thumbnailUrl,
 			twitchUserName: stream.twitch,
 			viewerCount: stream.viewerCount,
-			userId: stream.userId,
+			userId: stream.userId as number | null,
+			teamName: stream.teamName as string | null,
+			user: {
+				id: stream.id,
+				username: stream.username,
+				discordId: stream.discordId,
+				discordAvatar: stream.discordAvatar,
+				customUrl: stream.customUrl,
+				customAvatarUrl: stream.customAvatarUrl,
+			},
 		}));
 
 		const castStreams = this.ctx.castStreams.map((stream) => ({
@@ -1287,6 +1284,8 @@ export class Tournament {
 			twitchUserName: stream.twitch!,
 			viewerCount: stream.viewerCount,
 			userId: null as number | null,
+			teamName: null as string | null,
+			user: null,
 		}));
 
 		return [...memberStreams, ...castStreams].sort(

@@ -146,7 +146,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "DELETE_TEAM_MEMBER": {
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
-				ownTeam.members.some((member) => member.userId === data.userId),
+				ownTeam.memberUserIds.includes(data.userId),
 				"User is not in your team",
 			);
 			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
@@ -155,7 +155,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			// and then having members kicked without it affecting the checking in status
 			errorToastIfFalsy(
 				!ownTeamCheckedIn ||
-					ownTeam.members.length > tournament.minMembersPerTeam,
+					ownTeam.memberUserIds.length > tournament.minMembersPerTeam,
 				"Can't kick a member after checking in",
 			);
 
@@ -249,8 +249,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "ADD_PLAYER": {
 			errorToastIfFalsy(
-				tournament.ctx.teams.every((team) =>
-					team.members.every((member) => member.userId !== data.userId),
+				tournament.ctx.teams.every(
+					(team) => !team.memberUserIds.includes(data.userId),
 				),
 				"User is already in a team",
 			);
@@ -329,11 +329,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentTeamRepository.deleteById(ownTeam.id);
 
-			for (const member of ownTeam.members) {
+			for (const userId of ownTeam.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
 					tournamentId,
 					type: "participant",
-					userId: member.userId,
+					userId,
 				});
 
 				ShowcaseTournaments.updateCachedTournamentTeamCount({

@@ -133,7 +133,7 @@ function requireValidTrophyReceiver({
 	trophy: { id: number };
 	finalStandings: Array<{
 		placement: number;
-		team: { members: Array<{ userId: number }> };
+		team: { memberUserIds: number[] };
 	}>;
 	tournament: Tournament;
 }) {
@@ -157,9 +157,7 @@ function requireValidTrophyReceiver({
 		return false;
 	}
 
-	const firstPlaceUserIds = new Set(
-		firstPlace.team.members.map((m) => m.userId),
-	);
+	const firstPlaceUserIds = new Set(firstPlace.team.memberUserIds);
 	const invalidUserId = trophyReceiver.userIds.find(
 		(userId) => !firstPlaceUserIds.has(userId),
 	);

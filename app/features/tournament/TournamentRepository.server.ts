@@ -154,9 +154,15 @@ export async function findById(id: number) {
 				eb
 					.selectFrom("TournamentTeam")
 					.leftJoin(
-						"UserSubmittedImage",
+						"UserSubmittedImage as PickupAvatar",
 						"TournamentTeam.avatarImgId",
-						"UserSubmittedImage.id",
+						"PickupAvatar.id",
+					)
+					.leftJoin("AllTeam", "AllTeam.id", "TournamentTeam.teamId")
+					.leftJoin(
+						"UserSubmittedImage as TeamAvatar",
+						"AllTeam.avatarImgId",
+						"TeamAvatar.id",
 					)
 					.select(({ eb: innerEb }) => [
 						"TournamentTeam.id",
@@ -164,46 +170,54 @@ export async function findById(id: number) {
 						"TournamentTeam.seed",
 						"TournamentTeam.prefersNotToHost",
 						"TournamentTeam.droppedOut",
-						"TournamentTeam.inviteCode",
 						"TournamentTeam.createdAt",
+						"TournamentTeam.inviteCode",
 						"TournamentTeam.activeRosterUserIds",
 						"TournamentTeam.startingBracketIdx",
 						"TournamentTeam.abDivision",
-						"TournamentTeam.avatarImgId",
-						concatUserSubmittedImagePrefix(
-							innerEb.ref("UserSubmittedImage.url"),
-						).as("pickupAvatarUrl"),
+						concatUserSubmittedImagePrefix(innerEb.ref("TeamAvatar.url")).as(
+							"teamLogoUrl",
+						),
+						concatUserSubmittedImagePrefix(innerEb.ref("PickupAvatar.url")).as(
+							"pickupAvatarUrl",
+						),
+						sql<boolean> /*sql*/`exists(
+              select 1 from "MapPoolMap"
+              where "MapPoolMap"."tournamentTeamId" = "TournamentTeam"."id"
+            )`.as("hasMapPool"),
+						innerEb
+							.selectFrom("TournamentTeamMember")
+							.innerJoin("SeedingSkill", (join) =>
+								join
+									.onRef(
+										"SeedingSkill.userId",
+										"=",
+										"TournamentTeamMember.userId",
+									)
+									.on(
+										"SeedingSkill.type",
+										"=",
+										sql<
+											Tables["SeedingSkill"]["type"]
+										> /*sql*/`case when json_extract("Tournament"."settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end`,
+									),
+							)
+							.select(({ fn }) =>
+								fn.avg<number>("SeedingSkill.ordinal").as("v"),
+							)
+							.whereRef(
+								"TournamentTeamMember.tournamentTeamId",
+								"=",
+								"TournamentTeam.id",
+							)
+							.as("avgSeedingSkillOrdinal"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentTeamMember")
-								.innerJoin("User", "TournamentTeamMember.userId", "User.id")
-								.leftJoin("SeedingSkill", (join) =>
-									join
-										.onRef("User.id", "=", "SeedingSkill.userId")
-										.on(
-											"SeedingSkill.type",
-											"=",
-											sql<
-												Tables["SeedingSkill"]["type"]
-											> /*sql*/`case when json_extract("Tournament"."settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end`,
-										),
-								)
-								.select((eb) => [
-									"User.id as userId",
-									"User.username",
-									"User.discordId",
-									"User.discordAvatar",
-									"User.customUrl",
-									"User.country",
-									"SeedingSkill.ordinal",
+								.select([
+									"TournamentTeamMember.userId",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
-									"TournamentTeamMember.isSub",
-									sql<string | null> /*sql*/`coalesce(
-                    "TournamentTeamMember"."inGameName",
-                    "User"."inGameName"
-                  )`.as("inGameName"),
-									customAvatarUrl(eb).as("customAvatarUrl"),
 								])
 								.whereRef(
 									"TournamentTeamMember.tournamentTeamId",
@@ -227,34 +241,6 @@ export async function findById(id: number) {
 									"TournamentTeam.id",
 								),
 						).as("checkIns"),
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("MapPoolMap")
-								.whereRef(
-									"MapPoolMap.tournamentTeamId",
-									"=",
-									"TournamentTeam.id",
-								)
-								.select(["MapPoolMap.stageId", "MapPoolMap.mode"]),
-						).as("mapPool"),
-						jsonObjectFrom(
-							innerEb
-								.selectFrom("AllTeam")
-								.leftJoin(
-									"UserSubmittedImage",
-									"AllTeam.avatarImgId",
-									"UserSubmittedImage.id",
-								)
-								.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
-								.select((eb) => [
-									"AllTeam.id",
-									"AllTeam.customUrl",
-									concatUserSubmittedImagePrefix(
-										eb.ref("UserSubmittedImage.url"),
-									).as("logoUrl"),
-									"AllTeam.deletedAt",
-								]),
-						).as("team"),
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
 					.where("TournamentTeam.isPlaceholder", "=", 0)
@@ -325,11 +311,14 @@ export async function findById(id: number) {
 						"TournamentTeam.id",
 						"TournamentTeamMember.tournamentTeamId",
 					)
-					.select([
+					.innerJoin("User", "User.id", "LiveStream.userId")
+					.select((innerEb) => [
 						"LiveStream.userId",
 						"LiveStream.twitch",
 						"LiveStream.viewerCount",
 						"LiveStream.thumbnailUrl",
+						"TournamentTeam.name as teamName",
+						...commonUserSelect(innerEb),
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
 					.where("TournamentTeam.isPlaceholder", "=", 0)
@@ -357,17 +346,144 @@ export async function findById(id: number) {
 
 	return {
 		...result,
-		teams: result.teams.map((team) => ({
+		teams: result.teams.map(({ members, ...team }) => ({
 			...team,
-			members: team.members.map(({ ordinal, ...member }) => member),
-			avgSeedingSkillOrdinal: nullifyingAvg(
-				team.members
-					.map((member) => member.ordinal)
-					.filter((ordinal) => typeof ordinal === "number"),
-			),
+			memberUserIds: members.map((member) => member.userId),
+			/** When each member joined, index aligned with `memberUserIds`. */
+			memberJoinedAt: members.map((member) => member.createdAt),
+			ownerUserId:
+				members.find((member) => member.role === "OWNER")?.userId ?? null,
 		})),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
+}
+
+export type TeamFull = Unwrapped<typeof findTeamsFullByTournamentId>;
+
+/**
+ * Full rosters of a tournament's teams: per member profile data, map pools and
+ * invite codes. Kept out of {@link findById} because the tournament layout ships
+ * the lite team shape only — views that render rosters load these separately.
+ */
+export async function findTeamsFullByTournamentId(tournamentId: number) {
+	const teams = await db
+		.selectFrom("TournamentTeam")
+		.innerJoin("Tournament", "Tournament.id", "TournamentTeam.tournamentId")
+		.leftJoin(
+			"UserSubmittedImage as PickupAvatar",
+			"TournamentTeam.avatarImgId",
+			"PickupAvatar.id",
+		)
+		.select((eb) => [
+			"TournamentTeam.id",
+			"TournamentTeam.name",
+			"TournamentTeam.seed",
+			"TournamentTeam.prefersNotToHost",
+			"TournamentTeam.droppedOut",
+			"TournamentTeam.inviteCode",
+			"TournamentTeam.createdAt",
+			"TournamentTeam.activeRosterUserIds",
+			"TournamentTeam.startingBracketIdx",
+			"TournamentTeam.abDivision",
+			"TournamentTeam.avatarImgId",
+			concatUserSubmittedImagePrefix(eb.ref("PickupAvatar.url")).as(
+				"pickupAvatarUrl",
+			),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamMember")
+					.innerJoin("User", "TournamentTeamMember.userId", "User.id")
+					.leftJoin("SeedingSkill", (join) =>
+						join
+							.onRef("User.id", "=", "SeedingSkill.userId")
+							.on(
+								"SeedingSkill.type",
+								"=",
+								sql<
+									Tables["SeedingSkill"]["type"]
+								> /*sql*/`case when json_extract("Tournament"."settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end`,
+							),
+					)
+					.select((eb) => [
+						"User.id as userId",
+						"User.username",
+						"User.discordId",
+						"User.discordAvatar",
+						"User.customUrl",
+						"User.country",
+						"SeedingSkill.ordinal",
+						"TournamentTeamMember.role",
+						"TournamentTeamMember.createdAt",
+						"TournamentTeamMember.isSub",
+						sql<string | null> /*sql*/`coalesce(
+              "TournamentTeamMember"."inGameName",
+              "User"."inGameName"
+            )`.as("inGameName"),
+						customAvatarUrl(eb).as("customAvatarUrl"),
+					])
+					.whereRef(
+						"TournamentTeamMember.tournamentTeamId",
+						"=",
+						"TournamentTeam.id",
+					)
+					.orderBy(sql`"TournamentTeamMember"."role" = 'OWNER'`, "desc")
+					.orderBy("TournamentTeamMember.createdAt", "asc"),
+			).as("members"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamCheckIn")
+					.select([
+						"TournamentTeamCheckIn.bracketIdx",
+						"TournamentTeamCheckIn.checkedInAt",
+						"TournamentTeamCheckIn.isCheckOut",
+					])
+					.whereRef(
+						"TournamentTeamCheckIn.tournamentTeamId",
+						"=",
+						"TournamentTeam.id",
+					),
+			).as("checkIns"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("MapPoolMap")
+					.whereRef("MapPoolMap.tournamentTeamId", "=", "TournamentTeam.id")
+					.select(["MapPoolMap.stageId", "MapPoolMap.mode"]),
+			).as("mapPool"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("AllTeam")
+					.leftJoin(
+						"UserSubmittedImage",
+						"AllTeam.avatarImgId",
+						"UserSubmittedImage.id",
+					)
+					.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
+					.select((eb) => [
+						"AllTeam.id",
+						"AllTeam.customUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"logoUrl",
+						),
+						"AllTeam.deletedAt",
+					]),
+			).as("team"),
+		])
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.orderBy("TournamentTeam.seed", "asc")
+		.orderBy("TournamentTeam.createdAt", "asc")
+		.orderBy("TournamentTeam.id", "asc")
+		.execute();
+
+	return teams.map((team) => ({
+		...team,
+		members: team.members.map(({ ordinal, ...member }) => member),
+		avgSeedingSkillOrdinal: nullifyingAvg(
+			team.members
+				.map((member) => member.ordinal)
+				.filter((ordinal) => typeof ordinal === "number"),
+		),
+	}));
 }
 
 /**
@@ -1408,14 +1524,9 @@ export async function searchByName({
 export function updateTeamSeeds({
 	tournamentId,
 	teamIds,
-	teamsWithMembers,
 }: {
 	tournamentId: number;
 	teamIds: number[];
-	teamsWithMembers: Array<{
-		teamId: number;
-		members: Array<{ userId: number; username: string }>;
-	}>;
 }) {
 	return db.transaction().execute(async (trx) => {
 		await trx
@@ -1432,9 +1543,28 @@ export function updateTeamSeeds({
 				.execute();
 		}
 
+		const memberRows =
+			teamIds.length > 0
+				? await trx
+						.selectFrom("TournamentTeamMember")
+						.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+						.select([
+							"TournamentTeamMember.tournamentTeamId",
+							"User.id as userId",
+							"User.username",
+						])
+						.where("TournamentTeamMember.tournamentTeamId", "in", teamIds)
+						.execute()
+				: [];
+
 		const snapshot = JSON.stringify({
 			savedAt: databaseTimestampNow(),
-			teams: teamsWithMembers,
+			teams: teamIds.map((teamId) => ({
+				teamId,
+				members: memberRows
+					.filter((member) => member.tournamentTeamId === teamId)
+					.map(({ userId, username }) => ({ userId, username })),
+			})),
 		});
 		await trx
 			.updateTable("Tournament")

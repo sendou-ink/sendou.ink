@@ -10,7 +10,6 @@ import { executeBracketOperation } from "~/features/tournament-bracket/core/exec
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	clearTournamentDataCache,
-	type TournamentDataTeam,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
@@ -127,9 +126,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const team = tournament.teamById(data.teamId)!;
 			errorToastIfFalsy(
-				data.roster.every((userId) =>
-					team.members.some((m) => m.userId === userId),
-				),
+				data.roster.every((userId) => team.memberUserIds.includes(userId)),
 				"Invalid roster",
 			);
 
@@ -239,10 +236,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const teamTwo = tournament.teamById(match.opponentTwo!.id!)!;
 			errorToastIfFalsy(
 				data.rosters[0].every((userId) =>
-					teamOne.members.some((m) => m.userId === userId),
+					teamOne.memberUserIds.includes(userId),
 				) &&
 					data.rosters[1].every((userId) =>
-						teamTwo.members.some((m) => m.userId === userId),
+						teamTwo.memberUserIds.includes(userId),
 					),
 				"Invalid roster",
 			);
@@ -299,18 +296,24 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const results =
 				await TournamentMatchRepository.findResultsByMatchId(matchId);
 
-			const teamOne = match.opponentOne?.id
-				? tournament.teamById(match.opponentOne.id)
-				: undefined;
-			const teamTwo = match.opponentTwo?.id
-				? tournament.teamById(match.opponentTwo.id)
-				: undefined;
-			invariant(teamOne && teamTwo, "Teams are missing");
-
 			invariant(
-				match.roundMaps && match.opponentOne?.id && match.opponentTwo?.id,
-				"Missing fields to pick/ban",
+				match.opponentOne?.id && match.opponentTwo?.id,
+				"Teams are missing",
 			);
+			const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds([
+				match.opponentOne.id,
+				match.opponentTwo.id,
+			]);
+			const teamOne = {
+				...tournament.teamById(match.opponentOne.id)!,
+				mapPool: mapPools.get(match.opponentOne.id) ?? [],
+			};
+			const teamTwo = {
+				...tournament.teamById(match.opponentTwo.id)!,
+				mapPool: mapPools.get(match.opponentTwo.id) ?? [],
+			};
+
+			invariant(match.roundMaps, "Missing fields to pick/ban");
 
 			const currentPickBanEvents =
 				await TournamentRepository.findPickBanEventsByMatchId(match.id);
@@ -349,7 +352,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 						: [],
 				mapList,
 				tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-				teams: [teamOne, teamTwo] as [TournamentDataTeam, TournamentDataTeam],
+				teams: [teamOne, teamTwo] as [PickBan.MapPoolTeam, PickBan.MapPoolTeam],
 				pickerTeamId,
 				pickBanEvents: currentPickBanEvents,
 			};

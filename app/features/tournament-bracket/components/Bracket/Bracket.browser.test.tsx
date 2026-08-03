@@ -91,7 +91,6 @@ const mockTournament = {
 		mockTournament.ctx.teams.find((t) => t.id === id) ?? null,
 	teamMemberOfByUser: () => null,
 	isOrganizer: () => false,
-	tournamentTeamLogoSrc: () => null,
 };
 
 vi.mock("~/features/auth/core/user", () => ({

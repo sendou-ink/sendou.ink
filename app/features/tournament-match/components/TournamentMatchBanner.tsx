@@ -67,7 +67,7 @@ export function TournamentMatchBanner({
 	const host = hostingTeam
 		? {
 				name: hostingTeam.name,
-				avatarUrl: tournament.tournamentTeamLogoSrc(hostingTeam) ?? undefined,
+				avatarUrl: hostingTeam.logoUrl ?? undefined,
 			}
 		: null;
 
@@ -94,7 +94,7 @@ export function TournamentMatchBanner({
 			: undefined;
 
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
-		const team = tournament.teamById(tournamentTeamId);
+		const team = teams.find((t) => t?.id === tournamentTeamId);
 		if (!team) return null;
 
 		const activeRosterUserIds = team.activeRosterUserIds;
@@ -326,7 +326,7 @@ function CurrentMapPickInfo({
 					{teams.map((team) => (
 						<Avatar
 							key={team.id}
-							url={tournament.tournamentTeamLogoSrc(team)}
+							url={team.logoUrl}
 							identiconInput={team.name}
 							size="xxs"
 						/>

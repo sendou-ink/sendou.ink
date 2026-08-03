@@ -13,7 +13,12 @@ import {
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
 
-export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>>;
+/**
+ * One of the match's two teams: the tournament wide lite team (with its resolved seed)
+ * plus the roster and map pool that the match loader ships for these two teams only.
+ */
+export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>> &
+	Pick<TournamentMatchLoaderData["teams"][number], "members" | "mapPool">;
 
 export type MatchTabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 
@@ -54,9 +59,23 @@ export function MatchPageProvider({
 	const opponentOneId = data.match.opponentOne?.id;
 	const opponentTwoId = data.match.opponentTwo?.id;
 
+	const teamById = (tournamentTeamId: number | null | undefined) => {
+		if (!tournamentTeamId) return null;
+
+		const team = tournament.teamById(tournamentTeamId);
+		const withRoster = data.teams.find((t) => t.id === tournamentTeamId);
+		if (!team || !withRoster) return null;
+
+		return {
+			...team,
+			members: withRoster.members,
+			mapPool: withRoster.mapPool,
+		};
+	};
+
 	const teams: [MatchPageTeam | null, MatchPageTeam | null] = [
-		(opponentOneId ? tournament.teamById(opponentOneId) : null) ?? null,
-		(opponentTwoId ? tournament.teamById(opponentTwoId) : null) ?? null,
+		teamById(opponentOneId),
+		teamById(opponentTwoId),
 	];
 	const [teamOne, teamTwo] = teams;
 

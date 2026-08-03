@@ -3,7 +3,7 @@ import { differenceInDays } from "date-fns";
 import { ShieldMinus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import {
@@ -24,9 +24,12 @@ import {
 	tournamentTeamPage,
 } from "~/utils/urls";
 import * as Standings from "../core/Standings";
+import type { TournamentResultsLoaderData } from "../loaders/to.$id.results.server";
 import styles from "../tournament.module.css";
 import { TOURNAMENT } from "../tournament-constants";
 import { useTournament } from "./to.$id";
+
+export { loader } from "../loaders/to.$id.results.server";
 
 export default function TournamentResultsPage() {
 	const { t } = useTranslation(["common"]);
@@ -96,6 +99,7 @@ export default function TournamentResultsPage() {
 }
 
 function ResultsTable({ standings }: { standings: Standing[] }) {
+	const { rosters } = useLoaderData<TournamentResultsLoaderData>();
 	const tournament = useTournament();
 
 	let lastRenderedPlacement = 0;
@@ -141,7 +145,7 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 						rowDarkerBg = !rowDarkerBg;
 					}
 
-					const teamLogoSrc = tournament.tournamentTeamLogoSrc(standing.team);
+					const teamLogoSrc = standing.team.logoUrl;
 
 					const spr = Standings.calculateSPR({
 						standings,
@@ -179,17 +183,21 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 								</Link>
 							</td>
 							<td>
-								{standing.team.members.map((player) => (
-									<div
-										key={player.userId}
-										className="stack xxs horizontal items-center"
-									>
-										{player.country ? (
-											<Flag countryCode={player.country} tiny />
-										) : null}
-										{player.username}
-									</div>
-								))}
+								{(rosters[standing.team.id] ?? [])
+									.filter((player) =>
+										standing.team.memberUserIds.includes(player.userId),
+									)
+									.map((player) => (
+										<div
+											key={player.userId}
+											className="stack xxs horizontal items-center"
+										>
+											{player.country ? (
+												<Flag countryCode={player.country} tiny />
+											) : null}
+											{player.username}
+										</div>
+									))}
 							</td>
 							<td className="text-sm">{standing.team.seed}</td>
 							{tournament.ctx.isFinalized ? (

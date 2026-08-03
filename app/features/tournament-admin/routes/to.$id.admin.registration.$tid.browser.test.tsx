@@ -3,18 +3,18 @@ import { describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 
-const { mockTournament } = vi.hoisted(() => ({
+const { mockTournament, mockLoaderData } = vi.hoisted(() => ({
 	mockTournament: {
 		ctx: { id: 1, settings: { requireInGameNames: false } },
-		teamById: vi.fn(),
 	},
+	mockLoaderData: { team: null as unknown },
 }));
 
 vi.mock("react-router", async () => {
 	const actual = await vi.importActual("react-router");
 	return {
 		...actual,
-		useParams: () => ({ tid: "10" }),
+		useLoaderData: () => mockLoaderData,
 		useFetcher: () => ({
 			data: undefined,
 			state: "idle",
@@ -35,6 +35,11 @@ vi.mock(
 	() => ({ action: vi.fn() }),
 );
 
+vi.mock(
+	"~/features/tournament-admin/loaders/to.$id.admin.registration.$tid.server",
+	() => ({ loader: vi.fn() }),
+);
+
 import TournamentAdminRegistrationPage from "./to.$id.admin.registration.$tid";
 
 function renderPage() {
@@ -51,7 +56,7 @@ const CAPTAIN_NOT_A_MEMBER_ERROR = "The captain must be one of the players";
 describe("tournament admin registration - captain field", () => {
 	test("removing the captain's roster row does not leave a stale captain that fails validation", async () => {
 		// A linked/edited team whose captain (OWNER) is the first roster member.
-		mockTournament.teamById.mockReturnValue({
+		mockLoaderData.team = {
 			id: 10,
 			name: "low ink buddies",
 			team: undefined,
@@ -61,7 +66,7 @@ describe("tournament admin registration - captain field", () => {
 				{ userId: 1, username: "sanu", inGameName: null, role: "OWNER" },
 				{ userId: 2, username: "Jolt", inGameName: null, role: "MEMBER" },
 			],
-		});
+		};
 
 		const screen = await renderPage();
 

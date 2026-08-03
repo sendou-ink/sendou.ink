@@ -7,10 +7,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import type {
-	TournamentData,
-	TournamentDataTeam,
-} from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
 import {
@@ -29,21 +26,16 @@ import { useTournament } from "./to.$id";
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
-		?.tournament as TournamentData;
-	if (!args.loaderData || !tournamentData) return [];
+	if (!args.loaderData) return [];
 
-	const team = tournamentData.ctx.teams.find(
-		(t) => t.id === args.loaderData!.tournamentTeamId,
-	)!;
-	const teamLogoUrl = team.team?.logoUrl ?? team.pickupAvatarUrl;
+	const { team, tournamentName } = args.loaderData;
 
 	return metaTags({
-		title: `${team.name} @ ${tournamentData.ctx.name}`,
-		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
-		image: teamLogoUrl
+		title: `${team.name} @ ${tournamentName}`,
+		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentName}.`,
+		image: team.logoUrl
 			? {
-					url: teamLogoUrl,
+					url: team.logoUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,
@@ -57,7 +49,7 @@ export default function TournamentTeamPage() {
 	const teamIndex = tournament.ctx.teams.findIndex(
 		(t) => t.id === data.tournamentTeamId,
 	);
-	const team = tournament.teamById(data.tournamentTeamId)!;
+	const team = data.team;
 
 	return (
 		<div className="stack lg">
@@ -67,9 +59,7 @@ export default function TournamentTeamPage() {
 					mapPool={team.mapPool}
 					activePlayers={
 						data.sets.length > 0
-							? tournament
-									.participatedPlayersByTeamId(team.id)
-									.map((p) => p.userId)
+							? tournament.participatedPlayerUserIdsByTeamId(team.id)
 							: undefined
 					}
 				/>
@@ -185,7 +175,7 @@ function StatSquares({
 	);
 }
 
-function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
+function SetInfo({ set, team }: { set: PlayedSet; team: TournamentTeamFull }) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 

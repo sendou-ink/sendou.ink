@@ -2,7 +2,10 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import type { Pronouns } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	tournamentFromDBCached,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -164,7 +167,11 @@ async function resolveOwnTeam({
 		user,
 	});
 
-	const team = tournament.teamMemberOfByUser(user);
+	const teamLite = tournament.teamMemberOfByUser(user);
+	if (!teamLite) return null;
+
+	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
+	const team = teamsFull.find((t) => t.id === teamLite.id);
 	if (!team) return null;
 
 	const plusTiers = await UserRepository.findPlusTiersByUserIds(

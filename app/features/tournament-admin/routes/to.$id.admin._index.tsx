@@ -13,7 +13,7 @@ import {
 	X,
 } from "lucide-react";
 import * as React from "react";
-import { Link, useFetcher } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -28,7 +28,7 @@ import {
 import { Table } from "~/components/Table";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
 import { SendouForm } from "~/form/SendouForm";
 import {
@@ -40,15 +40,18 @@ import {
 } from "~/utils/urls";
 import { queryToUserIdentifier } from "~/utils/users";
 import { ExportDialog } from "../components/ExportDialog";
+import type { TournamentAdminTeamsLoaderData } from "../loaders/to.$id.admin.index.server";
 
 import styles from "./to.$id.admin._index.module.css";
 
 export { action } from "../actions/to.$id.admin.index.server";
+export { loader } from "../loaders/to.$id.admin.index.server";
 
 type SortKey = "name" | "checkIn";
 
 export default function TournamentAdminTeamsPage() {
 	const tournament = useTournament();
+	const { teams } = useLoaderData<TournamentAdminTeamsLoaderData>();
 
 	const [search, setSearch] = React.useState("");
 	const [sort, setSort] = React.useState<SortState<SortKey>>(null);
@@ -56,12 +59,10 @@ export default function TournamentAdminTeamsPage() {
 
 	const maxRosterSize = Math.max(
 		1,
-		...tournament.ctx.teams.map((team) => team.members.length),
+		...teams.map((team) => team.members.length),
 	);
 
-	const filteredTeams = tournament.ctx.teams.filter((team) =>
-		teamMatchesQuery(team, search),
-	);
+	const filteredTeams = teams.filter((team) => teamMatchesQuery(team, search));
 	const sortedTeams = sortTeams(filteredTeams, sort);
 
 	return (
@@ -136,7 +137,7 @@ export default function TournamentAdminTeamsPage() {
 								colSpan={maxRosterSize + (tournament.ctx.isFinalized ? 2 : 3)}
 								className={styles.noResults}
 							>
-								{tournament.ctx.teams.length === 0
+								{teams.length === 0
 									? "No registrations yet"
 									: "No registrations match your search"}
 							</td>
@@ -145,7 +146,9 @@ export default function TournamentAdminTeamsPage() {
 				</tbody>
 			</Table>
 
-			{exportOpen ? <ExportDialog close={() => setExportOpen(false)} /> : null}
+			{exportOpen ? (
+				<ExportDialog teams={teams} close={() => setExportOpen(false)} />
+			) : null}
 		</div>
 	);
 }
@@ -192,14 +195,14 @@ function TeamRow({
 	maxRosterSize,
 	editPage,
 }: {
-	team: TournamentDataTeam;
+	team: TournamentTeamFull;
 	maxRosterSize: number;
 	editPage: string;
 }) {
 	const tournament = useTournament();
 
 	const members = sortedMembers(team);
-	const logoSrc = tournament.tournamentTeamLogoSrc(team);
+	const logoSrc = team.logoUrl;
 
 	return (
 		<tr
@@ -252,7 +255,7 @@ function TeamRow({
 	);
 }
 
-function CheckInCell({ team }: { team: TournamentDataTeam }) {
+function CheckInCell({ team }: { team: TournamentTeamFull }) {
 	const tournament = useTournament();
 
 	const scopes = checkInScopes(tournament, team);
@@ -307,7 +310,7 @@ function TeamRowMenu({
 	team,
 	editPage,
 }: {
-	team: TournamentDataTeam;
+	team: TournamentTeamFull;
 	editPage: string;
 }) {
 	const tournament = useTournament();
@@ -455,7 +458,7 @@ function TeamRowMenu({
 	);
 }
 
-function sortedMembers(team: TournamentDataTeam) {
+function sortedMembers(team: TournamentTeamFull) {
 	return team.members.toSorted((a, b) => {
 		if (a.role === "OWNER" && b.role !== "OWNER") return -1;
 		if (b.role === "OWNER" && a.role !== "OWNER") return 1;
@@ -463,7 +466,7 @@ function sortedMembers(team: TournamentDataTeam) {
 	});
 }
 
-function isTournamentCheckedIn(team: TournamentDataTeam) {
+function isTournamentCheckedIn(team: TournamentTeamFull) {
 	const tournamentLevel = team.checkIns.filter(
 		(checkIn) => checkIn.bracketIdx === null,
 	);
@@ -473,7 +476,7 @@ function isTournamentCheckedIn(team: TournamentDataTeam) {
 	);
 }
 
-function isBracketCheckedIn(team: TournamentDataTeam, bracketIdx: number) {
+function isBracketCheckedIn(team: TournamentTeamFull, bracketIdx: number) {
 	return team.checkIns.some(
 		(checkIn) => checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
 	);
@@ -498,7 +501,7 @@ function isTeamInBracket(
 /** Check-in brackets the given team is a participant of. */
 function checkInBracketsForTeam(
 	tournament: Tournament,
-	team: TournamentDataTeam,
+	team: TournamentTeamFull,
 ) {
 	return tournament.brackets.filter(
 		(bracket) => isCheckInBracket(bracket) && isTeamInBracket(bracket, team.id),
@@ -506,7 +509,7 @@ function checkInBracketsForTeam(
 }
 
 /** The event and the team's check-in brackets paired with its status in each. */
-function checkInScopes(tournament: Tournament, team: TournamentDataTeam) {
+function checkInScopes(tournament: Tournament, team: TournamentTeamFull) {
 	return [
 		{ label: "Event", checkedIn: isTournamentCheckedIn(team) },
 		...checkInBracketsForTeam(tournament, team).map((bracket) => ({
@@ -517,7 +520,7 @@ function checkInScopes(tournament: Tournament, team: TournamentDataTeam) {
 }
 
 function activeCheckInLabels(
-	team: TournamentDataTeam,
+	team: TournamentTeamFull,
 	labelFor: (bracketIdx: number | null) => string,
 ) {
 	const byBracket = new Map<number | null, { in: boolean; out: boolean }>();
@@ -543,11 +546,11 @@ function activeCheckInLabels(
 	return labels;
 }
 
-function activeCheckInCount(team: TournamentDataTeam) {
+function activeCheckInCount(team: TournamentTeamFull) {
 	return activeCheckInLabels(team, () => "").length;
 }
 
-function teamMatchesQuery(team: TournamentDataTeam, search: string) {
+function teamMatchesQuery(team: TournamentTeamFull, search: string) {
 	const query = search.trim();
 	if (!query) return true;
 
@@ -577,7 +580,7 @@ function teamMatchesQuery(team: TournamentDataTeam, search: string) {
 	return false;
 }
 
-function sortTeams(teams: TournamentDataTeam[], sort: SortState<SortKey>) {
+function sortTeams(teams: TournamentTeamFull[], sort: SortState<SortKey>) {
 	const bySeed = teams.toSorted((a, b) => {
 		const aSeed = a.seed ?? Number.POSITIVE_INFINITY;
 		const bSeed = b.seed ?? Number.POSITIVE_INFINITY;

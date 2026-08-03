@@ -1,5 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { getUser } from "~/features/auth/core/user.server";
+import {
+	tournamentDataCached,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
@@ -16,8 +20,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: tournamentTeamPageParamsSchema,
 	});
 
+	const user = getUser();
 	const tournament = await tournamentDataCached({ tournamentId });
-	const team = tournament?.ctx.teams.find((t) => t.id === tournamentTeamId);
+	const team = (await tournamentTeamsFullCached({ tournamentId, user })).find(
+		(t) => t.id === tournamentTeamId,
+	);
 	const tournamentHasStarted = (tournament?.data.stage.length ?? 0) > 0;
 	if (!team || (tournamentHasStarted && team.checkIns.length === 0)) {
 		throw new Response(null, { status: 404 });
@@ -44,6 +51,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		tournamentTeamId,
+		team,
+		tournamentName: tournament.ctx.name,
 		sets,
 		winCounts: winCounts(sets),
 	};

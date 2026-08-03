@@ -1,28 +1,28 @@
 import { describe, expect, it } from "vitest";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { scopedAndSortedTeams } from "./ExportDialog";
 
 function team(
 	id: number,
-	checkIns: TournamentDataTeam["checkIns"],
-): TournamentDataTeam {
+	checkIns: TournamentTeamFull["checkIns"],
+): TournamentTeamFull {
 	return {
 		id,
 		name: `Team ${id}`,
 		seed: id,
 		createdAt: id,
 		checkIns,
-	} as unknown as TournamentDataTeam;
+	} as unknown as TournamentTeamFull;
 }
 
 function checkIns(
 	rows: Array<{ bracketIdx: number | null; isCheckOut?: number }>,
-): TournamentDataTeam["checkIns"] {
+): TournamentTeamFull["checkIns"] {
 	return rows.map((row, i) => ({
 		bracketIdx: row.bracketIdx,
 		checkedInAt: i + 1,
 		isCheckOut: row.isCheckOut ?? 0,
-	})) as unknown as TournamentDataTeam["checkIns"];
+	})) as unknown as TournamentTeamFull["checkIns"];
 }
 
 // Event-level check-in is stored with bracketIdx === null (see CHECK_IN action:

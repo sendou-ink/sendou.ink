@@ -40,7 +40,7 @@ export interface TournamentSummary {
 
 type TeamsArg = Array<{
 	id: number;
-	members: Array<{ userId: number }>;
+	memberUserIds: number[];
 	startingBracketIdx?: number | null;
 	abDivision?: number | null;
 }>;
@@ -658,12 +658,12 @@ function tournamentResults({
 			).length;
 		}
 
-		for (const player of standing.team.members) {
+		for (const userId of standing.team.memberUserIds) {
 			result.push({
 				participantCount: divisionParticipantCount,
 				placement: standing.placement,
 				tournamentTeamId: standing.team.id,
-				userId: player.userId,
+				userId,
 				div,
 			});
 		}
@@ -750,5 +750,5 @@ function teamIdToMembersUserIds(teams: TeamsArg, teamId: number) {
 	const team = teams.find((t) => t.id === teamId);
 	invariant(team, `Team with id ${teamId} not found`);
 
-	return team.members.map((m) => m.userId);
+	return team.memberUserIds;
 }

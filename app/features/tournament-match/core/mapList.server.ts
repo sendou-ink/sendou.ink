@@ -123,11 +123,13 @@ export async function resolveMatchMapList({
 				})
 			: undefined;
 
+	const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds(teams);
+
 	return resolveMapList({
 		tournamentId: match.tournamentId,
 		matchId: match.id,
 		teams,
-		mapPoolByTeamId: (teamId) => tournament.teamById(teamId)?.mapPool ?? [],
+		mapPoolByTeamId: (teamId) => mapPools.get(teamId) ?? [],
 		mapPickingStyle: match.mapPickingStyle,
 		maps: match.roundMaps,
 		tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
