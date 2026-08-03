@@ -594,6 +594,50 @@ describe("SendouForm", () => {
 				.element(screen.getByText("This field is required"))
 				.toBeVisible();
 		});
+
+		test("checking an option that satisfies the minimum shows no error", async () => {
+			const schema = z.object({
+				modes: checkboxGroup({
+					label: "labels.buildModes",
+					items: [
+						{ label: "modes.TW", value: "TW" },
+						{ label: "modes.SZ", value: "SZ" },
+					],
+					minLength: 1,
+				}),
+			});
+
+			const screen = await renderForm(schema);
+
+			await userEvent.click(screen.getByLabelText("Turf War").element());
+
+			expect(
+				screen.container.querySelector('[id$="-error"]'),
+			).not.toBeInTheDocument();
+		});
+
+		test("unchecking below the minimum shows the error without a submit", async () => {
+			const schema = z.object({
+				modes: checkboxGroup({
+					label: "labels.buildModes",
+					items: [
+						{ label: "modes.TW", value: "TW" },
+						{ label: "modes.SZ", value: "SZ" },
+					],
+					minLength: 1,
+				}),
+			});
+
+			const screen = await renderForm(schema);
+			const twCheckbox = screen.getByLabelText("Turf War");
+
+			await userEvent.click(twCheckbox.element());
+			await userEvent.click(twCheckbox.element());
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+		});
 	});
 
 	describe("validation", () => {

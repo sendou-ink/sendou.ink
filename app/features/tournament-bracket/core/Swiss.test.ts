@@ -170,6 +170,64 @@ describe("Swiss", () => {
 		});
 	});
 
+	describe("generateRound() with early advance", () => {
+		const EARLY_ADVANCE_SETTINGS = { advanceThreshold: 2 };
+
+		// 4 rounds & advance threshold of 2 means teams advance at 2 wins and are eliminated at 3 losses
+		const bracketWithFinishedRound = () => {
+			const data = Swiss.create({
+				seeding: [1, 2, 3, 4],
+				settings: { groupCount: 1, roundCount: 4 },
+			});
+
+			for (const match of data.match) {
+				match.winnerSide = "opponent1";
+			}
+
+			return data;
+		};
+
+		const standingsOf = (
+			records: Array<{ id: number; setWins: number; setLosses: number }>,
+		) =>
+			records.map((record) => ({
+				team: { id: record.id },
+				stats: { setWins: record.setWins, setLosses: record.setLosses },
+			}));
+
+		it("gives a bye to the only team left in the running", () => {
+			const round = Engine.generateRound(bracketWithFinishedRound(), {
+				groupId: 0,
+				standings: standingsOf([
+					{ id: 1, setWins: 2, setLosses: 0 }, // advanced
+					{ id: 2, setWins: 0, setLosses: 3 }, // eliminated
+					{ id: 3, setWins: 0, setLosses: 3 }, // eliminated
+					{ id: 4, setWins: 1, setLosses: 1 },
+				]),
+				settings: EARLY_ADVANCE_SETTINGS,
+			})._unsafeUnwrap();
+
+			expect(round.matches).toEqual([
+				{ number: 1, opponent1: { id: 4 }, opponent2: null },
+			]);
+		});
+
+		it("generates no round if no team is left in the running", () => {
+			const round = Engine.generateRound(bracketWithFinishedRound(), {
+				groupId: 0,
+				standings: standingsOf([
+					{ id: 1, setWins: 2, setLosses: 0 },
+					{ id: 2, setWins: 2, setLosses: 1 },
+					{ id: 3, setWins: 0, setLosses: 3 },
+					{ id: 4, setWins: 1, setLosses: 3 },
+				]),
+				settings: EARLY_ADVANCE_SETTINGS,
+			});
+
+			expect(round.isErr()).toBe(true);
+		});
+	});
+
 	const PAIR_UP_TEST_CASES = [RUSH_WEEKEND_3, LOW_INK_AUGUST_2025];
 
 	describe("pairUp()", () => {
@@ -264,6 +322,38 @@ describe("Swiss", () => {
 				expect(byes).toBeLessThanOrEqual(1);
 			},
 		);
+
+		it("gives a bye to a lone team", () => {
+			expect(Swiss.pairUp([{ id: 1, score: 2, avoid: [] }])).toEqual([
+				{ opponentOne: 1, opponentTwo: null },
+			]);
+		});
+
+		it("replays if a rematch free pairing does not exist for every team", () => {
+			// only 1 & 2 have not played each other yet
+			const result = Swiss.pairUp([
+				{ id: 1, score: 1, avoid: [3, 4] },
+				{ id: 2, score: 1, avoid: [3, 4] },
+				{ id: 3, score: 1, avoid: [1, 2, 4] },
+				{ id: 4, score: 1, avoid: [1, 2, 3] },
+			]);
+
+			expect(result).toHaveLength(2);
+			expect(includesPair(result, 1, 2)).toBe(true);
+			expect(includesPair(result, 3, 4)).toBe(true);
+		});
+
+		it("prefers replaying teams that have met the fewest times", () => {
+			// everyone has played everyone, but 1 & 2 have already played twice
+			const result = Swiss.pairUp([
+				{ id: 1, score: 1, avoid: [2, 2, 3, 4] },
+				{ id: 2, score: 1, avoid: [1, 1, 3, 4] },
+				{ id: 3, score: 1, avoid: [1, 2, 4] },
+				{ id: 4, score: 1, avoid: [1, 2, 3] },
+			]);
+
+			expect(includesPair(result, 1, 2)).toBe(false);
+		});
 	});
 
 	describe("calculateTeamStatus()", () => {
@@ -545,3 +635,15 @@ describe("Swiss", () => {
 		});
 	});
 });
+
+function includesPair(
+	result: Array<{ opponentOne: number; opponentTwo: number | null }>,
+	one: number,
+	two: number,
+) {
+	return result.some(
+		(match) =>
+			(match.opponentOne === one && match.opponentTwo === two) ||
+			(match.opponentOne === two && match.opponentTwo === one),
+	);
+}

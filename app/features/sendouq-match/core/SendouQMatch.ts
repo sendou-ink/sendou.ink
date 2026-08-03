@@ -26,6 +26,14 @@ export function score(match: {
 	};
 }
 
+/** Members of both groups of the match, alpha's first. */
+export function allMembers<T>(match: {
+	groupAlpha: { members: T[] };
+	groupBravo: { members: T[] };
+}): T[] {
+	return [...match.groupAlpha.members, ...match.groupBravo.members];
+}
+
 /**
  * Returns which side ("ALPHA" or "BRAVO") of the match the given user belongs
  * to, or null if they are not a member of either group.

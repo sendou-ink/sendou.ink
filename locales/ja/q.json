@@ -127,7 +127,7 @@
 	"match.cancelRequested": "キャンセルを申請しました",
 	"match.reportedBy": "{{name}}によって報告されました: ",
 	"match.cancelPendingConfirmation": "相手チームの了解を待っています",
-	"match.cancelMatch.confirm": "マッチをキャンセルしますか？(相手チームの了解が必要です。使いすぎるとバンされます。)",
+	"match.cancelMatch.explanation": "",
 	"match.adminCancel.confirm": "",
 	"match.tabs.reportScore": "スコアを報告",
 	"match.errors.cantCancel": "相手がスコアを報告したためキャンセルできません。ページの上の異議申立ての仕方を見てください。",

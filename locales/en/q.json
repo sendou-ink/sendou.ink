@@ -127,7 +127,7 @@
 	"match.cancelRequested": "Cancel requested",
 	"match.reportedBy": "Reported by {{name}} at",
 	"match.cancelPendingConfirmation": "Pending other team's confirmation",
-	"match.cancelMatch.confirm": "Cancel match? (requires confirmation from the other group, abuse of the feature will lead to a ban)",
+	"match.cancelMatch.explanation": "Canceling the match is only possible if both teams agree to it. Abuse of the feature will lead to a ban.",
 	"match.adminCancel.confirm": "Cancel this match as admin?",
 	"match.tabs.reportScore": "Report score",
 	"match.errors.cantCancel": "Can't cancel since opponent has already reported score for this match. See dispute instructions at the top of the page.",

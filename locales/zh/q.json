@@ -127,7 +127,7 @@
 	"match.cancelRequested": "已申请取消",
 	"match.reportedBy": "由 {{name}} 汇报于",
 	"match.cancelPendingConfirmation": "等待对手确认",
-	"match.cancelMatch.confirm": "要取消对局吗？（需要对手确认，滥用此功能将被封禁）",
+	"match.cancelMatch.explanation": "",
 	"match.adminCancel.confirm": "要以管理员身份取消对局吗？",
 	"match.tabs.reportScore": "汇报比分",
 	"match.errors.cantCancel": "对手已经汇报了对局结果，因此无法取消。请查看页面顶部的争议处理说明。",

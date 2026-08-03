@@ -45,6 +45,7 @@ export const myFormSchema = z.object({
 | `selectDynamicOptional` | Dropdown with runtime options | `label` |
 | `radioGroup` | Radio button group | `label`, `items` |
 | `checkboxGroup` | Multiple selection checkboxes | `label`, `items` |
+| `checkboxGroupDynamic` | Checkboxes with runtime options | `label` |
 | `datetime` | Required date/time picker | `label` |
 | `datetimeOptional` | Optional date/time picker | `label` |
 | `dayMonthYear` | Date picker (day only) | `label` |

@@ -8,6 +8,7 @@ import {
 	useBracketExpanded,
 	useTournament,
 } from "~/features/tournament/routes/to.$id";
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { Bracket as BracketType } from "../../core/Bracket";
@@ -74,8 +75,17 @@ export function SwissBracket({
 		return true;
 	};
 
+	// with the early advance variation the group can run out of teams before every
+	// round has been played, those rounds can never be started
+	const groupHasActiveTeams = Engine.groupHasActiveTeams(bracket.data, {
+		groupId: selectedGroupId,
+		standings: bracket.liveStandings,
+		settings: bracket.settings,
+	});
+
 	const roundThatCanBeStartedId = () => {
 		if (!tournament.isOrganizer(user) || bracket.preview) return undefined;
+		if (!groupHasActiveTeams) return undefined;
 
 		for (const round of rounds) {
 			const matches = bracket.data.match.filter(
@@ -125,6 +135,10 @@ export function SwissBracket({
 							(match) =>
 								match.roundId === round.id && match.groupId === selectedGroupId,
 						);
+
+						if (matches.length === 0 && !groupHasActiveTeams) {
+							return null;
+						}
 
 						if (
 							matches.length > 0 &&

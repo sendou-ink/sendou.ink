@@ -524,6 +524,28 @@ export function radioGroupDynamic(
 		FieldWithOptions<FormFieldItemsWithImage<string>>;
 }
 
+export function checkboxGroupDynamic(
+	args: WithTypedTranslationKeys<
+		Omit<
+			Extract<FormField, { type: "checkbox-group-dynamic" }>,
+			"type" | "initialValue"
+		>
+	>,
+) {
+	return z
+		.array(z.string())
+		.min(args.minLength ?? 0, "forms:errors.required")
+		.refine((val) => val.length === R.unique(val).length)
+		.register(formRegistry, {
+			...args,
+			label: prefixKey(args.label),
+			bottomText: prefixKey(args.bottomText),
+			type: "checkbox-group-dynamic",
+			initialValue: [],
+		}) as unknown as z.ZodType<string[]> &
+		FieldWithOptions<FormFieldItemsWithImage<string>>;
+}
+
 type DateTimeArgs = WithTypedTranslationKeys<
 	Omit<FormFieldDatetime<"datetime">, "type" | "initialValue" | "required">
 > & {
