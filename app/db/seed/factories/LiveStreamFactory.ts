@@ -1,8 +1,8 @@
-import type { TablesInsertable } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import { faker } from "../core/faker";
 
-type Stream = Omit<TablesInsertable["LiveStream"], "id">;
+type Stream = Omit<Tables["LiveStream"], "id">;
 
 type StreamOverrides = Partial<Stream> & Pick<Stream, "userId">;
 

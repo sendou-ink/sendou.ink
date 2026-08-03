@@ -1,11 +1,9 @@
 import { db } from "~/db/sql";
-import type { Tables, TablesInsertable } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import { commonUserSelect, peakXpOverallSql } from "~/utils/kysely.server";
 import * as StreamRanking from "../sidebar/core/StreamRanking";
 
-export function replaceAll(
-	streams: Omit<TablesInsertable["LiveStream"], "id">[],
-) {
+export function replaceAll(streams: Omit<Tables["LiveStream"], "id">[]) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("LiveStream").execute();
 

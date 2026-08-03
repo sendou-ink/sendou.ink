@@ -1,6 +1,6 @@
 import type { NotNull, Transaction } from "kysely";
 import { db } from "~/db/sql";
-import type { DB, TablesInsertable } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type {
@@ -35,7 +35,7 @@ export async function upsertOwn({
 
 export async function replaceByMatchId(
 	matchId: number,
-	weapons: TablesInsertable["ReportedWeapon"][],
+	weapons: Omit<Tables["ReportedWeapon"], "createdAt">[],
 	trx?: Transaction<DB>,
 ) {
 	const executor = trx ?? db;

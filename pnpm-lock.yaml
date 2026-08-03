@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@react-router/serve@8.1.0': 4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6
-  kysely@0.29.0: 6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6
+  kysely@0.29.0: a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a
 
 importers:
 
@@ -95,7 +95,7 @@ importers:
         version: 5.2.1
       kysely:
         specifier: 0.29.0
-        version: 0.29.0(patch_hash=6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6)
+        version: 0.29.0(patch_hash=a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a)
       lucide-react:
         specifier: 1.26.0
         version: 1.26.0(react@19.2.8)
@@ -8068,7 +8068,7 @@ snapshots:
       yaml: 2.9.0
       zod: 4.4.3
 
-  kysely@0.29.0(patch_hash=6f395b25414c1ef852485fa3a03d2d521816064697d8c4bff337e2b24d19daa6): {}
+  kysely@0.29.0(patch_hash=a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a): {}
 
   ley@0.8.1:
     dependencies:

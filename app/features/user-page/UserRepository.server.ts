@@ -1113,7 +1113,7 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 					args.weapons.map((weapon, i) => ({
 						userId,
 						weaponSplId: weapon.weaponSplId,
-						isFavorite: weapon.isFavorite,
+						isFavorite: weapon.isFavorite ?? 0,
 						order: i + 1,
 					})),
 				)

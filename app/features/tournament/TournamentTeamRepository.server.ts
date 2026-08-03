@@ -1,7 +1,7 @@
 import type { Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
-import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -171,7 +171,12 @@ export function insert({
 		);
 
 		if (additionalMemberUserIds.length > 0) {
-			const members: Array<TablesInsertable["TournamentTeamMember"]> = [];
+			const members: Array<
+				Pick<
+					Tables["TournamentTeamMember"],
+					"tournamentTeamId" | "userId" | "inGameName" | "isSub"
+				>
+			> = [];
 			for (const memberUserId of additionalMemberUserIds) {
 				members.push({
 					tournamentTeamId: tournamentTeam.id,
@@ -310,7 +315,12 @@ export function upsertRegistration({
 				: 0;
 
 		if (membersToAdd.length > 0) {
-			const members: Array<TablesInsertable["TournamentTeamMember"]> = [];
+			const members: Array<
+				Pick<
+					Tables["TournamentTeamMember"],
+					"tournamentTeamId" | "userId" | "inGameName" | "isSub" | "role"
+				>
+			> = [];
 			for (const userId of membersToAdd) {
 				const isOwner = isNew && userId === ownerUserId;
 				members.push({
