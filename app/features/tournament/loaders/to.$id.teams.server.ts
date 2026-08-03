@@ -1,30 +1,23 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
 import { getUser } from "~/features/auth/core/user.server";
 import {
 	tournamentFromDBCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { paginate, parseParams, parseSearchParams } from "~/utils/remix.server";
+import { paginate, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
+import { tournamentTeamsSearchParams } from "../tournament-search-params";
 
 export type TournamentTeamsLoaderData = SerializeFrom<typeof loader>;
 
 /** How many rosters are rendered (and shipped) per page of the teams tab. */
 const TEAMS_PAGE_SIZE = 50;
 
-const teamsSearchParamsSchema = z.object({
-	page: z.coerce.number().int().min(1).catch(1),
-});
-
 export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 	const user = getUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
-	const { page } = parseSearchParams({
-		request,
-		schema: teamsSearchParamsSchema,
-	});
+	const { page } = tournamentTeamsSearchParams.parse(request);
 
 	const tournament = await tournamentFromDBCached({ tournamentId, user });
 	const rosterByTeamId = new Map(

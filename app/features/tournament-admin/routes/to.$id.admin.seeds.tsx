@@ -343,7 +343,7 @@ function StartingBracketDialog() {
 
 	const startingBrackets = tournament.ctx.settings.bracketProgression
 		.flatMap((bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []))
-		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
+		.map((bracketIdx) => tournament.bracketsMeta[bracketIdx]);
 
 	return (
 		<div>

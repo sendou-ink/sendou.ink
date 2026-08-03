@@ -8,11 +8,19 @@ import { getTentativeTier } from "~/features/tournament-organization/core/tentat
 import { LRUCache } from "~/modules/cache";
 import { isAdmin } from "~/modules/permissions/utils";
 import { IN_MILLISECONDS } from "~/utils/cache.server";
-import { databaseTimestampToDate } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
+import type { Bracket } from "./Bracket";
 import { RunningTournaments } from "./RunningTournaments.server";
-import { Tournament } from "./Tournament";
+import {
+	type BracketDerivedMeta,
+	type SerializedBracket,
+	Tournament,
+} from "./Tournament";
 
 const combinedTournamentData = async (tournamentId: number) => {
 	const ctx = await TournamentRepository.findById(tournamentId);
@@ -25,6 +33,15 @@ const combinedTournamentData = async (tournamentId: number) => {
 };
 
 export type TournamentData = NonNullable<Unwrapped<typeof tournamentData>>;
+
+/**
+ * What the tournament layout ships: everything every view needs and nothing a single view
+ * needs. Match data is loaded per bracket by the views that render brackets.
+ */
+export type TournamentLayoutData = {
+	ctx: TournamentData["ctx"];
+	bracketsMeta: BracketDerivedMeta[];
+};
 
 /**
  * A tournament team as the tournament layout ships it: no per member profile data,
@@ -146,6 +163,9 @@ type TournamentDataCacheEntry = {
 	combined: ReturnType<typeof combinedTournamentData>;
 	// the vast majority of viewers are logged out and get the exact same censoring applied
 	anonymousMapped?: ReturnType<typeof dataMapped>;
+	// brackets are expensive to build (preview brackets are generated from scratch) and what
+	// they derive from is the same for every viewer, so one instance serves them all
+	anonymousTournament?: Tournament;
 };
 
 const tournamentDataCache = new LRUCache<number, TournamentDataCacheEntry>({
@@ -173,6 +193,60 @@ export async function tournamentDataCached({
 	}
 
 	return entry.anonymousMapped;
+}
+
+/**
+ * A `Tournament` shared by every request for the lifetime of the cache entry. The bracket
+ * level derivations (bracket state, standings, one bracket's data) are the same for every
+ * viewer, so building the brackets happens once per cache fill instead of once per request.
+ */
+export async function tournamentSharedCached(tournamentId: number) {
+	if (ServerConfig.disableCache) {
+		return new Tournament(
+			notFoundIfNullish(await tournamentData({ tournamentId })),
+		);
+	}
+
+	const entry = tournamentDataCacheEntry(tournamentId);
+	const data = notFoundIfNullish(await entry.combined);
+
+	if (!entry.anonymousMapped) {
+		entry.anonymousMapped = dataMapped({ user: undefined, ...data });
+	}
+	if (!entry.anonymousTournament) {
+		entry.anonymousTournament = new Tournament(entry.anonymousMapped);
+	}
+
+	return entry.anonymousTournament;
+}
+
+/** State of every bracket of the tournament, without any of the match data it derives from. */
+export async function bracketsMetaCached(
+	tournamentId: number,
+): Promise<BracketDerivedMeta[]> {
+	return (await tournamentSharedCached(tournamentId)).bracketsDerivedMeta;
+}
+
+/** One bracket with its match data, in the shape {@link Tournament.withBrackets} revives. */
+export function serializeBracket(bracket: Bracket): SerializedBracket {
+	return {
+		id: bracket.id,
+		idx: bracket.idx,
+		preview: bracket.preview,
+		data: bracket.data,
+		type: bracket.type,
+		canBeStarted: bracket.canBeStarted,
+		name: bracket.name,
+		teamsPendingCheckIn: bracket.teamsPendingCheckIn,
+		createdAt: bracket.createdAt ?? null,
+		sources: bracket.sources,
+		seeding: bracket.seeding,
+		settings: bracket.settings,
+		requiresCheckIn: bracket.requiresCheckIn,
+		startTime: bracket.startTime
+			? dateToDatabaseTimestamp(bracket.startTime)
+			: null,
+	};
 }
 
 function tournamentDataCacheEntry(tournamentId: number) {

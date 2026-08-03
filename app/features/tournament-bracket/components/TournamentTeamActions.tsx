@@ -10,6 +10,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
 import { logger } from "~/utils/logger";
 import {
 	soundPath,
@@ -18,12 +19,14 @@ import {
 } from "~/utils/urls";
 import styles from "../tournament-bracket.module.css";
 
-export function TournamentTeamActions() {
+export function TournamentTeamActions({
+	status,
+}: {
+	status: TournamentTeamMemberProgressStatus | null;
+}) {
 	const tournament = useTournament();
 	const user = useUser();
 	const fetcher = useFetcher();
-
-	const status = tournament.teamMemberOfProgressStatus(user);
 
 	useMatchReadySound(status?.type);
 
@@ -47,7 +50,10 @@ export function TournamentTeamActions() {
 		);
 	}
 	if (status.type === "CHECKIN") {
-		const bracket = tournament.brackets[status.bracketIdx ?? -1];
+		const bracket =
+			typeof status.bracketIdx === "number"
+				? tournament.bracketMetaByIdx(status.bracketIdx)
+				: null;
 
 		if (!bracket) {
 			return (
@@ -89,7 +95,7 @@ export function TournamentTeamActions() {
 		return (
 			<Container spaced="very">
 				{bracket.name} check-in
-				{bracket.canCheckIn(user) ? (
+				{tournament.canCheckInToBracket(bracket.idx, user) ? (
 					<fetcher.Form method="post">
 						<input type="hidden" name="bracketIdx" value={status.bracketIdx} />
 						<SubmitButton

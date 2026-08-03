@@ -17,9 +17,10 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
-import * as Standings from "../core/Standings";
-import type { PlayedSet } from "../core/sets.server";
-import { loader } from "../loaders/to.$id.teams.$tid.server";
+import {
+	loader,
+	type TournamentTeamLoaderData,
+} from "../loaders/to.$id.teams.$tid.server";
 import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
 
@@ -96,18 +97,8 @@ function StatSquares({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<typeof loader>();
-	const tournament = useTournament();
 
-	const standingsResult = Standings.tournamentStandings(tournament);
-	const overallStandings = Standings.flattenStandings(standingsResult);
-	const placement = overallStandings.find(
-		(s) => s.team.id === data.tournamentTeamId,
-	)?.placement;
-
-	const undergroundBracket = tournament.brackets.find((b) => b.isUnderground);
-	const undergroundPlacement = undergroundBracket?.standings.find(
-		(s) => s.team.id === data.tournamentTeamId,
-	)?.placement;
+	const { placement, undergroundPlacement, division } = data;
 
 	return (
 		<div className={styles.teamStats}>
@@ -161,21 +152,19 @@ function StatSquares({
 						{t("tournament:team.placement.footer")}
 					</div>
 				) : null}
-				{standingsResult.type === "multi" ? (
-					<div className={styles.teamStatSub}>
-						{
-							standingsResult.standings.find((s) =>
-								s.standings.some((s) => s.team.id === data.tournamentTeamId),
-							)?.div
-						}
-					</div>
-				) : null}
+				{division ? <div className={styles.teamStatSub}>{division}</div> : null}
 			</div>
 		</div>
 	);
 }
 
-function SetInfo({ set, team }: { set: PlayedSet; team: TournamentTeamFull }) {
+function SetInfo({
+	set,
+	team,
+}: {
+	set: TournamentTeamLoaderData["sets"][number];
+	team: TournamentTeamFull;
+}) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
@@ -210,7 +199,7 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentTeamFull }) {
 	};
 
 	const { bracketName, roundNameWithoutMatchIdentifier } =
-		tournament.matchContextNamesById(set.tournamentMatchId);
+		set.matchContextNames;
 
 	return (
 		<div className={styles.teamSet}>

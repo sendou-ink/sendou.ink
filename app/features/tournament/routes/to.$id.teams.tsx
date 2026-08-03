@@ -5,6 +5,7 @@ import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { tournamentDivisionsPage, tournamentTeamPage } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import type { TournamentTeamsLoaderData } from "../loaders/to.$id.teams.server";
+import { tournamentTeamsSearchParams } from "../tournament-search-params";
 import { getBracketProgressionLabel } from "../tournament-utils";
 import { useHasChildTournaments, useTournament } from "./to.$id";
 
@@ -15,6 +16,7 @@ export default function TournamentTeamsPage() {
 	const hasChildTournaments = useHasChildTournaments();
 	const data = useLoaderData<TournamentTeamsLoaderData>();
 	const pagination = useSearchParamPagination({
+		definition: tournamentTeamsSearchParams,
 		currentPage: data.currentPage,
 		pagesCount: data.pagesCount,
 	});

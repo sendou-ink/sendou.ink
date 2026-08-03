@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
@@ -463,21 +462,7 @@ export abstract class Bracket {
 	}
 
 	canCheckIn(user: OptionalIdObject) {
-		// using regular check-in
-		if (!this.teamsPendingCheckIn) return false;
-
-		if (this.startTime) {
-			const checkInOpen =
-				sub(this.startTime.getTime(), { hours: 1 }).getTime() < Date.now() &&
-				this.startTime.getTime() > Date.now();
-
-			if (!checkInOpen) return false;
-		}
-
-		const team = this.tournament.teamMemberOfByUser(user);
-		if (!team) return false;
-
-		return this.teamsPendingCheckIn.includes(team.id);
+		return this.tournament.canCheckInToBracket(this.idx, user);
 	}
 
 	abstract source(options: {

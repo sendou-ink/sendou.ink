@@ -6,14 +6,18 @@ import {
 	LEAGUES,
 	TOURNAMENT,
 } from "~/features/tournament/tournament-constants";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	bracketsMetaCached,
+	type TournamentLayoutData,
+	tournamentDataCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 
 export type TournamentLoaderData = {
-	tournament: Awaited<ReturnType<typeof tournamentDataCached>>;
+	tournament: TournamentLayoutData;
 	hasChildTournaments: boolean;
 	friendCodes:
 		| Awaited<
@@ -79,7 +83,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	// skip expensive rr7 data serialization (hot path loader)
 	return JSON.stringify({
-		tournament,
+		tournament: {
+			ctx: tournament.ctx,
+			bracketsMeta: await bracketsMetaCached(tournamentId),
+		},
 		hasChildTournaments,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)

@@ -110,7 +110,7 @@ export function ExportDialog({
 
 	const onDownload = () => {
 		const selectedBracket =
-			bracketIdx !== null ? tournament.brackets[bracketIdx] : null;
+			bracketIdx !== null ? tournament.bracketsMeta[bracketIdx] : null;
 		const bracketRequiresOwnCheckIn = Boolean(selectedBracket?.requiresCheckIn);
 		const teams = scopedAndSortedTeams({
 			teams: allTeams,
@@ -185,7 +185,7 @@ export function ExportDialog({
 					}))}
 				/>
 
-				{tournament.brackets.length > 1 ? (
+				{tournament.bracketsMeta.length > 1 ? (
 					<RadioRow
 						label="Bracket"
 						value={bracketIdx === null ? "all" : String(bracketIdx)}
@@ -194,7 +194,7 @@ export function ExportDialog({
 						}
 						options={[
 							{ value: "all", label: "All brackets" },
-							...tournament.brackets.map((bracket, idx) => ({
+							...tournament.bracketsMeta.map((bracket, idx) => ({
 								value: String(idx),
 								label: bracket.name || `#${idx}`,
 							})),

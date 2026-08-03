@@ -37,9 +37,7 @@ export function TournamentMatchAdminTab({
 
 	const isOrganizer = tournament.isOrganizer(user);
 	const canReopen =
-		isOrganizer &&
-		data.matchIsOver &&
-		tournament.matchCanBeReopened(data.match.id);
+		isOrganizer && data.matchIsOver && data.bracketContext.canBeReopened;
 	const canEndSet =
 		isOrganizer && !data.matchIsOver && data.match.startedAt !== null;
 
@@ -342,11 +340,8 @@ function EditReportedScoresSection({
 	teams: [MatchPageTeam, MatchPageTeam];
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const tournament = useTournament();
 
-	const withKo = tournament.bracketByIdxOrDefault(
-		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectsKos;
+	const withKo = data.bracketContext.collectsKos;
 
 	return (
 		<div className={styles.editSection}>

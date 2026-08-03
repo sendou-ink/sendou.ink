@@ -25,10 +25,6 @@ import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import {
-	isLeagueRoundLocked,
-	resolveLeagueRoundStartDate,
-} from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
@@ -80,9 +76,9 @@ export function TournamentMatchBanner({
 		tournament,
 	});
 
-	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
-	const leagueRoundStartDate = leagueRoundLocked
-		? resolveLeagueRoundStartDate(tournament, data.match.roundId)
+	const { leagueRoundLocked } = data.bracketContext;
+	const leagueRoundStartDate = data.bracketContext.leagueRoundStartDate
+		? databaseTimestampToDate(data.bracketContext.leagueRoundStartDate)
 		: null;
 
 	const pickBanBanner = resolvePickBanBanner(data, tournament, t);

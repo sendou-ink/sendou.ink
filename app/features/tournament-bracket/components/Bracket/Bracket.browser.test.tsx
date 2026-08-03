@@ -87,6 +87,9 @@ const mockTournament = {
 		participatedUsers: [1, 2, 3, 4, 5, 6, 7, 8],
 	},
 	brackets: [],
+	bracketsMeta: [],
+	bracketMetaByIdx: () => null,
+	isLeagueDivision: false,
 	teamById: (id: number) =>
 		mockTournament.ctx.teams.find((t) => t.id === id) ?? null,
 	teamMemberOfByUser: () => null,

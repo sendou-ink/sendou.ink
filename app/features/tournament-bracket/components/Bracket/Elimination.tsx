@@ -105,6 +105,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 					>
 						<RoundHeader
 							roundId={round.id}
+							bracketIdx={props.bracket.idx}
 							name={round.name}
 							bestOf={bestOf}
 							showInfos={someMatchOngoing}

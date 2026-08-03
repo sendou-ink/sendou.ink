@@ -70,6 +70,24 @@ export const handle: SendouRouteHandle = {
 
 const TournamentContext = React.createContext<Tournament>(null!);
 
+/**
+ * Overrides the tournament of the subtree, used by the views that load bracket match data
+ * of their own on top of what the layout ships.
+ */
+export function TournamentOverrideProvider({
+	tournament,
+	children,
+}: {
+	tournament: Tournament;
+	children: React.ReactNode;
+}) {
+	return (
+		<TournamentContext.Provider value={tournament}>
+			{children}
+		</TournamentContext.Provider>
+	);
+}
+
 export default function TournamentLayoutShell() {
 	const isHydrated = useHydrated();
 
@@ -152,7 +170,7 @@ type TournamentContext = {
 };
 
 export function useTournament() {
-	return useOutletContext<TournamentContext>().tournament;
+	return React.useContext(TournamentContext);
 }
 
 export function useBracketExpanded() {

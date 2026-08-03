@@ -1,4 +1,6 @@
+import { sub } from "date-fns";
 import type { Tables } from "~/db/tables";
+import type { TournamentStageSettings } from "~/db/tables-json";
 import {
 	LEAGUES,
 	TOURNAMENT,
@@ -10,7 +12,7 @@ import {
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
 import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
-import type * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
@@ -29,6 +31,67 @@ import type { TournamentData } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
 
+/**
+ * The state of one bracket that can only be derived from its match data. Shipped to the
+ * views that render a tournament without loading any of its match data.
+ */
+export type BracketDerivedMeta = {
+	/** Stage id of a started bracket, placeholder id of a bracket that has not been started. */
+	id: number;
+	createdAt: number | null;
+	preview: boolean;
+	everyMatchOver: boolean;
+	/** False only while a swiss bracket still has rounds whose matches have not been generated. */
+	allRoundsHaveMatches: boolean;
+	canBeStarted: boolean;
+	participantTournamentTeamIds: number[];
+	teamsPendingCheckIn: number[] | null;
+	seeding: number[] | null;
+};
+
+/** A bracket's identity and state without its match data. See {@link Tournament.bracketsMeta}. */
+export type BracketMeta = BracketDerivedMeta & {
+	idx: number;
+	name: string;
+	type: Tables["TournamentStage"]["type"];
+	sources: Progression.ParsedBracket["sources"];
+	settings: TournamentStageSettings | null;
+	requiresCheckIn: boolean;
+	startTime: Date | null;
+	isUnderground: boolean;
+	isFinals: boolean;
+	isStartingBracket: boolean;
+	enoughTeams: boolean;
+};
+
+/** One bracket as a route loader ships it, ready to be revived by {@link Tournament.withBrackets}. */
+export type SerializedBracket = {
+	id: number;
+	idx: number;
+	preview: boolean;
+	data: TournamentData["data"];
+	type: Tables["TournamentStage"]["type"];
+	canBeStarted?: boolean;
+	name: string;
+	teamsPendingCheckIn?: number[];
+	createdAt: number | null;
+	sources?: { bracketIdx: number; placements: number[] }[];
+	seeding?: number[];
+	settings: TournamentStageSettings | null;
+	requiresCheckIn: boolean;
+	startTime: number | null;
+};
+
+type TournamentArgs = {
+	/** Match data of every bracket. Absent in the views that only got {@link bracketsMeta}. */
+	data?: TournamentData["data"];
+	ctx: TournamentData["ctx"];
+	/** Derived bracket state, when the match data it was derived from is not shipped. */
+	bracketsMeta?: BracketDerivedMeta[];
+	/** Brackets whose match data this view loaded on its own. */
+	brackets?: SerializedBracket[];
+};
+
 /** The progress status of a team member in a running tournament, as resolved by {@link Tournament.teamMemberOfProgressStatus}. */
 export type TournamentTeamMemberProgressStatus = NonNullable<
 	ReturnType<Tournament["teamMemberOfProgressStatus"]>
@@ -37,24 +100,27 @@ export type TournamentTeamMemberProgressStatus = NonNullable<
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
 	ctx;
+	private args;
 	private data;
 	private _brackets: Array<Bracket | undefined> = [];
 	private _allBrackets: Bracket[] | undefined;
+	private _derivedMeta: BracketDerivedMeta[] | undefined;
+	private _bracketsMeta: BracketMeta[] | undefined;
 	private bracketIdxsBeingBuilt = new Set<number>();
 
-	constructor({
-		data,
-		ctx,
-	}: {
-		data: TournamentData["data"];
-		ctx: TournamentData["ctx"];
-	}) {
-		const hasStarted = data.stage.length > 0;
+	constructor(args: TournamentArgs) {
+		const { data, ctx, bracketsMeta, brackets } = args;
+
+		const hasStarted = data
+			? data.stage.length > 0
+			: Boolean(bracketsMeta?.some((meta) => !meta.preview));
 		const minMembersPerTeam = ctx.settings.minMembersPerTeam ?? 4;
 
 		const teamsInSeedOrder = sortTeamsBySeeding(ctx.teams, minMembersPerTeam);
 
+		this.args = args;
 		this.data = data;
+		this._derivedMeta = bracketsMeta;
 		this.ctx = {
 			...ctx,
 			teams: hasStarted
@@ -63,6 +129,24 @@ export class Tournament {
 				: teamsInSeedOrder,
 			startsAt: databaseTimestampToDate(ctx.startsAt),
 		};
+
+		for (const bracket of brackets ?? []) {
+			this._brackets[bracket.idx] = createBracket({
+				...bracket,
+				tournament: this,
+				startTime: bracket.startTime
+					? databaseTimestampToDate(bracket.startTime)
+					: null,
+			});
+		}
+	}
+
+	/**
+	 * The same tournament with the match data of the given brackets available. Used by the views
+	 * that load one bracket's data of their own, the layout only shipping {@link bracketsMeta}.
+	 */
+	withBrackets(brackets: SerializedBracket[]) {
+		return new Tournament({ ...this.args, brackets });
 	}
 
 	/**
@@ -77,6 +161,64 @@ export class Tournament {
 		}
 
 		return this._allBrackets;
+	}
+
+	/**
+	 * State of every bracket without its match data. Available in every view, unlike
+	 * {@link brackets} which needs the match data the bracket views load.
+	 */
+	get bracketsMeta(): BracketMeta[] {
+		if (this._bracketsMeta) return this._bracketsMeta;
+
+		const progression = this.ctx.settings.bracketProgression;
+		const derived = this.bracketsDerivedMeta;
+
+		this._bracketsMeta = progression.map((bracket, idx) => ({
+			...derived[idx],
+			idx,
+			name: bracket.name,
+			type: bracket.type,
+			sources: bracket.sources,
+			settings: bracket.settings ?? null,
+			requiresCheckIn: bracket.requiresCheckIn ?? false,
+			startTime: bracket.startTime
+				? databaseTimestampToDate(bracket.startTime)
+				: null,
+			isUnderground: Progression.isUnderground(idx, progression),
+			isFinals: Progression.isFinals(idx, progression),
+			isStartingBracket: !bracket.sources || bracket.sources.length === 0,
+			enoughTeams:
+				derived[idx].participantTournamentTeamIds.length >=
+				TOURNAMENT.ENOUGH_TEAMS_TO_START,
+		}));
+
+		return this._bracketsMeta;
+	}
+
+	/** {@link bracketsMeta} in the shape it is shipped in, i.e. only what match data is needed for. */
+	get bracketsDerivedMeta(): BracketDerivedMeta[] {
+		if (!this._derivedMeta) {
+			this._derivedMeta = this.brackets.map((bracket) => ({
+				id: bracket.id,
+				createdAt: bracket.createdAt ?? null,
+				preview: bracket.preview,
+				everyMatchOver: bracket.everyMatchOver,
+				allRoundsHaveMatches: bracket.data.round.every((round) =>
+					bracket.data.match.some((match) => match.roundId === round.id),
+				),
+				canBeStarted: bracket.canBeStarted ?? false,
+				participantTournamentTeamIds: bracket.participantTournamentTeamIds,
+				teamsPendingCheckIn: bracket.teamsPendingCheckIn ?? null,
+				seeding: bracket.seeding ?? null,
+			}));
+		}
+
+		return this._derivedMeta;
+	}
+
+	/** State of one bracket without its match data, or null if there is no such bracket. */
+	bracketMetaByIdx(idx: number): BracketMeta | null {
+		return this.bracketsMeta[idx] ?? null;
 	}
 
 	private builtBracketByIdx(bracketIdx: number): Bracket {
@@ -95,6 +237,12 @@ export class Tournament {
 	}
 
 	private buildBracket(bracketIdx: number): Bracket {
+		invariant(
+			this.data,
+			`Bracket ${bracketIdx} has no match data loaded, use bracketsMeta or load the bracket in this view's loader`,
+		);
+		const data = this.data;
+
 		const {
 			type,
 			name,
@@ -104,9 +252,7 @@ export class Tournament {
 			settings,
 		} = this.ctx.settings.bracketProgression[bracketIdx];
 
-		const inProgressStage = this.data.stage.find(
-			(stage) => stage.name === name,
-		);
+		const inProgressStage = data.stage.find((stage) => stage.name === name);
 
 		if (inProgressStage) {
 			return createBracket({
@@ -121,17 +267,15 @@ export class Tournament {
 				startTime: startTime ? databaseTimestampToDate(startTime) : null,
 				settings: settings ?? null,
 				data: {
-					...this.data,
-					group: this.data.group.filter(
+					...data,
+					group: data.group.filter(
 						(group) => group.stageId === inProgressStage.id,
 					),
-					match: this.data.match.filter(
+					match: data.match.filter(
 						(match) => match.stageId === inProgressStage.id,
 					),
-					stage: this.data.stage.filter(
-						(stage) => stage.id === inProgressStage.id,
-					),
-					round: this.data.round.filter(
+					stage: data.stage.filter((stage) => stage.id === inProgressStage.id),
+					round: data.round.filter(
 						(round) => round.stageId === inProgressStage.id,
 					),
 				},
@@ -499,14 +643,14 @@ export class Tournament {
 
 	/** Has tournament started, meaning that at least one bracket has started. Also finalized tournaments are considered started. */
 	get hasStarted() {
-		return this.data.stage.length > 0;
+		return this.bracketsMeta.some((bracket) => !bracket.preview);
 	}
 
 	/** Is every bracket over (bracket is over when every match is over). */
 	get everyBracketOver() {
 		if (this.ctx.isFinalized) return true;
 
-		return this.brackets.every((bracket) => bracket.everyMatchOver);
+		return this.bracketsMeta.every((bracket) => bracket.everyMatchOver);
 	}
 
 	teamById(id: number) {
@@ -570,7 +714,7 @@ export class Tournament {
 	/** Should it be possible for the given user to finalize this tournament at this time? */
 	canFinalize(user: OptionalIdObject) {
 		// can skip underground bracket
-		const relevantBrackets = this.brackets.filter(
+		const relevantBrackets = this.bracketsMeta.filter(
 			(b) => !b.preview || !b.isUnderground,
 		);
 
@@ -583,13 +727,7 @@ export class Tournament {
 				return true;
 			}
 
-			return this.brackets[0].data.round.every((round) => {
-				const hasMatches = this.brackets[0].data.match.some(
-					(match) => match.roundId === round.id,
-				);
-
-				return hasMatches;
-			});
+			return this.bracketsMeta[0].allRoundsHaveMatches;
 		};
 
 		return (
@@ -757,6 +895,26 @@ export class Tournament {
 		return count > 1;
 	}
 
+	/** Can the given user's team check in to the bracket at this time? */
+	canCheckInToBracket(bracketIdx: number, user: OptionalIdObject) {
+		const bracket = this.bracketMetaByIdx(bracketIdx);
+		// using regular check-in
+		if (!bracket?.teamsPendingCheckIn) return false;
+
+		if (bracket.startTime) {
+			const checkInOpen =
+				sub(bracket.startTime.getTime(), { hours: 1 }).getTime() < Date.now() &&
+				bracket.startTime.getTime() > Date.now();
+
+			if (!checkInOpen) return false;
+		}
+
+		const team = this.teamMemberOfByUser(user);
+		if (!team) return false;
+
+		return bracket.teamsPendingCheckIn.includes(team.id);
+	}
+
 	/** Returns the bracket and round names for the given match ID.
 	 * @example
 	 * tournament.matchNameById(123) // { bracketName: "Groups Stage", roundName: "Round 1.1", roundNameWithoutMatchIdentifier: "Round 1" }
@@ -858,18 +1016,6 @@ export class Tournament {
 			roundNameWithoutMatchIdentifier:
 				roundNameWithoutMatchIdentifier(roundName),
 		};
-	}
-
-	/** Returns a `Bracket` with the given index or the first bracket if not found. */
-	bracketByIdxOrDefault(idx: number): Bracket {
-		const bracket = this.bracketByIdx(idx);
-		if (bracket) return bracket;
-
-		const defaultBracket = this.bracketByIdx(0);
-		invariant(defaultBracket, "No brackets found");
-
-		logger.warn("Bracket not found, using fallback bracket");
-		return defaultBracket;
 	}
 
 	/** Returns a `Bracket` with the given index or null if not found. */

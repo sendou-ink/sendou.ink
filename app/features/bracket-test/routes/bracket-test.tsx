@@ -6,9 +6,11 @@ import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
+import { TournamentOverrideProvider } from "~/features/tournament/routes/to.$id";
 import type { Bracket as BracketType } from "~/features/tournament-bracket/core/Bracket";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
+import type { Tournament as TournamentClass } from "~/features/tournament-bracket/core/Tournament";
 import styles from "../bracket-test.module.css";
 
 type FormatType = Tables["TournamentStage"]["type"];
@@ -63,6 +65,8 @@ export default function BracketTestLayout() {
 			participatedUsers: teamIds,
 		},
 		brackets: [] as unknown[],
+		bracketsMeta: [] as unknown[],
+		bracketMetaByIdx: () => null,
 		teamById: (id: number) => teams.find((t) => t.id === id) ?? null,
 		teamMemberOfByUser: () => null,
 		isOrganizer: () => false,
@@ -177,16 +181,20 @@ export default function BracketTestLayout() {
 					</SendouSwitch>
 				</div>
 			</div>
-			<Outlet
-				context={{
-					tournament: mockTournament,
-					bracketExpanded,
-					setBracketExpanded,
-					hasChildTournaments: false,
-					preparedMaps: null,
-					bracket: mockBracket,
-				}}
-			/>
+			<TournamentOverrideProvider
+				tournament={mockTournament as unknown as TournamentClass}
+			>
+				<Outlet
+					context={{
+						tournament: mockTournament,
+						bracketExpanded,
+						setBracketExpanded,
+						hasChildTournaments: false,
+						preparedMaps: null,
+						bracket: mockBracket,
+					}}
+				/>
+			</TournamentOverrideProvider>
 		</Main>
 	);
 }

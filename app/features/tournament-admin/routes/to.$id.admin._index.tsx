@@ -27,7 +27,10 @@ import {
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import type {
+	BracketMeta,
+	Tournament,
+} from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
 import { SendouForm } from "~/form/SendouForm";
@@ -325,7 +328,7 @@ function TeamRowMenu({
 	const checkInOpen = tournament.regularCheckInStartInThePast;
 	const checkedIn = isTournamentCheckedIn(team);
 	const bracketsRequiringCheckIn = checkInBracketsForTeam(tournament, team);
-	const eventLabelSuffix = tournament.brackets.some(isCheckInBracket)
+	const eventLabelSuffix = tournament.bracketsMeta.some(isCheckInBracket)
 		? " (event)"
 		: "";
 
@@ -483,15 +486,12 @@ function isBracketCheckedIn(team: TournamentTeamFull, bracketIdx: number) {
 }
 
 /** Does this bracket have its own opt-in check-in (besides the event check-in)? */
-function isCheckInBracket(bracket: Tournament["brackets"][number]) {
+function isCheckInBracket(bracket: BracketMeta) {
 	return bracket.requiresCheckIn;
 }
 
 /** Is the team going to play (or pending check-in) in this bracket? */
-function isTeamInBracket(
-	bracket: Tournament["brackets"][number],
-	teamId: number,
-) {
+function isTeamInBracket(bracket: BracketMeta, teamId: number) {
 	return Boolean(
 		bracket.seeding?.includes(teamId) ||
 			bracket.teamsPendingCheckIn?.includes(teamId),
@@ -503,7 +503,7 @@ function checkInBracketsForTeam(
 	tournament: Tournament,
 	team: TournamentTeamFull,
 ) {
-	return tournament.brackets.filter(
+	return tournament.bracketsMeta.filter(
 		(bracket) => isCheckInBracket(bracket) && isTeamInBracket(bracket, team.id),
 	);
 }
