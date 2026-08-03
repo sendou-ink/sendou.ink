@@ -940,6 +940,12 @@ export function buildCases(fx: Fixtures): {
 		(tournamentIds) =>
 			TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds),
 	);
+	add(
+		"TournamentRepository.findParticipantTwitchAccounts",
+		fx.recentTournamentIds,
+		(tournamentIds) =>
+			TournamentRepository.findParticipantTwitchAccounts(tournamentIds),
+	);
 	addStatic("TournamentRepository.findAllForShowcase", () =>
 		TournamentRepository.findAllForShowcase(),
 	);
@@ -1018,6 +1024,9 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("UserRepository.findCountriesByUserIds", fx.skillBatch, (skillBatch) =>
 		UserRepository.findCountriesByUserIds(skillBatch.userIds),
+	);
+	add("UserRepository.findPlusTiersByUserIds", fx.skillBatch, (skillBatch) =>
+		UserRepository.findPlusTiersByUserIds(skillBatch.userIds),
 	);
 	add("UserRepository.findBuildFieldsByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findBuildFieldsByIdentifier(user.identifier),

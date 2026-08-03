@@ -4,6 +4,7 @@ import type { Pronouns } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
@@ -166,6 +167,10 @@ async function resolveOwnTeam({
 	const team = tournament.teamMemberOfByUser(user);
 	if (!team) return null;
 
+	const plusTiers = await UserRepository.findPlusTiersByUserIds(
+		team.members.map((m) => m.userId),
+	);
+
 	const members: LFGGroupMember[] = team.members.map((m) => ({
 		id: m.userId,
 		username: m.username,
@@ -179,7 +184,7 @@ async function resolveOwnTeam({
 		role: m.role,
 		isStayAsSub: false,
 		weapons: null,
-		plusTier: m.plusTier,
+		plusTier: plusTiers.get(m.userId) ?? null,
 	}));
 
 	return {

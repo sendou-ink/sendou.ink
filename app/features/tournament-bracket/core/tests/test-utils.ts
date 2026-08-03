@@ -79,6 +79,7 @@ export const testTournament = ({
 		toSetMapPool: [],
 		participatedUsers: [],
 		castStreams: [],
+		participantStreams: [],
 		mapPickingStyle: "AUTO_SZ",
 		settings: {
 			bracketProgression: [

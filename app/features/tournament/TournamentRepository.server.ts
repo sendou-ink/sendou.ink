@@ -188,8 +188,6 @@ export async function findById(id: number) {
 											> /*sql*/`case when json_extract("Tournament"."settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end`,
 										),
 								)
-								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-								.leftJoin("LiveStream", "LiveStream.userId", "User.id")
 								.select((eb) => [
 									"User.id as userId",
 									"User.username",
@@ -197,9 +195,7 @@ export async function findById(id: number) {
 									"User.discordAvatar",
 									"User.customUrl",
 									"User.country",
-									"User.twitch",
 									"SeedingSkill.ordinal",
-									"PlusTier.tier as plusTier",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
 									"TournamentTeamMember.isSub",
@@ -207,9 +203,6 @@ export async function findById(id: number) {
                     "TournamentTeamMember"."inGameName",
                     "User"."inGameName"
                   )`.as("inGameName"),
-									"LiveStream.twitch as streamTwitch",
-									"LiveStream.viewerCount as streamViewerCount",
-									"LiveStream.thumbnailUrl as streamThumbnailUrl",
 									customAvatarUrl(eb).as("customAvatarUrl"),
 								])
 								.whereRef(
@@ -319,6 +312,42 @@ export async function findById(id: number) {
 						sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each("Tournament"."castTwitchAccounts"))`,
 					),
 			).as("castStreams"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("LiveStream")
+					.innerJoin(
+						"TournamentTeamMember",
+						"TournamentTeamMember.userId",
+						"LiveStream.userId",
+					)
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentTeam.id",
+						"TournamentTeamMember.tournamentTeamId",
+					)
+					.select([
+						"LiveStream.userId",
+						"LiveStream.twitch",
+						"LiveStream.viewerCount",
+						"LiveStream.thumbnailUrl",
+					])
+					.where("TournamentTeam.tournamentId", "=", id)
+					.where("TournamentTeam.isPlaceholder", "=", 0)
+					.where("LiveStream.twitch", "is not", null)
+					.where(({ exists, selectFrom }) =>
+						exists(
+							selectFrom("TournamentTeamCheckIn")
+								.select("TournamentTeamCheckIn.tournamentTeamId")
+								.whereRef(
+									"TournamentTeamCheckIn.tournamentTeamId",
+									"=",
+									"TournamentTeam.id",
+								),
+						),
+					)
+					.groupBy("LiveStream.userId")
+					.$narrowType<{ userId: NotNull; twitch: NotNull }>(),
+			).as("participantStreams"),
 		])
 		.where("Tournament.id", "=", id)
 		.$narrowType<{ author: NotNull }>()
@@ -339,6 +368,34 @@ export async function findById(id: number) {
 		})),
 		participatedUsers: result.participatedUsers.map((user) => user.userId),
 	};
+}
+
+/**
+ * Twitch accounts of the given tournaments' participants who have not dropped out.
+ * Kept out of {@link findById} since only the live stream sync routine needs them.
+ */
+export async function findParticipantTwitchAccounts(tournamentIds: number[]) {
+	if (tournamentIds.length === 0) return [];
+
+	return db
+		.selectFrom("TournamentTeamMember")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+		.select([
+			"TournamentTeam.tournamentId",
+			"TournamentTeamMember.userId",
+			"User.twitch",
+		])
+		.where("TournamentTeam.tournamentId", "in", tournamentIds)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where("TournamentTeam.droppedOut", "=", 0)
+		.where("User.twitch", "is not", null)
+		.$narrowType<{ twitch: NotNull }>()
+		.execute();
 }
 
 /**

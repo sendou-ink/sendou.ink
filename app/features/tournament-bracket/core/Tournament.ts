@@ -1275,16 +1275,12 @@ export class Tournament {
 	}
 
 	get streams() {
-		const memberStreams = this.ctx.teams
-			.filter((team) => team.checkIns.length > 0)
-			.flatMap((team) => team.members)
-			.filter((member) => member.streamTwitch)
-			.map((member) => ({
-				thumbnailUrl: member.streamThumbnailUrl!,
-				twitchUserName: member.streamTwitch!,
-				viewerCount: member.streamViewerCount!,
-				userId: member.userId,
-			}));
+		const memberStreams = this.ctx.participantStreams.map((stream) => ({
+			thumbnailUrl: stream.thumbnailUrl,
+			twitchUserName: stream.twitch,
+			viewerCount: stream.viewerCount,
+			userId: stream.userId,
+		}));
 
 		const castStreams = this.ctx.castStreams.map((stream) => ({
 			thumbnailUrl: stream.thumbnailUrl,
@@ -1298,8 +1294,20 @@ export class Tournament {
 		);
 	}
 
+	/** Twitch account of every participant streaming the tournament right now, keyed by their user id. */
+	get streamingParticipants(): Map<number, string> {
+		if (!this.hasStarted || this.everyBracketOver) return new Map();
+
+		return new Map(
+			this.streams.flatMap((stream) =>
+				stream.userId !== null
+					? [[stream.userId, stream.twitchUserName] as const]
+					: [],
+			),
+		);
+	}
+
 	get streamingParticipantIds(): number[] {
-		if (!this.hasStarted || this.everyBracketOver) return [];
-		return this.streams.filter((s) => s.userId !== null).map((s) => s.userId!);
+		return [...this.streamingParticipants.keys()];
 	}
 }

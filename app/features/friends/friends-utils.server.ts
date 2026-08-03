@@ -172,19 +172,19 @@ function tournamentStreamUrl({
 	matchId: number;
 	opponentId: number;
 }) {
-	const streamingParticipantIds = new Set(tournament.streamingParticipantIds);
+	const streamingParticipants = tournament.streamingParticipants;
 	const ownTeamMembers =
 		tournament.teamMemberOfByUser({ id: friendId })?.members ?? [];
 
 	const friendAccount = streamingTwitchAccount(
 		ownTeamMembers.filter((member) => member.userId === friendId),
-		streamingParticipantIds,
+		streamingParticipants,
 	);
 	if (friendAccount) return twitchUrl(friendAccount);
 
 	const teammateAccount = streamingTwitchAccount(
 		ownTeamMembers.filter((member) => member.userId !== friendId),
-		streamingParticipantIds,
+		streamingParticipants,
 	);
 	if (teammateAccount) return twitchUrl(teammateAccount);
 
@@ -193,7 +193,7 @@ function tournamentStreamUrl({
 
 	const opponentAccount = streamingTwitchAccount(
 		tournament.teamById(opponentId)?.members ?? [],
-		streamingParticipantIds,
+		streamingParticipants,
 	);
 
 	return opponentAccount ? twitchUrl(opponentAccount) : null;
@@ -214,11 +214,13 @@ function liveCastAccount(tournament: Tournament, matchId: number) {
 }
 
 function streamingTwitchAccount(
-	players: Array<{ userId: number; streamTwitch: string | null }>,
-	streamingParticipantIds: ReadonlySet<number>,
+	players: Array<{ userId: number }>,
+	streamingParticipants: ReadonlyMap<number, string>,
 ) {
-	return players.find(
-		(player) =>
-			streamingParticipantIds.has(player.userId) && player.streamTwitch,
-	)?.streamTwitch;
+	for (const player of players) {
+		const twitchAccount = streamingParticipants.get(player.userId);
+		if (twitchAccount) return twitchAccount;
+	}
+
+	return null;
 }
