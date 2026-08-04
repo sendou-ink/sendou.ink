@@ -3,6 +3,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
@@ -45,10 +46,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 	// linked teams source their logo from the sendou.ink team, so any pickup avatar is cleared
 	const avatarImgId = linkedTeamId ? null : data.logo;
 
-	let team: NonNullable<ReturnType<typeof tournament.teamById>> | undefined;
-	if (typeof data.tournamentTeamId === "number") {
-		team = tournament.teamById(data.tournamentTeamId);
-	}
+	const team =
+		typeof data.tournamentTeamId === "number"
+			? (
+					await TournamentRepository.findTeamsFullByTournamentId(tournamentId)
+				).find((t) => t.id === data.tournamentTeamId)
+			: undefined;
 
 	errorToastIfFalsy(team || !tournament.hasStarted, "Tournament has started");
 
@@ -120,7 +123,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			notification: {
 				type: "TO_ADDED_TO_TEAM",
 				pictureUrl:
-					tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoUrl,
+					team.team?.logoUrl ?? team.pickupAvatarUrl ?? tournament.ctx.logoUrl,
 				meta: {
 					adderUsername: user.username,
 					teamName: name,

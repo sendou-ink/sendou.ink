@@ -6,7 +6,7 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import * as CSV from "~/modules/csv";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { teamPage, userPage } from "~/utils/urls";
@@ -79,7 +79,13 @@ const DEFAULT_FIELDS: ExportField[] = [
 	"memberUsername",
 ];
 
-export function ExportDialog({ close }: { close: () => void }) {
+export function ExportDialog({
+	close,
+	teams: allTeams,
+}: {
+	close: () => void;
+	teams: TournamentTeamFull[];
+}) {
 	const tournament = useTournament();
 
 	const [format, setFormat] = React.useState<ExportFormat>("list");
@@ -104,10 +110,10 @@ export function ExportDialog({ close }: { close: () => void }) {
 
 	const onDownload = () => {
 		const selectedBracket =
-			bracketIdx !== null ? tournament.brackets[bracketIdx] : null;
+			bracketIdx !== null ? tournament.bracketsMeta[bracketIdx] : null;
 		const bracketRequiresOwnCheckIn = Boolean(selectedBracket?.requiresCheckIn);
 		const teams = scopedAndSortedTeams({
-			teams: tournament.ctx.teams,
+			teams: allTeams,
 			status,
 			sort,
 			bracketIdx,
@@ -179,7 +185,7 @@ export function ExportDialog({ close }: { close: () => void }) {
 					}))}
 				/>
 
-				{tournament.brackets.length > 1 ? (
+				{tournament.bracketsMeta.length > 1 ? (
 					<RadioRow
 						label="Bracket"
 						value={bracketIdx === null ? "all" : String(bracketIdx)}
@@ -188,7 +194,7 @@ export function ExportDialog({ close }: { close: () => void }) {
 						}
 						options={[
 							{ value: "all", label: "All brackets" },
-							...tournament.brackets.map((bracket, idx) => ({
+							...tournament.bracketsMeta.map((bracket, idx) => ({
 								value: String(idx),
 								label: bracket.name || `#${idx}`,
 							})),
@@ -258,7 +264,7 @@ function RadioRow<T extends string>({
 }
 
 function hasActiveCheckIn(
-	team: TournamentDataTeam,
+	team: TournamentTeamFull,
 	bracketIdx: number | null,
 	bracketRequiresOwnCheckIn: boolean,
 ) {
@@ -285,7 +291,7 @@ export function scopedAndSortedTeams({
 	bracketRequiresOwnCheckIn,
 	bracketParticipantIds,
 }: {
-	teams: TournamentDataTeam[];
+	teams: TournamentTeamFull[];
 	status: ExportStatus;
 	sort: ExportSort;
 	bracketIdx: number | null;
@@ -323,7 +329,7 @@ export function scopedAndSortedTeams({
 }
 
 function teamFieldValue(
-	team: TournamentDataTeam,
+	team: TournamentTeamFull,
 	field: (typeof TEAM_FIELDS)[number],
 	opts: {
 		checkedInLabel: string;
@@ -355,7 +361,7 @@ function teamFieldValue(
 }
 
 function memberFieldValue(
-	member: TournamentDataTeam["members"][number],
+	member: TournamentTeamFull["members"][number],
 	field: (typeof MEMBER_FIELDS)[number],
 ) {
 	switch (field) {
@@ -380,7 +386,7 @@ function buildContent({
 	checkedInLabel,
 	notCheckedInLabel,
 }: {
-	teams: TournamentDataTeam[];
+	teams: TournamentTeamFull[];
 	format: ExportFormat;
 	fields: Set<ExportField>;
 	captainsOnly: boolean;
@@ -391,7 +397,7 @@ function buildContent({
 }) {
 	const teamFields = TEAM_FIELDS.filter((field) => fields.has(field));
 	const memberFields = MEMBER_FIELDS.filter((field) => fields.has(field));
-	const membersOf = (team: TournamentDataTeam) =>
+	const membersOf = (team: TournamentTeamFull) =>
 		captainsOnly
 			? team.members.filter((member) => member.role === "OWNER")
 			: team.members;

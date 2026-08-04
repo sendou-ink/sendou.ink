@@ -1,11 +1,13 @@
 import { add } from "date-fns";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
-import {
-	testTournament,
-	tournamentCtxTeam,
-} from "~/features/tournament-bracket/core/tests/test-utils";
+import { testTournament } from "~/features/tournament-bracket/core/tests/test-utils";
+import { withUserId } from "~/utils/Test";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 
 const { mockGetStreams } = vi.hoisted(() => ({
@@ -20,9 +22,17 @@ vi.mock("~/modules/twitch/utils.server", () => ({
 	hasTwitchEnvVars: () => true,
 }));
 
-vi.mock("~/features/user-page/UserRepository.server", () => ({
-	findIdsByTwitchUsernames: () => [],
-}));
+vi.mock(
+	"~/features/user-page/UserRepository.server",
+	async (importOriginal) => ({
+		...(await importOriginal<
+			typeof import("~/features/user-page/UserRepository.server")
+		>()),
+		findIdsByTwitchUsernames: () => [],
+	}),
+);
+
+const users = UserFactory.pool();
 
 function findAllTournamentStreamers() {
 	return db.selectFrom("TournamentStreamer").selectAll().execute();
@@ -32,11 +42,43 @@ function findAllLiveStreams() {
 	return db.selectFrom("LiveStream").selectAll().execute();
 }
 
-function addRunningTournament(
-	ctx?: Partial<Parameters<typeof testTournament>[0]["ctx"]>,
-) {
-	const tournament = testTournament({ ctx });
-	RunningTournaments.add(tournament);
+/**
+ * A tournament the sync routine considers live: its teams are in the database,
+ * which is where the routine looks up their members' Twitch accounts, and the
+ * tournament itself is in the running tournaments registry.
+ */
+async function addRunningTournament({
+	memberUserIds = [],
+	castTwitchAccounts = [],
+	droppedOut = false,
+}: {
+	memberUserIds?: number[];
+	castTwitchAccounts?: string[];
+	droppedOut?: boolean;
+} = {}) {
+	const tournament = await TournamentFactory.create({ authorId: users.id(1) });
+
+	if (memberUserIds.length > 0) {
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds,
+		});
+
+		if (droppedOut) {
+			await withUserId(users.id(1), () =>
+				TournamentTeamRepository.dropOut({
+					tournamentTeamId: team.id,
+					previewBracketIdxs: [],
+				}),
+			);
+		}
+	}
+
+	RunningTournaments.clear();
+	RunningTournaments.add(
+		testTournament({ ctx: { id: tournament.id, castTwitchAccounts } }),
+	);
+
 	return tournament;
 }
 
@@ -51,6 +93,7 @@ describe("syncLiveStreams tournament streamers", () => {
 		timeOffset += 31;
 		RunningTournaments.clear();
 		mockGetStreams.mockReset();
+		await users.create(1);
 	});
 
 	afterEach(() => {
@@ -87,40 +130,18 @@ describe("syncLiveStreams tournament streamers", () => {
 			{ twitchUserName: "player_one", viewerCount: 100, thumbnailUrl: "" },
 		]);
 
-		addRunningTournament({
-			teams: [
-				tournamentCtxTeam(1, {
-					members: [
-						{
-							userId: 10,
-							username: "Player One",
-							discordId: "10",
-							discordAvatar: null,
-							customUrl: null,
-							inGameName: null,
-							country: null,
-							twitch: "player_one",
-							plusTier: null,
-							role: "OWNER",
-							isSub: 0,
-							createdAt: 0,
-							streamTwitch: null,
-							streamViewerCount: null,
-							streamThumbnailUrl: null,
-							customAvatarUrl: null,
-						},
-					],
-				}),
-			],
+		const player = await UserFactory.create({ twitch: "player_one" });
+		const tournament = await addRunningTournament({
+			memberUserIds: [player.id],
 		});
 
 		await SyncLiveStreamsRoutine.run();
 
 		const rows = await findAllTournamentStreamers();
 		expect(rows).toHaveLength(1);
-		expect(rows[0].userId).toBe(10);
+		expect(rows[0].userId).toBe(player.id);
 		expect(rows[0].twitchAccount).toBe("player_one");
-		expect(rows[0].tournamentId).toBe(1);
+		expect(rows[0].tournamentId).toBe(tournament.id);
 	});
 
 	test("skips dropped-out teams", async () => {
@@ -128,32 +149,10 @@ describe("syncLiveStreams tournament streamers", () => {
 			{ twitchUserName: "dropped_player", viewerCount: 50, thumbnailUrl: "" },
 		]);
 
-		addRunningTournament({
-			teams: [
-				tournamentCtxTeam(1, {
-					droppedOut: 1,
-					members: [
-						{
-							userId: 20,
-							username: "Dropped",
-							discordId: "20",
-							discordAvatar: null,
-							customUrl: null,
-							inGameName: null,
-							country: null,
-							twitch: "dropped_player",
-							plusTier: null,
-							role: "OWNER",
-							isSub: 0,
-							createdAt: 0,
-							streamTwitch: null,
-							streamViewerCount: null,
-							streamThumbnailUrl: null,
-							customAvatarUrl: null,
-						},
-					],
-				}),
-			],
+		const player = await UserFactory.create({ twitch: "dropped_player" });
+		await addRunningTournament({
+			memberUserIds: [player.id],
+			droppedOut: true,
 		});
 
 		await SyncLiveStreamsRoutine.run();
@@ -167,9 +166,7 @@ describe("syncLiveStreams tournament streamers", () => {
 			{ twitchUserName: "caster_account", viewerCount: 200, thumbnailUrl: "" },
 		]);
 
-		addRunningTournament({
-			castTwitchAccounts: ["caster_account"],
-		});
+		await addRunningTournament({ castTwitchAccounts: ["caster_account"] });
 
 		await SyncLiveStreamsRoutine.run();
 
@@ -184,32 +181,8 @@ describe("syncLiveStreams tournament streamers", () => {
 			{ twitchUserName: "unrelated_stream", viewerCount: 10, thumbnailUrl: "" },
 		]);
 
-		addRunningTournament({
-			teams: [
-				tournamentCtxTeam(1, {
-					members: [
-						{
-							userId: 30,
-							username: "No Match",
-							discordId: "30",
-							discordAvatar: null,
-							customUrl: null,
-							inGameName: null,
-							country: null,
-							twitch: "different_account",
-							plusTier: null,
-							role: "OWNER",
-							isSub: 0,
-							createdAt: 0,
-							streamTwitch: null,
-							streamViewerCount: null,
-							streamThumbnailUrl: null,
-							customAvatarUrl: null,
-						},
-					],
-				}),
-			],
-		});
+		const player = await UserFactory.create({ twitch: "different_account" });
+		await addRunningTournament({ memberUserIds: [player.id] });
 
 		await SyncLiveStreamsRoutine.run();
 
@@ -222,72 +195,21 @@ describe("syncLiveStreams tournament streamers", () => {
 			{ twitchUserName: "streamer_a", viewerCount: 100, thumbnailUrl: "" },
 		]);
 
-		addRunningTournament({
-			teams: [
-				tournamentCtxTeam(1, {
-					members: [
-						{
-							userId: 40,
-							username: "Streamer A",
-							discordId: "40",
-							discordAvatar: null,
-							customUrl: null,
-							inGameName: null,
-							country: null,
-							twitch: "streamer_a",
-							plusTier: null,
-							role: "OWNER",
-							isSub: 0,
-							createdAt: 0,
-							streamTwitch: null,
-							streamViewerCount: null,
-							streamThumbnailUrl: null,
-							customAvatarUrl: null,
-						},
-					],
-				}),
-			],
-		});
+		const playerA = await UserFactory.create({ twitch: "streamer_a" });
+		await addRunningTournament({ memberUserIds: [playerA.id] });
 
 		await SyncLiveStreamsRoutine.run();
 
 		const rowsAfterFirst = await findAllTournamentStreamers();
 		expect(rowsAfterFirst).toHaveLength(1);
 
-		// add a different tournament — if throttle works, nothing new is inserted
-		RunningTournaments.clear();
-
+		// a different tournament — if throttle works, nothing new is inserted
 		mockGetStreams.mockResolvedValue([
 			{ twitchUserName: "streamer_b", viewerCount: 50, thumbnailUrl: "" },
 		]);
 
-		addRunningTournament({
-			id: 2,
-			teams: [
-				tournamentCtxTeam(2, {
-					members: [
-						{
-							userId: 50,
-							username: "Streamer B",
-							discordId: "50",
-							discordAvatar: null,
-							customUrl: null,
-							inGameName: null,
-							country: null,
-							twitch: "streamer_b",
-							plusTier: null,
-							role: "OWNER",
-							isSub: 0,
-							createdAt: 0,
-							streamTwitch: null,
-							streamViewerCount: null,
-							streamThumbnailUrl: null,
-							customAvatarUrl: null,
-						},
-					],
-				}),
-			],
-		});
+		const playerB = await UserFactory.create({ twitch: "streamer_b" });
+		await addRunningTournament({ memberUserIds: [playerB.id] });
 
 		// call again without advancing time — should be throttled
 		await SyncLiveStreamsRoutine.run();

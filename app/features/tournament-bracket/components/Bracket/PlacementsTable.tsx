@@ -13,6 +13,7 @@ import { useUser } from "../../../auth/core/user";
 import type { Bracket, Standing } from "../../core/Bracket";
 import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
+import type { BracketMeta } from "../../core/Tournament";
 import styles from "./bracket.module.css";
 
 export function PlacementsTable({
@@ -39,7 +40,7 @@ export function PlacementsTable({
 				wins: stats.setWins,
 				roundCount: bracket.swissRoundCount,
 			}) === "advanced"
-				? bracket.tournament.brackets.find((otherBracket) =>
+				? bracket.tournament.bracketsMeta.find((otherBracket) =>
 						otherBracket.sources?.some(
 							(source) => source.bracketIdx === bracket.idx,
 						),
@@ -47,7 +48,7 @@ export function PlacementsTable({
 				: undefined;
 		}
 
-		return bracket.tournament.brackets.find(
+		return bracket.tournament.bracketsMeta.find(
 			(b) =>
 				b.idx ===
 				Progression.destinationByPlacement({
@@ -61,7 +62,7 @@ export function PlacementsTable({
 	const possibleDestinationBrackets = Progression.destinationsFromBracketIdx(
 		bracket.idx,
 		bracket.tournament.ctx.settings.bracketProgression,
-	).map((idx) => bracket.tournament.bracketByIdx(idx)!);
+	).map((idx) => bracket.tournament.bracketsMeta[idx]);
 	const canEditDestination = (() => {
 		if (possibleDestinationBrackets.length === 0) return false;
 
@@ -139,8 +140,8 @@ function StandingsTable({
 	destinationBracket: (
 		standing: Standing,
 		placement: number,
-	) => Bracket | undefined;
-	possibleDestinationBrackets: Bracket[];
+	) => BracketMeta | undefined;
+	possibleDestinationBrackets: BracketMeta[];
 	canEditDestination: boolean;
 	allMatchesFinished: boolean;
 }) {
@@ -211,7 +212,7 @@ function StandingsTable({
 								override.tournamentTeamId === s.team.id,
 						);
 					const overridenDestinationBracket = overridenDestination
-						? bracket.tournament.bracketByIdx(
+						? bracket.tournament.bracketMetaByIdx(
 								overridenDestination.destinationBracketIdx,
 							)
 						: undefined;
@@ -359,9 +360,9 @@ function EditableDestination({
 	droppedOut,
 }: {
 	source: Bracket;
-	destination?: Bracket;
-	overridenDestination?: Bracket | null;
-	possibleDestinations: Bracket[];
+	destination?: BracketMeta;
+	overridenDestination?: BracketMeta | null;
+	possibleDestinations: BracketMeta[];
 	allMatchesFinished: boolean;
 	canEditDestination: boolean;
 	tournamentTeamId: number;

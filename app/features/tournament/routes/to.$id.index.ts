@@ -1,5 +1,9 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { getUser } from "~/features/auth/core/user.server";
+import {
+	requireTournamentVisible,
+	tournamentFromDBCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import { parseParams } from "~/utils/remix.server";
 import {
 	tournamentBracketsPage,
@@ -18,6 +22,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		user: undefined,
 	});
+	requireTournamentVisible({ ctx: tournament.ctx, user: getUser() });
 
 	if (!tournament.hasStarted) {
 		return redirect(tournamentInfoPage(tournamentId));

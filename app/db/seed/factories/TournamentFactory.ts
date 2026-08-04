@@ -359,13 +359,6 @@ async function persistSeeds(
 	await TournamentRepository.updateTeamSeeds({
 		tournamentId: tournament.ctx.id,
 		teamIds: tournament.ctx.teams.map((team) => team.id),
-		teamsWithMembers: tournament.ctx.teams.map((team) => ({
-			teamId: team.id,
-			members: team.members.map((member) => ({
-				userId: member.userId,
-				username: member.username,
-			})),
-		})),
 	});
 }
 
@@ -418,18 +411,19 @@ async function setActiveRosters(tournamentId: number, match: PlayedMatch) {
 		const team = tournament.teamById(teamId);
 		invariant(team, `Team ${teamId} is not in the tournament`);
 		invariant(
-			team.members.length >= tournament.minMembersPerTeam,
+			team.memberUserIds.length >= tournament.minMembersPerTeam,
 			`Team ${teamId} has too few members to play a match`,
 		);
 
 		// a team without subs plays with everybody it has, so it is never asked
-		if (team.members.length === tournament.minMembersPerTeam) continue;
+		if (team.memberUserIds.length === tournament.minMembersPerTeam) continue;
 
 		await TournamentTeamRepository.setActiveRoster({
 			teamId,
-			activeRosterUserIds: team.members
-				.slice(0, tournament.minMembersPerTeam)
-				.map((member) => member.userId),
+			activeRosterUserIds: team.memberUserIds.slice(
+				0,
+				tournament.minMembersPerTeam,
+			),
 		});
 	}
 }
@@ -481,13 +475,13 @@ async function finalize(tournamentId: number) {
 			? event.badgePrizes.map((badge) => ({
 					badgeId: badge.id,
 					tournamentTeamId: winner.team.id,
-					userIds: winner.team.members.map((member) => member.userId),
+					userIds: winner.team.memberUserIds,
 				}))
 			: undefined,
 		trophyReceiver: event?.trophy
 			? {
 					trophyId: event.trophy.id,
-					userIds: winner.team.members.map((member) => member.userId),
+					userIds: winner.team.memberUserIds,
 				}
 			: undefined,
 	});

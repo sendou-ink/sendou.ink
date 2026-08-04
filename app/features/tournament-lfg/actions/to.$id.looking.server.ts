@@ -6,6 +6,7 @@ import { requireNotBannedByOrganization } from "~/features/tournament/tournament
 import {
 	clearTournamentDataCache,
 	tournamentFromDBCached,
+	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
@@ -65,7 +66,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const team = tournament.teamMemberOfByUser(user);
 
 			if (team) {
-				const member = team.members.find((m) => m.userId === user.id);
+				const teams = await tournamentTeamsFullCached({ tournamentId, user });
+				const member = teams
+					.find((t) => t.id === team.id)
+					?.members.find((m) => m.userId === user.id);
 				const canManageTeam =
 					member?.role === "OWNER" || member?.role === "MANAGER";
 				errorToastIfFalsy(
@@ -74,7 +78,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				);
 
 				errorToastIfFalsy(
-					team.members.length < tournament.maxMembersPerTeam,
+					team.memberUserIds.length < tournament.maxMembersPerTeam,
 					"Team is already at max capacity",
 				);
 				const pickup = await TournamentLFGRepository.startLooking(team.id);

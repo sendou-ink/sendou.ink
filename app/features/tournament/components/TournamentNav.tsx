@@ -63,13 +63,19 @@ const PRIORITY_ORDER: NavItemKey[] = [
 
 export function TournamentNav({
 	tournament,
+	streamsCount,
 	hasChildTournaments,
 }: {
 	tournament: Tournament;
+	streamsCount: number;
 	hasChildTournaments: boolean;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const navItems = useNavItems({ tournament, hasChildTournaments });
+	const navItems = useNavItems({
+		tournament,
+		streamsCount,
+		hasChildTournaments,
+	});
 	const { visibleCount, containerRef, measureRef } = useNavOverflow(
 		navItems.length,
 	);
@@ -145,9 +151,11 @@ export function TournamentNav({
 
 function useNavItems({
 	tournament,
+	streamsCount,
 	hasChildTournaments,
 }: {
 	tournament: Tournament;
+	streamsCount: number;
 	hasChildTournaments: boolean;
 }): NavItem[] {
 	const { t } = useTranslation(["tournament"]);
@@ -212,7 +220,7 @@ function useNavItems({
 		items.streams = {
 			key: "streams",
 			label: t("tournament:nav.streams", {
-				count: tournament.streams.length,
+				count: streamsCount,
 			}),
 			to: "streams",
 			icon: <Tv />,

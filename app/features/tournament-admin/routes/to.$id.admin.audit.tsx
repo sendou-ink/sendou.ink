@@ -85,7 +85,7 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 
 	const detail =
 		typeof event.metadata?.bracketIdx === "number"
-			? tournament.brackets[event.metadata.bracketIdx]?.name
+			? tournament.bracketsMeta[event.metadata.bracketIdx]?.name
 			: event.metadata?.inGameName;
 
 	return (

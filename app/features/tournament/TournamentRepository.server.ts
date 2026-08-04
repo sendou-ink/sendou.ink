@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ordinal } from "openskill";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type {
@@ -33,13 +34,6 @@ import { updatedCastedMatchesInfo } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
 export async function findById(id: number) {
-	const isSetAsRanked = await db
-		.selectFrom("Tournament")
-		.select("settings")
-		.where("id", "=", id)
-		.executeTakeFirst()
-		.then((row) => row?.settings.isRanked ?? false);
-
 	const result = await db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -161,9 +155,15 @@ export async function findById(id: number) {
 				eb
 					.selectFrom("TournamentTeam")
 					.leftJoin(
-						"UserSubmittedImage",
+						"UserSubmittedImage as PickupAvatar",
 						"TournamentTeam.avatarImgId",
-						"UserSubmittedImage.id",
+						"PickupAvatar.id",
+					)
+					.leftJoin("AllTeam", "AllTeam.id", "TournamentTeam.teamId")
+					.leftJoin(
+						"UserSubmittedImage as TeamAvatar",
+						"AllTeam.avatarImgId",
+						"TeamAvatar.id",
 					)
 					.select(({ eb: innerEb }) => [
 						"TournamentTeam.id",
@@ -171,51 +171,54 @@ export async function findById(id: number) {
 						"TournamentTeam.seed",
 						"TournamentTeam.prefersNotToHost",
 						"TournamentTeam.droppedOut",
-						"TournamentTeam.inviteCode",
 						"TournamentTeam.createdAt",
+						"TournamentTeam.inviteCode",
 						"TournamentTeam.activeRosterUserIds",
 						"TournamentTeam.startingBracketIdx",
 						"TournamentTeam.abDivision",
-						"TournamentTeam.avatarImgId",
-						concatUserSubmittedImagePrefix(
-							innerEb.ref("UserSubmittedImage.url"),
-						).as("pickupAvatarUrl"),
+						concatUserSubmittedImagePrefix(innerEb.ref("TeamAvatar.url")).as(
+							"teamLogoUrl",
+						),
+						concatUserSubmittedImagePrefix(innerEb.ref("PickupAvatar.url")).as(
+							"pickupAvatarUrl",
+						),
+						sql<boolean> /*sql*/`exists(
+              select 1 from "MapPoolMap"
+              where "MapPoolMap"."tournamentTeamId" = "TournamentTeam"."id"
+            )`.as("hasMapPool"),
+						innerEb
+							.selectFrom("TournamentTeamMember")
+							.innerJoin("SeedingSkill", (join) =>
+								join
+									.onRef(
+										"SeedingSkill.userId",
+										"=",
+										"TournamentTeamMember.userId",
+									)
+									.on(
+										"SeedingSkill.type",
+										"=",
+										sql<
+											Tables["SeedingSkill"]["type"]
+										> /*sql*/`case when json_extract("Tournament"."settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end`,
+									),
+							)
+							.select(({ fn }) =>
+								fn.avg<number>("SeedingSkill.ordinal").as("v"),
+							)
+							.whereRef(
+								"TournamentTeamMember.tournamentTeamId",
+								"=",
+								"TournamentTeam.id",
+							)
+							.as("avgSeedingSkillOrdinal"),
 						jsonArrayFrom(
 							innerEb
 								.selectFrom("TournamentTeamMember")
-								.innerJoin("User", "TournamentTeamMember.userId", "User.id")
-								.leftJoin("SeedingSkill", (join) =>
-									join
-										.onRef("User.id", "=", "SeedingSkill.userId")
-										.on(
-											"SeedingSkill.type",
-											"=",
-											isSetAsRanked ? "RANKED" : "UNRANKED",
-										),
-								)
-								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-								.leftJoin("LiveStream", "LiveStream.userId", "User.id")
-								.select((eb) => [
-									"User.id as userId",
-									"User.username",
-									"User.discordId",
-									"User.discordAvatar",
-									"User.customUrl",
-									"User.country",
-									"User.twitch",
-									"SeedingSkill.ordinal",
-									"PlusTier.tier as plusTier",
+								.select([
+									"TournamentTeamMember.userId",
 									"TournamentTeamMember.role",
 									"TournamentTeamMember.createdAt",
-									"TournamentTeamMember.isSub",
-									sql<string | null> /*sql*/`coalesce(
-                    "TournamentTeamMember"."inGameName",
-                    "User"."inGameName"
-                  )`.as("inGameName"),
-									"LiveStream.twitch as streamTwitch",
-									"LiveStream.viewerCount as streamViewerCount",
-									"LiveStream.thumbnailUrl as streamThumbnailUrl",
-									customAvatarUrl(eb).as("customAvatarUrl"),
 								])
 								.whereRef(
 									"TournamentTeamMember.tournamentTeamId",
@@ -239,34 +242,6 @@ export async function findById(id: number) {
 									"TournamentTeam.id",
 								),
 						).as("checkIns"),
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("MapPoolMap")
-								.whereRef(
-									"MapPoolMap.tournamentTeamId",
-									"=",
-									"TournamentTeam.id",
-								)
-								.select(["MapPoolMap.stageId", "MapPoolMap.mode"]),
-						).as("mapPool"),
-						jsonObjectFrom(
-							innerEb
-								.selectFrom("AllTeam")
-								.leftJoin(
-									"UserSubmittedImage",
-									"AllTeam.avatarImgId",
-									"UserSubmittedImage.id",
-								)
-								.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
-								.select((eb) => [
-									"AllTeam.id",
-									"AllTeam.customUrl",
-									concatUserSubmittedImagePrefix(
-										eb.ref("UserSubmittedImage.url"),
-									).as("logoUrl"),
-									"AllTeam.deletedAt",
-								]),
-						).as("team"),
 					])
 					.where("TournamentTeam.tournamentId", "=", id)
 					.where("TournamentTeam.isPlaceholder", "=", 0)
@@ -290,40 +265,6 @@ export async function findById(id: number) {
 					.select(["MapPoolMap.mode", "MapPoolMap.stageId"])
 					.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
 			).as("toSetMapPool"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentStage")
-					.innerJoin(
-						"TournamentMatch",
-						"TournamentMatch.stageId",
-						"TournamentStage.id",
-					)
-					.innerJoin(
-						"TournamentMatchGameResult",
-						"TournamentMatch.id",
-						"TournamentMatchGameResult.matchId",
-					)
-					.innerJoin(
-						"TournamentMatchGameResultParticipant",
-						"TournamentMatchGameResult.id",
-						"TournamentMatchGameResultParticipant.matchGameResultId",
-					)
-					.select("TournamentMatchGameResultParticipant.userId")
-					.groupBy("TournamentMatchGameResultParticipant.userId")
-					.where("TournamentStage.tournamentId", "=", id),
-			).as("participatedUsers"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("LiveStream")
-					.select([
-						"LiveStream.twitch",
-						"LiveStream.viewerCount",
-						"LiveStream.thumbnailUrl",
-					])
-					.where(
-						sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each("Tournament"."castTwitchAccounts"))`,
-					),
-			).as("castStreams"),
 		])
 		.where("Tournament.id", "=", id)
 		.$narrowType<{ author: NotNull }>()
@@ -333,17 +274,304 @@ export async function findById(id: number) {
 
 	return {
 		...result,
-		teams: result.teams.map((team) => ({
+		teams: result.teams.map(({ members, ...team }) => ({
 			...team,
-			members: team.members.map(({ ordinal, ...member }) => member),
-			avgSeedingSkillOrdinal: nullifyingAvg(
-				team.members
-					.map((member) => member.ordinal)
-					.filter((ordinal) => typeof ordinal === "number"),
-			),
+			avgSeedingSkillOrdinal:
+				typeof team.avgSeedingSkillOrdinal === "number"
+					? Math.round(team.avgSeedingSkillOrdinal * 100) / 100
+					: null,
+			memberUserIds: members.map((member) => member.userId),
+			ownerUserId:
+				members.find((member) => member.role === "OWNER")?.userId ?? null,
 		})),
-		participatedUsers: result.participatedUsers.map((user) => user.userId),
+		latestTeamIdByDuplicatedUserId: latestTeamIdByDuplicatedUserId(
+			result.teams,
+		),
 	};
+}
+
+/**
+ * User ids of everyone on multiple teams' rosters mapped to the team they joined
+ * most recently. Nearly always empty, allowing the teams to drop per member join
+ * timestamps that only this tiebreak needed.
+ */
+function latestTeamIdByDuplicatedUserId(
+	teams: Array<{
+		id: number;
+		members: Array<{ userId: number; createdAt: number }>;
+	}>,
+) {
+	const latestByUserId = new Map<
+		number,
+		{ teamId: number; joinedAt: number }
+	>();
+	const duplicatedUserIds = new Set<number>();
+
+	for (const team of teams) {
+		for (const member of team.members) {
+			const existing = latestByUserId.get(member.userId);
+			if (existing) {
+				duplicatedUserIds.add(member.userId);
+			}
+			if (!existing || member.createdAt > existing.joinedAt) {
+				latestByUserId.set(member.userId, {
+					teamId: team.id,
+					joinedAt: member.createdAt,
+				});
+			}
+		}
+	}
+
+	const result: Record<number, number> = {};
+	for (const userId of duplicatedUserIds) {
+		result[userId] = latestByUserId.get(userId)!.teamId;
+	}
+
+	return result;
+}
+
+/**
+ * Live streams of the tournament: streams of checked-in participants and the streams
+ * of the tournament's cast Twitch accounts. Kept out of {@link findById} so the
+ * frequently changing stream data does not live in the cached tournament context.
+ */
+export async function findStreamsByTournamentId(tournamentId: number) {
+	const [participantStreams, castStreams] = await Promise.all([
+		db
+			.selectFrom("LiveStream")
+			.innerJoin(
+				"TournamentTeamMember",
+				"TournamentTeamMember.userId",
+				"LiveStream.userId",
+			)
+			.innerJoin(
+				"TournamentTeam",
+				"TournamentTeam.id",
+				"TournamentTeamMember.tournamentTeamId",
+			)
+			.innerJoin("User", "User.id", "LiveStream.userId")
+			.select((eb) => [
+				"LiveStream.userId",
+				"LiveStream.twitch",
+				"LiveStream.viewerCount",
+				"LiveStream.thumbnailUrl",
+				"TournamentTeam.name as teamName",
+				...commonUserSelect(eb),
+			])
+			.where("TournamentTeam.tournamentId", "=", tournamentId)
+			.where("TournamentTeam.isPlaceholder", "=", 0)
+			.where("LiveStream.twitch", "is not", null)
+			.where(({ exists, selectFrom }) =>
+				exists(
+					selectFrom("TournamentTeamCheckIn")
+						.select("TournamentTeamCheckIn.tournamentTeamId")
+						.whereRef(
+							"TournamentTeamCheckIn.tournamentTeamId",
+							"=",
+							"TournamentTeam.id",
+						),
+				),
+			)
+			.groupBy("LiveStream.userId")
+			.$narrowType<{ userId: NotNull; twitch: NotNull }>()
+			.execute(),
+		db
+			.selectFrom("LiveStream")
+			.select([
+				"LiveStream.twitch",
+				"LiveStream.viewerCount",
+				"LiveStream.thumbnailUrl",
+			])
+			.where(
+				sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each((SELECT "castTwitchAccounts" FROM "Tournament" WHERE "Tournament"."id" = ${tournamentId})))`,
+			)
+			.execute(),
+	]);
+
+	return { participantStreams, castStreams };
+}
+
+/** User ids of everyone who played at least one map of the tournament. */
+export async function findParticipatedUserIdsById(tournamentId: number) {
+	const rows = await db
+		.selectFrom("TournamentStage")
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.stageId",
+			"TournamentStage.id",
+		)
+		.innerJoin(
+			"TournamentMatchGameResult",
+			"TournamentMatch.id",
+			"TournamentMatchGameResult.matchId",
+		)
+		.innerJoin(
+			"TournamentMatchGameResultParticipant",
+			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResultParticipant.matchGameResultId",
+		)
+		.select("TournamentMatchGameResultParticipant.userId")
+		.groupBy("TournamentMatchGameResultParticipant.userId")
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.execute();
+
+	return rows.map((row) => row.userId);
+}
+
+export type TeamFull = Unwrapped<typeof findTeamsFullByTournamentId>;
+
+/**
+ * Full rosters of a tournament's teams: per member profile data, map pools and
+ * invite codes. Kept out of {@link findById} because the tournament layout ships
+ * the lite team shape only — views that render rosters load these separately.
+ */
+export async function findTeamsFullByTournamentId(tournamentId: number) {
+	const teams = await db
+		.selectFrom("TournamentTeam")
+		.innerJoin("Tournament", "Tournament.id", "TournamentTeam.tournamentId")
+		.leftJoin(
+			"UserSubmittedImage as PickupAvatar",
+			"TournamentTeam.avatarImgId",
+			"PickupAvatar.id",
+		)
+		.select((eb) => [
+			"TournamentTeam.id",
+			"TournamentTeam.name",
+			"TournamentTeam.seed",
+			"TournamentTeam.prefersNotToHost",
+			"TournamentTeam.droppedOut",
+			"TournamentTeam.inviteCode",
+			"TournamentTeam.createdAt",
+			"TournamentTeam.activeRosterUserIds",
+			"TournamentTeam.startingBracketIdx",
+			"TournamentTeam.abDivision",
+			"TournamentTeam.avatarImgId",
+			concatUserSubmittedImagePrefix(eb.ref("PickupAvatar.url")).as(
+				"pickupAvatarUrl",
+			),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamMember")
+					.innerJoin("User", "TournamentTeamMember.userId", "User.id")
+					.leftJoin("SeedingSkill", (join) =>
+						join
+							.onRef("User.id", "=", "SeedingSkill.userId")
+							.on(
+								"SeedingSkill.type",
+								"=",
+								sql<
+									Tables["SeedingSkill"]["type"]
+								> /*sql*/`case when json_extract("Tournament"."settings", '$.isRanked') = 1 then 'RANKED' else 'UNRANKED' end`,
+							),
+					)
+					.select((eb) => [
+						"User.id as userId",
+						"User.username",
+						"User.discordId",
+						"User.discordAvatar",
+						"User.customUrl",
+						"User.country",
+						"SeedingSkill.ordinal",
+						"TournamentTeamMember.role",
+						"TournamentTeamMember.createdAt",
+						"TournamentTeamMember.isSub",
+						sql<string | null> /*sql*/`coalesce(
+              "TournamentTeamMember"."inGameName",
+              "User"."inGameName"
+            )`.as("inGameName"),
+						customAvatarUrl(eb).as("customAvatarUrl"),
+					])
+					.whereRef(
+						"TournamentTeamMember.tournamentTeamId",
+						"=",
+						"TournamentTeam.id",
+					)
+					.orderBy(sql`"TournamentTeamMember"."role" = 'OWNER'`, "desc")
+					.orderBy("TournamentTeamMember.createdAt", "asc"),
+			).as("members"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamCheckIn")
+					.select([
+						"TournamentTeamCheckIn.bracketIdx",
+						"TournamentTeamCheckIn.checkedInAt",
+						"TournamentTeamCheckIn.isCheckOut",
+					])
+					.whereRef(
+						"TournamentTeamCheckIn.tournamentTeamId",
+						"=",
+						"TournamentTeam.id",
+					),
+			).as("checkIns"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("MapPoolMap")
+					.whereRef("MapPoolMap.tournamentTeamId", "=", "TournamentTeam.id")
+					.select(["MapPoolMap.stageId", "MapPoolMap.mode"]),
+			).as("mapPool"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("AllTeam")
+					.leftJoin(
+						"UserSubmittedImage",
+						"AllTeam.avatarImgId",
+						"UserSubmittedImage.id",
+					)
+					.whereRef("AllTeam.id", "=", "TournamentTeam.teamId")
+					.select((eb) => [
+						"AllTeam.id",
+						"AllTeam.customUrl",
+						concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+							"logoUrl",
+						),
+						"AllTeam.deletedAt",
+					]),
+			).as("team"),
+		])
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.orderBy("TournamentTeam.seed", "asc")
+		.orderBy("TournamentTeam.createdAt", "asc")
+		.orderBy("TournamentTeam.id", "asc")
+		.execute();
+
+	return teams.map((team) => ({
+		...team,
+		members: team.members.map(({ ordinal, ...member }) => member),
+		avgSeedingSkillOrdinal: nullifyingAvg(
+			team.members
+				.map((member) => member.ordinal)
+				.filter((ordinal) => typeof ordinal === "number"),
+		),
+	}));
+}
+
+/**
+ * Twitch accounts of the given tournaments' participants who have not dropped out.
+ * Kept out of {@link findById} since only the live stream sync routine needs them.
+ */
+export async function findParticipantTwitchAccounts(tournamentIds: number[]) {
+	if (tournamentIds.length === 0) return [];
+
+	return db
+		.selectFrom("TournamentTeamMember")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+		.select([
+			"TournamentTeam.tournamentId",
+			"TournamentTeamMember.userId",
+			"User.twitch",
+		])
+		.where("TournamentTeam.tournamentId", "in", tournamentIds)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where("TournamentTeam.droppedOut", "=", 0)
+		.where("User.twitch", "is not", null)
+		.$narrowType<{ twitch: NotNull }>()
+		.execute();
 }
 
 /**
@@ -445,6 +673,24 @@ export function findChildTournamentsForDivCalc(parentTournamentId: number) {
 			"Tournament.isFinalized",
 		])
 		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.execute();
+}
+
+/**
+ * Per-user results of a finalized tournament as persisted at finalization time.
+ * Empty for tournaments that have not been finalized.
+ */
+export function findResultsByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("TournamentResult")
+		.select([
+			"TournamentResult.tournamentTeamId",
+			"TournamentResult.userId",
+			"TournamentResult.placement",
+			"TournamentResult.div",
+		])
+		.where("TournamentResult.tournamentId", "=", tournamentId)
+		.orderBy("TournamentResult.placement", "asc")
 		.execute();
 }
 
@@ -1356,14 +1602,9 @@ export async function searchByName({
 export function updateTeamSeeds({
 	tournamentId,
 	teamIds,
-	teamsWithMembers,
 }: {
 	tournamentId: number;
 	teamIds: number[];
-	teamsWithMembers: Array<{
-		teamId: number;
-		members: Array<{ userId: number; username: string }>;
-	}>;
 }) {
 	return db.transaction().execute(async (trx) => {
 		await trx
@@ -1380,9 +1621,32 @@ export function updateTeamSeeds({
 				.execute();
 		}
 
+		const memberRows =
+			teamIds.length > 0
+				? await trx
+						.selectFrom("TournamentTeamMember")
+						.innerJoin("User", "User.id", "TournamentTeamMember.userId")
+						.select([
+							"TournamentTeamMember.tournamentTeamId",
+							"User.id as userId",
+							"User.username",
+						])
+						.where("TournamentTeamMember.tournamentTeamId", "in", teamIds)
+						.execute()
+				: [];
+
+		const membersByTeamId = R.groupBy(
+			memberRows,
+			(member) => member.tournamentTeamId,
+		);
 		const snapshot = JSON.stringify({
 			savedAt: databaseTimestampNow(),
-			teams: teamsWithMembers,
+			teams: teamIds.map((teamId) => ({
+				teamId,
+				members: (membersByTeamId[teamId] ?? []).map(
+					({ userId, username }) => ({ userId, username }),
+				),
+			})),
 		});
 		await trx
 			.updateTable("Tournament")

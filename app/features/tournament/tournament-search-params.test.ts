@@ -6,6 +6,7 @@ import {
 import {
 	tournamentJoinSearchParams,
 	tournamentSearchSearchParams,
+	tournamentTeamsSearchParams,
 } from "./tournament-search-params";
 
 describe("tournamentSearchSearchParams", () => {
@@ -38,5 +39,20 @@ describe("tournamentJoinSearchParams", () => {
 		assertRoundTrips(tournamentJoinSearchParams, {
 			code: ["abc123XYZ", "F3-9_xyz"],
 		});
+	});
+});
+
+describe("tournamentTeamsSearchParams", () => {
+	it("round-trips", () => {
+		assertRoundTrips(tournamentTeamsSearchParams, {
+			page: [1, 2, 17],
+		});
+	});
+
+	it("decodes garbage to defaults", () => {
+		assertDecodesToDefault(tournamentTeamsSearchParams, "page", [
+			["0"],
+			["abc"],
+		]);
 	});
 });

@@ -17,7 +17,7 @@ import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -159,7 +159,9 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 		return <ReadOnlyRegistrationForms />;
 	}
 
-	const ownTeam = tournament.ownedTeamByUser(user);
+	const ownTeam = tournament.ownedTeamByUser(user)
+		? (data?.ownTeam ?? null)
+		: null;
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
 	const hasFriendCodeSet = Boolean(user?.friendCode);
 
@@ -219,10 +221,10 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 }
 
 function ReadOnlyRegistrationForms() {
-	const user = useUser();
+	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const tournament = useTournament();
 
-	const team = tournament.teamMemberOfByUser(user);
+	const team = data?.ownTeam;
 	if (!team) return null;
 
 	const checkedIn = team.checkIns.length > 0;
@@ -453,7 +455,7 @@ function TeamInfo({
 	canUnregister,
 	readOnly = false,
 }: {
-	ownTeam?: TournamentDataTeam | null;
+	ownTeam?: TournamentTeamFull | null;
 	canUnregister: boolean;
 	readOnly?: boolean;
 }) {
@@ -638,7 +640,7 @@ function FillRoster({
 	ownTeamCheckedIn,
 	readOnly = false,
 }: {
-	ownTeam: TournamentDataTeam;
+	ownTeam: TournamentTeamFull;
 	ownTeamCheckedIn: boolean;
 	readOnly?: boolean;
 }) {
@@ -673,8 +675,8 @@ function FillRoster({
 	const playersAvailableToDirectlyAdd = (() => {
 		if (readOnly) return [];
 		return (data?.friendPlayers?.friends ?? []).filter((user) => {
-			const isNotInTeam = tournament.ctx.teams.every((team) =>
-				team.members.every((member) => member.userId !== user.id),
+			const isNotInTeam = tournament.ctx.teams.every(
+				(team) => !team.memberUserIds.includes(user.id),
 			);
 
 			const hasInGameNameIfNeeded =
@@ -855,7 +857,7 @@ function DirectlyAddPlayerSelect({
 	);
 }
 
-function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
+function DeleteMember({ members }: { members: TournamentTeamFull["members"] }) {
 	const { t } = useTranslation(["tournament", "common"]);
 	const id = React.useId();
 	const fetcher = useFetcher();
@@ -903,7 +905,7 @@ function CounterPickMapPoolPicker({
 	mapPool,
 }: {
 	readOnly?: boolean;
-	mapPool?: NonNullable<TournamentDataTeam["mapPool"]>;
+	mapPool?: NonNullable<TournamentTeamFull["mapPool"]>;
 }) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();

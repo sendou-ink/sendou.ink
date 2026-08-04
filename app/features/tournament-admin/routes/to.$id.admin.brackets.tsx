@@ -59,7 +59,7 @@ export default function TournamentAdminBracketsPage() {
 function BracketReset() {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
-	const inProgressBrackets = tournament.brackets.filter((b) => !b.preview);
+	const inProgressBrackets = tournament.bracketsMeta.filter((b) => !b.preview);
 	const [_bracketToDelete, setBracketToDelete] = React.useState(
 		inProgressBrackets[0]?.id,
 	);
@@ -129,7 +129,7 @@ function BracketProgressionEdit() {
 		Progression.ParsedBracket[] | null
 	>(tournament.ctx.settings.bracketProgression);
 
-	const disabledBracketIdxs = tournament.brackets
+	const disabledBracketIdxs = tournament.bracketsMeta
 		.filter((bracket) => !bracket.preview)
 		.map((bracket) => bracket.idx);
 

@@ -14,7 +14,7 @@ import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-brack
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import { useMatch } from "../match-page-context";
+import { type MatchPageTeam, useMatch } from "../match-page-context";
 
 export function TournamentMatchActionTab({
 	data,
@@ -55,9 +55,7 @@ export function TournamentMatchActionTab({
 
 	if (!teamOne || !teamTwo) return null;
 
-	const withKo = tournament.bracketByIdxOrDefault(
-		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectsKos;
+	const withKo = data.bracketContext.collectsKos;
 
 	const count = data.match.roundMaps.count;
 	const countType = data.match.roundMaps.type;
@@ -86,7 +84,6 @@ export function TournamentMatchActionTab({
 		setEndingTeamIds.length > 0
 			? {
 					...buildSetEndingData({
-						tournament,
 						teams: [teamOne, teamTwo],
 						scores,
 						results: data.results,
@@ -103,12 +100,12 @@ export function TournamentMatchActionTab({
 				{
 					id: teamOne.id,
 					name: teamOne.name,
-					avatar: tournament.tournamentTeamLogoSrc(teamOne) ?? undefined,
+					avatar: teamOne.logoUrl ?? undefined,
 				},
 				{
 					id: teamTwo.id,
 					name: teamTwo.name,
-					avatar: tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined,
+					avatar: teamTwo.logoUrl ?? undefined,
 				},
 			]}
 			ownTeamId={ownTeamId}
@@ -220,24 +217,19 @@ function useTournamentWeaponReport({
 
 		const activeRoster =
 			tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam) ??
-			team.members.map((m) => m.userId);
+			team.memberUserIds;
 
 		return activeRoster.includes(viewerUserId);
 	}
 }
 
 function buildSetEndingData({
-	tournament,
 	teams,
 	scores,
 	results,
 	opponentOneId,
 }: {
-	tournament: ReturnType<typeof useTournament>;
-	teams: [
-		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
-		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
-	];
+	teams: [MatchPageTeam, MatchPageTeam];
 	scores: [number, number];
 	results: TournamentMatchLoaderData["results"];
 	opponentOneId: number;
@@ -299,9 +291,7 @@ function buildSetEndingData({
 		};
 	});
 
-	const activeRosterUsers = (
-		team: NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
-	): CommonUser[] => {
+	const activeRosterUsers = (team: MatchPageTeam): CommonUser[] => {
 		const activeIds = team.activeRosterUserIds;
 		const members = activeIds
 			? team.members.filter((m) => activeIds.includes(m.userId))
@@ -313,11 +303,11 @@ function buildSetEndingData({
 		teams: {
 			alpha: {
 				name: teamOne.name,
-				avatar: tournament.tournamentTeamLogoSrc(teamOne) ?? undefined,
+				avatar: teamOne.logoUrl ?? undefined,
 			},
 			bravo: {
 				name: teamTwo.name,
-				avatar: tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined,
+				avatar: teamTwo.logoUrl ?? undefined,
 			},
 		},
 		score: { alpha: scores[0], bravo: scores[1] },

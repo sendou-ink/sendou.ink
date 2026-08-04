@@ -112,7 +112,6 @@ describe("Swiss", () => {
 		describe("Zones Weekly 38", () => {
 			const tournament = new Tournament({
 				...ZONES_WEEKLY_38(),
-				simulateBrackets: false,
 			});
 
 			const bracket = tournament.bracketByIdx(0)!;

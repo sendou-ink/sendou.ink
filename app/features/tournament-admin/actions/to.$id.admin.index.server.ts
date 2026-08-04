@@ -96,11 +96,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TournamentTeamRepository.deleteById(team.id);
 
-			for (const member of team.members) {
+			for (const userId of team.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
 					tournamentId,
 					type: "participant",
-					userId: member.userId,
+					userId,
 				});
 
 				ShowcaseTournaments.updateCachedTournamentTeamCount({
@@ -162,10 +162,11 @@ async function dropTeamOut({
 
 	// Set active roster only for teams with subs (can't infer which players played)
 	// Teams without subs have their roster trivially inferred in summarizer
-	const hasSubs = droppingTeam.members.length > tournament.minMembersPerTeam;
+	const hasSubs =
+		droppingTeam.memberUserIds.length > tournament.minMembersPerTeam;
 	if (hasSubs && !droppingTeam.activeRosterUserIds) {
 		const randomRoster = R.sample(
-			droppingTeam.members.map((m) => m.userId),
+			droppingTeam.memberUserIds,
 			tournament.minMembersPerTeam,
 		);
 		await TournamentTeamRepository.setActiveRoster({

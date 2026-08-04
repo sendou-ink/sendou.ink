@@ -139,13 +139,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				await TournamentRepository.updateTeamSeeds({
 					tournamentId: tournament.ctx.id,
 					teamIds: tournament.ctx.teams.map((team) => team.id),
-					teamsWithMembers: tournament.ctx.teams.map((team) => ({
-						teamId: team.id,
-						members: team.members.map((m) => ({
-							userId: m.userId,
-							username: m.username,
-						})),
-					})),
 				});
 			}
 
@@ -169,8 +162,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
-					userIds: seeding.flatMap((tournamentTeamId) =>
-						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
+					userIds: seeding.flatMap(
+						(tournamentTeamId) =>
+							tournament.teamById(tournamentTeamId)!.memberUserIds,
 					),
 					notification: {
 						type: "TO_BRACKET_STARTED",

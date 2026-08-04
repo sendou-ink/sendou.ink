@@ -3,7 +3,7 @@ import { differenceInDays } from "date-fns";
 import { ShieldMinus } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import {
@@ -16,20 +16,30 @@ import { Flag } from "~/components/Flag";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
-import type { Standing } from "~/features/tournament-bracket/core/Bracket";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import {
 	SPR_INFO_URL,
 	tournamentMatchPage,
 	tournamentTeamPage,
 } from "~/utils/urls";
-import * as Standings from "../core/Standings";
+import type { TournamentResultsLoaderData } from "../loaders/to.$id.results.server";
 import styles from "../tournament.module.css";
 import { TOURNAMENT } from "../tournament-constants";
 import { useTournament } from "./to.$id";
 
+export { loader } from "../loaders/to.$id.results.server";
+
+type ResultsStanding =
+	TournamentResultsLoaderData["standings"]["standings"] extends Array<infer T>
+		? T extends { standings: Array<infer U> }
+			? U
+			: T
+		: never;
+
 export default function TournamentResultsPage() {
 	const { t } = useTranslation(["common"]);
+	const { standings: standingsResult } =
+		useLoaderData<TournamentResultsLoaderData>();
 	const tournament = useTournament();
 	const { isCensored, reveal } = useSpoilerFree();
 
@@ -52,8 +62,6 @@ export default function TournamentResultsPage() {
 			</div>
 		);
 	}
-
-	const standingsResult = Standings.tournamentStandings(tournament);
 
 	if (standingsResult.type === "single") {
 		if (standingsResult.standings.length === 0) {
@@ -95,7 +103,7 @@ export default function TournamentResultsPage() {
 	);
 }
 
-function ResultsTable({ standings }: { standings: Standing[] }) {
+function ResultsTable({ standings }: { standings: ResultsStanding[] }) {
 	const tournament = useTournament();
 
 	let lastRenderedPlacement = 0;
@@ -141,12 +149,7 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 						rowDarkerBg = !rowDarkerBg;
 					}
 
-					const teamLogoSrc = tournament.tournamentTeamLogoSrc(standing.team);
-
-					const spr = Standings.calculateSPR({
-						standings,
-						teamId: standing.team.id,
-					});
+					const teamLogoSrc = standing.team.logoUrl;
 
 					return (
 						<tr
@@ -179,7 +182,7 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 								</Link>
 							</td>
 							<td>
-								{standing.team.members.map((player) => (
+								{standing.roster.map((player) => (
 									<div
 										key={player.userId}
 										className="stack xxs horizontal items-center"
@@ -194,12 +197,12 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 							<td className="text-sm">{standing.team.seed}</td>
 							{tournament.ctx.isFinalized ? (
 								<td className="text-sm">
-									{spr > 0 ? "+" : ""}
-									{spr}
+									{standing.spr > 0 ? "+" : ""}
+									{standing.spr}
 								</td>
 							) : null}
 							<td>
-								<MatchHistoryRow teamId={standing.team.id} />
+								<MatchHistoryRow matches={standing.matches} />
 							</td>
 						</tr>
 					);
@@ -209,14 +212,11 @@ function ResultsTable({ standings }: { standings: Standing[] }) {
 	);
 }
 
-function MatchHistoryRow({ teamId }: { teamId: number }) {
-	const tournament = useTournament();
-
-	const teamMatches = Standings.matchesPlayed({
-		tournament,
-		teamId,
-	});
-
+function MatchHistoryRow({
+	matches: teamMatches,
+}: {
+	matches: ResultsStanding["matches"];
+}) {
 	return (
 		<div className="stack horizontal xs">
 			{teamMatches.map((match, i) => {
