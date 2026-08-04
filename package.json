@@ -113,6 +113,7 @@
 		"cross-env": "10.1.0",
 		"i18next-locales-sync": "2.1.1",
 		"knip": "6.29.0",
+		"magic-string": "0.30.21",
 		"sql-formatter": "15.8.2",
 		"typescript": "7.0.2",
 		"vite": "8.1.5",

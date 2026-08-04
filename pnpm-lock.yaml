@@ -226,6 +226,9 @@ importers:
       knip:
         specifier: 6.29.0
         version: 6.29.0
+      magic-string:
+        specifier: 0.30.21
+        version: 0.30.21
       sql-formatter:
         specifier: 15.8.2
         version: 15.8.2
