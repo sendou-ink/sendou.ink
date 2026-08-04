@@ -10,7 +10,6 @@ import { executeBracketOperation } from "~/features/tournament-bracket/core/exec
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	clearTournamentDataCache,
-	type TournamentDataTeam,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
@@ -86,6 +85,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
+	// true when nothing outside match data (scores, pick/ban events) changed, letting
+	// broadcast receivers skip revalidating the tournament layout and root loaders
+	let onlyMatchResultsChanged = false;
 	let setIsOver = false;
 	let endedDroppedMatchIds: number[] = [];
 	let followingMatchIds: number[] = [];
@@ -110,6 +112,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
+			// a set ending (or dropped teams' matches ending) changes bracket state
+			// the layout ships (bracketsMeta), so only mid-set reports are scoped
+			onlyMatchResultsChanged = !setIsOver && endedDroppedMatchIds.length === 0;
 
 			break;
 		}
@@ -127,9 +132,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const team = tournament.teamById(data.teamId)!;
 			errorToastIfFalsy(
-				data.roster.every((userId) =>
-					team.members.some((m) => m.userId === userId),
-				),
+				data.roster.every((userId) => team.memberUserIds.includes(userId)),
 				"Invalid roster",
 			);
 
@@ -239,10 +242,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const teamTwo = tournament.teamById(match.opponentTwo!.id!)!;
 			errorToastIfFalsy(
 				data.rosters[0].every((userId) =>
-					teamOne.members.some((m) => m.userId === userId),
+					teamOne.memberUserIds.includes(userId),
 				) &&
 					data.rosters[1].every((userId) =>
-						teamTwo.members.some((m) => m.userId === userId),
+						teamTwo.memberUserIds.includes(userId),
 					),
 				"Invalid roster",
 			);
@@ -299,18 +302,27 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const results =
 				await TournamentMatchRepository.findResultsByMatchId(matchId);
 
-			const teamOne = match.opponentOne?.id
-				? tournament.teamById(match.opponentOne.id)
-				: undefined;
-			const teamTwo = match.opponentTwo?.id
-				? tournament.teamById(match.opponentTwo.id)
-				: undefined;
-			invariant(teamOne && teamTwo, "Teams are missing");
-
 			invariant(
-				match.roundMaps && match.opponentOne?.id && match.opponentTwo?.id,
-				"Missing fields to pick/ban",
+				match.opponentOne?.id && match.opponentTwo?.id,
+				"Teams are missing",
 			);
+			const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds([
+				match.opponentOne.id,
+				match.opponentTwo.id,
+			]);
+			const teamOneCtx = tournament.teamById(match.opponentOne.id);
+			const teamTwoCtx = tournament.teamById(match.opponentTwo.id);
+			invariant(teamOneCtx && teamTwoCtx, "Teams are missing");
+			const teamOne = {
+				...teamOneCtx,
+				mapPool: mapPools.get(match.opponentOne.id) ?? [],
+			};
+			const teamTwo = {
+				...teamTwoCtx,
+				mapPool: mapPools.get(match.opponentTwo.id) ?? [],
+			};
+
+			invariant(match.roundMaps, "Missing fields to pick/ban");
 
 			const currentPickBanEvents =
 				await TournamentRepository.findPickBanEventsByMatchId(match.id);
@@ -349,7 +361,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 						: [],
 				mapList,
 				tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
-				teams: [teamOne, teamTwo] as [TournamentDataTeam, TournamentDataTeam],
+				teams: [teamOne, teamTwo] as [PickBan.MapPoolTeam, PickBan.MapPoolTeam],
 				pickerTeamId,
 				pickBanEvents: currentPickBanEvents,
 			};
@@ -435,6 +447,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			}
 
 			emitMatchUpdate = true;
+			onlyMatchResultsChanged = true;
 
 			break;
 		}
@@ -668,6 +681,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			.map((followingMatch) => followingMatch.id);
 	}
 
+	const revalidateScope = onlyMatchResultsChanged
+		? ("MATCH_RESULTS" as const)
+		: undefined;
+
 	if (emitMatchUpdate) {
 		const otherMatchIdsToRevalidate = Array.from(
 			new Set([...endedDroppedMatchIds, ...followingMatchIds]),
@@ -678,11 +695,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentMatchWebsocketRoom(matchId),
 				type: "TOURNAMENT_MATCH_UPDATED",
 				revalidateOnly: true,
+				revalidateScope,
 			},
 			...otherMatchIdsToRevalidate.map((id) => ({
 				room: tournamentMatchWebsocketRoom(id),
 				type: "TOURNAMENT_MATCH_UPDATED" as const,
 				revalidateOnly: true as const,
+				revalidateScope,
 			})),
 		]);
 	}
@@ -692,6 +711,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
+				revalidateScope,
 			},
 		]);
 	}

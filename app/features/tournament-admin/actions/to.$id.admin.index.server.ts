@@ -12,6 +12,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -94,13 +95,20 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
+			const pickupChatTeam =
+				await TournamentLFGRepository.findPickupChatTeamById(team.id);
+
 			await TournamentTeamRepository.deleteById(team.id);
 
-			for (const member of team.members) {
+			if (pickupChatTeam) {
+				ChatSystemMessage.removeRoom(pickupChatTeam.chatCode);
+			}
+
+			for (const userId of team.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
 					tournamentId,
 					type: "participant",
-					userId: member.userId,
+					userId,
 				});
 
 				ShowcaseTournaments.updateCachedTournamentTeamCount({
@@ -162,10 +170,11 @@ async function dropTeamOut({
 
 	// Set active roster only for teams with subs (can't infer which players played)
 	// Teams without subs have their roster trivially inferred in summarizer
-	const hasSubs = droppingTeam.members.length > tournament.minMembersPerTeam;
+	const hasSubs =
+		droppingTeam.memberUserIds.length > tournament.minMembersPerTeam;
 	if (hasSubs && !droppingTeam.activeRosterUserIds) {
 		const randomRoster = R.sample(
-			droppingTeam.members.map((m) => m.userId),
+			droppingTeam.memberUserIds,
 			tournament.minMembersPerTeam,
 		);
 		await TournamentTeamRepository.setActiveRoster({

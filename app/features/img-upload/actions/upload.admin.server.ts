@@ -28,7 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
 				await ImageRepository.validateById(imageId);
 
 				if (image.tournamentId) {
-					clearTournamentDataCache(imageId);
+					clearTournamentDataCache(image.tournamentId);
 				}
 			}
 			break;

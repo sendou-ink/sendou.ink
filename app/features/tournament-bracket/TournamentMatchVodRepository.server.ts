@@ -1,8 +1,10 @@
 import { subDays, subHours } from "date-fns";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
+import { sql } from "kysely";
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import { commonUserSelect } from "~/utils/kysely.server";
 import { TOURNAMENT } from "../tournament/tournament-constants";
 
 export type VodsByTournamentId = Awaited<
@@ -21,7 +23,7 @@ export function findVodsByTournamentId(tournamentId: number) {
 			"TournamentStage.id",
 			"TournamentMatch.stageId",
 		)
-		.select([
+		.select((eb) => [
 			"TournamentMatchVod.matchId",
 			"TournamentMatchVod.userId",
 			"TournamentMatchVod.platform",
@@ -29,6 +31,29 @@ export function findVodsByTournamentId(tournamentId: number) {
 			"TournamentMatchVod.platformVideoId",
 			"TournamentMatchVod.timestampSeconds",
 			"TournamentMatchVod.viewCount",
+			jsonObjectFrom(
+				eb
+					.selectFrom("User")
+					.select((innerEb) => commonUserSelect(innerEb))
+					.whereRef("User.id", "=", "TournamentMatchVod.userId"),
+			).as("user"),
+			eb
+				.selectFrom("TournamentTeam")
+				.innerJoin(
+					"TournamentTeamMember",
+					"TournamentTeamMember.tournamentTeamId",
+					"TournamentTeam.id",
+				)
+				.select("TournamentTeam.name")
+				.whereRef(
+					"TournamentTeamMember.userId",
+					"=",
+					"TournamentMatchVod.userId",
+				)
+				.where(
+					sql<boolean>`"TournamentTeam"."id" in (json_extract("TournamentMatch"."opponentOne", '$.id'), json_extract("TournamentMatch"."opponentTwo", '$.id'))`,
+				)
+				.as("teamName"),
 		])
 		.where("TournamentStage.tournamentId", "=", tournamentId)
 		.orderBy("TournamentMatchVod.viewCount", "desc")

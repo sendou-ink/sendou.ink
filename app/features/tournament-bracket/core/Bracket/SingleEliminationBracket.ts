@@ -64,7 +64,7 @@ export class SingleEliminationBracket extends Bracket {
 		return R.unique(this.data.match.map((m) => m.groupId)).length > 1;
 	}
 
-	get standings(): Standing[] {
+	protected calculateStandings(): Standing[] {
 		const teams: { id: number; lostAt: number }[] = [];
 
 		const matches = (() => {

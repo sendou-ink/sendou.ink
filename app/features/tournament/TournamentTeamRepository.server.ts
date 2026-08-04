@@ -1,4 +1,4 @@
-import type { Transaction } from "kysely";
+import type { NotNull, Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
@@ -928,6 +928,37 @@ export function findByInviteCode(inviteCode: string) {
 		.select(["TournamentTeam.id", "TournamentTeam.tournamentId"])
 		.where("TournamentTeam.inviteCode", "=", inviteCode)
 		.executeTakeFirst();
+}
+
+/** Map pools of the given tournament teams, keyed by tournament team id. */
+export async function findMapPoolsByTeamIds(tournamentTeamIds: number[]) {
+	const rows = await db
+		.selectFrom("MapPoolMap")
+		.select([
+			"MapPoolMap.tournamentTeamId",
+			"MapPoolMap.stageId",
+			"MapPoolMap.mode",
+		])
+		.where("MapPoolMap.tournamentTeamId", "in", tournamentTeamIds)
+		.$narrowType<{ tournamentTeamId: NotNull }>()
+		.execute();
+
+	const result = new Map<
+		number,
+		Array<{ mode: ModeShort; stageId: StageId }>
+	>();
+	for (const row of rows) {
+		const existing = result.get(row.tournamentTeamId);
+		if (existing) {
+			existing.push({ mode: row.mode, stageId: row.stageId });
+		} else {
+			result.set(row.tournamentTeamId, [
+				{ mode: row.mode, stageId: row.stageId },
+			]);
+		}
+	}
+
+	return result;
 }
 
 export async function findRecentlyPlayedMapsByIds({

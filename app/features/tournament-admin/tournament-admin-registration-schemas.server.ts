@@ -53,7 +53,7 @@ export function adminRegistrationFormSchemaServer({
 			typeof data.tournamentTeamId === "number"
 				? tournament.teamById(data.tournamentTeamId)
 				: undefined;
-		const currentMemberIds = team?.members.map((member) => member.userId) ?? [];
+		const currentMemberIds = team?.memberUserIds ?? [];
 
 		if (team) {
 			const submittedMemberIds = data.members.map((member) => member.userId);
@@ -62,9 +62,8 @@ export function adminRegistrationFormSchemaServer({
 			);
 
 			if (tournament.hasStarted) {
-				const participatedPlayerIds = tournament
-					.participatedPlayersByTeamId(team.id)
-					.map((player) => player.userId);
+				const participatedPlayerIds =
+					tournament.participatedPlayerUserIdsByTeamId(team.id);
 				const removingParticipatedPlayer = membersToRemove.some((memberId) =>
 					participatedPlayerIds.includes(memberId),
 				);

@@ -4,7 +4,11 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import type { Unwrapped } from "../../../utils/types";
-import { tournamentFromDB } from "../core/Tournament.server";
+import {
+	requireTournamentVisible,
+	tournamentDataCached,
+	tournamentFromDB,
+} from "../core/Tournament.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = getUser();
@@ -12,6 +16,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		params,
 		schema: idObject,
 	});
+
+	const { ctx } = await tournamentDataCached({ tournamentId });
+	requireTournamentVisible({ ctx, user });
 
 	const divisions = notFoundIfNullish(await divisionsCached(tournamentId));
 

@@ -85,6 +85,22 @@ export function setGroupChatMetadata(group: {
 	});
 }
 
+export function setMatchChatMetadata(match: {
+	id: number;
+	chatCode: string;
+	participantUserIds: number[];
+}) {
+	ChatSystemMessage.setMetadata({
+		chatCode: match.chatCode,
+		header: `Match #${match.id}`,
+		subtitle: "SendouQ",
+		url: sendouQMatchPage(match.id),
+		imageUrl: `${navIconUrl("sendouq")}.avif`,
+		participantUserIds: match.participantUserIds,
+		expiresAfter: { hours: 2 },
+	});
+}
+
 const allTiersOrdered = TIERS.flatMap((t) => [
 	{ name: t.name, isPlus: true },
 	{ name: t.name, isPlus: false },

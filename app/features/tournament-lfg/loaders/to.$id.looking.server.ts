@@ -2,8 +2,13 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import type { Pronouns } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	requireTournamentVisible,
+	tournamentFromDBCached,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
@@ -26,6 +31,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		user,
 	});
+	requireTournamentVisible({ ctx: tournament.ctx, user });
 
 	if (!tournament.lfgEnabled) {
 		throw new Response(null, { status: 404 });
@@ -163,8 +169,16 @@ async function resolveOwnTeam({
 		user,
 	});
 
-	const team = tournament.teamMemberOfByUser(user);
+	const teamLite = tournament.teamMemberOfByUser(user);
+	if (!teamLite) return null;
+
+	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
+	const team = teamsFull.find((t) => t.id === teamLite.id);
 	if (!team) return null;
+
+	const plusTiers = await UserRepository.findPlusTiersByUserIds(
+		team.members.map((m) => m.userId),
+	);
 
 	const members: LFGGroupMember[] = team.members.map((m) => ({
 		id: m.userId,
@@ -179,7 +193,7 @@ async function resolveOwnTeam({
 		role: m.role,
 		isStayAsSub: false,
 		weapons: null,
-		plusTier: m.plusTier,
+		plusTier: plusTiers.get(m.userId) ?? null,
 	}));
 
 	return {

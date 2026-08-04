@@ -101,11 +101,11 @@ export class SwissBracket extends Bracket {
 		});
 	}
 
-	get standings(): Standing[] {
+	protected calculateStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	get liveStandings(): Standing[] {
+	protected calculateLiveStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: true });
 	}
 
@@ -330,7 +330,7 @@ export class SwissBracket extends Bracket {
 
 					// they are different teams and are tied, let's check who won
 
-					const finishedMatchBetweenTeams = matches.find((match) => {
+					const finishedMatchesBetweenTeams = matches.filter((match) => {
 						const isBetweenTeams =
 							(match.opponent1?.id === team.id &&
 								match.opponent2?.id === team2.id) ||
@@ -342,19 +342,18 @@ export class SwissBracket extends Bracket {
 						return isBetweenTeams && isFinished;
 					});
 
-					// they did not play each other
-					if (!finishedMatchBetweenTeams) continue;
+					for (const finishedMatchBetweenTeams of finishedMatchesBetweenTeams) {
+						const wonTheirMatch =
+							(finishedMatchBetweenTeams.opponent1!.id === team.id &&
+								finishedMatchBetweenTeams.winnerSide === "opponent1") ||
+							(finishedMatchBetweenTeams.opponent2!.id === team.id &&
+								finishedMatchBetweenTeams.winnerSide === "opponent2");
 
-					const wonTheirMatch =
-						(finishedMatchBetweenTeams.opponent1!.id === team.id &&
-							finishedMatchBetweenTeams.winnerSide === "opponent1") ||
-						(finishedMatchBetweenTeams.opponent2!.id === team.id &&
-							finishedMatchBetweenTeams.winnerSide === "opponent2");
-
-					if (wonTheirMatch) {
-						team.winsAgainstTied++;
-					} else {
-						team.lossesAgainstTied++;
+						if (wonTheirMatch) {
+							team.winsAgainstTied++;
+						} else {
+							team.lossesAgainstTied++;
+						}
 					}
 				}
 			}

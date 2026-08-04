@@ -256,6 +256,8 @@
 	"plans.bgStyle.MINI": "ミニマップ",
 	"plans.adder.objective": "ルール関与系",
 	"plans.ranges": "射程",
+	"plans.waterLevel.up": "",
+	"plans.waterLevel.down": "",
 	"articles.by": "作者: {{author}}",
 	"theme.light": "ライトモード",
 	"theme.dark": "ダークモード",

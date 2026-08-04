@@ -13,9 +13,7 @@ export function TournamentMatchHeader({
 }) {
 	const tournament = useTournament();
 
-	const { bracketName, roundName } = tournament.matchContextNamesById(
-		data.match.id,
-	);
+	const { bracketName, roundName } = data.bracketContext.names;
 
 	return (
 		<MatchPageHeader
@@ -24,7 +22,7 @@ export function TournamentMatchHeader({
 				<LinkButton
 					to={tournamentBracketsPage({
 						tournamentId: tournament.ctx.id,
-						bracketIdx: tournament.matchIdToBracketIdx(data.match.id),
+						bracketIdx: data.bracketContext.bracketIdx,
 						groupId: data.match.groupId,
 					})}
 					state={{ scrollToMatchId: data.match.id } satisfies BracketsPageState}

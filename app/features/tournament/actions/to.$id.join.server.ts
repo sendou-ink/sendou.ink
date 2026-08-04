@@ -8,6 +8,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import {
@@ -52,7 +53,7 @@ export const action: ActionFunction = async ({ params, url }) => {
 		(team) => team.id === leanTeam.id,
 	);
 	const previousTeam = tournament.ctx.teams.find((team) =>
-		team.members.some((member) => member.userId === user.id),
+		team.memberUserIds.includes(user.id),
 	);
 
 	errorToastIfFalsy(
@@ -90,6 +91,16 @@ export const action: ActionFunction = async ({ params, url }) => {
 		tournamentId,
 		type: "participant",
 		userId: user.id,
+	});
+
+	await syncPickupChatMetadata({
+		teamId: teamToJoin.id,
+		tournament: {
+			id: tournamentId,
+			name: tournament.ctx.name,
+			logoUrl: tournament.ctx.logoUrl,
+			startTime: tournament.ctx.startsAt,
+		},
 	});
 
 	clearTournamentDataCache(tournamentId);

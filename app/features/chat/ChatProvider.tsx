@@ -20,6 +20,7 @@ import type {
 import { chatUsersSearchParams } from "./chat-search-params";
 import type { ChatMessage, ChatUser } from "./chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
+import { revalidateWithScope } from "./revalidation-scope";
 import { ChatContext } from "./useChatContext";
 
 const PING_INTERVAL_MS = 60_000;
@@ -250,7 +251,9 @@ function ChatProviderInner({
 			// own form submission already reran loaders, so skip the duplicate fetch.
 			const isOwnRevalidate =
 				messageArr[0].revalidateOnly && messageArr[0].authorUserId === userId;
-			if (!isOwnRevalidate) revalidate();
+			if (!isOwnRevalidate) {
+				revalidateWithScope(revalidate, messageArr[0].revalidateScope);
+			}
 		}
 
 		const sound = messageTypeToSound(messageArr[0].type);

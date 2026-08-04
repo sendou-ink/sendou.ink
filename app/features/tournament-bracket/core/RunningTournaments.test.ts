@@ -2,33 +2,13 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { RunningTournaments } from "./RunningTournaments.server";
 import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
 
-const createMember = (userId: number) =>
-	({
-		userId,
-		username: `User ${userId}`,
-		discordId: String(userId),
-		discordAvatar: null,
-		customUrl: null,
-		country: null,
-		twitch: null,
-		plusTier: null,
-		createdAt: 0,
-		inGameName: null,
-		streamTwitch: null,
-		streamViewerCount: null,
-		streamThumbnailUrl: null,
-		role: "REGULAR",
-		isSub: 0,
-		customAvatarUrl: null,
-	}) as const;
-
 const createTestTournament = (
 	tournamentId: number,
 	teamMembers: { teamId: number; userIds: number[] }[],
 ) => {
 	const teams = teamMembers.map(({ teamId, userIds }) =>
 		tournamentCtxTeam(teamId, {
-			members: userIds.map(createMember),
+			memberUserIds: userIds,
 		}),
 	);
 

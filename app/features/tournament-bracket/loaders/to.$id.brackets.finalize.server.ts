@@ -4,6 +4,7 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
 import * as Standings from "~/features/tournament/core/Standings";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	summaryRatingTargets,
 	tournamentSummary,
@@ -93,16 +94,21 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 		progression: tournament.ctx.settings.bracketProgression,
 	});
 
-	return finalStandings.map((standing) => {
-		standing.team.members;
-		return {
-			placement: standing.placement,
-			tournamentTeamId: standing.team.id,
-			name: standing.team.name,
-			members: standing.team.members.map((member) => ({
+	const rostersByTeamId = new Map(
+		(
+			await TournamentRepository.findTeamsFullByTournamentId(tournament.ctx.id)
+		).map((team) => [team.id, team.members]),
+	);
+
+	return finalStandings.map((standing) => ({
+		placement: standing.placement,
+		tournamentTeamId: standing.team.id,
+		name: standing.team.name,
+		members: (rostersByTeamId.get(standing.team.id) ?? [])
+			.filter((member) => standing.team.memberUserIds.includes(member.userId))
+			.map((member) => ({
 				...member,
 				setResults: setResults.get(member.userId) ?? [],
 			})),
-		};
-	});
+	}));
 }

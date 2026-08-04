@@ -6,11 +6,10 @@ import {
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import { useMatch } from "../match-page-context";
+import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { UndoReportButton } from "./TournamentMatchActionTab";
 
 type FromIndicator = NonNullable<PickBanMapOption["picker"]>;
@@ -21,7 +20,7 @@ export function TournamentMatchActionPickBanTab({
 	turnOfResult,
 }: {
 	data: TournamentMatchLoaderData;
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MatchPageTeam, MatchPageTeam];
 	turnOfResult: PickBan.TurnOfResult;
 }) {
 	const user = useUser();

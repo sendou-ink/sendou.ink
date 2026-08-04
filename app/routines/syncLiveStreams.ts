@@ -1,5 +1,6 @@
 import { differenceInMinutes } from "date-fns";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getStreams } from "~/modules/twitch";
@@ -73,30 +74,27 @@ async function syncTournamentStreamers(
 		typeof LiveStreamRepository.insertTournamentStreamers
 	>[0] = [];
 
+	const participants = await TournamentRepository.findParticipantTwitchAccounts(
+		tournaments.map((tournament) => tournament.ctx.id),
+	);
+
+	for (const participant of participants) {
+		if (!streamsByTwitchName.has(participant.twitch.toLowerCase())) continue;
+
+		rows.push({
+			userId: participant.userId,
+			tournamentId: participant.tournamentId,
+			twitchAccount: participant.twitch,
+		});
+	}
+
 	for (const tournament of tournaments) {
-		const tournamentId = tournament.ctx.id;
-
-		for (const team of tournament.ctx.teams) {
-			if (team.droppedOut) continue;
-
-			for (const member of team.members) {
-				if (!member.twitch) continue;
-				if (!streamsByTwitchName.has(member.twitch.toLowerCase())) continue;
-
-				rows.push({
-					userId: member.userId,
-					tournamentId,
-					twitchAccount: member.twitch,
-				});
-			}
-		}
-
 		for (const twitchAccount of tournament.ctx.castTwitchAccounts ?? []) {
 			if (!streamsByTwitchName.has(twitchAccount.toLowerCase())) continue;
 
 			rows.push({
 				userId: null,
-				tournamentId,
+				tournamentId: tournament.ctx.id,
 				twitchAccount,
 			});
 		}

@@ -48,6 +48,19 @@ export async function findCountriesByUserIds(userIds: number[]) {
 	return new Map(rows.map((row) => [row.id, row.country]));
 }
 
+/** Plus tiers of the given users keyed by user id, users without a tier absent. */
+export async function findPlusTiersByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, number>();
+
+	const rows = await db
+		.selectFrom("PlusTier")
+		.select(["PlusTier.userId", "PlusTier.tier"])
+		.where("PlusTier.userId", "in", userIds)
+		.execute();
+
+	return new Map(rows.map((row) => [row.userId, row.tier]));
+}
+
 export async function findBuildFieldsByIdentifier(identifier: string) {
 	const row = await userByIdentifierQuery(identifier)
 		.select(({ eb }) => [

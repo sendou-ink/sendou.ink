@@ -1,11 +1,11 @@
 import { ArrowLeft, Import } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useParams } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type {
@@ -19,6 +19,7 @@ import {
 	tournamentAdminImportTeamsPage,
 	tournamentAdminPage,
 } from "~/utils/urls";
+import type { TournamentAdminRegistrationLoaderData } from "../loaders/to.$id.admin.registration.$tid.server";
 import {
 	type AdminRegistrationFormValues,
 	adminRegistrationFormSchema,
@@ -28,6 +29,7 @@ import {
 import type { ImportTeamsLoaderData } from "./to.$id.admin.import-teams";
 
 export { action } from "../actions/to.$id.admin.registration.server";
+export { loader } from "../loaders/to.$id.admin.registration.$tid.server";
 
 type RosterMemberValue = {
 	userId?: number;
@@ -45,10 +47,7 @@ type LinkedTeamPrefill = {
 export default function TournamentAdminRegistrationPage() {
 	const { t } = useTranslation(["common"]);
 	const tournament = useTournament();
-	const { tid } = useParams();
-
-	const team =
-		typeof tid === "string" ? tournament.teamById(Number(tid)) : undefined;
+	const { team } = useLoaderData<TournamentAdminRegistrationLoaderData>();
 
 	const adminPage = tournamentAdminPage(tournament.ctx.id);
 
@@ -102,7 +101,7 @@ export default function TournamentAdminRegistrationPage() {
 	);
 }
 
-function RegistrationFields({ team }: { team?: TournamentDataTeam }) {
+function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 	const { t } = useTranslation(["forms"]);
 	const tournament = useTournament();
 	const { values, setValue, revalidateAll, hasSubmitted } =

@@ -154,6 +154,74 @@ export function matchesPlayed({
 	});
 }
 
+type PersistedResultRow = {
+	tournamentTeamId: number;
+	userId: number;
+	placement: number;
+	div: string | null;
+};
+
+/**
+ * Standings of a finalized tournament reconstructed from the per-user results persisted at
+ * finalization, instead of recomputing them from bracket match data. Returns null when the
+ * persisted rows cannot back the standings (no rows, a team no longer in the tournament
+ * context, or a division label the progression no longer produces) so the caller can fall
+ * back to {@link tournamentStandings}.
+ */
+export function standingsFromPersistedResults({
+	tournament,
+	results,
+}: {
+	tournament: Tournament;
+	results: PersistedResultRow[];
+}): TournamentStandingsResult | null {
+	if (results.length === 0) return null;
+
+	const standings: Array<Standing & { div: string | null }> = [];
+
+	for (const rows of Object.values(
+		R.groupBy(results, (row) => row.tournamentTeamId),
+	)) {
+		const team = tournament.teamById(rows[0].tournamentTeamId);
+		if (!team) return null;
+
+		standings.push({
+			team: { ...team, memberUserIds: rows.map((row) => row.userId) },
+			placement: rows[0].placement,
+			div: rows[0].div,
+		});
+	}
+
+	const sorted = R.sortBy(
+		standings,
+		(standing) => standing.placement,
+		(standing) => standing.team.seed ?? Number.POSITIVE_INFINITY,
+	);
+
+	if (sorted.every((standing) => standing.div === null)) {
+		return { type: "single", standings: sorted };
+	}
+
+	const progression = tournament.ctx.settings.bracketProgression;
+	const divs = Progression.hasAbDivisionsFinals(progression)
+		? ["A", "B"]
+		: Progression.startingBrackets(progression).map((bracketIdx) =>
+				getBracketProgressionLabel(bracketIdx, progression),
+			);
+	const hasUnknownDiv = sorted.some(
+		(standing) => standing.div === null || !divs.includes(standing.div),
+	);
+	if (hasUnknownDiv) return null;
+
+	return {
+		type: "multi",
+		standings: divs.map((div) => ({
+			div,
+			standings: sorted.filter((standing) => standing.div === div),
+		})),
+	};
+}
+
 /**
  * Computes the standings for a given tournament by aggregating results from relevant brackets.
  *
