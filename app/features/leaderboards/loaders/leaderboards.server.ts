@@ -16,24 +16,17 @@ import {
 } from "../core/leaderboards.server";
 import {
 	DEFAULT_LEADERBOARD_MAX_SIZE,
-	LEADERBOARD_TYPES,
-	SEASON_SEARCH_PARAM_KEY,
-	TYPE_SEARCH_PARAM_KEY,
 	WEAPON_LEADERBOARD_MAX_SIZE,
 } from "../leaderboards-constants";
+import { leaderboardsSearchParams } from "../leaderboards-search-params";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = getUser();
-	const unvalidatedType = url.searchParams.get(TYPE_SEARCH_PARAM_KEY);
-	const unvalidatedSeason = url.searchParams.get(SEASON_SEARCH_PARAM_KEY);
+	const { type, season: seasonParam } = leaderboardsSearchParams.parse(url);
 
-	const type =
-		LEADERBOARD_TYPES.find((type) => type === unvalidatedType) ??
-		LEADERBOARD_TYPES[0];
 	const season =
-		Seasons.allStarted().find(
-			(s) => unvalidatedSeason && s === Number(unvalidatedSeason),
-		) ?? Seasons.currentOrPrevious()!.nth;
+		Seasons.allStarted().find((s) => s === seasonParam) ??
+		Seasons.currentOrPrevious()!.nth;
 
 	const fullUserLeaderboard = type.includes("USER")
 		? await cachedFullUserLeaderboard(season)

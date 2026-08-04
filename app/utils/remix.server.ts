@@ -1,10 +1,10 @@
 import type { Namespace, TFunction } from "i18next";
-import type { Ok, Result } from "neverthrow";
 import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
 import { ServerConfig } from "~/config.server";
+import type { Ok, Result } from "~/utils/result";
 import { logger } from "./logger";
 import { currentRequestPathname } from "./request-context.server";
 
@@ -35,25 +35,6 @@ export function badRequestIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
-export function parseSearchParams<T extends z.ZodTypeAny>({
-	request,
-	schema,
-}: {
-	request: Request;
-	schema: T;
-}): z.infer<T> {
-	const url = new URL(request.url);
-	const searchParams = Object.fromEntries(url.searchParams);
-
-	try {
-		return schema.parse(searchParams);
-	} catch (e) {
-		logger.error("Error parsing search params", e);
-
-		throw errorToastRedirect("Validation failed");
-	}
-}
-
 /**
  * Resolves the pagination state of a loader whose current page comes from the
  * `page` search param. `pagesCount` is at minimum 1 so empty result sets stay
@@ -82,17 +63,6 @@ export function paginate({
 	}
 
 	return { currentPage: page, pagesCount };
-}
-
-export function parseSafeSearchParams<T extends z.ZodTypeAny>({
-	request,
-	schema,
-}: {
-	request: Request;
-	schema: T;
-}) {
-	const url = new URL(request.url);
-	return schema.safeParse(Object.fromEntries(url.searchParams));
 }
 
 /**
@@ -178,7 +148,7 @@ export function canAccessLohiEndpoint(request: Request) {
 	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === ServerConfig.lohiToken;
 }
 
-function errorToastRedirect(message: string) {
+export function errorToastRedirect(message: string) {
 	return redirect(`${currentRequestPathname() ?? ""}?__error=${message}`);
 }
 
@@ -193,14 +163,14 @@ export function errorToastIfFalsy(
 }
 
 /**
- * To be used in loader or action function. Asserts that the provided `Result` value is an `Ok` variant of the `neverthrow` library.
+ * To be used in loader or action function. Asserts that the provided `Result` value is an `Ok` variant.
  *
  * If the value is an `Err`, shows an error toast to the user with the error message. The function will stop execution by throwing a redirect meaning it is safe to operate on the value after this function call.
  */
 export function errorToastIfErr<T, E extends string>(
 	value: Result<T, E>,
-): asserts value is Ok<T, never> {
-	if (value.isErr()) {
+): asserts value is Ok<T> {
+	if (!value.ok) {
 		throw errorToastRedirect(value.error);
 	}
 }

@@ -1,12 +1,6 @@
 import * as React from "react";
 import type { MetaFunction } from "react-router";
-import {
-	Form,
-	Link,
-	useFetcher,
-	useLoaderData,
-	useSearchParams,
-} from "react-router";
+import { Form, Link, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
@@ -21,6 +15,7 @@ import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import {
 	impersonateUrl,
@@ -43,6 +38,7 @@ import {
 	unbanUserSchema,
 	updateFriendCodeSchema,
 } from "../admin-schemas";
+import { adminSearchParams } from "../admin-search-params";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 import { loader } from "../loaders/admin.server";
 
@@ -87,15 +83,18 @@ export default function AdminPage() {
 
 function FriendCodeLookUp() {
 	const data = useLoaderData<typeof loader>();
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [friendCode, setFriendCode] = useSearchParam(
+		adminSearchParams,
+		"friendCode",
+	);
 
 	return (
 		<div className="stack lg">
 			<SendouForm
 				schema={friendCodeSearchSchema}
-				defaultValues={{ friendCode: searchParams.get("friendCode") ?? "" }}
+				defaultValues={{ friendCode: friendCode ?? "" }}
 				submitButtonText="Search"
-				onApply={({ friendCode }) => setSearchParams({ friendCode })}
+				onApply={({ friendCode }) => setFriendCode(friendCode)}
 			>
 				{({ FormField }) => <FormField name="friendCode" />}
 			</SendouForm>

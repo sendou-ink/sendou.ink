@@ -3,6 +3,7 @@ import { sub } from "date-fns";
 import type * as React from "react";
 import { ListBoxItem, type SelectProps } from "react-aria-components";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
+import { tournamentSearchSearchParams } from "~/features/tournament/tournament-search-params";
 import { LocaleTime } from "../LocaleTime";
 import { SearchSelect } from "./SearchSelect";
 import searchSelectStyles from "./SearchSelect.module.css";
@@ -44,8 +45,16 @@ export function TournamentSearch<T extends object>({
 	const search = useEntitySearch<TournamentSearchItem>({
 		buildUrl: (query) =>
 			pastOnly
-				? `/to/search?q=${query}&limit=6&maxStartTime=${new Date().toISOString()}`
-				: `/to/search?q=${query}&limit=6&minStartTime=${sub(new Date(), { days: 7 }).toISOString()}`,
+				? tournamentSearchSearchParams.href("/to/search", {
+						q: query,
+						limit: 6,
+						maxStartTime: new Date(),
+					})
+				: tournamentSearchSearchParams.href("/to/search", {
+						q: query,
+						limit: 6,
+						minStartTime: sub(new Date(), { days: 7 }),
+					}),
 		parseResults: parseTournamentResults,
 		initialSelectedId: initialTournamentId,
 		onChange,

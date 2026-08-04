@@ -1,8 +1,7 @@
 import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
-import { useSearchParams } from "react-router";
+import type { MetaFunction } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { Label } from "~/components/Label";
@@ -12,23 +11,18 @@ import type { Tables } from "~/db/tables";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ipLabsMaps, MAPS_URL, navIconUrl } from "~/utils/urls";
 import * as MapList from "../core/MapList";
 import { MapPool } from "../core/map-pool";
+import { mapListGeneratorSearchParams } from "../map-list-generator-search-params";
 
 import styles from "./maps.module.css";
 
 const AMOUNT_OF_MAPS_IN_MAP_LIST = stageIds.length * 2;
-
-export const shouldRevalidate: ShouldRevalidateFunction = ({ nextUrl }) => {
-	const searchParams = new URL(nextUrl).searchParams;
-	// Only let loader reload data if we're not currently editing the map pool
-	// and persisting it in the search params.
-	return searchParams.has("readonly");
-};
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -80,34 +74,23 @@ export default function MapListPage() {
 }
 
 export function useSearchParamPersistedMapPool() {
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [params, setParams] = useSearchParamsTyped(
+		mapListGeneratorSearchParams,
+	);
 
-	const [mapPool, setMapPool] = React.useState(() => {
-		if (searchParams.has("pool")) {
-			return new MapPool(searchParams.get("pool")!);
-		}
-
-		return MapPool.ANARCHY;
-	});
+	const [mapPool, setMapPool] = React.useState(() => new MapPool(params.pool));
 
 	const handleMapPoolChange = (
 		newMapPool: MapPool,
 		event?: Pick<Tables["CalendarEvent"], "id" | "name">,
 	) => {
 		setMapPool(newMapPool);
-		setSearchParams(
-			event
-				? { eventId: event.id.toString() }
-				: {
-						pool: newMapPool.serialized,
-					},
-			{ replace: true, preventScrollReset: true },
-		);
+		setParams(event ? { eventId: event.id } : { pool: newMapPool.serialized });
 	};
 
 	return {
 		mapPool,
-		readonly: searchParams.has("readonly"),
+		readonly: params.readonly,
 		handleMapPoolChange,
 	};
 }

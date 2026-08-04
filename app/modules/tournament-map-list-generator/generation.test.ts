@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { unwrap, unwrapErr } from "~/utils/result";
 import { rankedModesShort } from "../in-game-lists/modes";
 import type { RankedModeShort } from "../in-game-lists/types";
 import { generateBalancedMapList } from "./balanced-map-list";
@@ -60,7 +61,7 @@ const duplicationTiebreaker = new MapPool([
 	{ mode: "CB", stageId: 4 },
 ]);
 
-const generateMaps = ({
+const generateMapsResult = ({
 	count = 5,
 	seed = "test",
 	teams = [
@@ -86,6 +87,9 @@ const generateMaps = ({
 		followModeOrder,
 	});
 };
+
+const generateMaps = (args: Partial<TournamentMaplistInput> = {}) =>
+	unwrap(generateMapsResult(args));
 
 describe("Tournament map list generator", () => {
 	test("Modes are spread evenly", () => {
@@ -751,43 +755,43 @@ describe("TournamentMapListGeneratorOneMode", () => {
 		}
 	});
 
-	test('Throws if including modes not specified in "modesIncluded"', () => {
-		expect(() =>
-			generateMaps({
-				teams: [
-					{
-						id: 1,
-						maps: team1Picks,
-					},
-					{
-						id: 2,
-						maps: new MapPool([]),
-					},
-				],
-				modesIncluded: ["SZ"],
-			}),
-		).toThrow();
+	test('Returns an error if including modes not specified in "modesIncluded"', () => {
+		const result = generateMapsResult({
+			teams: [
+				{
+					id: 1,
+					maps: team1Picks,
+				},
+				{
+					id: 2,
+					maps: new MapPool([]),
+				},
+			],
+			modesIncluded: ["SZ"],
+		});
+
+		expect(unwrapErr(result)).toBe("MAPS_FOR_MODES_NOT_INCLUDED");
 	});
 
-	test("Throws if duplicate maps in the pool", () => {
-		expect(() =>
-			generateMaps({
-				teams: [
-					{
-						id: 1,
-						maps: new MapPool([
-							{ mode: "SZ", stageId: 1 },
-							{ mode: "SZ", stageId: 1 },
-						]),
-					},
-					{
-						id: 2,
-						maps: new MapPool([]),
-					},
-				],
-				modesIncluded: ["SZ"],
-			}),
-		).toThrowError("Duplicate map");
+	test("Returns an error if duplicate maps in the pool", () => {
+		const result = generateMapsResult({
+			teams: [
+				{
+					id: 1,
+					maps: new MapPool([
+						{ mode: "SZ", stageId: 1 },
+						{ mode: "SZ", stageId: 1 },
+					]),
+				},
+				{
+					id: 2,
+					maps: new MapPool([]),
+				},
+			],
+			modesIncluded: ["SZ"],
+		});
+
+		expect(unwrapErr(result)).toBe("DUPLICATE_MAPS_IN_MAP_POOL");
 	});
 });
 

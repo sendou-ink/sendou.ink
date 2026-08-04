@@ -2,6 +2,19 @@ import type { DamageType, TenacityPlayerDeficit } from "./analyzer-types";
 
 export const MAX_LDE_INTENSITY = 21;
 
+/** Every ability point total reachable by some main/sub slot combination, ascending. */
+export function possibleApValues() {
+	const uniqueValues = new Set<number>();
+
+	for (let i = 0; i < 4; i++) {
+		for (let j = 0; j < 10; j++) {
+			uniqueValues.add(i * 10 + j * 3);
+		}
+	}
+
+	return Array.from(uniqueValues).sort((a, b) => a - b);
+}
+
 export const DAMAGE_TYPE = [
 	"TURRET_MAX",
 	"TURRET_MIN",

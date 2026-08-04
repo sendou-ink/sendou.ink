@@ -2,8 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseSearchParams } from "~/utils/remix.server";
-import { tournamentSearchSearchParamsSchema } from "../tournament-schemas.server";
+import { tournamentSearchSearchParams } from "../tournament-search-params";
 
 export type TournamentSearchLoaderData = SerializeFrom<typeof loader>;
 
@@ -18,10 +17,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		limit,
 		minStartTime,
 		maxStartTime,
-	} = parseSearchParams({
-		request,
-		schema: tournamentSearchSearchParamsSchema,
-	});
+	} = tournamentSearchSearchParams.parse(request);
 
 	if (!query) return [];
 
@@ -29,8 +25,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		tournaments: await TournamentRepository.searchByName({
 			query,
 			limit,
-			minStartTime,
-			maxStartTime,
+			minStartTime: minStartTime ?? undefined,
+			maxStartTime: maxStartTime ?? undefined,
 		}),
 		query,
 	};

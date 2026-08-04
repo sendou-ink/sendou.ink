@@ -855,20 +855,22 @@ export async function requestCancelMatch({
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
 
-	if (match.isLocked) {
-		return { status: "ALREADY_LOCKED" };
-	}
-
-	if (match.cancelRequestedByUserId) {
-		return { status: "ALREADY_REQUESTED" };
-	}
-
 	const requesterGroupId = buildMembers(match).find(
 		(m) => m.id === requestedByUserId,
 	)?.groupId;
 	invariant(requesterGroupId, "Requester is not a member of any group");
 
-	await db.transaction().execute(async (trx) => {
+	return db.transaction().execute<RequestCancelResult>(async (trx) => {
+		const cancelState = await findCancelState(matchId, trx);
+
+		if (cancelState.isLocked) {
+			return { status: "ALREADY_LOCKED" };
+		}
+
+		if (cancelState.cancelRequestedByUserId) {
+			return { status: "ALREADY_REQUESTED" };
+		}
+
 		await trx
 			.updateTable("GroupMatch")
 			.set({ cancelRequestedByUserId: requestedByUserId })
@@ -884,9 +886,9 @@ export async function requestCancelMatch({
 			},
 			trx,
 		);
-	});
 
-	return { status: "REQUESTED" };
+		return { status: "REQUESTED" };
+	});
 }
 
 export type AcceptCancelResult =
@@ -909,30 +911,33 @@ export async function acceptCancelMatch({
 	const match = await findById(matchId);
 	invariant(match, "Match not found");
 
-	if (match.isLocked) {
-		return { status: "ALREADY_LOCKED" };
-	}
-
-	if (!match.cancelRequestedByUserId) {
-		return { status: "NO_CANCEL_REQUEST" };
-	}
-
 	const members = buildMembers(match);
-	const requesterGroupId = members.find(
-		(m) => m.id === match.cancelRequestedByUserId,
-	)?.groupId;
-	invariant(requesterGroupId, "Requester is not a member of any group");
 
 	const accepterGroupId = members.find(
 		(m) => m.id === acceptedByUserId,
 	)?.groupId;
 	invariant(accepterGroupId, "Accepter is not a member of any group");
 
-	if (accepterGroupId === requesterGroupId) {
-		return { status: "NOT_ALLOWED" };
-	}
+	return db.transaction().execute<AcceptCancelResult>(async (trx) => {
+		const cancelState = await findCancelState(matchId, trx);
 
-	await db.transaction().execute(async (trx) => {
+		if (cancelState.isLocked) {
+			return { status: "ALREADY_LOCKED" };
+		}
+
+		if (!cancelState.cancelRequestedByUserId) {
+			return { status: "NO_CANCEL_REQUEST" };
+		}
+
+		const requesterGroupId = members.find(
+			(m) => m.id === cancelState.cancelRequestedByUserId,
+		)?.groupId;
+		invariant(requesterGroupId, "Requester is not a member of any group");
+
+		if (accepterGroupId === requesterGroupId) {
+			return { status: "NOT_ALLOWED" };
+		}
+
 		await SQGroupRepository.setAsInactive(requesterGroupId, trx);
 		await SQGroupRepository.setAsInactive(accepterGroupId, trx);
 		await lockMatchWithoutSkillChange(match.id, trx);
@@ -951,9 +956,9 @@ export async function acceptCancelMatch({
 			},
 			trx,
 		);
-	});
 
-	return { status: "ACCEPTED" };
+		return { status: "ACCEPTED" };
+	});
 }
 
 export type RefuseCancelResult =
@@ -1436,6 +1441,22 @@ export async function undoMapReport({
 	});
 
 	return { status: "SUCCESS" };
+}
+
+/** Cancel request state read inside the writing transaction so concurrent requests can't both pass the guards. */
+function findCancelState(matchId: number, trx: Transaction<DB>) {
+	return trx
+		.selectFrom("GroupMatch")
+		.select(({ exists, selectFrom }) => [
+			"GroupMatch.cancelRequestedByUserId",
+			exists(
+				selectFrom("Skill")
+					.select("Skill.id")
+					.where("Skill.groupMatchId", "=", matchId),
+			).as("isLocked"),
+		])
+		.where("GroupMatch.id", "=", matchId)
+		.executeTakeFirstOrThrow();
 }
 
 async function insertCancelReport(

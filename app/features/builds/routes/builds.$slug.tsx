@@ -8,19 +8,14 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import {
-	type ShouldRevalidateFunction,
-	useLoaderData,
-	useSearchParams,
-} from "react-router";
-import * as R from "remeda";
+import { useLoaderData } from "react-router";
 import { BuildCard } from "~/components/BuildCard";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { Main } from "~/components/Main";
-import { isRevalidation, metaTags, type SerializeFrom } from "~/utils/remix";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import type { Unpacked } from "~/utils/types";
 import {
 	BUILDS_PAGE,
 	navIconUrl,
@@ -32,14 +27,10 @@ import {
 import {
 	BUILDS_PAGE_BATCH_SIZE,
 	BUILDS_PAGE_MAX_BUILDS,
-	FILTER_SEARCH_PARAM_KEY,
 	MAX_BUILD_FILTERS,
 	RECENT_PATCHES,
 } from "../builds-constants";
-import {
-	type BuildFiltersFromSearchParams,
-	buildFiltersSearchParams,
-} from "../builds-schemas";
+import { buildsSearchParams } from "../builds-search-params";
 import type { AbilityBuildFilter, BuildFilter } from "../builds-types";
 import { FilterSection } from "../components/FilterSection";
 
@@ -49,84 +40,7 @@ export { loader };
 
 import styles from "./builds.$slug.module.css";
 
-type ParsedFilter = Unpacked<BuildFiltersFromSearchParams>;
-
-/**
- * Returns true if the meaningful build filters in `next` differ from those in `current`.
- * Order-insensitive and duplicate-safe; AT_LEAST 0 ability filters are treated as no-ops.
- */
-export function buildFiltersMeaningfullyChanged(
-	current: URLSearchParams,
-	next: URLSearchParams,
-): boolean {
-	const oldFilters = extractMeaningfulFilters(current);
-	const newFilters = extractMeaningfulFilters(next);
-
-	return !R.isDeepEqual(
-		R.sortBy(oldFilters, filterKey),
-		R.sortBy(newFilters, filterKey),
-	);
-}
-
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isRevalidation(args)) return true;
-
-	if (args.currentParams.slug !== args.nextParams.slug) {
-		return true;
-	}
-
-	if (
-		args.currentUrl.searchParams.get("limit") !==
-		args.nextUrl.searchParams.get("limit")
-	) {
-		return true;
-	}
-
-	if (
-		buildFiltersMeaningfullyChanged(
-			args.currentUrl.searchParams,
-			args.nextUrl.searchParams,
-		)
-	) {
-		return args.defaultShouldRevalidate;
-	}
-
-	return false;
-};
-
-function parseFiltersFromSearchParams(
-	searchParams: URLSearchParams,
-): BuildFilter[] {
-	const raw = searchParams.get(FILTER_SEARCH_PARAM_KEY);
-	if (!raw) return [];
-
-	const parsed = buildFiltersSearchParams.safeParse(raw);
-	if (!parsed.success || !parsed.data) return [];
-
-	return parsed.data;
-}
-
-function extractMeaningfulFilters(
-	searchParams: URLSearchParams,
-): BuildFiltersFromSearchParams {
-	return parseFiltersFromSearchParams(searchParams).filter(isMeaningfulFilter);
-}
-
-function isMeaningfulFilter(filter: ParsedFilter): boolean {
-	if (filter.type !== "ability") return true;
-
-	return (
-		filter.comparison !== "AT_LEAST" ||
-		typeof filter.value !== "number" ||
-		filter.value > 0
-	);
-}
-
-function filterKey(filter: ParsedFilter): string {
-	if (filter.type === "mode") return `mode:${filter.mode}`;
-	if (filter.type === "date") return `date:${filter.date}`;
-	return `ability:${filter.ability}:${filter.comparison}:${filter.value}`;
-}
+export const shouldRevalidate = buildsSearchParams.shouldRevalidate;
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];
@@ -181,17 +95,13 @@ export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 export default function WeaponsBuildsPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "builds"]);
-	const [searchParams, setSearchParams] = useSearchParams();
-	const filters = parseFiltersFromSearchParams(searchParams);
+	const [{ f: filters }, setParams] = useSearchParamsTyped(buildsSearchParams);
 
-	const syncSearchParams = (newFilters: BuildFilter[]) => {
-		setSearchParams(
-			newFilters.length > 0
-				? {
-						[FILTER_SEARCH_PARAM_KEY]: JSON.stringify(newFilters),
-					}
-				: {},
-		);
+	const syncSearchParams = (
+		newFilters: BuildFilter[],
+		opts?: { loader?: boolean },
+	) => {
+		setParams({ f: newFilters }, opts);
 	};
 
 	const handleFilterAdd = (type: BuildFilter["type"]) => {
@@ -213,7 +123,11 @@ export default function WeaponsBuildsPage() {
 							mode: "SZ",
 						};
 
-		syncSearchParams([...filters, newFilter]);
+		// a fresh "at least 0" ability filter matches every build, so no need to refetch
+		syncSearchParams(
+			[...filters, newFilter],
+			type === "ability" ? { loader: false } : undefined,
+		);
 	};
 
 	const handleFilterChange = (i: number, newFilter: Partial<BuildFilter>) => {
@@ -233,17 +147,11 @@ export default function WeaponsBuildsPage() {
 		syncSearchParams(filters.filter((_, index) => index !== i));
 	};
 
-	const loadMoreLink = () => {
-		const params = new URLSearchParams();
-
-		params.set("limit", String(data.limit + BUILDS_PAGE_BATCH_SIZE));
-
-		if (filters.length > 0) {
-			params.set(FILTER_SEARCH_PARAM_KEY, JSON.stringify(filters));
-		}
-
-		return `?${params.toString()}`;
-	};
+	const loadMoreLink = () =>
+		buildsSearchParams.href("", {
+			limit: data.limit + BUILDS_PAGE_BATCH_SIZE,
+			f: filters,
+		});
 
 	const nthOfSameFilter = (index: number) => {
 		const type = filters[index].type;

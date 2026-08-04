@@ -1,18 +1,20 @@
 import { nanoid } from "nanoid";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, topSearchPage } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.server";
+import { topSearchSearchParams } from "../top-search-search-params";
 import type { MonthYear } from "../top-search-utils";
 
 export { loader };
@@ -36,7 +38,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function XSearchPage() {
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [params, setParams] = useSearchParamsTyped(topSearchSearchParams);
 	const { t } = useTranslation(["common", "game-misc"]);
 	const { formatter: monthYearRangeFormatter } = useDateTimeFormat({
 		month: "numeric",
@@ -51,19 +53,17 @@ export default function XSearchPage() {
 		invariant(mode, "mode is missing");
 		invariant(region, "region is missing");
 
-		setSearchParams({
-			month,
-			year,
-			mode,
-			region,
+		setParams({
+			month: Number(month),
+			year: Number(year),
+			mode: mode as RankedModeShort,
+			region: region as "WEST" | "JPN",
 		});
 	};
 
 	const selectValue = `${
-		searchParams.get("month") ?? data.availableMonthYears[0].month
-	}-${searchParams.get("year") ?? data.availableMonthYears[0].year}-${
-		searchParams.get("mode") ?? "SZ"
-	}-${searchParams.get("region") ?? "WEST"}`;
+		params.month ?? data.availableMonthYears[0].month
+	}-${params.year ?? data.availableMonthYears[0].year}-${params.mode}-${params.region}`;
 
 	const formatMonthYearRange = (from: MonthYear, to: MonthYear) =>
 		monthYearRangeFormatter.formatRange(

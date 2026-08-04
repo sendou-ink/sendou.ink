@@ -1,9 +1,8 @@
-import type { Result } from "neverthrow";
-import { err, ok } from "neverthrow";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
+import { err, ok, type Result } from "~/utils/result";
 import type { ModeShort, StageId } from "../in-game-lists/types";
 import { DEFAULT_MAP_POOL } from "./constants";
 import type {
@@ -17,38 +16,43 @@ type ModeWithStageAndScore = TournamentMapListMap & { score: number };
 const OPTIMAL_MAPLIST_SCORE = 0;
 const MAX_RECURSION_DEPTH = 5_000;
 
+type MapListGenerationError =
+	| "MAX_RECURSION_DEPTH_EXCEEDED"
+	| "COULD_NOT_GENERATE_MAPLIST"
+	| "MAPS_FOR_MODES_NOT_INCLUDED"
+	| "DUPLICATE_MAPS_IN_MAP_POOL";
+
+/**
+ * Generates a map list balanced between the two teams' map pools. If generation fails
+ * due to the recently played maps consideration, retries once without it.
+ */
 export function generateBalancedMapList(
 	input: TournamentMaplistInput,
-): Array<TournamentMapListMap> {
+): Result<Array<TournamentMapListMap>, MapListGenerationError> {
 	const result = generateWithInput(input);
 
-	if (result.isErr()) {
-		if (
-			result.error === "MAX_RECURSION_DEPTH_EXCEEDED" &&
-			input.recentlyPlayedMaps
-		) {
-			logger.error(
-				`Failed to generate map list with recently played maps consideration. Retrying without recently played maps. Team IDs: ${input.teams.map((t) => t.id).join(", ")}`,
-			);
-			return generateWithInput({
-				...input,
-				recentlyPlayedMaps: undefined,
-			})._unsafeUnwrap();
-		}
-
-		throw new Error(`couldn't generate maplist: ${result.error}`);
+	if (
+		!result.ok &&
+		result.error === "MAX_RECURSION_DEPTH_EXCEEDED" &&
+		input.recentlyPlayedMaps
+	) {
+		logger.error(
+			`Failed to generate map list with recently played maps consideration. Retrying without recently played maps. Team IDs: ${input.teams.map((t) => t.id).join(", ")}`,
+		);
+		return generateWithInput({
+			...input,
+			recentlyPlayedMaps: undefined,
+		});
 	}
 
-	return result.value;
+	return result;
 }
 
 function generateWithInput(
 	input: TournamentMaplistInput,
-): Result<
-	Array<TournamentMapListMap>,
-	"MAX_RECURSION_DEPTH_EXCEEDED" | "COULD_NOT_GENERATE_MAPLIST"
-> {
-	validateInput(input);
+): Result<Array<TournamentMapListMap>, MapListGenerationError> {
+	const validationError = validateInput(input);
+	if (validationError) return err(validationError);
 
 	const { seededShuffle } = seededRandom(input.seed);
 	const stages = seededShuffle(resolveCommonStages());
@@ -194,26 +198,27 @@ function generateWithInput(
 		return stages;
 	}
 
-	function validateInput(input: TournamentMaplistInput) {
-		invariant(
-			input.teams.every((t) =>
-				t.maps.stageModePairs.every((pair) =>
-					input.modesIncluded.includes(pair.mode),
-				),
+	function validateInput(
+		input: TournamentMaplistInput,
+	): MapListGenerationError | null {
+		const everyMapIsOfIncludedMode = input.teams.every((team) =>
+			team.maps.stageModePairs.every((pair) =>
+				input.modesIncluded.includes(pair.mode),
 			),
-			"Maps submitted for modes not included in the tournament",
 		);
+		if (!everyMapIsOfIncludedMode) return "MAPS_FOR_MODES_NOT_INCLUDED";
 
 		for (const team of input.teams) {
 			const stringified = team.maps.stageModePairs.map(
 				(p) => `${p.stageId}-${p.mode}`,
 			);
 			const unique = new Set(stringified);
-			invariant(
-				unique.size === stringified.length,
-				`Duplicate maps in map pool (team ${team.id})`,
-			);
+			if (unique.size !== stringified.length) {
+				return "DUPLICATE_MAPS_IN_MAP_POOL";
+			}
 		}
+
+		return null;
 	}
 
 	function utilizeOtherStageIdsWhenNoTiebreaker() {

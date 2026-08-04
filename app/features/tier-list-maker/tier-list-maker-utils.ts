@@ -1,22 +1,13 @@
-import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 import { TIER_LIST_MAKER_URL } from "~/utils/urls";
 import {
-	TIER_LIST_SEARCH_PARAM_NAMES,
 	TIER_NAME_FONT_SIZE_BREAKPOINTS,
 	TIER_NAME_FONT_SIZE_MIN,
 } from "./tier-list-maker-constants";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
+import { tierListMakerSearchParams } from "./tier-list-maker-search-params";
 
 export function tierListItemId(item: TierListItem) {
 	return `${item.type}:${item.id}${item.nth ? `:${item.nth}` : ""}`;
-}
-
-/** Compressed representation of the tier list, as stored in the page's search params. */
-export function serializeTierListState(state: TierListState) {
-	return compress({
-		tiers: state.tiers,
-		tierItems: Array.from(state.tierItems.entries()),
-	});
 }
 
 /**
@@ -32,21 +23,11 @@ export function tierListMakerPathWithState({
 	title: string;
 	showTierHeaders: boolean;
 }) {
-	const searchParams = new URLSearchParams({
-		[TIER_LIST_SEARCH_PARAM_NAMES.STATE]: serializeTierListState(state),
+	return tierListMakerSearchParams.href(TIER_LIST_MAKER_URL, {
+		state,
+		title,
+		showTierHeaders,
 	});
-
-	if (title) {
-		searchParams.set(TIER_LIST_SEARCH_PARAM_NAMES.TITLE, title);
-	}
-	if (!showTierHeaders) {
-		searchParams.set(
-			TIER_LIST_SEARCH_PARAM_NAMES.SHOW_TIER_HEADERS,
-			String(showTierHeaders),
-		);
-	}
-
-	return `${TIER_LIST_MAKER_URL}?${searchParams}`;
 }
 
 /**
@@ -108,20 +89,4 @@ export function tierNameFontSize(name: string) {
 		}
 	}
 	return TIER_NAME_FONT_SIZE_MIN;
-}
-
-/** Reverses {@link serializeTierListState}, returning null if the input is not valid. */
-export function decompress<T>(compressed: string) {
-	const json = decompressFromBase64(compressed);
-	if (json === null) return null;
-
-	try {
-		return JSON.parse(json) as T;
-	} catch {
-		return null;
-	}
-}
-
-function compress<T>(obj: T) {
-	return compressToBase64(JSON.stringify(obj), { urlSafe: true });
 }

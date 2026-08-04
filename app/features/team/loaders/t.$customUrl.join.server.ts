@@ -7,6 +7,7 @@ import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
+import { teamJoinSearchParams } from "../team-search-params";
 import { isTeamFull, isTeamMember } from "../team-utils";
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
@@ -19,14 +20,14 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		}),
 	);
 
-	const inviteCode = url.searchParams.get("code") ?? "";
+	const { code } = teamJoinSearchParams.parse(url);
 	const realInviteCode = team.inviteCode!;
 
 	const teamCount = (await TeamRepository.findAllByMemberUserId(user.id))
 		.length;
 
 	const validation = validateInviteCode({
-		inviteCode,
+		inviteCode: code ?? "",
 		realInviteCode,
 		team,
 		user,

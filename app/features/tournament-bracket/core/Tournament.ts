@@ -1,5 +1,4 @@
-import type { Tables, TournamentStage } from "~/db/tables";
-import type { TournamentStageSettings } from "~/db/tables-json";
+import type { Tables } from "~/db/tables";
 import {
 	LEAGUES,
 	TOURNAMENT,
@@ -27,8 +26,8 @@ import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
-import * as Engine from "./engine";
 import { getRounds } from "./rounds";
+import * as Seeding from "./Seeding";
 import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
@@ -132,15 +131,13 @@ export class Tournament {
 						requiresCheckIn,
 					});
 
-				const checkedInTeamsWithReplaysAvoided =
-					this.avoidReplaysOfPreviousBracketOpponent(
-						checkedInTeams,
-						{
-							sources,
-							type,
-						},
-						settings,
-					);
+				const checkedInTeamsWithReplaysAvoided = this.followUpBracketSeeding(
+					checkedInTeams,
+					{
+						sources,
+						type,
+					},
+				);
 
 				this.brackets.push(
 					createBracket({
@@ -285,137 +282,47 @@ export class Tournament {
 		};
 	}
 
-	private avoidReplaysOfPreviousBracketOpponent(
+	private followUpBracketSeeding(
 		teams: number[],
 		bracket: {
 			sources: Progression.ParsedBracket["sources"];
 			type: Tables["TournamentStage"]["type"];
 		},
-		settings: TournamentStageSettings,
 	) {
-		// rather arbitrary limit, but with smaller brackets avoiding replays is not possible
-		// and then later while loop hits iteration limit
-		if (teams.length < 8) return teams;
-
-		// can't have replays from previous brackets in the first bracket
-		// & no support yet for avoiding replays if many sources
-		if (bracket.sources?.length !== 1) return teams;
-
-		const sourceBracket = this.bracketByIdx(bracket.sources[0].bracketIdx);
-		if (!sourceBracket) {
-			logger.warn(
-				"avoidReplaysOfPreviousBracketOpponent: Source bracket not found",
-			);
-			return teams;
-		}
-
-		// should not happen but just in case
+		// nothing to adjust for starting brackets, and group stages pair via their own logic
+		if (!bracket.sources || bracket.sources.length === 0) return teams;
 		if (bracket.type === "round_robin" || bracket.type === "swiss") {
 			return teams;
 		}
 
-		const sourceBracketEncounters = sourceBracket.data.match.reduce(
-			(acc, cur) => {
-				const oneId = cur.opponent1?.id;
-				const twoId = cur.opponent2?.id;
-
-				if (typeof oneId !== "number" || typeof twoId !== "number") return acc;
-
-				if (!acc.has(oneId)) {
-					acc.set(oneId, []);
-				}
-				if (!acc.has(twoId)) {
-					acc.set(twoId, []);
-				}
-				acc.get(oneId)!.push(twoId);
-				acc.get(twoId)!.push(oneId);
-				return acc;
-			},
-			new Map() as Map<number, number[]>,
-		);
-
-		const bracketReplays = (candidateTeams: number[]) => {
-			const matches = Engine.create({
-				type: bracket.type as Exclude<
-					TournamentStage["type"],
-					"round_robin" | "swiss"
-				>,
-				seeding: candidateTeams,
-				settings,
-			}).match;
-			const replays: [number, number][] = [];
-			for (const match of matches) {
-				if (!match.opponent1?.id || !match.opponent2?.id) continue;
-
-				if (
-					sourceBracketEncounters
-						.get(match.opponent1.id)
-						?.includes(match.opponent2.id)
-				) {
-					replays.push([match.opponent1.id, match.opponent2.id]);
-				}
-			}
-
-			return replays;
-		};
-
-		const newOrder = [...teams];
-		// TODO: handle also e.g. top 3 of each group in the bracket
-		// only switch around 2nd seeds
-		const potentialSwitchCandidates = teams.slice(Math.floor(teams.length / 2));
-		let replays = bracketReplays(newOrder);
-		let iterations = 0;
-		while (replays.length > 0) {
-			iterations++;
-			if (iterations > 100) {
-				logger.warn(
-					"avoidReplaysOfPreviousBracketOpponent: Avoiding replays failed, too many iterations",
-				);
-
+		const sources: Seeding.FollowUpBracketSource[] = [];
+		for (const source of bracket.sources) {
+			const sourceBracket = this.bracketByIdx(source.bracketIdx);
+			if (!sourceBracket) {
+				logger.warn("followUpBracketSeeding: Source bracket not found");
 				return teams;
 			}
 
-			const [oneId, twoId] = replays[0];
+			const encounters: Array<[number, number]> = [];
+			for (const match of sourceBracket.data.match) {
+				const oneId = match.opponent1?.id;
+				const twoId = match.opponent2?.id;
+				if (typeof oneId !== "number" || typeof twoId !== "number") continue;
 
-			const lowerSeedId =
-				newOrder.indexOf(oneId) < newOrder.indexOf(twoId) ? twoId : oneId;
-
-			if (!potentialSwitchCandidates.some((t) => t === lowerSeedId)) {
-				logger.warn(
-					`Avoiding replays failed, no potential switch candidates found in match: ${oneId} vs. ${twoId}`,
-				);
-
-				return teams;
+				encounters.push([oneId, twoId]);
 			}
 
-			for (const candidate of potentialSwitchCandidates) {
-				// can't switch place with itself
-				if (candidate === lowerSeedId) continue;
-
-				const candidateIdx = newOrder.indexOf(candidate);
-				const otherIdx = newOrder.indexOf(lowerSeedId);
-
-				const temp = newOrder[candidateIdx];
-				newOrder[candidateIdx] = newOrder[otherIdx];
-				newOrder[otherIdx] = temp;
-
-				const oldReplayCount = replays.length;
-				const newReplays = bracketReplays(newOrder);
-				if (newReplays.length < oldReplayCount) {
-					replays = newReplays;
-					break;
-				}
-
-				{
-					// revert the switch
-					const temp = newOrder[candidateIdx];
-					newOrder[candidateIdx] = newOrder[otherIdx];
-					newOrder[otherIdx] = temp;
-				}
-			}
+			sources.push({
+				standings: sourceBracket.standings.map((standing) => ({
+					tournamentTeamId: standing.team.id,
+					placement: standing.placement,
+					groupId: standing.groupId ?? null,
+				})),
+				encounters,
+			});
 		}
 
-		return newOrder;
+		return Seeding.forFollowUpBracket({ teams, sources });
 	}
 
 	private divideTeamsToCheckedInAndNotCheckedIn({

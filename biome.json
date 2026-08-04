@@ -74,6 +74,10 @@
 	},
 	"overrides": [
 		{
+			"includes": ["app/**", "!app/modules/search-params/**"],
+			"plugins": ["./biome-plugins/no-raw-search-params.grit"]
+		},
+		{
 			"includes": ["**/*.test.ts", "**/*.test.tsx"],
 			"plugins": ["./biome-plugins/no-raw-db-writes-in-tests.grit"]
 		},

@@ -85,6 +85,6 @@ export function userPageLink(user: WebhookUser) {
 }
 
 /** Backslash-escapes Discord markdown so user text can't forge links or break formatting. */
-function escapeMarkdown(text: string) {
+export function escapeMarkdown(text: string) {
 	return text.replace(/[\\`*_~|()[\]]/g, "\\$&");
 }

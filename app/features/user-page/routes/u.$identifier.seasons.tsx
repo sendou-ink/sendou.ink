@@ -5,13 +5,10 @@ import { useTranslation } from "react-i18next";
 import {
 	Link,
 	Outlet,
-	type ShouldRevalidateFunction,
 	useFetcher,
 	useLoaderData,
 	useLocation,
 	useMatches,
-	useNavigate,
-	useSearchParams,
 } from "react-router";
 import Chart from "~/components/Chart";
 import { SendouButton } from "~/components/elements/Button";
@@ -39,8 +36,8 @@ import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
-import { isRevalidation } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	resolveAvatarUrl,
@@ -59,6 +56,7 @@ import {
 import type { UserSeasonSummaryGraphicLoaderData } from "../loaders/u.$identifier.seasons.summary-graphic.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export { loader };
 
@@ -66,16 +64,7 @@ export const handle: SendouRouteHandle = {
 	i18n: ["user", "calendar"],
 };
 
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isRevalidation(args)) return args.defaultShouldRevalidate;
-	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
-	if (args.currentParams.identifier !== args.nextParams.identifier) return true;
-
-	return (
-		args.currentUrl.searchParams.get("season") !==
-		args.nextUrl.searchParams.get("season")
-	);
-};
+export const shouldRevalidate = userSeasonsSearchParams.shouldRevalidate;
 
 const STAT_TABS = [
 	{ info: "weapons", labelKey: "weapons" },
@@ -159,12 +148,10 @@ function SeasonNav({
 }) {
 	const { t } = useTranslation(["user"]);
 	const location = useLocation();
-	const [searchParams] = useSearchParams();
+	const [info] = useSearchParam(userSeasonsSearchParams, "info");
 
 	const isStats = location.pathname.endsWith("/seasons/stats");
-	const selectedKey = isStats
-		? (searchParams.get("info") ?? "weapons")
-		: "sets";
+	const selectedKey = isStats ? info : "sets";
 
 	const routerOptions = { preventScrollReset: true };
 
@@ -317,7 +304,7 @@ function SeasonHeader({
 }) {
 	const { t } = useTranslation(["user"]);
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
-	const navigate = useNavigate();
+	const [, setSeason] = useSearchParam(userSeasonsSearchParams, "season");
 	const options = useSeasonSelectOptions();
 
 	return (
@@ -325,7 +312,7 @@ function SeasonHeader({
 			<SendouSelect
 				label={t("user:seasons.season")}
 				selectedKey={seasonViewed}
-				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
+				onSelectionChange={(seasonNth) => setSeason(Number(seasonNth))}
 				items={options}
 			>
 				{({ year, items, key }) => (

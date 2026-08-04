@@ -35,6 +35,7 @@ import type {
 	AnalyzedBuild,
 	DamageType,
 	InkConsumeType,
+	MainWeaponInkConsumptionStats,
 	MainWeaponParams,
 	SpecialWeaponParams,
 	StatFunctionInput,
@@ -123,6 +124,7 @@ export function buildStats({
 			subWeaponWhiteInkSeconds: framesToSeconds(subWeaponParams.InkRecoverStop),
 			subWeaponInkConsumptionPercentage:
 				subWeaponInkConsumptionPercentage(input),
+			...mainWeaponInkConsumptionPercentages(input),
 			squidFormInkRecoverySeconds: squidFormInkRecoverySeconds(input),
 			humanoidFormInkRecoverySeconds: humanoidFormInkRecoverySeconds(input),
 			runSpeed: runSpeed(input),
@@ -356,6 +358,37 @@ function subWeaponConsume({
 			inkTankSize(weaponSplId) / inkConsumeAfterISS,
 		),
 	};
+}
+
+function mainWeaponInkConsumptionPercentages(
+	args: StatFunctionInput,
+): MainWeaponInkConsumptionStats {
+	const result: MainWeaponInkConsumptionStats = {};
+
+	for (const type of INK_CONSUME_TYPES) {
+		const baseInkConsume = mainWeaponInkConsumeByType({
+			...args,
+			abilityPoints: new Map(),
+			type,
+		});
+
+		if (typeof baseInkConsume !== "number") continue;
+
+		const inkConsume = mainWeaponInkConsumeByType({ ...args, type });
+		invariant(typeof inkConsume === "number");
+
+		result[`mainWeaponInkConsumptionPercentage_${type}`] = {
+			baseValue: roundToNDecimalPlaces(
+				(baseInkConsume * 100) / inkTankSize(args.weaponSplId),
+			),
+			value: roundToNDecimalPlaces(
+				(inkConsume * 100) / inkTankSize(args.weaponSplId),
+			),
+			modifiedBy: "ISM",
+		};
+	}
+
+	return result;
 }
 
 function mainWeaponInkConsumeByType({

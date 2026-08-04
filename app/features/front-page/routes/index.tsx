@@ -12,6 +12,7 @@ import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { globalSearchSearchParams } from "~/components/layout/global-search-search-params";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
 import { Config } from "~/config";
@@ -338,7 +339,11 @@ function DiscoverFeatures() {
 					{data.weaponPool.map((weapon) => (
 						<Link
 							key={weapon.weaponSplId}
-							to={`?search=open&type=weapons&weapon=${weapon.weaponSplId}`}
+							to={globalSearchSearchParams.href("", {
+								search: "open",
+								type: "weapons",
+								weapon: weapon.weaponSplId,
+							})}
 							className={styles.weaponPill}
 						>
 							<WeaponImage

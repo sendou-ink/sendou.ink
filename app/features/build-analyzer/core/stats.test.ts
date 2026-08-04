@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+import { roundToNDecimalPlaces } from "~/utils/number";
 import { damageTypeToWeaponType } from "../analyzer-constants";
 import { buildStats } from "./stats";
+import { mainWeaponParams } from "./utils";
 
 describe("Analyze build", () => {
 	test("Every main weapon has damage", () => {
@@ -150,6 +152,57 @@ describe("Analyze build", () => {
 		[28, 36],
 		[57, 57],
 	]);
+
+	test("Main weapon ink consumption % exists per ink consume type of the weapon", () => {
+		const analyzedCharger = buildStats({
+			weaponSplId: 2010,
+			hasTacticooler: false,
+		});
+
+		expect(
+			analyzedCharger.stats.mainWeaponInkConsumptionPercentage_TAP_SHOT,
+		).toBeDefined();
+		expect(
+			analyzedCharger.stats.mainWeaponInkConsumptionPercentage_FULL_CHARGE,
+		).toBeDefined();
+		expect(
+			analyzedCharger.stats.mainWeaponInkConsumptionPercentage_NORMAL,
+		).toBeUndefined();
+	});
+
+	test("ISM decreases main weapon ink consumption %", () => {
+		const analyzed = buildStats({
+			weaponSplId: 0,
+			hasTacticooler: false,
+		});
+
+		const analyzedWithISM = buildStats({
+			weaponSplId: 0,
+			abilityPoints: new Map([["ISM", 20]]),
+			hasTacticooler: false,
+		});
+
+		const stat = analyzed.stats.mainWeaponInkConsumptionPercentage_NORMAL!;
+		const statWithISM =
+			analyzedWithISM.stats.mainWeaponInkConsumptionPercentage_NORMAL!;
+
+		expect(stat.value).toBe(stat.baseValue);
+		expect(statWithISM.baseValue).toBe(stat.baseValue);
+		expect(statWithISM.value).toBeLessThan(statWithISM.baseValue);
+	});
+
+	test("Accounts for Jr. big ink tank with main weapon ink consumption %", () => {
+		const analyzedJr = buildStats({
+			weaponSplId: 10,
+			hasTacticooler: false,
+		});
+
+		const jrParams = mainWeaponParams(10);
+
+		expect(
+			analyzedJr.stats.mainWeaponInkConsumptionPercentage_NORMAL?.baseValue,
+		).toBe(roundToNDecimalPlaces((jrParams.InkConsume! * 100) / 1.1));
+	});
 
 	test("Sub Power Up Beakon AP boost matches Lean", () => {
 		for (const [subPowerAp, quickSuperJumpAp] of subPowerApToQuickSuperJumpAp) {

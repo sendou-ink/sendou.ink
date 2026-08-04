@@ -31,7 +31,7 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
@@ -48,6 +48,7 @@ import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
+import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
 import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export { action };
@@ -77,11 +78,11 @@ export default function TournamentBracketsPage() {
 
 		return 1;
 	};
-	const [bracketIdx, setBracketIdx] = useSearchParamState({
-		defaultValue: defaultBracketIdx(),
-		name: "idx",
-		revive: Number,
-	});
+	const [bracketIdxParam, setBracketIdx] = useSearchParam(
+		tournamentBracketsSearchParams,
+		"idx",
+	);
+	const bracketIdx = bracketIdxParam ?? defaultBracketIdx();
 
 	const bracket = React.useMemo(
 		() => tournament.bracketByIdxOrDefault(bracketIdx),
@@ -317,7 +318,7 @@ function getAbDivisionsStartError(
 		groupCount,
 	});
 
-	return result.isErr() ? result.error : null;
+	return result.ok ? null : result.error;
 }
 
 function BracketStarter({

@@ -6,10 +6,8 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish } from "~/utils/remix.server";
-import {
-	seasonsSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas";
+import { userParamsSchema } from "../user-page-schemas";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsStatsLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
@@ -18,9 +16,7 @@ export type UserSeasonsStatsLoaderData = NonNullable<
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	requireUser();
 	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
+	const { info, season: seasonParam } = userSeasonsSearchParams.parse(url);
 
 	const user = notFoundIfNullish(
 		await UserRepository.findIdByIdentifier(identifier),
@@ -32,8 +28,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		return null;
 	}
 
-	const { info = "weapons", season = seasonsParticipatedIn[0] } =
-		parsedSearchParams.success ? parsedSearchParams.data : {};
+	const season = seasonParam ?? seasonsParticipatedIn[0];
 
 	return {
 		season,

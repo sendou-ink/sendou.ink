@@ -3,14 +3,10 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { UserPreferences } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
-import {
-	calendarFiltersSearchParamsObject,
-	calendarFiltersSearchParamsSchema,
-} from "~/features/calendar/calendar-schemas";
+import { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
+import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseSafeSearchParams, parseSearchParams } from "~/utils/remix.server";
-import { dayMonthYear } from "~/utils/zod";
 import * as CalendarRepository from "../CalendarRepository.server";
 import * as CalendarEvent from "../core/CalendarEvent";
 
@@ -18,14 +14,18 @@ export type CalendarLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const user = getUser();
-	const parsed = parseSafeSearchParams({
-		request: args.request,
-		schema: dayMonthYear,
-	});
+	const { day, month, year } = calendarSearchParams.parse(args.request);
 
-	const date = parsed.success
+	const dateViewed =
+		typeof day === "number" &&
+		typeof month === "number" &&
+		typeof year === "number"
+			? { day, month, year }
+			: undefined;
+
+	const date = dateViewed
 		? new Date(
-				Date.UTC(parsed.data.year, parsed.data.month, parsed.data.day),
+				Date.UTC(dateViewed.year, dateViewed.month, dateViewed.day),
 			).getTime()
 		: Date.now();
 
@@ -57,7 +57,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 	return {
 		eventTimes,
-		dateViewed: parsed.success ? parsed.data : undefined,
+		dateViewed,
 		filters,
 	};
 };
@@ -66,10 +66,7 @@ function resolveFilters(
 	request: Request,
 	preferences?: UserPreferences | null,
 ) {
-	const parsed = parseSearchParams({
-		request,
-		schema: calendarFiltersSearchParamsObject,
-	}).filters;
+	const parsed = calendarSearchParams.parse(request).filters;
 
 	if (!CalendarEvent.isDefaultFilters(parsed)) {
 		return parsed;

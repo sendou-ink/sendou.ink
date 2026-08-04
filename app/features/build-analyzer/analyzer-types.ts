@@ -258,6 +258,10 @@ export interface FullInkTankOption {
 	type: InkConsumeType;
 }
 
+export type MainWeaponInkConsumptionStats = {
+	[K in InkConsumeType as `mainWeaponInkConsumptionPercentage_${K}`]?: Stat;
+};
+
 export type DamageType = (typeof DAMAGE_TYPE)[number];
 
 export type TenacityPlayerDeficit = (typeof TENACITY_PLAYER_DEFICITS)[number];
@@ -350,7 +354,7 @@ export interface AnalyzedBuild {
 		specialRadiusRangeMin?: Stat;
 		specialRadiusRangeMax?: Stat;
 		specialPowerUpDuration?: Stat;
-	};
+	} & MainWeaponInkConsumptionStats;
 }
 
 export type SpecialEffectType = (typeof SPECIAL_EFFECTS)[number]["type"];

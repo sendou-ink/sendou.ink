@@ -47,7 +47,10 @@ export function Match(props: MatchProps) {
 
 	if (isBye) {
 		return (
-			<div className={clsx(styles.matchBye, styles.matchWrapper)}>
+			<div
+				className={clsx(styles.matchBye, styles.matchWrapper)}
+				data-testid="match-bye"
+			>
 				<MatchLine
 					lineType={props.lineType}
 					verticalExtend={props.lineVerticalExtend}
@@ -306,6 +309,7 @@ function MatchRow({
 					[styles.matchTeamNameNarrowest]: showAvatar && isBigSeedNumber,
 					invisible: !team,
 				})}
+				data-testid="match-team-name"
 			>
 				{displayedName}
 			</div>{" "}

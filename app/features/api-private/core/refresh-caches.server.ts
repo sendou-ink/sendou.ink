@@ -2,6 +2,7 @@ import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.se
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import { clearParticipationInfoMap } from "~/features/front-page/core/ShowcaseTournaments.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
+import { clearSeasonSkillsCache } from "~/features/sendouq/q-utils.server";
 import {
 	clearAllTournamentDataCache,
 	refreshRunningTournaments,
@@ -17,6 +18,7 @@ import { cache } from "~/utils/cache.server";
 export async function refreshCaches() {
 	clearAllTournamentDataCache();
 	clearParticipationInfoMap();
+	clearSeasonSkillsCache();
 	cache.clear();
 	await refreshBannedCache();
 	await refreshSendouQInstance();

@@ -1,4 +1,5 @@
 import {
+	escapeMarkdown,
 	sendSQCancelDiscordWebhook,
 	truncateEmbedValue,
 	userPageLink,
@@ -56,7 +57,7 @@ export function sendMatchCanceledWebhook(args: {
 				const side = index === 0 ? "Requesting team" : "Accepting team";
 				return [
 					{
-						name: `${side}'s reason (by ${memberFor(report.authorUserId).username})`,
+						name: `${side}'s reason (by ${escapeMarkdown(memberFor(report.authorUserId).username)})`,
 						value: truncateEmbedValue(report.reason),
 					},
 					{
@@ -76,7 +77,7 @@ export function sendMatchCanceledWebhook(args: {
 				value: args.nominationCounts
 					.map(
 						(count) =>
-							`${memberFor(count.userId).username} — season: ${count.seasonCount} • year: ${count.yearCount}`,
+							`${userPageLink(memberFor(count.userId))} — season: ${count.seasonCount} • year: ${count.yearCount}`,
 					)
 					.join("\n"),
 			},

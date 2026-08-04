@@ -10,7 +10,6 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import { SHORT_NANOID_LENGTH } from "./id";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
@@ -21,9 +20,6 @@ export const idObject = z.object({
 });
 
 export const inviteCode = z.string().length(SHORT_NANOID_LENGTH);
-export const inviteCodeObject = z.object({
-	inviteCode,
-});
 
 export const nonEmptyString = z.string().trim().min(1, {
 	message: "Required",
@@ -194,11 +190,6 @@ export const normalizeFriendCode = (value: string) => {
 
 	return withDashes;
 };
-
-export const friendCode = z
-	.string()
-	.regex(FRIEND_CODE_REGEXP)
-	.transform(normalizeFriendCode);
 
 export const ability = z.enum([
 	"ISM",

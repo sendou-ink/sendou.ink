@@ -19,8 +19,6 @@ export const SENDOUQ_BEST_OF = 7;
 
 export const ACTION_TAB_AFTER_LOCKED_SECONDS = 24 * 60 * 60; // 24 hours
 
-export const JOIN_CODE_SEARCH_PARAM_KEY = "join";
-
 /** Skalop topic that every user on the looking page subscribes to. */
 export const SENDOUQ_LOOKING_ROOM = "sq-looking";
 

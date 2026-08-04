@@ -1,12 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import {
-	Link,
-	type ShouldRevalidateFunction,
-	useLoaderData,
-	useMatches,
-} from "react-router";
+import { Link, useLoaderData, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -23,7 +18,6 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces } from "~/utils/number";
-import { isRevalidation } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userSeasonsPage } from "~/utils/urls";
 import {
@@ -32,6 +26,7 @@ import {
 } from "../loaders/u.$identifier.seasons.stats.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export { loader };
 
@@ -39,18 +34,7 @@ export const handle: SendouRouteHandle = {
 	i18n: ["user", "weapons", "game-misc"],
 };
 
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isRevalidation(args)) return args.defaultShouldRevalidate;
-	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
-	if (args.currentParams.identifier !== args.nextParams.identifier) return true;
-
-	return (
-		args.currentUrl.searchParams.get("season") !==
-			args.nextUrl.searchParams.get("season") ||
-		args.currentUrl.searchParams.get("info") !==
-			args.nextUrl.searchParams.get("info")
-	);
-};
+export const shouldRevalidate = userSeasonsSearchParams.shouldRevalidate;
 
 export default function UserSeasonsStats() {
 	const data = useLoaderData<typeof loader>();

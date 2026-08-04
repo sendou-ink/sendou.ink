@@ -1,5 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { sentryReactRouter } from "@sentry/react-router";
+import MagicString from "magic-string";
 import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
 
@@ -29,8 +30,13 @@ export default defineConfig((config) => {
 					const layer = id.includes("/components/elements/")
 						? "elements"
 						: "components";
+					const magicCode = new MagicString(code);
+					magicCode.prepend(`${layerOrder}\n@layer ${layer} {\n`);
+					magicCode.append("\n}");
+
 					return {
-						code: `${layerOrder}\n@layer ${layer} {\n${code}\n}`,
+						code: magicCode.toString(),
+						map: magicCode.generateMap({ source: id, hires: true }),
 					};
 				},
 			},
@@ -128,7 +134,6 @@ export default defineConfig((config) => {
 				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
 				"nanoid",
-				"neverthrow",
 				"openskill",
 				"pako",
 				"partysocket",

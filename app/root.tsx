@@ -64,6 +64,7 @@ import {
 } from "./modules/i18n/i18next.server";
 import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
+import { SearchParamsProvider } from "./modules/search-params/hooks";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
@@ -97,6 +98,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const json = args.json as Record<string, unknown> | undefined;
 	if (json?.revalidateRoot === true) return true;
 
+	// biome-ignore lint/plugin: presence check only, before any route's definition has parsed the URL
 	if (args.nextUrl.searchParams.has("lng")) return true;
 
 	return false;
@@ -235,16 +237,18 @@ function Document({
 			<body>
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
-						<I18nProvider locale={language}>
-							<SendouToastRegion />
-							<UnsavedChangesGuard />
-							<MyFuse data={data} />
-							<ChatProvider user={data?.user}>
-								<Layout data={data}>{children}</Layout>
-							</ChatProvider>
-						</I18nProvider>
-					</RouterProvider>
+					<SearchParamsProvider>
+						<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
+							<I18nProvider locale={language}>
+								<SendouToastRegion />
+								<UnsavedChangesGuard />
+								<MyFuse data={data} />
+								<ChatProvider user={data?.user}>
+									<Layout data={data}>{children}</Layout>
+								</ChatProvider>
+							</I18nProvider>
+						</RouterProvider>
+					</SearchParamsProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />
@@ -267,6 +271,7 @@ function useExternalAwareHref(href: string) {
 }
 
 function useTriggerToasts() {
+	// biome-ignore lint/plugin: app-wide toast params written by server redirects, belonging to no one feature
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Form, Link, useLoaderData, useSearchParams } from "react-router";
+import { Form, Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
@@ -8,21 +8,26 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { SendouForm } from "~/form/SendouForm";
 import { markFriendRequestsSeen } from "~/hooks/useUnseenFriendRequests";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FriendMenu } from "../components/FriendMenu";
 import { sendFriendRequestBaseSchema } from "../friends-schemas";
+import {
+	friendsSearchParams,
+	VIEW_FILTERS,
+	type ViewFilter,
+} from "../friends-search-params";
 import type { FriendsLoaderData } from "../loaders/friends.server";
 import styles from "./friends.module.css";
 
 export { action } from "../actions/friends.server";
 export { loader } from "../loaders/friends.server";
 
+export const shouldRevalidate = friendsSearchParams.shouldRevalidate;
+
 export const handle: SendouRouteHandle = {
 	i18n: ["friends"],
 };
-
-const VIEW_FILTERS = ["friends", "team", "all"] as const;
-type ViewFilter = (typeof VIEW_FILTERS)[number];
 
 export default function FriendsPage() {
 	const data = useLoaderData<FriendsLoaderData>();
@@ -156,7 +161,7 @@ function PendingRequestsSection() {
 function FriendsListSection() {
 	const { t } = useTranslation(["common", "friends"]);
 	const data = useLoaderData<FriendsLoaderData>();
-	const [searchParams] = useSearchParams();
+	const [viewParam] = useSearchParam(friendsSearchParams, "view");
 
 	const allCount = resolveShownItems("all", data).length;
 	const filterCounts: Record<ViewFilter, number> = {
@@ -165,11 +170,9 @@ function FriendsListSection() {
 		all: allCount,
 	};
 
-	const viewParam = searchParams.get("view") as ViewFilter | null;
 	const defaultFilter =
 		VIEW_FILTERS.find((key) => filterCounts[key] > 0) ?? "friends";
-	const filter =
-		viewParam && VIEW_FILTERS.includes(viewParam) ? viewParam : defaultFilter;
+	const filter = viewParam ?? defaultFilter;
 
 	const viewLabels: Record<ViewFilter, string> = {
 		friends: `${t("friends:view.friends")} (${filterCounts.friends})`,
@@ -191,11 +194,10 @@ function FriendsListSection() {
 					{VIEW_FILTERS.map((value) => (
 						<SubNavLink
 							key={value}
-							to={`?view=${value}`}
+							to={friendsSearchParams.href("", { view: value })}
 							secondary
 							controlled
 							active={filter === value}
-							defaultShouldRevalidate={false}
 						>
 							{viewLabels[value]}
 						</SubNavLink>

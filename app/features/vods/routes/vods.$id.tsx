@@ -13,8 +13,8 @@ import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
@@ -30,6 +30,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import { action } from "../actions/vods.$id.server";
 import { PovUser } from "../components/VodPov";
 import { loader } from "../loaders/vods.$id.server";
+import { vodsVodSearchParams } from "../vods-search-params";
 import type { Vod } from "../vods-types";
 import {
 	canEditVideo,
@@ -74,11 +75,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export default function VodPage() {
-	const [start, setStart] = useSearchParamState({
-		name: "start",
-		defaultValue: 0,
-		revive: Number,
-	});
+	const [start, setStart] = useSearchParam(vodsVodSearchParams, "start");
 	const [autoplay, setAutoplay] = React.useState(false);
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "vods"]);

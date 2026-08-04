@@ -5,10 +5,8 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish } from "~/utils/remix.server";
-import {
-	seasonsSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas";
+import { userParamsSchema } from "../user-page-schemas";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsSetsLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
@@ -17,9 +15,7 @@ export type UserSeasonsSetsLoaderData = NonNullable<
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	requireUser();
 	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
+	const { page, season: seasonParam } = userSeasonsSearchParams.parse(url);
 
 	const user = notFoundIfNullish(
 		await UserRepository.findIdByIdentifier(identifier),
@@ -31,8 +27,7 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		return null;
 	}
 
-	const { page = 1, season = seasonsParticipatedIn[0] } =
-		parsedSearchParams.success ? parsedSearchParams.data : {};
+	const season = seasonParam ?? seasonsParticipatedIn[0];
 
 	return {
 		results: {

@@ -33,4 +33,23 @@ describe("compressToBase64 & decompressFromBase64", () => {
 
 		expect(decompressFromBase64(compressed.slice(0, 4))).toBeNull();
 	});
+
+	it("returns null for a value inflating past maxDecompressedBytes", () => {
+		const bomb = compressToBase64("a".repeat(10 * 1024 * 1024));
+
+		expect(bomb.length).toBeLessThan(64 * 1024);
+		expect(
+			decompressFromBase64(bomb, { maxDecompressedBytes: 64 * 1024 }),
+		).toBeNull();
+	});
+
+	it("allows a value exactly at maxDecompressedBytes", () => {
+		const value = "a".repeat(1024);
+
+		expect(
+			decompressFromBase64(compressToBase64(value), {
+				maxDecompressedBytes: 1024,
+			}),
+		).toBe(value);
+	});
 });

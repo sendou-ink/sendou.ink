@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router";
+import { EMPTY_BUILD } from "~/features/builds/builds-constants";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import type {
 	Ability,
@@ -7,37 +7,26 @@ import type {
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
 import { isAbility } from "~/modules/in-game-lists/utils";
-import invariant from "~/utils/invariant";
-import { MAX_LDE_INTENSITY } from "./analyzer-constants";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { analyzerSearchParams } from "./analyzer-search-params";
 import type { SpecialEffectType } from "./analyzer-types";
-import { serializeBuild } from "./core/serializer";
 import { applySpecialEffects, SPECIAL_EFFECTS } from "./core/specialEffects";
 import { buildStats } from "./core/stats";
-import {
-	buildIsEmpty,
-	buildToAbilityPoints,
-	validatedBuildFromSearchParams,
-	validatedWeaponIdFromSearchParams,
-} from "./core/utils";
+import { buildIsEmpty, buildToAbilityPoints } from "./core/utils";
 
 export function useAnalyzeBuild() {
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [params, setParams] = useSearchParamsTyped(analyzerSearchParams);
 
-	const mainWeaponId = validatedWeaponIdFromSearchParams(searchParams) ?? 0;
-	const build = validatedBuildFromSearchParams(searchParams);
-	const build2 = validatedBuildFromSearchParams(searchParams, "build2", build);
-	const ldeIntensity = validatedLdeIntensityFromSearchParams(searchParams);
-	const effects = validatedEffectsFromSearchParams({ searchParams, build });
-	const effects2 = validatedEffectsFromSearchParams({
-		searchParams,
+	const mainWeaponId = params.weapon;
+	const build = params.build;
+	const build2 = buildIsEmpty(build) ? EMPTY_BUILD : params.build2;
+	const ldeIntensity = params.lde;
+	const effects = validatedEffects({ effects: params.effect, build });
+	const effects2 = validatedEffects({
+		effects: params.effect,
 		build: build2,
 	});
-	const focused = validatedFocusedFromSearchParams({ searchParams });
-
-	invariant(
-		!(buildIsEmpty(build) && !buildIsEmpty(build2)),
-		"build1 is empty but build2 isn't",
-	);
+	const focused = params.focused;
 
 	const handleChange = ({
 		newMainWeaponId = mainWeaponId,
@@ -54,17 +43,14 @@ export function useAnalyzeBuild() {
 		newEffects?: Array<SpecialEffectType>;
 		newFocused?: 1 | 2 | 3;
 	}) => {
-		setSearchParams(
-			{
-				weapon: String(newMainWeaponId),
-				build: serializeBuild(newBuild),
-				build2: serializeBuild(newBuild2),
-				lde: String(newLdeIntensity),
-				effect: newEffects,
-				focused: String(newFocused),
-			},
-			{ replace: true, preventScrollReset: true },
-		);
+		setParams({
+			weapon: newMainWeaponId,
+			build: newBuild,
+			build2: newBuild2,
+			lde: newLdeIntensity,
+			effect: newEffects,
+			focused: newFocused,
+		});
 	};
 
 	const buildAbilityPoints = buildToAbilityPoints(build);
@@ -121,35 +107,17 @@ function filterMainOnlyAbilities(
 	return Boolean(abilityObj && abilityObj.type !== "STACKABLE");
 }
 
-function validatedLdeIntensityFromSearchParams(searchParams: URLSearchParams) {
-	const ldeIntensity = searchParams.get("lde")
-		? Number(searchParams.get("lde"))
-		: null;
-
-	if (
-		!ldeIntensity ||
-		!Number.isInteger(ldeIntensity) ||
-		ldeIntensity < 0 ||
-		ldeIntensity > MAX_LDE_INTENSITY
-	) {
-		return 0;
-	}
-
-	return ldeIntensity;
-}
-
-function validatedEffectsFromSearchParams({
-	searchParams,
+function validatedEffects({
+	effects,
 	build,
 }: {
-	searchParams: URLSearchParams;
+	effects: Array<SpecialEffectType>;
 	build: BuildAbilitiesTupleWithUnknown;
 }) {
 	const result: Array<SpecialEffectType> = [];
 
-	const effects = searchParams.getAll("effect");
 	const effectsNoDuplicates = [...new Set(effects)];
-	const abilities = build.flat();
+	const buildAbilities = build.flat();
 
 	for (const effect of effectsNoDuplicates) {
 		const effectObj = SPECIAL_EFFECTS.find((e) => e.type === effect);
@@ -157,31 +125,18 @@ function validatedEffectsFromSearchParams({
 
 		// e.g. even if OG effect is active in state
 		// it can't be on unless build has OG
-		if (isAbility(effect) && !abilities.includes(effect)) {
+		if (isAbility(effect) && !buildAbilities.includes(effect)) {
 			continue;
 		}
 
-		result.push(effect as SpecialEffectType);
+		result.push(effect);
 	}
 
 	// lde is a special case in that it's always
 	// considered active when in the build
-	if (abilities.includes("LDE") && !result.includes("LDE")) {
+	if (buildAbilities.includes("LDE") && !result.includes("LDE")) {
 		result.push("LDE");
 	}
 
 	return result;
-}
-
-function validatedFocusedFromSearchParams({
-	searchParams,
-}: {
-	searchParams: URLSearchParams;
-}) {
-	const focused = searchParams.get("focused");
-
-	if (focused === "2") return 2;
-	if (focused === "3") return 3;
-
-	return 1;
 }

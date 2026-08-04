@@ -53,6 +53,7 @@ export async function loadFactories(parallelIndex: number) {
 			"~/db/seed/factories/SavedCalendarEventFactory"
 		),
 		ScrimPostFactory: await import("~/db/seed/factories/ScrimPostFactory"),
+		SkillFactory: await import("~/db/seed/factories/SkillFactory"),
 		SQGroupFactory: await import("~/db/seed/factories/SQGroupFactory"),
 		SQMatchFactory: await import("~/db/seed/factories/SQMatchFactory"),
 		TeamFactory: await import("~/db/seed/factories/TeamFactory"),

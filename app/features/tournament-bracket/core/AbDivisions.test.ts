@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { unwrap, unwrapErr } from "~/utils/result";
 import * as AbDivisions from "./AbDivisions";
 
 describe("AbDivisions.validate", () => {
@@ -8,10 +9,8 @@ describe("AbDivisions.validate", () => {
 			groupCount: 1,
 		});
 
-		expect(result.isOk()).toBe(true);
-		expect(result._unsafeUnwrap()).toEqual([
-			0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1,
-		]);
+		expect(result.ok).toBe(true);
+		expect(unwrap(result)).toEqual([0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1]);
 	});
 
 	it("accepts a balanced 12-team two-group configuration", () => {
@@ -20,7 +19,7 @@ describe("AbDivisions.validate", () => {
 			groupCount: 2,
 		});
 
-		expect(result.isOk()).toBe(true);
+		expect(result.ok).toBe(true);
 	});
 
 	it("rejects any unassigned team", () => {
@@ -29,8 +28,8 @@ describe("AbDivisions.validate", () => {
 			groupCount: 1,
 		});
 
-		expect(result.isErr()).toBe(true);
-		expect(result._unsafeUnwrapErr()).toMatch(/assigned/);
+		expect(result.ok).toBe(false);
+		expect(unwrapErr(result)).toMatch(/assigned/);
 	});
 
 	it("rejects invalid division values", () => {
@@ -39,7 +38,7 @@ describe("AbDivisions.validate", () => {
 			groupCount: 1,
 		});
 
-		expect(result.isErr()).toBe(true);
+		expect(result.ok).toBe(false);
 	});
 
 	it("rejects A/B counts differing by more than 1", () => {
@@ -48,8 +47,8 @@ describe("AbDivisions.validate", () => {
 			groupCount: 1,
 		});
 
-		expect(result.isErr()).toBe(true);
-		expect(result._unsafeUnwrapErr()).toMatch(/7 A, 5 B/);
+		expect(result.ok).toBe(false);
+		expect(unwrapErr(result)).toMatch(/7 A, 5 B/);
 	});
 
 	it("accepts a ±1 uneven configuration with a single group", () => {
@@ -58,7 +57,7 @@ describe("AbDivisions.validate", () => {
 			groupCount: 1,
 		});
 
-		expect(result.isOk()).toBe(true);
+		expect(result.ok).toBe(true);
 	});
 
 	it("rejects a ±1 uneven configuration when there are multiple groups", () => {
@@ -67,8 +66,8 @@ describe("AbDivisions.validate", () => {
 			groupCount: 2,
 		});
 
-		expect(result.isErr()).toBe(true);
-		expect(result._unsafeUnwrapErr()).toMatch(/single group/);
+		expect(result.ok).toBe(false);
+		expect(unwrapErr(result)).toMatch(/single group/);
 	});
 
 	it("rejects team counts not divisible by group count", () => {
@@ -77,8 +76,8 @@ describe("AbDivisions.validate", () => {
 			groupCount: 3,
 		});
 
-		expect(result.isErr()).toBe(true);
-		expect(result._unsafeUnwrapErr()).toMatch(/10 checked-in teams into 3/);
+		expect(result.ok).toBe(false);
+		expect(unwrapErr(result)).toMatch(/10 checked-in teams into 3/);
 	});
 
 	it("rejects odd per-group team counts", () => {
@@ -87,8 +86,8 @@ describe("AbDivisions.validate", () => {
 			groupCount: 2,
 		});
 
-		expect(result.isErr()).toBe(true);
-		expect(result._unsafeUnwrapErr()).toMatch(/5 teams/);
+		expect(result.ok).toBe(false);
+		expect(unwrapErr(result)).toMatch(/5 teams/);
 	});
 
 	it("preserves the original order of the divisions", () => {
@@ -99,7 +98,7 @@ describe("AbDivisions.validate", () => {
 			groupCount: 2,
 		});
 
-		expect(result._unsafeUnwrap()).toEqual(divisions);
+		expect(unwrap(result)).toEqual(divisions);
 	});
 });
 
