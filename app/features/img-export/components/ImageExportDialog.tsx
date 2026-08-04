@@ -1,4 +1,4 @@
-import { HardDriveDownload } from "lucide-react";
+import { HardDriveDownload, Share2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLocation, useMatches } from "react-router";
@@ -15,6 +15,8 @@ import { GraphicQrCodeContext } from "./Graphic";
 import styles from "./ImageExportDialog.module.css";
 
 const EXPORT_SCALE = 1.75;
+
+const COARSE_POINTER_QUERY = "(pointer: coarse)";
 
 type ThemeSelection = "light" | "dark" | "light-custom" | "dark-custom";
 
@@ -87,6 +89,7 @@ function ImageExportDialogContent({
 	const { htmlThemeClass } = useTheme();
 	const location = useLocation();
 	const pageHasCustomTheme = usePageHasCustomTheme();
+	const isMobile = useIsMobile();
 	const [themeSelection, setThemeSelection] = React.useState<ThemeSelection>(
 		() => {
 			const mode = htmlThemeClass === "light" ? "light" : "dark";
@@ -95,6 +98,7 @@ function ImageExportDialogContent({
 		},
 	);
 	const [withQrCode, setWithQrCode] = React.useState(true);
+	const [isDownloading, setIsDownloading] = React.useState(false);
 	const frameRef = React.useRef<HTMLDivElement>(null);
 
 	const theme = themeSelection.startsWith("light") ? "light" : "dark";
@@ -102,20 +106,53 @@ function ImageExportDialogContent({
 
 	const qrCodeUrl = `${SENDOU_INK_BASE_URL}${qrCodePath ?? `${location.pathname}${location.search}`}`;
 
-	const handleDownload = async () => {
+	// snapdom re-downloads every image at export time rather than reusing what the preview
+	// already painted, and silently drops any that fails. Warming them while the preview sits
+	// idle keeps those fetches from racing the capture's own work for the main thread.
+	// Runs after every render because settings can mount images that were not there before
+	// (e.g. the build export's ability chunks); re-running once everything is cached is ~7ms.
+	React.useEffect(() => {
+		if (isDownloading) return;
+
+		let cancelled = false;
+
+		import("@zumer/snapdom").then(({ preCache }) => {
+			if (cancelled || !frameRef.current) return;
+
+			preCache(frameRef.current).catch(() => {});
+		});
+
+		return () => {
+			cancelled = true;
+		};
+	});
+
+	const handleExport = async () => {
 		if (!frameRef.current) return;
 
-		const { snapdom } = await import("@zumer/snapdom");
+		setIsDownloading(true);
+		try {
+			const { snapdom } = await import("@zumer/snapdom");
 
-		await snapdom.download(frameRef.current, {
-			type: "png",
-			filename,
-			quality: 1,
-			scale: EXPORT_SCALE,
-			embedFonts: true,
-			// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
-			compress: false,
-		});
+			const blob = await snapdom.toBlob(frameRef.current, {
+				type: "png",
+				quality: 1,
+				scale: EXPORT_SCALE,
+				// snapdom's own download helper forces this, without it the export size would vary by device
+				dpr: 1,
+				embedFonts: true,
+				// without this snapdom re-encodes images down to their rendered size, making e.g. the tier image look rough
+				compress: false,
+				// names ending in a glyph outside the graphic's font (emoji, Greek, ...) get measured with
+				// one fallback font in the page and another when rasterized, so a box frozen to its exact
+				// text width ends up an ellipsis short. This re-measures the clone and pins diverging boxes
+				reconcile: true,
+			});
+
+			await saveImage(blob, `${filename}.png`, { canShare: isMobile });
+		} finally {
+			setIsDownloading(false);
+		}
 	};
 
 	return (
@@ -142,11 +179,16 @@ function ImageExportDialogContent({
 				{settings}
 			</div>
 			<SendouButton
-				icon={<HardDriveDownload />}
-				onPress={handleDownload}
+				icon={isMobile ? <Share2 /> : <HardDriveDownload />}
+				onPress={handleExport}
+				isDisabled={isDownloading}
 				className="mx-auto"
 			>
-				{t("common:imageExport.download")}
+				{isDownloading
+					? t("common:actions.loading")
+					: isMobile
+						? t("common:actions.share")
+						: t("common:imageExport.download")}
 			</SendouButton>
 			<div className={styles.scroller}>
 				<div
@@ -164,6 +206,51 @@ function ImageExportDialogContent({
 				</div>
 			</div>
 		</div>
+	);
+}
+
+/**
+ * Opens the share sheet when sharing is allowed (mobile) and the platform supports it,
+ * otherwise downloads the image
+ */
+async function saveImage(
+	blob: Blob,
+	filename: string,
+	{ canShare }: { canShare: boolean },
+) {
+	const file = new File([blob], filename, { type: blob.type });
+
+	if (canShare && navigator.canShare?.({ files: [file] })) {
+		try {
+			await navigator.share({ files: [file], title: filename });
+			return;
+		} catch (e) {
+			if (e instanceof Error && e.name === "AbortError") return;
+		}
+	}
+
+	// a blob url is used over a data url because iOS Safari fails to save big data urls
+	const url = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
+	anchor.href = url;
+	anchor.download = filename;
+	document.body.appendChild(anchor);
+	anchor.click();
+	anchor.remove();
+	URL.revokeObjectURL(url);
+}
+
+function subscribeToPointerQuery(callback: () => void) {
+	const mediaQueryList = window.matchMedia(COARSE_POINTER_QUERY);
+	mediaQueryList.addEventListener("change", callback);
+	return () => mediaQueryList.removeEventListener("change", callback);
+}
+
+function useIsMobile() {
+	return React.useSyncExternalStore(
+		subscribeToPointerQuery,
+		() => window.matchMedia(COARSE_POINTER_QUERY).matches,
+		() => false,
 	);
 }
 

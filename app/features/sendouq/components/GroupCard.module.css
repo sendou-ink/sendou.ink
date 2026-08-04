@@ -40,6 +40,10 @@
 	color: var(--color-text);
 }
 
+.memberActions {
+	flex-shrink: 0;
+}
+
 .tier {
 	margin-inline-start: auto;
 }

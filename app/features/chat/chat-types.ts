@@ -48,8 +48,6 @@ export interface ChatProps {
 	className?: string;
 	messagesContainerClassName?: string;
 	hidden?: boolean;
-	onMount?: () => void;
-	onUnmount?: () => void;
 	disabled?: boolean;
 	missingUserName?: string;
 }

@@ -214,7 +214,8 @@ async function seedInTheZone({
 }
 
 /** #2 double elim with an underground bracket, AUTO_SZ, ranked — bracket started,
- * not a single set reported yet. */
+ * not a single set reported yet. N-ZAP is seeded past the byes of the first round,
+ * so he has a match of his own going on. */
 async function seedPaddlingPool({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Paddling Pool"),
@@ -229,7 +230,7 @@ async function seedPaddlingPool({ users, rosters }: Ctx) {
 	const teamRosters = rosters.take({
 		teamCount: 12,
 		teamSize: 4,
-		pinned: [{ teamIdx: 0, userId: users.nzapId }],
+		pinned: [{ teamIdx: 4, userId: users.nzapId }],
 	});
 
 	await registerTeams({

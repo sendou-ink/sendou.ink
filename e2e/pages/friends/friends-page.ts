@@ -38,9 +38,10 @@ export class FriendsPage {
 		await submit(this.page);
 	}
 
+	/** Accepts the first pending request, the newest one. */
 	async acceptRequest() {
 		await waitForPOSTResponse(this.page, () =>
-			this.locators.acceptButton.click(),
+			this.locators.acceptButton.first().click(),
 		);
 	}
 

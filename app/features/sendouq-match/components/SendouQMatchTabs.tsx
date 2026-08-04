@@ -142,7 +142,7 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 type MatchData = SendouQMatchLoaderData["match"];
 
 function resolveCancelRequesterUsername(match: MatchData) {
-	const allMembers = [...match.groupAlpha.members, ...match.groupBravo.members];
+	const allMembers = SendouQMatch.allMembers(match);
 	return (
 		allMembers.find((m) => m.id === match.cancelRequestedByUserId)?.username ??
 		"?"
@@ -150,7 +150,7 @@ function resolveCancelRequesterUsername(match: MatchData) {
 }
 
 function resolveCancelAccepterUsername(match: MatchData) {
-	const allMembers = [...match.groupAlpha.members, ...match.groupBravo.members];
+	const allMembers = SendouQMatch.allMembers(match);
 	return (
 		allMembers.find((m) => m.id === match.cancelAcceptedByUserId)?.username ??
 		"?"

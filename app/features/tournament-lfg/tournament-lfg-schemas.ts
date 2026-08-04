@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { stringConstant, textAreaOptional, toggle } from "~/form/fields";
+import {
+	stringConstant,
+	textAreaOptional,
+	toggle,
+	userSearch,
+} from "~/form/fields";
 import { _action, id } from "~/utils/zod";
 
 const noteFieldSchema = textAreaOptional({
@@ -10,6 +15,12 @@ const noteFieldSchema = textAreaOptional({
 export const addSubFormSchema = z.object({
 	_action: stringConstant("ADD_SUB"),
 	message: noteFieldSchema,
+});
+
+export const addSubForUserFormSchema = z.object({
+	...addSubFormSchema.shape,
+	_action: stringConstant("ADD_SUB_FOR_USER"),
+	userId: userSearch({ label: "labels.user" }),
 });
 
 const stayAsSubFieldSchema = toggle({
@@ -60,6 +71,7 @@ export const lookingSchema = z.union([
 		userId: id,
 	}),
 	addSubFormSchema,
+	addSubForUserFormSchema,
 	z.object({
 		_action: _action("DELETE_SUB"),
 		userId: id,

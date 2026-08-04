@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import * as React from "react";
+import type * as React from "react";
 import { ListBoxItem, type SelectProps } from "react-aria-components";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import { SearchSelect } from "./SearchSelect";
@@ -22,22 +22,19 @@ interface TeamSearchProps<T extends object>
 	/** Team to preselect and display on mount (e.g. when editing a linked team). */
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 	onChange?: (team: TeamSearchResult | null) => void;
+	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export const TeamSearch = React.forwardRef(function TeamSearch<
-	T extends object,
->(
-	{
-		name,
-		label,
-		bottomText,
-		errorText,
-		initialTeam,
-		onChange,
-		...rest
-	}: TeamSearchProps<T>,
-	ref?: React.Ref<HTMLButtonElement>,
-) {
+export function TeamSearch<T extends object>({
+	name,
+	label,
+	bottomText,
+	errorText,
+	initialTeam,
+	onChange,
+	ref,
+	...rest
+}: TeamSearchProps<T>) {
 	const search = useEntitySearch<TeamSearchResult>({
 		buildUrl: (query) => `/search?q=${query}&type=teams&limit=6`,
 		parseResults: parseTeamResults,
@@ -61,7 +58,7 @@ export const TeamSearch = React.forwardRef(function TeamSearch<
 			renderItem={(item) => <TeamItem item={item} />}
 		/>
 	);
-});
+}
 
 function parseTeamResults(
 	data: unknown,

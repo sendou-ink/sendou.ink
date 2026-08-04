@@ -103,11 +103,13 @@ export function CheckboxGroupFormField<V extends string>({
 	const required = typeof minLength !== "number" || minLength > 0;
 
 	const handleChange = (itemValue: V, checked: boolean) => {
-		if (checked) {
-			onChange([...value, itemValue]);
-		} else {
-			onChange(value.filter((v) => v !== itemValue));
-		}
+		const newValue = checked
+			? [...value, itemValue]
+			: value.filter((v) => v !== itemValue);
+		onChange(newValue);
+		// validate with the value the click produced — the click event would
+		// otherwise validate the pre-click value and show a stale error
+		onBlur?.(newValue);
 	};
 
 	return (
@@ -128,7 +130,6 @@ export function CheckboxGroupFormField<V extends string>({
 							value={item.value}
 							checked={value.includes(item.value)}
 							onChange={(e) => handleChange(item.value, e.target.checked)}
-							onClick={() => onBlur?.()}
 							disabled={disabled}
 						/>
 						<label

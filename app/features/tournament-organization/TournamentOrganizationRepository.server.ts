@@ -636,17 +636,15 @@ export function update({
 			.where("TournamentOrganizationBadge.organizationId", "=", id)
 			.execute();
 
-		if (badges.length > 0) {
-			await trx
-				.insertInto("TournamentOrganizationBadge")
-				.values(
-					badges.map((badgeId) => ({
-						organizationId: id,
-						badgeId,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("TournamentOrganizationBadge")
+			.values(
+				badges.map((badgeId) => ({
+					organizationId: id,
+					badgeId,
+				})),
+			)
+			.execute();
 
 		return updatedOrg;
 	});

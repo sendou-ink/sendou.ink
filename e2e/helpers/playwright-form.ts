@@ -199,7 +199,8 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 		async selectUser(name, userName) {
 			const label = getLabel(String(name));
-			const comboboxButton = page.getByLabel(label, { exact: true });
+			// role + non-exact name: the trigger's accessible name is e.g. "User search User *"
+			const comboboxButton = page.getByRole("button", { name: label });
 			const searchInput = page.getByTestId("user-search-input");
 			const option = page.getByTestId("user-search-item").first();
 

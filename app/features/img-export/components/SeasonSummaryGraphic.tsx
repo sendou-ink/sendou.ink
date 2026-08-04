@@ -184,9 +184,11 @@ export function SeasonSummaryGraphic({
 						{tier.isPlus ? "+" : ""}
 					</div>
 					<div className={styles.heroSp}>{sp.toFixed(1)}SP</div>
-					<div className={styles.heroPeak}>
-						{t("user:seasons.peak")} {peakSp.toFixed(1)}SP
-					</div>
+					{peakSp.toFixed(1) === sp.toFixed(1) ? null : (
+						<div className={styles.heroPeak}>
+							{t("user:seasons.peak")} {peakSp.toFixed(1)}SP
+						</div>
+					)}
 				</div>
 				{typeof soloRank === "number" ? (
 					<div className={styles.rankBlock}>

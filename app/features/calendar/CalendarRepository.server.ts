@@ -506,19 +506,17 @@ export async function insert(args: CreateArgs) {
 					.executeTakeFirstOrThrow()
 			).id;
 
-			if (copiedStaff.length > 0) {
-				await trx
-					.insertInto("TournamentStaff")
-					.columns(["role", "userId", "tournamentId"])
-					.values(
-						copiedStaff.map((staff) => ({
-							role: staff.role,
-							userId: staff.userId,
-							tournamentId: tournamentId!,
-						})),
-					)
-					.execute();
-			}
+			await trx
+				.insertInto("TournamentStaff")
+				.columns(["role", "userId", "tournamentId"])
+				.values(
+					copiedStaff.map((staff) => ({
+						role: staff.role,
+						userId: staff.userId,
+						tournamentId: tournamentId!,
+					})),
+				)
+				.execute();
 		}
 
 		const avatarImgId = args.avatarFileName
@@ -750,8 +748,6 @@ function insertBadges(
 	{ eventId, badges }: { eventId: number; badges: CreateArgs["badges"] },
 	trx: Transaction<DB>,
 ) {
-	if (!badges.length) return;
-
 	return trx
 		.insertInto("CalendarEventBadge")
 		.values(
@@ -788,8 +784,6 @@ export function upsertReportedScores(args: {
 			.where("eventId", "=", args.eventId)
 			.execute();
 
-		if (args.results.length === 0) return;
-
 		const insertedTeams = await trx
 			.insertInto("CalendarEventResultTeam")
 			.values(
@@ -811,8 +805,6 @@ export function upsertReportedScores(args: {
 				userId: player.userId,
 			})),
 		);
-
-		if (players.length === 0) return;
 
 		await trx.insertInto("CalendarEventResultPlayer").values(players).execute();
 	});
@@ -839,8 +831,6 @@ async function upsertMapPool(
 			]),
 		)
 		.execute();
-
-	if (!mapPoolMaps.length) return;
 
 	await trx
 		.insertInto("MapPoolMap")

@@ -127,7 +127,7 @@
 	"match.cancelRequested": "Annulation demandée",
 	"match.reportedBy": "Reporté par {{name}} à",
 	"match.cancelPendingConfirmation": "En attente de confirmation de l'autre équipe",
-	"match.cancelMatch.confirm": "Annulé le match? (nécessite une confirmation de l'autre groupe, un abus de cette mécanique peut entrainer un ban)",
+	"match.cancelMatch.explanation": "",
 	"match.adminCancel.confirm": "",
 	"match.tabs.reportScore": "Score reporté ",
 	"match.errors.cantCancel": "Impossible d'annuler puisque l'adversaire a déjà reporté le score pour ce match. Voir les instructions de contestation en haut de la page.",

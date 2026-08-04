@@ -12,6 +12,7 @@ import type {
 	ArrayItemRenderContext,
 	SelectOption,
 	TeamSearchFieldOptions,
+	TournamentSearchFieldOptions,
 	UserSearchFieldOptions,
 } from "~/form/types";
 import {
@@ -351,26 +352,6 @@ function ImportTeamFields({
 	const { values, setValue } = useFormFieldContext();
 	const fetcher = useFetcher<ImportTeamsLoaderData>();
 
-	const sourceTournamentId =
-		typeof values.sourceTournamentId === "number"
-			? values.sourceTournamentId
-			: null;
-
-	const loadedForRef = React.useRef<number | null>(null);
-	React.useEffect(() => {
-		if (sourceTournamentId === null) return;
-		if (loadedForRef.current === sourceTournamentId) return;
-		if (fetcher.state !== "idle") return;
-
-		loadedForRef.current = sourceTournamentId;
-		fetcher.load(
-			tournamentAdminImportTeamsPage({
-				tournamentId: currentTournamentId,
-				fromTournamentId: sourceTournamentId,
-			}),
-		);
-	}, [sourceTournamentId, currentTournamentId, fetcher]);
-
 	const teams = fetcher.data?.teams ?? [];
 	teamsRef.current = teams;
 
@@ -397,7 +378,24 @@ function ImportTeamFields({
 
 	return (
 		<>
-			<FormField name="sourceTournamentId" options={{ pastOnly: true }} />
+			<FormField
+				name="sourceTournamentId"
+				options={
+					{
+						pastOnly: true,
+						onTournamentSelected: (tournament) => {
+							if (!tournament) return;
+
+							fetcher.load(
+								tournamentAdminImportTeamsPage({
+									tournamentId: currentTournamentId,
+									fromTournamentId: tournament.id,
+								}),
+							);
+						},
+					} satisfies TournamentSearchFieldOptions
+				}
+			/>
 			<FormField name="sourceTournamentTeamId" options={teamOptions} />
 		</>
 	);

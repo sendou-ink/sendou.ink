@@ -327,6 +327,22 @@ export interface GroupMatch {
 	noScreen: Generated<DBBoolean>;
 }
 
+/** One team's account of why a SendouQ match was canceled. Staff-only information. */
+export interface GroupMatchCancelReport {
+	id: GeneratedAlways<number>;
+	groupMatchId: number;
+	groupId: number;
+	authorUserId: number;
+	reason: string;
+	createdAt: Generated<number>;
+}
+
+/** Player nominated as a cause of the cancellation in a {@link GroupMatchCancelReport}. */
+export interface GroupMatchCancelReportPlayer {
+	cancelReportId: number;
+	userId: number;
+}
+
 export interface GroupMatchContinueVote {
 	id: GeneratedAlways<number>;
 	groupId: number;
@@ -870,8 +886,8 @@ export interface User {
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
 	joinOrder: number | null;
-	/** User card banner default selection, hex code or stage id. Note: supporters can also upload banner (stored in UserSubmittedImage, referenced by `bannerImgId` which takes precedence) */
-	bannerPresetImg: JSONColumnTypeNullable<string | StageId>;
+	/** User card banner default selection, stored as raw text (not JSON): either a hex code (e.g. "#8b0000") or a stage id in string form (e.g. "16"). Note: supporters can also upload banner (stored in UserSubmittedImage, referenced by `bannerImgId` which takes precedence) */
+	bannerPresetImg: string | null;
 	/** Supporter-uploaded user card banner (UserSubmittedImage id). Takes precedence over `bannerPresetImg`. */
 	bannerImgId: number | null;
 	/** Card stat types the user has chosen to hide from their card. */
@@ -1226,10 +1242,11 @@ export interface DB {
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
 	ExternalStream: ExternalStream;
-
 	Group: Group;
 	GroupLike: GroupLike;
 	GroupMatch: GroupMatch;
+	GroupMatchCancelReport: GroupMatchCancelReport;
+	GroupMatchCancelReportPlayer: GroupMatchCancelReportPlayer;
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;

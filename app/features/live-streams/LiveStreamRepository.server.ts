@@ -1,17 +1,13 @@
 import { db } from "~/db/sql";
-import type { Tables, TablesInsertable } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import { commonUserSelect, peakXpOverallSql } from "~/utils/kysely.server";
 import * as StreamRanking from "../sidebar/core/StreamRanking";
 
-export function replaceAll(
-	streams: Omit<TablesInsertable["LiveStream"], "id">[],
-) {
+export function replaceAll(streams: Omit<Tables["LiveStream"], "id">[]) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("LiveStream").execute();
 
-		if (streams.length > 0) {
-			await trx.insertInto("LiveStream").values(streams).execute();
-		}
+		await trx.insertInto("LiveStream").values(streams).execute();
 	});
 }
 
@@ -23,8 +19,6 @@ export function replaceAll(
 export function insertTournamentStreamers(
 	rows: Omit<Tables["TournamentStreamer"], "id">[],
 ) {
-	if (rows.length === 0) return Promise.resolve([]);
-
 	return db
 		.insertInto("TournamentStreamer")
 		.values(rows)

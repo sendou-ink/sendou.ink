@@ -360,9 +360,12 @@ export interface GetTournamentBracketResponse {
 /** GET /api/tournament/{tournamentId}/brackets/{bracketIndex}/standings */
 
 export interface GetTournamentBracketStandingsResponse {
+	finished: boolean;
 	standings: Array<{
 		tournamentTeamId: number;
 		placement: number;
+		/** (round robin & swiss only) id of the group the team played in. Placements are shared across groups, meaning e.g. every group's winner has the placement 1. */
+		groupId?: number;
 		stats?: {
 			setWins: number;
 			setLosses: number;
@@ -374,8 +377,10 @@ export interface GetTournamentBracketStandingsResponse {
 			koCount?: number;
 			winsAgainstTied: number;
 			lossesAgainstTied?: number;
-			buchholzSets?: number;
-			buchholzMaps?: number;
+			/** (swiss only) average win percentage of the team's opponents in sets, used as a tiebreaker */
+			opponentSetWinPercentage?: number;
+			/** (swiss only) average win percentage of the team's opponents in maps, used as a tiebreaker */
+			opponentMapWinPercentage?: number;
 		};
 	}>;
 }

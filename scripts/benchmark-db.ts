@@ -6,6 +6,12 @@ import { type BenchmarkCase, buildCases } from "./benchmark-db/cases";
 import { resolveFixtures } from "./benchmark-db/fixtures";
 
 const DEFAULT_ITERATIONS = 10;
+const SUMMARY_BUCKETS = [
+	{ label: ">=100ms", minMs: 100 },
+	{ label: "10-100ms", minMs: 10 },
+	{ label: "1-10ms", minMs: 1 },
+	{ label: "<1ms", minMs: 0 },
+];
 
 interface CaseResult {
 	name: string;
@@ -55,6 +61,7 @@ async function main() {
 	);
 
 	printResults(results, skipped);
+	printSummary(results, skipped);
 }
 
 main()
@@ -131,10 +138,23 @@ function erroredResult(name: string, error: unknown): CaseResult {
 function stats(durations: number[]) {
 	const sorted = [...durations].sort((a, b) => a - b);
 	const mean = sorted.reduce((acc, cur) => acc + cur, 0) / sorted.length;
-	const p95 =
-		sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)];
 
-	return { min: sorted[0], mean, p95 };
+	return { min: sorted[0], mean, p95: percentile(sorted, 0.95) };
+}
+
+function percentile(sortedValues: number[], fraction: number) {
+	const index = Math.ceil(sortedValues.length * fraction) - 1;
+
+	return sortedValues[Math.min(sortedValues.length - 1, Math.max(0, index))];
+}
+
+function geometricMean(values: number[]) {
+	const logSum = values.reduce(
+		(acc, cur) => acc + Math.log(Math.max(cur, Number.EPSILON)),
+		0,
+	);
+
+	return Math.exp(logSum / values.length);
 }
 
 function printResults(results: CaseResult[], skipped: string[]) {
@@ -174,6 +194,45 @@ function printResults(results: CaseResult[], skipped: string[]) {
 			logger.warn(`  ${result.name}: ${result.error}`);
 		}
 	}
+}
+
+function printSummary(results: CaseResult[], skipped: string[]) {
+	const timed = results.filter((result) => !result.error);
+	if (timed.length === 0) return;
+
+	const means = timed.map((result) => result.mean).sort((a, b) => a - b);
+	const total = means.reduce((acc, cur) => acc + cur, 0);
+	const slowest = timed.reduce((acc, cur) => (cur.mean > acc.mean ? cur : acc));
+
+	const rows: Array<[string, string]> = [
+		[
+			"cases timed",
+			`${timed.length} (${skipped.length} skipped, ${results.length - timed.length} errored)`,
+		],
+		["total", formatMs(total)],
+		["geometric mean", formatMs(geometricMean(means))],
+		["median", formatMs(percentile(means, 0.5))],
+		["p95", formatMs(percentile(means, 0.95))],
+		["slowest", `${formatMs(slowest.mean)} (${slowest.name})`],
+	];
+
+	let unbucketed = means;
+	for (const bucket of SUMMARY_BUCKETS) {
+		const inBucket = unbucketed.filter((mean) => mean >= bucket.minMs);
+		rows.push([bucket.label, `${inBucket.length} cases`]);
+		unbucketed = unbucketed.filter((mean) => mean < bucket.minMs);
+	}
+
+	const labelWidth = Math.max(...rows.map(([label]) => label.length));
+
+	logger.info("");
+	logger.info("Summary (mean per case)");
+	for (const [label, value] of rows) {
+		logger.info(`${label.padEnd(labelWidth)}  ${value}`);
+	}
+	logger.info(
+		"total is dominated by the slowest cases, geometric mean weighs every case equally",
+	);
 }
 
 function formatMs(ms: number) {

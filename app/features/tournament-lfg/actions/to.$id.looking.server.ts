@@ -330,6 +330,49 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			break;
 		}
+		case "ADD_SUB_FOR_USER": {
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+			errorToastIfFalsy(
+				tournament.isOrganizer(user),
+				"Only tournament organizers can add subs for other users",
+			);
+			errorToastIfFalsy(
+				tournament.canAddNewSubPostAsOrganizer,
+				"Cannot add sub post at this time",
+			);
+			await requireNotBannedByOrganization({
+				tournament,
+				user: { id: data.userId },
+				message: "The user is banned from events hosted by this organization",
+			});
+
+			const targetTeam = tournament.teamMemberOfByUser({ id: data.userId });
+			errorToastIfFalsy(
+				!targetTeam || targetTeam.droppedOut,
+				"User is already on a team",
+			);
+
+			const existingSubGroups =
+				await TournamentLFGRepository.findSubGroups(tournamentId);
+			errorToastIfFalsy(
+				!existingSubGroups.some((g) =>
+					g.members.some((m) => m.id === data.userId),
+				),
+				"User already has a sub post",
+			);
+
+			await TournamentLFGRepository.insertPlaceholderTeam({
+				tournamentId,
+				userId: data.userId,
+				isStayAsSub: true,
+				lfgNote: data.message ?? undefined,
+			});
+
+			break;
+		}
 		case "DELETE_SUB": {
 			const tournament = await tournamentFromDBCached({
 				tournamentId,

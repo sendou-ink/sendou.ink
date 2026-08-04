@@ -11,7 +11,7 @@ import {
 	Users,
 	Videotape,
 } from "lucide-react";
-import type * as React from "react";
+import * as React from "react";
 import { ListBox, ListBoxItem } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
@@ -311,12 +311,28 @@ export function WeaponResultsList({
 const RECENT_WEAPONS_KEY = "command-palette-recent-weapons";
 const MAX_RECENT_WEAPONS = 5;
 
-export function getRecentWeapons(): MainWeaponId[] {
-	if (typeof window === "undefined") return [];
+const recentWeaponsListeners = new Set<() => void>();
+
+function subscribeRecentWeapons(listener: () => void) {
+	recentWeaponsListeners.add(listener);
+	window.addEventListener("storage", listener);
+	return () => {
+		recentWeaponsListeners.delete(listener);
+		window.removeEventListener("storage", listener);
+	};
+}
+
+function getRecentWeaponsSnapshot() {
 	try {
-		const stored = localStorage.getItem(RECENT_WEAPONS_KEY);
-		if (!stored) return [];
-		const parsed = JSON.parse(stored);
+		return localStorage.getItem(RECENT_WEAPONS_KEY) ?? "[]";
+	} catch {
+		return "[]";
+	}
+}
+
+function parseRecentWeapons(raw: string): MainWeaponId[] {
+	try {
+		const parsed = JSON.parse(raw);
 		if (!Array.isArray(parsed)) return [];
 		return parsed.filter(
 			(id): id is MainWeaponId =>
@@ -327,13 +343,25 @@ export function getRecentWeapons(): MainWeaponId[] {
 	}
 }
 
+export function useRecentWeapons(): MainWeaponId[] {
+	const raw = React.useSyncExternalStore(
+		subscribeRecentWeapons,
+		getRecentWeaponsSnapshot,
+		() => "[]",
+	);
+	return parseRecentWeapons(raw);
+}
+
 export function saveRecentWeapon(weaponId: MainWeaponId): void {
 	try {
-		const recent = getRecentWeapons();
+		const recent = parseRecentWeapons(getRecentWeaponsSnapshot());
 		const filtered = recent.filter((id) => id !== weaponId);
 		const updated = [weaponId, ...filtered].slice(0, MAX_RECENT_WEAPONS);
 		localStorage.setItem(RECENT_WEAPONS_KEY, JSON.stringify(updated));
 	} catch {
 		// localStorage may be unavailable
+	}
+	for (const listener of recentWeaponsListeners) {
+		listener();
 	}
 }

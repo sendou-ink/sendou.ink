@@ -48,6 +48,33 @@ describe("syncXPBadges", () => {
 	});
 });
 
+describe("replaceManagers", () => {
+	test("empty list clears existing managers", async () => {
+		const user = await UserFactory.create();
+		const badge = await BadgeFactory.create(null, { managerIds: [user.id] });
+
+		await BadgeRepository.replaceManagers({
+			badgeId: badge.id,
+			managerIds: [],
+		});
+
+		const updated = await BadgeRepository.findById(badge.id);
+		expect(updated?.managers).toHaveLength(0);
+	});
+});
+
+describe("replaceOwners", () => {
+	test("empty list clears existing owners", async () => {
+		const user = await UserFactory.create();
+		const badge = await BadgeFactory.create(null, { ownerIds: [user.id] });
+
+		await BadgeRepository.replaceOwners({ badgeId: badge.id, ownerIds: [] });
+
+		const updated = await BadgeRepository.findById(badge.id);
+		expect(updated?.owners).toHaveLength(0);
+	});
+});
+
 /** Gives the user a linked X Rank player whose one placement is worth `power`. */
 const givePeakXp = (userId: number, power: number) =>
 	XRankPlacementFactory.create(

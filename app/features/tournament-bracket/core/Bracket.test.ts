@@ -21,8 +21,7 @@ describe("swiss standings - losses against tied", () => {
 
 		const standing = tournament
 			.bracketByIdx(0)
-			?.currentStandings(false)
-			.find((standing) => standing.team.id === TEAM_THIS_IS_FINE_ID);
+			?.standings.find((standing) => standing.team.id === TEAM_THIS_IS_FINE_ID);
 
 		invariant(standing, "Standing not found");
 
@@ -35,7 +34,7 @@ describe("swiss standings - losses against tied", () => {
 			simulateBrackets: false,
 		});
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+		const standings = tournament.bracketByIdx(0)!.standings;
 
 		// Both teams finished 4-2 in the same Swiss group. Team 16872 beat MORE of
 		// its tied peers (winsAgainstTied=2) than team 17505 (winsAgainstTied=1),
@@ -63,7 +62,7 @@ describe("swiss standings - losses against tied", () => {
 			simulateBrackets: false,
 		});
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+		const standings = tournament.bracketByIdx(0)!.standings;
 
 		// Both teams finished 4-2 in the same Swiss group. Team 16996 lost to none
 		// of its tied peers while team 17067 lost to one, even though 17067 has the
@@ -90,8 +89,7 @@ describe("swiss standings - losses against tied", () => {
 
 		const standing = tournament
 			.bracketByIdx(0)
-			?.currentStandings(false)
-			.find((standing) => standing.team.id === TEAM_ERROR_404_ID);
+			?.standings.find((standing) => standing.team.id === TEAM_ERROR_404_ID);
 		invariant(standing, "Standing not found");
 
 		expect(standing.stats?.lossesAgainstTied).toBe(0); // they lost against "Tidy Tidings" but that team dropped out before final round
@@ -134,7 +132,7 @@ describe("swiss standings - losses against tied", () => {
 	it("should handle a team with only one bye", () => {
 		const tournament = inProgressSwissTestTournament();
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const teamWithBye = standings.find((standing) => standing.team.id === 3);
 
@@ -146,14 +144,15 @@ describe("swiss standings - losses against tied", () => {
 		expect(teamWithBye?.stats?.setLosses).toBe(0);
 	});
 
-	it("team with only unfinished matches should not be in the current standings", () => {
+	it("team with only unfinished matches should be in the current standings with blank stats", () => {
 		const tournament = inProgressSwissTestTournament();
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const playingTeam = standings.find((standing) => standing.team.id === 1);
 
-		expect(playingTeam).toBe(undefined);
+		expect(playingTeam?.stats?.setWins).toBe(0);
+		expect(playingTeam?.stats?.setLosses).toBe(0);
 	});
 });
 
@@ -315,7 +314,7 @@ describe("round robin standings - dropped out teams", () => {
 	it("should not credit wins against a team that dropped out before completing all of their matches", () => {
 		// Team 4 dropped out before playing their match against team 3.
 		const tournament = droppedOutTournament({ skipMatchups: ["3-4"] });
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const team1Standing = standings.find((s) => s.team.id === 1);
 		const team2Standing = standings.find((s) => s.team.id === 2);
@@ -356,7 +355,7 @@ describe("round robin standings - dropped out teams", () => {
 		// 4 should still be excluded from tiebreakers — same intent as the
 		// skipMatchups variant above, but matching the real production shape.
 		const tournament = droppedOutTournament({ forfeitMatchups: ["3-4"] });
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const team1Standing = standings.find((s) => s.team.id === 1);
 		const team2Standing = standings.find((s) => s.team.id === 2);
@@ -461,7 +460,7 @@ describe("round robin A/B divisions standings", () => {
 
 	it("filtering by abDivision preserves standard tiebreaker order within each division", () => {
 		const tournament = abDivisionsTournament();
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		expect(standings.map((s) => s.team.id)).toEqual([1, 2, 3, 4]);
 

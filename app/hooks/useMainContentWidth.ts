@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
+import * as React from "react";
 import { useWindowSize } from "./useWindowSize";
 
 const MOBILE_BREAKPOINT = 600;
@@ -16,23 +15,34 @@ export function useLayoutSize(): LayoutSize {
 	return "desktop";
 }
 
-export function useMainContentWidth() {
-	const [width, setWidth] = useState(0);
+const listeners = new Set<() => void>();
+let observer: ResizeObserver | null = null;
 
-	useIsomorphicLayoutEffect(() => {
-		const main = document.querySelector("main");
-		if (!main) return;
-
-		setWidth(main.clientWidth);
-
-		const observer = new ResizeObserver((entries) => {
-			setWidth(entries[0]?.contentRect.width);
+function subscribe(listener: () => void) {
+	listeners.add(listener);
+	if (!observer) {
+		observer = new ResizeObserver(() => {
+			for (const notify of listeners) {
+				notify();
+			}
 		});
+		const main = document.querySelector("main");
+		if (main) observer.observe(main);
+	}
 
-		observer.observe(main);
+	return () => {
+		listeners.delete(listener);
+		if (listeners.size === 0) {
+			observer?.disconnect();
+			observer = null;
+		}
+	};
+}
 
-		return () => observer.disconnect();
-	}, []);
+function getSnapshot() {
+	return document.querySelector("main")?.clientWidth ?? 0;
+}
 
-	return width;
+export function useMainContentWidth() {
+	return React.useSyncExternalStore(subscribe, getSnapshot, () => 0);
 }

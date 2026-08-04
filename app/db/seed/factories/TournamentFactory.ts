@@ -215,6 +215,8 @@ export async function startBracket(
 		}),
 	});
 
+	await persistSeeds(tournament);
+
 	clearTournamentDataCache(tournamentId);
 
 	const started = await tournamentFromDB({ tournamentId, user: undefined });
@@ -222,6 +224,38 @@ export async function startBracket(
 	invariant(startedBracket, `Bracket at index ${bracketIdx} was not created`);
 
 	return startedBracket.data.match.map((match) => ({ id: match.id }));
+}
+
+/**
+ * Marks a match as casted by a Twitch account, adding the account to the
+ * tournament's cast accounts first, the way the organizer's stream page does.
+ */
+export async function castMatch({
+	tournamentId,
+	matchId,
+	twitchAccount,
+}: {
+	tournamentId: number;
+	matchId: number;
+	twitchAccount: string;
+}) {
+	const tournament = await TournamentRepository.findById(tournamentId);
+	invariant(tournament, `Tournament ${tournamentId} not found`);
+
+	await TournamentRepository.updateCastTwitchAccounts({
+		tournamentId,
+		castTwitchAccounts: [
+			...(tournament.castTwitchAccounts ?? []),
+			twitchAccount,
+		],
+	});
+	await TournamentRepository.setMatchAsCasted({
+		tournamentId,
+		matchId,
+		twitchAccount,
+	});
+
+	clearTournamentDataCache(tournamentId);
 }
 
 interface PlayedMatch {
@@ -308,6 +342,31 @@ async function generateNextSwissRound(
 	}
 
 	return generated;
+}
+
+/** Writes the seeds the bracket was created off, the same way starting a bracket
+ * through the site does. Without them the seeds shown are recomputed from the teams'
+ * seeding skills every time, so they drift out of sync with the started bracket as
+ * soon as those change. */
+async function persistSeeds(
+	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
+) {
+	const isAllSeedsPersisted = tournament.ctx.teams.every(
+		(team) => typeof team.seed === "number",
+	);
+	if (isAllSeedsPersisted) return;
+
+	await TournamentRepository.updateTeamSeeds({
+		tournamentId: tournament.ctx.id,
+		teamIds: tournament.ctx.teams.map((team) => team.id),
+		teamsWithMembers: tournament.ctx.teams.map((team) => ({
+			teamId: team.id,
+			members: team.members.map((member) => ({
+				userId: member.userId,
+				username: member.username,
+			})),
+		})),
+	});
 }
 
 function roundMapsFor(

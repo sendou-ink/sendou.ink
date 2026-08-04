@@ -45,7 +45,7 @@ export function Catcher() {
 
 	if (isNetworkError) {
 		return (
-			<Main>
+			<ErrorMain>
 				<ErrorGirlImage />
 				<h2 className="text-center">Connection error</h2>
 				<p className="text-center">
@@ -55,7 +55,7 @@ export function Catcher() {
 				<div className="mt-4 stack sm items-center">
 					<RefreshPageButton />
 				</div>
-			</Main>
+			</ErrorMain>
 		);
 	}
 
@@ -68,7 +68,7 @@ export function Catcher() {
 		})();
 
 		return (
-			<Main>
+			<ErrorMain>
 				<ErrorGirlImage />
 				<h2 className="text-center">Error happened</h2>
 				<p className="text-center">
@@ -84,7 +84,7 @@ export function Catcher() {
 						</div>
 					</div>
 				) : null}
-			</Main>
+			</ErrorMain>
 		);
 	}
 
@@ -92,7 +92,7 @@ export function Catcher() {
 		case 401:
 			if (!user) {
 				return (
-					<Main>
+					<ErrorMain>
 						<h2>Authentication required</h2>
 						<p>This page requires you to be logged in.</p>
 						<form action={LOG_IN_URL} method="post" className="mt-2">
@@ -100,36 +100,36 @@ export function Catcher() {
 								Log in via Discord
 							</SendouButton>
 						</form>
-					</Main>
+					</ErrorMain>
 				);
 			}
 			return (
-				<Main>
+				<ErrorMain>
 					<h2>Error 401 Unauthorized</h2>
 					<GetHelp />
-				</Main>
+				</ErrorMain>
 			);
 		case 403:
 			return (
-				<Main>
+				<ErrorMain>
 					<h2>Error 403 Forbidden</h2>
 					<p className="text-sm text-lighter font-semi-bold">
 						Your account doesn't have the required permissions to perform this
 						action.
 					</p>
 					<GetHelp />
-				</Main>
+				</ErrorMain>
 			);
 		case 404:
 			return (
-				<Main>
+				<ErrorMain>
 					<h2>Error {error.status} - Page not found</h2>
 					<GetHelp />
-				</Main>
+				</ErrorMain>
 			);
 		default:
 			return (
-				<Main>
+				<ErrorMain>
 					<h2>Error {error.status}</h2>
 					<GetHelp />
 					<div className="text-sm text-lighter font-semi-bold">
@@ -142,9 +142,14 @@ export function Catcher() {
 							? `\n${typeof error.data === "string" ? error.data : JSON.stringify(error.data, null, 2)}`
 							: null}
 					</pre>
-				</Main>
+				</ErrorMain>
 			);
 	}
+}
+
+/** Every branch of the error page, marked so tests can assert one is not shown. */
+function ErrorMain({ children }: { children: React.ReactNode }) {
+	return <Main testId="error-page">{children}</Main>;
 }
 
 function GetHelp() {

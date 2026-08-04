@@ -20,5 +20,5 @@ export {
 	undoGameResult,
 } from "./propagation/set";
 export * from "./status";
-export { generateRound } from "./swiss/pairing";
+export { generateRound, groupHasActiveTeams } from "./swiss/pairing";
 export * from "./types";

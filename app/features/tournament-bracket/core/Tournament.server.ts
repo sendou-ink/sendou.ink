@@ -188,6 +188,17 @@ function syncTournamentToRegistry(tournament: Tournament) {
 	}
 }
 
+/**
+ * Rebuilds the running tournaments registry from the database, forgetting the
+ * tournaments it held. E2E workers call this (via `/refresh-caches`) after
+ * writing tournaments straight into the database file.
+ */
+export async function refreshRunningTournaments() {
+	RunningTournaments.clear();
+
+	await primeRunningTournamentsCache();
+}
+
 async function primeRunningTournamentsCache() {
 	const tournamentIds = await TournamentRepository.findRunningTournamentIds();
 

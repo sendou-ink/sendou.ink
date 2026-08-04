@@ -351,6 +351,25 @@ export function FormField({
 		);
 	}
 
+	if (formField.type === "checkbox-group-dynamic") {
+		if (!options) {
+			throw new Error(
+				"Dynamic checkbox group form field requires options prop",
+			);
+		}
+		const checkboxItems = options as FormFieldItemsWithImage<string>;
+		return (
+			<CheckboxGroupFormField
+				{...commonProps}
+				{...formField}
+				disabled={isDisabled}
+				items={checkboxItems}
+				value={value as string[]}
+				onChange={handleChange as (v: string[]) => void}
+			/>
+		);
+	}
+
 	if (formField.type === "datetime" || formField.type === "date") {
 		return (
 			<DatetimeFormField
@@ -524,6 +543,7 @@ export function FormField({
 				value={value as number | null}
 				onChange={handleChange as (v: number | null) => void}
 				pastOnly={tournamentOptions?.pastOnly}
+				onTournamentSelected={tournamentOptions?.onTournamentSelected}
 			/>
 		);
 	}

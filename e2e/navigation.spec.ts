@@ -1,7 +1,14 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { expect, impersonate, navigate, test } from "./helpers/playwright";
+import { SENDOUQ_PAGE } from "~/utils/urls";
+import {
+	expect,
+	impersonate,
+	MOBILE_VIEWPORT,
+	navigate,
+	TABLET_VIEWPORT,
+	test,
+} from "./helpers/playwright";
 import { MobileNav } from "./pages/layout/mobile-nav";
-import { SideNav } from "./pages/layout/side-nav";
 import { TopNavMenus } from "./pages/layout/top-nav-menus";
 
 test.describe("Navigation", () => {
@@ -9,41 +16,26 @@ test.describe("Navigation", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
 
-		const sideNav = new SideNav(page);
-		await expect(sideNav.sectionHeading("Events")).toBeVisible();
-		await expect(sideNav.sectionHeading("Friends")).toBeVisible();
-		await expect(sideNav.sectionHeading("Streams")).toBeVisible();
-		await expect(sideNav.locators.viewAllLinks.first()).toBeVisible();
-
-		await sideNav.toggleCollapse();
-		await expect(sideNav.sectionHeading("Events")).not.toBeVisible();
-
-		await sideNav.toggleCollapse();
-		await expect(sideNav.sectionHeading("Events")).toBeVisible();
-
 		const topNav = new TopNavMenus(page);
 		await topNav.open("Play");
 		await expect(topNav.link("SendouQ")).toBeVisible();
 		await expect(topNav.link("Scrims")).toBeVisible();
 
 		await topNav.link("SendouQ").click();
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
 		await expect(topNav.link("SendouQ")).not.toBeVisible();
 
-		await navigate({ page, url: "/" });
-
 		await topNav.open("Tools");
-		await expect(topNav.link("Analyzer")).toBeVisible();
-		await topNav.close();
+		await topNav.link("Analyzer").click();
+		await expect(page).toHaveURL(/\/analyzer/);
 
 		await topNav.open("Community");
-		await expect(topNav.link("Builds")).toBeVisible();
-		await topNav.close();
-
-		await expect(sideNav.locators.notificationsButton).toBeVisible();
+		await topNav.link("Builds").click();
+		await expect(page).toHaveURL(/\/builds/);
 	});
 
 	test("mobile navigation", async ({ page }) => {
-		await page.setViewportSize({ width: 375, height: 667 });
+		await page.setViewportSize(MOBILE_VIEWPORT);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
 
@@ -55,43 +47,25 @@ test.describe("Navigation", () => {
 		await expect(mobileNav.tab("you")).toBeVisible();
 
 		await mobileNav.openPanel("menu");
-		await expect(mobileNav.menuLink("SendouQ")).toBeVisible();
 		await expect(mobileNav.menuLink("Analyzer")).toBeVisible();
 		await expect(mobileNav.menuLink("Builds")).toBeVisible();
-		await expect(mobileNav.locators.streamsHeading).toBeVisible();
-
-		await mobileNav.switchPanel("friends");
-		await expect(mobileNav.menuLink("SendouQ")).not.toBeVisible();
-		await expect(mobileNav.locators.viewAllLink).toBeVisible();
 
 		await mobileNav.switchPanel("you");
 		await expect(mobileNav.locators.youPanelUsername).toBeVisible();
 
-		await mobileNav.switchPanel("tourneys");
-		await expect(mobileNav.locators.viewAllLink).toBeVisible();
-
 		await mobileNav.closePanel();
-		await expect(mobileNav.locators.viewAllLink).not.toBeVisible();
+		await expect(mobileNav.locators.youPanelUsername).toHaveCount(0);
+
+		await mobileNav.openPanel("menu");
+		await mobileNav.menuLink("SendouQ").click();
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
+		await expect(mobileNav.menuLink("SendouQ")).not.toBeVisible();
 	});
 
 	test("tablet navigation", async ({ page }) => {
-		await page.setViewportSize({ width: 768, height: 1024 });
+		await page.setViewportSize(TABLET_VIEWPORT);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
-
-		const sideNav = new SideNav(page);
-		await expect(sideNav.sectionHeading("Events")).not.toBeVisible();
-		await expect(sideNav.sectionHeading("Friends")).not.toBeVisible();
-
-		await sideNav.openModal();
-
-		await expect(sideNav.sectionHeading("Events")).toBeVisible();
-		await expect(sideNav.sectionHeading("Friends")).toBeVisible();
-		await expect(sideNav.sectionHeading("Streams")).toBeVisible();
-		await expect(sideNav.locators.viewAllLinks.first()).toBeVisible();
-
-		await sideNav.closeModal();
-		await expect(sideNav.sectionHeading("Events")).not.toBeVisible();
 
 		const topNav = new TopNavMenus(page);
 		await topNav.open("Play");

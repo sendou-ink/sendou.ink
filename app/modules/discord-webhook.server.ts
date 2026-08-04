@@ -20,11 +20,24 @@ export interface WebhookUser {
  * line when `MOD_DISCORD_WEBHOOK_URL` is unset (e.g. in development).
  */
 export function sendModDiscordWebhook(embed: ModWebhookEmbed) {
-	const webhookUrl = process.env.MOD_DISCORD_WEBHOOK_URL;
+	sendDiscordWebhook("MOD_DISCORD_WEBHOOK_URL", embed);
+}
+
+/**
+ * Posts a rich embed to the SendouQ canceled matches channel Discord webhook.
+ * Fire-and-forget (see {@link sendModDiscordWebhook}).
+ */
+export function sendSQCancelDiscordWebhook(embed: ModWebhookEmbed) {
+	sendDiscordWebhook("SQ_CANCEL_DISCORD_WEBHOOK_URL", embed);
+}
+
+function sendDiscordWebhook(
+	envVarName: "MOD_DISCORD_WEBHOOK_URL" | "SQ_CANCEL_DISCORD_WEBHOOK_URL",
+	embed: ModWebhookEmbed,
+) {
+	const webhookUrl = process.env[envVarName];
 	if (!webhookUrl) {
-		logger.info(
-			"MOD_DISCORD_WEBHOOK_URL not set, skipping mod Discord webhook",
-		);
+		logger.info(`${envVarName} not set, skipping Discord webhook`);
 		return;
 	}
 
@@ -41,12 +54,12 @@ export function sendModDiscordWebhook(embed: ModWebhookEmbed) {
 		.then((response) => {
 			if (!response.ok) {
 				logger.error(
-					`Mod Discord webhook responded with status ${response.status}`,
+					`Discord webhook responded with status ${response.status}`,
 				);
 			}
 		})
 		.catch((error) => {
-			logger.error("Failed to send mod Discord webhook", error);
+			logger.error("Failed to send Discord webhook", error);
 		});
 }
 

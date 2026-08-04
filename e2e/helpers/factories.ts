@@ -40,11 +40,17 @@ export async function loadFactories(parallelIndex: number) {
 		CalendarEventFactory: await import(
 			"~/db/seed/factories/CalendarEventFactory"
 		),
+		FriendRequestFactory: await import(
+			"~/db/seed/factories/FriendRequestFactory"
+		),
 		FriendshipFactory: await import("~/db/seed/factories/FriendshipFactory"),
 		LFGPostFactory: await import("~/db/seed/factories/LFGPostFactory"),
 		LiveStreamFactory: await import("~/db/seed/factories/LiveStreamFactory"),
 		NotificationFactory: await import(
 			"~/db/seed/factories/NotificationFactory"
+		),
+		SavedCalendarEventFactory: await import(
+			"~/db/seed/factories/SavedCalendarEventFactory"
 		),
 		ScrimPostFactory: await import("~/db/seed/factories/ScrimPostFactory"),
 		SQGroupFactory: await import("~/db/seed/factories/SQGroupFactory"),

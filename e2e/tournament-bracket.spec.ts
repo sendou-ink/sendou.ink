@@ -53,6 +53,73 @@ test.describe("Tournament bracket", () => {
 		await expect(matchPage.editActiveRosterButton("bravo")).toBeVisible();
 	});
 
+	test("only asks for weapons of the maps played", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+		});
+		// the team with subs is created second, making it the bravo side of the match
+		const [, teamWithSub] = await createTeams(factories, tournament.id, [
+			{},
+			{ rosterSize: 5 },
+		]);
+		const [match] = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+
+		const ROSTER_WITH_VIEWER = [0, 1, 2, 4];
+		const ROSTER_WITHOUT_VIEWER = [0, 1, 2, 3];
+		const viewerUserId = teamWithSub.memberUserIds[4];
+
+		await impersonate(page, viewerUserId);
+
+		const matchPage = new TournamentMatchPage(page);
+		await matchPage.goto({ tournamentId: tournament.id, matchId: match.id });
+
+		// Map 1: subbed in, reports their weapon like any other player
+		await matchPage.openTab("rosters");
+		await matchPage.setActiveRoster("bravo", ROSTER_WITH_VIEWER);
+
+		await matchPage.openTab("action");
+		await matchPage.reportWeapon("Splattershot");
+		await expect(matchPage.locators.undoWeaponButton).toBeVisible();
+		await matchPage.reportResult({
+			mapsToReport: 1,
+			winner: 1,
+			setEnds: false,
+		});
+
+		// Map 2: subbed out, so there is no weapon of theirs to report
+		await matchPage.openTab("rosters");
+		await matchPage.setActiveRoster("bravo", ROSTER_WITHOUT_VIEWER);
+
+		await matchPage.openTab("action");
+		await matchPage.expandWeaponReporter();
+		await isNotVisible(matchPage.weaponPrompt(2));
+
+		await matchPage.reportResult({
+			mapsToReport: 1,
+			winner: 2,
+			setEnds: false,
+		});
+
+		// Map 3: subbed back in, asked for the map they are about to play
+		await matchPage.openTab("rosters");
+		await matchPage.setActiveRoster("bravo", ROSTER_WITH_VIEWER);
+
+		await matchPage.openTab("action");
+		await matchPage.expandWeaponReporter();
+		await expect(matchPage.weaponPrompt(3)).toBeVisible();
+
+		// Undoing map 2 puts it back up for grabs, now with them on the roster
+		await matchPage.undoLastReport();
+		await matchPage.expandWeaponReporter();
+		await expect(matchPage.weaponPrompt(2)).toBeVisible();
+	});
+
 	test("adds a sub mid tournament", async ({ page, factories }) => {
 		const tournament = await factories.TournamentFactory.create({
 			authorId: ADMIN_ID,

@@ -127,7 +127,7 @@
 	"match.cancelRequested": "",
 	"match.reportedBy": "",
 	"match.cancelPendingConfirmation": "",
-	"match.cancelMatch.confirm": "",
+	"match.cancelMatch.explanation": "",
 	"match.adminCancel.confirm": "",
 	"match.tabs.reportScore": "",
 	"match.errors.cantCancel": "",

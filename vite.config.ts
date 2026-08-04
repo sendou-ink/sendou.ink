@@ -104,7 +104,6 @@ export default defineConfig((config) => {
 				"@internationalized/date",
 				"@tldraw/tldraw",
 				"@zumer/snapdom",
-				"better-sqlite3",
 				"chart.js",
 				"compressorjs",
 				"date-fns/locale/da",

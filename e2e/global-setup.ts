@@ -2,11 +2,18 @@ import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
 import { ensureMigratedDb } from "../scripts/ensure-test-db";
-import { E2E_BASE_PORT } from "./helpers/playwright";
+import {
+	E2E_BASE_PORT,
+	e2eWebhookPort,
+	e2eWorkerPort,
+} from "./helpers/playwright";
 
 const DEBUG = process.env.E2E_DEBUG === "true";
 const SERVER_PROCESSES: ChildProcess[] = [];
 const MINIO_MARKER_FILE = ".e2e-minio-started";
+const STORAGE_BUCKET = "sendou";
+/** Anonymously listable only once the bucket exists and its public policy is set. */
+const MINIO_BUCKET_URL = `http://127.0.0.1:9000/${STORAGE_BUCKET}/`;
 const BUILD_MARKER_FILE = ".e2e-build-marker";
 const BUILD_INPUTS = [
 	"app",
@@ -21,16 +28,26 @@ declare global {
 	var __E2E_SERVERS__: ChildProcess[];
 }
 
+/**
+ * Whether the image storage is usable, which takes more than MinIO answering its health check:
+ * the container bootstraps the bucket only after startup, and a run whose bucket never got created
+ * would otherwise fail deep inside the one test that uploads an image (`art.spec.ts`) with an
+ * opaque 500.
+ */
+async function isMinioBucketReady(): Promise<boolean> {
+	try {
+		const response = await fetch(MINIO_BUCKET_URL);
+		return response.ok;
+	} catch {
+		return false;
+	}
+}
+
 async function waitForMinio(timeout = 60000): Promise<boolean> {
 	const start = Date.now();
 	while (Date.now() - start < timeout) {
-		try {
-			const response = await fetch("http://127.0.0.1:9000/minio/health/live");
-			if (response.ok) {
-				return true;
-			}
-		} catch {
-			// MinIO not ready yet
+		if (await isMinioBucketReady()) {
+			return true;
 		}
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 	}
@@ -39,15 +56,10 @@ async function waitForMinio(timeout = 60000): Promise<boolean> {
 
 async function ensureMinioRunning(): Promise<boolean> {
 	// Check if MinIO is already running
-	try {
-		const response = await fetch("http://127.0.0.1:9000/minio/health/live");
-		if (response.ok) {
-			// biome-ignore lint/suspicious/noConsole: CLI script output
-			console.log("MinIO is already running");
-			return false;
-		}
-	} catch {
-		// MinIO not running, we need to start it
+	if (await isMinioBucketReady()) {
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log("MinIO is already running");
+		return false;
 	}
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output
@@ -56,7 +68,9 @@ async function ensureMinioRunning(): Promise<boolean> {
 
 	const isReady = await waitForMinio();
 	if (!isReady) {
-		throw new Error("MinIO failed to start within timeout");
+		throw new Error(
+			`MinIO did not become usable within timeout (${MINIO_BUCKET_URL} never answered OK). If MinIO is running, its "${STORAGE_BUCKET}" bucket is missing or not public — recreate the container with "docker compose up -d --force-recreate minio".`,
+		);
 	}
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output
@@ -182,12 +196,13 @@ async function globalSetup(config: FullConfig) {
 	// Prepare databases and start servers for each worker
 	const serverPromises: Promise<void>[] = [];
 
-	// Kill any existing processes on our ports before starting
+	// Kill any existing processes on our ports before starting; sweep beyond the
+	// current worker count so leftovers from a run with more workers also die
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("Cleaning up any existing processes on e2e ports...");
 	const killedSomething = killProcessesOnPorts(
 		E2E_BASE_PORT,
-		E2E_BASE_PORT + workerCount - 1,
+		e2eWorkerPort(Math.max(workerCount, 8) - 1),
 	);
 	if (killedSomething) {
 		// Wait briefly for ports to be released
@@ -195,7 +210,7 @@ async function globalSetup(config: FullConfig) {
 	}
 
 	for (let i = 0; i < workerCount; i++) {
-		const port = E2E_BASE_PORT + i;
+		const port = e2eWorkerPort(i);
 		const dbPath = `db-test-e2e-${i}.sqlite3`;
 
 		ensureMigratedDb(dbPath);
@@ -224,10 +239,12 @@ async function globalSetup(config: FullConfig) {
 					STORAGE_ACCESS_KEY: "minio-user",
 					STORAGE_SECRET: "minio-password",
 					STORAGE_REGION: "us-east-1",
-					STORAGE_BUCKET: "sendou",
+					STORAGE_BUCKET,
 					// no system messages to a shared skalop instance (see build env above)
 					SKALOP_SYSTEM_MESSAGE_URL: "",
 					SKALOP_TOKEN: "",
+					// tests assert webhook payloads by listening on the worker's webhook port
+					SQ_CANCEL_DISCORD_WEBHOOK_URL: `http://localhost:${e2eWebhookPort(i)}/sq-cancel`,
 				},
 				detached: false,
 			},
@@ -255,11 +272,12 @@ async function globalSetup(config: FullConfig) {
 		);
 	}
 
+	// Store server processes globally for teardown before awaiting readiness so
+	// a failed startup still gets every already-spawned server cleaned up
+	global.__E2E_SERVERS__ = SERVER_PROCESSES;
+
 	// Wait for all servers to be ready
 	await Promise.all(serverPromises);
-
-	// Store server processes globally for teardown
-	global.__E2E_SERVERS__ = SERVER_PROCESSES;
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log("\nAll servers started successfully!\n");

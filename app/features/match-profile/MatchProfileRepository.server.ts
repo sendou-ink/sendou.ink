@@ -65,19 +65,17 @@ export async function updateOwnMatchProfile({
 			.where("userId", "=", userId)
 			.execute();
 
-		if (weaponPool.length > 0) {
-			await trx
-				.insertInto("UserWeaponPool")
-				.values(
-					weaponPool.map((wpn, i) => ({
-						userId,
-						sortOrder: i,
-						weaponSplId: wpn.id,
-						isFavorite: toDBBoolean(wpn.isFavorite),
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("UserWeaponPool")
+			.values(
+				weaponPool.map((wpn, i) => ({
+					userId,
+					sortOrder: i,
+					weaponSplId: wpn.id,
+					isFavorite: toDBBoolean(wpn.isFavorite),
+				})),
+			)
+			.execute();
 
 		await trx
 			.updateTable("User")

@@ -127,7 +127,7 @@
 	"match.cancelRequested": "Cancellazione richiesta",
 	"match.reportedBy": "Riportata da {{name}} alle",
 	"match.cancelPendingConfirmation": "Attendendo la conferma dell'altro team",
-	"match.cancelMatch.confirm": "Cancellare match? (Richiede conferma dell'altro gruppo, un abuso di questa funzione comporta un ban)",
+	"match.cancelMatch.explanation": "",
 	"match.adminCancel.confirm": "",
 	"match.tabs.reportScore": "Riporta punteggio",
 	"match.errors.cantCancel": "Non puoi cancellare il match, in quanto il nemico ha già riportato un punteggio. Consulta le istruzioni per la disputa di un match sono sopra alla pagina.",

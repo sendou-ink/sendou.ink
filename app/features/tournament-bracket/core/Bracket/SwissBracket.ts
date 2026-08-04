@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -31,22 +32,7 @@ export class SwissBracket extends Bracket {
 		}
 		const standings = this.standings;
 
-		const relevantMatchesFinished = this.data.round.every((round) => {
-			const roundsMatches = this.data.match.filter(
-				(match) => match.roundId === round.id,
-			);
-
-			// some round has not started yet
-			if (roundsMatches.length === 0) return false;
-
-			return roundsMatches.every((match) => {
-				if (match.opponent1 && match.opponent2 && !match.winnerSide) {
-					return false;
-				}
-
-				return true;
-			});
-		});
+		const relevantMatchesFinished = this.standingsAreFinal;
 
 		if (advanceThreshold) {
 			return {
@@ -86,11 +72,48 @@ export class SwissBracket extends Bracket {
 		};
 	}
 
-	get standings(): Standing[] {
-		return this.currentStandings();
+	/**
+	 * Swiss rounds are paired one at a time, so a round that has no matches yet can still change the standings.
+	 * Exception being rounds that can never be paired because every team of the group has already
+	 * advanced or been eliminated (early advance variation).
+	 */
+	get standingsAreFinal() {
+		if (!this.everyMatchOver) return false;
+
+		return this.data.group.every((group) => {
+			const groupsMatches = this.data.match.filter(
+				(match) => match.groupId === group.id,
+			);
+			if (groupsMatches.length === 0) return false;
+
+			const everyRoundPaired = this.data.round
+				.filter((round) => round.groupId === group.id)
+				.every((round) =>
+					groupsMatches.some((match) => match.roundId === round.id),
+				);
+			if (everyRoundPaired) return true;
+
+			return !Engine.groupHasActiveTeams(this.data, {
+				groupId: group.id,
+				standings: this.standings,
+				settings: this.settings,
+			});
+		});
 	}
 
-	currentStandings(includeUnfinishedGroups = false) {
+	get standings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: false });
+	}
+
+	get liveStandings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: true });
+	}
+
+	private computeStandings({
+		includeUnfinishedGroups,
+	}: {
+		includeUnfinishedGroups: boolean;
+	}): Standing[] {
 		const groupIds = this.data.group.map((group) => group.id);
 
 		const placements: (Standing & { groupId: number })[] = [];
@@ -183,6 +206,13 @@ export class SwissBracket extends Bracket {
 				}
 
 				if (!match.winnerSide) {
+					// teams yet to finish a match still belong in the standings
+					if (match.opponent1?.id) {
+						updateTeam({ teamId: match.opponent1.id });
+					}
+					if (match.opponent2?.id) {
+						updateTeam({ teamId: match.opponent2.id });
+					}
 					continue;
 				}
 
@@ -225,7 +255,7 @@ export class SwissBracket extends Bracket {
 				const winner = match.opponent1 ? match.opponent1 : match.opponent2;
 
 				if (!winner?.id) {
-					logger.warn("SwissBracket.currentStandings: winner not found");
+					logger.warn("SwissBracket.computeStandings: winner not found");
 					continue;
 				}
 
@@ -266,7 +296,7 @@ export class SwissBracket extends Bracket {
 				for (const teamId of teamsWhoPlayedAgainst) {
 					const opponent = teams.find((t) => t.id === teamId);
 					if (!opponent) {
-						logger.warn("SwissBracket.currentStandings: opponent not found", {
+						logger.warn("SwissBracket.computeStandings: opponent not found", {
 							teamId,
 						});
 						continue;

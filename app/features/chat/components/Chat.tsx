@@ -43,8 +43,6 @@ export function Chat({
 	messagesContainerClassName,
 	hidden = false,
 	chat,
-	onMount,
-	onUnmount,
 	disabled,
 	missingUserName,
 }: Omit<ChatProps, "onNewMessage" | "revalidates"> & {
@@ -79,14 +77,6 @@ export function Chat({
 
 	const { unseenMessagesInTheRoom, scrollToBottom, resetScroller } =
 		useChatAutoScroll(messages, messagesContainerRef);
-
-	React.useEffect(() => {
-		onMount?.();
-
-		return () => {
-			onUnmount?.();
-		};
-	}, [onMount, onUnmount]);
 
 	const sendingMessagesDisabled = disabled || readyState !== "CONNECTED";
 

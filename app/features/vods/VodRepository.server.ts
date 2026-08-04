@@ -287,7 +287,6 @@ export async function insert(
 				.executeTakeFirstOrThrow();
 			videoId = result.id;
 		}
-		if (args.matches.length === 0) return { ...video, id: videoId };
 
 		const insertedMatches = await trx
 			.insertInto("VideoMatch")
@@ -318,9 +317,7 @@ export async function insert(
 			})),
 		);
 
-		if (players.length > 0) {
-			await trx.insertInto("VideoMatchPlayer").values(players).execute();
-		}
+		await trx.insertInto("VideoMatchPlayer").values(players).execute();
 
 		return { ...video, id: videoId };
 	});

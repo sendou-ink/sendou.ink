@@ -1,4 +1,5 @@
 import type { Page } from "@playwright/test";
+import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
 import { tournamentAdminPage } from "~/utils/urls";
 import {
 	modalClickConfirmButton,
@@ -6,6 +7,7 @@ import {
 	submit,
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
+import { createFormHelpers } from "../../helpers/playwright-form";
 import { CalendarNewEventPage } from "../calendar/calendar-new-event-page";
 import { TournamentAdminStaffPage } from "./tournament-admin-staff-page";
 import { TournamentAdminStreamPage } from "./tournament-admin-stream-page";
@@ -15,11 +17,13 @@ import { TournamentNav } from "./tournament-nav";
 export class TournamentAdminPage {
 	private readonly page: Page;
 	readonly nav;
+	readonly addSubForm;
 	readonly locators;
 
 	constructor(page: Page) {
 		this.page = page;
 		this.nav = new TournamentNav(page);
+		this.addSubForm = createFormHelpers(page, addSubForUserFormSchema);
 		this.locators = {
 			editEventInfoButton: page.getByTestId("edit-event-info-button"),
 			searchInput: page.getByLabel("Search teams"),
@@ -27,6 +31,10 @@ export class TournamentAdminPage {
 			teamNames: page.getByTestId("team-name"),
 			noSearchResultsText: page.getByText("No registrations match your search"),
 			exportButton: page.getByRole("button", { name: "Export" }),
+			addSubButton: page.getByRole("button", { name: "Add sub" }),
+			addSubDialogHeading: page.getByRole("heading", {
+				name: "Add sub post on behalf of a user",
+			}),
 			exportDialogHeading: page.getByRole("heading", {
 				name: "Export participants",
 			}),
@@ -126,6 +134,10 @@ export class TournamentAdminPage {
 
 	async openExportDialog() {
 		await this.locators.exportButton.click();
+	}
+
+	async openAddSubDialog() {
+		await this.locators.addSubButton.click();
 	}
 
 	async downloadExport() {

@@ -1,8 +1,8 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +13,13 @@ const TEST_DB_PATH = path.join(ROOT_DIR, "db-test.sqlite3");
 
 export function setup() {
 	ensureMigratedDb(TEST_DB_PATH);
+
+	// Test workers only ever read this file, to copy its schema into their own
+	// in-memory database. Taking it out of WAL drops the -wal/-shm sidecars, so
+	// those concurrent opens need no write access and cannot contend.
+	const db = new DatabaseSync(TEST_DB_PATH);
+	db.exec("PRAGMA journal_mode = DELETE");
+	db.close();
 }
 
 /**
@@ -48,21 +55,27 @@ export function ensureMigratedDb(dbPath: string) {
 
 function migrationFilesOnDisk() {
 	return new Set(
-		fs.readdirSync(MIGRATIONS_DIR).filter((file) => file.endsWith(".js")),
+		fs
+			.readdirSync(MIGRATIONS_DIR)
+			.filter((file) => file.endsWith(".ts"))
+			// kysely tracks migrations by file name without the extension
+			.map((file) => file.slice(0, -".ts".length)),
 	);
 }
 
 function appliedMigrations(dbPath: string) {
-	const db = new Database(dbPath, { readonly: true });
+	const db = new DatabaseSync(dbPath, { readOnly: true });
 	try {
 		const hasMigrationsTable = db
 			.prepare(
-				"select 1 from sqlite_master where type = 'table' and name = 'migrations'",
+				"select 1 from sqlite_master where type = 'table' and name = 'kysely_migration'",
 			)
 			.get();
 		if (!hasMigrationsTable) return null;
 
-		const rows = db.prepare("select name from migrations").all() as Array<{
+		const rows = db
+			.prepare("select name from kysely_migration")
+			.all() as Array<{
 			name: string;
 		}>;
 		return rows.map((row) => row.name);

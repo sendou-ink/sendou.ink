@@ -119,18 +119,19 @@ export function useChatAutoScroll(
 		return () => observer.disconnect();
 	}, [ref, hasMessages]);
 
-	React.useEffect(() => {
-		if (messages.length === 0) return;
+	const latestMessage = messages.at(-1);
+	const latestMessageId = latestMessage?.id;
+	const latestMessageIsOwn = user != null && latestMessage?.userId === user.id;
 
-		const latestMessageIsOwn =
-			user != null && messages[messages.length - 1]?.userId === user.id;
+	React.useEffect(() => {
+		if (!latestMessageId) return;
 
 		if (latestMessageIsOwn || pinnedToBottomRef.current) {
 			scrollToBottom();
 		} else {
 			setUnseenMessages(true);
 		}
-	}, [messages, user, scrollToBottom]);
+	}, [latestMessageId, latestMessageIsOwn, scrollToBottom]);
 
 	const reset = () => {
 		pinnedToBottomRef.current = true;

@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
+import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
@@ -172,7 +173,7 @@ interface FormFieldSelectDynamic<T extends string> extends FormFieldBase<T> {
 	searchable?: boolean;
 }
 
-interface FormFieldRadioGroupDynamic<T extends string>
+interface FormFieldInputGroupDynamic<T extends string>
 	extends FormFieldBase<T> {
 	minLength?: number;
 }
@@ -195,8 +196,9 @@ export type FormField<V extends string = string> =
 	| FormFieldSelectDynamic<"select-dynamic">
 	| FormFieldDualSelect<"dual-select", V>
 	| FormFieldInputGroup<"radio-group", V>
-	| FormFieldRadioGroupDynamic<"radio-group-dynamic">
+	| FormFieldInputGroupDynamic<"radio-group-dynamic">
 	| FormFieldInputGroup<"checkbox-group", V>
+	| FormFieldInputGroupDynamic<"checkbox-group-dynamic">
 	| FormFieldDatetime<"datetime">
 	| FormFieldDatetime<"date">
 	| FormFieldWeaponPool<"weapon-pool">
@@ -359,4 +361,6 @@ export type UserSearchFieldOptions = {
 export type TournamentSearchFieldOptions = {
 	/** Restrict results to tournaments that have already started (finished/past). */
 	pastOnly?: boolean;
+	/** Exposes the resolved tournament on selection — the stored form value is only the tournament id. */
+	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };

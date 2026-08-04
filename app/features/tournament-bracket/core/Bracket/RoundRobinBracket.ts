@@ -87,10 +87,18 @@ export class RoundRobinBracket extends Bracket {
 	}
 
 	get standings(): Standing[] {
-		return this.currentStandings();
+		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	currentStandings(includeUnfinishedGroups = false) {
+	get liveStandings(): Standing[] {
+		return this.computeStandings({ includeUnfinishedGroups: true });
+	}
+
+	private computeStandings({
+		includeUnfinishedGroups,
+	}: {
+		includeUnfinishedGroups: boolean;
+	}): Standing[] {
 		const groupIds = this.data.group.map((group) => group.id);
 
 		const placements: (Standing & { groupId: number })[] = [];
@@ -139,18 +147,18 @@ export class RoundRobinBracket extends Bracket {
 
 			const updateTeam = ({
 				teamId,
-				setWins,
-				setLosses,
-				mapWins,
-				mapLosses,
-				koCount,
+				setWins = 0,
+				setLosses = 0,
+				mapWins = 0,
+				mapLosses = 0,
+				koCount = 0,
 			}: {
 				teamId: number;
-				setWins: number;
-				setLosses: number;
-				mapWins: number;
-				mapLosses: number;
-				koCount: number;
+				setWins?: number;
+				setLosses?: number;
+				mapWins?: number;
+				mapLosses?: number;
+				koCount?: number;
 			}) => {
 				const team = teams.find((team) => team.id === teamId);
 				if (team) {
@@ -173,18 +181,23 @@ export class RoundRobinBracket extends Bracket {
 			};
 
 			for (const match of matches) {
+				const opp1Id = match.opponent1?.id;
+				const opp2Id = match.opponent2?.id;
+				const opponentIds = [opp1Id, opp2Id].filter(
+					(id) => typeof id === "number",
+				);
+
 				if (!match.winnerSide) {
+					// teams yet to finish a match still belong in the standings, dropped out ones are seeded further below
+					for (const teamId of opponentIds) {
+						if (droppedOutWithIncompleteMatches.has(teamId)) continue;
+
+						updateTeam({ teamId });
+					}
 					continue;
 				}
 
-				const opp1Id = match.opponent1?.id;
-				const opp2Id = match.opponent2?.id;
-				if (
-					(typeof opp1Id === "number" &&
-						droppedOutWithIncompleteMatches.has(opp1Id)) ||
-					(typeof opp2Id === "number" &&
-						droppedOutWithIncompleteMatches.has(opp2Id))
-				) {
+				if (opponentIds.some((id) => droppedOutWithIncompleteMatches.has(id))) {
 					continue;
 				}
 

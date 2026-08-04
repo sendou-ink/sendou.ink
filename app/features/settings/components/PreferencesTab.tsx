@@ -8,6 +8,7 @@ import { Label } from "~/components/Label";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { SendouForm } from "~/form/SendouForm";
+import { useHydrated } from "~/hooks/useHydrated";
 import {
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
@@ -64,26 +65,21 @@ export function PreferencesTab() {
 
 function PushNotificationsEnabler() {
 	const { t } = useTranslation(["common"]);
-	const [notificationsPermsGranted, setNotificationsPermsGranted] =
-		React.useState<NotificationPermission | "not-supported">("default");
+	const isHydrated = useHydrated();
+	const [requestedPermission, setRequestedPermission] =
+		React.useState<NotificationPermission | null>(null);
 
-	React.useEffect(() => {
-		if (!("serviceWorker" in navigator)) {
-			setNotificationsPermsGranted("not-supported");
-			return;
-		}
-
-		if (!("PushManager" in window)) {
-			setNotificationsPermsGranted("not-supported");
-			return;
-		}
-
-		setNotificationsPermsGranted(Notification.permission);
-	}, []);
+	const notificationsPermsGranted: NotificationPermission | "not-supported" =
+		requestedPermission ??
+		(!isHydrated
+			? "default"
+			: !("serviceWorker" in navigator) || !("PushManager" in window)
+				? "not-supported"
+				: Notification.permission);
 
 	function askPermission() {
 		Notification.requestPermission().then((permission) => {
-			setNotificationsPermsGranted(permission);
+			setRequestedPermission(permission);
 			if (permission === "granted") {
 				initServiceWorker();
 			}

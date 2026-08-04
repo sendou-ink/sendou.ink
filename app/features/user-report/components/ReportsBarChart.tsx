@@ -6,9 +6,9 @@ import {
 	Tooltip,
 } from "chart.js";
 import { format } from "date-fns";
-import * as React from "react";
 import { Bar } from "react-chartjs-2";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useThemeColors } from "~/hooks/useThemeColors";
 import styles from "./ReportsBarChart.module.css";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
@@ -28,32 +28,12 @@ export function ReportsBarChart({
 }) {
 	const isHydrated = useHydrated();
 
-	const [colors, setColors] = React.useState({
-		bar: "",
-		border: "",
-		borderHigh: "",
-		text: "",
+	const colors = useThemeColors({
+		bar: "--color-text-accent",
+		border: "--color-border",
+		borderHigh: "--color-border-high",
+		text: "--color-text-high",
 	});
-
-	React.useEffect(() => {
-		const resolve = () => {
-			const get = (v: string) =>
-				getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-			setColors({
-				bar: get("--color-text-accent"),
-				border: get("--color-border"),
-				borderHigh: get("--color-border-high"),
-				text: get("--color-text-high"),
-			});
-		};
-
-		resolve();
-
-		const root = document.documentElement;
-		const observer = new MutationObserver(resolve);
-		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-		return () => observer.disconnect();
-	}, []);
 
 	if (!isHydrated) {
 		return <div className={styles.container} />;

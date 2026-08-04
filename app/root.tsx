@@ -235,7 +235,7 @@ function Document({
 			<body>
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<RouterProvider navigate={navigate} useHref={useHref}>
+					<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
 						<I18nProvider locale={language}>
 							<SendouToastRegion />
 							<UnsavedChangesGuard />
@@ -251,6 +251,19 @@ function Document({
 			</body>
 		</html>
 	);
+}
+
+const ABSOLUTE_URL_REGEX = /^[a-z][a-z\d+\-.]*:/i;
+
+/**
+ * Href every React Aria link (menu items, buttons, tabs) is rendered with.
+ * `useHref` resolves its argument against the current route, which would turn an
+ * absolute URL such as a Twitch link into a path of our own.
+ */
+function useExternalAwareHref(href: string) {
+	const resolved = useHref(href);
+
+	return ABSOLUTE_URL_REGEX.test(href) ? href : resolved;
 }
 
 function useTriggerToasts() {
@@ -301,31 +314,36 @@ function useLoadingIndicator() {
 }
 
 function useSidebarRevalidation() {
-	const revalidator = useRevalidator();
+	const { revalidate, state } = useRevalidator();
+
+	// read through a ref so a revalidation elsewhere in the app does not
+	// re-run the effect and restart the interval before it ever fires
+	const stateRef = React.useRef(state);
+	stateRef.current = state;
 
 	useEffect(() => {
 		const TEN_MINUTES = 10 * 60 * 1000;
 
-		const revalidate = () => {
-			if (revalidator.state === "idle") {
-				revalidator.revalidate();
+		const revalidateIfIdle = () => {
+			if (stateRef.current === "idle") {
+				revalidate();
 			}
 		};
 
 		const handleVisibilityChange = () => {
 			if (document.visibilityState === "visible") {
-				revalidate();
+				revalidateIfIdle();
 			}
 		};
 
 		document.addEventListener("visibilitychange", handleVisibilityChange);
-		const interval = setInterval(revalidate, TEN_MINUTES);
+		const interval = setInterval(revalidateIfIdle, TEN_MINUTES);
 
 		return () => {
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 			clearInterval(interval);
 		};
-	}, [revalidator]);
+	}, [revalidate]);
 }
 
 function usePreloadTranslation() {

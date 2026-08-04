@@ -159,7 +159,19 @@ interface LatestFormProps {
 	t: (key: string) => string;
 }
 
-export function SendouForm<T extends z.ZodRawShape>({
+export function SendouForm<T extends z.ZodRawShape>(props: SendouFormProps<T>) {
+	// Remounting on URL change resets all form state (handles edit → new transitions)
+	const location = useLocation();
+
+	return (
+		<SendouFormInner
+			key={`${location.pathname}${location.search}`}
+			{...props}
+		/>
+	);
+}
+
+function SendouFormInner<T extends z.ZodRawShape>({
 	children,
 	schema,
 	defaultValues,
@@ -219,22 +231,6 @@ export function SendouForm<T extends z.ZodRawShape>({
 			setFallbackError,
 		}),
 	);
-
-	const location = useLocation();
-	const locationKey = `${location.pathname}${location.search}`;
-	const previousLocationKey = React.useRef(locationKey);
-
-	// Reset form when URL changes (handles edit → new transitions)
-	React.useEffect(() => {
-		if (previousLocationKey.current === locationKey) return;
-		previousLocationKey.current = locationKey;
-
-		store.setValues(buildInitialValues(schema, defaultValues));
-		store.setClientErrors({});
-		store.setDirty(false);
-		setHasSubmitted(false);
-		setFallbackError(null);
-	}, [locationKey]);
 
 	const latestActionData = React.useRef(fetcher.data);
 	if (fetcher.data !== latestActionData.current) {
@@ -324,7 +320,7 @@ export function SendouForm<T extends z.ZodRawShape>({
 	const formContent = (
 		<>
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
-			<React.Fragment key={locationKey}>{resolvedChildren}</React.Fragment>
+			{resolvedChildren}
 			{mode !== "submit" || readOnly ? null : (
 				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
 					<SubmitButton

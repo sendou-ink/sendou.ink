@@ -56,22 +56,16 @@ export function FormWithConfirm({
 	const isControlled = isOpen !== undefined;
 	const dialogOpen = isControlled ? isOpen : internalOpen;
 
-	const openDialog = React.useCallback(() => {
+	const openDialog = () => {
 		onOpenChange?.(true);
 		setInternalOpen(true);
-	}, [onOpenChange]);
-	const closeDialog = React.useCallback(() => {
+	};
+	const closeDialog = () => {
 		onOpenChange?.(false);
 		setInternalOpen(false);
-	}, [onOpenChange]);
+	};
 
 	invariant(!children || React.isValidElement(children));
-
-	React.useEffect(() => {
-		if (fetcher.state === "loading") {
-			closeDialog();
-		}
-	}, [fetcher.state, closeDialog]);
 
 	return (
 		<>
@@ -84,6 +78,7 @@ export function FormWithConfirm({
 							ref={formRef}
 							method="post"
 							action={action}
+							onSubmit={closeDialog}
 						>
 							{fields?.map(([name, value]) => (
 								<input type="hidden" key={name} name={name} value={value} />

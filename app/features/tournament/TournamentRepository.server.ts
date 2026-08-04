@@ -837,18 +837,16 @@ export function setStaff({
 			.where("tournamentId", "=", tournamentId)
 			.execute();
 
-		if (staff.length > 0) {
-			await trx
-				.insertInto("TournamentStaff")
-				.values(
-					staff.map((staffer) => ({
-						tournamentId,
-						userId: staffer.userId,
-						role: staffer.role,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("TournamentStaff")
+			.values(
+				staff.map((staffer) => ({
+					tournamentId,
+					userId: staffer.userId,
+					role: staffer.role,
+				})),
+			)
+			.execute();
 	});
 }
 
@@ -1142,29 +1140,25 @@ export function finalize({
 			}
 		}
 
-		if (skillTeamUsers.length > 0) {
-			await trx
-				.insertInto("SkillTeamUser")
-				.values(skillTeamUsers)
-				.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
-				.execute();
-		}
+		await trx
+			.insertInto("SkillTeamUser")
+			.values(skillTeamUsers)
+			.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+			.execute();
 
 		// SeedingSkill has `on conflict replace` set in its migration
-		if (summary.seedingSkills.length > 0) {
-			await trx
-				.insertInto("SeedingSkill")
-				.values(
-					summary.seedingSkills.map((seedingSkill) => ({
-						type: seedingSkill.type,
-						mu: seedingSkill.mu,
-						sigma: seedingSkill.sigma,
-						ordinal: seedingSkill.ordinal,
-						userId: seedingSkill.userId,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("SeedingSkill")
+			.values(
+				summary.seedingSkills.map((seedingSkill) => ({
+					type: seedingSkill.type,
+					mu: seedingSkill.mu,
+					sigma: seedingSkill.sigma,
+					ordinal: seedingSkill.ordinal,
+					userId: seedingSkill.userId,
+				})),
+			)
+			.execute();
 
 		if (summary.mapResultDeltas.length > 0) {
 			invariant(seasonValue !== null, "Season missing for map result");
@@ -1243,12 +1237,7 @@ export function finalize({
 				userId,
 			})),
 		);
-		if (badgeOwners.length > 0) {
-			await trx
-				.insertInto("TournamentBadgeOwner")
-				.values(badgeOwners)
-				.execute();
-		}
+		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
 
 		if (trophyReceiver && trophyReceiver.userIds.length > 0) {
 			const tournamentRow = await trx
@@ -1290,12 +1279,10 @@ export function finalize({
 				div: tournamentResult.div,
 			}));
 
-		if (tournamentResults.length > 0) {
-			await trx
-				.insertInto("TournamentResult")
-				.values(tournamentResults)
-				.execute();
-		}
+		await trx
+			.insertInto("TournamentResult")
+			.values(tournamentResults)
+			.execute();
 
 		await trx
 			.updateTable("Tournament")

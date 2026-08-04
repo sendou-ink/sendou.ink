@@ -8,18 +8,58 @@ Run the `pnpm run biome:fix` command. Also you might want to set up Biome as an 
 
 ## Add a new database migration
 
-1) Add a new file to the migrations folder incrementing the last used number by one e.g. `011-my-cool-feature.js`. Note: there is no script to do this.
-2) Take this file as a base and fill it out with your migration:
+1) Run `pnpm run migrate:new "my cool feature"`. This creates `migrations/<UTC timestamp>-my-cool-feature.ts` e.g. `migrations/20260803143000-my-cool-feature.ts`. Migrations run in filename order, and the timestamp keeps two branches from claiming the same slot.
+2) Fill out the generated file, replacing the `TODO`s. Use the schema builder (`trx.schema`) rather than raw SQL:
 
-```js
-export function up(db) {
-	db.transaction(() => {
-		// your migrations go here
-	})();
+```ts
+import type { Kysely } from "kysely";
+
+/** Gives users somewhere to put their pronouns */
+export async function up(db: Kysely<any>): Promise<void> {
+	// kysely does not wrap sqlite migrations in a transaction, so do it here
+	await db.transaction().execute(async (trx) => {
+		await trx.schema
+			.alterTable("User")
+			.addColumn("pronouns", "text")
+			.execute();
+	});
 }
 ```
 
-Note: No need to implement the "down" migration
+New tables need `strict` appended, which the builder has no method for:
+
+```ts
+import { type Kysely, sql } from "kysely";
+
+export async function up(db: Kysely<any>): Promise<void> {
+	await db.transaction().execute(async (trx) => {
+		await trx.schema
+			.createTable("UserPronoun")
+			.addColumn("id", "integer", (col) => col.primaryKey())
+			.addColumn("userId", "integer", (col) =>
+				col.notNull().references("User.id").onDelete("cascade"),
+			)
+			.addColumn("createdAt", "integer", (col) =>
+				col.notNull().defaultTo(sql`(strftime('%s', 'now'))`),
+			)
+			// every table in this schema is strict
+			.modifyEnd(sql`strict`)
+			.execute();
+
+		await trx.schema
+			.createIndex("user_pronoun_user_id")
+			.on("UserPronoun")
+			.column("userId")
+			.execute();
+	});
+}
+```
+
+Notes:
+- No need to implement the "down" migration
+- Kysely does not wrap migrations in a transaction for SQLite, so wrap it yourself
+- Drop to raw `` sql`...` `` only for what the builder can't express: table rebuilds, `pragma foreign_key_check`, FTS5 virtual tables, generated columns. See the [SQLite migration quirks](./database-schemas.md#sqlite-migration-quirks).
+- `migrations/20260803000000-initial.ts` is the collapsed history of the 165 migrations that came before it. It only ever runs against an empty database, so leave it alone.
 
 3) Update the typings in `app/db/tables.ts`
 4) Run `pnpm run migrate up` to apply your migration (the unit test database `db-test.sqlite3` is created and migrated automatically when unit tests run)

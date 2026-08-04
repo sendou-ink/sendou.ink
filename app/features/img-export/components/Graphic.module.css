@@ -72,6 +72,10 @@ same place as an auto margin would but leaves their text room to breathe.
 }
 
 .headerTitle {
+	/* the export freezes this box at its exact text width, so it has to claim the row's free
+	space rather than shrink-wrap, or a glyph the raster measures wider gets ellipsised away.
+	Basis stays auto so the title still contributes its text to the row's intrinsic width */
+	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
 	font-size: var(--font-lg);
@@ -210,10 +214,10 @@ same place as an auto margin would but leaves their text room to breathe.
 	color: var(--graphic-text-dim);
 }
 
+/* no ellipsis: the chips wrap and a username is capped well below the row width, so truncating
+here only ever fired on the frozen-width rounding described above */
 .playerName {
-	overflow: hidden;
 	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .weapons {

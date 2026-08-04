@@ -59,13 +59,11 @@ async function insertMatchSkillsInTransaction(
 		}
 	}
 
-	if (teamUsers.length > 0) {
-		await executor
-			.insertInto("SkillTeamUser")
-			.values(teamUsers)
-			.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
-			.execute();
-	}
+	await executor
+		.insertInto("SkillTeamUser")
+		.values(teamUsers)
+		.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+		.execute();
 
 	if (!oldMatchMemento) return;
 
