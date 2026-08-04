@@ -79,19 +79,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
 
-	// skip expensive rr7 data serialization (hot path loader)
-	return JSON.stringify({
-		tournament,
-		hasChildTournaments,
-		friendCodes: showFriendCodes
-			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
-			: undefined,
-		preparedMaps:
-			isTournamentOrganizer && !tournament.ctx.isFinalized
-				? await TournamentRepository.findPreparedMapsById(tournamentId)
+	return {
+		customTheme: tournament.ctx.organization?.isEstablished
+			? tournament.ctx.customTheme
+			: null,
+		// skip expensive rr7 data serialization (hot path loader)
+		data: JSON.stringify({
+			tournament,
+			hasChildTournaments,
+			friendCodes: showFriendCodes
+				? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
 				: undefined,
-		vods: showVods
-			? await TournamentMatchVodRepository.findVodsByTournamentId(tournamentId)
-			: undefined,
-	});
+			preparedMaps:
+				isTournamentOrganizer && !tournament.ctx.isFinalized
+					? await TournamentRepository.findPreparedMapsById(tournamentId)
+					: undefined,
+			vods: showVods
+				? await TournamentMatchVodRepository.findVodsByTournamentId(
+						tournamentId,
+					)
+				: undefined,
+		}),
+	};
 };

@@ -184,6 +184,7 @@ export default [
 				"brackets",
 				"features/tournament-admin/routes/to.$id.admin.brackets.tsx",
 			),
+			route("theme", "features/tournament-admin/routes/to.$id.admin.theme.tsx"),
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),

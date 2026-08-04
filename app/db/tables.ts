@@ -534,6 +534,8 @@ export interface Tournament {
 	vodsLastSyncAt: Generated<number | null>;
 	/** How many times vods have been synced (automatic process that happens when tournament has concluded). */
 	vodsSyncCount: Generated<number>;
+	/** Custom theme shown on the tournament's pages. Only settable when the tournament is hosted by an established organization. */
+	customTheme: JSONColumnTypeNullable<CustomTheme>;
 }
 
 export interface SavedCalendarEvent {

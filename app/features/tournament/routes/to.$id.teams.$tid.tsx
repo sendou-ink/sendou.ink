@@ -29,8 +29,12 @@ import { useTournament } from "./to.$id";
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
-		?.tournament as TournamentData;
+	const rawData = (args.matches[1].loaderData as { data: string } | undefined)
+		?.data;
+	const tournamentData = rawData
+		? (JSON.parse(rawData)?.tournament as TournamentData | undefined)
+		: undefined;
+
 	if (!args.loaderData || !tournamentData) return [];
 
 	const team = tournamentData.ctx.teams.find(

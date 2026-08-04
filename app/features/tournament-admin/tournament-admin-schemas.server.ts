@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { _action, id, safeJSONParse } from "~/utils/zod";
+import { _action, id, safeJSONParse, themeInputSchema } from "~/utils/zod";
 import { bracketProgressionSchema } from "../calendar/calendar-schemas";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.server";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
@@ -97,3 +97,11 @@ export const adminSeedsActionSchema = z.union([
 		),
 	}),
 ]);
+
+export const adminThemeActionSchema = z.object({
+	_action: _action("UPDATE_CUSTOM_THEME"),
+	newValue: z.preprocess(
+		(val) => (!val || val === "null" ? null : val),
+		themeInputSchema.nullable(),
+	),
+});

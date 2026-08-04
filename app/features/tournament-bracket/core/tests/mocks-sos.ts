@@ -1664,6 +1664,7 @@ export const SWIM_OR_SINK_167 = (
 		],
 	},
 	ctx: {
+		customTheme: null,
 		id: 672,
 		parentTournamentId: null,
 		parentTournamentName: null,

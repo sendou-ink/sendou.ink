@@ -6,6 +6,7 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type {
 	CastedMatchesInfo,
+	CustomTheme,
 	PreparedMaps,
 	TournamentSettings,
 } from "~/db/tables-json";
@@ -57,6 +58,7 @@ export async function findById(id: number) {
 			"Tournament.castTwitchAccounts",
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
+			"Tournament.customTheme",
 			sql<boolean>`"Tournament"."rules" is not null`.as("hasRules"),
 			"Tournament.parentTournamentId",
 			eb
@@ -884,6 +886,22 @@ export function upsertPreparedMaps({
 			.where("Tournament.id", "=", tournamentId)
 			.execute();
 	});
+}
+
+export function updateCustomTheme({
+	tournamentId,
+	customTheme,
+}: {
+	tournamentId: number;
+	customTheme: CustomTheme | null;
+}) {
+	return db
+		.updateTable("Tournament")
+		.set({
+			customTheme: customTheme ? JSON.stringify(customTheme) : null,
+		})
+		.where("id", "=", tournamentId)
+		.execute();
 }
 
 export function updateCastTwitchAccounts({

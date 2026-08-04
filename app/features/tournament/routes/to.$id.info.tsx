@@ -27,8 +27,12 @@ import styles from "./to.$id.info.module.css";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
-		?.tournament as TournamentData | undefined;
+	const rawData = (args.matches[1].loaderData as { data: string } | undefined)
+		?.data;
+	const tournamentData = rawData
+		? (JSON.parse(rawData)?.tournament as TournamentData | undefined)
+		: undefined;
+
 	if (!tournamentData) return [];
 
 	return metaTags({

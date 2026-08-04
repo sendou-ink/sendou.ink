@@ -31,7 +31,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 };
 
 export const meta: MetaFunction = (args) => {
-	const rawData = args.loaderData as string | undefined;
+	const rawData = (args.loaderData as { data: string } | undefined)?.data;
 
 	if (!rawData) return [];
 
@@ -51,7 +51,7 @@ export const meta: MetaFunction = (args) => {
 export const handle: SendouRouteHandle = {
 	i18n: ["tournament", "calendar"],
 	breadcrumb: ({ match }) => {
-		const rawData = match.loaderData as string | undefined;
+		const rawData = (match.loaderData as { data: string } | undefined)?.data;
 
 		if (!rawData) return [];
 
@@ -87,7 +87,7 @@ export default function TournamentLayoutShell() {
 }
 
 export function TournamentLayout() {
-	const rawData = useLoaderData<typeof loader>();
+	const rawData = useLoaderData<typeof loader>().data;
 	const data = React.useMemo(
 		() => JSON.parse(rawData) as TournamentLoaderData,
 		[rawData],

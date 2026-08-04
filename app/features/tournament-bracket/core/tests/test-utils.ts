@@ -62,6 +62,7 @@ export const testTournament = ({
 		id: 1,
 		tags: null,
 		organization: null,
+		customTheme: null,
 		tier: null,
 		tentativeTier: null,
 		parentTournamentId: null,

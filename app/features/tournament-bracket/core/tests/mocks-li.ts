@@ -6162,6 +6162,7 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 		],
 	},
 	ctx: {
+		customTheme: null,
 		id: 815,
 		eventId: 2614,
 		parentTournamentId: null,
