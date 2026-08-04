@@ -256,6 +256,8 @@
 	"plans.bgStyle.MINI": "",
 	"plans.adder.objective": "",
 	"plans.ranges": "",
+	"plans.waterLevel.up": "",
+	"plans.waterLevel.down": "",
 	"articles.by": "napisane przez {{author}}",
 	"theme.light": "Jasny",
 	"theme.dark": "Ciemny",

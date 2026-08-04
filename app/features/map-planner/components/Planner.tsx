@@ -38,7 +38,7 @@ import { getWeaponRange } from "~/features/comp-analyzer/core/weapon-range";
 import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { stageIds, stagesObj } from "~/modules/in-game-lists/stage-ids";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -63,6 +63,7 @@ import {
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
+import type { StageWaterLevel } from "../plans-types";
 import styles from "./Planner.module.css";
 
 const DROPPED_IMAGE_SIZE_PX = 45;
@@ -317,6 +318,7 @@ export default function Planner() {
 			stageId: StageId;
 			mode: ModeShort;
 			style: "MINI" | "OVER";
+			waterLevel: StageWaterLevel;
 		}) => {
 			if (!editor) return;
 
@@ -672,6 +674,7 @@ function StageBackgroundSelector({
 		stageId: StageId;
 		mode: ModeShort;
 		style: "MINI" | "OVER";
+		waterLevel: StageWaterLevel;
 	}) => void;
 }) {
 	const { t } = useTranslation(["game-misc", "common"]);
@@ -680,9 +683,13 @@ function StageBackgroundSelector({
 	const [backgroundStyle, setBackgroundStyle] = React.useState<"MINI" | "OVER">(
 		"MINI",
 	);
+	const [waterLevel, setWaterLevel] = React.useState<StageWaterLevel>("up");
 
 	const handleStageIdChange = (stageId: StageId) => {
 		setStageId(stageId);
+		if (stageId !== stagesObj.MAHI_MAHI_RESORT) {
+			setWaterLevel("up");
+		}
 	};
 
 	return (
@@ -729,9 +736,24 @@ function StageBackgroundSelector({
 					);
 				})}
 			</select>
+			{stageId === stagesObj.MAHI_MAHI_RESORT ? (
+				<select
+					className="w-max"
+					value={waterLevel}
+					onChange={(e) => setWaterLevel(e.target.value as StageWaterLevel)}
+				>
+					{(["up", "down"] as const).map((level) => {
+						return (
+							<option key={level} value={level}>
+								{t(`common:plans.waterLevel.${level}`)}
+							</option>
+						);
+					})}
+				</select>
+			) : null}
 			<SendouButton
 				onPress={() =>
-					onAddBackground({ style: backgroundStyle, stageId, mode })
+					onAddBackground({ style: backgroundStyle, stageId, mode, waterLevel })
 				}
 				className="w-max"
 			>

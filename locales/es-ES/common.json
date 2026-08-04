@@ -256,6 +256,8 @@
 	"plans.bgStyle.MINI": "Minimapa",
 	"plans.adder.objective": "Objetivo",
 	"plans.ranges": "",
+	"plans.waterLevel.up": "",
+	"plans.waterLevel.down": "",
 	"articles.by": "por {{author}}",
 	"theme.light": "Claro",
 	"theme.dark": "Oscuro",
