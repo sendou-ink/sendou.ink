@@ -274,6 +274,43 @@ export abstract class Bracket {
 		return !this.sources || this.sources.length === 0;
 	}
 
+	/** Resolves teams' effective seeds: the better of a team's own seed and the best
+	 * seed of a team it defeated in this bracket. A team that beats a higher seed
+	 * inherits that seed, so cross-group placement ties break in the overtaker's
+	 * favor while defaulting to the original seeding when no upsets happened. */
+	protected effectiveSeedResolver(): (tournamentTeamId: number) => number {
+		const teamSeed = (tournamentTeamId: number) => {
+			const seed = this.tournament.teamById(tournamentTeamId)?.seed;
+			return typeof seed === "number" ? seed : Number.POSITIVE_INFINITY;
+		};
+
+		const bestBeatenSeed = new Map<number, number>();
+		for (const match of this.data.match) {
+			if (!match.winnerSide) continue;
+
+			const winner =
+				match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
+			const loser =
+				match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+			if (typeof winner?.id !== "number" || typeof loser?.id !== "number") {
+				continue;
+			}
+
+			const loserSeed = teamSeed(loser.id);
+			const currentBest =
+				bestBeatenSeed.get(winner.id) ?? Number.POSITIVE_INFINITY;
+			if (loserSeed < currentBest) {
+				bestBeatenSeed.set(winner.id, loserSeed);
+			}
+		}
+
+		return (tournamentTeamId) =>
+			Math.min(
+				teamSeed(tournamentTeamId),
+				bestBeatenSeed.get(tournamentTeamId) ?? Number.POSITIVE_INFINITY,
+			);
+	}
+
 	protected standingsWithoutNonParticipants(standings: Standing[]): Standing[] {
 		return standings.map((standing) => {
 			return {
