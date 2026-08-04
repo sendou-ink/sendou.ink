@@ -75,6 +75,7 @@ import type {
 	Stat,
 	SubWeaponDamage,
 } from "../analyzer-types";
+import { INK_CONSUME_TYPES } from "../analyzer-types";
 import { PerInkTankGrid } from "../components/PerInkTankGrid";
 import {
 	ABILITIES_WITHOUT_CHUNKS,
@@ -207,6 +208,17 @@ function BuildAnalyzerPage() {
 			/>
 		),
 
+		...INK_CONSUME_TYPES.filter(
+			(type) => analyzed.stats[`mainWeaponInkConsumptionPercentage_${type}`],
+		).map((type) => (
+			<StatCard
+				context={context}
+				key={`mainWeaponInkConsumptionPercentage_${type}`}
+				stat={statKeyToTuple(`mainWeaponInkConsumptionPercentage_${type}`)}
+				title={t(`analyzer:stat.mainWeaponInkConsumptionPercentage.${type}`)}
+				suffix="%"
+			/>
+		)),
 		typeof analyzed.stats.mainWeaponWhiteInkSeconds === "number" && (
 			<StatCard
 				context={context}
