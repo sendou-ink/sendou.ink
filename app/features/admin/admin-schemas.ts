@@ -11,12 +11,8 @@ import {
 	textFieldOptional,
 	userSearch,
 } from "~/form/fields";
-import { friendCode, id } from "~/utils/zod";
+import { id } from "~/utils/zod";
 import { BAN_REASON_MAX_LENGTH } from "./admin-constants";
-
-export const adminActionSearchParamsSchema = z.object({
-	friendCode,
-});
 
 const userField = userSearch({ label: "labels.user" });
 

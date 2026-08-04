@@ -534,6 +534,20 @@ export function buildCases(fx: Fixtures): {
 	add("SQMatchRepository.findSeasonCanceledMatchesByUserId", fx.sq, (sq) =>
 		SQMatchRepository.findSeasonCanceledMatchesByUserId(sq),
 	);
+	add(
+		"SQMatchRepository.findCancelReportsByGroupMatchId",
+		fx.heavyGroupMatchId,
+		(matchId) => SQMatchRepository.findCancelReportsByGroupMatchId(matchId),
+	);
+	add(
+		"SQMatchRepository.findCancelNominationCountsByUserIds",
+		both(fx.manyUserIds, fx.sq),
+		([userIds, sq]) =>
+			SQMatchRepository.findCancelNominationCountsByUserIds({
+				userIds,
+				season: sq.season,
+			}),
+	);
 
 	// QStreamsRepository
 	addStatic("QStreamsRepository.findAllActiveMatchPlayers", () =>

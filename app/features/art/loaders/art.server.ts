@@ -2,7 +2,7 @@ import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import * as ArtRepository from "../ArtRepository.server";
-import { FILTERED_TAG_KEY_SEARCH_PARAM_KEY } from "../art-constants";
+import { artSearchParams } from "../art-search-params";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const cachedArts = await cachified({
@@ -18,9 +18,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		},
 	});
 
-	const filteredTagName = url.searchParams.get(
-		FILTERED_TAG_KEY_SEARCH_PARAM_KEY,
-	);
+	const { tag: filteredTagName } = artSearchParams.parse(url);
 
 	const filteredTag = filteredTagName
 		? cachedArts.allTags.find((t) => t.name === filteredTagName)

@@ -28,7 +28,6 @@ import {
 	safeJSONParse,
 } from "~/utils/zod";
 import { CALENDAR_EVENT, CALENDAR_EVENT_RESULT } from "./calendar-constants";
-import * as CalendarEvent from "./core/CalendarEvent";
 
 const calendarEventTagSchema = z
 	.string()
@@ -177,12 +176,6 @@ export const calendarFiltersFormSchema = z
 			});
 		}
 	});
-export const calendarFiltersSearchParamsObject = z.object({
-	filters: z
-		.preprocess(safeJSONParse, calendarFiltersSearchParamsSchema)
-		.catch(CalendarEvent.defaultFilters()),
-});
-
 const reportedPlayerSchema = z.discriminatedUnion("type", [
 	z.object({ type: z.literal("USER"), id: id.nullable() }),
 	z.object({

@@ -20,13 +20,7 @@ import {
 } from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import {
-	Link,
-	useFetcher,
-	useLocation,
-	useMatches,
-	useSearchParams,
-} from "react-router";
+import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
@@ -37,6 +31,7 @@ import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -60,6 +55,7 @@ import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
+import { authErrorSearchParams } from "./layout-search-params";
 import { NotificationContent, useNotifications } from "./NotificationPopover";
 import notificationPopoverStyles from "./NotificationPopover.module.css";
 import { TopNavMenus } from "./TopNavMenus";
@@ -253,7 +249,7 @@ export function Layout({
 	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
-	const [searchParams] = useSearchParams();
+	const [authError] = useSearchParam(authErrorSearchParams, "authError");
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
 
@@ -506,7 +502,7 @@ export function Layout({
 					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
-			{searchParams.has("authError") ? (
+			{typeof authError === "string" ? (
 				<React.Suspense>
 					<AuthErrorDialog />
 				</React.Suspense>

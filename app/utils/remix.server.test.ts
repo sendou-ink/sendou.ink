@@ -81,9 +81,11 @@ describe("paginate()", () => {
 		expect(location).not.toBeNull();
 		const locationUrl = new URL(location!, "https://sendou.ink");
 		expect(locationUrl.pathname).toBe("/vods");
+		// biome-ignore-start lint/plugin: asserting on the raw redirect URL is the point of the test
 		expect(locationUrl.searchParams.get("page")).toBe("3");
 		expect(locationUrl.searchParams.get("type")).toBe("TOURNAMENT");
 		expect(locationUrl.searchParams.get("mode")).toBe("SZ");
+		// biome-ignore-end lint/plugin: asserting on the raw redirect URL is the point of the test
 	});
 
 	it("stays on page 1 when there are no results", () => {

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { _action, deduplicate, id, modeShort, stageId } from "~/utils/zod";
+import { _action, deduplicate, id } from "~/utils/zod";
 import { addFriendCodeSchema, updateGroupNoteSchema } from "./q-schemas";
 
 export const frontPageSchema = z.union([
@@ -64,10 +64,3 @@ export const lookingSchema = z.union([
 	}),
 	updateGroupNoteSchema,
 ]);
-
-export const weaponUsageSearchParamsSchema = z.object({
-	userId: id,
-	season: z.coerce.number().int().nonnegative(),
-	stageId,
-	modeShort,
-});

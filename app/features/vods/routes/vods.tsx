@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useLoaderData, useSearchParams } from "react-router";
+import { useLoaderData } from "react-router";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
@@ -8,13 +8,15 @@ import { WeaponSelect } from "~/components/WeaponSelect";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, VODS_PAGE } from "~/utils/urls";
 import { VodListing } from "../components/VodListing";
 import { loader } from "../loaders/vods.server";
 import { videoMatchTypes } from "../vods-constants";
+import { vodsSearchParams } from "../vods-search-params";
 import styles from "./vods.module.css";
 
 export { loader };
@@ -41,24 +43,16 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 export default function VodsSearchPage() {
 	const { t } = useTranslation(["vods"]);
 	const data = useLoaderData<typeof loader>();
-	const [, setSearchParams] = useSearchParams();
-
-	const addToSearchParams = (key: string, value: string | number) => {
-		setSearchParams((params) => {
-			params.set(key, String(value));
-			params.delete("page");
-			return params;
-		});
-	};
 
 	const pagination = useSearchParamPagination({
+		definition: vodsSearchParams,
 		currentPage: data.currentPage,
 		pagesCount: data.pagesCount,
 	});
 
 	return (
 		<Main className="stack lg" bigger>
-			<Filters addToSearchParams={addToSearchParams} />
+			<Filters />
 			{data.vods.length > 0 ? (
 				<>
 					<div className={styles.listingList}>
@@ -75,29 +69,11 @@ export default function VodsSearchPage() {
 	);
 }
 
-function Filters({
-	addToSearchParams,
-}: {
-	addToSearchParams: (key: string, value: string | number) => void;
-}) {
+function Filters() {
 	const { t } = useTranslation(["game-misc", "vods"]);
 
-	const [searchParams] = useSearchParams();
-	const mode = modesShort.find(
-		(mode) => searchParams.get("mode") && mode === searchParams.get("mode"),
-	);
-	const stageId = stageIds.find(
-		(stageId) =>
-			searchParams.get("stageId") &&
-			stageId === Number(searchParams.get("stageId")),
-	);
-	const weapon = mainWeaponIds.find(
-		(id) =>
-			searchParams.get("weapon") && id === Number(searchParams.get("weapon")),
-	);
-	const type = videoMatchTypes.find(
-		(type) => searchParams.get("type") && type === searchParams.get("type"),
-	);
+	const [{ mode, stageId, weapon, type }, setParams] =
+		useSearchParamsTyped(vodsSearchParams);
 
 	return (
 		<div className="stack sm horizontal flex-wrap">
@@ -106,7 +82,9 @@ function Filters({
 				<select
 					name="mode"
 					value={mode ?? ""}
-					onChange={(e) => addToSearchParams("mode", e.target.value)}
+					onChange={(e) =>
+						setParams({ mode: (e.target.value || null) as ModeShort | null })
+					}
 				>
 					<option value="">-</option>
 					{modesShort.map((mode) => {
@@ -123,7 +101,14 @@ function Filters({
 				<select
 					name="stage"
 					value={stageId ?? ""}
-					onChange={(e) => addToSearchParams("stageId", e.target.value)}
+					onChange={(e) =>
+						setParams({
+							stageId:
+								e.target.value === ""
+									? null
+									: (Number(e.target.value) as StageId),
+						})
+					}
 				>
 					<option value="">-</option>
 					{stageIds.map((stageId) => {
@@ -138,9 +123,9 @@ function Filters({
 
 			<WeaponSelect
 				label={t("vods:forms.title.weapon")}
-				value={weapon ?? null}
+				value={weapon}
 				onChange={(weaponId) => {
-					addToSearchParams("weapon", weaponId ?? "");
+					setParams({ weapon: weaponId ?? null });
 				}}
 				clearable
 			/>
@@ -151,7 +136,13 @@ function Filters({
 					name="type"
 					className={styles.typeSelect}
 					value={type ?? ""}
-					onChange={(e) => addToSearchParams("type", e.target.value)}
+					onChange={(e) =>
+						setParams({
+							type: (e.target.value || null) as
+								| (typeof videoMatchTypes)[number]
+								| null,
+						})
+					}
 				>
 					<option value="">-</option>
 					{videoMatchTypes.map((type) => {

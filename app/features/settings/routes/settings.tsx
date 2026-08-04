@@ -8,9 +8,9 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useSearchParams } from "react-router";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
@@ -29,6 +29,7 @@ import { SoundsTab } from "../components/SoundsTab";
 import { ThemeTab } from "../components/ThemeTab";
 import { loader } from "../loaders/settings.server";
 import type { SettingsTabSlug } from "../settings-constants";
+import { settingsSearchParams } from "../settings-search-params";
 import { defaultTab, resolveActiveTab } from "../settings-utils";
 import "./settings.global.css";
 
@@ -53,23 +54,14 @@ export const meta: MetaFunction = (args) => {
 export default function SettingsPage() {
 	const user = useUser();
 	const { t } = useTranslation(["common", "settings"]);
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [tab, setTab] = useSearchParam(settingsSearchParams, "tab");
 
 	const isLoggedIn = Boolean(user);
-	const activeTab = resolveActiveTab(searchParams.get("tab"), isLoggedIn);
+	const activeTab = resolveActiveTab(tab, isLoggedIn);
 
 	const handleSelectionChange = (key: React.Key) => {
 		const slug = key as SettingsTabSlug;
-		const next = new URLSearchParams(searchParams);
-		if (slug === defaultTab(isLoggedIn)) {
-			next.delete("tab");
-		} else {
-			next.set("tab", slug);
-		}
-		setSearchParams(next, {
-			defaultShouldRevalidate: false,
-			replace: true,
-		});
+		setTab(slug === defaultTab(isLoggedIn) ? null : slug);
 	};
 
 	return (

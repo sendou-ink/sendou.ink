@@ -14,9 +14,9 @@ import {
 	BUILD_SORT_IDENTIFIERS,
 	type BuildSort,
 } from "~/features/user-page/user-page-constants";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage, weaponCategoryUrl } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.builds.server";
@@ -27,6 +27,7 @@ import {
 } from "../loaders/u.$identifier.builds.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
+import { userBuildsSearchParams } from "../user-page-search-params";
 
 export { action, loader };
 
@@ -44,21 +45,17 @@ export default function UserBuildsPage() {
 	const user = useUser();
 	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
-	const [weaponFilter, setWeaponFilter] = useSearchParamState<BuildFilter>({
-		defaultValue: "ALL",
-		name: "weapon",
-		revive: (value) =>
-			["ALL", "PUBLIC", "PRIVATE"].includes(value)
-				? (value as BuildFilter)
-				: mainWeaponIds.find((id) => id === Number(value)),
-	});
+	const [weaponFilter, setWeaponFilter] = useSearchParam(
+		userBuildsSearchParams,
+		"weapon",
+	);
 
 	const isOwnPage = user?.id === layoutData.user.id;
-	const [changingSorting, setChangingSorting] = useSearchParamState({
-		defaultValue: false,
-		name: "sorting",
-		revive: (value) => value === "true" && isOwnPage,
-	});
+	const [sorting, setChangingSorting] = useSearchParam(
+		userBuildsSearchParams,
+		"sorting",
+	);
+	const changingSorting = sorting && isOwnPage;
 	// lives here so closing the dialog mid-submit doesn't unmount the fetcher,
 	// which would discard the action's redirect and skip revalidation
 	const sortingFetcher = useFetcher();

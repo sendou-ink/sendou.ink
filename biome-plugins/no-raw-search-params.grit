@@ -1,0 +1,18 @@
+language js
+
+// All URL search param handling goes through `app/modules/search-params`, so
+// that a param's codec, default and loader-relevance are declared exactly once.
+// See docs/dev/search-params.md.
+or {
+	`useSearchParams()` as $hook where {
+		register_diagnostic(span=$hook, message="Do not use raw `useSearchParams`. Declare the params in a `<feature>-search-params.ts` definition and read them with `useSearchParamsTyped`. See docs/dev/search-params.md.", severity="error")
+	},
+	`$_.searchParams.$method($_)` as $read where {
+		$method <: or {
+			`get`,
+			`getAll`,
+			`has`
+		},
+		register_diagnostic(span=$read, message="Do not read search params off a URL directly. Declare them in a `<feature>-search-params.ts` definition and read them with `definition.parse(request)`. If this is not a sendou.ink URL (an outgoing API call, or a URL pasted by a user), suppress with `// biome-ignore lint/plugin: <reason>`.", severity="error")
+	}
+}

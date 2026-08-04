@@ -11,10 +11,8 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { forbidden, notFoundIfNullish } from "~/utils/remix.server";
 import { resolveAvatarUrl } from "~/utils/urls";
-import {
-	seasonSummaryGraphicSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas";
+import { userParamsSchema } from "../user-page-schemas";
+import { userSeasonSummaryGraphicSearchParams } from "../user-page-search-params";
 
 const BEST_SETS_COUNT = 3;
 /** The graphic shows fewer than this when it also has weapons to show */
@@ -25,13 +23,10 @@ export type UserSeasonSummaryGraphicLoaderData = SerializeFrom<typeof loader>;
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const loggedInUser = requireUser();
 	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonSummaryGraphicSearchParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
-	if (!parsedSearchParams.success) {
+	const { season } = userSeasonSummaryGraphicSearchParams.parse(url);
+	if (typeof season !== "number") {
 		throw new Response(null, { status: 400 });
 	}
-	const { season } = parsedSearchParams.data;
 
 	const user = notFoundIfNullish(
 		await UserRepository.findIdByIdentifier(identifier),

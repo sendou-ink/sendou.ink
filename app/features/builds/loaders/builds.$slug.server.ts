@@ -5,14 +5,8 @@ import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import * as BuildRepository from "../BuildRepository.server";
-import {
-	BUILDS_PAGE_MAX_BUILDS,
-	FILTER_SEARCH_PARAM_KEY,
-} from "../builds-constants";
-import {
-	buildFiltersSearchParams,
-	buildsLimitSearchParam,
-} from "../builds-schemas";
+import { BUILDS_PAGE_MAX_BUILDS } from "../builds-constants";
+import { buildsSearchParams } from "../builds-search-params";
 import { filterBuilds } from "../core/filter.server";
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
@@ -24,20 +18,20 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const limit = buildsLimitSearchParam.parse(url.searchParams.get("limit"));
+	const { limit, f: filters } = buildsSearchParams.parse(url);
 
 	const weaponName = t(`weapons:MAIN_${weaponId}`);
 
 	const slug = mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
 
-	const filters = resolveFilters(url.searchParams.get(FILTER_SEARCH_PARAM_KEY));
+	const hasActiveFilters = filters.length > 0;
 
 	const builds = await BuildRepository.findAllByWeaponId(weaponId, {
-		limit: filters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
+		limit: hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
 		sortAbilities: !user?.preferences?.disableBuildAbilitySorting,
 	});
 
-	const filteredBuilds = filters
+	const filteredBuilds = hasActiveFilters
 		? filterBuilds({
 				builds,
 				filters,
@@ -61,18 +55,6 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		limit,
 		hasMoreBuilds,
 		slug,
-		filters: filters ?? [],
+		filters,
 	};
 };
-
-function resolveFilters(rawFilters: string | null) {
-	if (!rawFilters) return null;
-
-	const filters = buildFiltersSearchParams.safeParse(rawFilters);
-	const hasActiveFilters =
-		filters.success && filters.data && filters.data.length > 0;
-
-	if (!hasActiveFilters) return null;
-
-	return filters.data;
-}

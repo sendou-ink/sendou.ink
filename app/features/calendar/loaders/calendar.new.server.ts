@@ -11,22 +11,26 @@ import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { tournamentBracketsPage } from "~/utils/urls";
+import { calendarNewSearchParams } from "../calendar-search-params";
 import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	requireRole("CALENDAR_EVENT_ADDER");
 
-	const eventWithTournament = async (key: string) => {
-		const eventId = Number(url.searchParams.get(key));
-		const event = Number.isNaN(eventId)
-			? undefined
-			: await CalendarRepository.findById(eventId, {
-					includeMapPool: true,
-					includeTieBreakerMapPool: true,
-					includeBadgePrizes: true,
-					includeTrophy: true,
-				});
+	const { eventId, copyEventId, tournament } =
+		calendarNewSearchParams.parse(url);
+
+	const eventWithTournament = async (id: number | null) => {
+		const event =
+			id === null
+				? undefined
+				: await CalendarRepository.findById(id, {
+						includeMapPool: true,
+						includeTieBreakerMapPool: true,
+						includeBadgePrizes: true,
+						includeTrophy: true,
+					});
 
 		if (!event) return;
 
@@ -43,7 +47,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		};
 	};
 
-	const eventToEdit = await eventWithTournament("eventId");
+	const eventToEdit = await eventWithTournament(eventId);
 	const canEditEvent = (() => {
 		if (!eventToEdit) return false;
 		if (
@@ -84,7 +88,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 
 	const eventToCopyRaw =
 		canAddTournaments && !eventToEdit
-			? await eventWithTournament("copyEventId")
+			? await eventWithTournament(copyEventId)
 			: undefined;
 
 	const validOrganizationIds = organizations.flatMap((org) =>
@@ -123,9 +127,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 
 	return {
 		isAddingTournament: Boolean(
-			url.searchParams.has("tournament") ||
-				url.searchParams.has("copyEventId") ||
-				eventToEdit?.tournament,
+			tournament || copyEventId !== null || eventToEdit?.tournament,
 		),
 		managedBadges,
 		badgeOptions,

@@ -14,15 +14,17 @@ import {
 	RadioGroup,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useSearchParams } from "react-router";
+import { useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Image } from "~/components/Image";
 import { Input } from "~/components/Input";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { SearchLoaderData } from "~/features/search/routes/search";
+import { searchSearchParams } from "~/features/search/search-search-params";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import {
 	navIconUrl,
 	teamPage,
@@ -32,6 +34,11 @@ import {
 } from "~/utils/urls";
 import styles from "./GlobalSearch.module.css";
 import {
+	globalSearchSearchParams,
+	GLOBAL_SEARCH_TYPES as SEARCH_TYPES,
+	type GlobalSearchType as SearchType,
+} from "./global-search-search-params";
+import {
 	filterWeaponResults,
 	type SelectedWeapon,
 	saveRecentWeapon,
@@ -40,15 +47,6 @@ import {
 	WeaponResultsList,
 	weaponToSelectedWeapon,
 } from "./WeaponSearch";
-
-const SEARCH_TYPES = [
-	"weapons",
-	"users",
-	"teams",
-	"organizations",
-	"tournaments",
-] as const;
-type SearchType = (typeof SEARCH_TYPES)[number];
 
 const SEARCH_TYPE_TO_PREFIX: Record<SearchType, string> = {
 	weapons: "w",
@@ -96,18 +94,11 @@ function persistSearchType(type: SearchType) {
 
 export function GlobalSearch() {
 	const { t } = useTranslation(["common"]);
-	// TODO: use zod validated search params
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [params, setParams] = useSearchParamsTyped(globalSearchSearchParams);
 	const isHydrated = useHydrated();
 	const isMac = isHydrated && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent);
 
-	const searchParamOpen = searchParams.get("search") === "open";
-	const searchParamType = searchParams.get("type");
-	const searchParamWeapon = searchParams.get("weapon");
-	const initialSearchType =
-		searchParamType && SEARCH_TYPES.includes(searchParamType as SearchType)
-			? (searchParamType as SearchType)
-			: null;
+	const searchParamOpen = params.search === "open";
 
 	const [isOpen, setIsOpen] = React.useState(searchParamOpen);
 
@@ -132,13 +123,16 @@ export function GlobalSearch() {
 
 	const handleOpenChange = (open: boolean) => {
 		setIsOpen(open);
-		if (!open && (searchParamOpen || searchParamType || searchParamWeapon)) {
-			const newParams = new URLSearchParams(searchParams);
-			newParams.delete("search");
-			newParams.delete("type");
-			newParams.delete("weapon");
-			setSearchParams(newParams, { replace: true });
+		if (open) return;
+		if (
+			params.search === null &&
+			params.type === null &&
+			params.weapon === null
+		) {
+			return;
 		}
+
+		setParams({ search: null, type: null, weapon: null });
 	};
 
 	return (
@@ -153,8 +147,8 @@ export function GlobalSearch() {
 					<Dialog className={styles.dialog} aria-label={t("common:search")}>
 						<GlobalSearchContent
 							onClose={() => setIsOpen(false)}
-							initialSearchType={initialSearchType}
-							initialWeaponId={searchParamWeapon}
+							initialSearchType={params.type}
+							initialWeaponId={params.weapon}
 						/>
 					</Dialog>
 				</Modal>
@@ -164,15 +158,13 @@ export function GlobalSearch() {
 }
 
 function resolveInitialWeapon(
-	weaponIdStr: string | null,
+	weaponId: MainWeaponId | null,
 	t: TFunction<["common", "weapons"]>,
 ): SelectedWeapon | null {
-	if (!weaponIdStr) return null;
-	const id = Number(weaponIdStr) as MainWeaponId;
-	if (Number.isNaN(id)) return null;
-	const name = t(`weapons:MAIN_${id}`);
-	if (!name || name === `MAIN_${id}`) return null;
-	return weaponToSelectedWeapon(id, t);
+	if (weaponId === null) return null;
+	const name = t(`weapons:MAIN_${weaponId}`);
+	if (!name || name === `MAIN_${weaponId}`) return null;
+	return weaponToSelectedWeapon(weaponId, t);
 }
 
 function GlobalSearchContent({
@@ -182,7 +174,7 @@ function GlobalSearchContent({
 }: {
 	onClose: () => void;
 	initialSearchType: SearchType | null;
-	initialWeaponId: string | null;
+	initialWeaponId: MainWeaponId | null;
 }) {
 	const { t } = useTranslation(["common", "weapons"]);
 	const [query, setQuery] = React.useState("");
@@ -216,7 +208,11 @@ function GlobalSearchContent({
 			if (searchType === "weapons") return;
 			if (query.length < 3) return;
 			fetcher.load(
-				`/search?q=${encodeURIComponent(query)}&type=${searchType}&limit=10`,
+				searchSearchParams.href("/search", {
+					q: query,
+					type: searchType as Exclude<SearchType, "weapons">,
+					limit: 10,
+				}),
 			);
 		},
 		300,

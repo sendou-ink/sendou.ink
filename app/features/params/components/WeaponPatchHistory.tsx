@@ -17,16 +17,14 @@ import {
 	translateDamageReceiver,
 } from "~/features/object-damage-calculator/calculator-constants";
 import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
-import {
-	useSearchParamState,
-	useSearchParamStateEncoder,
-} from "~/hooks/useSearchParamState";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import * as WeaponParams from "../core/WeaponParams";
+import { weaponParamsSearchParams } from "../params-search-params";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
 	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
@@ -85,23 +83,17 @@ export function WeaponPatchHistoryByKit({
 
 	const kitIds = kits.map((kit) => kit.weaponId);
 
-	const [selectedWeaponId, setSelectedWeaponId] =
-		useSearchParamStateEncoder<MainWeaponId>({
-			name: "kit",
-			defaultValue: defaultWeaponId,
-			revive: (value) => {
-				const id = Number(value) as MainWeaponId;
-				return kitIds.includes(id) ? id : undefined;
-			},
-			encode: (value) => String(value),
-		});
+	const [kit, setKit] = useSearchParam(weaponParamsSearchParams, "kit");
+	const selectedWeaponId =
+		typeof kit === "number" && kitIds.includes(kit) ? kit : defaultWeaponId;
+	const selectKit = (weaponId: MainWeaponId) => {
+		setKit(weaponId === defaultWeaponId ? null : weaponId);
+	};
 
-	const [showSubSpecial, setShowSubSpecial] = useSearchParamState({
-		name: "kitExtras",
-		defaultValue: true,
-		revive: (value) =>
-			value === "false" ? false : value === "true" ? true : undefined,
-	});
+	const [showSubSpecial, setShowSubSpecial] = useSearchParam(
+		weaponParamsSearchParams,
+		"kitExtras",
+	);
 
 	const selectedKit =
 		kits.find((kit) => kit.weaponId === selectedWeaponId) ?? kits[0];
@@ -122,7 +114,7 @@ export function WeaponPatchHistoryByKit({
 					<KitFilter
 						kits={kits}
 						selectedWeaponId={selectedKit.weaponId}
-						onSelect={setSelectedWeaponId}
+						onSelect={selectKit}
 					/>
 				) : null}
 				<SendouSwitch isSelected={showSubSpecial} onChange={setShowSubSpecial}>

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage } from "~/components/Image";
-import { possibleApValues } from "~/features/build-analyzer/core/utils";
+import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";

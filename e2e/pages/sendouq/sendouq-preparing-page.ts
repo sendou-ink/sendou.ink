@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
+import { qSearchParams } from "~/features/sendouq/q-search-params";
 import invariant from "~/utils/invariant";
 import { SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
 import { expect, navigate } from "../../helpers/playwright";
@@ -34,9 +34,7 @@ export class SendouQPreparingPage {
 	/** The code of the invite link, for joining the group without being a friend. */
 	async inviteCode() {
 		const inviteLink = await this.locators.inviteLinkInput.inputValue();
-		const code = new URL(inviteLink).searchParams.get(
-			JOIN_CODE_SEARCH_PARAM_KEY,
-		);
+		const { join: code } = qSearchParams.parse(new URL(inviteLink));
 		invariant(code, `No invite code in the invite link: ${inviteLink}`);
 
 		return code;

@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { TIER_LIST_SEARCH_PARAM_NAMES } from "./tier-list-maker-constants";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
-import { tierListStateSerializedSchema } from "./tier-list-maker-schemas";
+import { tierListMakerSearchParams } from "./tier-list-maker-search-params";
 import {
 	addItemToTier,
-	decompress,
 	getNextNthForItem,
 	tierListItemId,
 	tierListMakerPathWithState,
@@ -87,11 +86,8 @@ describe("getNextNthForItem", () => {
 describe("tierListMakerPathWithState", () => {
 	function parseStateFromPath(path: string): TierListState {
 		const searchParams = new URLSearchParams(path.split("?")[1]);
-		const param = searchParams.get(TIER_LIST_SEARCH_PARAM_NAMES.STATE);
 
-		const parsed = tierListStateSerializedSchema.parse(decompress(param!));
-
-		return { tiers: parsed.tiers, tierItems: new Map(parsed.tierItems) };
+		return tierListMakerSearchParams.parse(searchParams).state;
 	}
 
 	it("round trips the tier list state", () => {

@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
@@ -10,6 +10,7 @@ import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -23,11 +24,8 @@ import {
 import { InfoPopover } from "../../../components/InfoPopover";
 import { TopTenPlayer } from "../components/TopTenPlayer";
 import type { XPLeaderboardItem } from "../LeaderboardRepository.server";
-import {
-	LEADERBOARD_TYPES,
-	SEASON_SEARCH_PARAM_KEY,
-	TYPE_SEARCH_PARAM_KEY,
-} from "../leaderboards-constants";
+import { LEADERBOARD_TYPES } from "../leaderboards-constants";
+import { leaderboardsSearchParams } from "../leaderboards-search-params";
 import { seasonHasTopTen } from "../leaderboards-utils";
 import { loader } from "../loaders/leaderboards.server";
 
@@ -60,12 +58,10 @@ export const meta: MetaFunction = (args) => {
 
 export default function LeaderboardsPage() {
 	const { t } = useTranslation(["common", "game-misc", "weapons"]);
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
 	const data = useLoaderData<typeof loader>();
 
-	const isAllUserLeaderboard =
-		!searchParams.get(TYPE_SEARCH_PARAM_KEY) ||
-		searchParams.get(TYPE_SEARCH_PARAM_KEY) === "USER";
+	const isAllUserLeaderboard = params.type === "USER";
 
 	const seasonPlusTypeToKey = ({
 		season,
@@ -75,21 +71,11 @@ export default function LeaderboardsPage() {
 		type: string;
 	}) => `${type};${season}`;
 
-	const selectValue = () => {
-		const type =
-			searchParams.get(TYPE_SEARCH_PARAM_KEY) ?? LEADERBOARD_TYPES[0];
-
-		if (
-			LEADERBOARD_TYPES.includes(type as (typeof LEADERBOARD_TYPES)[number])
-		) {
-			return seasonPlusTypeToKey({
-				season: data.season,
-				type,
-			});
-		}
-
-		return type;
-	};
+	const selectValue = () =>
+		seasonPlusTypeToKey({
+			season: data.season,
+			type: params.type,
+		});
 
 	const showTopTen = Boolean(
 		seasonHasTopTen(data.season) &&
@@ -108,13 +94,10 @@ export default function LeaderboardsPage() {
 				value={selectValue()}
 				onChange={(e) => {
 					const [type, season] = e.target.value.split(";");
-					setSearchParams(
-						{
-							[TYPE_SEARCH_PARAM_KEY]: type,
-							[SEASON_SEARCH_PARAM_KEY]: season,
-						},
-						{ replace: true },
-					);
+					setParams({
+						type: type as (typeof LEADERBOARD_TYPES)[number],
+						season: season ? Number(season) : null,
+					});
 				}}
 			>
 				{Seasons.allStarted().map((season) => {

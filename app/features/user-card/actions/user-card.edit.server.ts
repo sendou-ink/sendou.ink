@@ -5,15 +5,14 @@ import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
 import * as UserCardRepository from "../UserCardRepository.server";
 import { updateUserCardSchema } from "../user-card-schemas";
+import { userCardEditSearchParams } from "../user-card-search-params";
 import type { HideableUserCardStat } from "../user-card-types";
 import { isValidUnverifiedXp } from "../user-card-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 
-	const returnTo = safeReturnTo(
-		new URL(request.url).searchParams.get("returnTo"),
-	);
+	const { returnTo } = userCardEditSearchParams.parse(request);
 
 	const result = await parseFormDataWithImages({
 		request,
@@ -66,13 +65,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 	throw redirect(returnTo ?? userPage(user));
 };
-
-function safeReturnTo(value: string | null) {
-	if (!value) return null;
-	if (!value.startsWith("/") || value.startsWith("//")) return null;
-
-	return value;
-}
 
 function resolveBanner({
 	bannerType,

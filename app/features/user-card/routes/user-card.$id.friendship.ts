@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
+import { userCardFriendshipSearchParams } from "../user-card-search-params";
 import type { UserCardFriendship } from "../user-card-types";
 
 export type UserCardFriendshipLoaderData = SerializeFrom<typeof loader>;
@@ -29,8 +30,8 @@ export const loader = async ({
 		};
 	}
 
-	const withMutualFriends =
-		new URL(request.url).searchParams.get("mutuals") === "true";
+	const { mutuals: withMutualFriends } =
+		userCardFriendshipSearchParams.parse(request);
 
 	const [friendship, pendingRequest, mutualFriends] = await Promise.all([
 		FriendRepository.findFriendship({

@@ -1,12 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import {
-	Link,
-	type ShouldRevalidateFunction,
-	useLoaderData,
-	useMatches,
-} from "react-router";
+import { Link, useLoaderData, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
@@ -19,7 +14,6 @@ import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import { isRevalidation } from "~/utils/remix";
 import { sendouQMatchPage, tournamentTeamPage } from "~/utils/urls";
 import {
 	loader,
@@ -27,21 +21,11 @@ import {
 } from "../loaders/u.$identifier.seasons.index.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export { loader };
 
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isRevalidation(args)) return args.defaultShouldRevalidate;
-	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
-	if (args.currentParams.identifier !== args.nextParams.identifier) return true;
-
-	return (
-		args.currentUrl.searchParams.get("season") !==
-			args.nextUrl.searchParams.get("season") ||
-		args.currentUrl.searchParams.get("page") !==
-			args.nextUrl.searchParams.get("page")
-	);
-};
+export const shouldRevalidate = userSeasonsSearchParams.shouldRevalidate;
 
 export default function UserSeasonsSets() {
 	const { t } = useTranslation(["user"]);
@@ -68,6 +52,7 @@ function Results({
 	const ref = React.useRef<HTMLDivElement>(null);
 
 	const pagination = useSearchParamPagination({
+		definition: userSeasonsSearchParams,
 		currentPage: results.currentPage,
 		pagesCount: results.pagesCount,
 	});

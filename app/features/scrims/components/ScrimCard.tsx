@@ -12,7 +12,7 @@ import {
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Form, Link, useSearchParams } from "react-router";
+import { Form, Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -29,8 +29,10 @@ import {
 } from "~/features/user-card/components/UserCard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage } from "~/utils/urls";
+import { scrimsSearchParams } from "../scrims-search-params";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import styles from "./ScrimCard.module.css";
@@ -51,7 +53,10 @@ export function ScrimPostCard({
 }: ScrimPostCardProps) {
 	const { t } = useTranslation(["scrims"]);
 	const cardRef = useRef<HTMLDivElement>(null);
-	const [, setSearchParams] = useSearchParams();
+	const [, setPendingRequestPostId] = useSearchParam(
+		scrimsSearchParams,
+		"pendingRequestPostId",
+	);
 
 	const owner = post.users.find((user) => user.isOwner) ?? post.users[0];
 	const isPickup = !post.team?.name;
@@ -67,17 +72,11 @@ export function ScrimPostCard({
 		// deferred so it runs after <ScrollRestoration />'s scroll to top
 		const timeout = setTimeout(() => {
 			cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-			setSearchParams(
-				(prev) => {
-					prev.delete("pendingRequestPostId");
-					return prev;
-				},
-				{ replace: true, preventScrollReset: true },
-			);
+			setPendingRequestPostId(null);
 		}, 0);
 
 		return () => clearTimeout(timeout);
-	}, [autoScrollIntoView, setSearchParams]);
+	}, [autoScrollIntoView, setPendingRequestPostId]);
 
 	return (
 		<div className={styles.card} ref={cardRef}>

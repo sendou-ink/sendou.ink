@@ -1,36 +1,25 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import type { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
-import {
-	validatedBuildFromSearchParams,
-	validatedWeaponIdFromSearchParams,
-} from "~/features/build-analyzer/core/utils";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
-import type { Ability } from "~/modules/in-game-lists/types";
-import { actualNumber, id } from "~/utils/zod";
+import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
+import type { SearchParamsValues } from "~/modules/search-params/search-params";
 import type { newBuildBaseSchema } from "../user-page-schemas";
-
-const newBuildLoaderParamsSchema = z.object({
-	buildId: z.preprocess(actualNumber, id),
-});
+import { userBuildsNewSearchParams } from "../user-page-search-params";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
-	const params = newBuildLoaderParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
+	const params = userBuildsNewSearchParams.parse(url);
 
 	const usersBuilds = await BuildRepository.findAllByUserId(user.id, {
 		showPrivate: true,
 	});
-	const buildToEdit = usersBuilds.find(
-		(b) => params.success && b.id === params.data.buildId,
-	);
+	const buildToEdit = usersBuilds.find((b) => b.id === params.buildId);
 
 	return {
-		defaultValues: resolveDefaultValues(url.searchParams, buildToEdit),
+		defaultValues: resolveDefaultValues(params, buildToEdit),
 		gearIdToAbilities: resolveGearIdToAbilities(),
 	};
 
@@ -51,14 +40,13 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 type NewBuildDefaultValues = Partial<z.infer<typeof newBuildBaseSchema>>;
 
 function resolveDefaultValues(
-	searchParams: URLSearchParams,
+	params: SearchParamsValues<typeof userBuildsNewSearchParams.shape>,
 	buildToEdit:
 		| Awaited<ReturnType<typeof BuildRepository.findAllByUserId>>[number]
 		| undefined,
 ): NewBuildDefaultValues | null {
 	const weapons = resolveDefaultWeapons();
-	const abilities =
-		buildToEdit?.abilities ?? validatedBuildFromSearchParams(searchParams);
+	const abilities = buildToEdit?.abilities ?? params.build;
 
 	if (!buildToEdit && weapons.length === 0 && !abilities) {
 		return null;
@@ -85,9 +73,8 @@ function resolveDefaultValues(
 			}));
 		}
 
-		const weaponIdFromParams = validatedWeaponIdFromSearchParams(searchParams);
-		if (weaponIdFromParams) {
-			return [{ id: weaponIdFromParams, isFavorite: false }];
+		if (typeof params.weapon === "number") {
+			return [{ id: params.weapon as MainWeaponId, isFavorite: false }];
 		}
 
 		return [];

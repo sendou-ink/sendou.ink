@@ -4,11 +4,10 @@ import * as AssociationsRepository from "~/features/associations/AssociationRepo
 import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
-import { parseSearchParams } from "~/utils/remix.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { scrimsFiltersSearchParamsObject } from "../scrims-schemas";
+import { scrimsSearchParams } from "../scrims-search-params";
 import { dividePosts } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -18,13 +17,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? await AssociationsRepository.findByMemberUserId(user?.id)
 		: null;
 
-	const filtersFromSearchParams = parseSearchParams({
-		request,
-		schema: scrimsFiltersSearchParamsObject,
-	}).filters;
+	const filtersFromSearchParams = scrimsSearchParams.parse(request).filters;
 
 	const filters = Scrim.filtersAreDefault(filtersFromSearchParams)
-		? user?.preferences?.defaultScrimsFilters
+		? (user?.preferences?.defaultScrimsFilters ?? Scrim.defaultFilters())
 		: filtersFromSearchParams;
 
 	const posts = (await ScrimPostRepository.findAllRelevant())
@@ -60,6 +56,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		})),
 		posts: dividePosts(posts, user?.id),
 		teams: user ? await TeamRepository.findAllByMemberUserId(user.id) : [],
-		filters: filters ?? Scrim.defaultFilters(),
+		filters,
 	};
 };
