@@ -21,7 +21,7 @@ export interface CreateBracketArgs {
 	preview: boolean;
 	data?: BracketData;
 	type: Tables["TournamentStage"]["type"];
-	canBeStarted?: boolean;
+	participantsReady?: boolean;
 	name: string;
 	teamsPendingCheckIn?: number[];
 	tournament: Tournament;
@@ -63,7 +63,7 @@ export abstract class Bracket {
 	idx;
 	preview;
 	data;
-	canBeStarted;
+	participantsReady;
 	name;
 	teamsPendingCheckIn;
 	tournament;
@@ -83,7 +83,7 @@ export abstract class Bracket {
 		idx,
 		preview,
 		data,
-		canBeStarted,
+		participantsReady,
 		name,
 		teamsPendingCheckIn,
 		tournament,
@@ -105,13 +105,26 @@ export abstract class Bracket {
 		this.tournament = tournament;
 		this.settings = settings;
 		this.data = data ?? this.generateMatchesData(this.seeding!);
-		this.canBeStarted = canBeStarted;
+		this.participantsReady = participantsReady;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
 		this.sources = sources;
 		this.createdAt = createdAt;
 		this.requiresCheckIn = requiresCheckIn;
 		this.startTime = startTime;
+	}
+
+	/**
+	 * Can the organizer start this bracket at this moment? Evaluated on access rather than
+	 * stored because it depends on the current time, and a bracket can be built (and cached)
+	 * long before the clock reaches its start time.
+	 */
+	get canBeStarted() {
+		if (!this.participantsReady) return false;
+		if (this.startTime && this.startTime > new Date()) return false;
+		if (this.sources) return true;
+
+		return this.tournament.regularCheckInHasEnded;
 	}
 
 	/**

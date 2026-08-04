@@ -16,7 +16,6 @@ import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
-	databaseTimestampNow,
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
@@ -43,7 +42,6 @@ export type BracketDerivedMeta = {
 	everyMatchOver: boolean;
 	/** False only while a swiss bracket still has rounds whose matches have not been generated. */
 	allRoundsHaveMatches: boolean;
-	canBeStarted: boolean;
 	participantTournamentTeamIds: number[];
 	teamsPendingCheckIn: number[] | null;
 	seeding: number[] | null;
@@ -71,7 +69,7 @@ export type SerializedBracket = {
 	preview: boolean;
 	data: TournamentData["data"];
 	type: Tables["TournamentStage"]["type"];
-	canBeStarted?: boolean;
+	participantsReady?: boolean;
 	name: string;
 	teamsPendingCheckIn?: number[];
 	createdAt: number | null;
@@ -206,7 +204,6 @@ export class Tournament {
 				allRoundsHaveMatches: bracket.data.round.every((round) =>
 					bracket.data.match.some((match) => match.roundId === round.id),
 				),
-				canBeStarted: bracket.canBeStarted ?? false,
 				participantTournamentTeamIds: bracket.participantTournamentTeamIds,
 				teamsPendingCheckIn: bracket.teamsPendingCheckIn ?? null,
 				seeding: bracket.seeding ?? null,
@@ -316,11 +313,10 @@ export class Tournament {
 			type,
 			sources,
 			createdAt: null,
-			canBeStarted:
-				(!startTime || startTime < databaseTimestampNow()) &&
+			participantsReady:
 				checkedInTeamsWithReplaysAvoided.length >=
 					TOURNAMENT.ENOUGH_TEAMS_TO_START &&
-				(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
+				(!sources || relevantMatchesFinished),
 			teamsPendingCheckIn: bracketIdx !== 0 ? notCheckedInTeams : undefined,
 		});
 	}

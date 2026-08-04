@@ -256,7 +256,7 @@ export function serializeBracket(bracket: Bracket): SerializedBracket {
 		preview: bracket.preview,
 		data: bracket.data,
 		type: bracket.type,
-		canBeStarted: bracket.canBeStarted,
+		participantsReady: bracket.participantsReady,
 		name: bracket.name,
 		teamsPendingCheckIn: bracket.teamsPendingCheckIn,
 		createdAt: bracket.createdAt ?? null,
