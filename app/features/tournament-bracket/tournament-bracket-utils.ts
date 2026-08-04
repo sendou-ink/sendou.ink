@@ -1,16 +1,12 @@
-import type { TournamentBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import type {
+	TournamentBadgeReceivers,
+	TournamentTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
 
 export const tournamentWebsocketRoom = (tournamentId: number) =>
 	`tournament__${tournamentId}`;
-
-export function fillWithNullTillPowerOfTwo<T>(arr: T[]) {
-	const nextPowerOfTwo = 2 ** Math.ceil(Math.log2(arr.length));
-	const nullsToAdd = nextPowerOfTwo - arr.length;
-
-	return [...arr, ...new Array(nullsToAdd).fill(null)];
-}
 
 /**
  * Converts a group number to its corresponding letter representation.
@@ -109,6 +105,26 @@ export function validateBadgeReceivers({
 	const uniqueTournamentTeamIds = new Set(tournamentTeamIds);
 	if (tournamentTeamIds.length !== uniqueTournamentTeamIds.size) {
 		return "DUPLICATE_TOURNAMENT_TEAM_ID";
+	}
+
+	return null;
+}
+
+export function validateTrophyReceiver({
+	trophyReceiver,
+	trophy,
+}: {
+	trophyReceiver: TournamentTrophyReceiver | null;
+	trophy: { id: number } | null;
+}) {
+	if (!trophy) return null;
+
+	if (!trophyReceiver || trophyReceiver.trophyId !== trophy.id) {
+		return "TROPHY_NOT_FOUND";
+	}
+
+	if (trophyReceiver.userIds.length === 0) {
+		return "TROPHY_NOT_ASSIGNED";
 	}
 
 	return null;

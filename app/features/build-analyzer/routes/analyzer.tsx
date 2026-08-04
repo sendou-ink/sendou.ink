@@ -22,6 +22,7 @@ import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { useUser } from "~/features/auth/core/user";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { useHydrated } from "~/hooks/useHydrated";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import type {
@@ -62,6 +63,7 @@ import {
 	damageTypeToWeaponType,
 	MAX_AP,
 	MAX_LDE_INTENSITY,
+	TENACITY_PLAYER_DEFICITS,
 } from "../analyzer-constants";
 import { useAnalyzeBuild } from "../analyzer-hooks";
 import type {
@@ -73,6 +75,7 @@ import type {
 	Stat,
 	SubWeaponDamage,
 } from "../analyzer-types";
+import { INK_CONSUME_TYPES } from "../analyzer-types";
 import { PerInkTankGrid } from "../components/PerInkTankGrid";
 import {
 	ABILITIES_WITHOUT_CHUNKS,
@@ -154,6 +157,11 @@ function BuildAnalyzerPage() {
 	const objectShredderSelected = build[2][0] === "OS" || build2[2][0] === "OS";
 	const stealthJumpSelected = build[2][0] === "SJ" || build2[2][0] === "SJ";
 
+	// same for both builds as it only depends on the weapon
+	const tenacitySecondsToSpecial =
+		analyzed.stats.tenacitySecondsToSpecial ??
+		analyzed2.stats.tenacitySecondsToSpecial;
+
 	const context = {
 		isComparing: !buildIsEmpty(build) && !buildIsEmpty(build2),
 		mainWeaponId,
@@ -200,6 +208,17 @@ function BuildAnalyzerPage() {
 			/>
 		),
 
+		...INK_CONSUME_TYPES.filter(
+			(type) => analyzed.stats[`mainWeaponInkConsumptionPercentage_${type}`],
+		).map((type) => (
+			<StatCard
+				context={context}
+				key={`mainWeaponInkConsumptionPercentage_${type}`}
+				stat={statKeyToTuple(`mainWeaponInkConsumptionPercentage_${type}`)}
+				title={t(`analyzer:stat.mainWeaponInkConsumptionPercentage.${type}`)}
+				suffix="%"
+			/>
+		)),
 		typeof analyzed.stats.mainWeaponWhiteInkSeconds === "number" && (
 			<StatCard
 				context={context}
@@ -532,6 +551,27 @@ function BuildAnalyzerPage() {
 							title={t("analyzer:stat.specialLostSplattedByRP")}
 							suffix="%"
 						/>
+						{tenacitySecondsToSpecial
+							? TENACITY_PLAYER_DEFICITS.map((playerDeficit) => (
+									<StatCard
+										key={`tenacitySecondsToSpecial-${playerDeficit}`}
+										context={context}
+										stat={tenacitySecondsToSpecial[playerDeficit]}
+										title={t("analyzer:stat.tenacitySecondsToSpecial", {
+											count: playerDeficit,
+										})}
+										suffix={t("analyzer:suffix.seconds")}
+										staticValueAbility="T"
+										popoverInfo={t(
+											"analyzer:stat.tenacitySecondsToSpecial.explanation",
+											{
+												teamPlayerCount: FULL_GROUP_SIZE - playerDeficit,
+												opponentPlayerCount: FULL_GROUP_SIZE,
+											},
+										)}
+									/>
+								))
+							: null}
 						{analyzed.stats.specialDurationInSeconds && (
 							<StatCard
 								context={context}
@@ -1419,6 +1459,7 @@ function StatCard({
 	suffix,
 	popoverInfo,
 	testId,
+	staticValueAbility,
 	context: { mainWeaponId, abilityPoints, abilityPoints2, isComparing },
 }: {
 	title: string;
@@ -1426,6 +1467,8 @@ function StatCard({
 	suffix?: string;
 	popoverInfo?: string;
 	testId?: string;
+	/** Ability the stat is tied to, shown for stats that have a static value */
+	staticValueAbility?: AbilityType;
 	context: {
 		mainWeaponId: MainWeaponId;
 		abilityPoints: AbilityPoints;
@@ -1549,7 +1592,11 @@ function StatCard({
 			</div>
 			{/* always render this so it reserves space */}
 			<div className={styles.statCardAbilityContainer}>
-				{!isStaticValue && (
+				{isStaticValue ? (
+					staticValueAbility ? (
+						<ModifiedByAbilities abilities={staticValueAbility} />
+					) : null
+				) : (
 					<>
 						<ModifiedByAbilities abilities={stat[0].modifiedBy} />
 						<StatChartPopover

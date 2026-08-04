@@ -1,275 +1,301 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
-import {
-	createTeamSchema,
-	editTeamFormSchema,
-} from "~/features/team/team-schemas";
-import { editTeamPage, teamPage, userPage } from "~/utils/urls";
+import type { Factories } from "./helpers/factories";
 import {
 	expect,
 	impersonate,
 	isNotVisible,
-	modalClickConfirmButton,
 	navigate,
-	seed,
-	submit,
 	test,
-	waitForPOSTResponse,
 } from "./helpers/playwright";
-import { createFormHelpers } from "./helpers/playwright-form";
+import { AnythingAdder } from "./pages/layout/anything-adder";
+import { JoinTeamPage } from "./pages/team/join-team-page";
+import { NewTeamPage } from "./pages/team/new-team-page";
+import { TeamEditPage } from "./pages/team/team-edit-page";
+import { TeamPage } from "./pages/team/team-page";
+import { UserPage } from "./pages/user/user-page";
+
+const TEAM_NAME = "Alliance Rogue";
+const SECONDARY_TEAM_NAME = "Team Olive";
+const ROSTER_SIZE = 4;
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
-		await seed(page);
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
 
-		await page.getByTestId("anything-adder-menu-button").first().click();
-		await page.getByTestId("menu-item-team").click();
+		await new AnythingAdder(page).add("team");
 
 		await expect(page).toHaveURL(/t\/new/);
 
-		const form = createFormHelpers(page, createTeamSchema);
-		await form.fill("name", "Chimera");
-		await form.submit();
+		const newTeam = new NewTeamPage(page);
+		await newTeam.form.fill("name", "Chimera");
+		await newTeam.form.submit();
 
 		await expect(page).toHaveURL(/chimera/);
 	});
 });
 
 test.describe("Team page", () => {
-	test("edit team info", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
-
-		await page.getByTestId("edit-team-button").click();
-
-		const form = createFormHelpers(page, editTeamFormSchema, {
-			submitTestId: "edit-team-submit-button",
+	test("edit team info", async ({ page, factories }) => {
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID],
 		});
 
-		await form.fill("name", "Better Alliance Rogue");
-		await form.fill("bsky", "BetterAllianceRogue");
-		await form.fill("bio", "shorter bio");
+		await impersonate(page, ADMIN_ID);
 
-		await form.submit();
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
+
+		const teamEdit = await team.openEdit();
+		await teamEdit.form.fill("name", "Better Alliance Rogue");
+		await teamEdit.form.fill("bsky", "BetterAllianceRogue");
+		await teamEdit.form.fill("bio", "shorter bio");
+		await teamEdit.form.submit();
 
 		await expect(page).toHaveURL(/better-alliance-rogue/);
-		await page.getByText("shorter bio").isVisible();
-		await expect(page.getByTestId("bsky-link").first()).toHaveAttribute(
+		await expect(team.locators.bio).toHaveText("shorter bio");
+		await expect(team.locators.bskyLink).toHaveAttribute(
 			"href",
 			"https://bsky.app/profile/BetterAllianceRogue",
 		);
 	});
 
-	test("kicks a member & changes a role", async ({ page }) => {
-		await seed(page);
+	test("kicks a member & changes a role", async ({ page, factories }) => {
+		const { customUrl } = await createFullTeam(factories);
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
+
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
 
 		// Owner is Sendou
-		await expect(page.getByTestId(`member-owner-${ADMIN_ID}`)).toBeVisible();
+		await expect(team.ownerBadge(ADMIN_ID)).toBeVisible();
 
-		await page.getByTestId("manage-roster-button").click();
+		const roster = await team.openManageRoster();
+		await roster.memberRow(0).selectRole("SUPPORT");
 
-		await page
-			.getByTestId("member-row-0")
-			.locator("select")
-			.selectOption("SUPPORT");
+		const lastMember = roster.memberRow(ROSTER_SIZE - 1);
+		await expect(lastMember.locators.row).toBeVisible();
+		await lastMember.remove();
+		await isNotVisible(lastMember.locators.row);
 
-		await expect(page.getByTestId("member-row-3")).toBeVisible();
-		await page
-			.locator("fieldset:has([data-testid='member-row-3'])")
-			.getByRole("button", { name: "Remove item" })
-			.click();
-		await isNotVisible(page.getByTestId("member-row-3"));
+		await roster.save();
 
-		await submit(page);
+		await team.goto(customUrl);
 
-		await navigate({ page, url: teamPage("alliance-rogue") });
-
-		await expect(page.getByTestId("member-row-role-0")).toHaveText("Support");
+		await expect(team.memberRole(0)).toHaveText("Support");
 	});
 
-	test("sets a custom role for a member", async ({ page }) => {
-		await seed(page);
+	test("sets a custom role for a member", async ({ page, factories }) => {
+		const { customUrl } = await createFullTeam(factories);
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
 
-		await page.getByTestId("manage-roster-button").click();
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
 
-		const memberRow = page.getByTestId("member-row-1");
-		await memberRow.locator("select").first().selectOption("CUSTOM");
-		await memberRow.getByRole("textbox").fill("Strategist");
-		await memberRow.locator("select").nth(1).selectOption("OTHER");
+		const roster = await team.openManageRoster();
+		await roster.memberRow(1).setCustomRole("Strategist", "OTHER");
+		await roster.save();
 
-		await submit(page);
-
-		await navigate({ page, url: teamPage("alliance-rogue") });
+		await team.goto(customUrl);
 
 		// custom role is classified as "OTHER" so it lives under the "Other" tab
-		await page.getByRole("tab", { name: /Other/ }).click();
-		await expect(page.getByText("Strategist").first()).toBeVisible();
+		await team.locators.otherRolesTab.click();
+		await expect(team.customRole("Strategist")).toBeVisible();
 	});
 
-	test("reorders members via move buttons", async ({ page }) => {
-		await seed(page);
+	test("reorders members via move buttons", async ({ page, factories }) => {
+		const { customUrl } = await createFullTeam(factories);
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
 
-		await page.getByTestId("manage-roster-button").click();
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
 
-		const firstName = await page
-			.getByTestId("member-row-username-0")
-			.innerText();
-		const secondName = await page
-			.getByTestId("member-row-username-1")
-			.innerText();
+		const roster = await team.openManageRoster();
+		const firstRow = roster.memberRow(0);
+		const secondRow = roster.memberRow(1);
+		const lastRow = roster.memberRow(ROSTER_SIZE - 1);
+
+		const firstName = await firstRow.locators.username.innerText();
+		const secondName = await secondRow.locators.username.innerText();
 		expect(firstName).not.toBe(secondName);
 
-		const firstRow = page.locator("fieldset:has([data-testid='member-row-0'])");
-		const lastRow = page.locator("fieldset:has([data-testid='member-row-3'])");
-
 		// the first member can't move up and the last can't move down
-		await expect(
-			firstRow.getByRole("button", { name: "Move up" }),
-		).toBeDisabled();
-		await expect(
-			lastRow.getByRole("button", { name: "Move down" }),
-		).toBeDisabled();
+		await expect(firstRow.locators.moveUpButton).toBeDisabled();
+		await expect(lastRow.locators.moveDownButton).toBeDisabled();
 
 		// move the first member down one slot
-		await firstRow.getByRole("button", { name: "Move down" }).click();
+		await firstRow.moveDown();
 
-		await expect(page.getByTestId("member-row-username-0")).toHaveText(
-			secondName,
-		);
-		await expect(page.getByTestId("member-row-username-1")).toHaveText(
-			firstName,
-		);
+		await expect(firstRow.locators.username).toHaveText(secondName);
+		await expect(secondRow.locators.username).toHaveText(firstName);
 
-		await submit(page);
+		await roster.save();
 
-		await navigate({ page, url: teamPage("alliance-rogue") });
-		await page.getByTestId("manage-roster-button").click();
+		await team.goto(customUrl);
+		await team.openManageRoster();
 
 		// the new order is persisted
-		await expect(page.getByTestId("member-row-username-0")).toHaveText(
-			secondName,
-		);
+		await expect(firstRow.locators.username).toHaveText(secondName);
 	});
 
-	test("deletes team", async ({ page }) => {
-		await seed(page);
+	test("deletes team", async ({ page, factories }) => {
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID],
+		});
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
 
-		await page.getByTestId("team-actions-menu-button").click();
-		await page.getByTestId("delete-team-button").click();
-		await modalClickConfirmButton(page);
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
 
-		await expect(page).not.toHaveURL(/alliance-rogue/);
+		await team.openActionsMenu();
+		await team.delete();
+
+		await expect(page).not.toHaveURL(new RegExp(customUrl));
 	});
 
-	test("resets invite code, joins team, leaves, rejoins", async ({ page }) => {
-		await seed(page);
+	test("resets invite code, joins team, leaves, rejoins", async ({
+		page,
+		factories,
+	}) => {
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID],
+		});
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
 
-		await page.getByTestId("manage-roster-button").click();
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
 
-		const oldInviteLink = await page.getByTestId("invite-link").innerText();
+		const roster = await team.openManageRoster();
+		const oldInviteLink = await roster.inviteLink();
 
-		await submit(page, "reset-invite-link-button");
+		await roster.resetInviteLink();
 
-		await expect(page.getByTestId("invite-link")).not.toHaveText(oldInviteLink);
-		const newInviteLink = await page.getByTestId("invite-link").innerText();
+		await expect(roster.locators.inviteLink).not.toHaveText(oldInviteLink);
+		const newInviteLink = await roster.inviteLink();
 
 		await impersonate(page, NZAP_TEST_ID);
 
-		await navigate({ page, url: newInviteLink });
-		await submit(page);
+		const join = new JoinTeamPage(page);
+		await join.goto(newInviteLink);
+		await join.join();
 
-		await page.getByTestId("team-actions-menu-button").click();
-		await page.getByTestId("leave-team-button").click();
-		await modalClickConfirmButton(page);
+		await team.openActionsMenu();
+		await team.leave();
 
-		await navigate({ page, url: newInviteLink });
-		await submit(page);
+		await join.goto(newInviteLink);
+		await join.join();
 
-		await page.getByTestId("team-actions-menu-button").click();
-		await expect(page.getByTestId("leave-team-button")).toBeVisible();
+		await team.openActionsMenu();
+		await expect(team.locators.leaveTeamButton).toBeVisible();
 	});
 
 	test("joins a secondary team, makes main team & leaves making the seconary team the main one", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("team-olive") });
-
-		await page.getByTestId("manage-roster-button").click();
-
-		const inviteLink = await page.getByTestId("invite-link").innerText();
-		await navigate({ page, url: inviteLink });
-		await submit(page);
-
-		await page.getByTestId("team-actions-menu-button").click();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByTestId("make-main-team-button").click();
+		await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID],
 		});
+		const secondaryTeamOwner = await factories.UserFactory.create();
+		const { customUrl: secondaryCustomUrl } =
+			await factories.TeamFactory.create({
+				name: SECONDARY_TEAM_NAME,
+				memberUserIds: [secondaryTeamOwner.id],
+			});
 
-		await navigate({ page, url: userPage({ discordId: ADMIN_DISCORD_ID }) });
+		await impersonate(page, ADMIN_ID);
 
-		await expect(page.getByTestId("secondary-team-trigger")).toBeVisible();
-		await isNotVisible(page.getByText("Alliance Rogue"));
+		const secondaryTeam = new TeamPage(page);
+		await secondaryTeam.goto(secondaryCustomUrl);
 
-		await page.getByTestId("main-team-link").click();
+		const roster = await secondaryTeam.openManageRoster();
+		const inviteLink = await roster.inviteLink();
 
-		await page.getByTestId("team-actions-menu-button").click();
-		await expect(page.getByTestId("main-team-indicator")).toBeVisible();
-		await page.getByTestId("leave-team-button").click();
-		await modalClickConfirmButton(page);
+		const join = new JoinTeamPage(page);
+		await join.goto(inviteLink);
+		await join.join();
 
-		await navigate({ page, url: userPage({ discordId: ADMIN_DISCORD_ID }) });
+		await secondaryTeam.openActionsMenu();
+		await secondaryTeam.makeMainTeam();
 
-		await isNotVisible(page.getByTestId("secondary-team-trigger"));
-		await expect(page.getByText("Alliance Rogue")).toBeVisible();
+		const user = new UserPage(page);
+		await user.goto(ADMIN_DISCORD_ID);
+
+		await expect(user.locators.secondaryTeamsTrigger).toBeVisible();
+		await expect(user.locators.mainTeamLink).not.toContainText(TEAM_NAME);
+
+		const mainTeam = await user.openMainTeam();
+
+		await mainTeam.openActionsMenu();
+		await expect(mainTeam.locators.mainTeamIndicator).toBeVisible();
+		await mainTeam.leave();
+
+		await user.goto(ADMIN_DISCORD_ID);
+
+		await isNotVisible(user.locators.secondaryTeamsTrigger);
+		await expect(user.locators.mainTeamLink).toContainText(TEAM_NAME);
 	});
 
 	test("makes another user editor, who can edit the page & becomes owner after the original leaves", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page, "NZAP_IN_TEAM");
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID, NZAP_TEST_ID],
+		});
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
 
-		await page.getByTestId("manage-roster-button").click();
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
 
-		await page.getByLabel("Editor").first().click({ force: true });
-		await submit(page);
+		const roster = await team.openManageRoster();
+		// the owner has no editor toggle, so the first one belongs to N-ZAP
+		await roster.makeEditor(0);
+		await roster.save();
 
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: editTeamPage("alliance-rogue") });
 
-		const editorForm = createFormHelpers(page, editTeamFormSchema, {
-			submitTestId: "edit-team-submit-button",
-		});
-		await editorForm.fill("bio", "from editor");
-		await editorForm.submit();
+		const teamEdit = new TeamEditPage(page);
+		await teamEdit.goto(customUrl);
+		await teamEdit.form.fill("bio", "from editor");
+		await teamEdit.form.submit();
 
-		await expect(page).toHaveURL(/alliance-rogue/);
-		await page.getByText("from editor").isVisible();
+		await expect(page).toHaveURL(new RegExp(customUrl));
+		await expect(team.locators.bio).toHaveText("from editor");
 
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: teamPage("alliance-rogue") });
-		await page.getByTestId("team-actions-menu-button").click();
-		await page.getByTestId("leave-team-button").click();
-		await page.getByText("New owner will be N-ZAP").isVisible();
-		await modalClickConfirmButton(page);
+		await team.goto(customUrl);
 
-		await page.getByTestId("team-actions-menu-button").click();
-		await isNotVisible(page.getByTestId("leave-team-button"));
+		await team.openActionsMenu();
+		await team.startLeaving();
+		await expect(team.locators.confirmDialog).toContainText(
+			"New owner will be N-ZAP",
+		);
+		await team.confirmLeaving();
+
+		await team.openActionsMenu();
+		await isNotVisible(team.locators.leaveTeamButton);
 	});
 });
+
+/** A team of the admin and three others, the admin its owner and first member. */
+async function createFullTeam(factories: Factories) {
+	const members = await factories.UserFactory.createMany(ROSTER_SIZE - 1);
+
+	return factories.TeamFactory.create({
+		name: TEAM_NAME,
+		memberUserIds: [ADMIN_ID, ...members.map((member) => member.id)],
+	});
+}

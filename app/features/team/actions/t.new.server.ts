@@ -35,7 +35,7 @@ export const action: ActionFunction = async ({ request }) => {
 		"Already in max amount of teams",
 	);
 
-	const team = await TeamRepository.create({
+	const team = await TeamRepository.insert({
 		ownerUserId: user.id,
 		name: data.name,
 		isMainTeam: currentTeamCount === 0,

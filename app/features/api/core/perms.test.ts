@@ -1,28 +1,19 @@
-import { add } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import * as AdminRepository from "~/features/admin/AdminRepository.server";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import { describe, expect, test } from "vitest";
+import * as ApiTokenFactory from "~/db/seed/factories/ApiTokenFactory";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as ApiRepository from "../ApiRepository.server";
 import { checkUserHasApiAccess } from "./perms";
 
-describe("Permission logic consistency between allApiTokens and checkUserHasApiAccess", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(10);
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
+describe("Permission logic consistency between findAllApiTokens and checkUserHasApiAccess", () => {
 	test("both functions grant access for isApiAccesser flag", async () => {
-		await AdminRepository.makeApiAccesserByUserId(1);
+		const { id } = await UserFactory.create(null, { roles: ["API_ACCESSER"] });
 
-		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		await ApiTokenFactory.create({ userId: id });
+		const tokens = await ApiRepository.findAllApiTokens();
 
-		const user = await UserRepository.findLeanById(1);
+		const user = await UserRepository.findLeanById(id);
 		const hasAccess = await checkUserHasApiAccess(user!);
 
 		expect(tokens).toHaveLength(1);
@@ -30,12 +21,15 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions grant access for isTournamentOrganizer flag", async () => {
-		await AdminRepository.makeTournamentOrganizerByUserId(1);
+		const { id } = await UserFactory.create(
+			{},
+			{ roles: ["TOURNAMENT_ORGANIZER"] },
+		);
 
-		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		await ApiTokenFactory.create({ userId: id });
+		const tokens = await ApiRepository.findAllApiTokens();
 
-		const user = await UserRepository.findLeanById(1);
+		const user = await UserRepository.findLeanById(id);
 		const hasAccess = await checkUserHasApiAccess(user!);
 
 		expect(tokens).toHaveLength(1);
@@ -43,17 +37,12 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions grant access for patronTier >= 2", async () => {
-		await AdminRepository.forcePatron({
-			id: 1,
-			patronTier: 2,
-			patronSince: new Date(),
-			patronTill: add(new Date(), { months: 3 }),
-		});
+		const { id } = await UserFactory.create(null, { patronTier: 2 });
 
-		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		await ApiTokenFactory.create({ userId: id });
+		const tokens = await ApiRepository.findAllApiTokens();
 
-		const user = await UserRepository.findLeanById(1);
+		const user = await UserRepository.findLeanById(id);
 		const hasAccess = await checkUserHasApiAccess(user!);
 
 		expect(tokens).toHaveLength(1);
@@ -61,17 +50,12 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions deny access for patronTier < 2", async () => {
-		await AdminRepository.forcePatron({
-			id: 1,
-			patronTier: 1,
-			patronSince: new Date(),
-			patronTill: add(new Date(), { months: 3 }),
-		});
+		const { id } = await UserFactory.create(null, { patronTier: 1 });
 
-		await ApiRepository.generateToken(1, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		await ApiTokenFactory.create({ userId: id });
+		const tokens = await ApiRepository.findAllApiTokens();
 
-		const user = await UserRepository.findLeanById(1);
+		const user = await UserRepository.findLeanById(id);
 		const hasAccess = await checkUserHasApiAccess(user!);
 
 		expect(tokens).toHaveLength(0);
@@ -79,30 +63,23 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions grant access for ADMIN/ORGANIZER/STREAMER of established org", async () => {
-		const org = await TournamentOrganizationRepository.create({
-			ownerId: 1,
-			name: "Test Org",
-		});
+		const [owner, admin, organizer, streamer] = await UserFactory.createMany(4);
 
-		await TournamentOrganizationRepository.updateIsEstablished(org.id, true);
+		await TournamentOrganizationFactory.create(
+			{ ownerId: owner.id },
+			{
+				isEstablished: true,
+				members: [
+					{ userId: admin.id, role: "ADMIN" },
+					{ userId: organizer.id, role: "ORGANIZER" },
+					{ userId: streamer.id, role: "STREAMER" },
+				],
+			},
+		);
 
-		const orgData = await TournamentOrganizationRepository.findBySlug(org.slug);
-
-		for (const role of ["ADMIN", "ORGANIZER", "STREAMER"] as const) {
-			const userId = role === "ADMIN" ? 2 : role === "ORGANIZER" ? 3 : 4;
-
-			await TournamentOrganizationRepository.update({
-				id: org.id,
-				name: orgData!.name,
-				description: orgData!.description,
-				socials: orgData!.socials,
-				members: [{ userId, role, roleDisplayName: null }],
-				series: [],
-				badges: [],
-			});
-
-			await ApiRepository.generateToken(userId, "read");
-			const tokens = await ApiRepository.allApiTokens();
+		for (const userId of [admin.id, organizer.id, streamer.id]) {
+			await ApiTokenFactory.create({ userId });
+			const tokens = await ApiRepository.findAllApiTokens();
 
 			const user = await UserRepository.findLeanById(userId);
 			const hasAccess = await checkUserHasApiAccess(user!);
@@ -113,28 +90,17 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions deny access for MEMBER of established org", async () => {
-		const org = await TournamentOrganizationRepository.create({
-			ownerId: 1,
-			name: "Test Org",
-		});
+		const [owner, member] = await UserFactory.createMany(2);
 
-		await TournamentOrganizationRepository.updateIsEstablished(org.id, true);
+		await TournamentOrganizationFactory.create(
+			{ ownerId: owner.id },
+			{ isEstablished: true, members: [{ userId: member.id, role: "MEMBER" }] },
+		);
 
-		const orgData = await TournamentOrganizationRepository.findBySlug(org.slug);
-		await TournamentOrganizationRepository.update({
-			id: org.id,
-			name: orgData!.name,
-			description: orgData!.description,
-			socials: orgData!.socials,
-			members: [{ userId: 2, role: "MEMBER", roleDisplayName: null }],
-			series: [],
-			badges: [],
-		});
+		await ApiTokenFactory.create({ userId: member.id });
+		const tokens = await ApiRepository.findAllApiTokens();
 
-		await ApiRepository.generateToken(2, "read");
-		const tokens = await ApiRepository.allApiTokens();
-
-		const user = await UserRepository.findLeanById(2);
+		const user = await UserRepository.findLeanById(member.id);
 		const hasAccess = await checkUserHasApiAccess(user!);
 
 		expect(tokens).toHaveLength(0);
@@ -142,26 +108,17 @@ describe("Permission logic consistency between allApiTokens and checkUserHasApiA
 	});
 
 	test("both functions deny access for ADMIN of non-established org", async () => {
-		const org = await TournamentOrganizationRepository.create({
-			ownerId: 1,
-			name: "Test Org",
-		});
+		const [owner, member] = await UserFactory.createMany(2);
 
-		const orgData = await TournamentOrganizationRepository.findBySlug(org.slug);
-		await TournamentOrganizationRepository.update({
-			id: org.id,
-			name: orgData!.name,
-			description: orgData!.description,
-			socials: orgData!.socials,
-			members: [{ userId: 2, role: "ADMIN", roleDisplayName: null }],
-			series: [],
-			badges: [],
-		});
+		await TournamentOrganizationFactory.create(
+			{ ownerId: owner.id },
+			{ members: [{ userId: member.id, role: "ADMIN" }] },
+		);
 
-		await ApiRepository.generateToken(2, "read");
-		const tokens = await ApiRepository.allApiTokens();
+		await ApiTokenFactory.create({ userId: member.id });
+		const tokens = await ApiRepository.findAllApiTokens();
 
-		const user = await UserRepository.findLeanById(2);
+		const user = await UserRepository.findLeanById(member.id);
 		const hasAccess = await checkUserHasApiAccess(user!);
 
 		expect(tokens).toHaveLength(0);

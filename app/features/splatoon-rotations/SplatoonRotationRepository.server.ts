@@ -10,9 +10,7 @@ export async function replaceAll(
 	await db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("SplatoonRotation").execute();
 
-		if (rotations.length > 0) {
-			await trx.insertInto("SplatoonRotation").values(rotations).execute();
-		}
+		await trx.insertInto("SplatoonRotation").values(rotations).execute();
 	});
 
 	cachedRotations = await queryAll();
@@ -36,9 +34,9 @@ function queryAll() {
 			"SplatoonRotation.mode",
 			"SplatoonRotation.stageId1",
 			"SplatoonRotation.stageId2",
-			"SplatoonRotation.startTime",
-			"SplatoonRotation.endTime",
+			"SplatoonRotation.startsAt",
+			"SplatoonRotation.endsAt",
 		])
-		.orderBy("SplatoonRotation.startTime", "asc")
+		.orderBy("SplatoonRotation.startsAt", "asc")
 		.execute();
 }

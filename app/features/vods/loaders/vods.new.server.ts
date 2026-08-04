@@ -1,38 +1,31 @@
 import JSONCrush from "jsoncrush";
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	type PrefillVodMatch,
 	prefillVodMatches,
 } from "~/features/ingest/core/VodMatches";
 import { ingestVodPrefillSchema } from "~/features/ingest/ingest-vod-schemas";
-import { notFoundIfFalsy } from "~/utils/remix.server";
-import { actualNumber, id } from "~/utils/zod";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import * as VodRepository from "../VodRepository.server";
 import type { videoMatchTypes } from "../vods-constants";
+import { vodsNewSearchParams } from "../vods-search-params";
 import {
 	canEditVideo,
 	secondsToHoursMinutesSecondString,
 	vodToVideoBeingAdded,
 } from "../vods-utils";
 
-const newVodLoaderParamsSchema = z.object({
-	vod: z.preprocess(actualNumber, id),
-});
-
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
-	const params = newVodLoaderParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
+	const { vod: vodId, ingest } = vodsNewSearchParams.parse(url);
 
-	if (!params.success) {
-		return { vodToEdit: null, vodPrefill: vodPrefillFromSearchParams(url) };
+	if (vodId === null) {
+		return { vodToEdit: null, vodPrefill: vodPrefillFromIngestParam(ingest) };
 	}
 
-	const vod = notFoundIfFalsy(await VodRepository.findVodById(params.data.vod));
+	const vod = notFoundIfNullish(await VodRepository.findVodById(vodId));
 	const vodToEdit = vodToVideoBeingAdded(vod);
 
 	if (
@@ -60,8 +53,7 @@ export interface VodPrefill {
  * ~/features/ingest/ingest-vod-schemas) into form-prefill data. Detection
  * misses stay null for the user to fill; a malformed param is ignored.
  */
-function vodPrefillFromSearchParams(url: URL): VodPrefill | null {
-	const param = url.searchParams.get("ingest");
+function vodPrefillFromIngestParam(param: string | null): VodPrefill | null {
 	if (!param) return null;
 
 	try {

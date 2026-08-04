@@ -7,11 +7,8 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDBCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import {
-	errorToastIfFalsy,
-	parseParams,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
@@ -22,10 +19,16 @@ import { setPickupChatMetadata } from "../tournament-lfg-utils.server";
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const user = requireUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: lookingSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
 
 	const findOwnGroup = async () => {
 		const groups =
@@ -82,12 +85,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 							id: tournamentId,
 							name: tournament.ctx.name,
 							logoUrl: tournament.ctx.logoUrl,
-							startTime: tournament.ctx.startTime,
+							startTime: tournament.ctx.startsAt,
 						},
 					});
 				}
 			} else {
-				await TournamentLFGRepository.createPlaceholderTeam({
+				await TournamentLFGRepository.insertPlaceholderTeam({
 					tournamentId,
 					userId: user.id,
 					isStayAsSub: data.stayAsSub ?? false,
@@ -110,7 +113,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const targetGroup = groups.find((g) => g.id === data.targetTeamId);
 			if (!targetGroup) return null;
 
-			await TournamentLFGRepository.addLike({
+			await TournamentLFGRepository.insertLike({
 				likerTeamId: ownGroup.id,
 				targetTeamId: data.targetTeamId,
 			});
@@ -159,7 +162,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const theirGroup = groups.find((g) => g.id === data.targetTeamId);
 			if (!theirGroup) return null;
 
-			const theirLikes = await TournamentLFGRepository.allLikesByTeamId(
+			const theirLikes = await TournamentLFGRepository.findAllLikesByTeamId(
 				data.targetTeamId,
 			);
 			if (!theirLikes.given.some((like) => like.teamId === ownGroup.id)) {
@@ -211,7 +214,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						id: tournamentId,
 						name: tournament.ctx.name,
 						logoUrl: tournament.ctx.logoUrl,
-						startTime: tournament.ctx.startTime,
+						startTime: tournament.ctx.startsAt,
 					},
 				});
 			}
@@ -318,9 +321,52 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			);
 			errorToastIfFalsy(!hasExistingSubPost, "Already have a sub post");
 
-			await TournamentLFGRepository.createPlaceholderTeam({
+			await TournamentLFGRepository.insertPlaceholderTeam({
 				tournamentId,
 				userId: user.id,
+				isStayAsSub: true,
+				lfgNote: data.message ?? undefined,
+			});
+
+			break;
+		}
+		case "ADD_SUB_FOR_USER": {
+			const tournament = await tournamentFromDBCached({
+				tournamentId,
+				user,
+			});
+			errorToastIfFalsy(
+				tournament.isOrganizer(user),
+				"Only tournament organizers can add subs for other users",
+			);
+			errorToastIfFalsy(
+				tournament.canAddNewSubPostAsOrganizer,
+				"Cannot add sub post at this time",
+			);
+			await requireNotBannedByOrganization({
+				tournament,
+				user: { id: data.userId },
+				message: "The user is banned from events hosted by this organization",
+			});
+
+			const targetTeam = tournament.teamMemberOfByUser({ id: data.userId });
+			errorToastIfFalsy(
+				!targetTeam || targetTeam.droppedOut,
+				"User is already on a team",
+			);
+
+			const existingSubGroups =
+				await TournamentLFGRepository.findSubGroups(tournamentId);
+			errorToastIfFalsy(
+				!existingSubGroups.some((g) =>
+					g.members.some((m) => m.id === data.userId),
+				),
+				"User already has a sub post",
+			);
+
+			await TournamentLFGRepository.insertPlaceholderTeam({
+				tournamentId,
+				userId: data.userId,
 				isStayAsSub: true,
 				lfgNote: data.message ?? undefined,
 			});

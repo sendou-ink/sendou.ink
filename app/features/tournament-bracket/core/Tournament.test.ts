@@ -1,10 +1,9 @@
 import { describe, expect, it, test } from "vitest";
-import type { Match } from "~/modules/brackets-model";
+import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
 import { Tournament } from "./Tournament";
 import {
 	IN_THE_ZONE_32,
 	PADDLING_POOL_255,
-	PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES,
 	PADDLING_POOL_257,
 } from "./tests/mocks";
 import { SWIM_OR_SINK_167 } from "./tests/mocks-sos";
@@ -117,7 +116,10 @@ describe("Follow-up bracket progression", () => {
 		).toBe(AMOUNT_OF_BEST_VS_BEST);
 	});
 
-	const validateNoRematches = (rrMatches: Match[], topCutMatches: Match[]) => {
+	const validateNoRematches = (
+		rrMatches: MatchData[],
+		topCutMatches: MatchData[],
+	) => {
 		for (const topCutMatch of topCutMatches) {
 			if (!topCutMatch.opponent1?.id || !topCutMatch.opponent2?.id) {
 				continue;
@@ -158,30 +160,61 @@ describe("Follow-up bracket progression", () => {
 		validateNoRematches(rrMatches, topCutMatches);
 	});
 
-	test("avoids rematches in RR -> SE (PP 255) - only minimum swap", () => {
-		const oldTopCutMatches = PADDLING_POOL_255_TOP_CUT_INITIAL_MATCHES();
-		const newTopCutMatches = tournamentPP255.brackets[1].data.match;
+	test("group rivals in the top cut can only meet in the final (PP 255)", () => {
+		const rrStandings = tournamentPP255.brackets[0].standings;
+		const topCut = tournamentPP255.brackets[1];
 
-		let different = 0;
+		// group winners keep the best seeds
+		const groupWinnerIds = rrStandings
+			.filter((standing) => standing.placement === 1)
+			.map((standing) => standing.team.id);
+		expect(new Set(topCut.seeding?.slice(0, groupWinnerIds.length))).toEqual(
+			new Set(groupWinnerIds),
+		);
 
-		for (const match of oldTopCutMatches) {
-			if (!match.opponent1?.id || !match.opponent2?.id) {
-				continue;
-			}
+		// with two teams advancing per group, both should land in opposite
+		// halves of the bracket
+		const firstRoundId = topCut.data.round[0].id;
+		const matchCount = topCut.data.match.filter(
+			(match) => match.roundId === firstRoundId,
+		).length;
+		const halfByTeamId = new Map<number, number>();
+		for (const match of topCut.data.match) {
+			if (match.roundId !== firstRoundId) continue;
 
-			const newMatch = newTopCutMatches.find(
-				(m) =>
-					m.opponent1?.id === match.opponent1.id &&
-					m.opponent2?.id === match.opponent2.id,
-			);
-
-			if (!newMatch) {
-				different++;
+			for (const id of [match.opponent1?.id, match.opponent2?.id]) {
+				if (typeof id === "number") {
+					halfByTeamId.set(id, match.number <= matchCount / 2 ? 0 : 1);
+				}
 			}
 		}
 
-		// 1 team should get swapped meaning two matches are now different
-		expect(different, "Amount of different matches is incorrect").toBe(2);
+		const groupIds = new Set(rrStandings.map((standing) => standing.groupId));
+		for (const groupId of groupIds) {
+			const groupTeamIds = (topCut.seeding ?? []).filter(
+				(teamId) =>
+					rrStandings.find((standing) => standing.team.id === teamId)
+						?.groupId === groupId,
+			);
+
+			expect(groupTeamIds).toHaveLength(2);
+			expect(halfByTeamId.get(groupTeamIds[0])).not.toBe(
+				halfByTeamId.get(groupTeamIds[1]),
+			);
+		}
+	});
+
+	test("initializes an unstarted DE + underground tournament with exactly 2 teams", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: progressions.doubleEliminationWithUnderground,
+				},
+				teams: [tournamentCtxTeam(1), tournamentCtxTeam(2)],
+			},
+		});
+
+		expect(tournament.brackets).toHaveLength(2);
 	});
 
 	// TODO: handle LUTI bracket progression

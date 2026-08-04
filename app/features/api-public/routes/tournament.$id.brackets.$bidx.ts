@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentBracketResponse } from "../schema";
 
@@ -19,7 +19,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId: id,
 	});
 
-	const bracket = notFoundIfFalsy(tournament.bracketByIdx(bidx));
+	const bracket = notFoundIfNullish(tournament.bracketByIdx(bidx));
 
 	const result: GetTournamentBracketResponse = {
 		data: bracket.data,

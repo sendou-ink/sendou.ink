@@ -7,11 +7,9 @@ import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatReposi
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy } from "~/utils/remix.server";
-import {
-	seasonsSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas";
+import { notFoundIfNullish } from "~/utils/remix.server";
+import { userParamsSchema } from "../user-page-schemas";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsPageLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
@@ -20,25 +18,21 @@ export type UserSeasonsPageLoaderData = NonNullable<
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const loggedInUser = requireUser();
 	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
+	const { season: seasonParam } = userSeasonsSearchParams.parse(url);
 
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(identifier),
+	const user = notFoundIfNullish(
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(user.id);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
 	}
 
-	const { season = seasonsParticipatedIn[0] } = parsedSearchParams.success
-		? parsedSearchParams.data
-		: {};
+	const season = seasonParam ?? seasonsParticipatedIn[0];
 
-	const { isAccurateTiers, userSkills } = _userSkills(season);
+	const { isAccurateTiers, userSkills } = await _userSkills(season);
 	const { tier, ordinal, approximate } = userSkills[user.id] ?? {
 		approximate: false,
 		ordinal: 0,
@@ -49,23 +43,23 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		seasonsParticipatedIn,
 		currentOrdinal: !approximate ? ordinal : undefined,
 		winrates: {
-			maps: await PlayerStatRepository.seasonMapWinrateByUserId({
+			maps: await PlayerStatRepository.findSeasonMapWinrateByUserId({
 				season,
 				userId: user.id,
 			}),
-			sets: await PlayerStatRepository.seasonSetWinrateByUserId({
+			sets: await PlayerStatRepository.findSeasonSetWinrateByUserId({
 				season,
 				userId: user.id,
 			}),
 		},
-		skills: await SkillRepository.seasonProgressionByUserId({
+		skills: await SkillRepository.findSeasonProgressionByUserId({
 			season,
 			userId: user.id,
 		}),
 		tier,
 		isAccurateTiers,
 		canceled: loggedInUser.roles.includes("STAFF")
-			? await SQMatchRepository.seasonCanceledMatchesByUserId({
+			? await SQMatchRepository.findSeasonCanceledMatchesByUserId({
 					season,
 					userId: user.id,
 				})

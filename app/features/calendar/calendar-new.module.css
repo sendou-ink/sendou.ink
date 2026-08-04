@@ -1,0 +1,5 @@
+.trophyPreview {
+	background-color: var(--color-bg-high);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+}

@@ -3,15 +3,10 @@ import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type {
-	BuildSort,
-	CustomTheme,
-	DB,
-	Tables,
-	TablesInsertable,
-	UserPreferences,
-} from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
+import type { CustomTheme, UserPreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
+import type { BuildSort } from "~/features/user-page/user-page-constants";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -21,11 +16,11 @@ import {
 	concatUserSubmittedImagePrefix,
 	customAvatarUrl,
 	tournamentLogoOrNull,
+	userByIdentifierQuery,
 	userChatNameHue,
 	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
-import { safeNumberParse } from "~/utils/number";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
 import type { ChatUser } from "../chat/chat-types";
 import { sortBadgesByFavorites } from "./core/badge-sorting.server";
@@ -34,31 +29,27 @@ import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
 
-export const identifierToUserIdQuery = (identifier: string) =>
-	db
-		.selectFrom("User")
-		.select("User.id")
-		.where((eb) => {
-			// we don't want to parse discord id's as numbers (length = 18)
-			const parsedId =
-				identifier.length < 10 ? safeNumberParse(identifier) : null;
-			if (parsedId) {
-				return eb("User.id", "=", parsedId);
-			}
-
-			if (/^\d+$/.test(identifier)) {
-				return eb("User.discordId", "=", identifier);
-			}
-
-			return eb("User.customUrl", "=", identifier);
-		});
-
-export function identifierToUserId(identifier: string) {
-	return identifierToUserIdQuery(identifier).executeTakeFirst();
+export function findIdByIdentifier(identifier: string) {
+	return userByIdentifierQuery(identifier).executeTakeFirst();
 }
 
-export async function identifierToBuildFields(identifier: string) {
-	const row = await identifierToUserIdQuery(identifier)
+/** Country codes of the given users keyed by user id, users without a country set absent. */
+export async function findCountriesByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, string>();
+
+	const rows = await db
+		.selectFrom("User")
+		.select(["User.id", "User.country"])
+		.where("User.id", "in", userIds)
+		.where("User.country", "is not", null)
+		.$narrowType<{ country: NotNull }>()
+		.execute();
+
+	return new Map(rows.map((row) => [row.id, row.country]));
+}
+
+export async function findBuildFieldsByIdentifier(identifier: string) {
+	const row = await userByIdentifierQuery(identifier)
 		.select(({ eb }) => [
 			"User.buildSorting",
 			jsonArrayFrom(
@@ -85,7 +76,7 @@ export function findLayoutDataByIdentifier(
 	identifier: string,
 	loggedInUserId?: number,
 ) {
-	return identifierToUserIdQuery(identifier)
+	return userByIdentifierQuery(identifier)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select((eb) => [
 			...commonUserSelect(eb),
@@ -118,7 +109,7 @@ export function findLayoutDataByIdentifier(
 				.where((eb) =>
 					eb.or(
 						[
-							eb("Build.private", "=", 0),
+							eb("Build.isPrivate", "=", 0),
 							loggedInUserId ? eb("Build.ownerId", "=", loggedInUserId) : null,
 						].filter((filter) => filter !== null),
 					),
@@ -163,7 +154,7 @@ export async function findProfileByIdentifier(
 	identifier: string,
 	forceShowDiscordUniqueName?: boolean,
 ) {
-	const row = await identifierToUserIdQuery(identifier)
+	const row = await userByIdentifierQuery(identifier)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(({ eb }) => [
 			"User.twitch",
@@ -180,6 +171,8 @@ export async function findProfileByIdentifier(
 			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
 			"User.favoriteBadgeIds",
+			"User.favoriteTrophyIds",
+			"User.hiddenTrophyIds",
 			"User.patronTier",
 			"PlusTier.tier as plusTier",
 			"User.pronouns",
@@ -235,7 +228,7 @@ export async function findProfileByIdentifier(
 	// queried separately with a constant userId instead of correlating to
 	// "User"."id" so that SQLite can push the predicate down into both arms
 	// of the BadgeOwner view
-	const badges = await ownedBadgesByUserId(row.id);
+	const badges = await findOwnedBadgesByUserId(row.id);
 
 	return {
 		...row,
@@ -257,7 +250,7 @@ export async function findProfileByIdentifier(
  * to an outer "User"."id" would prevent SQLite from pushing the predicate
  * down into both arms of the BadgeOwner view, materializing the full view.
  */
-export function ownedBadgesByUserId(userId: number) {
+export function findOwnedBadgesByUserId(userId: number) {
 	return db
 		.selectFrom("BadgeOwner")
 		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
@@ -273,8 +266,8 @@ export function ownedBadgesByUserId(userId: number) {
 		.execute();
 }
 
-export async function widgetsEnabledByIdentifier(identifier: string) {
-	const row = await identifierToUserIdQuery(identifier)
+export async function findEnabledWidgetsByIdentifier(identifier: string) {
+	const row = await userByIdentifierQuery(identifier)
 		.select(["User.preferences", "User.patronTier"])
 		.executeTakeFirst();
 
@@ -284,7 +277,7 @@ export async function widgetsEnabledByIdentifier(identifier: string) {
 	return row?.preferences?.newProfileEnabled === true;
 }
 
-export async function preferencesByUserId(userId: number) {
+export async function findPreferencesByUserId(userId: number) {
 	const row = await db
 		.selectFrom("User")
 		.select("User.preferences")
@@ -301,8 +294,6 @@ export async function upsertWidgets(
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("UserWidget").where("userId", "=", userId).execute();
 
-		if (widgets.length === 0) return;
-
 		await trx
 			.insertInto("UserWidget")
 			.values(
@@ -316,7 +307,7 @@ export async function upsertWidgets(
 	});
 }
 
-export async function storedWidgetsByUserId(
+export async function findStoredWidgetsByUserId(
 	userId: number,
 ): Promise<Array<Tables["UserWidget"]["widget"]>> {
 	const rows = await db
@@ -329,10 +320,10 @@ export async function storedWidgetsByUserId(
 	return rows.map((row) => row.widget);
 }
 
-export async function widgetsByUserId(
+export async function findWidgetsByUserId(
 	identifier: string,
 ): Promise<LoadedWidget[] | null> {
-	const user = await identifierToUserId(identifier);
+	const user = await findIdByIdentifier(identifier);
 
 	if (!user) return null;
 
@@ -395,6 +386,7 @@ export async function findLeanById(id: number) {
 		.where("User.id", "=", id)
 		.select(({ eb }) => [
 			...commonUserSelect(eb),
+			"User.createdAt",
 			"User.customTheme",
 			"User.isArtist",
 			"User.isVideoAdder",
@@ -476,7 +468,7 @@ export function findAllPatrons() {
 		.select(["User.id", "User.discordId", "User.username", "User.patronTier"])
 		.where("User.patronTier", "is not", null)
 		.orderBy("User.patronTier", "desc")
-		.orderBy("User.patronSince", "asc")
+		.orderBy("User.patronStartedAt", "asc")
 		.execute();
 }
 
@@ -490,6 +482,18 @@ export function findAllPlusServerMembers() {
 			"PlusTier.tier as plusTier",
 		])
 		.execute();
+}
+
+export async function existingUserIds(userIds: Array<number>) {
+	if (userIds.length === 0) return [];
+
+	const rows = await db
+		.selectFrom("User")
+		.select("User.id")
+		.where("User.id", "in", userIds)
+		.execute();
+
+	return rows.map((row) => row.id);
 }
 
 export async function findChatUsersByUserIds(userIds: number[]) {
@@ -511,9 +515,9 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
 	return eb
 		.selectFrom("CalendarEventDate")
-		.select(({ fn }) => [fn.max("CalendarEventDate.startTime").as("startTime")])
+		.select(({ fn }) => [fn.max("CalendarEventDate.startsAt").as("startsAt")])
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
-		.as("startTime");
+		.as("startsAt");
 };
 
 const baseCalendarEventResultsQuery = (userId: number) =>
@@ -673,8 +677,8 @@ export function findResultsByUserId(
 
 	let query = calendarEventResultsQuery
 		.unionAll(tournamentResultsQuery)
-		.orderBy("startTime", "desc")
-		.$narrowType<{ startTime: NotNull }>();
+		.orderBy("startsAt", "desc")
+		.$narrowType<{ startsAt: NotNull }>();
 
 	if (limit !== undefined) {
 		query = query.limit(limit);
@@ -908,7 +912,7 @@ export function searchExact(args: {
 	return query.execute();
 }
 
-export async function currentFriendCodeByUserId(userId: number) {
+export async function findCurrentFriendCodeByUserId(userId: number) {
 	return db
 		.selectFrom("UserFriendCode")
 		.select([
@@ -923,7 +927,7 @@ export async function currentFriendCodeByUserId(userId: number) {
 }
 
 /** Returns all friend codes submitted by a user (both present and past) */
-export async function friendCodesByUserId(userId: number) {
+export async function findFriendCodesByUserId(userId: number) {
 	return db
 		.selectFrom("UserFriendCode")
 		.leftJoin("User", "User.id", "UserFriendCode.submitterUserId")
@@ -939,7 +943,7 @@ export async function friendCodesByUserId(userId: number) {
 
 let cachedFriendCodes: Set<string> | null = null;
 
-export async function allCurrentFriendCodes() {
+export async function findAllCurrentFriendCodes() {
 	if (cachedFriendCodes) {
 		return cachedFriendCodes;
 	}
@@ -967,7 +971,7 @@ export async function allCurrentFriendCodes() {
 	return friendCodes;
 }
 
-export async function inGameNameByUserId(userId: number) {
+export async function findInGameNameByUserId(userId: number) {
 	return (
 		await db
 			.selectFrom("User")
@@ -977,17 +981,17 @@ export async function inGameNameByUserId(userId: number) {
 	)?.inGameName;
 }
 
-export async function patronSinceByUserId(userId: number) {
+export async function findPatronStartedAtByUserId(userId: number) {
 	return (
 		await db
 			.selectFrom("User")
-			.select("User.patronSince")
+			.select("User.patronStartedAt")
 			.where("id", "=", userId)
 			.executeTakeFirst()
-	)?.patronSince;
+	)?.patronStartedAt;
 }
 
-export async function joinOrderByUserId(userId: number) {
+export async function findJoinOrderByUserId(userId: number) {
 	const row = await db
 		.selectFrom("User")
 		.select("User.joinOrder")
@@ -1002,7 +1006,7 @@ export async function joinOrderByUserId(userId: number) {
 	};
 }
 
-export async function commissionsByUserId(userId: number) {
+export async function findCommissionsByUserId(userId: number) {
 	return await db
 		.selectFrom("User")
 		.select([
@@ -1073,6 +1077,8 @@ type UpdateProfileArgs = Pick<
 > & {
 	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
 	favoriteBadgeIds?: number[] | null;
+	favoriteTrophyIds?: number[] | null;
+	hiddenTrophyIds?: number[] | null;
 	customAvatarImgId?: number | null;
 };
 export function updateOwnProfile(args: UpdateProfileArgs) {
@@ -1098,19 +1104,17 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				.execute();
 		}
 
-		if (args.weapons.length > 0) {
-			await trx
-				.insertInto("UserWeapon")
-				.values(
-					args.weapons.map((weapon, i) => ({
-						userId,
-						weaponSplId: weapon.weaponSplId,
-						isFavorite: weapon.isFavorite,
-						order: i + 1,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("UserWeapon")
+			.values(
+				args.weapons.map((weapon, i) => ({
+					userId,
+					weaponSplId: weapon.weaponSplId,
+					isFavorite: weapon.isFavorite ?? 0,
+					order: i + 1,
+				})),
+			)
+			.execute();
 
 		return trx
 			.updateTable("User")
@@ -1126,6 +1130,12 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				battlefy: args.battlefy,
 				favoriteBadgeIds: args.favoriteBadgeIds
 					? JSON.stringify(args.favoriteBadgeIds)
+					: null,
+				favoriteTrophyIds: args.favoriteTrophyIds
+					? JSON.stringify(args.favoriteTrophyIds)
+					: null,
+				hiddenTrophyIds: args.hiddenTrophyIds
+					? JSON.stringify(args.hiddenTrophyIds)
 					: null,
 				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
@@ -1206,17 +1216,15 @@ export function updateOwnResultHighlights(args: UpdateResultHighlightsArgs) {
 			.where("userId", "=", userId)
 			.execute();
 
-		if (args.resultTeamIds.length > 0) {
-			await trx
-				.insertInto("UserResultHighlight")
-				.values(
-					args.resultTeamIds.map((teamId) => ({
-						userId,
-						teamId,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("UserResultHighlight")
+			.values(
+				args.resultTeamIds.map((teamId) => ({
+					userId,
+					teamId,
+				})),
+			)
+			.execute();
 
 		await trx
 			.updateTable("TournamentResult")
@@ -1252,7 +1260,7 @@ export function updateOwnBuildSorting(buildSorting: BuildSort[] | null) {
 }
 
 export type UpdatePatronDataArgs = Array<
-	Pick<Tables["User"], "discordId" | "patronTier" | "patronSince">
+	Pick<Tables["User"], "discordId" | "patronTier" | "patronStartedAt">
 >;
 export function updatePatronData(users: UpdatePatronDataArgs) {
 	return db.transaction().execute(async (trx) => {
@@ -1260,13 +1268,13 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 			.updateTable("User")
 			.set({
 				patronTier: null,
-				patronSince: null,
-				patronTill: null,
+				patronStartedAt: null,
+				patronExpiresAt: null,
 			})
 			.where((eb) =>
 				eb.or([
-					eb("patronTill", "<", dateToDatabaseTimestamp(new Date())),
-					eb("patronTill", "is", null),
+					eb("patronExpiresAt", "<", dateToDatabaseTimestamp(new Date())),
+					eb("patronExpiresAt", "is", null),
 				]),
 			)
 			.execute();
@@ -1276,8 +1284,8 @@ export function updatePatronData(users: UpdatePatronDataArgs) {
 				.updateTable("User")
 				.set({
 					patronTier: user.patronTier,
-					patronSince: user.patronSince,
-					patronTill: null,
+					patronStartedAt: user.patronStartedAt,
+					patronExpiresAt: null,
 				})
 				.where("User.discordId", "=", user.discordId)
 				.execute();
@@ -1329,7 +1337,7 @@ export async function anyUserPrefersNoScreen(
 	return Boolean(result);
 }
 
-export async function socialLinksByUserId(userId: number) {
+export async function findSocialLinksByUserId(userId: number) {
 	const user = await db
 		.selectFrom("User")
 		.select([
@@ -1379,7 +1387,7 @@ export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
 }
 
 /** Returns weapon pool entries with ten-star status for the given user. */
-export function weaponPoolByUserId(userId: number) {
+export function findWeaponPoolByUserId(userId: number) {
 	return db
 		.selectFrom("UserWeaponPool")
 		.leftJoin("TenStarWeapon", (join) =>

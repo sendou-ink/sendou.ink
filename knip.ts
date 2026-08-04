@@ -4,18 +4,11 @@ const config = {
 		type: true,
 	},
 	tags: ["-lintignore"],
-	ignoreBinaries: ["lsof"],
-	// vendored 2022 dictionary tooling, not part of the module graph
-	ignore: ["scripts/dicts/**"],
-	// cwd relative path inside an execSync command, which knip resolves relative to the file instead
-	ignoreUnresolved: ["scripts/seed-single-variation.ts"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
-		"migrations/**/*.js",
+		"migrations/**/*.ts",
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
 		"public/sw-2.js",
-		"ley.config.cjs",
-		"ley-driver.cjs",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

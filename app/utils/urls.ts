@@ -1,22 +1,64 @@
 import slugify from "slugify";
 import { Config } from "~/config";
-import type { GearType, Preference, Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { Preference } from "~/db/tables-json";
+import {
+	artGridSearchParams,
+	artNewSearchParams,
+	artSearchParams,
+} from "~/features/art/art-search-params";
 import type { ArtSource } from "~/features/art/art-types";
+import { associationsSearchParams } from "~/features/associations/associations-search-params";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
-import { serializeBuild } from "~/features/build-analyzer/core/utils";
+import { analyzerSearchParams } from "~/features/build-analyzer/analyzer-search-params";
+import {
+	calendarNewSearchParams,
+	calendarSearchParams,
+} from "~/features/calendar/calendar-search-params";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
+import { leaderboardsSearchParams } from "~/features/leaderboards/leaderboards-search-params";
+import { lfgNewSearchParams } from "~/features/lfg/lfg-search-params";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type { StageBackgroundStyle } from "~/features/map-planner";
+import { mapListGeneratorSearchParams } from "~/features/map-list-generator/map-list-generator-search-params";
+import type {
+	StageBackgroundStyle,
+	StageWaterLevel,
+} from "~/features/map-planner/plans-types";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import { JOIN_CODE_SEARCH_PARAM_KEY } from "~/features/sendouq/q-constants";
+import { calculatorSearchParams } from "~/features/object-damage-calculator/calculator-search-params";
+import {
+	type PlusTierParam,
+	plusSuggestionsSearchParams,
+} from "~/features/plus-suggestions/plus-suggestions-search-params";
+import {
+	qSearchParams,
+	weaponUsageSearchParams,
+} from "~/features/sendouq/q-search-params";
+import { teamJoinSearchParams } from "~/features/team/team-search-params";
+import { topSearchSearchParams } from "~/features/top-search/top-search-search-params";
+import { tournamentJoinSearchParams } from "~/features/tournament/tournament-search-params";
+import { tournamentImportTeamsSearchParams } from "~/features/tournament-admin/tournament-admin-search-params";
+import { tournamentBracketsSearchParams } from "~/features/tournament-bracket/tournament-bracket-search-params";
+import { tournamentOrganizationSearchParams } from "~/features/tournament-organization/tournament-organization-search-params";
+import { userCardEditSearchParams } from "~/features/user-card/user-card-search-params";
+import {
+	userArtSearchParams,
+	userBuildsNewSearchParams,
+	userResultsSearchParams,
+	userSeasonSummaryGraphicSearchParams,
+	userSeasonsSearchParams,
+} from "~/features/user-page/user-page-search-params";
+import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import type {
 	Ability,
 	AbilityWithUnknown,
 	BrandId,
 	BuildAbilitiesTupleWithUnknown,
+	GearType,
 	MainWeaponId,
 	ModeShort,
 	ModeShortWithSpecial,
+	RankedModeShort,
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
@@ -36,6 +78,29 @@ export const discordAvatarUrl = ({
 	`https://cdn.discordapp.com/avatars/${discordId}/${
 		discordAvatar
 	}.webp${size === "lg" ? "?size=240" : "?size=80"}`;
+
+/**
+ * Resolves the avatar image url of an user, preferring their custom avatar over
+ * the Discord one. Returns undefined if the user has neither.
+ */
+export const resolveAvatarUrl = ({
+	customAvatarUrl,
+	discordId,
+	discordAvatar,
+	size,
+}: {
+	customAvatarUrl?: string | null;
+	discordId: string;
+	discordAvatar?: string | null;
+	size: "lg" | "sm";
+}) => {
+	if (customAvatarUrl) return customAvatarUrl;
+	if (discordAvatar) {
+		return discordAvatarUrl({ discordId, discordAvatar, size });
+	}
+
+	return undefined;
+};
 
 export const SENDOU_INK_BASE_URL = "https://sendou.ink";
 
@@ -66,6 +131,8 @@ export const SPR_INFO_URL =
 	"https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf";
 export const SPLATOON3_INK_SCHEDULES_URL =
 	"https://splatoon3.ink/data/schedules.json";
+export const PICOCAD2_WEB_VIEWER_URL =
+	"https://picocad2-web-viewer.hfcred.workers.dev/";
 
 export const bskyUrl = (accountName: string) =>
 	`https://bsky.app/profile/${accountName}`;
@@ -80,9 +147,12 @@ export const ADMIN_PAGE = "/admin";
 export const API_PAGE = "/api";
 export const ARTICLES_MAIN_PAGE = "/a";
 export const FAQ_PAGE = "/faq";
+export const WELCOME_PAGE = "/welcome";
 export const SUPPORT_PAGE = "/support";
 export const CONTRIBUTIONS_PAGE = "/contributions";
 export const BADGES_PAGE = "/badges";
+export const TROPHIES_PAGE = "/trophies";
+export const NEW_TROPHY_PAGE = "/trophies/new";
 export const BUILDS_PAGE = "/builds";
 export const TEAM_SEARCH_PAGE = "/t";
 export const NEW_TEAM_PAGE = "/t/new";
@@ -128,6 +198,7 @@ export const SENDOU_LOVE_EMOJI_PATH = `${STATIC_ASSETS_URL}/img/layout/sendou_lo
 export const FIRST_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/first.svg`;
 export const SECOND_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/second.svg`;
 export const THIRD_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/third.svg`;
+export const WELCOME_HERO_IMAGE_PATH = `${STATIC_ASSETS_URL}/img/welcome-hero.webp`;
 
 /** CV parser atlases/templates; the version segment guards against CDN cache
  * skew — bump it together with breaking atlas format changes */
@@ -146,15 +217,20 @@ export const PATRONS_LIST_ROUTE = "/patrons-list";
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 
-export const userCardFriendshipPage = (
-	userId: number,
-	args?: { withMutualFriends?: boolean },
-) =>
-	`/user-card/${userId}/friendship${
-		args?.withMutualFriends ? "?mutuals=true" : ""
-	}`;
+export const userCardFriendshipPage = (userId: number) =>
+	`/user-card/${userId}/friendship`;
 
 export const userCardNotePage = (userId: number) => `/user-card/${userId}/note`;
+
+export const userReportPage = (userId: number) => `/user-report/${userId}`;
+
+export const trophyPage = (trophyId: number) => `${TROPHIES_PAGE}/${trophyId}`;
+
+export const trophyWinsPage = (args: { trophyId: number; userId: number }) =>
+	`${TROPHIES_PAGE}/${args.trophyId}/wins/${args.userId}`;
+
+export const trophyTournamentsPage = (trophyId: number) =>
+	`${TROPHIES_PAGE}/${trophyId}/tournaments`;
 
 interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];
@@ -170,9 +246,20 @@ export const userSeasonsPage = ({
 	user: UserLinkArgs;
 	season?: number;
 }) =>
-	`${userPage(user)}/seasons${
-		typeof season === "number" ? `?season=${season}` : ""
-	}`;
+	userSeasonsSearchParams.href(`${userPage(user)}/seasons`, {
+		season: season ?? null,
+	});
+export const userSeasonSummaryGraphicPage = ({
+	user,
+	season,
+}: {
+	user: UserLinkArgs;
+	season: number;
+}) =>
+	userSeasonSummaryGraphicSearchParams.href(
+		`${userPage(user)}/seasons/summary-graphic`,
+		{ season },
+	);
 export const userSeasonsStatsPage = ({
 	user,
 	season,
@@ -181,62 +268,54 @@ export const userSeasonsStatsPage = ({
 	user: UserLinkArgs;
 	season?: number;
 	info?: "weapons" | "stages" | "mates" | "enemies";
-}) => {
-	const params = new URLSearchParams();
-	if (info) params.set("info", info);
-	if (typeof season === "number") params.set("season", String(season));
-	const query = params.toString();
-
-	return `${userPage(user)}/seasons/stats${query ? `?${query}` : ""}`;
-};
+}) =>
+	userSeasonsSearchParams.href(`${userPage(user)}/seasons/stats`, {
+		...(info ? { info } : {}),
+		season: season ?? null,
+	});
 export const userEditProfilePage = (user: UserLinkArgs) =>
 	`${userPage(user)}/edit`;
 export const userBuildsPage = (user: UserLinkArgs) =>
 	`${userPage(user)}/builds`;
 export const userResultsPage = (user: UserLinkArgs, showAll?: boolean) =>
-	`${userPage(user)}/results${showAll ? "?all=true" : ""}`;
+	userResultsSearchParams.href(`${userPage(user)}/results`, {
+		all: Boolean(showAll),
+	});
 export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
 export const userCardEditPage = (args?: { returnTo?: string }) =>
-	`${USER_CARD_EDIT_PAGE}${
-		args?.returnTo ? `?returnTo=${encodeURIComponent(args.returnTo)}` : ""
-	}`;
+	userCardEditSearchParams.href(USER_CARD_EDIT_PAGE, {
+		returnTo: args?.returnTo ?? null,
+	});
 export const newVodPage = (vodToEditId?: number) =>
-	`${VODS_PAGE}/new${vodToEditId ? `?vod=${vodToEditId}` : ""}`;
+	vodsNewSearchParams.href(`${VODS_PAGE}/new`, { vod: vodToEditId ?? null });
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>
 	`${userResultsPage(user)}/highlights`;
 export const userAdminPage = (user: UserLinkArgs) => `${userPage(user)}/admin`;
-export const artPage = (tag?: string) => `/art${tag ? `?tag=${tag}` : ""}`;
+export const artPage = (tag?: string) =>
+	artSearchParams.href("/art", { tag: tag ?? null });
 export const userArtPage = (
 	user: UserLinkArgs,
 	source?: ArtSource,
 	bigArtId?: number,
-) => {
-	const params = new URLSearchParams();
-	if (source) {
-		params.set("source", source);
-	}
-	if (typeof bigArtId === "number") {
-		params.set("big", String(bigArtId));
-	}
-
-	return `${userPage(user)}/art${params.size > 0 ? `?${params.toString()}` : ""}`;
-};
+) =>
+	artGridSearchParams.href(
+		userArtSearchParams.href(`${userPage(user)}/art`, {
+			...(source ? { source } : {}),
+		}),
+		{ big: bigArtId ?? null },
+	);
 export const newArtPage = (artId?: Tables["Art"]["id"]) =>
-	`${artPage()}/new${artId ? `?art=${artId}` : ""}`;
+	artNewSearchParams.href(`${artPage()}/new`, { art: artId ?? null });
 export const userNewBuildPage = (
 	user: UserLinkArgs,
 	params?: { weapon: MainWeaponId; build: BuildAbilitiesTupleWithUnknown },
 ) =>
-	`${userBuildsPage(user)}/new${
-		params
-			? `?${String(
-					new URLSearchParams({
-						weapon: String(params.weapon),
-						build: serializeBuild(params.build),
-					}),
-				)}`
-			: ""
-	}`;
+	params
+		? userBuildsNewSearchParams.href(`${userBuildsPage(user)}/new`, {
+				weapon: params.weapon,
+				build: params.build,
+			})
+		: `${userBuildsPage(user)}/new`;
 
 export const teamPage = (customUrl: string) => `/t/${customUrl}`;
 export const editTeamPage = (customUrl: string) =>
@@ -249,7 +328,10 @@ export const joinTeamPage = ({
 }: {
 	customUrl: string;
 	inviteCode: string;
-}) => `${teamPage(customUrl)}/join?code=${inviteCode}`;
+}) =>
+	teamJoinSearchParams.href(`${teamPage(customUrl)}/join`, {
+		code: inviteCode,
+	});
 
 export const topSearchPage = (args?: {
 	month: number;
@@ -258,7 +340,10 @@ export const topSearchPage = (args?: {
 	region: Tables["XRankPlacement"]["region"];
 }) =>
 	args
-		? `/xsearch?month=${args.month}&year=${args.year}&mode=${args.mode}&region=${args.region}`
+		? topSearchSearchParams.href("/xsearch", {
+				...args,
+				mode: args.mode as RankedModeShort,
+			})
 		: "/xsearch";
 export const topSearchPlayerPage = (playerId: number) =>
 	`${topSearchPage()}/player/${playerId}`;
@@ -266,17 +351,11 @@ export const topSearchPlayerPage = (playerId: number) =>
 export const leaderboardsPage = (args: {
 	season?: number;
 	type?: "USER" | "TEAM";
-}) => {
-	const params = new URLSearchParams();
-	if (typeof args.season === "number") {
-		params.set("season", String(args.season));
-	}
-	if (args.type) {
-		params.set("type", args.type);
-	}
-
-	return `${LEADERBOARDS_PAGE}${params.size > 0 ? `?${params.toString()}` : ""}`;
-};
+}) =>
+	leaderboardsSearchParams.href(LEADERBOARDS_PAGE, {
+		season: args.season ?? null,
+		...(args.type ? { type: args.type } : {}),
+	});
 
 export const authErrorUrl = (errorCode: AuthErrorCode) =>
 	`/?authError=${errorCode}`;
@@ -289,18 +368,15 @@ export const plusSuggestionPage = ({
 }: {
 	tier?: string | number;
 	showAlert?: boolean;
-} = {}) => {
-	const params = new URLSearchParams();
-	if (tier) {
-		params.set("tier", String(tier));
-	}
-	if (showAlert) {
-		params.set("alert", "true");
-	}
-	return `/plus/suggestions${params.toString() ? `?${params.toString()}` : ""}`;
-};
+} = {}) =>
+	plusSuggestionsSearchParams.href("/plus/suggestions", {
+		tier: tier ? (String(tier) as PlusTierParam) : null,
+		alert: Boolean(showAlert),
+	});
 export const plusSuggestionsNewPage = (tier?: string | number) =>
-	`/plus/suggestions/new${tier ? `?tier=${tier}` : ""}`;
+	plusSuggestionsSearchParams.href("/plus/suggestions/new", {
+		tier: tier ? (String(tier) as PlusTierParam) : null,
+	});
 
 export const weaponBuildPage = (weaponSlug: string) =>
 	`${BUILDS_PAGE}/${weaponSlug}`;
@@ -313,33 +389,33 @@ export const weaponParamsPage = (weaponSlug: string) => `/params/${weaponSlug}`;
 export const calendarPage = (args?: {
 	filters?: CalendarFilters;
 	dayMonthYear?: DayMonthYear;
-}) => {
-	const params = new URLSearchParams();
-	if (args?.filters) {
-		params.set("filters", JSON.stringify(args.filters));
-	}
-	if (args?.dayMonthYear) {
-		params.set("day", String(args.dayMonthYear.day));
-		params.set("month", String(args.dayMonthYear.month));
-		params.set("year", String(args.dayMonthYear.year));
-	}
+}) =>
+	calendarSearchParams.href(CALENDAR_PAGE, {
+		...(args?.filters ? { filters: args.filters } : {}),
+		...(args?.dayMonthYear
+			? {
+					day: args.dayMonthYear.day,
+					month: args.dayMonthYear.month,
+					year: args.dayMonthYear.year,
+				}
+			: {}),
+	});
 
-	return `${CALENDAR_PAGE}${params.toString() ? `?${params.toString()}` : ""}`;
-};
-
-export const calendarIcalFeed = (filters?: CalendarFilters) => {
-	const params = new URLSearchParams();
-	if (filters) {
-		params.set("filters", JSON.stringify(filters));
-	}
-	return `${SENDOU_INK_BASE_URL}/calendar.ics${params.toString() ? `?${params.toString()}` : ""}`;
-};
+export const calendarIcalFeed = (filters?: CalendarFilters) =>
+	calendarSearchParams.href(`${SENDOU_INK_BASE_URL}/calendar.ics`, {
+		...(filters ? { filters } : {}),
+	});
 
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;
 export const calendarEditPage = (eventId?: number) =>
-	`/calendar/new${eventId ? `?eventId=${eventId}` : ""}`;
+	calendarNewSearchParams.href("/calendar/new", {
+		eventId: eventId ?? null,
+	});
 export const tournamentEditPage = (eventId: number) =>
-	`${calendarEditPage(eventId)}&tournament=true`;
+	calendarNewSearchParams.href("/calendar/new", {
+		eventId,
+		tournament: true,
+	});
 export const calendarReportWinnersPage = (eventId: number) =>
 	`/calendar/${eventId}/report-winners`;
 export const tournamentPage = (tournamentId: number) => `/to/${tournamentId}`;
@@ -373,7 +449,10 @@ export const tournamentAdminImportTeamsPage = ({
 	tournamentId: number;
 	fromTournamentId: number;
 }) =>
-	`${tournamentAdminPage(tournamentId)}/import-teams?fromTournamentId=${fromTournamentId}`;
+	tournamentImportTeamsSearchParams.href(
+		`${tournamentAdminPage(tournamentId)}/import-teams`,
+		{ fromTournamentId },
+	);
 export const tournamentBracketsPage = ({
 	tournamentId,
 	bracketIdx,
@@ -382,19 +461,11 @@ export const tournamentBracketsPage = ({
 	tournamentId: number;
 	bracketIdx?: number | null;
 	groupId?: number;
-}) => {
-	const query = new URLSearchParams();
-	if (typeof bracketIdx === "number") {
-		query.set("idx", String(bracketIdx));
-	}
-	if (typeof groupId === "number") {
-		query.set("group", String(groupId));
-	}
-
-	return `/to/${tournamentId}/brackets${
-		query.size > 0 ? `?${query.toString()}` : ""
-	}`;
-};
+}) =>
+	tournamentBracketsSearchParams.href(`/to/${tournamentId}/brackets`, {
+		idx: bracketIdx ?? null,
+		group: groupId ?? null,
+	});
 export const tournamentDivisionsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/divisions`;
 export const tournamentResultsPage = (tournamentId: number) =>
@@ -412,7 +483,10 @@ export const tournamentJoinPage = ({
 }: {
 	tournamentId: number;
 	inviteCode: string;
-}) => `/to/${tournamentId}/join?code=${inviteCode}`;
+}) =>
+	tournamentJoinSearchParams.href(`/to/${tournamentId}/join`, {
+		code: inviteCode,
+	});
 export const tournamentSubsPage = (tournamentId: number) => {
 	return `/to/${tournamentId}/looking`;
 };
@@ -426,21 +500,17 @@ export const tournamentOrganizationPage = ({
 }: {
 	organizationSlug: string;
 	tournamentName?: string;
-}) => {
-	const params = new URLSearchParams();
-	if (tournamentName) {
-		params.set("source", tournamentName);
-	}
-
-	return `/org/${organizationSlug}${params.size > 0 ? `?${params.toString()}` : ""}`;
-};
+}) =>
+	tournamentOrganizationSearchParams.href(`/org/${organizationSlug}`, {
+		source: tournamentName ?? null,
+	});
 export const tournamentOrganizationEditPage = (organizationSlug: string) =>
 	`${tournamentOrganizationPage({ organizationSlug })}/edit`;
 export const tournamentOrganizationStatsPage = (organizationSlug: string) =>
 	`${tournamentOrganizationPage({ organizationSlug })}/stats`;
 
 export const sendouQInviteLink = (inviteCode: string) =>
-	`${SENDOUQ_PAGE}?${JOIN_CODE_SEARCH_PARAM_KEY}=${inviteCode}`;
+	qSearchParams.href(SENDOUQ_PAGE, { join: inviteCode });
 
 export const sendouQMatchPage = (id: Tables["GroupMatch"]["id"]) => {
 	return `${SENDOUQ_PAGE}/match/${id}`;
@@ -458,51 +528,53 @@ export const newScrimPostPage = () => {
 	return "/scrims/new";
 };
 
-export const associationsPage = (inviteCode?: string) => {
-	return `/associations${inviteCode ? `?inviteCode=${inviteCode}` : ""}`;
-};
+export const associationsPage = (inviteCode?: string) =>
+	associationsSearchParams.href("/associations", {
+		inviteCode: inviteCode ?? null,
+	});
 
 export const newAssociationsPage = () => {
 	return "/associations/new";
 };
 
-export const getWeaponUsage = ({
-	userId,
-	season,
-	modeShort,
-	stageId,
-}: {
+export const getWeaponUsage = (args: {
 	userId: number;
 	season: number;
 	modeShort: ModeShort;
 	stageId: StageId;
-}) => {
-	return `/weapon-usage?userId=${userId}&season=${season}&modeShort=${modeShort}&stageId=${stageId}`;
-};
+}) => weaponUsageSearchParams.href("/weapon-usage", args);
 
 export const mapsPageWithMapPool = (mapPool: MapPool) =>
-	`${MAPS_URL}?readonly&pool=${mapPool.serialized}`;
+	mapListGeneratorSearchParams.href(MAPS_URL, {
+		readonly: true,
+		pool: mapPool.serialized,
+	});
 export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
 export const analyzerPage = (args?: {
 	weaponId: MainWeaponId;
 	abilities: Ability[];
 }) =>
-	`/analyzer${
-		args
-			? `?weapon=${args.weaponId}&build=${encodeURIComponent(
-					args.abilities.join(","),
-				)}`
-			: ""
-	}`;
+	args
+		? analyzerSearchParams.href("/analyzer", {
+				weapon: args.weaponId,
+				build: [
+					args.abilities.slice(0, 4),
+					args.abilities.slice(4, 8),
+					args.abilities.slice(8, 12),
+				] as BuildAbilitiesTupleWithUnknown,
+			})
+		: "/analyzer";
 export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>
-	`/object-damage-calculator${
-		typeof weaponId === "number" ? `?weapon=${weaponId}` : ""
-	}`;
+	typeof weaponId === "number"
+		? calculatorSearchParams.href("/object-damage-calculator", {
+				weapon: { type: "MAIN", id: weaponId },
+			})
+		: "/object-damage-calculator";
 
 export const vodVideoPage = (videoId: number) => `${VODS_PAGE}/${videoId}`;
 
 export const lfgNewPostPage = (postId?: number) =>
-	`${LFG_PAGE}/new${postId ? `?postId=${postId}` : ""}`;
+	lfgNewSearchParams.href(`${LFG_PAGE}/new`, { postId: postId ?? null });
 
 export const badgeUrl = ({
 	code,
@@ -588,11 +660,16 @@ export const stageMinimapImageUrlWithEnding = ({
 	stageId,
 	mode,
 	style,
+	waterLevel,
 }: {
 	stageId: StageId;
 	mode: ModeShort;
 	style: StageBackgroundStyle;
-}) => `${STATIC_ASSETS_URL}/planner-maps/${stageId}-${mode}-${style}.png`;
+	waterLevel?: StageWaterLevel;
+}) =>
+	`${STATIC_ASSETS_URL}/planner-maps/${stageId}-${mode}-${style}${
+		waterLevel === "down" ? "-DOWN" : ""
+	}.png`;
 
 export function resolveBaseUrl(url: string) {
 	return new URL(url).host;

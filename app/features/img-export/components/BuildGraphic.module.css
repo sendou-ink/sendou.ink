@@ -1,0 +1,122 @@
+.plusTier {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	color: var(--graphic-accent);
+}
+
+.buildTitle {
+	overflow: hidden;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	line-height: 1.2;
+	text-align: center;
+	text-overflow: ellipsis;
+}
+
+.weaponsRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2);
+}
+
+.weapon {
+	position: relative;
+	padding: var(--s-0-5);
+	border-radius: 50%;
+	background-color: var(--graphic-row-bg);
+}
+
+.top500 {
+	position: absolute;
+	top: -3px;
+	right: 16px;
+	z-index: 1;
+}
+
+.weaponName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.gearGrid {
+	display: grid;
+	grid-template-columns: repeat(3, max-content);
+	gap: var(--s-2) var(--s-3);
+	place-items: center;
+	justify-content: center;
+	padding-block-end: var(--s-3);
+}
+
+.noGear {
+	grid-template-columns: repeat(2, max-content);
+}
+
+.noAbilityPoints {
+	padding-block-end: 0;
+}
+
+.gear {
+	background-color: var(--graphic-row-bg);
+	border-radius: 50%;
+}
+
+.subAbilities {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--s-3);
+}
+
+.subAbilitySegment {
+	position: relative;
+}
+
+.subAbilitySegmentIcons {
+	display: flex;
+	gap: var(--s-3);
+}
+
+.abilityPointsLabel {
+	position: absolute;
+	top: 100%;
+	inset-inline: 0;
+	margin-block-start: 5px;
+	border-top: 1px solid
+		color-mix(in oklch, var(--graphic-text-dim) 40%, transparent);
+	font-size: 0.7rem;
+	font-weight: var(--weight-semi);
+	line-height: 1.8;
+	text-align: center;
+	color: color-mix(in oklch, var(--graphic-text-dim) 70%, transparent);
+}
+
+.abilityChunks {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-3);
+}
+
+.abilityChunk {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.abilityChunkCount {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.description {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	line-height: 1.4;
+	text-align: center;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}

@@ -4,6 +4,71 @@ import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { peakXpOverallSql } from "~/utils/kysely.server";
+
+export type XRankPlacementInsertArgs = Omit<
+	Tables["XRankPlacement"],
+	"id" | "playerId"
+> & {
+	/** In-game id of the player the placement belongs to. */
+	playerSplId: string;
+	/**
+	 * Site user whose results these are, for a source that already knows the pairing.
+	 * A player claiming their own results afterwards goes through
+	 * `AdminRepository.linkUserAndPlayer`, which also refreshes what the link derives.
+	 */
+	playerUserId?: number;
+};
+
+/**
+ * Adds the given placements, creating a `SplatoonPlayer` row for every in-game id
+ * not seen before. Returns the placement ids in insertion order.
+ */
+export function insertMany(placements: XRankPlacementInsertArgs[]) {
+	return db.transaction().execute(async (trx) => {
+		const ids: number[] = [];
+
+		for (const { playerSplId, playerUserId, ...placement } of placements) {
+			await trx
+				.insertInto("SplatoonPlayer")
+				.values({ splId: playerSplId, userId: playerUserId ?? null })
+				.onConflict((oc) =>
+					playerUserId
+						? oc.column("splId").doUpdateSet({ userId: playerUserId })
+						: oc.column("splId").doNothing(),
+				)
+				.execute();
+
+			const inserted = await trx
+				.insertInto("XRankPlacement")
+				.values({
+					...placement,
+					playerId: (eb) =>
+						eb
+							.selectFrom("SplatoonPlayer")
+							.select("SplatoonPlayer.id")
+							.where("splId", "=", playerSplId),
+				})
+				.returning("id")
+				.executeTakeFirstOrThrow();
+
+			ids.push(inserted.id);
+		}
+
+		return ids;
+	});
+}
+
+/** Removes every placement of the given month, before its results are read in anew. */
+export function deleteAllByMonthYear(
+	args: Pick<Tables["XRankPlacement"], "month" | "year">,
+) {
+	return db
+		.deleteFrom("XRankPlacement")
+		.where("month", "=", args.month)
+		.where("year", "=", args.year)
+		.execute();
+}
 
 export function unlinkPlayerByUserId(userId: number) {
 	return db
@@ -11,14 +76,6 @@ export function unlinkPlayerByUserId(userId: number) {
 		.set({ userId: null })
 		.where("SplatoonPlayer.userId", "=", userId)
 		.execute();
-}
-
-/**
- * SQLite expression extracting a Splatoon player's overall peak XP from the denormalized `peakXp`
- * JSON column (see {@link refreshAllPeakXp}). `"SplatoonPlayer"` must be in scope at the call site.
- */
-export function peakXpOverallSql<T extends number | null = number | null>() {
-	return sql<T>`"SplatoonPlayer"."peakXp" ->> '$.overall'`;
 }
 
 /** Whether the user has a linked Splatoon player (i.e. has claimed their X Rank results). */
@@ -36,7 +93,7 @@ export async function isPlayerLinkedByUserId(userId: number): Promise<boolean> {
  * The user's verified peak XP, read from their linked player's denormalized `SplatoonPlayer.peakXp`
  * column (see {@link refreshAllPeakXp}). `null` when they have no linked player or no placements.
  */
-export async function peakVerifiedXpByUserId(
+export async function findPeakVerifiedXpByUserId(
 	userId: Tables["User"]["id"],
 ): Promise<number | null> {
 	const row = await db
@@ -112,7 +169,7 @@ export async function findPlacementsByUserId(
 	return result.length ? result : null;
 }
 
-export async function monthYears() {
+export async function findAllMonthYears() {
 	return await db
 		.selectFrom("XRankPlacement")
 		.select(["month", "year"])

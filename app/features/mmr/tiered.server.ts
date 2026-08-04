@@ -1,5 +1,6 @@
+import { cachified } from "@epic-web/cachified";
 import type { Tables } from "~/db/tables";
-import { cache, syncCached } from "~/utils/cache.server";
+import { cache } from "~/utils/cache.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import { USER_SKILLS_CACHE_KEY } from "../sendouq/q-constants";
 import {
@@ -9,7 +10,7 @@ import {
 	type TierName,
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "./mmr-constants";
-import { orderedUserMMRBySeason } from "./queries/orderedMMRBySeason.server";
+import * as SkillRepository from "./SkillRepository.server";
 
 export interface TieredSkill {
 	ordinal: number;
@@ -20,12 +21,12 @@ export interface TieredSkill {
 	approximate: boolean;
 }
 
-export function freshUserSkills(season: number): {
+export async function freshUserSkills(season: number): Promise<{
 	userSkills: Record<string, TieredSkill>;
 	intervals: SkillTierInterval[];
 	isAccurateTiers: boolean;
-} {
-	const points = orderedUserMMRBySeason(season);
+}> {
+	const points = await SkillRepository.findOrderedUserOrdinalsBySeason(season);
 
 	const { intervals, isAccurateTiers } = skillTierIntervals(points, "user");
 
@@ -53,14 +54,19 @@ export function freshUserSkills(season: number): {
 const userSkillsCacheKey = (season: number) =>
 	`${USER_SKILLS_CACHE_KEY}-${season}`;
 
-export function userSkills(season: number) {
-	return syncCached(userSkillsCacheKey(season), () => freshUserSkills(season));
+export function userSkills(season: number, { forceFresh = false } = {}) {
+	return cachified({
+		key: userSkillsCacheKey(season),
+		cache,
+		forceFresh,
+		// no ttl: a season's tiers only go stale when a match of it is played,
+		// and those code paths refresh this themselves
+		getFreshValue: () => freshUserSkills(season),
+	});
 }
 
-export function refreshUserSkills(season: number) {
-	cache.delete(userSkillsCacheKey(season));
-
-	userSkills(season);
+export async function refreshUserSkills(season: number) {
+	await userSkills(season, { forceFresh: true });
 }
 
 export type SkillTierInterval = ReturnType<
@@ -122,7 +128,9 @@ function skillTierIntervals(
 		const accPercentile = previousPercentiles + currentTier.percentile;
 
 		if (currentPercentile > accPercentile) {
-			const previousPoints = points[i - 1];
+			// with few enough players the very first one already exceeds the top
+			// tier's share, and there is nobody below them to close the tier at
+			const previousPoints = points[i - 1] ?? points[i];
 			const thisTier = result[result.length - 1];
 			thisTier.neededOrdinal = previousPoints.ordinal;
 

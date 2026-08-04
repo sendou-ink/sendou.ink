@@ -8,10 +8,12 @@ import {
 	useBracketExpanded,
 	useTournament,
 } from "~/features/tournament/routes/to.$id";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import type { Match as MatchType } from "~/modules/brackets-model";
+import * as Engine from "~/features/tournament-bracket/core/engine";
+import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import styles from "../../tournament-bracket.module.css";
+import { tournamentBracketsSearchParams } from "../../tournament-bracket-search-params";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
@@ -31,43 +33,36 @@ export function SwissBracket({
 	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 
 	const groups = getGroups(bracket);
-	const [selectedGroupId, setSelectedGroupId] = useSearchParamState({
-		defaultValue: groups[0].groupId,
-		name: "group",
-		revive: (id) =>
-			groups.find((g) => g.groupId === Number(id))
-				? Number(id)
-				: groups[0].groupId,
-	});
+	const [selectedGroupIdParam, setSelectedGroupId] = useSearchParam(
+		tournamentBracketsSearchParams,
+		"group",
+	);
+	// when bracket starts we go from "virtual id" to a real one
+	// which would cause the admin to see empty group after starting
+	// bracket
+	const selectedGroupId =
+		typeof selectedGroupIdParam === "number" &&
+		groups.some((g) => g.groupId === selectedGroupIdParam)
+			? selectedGroupIdParam
+			: groups[0].groupId;
 	const fetcher = useFetcher();
 
 	const selectedGroup = groups.find((g) => g.groupId === selectedGroupId)!;
 
 	const rounds = bracket.data.round.filter(
-		(r) => r.group_id === selectedGroupId,
+		(r) => r.groupId === selectedGroupId,
 	);
-
-	// when bracket starts we go from "virtual id" to a real one
-	// which would cause the admin to see empty group after starting
-	// bracket
-	if (!groups.some((g) => g.groupId === selectedGroupId)) {
-		setSelectedGroupId(groups[0].groupId);
-	}
 
 	const someMatchOngoing = (matches: MatchType[]) =>
 		matches.some(
-			(match) =>
-				match.opponent1 &&
-				match.opponent2 &&
-				match.opponent1.result !== "win" &&
-				match.opponent2.result !== "win",
+			(match) => match.opponent1 && match.opponent2 && !match.winnerSide,
 		);
 
 	const allRoundsFinished = () => {
 		for (const round of rounds) {
 			const matches = bracket.data.match.filter(
 				(match) =>
-					match.round_id === round.id && match.group_id === selectedGroupId,
+					match.roundId === round.id && match.groupId === selectedGroupId,
 			);
 
 			if (matches.length === 0 || someMatchOngoing(matches)) {
@@ -78,13 +73,22 @@ export function SwissBracket({
 		return true;
 	};
 
+	// with the early advance variation the group can run out of teams before every
+	// round has been played, those rounds can never be started
+	const groupHasActiveTeams = Engine.groupHasActiveTeams(bracket.data, {
+		groupId: selectedGroupId,
+		standings: bracket.liveStandings,
+		settings: bracket.settings,
+	});
+
 	const roundThatCanBeStartedId = () => {
 		if (!tournament.isOrganizer(user) || bracket.preview) return undefined;
+		if (!groupHasActiveTeams) return undefined;
 
 		for (const round of rounds) {
 			const matches = bracket.data.match.filter(
 				(match) =>
-					match.round_id === round.id && match.group_id === selectedGroupId,
+					match.roundId === round.id && match.groupId === selectedGroupId,
 			);
 
 			if (someMatchOngoing(matches) && matches.length > 0) {
@@ -127,9 +131,12 @@ export function SwissBracket({
 					{rounds.map((round, roundI) => {
 						const matches = bracket.data.match.filter(
 							(match) =>
-								match.round_id === round.id &&
-								match.group_id === selectedGroupId,
+								match.roundId === round.id && match.groupId === selectedGroupId,
 						);
+
+						if (matches.length === 0 && !groupHasActiveTeams) {
+							return null;
+						}
 
 						if (
 							matches.length > 0 &&
@@ -143,11 +150,7 @@ export function SwissBracket({
 						const bestOf = round.maps?.count;
 
 						const ongoingMatches = matches.filter(
-							(m) =>
-								m.opponent1 &&
-								m.opponent2 &&
-								!m.opponent1.result &&
-								!m.opponent2.result,
+							(m) => m.opponent1 && m.opponent2 && !m.winnerSide,
 						);
 						const startedAtValues = ongoingMatches
 							.map((m) => m.startedAt)
@@ -286,7 +289,7 @@ function getGroups(bracket: BracketType) {
 
 	for (const group of bracket.data.group) {
 		const matches = bracket.data.match.filter(
-			(match) => match.group_id === group.id,
+			(match) => match.groupId === group.id,
 		);
 
 		result.push({

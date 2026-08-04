@@ -6,8 +6,42 @@ import {
 } from "kysely";
 import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import { Config } from "~/config";
+import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { IS_E2E_TEST_RUN } from "./e2e";
+import { safeNumberParse } from "./number";
+
+/**
+ * Base query selecting the user matching a URL identifier, which can be their user id, their Discord
+ * id or their custom URL. Extend it with the columns the caller needs.
+ */
+export function userByIdentifierQuery(identifier: string) {
+	return db
+		.selectFrom("User")
+		.select("User.id")
+		.where((eb) => {
+			// we don't want to parse discord id's as numbers (length = 18)
+			const parsedId =
+				identifier.length < 10 ? safeNumberParse(identifier) : null;
+			if (parsedId) {
+				return eb("User.id", "=", parsedId);
+			}
+
+			if (/^\d+$/.test(identifier)) {
+				return eb("User.discordId", "=", identifier);
+			}
+
+			return eb("User.customUrl", "=", identifier);
+		});
+}
+
+/**
+ * SQLite expression extracting a Splatoon player's overall peak XP from the denormalized `peakXp`
+ * JSON column. `"SplatoonPlayer"` must be in scope at the call site.
+ */
+export function peakXpOverallSql<T extends number | null = number | null>() {
+	return sql<T>`"SplatoonPlayer"."peakXp" ->> '$.overall'`;
+}
 
 /**
  * Select list for the fields shared by every user representation across the app. Includes
@@ -47,6 +81,11 @@ export type CommonUser = Pick<
 	Tables["User"],
 	"id" | "username" | "discordId" | "discordAvatar" | "customUrl"
 > & { customAvatarUrl: string | null };
+
+/** Represents User joined with PlusTier table */
+export type UserWithPlusTier = Tables["User"] & {
+	plusTier: Tables["PlusTier"]["tier"] | null;
+};
 
 const userChatNameHueRaw = sql<
 	string | null
@@ -132,6 +171,34 @@ export function tournamentLogoWithDefault(
 			sql.lit(Config.tournamentDefaultLogo),
 		),
 	);
+}
+
+/**
+ * Subquery resolving to the event's earliest `CalendarEventDate` start time, or `null` when it has
+ * no dates. Correlates on `"CalendarEvent"."id"`. Alias it `.as("startTime")` when selecting it
+ * directly. Can also be passed to `orderBy` as is.
+ */
+export function calendarEventStartTime(
+	eb: ExpressionBuilder<Tables, "CalendarEvent">,
+) {
+	return eb
+		.selectFrom("CalendarEventDate")
+		.select((eb2) => eb2.fn.min<number>("startsAt").as("startsAt"))
+		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id");
+}
+
+/**
+ * Subquery counting a tournament's non-placeholder teams. Correlates on `"Tournament"."id"`.
+ * Alias it `.as("teamsCount")` when selecting it directly.
+ */
+export function tournamentTeamCount(
+	eb: ExpressionBuilder<Tables, "Tournament">,
+) {
+	return eb
+		.selectFrom("TournamentTeam")
+		.select((eb2) => eb2.fn.countAll<number>().as("count"))
+		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where("TournamentTeam.isPlaceholder", "=", 0);
 }
 
 /** Concats the file name (a bit misleadingly called `url` in the DB schema) with the root URL, giving the full URL for the image */

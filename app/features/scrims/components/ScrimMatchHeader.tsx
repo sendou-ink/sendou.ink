@@ -19,7 +19,7 @@ export function ScrimMatchHeader() {
 	const canCancel =
 		allowedToCancel &&
 		!isCanceled &&
-		databaseTimestampToDate(data.post.at) > new Date();
+		databaseTimestampToDate(data.post.startsAt) > new Date();
 
 	const acceptedRequest = data.post.requests.find((r) => r.isAccepted);
 	const viewerSide = data.mapByMap.viewerSide;

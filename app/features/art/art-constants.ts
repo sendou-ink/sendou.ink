@@ -7,6 +7,3 @@ export const ART = {
 	TAG_MAX_LENGTH: 100,
 	TAGS_MAX_LENGTH: 25,
 };
-
-export const NEW_ART_EXISTING_SEARCH_PARAM_KEY = "art";
-export const FILTERED_TAG_KEY_SEARCH_PARAM_KEY = "tag";

@@ -1,4 +1,5 @@
 import { parseDate } from "@internationalized/date";
+import clsx from "clsx";
 import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
@@ -48,7 +49,26 @@ import { StageSelect } from "~/components/StageSelect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Table } from "~/components/Table";
+import { TierPill } from "~/components/TierPill";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import {
+	SeasonSummaryGraphic,
+	type SeasonSummaryGraphicActivity,
+	type SeasonSummaryGraphicBestSet,
+	type SeasonSummaryGraphicStats,
+} from "~/features/img-export/components/SeasonSummaryGraphic";
+import {
+	TournamentResultsGraphic,
+	type TournamentResultsGraphicTeam,
+} from "~/features/img-export/components/TournamentResultsGraphic";
+import {
+	TournamentRunGraphic,
+	type TournamentRunGraphicMatch,
+} from "~/features/img-export/components/TournamentRunGraphic";
+import {
+	Trophy,
+	TrophyContextProvider,
+} from "~/features/trophies/components/Trophy";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import type { CustomFieldRenderProps } from "~/form/FormField";
@@ -56,10 +76,11 @@ import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import styles from "../components-showcase.module.css";
+import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "q"],
+	i18n: ["user", "q", "calendar", "tournament"],
 };
 
 export const SECTIONS = [
@@ -87,6 +108,21 @@ export const SECTIONS = [
 	{ title: "Avatar", id: "avatar", component: AvatarSection },
 	{ title: "User Card", id: "user-card", component: UserCardSection },
 	{
+		title: "Tournament Results Graphic",
+		id: "tournament-results-graphic",
+		component: TournamentResultsGraphicSection,
+	},
+	{
+		title: "Tournament Run Graphic",
+		id: "tournament-run-graphic",
+		component: TournamentRunGraphicSection,
+	},
+	{
+		title: "Season Summary Graphic",
+		id: "season-summary-graphic",
+		component: SeasonSummaryGraphicSection,
+	},
+	{
 		title: "Form Messages",
 		id: "form-messages",
 		component: FormMessageSection,
@@ -102,6 +138,8 @@ export const SECTIONS = [
 	{ title: "Flags", id: "flags", component: FlagSection },
 	{ title: "Placements", id: "placements", component: PlacementSection },
 	{ title: "Badges", id: "badges", component: BadgeSection },
+	{ title: "Trophies", id: "trophies", component: TrophySection },
+	{ title: "Tier Pills", id: "tier-pills", component: TierPillSection },
 	{ title: "Game Selects", id: "game-selects", component: GameSelectSection },
 	{ title: "Form Fields", id: "form-fields", component: FormFieldsSection },
 	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
@@ -1625,6 +1663,432 @@ function UserCardSection({ id }: { id: string }) {
 	);
 }
 
+const RESULTS_GRAPHIC_IMG_ROOT =
+	"https://sendou.nyc3.cdn.digitaloceanspaces.com";
+
+const RESULTS_GRAPHIC_TEAMS: TournamentResultsGraphicTeam[] = [
+	{
+		placement: 1,
+		name: "Besto Friendo",
+		players: [
+			{ name: "Yeti" },
+			{ name: "まるお", countryCode: "JP" },
+			{ name: "🪄", countryCode: "FR" },
+			{ name: "Grey", countryCode: "FR" },
+		],
+		weapons: [40, 2070, 8010, 5030],
+	},
+	{
+		placement: 2,
+		name: "輝く",
+		players: [
+			{ name: "Ali", countryCode: "CA" },
+			{ name: "w" },
+			{ name: "へでる" },
+			{ name: "メガチャーレム" },
+		],
+		weapons: [210, 40, 2010, 1120],
+	},
+	{
+		placement: 3,
+		name: "Small Bubbler",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/pickup-logo-867qQb75XxqndbJDbJzk3-1774655417856.webp`,
+		players: [
+			{ name: "Omegα" },
+			{ name: "shadowind", countryCode: "US" },
+			{ name: "Max", countryCode: "US" },
+			{ name: "y0shell", countryCode: "GB" },
+		],
+		weapons: [5010, 2030, 1010, 0],
+	},
+	{
+		placement: 4,
+		name: "For fun.",
+		players: [
+			{ name: "Len. 🕷", countryCode: "VN" },
+			{ name: "Jovan", countryCode: "NG" },
+			{ name: "swish", countryCode: "US" },
+			{ name: "prosper", countryCode: "NG" },
+		],
+		weapons: [240, 5040, 1030, 2070],
+	},
+	{
+		placement: 5,
+		name: "It’s too much",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/pickup-logo-1R_1LhuEk6jecMsRWwCl--1774679643780.webp`,
+		players: [
+			{ name: "Coolaceeeee  ^_^", countryCode: "JP" },
+			{ name: "illusion" },
+			{ name: "sunni" },
+			{ name: "Chiva", countryCode: "MX" },
+		],
+		weapons: [1001, 220, 40, 2010],
+	},
+	{
+		placement: 5,
+		name: "ezmd",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/Yu_tgElCa5D48CcyFPF3Y-1756077173431.webp`,
+		players: [
+			{ name: "Silver", countryCode: "FR" },
+			{ name: "Devin", countryCode: "DE" },
+			{ name: "kiki", countryCode: "IE" },
+			{ name: "Reiyu", countryCode: "DO" },
+		],
+		weapons: [5011, 2000, 8020, 260],
+	},
+	{
+		placement: 7,
+		name: "healthy diet food groups",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/OYhoGpd7lIRyyBawAfRx9-1673646086021.webp`,
+		players: [
+			{ name: "zyf", countryCode: "US" },
+			{ name: "Blopwher", countryCode: "US" },
+			{ name: "Stans", countryCode: "US" },
+			{ name: "Miner", countryCode: "ET" },
+		],
+		weapons: [1100, 2040, 10, 5000],
+	},
+	{
+		placement: 7,
+		name: "WIT CHECK",
+		players: [
+			{ name: "Andre", countryCode: "TT" },
+			{ name: "Isabel T.J.", countryCode: "ES" },
+			{ name: "Chara", countryCode: "US" },
+			{ name: "Basil", countryCode: "US" },
+		],
+		weapons: [200, 1020, 2060, 5020],
+	},
+];
+
+function TournamentResultsGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Tournament Results Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Top 8 export image">
+					<TournamentResultsGraphic
+						tournamentId={3435}
+						tournamentName="In The Zone 50"
+						startTime={new Date(1774720800 * 1000)}
+						tier={2}
+						logoUrl={`${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-itz.png`}
+						organization={{
+							name: "sendou.ink",
+							avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/dBYwiLjlhVBwW-oyyNJkC-1721997877357.webp`,
+						}}
+						teams={RESULTS_GRAPHIC_TEAMS}
+						teamsCount={32}
+						playersCount={130}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const RUN_GRAPHIC_SWISS = "Day 1 - Swiss";
+const RUN_GRAPHIC_ALPHA = "Day 2 - Alpha Bracket";
+
+const RUN_GRAPHIC_MATCHES: TournamentRunGraphicMatch[] = [
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[7], seed: 48 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "Swiss 1",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[5], seed: 3 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "Swiss 2",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[1], seed: 6 },
+		ownScore: 1,
+		opponentScore: 2,
+		roundName: "Swiss 3",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[3], seed: 15 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "Swiss 4",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[6], seed: 19 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "Swiss 5",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[4], seed: 26 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "Swiss 6",
+		bracketName: RUN_GRAPHIC_SWISS,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[2], seed: 22 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "WB Round 1",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[5], seed: 3 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "WB Round 2",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[6], seed: 19 },
+		ownScore: 2,
+		opponentScore: 0,
+		roundName: "WB Semis",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[3], seed: 15 },
+		ownScore: 2,
+		opponentScore: 1,
+		roundName: "WB Finals",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+	{
+		opponent: { ...RESULTS_GRAPHIC_TEAMS[1], seed: 6 },
+		ownScore: 3,
+		opponentScore: 1,
+		roundName: "Grand Finals",
+		bracketName: RUN_GRAPHIC_ALPHA,
+	},
+];
+
+function TournamentRunGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Tournament Run Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Team run export image">
+					<TournamentRunGraphic
+						tournamentId={3938}
+						tournamentTeamId={73362}
+						tournamentName="Low Ink June 2026"
+						startTime={new Date(1781974800 * 1000)}
+						tier={5}
+						logoUrl={`${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-zWk5C1kvQtEWrd7d2c_KS-1735836299376.webp`}
+						organization={{
+							name: "Inkling Performance Labs",
+							avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp`,
+						}}
+						team={RESULTS_GRAPHIC_TEAMS[0]}
+						seed={11}
+						matches={RUN_GRAPHIC_MATCHES}
+						teamsCount={74}
+						playersCount={349}
+						seriesWins={{
+							totalCount: 4,
+							first: {
+								name: "Low Ink May 2023",
+								startTime: new Date("2023-05-20T18:00:00Z"),
+							},
+							latest: {
+								name: "Low Ink February 2026",
+								startTime: new Date("2026-02-21T18:00:00Z"),
+							},
+						}}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const SEASON_SUMMARY_DAYS: Array<
+	[date: string, sp: number, activity: SeasonSummaryGraphicActivity]
+> = [
+	["2026-03-02", 1875.2, "sq"],
+	["2026-03-03", 1922.7, "sq"],
+	["2026-03-06", 1898.4, "sq"],
+	["2026-03-08", 1961.3, "tournament"],
+	["2026-03-10", 2004.9, "sq"],
+	["2026-03-12", 1987.1, "sq"],
+	["2026-03-14", 2043.6, "sq"],
+	["2026-03-17", 2071.2, "sq"],
+	["2026-03-19", 2055.8, "sq"],
+	["2026-03-22", 2102.4, "both"],
+	["2026-03-25", 2138.9, "sq"],
+	["2026-03-26", 2117.3, "sq"],
+	["2026-03-29", 2164.0, "tournament"],
+	["2026-04-02", 2189.5, "sq"],
+	["2026-04-05", 2151.2, "tournament"],
+	["2026-04-06", 2208.8, "sq"],
+	["2026-04-09", 2247.3, "sq"],
+	["2026-04-12", 2231.6, "both"],
+	["2026-04-15", 2278.1, "sq"],
+	["2026-04-16", 2296.4, "sq"],
+	["2026-04-19", 2263.7, "tournament"],
+	["2026-04-21", 2312.9, "sq"],
+	["2026-04-24", 2340.2, "sq"],
+	["2026-04-26", 2371.8, "both"],
+	["2026-04-28", 2355.4, "sq"],
+	["2026-05-01", 2389.7, "sq"],
+	["2026-05-03", 2410.8, "tournament"],
+	["2026-05-05", 2384.2, "sq"],
+	["2026-05-08", 2401.5, "sq"],
+	["2026-05-10", 2368.9, "both"],
+	["2026-05-11", 2352.6, "sq"],
+	["2026-05-14", 2377.3, "sq"],
+	["2026-05-16", 2341.5, "sq"],
+];
+
+const SEASON_SUMMARY_BEST_SETS: SeasonSummaryGraphicBestSet[] = [
+	{
+		context: "SendouQ",
+		ownScore: 4,
+		opponentScore: 2,
+		opponentSp: 2489.3,
+		opponentPlayers: [
+			{ name: "Yeti" },
+			{ name: "まるお", countryCode: "JP" },
+			{ name: "Silver", countryCode: "FR" },
+			{ name: "Chara", countryCode: "US" },
+		],
+	},
+	{
+		context: "In The Zone 50",
+		ownScore: 3,
+		opponentScore: 2,
+		opponentSp: 2451.0,
+		opponentPlayers: [
+			{ name: "zyf", countryCode: "US" },
+			{ name: "Blopwher", countryCode: "US" },
+			{ name: "Stans", countryCode: "US" },
+			{ name: "Miner", countryCode: "ET" },
+		],
+	},
+	{
+		context: "SendouQ",
+		ownScore: 4,
+		opponentScore: 3,
+		opponentSp: 2413.7,
+		opponentPlayers: [
+			{ name: "Andre", countryCode: "TT" },
+			{ name: "Devin", countryCode: "DE" },
+			{ name: "kiki", countryCode: "IE" },
+			{ name: "Reiyu", countryCode: "DO" },
+		],
+	},
+];
+
+const SEASON_SUMMARY_STATS: SeasonSummaryGraphicStats = {
+	tier: { name: "DIAMOND", isPlus: true },
+	sp: 2341.5,
+	setsWon: 41,
+	setsLost: 18,
+	mapsWon: 132,
+	mapsLost: 77,
+	longestWinStreak: 9,
+	clutch: { won: 8, total: 12 },
+	soloRank: 14,
+	teamRank: {
+		rank: 12,
+		sp: 2502.4,
+		mates: [
+			{ name: "Grey", countryCode: "FR" },
+			{ name: "sunni" },
+			{ name: "Isabel T.J.", countryCode: "ES" },
+		],
+		team: {
+			name: "Alliance Rogue",
+			logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/Yu_tgElCa5D48CcyFPF3Y-1756077173431.webp`,
+		},
+	},
+	topMates: [
+		{
+			player: { name: "Grey", countryCode: "FR" },
+			discordId: "289132480999030784",
+			setsCount: 23,
+		},
+		{
+			player: { name: "sunni" },
+			discordId: "437750362188120075",
+			setsCount: 17,
+		},
+		{
+			player: { name: "まるお", countryCode: "JP" },
+			discordId: "196628310288564224",
+			setsCount: 9,
+		},
+		{
+			player: { name: "Chara", countryCode: "US" },
+			discordId: "455039198672814090",
+			setsCount: 8,
+		},
+		{
+			player: { name: "Silver", countryCode: "FR" },
+			discordId: "224378380316540929",
+			setsCount: 6,
+		},
+		{ player: { name: "Yeti" }, discordId: "153113232128507904", setsCount: 4 },
+	],
+	bestStage: { stageId: 14, winratePercentage: 78 },
+	spProgression: SEASON_SUMMARY_DAYS.map(([date, sp]) => ({ date, sp })),
+	activeDays: SEASON_SUMMARY_DAYS.map(([date, , activity]) => ({
+		date,
+		activity,
+	})),
+	bestSets: SEASON_SUMMARY_BEST_SETS,
+	bestTournament: {
+		name: "In The Zone 50",
+		logoUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/tournament-logo-itz.png`,
+		tier: 2,
+		placement: 2,
+		teamsCount: 32,
+	},
+	topWeapons: [
+		{ weaponSplId: 40, usagePercentage: 46 },
+		{ weaponSplId: 1001, usagePercentage: 31 },
+		{ weaponSplId: 2070, usagePercentage: 12 },
+	],
+};
+
+function SeasonSummaryGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Season Summary Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Season summary export image">
+					<SeasonSummaryGraphic
+						user={{
+							name: "Sendou",
+							discordId: "79237403620945920",
+							customUrl: "sendou",
+							countryCode: "FI",
+							avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/dBYwiLjlhVBwW-oyyNJkC-1721997877357.webp`,
+						}}
+						season={8}
+						seasonDateRange={{
+							starts: new Date("2026-03-02T17:00:00.000Z"),
+							ends: new Date("2026-05-17T20:59:59.999Z"),
+						}}
+						stats={SEASON_SUMMARY_STATS}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
 function FormMessageSection({ id }: { id: string }) {
 	return (
 		<Section>
@@ -2048,6 +2512,115 @@ function BadgeSection({ id }: { id: string }) {
 	);
 }
 
+function TrophySection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Trophies</SectionTitle>
+
+			<TrophyContextProvider>
+				<div className="stack md">
+					<ComponentRow label="Interactive (drag to rotate)">
+						<Trophy
+							tile
+							model={EXAMPLE_TROPHY_MODEL}
+							className={styles.trophyExample}
+						/>
+					</ComponentRow>
+
+					<ComponentRow label="Preview (static)">
+						<Trophy
+							tile
+							model={EXAMPLE_TROPHY_MODEL}
+							className={styles.trophyExample}
+							preview
+						/>
+					</ComponentRow>
+
+					<ComponentRow label="With Tier">
+						<div className="stack horizontal sm flex-wrap">
+							{([1, 4, 9] as const).map((tier) => (
+								<Trophy
+									key={tier}
+									tile
+									model={EXAMPLE_TROPHY_MODEL}
+									className={styles.trophyExample}
+									tier={tier}
+									preview
+								/>
+							))}
+						</div>
+					</ComponentRow>
+
+					<ComponentRow label="Tentative Tier">
+						<Trophy
+							tile
+							model={EXAMPLE_TROPHY_MODEL}
+							className={styles.trophyExample}
+							tentativeTier={2}
+							preview
+						/>
+					</ComponentRow>
+
+					<ComponentRow label="Different Sizes">
+						<div className="stack horizontal sm items-end flex-wrap">
+							<Trophy
+								tile
+								model={EXAMPLE_TROPHY_MODEL}
+								className={clsx(
+									styles.trophyExample,
+									styles.trophyExampleSmall,
+								)}
+								preview
+							/>
+							<Trophy
+								tile
+								model={EXAMPLE_TROPHY_MODEL}
+								className={styles.trophyExample}
+								preview
+							/>
+							<Trophy
+								tile
+								model={EXAMPLE_TROPHY_MODEL}
+								className={clsx(
+									styles.trophyExample,
+									styles.trophyExampleLarge,
+								)}
+								preview
+							/>
+						</div>
+					</ComponentRow>
+				</div>
+			</TrophyContextProvider>
+		</Section>
+	);
+}
+
+function TierPillSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Tier Pills</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="All Tiers">
+					<div className="stack horizontal sm flex-wrap">
+						{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((tier) => (
+							<TierPill key={tier} tier={tier} />
+						))}
+					</div>
+				</ComponentRow>
+
+				<ComponentRow label="Tentative">
+					<div className="stack horizontal sm flex-wrap">
+						{[1, 4, 9].map((tier) => (
+							<TierPill key={tier} tier={tier} isTentative />
+						))}
+					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
 function GameSelectSection({ id }: { id: string }) {
 	const [selectedWeapon, setSelectedWeapon] = useState<MainWeaponId | null>(
 		null,
@@ -2102,14 +2675,14 @@ function FormFieldsSection({ id }: { id: string }) {
 
 			<SendouForm
 				schema={formFieldsShowcaseSchema}
-				autoSubmit
+				mode="autoSubmit"
 				className="w-full"
 			>
 				{({ FormField }) => (
 					<div className="stack lg">
 						<Divider smallText>Text Fields</Divider>
 
-						<ComponentRow label="textFieldRequired">
+						<ComponentRow label="textField">
 							<FormField name="requiredText" />
 						</ComponentRow>
 
@@ -2123,7 +2696,7 @@ function FormFieldsSection({ id }: { id: string }) {
 
 						<Divider smallText>Text Areas</Divider>
 
-						<ComponentRow label="textAreaRequired">
+						<ComponentRow label="textArea">
 							<FormField name="requiredTextArea" />
 						</ComponentRow>
 
@@ -2173,7 +2746,7 @@ function FormFieldsSection({ id }: { id: string }) {
 
 						<Divider smallText>Date & Time</Divider>
 
-						<ComponentRow label="datetimeRequired">
+						<ComponentRow label="datetime">
 							<FormField name="requiredDatetime" />
 						</ComponentRow>
 
@@ -2181,7 +2754,7 @@ function FormFieldsSection({ id }: { id: string }) {
 							<FormField name="optionalDatetime" />
 						</ComponentRow>
 
-						<ComponentRow label="dayMonthYearRequired">
+						<ComponentRow label="dayMonthYear">
 							<FormField name="birthDate" />
 						</ComponentRow>
 

@@ -26,6 +26,10 @@
 	}
 }
 
+.underground {
+	color: var(--color-text-high);
+}
+
 .modes {
 	display: inline-flex;
 	gap: var(--s-1);

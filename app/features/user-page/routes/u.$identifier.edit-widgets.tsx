@@ -15,7 +15,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Search as SearchIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -49,9 +50,6 @@ export default function EditWidgetsPage() {
 		Array<Tables["UserWidget"]["widget"]>
 	>(data.currentWidgets);
 	const [expandedWidgetId, setExpandedWidgetId] = useState<string | null>(null);
-	const [pendingScrollWidgetId, setPendingScrollWidgetId] = useState<
-		string | null
-	>(null);
 
 	const mainWidgets = selectedWidgets.filter((w) => {
 		const def = findWidgetById(w.id);
@@ -125,8 +123,12 @@ export default function EditWidgetsPage() {
 			invalidWidgetIds.has(w.id),
 		);
 		if (firstInvalid) {
-			setExpandedWidgetId(firstInvalid.id);
-			setPendingScrollWidgetId(firstInvalid.id);
+			flushSync(() => setExpandedWidgetId(firstInvalid.id));
+			scrollToFirstWidgetError(
+				document.querySelector<HTMLDivElement>(
+					`[data-widget-settings="${firstInvalid.id}"]`,
+				),
+			);
 			return;
 		}
 
@@ -145,16 +147,6 @@ export default function EditWidgetsPage() {
 	const toggleExpanded = (widgetId: string) => {
 		setExpandedWidgetId((prev) => (prev === widgetId ? null : widgetId));
 	};
-
-	useEffect(() => {
-		if (!pendingScrollWidgetId) return;
-		if (expandedWidgetId !== pendingScrollWidgetId) return;
-		const panel = document.querySelector<HTMLDivElement>(
-			`[data-widget-settings="${pendingScrollWidgetId}"]`,
-		);
-		scrollToFirstWidgetError(panel);
-		setPendingScrollWidgetId(null);
-	}, [pendingScrollWidgetId, expandedWidgetId]);
 
 	if (!isHydrated) {
 		return <Placeholder />;

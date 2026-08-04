@@ -1,40 +1,38 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { FRIENDS_PAGE, LFG_PAGE, SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	navigate,
-	seed,
-	selectUser,
-	submit,
-	test,
-	waitForPOSTResponse,
-} from "./helpers/playwright";
+import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { FriendsPage } from "./pages/friends/friends-page";
+import { LFGPage } from "./pages/lfg/lfg-page";
+import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 
 test.describe("User card", () => {
-	test("edits banner and bio from the looking page", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: SENDOUQ_LOOKING_PAGE });
+	test("edits banner and bio from the looking page", async ({
+		page,
+		factories,
+	}) => {
+		await factories.SQGroupFactory.create({ memberUserIds: [ADMIN_ID] });
 
-		const ownGroup = page.getByTestId("sendouq-group-card").first();
-		await ownGroup.getByRole("button", { name: "Sendou" }).click();
+		await impersonate(page);
 
-		await page.getByRole("link", { name: "Edit" }).click();
+		const looking = new SendouQLookingPage(page);
+		await looking.goto();
+
+		const card = await looking.ownGroupCard.openMemberCard("Sendou");
+		const cardEdit = await card.openEditPage();
 		await expect(page).toHaveURL(/\/user-card\/edit/);
 
 		const newBio = "New bio from e2e test";
-		await page.getByLabel("Short bio").fill(newBio);
-		await page.getByLabel("Banner", { exact: true }).selectOption("COLOR");
-		await page.getByRole("button", { name: "#4169e1" }).click();
+		await cardEdit.form.fill("shortBio", newBio);
+		await cardEdit.form.select("bannerType", "COLOR");
+		await cardEdit.selectBannerColor("#4169e1");
 
-		await submit(page);
+		await cardEdit.save();
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 
-		await ownGroup.getByRole("button", { name: "Sendou" }).click();
-		await expect(page.getByText(newBio)).toBeVisible();
-		await expect(page.getByTestId("user-card-banner")).toHaveCSS(
+		await looking.ownGroupCard.openMemberCard("Sendou");
+		await expect(card.bio(newBio)).toBeVisible();
+		await expect(card.locators.banner).toHaveCSS(
 			"background-color",
 			"rgb(65, 105, 225)",
 		);
@@ -44,50 +42,55 @@ test.describe("User card", () => {
 test.describe("User card friend request", () => {
 	test("receiver sees add friend button that accepts the incoming request", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: FRIENDS_PAGE });
+		await factories.LFGPostFactory.create({ authorId: NZAP_TEST_ID });
 
-		await selectUser({ page, userName: "Sendou", labelName: "User" });
-		await submit(page);
-		await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+		await impersonate(page, NZAP_TEST_ID);
+
+		const friends = new FriendsPage(page);
+		await friends.goto();
+		await friends.sendRequest("Sendou");
+		await expect(friends.locators.cancelRequestButton).toBeVisible();
 
 		await impersonate(page);
-		await navigate({ page, url: LFG_PAGE });
 
-		await page.getByRole("button", { name: "N-ZAP" }).first().click();
+		const lfg = new LFGPage(page);
+		await lfg.goto();
+		const card = await lfg.openUserCard("N-ZAP");
 
-		const acceptButton = page.getByLabel("Accept friend request");
-		await expect(acceptButton).toBeVisible();
-		await expect(page.getByLabel("Friend request pending")).not.toBeVisible();
+		await expect(card.locators.acceptFriendRequestButton).toBeVisible();
+		await expect(card.locators.pendingFriendRequestButton).not.toBeVisible();
 
-		await waitForPOSTResponse(page, () => acceptButton.click());
+		await card.acceptFriendRequest();
 
-		await expect(page.getByText("Friend request accepted")).toBeAttached();
-		await expect(acceptButton).not.toBeVisible();
-		await expect(page.getByLabel("Send friend request")).not.toBeVisible();
+		await expect(card.locators.friendRequestAcceptedToast).toBeAttached();
+		await expect(card.locators.acceptFriendRequestButton).not.toBeVisible();
+		await expect(card.locators.sendFriendRequestButton).not.toBeVisible();
 
-		await navigate({ page, url: FRIENDS_PAGE });
-		await expect(page.getByRole("button", { name: "N-ZAP" })).toBeVisible();
+		await friends.goto();
+		await expect(friends.friendButton("N-ZAP").first()).toBeVisible();
 	});
 
 	test("sender still sees pending state on the receiver's card", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		await factories.LFGPostFactory.create({ authorId: NZAP_TEST_ID });
+
 		await impersonate(page);
-		await navigate({ page, url: FRIENDS_PAGE });
 
-		await selectUser({ page, userName: "N-ZAP", labelName: "User" });
-		await submit(page);
-		await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+		const friends = new FriendsPage(page);
+		await friends.goto();
+		await friends.sendRequest("N-ZAP");
+		await expect(friends.locators.cancelRequestButton).toBeVisible();
 
-		await navigate({ page, url: LFG_PAGE });
-		await page.getByRole("button", { name: "N-ZAP" }).first().click();
+		const lfg = new LFGPage(page);
+		await lfg.goto();
+		const card = await lfg.openUserCard("N-ZAP");
 
-		await expect(page.getByLabel("Friend request pending")).toBeVisible();
-		await expect(page.getByLabel("Friend request pending")).toBeDisabled();
-		await expect(page.getByLabel("Accept friend request")).not.toBeVisible();
+		await expect(card.locators.pendingFriendRequestButton).toBeVisible();
+		await expect(card.locators.pendingFriendRequestButton).toBeDisabled();
+		await expect(card.locators.acceptFriendRequestButton).not.toBeVisible();
 	});
 });

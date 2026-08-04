@@ -1,0 +1,19 @@
+language js
+
+// The dev dataset composes factories only, so that seeding exercises the same
+// write paths the app does. The sanctioned exceptions (`backdate`, `pinUserId`,
+// a column no production write reaches) live in `app/db/seed/core` and inside
+// factory options — never in `dev/`.
+`$connection.$method($_)` as $write where {
+	$connection <: or {
+		`db`,
+		`trx`
+	},
+	$method <: or {
+		`insertInto`,
+		`updateTable`,
+		`deleteFrom`,
+		`replaceInto`
+	},
+	register_diagnostic(span=$write, message="The dev seed must not write to the database directly. Compose factories from `app/db/seed/factories`; if none fits, add one wrapping the repository write.", severity="error")
+}

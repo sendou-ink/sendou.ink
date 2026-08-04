@@ -10,7 +10,6 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-import { FRIEND_CODE_REGEXP } from "../features/sendouq/q-constants";
 import { SHORT_NANOID_LENGTH } from "./id";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
@@ -21,15 +20,10 @@ export const idObject = z.object({
 });
 
 export const inviteCode = z.string().length(SHORT_NANOID_LENGTH);
-export const inviteCodeObject = z.object({
-	inviteCode,
-});
 
 export const nonEmptyString = z.string().trim().min(1, {
 	message: "Required",
 });
-
-export const dbBoolean = z.coerce.number().min(0).max(1).int();
 
 // matches #RGB and #RRGGBB only (no alpha) https://stackoverflow.com/a/1636354
 const hexCodeWithoutAlphaRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
@@ -196,11 +190,6 @@ export const normalizeFriendCode = (value: string) => {
 
 	return withDashes;
 };
-
-export const friendCode = z
-	.string()
-	.regex(FRIEND_CODE_REGEXP)
-	.transform(normalizeFriendCode);
 
 export const ability = z.enum([
 	"ISM",
@@ -404,12 +393,6 @@ export function removeDuplicates(value: unknown) {
 	return Array.from(new Set(value));
 }
 
-export function toArray<T>(value: T | Array<T>) {
-	if (Array.isArray(value)) return value;
-
-	return [value];
-}
-
 export function emptyArrayToNull(value: unknown) {
 	if (Array.isArray(value) && value.length === 0) return null;
 
@@ -424,12 +407,6 @@ export function checkboxValueToBoolean(value: unknown) {
 	}
 
 	return value === "on";
-}
-
-export function checkboxValueToDbBoolean(value: unknown) {
-	if (checkboxValueToBoolean(value)) return 1;
-
-	return 0;
 }
 
 export const _action = <T extends string>(value: T) =>

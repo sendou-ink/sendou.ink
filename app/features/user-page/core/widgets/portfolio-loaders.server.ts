@@ -1,4 +1,5 @@
 import * as ArtRepository from "~/features/art/ArtRepository.server";
+import { getUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
@@ -9,6 +10,8 @@ import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
@@ -16,6 +19,11 @@ import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
 export const WIDGET_LOADERS = {
+	"trophies-owned": async (userId: number) => {
+		if (!canAccessTrophies(getUser())) return [];
+
+		return TrophyRepository.findByOwnerUserId(userId);
+	},
 	"badges-owned": async (userId: number) => {
 		return BadgeRepository.findByOwnerUserId(userId);
 	},
@@ -33,7 +41,7 @@ export const WIDGET_LOADERS = {
 	},
 	"peak-sp": async (userId: number) => {
 		const seasonsParticipatedIn =
-			await LeaderboardRepository.seasonsParticipatedInByUserId(userId);
+			await LeaderboardRepository.findSeasonsParticipatedInByUserId(userId);
 
 		if (seasonsParticipatedIn.length === 0) {
 			return null;
@@ -43,7 +51,7 @@ export const WIDGET_LOADERS = {
 		let maxOrdinal = Number.NEGATIVE_INFINITY;
 
 		for (const season of seasonsParticipatedIn) {
-			const { userSkills } = _userSkills(season);
+			const { userSkills } = await _userSkills(season);
 			const skillData = userSkills[userId];
 
 			if (!skillData || skillData.approximate) {
@@ -99,7 +107,7 @@ export const WIDGET_LOADERS = {
 		const leaderboardEntry =
 			// optimize, only check leaderboard if peak placement is high enough
 			peakPlacement.power >= 3318.9
-				? (await LeaderboardRepository.allXPLeaderboard()).find(
+				? (await LeaderboardRepository.findAllXPLeaderboard()).find(
 						(entry) => entry.id === userId,
 					)
 				: null;
@@ -128,7 +136,7 @@ export const WIDGET_LOADERS = {
 
 		const peakPlacement = placements[0];
 
-		const leaderboard = await LeaderboardRepository.weaponXPLeaderboard(
+		const leaderboard = await LeaderboardRepository.findWeaponXPLeaderboard(
 			settings.weaponSplId,
 		);
 		const leaderboardPosition = leaderboard.findIndex(
@@ -189,10 +197,10 @@ export const WIDGET_LOADERS = {
 		};
 	},
 	"patron-since": async (userId: number) => {
-		return UserRepository.patronSinceByUserId(userId);
+		return UserRepository.findPatronStartedAtByUserId(userId);
 	},
 	"join-date": async (userId: number) => {
-		return UserRepository.joinOrderByUserId(userId);
+		return UserRepository.findJoinOrderByUserId(userId);
 	},
 	videos: async (userId: number) => {
 		return VodRepository.findByUserId(userId, 3);
@@ -255,7 +263,7 @@ export const WIDGET_LOADERS = {
 		);
 	},
 	builds: async (userId: number) => {
-		const builds = await BuildRepository.allByUserId(userId, {
+		const builds = await BuildRepository.findAllByUserId(userId, {
 			showPrivate: false,
 			limit: 3,
 		});
@@ -276,13 +284,13 @@ export const WIDGET_LOADERS = {
 		return arts.slice(0, 3);
 	},
 	commissions: async (userId: number) => {
-		return UserRepository.commissionsByUserId(userId);
+		return UserRepository.findCommissionsByUserId(userId);
 	},
 	"weapon-pool": async (userId: number) => {
-		return UserRepository.weaponPoolByUserId(userId);
+		return UserRepository.findWeaponPoolByUserId(userId);
 	},
 	"social-links": async (userId: number) => {
-		return UserRepository.socialLinksByUserId(userId);
+		return UserRepository.findSocialLinksByUserId(userId);
 	},
 	links: async (_userId: number, settings: ExtractWidgetSettings<"links">) => {
 		return settings.links;

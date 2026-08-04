@@ -1,150 +1,114 @@
-import type { Page } from "@playwright/test";
+import { addHours, subMinutes } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { tournamentAdminPage, tournamentMatchPage } from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	isNotVisible,
-	navigate,
-	seed,
-	selectUser,
-	startBracket,
-	test,
-} from "./helpers/playwright";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
+import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
 
-const TOURNAMENT_ID = 2;
-
-const nzapStaffRow = (page: Page) => page.getByTestId("staff-row-N-ZAP");
-
-// The "For this event" staff section is read-only by default and reveals the
-// form only after clicking "Edit", collapsing back once the save succeeds.
-async function editStaff(page: Page) {
-	await page.getByTestId("edit-staff-button").click();
-}
-
-// The staff form collapses back to the read-only view after saving, so we only
-// wait for the POST and let web-first assertions wait for the revalidated DOM
-// rather than for a distinct revalidation request.
-async function saveStaff(page: Page) {
-	const postPromise = page.waitForResponse(
-		(res) => res.request().method() === "POST",
-	);
-	await page.getByTestId("submit-button").click();
-	await postPromise;
-}
-
-async function addStaffer(page: Page, role?: string) {
-	await editStaff(page);
-	// The empty staff array already renders one placeholder row to fill in, so we
-	// select into it directly rather than adding another row.
-	await selectUser({
-		page,
-		userName: "N-ZAP",
-		labelName: "User",
-	});
-	if (role) {
-		await page.getByLabel("Role", { exact: true }).selectOption(role);
-	}
-	await saveStaff(page);
-}
+const ROSTER_SIZE = 4;
 
 test.describe("Tournament staff", () => {
-	test("gives and takes away staff role", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-
-		await navigate({
-			page,
-			url: tournamentAdminPage(TOURNAMENT_ID),
+	test("gives and takes away staff role", async ({ page, factories }) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
 		});
 
-		await page.getByRole("tab", { name: "Staff" }).click();
+		await impersonate(page, ADMIN_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		const staff = await admin.openStaff();
 
 		// the tournament author is always shown as an organizer (info only)
-		await expect(page.getByTestId("staff-author")).toBeVisible();
+		await expect(staff.locators.authorRow).toBeVisible();
 
-		await addStaffer(page);
+		await staff.addStaffer("N-ZAP");
 
-		await expect(nzapStaffRow(page)).toBeVisible();
+		await expect(staff.staffRow("N-ZAP")).toBeVisible();
 
-		await editStaff(page);
-		await page.getByRole("button", { name: "Remove item" }).click();
-		await saveStaff(page);
+		await staff.removeStaffer();
 
-		await isNotVisible(nzapStaffRow(page));
+		await isNotVisible(staff.staffRow("N-ZAP"));
 	});
 
 	test("gives organizer role which allows another user to TO", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+
 		await impersonate(page, NZAP_TEST_ID);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(TOURNAMENT_ID),
-		});
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
 		// check that got redirected since has no access
 		await page.waitForURL("**/info");
 
 		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: tournamentAdminPage(TOURNAMENT_ID),
-		});
-
-		await page.getByRole("tab", { name: "Staff" }).click();
-		await addStaffer(page, "ORGANIZER");
+		await admin.goto(tournament.id);
+		const staff = await admin.openStaff();
+		await staff.addStaffer("N-ZAP", "ORGANIZER");
 
 		await impersonate(page, NZAP_TEST_ID);
-
-		await navigate({
-			page,
-			url: tournamentAdminPage(TOURNAMENT_ID),
-		});
+		await admin.goto(tournament.id);
 
 		// being an organizer grants admin page access (no longer redirected to info)
-		await expect(page.getByRole("tab", { name: "Teams" })).toBeVisible();
+		await expect(admin.adminTab("Teams")).toBeVisible();
 		// but an organizer has no perms to manage staff
-		await isNotVisible(page.getByRole("tab", { name: "Staff" }));
+		await isNotVisible(admin.adminTab("Staff"));
 	});
 
 	test("gives staff role which allows another user to see limited info", async ({
 		page,
+		factories,
 	}) => {
-		await startBracket(page);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+		});
+		const players = await factories.UserFactory.createMany(ROSTER_SIZE * 2);
+		for (const roster of [
+			players.slice(0, ROSTER_SIZE),
+			players.slice(ROSTER_SIZE),
+		]) {
+			await factories.TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					memberUserIds: roster.map((user) => user.id),
+				},
+				{ isCheckedIn: true },
+			);
+		}
+		const matches = await factories.TournamentFactory.startBracket(
+			tournament.id,
+		);
+		const matchId = matches[0].id;
 
 		await impersonate(page, NZAP_TEST_ID);
 
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId: TOURNAMENT_ID, matchId: 2 }),
-		});
+		const match = new TournamentMatchPage(page);
+		await match.goto({ tournamentId: tournament.id, matchId });
 
-		const roomPassSelector = page.getByTestId("room-pass");
-
-		await isNotVisible(roomPassSelector);
+		await isNotVisible(match.locators.roomPass);
 
 		await impersonate(page, ADMIN_ID);
 
-		await navigate({
-			page,
-			url: tournamentAdminPage(TOURNAMENT_ID),
-		});
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		const staff = await admin.openStaff();
+		await staff.addStaffer("N-ZAP", "STREAMER");
 
-		await page.getByRole("tab", { name: "Staff" }).click();
-		await addStaffer(page, "STREAMER");
-
-		await expect(nzapStaffRow(page)).toContainText("streamer");
+		await expect(staff.staffRow("N-ZAP")).toContainText("streamer");
 
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: tournamentMatchPage({ tournamentId: TOURNAMENT_ID, matchId: 2 }),
-		});
+		await match.goto({ tournamentId: tournament.id, matchId });
 
-		await expect(roomPassSelector).toBeVisible();
+		await expect(match.locators.roomPass).toBeVisible();
 	});
 });

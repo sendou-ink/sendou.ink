@@ -68,6 +68,8 @@ export default [
 		"features/user-card/routes/user-card.$id.note.ts",
 	),
 
+	route("/user-report/:id", "features/user-report/routes/user-report.$id.ts"),
+
 	route("/events", "features/calendar/routes/events.tsx"),
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),
@@ -83,6 +85,10 @@ export default [
 		route(
 			"edit-widgets",
 			"features/user-page/routes/u.$identifier.edit-widgets.tsx",
+		),
+		route(
+			"seasons/summary-graphic",
+			"features/user-page/routes/u.$identifier.seasons.summary-graphic.ts",
 		),
 		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx", [
 			index("features/user-page/routes/u.$identifier.seasons.index.tsx"),
@@ -110,6 +116,19 @@ export default [
 			route("edit", "features/badges/routes/badges.$id.edit.tsx"),
 		]),
 	]),
+
+	route(
+		"/trophies/:id/wins/:userId",
+		"features/trophies/routes/trophies.$id.wins.$userId.ts",
+	),
+	route(
+		"/trophies/:id/tournaments",
+		"features/trophies/routes/trophies.$id.tournaments.ts",
+	),
+	route("/trophies", "features/trophies/routes/trophies.tsx", [
+		route(":id", "features/trophies/routes/trophies.$id.tsx"),
+	]),
+	route("/trophies/new", "features/trophies/routes/trophies.new.tsx"),
 
 	...prefix("/calendar", [
 		index("features/calendar/routes/calendar.tsx"),
@@ -209,6 +228,7 @@ export default [
 	]),
 
 	route("/faq", "features/info/routes/faq.tsx"),
+	route("/welcome", "features/info/routes/welcome.tsx"),
 	route("/contributions", "features/info/routes/contributions.tsx"),
 	route("/support", "features/info/routes/support.tsx"),
 
@@ -329,6 +349,7 @@ export default [
 	]),
 
 	route("/patrons", "features/api-private/routes/patrons.ts"),
+	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/seed", "features/api-private/routes/seed.ts"),
 	route("/users", "features/api-private/routes/users.ts"),
 

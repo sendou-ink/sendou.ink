@@ -111,7 +111,7 @@ type TeamLeaderboardBySeasonQueryReturnType = InferResult<
 	ReturnType<typeof teamLeaderboardBySeasonQuery>
 >;
 
-export async function teamLeaderboardBySeason({
+export async function findTeamLeaderboardBySeason({
 	season,
 	onlyOneEntryPerUser,
 }: {
@@ -169,7 +169,7 @@ async function userIdsWithEnoughSqMatchesForTeamLeaderboard(seasonNth: number) {
 	return rows.map((row) => row.userId);
 }
 
-export async function userHasEnoughSqMatches(userId: number) {
+export async function hasEnoughSqMatchesByUserId(userId: number) {
 	const season = Seasons.currentOrPrevious();
 	if (!season) return false;
 
@@ -271,7 +271,7 @@ function ignoreTeams({
 	});
 }
 
-export async function seasonsParticipatedInByUserId(userId: number) {
+export async function findSeasonsParticipatedInByUserId(userId: number) {
 	const rows = await db
 		.selectFrom("Skill")
 		.select("season")
@@ -299,7 +299,7 @@ export async function seasonsParticipatedInByUserId(userId: number) {
 }
 
 export type XPLeaderboardItem = Awaited<
-	ReturnType<typeof allXPLeaderboard>
+	ReturnType<typeof findAllXPLeaderboard>
 >[number];
 
 function xpLeaderboardQuery(where?: {
@@ -379,23 +379,23 @@ function xpLeaderboardQuery(where?: {
 		.limit(DEFAULT_LEADERBOARD_MAX_SIZE);
 }
 
-export async function allXPLeaderboard() {
+export async function findAllXPLeaderboard() {
 	return xpLeaderboardQuery().execute();
 }
 
-export async function modeXPLeaderboard(mode: RankedModeShort) {
+export async function findModeXPLeaderboard(mode: RankedModeShort) {
 	return xpLeaderboardQuery({ mode }).execute();
 }
 
-export async function weaponXPLeaderboard(weaponSplId: MainWeaponId) {
+export async function findWeaponXPLeaderboard(weaponSplId: MainWeaponId) {
 	return xpLeaderboardQuery({ weaponSplId }).execute();
 }
 
 export type UserSPLeaderboardItem = Awaited<
-	ReturnType<typeof userSPLeaderboard>
+	ReturnType<typeof findUserSPLeaderboard>
 >[number];
 
-export async function userSPLeaderboard(season: number) {
+export async function findUserSPLeaderboard(season: number) {
 	const rows = await db
 		.selectFrom((eb) =>
 			eb
@@ -444,7 +444,7 @@ export type SeasonPopularUsersWeapon = Record<
 	MainWeaponId
 >;
 
-export async function seasonPopularUsersWeapon(
+export async function findSeasonPopularUsersWeapon(
 	season: number,
 ): Promise<SeasonPopularUsersWeapon> {
 	const { starts, ends } = Seasons.nthToDateRange(season);

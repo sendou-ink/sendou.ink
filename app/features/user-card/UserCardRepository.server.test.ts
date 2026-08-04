@@ -1,54 +1,31 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset, withNoUser, withUserId } from "~/utils/Test";
+import { beforeEach, describe, expect, it } from "vitest";
+import * as ImageFactory from "~/db/seed/factories/ImageFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
+import { withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
 
-const insertVerifiedXp = async (
+let owner: { id: number };
+let other: { id: number };
+
+const insertVerifiedXp = (
 	userId: number,
 	power: number,
 	region: "WEST" | "JPN" = "WEST",
-) => {
-	const player = await db
-		.insertInto("SplatoonPlayer")
-		.values({ splId: `spl-${userId}`, userId })
-		.returning("id")
-		.executeTakeFirstOrThrow();
-	await db
-		.insertInto("XRankPlacement")
-		.values({
-			playerId: player.id,
-			weaponSplId: 0,
-			badges: "[]",
-			bannerSplId: 1,
-			mode: "SZ",
-			month: 1,
-			year: 2024,
-			name: "Test Player",
-			nameDiscriminator: "0000",
-			power,
-			rank: 1,
-			region,
-			title: "Test",
-		})
-		.execute();
-};
+) => XRankPlacementFactory.create({ playerUserId: userId, power, region });
 
 const findXpStat = (card: UserCardData | undefined) =>
 	card?.stats.find((stat) => stat.type === "XP");
 
-describe("UserCardRepository.userCards", () => {
+describe("UserCardRepository.findAllByUserIds", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
-	});
-
-	afterEach(() => {
-		dbReset();
+		[owner, other] = await UserFactory.createMany(2);
 	});
 
 	it("returns an empty map when given no user ids", async () => {
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({
+			UserCardRepository.findAllByUserIds({
 				userIds: [],
 			}),
 		);
@@ -57,24 +34,22 @@ describe("UserCardRepository.userCards", () => {
 	});
 
 	it("keys cards by user id and builds the stats array from db fields", async () => {
-		await db
-			.updateTable("User")
-			.set({ div: "1" })
-			.where("id", "=", 1)
-			.execute();
-		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
-		await insertVerifiedXp(1, 2500);
+		const plusMember = await UserFactory.create(null, {
+			plusTier: 2,
+			div: "1",
+		});
+		await insertVerifiedXp(plusMember.id, 2500);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({
-				userIds: [1, 2],
+			UserCardRepository.findAllByUserIds({
+				userIds: [plusMember.id, other.id],
 			}),
 		);
 
 		expect(userCards.size).toBe(2);
 
-		const card = userCards.get(1);
-		expect(card?.id).toBe(1);
+		const card = userCards.get(plusMember.id);
+		expect(card?.id).toBe(plusMember.id);
 		expect(card?.freeAgentPostId).toBeNull();
 
 		const statTypes = card?.stats.map((stat) => stat.type) ?? [];
@@ -96,12 +71,12 @@ describe("UserCardRepository.userCards", () => {
 		});
 
 		// user 2 has none of the optional fields -> no stats
-		expect(userCards.get(2)?.stats).toHaveLength(0);
+		expect(userCards.get(other.id)?.stats).toHaveLength(0);
 	});
 
 	it("surfaces self-reported peak XP only when it beats the verified XP", async () => {
-		await insertVerifiedXp(1, 2500);
-		await withUserId(1, () =>
+		await insertVerifiedXp(owner.id, 2500);
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -112,10 +87,10 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toMatchObject({
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
 			type: "XP",
 			values: [
 				{ isVerified: false, region: "WEST", points: 2600 },
@@ -125,8 +100,8 @@ describe("UserCardRepository.userCards", () => {
 	});
 
 	it("ignores self-reported peak XP that does not beat the verified XP", async () => {
-		await insertVerifiedXp(1, 2500);
-		await withUserId(1, () =>
+		await insertVerifiedXp(owner.id, 2500);
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -137,18 +112,18 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toMatchObject({
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
 	});
 
 	it("ignores self-reported peak XP more than 200 above the verified XP", async () => {
-		await insertVerifiedXp(1, 2500);
-		await withUserId(1, () =>
+		await insertVerifiedXp(owner.id, 2500);
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -159,17 +134,17 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toMatchObject({
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
 			type: "XP",
 			values: [{ isVerified: true, region: "WEST", points: 2500 }],
 		});
 	});
 
 	it("ignores self-reported peak XP when there is no verified XP", async () => {
-		await withUserId(1, () =>
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -180,17 +155,17 @@ describe("UserCardRepository.userCards", () => {
 		);
 
 		const { userCards } = await withNoUser(() =>
-			UserCardRepository.userCards({ userIds: [1] }),
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
 		);
 
-		expect(findXpStat(userCards.get(1))).toBeUndefined();
+		expect(findXpStat(userCards.get(owner.id))).toBeUndefined();
 	});
 
 	it("persists edited card fields and surfaces hidden stats", async () => {
-		await db.insertInto("PlusTier").values({ userId: 1, tier: 2 }).execute();
-		await insertVerifiedXp(1, 2500);
+		const plusMember = await UserFactory.create(null, { plusTier: 2 });
+		await insertVerifiedXp(plusMember.id, 2500);
 
-		await withUserId(1, () =>
+		await withUserId(plusMember.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: "hello",
 				bannerPresetImg: "#ff4655",
@@ -200,12 +175,12 @@ describe("UserCardRepository.userCards", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(1, () =>
-			UserCardRepository.userCards({
-				userIds: [1],
+		const { userCards } = await withUserId(plusMember.id, () =>
+			UserCardRepository.findAllByUserIds({
+				userIds: [plusMember.id],
 			}),
 		);
-		const card = userCards.get(1);
+		const card = userCards.get(plusMember.id);
 
 		expect(card?.shortBio).toBe("hello");
 		expect(card?.banner).toMatchObject({ type: "COLOR", hexCode: "#ff4655" });
@@ -216,14 +191,16 @@ describe("UserCardRepository.userCards", () => {
 			value: 2,
 		});
 
-		const extras = await UserCardRepository.cardEditExtras(1);
+		const extras = await UserCardRepository.findCardEditExtrasByUserId(
+			plusMember.id,
+		);
 		expect(extras.hiddenCardStats).toEqual(["XP"]);
 	});
 
 	it("keeps hidden stats in `stats` when includeHiddenStats is set", async () => {
-		await insertVerifiedXp(1, 2500);
+		await insertVerifiedXp(owner.id, 2500);
 
-		await withUserId(1, () =>
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -233,13 +210,13 @@ describe("UserCardRepository.userCards", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(1, () =>
-			UserCardRepository.userCards({
-				userIds: [1],
+		const { userCards } = await withUserId(owner.id, () =>
+			UserCardRepository.findAllByUserIds({
+				userIds: [owner.id],
 				includeHiddenStats: true,
 			}),
 		);
-		const card = userCards.get(1);
+		const card = userCards.get(owner.id);
 
 		expect(findXpStat(card)).toMatchObject({
 			type: "XP",
@@ -248,13 +225,12 @@ describe("UserCardRepository.userCards", () => {
 	});
 
 	it("produces a URL banner when an uploaded banner image is set", async () => {
-		const image = await db
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({ url: "banner.webp", submitterUserId: 1, validatedAt: 1 })
-			.returning("id")
-			.executeTakeFirstOrThrow();
+		const image = await ImageFactory.create(
+			{ submitterUserId: owner.id },
+			{ isValidated: true },
+		);
 
-		await withUserId(1, () =>
+		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: null,
 				bannerPresetImg: null,
@@ -264,13 +240,13 @@ describe("UserCardRepository.userCards", () => {
 			}),
 		);
 
-		const { userCards } = await withUserId(1, () =>
-			UserCardRepository.userCards({
-				userIds: [1],
+		const { userCards } = await withUserId(owner.id, () =>
+			UserCardRepository.findAllByUserIds({
+				userIds: [owner.id],
 			}),
 		);
 
-		const banner = userCards.get(1)?.banner;
+		const banner = userCards.get(owner.id)?.banner;
 		expect(banner?.type).toBe("URL");
 		expect(banner).toHaveProperty("url");
 	});

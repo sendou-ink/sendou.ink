@@ -34,7 +34,7 @@
 .modal {
 	width: 100%;
 	max-width: 28rem;
-	max-height: 80dvh;
+	max-height: min(80dvh, calc(var(--visual-viewport-height, 100dvh) - 10rem));
 	overflow-x: hidden;
 	overflow-y: auto;
 	border-radius: 1rem;
@@ -54,7 +54,7 @@
 }
 
 :global(html[data-fuse="true"]) .modal {
-	max-height: 72dvh;
+	max-height: min(72dvh, calc(var(--visual-viewport-height, 100dvh) - 10rem));
 }
 
 .fullScreenModal {

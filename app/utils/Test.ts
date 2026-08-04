@@ -6,12 +6,11 @@ import type {
 import { expect } from "vitest";
 import type { z } from "zod";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import { db, sql } from "~/db/sql";
+import { actAs } from "~/db/seed/core/actAs";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SESSION_KEY } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
 import {
-	type AuthenticatedUser,
 	getUserFromRequest,
 	userAsyncLocalStorage,
 } from "~/features/auth/core/user-context.server";
@@ -25,23 +24,13 @@ export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 
 /**
  * Runs `fn` inside the user AsyncLocalStorage store so that repository functions
- * resolving the actor via `actorId()` / `actorIdOrNull()` see `user` as the acting
- * user. Use in direct repository unit tests, which run outside a request.
- */
-export function withUser<T>(user: AuthenticatedUser, fn: () => T): T {
-	return userAsyncLocalStorage.run({ user }, fn);
-}
-
-/**
- * Like {@link withUser} but takes only a user id, building a minimal acting-user
- * context. Convenient for repository data-setup in tests where only the actor's id
- * matters (repositories read the actor solely via `actorId()` / `actorIdOrNull()`).
+ * resolving the actor via `actorId()` / `actorIdOrNull()` see the user as the acting
+ * one. Use in direct repository unit tests, which run outside a request.
+ *
+ * An id is all it takes: repositories read the actor solely through `actorId()`.
  */
 export function withUserId<T>(id: number, fn: () => T): T {
-	return userAsyncLocalStorage.run(
-		{ user: { id } as unknown as AuthenticatedUser },
-		fn,
-	);
+	return actAs(id, fn);
 }
 
 /**
@@ -204,72 +193,3 @@ async function authHeader(
 
 	return [["Cookie", await authSessionStorage.commitSession(session)]];
 }
-
-/**
- * Resets all data in the database by deleting all rows from every table,
- * except for SQLite system tables and the 'migrations' table.
- *
- * @example
- * describe("My integration test", () => {
- *   beforeEach(async () => {
- *     await dbInsertUsers(2);
- *   });
- *
- *   afterEach(() => {
- *     dbReset();
- *   });
- *
- *   // tests go here
- * });
- */
-export const dbReset = () => {
-	// virtual tables and their shadow tables (e.g. UserSearch_data) can not be
-	// deleted from directly; the fts index stays in sync via the User triggers
-	const tables = sql
-		.prepare(
-			`SELECT name FROM sqlite_master
-			WHERE type='table'
-			AND name NOT LIKE 'sqlite_%'
-			AND name NOT LIKE 'migrations'
-			AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
-			AND NOT EXISTS (
-				SELECT 1 FROM sqlite_master AS vt
-				WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
-				AND sqlite_master.name LIKE vt.name || '_%'
-			);`,
-		)
-		.all() as { name: string }[];
-
-	sql.prepare("PRAGMA foreign_keys = OFF").run();
-	for (const table of tables) {
-		sql.prepare(`DELETE FROM "${table.name}"`).run();
-	}
-	sql.prepare("PRAGMA foreign_keys = ON").run();
-};
-
-/**
- * Inserts a specified number of user records into the "User" table in the database for integration testing.
- * 1) id: 1, discordName: "user1", discordId: "0"
- * 2) id: 2, discordName: "user2", discordId: "1"
- * 3) etc.
- *
- * @param count - The number of users to insert. Defaults to 2 if not provided.
- *
- * @example
- * // Inserts 5 users into the database
- * await dbInsertUsers(5);
- *
- * // Inserts 2 users (default)
- * await dbInsertUsers();
- */
-export const dbInsertUsers = (count = 2) =>
-	db
-		.insertInto("User")
-		.values(
-			Array.from({ length: count }).map((_, i) => ({
-				id: i + 1,
-				discordName: `user${i + 1}`,
-				discordId: String(i),
-			})),
-		)
-		.execute();

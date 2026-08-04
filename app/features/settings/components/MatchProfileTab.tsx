@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData, useLocation } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { ModeImage } from "~/components/Image";
-import type { Preference, UserMapModePreferences } from "~/db/tables";
+import type { Preference, UserMapModePreferences } from "~/db/tables-json";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
 import { SendouForm } from "~/form/SendouForm";

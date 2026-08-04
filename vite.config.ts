@@ -1,5 +1,6 @@
 import { reactRouter } from "@react-router/dev/vite";
 import { sentryReactRouter } from "@sentry/react-router";
+import MagicString from "magic-string";
 import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
 
@@ -13,9 +14,6 @@ export default defineConfig((config) => {
 				clientFiles: ["./app/entry.client.tsx", "./app/root.tsx"],
 				ssrFiles: ["./app/entry.server.tsx"],
 			},
-		},
-		ssr: {
-			noExternal: ["react-charts", "react-use"],
 		},
 		plugins: [
 			{
@@ -32,8 +30,13 @@ export default defineConfig((config) => {
 					const layer = id.includes("/components/elements/")
 						? "elements"
 						: "components";
+					const magicCode = new MagicString(code);
+					magicCode.prepend(`${layerOrder}\n@layer ${layer} {\n`);
+					magicCode.append("\n}");
+
 					return {
-						code: `${layerOrder}\n@layer ${layer} {\n${code}\n}`,
+						code: magicCode.toString(),
+						map: magicCode.generateMap({ source: id, hires: true }),
 					};
 				},
 			},
@@ -57,6 +60,15 @@ export default defineConfig((config) => {
 								telemetry: false,
 								unstable_sentryVitePluginOptions: {
 									applicationKey: "sendou-ink",
+									// tree-shakes SDK features we don't use (Replay, debug logging)
+									// out of the dynamically imported client bundle
+									bundleSizeOptimizations: {
+										excludeDebugStatements: true,
+										excludeReplayCanvas: true,
+										excludeReplayShadowDom: true,
+										excludeReplayIframe: true,
+										excludeReplayWorker: true,
+									},
 								},
 							},
 							config,
@@ -66,6 +78,7 @@ export default defineConfig((config) => {
 		],
 
 		test: {
+			globalSetup: ["./scripts/ensure-test-db.ts"],
 			projects: [
 				"./vitest.unit.config.ts",
 				"./vitest.browser.config.ts",
@@ -100,10 +113,8 @@ export default defineConfig((config) => {
 				"@dnd-kit/utilities",
 				"@epic-web/cachified",
 				"@internationalized/date",
-				"@remix-run/form-data-parser",
 				"@tldraw/tldraw",
 				"@zumer/snapdom",
-				"better-sqlite3",
 				"chart.js",
 				"compressorjs",
 				"date-fns/locale/da",
@@ -124,23 +135,27 @@ export default defineConfig((config) => {
 				"edmonds-blossom-fixed",
 				"i18next-browser-languagedetector",
 				"i18next-http-backend",
-				"jsoncrush",
 				"kysely",
 				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
 				"mediabunny",
-				"neverthrow",
+				"nanoid",
 				"openskill",
+				"pako",
 				"partysocket",
+				"picocad2-web",
 				"qrcode.react",
 				"react-chartjs-2",
 				"react-flip-toolkit",
+				"react-use-draggable-scroll",
 				"remeda",
 				"remix-auth",
 				"remix-auth-oauth2",
 				"remix-i18next",
 				"sql-formatter",
 				"swr/immutable",
+				"web-haptics/react",
+				"zod",
 			],
 		},
 	};

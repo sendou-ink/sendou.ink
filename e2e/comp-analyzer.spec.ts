@@ -1,187 +1,135 @@
-import { COMP_ANALYZER_URL } from "~/utils/urls";
-import { expect, navigate, test } from "./helpers/playwright";
+import { expect, test } from "./helpers/playwright";
+import { CompAnalyzerPage } from "./pages/comp-analyzer/comp-analyzer-page";
 
 test.describe("Composition Analyzer", () => {
 	test("weapon selection, removal, and URL persistence", async ({ page }) => {
-		await navigate({ page, url: COMP_ANALYZER_URL });
+		const compAnalyzer = new CompAnalyzerPage(page);
+		await compAnalyzer.goto();
 
-		const selectedWeapons = page.getByTestId("selected-weapons");
-		await expect(selectedWeapons).toBeVisible();
+		await expect(compAnalyzer.locators.selectedWeapons).toBeVisible();
 
-		// Initially no weapons selected - check for "Pick a weapon" text
-		await expect(page.getByText("Pick a weapon")).toHaveCount(4);
+		await expect(compAnalyzer.locators.emptyWeaponSlots).toHaveCount(4);
 
-		// Click on Splattershot (weapon ID 40)
-		await page.getByTestId("weapon-button-40").click();
+		await compAnalyzer.selectWeapon(40);
 
 		// First slot should now have the weapon
-		await expect(page.getByTestId("selected-weapon-0")).toBeVisible();
-		await expect(page.getByText("Pick a weapon")).toHaveCount(3);
+		await expect(compAnalyzer.selectedWeapon(0)).toBeVisible();
+		await expect(compAnalyzer.locators.emptyWeaponSlots).toHaveCount(3);
 
-		// Remove the weapon
-		await page.getByTestId("remove-weapon-0").click();
-		await expect(page.getByText("Pick a weapon")).toHaveCount(4);
+		await compAnalyzer.removeWeapon(0);
+		await expect(compAnalyzer.locators.emptyWeaponSlots).toHaveCount(4);
 
 		// Select 4 weapons to test auto-collapse
-		const categorizationToggle = page.getByTestId("categorization-toggle");
-		await expect(categorizationToggle).toBeVisible();
+		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
 
-		await page.getByTestId("weapon-button-40").click();
-		await page.getByTestId("weapon-button-50").click();
-		await page.getByTestId("weapon-button-60").click();
-		await page.getByTestId("weapon-button-70").click();
+		await compAnalyzer.selectWeapon(40);
+		await compAnalyzer.selectWeapon(50);
+		await compAnalyzer.selectWeapon(60);
+		await compAnalyzer.selectWeapon(70);
 
-		// Grid should auto-collapse
-		await expect(categorizationToggle).not.toBeVisible();
+		await expect(compAnalyzer.locators.categorizationToggle).not.toBeVisible();
 
-		// URL should contain weapons parameter
-		const url = page.url();
-		expect(url).toContain("weapons=");
-
-		// Reload the page to test URL persistence
-		await page.reload();
+		await expect(page).toHaveURL(/weapons=/);
 
 		// Weapons should still be selected after reload
-		await expect(page.getByTestId("selected-weapon-0")).toBeVisible();
-		await expect(page.getByTestId("selected-weapon-1")).toBeVisible();
-		await expect(page.getByTestId("selected-weapon-2")).toBeVisible();
-		await expect(page.getByTestId("selected-weapon-3")).toBeVisible();
+		await page.reload();
+
+		await expect(compAnalyzer.selectedWeapon(0)).toBeVisible();
+		await expect(compAnalyzer.selectedWeapon(1)).toBeVisible();
+		await expect(compAnalyzer.selectedWeapon(2)).toBeVisible();
+		await expect(compAnalyzer.selectedWeapon(3)).toBeVisible();
 	});
 
 	test("weapon grid controls and categorization", async ({ page }) => {
-		await navigate({ page, url: COMP_ANALYZER_URL });
+		const compAnalyzer = new CompAnalyzerPage(page);
+		await compAnalyzer.goto();
 
-		// Default is "category" - verify the radio is checked
-		const categoryRadio = page.getByTestId("categorization-category");
-		await expect(categoryRadio).toBeChecked();
+		await expect(compAnalyzer.categorizationRadio("category")).toBeChecked();
 
-		// Switch to sub categorization
-		await page.getByTestId("categorization-sub").click();
-		await expect(page.getByTestId("categorization-sub")).toBeChecked();
+		await compAnalyzer.selectCategorization("sub");
+		await expect(compAnalyzer.categorizationRadio("sub")).toBeChecked();
 
-		// Switch to special categorization
-		await page.getByTestId("categorization-special").click();
-		await expect(page.getByTestId("categorization-special")).toBeChecked();
-
-		// Test grid collapse/expand
-		const toggleButton = page.getByTestId("weapon-grid-toggle");
-		const categorizationToggle = page.getByTestId("categorization-toggle");
+		await compAnalyzer.selectCategorization("special");
+		await expect(compAnalyzer.categorizationRadio("special")).toBeChecked();
 
 		// Grid should be expanded
-		await expect(categorizationToggle).toBeVisible();
+		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
 
-		// Collapse the grid
-		await toggleButton.click();
-		await expect(categorizationToggle).not.toBeVisible();
+		await compAnalyzer.toggleWeaponGrid();
+		await expect(compAnalyzer.locators.categorizationToggle).not.toBeVisible();
 
-		// Expand the grid
-		await toggleButton.click();
-		await expect(categorizationToggle).toBeVisible();
+		await compAnalyzer.toggleWeaponGrid();
+		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
 
 		// Switch categorization and test URL persistence
-		await page.getByTestId("categorization-sub").click();
-		const url = page.url();
-		expect(url).toContain("categorization=sub");
+		await compAnalyzer.selectCategorization("sub");
+		await expect(page).toHaveURL(/categorization=sub/);
 
-		// Reload the page
 		await page.reload();
 
-		// Categorization should still be sub after reload
-		await expect(page.getByTestId("categorization-sub")).toBeChecked();
+		await expect(compAnalyzer.categorizationRadio("sub")).toBeChecked();
 	});
 
 	test("analysis sections appear and can be collapsed", async ({ page }) => {
-		await navigate({ page, url: COMP_ANALYZER_URL });
+		const compAnalyzer = new CompAnalyzerPage(page);
+		await compAnalyzer.goto();
 
-		const damageComboList = page.getByTestId("damage-combo-list");
-		const rangeVisualization = page.getByTestId("range-visualization");
+		const damageCombos = compAnalyzer.damageCombos;
 
 		// Both should not be visible initially
-		await expect(damageComboList).not.toBeVisible();
-		await expect(rangeVisualization).not.toBeVisible();
+		await expect(damageCombos.root).not.toBeVisible();
+		await expect(compAnalyzer.locators.rangeVisualization).not.toBeVisible();
 
 		// Select two weapons with range data (blaster - ID 210)
-		await page.getByTestId("weapon-button-40").click();
-		await page.getByTestId("weapon-button-210").click();
+		await compAnalyzer.selectWeapon(40);
+		await compAnalyzer.selectWeapon(210);
 
-		// Both damage combo list and range visualization should now be visible
-		await expect(damageComboList).toBeVisible();
-		await expect(rangeVisualization).toBeVisible();
+		await expect(damageCombos.root).toBeVisible();
+		await expect(compAnalyzer.locators.rangeVisualization).toBeVisible();
 
-		// Test damage combo list collapse/expand
-		const damageComboToggle = page.getByTestId("damage-combo-toggle");
+		// Should be expanded by default
+		await expect(damageCombos.content).toBeVisible();
 
-		// Should be expanded by default - look for content inside
-		await expect(
-			damageComboList.locator(".content, [class*='content']"),
-		).toBeVisible();
+		await damageCombos.toggleCollapsed();
+		await expect(damageCombos.content).not.toBeVisible();
 
-		// Collapse
-		await damageComboToggle.click();
-		await expect(
-			damageComboList.locator(".content, [class*='content']"),
-		).not.toBeVisible();
-
-		// Expand again
-		await damageComboToggle.click();
-		await expect(
-			damageComboList.locator(".content, [class*='content']"),
-		).toBeVisible();
+		await damageCombos.toggleCollapsed();
+		await expect(damageCombos.content).toBeVisible();
 	});
 
 	test("damage combo sliders and filtering work correctly", async ({
 		page,
 	}) => {
-		await navigate({ page, url: COMP_ANALYZER_URL });
+		const compAnalyzer = new CompAnalyzerPage(page);
+		await compAnalyzer.goto();
 
-		// Select Splattershot Jr. (ID 10) which has Splat Bomb sub
-		await page.getByTestId("weapon-button-10").click();
-		// Select Splattershot (ID 40) as second weapon
-		await page.getByTestId("weapon-button-40").click();
+		// Splattershot Jr. has Splat Bomb sub
+		await compAnalyzer.selectWeapon(10);
+		await compAnalyzer.selectWeapon(40);
 
-		const damageComboList = page.getByTestId("damage-combo-list");
-		await expect(damageComboList).toBeVisible();
+		const damageCombos = compAnalyzer.damageCombos;
+		await expect(damageCombos.root).toBeVisible();
 
 		// Part 1: Test Sub Defense slider
-		const sliders = damageComboList.locator("input[type='range']");
-		const subDefenseSlider = sliders.first();
+		const initialDamageValues =
+			await damageCombos.damageValues.allTextContents();
 
-		// Get initial damage values - find a combo row with sub weapon damage
-		const initialDamageValues = await damageComboList
-			.locator("[class*='damageValue']")
-			.allTextContents();
+		await damageCombos.subDefenseSlider.fill("57");
 
-		// Increase Sub Defense slider to max
-		await subDefenseSlider.fill("57");
-
-		// Get new damage values - they should be different (reduced for sub weapons)
-		const newDamageValues = await damageComboList
-			.locator("[class*='damageValue']")
-			.allTextContents();
-
-		// Verify damage values changed
+		// Damage of sub weapons should be reduced
+		const newDamageValues = await damageCombos.damageValues.allTextContents();
 		expect(initialDamageValues.join(",")).not.toEqual(
 			newDamageValues.join(","),
 		);
 
-		// Reset slider
-		await subDefenseSlider.fill("0");
+		await damageCombos.subDefenseSlider.fill("0");
 
 		// Part 2: Test Ink Resistance slider
-		const inkResSlider = sliders.nth(1);
+		const initialInkTimes = await damageCombos.inkTimes.allTextContents();
 
-		// Get initial ink time frames if any exist
-		const initialInkTimes = await damageComboList
-			.locator("[class*='inkTime']")
-			.allTextContents();
+		await damageCombos.inkResistanceSlider.fill("57");
 
-		// Increase Ink Resistance slider
-		await inkResSlider.fill("57");
-
-		// Get new ink time frames
-		const newInkTimes = await damageComboList
-			.locator("[class*='inkTime']")
-			.allTextContents();
+		const newInkTimes = await damageCombos.inkTimes.allTextContents();
 
 		// If there were ink times, they should have increased or more ink combos should appear
 		if (initialInkTimes.length > 0 || newInkTimes.length > 0) {
@@ -197,33 +145,22 @@ test.describe("Composition Analyzer", () => {
 		}
 
 		// Part 3: Test damage type filtering
-		const damageTypeLabels = damageComboList.locator(
-			"[class*='damageTypeLabel']",
-		);
-		const firstDamageTypeLabel = damageTypeLabels.first();
-
-		// Store the damage type text before clicking
+		const firstDamageTypeLabel = damageCombos.damageTypeLabels.first();
 		const damageTypeText = await firstDamageTypeLabel.textContent();
 
-		// Verify no filtered items exist initially (use button selector to avoid matching filteredItemsRow)
-		const filteredItemsSelector = "button[class*='filteredItem']";
-		await expect(damageComboList.locator(filteredItemsSelector)).toHaveCount(0);
+		await expect(damageCombos.filteredItems).toHaveCount(0);
 
-		// Click to filter out this damage type
 		await firstDamageTypeLabel.click();
 
-		// Verify at least one filtered item appears
-		const filteredItems = damageComboList.locator(filteredItemsSelector);
-		const filteredCount = await filteredItems.count();
+		const filteredCount = await damageCombos.filteredItems.count();
 		expect(filteredCount).toBeGreaterThan(0);
 
-		// Verify the first filtered item contains the expected damage type
-		await expect(filteredItems.first()).toContainText(damageTypeText ?? "");
+		await expect(damageCombos.filteredItems.first()).toContainText(
+			damageTypeText ?? "",
+		);
 
-		// Click the first filtered item to restore it
-		await filteredItems.first().click();
-
-		// Verify the count decreased by one
-		await expect(filteredItems).toHaveCount(filteredCount - 1);
+		// Clicking a filtered item restores it
+		await damageCombos.filteredItems.first().click();
+		await expect(damageCombos.filteredItems).toHaveCount(filteredCount - 1);
 	});
 });

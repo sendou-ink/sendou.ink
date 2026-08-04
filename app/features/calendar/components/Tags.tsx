@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
-import type { CalendarEventTag } from "~/db/tables";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import { tags as allTags } from "../calendar-constants";
 import styles from "./Tags.module.css";
 

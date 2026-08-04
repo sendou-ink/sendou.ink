@@ -10,8 +10,9 @@ import {
 import { ModeImage, StageImage } from "~/components/Image";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type { RankedModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { StageId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -44,7 +45,7 @@ export function SplatoonRotations() {
 	const nowUnixLive = useNowUnix(data.now);
 
 	const allInThePast = data.rotations.every(
-		(rotation) => rotation.endTime <= nowUnixLive,
+		(rotation) => rotation.endsAt <= nowUnixLive,
 	);
 	if (allInThePast) return null;
 
@@ -63,8 +64,8 @@ export function SplatoonRotations() {
 		if (activeFilter !== "ALL" && rotation.mode !== activeFilter) continue;
 
 		const isCurrent =
-			rotation.startTime <= nowUnixLive && rotation.endTime > nowUnixLive;
-		const isNext = rotation.startTime > nowUnixLive;
+			rotation.startsAt <= nowUnixLive && rotation.endsAt > nowUnixLive;
+		const isNext = rotation.startsAt > nowUnixLive;
 
 		if (!isCurrent && !isNext) continue;
 
@@ -131,17 +132,14 @@ export function SplatoonRotations() {
 }
 
 function useNowUnix(initialNow: number) {
-	const [now, setNow] = React.useState(initialNow);
+	const now = useAutoRerender("minute", {
+		alignTo: databaseTimestampToDate(initialNow),
+	});
+	const firstNowRef = React.useRef(now);
 
-	React.useEffect(() => {
-		setNow(dateToDatabaseTimestamp(new Date()));
-		const interval = setInterval(() => {
-			setNow(dateToDatabaseTimestamp(new Date()));
-		}, 60_000);
-		return () => clearInterval(interval);
-	}, []);
+	if (now === firstNowRef.current) return initialNow;
 
-	return now;
+	return dateToDatabaseTimestamp(now);
 }
 
 function rotationProgress(now: Date, start: Date, end: Date) {
@@ -173,8 +171,8 @@ function RotationCard({
 	const progress = current
 		? rotationProgress(
 				now,
-				databaseTimestampToDate(current.startTime),
-				databaseTimestampToDate(current.endTime),
+				databaseTimestampToDate(current.startsAt),
+				databaseTimestampToDate(current.endsAt),
 			)
 		: null;
 	const displayRotation = current ?? next;
@@ -185,7 +183,7 @@ function RotationCard({
 	return (
 		<div className={styles.rotationCard}>
 			<div className={styles.rotationCardType}>
-				<ModeImage mode={displayRotation.mode as RankedModeShort} width={20} />
+				<ModeImage mode={displayRotation.mode} width={20} />
 				{t(`front:${ROTATION_TYPE_LABELS[type]}` as any)}
 			</div>
 			{current && progress !== null ? (
@@ -195,7 +193,7 @@ function RotationCard({
 						style={{ width: `${progress * 100}%` }}
 					/>
 					<span className={styles.rotationCardProgressText}>
-						{formatDistanceToNow(current.endTime)}
+						{formatDistanceToNow(current.endsAt)}
 					</span>
 				</div>
 			) : null}
@@ -208,7 +206,7 @@ function RotationCard({
 				>
 					<span className={styles.rotationCardProgressText}>
 						<NextLabel
-							startTime={databaseTimestampToDate(next.startTime)}
+							startTime={databaseTimestampToDate(next.startsAt)}
 							now={now}
 						/>
 					</span>
@@ -233,16 +231,16 @@ function RotationCard({
 			<div className={styles.rotationCardNext}>
 				{shownNext ? (
 					<div className={styles.rotationCardNextInfo}>
-						{current && shownNext.startTime === current.endTime ? (
+						{current && shownNext.startsAt === current.endsAt ? (
 							t("front:rotations.nextLabel")
 						) : (
 							<NextLabel
-								startTime={databaseTimestampToDate(shownNext.startTime)}
+								startTime={databaseTimestampToDate(shownNext.startsAt)}
 								now={now}
 								compact
 							/>
 						)}
-						<ModeImage mode={shownNext.mode as RankedModeShort} width={16} />{" "}
+						<ModeImage mode={shownNext.mode} width={16} />{" "}
 						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId1}` as any))},{" "}
 						{shortStageName(t(`game-misc:STAGE_${shownNext.stageId2}` as any))}
 					</div>

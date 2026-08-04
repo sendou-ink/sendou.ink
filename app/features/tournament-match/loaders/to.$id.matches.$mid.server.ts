@@ -8,23 +8,22 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
+import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { Status } from "~/modules/brackets-model";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
-import { matchEndedEarly } from "../tournament-match-utils";
 
 export type TournamentMatchLoaderData = SerializeFrom<typeof loader>;
 
@@ -39,7 +38,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		user: undefined,
 	});
 
-	const match = notFoundIfFalsy(
+	const match = notFoundIfNullish(
 		await TournamentMatchRepository.findMatchById(matchId),
 	);
 
@@ -53,7 +52,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	}
 
 	let pickBanEvents = match.roundMaps?.pickBan
-		? await TournamentRepository.pickBanEventsByMatchId(match.id)
+		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 		: [];
 
 	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
@@ -64,8 +63,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const ingestedScoreboards =
 		await IngestRepository.findScoreboardsByTournamentMatchId(matchId);
 
-	const matchIsOver =
-		match.opponentOne?.result === "win" || match.opponentTwo?.result === "win";
+	const matchIsOver = Boolean(match.winnerSide);
 
 	if (
 		!matchIsOver &&
@@ -94,7 +92,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 				});
 				if (rollExecuted) {
-					pickBanEvents = await TournamentRepository.pickBanEventsByMatchId(
+					pickBanEvents = await TournamentRepository.findPickBanEventsByMatchId(
 						match.id,
 					);
 				}
@@ -147,25 +145,22 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const endedEarly = matchIsOver
 		? matchEndedEarly({
-				opponentOne: {
-					score: match.opponentOne?.score,
-					result: match.opponentOne?.result,
-				},
-				opponentTwo: {
-					score: match.opponentTwo?.score,
-					result: match.opponentTwo?.result,
-				},
+				opponentOne: match.opponentOne,
+				opponentTwo: match.opponentTwo,
+				winnerSide: match.winnerSide,
 				count: match.roundMaps.count,
 				countType: match.roundMaps.type,
 			})
 		: false;
+
+	const status = tournament.matchStatusById(matchId);
 
 	if (
 		match.chatCode &&
 		!matchIsOver &&
 		match.opponentOne?.id &&
 		match.opponentTwo?.id &&
-		match.status > Status.Locked
+		status !== "PENDING"
 	) {
 		// only add global chat for active roster (or all if not yet set i.e. first match)
 		// if roster changed mid-set the subs can still see the chat on the match page
@@ -208,7 +203,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			? true
 			: !chatAccessible({
 					expiresAfterDays: tournament.isLeagueDivision ? 30 : 7,
-					comparedTo: tournament.ctx.startTime,
+					comparedTo: tournament.ctx.startsAt,
 				});
 
 	const visibleChatCode =
@@ -223,13 +218,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		!isLeagueRoundLocked(tournament, match.roundId);
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: match.players.map((p) => p.id),
 			include: {
 				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
 			},
 		})),
-		match: hasPermsToSeeChat ? match : { ...match, chatCode: undefined },
+		match: {
+			...match,
+			status,
+			chatCode: hasPermsToSeeChat ? match.chatCode : undefined,
+		},
 		results,
 		reportedWeapons,
 		ingestedScoreboards,

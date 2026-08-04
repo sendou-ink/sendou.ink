@@ -1,17 +1,18 @@
 import type { LoaderFunctionArgs } from "react-router";
-import {
-	parseSearchParams,
-	redirectIfPageOutOfBounds,
-} from "~/utils/remix.server";
+import { paginate } from "~/utils/remix.server";
 import * as VodRepository from "../VodRepository.server";
 import { VODS_PAGE_BATCH_SIZE } from "../vods-constants";
-import { vodsSearchParamsSchema } from "../vods-schemas";
+import { vodsSearchParams } from "../vods-search-params";
 
 export const loader = async ({ request, url }: LoaderFunctionArgs) => {
-	const { page, ...filters } = parseSearchParams({
-		request,
-		schema: vodsSearchParamsSchema,
-	});
+	const { page, weapon, mode, stageId, type } = vodsSearchParams.parse(request);
+
+	const filters = {
+		weapon: weapon ?? undefined,
+		mode: mode ?? undefined,
+		stageId: stageId ?? undefined,
+		type: type ?? undefined,
+	};
 
 	const [vods, totalCount] = await Promise.all([
 		VodRepository.findVods({
@@ -22,13 +23,8 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 		VodRepository.countVods(filters),
 	]);
 
-	const pagesCount = Math.max(1, Math.ceil(totalCount / VODS_PAGE_BATCH_SIZE));
-
-	redirectIfPageOutOfBounds({ url, page, pagesCount });
-
 	return {
 		vods,
-		currentPage: page,
-		pagesCount,
+		...paginate({ url, page, pageSize: VODS_PAGE_BATCH_SIZE, totalCount }),
 	};
 };

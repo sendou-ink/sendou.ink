@@ -9,11 +9,14 @@ import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormMessage } from "~/components/FormMessage";
 import { Image, WeaponImage } from "~/components/Image";
 import { SubmitButton } from "~/components/SubmitButton";
-import { BUILD_SORT_IDENTIFIERS, type BuildSort } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
+import {
+	BUILD_SORT_IDENTIFIERS,
+	type BuildSort,
+} from "~/features/user-page/user-page-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage, weaponCategoryUrl } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.builds.server";
@@ -24,6 +27,7 @@ import {
 } from "../loaders/u.$identifier.builds.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
+import { userBuildsSearchParams } from "../user-page-search-params";
 
 export { action, loader };
 
@@ -31,7 +35,7 @@ import userStyles from "../user-page.module.css";
 import styles from "./u.$identifier.builds.module.css";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["weapons", "builds", "gear"],
+	i18n: ["weapons", "builds", "gear", "analyzer"],
 };
 
 type BuildFilter = "ALL" | "PUBLIC" | "PRIVATE" | MainWeaponId;
@@ -41,34 +45,30 @@ export default function UserBuildsPage() {
 	const user = useUser();
 	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
-	const [weaponFilter, setWeaponFilter] = useSearchParamState<BuildFilter>({
-		defaultValue: "ALL",
-		name: "weapon",
-		revive: (value) =>
-			["ALL", "PUBLIC", "PRIVATE"].includes(value)
-				? (value as BuildFilter)
-				: mainWeaponIds.find((id) => id === Number(value)),
-	});
+	const [weaponFilter, setWeaponFilter] = useSearchParam(
+		userBuildsSearchParams,
+		"weapon",
+	);
 
 	const isOwnPage = user?.id === layoutData.user.id;
-	const [changingSorting, setChangingSorting] = useSearchParamState({
-		defaultValue: false,
-		name: "sorting",
-		revive: (value) => value === "true" && isOwnPage,
-	});
-
-	const closeSortingDialog = React.useCallback(
-		() => setChangingSorting(false),
-		[setChangingSorting],
+	const [sorting, setChangingSorting] = useSearchParam(
+		userBuildsSearchParams,
+		"sorting",
 	);
+	const changingSorting = sorting && isOwnPage;
+	// lives here so closing the dialog mid-submit doesn't unmount the fetcher,
+	// which would discard the action's redirect and skip revalidation
+	const sortingFetcher = useFetcher();
+
+	const closeSortingDialog = () => setChangingSorting(false);
 
 	const builds =
 		weaponFilter === "ALL"
 			? data.builds
 			: weaponFilter === "PUBLIC"
-				? data.builds.filter((build) => !build.private)
+				? data.builds.filter((build) => !build.isPrivate)
 				: weaponFilter === "PRIVATE"
-					? data.builds.filter((build) => build.private)
+					? data.builds.filter((build) => build.isPrivate)
 					: data.builds.filter((build) =>
 							build.weapons
 								.map((wpn) => wpn.weaponSplId)
@@ -78,7 +78,10 @@ export default function UserBuildsPage() {
 	return (
 		<div className="stack lg">
 			{changingSorting ? (
-				<ChangeSortingDialog close={closeSortingDialog} />
+				<ChangeSortingDialog
+					close={closeSortingDialog}
+					fetcher={sortingFetcher}
+				/>
 			) : null}
 			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
 				{isOwnPage ? (
@@ -100,7 +103,13 @@ export default function UserBuildsPage() {
 			{builds.length > 0 ? (
 				<div className={styles.buildsContainer}>
 					{builds.map((build) => (
-						<BuildCard key={build.id} build={build} canEdit={isOwnPage} />
+						<BuildCard
+							key={build.id}
+							build={build}
+							owner={layoutData.user}
+							showOwner={false}
+							canEdit={isOwnPage}
+						/>
 					))}
 				</div>
 			) : (
@@ -127,7 +136,7 @@ function BuildsFilters({
 	if (data.builds.length === 0) return null;
 
 	const privateBuildsCount = data.builds.filter(
-		(build) => build.private,
+		(build) => build.isPrivate,
 	).length;
 	const publicBuildsCount = data.builds.length - privateBuildsCount;
 
@@ -178,7 +187,13 @@ function BuildsFilters({
 }
 
 const MISSING_SORT_VALUE = "null";
-function ChangeSortingDialog({ close }: { close: () => void }) {
+function ChangeSortingDialog({
+	close,
+	fetcher,
+}: {
+	close: () => void;
+	fetcher: ReturnType<typeof useFetcher>;
+}) {
 	const data = useLoaderData<typeof loader>();
 	const [buildSorting, setBuildSorting] = React.useState<
 		ReadonlyArray<BuildSort | null>
@@ -190,13 +205,6 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 		return [...data.buildSorting, null];
 	});
 	const { t } = useTranslation(["common", "user"]);
-	const fetcher = useFetcher();
-
-	React.useEffect(() => {
-		if (fetcher.state !== "loading") return;
-
-		close();
-	}, [fetcher.state, close]);
 
 	const canAddMoreSorting = buildSorting.length < BUILD_SORT_IDENTIFIERS.length;
 
@@ -218,7 +226,7 @@ function ChangeSortingDialog({ close }: { close: () => void }) {
 
 	return (
 		<SendouDialog heading={t("user:builds.sorting.header")} onClose={close}>
-			<fetcher.Form method="post">
+			<fetcher.Form method="post" onSubmit={() => close()}>
 				<input
 					type="hidden"
 					name="buildSorting"

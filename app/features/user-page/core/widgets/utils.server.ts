@@ -22,7 +22,8 @@ export async function cachedUserSQLeaderboardTopData() {
 	const allSeasons = Seasons.allFinished();
 
 	for (const season of allSeasons) {
-		const leaderboard = await LeaderboardRepository.userSPLeaderboard(season);
+		const leaderboard =
+			await LeaderboardRepository.findUserSPLeaderboard(season);
 
 		for (const entry of leaderboard) {
 			const userId = entry.id;

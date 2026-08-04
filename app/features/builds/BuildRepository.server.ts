@@ -21,7 +21,7 @@ import {
 import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
 
-export async function allByUserId(
+export async function findAllByUserId(
 	userId: number,
 	options: {
 		showPrivate?: boolean;
@@ -45,7 +45,7 @@ export async function allByUserId(
 			"Build.clothesGearSplId",
 			"Build.shoesGearSplId",
 			"Build.updatedAt",
-			"Build.private",
+			"Build.isPrivate",
 			"Build.abilities",
 			jsonArrayFrom(
 				eb
@@ -56,7 +56,7 @@ export async function allByUserId(
 			).as("weapons"),
 		])
 		.where("Build.ownerId", "=", userId)
-		.$if(!showPrivate, (qb) => qb.where("Build.private", "=", 0))
+		.$if(!showPrivate, (qb) => qb.where("Build.isPrivate", "=", 0))
 		.$if(typeof limit === "number", (qb) => qb.limit(limit!))
 		.orderBy("Build.updatedAt", "desc")
 		.execute();
@@ -74,12 +74,12 @@ interface CreateArgs {
 	shoesGearSplId: number | null;
 	weaponSplIds: Array<BuildWeapon["weaponSplId"]>;
 	abilities: BuildAbilitiesTuple;
-	private: TablesInsertable["Build"]["private"];
+	isPrivate: TablesInsertable["Build"]["isPrivate"];
 }
 
-export async function create(args: CreateArgs) {
+export async function insert(args: CreateArgs) {
 	return db.transaction().execute(async (trx) => {
-		const computed = await computeBuildData(trx, args);
+		const computed = await computeBuildData(args, trx);
 		const updatedAt = dateToDatabaseTimestamp(new Date());
 
 		const { id: buildId } = await trx
@@ -92,7 +92,7 @@ export async function create(args: CreateArgs) {
 				headGearSplId: args.headGearSplId,
 				clothesGearSplId: args.clothesGearSplId,
 				shoesGearSplId: args.shoesGearSplId,
-				private: args.private,
+				isPrivate: args.isPrivate,
 				abilities: JSON.stringify(args.abilities),
 				abilitiesSignature: computed.abilitiesSignature,
 				updatedAt,
@@ -100,13 +100,7 @@ export async function create(args: CreateArgs) {
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
-		await insertBuildChildrenInTrx({
-			trx,
-			buildId,
-			args,
-			computed,
-			updatedAt,
-		});
+		await insertBuildChildren({ buildId, args, computed, updatedAt }, trx);
 
 		const { count } = await trx
 			.selectFrom("Build")
@@ -117,12 +111,14 @@ export async function create(args: CreateArgs) {
 		if (count > BUILD.MAX_COUNT) {
 			throw new LimitReachedError("Max amount of builds reached");
 		}
+
+		return { id: buildId };
 	});
 }
 
 export async function update(args: CreateArgs & { id: number }) {
 	return db.transaction().execute(async (trx) => {
-		const computed = await computeBuildData(trx, args);
+		const computed = await computeBuildData(args, trx);
 		const updatedAt = dateToDatabaseTimestamp(new Date());
 
 		await trx
@@ -134,7 +130,7 @@ export async function update(args: CreateArgs & { id: number }) {
 				headGearSplId: args.headGearSplId,
 				clothesGearSplId: args.clothesGearSplId,
 				shoesGearSplId: args.shoesGearSplId,
-				private: args.private,
+				isPrivate: args.isPrivate,
 				abilities: JSON.stringify(args.abilities),
 				abilitiesSignature: computed.abilitiesSignature,
 				updatedAt,
@@ -155,13 +151,10 @@ export async function update(args: CreateArgs & { id: number }) {
 			.where("buildId", "=", args.id)
 			.execute();
 
-		await insertBuildChildrenInTrx({
+		await insertBuildChildren(
+			{ buildId: args.id, args, computed, updatedAt },
 			trx,
-			buildId: args.id,
-			args,
-			computed,
-			updatedAt,
-		});
+		);
 	});
 }
 
@@ -169,7 +162,7 @@ export function deleteById(id: number) {
 	return db.deleteFrom("Build").where("id", "=", id).execute();
 }
 
-export async function ownerIdById(buildId: number) {
+export async function findOwnerIdById(buildId: number) {
 	const result = await db
 		.selectFrom("Build")
 		.select("ownerId")
@@ -179,7 +172,9 @@ export async function ownerIdById(buildId: number) {
 	return result?.ownerId ?? null;
 }
 
-export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
+export async function findAllAbilityPointAverages(
+	weaponSplId?: MainWeaponId | null,
+) {
 	// Sum tables only contain rows for public builds,
 	// so the queries below need no private filter and no `Build` join.
 	if (typeof weaponSplId === "number") {
@@ -210,7 +205,9 @@ export async function abilityPointAverages(weaponSplId?: MainWeaponId | null) {
 		.execute();
 }
 
-export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
+export async function findAllPopularAbilitiesByWeaponId(
+	weaponSplId: MainWeaponId,
+) {
 	// One signature per user — otherwise a user with several builds for the
 	// same weapon (e.g. three different Slosher loadouts) would inflate three
 	// different signature buckets. The CTE picks each user's most recently
@@ -230,7 +227,7 @@ export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
 					"=",
 					canonicalWeaponSplId(weaponSplId),
 				)
-				.where("Build.private", "=", 0)
+				.where("Build.isPrivate", "=", 0)
 				.where("Build.abilitiesSignature", "is not", null)
 				.groupBy("Build.ownerId"),
 		)
@@ -249,14 +246,14 @@ export async function popularAbilitiesByWeaponId(weaponSplId: MainWeaponId) {
 }
 
 export type AverageAbilityPointsResult = Awaited<
-	ReturnType<typeof abilityPointAverages>
+	ReturnType<typeof findAllAbilityPointAverages>
 >[number];
 
 export type PopularBuildsRow = Awaited<
-	ReturnType<typeof popularAbilitiesByWeaponId>
+	ReturnType<typeof findAllPopularAbilitiesByWeaponId>
 >[number];
 
-export async function allByWeaponId(
+export async function findAllByWeaponId(
 	weaponId: MainWeaponId,
 	options: { limit: number; sortAbilities?: boolean },
 ) {
@@ -276,7 +273,7 @@ export async function allByWeaponId(
 			"Build.clothesGearSplId",
 			"Build.shoesGearSplId",
 			"Build.updatedAt",
-			"Build.private",
+			"Build.isPrivate",
 			"Build.abilities",
 			"PlusTier.tier as plusTier",
 			commonUserJsonObject(eb).as("owner"),
@@ -305,66 +302,77 @@ export async function allByWeaponId(
 /** Recomputes `BuildWeapon.sortValue` for every (build, weapon) from scratch
  * (plus tier + per-weapon top500). When `userId` is provided, only the builds
  * owned by that user are recomputed. */
-export async function recalculateAllSortValues(userId?: number) {
-	await db.transaction().execute(async (trx) => {
-		// Pass 1: tier*2 + 1 for public, NULL for private.
-		await trx
-			.updateTable("BuildWeapon")
-			.set({
-				sortValue: sql<number | null>`(
-					select case
-						when "b"."private" = 1 then null
-						else coalesce(
-							(select "tier" from "PlusTier" where "userId" = "b"."ownerId"),
-							4
-						) * 2 + 1
-					end
-					from "Build" as "b"
-					where "b"."id" = "BuildWeapon"."buildId"
-				)`,
-			})
-			.$if(userId !== undefined, (qb) =>
-				qb.where((eb) =>
-					eb.exists(
-						eb
-							.selectFrom("Build as b")
-							.select("b.id")
-							.whereRef("b.id", "=", "BuildWeapon.buildId")
-							.where("b.ownerId", "=", userId!),
-					),
-				),
-			)
-			.execute();
+export async function recalculateAllSortValues(
+	userId?: number,
+	trx?: Transaction<DB>,
+) {
+	if (trx) {
+		return recalculateSortValues(trx, userId);
+	}
 
-		// Pass 2: subtract 1 where this specific weapon is top500 for the owner.
-		await trx
-			.updateTable("BuildWeapon")
-			.set({
-				sortValue: sql<number>`"BuildWeapon"."sortValue" - 1`,
-			})
-			.where("BuildWeapon.sortValue", "is not", null)
-			.where((eb) =>
-				eb.exists(
-					eb
-						.selectFrom("Build as b")
-						.innerJoin("SplatoonPlayer as sp", "sp.userId", "b.ownerId")
-						.innerJoin("XRankPlacement as xrp", (join) =>
-							join
-								.onRef("xrp.playerId", "=", "sp.id")
-								.onRef("xrp.weaponSplId", "=", "BuildWeapon.weaponSplId"),
-						)
-						.select("b.id")
-						.whereRef("b.id", "=", "BuildWeapon.buildId")
-						.$if(userId !== undefined, (qb) =>
-							qb.where("b.ownerId", "=", userId!),
-						),
-				),
-			)
-			.execute();
-	});
+	await db
+		.transaction()
+		.execute((newTrx) => recalculateSortValues(newTrx, userId));
 }
 
 // ---
+
+async function recalculateSortValues(trx: Transaction<DB>, userId?: number) {
+	// Pass 1: tier*2 + 1 for public, NULL for private.
+	await trx
+		.updateTable("BuildWeapon")
+		.set({
+			sortValue: sql<number | null>`(
+				select case
+					when "b"."isPrivate" = 1 then null
+					else coalesce(
+						(select "tier" from "PlusTier" where "userId" = "b"."ownerId"),
+						4
+					) * 2 + 1
+				end
+				from "Build" as "b"
+				where "b"."id" = "BuildWeapon"."buildId"
+			)`,
+		})
+		.$if(userId !== undefined, (qb) =>
+			qb.where((eb) =>
+				eb.exists(
+					eb
+						.selectFrom("Build as b")
+						.select("b.id")
+						.whereRef("b.id", "=", "BuildWeapon.buildId")
+						.where("b.ownerId", "=", userId!),
+				),
+			),
+		)
+		.execute();
+
+	// Pass 2: subtract 1 where this specific weapon is top500 for the owner.
+	await trx
+		.updateTable("BuildWeapon")
+		.set({
+			sortValue: sql<number>`"BuildWeapon"."sortValue" - 1`,
+		})
+		.where("BuildWeapon.sortValue", "is not", null)
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("Build as b")
+					.innerJoin("SplatoonPlayer as sp", "sp.userId", "b.ownerId")
+					.innerJoin("XRankPlacement as xrp", (join) =>
+						join
+							.onRef("xrp.playerId", "=", "sp.id")
+							.onRef("xrp.weaponSplId", "=", "BuildWeapon.weaponSplId"),
+					)
+					.select("b.id")
+					.whereRef("b.id", "=", "BuildWeapon.buildId")
+					.$if(userId !== undefined, (qb) =>
+						qb.where("b.ownerId", "=", userId!),
+					),
+			),
+		)
+		.execute();
+}
 
 function weaponIsTop500(sortValue: number | null): boolean {
 	return sortValue != null && sortValue % 2 === 0;
@@ -416,8 +424,8 @@ interface ComputedBuildData {
 }
 
 async function computeBuildData(
-	trx: Transaction<DB>,
 	args: CreateArgs,
+	trx: Transaction<DB>,
 ): Promise<ComputedBuildData> {
 	const abilitySums = computeAbilitySums(args.abilities);
 
@@ -451,7 +459,9 @@ async function computeBuildData(
 	for (const weaponSplId of args.weaponSplIds) {
 		sortValueByWeaponSplId.set(
 			weaponSplId,
-			args.private ? null : tier * 2 + (top500Weapons.has(weaponSplId) ? 0 : 1),
+			args.isPrivate
+				? null
+				: tier * 2 + (top500Weapons.has(weaponSplId) ? 0 : 1),
 		);
 	}
 
@@ -484,19 +494,20 @@ function serializeSignature(sums: Array<[Ability, number]>): string {
 		.join(",");
 }
 
-async function insertBuildChildrenInTrx({
-	trx,
-	buildId,
-	args,
-	computed,
-	updatedAt,
-}: {
-	trx: Transaction<DB>;
-	buildId: number;
-	args: CreateArgs;
-	computed: ComputedBuildData;
-	updatedAt: number;
-}) {
+async function insertBuildChildren(
+	{
+		buildId,
+		args,
+		computed,
+		updatedAt,
+	}: {
+		buildId: number;
+		args: CreateArgs;
+		computed: ComputedBuildData;
+		updatedAt: number;
+	},
+	trx: Transaction<DB>,
+) {
 	await trx
 		.insertInto("BuildWeapon")
 		.values(
@@ -513,7 +524,7 @@ async function insertBuildChildrenInTrx({
 	// Private builds are excluded from the sum tables so the stats queries can
 	// run as pure covering-index scans. Visibility flips are handled implicitly
 	// by `update`'s delete-then-reinsert.
-	if (args.private) return;
+	if (args.isPrivate) return;
 
 	await trx
 		.insertInto("BuildAbilitySum")
@@ -535,10 +546,8 @@ async function insertBuildChildrenInTrx({
 				abilityPoints,
 			})),
 		);
-	if (weaponAbilityRows.length > 0) {
-		await trx
-			.insertInto("BuildWeaponAbility")
-			.values(weaponAbilityRows)
-			.execute();
-	}
+	await trx
+		.insertInto("BuildWeaponAbility")
+		.values(weaponAbilityRows)
+		.execute();
 }

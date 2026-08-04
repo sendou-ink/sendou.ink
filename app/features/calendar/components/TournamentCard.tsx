@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { ShieldMinus, Trophy, Users } from "lucide-react";
+import { ShieldMinus, Trophy as TrophyIcon, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -9,6 +9,7 @@ import { Image, ModeImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { Trophy } from "~/features/trophies/components/Trophy";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
@@ -36,7 +37,7 @@ export function TournamentCard({
 	const isHostedOnSendouInk = typeof tournament.isRanked === "boolean";
 
 	const startDate = isShowcase
-		? databaseTimestampToDate(tournament.startTime)
+		? databaseTimestampToDate(tournament.startsAt)
 		: null;
 
 	return (
@@ -142,11 +143,16 @@ export function TournamentCard({
 				>
 					{tournament.isRanked ? (
 						<div className={clsx(styles.pill, styles.pillRanked)}>
-							<Trophy />
+							<TrophyIcon />
 						</div>
 					) : null}
-					{isCalendar && tournament.badges && tournament.badges.length > 0 ? (
-						<BadgePrizesPill badges={tournament.badges} />
+					{isCalendar &&
+					(tournament.trophy ||
+						(tournament.badges && tournament.badges.length > 0)) ? (
+						<PrizesPill
+							badges={tournament.badges}
+							trophy={tournament.trophy?.model}
+						/>
 					) : null}
 					{isHostedOnSendouInk ? (
 						<div className={styles.teamCount}>
@@ -216,7 +222,7 @@ function TournamentFirstPlacerWithMembers({
 					<span className={styles.firstPlacersTeamName}>
 						{censored ? "???" : placer.teamName}
 					</span>
-					<div className="text-xxxs text-lighter font-bold text-uppercase">
+					<div className="text-xxs text-lighter font-bold text-uppercase">
 						{t("front:showcase.card.winner")}
 						{placer.div ? ` (${placer.div})` : null}
 					</div>
@@ -255,7 +261,7 @@ function TournamentFirstPlacerTeamNameOnly({
 			<span className={styles.firstPlacersTeamName}>
 				{censored ? "???" : placer.teamName}
 			</span>
-			<div className="text-xxxs text-lighter font-bold text-uppercase">
+			<div className="text-xxs text-lighter font-bold text-uppercase">
 				{t("front:showcase.card.winner")}
 				{placer.div ? ` (${placer.div})` : null}
 			</div>
@@ -292,10 +298,12 @@ function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
 	);
 }
 
-function BadgePrizesPill({
+function PrizesPill({
 	badges,
+	trophy,
 }: {
-	badges: NonNullable<CalendarEvent["badges"]>;
+	badges: CalendarEvent["badges"];
+	trophy?: string;
 }) {
 	return (
 		<SendouPopover
@@ -307,18 +315,22 @@ function BadgePrizesPill({
 				>
 					<Image
 						size={16}
-						path={navIconUrl("badges")}
+						path={trophy ? navIconUrl("trophies") : navIconUrl("badges")}
 						alt="Badge prizes"
 						className={styles.badgeNavIcon}
 					/>
 				</SendouButton>
 			}
 		>
-			<BadgeDisplay
-				badges={badges}
-				showText={false}
-				className={styles.badgeDisplay}
-			/>
+			{trophy ? (
+				<Trophy model={trophy} className={styles.trophyPreview} />
+			) : badges ? (
+				<BadgeDisplay
+					badges={badges}
+					showText={false}
+					className={styles.badgeDisplay}
+				/>
+			) : null}
 		</SendouPopover>
 	);
 }

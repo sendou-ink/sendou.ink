@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { Tables } from "~/db/tables";
 import type * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import { useHydrated } from "~/hooks/useHydrated";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "../plus-voting-constants";
@@ -17,49 +18,61 @@ interface VotingLocalStorageData {
 	usersForVotingOrder: Record<Tables["User"]["id"], number>;
 }
 
+interface VotingState {
+	usersForVoting: PlusVotingRepository.UsersForVoting;
+	votes: PlusVoteFromFE[];
+}
+
 export function usePlusVoting(
 	usersForVotingFromServer: PlusVotingRepository.UsersForVoting,
 ) {
-	const [usersForVoting, setUsersForVoting] =
-		React.useState<PlusVotingRepository.UsersForVoting>();
-	const [votes, setVotes] = React.useState<PlusVoteFromFE[]>([]);
+	const isHydrated = useHydrated();
+	const [state, setState] = React.useState<VotingState | null>(null);
 
-	const addVote = React.useCallback(
-		(type: "upvote" | "downvote") => {
-			setVotes((votes) => {
-				const votedId = usersForVoting?.[votes.length]?.user.id;
-				if (!votedId) return votes;
+	if (isHydrated && state === null) {
+		setState(resolveInitialVotingState(usersForVotingFromServer));
+	}
 
-				const newVotes = [
-					...votes,
-					{ votedId, score: type === "upvote" ? PLUS_UPVOTE : PLUS_DOWNVOTE },
-				];
+	const addVote = React.useCallback((type: "upvote" | "downvote") => {
+		setState((state) => {
+			if (!state) return state;
 
-				votesToLocalStorage({ usersForVoting, votes: newVotes });
+			const votedId = state.usersForVoting[state.votes.length]?.user.id;
+			if (!votedId) return state;
 
-				return newVotes;
+			const newVotes = [
+				...state.votes,
+				{ votedId, score: type === "upvote" ? PLUS_UPVOTE : PLUS_DOWNVOTE },
+			];
+
+			votesToLocalStorage({
+				usersForVoting: state.usersForVoting,
+				votes: newVotes,
 			});
-		},
-		[usersForVoting],
-	);
+
+			return { ...state, votes: newVotes };
+		});
+	}, []);
 
 	const undoLast = React.useCallback(() => {
-		setVotes((votes) => {
-			const newVotes = [...votes];
-			newVotes.pop();
+		setState((state) => {
+			if (!state) return state;
 
-			votesToLocalStorage({ usersForVoting, votes: newVotes });
-			return newVotes;
+			const newVotes = state.votes.slice(0, -1);
+
+			votesToLocalStorage({
+				usersForVoting: state.usersForVoting,
+				votes: newVotes,
+			});
+
+			return { ...state, votes: newVotes };
 		});
-	}, [usersForVoting]);
-
-	useLoadInitialStateFromLocalStorageEffect({
-		usersForVotingFromServer,
-		setUsersForVoting,
-		setVotes,
-	});
+	}, []);
 
 	useVoteWithKeysEffect(addVote);
+
+	const usersForVoting = state?.usersForVoting;
+	const votes = state?.votes ?? [];
 
 	const currentUser = usersForVoting?.[votes.length];
 
@@ -72,71 +85,60 @@ export function usePlusVoting(
 		undoLast,
 		currentUser,
 		previous: previousUser({ usersForVoting, votes }),
-		isReady: Boolean(usersForVoting),
+		isReady: state !== null,
 		progress,
 	};
 }
 
-function useLoadInitialStateFromLocalStorageEffect({
-	usersForVotingFromServer,
-	setUsersForVoting,
-	setVotes,
-}: {
-	usersForVotingFromServer: PlusVotingRepository.UsersForVoting;
-	setUsersForVoting: React.Dispatch<
-		React.SetStateAction<PlusVotingRepository.UsersForVoting | undefined>
-	>;
-	setVotes: React.Dispatch<React.SetStateAction<PlusVoteFromFE[]>>;
-}) {
+function resolveInitialVotingState(
+	usersForVotingFromServer: PlusVotingRepository.UsersForVoting,
+): VotingState {
 	const range = nextNonCompletedVoting(new Date());
 	invariant(range, "No next voting found");
 	const { month, year } = rangeToMonthYear(range);
 
-	React.useEffect(() => {
-		const usersForVotingFromLocalStorage =
-			localStorage.getItem(LOCAL_STORAGE_KEY);
+	const usersForVotingFromLocalStorage =
+		localStorage.getItem(LOCAL_STORAGE_KEY);
 
-		if (!usersForVotingFromLocalStorage) {
-			setUsersForVoting(usersForVotingFromServer);
-			return;
-		}
+	if (!usersForVotingFromLocalStorage) {
+		return { usersForVoting: usersForVotingFromServer, votes: [] };
+	}
 
-		const parsedUsersForVoting = JSON.parse(
-			usersForVotingFromLocalStorage,
-		) as VotingLocalStorageData;
+	const parsedUsersForVoting = JSON.parse(
+		usersForVotingFromLocalStorage,
+	) as VotingLocalStorageData;
 
-		if (
-			parsedUsersForVoting.month !== month ||
-			parsedUsersForVoting.year !== year
-		) {
-			setUsersForVoting(usersForVotingFromServer);
-			return;
-		}
+	if (
+		parsedUsersForVoting.month !== month ||
+		parsedUsersForVoting.year !== year
+	) {
+		return { usersForVoting: usersForVotingFromServer, votes: [] };
+	}
 
-		let usersForVotingForState = usersForVotingFromServer;
+	// bit of defensive coding in case for some reason the local storage data is out of date
+	try {
+		const sortedUsersForVoting = [...usersForVotingFromServer].sort((a, b) => {
+			const aOrder = parsedUsersForVoting.usersForVotingOrder[a.user.id];
+			const bOrder = parsedUsersForVoting.usersForVotingOrder[b.user.id];
 
-		// bit of defensive coding in case for some reason the local storage data is out of date
-		try {
-			usersForVotingForState = [...usersForVotingFromServer].sort((a, b) => {
-				const aOrder = parsedUsersForVoting.usersForVotingOrder[a.user.id];
-				const bOrder = parsedUsersForVoting.usersForVotingOrder[b.user.id];
+			if (typeof aOrder !== "number") {
+				throw new Error(`No order for user with id ${a.user.id}`);
+			}
+			if (typeof bOrder !== "number") {
+				throw new Error(`No order for user with id ${b.user.id}`);
+			}
 
-				if (typeof aOrder !== "number") {
-					throw new Error(`No order for user with id ${a.user.id}`);
-				}
-				if (typeof bOrder !== "number") {
-					throw new Error(`No order for user with id ${b.user.id}`);
-				}
+			return aOrder - bOrder;
+		});
 
-				return aOrder - bOrder;
-			});
-			setVotes(parsedUsersForVoting.votes);
-		} catch (e) {
-			logger.error(e);
-		}
-
-		setUsersForVoting(usersForVotingForState);
-	}, [month, year, usersForVotingFromServer, setUsersForVoting, setVotes]);
+		return {
+			usersForVoting: sortedUsersForVoting,
+			votes: parsedUsersForVoting.votes,
+		};
+	} catch (e) {
+		logger.error(e);
+		return { usersForVoting: usersForVotingFromServer, votes: [] };
+	}
 }
 
 function useVoteWithKeysEffect(vote: (type: "upvote" | "downvote") => void) {
@@ -182,7 +184,7 @@ function votesToLocalStorage({
 	usersForVoting,
 	votes,
 }: {
-	usersForVoting?: PlusVotingRepository.UsersForVoting;
+	usersForVoting: PlusVotingRepository.UsersForVoting;
 	votes: PlusVoteFromFE[];
 }) {
 	const range = nextNonCompletedVoting(new Date());
@@ -190,7 +192,6 @@ function votesToLocalStorage({
 
 	const { month, year } = rangeToMonthYear(range);
 
-	invariant(usersForVoting);
 	const toLocalStorage: VotingLocalStorageData = {
 		month,
 		year,

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router";
 
 declare global {
@@ -20,18 +20,10 @@ function callPageInit() {
 
 export function FusePageInit() {
 	const { pathname } = useLocation();
-	const previousPathname = useRef(pathname);
 
 	useEffect(() => {
 		callPageInit();
-	}, []);
-
-	useEffect(() => {
-		if (previousPathname.current === pathname) return;
-
-		previousPathname.current = pathname;
-		callPageInit();
-	});
+	}, [pathname]);
 
 	return null;
 }

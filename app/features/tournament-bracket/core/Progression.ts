@@ -1,5 +1,6 @@
 import * as R from "remeda";
-import type { Tables, TournamentStageSettings } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentStageSettings } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	databaseTimestampToDate,
@@ -90,9 +91,9 @@ export type ValidationError =
 			type: "NEGATIVE_PROGRESSION";
 			bracketIdx: number;
 	  }
-	// single elimination is not a valid source bracket (might change in the future)
+	// no SE positive placements (single elimination can only source underground brackets)
 	| {
-			type: "NO_SE_SOURCE";
+			type: "NO_SE_POSITIVE";
 			bracketIdx: number;
 	  }
 	// no DE positive placements (might change in the future)
@@ -287,10 +288,10 @@ export function bracketsToValidationError(
 		};
 	}
 
-	faultyBracketIdx = noSingleEliminationAsSource(brackets);
+	faultyBracketIdx = noSingleEliminationPositive(brackets);
 	if (typeof faultyBracketIdx === "number") {
 		return {
-			type: "NO_SE_SOURCE",
+			type: "NO_SE_POSITIVE",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -671,11 +672,14 @@ function negativeProgression(brackets: ParsedBracket[]) {
 	return null;
 }
 
-function noSingleEliminationAsSource(brackets: ParsedBracket[]) {
+function noSingleEliminationPositive(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		for (const source of bracket.sources ?? []) {
 			const sourceBracket = brackets[source.bracketIdx];
-			if (sourceBracket.type === "single_elimination") {
+			if (
+				sourceBracket.type === "single_elimination" &&
+				source.placements.some((placement) => placement > 0)
+			) {
 				return bracketIdx;
 			}
 		}
@@ -927,11 +931,18 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 	const bracketsToConsider = bracketsReachableFrom(0, progression);
 
 	const withoutIntermediateBrackets = bracketsToConsider.filter(
-		(bracket, bracketIdx) => {
+		(bracketIdx) => {
 			if (bracketIdx === 0) return true;
 
+			// underground brackets don't make their source bracket an intermediate one
+			const undergrounds = new Set(
+				undergroundBracketIdxs(bracketIdx, progression),
+			);
+
 			return progression.every(
-				(b) => !b.sources?.some((s) => s.bracketIdx === bracket),
+				(b, idx) =>
+					undergrounds.has(idx) ||
+					!b.sources?.some((s) => s.bracketIdx === bracketIdx),
 			);
 		},
 	);
@@ -944,7 +955,8 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 
 			return !sources.some(
 				(source) =>
-					progression[source.bracketIdx].type === "double_elimination",
+					progression[source.bracketIdx].type === "double_elimination" ||
+					progression[source.bracketIdx].type === "single_elimination",
 			);
 		},
 	);
@@ -1026,6 +1038,23 @@ export function destinationsFromBracketIdx(
 	}
 
 	return destinations;
+}
+
+/**
+ * Returns the indexes of the underground brackets sourced from the given bracket.
+ * An underground bracket is one that takes teams eliminated from its source bracket (negative placements).
+ */
+export function undergroundBracketIdxs(
+	bracketIdx: number,
+	progression: ParsedBracket[],
+): number[] {
+	return destinationsFromBracketIdx(bracketIdx, progression).filter((idx) =>
+		progression[idx].sources?.some(
+			(source) =>
+				source.bracketIdx === bracketIdx &&
+				source.placements.some((placement) => placement < 0),
+		),
+	);
 }
 
 export function destinationByPlacement({

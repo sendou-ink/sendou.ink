@@ -1,13 +1,15 @@
 import { Search } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useMatches, useSearchParams } from "react-router";
+import { useLoaderData, useMatches } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
 import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { useDebounce } from "~/hooks/useDebounce";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
 import { userPage, userResultsEditHighlightsPage } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
@@ -15,6 +17,7 @@ import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
+import { userResultsSearchParams } from "../user-page-search-params";
 
 export { loader };
 
@@ -27,10 +30,11 @@ export default function UserResultsPage() {
 	invariant(parentRoute);
 	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
-	const [searchParams, setSearchParams] = useSearchParams();
-	const showAll = searchParams.get("all") === "true";
+	const [{ all: showAll, tournament }, setParams] = useSearchParamsTyped(
+		userResultsSearchParams,
+	);
 
-	const urlTournamentQuery = searchParams.get("tournament") ?? "";
+	const urlTournamentQuery = tournament ?? "";
 	const [tournamentQuery, setTournamentQuery] =
 		React.useState(urlTournamentQuery);
 	const [prevUrlTournamentQuery, setPrevUrlTournamentQuery] =
@@ -44,26 +48,17 @@ export default function UserResultsPage() {
 	useDebounce(
 		() => {
 			if (urlTournamentQuery === tournamentQuery) return;
-			setSearchParams((params) => {
-				if (tournamentQuery) {
-					params.set("tournament", tournamentQuery);
-				} else {
-					params.delete("tournament");
-				}
-				params.delete("page");
-				return params;
-			});
+			setParams({ tournament: tournamentQuery || null });
 		},
 		300,
 		[tournamentQuery],
 	);
 
-	const setPage = (page: number) => {
-		setSearchParams((params) => {
-			params.set("page", String(page));
-			return params;
-		});
-	};
+	const pagination = useSearchParamPagination({
+		definition: userResultsSearchParams,
+		currentPage: data.results.currentPage,
+		pagesCount: data.results.pagesCount,
+	});
 
 	return (
 		<div className="stack lg">
@@ -96,27 +91,12 @@ export default function UserResultsPage() {
 				</div>
 			</div>
 			<UserResultsTable id="user-results-table" results={data.results.value} />
-			{data.results.pages > 1 ? (
-				<Pagination
-					currentPage={data.results.currentPage}
-					pagesCount={data.results.pages}
-					nextPage={() => setPage(data.results.currentPage + 1)}
-					previousPage={() => setPage(data.results.currentPage - 1)}
-					setPage={setPage}
-				/>
-			) : null}
+			{data.results.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 			{data.hasHighlightedResults ? (
 				<SendouButton
 					variant="minimal"
 					size="small"
-					onPress={() =>
-						setSearchParams((params) => {
-							params.set("all", showAll ? "false" : "true");
-							params.delete("page");
-
-							return params;
-						})
-					}
+					onPress={() => setParams({ all: !showAll })}
 				>
 					{showAll
 						? t("results.button.showHighlights")

@@ -26,7 +26,7 @@ export function cachedStreams() {
 		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
 		async getFreshValue() {
 			return streamedMatches({
-				matchPlayers: await QStreamsRepository.activeMatchPlayers(),
+				matchPlayers: await QStreamsRepository.findAllActiveMatchPlayers(),
 				leaderboard: await cachedFullUserLeaderboard(season.nth),
 			}).sort((a, b) => {
 				const aTierIndex = TIERS.findIndex(

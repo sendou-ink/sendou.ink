@@ -1,8 +1,11 @@
 import type { z } from "zod";
-import type { CalendarEventTag, Tables } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { tags } from "~/features/calendar/calendar-constants";
 import type { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
 import type { ModeShortWithSpecial } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
+
+export type CalendarEventTag = keyof typeof tags;
 
 interface CommonEvent {
 	id: number;
@@ -37,11 +40,12 @@ export interface CalendarEvent extends CommonEvent {
 	badges: Array<
 		Pick<Tables["Badge"], "id" | "code" | "displayName" | "hue">
 	> | null;
+	trophy: Pick<Tables["Trophy"], "model"> | null;
 }
 
 export interface ShowcaseCalendarEvent extends CommonEvent {
 	type: "showcase";
-	startTime: number;
+	startsAt: number;
 	/** Id of the organization the event belongs to, if any */
 	organizationId: number | null;
 	/** Tournament is hidden from the public (test tournament) */

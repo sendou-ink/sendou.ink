@@ -12,11 +12,12 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
 import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
+import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { validateCanJoinTeam } from "../tournament-utils";
 import {
 	requireNotBannedByOrganization,
@@ -29,10 +30,10 @@ export const action: ActionFunction = async ({ params, url }) => {
 		schema: idObject,
 	});
 	const user = requireUser();
-	const inviteCode = url.searchParams.get("code");
+	const { code: inviteCode } = tournamentJoinSearchParams.parse(url);
 	invariant(inviteCode, "code is missing");
 
-	const leanTeam = notFoundIfFalsy(
+	const leanTeam = notFoundIfNullish(
 		await TournamentTeamRepository.findByInviteCode(inviteCode),
 	);
 

@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
-import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
@@ -14,7 +14,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfNullish(
+		await TeamRepository.findByCustomUrl(customUrl),
+	);
 
 	errorToastIfFalsy(
 		isTeamManager({ team, user }) || user.roles.includes("ADMIN"),

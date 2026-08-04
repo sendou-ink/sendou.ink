@@ -19,6 +19,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
+	useFetchers,
 	useHref,
 	useLoaderData,
 	useMatches,
@@ -28,7 +29,7 @@ import {
 	useSearchParams,
 } from "react-router";
 import { Config } from "~/config";
-import type { CustomTheme } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
@@ -52,6 +53,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
@@ -62,6 +64,7 @@ import {
 } from "./modules/i18n/i18next.server";
 import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
+import { SearchParamsProvider } from "./modules/search-params/hooks";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
@@ -95,6 +98,7 @@ export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	const json = args.json as Record<string, unknown> | undefined;
 	if (json?.revalidateRoot === true) return true;
 
+	// biome-ignore lint/plugin: presence check only, before any route's definition has parsed the URL
 	if (args.nextUrl.searchParams.has("lng")) return true;
 
 	return false;
@@ -137,9 +141,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						inGameName: user.inGameName,
 						friendCode: user.friendCode,
 						preferences: user.preferences ?? {},
-						languages: user.languages ? user.languages.split(",") : [],
+						languages: user.languages ?? [],
 						plusTier: user.plusTier,
 						roles: user.roles,
+						createdAt: user.createdAt,
 					}
 				: undefined,
 			customTheme: isSupporter(user) ? user?.customTheme : undefined,
@@ -232,15 +237,18 @@ function Document({
 			<body>
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
-					<RouterProvider navigate={navigate} useHref={useHref}>
-						<I18nProvider locale={language}>
-							<SendouToastRegion />
-							<MyFuse data={data} />
-							<ChatProvider user={data?.user}>
-								<Layout data={data}>{children}</Layout>
-							</ChatProvider>
-						</I18nProvider>
-					</RouterProvider>
+					<SearchParamsProvider>
+						<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
+							<I18nProvider locale={language}>
+								<SendouToastRegion />
+								<UnsavedChangesGuard />
+								<MyFuse data={data} />
+								<ChatProvider user={data?.user}>
+									<Layout data={data}>{children}</Layout>
+								</ChatProvider>
+							</I18nProvider>
+						</RouterProvider>
+					</SearchParamsProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
 				<Scripts />
@@ -249,7 +257,21 @@ function Document({
 	);
 }
 
+const ABSOLUTE_URL_REGEX = /^[a-z][a-z\d+\-.]*:/i;
+
+/**
+ * Href every React Aria link (menu items, buttons, tabs) is rendered with.
+ * `useHref` resolves its argument against the current route, which would turn an
+ * absolute URL such as a Twitch link into a path of our own.
+ */
+function useExternalAwareHref(href: string) {
+	const resolved = useHref(href);
+
+	return ABSOLUTE_URL_REGEX.test(href) ? href : resolved;
+}
+
 function useTriggerToasts() {
+	// biome-ignore lint/plugin: app-wide toast params written by server redirects, belonging to no one feature
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 
@@ -297,31 +319,36 @@ function useLoadingIndicator() {
 }
 
 function useSidebarRevalidation() {
-	const revalidator = useRevalidator();
+	const { revalidate, state } = useRevalidator();
+
+	// read through a ref so a revalidation elsewhere in the app does not
+	// re-run the effect and restart the interval before it ever fires
+	const stateRef = React.useRef(state);
+	stateRef.current = state;
 
 	useEffect(() => {
 		const TEN_MINUTES = 10 * 60 * 1000;
 
-		const revalidate = () => {
-			if (revalidator.state === "idle") {
-				revalidator.revalidate();
+		const revalidateIfIdle = () => {
+			if (stateRef.current === "idle") {
+				revalidate();
 			}
 		};
 
 		const handleVisibilityChange = () => {
 			if (document.visibilityState === "visible") {
-				revalidate();
+				revalidateIfIdle();
 			}
 		};
 
 		document.addEventListener("visibilitychange", handleVisibilityChange);
-		const interval = setInterval(revalidate, TEN_MINUTES);
+		const interval = setInterval(revalidateIfIdle, TEN_MINUTES);
 
 		return () => {
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 			clearInterval(interval);
 		};
-	}, [revalidator]);
+	}, [revalidate]);
 }
 
 function usePreloadTranslation() {
@@ -430,10 +457,24 @@ export const ErrorBoundary = () => {
 
 function HydrationTestIndicator() {
 	const isHydrated = useHydrated();
+	const navigation = useNavigation();
+	const revalidator = useRevalidator();
+	const fetchers = useFetchers();
 
 	if (!isHydrated) return null;
 
-	return <div style={{ display: "none" }} data-testid="hydrated" />;
+	const routerIdle =
+		navigation.state === "idle" &&
+		revalidator.state === "idle" &&
+		fetchers.every((fetcher) => fetcher.state === "idle");
+
+	return (
+		<div
+			style={{ display: "none" }}
+			data-testid="hydrated"
+			data-router-idle={routerIdle ? "true" : undefined}
+		/>
+	);
 }
 
 function Fonts() {

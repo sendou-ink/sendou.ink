@@ -1,6 +1,7 @@
 import { isWithinInterval, sub } from "date-fns";
 import * as R from "remeda";
-import type { DBBoolean, ParsedMemento, Tables } from "~/db/tables";
+import type { DBBoolean, Tables } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables-json";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
@@ -56,14 +57,12 @@ class SendouQClass {
 	constructor(
 		groups: DBGroupRow[],
 		recentMatches: DBRecentlyFinishedMatchRow[],
-	) {
-		const season = Seasons.currentOrPrevious();
-		const {
+		{
 			intervals,
 			userSkills: calculatedUserSkills,
 			isAccurateTiers,
-		} = userSkills(season!.nth);
-
+		}: Awaited<ReturnType<typeof userSkills>>,
+	) {
 		this.#recentMatches = recentMatches;
 		this.#isAccurateTiers = isAccurateTiers;
 		this.#userSkills = calculatedUserSkills;
@@ -86,7 +85,7 @@ class SendouQClass {
 
 				return {
 					...member,
-					languages: member.languages?.split(",") || [],
+					languages: member.languages ?? [],
 					skill: !skill || skill.approximate ? ("CALCULATING" as const) : skill,
 					mapModePreferences: undefined,
 					noScreen: undefined,
@@ -183,7 +182,6 @@ class SendouQClass {
 			return {
 				...group,
 				chatCode: isTeamMember ? group.chatCode : undefined,
-				noScreen: this.#groupNoScreen(group),
 				tier: match.memento?.groups[group.id]?.tier,
 				skillDifference: match.memento?.groups[group.id]?.skillDifference,
 				matchmade: Boolean(group.matchmade),
@@ -234,6 +232,7 @@ class SendouQClass {
 		return {
 			...match,
 			chatCode: isMatchInsider ? match.chatCode : undefined,
+			noScreen: Boolean(match.noScreen),
 			currentMap,
 			groupAlpha: alphaCensored,
 			groupBravo: bravoCensored,
@@ -588,17 +587,25 @@ class SendouQClass {
 	}
 }
 
-const groups = await SQGroupRepository.findCurrentGroups();
-const recentMatches = await SQGroupRepository.findRecentlyFinishedMatches();
 /** Global instance of the SendouQ manager. Manages all active groups and matchmaking state. */
-export let SendouQ = new SendouQClass(groups, recentMatches);
+export let SendouQ = await freshSendouQInstance();
 
 /**
  * Refreshes the global SendouQ instance with the latest data from the database.
  * Should be called after any database changes that affect groups or matches.
  */
 export async function refreshSendouQInstance() {
-	const groups = await SQGroupRepository.findCurrentGroups();
-	const recentMatches = await SQGroupRepository.findRecentlyFinishedMatches();
-	SendouQ = new SendouQClass(groups, recentMatches);
+	SendouQ = await freshSendouQInstance();
+}
+
+async function freshSendouQInstance() {
+	const season = Seasons.currentOrPrevious();
+
+	const [groups, recentMatches, skills] = await Promise.all([
+		SQGroupRepository.findCurrentGroups(),
+		SQGroupRepository.findRecentlyFinishedMatches(),
+		userSkills(season!.nth),
+	]);
+
+	return new SendouQClass(groups, recentMatches, skills);
 }

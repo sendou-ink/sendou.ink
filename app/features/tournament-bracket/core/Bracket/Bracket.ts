@@ -1,14 +1,16 @@
 import { sub } from "date-fns";
 import * as R from "remeda";
-import type { Tables, TournamentStageSettings } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentStageSettings } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { Round } from "~/modules/brackets-model";
+import type {
+	BracketData,
+	RoundData,
+} from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import { fillWithNullTillPowerOfTwo } from "../../tournament-bracket-utils";
 import * as AbDivisions from "../AbDivisions";
-import { getTournamentManager } from "../brackets-manager";
+import * as Engine from "../engine";
 import * as Progression from "../Progression";
 import type { OptionalIdObject, Tournament } from "../Tournament";
 import type { TournamentDataTeam } from "../Tournament.server";
@@ -18,7 +20,7 @@ export interface CreateBracketArgs {
 	id: number;
 	idx: number;
 	preview: boolean;
-	data?: TournamentManagerDataSet;
+	data?: BracketData;
 	type: Tables["TournamentStage"]["type"];
 	canBeStarted?: boolean;
 	name: string;
@@ -44,7 +46,6 @@ export interface Standing {
 		setLosses: number;
 		mapWins: number;
 		mapLosses: number;
-		points: number;
 		koCount?: number;
 		winsAgainstTied: number;
 		lossesAgainstTied?: number;
@@ -63,7 +64,7 @@ export abstract class Bracket {
 	idx;
 	preview;
 	data;
-	simulatedData: TournamentManagerDataSet | undefined;
+	simulatedData: BracketData | undefined;
 	canBeStarted;
 	name;
 	teamsPendingCheckIn;
@@ -74,6 +75,7 @@ export abstract class Bracket {
 	settings;
 	requiresCheckIn;
 	startTime;
+	private _matchStatuses: Map<number, Engine.MatchStatus> | undefined;
 
 	constructor({
 		id,
@@ -125,9 +127,7 @@ export abstract class Bracket {
 			return;
 
 		try {
-			const manager = getTournamentManager();
-
-			manager.importData(this.data);
+			let data = this.data;
 
 			const teamOrder = this.teamOrderForSimulation();
 
@@ -141,13 +141,9 @@ export abstract class Bracket {
 				matchesToResolve = false;
 				loopCount++;
 
-				for (const match of manager.export().match) {
-					if (!match) continue;
+				for (const match of data.match) {
 					// we have a result already
-					if (
-						match.opponent1?.result === "win" ||
-						match.opponent2?.result === "win"
-					) {
+					if (match.winnerSide) {
 						continue;
 					}
 					// no opponent yet, let's simulate this in a coming loop
@@ -176,21 +172,15 @@ export abstract class Bracket {
 							? 1
 							: 2;
 
-					manager.update.match({
-						id: match.id,
-						opponent1: {
-							score: winner === 1 ? 1 : 0,
-							result: winner === 1 ? "win" : undefined,
-						},
-						opponent2: {
-							score: winner === 2 ? 1 : 0,
-							result: winner === 2 ? "win" : undefined,
-						},
-					});
+					data = Engine.reportResult(data, {
+						matchId: match.id,
+						scores: winner === 1 ? [1, 0] : [0, 1],
+						winnerSide: winner === 1 ? "opponent1" : "opponent2",
+					}).data;
 				}
 			}
 
-			this.simulatedData = manager.export();
+			this.simulatedData = data;
 		} catch (e) {
 			logger.error("Bracket.createdSimulation: ", e);
 		}
@@ -200,11 +190,7 @@ export abstract class Bracket {
 		const result = new Map(this.tournament.ctx.teams.map((t, i) => [t.id, i]));
 
 		for (const match of this.data.match) {
-			if (
-				!match.opponent1?.id ||
-				!match.opponent2?.id ||
-				(match.opponent1?.result !== "win" && match.opponent2?.result !== "win")
-			) {
+			if (!match.opponent1?.id || !match.opponent2?.id || !match.winnerSide) {
 				continue;
 			}
 
@@ -215,11 +201,11 @@ export abstract class Bracket {
 				continue;
 			}
 
-			if (opponent1Seed < opponent2Seed && match.opponent1?.result === "win") {
+			if (opponent1Seed < opponent2Seed && match.winnerSide === "opponent1") {
 				continue;
 			}
 
-			if (opponent2Seed < opponent1Seed && match.opponent2?.result === "win") {
+			if (opponent2Seed < opponent1Seed && match.winnerSide === "opponent2") {
 				continue;
 			}
 
@@ -238,21 +224,29 @@ export abstract class Bracket {
 	simulatedMatch(matchId: number) {
 		if (!this.simulatedData) return;
 
-		return this.simulatedData.match
-			.filter(Boolean)
-			.find((match) => match.id === matchId);
+		return this.simulatedData.match.find((match) => match.id === matchId);
 	}
 
-	get collectResultsWithPoints() {
+	/** Whether reporting a game in this bracket also records if the game was a KO win. */
+	get collectsKos() {
 		return false;
 	}
 
-	get type(): Tables["TournamentStage"]["type"] {
-		throw new Error("not implemented");
-	}
+	abstract get type(): Tables["TournamentStage"]["type"];
 
-	get standings(): Standing[] {
-		throw new Error("not implemented");
+	/**
+	 * Standings that are settled i.e. teams still playing are left out. Safe to
+	 * use for deciding who advances to another bracket.
+	 */
+	abstract get standings(): Standing[];
+
+	/**
+	 * How many rounds a swiss bracket has. Comes from the bracket's own stage
+	 * settings rather than `settings` (the progression's, editable at any time),
+	 * so it can't drift from the bracket that actually exists.
+	 */
+	get swissRoundCount() {
+		return Engine.swissRoundCount(this.data);
 	}
 
 	get participantTournamentTeamIds() {
@@ -263,17 +257,58 @@ export abstract class Bracket {
 		) as number[];
 	}
 
-	currentStandings(_includeUnfinishedGroups: boolean) {
+	/**
+	 * Standings including teams that are still playing. Meant for displaying the
+	 * bracket's current state, not for deciding who advances.
+	 */
+	get liveStandings(): Standing[] {
 		return this.standings;
 	}
 
-	winnersSourceRound(_roundNumber: number): Round | undefined {
+	winnersSourceRound(_roundNumber: number): RoundData | undefined {
 		return;
 	}
 
 	/** Returns true if this bracket is a starting bracket (i.e., teams in it start their tournament from this bracket). Note: there can be more than one starting bracket. */
 	get isStartingBracket() {
 		return !this.sources || this.sources.length === 0;
+	}
+
+	/** Resolves teams' effective seeds: the better of a team's own seed and the best
+	 * seed of a team it defeated in this bracket. A team that beats a higher seed
+	 * inherits that seed, so cross-group placement ties break in the overtaker's
+	 * favor while defaulting to the original seeding when no upsets happened. */
+	protected effectiveSeedResolver(): (tournamentTeamId: number) => number {
+		const teamSeed = (tournamentTeamId: number) => {
+			const seed = this.tournament.teamById(tournamentTeamId)?.seed;
+			return typeof seed === "number" ? seed : Number.POSITIVE_INFINITY;
+		};
+
+		const bestBeatenSeed = new Map<number, number>();
+		for (const match of this.data.match) {
+			if (!match.winnerSide) continue;
+
+			const winner =
+				match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
+			const loser =
+				match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+			if (typeof winner?.id !== "number" || typeof loser?.id !== "number") {
+				continue;
+			}
+
+			const loserSeed = teamSeed(loser.id);
+			const currentBest =
+				bestBeatenSeed.get(winner.id) ?? Number.POSITIVE_INFINITY;
+			if (loserSeed < currentBest) {
+				bestBeatenSeed.set(winner.id, loserSeed);
+			}
+		}
+
+		return (tournamentTeamId) =>
+			Math.min(
+				teamSeed(tournamentTeamId),
+				bestBeatenSeed.get(tournamentTeamId) ?? Number.POSITIVE_INFINITY,
+			);
 	}
 
 	protected standingsWithoutNonParticipants(standings: Standing[]): Standing[] {
@@ -290,49 +325,37 @@ export abstract class Bracket {
 		});
 	}
 
-	generateMatchesData(teams: number[]) {
-		const manager = getTournamentManager();
-
-		const virtualTournamentId = 1;
-
+	generateMatchesData(teams: number[]): BracketData {
 		if (teams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START) {
-			const settings = this.tournament.bracketManagerSettings(
-				this.settings,
-				this.type,
-				teams.length,
-			);
 			const abDivisions =
 				this.type === "round_robin" && this.settings?.hasAbDivisions === true
-					? this.abDivisionsForPreview(teams, settings.groupCount)
+					? this.abDivisionsForPreview(
+							teams,
+							Engine.roundRobinGroupCount(this.settings, teams.length),
+						)
 					: undefined;
 
-			manager.create({
-				tournamentId: virtualTournamentId,
-				name: "Virtual",
+			return Engine.create({
 				type: this.type,
-				seeding:
-					this.type === "round_robin"
-						? teams
-						: fillWithNullTillPowerOfTwo(teams),
+				seeding: teams,
 				settings: abDivisions
-					? settings
+					? this.settings
 					: {
-							...settings,
+							...this.settings,
 							hasAbDivisions: false,
 						},
+				independentRounds: this.tournament.isLeagueDivision,
 				abDivisions,
 			});
 		}
 
-		return manager.get.tournamentData(virtualTournamentId);
+		return { stage: [], group: [], round: [], match: [] };
 	}
 
 	private abDivisionsForPreview(
 		teams: number[],
-		groupCount: number | undefined,
+		groupCount: number,
 	): (0 | 1)[] | undefined {
-		if (!groupCount) return undefined;
-
 		const assignments = teams.map((teamId) => {
 			const team = this.tournament.teamById(teamId);
 			return team?.abDivision ?? null;
@@ -346,7 +369,7 @@ export abstract class Bracket {
 			AbDivisions.validate({
 				abDivisionsBySeedOrder: assignments,
 				groupCount,
-			}).isOk()
+			}).ok
 		) {
 			return assignments as (0 | 1)[];
 		}
@@ -358,7 +381,7 @@ export abstract class Bracket {
 			AbDivisions.validate({
 				abDivisionsBySeedOrder: fakeAssignments,
 				groupCount,
-			}).isOk()
+			}).ok
 		) {
 			return fakeAssignments;
 		}
@@ -380,6 +403,14 @@ export abstract class Bracket {
 		);
 	}
 
+	/**
+	 * Whether the standings of this bracket are final i.e. no further match can
+	 * change them. While false the standings are provisional.
+	 */
+	get standingsAreFinal() {
+		return this.everyMatchOver;
+	}
+
 	get everyMatchOver() {
 		if (this.preview) return false;
 
@@ -388,10 +419,7 @@ export abstract class Bracket {
 			if (match.opponent1 === null || match.opponent2 === null) {
 				continue;
 			}
-			if (
-				match.opponent1?.result !== "win" &&
-				match.opponent2?.result !== "win"
-			) {
+			if (!match.winnerSide) {
 				return false;
 			}
 		}
@@ -424,16 +452,14 @@ export abstract class Bracket {
 		return this.teamsPendingCheckIn.includes(team.id);
 	}
 
-	source(_options: {
+	abstract source(options: {
 		placements: number[];
 		advanceThreshold?: number;
 		rest?: boolean;
 	}): {
 		relevantMatchesFinished: boolean;
 		teams: number[];
-	} {
-		throw new Error("not implemented");
-	}
+	};
 
 	teamsWithNames(teams: { id: number }[]) {
 		return teams.map((team) => {
@@ -447,6 +473,23 @@ export abstract class Bracket {
 				name,
 			};
 		});
+	}
+
+	/** Statuses of every match of the bracket, keyed by match id. */
+	matchStatuses() {
+		if (!this._matchStatuses) {
+			this._matchStatuses = Engine.matchStatuses(this.data);
+		}
+
+		return this._matchStatuses;
+	}
+
+	/** Status of one match of the bracket. */
+	matchStatus(matchId: number) {
+		const status = this.matchStatuses().get(matchId);
+		invariant(status, `Match not found: ${matchId}`);
+
+		return status;
 	}
 
 	/**
@@ -465,10 +508,7 @@ export abstract class Bracket {
 			(a, b) => a.number - b.number,
 		)) {
 			if (!match.opponent1?.id || !match.opponent2?.id) continue;
-			if (
-				match.opponent1.result === "win" ||
-				match.opponent2.result === "win"
-			) {
+			if (match.winnerSide) {
 				continue;
 			}
 
@@ -487,7 +527,5 @@ export abstract class Bracket {
 		return ongoingMatchIds;
 	}
 
-	defaultRoundBestOfs(_data: TournamentManagerDataSet): BracketMapCounts {
-		throw new Error("not implemented");
-	}
+	abstract defaultRoundBestOfs(data: BracketData): BracketMapCounts;
 }

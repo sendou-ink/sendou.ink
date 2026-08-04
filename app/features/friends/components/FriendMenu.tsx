@@ -9,10 +9,12 @@ import {
 	SendouMenuItem,
 	SendouMenuSection,
 } from "~/components/elements/Menu";
+import { TwitchIcon } from "~/components/icons/Twitch";
 import { ListButton } from "~/components/SideNav";
 import {
+	type FriendActivityBadge,
 	type FriendActivityType,
-	isLiveFriendActivity,
+	friendActivityBadge,
 } from "~/features/friends/friends-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import {
@@ -22,6 +24,11 @@ import {
 	tournamentPage,
 	tournamentSubsPage,
 } from "~/utils/urls";
+
+const ACTIVITY_BADGE_TRANSLATION_KEY = {
+	MATCH: "friends:friendsList.inMatch",
+	NEXT: "friends:friendsList.nextMatch",
+} as const satisfies Record<FriendActivityBadge, string>;
 
 export function FriendMenu({
 	discordId,
@@ -34,6 +41,7 @@ export function FriendMenu({
 	activityType,
 	matchId,
 	tournamentId,
+	streamUrl,
 	friendshipId,
 	friendshipCreatedAt,
 	onNavigate,
@@ -48,6 +56,7 @@ export function FriendMenu({
 	activityType: FriendActivityType | null;
 	matchId: number | null;
 	tournamentId: number | null;
+	streamUrl: string | null;
 	friendshipId?: number;
 	friendshipCreatedAt?: number | null;
 	onNavigate?: () => void;
@@ -67,7 +76,7 @@ export function FriendMenu({
 			})
 		: null;
 
-	const isLive = isLiveFriendActivity(activityType);
+	const activityBadge = friendActivityBadge(activityType);
 	const activity = resolveActivity({ activityType, matchId, tournamentId });
 
 	return (
@@ -77,8 +86,14 @@ export function FriendMenu({
 					<ListButton
 						user={{ discordId, discordAvatar, customAvatarUrl }}
 						subtitle={subtitle}
-						badge={isLive ? t("friends:friendsList.live") : badge}
-						badgeVariant={isLive ? "warning" : "default"}
+						badge={
+							streamUrl
+								? t("friends:friendsList.live")
+								: activityBadge
+									? t(ACTIVITY_BADGE_TRANSLATION_KEY[activityBadge])
+									: badge
+						}
+						badgeVariant={streamUrl ? "warning" : "default"}
 					>
 						{name}
 					</ListButton>
@@ -88,6 +103,17 @@ export function FriendMenu({
 					<SendouMenuItem href={url} icon={<User />} onAction={onNavigate}>
 						{t("friends:friendsList.viewUserPage")}
 					</SendouMenuItem>
+					{streamUrl ? (
+						<SendouMenuItem
+							href={streamUrl}
+							target="_blank"
+							rel="noreferrer"
+							icon={<TwitchIcon />}
+							onAction={onNavigate}
+						>
+							{t("friends:friendsList.watchStream")}
+						</SendouMenuItem>
+					) : null}
 					{activity?.type === "join-sendouq" ? (
 						<SendouMenuItem
 							icon={<Swords />}
@@ -189,7 +215,7 @@ function resolveActivity(friend: {
 						}),
 					} as const)
 				: null;
-		case "TOURNAMENT_PLAYING":
+		case "TOURNAMENT_WAITING":
 			return friend.tournamentId
 				? ({
 						type: "view-tournament",

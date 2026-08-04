@@ -2,7 +2,7 @@ import { add, sub } from "date-fns";
 import { z } from "zod";
 import {
 	customField,
-	datetimeRequired,
+	datetime,
 	dualSelectOptional,
 	idConstant,
 	radioGroupDynamic,
@@ -11,8 +11,8 @@ import {
 	selectOptional,
 	stageSelect,
 	stringConstant,
+	textArea,
 	textAreaOptional,
-	textAreaRequired,
 	textFieldOptional,
 	timeRangeOptional,
 	toggle,
@@ -26,7 +26,6 @@ import {
 	filterOutNullishMembers,
 	id,
 	noDuplicates,
-	safeJSONParse,
 	timeString,
 } from "~/utils/zod";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
@@ -79,7 +78,7 @@ const cancelRequestSchema = z.object({
 
 export const cancelScrimFormSchema = z.object({
 	_action: stringConstant("CANCEL_SCRIM"),
-	reason: textAreaRequired({
+	reason: textArea({
 		label: "labels.scrimCancelReason",
 		bottomText: "bottomTexts.scrimCancelReasonHelp",
 		maxLength: SCRIM.CANCEL_REASON_MAX_LENGTH,
@@ -122,7 +121,7 @@ export const divsSchema = z
 		return divs;
 	});
 
-const scrimsFiltersSchema = z.object({
+export const scrimsFiltersSchema = z.object({
 	weekdayTimes: timeRangeSchema.nullable().catch(null),
 	weekendTimes: timeRangeSchema.nullable().catch(null),
 	divs: divsSchema.nullable().catch(null),
@@ -160,12 +159,6 @@ export const scrimsFiltersFormSchema = z.object({
 		endLabel: "labels.end",
 	}),
 	divs: divsFormField,
-});
-
-export const scrimsFiltersSearchParamsObject = z.object({
-	filters: z
-		.preprocess(safeJSONParse, scrimsFiltersSchema)
-		.catch({ weekdayTimes: null, weekendTimes: null, divs: null }),
 });
 
 const persistScrimFiltersSchema = z.object({
@@ -309,7 +302,7 @@ const mapsItems = [
 
 export const scrimsNewFormSchema = z
 	.object({
-		at: datetimeRequired({
+		at: datetime({
 			label: "labels.start",
 			bottomText: "bottomTexts.scrimStart",
 			min: () => sub(new Date(), { days: 1 }),
@@ -357,24 +350,22 @@ export const scrimsNewFormSchema = z
 			label: "labels.scrimMaps",
 			items: [...mapsItems],
 		}),
-		mapsTournamentId: customField(
-			{ initialValue: null },
-			z.preprocess(falsyToNull, id.nullable()),
-		),
+		mapsTournamentId: tournamentSearchOptional({
+			label: "labels.scrimMapsTournament",
+		}),
 	})
+	// a tournament pick is only meaningful when maps come from a tournament, so
+	// drop any stale selection instead of erroring on a field that is not rendered
+	.overwrite((post) =>
+		post.maps !== "TOURNAMENT" && post.mapsTournamentId
+			? { ...post, mapsTournamentId: null }
+			: post,
+	)
 	.superRefine((post, ctx) => {
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
 				message: "forms:errors.tournamentMustBeSelected",
-				code: z.ZodIssueCode.custom,
-			});
-		}
-
-		if (post.maps !== "TOURNAMENT" && post.mapsTournamentId) {
-			ctx.addIssue({
-				path: ["mapsTournamentId"],
-				message: "forms:errors.tournamentOnlyWhenMapsIsTournament",
 				code: z.ZodIssueCode.custom,
 			});
 		}

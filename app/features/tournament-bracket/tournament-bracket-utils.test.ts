@@ -1,33 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
-	fillWithNullTillPowerOfTwo,
 	groupNumberToLetters,
 	validateBadgeReceivers,
 } from "./tournament-bracket-utils";
-
-const powerOfTwoParamsToResults: [
-	amountOfTeams: number,
-	expectedNullCount: number,
-][] = [
-	[32, 0],
-	[16, 0],
-	[8, 0],
-	[31, 1],
-	[0, 0],
-	[17, 15],
-];
-
-describe("fillWithNullTillPowerOfTwo()", () => {
-	for (const [amountOfTeams, expectedNullCount] of powerOfTwoParamsToResults) {
-		test(`amountOfTeams=${amountOfTeams} -> ${expectedNullCount}`, () => {
-			expect(
-				fillWithNullTillPowerOfTwo(Array(amountOfTeams).fill("team")).filter(
-					(x) => x === null,
-				).length,
-			).toBe(expectedNullCount);
-		});
-	}
-});
 
 const groupNumberToLettersParamsToResult = [
 	{ groupNumber: 1, expected: "A" },

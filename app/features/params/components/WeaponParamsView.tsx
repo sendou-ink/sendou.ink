@@ -6,8 +6,9 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Main } from "~/components/Main";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import { weaponParamsSearchParams } from "../params-search-params";
 import type {
 	DamageMultiplierWithHistory,
 	KitPatchHistory,
@@ -50,11 +51,7 @@ export function WeaponParamsView({
 }) {
 	const { t } = useTranslation(["params"]);
 
-	const [tab, setTab] = useSearchParamState({
-		name: "tab",
-		defaultValue: "params",
-		revive: (value) => (value === "patches" ? "patches" : "params"),
-	});
+	const [tab, setTab] = useSearchParam(weaponParamsSearchParams, "tab");
 
 	const viewedKitPatchCount =
 		kitPatchHistories?.find((kit) => kit.weaponId === weaponId)?.patches
@@ -65,7 +62,9 @@ export function WeaponParamsView({
 			{kits ? <WeaponKits kits={kits} /> : null}
 			<SendouTabs
 				selectedKey={tab}
-				onSelectionChange={(key) => setTab(String(key))}
+				onSelectionChange={(key) =>
+					setTab(key === "patches" ? "patches" : "params")
+				}
 				className={styles.tabs}
 			>
 				<SendouTabList>

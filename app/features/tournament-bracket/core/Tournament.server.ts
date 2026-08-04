@@ -2,27 +2,22 @@ import { sub } from "date-fns";
 import { ServerConfig } from "~/config.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { notFoundIfFalsy } from "~/utils/remix.server";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
-import { getServerTournamentManager } from "./brackets-manager/manager.server";
 import { RunningTournaments } from "./RunningTournaments.server";
 import { Tournament } from "./Tournament";
-
-const manager = getServerTournamentManager();
-
-export const tournamentManagerData = (tournamentId: number) =>
-	manager.get.tournamentData(tournamentId);
 
 const combinedTournamentData = async (tournamentId: number) => {
 	const ctx = await TournamentRepository.findById(tournamentId);
 	if (!ctx) return null;
 
 	return {
-		data: tournamentManagerData(tournamentId),
+		data: await BracketRepository.findByTournamentId(tournamentId),
 		ctx,
 	};
 };
@@ -47,7 +42,7 @@ function dataMapped({
 	ctx,
 	user,
 }: {
-	data: TournamentManagerDataSet;
+	data: BracketData;
 	ctx: TournamentRepository.FindById;
 	user?: { id: number };
 }) {
@@ -91,7 +86,7 @@ export async function tournamentFromDB(args: {
 	user: { id: number } | undefined;
 	tournamentId: number;
 }) {
-	const data = notFoundIfFalsy(await tournamentData(args));
+	const data = notFoundIfNullish(await tournamentData(args));
 
 	const tournament = new Tournament({ ...data, simulateBrackets: false });
 	syncTournamentToRegistry(tournament);
@@ -103,7 +98,7 @@ export async function tournamentFromDBCached(args: {
 	user: { id: number } | undefined;
 	tournamentId: number;
 }) {
-	const data = notFoundIfFalsy(await tournamentDataCached(args));
+	const data = notFoundIfNullish(await tournamentDataCached(args));
 
 	return new Tournament({ ...data, simulateBrackets: false });
 }
@@ -122,14 +117,14 @@ export async function tournamentDataCached({
 	tournamentId: number;
 }) {
 	if (ServerConfig.disableCache) {
-		return notFoundIfFalsy(await tournamentData({ user, tournamentId }));
+		return notFoundIfNullish(await tournamentData({ user, tournamentId }));
 	}
 
 	if (!tournamentDataCache.has(tournamentId)) {
 		tournamentDataCache.set(tournamentId, combinedTournamentData(tournamentId));
 	}
 
-	const data = notFoundIfFalsy(await tournamentDataCache.get(tournamentId));
+	const data = notFoundIfNullish(await tournamentDataCache.get(tournamentId));
 
 	return dataMapped({ user, ...data });
 }
@@ -149,7 +144,7 @@ function mostRecentStartTime(tournament: Tournament) {
 		.filter((b) => b.startTime)
 		.map((b) => databaseTimestampToDate(b.startTime!));
 
-	const allStartTimes = [tournament.ctx.startTime, ...bracketStartTimes];
+	const allStartTimes = [tournament.ctx.startsAt, ...bracketStartTimes];
 
 	return allStartTimes
 		.filter((t) => t <= new Date())
@@ -163,6 +158,17 @@ function isTournamentLive(tournament: Tournament) {
 	const latestStartTime = mostRecentStartTime(tournament);
 
 	return Boolean(latestStartTime && latestStartTime >= cutoff);
+}
+
+/**
+ * Re-evaluates liveness of every tournament in the running tournaments registry,
+ * evicting those that are no longer live (e.g. abandoned tournaments whose latest
+ * day started over 6 hours ago and no page load has triggered a re-sync).
+ */
+export function evictStaleRunningTournaments() {
+	for (const tournament of RunningTournaments.all) {
+		syncTournamentToRegistry(tournament);
+	}
 }
 
 function syncTournamentToRegistry(tournament: Tournament) {
@@ -180,6 +186,17 @@ function syncTournamentToRegistry(tournament: Tournament) {
 		}
 		RunningTournaments.remove(tournament.ctx.id);
 	}
+}
+
+/**
+ * Rebuilds the running tournaments registry from the database, forgetting the
+ * tournaments it held. E2E workers call this (via `/refresh-caches`) after
+ * writing tournaments straight into the database file.
+ */
+export async function refreshRunningTournaments() {
+	RunningTournaments.clear();
+
+	await primeRunningTournamentsCache();
 }
 
 async function primeRunningTournamentsCache() {

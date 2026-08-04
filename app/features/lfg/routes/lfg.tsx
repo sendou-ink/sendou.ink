@@ -8,7 +8,7 @@ import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -20,11 +20,7 @@ import { LFGFilters } from "../components/LFGFilters";
 import { LFGPost } from "../components/LFGPost";
 import { filterPosts } from "../core/filtering";
 import { LFG } from "../lfg-constants";
-import {
-	filterToSmallStr,
-	type LFGFilter,
-	smallStrToFilter,
-} from "../lfg-types";
+import { lfgSearchParams } from "../lfg-search-params";
 import { loader } from "../loaders/lfg.server";
 import styles from "./lfg.module.css";
 
@@ -56,35 +52,11 @@ export type TiersMap = ReturnType<typeof unserializeTiers>;
 const unserializeTiers = (data: SerializeFrom<typeof loader>) =>
 	new Map(data.tiersMap);
 
-function decodeURLQuery(queryString: string): LFGFilter[] {
-	if (queryString === "") {
-		return [];
-	}
-	return queryString
-		.split("-")
-		.map(smallStrToFilter)
-		.filter((x) => x !== null);
-}
-
-function encodeURLQuery(filters: LFGFilter[]): string {
-	return filters.map(filterToSmallStr).join("-");
-}
-
 export default function LFGPage() {
 	const { t } = useTranslation(["common", "lfg"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const [filterFromSearch, setTilterFromSearch] = useSearchParamStateEncoder({
-		defaultValue: [],
-		name: "q",
-		revive: decodeURLQuery,
-		encode: encodeURLQuery,
-	});
-	const [filters, _setFilters] = React.useState<LFGFilter[]>(filterFromSearch);
-	const setFilters = (x: LFGFilter[]) => {
-		setTilterFromSearch(x);
-		_setFilters(x);
-	};
+	const [filters, setFilters] = useSearchParam(lfgSearchParams, "q");
 
 	const tiersMap = React.useMemo(() => unserializeTiers(data), [data]);
 

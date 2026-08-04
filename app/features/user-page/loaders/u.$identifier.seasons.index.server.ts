@@ -4,11 +4,9 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy } from "~/utils/remix.server";
-import {
-	seasonsSearchParamsSchema,
-	userParamsSchema,
-} from "../user-page-schemas";
+import { notFoundIfNullish } from "~/utils/remix.server";
+import { userParamsSchema } from "../user-page-schemas";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsSetsLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
@@ -17,32 +15,29 @@ export type UserSeasonsSetsLoaderData = NonNullable<
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	requireUser();
 	const { identifier } = userParamsSchema.parse(params);
-	const parsedSearchParams = seasonsSearchParamsSchema.safeParse(
-		Object.fromEntries(url.searchParams),
-	);
+	const { page, season: seasonParam } = userSeasonsSearchParams.parse(url);
 
-	const user = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(identifier),
+	const user = notFoundIfNullish(
+		await UserRepository.findIdByIdentifier(identifier),
 	);
 	const seasonsParticipatedIn =
-		await LeaderboardRepository.seasonsParticipatedInByUserId(user.id);
+		await LeaderboardRepository.findSeasonsParticipatedInByUserId(user.id);
 
 	if (seasonsParticipatedIn.length === 0) {
 		return null;
 	}
 
-	const { page = 1, season = seasonsParticipatedIn[0] } =
-		parsedSearchParams.success ? parsedSearchParams.data : {};
+	const season = seasonParam ?? seasonsParticipatedIn[0];
 
 	return {
 		results: {
-			value: await SQMatchRepository.seasonResultsByUserId({
+			value: await SQMatchRepository.findSeasonResultsByUserId({
 				season,
 				userId: user.id,
 				page,
 			}),
 			currentPage: page,
-			pages: await SQMatchRepository.seasonResultPagesByUserId({
+			pagesCount: await SQMatchRepository.countSeasonResultPagesByUserId({
 				season,
 				userId: user.id,
 			}),

@@ -2,34 +2,25 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import {
-	notFoundIfFalsy,
-	parseSafeSearchParams,
-	redirectIfPageOutOfBounds,
-} from "~/utils/remix.server";
+import { notFoundIfNullish, paginate } from "~/utils/remix.server";
 import {
 	HIGHLIGHTS_RESULTS_MAX,
 	RESULTS_PER_PAGE,
 } from "../user-page-constants";
-import { userResultsPageSearchParamsSchema } from "../user-page-schemas";
+import { userResultsSearchParams } from "../user-page-search-params";
 
 export type UserResultsLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
-	const parsedSearchParams = parseSafeSearchParams({
-		request,
-		schema: userResultsPageSearchParamsSchema,
-	});
+	const { all, page, tournament } = userResultsSearchParams.parse(request);
 
-	const userId = notFoundIfFalsy(
-		await UserRepository.identifierToUserId(params.identifier!),
+	const userId = notFoundIfNullish(
+		await UserRepository.findIdByIdentifier(params.identifier!),
 	).id;
 	const hasHighlightedResults =
 		await UserRepository.hasHighlightedResultsByUserId(userId);
 
-	let showHighlightsOnly = parsedSearchParams.success
-		? !parsedSearchParams.data.all
-		: true;
+	let showHighlightsOnly = !all;
 
 	if (!hasHighlightedResults) {
 		showHighlightsOnly = false;
@@ -40,10 +31,9 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		showHighlightsOnly = false;
 	}
 
-	const page = parsedSearchParams.success ? parsedSearchParams.data.page : 1;
 	const tournamentName =
-		!isChoosingHighlights && getUser() && parsedSearchParams.success
-			? parsedSearchParams.data.tournament
+		!isChoosingHighlights && getUser() && tournament !== null
+			? tournament
 			: undefined;
 
 	const [results, totalCount] = await Promise.all([
@@ -60,15 +50,10 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 		}),
 	]);
 
-	const pagesCount = Math.ceil(totalCount / RESULTS_PER_PAGE);
-
-	redirectIfPageOutOfBounds({ url, page, pagesCount });
-
 	return {
 		results: {
 			value: results,
-			currentPage: page,
-			pages: pagesCount,
+			...paginate({ url, page, pageSize: RESULTS_PER_PAGE, totalCount }),
 		},
 		hasHighlightedResults,
 	};

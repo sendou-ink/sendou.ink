@@ -15,11 +15,12 @@ import {
 import * as React from "react";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import type { RootLoaderData } from "~/root";
@@ -27,6 +28,7 @@ import {
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
 	navIconUrl,
+	SENDOU_INK_BASE_URL,
 	SETTINGS_PAGE,
 	SUPPORT_PAGE,
 	userPage,
@@ -44,6 +46,7 @@ import {
 import { navItems } from "./layout/nav-items";
 import styles from "./MobileNav.module.css";
 import { NotificationDot } from "./NotificationDot";
+import { ShareUrlButton } from "./ShareUrlButton";
 import { StreamListItems } from "./StreamListItems";
 
 type SidebarData = RootLoaderData["sidebar"] | undefined;
@@ -346,6 +349,7 @@ function MenuOverlay({
 }) {
 	const { t } = useTranslation(["front", "common"]);
 	const user = useUser();
+	const location = useLocation();
 
 	return (
 		<ModalOverlay
@@ -377,6 +381,11 @@ function MenuOverlay({
 									{t("common:pages.support")}
 								</LinkButton>
 							) : null}
+							<ShareUrlButton
+								variant="minimal"
+								shape="square"
+								url={`${SENDOU_INK_BASE_URL}${location.pathname}${location.search}`}
+							/>
 							<button
 								type="button"
 								className={styles.panelCloseButton}
@@ -389,25 +398,29 @@ function MenuOverlay({
 
 					<nav aria-label={t("front:mobileNav.menu")}>
 						<ul className={styles.navGrid}>
-							{navItems.map((item) => (
-								<li key={item.name}>
-									<Link
-										to={`/${item.url}`}
-										className={styles.navItem}
-										onClick={onClose}
-									>
-										<div className={styles.navItemImage}>
-											<Image
-												path={navIconUrl(item.name)}
-												height={32}
-												width={32}
-												alt=""
-											/>
-										</div>
-										<span>{t(`common:pages.${item.name}` as any)}</span>
-									</Link>
-								</li>
-							))}
+							{navItems
+								.filter(
+									(item) => item.name !== "trophies" || canAccessTrophies(user),
+								)
+								.map((item) => (
+									<li key={item.name}>
+										<Link
+											to={`/${item.url}`}
+											className={styles.navItem}
+											onClick={onClose}
+										>
+											<div className={styles.navItemImage}>
+												<Image
+													path={navIconUrl(item.name)}
+													height={32}
+													width={32}
+													alt=""
+												/>
+											</div>
+											<span>{t(`common:pages.${item.name}` as any)}</span>
+										</Link>
+									</li>
+								))}
 						</ul>
 					</nav>
 

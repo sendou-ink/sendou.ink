@@ -1,6 +1,7 @@
 import type { z } from "zod";
 import { ServerConfig } from "~/config.server";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { fetchWithTimeout } from "~/utils/fetch";
@@ -41,11 +42,12 @@ export async function updatePatreonData(): Promise<void> {
 		).map((discordId) => ({
 			discordId,
 			patronTier: 4,
-			patronSince: dateToDatabaseTimestamp(new Date()),
+			patronStartedAt: dateToDatabaseTimestamp(new Date()),
 		})),
 	];
 
 	await UserRepository.updatePatronData(patronsWithMods);
+	await TrophyRepository.syncSpecialTrophies();
 }
 
 const MAX_RETRIES = 10;
@@ -130,7 +132,7 @@ function parsePatronData({
 
 		patronsWithIds.push({
 			patreonId: patron.relationships.user.data.id,
-			patronSince: dateToDatabaseTimestamp(
+			patronStartedAt: dateToDatabaseTimestamp(
 				new Date(patron.attributes.pledge_relationship_start ?? Date.now()),
 			),
 			patronTier: idToTierNumber(tier),
@@ -162,7 +164,7 @@ function parsePatronData({
 		}
 
 		result.patrons.push({
-			patronSince: patronData.patronSince,
+			patronStartedAt: patronData.patronStartedAt,
 			discordId,
 			patronTier: patronData.patronTier,
 		});

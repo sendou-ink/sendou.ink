@@ -1,13 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
 import { getUser } from "~/features/auth/core/user.server";
 import { calculateTentativeTier } from "~/features/tournament/core/tiering";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseSafeSearchParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
 import { eventLeaderboards } from "../core/leaderboards.server";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_SERIES_LEADERBOARD_SIZE } from "../tournament-organization-constants";
+import { tournamentOrganizationSearchParams } from "../tournament-organization-search-params";
 import { organizationFromParams } from "../tournament-organization-utils.server";
 
 export type OrganizationPageLoaderData = SerializeFrom<typeof loader>;
@@ -15,15 +15,14 @@ export type OrganizationPageLoaderData = SerializeFrom<typeof loader>;
 export async function loader({ params, request }: LoaderFunctionArgs) {
 	const user = getUser();
 	const {
-		month = new Date().getMonth(),
-		year = new Date().getFullYear(),
-		page = 1,
+		month: monthParam,
+		year: yearParam,
+		page,
 		series: _seriesId,
 		source,
-	} = parseSafeSearchParams({
-		request,
-		schema: searchParamsSchema,
-	}).data ?? {};
+	} = tournamentOrganizationSearchParams.parse(request);
+	const month = monthParam ?? new Date().getMonth();
+	const year = yearParam ?? new Date().getFullYear();
 
 	const organization = await organizationFromParams(params);
 
@@ -80,22 +79,17 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 		series: await seriesInfo(),
 		month,
 		year,
+		trophies: canAccessTrophies(user)
+			? await TrophyRepository.findByOrganizationId(organization.id)
+			: [],
 		bannedUsers:
 			user?.id && organization.permissions.BAN.includes(user.id)
-				? await TournamentOrganizationRepository.allBannedUsersByOrganizationId(
+				? await TournamentOrganizationRepository.findAllBannedUsersByOrganizationId(
 						organization.id,
 					)
 				: null,
 	};
 }
-
-const searchParamsSchema = z.object({
-	month: z.coerce.number().int().min(0).max(11).optional(),
-	year: z.coerce.number().int().min(2020).max(2100).optional(),
-	series: id.optional(),
-	page: z.coerce.number().int().min(1).max(100).optional(),
-	source: z.string().optional(),
-});
 
 async function seriesStuff({
 	organizationId,
@@ -137,6 +131,6 @@ async function seriesStuff({
 				: null,
 		eventsCount: events.length,
 		logoUrl: events[0].logoUrl,
-		established: events.at(-1)!.startTime,
+		established: events.at(-1)!.startsAt,
 	};
 }

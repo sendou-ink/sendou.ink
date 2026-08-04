@@ -3,14 +3,14 @@ import { z } from "zod";
 import {
 	array,
 	customField,
-	dayMonthYearRequired,
+	dayMonthYear as dayMonthYearField,
 	fieldset,
 	idConstantOptional,
 	radioGroup,
 	select,
 	selectOptional,
 	stageSelect,
-	textFieldRequired,
+	textField,
 	weaponPool,
 	weaponSelectOptional,
 } from "~/form/fields";
@@ -28,18 +28,6 @@ import { videoMatchTypes } from "./vods-constants";
 import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
 export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
-
-export const vodsSearchParamsSchema = z.object({
-	page: z.coerce.number().min(1).max(1_000).catch(1),
-	weapon: weaponSplId.optional().catch(undefined),
-	mode: modeShort.optional().catch(undefined),
-	stageId: stageId.optional().catch(undefined),
-	type: z.enum(videoMatchTypes).optional().catch(undefined),
-});
-
-export const userVodsSearchParamsSchema = z.object({
-	page: z.coerce.number().min(1).max(1_000).catch(1),
-});
 
 const videoMatchSchema = z.object({
 	startsAt: z.string().regex(HOURS_MINUTES_SECONDS_REGEX, {
@@ -116,8 +104,9 @@ const povSchema = z.union([
 ]);
 
 const matchFieldsetSchema = z.object({
-	startsAt: textFieldRequired({
+	startsAt: textField({
 		label: "labels.vodStartTimestamp",
+		placeholder: "placeholders.vodStartTimestamp",
 		maxLength: 10,
 		regExp: {
 			pattern: HOURS_MINUTES_SECONDS_REGEX,
@@ -151,7 +140,7 @@ const matchFieldsetSchema = z.object({
 
 export const vodFormBaseSchema = z.object({
 	vodToEditId: idConstantOptional(),
-	youtubeUrl: textFieldRequired({
+	youtubeUrl: textField({
 		label: "labels.vodYoutubeUrl",
 		maxLength: 200,
 		validate: {
@@ -159,11 +148,11 @@ export const vodFormBaseSchema = z.object({
 			message: "Invalid YouTube URL",
 		},
 	}),
-	title: textFieldRequired({
+	title: textField({
 		label: "labels.vodTitle",
 		maxLength: 100,
 	}),
-	date: dayMonthYearRequired({
+	date: dayMonthYearField({
 		label: "labels.vodDate",
 		max: () => add(new Date(), { days: 1 }),
 		maxMessage: "errors.dateMustNotBeFuture",

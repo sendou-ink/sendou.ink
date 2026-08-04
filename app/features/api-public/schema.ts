@@ -1,6 +1,6 @@
-import type { Pronouns } from "~/db/tables";
+import type { Pronouns } from "~/db/tables-json";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import type { DataTypes, ValueToArray } from "~/modules/brackets-manager/types";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
 /** GET /api/user/{userId|discordId} */
 
@@ -360,19 +360,27 @@ export interface GetTournamentBracketResponse {
 /** GET /api/tournament/{tournamentId}/brackets/{bracketIndex}/standings */
 
 export interface GetTournamentBracketStandingsResponse {
+	finished: boolean;
 	standings: Array<{
 		tournamentTeamId: number;
 		placement: number;
+		/** (round robin & swiss only) id of the group the team played in. Placements are shared across groups, meaning e.g. every group's winner has the placement 1. */
+		groupId?: number;
 		stats?: {
 			setWins: number;
 			setLosses: number;
 			mapWins: number;
 			mapLosses: number;
-			points: number;
+			/** @deprecated points are no longer tracked, see koCount instead */
+			points?: number;
+			/** (round robin only) how many knockout wins the team has */
+			koCount?: number;
 			winsAgainstTied: number;
 			lossesAgainstTied?: number;
-			buchholzSets?: number;
-			buchholzMaps?: number;
+			/** (swiss only) average win percentage of the team's opponents in sets, used as a tiebreaker */
+			opponentSetWinPercentage?: number;
+			/** (swiss only) average win percentage of the team's opponents in maps, used as a tiebreaker */
+			opponentMapWinPercentage?: number;
 		};
 	}>;
 }
@@ -523,8 +531,8 @@ export type MapListMap = {
 		| "ROLL";
 	winnerTeamId: number | null;
 	participatedUserIds: Array<number> | null;
-	/** (round robin only) points of the match used for tiebreaker purposes. e.g. [100, 0] indicates a knockout. */
-	points: [number, number] | null;
+	/** (round robin only) whether the map ended in a knockout. `null` if not tracked. */
+	ko: boolean | null;
 };
 
 type TournamentMatchTeam = {
@@ -537,7 +545,7 @@ type TournamentBracket = {
 	name: string;
 };
 
-type TournamentBracketData = ValueToArray<DataTypes>;
+type TournamentBracketData = BracketData;
 
 /** POST /api/tournament/{id}/seeds */
 

@@ -284,6 +284,29 @@
 	padding: var(--s-0-5) var(--s-1-5);
 }
 
+.welcomeBanner {
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
+	border-radius: var(--radius-box);
+	padding: var(--s-2);
+	justify-content: center;
+	align-items: center;
+	display: flex;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+
+	& svg {
+		width: 1em;
+		height: 1em;
+	}
+}
+
 .lutiBanner {
 	background-color: #4874a0;
 	color: #fff;

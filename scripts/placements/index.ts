@@ -1,5 +1,3 @@
-import { sql } from "~/db/sql";
-import type { Tables } from "~/db/tables";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
@@ -17,9 +15,7 @@ invariant(
 	"jsonNumber must be an integer (argument 1)",
 );
 
-type Placements = Array<
-	Omit<Tables["XRankPlacement"], "playerId" | "id"> & { playerSplId: string }
->;
+type Placements = XRankPlacementRepository.XRankPlacementInsertArgs[];
 
 const modes = ["splatzones", "towercontrol", "rainmaker", "clamblitz"] as const;
 const modeToShort = {
@@ -35,7 +31,9 @@ void main();
 async function main() {
 	const placements: Placements = [];
 
-	wipeMonthYearPlacements(resolveMonthYear(jsonNumber));
+	await XRankPlacementRepository.deleteAllByMonthYear(
+		resolveMonthYear(jsonNumber),
+	);
 	for (const mode of modes) {
 		for (const region of regions) {
 			for (const includeWeapon of [false]) {
@@ -51,7 +49,7 @@ async function main() {
 		}
 	}
 
-	addPlacements(placements);
+	await XRankPlacementRepository.insertMany(placements);
 	await XRankPlacementRepository.refreshAllPeakXp();
 	await BadgeRepository.syncXPBadges();
 	await BuildRepository.recalculateAllSortValues();
@@ -138,68 +136,4 @@ function resolveMonthYear(number: number) {
 		month: start.getMonth() + 1,
 		year: start.getFullYear(),
 	};
-}
-
-const addPlayerStm = sql.prepare(/* sql */ `
-  insert into "SplatoonPlayer" ("splId")
-  values (@splId)
-  on conflict ("splId") do nothing
-`);
-
-const addPlacementStm = sql.prepare(/* sql */ `
-  insert into "XRankPlacement" (
-    "weaponSplId",
-    "name",
-    "nameDiscriminator",
-    "power",
-    "rank",
-    "title",
-    "badges",
-    "bannerSplId",
-    "playerId",
-    "month",
-    "year",
-    "region",
-    "mode"
-  )
-  values (
-    @weaponSplId,
-    @name,
-    @nameDiscriminator,
-    @power,
-    @rank,
-    @title,
-    @badges,
-    @bannerSplId,
-    (select "id" from "SplatoonPlayer" where "splId" = @playerSplId),
-    @month,
-    @year,
-    @region,
-    @mode
-  )
-`);
-
-function addPlacements(placements: Placements) {
-	sql.transaction(() => {
-		for (const placement of placements) {
-			addPlayerStm.run({ splId: placement.playerSplId });
-			addPlacementStm.run(placement);
-		}
-	})();
-}
-
-function wipeMonthYearPlacements({
-	month,
-	year,
-}: {
-	month: number;
-	year: number;
-}) {
-	const wipeMonthYearPlacementsStm = sql.prepare(/* sql */ `
-  delete from "XRankPlacement"
-    where "month" = @month
-    and "year" = @year
-`);
-
-	wipeMonthYearPlacementsStm.run({ month, year });
 }

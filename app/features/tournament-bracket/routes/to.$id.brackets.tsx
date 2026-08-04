@@ -13,12 +13,7 @@ import {
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import {
-	Outlet,
-	useLocation,
-	useOutletContext,
-	useRevalidator,
-} from "react-router";
+import { Outlet, useLocation, useOutletContext } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -36,8 +31,7 @@ import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useVisibilityChange } from "~/hooks/useVisibilityChange";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
@@ -54,6 +48,7 @@ import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
+import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
 import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export { action };
@@ -66,8 +61,6 @@ import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
 	const { t } = useTranslation(["common", "tournament"]);
-	const visibility = useVisibilityChange();
-	const { revalidate } = useRevalidator();
 	const user = useUser();
 	const tournament = useTournament();
 	const ctx = useOutletContext();
@@ -85,11 +78,11 @@ export default function TournamentBracketsPage() {
 
 		return 1;
 	};
-	const [bracketIdx, setBracketIdx] = useSearchParamState({
-		defaultValue: defaultBracketIdx(),
-		name: "idx",
-		revive: Number,
-	});
+	const [bracketIdxParam, setBracketIdx] = useSearchParam(
+		tournamentBracketsSearchParams,
+		"idx",
+	);
+	const bracketIdx = bracketIdxParam ?? defaultBracketIdx();
 
 	const bracket = React.useMemo(
 		() => tournament.bracketByIdxOrDefault(bracketIdx),
@@ -100,12 +93,6 @@ export default function TournamentBracketsPage() {
 		tournamentWebsocketRoom(tournament.ctx.id),
 		!tournament.ctx.isFinalized,
 	);
-
-	React.useEffect(() => {
-		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
-
-		revalidate();
-	}, [visibility, revalidate, tournament.ctx.isFinalized]);
 
 	const teamProgressStatus = tournament.teamMemberOfProgressStatus(user);
 	const showAddSubsButton =
@@ -178,6 +165,15 @@ export default function TournamentBracketsPage() {
 			return `Teams that get eliminated in the first ${Math.abs(
 				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
 			)} rounds of the losers bracket can play in this bracket`;
+		}
+
+		if (
+			tournament.brackets[0].type === "single_elimination" &&
+			bracket.isUnderground
+		) {
+			return `Teams that get eliminated in the first ${Math.abs(
+				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
+			)} rounds can play in this bracket`;
 		}
 
 		const advanceThreshold = tournament.brackets[0].settings?.advanceThreshold;
@@ -312,7 +308,7 @@ function getAbDivisionsStartError(
 		return null;
 	}
 
-	const groupCount = new Set(bracket.data.round.map((r) => r.group_id)).size;
+	const groupCount = new Set(bracket.data.round.map((r) => r.groupId)).size;
 	const abDivisionsBySeedOrder = bracket.seeding.map(
 		(teamId) => tournament.teamById(teamId)?.abDivision,
 	);
@@ -322,7 +318,7 @@ function getAbDivisionsStartError(
 		groupCount,
 	});
 
-	return result.isErr() ? result.error : null;
+	return result.ok ? null : result.error;
 }
 
 function BracketStarter({

@@ -1,7 +1,11 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { db, sql } from "~/db/sql";
-import type { CastedMatchesInfo } from "~/db/tables";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { backdate } from "~/db/seed/core/backdate";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentStreamerFactory from "~/db/seed/factories/TournamentStreamerFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
+import type { TournamentSettings } from "~/db/tables-json";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 
 const { mockGetUsersByLogin, mockGetArchiveVideos } = vi.hoisted(() => ({
 	mockGetUsersByLogin: vi.fn(),
@@ -21,26 +25,38 @@ vi.mock("~/modules/twitch/utils.server", () => ({
 	hasTwitchEnvVars: () => true,
 }));
 
-const TOURNAMENT_ID = 1;
+const DOUBLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
+	{
+		name: "Main Bracket",
+		type: "double_elimination",
+		requiresCheckIn: false,
+		settings: {},
+	},
+];
+
+const TEAM_COUNT = 4;
 const MATCH_START_SECONDS = 1700000000;
+const SECOND_MATCH_START_SECONDS = MATCH_START_SECONDS + 1800;
+
+const users = UserFactory.pool();
+
+let tournamentId: number;
+/** The two first round matches, backdated to the times the VODs are matched against. */
+let firstMatch: { id: number; winnerTeamId: number; loserTeamId: number };
+let secondMatch: { id: number; winnerTeamId: number; loserTeamId: number };
+let teams: Array<{ id: number; ownerUserId: number }>;
 
 describe("syncTournamentVods", () => {
 	beforeEach(async () => {
-		dbReset();
 		mockGetUsersByLogin.mockReset();
 		mockGetArchiveVideos.mockReset();
-		await dbInsertUsers(5);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(TEAM_COUNT);
 	});
 
 	test("player streamer gets VODs only for matches they participated in", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("player_stream", 1);
-		await seedTournamentTeamAndGameResult(1, [1, 2]);
-		await seedTournamentTeamAndGameResult(2, [3, 4]);
+		const player = playerOf(firstMatch.winnerTeamId);
+		await seedStreamer("player_stream", player);
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-1", login: "player_stream" },
@@ -51,8 +67,8 @@ describe("syncTournamentVods", () => {
 
 		const vods = await findAllVods();
 		expect(vods).toHaveLength(1);
-		expect(vods[0].matchId).toBe(1);
-		expect(vods[0].userId).toBe(1);
+		expect(vods[0].matchId).toBe(firstMatch.id);
+		expect(vods[0].userId).toBe(player);
 		expect(vods[0].account).toBe("player_stream");
 	});
 
@@ -73,17 +89,7 @@ describe("syncTournamentVods", () => {
 
 	test("cast account with castedMatchHistory produces VODs for casted matches only", async () => {
 		await seedTournamentWithMatches({
-			castedMatchesInfo: {
-				lockedMatches: [],
-				castedMatches: [],
-				castedMatchHistory: [
-					{
-						twitchAccount: "caster_stream",
-						matchId: 2,
-						timestamp: MATCH_START_SECONDS + 1800,
-					},
-				],
-			},
+			castedOn: { match: "second", twitchAccount: "caster_stream" },
 		});
 
 		mockGetUsersByLogin.mockResolvedValue([
@@ -95,27 +101,17 @@ describe("syncTournamentVods", () => {
 
 		const vods = await findAllVods();
 		expect(vods).toHaveLength(1);
-		expect(vods[0].matchId).toBe(2);
+		expect(vods[0].matchId).toBe(secondMatch.id);
 		expect(vods[0].userId).toBeNull();
 		expect(vods[0].account).toBe("caster_stream");
 	});
 
 	test("player VOD is preferred over cast VOD for same match and account", async () => {
 		await seedTournamentWithMatches({
-			castedMatchesInfo: {
-				lockedMatches: [],
-				castedMatches: [],
-				castedMatchHistory: [
-					{
-						twitchAccount: "dual_stream",
-						matchId: 1,
-						timestamp: MATCH_START_SECONDS,
-					},
-				],
-			},
+			castedOn: { match: "first", twitchAccount: "dual_stream" },
 		});
-		await seedStreamer("dual_stream", 1);
-		await seedTournamentTeamAndGameResult(1, [1, 2]);
+		const player = playerOf(firstMatch.winnerTeamId);
+		await seedStreamer("dual_stream", player);
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-d", login: "dual_stream" },
@@ -126,22 +122,12 @@ describe("syncTournamentVods", () => {
 
 		const vods = await findAllVods();
 		expect(vods).toHaveLength(1);
-		expect(vods[0].userId).toBe(1);
+		expect(vods[0].userId).toBe(player);
 	});
 
 	test("no VODs inserted when no Twitch videos match", async () => {
 		await seedTournamentWithMatches({
-			castedMatchesInfo: {
-				lockedMatches: [],
-				castedMatches: [],
-				castedMatchHistory: [
-					{
-						twitchAccount: "caster_stream",
-						matchId: 1,
-						timestamp: MATCH_START_SECONDS,
-					},
-				],
-			},
+			castedOn: { match: "first", twitchAccount: "caster_stream" },
 		});
 
 		mockGetUsersByLogin.mockResolvedValue([
@@ -163,8 +149,7 @@ describe("syncTournamentVods", () => {
 
 	test("returns hadApiError=true when getArchiveVideos throws for a streamer", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("player_stream", 1);
-		await seedTournamentTeamAndGameResult(1, [1, 2]);
+		await seedStreamer("player_stream", playerOf(firstMatch.winnerTeamId));
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-1", login: "player_stream" },
@@ -178,8 +163,7 @@ describe("syncTournamentVods", () => {
 
 	test("returns hadApiError=false when getArchiveVideos returns empty (no vods found)", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("player_stream", 1);
-		await seedTournamentTeamAndGameResult(1, [1, 2]);
+		await seedStreamer("player_stream", playerOf(firstMatch.winnerTeamId));
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-1", login: "player_stream" },
@@ -195,17 +179,7 @@ describe("syncTournamentVods", () => {
 
 	test("returns hadApiError=true when cast account API call fails", async () => {
 		await seedTournamentWithMatches({
-			castedMatchesInfo: {
-				lockedMatches: [],
-				castedMatches: [],
-				castedMatchHistory: [
-					{
-						twitchAccount: "caster_stream",
-						matchId: 1,
-						timestamp: MATCH_START_SECONDS,
-					},
-				],
-			},
+			castedOn: { match: "first", twitchAccount: "caster_stream" },
 		});
 
 		mockGetUsersByLogin.mockResolvedValue([
@@ -220,10 +194,8 @@ describe("syncTournamentVods", () => {
 
 	test("still inserts vods from successful streamers when another streamer's API call fails", async () => {
 		await seedTournamentWithMatches();
-		await seedStreamer("good_stream", 1);
-		await seedStreamer("bad_stream", 3);
-		await seedTournamentTeamAndGameResult(1, [1, 2]);
-		await seedTournamentTeamAndGameResult(2, [3, 4]);
+		await seedStreamer("good_stream", playerOf(firstMatch.winnerTeamId));
+		await seedStreamer("bad_stream", playerOf(secondMatch.winnerTeamId));
 
 		mockGetUsersByLogin.mockResolvedValue([
 			{ id: "twitch-g", login: "good_stream" },
@@ -243,8 +215,11 @@ describe("syncTournamentVods", () => {
 
 	test("no matches with startedAt results in no processing", async () => {
 		await seedTournamentWithMatches();
+		await seedStreamer("player_stream", playerOf(firstMatch.winnerTeamId));
 
-		// clear startedAt on all matches
+		// clear startedAt on all matches: a played match that was never started is a
+		// state no production write leaves behind
+		// biome-ignore lint/plugin: written rather than seeded, see above
 		await db.updateTable("TournamentMatch").set({ startedAt: null }).execute();
 
 		await runProcessOneTournament();
@@ -269,99 +244,55 @@ function twitchVideo({
 	};
 }
 
+/**
+ * A played out double elimination bracket of four one-player teams, its first
+ * round backdated to the times the VODs are matched against and optionally
+ * streamed by a cast account. Later matches start at the current time, far from
+ * any mocked VOD.
+ */
 async function seedTournamentWithMatches({
-	castedMatchesInfo,
+	castedOn,
 }: {
-	castedMatchesInfo?: CastedMatchesInfo;
+	castedOn?: { match: "first" | "second"; twitchAccount: string };
 } = {}) {
-	sql
-		.prepare(
-			/*sql*/ `insert into "Tournament" ("id", "mapPickingStyle", "settings", "isFinalized", "castedMatchesInfo") values (?, 'AUTO_SZ', ?, 1, ?)`,
-		)
-		.run(
-			TOURNAMENT_ID,
-			JSON.stringify({
-				bracketProgression: [
-					{ type: "double_elimination", name: "Main Bracket" },
-				],
-			}),
-			castedMatchesInfo ? JSON.stringify(castedMatchesInfo) : null,
-		);
-
-	sql
-		.prepare(
-			/*sql*/ `insert into "TournamentStage" ("id", "tournamentId", "name", "type", "settings", "number") values (1, ?, 'Main Bracket', 'double_elimination', '{}', 0)`,
-		)
-		.run(TOURNAMENT_ID);
-
-	sql
-		.prepare(
-			/*sql*/ `insert into "TournamentGroup" ("id", "stageId", "number") values (1, 1, 1)`,
-		)
-		.run();
-
-	sql
-		.prepare(
-			/*sql*/ `insert into "TournamentRound" ("id", "stageId", "groupId", "number") values (1, 1, 1, 1)`,
-		)
-		.run();
-
-	const insertTournamentMatchStm = sql.prepare(
-		/*sql*/ `insert into "TournamentMatch" ("id", "roundId", "stageId", "groupId", "number", "opponentOne", "opponentTwo", "status", "startedAt") values (?, 1, 1, 1, ?, ?, ?, 4, ?)`,
+	const tournament = await TournamentFactory.createPlayed(
+		{
+			authorId: users.id(1),
+			bracketProgression: DOUBLE_ELIMINATION,
+			minMembersPerTeam: 1,
+		},
+		{ teamRosters: users.ids(TEAM_COUNT).map((userId) => [userId]) },
 	);
+	tournamentId = tournament.id;
+	teams = tournament.teams;
+	[firstMatch, secondMatch] = tournament.matches;
 
-	insertTournamentMatchStm.run(
-		1,
-		1,
-		JSON.stringify({ id: 1 }),
-		JSON.stringify({ id: 2 }),
-		MATCH_START_SECONDS,
-	);
+	await backdate("TournamentMatch", firstMatch.id, {
+		startedAt: new Date(MATCH_START_SECONDS * 1000),
+	});
+	await backdate("TournamentMatch", secondMatch.id, {
+		startedAt: new Date(SECOND_MATCH_START_SECONDS * 1000),
+	});
 
-	insertTournamentMatchStm.run(
-		2,
-		2,
-		JSON.stringify({ id: 3 }),
-		JSON.stringify({ id: 4 }),
-		MATCH_START_SECONDS + 1800,
-	);
-}
-
-async function seedTournamentTeamAndGameResult(
-	matchId: number,
-	participantUserIds: number[],
-) {
-	const teamId = matchId * 100;
-
-	sql
-		.prepare(
-			/*sql*/ `insert or ignore into "TournamentTeam" ("id", "name", "tournamentId", "inviteCode") values (?, ?, ?, ?)`,
-		)
-		.run(teamId, `Team ${teamId}`, TOURNAMENT_ID, `code-${teamId}`);
-
-	const { lastInsertRowid: gameResultId } = sql
-		.prepare(
-			/*sql*/ `insert into "TournamentMatchGameResult" ("matchId", "number", "stageId", "mode", "source", "winnerTeamId", "reporterId") values (?, 1, 1, 'SZ', '{}', ?, 1)`,
-		)
-		.run(matchId, teamId);
-
-	for (const userId of participantUserIds) {
-		sql
-			.prepare(
-				/*sql*/ `insert into "TournamentMatchGameResultParticipant" ("matchGameResultId", "userId", "tournamentTeamId") values (?, ?, ?)`,
-			)
-			.run(Number(gameResultId), userId, teamId);
+	if (castedOn) {
+		await TournamentRepository.setMatchAsCasted({
+			tournamentId,
+			matchId: castedOn.match === "first" ? firstMatch.id : secondMatch.id,
+			twitchAccount: castedOn.twitchAccount,
+		});
 	}
 }
 
-async function seedStreamer(
-	twitchAccount: string,
-	userId: number | null = null,
-) {
-	await db
-		.insertInto("TournamentStreamer")
-		.values({ tournamentId: TOURNAMENT_ID, twitchAccount, userId })
-		.execute();
+function playerOf(tournamentTeamId: number) {
+	return teams.find((team) => team.id === tournamentTeamId)!.ownerUserId;
+}
+
+function seedStreamer(twitchAccount: string, userId: number | null = null) {
+	return TournamentStreamerFactory.create({
+		tournamentId,
+		twitchAccount,
+		userId,
+	});
 }
 
 function findAllVods() {
@@ -371,5 +302,5 @@ function findAllVods() {
 // lazy-import so mocks are in place before the module loads
 async function runProcessOneTournament() {
 	const { processOneTournament } = await import("./syncTournamentVods");
-	return processOneTournament(TOURNAMENT_ID);
+	return processOneTournament(tournamentId);
 }

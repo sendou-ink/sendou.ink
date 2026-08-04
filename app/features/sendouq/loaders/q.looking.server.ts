@@ -6,14 +6,14 @@ import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { groupExpiryStatus } from "../core/groups";
 import { SendouQ } from "../core/SendouQ.server";
+import { qLookingSearchParams } from "../q-search-params";
 import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
 
-	const isPreview =
-		url.searchParams.get("preview") === "true" &&
-		user.roles.includes("SUPPORTER");
+	const { preview } = qLookingSearchParams.parse(url);
+	const isPreview = preview && user.roles.includes("SUPPORTER");
 
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 	const groups =
@@ -41,13 +41,13 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	]);
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: cardUserIds,
 		})),
 		groups: groupsToShow,
 		ownGroup,
 		likes: ownGroup
-			? await SQGroupRepository.allLikesByGroupId(ownGroup.id)
+			? await SQGroupRepository.findAllLikesByGroupId(ownGroup.id)
 			: {
 					given: [],
 					received: [],

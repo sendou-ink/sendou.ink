@@ -54,6 +54,7 @@ function renderPage() {
 			{
 				path: "/search",
 				loader: ({ request }: LoaderFunctionArgs) => {
+					// biome-ignore lint/plugin: stub loader standing in for the real search route, reading the request the component built
 					const query = new URL(request.url).searchParams.get("q") ?? "";
 					return {
 						query,

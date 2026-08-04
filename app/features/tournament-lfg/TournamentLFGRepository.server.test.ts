@@ -1,33 +1,31 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
+import { withUserId } from "~/utils/Test";
 import * as TournamentLFGRepository from "./TournamentLFGRepository.server";
 
+const users = UserFactory.pool();
+
 const createTournament = () =>
-	db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	TournamentFactory.create({ authorId: users.id(1) });
 
 const createPlaceholder = (tournamentId: number, userId: number) =>
-	TournamentLFGRepository.createPlaceholderTeam({ tournamentId, userId });
+	TournamentLFGTeamFactory.create({ tournamentId, userId });
 
-describe("createPlaceholderTeam", () => {
+describe("insertPlaceholderTeam", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(2);
 	});
 
 	test("creates a placeholder team with owner member", async () => {
 		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, 1);
+		const team = await TournamentLFGRepository.insertPlaceholderTeam({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+		});
 
 		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
@@ -39,7 +37,10 @@ describe("createPlaceholderTeam", () => {
 
 	test("owner has OWNER role", async () => {
 		const tournament = await createTournament();
-		await createPlaceholder(tournament.id, 1);
+		await TournamentLFGRepository.insertPlaceholderTeam({
+			tournamentId: tournament.id,
+			userId: users.id(1),
+		});
 
 		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
@@ -52,17 +53,13 @@ describe("createPlaceholderTeam", () => {
 
 describe("findLookingTeamsByTournamentId", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(3);
 	});
 
 	test("returns looking teams for given tournament", async () => {
 		const tournament = await createTournament();
-		await createPlaceholder(tournament.id, 1);
-		await createPlaceholder(tournament.id, 2);
+		await createPlaceholder(tournament.id, users.id(1));
+		await createPlaceholder(tournament.id, users.id(2));
 
 		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
@@ -83,14 +80,14 @@ describe("findLookingTeamsByTournamentId", () => {
 
 	test("returns groups with member data", async () => {
 		const tournament = await createTournament();
-		await createPlaceholder(tournament.id, 1);
+		await createPlaceholder(tournament.id, users.id(1));
 
 		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament.id,
 		);
 		const members = groups[0].members;
 
-		expect(members[0].id).toBe(1);
+		expect(members[0].id).toBe(users.id(1));
 		expect(members[0].username).toBeDefined();
 		expect(members[0].role).toBe("OWNER");
 	});
@@ -98,8 +95,8 @@ describe("findLookingTeamsByTournamentId", () => {
 	test("does not return teams from other tournaments", async () => {
 		const tournament1 = await createTournament();
 		const tournament2 = await createTournament();
-		await createPlaceholder(tournament1.id, 1);
-		await createPlaceholder(tournament2.id, 2);
+		await createPlaceholder(tournament1.id, users.id(1));
+		await createPlaceholder(tournament2.id, users.id(2));
 
 		const groups = await TournamentLFGRepository.findLookingTeamsByTournamentId(
 			tournament1.id,
@@ -109,26 +106,22 @@ describe("findLookingTeamsByTournamentId", () => {
 	});
 });
 
-describe("addLike / deleteLike", () => {
+describe("insertLike / deleteLike", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(2);
 	});
 
 	test("adds a like between two teams", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
 		expect(likes.given[0].teamId).toBe(team2.id);
@@ -136,29 +129,29 @@ describe("addLike / deleteLike", () => {
 
 	test("duplicate like does not throw", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
 	});
 
 	test("deleteLike removes the like", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
@@ -167,37 +160,33 @@ describe("addLike / deleteLike", () => {
 			targetTeamId: team2.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(0);
 	});
 });
 
-describe("allLikesByTeamId", () => {
+describe("findAllLikesByTeamId", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(3);
 	});
 
 	test("separates likes into given and received", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
-		const team3 = await createPlaceholder(tournament.id, 3);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
+		const team3 = await createPlaceholder(tournament.id, users.id(3));
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team2.id,
 		});
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team3.id,
 			targetTeamId: team1.id,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(1);
 		expect(likes.given[0].teamId).toBe(team2.id);
@@ -207,9 +196,9 @@ describe("allLikesByTeamId", () => {
 
 	test("returns empty given/received when no likes", async () => {
 		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, users.id(1));
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team.id);
 
 		expect(likes.given).toHaveLength(0);
 		expect(likes.received).toHaveLength(0);
@@ -218,52 +207,23 @@ describe("allLikesByTeamId", () => {
 
 describe("startLooking", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
+		await users.create(3);
 	});
-
-	afterEach(() => {
-		dbReset();
-	});
-
-	const createRegisteredTeam = async (
-		tournamentId: number,
-		memberUserIds: number[],
-	) => {
-		const team = await db
-			.insertInto("TournamentTeam")
-			.values({
-				tournamentId,
-				name: "Real Team",
-				inviteCode: `inv-${tournamentId}-${memberUserIds.join("-")}`,
-				isLooking: 0,
-				isPlaceholder: 0,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		for (const [idx, userId] of memberUserIds.entries()) {
-			await db
-				.insertInto("TournamentTeamMember")
-				.values({
-					tournamentTeamId: team.id,
-					userId,
-					role: idx === 0 ? "OWNER" : "REGULAR",
-				})
-				.execute();
-		}
-
-		return team;
-	};
 
 	test("generates chatCode for a 2+ member team", async () => {
 		const tournament = await createTournament();
-		const team = await createRegisteredTeam(tournament.id, [1, 2]);
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1), users.id(2)],
+		});
 
 		const pickup = await TournamentLFGRepository.startLooking(team.id);
 
 		expect(pickup).not.toBeNull();
 		expect(pickup?.chatCode).toMatch(/.+/);
-		expect(pickup?.memberUserIds.sort()).toEqual([1, 2]);
+		expect(pickup?.memberUserIds.sort()).toEqual(
+			[users.id(1), users.id(2)].sort(),
+		);
 
 		const row = await db
 			.selectFrom("TournamentTeam")
@@ -275,7 +235,10 @@ describe("startLooking", () => {
 
 	test("returns null when team has only 1 member", async () => {
 		const tournament = await createTournament();
-		const team = await createRegisteredTeam(tournament.id, [1]);
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1)],
+		});
 
 		const pickup = await TournamentLFGRepository.startLooking(team.id);
 
@@ -291,7 +254,13 @@ describe("startLooking", () => {
 
 	test("reuses existing chatCode if already set", async () => {
 		const tournament = await createTournament();
-		const team = await createRegisteredTeam(tournament.id, [1, 2]);
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+		// the only production write of the column is `startLooking` itself, which
+		// invents a random code
+		// biome-ignore lint/plugin: no production write sets a known chatCode
 		await db
 			.updateTable("TournamentTeam")
 			.set({ chatCode: "existing-code" })
@@ -306,17 +275,13 @@ describe("startLooking", () => {
 
 describe("mergeTeams", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(5);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(5);
 	});
 
 	test("merges two teams, other team is deleted", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
 		await TournamentLFGRepository.mergeTeams({
 			survivingTeamId: team1.id,
@@ -336,8 +301,8 @@ describe("mergeTeams", () => {
 
 	test("demotes other team's OWNER to MANAGER", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
 		await TournamentLFGRepository.mergeTeams({
 			survivingTeamId: team1.id,
@@ -349,15 +314,15 @@ describe("mergeTeams", () => {
 			tournament.id,
 		);
 		const members = groups[0].members;
-		const user2Member = members.find((m) => m.id === 2);
+		const user2Member = members.find((m) => m.id === users.id(2));
 
 		expect(user2Member?.role).toBe("MANAGER");
 	});
 
 	test("throws when merged size exceeds maxGroupSize", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
 		await expect(
 			TournamentLFGRepository.mergeTeams({
@@ -370,8 +335,8 @@ describe("mergeTeams", () => {
 
 	test("stops looking when merged team reaches max capacity", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
 		await TournamentLFGRepository.mergeTeams({
 			survivingTeamId: team1.id,
@@ -388,8 +353,8 @@ describe("mergeTeams", () => {
 
 	test("survivor gets a chatCode when merged size is 2+", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
 		const result = await TournamentLFGRepository.mergeTeams({
 			survivingTeamId: team1.id,
@@ -399,7 +364,9 @@ describe("mergeTeams", () => {
 
 		expect(result.survivor).not.toBeNull();
 		expect(result.survivor?.chatCode).toMatch(/.+/);
-		expect(result.survivor?.memberUserIds.sort()).toEqual([1, 2]);
+		expect(result.survivor?.memberUserIds.sort()).toEqual(
+			[users.id(1), users.id(2)].sort(),
+		);
 		expect(result.removedChatCode).toBeNull();
 
 		const row = await db
@@ -412,9 +379,10 @@ describe("mergeTeams", () => {
 
 	test("returns removedChatCode when other team had a chatCode", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
+		// biome-ignore lint/plugin: as above, a known chatCode has no production write
 		await db
 			.updateTable("TournamentTeam")
 			.set({ chatCode: "other-code" })
@@ -432,15 +400,15 @@ describe("mergeTeams", () => {
 
 	test("clears likes on surviving team after merge", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
-		const team3 = await createPlaceholder(tournament.id, 3);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
+		const team3 = await createPlaceholder(tournament.id, users.id(3));
 
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team1.id,
 			targetTeamId: team3.id,
 		});
-		await TournamentLFGRepository.addLike({
+		await TournamentLFGRepository.insertLike({
 			likerTeamId: team3.id,
 			targetTeamId: team1.id,
 		});
@@ -451,7 +419,7 @@ describe("mergeTeams", () => {
 			maxGroupSize: 4,
 		});
 
-		const likes = await TournamentLFGRepository.allLikesByTeamId(team1.id);
+		const likes = await TournamentLFGRepository.findAllLikesByTeamId(team1.id);
 
 		expect(likes.given).toHaveLength(0);
 		expect(likes.received).toHaveLength(0);
@@ -459,15 +427,17 @@ describe("mergeTeams", () => {
 
 	test("resets createdAt of merged-in members so they sort after survivors", async () => {
 		const tournament = await createTournament();
-		const team1 = await createPlaceholder(tournament.id, 1);
-		const team2 = await createPlaceholder(tournament.id, 2);
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		// user 2 was looking before user 1 i.e. has an older createdAt
+		// user 2 was looking before user 1 i.e. has an older createdAt. The column
+		// defaults in SQL, and the table has no id of its own for `backdate` to key on
+		// biome-ignore lint/plugin: no production write sets the timestamp
 		await db
 			.updateTable("TournamentTeamMember")
 			.set({ createdAt: 1000 })
 			.where("tournamentTeamId", "=", team2.id)
-			.where("userId", "=", 2)
+			.where("userId", "=", users.id(2))
 			.execute();
 
 		await TournamentLFGRepository.mergeTeams({
@@ -480,7 +450,7 @@ describe("mergeTeams", () => {
 			.selectFrom("TournamentTeamMember")
 			.select("createdAt")
 			.where("tournamentTeamId", "=", team1.id)
-			.where("userId", "=", 2)
+			.where("userId", "=", users.id(2))
 			.executeTakeFirstOrThrow();
 
 		expect(mergedMember.createdAt).toBeGreaterThan(1000);
@@ -489,16 +459,12 @@ describe("mergeTeams", () => {
 
 describe("updateTeamNote", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(1);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(1);
 	});
 
 	test("sets and clears a team note", async () => {
 		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, users.id(1));
 
 		await TournamentLFGRepository.updateTeamNote({
 			teamId: team.id,
@@ -524,28 +490,21 @@ describe("updateTeamNote", () => {
 
 describe("updateMemberRole", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(2);
 	});
 
 	test("changes role from REGULAR to MANAGER", async () => {
 		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, 1);
-
-		await db
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: team.id,
-				userId: 2,
-				role: "REGULAR",
-			})
-			.execute();
+		const team = await TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds: [users.id(1), users.id(2)],
+			},
+			{ isLooking: true },
+		);
 
 		await TournamentLFGRepository.updateMemberRole({
-			userId: 2,
+			userId: users.id(2),
 			teamId: team.id,
 			role: "MANAGER",
 		});
@@ -554,7 +513,7 @@ describe("updateMemberRole", () => {
 			tournament.id,
 		);
 		const members = groups[0].members;
-		const user2Member = members.find((m) => m.id === 2);
+		const user2Member = members.find((m) => m.id === users.id(2));
 
 		expect(user2Member?.role).toBe("MANAGER");
 	});
@@ -562,7 +521,7 @@ describe("updateMemberRole", () => {
 	test("throws when attempting to set OWNER role", () => {
 		expect(() =>
 			TournamentLFGRepository.updateMemberRole({
-				userId: 1,
+				userId: users.id(1),
 				teamId: 1,
 				role: "OWNER",
 			}),
@@ -572,56 +531,50 @@ describe("updateMemberRole", () => {
 
 describe("updateStayAsSub", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(1);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(1);
 	});
 
 	test("toggles isStayAsSub on/off", async () => {
 		const tournament = await createTournament();
-		const team = await createPlaceholder(tournament.id, 1);
+		const team = await createPlaceholder(tournament.id, users.id(1));
 
-		await withUserId(1, () =>
+		await withUserId(users.id(1), () =>
 			TournamentLFGRepository.updateOwnStayAsSub({
 				teamId: team.id,
 				value: true,
 			}),
 		);
 
-		let subs = await TournamentLFGRepository.getSubsForTournament(
+		let subs = await TournamentLFGRepository.findAllSubsByTournamentId(
 			tournament.id,
 		);
-		expect(subs).toContain(1);
+		expect(subs).toContain(users.id(1));
 
-		await withUserId(1, () =>
+		await withUserId(users.id(1), () =>
 			TournamentLFGRepository.updateOwnStayAsSub({
 				teamId: team.id,
 				value: false,
 			}),
 		);
 
-		subs = await TournamentLFGRepository.getSubsForTournament(tournament.id);
-		expect(subs).not.toContain(1);
+		subs = await TournamentLFGRepository.findAllSubsByTournamentId(
+			tournament.id,
+		);
+		expect(subs).not.toContain(users.id(1));
 	});
 });
 
 describe("leaveLfg", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(3);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(3);
 	});
 
 	test("deletes placeholder team when last member leaves", async () => {
 		const tournament = await createTournament();
-		await createPlaceholder(tournament.id, 1);
+		await createPlaceholder(tournament.id, users.id(1));
 
 		await TournamentLFGRepository.leaveLfg({
-			userId: 1,
+			userId: users.id(1),
 			tournamentId: tournament.id,
 		});
 
@@ -635,29 +588,13 @@ describe("leaveLfg", () => {
 	test("sets isLooking=0 for non-placeholder team", async () => {
 		const tournament = await createTournament();
 
-		const team = await db
-			.insertInto("TournamentTeam")
-			.values({
-				tournamentId: tournament.id,
-				name: "Real Team",
-				inviteCode: "abc",
-				isLooking: 1,
-				isPlaceholder: 0,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		await db
-			.insertInto("TournamentTeamMember")
-			.values({
-				tournamentTeamId: team.id,
-				userId: 1,
-				role: "OWNER",
-			})
-			.execute();
+		const team = await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds: [users.id(1)] },
+			{ isLooking: true },
+		);
 
 		await TournamentLFGRepository.leaveLfg({
-			userId: 1,
+			userId: users.id(1),
 			tournamentId: tournament.id,
 		});
 
@@ -677,36 +614,32 @@ describe("leaveLfg", () => {
 	});
 });
 
-describe("getSubsForTournament", () => {
+describe("findAllSubsByTournamentId", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
-	});
-
-	afterEach(() => {
-		dbReset();
+		await users.create(2);
 	});
 
 	test("returns userIds with isStayAsSub", async () => {
 		const tournament = await createTournament();
-		await TournamentLFGRepository.createPlaceholderTeam({
+		await TournamentLFGTeamFactory.create({
 			tournamentId: tournament.id,
-			userId: 1,
+			userId: users.id(1),
 			isStayAsSub: true,
 		});
-		await createPlaceholder(tournament.id, 2);
+		await createPlaceholder(tournament.id, users.id(2));
 
-		const subs = await TournamentLFGRepository.getSubsForTournament(
+		const subs = await TournamentLFGRepository.findAllSubsByTournamentId(
 			tournament.id,
 		);
 
-		expect(subs).toEqual([1]);
+		expect(subs).toEqual([users.id(1)]);
 	});
 
 	test("returns empty when nobody opted in", async () => {
 		const tournament = await createTournament();
-		await createPlaceholder(tournament.id, 1);
+		await createPlaceholder(tournament.id, users.id(1));
 
-		const subs = await TournamentLFGRepository.getSubsForTournament(
+		const subs = await TournamentLFGRepository.findAllSubsByTournamentId(
 			tournament.id,
 		);
 

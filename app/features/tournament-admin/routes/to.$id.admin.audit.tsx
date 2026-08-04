@@ -1,15 +1,21 @@
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
 import { Table } from "~/components/Table";
-import { TOURNAMENT_AUDIT_LOG_TYPES } from "~/db/tables";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import {
+	TOURNAMENT_AUDIT_LOG_TYPES,
+	type TournamentAuditLogType,
+} from "~/features/tournament/tournament-constants";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { CommonUser } from "~/utils/kysely.server";
 import { tournamentTeamPage, userPage } from "~/utils/urls";
 import type { TournamentAdminAuditLoader } from "../loaders/to.$id.admin.audit.server";
+import { tournamentAuditSearchParams } from "../tournament-admin-search-params";
 import styles from "./to.$id.admin.audit.module.css";
 
 export { loader } from "../loaders/to.$id.admin.audit.server";
@@ -25,17 +31,15 @@ const WHEN_FORMAT_OPTIONS = {
 export default function TournamentAdminAuditLog() {
 	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<TournamentAdminAuditLoader>();
-	const [, setSearchParams] = useSearchParams();
-
 	const auditLog = data?.auditLog;
-	if (!auditLog) return null;
 
-	const setPage = (page: number) => {
-		setSearchParams((params) => {
-			params.set("page", String(page));
-			return params;
-		});
-	};
+	const pagination = useSearchParamPagination({
+		definition: tournamentAuditSearchParams,
+		currentPage: auditLog?.currentPage ?? 1,
+		pagesCount: auditLog?.pagesCount ?? 1,
+	});
+
+	if (!auditLog) return null;
 
 	return (
 		<div className="stack md">
@@ -62,15 +66,7 @@ export default function TournamentAdminAuditLog() {
 							))}
 						</tbody>
 					</Table>
-					{auditLog.pagesCount > 1 ? (
-						<Pagination
-							currentPage={auditLog.currentPage}
-							pagesCount={auditLog.pagesCount}
-							nextPage={() => setPage(auditLog.currentPage + 1)}
-							previousPage={() => setPage(auditLog.currentPage - 1)}
-							setPage={setPage}
-						/>
-					) : null}
+					{auditLog.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 				</>
 			)}
 		</div>
@@ -150,19 +146,9 @@ function AuditLogFilters({
 	teams: Array<{ id: number; name: string }>;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const [searchParams, setSearchParams] = useSearchParams();
-
-	const setFilter = (key: string, value: string) => {
-		setSearchParams((params) => {
-			if (value) {
-				params.set(key, value);
-			} else {
-				params.delete(key);
-			}
-			params.delete("page");
-			return params;
-		});
-	};
+	const [{ auditType, auditTeam }, setParams] = useSearchParamsTyped(
+		tournamentAuditSearchParams,
+	);
 
 	return (
 		<div className="stack horizontal sm flex-wrap">
@@ -172,8 +158,14 @@ function AuditLogFilters({
 				</Label>
 				<select
 					id="auditType"
-					value={searchParams.get("auditType") ?? ""}
-					onChange={(e) => setFilter("auditType", e.target.value)}
+					value={auditType ?? ""}
+					onChange={(e) =>
+						setParams({
+							auditType: e.target.value
+								? (e.target.value as TournamentAuditLogType)
+								: null,
+						})
+					}
 				>
 					<option value="">
 						{t("tournament:admin.audit.filter.allEvents")}
@@ -191,8 +183,12 @@ function AuditLogFilters({
 				</Label>
 				<select
 					id="auditTeam"
-					value={searchParams.get("auditTeam") ?? ""}
-					onChange={(e) => setFilter("auditTeam", e.target.value)}
+					value={auditTeam ?? ""}
+					onChange={(e) =>
+						setParams({
+							auditTeam: e.target.value ? Number(e.target.value) : null,
+						})
+					}
 				>
 					<option value="">
 						{t("tournament:admin.audit.filter.allTeams")}

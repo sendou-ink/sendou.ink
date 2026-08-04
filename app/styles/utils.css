@@ -23,16 +23,8 @@
 		font-size: var(--font-2xs);
 	}
 
-	.text-xxxs {
-		font-size: var(--font-2xs);
-	}
-
 	.text-center {
 		text-align: center;
-	}
-
-	.text-left {
-		text-align: left;
 	}
 
 	.text-main-forced {
@@ -43,20 +35,12 @@
 		color: var(--color-text-high);
 	}
 
-	.text-theme-transparent {
-		color: var(--color-accent-low);
-	}
-
 	.text-error {
 		color: var(--color-error);
 	}
 
 	.text-success {
 		color: var(--color-success);
-	}
-
-	.text-info {
-		color: var(--color-info);
 	}
 
 	.text-accent-high {
@@ -116,18 +100,6 @@
 		background-color: var(--color-bg-high);
 	}
 
-	.bg-transparent {
-		background-color: transparent;
-	}
-
-	.bg-darker-transparent {
-		background-color: var(--color-bg);
-	}
-
-	.bg-theme-transparent {
-		background-color: var(--color-accent-low);
-	}
-
 	.rounded {
 		border-radius: var(--radius-box);
 	}
@@ -152,10 +124,6 @@
 		font-weight: var(--weight-bold);
 	}
 
-	.h-full {
-		height: 100%;
-	}
-
 	.h-max {
 		height: max-content;
 	}
@@ -176,28 +144,12 @@
 		width: var(--s-24);
 	}
 
-	.min-w-max {
-		min-width: max-content;
-	}
-
 	.w-max {
 		width: max-content;
 	}
 
-	.w-min {
-		width: min-content;
-	}
-
 	.p-1 {
 		padding: var(--s-1);
-	}
-
-	.p-1-5 {
-		padding: var(--s-1-5);
-	}
-
-	.px-4 {
-		padding-inline: var(--s-4);
 	}
 
 	.py-4 {
@@ -212,14 +164,6 @@
 		padding-inline-start: var(--s-4);
 	}
 
-	.px-2 {
-		padding-inline: var(--s-2);
-	}
-
-	.pb-4 {
-		padding-block-end: var(--s-4);
-	}
-
 	.pt-0 {
 		padding-block-start: 0;
 	}
@@ -228,32 +172,12 @@
 		padding-block-start: var(--s-0-5);
 	}
 
-	.pt-8 {
-		padding-block-start: var(--s-8);
-	}
-
 	.m-auto-0 {
 		margin: auto 0;
 	}
 
-	.mt-auto {
-		margin-block-start: auto;
-	}
-
-	.mt-0 {
-		margin-block-start: 0;
-	}
-
-	.-mt-1px {
-		margin-block-start: -1px;
-	}
-
 	.mt-1 {
 		margin-block-start: var(--s-1);
-	}
-
-	.mt-1-5 {
-		margin-block-start: var(--s-1-5);
 	}
 
 	.mt-2 {
@@ -304,14 +228,6 @@
 		margin-inline-start: var(--s-2);
 	}
 
-	.ml-2-5 {
-		margin-inline-start: var(--s-3);
-	}
-
-	.ml-4 {
-		margin-inline-start: var(--s-4);
-	}
-
 	.ml-6 {
 		margin-inline-start: var(--s-6);
 	}
@@ -328,10 +244,6 @@
 		margin-inline-end: var(--s-2);
 	}
 
-	.mr-4 {
-		margin-inline-end: var(--s-4);
-	}
-
 	.mx-auto {
 		margin-inline: auto;
 	}
@@ -342,10 +254,6 @@
 
 	.mx-2 {
 		margin-inline: var(--s-2);
-	}
-
-	.my-auto {
-		margin-block: auto;
 	}
 
 	.my-1 {
@@ -400,10 +308,6 @@
 		overflow-x: auto;
 	}
 
-	.overflow-x-scroll {
-		overflow-x: scroll;
-	}
-
 	.relative {
 		position: relative;
 	}
@@ -444,10 +348,6 @@
 		justify-content: space-between;
 	}
 
-	.justify-evenly {
-		justify-content: space-evenly;
-	}
-
 	.justify-self-end {
 		justify-self: flex-end;
 	}
@@ -472,10 +372,6 @@
 		flex-wrap: wrap;
 	}
 
-	.flex-wrap-reverse {
-		flex-wrap: wrap-reverse;
-	}
-
 	.all-unset {
 		all: unset;
 	}
@@ -491,14 +387,6 @@
 		--label-margin: 0;
 	}
 
-	.mobile-hidden {
-		display: none;
-	}
-
-	.desktop-hidden {
-		display: inherit;
-	}
-
 	.cursor-pointer {
 		cursor: pointer;
 	}
@@ -507,43 +395,33 @@
 		opacity: 0.6;
 	}
 
-	.list-none {
-		list-style: none;
-	}
-
-	@media screen and (min-width: 480px) {
-		.mobile-hidden {
-			display: inherit;
-		}
-
-		.desktop-hidden {
-			display: none;
-		}
-	}
-
 	.scrollbar,
 	textarea {
-		@supports not selector(::-webkit-scrollbar) {
+		/* Firefox, Chrome 121+, Safari 18.2+ */
+		@supports (scrollbar-color: auto) {
 			scrollbar-width: thin;
 			scrollbar-color: var(--color-bg-higher) transparent;
 		}
 
-		&::-webkit-scrollbar,
-		&::-webkit-scrollbar-track {
-			background-color: transparent;
-			height: 14px;
-			width: 14px;
-		}
+		/* Legacy */
+		@supports not (scrollbar-color: auto) {
+			&::-webkit-scrollbar,
+			&::-webkit-scrollbar-track {
+				background-color: transparent;
+				height: 14px;
+				width: 14px;
+			}
 
-		&::-webkit-scrollbar-thumb {
-			background-color: var(--color-base-4);
-			border-radius: var(--radius-full);
-			border: 4px solid transparent;
-			background-clip: content-box;
-		}
+			&::-webkit-scrollbar-thumb {
+				background-color: var(--color-base-4);
+				border-radius: var(--radius-full);
+				border: 4px solid transparent;
+				background-clip: content-box;
+			}
 
-		&::-webkit-scrollbar-corner {
-			background-color: transparent;
+			&::-webkit-scrollbar-corner {
+				background-color: transparent;
+			}
 		}
 	}
 

@@ -23,3 +23,15 @@
 .componentContent {
 	width: 100%;
 }
+
+.trophyExample {
+	width: 140px;
+}
+
+.trophyExampleSmall {
+	width: 90px;
+}
+
+.trophyExampleLarge {
+	width: 200px;
+}

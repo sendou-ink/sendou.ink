@@ -31,6 +31,7 @@ import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { RootLoaderData } from "~/root";
 import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -50,17 +51,25 @@ import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import sideNavStyles from "../SideNav.module.css";
 import { StreamListItems } from "../StreamListItems";
-import { AuthErrorDialog } from "./AuthErrorDialog";
 import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
 import { LogInButtonContainer } from "./LogInButtonContainer";
+import { authErrorSearchParams } from "./layout-search-params";
 import { NotificationContent, useNotifications } from "./NotificationPopover";
 import notificationPopoverStyles from "./NotificationPopover.module.css";
 import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
+
+// lazy loaded so the rarely needed auth error dialog stays out of the eager
+// bundle loaded on every page
+const AuthErrorDialog = React.lazy(() =>
+	import("./AuthErrorDialog").then((module) => ({
+		default: module.AuthErrorDialog,
+	})),
+);
 
 /** Id of the loading-bar track rendered inside the header. NProgress mounts its
  * bar into it; the track sits just below the header border, spans only the area
@@ -240,25 +249,29 @@ export function Layout({
 	const { formatRelativeDate } = useRelativeDayFormat();
 	const isHydrated = useHydrated();
 	const location = useLocation();
+	const [authError] = useSearchParam(authErrorSearchParams, "authError");
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
 
-	React.useEffect(() => {
-		const handleResize = () => {
-			if (window.innerWidth < 600 || window.innerWidth >= 1000) {
-				setSideNavModalOpen(false);
-				setChatSidebarModalOpen(false);
-			}
-		};
+	// modals only exist in the tablet layout, close them when resizing out of
+	// it or navigating to another page (setChatOpen is left as is on purpose,
+	// it belongs to a parent component and thus cannot be set during render)
+	const prevLayoutSize = React.useRef(layoutSize);
+	const prevPathname = React.useRef(location.pathname);
+	const leftTabletLayout =
+		prevLayoutSize.current === "tablet" && layoutSize !== "tablet";
+	const pathnameChanged = prevPathname.current !== location.pathname;
+	prevLayoutSize.current = layoutSize;
+	prevPathname.current = location.pathname;
 
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
-	}, []);
-
-	React.useEffect(() => {
-		setSideNavModalOpen(false);
-		setChatSidebarModalOpen(false);
-	}, [location.pathname]);
+	if (leftTabletLayout || pathnameChanged) {
+		if (sideNavModalOpen) {
+			setSideNavModalOpen(false);
+		}
+		if (chatSidebarModalOpen) {
+			setChatSidebarModalOpen(false);
+		}
+	}
 
 	const user = useUser();
 	const { unseenIds } = useNotifications();
@@ -304,9 +317,10 @@ export function Layout({
 						key={`${event.type}-${event.id}`}
 						to={event.url}
 						imageUrl={event.logoUrl ?? undefined}
+						user={event.user ?? undefined}
 						subtitle={
 							isHydrated ? (
-								formatRelativeDate(event.startTime)
+								formatRelativeDate(event.startsAt)
 							) : (
 								<span className="invisible">Placeholder</span>
 							)
@@ -488,7 +502,11 @@ export function Layout({
 					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
-			<AuthErrorDialog />
+			{typeof authError === "string" ? (
+				<React.Suspense>
+					<AuthErrorDialog />
+				</React.Suspense>
+			) : null}
 		</>
 	);
 }

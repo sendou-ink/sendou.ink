@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { TOURNAMENT_ORGANIZATION_ROLES } from "~/db/tables";
-import { TOURNAMENT_ORGANIZATION } from "~/features/tournament-organization/tournament-organization-constants";
+import {
+	TOURNAMENT_ORGANIZATION,
+	TOURNAMENT_ORGANIZATION_ROLES,
+} from "~/features/tournament-organization/tournament-organization-constants";
 import {
 	array,
 	badges,
@@ -10,15 +12,15 @@ import {
 	select,
 	stringConstant,
 	textAreaOptional,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	toggle,
 	userSearch,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
 import { _action, id } from "~/utils/zod";
 
-const orgNameField = textFieldRequired({
+const orgNameField = textField({
 	label: "labels.name",
 	minLength: 2,
 	maxLength: 64,
@@ -63,14 +65,14 @@ export const organizationEditFormSchema = z.object({
 	socials: array({
 		label: "labels.orgSocialLinks",
 		max: 10,
-		field: textFieldRequired({ validate: "url", maxLength: 100 }),
+		field: textField({ validate: "url", maxLength: 100 }),
 	}),
 	series: array({
 		label: "labels.orgSeries",
 		max: 10,
 		field: fieldset({
 			fields: z.object({
-				name: textFieldRequired({
+				name: textField({
 					label: "labels.orgSeriesName",
 					minLength: 1,
 					maxLength: 32,

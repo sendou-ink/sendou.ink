@@ -4,7 +4,9 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 export const loader = async () => {
 	const user = requireUser();
 
-	const currentWidgets = await UserRepository.storedWidgetsByUserId(user.id);
+	const currentWidgets = await UserRepository.findStoredWidgetsByUserId(
+		user.id,
+	);
 
 	return { currentWidgets };
 };

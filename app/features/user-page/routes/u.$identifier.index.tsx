@@ -20,6 +20,8 @@ import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
+import { UserCard } from "~/features/user-card/components/UserCard";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
 import invariant from "~/utils/invariant";
@@ -55,6 +57,8 @@ export const handle: SendouRouteHandle = {
 		"weapons",
 		"gear",
 		"game-badges",
+		"analyzer",
+		"trophies",
 	],
 };
 
@@ -89,10 +93,16 @@ function NewUserInfoPage() {
 		<div className={newStyles.container}>
 			<div className="stack sm">
 				<div className={newStyles.header}>
-					<Avatar user={layoutData.user} size="xmd" loading="eager" />
+					<UserCard userId={layoutData.user.id}>
+						<Avatar user={layoutData.user} size="xmd" loading="eager" />
+					</UserCard>
 					<div className={newStyles.userInfo}>
 						<div className={newStyles.nameGroup}>
-							<h1 className={newStyles.username}>{layoutData.user.username}</h1>
+							<h1 className={newStyles.username}>
+								<UserCard userId={layoutData.user.id}>
+									{layoutData.user.username}
+								</UserCard>
+							</h1>
 							<ProfileSubtitle
 								inGameName={layoutData.user.inGameName}
 								pronouns={layoutData.user.pronouns}
@@ -181,15 +191,19 @@ export function OldUserInfoPage() {
 		<div className={styles.container}>
 			<div className="stack sm">
 				<div className={styles.avatarContainer}>
-					<Avatar
-						user={layoutData.user}
-						size="lg"
-						className={styles.avatar}
-						loading="eager"
-					/>
+					<UserCard userId={layoutData.user.id}>
+						<Avatar
+							user={layoutData.user}
+							size="lg"
+							className={styles.avatar}
+							loading="eager"
+						/>
+					</UserCard>
 					<div>
 						<h2 className={styles.name}>
-							<div>{layoutData.user.username}</div>
+							<UserCard userId={layoutData.user.id}>
+								<div>{layoutData.user.username}</div>
+							</UserCard>
 							<div>
 								{data.user.country ? (
 									<Flag countryCode={data.user.country} tiny />
@@ -220,7 +234,17 @@ export function OldUserInfoPage() {
 			<ExtraInfos />
 			<WeaponPool />
 			<TopPlacements />
-			<BadgeDisplay badges={data.user.badges} key={layoutData.user.id} />
+			{data.trophies.length > 0 ? (
+				<TrophyDisplay
+					trophies={data.trophies}
+					userId={layoutData.user.id}
+					key={`trophies-${layoutData.user.id}`}
+				/>
+			) : null}
+			<BadgeDisplay
+				badges={data.user.badges}
+				key={`badges-${layoutData.user.id}`}
+			/>
 			{data.user.bio && <article>{data.user.bio}</article>}
 		</div>
 	);

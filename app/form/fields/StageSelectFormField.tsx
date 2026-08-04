@@ -7,6 +7,7 @@ import styles from "./StageSelectFormField.module.css";
 type StageSelectFormFieldProps = FormFieldProps<"stage-select"> & {
 	value: StageId | null;
 	onChange: (value: StageId) => void;
+	disabled?: boolean;
 };
 
 export function StageSelectFormField({
@@ -18,6 +19,7 @@ export function StageSelectFormField({
 	value,
 	onChange,
 	onBlur,
+	disabled,
 }: StageSelectFormFieldProps) {
 	const { translatedLabel } = useTranslatedTexts({ label });
 
@@ -31,6 +33,7 @@ export function StageSelectFormField({
 					onBlur?.(id);
 				}}
 				isRequired={required}
+				isDisabled={disabled}
 			/>
 			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 		</div>

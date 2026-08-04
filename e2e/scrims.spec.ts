@@ -1,419 +1,388 @@
-import type { Page } from "@playwright/test";
+import { addDays, addHours, setHours, setMinutes, startOfHour } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import {
-	scrimsNewFormSchema,
-	submitMapListFormSchema,
-} from "~/features/scrims/scrims-schemas";
-import { newScrimPostPage, scrimPage, scrimsPage } from "~/utils/urls";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { toDBBoolean } from "~/utils/sql";
+import type { Factories } from "./helpers/factories";
 import {
 	expect,
 	impersonate,
+	isNotVisible,
 	navigate,
-	seed,
-	selectUser,
-	submit,
 	test,
-	waitForPOSTResponse,
 } from "./helpers/playwright";
-import { createFormHelpers } from "./helpers/playwright-form";
+import { AnythingAdder } from "./pages/layout/anything-adder";
+import { NewScrimPostPage } from "./pages/scrims/new-scrim-post-page";
+import { ScrimPage } from "./pages/scrims/scrim-page";
+import { ScrimsPage } from "./pages/scrims/scrims-page";
 
 const TEST_POOL_SERIALIZED = "sz:3a14000;tc:2c98000";
+const TOURNAMENT_NAME = "Swim or Sink";
+const ASSOCIATION_NAME = "Inkling Alliance";
+const PICKUP_NAMES = ["Pickup One", "Pickup Two", "Pickup Three"];
+const GROUP_SIZE = 4;
+const TOURNAMENT_MAP_POOL: Array<{ mode: ModeShort; stageId: StageId }> = [
+	{ mode: "SZ", stageId: 1 },
+	{ mode: "TC", stageId: 2 },
+	{ mode: "RM", stageId: 3 },
+	{ mode: "CB", stageId: 4 },
+];
 
 test.describe("Scrims", () => {
-	test("creates a new scrim & deletes it", async ({ page }) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: "/",
+	test("creates a new scrim & deletes it", async ({ page, factories }) => {
+		await createNamedUsers(factories, PICKUP_NAMES);
+		await factories.AssociationFactory.create({
+			userId: NZAP_TEST_ID,
+			name: ASSOCIATION_NAME,
 		});
 
-		await page.getByTestId("anything-adder-menu-button").first().click();
-		await page.getByTestId("menu-item-scrimPost").click();
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: "/" });
 
-		const form = createFormHelpers(page, scrimsNewFormSchema);
+		await new AnythingAdder(page).add("scrimPost");
 
-		await page.getByLabel("With").selectOption("PICKUP");
-		await selectUser({
-			labelName: "User 2",
-			page,
-			userName: "N-ZAP",
-		});
-		await selectUser({
-			labelName: "User 3",
-			page,
-			userName: "ab",
-		});
-		await selectUser({
-			labelName: "User 4",
-			page,
-			userName: "de",
-		});
-		await page.getByLabel("Visibility").selectOption("2");
+		const newPost = new NewScrimPostPage(page);
+		await newPost.selectPickupUsers(PICKUP_NAMES);
+		await newPost.selectVisibility(ASSOCIATION_NAME);
+		await newPost.form.fill("postText", "Test scrim");
+		await newPost.save();
 
-		await form.fill("postText", "Test scrim");
+		const scrims = new ScrimsPage(page);
+		await expect(scrims.locators.limitedVisibilityPopover).toBeVisible();
 
-		await submit(page);
+		await scrims.deleteFirstPost();
 
-		await expect(page.getByTestId("limited-visibility-popover")).toBeVisible();
-
-		await page.getByRole("button", { name: "Delete" }).first().click();
-		await submit(page, "confirm-button");
-
-		await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(1);
+		await expect(scrims.locators.deleteButtons).toHaveCount(0);
 	});
 
 	test("requests an existing scrim post & cancels the request", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: scrimsPage(),
-		});
+		for (let postNth = 0; postNth < 2; postNth++) {
+			await factories.ScrimPostFactory.create({
+				users: await createGroup(factories),
+			});
+		}
+		await createTeamFor(factories, NZAP_TEST_ID);
 
-		const requestScrimButtonLocator = page.getByTestId("request-scrim-button");
+		await impersonate(page, NZAP_TEST_ID);
 
-		await page.getByTestId("available-scrims-tab").click();
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
+		await scrims.openTab("available");
 
-		await expect(requestScrimButtonLocator.first()).toBeVisible();
+		await expect(scrims.locators.requestButtons).toHaveCount(2);
 
-		const initialCount = await requestScrimButtonLocator.count();
+		const request = await scrims.requestFirst();
+		await request.send();
 
-		await requestScrimButtonLocator.first().click();
+		await expect(scrims.locators.requestButtons).toHaveCount(1);
 
-		await submit(page);
+		await scrims.showPendingRequests();
+		await scrims.cancelPendingRequest();
 
-		await expect(requestScrimButtonLocator).toHaveCount(initialCount - 1);
-
-		const togglePendingRequestsButton = page.getByTestId(
-			"toggle-pending-requests-button",
-		);
-
-		await togglePendingRequestsButton.first().click();
-
-		await page.getByTestId("view-request-button").first().click();
-
-		const cancelButton = page.getByRole("button", {
-			name: "Cancel",
-		});
-		await cancelButton.click();
-
-		await expect(requestScrimButtonLocator).toHaveCount(initialCount);
+		await expect(scrims.locators.requestButtons).toHaveCount(2);
 	});
 
-	test("accepts a request", async ({ page }) => {
-		await seed(page);
+	test("accepts a request", async ({ page, factories }) => {
+		await createPostWithRequest(factories, { ownerUserId: ADMIN_ID });
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: scrimsPage(),
-		});
 
-		await page.getByTestId("confirm-modal-trigger-button").first().click();
-		await submit(page, "confirm-button");
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
+		await scrims.acceptFirstRequest();
 
-		await page.getByTestId("booked-scrims-tab").click();
+		await scrims.openTab("booked");
+		await expect(scrims.locators.contactLinks).toHaveCount(1);
 
-		const contactButtonLocator = page.getByRole("link", { name: "Contact" });
+		const scrim = await scrims.openFirstBookedScrim();
 
-		await expect(contactButtonLocator).toHaveCount(2);
-
-		await page.getByRole("link", { name: "Contact" }).first().click();
-
-		await expect(page.getByText("Scheduled scrim")).toBeVisible();
+		await expect(scrim.locators.subtitle).toBeVisible();
 	});
 
 	test("auto-cancels overlapping pending scrims when a scrim is booked", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page, "NO_SCRIMS");
-		await impersonate(page);
+		await createTeamFor(factories, ADMIN_ID);
+		await createTeamFor(factories, NZAP_TEST_ID);
 
-		const bookedAt = new Date();
-		bookedAt.setDate(bookedAt.getDate() + 1);
-		bookedAt.setHours(18, 0, 0, 0);
+		const bookedAt = startOfHour(setHours(addDays(new Date(), 1), 18));
+		// within ±1h of the booked time
+		const overlappingAt = setMinutes(bookedAt, 30);
+		// outside the ±1h window
+		const farAwayAt = setHours(bookedAt, 22);
 
-		const overlappingAt = new Date(bookedAt);
-		overlappingAt.setMinutes(30); // within ±1h of the booked time
+		await impersonate(page, ADMIN_ID);
 
-		const farAwayAt = new Date(bookedAt);
-		farAwayAt.setHours(22, 0, 0, 0); // outside the ±1h window
+		const newPost = new NewScrimPostPage(page);
+		for (const [at, text] of [
+			[bookedAt, "Booked post"],
+			[overlappingAt, "Overlapping post"],
+			[farAwayAt, "Far away post"],
+		] as const) {
+			await newPost.goto();
+			await newPost.form.setDateTime("at", at);
+			await newPost.form.fill("postText", text);
+			await newPost.save();
+		}
 
-		await createScrimPost(page, bookedAt, "Booked post");
-		await createScrimPost(page, overlappingAt, "Overlapping post");
-		await createScrimPost(page, farAwayAt, "Far away post");
-
-		// NZAP requests the earliest (soon-to-be-booked) post
+		// N-ZAP requests the earliest (soon-to-be-booked) post
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: scrimsPage() });
-		await page.getByTestId("available-scrims-tab").click();
-		await page.getByTestId("request-scrim-button").first().click();
-		await selectUser({ labelName: "User 2", page, userName: "5" });
-		await selectUser({ labelName: "User 3", page, userName: "6" });
-		await selectUser({ labelName: "User 4", page, userName: "7" });
-		await submit(page);
 
-		// Author accepts the request, booking the scrim
-		await impersonate(page);
-		await navigate({ page, url: scrimsPage() });
-		await page.getByTestId("confirm-modal-trigger-button").first().click();
-		await submit(page, "confirm-button");
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
+		await scrims.openTab("available");
 
-		// The overlapping pending post is auto-removed, the far away one survives
-		await page.getByRole("tab", { name: /Owned/ }).click();
-		await expect(page.getByText("Far away post")).toBeVisible();
-		await expect(page.getByText("Overlapping post")).toHaveCount(0);
+		const request = await scrims.requestFirst();
+		await request.send();
+
+		// the author accepts the request, booking the scrim
+		await impersonate(page, ADMIN_ID);
+		await scrims.goto();
+		await scrims.acceptFirstRequest();
+
+		await scrims.openTab("owned");
+
+		await expect(scrims.post("Far away post")).toBeVisible();
+		await isNotVisible(scrims.post("Overlapping post"));
 	});
 
-	test("cancels a scrim and shows canceled status", async ({ page }) => {
-		await seed(page);
+	test("cancels a scrim and shows canceled status", async ({
+		page,
+		factories,
+	}) => {
+		await createPostWithRequest(factories, {
+			ownerUserId: ADMIN_ID,
+			at: addHours(new Date(), 4),
+		});
+
 		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: scrimsPage(),
-		});
 
-		// Accept the first available scrim request to make it possible to access the scrim details page
-		await page.getByTestId("confirm-modal-trigger-button").first().click();
-		await submit(page, "confirm-button");
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
 
-		await page.getByTestId("booked-scrims-tab").click();
+		// accepting is what makes the scrim's own page accessible
+		await scrims.acceptFirstRequest();
+		await scrims.openTab("booked");
 
-		await page.getByRole("link", { name: "Contact" }).first().click();
+		const scrim = await scrims.openFirstBookedScrim();
+		await scrim.cancel("Oops something came up");
 
-		// Cancel the scrim
-		await page.getByRole("button", { name: "Cancel" }).click();
-		await page.getByLabel("Reason").fill("Oops something came up");
-		await submit(page, "cancel-scrim-submit");
+		await scrims.goto();
 
-		// Go back to the scrims page and check if the scrim is marked as canceled
-		await navigate({
-			page,
-			url: scrimsPage(),
-		});
-		await expect(page.getByText("Canceled")).toBeVisible();
+		await expect(scrims.locators.canceledLabel).toBeVisible();
 	});
 
 	test("creates scrim with start time and tournament maps, accepts with time and message", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page, "NO_SCRIMS");
-		await impersonate(page);
-		await navigate({
-			page,
-			url: newScrimPostPage(),
-		});
+		await createTeamFor(factories, ADMIN_ID);
+		await createNamedUsers(factories, PICKUP_NAMES);
+		await createTournament(factories);
 
-		const form = createFormHelpers(page, scrimsNewFormSchema);
-
-		const tomorrowDate = new Date();
-		tomorrowDate.setDate(tomorrowDate.getDate() + 1);
-		tomorrowDate.setHours(18, 0, 0, 0);
-
-		await form.setDateTime("at", tomorrowDate);
-
-		await form.select("rangeEnd", "+2hours");
-
-		await form.select("maps", "TOURNAMENT");
-
-		const tournamentSearchInput = page.getByTestId("tournament-search-input");
-		const tournamentSearchItem = page.getByTestId("tournament-search-item");
-
-		await page.getByRole("button", { name: /Tournament search/i }).click();
-		await tournamentSearchInput.fill("Swim or Sink");
-		await expect(tournamentSearchItem.first()).toBeVisible();
-		await tournamentSearchItem.first().click();
-
-		await submit(page);
-
-		// Log in as NZAP user and request the scrim
-		await impersonate(page, NZAP_TEST_ID);
-		await navigate({
-			page,
-			url: scrimsPage(),
-		});
-
-		await page.getByTestId("available-scrims-tab").click();
-
-		// Find and click the request button for the scrim we just created
-		await page.getByTestId("request-scrim-button").first().click();
-
-		await selectUser({
-			labelName: "User 2",
-			page,
-			userName: "5",
-		});
-		await selectUser({
-			labelName: "User 3",
-			page,
-			userName: "6",
-		});
-		await selectUser({
-			labelName: "User 4",
-			page,
-			userName: "7",
-		});
-
-		await page.getByLabel("Start time").selectOption({ index: 1 });
-
-		await page.getByLabel("Message").fill("Ready to scrim! Let's do this.");
-
-		await submit(page);
-
-		// Log back in as the author (admin) and verify the scrim and request details
 		await impersonate(page, ADMIN_ID);
-		await navigate({
-			page,
-			url: scrimsPage(),
-		});
 
-		await expect(page.getByText("+2h")).toBeVisible();
-		await expect(page.getByTestId("tournament-popover-trigger")).toBeVisible();
+		const newPost = new NewScrimPostPage(page);
+		await newPost.goto();
+		await newPost.form.setDateTime(
+			"at",
+			startOfHour(setHours(addDays(new Date(), 1), 18)),
+		);
+		await newPost.form.select("rangeEnd", "+2hours");
+		await newPost.selectTournamentMaps(TOURNAMENT_NAME);
+		await newPost.save();
 
-		await expect(
-			page.getByText("Ready to scrim! Let's do this."),
-		).toBeVisible();
+		await impersonate(page, NZAP_TEST_ID);
 
-		await page.getByTestId("confirm-modal-trigger-button").click();
-		await submit(page, "confirm-button");
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
+		await scrims.openTab("available");
 
-		await page.getByTestId("booked-scrims-tab").click();
-		await page.getByRole("link", { name: "Contact" }).click();
+		const request = await scrims.requestFirst();
+		await request.selectPickupUsers(PICKUP_NAMES);
+		await request.selectStartTime(1);
+		await request.form.fill("message", "Ready to scrim! Let's do this.");
+		await request.send();
 
-		await page.getByRole("tab", { name: "Action" }).click();
-		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
+		// back as the author, who sees the post and the request details
+		await impersonate(page, ADMIN_ID);
+		await scrims.goto();
+
+		await expect(scrims.post("+2h")).toBeVisible();
+		await expect(scrims.locators.tournamentPopover).toBeVisible();
+		await expect(scrims.post("Ready to scrim! Let's do this.")).toBeVisible();
+
+		await scrims.acceptFirstRequest();
+		await scrims.openTab("booked");
+
+		const scrim = await scrims.openFirstBookedScrim();
+		await scrim.openTab("action");
+
+		await expect(scrim.locators.mapListForm).toBeVisible();
 	});
 
 	test("map-by-map: lists, report, undo, replay, change list, stats", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-
-		const scrimUrl = scrimPage(1);
-
-		const mapListForm = createFormHelpers(page, submitMapListFormSchema, {
-			submitTestId: "submit-map-list-button",
+		const tournament = await createTournament(factories);
+		const post = await createPostWithRequest(factories, {
+			ownerUserId: ADMIN_ID,
+			requesterUserId: NZAP_TEST_ID,
+			mapsTournamentId: tournament.id,
+			isAccepted: true,
 		});
 
-		// ADMIN opens the Action tab — the map list form is shown immediately
+		// the admin opens the Action tab — the map list form is shown immediately
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: scrimUrl });
-		await page.getByRole("tab", { name: "Action" }).click();
-		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
 
-		// ADMIN submits a map list — the post's tournament (Swim or Sink) is the
-		// default source for the scrim author's team, so they can submit without
-		// running the tournament search. A first map is generated immediately
-		// so the page transitions to the report UI with the map-list manager
-		// collapsed.
-		await waitForPOSTResponse(page, () => mapListForm.submit());
-		await expect(page.getByTestId("report-score-button")).toBeVisible();
-		await page.getByRole("button", { name: /Manage map lists/i }).click();
-		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText(
-			"Swim or Sink",
-		);
+		const scrim = new ScrimPage(page);
+		await scrim.goto(post.id);
+		await scrim.openTab("action");
 
-		// NZAP submits a pool-URL-based map list. They have no list yet so the
+		await expect(scrim.locators.mapListForm).toBeVisible();
+
+		// the post's tournament is the default source for the author's side, so they
+		// can submit without running the tournament search. A first map is generated
+		// immediately, so the page moves on to the report UI with the map-list
+		// manager collapsed.
+		await scrim.submitMapList();
+
+		await expect(scrim.locators.reportScoreButton).toBeVisible();
+
+		await scrim.openMapListManager();
+
+		await expect(scrim.mapListRow("ALPHA")).toContainText(TOURNAMENT_NAME);
+
+		// N-ZAP submits a pool-URL-based map list. They have no list yet, so the
 		// map-list manager is already expanded on mount.
 		await impersonate(page, NZAP_TEST_ID);
-		await navigate({ page, url: scrimUrl });
-		await page.getByRole("tab", { name: "Action" }).click();
-		await page.getByLabel("Pool URL").click();
-		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
-		await waitForPOSTResponse(page, () => mapListForm.submit());
-		await expect(page.getByTestId("report-score-button")).toBeVisible();
-		await expect(page.getByTestId("map-list-row-BRAVO")).toContainText("Pool");
+		await scrim.goto(post.id);
+		await scrim.openTab("action");
+		await scrim.submitPoolMapList(TEST_POOL_SERIALIZED);
 
-		// Map 1: ALPHA wins → next map auto-generated
-		await reportScrimMapWinner(page, "ALPHA");
-		await expect(page.getByTestId("report-score-button")).toBeVisible();
+		await expect(scrim.locators.reportScoreButton).toBeVisible();
+		await expect(scrim.mapListRow("BRAVO")).toContainText("Pool");
 
-		// Map 2: BRAVO wins → next map auto-generated
-		await reportScrimMapWinner(page, "BRAVO");
-		await expect(page.getByTestId("report-score-button")).toBeVisible();
+		// map 1: ALPHA wins → next map auto-generated
+		await scrim.reportMapWinner("ALPHA");
+		await expect(scrim.locators.reportScoreButton).toBeVisible();
 
-		// Map 3: ALPHA wins → undo (un-reports map 3, deletes auto-gen map 4)
-		await reportScrimMapWinner(page, "ALPHA");
-		await expect(page.getByTestId("undo-map-button")).toBeVisible();
-		await submit(page, "undo-map-button");
-		await expect(page.getByTestId("report-score-button")).toBeVisible();
+		// map 2: BRAVO wins → next map auto-generated
+		await scrim.reportMapWinner("BRAVO");
+		await expect(scrim.locators.reportScoreButton).toBeVisible();
 
-		// Re-report map 3 as BRAVO wins → next map auto-generated
-		await reportScrimMapWinner(page, "BRAVO");
+		// map 3: ALPHA wins → undo (un-reports map 3, deletes auto-gen map 4)
+		await scrim.reportMapWinner("ALPHA");
+		await expect(scrim.locators.undoMapButton).toBeVisible();
+		await scrim.undoMap();
+		await expect(scrim.locators.reportScoreButton).toBeVisible();
 
-		// Replay last map: replaces the current generated map with a copy of
-		// the previous reported one, then report ALPHA wins
-		await expect(page.getByTestId("replay-map-button")).toBeVisible();
-		await submit(page, "replay-map-button");
-		await reportScrimMapWinner(page, "ALPHA");
+		// re-report map 3 as BRAVO wins → next map auto-generated
+		await scrim.reportMapWinner("BRAVO");
 
-		// Switch back to ADMIN to change their list
+		// replaying replaces the generated map with a copy of the previous one
+		await expect(scrim.locators.replayMapButton).toBeVisible();
+		await scrim.replayMap();
+		await scrim.reportMapWinner("ALPHA");
+
+		// back as the admin to change their list
 		await impersonate(page, ADMIN_ID);
-		await navigate({ page, url: scrimUrl });
-		await page.getByRole("tab", { name: "Action" }).click();
-		await page.getByRole("button", { name: /Manage map lists/i }).click();
+		await scrim.goto(post.id);
+		await scrim.openTab("action");
+		await scrim.openMapListManager();
 
-		// Remove ALPHA's tournament list (trash icon opens a confirm dialog)
-		await page
-			.getByTestId("map-list-row-ALPHA")
-			.getByLabel(/Remove list/i)
-			.click();
-		await waitForPOSTResponse(page, () => submit(page, "confirm-button"));
-		await expect(page.getByTestId("scrim-map-list-form")).toBeVisible();
+		await scrim.removeOwnMapList("ALPHA");
 
-		// Re-submit ALPHA's list, this time as a pool URL
-		await page.getByLabel("Pool URL").click();
-		await mapListForm.fill("serializedPool", TEST_POOL_SERIALIZED);
-		await waitForPOSTResponse(page, () => mapListForm.submit());
-		await expect(page.getByTestId("map-list-row-ALPHA")).toContainText("Pool");
+		await expect(scrim.locators.mapListForm).toBeVisible();
 
-		// Verify stats tab reflects the played maps
-		await page.getByRole("tab", { name: "Stats" }).click();
-		await expect(page.getByTestId("scrim-stats-root")).toBeVisible();
+		await scrim.submitPoolMapList(TEST_POOL_SERIALIZED);
 
-		// Four reported maps total (Alpha 2 / Bravo 2 from ADMIN's POV).
-		// Switch to "Mode" view so each row groups by mode, and disable the
-		// pool restriction so maps outside ADMIN's resubmitted pool still count.
-		// Sum of wins+losses across rows should equal 4.
-		await page
-			.getByTestId("scrim-stats-root")
-			.getByText("Mode", { exact: true })
-			.click();
-		await page.getByRole("switch").click({ force: true });
+		await expect(scrim.mapListRow("ALPHA")).toContainText("Pool");
 
-		const statsRoot = page.getByTestId("scrim-stats-root");
-		const winCells = await statsRoot
-			.locator("tbody tr td:nth-child(2)")
-			.allInnerTexts();
-		const lossCells = await statsRoot
-			.locator("tbody tr td:nth-child(3)")
-			.allInnerTexts();
-		const total =
-			winCells.reduce((acc, v) => acc + Number(v), 0) +
-			lossCells.reduce((acc, v) => acc + Number(v), 0);
-		expect(total).toBe(4);
+		await scrim.openTab("stats");
+
+		await expect(scrim.locators.statsRoot).toBeVisible();
+
+		// four reported maps in total (2 wins & 2 losses from the admin's point of view)
+		await scrim.showModeStatsOfAllMaps();
+
+		expect(await scrim.reportedMapCount()).toBe(4);
 	});
 });
 
-async function createScrimPost(page: Page, at: Date, text: string) {
-	await navigate({ page, url: newScrimPostPage() });
-
-	const form = createFormHelpers(page, scrimsNewFormSchema);
-
-	await form.setDateTime("at", at);
-	await form.fill("postText", text);
-
-	await submit(page);
+/** A tournament with a map pool, which a scrim can play its maps off. */
+function createTournament(factories: Factories) {
+	return factories.TournamentFactory.create({
+		authorId: ADMIN_ID,
+		name: TOURNAMENT_NAME,
+		startTimes: [dateToDatabaseTimestamp(addDays(new Date(), 1))],
+		mapPoolMaps: TOURNAMENT_MAP_POOL,
+	});
 }
 
-async function reportScrimMapWinner(page: Page, winner: "ALPHA" | "BRAVO") {
-	const testId = winner === "ALPHA" ? "winner-radio-1" : "winner-radio-2";
-	await expect(
-		page.locator('[data-testid^="winner-radio-"][data-selected="true"]'),
-	).toHaveCount(0);
-	await page.getByTestId(testId).click();
-	await submit(page, "report-score-button");
+/** Users a user search finds by the name given to them. */
+function createNamedUsers(factories: Factories, names: string[]) {
+	return factories.UserFactory.createMany(names.length, (index) => ({
+		discordName: names[index],
+	}));
+}
+
+async function createTeamFor(factories: Factories, userId: number) {
+	const teammates = await factories.UserFactory.createMany(GROUP_SIZE - 1);
+
+	return factories.TeamFactory.create({
+		memberUserIds: [userId, ...teammates.map((user) => user.id)],
+	});
+}
+
+/** A pick-up sized group of users, `userId` its owner if one is given. */
+async function createGroup(factories: Factories, userId?: number) {
+	const others = await factories.UserFactory.createMany(
+		userId ? GROUP_SIZE - 1 : GROUP_SIZE,
+	);
+	const userIds = userId
+		? [userId, ...others.map((user) => user.id)]
+		: others.map((user) => user.id);
+
+	return userIds.map((id, index) => ({
+		userId: id,
+		isOwner: toDBBoolean(index === 0),
+	}));
+}
+
+/** A scrim post with one request made to it, booked when `isAccepted`. */
+async function createPostWithRequest(
+	factories: Factories,
+	{
+		ownerUserId,
+		requesterUserId,
+		at,
+		mapsTournamentId,
+		isAccepted,
+	}: {
+		ownerUserId: number;
+		requesterUserId?: number;
+		at?: Date;
+		mapsTournamentId?: number;
+		isAccepted?: boolean;
+	},
+) {
+	const users = await createGroup(factories, ownerUserId);
+	const requesters = await createGroup(factories, requesterUserId);
+
+	return factories.ScrimPostFactory.create(
+		{
+			users,
+			startsAt: dateToDatabaseTimestamp(at ?? new Date()),
+			isScheduledForFuture: Boolean(at),
+			mapsTournamentId: mapsTournamentId ?? null,
+		},
+		{ requests: [{ users: requesters, isAccepted }] },
+	);
 }

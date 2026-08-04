@@ -13,6 +13,7 @@ import { useRef } from "react";
 import { Line } from "react-chartjs-2";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useThemeColors } from "~/hooks/useThemeColors";
 import styles from "./Chart.module.css";
 
 ChartJS.register(
@@ -87,42 +88,18 @@ export default function Chart({
 	});
 
 	// Get the chart colors from CSS variables
-	const [colors, setColors] = React.useState({
-		accentHigh: "",
-		infoHigh: "",
-		secondHigh: "",
-		accentLow: "",
-		secondLow: "",
-		border: "",
-		borderHigh: "",
-		text: "",
+	const colors = useThemeColors({
+		// bright "high" variants for the curve lines so they stay legible on the dark chart
+		accentHigh: "--color-text-accent",
+		infoHigh: "--color-info-high",
+		secondHigh: "--color-second-high",
+		// low variants for the highlight marker fills (paired with a light border)
+		accentLow: "--color-accent-low",
+		secondLow: "--color-second-low",
+		border: "--color-border",
+		borderHigh: "--color-border-high",
+		text: "--color-text-high",
 	});
-
-	React.useEffect(() => {
-		const resolve = () => {
-			const get = (v: string) =>
-				getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-			setColors({
-				// bright "high" variants for the curve lines so they stay legible on the dark chart
-				accentHigh: get("--color-text-accent"),
-				infoHigh: get("--color-info-high"),
-				secondHigh: get("--color-second-high"),
-				// low variants for the highlight marker fills (paired with a light border)
-				accentLow: get("--color-accent-low"),
-				secondLow: get("--color-second-low"),
-				border: get("--color-border"),
-				borderHigh: get("--color-border-high"),
-				text: get("--color-text-high"),
-			});
-		};
-
-		resolve();
-
-		const root = document.documentElement;
-		const observer = new MutationObserver(resolve);
-		observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-		return () => observer.disconnect();
-	}, []);
 
 	const scaleDefaults = React.useMemo(
 		() => ({

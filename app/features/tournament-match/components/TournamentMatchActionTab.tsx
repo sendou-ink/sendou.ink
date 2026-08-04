@@ -9,11 +9,12 @@ import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponRepo
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
+import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
-import { isSetOverByScore } from "../tournament-match-utils";
 
 export function TournamentMatchActionTab({
 	data,
@@ -54,9 +55,9 @@ export function TournamentMatchActionTab({
 
 	if (!teamOne || !teamTwo) return null;
 
-	const withPoints = tournament.bracketByIdxOrDefault(
+	const withKo = tournament.bracketByIdxOrDefault(
 		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectResultsWithPoints;
+	).collectsKos;
 
 	const count = data.match.roundMaps.count;
 	const countType = data.match.roundMaps.type;
@@ -113,16 +114,16 @@ export function TournamentMatchActionTab({
 			ownTeamId={ownTeamId}
 			stageId={currentMap.stageId}
 			mode={currentMap.mode}
-			withPoints={withPoints}
+			withKo={withKo}
 			setEnding={setEnding}
 			isSubmitting={reportFetcher.state !== "idle"}
-			onSubmit={({ winnerId, points }) => {
+			onSubmit={({ winnerId, ko }) => {
 				reportFetcher.submit(
 					{
 						_action: "REPORT_SCORE",
 						winnerTeamId: String(winnerId),
 						position: String(scoreSum),
-						...(points ? { points: JSON.stringify(points) } : {}),
+						...(typeof ko === "boolean" ? { ko: String(ko) } : {}),
 					},
 					{ method: "post" },
 				);
@@ -171,13 +172,16 @@ function useTournamentWeaponReport({
 	viewerUserId: number | undefined;
 	weaponReportingOpen: boolean;
 }) {
+	const tournament = useTournament();
+
 	const playOrderMaps = (data.mapList ?? []).filter(
 		(m) => !m.bannedByTournamentTeamId,
 	);
 	const reportedCount = data.results.length;
 	const weaponReportMaps = playOrderMaps
 		.slice(0, reportedCount + 1)
-		.map((m) => ({ stageId: m.stageId, mode: m.mode }));
+		.map((m, mapIndex) => ({ mapIndex, stageId: m.stageId, mode: m.mode }))
+		.filter(({ mapIndex }) => viewerPlayedMap(mapIndex));
 
 	const pastReported =
 		data.reportedWeapons && viewerUserId !== undefined
@@ -200,6 +204,26 @@ function useTournamentWeaponReport({
 	if (weaponReportMaps.length === 0) return null;
 
 	return weaponReport;
+
+	function viewerPlayedMap(mapIndex: number) {
+		if (viewerUserId === undefined) return false;
+
+		// a played map remembers the roster it was played with, the map still to be
+		// played goes by the roster as it stands now
+		const result = data.results[mapIndex];
+		if (result) {
+			return result.participants.some((p) => p.userId === viewerUserId);
+		}
+
+		const team = tournament.teamMemberOfByUser({ id: viewerUserId });
+		if (!team) return false;
+
+		const activeRoster =
+			tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam) ??
+			team.members.map((m) => m.userId);
+
+		return activeRoster.includes(viewerUserId);
+	}
 }
 
 function buildSetEndingData({
@@ -271,13 +295,7 @@ function buildSetEndingData({
 				alpha: alphaParticipants,
 				bravo: bravoParticipants,
 			},
-			points:
-				result.opponentOnePoints != null && result.opponentTwoPoints != null
-					? ([result.opponentOnePoints, result.opponentTwoPoints] as [
-							number,
-							number,
-						])
-					: undefined,
+			ko: result.ko != null ? Boolean(result.ko) : undefined,
 		};
 	});
 

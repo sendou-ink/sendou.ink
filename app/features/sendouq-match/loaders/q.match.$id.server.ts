@@ -8,7 +8,7 @@ import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.s
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
@@ -18,7 +18,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: qMatchPageParamsSchema,
 	}).id;
 
-	const matchUnmapped = notFoundIfFalsy(
+	const matchUnmapped = notFoundIfNullish(
 		await SQMatchRepository.findById(matchId),
 	);
 
@@ -35,7 +35,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const match = SendouQ.mapMatch(matchUnmapped, user);
 
 	return {
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: matchUsers,
 			include: { friendCode: isStaff || isParticipant },
 		})),

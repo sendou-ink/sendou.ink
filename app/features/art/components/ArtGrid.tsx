@@ -12,11 +12,12 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { usePagination } from "~/hooks/usePagination";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
 import { ResponsiveMasonry } from "../../../modules/responsive-masonry/components/ResponsiveMasonry";
 import { ART_PER_PAGE } from "../art-constants";
+import { artGridSearchParams } from "../art-search-params";
 import type { ListedArt } from "../art-types";
 import { previewUrl } from "../art-utils";
 import styles from "./ArtGrid.module.css";
@@ -44,12 +45,7 @@ export function ArtGrid({
 		items: arts,
 		pageSize: ART_PER_PAGE,
 	});
-	const [bigArtId, setBigArtId] = useSearchParamState<number | null>({
-		defaultValue: null,
-		name: "big",
-		revive: (value) =>
-			itemsToDisplay.find((art) => art.id === Number(value))?.id,
-	});
+	const [bigArtId, setBigArtId] = useSearchParam(artGridSearchParams, "big");
 	const isHydrated = useHydrated();
 
 	if (!isHydrated) return null;
@@ -89,7 +85,7 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
-	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const [imageSettled, setImageSettled] = React.useState(false);
 	const { formatter } = useDateTimeFormat({
 		year: "numeric",
 		month: "numeric",
@@ -107,11 +103,12 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				src={art.url}
 				loading="lazy"
 				className={styles.dialogImg}
-				onLoad={() => setImageLoaded(true)}
+				onLoad={() => setImageSettled(true)}
+				onError={() => setImageSettled(true)}
 			/>
 			{art.tags || art.linkedUsers ? (
 				<div
-					className={clsx(styles.tagsContainer, { invisible: !imageLoaded })}
+					className={clsx(styles.tagsContainer, { invisible: !imageSettled })}
 				>
 					{art.linkedUsers?.map((user) => (
 						<Link
@@ -136,7 +133,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			{art.description ? (
 				<div
 					className={clsx(styles.dialogDescription, {
-						invisible: !imageLoaded,
+						invisible: !imageSettled,
 					})}
 				>
 					{art.description}
@@ -167,7 +164,7 @@ function ImagePreview({
 	canEdit?: boolean;
 	showUploadDate?: boolean;
 }) {
-	const [imageLoaded, setImageLoaded] = React.useState(false);
+	const [imageSettled, setImageSettled] = React.useState(false);
 	const { t } = useTranslation(["common", "art"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
 
@@ -178,8 +175,10 @@ function ImagePreview({
 			src={previewUrl(art.url)}
 			loading="lazy"
 			onClick={onClick}
-			onLoad={() => setImageLoaded(true)}
+			onLoad={() => setImageSettled(true)}
+			onError={() => setImageSettled(true)}
 			className={enablePreview ? styles.thumbnail : undefined}
+			data-testid="art-image"
 		/>
 	);
 
@@ -189,7 +188,7 @@ function ImagePreview({
 				{img}
 				<div
 					className={clsx("stack horizontal justify-between mt-2", {
-						invisible: !imageLoaded,
+						invisible: !imageSettled,
 					})}
 				>
 					<LinkButton
@@ -234,7 +233,7 @@ function ImagePreview({
 					<Link
 						to={userArtPage(art.author, "MADE-BY")}
 						className={clsx("stack sm horizontal text-xs items-center mt-1", {
-							invisible: !imageLoaded,
+							invisible: !imageSettled,
 						})}
 					>
 						<Avatar user={art.author} size="xxs" />
@@ -243,7 +242,7 @@ function ImagePreview({
 					{uploadDateText ? (
 						<div
 							className={clsx("text-xs text-lighter", {
-								invisible: !imageLoaded,
+								invisible: !imageSettled,
 							})}
 						>
 							{uploadDateText}
@@ -278,7 +277,7 @@ function ImagePreview({
 			<div className="stack horizontal justify-between">
 				<div
 					className={clsx("stack sm horizontal text-xs items-center mt-1", {
-						invisible: !imageLoaded,
+						invisible: !imageSettled,
 					})}
 				>
 					<Avatar user={art.author} size="xxs" />
@@ -287,7 +286,7 @@ function ImagePreview({
 				{uploadDateText ? (
 					<div
 						className={clsx("text-xxs mt-1 text-lighter", {
-							invisible: !imageLoaded,
+							invisible: !imageSettled,
 						})}
 					>
 						{uploadDateText}

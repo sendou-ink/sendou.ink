@@ -1,13 +1,8 @@
-import { afterEach, describe, expect, test } from "vitest";
-import { dbReset } from "~/utils/Test";
-import * as AdminRepository from "../admin/AdminRepository.server";
+import { describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "./UserRepository.server";
 
 describe("UserRepository", () => {
-	afterEach(() => {
-		dbReset();
-	});
-
 	test("created user has createdAt field", async () => {
 		await UserRepository.upsert({
 			discordId: "1",
@@ -69,7 +64,7 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		const result = await UserRepository.joinOrderByUserId(id);
+		const result = await UserRepository.findJoinOrderByUserId(id);
 
 		expect(result?.joinOrder).toBe(1);
 	});
@@ -87,12 +82,12 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
-			1,
-		);
-		expect((await UserRepository.joinOrderByUserId(secondId))?.joinOrder).toBe(
-			2,
-		);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
+		).toBe(1);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(secondId))?.joinOrder,
+		).toBe(2);
 
 		await UserRepository.upsert({
 			discordId: "1",
@@ -100,26 +95,20 @@ describe("UserRepository", () => {
 			discordAvatar: null,
 		});
 
-		expect((await UserRepository.joinOrderByUserId(firstId))?.joinOrder).toBe(
-			1,
-		);
+		expect(
+			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
+		).toBe(1);
 	});
 
 	describe("userRoles", () => {
 		test("returns empty array for basic user", async () => {
-			await UserRepository.upsert({
-				discordId: "79237403620945920",
-				discordName: "DummyAdmin",
-				discordAvatar: null,
-			});
+			await UserFactory.createAdmin();
 
 			const recentDiscordId = String(
 				(BigInt(Date.now() - 1420070400000) << 22n) + 1n,
 			);
-			const { id } = await UserRepository.upsert({
+			const { id } = await UserFactory.create({
 				discordId: recentDiscordId,
-				discordName: "RegularUser",
-				discordAvatar: null,
 			});
 
 			const user = await UserRepository.findLeanById(id);
@@ -128,11 +117,7 @@ describe("UserRepository", () => {
 		});
 
 		test("returns ADMIN and STAFF roles for admin user", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945920",
-				discordName: "AdminUser",
-				discordAvatar: null,
-			});
+			const { id } = await UserFactory.createAdmin();
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -141,22 +126,7 @@ describe("UserRepository", () => {
 		});
 
 		test("returns MINOR_SUPPORT role for patron tier 1", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945921",
-				discordName: "PatronUser",
-				discordAvatar: null,
-			});
-
-			const now = new Date();
-			const oneYearFromNow = new Date(
-				now.getTime() + 365 * 24 * 60 * 60 * 1000,
-			);
-			await AdminRepository.forcePatron({
-				id,
-				patronTier: 1,
-				patronSince: now,
-				patronTill: oneYearFromNow,
-			});
+			const { id } = await UserFactory.create(null, { patronTier: 1 });
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -165,22 +135,7 @@ describe("UserRepository", () => {
 		});
 
 		test("returns SUPPORTER, MINOR_SUPPORT, TOURNAMENT_ADDER, CALENDAR_EVENT_ADDER, and API_ACCESSER roles for patron tier 2", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945921",
-				discordName: "SupporterUser",
-				discordAvatar: null,
-			});
-
-			const now = new Date();
-			const oneYearFromNow = new Date(
-				now.getTime() + 365 * 24 * 60 * 60 * 1000,
-			);
-			await AdminRepository.forcePatron({
-				id,
-				patronTier: 2,
-				patronSince: now,
-				patronTill: oneYearFromNow,
-			});
+			const { id } = await UserFactory.create(null, { patronTier: 2 });
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -192,13 +147,7 @@ describe("UserRepository", () => {
 		});
 
 		test("returns PLUS_SERVER_MEMBER role for plus tier user", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945921",
-				discordName: "PlusUser",
-				discordAvatar: null,
-			});
-
-			await AdminRepository.replacePlusTiers([{ userId: id, plusTier: 1 }]);
+			const { id } = await UserFactory.create(null, { plusTier: 1 });
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -206,13 +155,7 @@ describe("UserRepository", () => {
 		});
 
 		test("returns ARTIST role for artist user", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945921",
-				discordName: "ArtistUser",
-				discordAvatar: null,
-			});
-
-			await AdminRepository.makeArtistByUserId(id);
+			const { id } = await UserFactory.create(null, { roles: ["ARTIST"] });
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -220,13 +163,7 @@ describe("UserRepository", () => {
 		});
 
 		test("returns VIDEO_ADDER role for video adder user", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945921",
-				discordName: "VideoAdderUser",
-				discordAvatar: null,
-			});
-
-			await AdminRepository.makeVideoAdderByUserId(id);
+			const { id } = await UserFactory.create(null, { roles: ["VIDEO_ADDER"] });
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -234,13 +171,10 @@ describe("UserRepository", () => {
 		});
 
 		test("returns TOURNAMENT_ADDER and API_ACCESSER roles for tournament organizer", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945921",
-				discordName: "OrganizerUser",
-				discordAvatar: null,
-			});
-
-			await AdminRepository.makeTournamentOrganizerByUserId(id);
+			const { id } = await UserFactory.create(
+				{},
+				{ roles: ["TOURNAMENT_ORGANIZER"] },
+			);
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -249,13 +183,9 @@ describe("UserRepository", () => {
 		});
 
 		test("returns API_ACCESSER role for api accesser user", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945921",
-				discordName: "ApiUser",
-				discordAvatar: null,
+			const { id } = await UserFactory.create(null, {
+				roles: ["API_ACCESSER"],
 			});
-
-			await AdminRepository.makeApiAccesserByUserId(id);
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -264,11 +194,7 @@ describe("UserRepository", () => {
 
 		test("returns CALENDAR_EVENT_ADDER role for aged discord account", async () => {
 			const agedDiscordId = "79237403620945921";
-			const { id } = await UserRepository.upsert({
-				discordId: agedDiscordId,
-				discordName: "AgedUser",
-				discordAvatar: null,
-			});
+			const { id } = await UserFactory.create({ discordId: agedDiscordId });
 
 			const user = await UserRepository.findLeanById(id);
 
@@ -280,10 +206,8 @@ describe("UserRepository", () => {
 				(BigInt(Date.now() - 1420070400000) << 22n) + 1n,
 			);
 
-			const { id } = await UserRepository.upsert({
+			const { id } = await UserFactory.create({
 				discordId: recentDiscordId,
-				discordName: "NewUser",
-				discordAvatar: null,
 			});
 
 			const user = await UserRepository.findLeanById(id);
@@ -292,26 +216,14 @@ describe("UserRepository", () => {
 		});
 
 		test("returns multiple roles for user with multiple privileges", async () => {
-			const { id } = await UserRepository.upsert({
-				discordId: "79237403620945920",
-				discordName: "MultiRoleUser",
-				discordAvatar: null,
-			});
-
-			const now = new Date();
-			const oneYearFromNow = new Date(
-				now.getTime() + 365 * 24 * 60 * 60 * 1000,
+			const { id } = await UserFactory.create(
+				{},
+				{
+					patronTier: 2,
+					plusTier: 2,
+					roles: ["ARTIST", "VIDEO_ADDER"],
+				},
 			);
-			await AdminRepository.forcePatron({
-				id,
-				patronTier: 2,
-				patronSince: now,
-				patronTill: oneYearFromNow,
-			});
-
-			await AdminRepository.makeArtistByUserId(id);
-			await AdminRepository.makeVideoAdderByUserId(id);
-			await AdminRepository.replacePlusTiers([{ userId: id, plusTier: 2 }]);
 
 			const user = await UserRepository.findLeanById(id);
 

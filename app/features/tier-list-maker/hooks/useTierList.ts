@@ -4,16 +4,9 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import JSONCrush from "jsoncrush";
 import * as React from "react";
-import { useSearchParams } from "react-router";
-import { z } from "zod";
-import {
-	useSearchParamState,
-	useSearchParamStateEncoder,
-} from "~/hooks/useSearchParamState";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
-import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	mainWeaponIds,
@@ -21,29 +14,24 @@ import {
 	subWeaponIds,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { assertUnreachable } from "~/utils/types";
-import { modeShort, safeJSONParse } from "~/utils/zod";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";
-import {
-	type TierListItem,
-	type TierListMakerTier,
-	type TierListState,
-	tierListItemTypeSchema,
-	tierListStateSerializedSchema,
+import type {
+	TierListItem,
+	TierListMakerTier,
+	TierListState,
 } from "../tier-list-maker-schemas";
+import { tierListMakerSearchParams } from "../tier-list-maker-search-params";
 import { addItemToTier, getNextNthForItem } from "../tier-list-maker-utils";
 
 export type TierListPlacementMode = "track" | "click";
 
 export function useTierList() {
-	const [itemType, setItemType] = useSearchParamState<TierListItem["type"]>({
-		name: "type",
-		defaultValue: "main-weapon",
-		revive: (value) => {
-			const parsed = tierListItemTypeSchema.safeParse(value);
-			return parsed.success ? parsed.data : "main-weapon";
-		},
-	});
+	const [itemType, setItemType] = useSearchParam(
+		tierListMakerSearchParams,
+		"type",
+	);
 
 	const { tiers, setTiers, persistTiersStateToParams } =
 		useSearchParamTiersState();
@@ -60,46 +48,32 @@ export function useTierList() {
 		setSelectedTierId(mode === "click" ? (tiers.tiers[0]?.id ?? null) : null);
 	};
 
-	const [hideAltKits, setHideAltKits] = useSearchParamState({
-		name: "hideAltKits",
-		defaultValue: false,
-		revive: (value) => value === "true",
-	});
+	const [hideAltKits, setHideAltKits] = useSearchParam(
+		tierListMakerSearchParams,
+		"hideAltKits",
+	);
 
-	const [hideAltSkins, setHideAltSkins] = useSearchParamState({
-		name: "hideAltSkins",
-		defaultValue: false,
-		revive: (value) => value === "true",
-	});
+	const [hideAltSkins, setHideAltSkins] = useSearchParam(
+		tierListMakerSearchParams,
+		"hideAltSkins",
+	);
 
-	const [canAddDuplicates, setCanAddDuplicates] = useSearchParamState({
-		name: "canAddDuplicates",
-		defaultValue: false,
-		revive: (value) => value === "true",
-	});
+	const [canAddDuplicates, setCanAddDuplicates] = useSearchParam(
+		tierListMakerSearchParams,
+		"canAddDuplicates",
+	);
 
-	const [showTierHeaders, setShowTierHeaders] = useSearchParamState({
-		name: "showTierHeaders",
-		defaultValue: true,
-		revive: (value) => value === "true",
-	});
+	const [showTierHeaders, setShowTierHeaders] = useSearchParam(
+		tierListMakerSearchParams,
+		"showTierHeaders",
+	);
 
-	const [title, setTitle] = useSearchParamState({
-		name: "title",
-		defaultValue: "",
-		revive: (value) => value,
-	});
+	const [title, setTitle] = useSearchParam(tierListMakerSearchParams, "title");
 
-	const [selectedModes, setSelectedModes] = useSearchParamStateEncoder({
-		name: "modes",
-		defaultValue: rankedModesShort,
-		revive: (value) =>
-			z
-				.preprocess(safeJSONParse, z.array(modeShort))
-				.catch(() => rankedModesShort)
-				.parse(value),
-		encode: JSON.stringify,
-	});
+	const [selectedModes, setSelectedModes] = useSearchParam(
+		tierListMakerSearchParams,
+		"modes",
+	);
 
 	const parseItemFromId = (id: string): TierListItem | null => {
 		const [type, idStr, nth] = String(id).split(":");
@@ -508,53 +482,21 @@ export function useTierList() {
 	};
 }
 
-const TIER_SEARCH_PARAM_NAME = "state";
-
+/**
+ * The tier list state itself. `setTiers` only updates React state (drag-over
+ * fires on every pointer move); `persistTiersStateToParams` writes the state
+ * to the URL and is called when a drag or tier edit settles.
+ */
 function useSearchParamTiersState() {
-	const [initialSearchParams] = useSearchParams();
-	const [tiers, setTiers] = React.useState<TierListState>(() => {
-		const param = initialSearchParams.get(TIER_SEARCH_PARAM_NAME);
-
-		try {
-			if (param) {
-				const uncrushed = JSONCrush.uncrush(param);
-
-				const parsed = tierListStateSerializedSchema.parse(
-					JSON.parse(uncrushed),
-				);
-
-				return {
-					tiers: parsed.tiers,
-					tierItems: new Map(parsed.tierItems),
-				};
-			}
-		} catch {} // ignored on purpose
-
-		return {
-			tiers: DEFAULT_TIERS,
-			tierItems: new Map(),
-		};
-	});
-
-	const persistTiersStateToParams = (state: TierListState) => {
-		const searchParams = new URLSearchParams(window.location.search);
-
-		const serializedState = JSON.stringify({
-			tiers: state.tiers,
-			tierItems: Array.from(state.tierItems.entries()),
-		});
-
-		searchParams.set(TIER_SEARCH_PARAM_NAME, JSONCrush.crush(serializedState));
-		window.history.replaceState(
-			{},
-			"",
-			`${window.location.pathname}?${String(searchParams)}`,
-		);
-	};
+	const [stateParam, setStateParam] = useSearchParam(
+		tierListMakerSearchParams,
+		"state",
+	);
+	const [tiers, setTiers] = React.useState<TierListState>(() => stateParam);
 
 	return {
 		tiers,
 		setTiers,
-		persistTiersStateToParams,
+		persistTiersStateToParams: setStateParam,
 	};
 }

@@ -3,8 +3,6 @@ import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/typ
 
 export const MAX_BUILD_FILTERS = 6;
 
-export const FILTER_SEARCH_PARAM_KEY = "f";
-
 type Patch = { patch: string; date: string };
 
 /**

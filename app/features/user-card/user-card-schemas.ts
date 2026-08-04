@@ -4,12 +4,15 @@ import {
 	customField,
 	image,
 	numberFieldOptional,
+	radioGroup,
 	select,
 	stageSelect,
+	stringConstant,
 	textAreaOptional,
 	toggle,
 } from "~/form/fields";
-import { _action, falsyToNull, id } from "~/utils/zod";
+import { preferenceEmojiUrl } from "~/utils/urls";
+import { _action, id } from "~/utils/zod";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import { USER_CARD } from "./user-card-constants";
 
@@ -51,15 +54,37 @@ export const updateUserCardSchema = z.object({
 	hideDiv: toggle({ label: "labels.hideDiv" }),
 });
 
-export const userCardNoteSchema = z.union([
-	z.object({
-		_action: _action("SAVE"),
-		comment: z.preprocess(
-			falsyToNull,
-			z.string().max(SENDOUQ.PRIVATE_USER_NOTE_MAX_LENGTH).nullable(),
-		),
-		sentiment: z.enum(["POSITIVE", "NEUTRAL", "NEGATIVE"]),
+export const userCardNoteSaveSchema = z.object({
+	_action: stringConstant("SAVE"),
+	comment: textAreaOptional({
+		label: "labels.comment",
+		maxLength: SENDOUQ.PRIVATE_USER_NOTE_MAX_LENGTH,
 	}),
+	sentiment: radioGroup({
+		label: "labels.sentiment",
+		bottomText: "bottomTexts.sentiment",
+		items: [
+			{
+				value: "POSITIVE",
+				label: "options.sentiment.POSITIVE",
+				imgSrc: preferenceEmojiUrl("PREFER"),
+			},
+			{
+				value: "NEUTRAL",
+				label: "options.sentiment.NEUTRAL",
+				imgSrc: preferenceEmojiUrl(),
+			},
+			{
+				value: "NEGATIVE",
+				label: "options.sentiment.NEGATIVE",
+				imgSrc: preferenceEmojiUrl("AVOID"),
+			},
+		],
+	}),
+});
+
+export const userCardNoteSchema = z.union([
+	userCardNoteSaveSchema,
 	z.object({
 		_action: _action("DELETE"),
 	}),

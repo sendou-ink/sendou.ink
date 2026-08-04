@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
-import { notFoundIfFalsy, parseParams } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentOrganizationResponse } from "../schema";
 
@@ -14,7 +14,7 @@ const paramsSchema = z.object({
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id } = parseParams({ params, schema: paramsSchema });
 
-	const organization = notFoundIfFalsy(
+	const organization = notFoundIfNullish(
 		await db
 			.selectFrom("TournamentOrganization")
 			.leftJoin(

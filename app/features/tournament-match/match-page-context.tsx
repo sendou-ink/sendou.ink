@@ -1,7 +1,6 @@
 import * as React from "react";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { resolveRoomPass } from "~/components/match-page/utils";
-import { TournamentMatchStatus } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
@@ -87,6 +86,7 @@ export function MatchPageProvider({
 					],
 					mapList: data.mapList,
 					pickBanEventCount: data.pickBanEventCount,
+					matchId: data.match.id,
 				})
 			: null;
 	const isPickBanStep =
@@ -101,9 +101,7 @@ export function MatchPageProvider({
 		scores,
 	});
 
-	const waitingForPreviousMatch =
-		data.match.status === TournamentMatchStatus.Locked ||
-		data.match.status === TournamentMatchStatus.Waiting;
+	const waitingForPreviousMatch = data.match.status === "PENDING";
 
 	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 
@@ -262,9 +260,7 @@ function resolveJoinInfo({
 	);
 	const bracket = tournament.brackets[bracketIdx];
 	const bracketMatch = bracket?.data.match.find((m) => m.id === data.match.id);
-	const group = bracket?.data.group.find(
-		(g) => g.id === bracketMatch?.group_id,
-	);
+	const group = bracket?.data.group.find((g) => g.id === bracketMatch?.groupId);
 
 	const poolCode = tournament.resolvePoolCode({
 		hostingTeamId: hostingTeam.id,

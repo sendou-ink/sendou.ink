@@ -1,0 +1,602 @@
+import type { ShouldRevalidateFunction } from "react-router";
+import { isDeepEqual } from "remeda";
+import { z } from "zod";
+import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
+
+const COMPRESSED_PREFIX = "lz~";
+const ESCAPED_PREFIX = "lz~~";
+const DECODE_CACHE_MAX_SIZE = 300;
+const MAX_DECOMPRESSED_VALUE_BYTES = 256 * 1024;
+const DEFAULT_MAX_PAGE = 1000;
+
+const DECODE_FAILED = Symbol("DECODE_FAILED");
+
+type ScalarBase = "string" | "number" | "boolean";
+
+type EncodeMode = "canonical" | "compact";
+
+interface ParamOptionsBase {
+	/** Whether changing this param must run loaders. `false` params write through `history.replaceState` and never trigger revalidation. */
+	loader: boolean;
+	/** Param keys reset to their defaults whenever this param is written. */
+	resets?: string[];
+	/** The param's canonical encoding is the compressed form. Only for params whose values are inherently large. */
+	compress?: boolean;
+}
+
+type DefaultOption<T> = {
+	/** Value used when the param is missing or fails to decode. Values equal to it are omitted from the URL. Must be a static value. */
+	default: T;
+};
+
+type ParamOptions<T> = ParamOptionsBase &
+	(unknown extends T
+		? DefaultOption<T>
+		: null extends T
+			? {
+					/** Omit it: a nullable param's default is always `null`. */
+					default?: null;
+				}
+			: DefaultOption<T>);
+
+type ResolvedParamOptions<T> = ParamOptionsBase & { default: T };
+
+export interface ParamDef<T> {
+	default: T;
+	loader: boolean;
+	resets: string[];
+	compress: boolean;
+	decodeValues: (values: string[]) => T;
+	encodePlain: (value: T) => string[];
+	decodeCache: Map<string, T>;
+}
+
+type AnyShape = Record<string, ParamDef<any>>;
+
+export type SearchParamsValues<Shape extends AnyShape> = {
+	[K in keyof Shape]: Shape[K] extends ParamDef<infer T> ? T : never;
+};
+
+export interface SearchParamsDefinition<Shape extends AnyShape> {
+	shape: Shape;
+	keys: string[];
+	/** Decodes all params of the definition. Total: defaults resolve for missing or malformed values, never throws. */
+	parse: (input: Request | URL | URLSearchParams) => SearchParamsValues<Shape>;
+	/** Builds a href with the given values encoded as search params. Values equal to their default are omitted. */
+	href: (
+		path: string,
+		values: Partial<SearchParamsValues<Shape>>,
+		opts?: { compress?: boolean },
+	) => string;
+	/** Revalidates only when a `loader: true` param's decoded canonical value changed. */
+	shouldRevalidate: ShouldRevalidateFunction;
+}
+
+/**
+ * Creates a search params definition from param declarations (see `SP.param`,
+ * `SP.json` and `SP.custom`). One definition per route or feature drives
+ * loader parsing, client state, href building and revalidation.
+ */
+export function define<Shape extends AnyShape>(
+	shape: Shape,
+): SearchParamsDefinition<Shape> {
+	const keys = Object.keys(shape);
+
+	for (const [key, def] of Object.entries(shape)) {
+		for (const resetKey of def.resets) {
+			if (!keys.includes(resetKey)) {
+				throw new Error(
+					`Search param "${key}" resets unknown param "${resetKey}"`,
+				);
+			}
+		}
+	}
+
+	const definition: SearchParamsDefinition<Shape> = {
+		shape,
+		keys,
+		parse: (input) => {
+			const searchParams = toSearchParams(input);
+			const result: Record<string, unknown> = {};
+			for (const key of keys) {
+				result[key] = decodeParam(shape[key], searchParams.getAll(key));
+			}
+			return result as SearchParamsValues<Shape>;
+		},
+		href: (path, values, opts) => {
+			const searchParams = new URLSearchParams();
+			const mode: EncodeMode = opts?.compress ? "compact" : "canonical";
+			for (const key of keys) {
+				if (!(key in values)) continue;
+				for (const encoded of encodeParam(shape[key], values[key], mode)) {
+					searchParams.append(key, encoded);
+				}
+			}
+			const queryString = searchParams.toString();
+			if (!queryString) return path;
+
+			return `${path}${path.includes("?") ? "&" : "?"}${queryString}`;
+		},
+		shouldRevalidate: (args) => {
+			if (args.currentUrl.pathname !== args.nextUrl.pathname) {
+				return args.defaultShouldRevalidate;
+			}
+			if (args.formMethod && args.formMethod !== "GET") {
+				return args.defaultShouldRevalidate;
+			}
+			if (args.currentUrl.href === args.nextUrl.href) {
+				return args.defaultShouldRevalidate;
+			}
+			const current = args.currentUrl.searchParams;
+			const next = args.nextUrl.searchParams;
+			if (unknownParamsChanged(keys, current, next)) {
+				return args.defaultShouldRevalidate;
+			}
+			for (const key of keys) {
+				const def = shape[key];
+				if (!def.loader) continue;
+				if (
+					!isDeepEqual(
+						decodeParam(def, current.getAll(key)),
+						decodeParam(def, next.getAll(key)),
+					)
+				) {
+					return true;
+				}
+			}
+			return false;
+		},
+	};
+
+	return definition;
+}
+
+/**
+ * Decodes one param from its raw URL values, resolving to the default when the
+ * param is missing or malformed. Uses a per-param cache keyed on the raw values
+ * so repeated decodes of the same string return the same reference.
+ */
+export function decodeParam<T>(def: ParamDef<T>, values: string[]): T {
+	const cacheKey = JSON.stringify(values);
+	if (def.decodeCache.has(cacheKey)) {
+		return def.decodeCache.get(cacheKey) as T;
+	}
+
+	const decoded = def.decodeValues(values);
+
+	if (def.decodeCache.size >= DECODE_CACHE_MAX_SIZE) {
+		def.decodeCache.clear();
+	}
+	def.decodeCache.set(cacheKey, decoded);
+
+	return decoded;
+}
+
+/**
+ * Encodes one param value to its URL values. Returns an empty array (param
+ * absent) for values equal to the default.
+ */
+export function encodeParam<T>(
+	def: ParamDef<T>,
+	value: T,
+	mode: EncodeMode = "canonical",
+): string[] {
+	if (isDeepEqual(value, def.default)) return [];
+
+	return def.encodePlain(value).map((plain) => wrapValue(plain, def, mode));
+}
+
+/**
+ * Applies a partial values update on top of the current search params,
+ * preserving params outside the definition, applying declared `resets` and
+ * omitting values equal to their defaults. A key written in the same batch is
+ * never reset by another key of that batch.
+ */
+export function applyToSearchParams<Shape extends AnyShape>(
+	definition: SearchParamsDefinition<Shape>,
+	current: URLSearchParams,
+	updates: Partial<SearchParamsValues<Shape>>,
+): { next: URLSearchParams; navigationNeeded: boolean } {
+	const next = new URLSearchParams(current);
+	let navigationNeeded = false;
+
+	const updatedKeys = definition.keys.filter((key) => key in updates);
+
+	const resetKeys = new Set<string>();
+	for (const key of updatedKeys) {
+		for (const resetKey of definition.shape[key].resets) {
+			if (!(resetKey in updates)) resetKeys.add(resetKey);
+		}
+	}
+
+	for (const key of updatedKeys) {
+		const def = definition.shape[key];
+		if (def.loader) {
+			navigationNeeded = true;
+		}
+
+		next.delete(key);
+		for (const encoded of encodeParam(def, updates[key])) {
+			next.append(key, encoded);
+		}
+	}
+
+	for (const resetKey of resetKeys) {
+		if (definition.shape[resetKey].loader && next.has(resetKey)) {
+			navigationNeeded = true;
+		}
+		next.delete(resetKey);
+	}
+
+	return { next, navigationNeeded };
+}
+
+/**
+ * Serializes only the definition's keys out of a search string. Used as a
+ * cheap fingerprint: it changes exactly when one of the definition's params
+ * changes in the URL.
+ */
+export function pickRelevantSearch(keys: string[], search: string): string {
+	const searchParams = new URLSearchParams(search);
+	const picked = new URLSearchParams();
+	for (const key of keys) {
+		for (const value of searchParams.getAll(key)) {
+			picked.append(key, value);
+		}
+	}
+	return picked.toString();
+}
+
+/**
+ * Param declaration helpers. `SP.param` is the canonical declaration deriving
+ * the URL encoding from the value schema; `SP.json` and `SP.custom` are the
+ * explicit helpers for shapes outside the derivation table.
+ */
+export const SP = {
+	/**
+	 * Declares a param whose URL encoding is derived from the zod value
+	 * schema's type tree. Supported shapes: strings, numbers, booleans, string
+	 * and number enums/literals, same-base-type unions, arrays of those
+	 * (encoded as repeated keys) and a top-level `.nullable()` wrapper (`null`
+	 * encodes as param absent, so `default` is omitted for those). Anything else
+	 * is a `define()`-time error — use `SP.json` or `SP.custom` instead.
+	 */
+	param<S extends z.ZodType>(
+		schema: S,
+		opts: ParamOptions<z.output<S>>,
+	): ParamDef<z.output<S>> {
+		const resolved = resolveOptions(opts);
+		let core: z.ZodType = schema;
+
+		if (core instanceof z.ZodOptional) {
+			throw new Error(
+				"Search params use .nullable() instead of .optional() (null encodes as param absent)",
+			);
+		}
+		if (core instanceof z.ZodNullable) {
+			if (resolved.default !== null) {
+				throw new Error(
+					"A .nullable() search param must have null as its default, otherwise null and the default could not be told apart in the URL",
+				);
+			}
+			core = core.unwrap() as z.ZodType;
+		}
+
+		if (core instanceof z.ZodArray) {
+			const itemBase = deriveScalarBase(core.element as z.ZodType);
+			if (!itemBase) {
+				throw new Error(
+					`Cannot derive an URL encoding for the array item schema of a search param (got ${describeSchema(core.element as z.ZodType)}). Use SP.json or SP.custom.`,
+				);
+			}
+			return arrayParam(schema, core, itemBase, resolved);
+		}
+
+		const base = deriveScalarBase(core);
+		if (!base) {
+			throw new Error(
+				`Cannot derive an URL encoding for a search param schema (got ${describeSchema(core)}). Use SP.json or SP.custom.`,
+			);
+		}
+		return scalarParam(schema, base, resolved);
+	},
+
+	/** Declares the 1-based `page` param of a paginated route, as `useSearchParamPagination` expects it. */
+	page(opts?: { max?: number }): ParamDef<number> {
+		return SP.param(
+			z
+				.number()
+				.int()
+				.min(1)
+				.max(opts?.max ?? DEFAULT_MAX_PAGE),
+			{ default: 1, loader: true },
+		);
+	},
+
+	/** Declares a param encoded as `JSON.stringify` in a single value. For objects and whole-array-as-one-param values. */
+	json<S extends z.ZodType>(
+		schema: S,
+		opts: ParamOptions<z.output<S>>,
+	): ParamDef<z.output<S>> {
+		const resolved = resolveOptions(opts);
+
+		return {
+			...baseDef(resolved),
+			decodeValues: (values) => {
+				if (values.length === 0) return resolved.default;
+				const plain = unwrapValue(values[0]);
+				if (plain === DECODE_FAILED) return resolved.default;
+				let json: unknown;
+				try {
+					json = JSON.parse(plain);
+				} catch {
+					return resolved.default;
+				}
+				const parsed = schema.safeParse(json);
+				return parsed.success ? parsed.data : resolved.default;
+			},
+			encodePlain: (value) => [JSON.stringify(value)],
+		};
+	},
+
+	/**
+	 * Escape hatch: declares a param from a `z.codec(z.string(), valueSchema, ...)`
+	 * passed directly. The codec's `decode` may accept legacy formats while
+	 * `encode` always emits the canonical one.
+	 */
+	custom<Value>(
+		codec: z.ZodType<Value, string | null>,
+		opts: ParamOptions<Value>,
+	): ParamDef<Value> {
+		const resolved = resolveOptions(opts);
+
+		return {
+			...baseDef(resolved),
+			decodeValues: (values) => {
+				if (values.length === 0) return resolved.default;
+				const plain = unwrapValue(values[0]);
+				if (plain === DECODE_FAILED) return resolved.default;
+				const parsed = z.safeDecode(codec, plain);
+				return parsed.success ? parsed.data : resolved.default;
+			},
+			encodePlain: (value) => {
+				const encoded = z.safeEncode(codec, value);
+				if (!encoded.success || typeof encoded.data !== "string") {
+					throw new Error(
+						"Encoding a search param value failed; SP.custom codecs must encode every value of their type",
+					);
+				}
+				return [encoded.data];
+			},
+		};
+	},
+};
+
+function resolveOptions<T>(opts: ParamOptions<T>): ResolvedParamOptions<T> {
+	const { default: defaultValue, ...rest } = opts as ParamOptionsBase & {
+		default?: T;
+	};
+
+	return { ...rest, default: (defaultValue ?? null) as T };
+}
+
+function baseDef<T>(
+	opts: ResolvedParamOptions<T>,
+): Pick<
+	ParamDef<T>,
+	"default" | "loader" | "resets" | "compress" | "decodeCache"
+> {
+	return {
+		default: opts.default,
+		loader: opts.loader,
+		resets: opts.resets ?? [],
+		compress: opts.compress ?? false,
+		decodeCache: new Map(),
+	};
+}
+
+function scalarParam<T>(
+	schema: z.ZodType,
+	base: ScalarBase,
+	opts: ResolvedParamOptions<T>,
+): ParamDef<T> {
+	return {
+		...baseDef(opts),
+		decodeValues: (values) => {
+			if (values.length === 0) return opts.default;
+			const plain = unwrapValue(values[0]);
+			if (plain === DECODE_FAILED) return opts.default;
+			const candidate = plainToScalar(plain, base);
+			if (candidate === DECODE_FAILED) return opts.default;
+			const parsed = schema.safeParse(candidate);
+			return parsed.success ? (parsed.data as T) : opts.default;
+		},
+		encodePlain: (value) => [String(value)],
+	};
+}
+
+function arrayParam<T>(
+	schema: z.ZodType,
+	arraySchema: z.ZodArray,
+	itemBase: ScalarBase,
+	opts: ResolvedParamOptions<T>,
+): ParamDef<T> {
+	const itemSchema = arraySchema.element as z.ZodType;
+
+	return {
+		...baseDef(opts),
+		decodeValues: (values) => {
+			if (values.length === 0) return opts.default;
+
+			const plains: string[] = [];
+			for (const value of values) {
+				const plain = unwrapValue(value);
+				if (plain !== DECODE_FAILED) plains.push(plain);
+			}
+
+			let items = plains;
+			if (plains.length === 1) {
+				if (plains[0] === "") {
+					items = [];
+				} else if (plains[0].startsWith("[")) {
+					// legacy decode fallback for JSON-encoded arrays
+					try {
+						const parsed = JSON.parse(plains[0]);
+						if (Array.isArray(parsed)) {
+							items = parsed.map((member) => String(member));
+						}
+					} catch {}
+				} else if (itemBase === "number" && plains[0].includes(",")) {
+					// legacy decode fallback for comma-joined numeric arrays
+					items = plains[0].split(",");
+				}
+			}
+
+			const members: unknown[] = [];
+			for (const item of items) {
+				const candidate = plainToScalar(item, itemBase);
+				if (candidate === DECODE_FAILED) continue;
+				const parsed = itemSchema.safeParse(candidate);
+				if (parsed.success) members.push(parsed.data);
+			}
+
+			const parsed = schema.safeParse(members);
+			return parsed.success ? (parsed.data as T) : opts.default;
+		},
+		encodePlain: (value) => {
+			const items = value as unknown[];
+			if (items.length === 0) return [""];
+			return items.map((item) => String(item));
+		},
+	};
+}
+
+function plainToScalar(
+	plain: string,
+	base: ScalarBase,
+): string | number | boolean | typeof DECODE_FAILED {
+	if (base === "string") return plain;
+
+	if (base === "number") {
+		if (plain.trim() === "") return DECODE_FAILED;
+		const parsed = Number(plain);
+		return Number.isFinite(parsed) ? parsed : DECODE_FAILED;
+	}
+
+	if (plain === "true") return true;
+	if (plain === "false") return false;
+	return DECODE_FAILED;
+}
+
+function deriveScalarBase(schema: z.ZodType): ScalarBase | null {
+	if (schema instanceof z.ZodString) return "string";
+	if (schema instanceof z.ZodNumber) return "number";
+	if (schema instanceof z.ZodBoolean) return "boolean";
+
+	if (schema instanceof z.ZodEnum) {
+		return uniformTypeOf(schema.options);
+	}
+	if (schema instanceof z.ZodLiteral) {
+		return uniformTypeOf(Array.from(schema.values));
+	}
+	if (schema instanceof z.ZodUnion) {
+		const bases = (schema.options as z.ZodType[]).map(deriveScalarBase);
+		if (bases[0] && bases.every((base) => base === bases[0])) {
+			return bases[0];
+		}
+		return null;
+	}
+
+	return null;
+}
+
+function uniformTypeOf(values: unknown[]): ScalarBase | null {
+	const types = new Set(values.map((value) => typeof value));
+	if (types.size !== 1) return null;
+
+	const type = Array.from(types)[0];
+	if (type === "string" || type === "number" || type === "boolean") {
+		return type;
+	}
+	return null;
+}
+
+function describeSchema(schema: z.ZodType) {
+	return schema.constructor.name;
+}
+
+function toSearchParams(
+	input: Request | URL | URLSearchParams,
+): URLSearchParams {
+	if (input instanceof URLSearchParams) return input;
+	if (input instanceof URL) return input.searchParams;
+	return new URL(input.url).searchParams;
+}
+
+function unknownParamsChanged(
+	knownKeys: string[],
+	current: URLSearchParams,
+	next: URLSearchParams,
+): boolean {
+	const unknownKeys = new Set<string>();
+	for (const key of current.keys()) {
+		if (!knownKeys.includes(key)) unknownKeys.add(key);
+	}
+	for (const key of next.keys()) {
+		if (!knownKeys.includes(key)) unknownKeys.add(key);
+	}
+
+	for (const key of unknownKeys) {
+		if (!isDeepEqual(current.getAll(key), next.getAll(key))) return true;
+	}
+	return false;
+}
+
+function wrapValue<T>(plain: string, def: ParamDef<T>, mode: EncodeMode) {
+	if (def.compress) return compressTransportValue(plain);
+
+	if (mode === "compact") {
+		const compressed = compressTransportValue(plain);
+		const escaped = escapePlainValue(plain);
+		if (urlEncodedLength(compressed) < urlEncodedLength(escaped)) {
+			return compressed;
+		}
+	}
+
+	return escapePlainValue(plain);
+}
+
+/** Length the value takes in the URL, i.e. percent-encoded as `URLSearchParams` writes it. */
+function urlEncodedLength(value: string) {
+	return new URLSearchParams([["", value]]).toString().length;
+}
+
+/**
+ * Wraps a plain encoded value in the compressed transport form. Any param can
+ * arrive compressed like this; used by round-trip tests and share links.
+ */
+export function compressTransportValue(plain: string) {
+	return `${COMPRESSED_PREFIX}${compressToBase64(plain, { urlSafe: true })}`;
+}
+
+function escapePlainValue(plain: string) {
+	if (!plain.startsWith(COMPRESSED_PREFIX)) return plain;
+
+	return `${ESCAPED_PREFIX}${plain.slice(COMPRESSED_PREFIX.length)}`;
+}
+
+function unwrapValue(raw: string): string | typeof DECODE_FAILED {
+	if (raw.startsWith(ESCAPED_PREFIX)) {
+		return `${COMPRESSED_PREFIX}${raw.slice(ESCAPED_PREFIX.length)}`;
+	}
+
+	if (raw.startsWith(COMPRESSED_PREFIX)) {
+		const decompressed = decompressFromBase64(
+			raw.slice(COMPRESSED_PREFIX.length),
+			{ maxDecompressedBytes: MAX_DECOMPRESSED_VALUE_BYTES },
+		);
+		return decompressed === null ? DECODE_FAILED : decompressed;
+	}
+
+	return raw;
+}

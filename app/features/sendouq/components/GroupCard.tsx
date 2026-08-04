@@ -11,7 +11,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { ParsedMemento } from "~/db/tables";
+import type { ParsedMemento } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
@@ -20,6 +20,7 @@ import {
 	UserCard,
 	useUserCardData,
 } from "~/features/user-card/components/UserCard";
+import { SendouForm } from "~/form/SendouForm";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -34,7 +35,8 @@ import type {
 	SQGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
-import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
+import { FULL_GROUP_SIZE } from "../q-constants";
+import { updateGroupNoteSchema } from "../q-schemas";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
 
@@ -279,7 +281,7 @@ function GroupMember({
 							<span className={styles.name}>
 								{member.inGameName ? (
 									<>
-										<span className="text-lighter font-bold text-xxxs">
+										<span className="text-lighter font-bold text-xxs">
 											{t("user:ign.short")}:
 										</span>{" "}
 										{inGameNameWithoutDiscriminator(member.inGameName)}
@@ -291,12 +293,17 @@ function GroupMember({
 						</span>
 					</UserCard>
 					{member.pronouns ? (
-						<span className="text-lighter ml-1 text-xxxs">
+						<span className="text-lighter ml-1 text-xxs">
 							{member.pronouns.subject}/{member.pronouns.object}
 						</span>
 					) : null}
 				</div>
-				<div className="ml-auto stack horizontal sm items-center">
+				<div
+					className={clsx(
+						"ml-auto stack horizontal sm items-center",
+						styles.memberActions,
+					)}
+				>
 					{showActions || displayOnly ? (
 						<MemberRoleManager
 							member={member}
@@ -364,10 +371,6 @@ function MemberNote({
 		setEditing(true);
 	};
 
-	React.useEffect(() => {
-		setEditing(false);
-	}, [note]);
-
 	if (editing) {
 		return (
 			<AddPrivateNoteForm note={note} stopEditing={() => setEditing(false)} />
@@ -408,31 +411,18 @@ function AddPrivateNoteForm({
 	note?: string | null;
 	stopEditing: () => void;
 }) {
-	const fetcher = useFetcher();
-	const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 	const { t } = useTranslation(["common"]);
-	const [value, setValue] = React.useState(note ?? "");
-
-	const newValueLegal = value.length <= SENDOUQ.OWN_PUBLIC_NOTE_MAX_LENGTH;
-
-	React.useEffect(() => {
-		if (!textareaRef.current) return;
-		textareaRef.current.focus();
-		textareaRef.current.selectionStart = textareaRef.current.selectionEnd =
-			textareaRef.current.value.length;
-	}, []);
 
 	return (
-		<fetcher.Form method="post" action={SENDOUQ_LOOKING_PAGE}>
-			<textarea
-				value={value}
-				onChange={(e) => setValue(e.target.value)}
-				rows={2}
-				className={`${styles.noteTextarea} mt-1`}
-				name="value"
-				ref={textareaRef}
-			/>
-			<div className="stack horizontal justify-between">
+		<SendouForm
+			schema={updateGroupNoteSchema}
+			action={SENDOUQ_LOOKING_PAGE}
+			defaultValues={{ value: note ?? "" }}
+			className="stack sm mt-1"
+			submitButtonText={t("common:actions.save")}
+			submitButtonVariant="minimal"
+			submitButtonSize="miniscule"
+			secondarySubmit={
 				<SendouButton
 					variant="minimal-destructive"
 					size="miniscule"
@@ -440,21 +430,11 @@ function AddPrivateNoteForm({
 				>
 					{t("common:actions.cancel")}
 				</SendouButton>
-				{newValueLegal ? (
-					<SubmitButton
-						_action="UPDATE_NOTE"
-						variant="minimal"
-						size="miniscule"
-					>
-						{t("common:actions.save")}
-					</SubmitButton>
-				) : (
-					<span className="text-warning text-xxs font-semi-bold">
-						{value.length}/{SENDOUQ.OWN_PUBLIC_NOTE_MAX_LENGTH}
-					</span>
-				)}
-			</div>
-		</fetcher.Form>
+			}
+			onSuccess={stopEditing}
+		>
+			{({ FormField }) => <FormField name="value" autoFocus />}
+		</SendouForm>
 	);
 }
 

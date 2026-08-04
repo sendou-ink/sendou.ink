@@ -2,15 +2,15 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
-	safeParseRequestFormData,
 } from "~/utils/remix.server";
 import { calendarEventPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { reportWinnersActionSchema } from "../calendar-schemas";
+import { reportWinnersFormSchema } from "../calendar-schemas";
 import { canReportCalendarEventWinners } from "../calendar-utils";
 
 export const action: ActionFunction = async (args) => {
@@ -19,18 +19,16 @@ export const action: ActionFunction = async (args) => {
 		params: args.params,
 		schema: idObject,
 	});
-	const parsedInput = await safeParseRequestFormData({
+	const result = await parseFormData({
 		request: args.request,
-		schema: reportWinnersActionSchema,
+		schema: reportWinnersFormSchema,
 	});
 
-	if (!parsedInput.success) {
-		return {
-			errors: parsedInput.errors,
-		};
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
 	}
 
-	const event = notFoundIfFalsy(await CalendarRepository.findById(params.id));
+	const event = notFoundIfNullish(await CalendarRepository.findById(params.id));
 	errorToastIfFalsy(
 		canReportCalendarEventWinners({
 			user,
@@ -42,15 +40,8 @@ export const action: ActionFunction = async (args) => {
 
 	await CalendarRepository.upsertReportedScores({
 		eventId: params.id,
-		participantCount: parsedInput.data.participantCount,
-		results: parsedInput.data.team.map((t) => ({
-			teamName: t.teamName,
-			placement: t.placement,
-			players: t.players.map((p) => ({
-				userId: typeof p === "string" ? null : p.id,
-				name: typeof p === "string" ? p : null,
-			})),
-		})),
+		participantCount: result.data.participantCount,
+		results: result.data.teams,
 	});
 
 	throw redirect(calendarEventPage(params.id));

@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -15,15 +16,16 @@ import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/Grou
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
+import { parseFormData } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToast,
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
-	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
+import { sendMatchCanceledWebhook } from "../core/discord-webhook.server";
 import * as RejoinVote from "../core/RejoinVote";
 import * as SendouQMatch from "../core/SendouQMatch";
 import { matchSchema, qMatchPageParamsSchema } from "../q-match-schemas";
@@ -34,17 +36,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		schema: qMatchPageParamsSchema,
 	}).id;
 	const user = requireUser();
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: matchSchema,
 	});
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+	const data = result.data;
 
-	const match = notFoundIfFalsy(await SQMatchRepository.findById(matchId));
+	const match = notFoundIfNullish(await SQMatchRepository.findById(matchId));
 	const isStaff = user.roles.includes("STAFF");
-	const isParticipant = [
-		...match.groupAlpha.members,
-		...match.groupBravo.members,
-	].some((m) => m.id === user.id);
+	const isParticipant = SendouQMatch.allMembers(match).some(
+		(m) => m.id === user.id,
+	);
 	errorToastIfFalsy(
 		isParticipant || isStaff,
 		"Not a participant of this match",
@@ -80,7 +85,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (result.status === "MATCH_FINALIZED") {
 					try {
-						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 					} catch (error) {
 						logger.warn("Error refreshing user skills", error);
 					}
@@ -137,7 +142,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					errorToastIfFalsy(!currentGroup, "Member is already in a group");
 				}
 
-				await SQGroupRepository.createGroupFromPrevious({
+				await SQGroupRepository.insertFromPrevious({
 					previousGroupId: data.previousGroupId,
 					members: previousGroup.members.map((m) => ({
 						id: m.id,
@@ -182,7 +187,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				const votingResult = await db.transaction().execute(async (trx) => {
 					const existingVotes =
-						await GroupMatchContinueVoteRepository.findForGroups(
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
 							[viewerGroup.id],
 							trx,
 						);
@@ -191,7 +196,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						return null;
 					}
 
-					await GroupMatchContinueVoteRepository.cast(
+					await GroupMatchContinueVoteRepository.castOwnVote(
 						{
 							groupId: viewerGroup.id,
 							isContinuing: data.isContinuing,
@@ -200,7 +205,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					);
 
 					return RejoinVote.result(
-						await GroupMatchContinueVoteRepository.findForGroups(
+						await GroupMatchContinueVoteRepository.findAllByGroupIds(
 							[viewerGroup.id],
 							trx,
 						),
@@ -213,7 +218,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						.map((m) => ({ id: m.id, role: m.role }));
 
 					try {
-						await SQGroupRepository.createGroupFromPrevious({
+						await SQGroupRepository.insertFromPrevious({
 							previousGroupId: viewerGroup.id,
 							members: survivors,
 							status: "ACTIVE",
@@ -313,6 +318,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				const result = await SQMatchRepository.requestCancelMatch({
 					matchId,
 					requestedByUserId: user.id,
+					reason: data.reason,
+					nominatedUserIds: parseNominatedUserIds(data.nominatedUserIds, match),
 				});
 
 				if (result.status === "ALREADY_LOCKED") {
@@ -337,6 +344,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				const result = await SQMatchRepository.acceptCancelMatch({
 					matchId,
 					acceptedByUserId: user.id,
+					reason: data.reason,
+					nominatedUserIds: parseNominatedUserIds(data.nominatedUserIds, match),
 				});
 
 				if (result.status === "ALREADY_LOCKED") {
@@ -348,6 +357,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				if (result.status === "NOT_ALLOWED") {
 					return errorToast("Cannot accept own cancel request");
 				}
+
+				await notifyStaffOfCanceledMatch(match);
 
 				if (match.chatCode) {
 					ChatSystemMessage.send({
@@ -370,7 +381,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (result.shouldRefreshCaches) {
 					try {
-						refreshUserSkills(Seasons.currentOrPrevious()!.nth);
+						await refreshUserSkills(Seasons.currentOrPrevious()!.nth);
 					} catch (error) {
 						logger.warn("Error refreshing user skills", error);
 					}
@@ -432,3 +443,44 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	return null;
 };
+
+type MatchById = NonNullable<
+	Awaited<ReturnType<typeof SQMatchRepository.findById>>
+>;
+
+function parseNominatedUserIds(nominatedUserIds: string[], match: MatchById) {
+	const userIds = nominatedUserIds.map(Number);
+	const memberIds = SendouQMatch.allMembers(match).map((member) => member.id);
+	errorToastIfFalsy(
+		userIds.every((userId) => memberIds.includes(userId)),
+		"Nominated players must be participants of the match",
+	);
+
+	return userIds;
+}
+
+async function notifyStaffOfCanceledMatch(match: MatchById) {
+	try {
+		const reports = await SQMatchRepository.findCancelReportsByGroupMatchId(
+			match.id,
+		);
+		const nominatedUserIds = R.unique(
+			reports.flatMap((report) =>
+				report.nominatedPlayers.map((player) => player.userId),
+			),
+		);
+
+		sendMatchCanceledWebhook({
+			matchId: match.id,
+			members: SendouQMatch.allMembers(match),
+			reports,
+			nominationCounts:
+				await SQMatchRepository.findCancelNominationCountsByUserIds({
+					userIds: nominatedUserIds,
+					season: Seasons.currentOrPrevious()!.nth,
+				}),
+		});
+	} catch (error) {
+		logger.error("Failed to send match canceled webhook", error);
+	}
+}

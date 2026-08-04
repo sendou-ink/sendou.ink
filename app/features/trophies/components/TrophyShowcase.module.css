@@ -1,0 +1,47 @@
+.wrapper {
+	container-type: inline-size;
+}
+
+.modal {
+	padding: 0;
+	max-width: 48rem;
+}
+
+.trophyName {
+	font-weight: var(--weight-bold);
+	font-size: var(--font-lg);
+}
+
+.trophyPageLink {
+	font-size: var(--font-2xs);
+	margin-bottom: var(--s-2);
+}
+
+.content {
+	display: grid;
+	grid-template-columns: 1fr;
+	align-items: center;
+	background-color: var(--color-bg-high);
+}
+
+.details {
+	padding: var(--s-4);
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	background-color: var(--color-bg);
+	border-top: var(--border-style);
+	overflow-y: auto;
+}
+
+@container (width >= 560px) {
+	.content {
+		grid-template-columns: 60% 1fr;
+	}
+
+	.details {
+		border-top: 0;
+		border-left: var(--border-style);
+		height: 60cqw;
+	}
+}

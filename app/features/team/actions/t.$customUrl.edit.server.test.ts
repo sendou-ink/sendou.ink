@@ -1,18 +1,14 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import { db } from "~/db/sql";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import invariant from "~/utils/invariant";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
-import { dbInsertUsers, dbReset, wrappedAction } from "~/utils/Test";
-import { action as teamIndexPageAction } from "../actions/t.new.server";
-import type { createTeamSchema } from "../team-schemas";
+import { wrappedAction } from "~/utils/Test";
 import type { editTeamActionSchema } from "../team-schemas.server";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
-
-const createTeamAction = wrappedAction<typeof createTeamSchema>({
-	action: teamIndexPageAction,
-	isJsonSubmission: true,
-});
 
 const editTeamProfileAction = wrappedAction<typeof editTeamActionSchema>({
 	action: _editTeamProfileAction,
@@ -47,162 +43,144 @@ const VALID_CUSTOM_THEME = {
 const expectedStoredTheme = () =>
 	JSON.parse(JSON.stringify(clampThemeToGamut(VALID_CUSTOM_THEME)));
 
-const makeUserPatron = () =>
-	db
-		.updateTable("User")
-		.set({ patronTier: 2 })
-		.where("id", "=", REGULAR_USER_TEST_ID)
-		.execute();
-
 describe("team page editing", () => {
-	beforeEach(async () => {
-		await dbInsertUsers();
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-	});
-	afterEach(() => {
-		dbReset();
-	});
+	let customUrl: string;
 
-	it("sets a custom theme via UPDATE_CUSTOM_THEME", async () => {
-		await makeUserPatron();
-
-		const response = await editTeamProfileAction(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: VALID_CUSTOM_THEME,
-			},
-			{ user: "regular", params: { customUrl: "team-1" } },
+	const createTeam = async (
+		options?: Parameters<typeof TeamFactory.create>[1],
+	) => {
+		const team = await TeamFactory.create(
+			{ name: "Team 1", memberUserIds: [REGULAR_USER_TEST_ID] },
+			options,
 		);
-
-		expect(response).toEqual({ ok: true });
-
-		const team = await TeamRepository.findByCustomUrl("team-1");
-		expect(team?.customTheme).toEqual(expectedStoredTheme());
-	});
-
-	it("clears a custom theme via UPDATE_CUSTOM_THEME with null", async () => {
-		await makeUserPatron();
-
-		await editTeamProfileAction(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: VALID_CUSTOM_THEME,
-			},
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		const response = await editTeamProfileAction(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: null,
-			},
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		expect(response).toEqual({ ok: true });
-
-		const team = await TeamRepository.findByCustomUrl("team-1");
-		expect(team?.customTheme).toBeNull();
-	});
-
-	it("prevents setting an invalid custom theme", async () => {
-		await makeUserPatron();
-
-		const response = await editTeamProfileAction(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: {
-					...VALID_CUSTOM_THEME,
-					baseHue: 500, // Invalid: max is 360
-				},
-			},
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		expect(response.fieldErrors["newValue.baseHue"]).toBeTruthy();
-	});
-
-	it("preserves an existing custom theme when editing the team profile", async () => {
-		await makeUserPatron();
-
-		await editTeamProfileAction(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: VALID_CUSTOM_THEME,
-			},
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		const response = await editTeamProfileAction(
-			{ ...DEFAULT_EDIT_FIELDS, bio: "Updated bio" },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		expect(response.status).toBe(302);
-
-		const team = await TeamRepository.findByCustomUrl("team-1");
-		expect(team?.customTheme).toEqual(expectedStoredTheme());
-		expect(team?.bio).toBe("Updated bio");
-	});
-
-	const addTeamAvatar = async () => {
-		const image = await db
-			.insertInto("UnvalidatedUserSubmittedImage")
-			.values({
-				url: "https://example.com/test-avatar.jpg",
-				submitterUserId: REGULAR_USER_TEST_ID,
-			})
-			.returning("id")
-			.executeTakeFirstOrThrow();
-
-		await db
-			.updateTable("AllTeam")
-			.set({ avatarImgId: image.id })
-			.where("customUrl", "=", "team-1")
-			.execute();
-
-		return image.id;
+		customUrl = team.customUrl;
 	};
 
-	const imageExists = async (id: number) =>
-		Boolean(
-			await db
-				.selectFrom("UnvalidatedUserSubmittedImage")
-				.select("id")
-				.where("id", "=", id)
-				.executeTakeFirst(),
-		);
+	const teamRow = async () => {
+		const team = await TeamRepository.findByCustomUrl(customUrl);
+		invariant(team, `No team with the custom url ${customUrl}`);
 
-	it("deletes the submitted image row when an image is removed while editing", async () => {
-		const imageId = await addTeamAvatar();
+		return team;
+	};
 
-		await editTeamProfileAction(
-			{ ...DEFAULT_EDIT_FIELDS },
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
-
-		const team = await TeamRepository.findByCustomUrl("team-1");
-		expect(team?.avatarImgId).toBeNull();
-		expect(await imageExists(imageId)).toBe(false);
+	beforeEach(async () => {
+		// a patron because setting a custom theme is a patron only feature
+		await UserFactory.createRegular(null, { patronTier: 2 });
 	});
 
-	it("keeps the submitted image row when an existing image is unchanged", async () => {
-		const imageId = await addTeamAvatar();
+	describe("custom theme", () => {
+		beforeEach(() => createTeam());
 
-		await editTeamProfileAction(
-			{
-				...DEFAULT_EDIT_FIELDS,
-				logo: {
-					type: "EXISTING",
-					imgId: imageId,
-					url: "https://example.com/test-avatar.jpg",
+		it("sets a custom theme via UPDATE_CUSTOM_THEME", async () => {
+			const response = await editTeamProfileAction(
+				{
+					_action: "UPDATE_CUSTOM_THEME",
+					newValue: VALID_CUSTOM_THEME,
 				},
-			},
-			{ user: "regular", params: { customUrl: "team-1" } },
-		);
+				{ user: "regular", params: { customUrl } },
+			);
 
-		const team = await TeamRepository.findByCustomUrl("team-1");
-		expect(team?.avatarImgId).toBe(imageId);
-		expect(await imageExists(imageId)).toBe(true);
+			expect(response).toEqual({ ok: true });
+			expect((await teamRow()).customTheme).toEqual(expectedStoredTheme());
+		});
+
+		it("clears a custom theme via UPDATE_CUSTOM_THEME with null", async () => {
+			await editTeamProfileAction(
+				{
+					_action: "UPDATE_CUSTOM_THEME",
+					newValue: VALID_CUSTOM_THEME,
+				},
+				{ user: "regular", params: { customUrl } },
+			);
+
+			const response = await editTeamProfileAction(
+				{
+					_action: "UPDATE_CUSTOM_THEME",
+					newValue: null,
+				},
+				{ user: "regular", params: { customUrl } },
+			);
+
+			expect(response).toEqual({ ok: true });
+			expect((await teamRow()).customTheme).toBeNull();
+		});
+
+		it("prevents setting an invalid custom theme", async () => {
+			const response = await editTeamProfileAction(
+				{
+					_action: "UPDATE_CUSTOM_THEME",
+					newValue: {
+						...VALID_CUSTOM_THEME,
+						baseHue: 500, // Invalid: max is 360
+					},
+				},
+				{ user: "regular", params: { customUrl } },
+			);
+
+			expect(response.fieldErrors["newValue.baseHue"]).toBeTruthy();
+		});
+
+		it("preserves an existing custom theme when editing the team profile", async () => {
+			await editTeamProfileAction(
+				{
+					_action: "UPDATE_CUSTOM_THEME",
+					newValue: VALID_CUSTOM_THEME,
+				},
+				{ user: "regular", params: { customUrl } },
+			);
+
+			const response = await editTeamProfileAction(
+				{ ...DEFAULT_EDIT_FIELDS, bio: "Updated bio" },
+				{ user: "regular", params: { customUrl } },
+			);
+
+			expect(response.status).toBe(302);
+
+			const team = await teamRow();
+			expect(team.customTheme).toEqual(expectedStoredTheme());
+			expect(team.bio).toBe("Updated bio");
+		});
+	});
+
+	describe("logo", () => {
+		let imageId: number;
+
+		const imageExists = async (id: number) =>
+			Boolean(await ImageRepository.findById(id));
+
+		beforeEach(async () => {
+			await createTeam({ hasAvatar: true });
+
+			const avatarImgId = (await teamRow()).avatarImgId;
+			invariant(avatarImgId, "The team was created without a logo");
+			imageId = avatarImgId;
+		});
+
+		it("deletes the submitted image row when an image is removed while editing", async () => {
+			await editTeamProfileAction(
+				{ ...DEFAULT_EDIT_FIELDS },
+				{ user: "regular", params: { customUrl } },
+			);
+
+			expect((await teamRow()).avatarImgId).toBeNull();
+			expect(await imageExists(imageId)).toBe(false);
+		});
+
+		it("keeps the submitted image row when an existing image is unchanged", async () => {
+			await editTeamProfileAction(
+				{
+					...DEFAULT_EDIT_FIELDS,
+					logo: {
+						type: "EXISTING",
+						imgId: imageId,
+						url: "https://example.com/test-avatar.jpg",
+					},
+				},
+				{ user: "regular", params: { customUrl } },
+			);
+
+			expect((await teamRow()).avatarImgId).toBe(imageId);
+			expect(await imageExists(imageId)).toBe(true);
+		});
 	});
 });

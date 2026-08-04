@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { PreparedMaps as PreparedMapsType } from "~/db/tables";
+import type { PreparedMaps as PreparedMapsType } from "~/db/tables-json";
 import * as PreparedMaps from "./PreparedMaps";
 import { testTournament } from "./tests/test-utils";
 

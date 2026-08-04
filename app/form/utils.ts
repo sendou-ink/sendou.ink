@@ -2,7 +2,7 @@ import type { z } from "zod";
 import { getFormFieldMetadata } from "./fields";
 import type { FormField } from "./types";
 
-function infoMessageId(fieldId: string) {
+export function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
 
@@ -245,21 +245,38 @@ export function validateField(
 	return issue.message;
 }
 
+/**
+ * Accessibility attributes for a form control. Ids are derived from the field
+ * `name` because the error/info messages render with name-based ids
+ * (`errorMessageId`/`infoMessageId`) — a `useId()` value would point at
+ * elements that don't exist. The error id is also included in
+ * `aria-describedby` since `aria-errormessage` support in screen readers is
+ * still inconsistent.
+ */
 export function ariaAttributes({
-	id,
+	name,
 	error,
 	bottomText,
 	required,
 }: {
-	id: string;
+	name?: string;
 	error?: string;
 	bottomText?: string;
 	required?: boolean;
 }) {
+	const describedBy = name
+		? [
+				error ? errorMessageId(name) : undefined,
+				bottomText ? infoMessageId(name) : undefined,
+			]
+				.filter((id) => id !== undefined)
+				.join(" ")
+		: "";
+
 	return {
 		"aria-invalid": error ? ("true" as const) : undefined,
-		"aria-describedby": bottomText ? infoMessageId(id) : undefined,
-		"aria-errormessage": error ? errorMessageId(id) : undefined,
+		"aria-describedby": describedBy !== "" ? describedBy : undefined,
+		"aria-errormessage": error && name ? errorMessageId(name) : undefined,
 		"aria-required": required ? ("true" as const) : undefined,
 	};
 }

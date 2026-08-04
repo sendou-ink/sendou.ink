@@ -10,8 +10,8 @@ import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import type { DamageType } from "~/features/build-analyzer/analyzer-types";
-import { possibleApValues } from "~/features/build-analyzer/core/utils";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,

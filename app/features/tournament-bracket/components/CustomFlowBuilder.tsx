@@ -35,14 +35,13 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import type { CustomPickBanFlow, CustomPickBanStep } from "~/db/tables-json";
 import {
 	ACTION_TYPES,
 	type ActionType,
-	type CustomPickBanFlow,
-	type CustomPickBanStep,
 	WHO_SIDES,
 	type WhoSide,
-} from "~/db/tables";
+} from "~/features/tournament-bracket/tournament-bracket-constants";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import {
 	type CustomFlowValidationError,
@@ -51,6 +50,8 @@ import {
 import styles from "./CustomFlowBuilder.module.css";
 
 const WHO_I18N_KEYS = {
+	RANDOM: "tournament:customFlow.who.RANDOM",
+	RANDOM_OTHER: "tournament:customFlow.who.RANDOM_OTHER",
 	ALPHA: "tournament:customFlow.who.ALPHA",
 	BRAVO: "tournament:customFlow.who.BRAVO",
 	HIGHER_SEED: "tournament:customFlow.who.HIGHER_SEED",
@@ -62,6 +63,7 @@ const WHO_I18N_KEYS = {
 const ACTION_I18N_KEYS = {
 	ROLL: "tournament:customFlow.action.ROLL",
 	PICK: "tournament:customFlow.action.PICK",
+	PICK_NO_MODE_REPEAT: "tournament:customFlow.action.PICK_NO_MODE_REPEAT",
 	BAN: "tournament:customFlow.action.BAN",
 	MODE_PICK: "tournament:customFlow.action.MODE_PICK",
 	MODE_BAN: "tournament:customFlow.action.MODE_BAN",

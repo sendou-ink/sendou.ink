@@ -1,3 +1,26 @@
+diff --git a/dist/parser/insert-values-parser.d.ts b/dist/parser/insert-values-parser.d.ts
+index f77f26d0b37d60ab50c784e5c430e7e0c60c3caf..0c8759ce1894193e4df7f9fde633ad9ee7ad0af7 100644
+--- a/dist/parser/insert-values-parser.d.ts
++++ b/dist/parser/insert-values-parser.d.ts
+@@ -3,6 +3,7 @@ import { type ValueExpression } from './value-parser.js';
+ import { ValuesNode } from '../operation-node/values-node.js';
+ import type { NonNullableInsertKeys, NullableInsertKeys, InsertType } from '../util/column-type.js';
+ import { type ExpressionBuilder } from '../expression/expression-builder.js';
++import type { KyselyTypeError } from '../util/type-error.js';
+ export type InsertObject<DB, TB extends keyof DB> = {
+     [C in NonNullableInsertKeys<DB[TB]>]: ValueExpression<DB, TB, InsertType<DB[TB][C]>>;
+ } & {
+@@ -11,4 +12,10 @@ export type InsertObject<DB, TB extends keyof DB> = {
+ export type InsertObjectOrList<DB, TB extends keyof DB> = InsertObject<DB, TB> | ReadonlyArray<InsertObject<DB, TB>>;
+ export type InsertObjectOrListFactory<DB, TB extends keyof DB, UT extends keyof DB = never> = (eb: ExpressionBuilder<DB, TB | UT>) => InsertObjectOrList<DB, TB>;
+ export type InsertExpression<DB, TB extends keyof DB, UT extends keyof DB = never> = InsertObjectOrList<DB, TB> | InsertObjectOrListFactory<DB, TB, UT>;
++type AllInsertRowKeys<R> = R extends unknown ? keyof R : never;
++type OptionalInsertRowKeys<R> = {
++    [K in keyof R]-?: undefined extends R[K] ? K : never;
++}[keyof R];
++type HeterogeneousInsertRowsError<K> = KyselyTypeError<`every row must explicitly set the key '${K & string}', otherwise null is inserted for the rows missing it`>;
++export type HomogeneousInsertRows<R> = [AllInsertRowKeys<R>] extends [keyof R] ? [OptionalInsertRowKeys<R>] extends [never] ? unknown : HeterogeneousInsertRowsError<OptionalInsertRowKeys<R>> : HeterogeneousInsertRowsError<Exclude<AllInsertRowKeys<R>, keyof R>>;
+ export declare function parseInsertExpression(arg: InsertExpression<any, any, any>): [ReadonlyArray<ColumnNode>, ValuesNode];
 diff --git a/dist/plugin/parse-json-results/parse-json-results-plugin.js b/dist/plugin/parse-json-results/parse-json-results-plugin.js
 index f5d150373a5e36034044b6ba4e5840a7f7a3e725..7700d5ca3888c6ab8c8fad8494ba9dced24e258a 100644
 --- a/dist/plugin/parse-json-results/parse-json-results-plugin.js
@@ -10,3 +33,26 @@ index f5d150373a5e36034044b6ba4e5840a7f7a3e725..7700d5ca3888c6ab8c8fad8494ba9dce
          return str;
      }
  }
+diff --git a/dist/query-builder/insert-query-builder.d.ts b/dist/query-builder/insert-query-builder.d.ts
+index c75dfa47aad5eb505a241896067e60e536ea0561..2621cf967f242f7d405eecc95bc7befa8749aedd 100644
+--- a/dist/query-builder/insert-query-builder.d.ts
++++ b/dist/query-builder/insert-query-builder.d.ts
+@@ -1,7 +1,7 @@
+ import type { OperationNodeSource } from '../operation-node/operation-node-source.js';
+ import type { CompiledQuery } from '../query-compiler/compiled-query.js';
+ import { type SelectExpression, type SelectCallback } from '../parser/select-parser.js';
+-import { type InsertExpression } from '../parser/insert-values-parser.js';
++import { type HomogeneousInsertRows, type InsertExpression, type InsertObject, type InsertObjectOrListFactory } from '../parser/insert-values-parser.js';
+ import { InsertQueryNode } from '../operation-node/insert-query-node.js';
+ import type { NarrowPartial, SimplifyResult, SimplifySingleResult } from '../util/type-utils.js';
+ import { type UpdateObjectExpression } from '../parser/update-set-parser.js';
+@@ -202,7 +202,8 @@ export declare class InsertQueryBuilder<DB, TB extends keyof DB, out O> implemen
+      * )
+      * ```
+      */
+-    values(insert: InsertExpression<DB, TB>): InsertQueryBuilder<DB, TB, O>;
++    values(insert: InsertObject<DB, TB> | InsertObjectOrListFactory<DB, TB>): InsertQueryBuilder<DB, TB, O>;
++    values<R extends InsertObject<DB, TB>>(insert: readonly R[] & HomogeneousInsertRows<R>): InsertQueryBuilder<DB, TB, O>;
+     /**
+      * Sets the columns to insert.
+      *

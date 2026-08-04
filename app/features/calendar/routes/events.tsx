@@ -1,10 +1,16 @@
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData, useSearchParams } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { EventsList } from "~/components/EventsList";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
+import {
+	calendarEventsSearchParams,
+	VIEW_FILTERS,
+	type ViewFilter,
+} from "../calendar-search-params";
 import type { EventsLoaderData } from "../loaders/events.server";
 import styles from "./events.module.css";
 
@@ -14,25 +20,14 @@ export const handle: SendouRouteHandle = {
 	i18n: ["calendar"],
 };
 
-const VIEW_FILTERS = [
-	"registered",
-	"hosting",
-	"scrims",
-	"saved",
-	"organization",
-] as const;
-type ViewFilter = (typeof VIEW_FILTERS)[number];
-
 export default function EventsPage() {
 	const { t } = useTranslation(["calendar"]);
 	const data = useLoaderData<EventsLoaderData>();
-	const [searchParams] = useSearchParams();
+	const [viewParam] = useSearchParam(calendarEventsSearchParams, "view");
 
-	const viewParam = searchParams.get("view") as ViewFilter | null;
 	const defaultFilter =
 		VIEW_FILTERS.find((key) => data[key].length > 0) ?? "registered";
-	const filter =
-		viewParam && VIEW_FILTERS.includes(viewParam) ? viewParam : defaultFilter;
+	const filter = viewParam ?? defaultFilter;
 
 	const viewLabels: Record<ViewFilter, string> = {
 		registered: `${t("calendar:events.view.registered")} (${data.registered.length})`,
@@ -55,7 +50,7 @@ export default function EventsPage() {
 						{VIEW_FILTERS.map((value) => (
 							<SubNavLink
 								key={value}
-								to={`?view=${value}`}
+								to={calendarEventsSearchParams.href("", { view: value })}
 								secondary
 								controlled
 								active={filter === value}

@@ -10,6 +10,7 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -27,6 +28,7 @@ import { ScrimFiltersDialog } from "../components/ScrimFiltersDialog";
 import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.server";
 import type { newRequestSchema } from "../scrims-schemas";
+import { scrimsSearchParams } from "../scrims-search-params";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
 
 export { action, loader };
@@ -61,6 +63,20 @@ export default function ScrimsPage() {
 	const { t } = useTranslation(["calendar", "scrims"]);
 	const data = useLoaderData<typeof loader>();
 	const isHydrated = useHydrated();
+	const [autoScrollToPostId] = useSearchParam(
+		scrimsSearchParams,
+		"pendingRequestPostId",
+	);
+
+	// kept in state because the search param is cleared after the auto scroll
+	const [pendingRequestPostId, setPendingRequestPostId] =
+		React.useState(autoScrollToPostId);
+	if (
+		autoScrollToPostId !== null &&
+		autoScrollToPostId !== pendingRequestPostId
+	) {
+		setPendingRequestPostId(autoScrollToPostId);
+	}
 
 	if (!isHydrated)
 		return (
@@ -90,12 +106,15 @@ export default function ScrimsPage() {
 				</div>
 			</div>
 			<SendouTabs
+				key={pendingRequestPostId}
 				defaultSelectedKey={
-					data.posts.owned.length > 0
-						? "owned"
-						: data.posts.booked.length > 0
-							? "booked"
-							: "available"
+					pendingRequestPostId !== null
+						? "available"
+						: data.posts.owned.length > 0
+							? "owned"
+							: data.posts.booked.length > 0
+								? "booked"
+								: "available"
 				}
 			>
 				{user ? (
@@ -132,6 +151,8 @@ export default function ScrimsPage() {
 						<ScrimsDaySeparatedCards
 							posts={data.posts.neutral}
 							filters={data.filters}
+							pendingRequestPostId={pendingRequestPostId}
+							autoScrollToPostId={autoScrollToPostId}
 						/>
 					) : (
 						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
@@ -169,12 +190,16 @@ export default function ScrimsPage() {
 function ScrimsDaySeparatedCards({
 	posts,
 	filters,
+	pendingRequestPostId,
+	autoScrollToPostId,
 }: {
 	posts: ScrimPost[];
 	filters: ScrimFilters;
+	pendingRequestPostId: number | null;
+	autoScrollToPostId: number | null;
 }) {
 	const postsByDay = R.groupBy(posts, (post) =>
-		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
 	return (
@@ -182,7 +207,13 @@ function ScrimsDaySeparatedCards({
 			{Object.entries(postsByDay)
 				.sort(([a], [b]) => a.localeCompare(b))
 				.map(([day, dayPosts]) => (
-					<ScrimsDaySection key={day} posts={dayPosts!} filters={filters} />
+					<ScrimsDaySection
+						key={day}
+						posts={dayPosts!}
+						filters={filters}
+						pendingRequestPostId={pendingRequestPostId}
+						autoScrollToPostId={autoScrollToPostId}
+					/>
 				))}
 		</div>
 	);
@@ -191,13 +222,19 @@ function ScrimsDaySeparatedCards({
 function ScrimsDaySection({
 	posts,
 	filters,
+	pendingRequestPostId,
+	autoScrollToPostId,
 }: {
 	posts: ScrimPost[];
 	filters: ScrimFilters;
+	pendingRequestPostId: number | null;
+	autoScrollToPostId: number | null;
 }) {
 	const user = useUser();
 	const [showFiltered, setShowFiltered] = React.useState(false);
-	const [showRequestPending, setShowRequestPending] = React.useState(false);
+	const [showRequestPending, setShowRequestPending] = React.useState(
+		pendingRequestPostId !== null,
+	);
 
 	const filteredPosts = posts.filter((post) =>
 		Scrim.applyFilters(post, filters),
@@ -214,7 +251,7 @@ function ScrimsDaySection({
 			<div className="stack xxs">
 				<h2 className="text-sm">
 					<LocaleTime
-						date={posts[0].at}
+						date={posts[0].startsAt}
 						options={{
 							day: "numeric",
 							month: "numeric",
@@ -259,6 +296,7 @@ function ScrimsDaySection({
 							post={post}
 							action={getAction()}
 							isFilteredOut={isFilteredOut}
+							autoScrollIntoView={post.id === autoScrollToPostId}
 						/>
 					);
 				})}
@@ -330,7 +368,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 	const user = useUser();
 
 	const postsByDay = R.groupBy(posts, (post) =>
-		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
 	return (
@@ -342,7 +380,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
 								<LocaleTime
-									date={posts![0].at}
+									date={posts![0].startsAt}
 									options={{
 										day: "numeric",
 										month: "numeric",
@@ -372,7 +410,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 														<ScrimRequestCard
 															key={request.id}
 															request={request}
-															postStartTime={post.at}
+															postStartTime={post.startsAt}
 															canAccept={Boolean(
 																user &&
 																	post.permissions.MANAGE_REQUESTS.includes(
@@ -400,7 +438,7 @@ function ScrimsDaySeparatedOwnedCards({ posts }: { posts: ScrimPost[] }) {
 
 function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 	const postsByDay = R.groupBy(posts, (post) =>
-		format(databaseTimestampToDate(post.at), "yyyy-MM-dd"),
+		format(databaseTimestampToDate(post.startsAt), "yyyy-MM-dd"),
 	);
 
 	return (
@@ -412,7 +450,7 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 						<div key={day} className="stack md">
 							<h2 className="text-sm">
 								<LocaleTime
-									date={posts![0].at}
+									date={posts![0].startsAt}
 									options={{
 										day: "numeric",
 										month: "numeric",
@@ -432,7 +470,7 @@ function ScrimsDaySeparatedBookedCards({ posts }: { posts: ScrimPost[] }) {
 											{acceptedRequest ? (
 												<ScrimRequestCard
 													request={acceptedRequest}
-													postStartTime={post.at}
+													postStartTime={post.startsAt}
 													canAccept={false}
 													showFooter={false}
 												/>

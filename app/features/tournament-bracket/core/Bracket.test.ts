@@ -1,9 +1,9 @@
 import * as R from "remeda";
 import { describe, expect, it } from "vitest";
-import { BracketsManager } from "~/modules/brackets-manager";
-import { InMemoryDatabase } from "~/modules/brackets-memory-db";
 import invariant from "../../../utils/invariant";
-import * as Swiss from "../core/Swiss";
+import * as Engine from "./engine";
+import { createResolved } from "./engine/create";
+import type { BracketData, MatchData } from "./engine/types";
 import { Tournament } from "./Tournament";
 import { PADDLING_POOL_255 } from "./tests/mocks";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";
@@ -21,8 +21,7 @@ describe("swiss standings - losses against tied", () => {
 
 		const standing = tournament
 			.bracketByIdx(0)
-			?.currentStandings(false)
-			.find((standing) => standing.team.id === TEAM_THIS_IS_FINE_ID);
+			?.standings.find((standing) => standing.team.id === TEAM_THIS_IS_FINE_ID);
 
 		invariant(standing, "Standing not found");
 
@@ -35,7 +34,7 @@ describe("swiss standings - losses against tied", () => {
 			simulateBrackets: false,
 		});
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+		const standings = tournament.bracketByIdx(0)!.standings;
 
 		// Both teams finished 4-2 in the same Swiss group. Team 16872 beat MORE of
 		// its tied peers (winsAgainstTied=2) than team 17505 (winsAgainstTied=1),
@@ -63,7 +62,7 @@ describe("swiss standings - losses against tied", () => {
 			simulateBrackets: false,
 		});
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(false);
+		const standings = tournament.bracketByIdx(0)!.standings;
 
 		// Both teams finished 4-2 in the same Swiss group. Team 16996 lost to none
 		// of its tied peers while team 17067 lost to one, even though 17067 has the
@@ -90,23 +89,19 @@ describe("swiss standings - losses against tied", () => {
 
 		const standing = tournament
 			.bracketByIdx(0)
-			?.currentStandings(false)
-			.find((standing) => standing.team.id === TEAM_ERROR_404_ID);
+			?.standings.find((standing) => standing.team.id === TEAM_ERROR_404_ID);
 		invariant(standing, "Standing not found");
 
 		expect(standing.stats?.lossesAgainstTied).toBe(0); // they lost against "Tidy Tidings" but that team dropped out before final round
 	});
 
 	const inProgressSwissTestTournament = () => {
-		const data = Swiss.create({
-			tournamentId: 1,
-			name: "Swiss",
+		const data = Engine.create({
+			type: "swiss",
 			seeding: [1, 2, 3],
 			settings: {
-				swiss: {
-					groupCount: 1,
-					roundCount: 5,
-				},
+				groupCount: 1,
+				roundCount: 5,
 			},
 		});
 
@@ -137,7 +132,7 @@ describe("swiss standings - losses against tied", () => {
 	it("should handle a team with only one bye", () => {
 		const tournament = inProgressSwissTestTournament();
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const teamWithBye = standings.find((standing) => standing.team.id === 3);
 
@@ -149,14 +144,78 @@ describe("swiss standings - losses against tied", () => {
 		expect(teamWithBye?.stats?.setLosses).toBe(0);
 	});
 
-	it("team with only unfinished matches should not be in the current standings", () => {
+	it("team with only unfinished matches should be in the current standings with blank stats", () => {
 		const tournament = inProgressSwissTestTournament();
 
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const playingTeam = standings.find((standing) => standing.team.id === 1);
 
-		expect(playingTeam).toBe(undefined);
+		expect(playingTeam?.stats?.setWins).toBe(0);
+		expect(playingTeam?.stats?.setLosses).toBe(0);
+	});
+});
+
+describe("swiss standings - cross group ties", () => {
+	// Two Swiss groups of four playing one round. Group 1 is won by seed 3 (who beat
+	// seed 7), group 2 by seed 6 (who upset seed 2). Both are 1st of their group, and
+	// the upset gives seed 6 the better effective seed of the two.
+	const twoGroupSwissTournament = () => {
+		let data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: { groupCount: 2, roundCount: 1 },
+		});
+
+		const winnerByMatchup: Record<string, number> = {
+			"1-5": 5,
+			"3-7": 3,
+			"2-6": 6,
+			"4-8": 8,
+		};
+		for (const match of data.match) {
+			const one = match.opponent1!.id as number;
+			const two = match.opponent2!.id as number;
+			const key = one < two ? `${one}-${two}` : `${two}-${one}`;
+			const winnerId = winnerByMatchup[key];
+			invariant(winnerId, `unexpected matchup ${key}`);
+			const winnerIsOpp1 = one === winnerId;
+			data = Engine.reportResult(data, {
+				matchId: match.id,
+				scores: [winnerIsOpp1 ? 2 : 0, winnerIsOpp1 ? 0 : 2],
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+			}).data;
+		}
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: { groupCount: 2, roundCount: 1 },
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("ranks the group winner with the better effective seed first", () => {
+		const standings = twoGroupSwissTournament().bracketByIdx(0)!.standings;
+
+		const upsetWinnerIdx = standings.findIndex((s) => s.team.id === 6);
+		const otherWinnerIdx = standings.findIndex((s) => s.team.id === 3);
+
+		expect(standings[upsetWinnerIdx].placement).toBe(
+			standings[otherWinnerIdx].placement,
+		);
+		// without the effective seed tiebreak the lower groupId (seed 3's group) wins
+		expect(upsetWinnerIdx).toBeLessThan(otherWinnerIdx);
 	});
 });
 
@@ -193,10 +252,28 @@ describe("round robin standings", () => {
 		}
 	});
 
-	it("has ascending order from lower group id to higher group id for same placements", () => {
+	it("breaks same placement ties across groups by effective seed (own seed or best seed beaten)", () => {
 		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
+		const bracket = tournamentPP255.bracketByIdx(0)!;
 
-		const standings = tournamentPP255.bracketByIdx(0)!.standings;
+		const standings = bracket.standings;
+
+		const effectiveSeed = (tournamentTeamId: number) => {
+			let best = tournamentPP255.teamById(tournamentTeamId)!.seed!;
+			for (const match of bracket.data.match) {
+				if (!match.winnerSide) continue;
+
+				const winner =
+					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
+				const loser =
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+				if (winner?.id !== tournamentTeamId || !loser?.id) continue;
+
+				const loserSeed = tournamentPP255.teamById(loser.id)!.seed!;
+				best = Math.min(best, loserSeed);
+			}
+			return best;
+		};
 
 		const placements = R.unique(
 			standings.map((standing) => standing.placement),
@@ -215,10 +292,14 @@ describe("round robin standings", () => {
 					break;
 				}
 
+				// strictly less: an effective seed is either the team's own (unique) seed
+				// or the seed of a team it beat, and two teams that beat the same team
+				// share a group and therefore cannot share a placement. The comparator's
+				// groupId fallback is unreachable as long as that holds.
 				expect(
-					current.groupId,
+					effectiveSeed(current.team.id),
 					`Team with ID ${current.team.id} in wrong spot relative to ${next.team.id}`,
-				).toBeLessThan(next.groupId!);
+				).toBeLessThan(effectiveSeed(next.team.id));
 			}
 		}
 	});
@@ -232,17 +313,11 @@ describe("round robin standings - dropped out teams", () => {
 		skipMatchups?: string[];
 		forfeitMatchups?: string[];
 	} = {}) => {
-		const storage = new InMemoryDatabase();
-		const manager = new BracketsManager(storage);
-
-		manager.create({
-			name: "RR",
-			tournamentId: 1,
+		let data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			settings: {
 				groupCount: 1,
-				seedOrdering: ["groups.seed_optimized"],
 			},
 		});
 
@@ -252,34 +327,27 @@ describe("round robin standings - dropped out teams", () => {
 			winnerScore: number,
 			loserScore: number,
 		) => {
-			const match = storage.select<any>("match", matchId);
-			invariant(match, `match ${matchId} not found`);
-			const winnerIsOpp1 = match.opponent1.id === winnerId;
-			manager.update.match({
-				id: match.id,
-				opponent1: winnerIsOpp1
-					? { score: winnerScore, result: "win" }
-					: { score: loserScore },
-				opponent2: winnerIsOpp1
-					? { score: loserScore }
-					: { score: winnerScore, result: "win" },
-			});
+			const match = matchById(data, matchId);
+			const winnerIsOpp1 = match.opponent1?.id === winnerId;
+			data = Engine.reportResult(data, {
+				matchId,
+				scores: [
+					winnerIsOpp1 ? winnerScore : loserScore,
+					winnerIsOpp1 ? loserScore : winnerScore,
+				],
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+			}).data;
 		};
 
 		// Mimics endDroppedTeamMatches: sets a winner via result only, with no
 		// score recorded on either side (the match was never actually played).
 		const forfeitMatch = (matchId: number, winnerId: number) => {
-			const match = storage.select<any>("match", matchId);
-			invariant(match, `match ${matchId} not found`);
-			manager.update.match({
-				id: match.id,
-				opponent1: {
-					result: match.opponent1.id === winnerId ? "win" : "loss",
-				},
-				opponent2: {
-					result: match.opponent2.id === winnerId ? "win" : "loss",
-				},
-			});
+			const match = matchById(data, matchId);
+			data = Engine.reportResult(data, {
+				matchId,
+				winnerSide:
+					match.opponent1?.id === winnerId ? "opponent1" : "opponent2",
+			}).data;
 		};
 
 		// Team 1 beat everyone, team 2 beat 3 and 4, team 3 beat 4.
@@ -291,9 +359,9 @@ describe("round robin standings - dropped out teams", () => {
 			"2-4": 2,
 			"3-4": 3,
 		};
-		for (const match of storage.select<any>("match")!) {
-			const a = match.opponent1.id as number;
-			const b = match.opponent2.id as number;
+		for (const match of data.match) {
+			const a = match.opponent1!.id as number;
+			const b = match.opponent2!.id as number;
 			const key = a < b ? `${a}-${b}` : `${b}-${a}`;
 			if (skipMatchups.includes(key)) continue;
 			const winnerId = winnerByMatchup[key];
@@ -304,8 +372,6 @@ describe("round robin standings - dropped out teams", () => {
 				setResult(match.id, winnerId, 2, 0);
 			}
 		}
-
-		const data = manager.get.tournamentData(1);
 
 		return testTournament({
 			ctx: {
@@ -333,7 +399,7 @@ describe("round robin standings - dropped out teams", () => {
 	it("should not credit wins against a team that dropped out before completing all of their matches", () => {
 		// Team 4 dropped out before playing their match against team 3.
 		const tournament = droppedOutTournament({ skipMatchups: ["3-4"] });
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const team1Standing = standings.find((s) => s.team.id === 1);
 		const team2Standing = standings.find((s) => s.team.id === 2);
@@ -374,7 +440,7 @@ describe("round robin standings - dropped out teams", () => {
 		// 4 should still be excluded from tiebreakers — same intent as the
 		// skipMatchups variant above, but matching the real production shape.
 		const tournament = droppedOutTournament({ forfeitMatchups: ["3-4"] });
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		const team1Standing = standings.find((s) => s.team.id === 1);
 		const team2Standing = standings.find((s) => s.team.id === 2);
@@ -410,19 +476,13 @@ describe("round robin standings - dropped out teams", () => {
 
 describe("round robin A/B divisions standings", () => {
 	const abDivisionsTournament = () => {
-		const storage = new InMemoryDatabase();
-		const manager = new BracketsManager(storage);
-
-		manager.create({
-			name: "AB RR",
-			tournamentId: 1,
+		let data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
 			abDivisions: [0, 1, 0, 1],
 			settings: {
 				groupCount: 1,
 				hasAbDivisions: true,
-				seedOrdering: ["groups.seed_optimized"],
 			},
 		});
 
@@ -432,18 +492,16 @@ describe("round robin A/B divisions standings", () => {
 			winnerScore: number,
 			loserScore: number,
 		) => {
-			const match = storage.select<any>("match", matchId);
-			invariant(match, `match ${matchId} not found`);
-			const winnerIsOpp1 = match.opponent1.id === winnerId;
-			manager.update.match({
-				id: match.id,
-				opponent1: winnerIsOpp1
-					? { score: winnerScore, result: "win" }
-					: { score: loserScore },
-				opponent2: winnerIsOpp1
-					? { score: loserScore }
-					: { score: winnerScore, result: "win" },
-			});
+			const match = matchById(data, matchId);
+			const winnerIsOpp1 = match.opponent1?.id === winnerId;
+			data = Engine.reportResult(data, {
+				matchId,
+				scores: [
+					winnerIsOpp1 ? winnerScore : loserScore,
+					winnerIsOpp1 ? loserScore : winnerScore,
+				],
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+			}).data;
 		};
 
 		const winnerByMatchup: Record<string, number> = {
@@ -452,17 +510,15 @@ describe("round robin A/B divisions standings", () => {
 			"2-3": 2,
 			"3-4": 3,
 		};
-		for (const match of storage.select<any>("match")!) {
-			const a = match.opponent1.id as number;
-			const b = match.opponent2.id as number;
+		for (const match of data.match) {
+			const a = match.opponent1!.id as number;
+			const b = match.opponent2!.id as number;
 			const key = a < b ? `${a}-${b}` : `${b}-${a}`;
 			const winnerId = winnerByMatchup[key];
 			invariant(winnerId, `unexpected matchup ${key}`);
 			const loserScore = key === "2-3" || key === "3-4" ? 1 : 0;
 			setResult(match.id, winnerId, 2, loserScore);
 		}
-
-		const data = manager.get.tournamentData(1);
 
 		return testTournament({
 			ctx: {
@@ -489,7 +545,7 @@ describe("round robin A/B divisions standings", () => {
 
 	it("filtering by abDivision preserves standard tiebreaker order within each division", () => {
 		const tournament = abDivisionsTournament();
-		const standings = tournament.bracketByIdx(0)!.currentStandings(true);
+		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
 		expect(standings.map((s) => s.team.id)).toEqual([1, 2, 3, 4]);
 
@@ -535,33 +591,28 @@ describe("single elimination standings - third place match", () => {
 	}: {
 		thirdPlaceMatchReported: boolean;
 	}) => {
-		const storage = new InMemoryDatabase();
-		const manager = new BracketsManager(storage);
-
-		manager.create({
-			name: "SE",
-			tournamentId: 1,
+		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: { consolationFinal: true },
 		});
 
 		const reportLowerTeamIdAsWinner = (matchId: number) => {
-			manager.update.match({
-				id: matchId,
-				opponent1: { score: 2, result: "win" },
-				opponent2: { score: 0 },
-			});
+			data = Engine.reportResult(data, {
+				matchId,
+				scores: [2, 0],
+				winnerSide: "opponent1",
+			}).data;
 		};
 
-		const semifinals = storage
-			.select<any>("match")!
-			.filter((match) => match.opponent1?.id && match.opponent2?.id);
+		const semifinals = data.match.filter(
+			(match) => match.opponent1?.id && match.opponent2?.id,
+		);
 		invariant(semifinals.length === 2, "Expected two semifinal matches");
 
 		const semifinalLoserIds: number[] = [];
 		for (const match of semifinals) {
-			semifinalLoserIds.push(match.opponent2.id);
+			semifinalLoserIds.push(match.opponent2!.id!);
 			reportLowerTeamIdAsWinner(match.id);
 		}
 
@@ -569,14 +620,14 @@ describe("single elimination standings - third place match", () => {
 		let thirdPlaceLoserId: number | undefined;
 		if (thirdPlaceMatchReported) {
 			const thirdPlaceGroupId = Math.max(
-				...storage.select<any>("group")!.map((group) => group.id),
+				...data.group.map((group) => group.id),
 			);
-			const thirdPlaceMatch = storage
-				.select<any>("match")!
-				.find((match) => match.group_id === thirdPlaceGroupId);
+			const thirdPlaceMatch = data.match.find(
+				(match) => match.groupId === thirdPlaceGroupId,
+			);
 			invariant(thirdPlaceMatch, "Third place match not found");
-			thirdPlaceWinnerId = thirdPlaceMatch.opponent1.id;
-			thirdPlaceLoserId = thirdPlaceMatch.opponent2.id;
+			thirdPlaceWinnerId = thirdPlaceMatch.opponent1!.id!;
+			thirdPlaceLoserId = thirdPlaceMatch.opponent2!.id!;
 			reportLowerTeamIdAsWinner(thirdPlaceMatch.id);
 		}
 
@@ -594,7 +645,7 @@ describe("single elimination standings - third place match", () => {
 					],
 				},
 			},
-			data: manager.get.tournamentData(1),
+			data,
 		});
 
 		return { tournament, thirdPlaceWinnerId, thirdPlaceLoserId };
@@ -627,60 +678,28 @@ describe("single elimination standings - third place match", () => {
 	});
 });
 
-const reportLowerIdWinner = (
-	storage: InMemoryDatabase,
-	manager: BracketsManager,
-	matchId: number,
-) => {
-	const match = storage.select<any>("match", matchId);
-	invariant(match, `match ${matchId} not found`);
-	const opponent1Lower = match.opponent1.id < match.opponent2.id;
-	manager.update.match({
-		id: matchId,
-		opponent1: opponent1Lower ? { score: 2, result: "win" } : { score: 0 },
-		opponent2: opponent1Lower ? { score: 0 } : { score: 2, result: "win" },
-	});
-};
-
-const readyMatches = (
-	storage: InMemoryDatabase,
-	predicate: (match: any) => boolean,
-) =>
-	storage
-		.select<any>("match")!
-		.filter(
-			(match) =>
-				predicate(match) &&
-				match.opponent1?.id != null &&
-				match.opponent2?.id != null &&
-				match.opponent1.result == null &&
-				match.opponent2.result == null,
-		);
-
 describe("single elimination standings - projected ties", () => {
 	// Two semifinal losers tie for 3rd (no consolation final). Reports only one
 	// semifinal so the other is still in progress, mirroring the projected
 	// standings bug where the finished team is shown one placement too low.
 	const partialSingleEliminationTournament = () => {
-		const storage = new InMemoryDatabase();
-		const manager = new BracketsManager(storage);
-
-		manager.create({
-			name: "SE",
-			tournamentId: 1,
+		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
 			settings: {},
 		});
 
-		const semifinals = storage
-			.select<any>("match")!
-			.filter((match) => match.opponent1?.id && match.opponent2?.id);
+		const semifinals = data.match.filter(
+			(match) => match.opponent1?.id && match.opponent2?.id,
+		);
 		invariant(semifinals.length === 2, "Expected two semifinal matches");
 
 		const decided = semifinals[0];
-		const decidedLoserId = Math.max(decided.opponent1.id, decided.opponent2.id);
-		reportLowerIdWinner(storage, manager, decided.id);
+		const decidedLoserId = Math.max(
+			decided.opponent1!.id!,
+			decided.opponent2!.id!,
+		);
+		data = reportLowerIdWinner(data, decided.id);
 
 		const tournament = testTournament({
 			ctx: {
@@ -696,7 +715,7 @@ describe("single elimination standings - projected ties", () => {
 					],
 				},
 			},
-			data: manager.get.tournamentData(1),
+			data,
 		});
 
 		return { tournament, decidedLoserId };
@@ -719,64 +738,56 @@ describe("double elimination standings - projected ties", () => {
 	// losers round 2 matches so its loser should already project to tied 5th
 	// while the sibling match is still unfinished.
 	const partialDoubleEliminationTournament = () => {
-		const storage = new InMemoryDatabase();
-		const manager = new BracketsManager(storage);
-
-		manager.create({
-			name: "DE",
-			tournamentId: 1,
+		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
-			settings: { grandFinal: "double", seedOrdering: ["natural"] },
+			settings: {},
 		});
 
 		const groupId = (number: number) =>
-			storage.select<any>("group")!.find((g) => g.number === number)!.id;
+			data.group.find((group) => group.number === number)!.id;
 		const winnersGroupId = groupId(1);
 		const losersGroupId = groupId(2);
 
 		const losersRoundId = (number: number) =>
-			storage
-				.select<any>("round")!
-				.find((r) => r.group_id === losersGroupId && r.number === number)!.id;
+			data.round.find(
+				(round) => round.groupId === losersGroupId && round.number === number,
+			)!.id;
 
 		// play out the entire winners bracket so all losers feed in
-		let winnersReady = readyMatches(
-			storage,
-			(m) => m.group_id === winnersGroupId,
-		);
+		let winnersReady = readyMatches(data, (m) => m.groupId === winnersGroupId);
 		while (winnersReady.length) {
 			for (const match of winnersReady) {
-				reportLowerIdWinner(storage, manager, match.id);
+				data = reportLowerIdWinner(data, match.id);
 			}
-			winnersReady = readyMatches(
-				storage,
-				(m) => m.group_id === winnersGroupId,
-			);
+			winnersReady = readyMatches(data, (m) => m.groupId === winnersGroupId);
 		}
 
 		// losers round 1: both matches -> two teams eliminated, tied 7th/8th
 		for (const match of readyMatches(
-			storage,
-			(m) => m.round_id === losersRoundId(1),
+			data,
+			(m) => m.roundId === losersRoundId(1),
 		)) {
-			reportLowerIdWinner(storage, manager, match.id);
+			data = reportLowerIdWinner(data, match.id);
 		}
 
 		// losers round 2: report only one of the two matches
 		const losersRound2 = readyMatches(
-			storage,
-			(m) => m.round_id === losersRoundId(2),
+			data,
+			(m) => m.roundId === losersRoundId(2),
 		);
 		invariant(losersRound2.length === 2, "Expected two losers round 2 matches");
 
 		const decided = losersRound2[0];
-		const decidedLoserId = Math.max(decided.opponent1.id, decided.opponent2.id);
+		const decidedLoserId = Math.max(
+			decided.opponent1!.id!,
+			decided.opponent2!.id!,
+		);
 		const stillPlayingTeamIds = [
-			losersRound2[1].opponent1.id,
-			losersRound2[1].opponent2.id,
+			losersRound2[1].opponent1!.id,
+			losersRound2[1].opponent2!.id,
 		];
-		reportLowerIdWinner(storage, manager, decided.id);
+		data = reportLowerIdWinner(data, decided.id);
 
 		const tournament = testTournament({
 			ctx: {
@@ -792,7 +803,7 @@ describe("double elimination standings - projected ties", () => {
 					],
 				},
 			},
-			data: manager.get.tournamentData(1),
+			data,
 		});
 
 		return { tournament, decidedLoserId, stillPlayingTeamIds };
@@ -819,3 +830,98 @@ describe("double elimination standings - projected ties", () => {
 		}
 	});
 });
+
+describe("single elimination source - underground", () => {
+	// 8-team SE played out fully. The four first-round losers tie for last, so
+	// sourcing [-1] should feed exactly those teams into an underground bracket.
+	const playedSingleEliminationTournament = () => {
+		let data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: {},
+		});
+
+		const winnersGroupId = data.group.find((group) => group.number === 1)!.id;
+		const firstRoundId = data.round.find(
+			(round) => round.groupId === winnersGroupId && round.number === 1,
+		)!.id;
+
+		// lower id wins, so the higher id in each first-round match is the loser
+		const firstRoundLoserIds = readyMatches(
+			data,
+			(match) => match.roundId === firstRoundId,
+		).map((match) => Math.max(match.opponent1!.id!, match.opponent2!.id!));
+
+		let ready = readyMatches(data, (match) => match.groupId === winnersGroupId);
+		while (ready.length) {
+			for (const match of ready) {
+				data = reportLowerIdWinner(data, match.id);
+			}
+			ready = readyMatches(data, (match) => match.groupId === winnersGroupId);
+		}
+
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "SE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+
+		return { tournament, firstRoundLoserIds };
+	};
+
+	it("sources the first-round losers when placements are [-1]", () => {
+		const { tournament, firstRoundLoserIds } =
+			playedSingleEliminationTournament();
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [-1] });
+
+		expect(relevantMatchesFinished).toBe(true);
+		expect([...teams].sort((a, b) => a - b)).toEqual(
+			[...firstRoundLoserIds].sort((a, b) => a - b),
+		);
+	});
+});
+
+function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
+	const match = matchById(data, matchId);
+	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;
+
+	return Engine.reportResult(data, {
+		matchId,
+		scores: [opponent1Lower ? 2 : 0, opponent1Lower ? 0 : 2],
+		winnerSide: opponent1Lower ? "opponent1" : "opponent2",
+	}).data;
+}
+
+function readyMatches(
+	data: BracketData,
+	predicate: (match: MatchData) => boolean,
+) {
+	return data.match.filter(
+		(match) =>
+			predicate(match) &&
+			match.opponent1?.id != null &&
+			match.opponent2?.id != null &&
+			match.winnerSide == null,
+	);
+}
+
+function matchById(data: BracketData, id: number) {
+	const found = data.match.find((match) => match.id === id);
+	if (!found) throw new Error(`Match ${id} not found`);
+
+	return found;
+}

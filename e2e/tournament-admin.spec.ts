@@ -1,219 +1,283 @@
-import { STAFF_TEST_ID } from "~/db/seed/constants";
-import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
+import * as fs from "node:fs/promises";
+import { addMinutes, subDays } from "date-fns";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import type { Factories } from "./helpers/factories";
+import { expect, impersonate, test } from "./helpers/playwright";
 import {
-	tournamentAdminPage,
-	tournamentAdminRegistrationEditPage,
-	tournamentAdminRegistrationPage,
-} from "~/utils/urls";
-import {
-	expect,
-	impersonate,
-	modalClickConfirmButton,
-	navigate,
-	seed,
-	selectTournament,
-	selectUser,
-	submit,
-	test,
-	waitForPOSTResponse,
-} from "./helpers/playwright";
+	createTeams,
+	DOUBLE_ELIMINATION,
+	startedTournamentTimes,
+	teamSeeds,
+} from "./helpers/tournament";
+import { TournamentAdminAuditPage } from "./pages/tournament/tournament-admin-audit-page";
+import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
+import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
+import { TournamentSubsPage } from "./pages/tournament/tournament-subs-page";
 
-const TOURNAMENT_ID = 1;
-const auditPage = `${tournamentAdminPage(TOURNAMENT_ID)}/audit`;
+const ROSTER_SIZE = 4;
+const CAPTAIN_DISCORD_ID = "1234567890123456789";
 
 test.describe("Tournament admin team management", () => {
 	test("edits a registration, checks a team in and out, unregisters it and records it in the audit log", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page);
-
-		// --- Edit registration: rename the first team ---
-		await navigate({
-			page,
-			url: tournamentAdminRegistrationEditPage(TOURNAMENT_ID, 1),
+		const tournament = await createTournament(factories);
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		const team = await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam("Original Team"),
+			memberUserIds: roster.map((user) => user.id),
 		});
-		await expect(
-			page.getByRole("heading", { name: "Edit registration" }),
-		).toBeVisible();
 
-		await page.getByLabel("Team name").fill("Renamed Team");
-		await submit(page);
+		await impersonate(page, NZAP_TEST_ID);
+
+		const registration = new TournamentAdminRegistrationPage(page);
+		await registration.gotoEdit(tournament.id, team.id);
+		await expect(registration.locators.editHeading).toBeVisible();
+
+		await registration.form.fill("pickUpName", "Renamed Team");
+		await registration.save();
 
 		// back on the team list, the rename is reflected
-		await expect(page.getByLabel("Search teams")).toBeVisible();
-		await expect(
-			page.getByTestId("team-name").filter({ hasText: "Renamed Team" }),
-		).toBeVisible();
+		const admin = new TournamentAdminPage(page);
+		await expect(admin.locators.searchInput).toBeVisible();
+		await expect(admin.teamName("Renamed Team")).toBeVisible();
 
-		const firstRowActions = page
-			.getByTestId("team-row")
-			.first()
-			.getByLabel("Actions");
+		await admin.checkTeamIn(0);
+		await admin.checkTeamOut(0);
 
-		// --- Check the team in (fetcher JSON submit fired from the menu) ---
-		await firstRowActions.click();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("menuitem", { name: /^Check in/ }).click();
-		});
+		await admin.unregisterTeam(0);
+		await expect(admin.locators.unregisterDialogHeading).toBeVisible();
+		await admin.confirmUnregister();
 
-		// --- Check the team out ---
-		await firstRowActions.click();
-		await waitForPOSTResponse(page, async () => {
-			await page.getByRole("menuitem", { name: /^Check out/ }).click();
-		});
-
-		// --- Unregister the team (confirm dialog) ---
-		await firstRowActions.click();
-		await page.getByRole("menuitem", { name: "Unregister" }).click();
-		await expect(
-			page.getByRole("heading", {
-				name: /Unregister .* and delete its registration info\?/,
-			}),
-		).toBeVisible();
-		await modalClickConfirmButton(page);
-
-		// --- Audit log records the actions (target table cells, not the
-		// event-filter <option>s that share the same text) ---
-		await navigate({ page, url: auditPage });
-		await expect(
-			page.getByRole("cell", { name: "Team checked in" }),
-		).toBeVisible();
-		await expect(
-			page.getByRole("cell", { name: "Team checked out" }),
-		).toBeVisible();
-		await expect(
-			page.getByRole("cell", { name: "Team unregistered" }),
-		).toBeVisible();
+		const audit = new TournamentAdminAuditPage(page);
+		await audit.goto(tournament.id);
+		await expect(audit.eventCell("Team checked in")).toBeVisible();
+		await expect(audit.eventCell("Team checked out")).toBeVisible();
+		await expect(audit.eventCell("Team unregistered")).toBeVisible();
 	});
 
-	test("adds a new team and records it in the audit log", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-
-		await navigate({
-			page,
-			url: tournamentAdminRegistrationPage(TOURNAMENT_ID),
+	test("adds a new team and records it in the audit log", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await createTournament(factories);
+		const player = await factories.UserFactory.create({
+			discordName: "Rostered Riko",
 		});
-		await expect(
-			page.getByRole("heading", { name: "Add new team" }),
-		).toBeVisible();
 
-		await page.getByLabel("Team name").fill("Panda Squad");
-		// "Panda" (the seeded staff user) is not registered in this tournament, so it
-		// is a valid roster member; the faker-generated participants all are.
-		await selectUser({ page, userName: "Panda", labelName: "Player" });
-		await page.getByLabel("Captain").selectOption(String(STAFF_TEST_ID));
+		await impersonate(page, NZAP_TEST_ID);
 
-		await submit(page);
+		const registration = new TournamentAdminRegistrationPage(page);
+		await registration.gotoNew(tournament.id);
+		await expect(registration.locators.addHeading).toBeVisible();
 
-		await expect(
-			page.getByTestId("team-name").filter({ hasText: "Panda Squad" }),
-		).toBeVisible();
+		await registration.form.fill("pickUpName", "Panda Squad");
+		await registration.selectPlayer("Rostered Riko");
+		await registration.selectCaptain(player.id);
+		await registration.save();
 
-		await navigate({ page, url: auditPage });
-		await expect(
-			page.getByRole("cell", { name: "Team registered" }),
-		).toBeVisible();
+		const admin = new TournamentAdminPage(page);
+		await expect(admin.teamName("Panda Squad")).toBeVisible();
+
+		const audit = new TournamentAdminAuditPage(page);
+		await audit.goto(tournament.id);
+		await expect(audit.eventCell("Team registered")).toBeVisible();
 	});
 
 	test("imports a roster from another tournament into the registration form", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page);
+		const tournament = await createTournament(factories);
 
-		await navigate({
-			page,
-			url: tournamentAdminRegistrationPage(TOURNAMENT_ID),
+		// the tournament search of the import dialog only finds past tournaments
+		const pastTournament = await factories.TournamentFactory.create({
+			name: "Paddling Pool 253",
+			authorId: NZAP_TEST_ID,
+			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 2))],
 		});
-		await expect(
-			page.getByRole("heading", { name: "Add new team" }),
-		).toBeVisible();
+		const importedRoster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		await factories.TournamentTeamFactory.create({
+			tournamentId: pastTournament.id,
+			team: pickUpTeam("Imported Legends"),
+			memberUserIds: importedRoster.map((user) => user.id),
+		});
 
-		await page.getByRole("button", { name: "Import team" }).click();
-		const dialog = page.getByRole("dialog");
-		await expect(
-			dialog.getByRole("heading", { name: "Import team" }),
-		).toBeVisible();
+		await impersonate(page, NZAP_TEST_ID);
 
-		// "Paddling Pool 253" is a past tournament with rostered teams in the seed
-		await selectTournament({ page, query: "Paddling Pool" });
+		const registration = new TournamentAdminRegistrationPage(page);
+		await registration.gotoNew(tournament.id);
+		await expect(registration.locators.addHeading).toBeVisible();
 
-		// the team <select> populates asynchronously from the import loader and
-		// auto-selects the first team
-		const teamSelect = dialog.getByLabel("Team", { exact: true });
-		await expect(teamSelect.locator("option")).not.toHaveCount(0);
+		await registration.openImportDialog();
+		await expect(registration.locators.importDialogHeading).toBeVisible();
 
-		await dialog.getByTestId("submit-button").click();
+		await registration.importFirstTeamFrom("Paddling Pool");
 
-		// the dialog closes and the imported roster's name prefills the form. We only
-		// assert the prefill: the seed reuses the same users across tournaments, so the
-		// imported members already belong to this tournament's teams and the server
-		// would reject the registration — the import behaviour itself is what we test.
-		await expect(
-			page.getByRole("heading", { name: "Import team" }),
-		).toHaveCount(0);
-		await expect(page.getByLabel("Team name")).not.toHaveValue("");
+		// the dialog closes and the imported roster's name prefills the form
+		await expect(registration.locators.importDialogHeading).toHaveCount(0);
+		await expect(registration.locators.teamNameInput).toHaveValue(
+			"Imported Legends",
+		);
 	});
 
-	test("exports the team list", async ({ page }) => {
-		await seed(page);
-		await impersonate(page);
-		await navigate({ page, url: tournamentAdminPage(TOURNAMENT_ID) });
+	test("exports the team list", async ({ page, factories }) => {
+		const tournament = await createTournament(factories);
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam("Alpha Squad"),
+			memberUserIds: roster.map((user) => user.id),
+		});
 
-		const teamName = (
-			await page.getByTestId("team-name").first().innerText()
-		).trim();
+		await impersonate(page, NZAP_TEST_ID);
 
-		await page.getByRole("button", { name: "Export" }).click();
-		await expect(
-			page.getByRole("heading", { name: "Export participants" }),
-		).toBeVisible();
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
-		const downloadPromise = page.waitForEvent("download");
-		await page.getByRole("button", { name: "Download" }).click();
-		const download = await downloadPromise;
+		await admin.openExportDialog();
+		await expect(admin.locators.exportDialogHeading).toBeVisible();
+
+		const download = await admin.downloadExport();
 
 		expect(download.suggestedFilename()).toBe("participants.txt");
 
-		const path = await download.path();
-		const fs = await import("node:fs/promises");
-		const content = await fs.readFile(path, "utf-8");
-		expect(content).toContain(teamName);
+		const content = await fs.readFile(await download.path(), "utf-8");
+		expect(content).toContain("Alpha Squad");
+	});
+
+	test("adds a sub post on behalf of a user", async ({ page, factories }) => {
+		// registration is closed (start time in the past) so the subs view is shown on the looking page
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 1))],
+		});
+		await factories.UserFactory.create({
+			discordName: "Subby Sam",
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+
+		await admin.openAddSubDialog();
+		await expect(admin.locators.addSubDialogHeading).toBeVisible();
+
+		await admin.addSubForm.selectUser("userId", "Subby Sam");
+		await admin.addSubForm.fill("message", "Can play backline");
+		await admin.addSubForm.submit();
+
+		await expect(admin.locators.addSubDialogHeading).toHaveCount(0);
+
+		const subs = new TournamentSubsPage(page);
+		await subs.goto(tournament.id);
+		await expect(subs.subPostText("Subby Sam")).toBeVisible();
+		await expect(subs.subPostText("Can play backline")).toBeVisible();
+	});
+
+	test("adds a sub post on behalf of a user whose team dropped out", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
+		});
+		const dropout = await factories.UserFactory.create({
+			discordName: "Dropout Dana",
+		});
+		const droppingRest = await factories.UserFactory.createMany(
+			ROSTER_SIZE - 1,
+		);
+		await factories.TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				team: pickUpTeam("Recruiting Rays"),
+				memberUserIds: [dropout.id, ...droppingRest.map((user) => user.id)],
+			},
+			// the team was recruiting on the LFG page before it dropped out
+			{ isCheckedIn: true, isLooking: true },
+		);
+		// enough opponents that dropping out one team does not end every match
+		await createTeams(factories, tournament.id, teamSeeds(3));
+		await factories.TournamentFactory.startBracket(tournament.id);
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+
+		await admin.searchTeams("Recruiting Rays");
+		await admin.dropOutTeam(0);
+
+		await admin.openAddSubDialog();
+		await expect(admin.locators.addSubDialogHeading).toBeVisible();
+
+		await admin.addSubForm.selectUser("userId", "Dropout Dana");
+		await admin.addSubForm.fill("message", "Free to sub now");
+		await admin.addSubForm.submit();
+
+		await expect(admin.locators.addSubDialogHeading).toHaveCount(0);
+
+		const subs = new TournamentSubsPage(page);
+		await subs.goto(tournament.id);
+		await expect(subs.subPostText("Dropout Dana")).toBeVisible();
+		await expect(subs.subPostText("Free to sub now")).toBeVisible();
 	});
 
 	test("filters the team list by name and by captain Discord id", async ({
 		page,
+		factories,
 	}) => {
-		await seed(page);
-		await impersonate(page);
-		await navigate({ page, url: tournamentAdminPage(TOURNAMENT_ID) });
+		const tournament = await createTournament(factories);
+		const captain = await factories.UserFactory.create({
+			discordId: CAPTAIN_DISCORD_ID,
+		});
+		const alphaRest = await factories.UserFactory.createMany(ROSTER_SIZE - 1);
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam("Alpha Squad"),
+			memberUserIds: [captain.id, ...alphaRest.map((user) => user.id)],
+		});
+		const bravoRoster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam("Bravo Squad"),
+			memberUserIds: bravoRoster.map((user) => user.id),
+		});
 
-		const rows = page.getByTestId("team-row");
-		const search = page.getByLabel("Search teams");
+		await impersonate(page, NZAP_TEST_ID);
 
-		// admin (the impersonated user) captains the first team and is on no other
-		// team in this tournament, so its name + discord id both single it out
-		const firstTeamName = (
-			await page.getByTestId("team-name").first().innerText()
-		).trim();
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
 
-		await search.fill(firstTeamName);
-		await expect(rows).toHaveCount(1);
-		await expect(page.getByTestId("team-name").first()).toHaveText(
-			firstTeamName,
-		);
+		// the captain is on no other team, so their team name + discord id both single it out
+		await admin.searchTeams("Alpha Squad");
+		await expect(admin.locators.teamRows).toHaveCount(1);
+		await expect(admin.locators.teamNames.first()).toHaveText("Alpha Squad");
 
-		await search.fill(ADMIN_DISCORD_ID);
-		await expect(rows).toHaveCount(1);
-		await expect(page.getByTestId("team-name").first()).toHaveText(
-			firstTeamName,
-		);
+		await admin.searchTeams(CAPTAIN_DISCORD_ID);
+		await expect(admin.locators.teamRows).toHaveCount(1);
+		await expect(admin.locators.teamNames.first()).toHaveText("Alpha Squad");
 
-		await search.fill("zzz-no-such-team-zzz");
-		await expect(
-			page.getByText("No registrations match your search"),
-		).toBeVisible();
+		await admin.searchTeams("zzz-no-such-team-zzz");
+		await expect(admin.locators.noSearchResultsText).toBeVisible();
 	});
 });
+
+/** A tournament whose check-in window is open but that has not started. */
+function createTournament(factories: Factories) {
+	return factories.TournamentFactory.create({
+		authorId: NZAP_TEST_ID,
+		startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+	});
+}
+
+function pickUpTeam(name: string) {
+	return { name, prefersNotToHost: 0 as const, teamId: null };
+}

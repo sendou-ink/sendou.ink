@@ -290,7 +290,7 @@ export default function MatchPageTestRoute() {
 							ownTeamId={1}
 							stageId={4}
 							mode="SZ"
-							withPoints={true}
+							withKo={true}
 							actionButtons={
 								<SendouButton
 									variant="minimal-destructive"
@@ -688,7 +688,7 @@ export default function MatchPageTestRoute() {
 								mode: "RM",
 								timestamp: 1712856200,
 								winner: "ALPHA",
-								points: [100, 42],
+								ko: true,
 								weapons: {
 									alpha: [40, null, 1100, 3040],
 									bravo: [null, 210, null, 4010],

@@ -1,8 +1,8 @@
 import clsx from "clsx";
 import { SquarePen, Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
-import { Link, Outlet, useLoaderData, useSearchParams } from "react-router";
+import type { MetaFunction } from "react-router";
+import { Link, Outlet, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
@@ -18,6 +18,10 @@ import {
 	nextNonCompletedVoting,
 } from "~/features/plus-voting/core";
 import { SendouForm } from "~/form/SendouForm";
+import {
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
@@ -26,6 +30,11 @@ import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
 import styles from "../plus.module.css";
 import { editSuggestionFormSchema } from "../plus-suggestions-schemas";
+import {
+	PLUS_TIER_PARAMS,
+	type PlusTierParam,
+	plusSuggestionsSearchParams,
+} from "../plus-suggestions-search-params";
 import {
 	canAddCommentToSuggestionFE,
 	canDeleteComment,
@@ -47,19 +56,18 @@ export const meta: MetaFunction = (args) => {
 
 export type PlusSuggestionsLoaderData = SerializeFrom<typeof loader>;
 
-export const shouldRevalidate: ShouldRevalidateFunction = ({ formMethod }) => {
-	// only reload if form submission not when user changes tabs
-	return Boolean(formMethod && formMethod !== "GET");
-};
+export const shouldRevalidate = plusSuggestionsSearchParams.shouldRevalidate;
 
 export default function PlusSuggestionsPage() {
 	const data = useLoaderData<PlusSuggestionsLoaderData>();
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [{ tier, alert }, setSearchParams] = useSearchParamsTyped(
+		plusSuggestionsSearchParams,
+	);
 	const user = useUser();
-	const tierVisible = searchParamsToLegalTier(searchParams);
+	const tierVisible = Number(tier ?? "1");
 
-	const handleTierChange = (tier: string) => {
-		setSearchParams({ tier }, { replace: true });
+	const handleTierChange = (tier: PlusTierParam) => {
+		setSearchParams({ tier });
 	};
 
 	const visibleSuggestions = data.suggestions.filter(
@@ -81,7 +89,7 @@ export default function PlusSuggestionsPage() {
 			<div className={styles.container}>
 				<div className="stack md">
 					<SuggestedForInfo />
-					{searchParams.get("alert") === "true" ? (
+					{alert ? (
 						<Alert variation="WARNING">
 							You do not have permissions to suggest or suggesting is not
 							possible right now
@@ -97,26 +105,26 @@ export default function PlusSuggestionsPage() {
 							})}
 						>
 							<div className={styles.radios}>
-								{[1, 2, 3].map((tier) => {
-									const id = String(tier);
+								{PLUS_TIER_PARAMS.map((tierParam) => {
+									const tier = Number(tierParam);
 									const suggestions = data.suggestions.filter(
 										(suggestion) => suggestion.tier === tier,
 									);
 
 									return (
-										<div key={id} className={styles.radioContainer}>
-											<label htmlFor={id} className={styles.radioLabel}>
+										<div key={tierParam} className={styles.radioContainer}>
+											<label htmlFor={tierParam} className={styles.radioLabel}>
 												+{tier}{" "}
 												<span className={styles.usersCount}>
 													({suggestions.length})
 												</span>
 											</label>
 											<input
-												id={id}
+												id={tierParam}
 												name="tier"
 												type="radio"
 												checked={tierVisible === tier}
-												onChange={() => handleTierChange(String(tier))}
+												onChange={() => handleTierChange(tierParam)}
 												data-cy={`plus${tier}-radio`}
 											/>
 										</div>
@@ -146,16 +154,6 @@ export default function PlusSuggestionsPage() {
 			</div>
 		</>
 	);
-}
-
-function searchParamsToLegalTier(searchParams: URLSearchParams) {
-	const tierFromSearchParams = searchParams.get("tier");
-
-	if (tierFromSearchParams === "1") return 1;
-	if (tierFromSearchParams === "2") return 2;
-	if (tierFromSearchParams === "3") return 3;
-
-	return 1;
 }
 
 function SuggestedForInfo() {
@@ -228,7 +226,10 @@ function SuggestedUser({
 						className={styles.commentButton}
 						size="small"
 						variant="outlined"
-						to={`comment/${tier}/${suggestion.suggested.id}?tier=${tier}`}
+						to={plusSuggestionsSearchParams.href(
+							`comment/${tier}/${suggestion.suggested.id}`,
+							{ tier: String(tier) as PlusTierParam },
+						)}
 						prefetch="render"
 					>
 						Comment
@@ -263,7 +264,10 @@ export function PlusSuggestionComments({
 	defaultOpen?: true;
 }) {
 	const { t } = useTranslation(["common"]);
-	const [, setSearchParams] = useSearchParams();
+	const [, setEditingSuggestionId] = useSearchParam(
+		plusSuggestionsSearchParams,
+		"editingSuggestionId",
+	);
 
 	return (
 		<details open={defaultOpen} className="w-full">
@@ -311,12 +315,7 @@ export function PlusSuggestionComments({
 										icon={<SquarePen />}
 										variant="minimal"
 										aria-label={t("common:actions.edit")}
-										onPress={() =>
-											setSearchParams((prev) => {
-												prev.set("editingSuggestionId", String(entry.id));
-												return prev;
-											})
-										}
+										onPress={() => setEditingSuggestionId(entry.id)}
 									/>
 								) : null}
 								{deleteButtonArgs &&
@@ -383,19 +382,18 @@ function EditSuggestionDialog({
 	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
 }) {
 	const { t } = useTranslation(["common"]);
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [editingSuggestionId, setEditingSuggestionId] = useSearchParam(
+		plusSuggestionsSearchParams,
+		"editingSuggestionId",
+	);
 
-	const editingSuggestionId = Number(searchParams.get("editingSuggestionId"));
-
-	const entry = editingSuggestionId
-		? findEntryById(suggestions, editingSuggestionId)
-		: null;
+	const entry =
+		typeof editingSuggestionId === "number"
+			? findEntryById(suggestions, editingSuggestionId)
+			: null;
 
 	const handleClose = () => {
-		setSearchParams((prev) => {
-			prev.delete("editingSuggestionId");
-			return prev;
-		});
+		setEditingSuggestionId(null);
 	};
 
 	return (

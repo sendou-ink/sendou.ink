@@ -16,6 +16,7 @@ interface StageSelectProps<Clearable extends boolean | undefined = undefined> {
 	clearable?: Clearable;
 	testId?: string;
 	isRequired?: boolean;
+	isDisabled?: boolean;
 }
 
 export function StageSelect<Clearable extends boolean | undefined = undefined>({
@@ -26,6 +27,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 	clearable,
 	testId = "stage-select",
 	isRequired,
+	isDisabled,
 }: StageSelectProps<Clearable>) {
 	const { t } = useTranslation(["common", "game-misc"]);
 	const items = useStageItems();
@@ -54,6 +56,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 			clearable={clearable}
 			data-testid={testId}
 			isRequired={isRequired}
+			isDisabled={isDisabled}
 		>
 			{({ id, name }) => (
 				<SendouSelectItem key={id} id={id} textValue={name}>

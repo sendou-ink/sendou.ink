@@ -1,27 +1,29 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
-import { dbInsertUsers, dbReset, wrappedLoader } from "~/utils/Test";
+import { wrappedLoader } from "~/utils/Test";
 import { loader } from "../loaders/org.$slug.stats.server";
-import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "../test-utils";
 import { ESTABLISHED_ORG } from "../tournament-organization-constants";
+
+const users = UserFactory.pool();
 
 const statsLoader = wrappedLoader<SerializeFrom<typeof loader>>({ loader });
 
 const createOrg = () =>
-	TournamentOrganizationRepository.create({ ownerId: 1, name: "Org" });
+	TournamentOrganizationFactory.create({ ownerId: users.id(1) });
 
 describe("org stats loader", () => {
 	beforeEach(async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date(2026, 0, 15));
-		await dbInsertUsers(5);
+		await users.create(5);
 	});
 
-	afterEach(() => {
+	afterEach(async () => {
 		vi.useRealTimers();
-		dbReset();
 	});
 
 	test("throws when the user is not an org admin", async () => {
@@ -70,13 +72,13 @@ describe("org stats loader", () => {
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
 			startTime: dateToDatabaseTimestamp(new Date(2025, 11, 10)),
-			participantUserIds: [1, 2, 3],
+			participantUserIds: [users.id(1), users.id(2), users.id(3)],
 		});
 		// an event in the current month is ignored
 		await seedOrgEventWithParticipants({
 			organizationId: org.id,
 			startTime: dateToDatabaseTimestamp(new Date(2026, 0, 5)),
-			participantUserIds: [1, 2, 3, 4, 5],
+			participantUserIds: users.ids(),
 		});
 
 		const data = await statsLoader({

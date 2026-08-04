@@ -1,6 +1,6 @@
 import type { NotNull, Transaction } from "kysely";
 import { db } from "~/db/sql";
-import type { DB, TablesInsertable } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type {
@@ -10,15 +10,6 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
-
-export function createMany(
-	weapons: TablesInsertable["ReportedWeapon"][],
-	trx?: Transaction<DB>,
-) {
-	if (weapons.length === 0) return;
-
-	return (trx ?? db).insertInto("ReportedWeapon").values(weapons).execute();
-}
 
 export async function upsertOwn({
 	groupMatchId,
@@ -44,7 +35,7 @@ export async function upsertOwn({
 
 export async function replaceByMatchId(
 	matchId: number,
-	weapons: TablesInsertable["ReportedWeapon"][],
+	weapons: Omit<Tables["ReportedWeapon"], "createdAt">[],
 	trx?: Transaction<DB>,
 ) {
 	const executor = trx ?? db;
@@ -54,9 +45,7 @@ export async function replaceByMatchId(
 		.where("groupMatchId", "=", matchId)
 		.execute();
 
-	if (weapons.length > 0) {
-		await executor.insertInto("ReportedWeapon").values(weapons).execute();
-	}
+	await executor.insertInto("ReportedWeapon").values(weapons).execute();
 }
 
 export async function deleteOwnByMapIndex({
@@ -197,7 +186,7 @@ export async function findByTournamentMatchId(matchId: number) {
  * Aggregates a user's reported weapons across both SendouQ matches and
  * finalized tournaments that fall within the given season's date range.
  */
-export async function seasonReportedWeaponsByUserId({
+export async function findSeasonReportedWeaponsByUserId({
 	userId,
 	season,
 }: {
@@ -268,7 +257,7 @@ export interface WeaponUsageStat {
  * Reports how often a user and the mates/enemies they played against used each
  * weapon on a given stage and mode during a season, along with win/loss counts.
  */
-export async function weaponUsageStats({
+export async function findAllWeaponUsageStats({
 	userId,
 	mode,
 	stageId,

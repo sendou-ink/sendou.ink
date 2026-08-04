@@ -1,0 +1,54 @@
+.ownTeamRow {
+	grid-template-columns: 2.75rem 1fr auto;
+	background:
+		linear-gradient(
+			to right,
+			color-mix(in oklch, var(--graphic-accent) 16%, transparent),
+			transparent 40%
+		),
+		var(--graphic-row-bg);
+	border-color: color-mix(in oklch, var(--graphic-accent) 35%, transparent);
+}
+
+.matchRow {
+	grid-template-columns: 5.5rem 2.75rem 1fr auto;
+}
+
+.matchLeading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.roundName {
+	text-align: center;
+}
+
+.seriesWin {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	width: 100%;
+	text-align: center;
+}
+
+.seriesWinName {
+	width: 100%;
+	overflow: hidden;
+	font-size: var(--font-sm);
+	line-height: 1.2;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.seriesWinDate {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.seriesTitlesCount {
+	color: var(--graphic-first);
+}

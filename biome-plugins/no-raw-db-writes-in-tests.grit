@@ -1,0 +1,21 @@
+language js
+
+// Tests arrange their state through `app/db/seed/factories`, so that seeding
+// exercises the same write paths the app does. A raw write is only allowed when
+// no production write reaches the state at all, and then it has to say so:
+// `// biome-ignore lint/plugin: <why no production write can do this>`
+`$connection.$method($_)` as $write where {
+	// `trx` too, so that a write inside a test's own `db.transaction()` block is
+	// caught the same way the ones on the singleton are
+	$connection <: or {
+		`db`,
+		`trx`
+	},
+	$method <: or {
+		`insertInto`,
+		`updateTable`,
+		`deleteFrom`,
+		`replaceInto`
+	},
+	register_diagnostic(span=$write, message="Tests must not write to the database directly. Use a factory from `app/db/seed/factories`, or a repository write function if the test is about that write. If no production write reaches this state, keep the raw write and suppress with `// biome-ignore lint/plugin: <reason>`.", severity="error")
+}

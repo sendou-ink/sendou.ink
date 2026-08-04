@@ -1,28 +1,29 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { errorToastIfFalsy, notFoundIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import { validateInviteCode } from "../loaders/t.$customUrl.join.server";
 import * as TeamRepository from "../TeamRepository.server";
 import { TEAM } from "../team-constants";
 import { teamParamsSchema } from "../team-schemas.server";
+import { teamJoinSearchParams } from "../team-search-params";
 
 export const action: ActionFunction = async ({ params, url }) => {
 	const user = requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
-	const team = notFoundIfFalsy(
+	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl, {
 			includeInviteCode: true,
 		}),
 	);
 
-	const inviteCode = url.searchParams.get("code") ?? "";
+	const { code } = teamJoinSearchParams.parse(url);
 	const realInviteCode = team.inviteCode!;
 
 	errorToastIfFalsy(
 		validateInviteCode({
-			inviteCode,
+			inviteCode: code ?? "",
 			realInviteCode,
 			team,
 			user,
@@ -31,7 +32,7 @@ export const action: ActionFunction = async ({ params, url }) => {
 		"Invite code is invalid",
 	);
 
-	await TeamRepository.joinTeam({
+	await TeamRepository.insertOwnMembership({
 		maxTeamsAllowed:
 			user.patronTier && user.patronTier >= 2
 				? TEAM.MAX_TEAM_COUNT_PATRON

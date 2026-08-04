@@ -1,6 +1,6 @@
 ---
 name: e2e
-description: Run, debug, and manage Playwright e2e tests. Use when running e2e tests, debugging test failures, regenerating seed databases, or investigating test infrastructure issues.
+description: Run, debug, and manage Playwright e2e tests. Use when running e2e tests, debugging test failures, writing new specs, or investigating test infrastructure issues.
 ---
 
 # E2E Test Runner
@@ -8,27 +8,26 @@ description: Run, debug, and manage Playwright e2e tests. Use when running e2e t
 ## Architecture overview
 
 - Tests live in `e2e/*.spec.ts`, config in `playwright.config.ts`
-- Global setup (`e2e/global-setup.ts`) builds the app, creates per-worker databases, and starts one server per worker
-- Port calculation: `E2E_BASE_PORT = PORT (from .env) + 500`. Default PORT is typically 4001, so base port = 4501. Workers use ports base+0 through base+3
-- Worker databases: `db-test-e2e-0.sqlite3` through `db-test-e2e-3.sqlite3` in the project root
-- Seed databases (pre-seeded snapshots): `e2e/seeds/db-seed-*.sqlite3`
+- Page objects live in `e2e/pages/<feature>/` — every spec uses them; conventions in `docs/dev/e2e-page-objects.md`, gotchas in `docs/dev/e2e-page-objects-migration.md`
+- Global setup (`e2e/global-setup.ts`) builds the app (skipped when no build input changed since the last e2e build — tracked via `.e2e-build-marker`), creates/migrates per-worker databases (via `scripts/ensure-test-db.ts`: pending migrations are applied, drifted databases are rebuilt), and starts one server per worker
+- Port calculation: `E2E_BASE_PORT = PORT (from .env) + 500`. Worker N uses port base+N, except ports on the WHATWG fetch bad port list (e.g. 6679) are skipped — see `e2eWorkerPort` in `e2e/helpers/playwright.ts`
+- Worker count: `E2E_WORKERS` env, defaulting to `min(8, max(4, cores - 2))`
+- Worker databases: `db-test-e2e-<N>.sqlite3` in the project root; every test starts from a wiped database holding only the admin (Sendou) and N-ZAP users, and builds its own data with the `factories` fixture
 - MinIO (S3-compatible storage) is started via Docker Compose if not already running
 
 ## Pre-flight checks (run before every test execution)
 
 Before running tests, check for these common issues:
 
-1. **Stale worker databases** — Files matching `db-test-e2e-*.sqlite3` in the project root can cause "table already exists" migration errors if the schema has changed since they were created. Run `pnpm run test:e2e:generate-seeds` to regenerate these from the seed databases.
-
-2. **Port conflicts** — Check if anything is already listening on the e2e ports (base port through base+3):
+1. **Port conflicts** — Check if anything is already listening on the e2e ports (base port + worker index):
    ```
-   lsof -i :4501-4504 2>/dev/null
+   lsof -i :4501-4508 2>/dev/null
    ```
    If ports are occupied by leftover e2e servers, kill them. If occupied by something else, warn the user.
 
-3. **Seed databases exist** — Verify `e2e/seeds/` contains the expected seed files. If missing, run `pnpm run test:e2e:generate-seeds`.
+2. **Docker running** — MinIO requires Docker. Check with `docker info` if there are storage-related failures.
 
-4. **Docker running** — MinIO requires Docker. Check with `docker info` if there are storage-related failures.
+Stale worker databases (`db-test-e2e-*.sqlite3`) are handled automatically: global setup applies pending migrations and rebuilds databases whose migration history has drifted.
 
 ## Running tests
 
@@ -41,16 +40,18 @@ pnpm run test:e2e
 ```bash
 pnpm exec playwright test e2e/<name>.spec.ts
 ```
+Batch multiple files into one invocation — every invocation pays global setup.
 
 ### Flaky detection (repeats each test 10 times, stops on first failure)
 ```bash
 pnpm run test:e2e:flaky-detect
 ```
 
-### Regenerate seed databases (after schema/migration changes)
+### Force a rebuild of the app
 ```bash
-pnpm run test:e2e:generate-seeds
+E2E_FORCE_BUILD=true pnpm run test:e2e
 ```
+Global setup reuses the previous build when nothing under `app/`, `public/`, the lockfile, or the vite/react-router configs changed. Use this override if you suspect a stale build (e.g. after changing env-dependent build behavior).
 
 ## Debugging failures
 
@@ -62,10 +63,10 @@ Follow this funnel when tests fail:
 
 ### Step 2: Check infrastructure issues
 Common infrastructure errors and fixes:
-- **"table already exists"** → Stale worker DBs. Run `rm -f db-test-e2e-*.sqlite3`
+- **"table already exists"** → Should not happen anymore (global setup rebuilds drifted worker DBs); if it does, `rm -f db-test-e2e-*.sqlite3` and investigate `scripts/ensure-test-db.ts`
 - **"Server on port X did not start within timeout"** → Port conflict or app build error. Check ports with `lsof -i :<port>` and check for build errors
 - **"MinIO failed to start"** → Docker not running or compose issue. Check `docker info`
-- **Seed-related errors** → Run `pnpm run test:e2e:generate-seeds`
+- **"Test ended with database writes the server never saw"** → A factory call was not followed by a helper that talks to the server; add a `navigate`/`impersonate` after the writes
 
 ### Step 3: Reduce to single debug worker
 If the error is unclear, re-run with debug output and a single worker to see server logs:
@@ -75,41 +76,50 @@ E2E_DEBUG=true E2E_WORKERS=1 pnpm exec playwright test e2e/<failing-test>.spec.t
 This shows stdout/stderr from the test server, which is hidden by default.
 
 ### Step 4: Examine trace artifacts
-Playwright is configured with `trace: "retain-on-failure"`. After a failure, view the trace:
+Playwright is configured with `trace: "retain-on-failure"`. After a failure, check `test-results/<test-folder>/error-context.md` for the page's accessibility snapshot at failure time, or view the trace:
 ```bash
 pnpm exec playwright show-trace test-results/<test-folder>/trace.zip
 ```
 
+### Re-render races
+Skalop (websocket) is fully disconnected in e2e — the build has an empty `VITE_SKALOP_WS_URL` and worker servers get empty `SKALOP_SYSTEM_MESSAGE_URL`/`SKALOP_TOKEN` (see `e2e/global-setup.ts`), so cross-worker websocket crosstalk cannot cause flakes. Google Fonts are also blocked at the context level so font swaps never reflow the page mid-test. Re-renders from the test's own action revalidations can still swallow a React Aria press (press start registers, press end never fires — no POST); `waitForPOSTResponse` retries for this, so route flows through it rather than adding sleeps. When e2e tests for chat/websocket features are added, skalop needs a per-worker instance or stub with a runtime-derived WS URL.
+
 ## Test pattern reference
 
-Every test follows this pattern — use these imports from `./helpers/playwright`, NOT raw Playwright APIs:
+Every test builds its own data with factories and drives the UI through page objects:
 
 ```typescript
-import { expect, impersonate, navigate, seed, test } from "./helpers/playwright";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { expect, impersonate, test } from "./helpers/playwright";
+import { BuildsPage } from "./pages/builds/builds-page";
 
 test.describe("Feature", () => {
-  test("does something", async ({ page }) => {
-    await seed(page);                    // Reset DB to a known seed state
-    await impersonate(page, USER_ID);    // Log in as a specific user (default: admin)
-    await navigate({ page, url: "..." });// Navigate (waits for hydration)
-    // ... interact with the page ...
-    await submit(page);                  // Submit a form (waits for POST response)
-  });
+	test("does something", async ({ page, factories }) => {
+		await factories.BuildFactory.create({ ownerId: NZAP_TEST_ID });
+
+		await impersonate(page, NZAP_TEST_ID);
+		const builds = new BuildsPage(page);
+		await builds.goto();
+		// ... interact via page object methods, assert in the spec ...
+	});
 });
 ```
 
 Key rules:
-- Use `navigate()` instead of `page.goto()` — it waits for hydration
+- The database starts each test holding only the admin and N-ZAP; the `factories` worker fixture (see `e2e/helpers/factories.ts` for the registry) creates everything else
+- Locators live in page objects under `e2e/pages/` — specs contain no raw `getByTestId`/`getByRole` calls; see `docs/dev/e2e-page-objects.md`
+- Use `navigate()` instead of `page.goto()` — it waits for hydration (page objects' `goto()` methods wrap it)
 - Use `submit()` instead of clicking submit buttons directly — it waits for the POST response
-- Use `seed(page, variation?)` to reset the database. Available variations: DEFAULT, NO_TOURNAMENT_TEAMS, REG_OPEN, SMALL_SOS, NZAP_IN_TEAM, NO_SCRIMS, NO_SQ_GROUPS
-- Use `impersonate(page, userId?)` to authenticate. Default is admin (ADMIN_ID)
+- Use `impersonate(page, userId?)` to authenticate. Default is admin (ADMIN_ID); prefer N-ZAP (`NZAP_TEST_ID`) when the flow doesn't need admin rights
 - Avoid `page.waitForTimeout` — use assertions or `waitFor` patterns instead
-- Import `test` from `./helpers/playwright` (not from `@playwright/test`) — it includes worker port fixtures
+- Import `test` from `./helpers/playwright` (not from `@playwright/test`) — it includes worker port fixtures and the database reset
+- Factory writes must be followed by a helper that talks to the server (`navigate`, `impersonate`, `submit`) or the test fails with "writes the server never saw"
 
 ## Environment variables
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
-| `E2E_WORKERS` | Number of parallel workers | 4 |
+| `E2E_WORKERS` | Number of parallel workers | min(8, max(4, cores − 2)) |
 | `E2E_DEBUG` | Show server stdout/stderr when "true" | unset |
+| `E2E_FORCE_BUILD` | Rebuild the app even when inputs look unchanged | unset |
 | `PORT` | Base port for dev server (e2e adds 500) | 5173 |

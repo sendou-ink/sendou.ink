@@ -14,14 +14,31 @@ async function globalTeardown(_config: FullConfig) {
 
 	const servers = global.__E2E_SERVERS__ || [];
 
+	const exits: Promise<void>[] = [];
 	for (const server of servers) {
-		if (server && !server.killed) {
-			server.kill("SIGTERM");
+		if (server && !server.killed && server.exitCode === null) {
+			exits.push(
+				new Promise((resolve) => server.once("exit", () => resolve())),
+			);
+
+			if (process.platform === "win32" && server.pid) {
+				// the whole process tree needs to be killed on Windows to not leave
+				// the ports occupied
+				try {
+					execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: "pipe" });
+				} catch {
+					// Ignore errors, process might already be gone
+				}
+			} else {
+				server.kill("SIGTERM");
+			}
 		}
 	}
 
-	// Give processes a moment to clean up
-	await new Promise((resolve) => setTimeout(resolve, 1000));
+	await Promise.race([
+		Promise.all(exits),
+		new Promise((resolve) => setTimeout(resolve, 2000)),
+	]);
 
 	// Stop MinIO if we started it (check for marker file)
 	if (fs.existsSync(MINIO_MARKER_FILE)) {

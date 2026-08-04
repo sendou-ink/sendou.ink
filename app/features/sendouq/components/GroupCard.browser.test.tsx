@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import type { GroupSkillDifference } from "~/db/tables";
+import type { GroupSkillDifference } from "~/db/tables-json";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type {
 	SQGroup,

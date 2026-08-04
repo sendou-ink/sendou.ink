@@ -8,35 +8,42 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { datePlaceholder } from "~/features/chat/chat-utils";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import { ConcurrentModificationError } from "~/utils/errors";
-import { logger } from "~/utils/logger";
 import {
-	actionError,
-	errorToast,
-	errorToastIfFalsy,
-	parseRequestPayload,
-} from "~/utils/remix.server";
+	ConcurrentModificationError,
+	DuplicateEntryError,
+} from "~/utils/errors";
+import { logger } from "~/utils/logger";
+import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
+import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { SCRIM } from "../scrims-constants";
-import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
+import { scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
 import { usersListForPost } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
 
-	const data = await parseRequestPayload({
+	const result = await parseFormData({
 		request,
 		schema: scrimsActionSchema,
 	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+
 	switch (data._action) {
 		case "DELETE_POST": {
 			const post = await findPost({
@@ -49,7 +56,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				"Can't delete an accepted scrim, cancel it instead",
 			);
 
-			await ScrimPostRepository.del(post.id);
+			await ScrimPostRepository.deleteById(post.id);
 
 			break;
 		}
@@ -70,40 +77,47 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				errorToastIfFalsy(canSeePost, "Post not found");
 			}
 
-			if (post.rangeEnd && !data.at) {
-				return actionError<typeof newRequestSchema>({
-					msg: "Please select a time for the scrim",
-					field: "at",
-				});
+			if (post.rangeEndsAt && !data.at) {
+				return {
+					fieldErrors: { at: "Please select a time for the scrim" },
+				};
 			}
 
-			if (post.rangeEnd && data.at) {
+			if (post.rangeEndsAt && data.at) {
 				const validTimeOptions = generateTimeOptions(
-					databaseTimestampToDate(post.at),
-					databaseTimestampToDate(post.rangeEnd),
+					databaseTimestampToDate(post.startsAt),
+					databaseTimestampToDate(post.rangeEndsAt),
 				);
 				const requestTime = data.at.getTime();
 
 				if (!validTimeOptions.includes(requestTime)) {
-					return actionError<typeof newRequestSchema>({
-						msg: "Selected time must be one of the available options",
-						field: "at",
-					});
+					return {
+						fieldErrors: {
+							at: "Selected time must be one of the available options",
+						},
+					};
 				}
 			}
 
-			await ScrimPostRepository.insertRequest({
-				scrimPostId: data.scrimPostId,
-				teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
-				message: data.message,
-				at: data.at ? dateToDatabaseTimestamp(data.at) : null,
-				users: (
-					await usersListForPost({ authorId: user.id, from: data.from })
-				).map((userId) => ({
-					userId,
-					isOwner: Number(user.id === userId),
-				})),
-			});
+			try {
+				await ScrimPostRepository.insertRequest({
+					scrimPostId: data.scrimPostId,
+					teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
+					message: data.message,
+					startsAt: data.at ? dateToDatabaseTimestamp(data.at) : null,
+					users: (
+						await usersListForPost({ authorId: user.id, from: data.from })
+					).map((userId) => ({
+						userId,
+						isOwner: toDBBoolean(user.id === userId),
+					})),
+				});
+			} catch (error) {
+				if (error instanceof DuplicateEntryError) {
+					errorToast("Your team has already requested this scrim");
+				}
+				throw error;
+			}
 
 			notify({
 				userIds: post.users
@@ -143,15 +157,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				ChatSystemMessage.setMetadata({
 					chatCode: fullPost.chatCode,
 					header: datePlaceholder(
-						databaseTimestampToDate(request.at ?? post.at),
+						databaseTimestampToDate(request.startsAt ?? post.startsAt),
 					),
 					subtitle: "Scrim",
 					url: scrimPage(post.id),
 					imageUrl: `${navIconUrl("scrims")}.avif`,
 					participantUserIds: Scrim.participantIdsListFromAccepted(fullPost),
-					expiresAt: add(databaseTimestampToDate(request.at ?? post.at), {
-						hours: 3,
-					}),
+					expiresAt: add(
+						databaseTimestampToDate(request.startsAt ?? post.startsAt),
+						{
+							hours: 3,
+						},
+					),
 				});
 			}
 
@@ -201,13 +218,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					}
 
 					for (const removed of posts) {
-						await ScrimPostRepository.del(removed.id);
+						await ScrimPostRepository.deleteById(removed.id);
 						notify({
 							userIds: removed.memberIds,
 							defaultSeenUserIds: [user.id],
 							notification: {
 								type: "SCRIM_AUTO_DELETED",
-								meta: { at: removed.at },
+								meta: { at: removed.startsAt },
 							},
 						});
 					}

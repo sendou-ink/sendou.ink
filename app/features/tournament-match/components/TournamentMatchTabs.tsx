@@ -157,9 +157,6 @@ function resolveTimelineMaps(
 			}));
 
 	return data.results.map((result, mapIndex) => {
-		const hasPoints =
-			result.opponentOnePoints !== null && result.opponentTwoPoints !== null;
-
 		const alphaRoster = resolveRoster(result.participants, opponentOneId);
 		const bravoRoster = resolveRoster(result.participants, opponentTwoId);
 
@@ -216,12 +213,7 @@ function resolveTimelineMaps(
 			weapons: hasAnyWeapon
 				? { alpha: alphaWeapons, bravo: bravoWeapons }
 				: undefined,
-			points: hasPoints
-				? ([result.opponentOnePoints, result.opponentTwoPoints] as [
-						number,
-						number,
-					])
-				: undefined,
+			ko: result.ko != null ? Boolean(result.ko) : undefined,
 			scoreboard: resolveTimelineScoreboard(ingestedScoreboard, alphaIsWinner),
 		};
 	});
@@ -306,6 +298,7 @@ function resolveTimelinePickBanData(
 			maps,
 			teams: pickBanTeamsLite,
 			results: data.results,
+			matchId: data.match.id,
 		});
 		if (teamId === null) continue;
 

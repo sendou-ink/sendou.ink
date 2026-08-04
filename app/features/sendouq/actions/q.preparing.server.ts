@@ -55,9 +55,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				}
 
 				errorToastIfFalsy(
-					(await SQGroupRepository.friendsAndTeammates(user.id)).friends.some(
-						(friendUser) => friendUser.id === data.id,
-					),
+					(
+						await SQGroupRepository.findFriendsAndTeammates(user.id)
+					).friends.some((friendUser) => friendUser.id === data.id),
 					"Not a friend",
 				);
 				errorToastIfFalsy(
@@ -65,7 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					"User you are trying to add has no friend code set",
 				);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.addMember(
+				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
 					ownGroup.id,
 					{
 						userId: data.id,

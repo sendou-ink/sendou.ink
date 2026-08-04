@@ -32,10 +32,14 @@ List of the dependencies in production:
 - [Skalop](https://github.com/sendou-ink/skalop) - WebSocket server
 - [Lohi](https://github.com/sendou-ink/lohi) - Discord bot for profile updates, log-in links etc.
 - [Leanny/splat3](https://github.com/Leanny/splat3) - In-game data (manual update) 
-- [splatoon3.ink](https://github.com/misenhower/splatoon3.ink) - X Rank placement data (manual update)
+- [splatoon3.ink](https://github.com/misenhower/splatoon3.ink) - Rotation schedules (hourly routine) & X Rank placement data (manual update)
 - Discord - Auth  
 - Twitch - Streams  
-- Bluesky - Front page changelog
+- Patreon - Supporter status (hourly routine)  
+- Bluesky - Front page changelog  
+- Sentry - Error monitoring & tracing
+
+Configuration for these lives in `app/config.ts` (client, `VITE_*` variables, imported as `Config`) and `app/config.server.ts` (server only, imported as `ServerConfig`). Both validate their environment variables once on import.
 
 ## Folder structure
 
@@ -46,16 +50,18 @@ sendou.ink/
 │   │   └── elements/ -- Wrappers providing styling etc. around React Aria Components
 │   ├── db/ -- Database seeds, types & connection
 │   ├── features/ -- See "feature folders" below
+│   ├── form/ -- SendouForm & shared form field builders (see `forms.md`)
 │   ├── hooks/ -- React hooks used by many features
 │   ├── modules/ -- "node_modules but part of the app"
+│   ├── routines/ -- Cron job definitions (see "Routines" below)
 │   ├── styles/ -- Global .css files
 │   ├── utils/ -- Helper functions grouped by domain used by many features
+│   ├── config.ts -- Validated client (`VITE_*`) configuration
+│   ├── config.server.ts -- Validated server-only configuration
 │   ├── entry.client.tsx -- Client entry point (React Router concept)
 │   ├── entry.server.tsx -- Server entry point (React Router concept)
-│   ├── form/ -- Form helpers shared across features
-│   ├── root.tsx -- Basic HTML structure, React context providers & root data loader
-│   ├── routes.ts -- Route manifest
-│   └── routines/ -- Cron job definitions (see "Routines" below)
+│   ├── root.tsx -- Basic HTML structure, middleware, React context providers & root data loader
+│   └── routes.ts -- Route manifest
 ├── content/ -- Markdown files containing articles
 ├── docs/ -- Documentation to developers and users
 ├── e2e/ -- Playwright tests
@@ -77,16 +83,16 @@ You should aim to colocate code that "changes together" as much as possible. Fea
 - **actions/**: React Router actions per route
 - **components/**: React components
 - **core/**: "Core logic" meaning modules (see below) or other logic that is not typically rendering components or calling database
-- **queries/**: (deprecated) Database queries, should use repository instead
+- **data/**: Static generated data (e.g. JSON dumps of in-game values)
 - **loaders/**: React Router loaders per route
 - **routes/**: React Router route files (re-export the action/loader & default export the route component)
-- **FeatureRepository.server.ts**: Database queries & mappers
+- **FeatureRepository.server.ts**: Database queries & mappers (see `repositories.md`)
 - **feature-constants.ts**: Constant values
-- **feature-hooks**: React hooks
+- **feature-hooks.ts**: React hooks
 - **feature-schemas.ts**: Zod schemas for validating form values, params, payloads
 - **feature-types.ts**: Typescript types
 - **feature-utils.ts**: Utilities too small to make up for their own modules
-- **feature.css**: (deprecated) CSS, should use CSS modules instead
+- **Component.module.css**: CSS module matching the React file of the same root name
 
 Note: we are not using file-based routing. To add a new route `routes.ts` needs to be updated  
 Note: a route file needs to re-export the action/loader of that route
@@ -126,7 +132,9 @@ Testing is important part of every feature work. The approach the project takes 
 
 Unit testing "core logic" (i.e. no React, no DB calls) with Vitest is highly encouraged whenever feasible. Most tests are like this.
 
-Vitest can also be used to write "integration tests" that call mocked actions/loaders (see `admin.test.ts` for example). This uses in-memory SQLite3. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow.
+Vitest can also be used to write "integration tests" that call actions/loaders directly via the `wrappedAction` / `wrappedLoader` helpers from `~/utils/Test` (see `t.$customUrl.edit.test.ts` for example). These run against `db-test.sqlite3` and reset it between tests with `dbReset`. In practice this is best sparingly as they are typically slower than pure unit tests with more dependencies but also don't test the true end to end flow. Repository functions are tested the same way (`*Repository.server.test.ts`), wrapping calls in `withUser` / `withUserId` when the repository resolves an acting user.
+
+Components can be tested in a real browser with Vitest browser mode. These files are named `*.browser.test.tsx` and run together with the unit tests via `pnpm run test:unit:browser`. 
 
 Which brings us to E2E tests. For new features at least testing the happy path is encouraged. For more critical features (mainly tournament related stuff) it makes sense to test a bit more rigorously.
 
@@ -143,9 +151,11 @@ const user = useUser();
 Accessing logged in user in loaders/actions:
 
 ```ts
-const user = await requireUser(request); // get user or throw HTTP 401 if not logged in
-const user = await getUser(request); // get user (undefined if not logged in)
+const user = requireUser(); // get user or throw HTTP 401 if not logged in
+const user = getUser(); // get user (undefined if not logged in)
 ```
+
+These take no arguments. The logged in user is resolved once per request by `userMiddleware` (registered in `root.tsx` along with the other middleware) and stored in an `AsyncLocalStorage` that these functions read from. Outside of a request (e.g. in tests or scripts) the store has to be set up manually, see `withUser` in `~/utils/Test`.
 
 ### Permissions
 
@@ -159,17 +169,21 @@ User can also have global roles such as "staff" or "tournament adder". Set in th
 
 TODO (after React server actions in use)
 
+### Forms
+
+Forms are defined as Zod schemas built from the field builders in `~/form/fields` and rendered by `SendouForm`. The same schema validates the submission on the server. See `forms.md` for the full documentation.
+
 ### Performance
 
 Keeping server performance in mind is always necessary. Due to the monolithic nature of the server one badly optimized endpoint impacts all other routes.
 
-Use a load testing tool like `autocannon` to ensure new features scale.
+Use a load testing tool like `autocannon` to ensure new features scale. For database queries there is `pnpm run bench:db` which runs the repository read functions listed in `scripts/benchmark-db` against a copy of the production database.
 
 ### Database
 
 Sendou.ink uses SQLite3 for its database solution. See for example ["Consider SQLite"](https://blog.wesleyac.com/posts/consider-sqlite) for motivation why to pick SQLite for a web project over something like PostgreSQL. Tldr; for a project of this scale it gets you far, low latency when accessing data store & simplifies testing when your database is just a file on the filesystem. When writing code it should be kept in mind that writes to the database are not concurrent so abusing the database can lead to the whole web server process freezing essentially.
 
-Check `database-relations.md` for more information about the database relations. See `tables.ts` for documentation on tables and columns.
+Check `database-relations.md` for more information about the database relations and `database-schemas.md` for how columns should be typed. See `tables.ts` for documentation on tables and columns. All queries live in repositories, see `repositories.md` for the conventions they follow.
 
 ### React guidelines
 

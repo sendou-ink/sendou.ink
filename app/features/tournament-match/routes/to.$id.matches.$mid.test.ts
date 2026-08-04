@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
@@ -7,19 +7,15 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 }));
 
 import type { z } from "zod";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
-import {
-	dbInsertTournament,
-	dbInsertTournamentTeam,
-	dbStartTournament,
-} from "~/features/tournament/tournament-test-utils";
 import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,
-	dbInsertUsers,
-	dbReset,
 	wrappedAction,
 	wrappedLoader,
 } from "~/utils/Test";
@@ -40,15 +36,28 @@ const tournamentMatchLoader = wrappedLoader<SerializeFrom<typeof loader>>({
 	loader,
 });
 
-const loadMatchData = () =>
-	tournamentMatchLoader({
-		params: { id: "1", mid: "1" },
-	});
+const ROSTER_SIZE = 4;
+
+/** Everybody but the organizer, who is created apart from them for their pinned id. */
+const users = UserFactory.pool();
+
+let tournamentId: number;
+let matchId: number;
+let teamOne: { id: number };
+/** Organizes the tournament and plays on team one. Who the actions submit as. */
+let organizerId: number;
+
+const matchParams = () => ({ id: String(tournamentId), mid: String(matchId) });
+
+/** Team one's first four members, the ones it fields when it has to pick. */
+const activeRoster = () => [organizerId, ...users.ids(ROSTER_SIZE - 1)];
+
+const loadMatchData = () => tournamentMatchLoader({ params: matchParams() });
 
 const reportScoreAction = ({
 	position,
-	params = { id: "1", mid: "1" },
-	winnerTeamId = 1,
+	params = matchParams(),
+	winnerTeamId = teamOne.id,
 }: {
 	position: number;
 	params?: { id: string; mid: string };
@@ -63,14 +72,14 @@ const reportScoreAction = ({
 		{ user: "admin", params },
 	);
 
-const setActiveRosterAction = (teamId = 1, roster = [1, 2, 3, 4]) =>
+const setActiveRosterAction = (teamId = teamOne.id, roster = activeRoster()) =>
 	tournamentMatchAction(
 		{
 			_action: "SET_ACTIVE_ROSTER",
-			roster: roster,
+			roster,
 			teamId,
 		},
-		{ user: "admin", params: { id: "1", mid: "1" } },
+		{ user: "admin", params: matchParams() },
 	);
 
 const removeMemberAction = ({
@@ -82,26 +91,33 @@ const removeMemberAction = ({
 }) =>
 	removeMemberApiActionWrapped(
 		{ userId },
-		{ user: "admin", params: { id: "1", teamId: String(teamId) } },
+		{
+			user: "admin",
+			params: { id: String(tournamentId), teamId: String(teamId) },
+		},
+	);
+
+const createTeam = (tournamentId: number, memberUserIds: number[]) =>
+	TournamentTeamFactory.create(
+		{ tournamentId, memberUserIds },
+		{ isCheckedIn: true },
 	);
 
 describe("Tournament match page", () => {
 	beforeEach(async () => {
-		dbInsertUsers(10);
-		await dbInsertTournament();
-		await dbInsertTournamentTeam({
-			membersCount: 6,
-			ownerId: 1,
-		});
-		await dbInsertTournamentTeam({
-			membersCount: 4,
-			ownerId: 7,
-		});
-		await dbStartTournament([1, 2]);
-	});
+		organizerId = (await UserFactory.createAdmin()).id;
+		await users.create(9);
 
-	afterEach(() => {
-		dbReset();
+		const tournament = await TournamentFactory.create({
+			authorId: organizerId,
+		});
+		tournamentId = tournament.id;
+
+		// six members, so that team one has subs and a roster to pick from them
+		teamOne = await createTeam(tournamentId, [organizerId, ...users.ids(5)]);
+		await createTeam(tournamentId, users.ids(9).slice(5));
+
+		[{ id: matchId }] = await TournamentFactory.startBracket(tournamentId);
 	});
 
 	describe("results", () => {
@@ -121,18 +137,18 @@ describe("Tournament match page", () => {
 			expect(data.results.length).toBe(1);
 
 			const result = data.results[0];
+			const playing = [...activeRoster(), ...users.ids(9).slice(5)];
 
 			expect(result.stageId).toBe(1);
 			expect(result.mode).toBe("SZ");
 			expect(
 				result.participants.every((participant) =>
-					[1, 2, 3, 4, 7, 8, 9, 10].includes(participant.userId),
+					playing.includes(participant.userId),
 				),
 				"Result participants should only include active roster user ids",
 			).toBeTruthy();
-			expect(result.opponentOnePoints).toBe(null);
-			expect(result.opponentTwoPoints).toBe(null);
-			expect(result.winnerTeamId).toBe(1);
+			expect(result.ko).toBe(null);
+			expect(result.winnerTeamId).toBe(teamOne.id);
 		});
 
 		it("returns results for a completed match", async () => {
@@ -178,13 +194,19 @@ describe("Tournament match page", () => {
 
 	describe("active roster", () => {
 		it("should return error if submitted active roster contains user id not in the team", async () => {
-			const res = await setActiveRosterAction(1, [1, 2, 3, 7]);
+			const res = await setActiveRosterAction(teamOne.id, [
+				...activeRoster().slice(0, ROSTER_SIZE - 1),
+				users.id(6),
+			]);
 
 			assertResponseErrored(res, "Invalid roster");
 		});
 
 		it("should return error if submitted active roster is not of correct length", async () => {
-			const res = await setActiveRosterAction(1, [1, 2, 3]);
+			const res = await setActiveRosterAction(
+				teamOne.id,
+				activeRoster().slice(0, ROSTER_SIZE - 1),
+			);
 
 			assertResponseErrored(res, "Invalid roster length");
 		});
@@ -198,10 +220,7 @@ describe("Tournament match page", () => {
 		it("should wipe active roster if member in it removed by tournament admin", async () => {
 			await setActiveRosterAction();
 
-			await removeMemberAction({
-				teamId: 1,
-				userId: 2,
-			});
+			await removeMemberAction({ teamId: teamOne.id, userId: users.id(1) });
 
 			const res = await reportScoreAction({ position: 0 });
 			assertResponseErrored(res, "Team one has no active roster");
@@ -209,10 +228,9 @@ describe("Tournament match page", () => {
 
 		it("should retain active roster if member removed by tournament admin was not in it", async () => {
 			await setActiveRosterAction();
-			await removeMemberAction({
-				teamId: 1,
-				userId: 5,
-			});
+
+			// team one's sixth member, so not one of the four it fields
+			await removeMemberAction({ teamId: teamOne.id, userId: users.id(5) });
 
 			const res = await reportScoreAction({ position: 0 });
 
@@ -220,26 +238,21 @@ describe("Tournament match page", () => {
 		});
 
 		it("should not require setting active roster if both teams have no subs", async () => {
-			await dbInsertTournament();
-			await dbInsertTournamentTeam({
-				membersCount: 4,
-				ownerId: 1,
-				tournamentId: 2,
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId,
 			});
-			await dbInsertTournamentTeam({
-				membersCount: 4,
-				ownerId: 5,
-				tournamentId: 2,
-			});
-			await dbStartTournament([3, 4], 2);
+			const subLessTeam = await createTeam(tournament.id, [
+				organizerId,
+				...users.ids(ROSTER_SIZE - 1),
+			]);
+			await createTeam(tournament.id, users.ids(ROSTER_SIZE * 2 - 1).slice(3));
+
+			const [match] = await TournamentFactory.startBracket(tournament.id);
 
 			const res = await reportScoreAction({
 				position: 0,
-				params: {
-					id: "2",
-					mid: "2",
-				},
-				winnerTeamId: 3,
+				params: { id: String(tournament.id), mid: String(match.id) },
+				winnerTeamId: subLessTeam.id,
 			});
 
 			expect(res).toBe(null);
@@ -249,10 +262,13 @@ describe("Tournament match page", () => {
 	describe("locked match", () => {
 		it("should return error when reporting score for a match waiting on previous matches", async () => {
 			await setActiveRosterAction();
+			// the state under test is one an earlier match of a larger bracket puts this
+			// row in, not one the match was created in
+			// biome-ignore lint/plugin: written rather than seeded, see above
 			await db
 				.updateTable("TournamentMatch")
-				.set({ status: 0 })
-				.where("id", "=", 1)
+				.set({ opponentOne: JSON.stringify({ id: null }) })
+				.where("id", "=", matchId)
 				.execute();
 
 			const res = await reportScoreAction({ position: 0 });
@@ -262,21 +278,25 @@ describe("Tournament match page", () => {
 	});
 
 	describe("BYE matches", () => {
+		// as above: a BYE and a TBD opponent are states the surrounding bracket
+		// produces, so they are written here rather than seeded
 		it("should 404 when accessing a BYE match", async () => {
+			// biome-ignore lint/plugin: as above
 			await db
 				.updateTable("TournamentMatch")
-				.set({ opponentTwo: JSON.stringify(null) })
-				.where("id", "=", 1)
+				.set({ opponentTwo: null })
+				.where("id", "=", matchId)
 				.execute();
 
 			await expect(loadMatchData()).rejects.toThrow("404");
 		});
 
 		it("should not 404 when an opponent is a TBD placeholder waiting for an earlier match", async () => {
+			// biome-ignore lint/plugin: as above
 			await db
 				.updateTable("TournamentMatch")
 				.set({ opponentTwo: JSON.stringify({ id: null }) })
-				.where("id", "=", 1)
+				.where("id", "=", matchId)
 				.execute();
 
 			await expect(loadMatchData()).resolves.toBeDefined();

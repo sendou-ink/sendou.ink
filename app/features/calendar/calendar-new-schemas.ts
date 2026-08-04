@@ -5,25 +5,27 @@ import {
 	badges,
 	checkboxGroup,
 	customField,
+	datetime,
 	datetimeOptional,
-	datetimeRequired,
+	hidden,
 	idConstantOptional,
 	image,
 	numberFieldOptional,
 	select,
 	selectDynamicOptional,
 	textAreaOptional,
+	textField,
 	textFieldOptional,
-	textFieldRequired,
 	toggle,
 } from "~/form/fields";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { id } from "~/utils/zod";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import { bracketProgressionSchema } from "./calendar-schemas";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
 
 /** Single date row of the {@link calendarNewBaseSchema} `date` array (calendar events). */
-const calendarEventDateField = datetimeRequired({
+const calendarEventDateField = datetime({
 	label: "labels.date",
 	min: calendarEventMinDate,
 	max: calendarEventMaxDate,
@@ -31,10 +33,10 @@ const calendarEventDateField = datetimeRequired({
 
 export const calendarNewBaseSchema = z.object({
 	// discriminates between a calendar event and a tournament; seeded from the loader, no visible control
-	toToolsEnabled: customField({ initialValue: false }, z.boolean()),
+	toToolsEnabled: hidden(z.boolean(), false),
 	eventToEditId: idConstantOptional(),
 	tournamentToCopyId: idConstantOptional(),
-	name: textFieldRequired({
+	name: textField({
 		label: "labels.name",
 		minLength: CALENDAR_EVENT.NAME_MIN_LENGTH,
 		maxLength: CALENDAR_EVENT.NAME_MAX_LENGTH,
@@ -81,6 +83,7 @@ export const calendarNewBaseSchema = z.object({
 		})),
 	}),
 	badges: badges({ label: "labels.badges", maxCount: 50 }),
+	trophyId: customField({ initialValue: null }, id.nullish()),
 	avatarImgId: image({
 		label: "labels.logo",
 		bottomText: "bottomTexts.avatarValidation",
@@ -209,6 +212,14 @@ export function calendarNewSyncRefine(
 				message: "forms:errors.allModePool",
 			});
 		}
+	}
+
+	if (data.trophyId && data.badges.length > 0) {
+		ctx.addIssue({
+			path: ["badges"],
+			code: z.ZodIssueCode.custom,
+			message: "forms:errors.trophyWithBadges",
+		});
 	}
 
 	if (

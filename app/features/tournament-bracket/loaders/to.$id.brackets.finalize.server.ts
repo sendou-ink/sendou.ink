@@ -2,14 +2,12 @@ import { type LoaderFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import {
-	queryCurrentTeamRating,
-	queryCurrentUserRating,
-	queryCurrentUserSeedingRating,
-	queryTeamPlayerRatingAverage,
-} from "~/features/mmr/mmr-utils.server";
+import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
 import * as Standings from "~/features/tournament/core/Standings";
-import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import {
+	summaryRatingTargets,
+	tournamentSummary,
+} from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
@@ -36,19 +34,21 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		);
 	}
 
-	const badges = (
-		await CalendarRepository.findById(tournament.ctx.eventId, {
-			includeBadgePrizes: true,
-		})
-	)?.badgePrizes?.sort((a, b) => a.id - b.id);
+	const event = await CalendarRepository.findById(tournament.ctx.eventId, {
+		includeBadgePrizes: true,
+		includeTrophy: true,
+	});
 
 	invariant(
-		badges,
+		event?.badgePrizes,
 		`Tournament ${tournament.ctx.id} event not found for badges`,
 	);
 
+	const badges = event.badgePrizes.sort((a, b) => a.id - b.id);
+
 	return {
 		badges,
+		trophy: event.trophy,
 		standings: await standingsWithSetParticipation(tournament),
 	};
 };
@@ -57,34 +57,38 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 	const standingsResult = Standings.tournamentStandings(tournament);
 	const finalStandings = Standings.flattenStandings(standingsResult);
 
-	const results = await TournamentMatchRepository.allResultsByTournamentId(
+	const results = await TournamentMatchRepository.findAllResultsByTournamentId(
 		tournament.ctx.id,
 	);
 	invariant(results.length > 0, "No results found");
 
-	const season = Seasons.current(tournament.ctx.startTime)?.nth;
+	const season = Seasons.current(tournament.ctx.startsAt)?.nth;
 
 	const seedingSkillCountsFor = tournament.skillCountsFor;
+
+	const calculateSeasonalStats =
+		tournament.ranked && typeof season === "number";
+	const ratingTargets = summaryRatingTargets(results);
+	const ratings = calculateSeasonalStats
+		? await seasonRatings({ season, ...ratingTargets })
+		: null;
+	const seedingRating = seedingSkillCountsFor
+		? await seedingRatings({
+				type: seedingSkillCountsFor,
+				userIds: ratingTargets.userIds,
+			})
+		: null;
 
 	const { setResults } = tournamentSummary({
 		teams: tournament.ctx.teams,
 		finalStandings,
 		results,
-		calculateSeasonalStats: tournament.ranked,
-		queryCurrentTeamRating: (identifier) =>
-			queryCurrentTeamRating({ identifier, season: season! }).rating,
-		queryCurrentUserRating: (userId) =>
-			queryCurrentUserRating({ userId, season: season! }),
+		calculateSeasonalStats,
+		queryCurrentTeamRating: (identifier) => ratings!.team(identifier).rating,
+		queryCurrentUserRating: (userId) => ratings!.user(userId),
 		queryTeamPlayerRatingAverage: (identifier) =>
-			queryTeamPlayerRatingAverage({
-				identifier,
-				season: season!,
-			}),
-		queryCurrentSeedingRating: (userId) =>
-			queryCurrentUserSeedingRating({
-				userId,
-				type: seedingSkillCountsFor!,
-			}),
+			ratings!.teamPlayerAverage(identifier),
+		queryCurrentSeedingRating: (userId) => seedingRating!(userId),
 		seedingSkillCountsFor,
 		progression: tournament.ctx.settings.bracketProgression,
 	});

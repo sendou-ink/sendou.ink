@@ -1,10 +1,10 @@
-import type { ApiTokenType } from "~/db/tables";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
+import type { ApiTokenType } from "~/features/api/api-types";
 
 type CachedToken = { type: ApiTokenType; userId: number };
 
 async function loadApiTokensCache() {
-	const dbTokens = await ApiRepository.allApiTokens();
+	const dbTokens = await ApiRepository.findAllApiTokens();
 
 	const tokenMap = new Map<string, CachedToken>();
 

@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -18,6 +19,11 @@ export interface Fixtures {
 	buildId: number | null;
 	heavyWeaponSplId: MainWeaponId | null;
 	sq: { userId: number; season: number } | null;
+	skillBatch: {
+		season: number;
+		userIds: number[];
+		identifiers: SkillTeamIdentifier[];
+	} | null;
 	heavyGroupMatchId: number | null;
 	heavyGroupIds: [number, number] | null;
 	heavyStageModeCombo: { stageId: StageId; mode: ModeShort } | null;
@@ -56,6 +62,11 @@ export interface Fixtures {
 	badgeOwnerUserId: number | null;
 	badgeAuthorId: number | null;
 	badgeManagerUserId: number | null;
+	trophy: {
+		heavyTrophyId: number;
+		ownerUserId: number;
+		wins: { trophyId: number; userId: number };
+	} | null;
 	manyUserIds: number[] | null;
 	notification: { userId: number; type: Tables["Notification"]["type"] } | null;
 	heavyAssociation: {
@@ -65,7 +76,6 @@ export interface Fixtures {
 	} | null;
 	lfgAuthorId: number | null;
 	lfgTournament: { tournamentId: number; teamId: number } | null;
-	subsTournamentId: number | null;
 	auditTournamentId: number | null;
 	xrank: {
 		userId: number;
@@ -106,6 +116,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		buildId: await resolveBuildId(),
 		heavyWeaponSplId: await resolveHeavyWeaponSplId(),
 		sq: await resolveSq(),
+		skillBatch: await resolveSkillBatch(),
 		heavyGroupMatchId,
 		heavyGroupIds: await resolveHeavyGroupIds(heavyGroupMatchId),
 		heavyStageModeCombo: await resolveHeavyStageModeCombo(),
@@ -137,12 +148,12 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		badgeOwnerUserId: await resolveBadgeOwnerUserId(),
 		badgeAuthorId: await resolveBadgeAuthorId(),
 		badgeManagerUserId: await resolveBadgeManagerUserId(),
+		trophy: await resolveTrophy(),
 		manyUserIds: await resolveManyUserIds(heavyTournamentId),
 		notification: await resolveNotification(),
 		heavyAssociation: await resolveHeavyAssociation(),
 		lfgAuthorId: await resolveLfgAuthorId(),
 		lfgTournament: await resolveLfgTournament(),
-		subsTournamentId: (await resolveSubsTournamentId()) ?? heavyTournamentId,
 		auditTournamentId: (await resolveAuditTournamentId()) ?? heavyTournamentId,
 		xrank: await resolveXRank(),
 		heavyArtUserId: await resolveHeavyArtUserId(),
@@ -280,6 +291,50 @@ async function resolveSq() {
 	if (!userRow) return null;
 
 	return { userId: userRow.userId, season: seasonRow.season };
+}
+
+/**
+ * Batch sizes a big tournament's finalization asks for: every player of the event and
+ * every roster that appeared on a map (several per set, hence far more than teams).
+ */
+const SKILL_BATCH_USERS = 300;
+const SKILL_BATCH_IDENTIFIERS = 500;
+
+async function resolveSkillBatch() {
+	const seasonRow = await db
+		.selectFrom("Skill")
+		.select(({ fn }) => ["season", fn.countAll<number>().as("count")])
+		.groupBy("season")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!seasonRow) return null;
+
+	const userRows = await db
+		.selectFrom("Skill")
+		.select("userId")
+		.distinct()
+		.where("season", "=", seasonRow.season)
+		.where("userId", "is not", null)
+		.limit(SKILL_BATCH_USERS)
+		.execute();
+
+	const identifierRows = await db
+		.selectFrom("Skill")
+		.select("identifier")
+		.distinct()
+		.where("season", "=", seasonRow.season)
+		.where("identifier", "is not", null)
+		.limit(SKILL_BATCH_IDENTIFIERS)
+		.execute();
+
+	return {
+		season: seasonRow.season,
+		userIds: userRows.map((row) => row.userId as number),
+		identifiers: identifierRows.map(
+			(row) => row.identifier as SkillTeamIdentifier,
+		),
+	};
 }
 
 async function resolveHeavyGroupMatchId() {
@@ -505,7 +560,7 @@ async function resolveCalendarAuthorId() {
 async function resolveCalendarWindow() {
 	const row = await db
 		.selectFrom("CalendarEventDate")
-		.select(({ fn }) => fn.max("startTime").as("maxStartTime"))
+		.select(({ fn }) => fn.max("startsAt").as("maxStartTime"))
 		.executeTakeFirst();
 	if (typeof row?.maxStartTime !== "number") return null;
 
@@ -517,7 +572,7 @@ async function resolveCalendarWindow() {
 async function resolveScrimWindow() {
 	const row = await db
 		.selectFrom("ScrimPost")
-		.select(({ fn }) => fn.max("at").as("maxAt"))
+		.select(({ fn }) => fn.max("startsAt").as("maxAt"))
 		.executeTakeFirst();
 	if (typeof row?.maxAt !== "number") return null;
 
@@ -596,15 +651,15 @@ async function resolveHeavyOrg() {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
-		.select(["CalendarEvent.name", "CalendarEventDate.startTime"])
+		.select(["CalendarEvent.name", "CalendarEventDate.startsAt"])
 		.where("CalendarEvent.organizationId", "=", orgRow.id)
-		.orderBy("CalendarEventDate.startTime", "desc")
+		.orderBy("CalendarEventDate.startsAt", "desc")
 		.limit(1)
 		.executeTakeFirst();
 	if (!latestEvent) return null;
 
-	const latestEventDate = databaseTimestampToDate(latestEvent.startTime);
-	const windowStart = latestEvent.startTime - 90 * 24 * 60 * 60;
+	const latestEventDate = databaseTimestampToDate(latestEvent.startsAt);
+	const windowStart = latestEvent.startsAt - 90 * 24 * 60 * 60;
 
 	return {
 		id: orgRow.id,
@@ -614,7 +669,7 @@ async function resolveHeavyOrg() {
 		eventMonth: latestEventDate.getUTCMonth(),
 		eventYear: latestEventDate.getUTCFullYear(),
 		windowStart,
-		windowEnd: latestEvent.startTime,
+		windowEnd: latestEvent.startsAt,
 	};
 }
 
@@ -734,6 +789,45 @@ async function resolveBadgeManagerUserId() {
 	return row?.userId ?? null;
 }
 
+async function resolveTrophy() {
+	const heavyTrophyRow = await db
+		.selectFrom("TrophyOwner")
+		.select(({ fn }) => ["trophyId", fn.countAll<number>().as("count")])
+		.groupBy("trophyId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!heavyTrophyRow) return null;
+
+	const ownerRow = await db
+		.selectFrom("TrophyOwner")
+		.select(({ fn }) => ["userId", fn.countAll<number>().as("count")])
+		.groupBy("userId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!ownerRow) return null;
+
+	const winsRow = await db
+		.selectFrom("TrophyOwner")
+		.select(({ fn }) => [
+			"trophyId",
+			"userId",
+			fn.countAll<number>().as("count"),
+		])
+		.groupBy(["trophyId", "userId"])
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!winsRow) return null;
+
+	return {
+		heavyTrophyId: heavyTrophyRow.trophyId,
+		ownerUserId: ownerRow.userId,
+		wins: { trophyId: winsRow.trophyId, userId: winsRow.userId },
+	};
+}
+
 async function resolveManyUserIds(heavyTournamentId: number | null) {
 	if (heavyTournamentId !== null) {
 		const rows = await db
@@ -839,18 +933,6 @@ async function resolveLfgTournament() {
 	if (!row) return null;
 
 	return { tournamentId: row.tournamentId, teamId: row.id };
-}
-
-async function resolveSubsTournamentId() {
-	const row = await db
-		.selectFrom("TournamentSub")
-		.select(({ fn }) => ["tournamentId", fn.countAll<number>().as("count")])
-		.groupBy("tournamentId")
-		.orderBy("count", "desc")
-		.limit(1)
-		.executeTakeFirst();
-
-	return row?.tournamentId ?? null;
 }
 
 async function resolveAuditTournamentId() {

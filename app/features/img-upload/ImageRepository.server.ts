@@ -20,7 +20,7 @@ export function findById(id: number) {
 }
 
 /** Deletes an image and its associated art entry in a transaction */
-export function deleteImageById(id: number) {
+export function deleteById(id: number) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("Art").where("Art.imgId", "=", id).execute();
 		await trx
@@ -94,7 +94,7 @@ export async function countAllUnvalidated() {
 }
 
 /** Fetches unvalidated images for admin review with submitter info */
-export function unvalidatedImages() {
+export function findAllUnvalidated() {
 	return unvalidatedImagesBaseQuery
 		.leftJoin(
 			"User",
@@ -127,7 +127,7 @@ export async function countUnvalidatedBySubmitterUserId(userId: number) {
 }
 
 /** Marks an image as validated by setting the current timestamp */
-export function validateImage(id: number) {
+export function validateById(id: number) {
 	return db
 		.updateTable("UnvalidatedUserSubmittedImage")
 		.set({ validatedAt: databaseTimestampNow() })
@@ -140,9 +140,11 @@ export function validateImage(id: number) {
  */
 export function insert(
 	args: TablesInsertable["UnvalidatedUserSubmittedImage"],
-	trx: Transaction<DB> | typeof db = db,
+	trx?: Transaction<DB>,
 ) {
-	return trx
+	const executor = trx ?? db;
+
+	return executor
 		.insertInto("UnvalidatedUserSubmittedImage")
 		.values(args)
 		.returningAll()

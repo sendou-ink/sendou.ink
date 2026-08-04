@@ -1,5 +1,8 @@
-import { LFG_TYPES, type LFGType } from "~/db/tables";
-import { languagesUnified } from "~/modules/i18n/config";
+import { LFG_TYPES, type LFGType } from "~/features/lfg/lfg-constants";
+import {
+	languagesUnified,
+	type UnifiedLanguageCode,
+} from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import { TIERS, type TierName } from "../mmr/mmr-constants";
@@ -30,7 +33,7 @@ type TimezoneFilter = {
 
 type LanguageFilter = {
 	_tag: "Language";
-	language: string;
+	language: UnifiedLanguageCode;
 };
 
 type PlusTierFilter = {
@@ -120,10 +123,11 @@ export function smallStrToFilter(s: string): LFGFilter | null {
 			};
 		}
 		case "l": {
-			if (!languagesUnified.some((lang) => lang.code === val)) return null;
+			const language = languagesUnified.find((lang) => lang.code === val)?.code;
+			if (!language) return null;
 			return {
 				_tag: "Language",
-				language: val,
+				language,
 			};
 		}
 		case "pt": {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { CastedMatchesInfo } from "~/db/tables";
+import type { CastedMatchesInfo } from "~/db/tables-json";
 import * as Seasons from "../mmr/core/Seasons";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import { testTournament } from "../tournament-bracket/core/tests/test-utils";
@@ -810,7 +810,7 @@ describe("bracketProgressionLabel", () => {
 	it("returns the short code for a single stage", () => {
 		expect(
 			bracketProgressionLabel([bracket({ type: "single_elimination" })]),
-		).toBe("SE");
+		).toEqual({ label: "SE", hasUnderground: false });
 	});
 
 	it("joins stages with an arrow", () => {
@@ -819,7 +819,7 @@ describe("bracketProgressionLabel", () => {
 				bracket({ type: "round_robin" }),
 				bracket({ type: "single_elimination" }),
 			]),
-		).toBe("RR → SE");
+		).toEqual({ label: "RR → SE", hasUnderground: false });
 	});
 
 	it("collapses consecutive duplicate stages", () => {
@@ -829,10 +829,10 @@ describe("bracketProgressionLabel", () => {
 				bracket({ type: "single_elimination" }),
 				bracket({ type: "double_elimination" }),
 			]),
-		).toBe("SE → DE");
+		).toEqual({ label: "SE → DE", hasUnderground: false });
 	});
 
-	it("appends an underground bracket of a new type with a plus and (UG) tag", () => {
+	it("leaves an underground bracket out of the label", () => {
 		expect(
 			bracketProgressionLabel([
 				bracket({ type: "double_elimination" }),
@@ -841,30 +841,33 @@ describe("bracketProgressionLabel", () => {
 					sources: [{ bracketIdx: 0, placements: [-1] }],
 				}),
 			]),
-		).toBe("DE + SE (UG)");
+		).toEqual({ label: "DE", hasUnderground: true });
 	});
 
-	it("collapses repeated underground brackets of an already-shown type", () => {
+	it("flags many underground brackets the same as one", () => {
 		expect(
 			bracketProgressionLabel([
-				bracket({ type: "round_robin" }),
+				bracket({ type: "swiss" }),
 				bracket({
 					type: "single_elimination",
-					sources: [{ bracketIdx: 0, placements: [1] }],
+					sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
 				}),
 				bracket({
 					type: "single_elimination",
-					sources: [{ bracketIdx: 0, placements: [2] }],
+					sources: [{ bracketIdx: 0, placements: [5] }],
 				}),
 				bracket({
-					type: "single_elimination",
-					sources: [{ bracketIdx: 0, placements: [3] }],
+					type: "double_elimination",
+					sources: [{ bracketIdx: 0, placements: [6] }],
 				}),
 			]),
-		).toBe("RR → SE (UG)");
+		).toEqual({ label: "SW → SE", hasUnderground: true });
 	});
 
-	it("returns empty string for empty progression", () => {
-		expect(bracketProgressionLabel([])).toBe("");
+	it("returns empty label for empty progression", () => {
+		expect(bracketProgressionLabel([])).toEqual({
+			label: "",
+			hasUnderground: false,
+		});
 	});
 });

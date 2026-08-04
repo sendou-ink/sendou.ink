@@ -1,4 +1,4 @@
-import type { CalendarEventTag } from "~/db/tables";
+import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 
 export const tags = {
 	SPECIAL: {
@@ -86,14 +86,16 @@ export const REG_CLOSES_AT_OPTIONS = [
 
 export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
 
-/** How many days are shown at the /calendar page at a time */
-export const DAYS_SHOWN_AT_A_TIME = 4;
+/** How many days are shown at the /calendar page at a time (full week from Monday to Sunday) */
+export const DAYS_SHOWN_AT_A_TIME = 7;
 
 /** Tags not shown on the tournament cards */
 export const EXCLUDED_TAGS: Array<CalendarEventTag> = ["CARDS", "SR"];
 
 export const CALENDAR_EVENT_RESULT = {
 	MAX_PARTICIPANTS_COUNT: 1000,
+	MAX_TEAMS_COUNT: 100,
+	DEFAULT_PLAYERS_LENGTH: 4,
 	MAX_PLAYERS_LENGTH: 8,
 	MAX_TEAM_NAME_LENGTH: 100,
 	MAX_TEAM_PLACEMENT: 256,

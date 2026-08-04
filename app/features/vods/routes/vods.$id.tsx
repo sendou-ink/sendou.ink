@@ -12,8 +12,9 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
-import { useSearchParamState } from "~/hooks/useSearchParamState";
+import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
@@ -29,6 +30,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import { action } from "../actions/vods.$id.server";
 import { PovUser } from "../components/VodPov";
 import { loader } from "../loaders/vods.$id.server";
+import { vodsVodSearchParams } from "../vods-search-params";
 import type { Vod } from "../vods-types";
 import {
 	canEditVideo,
@@ -73,11 +75,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export default function VodPage() {
-	const [start, setStart] = useSearchParamState({
-		name: "start",
-		defaultValue: 0,
-		revive: Number,
-	});
+	const [start, setStart] = useSearchParam(vodsVodSearchParams, "start");
 	const [autoplay, setAutoplay] = React.useState(false);
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "vods"]);
@@ -97,7 +95,7 @@ export default function VodPage() {
 					<div className="stack horizontal sm items-center">
 						<PovUser pov={data.vod.pov} />
 						<LocaleTime
-							date={data.vod.youtubeDate}
+							date={data.vod.youtubePublishedAt}
 							options={{
 								day: "numeric",
 								month: "numeric",
@@ -252,8 +250,7 @@ function CopyTimestampsButton({
 }) {
 	const { t } = useTranslation(["vods", "weapons", "game-misc", "common"]);
 	const [dialogOpen, setDialogOpen] = React.useState(false);
-	const [copied, setCopied] = React.useState(false);
-	const [copyTrigger, setCopyTrigger] = React.useState(0);
+	const { copyToClipboard, copySuccess, reset } = useCopyToClipboard();
 	const [modeFormat, setModeFormat] = React.useState<"short" | "long">("short");
 	const [stageFormat, setStageFormat] = React.useState<"short" | "long">(
 		"long",
@@ -271,19 +268,7 @@ function CopyTimestampsButton({
 				: mode,
 	});
 
-	React.useEffect(() => {
-		if (copyTrigger === 0) return;
-
-		setCopied(true);
-		const timeout = setTimeout(() => setCopied(false), 2000);
-
-		return () => clearTimeout(timeout);
-	}, [copyTrigger]);
-
-	const handleCopy = () => {
-		navigator.clipboard.writeText(timestamps);
-		setCopyTrigger((prev) => prev + 1);
-	};
+	const handleCopy = () => copyToClipboard(timestamps);
 
 	return (
 		<>
@@ -293,7 +278,7 @@ function CopyTimestampsButton({
 				icon={<ClipboardCopy />}
 				onPress={() => {
 					setDialogOpen(true);
-					setCopied(false);
+					reset();
 				}}
 				data-testid="copy-timestamps-button"
 			>
@@ -350,9 +335,9 @@ function CopyTimestampsButton({
 					</p>
 					<SendouButton
 						onPress={handleCopy}
-						icon={copied ? <Check /> : <Copy />}
+						icon={copySuccess ? <Check /> : <Copy />}
 					>
-						{copied
+						{copySuccess
 							? t("common:actions.copied")
 							: t("common:actions.copyToClipboard")}
 					</SendouButton>

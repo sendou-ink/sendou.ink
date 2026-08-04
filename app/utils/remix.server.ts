@@ -1,24 +1,17 @@
-import type { FileUpload } from "@remix-run/form-data-parser";
-import { parseFormData as parseMultipartFormData } from "@remix-run/form-data-parser";
 import type { Namespace, TFunction } from "i18next";
-import type { Ok, Result } from "neverthrow";
 import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
 import { ServerConfig } from "~/config.server";
+import type { Ok, Result } from "~/utils/result";
 import { logger } from "./logger";
 import { currentRequestPathname } from "./request-context.server";
 
-export function notFoundIfFalsy<T>(value: T | null | undefined): T {
-	if (!value) throw new Response(null, { status: 404 });
-
-	return value;
-}
-
-export function notFoundIfNullLike<T>(value: T | null | undefined): T {
-	if (value === null || value === undefined)
+export function notFoundIfNullish<T>(value: T | null | undefined): T {
+	if (value === null || value === undefined) {
 		throw new Response(null, { status: 404 });
+	}
 
 	return value;
 }
@@ -42,56 +35,34 @@ export function badRequestIfFalsy<T>(value: T | null | undefined): T {
 	return value;
 }
 
-export function parseSearchParams<T extends z.ZodTypeAny>({
-	request,
-	schema,
-}: {
-	request: Request;
-	schema: T;
-}): z.infer<T> {
-	const url = new URL(request.url);
-	const searchParams = Object.fromEntries(url.searchParams);
-
-	try {
-		return schema.parse(searchParams);
-	} catch (e) {
-		logger.error("Error parsing search params", e);
-
-		throw errorToastRedirect("Validation failed");
-	}
-}
-
 /**
+ * Resolves the pagination state of a loader whose current page comes from the
+ * `page` search param. `pagesCount` is at minimum 1 so empty result sets stay
+ * on page 1.
+ *
  * If the requested `page` exceeds `pagesCount`, throws a redirect to the last
- * available page (preserving other search params). `pagesCount` is normalized
- * to a minimum of 1 so empty result sets stay on page 1.
+ * available page (preserving other search params).
  */
-export function redirectIfPageOutOfBounds({
+export function paginate({
 	url,
 	page,
-	pagesCount,
+	pageSize,
+	totalCount,
 }: {
 	url: URL;
 	page: number;
-	pagesCount: number;
-}): void {
-	const safePagesCount = Math.max(1, pagesCount);
-	if (page <= safePagesCount) return;
+	pageSize: number;
+	totalCount: number;
+}): { currentPage: number; pagesCount: number } {
+	const pagesCount = Math.max(1, Math.ceil(totalCount / pageSize));
 
-	const searchParams = new URLSearchParams(url.searchParams);
-	searchParams.set("page", String(safePagesCount));
-	throw redirect(`${url.pathname}?${searchParams.toString()}`);
-}
+	if (page > pagesCount) {
+		const searchParams = new URLSearchParams(url.searchParams);
+		searchParams.set("page", String(pagesCount));
+		throw redirect(`${url.pathname}?${searchParams.toString()}`);
+	}
 
-export function parseSafeSearchParams<T extends z.ZodTypeAny>({
-	request,
-	schema,
-}: {
-	request: Request;
-	schema: T;
-}) {
-	const url = new URL(request.url);
-	return schema.safeParse(Object.fromEntries(url.searchParams));
+	return { currentPage: page, pagesCount };
 }
 
 /**
@@ -114,28 +85,6 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 		return await schema.parseAsync(formDataObj);
 	} catch (e) {
 		logger.error("Error parsing request payload", e);
-
-		throw errorToastRedirect("Validation failed");
-	}
-}
-
-/**
- * @deprecated - use parseFormData from /app/form/parse.server.ts (with SendouForm) or parseRequestPayload (without SendouForm)
- *
- * Parse formData with the given schema. Throws a request to show an error toast if it fails.
- */
-export async function parseFormData<T extends z.ZodTypeAny>({
-	formData,
-	schema,
-}: {
-	formData: FormData;
-	schema: T;
-}): Promise<z.infer<T>> {
-	const formDataObj = formDataToObject(formData);
-	try {
-		return await schema.parseAsync(formDataObj);
-	} catch (e) {
-		logger.error("Error parsing form data", e);
 
 		throw errorToastRedirect("Validation failed");
 	}
@@ -173,33 +122,6 @@ export async function parseBody<T extends z.ZodTypeAny>({
 	return parsed.data;
 }
 
-export async function safeParseRequestFormData<T extends z.ZodTypeAny>({
-	request,
-	schema,
-}: {
-	request: Request;
-	schema: T;
-}): Promise<
-	{ success: true; data: z.infer<T> } | { success: false; errors: string[] }
-> {
-	const parsed = schema.safeParse(formDataToObject(await request.formData()));
-
-	// this implementation is somewhat redundant but it's the only way I got types to work nice
-	if (!parsed.success) {
-		return {
-			success: false,
-			errors: parsed.error.issues.map(
-				(issue: { message: string }) => issue.message,
-			),
-		};
-	}
-
-	return {
-		success: true,
-		data: parsed.data,
-	};
-}
-
 export function formDataToObject(formData: FormData) {
 	const result: Record<string, string | string[]> = {};
 
@@ -226,7 +148,7 @@ export function canAccessLohiEndpoint(request: Request) {
 	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === ServerConfig.lohiToken;
 }
 
-function errorToastRedirect(message: string) {
+export function errorToastRedirect(message: string) {
 	return redirect(`${currentRequestPathname() ?? ""}?__error=${message}`);
 }
 
@@ -241,14 +163,14 @@ export function errorToastIfFalsy(
 }
 
 /**
- * To be used in loader or action function. Asserts that the provided `Result` value is an `Ok` variant of the `neverthrow` library.
+ * To be used in loader or action function. Asserts that the provided `Result` value is an `Ok` variant.
  *
  * If the value is an `Err`, shows an error toast to the user with the error message. The function will stop execution by throwing a redirect meaning it is safe to operate on the value after this function call.
  */
 export function errorToastIfErr<T, E extends string>(
 	value: Result<T, E>,
-): asserts value is Ok<T, never> {
-	if (value.isErr()) {
+): asserts value is Ok<T> {
+	if (!value.ok) {
 		throw errorToastRedirect(value.error);
 	}
 }
@@ -270,18 +192,6 @@ export function successToastWithRedirect({
 	url: string;
 }) {
 	return redirect(`${url}?__success=${message}`);
-}
-
-export type ActionError = { field: string; msg: string; isError: true };
-
-export function actionError<T extends z.ZodTypeAny>({
-	msg,
-	field,
-}: {
-	msg: string;
-	field: (keyof z.infer<T> & string) | `${keyof z.infer<T> & string}.root`;
-}): ActionError {
-	return { msg, field, isError: true };
 }
 
 export type Breadcrumb =
@@ -336,54 +246,4 @@ export function privatelyCachedJson<T>(dataValue: T) {
 	return data(dataValue, {
 		headers: { "Cache-Control": "private, max-age=5" },
 	});
-}
-
-const DEFAULT_MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
-
-type FileUploadHandler = (
-	fileUpload: FileUpload,
-) => Promise<string | null | undefined>;
-type ParseFormDataOptions = { maxFileSize?: number };
-
-export function safeParseMultipartFormData(
-	request: Request,
-	uploadHandler?: FileUploadHandler,
-): Promise<FormData>;
-export function safeParseMultipartFormData(
-	request: Request,
-	options?: ParseFormDataOptions,
-	uploadHandler?: FileUploadHandler,
-): Promise<FormData>;
-export async function safeParseMultipartFormData(
-	request: Request,
-	optionsOrHandler?: ParseFormDataOptions | FileUploadHandler,
-	uploadHandler?: FileUploadHandler,
-): Promise<FormData> {
-	const maxFileSize =
-		typeof optionsOrHandler === "object" && optionsOrHandler?.maxFileSize
-			? optionsOrHandler.maxFileSize
-			: DEFAULT_MAX_FILE_SIZE_BYTES;
-
-	try {
-		if (typeof optionsOrHandler === "function") {
-			return await parseMultipartFormData(request, optionsOrHandler);
-		}
-		return await parseMultipartFormData(
-			request,
-			optionsOrHandler,
-			uploadHandler,
-		);
-	} catch (err) {
-		if (
-			err instanceof Error &&
-			(err.name === "MaxFileSizeExceededError" ||
-				(err.cause instanceof Error &&
-					err.cause.name === "MaxFileSizeExceededError"))
-		) {
-			throw errorToastRedirect(
-				`File size exceeds maximum allowed size of ${maxFileSize / 1024 / 1024}MB`,
-			);
-		}
-		throw err;
-	}
 }

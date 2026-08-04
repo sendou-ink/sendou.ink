@@ -41,10 +41,7 @@ export async function submitMapListAndGenerateIfNeeded(
 			)
 			.execute();
 
-		await ScrimMapRepository.tryGenerateAndInsertNextMapInTrx(
-			trx,
-			args.scrimPostId,
-		);
+		await ScrimMapRepository.tryGenerateAndInsertNextMap(args.scrimPostId, trx);
 	});
 }
 
@@ -70,13 +67,15 @@ export type ResolvedScrimMapList = {
 /**
  * Returns all submitted map lists for the scrim with the pool resolved into
  * concrete `(mode, stageId)` pairs. Tournament-sourced rows additionally carry
- * the tournament's id and name for display. Pass a transaction as `executor`
+ * the tournament's id and name for display. Pass a transaction as `trx`
  * to read within an existing transaction.
  */
 export async function findMapListsByScrimPostId(
 	scrimPostId: number,
-	executor: typeof db | Transaction<DB> = db,
+	trx?: Transaction<DB>,
 ): Promise<ResolvedScrimMapList[]> {
+	const executor = trx ?? db;
+
 	const rows = await executor
 		.selectFrom("ScrimMapList")
 		.leftJoin(

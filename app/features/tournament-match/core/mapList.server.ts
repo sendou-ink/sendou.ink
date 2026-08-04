@@ -1,20 +1,25 @@
-import type { Tables, TournamentRoundMaps } from "~/db/tables";
+import type { Tables } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
-import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { Round } from "~/modules/brackets-model";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { generateBalancedMapList } from "~/modules/tournament-map-list-generator/balanced-map-list";
+import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { starterMap } from "~/modules/tournament-map-list-generator/starter-map";
 import type {
+	DBTournamentMaplistSource,
 	TournamentMapListMap,
 	TournamentMaplistSource,
 } from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
-import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+import { unwrap } from "~/utils/result";
 import { assertUnreachable } from "~/utils/types";
+import type { FindMatchById } from "../TournamentMatchRepository.server";
 
 interface ResolveCurrentMapListArgs {
 	tournamentId: number;
@@ -87,6 +92,50 @@ export function resolveMapList(
 		);
 }
 
+/**
+ * The map list the given match is played on, `null` when it does not yet have both
+ * of its teams. Resolves the arguments {@link resolveMapList} needs out of the match
+ * and its tournament: the teams' map pools, the pick/ban events so far and, for the
+ * picking styles that avoid repeats, the maps the teams recently played.
+ */
+export async function resolveMatchMapList({
+	match,
+	tournament,
+}: {
+	match: FindMatchById;
+	tournament: Tournament;
+}): Promise<TournamentMapListMap[] | null> {
+	if (!match.opponentOne?.id || !match.opponentTwo?.id) return null;
+
+	const teams: [number, number] = [match.opponentOne.id, match.opponentTwo.id];
+
+	const pickBanEvents = match.roundMaps?.pickBan
+		? await TournamentRepository.findPickBanEventsByMatchId(match.id)
+		: [];
+
+	const recentlyPlayedMaps =
+		match.mapPickingStyle !== "TO"
+			? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+					teamIds: teams,
+				}).catch((error) => {
+					logger.error("Failed to fetch recently played maps", error);
+					return [];
+				})
+			: undefined;
+
+	return resolveMapList({
+		tournamentId: match.tournamentId,
+		matchId: match.id,
+		teams,
+		mapPoolByTeamId: (teamId) => tournament.teamById(teamId)?.mapPool ?? [],
+		mapPickingStyle: match.mapPickingStyle,
+		maps: match.roundMaps,
+		tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+		pickBanEvents,
+		recentlyPlayedMaps,
+	});
+}
+
 function resolveCustomMapList(
 	args: ResolveCurrentMapListArgs,
 ): TournamentMapListMap[] {
@@ -110,22 +159,16 @@ export function mapListFromResults(
 	results: Array<{
 		mode: ModeShort;
 		stageId: StageId;
-		source: string;
+		source: DBTournamentMaplistSource;
 	}>,
 ): TournamentMapListMap[] {
-	return results.map((result) => {
-		const parsedSource: TournamentMaplistSource = /^\d+$/.test(result.source)
-			? Number(result.source)
-			: (result.source as TournamentMaplistSource);
-
-		return {
-			mode: result.mode,
-			stageId: result.stageId,
-			source: parsedSource,
-			// Banned maps are not relevant for completed matches
-			bannedByTournamentTeamId: undefined,
-		};
-	});
+	return results.map((result) => ({
+		mode: result.mode,
+		stageId: result.stageId,
+		source: parseMaplistSource(result.source),
+		// Banned maps are not relevant for completed matches
+		bannedByTournamentTeamId: undefined,
+	}));
 }
 
 function resolveBannedByTeamId(
@@ -200,28 +243,32 @@ function resolveFreshTeamPickedMapList(
 		});
 	}
 
-	try {
-		return generateBalancedMapList({
-			count: count(),
-			seed: String(args.matchId),
-			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
-			tiebreakerMaps: new MapPool(tieBreakerMapPool),
-			teams: [
-				{
-					id: args.teams[0],
-					maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
-				},
-				{
-					id: args.teams[1],
-					maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
-				},
-			],
-			recentlyPlayedMaps: args.recentlyPlayedMaps,
-		});
-	} catch (e) {
-		logger.error("Failed to create map list. Falling back to default maps.", e);
+	const result = generateBalancedMapList({
+		count: count(),
+		seed: String(args.matchId),
+		modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
+		tiebreakerMaps: new MapPool(tieBreakerMapPool),
+		teams: [
+			{
+				id: args.teams[0],
+				maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
+			},
+			{
+				id: args.teams[1],
+				maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
+			},
+		],
+		recentlyPlayedMaps: args.recentlyPlayedMaps,
+	});
+	if (result.ok) return result.value;
 
-		return generateBalancedMapList({
+	logger.error(
+		"Failed to create map list. Falling back to default maps.",
+		result.error,
+	);
+
+	return unwrap(
+		generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
@@ -237,79 +284,6 @@ function resolveFreshTeamPickedMapList(
 				},
 			],
 			recentlyPlayedMaps: args.recentlyPlayedMaps,
-		});
-	}
-}
-
-export function roundMapsFromInput({
-	roundsFromDB,
-	virtualRounds,
-	maps,
-	bracket,
-}: {
-	roundsFromDB: Round[];
-	virtualRounds: Round[];
-	maps: (TournamentRoundMaps & { roundId: number })[];
-	bracket: Bracket;
-}) {
-	const expandedMaps =
-		bracket.type === "round_robin" || bracket.type === "swiss"
-			? expandMaps({ maps, virtualRounds })
-			: maps;
-
-	const virtualGroupIdToReal = (virtualGroupId: number) => {
-		const minRealGroupId = Math.min(...roundsFromDB.map((r) => r.group_id));
-		const minVirtualGroupId = Math.min(...virtualRounds.map((r) => r.group_id));
-
-		return virtualGroupId - minVirtualGroupId + minRealGroupId;
-	};
-
-	return expandedMaps.map((map) => {
-		const virtualRound = virtualRounds.find((r) => r.id === map.roundId);
-		invariant(
-			virtualRound,
-			`No virtual round found for map with round id: ${map.roundId}`,
-		);
-
-		const realRoundId = roundsFromDB.find(
-			(r) =>
-				r.number === virtualRound.number &&
-				r.group_id === virtualGroupIdToReal(virtualRound.group_id),
-		)?.id;
-		invariant(realRoundId, "No real round found for virtual round");
-
-		return { ...map, roundId: realRoundId };
-	});
-}
-
-function expandMaps({
-	virtualRounds,
-	maps,
-}: {
-	virtualRounds: Round[];
-	maps: (TournamentRoundMaps & { roundId: number })[];
-}) {
-	const result: typeof maps = [];
-
-	const mapsByNumber = maps.reduce(
-		(acc, map) => {
-			const number = virtualRounds.find((r) => r.id === map.roundId)?.number;
-			invariant(number, "No number found for round id");
-
-			acc.set(number, map);
-			return acc;
-		},
-		new Map() as Map<number, (typeof maps)[number]>,
+		}),
 	);
-	for (const round of virtualRounds) {
-		const maps = mapsByNumber.get(round.number);
-		invariant(maps, "No maps found for round number");
-
-		result.push({
-			...maps,
-			roundId: round.id,
-		});
-	}
-
-	return result;
 }

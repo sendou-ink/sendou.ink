@@ -1,9 +1,9 @@
 import type { TFunction } from "i18next";
 import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
+import type { NotificationSubscription } from "~/db/tables-json";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { APP_ICON_URL } from "~/utils/urls";
-import type { NotificationSubscription } from "../../../db/tables";
 import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
@@ -22,6 +22,9 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	TO_LIKE_ACCEPTED: "high",
 	BADGE_ADDED: "normal",
 	BADGE_MANAGER_ADDED: "normal",
+	TROPHY_SUBMITTED: "normal",
+	TROPHY_SUBMISSION_ACCEPTED: "normal",
+	TROPHY_SUBMISSION_DECLINED: "normal",
 	PLUS_VOTING_STARTED: "normal",
 	PLUS_SUGGESTION_ADDED: "normal",
 	TAGGED_TO_ART: "normal",
@@ -72,9 +75,10 @@ export async function notify({
 		logger.error("Failed to notify users", e);
 	}
 
-	const subscriptions = await NotificationRepository.subscriptionsByUserIds(
-		dededuplicatedUserIds,
-	);
+	const subscriptions =
+		await NotificationRepository.findAllSubscriptionsByUserIds(
+			dededuplicatedUserIds,
+		);
 	if (subscriptions.length > 0) {
 		const t = await getFixedTForLanguage("en-US", ["common"]);
 

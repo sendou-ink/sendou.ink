@@ -28,16 +28,19 @@ import { assertUnreachable } from "~/utils/types";
 import {
 	DAMAGE_TYPE,
 	RAINMAKER_SPEED_PENALTY_MODIFIER,
+	TENACITY_SPECIAL_POINTS_PER_SECOND,
 } from "../analyzer-constants";
 import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	DamageType,
 	InkConsumeType,
+	MainWeaponInkConsumptionStats,
 	MainWeaponParams,
 	SpecialWeaponParams,
 	StatFunctionInput,
 	SubWeaponParams,
+	TenacityPlayerDeficit,
 } from "../analyzer-types";
 import { INK_CONSUME_TYPES } from "../analyzer-types";
 import type { abilityValues as abilityValuesJson } from "../data/ability-values";
@@ -109,6 +112,7 @@ export function buildStats({
 			specialPoint: specialPoint(input),
 			specialLost: specialLost(input),
 			specialLostSplattedByRP: specialLost(input, true),
+			tenacitySecondsToSpecial: tenacitySecondsToSpecial(input),
 			fullInkTankOptions: fullInkTankOptions(input),
 			damages: damages(input),
 			specialWeaponDamages: specialWeaponDamages(input),
@@ -120,6 +124,7 @@ export function buildStats({
 			subWeaponWhiteInkSeconds: framesToSeconds(subWeaponParams.InkRecoverStop),
 			subWeaponInkConsumptionPercentage:
 				subWeaponInkConsumptionPercentage(input),
+			...mainWeaponInkConsumptionPercentages(input),
 			squidFormInkRecoverySeconds: squidFormInkRecoverySeconds(input),
 			humanoidFormInkRecoverySeconds: humanoidFormInkRecoverySeconds(input),
 			runSpeed: runSpeed(input),
@@ -207,6 +212,27 @@ function specialPoint({
 		baseValue: mainWeaponParams.SpecialPoint,
 		modifiedBy: SPECIAL_POINT_ABILITY,
 		value: Math.ceil(mainWeaponParams.SpecialPoint / effect),
+	};
+}
+
+function tenacitySecondsToSpecial({
+	mainWeaponParams,
+	mainOnlyAbilities,
+}: StatFunctionInput): AnalyzedBuild["stats"]["tenacitySecondsToSpecial"] {
+	if (!mainOnlyAbilities.includes("T")) return;
+
+	// Special Charge Up does not affect the rate Tenacity fills the gauge at
+	// so the unmodified amount of points needed is used here
+	const secondsToSpecial = (playerDeficit: TenacityPlayerDeficit) =>
+		roundToNDecimalPlaces(
+			mainWeaponParams.SpecialPoint /
+				TENACITY_SPECIAL_POINTS_PER_SECOND[playerDeficit],
+		);
+
+	return {
+		1: secondsToSpecial(1),
+		2: secondsToSpecial(2),
+		3: secondsToSpecial(3),
 	};
 }
 
@@ -332,6 +358,37 @@ function subWeaponConsume({
 			inkTankSize(weaponSplId) / inkConsumeAfterISS,
 		),
 	};
+}
+
+function mainWeaponInkConsumptionPercentages(
+	args: StatFunctionInput,
+): MainWeaponInkConsumptionStats {
+	const result: MainWeaponInkConsumptionStats = {};
+
+	for (const type of INK_CONSUME_TYPES) {
+		const baseInkConsume = mainWeaponInkConsumeByType({
+			...args,
+			abilityPoints: new Map(),
+			type,
+		});
+
+		if (typeof baseInkConsume !== "number") continue;
+
+		const inkConsume = mainWeaponInkConsumeByType({ ...args, type });
+		invariant(typeof inkConsume === "number");
+
+		result[`mainWeaponInkConsumptionPercentage_${type}`] = {
+			baseValue: roundToNDecimalPlaces(
+				(baseInkConsume * 100) / inkTankSize(args.weaponSplId),
+			),
+			value: roundToNDecimalPlaces(
+				(inkConsume * 100) / inkTankSize(args.weaponSplId),
+			),
+			modifiedBy: "ISM",
+		};
+	}
+
+	return result;
 }
 
 function mainWeaponInkConsumeByType({

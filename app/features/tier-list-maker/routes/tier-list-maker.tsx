@@ -9,14 +9,11 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
-import { snapdom } from "@zumer/snapdom";
 import clsx from "clsx";
 import { HardDriveDownload, Plus, RefreshCcw } from "lucide-react";
-import { useRef } from "react";
-import { flushSync } from "react-dom";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -34,6 +31,7 @@ import { ModeImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import { useHydrated } from "~/hooks/useHydrated";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { metaTags } from "~/utils/remix";
@@ -41,6 +39,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, TIER_LIST_MAKER_URL } from "~/utils/urls";
 import { ItemDragPreview } from "../components/ItemDragPreview";
 import { ItemPool } from "../components/ItemPool";
+import { TierListGraphic } from "../components/TierListGraphic";
 import { TierRow } from "../components/TierRow";
 import {
 	TierListProvider,
@@ -48,6 +47,7 @@ import {
 } from "../contexts/TierListContext";
 import type { TierListPlacementMode } from "../hooks/useTierList";
 import type { TierListItem } from "../tier-list-maker-schemas";
+import { tierListMakerPathWithState } from "../tier-list-maker-utils";
 import styles from "./tier-list-maker.module.css";
 
 const PLACEMENT_MODES: TierListPlacementMode[] = ["click", "track"];
@@ -90,7 +90,6 @@ export default function TierListMakerPage() {
 
 function TierListMakerContent() {
 	const { t } = useTranslation(["tier-list-maker"]);
-	const user = useUser();
 
 	const {
 		itemType,
@@ -110,10 +109,6 @@ function TierListMakerContent() {
 		setCanAddDuplicates,
 		showTierHeaders,
 		setShowTierHeaders,
-		title,
-		setTitle,
-		screenshotMode,
-		setScreenshotMode,
 		selectedModes,
 		setSelectedModes,
 		placementMode,
@@ -133,25 +128,6 @@ function TierListMakerContent() {
 		}),
 	);
 
-	const tierListRef = useRef<HTMLDivElement>(null);
-
-	const handleDownload = async () => {
-		if (!tierListRef.current) return;
-
-		flushSync(() => setScreenshotMode(true));
-
-		await snapdom.download(tierListRef.current, {
-			type: "png",
-			filename: "tier-list",
-			quality: 1,
-			scale: 1.75,
-			embedFonts: true,
-			backgroundColor: getComputedStyle(document.body).backgroundColor,
-		});
-
-		setScreenshotMode(false);
-	};
-
 	return (
 		<Main bigger className={clsx(styles.container, "stack lg")}>
 			<div className={styles.header}>
@@ -159,13 +135,7 @@ function TierListMakerContent() {
 					<SendouButton onPress={handleAddTier} size="small" icon={<Plus />}>
 						{t("tier-list-maker:addTier")}
 					</SendouButton>
-					<SendouButton
-						onPress={handleDownload}
-						size="small"
-						icon={<HardDriveDownload />}
-					>
-						{t("tier-list-maker:download")}
-					</SendouButton>
+					<TierListExportDialog />
 				</div>
 				<ResetPopover key={state.tierItems.size} handleReset={handleReset} />
 			</div>
@@ -179,30 +149,7 @@ function TierListMakerContent() {
 				onDragEnd={handleDragEnd}
 			>
 				<div className="stack">
-					<div
-						className={clsx(styles.tierList, {
-							[styles.tierListScreenshotMode]: screenshotMode,
-						})}
-						ref={tierListRef}
-					>
-						{title || !screenshotMode ? (
-							<input
-								type="text"
-								value={title}
-								onChange={(e) => setTitle(e.target.value)}
-								placeholder={t("tier-list-maker:titlePlaceholder")}
-								className={clsx(styles.titleInput, "plain")}
-							/>
-						) : null}
-						{screenshotMode && title && user ? (
-							<div className={styles.authorSection}>
-								<div className={styles.authorBy}>{t("tier-list-maker:by")}</div>
-								<div className={styles.authorInfo}>
-									<Avatar user={user} size="xxxs" alt={user.username} />
-									<span className={styles.authorUsername}>{user.username}</span>
-								</div>
-							</div>
-						) : null}
+					<div className={styles.tierList}>
 						{state.tiers.map((tier) => (
 							<TierRow key={tier.id} tier={tier} />
 						))}
@@ -337,6 +284,57 @@ function TierListMakerContent() {
 				</DragOverlay>
 			</DndContext>
 		</Main>
+	);
+}
+
+function TierListExportDialog() {
+	const { t } = useTranslation(["tier-list-maker", "common"]);
+	const user = useUser();
+	const { state, getItemsInTier, showTierHeaders, title, setTitle } =
+		useTierListState();
+	const [showUsername, setShowUsername] = useState(true);
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<SendouButton size="small" icon={<HardDriveDownload />}>
+					{t("common:imageExport.export")}
+				</SendouButton>
+			}
+			heading={t("common:imageExport.export")}
+			filename="tier-list"
+			qrCodePath={tierListMakerPathWithState({
+				state,
+				title,
+				showTierHeaders,
+			})}
+			settings={
+				<>
+					<input
+						type="text"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						placeholder={t("tier-list-maker:title")}
+						aria-label={t("tier-list-maker:title")}
+					/>
+					{user ? (
+						<SendouSwitch isSelected={showUsername} onChange={setShowUsername}>
+							{t("tier-list-maker:showUsername")}
+						</SendouSwitch>
+					) : null}
+				</>
+			}
+		>
+			<TierListGraphic
+				title={title}
+				author={showUsername && user ? user : undefined}
+				tiers={state.tiers.map((tier) => ({
+					...tier,
+					items: getItemsInTier(tier.id),
+				}))}
+				showTierHeaders={showTierHeaders}
+			/>
+		</ImageExportDialog>
 	);
 }
 

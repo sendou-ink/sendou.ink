@@ -57,7 +57,7 @@ export const loader: LoaderFunction = async () => {
 	}
 
 	const usersForVoting = user?.plusTier
-		? await PlusVotingRepository.usersForVoting({
+		? await PlusVotingRepository.findAllUsersForVoting({
 				id: user.id,
 				plusTier: user.plusTier,
 			})

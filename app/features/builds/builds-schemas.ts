@@ -1,11 +1,7 @@
 import { z } from "zod";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
-import { ability, modeShort, safeJSONParse } from "~/utils/zod";
-import {
-	BUILDS_PAGE_BATCH_SIZE,
-	BUILDS_PAGE_MAX_BUILDS,
-	MAX_BUILD_FILTERS,
-} from "./builds-constants";
+import { ability, modeShort } from "~/utils/zod";
+import { MAX_BUILD_FILTERS } from "./builds-constants";
 
 const abilityFilterSchema = z.object({
 	type: z.literal("ability"),
@@ -28,23 +24,8 @@ const dateFilterSchema = z.object({
 	date: z.iso.date(),
 });
 
-export const buildFiltersSearchParams = z.preprocess(
-	safeJSONParse,
-	z.union([
-		z.null(),
-		z
-			.array(z.union([abilityFilterSchema, modeFilterSchema, dateFilterSchema]))
-			.max(MAX_BUILD_FILTERS),
-	]),
-);
+export const buildFiltersSchema = z
+	.array(z.union([abilityFilterSchema, modeFilterSchema, dateFilterSchema]))
+	.max(MAX_BUILD_FILTERS);
 
-export type BuildFiltersFromSearchParams = NonNullable<
-	z.infer<typeof buildFiltersSearchParams>
->;
-
-export const buildsLimitSearchParam = z.coerce
-	.number()
-	.int()
-	.positive()
-	.catch(BUILDS_PAGE_BATCH_SIZE)
-	.transform((value) => Math.min(value, BUILDS_PAGE_MAX_BUILDS));
+export type BuildFiltersFromSearchParams = z.infer<typeof buildFiltersSchema>;

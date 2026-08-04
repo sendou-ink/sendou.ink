@@ -11,7 +11,10 @@ import {
 } from "~/utils/kysely.server";
 import { LFG } from "./lfg-constants";
 
-export async function posts(user?: { id: number; plusTier: number | null }) {
+export async function findAllPosts(user?: {
+	id: number;
+	plusTier: number | null;
+}) {
 	// "-1" won't match any user
 	const userId = user?.id ?? -1;
 
@@ -101,7 +104,11 @@ const postExpiryCutoff = () =>
 export function insertPost(
 	args: Omit<TablesInsertable["LFGPost"], "updatedAt">,
 ) {
-	return db.insertInto("LFGPost").values(args).execute();
+	return db
+		.insertInto("LFGPost")
+		.values(args)
+		.returning("id")
+		.executeTakeFirstOrThrow();
 }
 
 export function updatePost(

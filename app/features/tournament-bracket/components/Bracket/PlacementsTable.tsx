@@ -10,10 +10,9 @@ import {
 	tournamentTeamPage,
 } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
-import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket, Standing } from "../../core/Bracket";
+import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
-import * as Swiss from "../../core/Swiss";
 import styles from "./bracket.module.css";
 
 export function PlacementsTable({
@@ -27,57 +26,7 @@ export function PlacementsTable({
 }) {
 	const user = useUser();
 
-	const _standings = bracket
-		.currentStandings(true)
-		.filter((s) => s.groupId === groupId);
-
-	const missingTeams = bracket.data.match.reduce((acc, cur) => {
-		if (cur.group_id !== groupId) return acc;
-
-		if (
-			cur.opponent1?.id &&
-			!_standings.some((s) => s.team.id === cur.opponent1!.id) &&
-			!acc.includes(cur.opponent1.id)
-		) {
-			acc.push(cur.opponent1.id);
-		}
-
-		if (
-			cur.opponent2?.id &&
-			!_standings.some((s) => s.team.id === cur.opponent2!.id) &&
-			!acc.includes(cur.opponent2.id)
-		) {
-			acc.push(cur.opponent2.id);
-		}
-
-		return acc;
-	}, [] as number[]);
-
-	const standings = _standings
-		.concat(
-			missingTeams.map((id) => ({
-				team: bracket.tournament.teamById(id)!,
-				stats: {
-					mapLosses: 0,
-					mapWins: 0,
-					points: 0,
-					koCount: 0,
-					setLosses: 0,
-					setWins: 0,
-					winsAgainstTied: 0,
-					lossesAgainstTied: 0,
-				},
-				placement: Math.max(..._standings.map((s) => s.placement)) + 1,
-				groupId,
-			})),
-		)
-		.sort((a, b) => {
-			if (a.placement === b.placement && a.team.seed && b.team.seed) {
-				return a.team.seed - b.team.seed;
-			}
-
-			return a.placement - b.placement;
-		});
+	const standings = bracket.liveStandings.filter((s) => s.groupId === groupId);
 
 	const destinationBracket = (standing: Standing, placement: number) => {
 		if (bracket.type === "swiss" && bracket.settings?.advanceThreshold) {
@@ -88,8 +37,7 @@ export function PlacementsTable({
 				advanceThreshold: bracket.settings.advanceThreshold,
 				losses: stats.setLosses,
 				wins: stats.setWins,
-				roundCount:
-					bracket.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+				roundCount: bracket.swissRoundCount,
 			}) === "advanced"
 				? bracket.tournament.brackets.find((otherBracket) =>
 						otherBracket.sources?.some(
@@ -289,9 +237,7 @@ function StandingsTable({
 							advanceThreshold: bracket.settings.advanceThreshold,
 							losses: s.stats.setLosses,
 							wins: s.stats.setWins,
-							roundCount:
-								bracket.settings.roundCount ??
-								TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+							roundCount: bracket.swissRoundCount,
 						}) === "eliminated";
 
 					if (renderQualifiedRow) qualifiedRowRendered = true;
@@ -330,7 +276,7 @@ function StandingsTable({
 										{s.team.name}
 									</Link>{" "}
 									{s.team.droppedOut ? (
-										<span className="text-warning text-xxxs font-bold">
+										<span className="text-warning text-xxs font-bold">
 											Drop-out
 										</span>
 									) : null}

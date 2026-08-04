@@ -18,6 +18,8 @@ import { Placement } from "~/components/Placement";
 import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { tierListMakerSearchParams } from "~/features/tier-list-maker/tier-list-maker-search-params";
+import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
@@ -62,7 +64,7 @@ export function Widget({
 	user: Pick<Tables["User"], "id" | "discordId" | "customUrl">;
 }) {
 	const { t } = useTranslation(["user", "badges", "team", "org", "lfg"]);
-	const { formatter: patronSinceFormatter } = useDateTimeFormat({
+	const { formatter: patronStartedAtFormatter } = useDateTimeFormat({
 		day: "numeric",
 		month: "numeric",
 		year: "numeric",
@@ -78,6 +80,8 @@ export function Widget({
 						<Markdown>{widget.data.bio}</Markdown>
 					</article>
 				);
+			case "trophies-owned":
+				return <TrophyDisplay trophies={widget.data} userId={user.id} />;
 			case "badges-owned":
 				return (
 					<BadgeDisplay badges={widget.data} key={`badges-owned-${user.id}`} />
@@ -184,7 +188,9 @@ export function Widget({
 			case "patron-since":
 				if (!widget.data) return null;
 				return (
-					<BigValue value={patronSinceFormatter.format(widget.data) ?? ""} />
+					<BigValue
+						value={patronStartedAtFormatter.format(widget.data) ?? ""}
+					/>
 				);
 			case "join-date":
 				if (!widget.data) return null;
@@ -418,7 +424,7 @@ function HighlightedResults({
 							) : null}
 						</div>
 						<LocaleTime
-							date={result.startTime}
+							date={result.startsAt}
 							options={{
 								day: "numeric",
 								month: "numeric",
@@ -861,8 +867,9 @@ function LinksWidget({ links }: { links: string[] }) {
 
 function TierListWidget({ searchParams }: { searchParams: string }) {
 	const fullUrl = `/tier-list-maker?${searchParams}`;
-	const parsedUrl = new URL(fullUrl, "https://sendou.ink");
-	const title = parsedUrl.searchParams.get("title");
+	const { title } = tierListMakerSearchParams.parse(
+		new URL(fullUrl, "https://sendou.ink"),
+	);
 	const { t } = useTranslation(["user"]);
 
 	return (

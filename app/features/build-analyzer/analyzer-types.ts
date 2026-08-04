@@ -5,7 +5,10 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import type { DAMAGE_TYPE } from "./analyzer-constants";
+import type {
+	DAMAGE_TYPE,
+	TENACITY_PLAYER_DEFICITS,
+} from "./analyzer-constants";
 import type { SPECIAL_EFFECTS } from "./core/specialEffects";
 import type { weaponParams } from "./data/weapon-params";
 
@@ -255,7 +258,13 @@ export interface FullInkTankOption {
 	type: InkConsumeType;
 }
 
+export type MainWeaponInkConsumptionStats = {
+	[K in InkConsumeType as `mainWeaponInkConsumptionPercentage_${K}`]?: Stat;
+};
+
 export type DamageType = (typeof DAMAGE_TYPE)[number];
+
+export type TenacityPlayerDeficit = (typeof TENACITY_PLAYER_DEFICITS)[number];
 
 export interface Damage {
 	value: number;
@@ -284,6 +293,8 @@ export interface AnalyzedBuild {
 		specialPoint: Stat;
 		specialLost: Stat;
 		specialLostSplattedByRP: Stat;
+		/** Seconds it takes Tenacity to fill the special gauge, keyed by how many active players the user's team is down. Only set if the build has Tenacity. */
+		tenacitySecondsToSpecial?: Record<TenacityPlayerDeficit, number>;
 		mainWeaponWhiteInkSeconds?: number;
 		subWeaponWhiteInkSeconds: number;
 		subWeaponInkConsumptionPercentage: Stat;
@@ -343,7 +354,7 @@ export interface AnalyzedBuild {
 		specialRadiusRangeMin?: Stat;
 		specialRadiusRangeMax?: Stat;
 		specialPowerUpDuration?: Stat;
-	};
+	} & MainWeaponInkConsumptionStats;
 }
 
 export type SpecialEffectType = (typeof SPECIAL_EFFECTS)[number]["type"];

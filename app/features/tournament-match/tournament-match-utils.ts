@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import * as R from "remeda";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -107,44 +107,4 @@ export function isSetOverByResults({
 
 	// best of
 	return maxWins >= Math.ceil(count / 2);
-}
-
-export function isSetOverByScore({
-	scores,
-	count,
-	countType,
-}: {
-	scores: [number, number];
-	count: number;
-	countType: TournamentRoundMaps["type"];
-}) {
-	if (countType === "PLAY_ALL") {
-		return R.sum(scores) === count;
-	}
-
-	const matchOverAtXWins = Math.ceil(count / 2);
-	return scores[0] === matchOverAtXWins || scores[1] === matchOverAtXWins;
-}
-
-export function matchEndedEarly({
-	opponentOne,
-	opponentTwo,
-	count,
-	countType,
-}: {
-	opponentOne: { score?: number; result?: "win" | "loss" };
-	opponentTwo: { score?: number; result?: "win" | "loss" };
-	count: number;
-	countType: TournamentRoundMaps["type"];
-}) {
-	if (opponentOne.result !== "win" && opponentTwo.result !== "win") {
-		return false;
-	}
-
-	const scores: [number, number] = [
-		opponentOne.score ?? 0,
-		opponentTwo.score ?? 0,
-	];
-
-	return !isSetOverByScore({ scores, count, countType });
 }

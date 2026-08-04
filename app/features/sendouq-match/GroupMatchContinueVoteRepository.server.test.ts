@@ -1,67 +1,40 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset, withUserId } from "~/utils/Test";
+import { describe, expect, test } from "vitest";
+import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { withUserId } from "~/utils/Test";
 import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
 
-const insertGroup = async () => {
-	const group = await db
-		.insertInto("Group")
-		.values({
-			inviteCode: `inv-${Math.random().toString(36).slice(2, 10)}`,
-			chatCode: `chat-${Math.random().toString(36).slice(2, 10)}`,
-			status: "ACTIVE",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+const createGroup = async () => {
+	const owner = await UserFactory.create();
+	const group = await SQGroupFactory.create({ memberUserIds: [owner.id] });
+
 	return group.id;
 };
 
 const fetchVotes = (groupId: number) =>
-	db
-		.selectFrom("GroupMatchContinueVote")
-		.selectAll()
-		.where("groupId", "=", groupId)
-		.execute();
+	GroupMatchContinueVoteRepository.findAllByGroupIds([groupId]);
 
-describe("findForGroups", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(4);
-	});
+const castVote = (userId: number, groupId: number, isContinuing: boolean) =>
+	GroupMatchContinueVoteFactory.create({ userId, groupId, isContinuing });
 
-	afterEach(() => {
-		dbReset();
-	});
-
+describe("findAllByGroupIds", () => {
 	test("returns empty array without querying when no group ids given", async () => {
-		const result = await GroupMatchContinueVoteRepository.findForGroups([]);
+		const result = await GroupMatchContinueVoteRepository.findAllByGroupIds([]);
 		expect(result).toEqual([]);
 	});
 
 	test("returns votes only for the requested groups with isContinuing as boolean", async () => {
-		const groupA = await insertGroup();
-		const groupB = await insertGroup();
-		const groupC = await insertGroup();
+		const voters = await UserFactory.createMany(3);
+		const groupA = await createGroup();
+		const groupB = await createGroup();
+		const groupC = await createGroup();
 
-		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId: groupA,
-				isContinuing: 1,
-			}),
-		);
-		await withUserId(2, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId: groupB,
-				isContinuing: 0,
-			}),
-		);
-		await withUserId(3, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId: groupC,
-				isContinuing: 1,
-			}),
-		);
+		await castVote(voters[0].id, groupA, true);
+		await castVote(voters[1].id, groupB, false);
+		await castVote(voters[2].id, groupC, true);
 
-		const result = await GroupMatchContinueVoteRepository.findForGroups([
+		const result = await GroupMatchContinueVoteRepository.findAllByGroupIds([
 			groupA,
 			groupB,
 		]);
@@ -75,72 +48,42 @@ describe("findForGroups", () => {
 });
 
 describe("cast", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(4);
-	});
-
-	afterEach(() => {
-		dbReset();
-	});
+	/** The subject of this block, so it goes through the repository directly. */
+	const cast = (userId: number, groupId: number, isContinuing: boolean) =>
+		withUserId(userId, () =>
+			GroupMatchContinueVoteRepository.castOwnVote({ groupId, isContinuing }),
+		);
 
 	test("updates existing vote on conflict instead of inserting a duplicate", async () => {
-		const groupId = await insertGroup();
+		const voter = await UserFactory.create();
+		const groupId = await createGroup();
 
-		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId,
-				isContinuing: 1,
-			}),
-		);
-		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId,
-				isContinuing: 0,
-			}),
-		);
+		await cast(voter.id, groupId, true);
+		await cast(voter.id, groupId, false);
 
 		const votes = await fetchVotes(groupId);
 		expect(votes).toHaveLength(1);
-		expect(votes[0].isContinuing).toBe(0);
+		expect(votes[0].isContinuing).toBe(false);
 	});
 
 	test("voting no clears existing yes votes for that group only", async () => {
-		const groupA = await insertGroup();
-		const groupB = await insertGroup();
+		const voters = await UserFactory.createMany(3);
+		const groupA = await createGroup();
+		const groupB = await createGroup();
 
-		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId: groupA,
-				isContinuing: 1,
-			}),
-		);
-		await withUserId(2, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId: groupA,
-				isContinuing: 1,
-			}),
-		);
-		await withUserId(1, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId: groupB,
-				isContinuing: 1,
-			}),
-		);
+		await cast(voters[0].id, groupA, true);
+		await cast(voters[1].id, groupA, true);
+		await cast(voters[0].id, groupB, true);
 
-		await withUserId(3, () =>
-			GroupMatchContinueVoteRepository.cast({
-				groupId: groupA,
-				isContinuing: 0,
-			}),
-		);
+		await cast(voters[2].id, groupA, false);
 
 		const groupAVotes = await fetchVotes(groupA);
 		expect(groupAVotes).toHaveLength(1);
-		expect(groupAVotes[0].userId).toBe(3);
-		expect(groupAVotes[0].isContinuing).toBe(0);
+		expect(groupAVotes[0].userId).toBe(voters[2].id);
+		expect(groupAVotes[0].isContinuing).toBe(false);
 
 		const groupBVotes = await fetchVotes(groupB);
 		expect(groupBVotes).toHaveLength(1);
-		expect(groupBVotes[0].isContinuing).toBe(1);
+		expect(groupBVotes[0].isContinuing).toBe(true);
 	});
 });

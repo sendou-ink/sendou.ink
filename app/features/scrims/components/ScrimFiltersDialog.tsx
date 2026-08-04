@@ -1,14 +1,15 @@
 import { Funnel } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
 import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useUser } from "~/features/auth/core/user";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { scrimsFiltersFormSchema } from "../scrims-schemas";
+import { scrimsSearchParams } from "../scrims-search-params";
 import type { LutiDiv } from "../scrims-types";
 
 type FormValues = z.infer<typeof scrimsFiltersFormSchema>;
@@ -73,15 +74,12 @@ function FiltersForm({
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["scrims"]);
-	const [, setSearchParams] = useSearchParams();
+	const [, setSearchParams] = useSearchParamsTyped(scrimsSearchParams);
 
 	const defaultValues = filtersToFormValues(filters);
 
 	const handleApply = (values: FormValues) => {
-		setSearchParams((prev) => {
-			prev.set("filters", JSON.stringify(formValuesToFilters(values)));
-			return prev;
-		});
+		setSearchParams({ filters: formValuesToFilters(values) });
 		closeDialog();
 	};
 

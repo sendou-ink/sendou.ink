@@ -10,7 +10,7 @@ import {
 	Users,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
@@ -29,8 +29,10 @@ import {
 } from "~/features/user-card/components/UserCard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { ModeShort } from "~/modules/in-game-lists/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage } from "~/utils/urls";
+import { scrimsSearchParams } from "../scrims-search-params";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
 import styles from "./ScrimCard.module.css";
@@ -40,25 +42,44 @@ interface ScrimPostCardProps {
 	post: ScrimPost;
 	action?: "DELETE" | "REQUEST" | "VIEW_REQUEST" | "CONTACT";
 	isFilteredOut?: boolean;
+	autoScrollIntoView?: boolean;
 }
 
 export function ScrimPostCard({
 	post,
 	action,
 	isFilteredOut,
+	autoScrollIntoView,
 }: ScrimPostCardProps) {
 	const { t } = useTranslation(["scrims"]);
+	const cardRef = useRef<HTMLDivElement>(null);
+	const [, setPendingRequestPostId] = useSearchParam(
+		scrimsSearchParams,
+		"pendingRequestPostId",
+	);
 
 	const owner = post.users.find((user) => user.isOwner) ?? post.users[0];
 	const isPickup = !post.team?.name;
 	const teamName = post.team?.name ?? owner.username;
 
-	const flexTimeDisplay = post.rangeEnd
-		? formatFlexTimeDisplay(post.at, post.rangeEnd)
+	const flexTimeDisplay = post.rangeEndsAt
+		? formatFlexTimeDisplay(post.startsAt, post.rangeEndsAt)
 		: null;
 
+	useEffect(() => {
+		if (!autoScrollIntoView) return;
+
+		// deferred so it runs after <ScrollRestoration />'s scroll to top
+		const timeout = setTimeout(() => {
+			cardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+			setPendingRequestPostId(null);
+		}, 0);
+
+		return () => clearTimeout(timeout);
+	}, [autoScrollIntoView, setPendingRequestPostId]);
+
 	return (
-		<div className={styles.card}>
+		<div className={styles.card} ref={cardRef}>
 			<div className={styles.header}>
 				<div className={styles.avatarContainer}>
 					<ScrimTeamAvatar
@@ -87,7 +108,7 @@ export function ScrimPostCard({
 				<ScrimInfoItem label="Start">
 					<ScrimStartTimeDisplay
 						isScheduledForFuture={post.isScheduledForFuture}
-						startTimestamp={post.at}
+						startTimestamp={post.startsAt}
 						createdAtTimestamp={post.createdAt}
 						canceled={post.canceled}
 					/>
@@ -208,6 +229,52 @@ function ScrimTeamMemberRow({ user }: { user: ScrimPost["users"][number] }) {
 					<Avatar size="xxs" user={user} />
 				</NoteAvatar>
 				{user.username}
+			</span>
+		</UserCard>
+	);
+}
+
+function ScrimRequestMembersList({ users }: { users: ScrimPost["users"] }) {
+	const { t } = useTranslation(["scrims"]);
+
+	const sortedUsers = [...users].sort(
+		(a, b) => Number(b.isOwner) - Number(a.isOwner),
+	);
+
+	return (
+		<div className="stack md">
+			{sortedUsers.map((user) => (
+				<ScrimRequestMemberRow key={user.id} user={user}>
+					{user.isOwner ? (
+						<div className="text-lighter text-xs">
+							{t("scrims:cancelRequestModal.requester")}
+						</div>
+					) : null}
+				</ScrimRequestMemberRow>
+			))}
+		</div>
+	);
+}
+
+function ScrimRequestMemberRow({
+	user,
+	children,
+}: {
+	user: ScrimPost["users"][number];
+	children?: React.ReactNode;
+}) {
+	const cardData = useUserCardData(user.id);
+
+	return (
+		<UserCard userId={user.id} withMutualFriends>
+			<span className="stack horizontal sm items-center">
+				<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+					<Avatar size="xs" user={user} />
+				</NoteAvatar>
+				<span>
+					{user.username}
+					{children}
+				</span>
 			</span>
 		</UserCard>
 	);
@@ -409,6 +476,7 @@ function ScrimActionButtons({
 						onClose={() => setIsViewRequestModalOpen(false)}
 					>
 						<div className="stack md">
+							<ScrimRequestMembersList users={userRequest.users} />
 							{userRequest.message ? (
 								<div>
 									<div className="text-sm font-semi-bold mb-1">
@@ -417,13 +485,13 @@ function ScrimActionButtons({
 									<div className="text-lighter">{userRequest.message}</div>
 								</div>
 							) : null}
-							{userRequest.at ? (
+							{userRequest.startsAt ? (
 								<div>
 									<div className="text-sm font-semi-bold mb-1">
 										{t("scrims:requestModal.at.label")}
 									</div>
 									<LocaleTime
-										date={userRequest.at}
+										date={userRequest.startsAt}
 										options={{
 											hour: "numeric",
 											minute: "2-digit",
@@ -507,8 +575,8 @@ export function ScrimRequestCard({
 	const isPickup = !request.team?.name;
 	const teamName = request.team?.name ?? owner.username;
 
-	const confirmedTime = request.at
-		? databaseTimestampToDate(request.at)
+	const confirmedTime = request.startsAt
+		? databaseTimestampToDate(request.startsAt)
 		: databaseTimestampToDate(postStartTime);
 
 	return (

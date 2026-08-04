@@ -36,6 +36,7 @@ export type WeaponPoolItem = {
 type WeaponPoolFormFieldProps = FormFieldProps<"weapon-pool"> & {
 	value: WeaponPoolItem[];
 	onChange: (value: WeaponPoolItem[]) => void;
+	disabled?: boolean;
 };
 
 export function WeaponPoolFormField({
@@ -50,6 +51,7 @@ export function WeaponPoolFormField({
 	value,
 	onChange,
 	onBlur,
+	disabled,
 }: WeaponPoolFormFieldProps) {
 	const { t } = useTranslation(["forms"]);
 	const id = React.useId();
@@ -116,13 +118,14 @@ export function WeaponPoolFormField({
 	const weaponList = (
 		<ul className={styles.list}>
 			{value.map((weapon) =>
-				disableSorting ? (
+				disableSorting || disabled ? (
 					<StaticWeaponItem
 						key={weapon.id}
 						weapon={weapon}
 						showFavoriteToggle={!disableFavorites}
 						onToggleFavorite={handleToggleFavorite}
 						onRemove={handleRemove}
+						disabled={disabled}
 					/>
 				) : (
 					<SortableWeaponItem
@@ -154,7 +157,7 @@ export function WeaponPoolFormField({
 				}}
 				disabledWeaponIds={disabledWeaponIds}
 				clearable
-				isDisabled={isFull}
+				isDisabled={isFull || disabled}
 				placeholder={
 					isFull ? t("forms:placeholders.weaponPoolFull") : undefined
 				}
@@ -187,11 +190,13 @@ function StaticWeaponItem({
 	showFavoriteToggle,
 	onToggleFavorite,
 	onRemove,
+	disabled,
 }: {
 	weapon: WeaponPoolItem;
 	showFavoriteToggle: boolean;
 	onToggleFavorite: (id: MainWeaponId) => void;
 	onRemove: (id: MainWeaponId) => void;
+	disabled?: boolean;
 }) {
 	const { t } = useTranslation(["weapons"]);
 
@@ -222,6 +227,7 @@ function StaticWeaponItem({
 						}
 						aria-label="Toggle favorite"
 						onPress={() => onToggleFavorite(weapon.id)}
+						isDisabled={disabled}
 					/>
 				) : null}
 				<SendouButton
@@ -230,6 +236,7 @@ function StaticWeaponItem({
 					icon={<Trash />}
 					aria-label="Delete"
 					onPress={() => onRemove(weapon.id)}
+					isDisabled={disabled}
 				/>
 			</div>
 		</li>

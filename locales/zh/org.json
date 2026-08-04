@@ -20,6 +20,7 @@
 	"edit.form.series.seriesName.title": "系列赛名称",
 	"edit.form.series.showLeaderboard.title": "显示排行榜",
 	"edit.form.badges.title": "徽章",
+	"edit.form.rewards.title": "",
 	"edit.form.errors.noUnadmin": "您不能移除自己的管理员身份",
 	"banned.title": "被封禁的玩家",
 	"banned.empty": "当前没有玩家被此组织封禁。",

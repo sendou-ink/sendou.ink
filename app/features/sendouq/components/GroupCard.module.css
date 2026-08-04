@@ -40,6 +40,10 @@
 	color: var(--color-text);
 }
 
+.memberActions {
+	flex-shrink: 0;
+}
+
 .tier {
 	margin-inline-start: auto;
 }
@@ -79,10 +83,6 @@
 	color: var(--color-text);
 	border: none;
 	height: 24px;
-}
-
-.noteTextarea {
-	height: 4rem !important;
 }
 
 .futureMatchMode {

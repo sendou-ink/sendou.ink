@@ -1,8 +1,4 @@
-import type {
-	Tables,
-	TournamentStage,
-	TournamentStageSettings,
-} from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import {
 	LEAGUES,
 	TOURNAMENT,
@@ -13,9 +9,11 @@ import {
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
+import type {
+	BracketData,
+	MatchData,
+} from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
-import type { Match, Stage } from "~/modules/brackets-model";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { isAdmin } from "~/modules/permissions/utils";
 import {
@@ -26,14 +24,10 @@ import {
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
-import {
-	fillWithNullTillPowerOfTwo,
-	groupNumberToLetters,
-} from "../tournament-bracket-utils";
+import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
-import { getTournamentManager } from "./brackets-manager";
 import { getRounds } from "./rounds";
-import * as Swiss from "./Swiss";
+import * as Seeding from "./Seeding";
 import type { TournamentData, TournamentDataTeam } from "./Tournament.server";
 
 export type OptionalIdObject = { id: number } | undefined;
@@ -71,13 +65,13 @@ export class Tournament {
 				? // after the start the teams who did not check-in are irrelevant
 					teamsInSeedOrder.filter((team) => team.checkIns.length > 0)
 				: teamsInSeedOrder,
-			startTime: databaseTimestampToDate(ctx.startTime),
+			startsAt: databaseTimestampToDate(ctx.startsAt),
 		};
 
 		this.initBrackets(data);
 	}
 
-	private initBrackets(data: TournamentManagerDataSet) {
+	private initBrackets(data: BracketData) {
 		for (const [
 			bracketIdx,
 			{
@@ -93,7 +87,7 @@ export class Tournament {
 
 			if (inProgressStage) {
 				const match = data.match.filter(
-					(match) => match.stage_id === inProgressStage.id,
+					(match) => match.stageId === inProgressStage.id,
 				);
 
 				this.brackets.push(
@@ -111,62 +105,17 @@ export class Tournament {
 						data: {
 							...data,
 							group: data.group.filter(
-								(group) => group.stage_id === inProgressStage.id,
+								(group) => group.stageId === inProgressStage.id,
 							),
 							match,
 							stage: data.stage.filter(
 								(stage) => stage.id === inProgressStage.id,
 							),
 							round: data.round.filter(
-								(round) => round.stage_id === inProgressStage.id,
+								(round) => round.stageId === inProgressStage.id,
 							),
 						},
 						type,
-					}),
-				);
-			} else if (type === "swiss") {
-				const { teams, relevantMatchesFinished } = sources
-					? this.resolveTeamsFromSources(sources, bracketIdx)
-					: this.resolveTeamsFromSignups(bracketIdx);
-
-				const { checkedInTeams, notCheckedInTeams } =
-					this.divideTeamsToCheckedInAndNotCheckedIn({
-						teams,
-						bracketIdx,
-						usesRegularCheckIn: !sources,
-						requiresCheckIn,
-					});
-
-				this.brackets.push(
-					createBracket({
-						id: -1 * bracketIdx,
-						idx: bracketIdx,
-						tournament: this,
-						seeding: checkedInTeams,
-						preview: true,
-						name,
-						requiresCheckIn,
-						startTime: startTime ? databaseTimestampToDate(startTime) : null,
-						settings: settings ?? null,
-						data: Swiss.create({
-							tournamentId: this.ctx.id,
-							name,
-							seeding: checkedInTeams,
-							settings: this.bracketManagerSettings(
-								settings,
-								type,
-								checkedInTeams.length,
-							),
-						}),
-						type,
-						sources,
-						createdAt: null,
-						canBeStarted:
-							(!startTime || startTime < databaseTimestampNow()) &&
-							checkedInTeams.length >= TOURNAMENT.ENOUGH_TEAMS_TO_START &&
-							(sources ? relevantMatchesFinished : this.regularCheckInHasEnded),
-						teamsPendingCheckIn:
-							bracketIdx !== 0 ? notCheckedInTeams : undefined,
 					}),
 				);
 			} else {
@@ -182,15 +131,13 @@ export class Tournament {
 						requiresCheckIn,
 					});
 
-				const checkedInTeamsWithReplaysAvoided =
-					this.avoidReplaysOfPreviousBracketOpponent(
-						checkedInTeams,
-						{
-							sources,
-							type,
-						},
-						settings,
-					);
+				const checkedInTeamsWithReplaysAvoided = this.followUpBracketSeeding(
+					checkedInTeams,
+					{
+						sources,
+						type,
+					},
+				);
 
 				this.brackets.push(
 					createBracket({
@@ -335,146 +282,47 @@ export class Tournament {
 		};
 	}
 
-	private avoidReplaysOfPreviousBracketOpponent(
+	private followUpBracketSeeding(
 		teams: number[],
 		bracket: {
 			sources: Progression.ParsedBracket["sources"];
 			type: Tables["TournamentStage"]["type"];
 		},
-		settings: TournamentStageSettings,
 	) {
-		// rather arbitrary limit, but with smaller brackets avoiding replays is not possible
-		// and then later while loop hits iteration limit
-		if (teams.length < 8) return teams;
-
-		// can't have replays from previous brackets in the first bracket
-		// & no support yet for avoiding replays if many sources
-		if (bracket.sources?.length !== 1) return teams;
-
-		const sourceBracket = this.bracketByIdx(bracket.sources[0].bracketIdx);
-		if (!sourceBracket) {
-			logger.warn(
-				"avoidReplaysOfPreviousBracketOpponent: Source bracket not found",
-			);
-			return teams;
-		}
-
-		// should not happen but just in case
+		// nothing to adjust for starting brackets, and group stages pair via their own logic
+		if (!bracket.sources || bracket.sources.length === 0) return teams;
 		if (bracket.type === "round_robin" || bracket.type === "swiss") {
 			return teams;
 		}
 
-		const sourceBracketEncounters = sourceBracket.data.match.reduce(
-			(acc, cur) => {
-				const oneId = cur.opponent1?.id;
-				const twoId = cur.opponent2?.id;
+		const sources: Seeding.FollowUpBracketSource[] = [];
+		for (const source of bracket.sources) {
+			const sourceBracket = this.bracketByIdx(source.bracketIdx);
+			if (!sourceBracket) {
+				logger.warn("followUpBracketSeeding: Source bracket not found");
+				return teams;
+			}
 
-				if (typeof oneId !== "number" || typeof twoId !== "number") return acc;
+			const encounters: Array<[number, number]> = [];
+			for (const match of sourceBracket.data.match) {
+				const oneId = match.opponent1?.id;
+				const twoId = match.opponent2?.id;
+				if (typeof oneId !== "number" || typeof twoId !== "number") continue;
 
-				if (!acc.has(oneId)) {
-					acc.set(oneId, []);
-				}
-				if (!acc.has(twoId)) {
-					acc.set(twoId, []);
-				}
-				acc.get(oneId)!.push(twoId);
-				acc.get(twoId)!.push(oneId);
-				return acc;
-			},
-			new Map() as Map<number, number[]>,
-		);
+				encounters.push([oneId, twoId]);
+			}
 
-		const bracketReplays = (candidateTeams: number[]) => {
-			const manager = getTournamentManager();
-			manager.create({
-				tournamentId: this.ctx.id,
-				name: "X",
-				type: bracket.type as Exclude<
-					TournamentStage["type"],
-					"round_robin" | "swiss"
-				>,
-				seeding: fillWithNullTillPowerOfTwo(candidateTeams),
-				settings: this.bracketManagerSettings(
-					settings,
-					bracket.type,
-					candidateTeams.length,
-				),
+			sources.push({
+				standings: sourceBracket.standings.map((standing) => ({
+					tournamentTeamId: standing.team.id,
+					placement: standing.placement,
+					groupId: standing.groupId ?? null,
+				})),
+				encounters,
 			});
-
-			const matches = manager.get.tournamentData(this.ctx.id).match;
-			const replays: [number, number][] = [];
-			for (const match of matches) {
-				if (!match.opponent1?.id || !match.opponent2?.id) continue;
-
-				if (
-					sourceBracketEncounters
-						.get(match.opponent1.id)
-						?.includes(match.opponent2.id)
-				) {
-					replays.push([match.opponent1.id, match.opponent2.id]);
-				}
-			}
-
-			return replays;
-		};
-
-		const newOrder = [...teams];
-		// TODO: handle also e.g. top 3 of each group in the bracket
-		// only switch around 2nd seeds
-		const potentialSwitchCandidates = teams.slice(Math.floor(teams.length / 2));
-		let replays = bracketReplays(newOrder);
-		let iterations = 0;
-		while (replays.length > 0) {
-			iterations++;
-			if (iterations > 100) {
-				logger.warn(
-					"avoidReplaysOfPreviousBracketOpponent: Avoiding replays failed, too many iterations",
-				);
-
-				return teams;
-			}
-
-			const [oneId, twoId] = replays[0];
-
-			const lowerSeedId =
-				newOrder.indexOf(oneId) < newOrder.indexOf(twoId) ? twoId : oneId;
-
-			if (!potentialSwitchCandidates.some((t) => t === lowerSeedId)) {
-				logger.warn(
-					`Avoiding replays failed, no potential switch candidates found in match: ${oneId} vs. ${twoId}`,
-				);
-
-				return teams;
-			}
-
-			for (const candidate of potentialSwitchCandidates) {
-				// can't switch place with itself
-				if (candidate === lowerSeedId) continue;
-
-				const candidateIdx = newOrder.indexOf(candidate);
-				const otherIdx = newOrder.indexOf(lowerSeedId);
-
-				const temp = newOrder[candidateIdx];
-				newOrder[candidateIdx] = newOrder[otherIdx];
-				newOrder[otherIdx] = temp;
-
-				const oldReplayCount = replays.length;
-				const newReplays = bracketReplays(newOrder);
-				if (newReplays.length < oldReplayCount) {
-					replays = newReplays;
-					break;
-				}
-
-				{
-					// revert the switch
-					const temp = newOrder[candidateIdx];
-					newOrder[candidateIdx] = newOrder[otherIdx];
-					newOrder[otherIdx] = temp;
-				}
-			}
 		}
 
-		return newOrder;
+		return Seeding.forFollowUpBracket({ teams, sources });
 	}
 
 	private divideTeamsToCheckedInAndNotCheckedIn({
@@ -532,66 +380,11 @@ export class Tournament {
 		);
 	}
 
-	/** Provides settings for the brackets-manager module with our selected defaults */
-	bracketManagerSettings(
-		selectedSettings: TournamentStageSettings | null,
-		type: Tables["TournamentStage"]["type"],
-		participantsCount: number,
-	): Stage["settings"] {
-		switch (type) {
-			case "single_elimination": {
-				if (participantsCount < 4) {
-					return { consolationFinal: false };
-				}
-
-				return {
-					consolationFinal:
-						selectedSettings?.thirdPlaceMatch ??
-						TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
-				};
-			}
-			case "double_elimination": {
-				return {
-					grandFinal: "double",
-				};
-			}
-			case "round_robin": {
-				const teamsPerGroup =
-					selectedSettings?.teamsPerGroup ??
-					TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
-
-				return {
-					groupCount: Math.ceil(participantsCount / teamsPerGroup),
-					seedOrdering: ["groups.seed_optimized"],
-					hasAbDivisions: selectedSettings?.hasAbDivisions ?? false,
-					...(this.isLeagueDivision ? { independentRounds: true } : {}),
-				};
-			}
-			case "swiss": {
-				return {
-					swiss:
-						selectedSettings?.groupCount && selectedSettings.roundCount
-							? {
-									groupCount: selectedSettings.groupCount,
-									roundCount: selectedSettings.roundCount,
-								}
-							: {
-									groupCount: TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
-									roundCount: TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
-								},
-				};
-			}
-			default: {
-				assertUnreachable(type);
-			}
-		}
-	}
-
 	/** Is tournament ranked (affects SP/Skill). For tournament to be ranked the organizer needs to enable it and it needs to fit the conditions e.g. it needs to happen when a ranked season is active. */
 	get ranked() {
 		return tournamentIsRanked({
 			isSetAsRanked: this.ctx.settings.isRanked,
-			startTime: this.ctx.startTime,
+			startsAt: this.ctx.startsAt,
 			minMembersPerTeam: this.minMembersPerTeam,
 			isTest: this.isTest,
 		});
@@ -739,6 +532,20 @@ export class Tournament {
 		);
 	}
 
+	/** Status of the given match, derived from the state of its bracket. */
+	matchStatusById(matchId: number) {
+		for (const bracket of this.brackets) {
+			// preview brackets have locally generated match ids that can collide with real ones
+			if (bracket.preview) continue;
+
+			if (bracket.data.match.some((match) => match.id === matchId)) {
+				return bracket.matchStatus(matchId);
+			}
+		}
+
+		throw new Error("Match not found");
+	}
+
 	matchIdToBracketIdx(matchId: number) {
 		const idx = this.brackets.findIndex((bracket) =>
 			bracket.data.match.some((match) => match.id === matchId),
@@ -767,7 +574,7 @@ export class Tournament {
 
 			return this.brackets[0].data.round.every((round) => {
 				const hasMatches = this.brackets[0].data.match.some(
-					(match) => match.round_id === round.id,
+					(match) => match.roundId === round.id,
 				);
 
 				return hasMatches;
@@ -826,9 +633,18 @@ export class Tournament {
 		return (
 			!this.ctx.settings.regClosesAt ||
 			this.ctx.settings.regClosesAt ===
-				dateToDatabaseTimestamp(this.ctx.startTime) ||
+				dateToDatabaseTimestamp(this.ctx.startsAt) ||
 			this.registrationOpen
 		);
+	}
+
+	/** Can the organizer add a new sub post on behalf of a user at this time? Unlike users
+	 * the organizer is not limited by the registration closing early. */
+	get canAddNewSubPostAsOrganizer() {
+		if (!this.lfgEnabled) return false;
+		if (this.isInvitational) return false;
+
+		return !this.everyBracketOver;
 	}
 
 	/** what is the max amount of members teams can add in total? This limit doesn't apply to the organizer adding members to a team. */
@@ -853,7 +669,7 @@ export class Tournament {
 
 	/** Has the regular check-in (check-in for the whole tournament) ended? */
 	get regularCheckInHasEnded() {
-		return this.ctx.startTime < new Date();
+		return this.ctx.startsAt < new Date();
 	}
 
 	/** Has the regular check-in (check-in for the whole tournament) started? Note it is also considered started if it has ended. */
@@ -863,21 +679,21 @@ export class Tournament {
 
 	/** Date when the regular check-in is scheduled to start. */
 	get regularCheckInStartsAt() {
-		const result = new Date(this.ctx.startTime);
+		const result = new Date(this.ctx.startsAt);
 		result.setMinutes(result.getMinutes() - 60);
 		return result;
 	}
 
 	/** Date when the regular check-in is scheduled to start. */
 	get regularCheckInEndsAt() {
-		return this.ctx.startTime;
+		return this.ctx.startsAt;
 	}
 
 	/** Date when the tournament registration is scheduled to end. This can be set by the organizer. */
 	get registrationClosesAt() {
 		return this.ctx.settings.regClosesAt
 			? databaseTimestampToDate(this.ctx.settings.regClosesAt)
-			: this.ctx.startTime;
+			: this.ctx.startsAt;
 	}
 
 	/** Is the tournament registration open at this time? */
@@ -889,11 +705,11 @@ export class Tournament {
 
 	/** Can participants submit/undo their own weapon reports right now?
 	 * Always open while the tournament is running; once finalized it stays open only for tournaments
-	 * whose startTime is inside the current-season-plus-adjacent-off-season window. */
+	 * whose start time is inside the current-season-plus-adjacent-off-season window. */
 	get weaponReportingOpen() {
 		if (!this.ctx.isFinalized) return true;
 		return tournamentInWeaponReportingWindow({
-			tournamentStartTime: this.ctx.startTime,
+			tournamentStartTime: this.ctx.startsAt,
 		});
 	}
 
@@ -947,19 +763,19 @@ export class Tournament {
 
 					if (bracket.type === "round_robin") {
 						const group = bracket.data.group.find(
-							(group) => group.id === match.group_id,
+							(group) => group.id === match.groupId,
 						);
 						const round = bracket.data.round.find(
-							(round) => round.id === match.round_id,
+							(round) => round.id === match.roundId,
 						);
 
 						roundName = `Groups ${group?.number ? groupNumberToLetters(group.number) : ""}${round?.number ?? ""}.${match.number}`;
 					} else if (bracket.type === "swiss") {
 						const group = bracket.data.group.find(
-							(group) => group.id === match.group_id,
+							(group) => group.id === match.groupId,
 						);
 						const round = bracket.data.round.find(
-							(round) => round.id === match.round_id,
+							(round) => round.id === match.roundId,
 						);
 
 						const oneGroupOnly = bracket.data.group.length === 1;
@@ -980,7 +796,7 @@ export class Tournament {
 										...getRounds({ type: "losers", bracketData: bracket.data }),
 									];
 
-						const round = rounds.find((round) => round.id === match.round_id);
+						const round = rounds.find((round) => round.id === match.roundId);
 
 						if (round) {
 							const specifier = () => {
@@ -1112,10 +928,7 @@ export class Tournament {
 				const isParticipant =
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id;
 				const isNotFinished =
-					match.opponent1 &&
-					match.opponent2 &&
-					match.opponent1?.result !== "win" &&
-					match.opponent2?.result !== "win";
+					match.opponent1 && match.opponent2 && !match.winnerSide;
 				const isWaitingForTeam =
 					(match.opponent1 && match.opponent1.id === null) ||
 					(match.opponent2 && match.opponent2.id === null);
@@ -1133,8 +946,7 @@ export class Tournament {
 							(match) =>
 								(match.opponent1?.id === otherTeam.id ||
 									match.opponent2?.id === otherTeam.id) &&
-								match.opponent1?.result !== "win" &&
-								match.opponent2?.result !== "win",
+								!match.winnerSide,
 						)?.id !== match.id;
 
 					if (otherTeamBusyWithPreviousMatch) {
@@ -1153,6 +965,7 @@ export class Tournament {
 						type: "MATCH",
 						matchId: match.id,
 						opponent: otherTeam.name,
+						opponentId: otherTeam.id,
 					} as const;
 				}
 
@@ -1189,8 +1002,7 @@ export class Tournament {
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id,
 			).length;
 			const notAllRoundsGenerated =
-				bracket.settings?.roundCount &&
-				setsGeneratedCount !== bracket.settings.roundCount;
+				setsGeneratedCount !== bracket.swissRoundCount;
 
 			if (isParticipant && notAllRoundsGenerated) {
 				return { type: "WAITING_FOR_ROUND" } as const;
@@ -1300,7 +1112,7 @@ export class Tournament {
 		matchBracket,
 		bracketIdx,
 	}: {
-		match: Match;
+		match: MatchData;
 		matchBracket: Bracket;
 		bracketIdx: number;
 	}) {
@@ -1344,8 +1156,7 @@ export class Tournament {
 		return bracket.data.match
 			.filter(
 				// only interested in matches of the same bracket & not the match  itself
-				(match2) =>
-					match2.stage_id === match.stage_id && match2.id !== match.id,
+				(match2) => match2.stageId === match.stageId && match2.id !== match.id,
 			)
 			.filter((match2) => {
 				const hasSameParticipant =
@@ -1355,7 +1166,7 @@ export class Tournament {
 					match2.opponent2?.id === match.opponent2?.id;
 
 				const comesAfter =
-					match2.group_id > match.group_id || match2.round_id > match.round_id;
+					match2.groupId > match.groupId || match2.roundId > match.roundId;
 
 				return hasSameParticipant && comesAfter;
 			});

@@ -1,10 +1,11 @@
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
+import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	successToast,
 } from "~/utils/remix.server";
@@ -18,7 +19,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const placements = notFoundIfFalsy(
+	const placements = notFoundIfNullish(
 		await XRankPlacementRepository.findPlacementsByPlayerId(id),
 	);
 	const currentLinkedUserDiscordId = placements[0].discordId;
@@ -36,6 +37,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 	await XRankPlacementRepository.unlinkPlayerByUserId(user.id);
 
 	await BadgeRepository.syncXPBadges();
+	await TrophyRepository.syncSpecialTrophies();
 	await XRankPlacementRepository.refreshTenStarWeapons(user.id);
 
 	return successToast("Unlink successful");

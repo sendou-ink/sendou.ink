@@ -1,5 +1,7 @@
 # Contributing
 
+Thank you for taking interest in contributing to sendou.ink! Please note that mainly AI driven contributions from people who are not in the community or using the project are not wanted and will not be considered.
+
 ## How to contribute
 
 Reading the [architecture.md](./docs/dev/architecture.md) file is highly recommended before writing any code to get up to the speed with how the project folder structure works and getting familiar with its concepts.
@@ -16,14 +18,14 @@ You can also just directly make a pull request but untracked feature requests mi
 
 ## Making pull request
 
-1. Identify an issue to work on
+First of all note that a well detailed issue that explains a problem from user point of view with clear examples and code level investigation is often more valuable than a pull request.
 
-- Issues I have identified as potentially good for external contributors [are marked with the help wanted tag.](https://github.com/Sendouc/sendou.ink/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
-- "good first issue" are tasks that might be smaller in scope and easier to get started with
+When making a pull request what makes it easy to review (which makes it likely to be processed faster) include following:
 
-2. Make pull request
-
-- Tell me how I can test it and include unit / E2E tests if possible.
+1) Change is pre-discussed in an issue or GitHub, direction agreed upon
+2) If many unrelated changes are made, they are opened as separate pull requests (smaller is better generally speaking)
+3) UI changes are showcased with screenshots before/after
+4) Appropriate automated tests exist
 
 ## Help
 

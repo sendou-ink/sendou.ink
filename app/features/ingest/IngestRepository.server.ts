@@ -286,7 +286,7 @@ export async function tournamentStartTime(tournamentId: number) {
 			"CalendarEventDate.eventId",
 			"CalendarEvent.id",
 		)
-		.select(({ fn }) => fn.min("CalendarEventDate.startTime").as("startTime"))
+		.select(({ fn }) => fn.min("CalendarEventDate.startsAt").as("startTime"))
 		.where("CalendarEvent.tournamentId", "=", tournamentId)
 		.executeTakeFirst();
 

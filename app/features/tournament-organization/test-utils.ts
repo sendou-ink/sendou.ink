@@ -1,16 +1,15 @@
-import { db } from "~/db/sql";
-import invariant from "../../utils/invariant";
-import { dbInsertTournament } from "../tournament/tournament-test-utils";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { withUserId } from "~/utils/Test";
+import * as TournamentTeamRepository from "../tournament/TournamentTeamRepository.server";
 
 /**
  * Seeds a played tournament hosted by `organizationId`, starting at `startTime`
  * (a database timestamp in seconds), with one team whose roster is
  * `participantUserIds`. The team is checked in by default.
  *
- * Creates the full chain the active-participants query relies on:
- * CalendarEvent → CalendarEventDate → Tournament → TournamentTeam
- * (+ TournamentTeamCheckIn) → stage/group/round/match → game result +
- * participants.
+ * The bracket is started and its one match played out, because a participant of
+ * the organization's events is somebody who appears in a game result.
  *
  * Only meant for use in tests.
  */
@@ -25,118 +24,59 @@ export async function seedOrgEventWithParticipants({
 	participantUserIds: number[];
 	checkIn?: "in" | "out" | "none";
 }) {
-	const { tournamentId } = await dbInsertTournament({
-		organizationId,
-		startTime,
-	});
+	const [ownerUserId] = participantUserIds;
+	const asOwner = <T>(fn: () => T) => withUserId(ownerUserId, fn);
 
-	invariant(tournamentId, "Expected tournamentId to be defined");
+	const opponentUserIds = (
+		await UserFactory.createMany(participantUserIds.length)
+	).map((user) => user.id);
 
-	const event = await db
-		.insertInto("CalendarEvent")
-		.values({
-			authorId: participantUserIds[0],
-			name: `Event ${tournamentId}`,
-			bracketUrl: "https://example.com/bracket",
+	const {
+		id: tournamentId,
+		teams: [team, opponent],
+	} = await TournamentFactory.createPlayed(
+		{
+			authorId: ownerUserId,
 			organizationId,
-			tournamentId,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+			startTimes: [startTime],
+			minMembersPerTeam: participantUserIds.length,
+		},
+		{ teamRosters: [participantUserIds, opponentUserIds] },
+	);
 
-	await db
-		.insertInto("CalendarEventDate")
-		.values({ eventId: event.id, startTime })
-		.execute();
+	// the opponent exists only to give the participants somebody to play, so it
+	// leaves no check in behind to be counted as one of the event's own teams
+	await asOwner(() =>
+		TournamentTeamRepository.checkOut({
+			tournamentTeamId: opponent.id,
+			bracketIdx: null,
+		}),
+	);
 
-	const team = await db
-		.insertInto("TournamentTeam")
-		.values({
-			tournamentId,
-			name: `Team ${tournamentId}`,
-			inviteCode: `inv-${tournamentId}`,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	if (checkIn !== "none") {
-		await db
-			.insertInto("TournamentTeamCheckIn")
-			.values({
+	if (checkIn === "none") {
+		await asOwner(() =>
+			TournamentTeamRepository.checkOut({
 				tournamentTeamId: team.id,
-				checkedInAt: startTime,
-				isCheckOut: checkIn === "out" ? 1 : 0,
-			})
-			.execute();
+				bracketIdx: null,
+			}),
+		);
 	}
 
-	const stage = await db
-		.insertInto("TournamentStage")
-		.values({
-			tournamentId,
-			name: "Stage",
-			number: 1,
-			type: "single_elimination",
-			settings: "{}",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	const group = await db
-		.insertInto("TournamentGroup")
-		.values({ stageId: stage.id, number: 1 })
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	const round = await db
-		.insertInto("TournamentRound")
-		.values({
-			stageId: stage.id,
-			groupId: group.id,
-			number: 1,
-			maps: JSON.stringify({ count: 3, type: "BEST_OF" }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	const match = await db
-		.insertInto("TournamentMatch")
-		.values({
-			stageId: stage.id,
-			groupId: group.id,
-			roundId: round.id,
-			number: 1,
-			status: 4,
-			opponentOne: JSON.stringify({ id: team.id, score: 1 }),
-			opponentTwo: JSON.stringify({ id: team.id, score: 0 }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	const gameResult = await db
-		.insertInto("TournamentMatchGameResult")
-		.values({
-			matchId: match.id,
-			mode: "SZ",
-			number: 1,
-			reporterId: participantUserIds[0],
-			source: "TO",
-			stageId: 1,
-			winnerTeamId: team.id,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	await db
-		.insertInto("TournamentMatchGameResultParticipant")
-		.values(
-			participantUserIds.map((userId) => ({
-				matchGameResultId: gameResult.id,
-				userId,
+	if (checkIn === "out") {
+		// a check out leaves a row of its own only when it concerns one bracket,
+		// otherwise checking out simply undoes the check in
+		await asOwner(async () => {
+			await TournamentTeamRepository.checkOut({
 				tournamentTeamId: team.id,
-			})),
-		)
-		.execute();
+				bracketIdx: null,
+			});
+			await TournamentTeamRepository.checkIn(team.id, { bracketIdx: 0 });
+			await TournamentTeamRepository.checkOut({
+				tournamentTeamId: team.id,
+				bracketIdx: 0,
+			});
+		});
+	}
 
 	return { tournamentId, teamId: team.id };
 }

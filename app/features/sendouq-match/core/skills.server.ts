@@ -1,9 +1,9 @@
 import { ordinal, type Rating } from "openskill";
+import type { Tables } from "~/db/tables";
 import type {
 	GroupSkillDifference,
-	Tables,
 	UserSkillDifference,
-} from "~/db/tables";
+} from "~/db/tables-json";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
@@ -11,11 +11,7 @@ import {
 	rate,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
-import {
-	queryCurrentTeamRating,
-	queryCurrentUserRating,
-	queryTeamPlayerRatingAverage,
-} from "~/features/mmr/mmr-utils.server";
+import { seasonRatings } from "~/features/mmr/mmr-utils.server";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 
@@ -34,7 +30,7 @@ export type MementoSkillDifferences = {
 	>;
 };
 
-export function calculateMatchSkills({
+export async function calculateMatchSkills({
 	groupMatchId,
 	winner,
 	loser,
@@ -58,13 +54,18 @@ export function calculateMatchSkills({
 	const season = Seasons.currentOrPrevious()?.nth;
 	invariant(typeof season === "number", "No ranked season for skills");
 
+	const winnerTeamIdentifier = userIdsToIdentifier(winner);
+	const loserTeamIdentifier = userIdsToIdentifier(loser);
+
+	const ratings = await seasonRatings({
+		season,
+		userIds: [...winner, ...loser],
+		identifiers: [winnerTeamIdentifier, loserTeamIdentifier],
+	});
+
 	{
-		const oldWinnerRatings = winner.map((userId) =>
-			queryCurrentUserRating({ userId, season }),
-		);
-		const oldLoserRatings = loser.map((userId) =>
-			queryCurrentUserRating({ userId, season }),
-		);
+		const oldWinnerRatings = winner.map((userId) => ratings.user(userId));
+		const oldLoserRatings = loser.map((userId) => ratings.user(userId));
 
 		// individual skills
 		const [winnerTeamNew, loserTeamNew] = rate([
@@ -113,32 +114,14 @@ export function calculateMatchSkills({
 
 	{
 		// team skills
-		const winnerTeamIdentifier = userIdsToIdentifier(winner);
-		const loserTeamIdentifier = userIdsToIdentifier(loser);
+		const oldWinnerGroupRating = ratings.team(winnerTeamIdentifier);
+		const oldLoserGroupRating = ratings.team(loserTeamIdentifier);
 
-		const oldWinnerGroupRating = queryCurrentTeamRating({
-			identifier: winnerTeamIdentifier,
-			season,
-		});
-		const oldLoserGroupRating = queryCurrentTeamRating({
-			identifier: loserTeamIdentifier,
-			season,
-		});
 		const [[winnerGroupNew], [loserGroupNew]] = rate(
 			[[oldWinnerGroupRating.rating], [oldLoserGroupRating.rating]],
 			[
-				[
-					queryTeamPlayerRatingAverage({
-						identifier: winnerTeamIdentifier,
-						season,
-					}),
-				],
-				[
-					queryTeamPlayerRatingAverage({
-						identifier: loserTeamIdentifier,
-						season,
-					}),
-				],
+				[ratings.teamPlayerAverage(winnerTeamIdentifier)],
+				[ratings.teamPlayerAverage(loserTeamIdentifier)],
 			],
 		);
 

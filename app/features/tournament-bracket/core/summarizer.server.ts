@@ -1,20 +1,22 @@
 import { ordinal } from "openskill";
 import * as R from "remeda";
+import type { WinLossParticipationArray } from "~/db/tables-json";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import {
 	identifierToUserIds,
 	ordinalToSp,
 	rate,
+	type SkillTeamIdentifier,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
 import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import type { AllMatchResult } from "~/features/tournament-match/TournamentMatchRepository.server";
-import { matchEndedEarly } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import type { Tables, WinLossParticipationArray } from "../../../db/tables";
+import type { Tables } from "../../../db/tables";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
+import { matchEndedEarly } from "./engine";
 import type { ParsedBracket } from "./Progression";
 import * as Progression from "./Progression";
 
@@ -49,6 +51,65 @@ type RatingWithMatchesCount = {
 	matchesCount: number;
 };
 
+/**
+ * Users and teams whose current ratings `tournamentSummary` may look up, for the caller to
+ * load up front.
+ *
+ * A superset: which of a set's teams and players actually get looked up depends on who
+ * played the most maps of the set, and ties there are broken at random. Enumerating every
+ * candidate keeps that decision inside `tournamentSummary`.
+ */
+export function summaryRatingTargets(results: AllMatchResult[]) {
+	const userIds = new Set<number>();
+	const identifiers = new Set<SkillTeamIdentifier>();
+
+	const addIdentifier = (teamUserIds: number[]) => {
+		// non-full teams never make it as far as being looked up (`userIdsToIdentifier` throws)
+		if (teamUserIds.length !== 4) return;
+
+		identifiers.add(userIdsToIdentifier(teamUserIds));
+	};
+
+	for (const match of results) {
+		const winner =
+			match.winnerSide === "opponent1" ? match.opponentOne : match.opponentTwo;
+		const loser =
+			match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
+
+		if (match.maps.length === 0) {
+			for (const opponent of [winner, loser]) {
+				const roster =
+					opponent.activeRosterUserIds ?? opponent.memberUserIds ?? [];
+
+				for (const userId of roster) userIds.add(userId);
+				addIdentifier(roster);
+			}
+			continue;
+		}
+
+		for (const map of match.maps) {
+			for (const participant of map.participants)
+				userIds.add(participant.userId);
+
+			addIdentifier(
+				map.participants
+					.filter((p) => p.tournamentTeamId === winner.id)
+					.map((p) => p.userId),
+			);
+			addIdentifier(
+				map.participants
+					.filter((p) => p.tournamentTeamId !== winner.id)
+					.map((p) => p.userId),
+			);
+		}
+	}
+
+	return {
+		userIds: Array.from(userIds),
+		identifiers: Array.from(identifiers),
+	};
+}
+
 export function tournamentSummary({
 	results,
 	teams,
@@ -64,8 +125,8 @@ export function tournamentSummary({
 	results: AllMatchResult[];
 	teams: TeamsArg;
 	finalStandings: Standing[];
-	queryCurrentTeamRating: (identifier: string) => Rating;
-	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
+	queryCurrentTeamRating: (identifier: SkillTeamIdentifier) => Rating;
+	queryTeamPlayerRatingAverage: (identifier: SkillTeamIdentifier) => Rating;
 	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 	queryCurrentSeedingRating: (userId: number) => Rating;
 	seedingSkillCountsFor: Tables["SeedingSkill"]["type"] | null;
@@ -76,6 +137,7 @@ export function tournamentSummary({
 		const endedEarly = matchEndedEarly({
 			opponentOne: match.opponentOne,
 			opponentTwo: match.opponentTwo,
+			winnerSide: match.winnerSide,
 			count: match.roundMaps.count,
 			countType: match.roundMaps.type,
 		});
@@ -131,8 +193,8 @@ export function tournamentSummary({
 
 function calculateSkills(args: {
 	results: AllMatchResult[];
-	queryCurrentTeamRating: (identifier: string) => Rating;
-	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
+	queryCurrentTeamRating: (identifier: SkillTeamIdentifier) => Rating;
+	queryTeamPlayerRatingAverage: (identifier: SkillTeamIdentifier) => Rating;
 	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
 }) {
 	const result: TournamentSummary["skills"] = [];
@@ -209,9 +271,9 @@ function calculateIndividualPlayerSkills({
  */
 function matchToSetMostPlayedUsers(match: AllMatchResult) {
 	const winner =
-		match.opponentOne.result === "win" ? match.opponentOne : match.opponentTwo;
+		match.winnerSide === "opponent1" ? match.opponentOne : match.opponentTwo;
 	const loser =
-		match.opponentOne.result === "win" ? match.opponentTwo : match.opponentOne;
+		match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
 
 	// Handle dropped team sets without game results - use active roster or member list
 	if (match.maps.length === 0) {
@@ -271,12 +333,12 @@ function calculateTeamSkills({
 	queryTeamPlayerRatingAverage,
 }: {
 	results: AllMatchResult[];
-	queryCurrentTeamRating: (identifier: string) => Rating;
-	queryTeamPlayerRatingAverage: (identifier: string) => Rating;
+	queryCurrentTeamRating: (identifier: SkillTeamIdentifier) => Rating;
+	queryTeamPlayerRatingAverage: (identifier: SkillTeamIdentifier) => Rating;
 }) {
-	const teamRatings = new Map<string, Rating>();
-	const teamMatchesCount = new Map<string, number>();
-	const getTeamRating = (identifier: string) => {
+	const teamRatings = new Map<SkillTeamIdentifier, Rating>();
+	const teamMatchesCount = new Map<SkillTeamIdentifier, number>();
+	const getTeamRating = (identifier: SkillTeamIdentifier) => {
 		const existingRating = teamRatings.get(identifier);
 		if (existingRating) return existingRating;
 
@@ -285,17 +347,13 @@ function calculateTeamSkills({
 
 	for (const match of results) {
 		const winner =
-			match.opponentOne.result === "win"
-				? match.opponentOne
-				: match.opponentTwo;
+			match.winnerSide === "opponent1" ? match.opponentOne : match.opponentTwo;
 		const loser =
-			match.opponentOne.result === "win"
-				? match.opponentTwo
-				: match.opponentOne;
+			match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
 
 		// Handle dropped team sets without game results - use active roster or member list
-		let winnerTeamIdentifier: string;
-		let loserTeamIdentifier: string;
+		let winnerTeamIdentifier: SkillTeamIdentifier;
+		let loserTeamIdentifier: SkillTeamIdentifier;
 
 		if (match.maps.length === 0) {
 			// Use activeRosterUserIds if set, otherwise fall back to memberUserIds
@@ -495,8 +553,8 @@ function playerResultDeltas(
 		}
 
 		const mostPopularParticipants = (() => {
-			const alphaIdentifiers: string[] = [];
-			const bravoIdentifiers: string[] = [];
+			const alphaIdentifiers: SkillTeamIdentifier[] = [];
+			const bravoIdentifiers: SkillTeamIdentifier[] = [];
 
 			for (const map of match.maps) {
 				const alphaUserIds = map.participants
@@ -535,11 +593,11 @@ function playerResultDeltas(
 			for (const otherParticipant of mostPopularParticipants) {
 				if (ownerParticipant.userId === otherParticipant.userId) continue;
 
-				const result =
+				const ownerSide =
 					match.opponentOne.id === ownerParticipant.tournamentTeamId
-						? match.opponentOne.result
-						: match.opponentTwo.result;
-				const won = result === "win";
+						? "opponent1"
+						: "opponent2";
+				const won = match.winnerSide === ownerSide;
 
 				addPlayerResult({
 					ownerUserId: ownerParticipant.userId,

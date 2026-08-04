@@ -5,6 +5,6 @@ export const loader = async () => {
 	requireRole("ADMIN");
 
 	return {
-		streams: await ExternalStreamRepository.all(),
+		streams: await ExternalStreamRepository.findAll(),
 	};
 };

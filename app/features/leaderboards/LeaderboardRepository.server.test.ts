@@ -1,126 +1,79 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { db } from "~/db/sql";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	send: vi.fn(),
+	removeRoom: vi.fn(),
+	setMetadata: vi.fn(),
+}));
+
+import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentReportedWeaponFactory from "~/db/seed/factories/TournamentReportedWeaponFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
 import * as LeaderboardRepository from "./LeaderboardRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "./leaderboards-constants";
 
 const SEASON = Seasons.currentOrPrevious()!.nth;
 const SEASON_RANGE = Seasons.nthToDateRange(SEASON);
 const OVER_THRESHOLD = MATCHES_COUNT_NEEDED_FOR_LEADERBOARD + 1;
-const IN_SEASON_TIMESTAMP = dateToDatabaseTimestamp(SEASON_RANGE.starts);
-const OUT_OF_SEASON_TIMESTAMP = dateToDatabaseTimestamp(
-	new Date(SEASON_RANGE.starts.getTime() - 60 * 1000),
-);
+const IN_SEASON = SEASON_RANGE.starts;
+const OUT_OF_SEASON = new Date(SEASON_RANGE.starts.getTime() - 60 * 1000);
 
-const createGroup = () =>
-	db
-		.insertInto("Group")
-		.values({
-			status: "INACTIVE",
-			inviteCode: "test-invite-code",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+let player: { id: number };
+let otherPlayer: { id: number };
+/** The other players of the SendouQ groups the two report their weapons in. */
+let groupFillers: Array<{ id: number }>;
 
-const createGroupMatch = async (createdAt: number) => {
-	const alphaGroup = await createGroup();
-	const bravoGroup = await createGroup();
+const createSendouqMatch = (createdAt: Date) =>
+	// played out so that the groups go inactive and the same users can queue again
+	SQMatchFactory.create(
+		{
+			alphaUserIds: [player, otherPlayer, ...groupFillers.slice(0, 2)].map(
+				(user) => user.id,
+			),
+			bravoUserIds: groupFillers.slice(2).map((user) => user.id),
+		},
+		{ isConcluded: true, createdAt },
+	);
 
-	return db
-		.insertInto("GroupMatch")
-		.values({
-			alphaGroupId: alphaGroup.id,
-			bravoGroupId: bravoGroup.id,
-			chatCode: "test-chat-code",
-			createdAt,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-};
-
+/** A played tournament match, its two teams being the reporter and somebody else. */
 const createTournamentMatch = async ({
+	authorId,
 	isFinalized,
 }: {
+	authorId: number;
 	isFinalized: boolean;
 }) => {
-	const tournament = await db
-		.insertInto("Tournament")
-		.values({
-			mapPickingStyle: "TO",
-			settings: JSON.stringify({ bracketProgression: [] }),
-			isFinalized: isFinalized ? 1 : 0,
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	const { matches } = await TournamentFactory.createPlayed(
+		{ authorId, minMembersPerTeam: 1 },
+		{
+			playedOut: isFinalized ? "all" : 0,
+			teamRosters: [[authorId], [groupFillers[1].id]],
+		},
+	);
 
-	const stage = await db
-		.insertInto("TournamentStage")
-		.values({
-			tournamentId: tournament.id,
-			name: "Main bracket",
-			number: 1,
-			type: "double_elimination",
-			settings: "{}",
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	const group = await db
-		.insertInto("TournamentGroup")
-		.values({ stageId: stage.id, number: 1 })
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	const round = await db
-		.insertInto("TournamentRound")
-		.values({
-			stageId: stage.id,
-			groupId: group.id,
-			number: 1,
-			maps: JSON.stringify({ count: 3, type: "BEST_OF" }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
-
-	return db
-		.insertInto("TournamentMatch")
-		.values({
-			stageId: stage.id,
-			groupId: group.id,
-			roundId: round.id,
-			number: 1,
-			status: 4,
-			opponentOne: JSON.stringify({ id: null }),
-			opponentTwo: JSON.stringify({ id: null }),
-		})
-		.returning("id")
-		.executeTakeFirstOrThrow();
+	return matches[0];
 };
 
 const reportSendouqWeapons = async (args: {
 	userId: number;
 	weaponSplId: MainWeaponId;
 	count: number;
-	matchCreatedAt?: number;
+	matchCreatedAt?: Date;
 }) => {
-	const match = await createGroupMatch(
-		args.matchCreatedAt ?? IN_SEASON_TIMESTAMP,
-	);
+	const match = await createSendouqMatch(args.matchCreatedAt ?? IN_SEASON);
 
-	await db
-		.insertInto("ReportedWeapon")
-		.values(
-			Array.from({ length: args.count }, (_, mapIndex) => ({
-				groupMatchId: match.id,
-				mapIndex,
-				userId: args.userId,
-				weaponSplId: args.weaponSplId,
-			})),
-		)
-		.execute();
+	await SQReportedWeaponFactory.createMany(args.count, (mapIndex) => ({
+		groupMatchId: match.id,
+		mapIndex,
+		userId: args.userId,
+		weaponSplId: args.weaponSplId,
+	}));
 };
 
 const reportTournamentWeapons = async (args: {
@@ -128,80 +81,77 @@ const reportTournamentWeapons = async (args: {
 	weaponSplId: MainWeaponId;
 	count: number;
 	isFinalized?: boolean;
-	createdAt?: number;
+	createdAt?: Date;
 }) => {
 	const match = await createTournamentMatch({
+		authorId: args.userId,
 		isFinalized: args.isFinalized ?? true,
 	});
 
-	await db
-		.insertInto("ReportedWeapon")
-		.values(
-			Array.from({ length: args.count }, (_, mapIndex) => ({
-				tournamentMatchId: match.id,
-				mapIndex,
-				userId: args.userId,
-				weaponSplId: args.weaponSplId,
-				createdAt: args.createdAt ?? IN_SEASON_TIMESTAMP,
-			})),
-		)
-		.execute();
+	await TournamentReportedWeaponFactory.createMany(args.count, (mapIndex) => ({
+		tournamentMatchId: match.id,
+		mapIndex,
+		userId: args.userId,
+		weaponSplId: args.weaponSplId,
+		createdAt: dateToDatabaseTimestamp(args.createdAt ?? IN_SEASON),
+	}));
 };
 
-describe("seasonPopularUsersWeapon", () => {
+describe("findSeasonPopularUsersWeapon", () => {
 	beforeEach(async () => {
-		await dbInsertUsers(2);
-	});
-
-	afterEach(() => {
-		dbReset();
+		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
+		[player, otherPlayer, ...groupFillers] = users;
 	});
 
 	test("returns user's most reported SendouQ weapon", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10 });
+		expect(result).toEqual({ [player.id]: 10 });
 	});
 
 	test("requires more reports than the threshold", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 10,
 			count: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({});
 	});
 
 	test("counts weapons reported in finalized tournaments", async () => {
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 1000 });
+		expect(result).toEqual({ [player.id]: 1000 });
 	});
 
 	test("ignores weapons reported in unfinalized tournaments", async () => {
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
 			isFinalized: false,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({});
 	});
@@ -209,72 +159,80 @@ describe("seasonPopularUsersWeapon", () => {
 	test("combines SendouQ and tournament reports of the same weapon", async () => {
 		const half = Math.ceil(OVER_THRESHOLD / 2);
 
-		await reportSendouqWeapons({ userId: 1, weaponSplId: 10, count: half });
+		await reportSendouqWeapons({
+			userId: player.id,
+			weaponSplId: 10,
+			count: half,
+		});
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD - half,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10 });
+		expect(result).toEqual({ [player.id]: 10 });
 	});
 
 	test("picks the most reported weapon across both sources", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 0,
 			count: OVER_THRESHOLD + 1,
 		});
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD - 3,
 		});
 		await reportTournamentWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD - 3,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10 });
+		expect(result).toEqual({ [player.id]: 10 });
 	});
 
 	test("returns weapons of multiple users", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD,
 		});
 		await reportTournamentWeapons({
-			userId: 2,
+			userId: otherPlayer.id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
-		expect(result).toEqual({ 1: 10, 2: 1000 });
+		expect(result).toEqual({ [player.id]: 10, [otherPlayer.id]: 1000 });
 	});
 
 	test("ignores reports outside the season", async () => {
 		await reportSendouqWeapons({
-			userId: 1,
+			userId: player.id,
 			weaponSplId: 10,
 			count: OVER_THRESHOLD,
-			matchCreatedAt: OUT_OF_SEASON_TIMESTAMP,
+			matchCreatedAt: OUT_OF_SEASON,
 		});
 		await reportTournamentWeapons({
-			userId: 2,
+			userId: otherPlayer.id,
 			weaponSplId: 1000,
 			count: OVER_THRESHOLD,
-			createdAt: OUT_OF_SEASON_TIMESTAMP,
+			createdAt: OUT_OF_SEASON,
 		});
 
-		const result = await LeaderboardRepository.seasonPopularUsersWeapon(SEASON);
+		const result =
+			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({});
 	});

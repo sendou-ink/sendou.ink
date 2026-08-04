@@ -7,10 +7,8 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
 import type { Bracket as BracketType } from "~/features/tournament-bracket/core/Bracket";
-import { getTournamentManager } from "~/features/tournament-bracket/core/brackets-manager";
-import * as Swiss from "~/features/tournament-bracket/core/Swiss";
-import { fillWithNullTillPowerOfTwo } from "~/features/tournament-bracket/tournament-bracket-utils";
-import type { TournamentManagerDataSet } from "~/modules/brackets-manager/types";
+import * as Engine from "~/features/tournament-bracket/core/engine";
+import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import styles from "../bracket-test.module.css";
 
 type FormatType = Tables["TournamentStage"]["type"];
@@ -90,7 +88,7 @@ export default function BracketTestLayout() {
 		requiresCheckIn: false,
 		startTime: null,
 		simulatedMatch: () => undefined,
-		currentStandings: () => [],
+		liveStandings: [],
 		participantTournamentTeamIds: teamIds,
 		everyMatchOver: false,
 		isUnderground: false,
@@ -204,7 +202,7 @@ function generateTeams(count: number) {
 	}));
 }
 
-function countRounds(data: TournamentManagerDataSet, isDoubleElim: boolean) {
+function countRounds(data: BracketData, isDoubleElim: boolean) {
 	const totalRounds = Math.max(...data.round.map((r) => r.number));
 
 	if (!isDoubleElim) return { totalRounds, wbRounds: 0, lbRounds: 0 };
@@ -212,14 +210,14 @@ function countRounds(data: TournamentManagerDataSet, isDoubleElim: boolean) {
 	const wbGroupId = data.group.find((g) => g.number === 1)?.id;
 	const lbGroupId = data.group.find((g) => g.number === 2)?.id;
 
-	const wbRounds = data.round.filter((r) => r.group_id === wbGroupId).length;
-	const lbRounds = data.round.filter((r) => r.group_id === lbGroupId).length;
+	const wbRounds = data.round.filter((r) => r.groupId === wbGroupId).length;
+	const lbRounds = data.round.filter((r) => r.groupId === lbGroupId).length;
 
 	return { totalRounds, wbRounds, lbRounds };
 }
 
 function simulateCompletedRoundsByGroup(
-	data: TournamentManagerDataSet,
+	data: BracketData,
 	wbCompleted: number,
 	lbCompleted: number,
 ) {
@@ -228,10 +226,10 @@ function simulateCompletedRoundsByGroup(
 
 	const completedRoundIds = new Set<number>();
 	for (const round of data.round) {
-		if (round.group_id === wbGroupId && round.number <= wbCompleted) {
+		if (round.groupId === wbGroupId && round.number <= wbCompleted) {
 			completedRoundIds.add(round.id);
 		}
-		if (round.group_id === lbGroupId && round.number <= lbCompleted) {
+		if (round.groupId === lbGroupId && round.number <= lbCompleted) {
 			completedRoundIds.add(round.id);
 		}
 	}
@@ -239,10 +237,7 @@ function simulateCompletedRoundsByGroup(
 	markMatchesCompleted(data, completedRoundIds);
 }
 
-function simulateCompletedRounds(
-	data: TournamentManagerDataSet,
-	completedRounds: number,
-) {
+function simulateCompletedRounds(data: BracketData, completedRounds: number) {
 	if (completedRounds <= 0) return;
 
 	const roundsByNumber = new Map<number, number[]>();
@@ -263,56 +258,42 @@ function simulateCompletedRounds(
 }
 
 function markMatchesCompleted(
-	data: TournamentManagerDataSet,
+	data: BracketData,
 	completedRoundIds: Set<number>,
 ) {
 	for (const match of data.match) {
-		if (!completedRoundIds.has(match.round_id)) continue;
+		if (!completedRoundIds.has(match.roundId)) continue;
 		// skip BYE matches (opponent slot is null entirely)
 		if (match.opponent1 === null || match.opponent2 === null) continue;
 
-		match.opponent1 = { ...match.opponent1, score: 2, result: "win" };
-		match.opponent2 = { ...match.opponent2, score: 0, result: "loss" };
-		match.status = 4;
+		match.opponent1 = { ...match.opponent1, score: 2 };
+		match.opponent2 = { ...match.opponent2, score: 0 };
+		match.winnerSide = "opponent1";
 	}
 }
 
 function generateBracketData(
 	format: FormatType,
 	teamIds: number[],
-): TournamentManagerDataSet {
+): BracketData {
 	if (format === "swiss") {
-		return Swiss.create({
-			tournamentId: 1,
-			name: "Test Bracket",
+		return Engine.create({
+			type: "swiss",
 			seeding: teamIds,
-			settings: {
-				swiss: { groupCount: 1, roundCount: 5 },
-			},
+			settings: { groupCount: 1, roundCount: 5 },
 		});
 	}
 
-	const manager = getTournamentManager();
-	const seeding =
-		format === "round_robin" ? teamIds : fillWithNullTillPowerOfTwo(teamIds);
-
 	const settings =
 		format === "single_elimination"
-			? { consolationFinal: false }
+			? { thirdPlaceMatch: false }
 			: format === "double_elimination"
-				? { grandFinal: "double" as const }
-				: {
-						groupCount: Math.ceil(teamIds.length / 4),
-						seedOrdering: ["groups.seed_optimized" as const],
-					};
+				? null
+				: { teamsPerGroup: 4 };
 
-	manager.create({
-		tournamentId: 1,
-		name: "Test Bracket",
+	return Engine.create({
 		type: format,
-		seeding,
+		seeding: teamIds,
 		settings,
 	});
-
-	return manager.get.tournamentData(1);
 }

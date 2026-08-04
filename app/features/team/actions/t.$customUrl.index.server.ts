@@ -3,7 +3,7 @@ import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	errorToastIfFalsy,
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -22,7 +22,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 	});
 
 	const { customUrl } = teamParamsSchema.parse(params);
-	const team = notFoundIfFalsy(await TeamRepository.findByCustomUrl(customUrl));
+	const team = notFoundIfNullish(
+		await TeamRepository.findByCustomUrl(customUrl),
+	);
 
 	switch (data._action) {
 		case "LEAVE_TEAM": {
@@ -58,7 +60,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"You are not the team owner",
 			);
 
-			await TeamRepository.del(team.id);
+			await TeamRepository.deleteById(team.id);
 			throw redirect("/");
 		}
 		default: {

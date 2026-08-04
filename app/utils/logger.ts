@@ -13,13 +13,18 @@ function getSessionIdForLog(): string {
 	return globalThis.__getServerSessionId?.() ?? "no-session";
 }
 
+let infoLogsSilenced = false;
+
 function formatLog(...args: unknown[]) {
 	const sessionId = getSessionIdForLog();
 	return [`[${sessionId}]`, ...args];
 }
 
 export const logger = {
-	info: (...args: unknown[]) => console.log(...formatLog(...args)),
+	info: (...args: unknown[]) => {
+		if (infoLogsSilenced) return;
+		console.log(...formatLog(...args));
+	},
 	error: (...args: unknown[]) => console.error(...formatLog(...args)),
 	warn: (...args: unknown[]) => console.warn(...formatLog(...args)),
 	debug: (...args: unknown[]) => {
@@ -27,3 +32,13 @@ export const logger = {
 		console.debug(...formatLog(...args));
 	},
 };
+
+/** Runs `fn` without its `logger.info` output, warnings and errors still logging. */
+export async function withoutInfoLogs<T>(fn: () => Promise<T>): Promise<T> {
+	infoLogsSilenced = true;
+	try {
+		return await fn();
+	} finally {
+		infoLogsSilenced = false;
+	}
+}

@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import {
-	notFoundIfFalsy,
+	notFoundIfNullish,
 	parseParams,
 	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
@@ -15,7 +15,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 	const user = requireUser();
-	const event = notFoundIfFalsy(await CalendarRepository.findById(params.id));
+	const event = notFoundIfNullish(await CalendarRepository.findById(params.id));
 
 	unauthorizedIfFalsy(
 		canReportCalendarEventWinners({

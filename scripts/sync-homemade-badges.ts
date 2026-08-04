@@ -1,4 +1,5 @@
 import { db } from "~/db/sql";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import { logger } from "~/utils/logger";
 
 const HOMEMADE_BADGES_URL =
@@ -162,14 +163,7 @@ async function addBadge(badge: {
 	displayName: string;
 	authorId: number;
 }) {
-	return db
-		.insertInto("Badge")
-		.values({
-			code: badge.code,
-			displayName: badge.displayName,
-			authorId: badge.authorId,
-		})
-		.execute();
+	return BadgeRepository.insert({ ...badge, hue: null });
 }
 
 main();

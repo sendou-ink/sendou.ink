@@ -12,7 +12,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		schema,
 	});
 
-	const posts = await LFGRepository.posts(user);
+	const posts = await LFGRepository.findAllPosts(user);
 	const post = posts.find((post) => post.id === data.id);
 	errorToastIfFalsy(post, "Post not found");
 	errorToastIfFalsy(

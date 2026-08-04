@@ -1,34 +1,21 @@
-import { differenceInHours } from "date-fns";
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import * as Seasons from "~/features/mmr/core/Seasons";
-import {
-	queryCurrentTeamRating,
-	queryCurrentUserRating,
-	queryCurrentUserSeedingRating,
-	queryTeamPlayerRatingAverage,
-} from "~/features/mmr/mmr-utils.server";
-import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
-import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
-import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { tournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import { finalizeTournament } from "~/features/tournament-bracket/core/finalizeTournament.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import {
-	clearTournamentDataCache,
-	tournamentFromDB,
-} from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
+	type TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
-import { validateBadgeReceivers } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
-import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
-import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import {
+	validateBadgeReceivers,
+	validateTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {
@@ -55,72 +42,39 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	errorToastIfFalsy(tournament.canFinalize(user), "Can't finalize tournament");
 
+	const event = await CalendarRepository.findById(tournament.ctx.eventId, {
+		includeBadgePrizes: true,
+		includeTrophy: true,
+	});
+	invariant(event, "Event not found for tournament");
+
 	const badgeOwnersValid = data.badgeReceivers
-		? await requireValidBadgeReceivers(data.badgeReceivers, tournament)
+		? requireValidBadgeReceivers({
+				badgeReceivers: data.badgeReceivers,
+				badges: event.badgePrizes ?? [],
+				tournament,
+			})
 		: true;
 	if (!badgeOwnersValid) errorToast("New badge owners invalid");
 
-	const results =
-		await TournamentMatchRepository.allResultsByTournamentId(tournamentId);
-	invariant(results.length > 0, "No results found");
-
-	const season = resolveFinalizationSeason(tournament);
-
-	const seedingSkillCountsFor = tournament.skillCountsFor;
-	const standingsResult = Standings.tournamentStandings(tournament);
-	const finalStandings = Standings.flattenStandings(standingsResult);
-	const summary = tournamentSummary({
-		teams: tournament.ctx.teams,
-		finalStandings,
-		results,
-		calculateSeasonalStats: tournament.ranked && typeof season === "number",
-		queryCurrentTeamRating: (identifier) =>
-			queryCurrentTeamRating({ identifier, season: season! }).rating,
-		queryCurrentUserRating: (userId) =>
-			queryCurrentUserRating({ userId, season: season! }),
-		queryTeamPlayerRatingAverage: (identifier) =>
-			queryTeamPlayerRatingAverage({
-				identifier,
-				season: season!,
-			}),
-		queryCurrentSeedingRating: (userId) =>
-			queryCurrentUserSeedingRating({
-				userId,
-				type: seedingSkillCountsFor!,
-			}),
-		seedingSkillCountsFor,
-		progression: tournament.ctx.settings.bracketProgression,
-	});
-
-	const tournamentSummaryString = `Tournament id: ${tournamentId}, mapResultDeltas.lenght: ${summary.mapResultDeltas.length}, playerResultDeltas.length ${summary.playerResultDeltas.length}, tournamentResults.length ${summary.tournamentResults.length}, skills.length ${summary.skills.length}, seedingSkills.length ${summary.seedingSkills.length}`;
-	if (!tournament.isTest) {
-		logger.info(`Inserting tournament summary. ${tournamentSummaryString}`);
-		await TournamentRepository.finalize({
-			tournamentId,
-			summary,
-			season,
-			badgeReceivers: data.badgeReceivers ?? undefined,
+	const trophyReceiver = event.trophy ? (data.trophyReceiver ?? null) : null;
+	if (event.trophy) {
+		const trophyReceiverValid = requireValidTrophyReceiver({
+			trophyReceiver,
+			trophy: event.trophy,
+			finalStandings: Standings.flattenStandings(
+				Standings.tournamentStandings(tournament),
+			),
+			tournament,
 		});
-	} else {
-		logger.info(
-			`Did not insert tournament summary. ${tournamentSummaryString}`,
-		);
-		await TournamentRepository.finalizeWithoutSummary(tournamentId);
+		if (!trophyReceiverValid) errorToast("Invalid trophy receiver");
 	}
 
-	await SavedCalendarEventRepository.deleteByTournamentId(tournamentId);
-
-	if (!tournament.isTest) {
-		await updateSeriesTierHistory(tournament);
-	}
-
-	if (tournament.ranked && typeof season === "number") {
-		try {
-			refreshUserSkills(season);
-		} catch (error) {
-			logger.warn("Error refreshing user skills", error);
-		}
-	}
+	await finalizeTournament({
+		tournament,
+		badgeReceivers: data.badgeReceivers ?? undefined,
+		trophyReceiver: trophyReceiver ?? undefined,
+	});
 
 	if (data.badgeReceivers) {
 		logger.info(
@@ -130,7 +84,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		notifyBadgeReceivers(data.badgeReceivers);
 	}
 
-	clearTournamentDataCache(tournamentId);
+	if (trophyReceiver) {
+		logger.info(
+			`Trophy receiver for tournament id ${tournamentId}: ${JSON.stringify(trophyReceiver)}`,
+		);
+	}
 
 	// ensure RunningTournament = sidebar updates
 	await tournamentFromDB({ tournamentId, user });
@@ -141,17 +99,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	});
 };
 
-async function requireValidBadgeReceivers(
-	badgeReceivers: TournamentBadgeReceivers,
-	tournament: Tournament,
-) {
-	const badges = (
-		await CalendarRepository.findById(tournament.ctx.eventId, {
-			includeBadgePrizes: true,
-		})
-	)?.badgePrizes;
-	invariant(badges, "validateBadgeOwners: Event with badge prizes not found");
-
+function requireValidBadgeReceivers({
+	badgeReceivers,
+	badges,
+	tournament,
+}: {
+	badgeReceivers: TournamentBadgeReceivers;
+	badges: ReadonlyArray<{ id: number }>;
+	tournament: Tournament;
+}) {
 	const error = validateBadgeReceivers({
 		badgeReceivers,
 		badges,
@@ -160,6 +116,57 @@ async function requireValidBadgeReceivers(
 	if (error) {
 		logger.warn(
 			`validateBadgeOwners: Invalid badge receivers for tournament ${tournament.ctx.id}: ${error}`,
+		);
+		return false;
+	}
+
+	return true;
+}
+
+function requireValidTrophyReceiver({
+	trophyReceiver,
+	trophy,
+	finalStandings,
+	tournament,
+}: {
+	trophyReceiver: TournamentTrophyReceiver | null;
+	trophy: { id: number };
+	finalStandings: Array<{
+		placement: number;
+		team: { members: Array<{ userId: number }> };
+	}>;
+	tournament: Tournament;
+}) {
+	const error = validateTrophyReceiver({ trophyReceiver, trophy });
+	if (error) {
+		logger.warn(
+			`validateTrophyReceiver: Invalid trophy receiver for tournament ${tournament.ctx.id}: ${error}`,
+		);
+		return false;
+	}
+
+	if (!trophyReceiver) return true;
+
+	const firstPlace = finalStandings.find(
+		(standing) => standing.placement === 1,
+	);
+	if (!firstPlace) {
+		logger.warn(
+			`validateTrophyReceiver: No 1st place standing for tournament ${tournament.ctx.id}`,
+		);
+		return false;
+	}
+
+	const firstPlaceUserIds = new Set(
+		firstPlace.team.members.map((m) => m.userId),
+	);
+	const invalidUserId = trophyReceiver.userIds.find(
+		(userId) => !firstPlaceUserIds.has(userId),
+	);
+
+	if (invalidUserId !== undefined) {
+		logger.warn(
+			`validateTrophyReceiver: User ${invalidUserId} not in 1st place team for tournament ${tournament.ctx.id}`,
 		);
 		return false;
 	}
@@ -187,41 +194,4 @@ async function notifyBadgeReceivers(badgeReceivers: TournamentBadgeReceivers) {
 	} catch (error) {
 		logger.error("Error notifying badge receivers", error);
 	}
-}
-
-async function updateSeriesTierHistory(tournament: Tournament) {
-	const organizationId = tournament.ctx.organization?.id;
-	if (!organizationId) return;
-
-	const tier = tournament.ctx.tier;
-	if (tier === null) return;
-
-	try {
-		await TournamentOrganizationRepository.updateSeriesTierHistory({
-			organizationId,
-			eventName: tournament.ctx.name,
-			newTier: tier,
-		});
-		await refreshTentativeTiersCache();
-		logger.info(
-			`Updated series tier history for tournament ${tournament.ctx.id} with tier ${tier}`,
-		);
-	} catch (error) {
-		logger.error("Error updating series tier history", error);
-	}
-}
-
-function resolveFinalizationSeason(tournament: Tournament) {
-	// league divisions might be running for many weeks
-	const attributionDate = tournament.isLeagueDivision
-		? new Date()
-		: tournament.ctx.startTime;
-	const season = Seasons.current(attributionDate);
-	if (!season) return undefined;
-
-	// don't allow changing seasons that have already been closed for a long while
-	// even if you were sluggish with finalizing the tournament
-	if (differenceInHours(new Date(), season.ends) >= 24) return undefined;
-
-	return season.nth;
 }

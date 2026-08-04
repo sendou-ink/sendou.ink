@@ -10,6 +10,7 @@ export const Main = ({
 	bigger,
 	breakoutContainer,
 	style,
+	testId,
 }: {
 	children: React.ReactNode;
 	className?: string;
@@ -18,6 +19,7 @@ export const Main = ({
 	bigger?: boolean;
 	breakoutContainer?: boolean;
 	style?: React.CSSProperties;
+	testId?: string;
 }) => {
 	return (
 		<main
@@ -37,6 +39,7 @@ export const Main = ({
 						)
 			}
 			data-main-breakout={breakoutContainer || undefined}
+			data-testid={testId}
 			style={style}
 		>
 			{children}

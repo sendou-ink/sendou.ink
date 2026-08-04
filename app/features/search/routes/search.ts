@@ -6,9 +6,8 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseSearchParams } from "~/utils/remix.server";
 import { queryToUserIdentifier } from "~/utils/users";
-import { searchParamsSchema } from "../search-schemas";
+import { searchSearchParams } from "../search-search-params";
 import type { SearchType } from "../search-types";
 
 export type SearchLoaderData = SerializeFrom<typeof loader>;
@@ -21,14 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		}
 	}
 
-	const {
-		q: query,
-		type,
-		limit,
-	} = parseSearchParams({
-		request,
-		schema: searchParamsSchema,
-	});
+	const { q: query, type, limit } = searchSearchParams.parse(request);
 
 	if (!query) return { results: [], query, type };
 
@@ -76,10 +68,16 @@ async function searchByType({
 			}));
 		}
 		case "organizations": {
-			const orgs = await TournamentOrganizationRepository.searchByName({
-				query,
-				limit,
-			});
+			const numericQuery = /^\d+$/.test(query) ? Number(query) : null;
+			const orgs = numericQuery
+				? await TournamentOrganizationRepository.findOneById(numericQuery).then(
+						(o) => (o ? [o] : []),
+					)
+				: await TournamentOrganizationRepository.searchByName({
+						query,
+						limit,
+					});
+
 			return orgs.map((o) => ({
 				type: "organization" as const,
 				id: o.id,
@@ -98,7 +96,7 @@ async function searchByType({
 				id: t.id,
 				name: t.name,
 				logoUrl: t.logoUrl,
-				startTime: t.startTime,
+				startsAt: t.startsAt,
 			}));
 		}
 	}

@@ -1,15 +1,14 @@
 import clsx from "clsx";
+import { HardDriveDownload } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import {
 	Link,
 	Outlet,
-	type ShouldRevalidateFunction,
+	useFetcher,
 	useLoaderData,
 	useLocation,
 	useMatches,
-	useNavigate,
-	useSearchParams,
 } from "react-router";
 import Chart from "~/components/Chart";
 import { SendouButton } from "~/components/elements/Button";
@@ -29,17 +28,23 @@ import { TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { mainStyles } from "~/components/Main";
+import { useUser } from "~/features/auth/core/user";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
+import { SeasonSummaryGraphic } from "~/features/img-export/components/SeasonSummaryGraphic";
+import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
-import { isRevalidation } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	resolveAvatarUrl,
 	sendouQMatchPage,
 	TIERS_PAGE,
 	userPage,
+	userSeasonSummaryGraphicPage,
 	userSeasonsPage,
 	userSeasonsStatsPage,
 } from "~/utils/urls";
@@ -48,25 +53,18 @@ import {
 	loader,
 	type UserSeasonsPageLoaderData,
 } from "../loaders/u.$identifier.seasons.server";
+import type { UserSeasonSummaryGraphicLoaderData } from "../loaders/u.$identifier.seasons.summary-graphic.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "../user-page.module.css";
+import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export { loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user"],
+	i18n: ["user", "calendar"],
 };
 
-export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
-	if (isRevalidation(args)) return args.defaultShouldRevalidate;
-	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
-	if (args.currentParams.identifier !== args.nextParams.identifier) return true;
-
-	return (
-		args.currentUrl.searchParams.get("season") !==
-		args.nextUrl.searchParams.get("season")
-	);
-};
+export const shouldRevalidate = userSeasonsSearchParams.shouldRevalidate;
 
 const STAT_TABS = [
 	{ info: "weapons", labelKey: "weapons" },
@@ -103,10 +101,18 @@ export default function UserSeasonsLayout() {
 				user={layoutData.user}
 				backTo={userPage(layoutData.user)}
 			/>
-			<SeasonHeader
-				seasonViewed={data.season}
-				seasonsParticipatedIn={data.seasonsParticipatedIn}
-			/>
+			<div className="stack horizontal justify-between items-start">
+				<SeasonHeader
+					seasonViewed={data.season}
+					seasonsParticipatedIn={data.seasonsParticipatedIn}
+				/>
+				<SeasonSummaryExport
+					profileUser={layoutData.user}
+					season={data.season}
+					seasonsParticipatedIn={data.seasonsParticipatedIn}
+					hasCalculatedSkill={Boolean(data.currentOrdinal)}
+				/>
+			</div>
 			{data.currentOrdinal ? (
 				<div className="stack md">
 					<Rank
@@ -142,12 +148,10 @@ function SeasonNav({
 }) {
 	const { t } = useTranslation(["user"]);
 	const location = useLocation();
-	const [searchParams] = useSearchParams();
+	const [info] = useSearchParam(userSeasonsSearchParams, "info");
 
 	const isStats = location.pathname.endsWith("/seasons/stats");
-	const selectedKey = isStats
-		? (searchParams.get("info") ?? "weapons")
-		: "sets";
+	const selectedKey = isStats ? info : "sets";
 
 	const routerOptions = { preventScrollReset: true };
 
@@ -176,6 +180,121 @@ function SeasonNav({
 	);
 }
 
+function SeasonSummaryExport({
+	profileUser,
+	season,
+	seasonsParticipatedIn,
+	hasCalculatedSkill,
+}: {
+	profileUser: UserPageLoaderData["user"];
+	season: number;
+	seasonsParticipatedIn: number[];
+	hasCalculatedSkill: boolean;
+}) {
+	const { t } = useTranslation(["user"]);
+	const loggedInUser = useUser();
+
+	if (
+		!loggedInUser ||
+		loggedInUser.id !== profileUser.id ||
+		!hasCalculatedSkill ||
+		!SeasonSummary.isSeasonFinished(season)
+	) {
+		return null;
+	}
+
+	const canExport = SeasonSummary.canExportSeasonSummary({
+		loggedInUser,
+		profileUserId: profileUser.id,
+		season,
+		seasonsParticipatedIn,
+		hasCalculatedSkill,
+	});
+
+	if (!canExport) {
+		return (
+			<SendouPopover
+				trigger={
+					<SendouButton
+						size="small"
+						variant="outlined"
+						icon={<HardDriveDownload />}
+					>
+						{t("user:seasons.summary.export")}
+					</SendouButton>
+				}
+			>
+				{t("user:seasons.summary.export.supporterPerk")}
+			</SendouPopover>
+		);
+	}
+
+	return (
+		<SeasonSummaryExportDialog
+			key={season}
+			profileUser={profileUser}
+			season={season}
+		/>
+	);
+}
+
+function SeasonSummaryExportDialog({
+	profileUser,
+	season,
+}: {
+	profileUser: UserPageLoaderData["user"];
+	season: number;
+}) {
+	const { t } = useTranslation(["user"]);
+	const fetcher = useFetcher<UserSeasonSummaryGraphicLoaderData>();
+
+	const handleOpen = () => {
+		if (fetcher.state === "idle" && !fetcher.data) {
+			fetcher.load(userSeasonSummaryGraphicPage({ user: profileUser, season }));
+		}
+	};
+
+	const data = fetcher.data;
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<HardDriveDownload />}
+					onPress={handleOpen}
+				>
+					{t("user:seasons.summary.export")}
+				</SendouButton>
+			}
+			heading={t("user:seasons.summary.export")}
+			filename={`season-${season}-summary`}
+			qrCodePath={userSeasonsPage({ user: profileUser, season })}
+		>
+			{data ? (
+				<SeasonSummaryGraphic
+					user={{
+						name: profileUser.username,
+						discordId: profileUser.discordId,
+						customUrl: profileUser.customUrl ?? undefined,
+						countryCode: profileUser.country ?? undefined,
+						avatarUrl: resolveAvatarUrl({
+							customAvatarUrl: profileUser.customAvatarUrl,
+							discordId: profileUser.discordId,
+							discordAvatar: profileUser.discordAvatar,
+							size: "lg",
+						}),
+					}}
+					season={data.season}
+					seasonDateRange={Seasons.nthToDateRange(data.season)}
+					stats={data}
+				/>
+			) : null}
+		</ImageExportDialog>
+	);
+}
+
 function SeasonHeader({
 	seasonViewed,
 	seasonsParticipatedIn,
@@ -185,7 +304,7 @@ function SeasonHeader({
 }) {
 	const { t } = useTranslation(["user"]);
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
-	const navigate = useNavigate();
+	const [, setSeason] = useSearchParam(userSeasonsSearchParams, "season");
 	const options = useSeasonSelectOptions();
 
 	return (
@@ -193,7 +312,7 @@ function SeasonHeader({
 			<SendouSelect
 				label={t("user:seasons.season")}
 				selectedKey={seasonViewed}
-				onSelectionChange={(seasonNth) => navigate(`?season=${seasonNth}`)}
+				onSelectionChange={(seasonNth) => setSeason(Number(seasonNth))}
 				items={options}
 			>
 				{({ year, items, key }) => (
@@ -403,21 +522,74 @@ function CanceledMatchesDialog({
 		>
 			<div className="stack lg">
 				{canceledMatches.map((match) => (
-					<div key={match.id}>
-						<Link to={sendouQMatchPage(match.id)}>#{match.id}</Link>
-						<LocaleTime
-							date={match.createdAt}
-							options={{
-								year: "numeric",
-								month: "numeric",
-								day: "numeric",
-								hour: "numeric",
-								minute: "numeric",
-							}}
-						/>
+					<div key={match.id} className="stack sm">
+						<div>
+							<Link to={sendouQMatchPage(match.id)}>#{match.id}</Link>
+							<LocaleTime
+								date={match.createdAt}
+								options={{
+									year: "numeric",
+									month: "numeric",
+									day: "numeric",
+									hour: "numeric",
+									minute: "numeric",
+								}}
+							/>
+						</div>
+						<CanceledMatchReports cancelReports={match.cancelReports} />
 					</div>
 				))}
 			</div>
 		</SendouDialog>
+	);
+}
+
+function CanceledMatchReports({
+	cancelReports,
+}: {
+	cancelReports: NonNullable<
+		UserSeasonsPageLoaderData["canceled"]
+	>[number]["cancelReports"];
+}) {
+	if (cancelReports.length === 0) {
+		return (
+			<div className="text-lighter text-xs">
+				No cancel reports (canceled by staff)
+			</div>
+		);
+	}
+
+	const nominatedIdSets = cancelReports.map(
+		(report) => new Set(report.nominatedPlayers.map((player) => player.id)),
+	);
+	const teamsAgree =
+		nominatedIdSets.length === 2 &&
+		nominatedIdSets[0].size === nominatedIdSets[1].size &&
+		[...nominatedIdSets[0]].every((id) => nominatedIdSets[1].has(id));
+
+	return (
+		<div className="stack xs">
+			{cancelReports.map((report, index) => (
+				<div key={report.authorUsername} className="text-xs">
+					<div className="text-lighter">
+						{index === 0 ? "Requested" : "Accepted"} by {report.authorUsername}
+					</div>
+					<div>{report.reason}</div>
+					<div className="text-lighter">
+						Nominated:{" "}
+						{report.nominatedPlayers
+							.map((player) => player.username)
+							.join(", ")}
+					</div>
+				</div>
+			))}
+			{cancelReports.length === 2 ? (
+				<div className="text-xs font-semi-bold">
+					{teamsAgree
+						? "Teams nominated the same players"
+						: "Teams nominated different players (split)"}
+				</div>
+			) : null}
+		</div>
 	);
 }

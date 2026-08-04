@@ -1,6 +1,19 @@
-import type { DamageType } from "./analyzer-types";
+import type { DamageType, TenacityPlayerDeficit } from "./analyzer-types";
 
 export const MAX_LDE_INTENSITY = 21;
+
+/** Every ability point total reachable by some main/sub slot combination, ascending. */
+export function possibleApValues() {
+	const uniqueValues = new Set<number>();
+
+	for (let i = 0; i < 4; i++) {
+		for (let j = 0; j < 10; j++) {
+			uniqueValues.add(i * 10 + j * 3);
+		}
+	}
+
+	return Array.from(uniqueValues).sort((a, b) => a - b);
+}
 
 export const DAMAGE_TYPE = [
 	"TURRET_MAX",
@@ -109,3 +122,16 @@ export const MAX_AP = 57;
 
 export const MAIN_SLOT_AP = 10;
 export const SUB_SLOT_AP = 3;
+
+/** How many active players the opponent's team has more than the user's team */
+export const TENACITY_PLAYER_DEFICITS = [1, 2, 3] as const;
+
+/** Special points Tenacity passively grants per second. Unaffected by Special Charge Up. */
+export const TENACITY_SPECIAL_POINTS_PER_SECOND: Record<
+	TenacityPlayerDeficit,
+	number
+> = {
+	1: 3.26,
+	2: 5.44,
+	3: 7.59,
+};

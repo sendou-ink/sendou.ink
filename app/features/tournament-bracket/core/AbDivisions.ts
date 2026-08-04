@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "neverthrow";
+import { err, ok, type Result } from "~/utils/result";
 
 interface ValidateArgs {
 	abDivisionsBySeedOrder: (number | null | undefined)[];

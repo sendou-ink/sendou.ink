@@ -9,8 +9,8 @@ import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import * as Swiss from "~/features/tournament-bracket/core/Swiss";
 import { defaultBracketSettings } from "../../tournament/tournament-utils";
 import styles from "./BracketProgressionSelector.module.css";
 
@@ -21,6 +21,14 @@ const defaultBracket = (): Progression.InputBracket => ({
 	requiresCheckIn: false,
 	settings: {},
 });
+
+/** Bracket progression the selector reports before the user makes any changes. Used to seed form default values. */
+export function defaultBracketProgression():
+	| Progression.ParsedBracket[]
+	| null {
+	const validated = Progression.validatedBrackets([defaultBracket()]);
+	return Progression.isBrackets(validated) ? validated : null;
+}
 
 export function BracketProgressionSelector({
 	initialBrackets,
@@ -38,8 +46,13 @@ export function BracketProgressionSelector({
 		initialBrackets ?? [defaultBracket()],
 	);
 
+	const emit = (next: Progression.InputBracket[]) => {
+		const validatedNext = Progression.validatedBrackets(next);
+		onChange(Progression.isBrackets(validatedNext) ? validatedNext : null);
+	};
+
 	const handleAddBracket = () => {
-		setBrackets([
+		const newBrackets = [
 			...brackets,
 			{
 				...defaultBracket(),
@@ -52,7 +65,10 @@ export function BracketProgressionSelector({
 					},
 				],
 			},
-		]);
+		];
+
+		setBrackets(newBrackets);
+		emit(newBrackets);
 	};
 
 	const handleDeleteBracket = (idx: number) => {
@@ -73,21 +89,10 @@ export function BracketProgressionSelector({
 		}));
 
 		setBrackets(updatedBrackets);
+		emit(updatedBrackets);
 	};
 
 	const validated = Progression.validatedBrackets(brackets);
-	// `validatedBrackets` returns a fresh array each render, so emit only when the
-	// serialized result actually changes — otherwise `onChange` would loop the form store.
-	const serialized = Progression.isBrackets(validated)
-		? JSON.stringify(validated)
-		: null;
-	const lastSerialized = React.useRef<string | null | undefined>(undefined);
-
-	React.useEffect(() => {
-		if (lastSerialized.current === serialized) return;
-		lastSerialized.current = serialized;
-		onChange(serialized ? JSON.parse(serialized) : null);
-	}, [serialized, onChange]);
 
 	return (
 		<div className="stack lg items-start">
@@ -119,6 +124,7 @@ export function BracketProgressionSelector({
 							}
 
 							setBrackets(newBrackets);
+							emit(newBrackets);
 						}}
 						onDelete={
 							i !== 0 && !bracket.disabled

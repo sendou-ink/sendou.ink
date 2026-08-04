@@ -105,7 +105,7 @@ function withLfgJoins<QB extends SelectQueryBuilder<any, any, any>>(qb: QB) {
 			...commonUserSelect(eb),
 			"CalendarEvent.name as tournamentName",
 			"TournamentTeam.tournamentId",
-			"CalendarEventDate.startTime as tournamentStartTime",
+			"CalendarEventDate.startsAt as tournamentStartTime",
 			sql<
 				number | null
 			>`(SELECT COUNT(*) FROM "TournamentTeamMember" "ttm" WHERE "ttm"."tournamentTeamId" = "TournamentTeam"."id")`.as(
@@ -145,10 +145,11 @@ export async function insertFriendRequest({
 	senderId: number;
 	receiverId: number;
 }) {
-	await db
+	return db
 		.insertInto("FriendRequest")
 		.values({ senderId, receiverId })
-		.execute();
+		.returning("id")
+		.executeTakeFirstOrThrow();
 }
 
 export async function deleteFriendRequest({
@@ -260,16 +261,19 @@ export async function insertFriendship({
 	const minId = Math.min(userOneId, userTwoId);
 	const maxId = Math.max(userOneId, userTwoId);
 
-	await db.transaction().execute(async (trx) => {
-		await trx
+	return db.transaction().execute(async (trx) => {
+		const friendship = await trx
 			.insertInto("Friendship")
 			.values({ userOneId: minId, userTwoId: maxId })
-			.execute();
+			.returning("id")
+			.executeTakeFirstOrThrow();
 
 		await trx
 			.deleteFrom("FriendRequest")
 			.where("FriendRequest.id", "=", friendRequestId)
 			.execute();
+
+		return friendship;
 	});
 }
 

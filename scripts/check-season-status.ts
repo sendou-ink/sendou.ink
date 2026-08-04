@@ -55,11 +55,11 @@ const tournaments = await db
 		"Tournament.settings",
 		"Tournament.isFinalized",
 		"CalendarEvent.name",
-		"CalendarEventDate.startTime",
+		"CalendarEventDate.startsAt",
 	])
-	.where("CalendarEventDate.startTime", ">=", seasonStartTimestamp)
-	.where("CalendarEventDate.startTime", "<=", seasonEndTimestamp)
-	.orderBy("CalendarEventDate.startTime")
+	.where("CalendarEventDate.startsAt", ">=", seasonStartTimestamp)
+	.where("CalendarEventDate.startsAt", "<=", seasonEndTimestamp)
+	.orderBy("CalendarEventDate.startsAt")
 	.execute();
 
 const unfinalizedTournaments = tournaments.filter(

@@ -64,11 +64,13 @@ export function useEntitySearch<TItem extends { id: number }>({
 		[query],
 	);
 
-	React.useEffect(() => {
+	const prevInitialSelectedId = React.useRef(initialSelectedId);
+	if (initialSelectedId !== prevInitialSelectedId.current) {
+		prevInitialSelectedId.current = initialSelectedId;
 		if (typeof initialSelectedId === "number") {
 			setSelectedKey(initialSelectedId);
 		}
-	}, [initialSelectedId]);
+	}
 
 	const items = withInitialItem(
 		toEntitySearchItems(parseResults(queryFetcher.data, query)),
@@ -80,19 +82,23 @@ export function useEntitySearch<TItem extends { id: number }>({
 	);
 
 	// clear the selection when its item is no longer among the results
-	const realItemIdsKey = realItems.map((item) => item.id).join(",");
+	const isSelectionValid =
+		!selectedKey ||
+		selectedKey === initialSelectedId ||
+		realItems.length === 0 ||
+		realItems.some((item) => item.id === selectedKey);
+	const effectiveSelectedKey = isSelectionValid ? selectedKey : null;
+
+	const prevEffectiveSelectedKey = React.useRef(effectiveSelectedKey);
 	React.useEffect(() => {
-		if (!realItemIdsKey) return;
-		const ids = realItemIdsKey.split(",").map(Number);
-		if (
-			selectedKey &&
-			selectedKey !== initialSelectedId &&
-			!ids.includes(selectedKey)
-		) {
+		const selectionInvalidated =
+			!isSelectionValid && prevEffectiveSelectedKey.current !== null;
+		prevEffectiveSelectedKey.current = effectiveSelectedKey;
+		if (selectionInvalidated) {
 			setSelectedKey(null);
 			onChange?.(null);
 		}
-	}, [realItemIdsKey, selectedKey, onChange, initialSelectedId]);
+	});
 
 	const onSelectionChange = (key: number) => {
 		setSelectedKey(key);
@@ -102,7 +108,13 @@ export function useEntitySearch<TItem extends { id: number }>({
 		}
 	};
 
-	return { filterText, setFilterText, items, selectedKey, onSelectionChange };
+	return {
+		filterText,
+		setFilterText,
+		items,
+		selectedKey: effectiveSelectedKey,
+		onSelectionChange,
+	};
 }
 
 function toEntitySearchItems<TItem extends { id: number }>(

@@ -1,4 +1,4 @@
-import type { Match as MatchType } from "~/modules/brackets-model";
+import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import styles from "./bracket.module.css";
@@ -14,19 +14,15 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 	return (
 		<div className="stack xl">
 			{groups.map(({ groupName, groupId }) => {
-				const rounds = bracket.data.round.filter((r) => r.group_id === groupId);
+				const rounds = bracket.data.round.filter((r) => r.groupId === groupId);
 
 				const allMatchesFinished = rounds.every((round) => {
 					const matches = bracket.data.match.filter(
-						(match) => match.round_id === round.id,
+						(match) => match.roundId === round.id,
 					);
 
 					return matches.every(
-						(match) =>
-							!match.opponent1 ||
-							!match.opponent2 ||
-							match.opponent1?.result === "win" ||
-							match.opponent2?.result === "win",
+						(match) => !match.opponent1 || !match.opponent2 || match.winnerSide,
 					);
 				});
 
@@ -41,15 +37,12 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 								const bestOf = round.maps?.count;
 
 								const matches = bracket.data.match.filter(
-									(match) => match.round_id === round.id,
+									(match) => match.roundId === round.id,
 								);
 
 								const someMatchOngoing = matches.some(
 									(match) =>
-										match.opponent1 &&
-										match.opponent2 &&
-										match.opponent1.result !== "win" &&
-										match.opponent2.result !== "win",
+										match.opponent1 && match.opponent2 && !match.winnerSide,
 								);
 
 								return (
@@ -114,7 +107,7 @@ function getGroups(bracket: BracketType) {
 
 	for (const group of bracket.data.group) {
 		const matches = bracket.data.match.filter(
-			(match) => match.group_id === group.id,
+			(match) => match.groupId === group.id,
 		);
 
 		result.push({

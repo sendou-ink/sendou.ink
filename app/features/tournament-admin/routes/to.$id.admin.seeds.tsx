@@ -30,7 +30,7 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { InfoPopover } from "~/components/InfoPopover";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
-import type { SeedingSnapshot } from "~/db/tables";
+import type { SeedingSnapshot } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
@@ -689,19 +689,15 @@ function RowContents({
 	onSeedChange?: (newSeed: number) => void;
 }) {
 	const tournament = useTournament();
-	const [inputValue, setInputValue] = React.useState(String(seed ?? ""));
-
-	React.useEffect(() => {
-		setInputValue(String(seed ?? ""));
-	}, [seed]);
+	const [draft, setDraft] = React.useState<string | null>(null);
+	const inputValue = draft ?? String(seed ?? "");
 
 	const handleInputBlur = () => {
 		const newSeed = Number.parseInt(inputValue, 10);
 		if (!Number.isNaN(newSeed) && onSeedChange) {
 			onSeedChange(newSeed);
-		} else {
-			setInputValue(String(seed ?? ""));
 		}
+		setDraft(null);
 	};
 
 	const logoUrl = tournament.tournamentTeamLogoSrc(team);
@@ -714,7 +710,7 @@ function RowContents({
 						type="text"
 						className={styles.seedInput}
 						value={inputValue}
-						onChange={(e) => setInputValue(e.target.value)}
+						onChange={(e) => setDraft(e.target.value)}
 						onBlur={handleInputBlur}
 						onKeyDown={(e) => {
 							if (e.key === "Enter") {

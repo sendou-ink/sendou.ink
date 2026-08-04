@@ -1,31 +1,33 @@
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
-import { db } from "~/db/sql";
-import { dbInsertUsers, dbReset } from "~/utils/Test";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import * as BadgeRepository from "./BadgeRepository.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 
 describe("syncXPBadges", () => {
-	beforeEach(async () => {
-		await dbInsertUsers(3);
-		await insertXPBadges();
-	});
+	let user: { id: number };
 
-	afterEach(() => {
-		dbReset();
+	beforeEach(async () => {
+		user = await UserFactory.create();
+		await BadgeFactory.createMany(SPLATOON_3_XP_BADGE_VALUES.length, (i) => ({
+			code: String(SPLATOON_3_XP_BADGE_VALUES[i]),
+			displayName: `${SPLATOON_3_XP_BADGE_VALUES[i]}+ XP`,
+		}));
 	});
 
 	test("assigns badge to user with qualifying peakXp", async () => {
-		await insertSplatoonPlayer({ splId: "abc123", userId: 1, peakXp: 3000 });
+		await givePeakXp(user.id, 3000);
 
 		await BadgeRepository.syncXPBadges();
 
 		const badge = await findBadgeByCode("3000");
 		expect(badge?.owners).toHaveLength(1);
-		expect(badge?.owners[0].id).toBe(1);
+		expect(badge?.owners[0].id).toBe(user.id);
 	});
 
 	test("assigns highest qualifying badge when peakXp exceeds threshold", async () => {
-		await insertSplatoonPlayer({ splId: "abc123", userId: 1, peakXp: 3250 });
+		await givePeakXp(user.id, 3250);
 
 		await BadgeRepository.syncXPBadges();
 
@@ -37,7 +39,7 @@ describe("syncXPBadges", () => {
 	});
 
 	test("does not assign badge when peakXp is below minimum threshold", async () => {
-		await insertSplatoonPlayer({ splId: "abc123", userId: 1, peakXp: 2500 });
+		await givePeakXp(user.id, 2500);
 
 		await BadgeRepository.syncXPBadges();
 
@@ -46,44 +48,42 @@ describe("syncXPBadges", () => {
 	});
 });
 
-async function insertXPBadges() {
-	await db
-		.insertInto("Badge")
-		.values(
-			SPLATOON_3_XP_BADGE_VALUES.map((value) => ({
-				code: String(value),
-				displayName: `${value}+ XP`,
-				hue: null,
-				authorId: null,
-			})),
-		)
-		.execute();
-}
+describe("replaceManagers", () => {
+	test("empty list clears existing managers", async () => {
+		const user = await UserFactory.create();
+		const badge = await BadgeFactory.create(null, { managerIds: [user.id] });
 
-async function insertSplatoonPlayer(args: {
-	splId: string;
-	userId: number | null;
-	peakXp: number | null;
-}) {
-	await db
-		.insertInto("SplatoonPlayer")
-		.values({
-			splId: args.splId,
-			userId: args.userId,
-			peakXp:
-				args.peakXp === null
-					? null
-					: JSON.stringify({
-							overall: args.peakXp,
-							tentatek: args.peakXp,
-							takoroka: null,
-						}),
-		})
-		.execute();
-}
+		await BadgeRepository.replaceManagers({
+			badgeId: badge.id,
+			managerIds: [],
+		});
+
+		const updated = await BadgeRepository.findById(badge.id);
+		expect(updated?.managers).toHaveLength(0);
+	});
+});
+
+describe("replaceOwners", () => {
+	test("empty list clears existing owners", async () => {
+		const user = await UserFactory.create();
+		const badge = await BadgeFactory.create(null, { ownerIds: [user.id] });
+
+		await BadgeRepository.replaceOwners({ badgeId: badge.id, ownerIds: [] });
+
+		const updated = await BadgeRepository.findById(badge.id);
+		expect(updated?.owners).toHaveLength(0);
+	});
+});
+
+/** Gives the user a linked X Rank player whose one placement is worth `power`. */
+const givePeakXp = (userId: number, power: number) =>
+	XRankPlacementFactory.create(
+		{ playerUserId: userId, power },
+		{ refreshPeakXp: true },
+	);
 
 async function findBadgeByCode(code: string) {
-	const badges = await BadgeRepository.all();
+	const badges = await BadgeRepository.findAll();
 	const badge = badges.find((b) => b.code === code);
 	if (!badge) return null;
 	return BadgeRepository.findById(badge.id);

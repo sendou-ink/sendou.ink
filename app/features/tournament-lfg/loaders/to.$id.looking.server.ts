@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
-import type { Pronouns } from "~/db/tables";
+import type { Pronouns } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
@@ -76,7 +76,7 @@ async function lookingMode({
 	const otherGroups = groups.filter((g) => g.id !== ownGroup?.id);
 
 	const likes = ownGroup
-		? await TournamentLFGRepository.allLikesByTeamId(ownGroup.id)
+		? await TournamentLFGRepository.findAllLikesByTeamId(ownGroup.id)
 		: { given: [], received: [] };
 
 	const ownTeam = await resolveOwnTeam({
@@ -92,7 +92,7 @@ async function lookingMode({
 
 	return {
 		mode: "looking" as const,
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: cardUserIds,
 		})),
 		groups: otherGroups,
@@ -117,10 +117,7 @@ async function subsMode({
 		const member = group.members[0];
 		const weapons = parseWeapons(member.weapons);
 
-		const languages =
-			typeof member.languages === "string"
-				? member.languages.split(",").filter(Boolean)
-				: [];
+		const languages = member.languages ?? [];
 
 		return {
 			teamId: group.id,
@@ -140,7 +137,7 @@ async function subsMode({
 
 	return {
 		mode: "subs" as const,
-		...(await UserCardRepository.userCards({
+		...(await UserCardRepository.findAllByUserIds({
 			userIds: subs.map((sub) => sub.userId),
 		})),
 		subs,
@@ -202,10 +199,7 @@ function transformMembers(
 	>[number]["members"],
 ): LFGGroupMember[] {
 	return rawMembers.map((m) => {
-		const languages =
-			typeof m.languages === "string"
-				? m.languages.split(",").filter(Boolean)
-				: [];
+		const languages = m.languages ?? [];
 
 		const weapons = parseWeapons(m.weapons);
 		const pronouns = parsePronouns(m.pronouns);

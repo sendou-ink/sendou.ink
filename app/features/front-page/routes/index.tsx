@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { subMonths } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
@@ -11,24 +12,28 @@ import { BSKYReplyIcon } from "~/components/icons/BSKYReply";
 import { BSKYRepostIcon } from "~/components/icons/BSKYRepost";
 import { ExternalIcon } from "~/components/icons/External";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { globalSearchSearchParams } from "~/components/layout/global-search-search-params";
 import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
 import { Config } from "~/config";
+import { useUser } from "~/features/auth/core/user";
 import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import styles from "~/styles/front.module.css";
+import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	BLANK_IMAGE_URL,
 	CALENDAR_PAGE,
 	LUTI_PAGE,
 	leaderboardsPage,
 	navIconUrl,
 	SENDOUQ_PAGE,
 	sqHeaderGuyImageUrl,
+	WELCOME_PAGE,
 } from "~/utils/urls";
 import { type LeaderboardEntry, loader } from "../loaders/index.server";
 
@@ -143,6 +148,24 @@ function SeasonCard() {
 	);
 }
 
+function WelcomeBanner() {
+	const { t } = useTranslation(["front"]);
+	const user = useUser();
+
+	const isNewUser =
+		typeof user?.createdAt === "number" &&
+		databaseTimestampToDate(user.createdAt) > subMonths(new Date(), 6);
+
+	if (user && !isNewUser) return null;
+
+	return (
+		<Link to={WELCOME_PAGE} className={styles.welcomeBanner}>
+			{t("front:welcomeBanner")}
+			<ArrowRightIcon />
+		</Link>
+	);
+}
+
 function LeagueBanner() {
 	const showBannerFor = Config.showBannerForSeason;
 	if (!showBannerFor) return null;
@@ -241,7 +264,7 @@ function ResultHighlights() {
 					>
 						{t("front:showcase.results")}
 					</h2>
-					<div className={styles.tournamentCardsSpacer}>
+					<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
 						{data.tournaments.results.map((tournament) => (
 							<TournamentCard key={tournament.id} tournament={tournament} />
 						))}
@@ -271,7 +294,11 @@ function Leaderboard({
 						className="stack sm horizontal items-center text-main-forced"
 					>
 						<div className="mx-1">{index + 1}</div>
-						<Avatar url={entry.avatarUrl ?? BLANK_IMAGE_URL} size="xs" />
+						<Avatar
+							url={entry.avatarUrl}
+							identiconInput={entry.name}
+							size="xs"
+						/>
 						<div className="stack items-start">
 							<div className={styles.leaderboardName}>{entry.name}</div>
 							<div className="text-xs font-semi-bold text-lighter">
@@ -294,9 +321,12 @@ const DISCOVER_EXCLUDED_ITEMS = new Set(["settings", "luti"]);
 function DiscoverFeatures() {
 	const { t } = useTranslation(["front", "common"]);
 	const data = useLoaderData<typeof loader>();
+	const user = useUser();
 
 	const filteredNavItems = navItems.filter(
-		(item) => !DISCOVER_EXCLUDED_ITEMS.has(item.name),
+		(item) =>
+			!DISCOVER_EXCLUDED_ITEMS.has(item.name) &&
+			(item.name !== "trophies" || canAccessTrophies(user)),
 	);
 
 	return (
@@ -309,7 +339,11 @@ function DiscoverFeatures() {
 					{data.weaponPool.map((weapon) => (
 						<Link
 							key={weapon.weaponSplId}
-							to={`?search=open&type=weapons&weapon=${weapon.weaponSplId}`}
+							to={globalSearchSearchParams.href("", {
+								search: "open",
+								type: "weapons",
+								weapon: weapon.weaponSplId,
+							})}
 							className={styles.weaponPill}
 						>
 							<WeaponImage
@@ -340,6 +374,7 @@ function DiscoverFeatures() {
 					</Link>
 				))}
 			</nav>
+			<WelcomeBanner />
 			<PWAInstallBanner />
 		</div>
 	);

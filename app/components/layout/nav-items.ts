@@ -59,8 +59,8 @@ export const navItems = [
 		prefetch: false,
 	},
 	{
-		name: "badges",
-		url: "badges",
+		name: "trophies",
+		url: "trophies",
 		prefetch: false,
 	},
 	{

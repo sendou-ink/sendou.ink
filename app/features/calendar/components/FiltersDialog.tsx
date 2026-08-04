@@ -1,14 +1,15 @@
 import { Funnel } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
 import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useUser } from "~/features/auth/core/user";
 import { calendarFiltersFormSchema } from "~/features/calendar/calendar-schemas";
+import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 
 type FormValues = z.infer<typeof calendarFiltersFormSchema>;
 
@@ -51,13 +52,10 @@ function FiltersForm({
 }) {
 	const user = useUser();
 	const { t } = useTranslation(["calendar"]);
-	const [, setSearchParams] = useSearchParams();
+	const [, setSearchParams] = useSearchParamsTyped(calendarSearchParams);
 
 	const handleApply = (values: FormValues) => {
-		setSearchParams((prev) => {
-			prev.set("filters", JSON.stringify(values));
-			return prev;
-		});
+		setSearchParams({ filters: values as unknown as CalendarFilters });
 		closeDialog();
 	};
 

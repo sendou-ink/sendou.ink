@@ -1,3 +1,5 @@
+import { Config } from "~/config";
+
 export const SEED_ART_URLS = [
 	"https://images.unsplash.com/photo-1611627474565-2367887415d1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8bmF0dXJlLDF8fHx8fHwxNjg4NTU1NTA2&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1080",
 	"https://images.unsplash.com/photo-1625120742520-3f085b6894ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8bmF0dXJlLDF8fHx8fHwxNjg4NTU1NTI2&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1080",
@@ -33,16 +35,43 @@ export function getArtFilename(index: number): string {
 	return `art-${index}.jpg`;
 }
 
-export const SEED_TEAM_IMAGES = [
-	{ filename: "alliance-rogue.png", teamId: 1 },
-	{ filename: "default.png", teamId: null },
+/** Logos in `app/db/seed/img`, uploaded to the local image storage under their own
+ * name. Anything the seed sets as a logo has to be one of these to render in dev. */
+export const SEED_LOGO_FILENAMES = [
+	"alliance-rogue.png",
+	"default.png",
+	"in-the-zone.png",
+	"luti.png",
+	"paddling-pool.png",
+	"picnic.png",
+	"swim-or-sink.png",
+	"the-depths.png",
 ];
 
-export const SEED_TOURNAMENT_IMAGES = [
-	{ filename: "picnic.png", tournamentId: 1 },
-	{ filename: "in-the-zone.png", tournamentId: 2 },
-	{ filename: "paddling-pool.png", tournamentId: 3 },
-	{ filename: "swim-or-sink.png", tournamentId: 4 },
-	{ filename: "the-depths.png", tournamentId: 5 },
-	{ filename: "luti.png", tournamentId: 6 },
-];
+/** The logo of a tournament that has none of its own, uploaded under the name the
+ * app looks it up by. */
+export const SEED_DEFAULT_TOURNAMENT_LOGO = {
+	sourceFilename: "default.png",
+	filename: Config.tournamentDefaultLogo,
+};
+
+/** How many numbered logos are uploaded. A seed run needing more than this many
+ * ends up with logos that 404 — raise it rather than reusing one, the url column
+ * being unique. */
+export const SEED_NUMBERED_LOGO_COUNT = 200;
+
+/** Filename of a logo the seed hands to something it has no particular logo for.
+ * Numbered because every image row needs a url of its own, cycling the logos so
+ * that a page full of them is not a page of one logo. */
+export function numberedLogoFilename(index: number) {
+	return `seed-logo-${index}.png`;
+}
+
+/** The uploads a numbered logo filename resolves to, in the storage the app reads. */
+export const SEED_NUMBERED_LOGOS = Array.from(
+	{ length: SEED_NUMBERED_LOGO_COUNT },
+	(_, index) => ({
+		filename: numberedLogoFilename(index),
+		sourceFilename: SEED_LOGO_FILENAMES[index % SEED_LOGO_FILENAMES.length],
+	}),
+);

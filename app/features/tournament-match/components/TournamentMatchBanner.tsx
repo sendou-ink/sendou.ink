@@ -23,7 +23,7 @@ import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomR
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
-import type { TournamentRoundMaps } from "~/db/tables";
+import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import {
 	isLeagueRoundLocked,
@@ -211,17 +211,19 @@ export function TournamentMatchBanner({
 					/>
 				</MatchBanner>
 			) : null}
-			<MatchBannerBottomRow
-				games={resolveBannerGames({ data })}
-				activeRosters={
-					opponentOne?.id && opponentTwo?.id
-						? {
-								alpha: activeRosterByTeamId(opponentOne.id),
-								bravo: activeRosterByTeamId(opponentTwo.id),
-							}
-						: null
-				}
-			/>
+			{data.matchIsOver ? null : (
+				<MatchBannerBottomRow
+					games={resolveBannerGames({ data })}
+					activeRosters={
+						opponentOne?.id && opponentTwo?.id
+							? {
+									alpha: activeRosterByTeamId(opponentOne.id),
+									bravo: activeRosterByTeamId(opponentTwo.id),
+								}
+							: null
+					}
+				/>
+			)}
 		</MatchBannerContainer>
 	);
 }
@@ -245,6 +247,12 @@ function TournamentMatchBannerTopRow({
 	const startedAt = databaseTimestampToDate(data.match.startedAt);
 	const totalMinutes = differenceInMinutes(currentTime, startedAt);
 
+	const lastResultCreatedAt = data.results.at(-1)?.createdAt;
+	const endedAt =
+		typeof lastResultCreatedAt === "number"
+			? databaseTimestampToDate(lastResultCreatedAt)
+			: null;
+
 	const currentMinutes = resolveCurrentMinutes({
 		data,
 		tournament,
@@ -256,15 +264,13 @@ function TournamentMatchBannerTopRow({
 			score={{
 				alpha: scores[0],
 				bravo: scores[1],
-				isFinal:
-					data.match.opponentOne?.result === "win" ||
-					data.match.opponentTwo?.result === "win",
+				isFinal: Boolean(data.match.winnerSide),
 				count: data.match.roundMaps.count,
 				bestOf: data.match.roundMaps.type === "BEST_OF",
 			}}
 		>
 			{data.matchIsOver ? (
-				<MatchBannerStartedAt time={startedAt} />
+				<MatchBannerStartedAt time={startedAt} endTime={endedAt} />
 			) : (
 				<MatchBannerTimer time={{ currentMinutes, totalMinutes }} />
 			)}
@@ -430,6 +436,7 @@ function resolveCurrentSessionStartedAt({
 		teams,
 		mapList: data.mapList,
 		pickBanEventCount: data.pickBanEventCount,
+		matchId: data.match.id,
 	});
 	if (!currentTurn) return lastGameStartedAt;
 
@@ -441,6 +448,7 @@ function resolveCurrentSessionStartedAt({
 			matchStartedAt: data.match.startedAt,
 			maps: data.match.roundMaps,
 			teams,
+			matchId: data.match.id,
 		}) ?? lastGameStartedAt
 	);
 }
@@ -470,6 +478,7 @@ function resolvePickBanBanner(
 		],
 		mapList: data.mapList,
 		pickBanEventCount: data.pickBanEventCount,
+		matchId: data.match.id,
 	});
 	if (!turnOfResult) return null;
 
@@ -489,6 +498,7 @@ function resolvePickBanBanner(
 		if (isCounterpick) return t("tournament:pickBan.counterpick");
 		switch (turnOfResult.action) {
 			case "PICK":
+			case "PICK_NO_MODE_REPEAT":
 				return t("tournament:pickBan.pickMap") + stepCounter;
 			case "BAN":
 				return t("tournament:pickBan.banMap") + stepCounter;
@@ -525,10 +535,10 @@ function resolveDroppedOutTeamName({
 	if (!data.matchIsOver || data.results.length > 0) return null;
 
 	const droppedOutId =
-		data.match.opponentOne?.result === "loss"
-			? data.match.opponentOne.id
-			: data.match.opponentTwo?.result === "loss"
-				? data.match.opponentTwo.id
+		data.match.winnerSide === "opponent2"
+			? data.match.opponentOne?.id
+			: data.match.winnerSide === "opponent1"
+				? data.match.opponentTwo?.id
 				: null;
 	if (!droppedOutId) return null;
 
@@ -549,8 +559,6 @@ function resolveBannerGames({
 			.map((map) => ({
 				mode: map.mode as ModeShort | null,
 			})) ?? [];
-
-	if (data.matchIsOver) return playedAndScheduled;
 
 	const placeholderCount = Math.max(
 		0,

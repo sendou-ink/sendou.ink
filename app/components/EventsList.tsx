@@ -63,7 +63,7 @@ export function EventsList({
 
 	const groupedEvents = events.reduce<Record<string, typeof events>>(
 		(acc, event) => {
-			const key = getDayKey(event.startTime);
+			const key = getDayKey(event.startsAt);
 			if (!acc[key]) {
 				acc[key] = [];
 			}
@@ -79,7 +79,7 @@ export function EventsList({
 		<>
 			{dayKeys.map((dayKey) => {
 				const dayEvents = groupedEvents[dayKey];
-				const firstDate = new Date(dayEvents[0].startTime * 1000);
+				const firstDate = new Date(dayEvents[0].startsAt * 1000);
 
 				return (
 					<div key={dayKey}>
@@ -89,7 +89,8 @@ export function EventsList({
 								key={`${event.type}-${event.id}`}
 								to={event.url}
 								imageUrl={event.logoUrl ?? undefined}
-								subtitle={timeFormatter.format(event.startTime)}
+								user={event.user ?? undefined}
+								subtitle={timeFormatter.format(event.startsAt)}
 								onClick={onClick}
 							>
 								{event.scrimStatus === "booked"

@@ -19,15 +19,16 @@ import {
 import { InfoPopover } from "~/components/InfoPopover";
 import { translateDamageReceiver } from "~/features/object-damage-calculator/calculator-constants";
 import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
-import { useSearchParamStateEncoder } from "~/hooks/useSearchParamState";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { mySlugify, weaponParamsPage } from "~/utils/urls";
 import { getParamExplanation } from "../core/param-explanations";
 import * as WeaponParams from "../core/WeaponParams";
+import { weaponParamsSearchParams } from "../params-search-params";
 import { SPECIAL_POINTS_PARAM_KEY } from "../weapon-params-constants";
 import type {
 	DamageMultiplierWithHistory,
@@ -116,23 +117,13 @@ export function WeaponParamsTable({
 		...categoryWeaponIds.filter((id) => id !== currentWeaponId),
 	];
 
-	const [hiddenWeaponIds, setHiddenWeaponIds] = useSearchParamStateEncoder<
-		number[]
-	>({
-		name: "hidden",
-		defaultValue: [],
-		revive: (value) =>
-			value
-				.split(",")
-				.map(Number)
-				.filter(
-					(id) =>
-						!Number.isNaN(id) &&
-						id !== currentWeaponId &&
-						categoryWeaponIds.includes(id),
-				),
-		encode: (ids) => ids.join(","),
-	});
+	const [hiddenParamIds, setHiddenWeaponIds] = useSearchParam(
+		weaponParamsSearchParams,
+		"hidden",
+	);
+	const hiddenWeaponIds = hiddenParamIds.filter(
+		(id) => id !== currentWeaponId && categoryWeaponIds.includes(id),
+	);
 
 	const hiddenSet = new Set(hiddenWeaponIds);
 	const visibleWeaponIds = sortedWeaponIds.filter((id) => !hiddenSet.has(id));

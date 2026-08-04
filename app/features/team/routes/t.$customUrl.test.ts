@@ -1,13 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import { db } from "~/db/sql";
-import {
-	assertResponseErrored,
-	dbInsertUsers,
-	dbReset,
-	withUserId,
-	wrappedAction,
-} from "~/utils/Test";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import * as TeamRepository from "../TeamRepository.server";
@@ -24,7 +20,8 @@ const teamPageAction = wrappedAction<typeof teamProfilePageActionSchema>({
 });
 
 async function loadTeams() {
-	const teams = await TeamRepository.teamsByMemberUserId(REGULAR_USER_TEST_ID);
+	const teams =
+		await TeamRepository.findAllByMemberUserId(REGULAR_USER_TEST_ID);
 
 	const mainTeam = teams.find((t) => t.isMainTeam);
 	const secondaryTeams = teams.filter((t) => !t.isMainTeam);
@@ -32,12 +29,26 @@ async function loadTeams() {
 	return { team: mainTeam, secondaryTeams };
 }
 
+/** A team the regular user is a member but not the owner of. */
+const createTeamWithRegularMember = (
+	overrides: Partial<Parameters<typeof TeamFactory.create>[0]> = {},
+) =>
+	TeamFactory.create({
+		memberUserIds: [ADMIN_ID, REGULAR_USER_TEST_ID],
+		...overrides,
+	});
+
+const createTeamOwnedByRegular = (name: string, isMainTeam = true) =>
+	TeamFactory.create({
+		name,
+		isMainTeam,
+		memberUserIds: [REGULAR_USER_TEST_ID],
+	});
+
 describe("Secondary teams", () => {
 	beforeEach(async () => {
-		await dbInsertUsers();
-	});
-	afterEach(() => {
-		dbReset();
+		await UserFactory.createAdmin();
+		await UserFactory.createRegular();
 	});
 
 	it("first team created becomes main team", async () => {
@@ -70,12 +81,12 @@ describe("Secondary teams", () => {
 	});
 
 	it("sets main team (2 team)", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-		await createTeamAction({ name: "Team 2" }, { user: "regular" });
+		await createTeamOwnedByRegular("Team 1");
+		const secondary = await createTeamOwnedByRegular("Team 2", false);
 
 		await teamPageAction(
 			{ _action: "MAKE_MAIN_TEAM" },
-			{ user: "regular", params: { customUrl: "team-2" } },
+			{ user: "regular", params: { customUrl: secondary.customUrl } },
 		);
 
 		const { team } = await loadTeams();
@@ -84,8 +95,8 @@ describe("Secondary teams", () => {
 	});
 
 	it("when deleting the main team, the secondary team becomes main", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "regular" });
-		await createTeamAction({ name: "Team 2" }, { user: "regular" });
+		const main = await createTeamOwnedByRegular("Team 1");
+		await createTeamOwnedByRegular("Team 2", false);
 
 		await teamPageAction(
 			{
@@ -93,7 +104,7 @@ describe("Secondary teams", () => {
 			},
 			{
 				user: "regular",
-				params: { customUrl: "team-1" },
+				params: { customUrl: main.customUrl },
 			},
 		);
 
@@ -104,43 +115,22 @@ describe("Secondary teams", () => {
 	});
 
 	it("only the team owner (or admin) can delete a team", async () => {
-		await createTeamAction({ name: "Team 1" }, { user: "admin" });
-
-		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.joinTeam({
-				teamId: 1,
-				maxTeamsAllowed: 2,
-			}),
-		);
+		const { customUrl } = await createTeamWithRegularMember({ name: "Team 1" });
 
 		const response = await teamPageAction(
 			{ _action: "DELETE_TEAM" },
-			{ user: "regular", params: { customUrl: "team-1" } },
+			{ user: "regular", params: { customUrl } },
 		);
 
 		assertResponseErrored(response);
 
-		const team = await TeamRepository.findByCustomUrl("team-1");
-		expect(team).toBeTruthy();
+		expect(await TeamRepository.findByCustomUrl(customUrl)).toBeTruthy();
 	});
 
 	it("when leaving the main team, the secondary team becomes main", async () => {
-		// has to be made by "admin" because can't leave team you own
-		await createTeamAction({ name: "Team 1" }, { user: "admin" });
-		await createTeamAction({ name: "Team 2" }, { user: "admin" });
-
-		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.joinTeam({
-				teamId: 1,
-				maxTeamsAllowed: 2,
-			}),
-		);
-		await withUserId(REGULAR_USER_TEST_ID, () =>
-			TeamRepository.joinTeam({
-				teamId: 2,
-				maxTeamsAllowed: 2,
-			}),
-		);
+		// owned by the admin because you can't leave a team you own
+		const main = await createTeamWithRegularMember({ name: "Team 1" });
+		await createTeamWithRegularMember({ name: "Team 2", isMainTeam: false });
 
 		const { team, secondaryTeams } = await loadTeams();
 
@@ -153,7 +143,7 @@ describe("Secondary teams", () => {
 			},
 			{
 				user: "regular",
-				params: { customUrl: "team-1" },
+				params: { customUrl: main.customUrl },
 			},
 		);
 
@@ -175,17 +165,14 @@ describe("Secondary teams", () => {
 
 		assertResponseErrored(response);
 	});
+});
 
-	const makeUserPatron = () =>
-		db
-			.updateTable("User")
-			.set({ patronTier: 2 })
-			.where("id", "=", REGULAR_USER_TEST_ID)
-			.execute();
+describe("Secondary teams as patron", () => {
+	beforeEach(async () => {
+		await UserFactory.createRegular(null, { patronTier: 2 });
+	});
 
 	it("creates more than 2 teams as patron", async () => {
-		await makeUserPatron();
-
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 		await createTeamAction({ name: "Team 3" }, { user: "regular" });

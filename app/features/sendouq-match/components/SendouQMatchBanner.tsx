@@ -42,7 +42,10 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 			: groupNames.bravo
 		: undefined;
 
-	const bottomRow = (
+	const awaitingConfirmation =
+		!data.match.isLocked && SendouQMatch.score(data.match).isDecisive;
+
+	const bottomRow = data.match.isLocked ? null : (
 		<MatchBannerBottomRow
 			games={data.match.mapList.map((map) => ({
 				mode: map.mode,
@@ -53,9 +56,6 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 			}}
 		/>
 	);
-
-	const awaitingConfirmation =
-		!data.match.isLocked && SendouQMatch.score(data.match).isDecisive;
 
 	if (data.match.isLocked || awaitingConfirmation) {
 		const playedStageIds = data.match.mapList
@@ -109,9 +109,7 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 				<MatchBanner
 					stageId={currentMap.stageId}
 					mode={currentMap.mode}
-					screenLegal={
-						!data.match.groupAlpha.noScreen && !data.match.groupBravo.noScreen
-					}
+					screenLegal={!data.match.noScreen}
 					joinPool={joinPool}
 					joinPass={joinPass}
 				>
@@ -156,7 +154,14 @@ function SendouQMatchBannerTopRow({
 			}}
 		>
 			{data.match.isLocked || awaitingConfirmation ? (
-				<MatchBannerStartedAt time={startedAt} />
+				<MatchBannerStartedAt
+					time={startedAt}
+					endTime={
+						lastMapReportedAt
+							? databaseTimestampToDate(lastMapReportedAt)
+							: null
+					}
+				/>
 			) : (
 				<MatchBannerTimer
 					time={{
