@@ -293,6 +293,7 @@ export function validateBracketProgressionFormValues(
 		const sourceIdx = Number(entry.sourceBracketIdx);
 		if (
 			!Number.isInteger(sourceIdx) ||
+			String(sourceIdx) !== entry.sourceBracketIdx ||
 			sourceIdx < 0 ||
 			sourceIdx >= brackets.length ||
 			sourceIdx === entryIdx

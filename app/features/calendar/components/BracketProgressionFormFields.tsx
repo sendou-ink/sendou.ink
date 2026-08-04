@@ -65,8 +65,12 @@ export function BracketProgressionFormFields({
 		<>
 			<FormField
 				name="brackets"
+				// removing a bracket shifts the idxs of the brackets after it, so
+				// brackets before a started one must stay to keep started brackets'
+				// idxs (and disabledBracketIdxs) stable, matching the server's guard
 				canRemoveItem={(_, idx) =>
-					idx !== 0 && !disabledBracketIdxs.includes(idx)
+					idx !== 0 &&
+					disabledBracketIdxs.every((disabledIdx) => disabledIdx < idx)
 				}
 				onValueChange={handleBracketsChanged}
 			>

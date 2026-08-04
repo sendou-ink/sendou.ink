@@ -20,7 +20,7 @@ export class CalendarNewEventPage {
 				"No permissions to add tournaments",
 			),
 			addBracketButton: page.getByTestId("brackets-add-item-button"),
-			bracketNameInputs: page.getByLabel("Bracket's name"),
+			bracketNameInputs: page.getByLabel(/^Bracket name *\*?$/),
 			bracketFormatSelects: page.getByLabel("Format"),
 			placementsInputs: page.getByLabel("Placements"),
 			deleteBracketButtons: page.getByTestId("brackets-remove-item-button"),

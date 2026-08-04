@@ -207,6 +207,19 @@ describe("validateBracketProgressionFormValues", () => {
 		expect(issues[0].path).toEqual(["progression", 1, "sourceBracketIdx"]);
 	});
 
+	it("rejects a non-canonical source bracket idx string", () => {
+		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
+		formValues.progression[1] = {
+			...formValues.progression[1],
+			sourceBracketIdx: "00",
+		};
+
+		const issues = validationIssues(formValues);
+
+		expect(issues).toHaveLength(1);
+		expect(issues[0].path).toEqual(["progression", 1, "sourceBracketIdx"]);
+	});
+
 	it("rejects a bracket sourcing itself", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {

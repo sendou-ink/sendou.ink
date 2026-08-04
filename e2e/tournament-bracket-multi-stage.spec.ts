@@ -202,8 +202,8 @@ test.describe("Tournament bracket multi stage", () => {
 		await eventEdit.deleteLastBracket();
 		await eventEdit.makeAllBracketsStartingBrackets();
 
-		await eventEdit.setBracketFormat(0, "Single-elimination");
-		await eventEdit.setBracketFormat(1, "Single-elimination");
+		await eventEdit.setBracketFormat(0, "Single elimination");
+		await eventEdit.setBracketFormat(1, "Single elimination");
 		await eventEdit.setBracketFormat(2, "Swiss");
 		await eventEdit.setBracketFormat(3, "Swiss");
 

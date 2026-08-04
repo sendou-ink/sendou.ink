@@ -94,7 +94,7 @@ export function createFormHelpers<T extends z.ZodRawShape>(
 
 	// match the whole label (allowing the trailing space and optional required " *" the
 	// Label component always renders) so a short label like "Name" doesn't also pick up
-	// "Bracket's name" or "Require in-game names"
+	// "Bracket name" or "Require in-game names"
 	const byLabel = (label: string) => {
 		const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		return page.getByLabel(new RegExp(`^${escaped} *\\*?$`, "i"));
