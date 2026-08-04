@@ -673,6 +673,48 @@ describe("SendouQ", () => {
 				expect(groups[0].id).toBe(closerGroup);
 			});
 
+			test("full group one sub-tier away sorted above full group six sub-tiers away", async () => {
+				const mus = [
+					// own group -> DIAMOND
+					97, 96, 95, 94,
+					// adjacent group -> PLATINUM+ (one sub-tier below own)
+					93, 92, 91, 90,
+					// far group -> SILVER (six sub-tiers below own)
+					76, 75, 74, 73,
+					// rest of the ladder so every sub-tier cutoff lands on a distinct ordinal
+					99,
+					98, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 72, 71, 70,
+					69, 68, 67, 66, 65, 64, 63, 62, 61, 60,
+				];
+				await users.create(mus.length);
+				for (const [i, mu] of mus.entries()) {
+					await createSkill(i + 1, mu);
+				}
+				await refreshUserSkills(1);
+
+				await createGroup([1, 2, 3, 4]);
+				const adjacentTierGroupId = await createGroup([5, 6, 7, 8]);
+				const farTierGroupId = await createGroup([9, 10, 11, 12]);
+				await alignLatestActionAt([adjacentTierGroupId, farTierGroupId]);
+				await refreshSendouQInstance();
+
+				const groups = SendouQ.lookingGroups(users.id(1));
+
+				expect(groups).toHaveLength(2);
+
+				const adjacentTierGroup = groups.find(
+					(g) => g.id === adjacentTierGroupId,
+				)!;
+				const farTierGroup = groups.find((g) => g.id === farTierGroupId)!;
+				expect(adjacentTierGroup.tierRange?.diff).toEqual([-1, 1]);
+				expect(farTierGroup.tier).toMatchObject({
+					name: "SILVER",
+					isPlus: false,
+				});
+
+				expect(groups[0].id).toBe(adjacentTierGroupId);
+			});
+
 			test("newer groups sorted first when skill is equal", async () => {
 				await createSkill(1, 1000);
 				await createSkill(2, 1000);
