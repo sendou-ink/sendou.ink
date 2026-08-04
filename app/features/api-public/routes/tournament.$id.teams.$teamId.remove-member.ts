@@ -7,6 +7,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import {
 	errorToastIfFalsy,
 	parseBody,
@@ -43,18 +44,13 @@ export const action = async (args: ActionFunctionArgs) => {
 		errorToastIfFalsy(team, "Invalid team id");
 		errorToastIfFalsy(
 			team.checkIns.length === 0 ||
-				team.members.length > tournament.minMembersPerTeam,
+				team.memberUserIds.length > tournament.minMembersPerTeam,
 			"Can't remove last member from checked in team",
 		);
-		errorToastIfFalsy(
-			team.members.find((m) => m.userId === userId)?.role !== "OWNER",
-			"Cannot remove team owner",
-		);
+		errorToastIfFalsy(team.ownerUserId !== userId, "Cannot remove team owner");
 		errorToastIfFalsy(
 			!tournament.hasStarted ||
-				!tournament
-					.participatedPlayersByTeamId(teamId)
-					.some((p) => p.userId === userId),
+				!tournament.participatedPlayerUserIdsByTeamId(teamId).includes(userId),
 			"Cannot remove player that has participated in the tournament",
 		);
 
@@ -74,6 +70,16 @@ export const action = async (args: ActionFunctionArgs) => {
 			tournamentId,
 			type: "participant",
 			userId,
+		});
+
+		await syncPickupChatMetadata({
+			teamId: team.id,
+			tournament: {
+				id: tournamentId,
+				name: tournament.ctx.name,
+				logoUrl: tournament.ctx.logoUrl,
+				startTime: tournament.ctx.startsAt,
+			},
 		});
 
 		clearTournamentDataCache(tournamentId);

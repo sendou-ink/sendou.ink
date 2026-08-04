@@ -13,13 +13,17 @@ import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.ser
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { navIconUrl, SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
+import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
 import { lookingSchema } from "../q-schemas.server";
 import { resolveFutureMatchModes } from "../q-utils";
-import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
+import {
+	SendouQError,
+	setGroupChatMetadata,
+	setMatchChatMetadata,
+} from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -199,18 +203,24 @@ export const action: ActionFunction = async ({ request }) => {
 				refreshStreamsCache();
 
 				if (createdMatch.chatCode) {
-					ChatSystemMessage.setMetadata({
+					setMatchChatMetadata({
+						id: createdMatch.id,
 						chatCode: createdMatch.chatCode,
-						header: `Match #${createdMatch.id}`,
-						subtitle: "SendouQ",
-						url: sendouQMatchPage(createdMatch.id),
-						imageUrl: `${navIconUrl("sendouq")}.avif`,
 						participantUserIds: [
 							...ownGroup.members.map((m) => m.id),
 							...theirGroup.members.map((m) => m.id),
 						],
-						expiresAfter: { hours: 2 },
 					});
+				}
+
+				// extend the group chat rooms' expiry so they last through the match
+				for (const group of [ownGroup, theirGroup]) {
+					if (group.chatCode) {
+						setGroupChatMetadata({
+							chatCode: group.chatCode,
+							members: group.members,
+						});
+					}
 				}
 
 				// Both groups revalidate (→ redirected to the match by their looking

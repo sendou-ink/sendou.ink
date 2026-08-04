@@ -7,10 +7,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import type {
-	TournamentData,
-	TournamentDataTeam,
-} from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
 import {
@@ -20,30 +17,26 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
-import * as Standings from "../core/Standings";
-import type { PlayedSet } from "../core/sets.server";
-import { loader } from "../loaders/to.$id.teams.$tid.server";
+import {
+	loader,
+	type TournamentTeamLoaderData,
+} from "../loaders/to.$id.teams.$tid.server";
 import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
 
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
-		?.tournament as TournamentData;
-	if (!args.loaderData || !tournamentData) return [];
+	if (!args.loaderData) return [];
 
-	const team = tournamentData.ctx.teams.find(
-		(t) => t.id === args.loaderData!.tournamentTeamId,
-	)!;
-	const teamLogoUrl = team.team?.logoUrl ?? team.pickupAvatarUrl;
+	const { team, tournamentName } = args.loaderData;
 
 	return metaTags({
-		title: `${team.name} @ ${tournamentData.ctx.name}`,
-		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
-		image: teamLogoUrl
+		title: `${team.name} @ ${tournamentName}`,
+		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentName}.`,
+		image: team.logoUrl
 			? {
-					url: teamLogoUrl,
+					url: team.logoUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,
@@ -57,7 +50,7 @@ export default function TournamentTeamPage() {
 	const teamIndex = tournament.ctx.teams.findIndex(
 		(t) => t.id === data.tournamentTeamId,
 	);
-	const team = tournament.teamById(data.tournamentTeamId)!;
+	const team = data.team;
 
 	return (
 		<div className="stack lg">
@@ -65,13 +58,7 @@ export default function TournamentTeamPage() {
 				<TeamWithRoster
 					team={team}
 					mapPool={team.mapPool}
-					activePlayers={
-						data.sets.length > 0
-							? tournament
-									.participatedPlayersByTeamId(team.id)
-									.map((p) => p.userId)
-							: undefined
-					}
+					activePlayers={data.activePlayers}
 				/>
 				{team.team && !team.team.deletedAt ? (
 					<Link
@@ -106,18 +93,8 @@ function StatSquares({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<typeof loader>();
-	const tournament = useTournament();
 
-	const standingsResult = Standings.tournamentStandings(tournament);
-	const overallStandings = Standings.flattenStandings(standingsResult);
-	const placement = overallStandings.find(
-		(s) => s.team.id === data.tournamentTeamId,
-	)?.placement;
-
-	const undergroundBracket = tournament.brackets.find((b) => b.isUnderground);
-	const undergroundPlacement = undergroundBracket?.standings.find(
-		(s) => s.team.id === data.tournamentTeamId,
-	)?.placement;
+	const { placement, undergroundPlacement, division } = data;
 
 	return (
 		<div className={styles.teamStats}>
@@ -171,21 +148,19 @@ function StatSquares({
 						{t("tournament:team.placement.footer")}
 					</div>
 				) : null}
-				{standingsResult.type === "multi" ? (
-					<div className={styles.teamStatSub}>
-						{
-							standingsResult.standings.find((s) =>
-								s.standings.some((s) => s.team.id === data.tournamentTeamId),
-							)?.div
-						}
-					</div>
-				) : null}
+				{division ? <div className={styles.teamStatSub}>{division}</div> : null}
 			</div>
 		</div>
 	);
 }
 
-function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
+function SetInfo({
+	set,
+	team,
+}: {
+	set: TournamentTeamLoaderData["sets"][number];
+	team: TournamentTeamFull;
+}) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
@@ -220,7 +195,7 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 	};
 
 	const { bracketName, roundNameWithoutMatchIdentifier } =
-		tournament.matchContextNamesById(set.tournamentMatchId);
+		set.matchContextNames;
 
 	return (
 		<div className={styles.teamSet}>

@@ -16,7 +16,6 @@ describe("swiss standings - losses against tied", () => {
 	it("should calculate losses against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standing = tournament
@@ -31,7 +30,6 @@ describe("swiss standings - losses against tied", () => {
 	it("breaks ties on losses against tied, not wins against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -59,7 +57,6 @@ describe("swiss standings - losses against tied", () => {
 	it("ranks fewer losses against tied above a higher opponent set win %", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -84,7 +81,6 @@ describe("swiss standings - losses against tied", () => {
 	it("should ignore early dropped out teams for standings (losses against tied)", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standing = tournament
@@ -216,6 +212,87 @@ describe("swiss standings - cross group ties", () => {
 		);
 		// without the effective seed tiebreak the lower groupId (seed 3's group) wins
 		expect(upsetWinnerIdx).toBeLessThan(otherWinnerIdx);
+	});
+});
+
+describe("swiss standings - rematches between tied teams", () => {
+	// 4-team Swiss with 5 rounds, so rounds 4 and 5 are forced rematches. Teams 1
+	// and 2 finish 4-1, having met twice and split 1-1 (team 1 won the round 1
+	// meeting, team 2 the round 4 one), so head-to-head is even and opponent set
+	// win % should decide: team 2's opponents won 12 of 25 sets (48%), team 1's
+	// 10 of 25 (40%).
+	const swissTournamentWithRematches = () => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1, roundCount: 5 },
+		});
+
+		const roundResults: Array<Array<[winnerId: number, loserId: number]>> = [
+			[
+				[1, 2],
+				[3, 4],
+			],
+			[
+				[1, 3],
+				[2, 4],
+			],
+			[
+				[1, 4],
+				[2, 3],
+			],
+			[
+				[2, 1],
+				[3, 4],
+			],
+			[
+				[1, 4],
+				[2, 3],
+			],
+		];
+
+		data.match = roundResults.flatMap((results, roundIdx) =>
+			results.map(
+				([winnerId, loserId], matchIdx): MatchData => ({
+					id: roundIdx * 2 + matchIdx,
+					stageId: data.stage[0].id,
+					groupId: data.group[0].id,
+					roundId: data.round[roundIdx].id,
+					number: matchIdx + 1,
+					opponent1: { id: winnerId, score: 2 },
+					opponent2: { id: loserId, score: 0 },
+					winnerSide: "opponent1",
+				}),
+			),
+		);
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: { groupCount: 1, roundCount: 5 },
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("counts every meeting between tied teams for the head-to-head tiebreaker", () => {
+		const standings = swissTournamentWithRematches().bracketByIdx(0)!.standings;
+
+		const team1 = standings.find((s) => s.team.id === 1)!;
+		const team2 = standings.find((s) => s.team.id === 2)!;
+
+		expect(team2.placement).toBe(1);
+		expect(team1.stats?.lossesAgainstTied).toBe(1);
+		expect(team2.stats?.winsAgainstTied).toBe(1);
 	});
 });
 

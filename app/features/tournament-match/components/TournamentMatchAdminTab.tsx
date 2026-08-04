@@ -17,9 +17,8 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import { useMatch } from "../match-page-context";
+import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { OrganizerMatchMapListDialog } from "./OrganizerMatchMapListDialog";
 import styles from "./TournamentMatchAdminTab.module.css";
 
@@ -38,9 +37,7 @@ export function TournamentMatchAdminTab({
 
 	const isOrganizer = tournament.isOrganizer(user);
 	const canReopen =
-		isOrganizer &&
-		data.matchIsOver &&
-		tournament.matchCanBeReopened(data.match.id);
+		isOrganizer && data.matchIsOver && data.bracketContext.canBeReopened;
 	const canEndSet =
 		isOrganizer && !data.matchIsOver && data.match.startedAt !== null;
 
@@ -256,11 +253,7 @@ function ReopenMatchButton() {
 	);
 }
 
-function EndSetPopover({
-	teams,
-}: {
-	teams: [TournamentDataTeam, TournamentDataTeam];
-}) {
+function EndSetPopover({ teams }: { teams: [MatchPageTeam, MatchPageTeam] }) {
 	const { t } = useTranslation(["tournament"]);
 	const [selectedWinner, setSelectedWinner] = React.useState<
 		number | null | undefined
@@ -344,14 +337,11 @@ function EditReportedScoresSection({
 	teams,
 }: {
 	data: TournamentMatchLoaderData;
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MatchPageTeam, MatchPageTeam];
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const tournament = useTournament();
 
-	const withKo = tournament.bracketByIdxOrDefault(
-		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectsKos;
+	const withKo = data.bracketContext.collectsKos;
 
 	return (
 		<div className={styles.editSection}>
@@ -379,7 +369,7 @@ function EditReportedScoreRow({
 }: {
 	index: number;
 	result: TournamentMatchLoaderData["results"][number];
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MatchPageTeam, MatchPageTeam];
 	withKo: boolean;
 }) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
@@ -452,7 +442,7 @@ function EditReportedScoreForm({
 }: {
 	fetcher: ReturnType<typeof useFetcher>;
 	result: TournamentMatchLoaderData["results"][number];
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MatchPageTeam, MatchPageTeam];
 	withKo: boolean;
 	minMembersPerTeam: number;
 	onCancel: () => void;

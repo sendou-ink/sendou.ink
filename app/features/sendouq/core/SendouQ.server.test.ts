@@ -6,7 +6,10 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
-import { refreshUserSkills } from "~/features/mmr/tiered.server";
+import {
+	freshUserSkills,
+	refreshUserSkills,
+} from "~/features/mmr/tiered.server";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -168,6 +171,22 @@ describe("SendouQ", () => {
 			expect(group).toBeDefined();
 			expect(group?.members.some((m) => m.id === users.id(5))).toBe(true);
 			expect(group?.members.some((m) => m.id === users.id(1))).toBe(false);
+		});
+
+		test("solo group has the same tier as the user's personal tier", async () => {
+			await createSkill(1, 100);
+			await createSkill(2, 90);
+			await createSkill(3, 80);
+			await createSkill(4, 70);
+			await refreshUserSkills(1);
+
+			await createGroup([1]);
+			await refreshSendouQInstance();
+
+			const ownGroup = SendouQ.findOwnGroup(users.id(1))!;
+			const { userSkills: skills } = await freshUserSkills(1);
+
+			expect(ownGroup.tier).toMatchObject(skills[String(users.id(1))].tier);
 		});
 	});
 
@@ -652,6 +671,48 @@ describe("SendouQ", () => {
 
 				expect(groups.length).toBeGreaterThan(0);
 				expect(groups[0].id).toBe(closerGroup);
+			});
+
+			test("full group one sub-tier away sorted above full group six sub-tiers away", async () => {
+				const mus = [
+					// own group -> DIAMOND
+					97, 96, 95, 94,
+					// adjacent group -> PLATINUM+ (one sub-tier below own)
+					93, 92, 91, 90,
+					// far group -> SILVER (six sub-tiers below own)
+					76, 75, 74, 73,
+					// rest of the ladder so every sub-tier cutoff lands on a distinct ordinal
+					99,
+					98, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 72, 71, 70,
+					69, 68, 67, 66, 65, 64, 63, 62, 61, 60,
+				];
+				await users.create(mus.length);
+				for (const [i, mu] of mus.entries()) {
+					await createSkill(i + 1, mu);
+				}
+				await refreshUserSkills(1);
+
+				await createGroup([1, 2, 3, 4]);
+				const adjacentTierGroupId = await createGroup([5, 6, 7, 8]);
+				const farTierGroupId = await createGroup([9, 10, 11, 12]);
+				await alignLatestActionAt([adjacentTierGroupId, farTierGroupId]);
+				await refreshSendouQInstance();
+
+				const groups = SendouQ.lookingGroups(users.id(1));
+
+				expect(groups).toHaveLength(2);
+
+				const adjacentTierGroup = groups.find(
+					(g) => g.id === adjacentTierGroupId,
+				)!;
+				const farTierGroup = groups.find((g) => g.id === farTierGroupId)!;
+				expect(adjacentTierGroup.tierRange?.diff).toEqual([-1, 1]);
+				expect(farTierGroup.tier).toMatchObject({
+					name: "SILVER",
+					isPlus: false,
+				});
+
+				expect(groups[0].id).toBe(adjacentTierGroupId);
 			});
 
 			test("newer groups sorted first when skill is equal", async () => {

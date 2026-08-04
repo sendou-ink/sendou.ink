@@ -13,6 +13,7 @@ import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "../match-profile/banned-maps";
 import * as Seasons from "../mmr/core/Seasons";
+import type { Bracket as BracketClass } from "../tournament-bracket/core/Bracket";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
@@ -186,6 +187,7 @@ export function tournamentInWeaponReportingWindow({
 
 export function resolveLeagueRoundStartDate(
 	tournament: TournamentClass,
+	bracket: BracketClass | undefined,
 	roundId: number,
 ) {
 	if (!tournament.isLeagueDivision) return null;
@@ -196,10 +198,6 @@ export function resolveLeagueRoundStartDate(
 			(league) => league.tournamentId === tournament.ctx.parentTournamentId,
 		);
 	if (!league) return null;
-
-	const bracket = tournament.brackets.find((b) =>
-		b.data.round.some((r) => r.id === roundId),
-	);
 
 	const round = bracket?.data.round.find((r) => r.id === roundId);
 	const onlyRelevantRounds = bracket?.data.round.filter(
@@ -226,7 +224,10 @@ export function isLeagueRoundLocked(
 	tournament: TournamentClass,
 	roundId: number,
 ) {
-	const date = resolveLeagueRoundStartDate(tournament, roundId);
+	const bracket = tournament.brackets.find((b) =>
+		b.data.round.some((r) => r.id === roundId),
+	);
+	const date = resolveLeagueRoundStartDate(tournament, bracket, roundId);
 
 	if (!date) return false;
 
@@ -269,7 +270,7 @@ export function validateCanJoinTeam({
 	maxTeamSize,
 }: {
 	inviteCode?: string | null;
-	teamToJoin?: { members: { userId: number }[] };
+	teamToJoin?: { memberUserIds: number[] };
 	userId?: number;
 	maxTeamSize: number;
 }) {
@@ -285,10 +286,10 @@ export function validateCanJoinTeam({
 	if (!teamToJoin) {
 		return "NO_TEAM_MATCHING_CODE";
 	}
-	if (teamToJoin.members.some((member) => member.userId === userId)) {
+	if (teamToJoin.memberUserIds.includes(userId)) {
 		return "ALREADY_JOINED";
 	}
-	if (teamToJoin.members.length >= maxTeamSize) {
+	if (teamToJoin.memberUserIds.length >= maxTeamSize) {
 		return "TEAM_FULL";
 	}
 
@@ -308,7 +309,7 @@ export function normalizedTeamCount({
 export type TeamForOrdering = {
 	id: number;
 	seed: number | null;
-	members: { length: number };
+	memberUserIds: { length: number };
 	avgSeedingSkillOrdinal: number | null;
 	createdAt: number;
 	startingBracketIdx: number | null;
@@ -327,8 +328,8 @@ export function compareTeamsForOrdering(
 		return a.seed - b.seed;
 	}
 
-	const aIsFull = a.members.length >= minMembersPerTeam;
-	const bIsFull = b.members.length >= minMembersPerTeam;
+	const aIsFull = a.memberUserIds.length >= minMembersPerTeam;
+	const bIsFull = b.memberUserIds.length >= minMembersPerTeam;
 
 	if (aIsFull && !bIsFull) {
 		return -1;

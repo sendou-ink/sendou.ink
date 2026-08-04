@@ -286,8 +286,8 @@ class SendouQClass {
 				}),
 			)
 			.map(this.#getGroupReplayMapper(userId))
-			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.sort(this.#getSkillSortComparator(ownGroup.tier))
+			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map((group) => this.#censorGroup(group));
 	}
 
@@ -404,7 +404,6 @@ class SendouQClass {
 		return <
 			T extends {
 				members: unknown[];
-				tierRange: TierRange | null;
 				tier: TieredSkill["tier"] | null;
 				latestActionAt: number;
 			},
@@ -417,12 +416,6 @@ class SendouQClass {
 
 			if (aIsFull !== bIsFull) {
 				return aIsFull ? 1 : -1;
-			}
-
-			if (a.tierRange && b.tierRange) {
-				if (a.tierRange.diff[1] !== b.tierRange.diff[1]) {
-					return a.tierRange.diff[1] - b.tierRange.diff[1];
-				}
 			}
 
 			const ownTierIndex = getTierIndex(ownTier, this.#isAccurateTiers);
@@ -557,7 +550,9 @@ class SendouQClass {
 
 		return (
 			this.#intervals.find(
-				(i) => i.neededOrdinal && averageOrdinal > i.neededOrdinal,
+				(i) =>
+					typeof i.neededOrdinal === "number" &&
+					averageOrdinal >= i.neededOrdinal,
 			) ?? { isPlus: false, name: "IRON" }
 		);
 	}

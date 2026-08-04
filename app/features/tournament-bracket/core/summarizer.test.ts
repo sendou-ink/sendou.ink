@@ -29,37 +29,19 @@ describe("tournamentSummary()", () => {
 		checkIns: [],
 		createdAt: 0,
 		id: teamId,
-		inviteCode: null,
 		avgSeedingSkillOrdinal: null,
 		startingBracketIdx: null,
 		abDivision: null,
-		mapPool: [],
-		members: userIds.map((userId) => ({
-			country: null,
-			customUrl: null,
-			discordAvatar: null,
-			discordId: "123",
-			username: "test",
-			inGameName: "test",
-			twitch: null,
-			plusTier: null,
-			createdAt: 0,
-			userId,
-			streamTwitch: null,
-			streamViewerCount: null,
-			streamThumbnailUrl: null,
-			role: "REGULAR",
-			isSub: 0,
-			customAvatarUrl: null,
-		})),
+		hasMapPool: false,
+		inviteCode: null,
+		memberUserIds: userIds,
+		ownerUserId: userIds[0] ?? null,
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
 		droppedOut: 0,
-		team: null,
+		logoUrl: null,
 		seed: 1,
 		activeRosterUserIds: [],
-		avatarImgId: null,
-		pickupAvatarUrl: null,
 	});
 
 	function summarize({
@@ -89,38 +71,10 @@ describe("tournamentSummary()", () => {
 		}>;
 	} = {}) {
 		const defaultTeams = [
-			{
-				id: 1,
-				members: [
-					{ userId: 1 },
-					{ userId: 2 },
-					{ userId: 3 },
-					{ userId: 4 },
-					{ userId: 20 },
-				],
-			},
-			{
-				id: 2,
-				members: [{ userId: 5 }, { userId: 6 }, { userId: 7 }, { userId: 8 }],
-			},
-			{
-				id: 3,
-				members: [
-					{ userId: 9 },
-					{ userId: 10 },
-					{ userId: 11 },
-					{ userId: 12 },
-				],
-			},
-			{
-				id: 4,
-				members: [
-					{ userId: 13 },
-					{ userId: 14 },
-					{ userId: 15 },
-					{ userId: 16 },
-				],
-			},
+			{ id: 1, memberUserIds: [1, 2, 3, 4, 20] },
+			{ id: 2, memberUserIds: [5, 6, 7, 8] },
+			{ id: 3, memberUserIds: [9, 10, 11, 12] },
+			{ id: 4, memberUserIds: [13, 14, 15, 16] },
 		];
 
 		const teams = defaultTeams.map((team) => {

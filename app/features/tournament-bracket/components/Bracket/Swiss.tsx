@@ -172,6 +172,7 @@ export function SwissBracket({
 								<div className="stack sm horizontal">
 									<RoundHeader
 										roundId={round.id}
+										bracketIdx={bracket.idx}
 										name={`Round ${round.number}`}
 										bestOf={bestOf}
 										showInfos={someMatchOngoing(matches)}

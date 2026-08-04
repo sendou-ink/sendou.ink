@@ -399,6 +399,31 @@ export function leaveLfg({
 	});
 }
 
+/** Finds the data needed to update a team's pickup chat, or `null` if the team has no chat. */
+export async function findPickupChatTeamById(
+	teamId: number,
+): Promise<PickupChatTeam | null> {
+	const team = await db
+		.selectFrom("TournamentTeam")
+		.select(["name", "chatCode"])
+		.where("id", "=", teamId)
+		.executeTakeFirst();
+
+	if (!team?.chatCode) return null;
+
+	const members = await db
+		.selectFrom("TournamentTeamMember")
+		.select("userId")
+		.where("tournamentTeamId", "=", teamId)
+		.execute();
+
+	return {
+		chatCode: team.chatCode,
+		name: team.name,
+		memberUserIds: members.map((m) => m.userId),
+	};
+}
+
 export async function findAllSubsByTournamentId(tournamentId: number) {
 	const rows = await db
 		.selectFrom("TournamentTeamMember")

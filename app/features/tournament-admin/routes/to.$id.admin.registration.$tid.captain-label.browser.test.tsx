@@ -7,7 +7,6 @@ import { render } from "vitest-browser-react";
 const { mockTournament } = vi.hoisted(() => ({
 	mockTournament: {
 		ctx: { id: 1, settings: { requireInGameNames: false } },
-		teamById: vi.fn(),
 	},
 }));
 
@@ -15,8 +14,8 @@ vi.mock("react-router", async () => {
 	const actual = await vi.importActual("react-router");
 	return {
 		...actual,
-		// no tid -> "add new team" flow, where the roster is built via user search
-		useParams: () => ({}),
+		// no team -> "add new team" flow, where the roster is built via user search
+		useLoaderData: () => ({ team: null }),
 	};
 });
 
@@ -27,6 +26,11 @@ vi.mock("~/features/tournament/routes/to.$id", () => ({
 vi.mock(
 	"~/features/tournament-admin/actions/to.$id.admin.registration.server",
 	() => ({ action: vi.fn() }),
+);
+
+vi.mock(
+	"~/features/tournament-admin/loaders/to.$id.admin.registration.$tid.server",
+	() => ({ loader: vi.fn() }),
 );
 
 import TournamentAdminRegistrationPage from "./to.$id.admin.registration.$tid";

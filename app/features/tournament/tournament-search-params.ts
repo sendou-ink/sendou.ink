@@ -31,3 +31,7 @@ export const tournamentSearchSearchParams = SearchParams.define({
 export const tournamentJoinSearchParams = SearchParams.define({
 	code: SP.param(z.string().nullable(), { loader: true }),
 });
+
+export const tournamentTeamsSearchParams = SearchParams.define({
+	page: SP.page(),
+});

@@ -36,20 +36,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			const teamsWithMembers = tournament.ctx.teams
-				.filter((t) => data.seeds.includes(t.id))
-				.map((team) => ({
-					teamId: team.id,
-					members: team.members.map((m) => ({
-						userId: m.userId,
-						username: m.username,
-					})),
-				}));
-
 			await TournamentRepository.updateTeamSeeds({
 				tournamentId,
 				teamIds: data.seeds,
-				teamsWithMembers,
 			});
 
 			message = "Seeds saved successfully";

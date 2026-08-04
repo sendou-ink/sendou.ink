@@ -172,19 +172,19 @@ function tournamentStreamUrl({
 	matchId: number;
 	opponentId: number;
 }) {
-	const streamingParticipantIds = new Set(tournament.streamingParticipantIds);
-	const ownTeamMembers =
-		tournament.teamMemberOfByUser({ id: friendId })?.members ?? [];
+	const streamingParticipants = tournament.streamingParticipants;
+	const ownTeamUserIds =
+		tournament.teamMemberOfByUser({ id: friendId })?.memberUserIds ?? [];
 
 	const friendAccount = streamingTwitchAccount(
-		ownTeamMembers.filter((member) => member.userId === friendId),
-		streamingParticipantIds,
+		ownTeamUserIds.filter((userId) => userId === friendId),
+		streamingParticipants,
 	);
 	if (friendAccount) return twitchUrl(friendAccount);
 
 	const teammateAccount = streamingTwitchAccount(
-		ownTeamMembers.filter((member) => member.userId !== friendId),
-		streamingParticipantIds,
+		ownTeamUserIds.filter((userId) => userId !== friendId),
+		streamingParticipants,
 	);
 	if (teammateAccount) return twitchUrl(teammateAccount);
 
@@ -192,8 +192,8 @@ function tournamentStreamUrl({
 	if (castAccount) return twitchUrl(castAccount);
 
 	const opponentAccount = streamingTwitchAccount(
-		tournament.teamById(opponentId)?.members ?? [],
-		streamingParticipantIds,
+		tournament.teamById(opponentId)?.memberUserIds ?? [],
+		streamingParticipants,
 	);
 
 	return opponentAccount ? twitchUrl(opponentAccount) : null;
@@ -206,19 +206,22 @@ function liveCastAccount(tournament: Tournament, matchId: number) {
 	)?.twitchAccount;
 	if (!castAccount) return null;
 
-	const isLive = tournament.ctx.castStreams.some(
-		(stream) => stream.twitch?.toLowerCase() === castAccount.toLowerCase(),
+	const isLive = tournament.streams.some(
+		(stream) =>
+			stream.twitchUserName.toLowerCase() === castAccount.toLowerCase(),
 	);
 
 	return isLive ? castAccount : null;
 }
 
 function streamingTwitchAccount(
-	players: Array<{ userId: number; streamTwitch: string | null }>,
-	streamingParticipantIds: ReadonlySet<number>,
+	userIds: number[],
+	streamingParticipants: ReadonlyMap<number, string>,
 ) {
-	return players.find(
-		(player) =>
-			streamingParticipantIds.has(player.userId) && player.streamTwitch,
-	)?.streamTwitch;
+	for (const userId of userIds) {
+		const twitchAccount = streamingParticipants.get(userId);
+		if (twitchAccount) return twitchAccount;
+	}
+
+	return null;
 }

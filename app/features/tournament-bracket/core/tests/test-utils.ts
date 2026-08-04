@@ -12,16 +12,15 @@ export const tournamentCtxTeam = (
 		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: 0 }],
 		createdAt: 0,
 		id: teamId,
-		inviteCode: null,
 		avgSeedingSkillOrdinal: null,
 		startingBracketIdx: null,
 		abDivision: null,
-		team: null,
-		mapPool: [],
-		members: [],
+		hasMapPool: false,
+		inviteCode: null,
+		memberUserIds: [],
+		ownerUserId: null,
 		activeRosterUserIds: [],
-		avatarImgId: null,
-		pickupAvatarUrl: null,
+		logoUrl: null,
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,
 		droppedOut: 0,
@@ -77,8 +76,7 @@ export const testTournament = ({
 		staff: [],
 		tieBreakerMapPool: [],
 		toSetMapPool: [],
-		participatedUsers: [],
-		castStreams: [],
+		latestTeamIdByDuplicatedUserId: {},
 		mapPickingStyle: "AUTO_SZ",
 		settings: {
 			bracketProgression: [
@@ -116,6 +114,7 @@ export const testTournament = ({
 			})),
 		},
 		ctx: tournamentCtx,
+		participatedUsers: [],
 	});
 };
 

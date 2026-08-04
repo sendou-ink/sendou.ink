@@ -84,14 +84,17 @@ const mockTournament = {
 			],
 		},
 		bracketProgressionOverrides: [],
-		participatedUsers: [1, 2, 3, 4, 5, 6, 7, 8],
 	},
+	participatedUserIds: [1, 2, 3, 4, 5, 6, 7, 8],
+	streamingParticipantIds: [],
 	brackets: [],
+	bracketsMeta: [],
+	bracketMetaByIdx: () => null,
+	isLeagueDivision: false,
 	teamById: (id: number) =>
 		mockTournament.ctx.teams.find((t) => t.id === id) ?? null,
 	teamMemberOfByUser: () => null,
 	isOrganizer: () => false,
-	tournamentTeamLogoSrc: () => null,
 };
 
 vi.mock("~/features/auth/core/user", () => ({

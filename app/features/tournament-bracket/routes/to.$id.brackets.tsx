@@ -13,7 +13,13 @@ import {
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import { Outlet, useLocation, useOutletContext } from "react-router";
+import {
+	Outlet,
+	useLoaderData,
+	useLocation,
+	useNavigation,
+	useOutletContext,
+} from "react-router";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -25,6 +31,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -35,6 +42,7 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
+	TournamentOverrideProvider,
 	useBracketExpanded,
 	useTournament,
 	useTournamentPreparedMaps,
@@ -47,11 +55,15 @@ import { TournamentTeamActions } from "../components/TournamentTeamActions";
 import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
-import type { Tournament } from "../core/Tournament";
+import type { BracketMeta, Tournament } from "../core/Tournament";
+import {
+	loader,
+	type TournamentBracketsLoaderData,
+} from "../loaders/to.$id.brackets.server";
 import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
 import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
-export { action };
+export { action, loader };
 
 export const handle: SendouRouteHandle = {
 	mainBreakout: true,
@@ -60,41 +72,45 @@ export const handle: SendouRouteHandle = {
 import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
+	const data = useLoaderData<TournamentBracketsLoaderData>();
+	const layoutTournament = useTournament();
+
+	const tournament = React.useMemo(
+		() =>
+			data.bracket
+				? layoutTournament.withBrackets([data.bracket], {
+						participatedUsers: data.participatedUserIds,
+						streams: data.streams,
+					})
+				: layoutTournament,
+		[layoutTournament, data.bracket, data.participatedUserIds, data.streams],
+	);
+
+	return (
+		<TournamentOverrideProvider tournament={tournament}>
+			<TournamentBracketsView />
+		</TournamentOverrideProvider>
+	);
+}
+
+function TournamentBracketsView() {
 	const { t } = useTranslation(["common", "tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
+	const data = useLoaderData<TournamentBracketsLoaderData>();
 	const ctx = useOutletContext();
+	const location = useLocation();
 
 	useScrollToMatchOnLoad();
 
-	const defaultBracketIdx = () => {
-		if (
-			tournament.brackets.length === 1 ||
-			tournament.brackets[1].isUnderground ||
-			!tournament.brackets[0].everyMatchOver
-		) {
-			return 0;
-		}
-
-		return 1;
-	};
-	const [bracketIdxParam, setBracketIdx] = useSearchParam(
-		tournamentBracketsSearchParams,
-		"idx",
-	);
-	const bracketIdx = bracketIdxParam ?? defaultBracketIdx();
-
-	const bracket = React.useMemo(
-		() => tournament.bracketByIdxOrDefault(bracketIdx),
-		[tournament, bracketIdx],
-	);
+	const bracket = tournament.bracketByIdx(data.bracketIdx);
 
 	useWebsocketRevalidation(
 		tournamentWebsocketRoom(tournament.ctx.id),
 		!tournament.ctx.isFinalized,
 	);
 
-	const teamProgressStatus = tournament.teamMemberOfProgressStatus(user);
+	const teamProgressStatus = data.teamProgressStatus;
 	const showAddSubsButton =
 		!tournament.canFinalize(user) &&
 		!tournament.everyBracketOver &&
@@ -137,20 +153,16 @@ export default function TournamentBracketsPage() {
 		});
 	};
 
-	const teamsSourceText = () => {
-		if (
-			tournament.brackets[0].type === "round_robin" &&
-			!bracket.isUnderground
-		) {
+	const teamsSourceText = (bracket: BracketType) => {
+		const firstBracket = tournament.bracketsMeta[0];
+
+		if (firstBracket.type === "round_robin" && !bracket.isUnderground) {
 			return `Teams that place in the top ${Math.max(
 				...(bracket.sources ?? []).flatMap((s) => s.placements),
 			)} of their group will advance to this stage`;
 		}
 
-		if (
-			tournament.brackets[0].type === "round_robin" &&
-			bracket.isUnderground
-		) {
+		if (firstBracket.type === "round_robin" && bracket.isUnderground) {
 			const placements = (
 				bracket.sources?.flatMap((s) => s.placements) ?? []
 			).sort((a, b) => a - b);
@@ -158,28 +170,22 @@ export default function TournamentBracketsPage() {
 			return `Teams that don't advance to the final stage can play in this bracket (placements: ${placements.join(", ")})`;
 		}
 
-		if (
-			tournament.brackets[0].type === "double_elimination" &&
-			bracket.isUnderground
-		) {
+		if (firstBracket.type === "double_elimination" && bracket.isUnderground) {
 			return `Teams that get eliminated in the first ${Math.abs(
 				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
 			)} rounds of the losers bracket can play in this bracket`;
 		}
 
-		if (
-			tournament.brackets[0].type === "single_elimination" &&
-			bracket.isUnderground
-		) {
+		if (firstBracket.type === "single_elimination" && bracket.isUnderground) {
 			return `Teams that get eliminated in the first ${Math.abs(
 				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
 			)} rounds can play in this bracket`;
 		}
 
-		const advanceThreshold = tournament.brackets[0].settings?.advanceThreshold;
+		const advanceThreshold = firstBracket.settings?.advanceThreshold;
 		if (
 			advanceThreshold &&
-			tournament.ctx.settings.bracketProgression[bracketIdx].sources?.[0]
+			tournament.ctx.settings.bracketProgression[bracket.idx].sources?.[0]
 				.placements.length === 0
 		) {
 			return `Teams that win at least ${advanceThreshold} sets in the Swiss bracket will advance to this stage`;
@@ -198,7 +204,9 @@ export default function TournamentBracketsPage() {
 			{showTeamActionsRow ? (
 				<div className="stack horizontal mb-4 sm justify-between items-center">
 					{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
-					{!tournament.isLeagueDivision ? <TournamentTeamActions /> : null}
+					{!tournament.isLeagueDivision ? (
+						<TournamentTeamActions status={teamProgressStatus} />
+					) : null}
 					{showAddSubsButton ? <AddSubsPopOver /> : null}
 				</div>
 			) : null}
@@ -206,7 +214,8 @@ export default function TournamentBracketsPage() {
 				<div className="stack horizontal sm mb-4">
 					{tournament.canFinalize(user) ? (
 						<LinkButton
-							to="finalize"
+							// keeps the selected bracket, which the loader reads from the search params
+							to={{ pathname: "finalize", search: location.search }}
 							testId="finalize-tournament-button"
 							icon={<Stamp />}
 						>
@@ -224,15 +233,15 @@ export default function TournamentBracketsPage() {
 					) : null}
 				</div>
 			) : null}
-			<BracketTabs bracketIdx={bracketIdx} setBracketIdx={setBracketIdx}>
-				{(currentBracket, currentBracketIdx) => (
+			<BracketTabs loadedBracketIdx={data.bracketIdx}>
+				{bracket ? (
 					<BracketTabContent
-						bracket={currentBracket}
-						bracketIdx={currentBracketIdx}
+						bracket={bracket}
+						bracketIdx={data.bracketIdx}
 						waitingForTeamsText={waitingForTeamsText}
 						teamsSourceText={teamsSourceText}
 					/>
-				)}
+				) : null}
 			</BracketTabs>
 		</div>
 	);
@@ -265,8 +274,7 @@ function useScrollToMatchOnLoad() {
 
 function eligibleTeamCountForBracket(
 	tournament: Tournament,
-	bracket: BracketType,
-	bracketIdx: number,
+	bracket: BracketMeta,
 ) {
 	if (bracket.sources) {
 		return (
@@ -280,17 +288,13 @@ function eligibleTeamCountForBracket(
 	}
 
 	return tournament.ctx.teams.filter(
-		(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+		(team) => (team.startingBracketIdx ?? 0) === bracket.idx,
 	).length;
 }
 
-function bracketTabTeamCount(
-	tournament: Tournament,
-	bracket: BracketType,
-	bracketIdx: number,
-) {
+function bracketTabTeamCount(tournament: Tournament, bracket: BracketMeta) {
 	return bracket.preview
-		? eligibleTeamCountForBracket(tournament, bracket, bracketIdx)
+		? eligibleTeamCountForBracket(tournament, bracket)
 		: bracket.participantTournamentTeamIds.length;
 }
 
@@ -450,11 +454,11 @@ function AddSubsPopOver() {
 	}
 
 	const subsAvailableToAdd =
-		tournament.maxMembersPerTeam - ownedTeam.members.length;
+		tournament.maxMembersPerTeam - ownedTeam.memberUserIds.length;
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
 		tournamentId: tournament.ctx.id,
-		inviteCode: ownedTeam.inviteCode,
+		inviteCode: ownedTeam.inviteCode!,
 	})}`;
 
 	return (
@@ -505,48 +509,61 @@ function SubsPopover({ children }: { children: React.ReactNode }) {
 	);
 }
 
+/**
+ * Bracket switcher. Only the bracket the loader shipped the match data of is rendered;
+ * switching navigates so that the newly selected bracket's data gets loaded.
+ */
 function BracketTabs({
-	bracketIdx,
-	setBracketIdx,
+	loadedBracketIdx,
 	children,
 }: {
-	bracketIdx: number;
-	setBracketIdx: (bracketIdx: number) => void;
-	children: (bracket: BracketType, bracketIdx: number) => React.ReactNode;
+	loadedBracketIdx: number;
+	children: React.ReactNode;
 }) {
 	const tournament = useTournament();
-
-	const visibleBrackets = tournament.ctx.settings.bracketProgression.filter(
-		(_, i) =>
-			!tournament.ctx.isFinalized ||
-			!tournament.bracketByIdxOrDefault(i).preview,
+	const [idxParam, setIdxParam] = useSearchParam(
+		tournamentBracketsSearchParams,
+		"idx",
 	);
+	const navigation = useNavigation();
+
+	const visibleBrackets = tournament.visibleBracketsMeta;
+
+	// while the newly selected bracket is being loaded its tab is already the selected one
+	const pendingIdx = navigation.location
+		? tournamentBracketsSearchParams.parse(
+				new URLSearchParams(navigation.location.search),
+			).idx
+		: null;
+	const requestedIdx = pendingIdx ?? idxParam ?? loadedBracketIdx;
+	// the search param can point to a bracket without a tab e.g. one hidden after finalization
+	const selectedIdx = visibleBrackets.some(
+		(bracket) => bracket.idx === requestedIdx,
+	)
+		? requestedIdx
+		: loadedBracketIdx;
 
 	const bracketNameForTab = (name: string) => name.replace("bracket", "");
 
 	return (
 		<SendouTabs
-			selectedKey={String(bracketIdx)}
-			onSelectionChange={(key) => setBracketIdx(Number(key))}
+			selectedKey={String(selectedIdx)}
+			onSelectionChange={(key) => setIdxParam(Number(key))}
 		>
 			<SendouTabList>
-				{visibleBrackets.map((bracket, i) => (
+				{visibleBrackets.map((bracket) => (
 					<SendouTab
 						key={bracket.name}
-						id={String(i)}
-						number={bracketTabTeamCount(
-							tournament,
-							tournament.bracketByIdxOrDefault(i),
-							i,
-						)}
+						id={String(bracket.idx)}
+						number={bracketTabTeamCount(tournament, bracket)}
 					>
 						{bracketNameForTab(bracket.name)}
 					</SendouTab>
 				))}
 			</SendouTabList>
-			{visibleBrackets.map((_, i) => (
-				<SendouTabPanel key={i} id={String(i)}>
-					{children(tournament.bracketByIdxOrDefault(i), i)}
+			{visibleBrackets.map((bracket) => (
+				<SendouTabPanel key={bracket.idx} id={String(bracket.idx)}>
+					{bracket.idx === loadedBracketIdx ? children : <Placeholder />}
 				</SendouTabPanel>
 			))}
 		</SendouTabs>
@@ -562,7 +579,7 @@ function BracketTabContent({
 	bracket: BracketType;
 	bracketIdx: number;
 	waitingForTeamsText: (bracket: BracketType, bracketIdx: number) => string;
-	teamsSourceText: () => string | null;
+	teamsSourceText: (bracket: BracketType) => string | null;
 }) {
 	return (
 		<>
@@ -585,7 +602,7 @@ function BracketTabContent({
 					</div>
 					{bracket.sources ? (
 						<div className="text-center text-sm font-semi-bold text-lighter mt-2">
-							{teamsSourceText()}
+							{teamsSourceText(bracket)}
 						</div>
 					) : null}
 					{bracket.requiresCheckIn ? (
@@ -694,8 +711,7 @@ function StartBracketAlert({
 	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
 	const totalTeamsAvailableForTheBracket = eligibleTeamCountForBracket(
 		tournament,
-		bracket,
-		bracketIdx,
+		tournament.bracketsMeta[bracketIdx],
 	);
 
 	return (

@@ -5,7 +5,7 @@ import { logger } from "../utils/logger";
 const SENTRY_ENABLED = Config.sentry.enabled;
 
 export class Routine {
-	private name;
+	readonly name;
 	private func;
 
 	constructor({

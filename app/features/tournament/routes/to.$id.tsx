@@ -8,6 +8,7 @@ import {
 } from "react-router";
 import { containerClassName, Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
+import { isMatchResultsScopedRevalidation } from "~/features/chat/revalidation-scope";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -15,12 +16,14 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
 import { isRevalidation, metaTags } from "../../../utils/remix";
 import { TournamentNav } from "../components/TournamentNav";
+import { parseTournamentLoaderData } from "../core/layout-payload";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 
 export { loader };
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isMatchResultsScopedRevalidation(args)) return false;
 	if (isRevalidation(args)) return args.defaultShouldRevalidate;
 	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
 	if (args.currentParams.id !== args.nextParams.id) {
@@ -35,7 +38,7 @@ export const meta: MetaFunction = (args) => {
 
 	if (!rawData) return [];
 
-	const data = JSON.parse(rawData) as TournamentLoaderData;
+	const data = parseTournamentLoaderData(rawData);
 
 	return metaTags({
 		title: data.tournament.ctx.name,
@@ -55,7 +58,7 @@ export const handle: SendouRouteHandle = {
 
 		if (!rawData) return [];
 
-		const data = JSON.parse(rawData) as TournamentLoaderData;
+		const data = parseTournamentLoaderData(rawData);
 
 		return [
 			{
@@ -69,6 +72,24 @@ export const handle: SendouRouteHandle = {
 };
 
 const TournamentContext = React.createContext<Tournament>(null!);
+
+/**
+ * Overrides the tournament of the subtree, used by the views that load bracket match data
+ * of their own on top of what the layout ships.
+ */
+export function TournamentOverrideProvider({
+	tournament,
+	children,
+}: {
+	tournament: Tournament;
+	children: React.ReactNode;
+}) {
+	return (
+		<TournamentContext.Provider value={tournament}>
+			{children}
+		</TournamentContext.Provider>
+	);
+}
 
 export default function TournamentLayoutShell() {
 	const isHydrated = useHydrated();
@@ -89,7 +110,7 @@ export default function TournamentLayoutShell() {
 export function TournamentLayout() {
 	const rawData = useLoaderData<typeof loader>();
 	const data = React.useMemo(
-		() => JSON.parse(rawData) as TournamentLoaderData,
+		() => parseTournamentLoaderData(rawData),
 		[rawData],
 	);
 	const tournament = React.useMemo(
@@ -111,6 +132,7 @@ export function TournamentLayout() {
 		<>
 			<TournamentNav
 				tournament={tournament}
+				streamsCount={data.streamsCount}
 				hasChildTournaments={data.hasChildTournaments}
 			/>
 			<TournamentContext.Provider value={tournament}>
@@ -152,7 +174,7 @@ type TournamentContext = {
 };
 
 export function useTournament() {
-	return useOutletContext<TournamentContext>().tournament;
+	return React.useContext(TournamentContext);
 }
 
 export function useBracketExpanded() {

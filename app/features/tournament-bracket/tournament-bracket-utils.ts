@@ -39,8 +39,8 @@ export function tournamentTeamToActiveRosterUserIds(
 	}
 
 	// they don't need to select active roster as they have no subs
-	if (team.members.length === teamMinMemberCount) {
-		return team.members.map((member) => member.userId);
+	if (team.memberUserIds.length === teamMinMemberCount) {
+		return team.memberUserIds;
 	}
 
 	return null;
@@ -55,9 +55,9 @@ export function ensureOneStandingPerUser(standings: Standing[]) {
 			...standing,
 			team: {
 				...standing.team,
-				members: standing.team.members.filter((member) => {
-					if (userIds.has(member.userId)) return false;
-					userIds.add(member.userId);
+				memberUserIds: standing.team.memberUserIds.filter((userId) => {
+					if (userIds.has(userId)) return false;
+					userIds.add(userId);
 					return true;
 				}),
 			},

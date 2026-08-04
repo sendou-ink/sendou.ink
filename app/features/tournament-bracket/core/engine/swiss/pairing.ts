@@ -18,6 +18,16 @@ import { calculateTeamStatus } from "./team-status";
  */
 const REMATCH_PENALTY = 1_000_000;
 
+/**
+ * Weight added for each team of a pair that has already received a bye, making
+ * previously-byed teams more attractive to pair up. Applied per team (not per pair)
+ * so that a matching leaving a bye-less team unpaired always beats one giving a team
+ * a second bye: with an odd team count exactly one team is left unpaired, so the
+ * matchings differ by exactly one bonus, which is set to dwarf every score-based
+ * weight while staying far below REMATCH_PENALTY.
+ */
+const PRIOR_BYE_PAIRING_BONUS = 10_000;
+
 interface GroupArgs {
 	groupId: number;
 	standings: SwissStanding[];
@@ -285,11 +295,11 @@ function generateWeightedPairs({
 				wt -= 10;
 			}
 
-			if (
-				(Object.hasOwn(curr, "receivedBye") && curr.receivedBye) ||
-				(Object.hasOwn(opp, "receivedBye") && opp.receivedBye)
-			) {
-				wt += 40;
+			if (curr.receivedBye) {
+				wt += PRIOR_BYE_PAIRING_BONUS;
+			}
+			if (opp.receivedBye) {
+				wt += PRIOR_BYE_PAIRING_BONUS;
 			}
 
 			wt -= timesPlayed(curr, opp) * REMATCH_PENALTY;

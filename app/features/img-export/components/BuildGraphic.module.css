@@ -30,8 +30,8 @@
 
 .top500 {
 	position: absolute;
-	top: -3px;
-	right: 16px;
+	top: -16px;
+	right: 14px;
 	z-index: 1;
 }
 

@@ -256,6 +256,8 @@
 	"plans.bgStyle.MINI": "",
 	"plans.adder.objective": "",
 	"plans.ranges": "",
+	"plans.waterLevel.up": "",
+	"plans.waterLevel.down": "",
 	"articles.by": "{{author}} 작성",
 	"theme.light": "라이트",
 	"theme.dark": "다크",

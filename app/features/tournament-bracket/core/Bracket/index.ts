@@ -1,5 +1,5 @@
 import { assertUnreachable } from "~/utils/types";
-import type { CreateBracketArgs } from "./Bracket";
+import type { Bracket, CreateBracketArgs } from "./Bracket";
 import { DoubleEliminationBracket } from "./DoubleEliminationBracket";
 import { RoundRobinBracket } from "./RoundRobinBracket";
 import { SingleEliminationBracket } from "./SingleEliminationBracket";
@@ -8,9 +8,7 @@ import { SwissBracket } from "./SwissBracket";
 export type { CreateBracketArgs, Standing } from "./Bracket";
 export { Bracket } from "./Bracket";
 
-export function createBracket(
-	args: CreateBracketArgs,
-): SingleEliminationBracket | DoubleEliminationBracket | RoundRobinBracket {
+export function createBracket(args: CreateBracketArgs): Bracket {
 	switch (args.type) {
 		case "single_elimination": {
 			return new SingleEliminationBracket(args);

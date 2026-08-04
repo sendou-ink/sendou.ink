@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -10,6 +11,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import {
 	errorToastIfFalsy,
@@ -74,17 +76,29 @@ export const action = async (args: ActionFunctionArgs) => {
 			userId,
 			tournamentId,
 		});
+
+		// this team is not checked in & tournament started, so we can simply delete it
+		const previousTeamIdToDelete =
+			previousTeam &&
+			previousTeam.checkIns.length === 0 &&
+			tournament.hasStarted
+				? previousTeam.id
+				: undefined;
+		const previousTeamPickupChat = previousTeamIdToDelete
+			? await TournamentLFGRepository.findPickupChatTeamById(
+					previousTeamIdToDelete,
+				)
+			: null;
+
 		await TournamentTeamRepository.join({
 			userId,
 			newTeamId: team.id,
-			// this team is not checked in & tournament started, so we can simply delete it
-			previousTeamIdToDelete:
-				previousTeam &&
-				previousTeam.checkIns.length === 0 &&
-				tournament.hasStarted
-					? previousTeam.id
-					: undefined,
+			previousTeamIdToDelete,
 		});
+
+		if (previousTeamPickupChat) {
+			ChatSystemMessage.removeRoom(previousTeamPickupChat.chatCode);
+		}
 
 		ShowcaseTournaments.addToCached({
 			tournamentId,
@@ -92,13 +106,22 @@ export const action = async (args: ActionFunctionArgs) => {
 			userId,
 		});
 
+		await syncPickupChatMetadata({
+			teamId: team.id,
+			tournament: {
+				id: tournamentId,
+				name: tournament.ctx.name,
+				logoUrl: tournament.ctx.logoUrl,
+				startTime: tournament.ctx.startsAt,
+			},
+		});
+
 		if (!tournament.isTest && !tournament.isDraft) {
 			notify({
 				userIds: [userId],
 				notification: {
 					type: "TO_ADDED_TO_TEAM",
-					pictureUrl:
-						tournament.tournamentTeamLogoSrc(team) ?? tournament.ctx.logoUrl,
+					pictureUrl: team.logoUrl ?? tournament.ctx.logoUrl,
 					meta: {
 						adderUsername: user.username,
 						teamName: team.name,
