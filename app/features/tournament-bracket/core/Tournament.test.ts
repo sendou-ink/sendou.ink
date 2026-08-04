@@ -204,6 +204,19 @@ describe("Follow-up bracket progression", () => {
 		}
 	});
 
+	test("initializes an unstarted DE + underground tournament with exactly 2 teams", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: progressions.doubleEliminationWithUnderground,
+				},
+				teams: [tournamentCtxTeam(1), tournamentCtxTeam(2)],
+			},
+		});
+
+		expect(tournament.brackets).toHaveLength(2);
+	});
+
 	// TODO: handle LUTI bracket progression
 	// test("avoids rematches in RR -> SE (LUTI S16 Div 1) - avoid as long as possible", () => {
 	// 	https://github.com/sendou-ink/sendou.ink/pull/2192
