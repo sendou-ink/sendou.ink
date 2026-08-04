@@ -1,6 +1,8 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { getUser } from "~/features/auth/core/user.server";
 import type { Standing } from "~/features/tournament-bracket/core/Bracket";
 import {
+	requireTournamentVisible,
 	tournamentSharedCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -15,6 +17,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 
 	const tournament = await tournamentSharedCached(tournamentId);
+	requireTournamentVisible({ ctx: tournament.ctx, user: getUser() });
+
 	const teams = await tournamentTeamsFullCached({ tournamentId });
 
 	const rosterByTeamId = new Map(

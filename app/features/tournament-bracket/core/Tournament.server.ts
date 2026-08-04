@@ -6,7 +6,6 @@ import * as BracketRepository from "~/features/tournament-bracket/BracketReposit
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { LRUCache } from "~/modules/cache";
-import { isAdmin } from "~/modules/permissions/utils";
 import { IN_MILLISECONDS } from "~/utils/cache.server";
 import {
 	databaseTimestampToDate,
@@ -18,8 +17,11 @@ import type { Bracket } from "./Bracket";
 import { RunningTournaments } from "./RunningTournaments.server";
 import {
 	type BracketDerivedMeta,
+	isTournamentOrganizer,
+	type OptionalIdObject,
 	type SerializedBracket,
 	Tournament,
+	type TournamentOrganizerCtx,
 } from "./Tournament";
 
 const combinedTournamentData = async (tournamentId: number) => {
@@ -56,6 +58,32 @@ export type TournamentDataTeam = Omit<
 	/** Only set for the viewer's own team. */
 	inviteCode: string | null;
 };
+
+/** The parts of a tournament that decide whether it may be seen at all. */
+type TournamentVisibilityCtx = TournamentOrganizerCtx &
+	Pick<TournamentData["ctx"], "settings">;
+
+/**
+ * Ensures the tournament may be seen by the given user. Draft tournaments are only visible
+ * to their organizers.
+ *
+ * Every loader under the tournament layout route must call this. They are each reachable on
+ * their own via single fetch, without the layout loader (and its check) ever running.
+ *
+ * @throws {Response} 404 if the tournament is a draft the user is not an organizer of
+ */
+export function requireTournamentVisible({
+	ctx,
+	user,
+}: {
+	ctx: TournamentVisibilityCtx;
+	user: OptionalIdObject;
+}) {
+	if (!ctx.settings.isDraft) return;
+	if (isTournamentOrganizer({ ctx, user })) return;
+
+	throw new Response(null, { status: 404 });
+}
 
 export async function tournamentData({
 	user,
@@ -119,17 +147,10 @@ function shouldRevealInfo({
 	user,
 }: {
 	tournamentHasStarted: boolean;
-	ctx: Pick<TournamentRepository.FindById, "author" | "staff">;
+	ctx: TournamentOrganizerCtx;
 	user?: { id: number };
 }) {
-	const isOrganizer =
-		ctx.author.id === user?.id ||
-		ctx.staff.some(
-			(staff) => staff.id === user?.id && staff.role === "ORGANIZER",
-		) ||
-		isAdmin(user);
-
-	return tournamentHasStarted || isOrganizer;
+	return tournamentHasStarted || isTournamentOrganizer({ ctx, user });
 }
 
 export async function tournamentFromDB(args: {

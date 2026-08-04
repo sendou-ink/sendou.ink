@@ -1,6 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { tournamentTeamsFullCached } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	requireTournamentVisible,
+	tournamentDataCached,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { badRequestIfFalsy } from "~/utils/remix.server";
 import { tournamentImportTeamsSearchParams } from "../tournament-admin-search-params";
@@ -17,6 +21,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const fromTournamentId = badRequestIfFalsy(
 		tournamentImportTeamsSearchParams.parse(request).fromTournamentId,
 	);
+
+	const { ctx } = await tournamentDataCached({
+		tournamentId: fromTournamentId,
+	});
+	requireTournamentVisible({ ctx, user });
 
 	const fromTournamentTeams = await tournamentTeamsFullCached({
 		tournamentId: fromTournamentId,

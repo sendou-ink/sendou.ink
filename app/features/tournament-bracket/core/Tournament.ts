@@ -1365,24 +1365,7 @@ export class Tournament {
 
 	/** Checks if the given user is an organizer of the tournament. */
 	isOrganizer(user: OptionalIdObject) {
-		if (!user) return false;
-		if (isAdmin(user)) return true;
-
-		if (this.ctx.author.id === user.id) return true;
-
-		if (
-			this.ctx.organization?.members.some(
-				(member) =>
-					member.userId === user.id &&
-					["ADMIN", "ORGANIZER"].includes(member.role),
-			)
-		) {
-			return true;
-		}
-
-		return this.ctx.staff.some(
-			(staff) => staff.id === user.id && staff.role === "ORGANIZER",
-		);
+		return isTournamentOrganizer({ ctx: this.ctx, user });
 	}
 
 	/** Checks if the given user is an organizer or streamer of the tournament. */
@@ -1455,4 +1438,41 @@ export class Tournament {
 	get streamingParticipantIds(): number[] {
 		return [...this.streamingParticipants.keys()];
 	}
+}
+
+/** The parts of a tournament that decide who organizes it. */
+export type TournamentOrganizerCtx = Pick<
+	TournamentData["ctx"],
+	"author" | "staff" | "organization"
+>;
+
+/**
+ * Checks if the given user is an organizer of the tournament, off its context alone.
+ * {@link Tournament.isOrganizer} is the same check for when a `Tournament` is at hand.
+ */
+export function isTournamentOrganizer({
+	ctx,
+	user,
+}: {
+	ctx: TournamentOrganizerCtx;
+	user: OptionalIdObject;
+}) {
+	if (!user) return false;
+	if (isAdmin(user)) return true;
+
+	if (ctx.author.id === user.id) return true;
+
+	if (
+		ctx.organization?.members.some(
+			(member) =>
+				member.userId === user.id &&
+				["ADMIN", "ORGANIZER"].includes(member.role),
+		)
+	) {
+		return true;
+	}
+
+	return ctx.staff.some(
+		(staff) => staff.id === user.id && staff.role === "ORGANIZER",
+	);
 }

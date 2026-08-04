@@ -13,6 +13,7 @@ import {
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
+	requireTournamentVisible,
 	tournamentFromDBCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -43,6 +44,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		user: undefined,
 	});
+	requireTournamentVisible({ ctx: tournament.ctx, user });
+
 	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
 	const teamFullById = (tournamentTeamId: number) =>
 		teamsFull.find((team) => team.id === tournamentTeamId);

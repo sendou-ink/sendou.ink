@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import {
+	requireTournamentVisible,
 	tournamentDataCached,
 	tournamentSharedCached,
 	tournamentTeamsFullCached,
@@ -27,6 +28,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const user = getUser();
 	const tournament = await tournamentDataCached({ tournamentId });
+	requireTournamentVisible({ ctx: tournament.ctx, user });
+
 	const team = (await tournamentTeamsFullCached({ tournamentId, user })).find(
 		(t) => t.id === tournamentTeamId,
 	);

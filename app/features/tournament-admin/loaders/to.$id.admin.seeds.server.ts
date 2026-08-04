@@ -1,7 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
+import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
+	requireTournamentVisible,
 	tournamentFromDBCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -16,6 +18,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		user: undefined,
 	});
+	requireTournamentVisible({ ctx: tournament.ctx, user: getUser() });
+
 	const rosterByTeamId = new Map(
 		(await tournamentTeamsFullCached({ tournamentId })).map((team) => [
 			team.id,

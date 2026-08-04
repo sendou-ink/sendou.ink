@@ -4,6 +4,7 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import {
+	requireTournamentVisible,
 	tournamentFromDBCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -20,6 +21,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const tournament = await tournamentFromDBCached({ tournamentId, user });
+	requireTournamentVisible({ ctx: tournament.ctx, user });
+
 	const teamMemberOf = tournament.teamMemberOfByUser(user);
 
 	if (!teamMemberOf) {

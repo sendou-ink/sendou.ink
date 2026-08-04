@@ -3,6 +3,7 @@ import * as R from "remeda";
 import type { Pronouns } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import {
+	requireTournamentVisible,
 	tournamentFromDBCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -30,6 +31,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		user,
 	});
+	requireTournamentVisible({ ctx: tournament.ctx, user });
 
 	if (!tournament.lfgEnabled) {
 		throw new Response(null, { status: 404 });

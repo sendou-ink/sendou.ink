@@ -4,6 +4,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 import {
+	requireTournamentVisible,
 	serializeBracket,
 	tournamentSharedCached,
 } from "../core/Tournament.server";
@@ -20,6 +21,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 
 	const tournament = await tournamentSharedCached(tournamentId);
+	requireTournamentVisible({ ctx: tournament.ctx, user });
 
 	const bracketIdx = resolveBracketIdx(
 		tournament,
