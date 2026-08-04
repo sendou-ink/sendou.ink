@@ -9,8 +9,15 @@ import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-con
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { SendouForm } from "~/form/SendouForm";
+import invariant from "~/utils/invariant";
 import { tournamentAdminPage } from "~/utils/urls";
-import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
+import {
+	bracketProgressionFormSchema,
+	formValuesToInputBrackets,
+	progressionToFormValues,
+} from "../../calendar/calendar-progression-form";
+import { BracketProgressionFormFields } from "../../calendar/components/BracketProgressionFormFields";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
 
@@ -125,43 +132,56 @@ function BracketReset() {
 function BracketProgressionEdit() {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
-	const [bracketProgression, setBracketProgression] = React.useState<
-		Progression.ParsedBracket[] | null
-	>(tournament.ctx.settings.bracketProgression);
 
 	const disabledBracketIdxs = tournament.brackets
 		.filter((bracket) => !bracket.preview)
 		.map((bracket) => bracket.idx);
 
 	return (
-		<fetcher.Form method="post">
-			{bracketProgression ? (
-				<input
-					type="hidden"
-					name="bracketProgression"
-					value={JSON.stringify(bracketProgression)}
-				/>
-			) : null}
-			<BracketProgressionSelector
-				initialBrackets={Progression.validatedBracketsToInputFormat(
-					tournament.ctx.settings.bracketProgression,
-				).map((bracket, idx) => ({
-					...bracket,
-					disabled: disabledBracketIdxs.includes(idx),
-				}))}
-				isInvitationalTournament={tournament.isInvitational}
-				onChange={setBracketProgression}
+		<SendouForm
+			schema={bracketProgressionFormSchema}
+			defaultValues={progressionToFormValues(
+				tournament.ctx.settings.bracketProgression,
+			)}
+			submitButtonText="Save changes"
+			fullWidth
+			onApply={(values) => {
+				const inputBrackets = formValuesToInputBrackets(
+					values.brackets,
+					values.progression,
+				);
+
+				// started brackets can't be edited in the form, so pass their stored
+				// version through untouched — re-deriving their settings from form
+				// values could register them as changed and fail the server's guard
+				const originalInputBrackets =
+					Progression.validatedBracketsToInputFormat(
+						tournament.ctx.settings.bracketProgression,
+					);
+				for (const idx of disabledBracketIdxs) {
+					if (originalInputBrackets[idx]) {
+						inputBrackets[idx] = originalInputBrackets[idx];
+					}
+				}
+
+				const validated = Progression.validatedBrackets(inputBrackets);
+				invariant(Progression.isBrackets(validated), "Invalid progression");
+
+				fetcher.submit(
+					{
+						_action: "UPDATE_TOURNAMENT_PROGRESSION",
+						bracketProgression: JSON.stringify(validated),
+					},
+					{ method: "post" },
+				);
+			}}
+		>
+			<BracketProgressionFormFields
+				isInvitational={tournament.isInvitational}
+				disabledBracketIdxs={disabledBracketIdxs}
 				isTournamentInProgress
 			/>
-			<div className="stack md horizontal justify-center mt-6">
-				<SubmitButton
-					_action="UPDATE_TOURNAMENT_PROGRESSION"
-					isDisabled={!bracketProgression}
-				>
-					Save changes
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+		</SendouForm>
 	);
 }
 

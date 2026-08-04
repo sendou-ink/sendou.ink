@@ -21,7 +21,11 @@ import {
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { id } from "~/utils/zod";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
-import { bracketProgressionSchema } from "./calendar-schemas";
+import {
+	bracketsFormField,
+	progressionFormField,
+	validateBracketProgressionFormValues,
+} from "./calendar-progression-form";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
 
 /** Single date row of the {@link calendarNewBaseSchema} `date` array (calendar events). */
@@ -120,10 +124,10 @@ export const calendarNewBaseSchema = z.object({
 		],
 	}),
 	pool: customField({ initialValue: "" }, z.string().optional()),
-	bracketProgression: customField(
-		{ initialValue: null },
-		bracketProgressionSchema.nullish(),
-	),
+	// the two bracket progression fields are only rendered (and validated) for
+	// tournaments; for calendar events both stay at their empty initial value
+	brackets: bracketsFormField,
+	progression: progressionFormField,
 	isRanked: toggle({
 		label: "labels.ranked",
 		bottomText: "bottomTexts.ranked",
@@ -190,12 +194,20 @@ export function calendarNewSyncRefine(
 		});
 	}
 
-	if (data.toToolsEnabled && !data.bracketProgression) {
-		ctx.addIssue({
-			path: ["bracketProgression"],
-			code: z.ZodIssueCode.custom,
-			message: "forms:errors.bracketProgressionRequired",
-		});
+	if (data.toToolsEnabled) {
+		if (data.brackets.length === 0) {
+			ctx.addIssue({
+				path: ["brackets"],
+				code: z.ZodIssueCode.custom,
+				message: "forms:errors.bracketProgressionRequired",
+			});
+		} else {
+			validateBracketProgressionFormValues(
+				data.brackets,
+				data.progression,
+				ctx,
+			);
+		}
 	}
 
 	// "Prepicked by teams - All modes" requires one tiebreaker map per ranked mode

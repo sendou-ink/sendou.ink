@@ -137,6 +137,7 @@ export function ArrayFormField({
 							key={itemKey(idx)}
 							index={idx}
 							canRemove={canRemoveAt(idx)}
+							removeButtonTestId={`${name}-remove-item-button`}
 							onRemove={() => handleRemoveAt(idx)}
 							sortable={isSortable}
 							canMoveUp={idx > 0}
@@ -163,6 +164,7 @@ export function ArrayFormField({
 									variant="minimal-destructive"
 									onPress={() => handleRemoveAt(idx)}
 									className={styles.removeButton}
+									data-testid={`${name}-remove-item-button`}
 								/>
 							) : null}
 						</div>
@@ -181,6 +183,7 @@ export function ArrayFormField({
 					onPress={handleAdd}
 					isDisabled={count >= max || disabled}
 					className="m-0-auto"
+					data-testid={`${name}-add-item-button`}
 				>
 					{t("common:actions.add")}
 				</SendouButton>
@@ -193,6 +196,7 @@ function ArrayItemFieldset({
 	index,
 	children,
 	canRemove,
+	removeButtonTestId,
 	onRemove,
 	sortable,
 	canMoveUp,
@@ -203,6 +207,7 @@ function ArrayItemFieldset({
 	index: number;
 	children: React.ReactNode;
 	canRemove: boolean;
+	removeButtonTestId?: string;
 	onRemove: () => void;
 	sortable?: boolean;
 	canMoveUp?: boolean;
@@ -245,6 +250,7 @@ function ArrayItemFieldset({
 					variant="minimal-destructive"
 					onPress={onRemove}
 					isDisabled={!canRemove}
+					data-testid={removeButtonTestId}
 				/>
 			</div>
 			<div className={styles.content}>{children}</div>

@@ -197,29 +197,6 @@ export function isValidDate(date: Date) {
 	return !Number.isNaN(date.getTime());
 }
 
-/** Returns date as a string with the format YYYY-MM-DDThh:mm in user's time zone */
-export function dateToYearMonthDayHourMinuteString(date: Date) {
-	const copiedDate = new Date(date.getTime());
-
-	if (!isValidDate(copiedDate)) {
-		throw new Error("tried to format string from invalid date");
-	}
-
-	const year = copiedDate.getFullYear();
-	const month = copiedDate.getMonth() + 1;
-	const day = copiedDate.getDate();
-	const hour = copiedDate.getHours();
-	const minute = copiedDate.getMinutes();
-
-	return `${year}-${prefixZero(month)}-${prefixZero(day)}T${prefixZero(
-		hour,
-	)}:${prefixZero(minute)}`;
-}
-
-function prefixZero(number: number) {
-	return number < 10 ? `0${number}` : number;
-}
-
 export function getDateAtNextFullHour(date: Date) {
 	const copiedDate = new Date(date.getTime());
 	if (

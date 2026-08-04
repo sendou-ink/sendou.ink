@@ -200,7 +200,7 @@ test.describe("Tournament bracket multi stage", () => {
 
 		const eventEdit = await admin.editEventInfo();
 		await eventEdit.deleteLastBracket();
-		await eventEdit.toggleFollowUpBracketSwitches();
+		await eventEdit.makeAllBracketsStartingBrackets();
 
 		await eventEdit.setBracketFormat(0, "Single-elimination");
 		await eventEdit.setBracketFormat(1, "Single-elimination");

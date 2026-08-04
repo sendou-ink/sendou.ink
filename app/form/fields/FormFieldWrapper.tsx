@@ -67,6 +67,8 @@ interface FormFieldWrapperProps {
 	id: string;
 	name?: string;
 	label?: string;
+	/** Extra element rendered next to the label, e.g. an `<InfoPopover />` explaining the field's syntax. */
+	labelPopover?: React.ReactNode;
 	required?: boolean;
 	error?: string;
 	bottomText?: string;
@@ -78,6 +80,7 @@ export function FormFieldWrapper({
 	id,
 	name,
 	label,
+	labelPopover,
 	required,
 	error,
 	bottomText,
@@ -86,19 +89,28 @@ export function FormFieldWrapper({
 }: FormFieldWrapperProps) {
 	const { translatedLabel } = useTranslatedTexts({ label });
 
+	const labelElement = translatedLabel ? (
+		<Label
+			htmlFor={id}
+			required={required}
+			valueLimits={valueLimits}
+			spaced={false}
+		>
+			{translatedLabel}
+		</Label>
+	) : null;
+
 	return (
 		<div className={styles.root}>
 			<div className="stack xs">
-				{translatedLabel ? (
-					<Label
-						htmlFor={id}
-						required={required}
-						valueLimits={valueLimits}
-						spaced={false}
-					>
-						{translatedLabel}
-					</Label>
-				) : null}
+				{labelElement && labelPopover ? (
+					<div className="stack horizontal xs items-center">
+						{labelElement}
+						{labelPopover}
+					</div>
+				) : (
+					labelElement
+				)}
 				{children}
 				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
 			</div>
