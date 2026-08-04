@@ -132,6 +132,7 @@ export function TournamentLayout() {
 		<>
 			<TournamentNav
 				tournament={tournament}
+				streamsCount={data.streamsCount}
 				hasChildTournaments={data.hasChildTournaments}
 			/>
 			<TournamentContext.Provider value={tournament}>

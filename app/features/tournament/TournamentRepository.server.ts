@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ordinal } from "openskill";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type {
@@ -264,57 +265,6 @@ export async function findById(id: number) {
 					.select(["MapPoolMap.mode", "MapPoolMap.stageId"])
 					.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
 			).as("toSetMapPool"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("LiveStream")
-					.select([
-						"LiveStream.twitch",
-						"LiveStream.viewerCount",
-						"LiveStream.thumbnailUrl",
-					])
-					.where(
-						sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each("Tournament"."castTwitchAccounts"))`,
-					),
-			).as("castStreams"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("LiveStream")
-					.innerJoin(
-						"TournamentTeamMember",
-						"TournamentTeamMember.userId",
-						"LiveStream.userId",
-					)
-					.innerJoin(
-						"TournamentTeam",
-						"TournamentTeam.id",
-						"TournamentTeamMember.tournamentTeamId",
-					)
-					.innerJoin("User", "User.id", "LiveStream.userId")
-					.select((innerEb) => [
-						"LiveStream.userId",
-						"LiveStream.twitch",
-						"LiveStream.viewerCount",
-						"LiveStream.thumbnailUrl",
-						"TournamentTeam.name as teamName",
-						...commonUserSelect(innerEb),
-					])
-					.where("TournamentTeam.tournamentId", "=", id)
-					.where("TournamentTeam.isPlaceholder", "=", 0)
-					.where("LiveStream.twitch", "is not", null)
-					.where(({ exists, selectFrom }) =>
-						exists(
-							selectFrom("TournamentTeamCheckIn")
-								.select("TournamentTeamCheckIn.tournamentTeamId")
-								.whereRef(
-									"TournamentTeamCheckIn.tournamentTeamId",
-									"=",
-									"TournamentTeam.id",
-								),
-						),
-					)
-					.groupBy("LiveStream.userId")
-					.$narrowType<{ userId: NotNull; twitch: NotNull }>(),
-			).as("participantStreams"),
 		])
 		.where("Tournament.id", "=", id)
 		.$narrowType<{ author: NotNull }>()
@@ -378,6 +328,67 @@ function latestTeamIdByDuplicatedUserId(
 	}
 
 	return result;
+}
+
+/**
+ * Live streams of the tournament: streams of checked-in participants and the streams
+ * of the tournament's cast Twitch accounts. Kept out of {@link findById} so the
+ * frequently changing stream data does not live in the cached tournament context.
+ */
+export async function findStreamsByTournamentId(tournamentId: number) {
+	const [participantStreams, castStreams] = await Promise.all([
+		db
+			.selectFrom("LiveStream")
+			.innerJoin(
+				"TournamentTeamMember",
+				"TournamentTeamMember.userId",
+				"LiveStream.userId",
+			)
+			.innerJoin(
+				"TournamentTeam",
+				"TournamentTeam.id",
+				"TournamentTeamMember.tournamentTeamId",
+			)
+			.innerJoin("User", "User.id", "LiveStream.userId")
+			.select((eb) => [
+				"LiveStream.userId",
+				"LiveStream.twitch",
+				"LiveStream.viewerCount",
+				"LiveStream.thumbnailUrl",
+				"TournamentTeam.name as teamName",
+				...commonUserSelect(eb),
+			])
+			.where("TournamentTeam.tournamentId", "=", tournamentId)
+			.where("TournamentTeam.isPlaceholder", "=", 0)
+			.where("LiveStream.twitch", "is not", null)
+			.where(({ exists, selectFrom }) =>
+				exists(
+					selectFrom("TournamentTeamCheckIn")
+						.select("TournamentTeamCheckIn.tournamentTeamId")
+						.whereRef(
+							"TournamentTeamCheckIn.tournamentTeamId",
+							"=",
+							"TournamentTeam.id",
+						),
+				),
+			)
+			.groupBy("LiveStream.userId")
+			.$narrowType<{ userId: NotNull; twitch: NotNull }>()
+			.execute(),
+		db
+			.selectFrom("LiveStream")
+			.select([
+				"LiveStream.twitch",
+				"LiveStream.viewerCount",
+				"LiveStream.thumbnailUrl",
+			])
+			.where(
+				sql<boolean>`"LiveStream"."twitch" IN (SELECT value FROM json_each((SELECT "castTwitchAccounts" FROM "Tournament" WHERE "Tournament"."id" = ${tournamentId})))`,
+			)
+			.execute(),
+	]);
+
+	return { participantStreams, castStreams };
 }
 
 /** User ids of everyone who played at least one map of the tournament. */
@@ -662,6 +673,24 @@ export function findChildTournamentsForDivCalc(parentTournamentId: number) {
 			"Tournament.isFinalized",
 		])
 		.where("Tournament.parentTournamentId", "=", parentTournamentId)
+		.execute();
+}
+
+/**
+ * Per-user results of a finalized tournament as persisted at finalization time.
+ * Empty for tournaments that have not been finalized.
+ */
+export function findResultsByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("TournamentResult")
+		.select([
+			"TournamentResult.tournamentTeamId",
+			"TournamentResult.userId",
+			"TournamentResult.placement",
+			"TournamentResult.div",
+		])
+		.where("TournamentResult.tournamentId", "=", tournamentId)
+		.orderBy("TournamentResult.placement", "asc")
 		.execute();
 }
 
@@ -1606,13 +1635,17 @@ export function updateTeamSeeds({
 						.execute()
 				: [];
 
+		const membersByTeamId = R.groupBy(
+			memberRows,
+			(member) => member.tournamentTeamId,
+		);
 		const snapshot = JSON.stringify({
 			savedAt: databaseTimestampNow(),
 			teams: teamIds.map((teamId) => ({
 				teamId,
-				members: memberRows
-					.filter((member) => member.tournamentTeamId === teamId)
-					.map(({ userId, username }) => ({ userId, username })),
+				members: (membersByTeamId[teamId] ?? []).map(
+					({ userId, username }) => ({ userId, username }),
+				),
 			})),
 		});
 		await trx

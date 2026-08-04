@@ -1,13 +1,13 @@
-import { type LoaderFunctionArgs, redirect } from "react-router";
+import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
-	tournamentFromDBCached,
+	requireTournamentOrganizer,
+	tournamentSharedCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
-import { tournamentPage } from "~/utils/urls";
 import { id } from "~/utils/zod";
 
 export type TournamentAdminRegistrationLoaderData = SerializeFrom<
@@ -21,10 +21,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: z.object({ id, tid: id.optional() }),
 	});
 
-	const tournament = await tournamentFromDBCached({ tournamentId, user });
-	if (!tournament.isOrganizer(user)) {
-		throw redirect(tournamentPage(tournamentId));
-	}
+	const tournament = await tournamentSharedCached(tournamentId);
+	requireTournamentOrganizer({ tournament, user });
 
 	if (typeof tournamentTeamId !== "number") return { team: null };
 

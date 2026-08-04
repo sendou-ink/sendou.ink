@@ -1,24 +1,21 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
+import { getUser } from "~/features/auth/core/user.server";
 import {
-	requireTournamentOrganizer,
+	fetchTournamentStreams,
+	requireTournamentVisible,
 	tournamentSharedCached,
-	tournamentTeamsFullInSeedOrder,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
 
-export type TournamentAdminTeamsLoaderData = SerializeFrom<typeof loader>;
+export type TournamentStreamsLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = requireUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 
 	const tournament = await tournamentSharedCached(tournamentId);
-	requireTournamentOrganizer({ tournament, user });
+	requireTournamentVisible({ ctx: tournament.ctx, user: getUser() });
 
-	return {
-		teams: await tournamentTeamsFullInSeedOrder({ tournament, user }),
-	};
+	return { streams: await fetchTournamentStreams(tournamentId) };
 };

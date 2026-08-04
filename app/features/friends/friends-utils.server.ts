@@ -206,8 +206,9 @@ function liveCastAccount(tournament: Tournament, matchId: number) {
 	)?.twitchAccount;
 	if (!castAccount) return null;
 
-	const isLive = tournament.ctx.castStreams.some(
-		(stream) => stream.twitch?.toLowerCase() === castAccount.toLowerCase(),
+	const isLive = tournament.streams.some(
+		(stream) =>
+			stream.twitchUserName.toLowerCase() === castAccount.toLowerCase(),
 	);
 
 	return isLive ? castAccount : null;

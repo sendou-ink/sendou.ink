@@ -78,12 +78,12 @@ export default function TournamentBracketsPage() {
 	const tournament = React.useMemo(
 		() =>
 			data.bracket
-				? layoutTournament.withBrackets(
-						[data.bracket],
-						data.participatedUserIds,
-					)
+				? layoutTournament.withBrackets([data.bracket], {
+						participatedUsers: data.participatedUserIds,
+						streams: data.streams,
+					})
 				: layoutTournament,
-		[layoutTournament, data.bracket, data.participatedUserIds],
+		[layoutTournament, data.bracket, data.participatedUserIds, data.streams],
 	);
 
 	return (

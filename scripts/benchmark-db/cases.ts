@@ -885,6 +885,12 @@ export function buildCases(fx: Fixtures): {
 		TournamentRepository.findById(tournamentId),
 	);
 	add(
+		"TournamentRepository.findStreamsByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findStreamsByTournamentId(tournamentId),
+	);
+	add(
 		"TournamentRepository.findTeamsFullByTournamentId",
 		fx.heavyTournamentId,
 		(tournamentId) =>
@@ -929,6 +935,12 @@ export function buildCases(fx: Fixtures): {
 		fx.parentTournamentId,
 		(parentTournamentId) =>
 			TournamentRepository.findChildTournamentsForDivCalc(parentTournamentId),
+	);
+	add(
+		"TournamentRepository.findResultsByTournamentId",
+		fx.heavyResultsTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findResultsByTournamentId(tournamentId),
 	);
 	add(
 		"TournamentRepository.findLeagueDivParticipantUserIds",

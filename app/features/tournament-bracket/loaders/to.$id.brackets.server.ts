@@ -35,6 +35,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		// the layout does not ship these, standings derived in the view need them
 		participatedUserIds: tournament.participatedUserIds,
 		teamProgressStatus: tournament.teamMemberOfProgressStatus(user),
+		// the match cards' LIVE badges need these, also not shipped by the layout
+		streams: tournament.streams,
 	};
 };
 

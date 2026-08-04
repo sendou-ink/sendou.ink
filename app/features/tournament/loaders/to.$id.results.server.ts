@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { Standing } from "~/features/tournament-bracket/core/Bracket";
 import {
 	requireTournamentVisible,
@@ -47,7 +48,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matches: Standings.matchesPlayed({ tournament, teamId: standing.team.id }),
 	});
 
-	const result = Standings.tournamentStandings(tournament);
+	const persistedStandings = tournament.ctx.isFinalized
+		? Standings.standingsFromPersistedResults({
+				tournament,
+				results:
+					await TournamentRepository.findResultsByTournamentId(tournamentId),
+			})
+		: null;
+	const result =
+		persistedStandings ?? Standings.tournamentStandings(tournament);
 
 	return {
 		standings:

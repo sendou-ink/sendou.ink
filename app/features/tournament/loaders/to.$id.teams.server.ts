@@ -3,7 +3,7 @@ import { getUser } from "~/features/auth/core/user.server";
 import {
 	requireTournamentVisible,
 	tournamentSharedCached,
-	tournamentTeamsFullCached,
+	tournamentTeamsFullInSeedOrder,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { paginate, parseParams } from "~/utils/remix.server";
@@ -23,17 +23,7 @@ export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 	const tournament = await tournamentSharedCached(tournamentId);
 	requireTournamentVisible({ ctx: tournament.ctx, user });
 
-	const rosterByTeamId = new Map(
-		(await tournamentTeamsFullCached({ tournamentId, user })).map((team) => [
-			team.id,
-			team,
-		]),
-	);
-	// the tournament's own seed order, which is not the order rows come back in
-	const teams = tournament.ctx.teams.flatMap((team) => {
-		const withRoster = rosterByTeamId.get(team.id);
-		return withRoster ? [withRoster] : [];
-	});
+	const teams = await tournamentTeamsFullInSeedOrder({ tournament, user });
 
 	const { currentPage, pagesCount } = paginate({
 		url,

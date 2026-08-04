@@ -80,6 +80,23 @@ export type SerializedBracket = {
 	startTime: number | null;
 };
 
+/** One live stream of the tournament: a participant's stream or an official cast stream. */
+export type TournamentStream = {
+	thumbnailUrl: string;
+	twitchUserName: string;
+	viewerCount: number;
+	userId: number | null;
+	teamName: string | null;
+	user: {
+		id: number;
+		username: string;
+		discordId: string;
+		discordAvatar: string | null;
+		customUrl: string | null;
+		customAvatarUrl: string | null;
+	} | null;
+};
+
 type TournamentArgs = {
 	/** Match data of every bracket. Absent in the views that only got {@link bracketsMeta}. */
 	data?: TournamentData["data"];
@@ -90,6 +107,8 @@ type TournamentArgs = {
 	brackets?: SerializedBracket[];
 	/** User ids of everyone who played at least one map. */
 	participatedUsers?: number[];
+	/** Live streams of the tournament. Absent in the views whose loader does not ship them. */
+	streams?: TournamentStream[];
 };
 
 /** The progress status of a team member in a running tournament, as resolved by {@link Tournament.teamMemberOfProgressStatus}. */
@@ -150,12 +169,17 @@ export class Tournament {
 	 */
 	withBrackets(
 		brackets: SerializedBracket[],
-		participatedUsers?: number[] | null,
+		extras?: {
+			participatedUsers?: number[] | null;
+			streams?: TournamentStream[];
+		},
 	) {
 		return new Tournament({
 			...this.args,
 			brackets,
-			participatedUsers: participatedUsers ?? this.args.participatedUsers,
+			participatedUsers:
+				extras?.participatedUsers ?? this.args.participatedUsers,
+			streams: extras?.streams ?? this.args.streams,
 		});
 	}
 
@@ -1074,19 +1098,34 @@ export class Tournament {
 	 * Returns the progress status of the user in the tournament, or null if not participating.
 	 * e.g. might return "WAITING_FOR_MATCH" if the user is waiting for their next match or "WAITING_FOR_CAST" if the match is ready to be played but locked waiting for the cast.
 	 */
+	/**
+	 * The started brackets, built without generating the previews of the others.
+	 * Generating a preview bracket is expensive, so prefer this over filtering
+	 * {@link brackets} when only the started ones are needed.
+	 */
+	private get startedBrackets(): Bracket[] {
+		const data = this.data;
+		if (!data) return this.brackets.filter((bracket) => !bracket.preview);
+
+		return this.ctx.settings.bracketProgression.flatMap(
+			(progressionBracket, idx) =>
+				data.stage.some((stage) => stage.name === progressionBracket.name)
+					? [this.builtBracketByIdx(idx)]
+					: [],
+		);
+	}
+
 	teamMemberOfProgressStatus(user: OptionalIdObject) {
 		const team = this.teamMemberOfByUser(user);
 		if (!team) return null;
 
-		if (
-			this.brackets.every((bracket) => bracket.preview) &&
-			!this.regularCheckInIsOpen
-		) {
+		const startedBrackets = this.startedBrackets;
+
+		if (startedBrackets.length === 0 && !this.regularCheckInIsOpen) {
 			return null;
 		}
 
-		for (const bracket of this.brackets) {
-			if (bracket.preview) continue;
+		for (const bracket of startedBrackets) {
 			for (const match of bracket.data.match) {
 				const isParticipant =
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id;
@@ -1152,8 +1191,8 @@ export class Tournament {
 			}
 		}
 
-		for (const bracket of this.brackets) {
-			if (bracket.preview || bracket.type !== "swiss") continue;
+		for (const bracket of startedBrackets) {
+			if (bracket.type !== "swiss") continue;
 
 			// TODO: both seeding and participantTournamentTeamIds are used for the same thing
 			const isParticipant = bracket.participantTournamentTeamIds.includes(
@@ -1185,22 +1224,19 @@ export class Tournament {
 		if (team.checkIns.length === 0) return null;
 
 		if (!team.droppedOut) {
-			for (const bracket of this.brackets) {
-				if (
-					bracket.type !== "round_robin" ||
-					bracket.preview ||
-					bracket.everyMatchOver
-				) {
+			for (const bracket of startedBrackets) {
+				if (bracket.type !== "round_robin" || bracket.everyMatchOver) {
 					continue;
 				}
 
 				const isParticipant = bracket.participantTournamentTeamIds.includes(
 					team.id,
 				);
-				const hasFollowUpBrackets = this.brackets.some((otherBracket) =>
-					otherBracket.sources?.some(
-						(source) => source.bracketIdx === bracket.idx,
-					),
+				const hasFollowUpBrackets = this.ctx.settings.bracketProgression.some(
+					(progressionBracket) =>
+						progressionBracket.sources?.some(
+							(source) => source.bracketIdx === bracket.idx,
+						),
 				);
 
 				if (isParticipant && hasFollowUpBrackets) {
@@ -1404,35 +1440,9 @@ export class Tournament {
 		);
 	}
 
-	get streams() {
-		const memberStreams = this.ctx.participantStreams.map((stream) => ({
-			thumbnailUrl: stream.thumbnailUrl,
-			twitchUserName: stream.twitch,
-			viewerCount: stream.viewerCount,
-			userId: stream.userId as number | null,
-			teamName: stream.teamName as string | null,
-			user: {
-				id: stream.id,
-				username: stream.username,
-				discordId: stream.discordId,
-				discordAvatar: stream.discordAvatar,
-				customUrl: stream.customUrl,
-				customAvatarUrl: stream.customAvatarUrl,
-			},
-		}));
-
-		const castStreams = this.ctx.castStreams.map((stream) => ({
-			thumbnailUrl: stream.thumbnailUrl,
-			twitchUserName: stream.twitch!,
-			viewerCount: stream.viewerCount,
-			userId: null as number | null,
-			teamName: null as string | null,
-			user: null,
-		}));
-
-		return [...memberStreams, ...castStreams].sort(
-			(a, b) => b.viewerCount - a.viewerCount,
-		);
+	/** Live streams of the tournament, empty in the views whose loader did not ship them. */
+	get streams(): TournamentStream[] {
+		return this.args.streams ?? [];
 	}
 
 	/** Twitch account of every participant streaming the tournament right now, keyed by their user id. */

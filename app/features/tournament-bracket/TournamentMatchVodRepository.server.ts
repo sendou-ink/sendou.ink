@@ -1,4 +1,5 @@
 import { subDays, subHours } from "date-fns";
+import { sql } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
@@ -49,10 +50,8 @@ export function findVodsByTournamentId(tournamentId: number) {
 					"=",
 					"TournamentMatchVod.userId",
 				)
-				.whereRef(
-					"TournamentTeam.tournamentId",
-					"=",
-					"TournamentStage.tournamentId",
+				.where(
+					sql<boolean>`"TournamentTeam"."id" in (json_extract("TournamentMatch"."opponentOne", '$.id'), json_extract("TournamentMatch"."opponentTwo", '$.id'))`,
 				)
 				.as("teamName"),
 		])

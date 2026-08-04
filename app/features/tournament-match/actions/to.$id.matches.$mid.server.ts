@@ -310,12 +310,15 @@ export const action: ActionFunction = async ({ params, request }) => {
 				match.opponentOne.id,
 				match.opponentTwo.id,
 			]);
+			const teamOneCtx = tournament.teamById(match.opponentOne.id);
+			const teamTwoCtx = tournament.teamById(match.opponentTwo.id);
+			invariant(teamOneCtx && teamTwoCtx, "Teams are missing");
 			const teamOne = {
-				...tournament.teamById(match.opponentOne.id)!,
+				...teamOneCtx,
 				mapPool: mapPools.get(match.opponentOne.id) ?? [],
 			};
 			const teamTwo = {
-				...tournament.teamById(match.opponentTwo.id)!,
+				...teamTwoCtx,
 				mapPool: mapPools.get(match.opponentTwo.id) ?? [],
 			};
 

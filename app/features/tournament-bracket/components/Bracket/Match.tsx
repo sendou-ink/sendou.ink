@@ -82,7 +82,7 @@ export function Match(props: MatchProps) {
 function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	const tournament = useTournament();
 	const vods = useTournamentVods();
-	const streamingParticipants = tournament.streamingParticipantIds ?? [];
+	const streamingParticipants = tournament.streamingParticipantIds;
 
 	const prefix = () => {
 		if (type === "winners") return "WB ";

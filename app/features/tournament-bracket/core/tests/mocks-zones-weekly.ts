@@ -2,6 +2,7 @@ import type { TournamentData } from "../Tournament.server";
 
 /** Zones Weekly 38 with every round of swiss finished, last round's matches not generated */
 export const ZONES_WEEKLY_38 = (): TournamentData => ({
+	streams: [],
 	data: {
 		stage: [
 			{
@@ -634,7 +635,5 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			},
 		],
 		latestTeamIdByDuplicatedUserId: {},
-		castStreams: [],
-		participantStreams: [],
 	},
 });

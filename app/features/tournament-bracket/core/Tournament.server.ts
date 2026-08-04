@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import { redirect } from "react-router";
 import { ServerConfig } from "~/config.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -13,6 +14,7 @@ import {
 } from "~/utils/dates";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
+import { tournamentPage } from "~/utils/urls";
 import type { Bracket } from "./Bracket";
 import { RunningTournaments } from "./RunningTournaments.server";
 import {
@@ -22,6 +24,7 @@ import {
 	type SerializedBracket,
 	Tournament,
 	type TournamentOrganizerCtx,
+	type TournamentStream,
 } from "./Tournament";
 
 const combinedTournamentData = async (tournamentId: number) => {
@@ -33,8 +36,50 @@ const combinedTournamentData = async (tournamentId: number) => {
 		ctx,
 		participatedUsers:
 			await TournamentRepository.findParticipatedUserIdsById(tournamentId),
+		streams: await fetchTournamentStreams(tournamentId),
 	};
 };
+
+/**
+ * Live streams of the tournament read fresh from the database, bypassing the tournament
+ * data cache. The streams view and bracket views ship these; the cached copy (read once
+ * per cache fill) only serves the server-side consumers of running tournaments.
+ */
+export async function fetchTournamentStreams(
+	tournamentId: number,
+): Promise<TournamentStream[]> {
+	const { participantStreams, castStreams } =
+		await TournamentRepository.findStreamsByTournamentId(tournamentId);
+
+	const memberStreams = participantStreams.map((stream) => ({
+		thumbnailUrl: stream.thumbnailUrl,
+		twitchUserName: stream.twitch,
+		viewerCount: stream.viewerCount,
+		userId: stream.userId as number | null,
+		teamName: stream.teamName as string | null,
+		user: {
+			id: stream.id,
+			username: stream.username,
+			discordId: stream.discordId,
+			discordAvatar: stream.discordAvatar,
+			customUrl: stream.customUrl,
+			customAvatarUrl: stream.customAvatarUrl,
+		},
+	}));
+
+	const casts = castStreams.map((stream) => ({
+		thumbnailUrl: stream.thumbnailUrl,
+		twitchUserName: stream.twitch!,
+		viewerCount: stream.viewerCount,
+		userId: null,
+		teamName: null,
+		user: null,
+	}));
+
+	return [...memberStreams, ...casts].sort(
+		(a, b) => b.viewerCount - a.viewerCount,
+	);
+}
 
 export type TournamentData = NonNullable<Unwrapped<typeof tournamentData>>;
 
@@ -87,6 +132,24 @@ export function requireTournamentVisible({
 	throw new Response(null, { status: 404 });
 }
 
+/**
+ * Ensures the given user organizes the tournament, sending non-organizers back to the
+ * tournament's front page. Admin view loaders call this after {@link tournamentSharedCached}.
+ *
+ * @throws {Response} redirect to the tournament page for non-organizers
+ */
+export function requireTournamentOrganizer({
+	tournament,
+	user,
+}: {
+	tournament: Tournament;
+	user: OptionalIdObject;
+}) {
+	if (tournament.isOrganizer(user)) return;
+
+	throw redirect(tournamentPage(tournament.ctx.id));
+}
+
 export async function tournamentData({
 	user,
 	tournamentId,
@@ -104,11 +167,13 @@ function dataMapped({
 	data,
 	ctx,
 	participatedUsers,
+	streams,
 	user,
 }: {
 	data: BracketData;
 	ctx: TournamentRepository.FindById;
 	participatedUsers: number[];
+	streams: TournamentStream[];
 	user?: { id: number };
 }) {
 	const revealInfo = shouldRevealInfo({
@@ -125,6 +190,7 @@ function dataMapped({
 	return {
 		data,
 		participatedUsers,
+		streams,
 		ctx: {
 			...ctx,
 			tentativeTier,
@@ -347,6 +413,29 @@ export async function tournamentTeamsFullCached({
 	}
 
 	return entry.anonymousCensored;
+}
+
+/**
+ * {@link tournamentTeamsFullCached} in the tournament's own seed order, which is not
+ * the order the team rows come back in.
+ */
+export async function tournamentTeamsFullInSeedOrder({
+	tournament,
+	user,
+}: {
+	tournament: Tournament;
+	user?: { id: number };
+}) {
+	const rosterByTeamId = new Map(
+		(
+			await tournamentTeamsFullCached({ tournamentId: tournament.ctx.id, user })
+		).map((team) => [team.id, team]),
+	);
+
+	return tournament.ctx.teams.flatMap((team) => {
+		const withRoster = rosterByTeamId.get(team.id);
+		return withRoster ? [withRoster] : [];
+	});
 }
 
 function tournamentTeamsCacheEntry(tournamentId: number) {

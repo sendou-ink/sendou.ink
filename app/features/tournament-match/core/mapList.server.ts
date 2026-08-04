@@ -123,7 +123,10 @@ export async function resolveMatchMapList({
 				})
 			: undefined;
 
-	const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds(teams);
+	const mapPools =
+		match.mapPickingStyle !== "TO"
+			? await TournamentTeamRepository.findMapPoolsByTeamIds(teams)
+			: new Map<number, Array<{ mode: ModeShort; stageId: StageId }>>();
 
 	return resolveMapList({
 		tournamentId: match.tournamentId,

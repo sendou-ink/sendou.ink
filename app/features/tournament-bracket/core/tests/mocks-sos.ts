@@ -4,6 +4,7 @@ import type { TournamentData } from "../Tournament.server";
 export const SWIM_OR_SINK_167 = (
 	overrides?: TournamentData["ctx"]["bracketProgressionOverrides"],
 ): TournamentData => ({
+	streams: [],
 	data: {
 		stage: [
 			{
@@ -4303,7 +4304,5 @@ export const SWIM_OR_SINK_167 = (
 			},
 		],
 		latestTeamIdByDuplicatedUserId: {},
-		castStreams: [],
-		participantStreams: [],
 	},
 });

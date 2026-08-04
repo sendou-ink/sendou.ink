@@ -2,6 +2,7 @@ import type { TournamentData } from "../Tournament.server";
 
 export const PADDLING_POOL_257 = () =>
 	({
+		streams: [],
 		data: {
 			stage: [
 				{
@@ -2565,13 +2566,12 @@ export const PADDLING_POOL_257 = () =>
 				},
 			],
 			latestTeamIdByDuplicatedUserId: {},
-			castStreams: [],
-			participantStreams: [],
 		},
 	}) as TournamentData;
 
 export const PADDLING_POOL_255 = () =>
 	({
+		streams: [],
 		data: {
 			stage: [
 				{
@@ -5177,8 +5177,6 @@ export const PADDLING_POOL_255 = () =>
 				},
 			],
 			latestTeamIdByDuplicatedUserId: {},
-			castStreams: [],
-			participantStreams: [],
 		},
 	}) as TournamentData;
 
@@ -5187,6 +5185,7 @@ export const IN_THE_ZONE_32 = ({
 	hasCheckedOutTeam = false,
 }) =>
 	({
+		streams: [],
 		data: {
 			stage: [
 				{
@@ -7373,7 +7372,5 @@ export const IN_THE_ZONE_32 = ({
 			toSetMapPool: [],
 			tieBreakerMapPool: [],
 			latestTeamIdByDuplicatedUserId: {},
-			castStreams: [],
-			participantStreams: [],
 		},
 	}) as TournamentData;

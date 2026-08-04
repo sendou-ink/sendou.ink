@@ -1,19 +1,24 @@
 import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import { Redirect } from "~/components/Redirect";
 import { tournamentRegisterPage } from "~/utils/urls";
 import { TournamentStream } from "../components/TournamentStream";
+import type { TournamentStreamsLoaderData } from "../loaders/to.$id.streams.server";
 import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
+
+export { loader } from "../loaders/to.$id.streams.server";
 
 export default function TournamentStreamsPage() {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
+	const { streams } = useLoaderData<TournamentStreamsLoaderData>();
 
 	if (!tournament.hasStarted || tournament.everyBracketOver) {
 		return <Redirect to={tournamentRegisterPage(tournament.ctx.id)} />;
 	}
 
-	if (tournament.streams.length === 0) {
+	if (streams.length === 0) {
 		return (
 			<div className="text-center text-lg font-semi-bold text-lighter">
 				{t("tournament:streams.none")}
@@ -24,7 +29,7 @@ export default function TournamentStreamsPage() {
 	// TODO: link to user page, later tournament team page?
 	return (
 		<div className={styles.streamsGrid}>
-			{tournament.streams.map((stream) => (
+			{streams.map((stream) => (
 				<TournamentStream key={stream.twitchUserName} stream={stream} />
 			))}
 		</div>

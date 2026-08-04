@@ -21,6 +21,8 @@ import { serializeTournamentLoaderData } from "../core/layout-payload";
 
 export type TournamentLoaderData = {
 	tournament: TournamentLayoutData;
+	/** Count for the streams tab badge; the streams view loads the actual streams itself. */
+	streamsCount: number;
 	hasChildTournaments: boolean;
 	friendCodes:
 		| Awaited<
@@ -78,6 +80,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			ctx: tournament.ctx,
 			bracketsMeta: await bracketsMetaCached(tournamentId),
 		},
+		streamsCount: tournament.streams.length,
 		hasChildTournaments,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
