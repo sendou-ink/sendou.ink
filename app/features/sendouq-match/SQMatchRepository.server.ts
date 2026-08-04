@@ -1272,7 +1272,7 @@ async function finalizeMatch({
 	winners: ("ALPHA" | "BRAVO")[];
 	winnerGroupId: number;
 	loserGroupId: number;
-	confirmedByUserId: number;
+	confirmedByUserId: number | null;
 	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
 }) {
 	const { newSkills, differences } = await calculateMatchSkills({
@@ -1323,6 +1323,91 @@ async function finalizeMatch({
 			trx,
 		);
 	});
+}
+
+/** Matches created before the given cutoff whose score was never confirmed and that no cancellation has locked. */
+export function findUnfinishedMatchesCreatedBefore(cutoff: Date) {
+	return db
+		.selectFrom("GroupMatch")
+		.select(["GroupMatch.id", "GroupMatch.chatCode"])
+		.where("GroupMatch.confirmedAt", "is", null)
+		.where("GroupMatch.createdAt", "<", dateToDatabaseTimestamp(cutoff))
+		.where(({ not, exists, selectFrom }) =>
+			not(
+				exists(
+					selectFrom("Skill")
+						.select("Skill.id")
+						.whereRef("Skill.groupMatchId", "=", "GroupMatch.id"),
+				),
+			),
+		)
+		.execute();
+}
+
+export type ResolveUnfinishedMatchResult =
+	| { status: "CANCELED" }
+	| { status: "CONFIRMED" }
+	| { status: "ALREADY_LOCKED" };
+
+/**
+ * Resolves a match the teams never finished: cancels it if the score is not
+ * decisive, otherwise confirms the one team's report on the other's behalf.
+ * Leaves `confirmedByUserId` empty as no user acted.
+ */
+export async function resolveUnfinishedMatch(
+	matchId: number,
+): Promise<ResolveUnfinishedMatchResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked || match.confirmedAt) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	const { mapsToWin, alphaWins, isDecisive } = SendouQMatch.score(match);
+
+	if (!isDecisive) {
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({ winnerGroupId: null })
+				.where("matchId", "=", matchId)
+				.execute();
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+			await lockMatchWithoutSkillChange(match.id, trx);
+			await trx
+				.updateTable("GroupMatch")
+				.set({ cancelRequestedByUserId: null })
+				.where("id", "=", matchId)
+				.execute();
+		});
+		return { status: "CANCELED" };
+	}
+
+	const winnerGroupId =
+		alphaWins >= mapsToWin ? match.groupAlpha.id : match.groupBravo.id;
+	const loserGroupId =
+		alphaWins >= mapsToWin ? match.groupBravo.id : match.groupAlpha.id;
+
+	const winners: ("ALPHA" | "BRAVO")[] = match.mapList
+		.filter((m) => m.winnerGroupId !== null)
+		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
+
+	await finalizeMatch({
+		match,
+		members: buildMembers(match),
+		winners,
+		winnerGroupId,
+		loserGroupId,
+		confirmedByUserId: null,
+		preFinalize: async (trx) => {
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+		},
+	});
+
+	return { status: "CONFIRMED" };
 }
 
 export async function undoMatchReport({
