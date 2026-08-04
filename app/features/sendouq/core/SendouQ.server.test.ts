@@ -6,7 +6,10 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
-import { refreshUserSkills } from "~/features/mmr/tiered.server";
+import {
+	freshUserSkills,
+	refreshUserSkills,
+} from "~/features/mmr/tiered.server";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -168,6 +171,22 @@ describe("SendouQ", () => {
 			expect(group).toBeDefined();
 			expect(group?.members.some((m) => m.id === users.id(5))).toBe(true);
 			expect(group?.members.some((m) => m.id === users.id(1))).toBe(false);
+		});
+
+		test("solo group has the same tier as the user's personal tier", async () => {
+			await createSkill(1, 100);
+			await createSkill(2, 90);
+			await createSkill(3, 80);
+			await createSkill(4, 70);
+			await refreshUserSkills(1);
+
+			await createGroup([1]);
+			await refreshSendouQInstance();
+
+			const ownGroup = SendouQ.findOwnGroup(users.id(1))!;
+			const { userSkills: skills } = await freshUserSkills(1);
+
+			expect(ownGroup.tier).toMatchObject(skills[String(users.id(1))].tier);
 		});
 	});
 

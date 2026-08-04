@@ -557,7 +557,9 @@ class SendouQClass {
 
 		return (
 			this.#intervals.find(
-				(i) => i.neededOrdinal && averageOrdinal > i.neededOrdinal,
+				(i) =>
+					typeof i.neededOrdinal === "number" &&
+					averageOrdinal >= i.neededOrdinal,
 			) ?? { isPlus: false, name: "IRON" }
 		);
 	}
