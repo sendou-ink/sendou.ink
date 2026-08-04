@@ -13,7 +13,7 @@
 	"forms.gear.CLOTHES": "Ropa",
 	"forms.gear.SHOES": "Calzado",
 	"forms.abilities": "Habilidades",
-	"forms.private.info": "Los builds privados son visibles solo para ti.",
+	"forms.private.info": "Las builds privadas solo son visibles para ti.",
 	"deleteConfirm": "¿Borrar build '{{title}}'?",
 	"stats.count.title": "Estadísticas de {{count}} builds para {{weapon}}",
 	"stats.ap.title": "Promedios de puntos de potenciadores",

@@ -4,7 +4,7 @@
 	"q2": "¿Cómo puedo obtener un premio de insignia para mi evento?",
 	"a2": "Desde septiembre de 2024, las insignias pueden ser creadas por cualquier persona con las habilidades necesarias. Consulta el enlace al final de la página de insignias para más información.",
 	"q3": "¿Cómo puedo actualizar mi avatar o nombre de usuario?",
-	"a3": "2) Para que se actualicen de inmediato, puedes usar el comando /update-profile del bot de Discord Lohi.",
+	"a3": "Si actualizas tu nombre de usuario o avatar en Discord, no se actualizan de inmediato en sendou.ink. Para que eso ocurra, tienes dos opciones:\\n\\n1) Si eres miembro del Discord de este sitio o del Plus Server, simplemente puedes esperar. Hay una rutina diaria que se encarga de la actualización.\\n\\n2) Para que se actualicen de inmediato, puedes usar el comando /update-profile del bot de Discord Lohi.",
 	"q4": "Estoy suscrito en Patreon pero no he visto cambio en el sitio.",
 	"a4": "Asegúrate de conectar tu cuenta de Discord en Patreon.com. Después de hacerlo, puede tardar hasta 2 horas en actualizarse en el sitio.",
 	"q5": "¿Hay un app de sendou.ink?",

@@ -17,7 +17,7 @@
 	"actionButtons.kick": "Echar",
 	"kick.header": "¿Echar a {{user}} de {{teamName}}?",
 	"actionButtons.transferOwnership": "Transferir propiedad",
-	"transferOwnership.header": "¿Transferir propiedad de {{teamName}}?",
+	"transferOwnership.header": "¿Transferir la propiedad de {{teamName}} a {{user}}?",
 	"actionButtons.transferOwnership.confirm": "Transferir",
 	"deleteTeam.header": "¿Estás seguro que quieres eliminar a {{teamName}}?",
 	"deleteTeam.profilePicture.header": "¿Seguro que quieres eliminar la foto de perfil del equipo?",
