@@ -750,6 +750,7 @@ export interface TournamentOrganization {
 	socials: JSONColumnTypeNullable<string[]>;
 	avatarImgId: number | null;
 	isEstablished: Generated<DBBoolean>;
+	customTheme: JSONColumnTypeNullable<CustomTheme>;
 }
 
 export interface TournamentOrganizationMember {

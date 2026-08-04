@@ -37,6 +37,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	return {
 		monthlyStats,
 		averageMonthlyParticipants,
+		customTheme: organization.isEstablished ? organization.customTheme : null,
 	};
 }
 

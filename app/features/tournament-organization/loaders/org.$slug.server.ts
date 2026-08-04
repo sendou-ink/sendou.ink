@@ -65,6 +65,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
 
 	return {
 		organization,
+		customTheme: organization.isEstablished ? organization.customTheme : null,
 		events: series
 			? await TournamentOrganizationRepository.findPaginatedEventsBySeries({
 					organizationId: organization.id,

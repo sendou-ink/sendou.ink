@@ -22,6 +22,7 @@
 	"edit.form.badges.title": "Badges",
 	"edit.form.rewards.title": "Rewards",
 	"edit.form.errors.noUnadmin": "Can't remove yourself as an admin",
+	"edit.form.customTheme.title": "Custom theme",
 	"banned.title": "Banned players",
 	"banned.empty": "No players are currently banned from this organization.",
 	"banned.description": "Players who are banned cannot create or join teams in tournaments organized by this organization. This tab is only accessible to the admins of this organization.",
