@@ -12,6 +12,7 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
+import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -94,7 +95,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
+			const pickupChatTeam =
+				await TournamentLFGRepository.findPickupChatTeamById(team.id);
+
 			await TournamentTeamRepository.deleteById(team.id);
+
+			if (pickupChatTeam) {
+				ChatSystemMessage.removeRoom(pickupChatTeam.chatCode);
+			}
 
 			for (const userId of team.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({

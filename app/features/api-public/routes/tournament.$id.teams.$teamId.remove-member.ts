@@ -7,6 +7,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import {
 	errorToastIfFalsy,
 	parseBody,
@@ -69,6 +70,16 @@ export const action = async (args: ActionFunctionArgs) => {
 			tournamentId,
 			type: "participant",
 			userId,
+		});
+
+		await syncPickupChatMetadata({
+			teamId: team.id,
+			tournament: {
+				id: tournamentId,
+				name: tournament.ctx.name,
+				logoUrl: tournament.ctx.logoUrl,
+				startTime: tournament.ctx.startsAt,
+			},
 		});
 
 		clearTournamentDataCache(tournamentId);
