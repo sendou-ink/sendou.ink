@@ -37,25 +37,29 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 /**
- * The bracket to show when the view was opened without one: the first bracket, unless it is
- * over and followed by a bracket the tournament actually continues in.
+ * The bracket to show, always one of the brackets the view actually renders a tab for. Without
+ * a valid `idx` the first bracket, unless it is over and followed by a bracket the tournament
+ * actually continues in.
  */
 function resolveBracketIdx(
 	tournament: Awaited<ReturnType<typeof tournamentSharedCached>>,
 	idx: number | null,
 ) {
-	if (idx !== null && tournament.bracketMetaByIdx(idx)) {
+	const visibleBrackets = tournament.visibleBracketsMeta;
+	const isVisible = (idx: number) =>
+		visibleBrackets.some((bracket) => bracket.idx === idx);
+
+	if (idx !== null && isVisible(idx)) {
 		return idx;
 	}
 
 	const brackets = tournament.bracketsMeta;
-	if (
+	const defaultIdx =
 		brackets.length <= 1 ||
 		brackets[1].isUnderground ||
 		!brackets[0].everyMatchOver
-	) {
-		return 0;
-	}
+			? 0
+			: 1;
 
-	return 1;
+	return isVisible(defaultIdx) ? defaultIdx : (visibleBrackets[0]?.idx ?? 0);
 }

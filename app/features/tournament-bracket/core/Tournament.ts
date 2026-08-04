@@ -193,6 +193,16 @@ export class Tournament {
 		return this._bracketsMeta;
 	}
 
+	/**
+	 * {@link bracketsMeta} of the brackets the user can switch between. Brackets that never
+	 * started are not shown once the tournament has been finalized.
+	 */
+	get visibleBracketsMeta(): BracketMeta[] {
+		return this.bracketsMeta.filter(
+			(bracket) => !this.ctx.isFinalized || !bracket.preview,
+		);
+	}
+
 	/** {@link bracketsMeta} in the shape it is shipped in, i.e. only what match data is needed for. */
 	get bracketsDerivedMeta(): BracketDerivedMeta[] {
 		if (!this._derivedMeta) {

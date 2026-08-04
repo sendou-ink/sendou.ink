@@ -524,9 +524,7 @@ function BracketTabs({
 	);
 	const navigation = useNavigation();
 
-	const visibleBrackets = tournament.bracketsMeta.filter(
-		(bracket) => !tournament.ctx.isFinalized || !bracket.preview,
-	);
+	const visibleBrackets = tournament.visibleBracketsMeta;
 
 	// while the newly selected bracket is being loaded its tab is already the selected one
 	const pendingIdx = navigation.location
@@ -534,7 +532,13 @@ function BracketTabs({
 				new URLSearchParams(navigation.location.search),
 			).idx
 		: null;
-	const selectedIdx = pendingIdx ?? idxParam ?? loadedBracketIdx;
+	const requestedIdx = pendingIdx ?? idxParam ?? loadedBracketIdx;
+	// the search param can point to a bracket without a tab e.g. one hidden after finalization
+	const selectedIdx = visibleBrackets.some(
+		(bracket) => bracket.idx === requestedIdx,
+	)
+		? requestedIdx
+		: loadedBracketIdx;
 
 	const bracketNameForTab = (name: string) => name.replace("bracket", "");
 
