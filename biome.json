@@ -8,6 +8,7 @@
 			"!app/db/seed/data/placements.json",
 			"!build/**/*",
 			"!app/features/cv/tests/fixtures",
+			"!public/cv/**/*",
 			"!test-results/**/*",
 			"!playwright-report/**/*",
 			"!.react-router/**/*",

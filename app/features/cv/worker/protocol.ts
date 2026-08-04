@@ -3,9 +3,9 @@ import type { DetectedEvent, GateResult } from "../core/detectors/types";
 export interface InitRequest {
 	kind: "init";
 	/**
-	 * base URL the worker fetches atlases/templates from (e.g.
-	 * `${Config.staticAssetsUrl}/cv/v1`); passed in the init message so the
-	 * worker bundle stays free of the app config graph
+	 * static assets CDN root the worker fetches icons and atlases from
+	 * (`Config.staticAssetsUrl`); passed in the init message so the worker
+	 * bundle stays free of the app config graph
 	 */
 	assetsBaseUrl: string;
 	/**

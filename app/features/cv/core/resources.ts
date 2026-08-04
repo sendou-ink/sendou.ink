@@ -11,6 +11,12 @@
  * dominated startup.
  */
 
+import { abilities as abilityList } from "~/modules/in-game-lists/abilities";
+import {
+	mainWeaponIds,
+	specialWeaponIds,
+	subWeaponIds,
+} from "~/modules/in-game-lists/weapon-ids";
 import { prepareAbilityTemplates } from "./detectors/death/abilities";
 import { BURST_ICON_TEMPLATE_SIZES } from "./detectors/death/rois";
 import { prepareMinimapAbilityTemplates } from "./detectors/minimap/abilities";
@@ -31,9 +37,7 @@ import type { GlyphSet } from "./glyphs";
 import type { FrameData } from "./image";
 
 export interface ResourceIO {
-	/** ids listed in <assets>/<dir>/manifest.json */
-	readManifest(dir: string): Promise<string[]>;
-	/** decoded RGBA of <assets>/<dir>/<id>.png */
+	/** decoded RGBA of the shared game icon img/<dir>/<id>.avif */
 	readIcon(dir: string, id: string): Promise<FrameData>;
 	/** glyph atlas by name as a (possibly lazy) getter; () => null when absent */
 	loadAtlas(name: string): Promise<() => GlyphSet | null>;
@@ -75,12 +79,13 @@ function lazy<T>(build: () => T): () => T {
 export async function assembleScoreboardResources(
 	io: ResourceIO,
 ): Promise<ScoreboardResources> {
-	const icons = async (dir: string) => {
-		const ids = await io.readManifest(dir);
-		return Promise.all(
-			ids.map(async (id) => ({ id, image: await io.readIcon(dir, id) })),
+	const icons = (dir: string, ids: readonly (number | string)[]) =>
+		Promise.all(
+			ids.map(async (id) => ({
+				id: String(id),
+				image: await io.readIcon(dir, String(id)),
+			})),
 		);
-	};
 
 	const [
 		weaponIcons,
@@ -90,10 +95,15 @@ export async function assembleScoreboardResources(
 		plannerStages,
 		atlasEntries,
 	] = await Promise.all([
-		icons("main-weapons"),
-		icons("specials"),
-		icons("sub-weapons"),
-		icons("abilities"),
+		icons("main-weapons", mainWeaponIds),
+		icons("special-weapons", specialWeaponIds),
+		icons("sub-weapons", subWeaponIds),
+		// UNKNOWN is the garbled-badge template: it competes in matching and
+		// wins on unreadable slots (see CvAbility in cv-types.ts)
+		icons("abilities", [
+			...abilityList.map((ability) => ability.name),
+			"UNKNOWN",
+		]),
 		io.loadPlannerStages(),
 		Promise.all(
 			(Object.entries(ATLASES) as [keyof typeof ATLASES, string][]).map(

@@ -1,6 +1,8 @@
 /**
- * Worker/browser IO for ScoreboardResources: fetches the CDN-hosted CV
- * assets (assets repo `assets/cv/v1/**`) over HTTP. What the bundle
+ * Worker/browser IO for ScoreboardResources: fetches over HTTP. Game icons
+ * come from the CDN's shared `img/<dir>/<id>.avif` sets the rest of the app
+ * already uses; the CV-specific atlases (glyphs, planner signatures) are
+ * served same-origin from this repo's `public/cv/v1/**`. What the bundle
  * contains — every key, template option set, and atlas name — lives in
  * core/resources.ts, shared with the Node loader. The base URL arrives via
  * the worker init message (see worker/protocol.ts) so this module never
@@ -16,6 +18,14 @@ import type { ScoreboardResources } from "../core/detectors/scoreboard/index";
 import { type AtlasMeta, type GlyphSet, loadGlyphSet } from "../core/glyphs";
 import type { FrameData } from "../core/image";
 import { assembleScoreboardResources } from "../core/resources";
+
+/** CV parser atlases; the version segment guards against CDN cache skew —
+ * bump it together with breaking atlas format changes (must match the
+ * Node-side CV_ASSETS_DIR default in node/assets-dir.ts).
+ * xxx: temporarily served same-origin from this repo's public/ while the
+ * feature is in development; move to the assets repo CDN
+ * (`${base}/cv/v1`) later */
+const ATLAS_BASE = "/cv/v1";
 
 async function fetchImage(url: string): Promise<FrameData> {
 	const res = await fetch(url);
@@ -74,12 +84,8 @@ export function fetchScoreboardResources(
 	base: string,
 ): Promise<ScoreboardResources> {
 	return assembleScoreboardResources({
-		readManifest: (dir) =>
-			fetch(`${base}/${dir}/manifest.json`).then(
-				(r) => r.json() as Promise<string[]>,
-			),
-		readIcon: (dir, id) => fetchImage(`${base}/${dir}/${id}.png`),
-		loadAtlas: makeFetchAtlas(base),
-		loadPlannerStages: makeFetchPlannerStages(base),
+		readIcon: (dir, id) => fetchImage(`${base}/img/${dir}/${id}.avif`),
+		loadAtlas: makeFetchAtlas(ATLAS_BASE),
+		loadPlannerStages: makeFetchPlannerStages(ATLAS_BASE),
 	});
 }

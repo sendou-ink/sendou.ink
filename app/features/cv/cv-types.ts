@@ -14,8 +14,8 @@ export type CvLobby = (typeof CV_LOBBIES)[number];
 
 /**
  * A detected gear ability: a sendou ability id, or the explicit
- * unrecognized marker (the UNKNOWN template in assets/cv/abilities —
- * distinct from null, which means the badge was covered/absent).
+ * unrecognized marker (the UNKNOWN template in the shared img/abilities
+ * set — distinct from null, which means the badge was covered/absent).
  */
 export type CvAbility = Ability | "UNKNOWN"; // xxx: why not AbilityWithUnknown
 

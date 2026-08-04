@@ -8,9 +8,23 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { createCanvas, Image, ImageData } from "@napi-rs/canvas";
+import sharp from "sharp";
 import type { FrameData } from "../core/image";
 
 export async function readImage(path: string): Promise<FrameData> {
+	// @napi-rs/canvas mis-decodes AVIF at partial-alpha pixels (white-matte
+	// leak); sharp returns clean straight-alpha RGBA for those
+	if (path.endsWith(".avif")) {
+		const { data, info } = await sharp(path)
+			.ensureAlpha()
+			.raw()
+			.toBuffer({ resolveWithObject: true });
+		return {
+			width: info.width,
+			height: info.height,
+			data: new Uint8ClampedArray(data),
+		};
+	}
 	const img = new Image();
 	img.src = readFileSync(path);
 	await img.decode();

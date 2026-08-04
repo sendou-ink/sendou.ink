@@ -70,21 +70,30 @@ video file  → capture/vod-frames (WebCodecs decode, seek fallback)   [VoD tab]
 
 ## Assets (CDN) and fonts
 
-Glyph atlases, weapon/ability/special/sub template sets, and the planner
-signature atlas live in the **sendou-ink/assets repo** under `assets/cv/v1/**`
-(local checkout expected at `../assets`, override with `CV_ASSETS_DIR`;
-version segment bumps on breaking atlas-format changes so old deploys keep
-reading old files):
+Weapon/ability/special/sub template sources are the site's shared game
+icons in the **sendou-ink/assets repo** under `assets/img/**` (`.avif`; ids
+come from `~/modules/in-game-lists`, plus the CV-only `UNKNOWN` ability
+badge — `toCvAbility` narrows template ids back to sendou ids). The
+CV-specific sets — glyph atlases and the planner signature atlas — live in
+this repo under `public/cv/v1/**` (override with `CV_ASSETS_DIR`; the
+version segment bumps on breaking atlas-format changes). xxx: the atlases
+are in `public/` only while the feature is in development — move them to
+the assets repo (and the worker back to the CDN base) later:
 
-- Browser/worker: fetched from `${Config.staticAssetsUrl}/cv/v1` (the base URL
-  rides the worker init message). For local dev against fresh regens, serve
-  the checkout with CORS — `npx serve /Users/kalle/Developer/assets/assets -l 9100 --cors`
+- Browser/worker: icons fetched from `Config.staticAssetsUrl` at `img/**`
+  (the base URL rides the worker init message; the DO Space needs CORS —
+  GET, sendou.ink + localhost origins — because the worker `fetch()`es
+  cross-origin, plain `<img>` consumers don't); atlases fetched same-origin
+  from `/cv/v1/**`. For local dev against fresh icon regens, serve the
+  checkout with CORS —
+  `npx serve /Users/kalle/Developer/assets/assets -l 9100 --cors`
   — and set `VITE_STATIC_ASSETS_URL=http://localhost:9100` in `.env`.
-  The DO Space needs CORS (GET, sendou.ink + localhost origins) because the
-  worker `fetch()`es JSON/PNG cross-origin — plain `<img>` consumers don't.
-- Node (tests/scripts): read from the checkout directly, never the CDN.
-- Shipping a regen = commit + push the assets repo (CDN mirrors on push to
-  main); plain regens overwrite in place, breaking format changes bump `v1`.
+- Node (tests/scripts): atlases from `public/cv/v1`, icons from the
+  `../assets` checkout directly, never the CDN. AVIF icons decode through
+  `sharp` (`node/image-io.ts`) — `@napi-rs/canvas` mis-decodes AVIF
+  partial-alpha pixels.
+- Atlas regens overwrite `public/cv/v1` in place and ship with the app
+  build; breaking format changes bump `v1`.
 
 Fonts are proprietary and gitignored: `BlitzMain.otf`, `BlitzBold.otf`,
 `FOT-RowdyStd-EB.otf`, `FOT-KurokaneStd-EB.otf` in `assets/fonts/` (repo

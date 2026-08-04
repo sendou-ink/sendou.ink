@@ -3,7 +3,7 @@
  * in-flight frame at a time (the sampler drops frames while busy). Each
  * frame yields one result per registered detector, then a single "done".
  */
-import { CV_ASSETS_URL } from "../../../utils/urls";
+import { Config } from "../../../config";
 import type { WorkerResponse } from "./protocol";
 
 export type ResultHandler = (
@@ -69,7 +69,7 @@ export class AnalyzerClient {
 		};
 		this.#worker.postMessage({
 			kind: "init",
-			assetsBaseUrl: CV_ASSETS_URL,
+			assetsBaseUrl: Config.staticAssetsUrl,
 			suppressSteadyFrames: options.suppressSteadyFrames ?? true,
 		});
 	}

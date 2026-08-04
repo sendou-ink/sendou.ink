@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { CV_ASSETS_URL } from "~/utils/urls";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { mainWeaponImageUrl } from "~/utils/urls";
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
 import type { DeathData } from "../core/detectors/death/index";
 import * as death from "../core/detectors/death/rois";
@@ -552,7 +553,7 @@ export function ScreenshotPage() {
 												<span className="cand" key={c.id}>
 													<img
 														className="weapon-icon"
-														src={`${CV_ASSETS_URL}/main-weapons/${c.id}.png`}
+														src={`${mainWeaponImageUrl(Number(c.id) as MainWeaponId)}.avif`}
 														alt={c.id}
 													/>
 													{c.id}
