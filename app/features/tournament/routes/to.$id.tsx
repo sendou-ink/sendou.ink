@@ -8,6 +8,7 @@ import {
 } from "react-router";
 import { containerClassName, Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
+import { isMatchResultsScopedRevalidation } from "~/features/chat/revalidation-scope";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -21,6 +22,7 @@ import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 export { loader };
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isMatchResultsScopedRevalidation(args)) return false;
 	if (isRevalidation(args)) return args.defaultShouldRevalidate;
 	if (args.formMethod === "POST") return args.defaultShouldRevalidate;
 	if (args.currentParams.id !== args.nextParams.id) {

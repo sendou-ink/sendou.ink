@@ -43,6 +43,7 @@ import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
+import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
@@ -91,6 +92,7 @@ import "nprogress/nprogress.css";
 NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isMatchResultsScopedRevalidation(args)) return false;
 	if (isRevalidation(args)) return true;
 
 	if (args.formData?.get("revalidateRoot") === "true") return true;

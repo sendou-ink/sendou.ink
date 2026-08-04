@@ -85,6 +85,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
+	// true when nothing outside match data (scores, pick/ban events) changed, letting
+	// broadcast receivers skip revalidating the tournament layout and root loaders
+	let onlyMatchResultsChanged = false;
 	let setIsOver = false;
 	let endedDroppedMatchIds: number[] = [];
 	let followingMatchIds: number[] = [];
@@ -109,6 +112,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
+			// a set ending (or dropped teams' matches ending) changes bracket state
+			// the layout ships (bracketsMeta), so only mid-set reports are scoped
+			onlyMatchResultsChanged = !setIsOver && endedDroppedMatchIds.length === 0;
 
 			break;
 		}
@@ -438,6 +444,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			}
 
 			emitMatchUpdate = true;
+			onlyMatchResultsChanged = true;
 
 			break;
 		}
@@ -671,6 +678,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			.map((followingMatch) => followingMatch.id);
 	}
 
+	const revalidateScope = onlyMatchResultsChanged
+		? ("MATCH_RESULTS" as const)
+		: undefined;
+
 	if (emitMatchUpdate) {
 		const otherMatchIdsToRevalidate = Array.from(
 			new Set([...endedDroppedMatchIds, ...followingMatchIds]),
@@ -681,11 +692,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentMatchWebsocketRoom(matchId),
 				type: "TOURNAMENT_MATCH_UPDATED",
 				revalidateOnly: true,
+				revalidateScope,
 			},
 			...otherMatchIdsToRevalidate.map((id) => ({
 				room: tournamentMatchWebsocketRoom(id),
 				type: "TOURNAMENT_MATCH_UPDATED" as const,
 				revalidateOnly: true as const,
+				revalidateScope,
 			})),
 		]);
 	}
@@ -695,6 +708,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
+				revalidateScope,
 			},
 		]);
 	}
