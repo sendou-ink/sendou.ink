@@ -67,15 +67,30 @@ export class TournamentBracketsPage {
 		return this.match(matchId).locator("..").getByTestId("bracket-match-timer");
 	}
 
-	/** Team names of the bracket's first round in bracket order, top to bottom;
-	 * two slots per match, a BYE slot reading as an empty string. */
+	/** Team names of the bracket's first round in bracket order, top to bottom; two
+	 * slots per match, both slots of a BYE match reading as an empty string.
+	 * `teamCount` is how many teams the first round holds, byes excluded. Note that a
+	 * first round of mostly byes is compacted away by the UI, in which case what is
+	 * returned is the compacted column rather than the true first round. */
 	async firstRoundTeamNames(teamCount: number): Promise<string[]> {
-		const names = this.locators.bracketsViewer
+		const firstRound = this.locators.bracketsViewer
 			.locator("[data-round-id]")
-			.first()
-			.getByTestId("match-team-name");
-		await expect(names).toHaveCount(teamCount);
-		return names.allTextContents();
+			.first();
+		await expect(firstRound.getByTestId("match-team-name")).toHaveCount(
+			teamCount,
+		);
+
+		// a BYE renders no match rows at all, so its two slots are filled in here to
+		// keep the returned names aligned with the bracket's slots
+		return firstRound
+			.locator('[data-testid="match-bye"], [data-testid="match-team-name"]')
+			.evaluateAll((elements) =>
+				elements.flatMap((element) =>
+					element.dataset.testid === "match-bye"
+						? ["", ""]
+						: [element.textContent ?? ""],
+				),
+			);
 	}
 
 	/** Team names of every group's standings table, in placement order per group. */

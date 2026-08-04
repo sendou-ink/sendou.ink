@@ -136,6 +136,37 @@ describe("Seeding.forFollowUpBracket()", () => {
 				expect(new Set(quarterGroups).size).toBe(quarterGroups.length);
 			}
 		});
+
+		it("halves the group block size when the ideal spread is unreachable", () => {
+			// The two groups of four cannot hold a quarter each: only two quarters are
+			// reachable by their two lowest placement tiers, and both tiers are needed
+			// by both groups. The halved block size is satisfiable though, and it still
+			// spreads the group of two across quarters (the incoming order does not).
+			const groups = [
+				[101, 102, 103, 104],
+				[201, 202, 203, 204],
+				[301, 302],
+			];
+			const teams = [101, 201, 301, 102, 202, 302, 103, 203, 104, 204];
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [groupsSource(groups)],
+			});
+
+			const quarters = sections(result, LINEUP_16, 4);
+			const quarterOf = (teamId: number) =>
+				quarters.findIndex((quarter) => quarter.includes(teamId));
+			expect(quarterOf(301)).not.toBe(quarterOf(302));
+
+			for (const match of firstRoundMatches(result, LINEUP_16)) {
+				expect(groupOf(match[0])).not.toBe(groupOf(match[1]));
+			}
+
+			for (const [seedIdx, teamId] of result.entries()) {
+				expect(tierOf(teamId)).toBe(tierOf(teams[seedIdx]));
+			}
+		});
 	});
 
 	describe("previous encounter avoidance", () => {
@@ -185,6 +216,52 @@ describe("Seeding.forFollowUpBracket()", () => {
 			const result = Seeding.forFollowUpBracket({
 				teams,
 				sources: [singleGroupSource(teams, everyPair)],
+			});
+
+			expect(result).toEqual(teams);
+		});
+
+		it("single group: counts the middle seed of an odd team count into the bottom half", () => {
+			// with 13 teams the top half is seeds 1-6, leaving seeds 7-13 interchangeable.
+			// Team 5 has played every one of those but team 7, so team 7 is the only team
+			// that can take seed 12, the seed team 5 faces in round 1.
+			const teams = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+			const encounters: Array<[number, number]> = [
+				[5, 8],
+				[5, 9],
+				[5, 10],
+				[5, 11],
+				[5, 12],
+				[5, 13],
+			];
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [singleGroupSource(teams, encounters)],
+			});
+
+			expect(result.slice(0, 6)).toEqual([1, 2, 3, 4, 5, 6]);
+			expect(result[11]).toBe(7);
+
+			const rematchKeys = new Set(encounters.map((pair) => pair.join(":")));
+			for (const match of firstRoundMatches(result, LINEUP_16)) {
+				const key = match.toSorted((a, b) => a - b).join(":");
+				expect(rematchKeys.has(key)).toBe(false);
+			}
+		});
+
+		it("single group: returns a complete lineup when the search runs out of nodes", () => {
+			// team 1 has played every team of the bottom half pool, so no arrangement of
+			// it avoids their round 1 rematch and the search exhausts its node budget
+			// before the next relaxation rung takes over
+			const teams = Array.from({ length: 16 }, (_, i) => i + 1);
+			const encounters = teams
+				.slice(8)
+				.map((teamId): [number, number] => [1, teamId]);
+
+			const result = Seeding.forFollowUpBracket({
+				teams,
+				sources: [singleGroupSource(teams, encounters)],
 			});
 
 			expect(result).toEqual(teams);

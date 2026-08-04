@@ -156,6 +156,69 @@ describe("swiss standings - losses against tied", () => {
 	});
 });
 
+describe("swiss standings - cross group ties", () => {
+	// Two Swiss groups of four playing one round. Group 1 is won by seed 3 (who beat
+	// seed 7), group 2 by seed 6 (who upset seed 2). Both are 1st of their group, and
+	// the upset gives seed 6 the better effective seed of the two.
+	const twoGroupSwissTournament = () => {
+		let data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: { groupCount: 2, roundCount: 1 },
+		});
+
+		const winnerByMatchup: Record<string, number> = {
+			"1-5": 5,
+			"3-7": 3,
+			"2-6": 6,
+			"4-8": 8,
+		};
+		for (const match of data.match) {
+			const one = match.opponent1!.id as number;
+			const two = match.opponent2!.id as number;
+			const key = one < two ? `${one}-${two}` : `${two}-${one}`;
+			const winnerId = winnerByMatchup[key];
+			invariant(winnerId, `unexpected matchup ${key}`);
+			const winnerIsOpp1 = one === winnerId;
+			data = Engine.reportResult(data, {
+				matchId: match.id,
+				scores: [winnerIsOpp1 ? 2 : 0, winnerIsOpp1 ? 0 : 2],
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+			}).data;
+		}
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: { groupCount: 2, roundCount: 1 },
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("ranks the group winner with the better effective seed first", () => {
+		const standings = twoGroupSwissTournament().bracketByIdx(0)!.standings;
+
+		const upsetWinnerIdx = standings.findIndex((s) => s.team.id === 6);
+		const otherWinnerIdx = standings.findIndex((s) => s.team.id === 3);
+
+		expect(standings[upsetWinnerIdx].placement).toBe(
+			standings[otherWinnerIdx].placement,
+		);
+		// without the effective seed tiebreak the lower groupId (seed 3's group) wins
+		expect(upsetWinnerIdx).toBeLessThan(otherWinnerIdx);
+	});
+});
+
 describe("round robin standings", () => {
 	it("should sort teams primarily by set wins (per group) in paddling pool 255", () => {
 		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
@@ -229,10 +292,14 @@ describe("round robin standings", () => {
 					break;
 				}
 
+				// strictly less: an effective seed is either the team's own (unique) seed
+				// or the seed of a team it beat, and two teams that beat the same team
+				// share a group and therefore cannot share a placement. The comparator's
+				// groupId fallback is unreachable as long as that holds.
 				expect(
 					effectiveSeed(current.team.id),
 					`Team with ID ${current.team.id} in wrong spot relative to ${next.team.id}`,
-				).toBeLessThanOrEqual(effectiveSeed(next.team.id));
+				).toBeLessThan(effectiveSeed(next.team.id));
 			}
 		}
 	});
