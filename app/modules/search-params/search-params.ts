@@ -7,6 +7,7 @@ const COMPRESSED_PREFIX = "lz~";
 const ESCAPED_PREFIX = "lz~~";
 const DECODE_CACHE_MAX_SIZE = 300;
 const MAX_DECOMPRESSED_VALUE_BYTES = 256 * 1024;
+const DEFAULT_MAX_PAGE = 1000;
 
 const DECODE_FAILED = Symbol("DECODE_FAILED");
 
@@ -188,7 +189,8 @@ export function encodeParam<T>(
 /**
  * Applies a partial values update on top of the current search params,
  * preserving params outside the definition, applying declared `resets` and
- * omitting values equal to their defaults.
+ * omitting values equal to their defaults. A key written in the same batch is
+ * never reset by another key of that batch.
  */
 export function applyToSearchParams<Shape extends AnyShape>(
 	definition: SearchParamsDefinition<Shape>,
@@ -198,8 +200,16 @@ export function applyToSearchParams<Shape extends AnyShape>(
 	const next = new URLSearchParams(current);
 	let navigationNeeded = false;
 
-	for (const key of definition.keys) {
-		if (!(key in updates)) continue;
+	const updatedKeys = definition.keys.filter((key) => key in updates);
+
+	const resetKeys = new Set<string>();
+	for (const key of updatedKeys) {
+		for (const resetKey of definition.shape[key].resets) {
+			if (!(resetKey in updates)) resetKeys.add(resetKey);
+		}
+	}
+
+	for (const key of updatedKeys) {
 		const def = definition.shape[key];
 		if (def.loader) {
 			navigationNeeded = true;
@@ -209,13 +219,13 @@ export function applyToSearchParams<Shape extends AnyShape>(
 		for (const encoded of encodeParam(def, updates[key])) {
 			next.append(key, encoded);
 		}
+	}
 
-		for (const resetKey of def.resets) {
-			if (definition.shape[resetKey].loader && next.has(resetKey)) {
-				navigationNeeded = true;
-			}
-			next.delete(resetKey);
+	for (const resetKey of resetKeys) {
+		if (definition.shape[resetKey].loader && next.has(resetKey)) {
+			navigationNeeded = true;
 		}
+		next.delete(resetKey);
 	}
 
 	return { next, navigationNeeded };
@@ -289,6 +299,18 @@ export const SP = {
 			);
 		}
 		return scalarParam(schema, base, resolved);
+	},
+
+	/** Declares the 1-based `page` param of a paginated route, as `useSearchParamPagination` expects it. */
+	page(opts?: { max?: number }): ParamDef<number> {
+		return SP.param(
+			z
+				.number()
+				.int()
+				.min(1)
+				.max(opts?.max ?? DEFAULT_MAX_PAGE),
+			{ default: 1, loader: true },
+		);
 	},
 
 	/** Declares a param encoded as `JSON.stringify` in a single value. For objects and whole-array-as-one-param values. */
@@ -535,12 +557,18 @@ function wrapValue<T>(plain: string, def: ParamDef<T>, mode: EncodeMode) {
 
 	if (mode === "compact") {
 		const compressed = compressTransportValue(plain);
-		if (compressed.length < escapePlainValue(plain).length) {
+		const escaped = escapePlainValue(plain);
+		if (urlEncodedLength(compressed) < urlEncodedLength(escaped)) {
 			return compressed;
 		}
 	}
 
 	return escapePlainValue(plain);
+}
+
+/** Length the value takes in the URL, i.e. percent-encoded as `URLSearchParams` writes it. */
+function urlEncodedLength(value: string) {
+	return new URLSearchParams([["", value]]).toString().length;
 }
 
 /**

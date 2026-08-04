@@ -8,9 +8,6 @@ export const tournamentOrganizationSearchParams = SearchParams.define({
 		loader: true,
 	}),
 	series: SP.param(z.number().int().positive().nullable(), { loader: true }),
-	page: SP.param(z.number().int().min(1).max(100), {
-		default: 1,
-		loader: true,
-	}),
+	page: SP.page({ max: 100 }),
 	source: SP.param(z.string().nullable(), { loader: true }),
 });

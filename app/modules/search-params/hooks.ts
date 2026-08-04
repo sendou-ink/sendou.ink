@@ -13,6 +13,8 @@ type AnyShape = Record<string, ParamDef<any>>;
 interface SetSearchParamsOptions {
 	replace?: boolean;
 	preventScrollReset?: boolean;
+	/** Overrides the write channel derived from the written params' `loader`. */
+	loader?: boolean;
 }
 
 type SetSearchParams<Shape extends AnyShape> = (
@@ -48,7 +50,8 @@ export function SearchParamsProvider({
  * Writes are merges: params not mentioned are preserved, declared `resets`
  * are applied and values equal to their default are removed from the URL. If
  * any written param is `loader: true` the batch writes through one navigation,
- * otherwise through `history.replaceState` without triggering loaders.
+ * otherwise through `history.replaceState` without triggering loaders. A write
+ * known not to change loader data can force the latter with `{ loader: false }`.
  */
 export function useSearchParamsTyped<Shape extends AnyShape>(
 	definition: SearchParamsDefinition<Shape>,
@@ -73,8 +76,7 @@ export function useSearchParam<
 	SearchParamsValues<Shape>[K],
 	(value: SearchParamsValues<Shape>[K], opts?: SetSearchParamsOptions) => void,
 ] {
-	const keys = React.useMemo(() => [key], [key]);
-	const values = useDecodedValues(definition, keys);
+	const values = useDecodedValues(definition, [key]);
 	const setParams = useSetSearchParams(definition);
 
 	const setValue = React.useCallback(
@@ -114,6 +116,7 @@ function useSetSearchParams<Shape extends AnyShape>(
 
 	return React.useCallback(
 		(updates, opts) => {
+			const { loader, ...navigateOptions } = opts ?? {};
 			const current = new URLSearchParams(window.location.search);
 			const { next, navigationNeeded } = SearchParams.applyToSearchParams(
 				definition,
@@ -126,11 +129,11 @@ function useSetSearchParams<Shape extends AnyShape>(
 
 			const url = `${window.location.pathname}${queryString ? `?${queryString}` : ""}${window.location.hash}`;
 
-			if (navigationNeeded) {
+			if (loader ?? navigationNeeded) {
 				navigateRef.current(url, {
 					replace: true,
 					preventScrollReset: true,
-					...opts,
+					...navigateOptions,
 				});
 			} else {
 				window.history.replaceState(window.history.state, "", url);

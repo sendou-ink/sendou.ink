@@ -7,6 +7,10 @@ let historyPatched = false;
  * channel: react-router navigations (which call `history.pushState` /
  * `history.replaceState` under the hood), our own `history.replaceState`
  * writes and back/forward navigation.
+ *
+ * Note that our own `history.replaceState` writes (`loader: false` params) are
+ * invisible to react-router: `useLocation()` keeps returning the search string
+ * of the last navigation. Read those params through this module's hooks.
  */
 export function subscribe(listener: () => void) {
 	patchHistoryOnce();

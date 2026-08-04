@@ -97,8 +97,11 @@ export default function WeaponsBuildsPage() {
 	const { t } = useTranslation(["common", "builds"]);
 	const [{ f: filters }, setParams] = useSearchParamsTyped(buildsSearchParams);
 
-	const syncSearchParams = (newFilters: BuildFilter[]) => {
-		setParams({ f: newFilters });
+	const syncSearchParams = (
+		newFilters: BuildFilter[],
+		opts?: { loader?: boolean },
+	) => {
+		setParams({ f: newFilters }, opts);
 	};
 
 	const handleFilterAdd = (type: BuildFilter["type"]) => {
@@ -120,7 +123,11 @@ export default function WeaponsBuildsPage() {
 							mode: "SZ",
 						};
 
-		syncSearchParams([...filters, newFilter]);
+		// a fresh "at least 0" ability filter matches every build, so no need to refetch
+		syncSearchParams(
+			[...filters, newFilter],
+			type === "ability" ? { loader: false } : undefined,
+		);
 	};
 
 	const handleFilterChange = (i: number, newFilter: Partial<BuildFilter>) => {

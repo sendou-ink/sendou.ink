@@ -7,10 +7,7 @@ import { modeShort, numericEnum } from "~/utils/zod";
 import { videoMatchTypes } from "./vods-constants";
 
 export const vodsSearchParams = SearchParams.define({
-	page: SP.param(z.number().int().min(1).max(1000), {
-		default: 1,
-		loader: true,
-	}),
+	page: SP.page(),
 	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), {
 		loader: true,
 		resets: ["page"],
@@ -38,8 +35,5 @@ export const vodsVodSearchParams = SearchParams.define({
 });
 
 export const userVodsSearchParams = SearchParams.define({
-	page: SP.param(z.number().int().min(1).max(1000), {
-		default: 1,
-		loader: true,
-	}),
+	page: SP.page(),
 });

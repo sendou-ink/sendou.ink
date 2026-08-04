@@ -282,6 +282,22 @@ describe("SearchParams compression", () => {
 			testDefinition.parse(new URL(compactHref, "http://localhost")),
 		).toMatchObject({ filters: longFilters, limit: 50 });
 	});
+
+	it("compares the forms percent-encoded, not as raw strings", () => {
+		// shorter than its compressed form as a raw string, longer once percent-encoded
+		const filters = { minValue: 1, tags: ["ゲームのタグ"] };
+		const compactHref = testDefinition.href(
+			"/x",
+			{ filters },
+			{ compress: true },
+		);
+
+		const searchParams = new URL(compactHref, "http://localhost").searchParams;
+		expect(searchParams.get("filters")).toMatch(/^lz~/);
+		expect(compactHref.length).toBeLessThan(
+			testDefinition.href("/x", { filters }).length,
+		);
+	});
 });
 
 describe("SearchParams.href", () => {
@@ -331,6 +347,16 @@ describe("SearchParams.applyToSearchParams", () => {
 
 		expect(next.has("limit")).toBe(false);
 		expect(next.get("enabled")).toBe("true");
+	});
+
+	it("does not reset a param written in the same batch", () => {
+		const { next } = SearchParams.applyToSearchParams(
+			testDefinition,
+			new URLSearchParams(),
+			{ limit: 50, filters: { minValue: 1, tags: ["a"] } },
+		);
+
+		expect(next.get("limit")).toBe("50");
 	});
 
 	it("removes params written back to their default", () => {

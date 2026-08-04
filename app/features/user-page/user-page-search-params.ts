@@ -17,10 +17,7 @@ export const userResultsSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["page"],
 	}),
-	page: SP.param(z.number().int().min(1).max(1000), {
-		default: 1,
-		loader: true,
-	}),
+	page: SP.page(),
 	tournament: SP.param(z.string().trim().min(1).max(100).nullable(), {
 		loader: true,
 		resets: ["page"],
@@ -33,7 +30,7 @@ const startedSeason = z
 	.refine((nth) => Seasons.allStarted(new Date()).includes(nth));
 
 export const userSeasonsSearchParams = SearchParams.define({
-	page: SP.param(z.number().int().min(1), { default: 1, loader: true }),
+	page: SP.page(),
 	info: SP.param(z.enum(["weapons", "stages", "mates", "enemies"]), {
 		default: "weapons",
 		loader: true,

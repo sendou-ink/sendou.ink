@@ -4,7 +4,7 @@ import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 
 export const tournamentAuditSearchParams = SearchParams.define({
-	page: SP.param(z.number().int().min(1), { default: 1, loader: true }),
+	page: SP.page(),
 	auditType: SP.param(z.enum(TOURNAMENT_AUDIT_LOG_TYPES).nullable(), {
 		loader: true,
 		resets: ["page"],

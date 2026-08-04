@@ -54,6 +54,7 @@ Derivation is closed, not best-effort: shapes outside this table (objects, mixed
 | --- | --- |
 | `SP.json(schema, opts)` | `JSON.stringify` in a single value — for objects and whole-array-as-one-param values |
 | `SP.custom(codec, opts)` | anything — pass a `z.codec(z.string(), valueSchema, { decode, encode })` directly |
+| `SP.page(opts?)` | the paginated route's `page` param (1-based, `loader: true`, default `1`, `max` overridable) |
 
 Note: schemas built with `z.preprocess` (like `weaponSplId`, `stageId` in `app/utils/zod.ts`) are pipes and rejected — use the inner schema (`numericEnum(mainWeaponIds)`, `numericEnum(stageIds)`) since string→number conversion is the codec's job.
 
@@ -62,8 +63,6 @@ Note: schemas built with `z.preprocess` (like `weaponSplId`, `stageId` in `app/u
 Any param can arrive compressed (an `lz~` prefix followed by a deflate + base64url payload) without declaring anything — decode transparently decompresses first. Encoding stays human-readable except for `compress: true` params and on-demand compact links via `definition.href(path, values, { compress: true })` (QR codes, share links). A value is only compressed when that actually shortens it, compared as percent-encoded since that is what ends up in the URL.
 
 Since decoding happens before the value schema ever runs, a compressed arrival that inflates past 256 KiB is rejected mid-inflate and resolves to the default, so a hand-crafted URL cannot inflate to an arbitrarily large string on the server. The limit is an order of magnitude above the largest state the app produces (a tier list holding the entire item pool serializes to ~15 KB) while capping how far a URL that fits in the request line can expand.
-
-When the href is already built and the definition behind it is not known (e.g. the QR code of `ImageExportDialog`, which compacts whatever path it is given), `SearchParams.compactHref(href)` re-encodes every param of an existing href the same way.
 
 ## Loader API
 
@@ -86,8 +85,9 @@ setParams({ focused: "2" });       // loader:false only → history.replaceState
 setParams({ f: x, focused: "2" }); // mixed batch → one navigation carrying both changes
 ```
 
-- Writes are merges: params not mentioned are preserved.
-- The write channel is decided per batch: if any written param is `loader: true` the whole batch goes through one navigation, otherwise `history.replaceState`.
+- Writes are merges: params not mentioned are preserved. A param written in the same batch is never reset by another param's `resets`.
+- The write channel is decided per batch: if any written param is `loader: true` the whole batch goes through one navigation, otherwise `history.replaceState`. `setParams(values, { loader: false })` forces the `replaceState` channel for a write known not to change loader data (adding an inert filter placeholder, say).
+- `history.replaceState` writes are invisible to react-router: `useLocation()` keeps returning the search of the last navigation, so `loader: false` params are only readable through this module.
 - Values equal to their default are removed from the URL on write.
 - Default navigation options are `{ replace: true, preventScrollReset: true }`, overridable per call: `setParams(values, { replace: false, preventScrollReset: false })`.
 - For a focused subscription to one param: `const [weapon, setWeapon] = useSearchParam(buildsSearchParams, "weapon")` — rerenders only when that param changes.
