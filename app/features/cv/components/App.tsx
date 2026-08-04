@@ -1,80 +1,52 @@
-import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import { useSearchParam } from "~/modules/search-params/hooks";
+import { CV_PAGE } from "~/utils/urls";
+import { CV_TABS, type CvTab, cvSearchParams } from "../cv-search-params";
 import { LivePage } from "./LivePage";
 import { ScreenshotPage } from "./ScreenshotPage";
 import type { SendouUser } from "./sendou-ingest";
 import { VodPage } from "./VodPage";
 import "./styles.css";
 
-function useHashRoute(): string {
-	const [hash, setHash] = useState(() => window.location.hash);
-	useEffect(() => {
-		const onChange = () => setHash(window.location.hash);
-		window.addEventListener("hashchange", onChange);
-		return () => window.removeEventListener("hashchange", onChange);
-	}, []);
-	return hash;
-}
-
-/** The sendou.ink login, from the root loader's user context. */
-function SendouLogin({ user }: { user: SendouUser | null }) {
-	return (
-		<div className="topbar-user">
-			{user ? (
-				<span className="topbar-username" title="Logged in on sendou.ink">
-					{user.username}
-				</span>
-			) : (
-				<a href="/auth/login">Log in</a>
-			)}
-		</div>
-	);
-}
+const TAB_LABELS: Record<CvTab, string> = {
+	live: "Live",
+	screenshot: "Screenshot",
+	vod: "VoD",
+};
 
 export function App() {
-	const route = useHashRoute();
+	const [tab] = useSearchParam(cvSearchParams, "tab");
 	const rootUser = useUser();
 	const sendouUser: SendouUser | null = rootUser
 		? { id: rootUser.id, username: rootUser.username }
 		: null;
 
-	const page = route.startsWith("#/screenshot") ? (
-		<ScreenshotPage />
-	) : route.startsWith("#/vod") ? (
-		<VodPage sendouUser={sendouUser} />
-	) : (
-		<LivePage sendouUser={sendouUser} />
-	);
-	const active = route.startsWith("#/screenshot")
-		? "screenshot"
-		: route.startsWith("#/vod")
-			? "vod"
-			: "live";
+	const page =
+		tab === "screenshot" ? (
+			<ScreenshotPage />
+		) : tab === "vod" ? (
+			<VodPage sendouUser={sendouUser} />
+		) : (
+			<LivePage sendouUser={sendouUser} />
+		);
+
 	return (
 		<div className="cv-app">
-			<div className="app">
-				<header className="topbar">
-					<div className="site-title">
-						<h1>CV</h1>
-					</div>
-					<nav>
-						<a href="#/" className={active === "live" ? "active" : ""}>
-							Live
-						</a>
-						<a
-							href="#/screenshot"
-							className={active === "screenshot" ? "active" : ""}
+			<header className="topbar">
+				<nav>
+					{CV_TABS.map((tabOption) => (
+						<Link
+							key={tabOption}
+							to={cvSearchParams.href(CV_PAGE, { tab: tabOption })}
+							className={tab === tabOption ? "active" : ""}
 						>
-							Screenshot
-						</a>
-						<a href="#/vod" className={active === "vod" ? "active" : ""}>
-							VoD
-						</a>
-					</nav>
-					<SendouLogin user={sendouUser} />
-				</header>
-				{page}
-			</div>
+							{TAB_LABELS[tabOption]}
+						</Link>
+					))}
+				</nav>
+			</header>
+			{page}
 		</div>
 	);
 }

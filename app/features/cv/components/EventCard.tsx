@@ -6,6 +6,7 @@
  * pages don't duplicate the wiring.
  */
 
+import { useSearchParam } from "~/modules/search-params/hooks";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
 import {
 	DEATH_EVENT_TYPE,
@@ -24,6 +25,7 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
+import { cvSearchParams } from "../cv-search-params";
 import type { SendStatus } from "../store/events";
 import { DeathCard } from "./DeathCard";
 import type { FixtureData } from "./fixture-export";
@@ -52,12 +54,13 @@ export function EventCard(props: {
 	onSend?: () => void;
 }) {
 	const { type, t, confidence, data, thumbnail, detectedAt, getFrame } = props;
+	const [, setTab] = useSearchParam(cvSearchParams, "tab");
 	const onInspect = getFrame
 		? () =>
 				void getFrame().then((frame) => {
 					if (!frame) return;
 					setScreenshotFrame(frame);
-					window.location.hash = "#/screenshot";
+					setTab("screenshot");
 				})
 		: undefined;
 	const shared = { t, confidence, thumbnail, detectedAt, getFrame, onInspect };

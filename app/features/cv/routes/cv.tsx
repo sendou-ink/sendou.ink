@@ -1,5 +1,6 @@
 import { lazy } from "react";
 import type { MetaFunction } from "react-router";
+import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useHydrated } from "~/hooks/useHydrated";
 import { metaTags } from "~/utils/remix";
@@ -31,7 +32,5 @@ const CvApp = lazy(() =>
 export default function CvPage() {
 	const isHydrated = useHydrated();
 
-	if (!isHydrated) return <Placeholder />;
-
-	return <CvApp />;
+	return <Main bigger>{isHydrated ? <CvApp /> : <Placeholder />}</Main>;
 }

@@ -3,12 +3,6 @@ CV feature styles, ported from emberz. Scoped under .cv-app so nothing
 leaks into the host app; design tokens come from sendou.ink's own
 app/styles/vars.css (the emberz copies of those tokens were dropped).
 */
-.cv-app .app {
-	max-width: 1400px;
-	margin: 0 auto;
-	padding: 0 16px 48px;
-}
-
 .cv-app .topbar {
 	display: flex;
 	align-items: center;
@@ -18,81 +12,9 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	margin-bottom: 16px;
 }
 
-/* Site title ported from sendou.ink (app/components/layout/index.module.css) */
-.cv-app .site-title {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-}
-
-.cv-app .site-logo {
-	display: flex;
-	flex-direction: row;
-	align-items: center;
-	justify-content: center;
-	width: 40px;
-	height: 36px;
-	background-color: var(--color-text-accent);
-	border-radius: var(--radius-field);
-	font-weight: var(--weight-bold);
-	color: var(--color-text-inverse);
-	text-decoration: none;
-	flex-shrink: 0;
-	transition: background-color 0.2s;
-	line-height: 1;
-}
-
-.cv-app .site-logo:focus-visible {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
-}
-
-.cv-app .site-logo-s {
-	font-size: 14px;
-	position: relative;
-	top: -4px;
-}
-
-.cv-app .site-logo-ink {
-	font-size: 12px;
-	position: relative;
-	bottom: -4px;
-}
-
-.cv-app .site-title-separator {
-	font-size: var(--font-xs);
-	color: var(--color-text-high);
-	font-weight: var(--weight-bold);
-	opacity: 0.5;
-}
-
-.cv-app .topbar h1 {
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	margin: 0;
-}
-
 .cv-app .topbar nav {
 	display: flex;
 	gap: 8px;
-}
-
-.cv-app .topbar-user a {
-	color: var(--color-text-high);
-	font-weight: var(--weight-bold);
-	text-decoration: none;
-	padding: 4px 10px;
-	border-radius: var(--radius-field);
-	background: var(--color-bg-high);
-}
-
-.cv-app .topbar-user a:hover {
-	color: var(--color-text);
-}
-
-.cv-app .topbar-user a:focus-visible {
-	outline: var(--focus-ring);
-	outline-offset: 1px;
 }
 
 .cv-app .topbar nav a {
@@ -116,22 +38,6 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .cv-app .topbar nav a.active {
 	color: var(--color-text-accent);
 	background: var(--color-bg-high);
-}
-
-/* sendou.ink login info, pinned to the header's right edge */
-.cv-app .topbar-user {
-	margin-left: auto;
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-}
-
-.cv-app .topbar-username {
-	color: var(--color-text-accent);
-}
-
-.cv-app .topbar-user-offline {
-	color: var(--color-text-high);
-	opacity: 0.7;
 }
 
 .cv-app button {
