@@ -66,10 +66,13 @@ Non-obvious columns get a JSDoc comment: what `null` means, what a magic number 
 
 ## SQLite migration quirks
 
-- SQLite can't add `not null` to an existing column. To tighten one: add `"<col>_new" integer not null default 0`, `update ... set "<col>_new" = coalesce("<col>", 0)`, drop the old column, rename the new one. See `migrations/162-boolean-columns-not-null.js`.
+Adding a column, table or index is a `trx.schema` call (see [how-to.md](./how-to.md)). These are the cases where the schema builder runs out and raw `` sql`...` `` is the answer.
+
+- SQLite can't add `not null` to an existing column. To tighten one: add `"<col>_new" integer not null default 0`, `update ... set "<col>_new" = coalesce("<col>", 0)`, drop the old column, rename the new one.
 - `drop column` fails if the column is indexed, part of a constraint, or referenced by a trigger, view, generated column or partial index. Check `sqlite_master` first.
-- Only when that isn't enough, rebuild the table: `pragma foreign_keys = OFF`, create `X_new`, copy, drop, rename, recreate every index, then `pragma foreign_key_check` inside the transaction. See `migrations/161-tournament-match-nullable-opponents.js`.
-- New columns can't be added with a non-constant default, so a `createdAt` added later starts out nullable. Backfill it and rebuild the table in the same migration rather than leaving the nullability behind — see the `TournamentStage` rebuild in `migrations/162-boolean-columns-not-null.js`.
+- Only when that isn't enough, rebuild the table: `pragma foreign_keys = OFF`, create `X_new`, copy, drop, rename, recreate every index, then `pragma foreign_key_check` inside the transaction.
+- New columns can't be added with a non-constant default, so a `createdAt` added later starts out nullable. Backfill it and rebuild the table in the same migration rather than leaving the nullability behind.
+- `pragma foreign_keys` is a no-op inside a transaction, so a rebuild that needs it off has to toggle it outside the `db.transaction()` block.
 
 ## After changing the schema
 

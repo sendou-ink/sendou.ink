@@ -1,8 +1,7 @@
 import { subDays, subHours } from "date-fns";
-import type { Insertable } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
-import type { DB } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { TOURNAMENT } from "../tournament/tournament-constants";
 
@@ -36,9 +35,7 @@ export function findVodsByTournamentId(tournamentId: number) {
 		.execute();
 }
 
-export function insertMany(vods: Insertable<DB["TournamentMatchVod"]>[]) {
-	if (vods.length === 0) return;
-
+export function insertMany(vods: Omit<Tables["TournamentMatchVod"], "id">[]) {
 	return db
 		.insertInto("TournamentMatchVod")
 		.values(vods)

@@ -12,19 +12,29 @@ import type {
 import { calculateTeamStatus } from "./team-status";
 
 /**
+ * Weight subtracted for each time a pair has already played each other. Big enough
+ * to dwarf every other weight of the whole round, meaning rematches only happen when
+ * unavoidable and then as few of them as possible.
+ */
+const REMATCH_PENALTY = 1_000_000;
+
+interface GroupArgs {
+	groupId: number;
+	standings: SwissStanding[];
+	settings: { advanceThreshold?: number } | null;
+}
+
+/**
  * Generates the next round of matchups for a Swiss tournament bracket within a specific group.
  *
  * Considers only the matches and teams within the specified group. Teams that have dropped out are excluded from the pairing process.
  * If the group has an uneven number of teams, the lowest standing team that has not already received a bye is preferred to receive one.
+ * A team that is the only one left in the running receives a bye for the round.
  * Matches are generated such that teams do not replay previous opponents if possible.
  */
 export function generateRound(
 	data: BracketData,
-	args: {
-		groupId: number;
-		standings: SwissStanding[];
-		settings: { advanceThreshold?: number } | null;
-	},
+	args: GroupArgs,
 ): Result<GeneratedRound, string> {
 	// lets consider only this groups matches
 	// in the case that there are more than one group
@@ -38,39 +48,9 @@ export function generateRound(
 		return err("Not all matches are over");
 	}
 
-	const groupsTeams = groupsMatches
-		.flatMap((match) => [match.opponent1, match.opponent2])
-		.filter(Boolean);
-	const groupsStandings = args.standings.filter((standing) => {
-		return groupsTeams.some((team) => team?.id === standing.team.id);
-	});
+	const activeStandings = activeTeamStandings(data, args);
 
-	// teams who have dropped out are not considered
-	let standingsWithoutDropouts = groupsStandings.filter(
-		(s) => !s.team.droppedOut,
-	);
-
-	// filter out teams that have advanced or been eliminated if early advance/elimination is enabled
-	if (typeof args.settings?.advanceThreshold === "number") {
-		const roundCount = swissRoundCount(data);
-		const advanceThreshold = args.settings.advanceThreshold;
-
-		standingsWithoutDropouts = standingsWithoutDropouts.filter((standing) => {
-			const wins = standing.stats?.setWins ?? 0;
-			const losses = standing.stats?.setLosses ?? 0;
-			const status = calculateTeamStatus({
-				wins,
-				losses,
-				advanceThreshold,
-				roundCount,
-			});
-
-			return status === "active";
-		});
-	}
-
-	// if there are fewer than 2 active teams, no more matches can be generated
-	if (standingsWithoutDropouts.length < 2) {
+	if (activeStandings.length === 0) {
 		return err("Not enough active teams to generate matches");
 	}
 
@@ -79,7 +59,7 @@ export function generateRound(
 		.map((m) => m.opponent1?.id);
 
 	const pairs = pairUp(
-		standingsWithoutDropouts.map((standing) => ({
+		activeStandings.map((standing) => ({
 			id: standing.team.id,
 			score: standing.stats?.setWins ?? 0,
 			receivedBye: teamsThatHaveHadByes.includes(standing.team.id),
@@ -116,6 +96,52 @@ export function generateRound(
 	});
 }
 
+/**
+ * Whether the group still has at least one team that can be paired into a new round.
+ *
+ * False when every team of the group has dropped out or, with the early advance
+ * variation, has already advanced or been eliminated. In that case the remaining
+ * rounds of the group can never be started.
+ */
+export function groupHasActiveTeams(data: BracketData, args: GroupArgs) {
+	return activeTeamStandings(data, args).length > 0;
+}
+
+function activeTeamStandings(data: BracketData, args: GroupArgs) {
+	const groupsMatches = data.match.filter((m) => m.groupId === args.groupId);
+
+	const groupsTeams = groupsMatches
+		.flatMap((match) => [match.opponent1, match.opponent2])
+		.filter(Boolean);
+	const groupsStandings = args.standings.filter((standing) => {
+		return groupsTeams.some((team) => team?.id === standing.team.id);
+	});
+
+	// teams who have dropped out are not considered
+	const standingsWithoutDropouts = groupsStandings.filter(
+		(s) => !s.team.droppedOut,
+	);
+
+	// filter out teams that have advanced or been eliminated if early advance/elimination is enabled
+	if (typeof args.settings?.advanceThreshold !== "number") {
+		return standingsWithoutDropouts;
+	}
+
+	const roundCount = swissRoundCount(data);
+	const advanceThreshold = args.settings.advanceThreshold;
+
+	return standingsWithoutDropouts.filter((standing) => {
+		const status = calculateTeamStatus({
+			wins: standing.stats?.setWins ?? 0,
+			losses: standing.stats?.setLosses ?? 0,
+			advanceThreshold,
+			roundCount,
+		});
+
+		return status === "active";
+	});
+}
+
 function everyMatchOver(matches: MatchData[]) {
 	for (const match of matches) {
 		// bye
@@ -133,7 +159,7 @@ interface SwissPairingTeam {
 	id: number;
 	/** How many matches has the team won */
 	score: number;
-	/** List of tournament team ids this team already played */
+	/** List of tournament team ids this team already played, one entry per meeting */
 	avoid: Array<number>;
 	receivedBye?: boolean;
 }
@@ -141,12 +167,16 @@ interface SwissPairingTeam {
 /**
  * Pairs up teams for a swiss round using maximum weighted matching, avoiding
  * rematches if possible and preferring teams with equal scores to play each other.
+ * A team left over (odd amount of teams, or only one team given) receives a bye.
  *
  * Adapted from https://github.com/slashinfty/tournament-pairings
  */
 export function pairUp(players: SwissPairingTeam[]) {
-	if (players.length < 2) {
-		throw new Error("Need at least two players to pair up");
+	if (players.length === 0) {
+		throw new Error("Need at least one player to pair up");
+	}
+	if (players.length === 1) {
+		return [{ opponentOne: players[0].id, opponentTwo: null }];
 	}
 	if (players.length === 2) {
 		return [{ opponentOne: players[0].id, opponentTwo: players[1].id }];
@@ -155,7 +185,6 @@ export function pairUp(players: SwissPairingTeam[]) {
 	// uncomment to add a new test case to PAIR_UP_TEST_CASES
 	// console.log(players);
 
-	const matches = [];
 	const playerArray = R.shuffle(players).map((p, i) => ({ ...p, index: i }));
 	const scoreGroups = [...new Set(playerArray.map((p) => p.score))].sort(
 		(a, b) => a - b,
@@ -172,54 +201,38 @@ export function pairUp(players: SwissPairingTeam[]) {
 		),
 	].sort((a, b) => a - b);
 
-	let pairs = generateWeightedPairs({ playerArray, scoreGroups, scoreSums });
-	if (pairs.length === 0) {
-		// no possible pairs without rematches, try again allowing rematches
-		pairs = generateWeightedPairs({
-			playerArray,
-			scoreGroups,
-			scoreSums,
-			considerAvoid: false,
-		});
-	}
+	// every pair is considered so that the matching always covers as many teams as
+	// possible, rematches are simply weighted down heavily rather than left out
+	const blossomPairs = blossom(
+		generateWeightedPairs({ playerArray, scoreGroups, scoreSums }),
+		true,
+	);
 
-	const blossomPairs = blossom(pairs, true);
-	const playerCopy = [...playerArray];
-	let byeArray = [];
-	do {
-		const indexA = playerCopy[0].index;
-		const indexB = blossomPairs[indexA];
-		if (indexB === -1) {
-			byeArray.push(playerCopy.splice(0, 1)[0]);
+	const matches: Array<{ opponentOne: number; opponentTwo: number | null }> =
+		[];
+	const byes: number[] = [];
+	const pairedIndexes = new Set<number>();
+
+	for (const player of playerArray) {
+		if (pairedIndexes.has(player.index)) continue;
+
+		const opponentIndex = blossomPairs[player.index];
+		if (opponentIndex === -1) {
+			byes.push(player.id);
 			continue;
 		}
-		playerCopy.splice(0, 1);
-		playerCopy.splice(
-			playerCopy.findIndex((p) => p.index === indexB),
-			1,
-		);
-		const playerA = playerArray.find((p) => p.index === indexA);
-		const playerB = playerArray.find((p) => p.index === indexB);
-		invariant(playerA, "Player A not found");
-		invariant(playerB, "Player B not found");
 
-		matches.push({
-			opponentOne: playerA.id,
-			opponentTwo: playerB.id,
-		});
-	} while (
-		playerCopy.length >
-		blossomPairs.reduce(
-			(sum: number, idx: number) => (idx === -1 ? sum + 1 : sum),
-			0,
-		)
-	);
-	byeArray = [...byeArray, ...playerCopy];
-	for (let i = 0; i < byeArray.length; i++) {
-		matches.push({
-			opponentOne: byeArray[i].id,
-			opponentTwo: null,
-		});
+		const opponent = playerArray[opponentIndex];
+		invariant(opponent, "Opponent not found");
+
+		pairedIndexes.add(player.index);
+		pairedIndexes.add(opponentIndex);
+
+		matches.push({ opponentOne: player.id, opponentTwo: opponent.id });
+	}
+
+	for (const id of byes) {
+		matches.push({ opponentOne: id, opponentTwo: null });
 	}
 
 	return matches;
@@ -229,12 +242,10 @@ function generateWeightedPairs({
 	playerArray,
 	scoreGroups,
 	scoreSums,
-	considerAvoid = true,
 }: {
 	playerArray: (SwissPairingTeam & { index: number })[];
 	scoreGroups: number[];
 	scoreSums: number[];
-	considerAvoid?: boolean;
 }) {
 	const pairs: [number, number, number][] = [];
 	for (let i = 0; i < playerArray.length; i++) {
@@ -242,13 +253,6 @@ function generateWeightedPairs({
 		const next = playerArray.slice(i + 1);
 		for (let j = 0; j < next.length; j++) {
 			const opp = next[j];
-			if (
-				considerAvoid &&
-				Object.hasOwn(curr, "avoid") &&
-				curr.avoid.includes(opp.id)
-			) {
-				continue;
-			}
 			let wt =
 				75 - 75 / (scoreGroups.indexOf(Math.min(curr.score, opp.score)) + 2);
 			wt +=
@@ -287,9 +291,16 @@ function generateWeightedPairs({
 			) {
 				wt += 40;
 			}
+
+			wt -= timesPlayed(curr, opp) * REMATCH_PENALTY;
+
 			pairs.push([curr.index, opp.index, wt]);
 		}
 	}
 
 	return pairs;
+}
+
+function timesPlayed(curr: SwissPairingTeam, opp: SwissPairingTeam) {
+	return curr.avoid.filter((id) => id === opp.id).length;
 }

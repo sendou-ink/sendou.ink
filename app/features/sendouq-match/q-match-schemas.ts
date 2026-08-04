@@ -1,5 +1,30 @@
 import { z } from "zod";
+import { checkboxGroupDynamic, stringConstant, textArea } from "~/form/fields";
 import { _action, id, weaponSplId } from "~/utils/zod";
+import { SENDOUQ } from "../sendouq/q-constants";
+
+const cancelNominatedUserIdsField = checkboxGroupDynamic({
+	label: "labels.cancelNominatedPlayers",
+	bottomText: "bottomTexts.cancelNominatedPlayers",
+	minLength: 1,
+});
+
+const cancelReasonField = textArea({
+	label: "labels.reason",
+	maxLength: SENDOUQ.CANCEL_REASON_MAX_LENGTH,
+});
+
+export const requestCancelSchema = z.object({
+	_action: stringConstant("REQUEST_CANCEL"),
+	nominatedUserIds: cancelNominatedUserIdsField,
+	reason: cancelReasonField,
+});
+
+export const acceptCancelSchema = z.object({
+	_action: stringConstant("ACCEPT_CANCEL"),
+	nominatedUserIds: cancelNominatedUserIdsField,
+	reason: cancelReasonField,
+});
 
 export const matchSchema = z.union([
 	z.object({
@@ -31,12 +56,8 @@ export const matchSchema = z.union([
 		_action: _action("UNDO_WEAPON_REPORT"),
 		mapIndex: z.coerce.number().int().nonnegative(),
 	}),
-	z.object({
-		_action: _action("REQUEST_CANCEL"),
-	}),
-	z.object({
-		_action: _action("ACCEPT_CANCEL"),
-	}),
+	requestCancelSchema,
+	acceptCancelSchema,
 	z.object({
 		_action: _action("REFUSE_CANCEL"),
 	}),

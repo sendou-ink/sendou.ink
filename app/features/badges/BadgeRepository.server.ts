@@ -180,17 +180,15 @@ export function replaceManagers({
 			.where("badgeId", "=", badgeId)
 			.execute();
 
-		if (managerIds.length > 0) {
-			await trx
-				.insertInto("BadgeManager")
-				.values(
-					managerIds.map((userId) => ({
-						badgeId,
-						userId,
-					})),
-				)
-				.execute();
-		}
+		await trx
+			.insertInto("BadgeManager")
+			.values(
+				managerIds.map((userId) => ({
+					badgeId,
+					userId,
+				})),
+			)
+			.execute();
 	});
 }
 
@@ -207,23 +205,21 @@ export function replaceOwners({
 			.where("badgeId", "=", badgeId)
 			.execute();
 
-		if (ownerIds.length > 0) {
-			const counts = new Map<number, number>();
-			for (const userId of ownerIds) {
-				counts.set(userId, (counts.get(userId) ?? 0) + 1);
-			}
-
-			await trx
-				.insertInto("TournamentBadgeOwner")
-				.values(
-					Array.from(counts, ([userId, count]) => ({
-						badgeId,
-						userId,
-						count,
-					})),
-				)
-				.execute();
+		const counts = new Map<number, number>();
+		for (const userId of ownerIds) {
+			counts.set(userId, (counts.get(userId) ?? 0) + 1);
 		}
+
+		await trx
+			.insertInto("TournamentBadgeOwner")
+			.values(
+				Array.from(counts, ([userId, count]) => ({
+					badgeId,
+					userId,
+					count,
+				})),
+			)
+			.execute();
 	});
 }
 
@@ -261,8 +257,6 @@ export async function syncXPBadges() {
 
 			return badgeId ? [{ badgeId, userId }] : [];
 		});
-
-		if (badgeOwners.length === 0) return;
 
 		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
 	});

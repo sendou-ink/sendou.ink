@@ -201,6 +201,8 @@ function TrophyTermsGate({ children }: { children: React.ReactNode }) {
 }
 
 function NewTrophyForm() {
+	const { t } = useTranslation(["trophies"]);
+
 	return (
 		<SendouForm schema={createTrophyFormSchema}>
 			{({ FormField }) => (
@@ -226,6 +228,9 @@ function NewTrophyForm() {
 						)}
 					</FormField>
 					<FormField name="description" />
+					<FormMessage type="info">
+						{t("trophies:new.form.creatorNotice")}
+					</FormMessage>
 				</>
 			)}
 		</SendouForm>

@@ -1,6 +1,7 @@
 import { sub } from "date-fns";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -21,7 +22,7 @@ export interface Fixtures {
 	skillBatch: {
 		season: number;
 		userIds: number[];
-		identifiers: string[];
+		identifiers: SkillTeamIdentifier[];
 	} | null;
 	heavyGroupMatchId: number | null;
 	heavyGroupIds: [number, number] | null;
@@ -330,7 +331,9 @@ async function resolveSkillBatch() {
 	return {
 		season: seasonRow.season,
 		userIds: userRows.map((row) => row.userId as number),
-		identifiers: identifierRows.map((row) => row.identifier as string),
+		identifiers: identifierRows.map(
+			(row) => row.identifier as SkillTeamIdentifier,
+		),
 	};
 }
 
@@ -655,8 +658,8 @@ async function resolveHeavyOrg() {
 		.executeTakeFirst();
 	if (!latestEvent) return null;
 
-	const latestEventDate = databaseTimestampToDate(latestEvent.startTime);
-	const windowStart = latestEvent.startTime - 90 * 24 * 60 * 60;
+	const latestEventDate = databaseTimestampToDate(latestEvent.startsAt);
+	const windowStart = latestEvent.startsAt - 90 * 24 * 60 * 60;
 
 	return {
 		id: orgRow.id,
@@ -666,7 +669,7 @@ async function resolveHeavyOrg() {
 		eventMonth: latestEventDate.getUTCMonth(),
 		eventYear: latestEventDate.getUTCFullYear(),
 		windowStart,
-		windowEnd: latestEvent.startTime,
+		windowEnd: latestEvent.startsAt,
 	};
 }
 

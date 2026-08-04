@@ -129,6 +129,23 @@ export const SWISS_TO_TOP_CUT: BracketProgression = [
 	},
 ];
 
+/** Teams advance at 2 wins and are eliminated at 4 losses (roundCount - advanceThreshold + 1). */
+export const SWISS_EARLY_ADVANCE_TO_TOP_CUT: BracketProgression = [
+	{
+		type: "swiss",
+		name: "Swiss",
+		requiresCheckIn: false,
+		settings: { groupCount: 1, roundCount: 5, advanceThreshold: 2 },
+	},
+	{
+		type: "single_elimination",
+		name: "Top Cut",
+		requiresCheckIn: false,
+		settings: { thirdPlaceMatch: false },
+		sources: [{ bracketIdx: 0, placements: [] }],
+	},
+];
+
 export const TO_MAP_POOL = ([1, 2, 3, 4, 6, 7, 8, 10] as StageId[]).flatMap(
 	(stageId) =>
 		(["SZ", "TC", "RM", "CB"] as ModeShort[]).map((mode) => ({

@@ -28,7 +28,7 @@ export function insert(
 				users.map(({ userId, seen }) => ({
 					userId,
 					notificationId: inserted.id,
-					seen,
+					seen: seen ?? 0,
 				})),
 			)
 			.execute();

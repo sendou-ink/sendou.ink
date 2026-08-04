@@ -1,5 +1,4 @@
-import type { Insertable } from "kysely";
-import type { DB } from "~/db/tables";
+import type { Tables } from "~/db/tables";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import { hasTwitchEnvVars } from "~/modules/twitch/utils.server";
 import {
@@ -45,7 +44,7 @@ export async function processOneTournament(tournamentId: number) {
 
 	const matchesById = new Map(matches.map((m) => [m.id, m]));
 	const loginToTwitchId = new Map<string, string>();
-	const vods: Insertable<DB["TournamentMatchVod"]>[] = [];
+	const vods: Omit<Tables["TournamentMatchVod"], "id">[] = [];
 
 	// Player stream VODs
 	const streamers =

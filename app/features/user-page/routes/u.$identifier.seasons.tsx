@@ -535,21 +535,74 @@ function CanceledMatchesDialog({
 		>
 			<div className="stack lg">
 				{canceledMatches.map((match) => (
-					<div key={match.id}>
-						<Link to={sendouQMatchPage(match.id)}>#{match.id}</Link>
-						<LocaleTime
-							date={match.createdAt}
-							options={{
-								year: "numeric",
-								month: "numeric",
-								day: "numeric",
-								hour: "numeric",
-								minute: "numeric",
-							}}
-						/>
+					<div key={match.id} className="stack sm">
+						<div>
+							<Link to={sendouQMatchPage(match.id)}>#{match.id}</Link>
+							<LocaleTime
+								date={match.createdAt}
+								options={{
+									year: "numeric",
+									month: "numeric",
+									day: "numeric",
+									hour: "numeric",
+									minute: "numeric",
+								}}
+							/>
+						</div>
+						<CanceledMatchReports cancelReports={match.cancelReports} />
 					</div>
 				))}
 			</div>
 		</SendouDialog>
+	);
+}
+
+function CanceledMatchReports({
+	cancelReports,
+}: {
+	cancelReports: NonNullable<
+		UserSeasonsPageLoaderData["canceled"]
+	>[number]["cancelReports"];
+}) {
+	if (cancelReports.length === 0) {
+		return (
+			<div className="text-lighter text-xs">
+				No cancel reports (canceled by staff)
+			</div>
+		);
+	}
+
+	const nominatedIdSets = cancelReports.map(
+		(report) => new Set(report.nominatedPlayers.map((player) => player.id)),
+	);
+	const teamsAgree =
+		nominatedIdSets.length === 2 &&
+		nominatedIdSets[0].size === nominatedIdSets[1].size &&
+		[...nominatedIdSets[0]].every((id) => nominatedIdSets[1].has(id));
+
+	return (
+		<div className="stack xs">
+			{cancelReports.map((report, index) => (
+				<div key={report.authorUsername} className="text-xs">
+					<div className="text-lighter">
+						{index === 0 ? "Requested" : "Accepted"} by {report.authorUsername}
+					</div>
+					<div>{report.reason}</div>
+					<div className="text-lighter">
+						Nominated:{" "}
+						{report.nominatedPlayers
+							.map((player) => player.username)
+							.join(", ")}
+					</div>
+				</div>
+			))}
+			{cancelReports.length === 2 ? (
+				<div className="text-xs font-semi-bold">
+					{teamsAgree
+						? "Teams nominated the same players"
+						: "Teams nominated different players (split)"}
+				</div>
+			) : null}
+		</div>
 	);
 }

@@ -1,36 +1,42 @@
+import { DatabaseSync } from "node:sqlite";
 import { styleText } from "node:util";
 import * as Sentry from "@sentry/react-router";
-import Database from "better-sqlite3";
-import { Kysely, type LogEvent, SqliteDialect } from "kysely";
+import { Kysely, type LogEvent } from "kysely";
 import { format } from "sql-formatter";
 import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
+import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
+import { NodeSqliteDialect } from "./node-sqlite-dialect";
 import { FastParseJSONResultsPlugin } from "./parse-json-results-plugin";
 import type { DB } from "./tables";
 import { WriteTrackerPlugin } from "./write-tracker";
 
-const sql = new Database(
-	ServerConfig.isTest ? migratedEmptyDb() : ServerConfig.dbPath,
+const sql = new DatabaseSync(
+	ServerConfig.isTest ? ":memory:" : ServerConfig.dbPath,
 );
 
-sql.pragma("journal_mode = WAL");
+if (ServerConfig.isTest) {
+	applyMigratedSchema(sql);
+}
+
+sql.exec("PRAGMA journal_mode = WAL");
 // The synchronous=NORMAL setting provides the best balance between performance and safety for most applications running in WAL mode.
 // You lose durability across power lose with synchronous NORMAL in WAL mode, but that is not important for most applications.
 // Transactions are still atomic, consistent, and isolated, which are the most important characteristics in most use cases.
 // Source: https://sqlite.org/pragma.html
-sql.pragma("synchronous = NORMAL");
-sql.pragma("foreign_keys = ON");
-sql.pragma("busy_timeout = 5000");
+sql.exec("PRAGMA synchronous = NORMAL");
+sql.exec("PRAGMA foreign_keys = ON");
+sql.exec("PRAGMA busy_timeout = 5000");
 // 64MB page cache (default is 2MB)
-sql.pragma("cache_size = -65536");
+sql.exec("PRAGMA cache_size = -65536");
 // lets reads come straight from the OS page cache without read() syscalls
 // Source: https://sqlite.org/mmap.html
-sql.pragma("mmap_size = 3221225472");
+sql.exec("PRAGMA mmap_size = 3221225472");
 // see https://sqlite.org/pragma.html#pragma_optimize — recommended for long-lived
 // connections; pair with a periodic `PRAGMA optimize;` (see OptimizeDatabase routine)
-sql.pragma("optimize = 0x10002");
+sql.exec("PRAGMA optimize = 0x10002");
 
 // Strips diacritics so accent-insensitive name searches are possible
 // (e.g. "cafe" matches "Café"). Combined with LIKE's built-in ASCII
@@ -42,24 +48,51 @@ sql.function("unaccent", { deterministic: true }, (value) =>
 );
 
 export const db = new Kysely<DB>({
-	dialect: new SqliteDialect({
+	dialect: new NodeSqliteDialect({
 		database: sql,
+		cacheStatements: true,
 	}),
 	log,
-	plugins: [new FastParseJSONResultsPlugin(), new WriteTrackerPlugin()],
+	plugins: [
+		new EmptyValuesNoopPlugin(),
+		new FastParseJSONResultsPlugin(),
+		new WriteTrackerPlugin(),
+	],
 });
 
-// The test database file is created and migrated by scripts/ensure-test-db.ts
-// (vitest globalSetup) before any test worker imports this module.
-function migratedEmptyDb() {
-	const testDb = new Database("db-test.sqlite3", {
-		readonly: true,
-		fileMustExist: true,
+// Every test worker gets its own in-memory database, built by replaying the
+// schema of the migrated (and otherwise empty) file that scripts/ensure-test-db.ts
+// creates in vitest's globalSetup. Replaying the DDL rather than copying the file
+// is what `node:sqlite` allows: unlike better-sqlite3 it cannot deserialize a
+// database into memory.
+function applyMigratedSchema(target: DatabaseSync) {
+	const source = new DatabaseSync("db-test.sqlite3", {
+		readOnly: true,
+		timeout: 5000,
 	});
+
 	try {
-		return testDb.serialize();
+		// virtual tables create their own shadow tables (e.g. UserSearch_data), so
+		// replaying those would fail on a table that already exists
+		const statements = source
+			.prepare(`
+				SELECT sql FROM sqlite_master m
+				WHERE sql IS NOT NULL
+				AND name NOT LIKE 'sqlite_%'
+				AND NOT EXISTS (
+					SELECT 1 FROM sqlite_master AS vt
+					WHERE vt.sql LIKE 'CREATE VIRTUAL TABLE%'
+					AND m.name LIKE vt.name || '_%'
+				)
+				ORDER BY m.rowid
+			`)
+			.all() as Array<{ sql: string }>;
+
+		for (const statement of statements) {
+			target.exec(statement.sql);
+		}
 	} finally {
-		testDb.close();
+		source.close();
 	}
 }
 

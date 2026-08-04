@@ -140,11 +140,14 @@ function CastChannelChipRadio({
 	const fetcher = useFetcher();
 	const previousStateRef = React.useRef(fetcher.state);
 
+	// the action can still reject (e.g. "Not an organizer or streamer"), so the
+	// success toast waits for the round trip; on failure the action's data stays
+	// unset and only the error toast shows
 	React.useEffect(() => {
 		if (
 			previousStateRef.current !== "idle" &&
 			fetcher.state === "idle" &&
-			!(fetcher.data as { error?: unknown } | undefined)?.error
+			fetcher.data === null
 		) {
 			toastQueue.add(
 				{
@@ -383,18 +386,19 @@ function EditReportedScoreRow({
 	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const [editing, setEditing] = React.useState(false);
-	const previousFetcherStateRef = React.useRef(fetcher.state);
 
-	React.useEffect(() => {
-		if (
-			previousFetcherStateRef.current !== "idle" &&
-			fetcher.state === "idle" &&
-			!(fetcher.data as { error?: unknown } | undefined)?.error
-		) {
+	// close the form once our own submit round trip succeeds (action returns
+	// null); on failure the action redirects with an error toast and data stays
+	// unset, keeping the form open
+	const [previousFetcherState, setPreviousFetcherState] = React.useState(
+		fetcher.state,
+	);
+	if (previousFetcherState !== fetcher.state) {
+		setPreviousFetcherState(fetcher.state);
+		if (fetcher.state === "idle" && fetcher.data === null && editing) {
 			setEditing(false);
 		}
-		previousFetcherStateRef.current = fetcher.state;
-	}, [fetcher.state, fetcher.data]);
+	}
 
 	const isKo = Boolean(result.ko);
 

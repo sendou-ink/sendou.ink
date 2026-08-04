@@ -6,11 +6,9 @@ const config = {
 	tags: ["-lintignore"],
 	entry: [
 		"app/features/*/routes/**/*.{ts,tsx}",
-		"migrations/**/*.js",
+		"migrations/**/*.ts",
 		"scripts/**/*.{js,cjs,mjs,jsx,ts,cts,mts,tsx}",
 		"public/sw-2.js",
-		"ley.config.cjs",
-		"ley-driver.cjs",
 	],
 	compilers: {
 		css: (text: string, path: string) => {

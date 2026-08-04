@@ -9,11 +9,12 @@ import {
 	Trash2,
 	UserPlus,
 	UserRoundCheck,
+	VenetianMask,
 } from "lucide-react";
 import * as React from "react";
 import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLocation, useMatches } from "react-router";
+import { Form, useFetcher, useLocation, useMatches } from "react-router";
 import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -33,6 +34,7 @@ import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,
 	FRIENDS_PAGE,
+	impersonateUrl,
 	LFG_PAGE,
 	navIconUrl,
 	stageBannerImageUrl,
@@ -103,15 +105,17 @@ export function UserCard({
 	const fetcher = useFetcher<UserCardFriendshipLoaderData>();
 	const friendshipLoadedRef = React.useRef(false);
 
-	React.useEffect(() => {
-		if (!isOpen) return;
+	const handleOpenChange = (nextIsOpen: boolean) => {
+		setIsOpen(nextIsOpen);
+
+		if (!nextIsOpen) return;
 		if (friendshipLoadedRef.current) return;
 		if (isOwnCard) return;
 		if (typeof data?.id !== "number") return;
 
 		friendshipLoadedRef.current = true;
 		fetcher.load(userCardFriendshipPage(data.id, { withMutualFriends }));
-	}, [isOpen, isOwnCard, data?.id, withMutualFriends, fetcher.load]);
+	};
 
 	const friendship = fetcher.data;
 
@@ -135,7 +139,7 @@ export function UserCard({
 
 	return (
 		<>
-			<DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
+			<DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
 				<Button className={styles.trigger}>{children}</Button>
 				<Popover placement={placement} className={styles.popover}>
 					<Dialog className={styles.dialog}>
@@ -269,6 +273,9 @@ function CardContent({
 					</LinkButton>
 				) : (
 					<>
+						{process.env.NODE_ENV === "development" ? (
+							<ImpersonateButton userId={data.id} />
+						) : null}
 						{friendship && !friendship.isFriend ? (
 							<FriendRequestButton
 								targetUserId={data.id}
@@ -419,9 +426,10 @@ function FriendRequestButton({
 	const acceptsIncomingRequest = incomingFriendRequestId !== null;
 
 	// Sending a request keeps this button mounted (it becomes the pending checkmark), so the
-	// success toast can wait for the server round-trip here. The accept path instead unmounts the
-	// button as soon as the revalidated friendship data arrives, which can race the toast render,
-	// so that toast is fired directly from the press handler below.
+	// success toast can wait for the server round-trip here — the action can still reject with
+	// "Maximum pending friend requests reached". The accept path instead unmounts the button as
+	// soon as the revalidated friendship data arrives, which can race the toast render, so that
+	// toast is fired directly from the press handler below.
 	React.useEffect(() => {
 		if (
 			!acceptsIncomingRequest &&
@@ -493,6 +501,28 @@ function FriendRequestButton({
 				)
 			}
 		/>
+	);
+}
+
+/** Development only shortcut for logging in as the shown user. */
+function ImpersonateButton({ userId }: { userId: number }) {
+	const location = useLocation();
+
+	return (
+		<Form method="post" action={impersonateUrl(userId)} reloadDocument>
+			<input
+				type="hidden"
+				name="returnTo"
+				value={`${location.pathname}${location.search}`}
+			/>
+			<SendouButton
+				type="submit"
+				size="miniscule"
+				shape="circle"
+				icon={<VenetianMask />}
+				aria-label="Impersonate user"
+			/>
+		</Form>
 	);
 }
 

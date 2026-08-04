@@ -10,6 +10,7 @@ import {
 import { ModeImage, StageImage } from "~/components/Image";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
+import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { StageId } from "~/modules/in-game-lists/types";
 import {
@@ -131,17 +132,14 @@ export function SplatoonRotations() {
 }
 
 function useNowUnix(initialNow: number) {
-	const [now, setNow] = React.useState(initialNow);
+	const now = useAutoRerender("minute", {
+		alignTo: databaseTimestampToDate(initialNow),
+	});
+	const firstNowRef = React.useRef(now);
 
-	React.useEffect(() => {
-		setNow(dateToDatabaseTimestamp(new Date()));
-		const interval = setInterval(() => {
-			setNow(dateToDatabaseTimestamp(new Date()));
-		}, 60_000);
-		return () => clearInterval(interval);
-	}, []);
+	if (now === firstNowRef.current) return initialNow;
 
-	return now;
+	return dateToDatabaseTimestamp(now);
 }
 
 function rotationProgress(now: Date, start: Date, end: Date) {

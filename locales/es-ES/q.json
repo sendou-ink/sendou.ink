@@ -127,7 +127,7 @@
 	"match.cancelRequested": "Cancelación pedida",
 	"match.reportedBy": "Informado por {{name}} a",
 	"match.cancelPendingConfirmation": "Esperando confirmación del otro equipo",
-	"match.cancelMatch.confirm": "¿Cancelar partido? (requiere confirmación del otro grupo, el abuso de esta función puede darte una prohibición)",
+	"match.cancelMatch.explanation": "",
 	"match.adminCancel.confirm": "",
 	"match.tabs.reportScore": "Informar resultado",
 	"match.errors.cantCancel": "No se puede cancelar ya que el oponente ha informado el resultado para este partido. Ver instrucciones para disputar al inicio de la página.",

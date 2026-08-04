@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
+import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -71,13 +72,33 @@ export class SwissBracket extends Bracket {
 		};
 	}
 
-	/** Swiss rounds are paired one at a time, so a round that has no matches yet can still change the standings. */
+	/**
+	 * Swiss rounds are paired one at a time, so a round that has no matches yet can still change the standings.
+	 * Exception being rounds that can never be paired because every team of the group has already
+	 * advanced or been eliminated (early advance variation).
+	 */
 	get standingsAreFinal() {
-		const everyRoundPaired = this.data.round.every((round) =>
-			this.data.match.some((match) => match.roundId === round.id),
-		);
+		if (!this.everyMatchOver) return false;
 
-		return everyRoundPaired && this.everyMatchOver;
+		return this.data.group.every((group) => {
+			const groupsMatches = this.data.match.filter(
+				(match) => match.groupId === group.id,
+			);
+			if (groupsMatches.length === 0) return false;
+
+			const everyRoundPaired = this.data.round
+				.filter((round) => round.groupId === group.id)
+				.every((round) =>
+					groupsMatches.some((match) => match.roundId === round.id),
+				);
+			if (everyRoundPaired) return true;
+
+			return !Engine.groupHasActiveTeams(this.data, {
+				groupId: group.id,
+				standings: this.standings,
+				settings: this.settings,
+			});
+		});
 	}
 
 	get standings(): Standing[] {

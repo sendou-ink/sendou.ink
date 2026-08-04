@@ -13,12 +13,7 @@ import {
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import {
-	Outlet,
-	useLocation,
-	useOutletContext,
-	useRevalidator,
-} from "react-router";
+import { Outlet, useLocation, useOutletContext } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -37,7 +32,6 @@ import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useSearchParamState } from "~/hooks/useSearchParamState";
-import { useVisibilityChange } from "~/hooks/useVisibilityChange";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
@@ -66,8 +60,6 @@ import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
 	const { t } = useTranslation(["common", "tournament"]);
-	const visibility = useVisibilityChange();
-	const { revalidate } = useRevalidator();
 	const user = useUser();
 	const tournament = useTournament();
 	const ctx = useOutletContext();
@@ -100,12 +92,6 @@ export default function TournamentBracketsPage() {
 		tournamentWebsocketRoom(tournament.ctx.id),
 		!tournament.ctx.isFinalized,
 	);
-
-	React.useEffect(() => {
-		if (visibility !== "visible" || tournament.ctx.isFinalized) return;
-
-		revalidate();
-	}, [visibility, revalidate, tournament.ctx.isFinalized]);
 
 	const teamProgressStatus = tournament.teamMemberOfProgressStatus(user);
 	const showAddSubsButton =

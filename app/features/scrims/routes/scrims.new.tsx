@@ -273,20 +273,9 @@ function AssociationSelect({
 }
 
 function MapsTournamentFormField() {
-	const { values, setValue } = useFormFieldContext();
-	const maps = values.maps as string;
+	const { values } = useFormFieldContext();
 
-	const prevMaps = React.useRef(maps);
-	React.useEffect(() => {
-		if (prevMaps.current !== maps) {
-			prevMaps.current = maps;
-			if (maps !== "TOURNAMENT") {
-				setValue("mapsTournamentId", null);
-			}
-		}
-	}, [maps, setValue]);
-
-	if (maps !== "TOURNAMENT") return null;
+	if (values.maps !== "TOURNAMENT") return null;
 
 	return <FormField name="mapsTournamentId" />;
 }
