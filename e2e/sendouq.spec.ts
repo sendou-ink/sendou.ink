@@ -1,5 +1,9 @@
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import { SENDOUQ_LOOKING_PAGE, SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+} from "~/utils/urls";
 import { expect, impersonate, test } from "./helpers/playwright";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 import { SendouQPage } from "./pages/sendouq/sendouq-page";
@@ -111,5 +115,26 @@ test.describe("SendouQ", () => {
 		// the pending challenge has been undone
 		await looking.goto();
 		await expect(looking.locators.undoButtons).toHaveCount(0);
+	});
+
+	test("Joining the queue is blocked when the season's initial powers were never seeded", async ({
+		page,
+		factories,
+	}) => {
+		const [user] = await factories.UserFactory.createMany(1);
+		// the previous season concluded with skills but the current one has none,
+		// meaning season-initial-powers was forgotten
+		await factories.SkillFactory.create({ userId: user.id, season: 0 });
+
+		await impersonate(page, user.id);
+
+		const q = new SendouQPage(page);
+		await q.goto();
+		await q.joinSolo();
+
+		await expect(
+			page.getByText("Season's starting powers are not set yet"),
+		).toBeAttached();
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
 	});
 });

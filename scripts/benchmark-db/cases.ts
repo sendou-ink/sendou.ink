@@ -360,6 +360,9 @@ export function buildCases(fx: Fixtures): {
 		(skillBatch) =>
 			SkillRepository.findOrderedUserOrdinalsBySeason(skillBatch.season),
 	);
+	add("SkillRepository.existsBySeason", fx.skillBatch, (skillBatch) =>
+		SkillRepository.existsBySeason(skillBatch.season),
+	);
 	add("SkillRepository.findSeedingSkills", fx.skillBatch, (skillBatch) =>
 		SkillRepository.findSeedingSkills({
 			type: "RANKED",

@@ -99,6 +99,20 @@ export async function findOrderedUserOrdinalsBySeason(season: number) {
 }
 
 /**
+ * Whether the season has any Skill rows.
+ */
+export async function existsBySeason(season: number) {
+	const row = await db
+		.selectFrom("Skill")
+		.select("Skill.id")
+		.where("Skill.season", "=", season)
+		.limit(1)
+		.executeTakeFirst();
+
+	return Boolean(row);
+}
+
+/**
  * Seeding skills of the given users for one seeding type, keyed by user id. Users without
  * a seeding skill of that type are absent from the map.
  */
