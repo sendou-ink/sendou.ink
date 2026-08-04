@@ -88,6 +88,8 @@ type TournamentArgs = {
 	bracketsMeta?: BracketDerivedMeta[];
 	/** Brackets whose match data this view loaded on its own. */
 	brackets?: SerializedBracket[];
+	/** User ids of everyone who played at least one map. */
+	participatedUsers?: number[];
 };
 
 /** The progress status of a team member in a running tournament, as resolved by {@link Tournament.teamMemberOfProgressStatus}. */
@@ -98,6 +100,8 @@ export type TournamentTeamMemberProgressStatus = NonNullable<
 /** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
 export class Tournament {
 	ctx;
+	/** See {@link TournamentArgs.participatedUsers}, null when this view did not get them. */
+	readonly participatedUserIds: number[] | null;
 	private args;
 	private data;
 	private _brackets: Array<Bracket | undefined> = [];
@@ -118,6 +122,7 @@ export class Tournament {
 
 		this.args = args;
 		this.data = data;
+		this.participatedUserIds = args.participatedUsers ?? null;
 		this._derivedMeta = bracketsMeta;
 		this.ctx = {
 			...ctx,
@@ -143,8 +148,15 @@ export class Tournament {
 	 * The same tournament with the match data of the given brackets available. Used by the views
 	 * that load one bracket's data of their own, the layout only shipping {@link bracketsMeta}.
 	 */
-	withBrackets(brackets: SerializedBracket[]) {
-		return new Tournament({ ...this.args, brackets });
+	withBrackets(
+		brackets: SerializedBracket[],
+		participatedUsers?: number[] | null,
+	) {
+		return new Tournament({
+			...this.args,
+			brackets,
+			participatedUsers: participatedUsers ?? this.args.participatedUsers,
+		});
 	}
 
 	/**
@@ -687,9 +699,11 @@ export class Tournament {
 	participatedPlayerUserIdsByTeamId(id: number) {
 		const team = this.teamById(id);
 		invariant(team, "Team not found");
+		const participatedUserIds = this.participatedUserIds;
+		invariant(participatedUserIds, "Participated user ids not loaded");
 
 		return team.memberUserIds.filter((userId) =>
-			this.ctx.participatedUsers.includes(userId),
+			participatedUserIds.includes(userId),
 		);
 	}
 
@@ -1047,20 +1061,13 @@ export class Tournament {
 	teamMemberOfByUser(user: OptionalIdObject) {
 		if (!user) return null;
 
-		let result: (typeof this.ctx.teams)[number] | null = null;
-		let latestJoinedAt = 0;
-		for (const team of this.ctx.teams) {
-			const memberIdx = team.memberUserIds.indexOf(user.id);
-			if (memberIdx === -1) continue;
+		const teams = this.ctx.teams.filter((team) =>
+			team.memberUserIds.includes(user.id),
+		);
+		if (teams.length <= 1) return teams[0] ?? null;
 
-			const joinedAt = team.memberJoinedAt[memberIdx] ?? 0;
-			if (!result || joinedAt > latestJoinedAt) {
-				result = team;
-				latestJoinedAt = joinedAt;
-			}
-		}
-
-		return result;
+		const latestTeamId = this.ctx.latestTeamIdByDuplicatedUserId[user.id];
+		return teams.find((team) => team.id === latestTeamId) ?? teams[0];
 	}
 
 	/**

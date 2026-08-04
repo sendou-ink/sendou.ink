@@ -31,6 +31,8 @@ const combinedTournamentData = async (tournamentId: number) => {
 	return {
 		data: await BracketRepository.findByTournamentId(tournamentId),
 		ctx,
+		participatedUsers:
+			await TournamentRepository.findParticipatedUserIdsById(tournamentId),
 	};
 };
 
@@ -101,10 +103,12 @@ export async function tournamentData({
 function dataMapped({
 	data,
 	ctx,
+	participatedUsers,
 	user,
 }: {
 	data: BracketData;
 	ctx: TournamentRepository.FindById;
+	participatedUsers: number[];
 	user?: { id: number };
 }) {
 	const revealInfo = shouldRevealInfo({
@@ -120,6 +124,7 @@ function dataMapped({
 
 	return {
 		data,
+		participatedUsers,
 		ctx: {
 			...ctx,
 			tentativeTier,
@@ -280,7 +285,11 @@ function tournamentDataCacheEntry(tournamentId: number) {
 		storedAt: Date.now(),
 		combined: combinedTournamentData(tournamentId),
 	};
-	entry.combined.catch(() => tournamentDataCache.delete(tournamentId));
+	entry.combined.catch(() => {
+		if (tournamentDataCache.get(tournamentId) === entry) {
+			tournamentDataCache.delete(tournamentId);
+		}
+	});
 
 	tournamentDataCache.set(tournamentId, entry);
 
@@ -350,7 +359,11 @@ function tournamentTeamsCacheEntry(tournamentId: number) {
 		storedAt: Date.now(),
 		teams: TournamentRepository.findTeamsFullByTournamentId(tournamentId),
 	};
-	entry.teams.catch(() => tournamentTeamsCache.delete(tournamentId));
+	entry.teams.catch(() => {
+		if (tournamentTeamsCache.get(tournamentId) === entry) {
+			tournamentTeamsCache.delete(tournamentId);
+		}
+	});
 
 	tournamentTeamsCache.set(tournamentId, entry);
 

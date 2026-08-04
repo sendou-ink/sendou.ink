@@ -58,11 +58,7 @@ export default function TournamentTeamPage() {
 				<TeamWithRoster
 					team={team}
 					mapPool={team.mapPool}
-					activePlayers={
-						data.sets.length > 0
-							? tournament.participatedPlayerUserIdsByTeamId(team.id)
-							: undefined
-					}
+					activePlayers={data.activePlayers}
 				/>
 				{team.team && !team.team.deletedAt ? (
 					<Link

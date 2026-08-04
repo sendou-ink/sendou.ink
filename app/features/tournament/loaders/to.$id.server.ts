@@ -17,6 +17,7 @@ import * as TournamentMatchVodRepository from "~/features/tournament-bracket/Tou
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
+import { serializeTournamentLoaderData } from "../core/layout-payload";
 
 export type TournamentLoaderData = {
 	tournament: TournamentLayoutData;
@@ -72,8 +73,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
 
-	// skip expensive rr7 data serialization (hot path loader)
-	return JSON.stringify({
+	return serializeTournamentLoaderData({
 		tournament: {
 			ctx: tournament.ctx,
 			bracketsMeta: await bracketsMetaCached(tournamentId),

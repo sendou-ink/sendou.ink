@@ -35,7 +35,6 @@ describe("tournamentSummary()", () => {
 		hasMapPool: false,
 		inviteCode: null,
 		memberUserIds: userIds,
-		memberJoinedAt: userIds.map(() => 0),
 		ownerUserId: userIds[0] ?? null,
 		name: `Team ${teamId}`,
 		prefersNotToHost: 0,

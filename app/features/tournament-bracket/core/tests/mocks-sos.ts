@@ -1663,6 +1663,25 @@ export const SWIM_OR_SINK_167 = (
 			},
 		],
 	},
+	participatedUsers: [
+		44, 65, 73, 163, 190, 241, 267, 331, 373, 460, 590, 863, 986, 1038, 1059,
+		1338, 1548, 1616, 1736, 1894, 1953, 1961, 2059, 2088, 2670, 2672, 2888,
+		3181, 3275, 3449, 3513, 3657, 3930, 4307, 4504, 5001, 5106, 5187, 5227,
+		5261, 5334, 5368, 5471, 5584, 5679, 6051, 7008, 7216, 7807, 7994, 8080,
+		8297, 8552, 8587, 8760, 8830, 8852, 9001, 9034, 9235, 9454, 10181, 10200,
+		10265, 10611, 11244, 11495, 11815, 11951, 12585, 12610, 13671, 14007, 15188,
+		15278, 16387, 17310, 19035, 19093, 20240, 20731, 20774, 20807, 21205, 21249,
+		21339, 21487, 22026, 22344, 22396, 22409, 22614, 22706, 22744, 22903, 23016,
+		23082, 23115, 23132, 23292, 23505, 23712, 23946, 24514, 25053, 25168, 25218,
+		25464, 25469, 25622, 25856, 26103, 26428, 26801, 26820, 26988, 26989, 27113,
+		27222, 27438, 27440, 27474, 27485, 27917, 28097, 28145, 28391, 28671, 28700,
+		29011, 29120, 29182, 29467, 29531, 29643, 29823, 29855, 29897, 30122, 30204,
+		30266, 30591, 30612, 30685, 30686, 31195, 31259, 31395, 31526, 31580, 31868,
+		32203, 33067, 33116, 33402, 33825, 34014, 34071, 34414, 34594, 34657, 34724,
+		35169, 35225, 35571, 35724, 36265, 36898, 37341, 37677, 38176, 39363, 40169,
+		40505, 41797, 42409, 42703, 43847, 43850, 44751, 45163, 45635, 45980, 46045,
+		46099, 46101,
+	],
 	ctx: {
 		id: 672,
 		parentTournamentId: null,
@@ -2134,7 +2153,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [8852, 34724, 9403, 27222],
 				inviteCode: null,
 				memberUserIds: [8852, 9403, 31868, 13562, 34724, 27222],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 8852,
 				checkIns: [
 					{
@@ -2179,7 +2197,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [23016, 331, 44, 65],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 23016,
 				checkIns: [
 					{
@@ -2224,7 +2241,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [22344, 1038, 1059, 10200],
 				inviteCode: null,
 				memberUserIds: [22344, 10200, 1038, 1059, 267],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 22344,
 				checkIns: [
 					{
@@ -2269,7 +2285,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [9001, 9034, 590, 29643],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 9001,
 				checkIns: [
 					{
@@ -2314,7 +2329,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [3930, 5368, 373, 37677],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 3930,
 				checkIns: [
 					{
@@ -2359,7 +2373,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [7807, 11815, 5001, 7216],
 				inviteCode: null,
 				memberUserIds: [7807, 11143, 20311, 11815, 5001, 7216],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 7807,
 				checkIns: [
 					{
@@ -2404,7 +2417,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [3657, 5227, 25622, 25053],
 				inviteCode: null,
 				memberUserIds: [3657, 20026, 5227, 25622, 25053],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 3657,
 				checkIns: [
 					{
@@ -2449,7 +2461,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [73, 8760, 1548, 163],
 				inviteCode: null,
 				memberUserIds: [73, 5947, 8760, 1548, 163],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 73,
 				checkIns: [
 					{
@@ -2494,7 +2505,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [19093, 2670, 36265, 23505],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 19093,
 				checkIns: [
 					{
@@ -2539,7 +2549,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [22614, 11244, 3181, 11495],
 				inviteCode: null,
 				memberUserIds: [22614, 11244, 3181, 11495, 31073],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 22614,
 				checkIns: [
 					{
@@ -2579,7 +2588,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [21487, 28391, 23292, 13854],
 				inviteCode: null,
 				memberUserIds: [13854, 21487, 28391, 23292, 27438],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 13854,
 				checkIns: [
 					{
@@ -2624,7 +2632,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [3449, 4307, 20731, 22706],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 3449,
 				checkIns: [
 					{
@@ -2669,7 +2676,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [863, 34414, 27917, 15278],
 				inviteCode: null,
 				memberUserIds: [27917, 15278, 34414, 863, 31526],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 27917,
 				checkIns: [
 					{
@@ -2714,7 +2720,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [1736, 986, 25464, 2300],
 				inviteCode: null,
 				memberUserIds: [31259, 1736, 986, 2300, 25464, 30204],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 31259,
 				checkIns: [
 					{
@@ -2759,7 +2764,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [11350, 11275, 9718],
-				memberJoinedAt: [0, 0, 0],
 				ownerUserId: 11350,
 				checkIns: [],
 				hasMapPool: false,
@@ -2778,7 +2782,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [19035, 2088, 9454, 2059],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 19035,
 				checkIns: [
 					{
@@ -2823,7 +2826,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [35571, 25168, 27485, 14007],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 35571,
 				checkIns: [
 					{
@@ -2868,7 +2870,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [460, 1338, 5679, 241],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 460,
 				checkIns: [
 					{
@@ -2913,7 +2914,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [33116, 34014, 44751, 22756],
 				inviteCode: null,
 				memberUserIds: [11951, 33116, 34014, 44751, 44198, 22756],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 11951,
 				checkIns: [
 					{
@@ -2958,7 +2958,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [1616, 17310, 34657, 22409],
 				inviteCode: null,
 				memberUserIds: [1616, 1487, 17310, 34657, 22409],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 1616,
 				checkIns: [
 					{
@@ -3003,7 +3002,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [5471, 2672, 4504, 25856],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 5471,
 				checkIns: [
 					{
@@ -3048,7 +3046,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [5334, 34071, 23946, 21339],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 5334,
 				checkIns: [
 					{
@@ -3093,7 +3090,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [23115, 5261, 190, 12585],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 23115,
 				checkIns: [
 					{
@@ -3138,7 +3134,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [5662, 2731, 31764, 25133, 17855],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 5662,
 				checkIns: [],
 				hasMapPool: false,
@@ -3157,7 +3152,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [21205, 1953, 32885, 2888],
 				inviteCode: null,
 				memberUserIds: [21205, 32885, 1953, 15188, 2888],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 21205,
 				checkIns: [
 					{
@@ -3202,7 +3196,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [5106, 8297, 8830, 38176],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 5106,
 				checkIns: [
 					{
@@ -3247,7 +3240,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [23731, 36215],
-				memberJoinedAt: [0, 0],
 				ownerUserId: 23731,
 				checkIns: [],
 				hasMapPool: false,
@@ -3266,7 +3258,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [16387, 6051, 22903, 23132],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 16387,
 				checkIns: [
 					{
@@ -3311,7 +3302,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [29120, 35225, 8587, 27440],
 				inviteCode: null,
 				memberUserIds: [27440, 29120, 35225, 8587, 23333],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 27440,
 				checkIns: [
 					{
@@ -3356,7 +3346,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [26103, 31395, 33402, 31195],
 				inviteCode: null,
 				memberUserIds: [26103, 31395, 31195, 28700, 33402],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 26103,
 				checkIns: [
 					{
@@ -3401,7 +3390,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [30685, 30686, 22396, 1961],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 30685,
 				checkIns: [
 					{
@@ -3446,7 +3434,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [24514, 5187, 29823, 22744],
 				inviteCode: null,
 				memberUserIds: [24514, 5187, 10265, 22744, 29823],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 24514,
 				checkIns: [
 					{
@@ -3491,7 +3478,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [5584, 30612, 13671, 36898],
 				inviteCode: null,
 				memberUserIds: [5584, 13671, 30612, 36898, 31580],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 5584,
 				checkIns: [
 					{
@@ -3536,7 +3522,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [29645, 31533, 29483, 42118, 36800],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 29645,
 				checkIns: [],
 				hasMapPool: false,
@@ -3555,7 +3540,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [25469, 3513, 26820, 30122],
 				inviteCode: null,
 				memberUserIds: [30122, 26820, 31154, 10297, 3513, 25469],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 30122,
 				checkIns: [
 					{
@@ -3600,7 +3584,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [37477, 3635, 7433, 6647],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 37477,
 				checkIns: [],
 				hasMapPool: false,
@@ -3619,7 +3602,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [20774, 20807, 42703, 42409],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 20774,
 				checkIns: [
 					{
@@ -3664,7 +3646,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [28170, 11941, 715, 11409],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 28170,
 				checkIns: [],
 				hasMapPool: false,
@@ -3683,7 +3664,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [26428, 29182, 9235, 30591],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 26428,
 				checkIns: [
 					{
@@ -3728,7 +3708,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [25247, 2279, 26162, 4334, 24013],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 25247,
 				checkIns: [],
 				hasMapPool: false,
@@ -3747,7 +3726,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [41797, 29855, 34594, 26801],
 				inviteCode: null,
 				memberUserIds: [41797, 26801, 29855, 34594, 33825],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 41797,
 				checkIns: [
 					{
@@ -3792,7 +3770,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [25218, 26988, 26989, 12610],
 				inviteCode: null,
 				memberUserIds: [25218, 26988, 26989, 12610, 25755],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 25218,
 				checkIns: [
 					{
@@ -3837,7 +3814,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [37341, 30266, 22699, 39363],
 				inviteCode: null,
 				memberUserIds: [30266, 37341, 22699, 28145, 39363, 27113],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 30266,
 				checkIns: [
 					{
@@ -3882,7 +3858,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [22026, 29467, 10611, 46099],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 22026,
 				checkIns: [
 					{
@@ -3927,7 +3902,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [45980, 45163, 32203, 46101],
 				inviteCode: null,
 				memberUserIds: [45980, 45163, 2620, 32203, 46101],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 45980,
 				checkIns: [
 					{
@@ -3972,7 +3946,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [40505, 29011, 23082, 33067],
 				inviteCode: null,
 				memberUserIds: [40505, 29011, 23082, 33067, 21549],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 40505,
 				checkIns: [
 					{
@@ -4017,7 +3990,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [35724, 20240, 28097, 21249],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 35724,
 				checkIns: [
 					{
@@ -4062,7 +4034,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [23712, 8080, 7994, 20990],
 				inviteCode: null,
 				memberUserIds: [7994, 23712, 27474, 20990, 8080, 28671],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 7994,
 				checkIns: [
 					{
@@ -4107,7 +4078,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: [29531, 3275, 35169, 7008],
 				inviteCode: null,
 				memberUserIds: [29531, 3275, 35169, 7008, 40169],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 29531,
 				checkIns: [
 					{
@@ -4152,7 +4122,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [28703, 23183, 7664, 30237],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 28703,
 				checkIns: [],
 				hasMapPool: false,
@@ -4171,7 +4140,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [10181, 8552, 29897, 1894],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 10181,
 				checkIns: [
 					{
@@ -4216,7 +4184,6 @@ export const SWIM_OR_SINK_167 = (
 				activeRosterUserIds: null,
 				inviteCode: null,
 				memberUserIds: [43847, 43850, 45635, 46045],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 43847,
 				checkIns: [
 					{
@@ -4335,26 +4302,7 @@ export const SWIM_OR_SINK_167 = (
 				stageId: 21,
 			},
 		],
-		participatedUsers: [
-			44, 65, 73, 163, 190, 241, 267, 331, 373, 460, 590, 863, 986, 1038, 1059,
-			1338, 1548, 1616, 1736, 1894, 1953, 1961, 2059, 2088, 2670, 2672, 2888,
-			3181, 3275, 3449, 3513, 3657, 3930, 4307, 4504, 5001, 5106, 5187, 5227,
-			5261, 5334, 5368, 5471, 5584, 5679, 6051, 7008, 7216, 7807, 7994, 8080,
-			8297, 8552, 8587, 8760, 8830, 8852, 9001, 9034, 9235, 9454, 10181, 10200,
-			10265, 10611, 11244, 11495, 11815, 11951, 12585, 12610, 13671, 14007,
-			15188, 15278, 16387, 17310, 19035, 19093, 20240, 20731, 20774, 20807,
-			21205, 21249, 21339, 21487, 22026, 22344, 22396, 22409, 22614, 22706,
-			22744, 22903, 23016, 23082, 23115, 23132, 23292, 23505, 23712, 23946,
-			24514, 25053, 25168, 25218, 25464, 25469, 25622, 25856, 26103, 26428,
-			26801, 26820, 26988, 26989, 27113, 27222, 27438, 27440, 27474, 27485,
-			27917, 28097, 28145, 28391, 28671, 28700, 29011, 29120, 29182, 29467,
-			29531, 29643, 29823, 29855, 29897, 30122, 30204, 30266, 30591, 30612,
-			30685, 30686, 31195, 31259, 31395, 31526, 31580, 31868, 32203, 33067,
-			33116, 33402, 33825, 34014, 34071, 34414, 34594, 34657, 34724, 35169,
-			35225, 35571, 35724, 36265, 36898, 37341, 37677, 38176, 39363, 40169,
-			40505, 41797, 42409, 42703, 43847, 43850, 44751, 45163, 45635, 45980,
-			46045, 46099, 46101,
-		],
+		latestTeamIdByDuplicatedUserId: {},
 		castStreams: [],
 		participantStreams: [],
 	},

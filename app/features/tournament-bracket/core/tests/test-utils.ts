@@ -9,7 +9,6 @@ export const tournamentCtxTeam = (
 	partial?: Partial<TournamentData["ctx"]["teams"][0]>,
 ): TournamentData["ctx"]["teams"][0] => {
 	return {
-		memberJoinedAt: (partial?.memberUserIds ?? []).map((_, i) => i + 1),
 		checkIns: [{ checkedInAt: 1705858841, bracketIdx: null, isCheckOut: 0 }],
 		createdAt: 0,
 		id: teamId,
@@ -77,7 +76,7 @@ export const testTournament = ({
 		staff: [],
 		tieBreakerMapPool: [],
 		toSetMapPool: [],
-		participatedUsers: [],
+		latestTeamIdByDuplicatedUserId: {},
 		castStreams: [],
 		participantStreams: [],
 		mapPickingStyle: "AUTO_SZ",
@@ -117,6 +116,7 @@ export const testTournament = ({
 			})),
 		},
 		ctx: tournamentCtx,
+		participatedUsers: [],
 	});
 };
 

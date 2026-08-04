@@ -32,6 +32,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	return {
 		bracketIdx,
 		bracket: bracket ? serializeBracket(bracket) : null,
+		// the layout does not ship these, standings derived in the view need them
+		participatedUserIds: tournament.participatedUserIds,
 		teamProgressStatus: tournament.teamMemberOfProgressStatus(user),
 	};
 };

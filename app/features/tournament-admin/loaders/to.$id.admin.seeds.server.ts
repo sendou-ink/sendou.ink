@@ -3,7 +3,7 @@ import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
-	tournamentFromDBCached,
+	tournamentSharedCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
@@ -15,7 +15,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = requireUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 
-	const tournament = await tournamentFromDBCached({ tournamentId, user });
+	const tournament = await tournamentSharedCached(tournamentId);
 	if (!tournament.isOrganizer(user)) {
 		throw redirect(tournamentPage(tournamentId));
 	}

@@ -67,6 +67,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		tournamentTeamId,
 		team,
+		activePlayers:
+			sets.length > 0
+				? fullTournament.participatedPlayerUserIdsByTeamId(tournamentTeamId)
+				: undefined,
 		tournamentName: tournament.ctx.name,
 		sets: sets.map((set) => ({
 			...set,

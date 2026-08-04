@@ -264,6 +264,11 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			},
 		],
 	},
+	participatedUsers: [
+		45, 1843, 2072, 2899, 3147, 5662, 6114, 10757, 11484, 11780, 13370, 13590,
+		17855, 21689, 26992, 30176, 31148, 33047, 33491, 33578, 33611, 37632, 37901,
+		43518, 43662, 45879, 46006, 46467, 46813,
+	],
 	ctx: {
 		id: 891,
 		eventId: 2698,
@@ -372,7 +377,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				abDivision: null,
 				inviteCode: null,
 				memberUserIds: [5662, 2899, 6114, 33963, 30176],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 5662,
 				checkIns: [
 					{
@@ -397,7 +401,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				abDivision: null,
 				inviteCode: null,
 				memberUserIds: [17855, 21689, 3147, 2072],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 17855,
 				checkIns: [
 					{
@@ -422,7 +425,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				abDivision: null,
 				inviteCode: null,
 				memberUserIds: [11484, 13370, 45, 1843],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 11484,
 				checkIns: [
 					{
@@ -447,7 +449,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				abDivision: null,
 				inviteCode: null,
 				memberUserIds: [37632, 13590, 10757, 33047, 41024],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 37632,
 				checkIns: [
 					{
@@ -472,7 +473,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				abDivision: null,
 				inviteCode: null,
 				memberUserIds: [43518, 29665, 46006, 33483, 11780, 37901],
-				memberJoinedAt: [0, 0, 0, 0, 0, 0],
 				ownerUserId: 43518,
 				checkIns: [
 					{
@@ -497,7 +497,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				abDivision: null,
 				inviteCode: null,
 				memberUserIds: [45879, 43662, 33491, 46467, 46813],
-				memberJoinedAt: [0, 0, 0, 0, 0],
 				ownerUserId: 45879,
 				checkIns: [
 					{
@@ -522,7 +521,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				abDivision: null,
 				inviteCode: null,
 				memberUserIds: [26992, 33611, 31148, 33578],
-				memberJoinedAt: [0, 0, 0, 0],
 				ownerUserId: 26992,
 				checkIns: [
 					{
@@ -635,11 +633,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				stageId: 23,
 			},
 		],
-		participatedUsers: [
-			45, 1843, 2072, 2899, 3147, 5662, 6114, 10757, 11484, 11780, 13370, 13590,
-			17855, 21689, 26992, 30176, 31148, 33047, 33491, 33578, 33611, 37632,
-			37901, 43518, 43662, 45879, 46006, 46467, 46813,
-		],
+		latestTeamIdByDuplicatedUserId: {},
 		castStreams: [],
 		participantStreams: [],
 	},

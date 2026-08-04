@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import {
 	requireTournamentVisible,
-	tournamentFromDBCached,
+	tournamentSharedCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -20,7 +20,7 @@ export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 	const { page } = tournamentTeamsSearchParams.parse(request);
 
-	const tournament = await tournamentFromDBCached({ tournamentId, user });
+	const tournament = await tournamentSharedCached(tournamentId);
 	requireTournamentVisible({ ctx: tournament.ctx, user });
 
 	const rosterByTeamId = new Map(

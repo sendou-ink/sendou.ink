@@ -891,6 +891,12 @@ export function buildCases(fx: Fixtures): {
 			TournamentRepository.findTeamsFullByTournamentId(tournamentId),
 	);
 	add(
+		"TournamentRepository.findParticipatedUserIdsById",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findParticipatedUserIdsById(tournamentId),
+	);
+	add(
 		"TournamentRepository.findRulesById",
 		fx.heavyTournamentId,
 		(tournamentId) => TournamentRepository.findRulesById(tournamentId),

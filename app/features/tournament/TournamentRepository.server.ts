@@ -266,28 +266,6 @@ export async function findById(id: number) {
 			).as("toSetMapPool"),
 			jsonArrayFrom(
 				eb
-					.selectFrom("TournamentStage")
-					.innerJoin(
-						"TournamentMatch",
-						"TournamentMatch.stageId",
-						"TournamentStage.id",
-					)
-					.innerJoin(
-						"TournamentMatchGameResult",
-						"TournamentMatch.id",
-						"TournamentMatchGameResult.matchId",
-					)
-					.innerJoin(
-						"TournamentMatchGameResultParticipant",
-						"TournamentMatchGameResult.id",
-						"TournamentMatchGameResultParticipant.matchGameResultId",
-					)
-					.select("TournamentMatchGameResultParticipant.userId")
-					.groupBy("TournamentMatchGameResultParticipant.userId")
-					.where("TournamentStage.tournamentId", "=", id),
-			).as("participatedUsers"),
-			jsonArrayFrom(
-				eb
 					.selectFrom("LiveStream")
 					.select([
 						"LiveStream.twitch",
@@ -348,14 +326,85 @@ export async function findById(id: number) {
 		...result,
 		teams: result.teams.map(({ members, ...team }) => ({
 			...team,
+			avgSeedingSkillOrdinal:
+				typeof team.avgSeedingSkillOrdinal === "number"
+					? Math.round(team.avgSeedingSkillOrdinal * 100) / 100
+					: null,
 			memberUserIds: members.map((member) => member.userId),
-			/** When each member joined, index aligned with `memberUserIds`. */
-			memberJoinedAt: members.map((member) => member.createdAt),
 			ownerUserId:
 				members.find((member) => member.role === "OWNER")?.userId ?? null,
 		})),
-		participatedUsers: result.participatedUsers.map((user) => user.userId),
+		latestTeamIdByDuplicatedUserId: latestTeamIdByDuplicatedUserId(
+			result.teams,
+		),
 	};
+}
+
+/**
+ * User ids of everyone on multiple teams' rosters mapped to the team they joined
+ * most recently. Nearly always empty, allowing the teams to drop per member join
+ * timestamps that only this tiebreak needed.
+ */
+function latestTeamIdByDuplicatedUserId(
+	teams: Array<{
+		id: number;
+		members: Array<{ userId: number; createdAt: number }>;
+	}>,
+) {
+	const latestByUserId = new Map<
+		number,
+		{ teamId: number; joinedAt: number }
+	>();
+	const duplicatedUserIds = new Set<number>();
+
+	for (const team of teams) {
+		for (const member of team.members) {
+			const existing = latestByUserId.get(member.userId);
+			if (existing) {
+				duplicatedUserIds.add(member.userId);
+			}
+			if (!existing || member.createdAt > existing.joinedAt) {
+				latestByUserId.set(member.userId, {
+					teamId: team.id,
+					joinedAt: member.createdAt,
+				});
+			}
+		}
+	}
+
+	const result: Record<number, number> = {};
+	for (const userId of duplicatedUserIds) {
+		result[userId] = latestByUserId.get(userId)!.teamId;
+	}
+
+	return result;
+}
+
+/** User ids of everyone who played at least one map of the tournament. */
+export async function findParticipatedUserIdsById(tournamentId: number) {
+	const rows = await db
+		.selectFrom("TournamentStage")
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.stageId",
+			"TournamentStage.id",
+		)
+		.innerJoin(
+			"TournamentMatchGameResult",
+			"TournamentMatch.id",
+			"TournamentMatchGameResult.matchId",
+		)
+		.innerJoin(
+			"TournamentMatchGameResultParticipant",
+			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResultParticipant.matchGameResultId",
+		)
+		.select("TournamentMatchGameResultParticipant.userId")
+		.groupBy("TournamentMatchGameResultParticipant.userId")
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.execute();
+
+	return rows.map((row) => row.userId);
 }
 
 export type TeamFull = Unwrapped<typeof findTeamsFullByTournamentId>;

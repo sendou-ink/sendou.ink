@@ -352,13 +352,17 @@ export abstract class Bracket {
 	}
 
 	protected standingsWithoutNonParticipants(standings: Standing[]): Standing[] {
+		const participatedUserIds = this.tournament.participatedUserIds;
+		// views that did not load participated user ids show full rosters
+		if (!participatedUserIds) return standings;
+
 		return standings.map((standing) => {
 			return {
 				...standing,
 				team: {
 					...standing.team,
 					memberUserIds: standing.team.memberUserIds.filter((userId) =>
-						this.tournament.ctx.participatedUsers.includes(userId),
+						participatedUserIds.includes(userId),
 					),
 				},
 			};

@@ -16,6 +16,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
 import { isRevalidation, metaTags } from "../../../utils/remix";
 import { TournamentNav } from "../components/TournamentNav";
+import { parseTournamentLoaderData } from "../core/layout-payload";
 
 import { loader, type TournamentLoaderData } from "../loaders/to.$id.server";
 
@@ -37,7 +38,7 @@ export const meta: MetaFunction = (args) => {
 
 	if (!rawData) return [];
 
-	const data = JSON.parse(rawData) as TournamentLoaderData;
+	const data = parseTournamentLoaderData(rawData);
 
 	return metaTags({
 		title: data.tournament.ctx.name,
@@ -57,7 +58,7 @@ export const handle: SendouRouteHandle = {
 
 		if (!rawData) return [];
 
-		const data = JSON.parse(rawData) as TournamentLoaderData;
+		const data = parseTournamentLoaderData(rawData);
 
 		return [
 			{
@@ -109,7 +110,7 @@ export default function TournamentLayoutShell() {
 export function TournamentLayout() {
 	const rawData = useLoaderData<typeof loader>();
 	const data = React.useMemo(
-		() => JSON.parse(rawData) as TournamentLoaderData,
+		() => parseTournamentLoaderData(rawData),
 		[rawData],
 	);
 	const tournament = React.useMemo(
