@@ -1,7 +1,7 @@
-import { Err } from "neverthrow";
 import { describe, expect, it } from "vitest";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { StageId } from "~/modules/in-game-lists/types";
+import { unwrap } from "~/utils/result";
 import * as MapList from "./MapList";
 import { MapPool } from "./map-pool";
 
@@ -501,49 +501,49 @@ describe("MapList.generate()", () => {
 
 describe("MapList.parsePattern()", () => {
 	it("parses a simple pattern", () => {
-		expect(MapList.parsePattern("SZ*TC")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern("SZ*TC"))).toEqual({
 			pattern: ["SZ", "ANY", "TC"],
 		});
 	});
 
 	it("handles extra spaces", () => {
-		expect(MapList.parsePattern(" *  SZ    ")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern(" *  SZ    "))).toEqual({
 			pattern: ["ANY", "SZ"],
 		});
 	});
 
 	it("handles the same mode twice in pattern", () => {
-		expect(MapList.parsePattern("SZ*SZ")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern("SZ*SZ"))).toEqual({
 			pattern: ["SZ", "ANY", "SZ"],
 		});
 	});
 
 	it("returns error on invalid mode", () => {
-		expect(MapList.parsePattern("*INVALID*")).toBeInstanceOf(Err);
+		expect(MapList.parsePattern("*INVALID*").ok).toBe(false);
 	});
 
 	it("if starts and ends with ANY, the ending ANY is dropped", () => {
-		expect(MapList.parsePattern("*SZ*")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern("*SZ*"))).toEqual({
 			pattern: ["ANY", "SZ"],
 		});
 	});
 
 	it("parses a mustInclude mode", () => {
-		expect(MapList.parsePattern("[SZ]")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern("[SZ]"))).toEqual({
 			mustInclude: [{ mode: "SZ", isGuaranteed: false }],
 			pattern: [],
 		});
 	});
 
 	it("parses a guaranteed mustInclude mode", () => {
-		expect(MapList.parsePattern("[SZ!]")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern("[SZ!]"))).toEqual({
 			mustInclude: [{ mode: "SZ", isGuaranteed: true }],
 			pattern: [],
 		});
 	});
 
 	it("parses a complex pattern", () => {
-		expect(MapList.parsePattern(" * [SZ] * TC [TW]")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern(" * [SZ] * TC [TW]"))).toEqual({
 			mustInclude: [
 				{ mode: "TW", isGuaranteed: false },
 				{ mode: "SZ", isGuaranteed: false },
@@ -553,14 +553,14 @@ describe("MapList.parsePattern()", () => {
 	});
 
 	it("ignores repeated must include mode", () => {
-		expect(MapList.parsePattern("[SZ][SZ]")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern("[SZ][SZ]"))).toEqual({
 			mustInclude: [{ mode: "SZ", isGuaranteed: false }],
 			pattern: [],
 		});
 	});
 
 	it("parses an empty pattern", () => {
-		expect(MapList.parsePattern("")._unsafeUnwrap()).toEqual({
+		expect(unwrap(MapList.parsePattern(""))).toEqual({
 			pattern: [],
 		});
 	});
@@ -568,8 +568,8 @@ describe("MapList.parsePattern()", () => {
 	it("returns error when pattern is too long", () => {
 		const longPattern = "a".repeat(51);
 		const result = MapList.parsePattern(longPattern);
-		expect(result.isErr()).toBe(true);
-		if (result.isErr()) {
+		expect(result.ok).toBe(false);
+		if (!result.ok) {
 			expect(result.error).toBe("pattern too long");
 		}
 	});
@@ -578,8 +578,8 @@ describe("MapList.parsePattern()", () => {
 		expect(
 			MapList.parsePattern(
 				"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi ut varius velit. Ut egestas lacus dolor, sit amet iaculis justo dictum sed. Fusce aliquet sed nunc sit amet ullamcorper. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer leo ex, congue eu porta nec, imperdiet sed neque.",
-			),
-		).toBeInstanceOf(Err);
+			).ok,
+		).toBe(false);
 	});
 });
 

@@ -332,7 +332,7 @@ export abstract class Bracket {
 			AbDivisions.validate({
 				abDivisionsBySeedOrder: assignments,
 				groupCount,
-			}).isOk()
+			}).ok
 		) {
 			return assignments as (0 | 1)[];
 		}
@@ -344,7 +344,7 @@ export abstract class Bracket {
 			AbDivisions.validate({
 				abDivisionsBySeedOrder: fakeAssignments,
 				groupCount,
-			}).isOk()
+			}).ok
 		) {
 			return fakeAssignments;
 		}

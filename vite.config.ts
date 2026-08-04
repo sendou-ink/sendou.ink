@@ -128,7 +128,6 @@ export default defineConfig((config) => {
 				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
 				"nanoid",
-				"neverthrow",
 				"openskill",
 				"pako",
 				"partysocket",

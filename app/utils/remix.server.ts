@@ -1,10 +1,10 @@
 import type { Namespace, TFunction } from "i18next";
-import type { Ok, Result } from "neverthrow";
 import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
 import type { z } from "zod";
 import type { navItems } from "~/components/layout/nav-items";
 import { ServerConfig } from "~/config.server";
+import type { Ok, Result } from "~/utils/result";
 import { logger } from "./logger";
 import { currentRequestPathname } from "./request-context.server";
 
@@ -163,14 +163,14 @@ export function errorToastIfFalsy(
 }
 
 /**
- * To be used in loader or action function. Asserts that the provided `Result` value is an `Ok` variant of the `neverthrow` library.
+ * To be used in loader or action function. Asserts that the provided `Result` value is an `Ok` variant.
  *
  * If the value is an `Err`, shows an error toast to the user with the error message. The function will stop execution by throwing a redirect meaning it is safe to operate on the value after this function call.
  */
 export function errorToastIfErr<T, E extends string>(
 	value: Result<T, E>,
-): asserts value is Ok<T, never> {
-	if (value.isErr()) {
+): asserts value is Ok<T> {
+	if (!value.ok) {
 		throw errorToastRedirect(value.error);
 	}
 }

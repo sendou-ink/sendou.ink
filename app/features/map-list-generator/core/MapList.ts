@@ -1,4 +1,3 @@
-import { err, ok } from "neverthrow";
 import * as R from "remeda";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type {
@@ -7,6 +6,7 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
+import { err, ok, unwrapOr } from "~/utils/result";
 import type { MapPool } from "./map-pool";
 import type { ReadonlyMapPoolObject } from "./map-pool-serializer/types";
 
@@ -75,7 +75,7 @@ export function* generate(args: {
 	const firstArgs = yield [];
 	let amount = firstArgs.amount;
 	let pattern = firstArgs.pattern
-		? parsePattern(firstArgs.pattern).unwrapOr(null)
+		? unwrapOr(parsePattern(firstArgs.pattern), null)
 		: null;
 
 	while (true) {
@@ -135,7 +135,7 @@ export function* generate(args: {
 		const nextArgs = yield result;
 		amount = nextArgs.amount;
 		pattern = nextArgs.pattern
-			? parsePattern(nextArgs.pattern).unwrapOr(null)
+			? unwrapOr(parsePattern(nextArgs.pattern), null)
 			: null;
 	}
 }
@@ -402,8 +402,8 @@ const validPatternParts = new Set(["*", ...modesShort] as const);
  * Parses a pattern string into structured pattern data for map list generation.
  *
  * @example
- * parsePattern("SZ*TC").unwrapOr(null); // { pattern: ["SZ", "ANY", "TC"] }
- * parsePattern("[RM!]*SZ").unwrapOr(null); // { pattern: ["ANY", "SZ"], mustInclude: [{ mode: "RM", isGuaranteed: true }] }
+ * unwrapOr(parsePattern("SZ*TC"), null); // { pattern: ["SZ", "ANY", "TC"] }
+ * unwrapOr(parsePattern("[RM!]*SZ"), null); // { pattern: ["ANY", "SZ"], mustInclude: [{ mode: "RM", isGuaranteed: true }] }
  */
 export function parsePattern(pattern: string) {
 	if (pattern.length > 50) {

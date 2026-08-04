@@ -7,6 +7,7 @@ import {
 } from "~/features/tournament-bracket/core/tests/mocks-swiss";
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
 import invariant from "~/utils/invariant";
+import { unwrap } from "~/utils/result";
 import * as Engine from "./engine";
 import { pairUp } from "./engine/swiss/pairing";
 import * as TeamStatus from "./engine/swiss/team-status";
@@ -116,11 +117,13 @@ describe("Swiss", () => {
 
 			const bracket = tournament.bracketByIdx(0)!;
 
-			const matches = Engine.generateRound(bracket.data as Engine.BracketData, {
-				groupId: 4443,
-				standings: bracket.standings,
-				settings: bracket.settings,
-			})._unsafeUnwrap().matches;
+			const matches = unwrap(
+				Engine.generateRound(bracket.data as Engine.BracketData, {
+					groupId: 4443,
+					standings: bracket.standings,
+					settings: bracket.settings,
+				}),
+			).matches;
 
 			it("finds new opponents for each team in the last round", () => {
 				for (const match of matches) {
@@ -196,16 +199,18 @@ describe("Swiss", () => {
 			}));
 
 		it("gives a bye to the only team left in the running", () => {
-			const round = Engine.generateRound(bracketWithFinishedRound(), {
-				groupId: 0,
-				standings: standingsOf([
-					{ id: 1, setWins: 2, setLosses: 0 }, // advanced
-					{ id: 2, setWins: 0, setLosses: 3 }, // eliminated
-					{ id: 3, setWins: 0, setLosses: 3 }, // eliminated
-					{ id: 4, setWins: 1, setLosses: 1 },
-				]),
-				settings: EARLY_ADVANCE_SETTINGS,
-			})._unsafeUnwrap();
+			const round = unwrap(
+				Engine.generateRound(bracketWithFinishedRound(), {
+					groupId: 0,
+					standings: standingsOf([
+						{ id: 1, setWins: 2, setLosses: 0 }, // advanced
+						{ id: 2, setWins: 0, setLosses: 3 }, // eliminated
+						{ id: 3, setWins: 0, setLosses: 3 }, // eliminated
+						{ id: 4, setWins: 1, setLosses: 1 },
+					]),
+					settings: EARLY_ADVANCE_SETTINGS,
+				}),
+			);
 
 			expect(round.matches).toEqual([
 				{ number: 1, opponent1: { id: 4 }, opponent2: null },
@@ -224,7 +229,7 @@ describe("Swiss", () => {
 				settings: EARLY_ADVANCE_SETTINGS,
 			});
 
-			expect(round.isErr()).toBe(true);
+			expect(round.ok).toBe(false);
 		});
 	});
 

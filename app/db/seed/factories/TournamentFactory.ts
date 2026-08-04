@@ -325,7 +325,7 @@ async function generateNextSwissRound(
 			standings: bracket.standings,
 			settings: bracket.settings,
 		});
-		if (round.isErr()) continue;
+		if (!round.ok) continue;
 
 		const stageId = groupsMatches[0]?.stageId;
 		invariant(stageId, `Swiss group ${group.id} has no matches`);

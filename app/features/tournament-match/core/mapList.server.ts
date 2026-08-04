@@ -17,6 +17,7 @@ import type {
 } from "~/modules/tournament-map-list-generator/types";
 import { syncCached } from "~/utils/cache.server";
 import { logger } from "~/utils/logger";
+import { unwrap } from "~/utils/result";
 import { assertUnreachable } from "~/utils/types";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
 
@@ -242,28 +243,32 @@ function resolveFreshTeamPickedMapList(
 		});
 	}
 
-	try {
-		return generateBalancedMapList({
-			count: count(),
-			seed: String(args.matchId),
-			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
-			tiebreakerMaps: new MapPool(tieBreakerMapPool),
-			teams: [
-				{
-					id: args.teams[0],
-					maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
-				},
-				{
-					id: args.teams[1],
-					maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
-				},
-			],
-			recentlyPlayedMaps: args.recentlyPlayedMaps,
-		});
-	} catch (e) {
-		logger.error("Failed to create map list. Falling back to default maps.", e);
+	const result = generateBalancedMapList({
+		count: count(),
+		seed: String(args.matchId),
+		modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
+		tiebreakerMaps: new MapPool(tieBreakerMapPool),
+		teams: [
+			{
+				id: args.teams[0],
+				maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
+			},
+			{
+				id: args.teams[1],
+				maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
+			},
+		],
+		recentlyPlayedMaps: args.recentlyPlayedMaps,
+	});
+	if (result.ok) return result.value;
 
-		return generateBalancedMapList({
+	logger.error(
+		"Failed to create map list. Falling back to default maps.",
+		result.error,
+	);
+
+	return unwrap(
+		generateBalancedMapList({
 			count: count(),
 			seed: String(args.matchId),
 			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
@@ -279,6 +284,6 @@ function resolveFreshTeamPickedMapList(
 				},
 			],
 			recentlyPlayedMaps: args.recentlyPlayedMaps,
-		});
-	}
+		}),
+	);
 }

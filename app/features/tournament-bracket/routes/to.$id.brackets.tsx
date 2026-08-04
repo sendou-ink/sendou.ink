@@ -318,7 +318,7 @@ function getAbDivisionsStartError(
 		groupCount,
 	});
 
-	return result.isErr() ? result.error : null;
+	return result.ok ? null : result.error;
 }
 
 function BracketStarter({
