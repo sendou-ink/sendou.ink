@@ -1,27 +1,27 @@
-import type { LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 import * as R from "remeda";
-import { getUser } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
-	requireTournamentVisible,
 	tournamentFromDBCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { parseParams } from "~/utils/remix.server";
+import { tournamentPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
+	const user = requireUser();
 	const { id: tournamentId } = parseParams({ params, schema: idObject });
 
-	const tournament = await tournamentFromDBCached({
-		tournamentId,
-		user: undefined,
-	});
-	requireTournamentVisible({ ctx: tournament.ctx, user: getUser() });
+	const tournament = await tournamentFromDBCached({ tournamentId, user });
+	if (!tournament.isOrganizer(user)) {
+		throw redirect(tournamentPage(tournamentId));
+	}
 
 	const rosterByTeamId = new Map(
-		(await tournamentTeamsFullCached({ tournamentId })).map((team) => [
+		(await tournamentTeamsFullCached({ tournamentId, user })).map((team) => [
 			team.id,
 			team,
 		]),
