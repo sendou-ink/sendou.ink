@@ -113,21 +113,41 @@ interface SetMetadataArgs {
 
 const MAX_DEDUP_CACHE_SIZE = 5_000;
 const DEDUP_CACHE_PRUNE_TARGET = 2_500;
-const metadataDedup = new Map<string, string>();
+const MIN_EXPIRY_EXTENSION_MS = 15 * 60 * 1000;
+const metadataDedup = new Map<
+	string,
+	{ participantsKey: string; expiresAt: number }
+>();
 
 export async function setMetadata(args: SetMetadataArgs) {
 	if (systemMessagesDisabled) return;
 	if (!ServerConfig.skalop.systemMessageUrl) return;
 
+	invariant(
+		args.expiresAt || args.expiresAfter,
+		"setMetadata requires either expiresAt or expiresAfter",
+	);
+
 	const participantsKey = args.participantUserIds
 		.slice()
 		.sort((a, b) => a - b)
 		.join(",");
+	const expiresAt = args.expiresAt
+		? args.expiresAt.getTime()
+		: add(new Date(), args.expiresAfter!).getTime();
+
+	// skip only if a resend would neither change the roster nor meaningfully
+	// extend the room's lifetime
 	const cached = metadataDedup.get(args.chatCode);
-	if (cached === participantsKey) return;
+	if (
+		cached?.participantsKey === participantsKey &&
+		expiresAt - cached.expiresAt < MIN_EXPIRY_EXTENSION_MS
+	) {
+		return;
+	}
 
 	metadataDedup.delete(args.chatCode);
-	metadataDedup.set(args.chatCode, participantsKey);
+	metadataDedup.set(args.chatCode, { participantsKey, expiresAt });
 
 	if (metadataDedup.size > MAX_DEDUP_CACHE_SIZE) {
 		const entries = [...metadataDedup.entries()];
@@ -136,15 +156,6 @@ export async function setMetadata(args: SetMetadataArgs) {
 			metadataDedup.set(entry[0], entry[1]);
 		}
 	}
-
-	invariant(
-		args.expiresAt || args.expiresAfter,
-		"setMetadata requires either expiresAt or expiresAfter",
-	);
-
-	const expiresAt = args.expiresAt
-		? args.expiresAt.getTime()
-		: add(new Date(), args.expiresAfter!).getTime();
 
 	const chatUsers = await UserRepository.findChatUsersByUserIds(
 		args.participantUserIds,
