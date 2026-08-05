@@ -13,6 +13,7 @@ import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	latestSkillPerSeason,
+	skillCountsAsSeasonSet,
 } from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import * as Seasons from "../mmr/core/Seasons";
@@ -265,21 +266,7 @@ export async function findSeasonsParticipatedInByUserId(userId: number) {
 		.selectFrom("Skill")
 		.select("season")
 		.where("userId", "=", userId)
-		.where(({ or, eb, exists, selectFrom }) =>
-			or([
-				eb("groupMatchId", "is not", null),
-				exists(
-					selectFrom("TournamentResult")
-						.select("TournamentResult.userId")
-						.whereRef(
-							"TournamentResult.tournamentId",
-							"=",
-							"Skill.tournamentId",
-						)
-						.where("TournamentResult.userId", "=", userId),
-				),
-			]),
-		)
+		.where((eb) => skillCountsAsSeasonSet(eb, userId))
 		.groupBy("season")
 		.orderBy("season", "desc")
 		.execute();

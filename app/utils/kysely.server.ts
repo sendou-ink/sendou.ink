@@ -308,6 +308,27 @@ export function latestSkillPerSeason<By extends "userId" | "identifier">({
 		.groupBy(`Skill.${by}`);
 }
 
+/**
+ * Predicate for `Skill` rows of the user that represent a played set: either a SendouQ match or
+ * a ranked tournament the user has a result in. Filters out e.g. skills of tournament teams the
+ * user dropped from before results. `"Skill"` must be in scope at the call site.
+ */
+export function skillCountsAsSeasonSet(
+	eb: ExpressionBuilder<DB, "Skill">,
+	userId: number,
+) {
+	return eb.or([
+		eb("Skill.groupMatchId", "is not", null),
+		eb.exists(
+			eb
+				.selectFrom("TournamentResult")
+				.select("TournamentResult.userId")
+				.whereRef("TournamentResult.tournamentId", "=", "Skill.tournamentId")
+				.where("TournamentResult.userId", "=", userId),
+		),
+	]);
+}
+
 /** Concats the file name (a bit misleadingly called `url` in the DB schema) with the root URL, giving the full URL for the image */
 export function concatUserSubmittedImagePrefix<T extends string | null>(
 	expr: Expression<T>,
