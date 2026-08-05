@@ -29,6 +29,7 @@ import {
 	type VodSummary,
 } from "../store/vods";
 import { AnalyzerPool, defaultPoolSize } from "../worker/pool";
+import { withoutRepeatEvents } from "./dedupe-events";
 import { EventCard, type GetFrame } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
@@ -588,7 +589,7 @@ export function VodPage({
 								ingestable={ingestable}
 								send={ingestable ? bulkSend : undefined}
 							>
-								{built.sources.map((e, i) => {
+								{withoutRepeatEvents(built.sources).map((e, i) => {
 									const vodMatch = vodMatchByEvent.get(e);
 									return (
 										<EventCard

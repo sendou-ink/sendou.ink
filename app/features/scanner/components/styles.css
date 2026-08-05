@@ -179,6 +179,25 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-variant-numeric: tabular-nums;
 	margin-bottom: 8px;
 	align-items: center;
+
+	/* timestamp leads the row */
+	& > span:first-child {
+		color: var(--color-text);
+		font-weight: var(--weight-bold);
+	}
+
+	/* event-type chip: neutral like the match chips, the icon carries the accent */
+	& .status.detected {
+		gap: 5px;
+		padding: 2px 10px;
+		color: var(--color-text);
+		border-color: var(--color-border);
+		background: var(--color-bg);
+
+		& .event-type-icon {
+			color: var(--color-text-accent);
+		}
+	}
 }
 
 .scanner-app .card img.thumb {
@@ -248,10 +267,13 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-weight: var(--weight-body);
 }
 
+/* lighter than a solid slab: translucent fill + hairline so the boxes read
+   as grouping, not chrome */
 .scanner-app .team {
 	border-radius: var(--radius-field);
-	padding: 8px;
-	background: var(--color-bg);
+	padding: 8px 10px;
+	background: color-mix(in oklab, var(--color-bg) 45%, transparent);
+	border: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
 	min-width: 0;
 	overflow-x: auto;
 }
@@ -301,7 +323,8 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
+	letter-spacing: 0.06em;
+	color: var(--color-text-high);
 }
 
 .scanner-app .team.win h3 {
@@ -332,12 +355,14 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	width: auto;
 }
 
+/* round black pucks, same language as the match header weapon row */
 .scanner-app img.weapon-icon {
 	width: 28px;
 	height: 28px;
 	vertical-align: middle;
 	background: #000;
-	border-radius: 4px;
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5);
 }
 
 .scanner-app .minimap-player img.weapon-icon {
@@ -647,8 +672,10 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	}
 
 	& img.weapon-icon {
-		width: 22px;
-		height: 22px;
+		width: 32px;
+		height: 32px;
+		border-radius: 100%;
+		padding: var(--s-0-5);
 
 		&.pov {
 			outline: 2px solid var(--color-text-accent);

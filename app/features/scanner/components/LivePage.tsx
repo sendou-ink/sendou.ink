@@ -21,6 +21,7 @@ import {
 	updateEventsSend,
 } from "../store/events";
 import { AnalyzerClient } from "../worker/client";
+import { withoutRepeatEvents } from "./dedupe-events";
 import { EventCard } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
@@ -334,7 +335,7 @@ export function LivePage({
 											: undefined
 									}
 								>
-									{built.sources.map((e) => (
+									{withoutRepeatEvents(built.sources).map((e) => (
 										<EventCard
 											key={e.id}
 											type={e.type}
