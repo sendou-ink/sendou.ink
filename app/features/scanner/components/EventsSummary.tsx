@@ -10,6 +10,7 @@ import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
 import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
+import { EventTypeIcon } from "./EventTypeIcon";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
 	[MAP_START_EVENT_TYPE]: "map start",
@@ -33,16 +34,25 @@ export function EventsSummary({
 	for (const event of events) {
 		counts.set(event.type, (counts.get(event.type) ?? 0) + 1);
 	}
-	const parts = [...counts.entries()]
-		.sort((a, b) => b[1] - a[1])
-		.map(([type, count]) => {
-			const label = EVENT_TYPE_LABELS[type] ?? type;
-			return `${count} ${label}${count === 1 ? "" : "s"}`;
-		});
+	const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
 
 	return (
 		<div className="events-summary">
-			<span>{parts.join(" · ")}</span>
+			{sorted.map(([type, count]) => {
+				const label = EVENT_TYPE_LABELS[type] ?? type;
+				return (
+					<span
+						key={type}
+						className="events-summary-type"
+						title={`${count} ${label}${count === 1 ? "" : "s"}`}
+					>
+						<span className="events-summary-icon">
+							<EventTypeIcon type={type} />
+						</span>
+						×{count}
+					</span>
+				);
+			})}
 			<button type="button" className="events-toggle" onClick={onToggle}>
 				{open ? "hide events" : "show events"}
 			</button>

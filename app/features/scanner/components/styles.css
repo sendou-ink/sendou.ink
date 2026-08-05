@@ -134,6 +134,9 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 }
 
 .scanner-app .status.detected {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
 	color: var(--color-success-high);
 	border-color: var(--color-success-low);
 	background: var(--color-success-low);
@@ -822,6 +825,24 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	padding: 2px 4px;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.scanner-app .events-summary-type {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	font-variant-numeric: tabular-nums;
+}
+
+.scanner-app .events-summary-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: var(--radius-full);
+	background: var(--color-bg-higher);
 	color: var(--color-text-high);
 }
 

@@ -1,6 +1,10 @@
 import { WeaponImage } from "~/components/Image";
-import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
+import {
+	SCOREBOARD_OWN_EVENT_TYPE,
+	type ScoreboardOwnData,
+} from "../core/detectors/scoreboard-own/index";
 import { AbilityGrid } from "./AbilityGrid";
+import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { lobbyLabel, mainWeaponLabel, modeLabel, stageLabel } from "./labels";
@@ -21,7 +25,10 @@ export function ScoreboardOwnCard(props: {
 		<div className="card">
 			<div className="meta">
 				<span>t={formatTime(t)}</span>
-				<span className="status detected">own results</span>
+				<span className="status detected">
+					<EventTypeIcon type={SCOREBOARD_OWN_EVENT_TYPE} />
+					own results
+				</span>
 				<span>
 					{[
 						lobbyLabel(data.lobby),

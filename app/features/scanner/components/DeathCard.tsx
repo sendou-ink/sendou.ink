@@ -1,7 +1,11 @@
 import { WeaponImage } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { DeathData } from "../core/detectors/death/index";
+import {
+	DEATH_EVENT_TYPE,
+	type DeathData,
+} from "../core/detectors/death/index";
 import { AbilityGrid } from "./AbilityGrid";
+import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { weaponLabel } from "./labels";
@@ -23,7 +27,10 @@ export function DeathCard(props: {
 		<div className="card">
 			<div className="meta">
 				<span>t={formatTime(t)}</span>
-				<span className="status detected">death</span>
+				<span className="status detected">
+					<EventTypeIcon type={DEATH_EVENT_TYPE} />
+					death
+				</span>
 				<span>
 					splatted by <b>{weaponName ?? "?"}</b>
 					{data.name && <> ({data.name})</>}

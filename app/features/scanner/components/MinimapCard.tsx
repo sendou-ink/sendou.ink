@@ -1,11 +1,13 @@
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
-import type {
-	MinimapData,
-	MinimapEnemy,
-	MinimapTeammate,
+import {
+	MINIMAP_EVENT_TYPE,
+	type MinimapData,
+	type MinimapEnemy,
+	type MinimapTeammate,
 } from "../core/detectors/minimap/index";
 import type { ScannerAbility } from "../scanner-types";
+import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { stageLabel } from "./labels";
@@ -70,7 +72,10 @@ export function MinimapCard(props: {
 		<div className="card">
 			<div className="meta">
 				<span>t={formatTime(t)}</span>
-				<span className="status detected">minimap</span>
+				<span className="status detected">
+					<EventTypeIcon type={MINIMAP_EVENT_TYPE} />
+					minimap
+				</span>
 				{data.stage !== null && <span>{stageLabel(data.stage)}</span>}
 				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}

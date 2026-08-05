@@ -1,4 +1,8 @@
-import type { MapStartData } from "../core/detectors/map-start/index";
+import {
+	MAP_START_EVENT_TYPE,
+	type MapStartData,
+} from "../core/detectors/map-start/index";
+import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { modeLabel, stageLabel } from "./labels";
@@ -19,7 +23,10 @@ export function MapStartCard(props: {
 		<div className="card">
 			<div className="meta">
 				<span>t={formatTime(t)}</span>
-				<span className="status detected">map start</span>
+				<span className="status detected">
+					<EventTypeIcon type={MAP_START_EVENT_TYPE} />
+					map start
+				</span>
 				<span>
 					<b>{modeLabel(data.mode) ?? "?"}</b> · {stageLabel(data.stage) ?? "?"}
 				</span>

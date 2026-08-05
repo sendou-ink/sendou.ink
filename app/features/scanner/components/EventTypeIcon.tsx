@@ -1,0 +1,41 @@
+/**
+ * Shared lucide glyph per detected-event type, so the events summary line
+ * and the event cards mark each type with the same icon.
+ */
+
+import {
+	CircleHelp,
+	type LucideIcon,
+	Map as MapIcon,
+	Play,
+	RotateCcw,
+	Skull,
+	Trophy,
+	User,
+} from "lucide-react";
+import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
+import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
+import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
+import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
+import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
+import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
+
+const EVENT_TYPE_ICONS: Record<string, LucideIcon> = {
+	[MAP_START_EVENT_TYPE]: Play,
+	[DEATH_EVENT_TYPE]: Skull,
+	[MINIMAP_EVENT_TYPE]: MapIcon,
+	[SCOREBOARD_EVENT_TYPE]: Trophy,
+	[SCOREBOARD_REPLAY_EVENT_TYPE]: RotateCcw,
+	[SCOREBOARD_OWN_EVENT_TYPE]: User,
+};
+
+export function EventTypeIcon({
+	type,
+	size = 12,
+}: {
+	type: string;
+	size?: number;
+}) {
+	const Icon = EVENT_TYPE_ICONS[type] ?? CircleHelp;
+	return <Icon size={size} aria-hidden />;
+}

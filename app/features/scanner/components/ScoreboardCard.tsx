@@ -6,6 +6,7 @@ import type {
 } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
 import { AbilityPopover } from "./AbilityGrid";
+import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import type { CardData } from "./fixture-export";
 import { formatTime } from "./format";
@@ -82,7 +83,10 @@ export function ScoreboardCard(props: {
 		<div className="card">
 			<div className="meta">
 				<span>t={formatTime(t)}</span>
-				{isReplay && <span className="status detected">replay</span>}
+				<span className="status detected">
+					<EventTypeIcon type={eventType} />
+					{isReplay ? "replay" : "scoreboard"}
+				</span>
 				{(data.mode !== null || data.stage !== null) && (
 					<span>
 						{[
