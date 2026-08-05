@@ -19,6 +19,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { OrganizerMatchMapListDialog } from "./OrganizerMatchMapListDialog";
@@ -136,7 +137,7 @@ function CastChannelChipRadio({
 	currentlyCastedOn: string | null;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const fetcher = useFetcher();
+	const { submit, fetcher } = useActionSubmit(matchSchema);
 	const previousStateRef = React.useRef(fetcher.state);
 
 	// the action can still reject (e.g. "Not an organizer or streamer"), so the
@@ -163,10 +164,7 @@ function CastChannelChipRadio({
 
 	const handleChange = (value: string) => {
 		if (value === selectedValue) return;
-		fetcher.submit(
-			{ _action: "SET_AS_CASTED", twitchAccount: value },
-			{ method: "post" },
-		);
+		submit("SET_AS_CASTED", { twitchAccount: value });
 	};
 
 	return (

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher, useMatches } from "react-router";
+import { Link, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -25,12 +25,14 @@ import { WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import { useUser } from "~/features/auth/core/user";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useHasRole } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { editTeamPage, manageTeamRosterPage, userPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.index.server";
 import type * as TeamRepository from "../TeamRepository.server";
 import styles from "../team.module.css";
+import { teamProfilePageActionSchema } from "../team-schemas";
 import {
 	getMemberRoleType,
 	isTeamManager,
@@ -152,7 +154,7 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 	const { t } = useTranslation(["common", "team"]);
 	const user = useUser();
 	const isAdmin = useHasRole("ADMIN");
-	const fetcher = useFetcher();
+	const { submit } = useActionSubmit(teamProfilePageActionSchema);
 	const [confirming, setConfirming] = React.useState<"LEAVE" | "DELETE" | null>(
 		null,
 	);
@@ -174,8 +176,10 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 		return null;
 	}
 
-	const submitAction = (action: string) => {
-		fetcher.submit({ _action: action }, { method: "post" });
+	const submitAction = (
+		action: "LEAVE_TEAM" | "MAKE_MAIN_TEAM" | "DELETE_TEAM",
+	) => {
+		submit(action);
 		setConfirming(null);
 	};
 

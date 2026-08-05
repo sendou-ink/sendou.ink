@@ -13,7 +13,7 @@ import {
 	toggle,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
-import { _action } from "~/utils/zod";
+import { _action, themeInputSchema } from "~/utils/zod";
 import {
 	CUSTOM_ROLE_MAX_LENGTH,
 	TEAM,
@@ -23,6 +23,18 @@ import {
 export const resetInviteLinkSchema = z.object({
 	_action: _action("RESET_INVITE_LINK"),
 });
+
+export const teamProfilePageActionSchema = z.union([
+	z.object({
+		_action: _action("LEAVE_TEAM"),
+	}),
+	z.object({
+		_action: _action("MAKE_MAIN_TEAM"),
+	}),
+	z.object({
+		_action: _action("DELETE_TEAM"),
+	}),
+]);
 
 const teamNameValidate = {
 	func: (teamName: string) =>
@@ -65,6 +77,20 @@ export const editTeamFormSchema = z.object({
 	logo: image({ label: "labels.logo" }),
 	banner: image({ label: "labels.banner", dimensions: "thick-banner" }),
 });
+
+export const updateTeamCustomThemeSchema = z.object({
+	_action: _action("UPDATE_CUSTOM_THEME"),
+	newValue: z.preprocess(
+		(val) => (!val || val === "null" ? null : val),
+		themeInputSchema.nullable(),
+	),
+});
+
+/** Every payload the team edit route action accepts, discriminated by `_action`. */
+export const editTeamActionSchema = z.union([
+	editTeamFormSchema,
+	updateTeamCustomThemeSchema,
+]);
 
 /** Sentinel `role` value selected to switch a member to a free-text custom role. Never stored. */
 export const CUSTOM_ROLE_VALUE = "CUSTOM";

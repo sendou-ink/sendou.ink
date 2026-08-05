@@ -1,7 +1,8 @@
 import clsx from "clsx";
 import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { logger } from "../../../../utils/logger";
@@ -14,6 +15,7 @@ import type { Bracket, Standing } from "../../core/Bracket";
 import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
 import type { BracketMeta } from "../../core/Tournament";
+import { bracketSchema } from "../../tournament-bracket-schemas";
 import styles from "./bracket.module.css";
 
 export function PlacementsTable({
@@ -368,22 +370,21 @@ function EditableDestination({
 	tournamentTeamId: number;
 	droppedOut: boolean;
 }) {
-	const fetcher = useFetcher<any>();
+	const overrideProgression = useActionSubmit(bracketSchema, {
+		encType: "application/json",
+	});
 	const [editingDestination, setEditingDestination] = React.useState(false);
 	const [newDestinationIdx, setNewDestinationIdx] = React.useState<
 		number | null
 	>(overridenDestination?.idx ?? destination?.idx ?? -1);
 
 	const handleSubmit = () => {
-		fetcher.submit(
-			{
-				_action: "OVERRIDE_BRACKET_PROGRESSION",
-				tournamentTeamId,
-				sourceBracketIdx: source.idx,
-				destinationBracketIdx: newDestinationIdx,
-			},
-			{ method: "post", encType: "application/json" },
-		);
+		if (newDestinationIdx === null) return;
+		overrideProgression.submit("OVERRIDE_BRACKET_PROGRESSION", {
+			tournamentTeamId,
+			sourceBracketIdx: source.idx,
+			destinationBracketIdx: newDestinationIdx,
+		});
 	};
 
 	const possibleDestinations = [

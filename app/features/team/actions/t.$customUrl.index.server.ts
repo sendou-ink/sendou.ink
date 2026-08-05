@@ -8,10 +8,8 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TeamRepository from "../TeamRepository.server";
-import {
-	teamParamsSchema,
-	teamProfilePageActionSchema,
-} from "../team-schemas.server";
+import { teamProfilePageActionSchema } from "../team-schemas";
+import { teamParamsSchema } from "../team-schemas.server";
 import { isTeamMember, isTeamOwner, resolveNewOwner } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {

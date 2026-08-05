@@ -78,7 +78,7 @@
 			"plugins": ["./biome-plugins/no-raw-search-params.grit"]
 		},
 		{
-			"includes": ["app/**"],
+			"includes": ["app/**", "!app/hooks/useActionSubmit.ts"],
 			"plugins": ["./biome-plugins/no-raw-action-forms.grit"]
 		},
 		{

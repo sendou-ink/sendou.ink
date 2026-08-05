@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+	reportWeaponSchema,
+	undoWeaponReportSchema,
+} from "~/components/match-page/match-page-schemas";
+import {
 	ACTION_TYPES,
 	WHO_SIDES,
 } from "~/features/tournament-bracket/tournament-bracket-constants";
@@ -12,7 +16,6 @@ import {
 	numericEnum,
 	safeJSONParse,
 	stageId,
-	weaponSplId,
 } from "~/utils/zod";
 import { TOURNAMENT } from "../tournament/tournament-constants";
 import * as PickBan from "./core/PickBan";
@@ -83,15 +86,8 @@ export const matchSchema = z.union([
 		_action: _action("END_SET"),
 		winnerTeamId: z.preprocess(nullLiteraltoNull, id.nullable()),
 	}),
-	z.object({
-		_action: _action("REPORT_WEAPON"),
-		weaponSplId,
-		mapIndex: z.coerce.number().int().nonnegative(),
-	}),
-	z.object({
-		_action: _action("UNDO_WEAPON_REPORT"),
-		mapIndex: z.coerce.number().int().nonnegative(),
-	}),
+	reportWeaponSchema,
+	undoWeaponReportSchema,
 ]);
 
 export const bracketIdx = z.coerce.number().int().min(0).max(100);
