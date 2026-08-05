@@ -12,6 +12,7 @@ import type {
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	latestSkillPerSeason,
 } from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import * as Seasons from "../mmr/core/Seasons";
@@ -43,22 +44,10 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 	db
 		.selectFrom((eb) =>
 			eb
-				.selectFrom((eb) =>
-					eb
-						.selectFrom("Skill")
-						// with a lone max() aggregate SQLite takes the bare columns
-						// from the row that had the max id
-						.select(({ fn }) => [
-							fn.max("Skill.id").as("entryId"),
-							"Skill.ordinal",
-							"Skill.matchesCount",
-						])
-						.where("Skill.season", "=", season)
-						.where("Skill.identifier", "is not", null)
-						.groupBy("Skill.identifier")
-						.as("LatestOfTeam"),
+				.selectFrom(
+					latestSkillPerSeason({ season, by: "identifier" }).as("LatestOfTeam"),
 				)
-				.select(["LatestOfTeam.entryId", "LatestOfTeam.ordinal"])
+				.select(["LatestOfTeam.latestId as entryId", "LatestOfTeam.ordinal"])
 				.where(
 					"LatestOfTeam.matchesCount",
 					">=",
@@ -397,26 +386,11 @@ export type UserSPLeaderboardItem = Awaited<
 
 export async function findUserSPLeaderboard(season: number) {
 	const rows = await db
-		.selectFrom((eb) =>
-			eb
-				.selectFrom("Skill")
-				// with a lone max() aggregate SQLite takes the bare columns from the
-				// row that had the max id
-				.select(({ fn }) => [
-					fn.max("Skill.id").as("entryId"),
-					"Skill.ordinal",
-					"Skill.matchesCount",
-					"Skill.userId",
-				])
-				.where("Skill.season", "=", season)
-				.where("Skill.userId", "is not", null)
-				.groupBy("Skill.userId")
-				.as("Latest"),
-		)
+		.selectFrom(latestSkillPerSeason({ season, by: "userId" }).as("Latest"))
 		.innerJoin("User", "User.id", "Latest.userId")
 		.select((eb) => [
 			...commonUserSelect(eb),
-			"Latest.entryId",
+			"Latest.latestId as entryId",
 			"Latest.ordinal",
 			"User.plusSkippedForSeasonNth",
 		])

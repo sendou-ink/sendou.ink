@@ -274,6 +274,40 @@ export function tournamentTeamCount(
 		.where("TournamentTeam.isPlaceholder", "=", 0);
 }
 
+/**
+ * Grouped subquery picking each user's (`by: "userId"`) or team's (`by: "identifier"`) latest
+ * Skill row of a season: `latestId` plus that row's `ordinal`, `matchesCount` and the `by`
+ * column. Wrap it with `.selectFrom(latestSkillPerSeason(...).as("Latest"))`; extra `.where`s
+ * compose before aliasing.
+ */
+export function latestSkillPerSeason<By extends "userId" | "identifier">({
+	season,
+	by,
+}: {
+	season: number;
+	by: By;
+}) {
+	// The latest row per user/team is picked via SQLite's bare column rule: with a `max()`
+	// aggregate the other selected columns come from the row that produced the max.
+	// A self-join against a `max(id)` subquery is avoided because it lets the planner
+	// pick a nested-loop plan when it misjudges the season's row count (e.g. a freshly
+	// started season whose stats are dwarfed by older seasons), which made this query
+	// take ~12s. This form is plan-stable regardless of stats: a single grouped scan of
+	// the `skill_season_user_id_leaderboard` / `skill_season_identifier_leaderboard`
+	// covering index, no temp b-tree per partition.
+	return db
+		.selectFrom("Skill")
+		.select(({ fn }) => [
+			fn.max("Skill.id").as("latestId"),
+			"Skill.ordinal" as const,
+			"Skill.matchesCount" as const,
+			`Skill.${by}` as `Skill.${By}`,
+		])
+		.where("Skill.season", "=", season)
+		.where(`Skill.${by}`, "is not", null)
+		.groupBy(`Skill.${by}`);
+}
+
 /** Concats the file name (a bit misleadingly called `url` in the DB schema) with the root URL, giving the full URL for the image */
 export function concatUserSubmittedImagePrefix<T extends string | null>(
 	expr: Expression<T>,
