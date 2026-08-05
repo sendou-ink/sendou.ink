@@ -17,7 +17,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? await AssociationsRepository.findByMemberUserId(user?.id)
 		: null;
 
-	const filtersFromSearchParams = scrimsSearchParams.parse(request).filters;
+	const { weekdayTimes, weekendTimes, divs } =
+		scrimsSearchParams.parse(request);
+	const filtersFromSearchParams = { weekdayTimes, weekendTimes, divs };
 
 	const filters = Scrim.filtersAreDefault(filtersFromSearchParams)
 		? (user?.preferences?.defaultScrimsFilters ?? Scrim.defaultFilters())
@@ -57,5 +59,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		posts: dividePosts(posts, user?.id),
 		teams: user ? await TeamRepository.findAllByMemberUserId(user.id) : [],
 		filters,
+		canSaveAsDefault:
+			user != null &&
+			!R.isDeepEqual(
+				filters,
+				user.preferences?.defaultScrimsFilters ?? Scrim.defaultFilters(),
+			),
 	};
 };

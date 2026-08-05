@@ -20,6 +20,7 @@
 	"filters.weekendTimes": "Weekend times",
 	"filters.weekendStart": "Weekend start",
 	"filters.weekendEnd": "Weekend end",
+	"filters.divs": "Divs",
 	"filters.apply": "Apply",
 	"filters.applyAndDefault": "Apply & Set as Default",
 	"filters.showFiltered": "Show filtered ({{count}})",

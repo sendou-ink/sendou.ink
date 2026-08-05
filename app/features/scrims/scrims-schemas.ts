@@ -14,7 +14,6 @@ import {
 	textArea,
 	textAreaOptional,
 	textFieldOptional,
-	timeRangeOptional,
 	toggle,
 	tournamentSearchOptional,
 } from "~/form/fields";
@@ -90,7 +89,7 @@ const timeRangeSchema = z.object({
 	end: timeString,
 });
 
-export const divsSchema = z
+const divsBaseSchema = z
 	.object({
 		min: z.enum(LUTI_DIVS).nullable(),
 		max: z.enum(LUTI_DIVS).nullable(),
@@ -107,24 +106,51 @@ export const divsSchema = z
 		{
 			message: "forms:errors.divBothOrNeither",
 		},
-	)
-	.transform((divs) => {
-		if (!divs.min || !divs.max) return divs;
+	);
 
-		const minIndex = LUTI_DIVS.indexOf(divs.min);
-		const maxIndex = LUTI_DIVS.indexOf(divs.max);
+export const divsSchema = divsBaseSchema.transform(normalizeDivs);
 
-		if (maxIndex > minIndex) {
-			return { min: divs.max, max: divs.min };
-		}
+function normalizeDivs<T extends { min: string | null; max: string | null }>(
+	divs: T,
+): T {
+	if (!divs.min || !divs.max) return divs;
 
-		return divs;
-	});
+	const minIndex = LUTI_DIVS.indexOf(divs.min as (typeof LUTI_DIVS)[number]);
+	const maxIndex = LUTI_DIVS.indexOf(divs.max as (typeof LUTI_DIVS)[number]);
+	if (minIndex === -1 || maxIndex === -1) return divs;
+
+	if (maxIndex > minIndex) {
+		return { ...divs, min: divs.max, max: divs.min };
+	}
+
+	return divs;
+}
 
 export const scrimsFiltersSchema = z.object({
 	weekdayTimes: timeRangeSchema.nullable().catch(null),
 	weekendTimes: timeRangeSchema.nullable().catch(null),
 	divs: divsSchema.nullable().catch(null),
+});
+
+export const timeRangeCodec = z.codec(z.string(), timeRangeSchema.nullable(), {
+	decode: (encoded) => {
+		if (encoded[5] !== "-") return null;
+
+		return { start: encoded.slice(0, 5), end: encoded.slice(6) };
+	},
+	encode: (timeRange) =>
+		timeRange === null ? "" : `${timeRange.start}-${timeRange.end}`,
+});
+
+export const divsCodec = z.codec(z.string(), divsBaseSchema.nullable(), {
+	decode: (encoded) => {
+		const [max, min] = encoded.split("-");
+
+		return normalizeDivs({ max: max ?? null, min: min ?? null }) as z.output<
+			typeof divsBaseSchema
+		>;
+	},
+	encode: (divs) => (divs === null ? "" : `${divs.max}-${divs.min}`),
 });
 
 const divsFormField = dualSelectOptional({
@@ -145,20 +171,6 @@ const divsFormField = dualSelectOptional({
 		},
 		message: "errors.divBothOrNeither",
 	},
-});
-
-export const scrimsFiltersFormSchema = z.object({
-	weekdayTimes: timeRangeOptional({
-		label: "labels.weekdayTimes",
-		startLabel: "labels.start",
-		endLabel: "labels.end",
-	}),
-	weekendTimes: timeRangeOptional({
-		label: "labels.weekendTimes",
-		startLabel: "labels.start",
-		endLabel: "labels.end",
-	}),
-	divs: divsFormField,
 });
 
 const persistScrimFiltersSchema = z.object({
