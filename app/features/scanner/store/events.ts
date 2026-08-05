@@ -124,22 +124,6 @@ export function updateEventsSend(
 	);
 }
 
-export function deleteEvent(id: number): Promise<void> {
-	return db().then(
-		(database) =>
-			new Promise<void>((resolve, reject) => {
-				const transaction = database.transaction(
-					[EVENTS_STORE, FRAMES_STORE],
-					"readwrite",
-				);
-				transaction.objectStore(EVENTS_STORE).delete(id);
-				transaction.objectStore(FRAMES_STORE).delete(id);
-				transaction.oncomplete = () => resolve();
-				transaction.onerror = () => reject(transaction.error);
-			}),
-	);
-}
-
 export function listEvents(): Promise<StoredEvent[]> {
 	return tx(
 		EVENTS_STORE,

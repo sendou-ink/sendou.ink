@@ -132,6 +132,8 @@ export function VodPage({
 
 	const builtMatches = buildScannerMatches(matches.map((m) => m.event));
 	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
+	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
+	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
 
 	// "Upload as results" sends the whole scan in one go, so its outcome maps
 	// onto every ingestable card; a partial failure (some chunks sent, some
@@ -607,20 +609,20 @@ export function VodPage({
 							</MatchCard>
 						);
 					})}
-					{matches.length > 0 ? (
+					{ungroupedMatches.length > 0 ? (
 						<EventsSummary
-							events={matches.map((m) => m.event)}
+							events={ungroupedMatches.map((m) => m.event)}
 							open={eventsOpen}
 							onToggle={() => setEventsOpen(!eventsOpen)}
 						/>
 					) : null}
 					{/* newest detection on top; storage keeps ascending video-time order */}
 					{eventsOpen
-						? [...matches]
+						? [...ungroupedMatches]
 								.reverse()
 								.map((m, i) => (
 									<EventCard
-										key={matches.length - 1 - i}
+										key={ungroupedMatches.length - 1 - i}
 										type={m.event.type}
 										t={m.event.t}
 										confidence={m.event.confidence}

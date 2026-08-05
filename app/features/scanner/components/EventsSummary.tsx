@@ -1,7 +1,8 @@
 /**
- * One light line summarizing a scan's raw detections as per-type counts,
- * with a toggle for the full event card feed — the matches are the main
- * view, the events stay one click away.
+ * One light line summarizing raw detections as per-type counts, with a
+ * toggle for their event card feed. Callers pass only events not covered
+ * by a match card — a fallback for detections not yet grouped, hidden
+ * entirely once everything lives in a match.
  */
 
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";

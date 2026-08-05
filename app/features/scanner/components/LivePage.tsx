@@ -207,6 +207,10 @@ export function LivePage({
 		}
 	}, [deviceId, refreshFeed, send]);
 
+	const builtMatches = buildScannerMatches(feed);
+	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
+	const ungroupedFeed = feed.filter((e) => !groupedEvents.has(e));
+
 	const stop = useCallback(() => {
 		stopRef.current?.();
 		stopRef.current = null;
@@ -314,55 +318,53 @@ export function LivePage({
 					{feed.length === 0 ? (
 						<p className="score">No detections yet.</p>
 					) : null}
-					{[...buildScannerMatches(feed)]
-						.reverse()
-						.map((built, reverseIndex) => {
-							const id = built.sources[0]!.id!;
-							const ingestable = isIngestableMatch(built.match);
-							return (
-								<MatchCard
-									key={id}
-									match={built.match}
-									live={
-										running && reverseIndex === 0 && built.match.winner === null
-									}
-									inProgress={reverseIndex === 0 && built.match.winner === null}
-									ingestable={ingestable}
-									send={aggregateSendStatus(built.sources)}
-									onSend={
-										SENDOU_UPLOAD_ENABLED && sendouUser && ingestable
-											? () => void send(matchContaining(id), { manual: true })
-											: undefined
-									}
-								>
-									{withoutRepeatEvents(built.sources).map((e) => (
-										<EventCard
-											key={e.id}
-											type={e.type}
-											t={e.t}
-											confidence={e.confidence}
-											data={e.data as FixtureData}
-											thumbnail={e.thumbnail}
-											detectedAt={e.detectedAt}
-											getFrame={
-												e.hasFrame && e.id !== undefined
-													? () => loadEventFrame(e.id!)
-													: undefined
-											}
-										/>
-									))}
-								</MatchCard>
-							);
-						})}
-					{feed.length > 0 ? (
+					{[...builtMatches].reverse().map((built, reverseIndex) => {
+						const id = built.sources[0]!.id!;
+						const ingestable = isIngestableMatch(built.match);
+						return (
+							<MatchCard
+								key={id}
+								match={built.match}
+								live={
+									running && reverseIndex === 0 && built.match.winner === null
+								}
+								inProgress={reverseIndex === 0 && built.match.winner === null}
+								ingestable={ingestable}
+								send={aggregateSendStatus(built.sources)}
+								onSend={
+									SENDOU_UPLOAD_ENABLED && sendouUser && ingestable
+										? () => void send(matchContaining(id), { manual: true })
+										: undefined
+								}
+							>
+								{withoutRepeatEvents(built.sources).map((e) => (
+									<EventCard
+										key={e.id}
+										type={e.type}
+										t={e.t}
+										confidence={e.confidence}
+										data={e.data as FixtureData}
+										thumbnail={e.thumbnail}
+										detectedAt={e.detectedAt}
+										getFrame={
+											e.hasFrame && e.id !== undefined
+												? () => loadEventFrame(e.id!)
+												: undefined
+										}
+									/>
+								))}
+							</MatchCard>
+						);
+					})}
+					{ungroupedFeed.length > 0 ? (
 						<EventsSummary
-							events={feed}
+							events={ungroupedFeed}
 							open={eventsOpen}
 							onToggle={() => setEventsOpen(!eventsOpen)}
 						/>
 					) : null}
 					{eventsOpen
-						? feed.map((e) => (
+						? ungroupedFeed.map((e) => (
 								<EventCard
 									key={e.id}
 									type={e.type}
