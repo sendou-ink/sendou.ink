@@ -1,10 +1,16 @@
-import * as React from "react";
 import * as R from "remeda";
+import { z } from "zod";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 
-const LOCAL_STORAGE_KEY = "seen-friend-requests";
 const MAX_STORED_IDS = 200;
 
-const listeners = new Set<() => void>();
+export const seenFriendRequestsPersisted = PersistedState.define({
+	key: "seen-friend-requests",
+	storage: "local",
+	schema: z.array(z.number()),
+	default: [],
+});
 
 /**
  * Returns the count of incoming friend requests that the user has not yet seen.
@@ -15,13 +21,9 @@ const listeners = new Set<() => void>();
  * changes in another tab.
  */
 export function useUnseenFriendRequests(incomingRequestIds: number[]): number {
-	const raw = React.useSyncExternalStore(
-		subscribe,
-		getSnapshot,
-		getServerSnapshot,
-	);
+	const [seenIdsList] = usePersistedState(seenFriendRequestsPersisted);
 
-	const seenIds = new Set(parseSeenIds(raw));
+	const seenIds = new Set(seenIdsList);
 
 	return incomingRequestIds.filter((id) => !seenIds.has(id)).length;
 }
@@ -35,41 +37,12 @@ export function useUnseenFriendRequests(incomingRequestIds: number[]): number {
  * most recent ids are kept to keep the stored set from growing without bound.
  */
 export function markFriendRequestsSeen(ids: number[]) {
-	try {
-		const merged = R.unique([...parseSeenIds(getSnapshot()), ...ids])
-			.sort((a, b) => b - a)
-			.slice(0, MAX_STORED_IDS);
-		localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
-		for (const listener of listeners) {
-			listener();
-		}
-	} catch {
-		// local storage may be unavailable
-	}
-}
+	const merged = R.unique([
+		...PersistedState.read(seenFriendRequestsPersisted),
+		...ids,
+	])
+		.sort((a, b) => b - a)
+		.slice(0, MAX_STORED_IDS);
 
-function subscribe(listener: () => void) {
-	listeners.add(listener);
-	window.addEventListener("storage", listener);
-	return () => {
-		listeners.delete(listener);
-		window.removeEventListener("storage", listener);
-	};
-}
-
-function getSnapshot() {
-	return localStorage.getItem(LOCAL_STORAGE_KEY) ?? "[]";
-}
-
-function getServerSnapshot() {
-	return "[]";
-}
-
-function parseSeenIds(raw: string): number[] {
-	try {
-		const parsed = JSON.parse(raw);
-		return Array.isArray(parsed) ? parsed : [];
-	} catch {
-		return [];
-	}
+	PersistedState.write(seenFriendRequestsPersisted, merged);
 }
