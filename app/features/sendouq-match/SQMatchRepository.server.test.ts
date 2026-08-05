@@ -359,6 +359,42 @@ describe("finalizeMatch", () => {
 	});
 });
 
+describe("undoMatchReport", () => {
+	// intended: the group stays INACTIVE after an undo so it can't re-enter the
+	// queue while the disagreement is unresolved; the teams keep playing and
+	// staff resolve the match when available
+	test("keeps the reporter's group INACTIVE after undoing a set-ending report", async () => {
+		const setup = await setupMatch();
+
+		let reportedCount = 0;
+		let result = await SQMatchRepository.reportMapWinner({
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.alphaMembers[0].id,
+			reportedCount,
+		});
+		while (result.status === "MAP_REPORTED") {
+			reportedCount++;
+			result = await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.alphaMembers[0].id,
+				reportedCount,
+			});
+		}
+		expect(result.status).toBe("MATCH_REPORTED");
+		expect((await fetchGroup(setup.alphaGroupId))?.status).toBe("INACTIVE");
+
+		const undoResult = await SQMatchRepository.undoMatchReport({
+			matchId: setup.match.id,
+			requestedByUserId: setup.alphaMembers[0].id,
+		});
+		expect(undoResult.status).toBe("SUCCESS");
+
+		expect((await fetchGroup(setup.alphaGroupId))?.status).toBe("INACTIVE");
+	});
+});
+
 describe("findCancelNominationCountsByUserIds", () => {
 	test("counts distinct finalized cancellations within season and calendar year", async () => {
 		const season = Seasons.currentOrPrevious()!;

@@ -1,14 +1,10 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
 import { refreshApiTokensCache } from "~/features/api-public/api-public-utils.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { parseRequestPayload, successToast } from "~/utils/remix.server";
 import * as ApiRepository from "../ApiRepository.server";
+import { apiActionSchema } from "../api-schemas";
 import { checkUserHasApiAccess } from "../core/perms";
-
-const apiActionSchema = z.object({
-	_action: z.enum(["GENERATE_READ", "GENERATE_WRITE"]),
-});
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const data = await parseRequestPayload({

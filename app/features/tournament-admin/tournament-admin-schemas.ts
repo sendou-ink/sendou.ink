@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { _action, id, safeJSONParse, themeInputSchema } from "~/utils/zod";
 import { bracketProgressionSchema } from "../calendar/calendar-schemas";
-import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas.server";
+import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
 
 /**

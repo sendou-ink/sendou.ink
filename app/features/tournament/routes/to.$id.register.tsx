@@ -3,6 +3,7 @@ import { AlertCircle, Check, Clipboard, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -40,6 +41,12 @@ import {
 	type RegisterTeamFormValues,
 	registerTeamFormSchema,
 } from "../tournament-register-schemas";
+import {
+	addPlayerSchema,
+	checkInSchema,
+	deleteTeamMemberSchema,
+	updateMapPoolSchema,
+} from "../tournament-schemas";
 import {
 	type CounterPickValidationStatus,
 	validateCounterPickMapPool,
@@ -378,7 +385,6 @@ function CheckIn({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const isHydrated = useHydrated();
-	const fetcher = useFetcher();
 	const { formatter: checkInFormatter } = useDateTimeFormat({
 		minute: "numeric",
 		hour: "numeric",
@@ -437,16 +443,15 @@ function CheckIn({
 	}
 
 	return (
-		<fetcher.Form method="post" className="stack items-center">
-			<SubmitButton
-				size="small"
-				_action="CHECK_IN"
-				state={fetcher.state}
-				testId="check-in-button"
-			>
-				{t("tournament:pre.checkIn.button")}
-			</SubmitButton>
-		</fetcher.Form>
+		<ActionButton
+			schema={checkInSchema}
+			action="CHECK_IN"
+			formClassName="stack items-center"
+			size="small"
+			testId="check-in-button"
+		>
+			{t("tournament:pre.checkIn.button")}
+		</ActionButton>
 	);
 }
 
@@ -847,6 +852,7 @@ function DirectlyAddPlayerSelect({
 				</select>
 			</div>
 			<SubmitButton
+				schema={addPlayerSchema}
 				_action="ADD_PLAYER"
 				state={fetcher.state}
 				testId="add-player-button"
@@ -890,6 +896,7 @@ function DeleteMember({ members }: { members: TournamentTeamFull["members"] }) {
 				</select>
 				<SubmitButton
 					state={fetcher.state}
+					schema={deleteTeamMemberSchema}
 					_action="DELETE_TEAM_MEMBER"
 					variant="minimal-destructive"
 				>
@@ -973,6 +980,7 @@ function CounterPickMapPoolPicker({
 							tournament.ctx.tieBreakerMapPool,
 						) === "VALID" ? (
 						<SubmitButton
+							schema={updateMapPoolSchema}
 							_action="UPDATE_MAP_POOL"
 							state={fetcher.state}
 							className="self-center mt-4"

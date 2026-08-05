@@ -18,7 +18,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import * as React from "react";
-import { useFetcher, useLoaderData, useNavigation } from "react-router";
+import { useLoaderData, useNavigation } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -28,7 +29,6 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { InfoPopover } from "~/components/InfoPopover";
-import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { SeedingSnapshot } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -40,6 +40,7 @@ import { UserCard } from "~/features/user-card/components/UserCard";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
+import { adminSeedsActionSchema } from "../tournament-admin-schemas";
 import styles from "./to.$id.admin.seeds.module.css";
 
 export { action } from "../actions/to.$id.admin.seeds.server";
@@ -330,7 +331,6 @@ function SeedingDraggable({
 }
 
 function StartingBracketDialog() {
-	const fetcher = useFetcher();
 	const tournament = useTournament();
 
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -360,7 +360,7 @@ function StartingBracketDialog() {
 				onClose={() => setIsOpen(false)}
 				isFullScreen
 			>
-				<fetcher.Form className="stack lg items-center" method="post">
+				<div className="stack lg items-center">
 					<div>
 						{startingBrackets.map((bracket) => {
 							const teamCount = teamStartingBrackets.filter(
@@ -375,16 +375,6 @@ function StartingBracketDialog() {
 							);
 						})}
 					</div>
-					<input
-						type="hidden"
-						name="_action"
-						value="UPDATE_STARTING_BRACKETS"
-					/>
-					<input
-						type="hidden"
-						name="startingBrackets"
-						value={JSON.stringify(teamStartingBrackets)}
-					/>
 
 					<Table>
 						<thead>
@@ -431,15 +421,16 @@ function StartingBracketDialog() {
 							})}
 						</tbody>
 					</Table>
-					<SubmitButton
-						state={fetcher.state}
-						_action="UPDATE_STARTING_BRACKETS"
+					<ActionButton
+						schema={adminSeedsActionSchema}
+						action="UPDATE_STARTING_BRACKETS"
+						fields={{ startingBrackets: teamStartingBrackets }}
 						size="big"
 						testId="set-starting-brackets-submit-button"
 					>
 						Save
-					</SubmitButton>
-				</fetcher.Form>
+					</ActionButton>
+				</div>
 			</SendouDialog>
 		</div>
 	);
@@ -512,7 +503,6 @@ function AbDivisionImbalanceWarning() {
 type AbDivisionValue = 0 | 1 | null;
 
 function AbDivisionsDialog() {
-	const fetcher = useFetcher();
 	const tournament = useTournament();
 
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -543,18 +533,12 @@ function AbDivisionsDialog() {
 				onClose={() => setIsOpen(false)}
 				isFullScreen
 			>
-				<fetcher.Form className="stack lg items-center" method="post">
+				<div className="stack lg items-center">
 					<div className="stack horizontal sm text-xs">
 						<span>A: {counts.a}</span>
 						<span>B: {counts.b}</span>
 						<span>Unassigned: {counts.unassigned}</span>
 					</div>
-					<input type="hidden" name="_action" value="UPDATE_AB_DIVISIONS" />
-					<input
-						type="hidden"
-						name="abDivisions"
-						value={JSON.stringify(teamAbDivisions)}
-					/>
 
 					<Table>
 						<thead>
@@ -608,15 +592,16 @@ function AbDivisionsDialog() {
 							})}
 						</tbody>
 					</Table>
-					<SubmitButton
-						state={fetcher.state}
-						_action="UPDATE_AB_DIVISIONS"
+					<ActionButton
+						schema={adminSeedsActionSchema}
+						action="UPDATE_AB_DIVISIONS"
+						fields={{ abDivisions: teamAbDivisions }}
 						size="big"
 						testId="set-ab-divisions-submit-button"
 					>
 						Save
-					</SubmitButton>
-				</fetcher.Form>
+					</ActionButton>
+				</div>
 			</SendouDialog>
 		</div>
 	);
@@ -624,16 +609,12 @@ function AbDivisionsDialog() {
 
 function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 	const tournament = useTournament();
-	const fetcher = useFetcher();
 
 	const teamOrderInDb = tournament.ctx.teams.map((t) => t.id);
 	const teamOrderChanged = teamOrder.some((id, i) => id !== teamOrderInDb[i]);
 
 	return (
-		<fetcher.Form method="post" className={styles.form}>
-			<input type="hidden" name="tournamentId" value={tournament.ctx.id} />
-			<input type="hidden" name="seeds" value={JSON.stringify(teamOrder)} />
-			<input type="hidden" name="_action" value="UPDATE_SEEDS" />
+		<div className={styles.form}>
 			<Alert
 				variation={teamOrderChanged ? "WARNING" : "INFO"}
 				alertClassName="tournament-bracket__start-bracket-alert"
@@ -642,15 +623,17 @@ function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 				{teamOrderChanged
 					? "You have unsaved changes to seeding"
 					: "Drag teams to adjust their seeding"}
-				<SubmitButton
-					state={fetcher.state}
+				<ActionButton
+					schema={adminSeedsActionSchema}
+					action="UPDATE_SEEDS"
+					fields={{ seeds: teamOrder }}
 					isDisabled={!teamOrderChanged}
 					size="small"
 				>
 					Save seeds
-				</SubmitButton>
+				</ActionButton>
 			</Alert>
-		</fetcher.Form>
+		</div>
 	);
 }
 

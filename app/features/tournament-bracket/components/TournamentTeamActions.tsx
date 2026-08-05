@@ -2,15 +2,16 @@ import clsx from "clsx";
 import { sub } from "date-fns";
 import { Check } from "lucide-react";
 import * as React from "react";
-import { useFetcher } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/routes/to.$id";
+import { checkInSchema } from "~/features/tournament/tournament-schemas";
 import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
+import { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { logger } from "~/utils/logger";
 import {
 	soundPath,
@@ -26,7 +27,6 @@ export function TournamentTeamActions({
 }) {
 	const tournament = useTournament();
 	const user = useUser();
-	const fetcher = useFetcher();
 
 	useMatchReadySound(status?.type);
 
@@ -59,35 +59,30 @@ export function TournamentTeamActions({
 			return (
 				<Container spaced="very">
 					Your team needs to check-in
-					<fetcher.Form
-						method="post"
-						action={tournamentRegisterPage(tournament.ctx.id)}
-					>
-						<input type="hidden" name="bracketIdx" value={status.bracketIdx} />
-						{status.canCheckIn ? (
-							<SubmitButton
-								size="small"
-								variant="minimal"
-								_action="CHECK_IN"
-								state={fetcher.state}
-								testId="check-in-bracket-button"
-							>
-								Check-in now
-							</SubmitButton>
-						) : (
-							<SendouPopover
-								trigger={
-									<SendouButton variant="minimal" size="small">
-										Check-in now
-									</SendouButton>
-								}
-							>
-								{tournament.ctx.mapPickingStyle !== "TO"
-									? "Can't check-in, registration needs to be finished by the captain (full roster & map pool picked)"
-									: "Can't check-in, registration needs to be finished by the captain (full roster)"}
-							</SendouPopover>
-						)}
-					</fetcher.Form>
+					{status.canCheckIn ? (
+						<ActionButton
+							schema={checkInSchema}
+							action="CHECK_IN"
+							formAction={tournamentRegisterPage(tournament.ctx.id)}
+							size="small"
+							variant="minimal"
+							testId="check-in-bracket-button"
+						>
+							Check-in now
+						</ActionButton>
+					) : (
+						<SendouPopover
+							trigger={
+								<SendouButton variant="minimal" size="small">
+									Check-in now
+								</SendouButton>
+							}
+						>
+							{tournament.ctx.mapPickingStyle !== "TO"
+								? "Can't check-in, registration needs to be finished by the captain (full roster & map pool picked)"
+								: "Can't check-in, registration needs to be finished by the captain (full roster)"}
+						</SendouPopover>
+					)}
 				</Container>
 			);
 		}
@@ -96,18 +91,16 @@ export function TournamentTeamActions({
 			<Container spaced="very">
 				{bracket.name} check-in
 				{tournament.canCheckInToBracket(bracket.idx, user) ? (
-					<fetcher.Form method="post">
-						<input type="hidden" name="bracketIdx" value={status.bracketIdx} />
-						<SubmitButton
-							size="small"
-							variant="minimal"
-							_action="BRACKET_CHECK_IN"
-							state={fetcher.state}
-							testId="check-in-bracket-button"
-						>
-							Check-in
-						</SubmitButton>
-					</fetcher.Form>
+					<ActionButton
+						schema={bracketSchema}
+						action="BRACKET_CHECK_IN"
+						fields={{ bracketIdx: bracket.idx }}
+						size="small"
+						variant="minimal"
+						testId="check-in-bracket-button"
+					>
+						Check-in
+					</ActionButton>
 				) : bracket.startTime && bracket.startTime > new Date() ? (
 					<span className="text-lighter text-xxs">
 						open{" "}

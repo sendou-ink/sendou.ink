@@ -43,8 +43,11 @@ export function isVisible(args: IsVisibleArgs) {
 		args.associations?.actual.some((association) =>
 			currentVisibility.includes(association.id),
 		) ||
-		args.associations?.virtual.some((association) =>
-			currentVisibility.includes(association as any),
+		args.associations?.virtual.some(
+			(association) =>
+				// "FRIENDS" is a sentinel every user has, handled by the friendship check above
+				association !== "FRIENDS" &&
+				currentVisibility.includes(association as any),
 		) ||
 		false
 	);

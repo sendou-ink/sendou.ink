@@ -71,11 +71,15 @@ export default function LeaderboardsPage() {
 		type: string;
 	}) => `${type};${season}`;
 
+	// XP leaderboards are not tied to a season, so their option values have no
+	// season suffix and the select value must match
 	const selectValue = () =>
-		seasonPlusTypeToKey({
-			season: data.season,
-			type: params.type,
-		});
+		params.type.startsWith("XP")
+			? params.type
+			: seasonPlusTypeToKey({
+					season: data.season,
+					type: params.type,
+				});
 
 	const showTopTen = Boolean(
 		seasonHasTopTen(data.season) &&

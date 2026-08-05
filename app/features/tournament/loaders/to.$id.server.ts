@@ -50,16 +50,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		databaseTimestampToDate(tournament.ctx.startsAt),
 		subDays(new Date(), friendCodeVisibilityDays),
 	);
-	const isTournamentAdmin =
-		tournament.ctx.author.id === user?.id ||
-		tournament.ctx.staff.some(
-			(s) => s.role === "ORGANIZER" && s.id === user?.id,
-		) ||
-		user?.roles.includes("ADMIN") ||
-		tournament.ctx.organization?.members.some(
-			(m) => m.userId === user?.id && m.role === "ADMIN",
-		);
-	const showFriendCodes = tournamentStartedRecently && isTournamentAdmin;
+	const showFriendCodes =
+		tournamentStartedRecently &&
+		isTournamentOrganizer({ ctx: tournament.ctx, user });
 
 	const isLeagueSignup = Object.values(LEAGUES)
 		.flat()

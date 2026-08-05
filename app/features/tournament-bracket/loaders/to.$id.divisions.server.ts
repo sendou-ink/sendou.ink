@@ -1,24 +1,16 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import type { Unwrapped } from "../../../utils/types";
 import {
-	requireTournamentVisible,
-	tournamentDataCached,
 	tournamentFromDB,
+	tournamentFromParams,
 } from "../core/Tournament.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = getUser();
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
+	const { tournamentId, user } = await tournamentFromParams(params, {
+		for: "view",
 	});
-
-	const { ctx } = await tournamentDataCached({ tournamentId });
-	requireTournamentVisible({ ctx, user });
 
 	const divisions = notFoundIfNullish(await divisionsCached(tournamentId));
 

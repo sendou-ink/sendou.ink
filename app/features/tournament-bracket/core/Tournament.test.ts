@@ -1,5 +1,12 @@
 import { describe, expect, it, test } from "vitest";
-import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
+import type {
+	BracketData,
+	GeneratedRound,
+	MatchData,
+} from "~/features/tournament-bracket/core/engine/types";
+import { unwrap } from "~/utils/result";
+import * as Engine from "./engine";
+import type * as Progression from "./Progression";
 import { Tournament } from "./Tournament";
 import {
 	IN_THE_ZONE_32,
@@ -497,3 +504,200 @@ describe("Resolving the team a user is a member of", () => {
 		expect(tournament.teamMemberOfByUser({ id: USER_ID + 1 })).toBeNull();
 	});
 });
+
+describe("teamMemberOfProgressStatus in swiss", () => {
+	const teamsWithMembers = [1, 2, 3, 4].map((teamId) =>
+		tournamentCtxTeam(teamId, { memberUserIds: [100 + teamId] }),
+	);
+
+	it("resolves an early advanced team as waiting for the follow-up bracket", () => {
+		const data = playOutEarlyAdvanceSwiss(progressions.swissEarlyAdvance);
+
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: { bracketProgression: progressions.swissEarlyAdvance },
+				teams: teamsWithMembers,
+			},
+		});
+
+		expect(
+			tournament.bracketByIdx(1)?.seeding,
+			"test setup: the advanced team should be in the top cut preview",
+		).toContain(1);
+		expect(tournament.teamMemberOfProgressStatus({ id: 101 })?.type).toBe(
+			"WAITING_FOR_BRACKET",
+		);
+	});
+
+	it("resolves a dropped out team's status as thanks for playing", () => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: {},
+		});
+		finishPendingMatches(data);
+
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: { bracketProgression: progressions.swissOneGroup },
+				teams: [1, 2, 3, 4].map((teamId) =>
+					tournamentCtxTeam(teamId, {
+						memberUserIds: [100 + teamId],
+						droppedOut: teamId === 4 ? 1 : 0,
+					}),
+				),
+			},
+		});
+
+		expect(tournament.teamMemberOfProgressStatus({ id: 104 })?.type).toBe(
+			"THANKS_FOR_PLAYING",
+		);
+	});
+});
+
+describe("Swiss early advance bracket sourcing", () => {
+	const progressionWithConsolation: Progression.ParsedBracket[] = [
+		{
+			name: "Main Bracket",
+			type: "swiss",
+			requiresCheckIn: false,
+			settings: { advanceThreshold: 3 },
+		},
+		{
+			name: "Top Cut",
+			type: "single_elimination",
+			requiresCheckIn: false,
+			settings: {},
+			sources: [{ bracketIdx: 0, placements: [] }],
+		},
+		{
+			name: "Consolation",
+			type: "single_elimination",
+			requiresCheckIn: false,
+			settings: {},
+			sources: [{ bracketIdx: 0, placements: [2, 3, 4] }],
+		},
+	];
+
+	it("sources a consolation bracket by its placements instead of the advance threshold", () => {
+		const data = playOutEarlyAdvanceSwiss(progressionWithConsolation);
+
+		const tournament = testTournament({
+			data,
+			ctx: { settings: { bracketProgression: progressionWithConsolation } },
+		});
+
+		expect(
+			tournament.bracketByIdx(1)?.seeding,
+			"test setup: the swiss winner should be in the top cut",
+		).toContain(1);
+		expect(
+			tournament.bracketByIdx(2)?.seeding,
+			"the swiss winner advanced to the top cut and should not also be in the consolation bracket",
+		).not.toContain(1);
+	});
+});
+
+describe("teamById division seeds", () => {
+	it("assigns unique seeds within a division when a late registrant has null startingBracketIdx", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							name: "Div A",
+							type: "round_robin",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							name: "Div B",
+							type: "round_robin",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
+				},
+				teams: [
+					// DB query orders by seed ASC which puts NULL seeds first in SQLite
+					tournamentCtxTeam(5, {
+						seed: null,
+						startingBracketIdx: null,
+						createdAt: 5,
+					}),
+					tournamentCtxTeam(1, { seed: 1, startingBracketIdx: 0 }),
+					tournamentCtxTeam(2, { seed: 2, startingBracketIdx: 0 }),
+					tournamentCtxTeam(3, { seed: 3, startingBracketIdx: 1 }),
+					tournamentCtxTeam(4, { seed: 4, startingBracketIdx: 1 }),
+				],
+			},
+		});
+
+		const divATeamSeeds = [1, 2, 5].map(
+			(teamId) => tournament.teamById(teamId)?.seed,
+		);
+
+		expect(new Set(divATeamSeeds).size).toBe(3);
+	});
+});
+
+/**
+ * Plays a 4 team, 5 round, advance threshold 3 swiss all the way to its end.
+ * Team 1 wins rounds 1-3 locking their top cut spot, after which the pairing
+ * excludes them from the remaining rounds.
+ */
+function playOutEarlyAdvanceSwiss(
+	progression: Progression.ParsedBracket[],
+): BracketData {
+	const data = Engine.create({
+		type: "swiss",
+		seeding: [1, 2, 3, 4],
+		settings: { advanceThreshold: 3 },
+	});
+	const groupId = data.group[0].id;
+
+	finishPendingMatches(data);
+	for (let roundNumber = 2; roundNumber <= 5; roundNumber++) {
+		const bracket = testTournament({
+			data,
+			ctx: { settings: { bracketProgression: progression } },
+		}).bracketByIdx(0)!;
+		const generated = Engine.generateRound(bracket.data, {
+			groupId,
+			standings: bracket.standings,
+			settings: bracket.settings,
+		});
+		if (!generated.ok) break;
+		appendGeneratedRound(data, unwrap(generated));
+		finishPendingMatches(data);
+	}
+
+	return data;
+}
+
+/** Finishes every pending match, team 1 always winning theirs and otherwise the home side. */
+function finishPendingMatches(data: BracketData) {
+	for (const match of data.match) {
+		if (match.winnerSide !== null || !match.opponent2) continue;
+
+		match.winnerSide = match.opponent2.id === 1 ? "opponent2" : "opponent1";
+	}
+}
+
+function appendGeneratedRound(data: BracketData, round: GeneratedRound) {
+	let id = Math.max(...data.match.map((match) => match.id)) + 1;
+	for (const match of round.matches) {
+		data.match.push({
+			id: id++,
+			stageId: data.stage[0].id,
+			groupId: round.groupId,
+			roundId: round.roundId,
+			number: match.number,
+			opponent1: match.opponent1,
+			opponent2: match.opponent2,
+			winnerSide: null,
+		});
+	}
+}

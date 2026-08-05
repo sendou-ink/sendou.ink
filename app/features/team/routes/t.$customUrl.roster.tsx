@@ -1,13 +1,13 @@
 import { Check, Clipboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Form, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
@@ -18,7 +18,11 @@ import { metaTags } from "~/utils/remix";
 import { joinTeamPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
-import { CUSTOM_ROLE_VALUE, updateRosterSchema } from "../team-schemas";
+import {
+	CUSTOM_ROLE_VALUE,
+	resetInviteLinkSchema,
+	updateRosterSchema,
+} from "../team-schemas";
 import { isTeamFull } from "../team-utils";
 
 export { action, loader };
@@ -80,7 +84,7 @@ function InviteCodeSection() {
 				<div className="text-sm" data-testid="invite-link">
 					{inviteLink}
 				</div>
-				<Form method="post" className="stack horizontal md">
+				<div className="stack horizontal md">
 					<SendouButton
 						size="small"
 						icon={copySuccess ? <Check /> : <Clipboard />}
@@ -88,15 +92,16 @@ function InviteCodeSection() {
 					>
 						{t("common:actions.copyToClipboard")}
 					</SendouButton>
-					<SubmitButton
+					<ActionButton
+						schema={resetInviteLinkSchema}
+						action="RESET_INVITE_LINK"
 						variant="minimal-destructive"
-						_action="RESET_INVITE_LINK"
 						size="small"
 						testId="reset-invite-link-button"
 					>
 						{t("common:actions.reset")}
-					</SubmitButton>
-				</Form>
+					</ActionButton>
+				</div>
 			</div>
 		</div>
 	);

@@ -3,7 +3,7 @@ import type { Ability } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { MAX_AP } from "../build-analyzer/analyzer-constants";
-import { isStackableAbility } from "../build-analyzer/core/utils";
+import { isStackableAbility } from "../build-analyzer/core/ability-points";
 import type {
 	AverageAbilityPointsResult,
 	PopularBuildsRow,

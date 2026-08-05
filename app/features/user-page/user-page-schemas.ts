@@ -32,15 +32,20 @@ import { rawSensToString } from "~/utils/strings";
 import { isCustomUrl } from "~/utils/urls";
 import {
 	_action,
+	actualNumber,
 	clothesMainSlotAbility,
+	emptyArrayToNull,
 	headMainSlotAbility,
 	id,
+	processMany,
+	removeDuplicates,
 	safeJSONParse,
 	shoesMainSlotAbility,
 	stackableAbility,
 } from "~/utils/zod";
 import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
+	BUILD_SORT_IDENTIFIERS,
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 	USER,
@@ -348,3 +353,18 @@ export const newBuildSchema = newBuildBaseSchema.refine(
 	gearAllOrNoneRefine.fn,
 	gearAllOrNoneRefine.opts,
 );
+
+export const buildsActionSchema = z.union([
+	z.object({
+		_action: _action("DELETE_BUILD"),
+		buildToDeleteId: z.preprocess(actualNumber, id),
+	}),
+
+	z.object({
+		_action: _action("UPDATE_SORTING"),
+		buildSorting: z.preprocess(
+			processMany(safeJSONParse, removeDuplicates, emptyArrayToNull),
+			z.array(z.enum(BUILD_SORT_IDENTIFIERS)).nullable(),
+		),
+	}),
+]);

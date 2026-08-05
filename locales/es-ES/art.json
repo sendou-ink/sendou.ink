@@ -1,6 +1,5 @@
 {
 	"pendingApproval_one": "Tienes {{count}} imagen esperando aprobación.",
-	"pendingApproval_many": "Tienes {{count}} imágenes esperando aprobación.",
 	"pendingApproval_other": "Tienes {{count}} imágenes esperando aprobación.",
 	"madeBy": "Creada por",
 	"radios.all": "Todos",
@@ -21,8 +20,8 @@
 	"forms.tags.addNew.placeholder": "Crear una nueva etiqueta",
 	"forms.tags.search.placeholder": "Buscar etiquetas...",
 	"forms.tags.placeholder": "Selecciona una etiqueta",
-	"forms.tags.maxReached": "Limite máximo de etiquetas",
+	"forms.tags.maxReached": "Límite máximo de etiquetas",
 	"delete.title": "¿Seguro que quieres eliminar este arte?",
 	"unlink.title": "¿Seguro que quieres desvincular este arte de tu perfil? (solo {{username}} puede volver a añadirlo)",
-	"noArtForTag": ""
+	"noArtForTag": "No se ha encontrado arte subido para #{{tag}}"
 }

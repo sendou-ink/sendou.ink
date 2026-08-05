@@ -4,8 +4,10 @@ import { type FetcherWithComponents, Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import * as RejoinVote from "../core/RejoinVote";
+import { matchSchema } from "../q-match-schemas";
 import styles from "./RematchVotePanel.module.css";
 
 export type RematchVoteMember = {
@@ -30,6 +32,7 @@ export function RematchVotePanel({
 	fetcher,
 }: RematchVotePanelProps) {
 	const { t } = useTranslation(["q"]);
+	const { submit } = useActionSubmit(matchSchema, { fetcher });
 
 	const isPending = fetcher.state !== "idle";
 
@@ -98,15 +101,7 @@ export function RematchVotePanel({
 						variant="primary"
 						size="small"
 						isDisabled={isPending || viewerVotedYes}
-						onPress={() =>
-							fetcher.submit(
-								{
-									_action: "CAST_CONTINUE_VOTE",
-									isContinuing: "1",
-								},
-								{ method: "post" },
-							)
-						}
+						onPress={() => submit("CAST_CONTINUE_VOTE", { isContinuing: true })}
 					>
 						{t("q:match.rematch.vote.yes")}
 					</SendouButton>

@@ -1,9 +1,12 @@
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
+import { frontPageSchema } from "~/features/sendouq/q-action-schemas";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { SENDOUQ_PAGE } from "~/utils/urls";
 import * as RejoinVote from "../core/RejoinVote";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
+import { matchSchema } from "../q-match-schemas";
 import { RematchVotePanel } from "./RematchVotePanel";
 
 export function MatchmadeRejoinSection({
@@ -62,22 +65,18 @@ export function TrustedRejoinSection({
 	const viewerRole = viewerGroup.members.find(
 		(m) => m.id === viewerUserId,
 	)?.role;
-	const lookAgainFetcher = useFetcher();
+	const lookAgain = useActionSubmit(matchSchema);
 
 	if (viewerRole === "OWNER") {
 		return (
 			<div className="stack md items-center">
 				<SendouButton
 					variant="primary"
-					isPending={lookAgainFetcher.state !== "idle"}
+					isPending={lookAgain.state !== "idle"}
 					onPress={() => {
-						lookAgainFetcher.submit(
-							{
-								_action: "LOOK_AGAIN",
-								previousGroupId: String(viewerGroup.id),
-							},
-							{ method: "post" },
-						);
+						lookAgain.submit("LOOK_AGAIN", {
+							previousGroupId: viewerGroup.id,
+						});
 					}}
 				>
 					{t("q:match.actions.lookAgain")}
@@ -95,7 +94,9 @@ export function TrustedRejoinSection({
 
 function DeclinedSection() {
 	const { t } = useTranslation(["q"]);
-	const rejoinFetcher = useFetcher();
+	const rejoinQueue = useActionSubmit(frontPageSchema, {
+		action: SENDOUQ_PAGE,
+	});
 	return (
 		<div className="stack md items-center">
 			<p className="text-lighter text-sm text-center">
@@ -104,12 +105,9 @@ function DeclinedSection() {
 			<SendouButton
 				variant="minimal"
 				className="text-sm font-bold"
-				isPending={rejoinFetcher.state !== "idle"}
+				isPending={rejoinQueue.state !== "idle"}
 				onPress={() => {
-					rejoinFetcher.submit(
-						{ _action: "JOIN_QUEUE", direct: "true" },
-						{ method: "post", action: SENDOUQ_PAGE },
-					);
+					rejoinQueue.submit("JOIN_QUEUE", { direct: "true" });
 				}}
 			>
 				{t("q:match.rematch.rejoinQueue")}

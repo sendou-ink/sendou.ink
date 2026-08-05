@@ -14,6 +14,7 @@ import {
 	BUILD_SORT_IDENTIFIERS,
 	type BuildSort,
 } from "~/features/user-page/user-page-constants";
+import { buildsActionSchema } from "~/features/user-page/user-page-schemas";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -286,7 +287,7 @@ function ChangeSortingDialog({
 					</div>
 
 					<div>
-						<SubmitButton _action="UPDATE_SORTING">
+						<SubmitButton schema={buildsActionSchema} _action="UPDATE_SORTING">
 							{t("common:actions.save")}
 						</SubmitButton>
 					</div>

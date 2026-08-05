@@ -1,6 +1,7 @@
 import { addDays, subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { TROPHY_APPROVALS_REQUIRED } from "~/features/trophies/trophies-constants";
 import { decompressFromBase64 } from "~/utils/compression";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { TROPHIES_PAGE } from "~/utils/urls";
@@ -175,7 +176,9 @@ test.describe("Trophies", () => {
 
 		await pending.approve(approvedName);
 		await expect(
-			pending.row(approvedName).getByText("1/2 approvals"),
+			pending
+				.row(approvedName)
+				.getByText(`1/${TROPHY_APPROVALS_REQUIRED} approvals`),
 		).toBeVisible();
 
 		await pending.decline(declinedName, "Does not meet the requirements");

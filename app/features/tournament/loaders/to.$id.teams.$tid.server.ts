@@ -1,12 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import {
-	requireTournamentVisible,
 	tournamentDataCached,
-	tournamentSharedCached,
+	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
@@ -21,28 +19,31 @@ import {
 export type TournamentTeamLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const { id: tournamentId, tid: tournamentTeamId } = parseParams({
+	const { tid: tournamentTeamId } = parseParams({
 		params,
 		schema: tournamentTeamPageParamsSchema,
 	});
 
-	const user = getUser();
-	const tournament = await tournamentDataCached({ tournamentId });
-	requireTournamentVisible({ ctx: tournament.ctx, user });
+	const {
+		tournament: fullTournament,
+		tournamentId,
+		user,
+	} = await tournamentFromParams(params, { for: "view" });
+	const { data, ctx } = await tournamentDataCached({ tournamentId });
 
 	const team = (await tournamentTeamsFullCached({ tournamentId, user })).find(
 		(t) => t.id === tournamentTeamId,
 	);
-	const tournamentHasStarted = (tournament?.data.stage.length ?? 0) > 0;
+	const tournamentHasStarted = data.stage.length > 0;
 	if (!team || (tournamentHasStarted && team.checkIns.length === 0)) {
 		throw new Response(null, { status: 404 });
 	}
 
 	const setHistory =
 		await TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId);
-	const allRounds: AllRoundsItem[] = tournament.data.round.map((round) => {
-		const stage = tournament.data.stage.find((s) => s.id === round.stageId);
-		const group = tournament.data.group.find((g) => g.id === round.groupId);
+	const allRounds: AllRoundsItem[] = data.round.map((round) => {
+		const stage = data.stage.find((s) => s.id === round.stageId);
+		const group = data.group.find((g) => g.id === round.groupId);
 		invariant(stage && group, "Stage or group not found for round");
 		invariant(stage.name, "Stage from the database is missing a name");
 
@@ -56,8 +57,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const sets = tournamentTeamSets({ sets: setHistory, allRounds });
-
-	const fullTournament = await tournamentSharedCached(tournamentId);
 	const standingsResult = Standings.tournamentStandings(fullTournament);
 	const overallStandings = Standings.flattenStandings(standingsResult);
 	const undergroundBracketIdx = fullTournament.bracketsMeta.find(
@@ -71,7 +70,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			sets.length > 0
 				? fullTournament.participatedPlayerUserIdsByTeamId(tournamentTeamId)
 				: undefined,
-		tournamentName: tournament.ctx.name,
+		tournamentName: ctx.name,
 		sets: sets.map((set) => ({
 			...set,
 			// the layout ships no bracket match data, so the names can't be derived in the view

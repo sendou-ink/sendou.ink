@@ -1,23 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
-import {
-	requireTournamentVisible,
-	tournamentDataCached,
-} from "~/features/tournament-bracket/core/Tournament.server";
-import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = getUser();
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
+	const { tournamentId, user } = await tournamentFromParams(params, {
+		for: "view",
 	});
-
-	const { ctx } = await tournamentDataCached({ tournamentId });
-	requireTournamentVisible({ ctx, user });
 
 	const description =
 		await TournamentRepository.findDescriptionById(tournamentId);

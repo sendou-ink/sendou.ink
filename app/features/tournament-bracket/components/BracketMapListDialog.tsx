@@ -49,6 +49,7 @@ import {
 	generateTournamentRoundMaplist,
 	type TournamentRoundMapList,
 } from "../core/toMapList";
+import { bracketSchema } from "../tournament-bracket-schemas";
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
@@ -681,6 +682,7 @@ export function BracketMapListDialog({
 								) : (
 									<SubmitButton
 										testId="confirm-finalize-bracket-button"
+										schema={bracketSchema}
 										_action={isPreparing ? "PREPARE_MAPS" : "START_BRACKET"}
 										className="mx-auto mt-4"
 									>

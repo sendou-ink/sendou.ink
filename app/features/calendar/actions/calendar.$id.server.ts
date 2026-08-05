@@ -21,20 +21,20 @@ export const action: ActionFunction = async ({ params }) => {
 		await CalendarRepository.findById(parsedParams.id),
 	);
 
+	errorToastIfFalsy(
+		canDeleteCalendarEvent({
+			user,
+			event,
+			startTime: databaseTimestampToDate(event.startTimes[0]),
+		}),
+		"Cannot delete event",
+	);
+
 	if (event.tournamentId) {
 		errorToastIfFalsy(
 			(await BracketRepository.findByTournamentId(event.tournamentId)).stage
 				.length === 0,
 			"Tournament has already started",
-		);
-	} else {
-		errorToastIfFalsy(
-			canDeleteCalendarEvent({
-				user,
-				event,
-				startTime: databaseTimestampToDate(event.startTimes[0]),
-			}),
-			"Cannot delete event",
 		);
 	}
 

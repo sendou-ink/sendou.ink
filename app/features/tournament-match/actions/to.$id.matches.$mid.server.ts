@@ -1,6 +1,5 @@
 import type { ActionFunction } from "react-router";
 import { db } from "~/db/sql";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -10,12 +9,14 @@ import { executeBracketOperation } from "~/features/tournament-bracket/core/exec
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	matchPageParamsSchema,
 	matchSchema,
-} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -36,8 +37,11 @@ import type { FindMatchById } from "../TournamentMatchRepository.server";
 import { tournamentMatchWebsocketRoom } from "../tournament-match-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = requireUser();
-	const { mid: matchId, id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
+		params,
+		{ for: "action" },
+	);
+	const { mid: matchId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
 	});
@@ -53,8 +57,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 		request,
 		schema: matchSchema,
 	});
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	const validateCanReportScore = () => {
 		const isMemberOfATeamInTheMatch = match.players.some(
@@ -221,7 +223,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UPDATE_REPORTED_SCORE": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
 
 			const result = await TournamentMatchRepository.findResultById(
@@ -452,7 +454,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "REOPEN_MATCH": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(
 				tournament.matchCanBeReopened(match.id),
 				"Match can't be reopened, bracket has progressed",
@@ -572,7 +574,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "END_SET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(
 				match.opponentOne?.id && match.opponentTwo?.id,
 				"Teams are missing",

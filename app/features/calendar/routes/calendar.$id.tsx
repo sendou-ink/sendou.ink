@@ -2,7 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -13,6 +13,7 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
+import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -25,7 +26,6 @@ import {
 	mapsPageWithMapPool,
 	navIconUrl,
 	resolveBaseUrl,
-	userPage,
 } from "~/utils/urls";
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 import { action } from "../actions/calendar.$id.server";
@@ -232,18 +232,7 @@ function Results() {
 												key={player.name ? player.name : player.id}
 												className="flex items-center"
 											>
-												{player.name ? (
-													player.name
-												) : (
-													// as any but we know it's a user since it doesn't have name
-													<Link
-														to={userPage(player as any)}
-														className="stack horizontal xs items-center"
-													>
-														<Avatar user={player as any} size="xxs" />{" "}
-														{player.username}
-													</Link>
-												)}
+												<UserLink user={player} />
 											</li>
 										);
 									})}

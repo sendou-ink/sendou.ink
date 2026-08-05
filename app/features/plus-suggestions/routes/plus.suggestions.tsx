@@ -40,6 +40,7 @@ import {
 	canDeleteComment,
 	canEditSuggestion,
 	canSuggestNewUser,
+	isFirstSuggestion,
 } from "../plus-suggestions-utils";
 
 export { action, loader };
@@ -329,9 +330,10 @@ export function PlusSuggestionComments({
 										suggestionId={entry.id}
 										tier={deleteButtonArgs.tier}
 										suggestedUsername={deleteButtonArgs.suggested.username}
-										isFirstSuggestion={
-											deleteButtonArgs.suggestions.length === 1
-										}
+										isFirstSuggestion={isFirstSuggestion({
+											suggestionId: entry.id,
+											suggestions: deleteButtonArgs.suggestions,
+										})}
 									/>
 								) : null}
 							</div>

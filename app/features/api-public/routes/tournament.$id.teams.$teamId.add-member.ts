@@ -8,6 +8,7 @@ import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
@@ -43,7 +44,7 @@ export const action = async (args: ActionFunctionArgs) => {
 	return wrapActionForApi(async () => {
 		const user = requireUser();
 		const tournament = await tournamentFromDB({ tournamentId, user });
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
+		requireTournamentOrganizer(tournament, user);
 
 		const team = tournament.teamById(teamId);
 		errorToastIfFalsy(team, "Invalid team id");

@@ -43,6 +43,30 @@ describe("queryToUserIdentifier()", () => {
 			id: 42,
 		});
 	});
+
+	test("gets custom url from url with trailing slash", () => {
+		expect(queryToUserIdentifier("https://sendou.ink/u/sendou/")).toEqual({
+			customUrl: "sendou",
+		});
+	});
+
+	test("gets custom url from profile sub-page url", () => {
+		expect(queryToUserIdentifier("https://sendou.ink/u/sendou/builds")).toEqual(
+			{
+				customUrl: "sendou",
+			},
+		);
+	});
+
+	test("gets discord id from url with query string", () => {
+		expect(
+			queryToUserIdentifier(
+				"https://sendou.ink/u/79237403620945920?utm_source=discord",
+			),
+		).toEqual({
+			discordId: "79237403620945920",
+		});
+	});
 });
 
 describe("userDiscordIdIsAged()", () => {

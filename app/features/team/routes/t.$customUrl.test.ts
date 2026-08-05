@@ -7,8 +7,10 @@ import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
 import * as TeamRepository from "../TeamRepository.server";
-import type { createTeamSchema } from "../team-schemas";
-import type { teamProfilePageActionSchema } from "../team-schemas.server";
+import type {
+	createTeamSchema,
+	teamProfilePageActionSchema,
+} from "../team-schemas";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,

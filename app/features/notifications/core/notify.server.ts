@@ -99,13 +99,17 @@ export async function notify({
 	}
 }
 
-const sentNotifications = new Set<string>();
+const SENT_NOTIFICATION_TTL_MS = 1000 * 60 * 60;
+
+const sentNotifications = new Map<string, number>();
 
 export function clearSentNotificationsForTesting() {
 	sentNotifications.clear();
 }
 
-// deduplicates notifications as a failsafe & anti-abuse mechanism
+// deduplicates notifications as a failsafe & anti-abuse mechanism; entries
+// expire so a legitimately repeated identical notification (e.g. the same team
+// requesting a scrim again weeks later) still gets delivered
 function isNotificationAlreadySent(
 	notification: Notification,
 	userIds: Array<number>,
@@ -122,10 +126,11 @@ function isNotificationAlreadySent(
 
 	const sortedUserIds = [...userIds].sort((a, b) => a - b).join(",");
 	const key = `${notification.type}-${JSON.stringify(notification.meta)}-${sortedUserIds}`;
-	if (sentNotifications.has(key)) {
+	const sentAt = sentNotifications.get(key);
+	if (sentAt && Date.now() - sentAt < SENT_NOTIFICATION_TTL_MS) {
 		return true;
 	}
-	sentNotifications.add(key);
+	sentNotifications.set(key, Date.now());
 
 	if (sentNotifications.size > 10_000) {
 		sentNotifications.clear();

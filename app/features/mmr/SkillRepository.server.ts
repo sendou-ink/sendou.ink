@@ -2,6 +2,7 @@ import { sql, type Transaction } from "kysely";
 import { ordinal } from "openskill";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import { latestSkillPerSeason } from "~/utils/kysely.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import type { SkillTeamIdentifier } from "./mmr-utils";
 
@@ -71,28 +72,8 @@ export async function findCurrentTeamSkills({
  * Ordinals of the season's latest skill of every user who has one, best first.
  */
 export async function findOrderedUserOrdinalsBySeason(season: number) {
-	// The latest row per user is picked via SQLite's bare column rule: with a `max()`
-	// aggregate the other selected columns come from the row that produced the max.
-	// A self-join against a `max(id)` subquery is avoided because it lets the planner
-	// pick a nested-loop plan when it misjudges the season's row count (e.g. a freshly
-	// started season whose stats are dwarfed by older seasons), which made this query
-	// take ~12s. This form is plan-stable regardless of stats: a single grouped scan of
-	// the `skill_season_user_id_leaderboard` covering index, no temp b-tree per user.
 	return db
-		.selectFrom(
-			db
-				.selectFrom("Skill")
-				.select((eb) => [
-					"ordinal",
-					"matchesCount",
-					"userId",
-					eb.fn.max("id").as("latestId"),
-				])
-				.where("season", "=", season)
-				.where("userId", "is not", null)
-				.groupBy("userId")
-				.as("latest"),
-		)
+		.selectFrom(latestSkillPerSeason({ season, by: "userId" }).as("latest"))
 		.select(["ordinal", "matchesCount", "userId"])
 		.orderBy("ordinal", "desc")
 		.execute();

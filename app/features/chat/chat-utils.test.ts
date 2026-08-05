@@ -17,6 +17,16 @@ describe("chatCodeVisible", () => {
 		expect(result).toBe(true);
 	});
 
+	test("not visible when just past expiration window", () => {
+		const result = chatAccessible({
+			isStaff: false,
+			expiresAfterDays: 1,
+			comparedTo: sub(new Date(), { days: 1, hours: 12 }),
+		});
+
+		expect(result).toBe(false);
+	});
+
 	test("not visible when past expiration window", () => {
 		const result = chatAccessible({
 			isStaff: false,

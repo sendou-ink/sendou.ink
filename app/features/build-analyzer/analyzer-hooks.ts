@@ -10,9 +10,10 @@ import { isAbility } from "~/modules/in-game-lists/utils";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { analyzerSearchParams } from "./analyzer-search-params";
 import type { SpecialEffectType } from "./analyzer-types";
+import { buildToAbilityPoints } from "./core/ability-points";
 import { applySpecialEffects, SPECIAL_EFFECTS } from "./core/specialEffects";
 import { buildStats } from "./core/stats";
-import { buildIsEmpty, buildToAbilityPoints } from "./core/utils";
+import { buildIsEmpty } from "./core/utils";
 
 export function useAnalyzeBuild() {
 	const [params, setParams] = useSearchParamsTyped(analyzerSearchParams);

@@ -309,7 +309,6 @@ describe("update", () => {
 			],
 			type: "CAST",
 			pov: { type: "USER", userId: users.id(2) },
-			submitterUserId: users.id(1),
 			isValidated: true,
 		});
 
@@ -318,6 +317,39 @@ describe("update", () => {
 		expect(result?.title).toBe("Updated Title");
 		expect(result?.youtubeId).toBe("updated123");
 		expect(result?.type).toBe("CAST");
+	});
+
+	test("edit by another user with edit rights does not reassign the vod's submitter", async () => {
+		const vod = await VodFactory.create({
+			submitterUserId: users.id(1),
+			pov: { type: "USER", userId: users.id(2) },
+		});
+
+		await VodRepository.update({
+			id: vod.id,
+			title: "Fixed timestamp",
+			youtubeUrl: "https://www.youtube.com/watch?v=test123",
+			date: {
+				day: 1,
+				month: 0,
+				year: 2024,
+			},
+			matches: [
+				{
+					mode: "SZ",
+					stageId: 5,
+					startsAt: "0:05",
+					weapons: [50],
+				},
+			],
+			type: "TOURNAMENT",
+			pov: { type: "USER", userId: users.id(2) },
+			isValidated: true,
+		});
+
+		const result = await VodRepository.findVodById(vod.id);
+
+		expect(result?.submitterUserId).toBe(users.id(1));
 	});
 
 	test("deletes and recreates matches", async () => {
@@ -348,7 +380,6 @@ describe("update", () => {
 			],
 			type: "TOURNAMENT",
 			pov: { type: "USER", userId: users.id(1) },
-			submitterUserId: users.id(1),
 			isValidated: true,
 		});
 

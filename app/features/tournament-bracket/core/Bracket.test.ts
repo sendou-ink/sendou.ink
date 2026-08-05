@@ -91,6 +91,71 @@ describe("swiss standings - losses against tied", () => {
 		expect(standing.stats?.lossesAgainstTied).toBe(0); // they lost against "Tidy Tidings" but that team dropped out before final round
 	});
 
+	it("should ignore a dropped out team with an identical record (losses against tied)", () => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4, 5, 6],
+			settings: { groupCount: 1, roundCount: 3 },
+		});
+
+		const playedMatch = (
+			id: number,
+			roundIdx: number,
+			number: number,
+			winnerId: number,
+			loserId: number,
+		): MatchData => ({
+			id,
+			stageId: data.stage[0].id,
+			groupId: data.group[0].id,
+			roundId: data.round[roundIdx].id,
+			number,
+			opponent1: { id: winnerId },
+			opponent2: { id: loserId },
+			winnerSide: "opponent1",
+		});
+
+		// teams 1 and 6 both finish 2-1; team 1's only loss is to team 6,
+		// who dropped out after the swiss ended
+		data.match = [
+			playedMatch(0, 0, 1, 1, 2),
+			playedMatch(1, 0, 2, 3, 4),
+			playedMatch(2, 0, 3, 5, 6),
+			playedMatch(3, 1, 1, 1, 3),
+			playedMatch(4, 1, 2, 2, 5),
+			playedMatch(5, 1, 3, 6, 4),
+			playedMatch(6, 2, 1, 6, 1),
+			playedMatch(7, 2, 2, 3, 5),
+			playedMatch(8, 2, 3, 2, 4),
+		];
+
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Main Bracket",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
+				},
+				teams: [1, 2, 3, 4, 5, 6].map((teamId) =>
+					tournamentCtxTeam(teamId, { droppedOut: teamId === 6 ? 1 : 0 }),
+				),
+			},
+		});
+
+		const standing = tournament
+			.bracketByIdx(0)
+			?.standings.find((standing) => standing.team.id === 1);
+		invariant(standing, "Standing not found");
+
+		expect(standing.stats?.lossesAgainstTied).toBe(0);
+	});
+
 	const inProgressSwissTestTournament = () => {
 		const data = Engine.create({
 			type: "swiss",
@@ -969,6 +1034,70 @@ describe("single elimination source - underground", () => {
 		expect([...teams].sort((a, b) => a - b)).toEqual(
 			[...firstRoundLoserIds].sort((a, b) => a - b),
 		);
+	});
+});
+
+describe("swiss between rounds", () => {
+	const SWISS_MAIN_BRACKET = {
+		type: "swiss" as const,
+		name: "Main Bracket",
+		requiresCheckIn: false,
+		settings: { groupCount: 1, roundCount: 5 },
+		sources: [],
+	};
+
+	// swiss with round 1 fully reported but rounds 2-5 not yet paired
+	const betweenRoundsSwissData = () => {
+		let data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1, roundCount: 5 },
+		});
+
+		// needed to make it "not preview"
+		data.round = data.round.map((r) => ({
+			...r,
+			maps: { count: 3, type: "BEST_OF" },
+		}));
+
+		for (const match of data.match) {
+			data = reportLowerIdWinner(data, match.id);
+		}
+
+		return data;
+	};
+
+	it("tournament is not over while swiss still has unpaired rounds", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: { bracketProgression: [SWISS_MAIN_BRACKET] },
+			},
+			data: betweenRoundsSwissData(),
+		});
+
+		expect(tournament.everyBracketOver).toBe(false);
+	});
+
+	it("can't finalize between swiss rounds when progression also has an underground bracket", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						SWISS_MAIN_BRACKET,
+						{
+							type: "single_elimination" as const,
+							name: "Underground Bracket",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [{ bracketIdx: 0, placements: [3, 4] }],
+						},
+					],
+				},
+			},
+			data: betweenRoundsSwissData(),
+		});
+
+		expect(tournament.canFinalize({ id: 1 })).toBe(false);
 	});
 });
 
