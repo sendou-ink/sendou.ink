@@ -14,12 +14,16 @@ const plusTierFilter: LFGFilter = { _tag: "PlusTier", tier: 1 };
 const maxTierFilter: LFGFilter = { _tag: "MaxTier", tier: "GOLD" };
 const minTierFilter: LFGFilter = { _tag: "MinTier", tier: "BRONZE" };
 
+// the filter LFGAddFilterButton inserts when the user picks "Weapon"
+const emptyWeaponFilter: LFGFilter = { _tag: "Weapon", weaponSplIds: [] };
+
 describe("lfgSearchParams", () => {
 	it("round-trips", () => {
 		assertRoundTrips(lfgSearchParams, {
 			q: [
 				[],
 				[weaponFilter],
+				[emptyWeaponFilter],
 				[typeFilter],
 				[timezoneFilter],
 				[languageFilter],

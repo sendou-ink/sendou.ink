@@ -34,7 +34,9 @@ export class SwissBracket extends Bracket {
 
 		const relevantMatchesFinished = this.standingsAreFinal;
 
-		if (advanceThreshold) {
+		// explicit placements override the threshold, e.g. a consolation
+		// bracket for the teams that did not advance
+		if (advanceThreshold && placements.length === 0) {
 			return {
 				relevantMatchesFinished,
 				teams: standings
@@ -316,10 +318,17 @@ export class SwissBracket extends Bracket {
 				});
 			}
 
-			// wins against tied
+			const droppedOutTeams = this.tournament.ctx.teams
+				.filter((t) => t.droppedOut)
+				.map((t) => t.id);
+
+			// wins against tied, results against dropped out teams don't count
 			for (const team of teams) {
+				if (droppedOutTeams.includes(team.id)) continue;
+
 				for (const team2 of teams) {
 					if (team.id === team2.id) continue;
+					if (droppedOutTeams.includes(team2.id)) continue;
 					if (
 						team.setWins !== team2.setWins ||
 						// check also set losses to account for dropped teams
@@ -358,9 +367,6 @@ export class SwissBracket extends Bracket {
 				}
 			}
 
-			const droppedOutTeams = this.tournament.ctx.teams
-				.filter((t) => t.droppedOut)
-				.map((t) => t.id);
 			placements.push(
 				...teams
 					.sort((a, b) => {

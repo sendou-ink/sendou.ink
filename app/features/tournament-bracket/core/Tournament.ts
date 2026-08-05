@@ -24,6 +24,7 @@ import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
+import { calculateTeamStatus } from "./engine/swiss/team-status";
 import { getRounds } from "./rounds";
 import * as Seeding from "./Seeding";
 import type { TournamentData } from "./Tournament.server";
@@ -855,9 +856,9 @@ export class Tournament {
 
 	/** Date when the regular check-in is scheduled to start. */
 	get regularCheckInStartsAt() {
-		const result = new Date(this.ctx.startsAt);
-		result.setMinutes(result.getMinutes() - 60);
-		return result;
+		// elapsed time math instead of wall clock math so that the window
+		// stays one hour long across a DST transition
+		return new Date(this.ctx.startsAt.getTime() - 60 * 60 * 1000);
 	}
 
 	/** Date when the regular check-in is scheduled to start. */
@@ -1176,20 +1177,32 @@ export class Tournament {
 
 		for (const bracket of startedBrackets) {
 			if (bracket.type !== "swiss") continue;
+			// dropped out teams and teams whose run ended early via the advance
+			// threshold are excluded from the pairing, so no round is coming for them
+			if (bracket.everyMatchOver || team.droppedOut) continue;
 
 			// TODO: both seeding and participantTournamentTeamIds are used for the same thing
 			const isParticipant = bracket.participantTournamentTeamIds.includes(
 				team.id,
 			);
 
-			const setsGeneratedCount = bracket.data.match.filter(
+			const teamsMatches = bracket.data.match.filter(
 				(match) =>
 					match.opponent1?.id === team.id || match.opponent2?.id === team.id,
-			).length;
+			);
 			const notAllRoundsGenerated =
-				setsGeneratedCount !== bracket.swissRoundCount;
+				teamsMatches.length !== bracket.swissRoundCount;
 
-			if (isParticipant && notAllRoundsGenerated) {
+			const advanceThreshold = bracket.settings?.advanceThreshold;
+			const runEndedEarly = advanceThreshold
+				? calculateTeamStatus({
+						...swissTeamRecord(teamsMatches, team.id),
+						advanceThreshold,
+						roundCount: bracket.swissRoundCount,
+					}) !== "active"
+				: false;
+
+			if (isParticipant && notAllRoundsGenerated && !runEndedEarly) {
 				return { type: "WAITING_FOR_ROUND" } as const;
 			}
 		}
@@ -1444,6 +1457,36 @@ export class Tournament {
 	get streamingParticipantIds(): number[] {
 		return [...this.streamingParticipants.keys()];
 	}
+}
+
+/** A team's swiss set record off its match data, a BYE counting as a win. */
+function swissTeamRecord(matches: MatchData[], teamId: number) {
+	let wins = 0;
+	let losses = 0;
+
+	for (const match of matches) {
+		const side =
+			match.opponent1?.id === teamId
+				? "opponent1"
+				: match.opponent2?.id === teamId
+					? "opponent2"
+					: null;
+		if (!side) continue;
+
+		if (!match.opponent1 || !match.opponent2) {
+			wins++;
+			continue;
+		}
+		if (!match.winnerSide) continue;
+
+		if (match.winnerSide === side) {
+			wins++;
+		} else {
+			losses++;
+		}
+	}
+
+	return { wins, losses };
 }
 
 /** The parts of a tournament that decide who organizes it. */
