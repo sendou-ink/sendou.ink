@@ -7,7 +7,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	display: flex;
 	align-items: center;
 	gap: 24px;
-	padding: 12px 0;
+	padding-bottom: 12px;
 	border-bottom: var(--border-width) solid var(--color-bg-high);
 	margin-bottom: 16px;
 }
@@ -419,6 +419,15 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	margin-bottom: 16px;
+}
+
+.scanner-app .dropzone label {
+	display: inline;
+	font-size: inherit;
+	font-weight: inherit;
+	margin-block-end: 0;
+	text-decoration: underline;
+	cursor: pointer;
 }
 
 .scanner-app .dropzone.over {

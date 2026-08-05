@@ -322,7 +322,7 @@ export function ScreenshotPage() {
 				}}
 			>
 				Drop a frame (PNG/JPEG) here, or{" "}
-				<label style={{ textDecoration: "underline", cursor: "pointer" }}>
+				<label>
 					pick a file
 					<input
 						type="file"

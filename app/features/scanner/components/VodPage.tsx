@@ -422,7 +422,7 @@ export function VodPage({
 				}}
 			>
 				Drop a VoD (video file) here, or{" "}
-				<label style={{ textDecoration: "underline", cursor: "pointer" }}>
+				<label>
 					pick a file
 					<input
 						type="file"
