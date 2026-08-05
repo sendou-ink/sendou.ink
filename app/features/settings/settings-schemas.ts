@@ -2,9 +2,10 @@ import { z } from "zod";
 import { hidden, select, stringConstant, toggle } from "~/form/fields";
 import { themeInputSchema } from "~/utils/zod";
 
-const customThemeSchema = z.object({
+export const customThemeSchema = z.object({
 	_action: stringConstant("UPDATE_CUSTOM_THEME"),
 	newValue: hidden(themeInputSchema.nullable(), null),
+	revalidateRoot: z.literal(true).nullish(),
 });
 
 export const clockFormatSchema = z.object({
@@ -43,7 +44,7 @@ export const spoilerFreeModeSchema = z.object({
 	}),
 });
 
-const weaponReportDefaultOpenSchema = z.object({
+export const weaponReportDefaultOpenSchema = z.object({
 	_action: stringConstant("UPDATE_WEAPON_REPORT_DEFAULT_OPEN"),
 	newValue: z.boolean(),
 });

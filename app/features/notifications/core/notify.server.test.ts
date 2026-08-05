@@ -93,6 +93,37 @@ describe("notify()", () => {
 		expect(user6Notifications).toHaveLength(1);
 	});
 
+	test("identical notification is delivered again when repeated a day later", async () => {
+		vi.useFakeTimers();
+		try {
+			await notify({
+				userIds: [users.id(5)],
+				notification: {
+					type: "SCRIM_NEW_REQUEST",
+					meta: { fromUsername: "alice" },
+				},
+			});
+
+			vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+
+			await notify({
+				userIds: [users.id(5)],
+				notification: {
+					type: "SCRIM_NEW_REQUEST",
+					meta: { fromUsername: "alice" },
+				},
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+
+		const notifications = await NotificationRepository.findByUserId(
+			users.id(5),
+		);
+
+		expect(notifications).toHaveLength(2);
+	});
+
 	test("user ID order doesn't affect deduplication", async () => {
 		await notify({
 			userIds: [users.id(7), users.id(8), users.id(9)],

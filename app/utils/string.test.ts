@@ -21,6 +21,11 @@ describe("pathnameFromPotentialURL()", () => {
 			"FW4dKrY",
 		);
 	});
+
+	test("Resolves a scheme-less URL paste to the path", () => {
+		// otherwise the generated discordUrl becomes https://discord.gg/discord.gg/FW4dKrY
+		expect(pathnameFromPotentialURL("discord.gg/FW4dKrY")).toBe("FW4dKrY");
+	});
 });
 
 describe("truncateBySentence()", () => {
@@ -53,6 +58,17 @@ describe("truncateBySentence()", () => {
 		const text = "First line\nSecond line\nThird line";
 		expect(truncateBySentence(text, 20)).toBe("First line");
 	});
+
+	test("Does not treat a period inside a time like 18.00 as a sentence end", () => {
+		const text =
+			"Doors at 18.00, we will be playing five rounds of swiss followed by a top cut.";
+		expect(truncateBySentence(text, 40)).not.toBe("Doors at 18.");
+	});
+
+	test("Does not return a tiny fraction of the budget when a long sentence follows a short one", () => {
+		const text = `Hi. ${"x".repeat(400)}. Everyone is welcome.`;
+		expect(truncateBySentence(text, 300)).not.toBe("Hi.");
+	});
 });
 
 describe("removeMarkdown()", () => {
@@ -69,6 +85,11 @@ describe("removeMarkdown()", () => {
 
 	test("Decodes numeric HTML entities", () => {
 		expect(removeMarkdown("caf&#233; &#x26; tea")).toBe("café & tea");
+	});
+
+	test("Does not throw on an out of range numeric entity", () => {
+		// e.g. an organizer writing a hex color code in the description
+		expect(() => removeMarkdown("background: &#xFFFFFF; here")).not.toThrow();
 	});
 
 	test("Leaves unknown named entities untouched", () => {

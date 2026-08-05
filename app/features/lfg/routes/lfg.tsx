@@ -3,10 +3,10 @@ import { add, sub } from "date-fns";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -20,6 +20,7 @@ import { LFGFilters } from "../components/LFGFilters";
 import { LFGPost } from "../components/LFGPost";
 import { filterPosts } from "../core/filtering";
 import { LFG } from "../lfg-constants";
+import { lfgActionSchema } from "../lfg-schemas";
 import { lfgSearchParams } from "../lfg-search-params";
 import { loader } from "../loaders/lfg.server";
 import styles from "./lfg.module.css";
@@ -117,17 +118,21 @@ export default function LFGPage() {
 
 function PostExpiryAlert({ postId }: { postId: number }) {
 	const { t } = useTranslation(["common", "lfg"]);
-	const fetcher = useFetcher();
 
 	return (
 		<Alert variation="WARNING">
-			<fetcher.Form method="post" className="stack md horizontal items-center">
-				<input type="hidden" name="id" value={postId} />
+			<div className="stack md horizontal items-center">
 				{t("lfg:expiring")}{" "}
-				<SubmitButton _action="BUMP_POST" variant="outlined" size="small">
+				<ActionButton
+					schema={lfgActionSchema}
+					action="BUMP_POST"
+					fields={{ id: postId }}
+					variant="outlined"
+					size="small"
+				>
 					{t("common:actions.clickHere")}
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 		</Alert>
 	);
 }

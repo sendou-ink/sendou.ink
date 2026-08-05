@@ -2,7 +2,8 @@ import { User, Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useFetcher, useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -13,7 +14,6 @@ import { Image } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
@@ -38,6 +38,7 @@ import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { action } from "../actions/q.server";
 import { loader } from "../loaders/q.server";
+import { frontPageSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { userCanJoinQueueAt } from "../q-utils";
 
@@ -68,7 +69,6 @@ export default function QPage() {
 	const [dialogOpen, setDialogOpen] = React.useState(true);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 	const { formatter: joinTimeFormatter } = useDateTimeFormat({
 		day: "numeric",
 		month: "numeric",
@@ -111,26 +111,27 @@ export default function QPage() {
 						/>
 					) : null}
 					{user?.friendCode ? (
-						<fetcher.Form className="stack md" method="post">
-							<input type="hidden" name="_action" value="JOIN_QUEUE" />
+						<div className="stack md">
 							<div className="stack horizontal md items-center mt-4 mx-auto">
-								<SubmitButton
+								<ActionButton
+									schema={frontPageSchema}
+									action="JOIN_QUEUE"
 									icon={<Users />}
 									isDisabled={queueJoinStatus !== "NOW"}
 								>
 									{t("q:front.actions.joinWithGroup")}
-								</SubmitButton>
-								<SubmitButton
-									name="direct"
-									value="true"
-									state={fetcher.state}
+								</ActionButton>
+								<ActionButton
+									schema={frontPageSchema}
+									action="JOIN_QUEUE"
+									fields={{ direct: "true" }}
 									icon={<User />}
 									variant="outlined"
 									isDisabled={queueJoinStatus !== "NOW"}
 									testId="join-solo-button"
 								>
 									{t("q:front.actions.joinSolo")}
-								</SubmitButton>
+								</ActionButton>
 							</div>
 							{queueJoinStatus instanceof Date ? (
 								<div className="text-lighter text-xs text-center text-warning">
@@ -141,7 +142,7 @@ export default function QPage() {
 							) : (
 								<PreviewQueueButton />
 							)}
-						</fetcher.Form>
+						</div>
 					) : user ? (
 						<div className="stack md items-center">
 							<FriendCodePopover />
@@ -231,7 +232,6 @@ function JoinTeamDialog({
 	}[];
 }) {
 	const { t, i18n } = useTranslation(["q"]);
-	const fetcher = useFetcher();
 
 	return (
 		<SendouDialog
@@ -245,17 +245,14 @@ function JoinTeamDialog({
 				),
 			})}
 		>
-			<fetcher.Form
-				className="stack horizontal justify-center md mt-6 flex-wrap"
-				method="post"
-			>
-				<SubmitButton _action="JOIN_TEAM" state={fetcher.state}>
+			<div className="stack horizontal justify-center md mt-6 flex-wrap">
+				<ActionButton schema={frontPageSchema} action="JOIN_TEAM">
 					{t("q:front.join.joinAction")}
-				</SubmitButton>
+				</ActionButton>
 				<FormMessage type="info">
 					{t("q:front.join.friendSuggestion")}
 				</FormMessage>
-			</fetcher.Form>
+			</div>
 		</SendouDialog>
 	);
 }

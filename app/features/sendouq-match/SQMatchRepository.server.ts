@@ -7,6 +7,7 @@ import type { DB } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
@@ -17,6 +18,7 @@ import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	matchProfileWeapons,
+	skillCountsAsSeasonSet,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
@@ -69,7 +71,7 @@ export async function findById(id: number) {
 				selectFrom("Skill")
 					.select("Skill.id")
 					.where("Skill.groupMatchId", "=", id)
-					.where("Skill.season", "=", -1),
+					.where("Skill.season", "=", CANCELED_MATCH_SEASON),
 			).as("isCanceled"),
 			jsonArrayFrom(
 				eb
@@ -193,21 +195,7 @@ export async function countSeasonResultPagesByUserId({
 		.select(({ fn }) => [fn.countAll().as("count")])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb, exists, selectFrom }) =>
-			or([
-				eb("groupMatchId", "is not", null),
-				exists(
-					selectFrom("TournamentResult")
-						.select("TournamentResult.userId")
-						.whereRef(
-							"TournamentResult.tournamentId",
-							"=",
-							"Skill.tournamentId",
-						)
-						.where("TournamentResult.userId", "=", userId),
-				),
-			]),
-		)
+		.where((eb) => skillCountsAsSeasonSet(eb, userId))
 		.executeTakeFirstOrThrow();
 
 	return Math.ceil((row.count as number) / MATCHES_PER_SEASONS_PAGE);
@@ -331,21 +319,7 @@ export async function findSeasonResultsByUserId({
 		])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb, exists, selectFrom }) =>
-			or([
-				eb("groupMatchId", "is not", null),
-				exists(
-					selectFrom("TournamentResult")
-						.select("TournamentResult.userId")
-						.whereRef(
-							"TournamentResult.tournamentId",
-							"=",
-							"Skill.tournamentId",
-						)
-						.where("TournamentResult.userId", "=", userId),
-				),
-			]),
-		)
+		.where((eb) => skillCountsAsSeasonSet(eb, userId))
 		.limit(MATCHES_PER_SEASONS_PAGE)
 		.offset(MATCHES_PER_SEASONS_PAGE * (page - 1))
 		.orderBy("Skill.id", "desc")
@@ -437,8 +411,7 @@ export async function findSeasonCanceledMatchesByUserId({
 		.innerJoin("Skill", (join) =>
 			join
 				.onRef("GroupMatch.id", "=", "Skill.groupMatchId")
-				// dummy skills used to close match when it's canceled have season -1
-				.on("Skill.season", "=", -1),
+				.on("Skill.season", "=", CANCELED_MATCH_SEASON),
 		)
 		.select((eb) => [
 			"GroupMatch.id",
@@ -544,8 +517,7 @@ export async function findCancelNominationCountsByUserIds({
 		.innerJoin("Skill", (join) =>
 			join
 				.onRef("Skill.groupMatchId", "=", "GroupMatch.id")
-				// dummy skills used to close match when it's canceled have season -1
-				.on("Skill.season", "=", -1),
+				.on("Skill.season", "=", CANCELED_MATCH_SEASON),
 		)
 		.select([
 			"GroupMatchCancelReportPlayer.userId",
@@ -728,7 +700,7 @@ export function lockMatchWithoutSkillChange(
 			groupMatchId,
 			identifier: null,
 			mu: -1,
-			season: -1,
+			season: CANCELED_MATCH_SEASON,
 			sigma: -1,
 			ordinal: -1,
 			userId: null,

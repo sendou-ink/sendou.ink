@@ -4,7 +4,7 @@ import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { commonUserSelect, customAvatarUrl } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 import { FRIEND } from "./friends-constants";
 
 export async function findByUserIdWithActivity(userId: number) {
@@ -126,12 +126,7 @@ export async function findPendingSentRequests(senderId: number) {
 		.select((eb) => [
 			"FriendRequest.id",
 			"FriendRequest.createdAt",
-			"User.id as receiverId",
-			"User.username as receiverUsername",
-			"User.discordId as receiverDiscordId",
-			"User.discordAvatar as receiverDiscordAvatar",
-			"User.customUrl as receiverCustomUrl",
-			customAvatarUrl(eb).as("receiverCustomAvatarUrl"),
+			...commonUserSelect(eb, { prefix: "receiver" }),
 		])
 		.where("FriendRequest.senderId", "=", senderId)
 		.orderBy("FriendRequest.createdAt", "desc")
@@ -225,12 +220,7 @@ export async function findPendingReceivedRequests(receiverId: number) {
 		.select((eb) => [
 			"FriendRequest.id",
 			"FriendRequest.createdAt",
-			"User.id as senderId",
-			"User.username as senderUsername",
-			"User.discordId as senderDiscordId",
-			"User.discordAvatar as senderDiscordAvatar",
-			"User.customUrl as senderCustomUrl",
-			customAvatarUrl(eb).as("senderCustomAvatarUrl"),
+			...commonUserSelect(eb, { prefix: "sender" }),
 		])
 		.where("FriendRequest.receiverId", "=", receiverId)
 		.orderBy("FriendRequest.createdAt", "desc")

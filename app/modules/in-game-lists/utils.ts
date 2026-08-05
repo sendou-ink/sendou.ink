@@ -32,9 +32,12 @@ export function filterWeapon({
 	}
 
 	if (weapon.type === "MAIN") {
-		return (
-			weaponAltNames.get(weapon.id)?.includes(normalizedSearchTerm) ?? false
-		);
+		const altNames = weaponAltNames.get(weapon.id);
+		if (!altNames) return false;
+
+		const altNamesList = typeof altNames === "string" ? [altNames] : altNames;
+
+		return altNamesList.includes(normalizedSearchTerm);
 	}
 
 	return false;

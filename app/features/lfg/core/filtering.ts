@@ -31,7 +31,7 @@ function filterMatchesPost(
 	if (post.type === "COACH_FOR_TEAM") {
 		// not visible in the UI
 		if (
-			filter._tag === "Weapon" ||
+			(filter._tag === "Weapon" && filter.weaponSplIds.length > 0) ||
 			filter._tag === "MaxTier" ||
 			filter._tag === "MinTier"
 		) {

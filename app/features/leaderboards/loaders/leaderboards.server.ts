@@ -13,11 +13,9 @@ import {
 	cachedFullUserLeaderboard,
 	filterByWeaponCategory,
 	ownEntryPeek,
+	shownUserLeaderboard,
 } from "../core/leaderboards.server";
-import {
-	DEFAULT_LEADERBOARD_MAX_SIZE,
-	WEAPON_LEADERBOARD_MAX_SIZE,
-} from "../leaderboards-constants";
+import { WEAPON_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import { leaderboardsSearchParams } from "../leaderboards-search-params";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
@@ -32,10 +30,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		? await cachedFullUserLeaderboard(season)
 		: null;
 
-	const userLeaderboard = fullUserLeaderboard?.slice(
-		0,
-		DEFAULT_LEADERBOARD_MAX_SIZE,
-	);
+	const userLeaderboard = fullUserLeaderboard
+		? shownUserLeaderboard(fullUserLeaderboard)
+		: undefined;
 
 	const teamLeaderboard =
 		type === "TEAM" || type === "TEAM-ALL"

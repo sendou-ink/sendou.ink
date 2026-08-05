@@ -1049,4 +1049,23 @@ describe("tournamentSummary()", () => {
 		expect(skillsFromTeam1.length).toBe(4);
 		expect(skillsFromTeam2.length).toBe(4);
 	});
+
+	test("summarizes a dropped team set without maps when the dropped team has subs and no active roster", () => {
+		const summary = summarize({
+			results: [
+				{
+					maps: [],
+					opponentOne: createOpponent(1, 0, false, null, [1, 2, 3, 4]),
+					opponentTwo: createOpponent(2, 0, true, null, [5, 6, 7, 8, 17]),
+					winnerSide: "opponent1",
+					roundMaps: {
+						count: 3,
+						type: "BEST_OF",
+					},
+				},
+			],
+		});
+
+		expect(summary.tournamentResults.length).toBe(4 * 4);
+	});
 });

@@ -77,6 +77,7 @@ import type {
 } from "../analyzer-types";
 import { INK_CONSUME_TYPES } from "../analyzer-types";
 import { PerInkTankGrid } from "../components/PerInkTankGrid";
+import { isMainOnlyAbility, isStackableAbility } from "../core/ability-points";
 import {
 	ABILITIES_WITHOUT_CHUNKS,
 	getAbilityChunksMapAsArray,
@@ -86,12 +87,7 @@ import {
 	SPECIAL_EFFECTS,
 } from "../core/specialEffects";
 import { buildStats } from "../core/stats";
-import {
-	buildIsEmpty,
-	damageIsSubWeaponDamage,
-	isMainOnlyAbility,
-	isStackableAbility,
-} from "../core/utils";
+import { buildIsEmpty, damageIsSubWeaponDamage } from "../core/utils";
 import styles from "./analyzer.module.css";
 
 export const CURRENT_PATCH = "11.2";

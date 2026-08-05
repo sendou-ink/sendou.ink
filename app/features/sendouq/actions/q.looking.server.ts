@@ -16,8 +16,8 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { lookingSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { lookingSchema } from "../q-schemas.server";
 import { resolveFutureMatchModes } from "../q-utils";
 import {
 	SendouQError,
@@ -166,6 +166,13 @@ export const action: ActionFunction = async ({ request }) => {
 				const ownGroup = SendouQ.findOwnGroup(user.id);
 				const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
 				if (!ownGroup || !theirGroup) return null;
+
+				const allLikes = await SQGroupRepository.findAllLikesByGroupId(
+					data.targetGroupId,
+				);
+				if (!allLikes.given.some((like) => like.groupId === ownGroup.id)) {
+					return null;
+				}
 
 				const ownGroupPreferences =
 					await SQGroupRepository.findMapModePreferencesByGroupId(ownGroup.id);

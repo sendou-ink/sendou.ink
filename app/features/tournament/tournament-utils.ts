@@ -315,13 +315,22 @@ export type TeamForOrdering = {
 	startingBracketIdx: number | null;
 };
 
+/**
+ * Compares two teams pairwise for ordering purposes. Not a strict weak order
+ * when one team has a seed and the other does not (the seed is ignored in
+ * favor of the skill comparison), so it must not be used as a raw `sort`
+ * comparator over a mixed seeded/unseeded field — {@link sortTeamsBySeeding}
+ * handles that case.
+ */
 export function compareTeamsForOrdering(
 	a: TeamForOrdering,
 	b: TeamForOrdering,
 	minMembersPerTeam: number,
 ): number {
-	if (a.startingBracketIdx !== b.startingBracketIdx) {
-		return (a.startingBracketIdx ?? 0) - (b.startingBracketIdx ?? 0);
+	const aStartingBracketIdx = a.startingBracketIdx ?? 0;
+	const bStartingBracketIdx = b.startingBracketIdx ?? 0;
+	if (aStartingBracketIdx !== bStartingBracketIdx) {
+		return aStartingBracketIdx - bStartingBracketIdx;
 	}
 
 	if (a.seed !== null && b.seed !== null) {
@@ -355,13 +364,76 @@ export function compareTeamsForOrdering(
 	return a.createdAt !== b.createdAt ? a.createdAt - b.createdAt : a.id - b.id;
 }
 
+/**
+ * Orders tournament teams into their effective seed order. Within each
+ * starting bracket manually seeded teams keep the organizer's seed order,
+ * while unseeded teams (e.g. registered after the seeds were last saved) are
+ * slotted in by skill: below every seeded team with a higher skill ordinal,
+ * above the rest. Unseeded teams that are not full or have no skill ordinal
+ * go below all seeded teams. The result is deterministic regardless of the
+ * input order.
+ */
 export function sortTeamsBySeeding<T extends TeamForOrdering>(
 	teams: T[],
 	minMembersPerTeam: number,
 ): T[] {
-	return [...teams].sort((a, b) =>
-		compareTeamsForOrdering(a, b, minMembersPerTeam),
+	const byStartingBracket = new Map<number, T[]>();
+	for (const team of teams) {
+		const bracketIdx = team.startingBracketIdx ?? 0;
+		const group = byStartingBracket.get(bracketIdx) ?? [];
+		group.push(team);
+		byStartingBracket.set(bracketIdx, group);
+	}
+
+	return [...byStartingBracket.entries()]
+		.sort(([a], [b]) => a - b)
+		.flatMap(([, group]) => orderTeamsOfBracket(group, minMembersPerTeam));
+}
+
+function orderTeamsOfBracket<T extends TeamForOrdering>(
+	teams: T[],
+	minMembersPerTeam: number,
+): T[] {
+	const seeded = teams
+		.filter((team) => team.seed !== null)
+		.sort((a, b) => a.seed! - b.seed!);
+	const unseeded = teams
+		.filter((team) => team.seed === null)
+		.sort((a, b) => compareTeamsForOrdering(a, b, minMembersPerTeam));
+
+	const interleaved = unseeded.filter(
+		(team) =>
+			team.memberUserIds.length >= minMembersPerTeam &&
+			team.avgSeedingSkillOrdinal !== null,
 	);
+	const appended = unseeded.filter((team) => !interleaved.includes(team));
+
+	const insertionIdx = (team: T) => {
+		for (let i = seeded.length - 1; i >= 0; i--) {
+			const seededSkill =
+				seeded[i].avgSeedingSkillOrdinal ?? Number.NEGATIVE_INFINITY;
+			if (seededSkill >= team.avgSeedingSkillOrdinal!) return i + 1;
+		}
+		return 0;
+	};
+
+	const result: T[] = [];
+	let unseededIdx = 0;
+	for (let seededIdx = 0; seededIdx <= seeded.length; seededIdx++) {
+		while (
+			unseededIdx < interleaved.length &&
+			insertionIdx(interleaved[unseededIdx]) === seededIdx
+		) {
+			result.push(interleaved[unseededIdx]);
+			unseededIdx++;
+		}
+
+		if (seededIdx < seeded.length) {
+			result.push(seeded[seededIdx]);
+		}
+	}
+
+	return [...result, ...appended];
 }
 
 export function findTeamInsertPosition<T extends TeamForOrdering>(

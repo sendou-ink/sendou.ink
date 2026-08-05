@@ -1,5 +1,4 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
@@ -10,24 +9,18 @@ import {
 	tournamentSummary,
 } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseParams } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 
 export type FinalizeTournamentLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
+	const { tournament, user } = await tournamentFromParams(params, {
+		for: "action",
 	});
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	if (!tournament.canFinalize(user)) {
 		return redirect(

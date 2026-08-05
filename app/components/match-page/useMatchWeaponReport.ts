@@ -1,6 +1,7 @@
-import { useFetcher } from "react-router";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { weaponReportActionSchema } from "./match-page-schemas";
 import type { WeaponReporterMap, WeaponReporterProps } from "./WeaponReporter";
 
 /**
@@ -20,7 +21,7 @@ export function useMatchWeaponReport({
 	maps: WeaponReporterMap[];
 	pastReported: { mapIndex: number; weaponSplId: MainWeaponId }[];
 }): WeaponReporterProps {
-	const weaponFetcher = useFetcher();
+	const weaponReport = useActionSubmit(weaponReportActionSchema);
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();
 
@@ -39,28 +40,18 @@ export function useMatchWeaponReport({
 			.map((w) => w.weaponSplId),
 		nextMapIndex,
 		quickSelectWeaponIds: recentlyReportedWeapons,
-		isSubmitting: weaponFetcher.state !== "idle",
+		isSubmitting: weaponReport.state !== "idle",
 		onSubmit: (weaponSplId) => {
 			addRecentlyReportedWeapon(weaponSplId);
 			if (nextMapIndex < 0) return;
-			weaponFetcher.submit(
-				{
-					_action: "REPORT_WEAPON",
-					weaponSplId: String(weaponSplId),
-					mapIndex: String(nextMapIndex),
-				},
-				{ method: "post" },
-			);
+			weaponReport.submit("REPORT_WEAPON", {
+				weaponSplId,
+				mapIndex: nextMapIndex,
+			});
 		},
 		onUndo: () => {
 			if (undoMapIndex < 0) return;
-			weaponFetcher.submit(
-				{
-					_action: "UNDO_WEAPON_REPORT",
-					mapIndex: String(undoMapIndex),
-				},
-				{ method: "post" },
-			);
+			weaponReport.submit("UNDO_WEAPON_REPORT", { mapIndex: undoMapIndex });
 		},
 	};
 }

@@ -1,7 +1,5 @@
-import { abilities } from "~/modules/in-game-lists/abilities";
 import type {
 	Ability,
-	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
 	SpecialWeaponId,
@@ -9,7 +7,6 @@ import type {
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { Unpacked } from "~/utils/types";
-import { MAIN_SLOT_AP, SUB_SLOT_AP } from "../analyzer-constants";
 import type {
 	AbilityPoints,
 	AnalyzedBuild,
@@ -41,48 +38,6 @@ export function specialWeaponParams(
 	const params = rawWeaponParams as unknown as ParamsJson;
 
 	return params.specialWeapons[specialWeaponId] as SpecialWeaponParams;
-}
-
-export function buildToAbilityPoints(build: BuildAbilitiesTupleWithUnknown) {
-	const result: AbilityPoints = new Map();
-
-	for (const abilityRow of build) {
-		let abilityDoublerActive = false;
-		for (const [i, ability] of abilityRow.entries()) {
-			if (ability === "AD") {
-				abilityDoublerActive = true;
-			}
-			if (!isStackableAbility(ability) && ability !== "UNKNOWN") {
-				continue;
-			}
-
-			const aps = i === 0 ? MAIN_SLOT_AP : SUB_SLOT_AP;
-			const apsDoubled = aps * (abilityDoublerActive ? 2 : 1);
-			const newAp = (result.get(ability) ?? 0) + apsDoubled;
-
-			result.set(ability, newAp);
-		}
-	}
-
-	return result;
-}
-
-export function isStackableAbility(
-	ability: AbilityWithUnknown,
-): ability is Ability {
-	if (ability === "UNKNOWN") return false;
-	const abilityObj = abilities.find((a) => a.name === ability);
-	invariant(abilityObj);
-
-	return abilityObj.type === "STACKABLE";
-}
-
-export function isMainOnlyAbility(
-	ability: AbilityWithUnknown,
-): ability is Ability {
-	if (ability === "UNKNOWN") return false;
-
-	return !isStackableAbility(ability);
 }
 
 export function apFromMap({

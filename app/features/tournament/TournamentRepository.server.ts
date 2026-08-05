@@ -17,7 +17,7 @@ import type { TournamentSummary } from "~/features/tournament-bracket/core/summa
 import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
-} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -25,7 +25,6 @@ import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
-	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -465,11 +464,7 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 							),
 					)
 					.select((eb) => [
-						"User.id as userId",
-						"User.username",
-						"User.discordId",
-						"User.discordAvatar",
-						"User.customUrl",
+						...commonUserSelect(eb, { idAs: "userId" }),
 						"User.country",
 						"SeedingSkill.ordinal",
 						"TournamentTeamMember.role",
@@ -479,7 +474,6 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
               "TournamentTeamMember"."inGameName",
               "User"."inGameName"
             )`.as("inGameName"),
-						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.whereRef(
 						"TournamentTeamMember.tournamentTeamId",

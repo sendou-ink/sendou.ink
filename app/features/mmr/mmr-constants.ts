@@ -58,5 +58,8 @@ export const TIERS_BEFORE_LEVIATHAN = [
 
 export type TierName = (typeof TIERS)[number]["name"];
 
+/** `Skill.season` of the dummy skill inserted to close a canceled match without a skill change. */
+export const CANCELED_MATCH_SEASON = -1;
+
 export const USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN = 200;
 export const TEAM_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN = 100;

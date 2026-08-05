@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
-import { buildToAbilityPoints } from "./utils";
+import { buildToAbilityPoints } from "./ability-points";
 
 describe("buildToAbilityPoints", () => {
 	const EMPTY_ROW: [

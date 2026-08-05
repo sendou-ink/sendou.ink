@@ -17,6 +17,8 @@ export function RelativeTime({
 	});
 
 	return (
-		<abbr title={formatter.format(timestamp) ?? undefined}>{children}</abbr>
+		<abbr title={formatter.format(new Date(timestamp)) ?? undefined}>
+			{children}
+		</abbr>
 	);
 }

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "./test-utils";
 
@@ -56,6 +58,51 @@ describe("findByUserId", () => {
 		);
 
 		expect(result).toHaveLength(0);
+	});
+});
+
+describe("findEventsByMonth", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	const seedOrgEventAt = async (startTime: Date) => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+		await CalendarEventFactory.create({
+			authorId: users.id(1),
+			organizationId: org.id,
+			startTimes: [dateToDatabaseTimestamp(startTime)],
+		});
+
+		return org;
+	};
+
+	test("includes an event starting within the timezone margin before the month", async () => {
+		const org = await seedOrgEventAt(new Date("2024-12-31T22:00:00Z"));
+
+		const events = await TournamentOrganizationRepository.findEventsByMonth({
+			month: 0,
+			year: 2025,
+			organizationId: org.id,
+		});
+
+		expect(events).toHaveLength(1);
+	});
+
+	test("includes an event starting within the timezone margin after the month", async () => {
+		// Jan 31, 6 PM in America/Los_Angeles — the org page calendar renders
+		// this into the January grid for viewers west of UTC
+		const org = await seedOrgEventAt(new Date("2025-02-01T02:00:00Z"));
+
+		const events = await TournamentOrganizationRepository.findEventsByMonth({
+			month: 0,
+			year: 2025,
+			organizationId: org.id,
+		});
+
+		expect(events).toHaveLength(1);
 	});
 });
 

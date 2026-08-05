@@ -4,8 +4,8 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import {
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
-	customAvatarUrl,
 } from "~/utils/kysely.server";
 import { seededRandom } from "~/utils/random";
 import type { ListedArt } from "./art-types";
@@ -54,12 +54,8 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 			"Art.id",
 			"Art.createdAt",
 			"Art.isShowcase",
-			"User.id as userId",
-			"User.discordId",
-			"User.username",
-			"User.discordAvatar",
+			...commonUserSelect(eb, { idAs: "userId" }),
 			"User.commissionsOpen",
-			customAvatarUrl(eb).as("customAvatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
@@ -99,12 +95,8 @@ export async function findShowcaseArtsByTag(
 			"Art.id",
 			"Art.createdAt",
 			"Art.isShowcase",
-			"User.id as userId",
-			"User.discordId",
-			"User.username",
-			"User.discordAvatar",
+			...commonUserSelect(eb, { idAs: "userId" }),
 			"User.commissionsOpen",
-			customAvatarUrl(eb).as("customAvatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
@@ -150,11 +142,8 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 			"Art.id",
 			"Art.createdAt",
 			"Art.isShowcase",
-			"User.discordId",
-			"User.username",
-			"User.discordAvatar",
+			...commonUserSelect(eb, { idAs: "userId" }),
 			"User.commissionsOpen",
-			customAvatarUrl(eb).as("customAvatarUrl"),
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
@@ -209,11 +198,8 @@ export async function findArtsByUserId(
 					concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 						"url",
 					),
-					"User.discordId",
-					"User.username",
-					"User.discordAvatar",
+					...commonUserSelect(eb, { idAs: "userId" }),
 					"User.commissionsOpen",
-					customAvatarUrl(eb).as("customAvatarUrl"),
 					jsonArrayFrom(
 						eb
 							.selectFrom("TaggedArt")
@@ -229,12 +215,9 @@ export async function findArtsByUserId(
 								"LinkedUser.id",
 								"ArtUserMetadata.userId",
 							)
-							.select([
-								"LinkedUser.id",
-								"LinkedUser.discordId",
-								"LinkedUser.username",
-								"LinkedUser.customUrl",
-							])
+							.select((linkedEb) =>
+								commonUserSelect(linkedEb, { alias: "LinkedUser" }),
+							)
 							.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
 					).as("linkedUsers"),
 				])
@@ -270,12 +253,9 @@ export async function findArtsByUserId(
 								"LinkedUser.id",
 								"ArtUserMetadata.userId",
 							)
-							.select([
-								"LinkedUser.id",
-								"LinkedUser.discordId",
-								"LinkedUser.username",
-								"LinkedUser.customUrl",
-							])
+							.select((linkedEb) =>
+								commonUserSelect(linkedEb, { alias: "LinkedUser" }),
+							)
 							.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
 					).as("linkedUsers"),
 				])

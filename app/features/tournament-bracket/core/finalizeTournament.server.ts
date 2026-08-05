@@ -13,7 +13,7 @@ import { logger } from "~/utils/logger";
 import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
-} from "../tournament-bracket-schemas.server";
+} from "../tournament-bracket-schemas";
 import { summaryRatingTargets, tournamentSummary } from "./summarizer.server";
 import type { Tournament } from "./Tournament";
 import { clearTournamentDataCache } from "./Tournament.server";

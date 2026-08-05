@@ -12,7 +12,7 @@ export function chatAccessible(args: {
 }): boolean {
 	const extraDays = args.isStaff ? STAFF_EXTRA_DAYS : 0;
 	return (
-		differenceInDays(new Date(), args.comparedTo) <=
+		differenceInDays(new Date(), args.comparedTo) <
 		args.expiresAfterDays + extraDays
 	);
 }

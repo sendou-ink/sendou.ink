@@ -6,7 +6,10 @@ import { logger } from "~/utils/logger";
 import { SENDOUQ_BEST_OF } from "../q-constants";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 
-let cachedDefaults: Map<string, number> | null = null;
+let cachedDefaults: {
+	seasonNth: number;
+	weights: Map<string, number>;
+} | null = null;
 
 const ONE_WEEK_IN_DAYS = 7;
 const DEFAULT_MAP_WEIGHT = -SENDOUQ_BEST_OF;
@@ -25,15 +28,15 @@ export async function getDefaultMapWeights(): Promise<Map<string, number>> {
 		return new Map();
 	}
 
-	if (cachedDefaults) {
-		return cachedDefaults;
+	if (cachedDefaults && cachedDefaults.seasonNth === season.nth) {
+		return cachedDefaults.weights;
 	}
 
 	const weights = await calculateSeasonDefaultMaps(season.nth);
 	logger.info(
 		`[getDefaultMapWeights] Calculated default map weights: ${JSON.stringify(Object.fromEntries(weights))}`,
 	);
-	cachedDefaults = weights;
+	cachedDefaults = { seasonNth: season.nth, weights };
 
 	return weights;
 }

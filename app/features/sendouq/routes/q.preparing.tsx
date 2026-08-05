@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -12,6 +12,7 @@ import { GroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
 import { loader } from "../loaders/q.preparing.server";
+import { preparingSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE, sqGroupWebsocketRoom } from "../q-constants";
 
 export { action, loader };
@@ -37,7 +38,6 @@ export const meta: MetaFunction = (args) => {
 export default function QPreparingPage() {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
-	const joinQFetcher = useFetcher();
 
 	useWebsocketRevalidation(sqGroupWebsocketRoom(data.group.id));
 
@@ -54,15 +54,9 @@ export default function QPreparingPage() {
 					groupMemberIds={data.group.members.map((m) => m.id)}
 				/>
 			) : null}
-			<joinQFetcher.Form method="post">
-				<SubmitButton
-					size="big"
-					state={joinQFetcher.state}
-					_action="JOIN_QUEUE"
-				>
-					{t("q:preparing.joinQ")}
-				</SubmitButton>
-			</joinQFetcher.Form>
+			<ActionButton schema={preparingSchema} action="JOIN_QUEUE" size="big">
+				{t("q:preparing.joinQ")}
+			</ActionButton>
 			<GroupLeaver
 				type={data.group.members.length === 1 ? "GO_BACK" : "LEAVE_GROUP"}
 			/>

@@ -16,7 +16,7 @@
 	"forms.title.pov": "Jugador (punto de vista)",
 	"forms.title.startTimestamp": "Tiempo de comienzo",
 	"forms.title.mode": "Modo",
-	"forms.title.stage": "Mapa",
+	"forms.title.stage": "Escenario",
 	"forms.title.weaponsTeamOne": "Armas (Equipo 1)",
 	"forms.title.weaponsTeamTwo": "Armas (Equipo 2)",
 	"forms.title.weapon": "Arma",
@@ -33,10 +33,10 @@
 	"gainPerms": "Por favor envía un mensaje en el 'helpdesk' de nuestro Discord para obtener permiso para subir videos.",
 	"deleteConfirm": "¿Borrar el vídeo con el título '{{title}}'?",
 	"errors.youtubePreviewFailed": "Error al cargar la vista previa de YouTube",
-	"copyTimestamps": "",
-	"copyTimestamps.help": "",
-	"copyTimestamps.modeFormat": "",
-	"copyTimestamps.stageFormat": "",
-	"copyTimestamps.format.short": "",
-	"copyTimestamps.format.long": ""
+	"copyTimestamps": "Copiar marcas de tiempo",
+	"copyTimestamps.help": "Pégalas en la descripción de tu vídeo de YouTube para crear marcadores de capítulos.",
+	"copyTimestamps.modeFormat": "Formato de modo",
+	"copyTimestamps.stageFormat": "Formato de escenario",
+	"copyTimestamps.format.short": "Corto",
+	"copyTimestamps.format.long": "Largo"
 }
