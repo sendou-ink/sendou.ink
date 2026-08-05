@@ -162,6 +162,30 @@ export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonBuildObject(commonUserObjectFields(eb));
 }
 
+type ExtractedExpressionTypes<E extends Record<string, Expression<unknown>>> = {
+	[K in keyof E]: E[K] extends Expression<infer T> ? T : never;
+};
+
+/**
+ * `json_group_array` aggregate building one object per member row from the {@link CommonUser}
+ * fields plus `extras`. `"User"` must be in scope at the call site. Alias it (`.as("members")`)
+ * when selecting.
+ */
+export function commonUserMembersAgg<
+	E extends Record<string, Expression<unknown>>,
+>(eb: ExpressionBuilder<DB, any>, extras: E) {
+	return eb.fn
+		.agg("json_group_array", [
+			jsonBuildObject({
+				...commonUserObjectFields(
+					eb as unknown as ExpressionBuilder<Tables, "User">,
+				),
+				...extras,
+			}),
+		])
+		.$castTo<Array<CommonUser & ExtractedExpressionTypes<E>>>();
+}
+
 const USER_SUBMITTED_IMAGE_ROOT =
 	(process.env.NODE_ENV === "development" && !Config.prodMode) ||
 	IS_E2E_TEST_RUN ||
