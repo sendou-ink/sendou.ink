@@ -4,35 +4,30 @@ import {
 	assertRoundTrips,
 } from "~/modules/search-params/search-params-test-utils";
 import { lfgNewSearchParams, lfgSearchParams } from "./lfg-search-params";
-import type { LFGFilter } from "./lfg-types";
-
-const weaponFilter: LFGFilter = { _tag: "Weapon", weaponSplIds: [0, 10] };
-const typeFilter: LFGFilter = { _tag: "Type", type: "PLAYER_FOR_TEAM" };
-const timezoneFilter: LFGFilter = { _tag: "Timezone", maxHourDifference: 3 };
-const languageFilter: LFGFilter = { _tag: "Language", language: "en" };
-const plusTierFilter: LFGFilter = { _tag: "PlusTier", tier: 1 };
-const maxTierFilter: LFGFilter = { _tag: "MaxTier", tier: "GOLD" };
-const minTierFilter: LFGFilter = { _tag: "MinTier", tier: "BRONZE" };
-
-// the filter LFGAddFilterButton inserts when the user picks "Weapon"
-const emptyWeaponFilter: LFGFilter = { _tag: "Weapon", weaponSplIds: [] };
 
 describe("lfgSearchParams", () => {
 	it("round-trips", () => {
 		assertRoundTrips(lfgSearchParams, {
-			q: [
-				[],
-				[weaponFilter],
-				[emptyWeaponFilter],
-				[typeFilter],
-				[timezoneFilter],
-				[languageFilter],
-				[plusTierFilter],
-				[maxTierFilter],
-				[minTierFilter],
-				[weaponFilter, typeFilter, minTierFilter],
-			],
+			weapons: [[], [0], [0, 10, 4001]],
+			type: [null, "PLAYER_FOR_TEAM", "COACH_FOR_TEAM"],
+			timezone: [null, 0, 3, 12],
+			language: [null, "en", "ja"],
+			plusTier: [null, 1, 3],
+			minTier: [null, "GOLD", "LEVIATHAN"],
+			maxTier: [null, "PLATINUM", "IRON"],
 		});
+	});
+
+	it("decodes garbage to defaults", () => {
+		assertDecodesToDefault(lfgSearchParams, "type", [["NOT_A_TYPE"], [""]]);
+		assertDecodesToDefault(lfgSearchParams, "timezone", [
+			["13"],
+			["-1"],
+			["abc"],
+		]);
+		assertDecodesToDefault(lfgSearchParams, "language", [["xx"]]);
+		assertDecodesToDefault(lfgSearchParams, "plusTier", [["0"], ["4"]]);
+		assertDecodesToDefault(lfgSearchParams, "minTier", [["gold"], ["XX"]]);
 	});
 });
 

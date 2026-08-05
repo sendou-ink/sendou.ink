@@ -13,7 +13,9 @@ export class LFGPage {
 		this.page = page;
 		this.locators = {
 			addFilterButton: page.getByTestId("add-filter-button"),
-			languageFilterSelect: page.getByLabel("Spoken language"),
+			languageFilterSelect: page.getByLabel("Spoken language", {
+				exact: true,
+			}),
 		};
 	}
 
