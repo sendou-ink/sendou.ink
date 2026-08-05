@@ -55,13 +55,7 @@
 }
 
 .bestStageRow {
-	background-image:
-		linear-gradient(to right, var(--graphic-row-bg) 35%, transparent 80%),
-		var(--best-stage-banner);
-	background-origin: border-box;
-	background-position: right center;
-	background-size: cover;
-	background-repeat: no-repeat;
+	--stage-banner-fade: var(--graphic-row-bg);
 }
 
 .bestStageName {

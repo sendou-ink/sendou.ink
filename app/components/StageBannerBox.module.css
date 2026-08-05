@@ -1,0 +1,13 @@
+.banner {
+	background-image:
+		linear-gradient(
+			to right,
+			var(--stage-banner-fade, var(--color-bg-high)) 35%,
+			transparent 80%
+		),
+		var(--stage-banner);
+	background-origin: border-box;
+	background-position: right center;
+	background-size: cover;
+	background-repeat: no-repeat;
+}

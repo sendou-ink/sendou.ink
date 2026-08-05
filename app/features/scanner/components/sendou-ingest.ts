@@ -15,7 +15,11 @@ import type { DetectedEvent } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
 import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
-import { type StoredEvent, updateEventsSend } from "../store/events";
+import {
+	type SendStatus,
+	type StoredEvent,
+	updateEventsSend,
+} from "../store/events";
 
 const INGEST_URL = "/ingest";
 
@@ -124,6 +128,26 @@ export function matchContaining(
 	id: number,
 ): (built: BuiltMatch<StoredEvent>) => boolean {
 	return (built) => built.sources.some((e) => e.id === id);
+}
+
+/**
+ * The single send status a match displays, folded from its source events:
+ * an in-flight send wins, then a failure, then success, then queued. Within
+ * a state the most recent change is shown.
+ */
+export function aggregateSendStatus(
+	sources: readonly StoredEvent[],
+): SendStatus | undefined {
+	const statuses = sources
+		.map((e) => e.send)
+		.filter((status) => status !== undefined);
+	for (const state of ["sending", "failed", "sent", "queued"] as const) {
+		const ofState = statuses.filter((status) => status.state === state);
+		if (ofState.length > 0) {
+			return ofState.reduce((a, b) => (a.at >= b.at ? a : b));
+		}
+	}
+	return undefined;
 }
 
 /** Match selector: matches not yet sent (nor currently sending). */

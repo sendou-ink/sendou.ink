@@ -17,7 +17,9 @@ import { Link } from "react-router";
 import { openVodScan } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import type { DetectedEvent } from "../core/detectors/types";
+import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
+import type { SendStatus } from "../store/events";
 import {
 	deleteVod,
 	listVods,
@@ -28,10 +30,12 @@ import {
 } from "../store/vods";
 import { AnalyzerPool, defaultPoolSize } from "../worker/pool";
 import { EventCard, type GetFrame } from "./EventCard";
+import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import type { FixtureData } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
+import { MatchCard } from "./MatchCard";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -72,7 +76,13 @@ interface Progress {
 /** "Upload as results" progress/outcome shown next to the button. */
 type ResultsSend =
 	| { state: "sending"; sent: number; total: number }
-	| { state: "done"; sent: number; total: number; error: string | null };
+	| {
+			state: "done";
+			sent: number;
+			total: number;
+			error: string | null;
+			at: number;
+	  };
 
 export function VodPage({
 	sendouUser,
@@ -105,12 +115,28 @@ export function VodPage({
 	const [vods, setVods] = useState<VodSummary[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [over, setOver] = useState(false);
+	const [eventsOpen, setEventsOpen] = useState(false);
 	const [resultsSend, setResultsSend] = useState<ResultsSend | null>(null);
 
 	const abilityMap = useMemo(
 		() => connectAbilities(matches.map((m) => m.event)),
 		[matches],
 	);
+
+	const builtMatches = buildScannerMatches(matches.map((m) => m.event));
+	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
+
+	// "Upload as results" sends the whole scan in one go, so its outcome maps
+	// onto every ingestable card; a partial failure (some chunks sent, some
+	// not) can't be attributed per match — the bulk status text covers it
+	const bulkSend: SendStatus | undefined =
+		resultsSend?.state === "sending"
+			? { state: "sending", at: 0 }
+			: resultsSend?.state === "done" && resultsSend.error === null
+				? { state: "sent", at: resultsSend.at }
+				: resultsSend?.state === "done" && resultsSend.sent === 0
+					? { state: "failed", at: resultsSend.at }
+					: undefined;
 
 	// only offered once the whole VoD has been processed (a stored VoD is a
 	// completed scan by construction)
@@ -145,6 +171,7 @@ export function VodPage({
 			sent: report.sentMatches,
 			total: report.totalMatches,
 			error: report.error,
+			at: Date.now(),
 		});
 	}, []);
 
@@ -174,6 +201,7 @@ export function VodPage({
 			setError(null);
 			setMatches([]);
 			setResultsSend(null);
+			setEventsOpen(false);
 			setProgress(null);
 			setGateScore(null);
 			setMethod(null);
@@ -324,6 +352,7 @@ export function VodPage({
 			matchesRef.current = loaded;
 			setMatches(loaded);
 			setResultsSend(null);
+			setEventsOpen(false);
 			setFileName(name);
 			setSource("stored");
 			setStatus("done");
@@ -350,6 +379,7 @@ export function VodPage({
 		matchesRef.current = [];
 		setMatches([]);
 		setResultsSend(null);
+		setEventsOpen(false);
 		setFileName(null);
 		setStatus("idle");
 		setError(null);
@@ -418,9 +448,10 @@ export function VodPage({
 									` · ${progress.rate.toFixed(0)}× realtime`}
 							</span>
 						)}
-						{matches.length > 0 && (
+						{builtMatches.length > 0 && (
 							<span className="score">
-								{matches.length} match{matches.length === 1 ? "" : "es"}
+								{builtMatches.length} match
+								{builtMatches.length === 1 ? "" : "es"}
 							</span>
 						)}
 						{matches.length > 0 && (
@@ -522,37 +553,77 @@ export function VodPage({
 					/>
 				</div>
 				<div className="feed">
-					{matches.length === 0 && (
+					{matches.length === 0 ? (
 						<p className="score">
 							{status === "scanning"
 								? "Scanning — matches appear here as scoreboards are detected."
 								: "No matches found in this VoD."}
 						</p>
-					)}
-					{/* newest detection on top; storage keeps ascending video-time order */}
-					{[...matches].reverse().map((m, i) => {
-						const getFrame: GetFrame | undefined = m.frame
-							? () => Promise.resolve(m.frame)
-							: m.frameId !== undefined
-								? () => loadVodEventFrame(m.frameId!)
-								: undefined;
+					) : null}
+					{/* newest match on top; the builder keeps ascending video-time order */}
+					{[...builtMatches].reverse().map((built) => {
+						const ingestable = isIngestableMatch(built.match);
 						return (
-							<EventCard
-								key={matches.length - 1 - i}
-								type={m.event.type}
-								t={m.event.t}
-								confidence={m.event.confidence}
-								data={m.event.data}
-								abilities={abilityMap.get(m.event)}
-								thumbnail={m.thumbnail}
-								getFrame={getFrame}
-							/>
+							<MatchCard
+								key={built.sources[0]!.t}
+								match={built.match}
+								ingestable={ingestable}
+								send={ingestable ? bulkSend : undefined}
+							>
+								{built.sources.map((e, i) => {
+									const vodMatch = vodMatchByEvent.get(e);
+									return (
+										<EventCard
+											key={i}
+											type={e.type}
+											t={e.t}
+											confidence={e.confidence}
+											data={e.data}
+											abilities={abilityMap.get(e)}
+											thumbnail={vodMatch?.thumbnail}
+											getFrame={vodMatch ? frameLoader(vodMatch) : undefined}
+										/>
+									);
+								})}
+							</MatchCard>
 						);
 					})}
+					{matches.length > 0 ? (
+						<EventsSummary
+							events={matches.map((m) => m.event)}
+							open={eventsOpen}
+							onToggle={() => setEventsOpen(!eventsOpen)}
+						/>
+					) : null}
+					{/* newest detection on top; storage keeps ascending video-time order */}
+					{eventsOpen
+						? [...matches]
+								.reverse()
+								.map((m, i) => (
+									<EventCard
+										key={matches.length - 1 - i}
+										type={m.event.type}
+										t={m.event.t}
+										confidence={m.event.confidence}
+										data={m.event.data}
+										abilities={abilityMap.get(m.event)}
+										thumbnail={m.thumbnail}
+										getFrame={frameLoader(m)}
+									/>
+								))
+						: null}
 				</div>
 			</div>
 		</div>
 	);
+}
+
+function frameLoader(m: VodMatch): GetFrame | undefined {
+	return m.frame
+		? () => Promise.resolve(m.frame)
+		: m.frameId !== undefined
+			? () => loadVodEventFrame(m.frameId!)
+			: undefined;
 }
 
 function drawPreview(

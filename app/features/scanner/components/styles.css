@@ -435,3 +435,341 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .link-button:focus-visible {
 	outline: var(--focus-ring);
 }
+
+/* ── ingested matches feed ─────────────────────────────────────────── */
+
+.scanner-app .match-card {
+	position: relative;
+	overflow: hidden;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	animation: scanner-card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+	/* one overlay element all send-state effects draw on */
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		pointer-events: none;
+	}
+
+	&.sending {
+		box-shadow: inset 0 0 0 1px var(--color-info-low);
+	}
+
+	&.sending::after {
+		background-image: linear-gradient(
+			105deg,
+			transparent 40%,
+			rgb(255 255 255 / 0.09) 50%,
+			transparent 60%
+		);
+		background-size: 250% 100%;
+		animation: scanner-sheen 1.4s linear infinite;
+	}
+
+	&.flash-sent::after {
+		animation: scanner-sent-pop 0.8s ease-out both;
+	}
+
+	&.live {
+		box-shadow: inset 0 0 0 1px var(--color-info-low);
+	}
+}
+
+@keyframes scanner-card-in {
+	from {
+		opacity: 0;
+		transform: translateY(10px) scale(0.98);
+	}
+}
+
+@keyframes scanner-sheen {
+	from {
+		background-position: 130% 0;
+	}
+	to {
+		background-position: -130% 0;
+	}
+}
+
+@keyframes scanner-sent-pop {
+	0% {
+		opacity: 1;
+		box-shadow:
+			inset 0 0 0 2px var(--color-success),
+			inset 0 0 32px var(--color-success-low);
+	}
+	100% {
+		opacity: 0;
+		box-shadow:
+			inset 0 0 0 2px var(--color-success),
+			inset 0 0 32px var(--color-success-low);
+	}
+}
+
+.scanner-app .match-card-main {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px 12px;
+	padding: 12px 16px;
+	min-height: 66px;
+}
+
+.scanner-app .match-card.flash-failed .match-card-main {
+	animation: scanner-shake 0.35s ease;
+}
+
+@keyframes scanner-shake {
+	20% {
+		transform: translateX(-4px);
+	}
+	50% {
+		transform: translateX(4px);
+	}
+	80% {
+		transform: translateX(-2px);
+	}
+}
+
+.scanner-app .match-mode {
+	flex-shrink: 0;
+	filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));
+}
+
+.scanner-app .match-headline {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	/* claims row space so the score/chips can never crush the stage name
+	   out of view in a narrow feed column; wraps instead */
+	flex: 1 1 0;
+	min-width: 150px;
+}
+
+.scanner-app .match-stage {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	line-height: 1.1;
+}
+
+.scanner-app .match-meta {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.scanner-app .match-weapons {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+
+	& .vs {
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-semi);
+		color: var(--color-text-high);
+		margin: 0 5px;
+	}
+
+	& img.weapon-icon {
+		width: 22px;
+		height: 22px;
+
+		&.pov {
+			outline: 2px solid var(--color-text-accent);
+			outline-offset: 1px;
+		}
+	}
+}
+
+.scanner-app .match-side {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 6px;
+	margin-inline-start: auto;
+	flex-shrink: 0;
+}
+
+/* frosted-glass plate: keeps the score readable over vivid banner art
+   without dimming the image itself */
+.scanner-app .match-score {
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+	padding: 5px 12px;
+	border-radius: var(--radius-full);
+	background: color-mix(in oklab, var(--color-bg) 72%, transparent);
+	backdrop-filter: blur(8px);
+
+	& .win {
+		color: var(--color-error-high);
+	}
+
+	& .lose {
+		color: var(--color-info-high);
+	}
+}
+
+.scanner-app .match-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 2px 10px;
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border: var(--border-width) solid var(--color-border);
+	background-color: var(--color-bg);
+	color: var(--color-text-high);
+	white-space: nowrap;
+
+	& .dot {
+		width: 7px;
+		height: 7px;
+		border-radius: var(--radius-full);
+		background: currentColor;
+	}
+
+	&.live {
+		color: var(--color-error);
+		border-color: var(--color-error-low);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+
+		& .dot {
+			animation: scanner-pulse 1.4s ease-in-out infinite;
+		}
+	}
+
+	&.queued,
+	&.sending {
+		color: var(--color-info-high);
+		border-color: var(--color-info-low);
+		background-color: var(--color-info-low);
+
+		& .dot {
+			animation: scanner-pulse 1.4s ease-in-out infinite;
+		}
+	}
+
+	&.sent {
+		color: var(--color-success-high);
+		border-color: var(--color-success-low);
+		background-color: var(--color-success-low);
+	}
+
+	&.failed {
+		color: var(--color-error-high);
+		border-color: var(--color-error-low);
+		background-color: var(--color-error-low);
+	}
+}
+
+@keyframes scanner-pulse {
+	50% {
+		opacity: 0.25;
+		transform: scale(0.8);
+	}
+}
+
+/* undo the scanner-wide solid button look for the banner icon button */
+.scanner-app button.match-expand {
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-full);
+	background: color-mix(in oklab, var(--color-bg) 55%, transparent);
+	backdrop-filter: blur(8px);
+	color: var(--color-text-high);
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+	& svg {
+		width: 18px;
+		height: 18px;
+	}
+
+	&:hover {
+		color: var(--color-text);
+		background: color-mix(in oklab, var(--color-bg) 78%, transparent);
+	}
+
+	&.expanded {
+		transform: rotate(180deg);
+	}
+}
+
+.scanner-app .match-error {
+	padding: 0 16px 10px;
+	font-size: var(--font-2xs);
+	color: var(--color-error);
+}
+
+.scanner-app .match-card-detail {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 0 12px 12px;
+	animation: scanner-detail-in 0.25s ease both;
+
+	& .card {
+		background-color: var(--color-bg);
+	}
+}
+
+@keyframes scanner-detail-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}
+
+.scanner-app .events-summary {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	padding: 2px 4px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.scanner-app button.events-toggle {
+	border: none;
+	background: transparent;
+	color: var(--color-text-accent);
+	height: auto;
+	padding: 0;
+	font-size: var(--font-2xs);
+}
+
+.scanner-app .status.watching::before {
+	content: "";
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	border-radius: var(--radius-full);
+	background: currentColor;
+	margin-right: 6px;
+	animation: scanner-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.scanner-app .match-card,
+	.scanner-app .match-card.sending::after,
+	.scanner-app .match-card.flash-sent::after,
+	.scanner-app .match-card.flash-failed .match-card-main,
+	.scanner-app .match-card-detail,
+	.scanner-app .match-chip.live .dot,
+	.scanner-app .match-chip.queued .dot,
+	.scanner-app .match-chip.sending .dot,
+	.scanner-app .status.watching::before {
+		animation: none;
+	}
+}

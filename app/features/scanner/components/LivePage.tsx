@@ -10,6 +10,7 @@ import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
+import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
 	clearEvents,
@@ -22,10 +23,13 @@ import {
 } from "../store/events";
 import { AnalyzerClient } from "../worker/client";
 import { EventCard } from "./EventCard";
+import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
+import { MatchCard } from "./MatchCard";
 import {
+	aggregateSendStatus,
 	matchContaining,
 	type SendouUser,
 	sendMatches,
@@ -69,6 +73,7 @@ export function LivePage({
 	const [feed, setFeed] = useState<StoredEvent[]>([]);
 	const [running, setRunning] = useState(false);
 	const [sendouError, setSendouError] = useState<string | null>(null);
+	const [eventsOpen, setEventsOpen] = useState(false);
 	const [liveSend, setLiveSend] = useState(false);
 	const liveSendRef = useRef(false);
 	const sendingRef = useRef(false);
@@ -300,32 +305,83 @@ export function LivePage({
 			<div className="live-layout">
 				<video ref={videoRef} className="preview" muted playsInline />
 				<div className="feed">
-					{feed.length === 0 && <p className="score">No detections yet.</p>}
-					{feed.map((e) => (
-						<EventCard
-							key={e.id}
-							type={e.type}
-							t={e.t}
-							confidence={e.confidence}
-							data={e.data as FixtureData}
-							thumbnail={e.thumbnail}
-							detectedAt={e.detectedAt}
-							getFrame={
-								e.hasFrame && e.id !== undefined
-									? () => loadEventFrame(e.id!)
-									: undefined
-							}
-							send={e.send}
-							onSend={
-								SENDOU_UPLOAD_ENABLED &&
-								sendouUser &&
-								e.id !== undefined &&
-								INGESTABLE_TYPES.includes(e.type)
-									? () => void send(matchContaining(e.id!), { manual: true })
-									: undefined
-							}
+					{feed.length === 0 ? (
+						<p className="score">No detections yet.</p>
+					) : null}
+					{[...buildScannerMatches(feed)]
+						.reverse()
+						.map((built, reverseIndex) => {
+							const id = built.sources[0]!.id!;
+							const ingestable = isIngestableMatch(built.match);
+							return (
+								<MatchCard
+									key={id}
+									match={built.match}
+									live={
+										running && reverseIndex === 0 && built.match.winner === null
+									}
+									ingestable={ingestable}
+									send={aggregateSendStatus(built.sources)}
+									onSend={
+										SENDOU_UPLOAD_ENABLED && sendouUser && ingestable
+											? () => void send(matchContaining(id), { manual: true })
+											: undefined
+									}
+								>
+									{built.sources.map((e) => (
+										<EventCard
+											key={e.id}
+											type={e.type}
+											t={e.t}
+											confidence={e.confidence}
+											data={e.data as FixtureData}
+											thumbnail={e.thumbnail}
+											detectedAt={e.detectedAt}
+											getFrame={
+												e.hasFrame && e.id !== undefined
+													? () => loadEventFrame(e.id!)
+													: undefined
+											}
+										/>
+									))}
+								</MatchCard>
+							);
+						})}
+					{feed.length > 0 ? (
+						<EventsSummary
+							events={feed}
+							open={eventsOpen}
+							onToggle={() => setEventsOpen(!eventsOpen)}
 						/>
-					))}
+					) : null}
+					{eventsOpen
+						? feed.map((e) => (
+								<EventCard
+									key={e.id}
+									type={e.type}
+									t={e.t}
+									confidence={e.confidence}
+									data={e.data as FixtureData}
+									thumbnail={e.thumbnail}
+									detectedAt={e.detectedAt}
+									getFrame={
+										e.hasFrame && e.id !== undefined
+											? () => loadEventFrame(e.id!)
+											: undefined
+									}
+									send={e.send}
+									onSend={
+										SENDOU_UPLOAD_ENABLED &&
+										sendouUser &&
+										e.id !== undefined &&
+										INGESTABLE_TYPES.includes(e.type)
+											? () =>
+													void send(matchContaining(e.id!), { manual: true })
+											: undefined
+									}
+								/>
+							))
+						: null}
 				</div>
 			</div>
 		</div>

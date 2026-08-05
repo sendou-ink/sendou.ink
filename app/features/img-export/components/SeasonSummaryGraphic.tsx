@@ -12,11 +12,12 @@ import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
+import { StageBannerBox } from "~/components/StageBannerBox";
 import { TierPill } from "~/components/TierPill";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
-import { stageBannerImageUrl, userSeasonsPage } from "~/utils/urls";
+import { userSeasonsPage } from "~/utils/urls";
 import {
 	GRAPHIC_DATE_FORMAT_OPTIONS,
 	GraphicContainer,
@@ -264,13 +265,9 @@ export function SeasonSummaryGraphic({
 				</div>
 			) : null}
 			{bestStage ? (
-				<div
+				<StageBannerBox
+					stageId={bestStage.stageId}
 					className={clsx(graphicStyles.box, styles.bestStageRow)}
-					style={
-						{
-							"--best-stage-banner": `url(${stageBannerImageUrl(bestStage.stageId)})`,
-						} as React.CSSProperties
-					}
 				>
 					<div className={graphicStyles.boxLabel}>
 						{t("user:seasons.summary.bestStage")}
@@ -281,7 +278,7 @@ export function SeasonSummaryGraphic({
 							{Math.round(bestStage.winratePercentage)}%
 						</span>
 					</div>
-				</div>
+				</StageBannerBox>
 			) : null}
 			<div className={styles.middleGrid}>
 				<div className={clsx(graphicStyles.box, styles.activityBox)}>
