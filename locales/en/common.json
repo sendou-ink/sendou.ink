@@ -149,6 +149,8 @@
 	"actions.outlined": "Outlined",
 	"actions.noOutline": "No outline",
 	"actions.join": "Join",
+	"filterBar.addFilter": "Filter",
+	"filterBar.saveAsDefault": "Save as default",
 	"imageExport.export": "Export image",
 	"imageExport.download": "Download",
 	"imageExport.theme.light": "Light",

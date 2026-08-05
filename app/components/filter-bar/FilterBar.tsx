@@ -1,0 +1,172 @@
+import { ChevronDown, Plus, X } from "lucide-react";
+import * as React from "react";
+import { Button } from "react-aria-components";
+import { useTranslation } from "react-i18next";
+import { SendouButton } from "../elements/Button";
+import { SendouMenu, SendouMenuItem } from "../elements/Menu";
+import { SendouPopover } from "../elements/Popover";
+import styles from "./FilterBar.module.css";
+
+export interface FilterBarPill {
+	key: string;
+	/** Translated filter name shown on the pill and in the add filter menu. */
+	name: string;
+	/** Translated current value shown on the pill. Null when the filter is unset. */
+	formattedValue: React.ReactNode | null;
+	/** Popover content. Inputs inside write search params directly (instant apply). */
+	popover: React.ReactNode;
+	/** Pinned pills are always visible; others live behind the add filter menu until set. */
+	pinned?: boolean;
+	/** Resets the pill's param(s) to defaults. Renders the remove button. */
+	onRemove?: () => void;
+	/** Writes a starting value when the pill is added from the menu. */
+	onAdd?: () => void;
+	icon?: React.ReactNode;
+	popoverClassName?: string;
+	testId?: string;
+}
+
+export function FilterBar({
+	pills,
+	actions,
+}: {
+	pills: FilterBarPill[];
+	actions?: React.ReactNode;
+}) {
+	const [justAddedKeys, setJustAddedKeys] = React.useState<ReadonlySet<string>>(
+		new Set(),
+	);
+	const [openPillKey, setOpenPillKey] = React.useState<string | null>(null);
+
+	const isVisible = (pill: FilterBarPill) =>
+		Boolean(pill.pinned) ||
+		pill.formattedValue !== null ||
+		justAddedKeys.has(pill.key);
+
+	const hiddenPills = pills.filter((pill) => !isVisible(pill));
+
+	const addPill = (pill: FilterBarPill) => {
+		setJustAddedKeys((prev) => new Set(prev).add(pill.key));
+		setOpenPillKey(pill.key);
+		pill.onAdd?.();
+	};
+
+	const removePill = (pill: FilterBarPill) => {
+		setJustAddedKeys((prev) => {
+			const next = new Set(prev);
+			next.delete(pill.key);
+			return next;
+		});
+		if (openPillKey === pill.key) {
+			setOpenPillKey(null);
+		}
+		pill.onRemove?.();
+	};
+
+	return (
+		<div className={styles.bar}>
+			{pills.filter(isVisible).map((pill) => (
+				<FilterPill
+					key={pill.key}
+					pill={pill}
+					isOpen={openPillKey === pill.key}
+					onOpenChange={(isOpen) => setOpenPillKey(isOpen ? pill.key : null)}
+					onRemove={pill.onRemove ? () => removePill(pill) : undefined}
+				/>
+			))}
+			{hiddenPills.length > 0 ? (
+				<AddFilterMenu pills={hiddenPills} onAdd={addPill} />
+			) : null}
+			{actions}
+		</div>
+	);
+}
+
+function FilterPill({
+	pill,
+	isOpen,
+	onOpenChange,
+	onRemove,
+}: {
+	pill: FilterBarPill;
+	isOpen: boolean;
+	onOpenChange: (isOpen: boolean) => void;
+	onRemove?: () => void;
+}) {
+	const showRemove =
+		Boolean(onRemove) && (pill.formattedValue !== null || !pill.pinned);
+
+	return (
+		<div className={styles.pill}>
+			<SendouPopover
+				isOpen={isOpen}
+				onOpenChange={onOpenChange}
+				popoverClassName={pill.popoverClassName}
+				trigger={
+					<Button
+						className={styles.trigger}
+						data-active={pill.formattedValue !== null}
+						data-testid={pill.testId}
+					>
+						{pill.icon ? (
+							<span className={styles.icon}>{pill.icon}</span>
+						) : null}
+						<span>{pill.name}</span>
+						{pill.formattedValue !== null ? (
+							<span className={styles.value}>{pill.formattedValue}</span>
+						) : null}
+						<ChevronDown className={styles.chevron} />
+					</Button>
+				}
+			>
+				{pill.popover}
+			</SendouPopover>
+			{showRemove ? (
+				<SendouButton
+					variant="minimal-destructive"
+					size="miniscule"
+					icon={<X />}
+					aria-label={`Remove ${pill.name} filter`}
+					onPress={onRemove}
+					testId={pill.testId ? `${pill.testId}-remove` : undefined}
+				/>
+			) : null}
+		</div>
+	);
+}
+
+function AddFilterMenu({
+	pills,
+	onAdd,
+}: {
+	pills: FilterBarPill[];
+	onAdd: (pill: FilterBarPill) => void;
+}) {
+	const { t } = useTranslation();
+
+	return (
+		<SendouMenu
+			trigger={
+				<SendouButton
+					variant="outlined"
+					size="small"
+					icon={<Plus />}
+					data-testid="add-filter-button"
+				>
+					{t("filterBar.addFilter")}
+				</SendouButton>
+			}
+		>
+			{pills.map((pill) => (
+				<SendouMenuItem
+					key={pill.key}
+					icon={pill.icon}
+					onAction={() => onAdd(pill)}
+					data-testid={pill.testId ? `menu-item-${pill.testId}` : undefined}
+				>
+					{pill.name}
+				</SendouMenuItem>
+			))}
+		</SendouMenu>
+	);
+}
