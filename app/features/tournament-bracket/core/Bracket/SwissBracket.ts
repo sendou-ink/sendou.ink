@@ -77,8 +77,8 @@ export class SwissBracket extends Bracket {
 	 * Exception being rounds that can never be paired because every team of the group has already
 	 * advanced or been eliminated (early advance variation).
 	 */
-	get standingsAreFinal() {
-		if (!this.everyMatchOver) return false;
+	get everyMatchOver() {
+		if (!super.everyMatchOver) return false;
 
 		return this.data.group.every((group) => {
 			const groupsMatches = this.data.match.filter(

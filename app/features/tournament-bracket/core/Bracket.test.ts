@@ -972,6 +972,70 @@ describe("single elimination source - underground", () => {
 	});
 });
 
+describe("swiss between rounds", () => {
+	const SWISS_MAIN_BRACKET = {
+		type: "swiss" as const,
+		name: "Main Bracket",
+		requiresCheckIn: false,
+		settings: { groupCount: 1, roundCount: 5 },
+		sources: [],
+	};
+
+	// swiss with round 1 fully reported but rounds 2-5 not yet paired
+	const betweenRoundsSwissData = () => {
+		let data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1, roundCount: 5 },
+		});
+
+		// needed to make it "not preview"
+		data.round = data.round.map((r) => ({
+			...r,
+			maps: { count: 3, type: "BEST_OF" },
+		}));
+
+		for (const match of data.match) {
+			data = reportLowerIdWinner(data, match.id);
+		}
+
+		return data;
+	};
+
+	it("tournament is not over while swiss still has unpaired rounds", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: { bracketProgression: [SWISS_MAIN_BRACKET] },
+			},
+			data: betweenRoundsSwissData(),
+		});
+
+		expect(tournament.everyBracketOver).toBe(false);
+	});
+
+	it("can't finalize between swiss rounds when progression also has an underground bracket", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						SWISS_MAIN_BRACKET,
+						{
+							type: "single_elimination" as const,
+							name: "Underground Bracket",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [{ bracketIdx: 0, placements: [3, 4] }],
+						},
+					],
+				},
+			},
+			data: betweenRoundsSwissData(),
+		});
+
+		expect(tournament.canFinalize({ id: 1 })).toBe(false);
+	});
+});
+
 function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
 	const match = matchById(data, matchId);
 	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;

@@ -40,8 +40,6 @@ export type BracketDerivedMeta = {
 	createdAt: number | null;
 	preview: boolean;
 	everyMatchOver: boolean;
-	/** False only while a swiss bracket still has rounds whose matches have not been generated. */
-	allRoundsHaveMatches: boolean;
 	participantTournamentTeamIds: number[];
 	teamsPendingCheckIn: number[] | null;
 	seeding: number[] | null;
@@ -247,9 +245,6 @@ export class Tournament {
 				createdAt: bracket.createdAt ?? null,
 				preview: bracket.preview,
 				everyMatchOver: bracket.everyMatchOver,
-				allRoundsHaveMatches: bracket.data.round.every((round) =>
-					bracket.data.match.some((match) => match.roundId === round.id),
-				),
 				participantTournamentTeamIds: bracket.participantTournamentTeamIds,
 				teamsPendingCheckIn: bracket.teamsPendingCheckIn ?? null,
 				seeding: bracket.seeding ?? null,
@@ -763,20 +758,7 @@ export class Tournament {
 			(b) => !b.preview || !b.isUnderground,
 		);
 
-		const everyRoundHasMatches = () => {
-			// only in swiss matches get generated as tournament progresses
-			if (
-				this.ctx.settings.bracketProgression.length > 1 ||
-				this.ctx.settings.bracketProgression[0].type !== "swiss"
-			) {
-				return true;
-			}
-
-			return this.bracketsMeta[0].allRoundsHaveMatches;
-		};
-
 		return (
-			everyRoundHasMatches() &&
 			relevantBrackets.every((b) => b.everyMatchOver) &&
 			this.isOrganizer(user) &&
 			!this.ctx.isFinalized

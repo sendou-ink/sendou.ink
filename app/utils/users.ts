@@ -1,8 +1,8 @@
 import { logger } from "./logger";
 import { isCustomUrl } from "./urls";
 
-const longUrlRegExp = /(https:\/\/)?sendou.ink\/u\/(.+)/;
-const shortUrlRegExp = /(https:\/\/)?snd.ink\/(.+)/;
+const longUrlRegExp = /(https:\/\/)?sendou\.ink\/u\/([^/?#]+)/;
+const shortUrlRegExp = /(https:\/\/)?snd\.ink\/([^/?#]+)/;
 const DISCORD_ID_MIN_LENGTH = 17;
 export function queryToUserIdentifier(
 	query: string,

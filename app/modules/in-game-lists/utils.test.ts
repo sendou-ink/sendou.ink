@@ -35,6 +35,38 @@ describe("filterWeapon", () => {
 		).toBe(true);
 	});
 
+	const neoSplash = { type: "MAIN" as const, id: 22 as MainWeaponId };
+
+	test("matches a full alt name", () => {
+		expect(
+			filterWeapon({
+				weapon: neoSplash,
+				weaponName: "Neo Splash-o-matic",
+				searchTerm: "gecko",
+			}),
+		).toBe(true);
+	});
+
+	test("alt names match on the full alt name only, not a partial one", () => {
+		expect(
+			filterWeapon({
+				weapon: neoSplash,
+				weaponName: "Neo Splash-o-matic",
+				searchTerm: "geck",
+			}),
+		).toBe(false);
+	});
+
+	test("alt names match on the full alt name only, also when the weapon has a single alt name", () => {
+		expect(
+			filterWeapon({
+				weapon: { type: "MAIN", id: 10 as MainWeaponId },
+				weaponName: "Splattershot Jr.",
+				searchTerm: "vj",
+			}),
+		).toBe(false);
+	});
+
 	test("does not match unrelated weapon", () => {
 		expect(
 			filterWeapon({
