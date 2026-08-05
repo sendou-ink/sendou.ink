@@ -804,7 +804,7 @@ function TrophyListRow({
 							})}
 						</p>
 						<p>
-							{pending.approvals.some((a) => a.userId === currentUserId)
+							{canReview
 								? `(${pending.approvals.map((a) => a.username).join(", ")})`
 								: ""}
 						</p>

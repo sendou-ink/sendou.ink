@@ -7,6 +7,7 @@ import { db } from "~/db/sql";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TrophyRepository from "./TrophyRepository.server";
+import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
 describe("trophy approvals", () => {
 	let pendingTrophyId: number;
@@ -14,7 +15,9 @@ describe("trophy approvals", () => {
 
 	beforeEach(async () => {
 		const submitter = await UserFactory.create();
-		reviewerIds = (await UserFactory.createMany(3)).map((user) => user.id);
+		reviewerIds = (
+			await UserFactory.createMany(TROPHY_APPROVALS_REQUIRED + 1)
+		).map((user) => user.id);
 		const organization = await TournamentOrganizationFactory.create({
 			ownerId: submitter.id,
 		});
@@ -27,20 +30,23 @@ describe("trophy approvals", () => {
 	});
 
 	test("creates the trophy exactly once when approvals exceed the required count", async () => {
-		const [first, second, third] = reviewerIds;
-
-		expect(
-			await TrophyRepository.addApproval({ pendingTrophyId, userId: first }),
-		).toBe(null);
+		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED - 1)) {
+			expect(
+				await TrophyRepository.addApproval({ pendingTrophyId, userId }),
+			).toBe(null);
+		}
 
 		const accepted = await TrophyRepository.addApproval({
 			pendingTrophyId,
-			userId: second,
+			userId: reviewerIds[TROPHY_APPROVALS_REQUIRED - 1],
 		});
 		expect(accepted?.id).toBeTypeOf("number");
 
 		expect(
-			await TrophyRepository.addApproval({ pendingTrophyId, userId: third }),
+			await TrophyRepository.addApproval({
+				pendingTrophyId,
+				userId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
+			}),
 		).toBe(null);
 
 		expect(await trophyCount()).toBe(1);
@@ -65,14 +71,9 @@ describe("trophy approvals", () => {
 	});
 
 	test("re-approval after acceptance does not create another trophy", async () => {
-		await TrophyRepository.addApproval({
-			pendingTrophyId,
-			userId: reviewerIds[0],
-		});
-		await TrophyRepository.addApproval({
-			pendingTrophyId,
-			userId: reviewerIds[1],
-		});
+		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
+			await TrophyRepository.addApproval({ pendingTrophyId, userId });
+		}
 
 		expect(
 			await TrophyRepository.addApproval({
@@ -104,20 +105,15 @@ describe("trophy approvals", () => {
 	});
 
 	test("does not decline an already accepted pending trophy", async () => {
-		await TrophyRepository.addApproval({
-			pendingTrophyId,
-			userId: reviewerIds[0],
-		});
-		await TrophyRepository.addApproval({
-			pendingTrophyId,
-			userId: reviewerIds[1],
-		});
+		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
+			await TrophyRepository.addApproval({ pendingTrophyId, userId });
+		}
 
 		expect(
 			await TrophyRepository.declinePending({
 				id: pendingTrophyId,
 				reason: "reason",
-				declinedByUserId: reviewerIds[2],
+				declinedByUserId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
 			}),
 		).toBe(false);
 
@@ -133,16 +129,11 @@ describe("trophy approvals", () => {
 			declinedByUserId: reviewerIds[0],
 		});
 
-		await TrophyRepository.addApproval({
-			pendingTrophyId,
-			userId: reviewerIds[0],
-		});
-		expect(
-			await TrophyRepository.addApproval({
-				pendingTrophyId,
-				userId: reviewerIds[1],
-			}),
-		).toBe(null);
+		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
+			expect(
+				await TrophyRepository.addApproval({ pendingTrophyId, userId }),
+			).toBe(null);
+		}
 
 		expect(await trophyCount()).toBe(0);
 	});
@@ -260,7 +251,9 @@ describe("existsByName", () => {
 	beforeEach(async () => {
 		const owner = await UserFactory.create();
 		ownerId = owner.id;
-		approverIds = (await UserFactory.createMany(2)).map((user) => user.id);
+		approverIds = (await UserFactory.createMany(TROPHY_APPROVALS_REQUIRED)).map(
+			(user) => user.id,
+		);
 		organizationId = (await TournamentOrganizationFactory.create({ ownerId }))
 			.id;
 	});
