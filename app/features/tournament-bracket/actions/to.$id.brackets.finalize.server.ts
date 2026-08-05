@@ -1,12 +1,14 @@
 import type { ActionFunctionArgs } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Standings from "~/features/tournament/core/Standings";
 import { finalizeTournament } from "~/features/tournament-bracket/core/finalizeTournament.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	tournamentFromDB,
+	tournamentFromParams,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
@@ -21,20 +23,16 @@ import { logger } from "~/utils/logger";
 import {
 	errorToast,
 	errorToastIfFalsy,
-	parseParams,
 	parseRequestPayload,
 	successToastWithRedirect,
 } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 	const data = await parseRequestPayload({
 		request,
 		schema: finalizeTournamentActionSchema,

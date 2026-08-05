@@ -1,6 +1,5 @@
 import type { ActionFunction } from "react-router";
 import type { PreparedMaps } from "~/db/tables-json";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
@@ -15,11 +14,9 @@ import { logger } from "~/utils/logger";
 import {
 	errorToastIfErr,
 	errorToastIfFalsy,
-	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "~/utils/zod";
 import * as BracketRepository from "../BracketRepository.server";
 import * as AbDivisions from "../core/AbDivisions";
 import * as Engine from "../core/engine";
@@ -28,17 +25,16 @@ import type { Tournament } from "../core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
+	tournamentFromParams,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas";
 import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 	const data = await parseRequestPayload({ request, schema: bracketSchema });
 
 	let emitTournamentUpdate = false;

@@ -1,6 +1,5 @@
 import type { ActionFunction } from "react-router";
 import { db } from "~/db/sql";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -11,6 +10,7 @@ import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	matchPageParamsSchema,
@@ -36,8 +36,11 @@ import type { FindMatchById } from "../TournamentMatchRepository.server";
 import { tournamentMatchWebsocketRoom } from "../tournament-match-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = requireUser();
-	const { mid: matchId, id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
+		params,
+		{ for: "action" },
+	);
+	const { mid: matchId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
 	});
@@ -53,8 +56,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 		request,
 		schema: matchSchema,
 	});
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	const validateCanReportScore = () => {
 		const isMemberOfATeamInTheMatch = match.players.some(

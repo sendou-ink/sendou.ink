@@ -1,34 +1,29 @@
 import type { ActionFunction } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	errorToastIfFalsy,
-	parseParams,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "../../../utils/zod";
 import { adminSeedsActionSchema } from "../tournament-admin-schemas";
 import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: adminSeedsActionSchema,
 	});
 
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 
 	let message: string;
 	switch (data._action) {

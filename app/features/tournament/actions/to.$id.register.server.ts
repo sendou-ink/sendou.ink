@@ -1,5 +1,4 @@
 import type { ActionFunction } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -11,17 +10,16 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
-import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "~/utils/zod";
 import { registerSchema } from "../tournament-schemas.server";
 import {
 	isOneModeTournamentOf,
@@ -33,13 +31,10 @@ import {
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 	const ownTeam = tournament.ownedTeamByUser(user);
 
 	const result = await parseFormDataWithImages({

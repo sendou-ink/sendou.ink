@@ -1,9 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
-import { requireUser } from "~/features/auth/core/user.server";
 import {
-	requireTournamentOrganizer,
-	tournamentSharedCached,
+	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -15,14 +13,14 @@ export type TournamentAdminRegistrationLoaderData = SerializeFrom<
 >;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = requireUser();
-	const { id: tournamentId, tid: tournamentTeamId } = parseParams({
+	const { tid: tournamentTeamId } = parseParams({
 		params,
-		schema: z.object({ id, tid: id.optional() }),
+		schema: z.object({ tid: id.optional() }),
 	});
 
-	const tournament = await tournamentSharedCached(tournamentId);
-	requireTournamentOrganizer({ tournament, user });
+	const { tournamentId, user } = await tournamentFromParams(params, {
+		for: "organizer",
+	});
 
 	if (typeof tournamentTeamId !== "number") return { team: null };
 

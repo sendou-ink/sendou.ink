@@ -1,6 +1,11 @@
 import { sub } from "date-fns";
-import { redirect } from "react-router";
+import { type Params, redirect } from "react-router";
 import { ServerConfig } from "~/config.server";
+import {
+	type AuthenticatedUser,
+	getUser,
+	requireUser,
+} from "~/features/auth/core/user.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
@@ -12,9 +17,10 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import { notFoundIfNullish } from "~/utils/remix.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { tournamentPage } from "~/utils/urls";
+import { idObject } from "~/utils/zod";
 import type { Bracket } from "./Bracket";
 import { RunningTournaments } from "./RunningTournaments.server";
 import {
@@ -114,8 +120,9 @@ type TournamentVisibilityCtx = TournamentOrganizerCtx &
  * Ensures the tournament may be seen by the given user. Draft tournaments are only visible
  * to their organizers.
  *
- * Every loader under the tournament layout route must call this. They are each reachable on
- * their own via single fetch, without the layout loader (and its check) ever running.
+ * Every loader under the tournament layout route must run this (normally via
+ * {@link tournamentFromParams}). They are each reachable on their own via single fetch,
+ * without the layout loader (and its check) ever running.
  *
  * @throws {Response} 404 if the tournament is a draft the user is not an organizer of
  */
@@ -132,22 +139,69 @@ export function requireTournamentVisible({
 	throw new Response(null, { status: 404 });
 }
 
-/**
- * Ensures the given user organizes the tournament, sending non-organizers back to the
- * tournament's front page. Admin view loaders call this after {@link tournamentSharedCached}.
- *
- * @throws {Response} redirect to the tournament page for non-organizers
- */
-export function requireTournamentOrganizer({
-	tournament,
-	user,
-}: {
-	tournament: Tournament;
-	user: OptionalIdObject;
-}) {
-	if (tournament.isOrganizer(user)) return;
+type TournamentFromParamsOptions =
+	| { for: "view"; personalized?: boolean }
+	| { for: "action" | "organizer" | "admin" };
 
-	throw redirect(tournamentPage(tournament.ctx.id));
+/**
+ * The shared preamble of `to.$id.*` loaders and actions: parses the tournament id from the
+ * route params (404 on invalid), loads the tournament and runs the access guard.
+ *
+ * - `view`: anyone the tournament is visible to; cached read. With `personalized` the
+ *   tournament is censored for the viewer specifically (own team's invite code etc.);
+ *   without it every viewer shares one anonymous instance, amortizing bracket building.
+ * - `action`: any logged-in user; fresh read from the database for actions that do their
+ *   own per `_action` authorization.
+ * - `organizer` / `admin`: like `action` but non-organizers/non-admins are redirected to
+ *   the tournament front page.
+ */
+export async function tournamentFromParams(
+	params: Params<string>,
+	opts: { for: "view"; personalized?: boolean },
+): Promise<{
+	tournament: Tournament;
+	tournamentId: number;
+	user: AuthenticatedUser | undefined;
+}>;
+export async function tournamentFromParams(
+	params: Params<string>,
+	opts: { for: "action" | "organizer" | "admin" },
+): Promise<{
+	tournament: Tournament;
+	tournamentId: number;
+	user: AuthenticatedUser;
+}>;
+export async function tournamentFromParams(
+	params: Params<string>,
+	opts: TournamentFromParamsOptions,
+) {
+	const { id: tournamentId } = parseParams({ params, schema: idObject });
+
+	if (opts.for === "view") {
+		const user = getUser();
+		const tournament =
+			opts.personalized && user
+				? await tournamentFromDBCached({ tournamentId, user })
+				: await tournamentSharedCached(tournamentId);
+		requireTournamentVisible({ ctx: tournament.ctx, user });
+
+		return { tournament, tournamentId, user };
+	}
+
+	const user = requireUser();
+	const tournament = await tournamentFromDB({ tournamentId, user });
+	requireTournamentVisible({ ctx: tournament.ctx, user });
+
+	const isAuthorized =
+		opts.for === "action" ||
+		(opts.for === "organizer"
+			? tournament.isOrganizer(user)
+			: tournament.isAdmin(user));
+	if (!isAuthorized) {
+		throw redirect(tournamentPage(tournamentId));
+	}
+
+	return { tournament, tournamentId, user };
 }
 
 export async function tournamentData({
@@ -292,7 +346,7 @@ export async function tournamentDataCached({
  * level derivations (bracket state, standings, one bracket's data) are the same for every
  * viewer, so building the brackets happens once per cache fill instead of once per request.
  */
-export async function tournamentSharedCached(tournamentId: number) {
+async function tournamentSharedCached(tournamentId: number) {
 	if (ServerConfig.disableCache) {
 		return new Tournament(
 			notFoundIfNullish(await tournamentData({ tournamentId })),
