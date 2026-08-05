@@ -606,7 +606,9 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 /* ── ingested matches feed ─────────────────────────────────────────── */
 
 .scanner-app .match-card {
-	position: relative;
+	position: sticky;
+	top: var(--layout-sticky-top);
+	z-index: 1;
 	overflow: hidden;
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
