@@ -124,6 +124,19 @@ describe("isVisible", () => {
 		expect(Association.isVisible(args)).toBe(false);
 	});
 
+	it("should return false for a non-friend when the viewer has the FRIENDS virtual association every user gets", () => {
+		const args: Association.IsVisibleArgs = {
+			visibility: { forAssociation: "FRIENDS" },
+			associations: {
+				actual: [],
+				virtual: ["FRIENDS"],
+				friendIds: [99],
+			},
+			contentOwnerUserId: 42,
+		};
+		expect(Association.isVisible(args)).toBe(false);
+	});
+
 	it("should return false for FRIENDS visibility when not logged in", () => {
 		const args: Association.IsVisibleArgs = {
 			visibility: { forAssociation: "FRIENDS" },

@@ -305,6 +305,57 @@ describe("getDefaultMapWeights()", () => {
 		expect(result.has("SZ-7")).toBe(false);
 	});
 
+	test("recalculates weights when the resolved season changes (day 7 switch from previous to current season)", async () => {
+		const yesterday = new Date();
+		yesterday.setDate(yesterday.getDate() - 1);
+
+		mockSeasonCurrent.mockReturnValue({
+			nth: 2,
+			starts: yesterday,
+			ends: new Date("2030-12-31"),
+		});
+		mockSeasonPrevious.mockReturnValue({
+			nth: 1,
+			starts: new Date("2023-01-01"),
+			ends: new Date("2023-12-31"),
+		});
+
+		await createUsersWithPreferences({
+			seasonNth: 1,
+			preferences: [
+				{
+					modes: [],
+					pool: [{ mode: "SZ", stages: [0] }],
+				},
+			],
+		});
+		await createUsersWithPreferences({
+			seasonNth: 2,
+			preferences: [
+				{
+					modes: [],
+					pool: [{ mode: "SZ", stages: [1] }],
+				},
+			],
+		});
+
+		const weightsBeforeDaySeven = await getDefaultMapWeights();
+		expect(weightsBeforeDaySeven.has("SZ-0")).toBe(true);
+		expect(weightsBeforeDaySeven.has("SZ-1")).toBe(false);
+
+		const eightDaysAgo = new Date();
+		eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
+		mockSeasonCurrent.mockReturnValue({
+			nth: 2,
+			starts: eightDaysAgo,
+			ends: new Date("2030-12-31"),
+		});
+
+		const weightsAfterDaySeven = await getDefaultMapWeights();
+		expect(weightsAfterDaySeven.has("SZ-1")).toBe(true);
+		expect(weightsAfterDaySeven.has("SZ-0")).toBe(false);
+	});
+
 	test("handles empty preferences array", async () => {
 		mockSeasonCurrent.mockReturnValue({
 			nth: 1,

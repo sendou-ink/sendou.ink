@@ -167,6 +167,13 @@ export const action: ActionFunction = async ({ request }) => {
 				const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
 				if (!ownGroup || !theirGroup) return null;
 
+				const allLikes = await SQGroupRepository.findAllLikesByGroupId(
+					data.targetGroupId,
+				);
+				if (!allLikes.given.some((like) => like.groupId === ownGroup.id)) {
+					return null;
+				}
+
 				const ownGroupPreferences =
 					await SQGroupRepository.findMapModePreferencesByGroupId(ownGroup.id);
 				const theirGroupPreferences =

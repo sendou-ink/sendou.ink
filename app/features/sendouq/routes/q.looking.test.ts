@@ -85,6 +85,33 @@ const lookingAction = wrappedAction<typeof lookingSchema>({
 const findMatch = () =>
 	db.selectFrom("GroupMatch").selectAll().executeTakeFirstOrThrow();
 
+describe("SendouQ match creation validation", () => {
+	test("doesn't create a match with a group that hasn't challenged us", async () => {
+		const owner = await UserFactory.createAdmin();
+		const ownMembers = await UserFactory.createMany(FULL_GROUP_SIZE - 1);
+		const theirMembers = await UserFactory.createMany(FULL_GROUP_SIZE);
+
+		const theirGroup = await SQGroupFactory.create({
+			memberUserIds: theirMembers.map((user) => user.id),
+		});
+		await SQGroupFactory.create({
+			memberUserIds: [owner.id, ...ownMembers.map((user) => user.id)],
+		});
+		await refreshSendouQInstance();
+
+		await lookingAction(
+			{
+				_action: "MATCH_UP",
+				targetGroupId: theirGroup.id,
+			},
+			{ user: "admin" },
+		);
+
+		const matches = await db.selectFrom("GroupMatch").selectAll().execute();
+		expect(matches).toHaveLength(0);
+	});
+});
+
 describe("SendouQ match creation", () => {
 	let groups: Awaited<ReturnType<typeof prepareGroups>>;
 
