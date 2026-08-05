@@ -11,7 +11,12 @@ import {
 import test from "./node-test-compat";
 
 function read(value: number | null, confidence = 0.9): BannerScoreRead {
-	return { value, confidence, reading: value === null ? "" : String(value) };
+	return {
+		value,
+		confidence,
+		digits: value === null ? 0 : String(value).length,
+		reading: value === null ? "" : String(value),
+	};
 }
 
 test("both sides read: higher value is the winner's, either way around", () => {

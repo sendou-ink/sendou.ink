@@ -7,8 +7,9 @@
  * templates (real digits score 0.9+); the knockout itself is recognized from
  * the winner's team total instead (the box prints the count times five, and
  * only a knockout's full 100 count reaches 500). The score value bounces as
- * it lands, so a frame may catch the digits settled or mid-pop — callers
- * parse at both sizes and this module keeps the more confident read.
+ * it lands, so a frame may catch the digits settled or mid-pop — this module
+ * parses at both sizes and both binarization thresholds and keeps the best
+ * read (valid over none, longer digit run over shorter, then confidence).
  */
 import { getCV, type Mat } from "../../cv";
 import {
@@ -48,6 +49,18 @@ const DIGIT_MIN_CONF = 0.75;
 const BANNER_SCORE_BIN_THRESHOLD = 205;
 
 /**
+ * Second binarization pass for pale team colors: a light banner (gray ~220,
+ * with the wave-crest highlight brighter still) binarizes solid white at the
+ * base threshold, gluing label and digits into one giant unmatchable blob
+ * that can swallow all but the last digit. Only the ~250 digit ink survives
+ * this threshold. Both passes always run; a swallowed background can only
+ * shorten the digit run, never lengthen it, so the longer run wins
+ * regardless of confidence (the truncated read's surviving digit is genuine
+ * ink and scores just as well).
+ */
+const BANNER_SCORE_BRIGHT_BIN_THRESHOLD = 240;
+
+/**
  * Digits of one number nearly touch; anything further apart than this
  * fraction of a digit width is the label (or an unreadable glyph) ending
  * the run.
@@ -74,18 +87,27 @@ export interface BannerScoreRead {
 	value: number | null;
 	/** min glyph score across the accepted digits (0 when none) */
 	confidence: number;
+	/** digits in the accepted run (0 when unread) */
+	digits: number;
 	/** best raw reading, for debugging */
 	reading: string;
 }
 
-const EMPTY_READ: BannerScoreRead = { value: null, confidence: 0, reading: "" };
+const EMPTY_READ: BannerScoreRead = {
+	value: null,
+	confidence: 0,
+	digits: 0,
+	reading: "",
+};
 
 /**
  * Reads one banner side's score from `roi`: recognizes with each digit set
- * (one per on-screen text size) and keeps the best read. The score is the
- * trailing run of full-height, confidently-matched digits — everything the
- * localized label or the KNOCKOUT! burst leaves in the ROI fails at least
- * one of those tests.
+ * (one per on-screen text size) at each binarization threshold and keeps
+ * the best read — a valid value beats none, a longer digit run beats a
+ * shorter one, confidence breaks ties. The score is the trailing run of
+ * full-height, confidently-matched digits — everything the localized label
+ * or the KNOCKOUT! burst leaves in the ROI fails at least one of those
+ * tests.
  */
 export function parseBannerScore(
 	gray: Mat,
@@ -95,19 +117,18 @@ export function parseBannerScore(
 	const crop = copyRoi(gray, roi);
 	clearShortBlobs(crop);
 	let best = EMPTY_READ;
-	for (const set of sets) {
-		const raw = recognizeText(crop, set, {
-			binThreshold: BANNER_SCORE_BIN_THRESHOLD,
-			spaceGap: Number.POSITIVE_INFINITY,
-			minCharScore: 0.3,
-		});
-		const read = trailingScore(raw, set);
-		if (
-			(read.value !== null) === (best.value !== null)
-				? read.confidence > best.confidence
-				: read.value !== null
-		) {
-			best = read;
+	for (const binThreshold of [
+		BANNER_SCORE_BIN_THRESHOLD,
+		BANNER_SCORE_BRIGHT_BIN_THRESHOLD,
+	]) {
+		for (const set of sets) {
+			const raw = recognizeText(crop, set, {
+				binThreshold,
+				spaceGap: Number.POSITIVE_INFINITY,
+				minCharScore: 0.3,
+			});
+			const read = trailingScore(raw, set);
+			if (isBetterRead(read, best)) best = read;
 		}
 	}
 	crop.delete();
@@ -182,6 +203,14 @@ function clearShortBlobs(band: Mat): void {
 	labels.delete();
 }
 
+function isBetterRead(read: BannerScoreRead, best: BannerScoreRead): boolean {
+	if ((read.value !== null) !== (best.value !== null)) {
+		return read.value !== null;
+	}
+	if (read.digits !== best.digits) return read.digits > best.digits;
+	return read.confidence > best.confidence;
+}
+
 function trailingScore(raw: RecognizedText, set: GlyphSet): BannerScoreRead {
 	const maxGap = Math.max(4, Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO));
 	const isScoreDigit = (c: RecognizedChar) =>
@@ -209,6 +238,7 @@ function trailingScore(raw: RecognizedText, set: GlyphSet): BannerScoreRead {
 	return {
 		value,
 		confidence: Math.min(...run.map((c) => c.score)),
+		digits: run.length,
 		reading: raw.text,
 	};
 }
