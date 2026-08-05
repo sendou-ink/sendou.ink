@@ -4,13 +4,13 @@ import { Mic, Star, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
-import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
@@ -35,6 +35,7 @@ import type {
 	SQGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
+import { lookingSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { updateGroupNoteSchema } from "../q-schemas";
 import { resolveFutureMatchModes } from "../q-utils";
@@ -60,7 +61,6 @@ export function GroupCard({
 	layout?: "mobile" | "desktop";
 }) {
 	const { t } = useTranslation(["q"]);
-	const fetcher = useFetcher();
 
 	const hideNote =
 		displayOnly ||
@@ -202,26 +202,25 @@ export function GroupCard({
 				{action &&
 				(ownGroup?.usersRole === "OWNER" ||
 					ownGroup?.usersRole === "MANAGER") ? (
-					<fetcher.Form className="stack items-center" method="post">
-						<input type="hidden" name="targetGroupId" value={group.id} />
-						<SubmitButton
-							size="small"
-							variant={action === "UNLIKE" ? "destructive" : "outlined"}
-							_action={action}
-							state={fetcher.state}
-							testId="group-card-action-button"
-						>
-							{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
-								? t("q:looking.groups.actions.startMatch")
-								: action === "LIKE" && !group.members
-									? t("q:looking.groups.actions.challenge")
-									: action === "LIKE"
-										? t("q:looking.groups.actions.invite")
-										: action === "GROUP_UP"
-											? t("q:looking.groups.actions.groupUp")
-											: t("q:looking.groups.actions.undo")}
-						</SubmitButton>
-					</fetcher.Form>
+					<ActionButton
+						schema={lookingSchema}
+						action={action === "MATCH_UP_RECHALLENGE" ? "MATCH_UP" : action}
+						fields={{ targetGroupId: group.id }}
+						formClassName="stack items-center"
+						size="small"
+						variant={action === "UNLIKE" ? "destructive" : "outlined"}
+						testId="group-card-action-button"
+					>
+						{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
+							? t("q:looking.groups.actions.startMatch")
+							: action === "LIKE" && !group.members
+								? t("q:looking.groups.actions.challenge")
+								: action === "LIKE"
+									? t("q:looking.groups.actions.invite")
+									: action === "GROUP_UP"
+										? t("q:looking.groups.actions.groupUp")
+										: t("q:looking.groups.actions.undo")}
+					</ActionButton>
 				) : null}
 			</section>
 		</GroupCardContainer>
@@ -525,7 +524,6 @@ function MemberRoleManager({
 	enableKicking?: boolean;
 }) {
 	const loggedInUser = useUser();
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
 
 	if (displayOnly && member.role !== "OWNER") return null;
@@ -549,43 +547,44 @@ function MemberRoleManager({
 			<div className="stack sm items-center">
 				<div>{t(`q:roles.${member.role}`)}</div>
 				{member.role !== "OWNER" && !displayOnly ? (
-					<fetcher.Form
-						method="post"
-						action={SENDOUQ_LOOKING_PAGE}
-						className="stack md items-center"
-					>
-						<input type="hidden" name="userId" value={member.id} />
+					<div className="stack md items-center">
 						{member.role === "REGULAR" ? (
-							<SubmitButton
+							<ActionButton
+								schema={lookingSchema}
+								action="GIVE_MANAGER"
+								fields={{ userId: member.id }}
+								formAction={SENDOUQ_LOOKING_PAGE}
 								variant="outlined"
 								size="small"
-								_action="GIVE_MANAGER"
-								state={fetcher.state}
 							>
 								{t("q:looking.groups.actions.giveManager")}
-							</SubmitButton>
+							</ActionButton>
 						) : null}
 						{member.role === "MANAGER" ? (
-							<SubmitButton
+							<ActionButton
+								schema={lookingSchema}
+								action="REMOVE_MANAGER"
+								fields={{ userId: member.id }}
+								formAction={SENDOUQ_LOOKING_PAGE}
 								variant="destructive"
 								size="small"
-								_action="REMOVE_MANAGER"
-								state={fetcher.state}
 							>
 								{t("q:looking.groups.actions.removeManager")}
-							</SubmitButton>
+							</ActionButton>
 						) : null}
 						{enableKicking && member.id !== loggedInUser?.id ? (
-							<SubmitButton
+							<ActionButton
+								schema={lookingSchema}
+								action="KICK_FROM_GROUP"
+								fields={{ userId: member.id }}
+								formAction={SENDOUQ_LOOKING_PAGE}
 								variant="destructive"
 								size="small"
-								_action="KICK_FROM_GROUP"
-								state={fetcher.state}
 							>
 								{t("q:looking.groups.actions.kick")}
-							</SubmitButton>
+							</ActionButton>
 						) : null}
-					</fetcher.Form>
+					</div>
 				) : null}
 			</div>
 		</SendouPopover>

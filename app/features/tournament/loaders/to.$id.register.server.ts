@@ -1,27 +1,18 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import {
-	requireTournamentVisible,
-	tournamentFromDBCached,
+	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = getUser();
-	if (!user) return null;
-
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-
-	const tournament = await tournamentFromDBCached({ tournamentId, user });
-	requireTournamentVisible({ ctx: tournament.ctx, user });
+		{ for: "view", personalized: true },
+	);
+	if (!user) return null;
 
 	const teamMemberOf = tournament.teamMemberOfByUser(user);
 

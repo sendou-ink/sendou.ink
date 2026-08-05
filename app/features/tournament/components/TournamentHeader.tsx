@@ -2,11 +2,13 @@ import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
 import * as R from "remeda";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
-import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { LinkButton } from "~/components/elements/Button";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { ShareUrlButton } from "~/components/ShareUrlButton";
 import TimePopover from "~/components/TimePopover";
+import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -14,8 +16,8 @@ import {
 	SENDOU_INK_BASE_URL,
 	tournamentOrganizationPage,
 	tournamentPage,
-	userPage,
 } from "~/utils/urls";
+import { saveTournamentSchema } from "../tournament-schemas";
 import { tournamentNameParts } from "../tournament-utils";
 import styles from "./TournamentHeader.module.css";
 
@@ -123,23 +125,18 @@ function SaveTournamentButton({
 				: isSaved;
 
 	return (
-		<fetcher.Form method="post">
-			<input
-				type="hidden"
-				name="_action"
-				value={displayedSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
-			/>
-			<SendouButton
-				type="submit"
-				variant="outlined"
-				size="small"
-				shape="circle"
-				icon={displayedSaved ? <BookmarkCheck /> : <Bookmark />}
-				aria-label={
-					displayedSaved ? t("common:actions.unsave") : t("common:actions.save")
-				}
-			/>
-		</fetcher.Form>
+		<ActionButton
+			schema={saveTournamentSchema}
+			action={displayedSaved ? "UNSAVE_TOURNAMENT" : "SAVE_TOURNAMENT"}
+			fetcher={fetcher}
+			variant="outlined"
+			size="small"
+			shape="circle"
+			icon={displayedSaved ? <BookmarkCheck /> : <Bookmark />}
+			aria-label={
+				displayedSaved ? t("common:actions.unsave") : t("common:actions.save")
+			}
+		/>
 	);
 }
 
@@ -163,9 +160,6 @@ function OrganizerLink({ tournament }: { tournament: Tournament }) {
 	}
 
 	return (
-		<Link to={userPage(tournament.ctx.author)} className={styles.organizer}>
-			<Avatar user={tournament.ctx.author} size="xxs" />
-			{tournament.ctx.author.username}
-		</Link>
+		<UserLink user={tournament.ctx.author} className={styles.organizerUser} />
 	);
 }

@@ -6,7 +6,10 @@ export function hourDifferenceBetweenTimezones(
 ) {
 	const offset1 = getTimezoneOffset(timezone1);
 	const offset2 = getTimezoneOffset(timezone2);
-	return (offset1 - offset2) / 60;
+	const rawDifference = (offset1 - offset2) / 60;
+
+	// wrap to [-12, 12] so timezones across the date line compare by local clock time
+	return ((((rawDifference + 12) % 24) + 24) % 24) - 12;
 }
 
 // https://stackoverflow.com/a/29268535

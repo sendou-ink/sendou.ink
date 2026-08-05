@@ -2,11 +2,11 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
+import { UserLink } from "~/components/UserLink";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
@@ -14,7 +14,6 @@ import {
 	teamPage,
 	tournamentMatchPage,
 	tournamentTeamPage,
-	userPage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import {
@@ -260,14 +259,11 @@ function SetInfo({
 				<div className={styles.teamSetOpponentMembers}>
 					{set.opponent.roster.map((user) => {
 						return (
-							<Link
-								to={userPage(user)}
+							<UserLink
 								key={user.id}
+								user={user}
 								className={styles.teamSetOpponentMember}
-							>
-								<Avatar user={user} size="xxs" />
-								{user.username}
-							</Link>
+							/>
 						);
 					})}
 				</div>

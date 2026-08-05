@@ -1,14 +1,16 @@
 import { MapPin, Repeat, Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import * as Scrim from "../core/Scrim";
 import * as ScrimMapByMap from "../core/ScrimMapByMap";
 import type { loader } from "../loaders/scrims.$id.server";
+import { scrimIdActionSchema } from "../scrims-schemas";
 import type { ScrimSide } from "../scrims-types";
 import { PickMapDialog } from "./PickMapDialog";
 import { ScrimMapListManager } from "./ScrimMapListManager";
@@ -51,7 +53,7 @@ function NotParticipantSection() {
 function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 	const { t } = useTranslation(["q"]);
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
+	const reportMap = useActionSubmit(scrimIdActionSchema);
 	const map = data.mapByMap!.currentMap!;
 	const acceptedRequest = data.post.requests.find((r) => r.isAccepted)!;
 
@@ -75,16 +77,12 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 			stageId={map.stageId}
 			mode={map.mode}
 			withKo={false}
-			isSubmitting={fetcher.state !== "idle"}
+			isSubmitting={reportMap.state !== "idle"}
 			onSubmit={({ winnerId }) => {
-				fetcher.submit(
-					{
-						_action: "REPORT_MAP",
-						mapId: String(map.id),
-						winnerSide: winnerId === ALPHA_TEAM_ID ? "ALPHA" : "BRAVO",
-					},
-					{ method: "post" },
-				);
+				reportMap.submit("REPORT_MAP", {
+					mapId: map.id,
+					winnerSide: winnerId === ALPHA_TEAM_ID ? "ALPHA" : "BRAVO",
+				});
 			}}
 			actionButtons={<MapActionButtons />}
 			secondaryAction={<ScrimMapListManager viewerSide={viewerSide} />}
@@ -95,8 +93,8 @@ function ReportMapSection({ viewerSide }: { viewerSide: ScrimSide }) {
 function MapActionButtons() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
-	const undoFetcher = useFetcher();
-	const replayFetcher = useFetcher();
+	const undoMap = useActionSubmit(scrimIdActionSchema);
+	const replayMap = useActionSubmit(scrimIdActionSchema);
 
 	const maps = data.mapByMap?.maps ?? [];
 	const currentMap = data.mapByMap?.currentMap;
@@ -111,10 +109,10 @@ function MapActionButtons() {
 				variant="minimal-destructive"
 				size="miniscule"
 				icon={<Undo2 size={16} />}
-				isPending={undoFetcher.state !== "idle"}
+				isPending={undoMap.state !== "idle"}
 				isDisabled={!undoAllowed}
 				onPress={() => {
-					undoFetcher.submit({ _action: "UNDO_MAP" }, { method: "post" });
+					undoMap.submit("UNDO_MAP");
 				}}
 			>
 				{t("scrims:mapByMap.undo")}
@@ -124,10 +122,10 @@ function MapActionButtons() {
 				variant="minimal"
 				size="miniscule"
 				icon={<Repeat size={16} />}
-				isPending={replayFetcher.state !== "idle"}
+				isPending={replayMap.state !== "idle"}
 				isDisabled={!replayAllowed}
 				onPress={() => {
-					replayFetcher.submit({ _action: "REPLAY_MAP" }, { method: "post" });
+					replayMap.submit("REPLAY_MAP");
 				}}
 			>
 				{t("scrims:mapByMap.replay")}

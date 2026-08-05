@@ -77,6 +77,7 @@ const generateMapsResult = ({
 	tiebreakerMaps = tiebreakerPicks,
 	modesIncluded = [...rankedModesShort],
 	followModeOrder = false,
+	recentlyPlayedMaps,
 }: Partial<TournamentMaplistInput> = {}) => {
 	return generateBalancedMapList({
 		count,
@@ -85,6 +86,7 @@ const generateMapsResult = ({
 		tiebreakerMaps,
 		modesIncluded,
 		followModeOrder,
+		recentlyPlayedMaps,
 	});
 };
 
@@ -863,5 +865,27 @@ describe("Recently played maps", () => {
 		});
 
 		expect(mapList.length).toBe(5);
+	});
+});
+
+describe("Tiebreaker maps vs picked maps index collision", () => {
+	test("generates a full map list when team picks and tiebreakers share list indices", () => {
+		const result = generateMapsResult({
+			count: 3,
+			teams: [
+				{ id: 1, maps: new MapPool([{ mode: "SZ", stageId: 4 }]) },
+				{ id: 2, maps: new MapPool([{ mode: "SZ", stageId: 5 }]) },
+			],
+			tiebreakerMaps: new MapPool([
+				{ mode: "SZ", stageId: 6 },
+				{ mode: "SZ", stageId: 7 },
+			]),
+			modesIncluded: ["SZ"],
+		});
+
+		const mapList = unwrap(result);
+
+		expect(mapList.length).toBe(3);
+		expect(mapList[2].source).toBe("TIEBREAKER");
 	});
 });

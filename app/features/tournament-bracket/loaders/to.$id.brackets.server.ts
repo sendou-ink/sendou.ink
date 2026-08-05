@@ -1,12 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import type { Tournament } from "../core/Tournament";
 import {
-	requireTournamentVisible,
 	serializeBracket,
-	tournamentSharedCached,
+	tournamentFromParams,
 } from "../core/Tournament.server";
 import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
 
@@ -17,11 +14,9 @@ export type TournamentBracketsLoaderData = SerializeFrom<typeof loader>;
  * The other brackets are represented by the layout's bracket state alone.
  */
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
-	const user = getUser();
-	const { id: tournamentId } = parseParams({ params, schema: idObject });
-
-	const tournament = await tournamentSharedCached(tournamentId);
-	requireTournamentVisible({ ctx: tournament.ctx, user });
+	const { tournament, user } = await tournamentFromParams(params, {
+		for: "view",
+	});
 
 	const bracketIdx = resolveBracketIdx(
 		tournament,
@@ -45,10 +40,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
  * a valid `idx` the first bracket, unless it is over and followed by a bracket the tournament
  * actually continues in.
  */
-function resolveBracketIdx(
-	tournament: Awaited<ReturnType<typeof tournamentSharedCached>>,
-	idx: number | null,
-) {
+function resolveBracketIdx(tournament: Tournament, idx: number | null) {
 	const visibleBrackets = tournament.visibleBracketsMeta;
 	const isVisible = (idx: number) =>
 		visibleBrackets.some((bracket) => bracket.idx === idx);

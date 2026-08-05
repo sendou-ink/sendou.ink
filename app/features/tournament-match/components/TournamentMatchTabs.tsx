@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
@@ -10,7 +9,9 @@ import type {
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -302,7 +303,7 @@ function TournamentMatchRosterTab({
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const user = useUser();
-	const fetcher = useFetcher();
+	const setActiveRoster = useActionSubmit(matchSchema);
 	const {
 		teams: [teamOne, teamTwo],
 	} = useMatch();
@@ -321,7 +322,7 @@ function TournamentMatchRosterTab({
 				teamTwo ? needsActiveRosterSelection(teamTwo) : false,
 			]}
 			onSubbedOutChange={handleSubbedOutChange}
-			isSubmitting={fetcher.state !== "idle"}
+			isSubmitting={setActiveRoster.state !== "idle"}
 			teams={[
 				teamOne ? rosterTeamData(teamOne) : tbdTeam,
 				teamTwo ? rosterTeamData(teamTwo) : tbdTeam,
@@ -387,13 +388,9 @@ function TournamentMatchRosterTab({
 			(userId) => !subbedOut.includes(userId),
 		);
 
-		fetcher.submit(
-			{
-				_action: "SET_ACTIVE_ROSTER",
-				roster: JSON.stringify(activeRoster),
-				teamId: String(teamId),
-			},
-			{ method: "post" },
-		);
+		setActiveRoster.submit("SET_ACTIVE_ROSTER", {
+			roster: activeRoster,
+			teamId,
+		});
 	}
 }

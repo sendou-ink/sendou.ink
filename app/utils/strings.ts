@@ -50,11 +50,28 @@ export function gearTypeToInitial(gearType: GearType) {
 }
 
 export function pathnameFromPotentialURL(maybeUrl: string) {
+	const parsed = safeParseUrl(maybeUrl);
+	if (parsed) return stripEdgeSlashes(parsed.pathname);
+
+	// handle a URL pasted without a protocol, e.g. "discord.gg/FW4dKrY"
+	const parsedWithProtocol = safeParseUrl(`https://${maybeUrl}`);
+	const pathname = parsedWithProtocol
+		? stripEdgeSlashes(parsedWithProtocol.pathname)
+		: "";
+
+	return pathname || maybeUrl;
+}
+
+function safeParseUrl(value: string) {
 	try {
-		return new URL(maybeUrl).pathname.replace(/^\/+|\/+$/g, "");
+		return new URL(value);
 	} catch {
-		return maybeUrl;
+		return null;
 	}
+}
+
+function stripEdgeSlashes(pathname: string) {
+	return pathname.replace(/^\/+|\/+$/g, "");
 }
 
 export function truncateBySentence(value: string, max: number) {
@@ -62,7 +79,9 @@ export function truncateBySentence(value: string, max: number) {
 		return value;
 	}
 
-	const sentences = value.match(/[^.!?\n]+[.!?\n]*/g) || [];
+	// a sentence only ends at a terminator followed by whitespace, so that
+	// e.g. "18.00" does not split in the middle
+	const sentences = value.match(/[\s\S]+?(?:[.!?](?=\s|$)|\n|$)/g) || [];
 	let result = "";
 
 	for (const sentence of sentences) {
@@ -72,7 +91,13 @@ export function truncateBySentence(value: string, max: number) {
 		result += sentence;
 	}
 
-	return result.length > 0 ? result.trim() : value.slice(0, max).trim();
+	// when cutting at a sentence boundary would leave most of the budget
+	// unused, a mid-sentence cut that fills it is more informative
+	if (result.length < max / 2) {
+		return value.slice(0, max).trim();
+	}
+
+	return result.trim();
 }
 
 // based on https://github.com/zuchka/remove-markdown
@@ -101,9 +126,9 @@ export function removeMarkdown(value: string) {
 				const codePoint = code.startsWith("x")
 					? Number.parseInt(code.slice(1), 16)
 					: Number.parseInt(code, 10);
-				return Number.isFinite(codePoint)
-					? String.fromCodePoint(codePoint)
-					: "";
+				const isValidCodePoint =
+					Number.isFinite(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff;
+				return isValidCodePoint ? String.fromCodePoint(codePoint) : "";
 			})
 			// Remove setext-style headers
 			.replace(/^[=-]{2,}\s*$/g, "")

@@ -220,6 +220,27 @@ test.describe("SendouQ match page", () => {
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 	});
 
+	test("Rejoin vote: changing a yes vote to no takes effect", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, alpha } = await createMatch(factories, {
+			isMatchmade: true,
+			isConcluded: true,
+		});
+
+		await impersonate(page, alpha[0].id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+
+		await match.voteYes();
+		await expect(match.locators.votedYes).toHaveCount(1);
+
+		await match.voteNo();
+
+		await expect(match.locators.declinedText).toBeVisible();
+	});
+
 	test("Rejoin vote: cascade wipes yes on no, revote completes and rejoins", async ({
 		page,
 		factories,

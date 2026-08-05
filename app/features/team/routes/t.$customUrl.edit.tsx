@@ -1,18 +1,22 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { CustomThemeSelector } from "~/components/CustomThemeSelector";
 import { Divider } from "~/components/Divider";
 import { Main, mainStyles } from "~/components/Main";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { ThemeInput } from "~/utils/oklch-gamut";
 import { metaTags } from "~/utils/remix";
 import { action } from "../actions/t.$customUrl.edit.server";
 import { loader } from "../loaders/t.$customUrl.edit.server";
 import styles from "../team.module.css";
-import { editTeamFormSchema } from "../team-schemas";
+import {
+	editTeamFormSchema,
+	updateTeamCustomThemeSchema,
+} from "../team-schemas";
 
 export { action, loader };
 
@@ -72,23 +76,16 @@ export default function EditTeamPage() {
 function TeamCustomThemeSelector() {
 	const { customTheme, canAddCustomizedColors } =
 		useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
+	const { submit, state } = useActionSubmit(updateTeamCustomThemeSchema, {
+		encType: "application/json",
+	});
 
 	const handleSave = (themeInput: ThemeInput) => {
-		fetcher.submit(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: themeInput,
-			} as unknown as Parameters<typeof fetcher.submit>[0],
-			{ method: "post", encType: "application/json" },
-		);
+		submit("UPDATE_CUSTOM_THEME", { newValue: themeInput });
 	};
 
 	const handleReset = () => {
-		fetcher.submit(
-			{ _action: "UPDATE_CUSTOM_THEME", newValue: null },
-			{ method: "post", encType: "application/json" },
-		);
+		submit("UPDATE_CUSTOM_THEME", { newValue: null });
 	};
 
 	return (
@@ -98,7 +95,7 @@ function TeamCustomThemeSelector() {
 			isPersonalTheme={false}
 			onSave={handleSave}
 			onReset={handleReset}
-			fetcherState={fetcher.state}
+			fetcherState={state}
 		/>
 	);
 }

@@ -1,4 +1,3 @@
-import { useFetcher } from "react-router";
 import {
 	MatchActionPickBanTab,
 	type PickBanMapOption,
@@ -6,6 +5,8 @@ import {
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -25,7 +26,7 @@ export function TournamentMatchActionPickBanTab({
 }) {
 	const user = useUser();
 	const tournament = useTournament();
-	const fetcher = useFetcher();
+	const banPick = useActionSubmit(matchSchema);
 	const { scoreSum } = useMatch();
 
 	const pickerTeamId = turnOfResult.teamId;
@@ -98,18 +99,14 @@ export function TournamentMatchActionPickBanTab({
 		<MatchActionPickBanTab
 			options={options}
 			type={sharedActionType}
-			isSubmitting={fetcher.state !== "idle"}
+			isSubmitting={banPick.state !== "idle"}
 			waitingFor={canPickBan ? undefined : pickingTeam.name}
 			actionButtons={<UndoReportButton scoreSum={scoreSum} />}
 			onSubmit={({ map }) => {
-				fetcher.submit(
-					{
-						_action: "BAN_PICK",
-						...(map.mode != null ? { mode: map.mode } : {}),
-						...(map.stageId != null ? { stageId: String(map.stageId) } : {}),
-					},
-					{ method: "post" },
-				);
+				banPick.submit("BAN_PICK", {
+					mode: map.mode ?? undefined,
+					stageId: map.stageId ?? undefined,
+				});
 			}}
 		/>
 	);

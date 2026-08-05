@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { Link2 as LinkIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { BuildCard } from "~/components/BuildCard";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -15,6 +14,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Markdown } from "~/components/Markdown";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
+import { UserLink } from "~/components/UserLink";
 import type { Tables } from "~/db/tables";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
@@ -49,7 +49,6 @@ import {
 	tournamentOrganizationPage,
 	userArtPage,
 	userBuildsPage,
-	userPage,
 	userResultsPage,
 	userVodsPage,
 } from "~/utils/urls";
@@ -915,14 +914,7 @@ function FriendsWidget({
 	return (
 		<div className={styles.friendsList}>
 			{itemsToDisplay.map((friend) => (
-				<Link
-					key={friend.id}
-					to={userPage(friend)}
-					className={styles.friendLink}
-				>
-					<Avatar user={friend} size="xxs" />
-					{friend.username}
-				</Link>
+				<UserLink key={friend.id} user={friend} className={styles.friendLink} />
 			))}
 			{!everythingVisible ? (
 				<div className="mt-4">

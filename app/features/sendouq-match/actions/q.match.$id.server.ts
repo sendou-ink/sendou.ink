@@ -203,7 +203,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 							trx,
 						);
 
-					if (!RejoinVote.canCastVote(existingVotes, user.id)) {
+					if (
+						!RejoinVote.canCastVote(existingVotes, user.id, data.isContinuing)
+					) {
 						return null;
 					}
 

@@ -7,7 +7,8 @@ import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
-import { editTeamActionSchema, teamParamsSchema } from "../team-schemas.server";
+import { editTeamActionSchema } from "../team-schemas";
+import { teamParamsSchema } from "../team-schemas.server";
 import { canAddCustomizedColors, isTeamManager } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {

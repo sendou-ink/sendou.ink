@@ -104,7 +104,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					scrimPostId: data.scrimPostId,
 					teamId: data.from.mode === "TEAM" ? data.from.teamId : null,
 					message: data.message,
-					startsAt: data.at ? dateToDatabaseTimestamp(data.at) : null,
+					startsAt:
+						post.rangeEndsAt && data.at
+							? dateToDatabaseTimestamp(data.at)
+							: null,
 					users: (
 						await usersListForPost({ authorId: user.id, from: data.from })
 					).map((userId) => ({

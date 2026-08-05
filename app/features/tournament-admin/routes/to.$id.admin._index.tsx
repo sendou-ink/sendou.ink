@@ -13,7 +13,7 @@ import {
 	X,
 } from "lucide-react";
 import * as React from "react";
-import { Link, useFetcher, useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -34,6 +34,7 @@ import type {
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { addSubForUserFormSchema } from "~/features/tournament-lfg/tournament-lfg-schemas";
 import { SendouForm } from "~/form/SendouForm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import {
 	tournamentAdminRegistrationEditPage,
 	tournamentAdminRegistrationPage,
@@ -44,6 +45,7 @@ import {
 import { queryToUserIdentifier } from "~/utils/users";
 import { ExportDialog } from "../components/ExportDialog";
 import type { TournamentAdminTeamsLoaderData } from "../loaders/to.$id.admin.index.server";
+import { adminTeamsActionSchema } from "../tournament-admin-schemas";
 
 import styles from "./to.$id.admin._index.module.css";
 
@@ -317,13 +319,13 @@ function TeamRowMenu({
 	editPage: string;
 }) {
 	const tournament = useTournament();
-	const fetcher = useFetcher();
 	const [confirming, setConfirming] = React.useState<
 		"DELETE_TEAM" | "DROP_TEAM_OUT" | null
 	>(null);
 
-	const submit = (body: Record<string, string | number>) =>
-		fetcher.submit(body, { method: "post", encType: "application/json" });
+	const { submit } = useActionSubmit(adminTeamsActionSchema, {
+		encType: "application/json",
+	});
 
 	const checkInOpen = tournament.regularCheckInStartInThePast;
 	const checkedIn = isTournamentCheckedIn(team);
@@ -355,7 +357,7 @@ function TeamRowMenu({
 						<SendouMenuItem
 							icon={<LogOut />}
 							onAction={() =>
-								submit({ _action: "CHECK_OUT", teamId: team.id, bracketIdx: 0 })
+								submit("CHECK_OUT", { teamId: team.id, bracketIdx: 0 })
 							}
 						>
 							{`Check out${eventLabelSuffix}`}
@@ -364,7 +366,7 @@ function TeamRowMenu({
 						<SendouMenuItem
 							icon={<LogIn />}
 							onAction={() =>
-								submit({ _action: "CHECK_IN", teamId: team.id, bracketIdx: 0 })
+								submit("CHECK_IN", { teamId: team.id, bracketIdx: 0 })
 							}
 						>
 							{`Check in${eventLabelSuffix}`}
@@ -382,8 +384,7 @@ function TeamRowMenu({
 									key={bracket.idx}
 									icon={<LogOut />}
 									onAction={() =>
-										submit({
-											_action: "CHECK_OUT",
+										submit("CHECK_OUT", {
 											teamId: team.id,
 											bracketIdx: bracket.idx,
 										})
@@ -396,8 +397,7 @@ function TeamRowMenu({
 									key={bracket.idx}
 									icon={<LogIn />}
 									onAction={() =>
-										submit({
-											_action: "CHECK_IN",
+										submit("CHECK_IN", {
 											teamId: team.id,
 											bracketIdx: bracket.idx,
 										})
@@ -412,9 +412,7 @@ function TeamRowMenu({
 					team.droppedOut ? (
 						<SendouMenuItem
 							icon={<RotateCcw />}
-							onAction={() =>
-								submit({ _action: "UNDO_DROP_TEAM_OUT", teamId: team.id })
-							}
+							onAction={() => submit("UNDO_DROP_TEAM_OUT", { teamId: team.id })}
 						>
 							Undo drop out
 						</SendouMenuItem>

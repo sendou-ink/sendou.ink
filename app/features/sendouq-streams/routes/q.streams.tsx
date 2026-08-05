@@ -2,16 +2,16 @@ import { User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { UserLink } from "~/components/UserLink";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { FAQ_PAGE, sendouQMatchPage, twitchUrl, userPage } from "~/utils/urls";
+import { FAQ_PAGE, sendouQMatchPage, twitchUrl } from "~/utils/urls";
 
 import { loader } from "../loaders/q.streams.server";
 
@@ -58,13 +58,10 @@ export default function SendouQStreamsPage() {
 					return (
 						<div key={streamedMatch.user.id} className="stack sm">
 							<div className="stack horizontal justify-between items-end">
-								<Link
-									to={userPage(streamedMatch.user)}
+								<UserLink
+									user={streamedMatch.user}
 									className={styles.userContainer}
-								>
-									<Avatar size="xxs" user={streamedMatch.user} />{" "}
-									{streamedMatch.user.username}
-								</Link>
+								/>
 								<div className="stack horizontal sm">
 									{streamedMatch.weaponSplId ? (
 										<div className={styles.infoCircle}>

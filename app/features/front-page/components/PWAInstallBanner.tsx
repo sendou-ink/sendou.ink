@@ -1,8 +1,11 @@
 import { Download } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { APP_ICON_URL } from "~/utils/urls";
 import styles from "./PWAInstallBanner.module.css";
 
@@ -13,19 +16,18 @@ interface BeforeInstallPromptEvent extends Event {
 type InstallState = "hidden" | "native" | "ios" | "safari";
 
 const SAFARI_MIN_INSTALL_VERSION = 17;
-const BANNER_DISMISSED_KEY = "pwa-install-banner-dismissed";
+
+const bannerDismissedPersisted = PersistedState.define({
+	key: "pwa-install-banner-dismissed",
+	storage: "local",
+	schema: z.boolean(),
+	default: false,
+});
 
 let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
-let bannerDismissed = false;
 const installStateListeners = new Set<() => void>();
 
 if (typeof window !== "undefined") {
-	try {
-		bannerDismissed = localStorage.getItem(BANNER_DISMISSED_KEY) === "true";
-	} catch {
-		// localStorage may be unavailable
-	}
-
 	window.addEventListener("beforeinstallprompt", (event) => {
 		event.preventDefault();
 		deferredInstallPrompt = event as BeforeInstallPromptEvent;
@@ -117,12 +119,15 @@ function InstallAction({
 	);
 }
 
-function useInstallState() {
-	return React.useSyncExternalStore(
+function useInstallState(): InstallState {
+	const [bannerDismissed] = usePersistedState(bannerDismissedPersisted);
+	const promptInstallState = React.useSyncExternalStore(
 		subscribeToInstallState,
 		getInstallStateSnapshot,
 		getServerInstallStateSnapshot,
 	);
+
+	return bannerDismissed ? "hidden" : promptInstallState;
 }
 
 function subscribeToInstallState(callback: () => void) {
@@ -131,17 +136,10 @@ function subscribeToInstallState(callback: () => void) {
 }
 
 function dismissBanner() {
-	bannerDismissed = true;
-	try {
-		localStorage.setItem(BANNER_DISMISSED_KEY, "true");
-	} catch {
-		// localStorage may be unavailable
-	}
-	notifyInstallStateChanged();
+	PersistedState.write(bannerDismissedPersisted, true);
 }
 
 function getInstallStateSnapshot(): InstallState {
-	if (bannerDismissed) return "hidden";
 	if (isStandalone()) return "hidden";
 	if (deferredInstallPrompt) return "native";
 	if (isIos()) return "ios";

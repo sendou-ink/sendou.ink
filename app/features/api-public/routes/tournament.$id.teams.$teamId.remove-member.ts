@@ -5,6 +5,7 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
@@ -38,7 +39,7 @@ export const action = async (args: ActionFunctionArgs) => {
 	return wrapActionForApi(async () => {
 		const user = requireUser();
 		const tournament = await tournamentFromDB({ tournamentId, user });
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
+		requireTournamentOrganizer(tournament, user);
 
 		const team = tournament.teamById(teamId);
 		errorToastIfFalsy(team, "Invalid team id");

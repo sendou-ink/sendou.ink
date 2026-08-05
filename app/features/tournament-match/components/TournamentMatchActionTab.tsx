@@ -1,6 +1,5 @@
 import { Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
@@ -10,7 +9,9 @@ import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -25,7 +26,7 @@ export function TournamentMatchActionTab({
 }) {
 	const tournament = useTournament();
 	const user = useUser();
-	const reportFetcher = useFetcher();
+	const reportScore = useActionSubmit(matchSchema);
 	const {
 		teams: [teamOne, teamTwo],
 		scores,
@@ -113,17 +114,13 @@ export function TournamentMatchActionTab({
 			mode={currentMap.mode}
 			withKo={withKo}
 			setEnding={setEnding}
-			isSubmitting={reportFetcher.state !== "idle"}
+			isSubmitting={reportScore.state !== "idle"}
 			onSubmit={({ winnerId, ko }) => {
-				reportFetcher.submit(
-					{
-						_action: "REPORT_SCORE",
-						winnerTeamId: String(winnerId),
-						position: String(scoreSum),
-						...(typeof ko === "boolean" ? { ko: String(ko) } : {}),
-					},
-					{ method: "post" },
-				);
+				reportScore.submit("REPORT_SCORE", {
+					winnerTeamId: winnerId,
+					position: scoreSum,
+					ko: typeof ko === "boolean" ? ko : undefined,
+				});
 			}}
 			actionButtons={<UndoReportButton scoreSum={scoreSum} />}
 			secondaryAction={
@@ -135,23 +132,17 @@ export function TournamentMatchActionTab({
 
 export function UndoReportButton({ scoreSum }: { scoreSum: number }) {
 	const { t } = useTranslation(["q"]);
-	const undoFetcher = useFetcher();
+	const undoReport = useActionSubmit(matchSchema);
 
 	return (
 		<SendouButton
 			variant="minimal-destructive"
 			size="miniscule"
 			icon={<Undo2 size={16} />}
-			isPending={undoFetcher.state !== "idle"}
+			isPending={undoReport.state !== "idle"}
 			isDisabled={scoreSum === 0}
 			onPress={() => {
-				undoFetcher.submit(
-					{
-						_action: "UNDO_REPORT_SCORE",
-						position: String(scoreSum - 1),
-					},
-					{ method: "post" },
-				);
+				undoReport.submit("UNDO_REPORT_SCORE", { position: scoreSum - 1 });
 			}}
 			testId="undo-score-button"
 		>

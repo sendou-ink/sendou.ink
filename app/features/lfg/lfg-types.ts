@@ -92,15 +92,16 @@ export function filterToSmallStr(filter: LFGFilter): string {
 
 export function smallStrToFilter(s: string): LFGFilter | null {
 	const [tag, val] = s.split(".");
-	if (!tag || !val) return null;
+	if (!tag || val === undefined) return null;
 
 	switch (tag) {
 		case "w": {
+			// an empty weapon filter is valid, it's what the add filter button inserts
 			const weaponIds = val
 				.split(",")
+				.filter(Boolean)
 				.map((x) => Number.parseInt(x, 10) as MainWeaponId)
-				.filter((x) => x !== null && x !== undefined);
-			if (weaponIds.length === 0) return null;
+				.filter((x) => !Number.isNaN(x));
 			return {
 				_tag: "Weapon",
 				weaponSplIds: weaponIds,

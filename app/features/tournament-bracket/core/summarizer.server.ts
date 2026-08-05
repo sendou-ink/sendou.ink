@@ -363,8 +363,9 @@ function calculateTeamSkills({
 			const loserRoster =
 				loser.activeRosterUserIds ?? loser.memberUserIds ?? [];
 
-			// Skip if no roster info available (defensive check)
-			if (winnerRoster.length === 0 || loserRoster.length === 0) continue;
+			// team identifiers require a full roster of 4; summaryRatingTargets
+			// skips these rosters too so their ratings are never loaded
+			if (winnerRoster.length !== 4 || loserRoster.length !== 4) continue;
 
 			winnerTeamIdentifier = userIdsToIdentifier(winnerRoster);
 			loserTeamIdentifier = userIdsToIdentifier(loserRoster);

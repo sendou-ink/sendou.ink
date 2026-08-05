@@ -41,7 +41,11 @@ export const updateGroupFormSchema = z.object({
 });
 
 export const lookingSchema = z.union([
-	joinQueueFormSchema,
+	z.object({
+		_action: _action("JOIN_QUEUE"),
+		note: noteFieldSchema.optional(),
+		stayAsSub: stayAsSubFieldSchema.optional(),
+	}),
 	z.object({
 		_action: _action("LIKE"),
 		targetTeamId: id,

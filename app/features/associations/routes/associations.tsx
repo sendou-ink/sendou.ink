@@ -1,13 +1,13 @@
 import { Check, Clipboard, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
-import { Avatar } from "~/components/Avatar";
+import { Outlet, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
+import { UserLink } from "~/components/UserLink";
 import { action } from "~/features/associations/actions/associations.server";
 import {
 	type AssociationsLoaderData,
@@ -17,7 +17,8 @@ import { useUser } from "~/features/auth/core/user";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, userPage } from "~/utils/urls";
+import { associationsPage } from "~/utils/urls";
+import { associationsPageActionSchema } from "../associations-schemas";
 
 export { action, loader };
 
@@ -57,27 +58,26 @@ function Header() {
 
 function JoinForm() {
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["common", "scrims"]);
 
 	if (!data.toJoin) return null;
 
 	return (
-		<fetcher.Form method="post" className="stack horizontal md items-center">
-			<input type="hidden" name="inviteCode" value={data.toJoin.inviteCode} />
+		<div className="stack horizontal md items-center">
 			<Label spaced={false}>
 				{t("scrims:associations.join.title", {
 					name: data.toJoin.association.name,
 				})}
 			</Label>
-			<SubmitButton
+			<ActionButton
+				schema={associationsPageActionSchema}
+				action="JOIN_ASSOCIATION"
+				fields={{ inviteCode: data.toJoin.inviteCode }}
 				size="small"
-				_action="JOIN_ASSOCIATION"
-				state={fetcher.state}
 			>
 				{t("common:actions.join")}
-			</SubmitButton>
-		</fetcher.Form>
+			</ActionButton>
+		</div>
 	);
 }
 
@@ -172,7 +172,6 @@ function AssociationInviteCodeActions({
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
-	const fetcher = useFetcher();
 	const id = React.useId();
 
 	const inviteLink = `https://sendou.ink${associationsPage(inviteCode)}`;
@@ -190,17 +189,15 @@ function AssociationInviteCodeActions({
 					aria-label="Copy to clipboard"
 				/>
 			</div>
-			<fetcher.Form method="post">
-				<input type="hidden" name="associationId" value={associationId} />
-				<SubmitButton
-					variant="minimal-destructive"
-					size="small"
-					_action="REFRESH_INVITE_CODE"
-					state={fetcher.state}
-				>
-					{t("scrims:associations.shareLink.reset")}
-				</SubmitButton>
-			</fetcher.Form>
+			<ActionButton
+				schema={associationsPageActionSchema}
+				action="REFRESH_INVITE_CODE"
+				fields={{ associationId }}
+				variant="minimal-destructive"
+				size="small"
+			>
+				{t("scrims:associations.shareLink.reset")}
+			</ActionButton>
 		</div>
 	);
 }
@@ -220,13 +217,7 @@ function AssociationMember({
 
 	return (
 		<div className="stack horizontal sm items-center justify-between">
-			<Link
-				to={userPage(member)}
-				className="text-main-forced stack horizontal sm"
-			>
-				<Avatar size="xxs" user={member} />
-				{member.username}
-			</Link>
+			<UserLink user={member} />
 			{showControls ? (
 				<FormWithConfirm
 					dialogHeading={t("scrims:associations.removeMember.title", {

@@ -21,6 +21,7 @@ import {
 	everyTwoMinutes,
 } from "./routines/list.server";
 import { loadAllDateFnsLocales } from "./utils/dates";
+import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { logger } from "./utils/logger";
 
 // Reject/cancel all pending promises after 5 seconds
@@ -89,7 +90,7 @@ declare global {
 	var appStartSignal: undefined | true;
 }
 
-if (!global.appStartSignal && ServerConfig.isProduction) {
+if (!global.appStartSignal && ServerConfig.isProduction && !IS_E2E_TEST_RUN) {
 	global.appStartSignal = true;
 
 	cron.schedule("0 */1 * * *", async () => {

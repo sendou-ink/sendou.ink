@@ -243,6 +243,10 @@ async function globalSetup(config: FullConfig) {
 					// no system messages to a shared skalop instance (see build env above)
 					SKALOP_SYSTEM_MESSAGE_URL: "",
 					SKALOP_TOKEN: "",
+					// creds from .env must not reach test servers (SyncLiveStreams would
+					// hit the real Twitch API and overwrite factory-seeded streams)
+					TWITCH_CLIENT_ID: "",
+					TWITCH_CLIENT_SECRET: "",
 					// tests assert webhook payloads by listening on the worker's webhook port
 					SQ_CANCEL_DISCORD_WEBHOOK_URL: `http://localhost:${e2eWebhookPort(i)}/sq-cancel`,
 				},
