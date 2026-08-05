@@ -24,6 +24,7 @@ import * as PreparedMapsUtils from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
 	tournamentFromParams,
 } from "../core/Tournament.server";
@@ -41,7 +42,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	switch (data._action) {
 		case "START_BRACKET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(
 				!tournament.isDraft,
 				"Tournament must be opened before starting a bracket",
@@ -182,7 +183,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "PREPARE_MAPS": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
@@ -216,7 +217,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "ADVANCE_BRACKET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			errorToastIfFalsy(bracket, "Bracket not found");
@@ -244,7 +245,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UNADVANCE_BRACKET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			errorToastIfFalsy(bracket, "Bracket not found");
@@ -286,7 +287,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "OVERRIDE_BRACKET_PROGRESSION": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const allDestinationBrackets = Progression.destinationsFromBracketIdx(
 				data.sourceBracketIdx,

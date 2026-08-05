@@ -17,7 +17,11 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import {
+	errorToastIfFalsy,
+	notFoundIfNullish,
+	parseParams,
+} from "~/utils/remix.server";
 import type { Unwrapped } from "~/utils/types";
 import { tournamentPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
@@ -137,6 +141,27 @@ export function requireTournamentVisible({
 	if (isTournamentOrganizer({ ctx, user })) return;
 
 	throw new Response(null, { status: 404 });
+}
+
+/**
+ * Throws an error toast unless the user is an organizer of the tournament. For guarding
+ * a single `_action` branch; whole-route guards use {@link tournamentFromParams} with
+ * `for: "organizer"` instead.
+ */
+export function requireTournamentOrganizer(
+	tournament: Tournament,
+	user: AuthenticatedUser,
+	message = "Not an organizer",
+) {
+	errorToastIfFalsy(tournament.isOrganizer(user), message);
+}
+
+/** Throws an error toast unless the user is an admin of the tournament. */
+export function requireTournamentAdmin(
+	tournament: Tournament,
+	user: AuthenticatedUser,
+) {
+	errorToastIfFalsy(tournament.isAdmin(user), "Not a tournament admin");
 }
 
 type TournamentFromParamsOptions =

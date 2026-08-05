@@ -4,6 +4,7 @@ import { notify } from "~/features/notifications/core/notify.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -273,8 +274,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "DELETE_GROUP": {
-			errorToastIfFalsy(
-				tournament.isOrganizer(user),
+			requireTournamentOrganizer(
+				tournament,
+				user,
 				"Only tournament organizers can remove other groups",
 			);
 
@@ -313,8 +315,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ADD_SUB_FOR_USER": {
-			errorToastIfFalsy(
-				tournament.isOrganizer(user),
+			requireTournamentOrganizer(
+				tournament,
+				user,
 				"Only tournament organizers can add subs for other users",
 			);
 			errorToastIfFalsy(

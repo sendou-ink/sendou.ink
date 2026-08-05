@@ -9,6 +9,7 @@ import { executeBracketOperation } from "~/features/tournament-bracket/core/exec
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -222,7 +223,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UPDATE_REPORTED_SCORE": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.ctx.isFinalized, "Tournament is finalized");
 
 			const result = await TournamentMatchRepository.findResultById(
@@ -453,7 +454,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "REOPEN_MATCH": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(
 				tournament.matchCanBeReopened(match.id),
 				"Match can't be reopened, bracket has progressed",
@@ -573,7 +574,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "END_SET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(
 				match.opponentOne?.id && match.opponentTwo?.id,
 				"Teams are missing",

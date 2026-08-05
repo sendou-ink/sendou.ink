@@ -3,6 +3,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
@@ -12,7 +13,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { adminSeedsActionSchema } from "../tournament-admin-schemas";
-import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({

@@ -5,6 +5,8 @@ import * as BracketRepository from "~/features/tournament-bracket/BracketReposit
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
+	requireTournamentAdmin,
+	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
@@ -14,10 +16,6 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { adminBracketsActionSchema } from "../tournament-admin-schemas";
-import {
-	requireTournamentAdmin,
-	requireTournamentOrganizer,
-} from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({

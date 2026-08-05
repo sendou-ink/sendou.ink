@@ -9,6 +9,7 @@ import * as BracketRepository from "~/features/tournament-bracket/BracketReposit
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -19,7 +20,6 @@ import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { adminTeamsActionSchema } from "../tournament-admin-schemas";
-import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({
