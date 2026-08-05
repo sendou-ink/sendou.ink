@@ -1,18 +1,17 @@
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
+import { UserLink } from "~/components/UserLink";
 import {
 	calendarEventPage,
 	tournamentBracketsPage,
 	tournamentTeamPage,
-	userPage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 import styles from "../user-page.module.css";
@@ -152,18 +151,7 @@ export function UserResultsTable({
 													key={player.name ? player.name : player.id}
 													className="flex items-center"
 												>
-													{player.name ? (
-														player.name
-													) : (
-														// as any but we know it's a user since it doesn't have name
-														<Link
-															to={userPage(player as any)}
-															className="stack horizontal xs items-center"
-														>
-															<Avatar user={player as any} size="xxs" />
-															{player.username}
-														</Link>
-													)}
+													<UserLink user={player} />
 												</li>
 											))}
 										</ul>

@@ -1,13 +1,13 @@
 import { Check, Clipboard, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, Outlet, useLoaderData } from "react-router";
+import { Outlet, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { UserLink } from "~/components/UserLink";
 import { action } from "~/features/associations/actions/associations.server";
 import {
 	type AssociationsLoaderData,
@@ -17,7 +17,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, userPage } from "~/utils/urls";
+import { associationsPage } from "~/utils/urls";
 import { associationsPageActionSchema } from "../associations-schemas";
 
 export { action, loader };
@@ -217,13 +217,7 @@ function AssociationMember({
 
 	return (
 		<div className="stack horizontal sm items-center justify-between">
-			<Link
-				to={userPage(member)}
-				className="text-main-forced stack horizontal sm"
-			>
-				<Avatar size="xxs" user={member} />
-				{member.username}
-			</Link>
+			<UserLink user={member} />
 			{showControls ? (
 				<FormWithConfirm
 					dialogHeading={t("scrims:associations.removeMember.title", {

@@ -23,6 +23,7 @@ import {
 } from "~/components/elements/Tabs";
 import { WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
+import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
@@ -381,10 +382,9 @@ function MobileMemberCard({
 	return (
 		<div className={styles.memberCardContainer}>
 			<div className={styles.memberCard}>
-				<Link to={userPage(member)} className="stack items-center">
-					<Avatar user={member} size="md" />
+				<UserLink user={member} size="md" direction="vertical">
 					<div className={styles.memberCardName}>{member.username}</div>
-				</Link>
+				</UserLink>
 				{member.weapons.length > 0 ? (
 					<div className="stack horizontal md">
 						{member.weapons.map((weapon) => (

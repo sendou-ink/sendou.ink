@@ -8,6 +8,7 @@ import { LinkButton } from "~/components/elements/Button";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { ShareUrlButton } from "~/components/ShareUrlButton";
 import TimePopover from "~/components/TimePopover";
+import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -15,7 +16,6 @@ import {
 	SENDOU_INK_BASE_URL,
 	tournamentOrganizationPage,
 	tournamentPage,
-	userPage,
 } from "~/utils/urls";
 import { saveTournamentSchema } from "../tournament-schemas";
 import { tournamentNameParts } from "../tournament-utils";
@@ -160,9 +160,6 @@ function OrganizerLink({ tournament }: { tournament: Tournament }) {
 	}
 
 	return (
-		<Link to={userPage(tournament.ctx.author)} className={styles.organizer}>
-			<Avatar user={tournament.ctx.author} size="xxs" />
-			{tournament.ctx.author.username}
-		</Link>
+		<UserLink user={tournament.ctx.author} className={styles.organizerUser} />
 	);
 }
