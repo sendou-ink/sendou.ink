@@ -122,6 +122,36 @@ describe("trophy approvals", () => {
 		expect(await trophyCount()).toBe(1);
 	});
 
+	test("stays accepted even if approvals drop below the required count", async () => {
+		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
+			await TrophyRepository.addApproval({ pendingTrophyId, userId });
+		}
+
+		// biome-ignore lint/plugin: simulates raising TROPHY_APPROVALS_REQUIRED after acceptance, which no production code path can do
+		await db
+			.deleteFrom("PendingTrophyApproval")
+			.where("pendingTrophyId", "=", pendingTrophyId)
+			.where("userId", "=", reviewerIds[0])
+			.execute();
+
+		expect(
+			await TrophyRepository.addApproval({
+				pendingTrophyId,
+				userId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
+			}),
+		).toBe(null);
+
+		expect(
+			await TrophyRepository.declinePending({
+				id: pendingTrophyId,
+				reason: "reason",
+				declinedByUserId: reviewerIds[TROPHY_APPROVALS_REQUIRED],
+			}),
+		).toBe(false);
+
+		expect(await trophyCount()).toBe(1);
+	});
+
 	test("approvals after a decline do not create a trophy", async () => {
 		await TrophyRepository.declinePending({
 			id: pendingTrophyId,
