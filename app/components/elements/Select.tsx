@@ -78,6 +78,7 @@ export function SendouSelect<T extends object>({
 	clearable = false,
 	className,
 	filter,
+	onOpenChange,
 	...props
 }: SendouSelectProps<T>) {
 	const { t } = useTranslation(["common"]);
@@ -86,6 +87,8 @@ export function SendouSelect<T extends object>({
 	const isControlled = !!onSearchInputChange;
 
 	const handleOpenChange = (isOpen: boolean) => {
+		onOpenChange?.(isOpen);
+
 		if (!isControlled) return;
 
 		if (!isOpen) {

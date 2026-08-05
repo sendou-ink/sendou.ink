@@ -51,7 +51,7 @@ import {
 
 export type { CustomFieldRenderProps };
 
-const EMPTY_FORM_VALUES: Record<string, unknown> = {};
+const EMPTY_ITEM_VALUES: Record<string, unknown> = {};
 
 interface FormFieldProps {
 	name: string;
@@ -142,19 +142,6 @@ export function FormField({
 		store.subscribe,
 		getClientError,
 		getClientError,
-	);
-
-	// Only object arrays with a custom render receive the whole-form values, so
-	// every other field type subscribes to a constant and skips re-rendering
-	// when unrelated fields change.
-	const needsAllValues =
-		formField.type === "array" && typeof children === "function";
-	const getAllValues = () =>
-		needsAllValues ? store.values : EMPTY_FORM_VALUES;
-	const formValues = React.useSyncExternalStore(
-		store.subscribe,
-		getAllValues,
-		getAllValues,
 	);
 
 	const serverError =
@@ -467,35 +454,20 @@ export function FormField({
 				renderItem={(idx, itemName) => {
 					if (hasCustomRender && isObjectArray) {
 						const arrayValue = value as Record<string, unknown>[];
-						const itemValues = arrayValue[idx] ?? {};
-
-						const setItemField = (fieldName: string, fieldValue: unknown) => {
-							context?.setValueFromPrev(name, (prev) => {
-								const currentArray = (prev ?? []) as Record<string, unknown>[];
-								const newArray = [...currentArray];
-								newArray[idx] = {
-									...currentArray[idx],
-									[fieldName]: fieldValue,
-								};
-								return newArray;
-							});
-						};
-
-						const remove = () => {
-							handleChange(arrayValue.filter((_, i) => i !== idx));
-						};
 
 						return (
-							children as (props: ArrayItemRenderContext) => React.ReactNode
-						)({
-							index: idx,
-							itemName,
-							values: itemValues,
-							formValues,
-							setItemField,
-							canRemove: arrayValue.length > (formField.min ?? 0),
-							remove,
-						});
+							<ArrayItemCustomRender
+								arrayName={name}
+								index={idx}
+								itemName={itemName}
+								itemValues={arrayValue[idx] ?? EMPTY_ITEM_VALUES}
+								canRemove={arrayValue.length > (formField.min ?? 0)}
+								onArrayChange={handleChange as (v: unknown[]) => void}
+								renderChildren={
+									children as (props: ArrayItemRenderContext) => React.ReactNode
+								}
+							/>
+						);
 					}
 
 					return (
@@ -623,6 +595,68 @@ export function FormField({
 		<div>Unsupported form field type: {(formField as FormFieldType).type}</div>
 	);
 }
+
+interface ArrayItemCustomRenderProps {
+	arrayName: string;
+	index: number;
+	itemName: string;
+	itemValues: Record<string, unknown>;
+	canRemove: boolean;
+	onArrayChange: (value: unknown[]) => void;
+	renderChildren: (props: ArrayItemRenderContext) => React.ReactNode;
+}
+
+/**
+ * One custom-rendered array item, memoized so that a form edit re-renders only
+ * the item whose slice of the array changed — the array field itself re-renders
+ * on every write to the array. For this to hold, anything the item render reads
+ * from the form outside its own item must be subscribed to via `useFormValue`.
+ * The callbacks read the current array through the store instead of closing
+ * over it so a skipped re-render can never make them act on stale values.
+ */
+const ArrayItemCustomRender = React.memo(function ArrayItemCustomRender({
+	arrayName,
+	index,
+	itemName,
+	itemValues,
+	canRemove,
+	onArrayChange,
+	renderChildren,
+}: ArrayItemCustomRenderProps) {
+	const context = useOptionalFormFieldContext();
+
+	const setItemField = (fieldName: string, fieldValue: unknown) => {
+		context?.setValueFromPrev(arrayName, (prev) => {
+			const currentArray = (prev ?? []) as Record<string, unknown>[];
+			const newArray = [...currentArray];
+			newArray[index] = {
+				...currentArray[index],
+				[fieldName]: fieldValue,
+			};
+			return newArray;
+		});
+	};
+
+	const remove = () => {
+		if (!context) return;
+		const currentArray = (getNestedValue(context.store.values, arrayName) ??
+			[]) as unknown[];
+		onArrayChange(currentArray.filter((_, i) => i !== index));
+	};
+
+	return (
+		<>
+			{renderChildren({
+				index,
+				itemName,
+				values: itemValues,
+				setItemField,
+				canRemove,
+				remove,
+			})}
+		</>
+	);
+});
 
 function isArrayAppend(
 	values: Record<string, unknown>,

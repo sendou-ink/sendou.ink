@@ -720,6 +720,20 @@ export function useOptionalFormFieldContext() {
 }
 
 /**
+ * Subscribes to a single form value by (possibly nested) path, e.g. `"type"`
+ * or `"matches[2].mode"`. Unlike `useFormFieldContext` this re-renders only
+ * when that value changes, so prefer it for reading form state in components
+ * that should not re-render on every form edit.
+ */
+export function useFormValue(name: string): unknown {
+	const context = React.useContext(FormContext);
+	const store = context?.store ?? EMPTY_FORM_STORE;
+
+	const getValue = () => getNestedValue(store.values, name);
+	return React.useSyncExternalStore(store.subscribe, getValue, getValue);
+}
+
+/**
  * "First" error means first in DOM order, not first in error-map insertion
  * order — validation collects errors in schema order which does not have to
  * match the rendered field order.

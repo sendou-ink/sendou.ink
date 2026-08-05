@@ -12,7 +12,11 @@ import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import type { ArrayItemRenderContext, CustomFieldRenderProps } from "~/form";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { FormRenderProps } from "~/form/SendouForm";
-import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import {
+	SendouForm,
+	useFormValue,
+	useOptionalFormFieldContext,
+} from "~/form/SendouForm";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
@@ -169,9 +173,8 @@ function YouTubeEmbedWrapper({
 }: {
 	onPlayerReady: (player: YT.Player) => void;
 }) {
-	const { values } = useFormFieldContext();
 	const floatWidth = useFloatingEmbedWidth();
-	const youtubeUrl = values.youtubeUrl as string | undefined;
+	const youtubeUrl = useFormValue("youtubeUrl") as string | undefined;
 
 	if (!youtubeUrl) return null;
 
@@ -239,8 +242,7 @@ function VodFormFields({
 	player: YT.Player | null;
 	FormField: VodFormFieldComponent;
 }) {
-	const { values } = useFormFieldContext();
-	const videoType = values.type as string;
+	const videoType = useFormValue("type") as string;
 
 	return (
 		<>
@@ -261,7 +263,6 @@ function VodFormFields({
 						index={ctx.index}
 						itemName={ctx.itemName}
 						values={ctx.values as unknown as MatchFieldValues}
-						formValues={ctx.formValues}
 						setItemField={
 							ctx.setItemField as <K extends keyof MatchFieldValues>(
 								field: K,
@@ -281,12 +282,12 @@ function VodFormFields({
 }
 
 function TeamSizeField({ FormField }: { FormField: VodFormFieldComponent }) {
-	const { setValueFromPrev } = useFormFieldContext();
+	const context = useOptionalFormFieldContext();
 
 	// The weapon count per match is tied to the team size, so any already picked
 	// weapons would no longer fit the new size.
 	const clearMatchWeapons = () => {
-		setValueFromPrev("matches", (prev) =>
+		context?.setValueFromPrev("matches", (prev) =>
 			((prev ?? []) as Array<Record<string, unknown>>).map((match) => ({
 				...match,
 				weaponsTeamOne: [],
@@ -387,7 +388,6 @@ function MatchFieldsetContent({
 	index,
 	itemName,
 	values: matchValues,
-	formValues,
 	setItemField,
 	canRemove,
 	remove,
@@ -397,6 +397,8 @@ function MatchFieldsetContent({
 }: MatchFieldsetContentProps) {
 	const { t } = useTranslation(["vods", "common"]);
 	const [currentTime, setCurrentTime] = useState<string>("");
+	const previousWeapons = (useFormValue(`matches[${index - 1}]`) ??
+		null) as MatchFieldValues | null;
 
 	useEffect(() => {
 		if (!player) return;
@@ -414,9 +416,6 @@ function MatchFieldsetContent({
 
 		return () => clearInterval(interval);
 	}, [player]);
-
-	const allMatches = formValues.matches as MatchFieldValues[];
-	const previousWeapons = index > 0 ? allMatches[index - 1] : null;
 
 	return (
 		<>
@@ -460,7 +459,6 @@ function MatchFieldsetContent({
 					setItemField={setItemField}
 					videoType={videoType}
 					previousWeapons={previousWeapons}
-					formValues={formValues}
 				/>
 			</div>
 		</>
@@ -473,7 +471,6 @@ function WeaponsField({
 	setItemField,
 	videoType,
 	previousWeapons,
-	formValues,
 }: {
 	index: number;
 	matchValues: MatchFieldValues;
@@ -483,10 +480,9 @@ function WeaponsField({
 	) => void;
 	videoType: string;
 	previousWeapons: MatchFieldValues | null;
-	formValues: Record<string, unknown>;
 }) {
 	const { t } = useTranslation(["vods", "forms"]);
-	const teamSizeValue = formValues.teamSize as string | undefined;
+	const teamSizeValue = useFormValue("teamSize") as string | undefined;
 	const teamSize = teamSizeValue ? Number(teamSizeValue) : 4;
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();
