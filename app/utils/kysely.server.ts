@@ -1,4 +1,5 @@
 import {
+	type AliasedRawBuilder,
 	type ColumnType,
 	type Expression,
 	type ExpressionBuilder,
@@ -43,36 +44,84 @@ export function peakXpOverallSql<T extends number | null = number | null>() {
 	return sql<T>`"SplatoonPlayer"."peakXp" ->> '$.overall'`;
 }
 
+type CommonUserSelectOptions = {
+	alias?: string;
+	prefix?: string;
+	idAs?: string;
+};
+
+type UserTableAlias<O> = O extends { alias: infer A extends string }
+	? A
+	: "User";
+
+type PrefixedUserColumn<O, C extends string> = O extends {
+	prefix: infer P extends string;
+}
+	? `${P}${Capitalize<C>}`
+	: C;
+
+type UserIdColumn<O> = O extends { idAs: infer I extends string }
+	? I
+	: PrefixedUserColumn<O, "id">;
+
+type CommonUserSelectResult<O> = readonly [
+	`${UserTableAlias<O>}.id as ${UserIdColumn<O>}`,
+	`${UserTableAlias<O>}.username as ${PrefixedUserColumn<O, "username">}`,
+	`${UserTableAlias<O>}.discordId as ${PrefixedUserColumn<O, "discordId">}`,
+	`${UserTableAlias<O>}.discordAvatar as ${PrefixedUserColumn<O, "discordAvatar">}`,
+	`${UserTableAlias<O>}.customUrl as ${PrefixedUserColumn<O, "customUrl">}`,
+	AliasedRawBuilder<string | null, PrefixedUserColumn<O, "customAvatarUrl">>,
+];
+
 /**
  * Select list for the fields shared by every user representation across the app. Includes
  * `customAvatarUrl`, the full URL of the user's supporter custom avatar (resolved from
- * `User.customAvatarImgId`), or `null` when they have none. `"User"` must be in scope at the call
- * site (it always is, since the other fields reference `User.*`).
+ * `User.customAvatarImgId`), or `null` when they have none. By default reads from `"User"` which
+ * must be in scope at the call site; pass `alias` when the table is joined under another name
+ * (`alias: "LinkedUser"`), `prefix` to prefix every output column (`prefix: "sender"` →
+ * `senderId`, `senderUsername`, ...) and `idAs` to rename only the id column (`idAs: "userId"`).
  */
-export function commonUserSelect(eb: ExpressionBuilder<Tables, "User">) {
+export function commonUserSelect<const O extends CommonUserSelectOptions>(
+	eb: ExpressionBuilder<DB, any>,
+	options?: O,
+): CommonUserSelectResult<O> {
+	const alias = options?.alias ?? "User";
+	const prefix = options?.prefix;
+
+	const outputName = (column: string) =>
+		prefix ? `${prefix}${column[0].toUpperCase()}${column.slice(1)}` : column;
+	const idName = options?.idAs ?? outputName("id");
+
 	return [
-		"User.id",
-		"User.username",
-		"User.discordId",
-		"User.discordAvatar",
-		"User.customUrl",
-		customAvatarUrl(eb).as("customAvatarUrl"),
-	] as const;
+		`${alias}.id as ${idName}`,
+		`${alias}.username as ${outputName("username")}`,
+		`${alias}.discordId as ${outputName("discordId")}`,
+		`${alias}.discordAvatar as ${outputName("discordAvatar")}`,
+		`${alias}.customUrl as ${outputName("customUrl")}`,
+		customAvatarUrl(eb, alias).as(outputName("customAvatarUrl")),
+	] as unknown as CommonUserSelectResult<O>;
 }
 
 /**
  * SQL expression resolving to the full URL of a user's supporter custom avatar (from
  * `User.customAvatarImgId`), or `null` when they have none. Alias it
- * (`.as("customAvatarUrl")`) when selecting it directly. Prefer {@link commonUserSelect} /
- * {@link commonUserJsonObject}; reach for this only when those don't fit (e.g. prefixed aliases or
- * a hand-built `jsonBuildObject`).
+ * (`.as("customAvatarUrl")`) when selecting it directly. Pass `alias` when the `User` table is
+ * joined under another name. Prefer {@link commonUserSelect} / {@link commonUserJsonObject};
+ * reach for this only when those don't fit (e.g. a hand-built `jsonBuildObject`).
  */
-export function customAvatarUrl(eb: ExpressionBuilder<Tables, "User">) {
+export function customAvatarUrl(
+	eb: ExpressionBuilder<DB, any>,
+	alias = "User",
+) {
 	return concatUserSubmittedImagePrefix(
 		eb
 			.selectFrom("UserSubmittedImage")
 			.select("UserSubmittedImage.url")
-			.whereRef("UserSubmittedImage.id", "=", "User.customAvatarImgId")
+			.whereRef(
+				"UserSubmittedImage.id",
+				"=",
+				sql.ref(`${alias}.customAvatarImgId`),
+			)
 			.$asScalar(),
 	).$castTo<string | null>();
 }
