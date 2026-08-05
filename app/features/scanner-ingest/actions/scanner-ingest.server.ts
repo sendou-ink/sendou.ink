@@ -1,25 +1,19 @@
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { logger } from "~/utils/logger";
-import {
-	badRequestIfFalsy,
-	canAccessLohiEndpoint,
-	parseBody,
-} from "~/utils/remix.server";
+import { badRequestIfFalsy, parseBody } from "~/utils/remix.server";
 import * as Scoreboards from "../core/Scoreboards";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
-import {
-	type IngestedEventInput,
-	ingestBodySchema,
-} from "../scanner-ingest-schemas";
+import { ingestBodySchema } from "../scanner-ingest-schemas";
 
 // xxx: dont only attach scoreboard on ingest, also when score is reported (for e.g. tournament stuff)
 // xxx: check why http://localhost:7001/to/4066/matches/139247?tab=result layout bad
 // xxx: check why http://localhost:7001/to/4066/matches/139247?tab=result first game not uploaded
 // xxx: this needs some thinking and documentation to cover all the cases that can be ingested
 export const action: ActionFunction = async ({ request }) => {
-	const user = canAccessLohiEndpoint(request) ? null : requireUser();
+	const user = requireUser();
 
 	const data = await parseBody({ request, schema: ingestBodySchema });
 
@@ -29,6 +23,7 @@ export const action: ActionFunction = async ({ request }) => {
 		badRequestIfFalsy(await UserRepository.findLeanById(povUserId));
 	}
 
+	// xxx: also pass if the ingestion is live footage, if so then check users current activity and use that info instead (can/should also be persisted?)
 	let tournamentId = data.tournamentId ?? null;
 	// the resolving content walk's candidate games, kept so the scoreboard
 	// matching below doesn't re-query them
@@ -38,13 +33,13 @@ export const action: ActionFunction = async ({ request }) => {
 			await ScannerIngestRepository.tournamentStartTime(tournamentId),
 		);
 	} else if (povUserId) {
-		// no explicit tournament: resolve from the scoreboards' content first
-		// (the mode+stage sequence plus roster sides is near-unique in a
-		// user's history), then from when the events' match was played (a
-		// replay scoreboard carries the original recording time). Single-
-		// scoreboard requests (live sends) skip straight to the timestamp —
-		// content resolution needs a sequence to be decisive.
-		if (countScoreboardEvents(data.events) >= 2) {
+		// no explicit tournament: resolve from the matches' content first (the
+		// mode+stage sequence plus roster sides is near-unique in a user's
+		// history), then from when the match was played (a replay scoreboard
+		// carries the original recording time). Single-match requests (live
+		// sends) skip straight to the timestamp — content resolution needs a
+		// sequence to be decisive.
+		if (countAttachableMatches(data.matches) >= 2) {
 			const games = await ScannerIngestRepository.gamesPlayedByUserSince({
 				userId: povUserId,
 				since:
@@ -52,19 +47,19 @@ export const action: ActionFunction = async ({ request }) => {
 					Math.floor(Date.now() / 1000) - CONTENT_RESOLUTION_WINDOW_SECONDS,
 			});
 			tournamentId = Scoreboards.resolveTournamentId({
-				events: data.events,
+				matches: data.matches,
 				games,
 			});
 			if (tournamentId) {
 				candidateGames = games;
 				logger.debug(
-					`ingest: resolved tournament ${tournamentId} for user ${povUserId} from scoreboard contents ` +
+					`ingest: resolved tournament ${tournamentId} for user ${povUserId} from match contents ` +
 						`(${games.length} candidate games)`,
 				);
 			}
 		}
 		if (!tournamentId) {
-			const at = anchorTime(data.events);
+			const at = anchorTime(data.matches);
 			tournamentId = await ScannerIngestRepository.tournamentIdAt({
 				userId: povUserId,
 				at,
@@ -77,12 +72,13 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 	}
 
-	const storedEventsCount = await ScannerIngestRepository.addEvents({
-		tournamentId,
-		povUserId,
-		submitterUserId: user?.id ?? null,
-		events: data.events,
-	});
+	const { insertedCount, mergedCount, effectiveMatches } =
+		await ScannerIngestRepository.addOrMergeMatches({
+			tournamentId,
+			povUserId,
+			submitterUserId: user?.id ?? null,
+			matches: data.matches,
+		});
 
 	let storedScoreboardsCount = 0;
 	if (tournamentId && povUserId) {
@@ -97,7 +93,7 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 		const matched = Scoreboards.matchedScoreboards({
-			events: data.events,
+			matches: effectiveMatches,
 			games,
 		});
 
@@ -116,12 +112,16 @@ export const action: ActionFunction = async ({ request }) => {
 		);
 	} else {
 		logger.debug(
-			`ingest: stored ${storedEventsCount} events without a match context ` +
+			`ingest: stored ${insertedCount} matches (${mergedCount} merged) without a match context ` +
 				`(tournamentId=${tournamentId}, povUserId=${povUserId})`,
 		);
 	}
 
-	return { storedEventsCount, storedScoreboardsCount };
+	return {
+		storedMatchesCount: insertedCount,
+		mergedMatchesCount: mergedCount,
+		storedScoreboardsCount,
+	};
 };
 
 /**
@@ -130,37 +130,20 @@ export const action: ActionFunction = async ({ request }) => {
  */
 const CONTENT_RESOLUTION_WINDOW_SECONDS = 365 * 24 * 60 * 60;
 
-function countScoreboardEvents(events: IngestedEventInput[]): number {
-	return events.filter(
-		(event) => event.type === "Scoreboard" || event.type === "ScoreboardReplay",
-	).length;
+/** Matches that could attach to a tournament game: their winner is known. */
+function countAttachableMatches(matches: ScannerMatch[]): number {
+	return matches.filter((match) => match.winner !== null).length;
 }
 
 /**
- * The wall-clock time the events' match was (probably) played: the latest
- * scoreboard's recording time (replays) or detection time, falling back to
- * any event's detection time and finally to "now".
+ * The wall-clock time the request's matches were (probably) played: the
+ * latest match's playedAt, falling back to "now".
  */
-function anchorTime(events: IngestedEventInput[]): number {
-	const anchors = events
-		.filter(
-			(event) =>
-				event.type === "Scoreboard" || event.type === "ScoreboardReplay",
-		)
-		.map(
-			(event) =>
-				(event.type === "ScoreboardReplay" ? event.recordedAt : null) ??
-				event.detectedAt,
-		)
-		.filter(
-			(anchor): anchor is number => anchor !== undefined && anchor !== null,
-		);
-	if (anchors.length > 0) return Math.max(...anchors);
-
-	const detections = events
-		.map((event) => event.detectedAt)
-		.filter((detectedAt): detectedAt is number => detectedAt !== undefined);
-	if (detections.length > 0) return Math.max(...detections);
+function anchorTime(matches: ScannerMatch[]): number {
+	const playedAts = matches
+		.map((match) => match.playedAt)
+		.filter((playedAt): playedAt is number => playedAt !== null);
+	if (playedAts.length > 0) return Math.max(...playedAts);
 
 	return Date.now();
 }

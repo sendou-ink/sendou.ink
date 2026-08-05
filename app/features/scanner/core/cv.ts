@@ -4,6 +4,10 @@
  *
  * Everything in core/ obtains the cv namespace through getCV(); callers must
  * await loadOpenCV() once at startup (worker bootstrap, test setup, tool entry).
+ *
+ * Gotcha of this build (5.0.0-release.1): `.data` and `.clone()` are broken
+ * on ROI views — `view.copyTo(freshMat)` before pixel access. Views are fine
+ * as inputs to cv calls.
  */
 import cvModule from "@techstark/opencv-js";
 

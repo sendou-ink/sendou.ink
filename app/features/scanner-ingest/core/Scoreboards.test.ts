@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type {
+	ScannerMatch,
+	ScannerMatchPlayer,
+} from "~/features/scanner/core/scanner-match";
+import type {
 	ScannerAbility,
 	ScannerLobby,
 } from "~/features/scanner/scanner-types";
@@ -8,7 +12,6 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import type { IngestedEventInput } from "../scanner-ingest-schemas";
 import * as Scoreboards from "./Scoreboards";
 
 const WINNER_TEAM_ID = 100;
@@ -33,7 +36,7 @@ function testGame(
 	};
 }
 
-function testScoreboard({
+function testMatch({
 	t = 60,
 	mode = "SZ",
 	stage = 0,
@@ -51,34 +54,57 @@ function testScoreboard({
 	weapons?: (MainWeaponId | null)[];
 	abilities?: Record<number, ScannerAbility[][]>;
 	povIndex?: number | null;
-} = {}): IngestedEventInput {
+} = {}): ScannerMatch {
+	const players = names.map(
+		(name, i): ScannerMatchPlayer => ({
+			name: name || null,
+			weaponId: weapons[i]!,
+			paint: 1000,
+			ka: 10,
+			d: 5,
+			s: 2,
+			...(abilities[i] ? { abilities: abilities[i] } : null),
+		}),
+	);
 	return {
-		type: "Scoreboard",
-		t,
-		confidence: 0.9,
-		data: {
-			lobby,
-			mode,
-			stage,
-			scores: [100, 52],
-			players: names.map((name, i) => ({
-				name,
-				weaponId: weapons[i]!,
-				paint: 1000,
-				ka: 10,
-				d: 5,
-				s: 2,
-				...(abilities[i] ? { abilities: abilities[i] } : null),
-			})),
-			povIndex,
-		},
+		startsAt: t,
+		endsAt: t,
+		playedAt: null,
+		lobby,
+		mode,
+		stage,
+		matchScores: null,
+		replayCode: null,
+		cast: false,
+		teams: [
+			{ score: 100, players: players.slice(0, 4) },
+			{ score: 52, players: players.slice(4) },
+		],
+		winner: 0,
+		pov:
+			povIndex === null
+				? null
+				: { team: povIndex < 4 ? 0 : 1, index: povIndex % 4 },
+	};
+}
+
+/** The same game reported with sides in the other on-screen order. */
+function swapSides(match: ScannerMatch): ScannerMatch {
+	return {
+		...match,
+		teams: [match.teams[1], match.teams[0]],
+		winner: match.winner === null ? null : match.winner === 0 ? 1 : 0,
+		pov:
+			match.pov === null
+				? null
+				: { ...match.pov, team: match.pov.team === 0 ? 1 : 0 },
 	};
 }
 
 describe("matchedScoreboards", () => {
-	it("turns a matching game's scoreboard into stored scoreboard data", () => {
+	it("turns a matching game's match into stored scoreboard data", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard({ povIndex: 2 })],
+			matches: [testMatch({ povIndex: 2 })],
 			games: [testGame()],
 		});
 
@@ -105,6 +131,40 @@ describe("matchedScoreboards", () => {
 		});
 	});
 
+	it("a winner-1 match stores identically to its winner-0 mirror", () => {
+		const straight = Scoreboards.matchedScoreboards({
+			matches: [testMatch({ povIndex: 6 })],
+			games: [testGame()],
+		});
+		const swapped = Scoreboards.matchedScoreboards({
+			matches: [swapSides(testMatch({ povIndex: 6 }))],
+			games: [testGame()],
+		});
+
+		expect(swapped).toEqual(straight);
+		expect(swapped[0]!.povIndex).toBe(6);
+	});
+
+	it("skips matches without a known winner", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
+			matches: [{ ...testMatch(), winner: null }],
+			games: [testGame()],
+		});
+
+		expect(scoreboards).toHaveLength(0);
+	});
+
+	it("skips matches whose teams were not fully seen", () => {
+		const partial = testMatch();
+		partial.teams[1].players.pop();
+		const scoreboards = Scoreboards.matchedScoreboards({
+			matches: [partial],
+			games: [testGame()],
+		});
+
+		expect(scoreboards).toHaveLength(0);
+	});
+
 	it("carries ingested player abilities through to the stored scoreboard", () => {
 		const build: ScannerAbility[][] = [
 			["ISM", "ISS", "ISS", "ISS"],
@@ -112,7 +172,7 @@ describe("matchedScoreboards", () => {
 			["SSU", "RSU", "RSU", "RSU"],
 		];
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard({ abilities: { 5: build } })],
+			matches: [testMatch({ abilities: { 5: build } })],
 			games: [testGame()],
 		});
 
@@ -122,7 +182,7 @@ describe("matchedScoreboards", () => {
 
 	it("skips a game whose stored scoreboard has different players", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard()],
+			matches: [testMatch()],
 			games: [
 				testGame({
 					matchGameResultId: 11,
@@ -137,7 +197,7 @@ describe("matchedScoreboards", () => {
 
 	it("matches a re-detection of a stored scoreboard to the same game despite misread names", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard()],
+			matches: [testMatch()],
 			games: [
 				testGame({
 					matchGameResultId: 11,
@@ -161,9 +221,7 @@ describe("matchedScoreboards", () => {
 
 	it("does not count unreadable names towards stored scoreboard re-detection", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({ names: ["", "", "", "", "l1", "l2", "l3", "l4"] }),
-			],
+			matches: [testMatch({ names: ["", "", "", "", "l1", "l2", "l3", "l4"] })],
 			games: [
 				testGame({
 					matchGameResultId: 11,
@@ -176,9 +234,9 @@ describe("matchedScoreboards", () => {
 		expect(scoreboards.map((s) => s.matchGameResultId)).toEqual([12]);
 	});
 
-	it("matches scoreboards to games by mode and stage", () => {
+	it("matches matches to games by mode and stage", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard({ mode: "RM", stage: 1, t: 60 })],
+			matches: [testMatch({ mode: "RM", stage: 1, t: 60 })],
 			games: [
 				testGame({ mapIndex: 0, mode: "SZ", stageId: 0 as StageId }),
 				testGame({ mapIndex: 1, mode: "RM", stageId: 1 as StageId }),
@@ -190,12 +248,12 @@ describe("matchedScoreboards", () => {
 
 	it("assigns two games on the same mode and stage in chronological order", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({
+			matches: [
+				testMatch({
 					t: 60,
 					names: ["a", "b", "c", "d", "e", "f", "g", "h"],
 				}),
-				testScoreboard({
+				testMatch({
 					t: 5000,
 					names: ["i", "j", "k", "l", "m", "n", "o", "p"],
 				}),
@@ -216,9 +274,9 @@ describe("matchedScoreboards", () => {
 		).toBe(2);
 	});
 
-	it("skips duplicate detections of the same scoreboard", () => {
+	it("skips duplicate detections of the same game", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard({ t: 60 }), testScoreboard({ t: 65 })],
+			matches: [testMatch({ t: 60 }), testMatch({ t: 65 })],
 			games: [
 				testGame({ tournamentMatchId: 1, playedAt: 1000 }),
 				testGame({ tournamentMatchId: 2, playedAt: 2000 }),
@@ -229,18 +287,18 @@ describe("matchedScoreboards", () => {
 		expect(scoreboards[0]!.tournamentMatchId).toBe(1);
 	});
 
-	it("skips scoreboards from other lobbies", () => {
+	it("skips matches from other lobbies", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard({ lobby: "X" })],
+			matches: [testMatch({ lobby: "X" })],
 			games: [testGame()],
 		});
 
 		expect(scoreboards).toHaveLength(0);
 	});
 
-	it("skips scoreboards with unreadable mode or stage", () => {
+	it("skips matches with unreadable mode or stage", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard({ mode: null }), testScoreboard({ stage: null })],
+			matches: [testMatch({ mode: null }), testMatch({ stage: null })],
 			games: [testGame()],
 		});
 
@@ -249,8 +307,8 @@ describe("matchedScoreboards", () => {
 
 	it("keeps players with unread weapon or empty name", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({
+			matches: [
+				testMatch({
 					names: ["w1", "", "w3", "w4", "l1", "l2", "l3", "l4"],
 					weapons: [10, 10, null, 10, 20, 20, 20, 20],
 				}),
@@ -266,27 +324,11 @@ describe("matchedScoreboards", () => {
 		expect(players[2]!.ka).toBe(10);
 	});
 
-	it("skips non-scoreboard events", () => {
+	it("skips matches that have no matching game left", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				{
-					type: "MapStart",
-					t: 10,
-					confidence: 0.9,
-					data: { mode: "SZ", stage: 0 },
-				},
-			],
-			games: [testGame()],
-		});
-
-		expect(scoreboards).toHaveLength(0);
-	});
-
-	it("skips scoreboards that have no matching game left", () => {
-		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({ t: 60 }),
-				testScoreboard({
+			matches: [
+				testMatch({ t: 60 }),
+				testMatch({
 					t: 5000,
 					names: ["i", "j", "k", "l", "m", "n", "o", "p"],
 				}),
@@ -297,37 +339,13 @@ describe("matchedScoreboards", () => {
 		expect(scoreboards).toHaveLength(1);
 	});
 
-	it("uses ScoreboardReplay events too", () => {
-		const scoreboard = testScoreboard();
+	it("skips a game whose known rosters contradict the match sides", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				{
-					...scoreboard,
-					type: "ScoreboardReplay",
-					data: {
-						...(scoreboard.data as Extract<
-							IngestedEventInput,
-							{ type: "Scoreboard" }
-						>["data"]),
-						timestamp: "3/7/2026 22:28",
-						replayCode: "ABCD-EFGH-IJKL-MNOP",
-						matchScores: [100, 52],
-					},
-				},
-			],
-			games: [testGame()],
-		});
-
-		expect(scoreboards).toHaveLength(1);
-	});
-
-	it("skips a game whose known rosters contradict the scoreboard sides", () => {
-		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [testScoreboard()],
+			matches: [testMatch()],
 			games: [
 				testGame({
 					tournamentMatchId: 1,
-					// scoreboard winners are w1-w4 but this game was won by the l* players
+					// match winners are w1-w4 but this game was won by the l* players
 					winnerInGameNames: ["l1#1234", "l2"],
 					loserInGameNames: ["w1", "w2"],
 					playedAt: 1000,
@@ -346,8 +364,8 @@ describe("matchedScoreboards", () => {
 
 	it("matches known in-game names ignoring discriminator, case and unicode width", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({
+			matches: [
+				testMatch({
 					names: ["Ｗ１", "w2", "w3", "w4", "l1", "l2", "l3", "l4"],
 				}),
 			],
@@ -366,8 +384,8 @@ describe("matchedScoreboards", () => {
 
 	it("keeps players whose name appears twice on the same side", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({
+			matches: [
+				testMatch({
 					names: ["dupe", "dupe", "w3", "w4", "l1", "l2", "l3", "dupe"],
 				}),
 			],
@@ -381,9 +399,9 @@ describe("matchedScoreboards", () => {
 
 	it("does not assign a game played before the previously assigned one", () => {
 		const scoreboards = Scoreboards.matchedScoreboards({
-			events: [
-				testScoreboard({ t: 60, mode: "RM", stage: 1 }),
-				testScoreboard({ t: 1000, mode: "SZ", stage: 0 }),
+			matches: [
+				testMatch({ t: 60, mode: "RM", stage: 1 }),
+				testMatch({ t: 1000, mode: "SZ", stage: 0 }),
 			],
 			games: [
 				testGame({
@@ -427,13 +445,13 @@ describe("resolveTournamentId", () => {
 	}
 
 	const seenSequence = [
-		testScoreboard({ t: 60, mode: "SZ", stage: 0 }),
-		testScoreboard({ t: 600, mode: "TC", stage: 1 }),
+		testMatch({ t: 60, mode: "SZ", stage: 0 }),
+		testMatch({ t: 600, mode: "TC", stage: 1 }),
 	];
 
-	it("resolves the tournament whose games match the scoreboard sequence", () => {
+	it("resolves the tournament whose games match the seen sequence", () => {
 		const tournamentId = Scoreboards.resolveTournamentId({
-			events: seenSequence,
+			matches: seenSequence,
 			games: [
 				...tournamentGames(1, [
 					["SZ", 0],
@@ -449,9 +467,9 @@ describe("resolveTournamentId", () => {
 		expect(tournamentId).toBe(1);
 	});
 
-	it("does not resolve from a single matching scoreboard", () => {
+	it("does not resolve from a single matching match", () => {
 		const tournamentId = Scoreboards.resolveTournamentId({
-			events: [seenSequence[0]!],
+			matches: [seenSequence[0]!],
 			games: tournamentGames(1, [
 				["SZ", 0],
 				["TC", 1],
@@ -467,13 +485,13 @@ describe("resolveTournamentId", () => {
 			["TC", 1],
 		];
 		const tournamentId = Scoreboards.resolveTournamentId({
-			events: seenSequence,
+			matches: seenSequence,
 			games: [
 				...tournamentGames(1, sharedMaplist, {
 					winnerInGameNames: ["w1", "w2", "w3", "w4"],
 					loserInGameNames: ["l1", "l2", "l3", "l4"],
 				}),
-				// the other tournament's rosters contradict the scoreboard sides
+				// the other tournament's rosters contradict the match sides
 				...tournamentGames(2, sharedMaplist, {
 					winnerInGameNames: ["l1", "l2", "l3", "l4"],
 					loserInGameNames: ["w1", "w2", "w3", "w4"],
@@ -484,11 +502,11 @@ describe("resolveTournamentId", () => {
 		expect(tournamentId).toBe(1);
 	});
 
-	it("skips unreadable scoreboards but resolves from the rest", () => {
+	it("skips unreadable matches but resolves from the rest", () => {
 		const tournamentId = Scoreboards.resolveTournamentId({
-			events: [
+			matches: [
 				seenSequence[0]!,
-				testScoreboard({ t: 300, stage: null }),
+				testMatch({ t: 300, stage: null }),
 				seenSequence[1]!,
 			],
 			games: [

@@ -34,8 +34,8 @@ import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
+import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import type { IngestedScoreboardData } from "~/features/scanner-ingest/core/Scoreboards";
-import type { IngestedEventData } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import type {
 	MemberRole,
@@ -478,17 +478,15 @@ export interface ReportedWeapon {
 	createdAt: Generated<number>;
 }
 
-export interface IngestedEvent {
+export interface IngestedMatch {
 	id: GeneratedAlways<number>;
 	tournamentId: number | null;
 	povUserId: number | null;
 	submitterUserId: number | null;
-	type: string;
-	t: number;
-	confidence: number;
-	data: JSONColumnType<IngestedEventData>;
-	detectedAt: number | null;
-	eventHash: string;
+	/** database timestamp (seconds) the match was played at, when known */
+	playedAt: number | null;
+	data: JSONColumnType<ScannerMatch>;
+	matchHash: string;
 	createdAt: Generated<number>;
 }
 
@@ -1273,7 +1271,7 @@ export interface DB {
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
-	IngestedEvent: IngestedEvent;
+	IngestedMatch: IngestedMatch;
 	IngestedScoreboard: IngestedScoreboard;
 	PrivateUserNote: PrivateUserNote;
 	LogInLink: LogInLink;

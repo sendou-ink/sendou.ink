@@ -1,24 +1,27 @@
 /**
  * "Upload to sendou.ink" link for a fully processed VoD: the detected events
- * are grouped into per-match rows (src/core/vod-matches.ts) and packed into
- * the `ingest` search param of sendou.ink's /vods/new form (an `SP.json`
- * param the search-params module compresses), which prefills a new VoD from
- * them (the user adds the YouTube URL/title/date and fixes any misreads
- * before submitting).
+ * are built into ScannerMatches (core/match-builder.ts), projected onto the
+ * slim per-match rows the `ingest` search param of sendou.ink's /vods/new
+ * form carries (an `SP.json` param the search-params module compresses),
+ * which prefills a new VoD from them (the user adds the YouTube
+ * URL/title/date and fixes any misreads before submitting).
  *
  * The VoD type is auto-detected: footage containing the casted 8-player
  * spectator map screen is a CAST VoD; anything else leaves the form's default
- * type untouched.
+ * type untouched. A match without a mode read prefills the form's SZ default,
+ * flagged `modeAssumed` — the fabricated default lives here, not on
+ * ScannerMatch.
  */
-import type { IngestVodPrefill } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
+import type {
+	IngestVodMatchInput,
+	IngestVodPrefill,
+} from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { newVodPage } from "~/utils/urls";
-import {
-	MINIMAP_EVENT_TYPE,
-	type MinimapData,
-} from "../core/detectors/minimap/index";
 import type { DetectedEvent } from "../core/detectors/types";
-import { buildVodMatches } from "../core/vod-matches";
+import { buildScannerMatches } from "../core/match-builder";
+import type { ScannerMatch } from "../core/scanner-match";
 
 /**
  * GET query params ride the request line, and servers/proxies commonly cap
@@ -27,6 +30,9 @@ import { buildVodMatches } from "../core/vod-matches";
  * emitting a URL the server would reject with an opaque error.
  */
 const MAX_URL_LENGTH = 8000;
+
+/** The prefill default for a match whose mode no source read. */
+const DEFAULT_VOD_MODE = "SZ" satisfies ModeShort;
 
 export interface SendouUpload {
 	/** prefilled /vods/new path (same-origin); null when nothing usable to send */
@@ -37,18 +43,17 @@ export interface SendouUpload {
 
 /** Builds the prefilled /vods/new link for a completed scan's events. */
 export function sendouUpload(events: readonly DetectedEvent[]): SendouUpload {
-	const matches = buildVodMatches(events);
+	const matches = buildScannerMatches(events)
+		.map((built) => built.match)
+		.filter((match) => match.teams.some((team) => team.players.length > 0));
 	if (matches.length === 0) return { url: null, problem: null };
 
-	const isCast = events.some(
-		(event) =>
-			event.type === MINIMAP_EVENT_TYPE &&
-			(event.data as MinimapData).spectator,
-	);
+	const isCast = matches.some((match) => match.cast);
 
-	const payload: IngestVodPrefill = isCast
-		? { type: "CAST", matches }
-		: { matches };
+	const payload: IngestVodPrefill = {
+		...(isCast ? { type: "CAST" as const } : null),
+		matches: matches.map(toPrefillMatch),
+	};
 	const result = vodsNewSearchParams.href(newVodPage(), { ingest: payload });
 	if (result.length > MAX_URL_LENGTH) {
 		return {
@@ -59,4 +64,16 @@ export function sendouUpload(events: readonly DetectedEvent[]): SendouUpload {
 		};
 	}
 	return { url: result, problem: null };
+}
+
+function toPrefillMatch(match: ScannerMatch): IngestVodMatchInput {
+	return {
+		startsAt: match.startsAt ?? 0,
+		mode: match.mode ?? DEFAULT_VOD_MODE,
+		modeAssumed: match.mode === null,
+		stage: match.stage,
+		weapons: match.teams.flatMap((team) =>
+			team.players.map((player) => player.weaponId),
+		),
+	};
 }

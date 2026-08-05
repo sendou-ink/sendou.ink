@@ -33,7 +33,7 @@ import type { FixtureData } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
 import {
-	countIngestBatches,
+	countIngestableMatches,
 	type SendouUser,
 	sendVodResults,
 } from "./sendou-ingest";
@@ -120,11 +120,13 @@ export function VodPage({
 		[status, matches],
 	);
 
-	// "Upload as results" — the /ingest counterpart of live sending: private
-	// match batches (MapStart → deaths → scoreboard) POSTed in one go
-	const resultsBatchCount = useMemo(
+	// "Upload as results" — the /ingest counterpart of live sending: the
+	// scan's ingestable ScannerMatches POSTed in one go
+	const resultsMatchCount = useMemo(
 		() =>
-			status === "done" ? countIngestBatches(matches.map((m) => m.event)) : 0,
+			status === "done"
+				? countIngestableMatches(matches.map((m) => m.event))
+				: 0,
 		[status, matches],
 	);
 
@@ -133,15 +135,15 @@ export function VodPage({
 		setResultsSend({
 			state: "sending",
 			sent: 0,
-			total: countIngestBatches(events),
+			total: countIngestableMatches(events),
 		});
 		const report = await sendVodResults(events, (sent, total) =>
 			setResultsSend({ state: "sending", sent, total }),
 		);
 		setResultsSend({
 			state: "done",
-			sent: report.sentBatches,
-			total: report.totalBatches,
+			sent: report.sentMatches,
+			total: report.totalMatches,
 			error: report.error,
 		});
 	}, []);
@@ -444,7 +446,7 @@ export function VodPage({
 								upload unavailable: {upload.problem}
 							</span>
 						)}
-						{SENDOU_UPLOAD_ENABLED && resultsBatchCount > 0 && (
+						{SENDOU_UPLOAD_ENABLED && resultsMatchCount > 0 && (
 							<button
 								type="button"
 								disabled={!sendouUser || resultsSend?.state === "sending"}

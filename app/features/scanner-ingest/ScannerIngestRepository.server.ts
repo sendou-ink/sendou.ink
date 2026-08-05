@@ -1,77 +1,205 @@
 import { createHash } from "node:crypto";
+import { subDays } from "date-fns";
 import { sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
+import * as Matches from "./core/Matches";
 import type {
 	IngestableGameWithTournament,
 	IngestedScoreboardData,
 	MatchedScoreboard,
 } from "./core/Scoreboards";
-import type { IngestedEventInput } from "./scanner-ingest-schemas";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
 const opponentTwoId = sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`;
 
 /**
- * Stores raw ingested events. Events whose contents were stored before
- * (for the same tournament and POV user) are skipped.
- *
- * @returns count of newly stored events
+ * How far a stored match's playedAt may sit from an incoming one and still
+ * be loaded as a merge candidate (content contradictions are checked by
+ * Matches.isSameMatch; this only bounds the query).
  */
-export async function addEvents({
+const MERGE_CANDIDATE_PLAYED_AT_WINDOW_DAYS = 1;
+/** How recently a playedAt-less stored match must have been created to be a candidate. */
+const MERGE_CANDIDATE_CREATED_AT_WINDOW_DAYS = 7;
+const MERGE_CANDIDATE_LIMIT = 50;
+
+/**
+ * Stores ingested matches, merging partials: a match that
+ * `Matches.isSameMatch` recognizes as an already stored one (same
+ * tournament + POV user scope) enriches that row instead of inserting.
+ * Identical resends are no-ops via the content hash.
+ *
+ * @returns counts plus the post-merge matches (a partial arriving after an
+ * earlier richer send attaches downstream with the merged, fuller data)
+ */
+export async function addOrMergeMatches({
 	tournamentId,
 	povUserId,
 	submitterUserId,
-	events,
+	matches,
 }: {
 	tournamentId: number | null;
 	povUserId: number | null;
 	submitterUserId: number | null;
-	events: IngestedEventInput[];
+	matches: ScannerMatch[];
 }) {
-	const result = await db
-		.insertInto("IngestedEvent")
-		.values(
-			events.map((event) => ({
+	let insertedCount = 0;
+	let mergedCount = 0;
+	const effectiveMatches: ScannerMatch[] = [];
+
+	for (const match of matches) {
+		const canonical = Matches.canonicalMatch(match);
+		const hash = matchHash({ tournamentId, povUserId, match: canonical });
+
+		const effective = await db.transaction().execute(async (trx) => {
+			const identical = await trx
+				.selectFrom("IngestedMatch")
+				.select("data")
+				.where("matchHash", "=", hash)
+				.executeTakeFirst();
+			if (identical) return identical.data;
+
+			const stored = await findMergeCandidate(trx, {
 				tournamentId,
 				povUserId,
-				submitterUserId,
-				type: event.type,
-				t: event.t,
-				confidence: event.confidence,
-				data: JSON.stringify(event.data),
-				detectedAt: event.detectedAt ?? null,
-				eventHash: eventHash({ tournamentId, povUserId, event }),
-			})),
+				match: canonical,
+			});
+			if (!stored) {
+				const inserted = await trx
+					.insertInto("IngestedMatch")
+					.values({
+						tournamentId,
+						povUserId,
+						submitterUserId,
+						playedAt: toDbTimestamp(canonical.playedAt),
+						data: JSON.stringify(canonical),
+						matchHash: hash,
+					})
+					.onConflict((oc) => oc.column("matchHash").doNothing())
+					.executeTakeFirst();
+				if (Number(inserted.numInsertedOrUpdatedRows ?? 0) > 0) {
+					insertedCount++;
+				}
+				return canonical;
+			}
+
+			const { merged, changed } = Matches.mergeMatches(stored.data, canonical);
+			if (!changed) return stored.data;
+
+			const mergedCanonical = Matches.canonicalMatch(merged);
+			await trx
+				.updateTable("IngestedMatch")
+				.set({
+					playedAt: toDbTimestamp(mergedCanonical.playedAt),
+					data: JSON.stringify(mergedCanonical),
+					matchHash: matchHash({
+						tournamentId,
+						povUserId,
+						match: mergedCanonical,
+					}),
+				})
+				.where("id", "=", stored.id)
+				.execute();
+			mergedCount++;
+			return mergedCanonical;
+		});
+
+		effectiveMatches.push(effective);
+	}
+
+	return { insertedCount, mergedCount, effectiveMatches };
+}
+
+/**
+ * The stored match the incoming one describes the same game as, if any:
+ * rows in the same tournament + POV user scope, near in play time (or
+ * recent when either side has none), content-checked by Matches.isSameMatch.
+ */
+async function findMergeCandidate(
+	trx: Transaction<DB>,
+	{
+		tournamentId,
+		povUserId,
+		match,
+	}: {
+		tournamentId: number | null;
+		povUserId: number | null;
+		match: ScannerMatch;
+	},
+) {
+	const createdAfter = Math.floor(
+		subDays(new Date(), MERGE_CANDIDATE_CREATED_AT_WINDOW_DAYS).getTime() /
+			1000,
+	);
+
+	const candidates = await trx
+		.selectFrom("IngestedMatch")
+		.select(["id", "data"])
+		.$if(tournamentId === null, (qb) => qb.where("tournamentId", "is", null))
+		.$if(tournamentId !== null, (qb) =>
+			qb.where("tournamentId", "=", tournamentId!),
 		)
-		.onConflict((oc) => oc.column("eventHash").doNothing())
+		.$if(povUserId === null, (qb) => qb.where("povUserId", "is", null))
+		.$if(povUserId !== null, (qb) => qb.where("povUserId", "=", povUserId!))
+		.$if(match.playedAt !== null, (qb) =>
+			qb.where((eb) =>
+				eb.or([
+					eb.and([
+						eb(
+							"playedAt",
+							">=",
+							toDbTimestamp(
+								subDays(
+									match.playedAt!,
+									MERGE_CANDIDATE_PLAYED_AT_WINDOW_DAYS,
+								).getTime(),
+							),
+						),
+						eb(
+							"playedAt",
+							"<=",
+							toDbTimestamp(match.playedAt!)! +
+								MERGE_CANDIDATE_PLAYED_AT_WINDOW_DAYS * 24 * 60 * 60,
+						),
+					]),
+					eb.and([
+						eb("playedAt", "is", null),
+						eb("createdAt", ">=", createdAfter),
+					]),
+				]),
+			),
+		)
+		.$if(match.playedAt === null, (qb) =>
+			qb.where("createdAt", ">=", createdAfter),
+		)
+		.orderBy("createdAt", "desc")
+		.limit(MERGE_CANDIDATE_LIMIT)
 		.execute();
 
-	return result.reduce(
-		(acc, cur) => acc + Number(cur.numInsertedOrUpdatedRows ?? 0),
-		0,
+	return (
+		candidates.find((candidate) =>
+			Matches.isSameMatch(candidate.data, match),
+		) ?? null
 	);
 }
 
-function eventHash({
+/** wall-clock ms → database timestamp (seconds) */
+function toDbTimestamp(ms: number | null): number | null {
+	return ms === null ? null : Math.floor(ms / 1000);
+}
+
+function matchHash({
 	tournamentId,
 	povUserId,
-	event,
+	match,
 }: {
 	tournamentId: number | null;
 	povUserId: number | null;
-	event: IngestedEventInput;
+	match: ScannerMatch;
 }) {
 	return createHash("sha256")
-		.update(
-			JSON.stringify([
-				tournamentId,
-				povUserId,
-				event.type,
-				event.t,
-				event.data,
-			]),
-		)
+		.update(JSON.stringify([tournamentId, povUserId, match]))
 		.digest("hex");
 }
 

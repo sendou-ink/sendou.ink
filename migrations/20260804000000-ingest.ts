@@ -1,11 +1,11 @@
 import { type Kysely, sql } from "kysely";
 
-/** Tables for CV-ingested match events and end-of-game scoreboards */
+/** Tables for scanner-ingested matches and end-of-game scoreboards */
 export async function up(db: Kysely<any>): Promise<void> {
 	// kysely does not wrap sqlite migrations in a transaction, so do it here
 	await db.transaction().execute(async (trx) => {
 		await trx.schema
-			.createTable("IngestedEvent")
+			.createTable("IngestedMatch")
 			.addColumn("id", "integer", (col) => col.primaryKey())
 			.addColumn("tournamentId", "integer", (col) =>
 				col.references("Tournament.id").onDelete("cascade"),
@@ -16,12 +16,9 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.addColumn("submitterUserId", "integer", (col) =>
 				col.references("User.id").onDelete("set null"),
 			)
-			.addColumn("type", "text", (col) => col.notNull())
-			.addColumn("t", "real", (col) => col.notNull())
-			.addColumn("confidence", "real", (col) => col.notNull())
+			.addColumn("playedAt", "integer")
 			.addColumn("data", "text", (col) => col.notNull())
-			.addColumn("detectedAt", "integer")
-			.addColumn("eventHash", "text", (col) => col.unique().notNull())
+			.addColumn("matchHash", "text", (col) => col.unique().notNull())
 			.addColumn("createdAt", "integer", (col) =>
 				col.notNull().defaultTo(sql`(strftime('%s', 'now'))`),
 			)
@@ -30,15 +27,15 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.execute();
 
 		await trx.schema
-			.createIndex("ingested_event_tournament_id")
-			.on("IngestedEvent")
+			.createIndex("ingested_match_tournament_id")
+			.on("IngestedMatch")
 			.column("tournamentId")
 			.execute();
 
 		await trx.schema
-			.createIndex("ingested_event_pov_user_id")
-			.on("IngestedEvent")
-			.column("povUserId")
+			.createIndex("ingested_match_pov_user_id_played_at")
+			.on("IngestedMatch")
+			.columns(["povUserId", "playedAt"])
 			.execute();
 
 		await trx.schema

@@ -1,31 +1,25 @@
 /**
- * Zod schemas for the scanner events domain — the single source of truth shared
- * by the producer (the scanner detectors/UI in this feature) and the validator
- * (features/scanner-ingest). Every domain field is a sendou.ink id type; the
- * compile-time asserts at the bottom pin each schema to the corresponding
- * detector output interface so producer and validator cannot drift.
+ * Zod schemas for the scanner domain — the single source of truth shared by
+ * the producer (the scanner match builder/UI in this feature) and the
+ * validator (features/scanner-ingest). Every domain field is a sendou.ink id
+ * type; the compile-time asserts at the bottom pin each schema to the
+ * corresponding core interface so producer and validator cannot drift.
  *
- * The detectors/worker consume only the *types* (type-only imports point
- * the other way), so zod never enters the worker bundle; runtime
- * validation happens at the boundaries (ingest action, prefill loader).
+ * The core/worker modules consume only the *types* (type-only imports point
+ * the other way), so zod never enters the worker bundle; runtime validation
+ * happens at the boundaries (ingest action, prefill loader).
  */
 import { z } from "zod";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { Ability } from "~/modules/in-game-lists/types";
-import {
-	mainWeaponIds,
-	specialWeaponIds,
-	subWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
-import type { DeathData } from "./core/detectors/death/index";
-import type { MapStartData } from "./core/detectors/map-start/index";
+import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type {
-	ScoreboardData,
-	ScoreboardPlayer,
-} from "./core/detectors/scoreboard/index";
-import type { ScoreboardReplayData } from "./core/detectors/scoreboard-replay/index";
+	ScannerMatch,
+	ScannerMatchPlayer,
+	ScannerMatchTeam,
+} from "./core/scanner-match";
 import { SCANNER_LOBBIES } from "./scanner-types";
 
 const detectionText = z.string().max(500);
@@ -34,58 +28,53 @@ const scannerLobbySchema = z.enum(SCANNER_LOBBIES);
 export const modeShortSchema = z.enum(modesShort);
 export const stageIdSchema = z.literal(stageIds);
 export const mainWeaponIdSchema = z.literal(mainWeaponIds);
-const subWeaponIdSchema = z.literal(subWeaponIds);
-const specialWeaponIdSchema = z.literal(specialWeaponIds);
 
 const abilityNames = abilities.map((ability) => ability.name) as Ability[];
 /** a sendou ability id, or the detectors' explicit unrecognized marker */
-export const scannerAbilitySchema = z.union([
+const scannerAbilitySchema = z.union([
 	z.literal(abilityNames),
 	z.literal("UNKNOWN"),
 ]);
 
-export const scannerScoreboardPlayerSchema = z.object({
-	name: detectionText,
-	/** sendou main-weapon id; null when the row's weapon was unreadable */
+const scannerMatchPlayerSchema = z.object({
+	name: detectionText.nullable(),
 	weaponId: mainWeaponIdSchema.nullable(),
 	paint: z.number().nullable(),
 	ka: z.number().nullable(),
 	d: z.number().nullable(),
 	s: z.number().nullable(),
+	/** [head, clothes, shoes] ability rows harvested from death screens */
+	abilities: z.array(z.array(scannerAbilitySchema)).optional(),
 });
 
-export const scannerScoreboardDataSchema = z.object({
+const scannerMatchTeamSchema = z.object({
+	score: z.number().nullable(),
+	players: z.array(scannerMatchPlayerSchema).max(4),
+});
+
+const teamIndexSchema = z.union([z.literal(0), z.literal(1)]);
+
+export const scannerMatchSchema = z.object({
+	startsAt: z.number().int().min(0).nullable(),
+	endsAt: z.number().int().min(0).nullable(),
+	/** wall-clock ms the game was played */
+	playedAt: z.number().int().positive().nullable(),
 	lobby: scannerLobbySchema.nullable(),
 	mode: modeShortSchema.nullable(),
 	stage: stageIdSchema.nullable(),
-	scores: z.tuple([z.number().nullable(), z.number().nullable()]),
-	players: z.array(scannerScoreboardPlayerSchema).length(8),
-	povIndex: z.number().int().min(0).max(7).nullable(),
-});
-
-export const scannerScoreboardReplayDataSchema =
-	scannerScoreboardDataSchema.extend({
-		timestamp: detectionText.nullable(),
-		replayCode: detectionText.nullable(),
-		matchScores: z.tuple([z.number().nullable(), z.number().nullable()]),
-	});
-
-export const scannerDeathDataSchema = z.object({
-	/** sendou weapon id (main/sub/special id space per weaponType) */
-	weaponId: z
-		.union([mainWeaponIdSchema, subWeaponIdSchema, specialWeaponIdSchema])
+	matchScores: z
+		.tuple([z.number().nullable(), z.number().nullable()])
 		.nullable(),
-	weaponType: z.enum(["MAIN", "SUB", "SPECIAL"]).nullable(),
-	abilities: z.array(z.array(scannerAbilitySchema)),
-	name: detectionText.nullable(),
+	replayCode: detectionText.nullable(),
+	cast: z.boolean(),
+	teams: z.tuple([scannerMatchTeamSchema, scannerMatchTeamSchema]),
+	winner: teamIndexSchema.nullable(),
+	pov: z
+		.object({ team: teamIndexSchema, index: z.number().int().min(0).max(3) })
+		.nullable(),
 });
 
-export const scannerMapStartDataSchema = z.object({
-	mode: modeShortSchema.nullable(),
-	stage: stageIdSchema.nullable(),
-});
-
-// ---- compile-time drift protection: schema output <-> detector output ----
+// ---- compile-time drift protection: schema output <-> core interface ----
 
 type MutuallyAssignable<A, B> = [A] extends [B]
 	? [B] extends [A]
@@ -93,25 +82,17 @@ type MutuallyAssignable<A, B> = [A] extends [B]
 		: never
 	: never;
 
-// `true satisfies …` fails to compile the moment a schema and its detector
+// `true satisfies …` fails to compile the moment a schema and its core
 // interface disagree in either direction.
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerScoreboardPlayerSchema>,
-	ScoreboardPlayer
+	z.infer<typeof scannerMatchPlayerSchema>,
+	ScannerMatchPlayer
 >;
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerScoreboardDataSchema>,
-	ScoreboardData
+	z.infer<typeof scannerMatchTeamSchema>,
+	ScannerMatchTeam
 >;
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerScoreboardReplayDataSchema>,
-	ScoreboardReplayData
->;
-true satisfies MutuallyAssignable<
-	z.infer<typeof scannerDeathDataSchema>,
-	DeathData
->;
-true satisfies MutuallyAssignable<
-	z.infer<typeof scannerMapStartDataSchema>,
-	MapStartData
+	z.infer<typeof scannerMatchSchema>,
+	ScannerMatch
 >;

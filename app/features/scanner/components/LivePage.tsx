@@ -6,8 +6,10 @@ import {
 } from "../capture/sampler";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
+import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
+import type { BuiltMatch } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
 	clearEvents,
@@ -24,19 +26,20 @@ import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import {
-	batchContaining,
+	matchContaining,
 	type SendouUser,
-	sendBatches,
-	unsentBatches,
+	sendMatches,
+	unsentMatches,
 } from "./sendou-ingest";
 import { thumbnailFromBlob } from "./thumbnail";
 
 const SAMPLE_FPS = 2;
 
-/** Event types the /ingest batches carry — the only ones with a send status. */
+/** Event types the ingested matches are built from — the only ones with a send status. */
 const INGESTABLE_TYPES = [
 	MAP_START_EVENT_TYPE,
 	DEATH_EVENT_TYPE,
+	MINIMAP_EVENT_TYPE,
 	...SCOREBOARD_EVENT_TYPES,
 ];
 
@@ -88,10 +91,10 @@ export function LivePage({
 		};
 	}, [refreshFeed]);
 
-	/** Sends the batches `include` selects; serialized so sends never overlap. */
+	/** Sends the matches `include` selects; serialized so sends never overlap. */
 	const send = useCallback(
 		async (
-			include: (batch: StoredEvent[]) => boolean,
+			include: (built: BuiltMatch<StoredEvent>) => boolean,
 			{ manual = false } = {},
 		) => {
 			if (sendingRef.current) return;
@@ -99,15 +102,13 @@ export function LivePage({
 			if (manual) setSendouError(null);
 			try {
 				const events = await listEvents();
-				const { sentBatches, failedBatches } = await sendBatches({
+				const { sentMatches, failedMatches } = await sendMatches({
 					events,
 					include,
 					onStatus: refreshFeed,
 				});
-				if (manual && sentBatches + failedBatches === 0) {
-					setSendouError(
-						"nothing to send — no complete match (ending in a scoreboard) selected",
-					);
+				if (manual && sentMatches + failedMatches === 0) {
+					setSendouError("nothing to send — no complete match selected");
 				}
 			} finally {
 				sendingRef.current = false;
@@ -159,11 +160,11 @@ export function LivePage({
 									INGESTABLE_TYPES.includes(event.type)
 								) {
 									if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-										// a scoreboard closes its match batch — send it
+										// a scoreboard closes its match — send it
 										refreshFeed();
 										await send(
-											(batch) =>
-												batchContaining(id)(batch) && unsentBatches(batch),
+											(built) =>
+												matchContaining(id)(built) && unsentMatches(built),
 										);
 									} else {
 										await updateEventsSend([id], {
@@ -205,7 +206,10 @@ export function LivePage({
 		}
 		setRunning(false);
 		setStatus("idle");
-	}, []);
+		// the scan ending is the last match boundary — flush what's unsent
+		// (partials are safe: the server merges them into fuller resends)
+		if (liveSendRef.current) void send(unsentMatches);
+	}, [send]);
 
 	return (
 		<div>
@@ -282,7 +286,7 @@ export function LivePage({
 					<button
 						type="button"
 						disabled={!sendouUser || feed.length === 0}
-						onClick={() => void send(unsentBatches, { manual: true })}
+						onClick={() => void send(unsentMatches, { manual: true })}
 					>
 						Send unsent to sendou.ink
 					</button>
@@ -317,7 +321,7 @@ export function LivePage({
 								sendouUser &&
 								e.id !== undefined &&
 								INGESTABLE_TYPES.includes(e.type)
-									? () => void send(batchContaining(e.id!), { manual: true })
+									? () => void send(matchContaining(e.id!), { manual: true })
 									: undefined
 							}
 						/>

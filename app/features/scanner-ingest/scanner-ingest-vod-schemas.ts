@@ -6,7 +6,7 @@ import {
 } from "~/features/scanner/scanner-schemas";
 import { videoMatchTypes } from "~/features/vods/vods-constants";
 
-/** One detected match of a scanner VoD scan (~/features/scanner/core/vod-matches.ts). */
+/** One detected match of a scanner VoD scan, projected from a ScannerMatch (~/features/scanner/components/sendou-upload.ts). */
 const ingestVodMatchSchema = z.object({
 	/** whole seconds into the video the match starts at */
 	startsAt: z.number().int().min(0),

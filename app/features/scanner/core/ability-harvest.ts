@@ -7,32 +7,38 @@
  * and weapon id.
  */
 
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { ScannerAbility } from "../scanner-types";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
-import type {
-	ScoreboardData,
-	ScoreboardPlayer,
-} from "./detectors/scoreboard/index";
+import type { ScoreboardData } from "./detectors/scoreboard/index";
 import type { DetectedEvent } from "./detectors/types";
 
 /** player row index (0-7) → [head, clothes, shoes] ability-id rows */
 export type PlayerAbilityMap = Map<number, ScannerAbility[][]>;
 
+/** Any player row a death can be attributed against (scoreboard, minimap). */
+interface HarvestablePlayer {
+	name: string | null;
+	weaponId: MainWeaponId | null;
+}
+
 /**
- * Match a death's killer to a scoreboard player row. Both signals are OCR
- * output, so neither is trusted alone unless it is unambiguous: a combined
- * name+weapon hit wins, then a unique name hit, then a unique weapon hit
- * (two players on the same weapon with a misread name stay unattributed).
+ * Match a death's killer to a player row. Both signals are OCR output, so
+ * neither is trusted alone unless it is unambiguous: a combined name+weapon
+ * hit wins, then a unique name hit, then a unique weapon hit (two players on
+ * the same weapon with a misread name stay unattributed).
  */
 function matchPlayer(
-	players: ScoreboardPlayer[],
+	players: readonly HarvestablePlayer[],
 	death: DeathData,
 ): number | null {
 	const name = death.name?.trim().toLowerCase() || null;
 	const indices = players.map((_, i) => i);
 	const byName = name
-		? indices.filter((i) => players[i]!.name.trim().toLowerCase() === name)
+		? indices.filter(
+				(i) => (players[i]!.name ?? "").trim().toLowerCase() === name,
+			)
 		: [];
 	// scoreboard rows carry main-weapon ids; a sub/special credit says
 	// nothing about which main the killer holds
@@ -52,7 +58,7 @@ function matchPlayer(
  * readable ability grid is attributed to a scoreboard player row.
  */
 export function harvestAbilities(
-	players: ScoreboardPlayer[],
+	players: readonly HarvestablePlayer[],
 	deaths: readonly DeathData[],
 ): PlayerAbilityMap {
 	const abilities: PlayerAbilityMap = new Map();
