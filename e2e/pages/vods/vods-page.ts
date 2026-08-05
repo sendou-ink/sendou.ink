@@ -24,6 +24,7 @@ export class VodsPage {
 	}
 
 	async filterByWeapon(weaponName: string) {
+		await this.page.getByTestId("vods-weapon-filter").click();
 		await selectWeapon({ page: this.page, name: weaponName });
 	}
 }
