@@ -497,3 +497,46 @@ describe("Resolving the team a user is a member of", () => {
 		expect(tournament.teamMemberOfByUser({ id: USER_ID + 1 })).toBeNull();
 	});
 });
+
+describe("teamById division seeds", () => {
+	it("assigns unique seeds within a division when a late registrant has null startingBracketIdx", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							name: "Div A",
+							type: "round_robin",
+							requiresCheckIn: false,
+							settings: {},
+						},
+						{
+							name: "Div B",
+							type: "round_robin",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
+				},
+				teams: [
+					// DB query orders by seed ASC which puts NULL seeds first in SQLite
+					tournamentCtxTeam(5, {
+						seed: null,
+						startingBracketIdx: null,
+						createdAt: 5,
+					}),
+					tournamentCtxTeam(1, { seed: 1, startingBracketIdx: 0 }),
+					tournamentCtxTeam(2, { seed: 2, startingBracketIdx: 0 }),
+					tournamentCtxTeam(3, { seed: 3, startingBracketIdx: 1 }),
+					tournamentCtxTeam(4, { seed: 4, startingBracketIdx: 1 }),
+				],
+			},
+		});
+
+		const divATeamSeeds = [1, 2, 5].map(
+			(teamId) => tournament.teamById(teamId)?.seed,
+		);
+
+		expect(new Set(divATeamSeeds).size).toBe(3);
+	});
+});

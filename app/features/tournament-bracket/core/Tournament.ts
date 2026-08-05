@@ -698,11 +698,12 @@ export class Tournament {
 	teamById(id: number) {
 		let result: (typeof this.ctx.teams)[number] | null = null;
 		let seed = 0;
-		let currStartingBracketIdx = this.ctx.teams.at(0)?.startingBracketIdx;
+		let currStartingBracketIdx = this.ctx.teams.at(0)?.startingBracketIdx ?? 0;
 
 		for (const team of this.ctx.teams) {
-			if (team.startingBracketIdx !== currStartingBracketIdx) {
-				currStartingBracketIdx = team.startingBracketIdx;
+			const teamStartingBracketIdx = team.startingBracketIdx ?? 0;
+			if (teamStartingBracketIdx !== currStartingBracketIdx) {
+				currStartingBracketIdx = teamStartingBracketIdx;
 				seed = 1;
 			} else {
 				seed++;
