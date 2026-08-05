@@ -1,10 +1,10 @@
+import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
 } from "../core/detectors/death/index";
-import { AbilityGrid } from "./AbilityGrid";
 import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
@@ -31,10 +31,6 @@ export function DeathCard(props: {
 					<EventTypeIcon type={DEATH_EVENT_TYPE} />
 					death
 				</span>
-				<span>
-					splatted by <b>{weaponName ?? "?"}</b>
-					{data.name && <> ({data.name})</>}
-				</span>
 				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
 				<FrameThumb
@@ -44,17 +40,37 @@ export function DeathCard(props: {
 					fixture={{ data, type: "Death" }}
 				/>
 			</div>
-			<div className="teams solo">
+			<div className="teams death">
 				<div className="team">
-					{data.weaponId !== null && data.weaponType === "MAIN" ? (
-						<WeaponImage
-							weaponSplId={data.weaponId as MainWeaponId}
-							variant="build"
-							size={28}
-							className="weapon-icon"
-						/>
-					) : null}
-					<AbilityGrid abilities={data.abilities} />
+					<div className="death-body">
+						{data.weaponId !== null && data.weaponType === "MAIN" ? (
+							<WeaponImage
+								weaponSplId={data.weaponId as MainWeaponId}
+								variant="build"
+								size={28}
+								className="weapon-icon"
+							/>
+						) : null}
+						<div className="death-info">
+							<span className="death-name">
+								splatted by <b>{data.name ?? "?"}</b>
+							</span>
+							<span className="death-weapon">{weaponName ?? "?"}</span>
+						</div>
+						<div className="death-abilities">
+							{data.abilities.map((row, i) => (
+								<div key={i} className="gear">
+									{row.map((id, j) => (
+										<Ability
+											key={j}
+											ability={id}
+											size={j === 0 ? "SUBTINY" : "TINY"}
+										/>
+									))}
+								</div>
+							))}
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

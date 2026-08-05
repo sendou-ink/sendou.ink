@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
 import {
@@ -6,11 +7,14 @@ import {
 	type MinimapEnemy,
 	type MinimapTeammate,
 } from "../core/detectors/minimap/index";
+import type { CardSlot } from "../core/detectors/minimap/rois";
 import type { ScannerAbility } from "../scanner-types";
 import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { stageLabel } from "./labels";
+
+const ENEMY_SLOT_LETTERS = ["A", "B", "X", "Y"] as const;
 
 function AbilityRow({ abilities }: { abilities: (ScannerAbility | null)[] }) {
 	return (
@@ -28,16 +32,44 @@ function AbilityRow({ abilities }: { abilities: (ScannerAbility | null)[] }) {
 	);
 }
 
+function SlotChevron({ direction }: { direction: CardSlot }) {
+	return (
+		<svg
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth="3.5"
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-label={direction}
+			role="img"
+		>
+			<polyline points="6 14.5 12 8.5 18 14.5" />
+		</svg>
+	);
+}
+
+function TeammateMarker({ slot }: { slot: CardSlot }) {
+	if (slot === "self") {
+		return <span className="slot-marker">●</span>;
+	}
+	return (
+		<span className={`slot-marker ${slot}`}>
+			<SlotChevron direction={slot} />
+		</span>
+	);
+}
+
 function PlayerRow({
-	label,
+	marker,
 	player,
 }: {
-	label: string;
+	marker: ReactNode;
 	player: MinimapTeammate | MinimapEnemy;
 }) {
 	return (
 		<div className="minimap-player">
-			<span className="slot">{label}</span>
+			{marker}
 			{player.weaponId !== null ? (
 				<WeaponImage
 					weaponSplId={player.weaponId}
@@ -90,14 +122,26 @@ export function MinimapCard(props: {
 				<div className="team">
 					<h3>Team</h3>
 					{data.teammates.map((p) => (
-						<PlayerRow key={p.slot} label={p.slot} player={p} />
+						<PlayerRow
+							key={p.slot}
+							marker={<TeammateMarker slot={p.slot} />}
+							player={p}
+						/>
 					))}
 				</div>
 				{data.enemies.length > 0 ? (
 					<div className="team">
 						<h3>Enemies</h3>
 						{data.enemies.map((p, i) => (
-							<PlayerRow key={i} label={`${i + 1}`} player={p} />
+							<PlayerRow
+								key={i}
+								marker={
+									<span className="slot-marker">
+										{ENEMY_SLOT_LETTERS[i] ?? i + 1}
+									</span>
+								}
+								player={p}
+							/>
 						))}
 					</div>
 				) : null}

@@ -212,9 +212,14 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 	gap: 8px;
 
-	/* single hug-content box (death / own-results cards) */
+	/* single hug-content box (own-results cards) */
 	&.solo {
 		grid-template-columns: max-content;
+	}
+
+	/* single full-width box (death cards) */
+	&.death {
+		grid-template-columns: 1fr;
 	}
 }
 
@@ -285,16 +290,6 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	padding-block: 3px;
 	font-size: var(--font-xs);
 
-	& .slot {
-		flex-shrink: 0;
-		min-width: 3.25rem;
-		font-size: var(--font-2xs);
-		font-weight: var(--weight-bold);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		color: var(--color-text-high);
-	}
-
 	& .weapon-missing {
 		flex-shrink: 0;
 		width: 24px;
@@ -315,6 +310,80 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 		align-items: center;
 		gap: 2px;
 		flex-shrink: 0;
+	}
+}
+
+/* d-pad chevron / face-button pucks, same round-solid language as weapon icons */
+.scanner-app .slot-marker {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: var(--radius-full);
+	background: #000;
+	color: #fff;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+
+	& svg {
+		width: 13px;
+		height: 13px;
+	}
+
+	&.right svg {
+		transform: rotate(90deg);
+	}
+
+	&.down svg {
+		transform: rotate(180deg);
+	}
+
+	&.left svg {
+		transform: rotate(-90deg);
+	}
+}
+
+.scanner-app .death-body {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding-block: 2px;
+
+	& .death-info {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+
+		& .death-name {
+			font-size: var(--font-xs);
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		& .death-weapon {
+			font-size: var(--font-2xs);
+			font-weight: var(--weight-semi);
+			color: var(--color-text-high);
+		}
+	}
+
+	& .death-abilities {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-inline-start: auto;
+		flex-wrap: wrap;
+
+		& .gear {
+			display: flex;
+			align-items: center;
+			gap: 2px;
+		}
 	}
 }
 
