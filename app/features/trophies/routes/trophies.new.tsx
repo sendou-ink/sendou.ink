@@ -642,7 +642,7 @@ function TrophyListRow({
 
 	const isOwner = pending.submitterUserId === currentUserId;
 	const isDeclined = pending.declinedAt !== null;
-	const isAccepted = pending.approvals.length >= TROPHY_APPROVALS_REQUIRED;
+	const isAccepted = pending.acceptedAt !== null;
 	const isReviewed = isDeclined || isAccepted;
 	const alreadyApproved = pending.approvals.some(
 		(a) => a.userId === currentUserId,
