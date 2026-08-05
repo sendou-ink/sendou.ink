@@ -11,7 +11,7 @@ import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,
 	type TournamentTrophyReceiver,
-} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
 import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,

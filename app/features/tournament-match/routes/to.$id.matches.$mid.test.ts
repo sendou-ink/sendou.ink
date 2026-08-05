@@ -12,7 +12,7 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { action as removeMemberApiAction } from "~/features/api-public/routes/tournament.$id.teams.$teamId.remove-member";
-import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import type { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { SerializeFrom } from "~/utils/remix";
 import {
 	assertResponseErrored,

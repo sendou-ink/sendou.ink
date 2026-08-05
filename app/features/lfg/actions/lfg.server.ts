@@ -1,15 +1,14 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
-import { _action, id } from "~/utils/zod";
 import * as LFGRepository from "../LFGRepository.server";
+import { lfgActionSchema } from "../lfg-schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
-		schema,
+		schema: lfgActionSchema,
 	});
 
 	const posts = await LFGRepository.findAllPosts(user);
@@ -33,14 +32,3 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	return null;
 };
-
-const schema = z.union([
-	z.object({
-		_action: _action("DELETE_POST"),
-		id,
-	}),
-	z.object({
-		_action: _action("BUMP_POST"),
-		id,
-	}),
-]);

@@ -15,7 +15,7 @@ import {
 import {
 	matchPageParamsSchema,
 	matchSchema,
-} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";

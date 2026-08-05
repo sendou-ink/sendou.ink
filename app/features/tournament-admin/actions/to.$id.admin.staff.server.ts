@@ -9,7 +9,7 @@ import {
 import { parseFormData } from "~/form/parse.server";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "../../../utils/zod";
-import { adminStaffFormSchemaServer } from "../tournament-admin-schemas.server";
+import { adminStaffFormSchemaServer } from "../tournament-admin-schemas";
 import { requireTournamentAdmin } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {

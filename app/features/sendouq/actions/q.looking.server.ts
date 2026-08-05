@@ -16,8 +16,8 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { lookingSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { lookingSchema } from "../q-schemas.server";
 import { resolveFutureMatchModes } from "../q-utils";
 import {
 	SendouQError,

@@ -191,6 +191,7 @@ const trophyReceiver = z.object({
 });
 
 export const finalizeTournamentActionSchema = z.object({
+	_action: _action("FINALIZE_TOURNAMENT"),
 	badgeReceivers: z.preprocess(safeJSONParse, badgeReceivers.nullish()),
 	trophyReceiver: z.preprocess(safeJSONParse, trophyReceiver.nullish()),
 });

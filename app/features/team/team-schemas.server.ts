@@ -5,6 +5,7 @@ import * as TeamRepository from "./TeamRepository.server";
 import {
 	createTeamSchema,
 	editTeamFormSchema,
+	resetInviteLinkSchema,
 	updateRosterSchema,
 } from "./team-schemas";
 
@@ -51,7 +52,5 @@ export const editTeamActionSchema = z.union([
 
 export const manageRosterSchema = z.union([
 	updateRosterSchema,
-	z.object({
-		_action: _action("RESET_INVITE_LINK"),
-	}),
+	resetInviteLinkSchema,
 ]);

@@ -23,7 +23,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import { adminTeamsActionSchema } from "../tournament-admin-schemas.server";
+import { adminTeamsActionSchema } from "../tournament-admin-schemas";
 import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useFetcher } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
@@ -11,6 +12,7 @@ import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { tournamentAdminPage } from "~/utils/urls";
 import { BracketProgressionSelector } from "../../calendar/components/BracketProgressionSelector";
+import { adminBracketsActionSchema } from "../tournament-admin-schemas";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
 
@@ -105,6 +107,7 @@ function BracketReset() {
 					/>
 				</div>
 				<SubmitButton
+					schema={adminBracketsActionSchema}
 					_action="RESET_BRACKET"
 					state={fetcher.state}
 					isDisabled={confirmText !== bracketToDeleteName}
@@ -155,6 +158,7 @@ function BracketProgressionEdit() {
 			/>
 			<div className="stack md horizontal justify-center mt-6">
 				<SubmitButton
+					schema={adminBracketsActionSchema}
 					_action="UPDATE_TOURNAMENT_PROGRESSION"
 					isDisabled={!bracketProgression}
 				>
@@ -167,12 +171,11 @@ function BracketProgressionEdit() {
 
 function ReopenTournament() {
 	const tournament = useTournament();
-	const fetcher = useFetcher();
 	const [confirmText, setConfirmText] = React.useState("");
 
 	return (
 		<div>
-			<fetcher.Form method="post" className="stack horizontal sm items-end">
+			<div className="stack horizontal sm items-end">
 				<div className="flex-same-size">
 					<label htmlFor="reopen-confirmation">
 						Type tournament name (&quot;{tournament.ctx.name}&quot;) to confirm
@@ -184,16 +187,16 @@ function ReopenTournament() {
 						disableAutoComplete
 					/>
 				</div>
-				<SubmitButton
-					_action="REOPEN_TOURNAMENT"
-					state={fetcher.state}
+				<ActionButton
+					schema={adminBracketsActionSchema}
+					action="REOPEN_TOURNAMENT"
 					isDisabled={confirmText !== tournament.ctx.name}
 					variant="destructive"
 					testId="reopen-tournament-button"
 				>
 					Reopen
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 			<FormMessage type="error" className="mt-2">
 				Reopening a tournament will delete all results, skill calculations, and
 				badges awarded from this tournament. Use this to test finalization

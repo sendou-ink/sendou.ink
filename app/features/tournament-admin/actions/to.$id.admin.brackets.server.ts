@@ -16,7 +16,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "../../../utils/zod";
-import { adminBracketsActionSchema } from "../tournament-admin-schemas.server";
+import { adminBracketsActionSchema } from "../tournament-admin-schemas";
 import {
 	requireTournamentAdmin,
 	requireTournamentOrganizer,

@@ -3,7 +3,8 @@ import type * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import {
@@ -15,7 +16,6 @@ import {
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import type { UserCardData } from "~/features/user-card/user-card-types";
@@ -38,6 +38,7 @@ import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
 import { groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
+import { lookingSchema } from "../q-action-schemas";
 import {
 	FULL_GROUP_SIZE,
 	IS_Q_LOOKING_MOBILE_BREAKPOINT,
@@ -131,7 +132,6 @@ function InfoText() {
 	const { t } = useTranslation(["q"]);
 	const isHydrated = useHydrated();
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 	const { formatter: timeFormatter } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "numeric",
@@ -143,39 +143,33 @@ function InfoText() {
 
 	if (expiryStatus === "EXPIRED") {
 		return (
-			<fetcher.Form
-				method="post"
-				className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center"
-			>
+			<div className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center">
 				{t("q:looking.inactiveGroup")}{" "}
-				<SubmitButton
+				<ActionButton
+					schema={lookingSchema}
+					action="REFRESH_GROUP"
 					size="small"
 					variant="minimal"
-					_action="REFRESH_GROUP"
-					state={fetcher.state}
 				>
 					{t("q:looking.inactiveGroup.action")}
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 		);
 	}
 
 	if (expiryStatus === "EXPIRING_SOON") {
 		return (
-			<fetcher.Form
-				method="post"
-				className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center"
-			>
+			<div className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center">
 				{t("q:looking.inactiveGroup.soon")}{" "}
-				<SubmitButton
+				<ActionButton
+					schema={lookingSchema}
+					action="REFRESH_GROUP"
 					size="small"
 					variant="minimal"
-					_action="REFRESH_GROUP"
-					state={fetcher.state}
 				>
 					{t("q:looking.inactiveGroup.action")}
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 		);
 	}
 

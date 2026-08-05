@@ -17,7 +17,7 @@ import type { TournamentSummary } from "~/features/tournament-bracket/core/summa
 import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
-} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";

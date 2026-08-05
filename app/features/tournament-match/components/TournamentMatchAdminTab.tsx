@@ -2,6 +2,7 @@ import { Ban, Lock, LockOpen, RotateCcw, SquarePen } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -17,6 +18,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { OrganizerMatchMapListDialog } from "./OrganizerMatchMapListDialog";
@@ -202,36 +204,32 @@ function LockToggleButton({
 	const { t } = useTranslation(["tournament"]);
 
 	return (
-		<Form method="post" className={styles.lockRow}>
+		<div className={styles.lockRow}>
 			{isLocked ? (
-				<SubmitButton
-					_action="UNLOCK"
+				<ActionButton
+					schema={matchSchema}
+					action="UNLOCK"
 					size="small"
 					icon={<LockOpen size={16} />}
 					testId="cast-info-submit-button"
 				>
 					{t("tournament:match.admin.unlock")}
-				</SubmitButton>
+				</ActionButton>
 			) : (
-				<>
-					<input
-						type="hidden"
-						name="twitchAccount"
-						value={twitchAccount ?? ""}
-					/>
-					<SubmitButton
-						_action="LOCK"
-						size="small"
-						icon={<Lock size={16} />}
-						isDisabled={!twitchAccount}
-						testId="cast-info-submit-button"
-					>
-						{t("tournament:match.admin.lockToBeCasted")}
-					</SubmitButton>
-				</>
+				<ActionButton
+					schema={matchSchema}
+					action="LOCK"
+					fields={{ twitchAccount: twitchAccount ?? "" }}
+					size="small"
+					icon={<Lock size={16} />}
+					isDisabled={!twitchAccount}
+					testId="cast-info-submit-button"
+				>
+					{t("tournament:match.admin.lockToBeCasted")}
+				</ActionButton>
 			)}
 			<InfoPopover>{t("tournament:match.admin.lockingInfo")}</InfoPopover>
-		</Form>
+		</div>
 	);
 }
 
@@ -239,17 +237,16 @@ function ReopenMatchButton() {
 	const { t } = useTranslation(["tournament"]);
 
 	return (
-		<Form method="post">
-			<SubmitButton
-				_action="REOPEN_MATCH"
-				variant="destructive"
-				size="small"
-				icon={<RotateCcw size={16} />}
-				testId="reopen-match-button"
-			>
-				{t("tournament:match.action.reopenMatch")}
-			</SubmitButton>
-		</Form>
+		<ActionButton
+			schema={matchSchema}
+			action="REOPEN_MATCH"
+			variant="destructive"
+			size="small"
+			icon={<RotateCcw size={16} />}
+			testId="reopen-match-button"
+		>
+			{t("tournament:match.action.reopenMatch")}
+		</ActionButton>
 	);
 }
 
@@ -319,6 +316,7 @@ function EndSetPopover({ teams }: { teams: [MatchPageTeam, MatchPageTeam] }) {
 				/>
 
 				<SubmitButton
+					schema={matchSchema}
 					_action="END_SET"
 					testId="end-set-button"
 					size="small"
@@ -534,6 +532,7 @@ function EditReportedScoreForm({
 				<SubmitButton
 					size="small"
 					state={fetcher.state}
+					schema={matchSchema}
 					_action="UPDATE_REPORTED_SCORE"
 					isDisabled={!formValid}
 					testId={`save-result-${index}-button`}

@@ -13,11 +13,16 @@ import {
 	toggle,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
+import { _action } from "~/utils/zod";
 import {
 	CUSTOM_ROLE_MAX_LENGTH,
 	TEAM,
 	TEAM_MEMBER_ROLES,
 } from "./team-constants";
+
+export const resetInviteLinkSchema = z.object({
+	_action: _action("RESET_INVITE_LINK"),
+});
 
 const teamNameValidate = {
 	func: (teamName: string) =>

@@ -29,7 +29,7 @@ import {
 	clearTournamentDataCache,
 	tournamentFromDB,
 } from "../core/Tournament.server";
-import { bracketSchema } from "../tournament-bracket-schemas.server";
+import { bracketSchema } from "../tournament-bracket-schemas";
 import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
