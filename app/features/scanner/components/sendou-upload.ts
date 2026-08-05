@@ -10,7 +10,7 @@
  * spectator map screen is a CAST VoD; anything else leaves the form's default
  * type untouched.
  */
-import type { IngestVodPrefill } from "~/features/ingest/ingest-vod-schemas";
+import type { IngestVodPrefill } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import { newVodPage } from "~/utils/urls";
 import {

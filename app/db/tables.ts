@@ -31,11 +31,11 @@ import type {
 import type { ApiTokenType } from "~/features/api/api-types";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
-import type { IngestedScoreboardData } from "~/features/ingest/core/Scoreboards";
-import type { IngestedEventData } from "~/features/ingest/ingest-schemas";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
+import type { IngestedScoreboardData } from "~/features/scanner-ingest/core/Scoreboards";
+import type { IngestedEventData } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import type {
 	MemberRole,

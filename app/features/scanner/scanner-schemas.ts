@@ -1,7 +1,7 @@
 /**
  * Zod schemas for the scanner events domain — the single source of truth shared
  * by the producer (the scanner detectors/UI in this feature) and the validator
- * (features/ingest). Every domain field is a sendou.ink id type; the
+ * (features/scanner-ingest). Every domain field is a sendou.ink id type; the
  * compile-time asserts at the bottom pin each schema to the corresponding
  * detector output interface so producer and validator cannot drift.
  *

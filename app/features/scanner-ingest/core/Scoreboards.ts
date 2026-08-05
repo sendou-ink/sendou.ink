@@ -7,7 +7,7 @@ import type {
 import type {
 	IngestedEventInput,
 	ScoreboardEventInput,
-} from "../ingest-schemas";
+} from "../scanner-ingest-schemas";
 
 /** Lobby header value scoreboards of tournament games are expected to have. */
 const TOURNAMENT_LOBBY = "PRIVATE";

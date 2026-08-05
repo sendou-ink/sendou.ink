@@ -3,7 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
-import * as IngestRepository from "~/features/ingest/IngestRepository.server";
+import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -61,7 +61,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
 
 	const ingestedScoreboards =
-		await IngestRepository.findScoreboardsByTournamentMatchId(matchId);
+		await ScannerIngestRepository.findScoreboardsByTournamentMatchId(matchId);
 
 	const matchIsOver = Boolean(match.winnerSide);
 

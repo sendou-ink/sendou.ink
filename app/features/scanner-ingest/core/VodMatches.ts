@@ -3,7 +3,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import type { IngestVodMatchInput } from "../ingest-vod-schemas";
+import type { IngestVodMatchInput } from "../scanner-ingest-vod-schemas";
 
 export interface PrefillVodMatch {
 	startsAt: number;

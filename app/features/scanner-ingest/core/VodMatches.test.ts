@@ -3,7 +3,7 @@ import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import {
 	type IngestVodMatchInput,
 	ingestVodPrefillSchema,
-} from "../ingest-vod-schemas";
+} from "../scanner-ingest-vod-schemas";
 import { prefillVodMatches } from "./VodMatches";
 
 // 8 real main weapon ids (4v4): Splattershot etc.

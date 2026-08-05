@@ -43,7 +43,7 @@ video file  → capture/vod-frames (WebCodecs decode, seek fallback)   [VoD tab]
   DOM/browser APIs out of it; Node-only helpers (image IO, fixture loading)
   live in `node/`. Importing pure data/type modules from `~/modules` and
   `~/features/build-analyzer/data` is fine — zod and the app config graph are
-  not (schemas live in `scanner-schemas.ts`, consumed by `features/ingest`;
+  not (schemas live in `scanner-schemas.ts`, consumed by `features/scanner-ingest`;
   detectors only `import type` the shapes).
 - The route (`routes/scanner.tsx`) is SSR-guarded: everything below it assumes a
   browser (worker, IndexedDB, WebCodecs, getUserMedia), so the client tree

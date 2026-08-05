@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ingestVodPrefillSchema } from "~/features/ingest/ingest-vod-schemas";
+import { ingestVodPrefillSchema } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";

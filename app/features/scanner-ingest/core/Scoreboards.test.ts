@@ -8,7 +8,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import type { IngestedEventInput } from "../ingest-schemas";
+import type { IngestedEventInput } from "../scanner-ingest-schemas";
 import * as Scoreboards from "./Scoreboards";
 
 const WINNER_TEAM_ID = 100;

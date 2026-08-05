@@ -7,7 +7,7 @@ import type {
 	IngestedScoreboardData,
 	MatchedScoreboard,
 } from "./core/Scoreboards";
-import type { IngestedEventInput } from "./ingest-schemas";
+import type { IngestedEventInput } from "./scanner-ingest-schemas";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
 const opponentTwoId = sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`;

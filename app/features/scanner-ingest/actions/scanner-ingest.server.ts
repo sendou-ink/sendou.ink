@@ -8,8 +8,11 @@ import {
 	parseBody,
 } from "~/utils/remix.server";
 import * as Scoreboards from "../core/Scoreboards";
-import * as IngestRepository from "../IngestRepository.server";
-import { type IngestedEventInput, ingestBodySchema } from "../ingest-schemas";
+import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
+import {
+	type IngestedEventInput,
+	ingestBodySchema,
+} from "../scanner-ingest-schemas";
 
 // xxx: dont only attach scoreboard on ingest, also when score is reported (for e.g. tournament stuff)
 // xxx: check why http://localhost:7001/to/4066/matches/139247?tab=result layout bad
@@ -31,7 +34,9 @@ export const action: ActionFunction = async ({ request }) => {
 	// matching below doesn't re-query them
 	let candidateGames: Scoreboards.IngestableGameWithTournament[] | null = null;
 	if (tournamentId) {
-		badRequestIfFalsy(await IngestRepository.tournamentStartTime(tournamentId));
+		badRequestIfFalsy(
+			await ScannerIngestRepository.tournamentStartTime(tournamentId),
+		);
 	} else if (povUserId) {
 		// no explicit tournament: resolve from the scoreboards' content first
 		// (the mode+stage sequence plus roster sides is near-unique in a
@@ -40,7 +45,7 @@ export const action: ActionFunction = async ({ request }) => {
 		// scoreboard requests (live sends) skip straight to the timestamp —
 		// content resolution needs a sequence to be decisive.
 		if (countScoreboardEvents(data.events) >= 2) {
-			const games = await IngestRepository.gamesPlayedByUserSince({
+			const games = await ScannerIngestRepository.gamesPlayedByUserSince({
 				userId: povUserId,
 				since:
 					// xxx: use date-fns
@@ -60,7 +65,7 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 		if (!tournamentId) {
 			const at = anchorTime(data.events);
-			tournamentId = await IngestRepository.tournamentIdAt({
+			tournamentId = await ScannerIngestRepository.tournamentIdAt({
 				userId: povUserId,
 				at,
 			});
@@ -72,7 +77,7 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 	}
 
-	const storedEventsCount = await IngestRepository.addEvents({
+	const storedEventsCount = await ScannerIngestRepository.addEvents({
 		tournamentId,
 		povUserId,
 		submitterUserId: user?.id ?? null,
@@ -86,7 +91,7 @@ export const action: ActionFunction = async ({ request }) => {
 			? candidateGames.filter(
 					(game) => game.tournamentId === resolvedTournamentId,
 				)
-			: await IngestRepository.gamesPlayedByUserInTournament({
+			: await ScannerIngestRepository.gamesPlayedByUserInTournament({
 					userId: povUserId,
 					tournamentId,
 				});
@@ -96,7 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
 			games,
 		});
 
-		storedScoreboardsCount = await IngestRepository.addScoreboards({
+		storedScoreboardsCount = await ScannerIngestRepository.addScoreboards({
 			scoreboards: matched,
 			povUserId,
 		});
