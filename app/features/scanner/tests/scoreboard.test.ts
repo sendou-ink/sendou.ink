@@ -49,8 +49,15 @@ for (const fixture of fixtures) {
 		const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 		const expected = fixture.expected.data ?? {};
 
-		await t.test("scores", { skip: skip(fixture, "scores") }, () => {
-			assert.deepEqual(event.data.scores, expected.scores);
+		await t.test("matchScores", { skip: skip(fixture, "matchScores") }, () => {
+			const dbg = event.debug?.matchScore as
+				| { left?: { reading?: string }; right?: { reading?: string } }
+				| undefined;
+			assert.deepEqual(
+				event.data.matchScores,
+				expected.matchScores,
+				`matchScores mismatch (readings: "${dbg?.left?.reading}" / "${dbg?.right?.reading}")`,
+			);
 		});
 
 		await t.test(

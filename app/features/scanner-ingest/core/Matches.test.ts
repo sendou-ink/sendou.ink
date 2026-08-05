@@ -33,18 +33,12 @@ function testMatch(partial: Partial<ScannerMatch> = {}): ScannerMatch {
 		lobby: "PRIVATE",
 		mode: "SZ",
 		stage: 0,
-		matchScores: null,
+		matchScores: [100, 52],
 		replayCode: null,
 		cast: false,
 		teams: [
-			{
-				score: 100,
-				players: NAMES.slice(0, 4).map((n, i) => player(n, WEAPONS[i]!)),
-			},
-			{
-				score: 52,
-				players: NAMES.slice(4).map((n, i) => player(n, WEAPONS[4 + i]!)),
-			},
+			{ players: NAMES.slice(0, 4).map((n, i) => player(n, WEAPONS[i]!)) },
+			{ players: NAMES.slice(4).map((n, i) => player(n, WEAPONS[4 + i]!)) },
 		],
 		winner: 0,
 		pov: null,
@@ -103,10 +97,8 @@ describe("isSameMatch", () => {
 		});
 		const b = testMatch({
 			replayCode: "RABC-DEFG-HIJK-LMNO",
-			teams: [
-				{ score: null, players: [] },
-				{ score: null, players: [] },
-			],
+			matchScores: null,
+			teams: [{ players: [] }, { players: [] }],
 			winner: null,
 		});
 		expect(Matches.isSameMatch(a, b)).toBe(true);
@@ -128,10 +120,8 @@ describe("isSameMatch", () => {
 		const a = testMatch({ playedAt: 1_700_000_000_000 });
 		const b = testMatch({
 			playedAt: 1_700_000_000_000 + 5 * 60 * 1000,
-			teams: [
-				{ score: null, players: [] },
-				{ score: null, players: [] },
-			],
+			matchScores: null,
+			teams: [{ players: [] }, { players: [] }],
 			winner: null,
 		});
 		expect(Matches.isSameMatch(a, b)).toBe(true);
@@ -175,15 +165,10 @@ describe("isSameMatch", () => {
 		const minimap = testMatch({
 			winner: null,
 			lobby: null,
+			matchScores: null,
 			teams: [
-				{
-					score: null,
-					players: WEAPONS.slice(0, 4).map((w) => player(null, w)),
-				},
-				{
-					score: null,
-					players: WEAPONS.slice(4).map((w) => player(null, w)),
-				},
+				{ players: WEAPONS.slice(0, 4).map((w) => player(null, w)) },
+				{ players: WEAPONS.slice(4).map((w) => player(null, w)) },
 			],
 		});
 		expect(Matches.isSameMatch(testMatch(), minimap)).toBe(true);
@@ -191,15 +176,14 @@ describe("isSameMatch", () => {
 
 	it("unrelated matches are not the same", () => {
 		const other = testMatch({
+			matchScores: [88, 12],
 			teams: [
 				{
-					score: 88,
 					players: ["a", "b", "c", "d"].map((n, i) =>
 						player(n, (100 + 10 * i) as MainWeaponId),
 					),
 				},
 				{
-					score: 12,
 					players: ["e", "f", "g", "h"].map((n, i) =>
 						player(n, (200 + 10 * i) as MainWeaponId),
 					),
@@ -237,12 +221,12 @@ describe("mergeMatches", () => {
 	it("aligns a side-swapped incoming match before merging", () => {
 		const existing = testMatch({ winner: null, matchScores: null });
 		const incoming = sideSwapped(
-			testMatch({ matchScores: [3, 1], playedAt: 1_700_000_000_000 }),
+			testMatch({ matchScores: [84, 71], playedAt: 1_700_000_000_000 }),
 		);
 
 		const { merged } = Matches.mergeMatches(existing, incoming);
 		expect(merged.winner).toBe(0);
-		expect(merged.matchScores).toEqual([3, 1]);
+		expect(merged.matchScores).toEqual([84, 71]);
 		expect(merged.teams[0].players.map((p) => p.name)).toEqual(
 			NAMES.slice(0, 4),
 		);
@@ -269,10 +253,8 @@ describe("mergeMatches", () => {
 	it("fills empty teams from the incoming match", () => {
 		const existing = testMatch({
 			winner: null,
-			teams: [
-				{ score: null, players: [] },
-				{ score: null, players: [] },
-			],
+			matchScores: null,
+			teams: [{ players: [] }, { players: [] }],
 			replayCode: "RABC-DEFG-HIJK-LMNO",
 		});
 		const incoming = testMatch({ replayCode: "RABC-DEFG-HIJK-LMNO" });
@@ -283,6 +265,6 @@ describe("mergeMatches", () => {
 		expect(merged.teams[0].players.map((p) => p.name)).toEqual(
 			NAMES.slice(0, 4),
 		);
-		expect(merged.teams[0].score).toBe(100);
+		expect(merged.matchScores).toEqual([100, 52]);
 	});
 });

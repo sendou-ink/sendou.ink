@@ -61,9 +61,6 @@ export function MatchCard({
 		modeLabel(match.mode),
 		ingestable ? null : lobbyLabel(match.lobby),
 		match.startsAt !== null ? timeRangeLabel(match) : null,
-		match.matchScores
-			? `set ${match.matchScores[0] ?? "?"}–${match.matchScores[1] ?? "?"}`
-			: null,
 		match.replayCode,
 		match.cast ? "cast" : null,
 	]
@@ -150,20 +147,19 @@ function timeRangeLabel(match: ScannerMatch): string {
 }
 
 function Score({ match }: { match: ScannerMatch }) {
-	const [alpha, bravo] = match.teams;
-	if (alpha.score === null && bravo.score === null) return null;
+	if (match.matchScores === null) return null;
+	const [alpha, bravo] = match.matchScores;
 
+	// a 100 only happens on a knockout — show it the way players say it
+	const label = (score: number | null) =>
+		score === 100 ? "KO" : (score ?? "?");
 	// scoreboard-sourced matches list the winners first
 	const winnerKnown = match.winner !== null;
 	return (
 		<div className="match-score">
-			<span className={winnerKnown ? "win" : undefined}>
-				{alpha.score ?? "?"}
-			</span>
+			<span className={winnerKnown ? "win" : undefined}>{label(alpha)}</span>
 			<span className="sep"> – </span>
-			<span className={winnerKnown ? "lose" : undefined}>
-				{bravo.score ?? "?"}
-			</span>
+			<span className={winnerKnown ? "lose" : undefined}>{label(bravo)}</span>
 		</div>
 	);
 }

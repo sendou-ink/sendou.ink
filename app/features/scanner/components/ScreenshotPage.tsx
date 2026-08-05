@@ -160,9 +160,10 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 			rect(minimap.enemyCrossRoi(cy), "#e879f9");
 		}
 		for (const roi of [
-			minimap.GATE_CLOSE_BRIGHT,
+			...minimap.GATE_CLOSE_X_BRIGHT,
 			minimap.GATE_SPAWN_BRIGHT,
 			...minimap.GATE_CLOSE_DARK_PROBES,
+			...minimap.GATE_CLOSE_X_DARK,
 			...minimap.GATE_SPAWN_DARK_PROBES,
 		]) {
 			rect(roi, "#facc15");
@@ -197,6 +198,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		rect(sb.gateDarkProbe(cy), "#facc15");
 	}
 	for (const roi of sb.TEAM_SCORE_ROIS) rect(roi, "#60a5fa");
+	for (const roi of sb.MATCH_SCORE_ROIS) rect(roi, "#fb923c");
 	for (const roi of sb.GATE_PANEL_PROBES) rect(roi, "#facc15");
 	rect(sb.HEADER_LOBBY_BAND, "#34d399");
 	rect(sb.HEADER_LINE_BAND, "#34d399");
@@ -426,7 +428,9 @@ export function ScreenshotPage() {
 								{" · "}confidence{" "}
 								{((result.events[0].confidence ?? 0) * 100).toFixed(1)}% ·
 								scores{" "}
-								{JSON.stringify((result.events[0].data as CardData).scores)}
+								{JSON.stringify(
+									(result.events[0].data as CardData).matchScores,
+								)}
 								{" · "}
 								{(() => {
 									const data = result.events[0].data as CardData;

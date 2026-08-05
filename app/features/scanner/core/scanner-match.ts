@@ -26,8 +26,6 @@ export interface ScannerMatchPlayer {
 }
 
 export interface ScannerMatchTeam {
-	/** the team's game score; null when no results screen was seen */
-	score: number | null;
 	/** up to 4 players; slots the scan never saw are absent */
 	players: ScannerMatchPlayer[];
 }
@@ -45,7 +43,11 @@ export interface ScannerMatch {
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
 	stage: StageId | null;
-	/** set score from the replay screen, in `teams` order */
+	/**
+	 * the "Score:" banner game scores (0-100) in `teams` order, from a
+	 * results/replay screen; a knockout's winner reports 100. Null when no
+	 * such screen was seen.
+	 */
 	matchScores: [number | null, number | null] | null;
 	replayCode: string | null;
 	/** spectator/casted footage (the 8-player spectator map screen was seen) */

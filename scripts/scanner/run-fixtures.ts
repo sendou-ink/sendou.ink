@@ -35,7 +35,7 @@ for (const fixture of fixtures) {
 	console.info(`gate: pass=${gate.pass} score=${gate.score.toFixed(3)}`);
 	for (const event of events) {
 		console.info(`event confidence=${event.confidence.toFixed(3)}`);
-		console.info(`scores: ${JSON.stringify(event.data.scores)}`);
+		console.info(`matchScores: ${JSON.stringify(event.data.matchScores)}`);
 		const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 		event.data.players.forEach((p, i) => {
 			const dbg = rows[i];

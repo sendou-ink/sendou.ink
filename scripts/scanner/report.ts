@@ -103,7 +103,6 @@ for (const config of configs) {
 		header: { ok: 0, total: 0 } as Tally,
 		timestamp: { ok: 0, total: 0 } as Tally,
 		replayCode: { ok: 0, total: 0 } as Tally,
-		scores: { ok: 0, total: 0 } as Tally,
 		matchScores: { ok: 0, total: 0 } as Tally,
 		weapons: { ok: 0, total: 0 } as Tally,
 		names: { ok: 0, total: 0 } as Tally,
@@ -143,11 +142,6 @@ for (const config of configs) {
 		if (expected.replayCode !== undefined) {
 			tally.replayCode.total++;
 			if (event.data.replayCode === expected.replayCode) tally.replayCode.ok++;
-		}
-		if (expected.scores) {
-			tally.scores.total++;
-			if (JSON.stringify(event.data.scores) === JSON.stringify(expected.scores))
-				tally.scores.ok++;
 		}
 		if (expected.matchScores) {
 			tally.matchScores.total++;
@@ -200,10 +194,7 @@ for (const config of configs) {
 		console.info(`timestamp   ${pct(tally.timestamp)}`);
 		console.info(`replayCode  ${pct(tally.replayCode)}`);
 	}
-	console.info(`scores      ${pct(tally.scores)}`);
-	if (config.event === "ScoreboardReplay") {
-		console.info(`matchScores ${pct(tally.matchScores)}`);
-	}
+	console.info(`matchScores ${pct(tally.matchScores)}`);
 	console.info(`weapons     ${pct(tally.weapons)}`);
 	console.info(`names       ${pct(tally.names)}`);
 	console.info(`paint       ${pct(tally.paint)}`);

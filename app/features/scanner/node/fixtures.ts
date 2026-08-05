@@ -71,9 +71,8 @@ interface ExpectedScoreboard {
 		timestamp?: string;
 		/** ScoreboardReplay only */
 		replayCode?: string;
-		scores?: [number, number];
-		/** ScoreboardReplay only: the "Score:" banner values */
-		matchScores?: [number, number];
+		/** the "Score:" banner game scores, [winner, loser]; KO winner = 100 */
+		matchScores?: [number | null, number | null];
 		players?: ExpectedPlayer[];
 		/** index of the yellow POV-arrow row in `players`; null = no arrow */
 		povIndex?: number | null;

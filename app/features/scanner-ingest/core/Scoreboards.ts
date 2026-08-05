@@ -71,6 +71,7 @@ export interface IngestedScoreboardPlayer {
 }
 
 export interface IngestedScoreboardData {
+	/** game scores [winner, loser] (0-100; a knockout's winner is 100) */
 	scores: [number | null, number | null];
 	/** in scoreboard order: rows 0-3 winning team, rows 4-7 losing team */
 	players: IngestedScoreboardPlayer[];
@@ -198,6 +199,7 @@ interface WinnerFirstView {
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
 	stage: StageId | null;
+	/** game scores [winner, loser] from the match's "Score:" banner */
 	scores: [number | null, number | null];
 	players: WinnerFirstPlayer[];
 	povIndex: number | null;
@@ -233,7 +235,10 @@ function winnerFirstView(
 		lobby: match.lobby,
 		mode: match.mode,
 		stage: match.stage,
-		scores: [winners.score, losers.score],
+		scores: [
+			match.matchScores?.[match.winner] ?? null,
+			match.matchScores?.[match.winner === 0 ? 1 : 0] ?? null,
+		],
 		players: [...winners.players, ...losers.players].map((player) => ({
 			...player,
 			name: player.name ?? "",

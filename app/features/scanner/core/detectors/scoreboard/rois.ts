@@ -69,11 +69,31 @@ export function povArrowRoi(cy: number): Roi {
 	return { x: 930, y: cy - 32, w: 58, h: 56 };
 }
 
-/** Team score totals ("500 p"), larger digits, right-aligned ending at x=1658. */
+/**
+ * Team point totals ("500 p"), larger digits, right-aligned ending at
+ * x=1658. Only read to recognize a knockout (winner total 500) — the
+ * totals are the count times five, not the match score.
+ */
 export const TEAM_SCORE_ROIS: readonly [Roi, Roi] = [
 	{ x: 1530, y: 330, w: 132, h: 44 },
 	{ x: 1530, y: 684, w: 132, h: 44 },
 ];
+
+/**
+ * The two sides of the colored "Score:" banner above the team boxes. The
+ * left side's text is left-aligned from x~946 (digits directly there when
+ * the language renders no label), the right side's right-aligned ending at
+ * x~1691 — or x~1712 mid-pop, the digits bounce between ~28px and ~39px as
+ * the value lands (MATCH_SCORE_DIGIT_HEIGHTS). Boxes cover both sizes plus
+ * the label overlap the trailing-digit parse tolerates.
+ */
+export const MATCH_SCORE_ROIS: readonly [Roi, Roi] = [
+	{ x: 935, y: 231, w: 230, h: 50 },
+	{ x: 1600, y: 231, w: 125, h: 50 },
+];
+
+/** Banner score digit sizes: settled, and the landing bounce's peak. */
+export const MATCH_SCORE_DIGIT_HEIGHTS = [28, 39] as const;
 
 /**
  * Gate probe: the strip between the paint "p" suffix (ends 1424) and the

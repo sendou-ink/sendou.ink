@@ -4,9 +4,9 @@
     "lobby": "PRIVATE",
     "mode": "CB",
     "stage": 0,
-    "scores": [
-      480,
-      370
+    "matchScores": [
+      96,
+      74
     ],
     "povIndex": 0,
     "players": [

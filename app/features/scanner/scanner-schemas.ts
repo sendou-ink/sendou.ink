@@ -48,7 +48,6 @@ const scannerMatchPlayerSchema = z.object({
 });
 
 const scannerMatchTeamSchema = z.object({
-	score: z.number().nullable(),
 	players: z.array(scannerMatchPlayerSchema).max(4),
 });
 

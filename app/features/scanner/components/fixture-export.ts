@@ -26,9 +26,7 @@ import { mainWeaponLabel, stageLabel, weaponLabel } from "./labels";
 
 /** Scoreboard data with the replay extras present when the event has them. */
 export type CardData = ScoreboardData &
-	Partial<
-		Pick<ScoreboardReplayData, "timestamp" | "replayCode" | "matchScores">
-	>;
+	Partial<Pick<ScoreboardReplayData, "timestamp" | "replayCode">>;
 
 /** Any detector's event payload that can prefill a fixture. */
 export type FixtureData =
@@ -160,10 +158,7 @@ function buildExpectedJson(
 				}),
 				...(card.timestamp != null && { timestamp: card.timestamp }),
 				...(card.replayCode != null && { replayCode: card.replayCode }),
-				scores: card.scores,
-				...(card.matchScores !== undefined && {
-					matchScores: card.matchScores,
-				}),
+				matchScores: card.matchScores,
 				players: card.players.map((p) => ({
 					name: p.name,
 					weaponId: p.weaponId,

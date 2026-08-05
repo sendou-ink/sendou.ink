@@ -59,8 +59,9 @@ import {
 	enemySubTileRoi,
 	enemyWeaponRoi,
 	GATE_BRIGHT_MIN_MAX,
-	GATE_CLOSE_BRIGHT,
 	GATE_CLOSE_DARK_PROBES,
+	GATE_CLOSE_X_BRIGHT,
+	GATE_CLOSE_X_DARK,
 	GATE_DARK_MAX_MEAN,
 	GATE_SPAWN_BRIGHT,
 	GATE_SPAWN_DARK_PROBES,
@@ -224,8 +225,12 @@ export function createMinimapDetector(
 	function overlayGate(gray: Mat): GateResult {
 		return probeGate(
 			gray,
-			[...GATE_CLOSE_DARK_PROBES, ...GATE_SPAWN_DARK_PROBES],
-			[GATE_CLOSE_BRIGHT, GATE_SPAWN_BRIGHT],
+			[
+				...GATE_CLOSE_DARK_PROBES,
+				...GATE_CLOSE_X_DARK,
+				...GATE_SPAWN_DARK_PROBES,
+			],
+			[...GATE_CLOSE_X_BRIGHT, GATE_SPAWN_BRIGHT],
 		);
 	}
 

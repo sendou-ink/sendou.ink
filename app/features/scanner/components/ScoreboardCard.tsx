@@ -55,9 +55,8 @@ function PlayerRows({
 }
 
 function teamHeading(label: string, data: CardData, side: 0 | 1): string {
-	const score = `${label} — ${data.scores[side] ?? "?"}p`;
-	const match = data.matchScores?.[side];
-	return match != null ? `${score} · score ${match}` : score;
+	const score = data.matchScores[side];
+	return score !== null ? `${label} — ${score}` : label;
 }
 
 export function ScoreboardCard(props: {

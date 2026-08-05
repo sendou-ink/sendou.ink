@@ -12,6 +12,11 @@ import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import { cropRoi, maxBrightness, meanBrightness } from "../../image";
 import type { DetectedEvent, Detector, GateResult } from "../types";
+import {
+	FULL_COUNT_TEAM_SCORE,
+	parseBannerScore,
+	resolveMatchScores,
+} from "./banner";
 import { parseNumber } from "./digits";
 import { type ParsedHeader, parseHeader } from "./header";
 import { findPovIndex } from "./pov";
@@ -21,6 +26,8 @@ import {
 	GATE_PANEL_PROBES,
 	GATE_TEXT_MIN_MAX,
 	gateDarkProbe,
+	MATCH_SCORE_DIGIT_HEIGHTS,
+	MATCH_SCORE_ROIS,
 	nameRoi,
 	PAINT_DIGIT_HEIGHT,
 	paintRoi,
@@ -53,8 +60,11 @@ export interface ScoreboardData {
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
 	stage: StageId | null;
-	/** [winning team total, losing team total] as shown ("500 p") */
-	scores: [number | null, number | null];
+	/**
+	 * the "Score:" banner game scores, [winner, loser]; a knockout's winner
+	 * reports 100 (the burst hides the real banner)
+	 */
+	matchScores: [number | null, number | null];
 	/** 8 players: rows 0-3 winning team, rows 4-7 losing team */
 	players: ScoreboardPlayer[];
 	/**
@@ -178,6 +188,11 @@ export function createScoreboardDetector(
 					TEAM_DIGIT_HEIGHT / PAINT_DIGIT_HEIGHT,
 				)
 			: null);
+	const matchScoreSets = teamDigits
+		? MATCH_SCORE_DIGIT_HEIGHTS.map((height) =>
+				scaleGlyphSet(teamDigits, height / teamDigits.height),
+			)
+		: [];
 
 	function gate(frame: Mat): GateResult {
 		const gray = new cv.Mat();
@@ -248,19 +263,32 @@ export function createScoreboardDetector(
 			confidences.push(header.confidence);
 		}
 
-		const scores: [number | null, number | null] = [null, null];
-		const teamScoreConf: number[] = [];
+		// The winner's team total is read only to recognize a knockout: the
+		// box prints the count times five, and only a knockout's full 100
+		// count reaches 500 (the banner value it would confirm is hidden
+		// under the KNOCKOUT! burst).
+		let knockout = false;
+		let winnerTotalConf = 0;
 		if (teamDigits) {
-			for (const i of [0, 1] as const) {
-				// Team totals sit on the team-colored box (light swirl pattern),
-				// so binarize more aggressively than on the black pills.
-				const crop = cropRoi(gray, TEAM_SCORE_ROIS[i]);
-				const parsed = parseNumber(crop, teamDigits, { binThreshold: 175 });
-				crop.delete();
-				scores[i] = parsed.value;
-				teamScoreConf.push(parsed.confidence);
-				confidences.push(parsed.confidence);
-			}
+			// The total sits on the team-colored box (light swirl pattern),
+			// so binarize more aggressively than on the black pills.
+			const crop = cropRoi(gray, TEAM_SCORE_ROIS[0]);
+			const winnerTotal = parseNumber(crop, teamDigits, {
+				binThreshold: 175,
+			});
+			crop.delete();
+			knockout = winnerTotal.value === FULL_COUNT_TEAM_SCORE;
+			winnerTotalConf = winnerTotal.confidence;
+		}
+
+		let matchScores: [number | null, number | null] = [null, null];
+		let bannerDebug: object | undefined;
+		if (matchScoreSets.length > 0) {
+			const left = parseBannerScore(gray, MATCH_SCORE_ROIS[0], matchScoreSets);
+			const right = parseBannerScore(gray, MATCH_SCORE_ROIS[1], matchScoreSets);
+			matchScores = resolveMatchScores({ left, right, knockout });
+			confidences.push(left.confidence, right.confidence);
+			bannerDebug = { left, right, knockout, winnerTotalConf };
 		}
 
 		gray.delete();
@@ -280,11 +308,15 @@ export function createScoreboardDetector(
 					lobby: header?.lobby ?? null,
 					mode: header?.mode ?? null,
 					stage: header?.stage ?? null,
-					scores,
+					matchScores,
 					players,
 					povIndex,
 				},
-				debug: { rows: rowDebug, teamScoreConf, header: header?.debug },
+				debug: {
+					rows: rowDebug,
+					matchScore: bannerDebug,
+					header: header?.debug,
+				},
 			},
 		];
 	}

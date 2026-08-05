@@ -73,13 +73,10 @@ function testMatch({
 		lobby,
 		mode,
 		stage,
-		matchScores: null,
+		matchScores: [100, 52],
 		replayCode: null,
 		cast: false,
-		teams: [
-			{ score: 100, players: players.slice(0, 4) },
-			{ score: 52, players: players.slice(4) },
-		],
+		teams: [{ players: players.slice(0, 4) }, { players: players.slice(4) }],
 		winner: 0,
 		pov:
 			povIndex === null
@@ -94,6 +91,10 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 		...match,
 		teams: [match.teams[1], match.teams[0]],
 		winner: match.winner === null ? null : match.winner === 0 ? 1 : 0,
+		matchScores:
+			match.matchScores === null
+				? null
+				: [match.matchScores[1], match.matchScores[0]],
 		pov:
 			match.pov === null
 				? null

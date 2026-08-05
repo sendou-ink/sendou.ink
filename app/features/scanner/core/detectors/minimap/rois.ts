@@ -200,8 +200,29 @@ export const SPECIAL_READY_WEAPON_MIN_SCORE = 0.42;
  */
 export const PRESENCE_MIN_LAPLACIAN = 8;
 
-/** Gate probes (overlay variant): close-button disc + Spawn Point pill shapes. */
-export const GATE_CLOSE_BRIGHT: Roi = { x: 90, y: 90, w: 16, h: 16 };
+/**
+ * Gate probes (overlay variant): close-button disc + Spawn Point pill
+ * shapes. The close button is a white ✕ glyph on a dark disc (center
+ * (110,92), ±4px across fixtures), traced like the spectator X: bright
+ * probes on the crossing point and the four stroke arms, dark probes in
+ * the cardinal gaps between them. A mere bright blob at the same spot —
+ * the results screen's splat counter puts white digits exactly there —
+ * lights the gaps or misses the arms and fails.
+ */
+export const GATE_CLOSE_X_BRIGHT: readonly Roi[] = [
+	{ x: 104, y: 88, w: 12, h: 10 },
+	{ x: 88, y: 72, w: 8, h: 10 },
+	{ x: 124, y: 72, w: 8, h: 10 },
+	{ x: 88, y: 108, w: 8, h: 10 },
+	{ x: 124, y: 108, w: 8, h: 10 },
+];
+export const GATE_CLOSE_X_DARK: readonly Roi[] = [
+	{ x: 104, y: 62, w: 12, h: 8 },
+	{ x: 104, y: 116, w: 12, h: 8 },
+	{ x: 76, y: 88, w: 8, h: 10 },
+	{ x: 136, y: 88, w: 8, h: 10 },
+];
+/** Dark ring/background just outside the close-button disc. */
 export const GATE_CLOSE_DARK_PROBES: readonly Roi[] = [
 	{ x: 88, y: 50, w: 20, h: 14 },
 	{ x: 88, y: 132, w: 20, h: 14 },

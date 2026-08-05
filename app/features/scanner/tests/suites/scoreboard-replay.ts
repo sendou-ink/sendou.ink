@@ -67,16 +67,9 @@ export async function runScoreboardReplaySuite(
 			const rows = (event.debug?.rows ?? []) as ScoreboardRowDebug[];
 			const expected = fixture.expected.data ?? {};
 
-			await t.test("scores", { skip: skip(fixture, "scores") }, () => {
-				assert.deepEqual(event.data.scores, expected.scores);
-			});
-
 			await t.test(
 				"matchScores",
-				{
-					skip:
-						expected.matchScores === undefined || skip(fixture, "matchScores"),
-				},
+				{ skip: skip(fixture, "matchScores") },
 				() => {
 					assert.deepEqual(event.data.matchScores, expected.matchScores);
 				},

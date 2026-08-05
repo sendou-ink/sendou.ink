@@ -144,7 +144,6 @@ export function normalizeInGameName(name: string): string {
 
 function canonicalTeam(team: ScannerMatchTeam): ScannerMatchTeam {
 	return {
-		score: team.score,
 		players: team.players.map(canonicalPlayer),
 	};
 }
@@ -319,7 +318,7 @@ function mergeTeam(
 		players.push(entry.player);
 	}
 
-	return { score: existing.score ?? incoming.score, players };
+	return { players };
 }
 
 function mergePlayer(

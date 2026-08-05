@@ -5,9 +5,9 @@
  *
  * Layout differs from the live scoreboard: the two team panels sit side by
  * side and the replay owner's team may be on either side, so the
- * VICTORY/DEFEAT panel tags are read to keep `players`/`scores` ordered
- * winners-first like the live event. Field parsing reuses the scoreboard
- * helpers with glyph sets rescaled to this screen's text sizes.
+ * VICTORY/DEFEAT panel tags are read to keep `players`/`matchScores`
+ * ordered winners-first like the live event. Field parsing reuses the
+ * scoreboard helpers with glyph sets rescaled to this screen's text sizes.
  */
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
@@ -20,6 +20,11 @@ import {
 } from "../../image";
 import { RESULT_TAG_ENTRIES } from "../../localized";
 import { closestBy } from "../../text";
+import {
+	FULL_COUNT_TEAM_SCORE,
+	KO_MATCH_SCORE,
+	MATCH_SCORE_MIN_CONF,
+} from "../scoreboard/banner";
 import { type ParsedNumber, parseNumber } from "../scoreboard/digits";
 import type {
 	ScoreboardData,
@@ -71,11 +76,6 @@ export interface ScoreboardReplayData extends ScoreboardData {
 	timestamp: string | null;
 	/** "XXXX-XXXX-XXXX-XXXX" */
 	replayCode: string | null;
-	/**
-	 * the colored "Score:" banner values, [winner, loser] like `scores`;
-	 * a knockout's winner reports 100 (the burst hides the real banner)
-	 */
-	matchScores: [number | null, number | null];
 }
 
 export const SCOREBOARD_REPLAY_EVENT_TYPE = "ScoreboardReplay";
@@ -89,25 +89,6 @@ const REPLAY_INK_THRESHOLD = 90;
  * on the green-heavy grayscale, above the default 150.
  */
 const BANNER_BIN_THRESHOLD = 190;
-
-/**
- * On a knockout the winner's "Score:" banner is replaced by the localized
- * "KNOCKOUT!" burst, whose letters overlap the score ROI and weakly match
- * digit templates (an O reads as a ~0.42 zero; real digits score 0.9+).
- * Reads below this floor are discarded rather than trusted as a score — the
- * knockout that put the burst there is recovered from the team count below.
- */
-const MATCH_SCORE_MIN_CONF = 0.6;
-
-/** The count a knockout wins at — the burst hides it, so it is never read. */
-const KO_MATCH_SCORE = 100;
-
-/**
- * The team box prints the count times five ("440 p" alongside a 88 banner),
- * so a knockout's full 100 count shows as 500 — a total only a knockout
- * reaches, which is what separates a burst-covered banner from an unread one.
- */
-const FULL_COUNT_TEAM_SCORE = KO_MATCH_SCORE * 5;
 
 /** Canonical results the localized VICTORY/DEFEAT panel tags snap to. */
 type PanelResult = "VICTORY" | "DEFEAT";
@@ -268,6 +249,9 @@ export function createScoreboardReplayDetector(
 			rows.push(row.debug);
 		}
 
+		// The panel's point total is read only to recognize a knockout below
+		// (the count times five: only a knockout's full count reaches 500);
+		// it is never emitted as a score.
 		let teamScore: ParsedNumber | null = null;
 		if (teamDigits) {
 			const crop = cropRoi(gray, teamScoreRoi(dx));
@@ -284,7 +268,10 @@ export function createScoreboardReplayDetector(
 			matchScore = parseNumber(crop, matchScoreDigits, {
 				binThreshold: BANNER_BIN_THRESHOLD,
 			});
-			if (matchScore.confidence < MATCH_SCORE_MIN_CONF) {
+			if (
+				matchScore.confidence < MATCH_SCORE_MIN_CONF ||
+				(matchScore.value !== null && matchScore.value > KO_MATCH_SCORE)
+			) {
 				matchScore = { ...matchScore, value: null };
 			}
 			crop.delete();
@@ -402,10 +389,6 @@ export function createScoreboardReplayDetector(
 					stage: header?.stage ?? null,
 					timestamp: header?.timestamp ?? null,
 					replayCode: code?.code ?? null,
-					scores: [
-						winner.teamScore?.value ?? null,
-						loser.teamScore?.value ?? null,
-					],
 					matchScores: [
 						winner.matchScore?.value ?? null,
 						loser.matchScore?.value ?? null,

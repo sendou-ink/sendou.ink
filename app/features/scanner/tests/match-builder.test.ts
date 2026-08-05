@@ -58,7 +58,7 @@ function scoreboard(
 		lobby,
 		mode,
 		stage,
-		scores: [100, 47],
+		matchScores: [100, 47],
 		players: weapons.map((weaponId, i) => ({
 			name: NAMES[i] ?? `p${i}`,
 			weaponId,
@@ -84,7 +84,7 @@ function replayScoreboard(
 		...base,
 		timestamp,
 		replayCode,
-		matchScores: [3, 1],
+		matchScores: [88, 71],
 	};
 	return { type: "ScoreboardReplay", t, confidence: 0.9, data };
 }
@@ -162,10 +162,7 @@ test("scoreboard fields land on the match", () => {
 	assert.equal(match.stage, 0);
 	assert.equal(match.winner, 0);
 	assert.deepEqual(match.pov, { team: 0, index: 0 });
-	assert.deepEqual(
-		match.teams.map((team) => team.score),
-		[100, 47],
-	);
+	assert.deepEqual(match.matchScores, [100, 47]);
 	assert.deepEqual(
 		match.teams.map((team) => team.players.map((p) => p.name)),
 		[
@@ -175,7 +172,6 @@ test("scoreboard fields land on the match", () => {
 	);
 	assert.deepEqual(weapons(match), ALL);
 	assert.equal(match.cast, false);
-	assert.equal(match.matchScores, null);
 	assert.equal(match.replayCode, null);
 });
 
@@ -340,7 +336,7 @@ test("a replay scoreboard supplies replay code, set score and recording time", (
 	const built = buildScannerMatches([event]);
 	const match = built[0]!.match;
 	assert.equal(match.replayCode, "RABC-DEFG-HIJK-LMNO");
-	assert.deepEqual(match.matchScores, [3, 1]);
+	assert.deepEqual(match.matchScores, [88, 71]);
 	assert.equal(match.playedAt, new Date(2025, 11, 25, 21, 30).getTime());
 });
 
@@ -357,10 +353,7 @@ test("a minimap-only match has no playedAt and no winner", () => {
 	assert.equal(match.playedAt, null);
 	assert.equal(match.winner, null);
 	assert.equal(match.pov, null);
-	assert.deepEqual(
-		match.teams.map((team) => team.score),
-		[null, null],
-	);
+	assert.equal(match.matchScores, null);
 });
 
 test("a spectator map's minimaps become one cast match: weapons + stage from the minimap, mode unread", () => {

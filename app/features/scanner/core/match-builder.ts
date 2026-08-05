@@ -237,7 +237,9 @@ function toBuiltMatch<E extends DetectedEvent>(
 		lobby: board?.lobby ?? null,
 		mode: board?.mode ?? start?.mode ?? null,
 		stage: board?.stage ?? start?.stage ?? leadingStage(open.stageVotes),
-		matchScores: replay?.matchScores ?? null,
+		matchScores: board?.matchScores.some((score) => score !== null)
+			? board.matchScores
+			: null,
 		replayCode: replay?.replayCode ?? null,
 		cast: open.minimaps.some((event) => (event.data as MinimapData).spectator),
 		teams: board
@@ -303,8 +305,8 @@ function teamsFromScoreboard(
 		};
 	});
 	return [
-		{ score: board.scores[0], players: players.slice(0, PLAYERS_PER_TEAM) },
-		{ score: board.scores[1], players: players.slice(PLAYERS_PER_TEAM) },
+		{ players: players.slice(0, PLAYERS_PER_TEAM) },
+		{ players: players.slice(PLAYERS_PER_TEAM) },
 	];
 }
 
@@ -328,8 +330,8 @@ function teamsFromMinimaps(
 	});
 
 	return [
-		{ score: null, players: withAbilities.slice(0, alpha.length) },
-		{ score: null, players: withAbilities.slice(alpha.length) },
+		{ players: withAbilities.slice(0, alpha.length) },
+		{ players: withAbilities.slice(alpha.length) },
 	];
 }
 

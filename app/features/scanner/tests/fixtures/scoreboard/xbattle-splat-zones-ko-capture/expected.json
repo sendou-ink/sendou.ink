@@ -4,8 +4,8 @@
     "lobby": "X",
     "mode": "SZ",
     "stage": 0,
-    "scores": [
-      500,
+    "matchScores": [
+      100,
       0
     ],
     "povIndex": 0,

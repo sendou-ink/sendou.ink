@@ -4,8 +4,8 @@
     "lobby": "SERIES",
     "mode": "SZ",
     "stage": 8,
-    "scores": [
-      500,
+    "matchScores": [
+      100,
       0
     ],
     "players": [
