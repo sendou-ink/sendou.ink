@@ -1,5 +1,6 @@
 import { add, startOfWeek, sub } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import type { UserPreferences } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
@@ -41,6 +42,17 @@ export const loader = async (args: LoaderFunctionArgs) => {
 	const filters = resolveFilters(args.request, user?.preferences);
 	const filtered = CalendarEvent.applyFilters(events, filters);
 
+	const canSaveAsDefault =
+		user != null &&
+		!R.isDeepEqual(
+			filters,
+			user.preferences?.defaultCalendarFilters
+				? calendarFiltersSearchParamsSchema.parse(
+						user.preferences.defaultCalendarFilters,
+					)
+				: CalendarEvent.defaultFilters(),
+		);
+
 	const eventTimes = canAccessTrophies(user)
 		? filtered
 		: filtered.map((time) => ({
@@ -61,6 +73,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		eventTimes,
 		dateViewed,
 		filters,
+		canSaveAsDefault,
 	};
 };
 
@@ -68,7 +81,9 @@ function resolveFilters(
 	request: Request,
 	preferences?: UserPreferences | null,
 ) {
-	const parsed = calendarSearchParams.parse(request).filters;
+	const parsed = R.pick(calendarSearchParams.parse(request), [
+		...CalendarEvent.FILTERS_KEYS,
+	]);
 
 	if (!CalendarEvent.isDefaultFilters(parsed)) {
 		return parsed;

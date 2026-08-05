@@ -9,7 +9,7 @@ import type {
 	GroupedCalendarEvents,
 } from "../calendar-types";
 
-const FILTERS_KEYS = [
+export const FILTERS_KEYS = [
 	"preferredStartTime",
 	"tagsIncluded",
 	"tagsExcluded",

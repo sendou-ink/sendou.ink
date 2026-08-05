@@ -387,7 +387,7 @@ export const calendarPage = (args?: {
 	dayMonthYear?: DayMonthYear;
 }) =>
 	calendarSearchParams.href(CALENDAR_PAGE, {
-		...(args?.filters ? { filters: args.filters } : {}),
+		...(args?.filters ?? {}),
 		...(args?.dayMonthYear
 			? {
 					day: args.dayMonthYear.day,
@@ -399,7 +399,7 @@ export const calendarPage = (args?: {
 
 export const calendarIcalFeed = (filters?: CalendarFilters) =>
 	calendarSearchParams.href(`${SENDOU_INK_BASE_URL}/calendar.ics`, {
-		...(filters ? { filters } : {}),
+		...(filters ?? {}),
 	});
 
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;

@@ -1,12 +1,10 @@
 import type { Page } from "@playwright/test";
-import { calendarFiltersFormSchema } from "~/features/calendar/calendar-schemas";
 import { calendarPage } from "~/utils/urls";
 import {
 	expectIsHydrated,
 	navigate,
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
-import { createFormHelpers } from "../../helpers/playwright-form";
 
 /** `/calendar` */
 export class CalendarPage {
@@ -20,7 +18,10 @@ export class CalendarPage {
 			hiddenEventsButtons: page.getByTestId("hidden-events-button"),
 			clockHeaderTimes: page.getByTestId("clock-header-time"),
 			todayHeader: page.getByTestId("today-header"),
-			filterEventsButton: page.getByTestId("filter-events-button"),
+			eventTypeFilterPill: page.getByTestId("event-type-filter"),
+			saveFiltersAsDefaultButton: page.getByTestId(
+				"save-filters-as-default-button",
+			),
 			navigateButtons: page.getByTestId("calendar-navigate-button"),
 		};
 	}
@@ -46,9 +47,25 @@ export class CalendarPage {
 		await expectIsHydrated(this.page);
 	}
 
-	async openFilters() {
-		await this.locators.filterEventsButton.click();
-		return new CalendarFiltersDialog(this.page);
+	/** Toggles one of the switches inside the "Event type" filter pill's popover. */
+	async toggleEventTypeFilter(name: "isSendou" | "isRanked") {
+		await this.page.keyboard.press("Escape");
+		await this.locators.eventTypeFilterPill.click();
+		await this.page
+			.getByText(
+				name === "isSendou"
+					? "Only events hosted on sendou.ink"
+					: "Only ranked events",
+			)
+			.click();
+		await this.page.keyboard.press("Escape");
+	}
+
+	/** Persists the current filters as the user's default. */
+	async saveFiltersAsDefault() {
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.saveFiltersAsDefaultButton.click(),
+		);
 	}
 
 	/** Shows or hides the events the current filters hide, of the first time slot. */
@@ -62,33 +79,5 @@ export class CalendarPage {
 
 	async navigateNext() {
 		await this.locators.navigateButtons.nth(1).click();
-	}
-}
-
-class CalendarFiltersDialog {
-	private readonly page: Page;
-	readonly form;
-	readonly locators;
-
-	constructor(page: Page) {
-		this.page = page;
-		this.form = createFormHelpers(page, calendarFiltersFormSchema);
-		this.locators = {
-			applyAndMakeDefaultButton: page.getByRole("button", {
-				name: "Apply & make default",
-			}),
-		};
-	}
-
-	/** Applies the filters for this visit only, via search params. */
-	async apply() {
-		await this.form.submit();
-	}
-
-	/** Applies the filters and saves them as the user's default. */
-	async applyAndMakeDefault() {
-		await waitForPOSTResponse(this.page, () =>
-			this.locators.applyAndMakeDefaultButton.click(),
-		);
 	}
 }

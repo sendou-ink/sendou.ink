@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -13,24 +13,23 @@ import * as CalendarEvent from "./core/CalendarEvent";
 describe("calendarSearchParams", () => {
 	it("round-trips", () => {
 		assertRoundTrips(calendarSearchParams, {
-			filters: [
-				CalendarEvent.defaultFilters(),
-				{
-					preferredStartTime: "EU",
-					tagsIncluded: ["ART"],
-					tagsExcluded: ["MONEY"],
-					isSendou: true,
-					isRanked: true,
-					orgsIncluded: ["Splat Org"],
-					orgsExcluded: [],
-					authorIdsExcluded: [1, 274],
-					games: ["S3"],
-					preferredVersus: ["4v4"],
-					modes: ["SZ", "TC"],
-					modesExact: true,
-					minTeamCount: 16,
-				},
+			modes: [CalendarEvent.defaultFilters().modes, ["SZ", "TC"], ["TB"]],
+			modesExact: [false, true],
+			games: [CalendarEvent.defaultFilters().games, ["S3"], ["S1", "S2"]],
+			preferredVersus: [
+				CalendarEvent.defaultFilters().preferredVersus,
+				["4v4"],
+				["1v1", "2v2"],
 			],
+			preferredStartTime: ["ANY", "EU", "NA", "AU"],
+			tagsIncluded: [[], ["ART"], ["ART", "MONEY"]],
+			tagsExcluded: [[], ["MONEY"]],
+			isSendou: [false, true],
+			isRanked: [false, true],
+			minTeamCount: [0, 16],
+			orgsIncluded: [[], ["Splat Org"], ["A", "B"]],
+			orgsExcluded: [[], ["Bad Org"]],
+			authorIdsExcluded: [[], [1, 274]],
 			day: [null, 1, 15, 31],
 			month: [null, 0, 11],
 			year: [null, 2015, 2026, 2100],
@@ -38,12 +37,20 @@ describe("calendarSearchParams", () => {
 	});
 
 	it("decodes garbage to defaults", () => {
-		assertDecodesToDefault(calendarSearchParams, "filters", [
-			["not-json"],
-			["[1,2,3]"],
-			['"foo"'],
-			['{"preferredStartTime":"XX"}'],
+		assertDecodesToDefault(calendarSearchParams, "preferredStartTime", [
+			["XX"],
+			["eu"],
 		]);
+		assertDecodesToDefault(calendarSearchParams, "modesExact", [
+			["1"],
+			["yes"],
+		]);
+		assertDecodesToDefault(calendarSearchParams, "minTeamCount", [
+			["-1"],
+			["abc"],
+			["1.5"],
+		]);
+		assertDecodesToDefault(calendarSearchParams, "games", [["BAD"]]);
 		assertDecodesToDefault(calendarSearchParams, "day", [
 			["0"],
 			["32"],
@@ -56,21 +63,6 @@ describe("calendarSearchParams", () => {
 			["2101"],
 			["nope"],
 		]);
-	});
-
-	it("keeps valid fields when part of the filters blob is invalid", () => {
-		const parsed = calendarSearchParams.parse(
-			new URL(
-				`http://localhost/calendar?filters=${encodeURIComponent(
-					JSON.stringify({ isSendou: true, games: ["BAD"] }),
-				)}`,
-			),
-		);
-
-		expect(parsed.filters).toEqual({
-			...CalendarEvent.defaultFilters(),
-			isSendou: true,
-		});
 	});
 });
 

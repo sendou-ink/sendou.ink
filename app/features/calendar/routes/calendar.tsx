@@ -37,9 +37,8 @@ import {
 import type { DayMonthYear } from "~/utils/zod";
 import { action } from "../actions/calendar";
 import { daysForCalendar } from "../calendar-utils";
-import { FiltersDialog } from "../components/FiltersDialog";
+import { FiltersBar } from "../components/FiltersBar";
 import { TournamentCard } from "../components/TournamentCard";
-import * as CalendarEvent from "../core/CalendarEvent";
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 
 export { action, loader };
@@ -108,12 +107,9 @@ export default function CalendarPage() {
 						}
 						url={calendarIcalFeed(data.filters)}
 					/>
-					<FiltersDialog
-						key={CalendarEvent.filtersToString(data.filters)}
-						filters={data.filters}
-					/>
 				</div>
 			</div>
+			<FiltersBar />
 			<div
 				key={`${shown[0].year}-${shown[0].month}-${shown[0].day}`}
 				ref={scrollTodayToCenter}

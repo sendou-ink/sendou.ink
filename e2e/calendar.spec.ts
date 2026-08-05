@@ -38,9 +38,7 @@ test.describe("Calendar", () => {
 		const calendar = new CalendarPage(page);
 		await calendar.goto();
 
-		const filters = await calendar.openFilters();
-		await filters.form.check("isSendou");
-		await filters.apply();
+		await calendar.toggleEventTypeFilter("isSendou");
 
 		await expect(calendar.locators.tournamentCards).toHaveCount(
 			SENDOU_INK_TOURNAMENTS_COUNT,
@@ -77,9 +75,8 @@ test.describe("Calendar", () => {
 
 		await isNotVisible(calendar.locators.hiddenEventsButtons);
 
-		const filters = await calendar.openFilters();
-		await filters.form.check("isRanked");
-		await filters.applyAndMakeDefault();
+		await calendar.toggleEventTypeFilter("isRanked");
+		await calendar.saveFiltersAsDefault();
 
 		await expect(calendar.locators.hiddenEventsButtons.first()).toBeVisible();
 
