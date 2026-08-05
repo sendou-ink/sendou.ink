@@ -149,6 +149,8 @@
 	"actions.outlined": "アウトラインあり",
 	"actions.noOutline": "アウトラインなし",
 	"actions.join": "参加する",
+	"filterBar.addFilter": "",
+	"filterBar.saveAsDefault": "",
 	"imageExport.export": "",
 	"imageExport.download": "",
 	"imageExport.theme.light": "",

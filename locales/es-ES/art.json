@@ -1,5 +1,6 @@
 {
 	"pendingApproval_one": "Tienes {{count}} imagen esperando aprobación.",
+	"pendingApproval_many": "",
 	"pendingApproval_other": "Tienes {{count}} imágenes esperando aprobación.",
 	"madeBy": "Creada por",
 	"radios.all": "Todos",

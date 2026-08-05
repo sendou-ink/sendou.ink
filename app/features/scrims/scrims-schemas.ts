@@ -126,7 +126,7 @@ function normalizeDivs<T extends { min: string | null; max: string | null }>(
 	return divs;
 }
 
-export const scrimsFiltersSchema = z.object({
+const scrimsFiltersSchema = z.object({
 	weekdayTimes: timeRangeSchema.nullable().catch(null),
 	weekendTimes: timeRangeSchema.nullable().catch(null),
 	divs: divsSchema.nullable().catch(null),

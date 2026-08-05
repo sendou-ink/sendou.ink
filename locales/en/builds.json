@@ -21,7 +21,6 @@
 	"stats.all": "All",
 	"stats.public": "Public",
 	"stats.private": "Private",
-	"addFilter": "Add filter",
 	"linkButton.abilityStats": "Ability stats",
 	"linkButton.popularBuilds": "Popular builds",
 	"noPopularBuilds": "It seems there are no popular builds for this weapon at this moment.",

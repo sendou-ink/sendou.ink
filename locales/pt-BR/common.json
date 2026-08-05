@@ -149,6 +149,8 @@
 	"actions.outlined": "",
 	"actions.noOutline": "",
 	"actions.join": "Entrar",
+	"filterBar.addFilter": "",
+	"filterBar.saveAsDefault": "",
 	"imageExport.export": "",
 	"imageExport.download": "",
 	"imageExport.theme.light": "",

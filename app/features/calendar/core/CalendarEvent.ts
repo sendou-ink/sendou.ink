@@ -58,10 +58,7 @@ export function isDefaultFilters(filters: CalendarFilters): boolean {
 	return filtersToString(filters) === defaultFiltersString;
 }
 
-/**
- * Serializes the given calendar filters object into a string representation to be used as e.g. React key.
- */
-export function filtersToString(filters: CalendarFilters): string {
+function filtersToString(filters: CalendarFilters): string {
 	let result = "";
 
 	for (const key of FILTERS_KEYS) {
