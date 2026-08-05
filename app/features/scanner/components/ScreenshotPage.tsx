@@ -280,9 +280,16 @@ export function ScreenshotPage() {
 	useEffect(() => {
 		if (!inspectKey) return;
 		setInspectKey(null);
-		void claimInspectFrame(inspectKey).then((frame) => {
-			if (frame) void analyze(frame);
-		});
+		claimInspectFrame(inspectKey).then(
+			(frame) => {
+				if (frame) void analyze(frame);
+				else
+					setError(
+						"Inspected frame did not arrive — go back to the other tab and press Inspect again",
+					);
+			},
+			(e) => setError(String(e)),
+		);
 	}, [inspectKey, setInspectKey, analyze]);
 
 	const event = active?.events[0] as DetectedEvent<CardData> | undefined;
@@ -291,6 +298,7 @@ export function ScreenshotPage() {
 	const isDeath = activeDetector === "death";
 	const isMapStart = activeDetector === "map-start";
 	const isOwn = activeDetector === "scoreboard-own";
+	const isMinimap = activeDetector === "minimap";
 	const winnerSide = String(event?.debug?.winnerSide ?? "left");
 	const rowRois = isReplay ? replayRows(winnerSide) : scoreboardRows();
 
@@ -535,7 +543,52 @@ export function ScreenshotPage() {
 				</p>
 			)}
 
-			{frame && event && !isDeath && !isMapStart && !isOwn && (
+			{frame && event && isMinimap && (
+				<p>
+					{(() => {
+						const data = event.data as unknown as MinimapData;
+						return (
+							<>
+								stage <b>{stageLabel(data.stage) ?? "?"}</b>
+								{" · "}
+								{data.spectator ? "spectator map" : "POV overlay"}
+								{" · "}team{" "}
+								<b>
+									{data.teammates
+										.map(
+											(p) =>
+												`${p.slot}: ${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})`,
+										)
+										.join(", ") || "—"}
+								</b>
+								{data.enemies.length > 0 && (
+									<>
+										{" · "}enemies{" "}
+										<b>
+											{data.enemies
+												.map(
+													(p) =>
+														`${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})`,
+												)
+												.join(", ")}
+										</b>
+									</>
+								)}
+								{!data.spectator && (
+									<>
+										<br />
+										{minimap.CARD_LAYOUTS.map((card) => (
+											<RoiCrop key={card.slot} frame={frame} roi={card.name} />
+										))}
+									</>
+								)}
+							</>
+						);
+					})()}
+				</p>
+			)}
+
+			{frame && event && !isDeath && !isMapStart && !isOwn && !isMinimap && (
 				<table className="inspector">
 					<thead>
 						<tr>

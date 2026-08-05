@@ -39,67 +39,118 @@ function extractFrames(source: IDBObjectStore, frames: IDBObjectStore): void {
 	};
 }
 
+const ALL_STORES = [
+	EVENTS_STORE,
+	FRAMES_STORE,
+	VODS_STORE,
+	VOD_EVENTS_STORE,
+	VOD_FRAMES_STORE,
+	INSPECT_FRAMES_STORE,
+];
+
 // xxx: get rid of migrate before we go live with this
 /**
- * Versioned migrations: each `oldVersion < N` block upgrades a database from
- * below version N and runs exactly once per database. Any schema change —
- * including one to an EXISTING store (new index, moved field) — must be a new
- * block plus a DB_VERSION bump, never an edit to an old block: databases that
- * already ran the old block would silently skip the change otherwise.
+ * Brings any database — fresh, older-versioned or drifted (a dev database
+ * whose version was bumped past DB_VERSION without these stores) — to the
+ * current schema. Store creation is existence-guarded rather than
+ * version-gated so a reopen at version+1 (see openDb) can heal drift; only
+ * data moves stay keyed on the version they shipped in.
  */
 function migrate(
 	database: IDBDatabase,
 	transaction: IDBTransaction,
 	oldVersion: number,
 ): void {
-	if (oldVersion < 2) {
-		// v1/v2 era stores; contains() guards absorb the pre-versioned scheme,
-		// where every creation was unconditionally contains()-gated
-		if (!database.objectStoreNames.contains(EVENTS_STORE)) {
-			const store = database.createObjectStore(EVENTS_STORE, {
-				keyPath: "id",
-				autoIncrement: true,
-			});
-			store.createIndex("t", "t");
-			store.createIndex("detectedAt", "detectedAt");
-		}
-		if (!database.objectStoreNames.contains(VODS_STORE)) {
-			database.createObjectStore(VODS_STORE, { keyPath: "name" });
-		}
-		if (!database.objectStoreNames.contains(VOD_EVENTS_STORE)) {
-			const store = database.createObjectStore(VOD_EVENTS_STORE, {
-				keyPath: "id",
-				autoIncrement: true,
-			});
-			store.createIndex("vod", "vod");
-		}
+	if (!database.objectStoreNames.contains(EVENTS_STORE)) {
+		const store = database.createObjectStore(EVENTS_STORE, {
+			keyPath: "id",
+			autoIncrement: true,
+		});
+		store.createIndex("t", "t");
+		store.createIndex("detectedAt", "detectedAt");
+	}
+	if (!database.objectStoreNames.contains(VODS_STORE)) {
+		database.createObjectStore(VODS_STORE, { keyPath: "name" });
+	}
+	if (!database.objectStoreNames.contains(VOD_EVENTS_STORE)) {
+		const store = database.createObjectStore(VOD_EVENTS_STORE, {
+			keyPath: "id",
+			autoIncrement: true,
+		});
+		store.createIndex("vod", "vod");
+	}
+	if (!database.objectStoreNames.contains(FRAMES_STORE)) {
+		database.createObjectStore(FRAMES_STORE);
+	}
+	if (!database.objectStoreNames.contains(VOD_FRAMES_STORE)) {
+		database.createObjectStore(VOD_FRAMES_STORE);
 	}
 	if (oldVersion < 3) {
-		// frame blobs move out of the event records into keyed frame stores
-		const frames = database.createObjectStore(FRAMES_STORE);
-		const vodFrames = database.createObjectStore(VOD_FRAMES_STORE);
-		extractFrames(transaction.objectStore(EVENTS_STORE), frames);
-		extractFrames(transaction.objectStore(VOD_EVENTS_STORE), vodFrames);
+		// v1/v2 era kept the frame blobs embedded in the event records
+		extractFrames(
+			transaction.objectStore(EVENTS_STORE),
+			transaction.objectStore(FRAMES_STORE),
+		);
+		extractFrames(
+			transaction.objectStore(VOD_EVENTS_STORE),
+			transaction.objectStore(VOD_FRAMES_STORE),
+		);
 	}
-	if (oldVersion < 4) {
+	if (!database.objectStoreNames.contains(INSPECT_FRAMES_STORE)) {
 		database.createObjectStore(INSPECT_FRAMES_STORE);
 	}
 }
 
-function openDb(): Promise<IDBDatabase> {
+function openAt(version?: number): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {
-		const req = indexedDB.open(DB_NAME, DB_VERSION);
+		const req =
+			version === undefined
+				? indexedDB.open(DB_NAME)
+				: indexedDB.open(DB_NAME, version);
 		req.onupgradeneeded = (event) => {
 			migrate(req.result, req.transaction!, event.oldVersion);
+		};
+		req.onblocked = () => {
+			// biome-ignore lint/suspicious/noConsole: the only diagnostic channel for a hang caused by other tabs
+			console.warn(
+				"scanner database upgrade is blocked — close or reload other sendou.ink tabs",
+			);
 		};
 		req.onsuccess = () => resolve(req.result);
 		req.onerror = () => reject(req.error);
 	});
 }
 
+/**
+ * Opens at whatever version exists, then upgrades when the schema is behind —
+ * either an honest old version or a drifted database sitting at/above
+ * DB_VERSION without all stores, which a plain open(DB_VERSION) would
+ * silently accept (or reject with VersionError).
+ */
+async function openDb(): Promise<IDBDatabase> {
+	let database = await openAt();
+	const missingStore = ALL_STORES.some(
+		(name) => !database.objectStoreNames.contains(name),
+	);
+	if (database.version < DB_VERSION || missingStore) {
+		const nextVersion = Math.max(DB_VERSION, database.version + 1);
+		database.close();
+		database = await openAt(nextVersion);
+	}
+	return database;
+}
+
 let dbPromise: Promise<IDBDatabase> | null = null;
 export function db(): Promise<IDBDatabase> {
-	dbPromise ??= openDb();
+	dbPromise ??= openDb().then((database) => {
+		// when another tab needs to upgrade, release the connection instead of
+		// blocking that tab forever; the next call here reconnects fresh
+		database.onversionchange = () => {
+			database.close();
+			dbPromise = null;
+		};
+		return database;
+	});
 	return dbPromise;
 }
 
