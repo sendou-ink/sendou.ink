@@ -80,7 +80,7 @@ export default function Planner() {
 	const { t, i18n } = useTranslation(["common"]);
 	const { htmlThemeClass } = useTheme();
 
-	const isWide = i18n.language === "fr";
+	const isWide = i18n.language.startsWith("fr");
 
 	const [editor, setEditor] = React.useState<Editor | null>(null);
 	const [imgOutlined, setImgOutlined] = React.useState(false);
@@ -770,20 +770,20 @@ const ourLanguageToTldrawLanguageMap: Record<LanguageCode, string> = {
 	"es-US": "es",
 	"es-ES": "es",
 	ko: "ko-kr",
-	nl: "en",
-	zh: "zh-ch",
-	he: "he",
+	nl: "nl",
+	zh: "zh-cn",
+	"fr-CA": "fr",
+	"fr-EU": "fr",
+	"pt-BR": "pt-br",
 	// map to itself
 	da: "da",
 	de: "de",
 	en: "en",
-	"fr-CA": "fr-CA",
-	"fr-EU": "fr-EU",
+	he: "he",
 	it: "it",
 	ja: "ja",
 	ru: "ru",
 	pl: "pl",
-	"pt-BR": "pt-br",
 };
 function ourLanguageToTldrawLanguage(ourLanguageUserSelected: string) {
 	for (const [ourLanguage, tldrawLanguage] of Object.entries(

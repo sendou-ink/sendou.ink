@@ -5,6 +5,7 @@ import { db } from "~/db/sql";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as XRankPlacementRepository from "./XRankPlacementRepository.server";
 
+const SPLOOSH_O_MATIC: MainWeaponId = 0;
 const SPLATTERSHOT: MainWeaponId = 40;
 const SPLATTERSHOT_NOUVEAU: MainWeaponId = 41;
 
@@ -174,6 +175,32 @@ describe("refreshTenStarWeapons", () => {
 		await XRankPlacementRepository.refreshTenStarWeapons();
 
 		expect(await findTenStarWeapons()).toHaveLength(1);
+	});
+});
+
+describe("findPlacementsByUserId", () => {
+	test("weaponId filter returns only Sploosh-o-matic (weapon id 0) placements", async () => {
+		const user = await UserFactory.create();
+
+		await XRankPlacementFactory.create({
+			playerUserId: user.id,
+			power: 3000,
+			weaponSplId: SPLATTERSHOT,
+		});
+		await XRankPlacementFactory.create({
+			playerUserId: user.id,
+			power: 2500,
+			weaponSplId: SPLOOSH_O_MATIC,
+		});
+
+		const placements = await XRankPlacementRepository.findPlacementsByUserId(
+			user.id,
+			{ weaponId: SPLOOSH_O_MATIC, limit: 1 },
+		);
+
+		expect(placements?.map((placement) => placement.weaponSplId)).toEqual([
+			SPLOOSH_O_MATIC,
+		]);
 	});
 });
 

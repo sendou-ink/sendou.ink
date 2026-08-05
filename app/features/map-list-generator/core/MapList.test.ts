@@ -118,6 +118,16 @@ describe("MapList.generate()", () => {
 			expect(maps[3].mode).toBe("SZ");
 		});
 
+		it("guarantees a must-include even when the pattern's only ANY slot is in the back half", () => {
+			for (let i = 0; i < 10; i++) {
+				const gen = initGenerator();
+				const maps = gen.next({ amount: 3, pattern: "[RM!]SZTC*" }).value;
+
+				expect(maps).toHaveLength(3);
+				expect(maps.map((map) => map.mode)).toContain("RM");
+			}
+		});
+
 		it("follows a one mode only pattern", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 3, pattern: "SZ" }).value;
@@ -184,6 +194,13 @@ describe("MapList.generate()", () => {
 			expect(maps).toHaveLength(5);
 			expect(maps[0].mode, "missing SZ (must include mode)").toBe("SZ");
 			expect(maps[2].mode, "missign TC (required by pattern)").toBe("TC");
+		});
+
+		it("places a non-guaranteed must-include when the pattern has no flexible slots but more maps than pattern parts", () => {
+			const gen = initGenerator();
+			const maps = gen.next({ amount: 5, pattern: "[RM]SZTC" }).value;
+
+			expect(maps.map((map) => map.mode)).toContain("RM");
 		});
 
 		it("handles a conflict between pattern and must include", () => {

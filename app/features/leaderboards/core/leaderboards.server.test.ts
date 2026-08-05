@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import {
+	filterByWeaponCategory,
 	ownEntryPeek,
 	shownUserLeaderboard,
 	type UserLeaderboardWithAdditionsItem,
@@ -64,5 +66,24 @@ describe("shownUserLeaderboard & ownEntryPeek", () => {
 		const shown = shownUserLeaderboard(leaderboard);
 
 		expect(shown).toHaveLength(DEFAULT_LEADERBOARD_MAX_SIZE);
+	});
+});
+
+describe("filterByWeaponCategory", () => {
+	const SPLOOSH_O_MATIC: MainWeaponId = 0;
+	const SPLATTERSHOT: MainWeaponId = 40;
+	const LUNA_BLASTER: MainWeaponId = 200;
+
+	test("keeps a Sploosh-o-matic (weapon id 0) player on the shooters leaderboard", () => {
+		const entries = [
+			{ id: 1, weaponSplId: SPLOOSH_O_MATIC },
+			{ id: 2, weaponSplId: SPLATTERSHOT },
+			{ id: 3, weaponSplId: LUNA_BLASTER },
+			{ id: 4, weaponSplId: undefined },
+		];
+
+		const filtered = filterByWeaponCategory(entries, "SHOOTERS");
+
+		expect(filtered.map((entry) => entry.id)).toEqual([1, 2]);
 	});
 });

@@ -141,7 +141,9 @@ export function filterByWeaponCategory<
 	);
 
 	return entries.filter(
-		(entry) => entry.weaponSplId && weaponIdsOfCategory.has(entry.weaponSplId),
+		(entry) =>
+			typeof entry.weaponSplId === "number" &&
+			weaponIdsOfCategory.has(entry.weaponSplId),
 	);
 }
 

@@ -54,6 +54,9 @@ export default function ArticlesMainPage() {
 									day: "numeric",
 									month: "numeric",
 									year: "numeric",
+									// article dates are calendar dates parsed as UTC midnight;
+									// formatting in the viewer's zone would shift the day west of UTC
+									timeZone: "UTC",
 								}}
 							/>
 						</div>
