@@ -1,17 +1,22 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Form, Link, useLoaderData } from "react-router";
+import { Link, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { SendouForm } from "~/form/SendouForm";
 import { markFriendRequestsSeen } from "~/hooks/useUnseenFriendRequests";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FriendMenu } from "../components/FriendMenu";
-import { sendFriendRequestBaseSchema } from "../friends-schemas";
+import {
+	acceptFriendRequestSchema,
+	cancelFriendRequestSchema,
+	declineFriendRequestSchema,
+	sendFriendRequestBaseSchema,
+} from "../friends-schemas";
 import {
 	friendsSearchParams,
 	VIEW_FILTERS,
@@ -91,28 +96,24 @@ function IncomingRequestsSection() {
 							<span className={styles.userName}>{request.sender.username}</span>
 						</Link>
 						<div className="stack horizontal sm">
-							<Form method="post">
-								<input type="hidden" name="_action" value="ACCEPT_REQUEST" />
-								<input
-									type="hidden"
-									name="friendRequestId"
-									value={request.id}
-								/>
-								<SubmitButton variant="outlined" size="miniscule">
-									{t("common:actions.accept")}
-								</SubmitButton>
-							</Form>
-							<Form method="post">
-								<input type="hidden" name="_action" value="DECLINE_REQUEST" />
-								<input
-									type="hidden"
-									name="friendRequestId"
-									value={request.id}
-								/>
-								<SubmitButton variant="minimal-destructive" size="miniscule">
-									{t("common:actions.decline")}
-								</SubmitButton>
-							</Form>
+							<ActionButton
+								schema={acceptFriendRequestSchema}
+								action="ACCEPT_REQUEST"
+								fields={{ friendRequestId: request.id }}
+								variant="outlined"
+								size="miniscule"
+							>
+								{t("common:actions.accept")}
+							</ActionButton>
+							<ActionButton
+								schema={declineFriendRequestSchema}
+								action="DECLINE_REQUEST"
+								fields={{ friendRequestId: request.id }}
+								variant="minimal-destructive"
+								size="miniscule"
+							>
+								{t("common:actions.decline")}
+							</ActionButton>
 						</div>
 					</div>
 				))}
@@ -144,13 +145,15 @@ function PendingRequestsSection() {
 								{request.receiver.username}
 							</span>
 						</Link>
-						<Form method="post">
-							<input type="hidden" name="_action" value="CANCEL_REQUEST" />
-							<input type="hidden" name="friendRequestId" value={request.id} />
-							<SubmitButton variant="minimal-destructive" size="miniscule">
-								{t("common:actions.cancel")}
-							</SubmitButton>
-						</Form>
+						<ActionButton
+							schema={cancelFriendRequestSchema}
+							action="CANCEL_REQUEST"
+							fields={{ friendRequestId: request.id }}
+							variant="minimal-destructive"
+							size="miniscule"
+						>
+							{t("common:actions.cancel")}
+						</ActionButton>
 					</div>
 				))}
 			</div>

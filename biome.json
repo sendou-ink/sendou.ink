@@ -78,6 +78,10 @@
 			"plugins": ["./biome-plugins/no-raw-search-params.grit"]
 		},
 		{
+			"includes": ["app/**", "!app/hooks/useActionSubmit.ts"],
+			"plugins": ["./biome-plugins/no-raw-action-forms.grit"]
+		},
+		{
 			"includes": ["**/*.test.ts", "**/*.test.tsx"],
 			"plugins": ["./biome-plugins/no-raw-db-writes-in-tests.grit"]
 		},

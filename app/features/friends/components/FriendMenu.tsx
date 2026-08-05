@@ -1,7 +1,6 @@
 import { Swords, Trash2, User } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import {
@@ -16,7 +15,10 @@ import {
 	type FriendActivityType,
 	friendActivityBadge,
 } from "~/features/friends/friends-constants";
+import { deleteFriendSchema } from "~/features/friends/friends-schemas";
+import { frontPageSchema } from "~/features/sendouq/q-action-schemas";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import {
 	SENDOUQ_PAGE,
 	sendouQMatchPage,
@@ -67,7 +69,8 @@ export function FriendMenu({
 		month: "numeric",
 		year: "numeric",
 	});
-	const fetcher = useFetcher();
+	const joinQueue = useActionSubmit(frontPageSchema, { action: SENDOUQ_PAGE });
+	const deleteFriend = useActionSubmit(deleteFriendSchema);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 
 	const friendSinceText = friendshipCreatedAt
@@ -118,10 +121,7 @@ export function FriendMenu({
 						<SendouMenuItem
 							icon={<Swords />}
 							onAction={() => {
-								fetcher.submit(
-									{ _action: "JOIN_QUEUE", direct: "true" },
-									{ method: "post", action: SENDOUQ_PAGE },
-								);
+								joinQueue.submit("JOIN_QUEUE", { direct: "true" });
 								onNavigate?.();
 							}}
 						>
@@ -172,13 +172,7 @@ export function FriendMenu({
 							<SendouButton
 								variant="destructive"
 								onPress={() => {
-									fetcher.submit(
-										{
-											_action: "DELETE_FRIEND",
-											friendshipId: String(friendshipId),
-										},
-										{ method: "post" },
-									);
+									deleteFriend.submit("DELETE_FRIEND", { friendshipId });
 									setConfirmOpen(false);
 								}}
 							>

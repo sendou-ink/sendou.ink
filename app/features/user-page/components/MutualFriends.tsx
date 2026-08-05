@@ -1,10 +1,9 @@
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { UserLink } from "~/components/UserLink";
 import type { CommonUser } from "~/utils/kysely.server";
-import { userPage } from "~/utils/urls";
 import styles from "./MutualFriends.module.css";
 
 const MAX_VISIBLE_AVATARS = 5;
@@ -40,14 +39,11 @@ export function MutualFriends({
 			>
 				<div className={styles.list}>
 					{mutualFriends.map((friend) => (
-						<Link
+						<UserLink
 							key={friend.id}
-							to={userPage(friend)}
+							user={friend}
 							className={styles.friendLink}
-						>
-							<Avatar user={friend} size="xxs" />
-							{friend.username}
-						</Link>
+						/>
 					))}
 				</div>
 			</SendouPopover>

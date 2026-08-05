@@ -1,23 +1,17 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
-import {
-	errorToastIfFalsy,
-	notFoundIfNullish,
-	parseParams,
-} from "~/utils/remix.server";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { tournamentPage, tournamentRegisterPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 import { tournamentJoinSearchParams } from "../tournament-search-params";
 import { validateCanJoinTeam } from "../tournament-utils";
 import {
@@ -26,19 +20,16 @@ import {
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ params, url }) => {
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const user = requireUser();
+		{ for: "action" },
+	);
 	const { code: inviteCode } = tournamentJoinSearchParams.parse(url);
 	invariant(inviteCode, "code is missing");
 
 	const leanTeam = notFoundIfNullish(
 		await TournamentTeamRepository.findByInviteCode(inviteCode),
 	);
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	await requireNotBannedByOrganization({
 		tournament,

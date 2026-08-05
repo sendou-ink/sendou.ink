@@ -223,9 +223,8 @@
 }
 
 .memberCardName {
-	color: var(--color-text);
 	font-weight: var(--weight-bold);
-	margin-block-start: var(--s-2);
+	margin-block-start: var(--s-0-5);
 }
 
 .inviteContainer {

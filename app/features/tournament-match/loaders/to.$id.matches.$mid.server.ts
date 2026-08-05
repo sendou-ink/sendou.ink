@@ -1,6 +1,5 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -13,11 +12,10 @@ import {
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
-	requireTournamentVisible,
-	tournamentFromDBCached,
+	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -35,16 +33,14 @@ import * as TournamentMatchRepository from "../TournamentMatchRepository.server"
 export type TournamentMatchLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const { mid: matchId, id: tournamentId } = parseParams({
+	const { mid: matchId } = parseParams({
 		params,
 		schema: matchPageParamsSchema,
 	});
-	const user = getUser();
-	const tournament = await tournamentFromDBCached({
-		tournamentId,
-		user: undefined,
-	});
-	requireTournamentVisible({ ctx: tournament.ctx, user });
+	const { tournament, tournamentId, user } = await tournamentFromParams(
+		params,
+		{ for: "view" },
+	);
 
 	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
 	const teamFullById = (tournamentTeamId: number) =>

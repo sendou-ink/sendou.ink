@@ -2,16 +2,14 @@ import clsx from "clsx";
 import { isPast } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Table } from "~/components/Table";
+import { UserLink } from "~/components/UserLink";
 import { BanUserModal } from "~/features/tournament-organization/components/BanUserModal";
 import type { OrganizationPageLoaderData } from "~/features/tournament-organization/loaders/org.$slug.server";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { userPage } from "~/utils/urls";
 import styles from "../components/BannedPlayersList.module.css";
 
 const MAX_NOTE_LENGTH = 30;
@@ -61,17 +59,13 @@ export function BannedUsersList({
 							return (
 								<tr key={bannedUser.id}>
 									<td>
-										<Link
-											to={userPage(bannedUser)}
-											className="stack horizontal xs items-center w-max"
-										>
-											<Avatar user={bannedUser} size="xs" />
+										<UserLink user={bannedUser} size="xs">
 											<span
 												className={clsx({ [styles.expiredBan]: isExpired })}
 											>
 												{bannedUser.username}
 											</span>
-										</Link>
+										</UserLink>
 									</td>
 									<td
 										className={clsx("text-sm text-lighter", styles.reasonCell)}

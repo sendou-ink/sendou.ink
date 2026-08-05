@@ -17,7 +17,6 @@ import {
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
-	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
@@ -278,11 +277,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 							innerEb
 								.selectFrom("TournamentResult as WinnerResult")
 								.innerJoin("User", "User.id", "WinnerResult.userId")
-								.select((winnerEb) => [
-									"User.discordAvatar",
-									"User.discordId",
-									customAvatarUrl(winnerEb).as("customAvatarUrl"),
-								])
+								.select((winnerEb) => commonUserSelect(winnerEb))
 								.whereRef(
 									"WinnerResult.tournamentTeamId",
 									"=",
@@ -316,11 +311,7 @@ const findEventsBaseQuery = (organizationId: number) =>
 									"User.id",
 									"CalendarEventResultPlayer.userId",
 								)
-								.select((playerEb) => [
-									"User.discordAvatar",
-									"User.discordId",
-									customAvatarUrl(playerEb).as("customAvatarUrl"),
-								])
+								.select((playerEb) => commonUserSelect(playerEb))
 								.whereRef(
 									"CalendarEventResultPlayer.teamId",
 									"=",

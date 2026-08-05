@@ -1,27 +1,17 @@
 import type { ActionFunction } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseFormData } from "~/form/parse.server";
-import { parseParams } from "~/utils/remix.server";
-import { idObject } from "../../../utils/zod";
-import { adminStaffFormSchemaServer } from "../tournament-admin-schemas.server";
-import { requireTournamentAdmin } from "../tournament-admin-utils.server";
+import { adminStaffFormSchemaServer } from "../tournament-admin-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
-
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
+	const { tournament, tournamentId } = await tournamentFromParams(params, {
+		for: "admin",
 	});
-	const tournament = await tournamentFromDB({ tournamentId, user });
-
-	requireTournamentAdmin(tournament, user);
 
 	const result = await parseFormData({
 		request,

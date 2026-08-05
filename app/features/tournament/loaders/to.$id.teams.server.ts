@@ -1,13 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import {
-	requireTournamentVisible,
-	tournamentSharedCached,
+	tournamentFromParams,
 	tournamentTeamsFullInSeedOrder,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
-import { paginate, parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { paginate } from "~/utils/remix.server";
 import { tournamentTeamsSearchParams } from "../tournament-search-params";
 
 export type TournamentTeamsLoaderData = SerializeFrom<typeof loader>;
@@ -16,12 +13,10 @@ export type TournamentTeamsLoaderData = SerializeFrom<typeof loader>;
 const TEAMS_PAGE_SIZE = 50;
 
 export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
-	const user = getUser();
-	const { id: tournamentId } = parseParams({ params, schema: idObject });
+	const { tournament, user } = await tournamentFromParams(params, {
+		for: "view",
+	});
 	const { page } = tournamentTeamsSearchParams.parse(request);
-
-	const tournament = await tournamentSharedCached(tournamentId);
-	requireTournamentVisible({ ctx: tournament.ctx, user });
 
 	const teams = await tournamentTeamsFullInSeedOrder({ tournament, user });
 

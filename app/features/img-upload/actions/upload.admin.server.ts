@@ -8,7 +8,7 @@ import {
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as ImageRepository from "../ImageRepository.server";
-import { validateImageSchema } from "../upload-schemas.server";
+import { validateImageSchema } from "../upload-schemas";
 
 export const action: ActionFunction = async ({ request }) => {
 	requireRole("STAFF");

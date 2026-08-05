@@ -16,8 +16,8 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
 import { withUserId, wrappedAction } from "~/utils/Test";
 import { refreshSendouQInstance } from "../core/SendouQ.server";
+import type { lookingSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
-import type { lookingSchema } from "../q-schemas.server";
 import { action as rawLookingAction } from "./q.looking";
 
 const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [

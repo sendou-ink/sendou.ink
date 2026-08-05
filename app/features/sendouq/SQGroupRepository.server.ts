@@ -1,6 +1,6 @@
 import { sub } from "date-fns";
 import { type NotNull, sql, type Transaction } from "kysely";
-import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
@@ -9,8 +9,8 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
+	commonUserMembersAgg,
 	commonUserSelect,
-	customAvatarUrl,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
@@ -54,27 +54,6 @@ export async function findMapModePreferencesByGroupId(groupId: number) {
 }
 
 export async function findCurrentGroups() {
-	type SendouQMemberObject = {
-		id: Tables["User"]["id"];
-		username: Tables["User"]["username"];
-		discordId: Tables["User"]["discordId"];
-		discordAvatar: Tables["User"]["discordAvatar"];
-		customAvatarUrl: string | null;
-		customUrl: Tables["User"]["customUrl"];
-		pronouns: Tables["User"]["pronouns"] | null;
-		mapModePreferences: Tables["User"]["mapModePreferences"];
-		noScreen: Tables["User"]["noScreen"];
-		languages: Tables["User"]["languages"];
-		vc: Tables["User"]["vc"];
-		role: Tables["GroupMember"]["role"];
-		note: Tables["GroupMember"]["note"];
-		weapons:
-			| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
-					isTenStar: number;
-			  })[]
-			| null;
-	};
-
 	return (
 		db
 			.selectFrom("Group")
@@ -88,35 +67,23 @@ export async function findCurrentGroups() {
 					]),
 				),
 			)
-			.select(({ fn, eb }) => [
+			.select(({ eb }) => [
 				"Group.id",
 				"Group.chatCode",
 				"Group.inviteCode",
 				"Group.latestActionAt",
-				"Group.chatCode",
-				"Group.inviteCode",
 				"Group.status",
 				"GroupMatch.id as matchId",
-				fn
-					.agg("json_group_array", [
-						jsonBuildObject({
-							id: eb.ref("User.id"),
-							username: eb.ref("User.username"),
-							discordId: eb.ref("User.discordId"),
-							discordAvatar: eb.ref("User.discordAvatar"),
-							customAvatarUrl: customAvatarUrl(eb),
-							customUrl: eb.ref("User.customUrl"),
-							mapModePreferences: eb.ref("User.mapModePreferences"),
-							noScreen: eb.ref("User.noScreen"),
-							role: eb.ref("GroupMember.role"),
-							note: eb.ref("GroupMember.note"),
-							weapons: matchProfileWeapons(eb),
-							languages: eb.ref("User.languages"),
-							vc: eb.ref("User.vc"),
-						}),
-					])
-					.$castTo<SendouQMemberObject[]>()
-					.as("members"),
+				commonUserMembersAgg(eb, {
+					pronouns: eb.ref("User.pronouns"),
+					mapModePreferences: eb.ref("User.mapModePreferences"),
+					noScreen: eb.ref("User.noScreen"),
+					role: eb.ref("GroupMember.role"),
+					note: eb.ref("GroupMember.note"),
+					weapons: matchProfileWeapons(eb),
+					languages: eb.ref("User.languages"),
+					vc: eb.ref("User.vc"),
+				}).as("members"),
 			])
 			// != INACTIVE (same set as ACTIVE or PREPARING) so the partial
 			// group_status_active index applies

@@ -1,7 +1,7 @@
 import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
-} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
 
