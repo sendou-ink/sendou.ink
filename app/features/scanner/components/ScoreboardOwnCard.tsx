@@ -1,7 +1,7 @@
 import { WeaponImage } from "~/components/Image";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import { AbilityGrid } from "./AbilityGrid";
-import { saveFixtureFromEvent } from "./fixture-export";
+import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { lobbyLabel, mainWeaponLabel, modeLabel, stageLabel } from "./labels";
 
@@ -36,28 +36,14 @@ export function ScoreboardOwnCard(props: {
 				</span>
 				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
-				{onInspect && (
-					<button type="button" onClick={onInspect}>
-						Inspect
-					</button>
-				)}
-				{getFrame && (
-					<button
-						type="button"
-						onClick={() =>
-							void getFrame().then(
-								(f) => f && saveFixtureFromEvent(f, data, "ScoreboardOwn"),
-							)
-						}
-					>
-						Save fixture
-					</button>
-				)}
-				{thumbnail && (
-					<img className="thumb" src={thumbnail} alt="analyzed frame" />
-				)}
+				<FrameThumb
+					thumbnail={thumbnail}
+					getFrame={getFrame}
+					onInspect={onInspect}
+					fixture={{ data, type: "ScoreboardOwn" }}
+				/>
 			</div>
-			<div className="teams">
+			<div className="teams solo">
 				<div className="team">
 					{data.weaponId !== null ? (
 						<WeaponImage

@@ -6,15 +6,18 @@
  *  - `vods`: one summary record per fully scanned VoD, keyed by file name
  *  - `vod-events`: the detections of each saved VoD, indexed by VoD name
  *  - `vod-frames`: the vod-events' PNGs, keyed by vod-event id
+ *  - `inspect-frames`: one-shot Inspect handoffs into a new screenshot tab,
+ *    keyed by handoff key (see inspect.ts)
  */
 const DB_NAME = "vod-parser";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export const EVENTS_STORE = "events";
 export const FRAMES_STORE = "frames";
 export const VODS_STORE = "vods";
 export const VOD_EVENTS_STORE = "vod-events";
 export const VOD_FRAMES_STORE = "vod-frames";
+export const INSPECT_FRAMES_STORE = "inspect-frames";
 
 /**
  * Move a store's embedded `frame` blobs into a keyed frame store (v3
@@ -36,6 +39,7 @@ function extractFrames(source: IDBObjectStore, frames: IDBObjectStore): void {
 	};
 }
 
+// xxx: get rid of migrate before we go live with this
 /**
  * Versioned migrations: each `oldVersion < N` block upgrades a database from
  * below version N and runs exactly once per database. Any schema change —
@@ -76,6 +80,9 @@ function migrate(
 		const vodFrames = database.createObjectStore(VOD_FRAMES_STORE);
 		extractFrames(transaction.objectStore(EVENTS_STORE), frames);
 		extractFrames(transaction.objectStore(VOD_EVENTS_STORE), vodFrames);
+	}
+	if (oldVersion < 4) {
+		database.createObjectStore(INSPECT_FRAMES_STORE);
 	}
 }
 

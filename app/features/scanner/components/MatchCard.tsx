@@ -1,8 +1,8 @@
 /**
  * Glanceable card for one ScannerMatch in the live feed: stage banner
  * background, mode + stage, score, team weapons, and the match's /ingest
- * status. The source event cards render inside the expandable detail
- * section, so the raw per-event view stays one click away.
+ * status. Expanding the card reveals the source event cards below it,
+ * so the raw per-event view stays one click away.
  */
 
 import clsx from "clsx";
@@ -115,9 +115,6 @@ export function MatchCard({
 			{send?.state === "failed" && send.error ? (
 				<div className="match-error">{send.error}</div>
 			) : null}
-			{expanded && children ? (
-				<div className="match-card-detail">{children}</div>
-			) : null}
 		</>
 	);
 
@@ -127,12 +124,21 @@ export function MatchCard({
 		"flash-failed": flash === "failed",
 	});
 
-	return match.stage !== null ? (
-		<StageBannerBox stageId={match.stage} className={className}>
-			{inner}
-		</StageBannerBox>
-	) : (
-		<div className={className}>{inner}</div>
+	const card =
+		match.stage !== null ? (
+			<StageBannerBox stageId={match.stage} className={className}>
+				{inner}
+			</StageBannerBox>
+		) : (
+			<div className={className}>{inner}</div>
+		);
+
+	if (!children) return card;
+	return (
+		<div className="match-card-group">
+			{card}
+			{expanded ? <div className="match-events">{children}</div> : null}
+		</div>
 	);
 }
 

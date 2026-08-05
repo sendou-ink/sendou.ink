@@ -6,7 +6,7 @@ import type {
 	MinimapTeammate,
 } from "../core/detectors/minimap/index";
 import type { ScannerAbility } from "../scanner-types";
-import { saveFixtureFromEvent } from "./fixture-export";
+import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { stageLabel } from "./labels";
 
@@ -34,25 +34,23 @@ function PlayerRow({
 	player: MinimapTeammate | MinimapEnemy;
 }) {
 	return (
-		<tr>
-			<td>{label}</td>
-			<td>{player.name ?? ""}</td>
-			<td>
-				{player.weaponId !== null ? (
-					<WeaponImage
-						weaponSplId={player.weaponId}
-						variant="build"
-						size={28}
-						className="weapon-icon"
-					/>
-				) : (
-					"?"
-				)}
-			</td>
-			<td>
+		<div className="minimap-player">
+			<span className="slot">{label}</span>
+			{player.weaponId !== null ? (
+				<WeaponImage
+					weaponSplId={player.weaponId}
+					variant="build"
+					size={24}
+					className="weapon-icon"
+				/>
+			) : (
+				<span className="weapon-missing">?</span>
+			)}
+			<span className="name">{player.name ?? ""}</span>
+			<span className="abilities">
 				<AbilityRow abilities={player.abilities} />
-			</td>
-		</tr>
+			</span>
+		</div>
 	);
 }
 
@@ -76,40 +74,28 @@ export function MinimapCard(props: {
 				{data.stage !== null && <span>{stageLabel(data.stage)}</span>}
 				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
-				{onInspect && (
-					<button type="button" onClick={onInspect}>
-						Inspect
-					</button>
-				)}
-				{getFrame && (
-					<button
-						type="button"
-						onClick={() =>
-							void getFrame().then(
-								(f) => f && saveFixtureFromEvent(f, data, "Minimap"),
-							)
-						}
-					>
-						Save fixture
-					</button>
-				)}
-				{thumbnail && (
-					<img className="thumb" src={thumbnail} alt="analyzed frame" />
-				)}
+				<FrameThumb
+					thumbnail={thumbnail}
+					getFrame={getFrame}
+					onInspect={onInspect}
+					fixture={{ data, type: "Minimap" }}
+				/>
 			</div>
 			<div className="teams">
 				<div className="team">
-					<table className="players">
-						<tbody>
-							{data.teammates.map((p) => (
-								<PlayerRow key={p.slot} label={p.slot} player={p} />
-							))}
-							{data.enemies.map((p, i) => (
-								<PlayerRow key={`e${i}`} label={`enemy ${i + 1}`} player={p} />
-							))}
-						</tbody>
-					</table>
+					<h3>Team</h3>
+					{data.teammates.map((p) => (
+						<PlayerRow key={p.slot} label={p.slot} player={p} />
+					))}
 				</div>
+				{data.enemies.length > 0 ? (
+					<div className="team">
+						<h3>Enemies</h3>
+						{data.enemies.map((p, i) => (
+							<PlayerRow key={i} label={`${i + 1}`} player={p} />
+						))}
+					</div>
+				) : null}
 			</div>
 		</div>
 	);

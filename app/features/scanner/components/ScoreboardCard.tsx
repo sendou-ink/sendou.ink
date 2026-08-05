@@ -6,7 +6,8 @@ import type {
 } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
 import { AbilityPopover } from "./AbilityGrid";
-import { type CardData, saveFixtureFromEvent } from "./fixture-export";
+import { FrameThumb } from "./FrameThumb";
+import type { CardData } from "./fixture-export";
 import { formatTime } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
 
@@ -97,26 +98,12 @@ export function ScoreboardCard(props: {
 				{data.replayCode && <span className="score">{data.replayCode}</span>}
 				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
-				{onInspect && (
-					<button type="button" onClick={onInspect}>
-						Inspect
-					</button>
-				)}
-				{getFrame && (
-					<button
-						type="button"
-						onClick={() =>
-							void getFrame().then(
-								(f) => f && saveFixtureFromEvent(f, data, eventType),
-							)
-						}
-					>
-						Save fixture
-					</button>
-				)}
-				{thumbnail && (
-					<img className="thumb" src={thumbnail} alt="analyzed frame" />
-				)}
+				<FrameThumb
+					thumbnail={thumbnail}
+					getFrame={getFrame}
+					onInspect={onInspect}
+					fixture={{ data, type: eventType }}
+				/>
 			</div>
 			<div className="teams">
 				<div className="team win">

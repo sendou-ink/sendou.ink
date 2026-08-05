@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
 import type { DeathData } from "../core/detectors/death/index";
@@ -14,6 +15,8 @@ import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
 import * as replay from "../core/detectors/scoreboard-replay/rois";
 import type { DetectedEvent } from "../core/detectors/types";
+import { scannerSearchParams } from "../scanner-search-params";
+import { claimInspectFrame } from "../store/inspect";
 import { AnalyzerClient } from "../worker/client";
 import type { WorkerResponse } from "../worker/protocol";
 import { downloadEventsCsv } from "./events-csv";
@@ -25,7 +28,6 @@ import {
 	stageLabel,
 	weaponLabel,
 } from "./labels";
-import { takeScreenshotFrame } from "./screenshot-handoff";
 
 type Result = Extract<WorkerResponse, { kind: "result" }>;
 
@@ -269,11 +271,19 @@ export function ScreenshotPage() {
 		}
 	}, []);
 
-	// frame handed off from another page (e.g. a VoD match's Inspect button)
+	// frame handed off from an Inspect click in another browser tab; the
+	// handoff write races this tab's load, so the claim polls briefly
+	const [inspectKey, setInspectKey] = useSearchParam(
+		scannerSearchParams,
+		"inspect",
+	);
 	useEffect(() => {
-		const frame = takeScreenshotFrame();
-		if (frame) void analyze(frame);
-	}, [analyze]);
+		if (!inspectKey) return;
+		setInspectKey(null);
+		void claimInspectFrame(inspectKey).then((frame) => {
+			if (frame) void analyze(frame);
+		});
+	}, [inspectKey, setInspectKey, analyze]);
 
 	const event = active?.events[0] as DetectedEvent<CardData> | undefined;
 	const rows = (event?.debug?.rows ?? []) as ScoreboardRowDebug[];

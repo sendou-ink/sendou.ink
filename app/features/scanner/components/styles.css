@@ -168,23 +168,32 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 
 .scanner-app .card .meta {
 	display: flex;
-	gap: 12px;
+	flex-wrap: wrap;
+	gap: 6px 12px;
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
+	font-variant-numeric: tabular-nums;
 	margin-bottom: 8px;
 	align-items: center;
 }
 
 .scanner-app .card img.thumb {
-	width: 160px;
+	display: block;
+	height: 40px;
+	width: auto;
 	border-radius: var(--radius-field);
 }
 
 .scanner-app .teams {
 	display: grid;
-	grid-template-columns: 1fr 1fr;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
 	gap: 8px;
+
+	/* single hug-content box (death / own-results cards) */
+	&.solo {
+		grid-template-columns: max-content;
+	}
 }
 
 /* sendou.ink send status strip under a feed card */
@@ -240,6 +249,48 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	border-radius: var(--radius-field);
 	padding: 8px;
 	background: var(--color-bg);
+	min-width: 0;
+	overflow-x: auto;
+}
+
+.scanner-app .minimap-player {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding-block: 3px;
+	font-size: var(--font-xs);
+
+	& .slot {
+		flex-shrink: 0;
+		min-width: 3.25rem;
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-bold);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		color: var(--color-text-high);
+	}
+
+	& .weapon-missing {
+		flex-shrink: 0;
+		width: 24px;
+		text-align: center;
+		color: var(--color-text-high);
+	}
+
+	& .name {
+		flex: 1 1 0;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	& .abilities {
+		display: flex;
+		align-items: center;
+		gap: 2px;
+		flex-shrink: 0;
+	}
 }
 
 .scanner-app .team h3 {
@@ -274,12 +325,22 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-variant-numeric: tabular-nums;
 }
 
+.scanner-app .teams.solo table.players {
+	width: auto;
+}
+
 .scanner-app img.weapon-icon {
 	width: 28px;
 	height: 28px;
 	vertical-align: middle;
 	background: #000;
 	border-radius: 4px;
+}
+
+.scanner-app .minimap-player img.weapon-icon {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
 }
 
 .scanner-app .weapon-cell {
@@ -704,21 +765,45 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	}
 }
 
+/* the frame preview: an unstyled button so the image itself is the target */
+.scanner-app .card .meta button.thumb-button {
+	height: auto;
+	padding: 0;
+	border: none;
+	background: none;
+	margin-inline-start: auto;
+	border-radius: var(--radius-field);
+
+	&:hover {
+		filter: brightness(1.2);
+	}
+}
+
 .scanner-app .match-error {
 	padding: 0 16px 10px;
 	font-size: var(--font-2xs);
 	color: var(--color-error);
 }
 
-.scanner-app .match-card-detail {
+.scanner-app .match-card-group {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-	padding: 0 12px 12px;
+}
+
+/* source event cards, nested under their match card via an indent rail */
+.scanner-app .match-events {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-inline-start: 10px;
+	padding-inline-start: 12px;
+	border-inline-start: 2px solid var(--color-border);
 	animation: scanner-detail-in 0.25s ease both;
 
 	& .card {
-		background-color: var(--color-bg);
+		padding: 10px 14px;
+		min-width: 0;
 	}
 }
 
@@ -760,12 +845,32 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	animation: scanner-pulse 1.6s ease-in-out infinite;
 }
 
+/* the frame dialog portals outside .scanner-app, so these stay unscoped */
+.scanner-frame-dialog {
+	width: max-content;
+	max-width: min(96vw, 1400px);
+}
+
+.scanner-frame-dialog img.frame-full {
+	display: block;
+	max-width: 100%;
+	max-height: calc(80dvh - 9rem);
+	border-radius: var(--radius-field);
+}
+
+.scanner-frame-dialog .frame-actions {
+	display: flex;
+	justify-content: center;
+	gap: 12px;
+	margin-block-start: 12px;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.scanner-app .match-card,
 	.scanner-app .match-card.sending::after,
 	.scanner-app .match-card.flash-sent::after,
 	.scanner-app .match-card.flash-failed .match-card-main,
-	.scanner-app .match-card-detail,
+	.scanner-app .match-events,
 	.scanner-app .match-chip.live .dot,
 	.scanner-app .match-chip.queued .dot,
 	.scanner-app .match-chip.sending .dot,

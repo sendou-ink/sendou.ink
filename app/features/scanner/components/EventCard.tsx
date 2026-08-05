@@ -2,11 +2,12 @@
  * Single dispatch point from a detected event to its card component, shared
  * by the live feed and the VoD feed. Frames are loaded lazily through
  * `getFrame` (IndexedDB keeps them out of the listed records); the Inspect
- * action (open the frame in the screenshot page) is derived from it here so
- * pages don't duplicate the wiring.
+ * action (open the frame in the screenshot page in a new browser tab, so
+ * the running scan is left undisturbed) is derived from it here so pages
+ * don't duplicate the wiring.
  */
 
-import { useSearchParam } from "~/modules/search-params/hooks";
+import { SCANNER_PAGE } from "~/utils/urls";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
 import {
 	DEATH_EVENT_TYPE,
@@ -27,13 +28,13 @@ import {
 } from "../core/detectors/scoreboard-own/index";
 import { scannerSearchParams } from "../scanner-search-params";
 import type { SendStatus } from "../store/events";
+import { newInspectKey, putInspectFrame } from "../store/inspect";
 import { DeathCard } from "./DeathCard";
 import type { FixtureData } from "./fixture-export";
 import { MapStartCard } from "./MapStartCard";
 import { MinimapCard } from "./MinimapCard";
 import { ScoreboardCard } from "./ScoreboardCard";
 import { ScoreboardOwnCard } from "./ScoreboardOwnCard";
-import { setScreenshotFrame } from "./screenshot-handoff";
 
 export type GetFrame = () => Promise<Blob | null | undefined>;
 
@@ -54,14 +55,22 @@ export function EventCard(props: {
 	onSend?: () => void;
 }) {
 	const { type, t, confidence, data, thumbnail, detectedAt, getFrame } = props;
-	const [, setTab] = useSearchParam(scannerSearchParams, "tab");
+	// window.open must run synchronously in the click gesture (popup blockers);
+	// the frame write catches up and the new tab polls for it
 	const onInspect = getFrame
-		? () =>
+		? () => {
+				const key = newInspectKey();
+				window.open(
+					scannerSearchParams.href(SCANNER_PAGE, {
+						tab: "screenshot",
+						inspect: key,
+					}),
+					"_blank",
+				);
 				void getFrame().then((frame) => {
-					if (!frame) return;
-					setScreenshotFrame(frame);
-					setTab("screenshot");
-				})
+					if (frame) void putInspectFrame(key, frame);
+				});
+			}
 		: undefined;
 	const shared = { t, confidence, thumbnail, detectedAt, getFrame, onInspect };
 

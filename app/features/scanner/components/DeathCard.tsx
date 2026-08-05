@@ -2,7 +2,7 @@ import { WeaponImage } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { DeathData } from "../core/detectors/death/index";
 import { AbilityGrid } from "./AbilityGrid";
-import { saveFixtureFromEvent } from "./fixture-export";
+import { FrameThumb } from "./FrameThumb";
 import { formatTime } from "./format";
 import { weaponLabel } from "./labels";
 
@@ -30,28 +30,14 @@ export function DeathCard(props: {
 				</span>
 				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
-				{onInspect && (
-					<button type="button" onClick={onInspect}>
-						Inspect
-					</button>
-				)}
-				{getFrame && (
-					<button
-						type="button"
-						onClick={() =>
-							void getFrame().then(
-								(f) => f && saveFixtureFromEvent(f, data, "Death"),
-							)
-						}
-					>
-						Save fixture
-					</button>
-				)}
-				{thumbnail && (
-					<img className="thumb" src={thumbnail} alt="analyzed frame" />
-				)}
+				<FrameThumb
+					thumbnail={thumbnail}
+					getFrame={getFrame}
+					onInspect={onInspect}
+					fixture={{ data, type: "Death" }}
+				/>
 			</div>
-			<div className="teams">
+			<div className="teams solo">
 				<div className="team">
 					{data.weaponId !== null && data.weaponType === "MAIN" ? (
 						<WeaponImage
