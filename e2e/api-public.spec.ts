@@ -319,7 +319,7 @@ test.describe("Public API - Write endpoints", () => {
 
 		expect(response.status()).toBe(400);
 		const data = await response.json();
-		expect(data.error).toBe("Unauthorized");
+		expect(data.error).toBe("Not an organizer");
 	});
 });
 
