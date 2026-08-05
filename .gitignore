@@ -35,5 +35,5 @@ dump
 
 notepad.txt
 
-# proprietary game fonts for the CV glyph-atlas builders (scripts/cv)
+# proprietary game fonts for the scanner glyph-atlas builders (scripts/scanner)
 /assets/fonts/

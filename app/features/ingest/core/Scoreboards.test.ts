@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { CvAbility, CvLobby } from "~/features/cv/cv-types";
+import type {
+	ScannerAbility,
+	ScannerLobby,
+} from "~/features/scanner/scanner-types";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -43,10 +46,10 @@ function testScoreboard({
 	t?: number;
 	mode?: ModeShort | null;
 	stage?: StageId | null;
-	lobby?: CvLobby | null;
+	lobby?: ScannerLobby | null;
 	names?: string[];
 	weapons?: (MainWeaponId | null)[];
-	abilities?: Record<number, CvAbility[][]>;
+	abilities?: Record<number, ScannerAbility[][]>;
 	povIndex?: number | null;
 } = {}): IngestedEventInput {
 	return {
@@ -103,7 +106,7 @@ describe("matchedScoreboards", () => {
 	});
 
 	it("carries ingested player abilities through to the stored scoreboard", () => {
-		const build: CvAbility[][] = [
+		const build: ScannerAbility[][] = [
 			["ISM", "ISS", "ISS", "ISS"],
 			["QR", "QSJ", "QSJ", "QSJ"],
 			["SSU", "RSU", "RSU", "RSU"],

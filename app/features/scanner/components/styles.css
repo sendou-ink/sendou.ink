@@ -1,0 +1,437 @@
+/*
+Scanner feature styles, ported from emberz. Scoped under .scanner-app so nothing
+leaks into the host app; design tokens come from sendou.ink's own
+app/styles/vars.css (the emberz copies of those tokens were dropped).
+*/
+.scanner-app .topbar {
+	display: flex;
+	align-items: center;
+	gap: 24px;
+	padding: 12px 0;
+	border-bottom: var(--border-width) solid var(--color-bg-high);
+	margin-bottom: 16px;
+}
+
+.scanner-app .topbar nav {
+	display: flex;
+	gap: 8px;
+}
+
+.scanner-app .topbar nav a {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	text-decoration: none;
+	padding: 4px 10px;
+	border-radius: var(--radius-field);
+}
+
+.scanner-app .topbar nav a:hover {
+	color: var(--color-text);
+}
+
+.scanner-app .topbar nav a:focus-visible {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.scanner-app .topbar nav a.active {
+	color: var(--color-text-accent);
+	background: var(--color-bg-high);
+}
+
+.scanner-app button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border: var(--border-style-accent);
+	border-radius: var(--radius-field);
+	appearance: none;
+	background: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	cursor: pointer;
+	font-family: inherit;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	padding: 0 var(--field-padding);
+	height: var(--field-size-sm);
+	white-space: nowrap;
+	user-select: none;
+	outline-color: var(--color-text-accent);
+}
+
+.scanner-app button:focus-visible {
+	outline-style: solid;
+	outline-width: 2px;
+	outline-offset: 1px;
+}
+
+.scanner-app button:active {
+	transform: translateY(1px);
+}
+
+.scanner-app button:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+	transform: initial;
+}
+
+.scanner-app select {
+	appearance: none;
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(145, 145, 145)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+	background-position: center right var(--field-padding);
+	background-size: 18px auto;
+	background-repeat: no-repeat;
+	color: var(--color-text);
+	cursor: pointer;
+	font-family: inherit;
+	font-size: var(--font-xs);
+	height: var(--field-size-sm);
+	padding: 0 calc(18px + var(--field-padding) + 0.5rem) 0 var(--field-padding);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	outline: none;
+}
+
+.scanner-app select:focus-within {
+	outline: var(--focus-ring);
+	outline-offset: 1px;
+}
+
+.scanner-app select:disabled {
+	cursor: not-allowed;
+	opacity: 0.5;
+}
+
+.scanner-app .controls {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-bottom: 12px;
+	flex-wrap: wrap;
+}
+
+.scanner-app .status {
+	padding: 2px 12px;
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border: var(--border-width) solid var(--color-border);
+}
+
+.scanner-app .status.idle {
+	color: var(--color-text-high);
+}
+
+.scanner-app .status.watching {
+	color: var(--color-info-high);
+	border-color: var(--color-info-low);
+	background: var(--color-info-low);
+}
+
+.scanner-app .status.detected {
+	color: var(--color-success-high);
+	border-color: var(--color-success-low);
+	background: var(--color-success-low);
+}
+
+.scanner-app .live-layout {
+	display: grid;
+	grid-template-columns: minmax(320px, 640px) 1fr;
+	gap: 16px;
+	align-items: start;
+}
+
+.scanner-app video.preview,
+.scanner-app canvas.preview {
+	width: 100%;
+	background: #000;
+	border-radius: var(--radius-box);
+	border: var(--border-width) solid var(--color-bg-high);
+}
+
+.scanner-app .feed {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.scanner-app .card {
+	background: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: 16px;
+}
+
+.scanner-app .card .meta {
+	display: flex;
+	gap: 12px;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	margin-bottom: 8px;
+	align-items: center;
+}
+
+.scanner-app .card img.thumb {
+	width: 160px;
+	border-radius: var(--radius-field);
+}
+
+.scanner-app .teams {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 8px;
+}
+
+/* sendou.ink send status strip under a feed card */
+.scanner-app .send-wrap {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.scanner-app .send-strip {
+	display: flex;
+	gap: 12px;
+	align-items: center;
+	padding: 4px 16px;
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.scanner-app .send-strip.sent {
+	color: var(--color-success-high);
+	background: var(--color-success-low);
+}
+
+.scanner-app .send-strip.failed {
+	color: var(--color-error-high);
+	background: var(--color-error-low);
+}
+
+.scanner-app .send-strip.queued,
+.scanner-app .send-strip.sending {
+	color: var(--color-info-high);
+	background: var(--color-info-low);
+}
+
+.scanner-app .score {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.scanner-app .error {
+	color: var(--color-error);
+}
+
+.scanner-app .send-strip .error {
+	color: inherit;
+	font-weight: var(--weight-body);
+}
+
+.scanner-app .team {
+	border-radius: var(--radius-field);
+	padding: 8px;
+	background: var(--color-bg);
+}
+
+.scanner-app .team h3 {
+	margin: 0 0 6px;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+}
+
+.scanner-app .team.win h3 {
+	color: var(--color-error-high);
+}
+
+.scanner-app .team.lose h3 {
+	color: var(--color-info-high);
+}
+
+.scanner-app table.players {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-xs);
+}
+
+.scanner-app table.players td {
+	padding: 2px 6px;
+	white-space: nowrap;
+}
+
+.scanner-app table.players td.num {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+}
+
+.scanner-app img.weapon-icon {
+	width: 28px;
+	height: 28px;
+	vertical-align: middle;
+	background: #000;
+	border-radius: 4px;
+}
+
+.scanner-app .weapon-cell {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.scanner-app .ability-popover {
+	position: relative;
+	display: inline-flex;
+}
+
+.scanner-app button.ability-trigger {
+	height: auto;
+	padding: 2px;
+	background: var(--color-bg-higher);
+	border: 1px solid var(--color-border-high);
+	border-radius: 4px;
+}
+
+.scanner-app button.ability-trigger img {
+	display: block;
+	width: 18px;
+	height: 18px;
+}
+
+.scanner-app .ability-popover .popover {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	z-index: 20;
+	background: var(--color-bg-higher);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	padding: 6px;
+	box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
+}
+
+.scanner-app .vod-list {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.scanner-app .vod-item {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	background: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: 12px 16px;
+}
+
+.scanner-app .vod-item .name {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.scanner-app .vod-item .score {
+	flex: 1;
+}
+
+.scanner-app .dropzone {
+	border: var(--border-width) dashed var(--color-border-high);
+	border-radius: var(--radius-box);
+	padding: 32px;
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	margin-bottom: 16px;
+}
+
+.scanner-app .dropzone.over {
+	border-color: var(--color-text-accent);
+	color: var(--color-text-accent);
+}
+
+.scanner-app .screenshot-frame {
+	position: relative;
+	margin-bottom: 16px;
+}
+
+.scanner-app .screenshot-frame canvas {
+	width: 100%;
+	border-radius: var(--radius-box);
+	border: var(--border-width) solid var(--color-bg-high);
+}
+
+.scanner-app table.inspector {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-xs);
+}
+
+.scanner-app table.inspector th {
+	text-align: left;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	padding: 6px;
+	border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.scanner-app table.inspector td {
+	padding: 6px;
+	border-bottom: 1px solid var(--color-bg-high);
+	vertical-align: middle;
+}
+
+.scanner-app table.inspector canvas {
+	display: block;
+	background: #000;
+	border-radius: 4px;
+}
+
+.scanner-app .candidates {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.scanner-app .candidates .cand {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.scanner-app .candidates .cand:first-child {
+	color: var(--color-success);
+}
+
+/* internal navigation styled like the sibling action buttons */
+.scanner-app .link-button {
+	display: inline-flex;
+	align-items: center;
+	padding: 0 var(--field-padding);
+	height: var(--field-size-sm);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background: var(--color-bg-higher);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	text-decoration: none;
+}
+.scanner-app .link-button:focus-visible {
+	outline: var(--focus-ring);
+}

@@ -15,7 +15,7 @@ const devOnlyRoutes =
 				),
 				// verified against a production build (worker chunk, CDN fetch,
 				// React Compiler output); promote out of devOnlyRoutes on deploy
-				route("/cv", "features/cv/routes/cv.tsx"),
+				route("/scanner", "features/scanner/routes/scanner.tsx"),
 				route(
 					"/components",
 					"features/components-showcase/routes/components.tsx",

@@ -98,10 +98,10 @@
 - use the template `/github/pull_request_template.md`
 - do not mention claude or claude code in the description
 
-## CV feature (app/features/cv)
+## Scanner feature (app/features/scanner)
 
-- computer-vision match-event detection; full docs in `app/features/cv/README.md` — read it before touching detector/recognition code
+- computer-vision match-event detection; full docs in `app/features/scanner/README.md` — read it before touching detector/recognition code
 - OpenCV ROI-view gotcha: `.data`/`.clone()` are broken on ROI views — always `view.copyTo(freshMat)` before pixel access
-- fixture workflow: every live misread becomes a fixture under `app/features/cv/tests/fixtures/`; ground-truth labels are hand-corrected by the maintainer and definitive over any matcher output
-- test with `pnpm test:cv`; accuracy report with `pnpm cv:report`; atlas regen commands and the assets-repo/CDN flow are in the README
+- fixture workflow: every live misread becomes a fixture under `app/features/scanner/tests/fixtures/`; ground-truth labels are hand-corrected by the maintainer and definitive over any matcher output
+- test with `pnpm test:scanner`; accuracy report with `pnpm scanner:report`; atlas regen commands and the assets-repo/CDN flow are in the README
 - events, snap tables, and fixtures speak sendou ids (`ModeShort`/`StageId`/weapon ids/`Ability`) — never reintroduce English game-name literals outside the generated localized snap tables

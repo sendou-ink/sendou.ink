@@ -61,9 +61,9 @@ describe("prefillVodMatches", () => {
 		expect(parsed.success).toBe(false);
 	});
 
-	it("accepts the `ingest` search param the CV VoD tab sends", () => {
-		// what the CV VoD tab's "Upload as VoD" button puts in the URL
-		// (~/features/cv/components/sendou-upload.ts): a { type?, matches }
+	it("accepts the `ingest` search param the scanner VoD tab sends", () => {
+		// what the scanner VoD tab's "Upload as VoD" button puts in the URL
+		// (~/features/scanner/components/sendou-upload.ts): a { type?, matches }
 		// payload in the compressed `ingest` param
 		const href = vodsNewSearchParams.href("/vods/new", {
 			ingest: { type: "CAST", matches: [testMatch()] },

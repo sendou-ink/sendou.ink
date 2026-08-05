@@ -13,7 +13,7 @@ export interface PrefillVodMatch {
 }
 
 /**
- * Turns the per-match rows a CV VoD scan sends into prefill data for the
+ * Turns the per-match rows a scanner VoD scan sends into prefill data for the
  * /vods/new form. The rows already carry sendou ids (validated by
  * ingestVodPrefillSchema); this only renames fields into the form's shape.
  */

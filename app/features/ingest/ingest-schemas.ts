@@ -1,32 +1,32 @@
 import { z } from "zod";
 import {
-	cvAbilitySchema,
-	cvDeathDataSchema,
-	cvMapStartDataSchema,
-	cvScoreboardDataSchema,
-	cvScoreboardPlayerSchema,
-	cvScoreboardReplayDataSchema,
-} from "~/features/cv/cv-schemas";
+	scannerAbilitySchema,
+	scannerDeathDataSchema,
+	scannerMapStartDataSchema,
+	scannerScoreboardDataSchema,
+	scannerScoreboardPlayerSchema,
+	scannerScoreboardReplayDataSchema,
+} from "~/features/scanner/scanner-schemas";
 import { id } from "~/utils/zod";
 
 const INGEST_MAX_EVENTS_PER_REQUEST = 1000;
 
 /**
- * The event data shapes come from the producer (~/features/cv/cv-schemas —
- * the single source of truth for the CV events domain); this module only
+ * The event data shapes come from the producer (~/features/scanner/scanner-schemas —
+ * the single source of truth for the scanner events domain); this module only
  * adds the ingest-specific envelope and enrichments.
  */
 
 /** [head, clothes, shoes] ability rows gathered from the match's death screens */
-const scoreboardPlayerSchema = cvScoreboardPlayerSchema.extend({
-	abilities: z.array(z.array(cvAbilitySchema)).optional(),
+const scoreboardPlayerSchema = scannerScoreboardPlayerSchema.extend({
+	abilities: z.array(z.array(scannerAbilitySchema)).optional(),
 });
 
-const scoreboardDataSchema = cvScoreboardDataSchema.extend({
+const scoreboardDataSchema = scannerScoreboardDataSchema.extend({
 	players: z.array(scoreboardPlayerSchema).length(8),
 });
 
-const scoreboardReplayDataSchema = cvScoreboardReplayDataSchema.extend({
+const scoreboardReplayDataSchema = scannerScoreboardReplayDataSchema.extend({
 	players: z.array(scoreboardPlayerSchema).length(8),
 });
 
@@ -54,11 +54,11 @@ const ingestedEventSchema = z.discriminatedUnion("type", [
 	}),
 	eventBaseSchema.extend({
 		type: z.literal("Death"),
-		data: cvDeathDataSchema,
+		data: scannerDeathDataSchema,
 	}),
 	eventBaseSchema.extend({
 		type: z.literal("MapStart"),
-		data: cvMapStartDataSchema,
+		data: scannerMapStartDataSchema,
 	}),
 ]);
 

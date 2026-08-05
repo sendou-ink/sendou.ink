@@ -1,4 +1,4 @@
-import type { CvAbility } from "~/features/cv/cv-types";
+import type { ScannerAbility } from "~/features/scanner/scanner-types";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -70,7 +70,7 @@ export interface IngestedScoreboardPlayer {
 	s: number | null;
 	paint: number | null;
 	/** [head, clothes, shoes] ability rows gathered from the match's death screens */
-	abilities?: CvAbility[][];
+	abilities?: ScannerAbility[][];
 	/** set only via povIndex attribution */
 	userId?: number;
 }

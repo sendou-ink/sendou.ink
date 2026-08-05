@@ -82,7 +82,7 @@ export default defineConfig((config) => {
 			projects: [
 				"./vitest.unit.config.ts",
 				"./vitest.browser.config.ts",
-				"./vitest.cv.config.ts",
+				"./vitest.scanner.config.ts",
 			],
 		},
 		define: {
