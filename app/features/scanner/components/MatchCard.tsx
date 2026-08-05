@@ -29,6 +29,7 @@ export function MatchCard({
 	send,
 	onSend,
 	live = false,
+	inProgress = false,
 	ingestable = true,
 	children,
 }: {
@@ -39,6 +40,11 @@ export function MatchCard({
 	onSend?: () => void;
 	/** still being played: no closing scoreboard yet and the scan is running */
 	live?: boolean;
+	/**
+	 * the newest match, still being formulated (no result yet) — shows an
+	 * "in progress" chip in the score slot; at most one card should get this
+	 */
+	inProgress?: boolean;
 	/** false = isIngestableMatch rejected it (not a private battle) */
 	ingestable?: boolean;
 	/** expandable detail content, typically the source event cards */
@@ -87,7 +93,7 @@ export function MatchCard({
 							live
 						</span>
 					) : (
-						<Score match={match} />
+						<Score match={match} inProgress={inProgress} />
 					)}
 					<StatusChip send={send} ingestable={ingestable} live={live} />
 					{onSend && send?.state !== "sent" && send?.state !== "sending" ? (
@@ -146,8 +152,22 @@ function timeRangeLabel(match: ScannerMatch): string {
 		: start;
 }
 
-function Score({ match }: { match: ScannerMatch }) {
-	if (match.matchScores === null) return null;
+function Score({
+	match,
+	inProgress,
+}: {
+	match: ScannerMatch;
+	inProgress: boolean;
+}) {
+	if (match.matchScores === null) {
+		if (!inProgress) return null;
+		return (
+			<span className="match-chip in-progress">
+				<span className="dot" />
+				in progress
+			</span>
+		);
+	}
 	const [alpha, bravo] = match.matchScores;
 
 	// a 100 only happens on a knockout — show it the way players say it

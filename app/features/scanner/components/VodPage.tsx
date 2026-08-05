@@ -59,6 +59,11 @@ type Status = "idle" | "scanning" | "done" | "error";
 
 interface VodMatch {
 	event: DetectedEvent<FixtureData>;
+	/**
+	 * render identity — inherited when a better read replaces the event, so
+	 * match cards keyed on it don't remount (replaying the enter animation)
+	 */
+	key: number;
 	thumbnail?: string;
 	/** lossless PNG of the exact frame the detector analyzed (live scan) */
 	frame?: Blob;
@@ -103,6 +108,7 @@ export function VodPage({
 	const matchesRef = useRef<VodMatch[]>([]);
 	// in-flight thumbnail work; awaited before persisting a finished scan
 	const sideWorkRef = useRef<Promise<void>[]>([]);
+	const nextMatchKeyRef = useRef(0);
 
 	const [fileName, setFileName] = useState<string | null>(null);
 	/** live scan vs. reopened saved VoD (no video element for the latter) */
@@ -232,13 +238,19 @@ export function VodPage({
 									const thumbnail = frame
 										? await thumbnailFromBlob(frame)
 										: undefined;
-									const next =
+									const replaced =
 										action.action === "replaced"
-											? matchesRef.current.filter(
-													(m) => m.event !== action.replaced,
+											? matchesRef.current.find(
+													(m) => m.event === action.replaced,
 												)
-											: matchesRef.current.slice();
-									next.push({ event, thumbnail, frame });
+											: undefined;
+									const next = matchesRef.current.filter((m) => m !== replaced);
+									next.push({
+										event,
+										key: replaced?.key ?? nextMatchKeyRef.current++,
+										thumbnail,
+										frame,
+									});
 									next.sort((a, b) => a.event.t - b.event.t);
 									matchesRef.current = next;
 									setMatches(next);
@@ -346,6 +358,7 @@ export function VodPage({
 					confidence: e.confidence,
 					data: e.data as FixtureData,
 				},
+				key: nextMatchKeyRef.current++,
 				thumbnail: e.thumbnail,
 				frameId: e.hasFrame ? e.id : undefined,
 			}));
@@ -561,12 +574,17 @@ export function VodPage({
 						</p>
 					) : null}
 					{/* newest match on top; the builder keeps ascending video-time order */}
-					{[...builtMatches].reverse().map((built) => {
+					{[...builtMatches].reverse().map((built, reverseIndex) => {
 						const ingestable = isIngestableMatch(built.match);
 						return (
 							<MatchCard
-								key={built.sources[0]!.t}
+								key={vodMatchByEvent.get(built.sources[0]!)!.key}
 								match={built.match}
+								inProgress={
+									status === "scanning" &&
+									reverseIndex === 0 &&
+									built.match.winner === null
+								}
 								ingestable={ingestable}
 								send={ingestable ? bulkSend : undefined}
 							>

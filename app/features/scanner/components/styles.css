@@ -709,6 +709,10 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 		}
 	}
 
+	&.in-progress .dot {
+		animation: scanner-pulse 1.4s ease-in-out infinite;
+	}
+
 	&.queued,
 	&.sending {
 		color: var(--color-info-high);
@@ -893,6 +897,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	.scanner-app .match-card.flash-failed .match-card-main,
 	.scanner-app .match-events,
 	.scanner-app .match-chip.live .dot,
+	.scanner-app .match-chip.in-progress .dot,
 	.scanner-app .match-chip.queued .dot,
 	.scanner-app .match-chip.sending .dot,
 	.scanner-app .status.watching::before {

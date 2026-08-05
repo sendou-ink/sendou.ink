@@ -36,12 +36,19 @@ export interface StoredEvent {
 	send?: SendStatus;
 }
 
+/**
+ * Persist a detection; resolves to its store id. `reuseId` overwrites that
+ * existing row (and its frame) instead of adding a new one, so an event a
+ * better read replaces keeps a stable id.
+ */
 export function saveEvent(
 	event: DetectedEvent,
 	thumbnail?: string,
 	frame?: Blob,
+	reuseId?: number,
 ): Promise<number> {
 	const record: StoredEvent = {
+		...(reuseId !== undefined ? { id: reuseId } : null),
 		type: event.type,
 		t: event.t,
 		detectedAt: Date.now(),
@@ -60,10 +67,11 @@ export function saveEvent(
 				const events = transaction.objectStore(EVENTS_STORE);
 				const frames = transaction.objectStore(FRAMES_STORE);
 				let id: number;
-				const add = events.add(record) as IDBRequest<number>;
+				const add = events.put(record) as IDBRequest<number>;
 				add.onsuccess = () => {
 					id = add.result;
 					if (frame) frames.put(frame, id);
+					else if (reuseId !== undefined) frames.delete(id);
 					evictOldest(events, frames);
 				};
 				transaction.oncomplete = () => resolve(id);

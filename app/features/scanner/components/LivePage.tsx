@@ -14,7 +14,6 @@ import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
 	clearEvents,
-	deleteEvent,
 	listEvents,
 	loadEventFrame,
 	type StoredEvent,
@@ -154,11 +153,17 @@ export function LivePage({
 									? storedIdsRef.current.get(action.replaced)
 									: undefined;
 							void (async () => {
-								if (stale !== undefined) await deleteEvent(stale);
 								const thumbnail = result.frame
 									? await thumbnailFromBlob(result.frame)
 									: undefined;
-								const id = await saveEvent(event, thumbnail, result.frame);
+								// reusing the replaced event's id keeps match card keys
+								// stable, so repeat detections don't remount the cards
+								const id = await saveEvent(
+									event,
+									thumbnail,
+									result.frame,
+									stale,
+								);
 								storedIdsRef.current.set(event, id);
 								if (
 									liveSendRef.current &&
@@ -320,6 +325,7 @@ export function LivePage({
 									live={
 										running && reverseIndex === 0 && built.match.winner === null
 									}
+									inProgress={reverseIndex === 0 && built.match.winner === null}
 									ingestable={ingestable}
 									send={aggregateSendStatus(built.sources)}
 									onSend={
