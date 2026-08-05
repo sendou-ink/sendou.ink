@@ -7,7 +7,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import invariant from "~/utils/invariant";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { wrappedAction } from "~/utils/Test";
-import type { adminThemeActionSchema } from "../tournament-admin-schemas.server";
+import type { adminThemeActionSchema } from "../tournament-admin-schemas";
 import { action as _adminThemeAction } from "./to.$id.admin.theme.server";
 
 const adminThemeAction = wrappedAction<typeof adminThemeActionSchema>({

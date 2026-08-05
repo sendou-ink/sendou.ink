@@ -1,16 +1,20 @@
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import { CustomThemeSelector } from "~/components/CustomThemeSelector";
 import { Divider } from "~/components/Divider";
 import { Main } from "~/components/Main";
 import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
 import styles from "~/form/SendouForm.module.css";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { ThemeInput } from "~/utils/oklch-gamut";
 import { action } from "../actions/org.$slug.edit.server";
 import { loader } from "../loaders/org.$slug.edit.server";
 import { handle, meta } from "../routes/org.$slug";
-import { organizationEditFormSchema } from "../tournament-organization-schemas";
+import {
+	organizationEditFormSchema,
+	updateOrganizationCustomThemeSchema,
+} from "../tournament-organization-schemas";
 
 export { action, handle, loader, meta };
 
@@ -70,23 +74,17 @@ export default function TournamentOrganizationEditPage() {
 
 function OrganizationCustomThemeSelector() {
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
+	const { submit, state } = useActionSubmit(
+		updateOrganizationCustomThemeSchema,
+		{ encType: "application/json" },
+	);
 
 	const handleSave = (themeInput: ThemeInput) => {
-		fetcher.submit(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: themeInput,
-			} as unknown as Parameters<typeof fetcher.submit>[0],
-			{ method: "post", encType: "application/json" },
-		);
+		submit("UPDATE_CUSTOM_THEME", { newValue: themeInput });
 	};
 
 	const handleReset = () => {
-		fetcher.submit(
-			{ _action: "UPDATE_CUSTOM_THEME", newValue: null },
-			{ method: "post", encType: "application/json" },
-		);
+		submit("UPDATE_CUSTOM_THEME", { newValue: null });
 	};
 
 	return (
@@ -97,7 +95,7 @@ function OrganizationCustomThemeSelector() {
 			hidePatreonInfo
 			onSave={handleSave}
 			onReset={handleReset}
-			fetcherState={fetcher.state}
+			fetcherState={state}
 		/>
 	);
 }

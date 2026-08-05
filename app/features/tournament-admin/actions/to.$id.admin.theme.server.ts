@@ -3,14 +3,14 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	clearTournamentDataCache,
+	requireTournamentAdmin,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseFormData } from "~/form/parse.server";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { adminThemeActionSchema } from "../tournament-admin-schemas.server";
-import { requireTournamentAdmin } from "../tournament-admin-utils.server";
+import { adminThemeActionSchema } from "../tournament-admin-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();

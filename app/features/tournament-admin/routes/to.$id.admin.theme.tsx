@@ -1,18 +1,21 @@
-import { useFetcher } from "react-router";
 import { CustomThemeSelector } from "~/components/CustomThemeSelector";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import styles from "~/form/SendouForm.module.css";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { ThemeInput } from "~/utils/oklch-gamut";
 import { tournamentAdminPage } from "~/utils/urls";
+import { adminThemeActionSchema } from "../tournament-admin-schemas";
 
 export { action } from "../actions/to.$id.admin.theme.server";
 
 export default function TournamentAdminThemePage() {
 	const user = useUser();
 	const tournament = useTournament();
-	const fetcher = useFetcher();
+	const { submit, state } = useActionSubmit(adminThemeActionSchema, {
+		encType: "application/json",
+	});
 
 	if (
 		!tournament.isAdmin(user) ||
@@ -22,20 +25,11 @@ export default function TournamentAdminThemePage() {
 	}
 
 	const handleSave = (themeInput: ThemeInput) => {
-		fetcher.submit(
-			{
-				_action: "UPDATE_CUSTOM_THEME",
-				newValue: themeInput,
-			} as unknown as Parameters<typeof fetcher.submit>[0],
-			{ method: "post", encType: "application/json" },
-		);
+		submit("UPDATE_CUSTOM_THEME", { newValue: themeInput });
 	};
 
 	const handleReset = () => {
-		fetcher.submit(
-			{ _action: "UPDATE_CUSTOM_THEME", newValue: null },
-			{ method: "post", encType: "application/json" },
-		);
+		submit("UPDATE_CUSTOM_THEME", { newValue: null });
 	};
 
 	return (
@@ -47,7 +41,7 @@ export default function TournamentAdminThemePage() {
 				hidePatreonInfo
 				onSave={handleSave}
 				onReset={handleReset}
-				fetcherState={fetcher.state}
+				fetcherState={state}
 			/>
 		</div>
 	);

@@ -89,7 +89,7 @@ export const organizationEditFormSchema = z.object({
 	badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
 });
 
-const updateOrganizationCustomThemeSchema = z.object({
+export const updateOrganizationCustomThemeSchema = z.object({
 	_action: _action("UPDATE_CUSTOM_THEME"),
 	newValue: z.preprocess(
 		(val) => (!val || val === "null" ? null : val),
