@@ -564,6 +564,25 @@ export interface TournamentStartingBracketsBody {
 	}>;
 }
 
+/** POST /api/tournament/{id}/teams/upsert */
+
+/** @lintignore */
+export interface TournamentUpsertTeamBody {
+	/** Present when editing an existing registration, absent when adding a new team. */
+	tournamentTeamId?: number;
+	/** Team name for a pickup team. Either `name` or `teamId` must be given. */
+	name?: string;
+	/** Linked sendou.ink team id. Name and logo are sourced from the team. */
+	teamId?: number;
+	/** Roster member that is the team owner/captain. */
+	ownerUserId: number;
+	/** Full roster; members missing from the list are removed from the team. */
+	members: Array<{
+		userId: number;
+		inGameName?: string;
+	}>;
+}
+
 /** POST /api/tournament/{id}/teams/{tournamentTeamId}/add-member */
 /** POST /api/tournament/{id}/teams/{tournamentTeamId}/remove-member */
 
