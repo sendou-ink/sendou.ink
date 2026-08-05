@@ -13,7 +13,6 @@ export class WeaponBuildsPage {
 		this.locators = {
 			buildCards: page.getByTestId("build-card"),
 			addFilterButton: page.getByTestId("add-filter-button"),
-			deleteFilterButton: page.getByTestId("delete-filter-button"),
 			comparisonSelect: page.getByTestId("comparison-select"),
 			dateSelect: page.getByTestId("date-select"),
 			dateInput: page.getByTestId("date-input"),
@@ -41,11 +40,25 @@ export class WeaponBuildsPage {
 	}
 
 	async addFilter(type: "ability" | "mode" | "date") {
+		await this.page.keyboard.press("Escape");
+
+		if (type === "ability") {
+			await this.page.getByTestId("ability-filter").click();
+			await this.page.getByTestId("add-ability-condition").click();
+			return;
+		}
+
 		await this.locators.addFilterButton.click();
 		await this.page.getByTestId(`menu-item-${type}`).click();
 	}
 
-	async deleteFilter() {
-		await this.locators.deleteFilterButton.click();
+	async deleteFilter(type: "ability" | "mode" | "date") {
+		if (type === "ability") {
+			await this.page.getByTestId("delete-ability-condition").click();
+			return;
+		}
+
+		await this.page.keyboard.press("Escape");
+		await this.page.getByTestId(`${type}-remove`).click();
 	}
 }
