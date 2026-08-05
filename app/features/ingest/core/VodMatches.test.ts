@@ -1,5 +1,5 @@
-import JSONCrush from "jsoncrush";
 import { describe, expect, it } from "vitest";
+import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import {
 	type IngestVodMatchInput,
 	ingestVodPrefillSchema,
@@ -61,20 +61,20 @@ describe("prefillVodMatches", () => {
 		expect(parsed.success).toBe(false);
 	});
 
-	it("accepts the JSONCrushed `ingest` search param the CV VoD tab sends", () => {
-		// what the CV VoD tab's "Upload as VoD" button puts in the param
-		// (~/features/cv/components/sendou-upload.ts): a crushed
-		// { type?, matches } payload
-		const param = JSONCrush.crush(
-			JSON.stringify({ type: "CAST", matches: [testMatch()] }),
+	it("accepts the `ingest` search param the CV VoD tab sends", () => {
+		// what the CV VoD tab's "Upload as VoD" button puts in the URL
+		// (~/features/cv/components/sendou-upload.ts): a { type?, matches }
+		// payload in the compressed `ingest` param
+		const href = vodsNewSearchParams.href("/vods/new", {
+			ingest: { type: "CAST", matches: [testMatch()] },
+		});
+
+		const { ingest } = vodsNewSearchParams.parse(
+			new URL(href, "https://sendou.ink"),
 		);
 
-		const parsed = ingestVodPrefillSchema.safeParse(
-			JSON.parse(JSONCrush.uncrush(param)),
-		);
-
-		expect(parsed.success).toBe(true);
-		expect(parsed.data!.type).toBe("CAST");
-		expect(prefillVodMatches(parsed.data!.matches)).toHaveLength(1);
+		expect(ingest).not.toBeNull();
+		expect(ingest!.type).toBe("CAST");
+		expect(prefillVodMatches(ingest!.matches)).toHaveLength(1);
 	});
 });

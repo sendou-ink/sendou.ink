@@ -25,11 +25,12 @@ const ingestVodMatchSchema = z.object({
 });
 
 /**
- * The CV VoD tab's "Upload as VoD" button packs this, JSONCrushed, into
- * /vods/new's `ingest` search param to prefill the form: the detected match
- * rows, minus the submission fields (YouTube URL, title, date) the user
- * fills in the form. `type` is sent only when the scan auto-detected it
- * (spectator map screens → CAST); absent means the form's default.
+ * The CV VoD tab's "Upload as VoD" button packs this into /vods/new's
+ * `ingest` search param (an `SP.json` param, compressed by the search-params
+ * module) to prefill the form: the detected match rows, minus the submission
+ * fields (YouTube URL, title, date) the user fills in the form. `type` is
+ * sent only when the scan auto-detected it (spectator map screens → CAST);
+ * absent means the form's default.
  */
 export const ingestVodPrefillSchema = z.object({
 	type: z.enum(videoMatchTypes).optional(),
@@ -37,3 +38,4 @@ export const ingestVodPrefillSchema = z.object({
 });
 
 export type IngestVodMatchInput = z.infer<typeof ingestVodMatchSchema>;
+export type IngestVodPrefill = z.infer<typeof ingestVodPrefillSchema>;

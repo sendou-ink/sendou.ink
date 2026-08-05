@@ -1,11 +1,10 @@
-import JSONCrush from "jsoncrush";
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import {
 	type PrefillVodMatch,
 	prefillVodMatches,
 } from "~/features/ingest/core/VodMatches";
-import { ingestVodPrefillSchema } from "~/features/ingest/ingest-vod-schemas";
+import type { IngestVodPrefill } from "~/features/ingest/ingest-vod-schemas";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import * as VodRepository from "../VodRepository.server";
 import type { videoMatchTypes } from "../vods-constants";
@@ -48,28 +47,22 @@ export interface VodPrefill {
 }
 
 /**
- * Parses the `ingest` search param the emberz VoD parser's "Upload to
- * sendou.ink" button fills (a JSONCrushed ingestVodPrefillSchema payload, see
+ * Maps the `ingest` search param the CV VoD tab's "Upload as VoD" button
+ * fills (an ingestVodPrefillSchema payload, see
  * ~/features/ingest/ingest-vod-schemas) into form-prefill data. Detection
- * misses stay null for the user to fill; a malformed param is ignored.
+ * misses stay null for the user to fill; a malformed param has already
+ * decoded to null.
  */
-function vodPrefillFromIngestParam(param: string | null): VodPrefill | null {
-	if (!param) return null;
+function vodPrefillFromIngestParam(
+	ingest: IngestVodPrefill | null,
+): VodPrefill | null {
+	if (!ingest) return null;
 
-	try {
-		const parsed = ingestVodPrefillSchema.safeParse(
-			JSON.parse(JSONCrush.uncrush(param)),
-		);
-		if (!parsed.success) return null;
-
-		return {
-			type: parsed.data.type ?? null,
-			matches: prefillVodMatches(parsed.data.matches).map((match) => ({
-				...match,
-				startsAt: secondsToHoursMinutesSecondString(match.startsAt),
-			})),
-		};
-	} catch {
-		return null;
-	}
+	return {
+		type: ingest.type ?? null,
+		matches: prefillVodMatches(ingest.matches).map((match) => ({
+			...match,
+			startsAt: secondsToHoursMinutesSecondString(match.startsAt),
+		})),
+	};
 }

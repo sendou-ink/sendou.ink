@@ -1,23 +1,24 @@
 /**
  * "Upload to sendou.ink" link for a fully processed VoD: the detected events
- * are grouped into per-match rows (src/core/vod-matches.ts) and packed,
- * JSONCrush-compressed, into the `ingest` search param of sendou.ink's
- * /vods/new form, which prefills a new VoD from them (the user adds the
- * YouTube URL/title/date and fixes any misreads before submitting).
+ * are grouped into per-match rows (src/core/vod-matches.ts) and packed into
+ * the `ingest` search param of sendou.ink's /vods/new form (an `SP.json`
+ * param the search-params module compresses), which prefills a new VoD from
+ * them (the user adds the YouTube URL/title/date and fixes any misreads
+ * before submitting).
  *
  * The VoD type is auto-detected: footage containing the casted 8-player
  * spectator map screen is a CAST VoD; anything else leaves the form's default
  * type untouched.
  */
-import JSONCrush from "jsoncrush";
+import type { IngestVodPrefill } from "~/features/ingest/ingest-vod-schemas";
+import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
+import { newVodPage } from "~/utils/urls";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 } from "../core/detectors/minimap/index";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildVodMatches } from "../core/vod-matches";
-
-const VODS_NEW_PATH = "/vods/new";
 
 /**
  * GET query params ride the request line, and servers/proxies commonly cap
@@ -45,10 +46,10 @@ export function sendouUpload(events: readonly DetectedEvent[]): SendouUpload {
 			(event.data as MinimapData).spectator,
 	);
 
-	const payload = isCast ? { type: "CAST", matches } : { matches };
-	const params = new URLSearchParams();
-	params.set("ingest", JSONCrush.crush(JSON.stringify(payload)));
-	const result = `${VODS_NEW_PATH}?${params.toString()}`;
+	const payload: IngestVodPrefill = isCast
+		? { type: "CAST", matches }
+		: { matches };
+	const result = vodsNewSearchParams.href(newVodPage(), { ingest: payload });
 	if (result.length > MAX_URL_LENGTH) {
 		return {
 			url: null,
