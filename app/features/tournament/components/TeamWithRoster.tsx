@@ -4,7 +4,7 @@ import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { userPage } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import { useTournament, useTournamentFriendCodes } from "../routes/to.$id";
@@ -18,7 +18,7 @@ export function TeamWithRoster({
 	teamPageUrl,
 	activePlayers,
 }: {
-	team: TournamentDataTeam;
+	team: TournamentTeamFull;
 	mapPool?: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">> | null;
 	seed?: number;
 	bracketLabel?: string;
@@ -29,14 +29,12 @@ export function TeamWithRoster({
 	const tournament = useTournament();
 	const friendCodes = useTournamentFriendCodes();
 
-	const teamLogoSrc = tournament.tournamentTeamLogoSrc(team);
-
 	return (
 		<div>
 			<div className={styles.teamWithRoster}>
 				<div className={styles.teamWithRosterName}>
 					<div className="stack horizontal sm justify-end items-end">
-						<Avatar size="xxs" url={teamLogoSrc} identiconInput={team.name} />
+						<Avatar size="xxs" url={team.logoUrl} identiconInput={team.name} />
 						{seed ? (
 							<div className={styles.teamWithRosterSeed}>
 								{bracketLabel ? `${bracketLabel} ` : null}#{seed}

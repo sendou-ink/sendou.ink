@@ -23,6 +23,7 @@ import {
 import type { Bracket } from "../../core/Bracket";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
+import type { VodsByTournamentId } from "../../TournamentMatchVodRepository.server";
 import parentStyles from "../../tournament-bracket.module.css";
 import styles from "./bracket.module.css";
 
@@ -47,7 +48,10 @@ export function Match(props: MatchProps) {
 
 	if (isBye) {
 		return (
-			<div className={clsx(styles.matchBye, styles.matchWrapper)}>
+			<div
+				className={clsx(styles.matchBye, styles.matchWrapper)}
+				data-testid="match-bye"
+			>
 				<MatchLine
 					lineType={props.lineType}
 					verticalExtend={props.lineVerticalExtend}
@@ -78,7 +82,7 @@ export function Match(props: MatchProps) {
 function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 	const tournament = useTournament();
 	const vods = useTournamentVods();
-	const streamingParticipants = tournament.streamingParticipantIds ?? [];
+	const streamingParticipants = tournament.streamingParticipantIds;
 
 	const prefix = () => {
 		if (type === "winners") return "WB ";
@@ -101,8 +105,7 @@ function MatchHeader({ match, type, roundNumber, group }: MatchProps) {
 		}
 
 		const matchParticipants = [match.opponent1.id, match.opponent2.id].flatMap(
-			(teamId) =>
-				tournament.teamById(teamId)?.members.map((m) => m.userId) ?? [],
+			(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
 		);
 
 		return streamingParticipants.some((p) => matchParticipants.includes(p));
@@ -258,7 +261,7 @@ function MatchRow({
 
 	const ownTeam = tournament.teamMemberOfByUser(user);
 
-	const logoSrc = team ? tournament.tournamentTeamLogoSrc(team) : null;
+	const logoSrc = team ? team.logoUrl : null;
 	const showAvatar = spoilerCensor === "full" ? false : !simulated && team;
 
 	const isBigSeedNumber =
@@ -268,15 +271,13 @@ function MatchRow({
 	const displayedName =
 		spoilerCensor === "full" ? "???" : (team?.name ?? "???");
 
+	// xxx: used to have a title tooltip listing the team's members, removed when rosters
+	// left the tournament layout data. Check later if it can be brought back e.g. by
+	// loading the roster on demand when hovering
 	return (
 		<div
 			className={clsx("stack horizontal", { "text-lighter": isLoser })}
 			data-participant-id={team?.id}
-			title={
-				spoilerCensor === "full"
-					? undefined
-					: team?.members.map((m) => m.username).join(", ")
-			}
 		>
 			<div
 				className={clsx(styles.matchSeed, {
@@ -306,6 +307,7 @@ function MatchRow({
 					[styles.matchTeamNameNarrowest]: showAvatar && isBigSeedNumber,
 					invisible: !team,
 				})}
+				data-testid="match-team-name"
 			>
 				{displayedName}
 			</div>{" "}
@@ -326,7 +328,7 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 	)?.twitchAccount;
 
 	const matchParticipants = [match.opponent1.id, match.opponent2.id].flatMap(
-		(teamId) => tournament.teamById(teamId)?.members.map((m) => m.userId) ?? [],
+		(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
 	);
 
 	const streamsOfThisMatch = tournament.streams.filter(
@@ -362,29 +364,14 @@ function MatchStreams({ match }: Pick<MatchProps, "match">) {
 }
 
 interface MatchVodsProps {
-	vods: Array<{
-		matchId: number;
-		userId: number | null;
-		platform: string;
-		account: string;
-		platformVideoId: string;
-		timestampSeconds: number;
-		viewCount: number;
-	}>;
+	vods: VodsByTournamentId;
 }
 
 function MatchVods({ vods }: MatchVodsProps) {
-	const tournament = useTournament();
-
 	return (
 		<div className={parentStyles.vodGrid}>
 			{vods.map((vod) => {
-				const team = vod.userId
-					? tournament.ctx.teams.find((t) =>
-							t.members.some((m) => m.userId === vod.userId),
-						)
-					: null;
-				const user = team?.members.find((m) => m.userId === vod.userId);
+				const user = vod.user;
 
 				return (
 					<a
@@ -406,7 +393,7 @@ function MatchVods({ vods }: MatchVodsProps) {
 						<span
 							className={clsx("text-theme-secondary", parentStyles.vodTeamName)}
 						>
-							{user ? team?.name : null}
+							{user ? vod.teamName : null}
 						</span>
 						<span className="text-lighter stack horizontal xs items-center">
 							<Eye size={12} />

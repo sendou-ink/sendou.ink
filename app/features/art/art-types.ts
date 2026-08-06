@@ -1,4 +1,5 @@
 import type { Tables } from "~/db/tables";
+import type { CommonUser } from "~/utils/kysely.server";
 
 export interface ListedArt {
 	id: Tables["Art"]["id"];
@@ -10,12 +11,7 @@ export interface ListedArt {
 		id: Tables["ArtTag"]["id"];
 		name: Tables["ArtTag"]["name"];
 	}>;
-	linkedUsers?: Array<{
-		id: Tables["User"]["id"];
-		discordId: Tables["User"]["discordId"];
-		username: Tables["User"]["username"];
-		customUrl: Tables["User"]["customUrl"];
-	}>;
+	linkedUsers?: Array<CommonUser>;
 	author?: {
 		discordId: Tables["User"]["discordId"];
 		username: Tables["User"]["username"];

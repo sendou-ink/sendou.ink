@@ -1,13 +1,12 @@
 import { Trash } from "lucide-react";
 import * as React from "react";
-import { Form, Link, useLoaderData } from "react-router";
-import { SendouButton } from "~/components/elements/Button";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
+import { Link, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Main } from "~/components/Main";
-import { SubmitButton } from "~/components/SubmitButton";
 
 import { action } from "../actions/upload.admin.server";
 import { loader } from "../loaders/upload.admin.server";
+import { validateImageSchema } from "../upload-schemas";
 
 export { action, loader };
 
@@ -39,20 +38,18 @@ function ImageValidator() {
 						<div key={image.id}>
 							<div className="text-lg font-bold stack horizontal md">
 								{i + 1}){" "}
-								<FormWithConfirm
-									dialogHeading={`Reject image submitted by ${image.username}?`}
-									submitButtonText="Reject"
-									fields={[
-										["imageId", image.id],
-										["_action", "REJECT"],
-									]}
-								>
-									<SendouButton
-										icon={<Trash />}
-										variant="minimal-destructive"
-										size="medium"
-									/>
-								</FormWithConfirm>
+								<ActionButton
+									schema={validateImageSchema}
+									action="REJECT"
+									fields={{ imageId: image.id }}
+									confirm={{
+										dialogHeading: `Reject image submitted by ${image.username}?`,
+										submitButtonText: "Reject",
+									}}
+									icon={<Trash />}
+									variant="minimal-destructive"
+									size="medium"
+								/>
 							</div>
 							<img src={image.url} alt="" />
 							<Link to={`/u/${image.submitterUserId}`} className="text-xs">
@@ -63,16 +60,16 @@ function ImageValidator() {
 				})}
 			</div>
 
-			<Form method="post" className="mt-12">
-				<input
-					type="hidden"
-					name="imageIds"
-					value={JSON.stringify(data.images.map((img) => img.id))}
-				/>
-				<SubmitButton size="big" className="mx-auto" _action="VALIDATE">
-					All {data.images.length} above ok
-				</SubmitButton>
-			</Form>
+			<ActionButton
+				schema={validateImageSchema}
+				action="VALIDATE"
+				fields={{ imageIds: data.images.map((img) => img.id) }}
+				formClassName="mt-12"
+				size="big"
+				className="mx-auto"
+			>
+				All {data.images.length} above ok
+			</ActionButton>
 		</>
 	);
 }

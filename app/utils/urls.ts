@@ -20,7 +20,10 @@ import { leaderboardsSearchParams } from "~/features/leaderboards/leaderboards-s
 import { lfgNewSearchParams } from "~/features/lfg/lfg-search-params";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapListGeneratorSearchParams } from "~/features/map-list-generator/map-list-generator-search-params";
-import type { StageBackgroundStyle } from "~/features/map-planner";
+import type {
+	StageBackgroundStyle,
+	StageWaterLevel,
+} from "~/features/map-planner/plans-types";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { calculatorSearchParams } from "~/features/object-damage-calculator/calculator-search-params";
 import {
@@ -653,11 +656,16 @@ export const stageMinimapImageUrlWithEnding = ({
 	stageId,
 	mode,
 	style,
+	waterLevel,
 }: {
 	stageId: StageId;
 	mode: ModeShort;
 	style: StageBackgroundStyle;
-}) => `${STATIC_ASSETS_URL}/planner-maps/${stageId}-${mode}-${style}.png`;
+	waterLevel?: StageWaterLevel;
+}) =>
+	`${STATIC_ASSETS_URL}/planner-maps/${stageId}-${mode}-${style}${
+		waterLevel === "down" ? "-DOWN" : ""
+	}.png`;
 
 export function resolveBaseUrl(url: string) {
 	return new URL(url).host;

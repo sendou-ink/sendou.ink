@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useFetcher } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Divider } from "~/components/Divider";
 import { FormMessage } from "~/components/FormMessage";
 import { Input } from "~/components/Input";
@@ -10,6 +11,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { SendouForm } from "~/form/SendouForm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import invariant from "~/utils/invariant";
 import { tournamentAdminPage } from "~/utils/urls";
 import {
@@ -18,6 +20,7 @@ import {
 	progressionToFormValues,
 } from "../../calendar/calendar-progression-form";
 import { BracketProgressionFormFields } from "../../calendar/components/BracketProgressionFormFields";
+import { adminBracketsActionSchema } from "../tournament-admin-schemas";
 
 export { action } from "../actions/to.$id.admin.brackets.server";
 
@@ -66,7 +69,7 @@ export default function TournamentAdminBracketsPage() {
 function BracketReset() {
 	const tournament = useTournament();
 	const fetcher = useFetcher();
-	const inProgressBrackets = tournament.brackets.filter((b) => !b.preview);
+	const inProgressBrackets = tournament.bracketsMeta.filter((b) => !b.preview);
 	const [_bracketToDelete, setBracketToDelete] = React.useState(
 		inProgressBrackets[0]?.id,
 	);
@@ -112,6 +115,7 @@ function BracketReset() {
 					/>
 				</div>
 				<SubmitButton
+					schema={adminBracketsActionSchema}
 					_action="RESET_BRACKET"
 					state={fetcher.state}
 					isDisabled={confirmText !== bracketToDeleteName}
@@ -131,9 +135,9 @@ function BracketReset() {
 
 function BracketProgressionEdit() {
 	const tournament = useTournament();
-	const fetcher = useFetcher();
+	const { submit } = useActionSubmit(adminBracketsActionSchema);
 
-	const disabledBracketIdxs = tournament.brackets
+	const disabledBracketIdxs = tournament.bracketsMeta
 		.filter((bracket) => !bracket.preview)
 		.map((bracket) => bracket.idx);
 
@@ -167,13 +171,9 @@ function BracketProgressionEdit() {
 				const validated = Progression.validatedBrackets(inputBrackets);
 				invariant(Progression.isBrackets(validated), "Invalid progression");
 
-				fetcher.submit(
-					{
-						_action: "UPDATE_TOURNAMENT_PROGRESSION",
-						bracketProgression: JSON.stringify(validated),
-					},
-					{ method: "post" },
-				);
+				submit("UPDATE_TOURNAMENT_PROGRESSION", {
+					bracketProgression: validated,
+				});
 			}}
 		>
 			<BracketProgressionFormFields
@@ -187,12 +187,11 @@ function BracketProgressionEdit() {
 
 function ReopenTournament() {
 	const tournament = useTournament();
-	const fetcher = useFetcher();
 	const [confirmText, setConfirmText] = React.useState("");
 
 	return (
 		<div>
-			<fetcher.Form method="post" className="stack horizontal sm items-end">
+			<div className="stack horizontal sm items-end">
 				<div className="flex-same-size">
 					<label htmlFor="reopen-confirmation">
 						Type tournament name (&quot;{tournament.ctx.name}&quot;) to confirm
@@ -204,16 +203,16 @@ function ReopenTournament() {
 						disableAutoComplete
 					/>
 				</div>
-				<SubmitButton
-					_action="REOPEN_TOURNAMENT"
-					state={fetcher.state}
+				<ActionButton
+					schema={adminBracketsActionSchema}
+					action="REOPEN_TOURNAMENT"
 					isDisabled={confirmText !== tournament.ctx.name}
 					variant="destructive"
 					testId="reopen-tournament-button"
 				>
 					Reopen
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 			<FormMessage type="error" className="mt-2">
 				Reopening a tournament will delete all results, skill calculations, and
 				badges awarded from this tournament. Use this to test finalization

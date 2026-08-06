@@ -10,7 +10,10 @@ import {
 	SendouQ,
 } from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ_LOOKING_ROOM } from "~/features/sendouq/q-constants";
-import { SendouQError } from "~/features/sendouq/q-utils.server";
+import {
+	SendouQError,
+	setGroupChatMetadata,
+} from "~/features/sendouq/q-utils.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -153,6 +156,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
+				// the successor group reuses the chat code, extend the room's expiry
+				if (previousGroup.chatCode) {
+					setGroupChatMetadata({
+						chatCode: previousGroup.chatCode,
+						members: previousGroup.members,
+					});
+				}
+
 				if (match.chatCode) {
 					ChatSystemMessage.send({
 						room: match.chatCode,
@@ -192,7 +203,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 							trx,
 						);
 
-					if (!RejoinVote.canCastVote(existingVotes, user.id)) {
+					if (
+						!RejoinVote.canCastVote(existingVotes, user.id, data.isContinuing)
+					) {
 						return null;
 					}
 
@@ -230,6 +243,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					}
 
 					await refreshSendouQInstance();
+
+					// the successor group reuses the chat code; sync the room to the
+					// continuing members and extend its expiry
+					if (viewerGroup.chatCode && survivors.length > 0) {
+						setGroupChatMetadata({
+							chatCode: viewerGroup.chatCode,
+							members: survivors,
+						});
+					}
 
 					// The continuing group re-enters the looking pool, so refresh
 					// every looking client.

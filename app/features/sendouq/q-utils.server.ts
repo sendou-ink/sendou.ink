@@ -1,6 +1,7 @@
 import { redirect } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { TIERS } from "~/features/mmr/mmr-constants";
+import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import {
 	navIconUrl,
@@ -17,6 +18,27 @@ export class SendouQError extends Error {
 		super(message);
 		this.name = "SendouQError";
 	}
+}
+
+const seasonsKnownToHaveSkills = new Set<number>();
+
+/** Whether the season's initial skills were seeded (or there was no previous season's skills to seed them from). */
+export async function seasonInitialSkillsExist(season: number) {
+	if (seasonsKnownToHaveSkills.has(season)) return true;
+
+	if (await SkillRepository.existsBySeason(season)) {
+		seasonsKnownToHaveSkills.add(season);
+		return true;
+	}
+
+	// if the previous season has no skills either there was nothing to seed the
+	// new season's initial skills from (e.g. a fresh development database)
+	return !(await SkillRepository.existsBySeason(season - 1));
+}
+
+/** Clears the in-process cache backing `seasonInitialSkillsExist`. */
+export function clearSeasonSkillsCache() {
+	seasonsKnownToHaveSkills.clear();
 }
 
 function groupRedirectLocation(group?: SQOwnGroup) {
@@ -59,6 +81,22 @@ export function setGroupChatMetadata(group: {
 		url: SENDOUQ_LOOKING_PAGE,
 		imageUrl: `${navIconUrl("sendouq")}.avif`,
 		participantUserIds: group.members.map((m) => m.id),
+		expiresAfter: { hours: 2 },
+	});
+}
+
+export function setMatchChatMetadata(match: {
+	id: number;
+	chatCode: string;
+	participantUserIds: number[];
+}) {
+	ChatSystemMessage.setMetadata({
+		chatCode: match.chatCode,
+		header: `Match #${match.id}`,
+		subtitle: "SendouQ",
+		url: sendouQMatchPage(match.id),
+		imageUrl: `${navIconUrl("sendouq")}.avif`,
+		participantUserIds: match.participantUserIds,
 		expiresAfter: { hours: 2 },
 	});
 }

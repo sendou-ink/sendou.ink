@@ -1,5 +1,4 @@
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
@@ -10,7 +9,9 @@ import type {
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -115,15 +116,11 @@ function resolveTimelineTeams(
 	return {
 		alpha: {
 			name: teamOne?.name ?? "?",
-			avatar: teamOne
-				? (tournament.tournamentTeamLogoSrc(teamOne) ?? undefined)
-				: undefined,
+			avatar: teamOne ? (teamOne.logoUrl ?? undefined) : undefined,
 		},
 		bravo: {
 			name: teamTwo?.name ?? "?",
-			avatar: teamTwo
-				? (tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined)
-				: undefined,
+			avatar: teamTwo ? (teamTwo.logoUrl ?? undefined) : undefined,
 		},
 	};
 }
@@ -306,7 +303,7 @@ function TournamentMatchRosterTab({
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 	const user = useUser();
-	const fetcher = useFetcher();
+	const setActiveRoster = useActionSubmit(matchSchema);
 	const {
 		teams: [teamOne, teamTwo],
 	} = useMatch();
@@ -325,7 +322,7 @@ function TournamentMatchRosterTab({
 				teamTwo ? needsActiveRosterSelection(teamTwo) : false,
 			]}
 			onSubbedOutChange={handleSubbedOutChange}
-			isSubmitting={fetcher.state !== "idle"}
+			isSubmitting={setActiveRoster.state !== "idle"}
 			teams={[
 				teamOne ? rosterTeamData(teamOne) : tbdTeam,
 				teamTwo ? rosterTeamData(teamTwo) : tbdTeam,
@@ -333,16 +330,14 @@ function TournamentMatchRosterTab({
 		/>
 	);
 
-	function rosterTeamData(
-		team: NonNullable<ReturnType<typeof tournament.teamById>>,
-	) {
+	function rosterTeamData(team: MatchPageTeam) {
 		const subbedOut =
 			!data.matchIsOver &&
 			team.activeRosterUserIds &&
-			team.members.length > tournament.minMembersPerTeam
-				? team.members
-						.filter((m) => !team.activeRosterUserIds!.includes(m.userId))
-						.map((m) => m.userId)
+			team.memberUserIds.length > tournament.minMembersPerTeam
+				? team.memberUserIds.filter(
+						(userId) => !team.activeRosterUserIds!.includes(userId),
+					)
 				: undefined;
 
 		return {
@@ -353,7 +348,7 @@ function TournamentMatchRosterTab({
 					tournamentId: tournament.ctx.id,
 					tournamentTeamId: team.id,
 				}),
-				avatar: tournament.tournamentTeamLogoSrc(team) ?? undefined,
+				avatar: team.logoUrl ?? undefined,
 			},
 			members: team.members.map((m) => ({
 				id: m.userId,
@@ -369,19 +364,15 @@ function TournamentMatchRosterTab({
 		};
 	}
 
-	function canEditSubbedOutForTeam(
-		team: NonNullable<ReturnType<typeof tournament.teamById>>,
-	) {
+	function canEditSubbedOutForTeam(team: MatchPageTeam) {
 		if (data.matchIsOver) return false;
-		if (team.members.length <= tournament.minMembersPerTeam) return false;
+		if (team.memberUserIds.length <= tournament.minMembersPerTeam) return false;
 
-		const isMemberOfTeam = team.members.some((m) => m.userId === user?.id);
+		const isMemberOfTeam = user ? team.memberUserIds.includes(user.id) : false;
 		return isMemberOfTeam || tournament.isOrganizer(user);
 	}
 
-	function needsActiveRosterSelection(
-		team: NonNullable<ReturnType<typeof tournament.teamById>>,
-	) {
+	function needsActiveRosterSelection(team: MatchPageTeam) {
 		if (!canEditSubbedOutForTeam(team)) return false;
 		return !tournamentTeamToActiveRosterUserIds(
 			team,
@@ -390,20 +381,16 @@ function TournamentMatchRosterTab({
 	}
 
 	function handleSubbedOutChange(teamId: number, subbedOut: number[]) {
-		const team = tournament.teamById(teamId);
+		const team = [teamOne, teamTwo].find((t) => t?.id === teamId);
 		if (!team) return;
 
-		const activeRoster = team.members
-			.filter((m) => !subbedOut.includes(m.userId))
-			.map((m) => m.userId);
-
-		fetcher.submit(
-			{
-				_action: "SET_ACTIVE_ROSTER",
-				roster: JSON.stringify(activeRoster),
-				teamId: String(teamId),
-			},
-			{ method: "post" },
+		const activeRoster = team.memberUserIds.filter(
+			(userId) => !subbedOut.includes(userId),
 		);
+
+		setActiveRoster.submit("SET_ACTIVE_ROSTER", {
+			roster: activeRoster,
+			teamId,
+		});
 	}
 }

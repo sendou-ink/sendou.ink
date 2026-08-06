@@ -25,10 +25,6 @@ import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import {
-	isLeagueRoundLocked,
-	resolveLeagueRoundStartDate,
-} from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
@@ -67,7 +63,7 @@ export function TournamentMatchBanner({
 	const host = hostingTeam
 		? {
 				name: hostingTeam.name,
-				avatarUrl: tournament.tournamentTeamLogoSrc(hostingTeam) ?? undefined,
+				avatarUrl: hostingTeam.logoUrl ?? undefined,
 			}
 		: null;
 
@@ -80,9 +76,9 @@ export function TournamentMatchBanner({
 		tournament,
 	});
 
-	const leagueRoundLocked = isLeagueRoundLocked(tournament, data.match.roundId);
-	const leagueRoundStartDate = leagueRoundLocked
-		? resolveLeagueRoundStartDate(tournament, data.match.roundId)
+	const { leagueRoundLocked } = data.bracketContext;
+	const leagueRoundStartDate = data.bracketContext.leagueRoundStartDate
+		? databaseTimestampToDate(data.bracketContext.leagueRoundStartDate)
 		: null;
 
 	const pickBanBanner = resolvePickBanBanner(data, tournament, t);
@@ -94,7 +90,7 @@ export function TournamentMatchBanner({
 			: undefined;
 
 	const activeRosterByTeamId = (tournamentTeamId: number) => {
-		const team = tournament.teamById(tournamentTeamId);
+		const team = teams.find((t) => t?.id === tournamentTeamId);
 		if (!team) return null;
 
 		const activeRosterUserIds = team.activeRosterUserIds;
@@ -326,7 +322,7 @@ function CurrentMapPickInfo({
 					{teams.map((team) => (
 						<Avatar
 							key={team.id}
-							url={tournament.tournamentTeamLogoSrc(team)}
+							url={team.logoUrl}
 							identiconInput={team.name}
 							size="xxs"
 						/>

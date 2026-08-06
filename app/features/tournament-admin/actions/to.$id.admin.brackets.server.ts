@@ -1,39 +1,32 @@
 import type { ActionFunction } from "react-router";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	requireTournamentAdmin,
+	requireTournamentOrganizer,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	errorToastIfFalsy,
-	parseParams,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "../../../utils/zod";
-import { adminBracketsActionSchema } from "../tournament-admin-schemas.server";
-import {
-	requireTournamentAdmin,
-	requireTournamentOrganizer,
-} from "../tournament-admin-utils.server";
+import { adminBracketsActionSchema } from "../tournament-admin-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: adminBracketsActionSchema,
 	});
 
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 
 	let message: string;
 	switch (data._action) {

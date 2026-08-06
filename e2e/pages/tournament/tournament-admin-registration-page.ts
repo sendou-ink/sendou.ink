@@ -61,7 +61,9 @@ export class TournamentAdminRegistrationPage {
 	}
 
 	async selectCaptain(userId: number) {
-		await this.page.getByLabel("Captain").selectOption(String(userId));
+		await this.page
+			.getByLabel("Captain", { exact: true })
+			.selectOption(String(userId));
 	}
 
 	save() {

@@ -71,7 +71,7 @@ export class DoubleEliminationBracket extends Bracket {
 		);
 	}
 
-	get standings(): Standing[] {
+	protected calculateStandings(): Standing[] {
 		if (!this.enoughTeams) return [];
 
 		const losersGroupId = this.data.group.find((g) => g.number === 2)?.id;
@@ -124,12 +124,12 @@ export class DoubleEliminationBracket extends Bracket {
 		}
 
 		// edge case: 1 match only
-		const noLosersRounds = !losersGroupId;
+		const noLosersRounds = losersGroupId === undefined;
 		const grandFinalsNumber = noLosersRounds ? 1 : 3;
 		const grandFinalsGroupId = this.data.group.find(
 			(g) => g.number === grandFinalsNumber,
 		)?.id;
-		invariant(grandFinalsGroupId, "GF group not found");
+		invariant(grandFinalsGroupId !== undefined, "GF group not found");
 		const grandFinalMatches = this.data.match.filter(
 			(match) => match.groupId === grandFinalsGroupId,
 		);
@@ -137,6 +137,7 @@ export class DoubleEliminationBracket extends Bracket {
 		// if opponent1 won in DE it means that bracket reset is not played
 		if (
 			grandFinalMatches[0].opponent1 &&
+			grandFinalMatches[0].winnerSide &&
 			(noLosersRounds || grandFinalMatches[0].winnerSide === "opponent1")
 		) {
 			const loser =
@@ -163,7 +164,7 @@ export class DoubleEliminationBracket extends Bracket {
 				team: winnerTeam,
 				placement: 1,
 			});
-		} else if (grandFinalMatches[1].winnerSide) {
+		} else if (grandFinalMatches[1]?.winnerSide) {
 			const loser =
 				grandFinalMatches[1].winnerSide === "opponent1"
 					? "opponent2"

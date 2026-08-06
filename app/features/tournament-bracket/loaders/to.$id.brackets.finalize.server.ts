@@ -1,32 +1,26 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { seasonRatings, seedingRatings } from "~/features/mmr/mmr-utils.server";
 import * as Standings from "~/features/tournament/core/Standings";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import {
 	summaryRatingTargets,
 	tournamentSummary,
 } from "~/features/tournament-bracket/core/summarizer.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseParams } from "~/utils/remix.server";
 import { tournamentBracketsPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 
 export type FinalizeTournamentLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
+	const { tournament, user } = await tournamentFromParams(params, {
+		for: "action",
 	});
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
 
 	if (!tournament.canFinalize(user)) {
 		return redirect(
@@ -93,16 +87,21 @@ async function standingsWithSetParticipation(tournament: Tournament) {
 		progression: tournament.ctx.settings.bracketProgression,
 	});
 
-	return finalStandings.map((standing) => {
-		standing.team.members;
-		return {
-			placement: standing.placement,
-			tournamentTeamId: standing.team.id,
-			name: standing.team.name,
-			members: standing.team.members.map((member) => ({
+	const rostersByTeamId = new Map(
+		(
+			await TournamentRepository.findTeamsFullByTournamentId(tournament.ctx.id)
+		).map((team) => [team.id, team.members]),
+	);
+
+	return finalStandings.map((standing) => ({
+		placement: standing.placement,
+		tournamentTeamId: standing.team.id,
+		name: standing.team.name,
+		members: (rostersByTeamId.get(standing.team.id) ?? [])
+			.filter((member) => standing.team.memberUserIds.includes(member.userId))
+			.map((member) => ({
 				...member,
 				setResults: setResults.get(member.userId) ?? [],
 			})),
-		};
-	});
+	}));
 }

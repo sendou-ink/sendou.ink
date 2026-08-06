@@ -12,7 +12,7 @@ import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
 import { actualNumber } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";
-import { editBadgeActionSchema } from "../badges-schemas.server";
+import { editBadgeActionSchema } from "../badges-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const data = await parseRequestPayload({

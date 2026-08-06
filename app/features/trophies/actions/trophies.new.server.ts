@@ -11,10 +11,7 @@ import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TrophyRepository from "../TrophyRepository.server";
-import {
-	TROPHY_APPROVALS_REQUIRED,
-	TROPHY_PENDING_PER_USER_LIMIT,
-} from "../trophies-constants";
+import { TROPHY_PENDING_PER_USER_LIMIT } from "../trophies-constants";
 import {
 	pendingTrophyActionSchema,
 	trophyFormSchema,
@@ -135,7 +132,7 @@ export const action: ActionFunction = async ({ request }) => {
 			errorToastIfFalsy(pending, "Pending trophy not found");
 			errorToastIfFalsy(!pending.declinedAt, "Trophy is already declined");
 			errorToastIfFalsy(
-				pending.approvals.length < TROPHY_APPROVALS_REQUIRED,
+				!pending.acceptedAt,
 				"Cannot decline an accepted trophy",
 			);
 
@@ -170,10 +167,7 @@ export const action: ActionFunction = async ({ request }) => {
 				!pending.declinedAt,
 				"Cannot approve a declined trophy",
 			);
-			errorToastIfFalsy(
-				pending.approvals.length < TROPHY_APPROVALS_REQUIRED,
-				"Trophy is already accepted",
-			);
+			errorToastIfFalsy(!pending.acceptedAt, "Trophy is already accepted");
 			errorToastIfFalsy(
 				!pending.approvals.some((a) => a.userId === user.id),
 				"Already approved",

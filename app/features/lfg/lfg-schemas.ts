@@ -7,6 +7,7 @@ import {
 	selectDynamicOptional,
 	textArea,
 } from "~/form/fields";
+import { _action, id } from "~/utils/zod";
 import { LFG, TIMEZONES } from "./lfg-constants";
 
 export const lfgNewSchema = z
@@ -37,3 +38,14 @@ export const lfgNewSchema = z
 		message: "Invalid timezone",
 		path: ["timezone"],
 	});
+
+export const lfgActionSchema = z.union([
+	z.object({
+		_action: _action("DELETE_POST"),
+		id,
+	}),
+	z.object({
+		_action: _action("BUMP_POST"),
+		id,
+	}),
+]);

@@ -12,7 +12,8 @@ import {
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Form, Link } from "react-router";
+import { Link } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -32,6 +33,7 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage } from "~/utils/urls";
+import { scrimsActionSchema } from "../scrims-schemas";
 import { scrimsSearchParams } from "../scrims-search-params";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
@@ -502,21 +504,15 @@ function ScrimActionButtons({
 									/>
 								</div>
 							) : null}
-							<Form method="post">
-								<input
-									type="hidden"
-									name="scrimPostRequestId"
-									value={userRequest.id}
-								/>
-								<input type="hidden" name="_action" value="CANCEL_REQUEST" />
-								<SendouButton
-									type="submit"
-									variant="destructive"
-									icon={<Trash />}
-								>
-									{t("common:actions.cancel")}
-								</SendouButton>
-							</Form>
+							<ActionButton
+								schema={scrimsActionSchema}
+								action="CANCEL_REQUEST"
+								fields={{ scrimPostRequestId: userRequest.id }}
+								variant="destructive"
+								icon={<Trash />}
+							>
+								{t("common:actions.cancel")}
+							</ActionButton>
 						</div>
 					</SendouDialog>
 				) : null}

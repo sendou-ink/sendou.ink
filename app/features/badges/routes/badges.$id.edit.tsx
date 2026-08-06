@@ -1,6 +1,7 @@
 import { Trash } from "lucide-react";
 import * as React from "react";
-import { Form, useMatches, useOutletContext } from "react-router";
+import { useMatches, useOutletContext } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -9,6 +10,7 @@ import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/badges.$id.edit.server";
 import styles from "../badges.module.css";
+import { editBadgeActionSchema } from "../badges-schemas";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
 
@@ -27,11 +29,11 @@ export default function EditBadgePage() {
 			heading={`Editing winners of ${badge.displayName}`}
 			onCloseTo={parentMatch.pathname}
 		>
-			<Form method="post" className="stack md">
+			<div className="stack md">
 				{isStaff ? <Managers data={data} /> : null}
 				{isStaff && canManageBadge ? <Divider className="mt-2" /> : null}
 				{canManageBadge ? <Owners data={data} /> : null}
-			</Form>
+			</div>
 		</SendouDialog>
 	);
 }
@@ -88,20 +90,15 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 					))}
 				</ul>
 			</div>
-			<input
-				type="hidden"
-				name="managerIds"
-				value={JSON.stringify(managers.map((m) => m.id))}
-			/>
 			<div>
-				<SendouButton
-					type="submit"
+				<ActionButton
+					schema={editBadgeActionSchema}
+					action="MANAGERS"
+					fields={{ managerIds: managers.map((m) => m.id) }}
 					isDisabled={amountOfChanges === 0}
-					name="_action"
-					value="MANAGERS"
 				>
 					{submitButtonText(amountOfChanges)}
-				</SendouButton>
+				</ActionButton>
 			</div>
 		</div>
 	);
@@ -202,20 +199,15 @@ function Owners({ data }: { data: BadgeDetailsLoaderData }) {
 					))}
 				</ul>
 			) : null}
-			<input
-				type="hidden"
-				name="ownerIds"
-				value={JSON.stringify(countArrayToDuplicatedIdsArray(owners))}
-			/>
 			<div>
-				<SendouButton
-					type="submit"
+				<ActionButton
+					schema={editBadgeActionSchema}
+					action="OWNERS"
+					fields={{ ownerIds: countArrayToDuplicatedIdsArray(owners) }}
 					isDisabled={ownerDifferences.length === 0}
-					name="_action"
-					value="OWNERS"
 				>
 					Submit
-				</SendouButton>
+				</ActionButton>
 			</div>
 		</div>
 	);

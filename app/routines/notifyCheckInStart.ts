@@ -37,7 +37,7 @@ export const NotifyCheckInStartRoutine = new Routine({
 					pictureUrl: tournament.ctx.logoUrl,
 				},
 				userIds: tournament.ctx.teams
-					.flatMap((team) => team.members.map((member) => member.userId))
+					.flatMap((team) => team.memberUserIds)
 					.concat(tournament.ctx.staff.map((staff) => staff.id)),
 			});
 		}

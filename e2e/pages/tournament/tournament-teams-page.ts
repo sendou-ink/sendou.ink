@@ -21,4 +21,8 @@ export class TournamentTeamsPage {
 	memberNamed(name: string) {
 		return this.locators.teamMemberNames.getByText(name);
 	}
+
+	teamNamed(name: string) {
+		return this.locators.teamNames.getByText(name);
+	}
 }

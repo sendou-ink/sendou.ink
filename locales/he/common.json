@@ -256,6 +256,8 @@
 	"plans.bgStyle.MINI": "",
 	"plans.adder.objective": "",
 	"plans.ranges": "",
+	"plans.waterLevel.up": "",
+	"plans.waterLevel.down": "",
 	"articles.by": "מאת {{author}}",
 	"theme.light": "בהיר",
 	"theme.dark": "חשוך",

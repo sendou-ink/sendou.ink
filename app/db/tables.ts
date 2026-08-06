@@ -200,6 +200,7 @@ export interface PendingTrophy {
 	declineReason: string | null;
 	declinedAt: number | null;
 	declinedByUserId: number | null;
+	acceptedAt: number | null;
 	targetTrophyId: number | null;
 	managerId: number | null;
 }
@@ -714,6 +715,8 @@ export interface TournamentTeamMember {
 	isStayAsSub: Generated<DBBoolean>;
 	/** Set when the member was added to the roster after registration closed. */
 	isSub: Generated<DBBoolean>;
+	/** Set when the member was added to the roster by the tournament organizer instead of joining on their own. */
+	isOrganizerAdded: Generated<DBBoolean>;
 	// denormalized from TournamentTeam.isLooking
 	isLooking: Generated<DBBoolean>;
 }

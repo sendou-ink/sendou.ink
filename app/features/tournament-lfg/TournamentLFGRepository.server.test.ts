@@ -4,6 +4,7 @@ import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeam
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { withUserId } from "~/utils/Test";
 import * as TournamentLFGRepository from "./TournamentLFGRepository.server";
 
@@ -611,6 +612,55 @@ describe("leaveLfg", () => {
 			.executeTakeFirstOrThrow();
 
 		expect(teamRow.isLooking).toBe(0);
+	});
+});
+
+describe("findPickupChatTeamById", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("returns null when team has no chatCode", async () => {
+		const tournament = await createTournament();
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+
+		expect(
+			await TournamentLFGRepository.findPickupChatTeamById(team.id),
+		).toBeNull();
+	});
+
+	test("returns null when team does not exist", async () => {
+		expect(
+			await TournamentLFGRepository.findPickupChatTeamById(999),
+		).toBeNull();
+	});
+
+	test("returns current members after a roster change", async () => {
+		const tournament = await createTournament();
+		const team = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(1), users.id(2), users.id(3)],
+		});
+		const pickup = await TournamentLFGRepository.startLooking(team.id);
+
+		await withUserId(users.id(3), () =>
+			TournamentTeamRepository.leave({
+				teamId: team.id,
+				userId: users.id(3),
+			}),
+		);
+
+		const chatTeam = await TournamentLFGRepository.findPickupChatTeamById(
+			team.id,
+		);
+
+		expect(chatTeam?.chatCode).toBe(pickup?.chatCode);
+		expect(chatTeam?.memberUserIds.sort()).toEqual(
+			[users.id(1), users.id(2)].sort(),
+		);
 	});
 });
 

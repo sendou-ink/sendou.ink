@@ -5,6 +5,7 @@ import {
 	ROSTER_SIZE,
 	RR_TO_SE,
 	RR_TO_SE_WITH_UNDERGROUND,
+	RR_TOP_4_TO_SE,
 	SOS_BRACKETS,
 	startedTournamentTimes,
 	TO_MAP_POOL,
@@ -63,6 +64,59 @@ test.describe("Tournament bracket multi stage", () => {
 		await isNotVisible(match.locators.adminTab);
 		await isNotVisible(match.locators.reopenMatchButton);
 		await match.backToBracket();
+	});
+
+	// https://github.com/sendou-ink/sendou.ink/issues/2607
+	test("seeds the follow-up single elimination so group rivals rematch as late as possible", async ({
+		page,
+		factories,
+	}) => {
+		await impersonate(page);
+		const brackets = new TournamentBracketsPage(page);
+
+		// 4 groups of 4, every team advancing -> 16 team single elimination
+		const topFourTournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: RR_TOP_4_TO_SE,
+		});
+		await createTeams(factories, topFourTournament.id, teamSeeds(16));
+		await factories.TournamentFactory.playOut(topFourTournament.id);
+
+		await brackets.goto(topFourTournament.id);
+		await brackets.bracketTab("Groups stage").click();
+		const topFourGroups = await brackets.groupStandingsTeamNames(4);
+
+		await brackets.bracketTab("Final stage").click();
+		const topFourLineup = await brackets.firstRoundTeamNames(16);
+
+		expectGroupsSpreadAcrossBracket(topFourLineup, topFourGroups);
+		expectSeedOrderRespected(topFourLineup, topFourGroups);
+
+		// 4 groups of 4, top 2 advancing -> 8 team single elimination
+		const topTwoTournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: RR_TO_SE,
+		});
+		await createTeams(factories, topTwoTournament.id, teamSeeds(16));
+		await factories.TournamentFactory.playOut(topTwoTournament.id);
+
+		await brackets.goto(topTwoTournament.id);
+		await brackets.bracketTab("Groups stage").click();
+		const topTwoGroups = await brackets.groupStandingsTeamNames(4);
+
+		await brackets.bracketTab("Final stage").click();
+		const topTwoLineup = await brackets.firstRoundTeamNames(8);
+
+		expectGroupsSpreadAcrossBracket(
+			topTwoLineup,
+			topTwoGroups.map((group) => group.slice(0, 2)),
+		);
+		expectSeedOrderRespected(
+			topTwoLineup,
+			topTwoGroups.map((group) => group.slice(0, 2)),
+		);
 	});
 
 	test("shows tournament results on user profile after finalized tournament", async ({
@@ -300,3 +354,40 @@ test.describe("Tournament bracket multi stage", () => {
 		await expect(relinkDialog.locators.linkFinalsButton).toBeVisible();
 	});
 });
+
+/* With G groups feeding the bracket, every aligned section of G consecutive round 1
+ * slots (quarter for 16 teams from 4 groups, half for 8) should hold one team from
+ * each group; group rivals then can't rematch until the last log2(G) rounds. */
+function expectGroupsSpreadAcrossBracket(lineup: string[], groups: string[][]) {
+	for (let i = 0; i < lineup.length; i += groups.length) {
+		const section = lineup.slice(i, i + groups.length);
+		const sectionGroups = section.map((teamName) =>
+			groupIndexOf(groups, teamName),
+		);
+		expect(new Set(sectionGroups).size).toBe(groups.length);
+	}
+}
+
+/* Group placements must still decide the bracket seeds: every round 1 match pits a
+ * placement tier against its mirror (1st vs 4th, 2nd vs 3rd when four advance) and
+ * the two best group winners can only meet in the finals. */
+function expectSeedOrderRespected(lineup: string[], groups: string[][]) {
+	const tiersPerGroup = lineup.length / groups.length;
+	const tierOf = (teamName: string) =>
+		groups[groupIndexOf(groups, teamName)].indexOf(teamName) + 1;
+
+	for (let i = 0; i < lineup.length; i += 2) {
+		expect(tierOf(lineup[i]) + tierOf(lineup[i + 1])).toBe(tiersPerGroup + 1);
+	}
+
+	// the factory plays higher seeds to a win, so Teams 1 & 2 top their groups
+	// with the best records overall
+	expect(lineup.slice(0, lineup.length / 2)).toContain("Team 1");
+	expect(lineup.slice(lineup.length / 2)).toContain("Team 2");
+}
+
+function groupIndexOf(groups: string[][], teamName: string) {
+	const index = groups.findIndex((group) => group.includes(teamName));
+	expect(index, `team ${teamName} not found in any group`).toBeGreaterThan(-1);
+	return index;
+}

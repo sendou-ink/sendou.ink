@@ -17,12 +17,13 @@ import {
 } from "~/utils/urls";
 import { normalizeFriendCode } from "~/utils/zod";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { frontPageSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { frontPageSchema } from "../q-schemas.server";
 import { qSearchParams } from "../q-search-params";
 import { userCanJoinQueueAt } from "../q-utils";
 import {
 	SendouQError,
+	seasonInitialSkillsExist,
 	setGroupChatMetadata,
 	sqRedirectIfNeeded,
 } from "../q-utils.server";
@@ -196,6 +197,11 @@ async function validateCanJoinQ(user: { id: number; discordId: string }) {
 	errorToastIfFalsy(friendCode, "No friend code");
 	const canJoinQueue = userCanJoinQueueAt(user, friendCode) === "NOW";
 
-	errorToastIfFalsy(Seasons.current(), "Season is not active");
+	const season = Seasons.current();
+	errorToastIfFalsy(season, "Season is not active");
 	errorToastIfFalsy(canJoinQueue, "Can't join queue right now");
+	errorToastIfFalsy(
+		await seasonInitialSkillsExist(season.nth),
+		"Season's starting powers are not set yet. Please contact staff on the Discord helpdesk",
+	);
 }

@@ -1,6 +1,5 @@
 import type { ActionFunction } from "react-router";
 import type { PreparedMaps } from "~/db/tables-json";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
@@ -15,11 +14,9 @@ import { logger } from "~/utils/logger";
 import {
 	errorToastIfErr,
 	errorToastIfFalsy,
-	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "~/utils/zod";
 import * as BracketRepository from "../BracketRepository.server";
 import * as AbDivisions from "../core/AbDivisions";
 import * as Engine from "../core/engine";
@@ -27,25 +24,25 @@ import * as PreparedMapsUtils from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
+	tournamentFromParams,
 } from "../core/Tournament.server";
-import { bracketSchema } from "../tournament-bracket-schemas.server";
+import { bracketSchema } from "../tournament-bracket-schemas";
 import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 	const data = await parseRequestPayload({ request, schema: bracketSchema });
 
 	let emitTournamentUpdate = false;
 
 	switch (data._action) {
 		case "START_BRACKET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(
 				!tournament.isDraft,
 				"Tournament must be opened before starting a bracket",
@@ -139,13 +136,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				await TournamentRepository.updateTeamSeeds({
 					tournamentId: tournament.ctx.id,
 					teamIds: tournament.ctx.teams.map((team) => team.id),
-					teamsWithMembers: tournament.ctx.teams.map((team) => ({
-						teamId: team.id,
-						members: team.members.map((m) => ({
-							userId: m.userId,
-							username: m.username,
-						})),
-					})),
 				});
 			}
 
@@ -169,8 +159,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
-					userIds: seeding.flatMap((tournamentTeamId) =>
-						tournament.teamById(tournamentTeamId)!.members.map((m) => m.userId),
+					userIds: seeding.flatMap(
+						(tournamentTeamId) =>
+							tournament.teamById(tournamentTeamId)!.memberUserIds,
 					),
 					notification: {
 						type: "TO_BRACKET_STARTED",
@@ -192,7 +183,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "PREPARE_MAPS": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			invariant(bracket, "Bracket not found");
@@ -226,7 +217,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "ADVANCE_BRACKET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			errorToastIfFalsy(bracket, "Bracket not found");
@@ -254,7 +245,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "UNADVANCE_BRACKET": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const bracket = tournament.bracketByIdx(data.bracketIdx);
 			errorToastIfFalsy(bracket, "Bracket not found");
@@ -296,7 +287,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			break;
 		}
 		case "OVERRIDE_BRACKET_PROGRESSION": {
-			errorToastIfFalsy(tournament.isOrganizer(user), "Not an organizer");
+			requireTournamentOrganizer(tournament, user);
 
 			const allDestinationBrackets = Progression.destinationsFromBracketIdx(
 				data.sourceBracketIdx,

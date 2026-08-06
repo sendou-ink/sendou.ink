@@ -256,6 +256,8 @@
 	"plans.bgStyle.MINI": "Миникарта",
 	"plans.adder.objective": "Цель",
 	"plans.ranges": "",
+	"plans.waterLevel.up": "",
+	"plans.waterLevel.down": "",
 	"articles.by": "от {{author}}",
 	"theme.light": "Светлая",
 	"theme.dark": "Тёмная",

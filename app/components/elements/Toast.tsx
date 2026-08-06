@@ -21,9 +21,11 @@ export interface SendouToast {
 export const toastQueue = new ToastQueue<SendouToast>({
 	wrapUpdate(fn) {
 		if ("startViewTransition" in document) {
-			document.startViewTransition(() => {
+			const transition = document.startViewTransition(() => {
 				flushSync(fn);
 			});
+			// rejects with AbortError if another transition interrupts this one
+			transition.ready.catch(() => {});
 		} else {
 			fn();
 		}

@@ -212,6 +212,18 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 	return retryPost(page, "impersonate", `/auth/impersonate?id=${userId}`);
 }
 
+/** Runs the named server Routine (normally cron-driven) in the worker's server process. */
+export async function runRoutine(page: Page, name: string) {
+	const response = await retryPost(page, "runRoutine", "/run-routine", {
+		form: { name },
+	});
+	if (!response?.ok()) {
+		throw new Error(
+			`Running routine ${name} failed with status ${response?.status()}`,
+		);
+	}
+}
+
 /**
  * Direct (non-browser) POST that retries on transient network failures such as
  * "socket hang up", which the dev server can produce intermittently under load.

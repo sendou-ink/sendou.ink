@@ -13,6 +13,7 @@ export class TournamentNav {
 		this.page = page;
 		this.locators = {
 			teamsTab: page.locator('[data-testid="teams-tab"]:visible'),
+			registerTab: page.locator('[data-testid="register-tab"]:visible'),
 		};
 	}
 

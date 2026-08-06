@@ -7,7 +7,7 @@ import * as TeamRepository from "~/features/team/TeamRepository.server";
 import invariant from "~/utils/invariant";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { wrappedAction } from "~/utils/Test";
-import type { editTeamActionSchema } from "../team-schemas.server";
+import type { editTeamActionSchema } from "../team-schemas";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
 
 const editTeamProfileAction = wrappedAction<typeof editTeamActionSchema>({

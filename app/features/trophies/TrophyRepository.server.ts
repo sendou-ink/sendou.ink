@@ -469,21 +469,7 @@ export async function existsByName(args: {
 		.select("id")
 		.where("name", "=", args.name)
 		.where("declinedAt", "is", null)
-		.where((eb) =>
-			eb(
-				eb
-					.selectFrom("PendingTrophyApproval")
-					.select(({ fn }) => fn.countAll<number>().as("count"))
-					.whereRef(
-						"PendingTrophyApproval.pendingTrophyId",
-						"=",
-						"PendingTrophy.id",
-					)
-					.$asScalar(),
-				"<",
-				TROPHY_APPROVALS_REQUIRED,
-			),
-		);
+		.where("acceptedAt", "is", null);
 
 	if (args.excludeTrophyId !== undefined) {
 		pendingQuery = pendingQuery.where(
@@ -727,6 +713,7 @@ function pendingBaseQuery() {
 			"PendingTrophy.declineReason",
 			"PendingTrophy.declinedAt",
 			"PendingTrophy.declinedByUserId",
+			"PendingTrophy.acceptedAt",
 			"PendingTrophy.targetTrophyId",
 			"PendingTrophy.managerId",
 			"Submitter.username as submitterUsername",
@@ -767,20 +754,7 @@ export async function unreviewedCountBySubmitter(submitterUserId: number) {
 		.select((eb) => eb.fn.countAll<number>().as("count"))
 		.where("submitterUserId", "=", submitterUserId)
 		.where("declinedAt", "is", null)
-		.where((eb) =>
-			eb(
-				eb
-					.selectFrom("PendingTrophyApproval")
-					.select((eb2) => eb2.fn.countAll<number>().as("approvalCount"))
-					.whereRef(
-						"PendingTrophyApproval.pendingTrophyId",
-						"=",
-						"PendingTrophy.id",
-					),
-				"<",
-				TROPHY_APPROVALS_REQUIRED,
-			),
-		)
+		.where("acceptedAt", "is", null)
 		.executeTakeFirstOrThrow();
 
 	return row.count;
@@ -796,13 +770,13 @@ export async function declinePending(args: {
 	declinedByUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const { count } = await trx
-			.selectFrom("PendingTrophyApproval")
-			.select((eb) => eb.fn.countAll<number>().as("count"))
-			.where("pendingTrophyId", "=", args.id)
-			.executeTakeFirstOrThrow();
+		const pending = await trx
+			.selectFrom("PendingTrophy")
+			.select("acceptedAt")
+			.where("id", "=", args.id)
+			.executeTakeFirst();
 
-		if (count >= TROPHY_APPROVALS_REQUIRED) {
+		if (!pending || pending.acceptedAt !== null) {
 			return false;
 		}
 
@@ -850,7 +824,7 @@ export async function addApproval(args: {
 			.where("pendingTrophyId", "=", args.pendingTrophyId)
 			.executeTakeFirstOrThrow();
 
-		if (count !== TROPHY_APPROVALS_REQUIRED) {
+		if (count < TROPHY_APPROVALS_REQUIRED) {
 			return null;
 		}
 
@@ -867,9 +841,16 @@ export async function addApproval(args: {
 			])
 			.where("id", "=", args.pendingTrophyId)
 			.where("declinedAt", "is", null)
+			.where("acceptedAt", "is", null)
 			.executeTakeFirst();
 
 		if (!pending) return null;
+
+		await trx
+			.updateTable("PendingTrophy")
+			.set({ acceptedAt: dateToDatabaseTimestamp(new Date()) })
+			.where("id", "=", args.pendingTrophyId)
+			.execute();
 
 		if (pending.targetTrophyId !== null) {
 			await trx

@@ -41,10 +41,21 @@ export function userContinueStatus(votes: RejoinVote[], userId: number) {
 }
 
 /**
- * Whether the given user is still eligible to cast their vote.
+ * Whether the given user is still eligible to cast `isContinuing` as their vote.
+ * A first vote is always allowed while the vote is ongoing, and a yes vote can
+ * still be changed to a no; a no vote is final.
  */
-export function canCastVote(votes: RejoinVote[], userId: number) {
-	return !votes.some((vote) => vote.userId === userId);
+export function canCastVote(
+	votes: RejoinVote[],
+	userId: number,
+	isContinuing: boolean,
+) {
+	if (result(votes).type !== "ONGOING") return false;
+
+	const currentVote = userContinueStatus(votes, userId);
+	if (currentVote === null) return true;
+
+	return currentVote && !isContinuing;
 }
 
 /**

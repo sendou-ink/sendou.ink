@@ -14,19 +14,12 @@ invariant(rawNth, "nth of new season needed (argument 1)");
 const nth = Number(rawNth);
 invariant(!Number.isNaN(nth), "nth of new season must be a number");
 
-const seasonHasSkills = async (season: number) =>
-	Boolean(
-		await db
-			.selectFrom("Skill")
-			.select("id")
-			.where("season", "=", season)
-			.limit(1)
-			.executeTakeFirst(),
-	);
-
-invariant(await seasonHasSkills(nth - 1), `No skills for season ${nth - 1}`);
 invariant(
-	!(await seasonHasSkills(nth)),
+	await SkillRepository.existsBySeason(nth - 1),
+	`No skills for season ${nth - 1}`,
+);
+invariant(
+	!(await SkillRepository.existsBySeason(nth)),
 	`Skills for season ${nth} already exist`,
 );
 

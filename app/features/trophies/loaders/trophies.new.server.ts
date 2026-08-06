@@ -2,7 +2,6 @@ import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
 import * as TrophyRepository from "../TrophyRepository.server";
-import { TROPHY_APPROVALS_REQUIRED } from "../trophies-constants";
 import { canEditAnyTrophy, canReviewTrophies } from "../trophies-utils";
 
 export type NewTrophyLoaderData = SerializeFrom<typeof loader>;
@@ -25,7 +24,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 	const allItems = canReview ? rawItems : rawItems.map(stripReviewerInfo);
 
 	const isAccepted = (item: (typeof allItems)[number]) =>
-		item.approvals.length >= TROPHY_APPROVALS_REQUIRED;
+		item.acceptedAt !== null;
 
 	const pendingTrophies = allItems.filter(
 		(item) => !isAccepted(item) && !item.declinedAt,

@@ -86,11 +86,11 @@ export class RoundRobinBracket extends Bracket {
 		return teams;
 	}
 
-	get standings(): Standing[] {
+	protected calculateStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	get liveStandings(): Standing[] {
+	protected calculateLiveStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: true });
 	}
 
@@ -326,9 +326,15 @@ export class RoundRobinBracket extends Bracket {
 			);
 		}
 
+		const effectiveSeed = this.effectiveSeedResolver();
 		const sorted = placements.sort((a, b) => {
 			if (a.placement < b.placement) return -1;
 			if (a.placement > b.placement) return 1;
+
+			const aEffectiveSeed = effectiveSeed(a.team.id);
+			const bEffectiveSeed = effectiveSeed(b.team.id);
+			if (aEffectiveSeed < bEffectiveSeed) return -1;
+			if (aEffectiveSeed > bEffectiveSeed) return 1;
 
 			if (a.groupId < b.groupId) return -1;
 			if (a.groupId > b.groupId) return 1;

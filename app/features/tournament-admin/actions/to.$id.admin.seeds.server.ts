@@ -1,34 +1,29 @@
 import type { ActionFunction } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	requireTournamentOrganizer,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	errorToastIfFalsy,
-	parseParams,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "../../../utils/zod";
-import { adminSeedsActionSchema } from "../tournament-admin-schemas.server";
-import { requireTournamentOrganizer } from "../tournament-admin-utils.server";
+import { adminSeedsActionSchema } from "../tournament-admin-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: adminSeedsActionSchema,
 	});
 
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 
 	let message: string;
 	switch (data._action) {
@@ -36,20 +31,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			const teamsWithMembers = tournament.ctx.teams
-				.filter((t) => data.seeds.includes(t.id))
-				.map((team) => ({
-					teamId: team.id,
-					members: team.members.map((m) => ({
-						userId: m.userId,
-						username: m.username,
-					})),
-				}));
-
 			await TournamentRepository.updateTeamSeeds({
 				tournamentId,
 				teamIds: data.seeds,
-				teamsWithMembers,
 			});
 
 			message = "Seeds saved successfully";

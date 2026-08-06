@@ -1,6 +1,5 @@
 import { type ActionFunction, redirect } from "react-router";
 import type { z } from "zod";
-import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import { parseFormData } from "~/form/parse.server";
@@ -27,21 +26,17 @@ export const action: ActionFunction = async ({ request }) => {
 	const formData = result.data;
 	const video = transformFormDataToVideo(formData);
 
-	let savedVideo: Tables["Video"];
-	if (formData.vodToEditId) {
-		savedVideo = await VodRepository.update({
-			...video,
-			submitterUserId: user.id,
-			isValidated: true,
-			id: formData.vodToEditId,
-		});
-	} else {
-		savedVideo = await VodRepository.insert({
-			...video,
-			submitterUserId: user.id,
-			isValidated: true,
-		});
-	}
+	const savedVideo = formData.vodToEditId
+		? await VodRepository.update({
+				...video,
+				isValidated: true,
+				id: formData.vodToEditId,
+			})
+		: await VodRepository.insert({
+				...video,
+				submitterUserId: user.id,
+				isValidated: true,
+			});
 
 	throw redirect(vodVideoPage(savedVideo.id));
 };

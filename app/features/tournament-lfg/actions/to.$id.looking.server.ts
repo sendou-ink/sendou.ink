@@ -1,24 +1,26 @@
 import type { ActionFunctionArgs } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
 	clearTournamentDataCache,
-	tournamentFromDBCached,
+	requireTournamentOrganizer,
+	tournamentFromParams,
+	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { parseFormData } from "~/form/parse.server";
-import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "~/utils/zod";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas";
 import { survivingTeamId } from "../tournament-lfg-utils";
 import { setPickupChatMetadata } from "../tournament-lfg-utils.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({ params, schema: idObject });
+	const { tournament, tournamentId, user } = await tournamentFromParams(
+		params,
+		{ for: "action" },
+	);
 	const result = await parseFormData({
 		request,
 		schema: lookingSchema,
@@ -53,10 +55,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const existingGroup = await findOwnGroup();
 			if (existingGroup) return null;
 
-			const tournament = await tournamentFromDBCached({
-				tournamentId,
-				user,
-			});
 			await requireNotBannedByOrganization({ tournament, user });
 			errorToastIfFalsy(
 				tournament.canAddNewSubPost,
@@ -65,7 +63,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			const team = tournament.teamMemberOfByUser(user);
 
 			if (team) {
-				const member = team.members.find((m) => m.userId === user.id);
+				const teams = await tournamentTeamsFullCached({ tournamentId, user });
+				const member = teams
+					.find((t) => t.id === team.id)
+					?.members.find((m) => m.userId === user.id);
 				const canManageTeam =
 					member?.role === "OWNER" || member?.role === "MANAGER";
 				errorToastIfFalsy(
@@ -74,7 +75,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				);
 
 				errorToastIfFalsy(
-					team.members.length < tournament.maxMembersPerTeam,
+					team.memberUserIds.length < tournament.maxMembersPerTeam,
 					"Team is already at max capacity",
 				);
 				const pickup = await TournamentLFGRepository.startLooking(team.id);
@@ -116,11 +117,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			await TournamentLFGRepository.insertLike({
 				likerTeamId: ownGroup.id,
 				targetTeamId: data.targetTeamId,
-			});
-
-			const tournament = await tournamentFromDBCached({
-				tournamentId,
-				user,
 			});
 
 			notify({
@@ -191,11 +187,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			});
 
 			const otherGroup = surviving === ownGroup.id ? theirGroup : ownGroup;
-
-			const tournament = await tournamentFromDBCached({
-				tournamentId,
-				user,
-			});
 
 			const mergeResult = await TournamentLFGRepository.mergeTeams({
 				survivingTeamId: surviving,
@@ -283,12 +274,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "DELETE_GROUP": {
-			const tournament = await tournamentFromDBCached({
-				tournamentId,
+			requireTournamentOrganizer(
+				tournament,
 				user,
-			});
-			errorToastIfFalsy(
-				tournament.isOrganizer(user),
 				"Only tournament organizers can remove other groups",
 			);
 
@@ -300,10 +288,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ADD_SUB": {
-			const tournament = await tournamentFromDBCached({
-				tournamentId,
-				user,
-			});
 			await requireNotBannedByOrganization({ tournament, user });
 			errorToastIfFalsy(!tournament.everyBracketOver, "Tournament is over");
 			errorToastIfFalsy(
@@ -331,12 +315,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "ADD_SUB_FOR_USER": {
-			const tournament = await tournamentFromDBCached({
-				tournamentId,
+			requireTournamentOrganizer(
+				tournament,
 				user,
-			});
-			errorToastIfFalsy(
-				tournament.isOrganizer(user),
 				"Only tournament organizers can add subs for other users",
 			);
 			errorToastIfFalsy(
@@ -374,10 +355,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "DELETE_SUB": {
-			const tournament = await tournamentFromDBCached({
-				tournamentId,
-				user,
-			});
 			errorToastIfFalsy(
 				user.id === data.userId || tournament.isOrganizer(user),
 				"You can only delete your own sub post",

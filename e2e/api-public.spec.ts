@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { addHours } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
@@ -274,6 +275,87 @@ test.describe("Public API - Write endpoints", () => {
 		expect(response.status()).toBe(200);
 	});
 
+	test("upserts tournament team registration via API", async ({
+		page,
+		factories,
+	}) => {
+		const { tournamentId, token } = await organizedTournament(factories);
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+
+		await impersonate(page, ADMIN_ID);
+
+		const createResponse = await page.request.fetch(
+			`/api/tournament/${tournamentId}/teams/upsert`,
+			{
+				method: "POST",
+				headers: authorized(token),
+				data: {
+					name: "Api Pickup",
+					ownerUserId: roster[0].id,
+					members: roster.map((user) => ({ userId: user.id })),
+				},
+			},
+		);
+		expect(createResponse.status()).toBe(200);
+
+		const createdTeam = await teamByName(page, token, {
+			tournamentId,
+			name: "Api Pickup",
+		});
+		expect(createdTeam).toBeTruthy();
+		expect(createdTeam.members).toHaveLength(ROSTER_SIZE);
+
+		const editResponse = await page.request.fetch(
+			`/api/tournament/${tournamentId}/teams/upsert`,
+			{
+				method: "POST",
+				headers: authorized(token),
+				data: {
+					tournamentTeamId: createdTeam.id,
+					name: "Api Pickup Edited",
+					ownerUserId: roster[0].id,
+					members: roster
+						.slice(0, ROSTER_SIZE - 1)
+						.map((user) => ({ userId: user.id })),
+				},
+			},
+		);
+		expect(editResponse.status()).toBe(200);
+
+		const editedTeam = await teamByName(page, token, {
+			tournamentId,
+			name: "Api Pickup Edited",
+		});
+		expect(editedTeam.id).toBe(createdTeam.id);
+		expect(editedTeam.members).toHaveLength(ROSTER_SIZE - 1);
+	});
+
+	test("returns 400 with field errors for invalid upsert registration body", async ({
+		page,
+		factories,
+	}) => {
+		const { tournamentId, token } = await organizedTournament(factories);
+		const owner = await factories.UserFactory.create();
+
+		await impersonate(page, ADMIN_ID);
+
+		const response = await page.request.fetch(
+			`/api/tournament/${tournamentId}/teams/upsert`,
+			{
+				method: "POST",
+				headers: authorized(token),
+				data: {
+					ownerUserId: owner.id,
+					members: [{ userId: owner.id }],
+				},
+			},
+		);
+
+		expect(response.status()).toBe(400);
+		const data = await response.json();
+		expect(data.fieldErrors.pickUpName).toBeTruthy();
+	});
+
 	test("updates member IGN via API", async ({ page, factories }) => {
 		const { tournamentId, teamId, memberUserIds, token } =
 			await organizedTournament(factories);
@@ -319,7 +401,7 @@ test.describe("Public API - Write endpoints", () => {
 
 		expect(response.status()).toBe(400);
 		const data = await response.json();
-		expect(data.error).toBe("Unauthorized");
+		expect(data.error).toBe("Not an organizer");
 	});
 });
 
@@ -357,6 +439,21 @@ async function organizedTournament(
 		memberUserIds: teams[0].memberUserIds,
 		token,
 	};
+}
+
+async function teamByName(
+	page: Page,
+	token: string,
+	{ tournamentId, name }: { tournamentId: number; name: string },
+) {
+	const response = await page.request.fetch(
+		`/api/tournament/${tournamentId}/teams`,
+		{ headers: authorized(token) },
+	);
+	expect(response.status()).toBe(200);
+	const teams = await response.json();
+
+	return teams.find((team: { name: string }) => team.name === name);
 }
 
 async function readToken(factories: Factories, userId: number) {

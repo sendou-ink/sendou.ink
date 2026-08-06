@@ -3,7 +3,6 @@ import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { resolveRoomPass } from "~/components/match-page/utils";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
-import { isLeagueRoundLocked } from "~/features/tournament/tournament-utils";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
@@ -13,7 +12,12 @@ import {
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
 
-export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>>;
+/**
+ * One of the match's two teams: the tournament wide lite team (with its resolved seed)
+ * plus the roster and map pool that the match loader ships for these two teams only.
+ */
+export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>> &
+	Pick<TournamentMatchLoaderData["teams"][number], "members" | "mapPool">;
 
 export type MatchTabKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 
@@ -54,9 +58,23 @@ export function MatchPageProvider({
 	const opponentOneId = data.match.opponentOne?.id;
 	const opponentTwoId = data.match.opponentTwo?.id;
 
+	const teamById = (tournamentTeamId: number | null | undefined) => {
+		if (!tournamentTeamId) return null;
+
+		const team = tournament.teamById(tournamentTeamId);
+		const withRoster = data.teams.find((t) => t.id === tournamentTeamId);
+		if (!team || !withRoster) return null;
+
+		return {
+			...team,
+			members: withRoster.members,
+			mapPool: withRoster.mapPool,
+		};
+	};
+
 	const teams: [MatchPageTeam | null, MatchPageTeam | null] = [
-		(opponentOneId ? tournament.teamById(opponentOneId) : null) ?? null,
-		(opponentTwoId ? tournament.teamById(opponentTwoId) : null) ?? null,
+		teamById(opponentOneId),
+		teamById(opponentTwoId),
 	];
 	const [teamOne, teamTwo] = teams;
 
@@ -122,7 +140,7 @@ export function MatchPageProvider({
 		isPickBanStep,
 		isAdminEligible:
 			tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized,
-		leagueRoundLocked: isLeagueRoundLocked(tournament, data.match.roundId),
+		leagueRoundLocked: data.bracketContext.leagueRoundLocked,
 		lockedForCast,
 		waitingForPreviousMatch,
 	});
@@ -252,24 +270,17 @@ function resolveJoinInfo({
 
 	const hostingTeam = resolveHostingTeam([teamOne, teamTwo]);
 
-	const hasRoundRobin = tournament.brackets.some(
-		(b) => b.type === "round_robin",
-	);
-	const bracketIdx = tournament.brackets.findIndex((b) =>
-		b.data.match.some((m) => m.id === data.match.id),
-	);
-	const bracket = tournament.brackets[bracketIdx];
-	const bracketMatch = bracket?.data.match.find((m) => m.id === data.match.id);
-	const group = bracket?.data.group.find((g) => g.id === bracketMatch?.groupId);
+	const { bracketIdx, bracketType, groupNumber, hasRoundRobin } =
+		data.bracketContext;
 
 	const poolCode = tournament.resolvePoolCode({
 		hostingTeamId: hostingTeam.id,
 		groupLetters:
-			group && bracket?.type === "round_robin"
-				? groupNumberToLetters(group.number)
+			typeof groupNumber === "number" && bracketType === "round_robin"
+				? groupNumberToLetters(groupNumber)
 				: undefined,
 		bracketNumber:
-			hasRoundRobin && bracket?.type !== "round_robin"
+			hasRoundRobin && bracketType !== "round_robin" && bracketIdx !== null
 				? bracketIdx + 1
 				: undefined,
 	});

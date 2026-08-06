@@ -16,7 +16,6 @@ describe("swiss standings - losses against tied", () => {
 	it("should calculate losses against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standing = tournament
@@ -31,7 +30,6 @@ describe("swiss standings - losses against tied", () => {
 	it("breaks ties on losses against tied, not wins against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -59,7 +57,6 @@ describe("swiss standings - losses against tied", () => {
 	it("ranks fewer losses against tied above a higher opponent set win %", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -84,7 +81,6 @@ describe("swiss standings - losses against tied", () => {
 	it("should ignore early dropped out teams for standings (losses against tied)", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
-			simulateBrackets: false,
 		});
 
 		const standing = tournament
@@ -93,6 +89,71 @@ describe("swiss standings - losses against tied", () => {
 		invariant(standing, "Standing not found");
 
 		expect(standing.stats?.lossesAgainstTied).toBe(0); // they lost against "Tidy Tidings" but that team dropped out before final round
+	});
+
+	it("should ignore a dropped out team with an identical record (losses against tied)", () => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4, 5, 6],
+			settings: { groupCount: 1, roundCount: 3 },
+		});
+
+		const playedMatch = (
+			id: number,
+			roundIdx: number,
+			number: number,
+			winnerId: number,
+			loserId: number,
+		): MatchData => ({
+			id,
+			stageId: data.stage[0].id,
+			groupId: data.group[0].id,
+			roundId: data.round[roundIdx].id,
+			number,
+			opponent1: { id: winnerId },
+			opponent2: { id: loserId },
+			winnerSide: "opponent1",
+		});
+
+		// teams 1 and 6 both finish 2-1; team 1's only loss is to team 6,
+		// who dropped out after the swiss ended
+		data.match = [
+			playedMatch(0, 0, 1, 1, 2),
+			playedMatch(1, 0, 2, 3, 4),
+			playedMatch(2, 0, 3, 5, 6),
+			playedMatch(3, 1, 1, 1, 3),
+			playedMatch(4, 1, 2, 2, 5),
+			playedMatch(5, 1, 3, 6, 4),
+			playedMatch(6, 2, 1, 6, 1),
+			playedMatch(7, 2, 2, 3, 5),
+			playedMatch(8, 2, 3, 2, 4),
+		];
+
+		const tournament = testTournament({
+			data,
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Main Bracket",
+							requiresCheckIn: false,
+							settings: {},
+						},
+					],
+				},
+				teams: [1, 2, 3, 4, 5, 6].map((teamId) =>
+					tournamentCtxTeam(teamId, { droppedOut: teamId === 6 ? 1 : 0 }),
+				),
+			},
+		});
+
+		const standing = tournament
+			.bracketByIdx(0)
+			?.standings.find((standing) => standing.team.id === 1);
+		invariant(standing, "Standing not found");
+
+		expect(standing.stats?.lossesAgainstTied).toBe(0);
 	});
 
 	const inProgressSwissTestTournament = () => {
@@ -156,6 +217,150 @@ describe("swiss standings - losses against tied", () => {
 	});
 });
 
+describe("swiss standings - cross group ties", () => {
+	// Two Swiss groups of four playing one round. Group 1 is won by seed 3 (who beat
+	// seed 7), group 2 by seed 6 (who upset seed 2). Both are 1st of their group, and
+	// the upset gives seed 6 the better effective seed of the two.
+	const twoGroupSwissTournament = () => {
+		let data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: { groupCount: 2, roundCount: 1 },
+		});
+
+		const winnerByMatchup: Record<string, number> = {
+			"1-5": 5,
+			"3-7": 3,
+			"2-6": 6,
+			"4-8": 8,
+		};
+		for (const match of data.match) {
+			const one = match.opponent1!.id as number;
+			const two = match.opponent2!.id as number;
+			const key = one < two ? `${one}-${two}` : `${two}-${one}`;
+			const winnerId = winnerByMatchup[key];
+			invariant(winnerId, `unexpected matchup ${key}`);
+			const winnerIsOpp1 = one === winnerId;
+			data = Engine.reportResult(data, {
+				matchId: match.id,
+				scores: [winnerIsOpp1 ? 2 : 0, winnerIsOpp1 ? 0 : 2],
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+			}).data;
+		}
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: { groupCount: 2, roundCount: 1 },
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("ranks the group winner with the better effective seed first", () => {
+		const standings = twoGroupSwissTournament().bracketByIdx(0)!.standings;
+
+		const upsetWinnerIdx = standings.findIndex((s) => s.team.id === 6);
+		const otherWinnerIdx = standings.findIndex((s) => s.team.id === 3);
+
+		expect(standings[upsetWinnerIdx].placement).toBe(
+			standings[otherWinnerIdx].placement,
+		);
+		// without the effective seed tiebreak the lower groupId (seed 3's group) wins
+		expect(upsetWinnerIdx).toBeLessThan(otherWinnerIdx);
+	});
+});
+
+describe("swiss standings - rematches between tied teams", () => {
+	// 4-team Swiss with 5 rounds, so rounds 4 and 5 are forced rematches. Teams 1
+	// and 2 finish 4-1, having met twice and split 1-1 (team 1 won the round 1
+	// meeting, team 2 the round 4 one), so head-to-head is even and opponent set
+	// win % should decide: team 2's opponents won 12 of 25 sets (48%), team 1's
+	// 10 of 25 (40%).
+	const swissTournamentWithRematches = () => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1, roundCount: 5 },
+		});
+
+		const roundResults: Array<Array<[winnerId: number, loserId: number]>> = [
+			[
+				[1, 2],
+				[3, 4],
+			],
+			[
+				[1, 3],
+				[2, 4],
+			],
+			[
+				[1, 4],
+				[2, 3],
+			],
+			[
+				[2, 1],
+				[3, 4],
+			],
+			[
+				[1, 4],
+				[2, 3],
+			],
+		];
+
+		data.match = roundResults.flatMap((results, roundIdx) =>
+			results.map(
+				([winnerId, loserId], matchIdx): MatchData => ({
+					id: roundIdx * 2 + matchIdx,
+					stageId: data.stage[0].id,
+					groupId: data.group[0].id,
+					roundId: data.round[roundIdx].id,
+					number: matchIdx + 1,
+					opponent1: { id: winnerId, score: 2 },
+					opponent2: { id: loserId, score: 0 },
+					winnerSide: "opponent1",
+				}),
+			),
+		);
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "swiss",
+							name: "Swiss",
+							requiresCheckIn: false,
+							settings: { groupCount: 1, roundCount: 5 },
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("counts every meeting between tied teams for the head-to-head tiebreaker", () => {
+		const standings = swissTournamentWithRematches().bracketByIdx(0)!.standings;
+
+		const team1 = standings.find((s) => s.team.id === 1)!;
+		const team2 = standings.find((s) => s.team.id === 2)!;
+
+		expect(team2.placement).toBe(1);
+		expect(team1.stats?.lossesAgainstTied).toBe(1);
+		expect(team2.stats?.winsAgainstTied).toBe(1);
+	});
+});
+
 describe("round robin standings", () => {
 	it("should sort teams primarily by set wins (per group) in paddling pool 255", () => {
 		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
@@ -189,10 +394,28 @@ describe("round robin standings", () => {
 		}
 	});
 
-	it("has ascending order from lower group id to higher group id for same placements", () => {
+	it("breaks same placement ties across groups by effective seed (own seed or best seed beaten)", () => {
 		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
+		const bracket = tournamentPP255.bracketByIdx(0)!;
 
-		const standings = tournamentPP255.bracketByIdx(0)!.standings;
+		const standings = bracket.standings;
+
+		const effectiveSeed = (tournamentTeamId: number) => {
+			let best = tournamentPP255.teamById(tournamentTeamId)!.seed!;
+			for (const match of bracket.data.match) {
+				if (!match.winnerSide) continue;
+
+				const winner =
+					match.winnerSide === "opponent1" ? match.opponent1 : match.opponent2;
+				const loser =
+					match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
+				if (winner?.id !== tournamentTeamId || !loser?.id) continue;
+
+				const loserSeed = tournamentPP255.teamById(loser.id)!.seed!;
+				best = Math.min(best, loserSeed);
+			}
+			return best;
+		};
 
 		const placements = R.unique(
 			standings.map((standing) => standing.placement),
@@ -211,10 +434,14 @@ describe("round robin standings", () => {
 					break;
 				}
 
+				// strictly less: an effective seed is either the team's own (unique) seed
+				// or the seed of a team it beat, and two teams that beat the same team
+				// share a group and therefore cannot share a placement. The comparator's
+				// groupId fallback is unreachable as long as that holds.
 				expect(
-					current.groupId,
+					effectiveSeed(current.team.id),
 					`Team with ID ${current.team.id} in wrong spot relative to ${next.team.id}`,
-				).toBeLessThan(next.groupId!);
+				).toBeLessThan(effectiveSeed(next.team.id));
 			}
 		}
 	});
@@ -807,6 +1034,70 @@ describe("single elimination source - underground", () => {
 		expect([...teams].sort((a, b) => a - b)).toEqual(
 			[...firstRoundLoserIds].sort((a, b) => a - b),
 		);
+	});
+});
+
+describe("swiss between rounds", () => {
+	const SWISS_MAIN_BRACKET = {
+		type: "swiss" as const,
+		name: "Main Bracket",
+		requiresCheckIn: false,
+		settings: { groupCount: 1, roundCount: 5 },
+		sources: [],
+	};
+
+	// swiss with round 1 fully reported but rounds 2-5 not yet paired
+	const betweenRoundsSwissData = () => {
+		let data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1, roundCount: 5 },
+		});
+
+		// needed to make it "not preview"
+		data.round = data.round.map((r) => ({
+			...r,
+			maps: { count: 3, type: "BEST_OF" },
+		}));
+
+		for (const match of data.match) {
+			data = reportLowerIdWinner(data, match.id);
+		}
+
+		return data;
+	};
+
+	it("tournament is not over while swiss still has unpaired rounds", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: { bracketProgression: [SWISS_MAIN_BRACKET] },
+			},
+			data: betweenRoundsSwissData(),
+		});
+
+		expect(tournament.everyBracketOver).toBe(false);
+	});
+
+	it("can't finalize between swiss rounds when progression also has an underground bracket", () => {
+		const tournament = testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						SWISS_MAIN_BRACKET,
+						{
+							type: "single_elimination" as const,
+							name: "Underground Bracket",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [{ bracketIdx: 0, placements: [3, 4] }],
+						},
+					],
+				},
+			},
+			data: betweenRoundsSwissData(),
+		});
+
+		expect(tournament.canFinalize({ id: 1 })).toBe(false);
 	});
 });
 

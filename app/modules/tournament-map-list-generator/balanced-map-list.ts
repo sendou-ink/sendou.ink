@@ -88,15 +88,20 @@ function generateWithInput(
 						source: "TIEBREAKER" as const,
 					}));
 
+		// tiebreaker/fallback lists at the last slot get their own key range so
+		// their indices don't collide with the picked indices of the main list
+		const usedStageKeyOffset = stageList === stages ? 0 : stages.length;
+
 		for (const [i, stage] of stageList.entries()) {
-			if (!stageIsOk(stage, i)) continue;
+			const usedStageKey = i + usedStageKeyOffset;
+			if (!stageIsOk(stage, usedStageKey)) continue;
 			mapList.push(stage);
-			usedStages.add(i);
+			usedStages.add(usedStageKey);
 
 			const continueSearch = backtrack();
 			if (!continueSearch) return false;
 
-			usedStages.delete(i);
+			usedStages.delete(usedStageKey);
 			mapList.pop();
 		}
 

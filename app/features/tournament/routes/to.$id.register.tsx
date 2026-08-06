@@ -3,6 +3,7 @@ import { AlertCircle, Check, Clipboard, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -17,7 +18,7 @@ import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -40,6 +41,12 @@ import {
 	type RegisterTeamFormValues,
 	registerTeamFormSchema,
 } from "../tournament-register-schemas";
+import {
+	addPlayerSchema,
+	checkInSchema,
+	deleteTeamMemberSchema,
+	updateMapPoolSchema,
+} from "../tournament-schemas";
 import {
 	type CounterPickValidationStatus,
 	validateCounterPickMapPool,
@@ -96,14 +103,21 @@ export default function TournamentRegisterPage() {
 }
 
 function LeaveTeamControl() {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const user = useUser();
 	const tournament = useTournament();
 
 	const teamMemberOf = tournament.teamMemberOfByUser(user);
-	if (!teamMemberOf) return null;
+	if (!user || !teamMemberOf) return null;
 
 	const checkedIn = teamMemberOf.checkIns.length > 0;
-	const cannotLeave = checkedIn || !tournament.registrationOpen;
+	const organizerAdded = Boolean(
+		data?.ownTeam?.members.some(
+			(member) => member.userId === user.id && member.isOrganizerAdded,
+		),
+	);
+	const cannotLeave =
+		organizerAdded || checkedIn || !tournament.registrationOpen;
 
 	if (cannotLeave) {
 		return (
@@ -114,9 +128,11 @@ function LeaveTeamControl() {
 					</SendouButton>
 				}
 			>
-				{checkedIn
-					? "Your team has checked in. Contact the TO to leave the team."
-					: "Registration has closed. Contact the TO to leave the team."}
+				{organizerAdded
+					? "You were added to the team by the organizer. Contact the TO to leave the team."
+					: checkedIn
+						? "Your team has checked in. Contact the TO to leave the team."
+						: "Registration has closed. Contact the TO to leave the team."}
 			</SendouPopover>
 		);
 	}
@@ -159,7 +175,9 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 		return <ReadOnlyRegistrationForms />;
 	}
 
-	const ownTeam = tournament.ownedTeamByUser(user);
+	const ownTeam = tournament.ownedTeamByUser(user)
+		? (data?.ownTeam ?? null)
+		: null;
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
 	const hasFriendCodeSet = Boolean(user?.friendCode);
 
@@ -219,10 +237,10 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 }
 
 function ReadOnlyRegistrationForms() {
-	const user = useUser();
+	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const tournament = useTournament();
 
-	const team = tournament.teamMemberOfByUser(user);
+	const team = data?.ownTeam;
 	if (!team) return null;
 
 	const checkedIn = team.checkIns.length > 0;
@@ -376,7 +394,6 @@ function CheckIn({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const isHydrated = useHydrated();
-	const fetcher = useFetcher();
 	const { formatter: checkInFormatter } = useDateTimeFormat({
 		minute: "numeric",
 		hour: "numeric",
@@ -435,16 +452,15 @@ function CheckIn({
 	}
 
 	return (
-		<fetcher.Form method="post" className="stack items-center">
-			<SubmitButton
-				size="small"
-				_action="CHECK_IN"
-				state={fetcher.state}
-				testId="check-in-button"
-			>
-				{t("tournament:pre.checkIn.button")}
-			</SubmitButton>
-		</fetcher.Form>
+		<ActionButton
+			schema={checkInSchema}
+			action="CHECK_IN"
+			formClassName="stack items-center"
+			size="small"
+			testId="check-in-button"
+		>
+			{t("tournament:pre.checkIn.button")}
+		</ActionButton>
 	);
 }
 
@@ -453,7 +469,7 @@ function TeamInfo({
 	canUnregister,
 	readOnly = false,
 }: {
-	ownTeam?: TournamentDataTeam | null;
+	ownTeam?: TournamentTeamFull | null;
 	canUnregister: boolean;
 	readOnly?: boolean;
 }) {
@@ -638,7 +654,7 @@ function FillRoster({
 	ownTeamCheckedIn,
 	readOnly = false,
 }: {
-	ownTeam: TournamentDataTeam;
+	ownTeam: TournamentTeamFull;
 	ownTeamCheckedIn: boolean;
 	readOnly?: boolean;
 }) {
@@ -673,8 +689,8 @@ function FillRoster({
 	const playersAvailableToDirectlyAdd = (() => {
 		if (readOnly) return [];
 		return (data?.friendPlayers?.friends ?? []).filter((user) => {
-			const isNotInTeam = tournament.ctx.teams.every((team) =>
-				team.members.every((member) => member.userId !== user.id),
+			const isNotInTeam = tournament.ctx.teams.every(
+				(team) => !team.memberUserIds.includes(user.id),
 			);
 
 			const hasInGameNameIfNeeded =
@@ -845,6 +861,7 @@ function DirectlyAddPlayerSelect({
 				</select>
 			</div>
 			<SubmitButton
+				schema={addPlayerSchema}
 				_action="ADD_PLAYER"
 				state={fetcher.state}
 				testId="add-player-button"
@@ -855,7 +872,7 @@ function DirectlyAddPlayerSelect({
 	);
 }
 
-function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
+function DeleteMember({ members }: { members: TournamentTeamFull["members"] }) {
 	const { t } = useTranslation(["tournament", "common"]);
 	const id = React.useId();
 	const fetcher = useFetcher();
@@ -888,6 +905,7 @@ function DeleteMember({ members }: { members: TournamentDataTeam["members"] }) {
 				</select>
 				<SubmitButton
 					state={fetcher.state}
+					schema={deleteTeamMemberSchema}
 					_action="DELETE_TEAM_MEMBER"
 					variant="minimal-destructive"
 				>
@@ -903,7 +921,7 @@ function CounterPickMapPoolPicker({
 	mapPool,
 }: {
 	readOnly?: boolean;
-	mapPool?: NonNullable<TournamentDataTeam["mapPool"]>;
+	mapPool?: NonNullable<TournamentTeamFull["mapPool"]>;
 }) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
 	const tournament = useTournament();
@@ -971,6 +989,7 @@ function CounterPickMapPoolPicker({
 							tournament.ctx.tieBreakerMapPool,
 						) === "VALID" ? (
 						<SubmitButton
+							schema={updateMapPoolSchema}
 							_action="UPDATE_MAP_POOL"
 							state={fetcher.state}
 							className="self-center mt-4"

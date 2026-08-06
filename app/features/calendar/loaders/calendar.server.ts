@@ -31,9 +31,11 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 	const weekStart = startOfWeek(new Date(date), { weekStartsOn: 1 });
 	const events = await CalendarRepository.findAllBetweenTwoTimestamps({
-		// add a bit of tolerance to the timestamps to account for timezones
-		startTime: sub(weekStart, { hours: 24 }),
-		endTime: add(weekStart, { days: DAYS_SHOWN_AT_A_TIME + 1 }),
+		// on the default view the client resolves the shown week from its own clock,
+		// which around the week boundary can be a full week ahead of or behind the
+		// server's week, so fetch wide enough to cover every timezone's current week
+		startTime: sub(weekStart, { days: DAYS_SHOWN_AT_A_TIME + 1 }),
+		endTime: add(weekStart, { days: DAYS_SHOWN_AT_A_TIME * 2 + 1 }),
 	});
 
 	const filters = resolveFilters(args.request, user?.preferences);

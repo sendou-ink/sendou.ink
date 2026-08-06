@@ -2,6 +2,7 @@ import { Ban, Lock, LockOpen, RotateCcw, SquarePen } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -17,9 +18,10 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import { useMatch } from "../match-page-context";
+import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { OrganizerMatchMapListDialog } from "./OrganizerMatchMapListDialog";
 import styles from "./TournamentMatchAdminTab.module.css";
 
@@ -38,9 +40,7 @@ export function TournamentMatchAdminTab({
 
 	const isOrganizer = tournament.isOrganizer(user);
 	const canReopen =
-		isOrganizer &&
-		data.matchIsOver &&
-		tournament.matchCanBeReopened(data.match.id);
+		isOrganizer && data.matchIsOver && data.bracketContext.canBeReopened;
 	const canEndSet =
 		isOrganizer && !data.matchIsOver && data.match.startedAt !== null;
 
@@ -137,7 +137,7 @@ function CastChannelChipRadio({
 	currentlyCastedOn: string | null;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const fetcher = useFetcher();
+	const { submit, fetcher } = useActionSubmit(matchSchema);
 	const previousStateRef = React.useRef(fetcher.state);
 
 	// the action can still reject (e.g. "Not an organizer or streamer"), so the
@@ -164,10 +164,7 @@ function CastChannelChipRadio({
 
 	const handleChange = (value: string) => {
 		if (value === selectedValue) return;
-		fetcher.submit(
-			{ _action: "SET_AS_CASTED", twitchAccount: value },
-			{ method: "post" },
-		);
+		submit("SET_AS_CASTED", { twitchAccount: value });
 	};
 
 	return (
@@ -205,36 +202,32 @@ function LockToggleButton({
 	const { t } = useTranslation(["tournament"]);
 
 	return (
-		<Form method="post" className={styles.lockRow}>
+		<div className={styles.lockRow}>
 			{isLocked ? (
-				<SubmitButton
-					_action="UNLOCK"
+				<ActionButton
+					schema={matchSchema}
+					action="UNLOCK"
 					size="small"
 					icon={<LockOpen size={16} />}
 					testId="cast-info-submit-button"
 				>
 					{t("tournament:match.admin.unlock")}
-				</SubmitButton>
+				</ActionButton>
 			) : (
-				<>
-					<input
-						type="hidden"
-						name="twitchAccount"
-						value={twitchAccount ?? ""}
-					/>
-					<SubmitButton
-						_action="LOCK"
-						size="small"
-						icon={<Lock size={16} />}
-						isDisabled={!twitchAccount}
-						testId="cast-info-submit-button"
-					>
-						{t("tournament:match.admin.lockToBeCasted")}
-					</SubmitButton>
-				</>
+				<ActionButton
+					schema={matchSchema}
+					action="LOCK"
+					fields={{ twitchAccount: twitchAccount ?? "" }}
+					size="small"
+					icon={<Lock size={16} />}
+					isDisabled={!twitchAccount}
+					testId="cast-info-submit-button"
+				>
+					{t("tournament:match.admin.lockToBeCasted")}
+				</ActionButton>
 			)}
 			<InfoPopover>{t("tournament:match.admin.lockingInfo")}</InfoPopover>
-		</Form>
+		</div>
 	);
 }
 
@@ -242,25 +235,20 @@ function ReopenMatchButton() {
 	const { t } = useTranslation(["tournament"]);
 
 	return (
-		<Form method="post">
-			<SubmitButton
-				_action="REOPEN_MATCH"
-				variant="destructive"
-				size="small"
-				icon={<RotateCcw size={16} />}
-				testId="reopen-match-button"
-			>
-				{t("tournament:match.action.reopenMatch")}
-			</SubmitButton>
-		</Form>
+		<ActionButton
+			schema={matchSchema}
+			action="REOPEN_MATCH"
+			variant="destructive"
+			size="small"
+			icon={<RotateCcw size={16} />}
+			testId="reopen-match-button"
+		>
+			{t("tournament:match.action.reopenMatch")}
+		</ActionButton>
 	);
 }
 
-function EndSetPopover({
-	teams,
-}: {
-	teams: [TournamentDataTeam, TournamentDataTeam];
-}) {
+function EndSetPopover({ teams }: { teams: [MatchPageTeam, MatchPageTeam] }) {
 	const { t } = useTranslation(["tournament"]);
 	const [selectedWinner, setSelectedWinner] = React.useState<
 		number | null | undefined
@@ -326,6 +314,7 @@ function EndSetPopover({
 				/>
 
 				<SubmitButton
+					schema={matchSchema}
 					_action="END_SET"
 					testId="end-set-button"
 					size="small"
@@ -344,14 +333,11 @@ function EditReportedScoresSection({
 	teams,
 }: {
 	data: TournamentMatchLoaderData;
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MatchPageTeam, MatchPageTeam];
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const tournament = useTournament();
 
-	const withKo = tournament.bracketByIdxOrDefault(
-		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectsKos;
+	const withKo = data.bracketContext.collectsKos;
 
 	return (
 		<div className={styles.editSection}>
@@ -379,7 +365,7 @@ function EditReportedScoreRow({
 }: {
 	index: number;
 	result: TournamentMatchLoaderData["results"][number];
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MatchPageTeam, MatchPageTeam];
 	withKo: boolean;
 }) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
@@ -452,7 +438,7 @@ function EditReportedScoreForm({
 }: {
 	fetcher: ReturnType<typeof useFetcher>;
 	result: TournamentMatchLoaderData["results"][number];
-	teams: [TournamentDataTeam, TournamentDataTeam];
+	teams: [MatchPageTeam, MatchPageTeam];
 	withKo: boolean;
 	minMembersPerTeam: number;
 	onCancel: () => void;
@@ -544,6 +530,7 @@ function EditReportedScoreForm({
 				<SubmitButton
 					size="small"
 					state={fetcher.state}
+					schema={matchSchema}
 					_action="UPDATE_REPORTED_SCORE"
 					isDisabled={!formValid}
 					testId={`save-result-${index}-button`}
