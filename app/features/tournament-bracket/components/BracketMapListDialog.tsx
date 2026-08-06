@@ -24,11 +24,9 @@ import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables-json";
-import {
-	useTournament,
-	useTournamentPreparedMaps,
-} from "~/features/tournament/routes/to.$id";
+import { useTournamentPreparedMaps } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { modesShort } from "~/modules/in-game-lists/modes";

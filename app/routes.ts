@@ -417,6 +417,10 @@ export default [
 				"features/api-public/routes/tournament.$id.streams.ts",
 			),
 			route(
+				"/tournament/:id/teams/upsert",
+				"features/api-public/routes/tournament.$id.teams.upsert.ts",
+			),
+			route(
 				"/tournament/:id/teams/:teamId/add-member",
 				"features/api-public/routes/tournament.$id.teams.$teamId.add-member.ts",
 			),

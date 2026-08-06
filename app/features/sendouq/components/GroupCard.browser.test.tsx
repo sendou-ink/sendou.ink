@@ -32,7 +32,6 @@ function createMember(overrides: Partial<SQGroupMember> = {}): SQGroupMember {
 		friendCode: null,
 		inGameName: null,
 		note: null,
-		pronouns: null,
 		skillDifference: undefined,
 		noScreen: undefined,
 
@@ -84,7 +83,6 @@ function createOwnGroupMember(
 		friendCode: null,
 		inGameName: null,
 		note: null,
-		pronouns: null,
 		skillDifference: undefined,
 		noScreen: undefined,
 

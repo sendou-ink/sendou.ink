@@ -19,12 +19,17 @@ export class CalendarNewEventPage {
 			noTournamentPermissionsAlert: page.getByText(
 				"No permissions to add tournaments",
 			),
-			addBracketButton: page.getByTestId("add-bracket-button"),
-			bracketNameInputs: page.getByLabel("Bracket's name"),
+			addBracketButton: page.getByTestId("brackets-add-item-button"),
+			bracketNameInputs: page.getByLabel(/^Bracket name *\*?$/),
 			bracketFormatSelects: page.getByLabel("Format"),
-			placementsInputs: page.getByTestId("placements-input"),
-			deleteBracketButtons: page.getByTestId("delete-bracket-button"),
-			followUpBracketSwitches: page.getByTestId("follow-up-bracket-switch"),
+			placementsInputs: page.getByLabel("Placements"),
+			deleteBracketButtons: page.getByTestId("brackets-remove-item-button"),
+			signUpSourceRadios: page.getByRole("radio", { name: "Sign-up" }),
+			// the sources array is nested inside a progression item, so its add button
+			// test id is prefixed by the item's path e.g. "progression[1].sources"
+			addSourceButtons: page.locator(
+				'[data-testid$="sources-add-item-button"]',
+			),
 			mapPoolTemplateSelect: page.getByLabel("Template"),
 			clearMapPoolButton: page.getByRole("button", { name: "Clear" }),
 		};
@@ -79,10 +84,12 @@ export class CalendarNewEventPage {
 		await this.locators.bracketFormatSelects.nth(nth).selectOption(formatLabel);
 	}
 
-	/** Toggles every bracket's follow-up switch, making them starting brackets. */
-	async toggleFollowUpBracketSwitches() {
-		for (const bracketSwitch of await this.locators.followUpBracketSwitches.all()) {
-			await bracketSwitch.click();
+	/** Selects the "Sign-up" source for every bracket, making them all starting brackets. */
+	async makeAllBracketsStartingBrackets() {
+		for (const radio of await this.locators.signUpSourceRadios.all()) {
+			if (await radio.isEnabled()) {
+				await radio.check();
+			}
 		}
 	}
 
@@ -98,8 +105,8 @@ export class CalendarNewEventPage {
 		return submit(this.page);
 	}
 
-	// a freshly added bracket is already a follow-up (sources default on), so it only
-	// needs its name, format and source placements filled in
+	// a freshly added bracket is already a follow-up (sourcing from the first
+	// bracket), so it only needs its name, format and source placements filled in
 	async addFollowUpBracket({
 		name,
 		format,
@@ -113,6 +120,17 @@ export class CalendarNewEventPage {
 
 		await this.locators.bracketNameInputs.last().fill(name);
 		await this.locators.bracketFormatSelects.last().selectOption(format);
+		await this.locators.placementsInputs.last().fill(placements);
+	}
+
+	async renameBracket(nth: number, name: string) {
+		await this.locators.bracketNameInputs.nth(nth).fill(name);
+	}
+
+	/** Adds another source bracket to the last bracket of the progression. The new
+	 * row preselects the first bracket not sourced by it yet. */
+	async addSourceToLastBracket(placements: string) {
+		await this.locators.addSourceButtons.last().click();
 		await this.locators.placementsInputs.last().fill(placements);
 	}
 }

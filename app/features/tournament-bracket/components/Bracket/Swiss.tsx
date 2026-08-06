@@ -2,10 +2,8 @@ import clsx from "clsx";
 import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
-import {
-	useBracketExpanded,
-	useTournament,
-} from "~/features/tournament/routes/to.$id";
+import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import { useSearchParam } from "~/modules/search-params/hooks";

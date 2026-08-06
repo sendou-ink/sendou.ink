@@ -18,6 +18,7 @@ import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -51,7 +52,6 @@ import {
 	type CounterPickValidationStatus,
 	validateCounterPickMapPool,
 } from "../tournament-utils";
-import { useTournament } from "./to.$id";
 
 export { action, loader };
 
@@ -103,14 +103,21 @@ export default function TournamentRegisterPage() {
 }
 
 function LeaveTeamControl() {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const user = useUser();
 	const tournament = useTournament();
 
 	const teamMemberOf = tournament.teamMemberOfByUser(user);
-	if (!teamMemberOf) return null;
+	if (!user || !teamMemberOf) return null;
 
 	const checkedIn = teamMemberOf.checkIns.length > 0;
-	const cannotLeave = checkedIn || !tournament.registrationOpen;
+	const organizerAdded = Boolean(
+		data?.ownTeam?.members.some(
+			(member) => member.userId === user.id && member.isOrganizerAdded,
+		),
+	);
+	const cannotLeave =
+		organizerAdded || checkedIn || !tournament.registrationOpen;
 
 	if (cannotLeave) {
 		return (
@@ -121,9 +128,11 @@ function LeaveTeamControl() {
 					</SendouButton>
 				}
 			>
-				{checkedIn
-					? "Your team has checked in. Contact the TO to leave the team."
-					: "Registration has closed. Contact the TO to leave the team."}
+				{organizerAdded
+					? "You were added to the team by the organizer. Contact the TO to leave the team."
+					: checkedIn
+						? "Your team has checked in. Contact the TO to leave the team."
+						: "Registration has closed. Contact the TO to leave the team."}
 			</SendouPopover>
 		);
 	}

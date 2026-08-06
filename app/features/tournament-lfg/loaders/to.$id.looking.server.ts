@@ -1,6 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
-import type { Pronouns } from "~/db/tables-json";
 import type { getUser } from "~/features/auth/core/user.server";
 import {
 	tournamentFromDBCached,
@@ -183,7 +182,6 @@ async function resolveOwnTeam({
 		customUrl: m.customUrl,
 		languages: [],
 		vc: null,
-		pronouns: null,
 		role: m.role,
 		isStayAsSub: false,
 		weapons: null,
@@ -210,7 +208,6 @@ function transformMembers(
 		const languages = m.languages ?? [];
 
 		const weapons = parseWeapons(m.weapons);
-		const pronouns = parsePronouns(m.pronouns);
 
 		return {
 			id: m.id,
@@ -221,7 +218,6 @@ function transformMembers(
 			customUrl: m.customUrl,
 			languages,
 			vc: m.vc,
-			pronouns,
 			role: m.role,
 			isStayAsSub: m.isStayAsSub === 1,
 			weapons,
@@ -251,13 +247,4 @@ function parseWeapons(raw: unknown): Array<{
 			isTenStar: Boolean(w.isTenStar),
 		}),
 	);
-}
-
-function parsePronouns(raw: unknown): Pronouns | null {
-	if (!raw) return null;
-
-	const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-	if (!parsed || typeof parsed !== "object") return null;
-
-	return parsed as Pronouns;
 }

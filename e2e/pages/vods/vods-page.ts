@@ -11,6 +11,7 @@ export class VodsPage {
 		this.page = page;
 		this.locators = {
 			noVodsText: this.page.getByText(/No videos found matching this filter/),
+			addFilterButton: page.getByTestId("add-filter-button"),
 		};
 	}
 
@@ -24,6 +25,8 @@ export class VodsPage {
 	}
 
 	async filterByWeapon(weaponName: string) {
+		await this.locators.addFilterButton.click();
+		await this.page.getByTestId("menu-item-vods-weapon-filter").click();
 		await selectWeapon({ page: this.page, name: weaponName });
 	}
 }

@@ -180,6 +180,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 			const teamMemberOf = tournament.teamMemberOfByUser(user);
 			errorToastIfFalsy(teamMemberOf, "You are not in a team");
 			errorToastIfFalsy(
+				!(await TournamentTeamRepository.isOrganizerAddedMember({
+					tournamentTeamId: teamMemberOf.id,
+					userId: user.id,
+				})),
+				"You were added to the team by the organizer, contact the TO to leave the team",
+			);
+			errorToastIfFalsy(
 				teamMemberOf.checkIns.length === 0,
 				"You cannot leave after checking in",
 			);

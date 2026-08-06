@@ -1,11 +1,11 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { Redirect } from "~/components/Redirect";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { tournamentRegisterPage } from "~/utils/urls";
 import { TournamentStream } from "../components/TournamentStream";
 import type { TournamentStreamsLoaderData } from "../loaders/to.$id.streams.server";
 import styles from "../tournament.module.css";
-import { useTournament } from "./to.$id";
 
 export { loader } from "../loaders/to.$id.streams.server";
 

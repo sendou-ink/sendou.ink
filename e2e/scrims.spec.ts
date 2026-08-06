@@ -1,6 +1,7 @@
 import { addDays, addHours, setHours, setMinutes, startOfHour } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { serializeLutiDiv } from "~/features/scrims/scrims-utils";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { toDBBoolean } from "~/utils/sql";
@@ -84,6 +85,46 @@ test.describe("Scrims", () => {
 		await scrims.cancelPendingRequest();
 
 		await expect(scrims.locators.requestButtons).toHaveCount(2);
+	});
+
+	test("filters by div and sets the filter as default", async ({
+		page,
+		factories,
+	}) => {
+		await factories.ScrimPostFactory.create({
+			users: await createGroup(factories),
+			maxDiv: serializeLutiDiv("1"),
+			minDiv: serializeLutiDiv("2"),
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
+		await scrims.openTab("available");
+
+		await expect(scrims.locators.requestButtons).toHaveCount(1);
+
+		// a div range the post's own range falls outside of
+		await scrims.filterByDivs({ max: "5", min: "6" });
+
+		await expect(scrims.locators.requestButtons).toHaveCount(0);
+
+		await scrims.saveFiltersAsDefault();
+		await scrims.goto();
+		await scrims.openTab("available");
+
+		// remembers selection via user preferences
+		await expect(scrims.locators.requestButtons).toHaveCount(0);
+
+		await scrims.removeDivsFilter();
+
+		// removing the filter sticks instead of falling back to the saved default
+		await expect(scrims.locators.requestButtons).toHaveCount(1);
+
+		await scrims.reload();
+
+		await expect(scrims.locators.requestButtons).toHaveCount(1);
 	});
 
 	test("accepts a request", async ({ page, factories }) => {

@@ -149,6 +149,8 @@
 	"actions.outlined": "描边",
 	"actions.noOutline": "无描边",
 	"actions.join": "加入",
+	"filterBar.addFilter": "",
+	"filterBar.saveAsDefault": "",
 	"imageExport.export": "",
 	"imageExport.download": "",
 	"imageExport.theme.light": "",

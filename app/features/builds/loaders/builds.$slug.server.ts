@@ -18,13 +18,14 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	const { limit, f: filters } = buildsSearchParams.parse(url);
+	const { limit, abilities, mode, date } = buildsSearchParams.parse(url);
 
 	const weaponName = t(`weapons:MAIN_${weaponId}`);
 
 	const slug = mySlugify(t(`weapons:MAIN_${weaponId}`, { lng: "en" }));
 
-	const hasActiveFilters = filters.length > 0;
+	const hasActiveFilters =
+		abilities.length > 0 || mode !== null || date !== null;
 
 	const builds = await BuildRepository.findAllByWeaponId(weaponId, {
 		limit: hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
@@ -34,7 +35,9 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const filteredBuilds = hasActiveFilters
 		? filterBuilds({
 				builds,
-				filters,
+				abilities,
+				mode,
+				date,
 				count: limit + 1,
 			})
 		: builds;
@@ -55,6 +58,5 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		limit,
 		hasMoreBuilds,
 		slug,
-		filters,
 	};
 };

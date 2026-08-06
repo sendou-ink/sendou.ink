@@ -21,6 +21,18 @@ export const SPL2_JOIN_ORDER_CUTOFF = 13_589;
 export const MATCHES_PER_SEASONS_PAGE = 8;
 export const RESULTS_PER_PAGE = 25;
 export const HIGHLIGHTS_RESULTS_MAX = 500;
+
+/** Year of the oldest event that can have results. */
+export const RESULTS_FIRST_YEAR = 2015;
+
+/** Placement thresholds that results can be filtered by e.g. 3 = top 3 only. */
+export const RESULT_PLACEMENT_FILTERS = [1, 3, 8, 16, 32] as const;
+
+export type ResultPlacementFilter = (typeof RESULT_PLACEMENT_FILTERS)[number];
+
+export const RESULT_SOURCES = ["ALL", "SENDOU", "EXTERNAL"] as const;
+
+export type ResultSource = (typeof RESULT_SOURCES)[number];
 export const BUILD_SORT_IDENTIFIERS = [
 	"UPDATED_AT",
 	"TOP_500",

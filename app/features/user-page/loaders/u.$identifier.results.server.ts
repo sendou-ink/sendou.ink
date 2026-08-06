@@ -12,7 +12,20 @@ import { userResultsSearchParams } from "../user-page-search-params";
 export type UserResultsLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
-	const { all, page, tournament } = userResultsSearchParams.parse(request);
+	const {
+		highlightsOnly,
+		page,
+		tournament,
+		team,
+		mate,
+		minTier,
+		maxTier,
+		maxPlacement,
+		fromYear,
+		toYear,
+		source,
+		minParticipantCount,
+	} = userResultsSearchParams.parse(request);
 
 	const userId = notFoundIfNullish(
 		await UserRepository.findIdByIdentifier(params.identifier!),
@@ -20,34 +33,50 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 	const hasHighlightedResults =
 		await UserRepository.hasHighlightedResultsByUserId(userId);
 
-	let showHighlightsOnly = !all;
+	const isChoosingHighlights = url.pathname.includes("/results/highlights");
+	const canFilter = !isChoosingHighlights && Boolean(getUser());
 
-	if (!hasHighlightedResults) {
+	/** Logged out visitors are locked to the highlights, if there are any. */
+	let showHighlightsOnly = hasHighlightedResults;
+
+	if (canFilter && !highlightsOnly) {
 		showHighlightsOnly = false;
 	}
 
-	const isChoosingHighlights = url.pathname.includes("/results/highlights");
 	if (isChoosingHighlights) {
 		showHighlightsOnly = false;
 	}
 
-	const tournamentName =
-		!isChoosingHighlights && getUser() && tournament !== null
-			? tournament
-			: undefined;
+	const filters = canFilter
+		? {
+				tournamentName: tournament ?? undefined,
+				teamName: team ?? undefined,
+				mateUserId: mate ?? undefined,
+				minTier,
+				maxTier,
+				maxPlacement: maxPlacement ?? undefined,
+				fromYear: fromYear ?? undefined,
+				toYear: toYear ?? undefined,
+				source,
+				minParticipantCount,
+			}
+		: {};
 
-	const [results, totalCount] = await Promise.all([
+	const [results, totalCount, mateUsername] = await Promise.all([
 		UserRepository.findResultsByUserId(userId, {
 			showHighlightsOnly,
-			tournamentName,
+			...filters,
 			...(isChoosingHighlights
 				? { limit: HIGHLIGHTS_RESULTS_MAX }
 				: { limit: RESULTS_PER_PAGE, offset: (page - 1) * RESULTS_PER_PAGE }),
 		}),
 		UserRepository.countResultsByUserId(userId, {
 			showHighlightsOnly,
-			tournamentName,
+			...filters,
 		}),
+		filters.mateUserId
+			? UserRepository.findUsernameById(filters.mateUserId)
+			: null,
 	]);
 
 	return {
@@ -56,5 +85,6 @@ export const loader = async ({ params, request, url }: LoaderFunctionArgs) => {
 			...paginate({ url, page, pageSize: RESULTS_PER_PAGE, totalCount }),
 		},
 		hasHighlightedResults,
+		mateUsername,
 	};
 };

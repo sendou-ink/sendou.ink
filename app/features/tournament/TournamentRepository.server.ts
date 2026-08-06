@@ -470,6 +470,7 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 						"TournamentTeamMember.role",
 						"TournamentTeamMember.createdAt",
 						"TournamentTeamMember.isSub",
+						"TournamentTeamMember.isOrganizerAdded",
 						sql<string | null> /*sql*/`coalesce(
               "TournamentTeamMember"."inGameName",
               "User"."inGameName"

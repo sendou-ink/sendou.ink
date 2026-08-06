@@ -1,11 +1,14 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
+import { safeJSONParse } from "~/utils/zod";
 import * as CalendarRepository from "../CalendarRepository.server";
+import { calendarFiltersSearchParamsSchema } from "../calendar-schemas";
 import { calendarSearchParams } from "../calendar-search-params";
 import * as CalendarEvent from "../core/CalendarEvent";
 import * as ICal from "../core/ICal.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-	const { filters } = calendarSearchParams.parse(request);
+	const filters = resolveFilters(request);
 
 	const startTime = new Date();
 	const endTime = new Date(startTime);
@@ -39,3 +42,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		},
 	});
 };
+
+/** Subscribed feed URLs may still carry the pre-FilterBar `filters` JSON param. */
+function resolveFilters(request: Request) {
+	// biome-ignore lint/plugin: legacy param no current route produces
+	const legacyFilters = new URL(request.url).searchParams.get("filters");
+	if (legacyFilters !== null) {
+		const parsed = calendarFiltersSearchParamsSchema.safeParse(
+			safeJSONParse(legacyFilters),
+		);
+		if (parsed.success) return parsed.data;
+	}
+
+	return R.pick(calendarSearchParams.parse(request), [
+		...CalendarEvent.FILTERS_KEYS,
+	]);
+}

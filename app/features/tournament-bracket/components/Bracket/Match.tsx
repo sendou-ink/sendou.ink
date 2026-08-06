@@ -7,10 +7,8 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { useUser } from "~/features/auth/core/user";
 import { TournamentStream } from "~/features/tournament/components/TournamentStream";
-import {
-	useTournament,
-	useTournamentVods,
-} from "~/features/tournament/routes/to.$id";
+import { useTournamentVods } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";

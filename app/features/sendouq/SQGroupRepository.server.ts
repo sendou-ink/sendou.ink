@@ -75,7 +75,6 @@ export async function findCurrentGroups() {
 				"Group.status",
 				"GroupMatch.id as matchId",
 				commonUserMembersAgg(eb, {
-					pronouns: eb.ref("User.pronouns"),
 					mapModePreferences: eb.ref("User.mapModePreferences"),
 					noScreen: eb.ref("User.noScreen"),
 					role: eb.ref("GroupMember.role"),

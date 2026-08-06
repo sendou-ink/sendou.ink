@@ -1,7 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { LinkButton } from "~/components/elements/Button";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { BracketsPageState } from "~/features/tournament-bracket/routes/to.$id.brackets";
 import { tournamentBracketsPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";

@@ -1,10 +1,10 @@
 import clsx from "clsx";
 import { User } from "lucide-react";
 import { Avatar } from "~/components/Avatar";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { twitchUrl } from "~/utils/urls";
-import { useTournament } from "../routes/to.$id";
 import styles from "../tournament.module.css";
 
 export function TournamentStream({

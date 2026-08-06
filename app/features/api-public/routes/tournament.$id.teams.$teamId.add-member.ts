@@ -95,6 +95,7 @@ export const action = async (args: ActionFunctionArgs) => {
 			userId,
 			newTeamId: team.id,
 			previousTeamIdToDelete,
+			isOrganizerAdded: true,
 		});
 
 		if (previousTeamPickupChat) {

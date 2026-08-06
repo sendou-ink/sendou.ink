@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
+import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
+import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as UserRepository from "./UserRepository.server";
 
 describe("UserRepository", () => {
@@ -98,6 +102,192 @@ describe("UserRepository", () => {
 		expect(
 			(await UserRepository.findJoinOrderByUserId(firstId))?.joinOrder,
 		).toBe(1);
+	});
+
+	describe("findResultsByUserId filters", () => {
+		const startTimeOf = (year: number) =>
+			dateToDatabaseTimestamp(new Date(Date.UTC(year, 5, 1)));
+
+		const seedResults = async () => {
+			const user = await UserFactory.create();
+			const mate = await UserFactory.create();
+			const [firstOpponent, secondOpponent] = await UserFactory.createMany(2);
+
+			const wonEvent = await CalendarEventFactory.create({
+				name: "Gamma Open",
+				authorId: user.id,
+				startTimes: [startTimeOf(2024)],
+			});
+			await CalendarEventResultFactory.create({
+				eventId: wonEvent.id,
+				participantCount: 8,
+				results: [
+					{
+						teamName: "Team Gamma",
+						placement: 1,
+						players: [
+							{ userId: user.id, name: null },
+							{ userId: mate.id, name: null },
+						],
+					},
+				],
+			});
+
+			const lostEvent = await CalendarEventFactory.create({
+				name: "Delta Open",
+				authorId: user.id,
+				startTimes: [startTimeOf(2022)],
+			});
+			await CalendarEventResultFactory.create({
+				eventId: lostEvent.id,
+				participantCount: 50,
+				results: [
+					{
+						teamName: "Team Delta",
+						placement: 5,
+						players: [
+							{ userId: user.id, name: null },
+							{ userId: firstOpponent.id, name: null },
+						],
+					},
+				],
+			});
+
+			await TournamentFactory.createPlayed(
+				{
+					name: "Alpha Invitational",
+					authorId: user.id,
+					startTimes: [startTimeOf(2023)],
+					minMembersPerTeam: 1,
+				},
+				{
+					teamRosters: [[user.id], [secondOpponent.id]],
+					playedOut: "all",
+					tier: 1,
+				},
+			);
+
+			return { userId: user.id, mateUserId: mate.id };
+		};
+
+		const filteredResults = async (
+			userId: number,
+			filters: Parameters<typeof UserRepository.countResultsByUserId>[1],
+		) => {
+			const [results, count] = await Promise.all([
+				UserRepository.findResultsByUserId(userId, filters),
+				UserRepository.countResultsByUserId(userId, filters),
+			]);
+
+			expect(count).toBe(results.length);
+
+			return results;
+		};
+
+		test("returns every result without filters", async () => {
+			const { userId } = await seedResults();
+
+			const results = await filteredResults(userId, {});
+
+			expect(results).toHaveLength(3);
+		});
+
+		test("filters by result source", async () => {
+			const { userId } = await seedResults();
+
+			const tournaments = await filteredResults(userId, { source: "SENDOU" });
+			const reported = await filteredResults(userId, { source: "EXTERNAL" });
+
+			expect(tournaments).toHaveLength(1);
+			expect(tournaments[0].eventName).toBe("Alpha Invitational");
+			expect(reported.map((result) => result.eventName).sort()).toEqual([
+				"Delta Open",
+				"Gamma Open",
+			]);
+		});
+
+		test("filters by tier, excluding results without one", async () => {
+			const { userId } = await seedResults();
+
+			const bestTiers = await filteredResults(userId, {
+				minTier: 1,
+				maxTier: 3,
+			});
+			const worstTiers = await filteredResults(userId, {
+				minTier: 8,
+				maxTier: 9,
+			});
+
+			expect(bestTiers).toHaveLength(1);
+			expect(bestTiers[0].eventName).toBe("Alpha Invitational");
+			expect(worstTiers).toHaveLength(0);
+		});
+
+		test("filters by placement", async () => {
+			const { userId } = await seedResults();
+
+			const wins = await filteredResults(userId, { maxPlacement: 1 });
+
+			expect(wins.every((result) => result.placement === 1)).toBe(true);
+			expect(wins.map((result) => result.eventName)).toContain("Gamma Open");
+			expect(wins.map((result) => result.eventName)).not.toContain(
+				"Delta Open",
+			);
+		});
+
+		test("filters by year range", async () => {
+			const { userId } = await seedResults();
+
+			const results = await filteredResults(userId, {
+				fromYear: 2023,
+				toYear: 2024,
+			});
+
+			expect(results.map((result) => result.eventName).sort()).toEqual([
+				"Alpha Invitational",
+				"Gamma Open",
+			]);
+		});
+
+		test("filters by teammate", async () => {
+			const { userId, mateUserId } = await seedResults();
+
+			const results = await filteredResults(userId, { mateUserId });
+
+			expect(results).toHaveLength(1);
+			expect(results[0].eventName).toBe("Gamma Open");
+		});
+
+		test("filters by team name", async () => {
+			const { userId } = await seedResults();
+
+			const results = await filteredResults(userId, { teamName: "delta" });
+
+			expect(results).toHaveLength(1);
+			expect(results[0].eventName).toBe("Delta Open");
+		});
+
+		test("filters by minimum participant count", async () => {
+			const { userId } = await seedResults();
+
+			const results = await filteredResults(userId, {
+				minParticipantCount: 16,
+			});
+
+			expect(results).toHaveLength(1);
+			expect(results[0].eventName).toBe("Delta Open");
+		});
+
+		test("filters by tournament name", async () => {
+			const { userId } = await seedResults();
+
+			const results = await filteredResults(userId, {
+				tournamentName: "alpha",
+			});
+
+			expect(results).toHaveLength(1);
+			expect(results[0].eventName).toBe("Alpha Invitational");
+		});
 	});
 
 	describe("userRoles", () => {

@@ -149,6 +149,8 @@
 	"actions.outlined": "Con borde",
 	"actions.noOutline": "Sin borde",
 	"actions.join": "Unirse",
+	"filterBar.addFilter": "",
+	"filterBar.saveAsDefault": "",
 	"imageExport.export": "Exportar imagen",
 	"imageExport.download": "Descargar",
 	"imageExport.theme.light": "Claro",

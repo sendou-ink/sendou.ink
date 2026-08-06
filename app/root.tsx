@@ -34,6 +34,7 @@ import * as NotificationRepository from "~/features/notifications/NotificationRe
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
 import { useDebounce } from "~/hooks/useDebounce";
+import lexendLatinUrl from "~/styles/fonts/lexend-latin.woff2?url";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
@@ -79,6 +80,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 	i18nMiddleware,
 ];
 
+import "~/styles/fonts.css";
 import "~/styles/vars.css";
 import "~/styles/normalize.css";
 import "~/styles/common.css";
@@ -481,14 +483,13 @@ function HydrationTestIndicator() {
 
 function Fonts() {
 	return (
-		<>
-			<link rel="preconnect" href="https://fonts.googleapis.com" />
-			<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-			<link
-				href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap"
-				rel="stylesheet"
-			/>
-		</>
+		<link
+			rel="preload"
+			href={lexendLatinUrl}
+			as="font"
+			type="font/woff2"
+			crossOrigin="anonymous"
+		/>
 	);
 }
 

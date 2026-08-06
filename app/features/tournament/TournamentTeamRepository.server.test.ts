@@ -14,7 +14,11 @@ let anotherMember: { id: number };
 const membersByTeamId = (tournamentTeamId: number) =>
 	db
 		.selectFrom("TournamentTeamMember")
-		.select(["TournamentTeamMember.userId", "TournamentTeamMember.role"])
+		.select([
+			"TournamentTeamMember.userId",
+			"TournamentTeamMember.role",
+			"TournamentTeamMember.isOrganizerAdded",
+		])
 		.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
 		.execute();
 
@@ -93,6 +97,65 @@ describe("TournamentTeamRepository", () => {
 			expect(roleOf(members, owner.id)).toBe("OWNER");
 			expect(roleOf(members, member.id)).toBe("REGULAR");
 			expect(roleOf(members, anotherMember.id)).toBe("REGULAR");
+		});
+
+		test("marks added members as organizer added", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizer.id,
+			});
+
+			await withUserId(organizer.id, () =>
+				TournamentTeamRepository.upsertRegistration({
+					tournamentId: tournament.id,
+					name: "Team Olive",
+					teamId: null,
+					avatarImgId: null,
+					ownerUserId: owner.id,
+					ownerChange: null,
+					membersToAdd: [owner.id, member.id],
+					membersToRemove: [],
+					inGameNameUpdates: [],
+				}),
+			);
+
+			const team = await db
+				.selectFrom("TournamentTeam")
+				.select("TournamentTeam.id")
+				.where("TournamentTeam.tournamentId", "=", tournament.id)
+				.executeTakeFirstOrThrow();
+
+			const members = await membersByTeamId(team.id);
+
+			expect(members.every((teamMember) => teamMember.isOrganizerAdded)).toBe(
+				true,
+			);
+		});
+	});
+
+	describe("join", () => {
+		test("joining on your own is not marked as organizer added", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizer.id,
+			});
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [owner.id],
+				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			});
+
+			await withUserId(member.id, () =>
+				TournamentTeamRepository.join({
+					newTeamId: team.id,
+					userId: member.id,
+				}),
+			);
+
+			const members = await membersByTeamId(team.id);
+
+			expect(
+				members.find((teamMember) => teamMember.userId === member.id)
+					?.isOrganizerAdded,
+			).toBe(0);
 		});
 	});
 });

@@ -8,7 +8,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
 import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { checkInSchema } from "~/features/tournament/tournament-schemas";
 import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
 import { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";

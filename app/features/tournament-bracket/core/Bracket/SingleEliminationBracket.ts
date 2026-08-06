@@ -2,6 +2,7 @@ import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type {
 	BracketData,
+	MatchData,
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
@@ -86,6 +87,9 @@ export class SingleEliminationBracket extends Bracket {
 				continue;
 			}
 
+			// BYE
+			if (!match.opponent1 || !match.opponent2) continue;
+
 			const loser =
 				match.winnerSide === "opponent1" ? match.opponent2 : match.opponent1;
 			invariant(loser?.id, "Loser id not found");
@@ -139,12 +143,7 @@ export class SingleEliminationBracket extends Bracket {
 		const thirdPlaceMatch = this.hasThirdPlaceMatch()
 			? this.data.match.find((m) => m.groupId !== matches[0].groupId)
 			: undefined;
-		const thirdPlaceMatchWinner =
-			thirdPlaceMatch?.winnerSide === "opponent1"
-				? thirdPlaceMatch.opponent1
-				: thirdPlaceMatch?.winnerSide === "opponent2"
-					? thirdPlaceMatch.opponent2
-					: undefined;
+		const thirdPlaceMatchWinner = winnerOfThirdPlaceMatch(thirdPlaceMatch);
 
 		const resultWithThirdPlaceTiebroken = result
 			.flatMap((standing) => {
@@ -161,12 +160,17 @@ export class SingleEliminationBracket extends Bracket {
 		return this.standingsWithoutNonParticipants(resultWithThirdPlaceTiebroken);
 	}
 
-	source({ placements }: { placements: number[] }) {
+	source({ placements, rest }: { placements: number[]; rest?: boolean }) {
 		invariant(placements.length > 0, "Empty placements not supported");
 		invariant(
-			placements.every((placement) => placement < 0),
-			"Positive placements in SE not implemented",
+			placements.every((placement) => placement < 0) ||
+				placements.every((placement) => placement > 0),
+			"Mixed positive and negative placements not supported",
 		);
+
+		if (placements.every((placement) => placement > 0)) {
+			return this.sourceByStandings(placements, rest === true);
+		}
 
 		// third place match lives in a separate (higher) group; the winners
 		// group teams get eliminated from is the lowest group id
@@ -214,4 +218,21 @@ export class SingleEliminationBracket extends Bracket {
 			teams,
 		};
 	}
+}
+
+/**
+ * A third place match with only one opponent is decided by a BYE: the semifinal
+ * on the other side was itself won against a BYE, so it produced no loser and
+ * the lone semifinal loser takes third place without playing.
+ */
+function winnerOfThirdPlaceMatch(match: MatchData | undefined) {
+	if (!match) return undefined;
+
+	if (match.opponent1 && !match.opponent2) return match.opponent1;
+	if (!match.opponent1 && match.opponent2) return match.opponent2;
+
+	if (match.winnerSide === "opponent1") return match.opponent1;
+	if (match.winnerSide === "opponent2") return match.opponent2;
+
+	return undefined;
 }

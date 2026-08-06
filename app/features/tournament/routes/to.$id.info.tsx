@@ -7,6 +7,7 @@ import { containerClassName } from "~/components/Main";
 import { Markdown } from "~/components/Markdown";
 import { TierPill } from "~/components/TierPill";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { removeMarkdown } from "~/utils/strings";
@@ -21,7 +22,6 @@ import {
 import { parseTournamentLoaderData } from "../core/layout-payload";
 import { loader } from "../loaders/to.$id.info.server";
 import { bracketProgressionLabel } from "../tournament-utils";
-import { useTournament } from "./to.$id";
 import styles from "./to.$id.info.module.css";
 
 export { action, loader };

@@ -1019,6 +1019,15 @@ export function buildCases(fx: Fixtures): {
 		fx.tournamentTeamPair,
 		(teamIds) => TournamentTeamRepository.findMapPoolsByTeamIds(teamIds),
 	);
+	add(
+		"TournamentTeamRepository.isOrganizerAddedMember",
+		both(fx.heavyTournamentTeamId, fx.heavyUser),
+		([tournamentTeamId, user]) =>
+			TournamentTeamRepository.isOrganizerAddedMember({
+				tournamentTeamId,
+				userId: user.id,
+			}),
+	);
 
 	// TrophyRepository
 	addStatic("TrophyRepository.all", () => TrophyRepository.all());

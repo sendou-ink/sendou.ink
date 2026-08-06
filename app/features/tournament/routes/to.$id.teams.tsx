@@ -1,13 +1,14 @@
 import { useLoaderData } from "react-router";
 import { Pagination } from "~/components/Pagination";
 import { Redirect } from "~/components/Redirect";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { tournamentDivisionsPage, tournamentTeamPage } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import type { TournamentTeamsLoaderData } from "../loaders/to.$id.teams.server";
 import { tournamentTeamsSearchParams } from "../tournament-search-params";
 import { getBracketProgressionLabel } from "../tournament-utils";
-import { useHasChildTournaments, useTournament } from "./to.$id";
+import { useHasChildTournaments } from "./to.$id";
 
 export { loader } from "../loaders/to.$id.teams.server";
 

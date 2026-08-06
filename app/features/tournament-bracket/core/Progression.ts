@@ -31,8 +31,6 @@ interface BracketBase {
 	requiresCheckIn: boolean;
 }
 
-// Note sources is array for future proofing reasons. Currently the array is always of length 1 if it exists.
-
 export interface InputBracket extends BracketBase {
 	id: string;
 	sources?: EditableSource[];
@@ -91,14 +89,9 @@ export type ValidationError =
 			type: "NEGATIVE_PROGRESSION";
 			bracketIdx: number;
 	  }
-	// no SE positive placements (single elimination can only source underground brackets)
+	// a single source can not take both top finishers and eliminated teams
 	| {
-			type: "NO_SE_POSITIVE";
-			bracketIdx: number;
-	  }
-	// no DE positive placements (might change in the future)
-	| {
-			type: "NO_DE_POSITIVE";
+			type: "MIXED_POSITIVE_NEGATIVE_PLACEMENTS";
 			bracketIdx: number;
 	  }
 	// Swiss bracket with early advance/elimination must have a destination bracket
@@ -124,6 +117,21 @@ export type ValidationError =
 	// empty placements is only valid when sourcing from a Swiss bracket with early advance
 	| {
 			type: "EMPTY_PLACEMENTS_ON_NON_SWISS";
+			bracketIdx: number;
+	  }
+	// one destination bracket can source each bracket only once
+	| {
+			type: "DUPLICATE_SOURCE_BRACKET";
+			bracketIdx: number;
+	  }
+	// brackets can not source each other in a loop e.g. A sources B and B sources A
+	| {
+			type: "CYCLIC_PROGRESSION";
+			bracketIdxs: number[];
+	  }
+	// teams that started in different brackets can never meet, so the routes from many starting brackets can not merge
+	| {
+			type: "MERGED_STARTING_BRACKETS";
 			bracketIdx: number;
 	  };
 
@@ -152,7 +160,8 @@ export function validatedBracketsToInputFormat(
 	});
 }
 
-function placementsToString(placements: number[], rest = false): string {
+/** Formats a placements array into the compact user-facing string form, e.g. [1, 2, 3] -> "1-3" and [5, 6] with rest -> "5,6+". */
+export function placementsToString(placements: number[], rest = false): string {
 	if (placements.length === 0) return "";
 
 	placements.sort((a, b) => a - b);
@@ -222,9 +231,34 @@ export function validatedBrackets(
 export function bracketsToValidationError(
 	brackets: ParsedBracket[],
 ): ValidationError | null {
+	// must be checked first, other validations assume the progression is a directed acyclic graph
+	const cyclicBracketIdxs = cyclicProgression(brackets);
+	if (cyclicBracketIdxs) {
+		return {
+			type: "CYCLIC_PROGRESSION",
+			bracketIdxs: cyclicBracketIdxs,
+		};
+	}
+
+	const mergedStartingBracketsIdx = mergedStartingBrackets(brackets);
+	if (typeof mergedStartingBracketsIdx === "number") {
+		return {
+			type: "MERGED_STARTING_BRACKETS",
+			bracketIdx: mergedStartingBracketsIdx,
+		};
+	}
+
 	if (!resolvesWinner(brackets)) {
 		return {
 			type: "NOT_RESOLVING_WINNER",
+		};
+	}
+
+	const duplicateSourceBracketIdx = duplicateSourceBracket(brackets);
+	if (typeof duplicateSourceBracketIdx === "number") {
+		return {
+			type: "DUPLICATE_SOURCE_BRACKET",
+			bracketIdx: duplicateSourceBracketIdx,
 		};
 	}
 
@@ -288,18 +322,10 @@ export function bracketsToValidationError(
 		};
 	}
 
-	faultyBracketIdx = noSingleEliminationPositive(brackets);
+	faultyBracketIdx = mixedPositiveNegativePlacements(brackets);
 	if (typeof faultyBracketIdx === "number") {
 		return {
-			type: "NO_SE_POSITIVE",
-			bracketIdx: faultyBracketIdx,
-		};
-	}
-
-	faultyBracketIdx = noDoubleEliminationPositive(brackets);
-	if (typeof faultyBracketIdx === "number") {
-		return {
-			type: "NO_DE_POSITIVE",
+			type: "MIXED_POSITIVE_NEGATIVE_PLACEMENTS",
 			bracketIdx: faultyBracketIdx,
 		};
 	}
@@ -672,29 +698,12 @@ function negativeProgression(brackets: ParsedBracket[]) {
 	return null;
 }
 
-function noSingleEliminationPositive(brackets: ParsedBracket[]) {
+function mixedPositiveNegativePlacements(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		for (const source of bracket.sources ?? []) {
-			const sourceBracket = brackets[source.bracketIdx];
 			if (
-				sourceBracket.type === "single_elimination" &&
-				source.placements.some((placement) => placement > 0)
-			) {
-				return bracketIdx;
-			}
-		}
-	}
-
-	return null;
-}
-
-function noDoubleEliminationPositive(brackets: ParsedBracket[]) {
-	for (const [bracketIdx, bracket] of brackets.entries()) {
-		for (const source of bracket.sources ?? []) {
-			const sourceBracket = brackets[source.bracketIdx];
-			if (
-				sourceBracket.type === "double_elimination" &&
-				source.placements.some((placement) => placement > 0)
+				source.placements.some((placement) => placement > 0) &&
+				source.placements.some((placement) => placement < 0)
 			) {
 				return bracketIdx;
 			}
@@ -762,6 +771,22 @@ function swissEarlyAdvanceWithoutDestination(brackets: ParsedBracket[]) {
 	return null;
 }
 
+function duplicateSourceBracket(brackets: ParsedBracket[]) {
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (!bracket.sources) continue;
+
+		const seen = new Set<number>();
+		for (const source of bracket.sources) {
+			if (seen.has(source.bracketIdx)) {
+				return bracketIdx;
+			}
+			seen.add(source.bracketIdx);
+		}
+	}
+
+	return null;
+}
+
 function emptyPlacementsOnNonSwiss(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		for (const source of bracket.sources ?? []) {
@@ -776,6 +801,78 @@ function emptyPlacementsOnNonSwiss(brackets: ParsedBracket[]) {
 				return bracketIdx;
 			}
 		}
+	}
+
+	return null;
+}
+
+/** Returns the bracket indexes forming a loop of sources or null if the progression has no loops. */
+function cyclicProgression(brackets: ParsedBracket[]) {
+	const visited = new Set<number>();
+	const currentPath: number[] = [];
+
+	const findCycle = (bracketIdx: number): number[] | null => {
+		const pathIdx = currentPath.indexOf(bracketIdx);
+		if (pathIdx !== -1) return currentPath.slice(pathIdx);
+		if (visited.has(bracketIdx)) return null;
+
+		visited.add(bracketIdx);
+		currentPath.push(bracketIdx);
+
+		for (const source of brackets[bracketIdx]?.sources ?? []) {
+			const cycle = findCycle(source.bracketIdx);
+			if (cycle) return cycle;
+		}
+
+		currentPath.pop();
+
+		return null;
+	};
+
+	for (const bracketIdx of brackets.keys()) {
+		const cycle = findCycle(bracketIdx);
+		if (cycle) return cycle.sort((a, b) => a - b);
+	}
+
+	return null;
+}
+
+/** Returns the index of the bracket where routes from many starting brackets merge or null if they never merge. */
+function mergedStartingBrackets(brackets: ParsedBracket[]) {
+	const cache = new Map<number, Set<number>>();
+
+	const startingAncestors = (bracketIdx: number): Set<number> => {
+		const cached = cache.get(bracketIdx);
+		if (cached) return cached;
+
+		const sources = brackets[bracketIdx]?.sources;
+		const result = new Set<number>();
+
+		if (!sources?.length) {
+			result.add(bracketIdx);
+		} else {
+			for (const source of sources) {
+				for (const ancestorIdx of startingAncestors(source.bracketIdx)) {
+					result.add(ancestorIdx);
+				}
+			}
+		}
+
+		cache.set(bracketIdx, result);
+
+		return result;
+	};
+
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (startingAncestors(bracketIdx).size <= 1) continue;
+
+		// the merge already happened earlier in the progression, that bracket is reported instead
+		const mergedEarlier = (bracket.sources ?? []).some(
+			(source) => startingAncestors(source.bracketIdx).size > 1,
+		);
+		if (mergedEarlier) continue;
+
+		return bracketIdx;
 	}
 
 	return null;
@@ -818,13 +915,34 @@ export function hasAbDivisionsFinals(brackets: ParsedBracket[]): boolean {
 export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
-	const startBrackets = startingBrackets(brackets);
+	const mainBracketIdxs = new Set(
+		startingBrackets(brackets).flatMap((startBracketIdx) =>
+			resolveMainBracketProgression(brackets, startBracketIdx),
+		),
+	);
 
-	for (const startBracketIdx of startBrackets) {
-		if (
-			resolveMainBracketProgression(brackets, startBracketIdx).includes(idx)
-		) {
-			return false;
+	if (mainBracketIdxs.has(idx)) return false;
+
+	// a bracket whose top finishers advance (transitively) into the main progression
+	// is a redemption style intermediate bracket, not an underground one
+	const queue = [idx];
+	const visited = new Set<number>();
+	while (queue.length > 0) {
+		const currentIdx = queue.shift()!;
+		if (visited.has(currentIdx)) continue;
+		visited.add(currentIdx);
+
+		for (const [destinationIdx, bracket] of brackets.entries()) {
+			const advancesPositively = bracket.sources?.some(
+				(source) =>
+					source.bracketIdx === currentIdx &&
+					(source.placements.length === 0 ||
+						source.placements.some((placement) => placement > 0)),
+			);
+			if (!advancesPositively) continue;
+
+			if (mainBracketIdxs.has(destinationIdx)) return false;
+			queue.push(destinationIdx);
 		}
 	}
 
@@ -839,6 +957,17 @@ export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 export function bracketDepth(idx: number, brackets: ParsedBracket[]): number {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
+	return depthFromStartingBracket(idx, brackets, new Set());
+}
+
+function depthFromStartingBracket(
+	idx: number,
+	brackets: ParsedBracket[],
+	pathToBracket: Set<number>,
+): number {
+	// only possible with an invalid progression, see CYCLIC_PROGRESSION
+	if (pathToBracket.has(idx)) return 0;
+
 	const bracket = brackets[idx];
 
 	if (!bracket.sources || bracket.sources.length === 0) {
@@ -846,7 +975,11 @@ export function bracketDepth(idx: number, brackets: ParsedBracket[]): number {
 	}
 
 	const sourceDepths = bracket.sources.map((source) =>
-		bracketDepth(source.bracketIdx, brackets),
+		depthFromStartingBracket(
+			source.bracketIdx,
+			brackets,
+			new Set(pathToBracket).add(idx),
+		),
 	);
 
 	return Math.max(...sourceDepths) + 1;
@@ -860,6 +993,7 @@ function resolveMainBracketProgression(
 
 	let bracketIdxToFind = startBracketIdx;
 	const result = [startBracketIdx];
+	const visited = new Set([startBracketIdx]);
 	while (true) {
 		const bracket = brackets.findIndex((bracket) =>
 			bracket.sources?.some(
@@ -870,9 +1004,12 @@ function resolveMainBracketProgression(
 			),
 		);
 
-		if (bracket === -1) break;
+		// -1 = end of the progression, already visited is only possible
+		// with an invalid progression, see CYCLIC_PROGRESSION
+		if (bracket === -1 || visited.has(bracket)) break;
 
 		bracketIdxToFind = bracket;
+		visited.add(bracketIdxToFind);
 		result.push(bracketIdxToFind);
 	}
 
@@ -925,75 +1062,108 @@ export function changedBracketProgressionFormat(
  * Returns the order of brackets as is to be considered for standings. Teams from the bracket of lower index are considered to be above those from the lower bracket.
  * A participant's standing is the first bracket to appear in order that has the participant in it.
  *
- * The order is so that most significant brackets (i.e. finals) appear first.
+ * The order is so that most significant brackets (i.e. finals) appear first. A bracket always appears after every bracket
+ * it advances teams to, so the teams it eliminated end up below the teams that advanced out of it.
+ *
+ * Underground brackets are omitted as they are only used to break ties within their source bracket, see `tiebrokenByUndergroundBrackets`.
  */
 export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 	const bracketsToConsider = bracketsReachableFrom(0, progression);
 
-	const withoutIntermediateBrackets = bracketsToConsider.filter(
-		(bracketIdx) => {
-			if (bracketIdx === 0) return true;
+	const ordered = destinationsFirstOrder(bracketsToConsider, progression);
 
-			// underground brackets don't make their source bracket an intermediate one
-			const undergrounds = new Set(
-				undergroundBracketIdxs(bracketIdx, progression),
-			);
+	return ordered.filter((bracketIdx) => {
+		const sources = progression[bracketIdx].sources;
 
-			return progression.every(
-				(b, idx) =>
-					undergrounds.has(idx) ||
-					!b.sources?.some((s) => s.bracketIdx === bracketIdx),
-			);
-		},
-	);
+		if (!sources) return true;
 
-	const withoutUnderground = withoutIntermediateBrackets.filter(
-		(bracketIdx) => {
-			const sources = progression[bracketIdx].sources;
-
-			if (!sources) return true;
-
-			return !sources.some(
-				(source) =>
-					progression[source.bracketIdx].type === "double_elimination" ||
-					progression[source.bracketIdx].type === "single_elimination",
-			);
-		},
-	);
-
-	const minSourcedPlacements = new Map(
-		withoutUnderground.map((idx) => [
-			idx,
-			minSourcedPlacement(progression, idx),
-		]),
-	);
-
-	return [...withoutUnderground].sort((a, b) => {
-		const minA = minSourcedPlacements.get(a)!;
-		const minB = minSourcedPlacements.get(b)!;
-
-		if (minA === minB) {
-			return a - b;
-		}
-
-		return minA - minB;
+		return !sources.some(
+			(source) =>
+				(progression[source.bracketIdx].type === "double_elimination" ||
+					progression[source.bracketIdx].type === "single_elimination") &&
+				source.placements.some((placement) => placement < 0),
+		);
 	});
 }
 
-function minSourcedPlacement(
+/**
+ * Orders the given brackets so that every bracket appears after all the brackets it is a source of.
+ * Among the brackets that are free to be placed next, the one whose teams placed the highest in the
+ * deepest bracket they have in common (e.g. a top cut over a consolation bracket) goes first. The comparison
+ * follows the whole route the teams took, so e.g. a bracket taking the low placements of a redemption bracket
+ * can still rank above a bracket taking mid placements straight from the pools that fed that redemption bracket.
+ */
+function destinationsFirstOrder(
+	bracketIdxs: number[],
 	progression: ParsedBracket[],
-	bracketIdx: number,
-): number {
-	const sources = progression[bracketIdx].sources;
-	if (!sources || sources.length === 0) return Number.POSITIVE_INFINITY;
+): number[] {
+	const included = new Set(bracketIdxs);
 
-	let min = Number.POSITIVE_INFINITY;
-	for (const source of sources) {
-		for (const placement of source.placements) {
-			if (placement < min) min = placement;
+	const sourcedPlacements = new Map(
+		bracketIdxs.map((bracketIdx) => [
+			bracketIdx,
+			ancestorPlacements(bracketIdx, progression),
+		]),
+	);
+
+	const pendingDestinations = new Map(
+		bracketIdxs.map((bracketIdx) => [
+			bracketIdx,
+			new Set(
+				destinationsFromBracketIdx(bracketIdx, progression).filter(
+					(destinationIdx) => included.has(destinationIdx),
+				),
+			),
+		]),
+	);
+
+	const result: number[] = [];
+	const remaining = new Set(bracketIdxs);
+
+	while (remaining.size > 0) {
+		const withoutPendingDestinations = Array.from(remaining).filter(
+			(bracketIdx) => pendingDestinations.get(bracketIdx)!.size === 0,
+		);
+		// a cyclic progression is invalid but shouldn't cause an infinite loop here
+		const candidates =
+			withoutPendingDestinations.length > 0
+				? withoutPendingDestinations
+				: Array.from(remaining);
+
+		const next = bestSourcedBracket(candidates, sourcedPlacements, progression);
+
+		result.push(next);
+		remaining.delete(next);
+
+		for (const bracketIdx of remaining) {
+			pendingDestinations.get(bracketIdx)!.delete(next);
 		}
 	}
-	return min;
+
+	return result;
+}
+
+/** Of the given brackets, the one whose teams took the best route there, ties broken by the lowest bracket index. */
+function bestSourcedBracket(
+	bracketIdxs: number[],
+	sourcedPlacements: Map<number, Map<number, number>>,
+	progression: ParsedBracket[],
+): number {
+	let result = bracketIdxs[0];
+
+	for (const bracketIdx of bracketIdxs.slice(1)) {
+		const comparison = compareSourcedPlacements(
+			sourcedPlacements.get(bracketIdx)!,
+			sourcedPlacements.get(result)!,
+			progression,
+		);
+
+		if (comparison < 0 || (comparison === 0 && bracketIdx < result)) {
+			result = bracketIdx;
+		}
+	}
+
+	return result;
 }
 
 export function bracketsReachableFrom(
@@ -1095,4 +1265,145 @@ export function startingBrackets(progression: ParsedBracket[]): number[] {
 		.map((bracket, idx) => ({ bracket, idx }))
 		.filter(({ bracket }) => !bracket.sources)
 		.map(({ idx }) => idx);
+}
+
+/**
+ * Orders a bracket's sources for seeding purposes. Teams sourced with a better placement
+ * in a shared ancestor bracket seed above teams that took a longer route there, e.g. if the top cut
+ * sources both the top 2 of "Day 1 Pools" directly and the winners of a "Redemption" bracket
+ * (itself sourcing pools placements 3-4), the direct pools source is ordered first.
+ *
+ * Sources that share no ancestor bracket keep their original relative order.
+ */
+export function sortedSourcesForSeeding(
+	sources: DBSource[],
+	progression: ParsedBracket[],
+): DBSource[] {
+	const placementMaps = sources.map((source) =>
+		sourcePlacementsByBracket(source, progression),
+	);
+
+	return sources
+		.map((source, idx) => ({ source, idx }))
+		.sort((a, b) =>
+			compareSourcedPlacements(
+				placementMaps[a.idx],
+				placementMaps[b.idx],
+				progression,
+			),
+		)
+		.map(({ source }) => source);
+}
+
+/** Best (lowest positive) placement the source's teams achieved in each bracket on their route, keyed by bracket index. */
+function sourcePlacementsByBracket(
+	source: DBSource,
+	progression: ParsedBracket[],
+): Map<number, number> {
+	const result = new Map<number, number>();
+
+	result.set(source.bracketIdx, bestPositivePlacement(source.placements));
+
+	for (const [ancestorIdx, placement] of ancestorPlacements(
+		source.bracketIdx,
+		progression,
+	)) {
+		mergeMinPlacement(result, ancestorIdx, placement);
+	}
+
+	return result;
+}
+
+function ancestorPlacements(
+	bracketIdx: number,
+	progression: ParsedBracket[],
+	visited: Set<number> = new Set(),
+): Map<number, number> {
+	const result = new Map<number, number>();
+
+	if (visited.has(bracketIdx)) return result;
+	visited.add(bracketIdx);
+
+	for (const source of progression[bracketIdx].sources ?? []) {
+		mergeMinPlacement(
+			result,
+			source.bracketIdx,
+			bestPositivePlacement(source.placements),
+		);
+
+		for (const [ancestorIdx, placement] of ancestorPlacements(
+			source.bracketIdx,
+			progression,
+			visited,
+		)) {
+			mergeMinPlacement(result, ancestorIdx, placement);
+		}
+	}
+
+	return result;
+}
+
+function bestPositivePlacement(placements: number[]) {
+	const positives = placements.filter((placement) => placement > 0);
+
+	// empty placements = swiss early advancers i.e. the top teams of that bracket
+	if (positives.length === 0 && placements.length === 0) return 1;
+
+	// negative placements only = teams eliminated from the source bracket
+	if (positives.length === 0) return Number.POSITIVE_INFINITY;
+
+	return Math.min(...positives);
+}
+
+function mergeMinPlacement(
+	map: Map<number, number>,
+	bracketIdx: number,
+	placement: number,
+) {
+	const existing = map.get(bracketIdx);
+	if (existing === undefined || placement < existing) {
+		map.set(bracketIdx, placement);
+	}
+}
+
+/** Compares two routes by the placement they got in the deepest bracket they have in common. */
+function compareSourcedPlacements(
+	placementsA: Map<number, number>,
+	placementsB: Map<number, number>,
+	progression: ParsedBracket[],
+): number {
+	const commonBracketIdx = deepestCommonBracket(
+		placementsA,
+		placementsB,
+		progression,
+	);
+	if (commonBracketIdx === null) return 0;
+
+	const placementA = placementsA.get(commonBracketIdx)!;
+	const placementB = placementsB.get(commonBracketIdx)!;
+
+	if (placementA === placementB) return 0;
+
+	return placementA - placementB;
+}
+
+function deepestCommonBracket(
+	placementsA: Map<number, number>,
+	placementsB: Map<number, number>,
+	progression: ParsedBracket[],
+): number | null {
+	let result: number | null = null;
+	let resultDepth = -1;
+
+	for (const bracketIdx of placementsA.keys()) {
+		if (!placementsB.has(bracketIdx)) continue;
+
+		const depth = bracketDepth(bracketIdx, progression);
+		if (depth > resultDepth) {
+			result = bracketIdx;
+			resultDepth = depth;
+		}
+	}
+
+	return result;
 }

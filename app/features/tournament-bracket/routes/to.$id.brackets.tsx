@@ -35,6 +35,10 @@ import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import {
+	TournamentProvider,
+	useTournament,
+} from "~/features/tournament/tournament-context";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
@@ -42,9 +46,7 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
-	TournamentOverrideProvider,
 	useBracketExpanded,
-	useTournament,
 	useTournamentPreparedMaps,
 } from "../../tournament/routes/to.$id";
 import { action } from "../actions/to.$id.brackets.server";
@@ -55,6 +57,7 @@ import { TournamentTeamActions } from "../components/TournamentTeamActions";
 import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
+import * as Progression from "../core/Progression";
 import type { BracketMeta, Tournament } from "../core/Tournament";
 import {
 	loader,
@@ -87,9 +90,9 @@ export default function TournamentBracketsPage() {
 	);
 
 	return (
-		<TournamentOverrideProvider tournament={tournament}>
+		<TournamentProvider tournament={tournament}>
 			<TournamentBracketsView />
-		</TournamentOverrideProvider>
+		</TournamentProvider>
 	);
 }
 
@@ -154,44 +157,53 @@ function TournamentBracketsView() {
 	};
 
 	const teamsSourceText = (bracket: BracketType) => {
-		const firstBracket = tournament.bracketsMeta[0];
+		const progression = tournament.ctx.settings.bracketProgression;
+		const sources = progression[bracket.idx].sources;
+		if (!sources || sources.length === 0) return null;
 
-		if (firstBracket.type === "round_robin" && !bracket.isUnderground) {
-			return `Teams that place in the top ${Math.max(
-				...(bracket.sources ?? []).flatMap((s) => s.placements),
-			)} of their group will advance to this stage`;
-		}
+		const sourceDescriptions = Progression.sortedSourcesForSeeding(
+			sources,
+			progression,
+		).map((source) => {
+			const sourceBracket = progression[source.bracketIdx];
 
-		if (firstBracket.type === "round_robin" && bracket.isUnderground) {
-			const placements = (
-				bracket.sources?.flatMap((s) => s.placements) ?? []
-			).sort((a, b) => a - b);
+			if (source.placements.length === 0) {
+				return t("tournament:bracket.sources.earlyAdvancers", {
+					bracket: sourceBracket.name,
+					count: sourceBracket.settings?.advanceThreshold,
+				});
+			}
 
-			return `Teams that don't advance to the final stage can play in this bracket (placements: ${placements.join(", ")})`;
-		}
+			if (source.placements.every((placement) => placement < 0)) {
+				return t("tournament:bracket.sources.eliminated", {
+					bracket: sourceBracket.name,
+					count: Math.abs(Math.min(...source.placements)),
+				});
+			}
 
-		if (firstBracket.type === "double_elimination" && bracket.isUnderground) {
-			return `Teams that get eliminated in the first ${Math.abs(
-				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
-			)} rounds of the losers bracket can play in this bracket`;
-		}
+			const isTopN =
+				!source.rest &&
+				Math.min(...source.placements) === 1 &&
+				Math.max(...source.placements) === source.placements.length;
+			if (isTopN) {
+				return t("tournament:bracket.sources.top", {
+					bracket: sourceBracket.name,
+					count: Math.max(...source.placements),
+				});
+			}
 
-		if (firstBracket.type === "single_elimination" && bracket.isUnderground) {
-			return `Teams that get eliminated in the first ${Math.abs(
-				Math.min(...(bracket.sources ?? []).flatMap((s) => s.placements)),
-			)} rounds can play in this bracket`;
-		}
+			return t("tournament:bracket.sources.placements", {
+				bracket: sourceBracket.name,
+				placements: Progression.placementsToString(
+					[...source.placements],
+					source.rest,
+				),
+			});
+		});
 
-		const advanceThreshold = firstBracket.settings?.advanceThreshold;
-		if (
-			advanceThreshold &&
-			tournament.ctx.settings.bracketProgression[bracket.idx].sources?.[0]
-				.placements.length === 0
-		) {
-			return `Teams that win at least ${advanceThreshold} sets in the Swiss bracket will advance to this stage`;
-		}
-
-		return null;
+		return t("tournament:bracket.sources.header", {
+			sources: sourceDescriptions.join(", "),
+		});
 	};
 
 	if (tournament.isLeagueSignup) {
@@ -743,7 +755,7 @@ function StartBracketAlert({
 							? "Tournament start time is in the future"
 							: bracket.startTime && bracket.startTime > new Date()
 								? "Bracket start time is in the future"
-								: "Teams pending from the previous bracket"}{" "}
+								: "Teams pending from the source brackets"}{" "}
 						(blocks starting)
 					</div>
 				) : null}
