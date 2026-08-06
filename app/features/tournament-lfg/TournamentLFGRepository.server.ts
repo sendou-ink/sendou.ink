@@ -387,7 +387,6 @@ function lfgMembersAgg(
 	return commonUserMembersAgg(eb, {
 		languages: eb.ref("User.languages"),
 		vc: eb.ref("User.vc"),
-		pronouns: eb.ref("User.pronouns"),
 		role: eb.ref("TournamentTeamMember.role"),
 		isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
 		weapons: matchProfileWeapons(eb),

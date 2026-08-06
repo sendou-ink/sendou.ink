@@ -291,11 +291,6 @@ function GroupMember({
 							</span>
 						</span>
 					</UserCard>
-					{member.pronouns ? (
-						<span className="text-lighter ml-1 text-xxs">
-							{member.pronouns.subject}/{member.pronouns.object}
-						</span>
-					) : null}
 				</div>
 				<div
 					className={clsx(

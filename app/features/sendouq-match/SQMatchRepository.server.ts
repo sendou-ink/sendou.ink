@@ -157,7 +157,6 @@ function groupWithTeamAndMembers(
 							"GroupMember.role",
 							"GroupMember.note",
 							"User.inGameName",
-							"User.pronouns",
 							"User.vc",
 							"User.languages",
 							"User.noScreen",

@@ -11,7 +11,6 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
-import type { Pronouns } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { useTournament } from "~/features/tournament/routes/to.$id";
@@ -40,7 +39,6 @@ export type LFGGroupMember = {
 	customUrl: string | null;
 	languages: UnifiedLanguageCode[];
 	vc: "YES" | "NO" | "LISTEN_ONLY" | null;
-	pronouns: Pronouns | null;
 	role: "OWNER" | "MANAGER" | "REGULAR";
 	isStayAsSub: boolean;
 	weapons: Array<{
@@ -218,11 +216,6 @@ function LFGGroupMemberRow({
 							<span className={styles.name}>{member.username}</span>
 						</span>
 					</UserCard>
-					{member.pronouns ? (
-						<span className="text-lighter ml-1 text-xxs">
-							{member.pronouns.subject}/{member.pronouns.object}
-						</span>
-					) : null}
 				</div>
 				<div className="ml-auto stack horizontal sm items-center">
 					{showActions || (!showActions && member.role === "OWNER") ? (
