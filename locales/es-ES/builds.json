@@ -24,7 +24,7 @@
 	"addFilter": "Añadir filtro",
 	"linkButton.abilityStats": "Estadísticas de potenciadores",
 	"linkButton.popularBuilds": "Builds populares",
-	"noPopularBuilds": "Parece que no hay builds populares para esta arma al momento.",
+	"noPopularBuilds": "Parece que no hay builds populares para esta arma en este momento.",
 	"emptyAbilitySlot": "Espacio de potenciador vacío",
 	"filters.type.ability": "Por potenciador",
 	"filters.type.mode": "Por estilo",

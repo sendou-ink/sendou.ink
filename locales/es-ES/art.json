@@ -16,7 +16,7 @@
 	"forms.tags.title": "Etiquetas",
 	"forms.tags.selectFromExisting": "Seleccionar etiquetas existentes",
 	"forms.tags.cantFindExisting": "¿No encuentras una etiqueta existente?",
-	"forms.tags.addNew": "Crear nueva.",
+	"forms.tags.addNew": "Crear nueva",
 	"forms.tags.addNew.placeholder": "Crear una nueva etiqueta",
 	"forms.tags.search.placeholder": "Buscar etiquetas...",
 	"forms.tags.placeholder": "Selecciona una etiqueta",
