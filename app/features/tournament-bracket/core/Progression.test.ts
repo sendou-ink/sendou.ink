@@ -1757,6 +1757,140 @@ describe("validatedSources - CYCLIC_PROGRESSION", () => {
 	});
 });
 
+describe("validatedSources - MERGED_STARTING_BRACKETS", () => {
+	it("flags a bracket sourcing two starting brackets", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+					{
+						bracketId: "1",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("MERGED_STARTING_BRACKETS");
+		expect((error as any).bracketIdx).toBe(2);
+	});
+
+	it("flags a merge that happens through intermediate brackets", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1-2",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "2",
+						placements: "1",
+					},
+					{
+						bracketId: "3",
+						placements: "1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("MERGED_STARTING_BRACKETS");
+		expect((error as any).bracketIdx).toBe(4);
+	});
+
+	it("reports the bracket where the merge happens, not the ones after it", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "3",
+						placements: "1-2",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+					{
+						bracketId: "1",
+						placements: "1-2",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("MERGED_STARTING_BRACKETS");
+		expect((error as any).bracketIdx).toBe(3);
+	});
+
+	it("accepts many starting brackets that never merge", () => {
+		expect(
+			Progression.bracketsToValidationError(progressions.manyStartBrackets),
+		).toBeNull();
+	});
+
+	it("accepts many sources that all come from the same starting bracket", () => {
+		expect(
+			Progression.bracketsToValidationError(progressions.multiSourceTopCut),
+		).toBeNull();
+	});
+});
+
 describe("sortedSourcesForSeeding", () => {
 	it("orders a direct source above one that took a redemption route", () => {
 		const topCut: Progression.ParsedBracket = progressions.multiSourceTopCut[2];

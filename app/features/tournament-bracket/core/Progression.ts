@@ -128,6 +128,11 @@ export type ValidationError =
 	| {
 			type: "CYCLIC_PROGRESSION";
 			bracketIdxs: number[];
+	  }
+	// teams that started in different brackets can never meet, so the routes from many starting brackets can not merge
+	| {
+			type: "MERGED_STARTING_BRACKETS";
+			bracketIdx: number;
 	  };
 
 /** Takes validated brackets and returns them in the format that is ready for user input. */
@@ -232,6 +237,14 @@ export function bracketsToValidationError(
 		return {
 			type: "CYCLIC_PROGRESSION",
 			bracketIdxs: cyclicBracketIdxs,
+		};
+	}
+
+	const mergedStartingBracketsIdx = mergedStartingBrackets(brackets);
+	if (typeof mergedStartingBracketsIdx === "number") {
+		return {
+			type: "MERGED_STARTING_BRACKETS",
+			bracketIdx: mergedStartingBracketsIdx,
 		};
 	}
 
@@ -819,6 +832,47 @@ function cyclicProgression(brackets: ParsedBracket[]) {
 	for (const bracketIdx of brackets.keys()) {
 		const cycle = findCycle(bracketIdx);
 		if (cycle) return cycle.sort((a, b) => a - b);
+	}
+
+	return null;
+}
+
+/** Returns the index of the bracket where routes from many starting brackets merge or null if they never merge. */
+function mergedStartingBrackets(brackets: ParsedBracket[]) {
+	const cache = new Map<number, Set<number>>();
+
+	const startingAncestors = (bracketIdx: number): Set<number> => {
+		const cached = cache.get(bracketIdx);
+		if (cached) return cached;
+
+		const sources = brackets[bracketIdx]?.sources;
+		const result = new Set<number>();
+
+		if (!sources?.length) {
+			result.add(bracketIdx);
+		} else {
+			for (const source of sources) {
+				for (const ancestorIdx of startingAncestors(source.bracketIdx)) {
+					result.add(ancestorIdx);
+				}
+			}
+		}
+
+		cache.set(bracketIdx, result);
+
+		return result;
+	};
+
+	for (const [bracketIdx, bracket] of brackets.entries()) {
+		if (startingAncestors(bracketIdx).size <= 1) continue;
+
+		// the merge already happened earlier in the progression, that bracket is reported instead
+		const mergedEarlier = (bracket.sources ?? []).some(
+			(source) => startingAncestors(source.bracketIdx).size > 1,
+		);
+		if (mergedEarlier) continue;
+
+		return bracketIdx;
 	}
 
 	return null;

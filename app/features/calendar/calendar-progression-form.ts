@@ -382,6 +382,7 @@ function progressionErrorPaths(
 		case "MIXED_POSITIVE_NEGATIVE_PLACEMENTS":
 		case "DUPLICATE_SOURCE_BRACKET":
 		case "EMPTY_PLACEMENTS_ON_NON_SWISS":
+		case "MERGED_STARTING_BRACKETS":
 			return [["progression", error.bracketIdx, "sources"]];
 		default:
 			assertUnreachable(error);

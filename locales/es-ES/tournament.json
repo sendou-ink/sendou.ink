@@ -252,6 +252,7 @@
 	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "Las posiciones vacías solo son válidas cuando provienen de un bracket suizo con avance anticipado",
 	"progression.error.DUPLICATE_SOURCE_BRACKET": "",
 	"progression.error.CYCLIC_PROGRESSION": "",
+	"progression.error.MERGED_STARTING_BRACKETS": "",
 	"lfg.askCaptainToJoinQueue": "Pide al capitán de tu equipo o a un manager que se una a la cola",
 	"customFlow.beforeSet": "Antes del set",
 	"customFlow.afterMap": "Después del mapa",

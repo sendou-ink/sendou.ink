@@ -248,6 +248,7 @@
 	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "空名次仅在来源于包含提前晋级的瑞士轮对战表时有效",
 	"progression.error.DUPLICATE_SOURCE_BRACKET": "",
 	"progression.error.CYCLIC_PROGRESSION": "",
+	"progression.error.MERGED_STARTING_BRACKETS": "",
 	"lfg.askCaptainToJoinQueue": "请让您的队伍队长或管理员加入队列",
 	"customFlow.beforeSet": "本轮对局前",
 	"customFlow.afterMap": "本局结束后",

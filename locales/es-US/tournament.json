@@ -252,6 +252,7 @@
 	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "",
 	"progression.error.DUPLICATE_SOURCE_BRACKET": "",
 	"progression.error.CYCLIC_PROGRESSION": "",
+	"progression.error.MERGED_STARTING_BRACKETS": "",
 	"lfg.askCaptainToJoinQueue": "",
 	"customFlow.beforeSet": "",
 	"customFlow.afterMap": "",
