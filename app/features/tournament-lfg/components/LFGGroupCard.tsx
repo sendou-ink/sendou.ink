@@ -13,7 +13,7 @@ import { Image, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	UserCard,
 	useUserCardData,

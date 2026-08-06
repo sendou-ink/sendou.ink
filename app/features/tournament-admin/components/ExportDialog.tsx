@@ -5,7 +5,7 @@ import {
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import * as CSV from "~/modules/csv";
 import { databaseTimestampToDate } from "~/utils/dates";

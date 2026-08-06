@@ -8,7 +8,7 @@ import { Redirect } from "~/components/Redirect";
 import { SubmitButton } from "~/components/SubmitButton";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";

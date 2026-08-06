@@ -16,6 +16,7 @@ import { Flag } from "~/components/Flag";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 import {
 	SPR_INFO_URL,
@@ -25,7 +26,6 @@ import {
 import type { TournamentResultsLoaderData } from "../loaders/to.$id.results.server";
 import styles from "../tournament.module.css";
 import { TOURNAMENT } from "../tournament-constants";
-import { useTournament } from "./to.$id";
 
 export { loader } from "../loaders/to.$id.results.server";
 

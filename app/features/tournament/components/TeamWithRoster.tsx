@@ -4,10 +4,11 @@ import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { userPage } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
-import { useTournament, useTournamentFriendCodes } from "../routes/to.$id";
+import { useTournamentFriendCodes } from "../routes/to.$id";
 import styles from "../tournament.module.css";
 
 export function TeamWithRoster({

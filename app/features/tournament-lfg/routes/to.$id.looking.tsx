@@ -21,7 +21,7 @@ import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	UserCard,
 	useUserCardData,

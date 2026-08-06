@@ -35,6 +35,10 @@ import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import {
+	TournamentProvider,
+	useTournament,
+} from "~/features/tournament/tournament-context";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
@@ -42,9 +46,7 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
 import {
-	TournamentOverrideProvider,
 	useBracketExpanded,
-	useTournament,
 	useTournamentPreparedMaps,
 } from "../../tournament/routes/to.$id";
 import { action } from "../actions/to.$id.brackets.server";
@@ -88,9 +90,9 @@ export default function TournamentBracketsPage() {
 	);
 
 	return (
-		<TournamentOverrideProvider tournament={tournament}>
+		<TournamentProvider tournament={tournament}>
 			<TournamentBracketsView />
-		</TournamentOverrideProvider>
+		</TournamentProvider>
 	);
 }
 

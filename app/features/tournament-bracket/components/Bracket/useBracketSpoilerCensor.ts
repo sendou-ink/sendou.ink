@@ -1,6 +1,6 @@
 import { differenceInDays } from "date-fns";
-import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
 
 export type SpoilerCensor = "full" | "score-only" | undefined;

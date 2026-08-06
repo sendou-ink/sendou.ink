@@ -7,7 +7,7 @@ import type {
 	TimelinePickBanEvent,
 } from "~/components/match-page/MatchTimeline";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";

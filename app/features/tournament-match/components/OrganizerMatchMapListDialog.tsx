@@ -4,7 +4,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { nullFilledArray } from "~/utils/arrays";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";

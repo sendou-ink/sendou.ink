@@ -28,7 +28,7 @@ vi.mock("react-router", async () => {
 	};
 });
 
-vi.mock("~/features/tournament/routes/to.$id", () => ({
+vi.mock("~/features/tournament/tournament-context", () => ({
 	useTournament: () => mockTournament,
 }));
 

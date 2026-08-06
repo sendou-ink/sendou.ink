@@ -1,5 +1,5 @@
 import { Redirect } from "~/components/Redirect";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { SendouForm } from "~/form/SendouForm";
 import { tournamentAdminPage } from "~/utils/urls";
 import { adminStreamFormSchema } from "../tournament-admin-staff-schemas";

@@ -8,11 +8,11 @@ import { MapPoolStages } from "~/components/MapPoolSelector";
 import { Markdown } from "~/components/Markdown";
 import { Section } from "~/components/Section";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { mapsPageWithMapPool, navIconUrl } from "~/utils/urls";
 import { loader } from "../loaders/to.$id.rules.server";
-import { useTournament } from "./to.$id";
 import styles from "./to.$id.info.module.css";
 
 export { loader };

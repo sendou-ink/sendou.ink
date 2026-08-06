@@ -26,7 +26,7 @@ import {
 	type SortState,
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type {
 	BracketMeta,
 	Tournament,

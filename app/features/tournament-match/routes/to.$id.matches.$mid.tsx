@@ -2,7 +2,7 @@ import { useLoaderData } from "react-router";
 import { containerClassName } from "~/components/Main";
 import { MatchPage } from "~/components/match-page/MatchPage";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/to.$id.matches.$mid.server";
 import { TournamentMatchBanner } from "../components/TournamentMatchBanner";

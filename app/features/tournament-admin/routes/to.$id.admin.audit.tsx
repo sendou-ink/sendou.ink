@@ -5,11 +5,11 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
 import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
-import { useTournament } from "~/features/tournament/routes/to.$id";
 import {
 	TOURNAMENT_AUDIT_LOG_TYPES,
 	type TournamentAuditLogType,
 } from "~/features/tournament/tournament-constants";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { CommonUser } from "~/utils/kysely.server";

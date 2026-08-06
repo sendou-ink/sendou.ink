@@ -9,7 +9,7 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Placement } from "~/components/Placement";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	finalizeTournamentActionSchema,
 	type TournamentBadgeReceivers,

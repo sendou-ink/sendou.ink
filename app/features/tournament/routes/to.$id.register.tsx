@@ -18,6 +18,7 @@ import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -51,7 +52,6 @@ import {
 	type CounterPickValidationStatus,
 	validateCounterPickMapPool,
 } from "../tournament-utils";
-import { useTournament } from "./to.$id";
 
 export { action, loader };
 

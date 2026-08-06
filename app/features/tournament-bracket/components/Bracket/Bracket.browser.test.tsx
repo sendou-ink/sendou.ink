@@ -101,8 +101,11 @@ vi.mock("~/features/auth/core/user", () => ({
 	useUser: () => null,
 }));
 
-vi.mock("~/features/tournament/routes/to.$id", () => ({
+vi.mock("~/features/tournament/tournament-context", () => ({
 	useTournament: () => mockTournament,
+}));
+
+vi.mock("~/features/tournament/routes/to.$id", () => ({
 	useTournamentVods: () => [],
 	useBracketExpanded: () => ({
 		bracketExpanded: true,

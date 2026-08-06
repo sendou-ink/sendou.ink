@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { differenceInMinutes } from "date-fns";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { TournamentRoundMaps } from "~/db/tables-json";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";

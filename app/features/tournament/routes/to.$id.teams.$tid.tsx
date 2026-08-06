@@ -7,6 +7,7 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import { UserLink } from "~/components/UserLink";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
@@ -21,7 +22,6 @@ import {
 	type TournamentTeamLoaderData,
 } from "../loaders/to.$id.teams.$tid.server";
 import styles from "../tournament.module.css";
-import { useTournament } from "./to.$id";
 
 export { loader };
 
