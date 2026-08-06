@@ -1008,60 +1008,87 @@ export function changedBracketProgressionFormat(
  * Returns the order of brackets as is to be considered for standings. Teams from the bracket of lower index are considered to be above those from the lower bracket.
  * A participant's standing is the first bracket to appear in order that has the participant in it.
  *
- * The order is so that most significant brackets (i.e. finals) appear first.
+ * The order is so that most significant brackets (i.e. finals) appear first. A bracket always appears after every bracket
+ * it advances teams to, so the teams it eliminated end up below the teams that advanced out of it.
+ *
+ * Underground brackets are omitted as they are only used to break ties within their source bracket, see `tiebrokenByUndergroundBrackets`.
  */
 export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 	const bracketsToConsider = bracketsReachableFrom(0, progression);
 
-	const withoutIntermediateBrackets = bracketsToConsider.filter(
-		(bracketIdx) => {
-			if (bracketIdx === 0) return true;
+	const ordered = destinationsFirstOrder(bracketsToConsider, progression);
 
-			// underground brackets don't make their source bracket an intermediate one
-			const undergrounds = new Set(
-				undergroundBracketIdxs(bracketIdx, progression),
-			);
+	return ordered.filter((bracketIdx) => {
+		const sources = progression[bracketIdx].sources;
 
-			return progression.every(
-				(b, idx) =>
-					undergrounds.has(idx) ||
-					!b.sources?.some((s) => s.bracketIdx === bracketIdx),
-			);
-		},
-	);
+		if (!sources) return true;
 
-	const withoutUnderground = withoutIntermediateBrackets.filter(
-		(bracketIdx) => {
-			const sources = progression[bracketIdx].sources;
+		return !sources.some(
+			(source) =>
+				(progression[source.bracketIdx].type === "double_elimination" ||
+					progression[source.bracketIdx].type === "single_elimination") &&
+				source.placements.some((placement) => placement < 0),
+		);
+	});
+}
 
-			if (!sources) return true;
-
-			return !sources.some(
-				(source) =>
-					(progression[source.bracketIdx].type === "double_elimination" ||
-						progression[source.bracketIdx].type === "single_elimination") &&
-					source.placements.some((placement) => placement < 0),
-			);
-		},
-	);
+/**
+ * Orders the given brackets so that every bracket appears after all the brackets it is a source of.
+ * Among the brackets that are free to be placed next, the one taking the highest placements from its
+ * sources (e.g. a top cut over a consolation bracket) goes first.
+ */
+function destinationsFirstOrder(
+	bracketIdxs: number[],
+	progression: ParsedBracket[],
+): number[] {
+	const included = new Set(bracketIdxs);
 
 	const minSourcedPlacements = new Map(
-		withoutUnderground.map((idx) => [
-			idx,
-			minSourcedPlacement(progression, idx),
+		bracketIdxs.map((bracketIdx) => [
+			bracketIdx,
+			minSourcedPlacement(progression, bracketIdx),
 		]),
 	);
 
-	return [...withoutUnderground].sort((a, b) => {
-		const minA = minSourcedPlacements.get(a)!;
-		const minB = minSourcedPlacements.get(b)!;
+	const pendingDestinations = new Map(
+		bracketIdxs.map((bracketIdx) => [
+			bracketIdx,
+			new Set(
+				destinationsFromBracketIdx(bracketIdx, progression).filter(
+					(destinationIdx) => included.has(destinationIdx),
+				),
+			),
+		]),
+	);
 
-		if (minA === minB) {
-			return a - b;
+	const result: number[] = [];
+	const remaining = new Set(bracketIdxs);
+
+	while (remaining.size > 0) {
+		const withoutPendingDestinations = Array.from(remaining).filter(
+			(bracketIdx) => pendingDestinations.get(bracketIdx)!.size === 0,
+		);
+		// a cyclic progression is invalid but shouldn't cause an infinite loop here
+		const candidates =
+			withoutPendingDestinations.length > 0
+				? withoutPendingDestinations
+				: Array.from(remaining);
+
+		const next = R.firstBy(
+			candidates,
+			(bracketIdx) => minSourcedPlacements.get(bracketIdx)!,
+			(bracketIdx) => bracketIdx,
+		)!;
+
+		result.push(next);
+		remaining.delete(next);
+
+		for (const bracketIdx of remaining) {
+			pendingDestinations.get(bracketIdx)!.delete(next);
 		}
+	}
 
-		return minA - minB;
-	});
+	return result;
 }
 
 function minSourcedPlacement(

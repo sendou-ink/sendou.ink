@@ -1397,9 +1397,9 @@ describe("bracketIdxsForStandings", () => {
 
 	it("handles low ink", () => {
 		expect(Progression.bracketIdxsForStandings(progressions.lowInk)).toEqual([
-			3, 1,
+			3, 2, 1,
 			0,
-			// NOTE: 2 is omitted as it's an "intermediate" bracket
+			// NOTE: 2 is included so that teams eliminated in it are not dropped down to the starting bracket
 		]);
 	});
 
@@ -1442,7 +1442,15 @@ describe("bracketIdxsForStandings", () => {
 	it("keeps a finals bracket sourced positively from a SE redemption bracket", () => {
 		expect(
 			Progression.bracketIdxsForStandings(progressions.multiSourceTopCut),
-		).toEqual([2, 0]); // missing 1 because it's an intermediate bracket
+		).toEqual([2, 1, 0]);
+	});
+
+	it("places a redemption bracket above the brackets taking lower placements from the same source", () => {
+		expect(
+			Progression.bracketIdxsForStandings(
+				progressions.multiSourceTopCutWithConsolation,
+			),
+		).toEqual([2, 1, 3, 0]);
 	});
 });
 

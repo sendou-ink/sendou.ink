@@ -367,6 +367,49 @@ export const progressions = {
 			],
 		},
 	],
+	multiSourceTopCutWithConsolation: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Redemption",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Top Cut",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [1, 2],
+				},
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Consolation",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [5, 6, 7, 8],
+				},
+			],
+		},
+	],
 	swissToTwoSingleEliminationsWithUnderground: [
 		{
 			...DEFAULT_PROGRESSION_ARGS,
