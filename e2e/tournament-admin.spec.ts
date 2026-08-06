@@ -7,6 +7,7 @@ import { expect, impersonate, test } from "./helpers/playwright";
 import {
 	createTeams,
 	DOUBLE_ELIMINATION,
+	RR_TO_SE,
 	startedTournamentTimes,
 	teamSeeds,
 } from "./helpers/tournament";
@@ -267,6 +268,42 @@ test.describe("Tournament admin team management", () => {
 
 		await admin.searchTeams("zzz-no-such-team-zzz");
 		await expect(admin.locators.noSearchResultsText).toBeVisible();
+	});
+});
+
+test.describe("Tournament admin bracket progression editing", () => {
+	test("edits an unstarted follow-up bracket while the started bracket stays locked", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: RR_TO_SE,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		await factories.TournamentFactory.startBracket(tournament.id);
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		await admin.openBrackets();
+
+		// the started groups stage is locked and can not be removed
+		await expect(admin.locators.bracketNameInputs.first()).toBeDisabled();
+		await expect(admin.locators.bracketNameInputs.nth(1)).toBeEnabled();
+		await expect(admin.locators.removeBracketButtons.first()).toBeDisabled();
+		await expect(admin.locators.removeBracketButtons.nth(1)).toBeEnabled();
+
+		await admin.renameBracket(1, "Top Cut");
+		await admin.saveProgression();
+
+		await admin.goto(tournament.id);
+		await admin.openBrackets();
+		await expect(admin.locators.bracketNameInputs.nth(1)).toHaveValue(
+			"Top Cut",
+		);
 	});
 });
 

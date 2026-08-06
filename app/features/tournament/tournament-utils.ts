@@ -1,15 +1,11 @@
 import { sub } from "date-fns";
 import * as R from "remeda";
-import type {
-	CastedMatchesInfo,
-	TournamentStageSettings,
-} from "~/db/tables-json";
+import type { CastedMatchesInfo } from "~/db/tables-json";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import type { Tables } from "../../db/tables";
-import { assertUnreachable } from "../../utils/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "../match-profile/banned-maps";
 import * as Seasons from "../mmr/core/Seasons";
@@ -232,35 +228,6 @@ export function isLeagueRoundLocked(
 	if (!date) return false;
 
 	return sub(date, { hours: EARLIEST_TIMEZONE_OFFSET_HOURS }) > new Date();
-}
-
-export function defaultBracketSettings(
-	type: Tables["TournamentStage"]["type"],
-): TournamentStageSettings {
-	switch (type) {
-		case "single_elimination": {
-			return {
-				thirdPlaceMatch: true,
-			};
-		}
-		case "double_elimination": {
-			return {};
-		}
-		case "round_robin": {
-			return {
-				teamsPerGroup: 4,
-			};
-		}
-		case "swiss": {
-			return {
-				roundCount: 5,
-				groupCount: 1,
-			};
-		}
-		default: {
-			assertUnreachable(type);
-		}
-	}
 }
 
 export function validateCanJoinTeam({

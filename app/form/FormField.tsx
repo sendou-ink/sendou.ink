@@ -56,6 +56,8 @@ const EMPTY_FORM_VALUES: Record<string, unknown> = {};
 interface FormFieldProps {
 	name: string;
 	label?: string;
+	/** Extra element rendered next to the label, e.g. an `<InfoPopover />` explaining the field's syntax. Only `text-field` supports it. */
+	labelPopover?: React.ReactNode;
 	disabled?: boolean;
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
 	autoFocus?: boolean;
@@ -81,6 +83,7 @@ const FIELD_TYPES_WITH_RENDER_PROP = ["custom", "array"];
 export function FormField({
 	name,
 	label,
+	labelPopover,
 	disabled,
 	autoFocus,
 	maxCount,
@@ -223,6 +226,7 @@ export function FormField({
 				{...formField}
 				disabled={isDisabled}
 				autoFocus={autoFocus}
+				labelPopover={labelPopover}
 				value={value as string}
 				onChange={handleChange as (v: string) => void}
 			/>
