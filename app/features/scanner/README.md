@@ -15,6 +15,7 @@ from the emberz repo; see `MIGRATION.md` there.
 pnpm test:scanner                       # golden-file suite over tests/fixtures/ (Vitest, Node)
 pnpm scanner:report                     # accuracy table + name character error rate across fixtures
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
+pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
 pnpm scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
 pnpm scanner:build-localized-entries    # regen localized closed sets from ../splat3
@@ -38,8 +39,8 @@ sequenceDiagram
   participant UI as Live/VoD tab
   participant ING as /ingest (scanner-ingest)
   participant DB as IngestedMatch / IngestedScoreboard
-  Cap->>W: frame + t
-  W->>W: detectors gate() → parse()
+  Cap->>W: frame + t (live/screenshot/seek) — VoD: worker decodes its own slice
+  W->>W: scheduler dueDetectors() → gate() → parse()
   W-->>TL: DetectedEvents
   TL-->>UI: deduped timeline (IndexedDB on Live)
   UI->>MB: buildScannerMatches(events)
@@ -91,13 +92,36 @@ sequenceDiagram
   accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching
   recognition code.
-- A detector can declare `checkIntervalS` (objective: 1s) to cap how often
-  it is checked at all — the analyzer worker skips gate+parse in between
-  (`core/detectors/throttle.ts`) and exempts it from steady-frame
-  suppression — and `attachFrame: false` to keep continuously-firing events
-  from storing a frame PNG each. In the UI a match's objective reads render
-  as one step-line timeline (`components/ObjectiveTimeline.tsx`) instead of
-  per-event cards.
+- Scheduling (`core/detectors/scheduler.ts`): per scan session the
+  DetectorScheduler decides which detectors look at a frame. While a gate
+  keeps failing its detector is checked every `searchIntervalS` (default
+  0.25s — produced/casted VoDs cut screens to ~1s with transition flicker
+  inside, so search cadence must not assume raw-gameplay screen lifetimes;
+  gates are ~ms-cheap, so this costs little); once the gate passes it
+  drops to the dense refine cadence for best-read refinement. Suppression ends a refinement streak
+  once it stagnates by parse count AND elapsed time (~3s — the time floor
+  keeps a dense cadence from suppressing during a screen's entry animation
+  before it is readable) or immediately at `sufficientConfidence`; death
+  adds `rearmCooldownS` (safe because it fits inside the Death timeline
+  merge window). `checkIntervalS` (objective: 1s)
+  still hard-caps both phases and exempts from suppression; a detector can
+  also declare `attachFrame: false` to keep continuously-firing events from
+  storing a frame PNG each. In the UI a match's objective reads render as
+  one step-line timeline (`components/ObjectiveTimeline.tsx`) instead of
+  per-event cards. Frames no detector is due for skip canvas readback
+  entirely, and everything is counted in `core/detectors/telemetry.ts`
+  (surfaced in the VoD tab's telemetry panel).
+- VoD scans (`components/VodPage.tsx`): on the WebCodecs path the file's
+  duration is split into one contiguous slice per worker and each worker
+  demuxes + decodes its slice itself (mediabunny in the worker — no frames
+  cross the main thread). When the scheduler reports calm (no gate pass for
+  a quiet period, no open match — a confident map-start pins the scan
+  active until a scoreboard or timeout), the worker stops sequential decode
+  and skims keyframe-to-keyframe (single-frame decodes, hop capped at 2.5s
+  so short screens can't hide), snapping back to dense decode on any gate
+  pass. Chunks start dense, so slice boundaries are covered. The seek
+  fallback drives one worker and widens its stride over calm footage the
+  same way.
 - Recognition is language-agnostic: OCR output snaps against every game
   language at once (`core/localized-entries.ts`, generated) and events carry
   sendou ids. English display names come from `components/labels.ts`.

@@ -33,6 +33,7 @@
 		"test:scanner": "vitest run --project scanner",
 		"scanner:report": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/report.ts",
 		"scanner:fixtures": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/run-fixtures.ts",
+		"scanner:replay": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/replay-frames.ts",
 		"scanner:bootstrap-atlas": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/bootstrap-atlas-from-fixture.ts",
 		"scanner:build-glyph-atlas": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/build-glyph-atlas.ts",
 		"scanner:build-localized-entries": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/build-localized-entries.ts",

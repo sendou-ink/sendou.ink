@@ -1,0 +1,311 @@
+/**
+ * DetectorScheduler: one temporally-ordered scan session's answer to "which
+ * detectors should look at the frame at time t, and which of those should
+ * pay for a parse?". It folds together three ideas:
+ *
+ * - Cadence. While a detector's gate keeps failing it is checked every
+ *   `searchIntervalS` (default 0.25s — produced VoDs cut screens to as
+ *   little as ~1s with transition flicker inside that, so the search
+ *   cadence must not assume raw-gameplay screen lifetimes; gates are
+ *   ~1.6ms, so searching at the analysis floor costs nothing). Once the
+ *   gate passes it drops to the dense `refineIntervalS` so the best-read
+ *   refinement loop still sees every frame it wants. `checkIntervalS`
+ *   (objective counter) remains a hard cap on both phases and exempts the
+ *   detector from suppression, as before. `nextDueT()` lets the caller
+ *   skip a frame's canvas readback + normalize entirely when no detector
+ *   is due.
+ *
+ * - Suppression. A static screen that keeps a gate firing stops paying for
+ *   parses once a streak stagnates: at least `maxStagnantParses`
+ *   consecutive parses AND `stagnantAfterS` seconds without the best
+ *   confidence improving. The time floor matters — a gate often fires
+ *   during a screen's entry animation while parses still read nothing, and
+ *   at a dense sampling cadence a pure parse count would suppress before
+ *   the screen ever becomes readable (with the gate held high, it would
+ *   then never re-arm). A parse reaching the detector's
+ *   `sufficientConfidence` suppresses immediately: the timeline keeps the
+ *   best read per merge window, so once a read is that good further parses
+ *   cannot change the outcome. A
+ *   detector with `rearmCooldownS` (death: the overlay's animated
+ *   background makes its gate flicker) additionally skips parses for that
+ *   long after a sufficient read, across gate drops; safe only where the
+ *   timeline merges purely on time and the cooldown fits inside the merge
+ *   window.
+ *
+ * - Activity. The scheduler tracks when any gate last passed and whether a
+ *   match is open (a confident map-start without a closing scoreboard), so
+ *   the VoD chunk scanner can tell dead air ("calm") from footage that
+ *   deserves dense decoding.
+ *
+ * All state is keyed to the scan's own clock; a `t` jumping backwards means
+ * a new capture session or rescan and resets everything.
+ */
+
+import type { DetectedEvent } from "./types";
+
+export interface SchedulingInfo {
+	id: string;
+	checkIntervalS?: number;
+	searchIntervalS?: number;
+	sufficientConfidence?: number;
+	rearmCooldownS?: number;
+}
+
+export interface SchedulerOptions {
+	/**
+	 * false = one-shot harness mode: every detector is due on every frame and
+	 * parses are never suppressed
+	 */
+	suppressSteadyFrames: boolean;
+	/** check cadence while a detector's gate is passing */
+	refineIntervalS: number;
+	/** check cadence while a detector's gate is failing (per-detector
+	 * searchIntervalS overrides) */
+	searchIntervalS: number;
+	/** consecutive non-improving parses tolerated before suppression */
+	maxStagnantParses: number;
+	/** seconds without improvement tolerated before suppression */
+	stagnantAfterS: number;
+	/** minimum confidence gain that counts as an improvement */
+	minImprovement: number;
+	/** seconds without any gate pass before the scan counts as calm */
+	quietAfterS: number;
+	/** a match opened this long ago without closing is assumed abandoned */
+	matchOpenMaxS: number;
+	/** event types that open a match (map-start) */
+	matchOpeningTypes: readonly string[];
+	/** event types that close a match (the scoreboard family) */
+	matchClosingTypes: readonly string[];
+}
+
+const DEFAULT_SCHEDULER_OPTIONS: SchedulerOptions = {
+	suppressSteadyFrames: true,
+	refineIntervalS: 0.15,
+	searchIntervalS: 0.25,
+	maxStagnantParses: 6,
+	// give a screen ~3s to animate in and produce its best read, whatever
+	// the sampling cadence
+	stagnantAfterS: 3,
+	minImprovement: 0.001,
+	quietAfterS: 15,
+	matchOpenMaxS: 8 * 60,
+	matchOpeningTypes: [],
+	matchClosingTypes: [],
+};
+
+/** events below this are too dubious to drive match-open/close state */
+const MATCH_STATE_MIN_CONFIDENCE = 0.6;
+
+/** tolerated backwards jitter in t before the session counts as restarted */
+const RESET_TOLERANCE_S = 5;
+
+const INTERVAL_EPSILON_S = 1e-6;
+
+interface StreakState {
+	best: number;
+	stagnant: number;
+	lastImprovementT: number;
+	suppressed: boolean;
+}
+
+interface DetectorState {
+	info: SchedulingInfo;
+	lastCheckT: number | undefined;
+	gatePassing: boolean;
+	streak: StreakState | null;
+	/** parses skipped until this t after a sufficient read (rearmCooldownS) */
+	parseHoldUntilT: number;
+}
+
+export class DetectorScheduler {
+	#options: SchedulerOptions;
+	#states = new Map<string, DetectorState>();
+	#maxT = Number.NEGATIVE_INFINITY;
+	#lastActivityT = Number.NEGATIVE_INFINITY;
+	#matchOpenUntilT = Number.NEGATIVE_INFINITY;
+
+	constructor(
+		detectors: readonly SchedulingInfo[],
+		options: Partial<SchedulerOptions> = {},
+	) {
+		this.#options = { ...DEFAULT_SCHEDULER_OPTIONS, ...options };
+		for (const info of detectors) {
+			this.#states.set(info.id, freshState(info));
+		}
+	}
+
+	/** Drop all session state; `t` seeds the activity clock (chunk start). */
+	reset(t = Number.NEGATIVE_INFINITY): void {
+		for (const [id, state] of this.#states) {
+			this.#states.set(id, freshState(state.info));
+		}
+		this.#maxT = t;
+		this.#lastActivityT = t;
+		this.#matchOpenUntilT = Number.NEGATIVE_INFINITY;
+	}
+
+	/**
+	 * Earliest t at which any detector wants a check — frames before it can
+	 * skip analysis (and its canvas readback) entirely.
+	 */
+	nextDueT(): number {
+		let next = Number.POSITIVE_INFINITY;
+		for (const state of this.#states.values()) {
+			if (state.lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
+			next = Math.min(next, state.lastCheckT + this.#interval(state));
+		}
+		return next;
+	}
+
+	/** Detector ids that should gate the frame at `t`. */
+	dueDetectors(t: number): string[] {
+		if (t + RESET_TOLERANCE_S < this.#maxT) this.reset(t);
+		// the first frame seeds the activity clock so a fresh session is never
+		// instantly calm — it has to earn its quiet period first
+		if (this.#lastActivityT === Number.NEGATIVE_INFINITY) {
+			this.#lastActivityT = t;
+		}
+		this.#maxT = Math.max(this.#maxT, t);
+		const due: string[] = [];
+		for (const [id, state] of this.#states) {
+			if (state.lastCheckT === undefined) {
+				due.push(id);
+				continue;
+			}
+			if (t - state.lastCheckT >= this.#interval(state) - INTERVAL_EPSILON_S) {
+				due.push(id);
+			}
+		}
+		return due;
+	}
+
+	/** Report a gate outcome for a detector this scheduler marked due. */
+	recordGate(id: string, t: number, pass: boolean): void {
+		const state = this.#states.get(id);
+		if (!state) return;
+		state.lastCheckT = t;
+		state.gatePassing = pass;
+		if (pass) {
+			this.#lastActivityT = Math.max(this.#lastActivityT, t);
+		} else {
+			state.streak = null;
+		}
+	}
+
+	/** Whether the (passed) gate should be followed by a parse at `t`. */
+	shouldParse(id: string, t: number): boolean {
+		if (!this.#options.suppressSteadyFrames) return true;
+		const state = this.#states.get(id);
+		if (!state) return true;
+		if (state.info.checkIntervalS !== undefined) return true;
+		if (t < state.parseHoldUntilT) return false;
+		return !state.streak?.suppressed;
+	}
+
+	/** Report the outcome of a parse this scheduler approved. */
+	recordParse(
+		id: string,
+		t: number,
+		events: readonly Pick<DetectedEvent, "type" | "confidence">[],
+	): void {
+		this.#recordMatchState(t, events);
+		const state = this.#states.get(id);
+		if (!state || state.info.checkIntervalS !== undefined) return;
+		// no events counts as confidence 0: a false-firing gate on a static
+		// screen stagnates and gets suppressed just like a parsed one
+		const confidence = events.reduce(
+			(max, e) => Math.max(max, e.confidence),
+			0,
+		);
+		const { sufficientConfidence, rearmCooldownS } = state.info;
+		if (
+			sufficientConfidence !== undefined &&
+			confidence >= sufficientConfidence
+		) {
+			state.streak = {
+				best: confidence,
+				stagnant: 0,
+				lastImprovementT: t,
+				suppressed: true,
+			};
+			if (rearmCooldownS !== undefined) {
+				state.parseHoldUntilT = t + rearmCooldownS;
+			}
+			return;
+		}
+		if (!state.streak) {
+			state.streak = {
+				best: confidence,
+				stagnant: 0,
+				lastImprovementT: t,
+				suppressed: false,
+			};
+			return;
+		}
+		const streak = state.streak;
+		if (confidence > streak.best + this.#options.minImprovement) {
+			streak.best = confidence;
+			streak.stagnant = 0;
+			streak.lastImprovementT = t;
+			return;
+		}
+		streak.stagnant += 1;
+		if (
+			streak.stagnant >= this.#options.maxStagnantParses &&
+			t - streak.lastImprovementT >= this.#options.stagnantAfterS
+		) {
+			streak.suppressed = true;
+		}
+	}
+
+	/**
+	 * True when the footage at `t` is dead air as far as detection goes: no
+	 * gate has passed for quietAfterS and no match is open — the VoD scanner
+	 * may skim by keyframes instead of decoding densely.
+	 */
+	calm(t: number): boolean {
+		if (!this.#options.suppressSteadyFrames) return false;
+		return (
+			t - this.#lastActivityT >= this.#options.quietAfterS &&
+			t >= this.#matchOpenUntilT
+		);
+	}
+
+	#interval(state: DetectorState): number {
+		if (!this.#options.suppressSteadyFrames) return 0;
+		const { info } = state;
+		if (info.checkIntervalS !== undefined) return info.checkIntervalS;
+		const search = info.searchIntervalS ?? this.#options.searchIntervalS;
+		// while suppressed only the gate keeps running (to spot the screen
+		// changing), which the sparser search cadence covers
+		if (state.streak?.suppressed) return search;
+		return state.gatePassing ? this.#options.refineIntervalS : search;
+	}
+
+	#recordMatchState(
+		t: number,
+		events: readonly Pick<DetectedEvent, "type" | "confidence">[],
+	): void {
+		for (const event of events) {
+			if (event.confidence < MATCH_STATE_MIN_CONFIDENCE) continue;
+			if (this.#options.matchOpeningTypes.includes(event.type)) {
+				this.#matchOpenUntilT = Math.max(
+					this.#matchOpenUntilT,
+					t + this.#options.matchOpenMaxS,
+				);
+			} else if (this.#options.matchClosingTypes.includes(event.type)) {
+				this.#matchOpenUntilT = Math.min(this.#matchOpenUntilT, t);
+			}
+		}
+	}
+}
+
+function freshState(info: SchedulingInfo): DetectorState {
+	return {
+		info,
+		lastCheckT: undefined,
+		gatePassing: false,
+		streak: null,
+		parseHoldUntilT: Number.NEGATIVE_INFINITY,
+	};
+}

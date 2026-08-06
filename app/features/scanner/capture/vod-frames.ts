@@ -1,45 +1,27 @@
 /**
- * VoD frame extraction: step through a video file yielding (frame, t) as
- * fast as decoding allows — no real-time playback. The primary path demuxes
- * the file and decodes **every frame** sequentially with WebCodecs (via
- * mediabunny), yielding the VideoFrames themselves (transferable to the
- * analyzer workers with no main-thread conversion); when the container/codec
- * can't be read that way, it falls back to seek-stepping a <video> element
- * at a small fixed step, which handles anything the browser can play at the
- * cost of per-seek latency and frame-exact coverage.
+ * VoD scan entry points. The primary path probes whether WebCodecs (via
+ * mediabunny) can decode the file — if so, the analyzer workers each demux
+ * and decode their own time slice of it (worker/analyzer.worker.ts) and no
+ * frames cross the main thread at all. When the container/codec can't be
+ * read that way, the fallback seek-steps a <video> element, which handles
+ * anything the browser can play at the cost of per-seek latency; its stride
+ * is supplied per step so the caller can widen it over calm footage.
  */
-import { ALL_FORMATS, BlobSource, Input, VideoSampleSink } from "mediabunny";
-
-/**
- * Seek fallback step: a <video> element can't enumerate frames, so seek in
- * increments small enough that anything but blink-and-miss overlays is caught.
- */
-const SEEK_STEP_SECONDS = 0.25;
+import { ALL_FORMATS, BlobSource, Input } from "mediabunny";
 
 interface VodFrame {
 	/** the consumer owns the frame and must close() it */
-	frame: ImageBitmap | VideoFrame;
+	frame: ImageBitmap;
 	/** seconds into the video */
 	t: number;
 }
 
-export interface VodScan {
-	method: "webcodecs" | "seek";
-	duration: number;
-	frames: AsyncGenerator<VodFrame>;
-	dispose(): void;
-}
-
 /**
- * Open a scan over `file`, yielding every decoded frame (or, on the seek
- * fallback, one frame every SEEK_STEP_SECONDS). `video` must already have
- * the file loaded (metadata not required yet); it is only driven by the
- * seek fallback.
+ * Whether mediabunny + WebCodecs can decode `file`, and its duration if so.
  */
-export async function openVodScan(
+export async function probeWebCodecs(
 	file: File,
-	video: HTMLVideoElement,
-): Promise<VodScan> {
+): Promise<{ duration: number } | null> {
 	const input = new Input({
 		formats: ALL_FORMATS,
 		source: new BlobSource(file),
@@ -47,52 +29,40 @@ export async function openVodScan(
 	try {
 		const track = await input.getPrimaryVideoTrack();
 		if (track && (await track.canDecode())) {
-			const duration = await input.computeDuration([track]);
-			return {
-				method: "webcodecs",
-				duration,
-				frames: webCodecsFrames(input, new VideoSampleSink(track)),
-				dispose: () => input.dispose(),
-			};
+			return { duration: await input.computeDuration([track]) };
 		}
-		input.dispose();
+		return null;
 	} catch {
-		input.dispose();
-	}
-
-	await loadMetadata(video);
-	if (!Number.isFinite(video.duration)) {
-		throw new Error("video has no known duration — cannot scan by seeking");
-	}
-	return {
-		method: "seek",
-		duration: video.duration,
-		frames: seekFrames(video),
-		dispose: () => {},
-	};
-}
-
-async function* webCodecsFrames(
-	input: Input,
-	sink: VideoSampleSink,
-): AsyncGenerator<VodFrame> {
-	try {
-		for await (const sample of sink.samples()) {
-			if (!sample) continue;
-			const t = sample.timestamp;
-			const frame = sample.toVideoFrame();
-			sample.close();
-			yield { frame, t };
-		}
+		return null;
 	} finally {
 		input.dispose();
 	}
 }
 
-async function* seekFrames(video: HTMLVideoElement): AsyncGenerator<VodFrame> {
-	for (let t = 0; t < video.duration; t += SEEK_STEP_SECONDS) {
+/**
+ * Open a seek-stepping scan over `video` (which must already have the file
+ * loaded; metadata is awaited here). `nextStrideS` is consulted after every
+ * yielded frame, so analysis feedback can adjust the step on the fly.
+ */
+export async function openSeekScan(
+	video: HTMLVideoElement,
+	nextStrideS: () => number,
+): Promise<{ duration: number; frames: AsyncGenerator<VodFrame> }> {
+	await loadMetadata(video);
+	if (!Number.isFinite(video.duration)) {
+		throw new Error("video has no known duration — cannot scan by seeking");
+	}
+	return { duration: video.duration, frames: seekFrames(video, nextStrideS) };
+}
+
+async function* seekFrames(
+	video: HTMLVideoElement,
+	nextStrideS: () => number,
+): AsyncGenerator<VodFrame> {
+	for (let t = 0; t < video.duration; ) {
 		await seekTo(video, t);
 		yield { frame: await createImageBitmap(video), t };
+		t += Math.max(0.01, nextStrideS());
 	}
 }
 

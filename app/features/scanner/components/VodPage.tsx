@@ -1,25 +1,30 @@
 /**
  * VoD tab: load a video file and scan it for scoreboard matches as fast as
- * decoding allows — no real-time playback (see src/capture/vod-frames.ts).
- * Every frame is decoded and handed to a pool of analyzer workers; decode
- * never waits on analysis (a frame arriving while all workers are busy is
- * dropped — the next is ~1/60s away), so the scan runs at decode speed and
- * analysis coverage stays as dense as the machine keeps up with — dense
- * enough that even overlays visible for a fraction of a second are seen.
- * Each match can be opened in the screenshot page with the exact frame
- * that was analyzed.
+ * decoding allows — no real-time playback. On the primary (WebCodecs) path
+ * the file's duration is split into one contiguous slice per analyzer
+ * worker and each worker demuxes, decodes, schedules and analyzes its slice
+ * by itself (worker/analyzer.worker.ts): no frames cross the main thread,
+ * scheduling state is exact per slice, and calm stretches are skimmed by
+ * keyframe hops instead of decoded frame-by-frame. The seek fallback drives
+ * a <video> element through a single worker, widening its stride over calm
+ * footage. Each match can be opened in the screenshot page with the exact
+ * frame that was analyzed.
  *
  * Completed scans are persisted to IndexedDB keyed by file name
  * (src/store/vods.ts); the default view lists them for reinspection.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { openVodScan } from "../capture/vod-frames";
+import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
+import {
+	mergeScanTelemetry,
+	type ScanTelemetry,
+} from "../core/detectors/telemetry";
 import type { DetectedEvent } from "../core/detectors/types";
 import {
 	buildScannerMatches,
@@ -36,7 +41,11 @@ import {
 	saveVod,
 	type VodSummary,
 } from "../store/vods";
-import { AnalyzerPool, defaultPoolSize } from "../worker/pool";
+import {
+	AnalyzerClient,
+	type DoneInfo,
+	defaultScanWorkerCount,
+} from "../worker/client";
 import { withoutRepeatEvents } from "./dedupe-events";
 import { EventCard, type GetFrame } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
@@ -55,16 +64,14 @@ import {
 import { sendouUpload } from "./sendou-upload";
 import { thumbnailFromBlob } from "./thumbnail";
 
+/** seek-fallback stride while the worker reports activity */
+const SEEK_ACTIVE_STRIDE_S = 0.25;
 /**
- * Hard coverage floor: at most this much video may pass between two analyzed
- * frames. Busy-dropping alone is not enough — around match results every
- * gate fires and each analyzed frame runs a full parse (+ PNG encode), so
- * the whole pool can stay busy for hundreds of ms while decode races ahead
- * whole seconds of video; short screens (the own-results screen shows ~3s)
- * then fall into the gap. When the budget is spent and no worker is free,
- * decode waits.
+ * seek-fallback stride over calm footage (nothing detected for a while, no
+ * match open) — small enough that the screens that can start activity from
+ * dead air (results ~10s, match intro ~7s) still get sampled
  */
-const MAX_ANALYSIS_GAP_SECONDS = 0.25;
+const SEEK_CALM_STRIDE_S = 2.5;
 
 type Status = "idle" | "scanning" | "done" | "error";
 
@@ -108,7 +115,12 @@ export function VodPage({
 }) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const previewRef = useRef<HTMLCanvasElement>(null);
-	const poolRef = useRef<AnalyzerPool | null>(null);
+	const clientsRef = useRef<AnalyzerClient[]>([]);
+	// cancels the in-flight chunk scans of the previous scan, if any
+	const abortScanRef = useRef<(() => void) | null>(null);
+	// seek fallback: latest per-frame done info + the waiter for the next one
+	const doneInfoRef = useRef<DoneInfo | null>(null);
+	const frameDoneRef = useRef<(() => void) | null>(null);
 	const timelineRef = useRef(new TimelineBuilder());
 	// latest gate score from any worker; flushed to state on the UI throttle
 	const gateScoreRef = useRef<number | null>(null);
@@ -131,6 +143,7 @@ export function VodPage({
 	const [matches, setMatches] = useState<VodMatch[]>([]);
 	const [vods, setVods] = useState<VodSummary[]>([]);
 	const [error, setError] = useState<string | null>(null);
+	const [telemetry, setTelemetry] = useState<ScanTelemetry | null>(null);
 	const [over, setOver] = useState(false);
 	const [eventsOpen, setEventsOpen] = useState(false);
 	const [resultsSend, setResultsSend] = useState<ResultsSend | null>(null);
@@ -207,7 +220,9 @@ export function VodPage({
 		void refreshVods();
 		return () => {
 			abortRef.current.aborted = true;
-			poolRef.current?.dispose();
+			abortScanRef.current?.();
+			for (const client of clientsRef.current) client.dispose();
+			clientsRef.current = [];
 			if (urlRef.current) URL.revokeObjectURL(urlRef.current);
 		};
 	}, [refreshVods]);
@@ -215,10 +230,12 @@ export function VodPage({
 	const scan = useCallback(
 		async (file: File) => {
 			abortRef.current.aborted = true;
+			abortScanRef.current?.();
 			const abort = { aborted: false };
 			abortRef.current = abort;
 
 			setError(null);
+			setTelemetry(null);
 			setMatches([]);
 			setResultsSend(null);
 			setEventsOpen(false);
@@ -229,7 +246,6 @@ export function VodPage({
 			setSource("scan");
 			setStatus("scanning");
 
-			let dispose = () => {};
 			try {
 				// the element is used by the seek fallback and for post-scan review
 				const video = videoRef.current!;
@@ -237,109 +253,83 @@ export function VodPage({
 				urlRef.current = URL.createObjectURL(file);
 				video.src = urlRef.current;
 
-				poolRef.current ??= new AnalyzerPool(
-					defaultPoolSize(),
-					(result) => {
-						gateScoreRef.current = result.gate.score;
-						if (!result.gate.pass) return;
-						for (const event of result.events as DetectedEvent<FixtureData>[]) {
-							const action = timelineRef.current.push(event);
-							if (action.action !== "added" && action.action !== "replaced")
-								continue;
-							const frame = result.frame;
-							sideWorkRef.current.push(
-								(async () => {
-									const thumbnail = frame
-										? await thumbnailFromBlob(frame)
-										: undefined;
-									const replaced =
-										action.action === "replaced"
-											? matchesRef.current.find(
-													(m) => m.event === action.replaced,
-												)
-											: undefined;
-									const next = matchesRef.current.filter((m) => m !== replaced);
-									next.push({
-										event,
-										key: replaced?.key ?? nextMatchKeyRef.current++,
-										thumbnail,
-										frame,
-									});
-									next.sort((a, b) => a.event.t - b.event.t);
-									matchesRef.current = next;
-									setMatches(next);
-								})().catch(() => {}),
-							);
-						}
-					},
-					(message) => {
-						setError(message);
-						setStatus("error");
-					},
-				);
-				const pool = poolRef.current;
-				await pool.whenReady();
-				// let frames still in flight from an aborted scan finish before the
-				// timeline resets, so their results can't bleed into this scan
-				await pool.whenIdle();
+				if (clientsRef.current.length === 0) {
+					clientsRef.current = Array.from(
+						{ length: defaultScanWorkerCount() },
+						() =>
+							new AnalyzerClient(
+								(result) => {
+									gateScoreRef.current = result.gate.score;
+									if (!result.gate.pass) return;
+									for (const event of result.events as DetectedEvent<FixtureData>[]) {
+										const action = timelineRef.current.push(event);
+										if (
+											action.action !== "added" &&
+											action.action !== "replaced"
+										)
+											continue;
+										const frame = result.frame;
+										sideWorkRef.current.push(
+											(async () => {
+												const thumbnail = frame
+													? await thumbnailFromBlob(frame)
+													: undefined;
+												const replaced =
+													action.action === "replaced"
+														? matchesRef.current.find(
+																(m) => m.event === action.replaced,
+															)
+														: undefined;
+												const next = matchesRef.current.filter(
+													(m) => m !== replaced,
+												);
+												next.push({
+													event,
+													key: replaced?.key ?? nextMatchKeyRef.current++,
+													thumbnail,
+													frame,
+												});
+												next.sort((a, b) => a.event.t - b.event.t);
+												matchesRef.current = next;
+												setMatches(next);
+											})().catch(() => {}),
+										);
+									}
+								},
+								(message) => {
+									frameDoneRef.current?.();
+									frameDoneRef.current = null;
+									setError(message);
+									setStatus("error");
+								},
+								(_t, info: DoneInfo) => {
+									doneInfoRef.current = info;
+									frameDoneRef.current?.();
+									frameDoneRef.current = null;
+								},
+							),
+					);
+				}
+				const clients = clientsRef.current;
+				await Promise.all(clients.map((c) => c.whenReady()));
+				// let work still in flight from an aborted scan finish before the
+				// timeline resets, so its results can't bleed into this scan
+				await Promise.all(clients.map((c) => c.whenIdle()));
 				if (abort.aborted) return;
 				matchesRef.current = [];
 				sideWorkRef.current = [];
 				timelineRef.current = new TimelineBuilder();
 
-				const vod = await openVodScan(file, video);
-				dispose = () => vod.dispose();
-				if (abort.aborted) return;
-				setMethod(vod.method);
-
 				const started = performance.now();
-				// each frame goes to an idle worker; with none free it is dropped
-				// unless MAX_ANALYSIS_GAP_SECONDS of video has passed unanalyzed,
-				// in which case decode waits for a worker. Preview/progress
-				// re-renders are throttled off the hot loop (the preview draw must
-				// precede tryAnalyze — transferring the frame to a worker detaches it).
-				let lastUiUpdate = Number.NEGATIVE_INFINITY;
-				let lastAnalyzedT = Number.NEGATIVE_INFINITY;
-				for await (const { frame, t } of vod.frames) {
-					if (abort.aborted) {
-						frame.close();
-						break;
-					}
-					const now = performance.now();
-					if (now - lastUiUpdate >= 250) {
-						lastUiUpdate = now;
-						drawPreview(previewRef.current, frame);
-						setGateScore(gateScoreRef.current);
-						const elapsed = (now - started) / 1000;
-						setProgress({
-							t,
-							duration: vod.duration,
-							rate: elapsed > 0 ? t / elapsed : 0,
-						});
-					}
-					if (!pool.hasIdle()) {
-						if (t - lastAnalyzedT < MAX_ANALYSIS_GAP_SECONDS) {
-							frame.close();
-							continue;
-						}
-						await pool.whenAnyIdle();
-						if (abort.aborted) {
-							frame.close();
-							break;
-						}
-					}
-					pool.tryAnalyze(frame, t);
-					lastAnalyzedT = t;
-				}
-				await pool.whenIdle();
-				await Promise.all(sideWorkRef.current);
-				if (!abort.aborted) {
+				const finalize = async (duration: number) => {
+					await Promise.all(sideWorkRef.current);
+					if (abort.aborted) return;
 					matchesRef.current = withoutInvalidObjectives(matchesRef.current);
 					setMatches(matchesRef.current);
-					setProgress((p) => (p ? { ...p, t: vod.duration } : p));
+					setProgress((p) => (p ? { ...p, t: duration } : p));
 					setStatus("done");
 					await saveVod(
-						{ name: file.name, savedAt: Date.now(), duration: vod.duration },
+						{ name: file.name, savedAt: Date.now(), duration },
 						matchesRef.current.map((m) => ({
 							type: m.event.type,
 							t: m.event.t,
@@ -350,14 +340,126 @@ export function VodPage({
 						})),
 					);
 					await refreshVods();
+				};
+
+				const probe = await probeWebCodecs(file);
+				if (abort.aborted) return;
+
+				if (probe) {
+					// each worker demuxes, decodes and analyzes its own slice of
+					// the file; the main thread only aggregates progress
+					setMethod("webcodecs");
+					const { duration } = probe;
+					const chunkSpan = duration / clients.length;
+					const chunks = clients.map((client, i) => ({
+						client,
+						tStart: i * chunkSpan,
+						tEnd: i === clients.length - 1 ? duration : (i + 1) * chunkSpan,
+						t: i * chunkSpan,
+						done: false,
+						telemetry: null as ScanTelemetry | null,
+					}));
+					abortScanRef.current = () => {
+						for (const client of clients) client.abortChunk();
+					};
+					const mergedTelemetry = () =>
+						mergeScanTelemetry(
+							chunks.flatMap((c) => (c.telemetry ? [c.telemetry] : [])),
+						);
+					let lastUiUpdate = Number.NEGATIVE_INFINITY;
+					const pushUiUpdate = () => {
+						const now = performance.now();
+						if (now - lastUiUpdate < 250) return;
+						lastUiUpdate = now;
+						const covered = chunks.reduce(
+							(sum, c) => sum + (Math.min(c.t, c.tEnd) - c.tStart),
+							0,
+						);
+						const elapsed = (now - started) / 1000;
+						setGateScore(gateScoreRef.current);
+						setProgress({
+							t: covered,
+							duration,
+							rate: elapsed > 0 ? covered / elapsed : 0,
+						});
+						setTelemetry(mergedTelemetry());
+					};
+					await Promise.all(
+						chunks.map((chunk, chunkIndex) =>
+							chunk.client
+								.scanChunk(
+									{ file, chunkIndex, tStart: chunk.tStart, tEnd: chunk.tEnd },
+									(progress) => {
+										chunk.t = progress.t;
+										chunk.telemetry = progress.telemetry;
+										if (progress.preview) {
+											// show one chunk at a time: the earliest still running
+											if (chunks.find((c) => !c.done) === chunk) {
+												drawPreview(previewRef.current, progress.preview);
+											}
+											progress.preview.close();
+										}
+										pushUiUpdate();
+									},
+								)
+								.then((chunkTelemetry) => {
+									chunk.done = true;
+									chunk.t = chunk.tEnd;
+									chunk.telemetry = chunkTelemetry;
+								}),
+						),
+					);
+					if (abort.aborted) return;
+					setTelemetry(mergedTelemetry());
+					await finalize(duration);
+					return;
 				}
+
+				// seek fallback: one worker, one frame in flight; the worker's calm
+				// signal widens the stride over dead air
+				setMethod("seek");
+				const strideRef = { current: SEEK_ACTIVE_STRIDE_S };
+				const vod = await openSeekScan(video, () => strideRef.current);
+				if (abort.aborted) return;
+				const client = clients[0]!;
+				let lastUiUpdate = Number.NEGATIVE_INFINITY;
+				for await (const { frame, t } of vod.frames) {
+					if (abort.aborted) {
+						frame.close();
+						break;
+					}
+					const now = performance.now();
+					if (now - lastUiUpdate >= 250) {
+						lastUiUpdate = now;
+						// the preview draw must precede analyze — transferring the
+						// frame to the worker detaches it
+						drawPreview(previewRef.current, frame);
+						setGateScore(gateScoreRef.current);
+						const elapsed = (now - started) / 1000;
+						setProgress({
+							t,
+							duration: vod.duration,
+							rate: elapsed > 0 ? t / elapsed : 0,
+						});
+						if (doneInfoRef.current)
+							setTelemetry(doneInfoRef.current.telemetry);
+					}
+					await new Promise<void>((resolve) => {
+						frameDoneRef.current = resolve;
+						if (!client.analyze(frame, t)) resolve();
+					});
+					strideRef.current = doneInfoRef.current?.calm
+						? SEEK_CALM_STRIDE_S
+						: SEEK_ACTIVE_STRIDE_S;
+				}
+				if (doneInfoRef.current) setTelemetry(doneInfoRef.current.telemetry);
+				await finalize(vod.duration);
 			} catch (e) {
 				if (!abort.aborted) {
+					abortScanRef.current?.();
 					setError(String(e));
 					setStatus("error");
 				}
-			} finally {
-				dispose();
 			}
 		},
 		[refreshVods],
@@ -365,6 +467,8 @@ export function VodPage({
 
 	const openStored = useCallback(async (name: string) => {
 		abortRef.current.aborted = true;
+		abortScanRef.current?.();
+		setTelemetry(null);
 		try {
 			const events = await loadVodEvents(name);
 			// VoDs saved before objective reads were mode-gated may carry them
@@ -408,6 +512,8 @@ export function VodPage({
 
 	const backToList = useCallback(() => {
 		abortRef.current.aborted = true;
+		abortScanRef.current?.();
+		setTelemetry(null);
 		matchesRef.current = [];
 		setMatches([]);
 		setResultsSend(null);
@@ -534,6 +640,9 @@ export function VodPage({
 				)}
 			</div>
 			{error && <p className="error">{error}</p>}
+			{showVodView && telemetry ? (
+				<TelemetryPanel telemetry={telemetry} />
+			) : null}
 			{!showVodView && (
 				<div className="vod-list">
 					{vods.length === 0 && (
@@ -687,6 +796,51 @@ function frameLoader(m: VodMatch): GetFrame | undefined {
 		: m.frameId !== undefined
 			? () => loadVodEventFrame(m.frameId!)
 			: undefined;
+}
+
+function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
+	const detectors = Object.entries(telemetry.detectors).sort(([a], [b]) =>
+		a.localeCompare(b),
+	);
+	const coveredS = telemetry.activeVideoS + telemetry.skimVideoS;
+	return (
+		<details className="telemetry">
+			<summary>
+				telemetry · analyzed {telemetry.analyzedFrames}/
+				{telemetry.decodedFrames} decoded frames
+				{coveredS > 0 &&
+					` · skimmed ${formatTime(telemetry.skimVideoS)} of ${formatTime(coveredS)}`}
+				{telemetry.wallMs > 0 &&
+					` · ${formatTime(telemetry.wallMs / 1000)} cpu`}
+			</summary>
+			<table>
+				<thead>
+					<tr>
+						<th>detector</th>
+						<th>checks</th>
+						<th>gate pass</th>
+						<th>gate ms</th>
+						<th>parses</th>
+						<th>parse ms</th>
+						<th>suppressed</th>
+					</tr>
+				</thead>
+				<tbody>
+					{detectors.map(([id, d]) => (
+						<tr key={id}>
+							<td>{id}</td>
+							<td>{d.checks}</td>
+							<td>{d.gatePasses}</td>
+							<td>{Math.round(d.gateMs)}</td>
+							<td>{d.parses}</td>
+							<td>{Math.round(d.parseMs)}</td>
+							<td>{d.suppressedParses}</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		</details>
+	);
 }
 
 function drawPreview(

@@ -256,5 +256,10 @@ export function createScoreboardOwnDetector(
 		];
 	}
 
-	return { id: "scoreboard-own", gate, parse };
+	return {
+		id: "scoreboard-own",
+		sufficientConfidence: 0.98,
+		gate,
+		parse,
+	};
 }

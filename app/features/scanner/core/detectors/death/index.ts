@@ -820,5 +820,14 @@ export function createDeathDetector(
 		];
 	}
 
-	return { id: "death", gate, parse };
+	// the death cam's animated background flickers the gate; after a
+	// sufficient read the 4s rearm hold stays inside the timeline's 8s
+	// Death merge window, so every parse it skips would merge anyway
+	return {
+		id: "death",
+		sufficientConfidence: 0.98,
+		rearmCooldownS: 4,
+		gate,
+		parse,
+	};
 }

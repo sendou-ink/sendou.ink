@@ -426,5 +426,12 @@ export function createScoreboardReplayDetector(
 		];
 	}
 
-	return { id: "scoreboard-replay", gate, parse };
+	// no rearm cooldown — distinct replays browsed in quick succession are
+	// told apart by content
+	return {
+		id: "scoreboard-replay",
+		sufficientConfidence: 0.98,
+		gate,
+		parse,
+	};
 }

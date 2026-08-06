@@ -33,15 +33,41 @@ export interface GateResult {
 export interface Detector<TData = unknown> {
 	id: string;
 	/**
-	 * Minimum seconds between checks: frames inside the interval skip gate
-	 * and parse entirely (core/detectors/throttle.ts, applied by the
-	 * analyzer worker — per worker, so a VoD pool checks up to poolSize×
-	 * this often). Declaring an interval also exempts the detector from
-	 * steady-frame suppression: it marks a screen that stays up for minutes
-	 * with *changing* content, which the stagnating-confidence heuristic
-	 * would wrongly silence.
+	 * Minimum seconds between checks in *both* scheduling phases: frames
+	 * inside the interval skip gate and parse entirely
+	 * (core/detectors/scheduler.ts, applied by the analyzer worker).
+	 * Declaring an interval also exempts the detector from steady-frame
+	 * suppression: it marks a screen that stays up for minutes with
+	 * *changing* content, which the stagnating-confidence heuristic would
+	 * wrongly silence.
 	 */
 	checkIntervalS?: number;
+	/**
+	 * Check cadence while the gate keeps failing (the search phase); unset =
+	 * the scheduler's default (0.25s). Do not reason from raw-gameplay
+	 * screen lifetimes here: produced/casted VoDs cut screens (results,
+	 * intros) to as little as ~1s, with transition flicker eating frames
+	 * inside that window — the search cadence must sample such a window
+	 * several times. Gates cost ~1.6ms, so searching at the analysis floor
+	 * is effectively free; only override upward with strong evidence.
+	 */
+	searchIntervalS?: number;
+	/**
+	 * A parse reaching this confidence ends the streak's refinement
+	 * immediately: the timeline keeps the best read per merge window, so a
+	 * read this good cannot be improved upon in any way that matters.
+	 * Conservative by construction — if real reads never reach it, behavior
+	 * falls back to stagnation-based suppression.
+	 */
+	sufficientConfidence?: number;
+	/**
+	 * After a sufficient read, skip parses for this long even across gate
+	 * drops — for overlays whose animated background flickers the gate
+	 * (death). Only safe when the event type's timeline merge is purely
+	 * time-based and the cooldown fits inside the merge window, so every
+	 * parse the cooldown skips would have merged into the same event anyway.
+	 */
+	rearmCooldownS?: number;
 	/**
 	 * false = worker results for this detector's events ship without the
 	 * analyzed-frame PNG — for detectors whose events fire continuously,

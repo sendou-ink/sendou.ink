@@ -321,5 +321,11 @@ export function createScoreboardDetector(
 		];
 	}
 
-	return { id: "scoreboard", gate, parse };
+	// a 0.98 mean field score is a clean full read
+	return {
+		id: "scoreboard",
+		sufficientConfidence: 0.98,
+		gate,
+		parse,
+	};
 }

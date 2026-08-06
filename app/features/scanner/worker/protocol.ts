@@ -1,3 +1,4 @@
+import type { ScanTelemetry } from "../core/detectors/telemetry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 
 export interface InitRequest {
@@ -10,8 +11,9 @@ export interface InitRequest {
 	assetsBaseUrl: string;
 	/**
 	 * skip parse() for a detector whose gate keeps firing without confidence
-	 * improving (static screen); default true — one-shot consumers like the
-	 * screenshot harness turn it off
+	 * improving (static screen), and let the scheduler thin out checks;
+	 * default true — one-shot consumers like the screenshot harness turn it
+	 * off to get every detector on every frame
 	 */
 	suppressSteadyFrames?: boolean;
 }
@@ -25,6 +27,32 @@ export interface AnalyzeRequest {
 	t: number;
 }
 
+/**
+ * Scan a time slice of a VoD entirely inside the worker: demux + decode with
+ * mediabunny, schedule detectors, post results as they fire. Decoding in the
+ * worker removes the per-frame main-thread hop and lets each worker own a
+ * contiguous slice, so scheduler state (cadence, suppression, calm) is exact
+ * instead of split across a pool.
+ */
+export interface ScanChunkRequest {
+	kind: "scanChunk";
+	file: File;
+	chunkIndex: number;
+	/** seconds; the chunk scans [tStart, tEnd) */
+	tStart: number;
+	tEnd: number;
+}
+
+export interface AbortChunkRequest {
+	kind: "abortChunk";
+}
+
+export type WorkerRequest =
+	| InitRequest
+	| AnalyzeRequest
+	| ScanChunkRequest
+	| AbortChunkRequest;
+
 export type WorkerResponse =
 	| { kind: "ready" }
 	| {
@@ -36,6 +64,23 @@ export type WorkerResponse =
 			/** lossless PNG of the exact frame that was analyzed; present when events fired */
 			frame?: Blob;
 	  }
-	/** all detectors have reported for frame t */
-	| { kind: "done"; t: number }
+	/** all due detectors have reported for frame t (per-frame path only) */
+	| {
+			kind: "done";
+			t: number;
+			/** scheduler sees dead air — the caller may widen its sampling stride */
+			calm: boolean;
+			telemetry: ScanTelemetry;
+	  }
+	| {
+			kind: "chunkProgress";
+			chunkIndex: number;
+			/** seconds of video the chunk scan has reached */
+			t: number;
+			mode: "active" | "skim";
+			telemetry: ScanTelemetry;
+			/** small bitmap of the latest decoded frame, for the preview canvas */
+			preview?: ImageBitmap;
+	  }
+	| { kind: "chunkDone"; chunkIndex: number; telemetry: ScanTelemetry }
 	| { kind: "error"; message: string };

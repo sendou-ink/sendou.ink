@@ -639,5 +639,10 @@ export function createMinimapDetector(
 		];
 	}
 
-	return { id: "minimap", gate, parse };
+	return {
+		id: "minimap",
+		sufficientConfidence: 0.98,
+		gate,
+		parse,
+	};
 }

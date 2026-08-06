@@ -365,5 +365,10 @@ export function createMapStartDetector(
 		];
 	}
 
-	return { id: "map-start", gate, parse };
+	return {
+		id: "map-start",
+		sufficientConfidence: 0.98,
+		gate,
+		parse,
+	};
 }

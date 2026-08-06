@@ -1,16 +1,38 @@
 /**
- * Main-thread wrapper around the AnalyzerWorker: init handshake, one
- * in-flight frame at a time (the sampler drops frames while busy). Each
- * frame yields one result per registered detector, then a single "done".
+ * Main-thread wrapper around the AnalyzerWorker: init handshake, then either
+ * one in-flight frame at a time (live capture / screenshot / seek fallback —
+ * each frame yields one result per due detector, then a "done" carrying the
+ * scheduler's calm signal and telemetry) or one in-flight chunk scan (the
+ * worker decodes and analyzes a VoD time slice by itself, streaming results
+ * and progress until "chunkDone").
  */
 import { Config } from "../../../config";
+import type { ScanTelemetry } from "../core/detectors/telemetry";
 import type { WorkerResponse } from "./protocol";
 
 export type ResultHandler = (
 	result: Extract<WorkerResponse, { kind: "result" }>,
 ) => void;
 export type ErrorHandler = (message: string) => void;
-export type DoneHandler = (t: number) => void;
+export interface DoneInfo {
+	calm: boolean;
+	telemetry: ScanTelemetry;
+}
+export type DoneHandler = (t: number, info: DoneInfo) => void;
+export type ChunkProgress = Extract<WorkerResponse, { kind: "chunkProgress" }>;
+export type ChunkProgressHandler = (progress: ChunkProgress) => void;
+
+/** each chunk-scanning worker decodes and analyzes on its own; leave a core
+ * for the main thread and one for the browser's media stack */
+export function defaultScanWorkerCount(): number {
+	return Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 4) - 2));
+}
+
+interface PendingChunk {
+	resolve(telemetry: ScanTelemetry): void;
+	reject(error: Error): void;
+	onProgress?: ChunkProgressHandler;
+}
 
 export class AnalyzerClient {
 	#worker: Worker;
@@ -20,6 +42,8 @@ export class AnalyzerClient {
 	#onError: ErrorHandler;
 	#onDone: DoneHandler | undefined;
 	#readyPromise: Promise<void>;
+	#idleWaiters: (() => void)[] = [];
+	#chunk: PendingChunk | null = null;
 
 	constructor(
 		onResult: ResultHandler,
@@ -49,23 +73,27 @@ export class AnalyzerClient {
 			} else if (msg.kind === "result") {
 				this.#onResult(msg);
 			} else if (msg.kind === "done") {
-				this.#busy = false;
-				this.#onDone?.(msg.t);
+				this.#settle();
+				this.#onDone?.(msg.t, { calm: msg.calm, telemetry: msg.telemetry });
+			} else if (msg.kind === "chunkProgress") {
+				this.#chunk?.onProgress?.(msg);
+			} else if (msg.kind === "chunkDone") {
+				const chunk = this.#chunk;
+				this.#chunk = null;
+				this.#settle();
+				chunk?.resolve(msg.telemetry);
 			} else if (msg.kind === "error") {
-				this.#busy = false;
-				this.#onError(msg.message);
+				this.#fail(msg.message);
 			}
 		};
 		// A throw outside the worker's own try/catch posts neither "error" nor
 		// "done"; without these handlers `busy` would stay true forever and the
 		// sampler / VoD scan would silently freeze.
 		this.#worker.onerror = (e: ErrorEvent) => {
-			this.#busy = false;
-			this.#onError(`worker error: ${e.message || String(e)}`);
+			this.#fail(`worker error: ${e.message || String(e)}`);
 		};
 		this.#worker.onmessageerror = () => {
-			this.#busy = false;
-			this.#onError("worker message deserialization failed");
+			this.#fail("worker message deserialization failed");
 		};
 		this.#worker.postMessage({
 			kind: "init",
@@ -82,6 +110,13 @@ export class AnalyzerClient {
 		return this.#busy || !this.#ready;
 	}
 
+	/** Resolves once no frame or chunk scan is in flight. Call whenReady() first. */
+	async whenIdle(): Promise<void> {
+		while (this.#busy) {
+			await new Promise<void>((resolve) => this.#idleWaiters.push(resolve));
+		}
+	}
+
 	/** Returns false (and closes the bitmap) if the worker is still busy. */
 	analyze(bitmap: ImageBitmap | VideoFrame, t: number): boolean {
 		if (this.busy) {
@@ -93,7 +128,46 @@ export class AnalyzerClient {
 		return true;
 	}
 
+	/**
+	 * Scan [tStart, tEnd) of `file` inside the worker. Results stream to the
+	 * shared result handler; resolves with the chunk's telemetry once done
+	 * (an aborted chunk resolves too — abort is not an error).
+	 */
+	scanChunk(
+		request: { file: File; chunkIndex: number; tStart: number; tEnd: number },
+		onProgress?: ChunkProgressHandler,
+	): Promise<ScanTelemetry> {
+		if (this.busy) {
+			return Promise.reject(new Error("analyzer is busy"));
+		}
+		this.#busy = true;
+		return new Promise((resolve, reject) => {
+			this.#chunk = { resolve, reject, onProgress };
+			this.#worker.postMessage({ kind: "scanChunk", ...request });
+		});
+	}
+
+	/** Ask a running chunk scan to stop; it resolves after the current frame. */
+	abortChunk(): void {
+		if (this.#chunk) this.#worker.postMessage({ kind: "abortChunk" });
+	}
+
 	dispose(): void {
 		this.#worker.terminate();
+	}
+
+	#settle(): void {
+		this.#busy = false;
+		const waiters = this.#idleWaiters;
+		this.#idleWaiters = [];
+		for (const waiter of waiters) waiter();
+	}
+
+	#fail(message: string): void {
+		const chunk = this.#chunk;
+		this.#chunk = null;
+		this.#settle();
+		if (chunk) chunk.reject(new Error(message));
+		else this.#onError(message);
 	}
 }
