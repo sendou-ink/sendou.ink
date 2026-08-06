@@ -112,7 +112,8 @@ sequenceDiagram
   still hard-caps both phases and exempts from suppression; a detector can
   also declare `attachFrame: false` to keep continuously-firing events from
   storing a frame PNG each. In the UI a match's objective reads render as
-  one step-line timeline (`components/ObjectiveTimeline.tsx`) instead of
+  one step-line timeline (`~/components/ObjectiveTimeline.tsx`, shared with
+  the match page's stats section) instead of
   per-event cards. Frames no detector is due for skip canvas readback
   entirely, and everything is counted in `core/detectors/telemetry.ts`
   (surfaced in the VoD tab's telemetry panel).

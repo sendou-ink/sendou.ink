@@ -7,7 +7,7 @@ export default defineConfig({
 	test: {
 		name: "scanner",
 		include: ["app/features/scanner/**/*.test.{ts,tsx}"],
-		exclude: [...configDefaults.exclude],
+		exclude: [...configDefaults.exclude, "**/*.browser.test.{ts,tsx}"],
 		// OpenCV WASM init takes seconds and the fixture sweeps are heavy
 		testTimeout: 120_000,
 		hookTimeout: 120_000,

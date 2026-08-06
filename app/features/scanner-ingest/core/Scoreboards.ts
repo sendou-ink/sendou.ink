@@ -1,4 +1,7 @@
-import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
+import type {
+	ScannerMatch,
+	ScannerMatchObjective,
+} from "~/features/scanner/core/scanner-match";
 import type {
 	ScannerAbility,
 	ScannerLobby,
@@ -75,6 +78,13 @@ export interface IngestedScoreboardData {
 	scores: [number | null, number | null];
 	/** in scoreboard order: rows 0-3 winning team, rows 4-7 losing team */
 	players: IngestedScoreboardPlayer[];
+	/**
+	 * objective-counter progress of the game, per-team values [winner, loser]
+	 * and sample `t` in seconds since the game's first read (the source video
+	 * the raw values are offsets into is not stored). Absent when no counter
+	 * was read.
+	 */
+	objective?: ScannerMatchObjective;
 }
 
 export interface MatchedScoreboard {
@@ -202,6 +212,8 @@ interface WinnerFirstView {
 	/** game scores [winner, loser] from the match's "Score:" banner */
 	scores: [number | null, number | null];
 	players: WinnerFirstPlayer[];
+	/** counter progress with both the sides and `t` already stored-shaped */
+	objective: ScannerMatchObjective | null;
 	povIndex: number | null;
 	/** chronological walk key: wall-clock, else video time, else input order */
 	order: number;
@@ -243,6 +255,7 @@ function winnerFirstView(
 			...player,
 			name: player.name ?? "",
 		})),
+		objective: winnerFirstObjective(match.objective, match.winner),
 		povIndex:
 			match.pov === null
 				? null
@@ -250,6 +263,33 @@ function winnerFirstView(
 					? match.pov.index
 					: PLAYERS_PER_TEAM + match.pov.index,
 		order: match.playedAt ?? match.startsAt ?? index,
+	};
+}
+
+/**
+ * Puts a match's counter samples in stored-scoreboard shape: per-team values
+ * winner-first like `scores` and `players`, and `t` rebased to the game's
+ * first read so the samples stay meaningful without the source video.
+ */
+function winnerFirstObjective(
+	objective: ScannerMatchObjective | null,
+	winner: 0 | 1,
+): ScannerMatchObjective | null {
+	if (!objective || objective.samples.length === 0) return null;
+
+	const winnerFirst = <T>(pair: [T, T]): [T, T] =>
+		winner === 0 ? [pair[0], pair[1]] : [pair[1], pair[0]];
+	const firstT = Math.min(...objective.samples.map((sample) => sample.t));
+
+	return {
+		mode: objective.mode,
+		samples: objective.samples.map((sample) => ({
+			t: sample.t - firstT,
+			time: sample.time,
+			score: winnerFirst(sample.score),
+			penalty: winnerFirst(sample.penalty),
+			control: winnerFirst(sample.control),
+		})),
 	};
 }
 
@@ -355,6 +395,7 @@ function viewToMatchedScoreboard({
 		data: {
 			scores: view.scores,
 			players,
+			...(view.objective ? { objective: view.objective } : null),
 		},
 	};
 }

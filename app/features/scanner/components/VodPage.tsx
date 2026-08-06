@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import {
@@ -42,6 +43,7 @@ import {
 	loadVodEventFrame,
 	loadVodEvents,
 	saveVod,
+	saveVodResultsSend,
 	type VodSummary,
 } from "../store/vods";
 import {
@@ -58,7 +60,6 @@ import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
-import { ObjectiveTimeline } from "./ObjectiveTimeline";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -66,6 +67,9 @@ import {
 } from "./sendou-ingest";
 import { sendouUpload } from "./sendou-upload";
 import { thumbnailFromBlob } from "./thumbnail";
+
+/** The scan knows the on-screen sides only, not who is playing. */
+const SCANNER_TEAM_LABELS = ["Alpha", "Bravo"] as const;
 
 /** seek-fallback stride while the worker reports activity */
 const SEEK_ACTIVE_STRIDE_S = 0.25;
@@ -192,6 +196,14 @@ export function VodPage({
 		[status, matches],
 	);
 
+	const refreshVods = useCallback(async () => {
+		try {
+			setVods(await listVods());
+		} catch {
+			// listing failures are non-fatal; the scan UI still works
+		}
+	}, []);
+
 	const uploadResults = useCallback(async () => {
 		const events = matchesRef.current.map((m) => m.event);
 		setResultsSend({
@@ -202,22 +214,20 @@ export function VodPage({
 		const report = await sendVodResults(events, (sent, total) =>
 			setResultsSend({ state: "sending", sent, total }),
 		);
-		setResultsSend({
-			state: "done",
+		const outcome = {
 			sent: report.sentMatches,
 			total: report.totalMatches,
 			error: report.error,
 			at: Date.now(),
-		});
-	}, []);
-
-	const refreshVods = useCallback(async () => {
-		try {
-			setVods(await listVods());
-		} catch {
-			// listing failures are non-fatal; the scan UI still works
+		};
+		setResultsSend({ state: "done", ...outcome });
+		// the scan is saved under its file name, so its send outcome can be
+		// restored when the VoD is reopened
+		if (fileName) {
+			await saveVodResultsSend(fileName, outcome);
+			await refreshVods();
 		}
-	}, []);
+	}, [fileName, refreshVods]);
 
 	useEffect(() => {
 		void refreshVods();
@@ -468,7 +478,8 @@ export function VodPage({
 		[refreshVods],
 	);
 
-	const openStored = useCallback(async (name: string) => {
+	const openStored = useCallback(async (vod: VodSummary) => {
+		const name = vod.name;
 		abortRef.current.aborted = true;
 		abortScanRef.current?.();
 		setTelemetry(null);
@@ -490,7 +501,9 @@ export function VodPage({
 			);
 			matchesRef.current = loaded;
 			setMatches(loaded);
-			setResultsSend(null);
+			setResultsSend(
+				vod.resultsSend ? { state: "done", ...vod.resultsSend } : null,
+			);
 			setEventsOpen(false);
 			setFileName(name);
 			setSource("stored");
@@ -650,7 +663,7 @@ export function VodPage({
 								{formatTime(vod.duration)} ·{" "}
 								{new Date(vod.savedAt).toLocaleString()}
 							</span>
-							<button type="button" onClick={() => void openStored(vod.name)}>
+							<button type="button" onClick={() => void openStored(vod)}>
 								Open
 							</button>
 							<button type="button" onClick={() => void removeVod(vod.name)}>
@@ -721,7 +734,10 @@ export function VodPage({
 									send={skipReason ? undefined : bulkSend}
 								>
 									{objectiveEvents.length > 0 ? (
-										<ObjectiveTimeline events={objectiveEvents} />
+										<ObjectiveTimeline
+											events={objectiveEvents}
+											teamLabels={SCANNER_TEAM_LABELS}
+										/>
 									) : null}
 									{cardEvents.map((e, i) => {
 										const vodMatch = vodMatchByEvent.get(e);

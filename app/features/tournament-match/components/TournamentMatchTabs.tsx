@@ -8,7 +8,9 @@ import type {
 	TimelinePickBanEvent,
 } from "~/components/match-page/MatchTimeline";
 import type { WeaponPoolWeapon } from "~/components/match-page/WeaponPool";
+import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
 import { useUser } from "~/features/auth/core/user";
+import type { IngestedScoreboardData } from "~/features/scanner-ingest/core/Scoreboards";
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
@@ -255,7 +257,32 @@ function resolveTimelineScoreboard(
 			: ([loserScore, winnerScore] as [number | null, number | null]),
 		alpha: toTimelinePlayers(alphaIsWinner ? winnerRows : loserRows),
 		bravo: toTimelinePlayers(alphaIsWinner ? loserRows : winnerRows),
+		objective: toTimelineObjective(
+			ingestedScoreboard.data.objective,
+			alphaIsWinner,
+		),
 	};
+}
+
+/** Stored counter samples are winner-first; the timeline charts alpha-first. */
+function toTimelineObjective(
+	objective: IngestedScoreboardData["objective"],
+	alphaIsWinner: boolean,
+): ObjectiveTimelineEvent[] | undefined {
+	if (!objective) return undefined;
+
+	const alphaFirst = <T,>(pair: [T, T]): [T, T] =>
+		alphaIsWinner ? pair : [pair[1], pair[0]];
+
+	return objective.samples.map((sample) => ({
+		t: sample.t,
+		data: {
+			time: sample.time,
+			score: alphaFirst(sample.score),
+			penalty: alphaFirst(sample.penalty),
+			control: alphaFirst(sample.control),
+		},
+	}));
 }
 
 function resolveTimelinePickBanData(

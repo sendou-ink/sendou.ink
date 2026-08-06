@@ -31,6 +31,10 @@ import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
 import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
+import {
+	ObjectiveTimeline,
+	type ObjectiveTimelineEvent,
+} from "../ObjectiveTimeline";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import type { WeaponPoolWeapon } from "./WeaponPool";
@@ -87,6 +91,8 @@ export interface TimelineMap {
 		scores: [number | null, number | null];
 		alpha: TimelineScoreboardPlayer[];
 		bravo: TimelineScoreboardPlayer[];
+		/** Objective-counter reads ([alpha, bravo] values) charted above the stats tables. */
+		objective?: ObjectiveTimelineEvent[];
 	};
 }
 
@@ -383,6 +389,12 @@ function TimelineScoreboardSection({
 			</button>
 			{isExpanded ? (
 				<div className={styles.scoreboardPanel}>
+					{scoreboard.objective && scoreboard.objective.length > 0 ? (
+						<ObjectiveTimeline
+							events={scoreboard.objective}
+							teamLabels={[teams.alpha.name, teams.bravo.name]}
+						/>
+					) : null}
 					<div className={styles.scoreboardTables}>
 						<ScoreboardTable
 							name={teams.alpha.name}

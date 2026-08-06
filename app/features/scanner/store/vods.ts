@@ -9,6 +9,17 @@
  */
 import { db, tx, VOD_EVENTS_STORE, VOD_FRAMES_STORE, VODS_STORE } from "./db";
 
+/** How a VoD's last "Send results" went; absent = never attempted. */
+export interface VodResultsSend {
+	/** matches sendou.ink /ingest accepted */
+	sent: number;
+	total: number;
+	/** failure detail, null when the send went through */
+	error: string | null;
+	/** wall-clock time the send finished */
+	at: number;
+}
+
 export interface VodSummary {
 	/** VoD file name — primary key */
 	name: string;
@@ -17,6 +28,7 @@ export interface VodSummary {
 	/** video duration in seconds */
 	duration: number;
 	eventCount: number;
+	resultsSend?: VodResultsSend;
 }
 
 export interface StoredVodEvent {
@@ -83,6 +95,30 @@ export async function saveVod(
 				.objectStore(VODS_STORE)
 				.put({ ...meta, eventCount: events.length });
 		});
+		transaction.oncomplete = () => resolve();
+		transaction.onerror = () => reject(transaction.error);
+	});
+}
+
+/**
+ * Records how a VoD's "Send results" went, so reopening the scan reports
+ * what was sent instead of showing every match as never sent. Re-scanning
+ * the file starts over: `saveVod` writes a summary without one.
+ */
+export async function saveVodResultsSend(
+	name: string,
+	resultsSend: VodResultsSend,
+): Promise<void> {
+	const database = await db();
+	return new Promise((resolve, reject) => {
+		const transaction = database.transaction(VODS_STORE, "readwrite");
+		const vods = transaction.objectStore(VODS_STORE);
+		const get = vods.get(name) as IDBRequest<VodSummary | undefined>;
+		get.onsuccess = () => {
+			const summary = get.result;
+			if (!summary) return; // deleted meanwhile
+			vods.put({ ...summary, resultsSend });
+		};
 		transaction.oncomplete = () => resolve();
 		transaction.onerror = () => reject(transaction.error);
 	});

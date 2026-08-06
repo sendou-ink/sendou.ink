@@ -1,19 +1,17 @@
 /**
- * Line chart of a match's objective-counter reads: one line per team
+ * Line chart of a game's objective-counter reads: one line per team
  * (remaining count over match time, so lines fall toward 0). Control is a
  * thick strip along the bottom of the chart (y = 0) in the controlling
  * team's color, absent while neither team controls. Penalty is a
  * translucent band filled between score and score + penalty — its thickness
  * is the extra count the team must burn through before its score moves
  * again, so it grows when a penalty lands and shrinks as it counts down.
- * Control state and exact values stay in the shared hover tooltip. Rendered
- * inside a match card's expanded view instead of one event card per counter
- * tick.
+ * Control state and exact values stay in the shared hover tooltip.
  *
- * Series colors are scanner-local chart tokens (styles.css) — the theme's
- * text-tier colors are too pastel to tell apart as marks; these are the
- * same two hues re-stepped per theme and validated for CVD separation and
- * surface contrast.
+ * Series colors are the chart tokens from vars.css — the theme's text-tier
+ * colors are too pastel to tell apart as marks; these are the same two hues
+ * re-stepped per theme and validated for CVD separation and surface
+ * contrast.
  */
 
 import {
@@ -26,9 +24,9 @@ import {
 	Tooltip,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import { useTranslation } from "react-i18next";
 import { useThemeColors } from "~/hooks/useThemeColors";
-import type { ObjectiveData } from "../core/detectors/objective/index";
-import { formatClock, formatTime } from "./format";
+import styles from "./ObjectiveTimeline.module.css";
 
 ChartJS.register(
 	LinearScale,
@@ -39,22 +37,37 @@ ChartJS.register(
 	Legend,
 );
 
-const TEAM_LABELS = ["Alpha", "Bravo"] as const;
 const PENALTY_BRIDGE_SECONDS = 6;
 
+/** One objective-counter read, values in `[alpha, bravo]` order. */
+export interface ObjectiveTimelineSample {
+	/** seconds shown on the match timer at the read ("3:35" = 215); null = unreadable */
+	time: number | null;
+	/** displayed count per team; null = unreadable */
+	score: [number | null, number | null];
+	/** penalty pill value per team; null = no pill (or unreadable) */
+	penalty: [number | null, number | null];
+	/** which team held the objective at the read */
+	control: [boolean, boolean];
+}
+
 export interface ObjectiveTimelineEvent {
+	/** whole seconds into the source (video, stream or game) the read was made at */
 	t: number;
-	data: ObjectiveData;
+	data: ObjectiveTimelineSample;
 }
 
 export function ObjectiveTimeline({
 	events,
+	teamLabels,
 }: {
 	events: readonly ObjectiveTimelineEvent[];
+	teamLabels: readonly [string, string];
 }) {
+	const { t } = useTranslation(["common"]);
 	const colors = useThemeColors({
-		alpha: "--scanner-chart-alpha",
-		bravo: "--scanner-chart-bravo",
+		alpha: "--color-chart-alpha",
+		bravo: "--color-chart-bravo",
 		border: "--color-border",
 		borderHigh: "--color-border-high",
 		text: "--color-text-high",
@@ -64,7 +77,7 @@ export function ObjectiveTimeline({
 
 	const teamColors = [colors.alpha, colors.bravo];
 	const scoreDatasets = ([0, 1] as const).map((side) => ({
-		label: TEAM_LABELS[side],
+		label: teamLabels[side],
 		data: sorted.map((event) => ({
 			x: event.t,
 			y: event.data.score[side],
@@ -83,7 +96,7 @@ export function ObjectiveTimeline({
 	// strip along y = 0 while the team is in control; the losing edge is kept
 	// at 0 too so the strip extends exactly to where control ended
 	const controlDatasets = ([0, 1] as const).map((side) => ({
-		label: `${TEAM_LABELS[side]} control`,
+		label: `${teamLabels[side]} control`,
 		data: sorted.map((event, i) => ({
 			x: event.t,
 			y:
@@ -104,7 +117,7 @@ export function ObjectiveTimeline({
 		const penalties = smoothPenalties(sorted, side);
 		let lastScore: number | null = null;
 		return {
-			label: `${TEAM_LABELS[side]} penalty`,
+			label: `${teamLabels[side]} penalty`,
 			data: sorted.map((event, i) => {
 				lastScore = event.data.score[side] ?? lastScore;
 				return {
@@ -132,7 +145,7 @@ export function ObjectiveTimeline({
 	const datasets = [...scoreDatasets, ...penaltyDatasets, ...controlDatasets];
 
 	return (
-		<div className="card objective-timeline">
+		<div className={styles.container}>
 			<Line
 				data={{ datasets }}
 				options={{
@@ -150,7 +163,7 @@ export function ObjectiveTimeline({
 								color: colors.text,
 								maxRotation: 0,
 								maxTicksLimit: 8,
-								callback: (value) => formatTime(Number(value)),
+								callback: (value) => formatElapsed(Number(value)),
 							},
 						},
 						y: {
@@ -176,7 +189,12 @@ export function ObjectiveTimeline({
 								title: (items) => {
 									if (!items[0]) return "";
 									const clock = sorted[items[0].dataIndex]?.data.time;
-									return `${formatTime(items[0].parsed.x ?? 0)}${clock != null ? ` · ${formatClock(clock)} left` : ""}`;
+									const elapsed = formatElapsed(items[0].parsed.x ?? 0);
+									return clock != null
+										? `${elapsed} · ${t("common:objectiveTimeline.timeLeft", {
+												time: formatClock(clock),
+											})}`
+										: elapsed;
 								},
 								label: (item) => {
 									const event = sorted[item.dataIndex];
@@ -184,9 +202,15 @@ export function ObjectiveTimeline({
 									const side = item.datasetIndex as 0 | 1;
 									const { score, penalty, control } = event.data;
 									return [
-										`${TEAM_LABELS[side]}: ${score[side] ?? "?"}`,
-										penalty[side] !== null ? `+${penalty[side]} penalty` : null,
-										control[side] ? "in control" : null,
+										`${teamLabels[side]}: ${score[side] ?? "?"}`,
+										penalty[side] !== null
+											? t("common:objectiveTimeline.penalty", {
+													value: penalty[side],
+												})
+											: null,
+										control[side]
+											? t("common:objectiveTimeline.inControl")
+											: null,
 									]
 										.filter(Boolean)
 										.join(" · ");
@@ -259,4 +283,21 @@ function medianFilterValues(
 		result[nonNullIndexes[k]!] = window[1]!;
 	}
 	return result;
+}
+
+/** Position on the x-axis: m:ss, growing an hours part only when needed. */
+function formatElapsed(seconds: number): string {
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	const rest = String(Math.floor(seconds % 60)).padStart(2, "0");
+	return hours > 0
+		? `${hours}:${String(minutes).padStart(2, "0")}:${rest}`
+		: `${minutes}:${rest}`;
+}
+
+/** the match timer's M:SS (215 → "3:35") */
+function formatClock(seconds: number): string {
+	const minutes = Math.floor(seconds / 60);
+	const rest = String(Math.floor(seconds % 60)).padStart(2, "0");
+	return `${minutes}:${rest}`;
 }

@@ -179,6 +179,9 @@
 }
 
 .scoreboardPanel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
 	background-color: var(--color-bg);
 	border: var(--border-style);
 	border-radius: var(--radius-box);

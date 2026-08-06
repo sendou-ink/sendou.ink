@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type {
 	ScannerMatch,
+	ScannerMatchObjective,
 	ScannerMatchPlayer,
 } from "~/features/scanner/core/scanner-match";
 import type {
@@ -45,6 +46,7 @@ function testMatch({
 	weapons = [10, 10, 10, 10, 20, 20, 20, 20] as (MainWeaponId | null)[],
 	abilities = {},
 	povIndex = null,
+	objective = null,
 }: {
 	t?: number;
 	mode?: ModeShort | null;
@@ -54,6 +56,7 @@ function testMatch({
 	weapons?: (MainWeaponId | null)[];
 	abilities?: Record<number, ScannerAbility[][]>;
 	povIndex?: number | null;
+	objective?: ScannerMatchObjective | null;
 } = {}): ScannerMatch {
 	const players = names.map(
 		(name, i): ScannerMatchPlayer => ({
@@ -76,7 +79,7 @@ function testMatch({
 		matchScores: [100, 52],
 		replayCode: null,
 		cast: false,
-		objective: null,
+		objective,
 		teams: [{ players: players.slice(0, 4) }, { players: players.slice(4) }],
 		winner: 0,
 		pov:
@@ -86,11 +89,45 @@ function testMatch({
 	};
 }
 
+function testObjective(): ScannerMatchObjective {
+	return {
+		mode: "SZ",
+		samples: [
+			{
+				t: 600,
+				time: 300,
+				score: [100, 100],
+				penalty: [null, null],
+				control: [false, false],
+			},
+			{
+				t: 630,
+				time: 270,
+				score: [80, 100],
+				penalty: [null, 12],
+				control: [true, false],
+			},
+		],
+	};
+}
+
 /** The same game reported with sides in the other on-screen order. */
 function swapSides(match: ScannerMatch): ScannerMatch {
 	return {
 		...match,
 		teams: [match.teams[1], match.teams[0]],
+		objective:
+			match.objective === null
+				? null
+				: {
+						...match.objective,
+						samples: match.objective.samples.map((sample) => ({
+							...sample,
+							score: [sample.score[1], sample.score[0]],
+							penalty: [sample.penalty[1], sample.penalty[0]],
+							control: [sample.control[1], sample.control[0]],
+						})),
+					},
 		winner: match.winner === null ? null : match.winner === 0 ? 1 : 0,
 		matchScores:
 			match.matchScores === null
@@ -145,6 +182,55 @@ describe("matchedScoreboards", () => {
 
 		expect(swapped).toEqual(straight);
 		expect(swapped[0]!.povIndex).toBe(6);
+	});
+
+	it("stores counter samples rebased to the game's first read", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
+			matches: [testMatch({ objective: testObjective() })],
+			games: [testGame()],
+		});
+
+		expect(scoreboards[0]!.data.objective).toEqual({
+			mode: "SZ",
+			samples: [
+				{
+					t: 0,
+					time: 300,
+					score: [100, 100],
+					penalty: [null, null],
+					control: [false, false],
+				},
+				{
+					t: 30,
+					time: 270,
+					score: [80, 100],
+					penalty: [null, 12],
+					control: [true, false],
+				},
+			],
+		});
+	});
+
+	it("stores counter samples winner-first", () => {
+		const straight = Scoreboards.matchedScoreboards({
+			matches: [testMatch({ objective: testObjective() })],
+			games: [testGame()],
+		});
+		const swapped = Scoreboards.matchedScoreboards({
+			matches: [swapSides(testMatch({ objective: testObjective() }))],
+			games: [testGame()],
+		});
+
+		expect(swapped[0]!.data.objective).toEqual(straight[0]!.data.objective);
+	});
+
+	it("leaves out the objective of a match with no counter reads", () => {
+		const scoreboards = Scoreboards.matchedScoreboards({
+			matches: [testMatch()],
+			games: [testGame()],
+		});
+
+		expect(scoreboards[0]!.data.objective).toBeUndefined();
 	});
 
 	it("skips matches without a known winner", () => {

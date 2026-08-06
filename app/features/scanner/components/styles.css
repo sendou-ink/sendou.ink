@@ -1086,26 +1086,6 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	margin-block-start: var(--s-3);
 }
 
-/* Objective-timeline series colors: the two theme hues (error ~10, info
-   ~275) re-stepped per theme so the marks pass CVD-separation and
-   surface-contrast validation — the text-tier theme colors are too pastel
-   as chart marks. Declared on html (not .scanner-app) because they are
-   resolved via getComputedStyle on the root for canvas rendering. */
-html {
-	--scanner-chart-alpha: #da5b76;
-	--scanner-chart-bravo: #6572e4;
-}
-
-html.light {
-	--scanner-chart-alpha: #b82851;
-	--scanner-chart-bravo: #4246c2;
-}
-
-.scanner-app .objective-timeline {
-	height: 280px;
-	padding: var(--s-2-5) var(--s-3);
-}
-
 .scanner-app .telemetry {
 	margin: var(--s-2) 0;
 	font-size: var(--font-2xs);

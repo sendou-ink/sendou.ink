@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
 import {
 	listVideoInputs,
 	openVirtualCamera,
@@ -41,7 +42,6 @@ import { type FixtureData, saveFixture } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
-import { ObjectiveTimeline } from "./ObjectiveTimeline";
 import {
 	aggregateSendStatus,
 	matchContaining,
@@ -52,6 +52,9 @@ import {
 import { thumbnailFromBlob } from "./thumbnail";
 
 const SAMPLE_FPS = 2;
+
+/** The scan knows the on-screen sides only, not who is playing. */
+const SCANNER_TEAM_LABELS = ["Alpha", "Bravo"] as const;
 
 /** Event types the ingested matches are built from — the only ones with a send status. */
 const INGESTABLE_TYPES = [
@@ -397,7 +400,10 @@ export function LivePage({
 									}
 								>
 									{objectiveEvents.length > 0 ? (
-										<ObjectiveTimeline events={objectiveEvents} />
+										<ObjectiveTimeline
+											events={objectiveEvents}
+											teamLabels={SCANNER_TEAM_LABELS}
+										/>
 									) : null}
 									{cardEvents.map((e) => (
 										<EventCard
