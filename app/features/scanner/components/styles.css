@@ -6,15 +6,15 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .topbar {
 	display: flex;
 	align-items: center;
-	gap: 24px;
-	padding-bottom: 12px;
+	gap: var(--s-6);
+	padding-bottom: var(--s-3);
 	border-bottom: var(--border-width) solid var(--color-bg-high);
-	margin-bottom: 16px;
+	margin-bottom: var(--s-4);
 }
 
 .scanner-app .topbar nav {
 	display: flex;
-	gap: 8px;
+	gap: var(--s-2);
 }
 
 .scanner-app .topbar nav a {
@@ -22,7 +22,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
 	text-decoration: none;
-	padding: 4px 10px;
+	padding: var(--s-1) var(--s-2-5);
 	border-radius: var(--radius-field);
 }
 
@@ -57,12 +57,10 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	height: var(--field-size-sm);
 	white-space: nowrap;
 	user-select: none;
-	outline-color: var(--color-text-accent);
 }
 
 .scanner-app button:focus-visible {
-	outline-style: solid;
-	outline-width: 2px;
+	outline: var(--focus-ring);
 	outline-offset: 1px;
 }
 
@@ -81,16 +79,17 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(145, 145, 145)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+	background-image: var(--field-icon-chevron);
 	background-position: center right var(--field-padding);
-	background-size: 18px auto;
+	background-size: var(--field-size-icon) auto;
 	background-repeat: no-repeat;
 	color: var(--color-text);
 	cursor: pointer;
 	font-family: inherit;
 	font-size: var(--font-xs);
 	height: var(--field-size-sm);
-	padding: 0 calc(18px + var(--field-padding) + 0.5rem) 0 var(--field-padding);
+	padding: 0 calc(var(--field-size-icon) + var(--field-padding) + var(--s-2)) 0
+		var(--field-padding);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -109,18 +108,18 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 
 .scanner-app .controls {
 	display: flex;
-	gap: 8px;
+	gap: var(--s-2);
 	align-items: center;
-	margin-bottom: 12px;
+	margin-bottom: var(--s-3);
 	flex-wrap: wrap;
 }
 
 .scanner-app .status {
-	padding: 2px 12px;
+	padding: var(--s-0-5) var(--s-3);
 	border-radius: var(--radius-full);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	border: var(--border-width) solid var(--color-border);
+	border: var(--border-style);
 }
 
 .scanner-app .status.idle {
@@ -145,7 +144,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .live-layout {
 	display: grid;
 	grid-template-columns: minmax(320px, 640px) 1fr;
-	gap: 16px;
+	gap: var(--s-4);
 	align-items: start;
 }
 
@@ -160,19 +159,19 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .feed {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: var(--s-3);
 }
 
 .scanner-app .match-list {
 	display: flex;
 	flex-direction: column;
-	gap: 12px;
+	gap: var(--s-3);
 }
 
 .scanner-app .card {
 	background: var(--color-bg-high);
 	border-radius: var(--radius-box);
-	padding: 16px;
+	padding: var(--s-4);
 }
 
 .scanner-app .card .meta {
@@ -183,7 +182,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	font-variant-numeric: tabular-nums;
-	margin-bottom: 8px;
+	margin-bottom: var(--s-2);
 	align-items: center;
 
 	/* time + confidence + event type read as one unit, the detail text after it
@@ -198,7 +197,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	/* event-type chip: neutral like the match chips, the icon carries the accent */
 	& .status.detected {
 		gap: 5px;
-		padding: 2px 10px;
+		padding: var(--s-0-5) var(--s-2-5);
 		color: var(--color-text);
 		border-color: var(--color-border);
 		background: var(--color-bg);
@@ -214,9 +213,9 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 		display: inline-flex;
 		align-items: center;
 		gap: 5px;
-		padding: 2px 10px;
+		padding: var(--s-0-5) var(--s-2-5);
 		border-radius: var(--radius-full);
-		border: var(--border-width) solid var(--color-border);
+		border: var(--border-style);
 		background: var(--color-bg);
 		color: var(--color-text);
 		font-weight: var(--weight-bold);
@@ -237,7 +236,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .teams {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-	gap: 8px;
+	gap: var(--s-2);
 
 	/* single hug-content box (own-results cards) */
 	&.solo {
@@ -254,14 +253,14 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .send-wrap {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: var(--s-0-5);
 }
 
 .scanner-app .send-strip {
 	display: flex;
-	gap: 12px;
+	gap: var(--s-3);
 	align-items: center;
-	padding: 4px 16px;
+	padding: var(--s-1) var(--s-4);
 	border-radius: var(--radius-box);
 	background: var(--color-bg-high);
 	font-size: var(--font-2xs);
@@ -303,7 +302,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
    as grouping, not chrome */
 .scanner-app .team {
 	border-radius: var(--radius-field);
-	padding: 8px 10px;
+	padding: var(--s-2) var(--s-2-5);
 	background: color-mix(in oklab, var(--color-bg) 45%, transparent);
 	border: 1px solid color-mix(in oklab, var(--color-border) 55%, transparent);
 	min-width: 0;
@@ -313,7 +312,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .minimap-player {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: var(--s-2);
 	padding-block: 3px;
 	font-size: var(--font-xs);
 
@@ -335,7 +334,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	& .abilities {
 		display: flex;
 		align-items: center;
-		gap: 2px;
+		gap: var(--s-0-5);
 		flex-shrink: 0;
 	}
 }
@@ -349,7 +348,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	width: 20px;
 	height: 20px;
 	border-radius: var(--radius-full);
-	background: #000;
+	background: var(--color-bg-badge);
 	color: #fff;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
@@ -376,13 +375,13 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .death-body {
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	padding-block: 2px;
+	gap: var(--s-3);
+	padding-block: var(--s-0-5);
 
 	& .death-info {
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: var(--s-0-5);
 		min-width: 0;
 
 		& .death-name {
@@ -402,20 +401,20 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	& .death-abilities {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: var(--s-2-5);
 		margin-inline-start: auto;
 		flex-wrap: wrap;
 
 		& .gear {
 			display: flex;
 			align-items: center;
-			gap: 2px;
+			gap: var(--s-0-5);
 		}
 	}
 }
 
 .scanner-app .team h3 {
-	margin: 0 0 6px;
+	margin: 0 0 var(--s-1-5);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	text-transform: uppercase;
@@ -438,7 +437,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 }
 
 .scanner-app table.players td {
-	padding: 2px 6px;
+	padding: var(--s-0-5) var(--s-1-5);
 	white-space: nowrap;
 }
 
@@ -456,7 +455,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	width: 28px;
 	height: 28px;
 	vertical-align: middle;
-	background: #000;
+	background: var(--color-bg-badge);
 	border-radius: var(--radius-full);
 	padding: var(--s-0-5);
 }
@@ -470,7 +469,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .weapon-cell {
 	display: inline-flex;
 	align-items: center;
-	gap: 4px;
+	gap: var(--s-1);
 }
 
 .scanner-app .ability-popover {
@@ -480,43 +479,43 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 
 .scanner-app button.ability-trigger {
 	height: auto;
-	padding: 2px;
+	padding: var(--s-0-5);
 	background: var(--color-bg-higher);
 	border: 1px solid var(--color-border-high);
-	border-radius: 4px;
+	border-radius: var(--radius-selector);
 }
 
 .scanner-app button.ability-trigger img {
 	display: block;
-	width: 18px;
-	height: 18px;
+	width: var(--field-size-icon);
+	height: var(--field-size-icon);
 }
 
 .scanner-app .ability-popover .popover {
 	position: absolute;
-	top: calc(100% + 4px);
+	top: calc(100% + var(--s-1));
 	left: 0;
 	z-index: 20;
 	background: var(--color-bg-higher);
 	border: var(--border-style);
 	border-radius: var(--radius-field);
-	padding: 6px;
+	padding: var(--s-1-5);
 	box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
 }
 
 .scanner-app .vod-list {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--s-2);
 }
 
 .scanner-app .vod-item {
 	display: flex;
 	align-items: center;
-	gap: 12px;
+	gap: var(--s-3);
 	background: var(--color-bg-high);
 	border-radius: var(--radius-box);
-	padding: 12px 16px;
+	padding: var(--s-3) var(--s-4);
 }
 
 .scanner-app .vod-item .name {
@@ -534,12 +533,12 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .dropzone {
 	border: var(--border-width) dashed var(--color-border-high);
 	border-radius: var(--radius-box);
-	padding: 32px;
+	padding: var(--s-8);
 	text-align: center;
 	color: var(--color-text-high);
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
-	margin-bottom: 16px;
+	margin-bottom: var(--s-4);
 }
 
 .scanner-app .dropzone label {
@@ -558,7 +557,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 
 .scanner-app .screenshot-frame {
 	position: relative;
-	margin-bottom: 16px;
+	margin-bottom: var(--s-4);
 }
 
 .scanner-app .screenshot-frame canvas {
@@ -578,12 +577,12 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	padding: 6px;
-	border-bottom: var(--border-width) solid var(--color-border);
+	padding: var(--s-1-5);
+	border-bottom: var(--border-style);
 }
 
 .scanner-app table.inspector td {
-	padding: 6px;
+	padding: var(--s-1-5);
 	border-bottom: 1px solid var(--color-bg-high);
 	vertical-align: middle;
 }
@@ -591,12 +590,12 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app table.inspector canvas {
 	display: block;
 	background: #000;
-	border-radius: 4px;
+	border-radius: var(--radius-selector);
 }
 
 .scanner-app .candidates {
 	display: flex;
-	gap: 8px;
+	gap: var(--s-2);
 	align-items: center;
 }
 
@@ -604,7 +603,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	gap: 2px;
+	gap: var(--s-0-5);
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
@@ -635,8 +634,8 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .set-divider {
 	display: flex;
 	align-items: center;
-	gap: 10px;
-	margin-top: 6px;
+	gap: var(--s-2-5);
+	margin-top: var(--s-1-5);
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
@@ -733,8 +732,8 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
-	gap: 8px 12px;
-	padding: 12px 16px;
+	gap: var(--s-2) var(--s-3);
+	padding: var(--s-3) var(--s-4);
 	min-height: 66px;
 }
 
@@ -762,7 +761,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .match-headline {
 	display: flex;
 	flex-direction: column;
-	gap: 4px;
+	gap: var(--s-1);
 	/* claims row space so the score/chips can never crush the stage name
 	   out of view in a narrow feed column; wraps instead */
 	flex: 1 1 0;
@@ -784,7 +783,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .match-weapons {
 	display: flex;
 	align-items: center;
-	gap: 2px;
+	gap: var(--s-0-5);
 
 	& .vs {
 		font-size: var(--font-2xs);
@@ -796,7 +795,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	& img.weapon-icon {
 		width: 32px;
 		height: 32px;
-		border-radius: 100%;
+		border-radius: var(--radius-full);
 		padding: var(--s-0-5);
 
 		&.pov {
@@ -811,7 +810,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	display: flex;
 	flex-direction: column;
 	align-items: flex-end;
-	gap: 6px;
+	gap: var(--s-1-5);
 	margin-inline-start: auto;
 	flex-shrink: 0;
 }
@@ -820,7 +819,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	font-weight: var(--weight-extra);
 	font-variant-numeric: tabular-nums;
 	line-height: 1;
-	padding: 5px 12px;
+	padding: 5px var(--s-3);
 	border-radius: var(--radius-full);
 	background: color-mix(in oklab, var(--color-bg) 72%, transparent);
 	backdrop-filter: blur(8px);
@@ -837,12 +836,12 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .match-chip {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
-	padding: 2px 10px;
+	gap: var(--s-1-5);
+	padding: var(--s-0-5) var(--s-2-5);
 	border-radius: var(--radius-full);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	border: var(--border-width) solid var(--color-border);
+	border: var(--border-style);
 	background-color: var(--color-bg);
 	color: var(--color-text-high);
 	white-space: nowrap;
@@ -914,8 +913,8 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
 	& svg {
-		width: 18px;
-		height: 18px;
+		width: var(--field-size-icon);
+		height: var(--field-size-icon);
 	}
 
 	&:hover {
@@ -943,7 +942,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 }
 
 .scanner-app .match-error {
-	padding: 0 16px 10px;
+	padding: 0 var(--s-4) var(--s-2-5);
 	font-size: var(--font-2xs);
 	color: var(--color-error);
 }
@@ -951,21 +950,21 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .match-card-group {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--s-2);
 }
 
 /* source event cards, nested under their match card via an indent rail */
 .scanner-app .match-events {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
-	margin-inline-start: 10px;
-	padding-inline-start: 12px;
-	border-inline-start: 2px solid var(--color-border);
+	gap: var(--s-2);
+	margin-inline-start: var(--s-2-5);
+	padding-inline-start: var(--s-3);
+	border-inline-start: var(--border-width) solid var(--color-border);
 	animation: scanner-detail-in 0.25s ease both;
 
 	& .card {
-		padding: 10px 14px;
+		padding: var(--s-2-5) 14px;
 		min-width: 0;
 	}
 }
@@ -980,9 +979,9 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .events-summary {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: var(--s-2-5);
 	flex-wrap: wrap;
-	padding: 2px 4px;
+	padding: var(--s-0-5) var(--s-1);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
@@ -1022,7 +1021,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	height: 7px;
 	border-radius: var(--radius-full);
 	background: currentColor;
-	margin-right: 6px;
+	margin-right: var(--s-1-5);
 	animation: scanner-pulse 1.6s ease-in-out infinite;
 }
 
@@ -1042,8 +1041,8 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-frame-dialog .frame-actions {
 	display: flex;
 	justify-content: center;
-	gap: 12px;
-	margin-block-start: 12px;
+	gap: var(--s-3);
+	margin-block-start: var(--s-3);
 }
 
 /* Objective-timeline series colors: the two theme hues (error ~10, info
@@ -1063,11 +1062,11 @@ html.light {
 
 .scanner-app .objective-timeline {
 	height: 200px;
-	padding: 10px 12px;
+	padding: var(--s-2-5) var(--s-3);
 }
 
 .scanner-app .telemetry {
-	margin: 8px 0;
+	margin: var(--s-2) 0;
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
 }
@@ -1077,13 +1076,13 @@ html.light {
 }
 
 .scanner-app .telemetry table {
-	margin-top: 6px;
+	margin-top: var(--s-1-5);
 	border-collapse: collapse;
 }
 
 .scanner-app .telemetry table th,
 .scanner-app .telemetry table td {
-	padding: 2px 10px 2px 0;
+	padding: var(--s-0-5) var(--s-2-5) var(--s-0-5) 0;
 	text-align: right;
 	font-variant-numeric: tabular-nums;
 }
