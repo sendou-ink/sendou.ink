@@ -382,13 +382,8 @@ export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
 export const weaponParamsPage = (weaponSlug: string) => `/params/${weaponSlug}`;
 
-export const calendarPage = (args?: {
-	filters?: CalendarFilters;
-	dayMonthYear?: DayMonthYear;
-}) =>
+export const calendarPage = (args?: { dayMonthYear?: DayMonthYear }) =>
 	calendarSearchParams.href(CALENDAR_PAGE, {
-		// explicit filters are the whole truth, the visitor's saved defaults don't apply
-		...(args?.filters ? { ...args.filters, useDefaults: false } : {}),
 		...(args?.dayMonthYear
 			? {
 					day: args.dayMonthYear.day,

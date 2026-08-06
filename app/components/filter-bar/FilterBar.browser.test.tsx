@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { describe, expect, test } from "vitest";
+import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { SendouButton } from "../elements/Button";
 import { FilterBar } from "./FilterBar";
@@ -9,11 +10,14 @@ const MODES = ["SZ", "TC", "RM"];
 function TestFilterBar(props: {
 	initialMode?: string | null;
 	initialWeapon?: string | null;
+	initialRank?: string | null;
 }) {
 	const [mode, setMode] = useState<string | null>(props.initialMode ?? null);
 	const [weapon, setWeapon] = useState<string | null>(
 		props.initialWeapon ?? null,
 	);
+	// unlike the other pills this one seeds a value when added from the menu
+	const [rank, setRank] = useState<string | null>(props.initialRank ?? null);
 
 	return (
 		<FilterBar
@@ -48,12 +52,29 @@ function TestFilterBar(props: {
 						</button>
 					),
 				},
+				{
+					key: "rank",
+					name: "Rank",
+					formattedValue: rank,
+					onAdd: () => setRank("S+"),
+					onRemove: () => setRank(null),
+					popover: (
+						<button type="button" onClick={() => setRank("X")}>
+							Set X
+						</button>
+					),
+				},
 			]}
-			actions={
-				mode !== null || weapon !== null ? (
-					<SendouButton>Reset</SendouButton>
-				) : null
+			onReset={
+				mode !== null || weapon !== null || rank !== null
+					? () => {
+							setMode(null);
+							setWeapon(null);
+							setRank(null);
+						}
+					: undefined
 			}
+			actions={<SendouButton>Save as default</SendouButton>}
 		/>
 	);
 }
@@ -122,17 +143,51 @@ describe("FilterBar", () => {
 			.not.toBeInTheDocument();
 	});
 
-	test("renders the actions slot", async () => {
+	test("adding a pill seeds its starting value via onAdd", async () => {
+		const screen = await render(<TestFilterBar />);
+
+		await screen.getByRole("button", { name: "Filter" }).click();
+		await screen.getByRole("menuitem", { name: "Rank" }).click();
+
+		await expect
+			.element(screen.getByRole("button", { name: /Rank.*S\+/ }))
+			.toBeVisible();
+	});
+
+	test("renders the reset button and the actions slot", async () => {
 		const screen = await render(<TestFilterBar initialMode="SZ" />);
 
 		await expect
 			.element(screen.getByRole("button", { name: "Reset" }))
 			.toBeVisible();
+		await expect
+			.element(screen.getByRole("button", { name: "Save as default" }))
+			.toBeVisible();
+	});
+
+	test("resetting hides an added pill that was left unset", async () => {
+		const screen = await render(<TestFilterBar initialMode="SZ" />);
+
+		await screen.getByRole("button", { name: "Filter", exact: true }).click();
+		await screen.getByRole("menuitem", { name: "Weapon" }).click();
+
+		// adding a pill opens its popover, which blocks the reset button beneath it
+		await userEvent.keyboard("{Escape}");
+
+		await screen.getByRole("button", { name: "Reset" }).click();
+
+		await expect
+			.element(screen.getByRole("button", { name: /Weapon/ }))
+			.not.toBeInTheDocument();
 	});
 
 	test("hides the add filter menu when every pill is visible", async () => {
 		const screen = await render(
-			<TestFilterBar initialMode="SZ" initialWeapon="Splattershot" />,
+			<TestFilterBar
+				initialMode="SZ"
+				initialWeapon="Splattershot"
+				initialRank="X"
+			/>,
 		);
 
 		await expect

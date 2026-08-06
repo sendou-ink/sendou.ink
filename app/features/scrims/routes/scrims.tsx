@@ -6,13 +6,13 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import type { z } from "zod";
-import { ActionButton } from "~/components/ActionButton";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
 import { DualSelectFormField } from "~/form/fields/DualSelectFormField";
 import { TimeRangeFormField } from "~/form/fields/TimeRangeFormField";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useHydrated } from "~/hooks/useHydrated";
 import {
 	useSearchParam,
@@ -41,14 +41,7 @@ import type { LutiDiv, ScrimFilters, ScrimPost } from "../scrims-types";
 
 export { action, loader };
 
-import {
-	Check,
-	Download,
-	Funnel,
-	Megaphone,
-	RotateCcw,
-	Star,
-} from "lucide-react";
+import { Check, Download, Funnel, Megaphone, Star } from "lucide-react";
 
 import styles from "./scrims.module.css";
 
@@ -199,6 +192,9 @@ function Filters() {
 	const { t } = useTranslation(["scrims", "forms", "common"]);
 	const data = useLoaderData<typeof loader>();
 	const [, setParams] = useSearchParamsTyped(scrimsSearchParams);
+	const persistFilters = useActionSubmit(scrimsActionSchema, {
+		encType: "application/json",
+	});
 
 	const filters = data.filters;
 
@@ -261,34 +257,29 @@ function Filters() {
 					),
 				},
 			]}
+			onReset={
+				!Scrim.filtersAreDefault(filters)
+					? () =>
+							writeFilters({
+								weekdayTimes: null,
+								weekendTimes: null,
+								divs: null,
+							})
+					: undefined
+			}
 			actions={
-				<>
-					{!Scrim.filtersAreDefault(filters) ? (
-						<SendouButton
-							icon={<RotateCcw />}
-							onPress={() =>
-								writeFilters({
-									weekdayTimes: null,
-									weekendTimes: null,
-									divs: null,
-								})
-							}
-						>
-							{t("common:actions.reset")}
-						</SendouButton>
-					) : null}
-					{data.canSaveAsDefault ? (
-						<ActionButton
-							schema={scrimsActionSchema}
-							action="PERSIST_SCRIM_FILTERS"
-							fields={{ filters }}
-							icon={<Star />}
-							testId="save-filters-as-default-button"
-						>
-							{t("common:filterBar.saveAsDefault")}
-						</ActionButton>
-					) : null}
-				</>
+				data.canSaveAsDefault ? (
+					<SendouButton
+						icon={<Star />}
+						isDisabled={persistFilters.state !== "idle"}
+						onPress={() =>
+							persistFilters.submit("PERSIST_SCRIM_FILTERS", { filters })
+						}
+						data-testid="save-filters-as-default-button"
+					>
+						{t("common:filterBar.saveAsDefault")}
+					</SendouButton>
+				) : null
 			}
 		/>
 	);

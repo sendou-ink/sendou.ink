@@ -23,9 +23,13 @@ import {
 } from "~/utils/zod";
 import { CALENDAR_EVENT, CALENDAR_EVENT_RESULT } from "./calendar-constants";
 
-export const calendarEventTagSchema = z
+const calendarEventTagSchema = z
 	.string()
 	.refine((val) => CALENDAR_EVENT.TAGS.includes(val as CalendarEventTag));
+
+export const calendarFilterTagsArr = z
+	.array(calendarEventTagSchema)
+	.max(CALENDAR_EVENT.TAGS.length);
 
 const calendarFiltersPlainStringArr = z.array(z.string().max(100)).max(10);
 const calendarFiltersIdsArr = z.array(id).max(10);
@@ -42,8 +46,8 @@ const modeArr = z
 
 export const calendarFiltersSearchParamsSchema = z.object({
 	preferredStartTime: preferredStartTime.catch("ANY"),
-	tagsIncluded: z.array(calendarEventTagSchema).catch([]),
-	tagsExcluded: z.array(calendarEventTagSchema).catch([]),
+	tagsIncluded: calendarFilterTagsArr.catch([]),
+	tagsExcluded: calendarFilterTagsArr.catch([]),
 	isSendou: z.boolean().catch(false),
 	isRanked: z.boolean().catch(false),
 	orgsIncluded: calendarFiltersPlainStringArr.catch([]),

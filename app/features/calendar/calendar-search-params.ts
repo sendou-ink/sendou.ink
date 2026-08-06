@@ -8,7 +8,7 @@ import {
 	gamesShortSchema,
 	modeShortWithSpecial,
 } from "~/utils/zod";
-import { calendarEventTagSchema } from "./calendar-schemas";
+import { calendarFilterTagsArr } from "./calendar-schemas";
 
 export const VIEW_FILTERS = [
 	"registered",
@@ -37,11 +37,11 @@ export const calendarSearchParams = SearchParams.define({
 		default: "ANY",
 		loader: true,
 	}),
-	tagsIncluded: SP.param(z.array(calendarEventTagSchema), {
+	tagsIncluded: SP.param(calendarFilterTagsArr, {
 		default: [],
 		loader: true,
 	}),
-	tagsExcluded: SP.param(z.array(calendarEventTagSchema), {
+	tagsExcluded: SP.param(calendarFilterTagsArr, {
 		default: [],
 		loader: true,
 	}),

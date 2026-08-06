@@ -1,7 +1,8 @@
-import { ChevronDown, Plus, X } from "lucide-react";
+import { ChevronDown, Plus, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { SendouButton } from "../elements/Button";
 import { SendouMenu, SendouMenuItem } from "../elements/Menu";
 import { SendouPopover } from "../elements/Popover";
 import styles from "./FilterBar.module.css";
@@ -25,11 +26,15 @@ export interface FilterBarPill {
 
 export function FilterBar({
 	pills,
+	onReset,
 	actions,
 }: {
 	pills: FilterBarPill[];
+	/** Resets every pill's param(s) to defaults. Renders the reset button. */
+	onReset?: () => void;
 	actions?: React.ReactNode;
 }) {
+	const { t } = useTranslation();
 	const [justAddedKeys, setJustAddedKeys] = React.useState<ReadonlySet<string>>(
 		new Set(),
 	);
@@ -58,6 +63,12 @@ export function FilterBar({
 		pill.onRemove?.();
 	};
 
+	const resetPills = () => {
+		setJustAddedKeys(new Set());
+		setOpenPillKey(null);
+		onReset?.();
+	};
+
 	return (
 		<div className={styles.bar}>
 			{pills.filter(isVisible).map((pill) => (
@@ -72,7 +83,16 @@ export function FilterBar({
 			{hiddenPills.length > 0 ? (
 				<AddFilterMenu pills={hiddenPills} onAdd={addPill} />
 			) : null}
-			{actions ? <div className={styles.actions}>{actions}</div> : null}
+			{onReset || actions ? (
+				<div className={styles.actions}>
+					{onReset ? (
+						<SendouButton icon={<RotateCcw />} onPress={resetPills}>
+							{t("actions.reset")}
+						</SendouButton>
+					) : null}
+					{actions}
+				</div>
+			) : null}
 		</div>
 	);
 }

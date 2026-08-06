@@ -2,10 +2,12 @@ import type { Page } from "@playwright/test";
 import { scrimRequestFormSchema } from "~/features/scrims/scrims-schemas";
 import { scrimsPage } from "~/utils/urls";
 import {
+	expectIsHydrated,
 	modalClickConfirmButton,
 	navigate,
 	selectUser,
 	submit,
+	waitForPOSTResponse,
 } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { AssociationsPage } from "../associations/associations-page";
@@ -38,6 +40,11 @@ export class ScrimsPage {
 			limitedVisibilityPopover: page.getByTestId("limited-visibility-popover"),
 			tournamentPopover: page.getByTestId("tournament-popover-trigger"),
 			canceledLabel: page.getByText("Canceled"),
+			divsFilterPill: page.getByTestId("divs-filter"),
+			addFilterButton: page.getByTestId("add-filter-button"),
+			saveFiltersAsDefaultButton: page.getByTestId(
+				"save-filters-as-default-button",
+			),
 		};
 	}
 
@@ -45,8 +52,46 @@ export class ScrimsPage {
 		await navigate({ page: this.page, url: scrimsPage() });
 	}
 
+	async reload() {
+		await this.page.reload();
+		await expectIsHydrated(this.page);
+	}
+
 	post(text: string) {
 		return this.page.getByText(text);
+	}
+
+	/** Sets both selects of the "Divs" filter pill's popover. */
+	async filterByDivs({ max, min }: { max: string; min: string }) {
+		await this.page.keyboard.press("Escape");
+		await this.openDivsFilter();
+		await this.page.getByLabel("Max div").selectOption(max);
+		await this.page.getByLabel("Min div").selectOption(min);
+		await this.page.keyboard.press("Escape");
+	}
+
+	/** Resets the "Divs" filter, hiding the pill. */
+	async removeDivsFilter() {
+		await this.page.keyboard.press("Escape");
+		await this.page.getByTestId("divs-filter-remove").click();
+	}
+
+	/** Persists the current filters as the user's default. */
+	async saveFiltersAsDefault() {
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.saveFiltersAsDefaultButton.click(),
+		);
+	}
+
+	/** The pill is only rendered while its filter differs from the default. */
+	private async openDivsFilter() {
+		if (await this.locators.divsFilterPill.isVisible()) {
+			await this.locators.divsFilterPill.click();
+			return;
+		}
+
+		await this.locators.addFilterButton.click();
+		await this.page.getByTestId("menu-item-divs-filter").click();
 	}
 
 	async openTab(tab: Tab) {

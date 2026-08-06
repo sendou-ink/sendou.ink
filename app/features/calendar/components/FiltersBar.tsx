@@ -1,4 +1,4 @@
-import { RotateCcw, Star, X } from "lucide-react";
+import { Star, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
@@ -329,32 +329,27 @@ export function FiltersBar() {
 					),
 				},
 			]}
+			onReset={
+				!CalendarEvent.isDefaultFilters(filters)
+					? () => writeFilters(defaults)
+					: undefined
+			}
 			actions={
-				<>
-					{!CalendarEvent.isDefaultFilters(filters) ? (
-						<SendouButton
-							icon={<RotateCcw />}
-							onPress={() => writeFilters(defaults)}
-						>
-							{t("common:actions.reset")}
-						</SendouButton>
-					) : null}
-					{user && data.canSaveAsDefault ? (
-						<SendouButton
-							icon={<Star />}
-							isDisabled={persistFetcher.state !== "idle"}
-							onPress={() =>
-								persistFetcher.submit(filters, {
-									method: "post",
-									encType: "application/json",
-								})
-							}
-							data-testid="save-filters-as-default-button"
-						>
-							{t("common:filterBar.saveAsDefault")}
-						</SendouButton>
-					) : null}
-				</>
+				user && data.canSaveAsDefault ? (
+					<SendouButton
+						icon={<Star />}
+						isDisabled={persistFetcher.state !== "idle"}
+						onPress={() =>
+							persistFetcher.submit(filters, {
+								method: "post",
+								encType: "application/json",
+							})
+						}
+						data-testid="save-filters-as-default-button"
+					>
+						{t("common:filterBar.saveAsDefault")}
+					</SendouButton>
+				) : null
 			}
 		/>
 	);
