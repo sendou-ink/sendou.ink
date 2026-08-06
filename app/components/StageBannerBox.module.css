@@ -8,6 +8,10 @@
 		var(--stage-banner);
 	background-origin: border-box;
 	background-position: right center;
-	background-size: cover;
+	/* fade layer is grown a pixel past the box so subpixel box sizes can't
+	   leave a sliver of the banner showing at the edges */
+	background-size:
+		calc(100% + 2px) calc(100% + 2px),
+		cover;
 	background-repeat: no-repeat;
 }
