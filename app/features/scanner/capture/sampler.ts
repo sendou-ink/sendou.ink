@@ -25,50 +25,46 @@ export async function listVideoInputs(): Promise<MediaDeviceInfo[]> {
 export type FrameHandler = (bitmap: ImageBitmap, t: number) => void;
 
 /**
- * Sample frames from a playing video element at ~fps using
- * requestVideoFrameCallback. Returns a stop function.
+ * Sample frames from a playing video element at ~fps. The clock is a
+ * setInterval in a dedicated worker (ticker.worker.ts): rAF and
+ * requestVideoFrameCallback pause entirely in hidden tabs, but worker timers
+ * keep firing and the camera stream keeps decoding, so capture continues
+ * while the user is in another tab or window. Timestamps come from
+ * performance.now() (monotonic, which the timeline's merge windows rely on)
+ * rather than mediaTime, which Firefox never advances for MediaStream-backed
+ * videos anyway. Returns a stop function.
  */
 export function startSampler(
 	video: HTMLVideoElement,
 	fps: number,
 	onFrame: FrameHandler,
 ): () => void {
-	const intervalMs = 1000 / fps;
-	let lastSample = Number.NEGATIVE_INFINITY;
-	let lastMediaTime = Number.NEGATIVE_INFINITY;
+	const ticker = new Worker(new URL("./ticker.worker.ts", import.meta.url), {
+		type: "module",
+	});
+	ticker.postMessage(1000 / fps);
 	let stopped = false;
-	let handle = 0;
+	let sampling = false;
 
-	const tick = async (now: number, metadata: VideoFrameCallbackMetadata) => {
-		if (stopped) return;
-		// Throttle on the callback clock, not metadata.mediaTime: Firefox never
-		// advances mediaTime for MediaStream-backed videos, which would freeze
-		// sampling after the first frame.
-		if (now - lastSample >= intervalMs) {
-			lastSample = now;
-			try {
-				const bitmap = await createImageBitmap(video);
-				if (stopped) {
-					bitmap.close();
-					return;
-				}
-				// Same Firefox quirk for the frame timestamp: fall back to the clock
-				// when mediaTime isn't advancing so timestamps stay monotonic (the
-				// timeline's merge windows compare them).
-				const t =
-					metadata.mediaTime > lastMediaTime ? metadata.mediaTime : now / 1000;
-				lastMediaTime = Math.max(lastMediaTime, metadata.mediaTime);
-				onFrame(bitmap, t);
-			} catch {
-				// video not ready / tab hidden — skip this frame
+	ticker.onmessage = async () => {
+		if (stopped || sampling) return;
+		sampling = true;
+		try {
+			const bitmap = await createImageBitmap(video);
+			if (stopped) {
+				bitmap.close();
+				return;
 			}
+			onFrame(bitmap, performance.now() / 1000);
+		} catch {
+			// video not ready — skip this frame
+		} finally {
+			sampling = false;
 		}
-		if (!stopped) handle = video.requestVideoFrameCallback(tick);
 	};
-	handle = video.requestVideoFrameCallback(tick);
 
 	return () => {
 		stopped = true;
-		video.cancelVideoFrameCallback(handle);
+		ticker.terminate();
 	};
 }
