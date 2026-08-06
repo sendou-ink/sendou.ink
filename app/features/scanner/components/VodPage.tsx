@@ -12,14 +12,7 @@
  * Completed scans are persisted to IndexedDB keyed by file name
  * (src/store/vods.ts); the default view lists them for reinspection.
  */
-import {
-	Fragment,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { openVodScan } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
@@ -33,7 +26,6 @@ import {
 	invalidObjectiveEvents,
 	isIngestableMatch,
 } from "../core/match-builder";
-import { assignMatchSets } from "../core/match-sets";
 import { TimelineBuilder } from "../core/timeline/index";
 import type { SendStatus } from "../store/events";
 import {
@@ -52,7 +44,8 @@ import { downloadEventsCsv } from "./events-csv";
 import type { FixtureData } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
-import { MatchCard, SetDivider } from "./MatchCard";
+import { MatchCard } from "./MatchCard";
+import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import { ObjectiveTimeline } from "./ObjectiveTimeline";
 import {
 	countIngestableMatches,
@@ -148,8 +141,6 @@ export function VodPage({
 	);
 
 	const builtMatches = buildScannerMatches(matches.map((m) => m.event));
-	const setNumbers = assignMatchSets(builtMatches.map((b) => b.match));
-	const showSetDividers = (setNumbers.at(-1) ?? 1) > 1;
 	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
@@ -600,34 +591,31 @@ export function VodPage({
 								: "No matches found in this VoD."}
 						</p>
 					) : null}
-					{/* newest match on top; the builder keeps ascending video-time order */}
-					{[...builtMatches].reverse().map((built, reverseIndex) => {
-						const index = builtMatches.length - 1 - reverseIndex;
-						const ingestable = isIngestableMatch(built.match);
-						// counter reads render as one timeline chart, not a card each;
-						// a non-SZ match's reads (objective null) are never shown
-						const objectiveEvents = built.match.objective
-							? built.sources
-									.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-									.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
-							: [];
-						const cardEvents = withoutRepeatEvents(built.sources).filter(
-							(e) => e.type !== OBJECTIVE_EVENT_TYPE,
-						);
-						return (
-							<Fragment key={vodMatchByEvent.get(built.sources[0]!)!.key}>
-								{showSetDividers &&
-								setNumbers[index + 1] !== setNumbers[index] ? (
-									<SetDivider number={setNumbers[index]!} />
-								) : null}
+					<MatchLobbyTabs
+						matches={builtMatches}
+						keyOf={(built) => vodMatchByEvent.get(built.sources[0]!)!.key}
+						renderMatch={(built, justFormed) => {
+							const ingestable = isIngestableMatch(built.match);
+							// counter reads render as one timeline chart, not a card each;
+							// a non-SZ match's reads (objective null) are never shown
+							const objectiveEvents = built.match.objective
+								? built.sources
+										.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
+										.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
+								: [];
+							const cardEvents = withoutRepeatEvents(built.sources).filter(
+								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+							);
+							return (
 								<MatchCard
 									match={built.match}
 									inProgress={
 										status === "scanning" &&
-										reverseIndex === 0 &&
+										built === builtMatches.at(-1) &&
 										built.match.winner === null
 									}
 									ingestable={ingestable}
+									justFormed={justFormed}
 									send={ingestable ? bulkSend : undefined}
 								>
 									{objectiveEvents.length > 0 ? (
@@ -649,9 +637,9 @@ export function VodPage({
 										);
 									})}
 								</MatchCard>
-							</Fragment>
-						);
-					})}
+							);
+						}}
+					/>
 					{ungroupedMatches.length > 0 ? (
 						<EventsSummary
 							events={ungroupedMatches.map((m) => m.event)}

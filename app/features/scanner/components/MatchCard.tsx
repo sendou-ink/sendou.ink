@@ -31,6 +31,7 @@ export function MatchCard({
 	live = false,
 	inProgress = false,
 	ingestable = true,
+	justFormed = false,
 	children,
 }: {
 	match: ScannerMatch;
@@ -47,10 +48,15 @@ export function MatchCard({
 	inProgress?: boolean;
 	/** false = isIngestableMatch rejected it (not a private battle) */
 	ingestable?: boolean;
+	/** the scan just formed this match — play the enter animation */
+	justFormed?: boolean;
 	/** expandable detail content, typically the source event cards */
 	children?: React.ReactNode;
 }) {
 	const [expanded, setExpanded] = useState(false);
+	// fixed at mount: re-rendering must not cut the animation short, and a card
+	// remounting for another reason (switching lobby tabs) must not replay it
+	const [enter] = useState(justFormed);
 
 	// one-shot flash animations only on a state *change*, so already-sent
 	// matches don't replay the glow on every mount
@@ -122,6 +128,7 @@ export function MatchCard({
 	);
 
 	const className = clsx("match-card", send?.state, {
+		enter,
 		live,
 		"flash-sent": flash === "sent",
 		"flash-failed": flash === "failed",

@@ -163,6 +163,12 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	gap: 12px;
 }
 
+.scanner-app .match-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
 .scanner-app .card {
 	background: var(--color-bg-high);
 	border-radius: var(--radius-box);
@@ -653,7 +659,11 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	overflow: hidden;
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	animation: scanner-card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+	/* only cards the scan just formed animate in — see MatchCard's `enter` */
+	&.enter {
+		animation: scanner-card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+	}
 
 	/* one overlay element all send-state effects draw on */
 	&::after {

@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	listVideoInputs,
 	openVirtualCamera,
@@ -22,7 +22,6 @@ import {
 	invalidObjectiveEvents,
 	isIngestableMatch,
 } from "../core/match-builder";
-import { assignMatchSets } from "../core/match-sets";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
 	clearEvents,
@@ -40,7 +39,8 @@ import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
-import { MatchCard, SetDivider } from "./MatchCard";
+import { MatchCard } from "./MatchCard";
+import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import { ObjectiveTimeline } from "./ObjectiveTimeline";
 import {
 	aggregateSendStatus,
@@ -254,8 +254,6 @@ export function LivePage({
 	}, [deviceId, refreshFeed, send]);
 
 	const builtMatches = buildScannerMatches(feed);
-	const setNumbers = assignMatchSets(builtMatches.map((b) => b.match));
-	const showSetDividers = (setNumbers.at(-1) ?? 1) > 1;
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedFeed = feed.filter((e) => !groupedEvents.has(e));
 
@@ -366,33 +364,30 @@ export function LivePage({
 					{feed.length === 0 ? (
 						<p className="score">No detections yet.</p>
 					) : null}
-					{[...builtMatches].reverse().map((built, reverseIndex) => {
-						const index = builtMatches.length - 1 - reverseIndex;
-						const id = built.sources[0]!.id!;
-						const ingestable = isIngestableMatch(built.match);
-						// counter reads render as one timeline chart, not a card each;
-						// a non-SZ match's reads (objective null) are never shown
-						const objectiveEvents = built.match.objective
-							? built.sources
-									.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-									.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
-							: [];
-						const cardEvents = withoutRepeatEvents(built.sources).filter(
-							(e) => e.type !== OBJECTIVE_EVENT_TYPE,
-						);
-						return (
-							<Fragment key={id}>
-								{showSetDividers &&
-								setNumbers[index + 1] !== setNumbers[index] ? (
-									<SetDivider number={setNumbers[index]!} />
-								) : null}
+					<MatchLobbyTabs
+						matches={builtMatches}
+						keyOf={(built) => built.sources[0]!.id!}
+						renderMatch={(built, justFormed) => {
+							const id = built.sources[0]!.id!;
+							const ingestable = isIngestableMatch(built.match);
+							// counter reads render as one timeline chart, not a card each;
+							// a non-SZ match's reads (objective null) are never shown
+							const objectiveEvents = built.match.objective
+								? built.sources
+										.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
+										.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
+								: [];
+							const cardEvents = withoutRepeatEvents(built.sources).filter(
+								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+							);
+							const newest = built === builtMatches.at(-1);
+							return (
 								<MatchCard
 									match={built.match}
-									live={
-										running && reverseIndex === 0 && built.match.winner === null
-									}
-									inProgress={reverseIndex === 0 && built.match.winner === null}
+									live={running && newest && built.match.winner === null}
+									inProgress={newest && built.match.winner === null}
 									ingestable={ingestable}
+									justFormed={justFormed}
 									send={aggregateSendStatus(built.sources)}
 									onSend={
 										SENDOU_UPLOAD_ENABLED && sendouUser && ingestable
@@ -420,9 +415,9 @@ export function LivePage({
 										/>
 									))}
 								</MatchCard>
-							</Fragment>
-						);
-					})}
+							);
+						}}
+					/>
 					{ungroupedFeed.length > 0 ? (
 						<EventsSummary
 							events={ungroupedFeed}
