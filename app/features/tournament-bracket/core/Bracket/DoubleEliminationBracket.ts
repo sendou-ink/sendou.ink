@@ -218,8 +218,18 @@ export class DoubleEliminationBracket extends Bracket {
 		return true;
 	}
 
-	source({ placements }: { placements: number[] }) {
+	source({ placements, rest }: { placements: number[]; rest?: boolean }) {
 		invariant(placements.length > 0, "Empty placements not supported");
+		invariant(
+			placements.every((placement) => placement < 0) ||
+				placements.every((placement) => placement > 0),
+			"Mixed positive and negative placements not supported",
+		);
+
+		if (placements.every((placement) => placement > 0)) {
+			return this.sourceByStandings(placements, rest === true);
+		}
+
 		const resolveLosersGroupId = (data: BracketData) => {
 			const minGroupId = Math.min(...data.round.map((round) => round.groupId));
 
@@ -256,11 +266,6 @@ export class DoubleEliminationBracket extends Bracket {
 
 			return orderedRoundsIds.slice(0, amountOfRounds);
 		};
-
-		invariant(
-			placements.every((placement) => placement < 0),
-			"Positive placements in DE not implemented",
-		);
 
 		const losersGroupId = resolveLosersGroupId(this.data);
 		const sourceRoundsIds = placementsToRoundsIds(

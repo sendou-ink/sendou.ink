@@ -80,12 +80,7 @@ export function BracketProgressionSelector({
 			sources:
 				newBrackets.length === 1
 					? undefined
-					: b.sources?.map((source) => ({
-							...source,
-							bracketId: newBracketIds.has(source.bracketId)
-								? source.bracketId
-								: newBrackets[0].id,
-						})),
+					: b.sources?.filter((source) => newBracketIds.has(source.bracketId)),
 		}));
 
 		setBrackets(updatedBrackets);
@@ -107,19 +102,13 @@ export function BracketProgressionSelector({
 							newBrackets[i] = newBracket;
 
 							if (newBracket.settings.advanceThreshold) {
-								const destinationIdx = newBrackets.findIndex((b) =>
-									b.sources?.some(
-										(source) => source.bracketId === newBracket.id,
-									),
-								);
-
-								if (destinationIdx !== -1) {
-									newBrackets[destinationIdx].sources = newBrackets[
-										destinationIdx
-									].sources?.map((source) => ({
-										...source,
-										placements: "",
-									}));
+								for (const destinationBracket of newBrackets) {
+									destinationBracket.sources = destinationBracket.sources?.map(
+										(source) =>
+											source.bracketId === newBracket.id
+												? { ...source, placements: "" }
+												: source,
+									);
 								}
 							}
 
@@ -232,7 +221,7 @@ function TournamentFormatBracketSelector({
 							readOnly={bracket.disabled}
 						/>
 						<FormMessage type="info">
-							If missing, bracket can be started when the previous brackets have
+							If missing, bracket can be started when the source brackets have
 							finished
 						</FormMessage>
 					</div>
@@ -250,8 +239,8 @@ function TournamentFormatBracketSelector({
 							isDisabled={bracket.disabled}
 						/>
 						<FormMessage type="info">
-							Check-in starts 1 hour before start time or right after the
-							previous bracket finishes if no start time is set
+							Check-in starts 1 hour before start time or right after the source
+							brackets finish if no start time is set
 						</FormMessage>
 					</div>
 				) : null}
@@ -553,8 +542,8 @@ function TournamentFormatBracketSelector({
 							brackets={brackets.filter(
 								(bracket2) => bracket.id !== bracket2.id && bracket2.name,
 							)}
-							source={bracket.sources?.[0] ?? null}
-							onChange={(source) => updateBracket({ sources: [source] })}
+							sources={bracket.sources}
+							onChange={(sources) => updateBracket({ sources })}
 						/>
 					)}
 				</div>
@@ -565,12 +554,93 @@ function TournamentFormatBracketSelector({
 
 function SourcesSelector({
 	brackets,
-	source,
+	sources,
 	onChange,
 }: {
 	brackets: Progression.InputBracket[];
+	sources: Progression.EditableSource[];
+	onChange: (sources: Progression.EditableSource[]) => void;
+}) {
+	const rows: (Progression.EditableSource | null)[] =
+		sources.length > 0 ? sources : [null];
+
+	const materializedSources = (): Progression.EditableSource[] =>
+		sources.length > 0
+			? structuredClone(sources)
+			: [{ bracketId: brackets[0].id, placements: "" }];
+
+	const unusedBracket = () =>
+		brackets.find(
+			(bracket) =>
+				!materializedSources().some(
+					(source) => source.bracketId === bracket.id,
+				),
+		);
+
+	const handleRowChange = (
+		rowIdx: number,
+		newSource: Progression.EditableSource,
+	) => {
+		const next = materializedSources();
+		next[rowIdx] = newSource;
+		onChange(next);
+	};
+
+	const handleAddSource = () => {
+		const bracketToAdd = unusedBracket();
+		if (!bracketToAdd) return;
+
+		onChange([
+			...materializedSources(),
+			{ bracketId: bracketToAdd.id, placements: "" },
+		]);
+	};
+
+	const handleDeleteSource = (rowIdx: number) => {
+		onChange(sources.filter((_, i) => i !== rowIdx));
+	};
+
+	return (
+		<div className="stack sm items-start">
+			{rows.map((source, rowIdx) => (
+				<SourceRow
+					key={rowIdx}
+					brackets={brackets.filter(
+						(bracket) =>
+							bracket.id === source?.bracketId ||
+							!rows.some((row) => row?.bracketId === bracket.id),
+					)}
+					source={source}
+					onChange={(newSource) => handleRowChange(rowIdx, newSource)}
+					onDelete={
+						sources.length > 1 ? () => handleDeleteSource(rowIdx) : undefined
+					}
+				/>
+			))}
+			<SendouButton
+				icon={<Plus />}
+				size="small"
+				variant="outlined"
+				onPress={handleAddSource}
+				isDisabled={!unusedBracket()}
+				data-testid="add-source-button"
+			>
+				Add source
+			</SendouButton>
+		</div>
+	);
+}
+
+function SourceRow({
+	brackets,
+	source,
+	onChange,
+	onDelete,
+}: {
+	brackets: Progression.InputBracket[];
 	source: Progression.EditableSource | null;
-	onChange: (sources: Progression.EditableSource) => void;
+	onChange: (source: Progression.EditableSource) => void;
+	onDelete?: () => void;
 }) {
 	const id = React.useId();
 
@@ -587,7 +657,7 @@ function SourcesSelector({
 					<Label htmlFor={createId("bracket")}>Bracket</Label>
 					<select
 						id={createId("bracket")}
-						value={source?.bracketId ?? brackets[0].id}
+						value={source?.bracketId ?? brackets[0]?.id}
 						onChange={(e) =>
 							onChange({ placements: "", ...source, bracketId: e.target.value })
 						}
@@ -609,13 +679,23 @@ function SourcesSelector({
 							testId="placements-input"
 							onChange={(e) =>
 								onChange({
-									bracketId: brackets[0].id,
+									bracketId: brackets[0]?.id,
 									...source,
 									placements: e.target.value,
 								})
 							}
 						/>
 					</div>
+				) : null}
+				{onDelete ? (
+					<SendouButton
+						size="small"
+						variant="minimal-destructive"
+						onPress={onDelete}
+						data-testid="delete-source-button"
+					>
+						Remove
+					</SendouButton>
 				) : null}
 			</div>
 			{!inputBracket?.settings.advanceThreshold ? (

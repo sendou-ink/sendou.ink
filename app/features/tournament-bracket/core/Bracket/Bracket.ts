@@ -491,6 +491,33 @@ export abstract class Bracket {
 		teams: number[];
 	};
 
+	/** Advances top finishers by their standings placement. Only settled teams appear in
+	 * the standings, so placements are matched raw until the full standings resolve and
+	 * only then normalized (1,3,5 -> 1,2,3) the way group brackets source. */
+	protected sourceByStandings(placements: number[], rest: boolean) {
+		const standings = this.standings;
+		const relevantMatchesFinished =
+			standings.length === this.participantTournamentTeamIds.length &&
+			this.participantTournamentTeamIds.length > 0;
+
+		const maxExplicit = Math.max(...placements);
+		const matchesPlacement = (placement: number) =>
+			placements.includes(placement) || (rest && placement >= maxExplicit);
+
+		const uniquePlacements = R.unique(standings.map((s) => s.placement));
+		const placementNormalized = (placement: number) =>
+			relevantMatchesFinished
+				? uniquePlacements.indexOf(placement) + 1
+				: placement;
+
+		return {
+			relevantMatchesFinished,
+			teams: standings
+				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
+				.map((s) => s.team.id),
+		};
+	}
+
 	teamsWithNames(teams: { id: number }[]) {
 		return teams.map((team) => {
 			const name = this.tournament.ctx.teams.find(

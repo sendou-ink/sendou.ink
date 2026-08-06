@@ -30,6 +30,10 @@ export class TournamentBracketsPage {
 			streamPopover: page.getByTestId("stream-popover"),
 			streamPopoverStreams: page.getByTestId("tournament-stream"),
 			finalizeTournamentButton: page.getByTestId("finalize-tournament-button"),
+			finalizeBracketButton: page.getByTestId("finalize-bracket-button"),
+			teamsPendingFromSourcesText: page.getByText(
+				"Teams pending from the source brackets",
+			),
 			startRoundButton: page.getByTestId("start-round-button"),
 			byeTeam: page.getByTestId("bye-team"),
 			prepareMapsButton: page.getByTestId("prepare-maps-button"),

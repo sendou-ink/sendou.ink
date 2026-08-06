@@ -23,6 +23,7 @@ export class CalendarNewEventPage {
 			bracketNameInputs: page.getByLabel("Bracket's name"),
 			bracketFormatSelects: page.getByLabel("Format"),
 			placementsInputs: page.getByTestId("placements-input"),
+			addSourceButtons: page.getByTestId("add-source-button"),
 			deleteBracketButtons: page.getByTestId("delete-bracket-button"),
 			followUpBracketSwitches: page.getByTestId("follow-up-bracket-switch"),
 			mapPoolTemplateSelect: page.getByLabel("Template"),
@@ -113,6 +114,17 @@ export class CalendarNewEventPage {
 
 		await this.locators.bracketNameInputs.last().fill(name);
 		await this.locators.bracketFormatSelects.last().selectOption(format);
+		await this.locators.placementsInputs.last().fill(placements);
+	}
+
+	async renameBracket(nth: number, name: string) {
+		await this.locators.bracketNameInputs.nth(nth).fill(name);
+	}
+
+	/** Adds another source bracket to the last bracket of the progression. The new
+	 * row preselects the first bracket not sourced by it yet. */
+	async addSourceToLastBracket(placements: string) {
+		await this.locators.addSourceButtons.last().click();
 		await this.locators.placementsInputs.last().fill(placements);
 	}
 }

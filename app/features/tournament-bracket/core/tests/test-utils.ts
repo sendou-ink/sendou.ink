@@ -335,6 +335,38 @@ export const progressions = {
 			],
 		},
 	],
+	multiSourceTopCut: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Redemption",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Top Cut",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [1, 2],
+				},
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
 	swissToTwoSingleEliminationsWithUnderground: [
 		{
 			...DEFAULT_PROGRESSION_ARGS,

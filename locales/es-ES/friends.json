@@ -22,5 +22,6 @@
 	"view.all": "Todos",
 	"teamMembers.empty": "Aún no hay miembros en el equipo",
 	"unseenRequests_one": "{{count}} solicitud de amistad sin ver",
+	"unseenRequests_many": "",
 	"unseenRequests_other": "{{count}} solicitudes de amistad sin ver"
 }
