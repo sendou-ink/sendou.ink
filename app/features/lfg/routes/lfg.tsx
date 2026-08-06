@@ -147,7 +147,7 @@ function Filters() {
 					popover: (
 						<select
 							aria-label={t("lfg:filters.Type")}
-							className="w-max"
+							className="w-full"
 							value={type ?? "PLAYER_FOR_TEAM"}
 							onChange={(e) =>
 								setParams({ type: e.target.value as typeof type })
@@ -174,7 +174,7 @@ function Filters() {
 					popover: (
 						<select
 							aria-label={t("lfg:filters.Language")}
-							className="w-max"
+							className="w-full"
 							value={language ?? "en"}
 							onChange={(e) =>
 								setParams({ language: e.target.value as typeof language })
@@ -202,7 +202,7 @@ function Filters() {
 					popover: (
 						<select
 							aria-label={t("lfg:filters.PlusTier")}
-							className="w-max"
+							className="w-full"
 							value={plusTier ?? 3}
 							onChange={(e) => setParams({ plusTier: Number(e.target.value) })}
 						>
@@ -221,6 +221,7 @@ function Filters() {
 					popover: (
 						<input
 							aria-label={t("lfg:filters.Timezone")}
+							className="w-full"
 							type="number"
 							value={timezone ?? 3}
 							min={0}
@@ -315,7 +316,7 @@ function TierSelect({
 	return (
 		<select
 			aria-label={label}
-			className="w-max"
+			className="w-full"
 			value={value}
 			onChange={(e) => onChange(e.target.value as typeof value)}
 		>

@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { ChevronDown, Plus, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
@@ -113,7 +114,7 @@ function FilterPill({
 			<SendouPopover
 				isOpen={isOpen}
 				onOpenChange={onOpenChange}
-				popoverClassName={pill.popoverClassName}
+				popoverClassName={clsx(styles.popover, pill.popoverClassName)}
 				trigger={
 					<Button
 						className={styles.trigger}

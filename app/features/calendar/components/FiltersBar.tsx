@@ -265,7 +265,7 @@ export function FiltersBar() {
 						}),
 					testId: "organizers-filter",
 					popover: (
-						<div className="stack md items-start">
+						<div className="stack md">
 							<OrgListEditor
 								label={t("calendar:filter.orgsIncluded")}
 								values={filters.orgsIncluded}
@@ -296,7 +296,7 @@ export function FiltersBar() {
 						writeFilters({ preferredStartTime: "ANY", minTeamCount: 0 }),
 					testId: "time-and-size-filter",
 					popover: (
-						<div className="stack md items-start">
+						<div className="stack md">
 							<RadioGroupFormField
 								name="preferredStartTime"
 								label={t("calendar:filter.startTime")}
@@ -312,9 +312,10 @@ export function FiltersBar() {
 								}
 								onBlur={() => {}}
 							/>
-							<label className="stack xs items-start mb-0">
+							<label className="stack xs mb-0">
 								{t("calendar:filter.minTeamCount")}
 								<input
+									className="w-full"
 									type="number"
 									min={0}
 									value={filters.minTeamCount > 0 ? filters.minTeamCount : ""}
@@ -378,7 +379,7 @@ function OrgListEditor({
 	};
 
 	return (
-		<div className="stack xs items-start">
+		<div className="stack xs">
 			<span className="text-sm font-semi-bold">{label}</span>
 			{values.map((org) => (
 				<div key={org} className="stack horizontal xs items-center">
@@ -395,6 +396,7 @@ function OrgListEditor({
 			{values.length < 10 ? (
 				<div className="stack horizontal xs items-center">
 					<input
+						className="w-full"
 						value={draft}
 						maxLength={100}
 						disabled={disabled}
@@ -431,7 +433,7 @@ function ExcludedAuthorsEditor({
 	onChange: (values: number[]) => void;
 }) {
 	return (
-		<div className="stack xs items-start">
+		<div className="stack xs">
 			<span className="text-sm font-semi-bold">{label}</span>
 			{values.map((userId) => (
 				<div key={userId} className="stack horizontal xs items-center">

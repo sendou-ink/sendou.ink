@@ -1,3 +1,7 @@
+.popover {
+	min-width: 14rem;
+}
+
 .bar {
 	display: flex;
 	flex-wrap: wrap;

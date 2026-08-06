@@ -183,7 +183,7 @@ function Filters() {
 					name: t("builds:filters.mode"),
 					icon: <MapIcon />,
 					formattedValue:
-						mode !== null ? t(`game-misc:MODE_LONG_${mode}`) : null,
+						mode !== null ? t(`game-misc:MODE_SHORT_${mode}`) : null,
 					onAdd: () => setParams({ mode: "SZ" }),
 					onRemove: () => setParams({ mode: null }),
 					testId: "mode",
@@ -441,9 +441,10 @@ function DatePopover({
 			: oneMonthAgoOnSaturday;
 
 	return (
-		<div className="stack sm items-start">
+		<div className="stack sm">
 			<label className="mb-0">{t("builds:filters.date.since")}</label>
 			<select
+				className="w-full"
 				value={selectValue() ?? "CUSTOM"}
 				data-testid="date-select"
 				onChange={(e) =>
@@ -467,6 +468,7 @@ function DatePopover({
 			</select>
 			{selectValue() === "CUSTOM" ? (
 				<input
+					className="w-full"
 					type="date"
 					value={dateToYYYYMMDD(customDate)}
 					onChange={(e) => onChange(e.target.value)}
