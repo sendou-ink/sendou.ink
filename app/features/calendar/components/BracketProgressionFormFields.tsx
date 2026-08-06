@@ -9,7 +9,9 @@ import type { ArrayItemRenderContext } from "~/form/types";
 import {
 	type BracketFormValue,
 	newFollowUpProgressionEntry,
+	newProgressionSource,
 	type ProgressionFormValue,
+	type ProgressionSourceFormValue,
 	sourceBracketHasEarlyAdvance,
 } from "../calendar-progression-form";
 import styles from "./BracketProgressionFormFields.module.css";
@@ -224,17 +226,37 @@ function ProgressionEntryFields({
 	isSourceLocked: boolean;
 }) {
 	const { t } = useTranslation(["forms"]);
-	const { index, itemName, values, formValues } = renderContext;
+	const { index, itemName, values, formValues, setItemField } = renderContext;
 	const entry = values as unknown as ProgressionFormValue;
 	const brackets = (formValues.brackets ?? []) as BracketFormValue[];
+	const sources = entry.sources ?? [];
 
 	const isFirstBracket = index === 0;
 
-	const sourceBracketOptions = brackets.flatMap((bracket, bracketIdx) =>
-		bracketIdx === index || !bracket.name
-			? []
-			: [{ value: String(bracketIdx), label: bracket.name }],
-	);
+	// a newly added row defaults to the first bracket, which is usually already a
+	// source of this bracket, so it gets moved to the first one not sourced yet
+	const handleSourcesChanged = (newValue: unknown) => {
+		const newSources = newValue as ProgressionSourceFormValue[];
+		if (newSources.length <= sources.length) return;
+
+		const usedBracketIdxs = new Set(
+			newSources.slice(0, -1).map((source) => source.bracketIdx),
+		);
+		const unusedBracketIdx = brackets.findIndex(
+			(_, bracketIdx) =>
+				bracketIdx !== index && !usedBracketIdxs.has(String(bracketIdx)),
+		);
+		if (unusedBracketIdx === -1) return;
+
+		setItemField(
+			"sources",
+			newSources.map((source, sourceIdx) =>
+				sourceIdx === newSources.length - 1
+					? { ...source, bracketIdx: String(unusedBracketIdx) }
+					: source,
+			),
+		);
+	};
 
 	return (
 		<div className="stack md items-start">
@@ -246,20 +268,19 @@ function ProgressionEntryFields({
 				disabled={isFirstBracket || isSourceLocked}
 			/>
 			{!isFirstBracket && entry.source === "BRACKET" ? (
-				<>
-					<FormField
-						name={`${itemName}.sourceBracketIdx`}
-						options={sourceBracketOptions}
-						disabled={isDisabled}
-					/>
-					{!sourceBracketHasEarlyAdvance(brackets, entry) ? (
-						<FormField
-							name={`${itemName}.placements`}
-							disabled={isDisabled}
-							labelPopover={<PlacementsSyntaxPopover />}
+				<FormField
+					name={`${itemName}.sources`}
+					disabled={isDisabled}
+					onValueChange={handleSourcesChanged}
+				>
+					{(sourceRenderContext: ArrayItemRenderContext) => (
+						<SourceFields
+							renderContext={sourceRenderContext}
+							destinationBracketIdx={index}
+							isDisabled={isDisabled}
 						/>
-					) : null}
-				</>
+					)}
+				</FormField>
 			) : (
 				<FormMessage type="info">
 					{isInvitational
@@ -267,6 +288,52 @@ function ProgressionEntryFields({
 						: t("forms:progression.joinFromSignUp")}
 				</FormMessage>
 			)}
+		</div>
+	);
+}
+
+function SourceFields({
+	renderContext,
+	destinationBracketIdx,
+	isDisabled,
+}: {
+	renderContext: ArrayItemRenderContext;
+	destinationBracketIdx: number;
+	isDisabled: boolean;
+}) {
+	const { index, itemName, values, formValues } = renderContext;
+	const source = values as unknown as ProgressionSourceFormValue;
+	const brackets = (formValues.brackets ?? []) as BracketFormValue[];
+	const progression = (formValues.progression ?? []) as ProgressionFormValue[];
+	const siblingSources = progression[destinationBracketIdx]?.sources ?? [];
+
+	// a bracket can be sourced only once, so the brackets taken by the other rows
+	// are not offered here
+	const bracketOptions = brackets.flatMap((bracket, bracketIdx) =>
+		bracketIdx === destinationBracketIdx ||
+		!bracket.name ||
+		siblingSources.some(
+			(siblingSource, siblingIdx) =>
+				siblingIdx !== index && siblingSource.bracketIdx === String(bracketIdx),
+		)
+			? []
+			: [{ value: String(bracketIdx), label: bracket.name }],
+	);
+
+	return (
+		<div className="stack md items-start">
+			<FormField
+				name={`${itemName}.bracketIdx`}
+				options={bracketOptions}
+				disabled={isDisabled}
+			/>
+			{!sourceBracketHasEarlyAdvance(brackets, source) ? (
+				<FormField
+					name={`${itemName}.placements`}
+					disabled={isDisabled}
+					labelPopover={<PlacementsSyntaxPopover />}
+				/>
+			) : null}
 		</div>
 	);
 }
@@ -307,15 +374,24 @@ function progressionAfterBracketDelete(
 ): ProgressionFormValue[] {
 	return progression
 		.filter((_, idx) => idx !== deletedIdx)
-		.map((entry) => {
-			const sourceIdx = Number(entry.sourceBracketIdx);
+		.map((entry) => ({
+			...entry,
+			// sources of the deleted bracket are dropped, the rest shift down with it
+			sources: withFallbackSource(
+				(entry.sources ?? [])
+					.filter((source) => Number(source.bracketIdx) !== deletedIdx)
+					.map((source) => {
+						const sourceIdx = Number(source.bracketIdx);
+						return sourceIdx > deletedIdx
+							? { ...source, bracketIdx: String(sourceIdx - 1) }
+							: source;
+					}),
+			),
+		}));
+}
 
-			if (sourceIdx === deletedIdx) {
-				return { ...entry, sourceBracketIdx: "0" };
-			}
-			if (sourceIdx > deletedIdx) {
-				return { ...entry, sourceBracketIdx: String(sourceIdx - 1) };
-			}
-			return entry;
-		});
+function withFallbackSource(sources: ProgressionSourceFormValue[]) {
+	if (sources.length === 0) return [newProgressionSource()];
+
+	return sources;
 }

@@ -86,7 +86,7 @@ export function calculateSPR({
 	return expectedIndex - actualIndex;
 }
 
-/** Teams matches that contributed to the standings, in the order they were played in */
+/** Every match the team played, in the order they were played in */
 export function matchesPlayed({
 	tournament,
 	teamId,
@@ -94,32 +94,13 @@ export function matchesPlayed({
 	tournament: Tournament;
 	teamId: number;
 }) {
-	const startingBracketIdx = tournament.teamById(teamId)?.startingBracketIdx;
+	const bracketsInPlayedOrder = R.sortBy(
+		tournament.brackets,
+		(bracket) => bracket.createdAt ?? Number.POSITIVE_INFINITY,
+		(bracket) => bracket.idx,
+	);
 
-	let bracketIdxs: number[];
-
-	if (typeof startingBracketIdx !== "number" || startingBracketIdx === 0) {
-		bracketIdxs = Progression.bracketIdxsForStandings(
-			tournament.ctx.settings.bracketProgression,
-		);
-	} else {
-		const reachableBrackets = Progression.bracketsReachableFrom(
-			startingBracketIdx,
-			tournament.ctx.settings.bracketProgression,
-		);
-		const reachableSet = new Set(reachableBrackets);
-
-		const allBracketIdxs = tournament.ctx.settings.bracketProgression
-			.map((_, idx) => idx)
-			.sort((a, b) => b - a);
-		bracketIdxs = allBracketIdxs.filter((idx) => reachableSet.has(idx));
-	}
-
-	const brackets = bracketIdxs
-		.reverse()
-		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
-
-	const matches = brackets.flatMap((bracket, i) =>
+	const matches = bracketsInPlayedOrder.flatMap((bracket) =>
 		bracket.data.match
 			.filter(
 				(match) =>
@@ -130,7 +111,7 @@ export function matchesPlayed({
 			)
 			.map((match) => ({
 				...match,
-				bracketIdx: bracketIdxs[i],
+				bracketIdx: bracket.idx,
 			})),
 	);
 

@@ -25,6 +25,11 @@ export class CalendarNewEventPage {
 			placementsInputs: page.getByLabel("Placements"),
 			deleteBracketButtons: page.getByTestId("brackets-remove-item-button"),
 			signUpSourceRadios: page.getByRole("radio", { name: "Sign-up" }),
+			// the sources array is nested inside a progression item, so its add button
+			// test id is prefixed by the item's path e.g. "progression[1].sources"
+			addSourceButtons: page.locator(
+				'[data-testid$="sources-add-item-button"]',
+			),
 			mapPoolTemplateSelect: page.getByLabel("Template"),
 			clearMapPoolButton: page.getByRole("button", { name: "Clear" }),
 		};
@@ -115,6 +120,17 @@ export class CalendarNewEventPage {
 
 		await this.locators.bracketNameInputs.last().fill(name);
 		await this.locators.bracketFormatSelects.last().selectOption(format);
+		await this.locators.placementsInputs.last().fill(placements);
+	}
+
+	async renameBracket(nth: number, name: string) {
+		await this.locators.bracketNameInputs.nth(nth).fill(name);
+	}
+
+	/** Adds another source bracket to the last bracket of the progression. The new
+	 * row preselects the first bracket not sourced by it yet. */
+	async addSourceToLastBracket(placements: string) {
+		await this.locators.addSourceButtons.last().click();
 		await this.locators.placementsInputs.last().fill(placements);
 	}
 }

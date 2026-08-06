@@ -161,12 +161,17 @@ export class SingleEliminationBracket extends Bracket {
 		return this.standingsWithoutNonParticipants(resultWithThirdPlaceTiebroken);
 	}
 
-	source({ placements }: { placements: number[] }) {
+	source({ placements, rest }: { placements: number[]; rest?: boolean }) {
 		invariant(placements.length > 0, "Empty placements not supported");
 		invariant(
-			placements.every((placement) => placement < 0),
-			"Positive placements in SE not implemented",
+			placements.every((placement) => placement < 0) ||
+				placements.every((placement) => placement > 0),
+			"Mixed positive and negative placements not supported",
 		);
+
+		if (placements.every((placement) => placement > 0)) {
+			return this.sourceByStandings(placements, rest === true);
+		}
 
 		// third place match lives in a separate (higher) group; the winners
 		// group teams get eliminated from is the lowest group id

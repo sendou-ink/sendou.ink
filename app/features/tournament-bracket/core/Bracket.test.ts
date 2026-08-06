@@ -1037,6 +1037,174 @@ describe("single elimination source - underground", () => {
 	});
 });
 
+describe("single elimination source - positive placements", () => {
+	// 8-team SE without a third place match; lower id always wins so the final
+	// standings are 1st: team 1, 2nd: team 2, tied 3rd: teams 3 & 4, tied 5th: the rest
+	const singleEliminationTournament = ({
+		playedRounds,
+	}: {
+		playedRounds: "all" | "first";
+	}) => {
+		let data = createResolved({
+			type: "single_elimination",
+			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+			settings: {},
+		});
+
+		if (playedRounds === "first") {
+			for (const match of readyMatches(data, () => true)) {
+				data = reportLowerIdWinner(data, match.id);
+			}
+		} else {
+			let ready = readyMatches(data, () => true);
+			while (ready.length) {
+				for (const match of ready) {
+					data = reportLowerIdWinner(data, match.id);
+				}
+				ready = readyMatches(data, () => true);
+			}
+		}
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "single_elimination",
+							name: "SE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("sources the winner when placements are [1]", () => {
+		const tournament = singleEliminationTournament({ playedRounds: "all" });
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1] });
+
+		expect(relevantMatchesFinished).toBe(true);
+		expect(teams).toEqual([1]);
+	});
+
+	it("sources the top 2 when placements are [1, 2]", () => {
+		const tournament = singleEliminationTournament({ playedRounds: "all" });
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1, 2] });
+
+		expect(relevantMatchesFinished).toBe(true);
+		expect(teams).toEqual([1, 2]);
+	});
+
+	it("sources both tied semifinal losers when placements are [3]", () => {
+		const tournament = singleEliminationTournament({ playedRounds: "all" });
+
+		const { teams } = tournament.bracketByIdx(0)!.source({ placements: [3] });
+
+		expect([...teams].sort((a, b) => a - b)).toEqual([3, 4]);
+	});
+
+	it("reports relevant matches unfinished while the bracket is underway", () => {
+		const tournament = singleEliminationTournament({ playedRounds: "first" });
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1] });
+
+		expect(relevantMatchesFinished).toBe(false);
+		expect(teams).toEqual([]);
+	});
+});
+
+describe("double elimination source - positive placements", () => {
+	// 4-team DE; lower id always wins so the grand finals winner is team 1 and no
+	// bracket reset is played, leaving the standings 1st: team 1 ... 4th: team 4
+	const doubleEliminationTournament = ({
+		playedRounds,
+	}: {
+		playedRounds: "all" | "first";
+	}) => {
+		let data = createResolved({
+			type: "double_elimination",
+			seeding: [1, 2, 3, 4],
+			settings: {},
+		});
+
+		if (playedRounds === "first") {
+			for (const match of readyMatches(data, () => true)) {
+				data = reportLowerIdWinner(data, match.id);
+			}
+		} else {
+			let ready = readyMatches(data, () => true);
+			while (ready.length) {
+				for (const match of ready) {
+					data = reportLowerIdWinner(data, match.id);
+				}
+				ready = readyMatches(data, () => true);
+			}
+		}
+
+		return testTournament({
+			ctx: {
+				settings: {
+					bracketProgression: [
+						{
+							type: "double_elimination",
+							name: "DE",
+							requiresCheckIn: false,
+							settings: {},
+							sources: [],
+						},
+					],
+				},
+			},
+			data,
+		});
+	};
+
+	it("sources the winner when placements are [1]", () => {
+		const tournament = doubleEliminationTournament({ playedRounds: "all" });
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1] });
+
+		expect(relevantMatchesFinished).toBe(true);
+		expect(teams).toEqual([1]);
+	});
+
+	it("sources the top 2 when placements are [1, 2]", () => {
+		const tournament = doubleEliminationTournament({ playedRounds: "all" });
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1, 2] });
+
+		expect(relevantMatchesFinished).toBe(true);
+		expect(teams).toEqual([1, 2]);
+	});
+
+	it("reports relevant matches unfinished while the bracket is underway", () => {
+		const tournament = doubleEliminationTournament({ playedRounds: "first" });
+
+		const { teams, relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1] });
+
+		expect(relevantMatchesFinished).toBe(false);
+		expect(teams).toEqual([]);
+	});
+});
+
 describe("swiss between rounds", () => {
 	const SWISS_MAIN_BRACKET = {
 		type: "swiss" as const,

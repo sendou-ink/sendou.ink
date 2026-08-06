@@ -364,9 +364,14 @@ export class Tournament {
 	}
 
 	private resolveTeamsFromSources(
-		sources: NonNullable<Progression.ParsedBracket["sources"]>,
+		unsortedSources: NonNullable<Progression.ParsedBracket["sources"]>,
 		bracketIdx: number,
 	) {
+		const sources = Progression.sortedSourcesForSeeding(
+			unsortedSources,
+			this.ctx.settings.bracketProgression,
+		);
+
 		const teams: number[] = [];
 
 		let allRelevantMatchesFinished = true;
@@ -493,7 +498,10 @@ export class Tournament {
 		}
 
 		const sources: Seeding.FollowUpBracketSource[] = [];
-		for (const source of bracket.sources) {
+		for (const source of Progression.sortedSourcesForSeeding(
+			bracket.sources,
+			this.ctx.settings.bracketProgression,
+		)) {
 			const sourceBracket = this.bracketByIdx(source.bracketIdx);
 			if (!sourceBracket) {
 				logger.warn("followUpBracketSeeding: Source bracket not found");

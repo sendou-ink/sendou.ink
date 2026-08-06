@@ -112,6 +112,22 @@ describe("progressionToFormValues + formValuesToInputBrackets", () => {
 		expect(roundTrip(progression)).toEqual(progression);
 	});
 
+	it("round-trips a bracket sourcing teams from two brackets", () => {
+		const progression: Progression.ParsedBracket[] = [
+			RR_TO_SE_WITH_UNDERGROUND[0],
+			RR_TO_SE_WITH_UNDERGROUND[2],
+			{
+				...RR_TO_SE_WITH_UNDERGROUND[1],
+				sources: [
+					{ bracketIdx: 0, placements: [1, 2] },
+					{ bracketIdx: 1, placements: [1] },
+				],
+			},
+		];
+
+		expect(roundTrip(progression)).toEqual(progression);
+	});
+
 	it("round-trips bracket start time", () => {
 		const progression: Progression.ParsedBracket[] = [
 			RR_TO_SE_WITH_UNDERGROUND[0],
@@ -170,13 +186,13 @@ describe("validateBracketProgressionFormValues", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
-			placements: "not placements",
+			sources: [{ bracketIdx: "0", placements: "not placements" }],
 		};
 
 		const issues = validationIssues(formValues);
 
 		expect(issues).toHaveLength(1);
-		expect(issues[0].path).toEqual(["progression", 1, "placements"]);
+		expect(issues[0].path).toEqual(["progression", 1, "sources"]);
 		expect(issues[0].message).toBe(
 			"tournament:progression.error.PLACEMENTS_PARSE_ERROR",
 		);
@@ -198,38 +214,75 @@ describe("validateBracketProgressionFormValues", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
-			sourceBracketIdx: "10",
+			sources: [{ bracketIdx: "10", placements: "1,2" }],
 		};
 
 		const issues = validationIssues(formValues);
 
 		expect(issues).toHaveLength(1);
-		expect(issues[0].path).toEqual(["progression", 1, "sourceBracketIdx"]);
+		expect(issues[0].path).toEqual([
+			"progression",
+			1,
+			"sources",
+			0,
+			"bracketIdx",
+		]);
 	});
 
 	it("rejects a non-canonical source bracket idx string", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
-			sourceBracketIdx: "00",
+			sources: [{ bracketIdx: "00", placements: "1,2" }],
 		};
 
 		const issues = validationIssues(formValues);
 
 		expect(issues).toHaveLength(1);
-		expect(issues[0].path).toEqual(["progression", 1, "sourceBracketIdx"]);
+		expect(issues[0].path).toEqual([
+			"progression",
+			1,
+			"sources",
+			0,
+			"bracketIdx",
+		]);
 	});
 
 	it("rejects a bracket sourcing itself", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
-			sourceBracketIdx: "1",
+			sources: [{ bracketIdx: "1", placements: "1,2" }],
 		};
 
 		const issues = validationIssues(formValues);
 
 		expect(issues).toHaveLength(1);
-		expect(issues[0].path).toEqual(["progression", 1, "sourceBracketIdx"]);
+		expect(issues[0].path).toEqual([
+			"progression",
+			1,
+			"sources",
+			0,
+			"bracketIdx",
+		]);
+	});
+
+	it("rejects the same source bracket twice for one bracket", () => {
+		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
+		formValues.progression[1] = {
+			...formValues.progression[1],
+			sources: [
+				{ bracketIdx: "0", placements: "1,2" },
+				{ bracketIdx: "0", placements: "3,4" },
+			],
+		};
+
+		const issues = validationIssues(formValues);
+
+		expect(issues).toHaveLength(1);
+		expect(issues[0].path).toEqual(["progression", 1, "sources"]);
+		expect(issues[0].message).toBe(
+			"tournament:progression.error.DUPLICATE_SOURCE_BRACKET",
+		);
 	});
 });

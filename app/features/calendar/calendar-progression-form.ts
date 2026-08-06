@@ -32,11 +32,15 @@ export interface BracketFormValue {
 	requiresCheckIn: boolean;
 }
 
+export interface ProgressionSourceFormValue {
+	/** Index of the source bracket in the `brackets` form field, as a string (select value). */
+	bracketIdx: string;
+	placements: string | null;
+}
+
 export interface ProgressionFormValue {
 	source: "SIGN_UP" | "BRACKET";
-	/** Index of the source bracket in the `brackets` form field, as a string (select value). */
-	sourceBracketIdx: string;
-	placements: string | null;
+	sources: ProgressionSourceFormValue[];
 }
 
 // extracted so their literal item values don't widen to `string` in the
@@ -121,10 +125,9 @@ const bracketFieldset = fieldset({
 	}),
 });
 
-const progressionEntryFieldset = fieldset({
+const progressionSourceFieldset = fieldset({
 	fields: z.object({
-		source: progressionSourceField,
-		sourceBracketIdx: selectDynamic({
+		bracketIdx: selectDynamic({
 			label: "labels.sourceBracket",
 			initialValue: "0",
 		}),
@@ -132,6 +135,17 @@ const progressionEntryFieldset = fieldset({
 			label: "labels.placements",
 			placeholder: "placeholders.placements",
 			maxLength: 100,
+		}),
+	}),
+});
+
+const progressionEntryFieldset = fieldset({
+	fields: z.object({
+		source: progressionSourceField,
+		sources: array({
+			min: 1,
+			max: TOURNAMENT.MAX_BRACKETS_PER_TOURNAMENT - 1,
+			field: progressionSourceFieldset,
 		}),
 	}),
 });
@@ -166,7 +180,7 @@ export function defaultBracketsFormValues(): {
 } {
 	return {
 		brackets: [{ ...newBracketFormValue(), name: "Main Bracket" }],
-		progression: [{ source: "SIGN_UP", sourceBracketIdx: "0", placements: "" }],
+		progression: [{ source: "SIGN_UP", sources: [newProgressionSource()] }],
 	};
 }
 
@@ -188,7 +202,12 @@ function newBracketFormValue(): BracketFormValue {
 
 /** Progression form field value appended when a new bracket is added: a follow-up bracket sourcing teams from the first bracket. */
 export function newFollowUpProgressionEntry(): ProgressionFormValue {
-	return { source: "BRACKET", sourceBracketIdx: "0", placements: "" };
+	return { source: "BRACKET", sources: [newProgressionSource()] };
+}
+
+/** Source form field value of a bracket that takes its teams from the first bracket. */
+export function newProgressionSource(): ProgressionSourceFormValue {
+	return { bracketIdx: "0", placements: "" };
 }
 
 /** Converts the `brackets` + `progression` form values into {@link Progression.InputBracket} format ready for validation. */
@@ -217,14 +236,12 @@ export function formValuesToInputBrackets(
 			settings: settingsFromFormValues(bracket, false),
 			requiresCheckIn: bracket.requiresCheckIn,
 			startTime: bracket.startTime ?? undefined,
-			sources: [
-				{
-					bracketId: entry.sourceBracketIdx,
-					placements: sourceBracketHasEarlyAdvance(brackets, entry)
-						? ""
-						: (entry.placements ?? ""),
-				},
-			],
+			sources: entry.sources.map((source) => ({
+				bracketId: source.bracketIdx,
+				placements: sourceBracketHasEarlyAdvance(brackets, source)
+					? ""
+					: (source.placements ?? ""),
+			})),
 		};
 	});
 }
@@ -266,18 +283,22 @@ export function progressionToFormValues(
 		})),
 		progression: input.map((bracket) => ({
 			source: bracket.sources ? "BRACKET" : "SIGN_UP",
-			sourceBracketIdx: bracket.sources?.[0]?.bracketId ?? "0",
-			placements: bracket.sources?.[0]?.placements ?? "",
+			sources: bracket.sources?.length
+				? bracket.sources.map((source) => ({
+						bracketIdx: source.bracketId,
+						placements: source.placements,
+					}))
+				: [newProgressionSource()],
 		})),
 	};
 }
 
-/** Does the source bracket of the given progression entry advance teams via a Swiss early advance threshold (meaning placements are not specified)? */
+/** Does the bracket of the given progression source advance teams via a Swiss early advance threshold (meaning placements are not specified)? */
 export function sourceBracketHasEarlyAdvance(
 	brackets: BracketFormValue[],
-	entry: ProgressionFormValue,
+	source: ProgressionSourceFormValue,
 ) {
-	const sourceBracket = brackets[Number(entry.sourceBracketIdx)];
+	const sourceBracket = brackets[Number(source.bracketIdx)];
 	return sourceBracket?.type === "swiss" && sourceBracket.earlyAdvance;
 }
 
@@ -290,20 +311,28 @@ export function validateBracketProgressionFormValues(
 	for (const [entryIdx, entry] of progression.entries()) {
 		if (entryIdx === 0 || entry.source !== "BRACKET") continue;
 
-		const sourceIdx = Number(entry.sourceBracketIdx);
-		if (
-			!Number.isInteger(sourceIdx) ||
-			String(sourceIdx) !== entry.sourceBracketIdx ||
-			sourceIdx < 0 ||
-			sourceIdx >= brackets.length ||
-			sourceIdx === entryIdx
-		) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: "forms:errors.invalidSourceBracket",
-				path: ["progression", entryIdx, "sourceBracketIdx"],
-			});
-			return;
+		for (const [sourceRowIdx, source] of entry.sources.entries()) {
+			const sourceIdx = Number(source.bracketIdx);
+			if (
+				!Number.isInteger(sourceIdx) ||
+				String(sourceIdx) !== source.bracketIdx ||
+				sourceIdx < 0 ||
+				sourceIdx >= brackets.length ||
+				sourceIdx === entryIdx
+			) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "forms:errors.invalidSourceBracket",
+					path: [
+						"progression",
+						entryIdx,
+						"sources",
+						sourceRowIdx,
+						"bracketIdx",
+					],
+				});
+				return;
+			}
 		}
 	}
 
@@ -342,15 +371,19 @@ function progressionErrorPaths(
 			return [["brackets", error.bracketIdx, "hasAbDivisions"]];
 		case "SAME_PLACEMENT_TO_MULTIPLE_BRACKETS":
 		case "GAP_IN_PLACEMENTS":
-			return error.bracketIdxs.map((idx) => ["progression", idx, "placements"]);
+		case "CYCLIC_PROGRESSION":
+			return error.bracketIdxs.map((idx) => ["progression", idx, "sources"]);
+		// a bracket can have many sources but the error only identifies the bracket,
+		// so the message attaches to the sources list rather than one source's placements
 		case "PLACEMENTS_PARSE_ERROR":
 		case "TOO_MANY_PLACEMENTS":
 		case "PLACEMENT_TOO_HIGH":
 		case "NEGATIVE_PROGRESSION":
-		case "NO_SE_POSITIVE":
-		case "NO_DE_POSITIVE":
+		case "MIXED_POSITIVE_NEGATIVE_PLACEMENTS":
+		case "DUPLICATE_SOURCE_BRACKET":
 		case "EMPTY_PLACEMENTS_ON_NON_SWISS":
-			return [["progression", error.bracketIdx, "placements"]];
+		case "MERGED_STARTING_BRACKETS":
+			return [["progression", error.bracketIdx, "sources"]];
 		default:
 			assertUnreachable(error);
 	}
