@@ -9,7 +9,9 @@
  *   cadence must not assume raw-gameplay screen lifetimes; gates are
  *   ~1.6ms, so searching at the analysis floor costs nothing). Once the
  *   gate passes it drops to the dense `refineIntervalS` so the best-read
- *   refinement loop still sees every frame it wants. `checkIntervalS`
+ *   refinement loop still sees every frame it wants; a detector whose
+ *   parse is expensive (death ~1.4s) declares its own refineIntervalS so
+ *   the dense default cannot multiply that cost. `checkIntervalS`
  *   (objective counter) remains a hard cap on both phases and exempts the
  *   detector from suppression, as before. `nextDueT()` lets the caller
  *   skip a frame's canvas readback + normalize entirely when no detector
@@ -47,8 +49,10 @@ export interface SchedulingInfo {
 	id: string;
 	checkIntervalS?: number;
 	searchIntervalS?: number;
+	refineIntervalS?: number;
 	sufficientConfidence?: number;
 	rearmCooldownS?: number;
+	maxStagnantParses?: number;
 }
 
 export interface SchedulerOptions {
@@ -57,12 +61,15 @@ export interface SchedulerOptions {
 	 * parses are never suppressed
 	 */
 	suppressSteadyFrames: boolean;
-	/** check cadence while a detector's gate is passing */
+	/** check cadence while a detector's gate is passing (per-detector
+	 * refineIntervalS overrides — for detectors whose parse is expensive
+	 * enough that the dense default multiplies real cost) */
 	refineIntervalS: number;
 	/** check cadence while a detector's gate is failing (per-detector
 	 * searchIntervalS overrides) */
 	searchIntervalS: number;
-	/** consecutive non-improving parses tolerated before suppression */
+	/** consecutive non-improving parses tolerated before suppression
+	 * (per-detector maxStagnantParses overrides) */
 	maxStagnantParses: number;
 	/** seconds without improvement tolerated before suppression */
 	stagnantAfterS: number;
@@ -250,8 +257,10 @@ export class DetectorScheduler {
 			return;
 		}
 		streak.stagnant += 1;
+		const maxStagnant =
+			state.info.maxStagnantParses ?? this.#options.maxStagnantParses;
 		if (
-			streak.stagnant >= this.#options.maxStagnantParses &&
+			streak.stagnant >= maxStagnant &&
 			t - streak.lastImprovementT >= this.#options.stagnantAfterS
 		) {
 			streak.suppressed = true;
@@ -279,7 +288,8 @@ export class DetectorScheduler {
 		// while suppressed only the gate keeps running (to spot the screen
 		// changing), which the sparser search cadence covers
 		if (state.streak?.suppressed) return search;
-		return state.gatePassing ? this.#options.refineIntervalS : search;
+		if (!state.gatePassing) return search;
+		return info.refineIntervalS ?? this.#options.refineIntervalS;
 	}
 
 	#recordMatchState(

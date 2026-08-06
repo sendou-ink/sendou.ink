@@ -53,11 +53,27 @@ export interface Detector<TData = unknown> {
 	 */
 	searchIntervalS?: number;
 	/**
+	 * Check cadence while the gate is passing (the refine phase); unset =
+	 * the scheduler's dense default (0.15s). Only for detectors whose parse
+	 * is expensive enough that refining at the dense cadence multiplies
+	 * real cost — the sparser cadence still has to sample the screen's
+	 * lifetime several times.
+	 */
+	refineIntervalS?: number;
+	/**
+	 * Consecutive non-improving parses tolerated before stagnation
+	 * suppression; unset = the scheduler's default (6). Lower for expensive
+	 * parses to cap the worst-case cost of a stagnant streak.
+	 */
+	maxStagnantParses?: number;
+	/**
 	 * A parse reaching this confidence ends the streak's refinement
 	 * immediately: the timeline keeps the best read per merge window, so a
 	 * read this good cannot be improved upon in any way that matters.
-	 * Conservative by construction — if real reads never reach it, behavior
-	 * falls back to stagnation-based suppression.
+	 * Set just under the detector's measured clean-read confidence floor
+	 * (fixture-suite reads + confirmed scan events), so a streak's first
+	 * full read suppresses the rest; degraded-footage reads below the
+	 * floor fall back to stagnation-based suppression.
 	 */
 	sufficientConfidence?: number;
 	/**

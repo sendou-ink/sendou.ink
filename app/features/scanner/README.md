@@ -98,10 +98,15 @@ sequenceDiagram
   0.25s — produced/casted VoDs cut screens to ~1s with transition flicker
   inside, so search cadence must not assume raw-gameplay screen lifetimes;
   gates are ~ms-cheap, so this costs little); once the gate passes it
-  drops to the dense refine cadence for best-read refinement. Suppression ends a refinement streak
-  once it stagnates by parse count AND elapsed time (~3s — the time floor
+  drops to the dense refine cadence for best-read refinement (detectors
+  with expensive parses override it via `refineIntervalS` — death 0.5s,
+  minimap 0.4s). Suppression ends a refinement streak
+  once it stagnates by parse count (default 6; per-detector
+  `maxStagnantParses` — death 3) AND elapsed time (~3s — the time floor
   keeps a dense cadence from suppressing during a screen's entry animation
-  before it is readable) or immediately at `sufficientConfidence`; death
+  before it is readable) or immediately at `sufficientConfidence`, which
+  sits just under each detector's measured clean-read confidence floor
+  (fixture suite + confirmed scan events); death
   adds `rearmCooldownS` (safe because it fits inside the Death timeline
   merge window). `checkIntervalS` (objective: 1s)
   still hard-caps both phases and exempts from suppression; a detector can

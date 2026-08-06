@@ -639,9 +639,16 @@ export function createMinimapDetector(
 		];
 	}
 
+	// sufficientConfidence sits just under the measured clean-read floor
+	// (fixtures 0.746-0.800; confirmed scan events reach down to 0.699, and
+	// those below the floor fall back to stagnation). The refine override
+	// matters here because a map-open's confidence keeps fluctuating upward,
+	// resetting the stagnation counter — without it a ~0.9s parse runs at
+	// the dense cadence for the whole map-open
 	return {
 		id: "minimap",
-		sufficientConfidence: 0.98,
+		refineIntervalS: 0.4,
+		sufficientConfidence: 0.73,
 		gate,
 		parse,
 	};

@@ -321,10 +321,11 @@ export function createScoreboardDetector(
 		];
 	}
 
-	// a 0.98 mean field score is a clean full read
+	// just under the measured clean-read floor (fixtures 0.865-0.899,
+	// confirmed scan events down to 0.799)
 	return {
 		id: "scoreboard",
-		sufficientConfidence: 0.98,
+		sufficientConfidence: 0.79,
 		gate,
 		parse,
 	};

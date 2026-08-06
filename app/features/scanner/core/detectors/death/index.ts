@@ -97,6 +97,13 @@ export const DEATH_EVENT_TYPE = "Death";
 
 /** The constant message line must read back at least this well to emit. */
 const LINE1_MIN_SCORE = 0.5;
+/**
+ * A Latin template's constant line reading at least this well settles the
+ * language and the (expensive) JA line reads are skipped. Fixture-measured:
+ * Latin-language frames read their template at 0.889+, while JA frames'
+ * best Latin-template score is 0.222.
+ */
+const LATIN_DECISIVE_SCORE = 0.85;
 /** Snapped weapon reading below this is reported as null (kept in debug). */
 const WEAPON_MIN_SCORE = 0.55;
 /** Burst-icon fallback match below this is ignored (kept in debug). */
@@ -487,22 +494,30 @@ export function createDeathDetector(
 			};
 			line1 = readLine(SPLAT_LINE1_ROI, weaponGlyphs);
 			line2 = readLine(WEAPON_LINE_ROI, weaponGlyphs);
-			if (jaGlyphs) {
-				jaWeaponLine = readLine(JA_WEAPON_LINE_ROI, jaGlyphs);
-				jaConstLine = readLine(JA_CONST_LINE_ROI, jaGlyphs);
-			}
 			for (const t of DEATH_MESSAGE_TEMPLATES) {
-				let constReading: string;
-				if (isJaTemplate(t)) {
-					if (!jaConstLine) continue;
-					constReading = jaConstLine.text;
-				} else {
-					constReading = t.weaponLine === 1 ? line2.text : line1.text;
-				}
+				if (isJaTemplate(t)) continue;
+				const constReading = t.weaponLine === 1 ? line2.text : line1.text;
 				const score = closestEntry(constReading, [t.constText])?.score ?? 0;
 				if (score > line1Score) {
 					line1Score = score;
 					template = t;
+				}
+			}
+			// the JA line reads cost ~2x the Latin ones (condensed-kana atlas),
+			// so they only run when no Latin template already owns the frame:
+			// measured constant-line scores separate cleanly (Latin frames read
+			// their template at 0.889+, JA frames' best Latin score is <= 0.222)
+			if (jaGlyphs && line1Score < LATIN_DECISIVE_SCORE) {
+				jaWeaponLine = readLine(JA_WEAPON_LINE_ROI, jaGlyphs);
+				jaConstLine = readLine(JA_CONST_LINE_ROI, jaGlyphs);
+				for (const t of DEATH_MESSAGE_TEMPLATES) {
+					if (!isJaTemplate(t)) continue;
+					const score =
+						closestEntry(jaConstLine.text, [t.constText])?.score ?? 0;
+					if (score > line1Score) {
+						line1Score = score;
+						template = t;
+					}
 				}
 			}
 			if (!template || line1Score < LINE1_MIN_SCORE) {
@@ -822,11 +837,17 @@ export function createDeathDetector(
 
 	// the death cam's animated background flickers the gate; after a
 	// sufficient read the 4s rearm hold stays inside the timeline's 8s
-	// Death merge window, so every parse it skips would merge anyway
+	// Death merge window, so every parse it skips would merge anyway.
+	// sufficientConfidence sits just under the measured clean-read floor
+	// (fixtures 0.750-0.825, confirmed scan events 0.751+); the refine and
+	// stagnation overrides cap what a ~1.4s parse can cost when a dirty
+	// read never reaches it
 	return {
 		id: "death",
-		sufficientConfidence: 0.98,
+		refineIntervalS: 0.5,
+		sufficientConfidence: 0.74,
 		rearmCooldownS: 4,
+		maxStagnantParses: 3,
 		gate,
 		parse,
 	};

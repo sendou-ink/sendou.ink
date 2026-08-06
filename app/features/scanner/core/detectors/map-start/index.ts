@@ -365,9 +365,11 @@ export function createMapStartDetector(
 		];
 	}
 
+	// just under the measured clean-read floor (fixtures 0.795-0.864,
+	// confirmed scan events 0.854-1.0)
 	return {
 		id: "map-start",
-		sufficientConfidence: 0.98,
+		sufficientConfidence: 0.79,
 		gate,
 		parse,
 	};

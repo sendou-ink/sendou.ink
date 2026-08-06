@@ -427,10 +427,11 @@ export function createScoreboardReplayDetector(
 	}
 
 	// no rearm cooldown — distinct replays browsed in quick succession are
-	// told apart by content
+	// told apart by content. sufficientConfidence just under the measured
+	// clean-read floor (fixtures 0.808-0.890)
 	return {
 		id: "scoreboard-replay",
-		sufficientConfidence: 0.98,
+		sufficientConfidence: 0.8,
 		gate,
 		parse,
 	};

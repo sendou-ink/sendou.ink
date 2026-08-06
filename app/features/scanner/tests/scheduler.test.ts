@@ -65,6 +65,22 @@ test("a passing gate drops to the dense refine cadence", () => {
 	assert.equal(feed(s, 0.2, { pass: true, confidence: 0.7 }), "parsed");
 });
 
+test("a per-detector refine interval overrides the dense default", () => {
+	const s = make({ refineIntervalS: 0.5 });
+	assert.equal(feed(s, 0, { pass: true, confidence: 0.7 }), "parsed");
+	assert.equal(feed(s, 0.1, { pass: true, confidence: 0.7 }), "skipped");
+	assert.equal(feed(s, 0.4, { pass: true, confidence: 0.7 }), "skipped");
+	assert.equal(feed(s, 0.5, { pass: true, confidence: 0.7 }), "parsed");
+});
+
+test("a per-detector stagnation budget suppresses sooner", () => {
+	const s = make({ maxStagnantParses: 2 }, { stagnantAfterS: 0.1 });
+	assert.equal(feed(s, 0.0, { pass: true, confidence: 0.9 }), "parsed");
+	assert.equal(feed(s, 0.1, { pass: true, confidence: 0.9 }), "parsed");
+	assert.equal(feed(s, 0.2, { pass: true, confidence: 0.9 }), "parsed");
+	assert.equal(feed(s, 0.3, { pass: true, confidence: 0.9 }), "gated");
+});
+
 test("suppresses after stagnant parses on a static screen", () => {
 	const s = make({});
 	assert.equal(feed(s, 0.0, { pass: true, confidence: 0.9 }), "parsed");

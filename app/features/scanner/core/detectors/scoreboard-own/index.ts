@@ -256,9 +256,12 @@ export function createScoreboardOwnDetector(
 		];
 	}
 
+	// just under the measured clean-read floor (fixtures 0.562-0.669,
+	// confirmed scan events 0.612-0.635 — this screen's ability-grid scores
+	// keep the mean low even on perfect reads)
 	return {
 		id: "scoreboard-own",
-		sufficientConfidence: 0.98,
+		sufficientConfidence: 0.55,
 		gate,
 		parse,
 	};
