@@ -410,6 +410,94 @@ export const progressions = {
 			],
 		},
 	],
+	poolsToBracketsViaIntermediateBrackets: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Day 1 Pools",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Redemption",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [2, 3, 4],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Alpha",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1],
+				},
+				{
+					bracketIdx: 1,
+					placements: [1, 2, 3, 4, 5, 6, 7, 8],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Beta",
+			sources: [
+				{
+					bracketIdx: 1,
+					placements: [9, 10, 11, 12],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Gamma",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [5, 6],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Delta",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [7, 8],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Epsilon Seeding",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [9, 10, 11],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Epsilon",
+			sources: [
+				{
+					bracketIdx: 6,
+					placements: [1, 2, 3, 4],
+				},
+			],
+		},
+	],
 	swissToTwoSingleEliminationsWithUnderground: [
 		{
 			...DEFAULT_PROGRESSION_ARGS,

@@ -1034,8 +1034,10 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 
 /**
  * Orders the given brackets so that every bracket appears after all the brackets it is a source of.
- * Among the brackets that are free to be placed next, the one taking the highest placements from its
- * sources (e.g. a top cut over a consolation bracket) goes first.
+ * Among the brackets that are free to be placed next, the one whose teams placed the highest in the
+ * deepest bracket they have in common (e.g. a top cut over a consolation bracket) goes first. The comparison
+ * follows the whole route the teams took, so e.g. a bracket taking the low placements of a redemption bracket
+ * can still rank above a bracket taking mid placements straight from the pools that fed that redemption bracket.
  */
 function destinationsFirstOrder(
 	bracketIdxs: number[],
@@ -1043,10 +1045,10 @@ function destinationsFirstOrder(
 ): number[] {
 	const included = new Set(bracketIdxs);
 
-	const minSourcedPlacements = new Map(
+	const sourcedPlacements = new Map(
 		bracketIdxs.map((bracketIdx) => [
 			bracketIdx,
-			minSourcedPlacement(progression, bracketIdx),
+			ancestorPlacements(bracketIdx, progression),
 		]),
 	);
 
@@ -1074,11 +1076,7 @@ function destinationsFirstOrder(
 				? withoutPendingDestinations
 				: Array.from(remaining);
 
-		const next = R.firstBy(
-			candidates,
-			(bracketIdx) => minSourcedPlacements.get(bracketIdx)!,
-			(bracketIdx) => bracketIdx,
-		)!;
+		const next = bestSourcedBracket(candidates, sourcedPlacements, progression);
 
 		result.push(next);
 		remaining.delete(next);
@@ -1091,20 +1089,27 @@ function destinationsFirstOrder(
 	return result;
 }
 
-function minSourcedPlacement(
+/** Of the given brackets, the one whose teams took the best route there, ties broken by the lowest bracket index. */
+function bestSourcedBracket(
+	bracketIdxs: number[],
+	sourcedPlacements: Map<number, Map<number, number>>,
 	progression: ParsedBracket[],
-	bracketIdx: number,
 ): number {
-	const sources = progression[bracketIdx].sources;
-	if (!sources || sources.length === 0) return Number.POSITIVE_INFINITY;
+	let result = bracketIdxs[0];
 
-	let min = Number.POSITIVE_INFINITY;
-	for (const source of sources) {
-		for (const placement of source.placements) {
-			if (placement < min) min = placement;
+	for (const bracketIdx of bracketIdxs.slice(1)) {
+		const comparison = compareSourcedPlacements(
+			sourcedPlacements.get(bracketIdx)!,
+			sourcedPlacements.get(result)!,
+			progression,
+		);
+
+		if (comparison < 0 || (comparison === 0 && bracketIdx < result)) {
+			result = bracketIdx;
 		}
 	}
-	return min;
+
+	return result;
 }
 
 export function bracketsReachableFrom(
@@ -1226,19 +1231,13 @@ export function sortedSourcesForSeeding(
 
 	return sources
 		.map((source, idx) => ({ source, idx }))
-		.sort((a, b) => {
-			const commonBracketIdx = deepestCommonBracket(
+		.sort((a, b) =>
+			compareSourcedPlacements(
 				placementMaps[a.idx],
 				placementMaps[b.idx],
 				progression,
-			);
-			if (commonBracketIdx === null) return 0;
-
-			return (
-				placementMaps[a.idx].get(commonBracketIdx)! -
-				placementMaps[b.idx].get(commonBracketIdx)!
-			);
-		})
+			),
+		)
 		.map(({ source }) => source);
 }
 
@@ -1311,6 +1310,27 @@ function mergeMinPlacement(
 	if (existing === undefined || placement < existing) {
 		map.set(bracketIdx, placement);
 	}
+}
+
+/** Compares two routes by the placement they got in the deepest bracket they have in common. */
+function compareSourcedPlacements(
+	placementsA: Map<number, number>,
+	placementsB: Map<number, number>,
+	progression: ParsedBracket[],
+): number {
+	const commonBracketIdx = deepestCommonBracket(
+		placementsA,
+		placementsB,
+		progression,
+	);
+	if (commonBracketIdx === null) return 0;
+
+	const placementA = placementsA.get(commonBracketIdx)!;
+	const placementB = placementsB.get(commonBracketIdx)!;
+
+	if (placementA === placementB) return 0;
+
+	return placementA - placementB;
 }
 
 function deepestCommonBracket(

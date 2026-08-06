@@ -1452,6 +1452,23 @@ describe("bracketIdxsForStandings", () => {
 			),
 		).toEqual([2, 1, 3, 0]);
 	});
+
+	it("orders brackets by the placement of their teams in the shared ancestor bracket", () => {
+		expect(
+			Progression.bracketIdxsForStandings(
+				progressions.poolsToBracketsViaIntermediateBrackets,
+			),
+		).toEqual([
+			2, // Alpha (pools 1)
+			3, // Beta (pools 2-4, via Redemption)
+			1, // Redemption (pools 2-4)
+			4, // Gamma (pools 5-6)
+			5, // Delta (pools 7-8)
+			7, // Epsilon (pools 9-11, via Epsilon Seeding)
+			6, // Epsilon Seeding (pools 9-11)
+			0, // Day 1 Pools
+		]);
+	});
 });
 
 describe("startingBrackets", () => {
