@@ -28,7 +28,11 @@ import {
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
 import type { DetectedEvent } from "../core/detectors/types";
-import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
+import {
+	buildScannerMatches,
+	invalidObjectiveEvents,
+	isIngestableMatch,
+} from "../core/match-builder";
 import { assignMatchSets } from "../core/match-sets";
 import { TimelineBuilder } from "../core/timeline/index";
 import type { SendStatus } from "../store/events";
@@ -338,6 +342,8 @@ export function VodPage({
 				await pool.whenIdle();
 				await Promise.all(sideWorkRef.current);
 				if (!abort.aborted) {
+					matchesRef.current = withoutInvalidObjectives(matchesRef.current);
+					setMatches(matchesRef.current);
 					setProgress((p) => (p ? { ...p, t: vod.duration } : p));
 					setStatus("done");
 					await saveVod(
@@ -369,17 +375,20 @@ export function VodPage({
 		abortRef.current.aborted = true;
 		try {
 			const events = await loadVodEvents(name);
-			const loaded: VodMatch[] = events.map((e) => ({
-				event: {
-					type: e.type,
-					t: e.t,
-					confidence: e.confidence,
-					data: e.data as FixtureData,
-				},
-				key: nextMatchKeyRef.current++,
-				thumbnail: e.thumbnail,
-				frameId: e.hasFrame ? e.id : undefined,
-			}));
+			// VoDs saved before objective reads were mode-gated may carry them
+			const loaded = withoutInvalidObjectives(
+				events.map((e) => ({
+					event: {
+						type: e.type,
+						t: e.t,
+						confidence: e.confidence,
+						data: e.data as FixtureData,
+					},
+					key: nextMatchKeyRef.current++,
+					thumbnail: e.thumbnail,
+					frameId: e.hasFrame ? e.id : undefined,
+				})),
+			);
 			matchesRef.current = loaded;
 			setMatches(loaded);
 			setResultsSend(null);
@@ -595,10 +604,13 @@ export function VodPage({
 					{[...builtMatches].reverse().map((built, reverseIndex) => {
 						const index = builtMatches.length - 1 - reverseIndex;
 						const ingestable = isIngestableMatch(built.match);
-						// counter reads render as one timeline chart, not a card each
-						const objectiveEvents = built.sources
-							.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-							.map((e) => ({ t: e.t, data: e.data as ObjectiveData }));
+						// counter reads render as one timeline chart, not a card each;
+						// a non-SZ match's reads (objective null) are never shown
+						const objectiveEvents = built.match.objective
+							? built.sources
+									.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
+									.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
+							: [];
 						const cardEvents = withoutRepeatEvents(built.sources).filter(
 							(e) => e.type !== OBJECTIVE_EVENT_TYPE,
 						);
@@ -668,6 +680,16 @@ export function VodPage({
 			</div>
 		</div>
 	);
+}
+
+/** Drops objective reads that grouped into a known non-SZ match (misreads). */
+function withoutInvalidObjectives(matches: VodMatch[]): VodMatch[] {
+	const invalid = new Set(
+		invalidObjectiveEvents(buildScannerMatches(matches.map((m) => m.event))),
+	);
+	return invalid.size > 0
+		? matches.filter((m) => !invalid.has(m.event))
+		: matches;
 }
 
 function frameLoader(m: VodMatch): GetFrame | undefined {

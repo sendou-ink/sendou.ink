@@ -15,7 +15,11 @@ import type { ObjectiveData } from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardReplayData } from "../core/detectors/scoreboard-replay/index";
 import type { DetectedEvent } from "../core/detectors/types";
-import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
+import {
+	buildScannerMatches,
+	invalidObjectiveEvents,
+	isIngestableMatch,
+} from "../core/match-builder";
 import type { ScannerAbility, ScannerLobby } from "../scanner-types";
 import test from "./node-test-compat";
 
@@ -235,6 +239,28 @@ test("a losing-side pov swaps objective samples into teams order", () => {
 		penalty: [null, 4],
 		control: [false, true],
 	});
+});
+
+test("a known non-SZ match drops its objective reads", () => {
+	const events = [
+		mapStart(0, { mode: "CB" }),
+		objective(60),
+		objective(120),
+		scoreboard(300, { mode: "CB" }),
+	];
+	const built = buildScannerMatches(events);
+	assert.equal(built[0]!.match.objective, null);
+	assert.deepEqual(invalidObjectiveEvents(built), [events[1], events[2]]);
+});
+
+test("an unknown-mode match keeps its objective reads", () => {
+	const built = buildScannerMatches([
+		mapStart(0, { mode: null }),
+		objective(60),
+		scoreboard(300, { mode: null }),
+	]);
+	assert.equal(built[0]!.match.objective!.samples.length, 1);
+	assert.deepEqual(invalidObjectiveEvents(built), []);
 });
 
 test("without a pov the side whose count got lower is the winner side", () => {

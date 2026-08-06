@@ -163,6 +163,22 @@ export function isIngestableMatch(match: ScannerMatch): boolean {
 	return match.lobby === null || match.lobby === TOURNAMENT_LOBBY;
 }
 
+/**
+ * Objective-counter reads that landed on a match whose detected mode is not
+ * Splat Zones — the SZ parser (the only one so far) misreading another
+ * mode's counter overlay. The builder already leaves such a match's
+ * `objective` null; callers should delete these events from their stores.
+ */
+export function invalidObjectiveEvents<E extends DetectedEvent>(
+	built: readonly BuiltMatch<E>[],
+): E[] {
+	return built
+		.filter((b) => b.match.mode !== null && b.match.mode !== "SZ")
+		.flatMap((b) =>
+			b.sources.filter((event) => event.type === OBJECTIVE_EVENT_TYPE),
+		);
+}
+
 /** A match being accumulated as the timeline is walked. */
 interface OpenMatch<E extends DetectedEvent> {
 	mapStart: E | null;
@@ -251,20 +267,25 @@ function toBuiltMatch<E extends DetectedEvent>(
 		data: event.data as ObjectiveData,
 	}));
 
+	const mode = board?.mode ?? start?.mode ?? null;
+
 	const match: ScannerMatch = {
 		startsAt:
 			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
 		endsAt: floorOrNull(open.scoreboard?.t ?? open.minimaps.at(-1)?.t),
 		playedAt: playedAt(open.scoreboard, replay),
 		lobby: board?.lobby ?? null,
-		mode: board?.mode ?? start?.mode ?? null,
+		mode,
 		stage: board?.stage ?? start?.stage ?? leadingStage(open.stageVotes),
 		matchScores: board?.matchScores.some((score) => score !== null)
 			? board.matchScores
 			: null,
 		replayCode: replay?.replayCode ?? null,
 		cast: open.minimaps.some((event) => (event.data as MinimapData).spectator),
-		objective: buildObjective(objectives, board),
+		// only the SZ counter is parsed — reads on a known other-mode match
+		// are misreads of a lookalike overlay, not progress data
+		objective:
+			mode === null || mode === "SZ" ? buildObjective(objectives, board) : null,
 		teams: board
 			? teamsFromScoreboard(board, deaths)
 			: teamsFromMinimaps(

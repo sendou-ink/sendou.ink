@@ -5,7 +5,10 @@ import {
 	startSampler,
 } from "../capture/sampler";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
-import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
+import {
+	MAP_START_EVENT_TYPE,
+	type MapStartData,
+} from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import {
 	OBJECTIVE_EVENT_TYPE,
@@ -14,11 +17,16 @@ import {
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
-import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
+import {
+	buildScannerMatches,
+	invalidObjectiveEvents,
+	isIngestableMatch,
+} from "../core/match-builder";
 import { assignMatchSets } from "../core/match-sets";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
 	clearEvents,
+	deleteEvents,
 	listEvents,
 	loadEventFrame,
 	type StoredEvent,
@@ -70,6 +78,9 @@ export function LivePage({
 	);
 	const gatesRef = useRef(new Map<string, GateResult>());
 	const stopRef = useRef<(() => void) | null>(null);
+	// the open match is known to be a non-SZ mode, so counter reads are
+	// misreads of another mode's overlay and are not collected at all
+	const objectiveBlockedRef = useRef(false);
 
 	const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
 	const [deviceId, setDeviceId] = useState<string>("");
@@ -85,13 +96,28 @@ export function LivePage({
 	const sendingRef = useRef(false);
 
 	const refreshFeed = useCallback(() => {
-		void listEvents().then((events) =>
+		void (async () => {
+			const events = await listEvents();
+			// objective reads grouped into a known non-SZ match slipped past the
+			// live block (e.g. the mode read arrived after them) — delete them
+			const invalid = new Set(
+				invalidObjectiveEvents(buildScannerMatches(events)),
+			);
+			if (invalid.size > 0) {
+				await deleteEvents(
+					[...invalid]
+						.map((event) => event.id)
+						.filter((id): id is number => id !== undefined),
+				);
+			}
 			setFeed(
-				events.sort(
-					(a, b) => b.detectedAt - a.detectedAt || (b.id ?? 0) - (a.id ?? 0),
-				),
-			),
-		);
+				events
+					.filter((event) => !invalid.has(event))
+					.sort(
+						(a, b) => b.detectedAt - a.detectedAt || (b.id ?? 0) - (a.id ?? 0),
+					),
+			);
+		})();
 	}, []);
 
 	useEffect(() => {
@@ -132,6 +158,8 @@ export function LivePage({
 	const start = useCallback(async () => {
 		setError(null);
 		setStatus("loading");
+		// a restart may land mid-another-match; collect until its mode is known
+		objectiveBlockedRef.current = false;
 		try {
 			const video = videoRef.current!;
 			const stream = await openVirtualCamera(deviceId || undefined);
@@ -153,8 +181,20 @@ export function LivePage({
 					setStatus("detected");
 					for (const event of result.events as DetectedEvent<FixtureData>[]) {
 						latestParseRef.current = { type: event.type, data: event.data };
+						if (
+							event.type === OBJECTIVE_EVENT_TYPE &&
+							objectiveBlockedRef.current
+						) {
+							continue;
+						}
 						const action = timelineRef.current.push(event);
 						if (action.action === "added" || action.action === "replaced") {
+							if (event.type === MAP_START_EVENT_TYPE) {
+								const mode = (event.data as MapStartData).mode;
+								objectiveBlockedRef.current = mode !== null && mode !== "SZ";
+							} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+								objectiveBlockedRef.current = false;
+							}
 							const stale =
 								action.action === "replaced"
 									? storedIdsRef.current.get(action.replaced)
@@ -330,10 +370,13 @@ export function LivePage({
 						const index = builtMatches.length - 1 - reverseIndex;
 						const id = built.sources[0]!.id!;
 						const ingestable = isIngestableMatch(built.match);
-						// counter reads render as one timeline chart, not a card each
-						const objectiveEvents = built.sources
-							.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-							.map((e) => ({ t: e.t, data: e.data as ObjectiveData }));
+						// counter reads render as one timeline chart, not a card each;
+						// a non-SZ match's reads (objective null) are never shown
+						const objectiveEvents = built.match.objective
+							? built.sources
+									.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
+									.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
+							: [];
 						const cardEvents = withoutRepeatEvents(built.sources).filter(
 							(e) => e.type !== OBJECTIVE_EVENT_TYPE,
 						);

@@ -124,6 +124,27 @@ export function updateEventsSend(
 	);
 }
 
+/** Deletes the given events and their frames in one transaction. */
+export function deleteEvents(ids: number[]): Promise<void> {
+	return db().then(
+		(database) =>
+			new Promise<void>((resolve, reject) => {
+				const transaction = database.transaction(
+					[EVENTS_STORE, FRAMES_STORE],
+					"readwrite",
+				);
+				const events = transaction.objectStore(EVENTS_STORE);
+				const frames = transaction.objectStore(FRAMES_STORE);
+				for (const id of ids) {
+					events.delete(id);
+					frames.delete(id);
+				}
+				transaction.oncomplete = () => resolve();
+				transaction.onerror = () => reject(transaction.error);
+			}),
+	);
+}
+
 export function listEvents(): Promise<StoredEvent[]> {
 	return tx(
 		EVENTS_STORE,

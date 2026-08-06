@@ -78,7 +78,13 @@ sequenceDiagram
   holds the objective, and the match timer — a discriminated union on mode
   with only the SZ member so far). A match's reads land on `ScannerMatch`
   as `objective` progress samples in `teams` order, each anchored to the
-  game clock so consumers can graph progress and spot capture gaps. Parsing details are in each detector's module header;
+  game clock so consumers can graph progress and spot capture gaps. Reads
+  that group into a match whose detected mode is not SZ are misreads of a
+  lookalike overlay (other modes' counters pass the gate): the builder
+  leaves that match's `objective` null and callers discard the events
+  (`invalidObjectiveEvents` — Live deletes them from the store, VoD before
+  persisting/on load; Live also stops collecting once a MapStart reveals a
+  non-SZ mode). Parsing details are in each detector's module header;
   accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching
   recognition code.
