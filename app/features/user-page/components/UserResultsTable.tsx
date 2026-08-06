@@ -50,16 +50,21 @@ export function UserResultsTable({
 			</thead>
 			<tbody>
 				{results.map((result, i) => {
+					// team ids of the two result types are from different tables and can collide
+					const rowId = result.tournamentId
+						? `tournament-${result.teamId}`
+						: `event-${result.teamId}`;
+
 					// We are trying to construct a reasonable label for the checkbox
 					// which shouldn't contain the whole information of the table row as
 					// that can be also accessed when needed.
 					// e.g. "20xx Placing 2nd", "Big House 10 Placing 20th"
-					const placementCellId = `${id}-${result.teamId}-placement`;
-					const nameCellId = `${id}-${result.teamId}-name`;
+					const placementCellId = `${id}-${rowId}-placement`;
+					const nameCellId = `${id}-${rowId}-name`;
 					const checkboxLabelIds = `${nameCellId} ${placementHeaderId} ${placementCellId}`;
 
 					return (
-						<tr key={result.teamId}>
+						<tr key={rowId}>
 							{hasHighlightCheckboxes && (
 								<td>
 									<input
