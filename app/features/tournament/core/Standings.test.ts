@@ -228,6 +228,15 @@ describe("matchesPlayed", () => {
 		expect(roundRobinMatches).toHaveLength(3);
 		expect(singleEliminationMatches).toHaveLength(1);
 	});
+
+	it("includes matches of brackets that are not part of the standings, in the order they were played", () => {
+		const tournament = roundRobinWithRedemptionTournament();
+
+		const matches = matchesPlayed({ tournament, teamId: 4 });
+
+		// 3 round robin matches, the redemption bracket match and the final stage match
+		expect(matches.map((match) => match.bracketIdx)).toEqual([0, 0, 0, 2, 1]);
+	});
 });
 
 function roundRobinToSingleEliminationTournament() {
@@ -257,6 +266,80 @@ function roundRobinToSingleEliminationTournament() {
 				tournamentCtxTeam(3, { startingBracketIdx: 0, seed: 3 }),
 				tournamentCtxTeam(4, { startingBracketIdx: 0, seed: 4 }),
 			],
+		},
+		data,
+	});
+}
+
+function roundRobinWithRedemptionTournament() {
+	const merged = mergeStages(
+		playOutLowerIdWins(
+			createResolved({
+				type: "round_robin",
+				seeding: [1, 2, 3, 4],
+				settings: { groupCount: 1 },
+			}),
+		),
+		playOut(
+			createResolved({
+				type: "single_elimination",
+				seeding: [3, 4],
+				settings: {},
+			}),
+			(one, two) => one > two,
+		),
+		playOutLowerIdWins(
+			createResolved({
+				type: "single_elimination",
+				seeding: [1, 2, 4],
+				settings: {},
+			}),
+		),
+	);
+
+	// the redemption bracket (idx 2) was played before the final stage (idx 1)
+	const stageNames = ["Groups Stage", "Redemption", "Final Stage"];
+	const data = {
+		...merged,
+		stage: merged.stage.map((stage, stageIdx) => ({
+			...stage,
+			name: stageNames[stageIdx],
+			createdAt: stageIdx + 1,
+		})),
+	};
+
+	return testTournament({
+		ctx: {
+			settings: {
+				bracketProgression: [
+					{
+						type: "round_robin",
+						name: "Groups Stage",
+						requiresCheckIn: false,
+						settings: {},
+					},
+					{
+						type: "single_elimination",
+						name: "Final Stage",
+						requiresCheckIn: false,
+						settings: {},
+						sources: [
+							{ bracketIdx: 0, placements: [1, 2] },
+							{ bracketIdx: 2, placements: [1] },
+						],
+					},
+					{
+						type: "single_elimination",
+						name: "Redemption",
+						requiresCheckIn: false,
+						settings: {},
+						sources: [{ bracketIdx: 0, placements: [3, 4] }],
+					},
+				],
+			},
+			teams: [1, 2, 3, 4].map((id) =>
+				tournamentCtxTeam(id, { startingBracketIdx: 0, seed: id }),
+			),
 		},
 		data,
 	});
