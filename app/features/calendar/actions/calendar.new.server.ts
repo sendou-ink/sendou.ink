@@ -6,6 +6,7 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	clearTournamentDataCache,
 	tournamentFromDB,
@@ -28,6 +29,7 @@ import { pathnameFromPotentialURL } from "~/utils/strings";
 import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import { calendarNewSchemaServer } from "../calendar-new-schemas.server";
+import { formValuesToInputBrackets } from "../calendar-progression-form";
 import { canEditCalendarEvent, regClosesAtDate } from "../calendar-utils";
 import { findValidOrganizations } from "../loaders/calendar.new.server";
 
@@ -108,7 +110,7 @@ export const action: ActionFunction = async ({ request }) => {
 		toToolsEnabled: Number(data.toToolsEnabled),
 		toToolsMode:
 			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
-		bracketProgression: data.bracketProgression ?? null,
+		bracketProgression: bracketProgressionFromFormData(data),
 		minMembersPerTeam: Number(data.minMembersPerTeam),
 		maxMembersPerTeam:
 			data.minMembersPerTeam === "4" && data.maxMembersPerTeam
@@ -221,6 +223,21 @@ export const action: ActionFunction = async ({ request }) => {
 
 	throw redirect(calendarEventPage(createdEventId));
 };
+
+/** Resolves the validated bracket progression from the `brackets` + `progression` form fields (already validated by the schema's refine). */
+function bracketProgressionFromFormData(data: {
+	toToolsEnabled: boolean;
+	brackets: Parameters<typeof formValuesToInputBrackets>[0];
+	progression: Parameters<typeof formValuesToInputBrackets>[1];
+}) {
+	if (!data.toToolsEnabled || data.brackets.length === 0) return null;
+
+	const validated = Progression.validatedBrackets(
+		formValuesToInputBrackets(data.brackets, data.progression),
+	);
+
+	return Progression.isBrackets(validated) ? validated : null;
+}
 
 /** Checks user has permissions to create a tournament in this organization */
 async function validateOrganization({

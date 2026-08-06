@@ -202,7 +202,7 @@ export interface CustomPickBanFlow {
 	postGame: CustomPickBanStep[];
 }
 
-// when updating this also update `defaultBracketSettings` in tournament-utils.ts
+// when updating this also update `settingsFromFormValues` in calendar-progression-form.ts
 export interface TournamentStageSettings {
 	// SE
 	thirdPlaceMatch?: boolean;

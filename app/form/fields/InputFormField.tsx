@@ -7,6 +7,7 @@ import { FormFieldWrapper } from "./FormFieldWrapper";
 type InputFormFieldProps = FormFieldProps<"text-field"> & {
 	disabled?: boolean;
 	autoFocus?: boolean;
+	labelPopover?: React.ReactNode;
 	value: string;
 	onChange: (value: string) => void;
 };
@@ -14,6 +15,7 @@ type InputFormFieldProps = FormFieldProps<"text-field"> & {
 export function InputFormField({
 	name,
 	label,
+	labelPopover,
 	bottomText,
 	leftAddon,
 	transformValue,
@@ -40,6 +42,7 @@ export function InputFormField({
 			id={id}
 			name={name}
 			label={label}
+			labelPopover={labelPopover}
 			required={required}
 			error={error}
 			bottomText={bottomText}

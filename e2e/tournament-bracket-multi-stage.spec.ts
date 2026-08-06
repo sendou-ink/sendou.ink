@@ -256,10 +256,10 @@ test.describe("Tournament bracket multi stage", () => {
 
 		const eventEdit = await admin.editEventInfo();
 		await eventEdit.deleteLastBracket();
-		await eventEdit.toggleFollowUpBracketSwitches();
+		await eventEdit.makeAllBracketsStartingBrackets();
 
-		await eventEdit.setBracketFormat(0, "Single-elimination");
-		await eventEdit.setBracketFormat(1, "Single-elimination");
+		await eventEdit.setBracketFormat(0, "Single elimination");
+		await eventEdit.setBracketFormat(1, "Single elimination");
 		await eventEdit.setBracketFormat(2, "Swiss");
 		await eventEdit.setBracketFormat(3, "Swiss");
 
@@ -328,12 +328,12 @@ test.describe("Tournament bracket multi stage", () => {
 		await newTournament.setBracketFormat(0, "Round robin");
 		await newTournament.addFollowUpBracket({
 			name: "Redemption",
-			format: "Single-elimination",
+			format: "Single elimination",
 			placements: "3",
 		});
 		await newTournament.addFollowUpBracket({
 			name: "Finals",
-			format: "Single-elimination",
+			format: "Single elimination",
 			placements: "1-2",
 		});
 		await newTournament.addSourceToLastBracket("1");
