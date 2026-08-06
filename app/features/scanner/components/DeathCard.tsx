@@ -5,10 +5,9 @@ import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
 } from "../core/detectors/death/index";
-import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
-import { formatTime } from "./format";
 import { weaponLabel } from "./labels";
+import { MetaPills } from "./MetaChips";
 
 export function DeathCard(props: {
 	t: number;
@@ -26,12 +25,12 @@ export function DeathCard(props: {
 	return (
 		<div className="card">
 			<div className="meta">
-				<span>t={formatTime(t)}</span>
-				<span className="status detected">
-					<EventTypeIcon type={DEATH_EVENT_TYPE} />
-					death
-				</span>
-				<span>confidence {(confidence * 100).toFixed(0)}%</span>
+				<MetaPills
+					t={t}
+					confidence={confidence}
+					type={DEATH_EVENT_TYPE}
+					label="death"
+				/>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
 				<FrameThumb
 					thumbnail={thumbnail}

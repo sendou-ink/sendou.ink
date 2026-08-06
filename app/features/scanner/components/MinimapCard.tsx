@@ -9,10 +9,9 @@ import {
 } from "../core/detectors/minimap/index";
 import type { CardSlot } from "../core/detectors/minimap/rois";
 import type { ScannerAbility } from "../scanner-types";
-import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
-import { formatTime } from "./format";
 import { stageLabel } from "./labels";
+import { MetaPills } from "./MetaChips";
 
 const ENEMY_SLOT_LETTERS = ["A", "B", "X", "Y"] as const;
 
@@ -103,13 +102,13 @@ export function MinimapCard(props: {
 	return (
 		<div className="card">
 			<div className="meta">
-				<span>t={formatTime(t)}</span>
-				<span className="status detected">
-					<EventTypeIcon type={MINIMAP_EVENT_TYPE} />
-					minimap
-				</span>
-				{data.stage !== null && <span>{stageLabel(data.stage)}</span>}
-				<span>confidence {(confidence * 100).toFixed(0)}%</span>
+				<MetaPills
+					t={t}
+					confidence={confidence}
+					type={MINIMAP_EVENT_TYPE}
+					label="minimap"
+				/>
+				{data.stage !== null ? <span>{stageLabel(data.stage)}</span> : null}
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
 				<FrameThumb
 					thumbnail={thumbnail}

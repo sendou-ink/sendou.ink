@@ -4,10 +4,9 @@ import {
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
 import { AbilityGrid } from "./AbilityGrid";
-import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
-import { formatTime } from "./format";
 import { lobbyLabel, mainWeaponLabel, modeLabel, stageLabel } from "./labels";
+import { MetaPills } from "./MetaChips";
 
 export function ScoreboardOwnCard(props: {
 	t: number;
@@ -24,11 +23,12 @@ export function ScoreboardOwnCard(props: {
 	return (
 		<div className="card">
 			<div className="meta">
-				<span>t={formatTime(t)}</span>
-				<span className="status detected">
-					<EventTypeIcon type={SCOREBOARD_OWN_EVENT_TYPE} />
-					own results
-				</span>
+				<MetaPills
+					t={t}
+					confidence={confidence}
+					type={SCOREBOARD_OWN_EVENT_TYPE}
+					label="own results"
+				/>
 				<span>
 					{[
 						lobbyLabel(data.lobby),
@@ -41,7 +41,6 @@ export function ScoreboardOwnCard(props: {
 				<span>
 					weapon <b>{mainWeaponLabel(data.weaponId) ?? "?"}</b>
 				</span>
-				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
 				<FrameThumb
 					thumbnail={thumbnail}

@@ -6,11 +6,10 @@ import type {
 } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
 import { AbilityPopover } from "./AbilityGrid";
-import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
 import type { CardData } from "./fixture-export";
-import { formatTime } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
+import { MetaPills } from "./MetaChips";
 
 function PlayerRows({
 	players,
@@ -81,11 +80,12 @@ export function ScoreboardCard(props: {
 	return (
 		<div className="card">
 			<div className="meta">
-				<span>t={formatTime(t)}</span>
-				<span className="status detected">
-					<EventTypeIcon type={eventType} />
-					{isReplay ? "replay" : "scoreboard"}
-				</span>
+				<MetaPills
+					t={t}
+					confidence={confidence}
+					type={eventType}
+					label={isReplay ? "replay" : "scoreboard"}
+				/>
 				{(data.mode !== null || data.stage !== null) && (
 					<span>
 						{[
@@ -99,7 +99,6 @@ export function ScoreboardCard(props: {
 				)}
 				{data.timestamp && <span>{data.timestamp}</span>}
 				{data.replayCode && <span className="score">{data.replayCode}</span>}
-				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
 				<FrameThumb
 					thumbnail={thumbnail}

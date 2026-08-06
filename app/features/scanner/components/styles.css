@@ -172,7 +172,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .card .meta {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 6px 12px;
+	gap: var(--s-2) var(--s-4);
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
@@ -180,10 +180,13 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	margin-bottom: 8px;
 	align-items: center;
 
-	/* timestamp leads the row */
-	& > span:first-child {
-		color: var(--color-text);
-		font-weight: var(--weight-bold);
+	/* time + confidence + event type read as one unit, the detail text after it
+	   sits further away */
+	& .meta-pills {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--s-1);
 	}
 
 	/* event-type chip: neutral like the match chips, the icon carries the accent */
@@ -195,6 +198,24 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 		background: var(--color-bg);
 
 		& .event-type-icon {
+			color: var(--color-text-accent);
+		}
+	}
+
+	/* time + confidence chips share the event-type chip look; icon documents
+	   the value, full label on hover via title */
+	& .meta-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 10px;
+		border-radius: var(--radius-full);
+		border: var(--border-width) solid var(--color-border);
+		background: var(--color-bg);
+		color: var(--color-text);
+		font-weight: var(--weight-bold);
+
+		& .meta-chip-icon {
 			color: var(--color-text-accent);
 		}
 	}

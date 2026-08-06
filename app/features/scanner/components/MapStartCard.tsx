@@ -2,10 +2,9 @@ import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
-import { EventTypeIcon } from "./EventTypeIcon";
 import { FrameThumb } from "./FrameThumb";
-import { formatTime } from "./format";
 import { modeLabel, stageLabel } from "./labels";
+import { MetaPills } from "./MetaChips";
 
 export function MapStartCard(props: {
 	t: number;
@@ -22,15 +21,15 @@ export function MapStartCard(props: {
 	return (
 		<div className="card">
 			<div className="meta">
-				<span>t={formatTime(t)}</span>
-				<span className="status detected">
-					<EventTypeIcon type={MAP_START_EVENT_TYPE} />
-					map start
-				</span>
+				<MetaPills
+					t={t}
+					confidence={confidence}
+					type={MAP_START_EVENT_TYPE}
+					label="map start"
+				/>
 				<span>
 					<b>{modeLabel(data.mode) ?? "?"}</b> · {stageLabel(data.stage) ?? "?"}
 				</span>
-				<span>confidence {(confidence * 100).toFixed(0)}%</span>
 				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
 				<FrameThumb
 					thumbnail={thumbnail}
