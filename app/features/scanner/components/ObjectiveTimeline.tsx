@@ -1,7 +1,8 @@
 /**
- * Step-line chart of a match's objective-counter reads: one line per team
- * (remaining count over match time, so lines fall toward 0), solid while
- * that team is in control and dashed while it is not. Penalty is a
+ * Line chart of a match's objective-counter reads: one line per team
+ * (remaining count over match time, so lines fall toward 0). Control is a
+ * thick strip along the bottom of the chart (y = 0) in the controlling
+ * team's color, absent while neither team controls. Penalty is a
  * translucent band filled between score and score + penalty — its thickness
  * is the extra count the team must burn through before its score moves
  * again, so it grows when a penalty lands and shrinks as it counts down.
@@ -77,12 +78,26 @@ export function ObjectiveTimeline({
 		pointHoverRadius: 4,
 		hitRadius: 20,
 		spanGaps: true,
+		cubicInterpolationMode: "monotone" as const,
+	}));
+	// strip along y = 0 while the team is in control; the losing edge is kept
+	// at 0 too so the strip extends exactly to where control ended
+	const controlDatasets = ([0, 1] as const).map((side) => ({
+		label: `${TEAM_LABELS[side]} control`,
+		data: sorted.map((event, i) => ({
+			x: event.t,
+			y:
+				event.data.control[side] || sorted[i - 1]?.data.control[side]
+					? 0
+					: null,
+		})),
+		borderColor: teamColors[side],
+		borderWidth: 5,
+		pointRadius: 0,
+		pointHoverRadius: 0,
+		hitRadius: 0,
+		spanGaps: false,
 		stepped: "after" as const,
-		// dashed while the team is not in control, solid while it is
-		segment: {
-			borderDash: (ctx: { p0DataIndex: number }) =>
-				sorted[ctx.p0DataIndex]?.data.control[side] ? undefined : [4, 4],
-		},
 	}));
 	// band between score and score + penalty; its thickness is the penalty
 	const penaltyDatasets = ([0, 1] as const).map((side) => {
@@ -102,7 +117,7 @@ export function ObjectiveTimeline({
 			borderWidth: 1,
 			pointRadius: 0,
 			pointHoverRadius: 0,
-			stepped: "after" as const,
+			cubicInterpolationMode: "monotone" as const,
 			fill: { target: side },
 			// edge only where a penalty exists so zero-height bands stay invisible
 			segment: {
@@ -114,7 +129,7 @@ export function ObjectiveTimeline({
 			},
 		};
 	});
-	const datasets = [...scoreDatasets, ...penaltyDatasets];
+	const datasets = [...scoreDatasets, ...penaltyDatasets, ...controlDatasets];
 
 	return (
 		<div className="card objective-timeline">
