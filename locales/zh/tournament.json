@@ -247,6 +247,7 @@
 	"progression.error.AB_DIVISIONS_ODD_TEAMS_PER_GROUP": "A/B 分组要求每个小组的队伍数量为偶数",
 	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "空名次仅在来源于包含提前晋级的瑞士轮对战表时有效",
 	"progression.error.DUPLICATE_SOURCE_BRACKET": "",
+	"progression.error.CYCLIC_PROGRESSION": "",
 	"lfg.askCaptainToJoinQueue": "请让您的队伍队长或管理员加入队列",
 	"customFlow.beforeSet": "本轮对局前",
 	"customFlow.afterMap": "本局结束后",

@@ -371,6 +371,7 @@ function progressionErrorPaths(
 			return [["brackets", error.bracketIdx, "hasAbDivisions"]];
 		case "SAME_PLACEMENT_TO_MULTIPLE_BRACKETS":
 		case "GAP_IN_PLACEMENTS":
+		case "CYCLIC_PROGRESSION":
 			return error.bracketIdxs.map((idx) => ["progression", idx, "sources"]);
 		// a bracket can have many sources but the error only identifies the bracket,
 		// so the message attaches to the sources list rather than one source's placements

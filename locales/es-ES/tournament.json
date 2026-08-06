@@ -251,6 +251,7 @@
 	"progression.error.AB_DIVISIONS_ODD_TEAMS_PER_GROUP": "Las divisiones A/B requieren un número par de equipos por grupo",
 	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "Las posiciones vacías solo son válidas cuando provienen de un bracket suizo con avance anticipado",
 	"progression.error.DUPLICATE_SOURCE_BRACKET": "",
+	"progression.error.CYCLIC_PROGRESSION": "",
 	"lfg.askCaptainToJoinQueue": "Pide al capitán de tu equipo o a un manager que se una a la cola",
 	"customFlow.beforeSet": "Antes del set",
 	"customFlow.afterMap": "Después del mapa",

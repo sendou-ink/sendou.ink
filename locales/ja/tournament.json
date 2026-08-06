@@ -245,6 +245,7 @@
 	"progression.error.AB_DIVISIONS_ODD_TEAMS_PER_GROUP": "",
 	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "",
 	"progression.error.DUPLICATE_SOURCE_BRACKET": "",
+	"progression.error.CYCLIC_PROGRESSION": "",
 	"lfg.askCaptainToJoinQueue": "",
 	"customFlow.beforeSet": "",
 	"customFlow.afterMap": "",

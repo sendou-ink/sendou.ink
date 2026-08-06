@@ -1645,6 +1645,93 @@ describe("validatedSources - DUPLICATE_SOURCE_BRACKET", () => {
 	});
 });
 
+describe("validatedSources - CYCLIC_PROGRESSION", () => {
+	it("flags two brackets sourcing each other", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "0",
+						placements: "1-2",
+					},
+					{
+						bracketId: "2",
+						placements: "1",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("CYCLIC_PROGRESSION");
+		expect((error as any).bracketIdxs).toEqual([1, 2]);
+	});
+
+	it("flags a bracket sourcing itself", () => {
+		const error = getValidatedBrackets([
+			{
+				settings: {},
+				type: "round_robin",
+			},
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1",
+					},
+				],
+			},
+		]) as Progression.ValidationError;
+
+		expect(error.type).toBe("CYCLIC_PROGRESSION");
+		expect((error as any).bracketIdxs).toEqual([1]);
+	});
+
+	it("accepts a bracket sourcing one that comes later in the list", () => {
+		const result = getValidatedBrackets([
+			{
+				settings: {},
+				type: "single_elimination",
+				sources: [
+					{
+						bracketId: "1",
+						placements: "1-4",
+					},
+				],
+			},
+			{
+				settings: {},
+				type: "round_robin",
+			},
+		]);
+
+		expect(Progression.isBrackets(result)).toBe(true);
+	});
+
+	it("accepts brackets sharing a source (diamond shaped progression)", () => {
+		expect(
+			Progression.bracketsToValidationError(progressions.lowInk),
+		).toBeNull();
+	});
+});
+
 describe("sortedSourcesForSeeding", () => {
 	it("orders a direct source above one that took a redemption route", () => {
 		const topCut: Progression.ParsedBracket = progressions.multiSourceTopCut[2];

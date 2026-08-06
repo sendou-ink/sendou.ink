@@ -123,6 +123,11 @@ export type ValidationError =
 	| {
 			type: "DUPLICATE_SOURCE_BRACKET";
 			bracketIdx: number;
+	  }
+	// brackets can not source each other in a loop e.g. A sources B and B sources A
+	| {
+			type: "CYCLIC_PROGRESSION";
+			bracketIdxs: number[];
 	  };
 
 /** Takes validated brackets and returns them in the format that is ready for user input. */
@@ -221,6 +226,15 @@ export function validatedBrackets(
 export function bracketsToValidationError(
 	brackets: ParsedBracket[],
 ): ValidationError | null {
+	// must be checked first, other validations assume the progression is a directed acyclic graph
+	const cyclicBracketIdxs = cyclicProgression(brackets);
+	if (cyclicBracketIdxs) {
+		return {
+			type: "CYCLIC_PROGRESSION",
+			bracketIdxs: cyclicBracketIdxs,
+		};
+	}
+
 	if (!resolvesWinner(brackets)) {
 		return {
 			type: "NOT_RESOLVING_WINNER",
@@ -779,6 +793,37 @@ function emptyPlacementsOnNonSwiss(brackets: ParsedBracket[]) {
 	return null;
 }
 
+/** Returns the bracket indexes forming a loop of sources or null if the progression has no loops. */
+function cyclicProgression(brackets: ParsedBracket[]) {
+	const visited = new Set<number>();
+	const currentPath: number[] = [];
+
+	const findCycle = (bracketIdx: number): number[] | null => {
+		const pathIdx = currentPath.indexOf(bracketIdx);
+		if (pathIdx !== -1) return currentPath.slice(pathIdx);
+		if (visited.has(bracketIdx)) return null;
+
+		visited.add(bracketIdx);
+		currentPath.push(bracketIdx);
+
+		for (const source of brackets[bracketIdx]?.sources ?? []) {
+			const cycle = findCycle(source.bracketIdx);
+			if (cycle) return cycle;
+		}
+
+		currentPath.pop();
+
+		return null;
+	};
+
+	for (const bracketIdx of brackets.keys()) {
+		const cycle = findCycle(bracketIdx);
+		if (cycle) return cycle.sort((a, b) => a - b);
+	}
+
+	return null;
+}
+
 /** Takes the return type of `Progression.validatedBrackets` as an input and narrows the type to a successful validation */
 export function isBrackets(
 	input: ParsedBracket[] | ValidationError,
@@ -858,6 +903,17 @@ export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 export function bracketDepth(idx: number, brackets: ParsedBracket[]): number {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
+	return depthFromStartingBracket(idx, brackets, new Set());
+}
+
+function depthFromStartingBracket(
+	idx: number,
+	brackets: ParsedBracket[],
+	pathToBracket: Set<number>,
+): number {
+	// only possible with an invalid progression, see CYCLIC_PROGRESSION
+	if (pathToBracket.has(idx)) return 0;
+
 	const bracket = brackets[idx];
 
 	if (!bracket.sources || bracket.sources.length === 0) {
@@ -865,7 +921,11 @@ export function bracketDepth(idx: number, brackets: ParsedBracket[]): number {
 	}
 
 	const sourceDepths = bracket.sources.map((source) =>
-		bracketDepth(source.bracketIdx, brackets),
+		depthFromStartingBracket(
+			source.bracketIdx,
+			brackets,
+			new Set(pathToBracket).add(idx),
+		),
 	);
 
 	return Math.max(...sourceDepths) + 1;
@@ -879,6 +939,7 @@ function resolveMainBracketProgression(
 
 	let bracketIdxToFind = startBracketIdx;
 	const result = [startBracketIdx];
+	const visited = new Set([startBracketIdx]);
 	while (true) {
 		const bracket = brackets.findIndex((bracket) =>
 			bracket.sources?.some(
@@ -889,9 +950,12 @@ function resolveMainBracketProgression(
 			),
 		);
 
-		if (bracket === -1) break;
+		// -1 = end of the progression, already visited is only possible
+		// with an invalid progression, see CYCLIC_PROGRESSION
+		if (bracket === -1 || visited.has(bracket)) break;
 
 		bracketIdxToFind = bracket;
+		visited.add(bracketIdxToFind);
 		result.push(bracketIdxToFind);
 	}
 
