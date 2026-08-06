@@ -27,6 +27,8 @@ describe("calendarSearchParams", () => {
 			isSendou: [false, true],
 			isRanked: [false, true],
 			minTeamCount: [0, 16],
+			minTier: [1, 3, 9],
+			maxTier: [1, 5, 9],
 			orgsIncluded: [[], ["Splat Org"], ["A", "B"]],
 			orgsExcluded: [[], ["Bad Org"]],
 			authorIdsExcluded: [[], [1, 274]],
@@ -51,6 +53,12 @@ describe("calendarSearchParams", () => {
 			["abc"],
 			["1.5"],
 		]);
+		assertDecodesToDefault(calendarSearchParams, "minTier", [
+			["0"],
+			["10"],
+			["abc"],
+		]);
+		assertDecodesToDefault(calendarSearchParams, "maxTier", [["0"], ["10"]]);
 		assertDecodesToDefault(calendarSearchParams, "games", [["BAD"]]);
 		assertDecodesToDefault(calendarSearchParams, "day", [
 			["0"],

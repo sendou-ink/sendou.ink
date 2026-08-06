@@ -200,6 +200,43 @@ describe("CalendarEvent.applyFilters", () => {
 		expect(result[0].events.shown.map((e) => e.id)).toEqual([2]);
 	});
 
+	it("filters by tier range, taking the tentative tier into account", () => {
+		const events = [
+			{
+				at: 123,
+				events: [
+					makeEvent({ id: 1, tier: 1 }),
+					makeEvent({ id: 2, tier: 3 }),
+					makeEvent({ id: 3, tentativeTier: 4 }),
+					makeEvent({ id: 4, tier: 6 }),
+					makeEvent({ id: 5, tentativeTier: 8 }),
+					makeEvent({ id: 6 }),
+				],
+			},
+		];
+		const filters: CalendarFilters = {
+			...CalendarEvent.defaultFilters(),
+			minTier: 2,
+			maxTier: 6,
+		};
+		const result = CalendarEvent.applyFilters(events, filters);
+		expect(result[0].events.shown.map((e) => e.id)).toEqual([2, 3, 4]);
+	});
+
+	it("shows untiered events when the tier range is at its default", () => {
+		const events = [
+			{
+				at: 123,
+				events: [makeEvent({ id: 1 }), makeEvent({ id: 2, tier: 5 })],
+			},
+		];
+		const result = CalendarEvent.applyFilters(
+			events,
+			CalendarEvent.defaultFilters(),
+		);
+		expect(result[0].events.shown.map((e) => e.id)).toEqual([1, 2]);
+	});
+
 	it("filters by orgsIncluded", () => {
 		const events = [
 			{

@@ -1,5 +1,9 @@
 import { TZDate } from "@date-fns/tz";
 import { isWeekend } from "date-fns";
+import {
+	BEST_TIER_NUMBER,
+	WORST_TIER_NUMBER,
+} from "~/features/tournament/core/tiering";
 import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { assertType } from "~/utils/types";
@@ -22,6 +26,8 @@ export const FILTERS_KEYS = [
 	"modes",
 	"modesExact",
 	"minTeamCount",
+	"minTier",
+	"maxTier",
 	"preferredVersus",
 ] as const;
 
@@ -46,6 +52,8 @@ export function defaultFilters(): CalendarFilters {
 		orgsExcluded: [],
 		authorIdsExcluded: [],
 		minTeamCount: 0,
+		minTier: BEST_TIER_NUMBER,
+		maxTier: WORST_TIER_NUMBER,
 	};
 }
 
@@ -248,6 +256,23 @@ function matchesFilter(
 			}
 
 			return event.teamsCount >= minTeamCount;
+		}
+		case "minTier": {
+			const { minTier, maxTier } = filters;
+			if (minTier === BEST_TIER_NUMBER && maxTier === WORST_TIER_NUMBER) {
+				return true;
+			}
+
+			const tier = event.tier ?? event.tentativeTier;
+			if (tier === null) {
+				return false;
+			}
+
+			return tier >= minTier && tier <= maxTier;
+		}
+		case "maxTier": {
+			// handled in the minTier filter
+			return true;
 		}
 		case "orgsIncluded": {
 			const orgsIncluded = filters[key];

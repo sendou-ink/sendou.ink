@@ -1,6 +1,10 @@
 import { z } from "zod";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import {
+	BEST_TIER_NUMBER,
+	WORST_TIER_NUMBER,
+} from "~/features/tournament/core/tiering";
+import {
 	TOURNAMENT,
 	TOURNAMENT_STAGE_TYPES,
 } from "~/features/tournament/tournament-constants";
@@ -43,6 +47,11 @@ const modeArr = z
 	.array(modeShortWithSpecial)
 	.min(1)
 	.max(modesShortWithSpecial.length);
+const tierNumber = z.coerce
+	.number()
+	.int()
+	.min(BEST_TIER_NUMBER)
+	.max(WORST_TIER_NUMBER);
 
 export const calendarFiltersSearchParamsSchema = z.object({
 	preferredStartTime: preferredStartTime.catch("ANY"),
@@ -58,6 +67,8 @@ export const calendarFiltersSearchParamsSchema = z.object({
 	modes: modeArr.catch([...modesShortWithSpecial]),
 	modesExact: z.boolean().catch(false),
 	minTeamCount: z.coerce.number().int().nonnegative().catch(0),
+	minTier: tierNumber.catch(BEST_TIER_NUMBER),
+	maxTier: tierNumber.catch(WORST_TIER_NUMBER),
 });
 
 const TAGS_TO_OMIT: CalendarEventTag[] = [

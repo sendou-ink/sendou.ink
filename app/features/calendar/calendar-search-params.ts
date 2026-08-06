@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+	BEST_TIER_NUMBER,
+	WORST_TIER_NUMBER,
+} from "~/features/tournament/core/tiering";
 import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
@@ -18,6 +22,12 @@ export const VIEW_FILTERS = [
 	"organization",
 ] as const;
 export type ViewFilter = (typeof VIEW_FILTERS)[number];
+
+const tierNumber = z
+	.number()
+	.int()
+	.min(BEST_TIER_NUMBER)
+	.max(WORST_TIER_NUMBER);
 
 export const calendarSearchParams = SearchParams.define({
 	modes: SP.param(
@@ -51,6 +61,8 @@ export const calendarSearchParams = SearchParams.define({
 		default: 0,
 		loader: true,
 	}),
+	minTier: SP.param(tierNumber, { default: BEST_TIER_NUMBER, loader: true }),
+	maxTier: SP.param(tierNumber, { default: WORST_TIER_NUMBER, loader: true }),
 	orgsIncluded: SP.param(z.array(z.string().max(100)).max(10), {
 		default: [],
 		loader: true,

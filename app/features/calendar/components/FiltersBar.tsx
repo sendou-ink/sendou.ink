@@ -3,6 +3,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
@@ -10,6 +11,10 @@ import { useUser } from "~/features/auth/core/user";
 import { calendarFilterTags } from "~/features/calendar/calendar-schemas";
 import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
+import {
+	TIER_NUMBERS,
+	tierNumberToName,
+} from "~/features/tournament/core/tiering";
 import {
 	CheckboxGroupFormField,
 	RadioGroupFormField,
@@ -67,6 +72,20 @@ export function FiltersBar() {
 		}
 
 		return parts.length > 0 ? parts.join(" · ") : null;
+	};
+
+	const tierFormatted = () => {
+		if (
+			filters.minTier === defaults.minTier &&
+			filters.maxTier === defaults.maxTier
+		) {
+			return null;
+		}
+
+		const bestTier = tierNumberToName(filters.minTier);
+		const worstTier = tierNumberToName(filters.maxTier);
+
+		return bestTier === worstTier ? bestTier : `${bestTier}–${worstTier}`;
 	};
 
 	const tagsFormatted = () => {
@@ -207,6 +226,41 @@ export function FiltersBar() {
 							>
 								{t("calendar:filter.isRanked")}
 							</SendouSwitch>
+						</div>
+					),
+				},
+				{
+					key: "tier",
+					name: t("calendar:filterBar.tier"),
+					formattedValue: tierFormatted(),
+					onRemove: () =>
+						writeFilters({
+							minTier: defaults.minTier,
+							maxTier: defaults.maxTier,
+						}),
+					testId: "tier-filter",
+					popover: (
+						<div className="stack md">
+							<TierSelect
+								label={t("calendar:filter.minTier")}
+								value={filters.minTier}
+								onChange={(minTier) =>
+									writeFilters({
+										minTier,
+										maxTier: Math.max(minTier, filters.maxTier),
+									})
+								}
+							/>
+							<TierSelect
+								label={t("calendar:filter.maxTier")}
+								value={filters.maxTier}
+								onChange={(maxTier) =>
+									writeFilters({
+										maxTier,
+										minTier: Math.min(maxTier, filters.minTier),
+									})
+								}
+							/>
 						</div>
 					),
 				},
@@ -353,6 +407,31 @@ export function FiltersBar() {
 				) : null
 			}
 		/>
+	);
+}
+
+function TierSelect({
+	label,
+	value,
+	onChange,
+}: {
+	label: string;
+	value: number;
+	onChange: (value: number) => void;
+}) {
+	return (
+		<SendouSelect
+			label={label}
+			items={TIER_NUMBERS.map((tier) => ({ id: tier }))}
+			selectedKey={value}
+			onSelectionChange={(key) => onChange(Number(key))}
+		>
+			{({ id }) => (
+				<SendouSelectItem key={id} id={id}>
+					{tierNumberToName(id)}
+				</SendouSelectItem>
+			)}
+		</SendouSelect>
 	);
 }
 
