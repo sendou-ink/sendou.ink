@@ -51,9 +51,7 @@ function TestFilterBar(props: {
 			]}
 			actions={
 				mode !== null || weapon !== null ? (
-					<SendouButton size="small" variant="minimal">
-						Reset
-					</SendouButton>
+					<SendouButton>Reset</SendouButton>
 				) : null
 			}
 		/>

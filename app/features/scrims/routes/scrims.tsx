@@ -41,7 +41,14 @@ import type { LutiDiv, ScrimFilters, ScrimPost } from "../scrims-types";
 
 export { action, loader };
 
-import { Check, Download, Funnel, Megaphone } from "lucide-react";
+import {
+	Check,
+	Download,
+	Funnel,
+	Megaphone,
+	RotateCcw,
+	Star,
+} from "lucide-react";
 
 import styles from "./scrims.module.css";
 
@@ -258,8 +265,7 @@ function Filters() {
 				<>
 					{!Scrim.filtersAreDefault(filters) ? (
 						<SendouButton
-							variant="minimal"
-							size="small"
+							icon={<RotateCcw />}
 							onPress={() =>
 								writeFilters({
 									weekdayTimes: null,
@@ -276,8 +282,7 @@ function Filters() {
 							schema={scrimsActionSchema}
 							action="PERSIST_SCRIM_FILTERS"
 							fields={{ filters }}
-							variant="minimal"
-							size="small"
+							icon={<Star />}
 							testId="save-filters-as-default-button"
 						>
 							{t("common:filterBar.saveAsDefault")}

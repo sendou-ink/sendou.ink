@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { RotateCcw, Star, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
@@ -333,8 +333,7 @@ export function FiltersBar() {
 				<>
 					{!CalendarEvent.isDefaultFilters(filters) ? (
 						<SendouButton
-							variant="minimal"
-							size="small"
+							icon={<RotateCcw />}
 							onPress={() => writeFilters(defaults)}
 						>
 							{t("common:actions.reset")}
@@ -342,8 +341,7 @@ export function FiltersBar() {
 					) : null}
 					{user && data.canSaveAsDefault ? (
 						<SendouButton
-							variant="minimal"
-							size="small"
+							icon={<Star />}
 							isDisabled={persistFetcher.state !== "idle"}
 							onPress={() =>
 								persistFetcher.submit(filters, {

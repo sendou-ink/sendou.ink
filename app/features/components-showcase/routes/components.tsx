@@ -1,6 +1,6 @@
 import { parseDate } from "@internationalized/date";
 import clsx from "clsx";
-import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
+import { Check, Plus, RotateCcw, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
 import { Alert } from "~/components/Alert";
@@ -1389,8 +1389,7 @@ function FilterBarSection({ id }: { id: string }) {
 				actions={
 					mode !== null || stage !== null ? (
 						<SendouButton
-							variant="minimal"
-							size="small"
+							icon={<RotateCcw />}
 							onPress={() => {
 								setMode(null);
 								setStage(null);

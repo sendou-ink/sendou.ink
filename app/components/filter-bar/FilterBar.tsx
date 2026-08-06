@@ -72,7 +72,7 @@ export function FilterBar({
 			{hiddenPills.length > 0 ? (
 				<AddFilterMenu pills={hiddenPills} onAdd={addPill} />
 			) : null}
-			{actions}
+			{actions ? <div className={styles.actions}>{actions}</div> : null}
 		</div>
 	);
 }
