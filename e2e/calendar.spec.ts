@@ -84,6 +84,15 @@ test.describe("Calendar", () => {
 
 		// remembers selection via user preferences
 		await expect(calendar.locators.hiddenEventsButtons.first()).toBeVisible();
+
+		await calendar.removeEventTypeFilter();
+
+		// removing the filter sticks instead of falling back to the saved default
+		await isNotVisible(calendar.locators.hiddenEventsButtons);
+
+		await calendar.reload();
+
+		await isNotVisible(calendar.locators.hiddenEventsButtons);
 	});
 
 	test("navigates view more buttons", async ({ page }) => {

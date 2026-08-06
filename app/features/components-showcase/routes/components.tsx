@@ -1346,7 +1346,6 @@ function FilterBarSection({ id }: { id: string }) {
 					{
 						key: "mode",
 						name: "Mode",
-						pinned: true,
 						formattedValue: mode,
 						onRemove: () => setMode(null),
 						popover: (

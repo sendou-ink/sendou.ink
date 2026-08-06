@@ -81,9 +81,14 @@ function resolveFilters(
 	request: Request,
 	preferences?: UserPreferences | null,
 ) {
-	const parsed = R.pick(calendarSearchParams.parse(request), [
-		...CalendarEvent.FILTERS_KEYS,
-	]);
+	const searchParams = calendarSearchParams.parse(request);
+	const parsed = R.pick(searchParams, [...CalendarEvent.FILTERS_KEYS]);
+
+	// the user cleared or edited the filters, so the URL is the whole truth
+	// even when it ends up holding no filters at all
+	if (!searchParams.useDefaults) {
+		return parsed;
+	}
 
 	if (!CalendarEvent.isDefaultFilters(parsed)) {
 		return parsed;

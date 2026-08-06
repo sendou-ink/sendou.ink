@@ -30,6 +30,7 @@ describe("calendarSearchParams", () => {
 			orgsIncluded: [[], ["Splat Org"], ["A", "B"]],
 			orgsExcluded: [[], ["Bad Org"]],
 			authorIdsExcluded: [[], [1, 274]],
+			useDefaults: [true, false],
 			day: [null, 1, 15, 31],
 			month: [null, 0, 11],
 			year: [null, 2015, 2026, 2100],

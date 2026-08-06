@@ -162,14 +162,13 @@ function Filters() {
 				{
 					key: "abilities",
 					name: t("builds:filters.abilities"),
-					pinned: true,
 					icon: <FlaskConical />,
 					formattedValue:
 						abilityConditions.length > 0
 							? formatAbilityConditions(abilityConditions)
 							: null,
 					onRemove: () => setParams({ abilities: [] }),
-					testId: "ability-filter",
+					testId: "ability",
 					popover: (
 						<AbilityConditionsPopover
 							conditions={abilityConditions}

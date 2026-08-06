@@ -16,10 +16,6 @@
 	&:has(.trigger[data-hovered]) {
 		background-color: var(--color-bg-high);
 	}
-
-	&:has(.removeButton) .trigger {
-		padding-right: var(--s-1);
-	}
 }
 
 .trigger {
@@ -39,6 +35,10 @@
 	&[data-focus-visible] {
 		outline: var(--focus-ring);
 		outline-offset: 2px;
+	}
+
+	.pill:has(.removeButton) & {
+		padding-right: var(--s-1);
 	}
 }
 

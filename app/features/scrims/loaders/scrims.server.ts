@@ -17,13 +17,16 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		? await AssociationsRepository.findByMemberUserId(user?.id)
 		: null;
 
-	const { weekdayTimes, weekendTimes, divs } =
+	const { weekdayTimes, weekendTimes, divs, useDefaults } =
 		scrimsSearchParams.parse(request);
 	const filtersFromSearchParams = { weekdayTimes, weekendTimes, divs };
 
-	const filters = Scrim.filtersAreDefault(filtersFromSearchParams)
-		? (user?.preferences?.defaultScrimsFilters ?? Scrim.defaultFilters())
-		: filtersFromSearchParams;
+	// when the user cleared or edited the filters the URL is the whole truth
+	// even when it ends up holding no filters at all
+	const filters =
+		useDefaults && Scrim.filtersAreDefault(filtersFromSearchParams)
+			? (user?.preferences?.defaultScrimsFilters ?? Scrim.defaultFilters())
+			: filtersFromSearchParams;
 
 	const posts = (await ScrimPostRepository.findAllRelevant())
 		.filter(

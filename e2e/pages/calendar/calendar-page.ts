@@ -19,6 +19,7 @@ export class CalendarPage {
 			clockHeaderTimes: page.getByTestId("clock-header-time"),
 			todayHeader: page.getByTestId("today-header"),
 			eventTypeFilterPill: page.getByTestId("event-type-filter"),
+			addFilterButton: page.getByTestId("add-filter-button"),
 			saveFiltersAsDefaultButton: page.getByTestId(
 				"save-filters-as-default-button",
 			),
@@ -50,7 +51,7 @@ export class CalendarPage {
 	/** Toggles one of the switches inside the "Event type" filter pill's popover. */
 	async toggleEventTypeFilter(name: "isSendou" | "isRanked") {
 		await this.page.keyboard.press("Escape");
-		await this.locators.eventTypeFilterPill.click();
+		await this.openEventTypeFilter();
 		await this.page
 			.getByText(
 				name === "isSendou"
@@ -59,6 +60,23 @@ export class CalendarPage {
 			)
 			.click();
 		await this.page.keyboard.press("Escape");
+	}
+
+	/** Resets the "Event type" filter pill's filters, hiding the pill. */
+	async removeEventTypeFilter() {
+		await this.page.keyboard.press("Escape");
+		await this.page.getByTestId("event-type-filter-remove").click();
+	}
+
+	/** The pill is only rendered while its filters differ from the defaults. */
+	private async openEventTypeFilter() {
+		if (await this.locators.eventTypeFilterPill.isVisible()) {
+			await this.locators.eventTypeFilterPill.click();
+			return;
+		}
+
+		await this.locators.addFilterButton.click();
+		await this.page.getByTestId("menu-item-event-type-filter").click();
 	}
 
 	/** Persists the current filters as the user's default. */

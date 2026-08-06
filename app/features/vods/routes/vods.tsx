@@ -86,7 +86,6 @@ function Filters() {
 				{
 					key: "mode",
 					name: t("vods:forms.title.mode"),
-					pinned: true,
 					formattedValue:
 						mode !== null ? t(`game-misc:MODE_SHORT_${mode}`) : null,
 					onRemove: () => setParams({ mode: null }),
@@ -110,7 +109,6 @@ function Filters() {
 				{
 					key: "stage",
 					name: t("vods:forms.title.stage"),
-					pinned: true,
 					formattedValue:
 						stageId !== null ? t(`game-misc:STAGE_${stageId}`) : null,
 					onRemove: () => setParams({ stageId: null }),
@@ -136,7 +134,6 @@ function Filters() {
 				{
 					key: "weapon",
 					name: t("vods:forms.title.weapon"),
-					pinned: true,
 					formattedValue: weapon !== null ? t(`weapons:MAIN_${weapon}`) : null,
 					onRemove: () => setParams({ weapon: null }),
 					testId: "vods-weapon-filter",
@@ -153,7 +150,6 @@ function Filters() {
 				{
 					key: "type",
 					name: t("vods:forms.title.type"),
-					pinned: true,
 					formattedValue: type !== null ? t(`vods:type.${type}`) : null,
 					onRemove: () => setParams({ type: null }),
 					testId: "vods-type-filter",

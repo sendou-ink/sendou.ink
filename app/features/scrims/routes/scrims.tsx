@@ -196,7 +196,7 @@ function Filters() {
 	const filters = data.filters;
 
 	const writeFilters = (partial: Partial<ScrimFilters>) => {
-		setParams({ ...filters, ...partial });
+		setParams({ ...filters, ...partial, useDefaults: false });
 	};
 
 	return (
@@ -205,7 +205,6 @@ function Filters() {
 				{
 					key: "weekdayTimes",
 					name: t("scrims:filters.weekdayTimes"),
-					pinned: true,
 					formattedValue: filters.weekdayTimes
 						? `${filters.weekdayTimes.start}–${filters.weekdayTimes.end}`
 						: null,
@@ -224,7 +223,6 @@ function Filters() {
 				{
 					key: "weekendTimes",
 					name: t("scrims:filters.weekendTimes"),
-					pinned: true,
 					formattedValue: filters.weekendTimes
 						? `${filters.weekendTimes.start}–${filters.weekendTimes.end}`
 						: null,
@@ -243,7 +241,6 @@ function Filters() {
 				{
 					key: "divs",
 					name: t("scrims:filters.divs"),
-					pinned: true,
 					formattedValue: filters.divs
 						? `${filters.divs.max}–${filters.divs.min}`
 						: null,
@@ -264,7 +261,7 @@ function Filters() {
 							variant="minimal"
 							size="small"
 							onPress={() =>
-								setParams({
+								writeFilters({
 									weekdayTimes: null,
 									weekendTimes: null,
 									divs: null,

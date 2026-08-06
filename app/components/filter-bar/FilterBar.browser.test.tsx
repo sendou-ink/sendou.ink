@@ -21,7 +21,6 @@ function TestFilterBar(props: {
 				{
 					key: "mode",
 					name: "Mode",
-					pinned: true,
 					formattedValue: mode,
 					onRemove: () => setMode(null),
 					popover: (
@@ -62,7 +61,7 @@ function TestFilterBar(props: {
 }
 
 describe("FilterBar", () => {
-	test("renders a pinned pill with its name and formatted value", async () => {
+	test("renders a set pill with its name and formatted value", async () => {
 		const screen = await render(<TestFilterBar initialMode="SZ" />);
 
 		await expect
@@ -81,9 +80,12 @@ describe("FilterBar", () => {
 			.toBeVisible();
 	});
 
-	test("hides an unset optional pill behind the add filter menu", async () => {
+	test("hides a pill at its default value behind the add filter menu", async () => {
 		const screen = await render(<TestFilterBar />);
 
+		await expect
+			.element(screen.getByRole("button", { name: /Mode/ }))
+			.not.toBeInTheDocument();
 		await expect
 			.element(screen.getByRole("button", { name: /Weapon/ }))
 			.not.toBeInTheDocument();
@@ -95,7 +97,7 @@ describe("FilterBar", () => {
 			.toBeVisible();
 	});
 
-	test("adding an optional pill opens its popover and keeps the pill visible while unset", async () => {
+	test("adding a pill opens its popover and keeps the pill visible while unset", async () => {
 		const screen = await render(<TestFilterBar />);
 
 		await screen.getByRole("button", { name: "Filter" }).click();
@@ -112,7 +114,7 @@ describe("FilterBar", () => {
 			.toBeVisible();
 	});
 
-	test("removing an optional pill hides it again", async () => {
+	test("removing a pill hides it again", async () => {
 		const screen = await render(<TestFilterBar initialWeapon="Splattershot" />);
 
 		await screen.getByRole("button", { name: "Remove Weapon filter" }).click();
@@ -131,7 +133,9 @@ describe("FilterBar", () => {
 	});
 
 	test("hides the add filter menu when every pill is visible", async () => {
-		const screen = await render(<TestFilterBar initialWeapon="Splattershot" />);
+		const screen = await render(
+			<TestFilterBar initialMode="SZ" initialWeapon="Splattershot" />,
+		);
 
 		await expect
 			.element(screen.getByRole("button", { name: "Filter", exact: true }))

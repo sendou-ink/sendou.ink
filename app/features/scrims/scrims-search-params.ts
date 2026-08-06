@@ -7,6 +7,8 @@ export const scrimsSearchParams = SearchParams.define({
 	weekdayTimes: SP.custom(timeRangeCodec, { loader: true }),
 	weekendTimes: SP.custom(timeRangeCodec, { loader: true }),
 	divs: SP.custom(divsCodec, { loader: true }),
+	/** False once the user has edited the filters, making the URL win over their saved defaults. */
+	useDefaults: SP.param(z.boolean(), { default: true, loader: true }),
 	pendingRequestPostId: SP.param(z.number().int().positive().nullable(), {
 		loader: false,
 	}),

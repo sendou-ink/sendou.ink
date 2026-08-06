@@ -10,12 +10,10 @@ export interface FilterBarPill {
 	key: string;
 	/** Translated filter name shown on the pill and in the add filter menu. */
 	name: string;
-	/** Translated current value shown on the pill. Null when the filter is unset. */
+	/** Translated current value shown on the pill. Null when the filter is at its default. */
 	formattedValue: React.ReactNode | null;
 	/** Popover content. Inputs inside write search params directly (instant apply). */
 	popover: React.ReactNode;
-	/** Pinned pills are always visible; others live behind the add filter menu until set. */
-	pinned?: boolean;
 	/** Resets the pill's param(s) to defaults. Renders the remove button. */
 	onRemove?: () => void;
 	/** Writes a starting value when the pill is added from the menu. */
@@ -38,9 +36,7 @@ export function FilterBar({
 	const [openPillKey, setOpenPillKey] = React.useState<string | null>(null);
 
 	const isVisible = (pill: FilterBarPill) =>
-		Boolean(pill.pinned) ||
-		pill.formattedValue !== null ||
-		justAddedKeys.has(pill.key);
+		pill.formattedValue !== null || justAddedKeys.has(pill.key);
 
 	const hiddenPills = pills.filter((pill) => !isVisible(pill));
 
@@ -92,9 +88,6 @@ function FilterPill({
 	onOpenChange: (isOpen: boolean) => void;
 	onRemove?: () => void;
 }) {
-	const showRemove =
-		Boolean(onRemove) && (pill.formattedValue !== null || !pill.pinned);
-
 	return (
 		<div className={styles.pill}>
 			<SendouPopover
@@ -120,7 +113,7 @@ function FilterPill({
 			>
 				{pill.popover}
 			</SendouPopover>
-			{showRemove ? (
+			{onRemove ? (
 				<Button
 					className={styles.removeButton}
 					aria-label={`Remove ${pill.name} filter`}

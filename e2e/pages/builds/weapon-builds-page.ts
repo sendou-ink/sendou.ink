@@ -42,14 +42,12 @@ export class WeaponBuildsPage {
 	async addFilter(type: "ability" | "mode" | "date") {
 		await this.page.keyboard.press("Escape");
 
-		if (type === "ability") {
-			await this.page.getByTestId("ability-filter").click();
-			await this.page.getByTestId("add-ability-condition").click();
-			return;
-		}
-
 		await this.locators.addFilterButton.click();
 		await this.page.getByTestId(`menu-item-${type}`).click();
+
+		if (type === "ability") {
+			await this.page.getByTestId("add-ability-condition").click();
+		}
 	}
 
 	async deleteFilter(type: "ability" | "mode" | "date") {

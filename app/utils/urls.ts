@@ -387,7 +387,8 @@ export const calendarPage = (args?: {
 	dayMonthYear?: DayMonthYear;
 }) =>
 	calendarSearchParams.href(CALENDAR_PAGE, {
-		...(args?.filters ?? {}),
+		// explicit filters are the whole truth, the visitor's saved defaults don't apply
+		...(args?.filters ? { ...args.filters, useDefaults: false } : {}),
 		...(args?.dayMonthYear
 			? {
 					day: args.dayMonthYear.day,

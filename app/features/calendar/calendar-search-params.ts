@@ -63,6 +63,8 @@ export const calendarSearchParams = SearchParams.define({
 		default: [],
 		loader: true,
 	}),
+	/** False once the user has edited the filters, making the URL win over their saved defaults. */
+	useDefaults: SP.param(z.boolean(), { default: true, loader: true }),
 	day: SP.param(dayMonthYear.shape.day.nullable(), { loader: true }),
 	month: SP.param(dayMonthYear.shape.month.nullable(), { loader: true }),
 	year: SP.param(dayMonthYear.shape.year.nullable(), { loader: true }),

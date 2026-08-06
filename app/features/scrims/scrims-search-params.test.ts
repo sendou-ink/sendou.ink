@@ -24,6 +24,7 @@ describe("scrimsSearchParams", () => {
 				{ min: "11", max: "X" },
 			],
 			pendingRequestPostId: [null, 1, 987654],
+			useDefaults: [true, false],
 		});
 	});
 

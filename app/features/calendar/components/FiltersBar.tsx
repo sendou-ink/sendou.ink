@@ -36,7 +36,7 @@ export function FiltersBar() {
 	}));
 
 	const writeFilters = (partial: Partial<CalendarFilters>) => {
-		setParams({ ...filters, ...partial });
+		setParams({ ...filters, ...partial, useDefaults: false });
 	};
 
 	const modesFormatted = () => {
@@ -117,7 +117,6 @@ export function FiltersBar() {
 				{
 					key: "modes",
 					name: t("calendar:filter.modes"),
-					pinned: true,
 					formattedValue: modesFormatted(),
 					onRemove: () =>
 						writeFilters({ modes: defaults.modes, modesExact: false }),
@@ -155,7 +154,6 @@ export function FiltersBar() {
 				{
 					key: "eventType",
 					name: t("calendar:filterBar.eventType"),
-					pinned: true,
 					formattedValue: eventTypeFormatted(),
 					onRemove: () =>
 						writeFilters({
@@ -215,7 +213,6 @@ export function FiltersBar() {
 				{
 					key: "tags",
 					name: t("calendar:filterBar.tags"),
-					pinned: true,
 					formattedValue: tagsFormatted(),
 					onRemove: () => writeFilters({ tagsIncluded: [], tagsExcluded: [] }),
 					testId: "tags-filter",
@@ -259,7 +256,6 @@ export function FiltersBar() {
 				{
 					key: "organizers",
 					name: t("calendar:filterBar.organizers"),
-					pinned: true,
 					formattedValue: organizersFormatted(),
 					onRemove: () =>
 						writeFilters({
@@ -295,7 +291,6 @@ export function FiltersBar() {
 				{
 					key: "timeAndSize",
 					name: t("calendar:filterBar.timeAndSize"),
-					pinned: true,
 					formattedValue: timeAndSizeFormatted(),
 					onRemove: () =>
 						writeFilters({ preferredStartTime: "ANY", minTeamCount: 0 }),
