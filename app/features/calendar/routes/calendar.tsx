@@ -76,7 +76,9 @@ export default function CalendarPage() {
 			className={clsx("stack lg", styles.container)}
 			style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME } as React.CSSProperties}
 		>
-			<div className={styles.buttonsContainer}>
+			<div
+				className={clsx(styles.columnsWidthContainer, styles.buttonsContainer)}
+			>
 				<div className={styles.navigateButtonsContainer}>
 					<NavigateButton
 						icon={<ChevronLeft />}
@@ -109,7 +111,9 @@ export default function CalendarPage() {
 					/>
 				</div>
 			</div>
-			<FiltersBar />
+			<div className={styles.columnsWidthContainer}>
+				<FiltersBar />
+			</div>
 			<div
 				key={`${shown[0].year}-${shown[0].month}-${shown[0].day}`}
 				ref={scrollTodayToCenter}
