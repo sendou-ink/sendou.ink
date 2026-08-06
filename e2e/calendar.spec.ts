@@ -38,9 +38,7 @@ test.describe("Calendar", () => {
 		const calendar = new CalendarPage(page);
 		await calendar.goto();
 
-		const filters = await calendar.openFilters();
-		await filters.form.check("isSendou");
-		await filters.apply();
+		await calendar.toggleEventTypeFilter("isSendou");
 
 		await expect(calendar.locators.tournamentCards).toHaveCount(
 			SENDOU_INK_TOURNAMENTS_COUNT,
@@ -77,9 +75,8 @@ test.describe("Calendar", () => {
 
 		await isNotVisible(calendar.locators.hiddenEventsButtons);
 
-		const filters = await calendar.openFilters();
-		await filters.form.check("isRanked");
-		await filters.applyAndMakeDefault();
+		await calendar.toggleEventTypeFilter("isRanked");
+		await calendar.saveFiltersAsDefault();
 
 		await expect(calendar.locators.hiddenEventsButtons.first()).toBeVisible();
 
@@ -87,6 +84,15 @@ test.describe("Calendar", () => {
 
 		// remembers selection via user preferences
 		await expect(calendar.locators.hiddenEventsButtons.first()).toBeVisible();
+
+		await calendar.removeEventTypeFilter();
+
+		// removing the filter sticks instead of falling back to the saved default
+		await isNotVisible(calendar.locators.hiddenEventsButtons);
+
+		await calendar.reload();
+
+		await isNotVisible(calendar.locators.hiddenEventsButtons);
 	});
 
 	test("navigates view more buttons", async ({ page }) => {

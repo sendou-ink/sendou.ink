@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
+import type { LFGFilterValues } from "../lfg-types";
 import type { LFGLoaderPost } from "../routes/lfg";
 import { filterPosts } from "./filtering";
 
@@ -9,15 +10,21 @@ const postOfType = (type: LFGLoaderPost["type"]) =>
 		team: null,
 	}) as unknown as LFGLoaderPost;
 
+const noFilters: LFGFilterValues = {
+	weapons: [],
+	type: null,
+	timezone: null,
+	language: null,
+	plusTier: null,
+	minTier: null,
+	maxTier: null,
+};
+
 describe("filterPosts", () => {
-	test("a weapon filter with no weapons selected shows every post", () => {
+	test("no weapons selected shows every post", () => {
 		const posts = [postOfType("PLAYER_FOR_TEAM"), postOfType("COACH_FOR_TEAM")];
 
-		const filtered = filterPosts(
-			posts,
-			[{ _tag: "Weapon", weaponSplIds: [] }],
-			new Map(),
-		);
+		const filtered = filterPosts(posts, noFilters, new Map());
 
 		expect(filtered).toHaveLength(2);
 	});
@@ -45,7 +52,7 @@ describe("filterPosts", () => {
 
 			const filtered = filterPosts(
 				[post],
-				[{ _tag: "Timezone", maxHourDifference: 3 }],
+				{ ...noFilters, timezone: 3 },
 				new Map(),
 			);
 

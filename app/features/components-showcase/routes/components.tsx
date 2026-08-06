@@ -1,6 +1,6 @@
 import { parseDate } from "@internationalized/date";
 import clsx from "clsx";
-import { Check, Plus, Search, SquarePen, Trash } from "lucide-react";
+import { Check, Plus, RotateCcw, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
 import { Alert } from "~/components/Alert";
@@ -29,6 +29,7 @@ import {
 import { toastQueue } from "~/components/elements/Toast";
 import { Flag } from "~/components/Flag";
 import { FormMessage } from "~/components/FormMessage";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
 import {
 	ModeImage,
 	SpecialWeaponImage,
@@ -101,6 +102,7 @@ export const SECTIONS = [
 	{ title: "Dialog", id: "dialog", component: DialogSection },
 	{ title: "Popover", id: "popover", component: PopoverSection },
 	{ title: "Menu", id: "menu", component: MenuSection },
+	{ title: "Filter Bar", id: "filter-bar", component: FilterBarSection },
 	{ title: "Toast", id: "toast", component: ToastSection },
 	{ title: "Divider", id: "divider", component: DividerSection },
 	{ title: "Table", id: "table", component: TableSection },
@@ -1324,6 +1326,80 @@ function MenuSection({ id }: { id: string }) {
 					</SendouMenu>
 				</ComponentRow>
 			</div>
+		</Section>
+	);
+}
+
+const SHOWCASE_MODES = ["SZ", "TC", "RM", "CB"];
+const SHOWCASE_STAGES = ["Scorch Gorge", "Eeltail Alley", "Hagglefish Market"];
+
+function FilterBarSection({ id }: { id: string }) {
+	const [mode, setMode] = useState<string | null>("SZ");
+	const [stage, setStage] = useState<string | null>(null);
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Filter Bar</SectionTitle>
+
+			<FilterBar
+				pills={[
+					{
+						key: "mode",
+						name: "Mode",
+						formattedValue: mode,
+						onRemove: () => setMode(null),
+						popover: (
+							<SendouChipRadioGroup wrap>
+								{SHOWCASE_MODES.map((value) => (
+									<SendouChipRadio
+										key={value}
+										name="filter-bar-showcase-mode"
+										value={value}
+										checked={mode === value}
+										onChange={setMode}
+									>
+										{value}
+									</SendouChipRadio>
+								))}
+							</SendouChipRadioGroup>
+						),
+					},
+					{
+						key: "stage",
+						name: "Stage",
+						formattedValue: stage,
+						onRemove: () => setStage(null),
+						popover: (
+							<SendouChipRadioGroup orientation="vertical">
+								{SHOWCASE_STAGES.map((value) => (
+									<SendouChipRadio
+										key={value}
+										name="filter-bar-showcase-stage"
+										value={value}
+										checked={stage === value}
+										onChange={setStage}
+									>
+										{value}
+									</SendouChipRadio>
+								))}
+							</SendouChipRadioGroup>
+						),
+					},
+				]}
+				actions={
+					mode !== null || stage !== null ? (
+						<SendouButton
+							icon={<RotateCcw />}
+							onPress={() => {
+								setMode(null);
+								setStage(null);
+							}}
+						>
+							Reset
+						</SendouButton>
+					) : null
+				}
+			/>
 		</Section>
 	);
 }

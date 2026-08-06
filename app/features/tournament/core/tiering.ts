@@ -51,6 +51,12 @@ const NUMBER_TO_TIER = {
 export type TournamentTier = keyof typeof TIER_TO_NUMBER;
 export type TournamentTierNumber = (typeof TIER_TO_NUMBER)[TournamentTier];
 
+/** Every tier number, from the best tier (X) to the worst (C). */
+export const TIER_NUMBERS = Object.values(TIER_TO_NUMBER);
+
+export const BEST_TIER_NUMBER = TIER_TO_NUMBER.X;
+export const WORST_TIER_NUMBER = TIER_TO_NUMBER.C;
+
 export function calculateAdjustedScore(
 	rawScore: number,
 	teamCount: number,

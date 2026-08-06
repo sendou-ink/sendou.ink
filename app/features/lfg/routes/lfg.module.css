@@ -1,8 +1,3 @@
-.topRow {
-	display: flex;
-	justify-content: flex-end;
-}
-
 .post {
 	scroll-margin-top: 6rem;
 }

@@ -1,14 +1,14 @@
 import { z } from "zod";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import * as Scrim from "./core/Scrim";
-import { scrimsFiltersSchema } from "./scrims-schemas";
+import { divsCodec, timeRangeCodec } from "./scrims-schemas";
 
 export const scrimsSearchParams = SearchParams.define({
-	filters: SP.json(scrimsFiltersSchema, {
-		default: Scrim.defaultFilters(),
-		loader: true,
-	}),
+	weekdayTimes: SP.custom(timeRangeCodec, { loader: true }),
+	weekendTimes: SP.custom(timeRangeCodec, { loader: true }),
+	divs: SP.custom(divsCodec, { loader: true }),
+	/** False once the user has edited the filters, making the URL win over their saved defaults. */
+	useDefaults: SP.param(z.boolean(), { default: true, loader: true }),
 	pendingRequestPostId: SP.param(z.number().int().positive().nullable(), {
 		loader: false,
 	}),

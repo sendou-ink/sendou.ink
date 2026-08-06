@@ -1,0 +1,139 @@
+.popover {
+	min-width: 14rem;
+}
+
+.bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.pill {
+	display: inline-flex;
+	align-items: center;
+	height: var(--selector-size);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	transition: background-color 0.15s;
+
+	&:has(.trigger[data-hovered]) {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.trigger {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	height: 100%;
+	padding: 0 var(--s-2);
+	border: none;
+	border-radius: inherit;
+	background-color: transparent;
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	cursor: pointer;
+
+	&[data-focus-visible] {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+
+	.pill:has(.removeButton) & {
+		padding-right: var(--s-1);
+	}
+}
+
+.removeButton {
+	display: inline-flex;
+	align-items: center;
+	height: 100%;
+	padding: 0 var(--s-1-5);
+	border: none;
+	border-radius: inherit;
+	background-color: transparent;
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	& > svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	&[data-hovered] {
+		color: var(--color-error);
+	}
+
+	&[data-focus-visible] {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+}
+
+.actions {
+	display: contents;
+}
+
+.actions button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	height: var(--selector-size);
+	padding: 0 var(--s-2);
+	border: var(--border-style-high);
+	border-radius: var(--radius-selector);
+	background-color: transparent;
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	cursor: pointer;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&[data-hovered] {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
+	}
+
+	&[data-focus-visible] {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+
+	&[data-disabled] {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+
+	& svg {
+		width: 14px;
+		min-width: 14px;
+		max-width: 14px;
+		height: 14px;
+		margin-inline-end: 0;
+	}
+}
+
+.icon {
+	display: inline-flex;
+
+	& > svg {
+		width: 14px;
+		height: 14px;
+	}
+}
+
+.value {
+	color: var(--color-text-accent);
+}
+
+.chevron,
+.plus {
+	width: 14px;
+	height: 14px;
+	color: var(--color-text-high);
+}

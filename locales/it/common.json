@@ -149,6 +149,8 @@
 	"actions.outlined": "Contornato",
 	"actions.noOutline": "Nessun contorno",
 	"actions.join": "Entra",
+	"filterBar.addFilter": "",
+	"filterBar.saveAsDefault": "",
 	"imageExport.export": "",
 	"imageExport.download": "",
 	"imageExport.theme.light": "",
