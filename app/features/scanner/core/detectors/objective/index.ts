@@ -1,8 +1,9 @@
 /**
  * ObjectiveDetector: parses the ranked in-match counter overlay top-center —
- * each team's count plate, the penalty pill under it, and which team is in
+ * each team's count plate, the penalty pill under it, which team is in
  * control (the controlling team's plate swaps to a near-black fill with the
- * digits in the team's ink color; see rois.ts for the layout).
+ * digits in the team's ink color; see rois.ts for the layout), and the M:SS
+ * match timer above the plates.
  *
  * Digits are read as the trailing digit run (banner.ts) of the band under
  * several channel extractions: team-color ink on the black plate needs the
@@ -18,7 +19,12 @@
  * between the plates is left for when TC/RM/CB fixtures land.
  */
 import { getCV, type Mat, minMaxLoc } from "../../cv";
-import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
+import {
+	type GlyphSet,
+	type RecognizedChar,
+	recognizeText,
+	scaleGlyphSet,
+} from "../../glyphs";
 import {
 	copyRoi,
 	maxBrightness,
@@ -52,14 +58,24 @@ import {
 	SCORE_BIN_THRESHOLDS,
 	SCORE_ROIS,
 	SCORE_TEXT_HEIGHTS,
+	TIMER_BIN_THRESHOLD,
 	TIMER_DARK_PROBES,
+	TIMER_DIGIT_MIN_CONF,
+	TIMER_DIGIT_MIN_HEIGHT_RATIO,
 	TIMER_DIGIT_ROI,
+	TIMER_TEXT_HEIGHT,
 } from "./rois";
 
 export type ObjectiveData = SplatZonesObjectiveData;
 
 export interface SplatZonesObjectiveData {
 	mode: "SZ";
+	/**
+	 * seconds shown on the match timer above the plates ("3:35" = 215);
+	 * null = unreadable. Counts down in regulation; the overtime display is
+	 * unattested so far.
+	 */
+	time: number | null;
 	/** displayed count per team, [alpha, bravo]; null = unreadable */
 	score: [number | null, number | null];
 	/** penalty pill value per team; null = no pill (or unreadable) */
@@ -76,7 +92,8 @@ const CHECK_INTERVAL_SECONDS = 1;
 /**
  * Timeline content guard: consecutive counter reads merge only when they
  * show the same state, so every actual tick/penalty/control change becomes
- * its own event.
+ * its own event. `time` is deliberately not compared — the timer ticks
+ * every second, so comparing it would keep any two reads from ever merging.
  */
 export function sameObjectiveData(a: unknown, b: unknown): boolean {
 	const da = a as ObjectiveData;
@@ -116,6 +133,12 @@ export function createObjectiveDetector(
 		? scaleGlyphSet(
 				resources.paintDigits,
 				PENALTY_TEXT_HEIGHT / resources.paintDigits.height,
+			)
+		: null;
+	const timerSet: GlyphSet | null = resources.paintDigits
+		? scaleGlyphSet(
+				resources.paintDigits,
+				TIMER_TEXT_HEIGHT / resources.paintDigits.height,
 			)
 		: null;
 
@@ -196,6 +219,40 @@ export function createObjectiveDetector(
 		return best;
 	}
 
+	/**
+	 * The match timer's M:SS over TIMER_DIGIT_ROI: white digits on the
+	 * near-black box the gate already anchored on. The colon's two dots stack
+	 * to well under the digit height floor, so a valid read is exactly three
+	 * full-height digits — the minute, then the two second digits.
+	 */
+	function readTimer(gray: Mat): { value: number | null; reading: string } {
+		if (!timerSet) return { value: null, reading: "" };
+		const band = copyRoi(gray, TIMER_DIGIT_ROI);
+		const raw = recognizeText(band, timerSet, {
+			binThreshold: TIMER_BIN_THRESHOLD,
+			spaceGap: Number.POSITIVE_INFINITY,
+			minCharScore: 0.3,
+		});
+		band.delete();
+		const isTimerDigit = (c: RecognizedChar) =>
+			c.score >= TIMER_DIGIT_MIN_CONF &&
+			c.y1 - c.y0 >= timerSet.height * TIMER_DIGIT_MIN_HEIGHT_RATIO;
+		const digits = raw.chars.filter(isTimerDigit).map((c) => Number(c.char));
+		if (digits.length !== 3 || digits.some(Number.isNaN)) {
+			return { value: null, reading: raw.text };
+		}
+		const [minutes, secondsTens, secondsOnes] = digits as [
+			number,
+			number,
+			number,
+		];
+		if (secondsTens >= 6) return { value: null, reading: raw.text };
+		return {
+			value: minutes * 60 + secondsTens * 10 + secondsOnes,
+			reading: raw.text,
+		};
+	}
+
 	/** Penalty pill: presence probes first, then the white "+N" digits. */
 	function readPenalty(
 		frame: Mat,
@@ -263,6 +320,7 @@ export function createObjectiveDetector(
 				fill,
 			};
 		}) as [SideRead, SideRead];
+		const timer = readTimer(gray);
 		gray.delete();
 
 		// no readable count on either side = the gate hit a lookalike
@@ -279,6 +337,7 @@ export function createObjectiveDetector(
 				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
 				data: {
 					mode: "SZ",
+					time: timer.value,
 					score: [sides[0].score.value, sides[1].score.value],
 					penalty: [
 						sides[0].penalty?.value ?? null,
@@ -287,6 +346,7 @@ export function createObjectiveDetector(
 					control: [sides[0].control, sides[1].control],
 				},
 				debug: {
+					timerReading: timer.reading,
 					scoreReadings: sides.map((side) => side.score.reading),
 					scoreConfidences: sides.map((side) => side.score.confidence),
 					penaltyReadings: sides.map((side) => side.penalty?.reading ?? null),

@@ -74,9 +74,11 @@ sequenceDiagram
   (replay-browser detail), `scoreboard-own` (personal results), `death`
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay,
   plus the casted 8-player spectator map as a gated variant), `objective`
-  (the ranked in-match counter overlay: per-team counts, penalties, and who
-  holds the objective — a discriminated union on mode with only the SZ
-  member so far). Parsing details are in each detector's module header;
+  (the ranked in-match counter overlay: per-team counts, penalties, who
+  holds the objective, and the match timer — a discriminated union on mode
+  with only the SZ member so far). A match's reads land on `ScannerMatch`
+  as `objective` progress samples in `teams` order, each anchored to the
+  game clock so consumers can graph progress and spot capture gaps. Parsing details are in each detector's module header;
   accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching
   recognition code.

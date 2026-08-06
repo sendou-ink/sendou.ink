@@ -89,6 +89,8 @@ interface ExpectedScoreboard {
 		abilities?: ScannerAbility[][];
 		/** Death only: killer's splash-tag name */
 		name?: string;
+		/** Objective only: match-timer seconds ("3:35" = 215); null = unreadable */
+		time?: number | null;
 		/** Objective only: displayed counter per team, [alpha, bravo] */
 		score?: [number | null, number | null];
 		/** Objective only: penalty pill value per team; null = no pill */

@@ -17,6 +17,7 @@ import type { Ability } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type {
 	ScannerMatch,
+	ScannerMatchObjective,
 	ScannerMatchPlayer,
 	ScannerMatchTeam,
 } from "./core/scanner-match";
@@ -53,6 +54,24 @@ const scannerMatchTeamSchema = z.object({
 
 const teamIndexSchema = z.union([z.literal(0), z.literal(1)]);
 
+/** counters change at most 1/s, so a match yields a few hundred samples */
+const MAX_OBJECTIVE_SAMPLES = 1000;
+
+const scannerMatchObjectiveSampleSchema = z.object({
+	t: z.number().int().min(0),
+	time: z.number().int().min(0).nullable(),
+	score: z.tuple([z.number().nullable(), z.number().nullable()]),
+	penalty: z.tuple([z.number().nullable(), z.number().nullable()]),
+	control: z.tuple([z.boolean(), z.boolean()]),
+});
+
+const scannerMatchObjectiveSchema = z.object({
+	mode: z.literal("SZ"),
+	samples: z
+		.array(scannerMatchObjectiveSampleSchema)
+		.max(MAX_OBJECTIVE_SAMPLES),
+});
+
 export const scannerMatchSchema = z.object({
 	startsAt: z.number().int().min(0).nullable(),
 	endsAt: z.number().int().min(0).nullable(),
@@ -66,6 +85,7 @@ export const scannerMatchSchema = z.object({
 		.nullable(),
 	replayCode: detectionText.nullable(),
 	cast: z.boolean(),
+	objective: scannerMatchObjectiveSchema.nullable(),
 	teams: z.tuple([scannerMatchTeamSchema, scannerMatchTeamSchema]),
 	winner: teamIndexSchema.nullable(),
 	pov: z
@@ -90,6 +110,10 @@ true satisfies MutuallyAssignable<
 true satisfies MutuallyAssignable<
 	z.infer<typeof scannerMatchTeamSchema>,
 	ScannerMatchTeam
+>;
+true satisfies MutuallyAssignable<
+	z.infer<typeof scannerMatchObjectiveSchema>,
+	ScannerMatchObjective
 >;
 true satisfies MutuallyAssignable<
 	z.infer<typeof scannerMatchSchema>,

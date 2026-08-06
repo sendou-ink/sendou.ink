@@ -11,6 +11,7 @@ import type {
 	MinimapTeammate,
 } from "../core/detectors/minimap/index";
 import { SPECTATOR_SLOTS } from "../core/detectors/minimap/rois";
+import type { ObjectiveData } from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardReplayData } from "../core/detectors/scoreboard-replay/index";
 import type { DetectedEvent } from "../core/detectors/types";
@@ -42,6 +43,19 @@ function death(
 		name,
 	};
 	return { type: "Death", t, confidence: 0.9, data };
+}
+
+function objective(
+	t: number,
+	{
+		time = 215 as number | null,
+		score = [95, 53] as [number | null, number | null],
+		penalty = [null, null] as [number | null, number | null],
+		control = [true, false] as [boolean, boolean],
+	} = {},
+): DetectedEvent {
+	const data: ObjectiveData = { mode: "SZ", time, score, penalty, control };
+	return { type: "Objective", t, confidence: 0.9, data };
 }
 
 function scoreboard(
@@ -173,11 +187,70 @@ test("scoreboard fields land on the match", () => {
 	assert.deepEqual(weapons(match), ALL);
 	assert.equal(match.cast, false);
 	assert.equal(match.replayCode, null);
+	assert.equal(match.objective, null);
 });
 
 test("a losing-side pov index maps to the second team", () => {
 	const built = buildScannerMatches([scoreboard(300, { povIndex: 6 })]);
 	assert.deepEqual(built[0]!.match.pov, { team: 1, index: 2 });
+});
+
+test("objective reads become teams-order samples on the match", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(120.4, { time: 215, penalty: [4, null] }),
+		objective(180, { time: 155, score: [80, 53] }),
+		scoreboard(300),
+	]);
+	assert.deepEqual(built[0]!.match.objective, {
+		mode: "SZ",
+		samples: [
+			{
+				t: 120,
+				time: 215,
+				score: [95, 53],
+				penalty: [4, null],
+				control: [true, false],
+			},
+			{
+				t: 180,
+				time: 155,
+				score: [80, 53],
+				penalty: [null, null],
+				control: [true, false],
+			},
+		],
+	});
+});
+
+test("a losing-side pov swaps objective samples into teams order", () => {
+	const built = buildScannerMatches([
+		objective(120, { penalty: [4, null] }),
+		scoreboard(300, { povIndex: 6 }),
+	]);
+	assert.deepEqual(built[0]!.match.objective!.samples[0], {
+		t: 120,
+		time: 215,
+		score: [53, 95],
+		penalty: [null, 4],
+		control: [false, true],
+	});
+});
+
+test("without a pov the side whose count got lower is the winner side", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(60, { score: [95, 53] }),
+		objective(200, { score: [60, 20] }),
+		scoreboard(300, { povIndex: null }),
+	]);
+	assert.deepEqual(
+		built[0]!.match.objective!.samples.map((sample) => sample.score),
+		[
+			[53, 95],
+			[20, 60],
+		],
+	);
 });
 
 test("enriches players with abilities from the match's deaths", () => {

@@ -95,6 +95,16 @@ export const GATE_TIMER_MAX_MEAN = 70;
 export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 240;
 
 /**
+ * The timer's white M:SS digits measure 34px in the attested fixture; the
+ * colon's two dots stack to well under the digit height floor, so a plain
+ * height filter drops the colon and leaves the M SS digits.
+ */
+export const TIMER_TEXT_HEIGHT = 34;
+export const TIMER_BIN_THRESHOLD = 160;
+export const TIMER_DIGIT_MIN_CONF = 0.75;
+export const TIMER_DIGIT_MIN_HEIGHT_RATIO = 0.82;
+
+/**
  * Count digits measure ~40-44px across the attested plates; both scaled
  * sets are tried and the best trailing read wins (same pattern as the
  * banner's settled/mid-pop sizes).

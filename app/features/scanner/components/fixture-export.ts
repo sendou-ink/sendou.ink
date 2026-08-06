@@ -138,6 +138,7 @@ function buildExpectedJson(
 				event: eventType,
 				data: {
 					mode: objective.mode,
+					time: objective.time,
 					score: objective.score,
 					penalty: objective.penalty,
 					control: objective.control,

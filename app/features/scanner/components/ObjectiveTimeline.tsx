@@ -22,7 +22,7 @@ import {
 import { Line } from "react-chartjs-2";
 import { useThemeColors } from "~/hooks/useThemeColors";
 import type { ObjectiveData } from "../core/detectors/objective/index";
-import { formatTime } from "./format";
+import { formatClock, formatTime } from "./format";
 
 ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -111,8 +111,11 @@ export function ObjectiveTimeline({
 						},
 						tooltip: {
 							callbacks: {
-								title: (items) =>
-									items[0] ? formatTime(items[0].parsed.x ?? 0) : "",
+								title: (items) => {
+									if (!items[0]) return "";
+									const clock = sorted[items[0].dataIndex]?.data.time;
+									return `${formatTime(items[0].parsed.x ?? 0)}${clock != null ? ` · ${formatClock(clock)} left` : ""}`;
+								},
 								label: (item) => {
 									const event = sorted[item.dataIndex];
 									if (!event) return "";

@@ -5,6 +5,7 @@
  */
 import type {
 	ScannerMatch,
+	ScannerMatchObjective,
 	ScannerMatchPlayer,
 	ScannerMatchTeam,
 } from "~/features/scanner/core/scanner-match";
@@ -48,6 +49,8 @@ export function canonicalMatch(match: ScannerMatch): ScannerMatch {
 				: [match.matchScores[0], match.matchScores[1]],
 		replayCode: match.replayCode,
 		cast: match.cast,
+		objective:
+			match.objective === null ? null : canonicalObjective(match.objective),
 		teams: [canonicalTeam(match.teams[0]), canonicalTeam(match.teams[1])],
 		winner: match.winner,
 		pov:
@@ -121,6 +124,9 @@ export function mergeMatches(
 		matchScores: mergeScorePair(existing.matchScores, oriented.matchScores),
 		replayCode: existing.replayCode ?? oriented.replayCode,
 		cast: existing.cast || oriented.cast,
+		// whole-series first-ingest-wins: interleaving two partial sample
+		// series from different scans is not attempted
+		objective: existing.objective ?? oriented.objective,
 		teams: [
 			mergeTeam(existing.teams[0], oriented.teams[0]),
 			mergeTeam(existing.teams[1], oriented.teams[1]),
@@ -140,6 +146,21 @@ export function mergeMatches(
 /** Lowercased, width-normalized in-game name without the #discriminator. */
 export function normalizeInGameName(name: string): string {
 	return name.split("#")[0]!.normalize("NFKC").trim().toLowerCase();
+}
+
+function canonicalObjective(
+	objective: ScannerMatchObjective,
+): ScannerMatchObjective {
+	return {
+		mode: objective.mode,
+		samples: objective.samples.map((sample) => ({
+			t: sample.t,
+			time: sample.time,
+			score: [sample.score[0], sample.score[1]],
+			penalty: [sample.penalty[0], sample.penalty[1]],
+			control: [sample.control[0], sample.control[1]],
+		})),
+	};
 }
 
 function canonicalTeam(team: ScannerMatchTeam): ScannerMatchTeam {
@@ -254,6 +275,18 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 			match.matchScores === null
 				? null
 				: [match.matchScores[1], match.matchScores[0]],
+		objective:
+			match.objective === null
+				? null
+				: {
+						mode: match.objective.mode,
+						samples: match.objective.samples.map((sample) => ({
+							...sample,
+							score: [sample.score[1], sample.score[0]],
+							penalty: [sample.penalty[1], sample.penalty[0]],
+							control: [sample.control[1], sample.control[0]],
+						})),
+					},
 	};
 }
 

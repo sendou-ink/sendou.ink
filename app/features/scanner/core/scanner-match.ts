@@ -30,6 +30,35 @@ export interface ScannerMatchTeam {
 	players: ScannerMatchPlayer[];
 }
 
+export interface ScannerMatchObjectiveSample {
+	/** whole seconds into the video/stream the counter was read at */
+	t: number;
+	/**
+	 * seconds shown on the match timer at the read ("3:35" = 215); null =
+	 * unreadable. The game clock is the axis to graph progress on — score
+	 * moves at most 1/s against it.
+	 */
+	time: number | null;
+	/** displayed count per team, in `teams` order; null = unreadable */
+	score: [number | null, number | null];
+	/** penalty pill value per team; null = no pill (or unreadable) */
+	penalty: [number | null, number | null];
+	/** which team held the objective at the read */
+	control: [boolean, boolean];
+}
+
+/**
+ * Objective-counter progress over the match. Samples are chronological and
+ * deduped to state changes, with an unchanged state re-confirmed every ~10s
+ * while the counter stays on screen — so consecutive samples further apart
+ * than that were not observed in between (capture gap, covered HUD): render
+ * such stretches as unknown instead of interpolating.
+ */
+export interface ScannerMatchObjective {
+	mode: "SZ";
+	samples: ScannerMatchObjectiveSample[];
+}
+
 export interface ScannerMatch {
 	/** whole seconds into the video/stream the match starts at */
 	startsAt: number | null;
@@ -52,6 +81,12 @@ export interface ScannerMatch {
 	replayCode: string | null;
 	/** spectator/casted footage (the 8-player spectator map screen was seen) */
 	cast: boolean;
+	/**
+	 * counter progress samples in `teams` order (the on-screen left plate is
+	 * the POV/alpha side; the builder reorients when teams[0] is the other
+	 * side); null when no counter was read
+	 */
+	objective: ScannerMatchObjective | null;
 	/**
 	 * on-screen order: scoreboard rows 0-3 are teams[0] (the winners),
 	 * minimap alpha/own side is teams[0]

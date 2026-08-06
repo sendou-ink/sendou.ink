@@ -25,7 +25,10 @@ import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 } from "./detectors/minimap/index";
-import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "./detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
 import {
@@ -36,6 +39,8 @@ import type { DetectedEvent } from "./detectors/types";
 import { parseReplayTimestamp } from "./replay-time";
 import type {
 	ScannerMatch,
+	ScannerMatchObjective,
+	ScannerMatchObjectiveSample,
 	ScannerMatchPlayer,
 	ScannerMatchTeam,
 } from "./scanner-match";
@@ -163,7 +168,7 @@ interface OpenMatch<E extends DetectedEvent> {
 	mapStart: E | null;
 	minimaps: E[];
 	deaths: E[];
-	/** objective-counter reads; carried in sources, not on ScannerMatch */
+	/** objective-counter reads; become the match's `objective` samples */
 	objectives: E[];
 	scoreboard: E | null;
 	/**
@@ -241,6 +246,10 @@ function toBuiltMatch<E extends DetectedEvent>(
 			? (open.scoreboard.data as ScoreboardReplayData)
 			: undefined;
 	const deaths = open.deaths.map((event) => event.data as DeathData);
+	const objectives = open.objectives.map((event) => ({
+		t: event.t,
+		data: event.data as ObjectiveData,
+	}));
 
 	const match: ScannerMatch = {
 		startsAt:
@@ -255,6 +264,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 			: null,
 		replayCode: replay?.replayCode ?? null,
 		cast: open.minimaps.some((event) => (event.data as MinimapData).spectator),
+		objective: buildObjective(objectives, board),
 		teams: board
 			? teamsFromScoreboard(board, deaths)
 			: teamsFromMinimaps(
@@ -276,6 +286,50 @@ function toBuiltMatch<E extends DetectedEvent>(
 
 function floorOrNull(t: number | undefined): number | null {
 	return t === undefined ? null : Math.max(0, Math.floor(t));
+}
+
+/**
+ * The counter reads as `objective` samples in `teams` order. The on-screen
+ * plates put the POV/alpha side left, which already is teams[0] for a
+ * minimap-grouped match; a scoreboard-closed match's teams are winner-first,
+ * so the sides swap when the POV seat sat on the losing team — or, with no
+ * POV arrow read, when the right plate's count got lower (in SZ the winner
+ * is the team whose remaining count went furthest down; ties keep the order
+ * as read).
+ */
+function buildObjective(
+	objectives: readonly { t: number; data: ObjectiveData }[],
+	board: ScoreboardData | undefined,
+): ScannerMatchObjective | null {
+	if (objectives.length === 0) return null;
+	const swap = board
+		? board.povIndex !== null
+			? board.povIndex >= PLAYERS_PER_TEAM
+			: bestCount(objectives, 1) < bestCount(objectives, 0)
+		: false;
+	const samples = objectives.map(({ t, data }): ScannerMatchObjectiveSample => {
+		const [a, b] = swap ? ([1, 0] as const) : ([0, 1] as const);
+		return {
+			t: Math.max(0, Math.floor(t)),
+			time: data.time,
+			score: [data.score[a], data.score[b]],
+			penalty: [data.penalty[a], data.penalty[b]],
+			control: [data.control[a], data.control[b]],
+		};
+	});
+	return { mode: "SZ", samples };
+}
+
+/** The lowest count a side's plate ever showed; Infinity when never read. */
+function bestCount(
+	objectives: readonly { data: ObjectiveData }[],
+	side: 0 | 1,
+): number {
+	return Math.min(
+		...objectives.map(
+			({ data }) => data.score[side] ?? Number.POSITIVE_INFINITY,
+		),
+	);
 }
 
 /**

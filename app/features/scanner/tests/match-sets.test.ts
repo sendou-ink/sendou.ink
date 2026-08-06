@@ -26,6 +26,7 @@ function match(
 		matchScores: null,
 		replayCode: null,
 		cast: false,
+		objective: null,
 		teams: [{ players: alpha.map(player) }, { players: bravo.map(player) }],
 		winner: null,
 		pov: null,

@@ -36,6 +36,7 @@ function testMatch(partial: Partial<ScannerMatch> = {}): ScannerMatch {
 		matchScores: [100, 52],
 		replayCode: null,
 		cast: false,
+		objective: null,
 		teams: [
 			{ players: NAMES.slice(0, 4).map((n, i) => player(n, WEAPONS[i]!)) },
 			{ players: NAMES.slice(4).map((n, i) => player(n, WEAPONS[4 + i]!)) },
@@ -61,10 +62,24 @@ function sideSwapped(match: ScannerMatch): ScannerMatch {
 
 describe("canonicalMatch", () => {
 	it("serializes identically regardless of input key order", () => {
-		const match = testMatch();
+		const match = testMatch({
+			objective: {
+				mode: "SZ",
+				samples: [
+					{
+						t: 120,
+						time: 215,
+						score: [95, 53],
+						penalty: [4, null],
+						control: [true, false],
+					},
+				],
+			},
+		});
 		const reordered = JSON.parse(
 			JSON.stringify({
 				winner: match.winner,
+				objective: match.objective,
 				teams: match.teams,
 				cast: match.cast,
 				replayCode: match.replayCode,

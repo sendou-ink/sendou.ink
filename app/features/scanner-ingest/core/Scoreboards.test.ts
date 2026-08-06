@@ -76,6 +76,7 @@ function testMatch({
 		matchScores: [100, 52],
 		replayCode: null,
 		cast: false,
+		objective: null,
 		teams: [{ players: players.slice(0, 4) }, { players: players.slice(4) }],
 		winner: 0,
 		pov:

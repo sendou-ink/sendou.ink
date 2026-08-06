@@ -32,7 +32,7 @@ import {
 	SCOREBOARD_REPLAY_EVENT_TYPE,
 	type ScoreboardReplayData,
 } from "../core/detectors/scoreboard-replay/index";
-import { formatTime } from "./format";
+import { formatClock, formatTime } from "./format";
 import {
 	lobbyLabel,
 	mainWeaponLabel,
@@ -184,6 +184,7 @@ function eventCells(event: CsvEvent): Cell[] {
 			const d = event.data as ObjectiveData;
 			const sideText = (side: 0 | 1) =>
 				`${d.score[side] ?? "?"}${d.penalty[side] !== null ? ` (+${d.penalty[side]})` : ""}${d.control[side] ? " ctrl" : ""}`;
+			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
 			return [
 				...base,
 				"",
@@ -195,7 +196,7 @@ function eventCells(event: CsvEvent): Cell[] {
 				"",
 				"",
 				"",
-				`${sideText(0)} vs ${sideText(1)}`,
+				`${clock}${sideText(0)} vs ${sideText(1)}`,
 				"",
 				"",
 			];

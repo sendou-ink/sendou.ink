@@ -72,6 +72,18 @@ for (const fixture of fixtures) {
 			},
 		);
 
+		await t.test(
+			"time",
+			{ skip: expected.time === undefined || skip(fixture, "time") },
+			() => {
+				assert.equal(
+					event.data.time,
+					expected.time,
+					`time mismatch (${debug()})`,
+				);
+			},
+		);
+
 		for (const side of [0, 1] as const) {
 			await t.test(
 				`score[${side}]`,

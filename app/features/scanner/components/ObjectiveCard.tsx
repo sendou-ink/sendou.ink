@@ -3,6 +3,7 @@ import {
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
 import { FrameThumb } from "./FrameThumb";
+import { formatClock } from "./format";
 import { MetaPills } from "./MetaChips";
 
 export function ObjectiveCard(props: {
@@ -34,6 +35,7 @@ export function ObjectiveCard(props: {
 					label="objective"
 				/>
 				<span>
+					{data.time !== null ? `${formatClock(data.time)} · ` : null}
 					<b>
 						{side(0)} – {side(1)}
 					</b>
