@@ -1,9 +1,13 @@
 /**
  * Step-line chart of a match's objective-counter reads: one line per team
  * (remaining count over match time, so lines fall toward 0), solid while
- * that team is in control and dashed while it is not, with penalty and
- * control state in the shared hover tooltip. Rendered inside a match card's
- * expanded view instead of one event card per counter tick.
+ * that team is in control and dashed while it is not. Penalty is a
+ * translucent band filled between score and score + penalty — its thickness
+ * is the extra count the team must burn through before its score moves
+ * again, so it grows when a penalty lands and shrinks as it counts down.
+ * Control state and exact values stay in the shared hover tooltip. Rendered
+ * inside a match card's expanded view instead of one event card per counter
+ * tick.
  *
  * Series colors are scanner-local chart tokens (styles.css) — the theme's
  * text-tier colors are too pastel to tell apart as marks; these are the
@@ -13,6 +17,7 @@
 
 import {
 	Chart as ChartJS,
+	Filler,
 	Legend,
 	LinearScale,
 	LineElement,
@@ -24,9 +29,17 @@ import { useThemeColors } from "~/hooks/useThemeColors";
 import type { ObjectiveData } from "../core/detectors/objective/index";
 import { formatClock, formatTime } from "./format";
 
-ChartJS.register(LinearScale, PointElement, LineElement, Tooltip, Legend);
+ChartJS.register(
+	LinearScale,
+	PointElement,
+	LineElement,
+	Filler,
+	Tooltip,
+	Legend,
+);
 
 const TEAM_LABELS = ["Alpha", "Bravo"] as const;
+const PENALTY_BRIDGE_SECONDS = 6;
 
 export interface ObjectiveTimelineEvent {
 	t: number;
@@ -49,7 +62,7 @@ export function ObjectiveTimeline({
 	if (sorted.length === 0) return null;
 
 	const teamColors = [colors.alpha, colors.bravo];
-	const datasets = ([0, 1] as const).map((side) => ({
+	const scoreDatasets = ([0, 1] as const).map((side) => ({
 		label: TEAM_LABELS[side],
 		data: sorted.map((event) => ({
 			x: event.t,
@@ -63,6 +76,7 @@ export function ObjectiveTimeline({
 		pointRadius: 0,
 		pointHoverRadius: 4,
 		hitRadius: 20,
+		spanGaps: true,
 		stepped: "after" as const,
 		// dashed while the team is not in control, solid while it is
 		segment: {
@@ -70,6 +84,37 @@ export function ObjectiveTimeline({
 				sorted[ctx.p0DataIndex]?.data.control[side] ? undefined : [4, 4],
 		},
 	}));
+	// band between score and score + penalty; its thickness is the penalty
+	const penaltyDatasets = ([0, 1] as const).map((side) => {
+		const penalties = smoothPenalties(sorted, side);
+		let lastScore: number | null = null;
+		return {
+			label: `${TEAM_LABELS[side]} penalty`,
+			data: sorted.map((event, i) => {
+				lastScore = event.data.score[side] ?? lastScore;
+				return {
+					x: event.t,
+					y: lastScore === null ? null : lastScore + (penalties[i] ?? 0),
+				};
+			}),
+			borderColor: `${teamColors[side]}8c`,
+			backgroundColor: `${teamColors[side]}38`,
+			borderWidth: 1,
+			pointRadius: 0,
+			pointHoverRadius: 0,
+			stepped: "after" as const,
+			fill: { target: side },
+			// edge only where a penalty exists so zero-height bands stay invisible
+			segment: {
+				borderColor: (ctx: { p0DataIndex: number; p1DataIndex: number }) =>
+					(penalties[ctx.p0DataIndex] ?? 0) > 0 ||
+					(penalties[ctx.p1DataIndex] ?? 0) > 0
+						? undefined
+						: "transparent",
+			},
+		};
+	});
+	const datasets = [...scoreDatasets, ...penaltyDatasets];
 
 	return (
 		<div className="card objective-timeline">
@@ -95,7 +140,7 @@ export function ObjectiveTimeline({
 						},
 						y: {
 							min: 0,
-							max: 100,
+							suggestedMax: 100,
 							grid: { color: colors.border },
 							border: { color: colors.borderHigh },
 							ticks: { color: colors.text, stepSize: 25 },
@@ -107,9 +152,11 @@ export function ObjectiveTimeline({
 								color: colors.text,
 								boxWidth: 10,
 								boxHeight: 10,
+								filter: (item) => (item.datasetIndex ?? 0) < 2,
 							},
 						},
 						tooltip: {
+							filter: (item) => item.datasetIndex < 2,
 							callbacks: {
 								title: (items) => {
 									if (!items[0]) return "";
@@ -136,4 +183,65 @@ export function ObjectiveTimeline({
 			/>
 		</div>
 	);
+}
+
+/**
+ * The penalty pill is misread for a frame or two at a time: it flickers
+ * between a value and null, and occasionally drops a digit ("36" read as
+ * "6"). Median-filters isolated outlier values, drops one-off reads with no
+ * nearby confirmation and carries the previous value across short null gaps
+ * so the band renders as one steady shape instead of a picket fence.
+ */
+function smoothPenalties(
+	sorted: readonly ObjectiveTimelineEvent[],
+	side: 0 | 1,
+): (number | null)[] {
+	const medianFiltered = medianFilterValues(
+		sorted.map((event) => event.data.penalty[side]),
+	);
+	const kept = sorted.map((event, i) => {
+		const value = medianFiltered[i]!;
+		if (value === null) return null;
+		const hasNearbyRead = sorted.some(
+			(other, j) =>
+				j !== i &&
+				other.data.penalty[side] !== null &&
+				Math.abs(other.t - event.t) <= PENALTY_BRIDGE_SECONDS,
+		);
+		return hasNearbyRead ? value : null;
+	});
+
+	const result = [...kept];
+	let prev = -1;
+	for (let i = 0; i < result.length; i++) {
+		if (result[i] !== null) {
+			prev = i;
+			continue;
+		}
+		if (prev === -1) continue;
+		const next = result.findIndex((value, j) => j > i && value !== null);
+		if (next === -1) continue;
+		if (sorted[next]!.t - sorted[prev]!.t <= PENALTY_BRIDGE_SECONDS) {
+			result[i] = result[prev];
+		}
+	}
+	return result;
+}
+
+function medianFilterValues(
+	values: readonly (number | null)[],
+): (number | null)[] {
+	const nonNullIndexes = values.flatMap((value, i) =>
+		value !== null ? [i] : [],
+	);
+	const result = [...values];
+	for (let k = 1; k < nonNullIndexes.length - 1; k++) {
+		const window = [
+			values[nonNullIndexes[k - 1]!]!,
+			values[nonNullIndexes[k]!]!,
+			values[nonNullIndexes[k + 1]!]!,
+		].sort((a, b) => a - b);
+		result[nonNullIndexes[k]!] = window[1]!;
+	}
+	return result;
 }
