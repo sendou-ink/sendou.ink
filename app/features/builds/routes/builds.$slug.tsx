@@ -273,7 +273,7 @@ function AbilityConditionsPopover({
 	};
 
 	return (
-		<div className="stack sm items-start">
+		<div className={styles.abilityConditions}>
 			{conditions.map((condition, i) => (
 				<AbilityConditionRow
 					key={i}
@@ -287,6 +287,7 @@ function AbilityConditionsPopover({
 				/>
 			))}
 			<SendouButton
+				className="self-start"
 				size="small"
 				variant="minimal"
 				isDisabled={conditions.length >= MAX_BUILD_FILTERS}
@@ -312,7 +313,7 @@ function AbilityConditionRow({
 	const abilityObject = abilities.find((a) => a.name === condition.ability)!;
 
 	return (
-		<div className="stack horizontal sm items-center">
+		<div className={styles.abilityConditionRow}>
 			<Ability ability={condition.ability} size="TINY" />
 			<select
 				value={condition.ability}
@@ -336,49 +337,6 @@ function AbilityConditionRow({
 					);
 				})}
 			</select>
-			{abilityObject.type !== "STACKABLE" ? (
-				<select
-					value={!condition.value ? "false" : "true"}
-					onChange={(e) =>
-						onChange({ ...condition, value: e.target.value === "true" })
-					}
-				>
-					<option value="true">{t("builds:filters.has")}</option>
-					<option value="false">{t("builds:filters.does.not.have")}</option>
-				</select>
-			) : null}
-			{abilityObject.type === "STACKABLE" ? (
-				<select
-					value={condition.comparison}
-					onChange={(e) =>
-						onChange({
-							...condition,
-							comparison: e.target.value as AbilityCondition["comparison"],
-						})
-					}
-					data-testid="comparison-select"
-				>
-					<option value="AT_LEAST">{t("builds:filters.atLeast")}</option>
-					<option value="AT_MOST">{t("builds:filters.atMost")}</option>
-				</select>
-			) : null}
-			{abilityObject.type === "STACKABLE" ? (
-				<div className="stack horizontal sm items-center">
-					<select
-						value={typeof condition.value === "number" ? condition.value : "0"}
-						onChange={(e) =>
-							onChange({ ...condition, value: Number(e.target.value) })
-						}
-					>
-						{possibleApValues().map((value) => (
-							<option key={value} value={value}>
-								{value}
-							</option>
-						))}
-					</select>
-					<div className="text-sm">{t("analyzer:abilityPoints.short")}</div>
-				</div>
-			) : null}
 			<SendouButton
 				icon={<X />}
 				size="miniscule"
@@ -387,6 +345,51 @@ function AbilityConditionRow({
 				aria-label="Delete ability condition"
 				data-testid="delete-ability-condition"
 			/>
+			<div className={styles.abilityConditionValueRow}>
+				{abilityObject.type === "STACKABLE" ? (
+					<>
+						<select
+							value={condition.comparison}
+							onChange={(e) =>
+								onChange({
+									...condition,
+									comparison: e.target.value as AbilityCondition["comparison"],
+								})
+							}
+							data-testid="comparison-select"
+						>
+							<option value="AT_LEAST">{t("builds:filters.atLeast")}</option>
+							<option value="AT_MOST">{t("builds:filters.atMost")}</option>
+						</select>
+						<select
+							className={styles.abilityConditionApSelect}
+							value={
+								typeof condition.value === "number" ? condition.value : "0"
+							}
+							onChange={(e) =>
+								onChange({ ...condition, value: Number(e.target.value) })
+							}
+						>
+							{possibleApValues().map((value) => (
+								<option key={value} value={value}>
+									{value}
+								</option>
+							))}
+						</select>
+						<div className="text-sm">{t("analyzer:abilityPoints.short")}</div>
+					</>
+				) : (
+					<select
+						value={!condition.value ? "false" : "true"}
+						onChange={(e) =>
+							onChange({ ...condition, value: e.target.value === "true" })
+						}
+					>
+						<option value="true">{t("builds:filters.has")}</option>
+						<option value="false">{t("builds:filters.does.not.have")}</option>
+					</select>
+				)}
+			</div>
 		</div>
 	);
 }
