@@ -32,6 +32,22 @@ export interface GateResult {
  */
 export interface Detector<TData = unknown> {
 	id: string;
+	/**
+	 * Minimum seconds between checks: frames inside the interval skip gate
+	 * and parse entirely (core/detectors/throttle.ts, applied by the
+	 * analyzer worker — per worker, so a VoD pool checks up to poolSize×
+	 * this often). Declaring an interval also exempts the detector from
+	 * steady-frame suppression: it marks a screen that stays up for minutes
+	 * with *changing* content, which the stagnating-confidence heuristic
+	 * would wrongly silence.
+	 */
+	checkIntervalS?: number;
+	/**
+	 * false = worker results for this detector's events ship without the
+	 * analyzed-frame PNG — for detectors whose events fire continuously,
+	 * where a stored frame per event would balloon IndexedDB.
+	 */
+	attachFrame?: boolean;
 	gate(frame: Mat): GateResult;
 	parse(frame: Mat, t: number, gate?: GateResult): DetectedEvent<TData>[];
 }

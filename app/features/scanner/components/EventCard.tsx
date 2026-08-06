@@ -21,6 +21,10 @@ import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 } from "../core/detectors/minimap/index";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
@@ -33,6 +37,7 @@ import { DeathCard } from "./DeathCard";
 import type { FixtureData } from "./fixture-export";
 import { MapStartCard } from "./MapStartCard";
 import { MinimapCard } from "./MinimapCard";
+import { ObjectiveCard } from "./ObjectiveCard";
 import { ScoreboardCard } from "./ScoreboardCard";
 import { ScoreboardOwnCard } from "./ScoreboardOwnCard";
 
@@ -138,6 +143,8 @@ function renderCard(
 		<ScoreboardOwnCard {...shared} data={data as ScoreboardOwnData} />
 	) : type === MINIMAP_EVENT_TYPE ? (
 		<MinimapCard {...shared} data={data as MinimapData} />
+	) : type === OBJECTIVE_EVENT_TYPE ? (
+		<ObjectiveCard {...shared} data={data as ObjectiveData} />
 	) : (
 		<ScoreboardCard
 			{...shared}

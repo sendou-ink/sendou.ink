@@ -16,6 +16,10 @@ import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 } from "../core/detectors/minimap/index";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
@@ -34,7 +38,8 @@ export type FixtureData =
 	| DeathData
 	| MapStartData
 	| ScoreboardOwnData
-	| MinimapData;
+	| MinimapData
+	| ObjectiveData;
 
 function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
@@ -120,6 +125,22 @@ function buildExpectedJson(
 						weaponId: p.weaponId,
 						abilities: p.abilities,
 					})),
+				},
+			},
+			null,
+			2,
+		)}\n`;
+	}
+	if (eventType === OBJECTIVE_EVENT_TYPE) {
+		const objective = data as ObjectiveData;
+		return `${JSON.stringify(
+			{
+				event: eventType,
+				data: {
+					mode: objective.mode,
+					score: objective.score,
+					penalty: objective.penalty,
+					control: objective.control,
 				},
 			},
 			null,

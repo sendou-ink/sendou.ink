@@ -10,12 +10,14 @@ import {
 	Play,
 	RotateCcw,
 	Skull,
+	Target,
 	Trophy,
 	User,
 } from "lucide-react";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
 import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
@@ -24,6 +26,7 @@ const EVENT_TYPE_ICONS: Record<string, LucideIcon> = {
 	[MAP_START_EVENT_TYPE]: Play,
 	[DEATH_EVENT_TYPE]: Skull,
 	[MINIMAP_EVENT_TYPE]: MapIcon,
+	[OBJECTIVE_EVENT_TYPE]: Target,
 	[SCOREBOARD_EVENT_TYPE]: Trophy,
 	[SCOREBOARD_REPLAY_EVENT_TYPE]: RotateCcw,
 	[SCOREBOARD_OWN_EVENT_TYPE]: User,

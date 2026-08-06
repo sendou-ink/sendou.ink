@@ -3,6 +3,10 @@
  * Same-type events within a merge window collapse into one, keeping the
  * highest-confidence version; events below a confidence floor are dropped.
  */
+import {
+	OBJECTIVE_EVENT_TYPE,
+	sameObjectiveData,
+} from "../detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
 import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-replay/index";
 import type { DetectedEvent } from "../detectors/types";
@@ -34,10 +38,14 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	// players flick the map open for 1-3s and each open is a fresh sample
 	// (slots read differently across opens), so minimap frames merge only
 	// within one open
-	mergeWindowByType: { Death: 8, Minimap: 5 },
+	// objective counter reads repeat every check second; the content guard
+	// below keeps every actual change while the window collapses static
+	// stretches into one event per state
+	mergeWindowByType: { Death: 8, Minimap: 5, [OBJECTIVE_EVENT_TYPE]: 10 },
 	sameEventDataByType: {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
+		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
 	},
 	minConfidence: 0.6,
 };

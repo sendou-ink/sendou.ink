@@ -7,6 +7,7 @@
 import { createDeathDetector } from "./death/index";
 import { createMapStartDetector } from "./map-start/index";
 import { createMinimapDetector } from "./minimap/index";
+import { createObjectiveDetector } from "./objective/index";
 import {
 	createScoreboardDetector,
 	SCOREBOARD_EVENT_TYPE,
@@ -38,5 +39,6 @@ export function createAllDetectors(
 		createDeathDetector(resources) as Detector<unknown>,
 		createMapStartDetector(resources) as Detector<unknown>,
 		createMinimapDetector(resources) as Detector<unknown>,
+		createObjectiveDetector(resources) as Detector<unknown>,
 	];
 }

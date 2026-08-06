@@ -127,7 +127,7 @@ export function parseBannerScore(
 				spaceGap: Number.POSITIVE_INFINITY,
 				minCharScore: 0.3,
 			});
-			const read = trailingScore(raw, set);
+			const read = trailingDigitRun(raw, set);
 			if (isBetterRead(read, best)) best = read;
 		}
 	}
@@ -203,7 +203,15 @@ function clearShortBlobs(band: Mat): void {
 	labels.delete();
 }
 
-function isBetterRead(read: BannerScoreRead, best: BannerScoreRead): boolean {
+/**
+ * Read preference shared by every multi-attempt digit read: a valid value
+ * beats none, a longer digit run beats a shorter one, confidence breaks
+ * ties.
+ */
+export function isBetterRead(
+	read: BannerScoreRead,
+	best: BannerScoreRead,
+): boolean {
 	if ((read.value !== null) !== (best.value !== null)) {
 		return read.value !== null;
 	}
@@ -211,11 +219,34 @@ function isBetterRead(read: BannerScoreRead, best: BannerScoreRead): boolean {
 	return read.confidence > best.confidence;
 }
 
-function trailingScore(raw: RecognizedText, set: GlyphSet): BannerScoreRead {
+export interface TrailingDigitOptions {
+	/** char floor a glyph must clear to count as a digit of the number */
+	minCharScore?: number;
+	/** min ink height as a fraction of the set height (drops labels, '+') */
+	minHeightRatio?: number;
+	/** values above this are rejected as misreads */
+	maxValue?: number;
+}
+
+/**
+ * The trailing run of full-height, confidently-matched digits of a
+ * recognized line — the number-on-a-plate read shared by the score banner
+ * and the objective counters, where a localized label / burst / '+' sign
+ * precedes the digits and must fail at least one of the floors.
+ */
+export function trailingDigitRun(
+	raw: RecognizedText,
+	set: GlyphSet,
+	options: TrailingDigitOptions = {},
+): BannerScoreRead {
+	const {
+		minCharScore = DIGIT_MIN_CONF,
+		minHeightRatio = DIGIT_MIN_HEIGHT_RATIO,
+		maxValue = KO_MATCH_SCORE,
+	} = options;
 	const maxGap = Math.max(4, Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO));
 	const isScoreDigit = (c: RecognizedChar) =>
-		c.score >= DIGIT_MIN_CONF &&
-		c.y1 - c.y0 >= set.height * DIGIT_MIN_HEIGHT_RATIO;
+		c.score >= minCharScore && c.y1 - c.y0 >= set.height * minHeightRatio;
 
 	const run: RecognizedChar[] = [];
 	let i = raw.chars.length - 1;
@@ -234,7 +265,7 @@ function trailingScore(raw: RecognizedText, set: GlyphSet): BannerScoreRead {
 	}
 
 	const value = Number.parseInt(run.map((c) => c.char).join(""), 10);
-	if (value > KO_MATCH_SCORE) return { ...EMPTY_READ, reading: raw.text };
+	if (value > maxValue) return { ...EMPTY_READ, reading: raw.text };
 	return {
 		value,
 		confidence: Math.min(...run.map((c) => c.score)),

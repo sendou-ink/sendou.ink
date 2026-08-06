@@ -19,6 +19,10 @@ import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 } from "../core/detectors/minimap/index";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
@@ -172,6 +176,26 @@ function eventCells(event: CsvEvent): Cell[] {
 				"",
 				formatAbilities(d.abilities),
 				"",
+				"",
+				"",
+			];
+		}
+		case OBJECTIVE_EVENT_TYPE: {
+			const d = event.data as ObjectiveData;
+			const sideText = (side: 0 | 1) =>
+				`${d.score[side] ?? "?"}${d.penalty[side] !== null ? ` (+${d.penalty[side]})` : ""}${d.control[side] ? " ctrl" : ""}`;
+			return [
+				...base,
+				"",
+				modeLabel(d.mode),
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				`${sideText(0)} vs ${sideText(1)}`,
 				"",
 				"",
 			];

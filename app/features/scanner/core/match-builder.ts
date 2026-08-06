@@ -25,6 +25,7 @@ import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 } from "./detectors/minimap/index";
+import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
 import {
@@ -82,8 +83,9 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const nextStage = buildNextStageMap(sorted);
 
 	let open: OpenMatch<E> | null = null;
-	// deaths seen with no match open to anchor them yet
+	// deaths/objective reads seen with no match open to anchor them yet
 	let orphanDeaths: E[] = [];
+	let orphanObjectives: E[] = [];
 	const finalize = (): void => {
 		if (!open) return;
 		if (open.scoreboard || open.minimaps.length > 0) {
@@ -100,17 +102,22 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			open.mapStart = event;
 			vote(open.stageVotes, (event.data as MapStartData).stage);
 			orphanDeaths = [];
+			orphanObjectives = [];
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			if (!open) {
 				open = startMatch();
 				open.deaths = orphanDeaths.filter(
 					(death) => event.t - death.t <= FALLBACK_WINDOW_SECONDS,
 				);
+				open.objectives = orphanObjectives.filter(
+					(objective) => event.t - objective.t <= FALLBACK_WINDOW_SECONDS,
+				);
 			}
 			open.scoreboard = event;
 			vote(open.stageVotes, (event.data as ScoreboardData).stage);
 			finalize();
 			orphanDeaths = [];
+			orphanObjectives = [];
 		} else if (event.type === MINIMAP_EVENT_TYPE) {
 			const stage = (event.data as MinimapData).stage;
 			if (open) {
@@ -134,6 +141,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			vote(open.stageVotes, stage);
 		} else if (event.type === DEATH_EVENT_TYPE) {
 			(open?.deaths ?? orphanDeaths).push(event);
+		} else if (event.type === OBJECTIVE_EVENT_TYPE) {
+			(open?.objectives ?? orphanObjectives).push(event);
 		}
 	}
 	finalize();
@@ -154,6 +163,8 @@ interface OpenMatch<E extends DetectedEvent> {
 	mapStart: E | null;
 	minimaps: E[];
 	deaths: E[];
+	/** objective-counter reads; carried in sources, not on ScannerMatch */
+	objectives: E[];
 	scoreboard: E | null;
 	/**
 	 * per-stage read counts (a MapStart's stage seeds it); the plurality
@@ -170,6 +181,7 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 		mapStart: null,
 		minimaps: [],
 		deaths: [],
+		objectives: [],
 		scoreboard: null,
 		stageVotes: new Map(),
 		lastMinimapT: null,
@@ -218,6 +230,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		...(open.mapStart ? [open.mapStart] : []),
 		...open.minimaps,
 		...open.deaths,
+		...open.objectives,
 		...(open.scoreboard ? [open.scoreboard] : []),
 	].sort((a, b) => a.t - b.t);
 

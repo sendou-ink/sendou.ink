@@ -5,6 +5,7 @@
 import { loadOpenCV } from "../core/cv";
 import { createAllDetectors } from "../core/detectors/registry";
 import { ParseSuppressor } from "../core/detectors/suppressor";
+import { CheckThrottle } from "../core/detectors/throttle";
 import type { Detector } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
 import type { AnalyzeRequest, InitRequest, WorkerResponse } from "./protocol";
@@ -12,6 +13,7 @@ import { fetchScoreboardResources } from "./resources";
 
 let detectors: Detector<unknown>[] = [];
 let suppressor: ParseSuppressor | null = null;
+let throttle = new CheckThrottle();
 
 function post(message: WorkerResponse): void {
 	self.postMessage(message);
@@ -26,6 +28,7 @@ async function init({
 		const resources = await fetchScoreboardResources(assetsBaseUrl);
 		detectors = createAllDetectors(resources);
 		suppressor = suppressSteadyFrames ? new ParseSuppressor() : null;
+		throttle = new CheckThrottle();
 		post({ kind: "ready" });
 	} catch (error) {
 		post({ kind: "error", message: `init failed: ${String(error)}` });
@@ -63,13 +66,22 @@ async function analyze({ bitmap, t }: AnalyzeRequest): Promise<void> {
 
 	try {
 		for (const detector of detectors) {
+			if (!throttle.shouldCheck(detector.id, t, detector.checkIntervalS))
+				continue;
 			const gate = detector.gate(frame);
-			const runParse = suppressor
-				? suppressor.shouldParse(detector.id, gate.pass)
+			// interval-limited detectors watch changing content and opt out of
+			// steady-frame suppression (see Detector.checkIntervalS)
+			const suppressible =
+				detector.checkIntervalS === undefined ? suppressor : null;
+			const runParse = suppressible
+				? suppressible.shouldParse(detector.id, gate.pass)
 				: gate.pass;
 			const events = runParse ? detector.parse(frame, t, gate) : [];
-			if (runParse) suppressor?.recordParse(detector.id, events);
-			const blob = events.length > 0 ? await frameBlob() : undefined;
+			if (runParse) suppressible?.recordParse(detector.id, events);
+			const blob =
+				events.length > 0 && detector.attachFrame !== false
+					? await frameBlob()
+					: undefined;
 			post({
 				kind: "result",
 				detector: detector.id,

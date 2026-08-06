@@ -60,6 +60,7 @@ interface ExpectedScoreboard {
 		| "Death"
 		| "MapStart"
 		| "Minimap"
+		| "Objective"
 		| "none";
 	data?: {
 		lobby?: ScannerLobby;
@@ -88,6 +89,12 @@ interface ExpectedScoreboard {
 		abilities?: ScannerAbility[][];
 		/** Death only: killer's splash-tag name */
 		name?: string;
+		/** Objective only: displayed counter per team, [alpha, bravo] */
+		score?: [number | null, number | null];
+		/** Objective only: penalty pill value per team; null = no pill */
+		penalty?: [number | null, number | null];
+		/** Objective only: which team currently holds the objective */
+		control?: [boolean, boolean];
 		/** Minimap only: casted 8-player spectator map screen (not parsed yet) */
 		spectator?: boolean;
 		/** Minimap only: own-team callout cards in slot order */

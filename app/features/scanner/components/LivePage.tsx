@@ -7,6 +7,10 @@ import {
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "../core/detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
@@ -29,6 +33,7 @@ import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { MatchCard, SetDivider } from "./MatchCard";
+import { ObjectiveTimeline } from "./ObjectiveTimeline";
 import {
 	aggregateSendStatus,
 	matchContaining,
@@ -325,6 +330,13 @@ export function LivePage({
 						const index = builtMatches.length - 1 - reverseIndex;
 						const id = built.sources[0]!.id!;
 						const ingestable = isIngestableMatch(built.match);
+						// counter reads render as one timeline chart, not a card each
+						const objectiveEvents = built.sources
+							.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
+							.map((e) => ({ t: e.t, data: e.data as ObjectiveData }));
+						const cardEvents = withoutRepeatEvents(built.sources).filter(
+							(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+						);
 						return (
 							<Fragment key={id}>
 								{showSetDividers &&
@@ -345,7 +357,10 @@ export function LivePage({
 											: undefined
 									}
 								>
-									{withoutRepeatEvents(built.sources).map((e) => (
+									{objectiveEvents.length > 0 ? (
+										<ObjectiveTimeline events={objectiveEvents} />
+									) : null}
+									{cardEvents.map((e) => (
 										<EventCard
 											key={e.id}
 											type={e.type}

@@ -70,13 +70,23 @@ sequenceDiagram
   assumes a browser, so the client tree loads via `React.lazy` after
   `useHydrated`. Nothing from `core/worker/capture/store` may be imported at
   route-module top level.
-- Six detectors: `scoreboard` (results screen), `scoreboard-replay`
+- Seven detectors: `scoreboard` (results screen), `scoreboard-replay`
   (replay-browser detail), `scoreboard-own` (personal results), `death`
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay,
-  plus the casted 8-player spectator map as a gated variant). Parsing details
-  are in each detector's module header; accuracy-critical matching internals
-  in `core/glyphs.ts` and `core/detectors/scoreboard/weapons.ts` — read those
-  before touching recognition code.
+  plus the casted 8-player spectator map as a gated variant), `objective`
+  (the ranked in-match counter overlay: per-team counts, penalties, and who
+  holds the objective — a discriminated union on mode with only the SZ
+  member so far). Parsing details are in each detector's module header;
+  accuracy-critical matching internals in `core/glyphs.ts` and
+  `core/detectors/scoreboard/weapons.ts` — read those before touching
+  recognition code.
+- A detector can declare `checkIntervalS` (objective: 1s) to cap how often
+  it is checked at all — the analyzer worker skips gate+parse in between
+  (`core/detectors/throttle.ts`) and exempts it from steady-frame
+  suppression — and `attachFrame: false` to keep continuously-firing events
+  from storing a frame PNG each. In the UI a match's objective reads render
+  as one step-line timeline (`components/ObjectiveTimeline.tsx`) instead of
+  per-event cards.
 - Recognition is language-agnostic: OCR output snaps against every game
   language at once (`core/localized-entries.ts`, generated) and events carry
   sendou ids. English display names come from `components/labels.ts`.

@@ -8,6 +8,7 @@
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
 import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
@@ -17,6 +18,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 	[MAP_START_EVENT_TYPE]: "map start",
 	[DEATH_EVENT_TYPE]: "death",
 	[MINIMAP_EVENT_TYPE]: "minimap",
+	[OBJECTIVE_EVENT_TYPE]: "objective",
 	[SCOREBOARD_EVENT_TYPE]: "scoreboard",
 	[SCOREBOARD_REPLAY_EVENT_TYPE]: "replay scoreboard",
 	[SCOREBOARD_OWN_EVENT_TYPE]: "own result",

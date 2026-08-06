@@ -23,6 +23,10 @@ import {
 import { Link } from "react-router";
 import { openVodScan } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "../core/detectors/objective/index";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
 import { assignMatchSets } from "../core/match-sets";
@@ -45,6 +49,7 @@ import type { FixtureData } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
 import { MatchCard, SetDivider } from "./MatchCard";
+import { ObjectiveTimeline } from "./ObjectiveTimeline";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -590,6 +595,13 @@ export function VodPage({
 					{[...builtMatches].reverse().map((built, reverseIndex) => {
 						const index = builtMatches.length - 1 - reverseIndex;
 						const ingestable = isIngestableMatch(built.match);
+						// counter reads render as one timeline chart, not a card each
+						const objectiveEvents = built.sources
+							.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
+							.map((e) => ({ t: e.t, data: e.data as ObjectiveData }));
+						const cardEvents = withoutRepeatEvents(built.sources).filter(
+							(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+						);
 						return (
 							<Fragment key={vodMatchByEvent.get(built.sources[0]!)!.key}>
 								{showSetDividers &&
@@ -606,7 +618,10 @@ export function VodPage({
 									ingestable={ingestable}
 									send={ingestable ? bulkSend : undefined}
 								>
-									{withoutRepeatEvents(built.sources).map((e, i) => {
+									{objectiveEvents.length > 0 ? (
+										<ObjectiveTimeline events={objectiveEvents} />
+									) : null}
+									{cardEvents.map((e, i) => {
 										const vodMatch = vodMatchByEvent.get(e);
 										return (
 											<EventCard
