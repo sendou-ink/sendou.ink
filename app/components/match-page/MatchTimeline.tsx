@@ -383,21 +383,23 @@ function TimelineScoreboardSection({
 			</button>
 			{isExpanded ? (
 				<div className={styles.scoreboardPanel}>
-					<ScoreboardTeamRows
-						name={teams.alpha.name}
-						players={scoreboard.alpha}
-					/>
-					<ScoreboardTeamRows
-						name={teams.bravo.name}
-						players={scoreboard.bravo}
-					/>
+					<div className={styles.scoreboardTables}>
+						<ScoreboardTable
+							name={teams.alpha.name}
+							players={scoreboard.alpha}
+						/>
+						<ScoreboardTable
+							name={teams.bravo.name}
+							players={scoreboard.bravo}
+						/>
+					</div>
 				</div>
 			) : null}
 		</div>
 	);
 }
 
-function ScoreboardTeamRows({
+function ScoreboardTable({
 	name,
 	players,
 }: {
@@ -407,55 +409,67 @@ function ScoreboardTeamRows({
 	const { t } = useTranslation(["q"]);
 
 	return (
-		<>
-			<div className={styles.scoreboardTeamHeader}>
-				<span className={styles.scoreboardTeamName}>{name}</span>
-				<span className={styles.scoreboardStat}>
-					{t("q:match.timeline.stats.paint")}
-				</span>
-				<span className={styles.scoreboardStat}>
-					{t("q:match.timeline.stats.kills")}
-				</span>
-				<span className={styles.scoreboardStat}>
-					{t("q:match.timeline.stats.deaths")}
-				</span>
-				<span className={styles.scoreboardStat}>
-					{t("q:match.timeline.stats.specials")}
-				</span>
-			</div>
-			{players.map((player, i) => (
-				<div key={i} className={styles.scoreboardPlayerRow}>
-					{player.weaponSplId !== null ? (
-						<WeaponImage
-							weaponSplId={player.weaponSplId}
-							variant="badge"
-							size={28}
-						/>
-					) : (
-						<Image
-							path={abilityImageUrl("UNKNOWN")}
-							alt="?"
-							size={28}
-							className={styles.scoreboardUnknownWeapon}
-						/>
-					)}
-					<span className={styles.scoreboardPlayerName}>{player.name}</span>
-					<span className={styles.scoreboardStat}>
-						{player.paint !== null
-							? t("q:match.timeline.points", { points: player.paint })
-							: "–"}
-					</span>
-					<span className={styles.scoreboardStat}>{player.ka ?? "–"}</span>
-					<span className={styles.scoreboardStat}>{player.d ?? "–"}</span>
-					<span className={styles.scoreboardStat}>{player.s ?? "–"}</span>
-					<span className={styles.scoreboardBuildCell}>
-						{player.abilities && player.abilities.length > 0 ? (
-							<ScoreboardBuildPopover abilities={player.abilities} />
-						) : null}
-					</span>
-				</div>
-			))}
-		</>
+		<table className={styles.scoreboardTable}>
+			<thead>
+				<tr className={styles.scoreboardHeaderRow}>
+					<th className={styles.scoreboardWeaponColumn} />
+					<th scope="col" className={styles.scoreboardTeamName}>
+						{name}
+					</th>
+					<th scope="col" className={styles.scoreboardStatHeader}>
+						{t("q:match.timeline.stats.paint")}
+					</th>
+					<th scope="col" className={styles.scoreboardStatHeader}>
+						{t("q:match.timeline.stats.kills")}
+					</th>
+					<th scope="col" className={styles.scoreboardStatHeader}>
+						{t("q:match.timeline.stats.deaths")}
+					</th>
+					<th scope="col" className={styles.scoreboardStatHeader}>
+						{t("q:match.timeline.stats.specials")}
+					</th>
+					<th className={styles.scoreboardBuildColumn} />
+				</tr>
+			</thead>
+			<tbody>
+				{players.map((player, i) => (
+					<tr key={i} className={styles.scoreboardPlayerRow}>
+						<td className={styles.scoreboardWeaponCell}>
+							{player.weaponSplId !== null ? (
+								<WeaponImage
+									weaponSplId={player.weaponSplId}
+									variant="badge"
+									size={28}
+								/>
+							) : (
+								<Image
+									path={abilityImageUrl("UNKNOWN")}
+									alt="?"
+									size={28}
+									className={styles.scoreboardUnknownWeapon}
+								/>
+							)}
+						</td>
+						<th scope="row" className={styles.scoreboardPlayerName}>
+							{player.name}
+						</th>
+						<td className={styles.scoreboardStat}>
+							{player.paint !== null
+								? t("q:match.timeline.points", { points: player.paint })
+								: "–"}
+						</td>
+						<td className={styles.scoreboardStat}>{player.ka ?? "–"}</td>
+						<td className={styles.scoreboardStat}>{player.d ?? "–"}</td>
+						<td className={styles.scoreboardStat}>{player.s ?? "–"}</td>
+						<td className={styles.scoreboardBuildCell}>
+							{player.abilities && player.abilities.length > 0 ? (
+								<ScoreboardBuildPopover abilities={player.abilities} />
+							) : null}
+						</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
 	);
 }
 

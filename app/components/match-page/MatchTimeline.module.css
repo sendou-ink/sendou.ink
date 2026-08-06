@@ -179,46 +179,80 @@
 }
 
 .scoreboardPanel {
-	display: grid;
-	grid-template-columns: max-content minmax(0, 1fr) repeat(5, max-content);
-	row-gap: var(--s-1-5);
-	column-gap: var(--s-3);
-	align-items: center;
-	background-color: var(--color-bg-high);
+	background-color: var(--color-bg);
+	border: var(--border-style);
 	border-radius: var(--radius-box);
 	padding: var(--s-3);
 	font-size: var(--font-xs);
 }
 
-.scoreboardTeamHeader {
-	display: grid;
-	grid-template-columns: subgrid;
-	grid-column: 1 / -1;
-	align-items: end;
+.scoreboardTables {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+}
+
+.scoreboardTable {
+	width: 100%;
+	min-width: 24rem;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.scoreboardWeaponColumn,
+.scoreboardBuildColumn,
+.scoreboardStatHeader,
+.scoreboardTeamName,
+.scoreboardWeaponCell,
+.scoreboardPlayerName,
+.scoreboardStat,
+.scoreboardBuildCell {
+	padding: var(--s-1) var(--s-2);
+	vertical-align: middle;
+}
+
+.scoreboardHeaderRow {
+	border-bottom: var(--border-style);
+}
+
+.scoreboardPlayerRow:nth-child(even) {
+	background-color: var(--color-bg-high);
+}
+
+.scoreboardWeaponColumn {
+	width: 3rem;
+}
+
+.scoreboardBuildColumn {
+	width: 2.5rem;
+}
+
+.scoreboardStatHeader {
+	width: 3.5rem;
+	text-align: center;
 	font-size: var(--font-3xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
-
-	&:not(:first-child) {
-		margin-top: var(--s-3);
-	}
 }
 
 .scoreboardTeamName {
-	grid-column: span 2;
+	text-align: start;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
 
-.scoreboardPlayerRow {
-	display: grid;
-	grid-template-columns: subgrid;
-	grid-column: 1 / -1;
-	align-items: center;
+.scoreboardWeaponCell {
+	line-height: 0;
 }
 
 .scoreboardPlayerName {
+	text-align: start;
 	font-weight: var(--weight-semi);
 	overflow: hidden;
 	white-space: nowrap;
@@ -231,9 +265,8 @@
 }
 
 .scoreboardBuildCell {
-	display: flex;
-	justify-content: center;
-	min-width: 24px;
+	text-align: center;
+	line-height: 0;
 }
 
 .scoreboardAbilities {
