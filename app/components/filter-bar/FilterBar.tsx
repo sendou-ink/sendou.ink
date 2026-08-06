@@ -2,7 +2,6 @@ import { ChevronDown, Plus, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { SendouButton } from "../elements/Button";
 import { SendouMenu, SendouMenuItem } from "../elements/Menu";
 import { SendouPopover } from "../elements/Popover";
 import styles from "./FilterBar.module.css";
@@ -122,14 +121,14 @@ function FilterPill({
 				{pill.popover}
 			</SendouPopover>
 			{showRemove ? (
-				<SendouButton
-					variant="minimal-destructive"
-					size="miniscule"
-					icon={<X />}
+				<Button
+					className={styles.removeButton}
 					aria-label={`Remove ${pill.name} filter`}
 					onPress={onRemove}
-					testId={pill.testId ? `${pill.testId}-remove` : undefined}
-				/>
+					data-testid={pill.testId ? `${pill.testId}-remove` : undefined}
+				>
+					<X />
+				</Button>
 			) : null}
 		</div>
 	);
@@ -147,14 +146,12 @@ function AddFilterMenu({
 	return (
 		<SendouMenu
 			trigger={
-				<SendouButton
-					variant="outlined"
-					size="small"
-					icon={<Plus />}
-					data-testid="add-filter-button"
-				>
-					{t("filterBar.addFilter")}
-				</SendouButton>
+				<div className={styles.pill}>
+					<Button className={styles.trigger} data-testid="add-filter-button">
+						<Plus className={styles.plus} />
+						<span>{t("filterBar.addFilter")}</span>
+					</Button>
+				</div>
 			}
 		>
 			{pills.map((pill) => (

@@ -8,35 +8,63 @@
 .pill {
 	display: inline-flex;
 	align-items: center;
-	gap: var(--s-0-5);
+	height: var(--selector-size);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	transition: background-color 0.15s;
+
+	&:has(.trigger[data-hovered]) {
+		background-color: var(--color-bg-high);
+	}
+
+	&:has(.removeButton) .trigger {
+		padding-right: var(--s-1);
+	}
 }
 
 .trigger {
 	display: inline-flex;
 	align-items: center;
 	gap: var(--s-1);
-	height: var(--selector-size);
+	height: 100%;
 	padding: 0 var(--s-2);
-	border: var(--border-style);
-	border-radius: var(--radius-selector);
-	background-color: var(--color-bg-higher);
+	border: none;
+	border-radius: inherit;
+	background-color: transparent;
 	color: var(--color-text);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	cursor: pointer;
-	transition: background-color 0.15s;
-
-	&[data-hovered] {
-		background-color: var(--color-bg-high);
-	}
 
 	&[data-focus-visible] {
 		outline: var(--focus-ring);
 		outline-offset: 2px;
 	}
+}
 
-	&[data-active="true"] {
-		border: var(--border-style-accent);
+.removeButton {
+	display: inline-flex;
+	align-items: center;
+	height: 100%;
+	padding: 0 var(--s-1-5);
+	border: none;
+	border-radius: inherit;
+	background-color: transparent;
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	& > svg {
+		width: 14px;
+		height: 14px;
+	}
+
+	&[data-hovered] {
+		color: var(--color-error);
+	}
+
+	&[data-focus-visible] {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
 	}
 }
 
@@ -53,7 +81,8 @@
 	color: var(--color-text-accent);
 }
 
-.chevron {
+.chevron,
+.plus {
 	width: 14px;
 	height: 14px;
 	color: var(--color-text-high);
