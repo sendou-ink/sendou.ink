@@ -44,6 +44,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	gap: var(--s-1-5);
 	border: var(--border-style-accent);
 	border-radius: var(--radius-field);
 	appearance: none;
@@ -57,6 +58,11 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	height: var(--field-size-sm);
 	white-space: nowrap;
 	user-select: none;
+
+	& > svg {
+		width: 16px;
+		height: 16px;
+	}
 }
 
 .scanner-app button:focus-visible {
@@ -616,17 +622,52 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .link-button {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
+	gap: var(--s-1-5);
 	padding: 0 var(--field-padding);
 	height: var(--field-size-sm);
-	border: var(--border-style);
+	border: var(--border-style-accent);
 	border-radius: var(--radius-field);
+	background: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	white-space: nowrap;
+	text-decoration: none;
+
+	& > svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	&:active {
+		transform: translateY(1px);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+/* export formats live behind this icon-only trigger, pushed to the row's end */
+.scanner-app button.export-menu {
+	margin-inline-start: auto;
+	width: var(--field-size-sm);
+	padding: 0;
+	border: var(--border-style);
 	background: var(--color-bg-higher);
 	color: var(--color-text);
-	font-size: var(--font-sm);
-	text-decoration: none;
-}
-.scanner-app .link-button:focus-visible {
-	outline: var(--focus-ring);
+
+	&:hover {
+		color: var(--color-text-accent);
+	}
+
+	& > svg {
+		width: var(--field-size-icon);
+		height: var(--field-size-icon);
+		margin: 0;
+	}
 }
 
 /* ── ingested matches feed ─────────────────────────────────────────── */

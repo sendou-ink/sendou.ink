@@ -86,7 +86,7 @@ export interface VodResultsSendReport {
 }
 
 /**
- * One-go sender for the VoD tab's "Upload as results": builds a completed
+ * One-go sender for the VoD tab's "Send results": builds a completed
  * scan's events into matches and POSTs as many per request as the server
  * cap allows — usually the whole scan in one request, so sendou.ink's
  * content-based tournament resolution sees the full match sequence (its

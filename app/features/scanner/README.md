@@ -49,7 +49,7 @@ sequenceDiagram
   ING->>ING: resolve tournament (content sequence ≥2, else playedAt)
   ING->>DB: merge-store IngestedMatch (matchHash, isSameMatch + merge)
   ING->>DB: attach winner-first view → IngestedScoreboard (first-ingest-wins, POV + ReportedWeapon)
-  Note over UI: VoD "Upload as VoD": ScannerMatch → slim prefill param → /vods/new
+  Note over UI: VoD "Add VoD": ScannerMatch → slim prefill param → /vods/new
 ```
 
 - `core/` is pure (mats in, events/matches out) and runs in three contexts:

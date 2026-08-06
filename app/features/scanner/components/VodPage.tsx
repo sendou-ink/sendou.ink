@@ -13,8 +13,11 @@
  * Completed scans are persisted to IndexedDB keyed by file name
  * (src/store/vods.ts); the default view lists them for reinspection.
  */
+import { Download, FileText, Send, Video } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import {
@@ -96,7 +99,7 @@ interface Progress {
 	rate: number;
 }
 
-/** "Upload as results" progress/outcome shown next to the button. */
+/** "Send results" progress/outcome shown next to the button. */
 type ResultsSend =
 	| { state: "sending"; sent: number; total: number }
 	| {
@@ -159,7 +162,7 @@ export function VodPage({
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
 
-	// "Upload as results" sends the whole scan in one go, so its outcome maps
+	// "Send results" sends the whole scan in one go, so its outcome maps
 	// onto every ingestable card; a partial failure (some chunks sent, some
 	// not) can't be attributed per match — the bulk status text covers it
 	const bulkSend: SendStatus | undefined =
@@ -179,7 +182,7 @@ export function VodPage({
 		[status, matches],
 	);
 
-	// "Upload as results" — the /ingest counterpart of live sending: the
+	// "Send results" — the /ingest counterpart of live sending: the
 	// scan's ingestable ScannerMatches POSTed in one go
 	const resultsMatchCount = useMemo(
 		() =>
@@ -586,28 +589,10 @@ export function VodPage({
 									` · ${progress.rate.toFixed(0)}× realtime`}
 							</span>
 						)}
-						{builtMatches.length > 0 && (
-							<span className="score">
-								{builtMatches.length} match
-								{builtMatches.length === 1 ? "" : "es"}
-							</span>
-						)}
-						{matches.length > 0 && (
-							<button
-								type="button"
-								onClick={() =>
-									downloadEventsCsv(
-										`${fileName.replace(/\.[^.]+$/, "")}-events.csv`,
-										matches.map((m) => m.event),
-									)
-								}
-							>
-								Download CSV
-							</button>
-						)}
 						{SENDOU_UPLOAD_ENABLED && upload?.url && (
 							<Link to={upload.url} className="link-button">
-								Upload as VoD
+								<Video aria-hidden />
+								Add VoD
 							</Link>
 						)}
 						{SENDOU_UPLOAD_ENABLED && upload?.problem && (
@@ -622,7 +607,8 @@ export function VodPage({
 								title={sendouUser ? undefined : "log in on sendou.ink first"}
 								onClick={() => void uploadResults()}
 							>
-								Upload as results
+								<Send aria-hidden />
+								Send results
 							</button>
 						)}
 						{resultsSend && (
@@ -635,6 +621,12 @@ export function VodPage({
 										? `sent ${resultsSend.sent}/${resultsSend.total} matches — ${resultsSend.error}`
 										: `sent ${resultsSend.sent}/${resultsSend.total} matches to sendou.ink`}
 							</span>
+						)}
+						{matches.length > 0 && (
+							<ExportMenu
+								fileName={fileName}
+								events={matches.map((m) => m.event)}
+							/>
 						)}
 					</>
 				)}
@@ -777,6 +769,39 @@ export function VodPage({
 				</div>
 			</div>
 		</div>
+	);
+}
+
+/** Export formats of the scanned events, behind one icon-only menu. */
+function ExportMenu({
+	fileName,
+	events,
+}: {
+	fileName: string;
+	events: DetectedEvent<FixtureData>[];
+}) {
+	return (
+		<SendouMenu
+			trigger={
+				<SendouButton
+					icon={<Download />}
+					className="export-menu"
+					aria-label="Export"
+				/>
+			}
+		>
+			<SendouMenuItem
+				icon={<FileText />}
+				onAction={() =>
+					downloadEventsCsv(
+						`${fileName.replace(/\.[^.]+$/, "")}-events.csv`,
+						events,
+					)
+				}
+			>
+				CSV
+			</SendouMenuItem>
+		</SendouMenu>
 	);
 }
 

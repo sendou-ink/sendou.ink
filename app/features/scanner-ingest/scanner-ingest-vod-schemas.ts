@@ -25,7 +25,7 @@ const ingestVodMatchSchema = z.object({
 });
 
 /**
- * The scanner VoD tab's "Upload as VoD" button packs this into /vods/new's
+ * The scanner VoD tab's "Add VoD" button packs this into /vods/new's
  * `ingest` search param (an `SP.json` param, compressed by the search-params
  * module) to prefill the form: the detected match rows, minus the submission
  * fields (YouTube URL, title, date) the user fills in the form. `type` is
