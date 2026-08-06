@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
+import type { CustomTheme } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import {
 	TIER_HISTORY_LENGTH,
@@ -67,6 +68,7 @@ export async function findBySlug(slug: string) {
 			"TournamentOrganization.socials",
 			"TournamentOrganization.slug",
 			"TournamentOrganization.isEstablished",
+			"TournamentOrganization.customTheme",
 			"TournamentOrganization.avatarImgId",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"avatarUrl",
@@ -748,6 +750,22 @@ export function updateIsEstablished(
 		.updateTable("TournamentOrganization")
 		.set({ isEstablished: toDBBoolean(isEstablished) })
 		.where("id", "=", organizationId)
+		.execute();
+}
+
+export function updateCustomTheme({
+	id,
+	customTheme,
+}: {
+	id: number;
+	customTheme: CustomTheme | null;
+}) {
+	return db
+		.updateTable("TournamentOrganization")
+		.set({
+			customTheme: customTheme ? JSON.stringify(customTheme) : null,
+		})
+		.where("id", "=", id)
 		.execute();
 }
 

@@ -22,6 +22,7 @@
 	"edit.form.badges.title": "Insignias",
 	"edit.form.rewards.title": "Recompensas",
 	"edit.form.errors.noUnadmin": "No puedes quitarte el rol de admin",
+	"edit.form.customTheme.title": "",
 	"banned.title": "Jugadores baneados",
 	"banned.empty": "Actualmente no hay jugadores baneados en esta organización.",
 	"banned.description": "Los jugadores baneados no pueden crear ni unirse a equipos en los torneos organizados por esta organización. Esta pestaña solo es accesible para los admins de la organización.",

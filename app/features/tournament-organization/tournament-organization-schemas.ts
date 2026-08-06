@@ -18,7 +18,7 @@ import {
 	userSearch,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
-import { _action, id } from "~/utils/zod";
+import { _action, id, themeInputSchema } from "~/utils/zod";
 
 const orgNameField = textField({
 	label: "labels.name",
@@ -35,6 +35,7 @@ export const newOrganizationSchema = z.object({
 });
 
 export const organizationEditFormSchema = z.object({
+	_action: stringConstant("EDIT"),
 	name: orgNameField,
 	logo: image({ label: "labels.logo", autoValidate: true }),
 	description: textAreaOptional({
@@ -87,6 +88,19 @@ export const organizationEditFormSchema = z.object({
 	}),
 	badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
 });
+
+export const updateOrganizationCustomThemeSchema = z.object({
+	_action: _action("UPDATE_CUSTOM_THEME"),
+	newValue: z.preprocess(
+		(val) => (!val || val === "null" ? null : val),
+		themeInputSchema.nullable(),
+	),
+});
+
+export const organizationEditActionSchema = z.union([
+	organizationEditFormSchema,
+	updateOrganizationCustomThemeSchema,
+]);
 
 export const banUserActionSchema = z.object({
 	_action: stringConstant("BAN_USER"),

@@ -22,6 +22,7 @@
 	"edit.form.badges.title": "徽章",
 	"edit.form.rewards.title": "",
 	"edit.form.errors.noUnadmin": "您不能移除自己的管理员身份",
+	"edit.form.customTheme.title": "",
 	"banned.title": "被封禁的玩家",
 	"banned.empty": "当前没有玩家被此组织封禁。",
 	"banned.description": "被封禁的玩家无法在此组织举办的赛事中创建或加入队伍。此标签页仅对组织管理员开放。",

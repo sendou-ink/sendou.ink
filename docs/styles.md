@@ -1,6 +1,6 @@
 # Custom Theme System
 
-The custom theme system lets Patreon supporters customize the sites colors, border radii, sizes, and border widths. Custom themes are created using as a small set of inputs which are expanded into a full set of CSS properties via gamut clamping.
+The custom theme system lets Patreon supporters customize the sites colors, border radii, sizes, and border widths. Teams (with a supporter member) and established tournament organizations can also set a custom theme shown on their pages, and tournaments hosted by an established organization can set one per tournament via the admin page's theme tab. Custom themes are created using as a small set of inputs which are expanded into a full set of CSS properties via gamut clamping.
 
 ## Files
 
@@ -52,7 +52,7 @@ You cannot always recover the original `baseChroma` from a stored `CustomTheme`.
 
 ### Size and border vars are for users only
 
-`useCustomThemeVars()` in `root.tsx` only applies `--_size-*` and `--_border-width` from the users own theme. When viewing the page of another user or team, their theme only overrides color and radius variables, never size or border, to prevent layout shifts and accessibility issues.
+`useCustomThemeVars()` in `root.tsx` only applies `--_size-*` and `--_border-width` from the users own theme. When viewing the page of another user, a team, a tournament organization, or a tournament, their theme only overrides color and radius variables, never size or border, to prevent layout shifts and accessibility issues.
 
 ### The `--_base-c-0` slot is always near zero
 

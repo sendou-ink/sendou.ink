@@ -68,23 +68,30 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
 
-	return serializeTournamentLoaderData({
-		tournament: {
-			ctx: tournament.ctx,
-			bracketsMeta: await bracketsMetaCached(tournamentId),
-		},
-		streamsCount: tournament.streams.length,
-		hasChildTournaments,
-		friendCodes: showFriendCodes
-			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
-			: undefined,
-		preparedMaps:
-			isTournamentOrganizer({ ctx: tournament.ctx, user }) &&
-			!tournament.ctx.isFinalized
-				? await TournamentRepository.findPreparedMapsById(tournamentId)
+	return {
+		customTheme: tournament.ctx.organization?.isEstablished
+			? tournament.ctx.customTheme
+			: null,
+		data: serializeTournamentLoaderData({
+			tournament: {
+				ctx: tournament.ctx,
+				bracketsMeta: await bracketsMetaCached(tournamentId),
+			},
+			streamsCount: tournament.streams.length,
+			hasChildTournaments,
+			friendCodes: showFriendCodes
+				? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
 				: undefined,
-		vods: showVods
-			? await TournamentMatchVodRepository.findVodsByTournamentId(tournamentId)
-			: undefined,
-	});
+			preparedMaps:
+				isTournamentOrganizer({ ctx: tournament.ctx, user }) &&
+				!tournament.ctx.isFinalized
+					? await TournamentRepository.findPreparedMapsById(tournamentId)
+					: undefined,
+			vods: showVods
+				? await TournamentMatchVodRepository.findVodsByTournamentId(
+						tournamentId,
+					)
+				: undefined,
+		}),
+	};
 };

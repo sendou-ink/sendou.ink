@@ -1204,6 +1204,7 @@ export const PADDLING_POOL_257 = () =>
 			37658, 38062, 38120,
 		],
 		ctx: {
+			customTheme: null,
 			id: 27,
 			organization: null,
 			tier: null,
@@ -3855,6 +3856,7 @@ export const PADDLING_POOL_255 = () =>
 			35118, 35807, 38062, 38080, 38902,
 		],
 		ctx: {
+			customTheme: null,
 			id: 18,
 			organization: null,
 			tier: null,
@@ -6393,6 +6395,7 @@ export const IN_THE_ZONE_32 = ({
 			28851, 34238, 35807, 37105, 38080,
 		],
 		ctx: {
+			customTheme: null,
 			id: 11,
 			parentTournamentId: null,
 			parentTournamentName: null,

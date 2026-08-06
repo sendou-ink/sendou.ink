@@ -271,6 +271,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		43518, 43662, 45879, 46006, 46467, 46813,
 	],
 	ctx: {
+		customTheme: null,
 		id: 891,
 		eventId: 2698,
 		tier: null,

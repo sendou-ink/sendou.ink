@@ -2,6 +2,7 @@ import clsx from "clsx";
 import {
 	History,
 	ListOrdered,
+	Palette,
 	SquarePen,
 	Trophy,
 	Tv,
@@ -36,7 +37,14 @@ export { action } from "../actions/to.$id.admin.index.server";
 
 const HORIZONTAL_TABS_BELOW = 720;
 
-type AdminTab = "teams" | "seeds" | "staff" | "stream" | "brackets" | "audit";
+type AdminTab =
+	| "teams"
+	| "seeds"
+	| "staff"
+	| "stream"
+	| "brackets"
+	| "theme"
+	| "audit";
 
 export default function TournamentAdminLayout() {
 	const { t } = useTranslation(["tournament", "calendar"]);
@@ -61,6 +69,9 @@ export default function TournamentAdminLayout() {
 		: !tournament.isLeagueSignup || showEditBrackets;
 	const showStreamTab = !tournament.ctx.isFinalized;
 	const showSeedsTab = !tournament.hasStarted && !tournament.isLeagueSignup;
+	const showThemeTab =
+		tournament.isAdmin(user) &&
+		Boolean(tournament.ctx.organization?.isEstablished);
 
 	if (!tournament.isOrganizer(user)) {
 		return <Redirect to={tournamentPage(tournament.ctx.id)} />;
@@ -146,6 +157,15 @@ export default function TournamentAdminLayout() {
 							icon={<Trophy />}
 						>
 							{t("tournament:admin.tab.brackets")}
+						</SendouTab>
+					) : null}
+					{showThemeTab ? (
+						<SendouTab
+							id="theme"
+							href={`${adminPage}/theme`}
+							icon={<Palette />}
+						>
+							{t("tournament:admin.tab.theme")}
 						</SendouTab>
 					) : null}
 					<SendouTab id="audit" href={`${adminPage}/audit`} icon={<History />}>

@@ -27,7 +27,9 @@ import styles from "./to.$id.info.module.css";
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const rawLayoutData = args.matches[1].loaderData as string | undefined;
+	const rawLayoutData = (
+		args.matches[1].loaderData as { data: string } | undefined
+	)?.data;
 	const tournamentData = rawLayoutData
 		? parseTournamentLoaderData(rawLayoutData).tournament
 		: undefined;

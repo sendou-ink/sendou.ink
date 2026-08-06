@@ -27,5 +27,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	return {
 		organization,
 		badgeOptions: await badgeOptions(),
+		customTheme: organization.isEstablished ? organization.customTheme : null,
+		canSetCustomTheme: Boolean(organization.isEstablished),
 	};
 }

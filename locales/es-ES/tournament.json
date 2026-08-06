@@ -82,6 +82,7 @@
 	"admin.tab.staff": "Staff",
 	"admin.tab.stream": "Stream",
 	"admin.tab.brackets": "Brackets",
+	"admin.tab.theme": "",
 	"admin.tab.audit": "Registro de auditoría",
 	"admin.audit.empty": "No hay eventos aún",
 	"admin.audit.filter.event": "Evento",

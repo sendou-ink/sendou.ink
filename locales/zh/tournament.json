@@ -81,6 +81,7 @@
 	"admin.tab.staff": "工作人员",
 	"admin.tab.stream": "直播",
 	"admin.tab.brackets": "对战表",
+	"admin.tab.theme": "",
 	"admin.tab.audit": "操作日志",
 	"admin.audit.empty": "暂无事件",
 	"admin.audit.filter.event": "事件",
