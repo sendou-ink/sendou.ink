@@ -10,6 +10,8 @@ export interface PrefillVodMatch {
 	mode: ModeShort | null;
 	stageId: StageId | null;
 	weapons: (MainWeaponId | null)[];
+	/** the POV player's weapon, when the scan identified their seat */
+	povWeapon: MainWeaponId | null;
 }
 
 /**
@@ -25,5 +27,6 @@ export function prefillVodMatches(
 		mode: match.mode,
 		stageId: match.stage,
 		weapons: match.weapons,
+		povWeapon: match.povWeapon ?? null,
 	}));
 }

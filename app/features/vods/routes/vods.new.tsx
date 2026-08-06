@@ -135,7 +135,8 @@ type VodPrefill = NonNullable<Awaited<ReturnType<typeof loader>>["vodPrefill"]>;
  * detected matches with anything the detectors missed left at the blank form's
  * defaults for the user to fill. CAST weapons are the alpha team's four slots
  * then bravo's; unread slots are dropped so the remaining empty (required)
- * selects surface them.
+ * selects surface them. A non-CAST VoD instead takes the POV player's weapon,
+ * which the scan only knows when a scoreboard identified their seat.
  */
 function vodPrefillToFormValues(prefill: VodPrefill) {
 	const teamSize = 4;
@@ -149,7 +150,9 @@ function vodPrefillToFormValues(prefill: VodPrefill) {
 			startsAt: match.startsAt,
 			mode: match.mode ?? ("SZ" as const),
 			stageId: (match.stageId ?? 1) as StageId,
-			weapon: undefined as MainWeaponId | undefined,
+			weapon: isCast
+				? undefined
+				: ((match.povWeapon ?? undefined) as MainWeaponId | undefined),
 			weaponsTeamOne: isCast
 				? weaponPoolFromPrefill(match.weapons.slice(0, teamSize))
 				: ([] as WeaponPoolItem[]),

@@ -25,7 +25,7 @@ function testMatch(
 
 describe("prefillVodMatches", () => {
 	it("maps validated match rows into the form's prefill shape", () => {
-		const prefilled = prefillVodMatches([testMatch()]);
+		const prefilled = prefillVodMatches([testMatch({ povWeapon: 20 })]);
 
 		expect(prefilled).toHaveLength(1);
 		expect(prefilled[0]).toEqual({
@@ -33,6 +33,7 @@ describe("prefillVodMatches", () => {
 			mode: "SZ",
 			stageId: 0,
 			weapons: [40, 40, 40, 40, 20, 20, 20, 20],
+			povWeapon: 20,
 		});
 	});
 
@@ -51,6 +52,7 @@ describe("prefillVodMatches", () => {
 			mode: null,
 			stageId: null,
 			weapons: [40, 40, 40, 40, 20, 20, 20, null],
+			povWeapon: null,
 		});
 	});
 

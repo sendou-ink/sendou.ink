@@ -22,6 +22,12 @@ const ingestVodMatchSchema = z.object({
 	stage: stageIdSchema.nullable(),
 	/** sendou main-weapon ids; null for a slot that never read */
 	weapons: z.array(mainWeaponIdSchema.nullable()).max(16),
+	/**
+	 * the POV player's weapon, prefilling a non-CAST VoD's single weapon
+	 * select. Absent when no scoreboard identified the POV seat (or it read
+	 * no weapon) — including on casted footage, which has no POV.
+	 */
+	povWeapon: mainWeaponIdSchema.optional(),
 });
 
 /**

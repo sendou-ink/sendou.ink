@@ -17,7 +17,7 @@ import type {
 	IngestVodPrefill,
 } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
-import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
 import { newVodPage } from "~/utils/urls";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildScannerMatches } from "../core/match-builder";
@@ -75,5 +75,14 @@ function toPrefillMatch(match: ScannerMatch): IngestVodMatchInput {
 		weapons: match.teams.flatMap((team) =>
 			team.players.map((player) => player.weaponId),
 		),
+		povWeapon: povWeaponId(match),
 	};
+}
+
+function povWeaponId(match: ScannerMatch): MainWeaponId | undefined {
+	if (!match.pov) return undefined;
+
+	return (
+		match.teams[match.pov.team].players[match.pov.index]?.weaponId ?? undefined
+	);
 }
