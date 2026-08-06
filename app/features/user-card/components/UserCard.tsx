@@ -316,7 +316,10 @@ function CardContent({
 				)}
 			</div>
 			<div className={styles.identity}>
-				<NoteAvatar sentiment={data.privateNote?.sentiment}>
+				<NoteAvatar
+					sentiment={data.privateNote?.sentiment}
+					onClick={isOwnCard ? undefined : onNoteButtonPress}
+				>
 					<Avatar user={data} size="md" className={styles.avatar} />
 				</NoteAvatar>
 				<div className={styles.nameGroup}>

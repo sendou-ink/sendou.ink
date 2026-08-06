@@ -29,20 +29,34 @@ const SIZE_CLASS = {
  * `sentiment` is set: POSITIVE → green check, NEGATIVE → red cross, NEUTRAL → grey dash. Renders the
  * children without a badge when `sentiment` is `null`/`undefined`. `size` scales the badge to match
  * the wrapped avatar (`xs` for tiny avatars, `sm` for small avatars, `md` for large ones).
+ *
+ * `onClick` makes the whole wrapper (avatar and badge) clickable. It is kept out of the tab order, so
+ * only use it as a shortcut to an action that is also available elsewhere.
  */
 export function NoteAvatar({
 	sentiment,
 	size = "md",
 	className,
+	onClick,
 	children,
 }: {
 	sentiment?: Sentiment | null;
 	size?: keyof typeof SIZE_CLASS;
 	className?: string;
+	onClick?: () => void;
 	children: React.ReactNode;
 }) {
+	const Wrapper = onClick ? "button" : "div";
+
 	return (
-		<div className={clsx(styles.wrapper, className)}>
+		<Wrapper
+			type={onClick ? "button" : undefined}
+			className={clsx(styles.wrapper, className, {
+				[styles.clickable]: onClick,
+			})}
+			onClick={onClick}
+			tabIndex={onClick ? -1 : undefined}
+		>
 			{children}
 			{sentiment ? (
 				<span
@@ -56,6 +70,6 @@ export function NoteAvatar({
 					{BADGE_ICON[sentiment]}
 				</span>
 			) : null}
-		</div>
+		</Wrapper>
 	);
 }
