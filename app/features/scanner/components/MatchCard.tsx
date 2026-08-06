@@ -145,6 +145,11 @@ export function MatchCard({
 	);
 }
 
+/** Labeled rule above the newest card of each set in the feed. */
+export function SetDivider({ number }: { number: number }) {
+	return <div className="set-divider">Set {number}</div>;
+}
+
 function timeRangeLabel(match: ScannerMatch): string {
 	const start = formatTime(match.startsAt!);
 	return match.endsAt !== null && match.endsAt !== match.startsAt

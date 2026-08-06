@@ -12,12 +12,20 @@
  * Completed scans are persisted to IndexedDB keyed by file name
  * (src/store/vods.ts); the default view lists them for reinspection.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+	Fragment,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import { Link } from "react-router";
 import { openVodScan } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
+import { assignMatchSets } from "../core/match-sets";
 import { TimelineBuilder } from "../core/timeline/index";
 import type { SendStatus } from "../store/events";
 import {
@@ -36,7 +44,7 @@ import { downloadEventsCsv } from "./events-csv";
 import type { FixtureData } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
-import { MatchCard } from "./MatchCard";
+import { MatchCard, SetDivider } from "./MatchCard";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -131,6 +139,8 @@ export function VodPage({
 	);
 
 	const builtMatches = buildScannerMatches(matches.map((m) => m.event));
+	const setNumbers = assignMatchSets(builtMatches.map((b) => b.match));
+	const showSetDividers = (setNumbers.at(-1) ?? 1) > 1;
 	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
@@ -578,35 +588,41 @@ export function VodPage({
 					) : null}
 					{/* newest match on top; the builder keeps ascending video-time order */}
 					{[...builtMatches].reverse().map((built, reverseIndex) => {
+						const index = builtMatches.length - 1 - reverseIndex;
 						const ingestable = isIngestableMatch(built.match);
 						return (
-							<MatchCard
-								key={vodMatchByEvent.get(built.sources[0]!)!.key}
-								match={built.match}
-								inProgress={
-									status === "scanning" &&
-									reverseIndex === 0 &&
-									built.match.winner === null
-								}
-								ingestable={ingestable}
-								send={ingestable ? bulkSend : undefined}
-							>
-								{withoutRepeatEvents(built.sources).map((e, i) => {
-									const vodMatch = vodMatchByEvent.get(e);
-									return (
-										<EventCard
-											key={i}
-											type={e.type}
-											t={e.t}
-											confidence={e.confidence}
-											data={e.data}
-											abilities={abilityMap.get(e)}
-											thumbnail={vodMatch?.thumbnail}
-											getFrame={vodMatch ? frameLoader(vodMatch) : undefined}
-										/>
-									);
-								})}
-							</MatchCard>
+							<Fragment key={vodMatchByEvent.get(built.sources[0]!)!.key}>
+								{showSetDividers &&
+								setNumbers[index + 1] !== setNumbers[index] ? (
+									<SetDivider number={setNumbers[index]!} />
+								) : null}
+								<MatchCard
+									match={built.match}
+									inProgress={
+										status === "scanning" &&
+										reverseIndex === 0 &&
+										built.match.winner === null
+									}
+									ingestable={ingestable}
+									send={ingestable ? bulkSend : undefined}
+								>
+									{withoutRepeatEvents(built.sources).map((e, i) => {
+										const vodMatch = vodMatchByEvent.get(e);
+										return (
+											<EventCard
+												key={i}
+												type={e.type}
+												t={e.t}
+												confidence={e.confidence}
+												data={e.data}
+												abilities={abilityMap.get(e)}
+												thumbnail={vodMatch?.thumbnail}
+												getFrame={vodMatch ? frameLoader(vodMatch) : undefined}
+											/>
+										);
+									})}
+								</MatchCard>
+							</Fragment>
 						);
 					})}
 					{ungroupedMatches.length > 0 ? (

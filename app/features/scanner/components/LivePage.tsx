@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import {
 	listVideoInputs,
 	openVirtualCamera,
@@ -11,6 +11,7 @@ import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
 import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
+import { assignMatchSets } from "../core/match-sets";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
 	clearEvents,
@@ -27,7 +28,7 @@ import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
 import { SENDOU_UPLOAD_ENABLED } from "./flags";
-import { MatchCard } from "./MatchCard";
+import { MatchCard, SetDivider } from "./MatchCard";
 import {
 	aggregateSendStatus,
 	matchContaining,
@@ -208,6 +209,8 @@ export function LivePage({
 	}, [deviceId, refreshFeed, send]);
 
 	const builtMatches = buildScannerMatches(feed);
+	const setNumbers = assignMatchSets(builtMatches.map((b) => b.match));
+	const showSetDividers = (setNumbers.at(-1) ?? 1) > 1;
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedFeed = feed.filter((e) => !groupedEvents.has(e));
 
@@ -319,41 +322,47 @@ export function LivePage({
 						<p className="score">No detections yet.</p>
 					) : null}
 					{[...builtMatches].reverse().map((built, reverseIndex) => {
+						const index = builtMatches.length - 1 - reverseIndex;
 						const id = built.sources[0]!.id!;
 						const ingestable = isIngestableMatch(built.match);
 						return (
-							<MatchCard
-								key={id}
-								match={built.match}
-								live={
-									running && reverseIndex === 0 && built.match.winner === null
-								}
-								inProgress={reverseIndex === 0 && built.match.winner === null}
-								ingestable={ingestable}
-								send={aggregateSendStatus(built.sources)}
-								onSend={
-									SENDOU_UPLOAD_ENABLED && sendouUser && ingestable
-										? () => void send(matchContaining(id), { manual: true })
-										: undefined
-								}
-							>
-								{withoutRepeatEvents(built.sources).map((e) => (
-									<EventCard
-										key={e.id}
-										type={e.type}
-										t={e.t}
-										confidence={e.confidence}
-										data={e.data as FixtureData}
-										thumbnail={e.thumbnail}
-										detectedAt={e.detectedAt}
-										getFrame={
-											e.hasFrame && e.id !== undefined
-												? () => loadEventFrame(e.id!)
-												: undefined
-										}
-									/>
-								))}
-							</MatchCard>
+							<Fragment key={id}>
+								{showSetDividers &&
+								setNumbers[index + 1] !== setNumbers[index] ? (
+									<SetDivider number={setNumbers[index]!} />
+								) : null}
+								<MatchCard
+									match={built.match}
+									live={
+										running && reverseIndex === 0 && built.match.winner === null
+									}
+									inProgress={reverseIndex === 0 && built.match.winner === null}
+									ingestable={ingestable}
+									send={aggregateSendStatus(built.sources)}
+									onSend={
+										SENDOU_UPLOAD_ENABLED && sendouUser && ingestable
+											? () => void send(matchContaining(id), { manual: true })
+											: undefined
+									}
+								>
+									{withoutRepeatEvents(built.sources).map((e) => (
+										<EventCard
+											key={e.id}
+											type={e.type}
+											t={e.t}
+											confidence={e.confidence}
+											data={e.data as FixtureData}
+											thumbnail={e.thumbnail}
+											detectedAt={e.detectedAt}
+											getFrame={
+												e.hasFrame && e.id !== undefined
+													? () => loadEventFrame(e.id!)
+													: undefined
+											}
+										/>
+									))}
+								</MatchCard>
+							</Fragment>
 						);
 					})}
 					{ungroupedFeed.length > 0 ? (
