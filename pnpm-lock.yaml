@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@react-router/serve@8.1.0': 4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6
+  '@react-router/serve@8.1.0': 0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738
   kysely@0.29.0: a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a
 
 importers:
@@ -47,7 +47,7 @@ importers:
         version: 8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
       '@react-router/serve':
         specifier: 8.1.0
-        version: 8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
+        version: 8.1.0(patch_hash=0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
       '@sentry/react-router':
         specifier: 10.68.0
         version: 10.68.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@react-router/node@8.3.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
@@ -192,7 +192,7 @@ importers:
         version: 1.62.0
       '@react-router/dev':
         specifier: 8.3.0
-        version: 8.3.0(@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))
+        version: 8.3.0(@react-router/serve@8.1.0(patch_hash=0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))
       '@types/node':
         specifier: 26.1.2
         version: 26.1.2
@@ -5771,7 +5771,7 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
-  '@react-router/dev@8.3.0(@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))':
+  '@react-router/dev@8.3.0(@react-router/serve@8.1.0(patch_hash=0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2))(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)(vite@8.1.5(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
       '@babel/generator': 7.29.7
@@ -5802,7 +5802,7 @@ snapshots:
       valibot: 1.4.2(typescript@7.0.2)
       vite: 8.1.5(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0)
     optionalDependencies:
-      '@react-router/serve': 8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
+      '@react-router/serve': 8.1.0(patch_hash=0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
       typescript: 7.0.2
     transitivePeerDependencies:
       - babel-plugin-macros
@@ -5830,7 +5830,7 @@ snapshots:
     optionalDependencies:
       typescript: 7.0.2
 
-  '@react-router/serve@8.1.0(patch_hash=4d79b209948d4237f1ca3a5cca417c6d11519d8b1ab7084c75c46a39e3ac27d6)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)':
+  '@react-router/serve@8.1.0(patch_hash=0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)':
     dependencies:
       '@react-router/express': 8.1.0(express@5.2.1)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
       '@react-router/node': 8.1.0(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
