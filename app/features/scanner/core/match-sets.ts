@@ -8,7 +8,7 @@
  * readable names is inconclusive and never opens a new set.
  */
 import type { ScannerMatch } from "./scanner-match";
-import { closestBy } from "./text";
+import { matchKey, rankBy } from "./text";
 
 /**
  * closestBy score two reads of the same name must reach — 0.7 forgives one
@@ -48,7 +48,7 @@ function rosterNames(match: ScannerMatch): string[] {
 
 /**
  * Whether two rosters read as the same eight players: every name of the
- * smaller roster must find a fuzzy partner in the other, short of
+ * smaller roster must find a partner in the other, short of
  * MAX_SUBS_PER_GAME misses. Partial reads compare only what both saw, so a
  * minimap-sourced half-roster still chains a set together.
  */
@@ -56,11 +56,33 @@ function sameRoster(a: readonly string[], b: readonly string[]): boolean {
 	const remaining = [...b];
 	let matched = 0;
 	for (const name of a) {
-		const best = closestBy(name, remaining, (entry) => entry);
-		if (best && best.score >= SAME_NAME_SCORE) {
+		const partner = rankBy(name, remaining, (entry) => entry).find(
+			({ entry, score }) =>
+				score >= SAME_NAME_SCORE || sharedPrefixRead(name, entry),
+		);
+		if (partner) {
 			matched++;
-			remaining.splice(remaining.indexOf(best.entry), 1);
+			remaining.splice(remaining.indexOf(partner.entry), 1);
 		}
 	}
 	return Math.min(a.length, b.length) - matched <= MAX_SUBS_PER_GAME;
+}
+
+/**
+ * Whether two reads of a name agree on a leading prefix long enough that the
+ * difference reads as tail damage, not another player. CJK names run 2-4
+ * glyphs, so a single truncated (れた → れ) or garbled (ほった → ほっ′`)
+ * tail glyph sinks the edit-distance score below any usable threshold while
+ * the OCR damage sits, as it nearly always does, at the end of the row.
+ */
+function sharedPrefixRead(a: string, b: string): boolean {
+	const keyA = matchKey(a);
+	const keyB = matchKey(b);
+	const shorter = Math.min(keyA.length, keyB.length);
+	if (shorter === 0) return false;
+	let prefix = 0;
+	while (prefix < shorter && keyA[prefix] === keyB[prefix]) prefix++;
+	// a whole-read prefix is a truncation; a 2+ glyph prefix covering two
+	// thirds of the shorter read is a solid read with a garbled tail
+	return prefix === shorter || (prefix >= 2 && prefix * 3 >= shorter * 2);
 }

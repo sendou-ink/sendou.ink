@@ -72,6 +72,20 @@ test("assignMatchSets", async (t) => {
 		assert.deepEqual(assignMatchSets(games), [1, 1]);
 	});
 
+	await t.test("tail damage on short CJK names is not a roster change", () => {
+		const games = [
+			match(
+				["まどろみ", "ほった", "きのちゃんねる !", "くてんちゃんねる"],
+				["かなえる", "たん", "ロット", "れた"],
+			),
+			match(
+				["まどろみ", "ほっ′`", "きのちゃんねる !", "くてんちゃんねる"],
+				["かなえる", "たん", "ロット", "れ"],
+			),
+		];
+		assert.deepEqual(assignMatchSets(games), [1, 1]);
+	});
+
 	await t.test("one sub is tolerated, two are a new set", () => {
 		const oneSub = [
 			match(TEAM_A, TEAM_B),
