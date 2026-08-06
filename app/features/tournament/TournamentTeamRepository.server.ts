@@ -9,6 +9,7 @@ import { flatZip } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
+import { toDBBoolean } from "~/utils/sql";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 
 export function setActiveRoster({
@@ -318,7 +319,12 @@ export function upsertRegistration({
 			const members: Array<
 				Pick<
 					Tables["TournamentTeamMember"],
-					"tournamentTeamId" | "userId" | "inGameName" | "isSub" | "role"
+					| "tournamentTeamId"
+					| "userId"
+					| "inGameName"
+					| "isSub"
+					| "role"
+					| "isOrganizerAdded"
 				>
 			> = [];
 			for (const userId of membersToAdd) {
@@ -333,6 +339,7 @@ export function upsertRegistration({
 					isSub,
 					// every row needs the same keys, otherwise Kysely inserts null for the missing ones
 					role: isOwner ? "OWNER" : "REGULAR",
+					isOrganizerAdded: 1,
 				});
 			}
 
@@ -485,6 +492,7 @@ export function copyFromAnotherTournament({
 				"TournamentTeamMember.role",
 				"TournamentTeamMember.userId",
 				"TournamentTeamMember.isSub",
+				"TournamentTeamMember.isOrganizerAdded",
 
 				// -- exclude these
 				// "TournamentTeamMember.tournamentTeamId"
@@ -776,12 +784,15 @@ export function join({
 	previousTeamIdToDelete,
 	newTeamId,
 	userId,
+	isOrganizerAdded = false,
 }: {
 	/** Team to delete as the user joins, e.g. a solo team they leave behind. */
 	previousTeamIdToDelete?: number;
 	newTeamId: number;
 	/** The user joining the team. */
 	userId: number;
+	/** Was the user added to the team by the tournament organizer instead of joining on their own? */
+	isOrganizerAdded?: boolean;
 }) {
 	return db.transaction().execute(async (trx) => {
 		if (previousTeamIdToDelete) {
@@ -816,6 +827,7 @@ export function join({
 				userId,
 				inGameName,
 				isSub,
+				isOrganizerAdded: toDBBoolean(isOrganizerAdded),
 			})
 			.execute();
 
@@ -850,6 +862,24 @@ export function deleteById(tournamentTeamId: number) {
 			.where("TournamentTeam.id", "=", tournamentTeamId)
 			.execute();
 	});
+}
+
+/** Was the user's membership in the given team added by the tournament organizer instead of the user joining on their own? */
+export async function isOrganizerAddedMember({
+	tournamentTeamId,
+	userId,
+}: {
+	tournamentTeamId: number;
+	userId: number;
+}) {
+	const member = await db
+		.selectFrom("TournamentTeamMember")
+		.select("TournamentTeamMember.isOrganizerAdded")
+		.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+		.where("TournamentTeamMember.userId", "=", userId)
+		.executeTakeFirst();
+
+	return Boolean(member?.isOrganizerAdded);
 }
 
 export function leave({
