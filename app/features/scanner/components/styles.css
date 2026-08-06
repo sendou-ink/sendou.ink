@@ -806,10 +806,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	flex-shrink: 0;
 }
 
-/* frosted-glass plate: keeps the score readable over vivid banner art
-   without dimming the image itself */
 .scanner-app .match-score {
-	font-size: var(--font-lg);
 	font-weight: var(--weight-extra);
 	font-variant-numeric: tabular-nums;
 	line-height: 1;

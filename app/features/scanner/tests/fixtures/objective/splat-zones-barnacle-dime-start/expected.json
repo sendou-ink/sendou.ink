@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 299,
+		"score": [100, 100],
+		"penalty": [null, null],
+		"control": [false, false]
+	},
+	"options": {
+		"notes": "Match start: zone neutral, both plates near-black with three-digit 100s (green/pink digits)."
+	}
+}

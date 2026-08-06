@@ -5,6 +5,6 @@
 		"time": 215,
 		"score": [95, 53],
 		"penalty": [4, null],
-		"control": [true, false]
+		"control": [false, true]
 	}
 }

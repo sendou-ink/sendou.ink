@@ -1,17 +1,18 @@
 /**
  * ObjectiveDetector: parses the ranked in-match counter overlay top-center —
  * each team's count plate, the penalty pill under it, which team is in
- * control (the controlling team's plate swaps to a near-black fill with the
- * digits in the team's ink color; see rois.ts for the layout), and the M:SS
- * match timer above the plates.
+ * control (the controlling team's plate keeps its saturated team-color
+ * fill; a non-controlling team's — or both, while the objective is neutral
+ * — swaps to a near-black fill with the digits in the team's ink color;
+ * see rois.ts for the layout), and the M:SS match timer above the plates.
  *
  * Digits are read as the trailing digit run (banner.ts) of the band under
  * several channel extractions: team-color ink on the black plate needs the
- * brightest channel (dark blue ink is near-black in luminance), white ink
- * on a team-color fill needs the darkest channel (which drops the fill and
- * keeps white) — every extraction is tried at each threshold/size and the
- * best-scoring read wins. A gate hit that yields no readable count on
- * either side emits nothing (lookalike frame).
+ * brightest channel (dark blue ink is near-black in luminance), white or
+ * near-black ink on a team-color fill needs the darkest channel (which
+ * drops the fill and keeps the contrast) — every extraction is tried at
+ * each threshold/size and the best-scoring read wins. A gate hit that
+ * yields no readable count on either side emits nothing (lookalike frame).
  *
  * The data is a discriminated union on `mode`, prepared for the counter
  * semantics of the other modes; only the SZ member exists so far and every
@@ -41,9 +42,7 @@ import {
 import type { ScoreboardResources } from "../scoreboard/index";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
-	CONTROL_PLATE_MAX_MEAN,
-	CONTROL_PLATE_MAX_SATURATION,
-	GATE_PLATE_MAX_MEAN,
+	CONTROL_PLATE_MIN_SATURATION,
 	GATE_PLATE_MAX_STD,
 	GATE_SCORE_MIN_MAX_BRIGHTNESS,
 	GATE_TIMER_MAX_MEAN,
@@ -80,7 +79,7 @@ export interface SplatZonesObjectiveData {
 	score: [number | null, number | null];
 	/** penalty pill value per team; null = no pill (or unreadable) */
 	penalty: [number | null, number | null];
-	/** which team currently holds the zone (team-ink digits on black plate) */
+	/** which team currently holds the zone (team-color plate fill) */
 	control: [boolean, boolean];
 }
 
@@ -156,8 +155,7 @@ export function createObjectiveDetector(
 	}
 
 	function plateProbeOk(gray: Mat, roi: Roi): boolean {
-		const { mean, std } = meanStd(gray, roi);
-		return mean <= GATE_PLATE_MAX_MEAN && std <= GATE_PLATE_MAX_STD;
+		return meanStd(gray, roi).std <= GATE_PLATE_MAX_STD;
 	}
 
 	function scoreInkOk(frame: Mat, roi: Roi): boolean {
@@ -277,8 +275,8 @@ export function createObjectiveDetector(
 
 	/**
 	 * Control: the plate's fill (sampled over the probe strip) is the
-	 * neutral near-black style — dark AND unsaturated — instead of the
-	 * non-controlling team-color fill (see CONTROL_PLATE_MAX_* in rois.ts).
+	 * saturated team-color style instead of the near-black fill shown while
+	 * not in control (see CONTROL_PLATE_MIN_SATURATION in rois.ts).
 	 */
 	function plateFill(
 		frame: Mat,
@@ -315,8 +313,7 @@ export function createObjectiveDetector(
 				penalty,
 				control:
 					score.value !== null &&
-					fill.mean <= CONTROL_PLATE_MAX_MEAN &&
-					fill.saturation <= CONTROL_PLATE_MAX_SATURATION,
+					fill.saturation >= CONTROL_PLATE_MIN_SATURATION,
 				fill,
 			};
 		}) as [SideRead, SideRead];
