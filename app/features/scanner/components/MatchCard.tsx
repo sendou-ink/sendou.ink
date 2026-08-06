@@ -12,6 +12,7 @@ import { useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage, WeaponImage } from "~/components/Image";
 import { StageBannerBox } from "~/components/StageBannerBox";
+import type { IngestSkipReason } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
 import { formatTime } from "./format";
@@ -30,7 +31,7 @@ export function MatchCard({
 	onSend,
 	live = false,
 	inProgress = false,
-	ingestable = true,
+	skipReason,
 	justFormed = false,
 	children,
 }: {
@@ -46,8 +47,8 @@ export function MatchCard({
 	 * "in progress" chip in the score slot; at most one card should get this
 	 */
 	inProgress?: boolean;
-	/** false = isIngestableMatch rejected it (not a private battle) */
-	ingestable?: boolean;
+	/** set = ingestSkipReasons held the match back from /ingest */
+	skipReason?: IngestSkipReason;
 	/** the scan just formed this match — play the enter animation */
 	justFormed?: boolean;
 	/** expandable detail content, typically the source event cards */
@@ -71,7 +72,7 @@ export function MatchCard({
 
 	const meta = [
 		modeLabel(match.mode),
-		ingestable ? null : lobbyLabel(match.lobby),
+		skipReason === "lobby" ? lobbyLabel(match.lobby) : null,
 		match.startsAt !== null ? timeRangeLabel(match) : null,
 		match.replayCode,
 		match.cast ? "cast" : null,
@@ -101,7 +102,7 @@ export function MatchCard({
 					) : (
 						<Score match={match} inProgress={inProgress} />
 					)}
-					<StatusChip send={send} ingestable={ingestable} live={live} />
+					<StatusChip send={send} skipReason={skipReason} live={live} />
 					{onSend && send?.state !== "sent" && send?.state !== "sending" ? (
 						<button type="button" onClick={onSend}>
 							{send?.state === "failed" ? "Retry" : "Send"}
@@ -237,14 +238,20 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 
 function StatusChip({
 	send,
-	ingestable,
+	skipReason,
 	live,
 }: {
 	send?: SendStatus;
-	ingestable: boolean;
+	skipReason?: IngestSkipReason;
 	live: boolean;
 }) {
-	if (!ingestable) return <span className="match-chip">not ingested</span>;
+	if (skipReason) {
+		return (
+			<span className="match-chip">
+				{skipReason === "disconnect" ? "disconnect" : "not ingested"}
+			</span>
+		);
+	}
 	if (send) {
 		return (
 			<span className={clsx("match-chip", send.state)} title={send.error}>

@@ -13,7 +13,7 @@
 
 import type { DetectedEvent } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
-import { buildScannerMatches, isIngestableMatch } from "../core/match-builder";
+import { buildScannerMatches, ingestSkipReasons } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 import {
 	type SendStatus,
@@ -50,9 +50,9 @@ export async function sendMatches({
 	include: (built: BuiltMatch<StoredEvent>) => boolean;
 	onStatus: () => void;
 }): Promise<SendResult> {
-	const allBuilt = buildScannerMatches(
-		events.filter((e) => e.id !== undefined),
-	).filter((built) => isIngestableMatch(built.match));
+	const allBuilt = ingestableBuilt(
+		buildScannerMatches(events.filter((e) => e.id !== undefined)),
+	);
 	const selected = allBuilt.filter(include);
 	await clearOrphanedQueued(events, allBuilt);
 
@@ -158,9 +158,16 @@ export function unsentMatches(built: BuiltMatch<StoredEvent>): boolean {
 }
 
 function ingestableMatches(events: readonly DetectedEvent[]): ScannerMatch[] {
-	return buildScannerMatches(events)
-		.filter((built) => isIngestableMatch(built.match))
-		.map((built) => built.match);
+	return ingestableBuilt(buildScannerMatches(events)).map(
+		(built) => built.match,
+	);
+}
+
+function ingestableBuilt<E extends DetectedEvent>(
+	built: BuiltMatch<E>[],
+): BuiltMatch<E>[] {
+	const skipped = ingestSkipReasons(built);
+	return built.filter((match) => !skipped.has(match));
 }
 
 async function postIngestMatches(matches: ScannerMatch[]) {

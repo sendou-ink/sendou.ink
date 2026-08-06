@@ -10,9 +10,10 @@
  * only when a scoreboard or minimaps back it — a MapStart plus deaths whose
  * results screen was missed identifies no game.
  *
- * Matches are emitted regardless of lobby (the vods prefill wants every
- * match); senders filter with `isIngestableMatch`. Death events reveal enemy
- * builds and are harvested onto the match's player rows (ability-harvest.ts).
+ * Matches are emitted regardless of lobby or outcome (the vods prefill wants
+ * every match); senders filter with `ingestSkipReasons`. Death events reveal
+ * enemy builds and are harvested onto the match's player rows
+ * (ability-harvest.ts).
  */
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { harvestAbilities } from "./ability-harvest";
@@ -62,6 +63,13 @@ const FALLBACK_WINDOW_SECONDS = 480;
 const MATCH_GAP_SECONDS = 300;
 
 const PLAYERS_PER_TEAM = 4;
+
+/**
+ * Slack the ended-early check gives a match before calling it a disconnect:
+ * a counter read is a snapshot of numbers that keep moving, and the results
+ * screen is only read some seconds after the last whistle.
+ */
+const EARLY_END_MARGIN_SECONDS = 10;
 
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
@@ -155,12 +163,38 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	return built;
 }
 
+/** Why a built match is held back from /ingest; absent = it is sent. */
+export type IngestSkipReason =
+	/** not a tournament (Private Battle) game */
+	| "lobby"
+	/** a disconnect ended it before it could be decided */
+	| "disconnect";
+
 /**
- * Whether a match is worth sending to /ingest: only tournament (Private
- * Battle) games are; an unreadable lobby gets the benefit of the doubt.
+ * Which of the built matches are not worth sending to /ingest, and why.
+ * Kept out are non-tournament lobbies (an unread lobby gets the benefit of
+ * the doubt) and games a disconnect cut short — a scoreless match is a
+ * disconnect when its counter reads prove the game could not have ended on
+ * its own (see `endedEarly`), or when the same map and mode is played again
+ * right after and that one does have a score, i.e. it was replayed.
+ *
+ * The replay evidence only ever arrives after the fact, so a live scan may
+ * have already sent the abandoned game by the time its replay is detected;
+ * the counter-read check is what catches it in the moment.
  */
-export function isIngestableMatch(match: ScannerMatch): boolean {
-	return match.lobby === null || match.lobby === TOURNAMENT_LOBBY;
+export function ingestSkipReasons<E extends DetectedEvent>(
+	built: readonly BuiltMatch<E>[],
+): Map<BuiltMatch<E>, IngestSkipReason> {
+	const reasons = new Map<BuiltMatch<E>, IngestSkipReason>();
+	for (const [index, candidate] of built.entries()) {
+		const { match } = candidate;
+		if (match.lobby !== null && match.lobby !== TOURNAMENT_LOBBY) {
+			reasons.set(candidate, "lobby");
+		} else if (endedEarly(match) || wasReplayed(built, index)) {
+			reasons.set(candidate, "disconnect");
+		}
+	}
+	return reasons;
 }
 
 /**
@@ -177,6 +211,64 @@ export function invalidObjectiveEvents<E extends DetectedEvent>(
 		.flatMap((b) =>
 			b.sources.filter((event) => event.type === OBJECTIVE_EVENT_TYPE),
 		);
+}
+
+/**
+ * Whether a disconnect ended the match before it could be decided: it has a
+ * results screen but no score on it, and its last counter read still needed
+ * more game left than the footage gave it. From that read a game can end no
+ * sooner than the clock running out, or the lower counter falling to zero at
+ * its 1/s cap (a knockout) with any penalty worked off first — so when even
+ * that came due after the match was already over, it was cut short.
+ */
+function endedEarly(match: ScannerMatch): boolean {
+	// no results screen at all: an unfinished scan, not an unfinished game
+	if (match.winner === null) return false;
+	if (match.matchScores !== null) return false;
+	const lastSample = match.objective?.samples.at(-1);
+	if (!lastSample || match.endsAt === null) return false;
+
+	const soonestEnd = secondsUntilSoonestEnd(lastSample);
+	if (soonestEnd === null) return false;
+
+	const secondsLeftInFootage = match.endsAt - lastSample.t;
+	return soonestEnd - secondsLeftInFootage > EARLY_END_MARGIN_SECONDS;
+}
+
+function secondsUntilSoonestEnd(
+	sample: ScannerMatchObjectiveSample,
+): number | null {
+	const knockouts = sample.score.map((score, team) =>
+		score === null ? null : score + (sample.penalty[team] ?? 0),
+	);
+	const seconds = [sample.time, ...knockouts].filter(
+		(value): value is number => value !== null,
+	);
+	return seconds.length > 0 ? Math.min(...seconds) : null;
+}
+
+/**
+ * Whether the scoreless match at `index` was played again right after: the
+ * run of matches following it on the same mode and stage is the same game
+ * restarted, so one of them reaching a score means the earlier attempts
+ * ended in a disconnect. The run stops at the first other map, which keeps
+ * the same map coming up again later in the scan out of it.
+ */
+function wasReplayed<E extends DetectedEvent>(
+	built: readonly BuiltMatch<E>[],
+	index: number,
+): boolean {
+	const { match } = built[index]!;
+	if (match.matchScores !== null) return false;
+	if (match.mode === null || match.stage === null) return false;
+
+	for (const later of built.slice(index + 1)) {
+		if (later.match.mode !== match.mode || later.match.stage !== match.stage) {
+			return false;
+		}
+		if (later.match.matchScores !== null) return true;
+	}
+	return false;
 }
 
 /** A match being accumulated as the timeline is walked. */

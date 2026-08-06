@@ -23,8 +23,8 @@ import {
 import type { DetectedEvent } from "../core/detectors/types";
 import {
 	buildScannerMatches,
+	ingestSkipReasons,
 	invalidObjectiveEvents,
-	isIngestableMatch,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
 import type { SendStatus } from "../store/events";
@@ -141,6 +141,7 @@ export function VodPage({
 	);
 
 	const builtMatches = buildScannerMatches(matches.map((m) => m.event));
+	const skipReasons = ingestSkipReasons(builtMatches);
 	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
@@ -595,7 +596,7 @@ export function VodPage({
 						matches={builtMatches}
 						keyOf={(built) => vodMatchByEvent.get(built.sources[0]!)!.key}
 						renderMatch={(built, justFormed) => {
-							const ingestable = isIngestableMatch(built.match);
+							const skipReason = skipReasons.get(built);
 							// counter reads render as one timeline chart, not a card each;
 							// a non-SZ match's reads (objective null) are never shown
 							const objectiveEvents = built.match.objective
@@ -614,9 +615,9 @@ export function VodPage({
 										built === builtMatches.at(-1) &&
 										built.match.winner === null
 									}
-									ingestable={ingestable}
+									skipReason={skipReason}
 									justFormed={justFormed}
-									send={ingestable ? bulkSend : undefined}
+									send={skipReason ? undefined : bulkSend}
 								>
 									{objectiveEvents.length > 0 ? (
 										<ObjectiveTimeline events={objectiveEvents} />

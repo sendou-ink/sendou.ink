@@ -19,8 +19,8 @@ import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
 import {
 	buildScannerMatches,
+	ingestSkipReasons,
 	invalidObjectiveEvents,
-	isIngestableMatch,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
@@ -254,6 +254,7 @@ export function LivePage({
 	}, [deviceId, refreshFeed, send]);
 
 	const builtMatches = buildScannerMatches(feed);
+	const skipReasons = ingestSkipReasons(builtMatches);
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedFeed = feed.filter((e) => !groupedEvents.has(e));
 
@@ -369,7 +370,7 @@ export function LivePage({
 						keyOf={(built) => built.sources[0]!.id!}
 						renderMatch={(built, justFormed) => {
 							const id = built.sources[0]!.id!;
-							const ingestable = isIngestableMatch(built.match);
+							const skipReason = skipReasons.get(built);
 							// counter reads render as one timeline chart, not a card each;
 							// a non-SZ match's reads (objective null) are never shown
 							const objectiveEvents = built.match.objective
@@ -386,11 +387,11 @@ export function LivePage({
 									match={built.match}
 									live={running && newest && built.match.winner === null}
 									inProgress={newest && built.match.winner === null}
-									ingestable={ingestable}
+									skipReason={skipReason}
 									justFormed={justFormed}
 									send={aggregateSendStatus(built.sources)}
 									onSend={
-										SENDOU_UPLOAD_ENABLED && sendouUser && ingestable
+										SENDOU_UPLOAD_ENABLED && sendouUser && !skipReason
 											? () => void send(matchContaining(id), { manual: true })
 											: undefined
 									}

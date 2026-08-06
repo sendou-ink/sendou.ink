@@ -17,8 +17,8 @@ import type { ScoreboardReplayData } from "../core/detectors/scoreboard-replay/i
 import type { DetectedEvent } from "../core/detectors/types";
 import {
 	buildScannerMatches,
+	ingestSkipReasons,
 	invalidObjectiveEvents,
-	isIngestableMatch,
 } from "../core/match-builder";
 import type { ScannerAbility, ScannerLobby } from "../scanner-types";
 import test from "./node-test-compat";
@@ -70,13 +70,14 @@ function scoreboard(
 		stage = 0 as StageId | null,
 		weapons = ALL as (MainWeaponId | null)[],
 		povIndex = 0 as number | null,
+		matchScores = [100, 47] as [number | null, number | null],
 	} = {},
 ): DetectedEvent {
 	const data: ScoreboardData = {
 		lobby,
 		mode,
 		stage,
-		matchScores: [100, 47],
+		matchScores,
 		players: weapons.map((weaponId, i) => ({
 			name: NAMES[i] ?? `p${i}`,
 			weaponId,
@@ -370,23 +371,68 @@ test("the fallback window does not reach past the previous scoreboard", () => {
 	);
 });
 
-test("non-private lobbies are recorded and filtered by isIngestableMatch", () => {
+test("non-private lobbies are recorded and skipped on ingest", () => {
 	const built = buildScannerMatches([
 		mapStart(0),
 		scoreboard(300, { lobby: "X" }),
 		mapStart(400),
 		scoreboard(700),
 	]);
+	const skipped = ingestSkipReasons(built);
 	assert.equal(built.length, 2);
 	assert.equal(built[0]!.match.lobby, "X");
-	assert.equal(isIngestableMatch(built[0]!.match), false);
-	assert.equal(isIngestableMatch(built[1]!.match), true);
+	assert.equal(skipped.get(built[0]!), "lobby");
+	assert.equal(skipped.get(built[1]!), undefined);
+});
+
+test("a scoreless match whose counters had no time to run out is a disconnect", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(140, { time: 183, score: [10, 43], penalty: [69, 0] }),
+		scoreboard(155, { matchScores: [null, null] }),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(ingestSkipReasons(built).get(built[0]!), "disconnect");
+});
+
+test("a scoreless match a knockout could have ended is kept", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(140, { time: 30, score: [5, 90], penalty: [0, 0] }),
+		scoreboard(200, { matchScores: [null, null] }),
+	]);
+	assert.equal(built.length, 1);
+	assert.equal(ingestSkipReasons(built).size, 0);
+});
+
+test("a scoreless match replayed on the same map is a disconnect", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300, { matchScores: [null, null] }),
+		mapStart(400),
+		scoreboard(700),
+	]);
+	const skipped = ingestSkipReasons(built);
+	assert.equal(built.length, 2);
+	assert.equal(skipped.get(built[0]!), "disconnect");
+	assert.equal(skipped.get(built[1]!), undefined);
+});
+
+test("a scoreless match the next map moves on from is kept", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300, { matchScores: [null, null] }),
+		mapStart(400, { stage: 1 }),
+		scoreboard(700, { stage: 1 }),
+	]);
+	assert.equal(built.length, 2);
+	assert.equal(ingestSkipReasons(built).size, 0);
 });
 
 test("an unreadable lobby is ingestable", () => {
 	const built = buildScannerMatches([scoreboard(300, { lobby: null })]);
 	assert.equal(built.length, 1);
-	assert.equal(isIngestableMatch(built[0]!.match), true);
+	assert.equal(ingestSkipReasons(built).size, 0);
 });
 
 test("a match whose scoreboard was missed is dropped on the next map start", () => {

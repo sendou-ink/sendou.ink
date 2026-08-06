@@ -64,8 +64,11 @@ sequenceDiagram
   change and >5 min gap. An event belongs to at most one match. Deaths
   reveal enemy builds (`ability-harvest.ts`).
   Every field is nullable — partial matches are fine, scanner-ingest merges
-  them server-side. Senders filter with `isIngestableMatch` (private/unread
-  lobby only).
+  them server-side. Senders filter with `ingestSkipReasons`: private/unread
+  lobby only, and no games a disconnect cut short (a scoreless match whose
+  last counter read left the game more time than the footage did, or that
+  was replayed right after on the same map — the latter only ever resolves
+  after the fact, so it is a VoD-scan filter in practice).
 - The route (`routes/scanner.tsx`) is SSR-guarded: everything below it
   assumes a browser, so the client tree loads via `React.lazy` after
   `useHydrated`. Nothing from `core/worker/capture/store` may be imported at
