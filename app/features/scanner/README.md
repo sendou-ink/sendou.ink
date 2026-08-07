@@ -38,7 +38,7 @@ sequenceDiagram
   participant MB as match-builder
   participant UI as Live/VoD tab
   participant ING as /ingest (scanner-ingest)
-  participant DB as IngestedMatch / IngestedScoreboard
+  participant DB as IngestedMatch / IngestedMatchLink
   Cap->>W: frame + t (live/screenshot/seek) — VoD: worker decodes its own slice
   W->>W: scheduler dueDetectors() → gate() → parse()
   W-->>TL: DetectedEvents
@@ -46,9 +46,9 @@ sequenceDiagram
   UI->>MB: buildScannerMatches(events)
   MB-->>UI: ScannerMatch[] + source events
   UI->>ING: POST { matches } (Live: on match close / scan end, VoD: whole scan)
-  ING->>ING: resolve tournament (content sequence ≥2, else playedAt)
-  ING->>DB: merge-store IngestedMatch (matchHash, isSameMatch + merge)
-  ING->>DB: attach winner-first view → IngestedScoreboard (first-ingest-wins, POV + ReportedWeapon)
+  ING->>ING: resolve context (current tournament/SendouQ activity, casts via staff roles, else content sequence ≥2)
+  ING->>DB: merge-store IngestedMatch (matchHash, isSameMatch + merge, context hints)
+  ING->>DB: link matches to game results → IngestedMatchLink (POV weapon → ReportedWeapon; scoreboards derived at read time)
   Note over UI: VoD "Add VoD": ScannerMatch → slim prefill param → /vods/new
 ```
 

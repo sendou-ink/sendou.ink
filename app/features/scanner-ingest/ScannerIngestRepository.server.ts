@@ -6,10 +6,11 @@ import type { DB } from "~/db/tables";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import * as Matches from "./core/Matches";
 import type {
-	IngestableGameWithTournament,
-	IngestedScoreboardData,
-	MatchedScoreboard,
+	IngestableGame,
+	IngestableGameWithContext,
+	IngestContext,
 } from "./core/Scoreboards";
+import * as Scoreboards from "./core/Scoreboards";
 
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
 const opponentTwoId = sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`;
@@ -26,42 +27,52 @@ const MERGE_CANDIDATE_LIMIT = 50;
 
 /**
  * Stores ingested matches, merging partials: a match that
- * `Matches.isSameMatch` recognizes as an already stored one (same
- * tournament + POV user scope) enriches that row instead of inserting.
- * Identical resends are no-ops via the content hash.
+ * `Matches.isSameMatch` recognizes as an already stored one (same POV user
+ * scope) enriches that row instead of inserting. Identical resends are
+ * no-ops via the content hash. The resolved context is stamped onto the
+ * rows as tournamentIdHint/groupMatchIdHint (existing hints win; missing
+ * ones are backfilled even on no-op resends).
  *
- * @returns counts plus the post-merge matches (a partial arriving after an
- * earlier richer send attaches downstream with the merged, fuller data)
+ * @returns counts plus the post-merge rows (a partial arriving after an
+ * earlier richer send links downstream with the merged, fuller data)
  */
 export async function addOrMergeMatches({
-	tournamentId,
 	povUserId,
 	submitterUserId,
 	matches,
+	context,
 }: {
-	tournamentId: number | null;
 	povUserId: number | null;
 	submitterUserId: number | null;
 	matches: ScannerMatch[];
+	context: IngestContext | null;
 }) {
+	const hints = {
+		tournamentIdHint:
+			context?.type === "tournament" ? context.tournamentId : null,
+		groupMatchIdHint: context?.type === "sendouq" ? context.groupMatchId : null,
+	};
+
 	let insertedCount = 0;
 	let mergedCount = 0;
-	const effectiveMatches: ScannerMatch[] = [];
+	const effectiveMatches: Array<{ id: number; data: ScannerMatch }> = [];
 
 	for (const match of matches) {
 		const canonical = Matches.canonicalMatch(match);
-		const hash = matchHash({ tournamentId, povUserId, match: canonical });
+		const hash = matchHash({ povUserId, match: canonical });
 
 		const effective = await db.transaction().execute(async (trx) => {
 			const identical = await trx
 				.selectFrom("IngestedMatch")
-				.select("data")
+				.select(["id", "data", "tournamentIdHint", "groupMatchIdHint"])
 				.where("matchHash", "=", hash)
 				.executeTakeFirst();
-			if (identical) return identical.data;
+			if (identical) {
+				await backfillHints(trx, identical, hints);
+				return { id: identical.id, data: identical.data };
+			}
 
 			const stored = await findMergeCandidate(trx, {
-				tournamentId,
 				povUserId,
 				match: canonical,
 			});
@@ -69,23 +80,24 @@ export async function addOrMergeMatches({
 				const inserted = await trx
 					.insertInto("IngestedMatch")
 					.values({
-						tournamentId,
 						povUserId,
 						submitterUserId,
 						playedAt: toDbTimestamp(canonical.playedAt),
 						data: JSON.stringify(canonical),
 						matchHash: hash,
+						...hints,
 					})
-					.onConflict((oc) => oc.column("matchHash").doNothing())
-					.executeTakeFirst();
-				if (Number(inserted.numInsertedOrUpdatedRows ?? 0) > 0) {
-					insertedCount++;
-				}
-				return canonical;
+					.returning("id")
+					.executeTakeFirstOrThrow();
+				insertedCount++;
+				return { id: inserted.id, data: canonical };
 			}
 
 			const { merged, changed } = Matches.mergeMatches(stored.data, canonical);
-			if (!changed) return stored.data;
+			if (!changed) {
+				await backfillHints(trx, stored, hints);
+				return { id: stored.id, data: stored.data };
+			}
 
 			const mergedCanonical = Matches.canonicalMatch(merged);
 			await trx
@@ -93,16 +105,14 @@ export async function addOrMergeMatches({
 				.set({
 					playedAt: toDbTimestamp(mergedCanonical.playedAt),
 					data: JSON.stringify(mergedCanonical),
-					matchHash: matchHash({
-						tournamentId,
-						povUserId,
-						match: mergedCanonical,
-					}),
+					matchHash: matchHash({ povUserId, match: mergedCanonical }),
+					tournamentIdHint: stored.tournamentIdHint ?? hints.tournamentIdHint,
+					groupMatchIdHint: stored.groupMatchIdHint ?? hints.groupMatchIdHint,
 				})
 				.where("id", "=", stored.id)
 				.execute();
 			mergedCount++;
-			return mergedCanonical;
+			return { id: stored.id, data: mergedCanonical };
 		});
 
 		effectiveMatches.push(effective);
@@ -111,19 +121,42 @@ export async function addOrMergeMatches({
 	return { insertedCount, mergedCount, effectiveMatches };
 }
 
+async function backfillHints(
+	trx: Transaction<DB>,
+	stored: {
+		id: number;
+		tournamentIdHint: number | null;
+		groupMatchIdHint: number | null;
+	},
+	hints: { tournamentIdHint: number | null; groupMatchIdHint: number | null },
+) {
+	const tournamentIdHint = stored.tournamentIdHint ?? hints.tournamentIdHint;
+	const groupMatchIdHint = stored.groupMatchIdHint ?? hints.groupMatchIdHint;
+	if (
+		tournamentIdHint === stored.tournamentIdHint &&
+		groupMatchIdHint === stored.groupMatchIdHint
+	) {
+		return;
+	}
+
+	await trx
+		.updateTable("IngestedMatch")
+		.set({ tournamentIdHint, groupMatchIdHint })
+		.where("id", "=", stored.id)
+		.execute();
+}
+
 /**
  * The stored match the incoming one describes the same game as, if any:
- * rows in the same tournament + POV user scope, near in play time (or
- * recent when either side has none), content-checked by Matches.isSameMatch.
+ * rows in the same POV user scope, near in play time (or recent when either
+ * side has none), content-checked by Matches.isSameMatch.
  */
 async function findMergeCandidate(
 	trx: Transaction<DB>,
 	{
-		tournamentId,
 		povUserId,
 		match,
 	}: {
-		tournamentId: number | null;
 		povUserId: number | null;
 		match: ScannerMatch;
 	},
@@ -135,11 +168,7 @@ async function findMergeCandidate(
 
 	const candidates = await trx
 		.selectFrom("IngestedMatch")
-		.select(["id", "data"])
-		.$if(tournamentId === null, (qb) => qb.where("tournamentId", "is", null))
-		.$if(tournamentId !== null, (qb) =>
-			qb.where("tournamentId", "=", tournamentId!),
-		)
+		.select(["id", "data", "tournamentIdHint", "groupMatchIdHint"])
 		.$if(povUserId === null, (qb) => qb.where("povUserId", "is", null))
 		.$if(povUserId !== null, (qb) => qb.where("povUserId", "=", povUserId!))
 		.$if(match.playedAt !== null, (qb) =>
@@ -190,16 +219,14 @@ function toDbTimestamp(ms: number | null): number | null {
 }
 
 function matchHash({
-	tournamentId,
 	povUserId,
 	match,
 }: {
-	tournamentId: number | null;
 	povUserId: number | null;
 	match: ScannerMatch;
 }) {
 	return createHash("sha256")
-		.update(JSON.stringify([tournamentId, povUserId, match]))
+		.update(JSON.stringify([povUserId, match]))
 		.digest("hex");
 }
 
@@ -208,38 +235,63 @@ export function gamesPlayedByUserInTournament(params: {
 	userId: number;
 	tournamentId: number;
 }) {
-	return gamesPlayedByUser(params);
+	return tournamentGames(params);
 }
 
 /**
  * Returns the games a user played in any tournament since the given
- * database timestamp, in chronological order — the candidate set for
- * content-based tournament resolution (Scoreboards.resolveTournamentId).
+ * database timestamp, in chronological order — tournament candidates for
+ * content-based context resolution (Scoreboards.resolveContext).
  */
 export function gamesPlayedByUserSince(params: {
 	userId: number;
 	/** database timestamp (seconds) */
 	since: number;
 }) {
-	return gamesPlayedByUser(params);
+	return tournamentGames(params);
 }
 
-async function gamesPlayedByUser({
+/**
+ * Returns the games of a tournament's casted sets (currently streamed ones
+ * plus the cast history), in chronological order — the candidate set for
+ * cast footage, whose submitter is staff rather than a player of the games.
+ */
+export async function castedGamesInTournament(tournamentId: number) {
+	const tournament = await db
+		.selectFrom("Tournament")
+		.select("castedMatchesInfo")
+		.where("Tournament.id", "=", tournamentId)
+		.executeTakeFirst();
+	const castedMatchesInfo = tournament?.castedMatchesInfo;
+
+	const tournamentMatchIds = [
+		...new Set([
+			...(castedMatchesInfo?.castedMatches ?? []).map(
+				(casted) => casted.matchId,
+			),
+			...(castedMatchesInfo?.castedMatchHistory ?? []).map(
+				(casted) => casted.matchId,
+			),
+		]),
+	];
+	if (tournamentMatchIds.length === 0) return [];
+
+	return tournamentGames({ tournamentId, tournamentMatchIds });
+}
+
+async function tournamentGames({
 	userId,
 	tournamentId,
+	tournamentMatchIds,
 	since,
 }: {
-	userId: number;
+	userId?: number;
 	tournamentId?: number;
+	tournamentMatchIds?: number[];
 	since?: number;
-}): Promise<IngestableGameWithTournament[]> {
+}): Promise<IngestableGameWithContext[]> {
 	const rows = await db
-		.selectFrom("TournamentMatchGameResultParticipant")
-		.innerJoin(
-			"TournamentMatchGameResult",
-			"TournamentMatchGameResult.id",
-			"TournamentMatchGameResultParticipant.matchGameResultId",
-		)
+		.selectFrom("TournamentMatchGameResult")
 		.innerJoin(
 			"TournamentMatch",
 			"TournamentMatch.id",
@@ -250,11 +302,6 @@ async function gamesPlayedByUser({
 			"TournamentStage.id",
 			"TournamentMatch.stageId",
 		)
-		.leftJoin(
-			"IngestedScoreboard",
-			"IngestedScoreboard.matchGameResultId",
-			"TournamentMatchGameResult.id",
-		)
 		.select([
 			"TournamentMatchGameResult.id as matchGameResultId",
 			"TournamentMatchGameResult.matchId as tournamentMatchId",
@@ -264,13 +311,29 @@ async function gamesPlayedByUser({
 			"TournamentMatchGameResult.winnerTeamId",
 			"TournamentMatchGameResult.createdAt as playedAt",
 			"TournamentStage.tournamentId",
-			"IngestedScoreboard.data as storedScoreboardData",
 			opponentOneId.as("opponentOneId"),
 			opponentTwoId.as("opponentTwoId"),
 		])
-		.where("TournamentMatchGameResultParticipant.userId", "=", userId)
+		.$if(userId !== undefined, (qb) =>
+			qb.where((eb) =>
+				eb.exists(
+					eb
+						.selectFrom("TournamentMatchGameResultParticipant")
+						.select("TournamentMatchGameResultParticipant.userId")
+						.whereRef(
+							"TournamentMatchGameResultParticipant.matchGameResultId",
+							"=",
+							"TournamentMatchGameResult.id",
+						)
+						.where("TournamentMatchGameResultParticipant.userId", "=", userId!),
+				),
+			),
+		)
 		.$if(tournamentId !== undefined, (qb) =>
 			qb.where("TournamentStage.tournamentId", "=", tournamentId!),
+		)
+		.$if(tournamentMatchIds !== undefined, (qb) =>
+			qb.where("TournamentMatchGameResult.matchId", "in", tournamentMatchIds!),
 		)
 		.$if(since !== undefined, (qb) =>
 			qb.where("TournamentMatchGameResult.createdAt", ">=", since!),
@@ -282,6 +345,10 @@ async function gamesPlayedByUser({
 	const inGameNamesByTeamId = await teamInGameNames(
 		rows.flatMap((row) => [row.opponentOneId, row.opponentTwoId]),
 	);
+	const linkedNames = await linkedPlayerNamesByTarget(
+		"tournamentMatchGameResultId",
+		rows.map((row) => row.matchGameResultId),
+	);
 
 	return rows.map((row) => {
 		const loserTeamId =
@@ -292,22 +359,22 @@ async function gamesPlayedByUser({
 					: null;
 
 		return {
-			matchGameResultId: row.matchGameResultId,
-			tournamentMatchId: row.tournamentMatchId,
-			tournamentId: row.tournamentId,
+			target: {
+				type: "tournament",
+				matchGameResultId: row.matchGameResultId,
+				tournamentMatchId: row.tournamentMatchId,
+			},
+			context: { type: "tournament", tournamentId: row.tournamentId },
 			mapIndex: row.number - 1,
 			mode: row.mode,
 			stageId: row.stageId,
-			winnerTeamId: row.winnerTeamId,
-			loserTeamId,
 			winnerInGameNames: inGameNamesByTeamId.get(row.winnerTeamId) ?? [],
 			loserInGameNames:
 				(loserTeamId !== null
 					? inGameNamesByTeamId.get(loserTeamId)
 					: undefined) ?? [],
 			playedAt: row.playedAt,
-			storedScoreboardPlayerNames:
-				row.storedScoreboardData?.players.map((player) => player.name) ?? null,
+			linkedPlayerNames: linkedNames.get(row.matchGameResultId) ?? null,
 		};
 	});
 }
@@ -338,6 +405,180 @@ async function teamInGameNames(teamIds: Array<number | null>) {
 		const names = result.get(member.tournamentTeamId) ?? [];
 		names.push(member.inGameName);
 		result.set(member.tournamentTeamId, names);
+	}
+
+	return result;
+}
+
+/** Returns a SendouQ match's games (its whole map list), in map order. */
+export function gamesInGroupMatch(groupMatchId: number) {
+	return sendouqGames({ groupMatchId });
+}
+
+/**
+ * Returns the reported games of SendouQ matches a user played in since the
+ * given database timestamp, in chronological order — SendouQ candidates for
+ * content-based context resolution (Scoreboards.resolveContext).
+ */
+export function sendouqGamesPlayedByUserSince(params: {
+	userId: number;
+	/** database timestamp (seconds) */
+	since: number;
+}) {
+	return sendouqGames(params);
+}
+
+async function sendouqGames({
+	groupMatchId,
+	userId,
+	since,
+}: {
+	groupMatchId?: number;
+	userId?: number;
+	since?: number;
+}): Promise<IngestableGameWithContext[]> {
+	const rows = await db
+		.selectFrom("GroupMatchMap")
+		.innerJoin("GroupMatch", "GroupMatch.id", "GroupMatchMap.matchId")
+		.select([
+			"GroupMatchMap.id as groupMatchMapId",
+			"GroupMatchMap.matchId as groupMatchId",
+			"GroupMatchMap.index as mapIndex",
+			"GroupMatchMap.mode",
+			"GroupMatchMap.stageId",
+			"GroupMatchMap.winnerGroupId",
+			"GroupMatch.alphaGroupId",
+			"GroupMatch.bravoGroupId",
+			"GroupMatch.createdAt as playedAt",
+		])
+		.$if(groupMatchId !== undefined, (qb) =>
+			qb.where("GroupMatchMap.matchId", "=", groupMatchId!),
+		)
+		.$if(userId !== undefined, (qb) =>
+			qb.where((eb) =>
+				eb.exists(
+					eb
+						.selectFrom("GroupMember")
+						.select("GroupMember.userId")
+						.where("GroupMember.userId", "=", userId!)
+						.where((memberEb) =>
+							memberEb.or([
+								memberEb(
+									"GroupMember.groupId",
+									"=",
+									memberEb.ref("GroupMatch.alphaGroupId"),
+								),
+								memberEb(
+									"GroupMember.groupId",
+									"=",
+									memberEb.ref("GroupMatch.bravoGroupId"),
+								),
+							]),
+						),
+				),
+			),
+		)
+		// content resolution walks played games only; a current match's
+		// pre-generated unplayed maps would flood the candidate sequence
+		.$if(since !== undefined, (qb) =>
+			qb
+				.where("GroupMatch.createdAt", ">=", since!)
+				.where("GroupMatchMap.winnerGroupId", "is not", null),
+		)
+		.orderBy("GroupMatch.createdAt", "asc")
+		.orderBy("GroupMatchMap.index", "asc")
+		.execute();
+
+	const inGameNamesByGroupId = await groupInGameNames(
+		rows.flatMap((row) => [row.alphaGroupId, row.bravoGroupId]),
+	);
+	const linkedNames = await linkedPlayerNamesByTarget(
+		"groupMatchMapId",
+		rows.map((row) => row.groupMatchMapId),
+	);
+
+	return rows.map((row) => {
+		const loserGroupId =
+			row.winnerGroupId === row.alphaGroupId
+				? row.bravoGroupId
+				: row.winnerGroupId === row.bravoGroupId
+					? row.alphaGroupId
+					: null;
+
+		return {
+			target: {
+				type: "sendouq",
+				groupMatchMapId: row.groupMatchMapId,
+				groupMatchId: row.groupMatchId,
+			},
+			context: { type: "sendouq", groupMatchId: row.groupMatchId },
+			mapIndex: row.mapIndex,
+			mode: row.mode,
+			stageId: row.stageId,
+			winnerInGameNames:
+				(row.winnerGroupId !== null
+					? inGameNamesByGroupId.get(row.winnerGroupId)
+					: undefined) ?? [],
+			loserInGameNames:
+				(loserGroupId !== null
+					? inGameNamesByGroupId.get(loserGroupId)
+					: undefined) ?? [],
+			playedAt: row.playedAt,
+			linkedPlayerNames: linkedNames.get(row.groupMatchMapId) ?? null,
+		};
+	});
+}
+
+async function groupInGameNames(groupIds: number[]) {
+	const uniqueGroupIds = [...new Set(groupIds)];
+	if (uniqueGroupIds.length === 0) return new Map<number, string[]>();
+
+	const members = await db
+		.selectFrom("GroupMember")
+		.innerJoin("User", "User.id", "GroupMember.userId")
+		.select(["GroupMember.groupId", "User.inGameName"])
+		.where("GroupMember.groupId", "in", uniqueGroupIds)
+		.execute();
+
+	const result = new Map<number, string[]>();
+	for (const member of members) {
+		if (!member.inGameName) continue;
+		const names = result.get(member.groupId) ?? [];
+		names.push(member.inGameName);
+		result.set(member.groupId, names);
+	}
+
+	return result;
+}
+
+/**
+ * The winner-first player names of each game's earliest linked ingested
+ * match, keyed by the given link target column's value.
+ */
+async function linkedPlayerNamesByTarget(
+	column: "tournamentMatchGameResultId" | "groupMatchMapId",
+	targetIds: number[],
+) {
+	const result = new Map<number, string[]>();
+	if (targetIds.length === 0) return result;
+
+	const rows = await db
+		.selectFrom("IngestedMatchLink")
+		.innerJoin(
+			"IngestedMatch",
+			"IngestedMatch.id",
+			"IngestedMatchLink.ingestedMatchId",
+		)
+		.select([`IngestedMatchLink.${column} as targetId`, "IngestedMatch.data"])
+		.where(`IngestedMatchLink.${column}`, "in", targetIds)
+		.orderBy("IngestedMatchLink.createdAt", "asc")
+		.orderBy("IngestedMatchLink.id", "asc")
+		.execute();
+
+	for (const row of rows) {
+		if (row.targetId === null || result.has(row.targetId)) continue;
+		const names = Scoreboards.winnerFirstPlayerNames(row.data);
+		if (names) result.set(row.targetId, names);
 	}
 
 	return result;
@@ -405,157 +646,296 @@ export async function tournamentIdAt({
 	return row?.tournamentId ?? null;
 }
 
-/** Returns the tournament's start time as a database timestamp. */
-export async function tournamentStartTime(tournamentId: number) {
+/** SendouQ sets run well under this long; matches created further before the events cannot be theirs. */
+const GROUP_MATCH_WINDOW_BEFORE_SECONDS = 2 * 60 * 60;
+/** Event timestamps come from client clocks, so allow the match to have been created a little after them. */
+const GROUP_MATCH_WINDOW_AFTER_SECONDS = 60 * 60;
+
+/**
+ * The SendouQ match the user was (probably) playing at the given wall-clock
+ * time: a group they are a member of is in a non-canceled match created
+ * close enough before `at`. When several qualify the latest-created wins.
+ */
+export async function groupMatchIdAt({
+	userId,
+	at,
+}: {
+	userId: number;
+	/** wall-clock ms */
+	at: number;
+}) {
+	const atSeconds = Math.floor(at / 1000);
+
 	const row = await db
-		.selectFrom("CalendarEvent")
-		.innerJoin(
-			"CalendarEventDate",
-			"CalendarEventDate.eventId",
-			"CalendarEvent.id",
+		.selectFrom("GroupMatch")
+		.select("GroupMatch.id")
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.where("GroupMember.userId", "=", userId)
+					.where((memberEb) =>
+						memberEb.or([
+							memberEb(
+								"GroupMember.groupId",
+								"=",
+								memberEb.ref("GroupMatch.alphaGroupId"),
+							),
+							memberEb(
+								"GroupMember.groupId",
+								"=",
+								memberEb.ref("GroupMatch.bravoGroupId"),
+							),
+						]),
+					),
+			),
 		)
-		.select(({ fn }) => fn.min("CalendarEventDate.startsAt").as("startTime"))
-		.where("CalendarEvent.tournamentId", "=", tournamentId)
+		.where(
+			"GroupMatch.createdAt",
+			"<=",
+			atSeconds + GROUP_MATCH_WINDOW_AFTER_SECONDS,
+		)
+		.where(
+			"GroupMatch.createdAt",
+			">=",
+			atSeconds - GROUP_MATCH_WINDOW_BEFORE_SECONDS,
+		)
+		.where("GroupMatch.cancelAcceptedByUserId", "is", null)
+		.orderBy("GroupMatch.createdAt", "desc")
 		.executeTakeFirst();
 
-	return row?.startTime ?? null;
+	return row?.id ?? null;
 }
 
 /**
- * Stores matched scoreboards. A game that already has a stored scoreboard
- * keeps it (first ingest wins). When the scoreboard's POV player is known
- * (via povIndex + povUserId), their row is attributed to the user and their
- * weapon is reported as a regular ReportedWeapon, unless the user already
- * has one for that game.
- *
- * @returns count of newly stored scoreboards
+ * Tournaments running a match around the given wall-clock time that the
+ * user helps run: they authored the event, are on its staff (organizer or
+ * streamer), or hold an admin/organizer/streamer role in its organization.
+ * The candidate contexts for cast footage.
  */
-export async function addScoreboards({
-	scoreboards,
-	povUserId,
+export async function staffTournamentIdsAt({
+	userId,
+	at,
 }: {
-	scoreboards: MatchedScoreboard[];
-	povUserId: number | null;
-}) {
-	let storedCount = 0;
+	userId: number;
+	/** wall-clock ms */
+	at: number;
+}): Promise<number[]> {
+	const atSeconds = Math.floor(at / 1000);
 
-	for (const scoreboard of scoreboards) {
-		const wasInserted = await db.transaction().execute(async (trx) => {
-			const povPlayer =
-				povUserId !== null && scoreboard.povIndex !== null
-					? scoreboard.data.players[scoreboard.povIndex]
-					: undefined;
+	const rows = await db
+		.selectFrom("TournamentMatch")
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentStage.tournamentId",
+		)
+		.select("TournamentStage.tournamentId")
+		.distinct()
+		.where(
+			"TournamentMatch.startedAt",
+			"<=",
+			atSeconds + MATCH_WINDOW_AFTER_SECONDS,
+		)
+		.where(
+			"TournamentMatch.startedAt",
+			">=",
+			atSeconds - MATCH_WINDOW_BEFORE_SECONDS,
+		)
+		.where((eb) =>
+			eb.or([
+				eb("CalendarEvent.authorId", "=", userId),
+				eb.exists(
+					eb
+						.selectFrom("TournamentStaff")
+						.select("TournamentStaff.userId")
+						.whereRef(
+							"TournamentStaff.tournamentId",
+							"=",
+							"TournamentStage.tournamentId",
+						)
+						.where("TournamentStaff.userId", "=", userId),
+				),
+				eb.exists(
+					eb
+						.selectFrom("TournamentOrganizationMember")
+						.select("TournamentOrganizationMember.userId")
+						.whereRef(
+							"TournamentOrganizationMember.organizationId",
+							"=",
+							"CalendarEvent.organizationId",
+						)
+						.where("TournamentOrganizationMember.userId", "=", userId)
+						.where("TournamentOrganizationMember.role", "in", [
+							"ADMIN",
+							"ORGANIZER",
+							"STREAMER",
+						]),
+				),
+			]),
+		)
+		.execute();
 
-			const data: IngestedScoreboardData = povPlayer
-				? {
-						...scoreboard.data,
-						players: scoreboard.data.players.map((player, playerIdx) =>
-							playerIdx === scoreboard.povIndex
-								? { ...player, userId: povUserId! }
-								: player,
-						),
-					}
-				: scoreboard.data;
-
-			const insertResult = await trx
-				.insertInto("IngestedScoreboard")
-				.values({
-					matchGameResultId: scoreboard.matchGameResultId,
-					data: JSON.stringify(data),
-				})
-				.onConflict((oc) => oc.column("matchGameResultId").doNothing())
-				.executeTakeFirst();
-			const inserted = Number(insertResult.numInsertedOrUpdatedRows ?? 0) > 0;
-
-			if (!povPlayer) return inserted;
-
-			if (!inserted) {
-				await attributePovUser({
-					trx,
-					matchGameResultId: scoreboard.matchGameResultId,
-					povIndex: scoreboard.povIndex!,
-					userId: povUserId!,
-				});
-			}
-
-			if (povPlayer.weaponSplId !== null) {
-				await trx
-					.insertInto("ReportedWeapon")
-					.values({
-						tournamentMatchId: scoreboard.tournamentMatchId,
-						mapIndex: scoreboard.mapIndex,
-						userId: povUserId!,
-						weaponSplId: povPlayer.weaponSplId,
-					})
-					.onConflict((oc) =>
-						oc.columns(["tournamentMatchId", "mapIndex", "userId"]).doNothing(),
-					)
-					.execute();
-			}
-
-			return inserted;
-		});
-
-		if (wasInserted) storedCount++;
-	}
-
-	return storedCount;
+	return rows.map((row) => row.tournamentId);
 }
 
-async function attributePovUser({
-	trx,
-	matchGameResultId,
-	povIndex,
-	userId,
+/**
+ * Links ingested matches to the game results they were matched to. A row
+ * links to at most one game (re-sends are no-ops); one game may collect
+ * links from many rows (each POV's scan of it). When the row's POV player
+ * is known, their weapon is reported as a regular ReportedWeapon, unless
+ * the user already has one for that game.
+ *
+ * @returns count of newly created links
+ */
+export async function addLinks({
+	links,
+	povUserId,
 }: {
-	trx: Transaction<DB>;
-	matchGameResultId: number;
-	povIndex: number;
-	userId: number;
+	links: Array<{
+		ingestedMatchId: number;
+		match: ScannerMatch;
+		game: IngestableGame;
+	}>;
+	povUserId: number | null;
 }) {
-	const existing = await trx
-		.selectFrom("IngestedScoreboard")
-		.select(["id", "data"])
-		.where("matchGameResultId", "=", matchGameResultId)
-		.executeTakeFirst();
-	if (!existing) return;
+	let linkedCount = 0;
 
-	if (existing.data.players.some((player) => player.userId === userId)) {
-		return;
+	for (const link of links) {
+		const wasInserted = await db.transaction().execute(async (trx) => {
+			const insertResult = await trx
+				.insertInto("IngestedMatchLink")
+				.values({
+					ingestedMatchId: link.ingestedMatchId,
+					tournamentMatchGameResultId:
+						link.game.target.type === "tournament"
+							? link.game.target.matchGameResultId
+							: null,
+					groupMatchMapId:
+						link.game.target.type === "sendouq"
+							? link.game.target.groupMatchMapId
+							: null,
+				})
+				.onConflict((oc) => oc.column("ingestedMatchId").doNothing())
+				.executeTakeFirst();
+
+			await reportPovWeapon(trx, link, povUserId);
+
+			return Number(insertResult.numInsertedOrUpdatedRows ?? 0) > 0;
+		});
+
+		if (wasInserted) linkedCount++;
 	}
 
-	const player = existing.data.players[povIndex];
-	if (!player || player.userId !== undefined) return;
+	return linkedCount;
+}
 
-	const players = existing.data.players.map((other, playerIdx) =>
-		playerIdx === povIndex ? { ...other, userId } : other,
-	);
+async function reportPovWeapon(
+	trx: Transaction<DB>,
+	{ match, game }: { match: ScannerMatch; game: IngestableGame },
+	povUserId: number | null,
+) {
+	if (povUserId === null || match.pov === null) return;
+	const weaponSplId =
+		match.teams[match.pov.team]?.players[match.pov.index]?.weaponId ?? null;
+	if (weaponSplId === null) return;
 
 	await trx
-		.updateTable("IngestedScoreboard")
-		.set({ data: JSON.stringify({ ...existing.data, players }) })
-		.where("id", "=", existing.id)
+		.insertInto("ReportedWeapon")
+		.values({
+			tournamentMatchId:
+				game.target.type === "tournament"
+					? game.target.tournamentMatchId
+					: null,
+			groupMatchId:
+				game.target.type === "sendouq" ? game.target.groupMatchId : null,
+			mapIndex: game.mapIndex,
+			userId: povUserId,
+			weaponSplId,
+		})
+		.onConflict((oc) =>
+			oc
+				.columns(
+					game.target.type === "tournament"
+						? ["tournamentMatchId", "mapIndex", "userId"]
+						: ["groupMatchId", "mapIndex", "userId"],
+				)
+				.doNothing(),
+		)
 		.execute();
 }
 
-/** Returns a tournament match's ingested scoreboards with their 0-based map indexes. */
+/**
+ * Returns a tournament match's ingested scoreboards with their 0-based map
+ * indexes, each derived from the game's linked ingested matches.
+ */
 export async function findScoreboardsByTournamentMatchId(
 	tournamentMatchId: number,
 ) {
 	const rows = await db
-		.selectFrom("IngestedScoreboard")
+		.selectFrom("IngestedMatchLink")
+		.innerJoin(
+			"IngestedMatch",
+			"IngestedMatch.id",
+			"IngestedMatchLink.ingestedMatchId",
+		)
 		.innerJoin(
 			"TournamentMatchGameResult",
 			"TournamentMatchGameResult.id",
-			"IngestedScoreboard.matchGameResultId",
+			"IngestedMatchLink.tournamentMatchGameResultId",
 		)
-		.select(["TournamentMatchGameResult.number", "IngestedScoreboard.data"])
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchGameResult.matchId",
+		)
+		.select([
+			"TournamentMatchGameResult.id as matchGameResultId",
+			"TournamentMatchGameResult.number",
+			"TournamentMatchGameResult.winnerTeamId",
+			opponentOneId.as("opponentOneId"),
+			opponentTwoId.as("opponentTwoId"),
+			"IngestedMatch.data",
+			"IngestedMatch.povUserId",
+		])
 		.where("TournamentMatchGameResult.matchId", "=", tournamentMatchId)
 		.orderBy("TournamentMatchGameResult.number", "asc")
+		.orderBy("IngestedMatchLink.createdAt", "asc")
+		.orderBy("IngestedMatchLink.id", "asc")
 		.execute();
 
-	return rows.map((row) => ({
-		mapIndex: row.number - 1,
-		data: row.data,
-	}));
+	const byGame = new Map<number, typeof rows>();
+	for (const row of rows) {
+		const gameRows = byGame.get(row.matchGameResultId) ?? [];
+		gameRows.push(row);
+		byGame.set(row.matchGameResultId, gameRows);
+	}
+
+	return [...byGame.values()].flatMap((gameRows) => {
+		const first = gameRows[0]!;
+		const loserTeamId =
+			first.winnerTeamId === first.opponentOneId
+				? first.opponentTwoId
+				: first.winnerTeamId === first.opponentTwoId
+					? first.opponentOneId
+					: null;
+
+		const data = Scoreboards.deriveScoreboardData({
+			linked: gameRows.map((row) => ({
+				data: row.data,
+				povUserId: row.povUserId,
+			})),
+			winnerTeamId: first.winnerTeamId,
+			loserTeamId,
+		});
+		if (!data) return [];
+
+		return [{ mapIndex: first.number - 1, data }];
+	});
 }

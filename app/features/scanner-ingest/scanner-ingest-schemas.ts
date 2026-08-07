@@ -12,6 +12,5 @@ const MAX_MATCHES_PER_REQUEST = 50;
 export const ingestBodySchema = z.object({
 	/** the user whose point of view the matches were detected from */
 	povUserId: id.optional(),
-	tournamentId: id.optional(),
 	matches: z.array(scannerMatchSchema).min(1).max(MAX_MATCHES_PER_REQUEST),
 });

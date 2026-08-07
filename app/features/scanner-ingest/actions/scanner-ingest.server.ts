@@ -1,3 +1,4 @@
+import { subDays } from "date-fns";
 import type { ActionFunction } from "react-router";
 import { Config } from "~/config";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -29,114 +30,220 @@ export const action: ActionFunction = async ({ request }) => {
 		badRequestIfFalsy(await UserRepository.findLeanById(povUserId));
 	}
 
-	// xxx: also pass if the ingestion is live footage, if so then check users current activity and use that info instead (can/should also be persisted?)
-	let tournamentId = data.tournamentId ?? null;
-	// the resolving content walk's candidate games, kept so the scoreboard
-	// matching below doesn't re-query them
-	let candidateGames: Scoreboards.IngestableGameWithTournament[] | null = null;
-	if (tournamentId) {
-		badRequestIfFalsy(
-			await ScannerIngestRepository.tournamentStartTime(tournamentId),
-		);
-	} else if (povUserId) {
-		// no explicit tournament: resolve from the matches' content first (the
-		// mode+stage sequence plus roster sides is near-unique in a user's
-		// history), then from when the match was played (a replay scoreboard
-		// carries the original recording time). Single-match requests (live
-		// sends) skip straight to the timestamp — content resolution needs a
-		// sequence to be decisive.
-		if (countAttachableMatches(data.matches) >= 2) {
-			const games = await ScannerIngestRepository.gamesPlayedByUserSince({
-				userId: povUserId,
-				since:
-					// xxx: use date-fns
-					Math.floor(Date.now() / 1000) - CONTENT_RESOLUTION_WINDOW_SECONDS,
-			});
-			tournamentId = Scoreboards.resolveTournamentId({
-				matches: data.matches,
-				games,
-			});
-			if (tournamentId) {
-				candidateGames = games;
-				logger.debug(
-					`ingest: resolved tournament ${tournamentId} for user ${povUserId} from match contents ` +
-						`(${games.length} candidate games)`,
-				);
-			}
-		}
-		if (!tournamentId) {
-			const at = anchorTime(data.matches);
-			tournamentId = await ScannerIngestRepository.tournamentIdAt({
-				userId: povUserId,
-				at,
-			});
-			logger.debug(
-				tournamentId
-					? `ingest: resolved tournament ${tournamentId} for user ${povUserId} from timestamp ${new Date(at).toISOString()}`
-					: `ingest: no tournament for user ${povUserId} at ${new Date(at).toISOString()} (no tournament match of theirs started around then)`,
-			);
-		}
+	const matches = data.matches.filter(
+		(match) => match.lobby === null || match.lobby === "PRIVATE",
+	);
+	if (matches.length === 0) {
+		return {
+			storedMatchesCount: 0,
+			mergedMatchesCount: 0,
+			linkedGamesCount: 0,
+		};
 	}
+
+	const resolved = await resolveIngestContext({
+		matches,
+		povUserId,
+		casterUserId: user?.id ?? null,
+	});
 
 	const { insertedCount, mergedCount, effectiveMatches } =
 		await ScannerIngestRepository.addOrMergeMatches({
-			tournamentId,
 			povUserId,
 			submitterUserId: user?.id ?? null,
-			matches: data.matches,
+			matches,
+			context: resolved?.context ?? null,
 		});
 
-	let storedScoreboardsCount = 0;
-	if (tournamentId && povUserId) {
-		const resolvedTournamentId = tournamentId;
-		const games = candidateGames
-			? candidateGames.filter(
-					(game) => game.tournamentId === resolvedTournamentId,
-				)
-			: await ScannerIngestRepository.gamesPlayedByUserInTournament({
-					userId: povUserId,
-					tournamentId,
-				});
-
-		const matched = Scoreboards.matchedScoreboards({
-			matches: effectiveMatches,
-			games,
+	let linkedGamesCount = 0;
+	if (resolved) {
+		const matched = Scoreboards.matchedGames({
+			matches: effectiveMatches.map((effective) => effective.data),
+			games: resolved.games,
 		});
 
-		storedScoreboardsCount = await ScannerIngestRepository.addScoreboards({
-			scoreboards: matched,
+		linkedGamesCount = await ScannerIngestRepository.addLinks({
+			links: matched.map(({ matchIndex, game }) => ({
+				ingestedMatchId: effectiveMatches[matchIndex]!.id,
+				match: effectiveMatches[matchIndex]!.data,
+				game,
+			})),
 			povUserId,
 		});
 
 		logger.debug(
-			matched.length > 0
-				? `ingest: matched ${matched.length} scoreboards in tournament ${tournamentId} to ` +
-						`[${matched.map((m) => `match ${m.tournamentMatchId} map ${m.mapIndex + 1}`).join(", ")}], ` +
-						`${storedScoreboardsCount} newly stored`
-				: `ingest: no scoreboards matched in tournament ${tournamentId} — user ${povUserId} has ` +
-						`${games.length} reported games there`,
+			`ingest: ${Scoreboards.contextKey(resolved.context)} matched ${matched.length} games, ` +
+				`${linkedGamesCount} newly linked (stored ${insertedCount}, merged ${mergedCount})`,
 		);
 	} else {
 		logger.debug(
-			`ingest: stored ${insertedCount} matches (${mergedCount} merged) without a match context ` +
-				`(tournamentId=${tournamentId}, povUserId=${povUserId})`,
+			`ingest: stored ${insertedCount} matches (${mergedCount} merged) without a resolved context ` +
+				`(povUserId=${povUserId})`,
 		);
 	}
 
 	return {
 		storedMatchesCount: insertedCount,
 		mergedMatchesCount: mergedCount,
-		storedScoreboardsCount,
+		linkedGamesCount,
 	};
 };
 
 /**
  * How far back the POV user's reported games are considered as content-
- * resolution candidates (365 days)
+ * resolution candidates
  */
-const CONTENT_RESOLUTION_WINDOW_SECONDS = 365 * 24 * 60 * 60;
+const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
 
-/** Matches that could attach to a tournament game: their winner is known. */
+interface ResolvedIngestContext {
+	context: Scoreboards.IngestContext;
+	games: Scoreboards.IngestableGameWithContext[];
+}
+
+interface IngestContextCandidate {
+	context: Scoreboards.IngestContext;
+	loadGames: () => Promise<Scoreboards.IngestableGameWithContext[]>;
+}
+
+/**
+ * Resolves the context (tournament or SendouQ match) a request's matches
+ * belong to.
+ *
+ * The user's activity around the time the matches were played is the strong
+ * signal: the SendouQ match resp. tournament match of theirs running then
+ * (for cast footage, the casted sets of tournaments the submitter helps
+ * run as author/organizer/streamer). Candidates are scored by how many
+ * matches would link to their games; a candidate is kept even when nothing links
+ * yet (a live minimap-only match still gets its hint). With no activity,
+ * the matches' content decides: the mode+stage sequence plus roster sides
+ * is near-unique in a user's reported-game history.
+ */
+async function resolveIngestContext({
+	matches,
+	povUserId,
+	casterUserId,
+}: {
+	matches: ScannerMatch[];
+	povUserId: number | null;
+	casterUserId: number | null;
+}): Promise<ResolvedIngestContext | null> {
+	const at = anchorTime(matches);
+	const hasPovMatches = matches.some((match) => !match.cast);
+	const hasCastMatches = matches.some((match) => match.cast);
+
+	const candidates: IngestContextCandidate[] = [];
+	const seenContexts = new Set<string>();
+	const addCandidate = (candidate: IngestContextCandidate) => {
+		const key = Scoreboards.contextKey(candidate.context);
+		if (seenContexts.has(key)) return;
+		seenContexts.add(key);
+		candidates.push(candidate);
+	};
+
+	if (povUserId && hasPovMatches) {
+		const groupMatchId = await ScannerIngestRepository.groupMatchIdAt({
+			userId: povUserId,
+			at,
+		});
+		if (groupMatchId) {
+			addCandidate({
+				context: { type: "sendouq", groupMatchId },
+				loadGames: () =>
+					ScannerIngestRepository.gamesInGroupMatch(groupMatchId),
+			});
+		}
+
+		const tournamentId = await ScannerIngestRepository.tournamentIdAt({
+			userId: povUserId,
+			at,
+		});
+		if (tournamentId) {
+			addCandidate({
+				context: { type: "tournament", tournamentId },
+				loadGames: () =>
+					ScannerIngestRepository.gamesPlayedByUserInTournament({
+						userId: povUserId,
+						tournamentId,
+					}),
+			});
+		}
+	}
+
+	if (casterUserId && hasCastMatches) {
+		const staffTournamentIds =
+			await ScannerIngestRepository.staffTournamentIdsAt({
+				userId: casterUserId,
+				at,
+			});
+		for (const tournamentId of staffTournamentIds) {
+			addCandidate({
+				context: { type: "tournament", tournamentId },
+				loadGames: () =>
+					ScannerIngestRepository.castedGamesInTournament(tournamentId),
+			});
+		}
+	}
+
+	let best: {
+		candidate: IngestContextCandidate;
+		games: Scoreboards.IngestableGameWithContext[];
+		matched: number;
+	} | null = null;
+	for (const candidate of candidates) {
+		const games = await candidate.loadGames();
+		const matched = Scoreboards.matchedGames({ matches, games }).length;
+		if (!best || matched > best.matched) {
+			best = { candidate, games, matched };
+		}
+	}
+	if (best) {
+		logger.debug(
+			`ingest: resolved ${Scoreboards.contextKey(best.candidate.context)} for user ${povUserId} ` +
+				`from activity at ${new Date(at).toISOString()} (${best.matched} matches aligned, ${candidates.length} candidates)`,
+		);
+		return {
+			context: best.candidate.context,
+			games: best.games,
+		};
+	}
+
+	if (povUserId && hasPovMatches && countAttachableMatches(matches) >= 2) {
+		const since = Math.floor(
+			subDays(new Date(), CONTENT_RESOLUTION_WINDOW_DAYS).getTime() / 1000,
+		);
+		const games = [
+			...(await ScannerIngestRepository.gamesPlayedByUserSince({
+				userId: povUserId,
+				since,
+			})),
+			...(await ScannerIngestRepository.sendouqGamesPlayedByUserSince({
+				userId: povUserId,
+				since,
+			})),
+		];
+		const context = Scoreboards.resolveContext({ matches, games });
+		if (context) {
+			const key = Scoreboards.contextKey(context);
+			logger.debug(
+				`ingest: resolved ${key} for user ${povUserId} from match contents ` +
+					`(${games.length} candidate games)`,
+			);
+			return {
+				context,
+				games: games.filter(
+					(game) => Scoreboards.contextKey(game.context) === key,
+				),
+			};
+		}
+	}
+
+	logger.debug(
+		`ingest: no context for user ${povUserId} at ${new Date(at).toISOString()}`,
+	);
+	return null;
+}
+
+/** Matches that could link to a reported game: their winner is known. */
 function countAttachableMatches(matches: ScannerMatch[]): number {
 	return matches.filter((match) => match.winner !== null).length;
 }
