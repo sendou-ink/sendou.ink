@@ -1,0 +1,76 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 22,
+    "timestamp": "9/7/2026 18:17",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "CPT-Eevee☆",
+        "weaponId": 8000,
+        "paint": 466,
+        "ka": 7,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "8♪cloudy",
+        "weaponId": 7022,
+        "paint": 607,
+        "ka": 4,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "あさごはん",
+        "weaponId": 2070,
+        "paint": 472,
+        "ka": 5,
+        "d": 1,
+        "s": 1
+      },
+      {
+        "name": "bobong",
+        "weaponId": 201,
+        "paint": 159,
+        "ka": 1,
+        "d": 1,
+        "s": 0
+      },
+      {
+        "name": "maomaoく3",
+        "weaponId": 2060,
+        "paint": 405,
+        "ka": 3,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "かなめ",
+        "weaponId": 4000,
+        "paint": 753,
+        "ka": 1,
+        "d": 3,
+        "s": 3
+      },
+      {
+        "name": "Ccaramel",
+        "weaponId": 8010,
+        "paint": 381,
+        "ka": 1,
+        "d": 4,
+        "s": 0
+      }
+    ],
+    "replayCode": "R24X-YWMH-K2S6-TK9G",
+    "stageLabel": "Marlin Airport"
+  },
+  "options": {
+    "notes": "Twitch-stream capture. 7-player match: the 8th pill is empty and must not be emitted. Replay code hand-verified from the zoomed frame (old parser returned no code; a later one misread T as 7)."
+  }
+}

@@ -18,7 +18,7 @@ import {
 	type DeathData,
 } from "../../core/detectors/death/index";
 import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
-import { createScoreboardReplayDetector } from "../../core/detectors/scoreboard-replay/index";
+import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	type Fixture,
 	isFieldSkipped,
@@ -114,8 +114,8 @@ export async function runDeathSuite(
 	const scoreboardPositives = loadFixtures("scoreboard").filter(
 		(f) => f.expected.event === "Scoreboard",
 	);
-	const replayPositives = loadFixtures("scoreboard-replay").filter(
-		(f) => f.expected.event === "ScoreboardReplay",
+	const replayPositives = loadFixtures("scoreboard-battle-log-replay").filter(
+		(f) => f.expected.event === "ScoreboardBattleLogReplay",
 	);
 	for (const fixture of mine([...scoreboardPositives, ...replayPositives])) {
 		test(`death gate stays quiet on ${fixture.dir.split("/").slice(-2).join("/")}`, async () => {
@@ -145,7 +145,7 @@ export async function runDeathSuite(
 	);
 	if (crossFixtures.length > 0) {
 		const scoreboardDetector = createScoreboardDetector(resources);
-		const replayDetector = createScoreboardReplayDetector(resources);
+		const replayDetector = createScoreboardBattleLogReplayDetector(resources);
 		for (const fixture of crossFixtures) {
 			test(`scoreboard gates stay quiet on death/${fixture.name}`, async () => {
 				const live = await runDetectorOnFixture(scoreboardDetector, fixture);

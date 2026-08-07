@@ -10,11 +10,11 @@ import { loadOpenCV } from "../core/cv";
 import { createDeathDetector } from "../core/detectors/death/index";
 import { createMapStartDetector } from "../core/detectors/map-start/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
+import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
-import { createScoreboardReplayDetector } from "../core/detectors/scoreboard-replay/index";
 import type { Detector } from "../core/detectors/types";
 import {
 	type Fixture,
@@ -103,8 +103,8 @@ const otherPositives = [
 	...loadFixtures("scoreboard").filter(
 		(f) => f.expected.event === "Scoreboard",
 	),
-	...loadFixtures("scoreboard-replay").filter(
-		(f) => f.expected.event === "ScoreboardReplay",
+	...loadFixtures("scoreboard-battle-log-replay").filter(
+		(f) => f.expected.event === "ScoreboardBattleLogReplay",
 	),
 	...loadFixtures("death").filter((f) => f.expected.event === "Death"),
 	...loadFixtures("map-start").filter((f) => f.expected.event === "MapStart"),
@@ -134,7 +134,7 @@ for (const fixture of loadFixtures("negative")) {
 
 const otherDetectors: Detector<unknown>[] = [
 	createScoreboardDetector(resources) as Detector<unknown>,
-	createScoreboardReplayDetector(resources) as Detector<unknown>,
+	createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
 	createDeathDetector(resources) as Detector<unknown>,
 	createMapStartDetector(resources) as Detector<unknown>,
 ];

@@ -4,7 +4,6 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import type { BattleLogData } from "../core/detectors/battle-log/index";
 import type { DeathData } from "../core/detectors/death/index";
 import type {
 	MinimapData,
@@ -14,7 +13,8 @@ import type {
 import { SPECTATOR_SLOTS } from "../core/detectors/minimap/rois";
 import type { ObjectiveData } from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
-import type { ScoreboardReplayData } from "../core/detectors/scoreboard-replay/index";
+import type { ScoreboardBattleLogData } from "../core/detectors/scoreboard-battle-log/index";
+import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "../core/detectors/types";
 import {
 	buildScannerMatches,
@@ -100,13 +100,13 @@ function replayScoreboard(
 	} = {},
 ): DetectedEvent & { detectedAt?: number } {
 	const base = scoreboard(t).data as ScoreboardData;
-	const data: ScoreboardReplayData = {
+	const data: ScoreboardBattleLogReplayData = {
 		...base,
 		timestamp,
 		replayCode,
 		matchScores: [88, 71],
 	};
-	return { type: "ScoreboardReplay", t, confidence: 0.9, data };
+	return { type: "ScoreboardBattleLogReplay", t, confidence: 0.9, data };
 }
 
 function battleLogScoreboard(
@@ -114,12 +114,12 @@ function battleLogScoreboard(
 	{ timestamp = null as string | null } = {},
 ): DetectedEvent & { detectedAt?: number } {
 	const base = scoreboard(t).data as ScoreboardData;
-	const data: BattleLogData = {
+	const data: ScoreboardBattleLogData = {
 		...base,
 		timestamp,
 		matchScores: [100, 0],
 	};
-	return { type: "BattleLog", t, confidence: 0.9, data };
+	return { type: "ScoreboardBattleLog", t, confidence: 0.9, data };
 }
 
 function teammate(weaponId: MainWeaponId | null, i: number): MinimapTeammate {
@@ -499,7 +499,7 @@ test("a replay scoreboard supplies replay code, set score and recording time", (
 	assert.equal(match.playedAt, new Date(2025, 11, 25, 21, 30).getTime());
 });
 
-test("a battle-log scoreboard closes a match and supplies the recording time without a replay code", () => {
+test("a battle log scoreboard closes a match and supplies the recording time without a replay code", () => {
 	const event = battleLogScoreboard(300, { timestamp: "25.12.2025 21:30" });
 	event.detectedAt = Date.UTC(2025, 11, 26, 12, 0);
 	const built = buildScannerMatches([event]);

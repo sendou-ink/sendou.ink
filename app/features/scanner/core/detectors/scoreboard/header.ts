@@ -103,13 +103,13 @@ export interface TagBandOptions extends RecognizeOptions {
 	 */
 	tagDarkMax?: number;
 	/**
-	 * Non-tag columns tolerated before the tag begins. The battle-log tags
+	 * Non-tag columns tolerated before the tag begins. The battle log tags
 	 * are not left-anchored (a leading rank icon shifts line 1 per lobby
 	 * type), so its bands start on the stage photo and scan for the tag.
 	 */
 	tagLeadInMax?: number;
 	/**
-	 * Tag-like row fraction a column must reach. The battle-log tags are
+	 * Tag-like row fraction a column must reach. The battle log tags are
 	 * subtly tilted, so a horizontal band always catches a few photo rows
 	 * above or below the box — those bands pass a looser fraction.
 	 */
@@ -118,8 +118,8 @@ export interface TagBandOptions extends RecognizeOptions {
 
 /**
  * OCR one header band: trim the crop to the black-tag extent, then
- * recognize it as a single line. Shared with the scoreboard-replay header,
- * whose tags have the same style at different positions/sizes.
+ * recognize it as a single line. Shared with the scoreboard-battle-log-replay
+ * header, whose tags have the same style at different positions/sizes.
  */
 export function readTagBand(
 	gray: Mat,

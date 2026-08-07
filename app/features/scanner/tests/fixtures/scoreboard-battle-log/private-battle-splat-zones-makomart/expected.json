@@ -1,0 +1,88 @@
+{
+  "event": "ScoreboardBattleLog",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 10,
+    "timestamp": "5/8/2026 19:16",
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 3,
+    "players": [
+      {
+        "name": "BDAYBOY",
+        "paint": 1955,
+        "ka": 13,
+        "d": 5,
+        "s": 8,
+        "weaponId": 60
+      },
+      {
+        "name": "∴Columbina",
+        "paint": 1430,
+        "ka": 8,
+        "d": 7,
+        "s": 6,
+        "weaponId": 3020
+      },
+      {
+        "name": "xtsy",
+        "paint": 956,
+        "ka": 9,
+        "d": 4,
+        "s": 4,
+        "weaponId": 50
+      },
+      {
+        "name": "Sendou",
+        "paint": 917,
+        "ka": 6,
+        "d": 9,
+        "s": 3,
+        "weaponId": 211
+      },
+      {
+        "name": "Bronx Thug",
+        "paint": 1512,
+        "ka": 13,
+        "d": 7,
+        "s": 7,
+        "weaponId": 3011
+      },
+      {
+        "name": "mr 2how",
+        "paint": 1380,
+        "ka": 11,
+        "d": 9,
+        "s": 7,
+        "weaponId": 8002
+      },
+      {
+        "name": "Katfesh",
+        "paint": 1473,
+        "ka": 3,
+        "d": 3,
+        "s": 7,
+        "weaponId": 2071
+      },
+      {
+        "name": "-Artemis->",
+        "paint": 1031,
+        "ka": 10,
+        "d": 8,
+        "s": 5,
+        "weaponId": 1002
+      }
+    ],
+    "stageLabel": "MakoMart"
+  },
+  "options": {
+    "skipFields": [
+      "players.0.name",
+      "players.1.name"
+    ],
+    "notes": "720p stream capture with horizontal banding. players.0.name (BDAYBOY) reads BOAuBOY and players.1.name (∴Columbina) reads ∴Columhina — the banding cuts glyph cores at this size. Weapons row order: N-ZAP '85, Sloshing Machine, .52 Gal, Custom Blaster, Tri-Slosher Nouveau, Stickerz Splatana Stamper, Snipewriter 5B, Carbon Roller ANG-L."
+  }
+}

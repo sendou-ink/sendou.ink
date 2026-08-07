@@ -1,0 +1,81 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 17,
+    "timestamp": "3/7/2026 21:22",
+    "replayCode": "R0M1-UCVK-F5AK-VUL2",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "★Bønk★•PE•",
+        "weaponId": 1010,
+        "paint": 1210,
+        "ka": 19,
+        "d": 6,
+        "s": 5
+      },
+      {
+        "name": "Enamel",
+        "weaponId": 2070,
+        "paint": 1596,
+        "ka": 14,
+        "d": 3,
+        "s": 6
+      },
+      {
+        "name": "Sen★u",
+        "weaponId": 10,
+        "paint": 1534,
+        "ka": 13,
+        "d": 10,
+        "s": 6
+      },
+      {
+        "name": "Rιppιn←H",
+        "weaponId": 8001,
+        "paint": 1248,
+        "ka": 10,
+        "d": 11,
+        "s": 5
+      },
+      {
+        "name": "nwrm",
+        "weaponId": 50,
+        "paint": 1018,
+        "ka": 14,
+        "d": 12,
+        "s": 3
+      },
+      {
+        "name": "slord",
+        "weaponId": 20,
+        "paint": 1807,
+        "ka": 8,
+        "d": 4,
+        "s": 6
+      },
+      {
+        "name": "Olise",
+        "weaponId": 2070,
+        "paint": 1535,
+        "ka": 10,
+        "d": 3,
+        "s": 6
+      },
+      {
+        "name": "AHOOLduιUuU",
+        "weaponId": 1015,
+        "paint": 870,
+        "ka": 12,
+        "d": 14,
+        "s": 3
+      }
+    ],
+    "stageLabel": "Barnacle & Dime"
+  }
+}

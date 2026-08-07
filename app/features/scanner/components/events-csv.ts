@@ -24,11 +24,11 @@ import {
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
+import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
-import type { ScoreboardReplayData } from "../core/detectors/scoreboard-replay/index";
 import { formatClock, formatTime } from "./format";
 import {
 	lobbyLabel,
@@ -218,8 +218,10 @@ function eventCells(event: CsvEvent): Cell[] {
 			];
 		}
 		default: {
-			// Scoreboard, ScoreboardReplay and BattleLog share the base shape
-			const d = event.data as ScoreboardData & Partial<ScoreboardReplayData>;
+			// Scoreboard, ScoreboardBattleLogReplay and ScoreboardBattleLog share
+			// the base shape
+			const d = event.data as ScoreboardData &
+				Partial<ScoreboardBattleLogReplayData>;
 			return [
 				...base,
 				lobbyLabel(d.lobby),

@@ -29,7 +29,7 @@
  *   best read per merge window, so once a read is that good further parses
  *   cannot change the outcome. A gate that reports a content `signature`
  *   ends the streak the moment the signature moves past
- *   `signatureTolerance`: browsing distinct battle-log/replay entries never
+ *   `signatureTolerance`: browsing distinct battle log / replay entries never
  *   drops those gates, so without the signature one sufficient read would
  *   suppress every subsequent entry for as long as the screen family stays
  *   up. A
@@ -83,7 +83,7 @@ export interface SchedulerOptions {
 	/**
 	 * a gate signature cell moving more than this since the streak's last
 	 * parse means the screen's content changed and the streak resets
-	 * (measured on battle-log browsing: static-screen noise ≤2 per cell,
+	 * (measured on battle log browsing: static-screen noise ≤2 per cell,
 	 * entry flips ≥57)
 	 */
 	signatureTolerance: number;

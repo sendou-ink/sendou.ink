@@ -1,15 +1,15 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
  * Draw all scoreboard ROIs on a (normalized) frame for visual calibration.
- * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-replay|battle-log]
+ * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log]
  */
 import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
-import * as bl from "../../app/features/scanner/core/detectors/battle-log/rois";
 import * as death from "../../app/features/scanner/core/detectors/death/rois";
 import * as mapStart from "../../app/features/scanner/core/detectors/map-start/rois";
 import * as minimap from "../../app/features/scanner/core/detectors/minimap/rois";
 import * as sb from "../../app/features/scanner/core/detectors/scoreboard/rois";
-import * as replay from "../../app/features/scanner/core/detectors/scoreboard-replay/rois";
+import * as bl from "../../app/features/scanner/core/detectors/scoreboard-battle-log/rois";
+import * as replay from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
 import {
 	matToFrameData,
 	normalizeFrame,
@@ -22,7 +22,7 @@ const [imagePath, outPath = "roi-overlay.png", detector = "scoreboard"] =
 	process.argv.slice(2);
 if (!imagePath) {
 	console.error(
-		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-replay|battle-log|death|map-start|minimap]",
+		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|death|map-start|minimap]",
 	);
 	process.exit(1);
 }
@@ -53,7 +53,7 @@ if (detector === "scoreboard") {
 	}
 	for (const roi of sb.TEAM_SCORE_ROIS) rect(frame, roi, [0, 128, 255]);
 	for (const roi of sb.GATE_PANEL_PROBES) rect(frame, roi, [255, 255, 0]);
-} else if (detector === "scoreboard-replay") {
+} else if (detector === "scoreboard-battle-log-replay") {
 	for (const dx of replay.PANEL_XS) {
 		for (const cy of replay.ROW_CENTERS) {
 			rect(frame, replay.weaponRoi(cy, dx), [255, 0, 0]);
@@ -72,7 +72,7 @@ if (detector === "scoreboard") {
 	rect(frame, replay.HEADER_TOP_BAND, [0, 255, 0]);
 	rect(frame, replay.HEADER_BOTTOM_BAND, [0, 255, 0]);
 	rect(frame, replay.REPLAY_CODE_ROI, [0, 255, 0]);
-} else if (detector === "battle-log") {
+} else if (detector === "scoreboard-battle-log") {
 	for (const dy of bl.PANEL_DYS) {
 		for (const base of bl.ROW_CENTERS) {
 			const cy = base + dy;

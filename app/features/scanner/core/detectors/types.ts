@@ -25,7 +25,7 @@ export interface GateResult {
 	 * coarse content fingerprint of the recognized screen (grid-cell means
 	 * over content ROIs, see image.ts roiSignature) — the scheduler re-arms a
 	 * suppressed streak when it moves, for screens whose distinct real
-	 * occurrences keep the gate passing (browsing battle-log / replay entries)
+	 * occurrences keep the gate passing (browsing battle log / replay entries)
 	 */
 	signature?: number[];
 }

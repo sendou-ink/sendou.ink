@@ -21,16 +21,16 @@ import {
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
+import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
-import type { ScoreboardReplayData } from "../core/detectors/scoreboard-replay/index";
 import { mainWeaponLabel, stageLabel, weaponLabel } from "./labels";
 
 /** Scoreboard data with the replay extras present when the event has them. */
 export type CardData = ScoreboardData &
-	Partial<Pick<ScoreboardReplayData, "timestamp" | "replayCode">>;
+	Partial<Pick<ScoreboardBattleLogReplayData, "timestamp" | "replayCode">>;
 
 /** Any detector's event payload that can prefill a fixture. */
 export type FixtureData =

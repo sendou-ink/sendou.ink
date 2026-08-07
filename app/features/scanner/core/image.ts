@@ -132,7 +132,7 @@ export function minChannel(mat: Mat, roi?: Roi): Mat {
  * Coarse content fingerprint of a grayscale ROI: the mean brightness of each
  * cell in a cols x rows grid over the region. Cheap enough for gates.
  * Consecutive frames of one static screen move a cell by ≤~2 while different
- * text/content moves cells by tens (measured on battle-log browsing footage)
+ * text/content moves cells by tens (measured on battle log browsing footage)
  * — the scheduler compares fingerprints to re-arm suppression when a passing
  * gate's screen flips to a new real occurrence (GateResult.signature).
  */

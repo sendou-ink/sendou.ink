@@ -1,11 +1,11 @@
 import { WeaponImage } from "~/components/Image";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
-import { BATTLE_LOG_EVENT_TYPE } from "../core/detectors/battle-log/index";
 import type {
 	ScoreboardData,
 	ScoreboardPlayer,
 } from "../core/detectors/scoreboard/index";
-import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-replay/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { AbilityPopover } from "./AbilityGrid";
 import { FrameThumb } from "./FrameThumb";
 import type { CardData } from "./fixture-export";
@@ -77,8 +77,8 @@ export function ScoreboardCard(props: {
 	const { t, confidence, thumbnail, detectedAt, getFrame, onInspect } = props;
 	const eventType = props.eventType ?? "Scoreboard";
 	const data = props.data as CardData;
-	const isReplay = eventType === SCOREBOARD_REPLAY_EVENT_TYPE;
-	const isBattleLog = eventType === BATTLE_LOG_EVENT_TYPE;
+	const isReplay = eventType === SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE;
+	const isScoreboardBattleLog = eventType === SCOREBOARD_BATTLE_LOG_EVENT_TYPE;
 	return (
 		<div className="card">
 			<div className="meta">
@@ -87,7 +87,11 @@ export function ScoreboardCard(props: {
 					confidence={confidence}
 					type={eventType}
 					label={
-						isReplay ? "replay" : isBattleLog ? "battle log" : "scoreboard"
+						isReplay
+							? "replay"
+							: isScoreboardBattleLog
+								? "battle log"
+								: "scoreboard"
 					}
 				/>
 				{(data.mode !== null || data.stage !== null) && (

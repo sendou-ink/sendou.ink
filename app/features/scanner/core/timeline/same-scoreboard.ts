@@ -11,7 +11,7 @@
  * frames), so a split only happens on evidence that survives that noise.
  */
 import type { ScoreboardData } from "../detectors/scoreboard/index";
-import type { ScoreboardReplayData } from "../detectors/scoreboard-replay/index";
+import type { ScoreboardBattleLogReplayData } from "../detectors/scoreboard-battle-log-replay/index";
 
 /**
  * Replay codes of the same replay re-read on a low-fidelity capture differ
@@ -61,8 +61,10 @@ function paints(data: Partial<ScoreboardData>): number[] {
  * only compared when both sides read them, so a null read never splits.
  */
 export function sameScoreboardMatch(a: unknown, b: unknown): boolean {
-	const da = a as Partial<ScoreboardData> & Partial<ScoreboardReplayData>;
-	const db = b as Partial<ScoreboardData> & Partial<ScoreboardReplayData>;
+	const da = a as Partial<ScoreboardData> &
+		Partial<ScoreboardBattleLogReplayData>;
+	const db = b as Partial<ScoreboardData> &
+		Partial<ScoreboardBattleLogReplayData>;
 
 	const stageA = da.stage ?? null;
 	const stageB = db.stage ?? null;

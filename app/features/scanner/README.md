@@ -74,9 +74,10 @@ sequenceDiagram
   assumes a browser, so the client tree loads via `React.lazy` after
   `useHydrated`. Nothing from `core/worker/capture/store` may be imported at
   route-module top level.
-- Eight detectors: `scoreboard` (results screen), `scoreboard-replay`
-  (replay-browser detail), `battle-log` (Recent Battles detail — the same
-  data as the replay screen sans the replay code, panels stacked instead of
+- Eight detectors: `scoreboard` (results screen),
+  `scoreboard-battle-log-replay` (replay-browser detail),
+  `scoreboard-battle-log` (Recent Battles detail — the same data as the
+  replay screen sans the replay code, panels stacked instead of
   side by side), `scoreboard-own` (personal results), `death`
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay,
   plus the casted 8-player spectator map as a gated variant), `objective`

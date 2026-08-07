@@ -8,7 +8,6 @@
  * Usage: pnpm scanner:report
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
-import { createBattleLogDetector } from "../../app/features/scanner/core/detectors/battle-log/index";
 import {
 	createDeathDetector,
 	type DeathData,
@@ -22,14 +21,15 @@ import {
 	type MinimapData,
 } from "../../app/features/scanner/core/detectors/minimap/index";
 import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
+import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
+import {
+	createScoreboardBattleLogReplayDetector,
+	type ScoreboardBattleLogReplayData,
+} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
 } from "../../app/features/scanner/core/detectors/scoreboard-own/index";
-import {
-	createScoreboardReplayDetector,
-	type ScoreboardReplayData,
-} from "../../app/features/scanner/core/detectors/scoreboard-replay/index";
 import type { Detector } from "../../app/features/scanner/core/detectors/types";
 import {
 	loadFixtures,
@@ -42,7 +42,7 @@ const resources = await loadScoreboardResources();
 
 interface Config {
 	label: string;
-	detector: Detector<Partial<ScoreboardReplayData>>;
+	detector: Detector<Partial<ScoreboardBattleLogReplayData>>;
 	fixturesDir: string;
 	event: string;
 }
@@ -55,16 +55,16 @@ const configs: Config[] = [
 		event: "Scoreboard",
 	},
 	{
-		label: "scoreboard-replay",
-		detector: createScoreboardReplayDetector(resources),
-		fixturesDir: "scoreboard-replay",
-		event: "ScoreboardReplay",
+		label: "scoreboard-battle-log-replay",
+		detector: createScoreboardBattleLogReplayDetector(resources),
+		fixturesDir: "scoreboard-battle-log-replay",
+		event: "ScoreboardBattleLogReplay",
 	},
 	{
-		label: "battle-log",
-		detector: createBattleLogDetector(resources),
-		fixturesDir: "battle-log",
-		event: "BattleLog",
+		label: "scoreboard-battle-log",
+		detector: createScoreboardBattleLogDetector(resources),
+		fixturesDir: "scoreboard-battle-log",
+		event: "ScoreboardBattleLog",
 	},
 ];
 

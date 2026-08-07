@@ -12,7 +12,7 @@ function event(
 	return { type, t, confidence, data: { t } };
 }
 
-/** A ScoreboardReplay event with just the identity-relevant data fields. */
+/** A ScoreboardBattleLogReplay event with just the identity-relevant data fields. */
 function replay(
 	t: number,
 	confidence: number,
@@ -22,7 +22,7 @@ function replay(
 	},
 ): DetectedEvent {
 	return {
-		type: "ScoreboardReplay",
+		type: "ScoreboardBattleLogReplay",
 		t,
 		confidence,
 		data: {

@@ -3,7 +3,6 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
-import * as bl from "../core/detectors/battle-log/rois";
 import type { DeathData } from "../core/detectors/death/index";
 import * as death from "../core/detectors/death/rois";
 import type { MapStartData } from "../core/detectors/map-start/index";
@@ -12,9 +11,10 @@ import type { MinimapData } from "../core/detectors/minimap/index";
 import * as minimap from "../core/detectors/minimap/rois";
 import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
 import * as sb from "../core/detectors/scoreboard/rois";
+import * as bl from "../core/detectors/scoreboard-battle-log/rois";
+import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
-import * as replay from "../core/detectors/scoreboard-replay/rois";
 import type { DetectedEvent } from "../core/detectors/types";
 import { scannerSearchParams } from "../scanner-search-params";
 import { claimInspectFrame } from "../store/inspect";
@@ -191,7 +191,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		}
 		return;
 	}
-	if (detector === "battle-log") {
+	if (detector === "scoreboard-battle-log") {
 		for (const dy of bl.PANEL_DYS) {
 			for (const base of bl.ROW_CENTERS) {
 				const cy = base + dy;
@@ -210,7 +210,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		rect(bl.HEADER_BOTTOM_BAND, "#34d399");
 		return;
 	}
-	if (detector === "scoreboard-replay") {
+	if (detector === "scoreboard-battle-log-replay") {
 		for (const dx of replay.PANEL_XS) {
 			for (const cy of replay.ROW_CENTERS) {
 				rect(replay.weaponRoi(cy, dx), "#f87171");
@@ -336,8 +336,8 @@ export function ScreenshotPage() {
 
 	const event = active?.events[0] as DetectedEvent<CardData> | undefined;
 	const rows = (event?.debug?.rows ?? []) as ScoreboardRowDebug[];
-	const isReplay = activeDetector === "scoreboard-replay";
-	const isBattleLog = activeDetector === "battle-log";
+	const isReplay = activeDetector === "scoreboard-battle-log-replay";
+	const isScoreboardBattleLog = activeDetector === "scoreboard-battle-log";
 	const isDeath = activeDetector === "death";
 	const isMapStart = activeDetector === "map-start";
 	const isOwn = activeDetector === "scoreboard-own";
@@ -345,7 +345,7 @@ export function ScreenshotPage() {
 	const winnerSide = String(event?.debug?.winnerSide ?? "left");
 	const rowRois = isReplay
 		? replayRows(winnerSide)
-		: isBattleLog
+		: isScoreboardBattleLog
 			? battleLogRows(winnerSide)
 			: scoreboardRows();
 
@@ -507,7 +507,7 @@ export function ScreenshotPage() {
 				</p>
 			)}
 
-			{frame && event && isBattleLog && (
+			{frame && event && isScoreboardBattleLog && (
 				<p>
 					timestamp <b>{event.data.timestamp ?? "?"}</b>
 					{" · "}match scores {JSON.stringify(event.data.matchScores)}

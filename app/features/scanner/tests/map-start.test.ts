@@ -14,7 +14,7 @@ import {
 	type MapStartData,
 } from "../core/detectors/map-start/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
-import { createScoreboardReplayDetector } from "../core/detectors/scoreboard-replay/index";
+import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	type Fixture,
 	isFieldSkipped,
@@ -92,8 +92,8 @@ const otherPositives = [
 	...loadFixtures("scoreboard").filter(
 		(f) => f.expected.event === "Scoreboard",
 	),
-	...loadFixtures("scoreboard-replay").filter(
-		(f) => f.expected.event === "ScoreboardReplay",
+	...loadFixtures("scoreboard-battle-log-replay").filter(
+		(f) => f.expected.event === "ScoreboardBattleLogReplay",
 	),
 	...loadFixtures("death").filter((f) => f.expected.event === "Death"),
 ];
@@ -121,7 +121,7 @@ for (const fixture of loadFixtures("negative")) {
 }
 
 const scoreboardDetector = createScoreboardDetector(resources);
-const replayDetector = createScoreboardReplayDetector(resources);
+const replayDetector = createScoreboardBattleLogReplayDetector(resources);
 const deathDetector = createDeathDetector(resources);
 for (const fixture of fixtures.filter((f) => f.expected.event === "MapStart")) {
 	test(`other gates stay quiet on map-start/${fixture.name}`, async () => {

@@ -1,0 +1,79 @@
+{
+  "event": "ScoreboardBattleLog",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 21,
+    "timestamp": "5/8/2026 19:30",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "xtsy",
+        "weaponId": 8000,
+        "paint": 591,
+        "ka": 6,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "BDAYBOY",
+        "weaponId": 60,
+        "paint": 741,
+        "ka": 4,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "Sendou",
+        "weaponId": 211,
+        "paint": 296,
+        "ka": 4,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "∴Columhina",
+        "weaponId": 3020,
+        "paint": 529,
+        "ka": 3,
+        "d": 0,
+        "s": 1
+      },
+      {
+        "name": "mr 2how",
+        "weaponId": 8002,
+        "paint": 503,
+        "ka": 2,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "name": "Bronx Thug",
+        "weaponId": 41,
+        "paint": 482,
+        "ka": 1,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "-Hrtemis->",
+        "weaponId": 1001,
+        "paint": 310,
+        "ka": 1,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "Katfesh",
+        "weaponId": 2070,
+        "paint": 562,
+        "ka": 0,
+        "d": 0,
+        "s": 2
+      }
+    ]
+  }
+}

@@ -163,14 +163,17 @@ for (const fixture of fixtures) {
 	});
 }
 
-// Mirror of the cross-negative sweeps in suites/scoreboard-replay.ts and
-// battle-log.test.ts: the live gate must stay quiet on every replay-browser
-// and battle-log positive.
+// Mirror of the cross-negative sweeps in
+// suites/scoreboard-battle-log-replay.ts and scoreboard-battle-log.test.ts:
+// the live gate must stay quiet on every replay-browser and battle log
+// positive.
 for (const fixture of [
-	...loadFixtures("scoreboard-replay").filter(
-		(f) => f.expected.event === "ScoreboardReplay",
+	...loadFixtures("scoreboard-battle-log-replay").filter(
+		(f) => f.expected.event === "ScoreboardBattleLogReplay",
 	),
-	...loadFixtures("battle-log").filter((f) => f.expected.event === "BattleLog"),
+	...loadFixtures("scoreboard-battle-log").filter(
+		(f) => f.expected.event === "ScoreboardBattleLog",
+	),
 ]) {
 	test(`scoreboard gate stays quiet on ${fixture.name}`, async () => {
 		const { gate } = await runDetectorOnFixture(detector, fixture);

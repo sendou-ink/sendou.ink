@@ -3,13 +3,14 @@
  * Same-type events within a merge window collapse into one, keeping the
  * highest-confidence version; events below a confidence floor are dropped.
  */
-import { BATTLE_LOG_EVENT_TYPE } from "../detectors/battle-log/index";
+
 import {
 	OBJECTIVE_EVENT_TYPE,
 	sameObjectiveData,
 } from "../detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
-import { SCOREBOARD_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-replay/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "../detectors/types";
 import { sameScoreboardMatch } from "./same-scoreboard";
 
@@ -45,8 +46,8 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	mergeWindowByType: { Death: 8, Minimap: 5, [OBJECTIVE_EVENT_TYPE]: 10 },
 	sameEventDataByType: {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
-		[SCOREBOARD_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
-		[BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
+		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
+		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
 		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
 	},
 	minConfidence: 0.6,

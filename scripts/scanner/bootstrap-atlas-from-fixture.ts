@@ -31,7 +31,7 @@ import {
 import {
 	CODE_TEXT_HEIGHT,
 	REPLAY_CODE_ROI,
-} from "../../app/features/scanner/core/detectors/scoreboard-replay/rois";
+} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
 import type { AtlasMeta } from "../../app/features/scanner/core/glyphs";
 import {
 	normalizeFrame,
@@ -626,15 +626,18 @@ for (const source of SOURCES) {
 // so keep every occurrence (array collector), like names.
 const REPLAY_SOURCES: { frame: string; code: string }[] = [
 	{
-		frame: "scoreboard-replay/private-battle-splat-zones-hagglefish/frame.jpeg",
+		frame:
+			"scoreboard-battle-log-replay/private-battle-splat-zones-hagglefish/frame.jpeg",
 		code: "R6KE-D064-3CXD-XVKL",
 	},
 	{
-		frame: "scoreboard-replay/anarchy-open-rainmaker-knockout-museum/frame.png",
+		frame:
+			"scoreboard-battle-log-replay/anarchy-open-rainmaker-knockout-museum/frame.png",
 		code: "RWYQ-4X37-M1EL-EGGQ",
 	},
 	{
-		frame: "scoreboard-replay/private-battle-crableg-capital/frame.png",
+		frame:
+			"scoreboard-battle-log-replay/private-battle-crableg-capital/frame.png",
 		code: "R1V4-PAHW-GGM2-PD9S",
 	},
 	// Heavily compressed stream captures: font-rendered templates lose to
@@ -642,15 +645,18 @@ const REPLAY_SOURCES: { frame: string; code: string }[] = [
 	// chars they cover (8 B F J N T U 5 among them) need crops at this
 	// fidelity. brinewater-1411/marlin stay out as generalization checks.
 	{
-		frame: "scoreboard-replay/x-battle-rainmaker-brinewater-1404/frame.png",
+		frame:
+			"scoreboard-battle-log-replay/x-battle-rainmaker-brinewater-1404/frame.png",
 		code: "R80B-00DL-WF4X-V3CA",
 	},
 	{
-		frame: "scoreboard-replay/x-battle-rainmaker-brinewater-1416/frame.png",
+		frame:
+			"scoreboard-battle-log-replay/x-battle-rainmaker-brinewater-1416/frame.png",
 		code: "RUH3-3NEF-F5FY-PAJL",
 	},
 	{
-		frame: "scoreboard-replay/x-battle-rainmaker-urchin-1434/frame.png",
+		frame:
+			"scoreboard-battle-log-replay/x-battle-rainmaker-urchin-1434/frame.png",
 		code: "RUCT-5HNH-XWDC-J51U",
 	},
 ];

@@ -55,8 +55,8 @@ interface ExpectedMinimapEnemy {
 interface ExpectedScoreboard {
 	event:
 		| "Scoreboard"
-		| "ScoreboardReplay"
-		| "BattleLog"
+		| "ScoreboardBattleLogReplay"
+		| "ScoreboardBattleLog"
 		| "ScoreboardOwn"
 		| "Death"
 		| "MapStart"
@@ -69,9 +69,9 @@ interface ExpectedScoreboard {
 		stage?: StageId;
 		/** informational for the human corrector; tests compare `stage` */
 		stageLabel?: string;
-		/** ScoreboardReplay + BattleLog only */
+		/** ScoreboardBattleLogReplay + ScoreboardBattleLog only */
 		timestamp?: string;
-		/** ScoreboardReplay only */
+		/** ScoreboardBattleLogReplay only */
 		replayCode?: string;
 		/** the "Score:" banner game scores, [winner, loser]; KO winner = 100 */
 		matchScores?: [number | null, number | null];

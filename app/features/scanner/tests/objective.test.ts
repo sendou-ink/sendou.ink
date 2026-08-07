@@ -16,8 +16,8 @@ import {
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
+import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
-import { createScoreboardReplayDetector } from "../core/detectors/scoreboard-replay/index";
 import type { Detector } from "../core/detectors/types";
 import {
 	type Fixture,
@@ -134,7 +134,7 @@ for (const fixture of fixtures) {
 // stay quiet on their positives.
 const otherPositiveSets = [
 	["scoreboard", "Scoreboard"],
-	["scoreboard-replay", "ScoreboardReplay"],
+	["scoreboard-battle-log-replay", "ScoreboardBattleLogReplay"],
 	["scoreboard-own", "ScoreboardOwn"],
 	["map-start", "MapStart"],
 	["minimap", "Minimap"],
@@ -174,8 +174,8 @@ for (const fixture of loadFixtures("negative")) {
 const otherDetectors: readonly [string, Detector<unknown>][] = [
 	["scoreboard", createScoreboardDetector(resources) as Detector<unknown>],
 	[
-		"scoreboard-replay",
-		createScoreboardReplayDetector(resources) as Detector<unknown>,
+		"scoreboard-battle-log-replay",
+		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
 	],
 	[
 		"scoreboard-own",
