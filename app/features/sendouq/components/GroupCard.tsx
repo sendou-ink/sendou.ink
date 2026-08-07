@@ -92,6 +92,9 @@ export function GroupCard({
 		? resolveFutureMatchModes(ownGroup, group)
 		: null;
 
+	// while previewing the queue the viewer has no group of their own to act with
+	const actionToShow = ownGroup ? action : undefined;
+
 	return (
 		<GroupCardContainer
 			groupId={group.id}
@@ -214,27 +217,32 @@ export function GroupCard({
 				{group.skillDifference ? (
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
-				{action || suggestable || trail ? (
+				{actionToShow || suggestable || trail ? (
 					<div className="stack xs items-center">
 						<div className="stack sm horizontal items-center justify-center">
-							{action ? (
+							{actionToShow ? (
 								<ActionButton
 									schema={lookingSchema}
 									action={
-										action === "MATCH_UP_RECHALLENGE" ? "MATCH_UP" : action
+										actionToShow === "MATCH_UP_RECHALLENGE"
+											? "MATCH_UP"
+											: actionToShow
 									}
 									fields={{ targetGroupId: group.id }}
 									size="small"
-									variant={action === "UNLIKE" ? "destructive" : undefined}
+									variant={
+										actionToShow === "UNLIKE" ? "destructive" : undefined
+									}
 									testId="group-card-action-button"
 								>
-									{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
+									{actionToShow === "MATCH_UP" ||
+									actionToShow === "MATCH_UP_RECHALLENGE"
 										? t("q:looking.groups.actions.startMatch")
-										: action === "LIKE" && !group.members
+										: actionToShow === "LIKE" && !group.members
 											? t("q:looking.groups.actions.challenge")
-											: action === "LIKE"
+											: actionToShow === "LIKE"
 												? t("q:looking.groups.actions.invite")
-												: action === "GROUP_UP"
+												: actionToShow === "GROUP_UP"
 													? t("q:looking.groups.actions.groupUp")
 													: t("q:looking.groups.actions.undo")}
 								</ActionButton>

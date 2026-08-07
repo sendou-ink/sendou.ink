@@ -192,6 +192,46 @@ test.describe("SendouQ", () => {
 		await isNotVisible(looking.locators.suggestButtons);
 	});
 
+	test("Previewing the queue shows the groups without any way to act on them", async ({
+		page,
+		factories,
+	}) => {
+		const supporter = await factories.UserFactory.create(null, {
+			patronTier: 2,
+		});
+		const [soloQueuer] = await factories.UserFactory.createMany(1);
+		const fullGroupMembers =
+			await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		await factories.SQGroupFactory.create({ memberUserIds: [soloQueuer.id] });
+		await factories.SQGroupFactory.create({
+			memberUserIds: fullGroupMembers.map((member) => member.id),
+		});
+
+		await impersonate(page, supporter.id);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.gotoPreview();
+
+		await expect(looking.locators.groupCards).toHaveCount(2);
+		// without a group of their own there is nothing to invite, challenge or suggest with
+		await isNotVisible(looking.locators.actionButtons);
+		await isNotVisible(looking.locators.suggestButtons);
+	});
+
+	test("Previewing the queue is only for supporters", async ({
+		page,
+		factories,
+	}) => {
+		const [user] = await factories.UserFactory.createMany(1);
+
+		await impersonate(page, user.id);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.gotoPreview();
+
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
+	});
+
 	test("Ready check flow - both groups confirm and the match starts", async ({
 		page,
 		factories,
