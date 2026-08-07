@@ -5,6 +5,7 @@ import { Image } from "~/components/Image";
 import type { LoaderNotification } from "~/components/layout/NotificationPopover";
 import {
 	notificationLink,
+	notificationMeta,
 	notificationNavIcon,
 } from "~/features/notifications/notifications-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -35,7 +36,10 @@ export function NotificationItem({
 				{!notification.seen ? <div className={styles.unseenDot} /> : null}
 			</NotificationImage>
 			<div className={styles.itemHeader}>
-				{t(`common:notifications.text.${notification.type}`, notification.meta)}
+				{t(
+					`common:notifications.text.${notification.type}`,
+					notificationMeta(notification),
+				)}
 			</div>
 			<div className={styles.timestamp}>
 				{formatDistance(

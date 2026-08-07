@@ -549,16 +549,23 @@ export async function findCancelNominationCountsByUserIds({
 	});
 }
 
+/**
+ * Creates a match between two groups. Every match made in the app comes from a
+ * ready check, which is resolved as part of the same transaction; only seeds and
+ * tests, which have no check to resolve, leave `readyCheckId` out.
+ */
 export function insert({
 	alphaGroupId,
 	bravoGroupId,
 	mapList,
 	memento,
+	readyCheckId,
 }: {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	mapList: TournamentMapListMap[];
 	memento: ParsedMemento;
+	readyCheckId?: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const existingMatch = await trx
@@ -621,6 +628,13 @@ export function insert({
 			bravoGroupId,
 			trx,
 		);
+
+		if (typeof readyCheckId === "number") {
+			await SQGroupRepository.deleteReadyCheck(
+				{ id: readyCheckId, markMissedMembers: false },
+				trx,
+			);
+		}
 
 		await validateCreatedMatch(trx, alphaGroupId, bravoGroupId);
 

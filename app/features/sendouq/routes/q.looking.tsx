@@ -301,7 +301,11 @@ function Groups() {
 			<ColumnHeader isMobile={isMobile}>
 				{t("q:looking.columns.myGroup")}
 			</ColumnHeader>
-			<GroupCard group={data.ownGroup} ownGroup={data.ownGroup} />
+			<GroupCard
+				group={data.ownGroup}
+				ownGroup={data.ownGroup}
+				kickableUserIds={data.kickableUserIds}
+			/>
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
 					inviteCode={data.ownGroup.inviteCode}

@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "为每个模式选择 {{count}} 个您不想避开的场地以设置场地偏好",
 	"sounds.likeReceived": "收到小组邀请",
 	"sounds.groupNewMember": "小组邀请已通过",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "SendouQ 对局开始",
 	"sounds.tournamentMatchStarted": "赛事对局开始"
 }

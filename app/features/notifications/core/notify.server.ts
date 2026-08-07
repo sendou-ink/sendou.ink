@@ -8,12 +8,13 @@ import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
-import { notificationLink } from "../notifications-utils";
+import { notificationLink, notificationMeta } from "../notifications-utils";
 import webPush, { webPushEnabled } from "./webPush.server";
 
 const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	SQ_ADDED_TO_GROUP: "high",
 	SQ_NEW_MATCH: "high",
+	SQ_READY_CHECK: "high",
 	TO_ADDED_TO_TEAM: "normal",
 	TO_BRACKET_STARTED: "high",
 	TO_CHECK_IN_OPENED: "high",
@@ -125,7 +126,7 @@ function isNotificationAlreadySent(
 	}
 
 	const sortedUserIds = [...userIds].sort((a, b) => a - b).join(",");
-	const key = `${notification.type}-${JSON.stringify(notification.meta)}-${sortedUserIds}`;
+	const key = `${notification.type}-${JSON.stringify(notificationMeta(notification))}-${sortedUserIds}`;
 	const sentAt = sentNotifications.get(key);
 	if (sentAt && Date.now() - sentAt < SENT_NOTIFICATION_TTL_MS) {
 		return true;
@@ -180,7 +181,7 @@ function pushNotificationOptions(
 		title: t(`common:notifications.title.${notification.type}`),
 		body: t(
 			`common:notifications.text.${notification.type}`,
-			notification.meta,
+			notificationMeta(notification),
 		),
 		icon: notification.pictureUrl ?? APP_ICON_URL,
 		data: { url: notificationLink(notification) },

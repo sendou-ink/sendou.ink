@@ -109,6 +109,7 @@ class SendouQClass {
 		if (!ownGroup) return "default";
 		if (ownGroup.status === "PREPARING") return "preparing";
 		if (ownGroup.matchId) return "match";
+		if (ownGroup.status === "READY_CHECK") return "ready";
 
 		return "looking";
 	}

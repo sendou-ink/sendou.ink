@@ -5,6 +5,8 @@ export const SENDOUQ = {
 	OWN_PUBLIC_NOTE_MAX_LENGTH: 160,
 	PRIVATE_USER_NOTE_MAX_LENGTH: 280,
 	CANCEL_REASON_MAX_LENGTH: 500,
+	/** How long the members of two matched up groups have to confirm they are ready to play */
+	READY_CHECK_MINUTES: 7,
 } as const;
 
 const FRIEND_CODE_REGEXP_PATTERN = "^(SW-)?[0-9]{4}-?[0-9]{4}-?[0-9]{4}$";

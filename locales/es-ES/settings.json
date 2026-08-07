@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "Elige {{count}} mapas por modo que no evitaste para guardar tus preferencias",
 	"sounds.likeReceived": "Invitación de grupo recibida",
 	"sounds.groupNewMember": "Invitación de grupo aceptada",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "Partida de SendouQ iniciada",
 	"sounds.tournamentMatchStarted": "Set de torneo iniciado"
 }

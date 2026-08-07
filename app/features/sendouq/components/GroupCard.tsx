@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
-import { Mic, Volume2, VolumeX } from "lucide-react";
+import { Check, Hourglass, Mic, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { Trans, useTranslation } from "react-i18next";
@@ -23,6 +23,7 @@ import {
 import { SendouForm } from "~/form/SendouForm";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
+import { nullFilledArray } from "~/utils/arrays";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -57,6 +58,8 @@ export function GroupCard({
 	hideWeapons = false,
 	hideNote: _hidenote = false,
 	ownGroup,
+	readyUserIds,
+	kickableUserIds,
 	layout = "desktop",
 }: {
 	group: SQGroup | SQOwnGroup;
@@ -69,6 +72,10 @@ export function GroupCard({
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
 	ownGroup?: SQOwnGroup;
+	/** Members who have confirmed they are ready to play, shown during a ready check. */
+	readyUserIds?: number[];
+	/** Members the viewer can kick out of the group. */
+	kickableUserIds?: number[];
 	layout?: "mobile" | "desktop";
 }) {
 	const { t } = useTranslation(["q"]);
@@ -102,6 +109,8 @@ export function GroupCard({
 									hideVc={hideVc}
 									hideWeapons={hideWeapons}
 									hideNote={hideNote}
+									isReady={readyUserIds?.includes(member.id)}
+									isKickable={kickableUserIds?.includes(member.id)}
 								/>
 							);
 						})}
@@ -304,11 +313,15 @@ function GroupMember({
 	hideVc,
 	hideWeapons,
 	hideNote,
+	isReady,
+	isKickable,
 }: {
 	member: SQGroupMember;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
+	isReady?: boolean;
+	isKickable?: boolean;
 }) {
 	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
@@ -347,48 +360,124 @@ function GroupMember({
 						styles.memberActions,
 					)}
 				>
+					{typeof isReady === "boolean" ? (
+						<ReadyIndicator isReady={isReady} />
+					) : null}
 					{member.skill ? <TierInfo skill={member.skill} /> : null}
 				</div>
 			</div>
-			<div className="stack horizontal justify-between">
-				<div className="stack horizontal items-center xxs">
-					{member.vc && !hideVc ? (
+			{isKickable ? (
+				<MemberKicker member={member} />
+			) : (
+				<div className="stack horizontal justify-between">
+					<div className="stack horizontal items-center xxs">
+						{member.vc && !hideVc ? (
+							<div className={styles.extraInfo}>
+								<VoiceChatInfo member={member} />
+							</div>
+						) : null}
+						{member.friendCode ? (
+							<SendouPopover
+								trigger={
+									<SendouButton className={styles.extraInfoButton}>
+										FC
+									</SendouButton>
+								}
+							>
+								SW-{member.friendCode}
+							</SendouPopover>
+						) : null}
+					</div>
+					{member.weapons && member.weapons.length > 0 && !hideWeapons ? (
 						<div className={styles.extraInfo}>
-							<VoiceChatInfo member={member} />
+							{member.weapons?.map((weapon) => {
+								return (
+									<WeaponImage
+										key={weapon.weaponSplId}
+										weapon={weapon}
+										size={26}
+									/>
+								);
+							})}
 						</div>
 					) : null}
-					{member.friendCode ? (
-						<SendouPopover
-							trigger={
-								<SendouButton className={styles.extraInfoButton}>
-									FC
-								</SendouButton>
-							}
-						>
-							SW-{member.friendCode}
-						</SendouPopover>
+					{member.skillDifference ? (
+						<MemberSkillDifference skillDifference={member.skillDifference} />
 					) : null}
 				</div>
-				{member.weapons && member.weapons.length > 0 && !hideWeapons ? (
-					<div className={styles.extraInfo}>
-						{member.weapons?.map((weapon) => {
-							return (
-								<WeaponImage
-									key={weapon.weaponSplId}
-									weapon={weapon}
-									size={26}
-								/>
-							);
-						})}
-					</div>
-				) : null}
-				{member.skillDifference ? (
-					<MemberSkillDifference skillDifference={member.skillDifference} />
-				) : null}
-			</div>
+			)}
 			{!hideNote ? (
 				<MemberNote note={member.note} editable={user?.id === member.id} />
 			) : null}
+		</div>
+	);
+}
+
+/** Stand-in for a group whose members are not revealed yet, showing only how many of them are ready to play. */
+export function HiddenGroupCard({
+	memberCount,
+	readyCount,
+}: {
+	memberCount: number;
+	readyCount: number;
+}) {
+	return (
+		<section className={styles.group} data-testid="sendouq-hidden-group-card">
+			<div className="stack md">
+				{nullFilledArray(memberCount).map((_, i) => (
+					<div className={clsx(styles.member, styles.hiddenMember)} key={i}>
+						<span className={styles.hiddenMemberName}>???</span>
+						<div className={clsx("ml-auto", styles.memberActions)}>
+							<ReadyIndicator isReady={i < readyCount} />
+						</div>
+					</div>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function ReadyIndicator({ isReady }: { isReady: boolean }) {
+	const { t } = useTranslation(["q"]);
+
+	const Icon = isReady ? Check : Hourglass;
+
+	return (
+		<Icon
+			className={clsx(styles.readyIcon, {
+				[styles.readyIconConfirmed]: isReady,
+			})}
+			aria-label={t(
+				isReady ? "q:ready.member.ready" : "q:ready.member.waiting",
+			)}
+			data-testid={isReady ? "member-ready" : "member-not-ready"}
+		/>
+	);
+}
+
+function MemberKicker({ member }: { member: SQGroupMember }) {
+	const { t } = useTranslation(["common", "q"]);
+
+	return (
+		<div className="stack horizontal sm items-center justify-between text-xxs text-warning">
+			{t("q:looking.groups.missedReadyCheck")}
+			<ActionButton
+				schema={lookingSchema}
+				action="KICK_FROM_GROUP"
+				fields={{ userId: member.id }}
+				formAction={SENDOUQ_LOOKING_PAGE}
+				variant="minimal-destructive"
+				size="miniscule"
+				testId="group-card-kick-button"
+				confirm={{
+					dialogHeading: t("q:looking.groups.actions.kick.confirm", {
+						name: member.username,
+					}),
+					submitButtonText: t("q:looking.groups.actions.kick"),
+				}}
+			>
+				{t("q:looking.groups.actions.kick")}
+			</ActionButton>
 		</div>
 	);
 }

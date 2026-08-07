@@ -1,5 +1,5 @@
 import type { Locator } from "@playwright/test";
-import { submit } from "../../helpers/playwright";
+import { modalClickConfirmButton, submit } from "../../helpers/playwright";
 import { UserCard } from "../user/user-card";
 
 export class GroupCard {
@@ -9,6 +9,8 @@ export class GroupCard {
 	readonly suggestButton: Locator;
 	/** Note of who in the own group invited or suggested this group. */
 	readonly trail: Locator;
+	/** One per member who missed a ready check, and can thus be kicked. */
+	readonly kickButtons: Locator;
 
 	constructor(root: Locator) {
 		this.root = root;
@@ -16,6 +18,7 @@ export class GroupCard {
 		this.actionButton = root.getByTestId("group-card-action-button");
 		this.suggestButton = root.getByTestId("group-card-suggest-button");
 		this.trail = root.getByTestId("group-card-trail");
+		this.kickButtons = root.getByTestId("group-card-kick-button");
 	}
 
 	/** Challenges or invites the group, accepts what it offered, or undoes either. */
@@ -25,6 +28,12 @@ export class GroupCard {
 
 	pressSuggest() {
 		return submit(this.root.page(), this.suggestButton);
+	}
+
+	/** Kicks the first member the card offers a kick button for, confirming the dialog. */
+	async pressKick() {
+		await this.kickButtons.first().click();
+		await modalClickConfirmButton(this.root.page());
 	}
 
 	openMemberCard(name: string) {

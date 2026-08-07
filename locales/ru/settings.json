@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "Выберите по {{count}} арен за каждый режим, который вы не избегаете, чтобы сохранить настройки",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

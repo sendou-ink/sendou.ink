@@ -1,5 +1,10 @@
 import { sub } from "date-fns";
-import { type NotNull, sql, type Transaction } from "kysely";
+import {
+	type ExpressionBuilder,
+	type NotNull,
+	sql,
+	type Transaction,
+} from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
@@ -705,6 +710,11 @@ export function deleteAllLikesByGroupId(groupId: number) {
 	return db.transaction().execute((trx) => deleteLikesByGroupId(groupId, trx));
 }
 
+/**
+ * Removes the user from their group, deleting the group if they were its last
+ * member. A ready check the group was in is called off, its groups returning to
+ * the looking pool. Returns the ids of the groups that were in that check.
+ */
 export function leaveGroup(userId: number) {
 	return db.transaction().execute(async (trx) => {
 		const userGroup = await trx
@@ -714,6 +724,34 @@ export function leaveGroup(userId: number) {
 			.where("userId", "=", userId)
 			.where("Group.status", "!=", "INACTIVE")
 			.executeTakeFirstOrThrow();
+
+		// the group can no longer field the match it was about to play, so the
+		// other group is freed to look again as well
+		const readyCheck = await trx
+			.selectFrom("GroupReadyCheck")
+			.select([
+				"GroupReadyCheck.id",
+				"GroupReadyCheck.alphaGroupId",
+				"GroupReadyCheck.bravoGroupId",
+			])
+			.where((eb) =>
+				eb.or([
+					eb("GroupReadyCheck.alphaGroupId", "=", userGroup.id),
+					eb("GroupReadyCheck.bravoGroupId", "=", userGroup.id),
+				]),
+			)
+			.executeTakeFirst();
+
+		if (readyCheck) {
+			await deleteReadyCheckInTrx(
+				{ id: readyCheck.id, markMissedMembers: false },
+				trx,
+			);
+		}
+
+		const abortedReadyCheckGroupIds = readyCheck
+			? [readyCheck.alphaGroupId, readyCheck.bravoGroupId]
+			: [];
 
 		await trx
 			.deleteFrom("GroupMember")
@@ -729,7 +767,7 @@ export function leaveGroup(userId: number) {
 
 		if (!remainingMember) {
 			await trx.deleteFrom("Group").where("id", "=", userGroup.id).execute();
-			return;
+			return { abortedReadyCheckGroupIds };
 		}
 
 		const match = await trx
@@ -746,6 +784,8 @@ export function leaveGroup(userId: number) {
 		if (match) {
 			throw new SendouQError("Can't leave group when already in a match");
 		}
+
+		return { abortedReadyCheckGroupIds };
 	});
 }
 
@@ -776,6 +816,183 @@ export function updateOwnMemberNote({
 	});
 }
 
+/** User ids of the group's members who let a ready check expire without confirming, and can thus be kicked by the rest of the group. */
+export async function findAllMissedReadyCheckUserIdsByGroupId(groupId: number) {
+	const rows = await db
+		.selectFrom("GroupMember")
+		.select("GroupMember.userId")
+		.where("GroupMember.groupId", "=", groupId)
+		.where("GroupMember.missedReadyCheckAt", "is not", null)
+		.execute();
+
+	return rows.map((row) => row.userId);
+}
+
+/** The ready check the group is in, with each member of both groups and when (if at all) they confirmed being ready. */
+export async function findReadyCheckByGroupId(groupId: number) {
+	const readyCheck = await db
+		.selectFrom("GroupReadyCheck")
+		.select([
+			"GroupReadyCheck.id",
+			"GroupReadyCheck.alphaGroupId",
+			"GroupReadyCheck.bravoGroupId",
+			"GroupReadyCheck.createdAt",
+		])
+		.where((eb) =>
+			eb.or([
+				eb("GroupReadyCheck.alphaGroupId", "=", groupId),
+				eb("GroupReadyCheck.bravoGroupId", "=", groupId),
+			]),
+		)
+		.executeTakeFirst();
+
+	if (!readyCheck) return;
+
+	const members = await db
+		.selectFrom("GroupMember")
+		.leftJoin("GroupReadyCheckConfirmation", (join) =>
+			join
+				.onRef("GroupReadyCheckConfirmation.userId", "=", "GroupMember.userId")
+				.on("GroupReadyCheckConfirmation.readyCheckId", "=", readyCheck.id),
+		)
+		.select([
+			"GroupMember.userId",
+			"GroupMember.groupId",
+			"GroupReadyCheckConfirmation.createdAt as confirmedAt",
+		])
+		.where("GroupMember.groupId", "in", [
+			readyCheck.alphaGroupId,
+			readyCheck.bravoGroupId,
+		])
+		.execute();
+
+	return { ...readyCheck, members };
+}
+
+/** Ready checks that were started before the given time. */
+export function findAllReadyChecksStartedBefore(date: Date) {
+	return db
+		.selectFrom("GroupReadyCheck")
+		.select([
+			"GroupReadyCheck.id",
+			"GroupReadyCheck.alphaGroupId",
+			"GroupReadyCheck.bravoGroupId",
+		])
+		.where("GroupReadyCheck.createdAt", "<", dateToDatabaseTimestamp(date))
+		.execute();
+}
+
+/**
+ * Starts a ready check between two groups, taking both out of the looking pool
+ * along with everything they had pending. The user starting it counts as ready
+ * right away.
+ */
+export function insertReadyCheck({
+	alphaGroupId,
+	bravoGroupId,
+	confirmedByUserId,
+}: {
+	alphaGroupId: number;
+	bravoGroupId: number;
+	confirmedByUserId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		// the status doubles as the lock that keeps a group out of two ready checks at once
+		const { numUpdatedRows } = await trx
+			.updateTable("Group")
+			.set({ status: "READY_CHECK", latestActionAt: databaseTimestampNow() })
+			.where("Group.id", "in", [alphaGroupId, bravoGroupId])
+			.where("Group.status", "=", "ACTIVE")
+			.executeTakeFirstOrThrow();
+
+		if (Number(numUpdatedRows) !== 2) {
+			throw new SendouQError("Both groups are not available for a ready check");
+		}
+
+		await deleteLikesAndSuggestionsByGroupId(alphaGroupId, trx);
+		await deleteLikesAndSuggestionsByGroupId(bravoGroupId, trx);
+
+		// a new ready check is a fresh chance to show up for everyone
+		await trx
+			.updateTable("GroupMember")
+			.set({ missedReadyCheckAt: null })
+			.where("GroupMember.groupId", "in", [alphaGroupId, bravoGroupId])
+			.execute();
+
+		const readyCheck = await trx
+			.insertInto("GroupReadyCheck")
+			.values({ alphaGroupId, bravoGroupId })
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("GroupReadyCheckConfirmation")
+			.values({ readyCheckId: readyCheck.id, userId: confirmedByUserId })
+			.execute();
+
+		return readyCheck;
+	});
+}
+
+/**
+ * Records the user as ready to play. Confirming twice is a no-op.
+ *
+ * @returns Whether every member of both groups has now confirmed, or `null` if the ready check no longer exists
+ */
+export function insertReadyCheckConfirmation({
+	readyCheckId,
+	userId,
+}: {
+	readyCheckId: number;
+	userId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const readyCheck = await trx
+			.selectFrom("GroupReadyCheck")
+			.select(["GroupReadyCheck.alphaGroupId", "GroupReadyCheck.bravoGroupId"])
+			.where("GroupReadyCheck.id", "=", readyCheckId)
+			.executeTakeFirst();
+
+		// someone else's request resolved the ready check while this one was in flight
+		if (!readyCheck) return null;
+
+		await trx
+			.insertInto("GroupReadyCheckConfirmation")
+			.values({ readyCheckId, userId })
+			.onConflict((oc) => oc.columns(["readyCheckId", "userId"]).doNothing())
+			.execute();
+
+		// read back rather than trusting the caller's view of who had confirmed, so
+		// that two last confirmations at once can't both conclude someone is missing
+		const unconfirmedMember = await trx
+			.selectFrom("GroupMember")
+			.select("GroupMember.userId")
+			.where("GroupMember.groupId", "in", [
+				readyCheck.alphaGroupId,
+				readyCheck.bravoGroupId,
+			])
+			.where((eb) => didNotConfirmReadyCheck(eb, readyCheckId))
+			.executeTakeFirst();
+
+		return { everyoneIsReady: !unconfirmedMember };
+	});
+}
+
+/**
+ * Ends a ready check, returning both of its groups to the looking pool. With
+ * `markMissedMembers` the members who never confirmed are marked as having
+ * missed it, which is what lets the rest of their group kick them.
+ */
+export function deleteReadyCheck(
+	{ id, markMissedMembers }: { id: number; markMissedMembers: boolean },
+	trx?: Transaction<DB>,
+) {
+	const run = (trx: Transaction<DB>) =>
+		deleteReadyCheckInTrx({ id, markMissedMembers }, trx);
+
+	return trx ? run(trx) : db.transaction().execute(run);
+}
+
 export function setPreparingGroupAsActive(groupId: number) {
 	return db
 		.updateTable("Group")
@@ -792,6 +1009,42 @@ export function setAsInactive(groupId: number, trx?: Transaction<DB>) {
 		.where("id", "=", groupId)
 		.execute();
 }
+async function deleteReadyCheckInTrx(
+	{ id, markMissedMembers }: { id: number; markMissedMembers: boolean },
+	trx: Transaction<DB>,
+) {
+	const readyCheck = await trx
+		.selectFrom("GroupReadyCheck")
+		.select(["GroupReadyCheck.alphaGroupId", "GroupReadyCheck.bravoGroupId"])
+		.where("GroupReadyCheck.id", "=", id)
+		.executeTakeFirst();
+
+	if (!readyCheck) return;
+
+	const groupIds = [readyCheck.alphaGroupId, readyCheck.bravoGroupId];
+
+	if (markMissedMembers) {
+		await trx
+			.updateTable("GroupMember")
+			.set({ missedReadyCheckAt: databaseTimestampNow() })
+			.where("GroupMember.groupId", "in", groupIds)
+			.where((eb) => didNotConfirmReadyCheck(eb, id))
+			.execute();
+	}
+
+	await trx
+		.deleteFrom("GroupReadyCheck")
+		.where("GroupReadyCheck.id", "=", id)
+		.execute();
+
+	await trx
+		.updateTable("Group")
+		.set({ status: "ACTIVE", latestActionAt: databaseTimestampNow() })
+		.where("Group.id", "in", groupIds)
+		.where("Group.status", "=", "READY_CHECK")
+		.execute();
+}
+
 async function recordImplicitRejoinNoVote(
 	userId: number,
 	trx: Transaction<DB>,
@@ -839,4 +1092,24 @@ async function recordImplicitRejoinNoVote(
 		.execute();
 
 	return candidate.matchChatCode;
+}
+
+/** Matches the `GroupMember` rows that have no confirmation for the given ready check. */
+function didNotConfirmReadyCheck(
+	eb: ExpressionBuilder<DB, "GroupMember">,
+	readyCheckId: number,
+) {
+	return eb.not(
+		eb.exists(
+			eb
+				.selectFrom("GroupReadyCheckConfirmation")
+				.select("GroupReadyCheckConfirmation.userId")
+				.where("GroupReadyCheckConfirmation.readyCheckId", "=", readyCheckId)
+				.whereRef(
+					"GroupReadyCheckConfirmation.userId",
+					"=",
+					"GroupMember.userId",
+				),
+		),
+	);
 }

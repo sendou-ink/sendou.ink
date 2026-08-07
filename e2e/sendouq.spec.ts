@@ -1,13 +1,21 @@
 import { sub } from "date-fns";
-import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { FULL_GROUP_SIZE, SENDOUQ } from "~/features/sendouq/q-constants";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_PREPARING_PAGE,
+	SENDOUQ_READY_PAGE,
 } from "~/utils/urls";
-import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import {
+	expect,
+	impersonate,
+	isNotVisible,
+	runRoutine,
+	test,
+} from "./helpers/playwright";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 import { SendouQPage } from "./pages/sendouq/sendouq-page";
+import { SendouQReadyPage } from "./pages/sendouq/sendouq-ready-page";
 import { MatchProfilePage } from "./pages/settings/match-profile-page";
 
 test.describe("SendouQ", () => {
@@ -182,6 +190,108 @@ test.describe("SendouQ", () => {
 		await impersonate(page, other.id);
 		await looking.goto();
 		await isNotVisible(looking.locators.suggestButtons);
+	});
+
+	test("Ready check flow - both groups confirm and the match starts", async ({
+		page,
+		factories,
+	}) => {
+		const challengers = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const accepters = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const challengerGroup = await factories.SQGroupFactory.create({
+			memberUserIds: challengers.map((member) => member.id),
+		});
+		await factories.SQGroupFactory.create(
+			{ memberUserIds: accepters.map((member) => member.id) },
+			{ likedByGroupIds: [challengerGroup.id] },
+		);
+
+		await impersonate(page, accepters[0].id);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.goto();
+		await looking.pressGroupAction();
+
+		// accepting the challenge starts the ready check instead of the match
+		await expect(page).toHaveURL(SENDOUQ_READY_PAGE);
+
+		const ready = new SendouQReadyPage(page);
+		await expect(ready.locators.countdown).toBeVisible();
+		// who they will be playing is not revealed yet
+		await expect(ready.locators.hiddenGroupCard).toBeVisible();
+		// accepting counted as being ready, so it is 1 of the 8
+		await expect(ready.locators.membersReady).toHaveCount(1);
+		await expect(ready.locators.confirmedText).toBeVisible();
+
+		const restOfTheQueue = [...accepters.slice(1), ...challengers];
+		for (const member of restOfTheQueue.slice(0, -1)) {
+			await impersonate(page, member.id);
+			await ready.goto();
+			await ready.confirmReady();
+
+			await expect(page).toHaveURL(SENDOUQ_READY_PAGE);
+			await expect(ready.locators.confirmedText).toBeVisible();
+		}
+
+		// the last one to confirm gets everyone into the match
+		await impersonate(page, restOfTheQueue.at(-1)!.id);
+		await ready.goto();
+		await ready.confirmReady();
+
+		await expect(page).toHaveURL(/\/q\/match\/\d+/);
+	});
+
+	test("Ready check expiring sends the groups back to looking and lets them kick who missed it", async ({
+		page,
+		factories,
+	}) => {
+		const ownMembers = await factories.UserFactory.createMany(FULL_GROUP_SIZE, {
+			profile: null,
+		});
+		const theirMembers = await factories.UserFactory.createMany(
+			FULL_GROUP_SIZE,
+			{ profile: null },
+		);
+		const ownGroup = await factories.SQGroupFactory.create({
+			memberUserIds: ownMembers.map((member) => member.id),
+		});
+		const theirGroup = await factories.SQGroupFactory.create({
+			memberUserIds: theirMembers.map((member) => member.id),
+		});
+
+		// everyone but the last member of the own group confirms
+		const readyCheck = await factories.SQReadyCheckFactory.create(
+			{
+				alphaGroupId: ownGroup.id,
+				bravoGroupId: theirGroup.id,
+				confirmedByUserId: ownMembers[0].id,
+			},
+			{
+				confirmedByUserIds: [
+					...ownMembers.slice(1, -1).map((member) => member.id),
+					...theirMembers.map((member) => member.id),
+				],
+			},
+		);
+		await factories.backdate("GroupReadyCheck", readyCheck.id, {
+			createdAt: sub(new Date(), { minutes: SENDOUQ.READY_CHECK_MINUTES + 1 }),
+		});
+
+		await runRoutine(page, "ExpireReadyChecks");
+
+		await impersonate(page, ownMembers[0].id);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.goto();
+
+		// the group is looking again and the one who never confirmed can be kicked
+		await expect(looking.ownGroupCard.members).toHaveCount(FULL_GROUP_SIZE);
+		await expect(looking.ownGroupCard.kickButtons).toHaveCount(1);
+
+		await looking.ownGroupCard.pressKick();
+
+		await expect(looking.ownGroupCard.members).toHaveCount(FULL_GROUP_SIZE - 1);
+		await expect(looking.ownGroupCard.kickButtons).toHaveCount(0);
 	});
 
 	test("Joining the queue is blocked when the season's initial powers were never seeded", async ({

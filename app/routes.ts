@@ -274,6 +274,7 @@ export default [
 		route("info", "features/sendouq/routes/q.info.tsx"),
 		route("looking", "features/sendouq/routes/q.looking.tsx"),
 		route("preparing", "features/sendouq/routes/q.preparing.tsx"),
+		route("ready", "features/sendouq/routes/q.ready.tsx"),
 		route("match/:id", "features/sendouq-match/routes/q.match.$id.tsx"),
 		route("settings", "features/match-profile/routes/q.settings.tsx"),
 		route("streams", "features/sendouq-streams/routes/q.streams.tsx"),

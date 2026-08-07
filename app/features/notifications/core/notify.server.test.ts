@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
+import { notificationMeta } from "../notifications-utils";
 import { clearSentNotificationsForTesting, notify } from "./notify.server";
 
 const users = UserFactory.pool();
@@ -62,7 +63,9 @@ describe("notify()", () => {
 		expect(user4Notifications).toHaveLength(1);
 
 		expect(user1Notifications[0].type).toBe("SCRIM_NEW_REQUEST");
-		expect(user1Notifications[0].meta).toEqual({ fromUsername: "alice" });
+		expect(notificationMeta(user1Notifications[0])).toEqual({
+			fromUsername: "alice",
+		});
 	});
 
 	test("same recipients and notification deduplicates", async () => {
@@ -244,7 +247,7 @@ describe("notify()", () => {
 		expect(user12Notifications).toHaveLength(2);
 		expect(user13Notifications).toHaveLength(2);
 
-		const metas = user12Notifications.map((n) => n.meta);
+		const metas = user12Notifications.map(notificationMeta);
 		expect(metas).toContainEqual({ fromUsername: "bob" });
 		expect(metas).toContainEqual({ fromUsername: "charlie" });
 	});

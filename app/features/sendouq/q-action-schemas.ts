@@ -52,7 +52,15 @@ export const lookingSchema = z.union([
 		_action: _action("LEAVE_GROUP"),
 	}),
 	z.object({
+		_action: _action("KICK_FROM_GROUP"),
+		userId: id,
+	}),
+	z.object({
 		_action: _action("REFRESH_GROUP"),
 	}),
 	updateGroupNoteSchema,
 ]);
+
+export const readySchema = z.object({
+	_action: _action("CONFIRM_READY"),
+});

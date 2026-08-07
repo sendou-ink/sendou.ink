@@ -58,6 +58,8 @@
 	"notifications.managePush": "Notificaciones push",
 	"notifications.title.SQ_ADDED_TO_GROUP": "Añadido a Grupo SendouQ",
 	"notifications.text.SQ_ADDED_TO_GROUP": "Añadido a un grupo por {{adderUsername}}",
+	"notifications.title.SQ_READY_CHECK": "",
+	"notifications.text.SQ_READY_CHECK": "",
 	"notifications.title.SQ_NEW_MATCH": "Nueva Partida SendouQ",
 	"notifications.text.SQ_NEW_MATCH": "Ha comenzado la partida de SendouQ #{{matchId}}",
 	"notifications.title.TO_ADDED_TO_TEAM": "Añadido a un Equipo",

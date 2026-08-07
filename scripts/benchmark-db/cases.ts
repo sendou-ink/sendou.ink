@@ -589,6 +589,20 @@ export function buildCases(fx: Fixtures): {
 		fx.heavyGroupIds,
 		(groupIds) => SQGroupRepository.findAllSuggestionsByGroupId(groupIds[0]),
 	);
+	add(
+		"SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId",
+		fx.heavyGroupIds,
+		(groupIds) =>
+			SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId(groupIds[0]),
+	);
+	add(
+		"SQGroupRepository.findReadyCheckByGroupId",
+		fx.heavyGroupIds,
+		(groupIds) => SQGroupRepository.findReadyCheckByGroupId(groupIds[0]),
+	);
+	addStatic("SQGroupRepository.findAllReadyChecksStartedBefore", () =>
+		SQGroupRepository.findAllReadyChecksStartedBefore(new Date()),
+	);
 	add("SQGroupRepository.findFriendsAndTeammates", fx.sq, (sq) =>
 		SQGroupRepository.findFriendsAndTeammates(sq.userId),
 	);

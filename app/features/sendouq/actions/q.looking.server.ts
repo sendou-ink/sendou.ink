@@ -2,27 +2,21 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import {
-	createMatchMemento,
-	matchMapList,
-} from "~/features/sendouq-match/core/match.server";
-import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import { parseFormData } from "~/form/parse.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
+import { SENDOUQ_PAGE, SENDOUQ_READY_PAGE } from "~/utils/urls";
 import { canSuggest, groupAfterMorph } from "../core/groups";
+import * as ReadyCheck from "../core/ready-check.server";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { lookingSchema } from "../q-action-schemas";
-import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { resolveFutureMatchModes } from "../q-utils";
 import {
-	SendouQError,
-	setGroupChatMetadata,
-	setMatchChatMetadata,
-} from "../q-utils.server";
+	FULL_GROUP_SIZE,
+	SENDOUQ_LOOKING_ROOM,
+	sqGroupWebsocketRoom,
+} from "../q-constants";
+import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -183,100 +177,29 @@ export const action: ActionFunction = async ({ request }) => {
 					return null;
 				}
 
-				const ownGroupPreferences =
-					await SQGroupRepository.findMapModePreferencesByGroupId(ownGroup.id);
-				const theirGroupPreferences =
-					await SQGroupRepository.findMapModePreferencesByGroupId(
-						theirGroup.id,
-					);
-
-				const modesIncluded = resolveFutureMatchModes(ownGroup, theirGroup);
-
-				const mapList = await matchMapList(
-					{
-						id: ownGroup.id,
-						preferences: ownGroupPreferences,
-					},
-					{
-						id: theirGroup.id,
-						preferences: theirGroupPreferences,
-					},
-					modesIncluded,
+				const bothCanPlay = [ownGroup, theirGroup].every(
+					(group) => group.members.length === FULL_GROUP_SIZE && !group.matchId,
 				);
+				if (!bothCanPlay) return null;
 
-				const createdMatch = await SQMatchRepository.insert({
-					alphaGroupId: ownGroup.id,
-					bravoGroupId: theirGroup.id,
-					mapList,
-					memento: await createMatchMemento({
-						own: { group: ownGroup, preferences: ownGroupPreferences },
-						their: { group: theirGroup, preferences: theirGroupPreferences },
-						mapList,
-					}),
+				await ReadyCheck.start({
+					ownGroup,
+					theirGroup,
+					actorUserId: user.id,
 				});
 
-				await refreshSendouQInstance();
-				refreshStreamsCache();
-
-				if (createdMatch.chatCode) {
-					setMatchChatMetadata({
-						id: createdMatch.id,
-						chatCode: createdMatch.chatCode,
-						participantUserIds: [
-							...ownGroup.members.map((m) => m.id),
-							...theirGroup.members.map((m) => m.id),
-						],
-					});
-				}
-
-				// extend the group chat rooms' expiry so they last through the match
-				for (const group of [ownGroup, theirGroup]) {
-					if (group.chatCode) {
-						setGroupChatMetadata({
-							chatCode: group.chatCode,
-							members: group.members,
-						});
-					}
-				}
-
-				// Both groups revalidate (→ redirected to the match by their looking
-				// loader) and play the match sound. Sent to the groups' topics so it
-				// reaches every member reliably, not just live chat participants.
-				ChatSystemMessage.send([
-					{
-						room: sqGroupWebsocketRoom(ownGroup.id),
-						type: "MATCH_STARTED",
-						revalidateOnly: true,
-					},
-					{
-						room: sqGroupWebsocketRoom(theirGroup.id),
-						type: "MATCH_STARTED",
-						revalidateOnly: true,
-					},
-				]);
-
-				notify({
-					userIds: [
-						...ownGroup.members.map((m) => m.id),
-						...theirGroup.members.map((m) => m.id),
-					],
-					defaultSeenUserIds: [user.id],
-					notification: {
-						type: "SQ_NEW_MATCH",
-						meta: {
-							matchId: createdMatch.id,
-						},
-					},
-				});
-
-				broadcastLookingUpdate();
-
-				throw redirect(sendouQMatchPage(createdMatch.id));
+				throw redirect(SENDOUQ_READY_PAGE);
 			}
 			case "LEAVE_GROUP": {
-				await SQGroupRepository.leaveGroup(user.id);
+				const { abortedReadyCheckGroupIds } =
+					await SQGroupRepository.leaveGroup(user.id);
 
 				await refreshSendouQInstance();
+
+				// the group that was about to play them is free to look again
+				for (const groupId of abortedReadyCheckGroupIds) {
+					revalidateGroupTopic(groupId);
+				}
 
 				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
 				if (remainingGroup?.chatCode) {
@@ -294,6 +217,42 @@ export const action: ActionFunction = async ({ request }) => {
 				broadcastLookingUpdate();
 
 				throw redirect(SENDOUQ_PAGE);
+			}
+			case "KICK_FROM_GROUP": {
+				errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
+				errorToastIfFalsy(
+					(
+						await SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId(
+							currentGroup.id,
+						)
+					).includes(data.userId),
+					"Only a member who missed a ready check can be kicked",
+				);
+
+				const kickedMember = currentGroup.members.find(
+					(member) => member.id === data.userId,
+				);
+
+				await SQGroupRepository.leaveGroup(data.userId);
+
+				await refreshSendouQInstance();
+
+				const groupAfterKick = SendouQ.findUncensoredGroupById(currentGroup.id);
+				if (groupAfterKick?.chatCode && kickedMember) {
+					ChatSystemMessage.send({
+						room: groupAfterKick.chatCode,
+						type: "USER_LEFT",
+						context: { name: kickedMember.username },
+					});
+					setGroupChatMetadata({
+						chatCode: groupAfterKick.chatCode,
+						members: groupAfterKick.members,
+					});
+				}
+
+				broadcastLookingUpdate();
+
+				break;
 			}
 			case "REFRESH_GROUP": {
 				await SQGroupRepository.refreshGroup(currentGroup.id);

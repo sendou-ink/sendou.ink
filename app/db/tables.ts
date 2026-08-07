@@ -303,7 +303,7 @@ export interface Group {
 	latestActionAt: Generated<number>;
 	/** If truthy, group was at least partly made in the matchmaking UI (/q/looking) */
 	matchmade: Generated<DBBoolean>;
-	status: "PREPARING" | "ACTIVE" | "INACTIVE";
+	status: "PREPARING" | "ACTIVE" | "INACTIVE" | "READY_CHECK";
 	teamId: number | null;
 }
 
@@ -370,7 +370,24 @@ export interface GroupMatchMap {
 export interface GroupMember {
 	createdAt: Generated<number>;
 	groupId: number;
+	/** When the member last let a {@link GroupReadyCheck} expire without confirming, letting the rest of the group kick them. `null` if they have not. */
+	missedReadyCheckAt: number | null;
 	note: string | null;
+	userId: number;
+}
+
+/** Both groups' members confirming they are ready to play, before their match is created */
+export interface GroupReadyCheck {
+	alphaGroupId: number;
+	bravoGroupId: number;
+	createdAt: Generated<number>;
+	id: GeneratedAlways<number>;
+}
+
+/** One member confirming they are ready to play in a {@link GroupReadyCheck} */
+export interface GroupReadyCheckConfirmation {
+	createdAt: Generated<number>;
+	readyCheckId: number;
 	userId: number;
 }
 
@@ -1266,6 +1283,8 @@ export interface DB {
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
+	GroupReadyCheck: GroupReadyCheck;
+	GroupReadyCheckConfirmation: GroupReadyCheckConfirmation;
 	GroupSuggestion: GroupSuggestion;
 	PrivateUserNote: PrivateUserNote;
 	LogInLink: LogInLink;

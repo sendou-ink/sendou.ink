@@ -176,6 +176,7 @@ export const SENDOUQ_INFO_PAGE = "/q/info";
 export const MATCH_PROFILE_PAGE = "/settings?tab=match-profile";
 export const SENDOUQ_PREPARING_PAGE = "/q/preparing";
 export const SENDOUQ_LOOKING_PAGE = "/q/looking";
+export const SENDOUQ_READY_PAGE = "/q/ready";
 export const SENDOUQ_LOOKING_PREVIEW_PAGE = "/q/looking?preview=true";
 export const SENDOUQ_STREAMS_PAGE = "/q/streams";
 export const TIERS_PAGE = "/tiers";
