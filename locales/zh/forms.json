@@ -298,6 +298,8 @@
 	"labels.regTeamName": "队伍名称",
 	"labels.regTeam": "队伍",
 	"labels.regCaptain": "队长",
+	"labels.tournamentName": "",
+	"bottomTexts.tournamentName": "",
 	"labels.regSignUpAs": "队伍报名形式",
 	"labels.regPickUpName": "临时队伍名称",
 	"labels.regPrefersNotToHost": "我方队伍不倾向于担任房主",

@@ -60,6 +60,11 @@ export class TournamentAdminRegistrationPage {
 		await this.page.keyboard.press("Enter");
 	}
 
+	/** Names the roster member at `index` for tournaments. Only shown to organizers who may set it. */
+	async setTournamentName(index: number, name: string) {
+		await this.page.getByLabel("Tournament name").nth(index).fill(name);
+	}
+
 	async selectCaptain(userId: number) {
 		await this.page
 			.getByLabel("Captain", { exact: true })

@@ -48,6 +48,8 @@ type CommonUserSelectOptions = {
 	alias?: string;
 	prefix?: string;
 	idAs?: string;
+	/** For tournament scoped queries: `username` resolves to {@link tournamentUsername}. */
+	inTournament?: boolean;
 };
 
 type UserTableAlias<O> = O extends { alias: infer A extends string }
@@ -79,7 +81,8 @@ type CommonUserSelectResult<O> = readonly [
  * `User.customAvatarImgId`), or `null` when they have none. By default reads from `"User"` which
  * must be in scope at the call site; pass `alias` when the table is joined under another name
  * (`alias: "LinkedUser"`), `prefix` to prefix every output column (`prefix: "sender"` →
- * `senderId`, `senderUsername`, ...) and `idAs` to rename only the id column (`idAs: "userId"`).
+ * `senderId`, `senderUsername`, ...), `idAs` to rename only the id column (`idAs: "userId"`) and
+ * `inTournament` to resolve `username` via {@link tournamentUsername}.
  */
 export function commonUserSelect<const O extends CommonUserSelectOptions>(
 	eb: ExpressionBuilder<DB, any>,
@@ -94,7 +97,9 @@ export function commonUserSelect<const O extends CommonUserSelectOptions>(
 
 	return [
 		`${alias}.id as ${idName}`,
-		`${alias}.username as ${outputName("username")}`,
+		options?.inTournament
+			? tournamentUsername(alias).as(outputName("username"))
+			: `${alias}.username as ${outputName("username")}`,
 		`${alias}.discordId as ${outputName("discordId")}`,
 		`${alias}.discordAvatar as ${outputName("discordAvatar")}`,
 		`${alias}.customUrl as ${outputName("customUrl")}`,
@@ -388,4 +393,16 @@ export function userProfileWeapons(eb: ExpressionBuilder<DB, any>) {
 			.whereRef("UserWeapon.userId", "=", "User.id")
 			.orderBy("UserWeapon.order", "asc"),
 	);
+}
+
+/**
+ * The name a user is shown under inside tournaments: the name organizers have given them
+ * (`User.tournamentName`) falling back to their `username`. Alias it (`.as("username")`) when
+ * selecting it directly. Prefer `commonUserSelect(eb, { inTournament: true })`; reach for this
+ * only when the query doesn't select the common user fields.
+ */
+export function tournamentUsername(alias = "User") {
+	return sql<string>`coalesce(${sql.ref(`${alias}.tournamentName`)}, ${sql.ref(
+		`${alias}.username`,
+	)})`;
 }

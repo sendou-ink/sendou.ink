@@ -66,6 +66,7 @@ export const TOURNAMENT_AUDIT_LOG_TYPES = [
 	"TEAM_DROPPED_OUT",
 	"TEAM_DROP_OUT_UNDONE",
 	"UPDATE_IN_GAME_NAME",
+	"UPDATE_TOURNAMENT_NAME",
 ] as const;
 
 export type TournamentAuditLogType =

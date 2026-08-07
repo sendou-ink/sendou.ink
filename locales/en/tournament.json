@@ -102,6 +102,8 @@
 	"admin.audit.event.TEAM_DROPPED_OUT": "Team dropped out",
 	"admin.audit.event.TEAM_DROP_OUT_UNDONE": "Team drop out undone",
 	"admin.audit.event.UPDATE_IN_GAME_NAME": "In-game name changed",
+	"admin.audit.event.UPDATE_TOURNAMENT_NAME": "Tournament name changed",
+	"admin.audit.detail.tournamentNameCleared": "Name cleared",
 	"admin.actions.CHANGE_TEAM_OWNER": "Change captain",
 	"admin.actions.CHANGE_TEAM_NAME": "Change team name",
 	"admin.actions.CHECK_IN": "Check in",

@@ -298,6 +298,8 @@
 	"labels.regTeamName": "Team name",
 	"labels.regTeam": "Team",
 	"labels.regCaptain": "Captain",
+	"labels.tournamentName": "Tournament name",
+	"bottomTexts.tournamentName": "The name shown for this player in tournaments. Also applies to tournaments other organizers host in the future. If empty, their sendou.ink username is shown.",
 	"labels.regSignUpAs": "Team signing up as",
 	"labels.regPickUpName": "Pick-up name",
 	"labels.regPrefersNotToHost": "My team prefers not to host rooms",

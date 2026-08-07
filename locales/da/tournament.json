@@ -102,6 +102,8 @@
 	"admin.audit.event.TEAM_DROPPED_OUT": "",
 	"admin.audit.event.TEAM_DROP_OUT_UNDONE": "",
 	"admin.audit.event.UPDATE_IN_GAME_NAME": "",
+	"admin.audit.event.UPDATE_TOURNAMENT_NAME": "",
+	"admin.audit.detail.tournamentNameCleared": "",
 	"admin.actions.CHANGE_TEAM_OWNER": "Ændr holdkaptajn",
 	"admin.actions.CHANGE_TEAM_NAME": "Ændr holdnavn",
 	"admin.actions.CHECK_IN": "Tjek ind",

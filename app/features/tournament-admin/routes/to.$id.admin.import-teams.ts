@@ -45,6 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				userId: member.userId,
 				username: member.username,
 				inGameName: member.inGameName,
+				tournamentName: member.tournamentName,
 				isOwner: member.role === "OWNER",
 			})),
 		})),

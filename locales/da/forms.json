@@ -298,6 +298,8 @@
 	"labels.regTeamName": "",
 	"labels.regTeam": "",
 	"labels.regCaptain": "",
+	"labels.tournamentName": "",
+	"bottomTexts.tournamentName": "",
 	"labels.regSignUpAs": "",
 	"labels.regPickUpName": "",
 	"labels.regPrefersNotToHost": "",

@@ -14,6 +14,7 @@ import {
 	userSearch,
 } from "~/form/fields";
 import { IN_GAME_NAME_MAX_LENGTH } from "../user-page/in-game-name";
+import { USER } from "../user-page/user-page-constants";
 /**
  * Roster size cap for organizer-managed registrations. The per-tournament
  * `maxMembersPerTeam` limit intentionally doesn't apply to organizers, so this
@@ -27,6 +28,16 @@ const memberFieldset = fieldset({
 		inGameName: textFieldOptional({
 			label: "labels.inGameName",
 			maxLength: IN_GAME_NAME_MAX_LENGTH,
+		}),
+		/**
+		 * Only editable by members of an established organization
+		 * (`Tournament.canEditTournamentNames`), whose submission is authoritative:
+		 * `null` clears the name the player has. Ignored from everyone else.
+		 */
+		tournamentName: textFieldOptional({
+			label: "labels.tournamentName",
+			bottomText: "bottomTexts.tournamentName",
+			maxLength: USER.CUSTOM_NAME_MAX_LENGTH,
 		}),
 	}),
 });

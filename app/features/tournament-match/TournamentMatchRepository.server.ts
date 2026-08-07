@@ -51,7 +51,7 @@ export async function findMatchById(id: number) {
 					.selectFrom("TournamentTeamMember")
 					.innerJoin("User", "User.id", "TournamentTeamMember.userId")
 					.select((eb) => [
-						...commonUserSelect(eb),
+						...commonUserSelect(eb, { inTournament: true }),
 						"TournamentTeamMember.tournamentTeamId",
 						sql<
 							string | null

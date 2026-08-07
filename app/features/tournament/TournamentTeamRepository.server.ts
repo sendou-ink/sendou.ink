@@ -211,11 +211,14 @@ export function insert({
 /**
  * Creates a new registration or applies a full-state edit to an existing one in a
  * single transaction: team name, linked sendou.ink team, owner assignment/transfer,
- * member adds/removes and in-game name updates. Pass `tournamentTeamId` to edit an
- * existing team, or omit it to create a new one (all members are then "added" and
- * `ownerUserId` becomes the owner). The caller is responsible for validating the
- * derived ops and for any side effects (cache updates, notifications) outside the
- * transaction.
+ * member adds/removes, in-game name updates and tournament name updates. Pass
+ * `tournamentTeamId` to edit an existing team, or omit it to create a new one (all
+ * members are then "added" and `ownerUserId` becomes the owner). The caller is
+ * responsible for validating the derived ops and for any side effects (cache updates,
+ * notifications) outside the transaction.
+ *
+ * Returns the tournament name changes that were actually applied (submitted values
+ * equal to the user's current one are no-ops), for the caller to log.
  */
 export function upsertRegistration({
 	tournamentTeamId,
@@ -228,6 +231,7 @@ export function upsertRegistration({
 	membersToAdd,
 	membersToRemove,
 	inGameNameUpdates,
+	tournamentNameUpdates,
 }: {
 	/** Present when editing an existing team, omitted when creating a new one. */
 	tournamentTeamId?: number;
@@ -244,6 +248,11 @@ export function upsertRegistration({
 	membersToAdd: number[];
 	membersToRemove: number[];
 	inGameNameUpdates: Array<{ userId: number; inGameName: string }>;
+	/** Organizer-set names shown in every tournament. `null` clears the user's current one. */
+	tournamentNameUpdates: Array<{
+		userId: number;
+		tournamentName: string | null;
+	}>;
 }) {
 	const isNew = typeof tournamentTeamId !== "number";
 
@@ -395,6 +404,45 @@ export function upsertRegistration({
 				trx,
 			);
 		}
+
+		const appliedTournamentNameChanges: Array<{
+			userId: number;
+			previousTournamentName: string | null;
+			tournamentName: string | null;
+		}> = [];
+		for (const { userId, tournamentName } of tournamentNameUpdates) {
+			const { tournamentName: previousTournamentName } = await trx
+				.selectFrom("User")
+				.select("User.tournamentName")
+				.where("User.id", "=", userId)
+				.executeTakeFirstOrThrow();
+
+			if (previousTournamentName === tournamentName) continue;
+
+			await trx
+				.updateTable("User")
+				.set({ tournamentName })
+				.where("User.id", "=", userId)
+				.execute();
+
+			await TournamentAuditLogRepository.insert(
+				{
+					type: "UPDATE_TOURNAMENT_NAME",
+					tournamentTeamId: id,
+					subjectUserId: userId,
+					metadata: { tournamentName },
+				},
+				trx,
+			);
+
+			appliedTournamentNameChanges.push({
+				userId,
+				previousTournamentName,
+				tournamentName,
+			});
+		}
+
+		return { appliedTournamentNameChanges };
 	});
 }
 

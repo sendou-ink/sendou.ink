@@ -26,6 +26,7 @@ import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	tournamentLogoWithDefault,
+	tournamentUsername,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
@@ -355,7 +356,7 @@ export async function findStreamsByTournamentId(tournamentId: number) {
 				"LiveStream.viewerCount",
 				"LiveStream.thumbnailUrl",
 				"TournamentTeam.name as teamName",
-				...commonUserSelect(eb),
+				...commonUserSelect(eb, { inTournament: true }),
 			])
 			.where("TournamentTeam.tournamentId", "=", tournamentId)
 			.where("TournamentTeam.isPlaceholder", "=", 0)
@@ -464,8 +465,9 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 							),
 					)
 					.select((eb) => [
-						...commonUserSelect(eb, { idAs: "userId" }),
+						...commonUserSelect(eb, { idAs: "userId", inTournament: true }),
 						"User.country",
+						"User.tournamentName",
 						"SeedingSkill.ordinal",
 						"TournamentTeamMember.role",
 						"TournamentTeamMember.createdAt",
@@ -855,7 +857,7 @@ export function findAllForShowcase() {
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
 					.select((eb) => [
-						...commonUserSelect(eb),
+						...commonUserSelect(eb, { inTournament: true }),
 						"User.country",
 						"TournamentResult.div",
 						"TournamentTeam.name as teamName",
@@ -1624,7 +1626,7 @@ export function updateTeamSeeds({
 						.select([
 							"TournamentTeamMember.tournamentTeamId",
 							"User.id as userId",
-							"User.username",
+							tournamentUsername().as("username"),
 						])
 						.where("TournamentTeamMember.tournamentTeamId", "in", teamIds)
 						.execute()

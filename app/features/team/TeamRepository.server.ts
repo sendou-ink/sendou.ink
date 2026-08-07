@@ -67,7 +67,7 @@ export function searchByName({
 				eb
 					.selectFrom("TeamMemberWithSecondary")
 					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-					.select(["User.id", "User.username"])
+					.select(["User.id", "User.username", "User.tournamentName"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
 					.where((eb2) =>
 						eb2.and([

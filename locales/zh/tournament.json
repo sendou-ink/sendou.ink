@@ -101,6 +101,8 @@
 	"admin.audit.event.TEAM_DROPPED_OUT": "队伍已退赛",
 	"admin.audit.event.TEAM_DROP_OUT_UNDONE": "已撤销队伍退赛",
 	"admin.audit.event.UPDATE_IN_GAME_NAME": "游戏内昵称已更改",
+	"admin.audit.event.UPDATE_TOURNAMENT_NAME": "",
+	"admin.audit.detail.tournamentNameCleared": "",
 	"admin.actions.CHANGE_TEAM_OWNER": "更换队长",
 	"admin.actions.CHANGE_TEAM_NAME": "更改队伍名称",
 	"admin.actions.CHECK_IN": "签到",

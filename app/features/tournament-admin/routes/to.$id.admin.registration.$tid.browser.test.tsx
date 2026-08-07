@@ -7,6 +7,7 @@ const { mockTournament, mockLoaderData, submitMock, loadMock } = vi.hoisted(
 	() => ({
 		mockTournament: {
 			ctx: { id: 1, settings: { requireInGameNames: false } },
+			canEditTournamentNames: (): boolean => false,
 		},
 		mockLoaderData: { team: null as unknown },
 		submitMock: vi.fn(),
@@ -98,5 +99,46 @@ describe("tournament admin registration - captain field", () => {
 		await expect
 			.element(screen.getByText(CAPTAIN_NOT_A_MEMBER_ERROR))
 			.not.toBeInTheDocument();
+	});
+});
+
+describe("tournament admin registration - tournament name field", () => {
+	beforeEach(() => {
+		mockLoaderData.team = {
+			id: 10,
+			name: "low ink buddies",
+			team: undefined,
+			pickupAvatarUrl: null,
+			avatarImgId: null,
+			members: [
+				{
+					userId: 1,
+					username: "sanu",
+					inGameName: null,
+					tournamentName: "Sanu",
+					role: "OWNER",
+				},
+			],
+		};
+	});
+
+	test("is not shown to organizers who can't edit tournament names", async () => {
+		mockTournament.canEditTournamentNames = () => false;
+
+		const screen = await renderPage();
+
+		await expect
+			.element(screen.getByLabelText("Tournament name"))
+			.not.toBeInTheDocument();
+	});
+
+	test("shows the player's current tournament name", async () => {
+		mockTournament.canEditTournamentNames = () => true;
+
+		const screen = await renderPage();
+
+		await expect
+			.element(screen.getByLabelText("Tournament name"))
+			.toHaveValue("Sanu");
 	});
 });

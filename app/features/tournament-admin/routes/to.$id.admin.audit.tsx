@@ -86,7 +86,10 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 	const detail =
 		typeof event.metadata?.bracketIdx === "number"
 			? tournament.bracketsMeta[event.metadata.bracketIdx]?.name
-			: event.metadata?.inGameName;
+			: event.type === "UPDATE_TOURNAMENT_NAME"
+				? (event.metadata?.tournamentName ??
+					t("tournament:admin.audit.detail.tournamentNameCleared"))
+				: event.metadata?.inGameName;
 
 	return (
 		<tr>

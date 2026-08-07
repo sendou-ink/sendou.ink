@@ -856,6 +856,8 @@ export interface User {
 	customName: string | null;
 	/** coalesce(customName, discordName) */
 	username: ColumnType<string, never, never>;
+	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
+	tournamentName: string | null;
 	discordUniqueName: string | null;
 	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
 	favoriteBadgeIds: JSONColumnTypeNullable<number[]>;

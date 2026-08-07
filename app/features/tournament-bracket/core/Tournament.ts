@@ -1416,6 +1416,24 @@ export class Tournament {
 		);
 	}
 
+	/**
+	 * Checks if the given user can set the tournament names of the tournament's players.
+	 *
+	 * Restricted to members of an established organization because the name they set is
+	 * shown in every tournament from then on, not only in this one.
+	 */
+	canEditTournamentNames(user: OptionalIdObject) {
+		if (!user) return false;
+		if (isAdmin(user)) return true;
+		if (!this.ctx.organization?.isEstablished) return false;
+
+		return this.ctx.organization.members.some(
+			(member) =>
+				member.userId === user.id &&
+				["ADMIN", "ORGANIZER"].includes(member.role),
+		);
+	}
+
 	/** Checks if the given user is an organizer of the tournament. */
 	isOrganizer(user: OptionalIdObject) {
 		return isTournamentOrganizer({ ctx: this.ctx, user });

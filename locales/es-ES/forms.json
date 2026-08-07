@@ -298,6 +298,8 @@
 	"labels.regTeamName": "Nombre del equipo",
 	"labels.regTeam": "Equipo",
 	"labels.regCaptain": "Capitán",
+	"labels.tournamentName": "",
+	"bottomTexts.tournamentName": "",
 	"labels.regSignUpAs": "El equipo se inscribe como",
 	"labels.regPickUpName": "Nombre del pick-up",
 	"labels.regPrefersNotToHost": "Mi equipo prefiere no hostear salas",

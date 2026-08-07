@@ -1,4 +1,8 @@
-import { type ActionFunction, redirect } from "react-router";
+import {
+	type ActionFunction,
+	type ActionFunctionArgs,
+	redirect,
+} from "react-router";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -12,11 +16,23 @@ import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLF
 import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
+import { logger } from "~/utils/logger";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { tournamentAdminPage } from "~/utils/urls";
 import { adminRegistrationFormSchemaServer } from "../tournament-admin-registration-schemas.server";
 
-export const action: ActionFunction = async ({ request, params }) => {
+export const action: ActionFunction = (args) =>
+	upsertRegistrationAction(args, { allowTournamentNameUpdates: true });
+
+/**
+ * The registration upsert itself, shared with the public API's version of this
+ * endpoint. That one passes `allowTournamentNameUpdates: false`: tournament names
+ * are the admin form's business and the API can only read them.
+ */
+export const upsertRegistrationAction = async (
+	{ request, params }: ActionFunctionArgs,
+	{ allowTournamentNameUpdates }: { allowTournamentNameUpdates: boolean },
+) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
 		{ for: "organizer" },
@@ -76,18 +92,36 @@ export const action: ActionFunction = async ({ request, params }) => {
 		return [{ userId: member.userId, inGameName: member.inGameName }];
 	});
 
-	await TournamentTeamRepository.upsertRegistration({
-		tournamentTeamId: team?.id,
-		tournamentId,
-		name,
-		teamId: linkedTeamId,
-		avatarImgId,
-		ownerUserId,
-		ownerChange,
-		membersToAdd,
-		membersToRemove,
-		inGameNameUpdates,
-	});
+	// only a submission from someone allowed to edit tournament names says anything
+	// about them, everyone else leaves the names the players have untouched
+	const tournamentNameUpdates =
+		allowTournamentNameUpdates && tournament.canEditTournamentNames(user)
+			? submittedMembers.map((member) => ({
+					userId: member.userId,
+					tournamentName: member.tournamentName ?? null,
+				}))
+			: [];
+
+	const { appliedTournamentNameChanges } =
+		await TournamentTeamRepository.upsertRegistration({
+			tournamentTeamId: team?.id,
+			tournamentId,
+			name,
+			teamId: linkedTeamId,
+			avatarImgId,
+			ownerUserId,
+			ownerChange,
+			membersToAdd,
+			membersToRemove,
+			inGameNameUpdates,
+			tournamentNameUpdates,
+		});
+
+	for (const change of appliedTournamentNameChanges) {
+		logger.info(
+			`Tournament name updated: subject user id: ${change.userId} - "${change.previousTournamentName ?? ""}" -> "${change.tournamentName ?? ""}" - by user id: ${user.id} - tournament id: ${tournamentId}`,
+		);
+	}
 
 	for (const addId of membersToAdd) {
 		await TournamentLFGRepository.leaveLfg({

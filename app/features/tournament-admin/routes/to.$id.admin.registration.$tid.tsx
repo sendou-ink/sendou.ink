@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
@@ -34,6 +35,7 @@ export { loader } from "../loaders/to.$id.admin.registration.$tid.server";
 type RosterMemberValue = {
 	userId?: number;
 	inGameName?: string | null;
+	tournamentName?: string | null;
 };
 
 type ImportableTeam = ImportTeamsLoaderData["teams"][number];
@@ -75,6 +77,7 @@ export default function TournamentAdminRegistrationPage() {
 					inGameName: tournament.ctx.settings.requireInGameNames
 						? (member.inGameName ?? null)
 						: null,
+					tournamentName: member.tournamentName ?? null,
 				})),
 			}
 		: undefined;
@@ -104,6 +107,7 @@ export default function TournamentAdminRegistrationPage() {
 function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 	const { t } = useTranslation(["forms"]);
 	const tournament = useTournament();
+	const user = useUser();
 	const { values, setValue, revalidateAll, hasSubmitted } =
 		useFormFieldContext();
 
@@ -122,6 +126,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 	const linkedTeam = Boolean(values.linkedTeam);
 	const members = (values.members as RosterMemberValue[]) ?? [];
 	const requireInGameNames = tournament.ctx.settings.requireInGameNames;
+	const canEditTournamentNames = tournament.canEditTournamentNames(user);
 
 	const handleImport = (importedTeam: ImportableTeam) => {
 		setUsernames((prev) => {
@@ -154,6 +159,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 		importedValues.members = importedTeam.members.map((member) => ({
 			userId: member.userId,
 			inGameName: member.inGameName,
+			tournamentName: member.tournamentName,
 			// fresh key so the member rows remount and their user-search inputs
 			// re-resolve when importing a different team over a previous import
 			_key: crypto.randomUUID(),
@@ -240,6 +246,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 									selected.members.map((member) => ({
 										userId: member.id,
 										inGameName: null,
+										tournamentName: member.tournamentName,
 									})),
 								);
 								setValue("ownerId", String(selected.members[0]?.id ?? ""));
@@ -269,12 +276,23 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 										if (requireInGameNames && user.inGameName) {
 											setValue(`${itemName}.inGameName`, user.inGameName);
 										}
+										// the field is saved as is, so it has to show the name the
+										// user already has or saving would clear it
+										if (canEditTournamentNames) {
+											setValue(
+												`${itemName}.tournamentName`,
+												user.tournamentName,
+											);
+										}
 									},
 								} satisfies UserSearchFieldOptions
 							}
 						/>
 						{requireInGameNames ? (
 							<FormField name={`${itemName}.inGameName`} />
+						) : null}
+						{canEditTournamentNames ? (
+							<FormField name={`${itemName}.tournamentName`} />
 						) : null}
 					</div>
 				)}

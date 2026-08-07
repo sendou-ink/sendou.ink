@@ -946,6 +946,7 @@ const searchSelectedFields = (eb: ExpressionBuilder<DB, "User">) =>
 	[
 		...commonUserSelect(eb),
 		"User.inGameName",
+		"User.tournamentName",
 		"PlusTier.tier as plusTier",
 		eb
 			.fn<string | null>("iif", [
