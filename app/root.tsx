@@ -34,6 +34,7 @@ import * as NotificationRepository from "~/features/notifications/NotificationRe
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
 import { useDebounce } from "~/hooks/useDebounce";
+import { useReloadOnNewDeploy } from "~/hooks/useReloadOnNewDeploy";
 import lexendLatinUrl from "~/styles/fonts/lexend-latin.woff2?url";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
@@ -68,6 +69,7 @@ import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
 import { SearchParamsProvider } from "./modules/search-params/hooks";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
+import { GIT_COMMIT } from "./utils/git-commit";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
 import { requestContextMiddleware } from "./utils/request-context-middleware.server";
@@ -158,6 +160,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					})
 				: undefined,
 			sidebar: sidebarData,
+			buildCommit: GIT_COMMIT,
 		},
 		{
 			headers: { "Set-Cookie": await i18nCookie.serialize(locale) },
@@ -398,6 +401,8 @@ export default function App() {
 	//
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
 	const data = useLoaderData<RootLoaderData>();
+
+	useReloadOnNewDeploy(data.buildCommit);
 
 	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
 	// elements to work properly when a React Aria Component disabled scrolling
