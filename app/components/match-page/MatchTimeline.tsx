@@ -43,8 +43,8 @@ import { WeaponPool } from "./WeaponPool";
 const LONG_TEAM_NAME_THRESHOLD = 16;
 
 // xxx: make actual in-game score
-/** In-game team scores run 0-500p; a knockout shows as 500p for the winner. */
-const SCOREBOARD_KO_SCORE = 500;
+/** Ingested team scores run 0-100; a knockout shows as 100 for the winner. */
+const SCOREBOARD_KO_SCORE = 100;
 
 const ABILITY_NAMES: ReadonlySet<string> = new Set(
 	abilities.map((ability) => ability.name),
@@ -87,7 +87,7 @@ export interface TimelineMap {
 	pickedBy?: MatchSide;
 	/** Ingested end-of-game scoreboard rendered as an expandable stats section below the map row. */
 	scoreboard?: {
-		/** [alpha, bravo] on the in-game 0-500p scale (500 = knockout) */
+		/** [alpha, bravo] on the ingested 0-100 scale (100 = knockout) */
 		scores: [number | null, number | null];
 		alpha: TimelineScoreboardPlayer[];
 		bravo: TimelineScoreboardPlayer[];
@@ -310,7 +310,7 @@ function SideResult({
 }: {
 	result: "WIN" | "LOSS";
 	isKo?: boolean;
-	/** in-game 0-500p team score from an ingested scoreboard (500 = knockout) */
+	/** ingested 0-100 team score (100 = knockout) */
 	scoreboardScore?: number | null;
 	weapons?: WeaponPoolWeapon[];
 	isPicked?: boolean;

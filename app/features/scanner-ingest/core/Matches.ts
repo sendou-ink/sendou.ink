@@ -325,22 +325,22 @@ function mergeTeam(
 			return hit.player;
 		},
 	);
-	existing.players.forEach((player, i) => {
-		if (counterparts[i] || player.weaponId === null) return;
+	for (const [i, player] of existing.players.entries()) {
+		if (counterparts[i] || player.weaponId === null) continue;
 		const hits = pool.filter(
 			(entry) => !entry.used && entry.player.weaponId === player.weaponId,
 		);
-		if (hits.length !== 1) return;
+		if (hits.length !== 1) continue;
 		hits[0]!.used = true;
 		counterparts[i] = hits[0]!.player;
-	});
-	existing.players.forEach((_, i) => {
-		if (counterparts[i]) return;
+	}
+	for (const i of existing.players.keys()) {
+		if (counterparts[i]) continue;
 		const hit = pool[i]?.used === false ? pool[i]! : pool.find((e) => !e.used);
-		if (!hit) return;
+		if (!hit) continue;
 		hit.used = true;
 		counterparts[i] = hit.player;
-	});
+	}
 
 	const players = existing.players.map((player, i) => {
 		const counterpart = counterparts[i];

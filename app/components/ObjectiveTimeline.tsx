@@ -30,6 +30,7 @@ import { Line } from "react-chartjs-2";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "~/hooks/useThemeColors";
 import styles from "./ObjectiveTimeline.module.css";
+import { smoothPenalties } from "./objective-timeline-utils";
 
 ChartJS.register(
 	LinearScale,
@@ -40,7 +41,6 @@ ChartJS.register(
 	Legend,
 );
 
-const PENALTY_BRIDGE_SECONDS = 6;
 /** count-axis units of gutter kept below zero for the control lane */
 const CONTROL_LANE_DEPTH = 13;
 const CONTROL_LANE_Y = -6;
@@ -123,7 +123,12 @@ export function ObjectiveTimeline({
 	}));
 	// band between score and score + penalty; its thickness is the penalty
 	const penaltyDatasets = ([0, 1] as const).map((side) => {
-		const penalties = smoothPenalties(sorted, side);
+		const penalties = smoothPenalties(
+			sorted.map((event) => ({
+				t: event.t,
+				penalty: event.data.penalty[side],
+			})),
+		);
 		let lastScore: number | null = null;
 		return {
 			label: `${teamLabels[side]} penalty`,
@@ -259,67 +264,6 @@ function gridColor(
 ) {
 	if (value < 0) return "transparent";
 	return value === 0 ? colors.borderHigh : colors.border;
-}
-
-/**
- * The penalty pill is misread for a frame or two at a time: it flickers
- * between a value and null, and occasionally drops a digit ("36" read as
- * "6"). Median-filters isolated outlier values, drops one-off reads with no
- * nearby confirmation and carries the previous value across short null gaps
- * so the band renders as one steady shape instead of a picket fence.
- */
-function smoothPenalties(
-	sorted: readonly ObjectiveTimelineEvent[],
-	side: 0 | 1,
-): (number | null)[] {
-	const medianFiltered = medianFilterValues(
-		sorted.map((event) => event.data.penalty[side]),
-	);
-	const kept = sorted.map((event, i) => {
-		const value = medianFiltered[i]!;
-		if (value === null) return null;
-		const hasNearbyRead = sorted.some(
-			(other, j) =>
-				j !== i &&
-				other.data.penalty[side] !== null &&
-				Math.abs(other.t - event.t) <= PENALTY_BRIDGE_SECONDS,
-		);
-		return hasNearbyRead ? value : null;
-	});
-
-	const result = [...kept];
-	let prev = -1;
-	for (let i = 0; i < result.length; i++) {
-		if (result[i] !== null) {
-			prev = i;
-			continue;
-		}
-		if (prev === -1) continue;
-		const next = result.findIndex((value, j) => j > i && value !== null);
-		if (next === -1) continue;
-		if (sorted[next]!.t - sorted[prev]!.t <= PENALTY_BRIDGE_SECONDS) {
-			result[i] = result[prev];
-		}
-	}
-	return result;
-}
-
-function medianFilterValues(
-	values: readonly (number | null)[],
-): (number | null)[] {
-	const nonNullIndexes = values.flatMap((value, i) =>
-		value !== null ? [i] : [],
-	);
-	const result = [...values];
-	for (let k = 1; k < nonNullIndexes.length - 1; k++) {
-		const window = [
-			values[nonNullIndexes[k - 1]!]!,
-			values[nonNullIndexes[k]!]!,
-			values[nonNullIndexes[k + 1]!]!,
-		].sort((a, b) => a - b);
-		result[nonNullIndexes[k]!] = window[1]!;
-	}
-	return result;
 }
 
 /** Position on the x-axis: m:ss, growing an hours part only when needed. */

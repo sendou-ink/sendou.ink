@@ -431,7 +431,9 @@ function attributionIndex(
 
 /**
  * Drops re-detections of the same game within one request: same mode and
- * stage with every player row carrying the same name.
+ * stage with enough player rows carrying the same readable name in the same
+ * position — the same OCR-jitter tolerance as the cross-request duplicate
+ * check (isLinkedDuplicate).
  */
 function dedupeViews(sorted: IndexedView[]): IndexedView[] {
 	const result: IndexedView[] = [];
@@ -441,8 +443,9 @@ function dedupeViews(sorted: IndexedView[]): IndexedView[] {
 			(other) =>
 				other.mode === view.mode &&
 				other.stage === view.stage &&
-				other.players.every(
-					(player, i) => player.name === view.players[i]!.name,
+				isLinkedDuplicate(
+					view,
+					other.players.map((player) => player.name),
 				),
 		);
 		if (!isDuplicate) result.push(view);

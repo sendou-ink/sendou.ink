@@ -3,10 +3,10 @@ import type { ActionFunction } from "react-router";
 import { Config } from "~/config";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin } from "~/modules/permissions/utils";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { badRequestIfFalsy, forbidden, parseBody } from "~/utils/remix.server";
+import { forbidden, parseBody } from "~/utils/remix.server";
 import * as Scoreboards from "../core/Scoreboards";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import {
@@ -28,11 +28,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const data = await parseBody({ request, schema: ingestBodySchema });
 
-	const povUserId = data.povUserId ?? user?.id ?? null;
-
-	if (povUserId) {
-		badRequestIfFalsy(await UserRepository.findLeanById(povUserId));
-	}
+	const povUserId = user.id;
 
 	const indexedMatches = data.matches
 		.map((match, requestIndex) => ({ match, requestIndex }))
@@ -50,13 +46,13 @@ export const action: ActionFunction = async ({ request }) => {
 	const resolved = await resolveIngestContext({
 		matches,
 		povUserId,
-		casterUserId: user?.id ?? null,
+		casterUserId: user.id,
 	});
 
 	const { insertedCount, mergedCount, effectiveMatches } =
 		await ScannerIngestRepository.addOrMergeMatches({
 			povUserId,
-			submitterUserId: user?.id ?? null,
+			submitterUserId: user.id,
 			matches,
 			context: resolved?.context ?? null,
 		});
@@ -238,8 +234,8 @@ async function resolveIngestContext({
 	}
 
 	if (povUserId && hasPovMatches && countAttachableMatches(matches) >= 2) {
-		const since = Math.floor(
-			subDays(new Date(), CONTENT_RESOLUTION_WINDOW_DAYS).getTime() / 1000,
+		const since = dateToDatabaseTimestamp(
+			subDays(new Date(), CONTENT_RESOLUTION_WINDOW_DAYS),
 		);
 		const games = [
 			...(await ScannerIngestRepository.gamesPlayedByUserSince({

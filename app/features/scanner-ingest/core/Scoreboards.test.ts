@@ -279,6 +279,25 @@ describe("matchedGames", () => {
 		expect(tournamentMatchIdOf(matched[0]!)).toBe(1);
 	});
 
+	it("skips a duplicate detection despite a couple of OCR-misread names", () => {
+		const matched = Scoreboards.matchedGames({
+			matches: [
+				testMatch({ t: 60 }),
+				testMatch({
+					t: 65,
+					names: ["w1", "vv2", "w3", "w4", "l1", "l2", "l3", "I4"],
+				}),
+			],
+			games: [
+				testGame({ tournamentMatchId: 1, playedAt: 1000 }),
+				testGame({ tournamentMatchId: 2, playedAt: 2000 }),
+			],
+		});
+
+		expect(matched).toHaveLength(1);
+		expect(tournamentMatchIdOf(matched[0]!)).toBe(1);
+	});
+
 	it("skips matches from other lobbies", () => {
 		const matched = Scoreboards.matchedGames({
 			matches: [testMatch({ lobby: "X" })],
@@ -548,6 +567,21 @@ describe("deriveScoreboardData", () => {
 		]);
 
 		expect(data!.players[2]!.userId).toBe(42);
+	});
+
+	it("does not attribute a POV whose read name contradicts its seat's merged row", () => {
+		const data = derive([
+			{ data: testMatch(), povUserId: null },
+			{
+				data: testMatch({
+					povIndex: 2,
+					names: ["w1", "w2", "x9", "w4", "l1", "l2", "l3", "l4"],
+				}),
+				povUserId: 42,
+			},
+		]);
+
+		expect(data!.players.some((p) => p.userId === 42)).toBe(false);
 	});
 
 	it("merges a later partial's fields under the first link's values", () => {

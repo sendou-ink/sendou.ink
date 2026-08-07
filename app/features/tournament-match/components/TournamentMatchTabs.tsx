@@ -14,11 +14,11 @@ import type { IngestedScoreboardData } from "~/features/scanner-ingest/core/Scor
 import { useTournament } from "~/features/tournament/routes/to.$id";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
+import { resolveTimelineWeapons } from "../tournament-match-utils";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
@@ -176,50 +176,12 @@ function resolveTimelineMaps(
 		const weaponsFor = (
 			roster: ReturnType<typeof resolveRoster>,
 			tournamentTeamId: number,
-		): WeaponPoolWeapon[] => {
-			const linkedWeapons = roster.map((u) => weaponFor(u.id));
-
-			// an ingested row without a user is only unaccounted for if no roster
-			// member already reported its weapon, otherwise it is that member's row
-			// and reusing it would show their weapon twice
-			const accountedForCounts = new Map<MainWeaponId, number>();
-			for (const weapon of linkedWeapons) {
-				if (weapon === null) continue;
-				accountedForCounts.set(
-					weapon,
-					(accountedForCounts.get(weapon) ?? 0) + 1,
-				);
-			}
-
-			const unlinkedIngested =
-				ingestedScoreboard?.data.players.flatMap((player) => {
-					if (
-						player.userId !== undefined ||
-						player.weaponSplId === null ||
-						player.tournamentTeamId !== tournamentTeamId
-					) {
-						return [];
-					}
-
-					const accountedFor = accountedForCounts.get(player.weaponSplId) ?? 0;
-					if (accountedFor > 0) {
-						accountedForCounts.set(player.weaponSplId, accountedFor - 1);
-						return [];
-					}
-
-					return [player.weaponSplId];
-				}) ?? [];
-
-			let unlinkedIdx = 0;
-			return linkedWeapons.map((linked) => {
-				if (linked !== null) return linked;
-
-				const ingested = unlinkedIngested[unlinkedIdx++];
-				return ingested !== undefined
-					? { weaponSplId: ingested, unverified: true }
-					: null;
+		): WeaponPoolWeapon[] =>
+			resolveTimelineWeapons({
+				linkedWeapons: roster.map((u) => weaponFor(u.id)),
+				ingestedPlayers: ingestedScoreboard?.data.players ?? [],
+				tournamentTeamId,
 			});
-		};
 
 		const alphaWeapons = weaponsFor(alphaRoster, opponentOneId);
 		const bravoWeapons = weaponsFor(bravoRoster, opponentTwoId);

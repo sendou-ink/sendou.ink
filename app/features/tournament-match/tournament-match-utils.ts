@@ -1,9 +1,15 @@
 import type { TFunction } from "i18next";
 import * as R from "remeda";
+import type { WeaponPoolWeapon } from "~/components/match-page/WeaponPool";
 import type { TournamentRoundMaps } from "~/db/tables-json";
+import type { IngestedScoreboardPlayer } from "~/features/scanner-ingest/core/Scoreboards";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
 
@@ -86,6 +92,62 @@ export function pickInfoText({
 
 	logger.error(`Unknown source: ${String(map.source)}`);
 	return "";
+}
+
+/**
+ * One team's weapons for a map row: each roster member's reported weapon,
+ * with the gaps filled from the map's ingested scoreboard rows that no
+ * member accounts for. An ingested row without a user is only unaccounted
+ * for if no roster member already reported its weapon, otherwise it is that
+ * member's row and reusing it would show their weapon twice — a multiset
+ * count, so two ingested rows of a weapon survive one report of it.
+ *
+ * @param linkedWeapons per roster member, the weapon they reported for the map (null = none)
+ * @param ingestedPlayers the map's ingested scoreboard rows (empty when none ingested)
+ * @returns index-aligned with `linkedWeapons`; ingested fills are marked unverified
+ */
+export function resolveTimelineWeapons({
+	linkedWeapons,
+	ingestedPlayers,
+	tournamentTeamId,
+}: {
+	linkedWeapons: (MainWeaponId | null)[];
+	ingestedPlayers: IngestedScoreboardPlayer[];
+	tournamentTeamId: number;
+}): WeaponPoolWeapon[] {
+	const accountedForCounts = new Map<MainWeaponId, number>();
+	for (const weapon of linkedWeapons) {
+		if (weapon === null) continue;
+		accountedForCounts.set(weapon, (accountedForCounts.get(weapon) ?? 0) + 1);
+	}
+
+	const unlinkedIngested = ingestedPlayers.flatMap((player) => {
+		if (
+			player.userId !== undefined ||
+			player.weaponSplId === null ||
+			player.tournamentTeamId !== tournamentTeamId
+		) {
+			return [];
+		}
+
+		const accountedFor = accountedForCounts.get(player.weaponSplId) ?? 0;
+		if (accountedFor > 0) {
+			accountedForCounts.set(player.weaponSplId, accountedFor - 1);
+			return [];
+		}
+
+		return [player.weaponSplId];
+	});
+
+	let unlinkedIdx = 0;
+	return linkedWeapons.map((linked) => {
+		if (linked !== null) return linked;
+
+		const ingested = unlinkedIngested[unlinkedIdx++];
+		return ingested !== undefined
+			? { weaponSplId: ingested, unverified: true }
+			: null;
+	});
 }
 
 export function isSetOverByResults({

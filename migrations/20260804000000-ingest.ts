@@ -84,5 +84,12 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.on("IngestedMatchLink")
 			.column("groupMatchMapId")
 			.execute();
+
+		// ingest context resolution prunes reported games by a createdAt window
+		await trx.schema
+			.createIndex("tournament_match_game_result_created_at")
+			.on("TournamentMatchGameResult")
+			.column("createdAt")
+			.execute();
 	});
 }

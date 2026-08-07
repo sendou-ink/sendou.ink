@@ -699,7 +699,7 @@ export default function MatchPageTestRoute() {
 								},
 								scoreboard: {
 									objective: MOCK_OBJECTIVE_EVENTS,
-									scores: [500, 0],
+									scores: [100, 0],
 									alpha: [
 										{
 											name: "Sendou",

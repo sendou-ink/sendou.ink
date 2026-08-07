@@ -22,6 +22,7 @@ import {
 	userSearch,
 } from "./fields";
 import { SendouForm, useFormFieldContext } from "./SendouForm";
+import type { ArrayItemRenderContext } from "./types";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
 
@@ -1412,6 +1413,269 @@ describe("SendouForm", () => {
 
 			await expect.element(inputA).toHaveValue("Value A");
 			await expect.element(inputB).toHaveValue("Value B");
+		});
+	});
+
+	describe("array field with custom-rendered items", () => {
+		const memberSchema = () =>
+			z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textField({ label: "labels.name", maxLength: 100 }),
+							role: select({
+								label: "labels.staffRole",
+								items: [
+									{ value: "ORGANIZER", label: "options.staffRole.ORGANIZER" },
+									{ value: "STREAMER", label: "options.staffRole.STREAMER" },
+								],
+							}),
+						}),
+					}),
+				}),
+			});
+
+		function renderCustomArrayForm(options?: {
+			defaultValues?: Record<string, unknown>;
+			onApply?: (values: Record<string, unknown>) => void;
+		}) {
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={memberSchema()}
+								defaultValues={options?.defaultValues}
+								onApply={options?.onApply}
+							>
+								<FormField name="members">
+									{(ctx: ArrayItemRenderContext) => (
+										<div>
+											<div data-testid={`member-${ctx.index}`}>
+												{ctx.values.name as string} /{" "}
+												{ctx.values.role as string}
+											</div>
+											<button
+												type="button"
+												onClick={() =>
+													ctx.setItemField(
+														"name",
+														`${ctx.values.name as string} edited`,
+													)
+												}
+											>
+												Edit member {ctx.index + 1}
+											</button>
+											{ctx.canRemove ? (
+												<button type="button" onClick={() => ctx.remove()}>
+													Remove member {ctx.index + 1}
+												</button>
+											) : null}
+										</div>
+									)}
+								</FormField>
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			return render(<RouterProvider router={router} />);
+		}
+
+		const memberTestIds = (screen: Awaited<ReturnType<typeof render>>) =>
+			screen.container.querySelectorAll('[data-testid^="member-"]');
+
+		test("renders each item through the render function with its values", async () => {
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+					],
+				},
+			});
+
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Alice / ORGANIZER");
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("Bob / STREAMER");
+		});
+
+		test("add button appends a new custom-rendered item", async () => {
+			const screen = await renderCustomArrayForm();
+
+			expect(memberTestIds(screen).length).toBe(1);
+
+			await screen.getByRole("button", { name: "Add" }).click();
+
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("/ ORGANIZER");
+			expect(memberTestIds(screen).length).toBe(2);
+		});
+
+		test("remove removes exactly the clicked item", async () => {
+			const onApply = vi.fn();
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+						{ name: "Carol", role: "STREAMER" },
+					],
+				},
+				onApply,
+			});
+
+			await screen.getByRole("button", { name: "Remove member 2" }).click();
+
+			expect(memberTestIds(screen).length).toBe(2);
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Alice / ORGANIZER");
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("Carol / STREAMER");
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice", role: "ORGANIZER" }),
+					expect.objectContaining({ name: "Carol", role: "STREAMER" }),
+				],
+			});
+		});
+
+		test("remove after add acts on the grown array, not a stale one", async () => {
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+					],
+				},
+			});
+
+			await screen.getByRole("button", { name: "Add" }).click();
+			await screen.getByRole("button", { name: "Remove member 1" }).click();
+
+			// A stale remove would have filtered the pre-add two-item array and
+			// dropped the freshly added row along with Alice.
+			expect(memberTestIds(screen).length).toBe(2);
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Bob / STREAMER");
+		});
+
+		test("remove after editing a different item keeps the edit", async () => {
+			const onApply = vi.fn();
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+						{ name: "Carol", role: "STREAMER" },
+					],
+				},
+				onApply,
+			});
+
+			// Editing item 1 does not re-render the memoized item 3, so its remove
+			// callback must read the current array instead of a stale closure.
+			await screen.getByRole("button", { name: "Edit member 1" }).click();
+			await screen.getByRole("button", { name: "Remove member 3" }).click();
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice edited", role: "ORGANIZER" }),
+					expect.objectContaining({ name: "Bob", role: "STREAMER" }),
+				],
+			});
+		});
+
+		test("setItemField updates only the targeted item's field", async () => {
+			const onApply = vi.fn();
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+					],
+				},
+				onApply,
+			});
+
+			await screen.getByRole("button", { name: "Edit member 2" }).click();
+
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("Bob edited / STREAMER");
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Alice / ORGANIZER");
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice", role: "ORGANIZER" }),
+					expect.objectContaining({ name: "Bob edited", role: "STREAMER" }),
+				],
+			});
+		});
+
+		test("itemName renders a nested FormField bound to the item", async () => {
+			const onApply = vi.fn();
+			const schema = memberSchema();
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={schema}
+								defaultValues={{
+									members: [{ name: "Alice", role: "ORGANIZER" }],
+								}}
+								onApply={onApply}
+							>
+								<FormField name="members">
+									{(ctx: ArrayItemRenderContext) => (
+										<FormField name={`${ctx.itemName}.name`} />
+									)}
+								</FormField>
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+			const input = screen.getByLabelText("Name");
+
+			await expect.element(input).toHaveValue("Alice");
+
+			await userEvent.type(input.element(), " Smith");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice Smith", role: "ORGANIZER" }),
+				],
+			});
 		});
 	});
 
