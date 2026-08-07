@@ -27,7 +27,12 @@
  *   then never re-arm). A parse reaching the detector's
  *   `sufficientConfidence` suppresses immediately: the timeline keeps the
  *   best read per merge window, so once a read is that good further parses
- *   cannot change the outcome. A
+ *   cannot change the outcome. A gate that reports a content `signature`
+ *   ends the streak the moment the signature moves past
+ *   `signatureTolerance`: browsing distinct battle-log/replay entries never
+ *   drops those gates, so without the signature one sufficient read would
+ *   suppress every subsequent entry for as long as the screen family stays
+ *   up. A
  *   detector with `rearmCooldownS` (death: the overlay's animated
  *   background makes its gate flicker) additionally skips parses for that
  *   long after a sufficient read, across gate drops; safe only where the
@@ -75,6 +80,13 @@ export interface SchedulerOptions {
 	stagnantAfterS: number;
 	/** minimum confidence gain that counts as an improvement */
 	minImprovement: number;
+	/**
+	 * a gate signature cell moving more than this since the streak's last
+	 * parse means the screen's content changed and the streak resets
+	 * (measured on battle-log browsing: static-screen noise ≤2 per cell,
+	 * entry flips ≥57)
+	 */
+	signatureTolerance: number;
 	/** seconds without any gate pass before the scan counts as calm */
 	quietAfterS: number;
 	/** a match opened this long ago without closing is assumed abandoned */
@@ -94,6 +106,7 @@ const DEFAULT_SCHEDULER_OPTIONS: SchedulerOptions = {
 	// the sampling cadence
 	stagnantAfterS: 3,
 	minImprovement: 0.001,
+	signatureTolerance: 12,
 	quietAfterS: 15,
 	matchOpenMaxS: 8 * 60,
 	matchOpeningTypes: [],
@@ -113,6 +126,8 @@ interface StreakState {
 	stagnant: number;
 	lastImprovementT: number;
 	suppressed: boolean;
+	/** gate signature of the streak's last parsed frame */
+	signature: readonly number[] | undefined;
 }
 
 interface DetectorState {
@@ -120,6 +135,8 @@ interface DetectorState {
 	lastCheckT: number | undefined;
 	gatePassing: boolean;
 	streak: StreakState | null;
+	/** signature reported by the latest passing gate */
+	lastGateSignature: readonly number[] | undefined;
 	/** parses skipped until this t after a sufficient read (rearmCooldownS) */
 	parseHoldUntilT: number;
 }
@@ -187,16 +204,33 @@ export class DetectorScheduler {
 	}
 
 	/** Report a gate outcome for a detector this scheduler marked due. */
-	recordGate(id: string, t: number, pass: boolean): void {
+	recordGate(
+		id: string,
+		t: number,
+		pass: boolean,
+		signature?: readonly number[],
+	): void {
 		const state = this.#states.get(id);
 		if (!state) return;
 		state.lastCheckT = t;
 		state.gatePassing = pass;
-		if (pass) {
-			this.#lastActivityT = Math.max(this.#lastActivityT, t);
-		} else {
+		if (!pass) {
+			state.streak = null;
+			return;
+		}
+		this.#lastActivityT = Math.max(this.#lastActivityT, t);
+		if (
+			signature &&
+			state.streak?.signature &&
+			signaturesDiffer(
+				signature,
+				state.streak.signature,
+				this.#options.signatureTolerance,
+			)
+		) {
 			state.streak = null;
 		}
+		state.lastGateSignature = signature;
 	}
 
 	/** Whether the (passed) gate should be followed by a parse at `t`. */
@@ -234,6 +268,7 @@ export class DetectorScheduler {
 				stagnant: 0,
 				lastImprovementT: t,
 				suppressed: true,
+				signature: state.lastGateSignature,
 			};
 			if (rearmCooldownS !== undefined) {
 				state.parseHoldUntilT = t + rearmCooldownS;
@@ -246,10 +281,12 @@ export class DetectorScheduler {
 				stagnant: 0,
 				lastImprovementT: t,
 				suppressed: false,
+				signature: state.lastGateSignature,
 			};
 			return;
 		}
 		const streak = state.streak;
+		streak.signature = state.lastGateSignature;
 		if (confidence > streak.best + this.#options.minImprovement) {
 			streak.best = confidence;
 			streak.stagnant = 0;
@@ -316,6 +353,19 @@ function freshState(info: SchedulingInfo): DetectorState {
 		lastCheckT: undefined,
 		gatePassing: false,
 		streak: null,
+		lastGateSignature: undefined,
 		parseHoldUntilT: Number.NEGATIVE_INFINITY,
 	};
+}
+
+function signaturesDiffer(
+	a: readonly number[],
+	b: readonly number[],
+	tolerance: number,
+): boolean {
+	if (a.length !== b.length) return true;
+	for (let i = 0; i < a.length; i++) {
+		if (Math.abs(a[i]! - b[i]!) > tolerance) return true;
+	}
+	return false;
 }

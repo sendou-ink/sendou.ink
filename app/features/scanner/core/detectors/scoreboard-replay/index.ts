@@ -17,6 +17,7 @@ import {
 	maxChannel,
 	meanBrightness,
 	type Roi,
+	roiSignature,
 } from "../../image";
 import { RESULT_TAG_ENTRIES } from "../../localized";
 import { closestBy } from "../../text";
@@ -50,6 +51,7 @@ import {
 	gateFlatProbe,
 	HEADER_LINE_HEIGHT,
 	HEADER_TIMESTAMP_HEIGHT,
+	HEADER_TOP_BAND,
 	MATCH_SCORE_DIGIT_HEIGHT,
 	MATCH_SCORE_ROIS,
 	NAME_TEXT_HEIGHT,
@@ -185,7 +187,6 @@ export function createScoreboardReplayDetector(
 			if (meanBrightness(frame, roi) < GATE_GAP_MAX_MEAN) gapOk++;
 		}
 		const codeFraction = greenFraction(frame, REPLAY_CODE_ROI);
-		gray.delete();
 
 		const rowCount = PANEL_XS.length * ROW_CENTERS.length;
 		const score =
@@ -199,7 +200,24 @@ export function createScoreboardReplayDetector(
 			suffixOk >= 7 &&
 			gapOk === 2 &&
 			codeFraction >= GATE_CODE_MIN_FRACTION;
-		return { pass, score };
+		// browsing flips between replays never drop this gate, so it
+		// fingerprints the content that always differs between two battles
+		// (recording timestamp band + replay code) plus the name columns —
+		// the scheduler re-arms suppression when the fingerprint moves
+		const signature = pass ? contentSignature(gray) : undefined;
+		gray.delete();
+		return { pass, score, signature };
+	}
+
+	function contentSignature(gray: Mat): number[] {
+		const signature = roiSignature(gray, HEADER_TOP_BAND, 32, 2);
+		signature.push(...roiSignature(gray, REPLAY_CODE_ROI, 32, 1));
+		for (const dx of PANEL_XS) {
+			for (const cy of ROW_CENTERS) {
+				signature.push(...roiSignature(gray, nameRoi(cy, dx), 8, 1));
+			}
+		}
+		return signature;
 	}
 
 	function parsePanel(gray: Mat, rgb: Mat, dx: number): PanelParse {

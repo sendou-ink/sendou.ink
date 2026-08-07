@@ -128,6 +128,30 @@ export function minChannel(mat: Mat, roi?: Roi): Mat {
 	return channelExtreme(mat, roi, "min");
 }
 
+/**
+ * Coarse content fingerprint of a grayscale ROI: the mean brightness of each
+ * cell in a cols x rows grid over the region. Cheap enough for gates.
+ * Consecutive frames of one static screen move a cell by ≤~2 while different
+ * text/content moves cells by tens (measured on battle-log browsing footage)
+ * — the scheduler compares fingerprints to re-arm suppression when a passing
+ * gate's screen flips to a new real occurrence (GateResult.signature).
+ */
+export function roiSignature(
+	gray: Mat,
+	roi: Roi,
+	cols: number,
+	rows: number,
+): number[] {
+	const cv = getCV();
+	const view = cropRoi(gray, roi);
+	const small = new cv.Mat();
+	cv.resize(view, small, new cv.Size(cols, rows), 0, 0, cv.INTER_AREA);
+	view.delete();
+	const cells = Array.from(small.data as Uint8Array, Number);
+	small.delete();
+	return cells;
+}
+
 /** |Laplacian| response of a grayscale mat; caller owns the result. */
 export function laplacianAbs(gray: Mat): Mat {
 	const cv = getCV();

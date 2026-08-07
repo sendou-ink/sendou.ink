@@ -55,7 +55,7 @@ for (const [i, file] of files.entries()) {
 	for (const detector of detectors) {
 		if (!due.includes(detector.id)) continue;
 		const gate = detector.gate(frame);
-		scheduler.recordGate(detector.id, t, gate.pass);
+		scheduler.recordGate(detector.id, t, gate.pass, gate.signature);
 		if (!gate.pass) {
 			if (process.env.LOG_GATES?.includes(detector.id)) {
 				console.log(

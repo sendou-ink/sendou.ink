@@ -34,10 +34,15 @@ function make(detector: Partial<SchedulingInfo>, options = {}) {
 function feed(
 	s: DetectorScheduler,
 	t: number,
-	options: { pass: boolean; confidence?: number; type?: string },
+	options: {
+		pass: boolean;
+		confidence?: number;
+		type?: string;
+		signature?: number[];
+	},
 ): "skipped" | "gated" | "parsed" {
 	if (!s.dueDetectors(t).includes("d")) return "skipped";
-	s.recordGate("d", t, options.pass);
+	s.recordGate("d", t, options.pass, options.signature);
 	if (!options.pass || !s.shouldParse("d", t)) return "gated";
 	s.recordParse(
 		"d",
@@ -142,6 +147,48 @@ test("a sufficient read suppresses immediately", () => {
 	// gate drop = screen changed = fresh streak parses again
 	feed(s, 0.2, { pass: false });
 	assert.equal(feed(s, 0.3, { pass: true, confidence: 0.7 }), "parsed");
+});
+
+test("a changed gate signature re-arms a suppressed streak", () => {
+	const s = make({ sufficientConfidence: 0.8 });
+	const entryA = [20, 200];
+	const entryB = [200, 20];
+	assert.equal(
+		feed(s, 0, { pass: true, confidence: 0.9, signature: entryA }),
+		"parsed",
+	);
+	assert.equal(
+		feed(s, 0.1, { pass: true, confidence: 0.9, signature: entryA }),
+		"gated",
+	);
+	// codec noise within tolerance is still the same screen
+	assert.equal(
+		feed(s, 0.2, { pass: true, confidence: 0.9, signature: [22, 198] }),
+		"gated",
+	);
+	// the next browsed entry keeps the gate passing but moves the content
+	assert.equal(
+		feed(s, 0.3, { pass: true, confidence: 0.9, signature: entryB }),
+		"parsed",
+	);
+	assert.equal(
+		feed(s, 0.4, { pass: true, confidence: 0.9, signature: entryB }),
+		"gated",
+	);
+});
+
+test("a signature change mid-streak starts a fresh best", () => {
+	const s = make({});
+	feed(s, 0.0, { pass: true, confidence: 0.9, signature: [0] });
+	feed(s, 0.1, { pass: true, confidence: 0.9, signature: [0] });
+	// the next entry reads worse than the old best — with the old streak's
+	// best carried over these would count stagnant and suppress at t=0.4
+	feed(s, 0.2, { pass: true, confidence: 0.7, signature: [255] });
+	feed(s, 0.3, { pass: true, confidence: 0.7, signature: [255] });
+	assert.equal(
+		feed(s, 0.4, { pass: true, confidence: 0.7, signature: [255] }),
+		"parsed",
+	);
 });
 
 test("rearm cooldown skips parses across gate flicker", () => {

@@ -135,7 +135,7 @@ async function analyzeFrame(
 			const gateStart = performance.now();
 			const gate = detector.gate(frame);
 			counters.gateMs += performance.now() - gateStart;
-			scheduler!.recordGate(detector.id, t, gate.pass);
+			scheduler!.recordGate(detector.id, t, gate.pass, gate.signature);
 			if (gate.pass) counters.gatePasses++;
 			const runParse = gate.pass && scheduler!.shouldParse(detector.id, t);
 			if (gate.pass && !runParse) counters.suppressedParses++;

@@ -110,7 +110,10 @@ sequenceDiagram
   sits just under each detector's measured clean-read confidence floor
   (fixture suite + confirmed scan events); death
   adds `rearmCooldownS` (safe because it fits inside the Death timeline
-  merge window). `checkIntervalS` (objective: 1s)
+  merge window). Battle-log and replay gates also return a content
+  `signature` (grid-cell means over the header/name/code ROIs) — browsing
+  distinct entries never drops those gates, so the scheduler instead resets
+  the streak when the signature moves, one parse per distinct battle. `checkIntervalS` (objective: 1s)
   still hard-caps both phases and exempts from suppression; a detector can
   also declare `attachFrame: false` to keep continuously-firing events from
   storing a frame PNG each. In the UI a match's objective reads render as

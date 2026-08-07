@@ -17,6 +17,7 @@ import {
 	maxBrightness,
 	maxChannel,
 	meanBrightness,
+	roiSignature,
 } from "../../image";
 import { RESULT_TAG_ENTRIES } from "../../localized";
 import { closestBy } from "../../text";
@@ -166,7 +167,6 @@ export function createBattleLogDetector(
 		for (const roi of GATE_COLOR_PROBES) {
 			if (probeSaturation(frame, roi) >= GATE_COLOR_MIN_SATURATION) colorOk++;
 		}
-		gray.delete();
 
 		const rowCount = PANEL_DYS.length * ROW_CENTERS.length;
 		const score =
@@ -175,7 +175,23 @@ export function createBattleLogDetector(
 				colorOk / GATE_COLOR_PROBES.length) /
 			3;
 		const pass = darkOk >= 7 && suffixOk >= 7 && colorOk === 3;
-		return { pass, score };
+		// browsing flips between entries never drop this gate, so it
+		// fingerprints the content that always differs between two battles
+		// (recording timestamp + stage tag) plus the name column — the
+		// scheduler re-arms suppression when the fingerprint moves
+		const signature = pass ? contentSignature(gray) : undefined;
+		gray.delete();
+		return { pass, score, signature };
+	}
+
+	function contentSignature(gray: Mat): number[] {
+		const signature = roiSignature(gray, HEADER_TOP_BAND, 32, 2);
+		for (const dy of PANEL_DYS) {
+			for (const base of ROW_CENTERS) {
+				signature.push(...roiSignature(gray, nameRoi(base + dy), 8, 1));
+			}
+		}
+		return signature;
 	}
 
 	function parsePanel(gray: Mat, rgb: Mat, dy: number): PanelParse {
@@ -351,7 +367,9 @@ export function createBattleLogDetector(
 	}
 
 	// no rearm cooldown — distinct battles browsed in quick succession are
-	// told apart by content (same as the replay browser)
+	// told apart by content: the gate signature re-arms scheduler suppression
+	// and the timeline merges via sameScoreboardMatch (same as the replay
+	// browser)
 	return {
 		id: "battle-log",
 		sufficientConfidence: 0.8,
