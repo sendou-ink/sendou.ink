@@ -190,6 +190,10 @@ export default [
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),
+		route(
+			"teams/:tid/comps",
+			"features/tournament/routes/to.$id.teams.$tid.comps.ts",
+		),
 		route("streams", "features/tournament/routes/to.$id.streams.tsx"),
 
 		route("looking", "features/tournament-lfg/routes/to.$id.looking.tsx"),

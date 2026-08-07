@@ -425,6 +425,13 @@ export const tournamentTeamPage = ({
 	tournamentId: number;
 	tournamentTeamId: number;
 }) => `/to/${tournamentId}/teams/${tournamentTeamId}`;
+export const tournamentTeamCompsPage = ({
+	tournamentId,
+	tournamentTeamId,
+}: {
+	tournamentId: number;
+	tournamentTeamId: number;
+}) => `${tournamentTeamPage({ tournamentId, tournamentTeamId })}/comps`;
 export const tournamentInfoPage = (tournamentId: number) =>
 	`/to/${tournamentId}/info`;
 export const tournamentRegisterPage = (tournamentId: number) =>

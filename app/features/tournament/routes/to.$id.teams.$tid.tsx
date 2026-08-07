@@ -1,12 +1,16 @@
 import clsx from "clsx";
+import { HardDriveDownload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
+import { useUser } from "~/features/auth/core/user";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
+import { TournamentRunGraphic } from "~/features/img-export/components/TournamentRunGraphic";
 import type {
 	TournamentData,
 	TournamentDataTeam,
@@ -16,12 +20,14 @@ import { metaTags } from "~/utils/remix";
 import {
 	teamPage,
 	tournamentMatchPage,
+	tournamentTeamCompsPage,
 	tournamentTeamPage,
 	userPage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import * as Standings from "../core/Standings";
 import type { PlayedSet } from "../core/sets.server";
+import type { TournamentTeamCompsLoaderData } from "../loaders/to.$id.teams.$tid.comps.server";
 import { loader } from "../loaders/to.$id.teams.$tid.server";
 import styles from "../tournament.module.css";
 import { useTournament } from "./to.$id";
@@ -88,6 +94,7 @@ export default function TournamentTeamPage() {
 					teamsCount={tournament.ctx.teams.length}
 				/>
 			) : null}
+			<RunImageExport />
 			<div className={styles.teamSets}>
 				{data.sets.map((set) => {
 					return <SetInfo key={set.tournamentMatchId} set={set} team={team} />;
@@ -182,6 +189,129 @@ function StatSquares({
 				) : null}
 			</div>
 		</div>
+	);
+}
+
+function RunImageExport() {
+	const { t } = useTranslation(["common"]);
+	const user = useUser();
+	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+	const fetcher = useFetcher<TournamentTeamCompsLoaderData>();
+
+	const team = tournament.teamById(data.tournamentTeamId);
+	const isOwnTeam = Boolean(
+		team?.members.some((member) => member.userId === user?.id),
+	);
+
+	const placement = Standings.flattenStandings(
+		Standings.tournamentStandings(tournament),
+	).find((standing) => standing.team.id === data.tournamentTeamId)?.placement;
+
+	if (!team || !isOwnTeam || typeof placement !== "number") return null;
+
+	const handleOpen = () => {
+		if (fetcher.state === "idle" && !fetcher.data) {
+			fetcher.load(
+				tournamentTeamCompsPage({
+					tournamentId: tournament.ctx.id,
+					tournamentTeamId: data.tournamentTeamId,
+				}),
+			);
+		}
+	};
+
+	const compByMatchId = new Map(
+		fetcher.data?.opponentComps.map((opponentComp) => [
+			opponentComp.tournamentMatchId,
+			opponentComp.comp,
+		]),
+	);
+
+	const participatedPlayers = tournament.participatedPlayersByTeamId(team.id);
+	const ownPlayers =
+		participatedPlayers.length > 0 ? participatedPlayers : team.members;
+
+	const graphicTeam = {
+		placement,
+		name: team.name,
+		logoUrl: tournament.tournamentTeamLogoSrc(team) ?? undefined,
+		players: ownPlayers.map((player) => ({
+			name: player.username,
+			countryCode: player.country ?? undefined,
+		})),
+		weapons: fetcher.data?.ownComp ?? [],
+	};
+
+	const matches = data.sets.map((set) => {
+		const { bracketName, roundNameWithoutMatchIdentifier } =
+			tournament.matchContextNamesById(set.tournamentMatchId);
+		const opponentTeam = tournament.teamById(set.opponent.id);
+
+		return {
+			opponent: {
+				name: set.opponent.name,
+				logoUrl: opponentTeam
+					? (tournament.tournamentTeamLogoSrc(opponentTeam) ?? undefined)
+					: undefined,
+				seed: opponentTeam?.seed,
+				players: set.opponent.roster.map((rosterUser) => ({
+					name: rosterUser.username,
+					countryCode:
+						opponentTeam?.members.find(
+							(member) => member.userId === rosterUser.id,
+						)?.country ?? undefined,
+				})),
+				weapons: compByMatchId.get(set.tournamentMatchId) ?? [],
+			},
+			ownScore: set.score[0],
+			opponentScore: set.score[1],
+			roundName: roundNameWithoutMatchIdentifier ?? "",
+			bracketName: bracketName ?? "",
+		};
+	});
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<HardDriveDownload />}
+					onPress={handleOpen}
+					className="mx-auto"
+				>
+					{t("common:imageExport.export")}
+				</SendouButton>
+			}
+			heading={t("common:imageExport.export")}
+			filename={`tournament-${tournament.ctx.id}-run`}
+		>
+			{fetcher.data ? (
+				// xxx: pass seriesWins so 1st place finishes show the series titles row
+				<TournamentRunGraphic
+					tournamentId={tournament.ctx.id}
+					tournamentTeamId={data.tournamentTeamId}
+					tournamentName={tournament.ctx.name}
+					startTime={tournament.ctx.startsAt}
+					logoUrl={tournament.ctx.logoUrl ?? undefined}
+					tier={tournament.ctx.tier ?? undefined}
+					organization={
+						tournament.ctx.organization
+							? {
+									name: tournament.ctx.organization.name,
+									avatarUrl: tournament.ctx.organization.logoUrl ?? undefined,
+								}
+							: undefined
+					}
+					team={graphicTeam}
+					seed={team.seed}
+					matches={matches}
+					teamsCount={tournament.ctx.teams.length}
+					playersCount={tournament.ctx.participatedUsers.length}
+				/>
+			) : null}
+		</ImageExportDialog>
 	);
 }
 
