@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "Elige {{count}} escenarios por estilo que no evitaste para guardar tus preferencias",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

@@ -8,6 +8,7 @@ import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_PREPARING_PAGE,
+	SENDOUQ_READY_PAGE,
 	sendouQMatchPage,
 } from "~/utils/urls";
 import type { SQOwnGroup } from "./core/SendouQ.server";
@@ -44,6 +45,7 @@ export function clearSeasonSkillsCache() {
 function groupRedirectLocation(group?: SQOwnGroup) {
 	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
 	if (group?.matchId) return sendouQMatchPage(group.matchId);
+	if (group?.status === "READY_CHECK") return SENDOUQ_READY_PAGE;
 	if (group) return SENDOUQ_LOOKING_PAGE;
 
 	return SENDOUQ_PAGE;
@@ -55,7 +57,7 @@ export function sqRedirectIfNeeded({
 	currentLocation,
 }: {
 	ownGroup?: SQOwnGroup;
-	currentLocation: "default" | "preparing" | "looking" | "match";
+	currentLocation: "default" | "preparing" | "looking" | "ready" | "match";
 }) {
 	const newLocation = groupRedirectLocation(ownGroup);
 
@@ -65,6 +67,7 @@ export function sqRedirectIfNeeded({
 		return;
 	if (currentLocation === "looking" && newLocation === SENDOUQ_LOOKING_PAGE)
 		return;
+	if (currentLocation === "ready" && newLocation === SENDOUQ_READY_PAGE) return;
 	if (currentLocation === "match" && newLocation.includes("match")) return;
 
 	throw redirect(newLocation);
@@ -81,6 +84,22 @@ export function setGroupChatMetadata(group: {
 		url: SENDOUQ_LOOKING_PAGE,
 		imageUrl: `${navIconUrl("sendouq")}.avif`,
 		participantUserIds: group.members.map((m) => m.id),
+		expiresAfter: { hours: 2 },
+	});
+}
+
+export function setMatchChatMetadata(match: {
+	id: number;
+	chatCode: string;
+	participantUserIds: number[];
+}) {
+	ChatSystemMessage.setMetadata({
+		chatCode: match.chatCode,
+		header: `Match #${match.id}`,
+		subtitle: "SendouQ",
+		url: sendouQMatchPage(match.id),
+		imageUrl: `${navIconUrl("sendouq")}.avif`,
+		participantUserIds: match.participantUserIds,
 		expiresAfter: { hours: 2 },
 	});
 }

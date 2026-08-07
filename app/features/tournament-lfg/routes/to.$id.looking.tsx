@@ -3,7 +3,8 @@ import { Mic, Trash } from "lucide-react";
 import * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -18,10 +19,9 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placeholder } from "~/components/Placeholder";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	UserCard,
 	useUserCardData,
@@ -39,6 +39,7 @@ import {
 import {
 	addSubFormSchema,
 	joinQueueFormSchema,
+	lookingSchema,
 } from "../tournament-lfg-schemas";
 
 export { action } from "../actions/to.$id.looking.server";
@@ -424,7 +425,6 @@ function TeamQueueSection() {
 		{ mode: "looking" }
 	>;
 	const tournament = useTournament();
-	const fetcher = useFetcher();
 
 	if (!data.ownTeam) return null;
 
@@ -438,15 +438,14 @@ function TeamQueueSection() {
 			<LFGGroupCard group={data.ownTeam} />
 			{!isAtMaxMembers ? (
 				canJoinQueue ? (
-					<fetcher.Form method="post" className="stack items-center">
-						<SubmitButton
-							_action="JOIN_QUEUE"
-							state={fetcher.state}
-							variant="outlined"
-						>
-							{t("q:looking.joinQPromptMembers")}
-						</SubmitButton>
-					</fetcher.Form>
+					<ActionButton
+						schema={lookingSchema}
+						action="JOIN_QUEUE"
+						formClassName="stack items-center"
+						variant="outlined"
+					>
+						{t("q:looking.joinQPromptMembers")}
+					</ActionButton>
 				) : (
 					<div className="stack items-center">
 						<SendouPopover

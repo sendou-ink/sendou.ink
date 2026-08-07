@@ -25,9 +25,14 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { Placement } from "~/components/Placement";
 import { useUser } from "~/features/auth/core/user";
+import {
+	acceptFriendRequestSchema,
+	sendFriendRequestBaseSchema,
+} from "~/features/friends/friends-schemas";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
 import { ReportUserDialog } from "~/features/user-report/components/ReportUserDialog";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
@@ -311,7 +316,10 @@ function CardContent({
 				)}
 			</div>
 			<div className={styles.identity}>
-				<NoteAvatar sentiment={data.privateNote?.sentiment}>
+				<NoteAvatar
+					sentiment={data.privateNote?.sentiment}
+					onClick={isOwnCard ? undefined : onNoteButtonPress}
+				>
 					<Avatar user={data} size="md" className={styles.avatar} />
 				</NoteAvatar>
 				<div className={styles.nameGroup}>
@@ -427,6 +435,14 @@ function FriendRequestButton({
 }) {
 	const { t } = useTranslation(["user"]);
 	const fetcher = useFetcher();
+	const acceptRequest = useActionSubmit(acceptFriendRequestSchema, {
+		action: FRIENDS_PAGE,
+		fetcher,
+	});
+	const sendRequest = useActionSubmit(sendFriendRequestBaseSchema, {
+		action: FRIENDS_PAGE,
+		fetcher,
+	});
 	const previousStateRef = React.useRef(fetcher.state);
 	const acceptsIncomingRequest = incomingFriendRequestId !== null;
 
@@ -459,6 +475,7 @@ function FriendRequestButton({
 				isDisabled={fetcher.state !== "idle" || fetcher.data === null}
 				aria-label="Accept friend request"
 				onPress={() => {
+					if (incomingFriendRequestId === null) return;
 					toastQueue.add(
 						{
 							message: t("user:card.friendRequestAccepted"),
@@ -466,13 +483,9 @@ function FriendRequestButton({
 						},
 						{ timeout: 5000 },
 					);
-					fetcher.submit(
-						{
-							_action: "ACCEPT_REQUEST",
-							friendRequestId: incomingFriendRequestId,
-						},
-						{ method: "post", action: FRIENDS_PAGE },
-					);
+					acceptRequest.submit("ACCEPT_REQUEST", {
+						friendRequestId: incomingFriendRequestId,
+					});
 				}}
 			/>
 		);
@@ -500,10 +513,7 @@ function FriendRequestButton({
 			icon={<UserPlus />}
 			aria-label={t("user:card.sendFriendRequest")}
 			onPress={() =>
-				fetcher.submit(
-					{ _action: "SEND_REQUEST", userId: targetUserId },
-					{ method: "post", action: FRIENDS_PAGE },
-				)
+				sendRequest.submit("SEND_REQUEST", { userId: targetUserId })
 			}
 		/>
 	);

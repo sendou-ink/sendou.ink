@@ -1,19 +1,19 @@
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
 import { Table } from "~/components/Table";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { UserLink } from "~/components/UserLink";
 import {
 	TOURNAMENT_AUDIT_LOG_TYPES,
 	type TournamentAuditLogType,
 } from "~/features/tournament/tournament-constants";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { CommonUser } from "~/utils/kysely.server";
-import { tournamentTeamPage, userPage } from "~/utils/urls";
+import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentAdminAuditLoader } from "../loaders/to.$id.admin.audit.server";
 import { tournamentAuditSearchParams } from "../tournament-admin-search-params";
 import styles from "./to.$id.admin.audit.module.css";
@@ -85,8 +85,11 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 
 	const detail =
 		typeof event.metadata?.bracketIdx === "number"
-			? tournament.brackets[event.metadata.bracketIdx]?.name
-			: event.metadata?.inGameName;
+			? tournament.bracketsMeta[event.metadata.bracketIdx]?.name
+			: event.type === "UPDATE_TOURNAMENT_NAME"
+				? (event.metadata?.tournamentName ??
+					t("tournament:admin.audit.detail.tournamentNameCleared"))
+				: event.metadata?.inGameName;
 
 	return (
 		<tr>
@@ -132,12 +135,7 @@ function AuditLogRow({ event }: { event: AuditLogEvent }) {
 function UserCell({ user }: { user: CommonUser | null }) {
 	if (!user) return <>-</>;
 
-	return (
-		<Link to={userPage(user)} className={styles.userCell}>
-			<Avatar user={user} size="xxs" />
-			{user.username}
-		</Link>
-	);
+	return <UserLink user={user} className={styles.userCell} />;
 }
 
 function AuditLogFilters({

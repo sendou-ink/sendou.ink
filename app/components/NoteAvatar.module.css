@@ -5,6 +5,13 @@
 	width: fit-content;
 }
 
+.clickable {
+	cursor: pointer;
+	border: none;
+	padding: 0;
+	background: none;
+}
+
 .badge {
 	position: absolute;
 	bottom: 15%;

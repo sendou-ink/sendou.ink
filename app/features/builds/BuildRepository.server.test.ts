@@ -3,6 +3,7 @@ import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
+import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
 import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
@@ -111,6 +112,26 @@ describe("BuildRepository.insert — computeBuildData", () => {
 			expect(sums).toHaveLength(2);
 			expect(sums).toContainEqual({ ability: "ISM", abilityPoints: 38 });
 			expect(sums).toContainEqual({ ability: "ISS", abilityPoints: 19 });
+		});
+
+		test("agrees with the analyzer's AP calculation for Ability Doubler builds", async () => {
+			const abilitiesWithDoubler: BuildAbilitiesTuple = [
+				["ISM", "ISM", "ISM", "ISM"],
+				["AD", "ISM", "ISM", "ISM"],
+				["SJ", "ISM", "ISM", "ISM"],
+			];
+			const { id } = await BuildRepository.insert(
+				baseArgs({ abilities: abilitiesWithDoubler }),
+			);
+
+			const sums = await buildAbilitySumsByBuildId(id);
+			const analyzerIsmAp =
+				buildToAbilityPoints(abilitiesWithDoubler).get("ISM");
+
+			expect(sums).toContainEqual({
+				ability: "ISM",
+				abilityPoints: analyzerIsmAp,
+			});
 		});
 
 		test("does not insert BuildAbilitySum rows for private builds", async () => {

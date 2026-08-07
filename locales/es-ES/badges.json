@@ -3,7 +3,7 @@
 	"patreon+": "Supporter+ de sendou.ink en Patreon",
 	"xp": "Recibido por alcanzar {{xpText}}",
 	"tournament_one": "Recibido por ganar {{tournament}}",
-	"tournament_many": "Recibido por ganar {{tournament}} (×{{count}})",
+	"tournament_many": "",
 	"tournament_other": "Recibido por ganar {{tournament}} (×{{count}})",
 	"forYourEvent": "¿Insignia para tu evento?",
 	"managedBy": "Administrado por <0></0>",

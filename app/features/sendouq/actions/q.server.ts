@@ -17,8 +17,8 @@ import {
 } from "~/utils/urls";
 import { normalizeFriendCode } from "~/utils/zod";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { frontPageSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { frontPageSchema } from "../q-schemas.server";
 import { qSearchParams } from "../q-search-params";
 import { userCanJoinQueueAt } from "../q-utils";
 import {
@@ -94,10 +94,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
 					groupInvitedTo.id,
-					{
-						userId: user.id,
-						role: "MANAGER",
-					},
+					{ userId: user.id },
 				);
 
 				if (chatCodeToRevalidate) {

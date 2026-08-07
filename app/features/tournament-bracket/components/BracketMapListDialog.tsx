@@ -24,11 +24,9 @@ import { Label } from "~/components/Label";
 import { LocaleTime } from "~/components/LocaleTime";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { CustomPickBanFlow, TournamentRoundMaps } from "~/db/tables-json";
-import {
-	useTournament,
-	useTournamentPreparedMaps,
-} from "~/features/tournament/routes/to.$id";
+import { useTournamentPreparedMaps } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -49,6 +47,7 @@ import {
 	generateTournamentRoundMaplist,
 	type TournamentRoundMapList,
 } from "../core/toMapList";
+import { bracketSchema } from "../tournament-bracket-schemas";
 import styles from "./BracketMapListDialog.module.css";
 import { CustomFlowBuilder } from "./CustomFlowBuilder";
 
@@ -92,10 +91,23 @@ export function BracketMapListDialog({
 		}
 
 		if (isPreparing) {
+			return PreparedMaps.eliminationTeamCountPrefill({
+				tournament,
+				bracketIdx,
+			});
+		}
+
+		if (
+			bracket.type !== "single_elimination" &&
+			bracket.type !== "double_elimination"
+		) {
 			return null;
 		}
 
-		return PreparedMaps.eliminationTeamCountOptions(bracketTeamsCount)[0].max;
+		return PreparedMaps.eliminationTeamCountOptions({
+			type: bracket.type,
+			currentCount: bracketTeamsCount,
+		})[0].max;
 	});
 	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
 		() => {
@@ -393,6 +405,7 @@ export function BracketMapListDialog({
 								(bracket.type === "single_elimination" ||
 									bracket.type === "double_elimination") ? (
 									<EliminationTeamCountSelect
+										type={bracket.type}
 										count={eliminationTeamCount}
 										realCount={bracketTeamsCount}
 										setCount={(newCount) => {
@@ -681,6 +694,7 @@ export function BracketMapListDialog({
 								) : (
 									<SubmitButton
 										testId="confirm-finalize-bracket-button"
+										schema={bracketSchema}
 										_action={isPreparing ? "PREPARE_MAPS" : "START_BRACKET"}
 										className="mx-auto mt-4"
 									>
@@ -804,10 +818,12 @@ function teamCountAdjustedBracketData({
 }
 
 function EliminationTeamCountSelect({
+	type,
 	count,
 	realCount,
 	setCount,
 }: {
+	type: PreparedMaps.EliminationBracketType;
 	count: number | null;
 	realCount: number;
 	setCount: (count: number | null) => void;
@@ -823,20 +839,22 @@ function EliminationTeamCountSelect({
 				defaultValue={count ?? ""}
 			>
 				<option value="">Select count</option>
-				{PreparedMaps.eliminationTeamCountOptions(realCount).map(
-					(teamCountRange) => {
-						const label =
-							teamCountRange.min === teamCountRange.max
-								? teamCountRange.min
-								: `${teamCountRange.min}-${teamCountRange.max}`;
+				{PreparedMaps.eliminationTeamCountOptions({
+					type,
+					// the prepared for count can be below the current team count e.g. when some of the registered teams are not expected to play
+					currentCount: Math.min(realCount, count ?? realCount),
+				}).map((teamCountRange) => {
+					const label =
+						teamCountRange.min === teamCountRange.max
+							? teamCountRange.min
+							: `${teamCountRange.min}-${teamCountRange.max}`;
 
-						return (
-							<option key={teamCountRange.max} value={teamCountRange.max}>
-								{label}
-							</option>
-						);
-					},
-				)}
+					return (
+						<option key={teamCountRange.max} value={teamCountRange.max}>
+							{label}
+						</option>
+					);
+				})}
 			</select>
 		</div>
 	);

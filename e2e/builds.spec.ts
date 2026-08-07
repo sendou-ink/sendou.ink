@@ -113,14 +113,14 @@ test.describe("Builds", () => {
 		// are all builds with ISM are hidden?
 		await expect(weaponBuilds.ability("ISM")).toHaveCount(1);
 
-		await weaponBuilds.deleteFilter();
+		await weaponBuilds.deleteFilter("ability");
 
 		await expect(weaponBuilds.ability("ISM").nth(1)).toBeVisible();
 
 		await weaponBuilds.addFilter("mode");
 		await weaponBuilds.modeFilterCheckbox("Tower Control").click();
 		await expect(weaponBuilds.modeBadge("TC")).toHaveCount(3);
-		await weaponBuilds.deleteFilter();
+		await weaponBuilds.deleteFilter("mode");
 		await expect(weaponBuilds.locators.buildCards.first()).toBeVisible();
 
 		await weaponBuilds.addFilter("date");

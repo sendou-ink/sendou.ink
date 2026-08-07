@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData, useLocation } from "react-router";
+import { useLoaderData, useLocation } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Badge } from "~/components/Badge";
 import { Divider } from "~/components/Divider";
@@ -8,12 +9,12 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { FormMessage } from "~/components/FormMessage";
 import { Placement } from "~/components/Placement";
-import { SubmitButton } from "~/components/SubmitButton";
-import { useTournament } from "~/features/tournament/routes/to.$id";
-import type {
-	TournamentBadgeReceivers,
-	TournamentTrophyReceiver,
-} from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import { useTournament } from "~/features/tournament/tournament-context";
+import {
+	finalizeTournamentActionSchema,
+	type TournamentBadgeReceivers,
+	type TournamentTrophyReceiver,
+} from "~/features/tournament-bracket/tournament-bracket-schemas";
 import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,
@@ -88,21 +89,20 @@ export default function TournamentFinalizePage() {
 					tournamentHasBadges &&
 					!tournamentHasTrophy
 				}
+				trophyReceiver={trophyReceiver}
+				badgeReceivers={
+					!trophyReceiver && tournamentHasBadges && !isAssignBadgesLaterSelected
+						? badgeReceivers
+						: null
+				}
 			>
 				{tournamentHasTrophy && data.trophy && firstPlaceStanding ? (
-					<>
-						<input
-							type="hidden"
-							name="trophyReceiver"
-							value={JSON.stringify(trophyReceiver)}
-						/>
-						<NewTrophyReceiversSelector
-							trophy={data.trophy}
-							firstPlaceStanding={firstPlaceStanding}
-							trophyReceiverUserIds={trophyReceiverUserIds}
-							setTrophyReceiverUserIds={setTrophyReceiverUserIds}
-						/>
-					</>
+					<NewTrophyReceiversSelector
+						trophy={data.trophy}
+						firstPlaceStanding={firstPlaceStanding}
+						trophyReceiverUserIds={trophyReceiverUserIds}
+						setTrophyReceiverUserIds={setTrophyReceiverUserIds}
+					/>
 				) : tournamentHasBadges ? (
 					<>
 						<SendouSwitch
@@ -113,19 +113,12 @@ export default function TournamentFinalizePage() {
 							{t("tournament:actions.finalize.assignBadgesLater")}
 						</SendouSwitch>
 						{!isAssignBadgesLaterSelected ? (
-							<>
-								<input
-									type="hidden"
-									name="badgeReceivers"
-									value={JSON.stringify(badgeReceivers)}
-								/>
-								<NewBadgeReceiversSelector
-									badges={data.badges}
-									standings={data.standings}
-									badgeReceivers={badgeReceivers}
-									setBadgeReceivers={setBadgeReceivers}
-								/>
-							</>
+							<NewBadgeReceiversSelector
+								badges={data.badges}
+								standings={data.standings}
+								badgeReceivers={badgeReceivers}
+								setBadgeReceivers={setBadgeReceivers}
+							/>
 						) : null}
 					</>
 				) : null}
@@ -138,28 +131,36 @@ function FinalizeForm({
 	children,
 	error,
 	isAssigningBadges,
+	trophyReceiver,
+	badgeReceivers,
 }: {
 	children: React.ReactNode;
 	error:
 		| ReturnType<typeof validateBadgeReceivers>
 		| ReturnType<typeof validateTrophyReceiver>;
 	isAssigningBadges: boolean;
+	trophyReceiver: TournamentTrophyReceiver | null;
+	badgeReceivers: TournamentBadgeReceivers | null;
 }) {
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["tournament"]);
 
 	return (
-		<fetcher.Form method="post" className="stack md">
-			<input type="hidden" name="_action" value="FINALIZE_TOURNAMENT" />
+		<div className="stack md">
 			<div className="stack md">{children}</div>
 			<div className="stack horizontal md justify-center mt-2">
-				<SubmitButton testId="confirm-button" isDisabled={Boolean(error)}>
+				<ActionButton
+					schema={finalizeTournamentActionSchema}
+					action="FINALIZE_TOURNAMENT"
+					fields={{ trophyReceiver, badgeReceivers }}
+					testId="confirm-button"
+					isDisabled={Boolean(error)}
+				>
 					{t(
 						isAssigningBadges
 							? "tournament:actions.finalize.action.withBadges"
 							: "tournament:actions.finalize.action",
 					)}
-				</SubmitButton>
+				</ActionButton>
 			</div>
 			{error ? (
 				<FormMessage type="error" className="text-center">
@@ -170,7 +171,7 @@ function FinalizeForm({
 					{t("tournament:actions.finalize.info")}
 				</FormMessage>
 			)}
-		</fetcher.Form>
+		</div>
 	);
 }
 

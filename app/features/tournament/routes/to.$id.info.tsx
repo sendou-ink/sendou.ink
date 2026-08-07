@@ -7,7 +7,7 @@ import { containerClassName } from "~/components/Main";
 import { Markdown } from "~/components/Markdown";
 import { TierPill } from "~/components/TierPill";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type { TournamentData } from "~/features/tournament-bracket/core/Tournament.server";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { removeMarkdown } from "~/utils/strings";
@@ -19,16 +19,18 @@ import {
 	TournamentHeader,
 	TournamentHeaderActions,
 } from "../components/TournamentHeader";
+import { parseTournamentLoaderData } from "../core/layout-payload";
 import { loader } from "../loaders/to.$id.info.server";
 import { bracketProgressionLabel } from "../tournament-utils";
-import { useTournament } from "./to.$id";
 import styles from "./to.$id.info.module.css";
 
 export { action, loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
-		?.tournament as TournamentData | undefined;
+	const rawLayoutData = args.matches[1].loaderData as string | undefined;
+	const tournamentData = rawLayoutData
+		? parseTournamentLoaderData(rawLayoutData).tournament
+		: undefined;
 	if (!tournamentData) return [];
 
 	return metaTags({

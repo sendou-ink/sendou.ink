@@ -7,14 +7,22 @@ import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import type { z } from "zod";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
+import { DualSelectFormField } from "~/form/fields/DualSelectFormField";
+import { TimeRangeFormField } from "~/form/fields/TimeRangeFormField";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useSearchParam } from "~/modules/search-params/hooks";
+import {
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPage, navIconUrl, scrimsPage } from "~/utils/urls";
+import { timeString } from "~/utils/zod";
 import {
 	SendouTab,
 	SendouTabList,
@@ -24,16 +32,16 @@ import {
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.server";
 import { ScrimPostCard, ScrimRequestCard } from "../components/ScrimCard";
-import { ScrimFiltersDialog } from "../components/ScrimFiltersDialog";
 import * as Scrim from "../core/Scrim";
 import { loader } from "../loaders/scrims.server";
-import type { newRequestSchema } from "../scrims-schemas";
+import { LUTI_DIVS } from "../scrims-constants";
+import { type newRequestSchema, scrimsActionSchema } from "../scrims-schemas";
 import { scrimsSearchParams } from "../scrims-search-params";
-import type { ScrimFilters, ScrimPost } from "../scrims-types";
+import type { LutiDiv, ScrimFilters, ScrimPost } from "../scrims-types";
 
 export { action, loader };
 
-import { Check, Download, Funnel, Megaphone } from "lucide-react";
+import { Check, Download, Funnel, Megaphone, Star } from "lucide-react";
 
 import styles from "./scrims.module.css";
 
@@ -87,23 +95,16 @@ export default function ScrimsPage() {
 
 	return (
 		<Main className="stack lg">
-			<div className="stack horizontal justify-between items-center">
-				<div className="stack horizontal sm">
-					<LinkButton
-						size="small"
-						to={associationsPage()}
-						className={clsx({ invisible: !user })}
-						variant="outlined"
-					>
-						{t("scrims:associations.title")}
-					</LinkButton>
-					{user ? (
-						<ScrimFiltersDialog
-							key={JSON.stringify(data.filters)}
-							filters={data.filters}
-						/>
-					) : null}
-				</div>
+			<div className="stack horizontal sm items-center flex-wrap">
+				<LinkButton
+					size="small"
+					to={associationsPage()}
+					className={clsx({ invisible: !user })}
+					variant="outlined"
+				>
+					{t("scrims:associations.title")}
+				</LinkButton>
+				<Filters />
 			</div>
 			<SendouTabs
 				key={pendingRequestPostId}
@@ -184,6 +185,182 @@ export default function ScrimsPage() {
 				{Intl.DateTimeFormat().resolvedOptions().timeZone}
 			</div>
 		</Main>
+	);
+}
+
+function Filters() {
+	const { t } = useTranslation(["scrims", "forms", "common"]);
+	const data = useLoaderData<typeof loader>();
+	const [, setParams] = useSearchParamsTyped(scrimsSearchParams);
+	const persistFilters = useActionSubmit(scrimsActionSchema, {
+		encType: "application/json",
+	});
+
+	const filters = data.filters;
+
+	const writeFilters = (partial: Partial<ScrimFilters>) => {
+		setParams({ ...filters, ...partial, useDefaults: false });
+	};
+
+	return (
+		<FilterBar
+			pills={[
+				{
+					key: "weekdayTimes",
+					name: t("scrims:filters.weekdayTimes"),
+					formattedValue: filters.weekdayTimes
+						? `${filters.weekdayTimes.start}–${filters.weekdayTimes.end}`
+						: null,
+					onRemove: () => writeFilters({ weekdayTimes: null }),
+					testId: "weekday-times-filter",
+					popover: (
+						<TimeRangePopover
+							name="weekdayTimes"
+							value={filters.weekdayTimes}
+							onChange={(timeRange) =>
+								writeFilters({ weekdayTimes: timeRange })
+							}
+						/>
+					),
+				},
+				{
+					key: "weekendTimes",
+					name: t("scrims:filters.weekendTimes"),
+					formattedValue: filters.weekendTimes
+						? `${filters.weekendTimes.start}–${filters.weekendTimes.end}`
+						: null,
+					onRemove: () => writeFilters({ weekendTimes: null }),
+					testId: "weekend-times-filter",
+					popover: (
+						<TimeRangePopover
+							name="weekendTimes"
+							value={filters.weekendTimes}
+							onChange={(timeRange) =>
+								writeFilters({ weekendTimes: timeRange })
+							}
+						/>
+					),
+				},
+				{
+					key: "divs",
+					name: t("scrims:filters.divs"),
+					formattedValue: filters.divs
+						? `${filters.divs.max}–${filters.divs.min}`
+						: null,
+					onRemove: () => writeFilters({ divs: null }),
+					testId: "divs-filter",
+					popover: (
+						<DivsPopover
+							value={filters.divs}
+							onChange={(divs) => writeFilters({ divs })}
+						/>
+					),
+				},
+			]}
+			onReset={
+				!Scrim.filtersAreDefault(filters)
+					? () =>
+							writeFilters({
+								weekdayTimes: null,
+								weekendTimes: null,
+								divs: null,
+							})
+					: undefined
+			}
+			actions={
+				data.canSaveAsDefault ? (
+					<SendouButton
+						icon={<Star />}
+						isDisabled={persistFilters.state !== "idle"}
+						onPress={() =>
+							persistFilters.submit("PERSIST_SCRIM_FILTERS", { filters })
+						}
+						data-testid="save-filters-as-default-button"
+					>
+						{t("common:filterBar.saveAsDefault")}
+					</SendouButton>
+				) : null
+			}
+		/>
+	);
+}
+
+function TimeRangePopover({
+	name,
+	value,
+	onChange,
+}: {
+	name: string;
+	value: ScrimFilters["weekdayTimes"];
+	onChange: (value: ScrimFilters["weekdayTimes"]) => void;
+}) {
+	const { t } = useTranslation(["forms"]);
+	const [draft, setDraft] = React.useState(value);
+
+	const handleChange = (timeRange: { start: string; end: string } | null) => {
+		setDraft(timeRange);
+
+		if (timeRange === null) {
+			onChange(null);
+			return;
+		}
+
+		if (
+			timeString.safeParse(timeRange.start).success &&
+			timeString.safeParse(timeRange.end).success
+		) {
+			onChange(timeRange);
+		}
+	};
+
+	return (
+		<TimeRangeFormField
+			name={name}
+			value={draft}
+			onChange={handleChange}
+			startLabel={t("forms:labels.start")}
+			endLabel={t("forms:labels.end")}
+		/>
+	);
+}
+
+function DivsPopover({
+	value,
+	onChange,
+}: {
+	value: ScrimFilters["divs"];
+	onChange: (value: ScrimFilters["divs"]) => void;
+}) {
+	const { t } = useTranslation(["forms"]);
+	const [draft, setDraft] = React.useState<[LutiDiv | null, LutiDiv | null]>([
+		value?.max ?? null,
+		value?.min ?? null,
+	]);
+
+	const divItems = LUTI_DIVS.map((div) => ({ label: div, value: div }));
+
+	const handleChange = (newValue: [LutiDiv | null, LutiDiv | null]) => {
+		setDraft(newValue);
+
+		const [max, min] = newValue;
+		if (max !== null && min !== null) {
+			onChange({ max, min });
+		} else if (max === null && min === null) {
+			onChange(null);
+		}
+	};
+
+	return (
+		<DualSelectFormField
+			name="divs"
+			fields={[
+				{ label: t("forms:labels.scrimMaxDiv"), items: divItems },
+				{ label: t("forms:labels.scrimMinDiv"), items: divItems },
+			]}
+			value={draft}
+			onChange={handleChange}
+			onBlur={() => {}}
+		/>
 	);
 }
 

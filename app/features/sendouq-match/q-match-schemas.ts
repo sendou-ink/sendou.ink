@@ -1,6 +1,10 @@
 import { z } from "zod";
+import {
+	reportWeaponSchema,
+	undoWeaponReportSchema,
+} from "~/components/match-page/match-page-schemas";
 import { checkboxGroupDynamic, stringConstant, textArea } from "~/form/fields";
-import { _action, id, weaponSplId } from "~/utils/zod";
+import { _action, id } from "~/utils/zod";
 import { SENDOUQ } from "../sendouq/q-constants";
 
 const cancelNominatedUserIdsField = checkboxGroupDynamic({
@@ -38,13 +42,17 @@ export const matchSchema = z.union([
 	}),
 	z.object({
 		_action: _action("CAST_CONTINUE_VOTE"),
-		isContinuing: z.enum(["0", "1"]).transform((v) => v === "1"),
+		isContinuing: z.preprocess(
+			(value) =>
+				value === "1" || value === "true"
+					? true
+					: value === "0" || value === "false"
+						? false
+						: value,
+			z.boolean(),
+		),
 	}),
-	z.object({
-		_action: _action("REPORT_WEAPON"),
-		weaponSplId,
-		mapIndex: z.coerce.number().int().nonnegative(),
-	}),
+	reportWeaponSchema,
 	z.object({
 		_action: _action("UNDO_MATCH_REPORT"),
 	}),
@@ -52,10 +60,7 @@ export const matchSchema = z.union([
 		_action: _action("UNDO_MAP_REPORT"),
 		mapIndex: z.coerce.number().int().nonnegative(),
 	}),
-	z.object({
-		_action: _action("UNDO_WEAPON_REPORT"),
-		mapIndex: z.coerce.number().int().nonnegative(),
-	}),
+	undoWeaponReportSchema,
 	requestCancelSchema,
 	acceptCancelSchema,
 	z.object({

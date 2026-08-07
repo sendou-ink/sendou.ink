@@ -1,7 +1,8 @@
 import clsx from "clsx";
 import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
-import { Link, useFetcher } from "react-router";
+import { Link } from "react-router";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { logger } from "../../../../utils/logger";
@@ -13,6 +14,8 @@ import { useUser } from "../../../auth/core/user";
 import type { Bracket, Standing } from "../../core/Bracket";
 import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
+import type { BracketMeta } from "../../core/Tournament";
+import { bracketSchema } from "../../tournament-bracket-schemas";
 import styles from "./bracket.module.css";
 
 export function PlacementsTable({
@@ -39,7 +42,7 @@ export function PlacementsTable({
 				wins: stats.setWins,
 				roundCount: bracket.swissRoundCount,
 			}) === "advanced"
-				? bracket.tournament.brackets.find((otherBracket) =>
+				? bracket.tournament.bracketsMeta.find((otherBracket) =>
 						otherBracket.sources?.some(
 							(source) => source.bracketIdx === bracket.idx,
 						),
@@ -47,7 +50,7 @@ export function PlacementsTable({
 				: undefined;
 		}
 
-		return bracket.tournament.brackets.find(
+		return bracket.tournament.bracketsMeta.find(
 			(b) =>
 				b.idx ===
 				Progression.destinationByPlacement({
@@ -61,7 +64,7 @@ export function PlacementsTable({
 	const possibleDestinationBrackets = Progression.destinationsFromBracketIdx(
 		bracket.idx,
 		bracket.tournament.ctx.settings.bracketProgression,
-	).map((idx) => bracket.tournament.bracketByIdx(idx)!);
+	).map((idx) => bracket.tournament.bracketsMeta[idx]);
 	const canEditDestination = (() => {
 		if (possibleDestinationBrackets.length === 0) return false;
 
@@ -139,8 +142,8 @@ function StandingsTable({
 	destinationBracket: (
 		standing: Standing,
 		placement: number,
-	) => Bracket | undefined;
-	possibleDestinationBrackets: Bracket[];
+	) => BracketMeta | undefined;
+	possibleDestinationBrackets: BracketMeta[];
 	canEditDestination: boolean;
 	allMatchesFinished: boolean;
 }) {
@@ -211,7 +214,7 @@ function StandingsTable({
 								override.tournamentTeamId === s.team.id,
 						);
 					const overridenDestinationBracket = overridenDestination
-						? bracket.tournament.bracketByIdx(
+						? bracket.tournament.bracketMetaByIdx(
 								overridenDestination.destinationBracketIdx,
 							)
 						: undefined;
@@ -359,30 +362,29 @@ function EditableDestination({
 	droppedOut,
 }: {
 	source: Bracket;
-	destination?: Bracket;
-	overridenDestination?: Bracket | null;
-	possibleDestinations: Bracket[];
+	destination?: BracketMeta;
+	overridenDestination?: BracketMeta | null;
+	possibleDestinations: BracketMeta[];
 	allMatchesFinished: boolean;
 	canEditDestination: boolean;
 	tournamentTeamId: number;
 	droppedOut: boolean;
 }) {
-	const fetcher = useFetcher<any>();
+	const overrideProgression = useActionSubmit(bracketSchema, {
+		encType: "application/json",
+	});
 	const [editingDestination, setEditingDestination] = React.useState(false);
 	const [newDestinationIdx, setNewDestinationIdx] = React.useState<
 		number | null
 	>(overridenDestination?.idx ?? destination?.idx ?? -1);
 
 	const handleSubmit = () => {
-		fetcher.submit(
-			{
-				_action: "OVERRIDE_BRACKET_PROGRESSION",
-				tournamentTeamId,
-				sourceBracketIdx: source.idx,
-				destinationBracketIdx: newDestinationIdx,
-			},
-			{ method: "post", encType: "application/json" },
-		);
+		if (newDestinationIdx === null) return;
+		overrideProgression.submit("OVERRIDE_BRACKET_PROGRESSION", {
+			tournamentTeamId,
+			sourceBracketIdx: source.idx,
+			destinationBracketIdx: newDestinationIdx,
+		});
 	};
 
 	const possibleDestinations = [

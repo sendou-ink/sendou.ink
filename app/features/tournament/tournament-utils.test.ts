@@ -28,7 +28,7 @@ const createTeam = (
 ): TeamForOrdering => ({
 	id,
 	seed: options.seed ?? null,
-	members: { length: options.members ?? 4 },
+	memberUserIds: { length: options.members ?? 4 },
 	avgSeedingSkillOrdinal:
 		options.avgSeedingSkillOrdinal === undefined
 			? 100
@@ -192,6 +192,27 @@ describe("compareTeamsForOrdering", () => {
 			expect(result).toBeLessThan(0);
 		});
 	});
+
+	describe("startingBracketIdx null vs explicit 0", () => {
+		it("orders by seed when one team has null and the other explicit 0 starting bracket", () => {
+			const nullBracketTeam = createTeam(1, {
+				seed: 1,
+				startingBracketIdx: null,
+			});
+			const zeroBracketTeam = createTeam(2, {
+				seed: 2,
+				startingBracketIdx: 0,
+			});
+
+			const result = compareTeamsForOrdering(
+				nullBracketTeam,
+				zeroBracketTeam,
+				MIN_MEMBERS,
+			);
+
+			expect(result).toBeLessThan(0);
+		});
+	});
 });
 
 describe("sortTeamsBySeeding", () => {
@@ -208,6 +229,59 @@ describe("sortTeamsBySeeding", () => {
 		const sorted = sortTeamsBySeeding(teams, MIN_MEMBERS);
 
 		expect(sorted.map((t) => t.id)).toEqual([5, 3, 4, 2, 1, 6]);
+	});
+
+	it("keeps manually seeded teams in seed order when unseeded teams are present", () => {
+		const seededSkills = [31, 18, 20, 37, 2, 46, 19, 37];
+		const seededTeams = seededSkills.map((skill, i) =>
+			createTeam(i + 1, { seed: i + 1, avgSeedingSkillOrdinal: skill }),
+		);
+		// input mirrors the DB query order (seed ASC = NULL seeds first in SQLite)
+		const teams = [
+			createTeam(9, { avgSeedingSkillOrdinal: 40 }),
+			createTeam(10, { avgSeedingSkillOrdinal: 31 }),
+			...seededTeams,
+		];
+
+		const sorted = sortTeamsBySeeding(teams, MIN_MEMBERS);
+
+		expect(
+			sorted.filter((team) => team.seed !== null).map((team) => team.seed),
+		).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+	});
+
+	it("returns the same order regardless of input order", () => {
+		const seedOne = createTeam(1, { seed: 1, avgSeedingSkillOrdinal: 5 });
+		const seedTwo = createTeam(2, { seed: 2, avgSeedingSkillOrdinal: 30 });
+		const seedThree = createTeam(3, { seed: 3, avgSeedingSkillOrdinal: 20 });
+		const seedFour = createTeam(4, { seed: 4, avgSeedingSkillOrdinal: 25 });
+		const unseeded = createTeam(5, { avgSeedingSkillOrdinal: 28 });
+
+		const sortedA = sortTeamsBySeeding(
+			[seedOne, seedTwo, seedThree, seedFour, unseeded],
+			MIN_MEMBERS,
+		);
+		const sortedB = sortTeamsBySeeding(
+			[seedOne, seedThree, seedFour, unseeded, seedTwo],
+			MIN_MEMBERS,
+		);
+
+		expect(sortedA.map((team) => team.id)).toEqual(
+			sortedB.map((team) => team.id),
+		);
+	});
+
+	it("slots an unseeded team below every seeded team with a higher skill ordinal", () => {
+		const seedOne = createTeam(1, { seed: 1, avgSeedingSkillOrdinal: 5 });
+		const seedTwo = createTeam(2, { seed: 2, avgSeedingSkillOrdinal: 30 });
+		const unseeded = createTeam(5, { avgSeedingSkillOrdinal: 28 });
+
+		const sorted = sortTeamsBySeeding(
+			[unseeded, seedOne, seedTwo],
+			MIN_MEMBERS,
+		);
+
+		expect(sorted.map((team) => team.id)).toEqual([1, 2, 5]);
 	});
 
 	it("does not mutate original array", () => {

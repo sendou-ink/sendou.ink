@@ -40,7 +40,7 @@ export interface TournamentSummary {
 
 type TeamsArg = Array<{
 	id: number;
-	members: Array<{ userId: number }>;
+	memberUserIds: number[];
 	startingBracketIdx?: number | null;
 	abDivision?: number | null;
 }>;
@@ -363,8 +363,9 @@ function calculateTeamSkills({
 			const loserRoster =
 				loser.activeRosterUserIds ?? loser.memberUserIds ?? [];
 
-			// Skip if no roster info available (defensive check)
-			if (winnerRoster.length === 0 || loserRoster.length === 0) continue;
+			// team identifiers require a full roster of 4; summaryRatingTargets
+			// skips these rosters too so their ratings are never loaded
+			if (winnerRoster.length !== 4 || loserRoster.length !== 4) continue;
 
 			winnerTeamIdentifier = userIdsToIdentifier(winnerRoster);
 			loserTeamIdentifier = userIdsToIdentifier(loserRoster);
@@ -658,12 +659,12 @@ function tournamentResults({
 			).length;
 		}
 
-		for (const player of standing.team.members) {
+		for (const userId of standing.team.memberUserIds) {
 			result.push({
 				participantCount: divisionParticipantCount,
 				placement: standing.placement,
 				tournamentTeamId: standing.team.id,
-				userId: player.userId,
+				userId,
 				div,
 			});
 		}
@@ -750,5 +751,5 @@ function teamIdToMembersUserIds(teams: TeamsArg, teamId: number) {
 	const team = teams.find((t) => t.id === teamId);
 	invariant(team, `Team with id ${teamId} not found`);
 
-	return team.members.map((m) => m.userId);
+	return team.memberUserIds;
 }

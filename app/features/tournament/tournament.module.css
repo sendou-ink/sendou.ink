@@ -466,11 +466,7 @@
 }
 
 .teamSetOpponentMember {
-	color: var(--color-text);
-	display: flex;
-	gap: var(--s-1);
 	font-size: var(--font-xs);
-	align-items: center;
 }
 
 .overlapDivider {

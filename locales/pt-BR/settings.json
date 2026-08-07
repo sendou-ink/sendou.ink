@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "Escolha {{count}} mapas por modo que você não evitou para salvar suas preferências",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

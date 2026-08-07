@@ -1,7 +1,12 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
-import { Label } from "~/components/Label";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { WeaponSelect } from "~/components/WeaponSelect";
@@ -70,90 +75,105 @@ export default function VodsSearchPage() {
 }
 
 function Filters() {
-	const { t } = useTranslation(["game-misc", "vods"]);
+	const { t } = useTranslation(["game-misc", "vods", "weapons"]);
 
 	const [{ mode, stageId, weapon, type }, setParams] =
 		useSearchParamsTyped(vodsSearchParams);
 
 	return (
-		<div className="stack sm horizontal flex-wrap">
-			<div>
-				<Label>{t("vods:forms.title.mode")}</Label>
-				<select
-					name="mode"
-					value={mode ?? ""}
-					onChange={(e) =>
-						setParams({ mode: (e.target.value || null) as ModeShort | null })
-					}
-				>
-					<option value="">-</option>
-					{modesShort.map((mode) => {
-						return (
-							<option key={mode} value={mode}>
-								{t(`game-misc:MODE_SHORT_${mode}`)}
-							</option>
-						);
-					})}
-				</select>
-			</div>
-			<div>
-				<Label>{t("vods:forms.title.stage")}</Label>
-				<select
-					name="stage"
-					value={stageId ?? ""}
-					onChange={(e) =>
-						setParams({
-							stageId:
-								e.target.value === ""
-									? null
-									: (Number(e.target.value) as StageId),
-						})
-					}
-				>
-					<option value="">-</option>
-					{stageIds.map((stageId) => {
-						return (
-							<option key={stageId} value={stageId}>
-								{t(`game-misc:STAGE_${stageId}`)}
-							</option>
-						);
-					})}
-				</select>
-			</div>
-
-			<WeaponSelect
-				label={t("vods:forms.title.weapon")}
-				value={weapon}
-				onChange={(weaponId) => {
-					setParams({ weapon: weaponId ?? null });
-				}}
-				clearable
-			/>
-
-			<div>
-				<Label>{t("vods:forms.title.type")}</Label>
-				<select
-					name="type"
-					className={styles.typeSelect}
-					value={type ?? ""}
-					onChange={(e) =>
-						setParams({
-							type: (e.target.value || null) as
-								| (typeof videoMatchTypes)[number]
-								| null,
-						})
-					}
-				>
-					<option value="">-</option>
-					{videoMatchTypes.map((type) => {
-						return (
-							<option key={type} value={type}>
-								{t(`vods:type.${type}`)}
-							</option>
-						);
-					})}
-				</select>
-			</div>
-		</div>
+		<FilterBar
+			pills={[
+				{
+					key: "mode",
+					name: t("vods:forms.title.mode"),
+					formattedValue:
+						mode !== null ? t(`game-misc:MODE_SHORT_${mode}`) : null,
+					onRemove: () => setParams({ mode: null }),
+					testId: "vods-mode-filter",
+					popover: (
+						<SendouChipRadioGroup wrap>
+							{modesShort.map((option) => (
+								<SendouChipRadio
+									key={option}
+									name="vods-mode"
+									value={option}
+									checked={mode === option}
+									onChange={(value) => setParams({ mode: value as ModeShort })}
+								>
+									{t(`game-misc:MODE_SHORT_${option}`)}
+								</SendouChipRadio>
+							))}
+						</SendouChipRadioGroup>
+					),
+				},
+				{
+					key: "stage",
+					name: t("vods:forms.title.stage"),
+					formattedValue:
+						stageId !== null ? t(`game-misc:STAGE_${stageId}`) : null,
+					onRemove: () => setParams({ stageId: null }),
+					testId: "vods-stage-filter",
+					popover: (
+						<SendouSelect
+							aria-label={t("vods:forms.title.stage")}
+							items={stageIds.map((id) => ({ id }))}
+							selectedKey={stageId}
+							onSelectionChange={(key) =>
+								setParams({ stageId: key as StageId })
+							}
+							search={{}}
+						>
+							{({ id }) => (
+								<SendouSelectItem key={id} id={id}>
+									{t(`game-misc:STAGE_${id}`)}
+								</SendouSelectItem>
+							)}
+						</SendouSelect>
+					),
+				},
+				{
+					key: "weapon",
+					name: t("vods:forms.title.weapon"),
+					formattedValue: weapon !== null ? t(`weapons:MAIN_${weapon}`) : null,
+					onRemove: () => setParams({ weapon: null }),
+					testId: "vods-weapon-filter",
+					popover: (
+						<WeaponSelect
+							value={weapon}
+							onChange={(weaponId) => {
+								setParams({ weapon: weaponId ?? null });
+							}}
+							clearable
+						/>
+					),
+				},
+				{
+					key: "type",
+					name: t("vods:forms.title.type"),
+					formattedValue: type !== null ? t(`vods:type.${type}`) : null,
+					onRemove: () => setParams({ type: null }),
+					testId: "vods-type-filter",
+					popover: (
+						<SendouChipRadioGroup wrap>
+							{videoMatchTypes.map((option) => (
+								<SendouChipRadio
+									key={option}
+									name="vods-type"
+									value={option}
+									checked={type === option}
+									onChange={(value) =>
+										setParams({
+											type: value as (typeof videoMatchTypes)[number],
+										})
+									}
+								>
+									{t(`vods:type.${option}`)}
+								</SendouChipRadio>
+							))}
+						</SendouChipRadioGroup>
+					),
+				},
+			]}
+		/>
 	);
 }

@@ -99,20 +99,6 @@
 	height: 15px;
 }
 
-.star {
-	min-width: 18px;
-	max-width: 18px;
-	color: var(--color-text-accent);
-}
-
-.starFilled {
-	fill: var(--color-text-accent);
-}
-
-.starInactive {
-	color: var(--color-text-high);
-}
-
 .displayTier {
 	display: flex;
 	gap: var(--s-1);
@@ -138,4 +124,27 @@
 	text-decoration-style: dotted;
 	font-weight: var(--weight-bold);
 	height: 19.8281px;
+}
+
+.hiddenMember {
+	min-height: 2.75rem;
+}
+
+.hiddenMemberName {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.1em;
+	padding-block: var(--s-2);
+	padding-inline-start: var(--s-3);
+}
+
+.readyIcon {
+	width: 18px;
+	height: 18px;
+	color: var(--color-text-high);
+}
+
+.readyIconConfirmed {
+	color: var(--color-success);
 }

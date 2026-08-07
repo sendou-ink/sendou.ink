@@ -24,6 +24,7 @@ import { searchSearchParams } from "~/features/search/search-search-params";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import {
 	navIconUrl,
@@ -34,6 +35,11 @@ import {
 } from "~/utils/urls";
 import styles from "./GlobalSearch.module.css";
 import {
+	saveRecentWeapon,
+	searchTypePersisted,
+	useRecentWeapons,
+} from "./global-search-persisted";
+import {
 	globalSearchSearchParams,
 	GLOBAL_SEARCH_TYPES as SEARCH_TYPES,
 	type GlobalSearchType as SearchType,
@@ -41,8 +47,6 @@ import {
 import {
 	filterWeaponResults,
 	type SelectedWeapon,
-	saveRecentWeapon,
-	useRecentWeapons,
 	WeaponDestinationMenu,
 	WeaponResultsList,
 	weaponToSelectedWeapon,
@@ -56,8 +60,6 @@ const SEARCH_TYPE_TO_PREFIX: Record<SearchType, string> = {
 	tournaments: "to",
 };
 
-const STORAGE_KEY = "global-search-search-type";
-
 function searchTypeIconPath(type: SearchType): string {
 	if (type === "weapons") {
 		return weaponCategoryUrl("SHOOTERS");
@@ -69,27 +71,6 @@ function searchTypeIconPath(type: SearchType): string {
 		tournaments: "calendar",
 	};
 	return navIconUrl(navIcons[type]);
-}
-
-function getInitialSearchType(): SearchType {
-	if (typeof window === "undefined") return "weapons";
-	try {
-		const stored = localStorage.getItem(STORAGE_KEY);
-		if (stored && SEARCH_TYPES.includes(stored as SearchType)) {
-			return stored as SearchType;
-		}
-	} catch {
-		// localStorage may be unavailable
-	}
-	return "weapons";
-}
-
-function persistSearchType(type: SearchType) {
-	try {
-		localStorage.setItem(STORAGE_KEY, type);
-	} catch {
-		// localStorage may be unavailable
-	}
 }
 
 export function GlobalSearch() {
@@ -179,7 +160,7 @@ function GlobalSearchContent({
 	const { t } = useTranslation(["common", "weapons"]);
 	const [query, setQuery] = React.useState("");
 	const [searchType, setSearchType] = React.useState<SearchType>(
-		initialSearchType ?? getInitialSearchType(),
+		() => initialSearchType ?? PersistedState.read(searchTypePersisted),
 	);
 	const [selectedWeapon, setSelectedWeapon] =
 		React.useState<SelectedWeapon | null>(
@@ -254,7 +235,7 @@ function GlobalSearchContent({
 
 	const handleSearchTypeChange = (value: string) => {
 		setSearchType(value as SearchType);
-		persistSearchType(value as SearchType);
+		PersistedState.write(searchTypePersisted, value as SearchType);
 		setSelectedWeapon(null);
 	};
 
@@ -273,7 +254,7 @@ function GlobalSearchContent({
 			);
 			if (matchedType) {
 				setSearchType(matchedType);
-				persistSearchType(matchedType);
+				PersistedState.write(searchTypePersisted, matchedType);
 				setSelectedWeapon(null);
 				setQuery("");
 				return;

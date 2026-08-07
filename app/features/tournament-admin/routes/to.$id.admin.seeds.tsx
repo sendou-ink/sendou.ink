@@ -18,7 +18,8 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import * as React from "react";
-import { useFetcher, useLoaderData, useNavigation } from "react-router";
+import { useLoaderData, useNavigation } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
@@ -28,18 +29,18 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { InfoPopover } from "~/components/InfoPopover";
-import { SubmitButton } from "~/components/SubmitButton";
 import { Table } from "~/components/Table";
 import type { SeedingSnapshot } from "~/db/tables-json";
-import { useTournament } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
+import { useTournament } from "~/features/tournament/tournament-context";
 import * as AbDivisions from "~/features/tournament-bracket/core/AbDivisions";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ordinalToRoundedSp } from "../../mmr/mmr-utils";
+import { adminSeedsActionSchema } from "../tournament-admin-schemas";
 import styles from "./to.$id.admin.seeds.module.css";
 
 export { action } from "../actions/to.$id.admin.seeds.server";
@@ -60,11 +61,10 @@ const AB_DIVISION_RADIO_OPTIONS = [
 
 export default function TournamentAdminSeedsPage() {
 	const tournament = useTournament();
+	const { seedingSnapshot, teams } = useLoaderData<typeof loader>();
 	const navigation = useNavigation();
-	const [teamOrder, setTeamOrder] = React.useState(
-		tournament.ctx.teams.map((t) => t.id),
-	);
-	const [activeTeam, setActiveTeam] = React.useState<TournamentDataTeam | null>(
+	const [teamOrder, setTeamOrder] = React.useState(teams.map((t) => t.id));
+	const [activeTeam, setActiveTeam] = React.useState<TournamentTeamFull | null>(
 		null,
 	);
 	const sensors = useSensors(
@@ -84,24 +84,17 @@ export default function TournamentAdminSeedsPage() {
 		}),
 	);
 
-	const { seedingSnapshot } = useLoaderData<typeof loader>();
-	const newTeamIds = computeNewTeamIds(tournament.ctx.teams, seedingSnapshot);
-	const newPlayersByTeam = computeNewPlayers(
-		tournament.ctx.teams,
-		seedingSnapshot,
-	);
-	const removedPlayersByTeam = computeRemovedPlayers(
-		tournament.ctx.teams,
-		seedingSnapshot,
-	);
+	const newTeamIds = computeNewTeamIds(teams, seedingSnapshot);
+	const newPlayersByTeam = computeNewPlayers(teams, seedingSnapshot);
+	const removedPlayersByTeam = computeRemovedPlayers(teams, seedingSnapshot);
 
-	const teamsSorted = [...tournament.ctx.teams].sort(
+	const teamsSorted = [...teams].sort(
 		(a, b) => teamOrder.indexOf(a.id) - teamOrder.indexOf(b.id),
 	);
 
 	const isOutOfOrder = (
-		team: TournamentDataTeam,
-		previousTeam?: TournamentDataTeam,
+		team: TournamentTeamFull,
+		previousTeam?: TournamentTeamFull,
 	) => {
 		if (!previousTeam) return false;
 
@@ -115,9 +108,7 @@ export default function TournamentAdminSeedsPage() {
 		return Boolean(previousTeam.avgSeedingSkillOrdinal);
 	};
 
-	const noOrganizerSetSeeding = tournament.ctx.teams.every(
-		(team) => !team.seed,
-	);
+	const noOrganizerSetSeeding = teams.every((team) => !team.seed);
 
 	const handleSeedChange = (teamId: number, newSeed: number) => {
 		if (newSeed < 1) return;
@@ -135,7 +126,7 @@ export default function TournamentAdminSeedsPage() {
 	};
 
 	const sortAllBySp = () => {
-		const sortedTeams = [...tournament.ctx.teams].sort((a, b) => {
+		const sortedTeams = [...teams].sort((a, b) => {
 			if (
 				a.avgSeedingSkillOrdinal !== null &&
 				b.avgSeedingSkillOrdinal !== null
@@ -174,17 +165,13 @@ export default function TournamentAdminSeedsPage() {
 			</div>
 			{tournament.isMultiStartingBracket ? (
 				<StartingBracketDialog
-					key={tournament.ctx.teams
-						.map((team) => team.startingBracketIdx ?? 0)
-						.join()}
+					key={teams.map((team) => team.startingBracketIdx ?? 0).join()}
 				/>
 			) : null}
 			{hasAbDivisionsStartingBracket(tournament) ? (
 				<>
 					<AbDivisionsDialog
-						key={tournament.ctx.teams
-							.map((team) => team.abDivision ?? -1)
-							.join()}
+						key={teams.map((team) => team.abDivision ?? -1).join()}
 					/>
 					<AbDivisionImbalanceWarning />
 				</>
@@ -344,7 +331,6 @@ function SeedingDraggable({
 }
 
 function StartingBracketDialog() {
-	const fetcher = useFetcher();
 	const tournament = useTournament();
 
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -357,7 +343,7 @@ function StartingBracketDialog() {
 
 	const startingBrackets = tournament.ctx.settings.bracketProgression
 		.flatMap((bracket, bracketIdx) => (!bracket.sources ? [bracketIdx] : []))
-		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
+		.map((bracketIdx) => tournament.bracketsMeta[bracketIdx]);
 
 	return (
 		<div>
@@ -374,7 +360,7 @@ function StartingBracketDialog() {
 				onClose={() => setIsOpen(false)}
 				isFullScreen
 			>
-				<fetcher.Form className="stack lg items-center" method="post">
+				<div className="stack lg items-center">
 					<div>
 						{startingBrackets.map((bracket) => {
 							const teamCount = teamStartingBrackets.filter(
@@ -389,16 +375,6 @@ function StartingBracketDialog() {
 							);
 						})}
 					</div>
-					<input
-						type="hidden"
-						name="_action"
-						value="UPDATE_STARTING_BRACKETS"
-					/>
-					<input
-						type="hidden"
-						name="startingBrackets"
-						value={JSON.stringify(teamStartingBrackets)}
-					/>
 
 					<Table>
 						<thead>
@@ -445,15 +421,16 @@ function StartingBracketDialog() {
 							})}
 						</tbody>
 					</Table>
-					<SubmitButton
-						state={fetcher.state}
-						_action="UPDATE_STARTING_BRACKETS"
+					<ActionButton
+						schema={adminSeedsActionSchema}
+						action="UPDATE_STARTING_BRACKETS"
+						fields={{ startingBrackets: teamStartingBrackets }}
 						size="big"
 						testId="set-starting-brackets-submit-button"
 					>
 						Save
-					</SubmitButton>
-				</fetcher.Form>
+					</ActionButton>
+				</div>
 			</SendouDialog>
 		</div>
 	);
@@ -526,7 +503,6 @@ function AbDivisionImbalanceWarning() {
 type AbDivisionValue = 0 | 1 | null;
 
 function AbDivisionsDialog() {
-	const fetcher = useFetcher();
 	const tournament = useTournament();
 
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -557,18 +533,12 @@ function AbDivisionsDialog() {
 				onClose={() => setIsOpen(false)}
 				isFullScreen
 			>
-				<fetcher.Form className="stack lg items-center" method="post">
+				<div className="stack lg items-center">
 					<div className="stack horizontal sm text-xs">
 						<span>A: {counts.a}</span>
 						<span>B: {counts.b}</span>
 						<span>Unassigned: {counts.unassigned}</span>
 					</div>
-					<input type="hidden" name="_action" value="UPDATE_AB_DIVISIONS" />
-					<input
-						type="hidden"
-						name="abDivisions"
-						value={JSON.stringify(teamAbDivisions)}
-					/>
 
 					<Table>
 						<thead>
@@ -622,15 +592,16 @@ function AbDivisionsDialog() {
 							})}
 						</tbody>
 					</Table>
-					<SubmitButton
-						state={fetcher.state}
-						_action="UPDATE_AB_DIVISIONS"
+					<ActionButton
+						schema={adminSeedsActionSchema}
+						action="UPDATE_AB_DIVISIONS"
+						fields={{ abDivisions: teamAbDivisions }}
 						size="big"
 						testId="set-ab-divisions-submit-button"
 					>
 						Save
-					</SubmitButton>
-				</fetcher.Form>
+					</ActionButton>
+				</div>
 			</SendouDialog>
 		</div>
 	);
@@ -638,16 +609,12 @@ function AbDivisionsDialog() {
 
 function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 	const tournament = useTournament();
-	const fetcher = useFetcher();
 
 	const teamOrderInDb = tournament.ctx.teams.map((t) => t.id);
 	const teamOrderChanged = teamOrder.some((id, i) => id !== teamOrderInDb[i]);
 
 	return (
-		<fetcher.Form method="post" className={styles.form}>
-			<input type="hidden" name="tournamentId" value={tournament.ctx.id} />
-			<input type="hidden" name="seeds" value={JSON.stringify(teamOrder)} />
-			<input type="hidden" name="_action" value="UPDATE_SEEDS" />
+		<div className={styles.form}>
 			<Alert
 				variation={teamOrderChanged ? "WARNING" : "INFO"}
 				alertClassName="tournament-bracket__start-bracket-alert"
@@ -656,15 +623,17 @@ function SeedAlert({ teamOrder }: { teamOrder: number[] }) {
 				{teamOrderChanged
 					? "You have unsaved changes to seeding"
 					: "Drag teams to adjust their seeding"}
-				<SubmitButton
-					state={fetcher.state}
+				<ActionButton
+					schema={adminSeedsActionSchema}
+					action="UPDATE_SEEDS"
+					fields={{ seeds: teamOrder }}
 					isDisabled={!teamOrderChanged}
 					size="small"
 				>
 					Save seeds
-				</SubmitButton>
+				</ActionButton>
 			</Alert>
-		</fetcher.Form>
+		</div>
 	);
 }
 
@@ -677,7 +646,7 @@ function RowContents({
 	removedPlayers,
 	onSeedChange,
 }: {
-	team: TournamentDataTeam;
+	team: TournamentTeamFull;
 	seed?: number;
 	teamSeedingSkill: {
 		sp: number | null;
@@ -688,7 +657,6 @@ function RowContents({
 	removedPlayers?: Array<{ userId: number; username: string }>;
 	onSeedChange?: (newSeed: number) => void;
 }) {
-	const tournament = useTournament();
 	const [draft, setDraft] = React.useState<string | null>(null);
 	const inputValue = draft ?? String(seed ?? "");
 
@@ -700,7 +668,7 @@ function RowContents({
 		setDraft(null);
 	};
 
-	const logoUrl = tournament.tournamentTeamLogoSrc(team);
+	const logoUrl = team.logoUrl;
 
 	return (
 		<>
@@ -775,7 +743,7 @@ function RowContents({
 }
 
 function computeNewTeamIds(
-	teams: TournamentDataTeam[],
+	teams: TournamentTeamFull[],
 	snapshot: SeedingSnapshot | null,
 ): Set<number> {
 	if (!snapshot) return new Set();
@@ -784,7 +752,7 @@ function computeNewTeamIds(
 }
 
 function computeNewPlayers(
-	teams: TournamentDataTeam[],
+	teams: TournamentTeamFull[],
 	snapshot: SeedingSnapshot | null,
 ): Map<number, Set<number>> {
 	const result = new Map<number, Set<number>>();
@@ -814,7 +782,7 @@ function computeNewPlayers(
 }
 
 function computeRemovedPlayers(
-	teams: TournamentDataTeam[],
+	teams: TournamentTeamFull[],
 	snapshot: SeedingSnapshot | null,
 ): Map<number, Array<{ userId: number; username: string }>> {
 	const result = new Map<number, Array<{ userId: number; username: string }>>();

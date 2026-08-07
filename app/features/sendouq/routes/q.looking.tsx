@@ -3,7 +3,8 @@ import type * as React from "react";
 import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { useFetcher, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { LinkButton } from "~/components/elements/Button";
 import {
@@ -15,7 +16,6 @@ import {
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import type { UserCardData } from "~/features/user-card/user-card-types";
@@ -33,11 +33,12 @@ import {
 	SENDOUQ_STREAMS_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/q.looking.server";
-import { GroupCard } from "../components/GroupCard";
+import { GroupCard, type GroupCardTrail } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
-import { groupExpiryStatus } from "../core/groups";
+import { canSuggest, groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
+import { lookingSchema } from "../q-action-schemas";
 import {
 	FULL_GROUP_SIZE,
 	IS_Q_LOOKING_MOBILE_BREAKPOINT,
@@ -131,7 +132,6 @@ function InfoText() {
 	const { t } = useTranslation(["q"]);
 	const isHydrated = useHydrated();
 	const data = useLoaderData<typeof loader>();
-	const fetcher = useFetcher();
 	const { formatter: timeFormatter } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "numeric",
@@ -143,39 +143,33 @@ function InfoText() {
 
 	if (expiryStatus === "EXPIRED") {
 		return (
-			<fetcher.Form
-				method="post"
-				className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center"
-			>
+			<div className="text-xs text-lighter ml-auto text-error stack horizontal sm items-center">
 				{t("q:looking.inactiveGroup")}{" "}
-				<SubmitButton
+				<ActionButton
+					schema={lookingSchema}
+					action="REFRESH_GROUP"
 					size="small"
 					variant="minimal"
-					_action="REFRESH_GROUP"
-					state={fetcher.state}
 				>
 					{t("q:looking.inactiveGroup.action")}
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 		);
 	}
 
 	if (expiryStatus === "EXPIRING_SOON") {
 		return (
-			<fetcher.Form
-				method="post"
-				className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center"
-			>
+			<div className="text-xs text-lighter ml-auto text-warning stack horizontal sm items-center">
 				{t("q:looking.inactiveGroup.soon")}{" "}
-				<SubmitButton
+				<ActionButton
+					schema={lookingSchema}
+					action="REFRESH_GROUP"
 					size="small"
 					variant="minimal"
-					_action="REFRESH_GROUP"
-					state={fetcher.state}
 				>
 					{t("q:looking.inactiveGroup.action")}
-				</SubmitButton>
-			</fetcher.Form>
+				</ActionButton>
+			</div>
 		);
 	}
 
@@ -242,7 +236,37 @@ function Groups() {
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
-	const groups = sortGroupsByPrivateNoteSentiment(data.groups, data.userCards);
+	const suggestedByUsernames = new Map(
+		data.suggestions.map((suggestion) => [
+			suggestion.groupId,
+			suggestion.createdByUsername,
+		]),
+	);
+	const invitedByUsernames = new Map(
+		data.likes.given.map((like) => [like.groupId, like.createdByUsername]),
+	);
+
+	const groups = sortGroups(data.groups, {
+		userCards: data.userCards,
+		suggestedGroupIds: new Set(suggestedByUsernames.keys()),
+	});
+
+	const trailOf = (groupId: number): GroupCardTrail | undefined => {
+		const invitedBy = invitedByUsernames.get(groupId);
+		if (invitedBy) return { type: "INVITED", username: invitedBy };
+
+		const suggestedBy = suggestedByUsernames.get(groupId);
+		if (suggestedBy) return { type: "SUGGESTED", username: suggestedBy };
+
+		return undefined;
+	};
+
+	const canSuggestGroups = Boolean(data.ownGroup && canSuggest(data.ownGroup));
+	// a group already invited or suggested has nothing left to point out
+	const isSuggestable = (groupId: number) =>
+		canSuggestGroups &&
+		!invitedByUsernames.has(groupId) &&
+		!suggestedByUsernames.has(groupId);
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
@@ -263,6 +287,7 @@ function Groups() {
 							key={group.id}
 							group={group}
 							action="UNLIKE"
+							trail={trailOf(group.id)}
 							ownGroup={data.ownGroup}
 							layout={layout}
 						/>
@@ -276,7 +301,11 @@ function Groups() {
 			<ColumnHeader isMobile={isMobile}>
 				{t("q:looking.columns.myGroup")}
 			</ColumnHeader>
-			<GroupCard group={data.ownGroup} ownGroup={data.ownGroup} />
+			<GroupCard
+				group={data.ownGroup}
+				ownGroup={data.ownGroup}
+				kickableUserIds={data.kickableUserIds}
+			/>
 			{data.ownGroup.inviteCode ? (
 				<MemberAdder
 					inviteCode={data.ownGroup.inviteCode}
@@ -364,6 +393,8 @@ function Groups() {
 													? "UNLIKE"
 													: "LIKE"
 											}
+											suggestable={isSuggestable(group.id)}
+											trail={trailOf(group.id)}
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -391,6 +422,8 @@ function Groups() {
 											key={group.id}
 											group={group}
 											action={action()}
+											suggestable={isSuggestable(group.id)}
+											trail={trailOf(group.id)}
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -428,6 +461,8 @@ function Groups() {
 									key={group.id}
 									group={group}
 									action={action()}
+									suggestable={isSuggestable(group.id)}
+									trail={trailOf(group.id)}
 									ownGroup={data.ownGroup}
 									layout={layout}
 								/>
@@ -441,15 +476,22 @@ function Groups() {
 }
 
 /**
- * Floats groups the viewer has a positive private note on up and groups with a
- * negative note down, while preserving the server's tier/activity ordering
- * within each sentiment bucket and keeping full (censored) groups last. The
- * note sentiment is read from the already-loaded `userCards` data so the server
- * does not need to attach notes to group members.
+ * Floats groups a teammate suggested to the very top, then groups the viewer has
+ * a positive private note on up and groups with a negative note down, while
+ * preserving the server's tier/activity ordering within each bucket and keeping
+ * full (censored) groups last. The note sentiment is read from the already-loaded
+ * `userCards` data so the server does not need to attach notes to group members.
  */
-function sortGroupsByPrivateNoteSentiment<
-	T extends { members?: { id: number }[] },
->(groups: T[], userCards: Map<number, UserCardData>): T[] {
+function sortGroups<T extends { id: number; members?: { id: number }[] }>(
+	groups: T[],
+	{
+		userCards,
+		suggestedGroupIds,
+	}: {
+		userCards: Map<number, UserCardData>;
+		suggestedGroupIds: Set<number>;
+	},
+): T[] {
 	const sentimentScore = (group: T) => {
 		if (!group.members) return 0;
 
@@ -464,6 +506,10 @@ function sortGroupsByPrivateNoteSentiment<
 	};
 
 	return groups.toSorted((a, b) => {
+		const aIsSuggested = suggestedGroupIds.has(a.id);
+		const bIsSuggested = suggestedGroupIds.has(b.id);
+		if (aIsSuggested !== bIsSuggested) return aIsSuggested ? -1 : 1;
+
 		const aIsFull = !a.members;
 		const bIsFull = !b.members;
 		if (aIsFull !== bIsFull) return aIsFull ? 1 : -1;

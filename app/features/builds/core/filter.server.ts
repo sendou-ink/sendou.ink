@@ -1,17 +1,11 @@
 import type { Tables } from "~/db/tables";
-import { buildToAbilityPoints } from "~/features/build-analyzer/core/utils";
+import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
 import type {
 	BuildAbilitiesTuple,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { assertUnreachable } from "~/utils/types";
-import type { BuildFiltersFromSearchParams } from "../builds-schemas";
-import type {
-	AbilityBuildFilter,
-	DateBuildFilter,
-	ModeBuildFilter,
-} from "../builds-types";
+import type { AbilityCondition } from "../builds-types";
 
 type PartialBuild = {
 	abilities: BuildAbilitiesTuple;
@@ -19,17 +13,24 @@ type PartialBuild = {
 	updatedAt: Tables["Build"]["updatedAt"];
 };
 
+interface BuildFilters {
+	abilities: AbilityCondition[];
+	mode: ModeShort | null;
+	date: string | null;
+}
+
 /**
  * Filters an array of builds based on the provided filter criteria and returns up to a specified count of matching builds.
  *
  * Filters are applied on "AND" basis, meaning all filters must match for a build to be included in the result.
  */
 export function filterBuilds<T extends PartialBuild>({
-	filters,
+	abilities,
+	mode,
+	date,
 	count,
 	builds,
-}: {
-	filters: BuildFiltersFromSearchParams;
+}: BuildFilters & {
 	count: number;
 	builds: T[];
 }) {
@@ -38,7 +39,7 @@ export function filterBuilds<T extends PartialBuild>({
 	for (const build of builds) {
 		if (result.length === count) break;
 
-		if (buildMatchesFilters({ build, filters })) {
+		if (buildMatchesFilters({ build, abilities, mode, date })) {
 			result.push(build);
 		}
 	}
@@ -48,42 +49,38 @@ export function filterBuilds<T extends PartialBuild>({
 
 function buildMatchesFilters<T extends PartialBuild>({
 	build,
-	filters,
-}: {
-	build: T;
-	filters: BuildFiltersFromSearchParams;
-}) {
-	for (const filter of filters) {
-		if (filter.type === "ability") {
-			if (!matchesAbilityFilter({ build, filter })) return false;
-		} else if (filter.type === "mode") {
-			if (!matchesModeFilter({ build, filter })) return false;
-		} else if (filter.type === "date") {
-			if (!matchesDateFilter({ build, filter })) return false;
-		} else {
-			assertUnreachable(filter);
-		}
+	abilities,
+	mode,
+	date,
+}: BuildFilters & { build: T }) {
+	for (const condition of abilities) {
+		if (!matchesAbilityCondition({ build, condition })) return false;
 	}
+
+	if (mode !== null && !matchesModeFilter({ build, mode })) return false;
+	if (date !== null && !matchesDateFilter({ build, date })) return false;
 
 	return true;
 }
 
-function matchesAbilityFilter({
+function matchesAbilityCondition({
 	build,
-	filter,
+	condition,
 }: {
 	build: PartialBuild;
-	filter: AbilityBuildFilter;
+	condition: AbilityCondition;
 }) {
-	if (typeof filter.value === "boolean") {
-		const hasAbility = build.abilities.flat().includes(filter.ability);
-		if (filter.value && !hasAbility) return false;
-		if (!filter.value && hasAbility) return false;
-	} else if (typeof filter.value === "number") {
+	if (typeof condition.value === "boolean") {
+		const hasAbility = build.abilities.flat().includes(condition.ability);
+		if (condition.value && !hasAbility) return false;
+		if (!condition.value && hasAbility) return false;
+	} else if (typeof condition.value === "number") {
 		const abilityPoints = buildToAbilityPoints(build.abilities);
-		const ap = abilityPoints.get(filter.ability) ?? 0;
-		if (filter.comparison === "AT_LEAST" && ap < filter.value) return false;
-		if (filter.comparison === "AT_MOST" && ap > filter.value) return false;
+		const ap = abilityPoints.get(condition.ability) ?? 0;
+		if (condition.comparison === "AT_LEAST" && ap < condition.value)
+			return false;
+		if (condition.comparison === "AT_MOST" && ap > condition.value)
+			return false;
 	}
 
 	return true;
@@ -91,24 +88,22 @@ function matchesAbilityFilter({
 
 function matchesModeFilter({
 	build,
-	filter,
+	mode,
 }: {
 	build: PartialBuild;
-	filter: ModeBuildFilter;
+	mode: ModeShort;
 }) {
 	if (!build.modes) return false;
 
-	return build.modes.includes(filter.mode);
+	return build.modes.includes(mode);
 }
 
 function matchesDateFilter({
 	build,
-	filter,
+	date,
 }: {
 	build: PartialBuild;
-	filter: DateBuildFilter;
+	date: string;
 }) {
-	const date = new Date(filter.date);
-
-	return date < databaseTimestampToDate(build.updatedAt);
+	return new Date(date) < databaseTimestampToDate(build.updatedAt);
 }

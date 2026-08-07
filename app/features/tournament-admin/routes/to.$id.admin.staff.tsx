@@ -5,7 +5,7 @@ import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import type { Tables } from "~/db/tables";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { TOURNAMENT_ORGANIZATION_ROLES } from "~/features/tournament-organization/tournament-organization-constants";
 import { SendouForm } from "~/form/SendouForm";
 import { tournamentOrganizationEditPage } from "~/utils/urls";

@@ -201,6 +201,7 @@ export interface PendingTrophy {
 	declineReason: string | null;
 	declinedAt: number | null;
 	declinedByUserId: number | null;
+	acceptedAt: number | null;
 	targetTrophyId: number | null;
 	managerId: number | null;
 }
@@ -303,7 +304,7 @@ export interface Group {
 	latestActionAt: Generated<number>;
 	/** If truthy, group was at least partly made in the matchmaking UI (/q/looking) */
 	matchmade: Generated<DBBoolean>;
-	status: "PREPARING" | "ACTIVE" | "INACTIVE";
+	status: "PREPARING" | "ACTIVE" | "INACTIVE" | "READY_CHECK";
 	teamId: number | null;
 }
 
@@ -312,6 +313,9 @@ export interface GroupLike {
 	likerGroupId: number;
 	targetGroupId: number;
 	isRechallenge: Generated<DBBoolean>;
+	// TODO: migrate to not null
+	/** Member of the liker group who sent the invite. `null` for invites sent before the column existed. */
+	createdByUserId: number | null;
 }
 
 export interface GroupMatch {
@@ -367,9 +371,34 @@ export interface GroupMatchMap {
 export interface GroupMember {
 	createdAt: Generated<number>;
 	groupId: number;
+	/** When the member last let a {@link GroupReadyCheck} expire without confirming, letting the rest of the group kick them. `null` if they have not. */
+	missedReadyCheckAt: number | null;
 	note: string | null;
-	role: "OWNER" | "MANAGER" | "REGULAR";
 	userId: number;
+}
+
+/** Both groups' members confirming they are ready to play, before their match is created */
+export interface GroupReadyCheck {
+	alphaGroupId: number;
+	bravoGroupId: number;
+	createdAt: Generated<number>;
+	id: GeneratedAlways<number>;
+}
+
+/** One member confirming they are ready to play in a {@link GroupReadyCheck} */
+export interface GroupReadyCheckConfirmation {
+	createdAt: Generated<number>;
+	readyCheckId: number;
+	userId: number;
+}
+
+/** A group member pointing their own group at another group, without inviting it */
+export interface GroupSuggestion {
+	createdAt: Generated<number>;
+	/** Group whose members see the suggestion */
+	suggesterGroupId: number;
+	targetGroupId: number;
+	createdByUserId: number;
 }
 
 export interface PrivateUserNote {
@@ -739,6 +768,8 @@ export interface TournamentTeamMember {
 	isStayAsSub: Generated<DBBoolean>;
 	/** Set when the member was added to the roster after registration closed. */
 	isSub: Generated<DBBoolean>;
+	/** Set when the member was added to the roster by the tournament organizer instead of joining on their own. */
+	isOrganizerAdded: Generated<DBBoolean>;
 	// denormalized from TournamentTeam.isLooking
 	isLooking: Generated<DBBoolean>;
 }
@@ -878,6 +909,8 @@ export interface User {
 	customName: string | null;
 	/** coalesce(customName, discordName) */
 	username: ColumnType<string, never, never>;
+	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
+	tournamentName: string | null;
 	discordUniqueName: string | null;
 	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
 	favoriteBadgeIds: JSONColumnTypeNullable<number[]>;
@@ -1275,6 +1308,9 @@ export interface DB {
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
+	GroupReadyCheck: GroupReadyCheck;
+	GroupReadyCheckConfirmation: GroupReadyCheckConfirmation;
+	GroupSuggestion: GroupSuggestion;
 	IngestedMatch: IngestedMatch;
 	IngestedMatchLink: IngestedMatchLink;
 	PrivateUserNote: PrivateUserNote;

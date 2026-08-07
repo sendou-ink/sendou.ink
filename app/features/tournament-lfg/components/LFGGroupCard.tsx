@@ -3,7 +3,7 @@ import { Mic, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
@@ -11,11 +11,9 @@ import { SendouPopover } from "~/components/elements/Popover";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
-import { SubmitButton } from "~/components/SubmitButton";
-import type { Pronouns } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	UserCard,
 	useUserCardData,
@@ -26,7 +24,10 @@ import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
-import { updateGroupFormSchema } from "../tournament-lfg-schemas";
+import {
+	lookingSchema,
+	updateGroupFormSchema,
+} from "../tournament-lfg-schemas";
 import styles from "./LFGGroupCard.module.css";
 
 export type LFGGroupMember = {
@@ -38,7 +39,6 @@ export type LFGGroupMember = {
 	customUrl: string | null;
 	languages: UnifiedLanguageCode[];
 	vc: "YES" | "NO" | "LISTEN_ONLY" | null;
-	pronouns: Pronouns | null;
 	role: "OWNER" | "MANAGER" | "REGULAR";
 	isStayAsSub: boolean;
 	weapons: Array<{
@@ -69,7 +69,6 @@ export function LFGGroupCard({
 	ownGroup?: LFGGroup;
 }) {
 	const { t } = useTranslation(["common", "q"]);
-	const fetcher = useFetcher();
 	const user = useUser();
 	const tournament = useTournament();
 
@@ -119,21 +118,20 @@ export function LFGGroupCard({
 				{action &&
 				(ownGroup?.usersRole === "OWNER" ||
 					ownGroup?.usersRole === "MANAGER") ? (
-					<fetcher.Form className="stack items-center" method="post">
-						<input type="hidden" name="targetTeamId" value={group.id} />
-						<SubmitButton
-							size="small"
-							variant={action === "UNLIKE" ? "destructive" : "outlined"}
-							_action={action}
-							state={fetcher.state}
-						>
-							{action === "LIKE"
-								? t("q:looking.groups.actions.invite")
-								: action === "ACCEPT"
-									? t("common:actions.accept")
-									: t("q:looking.groups.actions.undo")}
-						</SubmitButton>
-					</fetcher.Form>
+					<ActionButton
+						schema={lookingSchema}
+						action={action}
+						fields={{ targetTeamId: group.id }}
+						formClassName="stack items-center"
+						size="small"
+						variant={action === "UNLIKE" ? "destructive" : "outlined"}
+					>
+						{action === "LIKE"
+							? t("q:looking.groups.actions.invite")
+							: action === "ACCEPT"
+								? t("common:actions.accept")
+								: t("q:looking.groups.actions.undo")}
+					</ActionButton>
 				) : null}
 				{showOrganizerDelete ? (
 					<LFGOrganizerGroupRemover group={group} />
@@ -218,11 +216,6 @@ function LFGGroupMemberRow({
 							<span className={styles.name}>{member.username}</span>
 						</span>
 					</UserCard>
-					{member.pronouns ? (
-						<span className="text-lighter ml-1 text-xxs">
-							{member.pronouns.subject}/{member.pronouns.object}
-						</span>
-					) : null}
 				</div>
 				<div className="ml-auto stack horizontal sm items-center">
 					{showActions || (!showActions && member.role === "OWNER") ? (
@@ -357,7 +350,6 @@ function LFGMemberRoleManager({
 	member: Pick<LFGGroupMember, "id" | "role">;
 	showActions: boolean;
 }) {
-	const fetcher = useFetcher();
 	const { t } = useTranslation(["q"]);
 	const isFilled = member.role === "OWNER";
 
@@ -383,29 +375,30 @@ function LFGMemberRoleManager({
 			<div className="stack sm items-center">
 				<div>{t(`q:roles.${member.role}`)}</div>
 				{member.role !== "OWNER" && showActions ? (
-					<fetcher.Form method="post" className="stack md items-center">
-						<input type="hidden" name="userId" value={member.id} />
+					<div className="stack md items-center">
 						{member.role === "REGULAR" ? (
-							<SubmitButton
+							<ActionButton
+								schema={lookingSchema}
+								action="GIVE_MANAGER"
+								fields={{ userId: member.id }}
 								variant="outlined"
 								size="small"
-								_action="GIVE_MANAGER"
-								state={fetcher.state}
 							>
 								{t("q:looking.groups.actions.giveManager")}
-							</SubmitButton>
+							</ActionButton>
 						) : null}
 						{member.role === "MANAGER" ? (
-							<SubmitButton
+							<ActionButton
+								schema={lookingSchema}
+								action="REMOVE_MANAGER"
+								fields={{ userId: member.id }}
 								variant="destructive"
 								size="small"
-								_action="REMOVE_MANAGER"
-								state={fetcher.state}
 							>
 								{t("q:looking.groups.actions.removeManager")}
-							</SubmitButton>
+							</ActionButton>
 						) : null}
-					</fetcher.Form>
+					</div>
 				) : null}
 			</div>
 		</SendouPopover>

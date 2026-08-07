@@ -5,11 +5,9 @@ import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { Tables } from "~/db/tables";
 import type { AbilityPoints } from "~/features/build-analyzer/analyzer-types";
+import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
 import { getAbilityChunksMapAsArray } from "~/features/build-analyzer/core/abilityChunksCalc";
-import {
-	apFromMap,
-	buildToAbilityPoints,
-} from "~/features/build-analyzer/core/utils";
+import { apFromMap } from "~/features/build-analyzer/core/utils";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import type {
 	Ability as AbilityType,

@@ -105,11 +105,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			? await TournamentRepository.findPickBanEventsByMatchId(match.id)
 			: [];
 
+		const mapPools = await TournamentTeamRepository.findMapPoolsByTeamIds([
+			opponentOne.id,
+			opponentTwo.id,
+		]);
+
 		return resolveMapList({
 			tournamentId: match.tournamentId,
 			matchId: id,
 			teams: [opponentOne.id, opponentTwo.id],
-			mapPoolByTeamId: (teamId) => tournament.teamById(teamId)?.mapPool ?? [],
+			mapPoolByTeamId: (teamId) => mapPools.get(teamId) ?? [],
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
 			tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,

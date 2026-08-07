@@ -14,6 +14,7 @@ import {
 	SENDOUQ_RULES_PAGE,
 	TIERS_PAGE,
 } from "~/utils/urls";
+import { SENDOUQ } from "../q-constants";
 import styles from "./q.info.module.css";
 
 export const meta: MetaFunction = (args) => {
@@ -325,6 +326,14 @@ function FindingAnOpponent() {
 				result in the best match but you are free to challenge group of any
 				level (and they are free to not accept). You will also see the modes the
 				set would have before deciding on challenging/accepting.
+			</p>
+			<h3>Ready check</h3>
+			<p>
+				Accepting a challenge doesn&apos;t start the match right away. First
+				every member of both groups has {SENDOUQ.READY_CHECK_MINUTES} minutes to
+				confirm that they are ready to play. Once everyone has confirmed the
+				match starts. If the time runs out, both groups go back to looking and
+				have to challenge again.
 			</p>
 			<h3>Rechallenging</h3>
 			<p>

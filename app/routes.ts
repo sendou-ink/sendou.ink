@@ -281,6 +281,7 @@ export default [
 		route("info", "features/sendouq/routes/q.info.tsx"),
 		route("looking", "features/sendouq/routes/q.looking.tsx"),
 		route("preparing", "features/sendouq/routes/q.preparing.tsx"),
+		route("ready", "features/sendouq/routes/q.ready.tsx"),
 		route("match/:id", "features/sendouq-match/routes/q.match.$id.tsx"),
 		route("settings", "features/match-profile/routes/q.settings.tsx"),
 		route("streams", "features/sendouq-streams/routes/q.streams.tsx"),
@@ -354,6 +355,7 @@ export default [
 
 	route("/patrons", "features/api-private/routes/patrons.ts"),
 	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
+	route("/run-routine", "features/api-private/routes/run-routine.ts"),
 	route("/seed", "features/api-private/routes/seed.ts"),
 	route("/users", "features/api-private/routes/users.ts"),
 
@@ -423,6 +425,10 @@ export default [
 			route(
 				"/tournament/:id/streams",
 				"features/api-public/routes/tournament.$id.streams.ts",
+			),
+			route(
+				"/tournament/:id/teams/upsert",
+				"features/api-public/routes/tournament.$id.teams.upsert.ts",
 			),
 			route(
 				"/tournament/:id/teams/:teamId/add-member",

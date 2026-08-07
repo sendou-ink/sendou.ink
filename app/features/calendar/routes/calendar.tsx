@@ -25,21 +25,17 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
 import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
+import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import {
-	CALENDAR_PAGE,
-	calendarIcalFeed,
-	calendarPage,
-	navIconUrl,
-} from "~/utils/urls";
+import { CALENDAR_PAGE, calendarIcalFeed, navIconUrl } from "~/utils/urls";
 import type { DayMonthYear } from "~/utils/zod";
 import { action } from "../actions/calendar";
 import { daysForCalendar } from "../calendar-utils";
-import { FiltersDialog } from "../components/FiltersDialog";
+import { FiltersBar } from "../components/FiltersBar";
 import { TournamentCard } from "../components/TournamentCard";
-import * as CalendarEvent from "../core/CalendarEvent";
 import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 
 export { action, loader };
@@ -77,25 +73,18 @@ export default function CalendarPage() {
 			className={clsx("stack lg", styles.container)}
 			style={{ "--columns-count": DAYS_SHOWN_AT_A_TIME } as React.CSSProperties}
 		>
-			<div className={styles.buttonsContainer}>
+			<div
+				className={clsx(styles.columnsWidthContainer, styles.buttonsContainer)}
+			>
 				<div className={styles.navigateButtonsContainer}>
-					<NavigateButton
-						icon={<ChevronLeft />}
-						daysInterval={previous}
-						filters={data.filters}
-					>
+					<NavigateButton icon={<ChevronLeft />} daysInterval={previous}>
 						{t("common:actions.previous")}
 					</NavigateButton>
-					<NavigateButton
-						icon={<ChevronRight />}
-						daysInterval={next}
-						filters={data.filters}
-					>
+					<NavigateButton icon={<ChevronRight />} daysInterval={next}>
 						{t("common:actions.next")}
 					</NavigateButton>
 					<CalendarDatePicker
 						dayMonthYear={current}
-						filters={data.filters}
 						key={JSON.stringify(current)}
 					/>
 				</div>
@@ -108,11 +97,10 @@ export default function CalendarPage() {
 						}
 						url={calendarIcalFeed(data.filters)}
 					/>
-					<FiltersDialog
-						key={CalendarEvent.filtersToString(data.filters)}
-						filters={data.filters}
-					/>
 				</div>
+			</div>
+			<div className={styles.columnsWidthContainer}>
+				<FiltersBar />
 			</div>
 			<div
 				key={`${shown[0].year}-${shown[0].month}-${shown[0].day}`}
@@ -145,13 +133,13 @@ function NavigateButton({
 	icon,
 	children,
 	daysInterval,
-	filters,
 }: {
 	icon: SendouButtonProps["icon"];
 	children: React.ReactNode;
 	daysInterval: ReturnType<typeof daysForCalendar>["shown"];
-	filters?: CalendarLoaderData["filters"];
 }) {
+	const dayHref = useCalendarDayHref();
+
 	const lowestDate = daysInterval[0];
 	const highestDate = daysInterval[daysInterval.length - 1];
 
@@ -159,7 +147,7 @@ function NavigateButton({
 
 	return (
 		<Link
-			to={calendarPage({ filters, dayMonthYear: lowestDate })}
+			to={dayHref(lowestDate)}
 			className={clsx(styles.navigateButton, styles.navigateArrowButton)}
 			data-testid="calendar-navigate-button"
 		>
@@ -177,24 +165,16 @@ function NavigateButton({
 	);
 }
 
-function CalendarDatePicker({
-	dayMonthYear,
-	filters,
-}: {
-	dayMonthYear: DayMonthYear;
-	filters?: CalendarLoaderData["filters"];
-}) {
+function CalendarDatePicker({ dayMonthYear }: { dayMonthYear: DayMonthYear }) {
 	const navigate = useNavigate();
+	const dayHref = useCalendarDayHref();
 
 	const onChange = (date: DateValue) => {
 		navigate(
-			calendarPage({
-				filters,
-				dayMonthYear: {
-					day: date.day,
-					month: date.month - 1,
-					year: date.year,
-				},
+			dayHref({
+				day: date.day,
+				month: date.month - 1,
+				year: date.year,
 			}),
 		);
 	};
@@ -214,6 +194,14 @@ function CalendarDatePicker({
 			/>
 		</SendouPopover>
 	);
+}
+
+/** Href to another day, carrying the current filter search params over unchanged. */
+function useCalendarDayHref() {
+	const [params] = useSearchParamsTyped(calendarSearchParams);
+
+	return (dayMonthYear: DayMonthYear) =>
+		calendarSearchParams.href(CALENDAR_PAGE, { ...params, ...dayMonthYear });
 }
 
 /** Centers today's column, leaving weeks that don't contain today scrolled to their first day. */

@@ -1,8 +1,11 @@
+import { sub } from "date-fns";
 import { describe, expect, test } from "vitest";
+import { backdate } from "~/db/seed/core/backdate";
 import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import * as SQGroupRepository from "./SQGroupRepository.server";
@@ -126,5 +129,44 @@ describe("insertMember", () => {
 		expect(votes[0].userId).toBe(alphaMembers[0].id);
 		expect(votes[0].isContinuing).toBe(false);
 		expect(chatCodeToRevalidate).toBe(matchChatCode);
+	});
+});
+
+describe("setOldGroupsAsInactive", () => {
+	test("deletes the expired groups' likes and suggestions", async () => {
+		const [expiring, other] = await UserFactory.createMany(2);
+
+		const expiringGroup = await SQGroupFactory.create({
+			memberUserIds: [expiring.id],
+		});
+		const otherGroup = await SQGroupFactory.create({
+			memberUserIds: [other.id],
+		});
+
+		await SQGroupRepository.insertLike({
+			likerGroupId: otherGroup.id,
+			targetGroupId: expiringGroup.id,
+			createdByUserId: other.id,
+		});
+		await SQGroupRepository.insertSuggestion({
+			suggesterGroupId: expiringGroup.id,
+			targetGroupId: otherGroup.id,
+			createdByUserId: expiring.id,
+		});
+
+		await backdate("Group", expiringGroup.id, {
+			latestActionAt: sub(new Date(), { hours: 2 }),
+		});
+
+		await SQGroupRepository.setOldGroupsAsInactive();
+
+		const likes = await db.selectFrom("GroupLike").selectAll().execute();
+		const suggestions = await db
+			.selectFrom("GroupSuggestion")
+			.selectAll()
+			.execute();
+
+		expect(likes).toHaveLength(0);
+		expect(suggestions).toHaveLength(0);
 	});
 });

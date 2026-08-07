@@ -340,43 +340,67 @@ function modifyModeOrderByPattern(
 		modesConsumed++;
 	}
 
+	const mustIncludePlacedIndices = new Set<number>();
+
 	if (pattern.mustInclude) {
+		const flexibleIndices = expandedPattern.flatMap((part, idx) =>
+			part === undefined || part === "ANY" ? [idx] : [],
+		);
+		// with no flexible slots a must include may still claim slots from the
+		// pattern's repeats, but never from its first cycle (pattern has priority)
+		const overridableIndices =
+			flexibleIndices.length > 0
+				? flexibleIndices
+				: expandedPattern.flatMap((_, idx) =>
+						idx >= pattern.pattern.length ? [idx] : [],
+					);
+
 		for (const { mode, isGuaranteed } of pattern.mustInclude) {
 			// impossible must include, mode is not in the pool
 			if (!modeOrder.includes(mode)) continue;
 
-			let possibleIndices = expandedPattern.every((part) => part !== "ANY")
-				? // inflexible pattern fallback
-					expandedPattern.map((_, idx) => idx)
-				: expandedPattern.flatMap((part, idx) => (part === "ANY" ? [idx] : []));
-
+			let possibleIndices = overridableIndices;
 			if (isGuaranteed) {
 				const guaranteedPositions = Math.ceil(amount / 2);
-				possibleIndices = possibleIndices.filter(
+				const frontIndices = possibleIndices.filter(
 					(idx) => idx < guaranteedPositions,
 				);
+				// an unsatisfiable guaranteed position degrades to any allowed slot
+				if (frontIndices.length > 0) {
+					possibleIndices = frontIndices;
+				}
 			}
 
-			const isAlreadyIncluded = result.includes(mode);
-			// "good spot" means a spot where the pattern allows ANY mode
-			const isInGoodSpot = possibleIndices.includes(result.indexOf(mode));
+			// nothing the must include is allowed to claim, pattern wins entirely
+			if (possibleIndices.length === 0) continue;
+
+			const currentIndex = result.indexOf(mode);
+			const isAlreadyIncluded = currentIndex !== -1;
+			// "good spot" means a slot the must include may claim, or one the
+			// pattern itself pins the mode to (relocating from there is pointless
+			// as the pattern gets stamped back over fixed slots)
+			const isInGoodSpot =
+				possibleIndices.includes(currentIndex) ||
+				(!isGuaranteed && expandedPattern[currentIndex] === mode);
 
 			if (!isAlreadyIncluded) {
 				const randomIndex = R.sample(possibleIndices, 1)[0];
 				invariant(typeof randomIndex === "number");
 				result[randomIndex] = mode;
+				mustIncludePlacedIndices.add(randomIndex);
 			} else if (!isInGoodSpot) {
-				const currentIndex = result.indexOf(mode);
-				const targetIndex = R.sample(
-					possibleIndices.filter((idx) => idx !== currentIndex),
-					1,
-				)[0];
+				const swapTargets = possibleIndices.filter(
+					(idx) => idx !== currentIndex,
+				);
+				if (swapTargets.length === 0) continue;
+				const targetIndex = R.sample(swapTargets, 1)[0];
 				invariant(typeof targetIndex === "number");
 
 				[result[currentIndex], result[targetIndex]] = [
 					result[targetIndex],
 					result[currentIndex],
 				];
+				mustIncludePlacedIndices.add(targetIndex);
 			}
 		}
 	}
@@ -387,6 +411,7 @@ function modifyModeOrderByPattern(
 
 	for (const [idx, mode] of expandedPattern.entries()) {
 		if (mode === "ANY") continue;
+		if (mustIncludePlacedIndices.has(idx)) continue;
 
 		if (modeOrder.includes(mode)) {
 			result[idx] = mode;

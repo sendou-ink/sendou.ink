@@ -86,7 +86,7 @@ export function calculateSPR({
 	return expectedIndex - actualIndex;
 }
 
-/** Teams matches that contributed to the standings, in the order they were played in */
+/** Every match the team played, in the order they were played in */
 export function matchesPlayed({
 	tournament,
 	teamId,
@@ -94,32 +94,13 @@ export function matchesPlayed({
 	tournament: Tournament;
 	teamId: number;
 }) {
-	const startingBracketIdx = tournament.teamById(teamId)?.startingBracketIdx;
+	const bracketsInPlayedOrder = R.sortBy(
+		tournament.brackets,
+		(bracket) => bracket.createdAt ?? Number.POSITIVE_INFINITY,
+		(bracket) => bracket.idx,
+	);
 
-	let bracketIdxs: number[];
-
-	if (typeof startingBracketIdx !== "number" || startingBracketIdx === 0) {
-		bracketIdxs = Progression.bracketIdxsForStandings(
-			tournament.ctx.settings.bracketProgression,
-		);
-	} else {
-		const reachableBrackets = Progression.bracketsReachableFrom(
-			startingBracketIdx,
-			tournament.ctx.settings.bracketProgression,
-		);
-		const reachableSet = new Set(reachableBrackets);
-
-		const allBracketIdxs = tournament.ctx.settings.bracketProgression
-			.map((_, idx) => idx)
-			.sort((a, b) => b - a);
-		bracketIdxs = allBracketIdxs.filter((idx) => reachableSet.has(idx));
-	}
-
-	const brackets = bracketIdxs
-		.reverse()
-		.map((bracketIdx) => tournament.bracketByIdx(bracketIdx)!);
-
-	const matches = brackets.flatMap((bracket, i) =>
+	const matches = bracketsInPlayedOrder.flatMap((bracket) =>
 		bracket.data.match
 			.filter(
 				(match) =>
@@ -130,7 +111,7 @@ export function matchesPlayed({
 			)
 			.map((match) => ({
 				...match,
-				bracketIdx: bracketIdxs[i],
+				bracketIdx: bracket.idx,
 			})),
 	);
 
@@ -152,6 +133,74 @@ export function matchesPlayed({
 			bracketIdx: match.bracketIdx,
 		};
 	});
+}
+
+type PersistedResultRow = {
+	tournamentTeamId: number;
+	userId: number;
+	placement: number;
+	div: string | null;
+};
+
+/**
+ * Standings of a finalized tournament reconstructed from the per-user results persisted at
+ * finalization, instead of recomputing them from bracket match data. Returns null when the
+ * persisted rows cannot back the standings (no rows, a team no longer in the tournament
+ * context, or a division label the progression no longer produces) so the caller can fall
+ * back to {@link tournamentStandings}.
+ */
+export function standingsFromPersistedResults({
+	tournament,
+	results,
+}: {
+	tournament: Tournament;
+	results: PersistedResultRow[];
+}): TournamentStandingsResult | null {
+	if (results.length === 0) return null;
+
+	const standings: Array<Standing & { div: string | null }> = [];
+
+	for (const rows of Object.values(
+		R.groupBy(results, (row) => row.tournamentTeamId),
+	)) {
+		const team = tournament.teamById(rows[0].tournamentTeamId);
+		if (!team) return null;
+
+		standings.push({
+			team: { ...team, memberUserIds: rows.map((row) => row.userId) },
+			placement: rows[0].placement,
+			div: rows[0].div,
+		});
+	}
+
+	const sorted = R.sortBy(
+		standings,
+		(standing) => standing.placement,
+		(standing) => standing.team.seed ?? Number.POSITIVE_INFINITY,
+	);
+
+	if (sorted.every((standing) => standing.div === null)) {
+		return { type: "single", standings: sorted };
+	}
+
+	const progression = tournament.ctx.settings.bracketProgression;
+	const divs = Progression.hasAbDivisionsFinals(progression)
+		? ["A", "B"]
+		: Progression.startingBrackets(progression).map((bracketIdx) =>
+				getBracketProgressionLabel(bracketIdx, progression),
+			);
+	const hasUnknownDiv = sorted.some(
+		(standing) => standing.div === null || !divs.includes(standing.div),
+	);
+	if (hasUnknownDiv) return null;
+
+	return {
+		type: "multi",
+		standings: divs.map((div) => ({
+			div,
+			standings: sorted.filter((standing) => standing.div === div),
+		})),
+	};
 }
 
 /**

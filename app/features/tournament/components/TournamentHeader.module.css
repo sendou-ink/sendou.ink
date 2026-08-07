@@ -79,6 +79,11 @@
 	font-weight: var(--weight-semi);
 }
 
+.organizerUser {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
 .dates {
 	display: flex;
 	flex-direction: column;

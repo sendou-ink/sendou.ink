@@ -67,7 +67,7 @@ export function searchByName({
 				eb
 					.selectFrom("TeamMemberWithSecondary")
 					.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-					.select(["User.id", "User.username"])
+					.select(["User.id", "User.username", "User.tournamentName"])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
 					.where((eb2) =>
 						eb2.and([
@@ -300,15 +300,18 @@ export async function findResultsById(teamId: number) {
 	});
 }
 
+// reads AllTeamMember instead of the TeamMemberWithSecondary view because the
+// view filters out members who have left, and past members are exactly what
+// subsOfResult needs to tell substitutes apart from since-departed roster members
 function allMembersById(teamId: number) {
 	return db
-		.selectFrom("TeamMemberWithSecondary")
+		.selectFrom("AllTeamMember")
 		.select([
-			"TeamMemberWithSecondary.userId",
-			"TeamMemberWithSecondary.leftAt",
-			"TeamMemberWithSecondary.createdAt",
+			"AllTeamMember.userId",
+			"AllTeamMember.leftAt",
+			"AllTeamMember.createdAt",
 		])
-		.where("TeamMemberWithSecondary.teamId", "=", teamId)
+		.where("AllTeamMember.teamId", "=", teamId)
 		.execute();
 }
 

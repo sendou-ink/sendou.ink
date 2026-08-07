@@ -6,15 +6,22 @@ import {
 	LEAGUES,
 	TOURNAMENT,
 } from "~/features/tournament/tournament-constants";
-import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { isTournamentOrganizer } from "~/features/tournament-bracket/core/Tournament";
+import {
+	bracketsMetaCached,
+	requireTournamentVisible,
+	type TournamentLayoutData,
+	tournamentDataCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
+import { serializeTournamentLoaderData } from "../core/layout-payload";
 
 export type TournamentLoaderData = {
-	tournament: Awaited<ReturnType<typeof tournamentDataCached>>;
-	streamingParticipants: number[];
+	tournament: TournamentLayoutData;
+	/** Count for the streams tab badge; the streams view loads the actual streams itself. */
 	streamsCount: number;
 	hasChildTournaments: boolean;
 	friendCodes:
@@ -36,34 +43,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	});
 
 	const tournament = await tournamentDataCached({ tournamentId, user });
+	requireTournamentVisible({ ctx: tournament.ctx, user });
 
 	const friendCodeVisibilityDays = tournament.ctx.parentTournamentId ? 120 : 30;
 	const tournamentStartedRecently = isAfter(
 		databaseTimestampToDate(tournament.ctx.startsAt),
 		subDays(new Date(), friendCodeVisibilityDays),
 	);
-	const isTournamentAdmin =
-		tournament.ctx.author.id === user?.id ||
-		tournament.ctx.staff.some(
-			(s) => s.role === "ORGANIZER" && s.id === user?.id,
-		) ||
-		user?.roles.includes("ADMIN") ||
-		tournament.ctx.organization?.members.some(
-			(m) => m.userId === user?.id && m.role === "ADMIN",
-		);
-	const isTournamentOrganizer =
-		isTournamentAdmin ||
-		tournament.ctx.staff.some(
-			(s) => s.role === "ORGANIZER" && s.id === user?.id,
-		) ||
-		tournament.ctx.organization?.members.some(
-			(m) => m.userId === user?.id && m.role === "ORGANIZER",
-		);
-	if (tournament.ctx.settings.isDraft && !isTournamentOrganizer) {
-		throw new Response(null, { status: 404 });
-	}
-
-	const showFriendCodes = tournamentStartedRecently && isTournamentAdmin;
+	const showFriendCodes =
+		tournamentStartedRecently &&
+		isTournamentOrganizer({ ctx: tournament.ctx, user });
 
 	const isLeagueSignup = Object.values(LEAGUES)
 		.flat()
@@ -79,15 +68,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
 
-	// skip expensive rr7 data serialization (hot path loader)
-	return JSON.stringify({
-		tournament,
+	return serializeTournamentLoaderData({
+		tournament: {
+			ctx: tournament.ctx,
+			bracketsMeta: await bracketsMetaCached(tournamentId),
+		},
+		streamsCount: tournament.streams.length,
 		hasChildTournaments,
 		friendCodes: showFriendCodes
 			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
 			: undefined,
 		preparedMaps:
-			isTournamentOrganizer && !tournament.ctx.isFinalized
+			isTournamentOrganizer({ ctx: tournament.ctx, user }) &&
+			!tournament.ctx.isFinalized
 				? await TournamentRepository.findPreparedMapsById(tournamentId)
 				: undefined,
 		vods: showVods

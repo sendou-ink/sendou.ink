@@ -49,6 +49,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 									<div key={round.id} className={styles.elimRoundColumn}>
 										<RoundHeader
 											roundId={round.id}
+											bracketIdx={bracket.idx}
 											name={`Round ${round.number}`}
 											bestOf={bestOf}
 											showInfos={someMatchOngoing}

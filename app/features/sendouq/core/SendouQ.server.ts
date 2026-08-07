@@ -1,6 +1,6 @@
 import { isWithinInterval, sub } from "date-fns";
 import * as R from "remeda";
-import type { DBBoolean, Tables } from "~/db/tables";
+import type { DBBoolean } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -79,7 +79,6 @@ class SendouQClass {
 			skillDifference:
 				undefined as ParsedMemento["groups"][number]["skillDifference"],
 			isReplay: false,
-			usersRole: null as Tables["GroupMember"]["role"] | null,
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
 
@@ -110,26 +109,19 @@ class SendouQClass {
 		if (!ownGroup) return "default";
 		if (ownGroup.status === "PREPARING") return "preparing";
 		if (ownGroup.matchId) return "match";
+		if (ownGroup.status === "READY_CHECK") return "ready";
 
 		return "looking";
 	}
 
 	/**
 	 * Finds the group that a user belongs to.
-	 * @returns The user's group with their role, or undefined if not in a group
+	 * @returns The user's group, or undefined if not in a group
 	 */
 	findOwnGroup(userId: number) {
-		const result = this.groups.find((group) =>
+		return this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
 		);
-		if (!result) return;
-
-		const member = result.members.find((m) => m.id === userId)!;
-
-		return {
-			...result,
-			usersRole: member.role,
-		};
 	}
 
 	/**
@@ -286,8 +278,8 @@ class SendouQClass {
 				}),
 			)
 			.map(this.#getGroupReplayMapper(userId))
-			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.sort(this.#getSkillSortComparator(ownGroup.tier))
+			.map(this.#getAddTierRangeMapper(ownGroup.tier))
 			.map((group) => this.#censorGroup(group));
 	}
 
@@ -404,7 +396,6 @@ class SendouQClass {
 		return <
 			T extends {
 				members: unknown[];
-				tierRange: TierRange | null;
 				tier: TieredSkill["tier"] | null;
 				latestActionAt: number;
 			},
@@ -417,12 +408,6 @@ class SendouQClass {
 
 			if (aIsFull !== bIsFull) {
 				return aIsFull ? 1 : -1;
-			}
-
-			if (a.tierRange && b.tierRange) {
-				if (a.tierRange.diff[1] !== b.tierRange.diff[1]) {
-					return a.tierRange.diff[1] - b.tierRange.diff[1];
-				}
 			}
 
 			const ownTierIndex = getTierIndex(ownTier, this.#isAccurateTiers);
@@ -557,7 +542,9 @@ class SendouQClass {
 
 		return (
 			this.#intervals.find(
-				(i) => i.neededOrdinal && averageOrdinal > i.neededOrdinal,
+				(i) =>
+					typeof i.neededOrdinal === "number" &&
+					averageOrdinal >= i.neededOrdinal,
 			) ?? { isPlus: false, name: "IRON" }
 		);
 	}

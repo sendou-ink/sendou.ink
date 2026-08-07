@@ -1,18 +1,17 @@
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
+import { UserLink } from "~/components/UserLink";
 import {
 	calendarEventPage,
 	tournamentBracketsPage,
 	tournamentTeamPage,
-	userPage,
 } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 import styles from "../user-page.module.css";
@@ -51,16 +50,21 @@ export function UserResultsTable({
 			</thead>
 			<tbody>
 				{results.map((result, i) => {
+					// team ids of the two result types are from different tables and can collide
+					const rowId = result.tournamentId
+						? `tournament-${result.teamId}`
+						: `event-${result.teamId}`;
+
 					// We are trying to construct a reasonable label for the checkbox
 					// which shouldn't contain the whole information of the table row as
 					// that can be also accessed when needed.
 					// e.g. "20xx Placing 2nd", "Big House 10 Placing 20th"
-					const placementCellId = `${id}-${result.teamId}-placement`;
-					const nameCellId = `${id}-${result.teamId}-name`;
+					const placementCellId = `${id}-${rowId}-placement`;
+					const nameCellId = `${id}-${rowId}-name`;
 					const checkboxLabelIds = `${nameCellId} ${placementHeaderId} ${placementCellId}`;
 
 					return (
-						<tr key={result.teamId}>
+						<tr key={rowId}>
 							{hasHighlightCheckboxes && (
 								<td>
 									<input
@@ -152,18 +156,7 @@ export function UserResultsTable({
 													key={player.name ? player.name : player.id}
 													className="flex items-center"
 												>
-													{player.name ? (
-														player.name
-													) : (
-														// as any but we know it's a user since it doesn't have name
-														<Link
-															to={userPage(player as any)}
-															className="stack horizontal xs items-center"
-														>
-															<Avatar user={player as any} size="xxs" />
-															{player.username}
-														</Link>
-													)}
+													<UserLink user={player} />
 												</li>
 											))}
 										</ul>

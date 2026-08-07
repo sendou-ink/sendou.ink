@@ -34,6 +34,7 @@ import * as NotificationRepository from "~/features/notifications/NotificationRe
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
 import { useDebounce } from "~/hooks/useDebounce";
+import lexendLatinUrl from "~/styles/fonts/lexend-latin.woff2?url";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
 import { Catcher } from "./components/Catcher";
@@ -43,6 +44,7 @@ import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
+import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
@@ -78,6 +80,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 	i18nMiddleware,
 ];
 
+import "~/styles/fonts.css";
 import "~/styles/vars.css";
 import "~/styles/normalize.css";
 import "~/styles/common.css";
@@ -91,6 +94,7 @@ import "nprogress/nprogress.css";
 NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
+	if (isMatchResultsScopedRevalidation(args)) return false;
 	if (isRevalidation(args)) return true;
 
 	if (args.formData?.get("revalidateRoot") === "true") return true;
@@ -479,14 +483,13 @@ function HydrationTestIndicator() {
 
 function Fonts() {
 	return (
-		<>
-			<link rel="preconnect" href="https://fonts.googleapis.com" />
-			<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-			<link
-				href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap"
-				rel="stylesheet"
-			/>
-		</>
+		<link
+			rel="preload"
+			href={lexendLatinUrl}
+			as="font"
+			type="font/woff2"
+			crossOrigin="anonymous"
+		/>
 	);
 }
 

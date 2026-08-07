@@ -1,22 +1,14 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
-import { parseParams } from "~/utils/remix.server";
+import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import {
 	tournamentBracketsPage,
 	tournamentInfoPage,
 	tournamentResultsPage,
 } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
-	});
-
-	const tournament = await tournamentFromDBCached({
-		tournamentId,
-		user: undefined,
+	const { tournament, tournamentId } = await tournamentFromParams(params, {
+		for: "view",
 	});
 
 	if (!tournament.hasStarted) {

@@ -65,15 +65,44 @@ describe("RejoinVote.userContinueStatus()", () => {
 
 describe("RejoinVote.canCastVote()", () => {
 	test("is true when the user has not voted yet", () => {
-		expect(RejoinVote.canCastVote([{ userId: 2, isContinuing: true }], 1)).toBe(
-			true,
-		);
+		expect(
+			RejoinVote.canCastVote([{ userId: 2, isContinuing: true }], 1, true),
+		).toBe(true);
+		expect(
+			RejoinVote.canCastVote([{ userId: 2, isContinuing: true }], 1, false),
+		).toBe(true);
 	});
 
-	test("is false once the user has voted", () => {
+	test("is true when changing a yes vote to a no", () => {
 		expect(
-			RejoinVote.canCastVote([{ userId: 1, isContinuing: false }], 1),
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: true }], 1, false),
+		).toBe(true);
+	});
+
+	test("is false when re-casting a yes vote", () => {
+		expect(
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: true }], 1, true),
 		).toBe(false);
+	});
+
+	test("is false once the user has voted no", () => {
+		expect(
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: false }], 1, true),
+		).toBe(false);
+		expect(
+			RejoinVote.canCastVote([{ userId: 1, isContinuing: false }], 1, false),
+		).toBe(false);
+	});
+
+	test("is false once the vote has settled", () => {
+		const resolvedVotes = [
+			{ userId: 1, isContinuing: true },
+			{ userId: 2, isContinuing: true },
+			{ userId: 3, isContinuing: true },
+			{ userId: 4, isContinuing: true },
+		];
+
+		expect(RejoinVote.canCastVote(resolvedVotes, 1, false)).toBe(false);
 	});
 });
 

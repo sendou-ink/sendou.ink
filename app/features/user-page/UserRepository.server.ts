@@ -6,7 +6,15 @@ import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import type { CustomTheme, UserPreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
-import type { BuildSort } from "~/features/user-page/user-page-constants";
+import {
+	BEST_TIER_NUMBER,
+	type TournamentTierNumber,
+	WORST_TIER_NUMBER,
+} from "~/features/tournament/core/tiering";
+import type {
+	BuildSort,
+	ResultSource,
+} from "~/features/user-page/user-page-constants";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -46,6 +54,19 @@ export async function findCountriesByUserIds(userIds: number[]) {
 		.execute();
 
 	return new Map(rows.map((row) => [row.id, row.country]));
+}
+
+/** Plus tiers of the given users keyed by user id, users without a tier absent. */
+export async function findPlusTiersByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, number>();
+
+	const rows = await db
+		.selectFrom("PlusTier")
+		.select(["PlusTier.userId", "PlusTier.tier"])
+		.where("PlusTier.userId", "in", userIds)
+		.execute();
+
+	return new Map(rows.map((row) => [row.userId, row.tier]));
 }
 
 export async function findBuildFieldsByIdentifier(identifier: string) {
@@ -379,6 +400,16 @@ export function findByFriendCode(friendCode: string) {
 		.execute();
 }
 
+export async function findUsernameById(id: number) {
+	const user = await db
+		.selectFrom("User")
+		.select("User.username")
+		.where("User.id", "=", id)
+		.executeTakeFirst();
+
+	return user?.username ?? null;
+}
+
 export async function findLeanById(id: number) {
 	const user = await db
 		.selectFrom("User")
@@ -512,16 +543,61 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 	return result;
 }
 
-const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) => {
-	return eb
+export interface ResultsFilters {
+	showHighlightsOnly?: boolean;
+	tournamentName?: string;
+	teamName?: string;
+	mateUserId?: number;
+	minTier?: TournamentTierNumber;
+	maxTier?: TournamentTierNumber;
+	maxPlacement?: number;
+	fromYear?: number;
+	toYear?: number;
+	source?: ResultSource;
+	minParticipantCount?: number;
+}
+
+const withMaxEventStartTime = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
+	eb
 		.selectFrom("CalendarEventDate")
 		.select(({ fn }) => [fn.max("CalendarEventDate.startsAt").as("startsAt")])
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id")
 		.as("startsAt");
-};
 
-const baseCalendarEventResultsQuery = (userId: number) =>
-	db
+const maxEventStartTimeExpr = sql<number>`(select max(${sql.ref("CalendarEventDate.startsAt")}) from ${sql.table("CalendarEventDate")} where ${sql.ref("CalendarEventDate.eventId")} = ${sql.ref("CalendarEvent.id")})`;
+
+const maxEventStartTimeAtLeastExpr = (year: number) =>
+	sql<boolean>`${maxEventStartTimeExpr} >= ${yearStartsAt(year)}`;
+
+const maxEventStartTimeAtMostExpr = (year: number) =>
+	sql<boolean>`${maxEventStartTimeExpr} <= ${yearEndsAt(year)}`;
+
+const NEVER_MATCHES = sql<boolean>`0`;
+
+const isTierFiltered = ({
+	minTier = BEST_TIER_NUMBER,
+	maxTier = WORST_TIER_NUMBER,
+}: ResultsFilters) =>
+	minTier !== BEST_TIER_NUMBER || maxTier !== WORST_TIER_NUMBER;
+
+/** Results reported on a calendar event have no tier, so filtering by tier excludes them. */
+const includesCalendarEventResults = (filters: ResultsFilters) =>
+	filters.source !== "SENDOU" && !isTierFiltered(filters);
+
+const includesTournamentResults = (filters: ResultsFilters) =>
+	filters.source !== "EXTERNAL";
+
+const yearStartsAt = (year: number) =>
+	dateToDatabaseTimestamp(new Date(Date.UTC(year, 0, 1)));
+
+const yearEndsAt = (year: number) =>
+	dateToDatabaseTimestamp(new Date(Date.UTC(year + 1, 0, 1))) - 1;
+
+const baseCalendarEventResultsQuery = (
+	userId: number,
+	filters: ResultsFilters,
+) => {
+	let query = db
 		.selectFrom("CalendarEventResultPlayer")
 		.innerJoin(
 			"CalendarEventResultTeam",
@@ -540,8 +616,71 @@ const baseCalendarEventResultsQuery = (userId: number) =>
 		)
 		.where("CalendarEventResultPlayer.userId", "=", userId);
 
-const baseTournamentResultsQuery = (userId: number) =>
-	db
+	if (!includesCalendarEventResults(filters)) {
+		return query.where(NEVER_MATCHES);
+	}
+
+	if (filters.showHighlightsOnly) {
+		query = query.where("UserResultHighlight.userId", "is not", null);
+	}
+
+	if (filters.tournamentName) {
+		query = query.where(
+			nameLikeExpr("CalendarEvent.name", filters.tournamentName),
+		);
+	}
+
+	if (filters.teamName) {
+		query = query.where(
+			nameLikeExpr("CalendarEventResultTeam.name", filters.teamName),
+		);
+	}
+
+	if (filters.mateUserId) {
+		const mateUserId = filters.mateUserId;
+		query = query.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("CalendarEventResultPlayer as MatePlayer")
+					.select("MatePlayer.userId")
+					.whereRef("MatePlayer.teamId", "=", "CalendarEventResultTeam.id")
+					.where("MatePlayer.userId", "=", mateUserId),
+			),
+		);
+	}
+
+	if (filters.maxPlacement) {
+		query = query.where(
+			"CalendarEventResultTeam.placement",
+			"<=",
+			filters.maxPlacement,
+		);
+	}
+
+	if (filters.minParticipantCount) {
+		query = query.where(
+			"CalendarEvent.participantCount",
+			">=",
+			filters.minParticipantCount,
+		);
+	}
+
+	if (filters.fromYear) {
+		query = query.where(maxEventStartTimeAtLeastExpr(filters.fromYear));
+	}
+
+	if (filters.toYear) {
+		query = query.where(maxEventStartTimeAtMostExpr(filters.toYear));
+	}
+
+	return query;
+};
+
+const baseTournamentResultsQuery = (
+	userId: number,
+	filters: ResultsFilters,
+) => {
+	let query = db
 		.selectFrom("TournamentResult")
 		.innerJoin(
 			"TournamentTeam",
@@ -556,124 +695,167 @@ const baseTournamentResultsQuery = (userId: number) =>
 		.innerJoin("Tournament", "Tournament.id", "TournamentResult.tournamentId")
 		.where("TournamentResult.userId", "=", userId);
 
+	if (!includesTournamentResults(filters)) {
+		return query.where(NEVER_MATCHES);
+	}
+
+	if (filters.showHighlightsOnly) {
+		query = query.where("TournamentResult.isHighlight", "=", 1);
+	}
+
+	if (filters.tournamentName) {
+		query = query.where(
+			nameLikeExpr("CalendarEvent.name", filters.tournamentName),
+		);
+	}
+
+	if (filters.teamName) {
+		query = query.where(nameLikeExpr("TournamentTeam.name", filters.teamName));
+	}
+
+	if (filters.mateUserId) {
+		const mateUserId = filters.mateUserId;
+		query = query.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("TournamentResult as MateResult")
+					.select("MateResult.userId")
+					.whereRef(
+						"MateResult.tournamentTeamId",
+						"=",
+						"TournamentResult.tournamentTeamId",
+					)
+					.where("MateResult.userId", "=", mateUserId),
+			),
+		);
+	}
+
+	if (isTierFiltered(filters)) {
+		query = query
+			.where("Tournament.tier", ">=", filters.minTier ?? BEST_TIER_NUMBER)
+			.where("Tournament.tier", "<=", filters.maxTier ?? WORST_TIER_NUMBER);
+	}
+
+	if (filters.maxPlacement) {
+		query = query.where(
+			"TournamentResult.placement",
+			"<=",
+			filters.maxPlacement,
+		);
+	}
+
+	if (filters.minParticipantCount) {
+		query = query.where(
+			"TournamentResult.participantCount",
+			">=",
+			filters.minParticipantCount,
+		);
+	}
+
+	if (filters.fromYear) {
+		query = query.where(maxEventStartTimeAtLeastExpr(filters.fromYear));
+	}
+
+	if (filters.toYear) {
+		query = query.where(maxEventStartTimeAtMostExpr(filters.toYear));
+	}
+
+	return query;
+};
+
 const escapeLikePattern = (value: string) =>
 	value.replace(/[\\%_]/g, (char) => `\\${char}`);
 
-const tournamentNameLikeExpr = (tournamentName: string) => {
-	const pattern = `%${escapeLikePattern(tournamentName)}%`;
-	return sql<boolean>`${sql.ref("CalendarEvent.name")} like ${pattern} escape '\\'`;
+const nameLikeExpr = (column: string, name: string) => {
+	const pattern = `%${escapeLikePattern(name)}%`;
+	return sql<boolean>`${sql.ref(column)} like ${pattern} escape '\\'`;
 };
 
 export function findResultsByUserId(
 	userId: number,
 	{
-		showHighlightsOnly = false,
 		limit,
 		offset,
-		tournamentName,
-	}: {
-		showHighlightsOnly?: boolean;
+		...filters
+	}: ResultsFilters & {
 		limit?: number;
 		offset?: number;
-		tournamentName?: string;
 	} = {},
 ) {
-	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
-		({ eb, fn }) => [
-			"CalendarEvent.id as eventId",
-			sql<number>`null`.as("tournamentId"),
-			"CalendarEventResultTeam.placement",
-			"CalendarEvent.participantCount",
-			sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
-			sql<string | null>`null`.as("div"),
-			sql<string | null>`null`.as("logoUrl"),
-			"CalendarEvent.name as eventName",
-			"CalendarEventResultTeam.id as teamId",
-			"CalendarEventResultTeam.name as teamName",
-			fn<number | null>("iif", [
-				"UserResultHighlight.userId",
-				sql`1`,
-				sql`0`,
-			]).as("isHighlight"),
-			sql<number | null>`null`.as("tier"),
-			withMaxEventStartTime(eb),
-			jsonArrayFrom(
-				eb
-					.selectFrom("CalendarEventResultPlayer")
-					.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
-					.select((eb) => [
-						...commonUserSelect(eb),
-						"CalendarEventResultPlayer.name",
-					])
-					.whereRef(
-						"CalendarEventResultPlayer.teamId",
-						"=",
-						"CalendarEventResultTeam.id",
-					)
-					.where((eb) =>
-						eb.or([
-							eb("CalendarEventResultPlayer.userId", "is", null),
-							eb("CalendarEventResultPlayer.userId", "!=", userId),
-						]),
-					),
-			).as("mates"),
-		],
-	);
+	const calendarEventResultsQuery = baseCalendarEventResultsQuery(
+		userId,
+		filters,
+	).select(({ eb, fn }) => [
+		"CalendarEvent.id as eventId",
+		sql<number>`null`.as("tournamentId"),
+		"CalendarEventResultTeam.placement",
+		"CalendarEvent.participantCount",
+		sql<Tables["TournamentResult"]["setResults"]>`null`.as("setResults"),
+		sql<string | null>`null`.as("div"),
+		sql<string | null>`null`.as("logoUrl"),
+		"CalendarEvent.name as eventName",
+		"CalendarEventResultTeam.id as teamId",
+		"CalendarEventResultTeam.name as teamName",
+		fn<number | null>("iif", ["UserResultHighlight.userId", sql`1`, sql`0`]).as(
+			"isHighlight",
+		),
+		sql<number | null>`null`.as("tier"),
+		withMaxEventStartTime(eb),
+		jsonArrayFrom(
+			eb
+				.selectFrom("CalendarEventResultPlayer")
+				.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
+				.select((eb) => [
+					...commonUserSelect(eb),
+					"CalendarEventResultPlayer.name",
+				])
+				.whereRef(
+					"CalendarEventResultPlayer.teamId",
+					"=",
+					"CalendarEventResultTeam.id",
+				)
+				.where((eb) =>
+					eb.or([
+						eb("CalendarEventResultPlayer.userId", "is", null),
+						eb("CalendarEventResultPlayer.userId", "!=", userId),
+					]),
+				),
+		).as("mates"),
+	]);
 
-	let tournamentResultsQuery = baseTournamentResultsQuery(userId).select(
-		({ eb }) => [
-			sql<number>`null`.as("eventId"),
-			"TournamentResult.tournamentId",
-			"TournamentResult.placement",
-			"TournamentResult.participantCount",
-			"TournamentResult.setResults",
-			"TournamentResult.div",
-			tournamentLogoOrNull(eb).as("logoUrl"),
-			"CalendarEvent.name as eventName",
-			"TournamentTeam.id as teamId",
-			"TournamentTeam.name as teamName",
-			"TournamentResult.isHighlight",
-			"Tournament.tier",
-			withMaxEventStartTime(eb),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentResult as TournamentResult2")
-					.innerJoin("User", "User.id", "TournamentResult2.userId")
-					.select((eb) => [
-						...commonUserSelect(eb),
-						sql<string | null>`null`.as("name"),
-					])
-					.whereRef(
-						"TournamentResult2.tournamentTeamId",
-						"=",
-						"TournamentResult.tournamentTeamId",
-					)
-					.where("TournamentResult2.userId", "!=", userId),
-			).as("mates"),
-		],
-	);
-
-	if (showHighlightsOnly) {
-		calendarEventResultsQuery = calendarEventResultsQuery.where(
-			"UserResultHighlight.userId",
-			"is not",
-			null,
-		);
-		tournamentResultsQuery = tournamentResultsQuery.where(
-			"TournamentResult.isHighlight",
-			"=",
-			1,
-		);
-	}
-
-	if (tournamentName) {
-		calendarEventResultsQuery = calendarEventResultsQuery.where(
-			tournamentNameLikeExpr(tournamentName),
-		);
-		tournamentResultsQuery = tournamentResultsQuery.where(
-			tournamentNameLikeExpr(tournamentName),
-		);
-	}
+	const tournamentResultsQuery = baseTournamentResultsQuery(
+		userId,
+		filters,
+	).select(({ eb }) => [
+		sql<number>`null`.as("eventId"),
+		"TournamentResult.tournamentId",
+		"TournamentResult.placement",
+		"TournamentResult.participantCount",
+		"TournamentResult.setResults",
+		"TournamentResult.div",
+		tournamentLogoOrNull(eb).as("logoUrl"),
+		"CalendarEvent.name as eventName",
+		"TournamentTeam.id as teamId",
+		"TournamentTeam.name as teamName",
+		"TournamentResult.isHighlight",
+		"Tournament.tier",
+		withMaxEventStartTime(eb),
+		jsonArrayFrom(
+			eb
+				.selectFrom("TournamentResult as TournamentResult2")
+				.innerJoin("User", "User.id", "TournamentResult2.userId")
+				.select((eb) => [
+					...commonUserSelect(eb),
+					sql<string | null>`null`.as("name"),
+				])
+				.whereRef(
+					"TournamentResult2.tournamentTeamId",
+					"=",
+					"TournamentResult.tournamentTeamId",
+				)
+				.where("TournamentResult2.userId", "!=", userId),
+		).as("mates"),
+	]);
 
 	let query = calendarEventResultsQuery
 		.unionAll(tournamentResultsQuery)
@@ -693,40 +875,17 @@ export function findResultsByUserId(
 
 export async function countResultsByUserId(
 	userId: number,
-	{
-		showHighlightsOnly = false,
-		tournamentName,
-	}: { showHighlightsOnly?: boolean; tournamentName?: string } = {},
+	filters: ResultsFilters = {},
 ) {
-	let calendarEventResultsQuery = baseCalendarEventResultsQuery(userId).select(
-		({ fn }) => [fn.countAll<number>().as("count")],
-	);
+	const calendarEventResultsQuery = baseCalendarEventResultsQuery(
+		userId,
+		filters,
+	).select(({ fn }) => [fn.countAll<number>().as("count")]);
 
-	let tournamentResultsQuery = baseTournamentResultsQuery(userId).select(
-		({ fn }) => [fn.countAll<number>().as("count")],
-	);
-
-	if (showHighlightsOnly) {
-		calendarEventResultsQuery = calendarEventResultsQuery.where(
-			"UserResultHighlight.userId",
-			"is not",
-			null,
-		);
-		tournamentResultsQuery = tournamentResultsQuery.where(
-			"TournamentResult.isHighlight",
-			"=",
-			1,
-		);
-	}
-
-	if (tournamentName) {
-		calendarEventResultsQuery = calendarEventResultsQuery.where(
-			tournamentNameLikeExpr(tournamentName),
-		);
-		tournamentResultsQuery = tournamentResultsQuery.where(
-			tournamentNameLikeExpr(tournamentName),
-		);
-	}
+	const tournamentResultsQuery = baseTournamentResultsQuery(
+		userId,
+		filters,
+	).select(({ fn }) => [fn.countAll<number>().as("count")]);
 
 	const [calendarEventResults, tournamentResults] = await Promise.all([
 		calendarEventResultsQuery.executeTakeFirst(),
@@ -787,6 +946,7 @@ const searchSelectedFields = (eb: ExpressionBuilder<DB, "User">) =>
 	[
 		...commonUserSelect(eb),
 		"User.inGameName",
+		"User.tournamentName",
 		"PlusTier.tier as plusTier",
 		eb
 			.fn<string | null>("iif", [

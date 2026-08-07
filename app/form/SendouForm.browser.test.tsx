@@ -12,6 +12,7 @@ import {
 	fieldset,
 	radioGroup,
 	select,
+	selectDynamic,
 	selectOptional,
 	textArea,
 	textAreaOptional,
@@ -698,6 +699,51 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByLabelText("Clock format"))
 				.toHaveValue("auto");
+		});
+
+		test("toggle falls back to schema initial value when no default provided", async () => {
+			const schema = z.object({
+				noScreen: toggleField({ label: "labels.noScreen", initialValue: true }),
+			});
+
+			const screen = await renderForm(schema);
+
+			await expect.element(screen.getByRole("switch")).toBeChecked();
+		});
+
+		test("dynamic select falls back to schema initial value when no default provided", async () => {
+			const schema = z.object({
+				threshold: selectDynamic({
+					label: "labels.advanceThreshold",
+					initialValue: "4",
+				}),
+			});
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm schema={schema}>
+								<FormField
+									name="threshold"
+									options={["3", "4", "5"].map((value) => ({
+										value,
+										label: value,
+									}))}
+								/>
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+
+			await expect
+				.element(screen.getByLabelText("Wins needed to advance"))
+				.toHaveValue("4");
 		});
 	});
 

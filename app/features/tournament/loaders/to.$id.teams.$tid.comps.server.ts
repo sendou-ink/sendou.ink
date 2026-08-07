@@ -4,7 +4,7 @@ import * as RunComps from "~/features/img-export/core/RunComps";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas.server";
+import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
@@ -27,7 +27,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		throw new Response(null, { status: 404 });
 	}
 
-	if (!team.members.some((member) => member.userId === user.id)) {
+	if (!team.memberUserIds.includes(user.id)) {
 		throw forbidden();
 	}
 
@@ -35,8 +35,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const teamIdByUserId = new Map<number, number>();
 	for (const team of tournament.ctx.teams) {
-		for (const member of team.members) {
-			teamIdByUserId.set(member.userId, team.id);
+		for (const userId of team.memberUserIds) {
+			teamIdByUserId.set(userId, team.id);
 		}
 	}
 

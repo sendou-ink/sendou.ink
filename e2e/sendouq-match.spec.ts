@@ -1,4 +1,5 @@
 import http from "node:http";
+import { sub } from "date-fns";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
@@ -6,6 +7,7 @@ import {
 	e2eWebhookPort,
 	expect,
 	impersonate,
+	runRoutine,
 	test,
 } from "./helpers/playwright";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
@@ -144,6 +146,43 @@ test.describe("SendouQ match page", () => {
 		);
 	});
 
+	test("Auto-resolve: day-old match with no score reported is canceled", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, alpha } = await createMatch(factories, {
+			createdAt: sub(new Date(), { hours: 25 }),
+		});
+
+		await impersonate(page, alpha[0].id);
+		await runRoutine(page, "ResolveStaleSQMatches");
+
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+
+		await expect(match.locators.canceledText).toBeVisible();
+	});
+
+	test("Auto-resolve: day-old match the other team never confirmed is confirmed", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, bravo } = await createMatch(factories, {
+			isReported: true,
+			createdAt: sub(new Date(), { hours: 25 }),
+		});
+
+		await impersonate(page, bravo[0].id);
+		await runRoutine(page, "ResolveStaleSQMatches");
+
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+
+		await expect(match.score(4, 0)).toBeVisible();
+		// the match is locked; a participant now sees the rejoin button
+		await expect(match.locators.lookAgainButton).toBeVisible();
+	});
+
 	test("Rejoin: trusted group one-click look again", async ({
 		page,
 		factories,
@@ -152,7 +191,8 @@ test.describe("SendouQ match page", () => {
 			isConcluded: true,
 		});
 
-		await impersonate(page, bravo[0].id);
+		// any member can re-queue the group, not only the member who created it
+		await impersonate(page, bravo[1].id);
 		const match = new SendouQMatchPage(page);
 		await match.goto(matchId);
 		await match.lookAgain();
@@ -179,6 +219,27 @@ test.describe("SendouQ match page", () => {
 		await match.rejoinQueue();
 
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
+	});
+
+	test("Rejoin vote: changing a yes vote to no takes effect", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, alpha } = await createMatch(factories, {
+			isMatchmade: true,
+			isConcluded: true,
+		});
+
+		await impersonate(page, alpha[0].id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+
+		await match.voteYes();
+		await expect(match.locators.votedYes).toHaveCount(1);
+
+		await match.voteNo();
+
+		await expect(match.locators.declinedText).toBeVisible();
 	});
 
 	test("Rejoin vote: cascade wipes yes on no, revote completes and rejoins", async ({
@@ -272,7 +333,14 @@ async function createMatch(
 	{
 		isMatchmade,
 		isConcluded,
-	}: { isMatchmade?: boolean; isConcluded?: boolean } = {},
+		isReported,
+		createdAt,
+	}: {
+		isMatchmade?: boolean;
+		isConcluded?: boolean;
+		isReported?: boolean;
+		createdAt?: Date;
+	} = {},
 ) {
 	const alpha = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
 	const bravo = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
@@ -283,7 +351,7 @@ async function createMatch(
 			bravoUserIds: bravo.map((member) => member.id),
 			isMatchmade,
 		},
-		{ isConcluded },
+		{ isConcluded, isReported, createdAt },
 	);
 
 	return { matchId: match.id, alpha, bravo };

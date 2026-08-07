@@ -6,7 +6,7 @@ import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Side } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
-import { customAvatarUrl } from "~/utils/kysely.server";
+import { commonUserSelect } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 
@@ -51,19 +51,14 @@ export async function findMatchById(id: number) {
 					.selectFrom("TournamentTeamMember")
 					.innerJoin("User", "User.id", "TournamentTeamMember.userId")
 					.select((eb) => [
-						"User.id",
-						"User.username",
+						...commonUserSelect(eb, { inTournament: true }),
 						"TournamentTeamMember.tournamentTeamId",
 						sql<
 							string | null
 						>`coalesce("TournamentTeamMember"."inGameName", "User"."inGameName")`.as(
 							"inGameName",
 						),
-						"User.discordId",
-						"User.customUrl",
-						"User.discordAvatar",
 						"User.pronouns",
-						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.where(({ or, eb: innerEb }) =>
 						or([
@@ -484,14 +479,7 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 								"otherTeam.id",
 							),
 					)
-					.select((eb) => [
-						"User.id",
-						"User.username",
-						"User.discordAvatar",
-						"User.discordId",
-						"User.customUrl",
-						customAvatarUrl(eb).as("customAvatarUrl"),
-					])
+					.select((eb) => [...commonUserSelect(eb), "User.country"])
 					.whereRef(
 						"TournamentMatchGameResult.matchId",
 						"=",

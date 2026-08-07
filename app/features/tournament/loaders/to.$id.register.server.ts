@@ -1,26 +1,24 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
-import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import {
+	tournamentFromParams,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = getUser();
+	const { tournament, tournamentId, user } = await tournamentFromParams(
+		params,
+		{ for: "view", personalized: true },
+	);
 	if (!user) return null;
 
-	const { id: tournamentId } = parseParams({
-		params,
-		schema: idObject,
-	});
+	const teamMemberOf = tournament.teamMemberOfByUser(user);
 
-	const tournament = await tournamentFromDBCached({ tournamentId, user });
-	const ownTeam = tournament.ownedTeamByUser(user);
-
-	if (!ownTeam) {
+	if (!teamMemberOf) {
 		return {
+			ownTeam: null,
 			mapPool: null,
 			friendPlayers: null,
 			teams: await TeamRepository.findAllMemberOfByUserId(user.id),
@@ -31,8 +29,14 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		};
 	}
 
+	const ownTeam =
+		(await tournamentTeamsFullCached({ tournamentId, user })).find(
+			(team) => team.id === teamMemberOf.id,
+		) ?? null;
+
 	return {
-		mapPool: ownTeam.mapPool,
+		ownTeam,
+		mapPool: ownTeam?.mapPool ?? null,
 		friendPlayers: await SQGroupRepository.findFriendsAndTeammates(user.id),
 		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
 		isSaved: false,

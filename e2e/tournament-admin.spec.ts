@@ -7,6 +7,7 @@ import { expect, impersonate, test } from "./helpers/playwright";
 import {
 	createTeams,
 	DOUBLE_ELIMINATION,
+	RR_TO_SE,
 	startedTournamentTimes,
 	teamSeeds,
 } from "./helpers/tournament";
@@ -14,6 +15,7 @@ import { TournamentAdminAuditPage } from "./pages/tournament/tournament-admin-au
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentSubsPage } from "./pages/tournament/tournament-subs-page";
+import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
 
 const ROSTER_SIZE = 4;
 const CAPTAIN_DISCORD_ID = "1234567890123456789";
@@ -23,7 +25,11 @@ test.describe("Tournament admin team management", () => {
 		page,
 		factories,
 	}) => {
-		const tournament = await createTournament(factories);
+		// an established organization's tournament, so its captain's tournament name
+		// can be set as part of the edit
+		const tournament = await createTournament(factories, {
+			establishedOrganization: true,
+		});
 		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
 		const team = await factories.TournamentTeamFactory.create({
 			tournamentId: tournament.id,
@@ -38,6 +44,7 @@ test.describe("Tournament admin team management", () => {
 		await expect(registration.locators.editHeading).toBeVisible();
 
 		await registration.form.fill("pickUpName", "Renamed Team");
+		await registration.setTournamentName(0, "Riko");
 		await registration.save();
 
 		// back on the team list, the rename is reflected
@@ -45,6 +52,12 @@ test.describe("Tournament admin team management", () => {
 		await expect(admin.locators.searchInput).toBeVisible();
 		await expect(admin.teamName("Renamed Team")).toBeVisible();
 
+		// the captain is shown under the name the organizer gave them
+		const teamPage = new TournamentTeamPage(page);
+		await teamPage.goto(tournament.id, team.id);
+		await expect(teamPage.locators.memberNames.first()).toHaveText("Riko");
+
+		await admin.goto(tournament.id);
 		await admin.checkTeamIn(0);
 		await admin.checkTeamOut(0);
 
@@ -57,6 +70,7 @@ test.describe("Tournament admin team management", () => {
 		await expect(audit.eventCell("Team checked in")).toBeVisible();
 		await expect(audit.eventCell("Team checked out")).toBeVisible();
 		await expect(audit.eventCell("Team unregistered")).toBeVisible();
+		await expect(audit.eventCell("Tournament name changed")).toBeVisible();
 	});
 
 	test("adds a new team and records it in the audit log", async ({
@@ -270,10 +284,59 @@ test.describe("Tournament admin team management", () => {
 	});
 });
 
+test.describe("Tournament admin bracket progression editing", () => {
+	test("edits an unstarted follow-up bracket while the started bracket stays locked", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: NZAP_TEST_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: RR_TO_SE,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		await factories.TournamentFactory.startBracket(tournament.id);
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const admin = new TournamentAdminPage(page);
+		await admin.goto(tournament.id);
+		await admin.openBrackets();
+
+		// the started groups stage is locked and can not be removed
+		await expect(admin.locators.bracketNameInputs.first()).toBeDisabled();
+		await expect(admin.locators.bracketNameInputs.nth(1)).toBeEnabled();
+		await expect(admin.locators.removeBracketButtons.first()).toBeDisabled();
+		await expect(admin.locators.removeBracketButtons.nth(1)).toBeEnabled();
+
+		await admin.renameBracket(1, "Top Cut");
+		await admin.saveProgression();
+
+		await admin.goto(tournament.id);
+		await admin.openBrackets();
+		await expect(admin.locators.bracketNameInputs.nth(1)).toHaveValue(
+			"Top Cut",
+		);
+	});
+});
+
 /** A tournament whose check-in window is open but that has not started. */
-function createTournament(factories: Factories) {
+async function createTournament(
+	factories: Factories,
+	{
+		establishedOrganization = false,
+	}: { establishedOrganization?: boolean } = {},
+) {
+	const organization = establishedOrganization
+		? await factories.TournamentOrganizationFactory.create(
+				{ ownerId: NZAP_TEST_ID },
+				{ isEstablished: true },
+			)
+		: null;
+
 	return factories.TournamentFactory.create({
 		authorId: NZAP_TEST_ID,
+		organizationId: organization?.id ?? null,
 		startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
 	});
 }

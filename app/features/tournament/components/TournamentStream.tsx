@@ -1,10 +1,10 @@
 import clsx from "clsx";
 import { User } from "lucide-react";
 import { Avatar } from "~/components/Avatar";
+import { useTournament } from "~/features/tournament/tournament-context";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { twitchUrl } from "~/utils/urls";
-import { useTournament } from "../routes/to.$id";
 import styles from "../tournament.module.css";
 
 export function TournamentStream({
@@ -15,10 +15,6 @@ export function TournamentStream({
 	withThumbnail?: boolean;
 }) {
 	const tournament = useTournament();
-	const team = tournament.ctx.teams.find((team) =>
-		team.members.some((m) => m.userId === stream.userId),
-	);
-	const user = team?.members.find((m) => m.userId === stream.userId);
 
 	return (
 		<div
@@ -41,14 +37,14 @@ export function TournamentStream({
 				</a>
 			) : null}
 			<div className="stack md horizontal justify-between">
-				{user && team ? (
+				{stream.user ? (
 					<div className={styles.streamUserContainer}>
-						<Avatar size="xxs" user={user} /> {user.username}
+						<Avatar size="xxs" user={stream.user} /> {stream.user.username}
 						<span
 							className={clsx("text-theme-secondary", styles.streamTeamName)}
-							title={team.name}
+							title={stream.teamName ?? undefined}
 						>
-							{team.name}
+							{stream.teamName}
 						</span>
 					</div>
 				) : (

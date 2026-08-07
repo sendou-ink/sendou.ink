@@ -1,10 +1,16 @@
 import { add } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
+import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import {
+	FULL_GROUP_SIZE,
+	SENDOUQ_BEST_OF,
+} from "~/features/sendouq/q-constants";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { withUserId } from "~/utils/Test";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
@@ -54,6 +60,60 @@ const fetchSkills = async (matchId: number) => {
 		.where("groupMatchId", "=", matchId)
 		.execute();
 };
+
+describe("insert", () => {
+	test("deletes the matched groups' pending likes and suggestions", async () => {
+		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2 + 1);
+		const alphaMembers = users.slice(0, FULL_GROUP_SIZE);
+		const bravoMembers = users.slice(FULL_GROUP_SIZE, FULL_GROUP_SIZE * 2);
+		const bystander = users[FULL_GROUP_SIZE * 2];
+
+		const alphaGroup = await SQGroupFactory.create({
+			memberUserIds: alphaMembers.map((member) => member.id),
+		});
+		const bravoGroup = await SQGroupFactory.create({
+			memberUserIds: bravoMembers.map((member) => member.id),
+		});
+		const bystanderGroup = await SQGroupFactory.create({
+			memberUserIds: [bystander.id],
+		});
+
+		await SQGroupRepository.insertLike({
+			likerGroupId: bystanderGroup.id,
+			targetGroupId: alphaGroup.id,
+			createdByUserId: bystander.id,
+		});
+		await SQGroupRepository.insertLike({
+			likerGroupId: bravoGroup.id,
+			targetGroupId: bystanderGroup.id,
+			createdByUserId: bravoMembers[0].id,
+		});
+		await SQGroupRepository.insertSuggestion({
+			suggesterGroupId: alphaGroup.id,
+			targetGroupId: bystanderGroup.id,
+			createdByUserId: alphaMembers[0].id,
+		});
+
+		await SQMatchRepository.insert({
+			alphaGroupId: alphaGroup.id,
+			bravoGroupId: bravoGroup.id,
+			mapList: SplatoonFaker.mapList(SENDOUQ_BEST_OF).map((map) => ({
+				...map,
+				source: "BOTH" as const,
+			})),
+			memento: { users: {}, groups: {}, pools: [] },
+		});
+
+		const likes = await db.selectFrom("GroupLike").selectAll().execute();
+		const suggestions = await db
+			.selectFrom("GroupSuggestion")
+			.selectAll()
+			.execute();
+
+		expect(likes).toHaveLength(0);
+		expect(suggestions).toHaveLength(0);
+	});
+});
 
 describe("lockMatchWithoutSkillChange", () => {
 	test("inserts dummy skill to lock match", async () => {
@@ -356,6 +416,42 @@ describe("finalizeMatch", () => {
 		expect(confirmation.status).toBe("MATCH_FINALIZED");
 
 		expect(await fetchCancelReports(setup.match.id)).toHaveLength(0);
+	});
+});
+
+describe("undoMatchReport", () => {
+	// intended: the group stays INACTIVE after an undo so it can't re-enter the
+	// queue while the disagreement is unresolved; the teams keep playing and
+	// staff resolve the match when available
+	test("keeps the reporter's group INACTIVE after undoing a set-ending report", async () => {
+		const setup = await setupMatch();
+
+		let reportedCount = 0;
+		let result = await SQMatchRepository.reportMapWinner({
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.alphaMembers[0].id,
+			reportedCount,
+		});
+		while (result.status === "MAP_REPORTED") {
+			reportedCount++;
+			result = await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.alphaMembers[0].id,
+				reportedCount,
+			});
+		}
+		expect(result.status).toBe("MATCH_REPORTED");
+		expect((await fetchGroup(setup.alphaGroupId))?.status).toBe("INACTIVE");
+
+		const undoResult = await SQMatchRepository.undoMatchReport({
+			matchId: setup.match.id,
+			requestedByUserId: setup.alphaMembers[0].id,
+		});
+		expect(undoResult.status).toBe("SUCCESS");
+
+		expect((await fetchGroup(setup.alphaGroupId))?.status).toBe("INACTIVE");
 	});
 });
 

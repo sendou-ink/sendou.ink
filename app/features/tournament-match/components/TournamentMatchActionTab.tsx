@@ -1,6 +1,5 @@
 import { Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
@@ -8,13 +7,15 @@ import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
+import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
-import { useMatch } from "../match-page-context";
+import { type MatchPageTeam, useMatch } from "../match-page-context";
 
 export function TournamentMatchActionTab({
 	data,
@@ -25,7 +26,7 @@ export function TournamentMatchActionTab({
 }) {
 	const tournament = useTournament();
 	const user = useUser();
-	const reportFetcher = useFetcher();
+	const reportScore = useActionSubmit(matchSchema);
 	const {
 		teams: [teamOne, teamTwo],
 		scores,
@@ -55,9 +56,7 @@ export function TournamentMatchActionTab({
 
 	if (!teamOne || !teamTwo) return null;
 
-	const withKo = tournament.bracketByIdxOrDefault(
-		tournament.matchIdToBracketIdx(data.match.id) ?? 0,
-	).collectsKos;
+	const withKo = data.bracketContext.collectsKos;
 
 	const count = data.match.roundMaps.count;
 	const countType = data.match.roundMaps.type;
@@ -86,7 +85,6 @@ export function TournamentMatchActionTab({
 		setEndingTeamIds.length > 0
 			? {
 					...buildSetEndingData({
-						tournament,
 						teams: [teamOne, teamTwo],
 						scores,
 						results: data.results,
@@ -103,12 +101,12 @@ export function TournamentMatchActionTab({
 				{
 					id: teamOne.id,
 					name: teamOne.name,
-					avatar: tournament.tournamentTeamLogoSrc(teamOne) ?? undefined,
+					avatar: teamOne.logoUrl ?? undefined,
 				},
 				{
 					id: teamTwo.id,
 					name: teamTwo.name,
-					avatar: tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined,
+					avatar: teamTwo.logoUrl ?? undefined,
 				},
 			]}
 			ownTeamId={ownTeamId}
@@ -116,17 +114,13 @@ export function TournamentMatchActionTab({
 			mode={currentMap.mode}
 			withKo={withKo}
 			setEnding={setEnding}
-			isSubmitting={reportFetcher.state !== "idle"}
+			isSubmitting={reportScore.state !== "idle"}
 			onSubmit={({ winnerId, ko }) => {
-				reportFetcher.submit(
-					{
-						_action: "REPORT_SCORE",
-						winnerTeamId: String(winnerId),
-						position: String(scoreSum),
-						...(typeof ko === "boolean" ? { ko: String(ko) } : {}),
-					},
-					{ method: "post" },
-				);
+				reportScore.submit("REPORT_SCORE", {
+					winnerTeamId: winnerId,
+					position: scoreSum,
+					ko: typeof ko === "boolean" ? ko : undefined,
+				});
 			}}
 			actionButtons={<UndoReportButton scoreSum={scoreSum} />}
 			secondaryAction={
@@ -138,23 +132,17 @@ export function TournamentMatchActionTab({
 
 export function UndoReportButton({ scoreSum }: { scoreSum: number }) {
 	const { t } = useTranslation(["q"]);
-	const undoFetcher = useFetcher();
+	const undoReport = useActionSubmit(matchSchema);
 
 	return (
 		<SendouButton
 			variant="minimal-destructive"
 			size="miniscule"
 			icon={<Undo2 size={16} />}
-			isPending={undoFetcher.state !== "idle"}
+			isPending={undoReport.state !== "idle"}
 			isDisabled={scoreSum === 0}
 			onPress={() => {
-				undoFetcher.submit(
-					{
-						_action: "UNDO_REPORT_SCORE",
-						position: String(scoreSum - 1),
-					},
-					{ method: "post" },
-				);
+				undoReport.submit("UNDO_REPORT_SCORE", { position: scoreSum - 1 });
 			}}
 			testId="undo-score-button"
 		>
@@ -220,24 +208,19 @@ function useTournamentWeaponReport({
 
 		const activeRoster =
 			tournamentTeamToActiveRosterUserIds(team, tournament.minMembersPerTeam) ??
-			team.members.map((m) => m.userId);
+			team.memberUserIds;
 
 		return activeRoster.includes(viewerUserId);
 	}
 }
 
 function buildSetEndingData({
-	tournament,
 	teams,
 	scores,
 	results,
 	opponentOneId,
 }: {
-	tournament: ReturnType<typeof useTournament>;
-	teams: [
-		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
-		NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
-	];
+	teams: [MatchPageTeam, MatchPageTeam];
 	scores: [number, number];
 	results: TournamentMatchLoaderData["results"];
 	opponentOneId: number;
@@ -299,9 +282,7 @@ function buildSetEndingData({
 		};
 	});
 
-	const activeRosterUsers = (
-		team: NonNullable<ReturnType<ReturnType<typeof useTournament>["teamById"]>>,
-	): CommonUser[] => {
+	const activeRosterUsers = (team: MatchPageTeam): CommonUser[] => {
 		const activeIds = team.activeRosterUserIds;
 		const members = activeIds
 			? team.members.filter((m) => activeIds.includes(m.userId))
@@ -313,11 +294,11 @@ function buildSetEndingData({
 		teams: {
 			alpha: {
 				name: teamOne.name,
-				avatar: tournament.tournamentTeamLogoSrc(teamOne) ?? undefined,
+				avatar: teamOne.logoUrl ?? undefined,
 			},
 			bravo: {
 				name: teamTwo.name,
-				avatar: tournament.tournamentTeamLogoSrc(teamTwo) ?? undefined,
+				avatar: teamTwo.logoUrl ?? undefined,
 			},
 		},
 		score: { alpha: scores[0], bravo: scores[1] },

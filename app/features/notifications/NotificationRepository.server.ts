@@ -6,6 +6,7 @@ import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import { NOTIFICATIONS } from "./notifications-contants";
 import type { Notification } from "./notifications-types";
+import { notificationMeta } from "./notifications-utils";
 
 export function insert(
 	notification: Notification,
@@ -17,7 +18,9 @@ export function insert(
 			.values({
 				type: notification.type,
 				pictureUrl: notification.pictureUrl,
-				meta: notification.meta ? JSON.stringify(notification.meta) : null,
+				meta: notificationMeta(notification)
+					? JSON.stringify(notificationMeta(notification))
+					: null,
 			})
 			.returning("id")
 			.executeTakeFirstOrThrow();

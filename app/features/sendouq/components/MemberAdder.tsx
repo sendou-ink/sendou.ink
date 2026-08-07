@@ -12,6 +12,7 @@ import {
 	sendouQInviteLink,
 } from "~/utils/urls";
 import type { SendouQPreparingAction } from "../actions/q.preparing.server";
+import { preparingSchema } from "../q-action-schemas";
 
 export function MemberAdder({
 	inviteCode,
@@ -66,6 +67,7 @@ function AddFriendRow({ groupMemberIds }: { groupMemberIds: number[] }) {
 					<SubmitButton
 						shape="square"
 						variant="outlined"
+						schema={preparingSchema}
 						_action="ADD_FRIEND"
 						isDisabled={!friend}
 						icon={<Plus />}

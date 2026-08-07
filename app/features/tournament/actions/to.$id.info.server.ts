@@ -9,7 +9,7 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import { TOURNAMENT } from "../tournament-constants";
-import { saveTournamentSchema } from "../tournament-schemas.server";
+import { saveTournamentSchema } from "../tournament-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();

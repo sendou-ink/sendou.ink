@@ -1,16 +1,16 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
-import { Mic, Star, Volume2, VolumeX } from "lucide-react";
+import { Check, Hourglass, Mic, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
-import { useTranslation } from "react-i18next";
-import { Link, useFetcher } from "react-router";
+import { Trans, useTranslation } from "react-i18next";
+import { Link } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
-import { SubmitButton } from "~/components/SubmitButton";
 import type { ParsedMemento } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
@@ -23,6 +23,7 @@ import {
 import { SendouForm } from "~/form/SendouForm";
 import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
+import { nullFilledArray } from "~/utils/arrays";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import {
 	SENDOUQ_LOOKING_PAGE,
@@ -35,32 +36,49 @@ import type {
 	SQGroupMember,
 	SQOwnGroup,
 } from "../core/SendouQ.server";
+import { lookingSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import { updateGroupNoteSchema } from "../q-schemas";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
 
+/** Who in the viewer's own group acted on the shown group, and how. */
+export type GroupCardTrail = {
+	type: "INVITED" | "SUGGESTED";
+	username: string;
+};
+
 export function GroupCard({
 	group,
 	action,
+	suggestable = false,
+	trail,
 	displayOnly = false,
 	hideVc = false,
 	hideWeapons = false,
 	hideNote: _hidenote = false,
 	ownGroup,
+	readyUserIds,
+	kickableUserIds,
 	layout = "desktop",
 }: {
 	group: SQGroup | SQOwnGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
+	/** Can the viewer point their own teammates at this group? */
+	suggestable?: boolean;
+	trail?: GroupCardTrail;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
 	ownGroup?: SQOwnGroup;
+	/** Members who have confirmed they are ready to play, shown during a ready check. */
+	readyUserIds?: number[];
+	/** Members the viewer can kick out of the group. */
+	kickableUserIds?: number[];
 	layout?: "mobile" | "desktop";
 }) {
 	const { t } = useTranslation(["q"]);
-	const fetcher = useFetcher();
 
 	const hideNote =
 		displayOnly ||
@@ -73,8 +91,6 @@ export function GroupCard({
 	const futureMatchModes = ownGroup
 		? resolveFutureMatchModes(ownGroup, group)
 		: null;
-
-	const enableKicking = group.usersRole === "OWNER" && !displayOnly;
 
 	return (
 		<GroupCardContainer
@@ -89,13 +105,12 @@ export function GroupCard({
 							return (
 								<GroupMember
 									member={member}
-									showActions={group.usersRole === "OWNER"}
 									key={member.discordId}
-									displayOnly={displayOnly}
 									hideVc={hideVc}
 									hideWeapons={hideWeapons}
 									hideNote={hideNote}
-									enableKicking={enableKicking}
+									isReady={readyUserIds?.includes(member.id)}
+									isKickable={kickableUserIds?.includes(member.id)}
 								/>
 							);
 						})}
@@ -199,32 +214,80 @@ export function GroupCard({
 				{group.skillDifference ? (
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
-				{action &&
-				(ownGroup?.usersRole === "OWNER" ||
-					ownGroup?.usersRole === "MANAGER") ? (
-					<fetcher.Form className="stack items-center" method="post">
-						<input type="hidden" name="targetGroupId" value={group.id} />
-						<SubmitButton
-							size="small"
-							variant={action === "UNLIKE" ? "destructive" : "outlined"}
-							_action={action}
-							state={fetcher.state}
-							testId="group-card-action-button"
-						>
-							{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
-								? t("q:looking.groups.actions.startMatch")
-								: action === "LIKE" && !group.members
-									? t("q:looking.groups.actions.challenge")
-									: action === "LIKE"
-										? t("q:looking.groups.actions.invite")
-										: action === "GROUP_UP"
-											? t("q:looking.groups.actions.groupUp")
-											: t("q:looking.groups.actions.undo")}
-						</SubmitButton>
-					</fetcher.Form>
+				{action || suggestable || trail ? (
+					<div className="stack xs items-center">
+						<div className="stack sm horizontal items-center justify-center">
+							{action ? (
+								<ActionButton
+									schema={lookingSchema}
+									action={
+										action === "MATCH_UP_RECHALLENGE" ? "MATCH_UP" : action
+									}
+									fields={{ targetGroupId: group.id }}
+									size="small"
+									variant={action === "UNLIKE" ? "destructive" : undefined}
+									testId="group-card-action-button"
+								>
+									{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
+										? t("q:looking.groups.actions.startMatch")
+										: action === "LIKE" && !group.members
+											? t("q:looking.groups.actions.challenge")
+											: action === "LIKE"
+												? t("q:looking.groups.actions.invite")
+												: action === "GROUP_UP"
+													? t("q:looking.groups.actions.groupUp")
+													: t("q:looking.groups.actions.undo")}
+								</ActionButton>
+							) : null}
+							{suggestable ? (
+								<ActionButton
+									schema={lookingSchema}
+									action="SUGGEST"
+									fields={{ targetGroupId: group.id }}
+									size="small"
+									variant="outlined"
+									testId="group-card-suggest-button"
+								>
+									{t("q:looking.groups.actions.suggest")}
+								</ActionButton>
+							) : null}
+						</div>
+						{trail ? (
+							<GroupCardTrailText trail={trail} isFullGroup={!group.members} />
+						) : null}
+					</div>
 				) : null}
 			</section>
 		</GroupCardContainer>
+	);
+}
+
+function GroupCardTrailText({
+	trail,
+	isFullGroup,
+}: {
+	trail: GroupCardTrail;
+	isFullGroup: boolean;
+}) {
+	const { t } = useTranslation(["q"]);
+
+	const i18nKey = () => {
+		if (trail.type === "SUGGESTED") return "q:looking.groups.trail.suggested";
+
+		return isFullGroup
+			? "q:looking.groups.trail.challenged"
+			: "q:looking.groups.trail.invited";
+	};
+
+	return (
+		<div className="text-xxs text-lighter mt-1" data-testid="group-card-trail">
+			<Trans
+				t={t}
+				i18nKey={i18nKey()}
+				values={{ username: trail.username }}
+				components={[<span key="username" className="font-bold" />]}
+			/>
+		</div>
 	);
 }
 
@@ -247,20 +310,18 @@ function GroupCardContainer({
 
 function GroupMember({
 	member,
-	showActions,
-	displayOnly,
 	hideVc,
 	hideWeapons,
 	hideNote,
-	enableKicking,
+	isReady,
+	isKickable,
 }: {
 	member: SQGroupMember;
-	showActions: boolean;
-	displayOnly?: boolean;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
-	enableKicking?: boolean;
+	isReady?: boolean;
+	isKickable?: boolean;
 }) {
 	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
@@ -292,11 +353,6 @@ function GroupMember({
 							</span>
 						</span>
 					</UserCard>
-					{member.pronouns ? (
-						<span className="text-lighter ml-1 text-xxs">
-							{member.pronouns.subject}/{member.pronouns.object}
-						</span>
-					) : null}
 				</div>
 				<div
 					className={clsx(
@@ -304,55 +360,124 @@ function GroupMember({
 						styles.memberActions,
 					)}
 				>
-					{showActions || displayOnly ? (
-						<MemberRoleManager
-							member={member}
-							displayOnly={displayOnly}
-							enableKicking={enableKicking}
-						/>
+					{typeof isReady === "boolean" ? (
+						<ReadyIndicator isReady={isReady} />
 					) : null}
 					{member.skill ? <TierInfo skill={member.skill} /> : null}
 				</div>
 			</div>
-			<div className="stack horizontal justify-between">
-				<div className="stack horizontal items-center xxs">
-					{member.vc && !hideVc ? (
+			{isKickable ? (
+				<MemberKicker member={member} />
+			) : (
+				<div className="stack horizontal justify-between">
+					<div className="stack horizontal items-center xxs">
+						{member.vc && !hideVc ? (
+							<div className={styles.extraInfo}>
+								<VoiceChatInfo member={member} />
+							</div>
+						) : null}
+						{member.friendCode ? (
+							<SendouPopover
+								trigger={
+									<SendouButton className={styles.extraInfoButton}>
+										FC
+									</SendouButton>
+								}
+							>
+								SW-{member.friendCode}
+							</SendouPopover>
+						) : null}
+					</div>
+					{member.weapons && member.weapons.length > 0 && !hideWeapons ? (
 						<div className={styles.extraInfo}>
-							<VoiceChatInfo member={member} />
+							{member.weapons?.map((weapon) => {
+								return (
+									<WeaponImage
+										key={weapon.weaponSplId}
+										weapon={weapon}
+										size={26}
+									/>
+								);
+							})}
 						</div>
 					) : null}
-					{member.friendCode ? (
-						<SendouPopover
-							trigger={
-								<SendouButton className={styles.extraInfoButton}>
-									FC
-								</SendouButton>
-							}
-						>
-							SW-{member.friendCode}
-						</SendouPopover>
+					{member.skillDifference ? (
+						<MemberSkillDifference skillDifference={member.skillDifference} />
 					) : null}
 				</div>
-				{member.weapons && member.weapons.length > 0 && !hideWeapons ? (
-					<div className={styles.extraInfo}>
-						{member.weapons?.map((weapon) => {
-							return (
-								<WeaponImage
-									key={weapon.weaponSplId}
-									weapon={weapon}
-									size={26}
-								/>
-							);
-						})}
-					</div>
-				) : null}
-				{member.skillDifference ? (
-					<MemberSkillDifference skillDifference={member.skillDifference} />
-				) : null}
-			</div>
+			)}
 			{!hideNote ? (
 				<MemberNote note={member.note} editable={user?.id === member.id} />
 			) : null}
+		</div>
+	);
+}
+
+/** Stand-in for a group whose members are not revealed yet, showing only how many of them are ready to play. */
+export function HiddenGroupCard({
+	memberCount,
+	readyCount,
+}: {
+	memberCount: number;
+	readyCount: number;
+}) {
+	return (
+		<section className={styles.group} data-testid="sendouq-hidden-group-card">
+			<div className="stack md">
+				{nullFilledArray(memberCount).map((_, i) => (
+					<div className={clsx(styles.member, styles.hiddenMember)} key={i}>
+						<span className={styles.hiddenMemberName}>???</span>
+						<div className={clsx("ml-auto", styles.memberActions)}>
+							<ReadyIndicator isReady={i < readyCount} />
+						</div>
+					</div>
+				))}
+			</div>
+		</section>
+	);
+}
+
+function ReadyIndicator({ isReady }: { isReady: boolean }) {
+	const { t } = useTranslation(["q"]);
+
+	const Icon = isReady ? Check : Hourglass;
+
+	return (
+		<Icon
+			className={clsx(styles.readyIcon, {
+				[styles.readyIconConfirmed]: isReady,
+			})}
+			aria-label={t(
+				isReady ? "q:ready.member.ready" : "q:ready.member.waiting",
+			)}
+			data-testid={isReady ? "member-ready" : "member-not-ready"}
+		/>
+	);
+}
+
+function MemberKicker({ member }: { member: SQGroupMember }) {
+	const { t } = useTranslation(["common", "q"]);
+
+	return (
+		<div className="stack horizontal sm items-center justify-between text-xxs text-warning">
+			{t("q:looking.groups.missedReadyCheck")}
+			<ActionButton
+				schema={lookingSchema}
+				action="KICK_FROM_GROUP"
+				fields={{ userId: member.id }}
+				formAction={SENDOUQ_LOOKING_PAGE}
+				variant="minimal-destructive"
+				size="miniscule"
+				testId="group-card-kick-button"
+				confirm={{
+					dialogHeading: t("q:looking.groups.actions.kick.confirm", {
+						name: member.username,
+					}),
+					submitButtonText: t("q:looking.groups.actions.kick"),
+				}}
+			>
+				{t("q:looking.groups.actions.kick")}
+			</ActionButton>
 		</div>
 	);
 }
@@ -512,83 +637,6 @@ function MemberSkillDifference({
 			<span className="text-lighter">{t("q:looking.sp.calculating")}</span> (
 			{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded})
 		</div>
-	);
-}
-
-function MemberRoleManager({
-	member,
-	displayOnly,
-	enableKicking,
-}: {
-	member: Pick<SQGroupMember, "id" | "role">;
-	displayOnly?: boolean;
-	enableKicking?: boolean;
-}) {
-	const loggedInUser = useUser();
-	const fetcher = useFetcher();
-	const { t } = useTranslation(["q"]);
-
-	if (displayOnly && member.role !== "OWNER") return null;
-
-	return (
-		<SendouPopover
-			trigger={
-				<SendouButton
-					variant="minimal"
-					icon={
-						<Star
-							className={clsx(styles.star, {
-								[styles.starFilled]: member.role === "OWNER",
-								[styles.starInactive]: member.role === "REGULAR",
-							})}
-						/>
-					}
-				/>
-			}
-		>
-			<div className="stack sm items-center">
-				<div>{t(`q:roles.${member.role}`)}</div>
-				{member.role !== "OWNER" && !displayOnly ? (
-					<fetcher.Form
-						method="post"
-						action={SENDOUQ_LOOKING_PAGE}
-						className="stack md items-center"
-					>
-						<input type="hidden" name="userId" value={member.id} />
-						{member.role === "REGULAR" ? (
-							<SubmitButton
-								variant="outlined"
-								size="small"
-								_action="GIVE_MANAGER"
-								state={fetcher.state}
-							>
-								{t("q:looking.groups.actions.giveManager")}
-							</SubmitButton>
-						) : null}
-						{member.role === "MANAGER" ? (
-							<SubmitButton
-								variant="destructive"
-								size="small"
-								_action="REMOVE_MANAGER"
-								state={fetcher.state}
-							>
-								{t("q:looking.groups.actions.removeManager")}
-							</SubmitButton>
-						) : null}
-						{enableKicking && member.id !== loggedInUser?.id ? (
-							<SubmitButton
-								variant="destructive"
-								size="small"
-								_action="KICK_FROM_GROUP"
-								state={fetcher.state}
-							>
-								{t("q:looking.groups.actions.kick")}
-							</SubmitButton>
-						) : null}
-					</fetcher.Form>
-				) : null}
-			</div>
-		</SendouPopover>
 	);
 }
 

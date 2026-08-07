@@ -22,8 +22,8 @@ import {
 } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
+	commonUserSelect,
 	concatUserSubmittedImagePrefix,
-	customAvatarUrl,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
@@ -337,12 +337,9 @@ export async function findById(
 			"CalendarEvent.participantCount",
 			"CalendarEvent.avatarImgId",
 			"Tournament.mapPickingStyle",
-			"User.id as authorId",
 			"CalendarEventDate.startsAt",
 			"CalendarEventDate.eventId",
-			"User.username",
-			"User.discordId",
-			"User.discordAvatar",
+			...commonUserSelect(eb, { idAs: "authorId" }),
 			hasBadge(eb),
 			tournamentOrganization(eb.ref("CalendarEvent.organizationId")).as(
 				"organization",
@@ -394,13 +391,8 @@ export async function findResultsByEventId(eventId: number) {
 					.selectFrom("CalendarEventResultPlayer")
 					.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
 					.select((eb) => [
-						"CalendarEventResultPlayer.userId as id",
+						...commonUserSelect(eb),
 						"CalendarEventResultPlayer.name",
-						"User.username",
-						"User.discordId",
-						"User.discordAvatar",
-						"User.customUrl",
-						customAvatarUrl(eb).as("customAvatarUrl"),
 					])
 					.whereRef(
 						"CalendarEventResultPlayer.teamId",

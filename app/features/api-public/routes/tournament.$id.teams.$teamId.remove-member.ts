@@ -5,8 +5,10 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
+import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import {
 	errorToastIfFalsy,
 	parseBody,
@@ -37,24 +39,19 @@ export const action = async (args: ActionFunctionArgs) => {
 	return wrapActionForApi(async () => {
 		const user = requireUser();
 		const tournament = await tournamentFromDB({ tournamentId, user });
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
+		requireTournamentOrganizer(tournament, user);
 
 		const team = tournament.teamById(teamId);
 		errorToastIfFalsy(team, "Invalid team id");
 		errorToastIfFalsy(
 			team.checkIns.length === 0 ||
-				team.members.length > tournament.minMembersPerTeam,
+				team.memberUserIds.length > tournament.minMembersPerTeam,
 			"Can't remove last member from checked in team",
 		);
-		errorToastIfFalsy(
-			team.members.find((m) => m.userId === userId)?.role !== "OWNER",
-			"Cannot remove team owner",
-		);
+		errorToastIfFalsy(team.ownerUserId !== userId, "Cannot remove team owner");
 		errorToastIfFalsy(
 			!tournament.hasStarted ||
-				!tournament
-					.participatedPlayersByTeamId(teamId)
-					.some((p) => p.userId === userId),
+				!tournament.participatedPlayerUserIdsByTeamId(teamId).includes(userId),
 			"Cannot remove player that has participated in the tournament",
 		);
 
@@ -74,6 +71,16 @@ export const action = async (args: ActionFunctionArgs) => {
 			tournamentId,
 			type: "participant",
 			userId,
+		});
+
+		await syncPickupChatMetadata({
+			teamId: team.id,
+			tournament: {
+				id: tournamentId,
+				name: tournament.ctx.name,
+				logoUrl: tournament.ctx.logoUrl,
+				startTime: tournament.ctx.startsAt,
+			},
 		});
 
 		clearTournamentDataCache(tournamentId);

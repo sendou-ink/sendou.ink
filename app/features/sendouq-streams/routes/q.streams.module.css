@@ -1,10 +1,6 @@
 .userContainer {
 	font-size: var(--font-xs);
-	display: flex;
-	gap: var(--s-2);
-	align-items: center;
 	font-weight: var(--weight-semi);
-	color: var(--color-text);
 }
 
 .viewerCount {

@@ -55,7 +55,7 @@ function fetchEventsOfWeek(args: { week: number; year: number }) {
 			">=",
 			dateToDatabaseTimestamp(startTime),
 		)
-		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
+		.where("CalendarEventDate.startsAt", "<", dateToDatabaseTimestamp(endTime))
 		.where("CalendarEvent.hidden", "=", 0)
 		.orderBy("CalendarEventDate.startsAt", "asc")
 		.execute();

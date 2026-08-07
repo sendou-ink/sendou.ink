@@ -141,7 +141,23 @@ export function filterByWeaponCategory<
 	);
 
 	return entries.filter(
-		(entry) => entry.weaponSplId && weaponIdsOfCategory.has(entry.weaponSplId),
+		(entry) =>
+			typeof entry.weaponSplId === "number" &&
+			weaponIdsOfCategory.has(entry.weaponSplId),
+	);
+}
+
+/**
+ * The entries of the full user leaderboard that are visible on the leaderboard
+ * page. Cut by placement rank instead of entry count so that players tied
+ * across the cutoff are all shown; {@link ownEntryPeek} covers exactly the
+ * entries this leaves out.
+ */
+export function shownUserLeaderboard(
+	leaderboard: UserLeaderboardWithAdditionsItem[],
+) {
+	return leaderboard.filter(
+		(entry) => entry.placementRank <= DEFAULT_LEADERBOARD_MAX_SIZE,
 	);
 }
 

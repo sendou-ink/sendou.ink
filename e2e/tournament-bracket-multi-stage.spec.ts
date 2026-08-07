@@ -1,3 +1,4 @@
+import { subMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import {
@@ -11,6 +12,7 @@ import {
 	TO_MAP_POOL,
 	teamSeeds,
 } from "./helpers/tournament";
+import { CalendarNewEventPage } from "./pages/calendar/calendar-new-event-page";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
@@ -254,10 +256,10 @@ test.describe("Tournament bracket multi stage", () => {
 
 		const eventEdit = await admin.editEventInfo();
 		await eventEdit.deleteLastBracket();
-		await eventEdit.toggleFollowUpBracketSwitches();
+		await eventEdit.makeAllBracketsStartingBrackets();
 
-		await eventEdit.setBracketFormat(0, "Single-elimination");
-		await eventEdit.setBracketFormat(1, "Single-elimination");
+		await eventEdit.setBracketFormat(0, "Single elimination");
+		await eventEdit.setBracketFormat(1, "Single elimination");
 		await eventEdit.setBracketFormat(2, "Swiss");
 		await eventEdit.setBracketFormat(3, "Swiss");
 
@@ -297,6 +299,89 @@ test.describe("Tournament bracket multi stage", () => {
 		}
 
 		await expect(brackets.match(11)).toBeVisible();
+	});
+
+	test("plays out a redemption bracket set up in the tournament creation form", async ({
+		page,
+		factories,
+	}) => {
+		test.slow();
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+
+		await impersonate(page, organizer.id);
+
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
+
+		await newTournament.form.fill("name", "Redemption Arc");
+		// start time in the past so the brackets can be started right away
+		await newTournament.setFirstDate(subMinutes(new Date(), 30));
+
+		await newTournament.form.select("toToolsMode", "TO");
+		await newTournament.selectMapPoolTemplate("preset:SZ");
+
+		// groups of 4: top 2 advance to the finals directly, 3rd placers get
+		// another shot at the last finals spot through the redemption bracket
+		await newTournament.renameBracket(0, "Groups");
+		await newTournament.setBracketFormat(0, "Round robin");
+		await newTournament.addFollowUpBracket({
+			name: "Redemption",
+			format: "Single elimination",
+			placements: "3",
+		});
+		await newTournament.addFollowUpBracket({
+			name: "Finals",
+			format: "Single elimination",
+			placements: "1-2",
+		});
+		await newTournament.addSourceToLastBracket("1");
+
+		await newTournament.form.submit();
+
+		await expect(page).toHaveURL(/\/to\/\d+/);
+		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)![1]);
+
+		await createTeams(factories, tournamentId, teamSeeds(8));
+		await factories.TournamentFactory.playOut(tournamentId, 0);
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournamentId);
+
+		await brackets.bracketTab("Groups").click();
+		const groups = await brackets.groupStandingsTeamNames(2);
+		const redemptionTeamNames = groups.map((group) => group[2]);
+
+		// the finals can not be started before the redemption bracket has been played out
+		await brackets.bracketTab("Finals").click();
+		await expect(brackets.locators.teamsPendingFromSourcesText).toBeVisible();
+		await isNotVisible(brackets.locators.finalizeBracketButton);
+
+		await brackets.bracketTab("Redemption").click();
+		await brackets.finalize();
+
+		const redemptionMatchId = Number(
+			await brackets.locators.matches.first().getAttribute("data-match-id"),
+		);
+		const redemptionMatch = await brackets.openMatch(redemptionMatchId);
+		await redemptionMatch.openTab("action");
+		await redemptionMatch.reportResultForTeam({
+			teamName: redemptionTeamNames[0],
+			mapsToReport: 3,
+		});
+		await redemptionMatch.backToBracket();
+
+		await brackets.bracketTab("Finals").click();
+		await isNotVisible(brackets.locators.teamsPendingFromSourcesText);
+		await brackets.finalize();
+
+		// the redemption bracket's winner took the last spot in the finals
+		await expect(
+			brackets.locators.bracketsViewer
+				.getByText(redemptionTeamNames[0])
+				.first(),
+		).toBeVisible();
 	});
 
 	test("prepares maps (including third place match linking)", async ({

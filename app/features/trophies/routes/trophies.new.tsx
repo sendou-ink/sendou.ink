@@ -3,13 +3,7 @@ import { Check, Clipboard, Dot, Trash2, TriangleAlert, X } from "lucide-react";
 import type { RenderStats } from "picocad2-web";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import {
-	Form,
-	Link,
-	type MetaFunction,
-	useFetcher,
-	useLoaderData,
-} from "react-router";
+import { Form, Link, type MetaFunction, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -27,6 +21,7 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useDebounce } from "~/hooks/useDebounce";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -59,6 +54,7 @@ import {
 } from "../trophies-constants";
 import {
 	createTrophyFormSchema,
+	pendingTrophyActionSchema,
 	updateTrophyFormSchema,
 } from "../trophies-schemas";
 import {
@@ -642,28 +638,22 @@ function TrophyListRow({
 	canReview: boolean;
 }) {
 	const { t } = useTranslation(["trophies", "common"]);
-	const fetcher = useFetcher();
+	const { submit, state } = useActionSubmit(pendingTrophyActionSchema);
 
 	const isOwner = pending.submitterUserId === currentUserId;
 	const isDeclined = pending.declinedAt !== null;
-	const isAccepted = pending.approvals.length >= TROPHY_APPROVALS_REQUIRED;
+	const isAccepted = pending.acceptedAt !== null;
 	const isReviewed = isDeclined || isAccepted;
 	const alreadyApproved = pending.approvals.some(
 		(a) => a.userId === currentUserId,
 	);
 
 	const handleDelete = () => {
-		const formData = new FormData();
-		formData.append("_action", "DELETE");
-		formData.append("pendingTrophyId", String(pending.id));
-		fetcher.submit(formData, { method: "post" });
+		submit("DELETE", { pendingTrophyId: pending.id });
 	};
 
 	const handleApprove = () => {
-		const formData = new FormData();
-		formData.append("_action", "APPROVE");
-		formData.append("pendingTrophyId", String(pending.id));
-		fetcher.submit(formData, { method: "post" });
+		submit("APPROVE", { pendingTrophyId: pending.id });
 	};
 
 	const [previewOpen, setPreviewOpen] = React.useState(false);
@@ -804,7 +794,7 @@ function TrophyListRow({
 							})}
 						</p>
 						<p>
-							{pending.approvals.some((a) => a.userId === currentUserId)
+							{canReview
 								? `(${pending.approvals.map((a) => a.username).join(", ")})`
 								: ""}
 						</p>
@@ -828,7 +818,7 @@ function TrophyListRow({
 							<SendouButton
 								size="small"
 								onPress={handleApprove}
-								isDisabled={fetcher.state !== "idle" || alreadyApproved}
+								isDisabled={state !== "idle" || alreadyApproved}
 							>
 								{alreadyApproved
 									? t("trophies:new.pending.approved")
@@ -854,7 +844,7 @@ function TrophyListRow({
 							size="small"
 							shape="square"
 							onPress={handleDelete}
-							isDisabled={fetcher.state !== "idle"}
+							isDisabled={state !== "idle"}
 							icon={<Trash2 size={16} />}
 						/>
 					) : null}
@@ -868,7 +858,7 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 	const { t } = useTranslation(["trophies"]);
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [reason, setReason] = React.useState("");
-	const fetcher = useFetcher();
+	const { submit, fetcher } = useActionSubmit(pendingTrophyActionSchema);
 	const id = React.useId();
 
 	React.useEffect(() => {
@@ -899,11 +889,7 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 						className={styles.dialogForm}
 						onSubmit={(e) => {
 							e.preventDefault();
-							const formData = new FormData();
-							formData.append("_action", "DECLINE");
-							formData.append("pendingTrophyId", String(pendingTrophyId));
-							formData.append("reason", reason);
-							fetcher.submit(formData, { method: "post" });
+							submit("DECLINE", { pendingTrophyId, reason });
 						}}
 					>
 						<div>

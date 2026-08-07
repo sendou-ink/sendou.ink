@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "Sélectionner {{count}} stages par mode que vous n'avez pas évité pour enregistrer vos préférences",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

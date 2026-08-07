@@ -212,6 +212,18 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 	return retryPost(page, "impersonate", `/auth/impersonate?id=${userId}`);
 }
 
+/** Runs the named server Routine (normally cron-driven) in the worker's server process. */
+export async function runRoutine(page: Page, name: string) {
+	const response = await retryPost(page, "runRoutine", "/run-routine", {
+		form: { name },
+	});
+	if (!response?.ok()) {
+		throw new Error(
+			`Running routine ${name} failed with status ${response?.status()}`,
+		);
+	}
+}
+
 /**
  * Direct (non-browser) POST that retries on transient network failures such as
  * "socket hang up", which the dev server can produce intermittently under load.
@@ -238,9 +250,16 @@ async function retryPost(
 	throw new Error(`${name}: unreachable`);
 }
 
-export async function submit(page: Page, testId?: string) {
+/** Clicks a submit button and waits for the POST it fires. Takes a locator when
+ * the test id alone is ambiguous, e.g. one button per card on a list page. */
+export async function submit(page: Page, target?: string | Locator) {
+	const button =
+		typeof target === "object"
+			? target
+			: page.getByTestId(target ?? "submit-button");
+
 	await waitForPOSTResponse(page, async () => {
-		await page.getByTestId(testId ?? "submit-button").click();
+		await button.click();
 	});
 
 	// Toast flash params are stripped right after via a replace navigation

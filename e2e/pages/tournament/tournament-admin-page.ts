@@ -42,6 +42,8 @@ export class TournamentAdminPage {
 			unregisterDialogHeading: page.getByRole("heading", {
 				name: /Unregister .* and delete its registration info\?/,
 			}),
+			bracketNameInputs: page.getByLabel(/^Bracket name *\*?$/),
+			removeBracketButtons: page.getByTestId("brackets-remove-item-button"),
 		};
 	}
 
@@ -105,6 +107,19 @@ export class TournamentAdminPage {
 				.getByRole("menuitem", { name: `Check in (${bracketName})` })
 				.click();
 		});
+	}
+
+	/** Opens the Brackets tab, where started brackets are locked and the rest of the progression is editable. */
+	async openBrackets() {
+		await this.adminTab("Brackets").click();
+	}
+
+	async renameBracket(nth: number, name: string) {
+		await this.locators.bracketNameInputs.nth(nth).fill(name);
+	}
+
+	async saveProgression() {
+		await submit(this.page);
 	}
 
 	/** Resets a bracket from the admin Brackets tab, typing out its name to confirm. */

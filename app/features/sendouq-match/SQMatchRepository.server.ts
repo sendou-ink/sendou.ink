@@ -7,6 +7,7 @@ import type { DB } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
@@ -17,6 +18,7 @@ import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	matchProfileWeapons,
+	skillCountsAsSeasonSet,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import type { Unpacked } from "~/utils/types";
@@ -69,7 +71,7 @@ export async function findById(id: number) {
 				selectFrom("Skill")
 					.select("Skill.id")
 					.where("Skill.groupMatchId", "=", id)
-					.where("Skill.season", "=", -1),
+					.where("Skill.season", "=", CANCELED_MATCH_SEASON),
 			).as("isCanceled"),
 			jsonArrayFrom(
 				eb
@@ -152,10 +154,8 @@ function groupWithTeamAndMembers(
 						)
 						.select((arrayEb) => [
 							...commonUserSelect(arrayEb),
-							"GroupMember.role",
 							"GroupMember.note",
 							"User.inGameName",
-							"User.pronouns",
 							"User.vc",
 							"User.languages",
 							"User.noScreen",
@@ -193,21 +193,7 @@ export async function countSeasonResultPagesByUserId({
 		.select(({ fn }) => [fn.countAll().as("count")])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb, exists, selectFrom }) =>
-			or([
-				eb("groupMatchId", "is not", null),
-				exists(
-					selectFrom("TournamentResult")
-						.select("TournamentResult.userId")
-						.whereRef(
-							"TournamentResult.tournamentId",
-							"=",
-							"Skill.tournamentId",
-						)
-						.where("TournamentResult.userId", "=", userId),
-				),
-			]),
-		)
+		.where((eb) => skillCountsAsSeasonSet(eb, userId))
 		.executeTakeFirstOrThrow();
 
 	return Math.ceil((row.count as number) / MATCHES_PER_SEASONS_PAGE);
@@ -331,21 +317,7 @@ export async function findSeasonResultsByUserId({
 		])
 		.where("userId", "=", userId)
 		.where("season", "=", season)
-		.where(({ or, eb, exists, selectFrom }) =>
-			or([
-				eb("groupMatchId", "is not", null),
-				exists(
-					selectFrom("TournamentResult")
-						.select("TournamentResult.userId")
-						.whereRef(
-							"TournamentResult.tournamentId",
-							"=",
-							"Skill.tournamentId",
-						)
-						.where("TournamentResult.userId", "=", userId),
-				),
-			]),
-		)
+		.where((eb) => skillCountsAsSeasonSet(eb, userId))
 		.limit(MATCHES_PER_SEASONS_PAGE)
 		.offset(MATCHES_PER_SEASONS_PAGE * (page - 1))
 		.orderBy("Skill.id", "desc")
@@ -437,8 +409,7 @@ export async function findSeasonCanceledMatchesByUserId({
 		.innerJoin("Skill", (join) =>
 			join
 				.onRef("GroupMatch.id", "=", "Skill.groupMatchId")
-				// dummy skills used to close match when it's canceled have season -1
-				.on("Skill.season", "=", -1),
+				.on("Skill.season", "=", CANCELED_MATCH_SEASON),
 		)
 		.select((eb) => [
 			"GroupMatch.id",
@@ -544,8 +515,7 @@ export async function findCancelNominationCountsByUserIds({
 		.innerJoin("Skill", (join) =>
 			join
 				.onRef("Skill.groupMatchId", "=", "GroupMatch.id")
-				// dummy skills used to close match when it's canceled have season -1
-				.on("Skill.season", "=", -1),
+				.on("Skill.season", "=", CANCELED_MATCH_SEASON),
 		)
 		.select([
 			"GroupMatchCancelReportPlayer.userId",
@@ -579,16 +549,23 @@ export async function findCancelNominationCountsByUserIds({
 	});
 }
 
+/**
+ * Creates a match between two groups. Every match made in the app comes from a
+ * ready check, which is resolved as part of the same transaction; only seeds and
+ * tests, which have no check to resolve, leave `readyCheckId` out.
+ */
 export function insert({
 	alphaGroupId,
 	bravoGroupId,
 	mapList,
 	memento,
+	readyCheckId,
 }: {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	mapList: TournamentMapListMap[];
 	memento: ParsedMemento;
+	readyCheckId?: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const existingMatch = await trx
@@ -641,6 +618,23 @@ export function insert({
 
 		await syncGroupTeamId(alphaGroupId, trx);
 		await syncGroupTeamId(bravoGroupId, trx);
+
+		// both groups are locked into this match, so anything pending is moot
+		await SQGroupRepository.deleteLikesAndSuggestionsByGroupId(
+			alphaGroupId,
+			trx,
+		);
+		await SQGroupRepository.deleteLikesAndSuggestionsByGroupId(
+			bravoGroupId,
+			trx,
+		);
+
+		if (typeof readyCheckId === "number") {
+			await SQGroupRepository.deleteReadyCheck(
+				{ id: readyCheckId, markMissedMembers: false },
+				trx,
+			);
+		}
 
 		await validateCreatedMatch(trx, alphaGroupId, bravoGroupId);
 
@@ -728,7 +722,7 @@ export function lockMatchWithoutSkillChange(
 			groupMatchId,
 			identifier: null,
 			mu: -1,
-			season: -1,
+			season: CANCELED_MATCH_SEASON,
 			sigma: -1,
 			ordinal: -1,
 			userId: null,
@@ -1272,7 +1266,7 @@ async function finalizeMatch({
 	winners: ("ALPHA" | "BRAVO")[];
 	winnerGroupId: number;
 	loserGroupId: number;
-	confirmedByUserId: number;
+	confirmedByUserId: number | null;
 	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
 }) {
 	const { newSkills, differences } = await calculateMatchSkills({
@@ -1323,6 +1317,91 @@ async function finalizeMatch({
 			trx,
 		);
 	});
+}
+
+/** Matches created before the given cutoff whose score was never confirmed and that no cancellation has locked. */
+export function findUnfinishedMatchesCreatedBefore(cutoff: Date) {
+	return db
+		.selectFrom("GroupMatch")
+		.select(["GroupMatch.id", "GroupMatch.chatCode"])
+		.where("GroupMatch.confirmedAt", "is", null)
+		.where("GroupMatch.createdAt", "<", dateToDatabaseTimestamp(cutoff))
+		.where(({ not, exists, selectFrom }) =>
+			not(
+				exists(
+					selectFrom("Skill")
+						.select("Skill.id")
+						.whereRef("Skill.groupMatchId", "=", "GroupMatch.id"),
+				),
+			),
+		)
+		.execute();
+}
+
+export type ResolveUnfinishedMatchResult =
+	| { status: "CANCELED" }
+	| { status: "CONFIRMED" }
+	| { status: "ALREADY_LOCKED" };
+
+/**
+ * Resolves a match the teams never finished: cancels it if the score is not
+ * decisive, otherwise confirms the one team's report on the other's behalf.
+ * Leaves `confirmedByUserId` empty as no user acted.
+ */
+export async function resolveUnfinishedMatch(
+	matchId: number,
+): Promise<ResolveUnfinishedMatchResult> {
+	const match = await findById(matchId);
+	invariant(match, "Match not found");
+
+	if (match.isLocked || match.confirmedAt) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
+	const { mapsToWin, alphaWins, isDecisive } = SendouQMatch.score(match);
+
+	if (!isDecisive) {
+		await db.transaction().execute(async (trx) => {
+			await trx
+				.updateTable("GroupMatchMap")
+				.set({ winnerGroupId: null })
+				.where("matchId", "=", matchId)
+				.execute();
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+			await lockMatchWithoutSkillChange(match.id, trx);
+			await trx
+				.updateTable("GroupMatch")
+				.set({ cancelRequestedByUserId: null })
+				.where("id", "=", matchId)
+				.execute();
+		});
+		return { status: "CANCELED" };
+	}
+
+	const winnerGroupId =
+		alphaWins >= mapsToWin ? match.groupAlpha.id : match.groupBravo.id;
+	const loserGroupId =
+		alphaWins >= mapsToWin ? match.groupBravo.id : match.groupAlpha.id;
+
+	const winners: ("ALPHA" | "BRAVO")[] = match.mapList
+		.filter((m) => m.winnerGroupId !== null)
+		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
+
+	await finalizeMatch({
+		match,
+		members: buildMembers(match),
+		winners,
+		winnerGroupId,
+		loserGroupId,
+		confirmedByUserId: null,
+		preFinalize: async (trx) => {
+			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
+			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
+		},
+	});
+
+	return { status: "CONFIRMED" };
 }
 
 export async function undoMatchReport({

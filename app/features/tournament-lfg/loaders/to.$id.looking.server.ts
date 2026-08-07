@@ -1,13 +1,15 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
-import type { Pronouns } from "~/db/tables-json";
-import { getUser } from "~/features/auth/core/user.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import type { getUser } from "~/features/auth/core/user.server";
+import {
+	tournamentFromDBCached,
+	tournamentFromParams,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
-import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
 import type { LFGGroup, LFGGroupMember } from "../components/LFGGroupCard";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 
@@ -19,13 +21,10 @@ export type SubEntry = Extract<
 export type LookingLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-	const user = getUser();
-	const { id: tournamentId } = parseParams({ params, schema: idObject });
-
-	const tournament = await tournamentFromDBCached({
-		tournamentId,
-		user,
-	});
+	const { tournament, tournamentId, user } = await tournamentFromParams(
+		params,
+		{ for: "view", personalized: true },
+	);
 
 	if (!tournament.lfgEnabled) {
 		throw new Response(null, { status: 404 });
@@ -163,8 +162,16 @@ async function resolveOwnTeam({
 		user,
 	});
 
-	const team = tournament.teamMemberOfByUser(user);
+	const teamLite = tournament.teamMemberOfByUser(user);
+	if (!teamLite) return null;
+
+	const teamsFull = await tournamentTeamsFullCached({ tournamentId, user });
+	const team = teamsFull.find((t) => t.id === teamLite.id);
 	if (!team) return null;
+
+	const plusTiers = await UserRepository.findPlusTiersByUserIds(
+		team.members.map((m) => m.userId),
+	);
 
 	const members: LFGGroupMember[] = team.members.map((m) => ({
 		id: m.userId,
@@ -175,11 +182,10 @@ async function resolveOwnTeam({
 		customUrl: m.customUrl,
 		languages: [],
 		vc: null,
-		pronouns: null,
 		role: m.role,
 		isStayAsSub: false,
 		weapons: null,
-		plusTier: m.plusTier,
+		plusTier: plusTiers.get(m.userId) ?? null,
 	}));
 
 	return {
@@ -202,7 +208,6 @@ function transformMembers(
 		const languages = m.languages ?? [];
 
 		const weapons = parseWeapons(m.weapons);
-		const pronouns = parsePronouns(m.pronouns);
 
 		return {
 			id: m.id,
@@ -213,7 +218,6 @@ function transformMembers(
 			customUrl: m.customUrl,
 			languages,
 			vc: m.vc,
-			pronouns,
 			role: m.role,
 			isStayAsSub: m.isStayAsSub === 1,
 			weapons,
@@ -243,13 +247,4 @@ function parseWeapons(raw: unknown): Array<{
 			isTenStar: Boolean(w.isTenStar),
 		}),
 	);
-}
-
-function parsePronouns(raw: unknown): Pronouns | null {
-	if (!raw) return null;
-
-	const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-	if (!parsed || typeof parsed !== "object") return null;
-
-	return parsed as Pronouns;
 }

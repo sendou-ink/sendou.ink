@@ -1,4 +1,5 @@
 import {
+	type AliasedRawBuilder,
 	type ColumnType,
 	type Expression,
 	type ExpressionBuilder,
@@ -43,36 +44,89 @@ export function peakXpOverallSql<T extends number | null = number | null>() {
 	return sql<T>`"SplatoonPlayer"."peakXp" ->> '$.overall'`;
 }
 
+type CommonUserSelectOptions = {
+	alias?: string;
+	prefix?: string;
+	idAs?: string;
+	/** For tournament scoped queries: `username` resolves to {@link tournamentUsername}. */
+	inTournament?: boolean;
+};
+
+type UserTableAlias<O> = O extends { alias: infer A extends string }
+	? A
+	: "User";
+
+type PrefixedUserColumn<O, C extends string> = O extends {
+	prefix: infer P extends string;
+}
+	? `${P}${Capitalize<C>}`
+	: C;
+
+type UserIdColumn<O> = O extends { idAs: infer I extends string }
+	? I
+	: PrefixedUserColumn<O, "id">;
+
+type CommonUserSelectResult<O> = readonly [
+	`${UserTableAlias<O>}.id as ${UserIdColumn<O>}`,
+	`${UserTableAlias<O>}.username as ${PrefixedUserColumn<O, "username">}`,
+	`${UserTableAlias<O>}.discordId as ${PrefixedUserColumn<O, "discordId">}`,
+	`${UserTableAlias<O>}.discordAvatar as ${PrefixedUserColumn<O, "discordAvatar">}`,
+	`${UserTableAlias<O>}.customUrl as ${PrefixedUserColumn<O, "customUrl">}`,
+	AliasedRawBuilder<string | null, PrefixedUserColumn<O, "customAvatarUrl">>,
+];
+
 /**
  * Select list for the fields shared by every user representation across the app. Includes
  * `customAvatarUrl`, the full URL of the user's supporter custom avatar (resolved from
- * `User.customAvatarImgId`), or `null` when they have none. `"User"` must be in scope at the call
- * site (it always is, since the other fields reference `User.*`).
+ * `User.customAvatarImgId`), or `null` when they have none. By default reads from `"User"` which
+ * must be in scope at the call site; pass `alias` when the table is joined under another name
+ * (`alias: "LinkedUser"`), `prefix` to prefix every output column (`prefix: "sender"` →
+ * `senderId`, `senderUsername`, ...), `idAs` to rename only the id column (`idAs: "userId"`) and
+ * `inTournament` to resolve `username` via {@link tournamentUsername}.
  */
-export function commonUserSelect(eb: ExpressionBuilder<Tables, "User">) {
+export function commonUserSelect<const O extends CommonUserSelectOptions>(
+	eb: ExpressionBuilder<DB, any>,
+	options?: O,
+): CommonUserSelectResult<O> {
+	const alias = options?.alias ?? "User";
+	const prefix = options?.prefix;
+
+	const outputName = (column: string) =>
+		prefix ? `${prefix}${column[0].toUpperCase()}${column.slice(1)}` : column;
+	const idName = options?.idAs ?? outputName("id");
+
 	return [
-		"User.id",
-		"User.username",
-		"User.discordId",
-		"User.discordAvatar",
-		"User.customUrl",
-		customAvatarUrl(eb).as("customAvatarUrl"),
-	] as const;
+		`${alias}.id as ${idName}`,
+		options?.inTournament
+			? tournamentUsername(alias).as(outputName("username"))
+			: `${alias}.username as ${outputName("username")}`,
+		`${alias}.discordId as ${outputName("discordId")}`,
+		`${alias}.discordAvatar as ${outputName("discordAvatar")}`,
+		`${alias}.customUrl as ${outputName("customUrl")}`,
+		customAvatarUrl(eb, alias).as(outputName("customAvatarUrl")),
+	] as unknown as CommonUserSelectResult<O>;
 }
 
 /**
  * SQL expression resolving to the full URL of a user's supporter custom avatar (from
  * `User.customAvatarImgId`), or `null` when they have none. Alias it
- * (`.as("customAvatarUrl")`) when selecting it directly. Prefer {@link commonUserSelect} /
- * {@link commonUserJsonObject}; reach for this only when those don't fit (e.g. prefixed aliases or
- * a hand-built `jsonBuildObject`).
+ * (`.as("customAvatarUrl")`) when selecting it directly. Pass `alias` when the `User` table is
+ * joined under another name. Prefer {@link commonUserSelect} / {@link commonUserJsonObject};
+ * reach for this only when those don't fit (e.g. a hand-built `jsonBuildObject`).
  */
-export function customAvatarUrl(eb: ExpressionBuilder<Tables, "User">) {
+export function customAvatarUrl(
+	eb: ExpressionBuilder<DB, any>,
+	alias = "User",
+) {
 	return concatUserSubmittedImagePrefix(
 		eb
 			.selectFrom("UserSubmittedImage")
 			.select("UserSubmittedImage.url")
-			.whereRef("UserSubmittedImage.id", "=", "User.customAvatarImgId")
+			.whereRef(
+				"UserSubmittedImage.id",
+				"=",
+				sql.ref(`${alias}.customAvatarImgId`),
+			)
 			.$asScalar(),
 	).$castTo<string | null>();
 }
@@ -111,6 +165,30 @@ export function commonUserObjectFields(eb: ExpressionBuilder<Tables, "User">) {
 
 export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonBuildObject(commonUserObjectFields(eb));
+}
+
+type ExtractedExpressionTypes<E extends Record<string, Expression<unknown>>> = {
+	[K in keyof E]: E[K] extends Expression<infer T> ? T : never;
+};
+
+/**
+ * `json_group_array` aggregate building one object per member row from the {@link CommonUser}
+ * fields plus `extras`. `"User"` must be in scope at the call site. Alias it (`.as("members")`)
+ * when selecting.
+ */
+export function commonUserMembersAgg<
+	E extends Record<string, Expression<unknown>>,
+>(eb: ExpressionBuilder<DB, any>, extras: E) {
+	return eb.fn
+		.agg("json_group_array", [
+			jsonBuildObject({
+				...commonUserObjectFields(
+					eb as unknown as ExpressionBuilder<Tables, "User">,
+				),
+				...extras,
+			}),
+		])
+		.$castTo<Array<CommonUser & ExtractedExpressionTypes<E>>>();
 }
 
 const USER_SUBMITTED_IMAGE_ROOT =
@@ -201,6 +279,61 @@ export function tournamentTeamCount(
 		.where("TournamentTeam.isPlaceholder", "=", 0);
 }
 
+/**
+ * Grouped subquery picking each user's (`by: "userId"`) or team's (`by: "identifier"`) latest
+ * Skill row of a season: `latestId` plus that row's `ordinal`, `matchesCount` and the `by`
+ * column. Wrap it with `.selectFrom(latestSkillPerSeason(...).as("Latest"))`; extra `.where`s
+ * compose before aliasing.
+ */
+export function latestSkillPerSeason<By extends "userId" | "identifier">({
+	season,
+	by,
+}: {
+	season: number;
+	by: By;
+}) {
+	// The latest row per user/team is picked via SQLite's bare column rule: with a `max()`
+	// aggregate the other selected columns come from the row that produced the max.
+	// A self-join against a `max(id)` subquery is avoided because it lets the planner
+	// pick a nested-loop plan when it misjudges the season's row count (e.g. a freshly
+	// started season whose stats are dwarfed by older seasons), which made this query
+	// take ~12s. This form is plan-stable regardless of stats: a single grouped scan of
+	// the `skill_season_user_id_leaderboard` / `skill_season_identifier_leaderboard`
+	// covering index, no temp b-tree per partition.
+	return db
+		.selectFrom("Skill")
+		.select(({ fn }) => [
+			fn.max("Skill.id").as("latestId"),
+			"Skill.ordinal" as const,
+			"Skill.matchesCount" as const,
+			`Skill.${by}` as `Skill.${By}`,
+		])
+		.where("Skill.season", "=", season)
+		.where(`Skill.${by}`, "is not", null)
+		.groupBy(`Skill.${by}`);
+}
+
+/**
+ * Predicate for `Skill` rows of the user that represent a played set: either a SendouQ match or
+ * a ranked tournament the user has a result in. Filters out e.g. skills of tournament teams the
+ * user dropped from before results. `"Skill"` must be in scope at the call site.
+ */
+export function skillCountsAsSeasonSet(
+	eb: ExpressionBuilder<DB, "Skill">,
+	userId: number,
+) {
+	return eb.or([
+		eb("Skill.groupMatchId", "is not", null),
+		eb.exists(
+			eb
+				.selectFrom("TournamentResult")
+				.select("TournamentResult.userId")
+				.whereRef("TournamentResult.tournamentId", "=", "Skill.tournamentId")
+				.where("TournamentResult.userId", "=", userId),
+		),
+	]);
+}
+
 /** Concats the file name (a bit misleadingly called `url` in the DB schema) with the root URL, giving the full URL for the image */
 export function concatUserSubmittedImagePrefix<T extends string | null>(
 	expr: Expression<T>,
@@ -260,4 +393,16 @@ export function userProfileWeapons(eb: ExpressionBuilder<DB, any>) {
 			.whereRef("UserWeapon.userId", "=", "User.id")
 			.orderBy("UserWeapon.order", "asc"),
 	);
+}
+
+/**
+ * The name a user is shown under inside tournaments: the name organizers have given them
+ * (`User.tournamentName`) falling back to their `username`. Alias it (`.as("username")`) when
+ * selecting it directly. Prefer `commonUserSelect(eb, { inTournament: true })`; reach for this
+ * only when the query doesn't select the common user fields.
+ */
+export function tournamentUsername(alias = "User") {
+	return sql<string>`coalesce(${sql.ref(`${alias}.tournamentName`)}, ${sql.ref(
+		`${alias}.username`,
+	)})`;
 }

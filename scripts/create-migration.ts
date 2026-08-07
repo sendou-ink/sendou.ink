@@ -8,9 +8,7 @@ const MIGRATION_FOLDER = fileURLToPath(
 
 const TEMPLATE = `import type { Kysely } from "kysely";
 
-/** TODO: describe what this migration changes */
 export async function up(db: Kysely<any>): Promise<void> {
-	// kysely does not wrap sqlite migrations in a transaction, so do it here
 	await db.transaction().execute(async (trx) => {
 		await trx.schema.alterTable("TODO").addColumn("TODO", "text").execute();
 	});

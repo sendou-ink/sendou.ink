@@ -26,6 +26,13 @@ export class TournamentRegisterPage {
 		});
 		this.locators = {
 			fillRosterHeading: page.getByText("Fill roster"),
+			registrationClosedAlert: page.getByText(
+				"Registration for this tournament has closed",
+			),
+			leaveTeamButton: page.getByRole("button", { name: "Leave the team" }),
+			organizerAddedLeaveExplanation: page.getByText(
+				"You were added to the team by the organizer. Contact the TO to leave the team.",
+			),
 		};
 	}
 

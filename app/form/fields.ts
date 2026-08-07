@@ -338,7 +338,10 @@ function registerTextArea<T extends z.ZodType<string | null>>(
 export function toggle(
 	args: WithTypedTranslationKeys<
 		Omit<Extract<FormField, { type: "switch" }>, "type" | "initialValue">
-	>,
+	> & {
+		/** Value used when the form has no default value for the field. Defaults to `false`. */
+		initialValue?: boolean;
+	},
 ) {
 	return z
 		.boolean()
@@ -349,7 +352,7 @@ export function toggle(
 			label: prefixKey(args.label),
 			bottomText: prefixKey(args.bottomText),
 			type: "switch",
-			initialValue: false,
+			initialValue: args.initialValue ?? false,
 		});
 }
 
@@ -411,14 +414,17 @@ export function selectDynamic(
 			Extract<FormField, { type: "select-dynamic" }>,
 			"type" | "initialValue" | "clearable"
 		>
-	>,
+	> & {
+		/** Value used when the form has no default value for the field. Defaults to no selection. */
+		initialValue?: string;
+	},
 ) {
 	return z.string().register(formRegistry, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "select-dynamic",
-		initialValue: null,
+		initialValue: args.initialValue ?? null,
 		clearable: false,
 	}) as unknown as z.ZodType<string> & FieldWithOptions<SelectOption[]>;
 }
@@ -767,9 +773,9 @@ export function timeRangeOptional(args: TimeRangeArgs) {
 
 export function fieldset<S extends z.ZodRawShape>(
 	args: WithTypedTranslationKeys<
-		Omit<FormFieldFieldset<"fieldset", S>, "type" | "initialValue">
-	>,
-) {
+		Omit<FormFieldFieldset<"fieldset", S>, "type" | "initialValue" | "fields">
+	> & { fields: z.ZodObject<S> },
+): z.ZodObject<S> {
 	// @ts-expect-error Complex generic type with registry
 	return args.fields.register(formRegistry, {
 		...args,
@@ -777,7 +783,7 @@ export function fieldset<S extends z.ZodRawShape>(
 		bottomText: prefixKey(args.bottomText),
 		type: "fieldset",
 		initialValue: {},
-	});
+	}) as z.ZodObject<S>;
 }
 
 type UserSearchArgs = WithTypedTranslationKeys<

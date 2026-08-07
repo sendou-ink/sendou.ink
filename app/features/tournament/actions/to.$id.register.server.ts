@@ -1,5 +1,5 @@
 import type { ActionFunction } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -7,18 +7,19 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
+import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
-import { errorToastIfFalsy, parseParams } from "~/utils/remix.server";
+import { errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "~/utils/zod";
 import { registerSchema } from "../tournament-schemas.server";
 import {
 	isOneModeTournamentOf,
@@ -30,13 +31,10 @@ import {
 } from "../tournament-utils.server";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
-	const { id: tournamentId } = parseParams({
+	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		schema: idObject,
-	});
-
-	const tournament = await tournamentFromDB({ tournamentId, user });
+		{ for: "action" },
+	);
 	const ownTeam = tournament.ownedTeamByUser(user);
 
 	const result = await parseFormDataWithImages({
@@ -146,7 +144,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "DELETE_TEAM_MEMBER": {
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
-				ownTeam.members.some((member) => member.userId === data.userId),
+				ownTeam.memberUserIds.includes(data.userId),
 				"User is not in your team",
 			);
 			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
@@ -155,7 +153,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			// and then having members kicked without it affecting the checking in status
 			errorToastIfFalsy(
 				!ownTeamCheckedIn ||
-					ownTeam.members.length > tournament.minMembersPerTeam,
+					ownTeam.memberUserIds.length > tournament.minMembersPerTeam,
 				"Can't kick a member after checking in",
 			);
 
@@ -169,6 +167,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 				type: "participant",
 				userId: data.userId,
 			});
+
+			await syncPickupChatMetadata({
+				teamId: ownTeam.id,
+				tournament: pickupChatTournament(tournament),
+			});
 			break;
 		}
 		case "LEAVE_TEAM": {
@@ -176,6 +179,13 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			const teamMemberOf = tournament.teamMemberOfByUser(user);
 			errorToastIfFalsy(teamMemberOf, "You are not in a team");
+			errorToastIfFalsy(
+				!(await TournamentTeamRepository.isOrganizerAddedMember({
+					tournamentTeamId: teamMemberOf.id,
+					userId: user.id,
+				})),
+				"You were added to the team by the organizer, contact the TO to leave the team",
+			);
 			errorToastIfFalsy(
 				teamMemberOf.checkIns.length === 0,
 				"You cannot leave after checking in",
@@ -194,6 +204,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournamentId,
 				type: "participant",
 				userId: user.id,
+			});
+
+			await syncPickupChatMetadata({
+				teamId: teamMemberOf.id,
+				tournament: pickupChatTournament(tournament),
 			});
 
 			break;
@@ -249,8 +264,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "ADD_PLAYER": {
 			errorToastIfFalsy(
-				tournament.ctx.teams.every((team) =>
-					team.members.every((member) => member.userId !== data.userId),
+				tournament.ctx.teams.every(
+					(team) => !team.memberUserIds.includes(data.userId),
 				),
 				"User is already in a team",
 			);
@@ -297,6 +312,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
+			await syncPickupChatMetadata({
+				teamId: ownTeam.id,
+				tournament: pickupChatTournament(tournament),
+			});
+
 			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: [data.userId],
@@ -327,13 +347,20 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 
+			const pickupChatTeam =
+				await TournamentLFGRepository.findPickupChatTeamById(ownTeam.id);
+
 			await TournamentTeamRepository.deleteById(ownTeam.id);
 
-			for (const member of ownTeam.members) {
+			if (pickupChatTeam) {
+				ChatSystemMessage.removeRoom(pickupChatTeam.chatCode);
+			}
+
+			for (const userId of ownTeam.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
 					tournamentId,
 					type: "participant",
-					userId: member.userId,
+					userId,
 				});
 
 				ShowcaseTournaments.updateCachedTournamentTeamCount({
@@ -353,3 +380,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return null;
 };
+
+function pickupChatTournament(tournament: Tournament) {
+	return {
+		id: tournament.ctx.id,
+		name: tournament.ctx.name,
+		logoUrl: tournament.ctx.logoUrl,
+		startTime: tournament.ctx.startsAt,
+	};
+}

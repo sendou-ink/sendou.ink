@@ -3,18 +3,16 @@ import { HardDriveDownload } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useFetcher, useLoaderData } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { ModeImage, StageImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
+import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import { TournamentRunGraphic } from "~/features/img-export/components/TournamentRunGraphic";
-import type {
-	TournamentData,
-	TournamentDataTeam,
-} from "~/features/tournament-bracket/core/Tournament.server";
+import { useTournament } from "~/features/tournament/tournament-context";
+import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
 import {
@@ -22,34 +20,28 @@ import {
 	tournamentMatchPage,
 	tournamentTeamCompsPage,
 	tournamentTeamPage,
-	userPage,
 } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
-import * as Standings from "../core/Standings";
-import type { PlayedSet } from "../core/sets.server";
 import type { TournamentTeamCompsLoaderData } from "../loaders/to.$id.teams.$tid.comps.server";
-import { loader } from "../loaders/to.$id.teams.$tid.server";
+import {
+	loader,
+	type TournamentTeamLoaderData,
+} from "../loaders/to.$id.teams.$tid.server";
 import styles from "../tournament.module.css";
-import { useTournament } from "./to.$id";
 
 export { loader };
 
 export const meta: MetaFunction<typeof loader> = (args) => {
-	const tournamentData = JSON.parse(args.matches[1].loaderData as any)
-		?.tournament as TournamentData;
-	if (!args.loaderData || !tournamentData) return [];
+	if (!args.loaderData) return [];
 
-	const team = tournamentData.ctx.teams.find(
-		(t) => t.id === args.loaderData!.tournamentTeamId,
-	)!;
-	const teamLogoUrl = team.team?.logoUrl ?? team.pickupAvatarUrl;
+	const { team, tournamentName } = args.loaderData;
 
 	return metaTags({
-		title: `${team.name} @ ${tournamentData.ctx.name}`,
-		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentData.ctx.name}.`,
-		image: teamLogoUrl
+		title: `${team.name} @ ${tournamentName}`,
+		description: `${team.name} roster (${team.members.map((m) => m.username).join(", ")}) and sets in ${tournamentName}.`,
+		image: team.logoUrl
 			? {
-					url: teamLogoUrl,
+					url: team.logoUrl,
 					dimensions: { width: 124, height: 124 },
 				}
 			: undefined,
@@ -63,7 +55,7 @@ export default function TournamentTeamPage() {
 	const teamIndex = tournament.ctx.teams.findIndex(
 		(t) => t.id === data.tournamentTeamId,
 	);
-	const team = tournament.teamById(data.tournamentTeamId)!;
+	const team = data.team;
 
 	return (
 		<div className="stack lg">
@@ -71,13 +63,7 @@ export default function TournamentTeamPage() {
 				<TeamWithRoster
 					team={team}
 					mapPool={team.mapPool}
-					activePlayers={
-						data.sets.length > 0
-							? tournament
-									.participatedPlayersByTeamId(team.id)
-									.map((p) => p.userId)
-							: undefined
-					}
+					activePlayers={data.activePlayers}
 				/>
 				{team.team && !team.team.deletedAt ? (
 					<Link
@@ -113,18 +99,8 @@ function StatSquares({
 }) {
 	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<typeof loader>();
-	const tournament = useTournament();
 
-	const standingsResult = Standings.tournamentStandings(tournament);
-	const overallStandings = Standings.flattenStandings(standingsResult);
-	const placement = overallStandings.find(
-		(s) => s.team.id === data.tournamentTeamId,
-	)?.placement;
-
-	const undergroundBracket = tournament.brackets.find((b) => b.isUnderground);
-	const undergroundPlacement = undergroundBracket?.standings.find(
-		(s) => s.team.id === data.tournamentTeamId,
-	)?.placement;
+	const { placement, undergroundPlacement, division } = data;
 
 	return (
 		<div className={styles.teamStats}>
@@ -178,15 +154,7 @@ function StatSquares({
 						{t("tournament:team.placement.footer")}
 					</div>
 				) : null}
-				{standingsResult.type === "multi" ? (
-					<div className={styles.teamStatSub}>
-						{
-							standingsResult.standings.find((s) =>
-								s.standings.some((s) => s.team.id === data.tournamentTeamId),
-							)?.div
-						}
-					</div>
-				) : null}
+				{division ? <div className={styles.teamStatSub}>{division}</div> : null}
 			</div>
 		</div>
 	);
@@ -199,16 +167,11 @@ function RunImageExport() {
 	const tournament = useTournament();
 	const fetcher = useFetcher<TournamentTeamCompsLoaderData>();
 
-	const team = tournament.teamById(data.tournamentTeamId);
-	const isOwnTeam = Boolean(
-		team?.members.some((member) => member.userId === user?.id),
+	const isOwnTeam = data.team.members.some(
+		(member) => member.userId === user?.id,
 	);
 
-	const placement = Standings.flattenStandings(
-		Standings.tournamentStandings(tournament),
-	).find((standing) => standing.team.id === data.tournamentTeamId)?.placement;
-
-	if (!team || !isOwnTeam || typeof placement !== "number") return null;
+	if (!isOwnTeam || typeof data.placement !== "number") return null;
 
 	const handleOpen = () => {
 		if (fetcher.state === "idle" && !fetcher.data) {
@@ -228,14 +191,18 @@ function RunImageExport() {
 		]),
 	);
 
-	const participatedPlayers = tournament.participatedPlayersByTeamId(team.id);
+	const activePlayers = data.activePlayers ?? [];
 	const ownPlayers =
-		participatedPlayers.length > 0 ? participatedPlayers : team.members;
+		activePlayers.length > 0
+			? data.team.members.filter((member) =>
+					activePlayers.includes(member.userId),
+				)
+			: data.team.members;
 
 	const graphicTeam = {
-		placement,
-		name: team.name,
-		logoUrl: tournament.tournamentTeamLogoSrc(team) ?? undefined,
+		placement: data.placement,
+		name: data.team.name,
+		logoUrl: data.team.logoUrl ?? undefined,
 		players: ownPlayers.map((player) => ({
 			name: player.username,
 			countryCode: player.country ?? undefined,
@@ -245,22 +212,17 @@ function RunImageExport() {
 
 	const matches = data.sets.map((set) => {
 		const { bracketName, roundNameWithoutMatchIdentifier } =
-			tournament.matchContextNamesById(set.tournamentMatchId);
+			set.matchContextNames;
 		const opponentTeam = tournament.teamById(set.opponent.id);
 
 		return {
 			opponent: {
 				name: set.opponent.name,
-				logoUrl: opponentTeam
-					? (tournament.tournamentTeamLogoSrc(opponentTeam) ?? undefined)
-					: undefined,
+				logoUrl: opponentTeam?.logoUrl ?? undefined,
 				seed: opponentTeam?.seed,
 				players: set.opponent.roster.map((rosterUser) => ({
 					name: rosterUser.username,
-					countryCode:
-						opponentTeam?.members.find(
-							(member) => member.userId === rosterUser.id,
-						)?.country ?? undefined,
+					countryCode: rosterUser.country ?? undefined,
 				})),
 				weapons: compByMatchId.get(set.tournamentMatchId) ?? [],
 			},
@@ -305,17 +267,23 @@ function RunImageExport() {
 							: undefined
 					}
 					team={graphicTeam}
-					seed={team.seed}
+					seed={tournament.teamById(data.tournamentTeamId)?.seed}
 					matches={matches}
 					teamsCount={tournament.ctx.teams.length}
-					playersCount={tournament.ctx.participatedUsers.length}
+					playersCount={data.participatedUsersCount}
 				/>
 			) : null}
 		</ImageExportDialog>
 	);
 }
 
-function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
+function SetInfo({
+	set,
+	team,
+}: {
+	set: TournamentTeamLoaderData["sets"][number];
+	team: TournamentTeamFull;
+}) {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
@@ -350,7 +318,7 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 	};
 
 	const { bracketName, roundNameWithoutMatchIdentifier } =
-		tournament.matchContextNamesById(set.tournamentMatchId);
+		set.matchContextNames;
 
 	return (
 		<div className={styles.teamSet}>
@@ -415,14 +383,11 @@ function SetInfo({ set, team }: { set: PlayedSet; team: TournamentDataTeam }) {
 				<div className={styles.teamSetOpponentMembers}>
 					{set.opponent.roster.map((user) => {
 						return (
-							<Link
-								to={userPage(user)}
+							<UserLink
 								key={user.id}
+								user={user}
 								className={styles.teamSetOpponentMember}
-							>
-								<Avatar user={user} size="xxs" />
-								{user.username}
-							</Link>
+							/>
 						);
 					})}
 				</div>

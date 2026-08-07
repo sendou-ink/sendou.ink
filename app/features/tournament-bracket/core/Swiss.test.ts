@@ -112,7 +112,6 @@ describe("Swiss", () => {
 		describe("Zones Weekly 38", () => {
 			const tournament = new Tournament({
 				...ZONES_WEEKLY_38(),
-				simulateBrackets: false,
 			});
 
 			const bracket = tournament.bracketByIdx(0)!;
@@ -358,6 +357,24 @@ describe("Swiss", () => {
 			]);
 
 			expect(includesPair(result, 1, 2)).toBe(false);
+		});
+
+		it("prefers giving the bye to the lowest standing team without a previous bye", () => {
+			// five team swiss entering round 4: teams 3, 4 and 5 have already had a
+			// bye, team 3 in the round right before this one. Teams 1 and 2 have not,
+			// and a rematch free pairing where team 2 (the lowest standing team
+			// without a previous bye) gets the bye exists: 1-4, 3-5
+			const result = Swiss.pairUp([
+				{ id: 1, score: 3, avoid: [3, 5, 2] },
+				{ id: 2, score: 2, avoid: [4, 3, 1] },
+				{ id: 4, score: 2, avoid: [2, 5], receivedBye: true },
+				{ id: 3, score: 1, avoid: [1, 2], receivedBye: true },
+				{ id: 5, score: 1, avoid: [1, 4], receivedBye: true },
+			]);
+
+			const bye = result.find((match) => match.opponentTwo === null);
+
+			expect(bye?.opponentOne).toBe(2);
 		});
 	});
 

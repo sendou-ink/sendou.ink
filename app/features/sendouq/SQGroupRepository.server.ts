@@ -1,16 +1,20 @@
 import { sub } from "date-fns";
-import { type NotNull, sql, type Transaction } from "kysely";
-import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
+import {
+	type ExpressionBuilder,
+	type NotNull,
+	sql,
+	type Transaction,
+} from "kysely";
+import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
-import invariant from "~/utils/invariant";
 import {
+	commonUserMembersAgg,
 	commonUserSelect,
-	customAvatarUrl,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
@@ -54,27 +58,6 @@ export async function findMapModePreferencesByGroupId(groupId: number) {
 }
 
 export async function findCurrentGroups() {
-	type SendouQMemberObject = {
-		id: Tables["User"]["id"];
-		username: Tables["User"]["username"];
-		discordId: Tables["User"]["discordId"];
-		discordAvatar: Tables["User"]["discordAvatar"];
-		customAvatarUrl: string | null;
-		customUrl: Tables["User"]["customUrl"];
-		pronouns: Tables["User"]["pronouns"] | null;
-		mapModePreferences: Tables["User"]["mapModePreferences"];
-		noScreen: Tables["User"]["noScreen"];
-		languages: Tables["User"]["languages"];
-		vc: Tables["User"]["vc"];
-		role: Tables["GroupMember"]["role"];
-		note: Tables["GroupMember"]["note"];
-		weapons:
-			| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
-					isTenStar: number;
-			  })[]
-			| null;
-	};
-
 	return (
 		db
 			.selectFrom("Group")
@@ -88,35 +71,21 @@ export async function findCurrentGroups() {
 					]),
 				),
 			)
-			.select(({ fn, eb }) => [
+			.select(({ eb }) => [
 				"Group.id",
 				"Group.chatCode",
 				"Group.inviteCode",
 				"Group.latestActionAt",
-				"Group.chatCode",
-				"Group.inviteCode",
 				"Group.status",
 				"GroupMatch.id as matchId",
-				fn
-					.agg("json_group_array", [
-						jsonBuildObject({
-							id: eb.ref("User.id"),
-							username: eb.ref("User.username"),
-							discordId: eb.ref("User.discordId"),
-							discordAvatar: eb.ref("User.discordAvatar"),
-							customAvatarUrl: customAvatarUrl(eb),
-							customUrl: eb.ref("User.customUrl"),
-							mapModePreferences: eb.ref("User.mapModePreferences"),
-							noScreen: eb.ref("User.noScreen"),
-							role: eb.ref("GroupMember.role"),
-							note: eb.ref("GroupMember.note"),
-							weapons: matchProfileWeapons(eb),
-							languages: eb.ref("User.languages"),
-							vc: eb.ref("User.vc"),
-						}),
-					])
-					.$castTo<SendouQMemberObject[]>()
-					.as("members"),
+				commonUserMembersAgg(eb, {
+					mapModePreferences: eb.ref("User.mapModePreferences"),
+					noScreen: eb.ref("User.noScreen"),
+					note: eb.ref("GroupMember.note"),
+					weapons: matchProfileWeapons(eb),
+					languages: eb.ref("User.languages"),
+					vc: eb.ref("User.vc"),
+				}).as("members"),
 			])
 			// != INACTIVE (same set as ACTIVE or PREPARING) so the partial
 			// group_status_active index applies
@@ -156,7 +125,6 @@ export async function insert(args: CreateGroupArgs) {
 			.values({
 				groupId: createdGroup.id,
 				userId: args.userId,
-				role: "OWNER",
 			})
 			.execute();
 
@@ -175,17 +143,13 @@ export async function insert(args: CreateGroupArgs) {
 
 type CreateGroupFromPreviousGroupArgs = {
 	previousGroupId: number;
-	members: {
-		id: number;
-		role: Tables["GroupMember"]["role"];
-	}[];
+	memberUserIds: number[];
 	status?: Exclude<Tables["Group"]["status"], "INACTIVE">;
 };
 export async function insertFromPrevious(
 	args: CreateGroupFromPreviousGroupArgs,
 ) {
 	const status = args.status ?? "PREPARING";
-	const membersWithEnsuredOwner = ensureOwnerRole(args.members);
 
 	return db.transaction().execute(async (trx) => {
 		const createdGroup = await trx
@@ -209,10 +173,9 @@ export async function insertFromPrevious(
 		await trx
 			.insertInto("GroupMember")
 			.values(
-				membersWithEnsuredOwner.map((member) => ({
+				args.memberUserIds.map((userId) => ({
 					groupId: createdGroup.id,
-					userId: member.id,
-					role: member.role,
+					userId,
 				})),
 			)
 			.execute();
@@ -227,19 +190,6 @@ export async function insertFromPrevious(
 	});
 }
 
-function ensureOwnerRole(
-	members: CreateGroupFromPreviousGroupArgs["members"],
-): CreateGroupFromPreviousGroupArgs["members"] {
-	if (members.some((m) => m.role === "OWNER")) return members;
-
-	const promoteeIndex = members.findIndex((m) => m.role === "MANAGER");
-	const targetIndex = promoteeIndex !== -1 ? promoteeIndex : 0;
-
-	return members.map((m, i) =>
-		i === targetIndex ? { ...m, role: "OWNER" as const } : m,
-	);
-}
-
 function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
 	return trx
 		.deleteFrom("GroupLike")
@@ -250,6 +200,31 @@ function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
 			]),
 		)
 		.execute();
+}
+
+function deleteSuggestionsByGroupId(groupId: number, trx: Transaction<DB>) {
+	return trx
+		.deleteFrom("GroupSuggestion")
+		.where((eb) =>
+			eb.or([
+				eb("GroupSuggestion.suggesterGroupId", "=", groupId),
+				eb("GroupSuggestion.targetGroupId", "=", groupId),
+			]),
+		)
+		.execute();
+}
+
+/**
+ * Deletes every like and suggestion where the given group is on either side.
+ * Called when the group's pending challenges and suggestions stop being
+ * actionable e.g. its roster changed or it started a match.
+ */
+export async function deleteLikesAndSuggestionsByGroupId(
+	groupId: number,
+	trx: Transaction<DB>,
+) {
+	await deleteLikesByGroupId(groupId, trx);
+	await deleteSuggestionsByGroupId(groupId, trx);
 }
 
 export function morphGroups({
@@ -267,35 +242,13 @@ export function morphGroups({
 			.where("Group.id", "=", survivingGroupId)
 			.execute();
 
-		const otherGroupMembers = await trx
-			.selectFrom("GroupMember")
-			.select(["GroupMember.userId", "GroupMember.role"])
+		await trx
+			.updateTable("GroupMember")
+			.set({ groupId: survivingGroupId })
 			.where("GroupMember.groupId", "=", otherGroupId)
 			.execute();
 
-		for (const member of otherGroupMembers) {
-			const oldRole = otherGroupMembers.find(
-				(m) => m.userId === member.userId,
-			)?.role;
-			invariant(oldRole, "Member lacking a role");
-
-			await trx
-				.updateTable("GroupMember")
-				.set({
-					role:
-						oldRole === "OWNER"
-							? "MANAGER"
-							: oldRole === "MANAGER"
-								? "MANAGER"
-								: "REGULAR",
-					groupId: survivingGroupId,
-				})
-				.where("GroupMember.groupId", "=", otherGroupId)
-				.where("GroupMember.userId", "=", member.userId)
-				.execute();
-		}
-
-		await deleteLikesByGroupId(survivingGroupId, trx);
+		await deleteLikesAndSuggestionsByGroupId(survivingGroupId, trx);
 		await refreshGroup(survivingGroupId, trx);
 
 		await trx
@@ -346,13 +299,7 @@ async function isGroupCorrect(
 
 export async function insertMember(
 	groupId: number,
-	{
-		userId,
-		role = "REGULAR",
-	}: {
-		userId: number;
-		role?: Tables["GroupMember"]["role"];
-	},
+	{ userId }: { userId: number },
 ) {
 	const chatCodeToRevalidate = await db.transaction().execute(async (trx) => {
 		await trx
@@ -360,11 +307,10 @@ export async function insertMember(
 			.values({
 				groupId,
 				userId,
-				role,
 			})
 			.execute();
 
-		await deleteLikesByGroupId(groupId, trx);
+		await deleteLikesAndSuggestionsByGroupId(groupId, trx);
 
 		if (!(await isGroupCorrect(groupId, trx))) {
 			throw new SendouQError(
@@ -381,10 +327,12 @@ export async function insertMember(
 export async function findAllLikesByGroupId(groupId: number) {
 	const rows = await db
 		.selectFrom("GroupLike")
+		.leftJoin("User", "User.id", "GroupLike.createdByUserId")
 		.select([
 			"GroupLike.likerGroupId",
 			"GroupLike.targetGroupId",
 			"GroupLike.isRechallenge",
+			"User.username as createdByUsername",
 		])
 		.where((eb) =>
 			eb.or([
@@ -400,6 +348,7 @@ export async function findAllLikesByGroupId(groupId: number) {
 			.map((row) => ({
 				groupId: row.targetGroupId,
 				isRechallenge: row.isRechallenge,
+				createdByUsername: row.createdByUsername,
 			})),
 		received: rows
 			.filter((row) => row.targetGroupId === groupId)
@@ -408,6 +357,25 @@ export async function findAllLikesByGroupId(groupId: number) {
 				isRechallenge: row.isRechallenge,
 			})),
 	};
+}
+
+/** Suggestions the given group's members have made to each other, newest first. */
+export async function findAllSuggestionsByGroupId(groupId: number) {
+	const rows = await db
+		.selectFrom("GroupSuggestion")
+		.innerJoin("User", "User.id", "GroupSuggestion.createdByUserId")
+		.select([
+			"GroupSuggestion.targetGroupId",
+			"User.username as createdByUsername",
+		])
+		.where("GroupSuggestion.suggesterGroupId", "=", groupId)
+		.orderBy("GroupSuggestion.createdAt", "desc")
+		.execute();
+
+	return rows.map((row) => ({
+		groupId: row.targetGroupId,
+		createdByUsername: row.createdByUsername,
+	}));
 }
 
 export function rechallenge({
@@ -512,14 +480,32 @@ export async function setOldGroupsAsInactive() {
 			.where("latestActionAt", "<", dateToDatabaseTimestamp(oneHourAgo))
 			.execute();
 
+		const groupIds = groupsToSetInactive.map((g) => g.id);
+
+		await trx
+			.deleteFrom("GroupLike")
+			.where((eb) =>
+				eb.or([
+					eb("GroupLike.likerGroupId", "in", groupIds),
+					eb("GroupLike.targetGroupId", "in", groupIds),
+				]),
+			)
+			.execute();
+
+		await trx
+			.deleteFrom("GroupSuggestion")
+			.where((eb) =>
+				eb.or([
+					eb("GroupSuggestion.suggesterGroupId", "in", groupIds),
+					eb("GroupSuggestion.targetGroupId", "in", groupIds),
+				]),
+			)
+			.execute();
+
 		return trx
 			.updateTable("Group")
 			.set({ status: "INACTIVE" })
-			.where(
-				"Group.id",
-				"in",
-				groupsToSetInactive.map((g) => g.id),
-			)
+			.where("Group.id", "in", groupIds)
 			.executeTakeFirst();
 	});
 }
@@ -638,15 +624,17 @@ export async function findRecentlyFinishedMatches() {
 export function insertLike({
 	likerGroupId,
 	targetGroupId,
+	createdByUserId,
 }: {
 	likerGroupId: number;
 	targetGroupId: number;
+	createdByUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		try {
 			await trx
 				.insertInto("GroupLike")
-				.values({ likerGroupId, targetGroupId })
+				.values({ likerGroupId, targetGroupId, createdByUserId })
 				.onConflict((oc) =>
 					oc.columns(["likerGroupId", "targetGroupId"]).doNothing(),
 				)
@@ -658,7 +646,44 @@ export function insertLike({
 			throw error;
 		}
 
+		// inviting says everything the suggestion was there to say
+		await trx
+			.deleteFrom("GroupSuggestion")
+			.where("suggesterGroupId", "=", likerGroupId)
+			.where("targetGroupId", "=", targetGroupId)
+			.execute();
+
 		await refreshGroup(likerGroupId, trx);
+	});
+}
+
+/** Marks a group as worth a look for the suggester's own teammates. Suggesting twice is a no-op. */
+export function insertSuggestion({
+	suggesterGroupId,
+	targetGroupId,
+	createdByUserId,
+}: {
+	suggesterGroupId: number;
+	targetGroupId: number;
+	createdByUserId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		try {
+			await trx
+				.insertInto("GroupSuggestion")
+				.values({ suggesterGroupId, targetGroupId, createdByUserId })
+				.onConflict((oc) =>
+					oc.columns(["suggesterGroupId", "targetGroupId"]).doNothing(),
+				)
+				.execute();
+		} catch (error) {
+			if (errorIsSqliteForeignKeyConstraintFailure(error)) {
+				throw new SendouQError(error.message);
+			}
+			throw error;
+		}
+
+		await refreshGroup(suggesterGroupId, trx);
 	});
 }
 
@@ -685,15 +710,48 @@ export function deleteAllLikesByGroupId(groupId: number) {
 	return db.transaction().execute((trx) => deleteLikesByGroupId(groupId, trx));
 }
 
+/**
+ * Removes the user from their group, deleting the group if they were its last
+ * member. A ready check the group was in is called off, its groups returning to
+ * the looking pool. Returns the ids of the groups that were in that check.
+ */
 export function leaveGroup(userId: number) {
 	return db.transaction().execute(async (trx) => {
 		const userGroup = await trx
 			.selectFrom("GroupMember")
 			.innerJoin("Group", "Group.id", "GroupMember.groupId")
-			.select(["Group.id", "GroupMember.role"])
+			.select(["Group.id"])
 			.where("userId", "=", userId)
 			.where("Group.status", "!=", "INACTIVE")
 			.executeTakeFirstOrThrow();
+
+		// the group can no longer field the match it was about to play, so the
+		// other group is freed to look again as well
+		const readyCheck = await trx
+			.selectFrom("GroupReadyCheck")
+			.select([
+				"GroupReadyCheck.id",
+				"GroupReadyCheck.alphaGroupId",
+				"GroupReadyCheck.bravoGroupId",
+			])
+			.where((eb) =>
+				eb.or([
+					eb("GroupReadyCheck.alphaGroupId", "=", userGroup.id),
+					eb("GroupReadyCheck.bravoGroupId", "=", userGroup.id),
+				]),
+			)
+			.executeTakeFirst();
+
+		if (readyCheck) {
+			await deleteReadyCheckInTrx(
+				{ id: readyCheck.id, markMissedMembers: false },
+				trx,
+			);
+		}
+
+		const abortedReadyCheckGroupIds = readyCheck
+			? [readyCheck.alphaGroupId, readyCheck.bravoGroupId]
+			: [];
 
 		await trx
 			.deleteFrom("GroupMember")
@@ -701,28 +759,15 @@ export function leaveGroup(userId: number) {
 			.where("GroupMember.groupId", "=", userGroup.id)
 			.execute();
 
-		const remainingMembers = await trx
+		const remainingMember = await trx
 			.selectFrom("GroupMember")
-			.select(["userId", "role"])
+			.select(["userId"])
 			.where("groupId", "=", userGroup.id)
-			.execute();
+			.executeTakeFirst();
 
-		if (remainingMembers.length === 0) {
+		if (!remainingMember) {
 			await trx.deleteFrom("Group").where("id", "=", userGroup.id).execute();
-			return;
-		}
-
-		if (userGroup.role === "OWNER") {
-			const newOwner =
-				remainingMembers.find((m) => m.role === "MANAGER") ??
-				remainingMembers[0];
-
-			await trx
-				.updateTable("GroupMember")
-				.set({ role: "OWNER" })
-				.where("userId", "=", newOwner.userId)
-				.where("groupId", "=", userGroup.id)
-				.execute();
+			return { abortedReadyCheckGroupIds };
 		}
 
 		const match = await trx
@@ -739,6 +784,8 @@ export function leaveGroup(userId: number) {
 		if (match) {
 			throw new SendouQError("Can't leave group when already in a match");
 		}
+
+		return { abortedReadyCheckGroupIds };
 	});
 }
 
@@ -769,29 +816,181 @@ export function updateOwnMemberNote({
 	});
 }
 
-export function updateMemberRole({
-	userId,
-	groupId,
-	role,
-}: {
-	userId: number;
-	groupId: number;
-	role: Tables["GroupMember"]["role"];
-}) {
-	if (role === "OWNER") {
-		throw new Error("Can't set role to OWNER with this function");
-	}
+/** User ids of the group's members who let a ready check expire without confirming, and can thus be kicked by the rest of the group. */
+export async function findAllMissedReadyCheckUserIdsByGroupId(groupId: number) {
+	const rows = await db
+		.selectFrom("GroupMember")
+		.select("GroupMember.userId")
+		.where("GroupMember.groupId", "=", groupId)
+		.where("GroupMember.missedReadyCheckAt", "is not", null)
+		.execute();
 
+	return rows.map((row) => row.userId);
+}
+
+/** The ready check the group is in, with each member of both groups and when (if at all) they confirmed being ready. */
+export async function findReadyCheckByGroupId(groupId: number) {
+	const readyCheck = await db
+		.selectFrom("GroupReadyCheck")
+		.select([
+			"GroupReadyCheck.id",
+			"GroupReadyCheck.alphaGroupId",
+			"GroupReadyCheck.bravoGroupId",
+			"GroupReadyCheck.createdAt",
+		])
+		.where((eb) =>
+			eb.or([
+				eb("GroupReadyCheck.alphaGroupId", "=", groupId),
+				eb("GroupReadyCheck.bravoGroupId", "=", groupId),
+			]),
+		)
+		.executeTakeFirst();
+
+	if (!readyCheck) return;
+
+	const members = await db
+		.selectFrom("GroupMember")
+		.leftJoin("GroupReadyCheckConfirmation", (join) =>
+			join
+				.onRef("GroupReadyCheckConfirmation.userId", "=", "GroupMember.userId")
+				.on("GroupReadyCheckConfirmation.readyCheckId", "=", readyCheck.id),
+		)
+		.select([
+			"GroupMember.userId",
+			"GroupMember.groupId",
+			"GroupReadyCheckConfirmation.createdAt as confirmedAt",
+		])
+		.where("GroupMember.groupId", "in", [
+			readyCheck.alphaGroupId,
+			readyCheck.bravoGroupId,
+		])
+		.execute();
+
+	return { ...readyCheck, members };
+}
+
+/** Ready checks that were started before the given time. */
+export function findAllReadyChecksStartedBefore(date: Date) {
+	return db
+		.selectFrom("GroupReadyCheck")
+		.select([
+			"GroupReadyCheck.id",
+			"GroupReadyCheck.alphaGroupId",
+			"GroupReadyCheck.bravoGroupId",
+		])
+		.where("GroupReadyCheck.createdAt", "<", dateToDatabaseTimestamp(date))
+		.execute();
+}
+
+/**
+ * Starts a ready check between two groups, taking both out of the looking pool
+ * along with everything they had pending. The user starting it counts as ready
+ * right away.
+ */
+export function insertReadyCheck({
+	alphaGroupId,
+	bravoGroupId,
+	confirmedByUserId,
+}: {
+	alphaGroupId: number;
+	bravoGroupId: number;
+	confirmedByUserId: number;
+}) {
 	return db.transaction().execute(async (trx) => {
+		// the status doubles as the lock that keeps a group out of two ready checks at once
+		const { numUpdatedRows } = await trx
+			.updateTable("Group")
+			.set({ status: "READY_CHECK", latestActionAt: databaseTimestampNow() })
+			.where("Group.id", "in", [alphaGroupId, bravoGroupId])
+			.where("Group.status", "=", "ACTIVE")
+			.executeTakeFirstOrThrow();
+
+		if (Number(numUpdatedRows) !== 2) {
+			throw new SendouQError("Both groups are not available for a ready check");
+		}
+
+		await deleteLikesAndSuggestionsByGroupId(alphaGroupId, trx);
+		await deleteLikesAndSuggestionsByGroupId(bravoGroupId, trx);
+
+		// a new ready check is a fresh chance to show up for everyone
 		await trx
 			.updateTable("GroupMember")
-			.set({ role })
-			.where("userId", "=", userId)
-			.where("groupId", "=", groupId)
+			.set({ missedReadyCheckAt: null })
+			.where("GroupMember.groupId", "in", [alphaGroupId, bravoGroupId])
 			.execute();
 
-		await refreshGroup(groupId, trx);
+		const readyCheck = await trx
+			.insertInto("GroupReadyCheck")
+			.values({ alphaGroupId, bravoGroupId })
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("GroupReadyCheckConfirmation")
+			.values({ readyCheckId: readyCheck.id, userId: confirmedByUserId })
+			.execute();
+
+		return readyCheck;
 	});
+}
+
+/**
+ * Records the user as ready to play. Confirming twice is a no-op.
+ *
+ * @returns Whether every member of both groups has now confirmed, or `null` if the ready check no longer exists
+ */
+export function insertReadyCheckConfirmation({
+	readyCheckId,
+	userId,
+}: {
+	readyCheckId: number;
+	userId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const readyCheck = await trx
+			.selectFrom("GroupReadyCheck")
+			.select(["GroupReadyCheck.alphaGroupId", "GroupReadyCheck.bravoGroupId"])
+			.where("GroupReadyCheck.id", "=", readyCheckId)
+			.executeTakeFirst();
+
+		// someone else's request resolved the ready check while this one was in flight
+		if (!readyCheck) return null;
+
+		await trx
+			.insertInto("GroupReadyCheckConfirmation")
+			.values({ readyCheckId, userId })
+			.onConflict((oc) => oc.columns(["readyCheckId", "userId"]).doNothing())
+			.execute();
+
+		// read back rather than trusting the caller's view of who had confirmed, so
+		// that two last confirmations at once can't both conclude someone is missing
+		const unconfirmedMember = await trx
+			.selectFrom("GroupMember")
+			.select("GroupMember.userId")
+			.where("GroupMember.groupId", "in", [
+				readyCheck.alphaGroupId,
+				readyCheck.bravoGroupId,
+			])
+			.where((eb) => didNotConfirmReadyCheck(eb, readyCheckId))
+			.executeTakeFirst();
+
+		return { everyoneIsReady: !unconfirmedMember };
+	});
+}
+
+/**
+ * Ends a ready check, returning both of its groups to the looking pool. With
+ * `markMissedMembers` the members who never confirmed are marked as having
+ * missed it, which is what lets the rest of their group kick them.
+ */
+export function deleteReadyCheck(
+	{ id, markMissedMembers }: { id: number; markMissedMembers: boolean },
+	trx?: Transaction<DB>,
+) {
+	const run = (trx: Transaction<DB>) =>
+		deleteReadyCheckInTrx({ id, markMissedMembers }, trx);
+
+	return trx ? run(trx) : db.transaction().execute(run);
 }
 
 export function setPreparingGroupAsActive(groupId: number) {
@@ -810,6 +1009,42 @@ export function setAsInactive(groupId: number, trx?: Transaction<DB>) {
 		.where("id", "=", groupId)
 		.execute();
 }
+async function deleteReadyCheckInTrx(
+	{ id, markMissedMembers }: { id: number; markMissedMembers: boolean },
+	trx: Transaction<DB>,
+) {
+	const readyCheck = await trx
+		.selectFrom("GroupReadyCheck")
+		.select(["GroupReadyCheck.alphaGroupId", "GroupReadyCheck.bravoGroupId"])
+		.where("GroupReadyCheck.id", "=", id)
+		.executeTakeFirst();
+
+	if (!readyCheck) return;
+
+	const groupIds = [readyCheck.alphaGroupId, readyCheck.bravoGroupId];
+
+	if (markMissedMembers) {
+		await trx
+			.updateTable("GroupMember")
+			.set({ missedReadyCheckAt: databaseTimestampNow() })
+			.where("GroupMember.groupId", "in", groupIds)
+			.where((eb) => didNotConfirmReadyCheck(eb, id))
+			.execute();
+	}
+
+	await trx
+		.deleteFrom("GroupReadyCheck")
+		.where("GroupReadyCheck.id", "=", id)
+		.execute();
+
+	await trx
+		.updateTable("Group")
+		.set({ status: "ACTIVE", latestActionAt: databaseTimestampNow() })
+		.where("Group.id", "in", groupIds)
+		.where("Group.status", "=", "READY_CHECK")
+		.execute();
+}
+
 async function recordImplicitRejoinNoVote(
 	userId: number,
 	trx: Transaction<DB>,
@@ -857,4 +1092,24 @@ async function recordImplicitRejoinNoVote(
 		.execute();
 
 	return candidate.matchChatCode;
+}
+
+/** Matches the `GroupMember` rows that have no confirmation for the given ready check. */
+function didNotConfirmReadyCheck(
+	eb: ExpressionBuilder<DB, "GroupMember">,
+	readyCheckId: number,
+) {
+	return eb.not(
+		eb.exists(
+			eb
+				.selectFrom("GroupReadyCheckConfirmation")
+				.select("GroupReadyCheckConfirmation.userId")
+				.where("GroupReadyCheckConfirmation.readyCheckId", "=", readyCheckId)
+				.whereRef(
+					"GroupReadyCheckConfirmation.userId",
+					"=",
+					"GroupMember.userId",
+				),
+		),
+	);
 }

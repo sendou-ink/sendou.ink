@@ -35,6 +35,7 @@ import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalend
 import * as TournamentAuditLogRepository from "~/features/tournament/TournamentAuditLogRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
@@ -656,6 +657,25 @@ export function buildCases(fx: Fixtures): {
 	add("SQGroupRepository.findAllLikesByGroupId", fx.heavyGroupIds, (groupIds) =>
 		SQGroupRepository.findAllLikesByGroupId(groupIds[0]),
 	);
+	add(
+		"SQGroupRepository.findAllSuggestionsByGroupId",
+		fx.heavyGroupIds,
+		(groupIds) => SQGroupRepository.findAllSuggestionsByGroupId(groupIds[0]),
+	);
+	add(
+		"SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId",
+		fx.heavyGroupIds,
+		(groupIds) =>
+			SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId(groupIds[0]),
+	);
+	add(
+		"SQGroupRepository.findReadyCheckByGroupId",
+		fx.heavyGroupIds,
+		(groupIds) => SQGroupRepository.findReadyCheckByGroupId(groupIds[0]),
+	);
+	addStatic("SQGroupRepository.findAllReadyChecksStartedBefore", () =>
+		SQGroupRepository.findAllReadyChecksStartedBefore(new Date()),
+	);
 	add("SQGroupRepository.findFriendsAndTeammates", fx.sq, (sq) =>
 		SQGroupRepository.findFriendsAndTeammates(sq.userId),
 	);
@@ -728,6 +748,13 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("XRankPlacementRepository.findPeaksByUserId", fx.xrank, (xrank) =>
 		XRankPlacementRepository.findPeaksByUserId(xrank.userId, "both"),
+	);
+
+	// BracketRepository
+	add(
+		"BracketRepository.findByTournamentId",
+		fx.heaviestBracketTournamentId,
+		(tournamentId) => BracketRepository.findByTournamentId(tournamentId),
 	);
 
 	// TournamentMatchVodRepository
@@ -950,6 +977,24 @@ export function buildCases(fx: Fixtures): {
 		TournamentRepository.findById(tournamentId),
 	);
 	add(
+		"TournamentRepository.findStreamsByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findStreamsByTournamentId(tournamentId),
+	);
+	add(
+		"TournamentRepository.findTeamsFullByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findTeamsFullByTournamentId(tournamentId),
+	);
+	add(
+		"TournamentRepository.findParticipatedUserIdsById",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findParticipatedUserIdsById(tournamentId),
+	);
+	add(
 		"TournamentRepository.findRulesById",
 		fx.heavyTournamentId,
 		(tournamentId) => TournamentRepository.findRulesById(tournamentId),
@@ -984,6 +1029,12 @@ export function buildCases(fx: Fixtures): {
 			TournamentRepository.findChildTournamentsForDivCalc(parentTournamentId),
 	);
 	add(
+		"TournamentRepository.findResultsByTournamentId",
+		fx.heavyResultsTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findResultsByTournamentId(tournamentId),
+	);
+	add(
 		"TournamentRepository.findLeagueDivParticipantUserIds",
 		fx.parentTournamentId,
 		(parentTournamentId) =>
@@ -1004,6 +1055,12 @@ export function buildCases(fx: Fixtures): {
 		fx.recentTournamentIds,
 		(tournamentIds) =>
 			TournamentRepository.findRelatedUsersByTournamentIds(tournamentIds),
+	);
+	add(
+		"TournamentRepository.findParticipantTwitchAccounts",
+		fx.recentTournamentIds,
+		(tournamentIds) =>
+			TournamentRepository.findParticipantTwitchAccounts(tournamentIds),
 	);
 	addStatic("TournamentRepository.findAllForShowcase", () =>
 		TournamentRepository.findAllForShowcase(),
@@ -1049,6 +1106,20 @@ export function buildCases(fx: Fixtures): {
 		(teamIds) =>
 			TournamentTeamRepository.findRecentlyPlayedMapsByIds({ teamIds }),
 	);
+	add(
+		"TournamentTeamRepository.findMapPoolsByTeamIds",
+		fx.tournamentTeamPair,
+		(teamIds) => TournamentTeamRepository.findMapPoolsByTeamIds(teamIds),
+	);
+	add(
+		"TournamentTeamRepository.isOrganizerAddedMember",
+		both(fx.heavyTournamentTeamId, fx.heavyUser),
+		([tournamentTeamId, user]) =>
+			TournamentTeamRepository.isOrganizerAddedMember({
+				tournamentTeamId,
+				userId: user.id,
+			}),
+	);
 
 	// TrophyRepository
 	addStatic("TrophyRepository.all", () => TrophyRepository.all());
@@ -1083,6 +1154,9 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("UserRepository.findCountriesByUserIds", fx.skillBatch, (skillBatch) =>
 		UserRepository.findCountriesByUserIds(skillBatch.userIds),
+	);
+	add("UserRepository.findPlusTiersByUserIds", fx.skillBatch, (skillBatch) =>
+		UserRepository.findPlusTiersByUserIds(skillBatch.userIds),
 	);
 	add("UserRepository.findBuildFieldsByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findBuildFieldsByIdentifier(user.identifier),

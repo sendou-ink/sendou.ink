@@ -9,15 +9,18 @@
 	);
 }
 
+.columnsWidthContainer {
+	width: 100%;
+	max-width: var(--columns-width);
+	margin-inline: auto;
+}
+
 .buttonsContainer {
 	display: flex;
 	justify-content: space-between;
 	gap: var(--s-6);
 	align-items: start;
 	flex-wrap: wrap-reverse;
-	width: 100%;
-	max-width: var(--columns-width);
-	margin-inline: auto;
 }
 
 .navigateButtonsContainer {

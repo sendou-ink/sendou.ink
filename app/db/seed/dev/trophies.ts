@@ -106,7 +106,7 @@ async function seedPendingTrophies({
 			...submission(index),
 			name: `Accepted trophy ${index + 1}`,
 		}),
-		{ approverUserIds: [users.adminId, users.staffId] },
+		{ approverUserIds: [users.adminId, users.staffId, users.orgAdminId] },
 	);
 
 	await TrophyFactory.createManyPending(

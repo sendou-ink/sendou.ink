@@ -1,6 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import {
+	requireTournamentVisible,
+	tournamentDataCached,
+	tournamentTeamsFullCached,
+} from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { badRequestIfFalsy } from "~/utils/remix.server";
 import { tournamentImportTeamsSearchParams } from "../tournament-admin-search-params";
@@ -18,13 +22,18 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		tournamentImportTeamsSearchParams.parse(request).fromTournamentId,
 	);
 
-	const fromTournament = await tournamentFromDB({
+	const { ctx } = await tournamentDataCached({
+		tournamentId: fromTournamentId,
+	});
+	requireTournamentVisible({ ctx, user });
+
+	const fromTournamentTeams = await tournamentTeamsFullCached({
 		tournamentId: fromTournamentId,
 		user,
 	});
 
 	return {
-		teams: fromTournament.ctx.teams.map((team) => ({
+		teams: fromTournamentTeams.map((team) => ({
 			id: team.id,
 			name: team.name,
 			avatarImgId: team.avatarImgId,
@@ -36,6 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				userId: member.userId,
 				username: member.username,
 				inGameName: member.inGameName,
+				tournamentName: member.tournamentName,
 				isOwner: member.role === "OWNER",
 			})),
 		})),

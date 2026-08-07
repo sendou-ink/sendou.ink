@@ -1,4 +1,3 @@
-import { sub } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
@@ -22,7 +21,7 @@ export interface CreateBracketArgs {
 	preview: boolean;
 	data?: BracketData;
 	type: Tables["TournamentStage"]["type"];
-	canBeStarted?: boolean;
+	participantsReady?: boolean;
 	name: string;
 	teamsPendingCheckIn?: number[];
 	tournament: Tournament;
@@ -64,8 +63,7 @@ export abstract class Bracket {
 	idx;
 	preview;
 	data;
-	simulatedData: BracketData | undefined;
-	canBeStarted;
+	participantsReady;
 	name;
 	teamsPendingCheckIn;
 	tournament;
@@ -76,13 +74,16 @@ export abstract class Bracket {
 	requiresCheckIn;
 	startTime;
 	private _matchStatuses: Map<number, Engine.MatchStatus> | undefined;
+	private _simulatedData: { value: BracketData | undefined } | undefined;
+	private _standings: Standing[] | undefined;
+	private _liveStandings: Standing[] | undefined;
 
 	constructor({
 		id,
 		idx,
 		preview,
 		data,
-		canBeStarted,
+		participantsReady,
 		name,
 		teamsPendingCheckIn,
 		tournament,
@@ -104,17 +105,38 @@ export abstract class Bracket {
 		this.tournament = tournament;
 		this.settings = settings;
 		this.data = data ?? this.generateMatchesData(this.seeding!);
-		this.canBeStarted = canBeStarted;
+		this.participantsReady = participantsReady;
 		this.name = name;
 		this.teamsPendingCheckIn = teamsPendingCheckIn;
 		this.sources = sources;
 		this.createdAt = createdAt;
 		this.requiresCheckIn = requiresCheckIn;
 		this.startTime = startTime;
+	}
 
-		if (this.tournament.simulateBrackets) {
-			this.createdSimulation();
+	/**
+	 * Can the organizer start this bracket at this moment? Evaluated on access rather than
+	 * stored because it depends on the current time, and a bracket can be built (and cached)
+	 * long before the clock reaches its start time.
+	 */
+	get canBeStarted() {
+		if (!this.participantsReady) return false;
+		if (this.startTime && this.startTime > new Date()) return false;
+		if (this.sources) return true;
+
+		return this.tournament.regularCheckInHasEnded;
+	}
+
+	/**
+	 * Bracket data with the results of the unplayed matches filled in, showing how teams are
+	 * expected to advance. Simulating is expensive so it happens on first access only.
+	 */
+	get simulatedData(): BracketData | undefined {
+		if (!this._simulatedData) {
+			this._simulatedData = { value: this.createdSimulation() };
 		}
+
+		return this._simulatedData.value;
 	}
 
 	private createdSimulation() {
@@ -180,9 +202,11 @@ export abstract class Bracket {
 				}
 			}
 
-			this.simulatedData = data;
+			return data;
 		} catch (e) {
 			logger.error("Bracket.createdSimulation: ", e);
+
+			return;
 		}
 	}
 
@@ -238,7 +262,15 @@ export abstract class Bracket {
 	 * Standings that are settled i.e. teams still playing are left out. Safe to
 	 * use for deciding who advances to another bracket.
 	 */
-	abstract get standings(): Standing[];
+	get standings(): Standing[] {
+		if (!this._standings) {
+			this._standings = this.calculateStandings();
+		}
+
+		return this._standings;
+	}
+
+	protected abstract calculateStandings(): Standing[];
 
 	/**
 	 * How many rounds a swiss bracket has. Comes from the bracket's own stage
@@ -262,6 +294,14 @@ export abstract class Bracket {
 	 * bracket's current state, not for deciding who advances.
 	 */
 	get liveStandings(): Standing[] {
+		if (!this._liveStandings) {
+			this._liveStandings = this.calculateLiveStandings();
+		}
+
+		return this._liveStandings;
+	}
+
+	protected calculateLiveStandings(): Standing[] {
 		return this.standings;
 	}
 
@@ -312,13 +352,17 @@ export abstract class Bracket {
 	}
 
 	protected standingsWithoutNonParticipants(standings: Standing[]): Standing[] {
+		const participatedUserIds = this.tournament.participatedUserIds;
+		// views that did not load participated user ids show full rosters
+		if (!participatedUserIds) return standings;
+
 		return standings.map((standing) => {
 			return {
 				...standing,
 				team: {
 					...standing.team,
-					members: standing.team.members.filter((member) =>
-						this.tournament.ctx.participatedUsers.includes(member.userId),
+					memberUserIds: standing.team.memberUserIds.filter((userId) =>
+						participatedUserIds.includes(userId),
 					),
 				},
 			};
@@ -435,21 +479,7 @@ export abstract class Bracket {
 	}
 
 	canCheckIn(user: OptionalIdObject) {
-		// using regular check-in
-		if (!this.teamsPendingCheckIn) return false;
-
-		if (this.startTime) {
-			const checkInOpen =
-				sub(this.startTime.getTime(), { hours: 1 }).getTime() < Date.now() &&
-				this.startTime.getTime() > Date.now();
-
-			if (!checkInOpen) return false;
-		}
-
-		const team = this.tournament.teamMemberOfByUser(user);
-		if (!team) return false;
-
-		return this.teamsPendingCheckIn.includes(team.id);
+		return this.tournament.canCheckInToBracket(this.idx, user);
 	}
 
 	abstract source(options: {
@@ -460,6 +490,33 @@ export abstract class Bracket {
 		relevantMatchesFinished: boolean;
 		teams: number[];
 	};
+
+	/** Advances top finishers by their standings placement. Only settled teams appear in
+	 * the standings, so placements are matched raw until the full standings resolve and
+	 * only then normalized (1,3,5 -> 1,2,3) the way group brackets source. */
+	protected sourceByStandings(placements: number[], rest: boolean) {
+		const standings = this.standings;
+		const relevantMatchesFinished =
+			standings.length === this.participantTournamentTeamIds.length &&
+			this.participantTournamentTeamIds.length > 0;
+
+		const maxExplicit = Math.max(...placements);
+		const matchesPlacement = (placement: number) =>
+			placements.includes(placement) || (rest && placement >= maxExplicit);
+
+		const uniquePlacements = R.unique(standings.map((s) => s.placement));
+		const placementNormalized = (placement: number) =>
+			relevantMatchesFinished
+				? uniquePlacements.indexOf(placement) + 1
+				: placement;
+
+		return {
+			relevantMatchesFinished,
+			teams: standings
+				.filter((s) => matchesPlacement(placementNormalized(s.placement)))
+				.map((s) => s.team.id),
+		};
+	}
 
 	teamsWithNames(teams: { id: number }[]) {
 		return teams.map((team) => {

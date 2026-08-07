@@ -86,11 +86,11 @@ export class RoundRobinBracket extends Bracket {
 		return teams;
 	}
 
-	get standings(): Standing[] {
+	protected calculateStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: false });
 	}
 
-	get liveStandings(): Standing[] {
+	protected calculateLiveStandings(): Standing[] {
 		return this.computeStandings({ includeUnfinishedGroups: true });
 	}
 

@@ -52,6 +52,14 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 					given: [],
 					received: [],
 				},
+		suggestions: ownGroup
+			? await SQGroupRepository.findAllSuggestionsByGroupId(ownGroup.id)
+			: [],
+		kickableUserIds: ownGroup
+			? await SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId(
+					ownGroup.id,
+				)
+			: [],
 		lastUpdated: Date.now(),
 		streamsCount: (await cachedStreams()).length,
 		chatCode:

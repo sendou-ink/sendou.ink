@@ -1,18 +1,15 @@
 import clsx from "clsx";
-import { useFetcher } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
-import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
-import {
-	useBracketExpanded,
-	useTournament,
-} from "~/features/tournament/routes/to.$id";
+import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import styles from "../../tournament-bracket.module.css";
+import { bracketSchema } from "../../tournament-bracket-schemas";
 import { tournamentBracketsSearchParams } from "../../tournament-bracket-search-params";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import { Match } from "./Match";
@@ -45,7 +42,6 @@ export function SwissBracket({
 		groups.some((g) => g.groupId === selectedGroupIdParam)
 			? selectedGroupIdParam
 			: groups[0].groupId;
-	const fetcher = useFetcher();
 
 	const selectedGroup = groups.find((g) => g.groupId === selectedGroupId)!;
 
@@ -172,6 +168,7 @@ export function SwissBracket({
 								<div className="stack sm horizontal">
 									<RoundHeader
 										roundId={round.id}
+										bracketIdx={bracket.idx}
 										name={`Round ${round.number}`}
 										bestOf={bestOf}
 										showInfos={someMatchOngoing(matches)}
@@ -180,48 +177,36 @@ export function SwissBracket({
 										matches={ongoingMatches}
 									/>
 									{roundThatCanBeStartedId() === round.id ? (
-										<fetcher.Form method="post">
-											<input
-												type="hidden"
-												name="groupId"
-												value={selectedGroupId}
-											/>
-											<input
-												type="hidden"
-												name="bracketIdx"
-												value={bracketIdx}
-											/>
-											<SubmitButton
-												_action="ADVANCE_BRACKET"
-												state={fetcher.state}
-												testId="start-round-button"
-											>
-												Start round
-											</SubmitButton>
-										</fetcher.Form>
+										<ActionButton
+											schema={bracketSchema}
+											action="ADVANCE_BRACKET"
+											fields={{ groupId: selectedGroupId, bracketIdx }}
+											testId="start-round-button"
+										>
+											Start round
+										</ActionButton>
 									) : null}
 									{someMatchOngoing(matches) &&
 									tournament.isOrganizer(user) &&
 									roundI > 0 ? (
-										<FormWithConfirm
-											dialogHeading={`Delete all matches of round ${round.number}?`}
-											fields={[
-												["groupId", selectedGroupId],
-												["roundId", round.id],
-												["bracketIdx", bracketIdx],
-												["_action", "UNADVANCE_BRACKET"],
-											]}
+										<ActionButton
+											schema={bracketSchema}
+											action="UNADVANCE_BRACKET"
+											fields={{
+												groupId: selectedGroupId,
+												roundId: round.id,
+												bracketIdx,
+											}}
+											confirm={{
+												dialogHeading: `Delete all matches of round ${round.number}?`,
+											}}
+											variant="minimal-destructive"
+											className="small-text mb-4"
+											size="small"
+											testId="reset-round-button"
 										>
-											<SendouButton
-												variant="minimal-destructive"
-												type="submit"
-												className="small-text mb-4"
-												size="small"
-												data-testid="reset-round-button"
-											>
-												Reset round
-											</SendouButton>
-										</FormWithConfirm>
+											Reset round
+										</ActionButton>
 									) : null}
 								</div>
 								<div className="stack horizontal md lg-row flex-wrap">

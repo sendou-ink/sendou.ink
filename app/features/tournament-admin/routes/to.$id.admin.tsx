@@ -22,7 +22,7 @@ import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
-import { useTournament } from "~/features/tournament/routes/to.$id";
+import { useTournament } from "~/features/tournament/tournament-context";
 import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	calendarEventPage,

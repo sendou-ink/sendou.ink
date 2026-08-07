@@ -1,5 +1,4 @@
-import type { Transaction } from "kysely";
-import { jsonBuildObject } from "kysely/helpers/sqlite";
+import type { ExpressionBuilder, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -7,8 +6,8 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
+	commonUserMembersAgg,
 	concatUserSubmittedImagePrefix,
-	customAvatarUrl,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
@@ -61,26 +60,6 @@ export function insertPlaceholderTeam(args: CreatePlaceholderTeamArgs) {
 	});
 }
 
-type TournamentLFGMemberObject = {
-	id: Tables["User"]["id"];
-	username: Tables["User"]["username"];
-	discordId: Tables["User"]["discordId"];
-	discordAvatar: Tables["User"]["discordAvatar"];
-	customAvatarUrl: string | null;
-	customUrl: Tables["User"]["customUrl"];
-	languages: Tables["User"]["languages"];
-	vc: Tables["User"]["vc"];
-	pronouns: Tables["User"]["pronouns"];
-	role: Tables["TournamentTeamMember"]["role"];
-	isStayAsSub: Tables["TournamentTeamMember"]["isStayAsSub"];
-	weapons:
-		| (Pick<Tables["UserWeaponPool"], "weaponSplId" | "isFavorite"> & {
-				isTenStar: number;
-		  })[]
-		| null;
-	plusTier: Tables["PlusTier"]["tier"] | null;
-};
-
 export async function findLookingTeamsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentTeam")
@@ -96,7 +75,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 			"UserSubmittedImage.id",
 			"TournamentTeam.avatarImgId",
 		)
-		.select(({ fn, eb }) => [
+		.select(({ eb }) => [
 			"TournamentTeam.id",
 			"TournamentTeam.isPlaceholder",
 			"TournamentTeam.lfgNote as note",
@@ -104,26 +83,7 @@ export async function findLookingTeamsByTournamentId(tournamentId: number) {
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"teamAvatarUrl",
 			),
-			fn
-				.agg("json_group_array", [
-					jsonBuildObject({
-						id: eb.ref("User.id"),
-						username: eb.ref("User.username"),
-						discordId: eb.ref("User.discordId"),
-						discordAvatar: eb.ref("User.discordAvatar"),
-						customAvatarUrl: customAvatarUrl(eb),
-						customUrl: eb.ref("User.customUrl"),
-						languages: eb.ref("User.languages"),
-						vc: eb.ref("User.vc"),
-						pronouns: eb.ref("User.pronouns"),
-						role: eb.ref("TournamentTeamMember.role"),
-						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: matchProfileWeapons(eb),
-						plusTier: eb.ref("PlusTier.tier"),
-					}),
-				])
-				.$castTo<TournamentLFGMemberObject[]>()
-				.as("members"),
+			lfgMembersAgg(eb).as("members"),
 		])
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
 		.where("TournamentTeam.isLooking", "=", 1)
@@ -141,29 +101,10 @@ export async function findSubGroups(tournamentId: number) {
 		)
 		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-		.select(({ fn, eb }) => [
+		.select(({ eb }) => [
 			"TournamentTeam.id",
 			"TournamentTeam.lfgNote as message",
-			fn
-				.agg("json_group_array", [
-					jsonBuildObject({
-						id: eb.ref("User.id"),
-						username: eb.ref("User.username"),
-						discordId: eb.ref("User.discordId"),
-						discordAvatar: eb.ref("User.discordAvatar"),
-						customAvatarUrl: customAvatarUrl(eb),
-						customUrl: eb.ref("User.customUrl"),
-						languages: eb.ref("User.languages"),
-						vc: eb.ref("User.vc"),
-						pronouns: eb.ref("User.pronouns"),
-						role: eb.ref("TournamentTeamMember.role"),
-						isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
-						weapons: matchProfileWeapons(eb),
-						plusTier: eb.ref("PlusTier.tier"),
-					}),
-				])
-				.$castTo<TournamentLFGMemberObject[]>()
-				.as("members"),
+			lfgMembersAgg(eb).as("members"),
 		])
 		.where("TournamentTeam.tournamentId", "=", tournamentId)
 		.where("TournamentTeam.isPlaceholder", "=", 1)
@@ -399,6 +340,31 @@ export function leaveLfg({
 	});
 }
 
+/** Finds the data needed to update a team's pickup chat, or `null` if the team has no chat. */
+export async function findPickupChatTeamById(
+	teamId: number,
+): Promise<PickupChatTeam | null> {
+	const team = await db
+		.selectFrom("TournamentTeam")
+		.select(["name", "chatCode"])
+		.where("id", "=", teamId)
+		.executeTakeFirst();
+
+	if (!team?.chatCode) return null;
+
+	const members = await db
+		.selectFrom("TournamentTeamMember")
+		.select("userId")
+		.where("tournamentTeamId", "=", teamId)
+		.execute();
+
+	return {
+		chatCode: team.chatCode,
+		name: team.name,
+		memberUserIds: members.map((m) => m.userId),
+	};
+}
+
 export async function findAllSubsByTournamentId(tournamentId: number) {
 	const rows = await db
 		.selectFrom("TournamentTeamMember")
@@ -413,6 +379,20 @@ export async function findAllSubsByTournamentId(tournamentId: number) {
 		.execute();
 
 	return rows.map((row) => row.userId);
+}
+
+function lfgMembersAgg(
+	eb: ExpressionBuilder<DB, "User" | "TournamentTeamMember" | "PlusTier">,
+) {
+	return commonUserMembersAgg(eb, {
+		languages: eb.ref("User.languages"),
+		vc: eb.ref("User.vc"),
+		role: eb.ref("TournamentTeamMember.role"),
+		isStayAsSub: eb.ref("TournamentTeamMember.isStayAsSub"),
+		weapons: matchProfileWeapons(eb),
+		// both callers left join PlusTier which the signature can't express
+		plusTier: eb.ref("PlusTier.tier").$castTo<number | null>(),
+	});
 }
 
 function deleteLikesByTeamId(teamId: number, trx: Transaction<DB>) {

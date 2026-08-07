@@ -6,6 +6,7 @@ import { LinkButton } from "~/components/elements/Button";
 import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
+import { useTournament } from "~/features/tournament/tournament-context";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import {
@@ -17,7 +18,6 @@ import { action } from "../actions/to.$id.join.server";
 import { loader } from "../loaders/to.$id.join.server";
 import styles from "../tournament.module.css";
 import { validateCanJoinTeam } from "../tournament-utils";
-import { useTournament } from "./to.$id";
 
 export { action, loader };
 

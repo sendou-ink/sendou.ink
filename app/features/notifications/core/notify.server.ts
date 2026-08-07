@@ -8,12 +8,13 @@ import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
-import { notificationLink } from "../notifications-utils";
+import { notificationLink, notificationMeta } from "../notifications-utils";
 import webPush, { webPushEnabled } from "./webPush.server";
 
 const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	SQ_ADDED_TO_GROUP: "high",
 	SQ_NEW_MATCH: "high",
+	SQ_READY_CHECK: "high",
 	TO_ADDED_TO_TEAM: "normal",
 	TO_BRACKET_STARTED: "high",
 	TO_CHECK_IN_OPENED: "high",
@@ -99,13 +100,17 @@ export async function notify({
 	}
 }
 
-const sentNotifications = new Set<string>();
+const SENT_NOTIFICATION_TTL_MS = 1000 * 60 * 60;
+
+const sentNotifications = new Map<string, number>();
 
 export function clearSentNotificationsForTesting() {
 	sentNotifications.clear();
 }
 
-// deduplicates notifications as a failsafe & anti-abuse mechanism
+// deduplicates notifications as a failsafe & anti-abuse mechanism; entries
+// expire so a legitimately repeated identical notification (e.g. the same team
+// requesting a scrim again weeks later) still gets delivered
 function isNotificationAlreadySent(
 	notification: Notification,
 	userIds: Array<number>,
@@ -121,11 +126,12 @@ function isNotificationAlreadySent(
 	}
 
 	const sortedUserIds = [...userIds].sort((a, b) => a - b).join(",");
-	const key = `${notification.type}-${JSON.stringify(notification.meta)}-${sortedUserIds}`;
-	if (sentNotifications.has(key)) {
+	const key = `${notification.type}-${JSON.stringify(notificationMeta(notification))}-${sortedUserIds}`;
+	const sentAt = sentNotifications.get(key);
+	if (sentAt && Date.now() - sentAt < SENT_NOTIFICATION_TTL_MS) {
 		return true;
 	}
-	sentNotifications.add(key);
+	sentNotifications.set(key, Date.now());
 
 	if (sentNotifications.size > 10_000) {
 		sentNotifications.clear();
@@ -175,7 +181,7 @@ function pushNotificationOptions(
 		title: t(`common:notifications.title.${notification.type}`),
 		body: t(
 			`common:notifications.text.${notification.type}`,
-			notification.meta,
+			notificationMeta(notification),
 		),
 		icon: notification.pictureUrl ?? APP_ICON_URL,
 		data: { url: notificationLink(notification) },

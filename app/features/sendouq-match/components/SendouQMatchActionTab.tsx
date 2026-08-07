@@ -15,6 +15,7 @@ import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	resolveGroupNames,
@@ -23,7 +24,11 @@ import {
 } from "../core/match-timeline";
 import * as SendouQMatch from "../core/SendouQMatch";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
-import { acceptCancelSchema, requestCancelSchema } from "../q-match-schemas";
+import {
+	acceptCancelSchema,
+	matchSchema,
+	requestCancelSchema,
+} from "../q-match-schemas";
 import {
 	MatchmadeRejoinSection,
 	OffSeasonRejoinSection,
@@ -135,7 +140,7 @@ function CancelPendingTab() {
 
 function CancelRespondTab({ data }: { data: SendouQMatchLoaderData }) {
 	const { t } = useTranslation(["q", "common"]);
-	const cancelFetcher = useFetcher();
+	const refuseCancel = useActionSubmit(matchSchema);
 
 	return (
 		<SendouTabPanel id={TAB_KEYS.ACTION}>
@@ -147,12 +152,9 @@ function CancelRespondTab({ data }: { data: SendouQMatchLoaderData }) {
 					<SendouButton
 						variant="outlined"
 						icon={<X />}
-						isDisabled={cancelFetcher.state !== "idle"}
+						isDisabled={refuseCancel.state !== "idle"}
 						onPress={() => {
-							cancelFetcher.submit(
-								{ _action: "REFUSE_CANCEL" },
-								{ method: "post" },
-							);
+							refuseCancel.submit("REFUSE_CANCEL");
 						}}
 					>
 						{t("common:actions.refuse")}
@@ -272,10 +274,7 @@ function RequeueTab({
 					{!data.isOffSeason &&
 					!viewerGroup.matchmade &&
 					(!awaitingConfirmation || isOnReporterTeam) ? (
-						<TrustedRejoinSection
-							viewerGroup={viewerGroup}
-							viewerUserId={user.id}
-						/>
+						<TrustedRejoinSection viewerGroup={viewerGroup} />
 					) : null}
 					{isOnReporterTeam ? <hr className={styles.divider} /> : null}
 
@@ -324,8 +323,8 @@ function WeaponReportSection({
 
 function ScoreConfirmerSection({ data }: { data: SendouQMatchLoaderData }) {
 	const { t } = useTranslation(["q"]);
-	const fetcher = useFetcher();
-	const confirmFetcherPending = fetcher.state !== "idle";
+	const { submit, state } = useActionSubmit(matchSchema);
+	const confirmFetcherPending = state !== "idle";
 
 	const decidingMap = [...data.match.mapList]
 		.reverse()
@@ -341,14 +340,10 @@ function ScoreConfirmerSection({ data }: { data: SendouQMatchLoaderData }) {
 				isPending={confirmFetcherPending}
 				onPress={() => {
 					if (!decidingMap?.winnerGroupId) return;
-					fetcher.submit(
-						{
-							_action: "REPORT_SCORE",
-							winnerId: String(decidingMap.winnerGroupId),
-							reportedCount: String(reportedCount),
-						},
-						{ method: "post" },
-					);
+					submit("REPORT_SCORE", {
+						winnerId: decidingMap.winnerGroupId,
+						reportedCount,
+					});
 				}}
 			>
 				{t("q:match.confirmScore")}
@@ -362,7 +357,7 @@ function ScoreConfirmerSection({ data }: { data: SendouQMatchLoaderData }) {
 
 function ReporterUndoSection() {
 	const { t } = useTranslation(["q"]);
-	const undoFetcher = useFetcher();
+	const undoReport = useActionSubmit(matchSchema);
 
 	return (
 		<div className="stack md items-center">
@@ -372,12 +367,9 @@ function ReporterUndoSection() {
 			<SendouButton
 				variant="outlined"
 				size="small"
-				isPending={undoFetcher.state !== "idle"}
+				isPending={undoReport.state !== "idle"}
 				onPress={() => {
-					undoFetcher.submit(
-						{ _action: "UNDO_MATCH_REPORT" },
-						{ method: "post" },
-					);
+					undoReport.submit("UNDO_MATCH_REPORT");
 				}}
 			>
 				{t("q:match.undoReport")}
@@ -400,8 +392,8 @@ function InProgressTab({
 	user: { id: number };
 }) {
 	const { t } = useTranslation(["q", "common"]);
-	const fetcher = useFetcher();
-	const undoFetcher = useFetcher();
+	const reportScore = useActionSubmit(matchSchema);
+	const undoReport = useActionSubmit(matchSchema);
 	const cancelFetcher = useFetcher();
 
 	const isStaffOnly = ownTeamId == null;
@@ -460,17 +452,10 @@ function InProgressTab({
 			stageId={currentMap.stageId}
 			mode={currentMap.mode}
 			withKo={false}
-			isSubmitting={fetcher.state !== "idle"}
+			isSubmitting={reportScore.state !== "idle"}
 			setEnding={setEnding}
 			onSubmit={({ winnerId }) => {
-				fetcher.submit(
-					{
-						_action: "REPORT_SCORE",
-						winnerId: String(winnerId),
-						reportedCount: String(reportedCount),
-					},
-					{ method: "post" },
-				);
+				reportScore.submit("REPORT_SCORE", { winnerId, reportedCount });
 			}}
 			secondaryAction={
 				isStaffOnly ? null : <WeaponReporter {...weaponReport} />
@@ -513,20 +498,14 @@ function InProgressTab({
 						variant="minimal-destructive"
 						size="miniscule"
 						icon={<Undo2 size={16} />}
-						isPending={undoFetcher.state !== "idle"}
+						isPending={undoReport.state !== "idle"}
 						isDisabled={!scoreIsNotZero}
 						onPress={() => {
 							const mapIndex = data.match.mapList.findLastIndex(
 								(m) => m.winnerGroupId !== null,
 							);
 							if (mapIndex < 0) return;
-							undoFetcher.submit(
-								{
-									_action: "UNDO_MAP_REPORT",
-									mapIndex: String(mapIndex),
-								},
-								{ method: "post" },
-							);
+							undoReport.submit("UNDO_MAP_REPORT", { mapIndex });
 						}}
 					>
 						{t("q:match.undoReport")}

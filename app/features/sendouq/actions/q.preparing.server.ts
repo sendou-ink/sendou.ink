@@ -10,8 +10,8 @@ import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import { preparingSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { preparingSchema } from "../q-schemas.server";
 import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
 
 export type SendouQPreparingAction = typeof action;
@@ -25,11 +25,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 	errorToastIfFalsy(ownGroup, "No group found");
-
-	// no perms, possibly just lost them so no more graceful degradation
-	if (ownGroup.usersRole === "REGULAR") {
-		return null;
-	}
 
 	const season = Seasons.current();
 	errorToastIfFalsy(season, "Season is not active");
@@ -67,10 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
 					ownGroup.id,
-					{
-						userId: data.id,
-						role: "MANAGER",
-					},
+					{ userId: data.id },
 				);
 
 				if (chatCodeToRevalidate) {

@@ -157,7 +157,7 @@ export async function findPlacementsByUserId(
 		.where("SplatoonPlayer.userId", "=", userId)
 		.orderBy("XRankPlacement.power", "desc");
 
-	if (options?.weaponId) {
+	if (typeof options?.weaponId === "number") {
 		query = query.where("XRankPlacement.weaponSplId", "=", options.weaponId);
 	}
 

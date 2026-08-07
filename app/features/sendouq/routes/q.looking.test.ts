@@ -12,12 +12,14 @@ import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import invariant from "~/utils/invariant";
 import { withUserId, wrappedAction } from "~/utils/Test";
+import * as ReadyCheck from "../core/ready-check.server";
 import { refreshSendouQInstance } from "../core/SendouQ.server";
+import type { lookingSchema } from "../q-action-schemas";
 import { FULL_GROUP_SIZE } from "../q-constants";
-import type { lookingSchema } from "../q-schemas.server";
 import { action as rawLookingAction } from "./q.looking";
 
 const SZ_ONLY_PREFERENCE: UserMapModePreferences["modes"] = [
@@ -82,20 +84,65 @@ const lookingAction = wrappedAction<typeof lookingSchema>({
 	action: rawLookingAction,
 });
 
+/** Confirms every member of both groups as ready, which is what creates the match. */
+const confirmEveryoneReady = async (groupId: number) => {
+	for (;;) {
+		const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(groupId);
+		if (!readyCheck) return;
+
+		const nextToConfirm = readyCheck.members.find(
+			(member) => !member.confirmedAt,
+		);
+		invariant(nextToConfirm, "Everyone confirmed but no match was created");
+
+		await ReadyCheck.confirm({ readyCheck, userId: nextToConfirm.userId });
+	}
+};
+
 const findMatch = () =>
 	db.selectFrom("GroupMatch").selectAll().executeTakeFirstOrThrow();
+
+describe("SendouQ match creation validation", () => {
+	test("doesn't create a match with a group that hasn't challenged us", async () => {
+		const owner = await UserFactory.createAdmin();
+		const ownMembers = await UserFactory.createMany(FULL_GROUP_SIZE - 1);
+		const theirMembers = await UserFactory.createMany(FULL_GROUP_SIZE);
+
+		const theirGroup = await SQGroupFactory.create({
+			memberUserIds: theirMembers.map((user) => user.id),
+		});
+		await SQGroupFactory.create({
+			memberUserIds: [owner.id, ...ownMembers.map((user) => user.id)],
+		});
+		await refreshSendouQInstance();
+
+		await lookingAction(
+			{
+				_action: "MATCH_UP",
+				targetGroupId: theirGroup.id,
+			},
+			{ user: "admin" },
+		);
+
+		const matches = await db.selectFrom("GroupMatch").selectAll().execute();
+		expect(matches).toHaveLength(0);
+	});
+});
 
 describe("SendouQ match creation", () => {
 	let groups: Awaited<ReturnType<typeof prepareGroups>>;
 
-	const createMatch = () =>
-		lookingAction(
+	const createMatch = async () => {
+		await lookingAction(
 			{
 				_action: "MATCH_UP",
 				targetGroupId: groups.theirGroup.id,
 			},
 			{ user: "admin" },
 		);
+
+		await confirmEveryoneReady(groups.ownGroup.id);
+	};
 
 	beforeEach(async () => {
 		groups = await prepareGroups();

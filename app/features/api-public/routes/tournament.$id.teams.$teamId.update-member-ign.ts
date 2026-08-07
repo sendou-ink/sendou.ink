@@ -4,12 +4,12 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
+	requireTournamentOrganizer,
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { inGameNameIsValid } from "~/features/user-page/in-game-name";
 import {
 	badRequestIfFalsy,
-	errorToastIfFalsy,
 	parseBody,
 	parseParams,
 } from "~/utils/remix.server";
@@ -39,7 +39,7 @@ export const action = async (args: ActionFunctionArgs) => {
 	return wrapActionForApi(async () => {
 		const user = requireUser();
 		const tournament = await tournamentFromDB({ tournamentId, user });
-		errorToastIfFalsy(tournament.isOrganizer(user), "Unauthorized");
+		requireTournamentOrganizer(tournament, user);
 
 		const teamMemberOf = badRequestIfFalsy(
 			tournament.teamMemberOfByUser({ id: userId }),

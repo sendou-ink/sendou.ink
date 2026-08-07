@@ -1,7 +1,13 @@
 import { addHours, addMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import {
+	expect,
+	impersonate,
+	isNotVisible,
+	navigate,
+	test,
+} from "./helpers/playwright";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentPage } from "./pages/tournament/tournament-page";
 import { TournamentRegisterPage } from "./pages/tournament/tournament-register-page";
@@ -11,6 +17,9 @@ import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 const TEAM_NAME = "Chimera";
 const ROSTER_SIZE = 4;
 const SEEDED_TEAM_COUNT = 8;
+
+/** Views of a tournament whose loaders each ship some of its teams' data. */
+const TOURNAMENT_TEAM_VIEWS = ["teams", "results", "brackets", "admin/seeds"];
 
 test.describe("Tournament", () => {
 	test("registers for tournament", async ({ page, factories }) => {
@@ -130,6 +139,42 @@ test.describe("Tournament", () => {
 		await expect(teamsPage.locators.teamNames.first()).not.toHaveText(
 			teamNameForSeed(1),
 		);
+	});
+
+	test("hides a draft tournament from non-organizers, including its loaders", async ({
+		page,
+		factories,
+	}) => {
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			isDraft: true,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+		const captain = await factories.UserFactory.create();
+		const team = await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam(TEAM_NAME),
+			memberUserIds: [captain.id],
+		});
+
+		// the draft's own pages never render, so flush the factory writes elsewhere
+		await navigate({ page, url: "/" });
+
+		for (const view of [...TOURNAMENT_TEAM_VIEWS, `teams/${team.id}`]) {
+			const url = `/to/${tournament.id}/${view}`;
+
+			const pageResponse = await page.request.fetch(url);
+			expect(pageResponse.status(), `${url} page`).toBe(404);
+
+			// each view's loader is also reachable on its own via single fetch
+			const dataResponse = await page.request.fetch(`${url}.data`);
+			expect(await dataResponse.text(), `${url}.data`).not.toContain(TEAM_NAME);
+		}
+
+		const scopedToTeamsLoader = await page.request.fetch(
+			`/to/${tournament.id}/teams.data?_routes=features/tournament/routes/to.$id.teams`,
+		);
+		expect(await scopedToTeamsLoader.text()).not.toContain(TEAM_NAME);
 	});
 });
 

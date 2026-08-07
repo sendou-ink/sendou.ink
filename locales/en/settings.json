@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "Pick {{count}} stages per mode that you didn't avoid to save your preferences",
 	"sounds.likeReceived": "Group invitation received",
 	"sounds.groupNewMember": "Group invitation accepted",
+	"sounds.readyCheckStarted": "SendouQ ready check started",
 	"sounds.matchStarted": "SendouQ match started",
 	"sounds.tournamentMatchStarted": "Tournament match started"
 }

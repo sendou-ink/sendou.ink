@@ -22,3 +22,30 @@
 		flex-direction: row;
 	}
 }
+
+.abilityConditions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	width: 100%;
+	min-width: 14rem;
+}
+
+.abilityConditionRow {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.abilityConditionValueRow {
+	display: grid;
+	grid-column: 2 / -1;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.abilityConditionApSelect {
+	min-width: 4.5rem;
+}

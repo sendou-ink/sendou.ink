@@ -1,8 +1,9 @@
 import { Crosshair } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import { weaponReportDefaultOpenSchema } from "~/features/settings/settings-schemas";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -47,7 +48,10 @@ export function WeaponReporter({
 }: WeaponReporterProps) {
 	const { t } = useTranslation(["q", "game-misc", "common"]);
 	const user = useUser();
-	const fetcher = useFetcher();
+	const persistDefaultOpen = useActionSubmit(weaponReportDefaultOpenSchema, {
+		action: SETTINGS_PAGE,
+		encType: "application/json",
+	});
 	const [isOpen, setIsOpen] = useState(
 		() => user?.preferences.weaponReportDefaultOpen ?? false,
 	);
@@ -64,10 +68,9 @@ export function WeaponReporter({
 
 	const handleToggle = (newOpen: boolean) => {
 		setIsOpen(newOpen);
-		fetcher.submit(
-			{ _action: "UPDATE_WEAPON_REPORT_DEFAULT_OPEN", newValue: newOpen },
-			{ method: "post", action: SETTINGS_PAGE, encType: "application/json" },
-		);
+		persistDefaultOpen.submit("UPDATE_WEAPON_REPORT_DEFAULT_OPEN", {
+			newValue: newOpen,
+		});
 	};
 
 	return (

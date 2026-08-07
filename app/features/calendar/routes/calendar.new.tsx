@@ -13,7 +13,6 @@ import { MapPoolSelector } from "~/components/MapPoolSelector";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
@@ -30,11 +29,12 @@ import { action } from "../actions/calendar.new.server";
 import type { RegClosesAtOption } from "../calendar-constants";
 import styles from "../calendar-new.module.css";
 import { calendarNewBaseSchema } from "../calendar-new-schemas";
-import { datesToRegClosesAt } from "../calendar-utils";
 import {
-	BracketProgressionSelector,
-	defaultBracketProgression,
-} from "../components/BracketProgressionSelector";
+	defaultBracketsFormValues,
+	progressionToFormValues,
+} from "../calendar-progression-form";
+import { datesToRegClosesAt } from "../calendar-utils";
+import { BracketProgressionFormFields } from "../components/BracketProgressionFormFields";
 import { loader } from "../loaders/calendar.new.server";
 
 export { action, loader };
@@ -172,6 +172,12 @@ function useDefaultValues() {
 		return "";
 	})();
 
+	const bracketProgressionValues = settings?.bracketProgression
+		? progressionToFormValues(settings.bracketProgression)
+		: data.isAddingTournament
+			? defaultBracketsFormValues()
+			: { brackets: [], progression: [] };
+
 	return {
 		toToolsEnabled: data.isAddingTournament,
 		eventToEditId: data.eventToEdit?.eventId,
@@ -214,9 +220,8 @@ function useDefaultValues() {
 		maxMembersPerTeam: settings?.maxMembersPerTeam ?? undefined,
 		toToolsMode,
 		pool,
-		bracketProgression:
-			settings?.bracketProgression ??
-			(data.isAddingTournament ? defaultBracketProgression() : null),
+		brackets: bracketProgressionValues.brackets,
+		progression: bracketProgressionValues.progression,
 		isRanked: settings?.isRanked ?? true,
 		enableNoScreenToggle: settings?.enableNoScreenToggle ?? true,
 		enableSubs: settings?.enableSubs ?? true,
@@ -598,41 +603,16 @@ function TiebreakerMapPoolField() {
 }
 
 function BracketProgressionField() {
-	const { t } = useTranslation();
 	const { values } = useFormFieldContext();
-	const baseEvent = useBaseEvent();
-
-	const initialBrackets = baseEvent?.tournament?.ctx.settings.bracketProgression
-		? Progression.validatedBracketsToInputFormat(
-				baseEvent.tournament.ctx.settings.bracketProgression,
-			)
-		: undefined;
 
 	return (
 		<div className="stack md w-full">
 			<Divider smallText className="mt-4">
 				Tournament format
 			</Divider>
-			<FormField name="bracketProgression">
-				{({ onChange, error }: CustomFieldRenderProps) => (
-					<>
-						<BracketProgressionSelector
-							initialBrackets={initialBrackets}
-							isInvitationalTournament={Boolean(values.isInvitational)}
-							onChange={onChange}
-							isTournamentInProgress={false}
-						/>
-						{error ? (
-							<FormMessage
-								id={errorMessageId("bracketProgression")}
-								type="error"
-							>
-								{t(error as never)}
-							</FormMessage>
-						) : null}
-					</>
-				)}
-			</FormField>
+			<BracketProgressionFormFields
+				isInvitational={Boolean(values.isInvitational)}
+			/>
 		</div>
 	);
 }

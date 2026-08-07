@@ -23,6 +23,7 @@
 	"matchProfile.mapPool.notOk": "モードにつきステージを {{count}} 個選んでください。（避けるステージに入っていない）",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

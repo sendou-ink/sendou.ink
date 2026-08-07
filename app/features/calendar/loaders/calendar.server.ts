@@ -1,5 +1,6 @@
 import { add, startOfWeek, sub } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import type { UserPreferences } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
@@ -31,13 +32,26 @@ export const loader = async (args: LoaderFunctionArgs) => {
 
 	const weekStart = startOfWeek(new Date(date), { weekStartsOn: 1 });
 	const events = await CalendarRepository.findAllBetweenTwoTimestamps({
-		// add a bit of tolerance to the timestamps to account for timezones
-		startTime: sub(weekStart, { hours: 24 }),
-		endTime: add(weekStart, { days: DAYS_SHOWN_AT_A_TIME + 1 }),
+		// on the default view the client resolves the shown week from its own clock,
+		// which around the week boundary can be a full week ahead of or behind the
+		// server's week, so fetch wide enough to cover every timezone's current week
+		startTime: sub(weekStart, { days: DAYS_SHOWN_AT_A_TIME + 1 }),
+		endTime: add(weekStart, { days: DAYS_SHOWN_AT_A_TIME * 2 + 1 }),
 	});
 
 	const filters = resolveFilters(args.request, user?.preferences);
 	const filtered = CalendarEvent.applyFilters(events, filters);
+
+	const canSaveAsDefault =
+		user != null &&
+		!R.isDeepEqual(
+			filters,
+			user.preferences?.defaultCalendarFilters
+				? calendarFiltersSearchParamsSchema.parse(
+						user.preferences.defaultCalendarFilters,
+					)
+				: CalendarEvent.defaultFilters(),
+		);
 
 	const eventTimes = canAccessTrophies(user)
 		? filtered
@@ -59,6 +73,7 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		eventTimes,
 		dateViewed,
 		filters,
+		canSaveAsDefault,
 	};
 };
 
@@ -66,7 +81,14 @@ function resolveFilters(
 	request: Request,
 	preferences?: UserPreferences | null,
 ) {
-	const parsed = calendarSearchParams.parse(request).filters;
+	const searchParams = calendarSearchParams.parse(request);
+	const parsed = R.pick(searchParams, [...CalendarEvent.FILTERS_KEYS]);
+
+	// the user cleared or edited the filters, so the URL is the whole truth
+	// even when it ends up holding no filters at all
+	if (!searchParams.useDefaults) {
+		return parsed;
+	}
 
 	if (!CalendarEvent.isDefaultFilters(parsed)) {
 		return parsed;

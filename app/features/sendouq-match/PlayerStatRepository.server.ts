@@ -11,6 +11,7 @@ import type { DB, Tables } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	commonUserJsonObject,
+	latestSkillPerSeason,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 
@@ -380,16 +381,11 @@ export async function findSeasonTournamentRunsByUserId({
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			eb
 				.selectFrom(
-					eb
-						.selectFrom("Skill as TopEightSkill")
-						.select((seb) => [
-							"TopEightSkill.ordinal",
-							// bare column with max(): the ordinal comes from the season's last skill row of that user
-							seb.fn.max("TopEightSkill.id").as("latestId"),
-						])
-						.where("TopEightSkill.season", "=", season)
-						.where("TopEightSkill.userId", "in", (ieb) =>
-							ieb
+					latestSkillPerSeason({ season, by: "userId" })
+						.where(
+							"Skill.userId",
+							"in",
+							eb
 								.selectFrom("TournamentResult as TopEightResult")
 								.select("TopEightResult.userId")
 								.whereRef("TopEightResult.tournamentId", "=", "Tournament.id")
@@ -399,7 +395,6 @@ export async function findSeasonTournamentRunsByUserId({
 									TOURNAMENT_FIELD_STRENGTH_PLACEMENT,
 								),
 						)
-						.groupBy("TopEightSkill.userId")
 						.as("TopEightLatestSkill"),
 				)
 				.select(({ fn }) =>

@@ -5,6 +5,7 @@ export type Notification =
 				adderUsername: string;
 			}
 	  >
+	| NotificationItem<"SQ_READY_CHECK">
 	| NotificationItem<
 			"SQ_NEW_MATCH",
 			{

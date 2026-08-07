@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
+import { notificationMeta } from "../notifications-utils";
 import { clearSentNotificationsForTesting, notify } from "./notify.server";
 
 const users = UserFactory.pool();
@@ -62,7 +63,9 @@ describe("notify()", () => {
 		expect(user4Notifications).toHaveLength(1);
 
 		expect(user1Notifications[0].type).toBe("SCRIM_NEW_REQUEST");
-		expect(user1Notifications[0].meta).toEqual({ fromUsername: "alice" });
+		expect(notificationMeta(user1Notifications[0])).toEqual({
+			fromUsername: "alice",
+		});
 	});
 
 	test("same recipients and notification deduplicates", async () => {
@@ -91,6 +94,37 @@ describe("notify()", () => {
 
 		expect(user5Notifications).toHaveLength(1);
 		expect(user6Notifications).toHaveLength(1);
+	});
+
+	test("identical notification is delivered again when repeated a day later", async () => {
+		vi.useFakeTimers();
+		try {
+			await notify({
+				userIds: [users.id(5)],
+				notification: {
+					type: "SCRIM_NEW_REQUEST",
+					meta: { fromUsername: "alice" },
+				},
+			});
+
+			vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+
+			await notify({
+				userIds: [users.id(5)],
+				notification: {
+					type: "SCRIM_NEW_REQUEST",
+					meta: { fromUsername: "alice" },
+				},
+			});
+		} finally {
+			vi.useRealTimers();
+		}
+
+		const notifications = await NotificationRepository.findByUserId(
+			users.id(5),
+		);
+
+		expect(notifications).toHaveLength(2);
 	});
 
 	test("user ID order doesn't affect deduplication", async () => {
@@ -213,7 +247,7 @@ describe("notify()", () => {
 		expect(user12Notifications).toHaveLength(2);
 		expect(user13Notifications).toHaveLength(2);
 
-		const metas = user12Notifications.map((n) => n.meta);
+		const metas = user12Notifications.map(notificationMeta);
 		expect(metas).toContainEqual({ fromUsername: "bob" });
 		expect(metas).toContainEqual({ fromUsername: "charlie" });
 	});

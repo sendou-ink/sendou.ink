@@ -1,7 +1,6 @@
 import * as React from "react";
 import type { MetaFunction } from "react-router";
-import { Form, Link, useFetcher, useLoaderData } from "react-router";
-import { Avatar } from "~/components/Avatar";
+import { Form, useFetcher, useLoaderData } from "react-router";
 import { Catcher } from "~/components/Catcher";
 import { SendouButton } from "~/components/elements/Button";
 import {
@@ -13,16 +12,12 @@ import {
 import { UserSearch } from "~/components/elements/UserSearch";
 import { Main } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
+import { UserLink } from "~/components/UserLink";
 import { SendouForm } from "~/form/SendouForm";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
-import {
-	impersonateUrl,
-	SEED_URL,
-	STOP_IMPERSONATING_URL,
-	userPage,
-} from "~/utils/urls";
+import { impersonateUrl, SEED_URL, STOP_IMPERSONATING_URL } from "~/utils/urls";
 import { action } from "../actions/admin.server";
 import {
 	banUserSchema,
@@ -100,14 +95,7 @@ function FriendCodeLookUp() {
 			</SendouForm>
 			<div className="stack lg">
 				{data.friendCodeSearchUsers?.map((user) => (
-					<Link
-						key={user.id}
-						to={userPage(user)}
-						className="stack horizontal sm text-main-forced items-center"
-					>
-						<Avatar user={user} size="sm" />
-						{user.username}
-					</Link>
+					<UserLink key={user.id} user={user} size="sm" />
 				))}
 			</div>
 		</div>

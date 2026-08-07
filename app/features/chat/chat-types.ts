@@ -4,6 +4,7 @@ export type SystemMessageType =
 	| "NEW_GROUP"
 	| "USER_LEFT"
 	| "MATCH_STARTED"
+	| "READY_CHECK_STARTED"
 	| "LIKE_RECEIVED"
 	| "SCORE_REPORTED"
 	| "SCORE_CONFIRMED"
@@ -18,6 +19,8 @@ export type SystemMessageType =
 export type SystemMessageContext = {
 	name: string;
 };
+
+export type RevalidateScope = "MATCH_RESULTS";
 export interface ChatMessage {
 	id: string;
 	type?: SystemMessageType;
@@ -25,6 +28,8 @@ export interface ChatMessage {
 	context?: SystemMessageContext;
 	/** If true, the purpose of this message is just to run the data loaders again meaning the logic related to showing a new chat message is skipped. Defaults to false.  */
 	revalidateOnly?: boolean;
+	/** Narrows what data a `revalidateOnly` message may have changed so that routes whose data is unaffected can skip revalidating. Unset means anything may have changed. */
+	revalidateScope?: RevalidateScope;
 	/** User id of the actor that triggered this message. Used to skip own-author revalidates so we don't double-fetch loaders right after a form submission. */
 	authorUserId?: number;
 	userId?: number;

@@ -1,15 +1,15 @@
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
+import { UserLink } from "~/components/UserLink";
 import type { TeamResultsLoaderData } from "~/features/team/loaders/t.$customUrl.results.server";
-import { tournamentTeamPage, userPage } from "~/utils/urls";
+import { tournamentTeamPage } from "~/utils/urls";
 
 import styles from "./TeamResultsTable.module.css";
 
@@ -91,13 +91,7 @@ export function TeamResultsTable({ results }: TeamResultsTableProps) {
 											<ul className={styles.players}>
 												{result.subs.map((player) => (
 													<li key={player.id} className="flex items-center">
-														<Link
-															to={userPage(player)}
-															className="stack horizontal xs items-center"
-														>
-															<Avatar user={player} size="xxs" />
-															{player.username}
-														</Link>
+														<UserLink user={player} />
 													</li>
 												))}
 											</ul>

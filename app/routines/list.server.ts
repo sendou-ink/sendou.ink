@@ -8,11 +8,13 @@ import { DeleteOldPendingFriendRequestsRoutine } from "./deleteOldPendingFriendR
 import { DeleteOldTournamentAuditLogsRoutine } from "./deleteOldTournamentAuditLogs";
 import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { EvictStaleRunningTournamentsRoutine } from "./evictStaleRunningTournaments";
+import { ExpireReadyChecksRoutine } from "./expireReadyChecks";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { OptimizeDatabaseRoutine } from "./optimizeDatabase";
+import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 import { SetOldGroupsAsInactiveRoutine } from "./setOldGroupsAsInactive";
 import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { SyncSplatoonRotationsRoutine } from "./syncSplatoonRotations";
@@ -36,6 +38,7 @@ export const everyHourAt30 = [
 	CloseExpiredContinueVotesRoutine,
 	DeleteOldExternalStreamsRoutine,
 	EvictStaleRunningTournamentsRoutine,
+	ResolveStaleSQMatchesRoutine,
 ];
 
 /** List of Routines that should occur daily */
@@ -51,4 +54,7 @@ export const daily = [
 ];
 
 /** List of Routines that should occur every 2 minutes */
-export const everyTwoMinutes = [SyncLiveStreamsRoutine];
+export const everyTwoMinutes = [
+	SyncLiveStreamsRoutine,
+	ExpireReadyChecksRoutine,
+];

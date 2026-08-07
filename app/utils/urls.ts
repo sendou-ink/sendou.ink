@@ -44,7 +44,6 @@ import { userCardEditSearchParams } from "~/features/user-card/user-card-search-
 import {
 	userArtSearchParams,
 	userBuildsNewSearchParams,
-	userResultsSearchParams,
 	userSeasonSummaryGraphicSearchParams,
 	userSeasonsSearchParams,
 } from "~/features/user-page/user-page-search-params";
@@ -178,6 +177,7 @@ export const SENDOUQ_INFO_PAGE = "/q/info";
 export const MATCH_PROFILE_PAGE = "/settings?tab=match-profile";
 export const SENDOUQ_PREPARING_PAGE = "/q/preparing";
 export const SENDOUQ_LOOKING_PAGE = "/q/looking";
+export const SENDOUQ_READY_PAGE = "/q/ready";
 export const SENDOUQ_LOOKING_PREVIEW_PAGE = "/q/looking?preview=true";
 export const SENDOUQ_STREAMS_PAGE = "/q/streams";
 export const TIERS_PAGE = "/tiers";
@@ -274,10 +274,8 @@ export const userEditProfilePage = (user: UserLinkArgs) =>
 	`${userPage(user)}/edit`;
 export const userBuildsPage = (user: UserLinkArgs) =>
 	`${userPage(user)}/builds`;
-export const userResultsPage = (user: UserLinkArgs, showAll?: boolean) =>
-	userResultsSearchParams.href(`${userPage(user)}/results`, {
-		all: Boolean(showAll),
-	});
+export const userResultsPage = (user: UserLinkArgs) =>
+	`${userPage(user)}/results`;
 export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
 export const userCardEditPage = (args?: { returnTo?: string }) =>
 	userCardEditSearchParams.href(USER_CARD_EDIT_PAGE, {
@@ -383,12 +381,8 @@ export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
 export const weaponParamsPage = (weaponSlug: string) => `/params/${weaponSlug}`;
 
-export const calendarPage = (args?: {
-	filters?: CalendarFilters;
-	dayMonthYear?: DayMonthYear;
-}) =>
+export const calendarPage = (args?: { dayMonthYear?: DayMonthYear }) =>
 	calendarSearchParams.href(CALENDAR_PAGE, {
-		...(args?.filters ? { filters: args.filters } : {}),
 		...(args?.dayMonthYear
 			? {
 					day: args.dayMonthYear.day,
@@ -400,7 +394,7 @@ export const calendarPage = (args?: {
 
 export const calendarIcalFeed = (filters?: CalendarFilters) =>
 	calendarSearchParams.href(`${SENDOU_INK_BASE_URL}/calendar.ics`, {
-		...(filters ? { filters } : {}),
+		...(filters ?? {}),
 	});
 
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;

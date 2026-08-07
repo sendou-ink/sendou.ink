@@ -7,6 +7,7 @@ import type { ActionFunction, ActionFunctionArgs } from "react-router";
  * The existing actions use:
  * - `successToast(message)` which returns `redirect("?__success=message")`
  * - `errorToastIfFalsy/errorToastIfErr` which throw `redirect("?__error=message")`
+ * - `{ fieldErrors }` returns for form validation failures
  */
 export async function wrapActionForApi(
 	actionFn: ActionFunction,
@@ -17,6 +18,19 @@ export async function wrapActionForApi(
 
 		if (response instanceof Response && response.status === 302) {
 			return new Response(null, { status: 200 });
+		}
+
+		if (response && typeof response === "object" && "fieldErrors" in response) {
+			return new Response(
+				JSON.stringify({
+					error: "Validation failed",
+					fieldErrors: response.fieldErrors,
+				}),
+				{
+					status: 400,
+					headers: { "Content-Type": "application/json" },
+				},
+			);
 		}
 
 		return response as Response;
