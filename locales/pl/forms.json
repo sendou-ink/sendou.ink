@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Istnieje już drużyna o tym imieniu",
 	"errors.duplicateOrgName": "",
+	"errors.duplicateOrgMember": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Pula broni",

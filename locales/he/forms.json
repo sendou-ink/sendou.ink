@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "יש כבר צוות בשם הזה",
 	"errors.duplicateOrgName": "",
+	"errors.duplicateOrgMember": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "מאגר נשקים",

@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "请至少选择一个选项",
 	"errors.duplicateName": "该队伍名称已被占用",
 	"errors.duplicateOrgName": "该组织名称已被占用",
+	"errors.duplicateOrgMember": "",
 	"errors.noOnlySpecialCharacters": "名称不能仅由特殊字符组成",
 	"errors.customRoleRequired": "请输入自定义职责的名称",
 	"labels.weaponPool": "武器池",

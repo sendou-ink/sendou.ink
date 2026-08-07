@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "そのチーム名はすでに使用されています",
 	"errors.duplicateOrgName": "",
+	"errors.duplicateOrgMember": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "使用ブキ",

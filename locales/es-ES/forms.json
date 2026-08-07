@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "Debe seleccionarse al menos una opción",
 	"errors.duplicateName": "Ya existe un equipo con ese nombre",
 	"errors.duplicateOrgName": "Ya hay una organización con este nombre",
+	"errors.duplicateOrgMember": "",
 	"errors.noOnlySpecialCharacters": "El nombre no puede ser solo caracteres especiales",
 	"errors.customRoleRequired": "Introduce un nombre para el rol personalizado",
 	"labels.weaponPool": "Selección de armas",

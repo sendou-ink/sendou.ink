@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Ya existe un equipo con ese nombre",
 	"errors.duplicateOrgName": "",
+	"errors.duplicateOrgMember": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Grupo de armas",

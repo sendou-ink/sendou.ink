@@ -34,59 +34,76 @@ export const newOrganizationSchema = z.object({
 	name: orgNameField,
 });
 
-export const organizationEditFormSchema = z.object({
-	name: orgNameField,
-	logo: image({ label: "labels.logo", autoValidate: true }),
-	description: textAreaOptional({
-		label: "labels.description",
-		maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
-	}),
-	members: array({
-		label: "labels.members",
-		bottomText: "bottomTexts.orgMembersInfo",
-		max: 32,
-		field: fieldset({
-			fields: z.object({
-				userId: userSearch({ label: "labels.user" }),
-				role: select({
-					label: "labels.orgMemberRole",
-					items: TOURNAMENT_ORGANIZATION_ROLES.map((role) => ({
-						value: role,
-						label: `options.orgRole.${role}` as const,
-					})),
-				}),
-				roleDisplayName: textFieldOptional({
-					label: "labels.orgMemberRoleDisplayName",
-					maxLength: 32,
+export const organizationEditFormSchema = z
+	.object({
+		name: orgNameField,
+		logo: image({ label: "labels.logo", autoValidate: true }),
+		description: textAreaOptional({
+			label: "labels.description",
+			maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
+		}),
+		members: array({
+			label: "labels.members",
+			bottomText: "bottomTexts.orgMembersInfo",
+			max: 32,
+			field: fieldset({
+				fields: z.object({
+					userId: userSearch({ label: "labels.user" }),
+					role: select({
+						label: "labels.orgMemberRole",
+						items: TOURNAMENT_ORGANIZATION_ROLES.map((role) => ({
+							value: role,
+							label: `options.orgRole.${role}` as const,
+						})),
+					}),
+					roleDisplayName: textFieldOptional({
+						label: "labels.orgMemberRoleDisplayName",
+						maxLength: 32,
+					}),
 				}),
 			}),
 		}),
-	}),
-	socials: array({
-		label: "labels.orgSocialLinks",
-		max: 10,
-		field: textField({ validate: "url", maxLength: 100 }),
-	}),
-	series: array({
-		label: "labels.orgSeries",
-		max: 10,
-		field: fieldset({
-			fields: z.object({
-				name: textField({
-					label: "labels.orgSeriesName",
-					minLength: 1,
-					maxLength: 32,
+		socials: array({
+			label: "labels.orgSocialLinks",
+			max: 10,
+			field: textField({ validate: "url", maxLength: 100 }),
+		}),
+		series: array({
+			label: "labels.orgSeries",
+			max: 10,
+			field: fieldset({
+				fields: z.object({
+					name: textField({
+						label: "labels.orgSeriesName",
+						minLength: 1,
+						maxLength: 32,
+					}),
+					description: textAreaOptional({
+						label: "labels.description",
+						maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
+					}),
+					showLeaderboard: toggle({ label: "labels.orgSeriesShowLeaderboard" }),
 				}),
-				description: textAreaOptional({
-					label: "labels.description",
-					maxLength: TOURNAMENT_ORGANIZATION.DESCRIPTION_MAX_LENGTH,
-				}),
-				showLeaderboard: toggle({ label: "labels.orgSeriesShowLeaderboard" }),
 			}),
 		}),
-	}),
-	badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
-});
+		badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
+	})
+	.superRefine((data, ctx) => {
+		const seenUserIds = new Set<number>();
+
+		for (const [index, member] of data.members.entries()) {
+			if (seenUserIds.has(member.userId)) {
+				ctx.addIssue({
+					code: z.ZodIssueCode.custom,
+					message: "forms:errors.duplicateOrgMember",
+					path: ["members", index, "userId"],
+				});
+				continue;
+			}
+
+			seenUserIds.add(member.userId);
+		}
+	});
 
 export const banUserActionSchema = z.object({
 	_action: stringConstant("BAN_USER"),

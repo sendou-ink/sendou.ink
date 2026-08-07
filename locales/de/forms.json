@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "",
 	"errors.duplicateName": "Es gibt bereits ein Team mit diesem Namen",
 	"errors.duplicateOrgName": "",
+	"errors.duplicateOrgMember": "",
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Waffenpool",

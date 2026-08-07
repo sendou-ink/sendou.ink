@@ -67,6 +67,7 @@
 	"errors.atLeastOneOption": "At least one option must be selected",
 	"errors.duplicateName": "There is already a team with this name",
 	"errors.duplicateOrgName": "There is already an organization with this name",
+	"errors.duplicateOrgMember": "This user is already listed as a member",
 	"errors.noOnlySpecialCharacters": "Name can't be only special characters",
 	"errors.customRoleRequired": "Enter a name for the custom role",
 	"labels.weaponPool": "Weapon pool",
