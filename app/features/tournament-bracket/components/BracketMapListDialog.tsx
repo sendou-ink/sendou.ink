@@ -97,7 +97,17 @@ export function BracketMapListDialog({
 			});
 		}
 
-		return PreparedMaps.eliminationTeamCountOptions(bracketTeamsCount)[0].max;
+		if (
+			bracket.type !== "single_elimination" &&
+			bracket.type !== "double_elimination"
+		) {
+			return null;
+		}
+
+		return PreparedMaps.eliminationTeamCountOptions({
+			type: bracket.type,
+			currentCount: bracketTeamsCount,
+		})[0].max;
 	});
 	const [thirdPlaceMatchLinked, setThirdPlaceMatchLinked] = React.useState(
 		() => {
@@ -395,6 +405,7 @@ export function BracketMapListDialog({
 								(bracket.type === "single_elimination" ||
 									bracket.type === "double_elimination") ? (
 									<EliminationTeamCountSelect
+										type={bracket.type}
 										count={eliminationTeamCount}
 										realCount={bracketTeamsCount}
 										setCount={(newCount) => {
@@ -807,10 +818,12 @@ function teamCountAdjustedBracketData({
 }
 
 function EliminationTeamCountSelect({
+	type,
 	count,
 	realCount,
 	setCount,
 }: {
+	type: PreparedMaps.EliminationBracketType;
 	count: number | null;
 	realCount: number;
 	setCount: (count: number | null) => void;
@@ -826,10 +839,11 @@ function EliminationTeamCountSelect({
 				defaultValue={count ?? ""}
 			>
 				<option value="">Select count</option>
-				{PreparedMaps.eliminationTeamCountOptions(
+				{PreparedMaps.eliminationTeamCountOptions({
+					type,
 					// the prepared for count can be below the current team count e.g. when some of the registered teams are not expected to play
-					Math.min(realCount, count ?? realCount),
-				).map((teamCountRange) => {
+					currentCount: Math.min(realCount, count ?? realCount),
+				}).map((teamCountRange) => {
 					const label =
 						teamCountRange.min === teamCountRange.max
 							? teamCountRange.min

@@ -54,7 +54,18 @@ export function resolvePreparedForTheBracket({
 
 	return null;
 }
-const ELIMINATION_BRACKET_TEAM_RANGES = [
+
+export type EliminationBracketType =
+	| "single_elimination"
+	| "double_elimination";
+
+interface TeamCountRange {
+	min: number;
+	max: number;
+}
+
+/** A round is only added once the bracket size doubles. Three teams playing without a third place match is handled by trimming instead. */
+const SINGLE_ELIMINATION_TEAM_RANGES: readonly TeamCountRange[] = [
 	{ min: 2, max: 2 },
 	{ min: 3, max: 4 },
 	{ min: 5, max: 8 },
@@ -63,18 +74,49 @@ const ELIMINATION_BRACKET_TEAM_RANGES = [
 	{ min: 33, max: 64 },
 	{ min: 65, max: 128 },
 	{ min: 129, max: 256 },
-] as const;
+];
+
+/** Below three quarters of the bracket size the loser bracket loses its first round to byes, so every power of two splits in two. */
+const DOUBLE_ELIMINATION_TEAM_RANGES: readonly TeamCountRange[] = [
+	{ min: 2, max: 2 },
+	{ min: 3, max: 3 },
+	{ min: 4, max: 4 },
+	{ min: 5, max: 6 },
+	{ min: 7, max: 8 },
+	{ min: 9, max: 12 },
+	{ min: 13, max: 16 },
+	{ min: 17, max: 24 },
+	{ min: 25, max: 32 },
+	{ min: 33, max: 48 },
+	{ min: 49, max: 64 },
+	{ min: 65, max: 96 },
+	{ min: 97, max: 128 },
+	{ min: 129, max: 192 },
+	{ min: 193, max: 256 },
+];
 
 /** For single elimination and double elimination returns the amount of options that are the "steps" that affect the round count. Takes in currentCount as an argument, filtering out counts below that.  */
-export function eliminationTeamCountOptions(currentCount: number) {
-	return ELIMINATION_BRACKET_TEAM_RANGES.filter(
-		({ max }) => max >= currentCount,
-	);
+export function eliminationTeamCountOptions({
+	type,
+	currentCount,
+}: {
+	type: EliminationBracketType;
+	currentCount: number;
+}) {
+	const ranges =
+		type === "double_elimination"
+			? DOUBLE_ELIMINATION_TEAM_RANGES
+			: SINGLE_ELIMINATION_TEAM_RANGES;
+
+	return ranges.filter(({ max }) => max >= currentCount);
 }
 
 /** Validates that given count is a known "max" elimination team count value */
 export function isValidMaxEliminationTeamCount(count: number) {
-	return ELIMINATION_BRACKET_TEAM_RANGES.some(({ max }) => max === count);
+	return [
+		...SINGLE_ELIMINATION_TEAM_RANGES,
+		...DOUBLE_ELIMINATION_TEAM_RANGES,
+	].some(({ max }) => max === count);
 }
 
 /** Registration closing within this window means the teams registered are a good enough basis for an estimate. */
@@ -107,7 +149,10 @@ export function eliminationTeamCountPrefill({
 		return null;
 	}
 
-	const [smallestFitting, nextUp] = eliminationTeamCountOptions(expected.count);
+	const [smallestFitting, nextUp] = eliminationTeamCountOptions({
+		type: bracket.type,
+		currentCount: expected.count,
+	});
 	if (!smallestFitting) return null;
 	if (expected.isExact) return smallestFitting.max;
 
@@ -136,6 +181,14 @@ export function trimPreparedEliminationMaps({
 		return null;
 	}
 
+	// only elimination brackets have prepared maps to trim, defensive check
+	if (
+		rest.bracket.type !== "single_elimination" &&
+		rest.bracket.type !== "double_elimination"
+	) {
+		return null;
+	}
+
 	// eliminationTeamCount should exist here, defensive check
 	if (
 		!preparedMaps.eliminationTeamCount ||
@@ -147,7 +200,10 @@ export function trimPreparedEliminationMaps({
 
 	const isPerfectCountMatch =
 		preparedMaps.eliminationTeamCount ===
-		eliminationTeamCountOptions(teamCount)[0].max;
+		eliminationTeamCountOptions({
+			type: rest.bracket.type,
+			currentCount: teamCount,
+		})[0].max;
 
 	if (isPerfectCountMatch) {
 		if (thirdPlaceMatchDisappeared({ preparedMaps, teamCount, ...rest })) {

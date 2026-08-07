@@ -120,9 +120,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 						eliminationTeamCount:
 							bracket.type === "single_elimination" ||
 							bracket.type === "double_elimination"
-								? PreparedMapsUtils.eliminationTeamCountOptions(
-										seeding.length,
-									)[0].max
+								? PreparedMapsUtils.eliminationTeamCountOptions({
+										type: bracket.type,
+										currentCount: seeding.length,
+									})[0].max
 								: undefined,
 					},
 				});

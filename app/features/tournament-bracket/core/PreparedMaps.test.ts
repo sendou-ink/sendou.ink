@@ -1,12 +1,15 @@
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
+import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import type { PreparedMaps as PreparedMapsType } from "~/db/tables-json";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { nullFilledArray } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
 import type { BracketData } from "./engine/types";
 import * as PreparedMaps from "./PreparedMaps";
 import type * as Progression from "./Progression";
+import { getRounds } from "./rounds";
 import type { TournamentData } from "./Tournament.server";
 import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
 
@@ -203,16 +206,124 @@ describe("PreparedMaps - resolvePreparedForTheBracket", () => {
 });
 
 describe("PreparedMaps - eliminationTeamCountOptions", () => {
-	test("returns options greater than the count given", () => {
-		expect(
-			PreparedMaps.eliminationTeamCountOptions(3).every(
-				(option) => option.max > 3,
-			),
-		).toBe(true);
+	const HIGHEST_TESTED_TEAM_COUNT = 256;
+
+	const ELIMINATION_TYPES = [
+		"single_elimination",
+		"double_elimination",
+	] as const;
+
+	test("excludes ranges too small for the count given", () => {
+		const options = PreparedMaps.eliminationTeamCountOptions({
+			type: "double_elimination",
+			currentCount: 3,
+		});
+
+		expect(options.some((option) => option.max < 3)).toBe(false);
+		expect(options[0]).toEqual({ min: 3, max: 3 });
 	});
 
 	test("returns the option equivalent to the current count", () => {
-		expect(PreparedMaps.eliminationTeamCountOptions(32)[0].max).toBe(32);
+		expect(
+			PreparedMaps.eliminationTeamCountOptions({
+				type: "double_elimination",
+				currentCount: 32,
+			})[0].max,
+		).toBe(32);
+	});
+
+	test("splits a power of two in two for double elimination only", () => {
+		const currentCount = 12;
+
+		expect(
+			PreparedMaps.eliminationTeamCountOptions({
+				type: "double_elimination",
+				currentCount,
+			})[0].max,
+		).toBe(12);
+		expect(
+			PreparedMaps.eliminationTeamCountOptions({
+				type: "single_elimination",
+				currentCount,
+			})[0].max,
+		).toBe(16);
+	});
+
+	for (const type of ELIMINATION_TYPES) {
+		test(`every ${type} team count plays the same rounds as the max of its range`, () => {
+			const mismatches: string[] = [];
+
+			for (
+				let teamCount = TOURNAMENT.ENOUGH_TEAMS_TO_START;
+				teamCount <= HIGHEST_TESTED_TEAM_COUNT;
+				teamCount++
+			) {
+				const rangeMax = PreparedMaps.eliminationTeamCountOptions({
+					type,
+					currentCount: teamCount,
+				})[0].max;
+
+				const played = playedRoundNames({ type, teamCount });
+				const preparedFor = playedRoundNames({ type, teamCount: rangeMax });
+
+				if (!R.isDeepEqual(played, preparedFor)) {
+					mismatches.push(
+						`${teamCount} teams play [${played.join(", ")}] but preparing for ${rangeMax} shows [${preparedFor.join(", ")}]`,
+					);
+				}
+			}
+
+			expect(mismatches).toEqual([]);
+		});
+	}
+
+	/**
+	 * Names of the rounds that actually get played i.e. what both the bracket and the prepared maps dialog show.
+	 * The third place match is left out because it is trimmed separately when it disappears below four teams.
+	 */
+	function playedRoundNames({
+		type,
+		teamCount,
+	}: {
+		type: (typeof ELIMINATION_TYPES)[number];
+		teamCount: number;
+	}) {
+		const bracketData = Engine.create({
+			type,
+			seeding: nullFilledArray(teamCount).map((_, i) => i + 1),
+			settings: {},
+		});
+
+		const rounds =
+			type === "single_elimination"
+				? getRounds({ type: "single", bracketData })
+				: [
+						...getRounds({ type: "winners", bracketData }),
+						...getRounds({ type: "losers", bracketData }),
+					];
+
+		return rounds
+			.map((round) => round.name)
+			.filter((name) => name !== TOURNAMENT.ROUND_NAMES.THIRD_PLACE_MATCH);
+	}
+});
+
+describe("PreparedMaps - isValidMaxEliminationTeamCount", () => {
+	test("accepts a max shared by both elimination types", () => {
+		expect(PreparedMaps.isValidMaxEliminationTeamCount(4)).toBe(true);
+	});
+
+	test("accepts a max that only double elimination splits at", () => {
+		expect(PreparedMaps.isValidMaxEliminationTeamCount(12)).toBe(true);
+	});
+
+	test("rejects a count that is not the max of any range", () => {
+		expect(PreparedMaps.isValidMaxEliminationTeamCount(5)).toBe(false);
+	});
+
+	test("rejects counts outside the supported bracket sizes", () => {
+		expect(PreparedMaps.isValidMaxEliminationTeamCount(1)).toBe(false);
+		expect(PreparedMaps.isValidMaxEliminationTeamCount(300)).toBe(false);
 	});
 });
 
@@ -902,7 +1013,7 @@ describe("PreparedMaps - eliminationTeamCountPrefill", () => {
 
 		expect(
 			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
-		).toBe(16);
+		).toBe(12);
 	});
 
 	test("does not count teams that never filled their roster", () => {
@@ -918,7 +1029,7 @@ describe("PreparedMaps - eliminationTeamCountPrefill", () => {
 
 		expect(
 			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
-		).toBe(16);
+		).toBe(12);
 	});
 
 	test("prefills invitational tournaments even if the start time is far away", () => {
@@ -947,7 +1058,7 @@ describe("PreparedMaps - eliminationTeamCountPrefill", () => {
 
 		expect(
 			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
-		).toBe(16);
+		).toBe(12);
 	});
 
 	test("does not prefill while registration is still open", () => {
@@ -983,7 +1094,7 @@ describe("PreparedMaps - eliminationTeamCountPrefill", () => {
 
 		expect(
 			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
-		).toBe(32);
+		).toBe(24);
 	});
 
 	test("prefills a follow-up bracket with the amount of teams that advance", () => {
