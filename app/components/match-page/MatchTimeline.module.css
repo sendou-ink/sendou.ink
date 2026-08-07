@@ -127,13 +127,13 @@
 }
 
 .resultLabel {
-	font-size: var(--font-xs);
+	font-size: var(--font-sm);
 	font-weight: var(--weight-extra);
 	text-transform: uppercase;
 }
 
 .resultPoints {
-	font-size: var(--font-3xs);
+	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text);
 }

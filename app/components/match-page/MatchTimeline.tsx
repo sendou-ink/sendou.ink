@@ -35,6 +35,7 @@ import {
 	ObjectiveTimeline,
 	type ObjectiveTimelineEvent,
 } from "../ObjectiveTimeline";
+import { matchScoresFromObjective } from "../objective-timeline-utils";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import type { WeaponPoolWeapon } from "./WeaponPool";
@@ -257,6 +258,12 @@ function TimelineMapRow({
 	teams: MatchTimelineProps["teams"];
 }) {
 	const { t } = useTranslation(["game-misc"]);
+	const objectiveScores = matchScoresFromObjective(
+		(map.scoreboard?.objective ?? []).map((event) => ({
+			t: event.t,
+			score: event.data.score,
+		})),
+	);
 
 	return (
 		<div className={styles.mapEvent}>
@@ -265,6 +272,7 @@ function TimelineMapRow({
 					result={map.winner === "ALPHA" ? "WIN" : "LOSS"}
 					isKo={map.ko && map.winner === "ALPHA"}
 					scoreboardScore={map.scoreboard?.scores[0]}
+					objectiveScore={objectiveScores[0]}
 					weapons={map.weapons?.alpha}
 					isPicked={map.pickedBy === "ALPHA"}
 				/>
@@ -290,6 +298,7 @@ function TimelineMapRow({
 					result={map.winner === "BRAVO" ? "WIN" : "LOSS"}
 					isKo={map.ko && map.winner === "BRAVO"}
 					scoreboardScore={map.scoreboard?.scores[1]}
+					objectiveScore={objectiveScores[1]}
 					weapons={map.weapons?.bravo}
 					isPicked={map.pickedBy === "BRAVO"}
 				/>
@@ -305,6 +314,7 @@ function SideResult({
 	result,
 	isKo,
 	scoreboardScore,
+	objectiveScore,
 	weapons,
 	isPicked,
 }: {
@@ -312,10 +322,13 @@ function SideResult({
 	isKo?: boolean;
 	/** ingested 0-100 team score (100 = knockout) */
 	scoreboardScore?: number | null;
+	/** 0-100 team score implied by the last objective-counter read */
+	objectiveScore?: number | null;
 	weapons?: WeaponPoolWeapon[];
 	isPicked?: boolean;
 }) {
 	const { t } = useTranslation(["q"]);
+	const score = resolveSideScore(scoreboardScore, objectiveScore);
 
 	return (
 		<div className={styles.sideResult}>
@@ -342,22 +355,63 @@ function SideResult({
 							? t("q:match.timeline.win")
 							: t("q:match.timeline.loss")}
 					</span>
-					{isKo && scoreboardScore == null ? (
+					{isKo && score === null ? (
 						<span className={styles.resultPoints}>
 							{t("q:match.action.ko")}
 						</span>
 					) : null}
 				</div>
-				{typeof scoreboardScore === "number" ? (
-					<span className={styles.resultPoints}>
-						{scoreboardScore === SCOREBOARD_KO_SCORE
-							? t("q:match.action.ko")
-							: t("q:match.timeline.points", { points: scoreboardScore })}
-					</span>
-				) : null}
+				{score ? <ResultPoints score={score} /> : null}
 			</div>
 			{weapons ? <WeaponPool weapons={weapons} /> : null}
 		</div>
+	);
+}
+
+interface SideScore {
+	/** 0-100 (100 = knockout) */
+	value: number;
+	/** read off the objective counter rather than the results screen */
+	fromObjective: boolean;
+}
+
+/**
+ * A knockout's loser is reported with no score of its own, so the count it
+ * took is only known from the objective counter — prefer that read over a
+ * scoreless 0, and mark it as the video-sourced value it is.
+ */
+function resolveSideScore(
+	scoreboardScore?: number | null,
+	objectiveScore?: number | null,
+): SideScore | null {
+	if (typeof scoreboardScore === "number" && scoreboardScore > 0) {
+		return { value: scoreboardScore, fromObjective: false };
+	}
+	if (typeof objectiveScore === "number") {
+		return { value: objectiveScore, fromObjective: true };
+	}
+	if (typeof scoreboardScore === "number") {
+		return { value: scoreboardScore, fromObjective: false };
+	}
+
+	return null;
+}
+
+function ResultPoints({ score }: { score: SideScore }) {
+	const { t } = useTranslation(["q"]);
+
+	if (score.value === SCOREBOARD_KO_SCORE) {
+		return (
+			<span className={styles.resultPoints}>{t("q:match.action.ko")}</span>
+		);
+	}
+
+	return (
+		<span className={styles.resultPoints}>
+			{score.fromObjective
+				? `(${score.value})`
+				: t("q:match.timeline.points", { points: score.value })}
+		</span>
 	);
 }
 

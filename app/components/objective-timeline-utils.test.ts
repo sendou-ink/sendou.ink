@@ -1,8 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { type PenaltyRead, smoothPenalties } from "./objective-timeline-utils";
+import {
+	matchScoresFromObjective,
+	type ObjectiveScoreRead,
+	type PenaltyRead,
+	smoothPenalties,
+} from "./objective-timeline-utils";
 
 function reads(...pairs: Array<[t: number, penalty: number | null]>) {
 	return pairs.map(([t, penalty]): PenaltyRead => ({ t, penalty }));
+}
+
+function counterReads(
+	...entries: Array<[t: number, alpha: number | null, bravo: number | null]>
+) {
+	return entries.map(
+		([t, alpha, bravo]): ObjectiveScoreRead => ({ t, score: [alpha, bravo] }),
+	);
 }
 
 describe("smoothPenalties", () => {
@@ -48,5 +61,45 @@ describe("smoothPenalties", () => {
 
 	it("keeps all-null reads null", () => {
 		expect(smoothPenalties(reads([0, null], [2, null]))).toEqual([null, null]);
+	});
+});
+
+describe("matchScoresFromObjective", () => {
+	it("inverts the last counter read of each team", () => {
+		expect(
+			matchScoresFromObjective(
+				counterReads([0, 100, 100], [60, 80, 92], [120, 55, 0]),
+			),
+		).toEqual([45, 100]);
+	});
+
+	it("falls back to the latest readable count", () => {
+		expect(
+			matchScoresFromObjective(
+				counterReads([0, 100, 100], [60, 55, 40], [120, null, null]),
+			),
+		).toEqual([45, 60]);
+	});
+
+	it("ignores counts outside the counter's range", () => {
+		expect(
+			matchScoresFromObjective(counterReads([0, 100, 100], [60, 155, 40])),
+		).toEqual([0, 60]);
+	});
+
+	it("reads the last count regardless of the order given", () => {
+		expect(
+			matchScoresFromObjective(
+				counterReads([120, 55, 0], [0, 100, 100], [60, 80, 92]),
+			),
+		).toEqual([45, 100]);
+	});
+
+	it("reports nothing when no count was read", () => {
+		expect(matchScoresFromObjective(counterReads([0, null, null]))).toEqual([
+			null,
+			null,
+		]);
+		expect(matchScoresFromObjective([])).toEqual([null, null]);
 	});
 });

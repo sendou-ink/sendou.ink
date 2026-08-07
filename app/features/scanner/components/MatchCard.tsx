@@ -11,6 +11,7 @@ import type * as React from "react";
 import { useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage, WeaponImage } from "~/components/Image";
+import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -20,6 +21,9 @@ import type { ScannerMatch } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
 import { formatTime } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
+
+/** the game score a knockout wins at */
+const KO_MATCH_SCORE = 100;
 
 const SEND_CHIP_LABELS: Record<Exclude<SendStatus["state"], "sent">, string> = {
 	queued: "queued",
@@ -186,19 +190,43 @@ function Score({
 		);
 	}
 	const [alpha, bravo] = match.matchScores;
+	const objectiveScores = matchScoresFromObjective(
+		match.objective?.samples ?? [],
+	);
 
-	// a 100 only happens on a knockout — show it the way players say it
-	const label = (score: number | null) =>
-		score === 100 ? "KO" : (score ?? "?");
 	// scoreboard-sourced matches list the winners first
 	const winnerKnown = match.winner !== null;
 	return (
 		<div className="match-score">
-			<span className={winnerKnown ? "win" : undefined}>{label(alpha)}</span>
+			<span className={winnerKnown ? "win" : undefined}>
+				{scoreLabel(alpha, objectiveScores[0])}
+			</span>
 			<span className="sep"> – </span>
-			<span className={winnerKnown ? "lose" : undefined}>{label(bravo)}</span>
+			<span className={winnerKnown ? "lose" : undefined}>
+				{scoreLabel(bravo, objectiveScores[1])}
+			</span>
 		</div>
 	);
+}
+
+/**
+ * A 100 only happens on a knockout, shown the way players say it. A knockout's
+ * loser gets no score of its own, so the objective counter's last read stands
+ * in — parenthesized, since the scan read it off the video and may have lost
+ * sight of the counter before the game ended.
+ */
+function scoreLabel(
+	score: number | null,
+	objectiveScore: number | null,
+): string {
+	if (score !== null && score > 0) {
+		return score === KO_MATCH_SCORE ? "KO" : String(score);
+	}
+	if (objectiveScore !== null) {
+		return objectiveScore === KO_MATCH_SCORE ? "(KO)" : `(${objectiveScore})`;
+	}
+
+	return score === null ? "?" : String(score);
 }
 
 interface TeamWeapon {

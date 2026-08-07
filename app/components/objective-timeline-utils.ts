@@ -1,5 +1,8 @@
 const PENALTY_BRIDGE_SECONDS = 6;
 
+/** The count a knockout wins at: the counter runs out and the team takes all of it. */
+const FULL_COUNT = 100;
+
 /** One penalty read: when it was made and the pill value seen (null = no pill or unreadable). */
 export interface PenaltyRead {
 	/** whole seconds into the source (video, stream or game) the read was made at */
@@ -48,6 +51,43 @@ export function smoothPenalties(
 		}
 	}
 	return result;
+}
+
+/** One counter read: when it was made and the count displayed per team. */
+export interface ObjectiveScoreRead {
+	/** whole seconds into the source (video, stream or game) the read was made at */
+	t: number;
+	/** displayed count per team; null = unreadable */
+	score: readonly [number | null, number | null];
+}
+
+/**
+ * Match scores implied by each team's last readable counter read. The counter
+ * counts down from 100 while match scores run the other way (100 = knockout),
+ * so a read is inverted into the count the team took. Stands in where the
+ * results screen reports no score of its own — a knockout's loser — but the
+ * last read is only as late as the last frame the counter was seen in, so it
+ * can trail the count the team ended on.
+ *
+ * @param reads counter reads, in any order
+ * @returns per-team match score (0-100); null where nothing was read
+ */
+export function matchScoresFromObjective(
+	reads: readonly ObjectiveScoreRead[],
+): [number | null, number | null] {
+	const sorted = [...reads].sort((a, b) => a.t - b.t);
+	const lastCountTaken = (side: 0 | 1) => {
+		for (let i = sorted.length - 1; i >= 0; i--) {
+			const count = sorted[i]!.score[side];
+			// a count outside the counter's range is a misread, not a state
+			if (count !== null && count >= 0 && count <= FULL_COUNT) {
+				return FULL_COUNT - count;
+			}
+		}
+		return null;
+	};
+
+	return [lastCountTaken(0), lastCountTaken(1)];
 }
 
 function medianFilterValues(
