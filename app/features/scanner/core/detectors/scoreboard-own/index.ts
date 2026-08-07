@@ -12,15 +12,15 @@
  */
 
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
 import {
-	type ScannerAbility,
 	type ScannerLobby,
+	toAbilityWithUnknown,
 	toMainWeaponId,
-	toScannerAbility,
 } from "../../../scanner-types";
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
@@ -60,7 +60,7 @@ export interface ScoreboardOwnData {
 	 * own gear abilities, [head, clothes, shoes] rows of
 	 * [main, sub, sub, sub] ability ids
 	 */
-	abilities: ScannerAbility[][];
+	abilities: AbilityWithUnknown[][];
 }
 
 export const SCOREBOARD_OWN_EVENT_TYPE = "ScoreboardOwn";
@@ -194,18 +194,18 @@ export function createScoreboardOwnDetector(
 		}
 
 		// gear-card ability strips: [head, clothes, shoes] x [main, sub, sub, sub]
-		const abilityRows: ScannerAbility[][] = [];
+		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
 		if (abilities) {
 			for (let row = 0; row < GEAR_ROWS; row++) {
-				const ids: ScannerAbility[] = [];
+				const ids: AbilityWithUnknown[] = [];
 				const debug: (WeaponMatch | null)[] = [];
 				const mainCrop = cropRoi(rgb, gearMainRoi(row));
 				const main = matchWeapon(mainCrop, abilities.mains, {
 					inkThreshold: OWN_ABILITY_INK_THRESHOLD,
 				});
 				mainCrop.delete();
-				ids.push(toScannerAbility(main.id) ?? "UNKNOWN");
+				ids.push(toAbilityWithUnknown(main.id) ?? "UNKNOWN");
 				debug.push(main);
 				confidences.push(Math.max(0, main.score));
 				for (let slot = 0; slot < 3; slot++) {
@@ -214,7 +214,7 @@ export function createScoreboardOwnDetector(
 						inkThreshold: OWN_ABILITY_INK_THRESHOLD,
 					});
 					crop.delete();
-					ids.push(toScannerAbility(sub.id) ?? "UNKNOWN");
+					ids.push(toAbilityWithUnknown(sub.id) ?? "UNKNOWN");
 					debug.push(sub);
 					confidences.push(Math.max(0, sub.score));
 				}

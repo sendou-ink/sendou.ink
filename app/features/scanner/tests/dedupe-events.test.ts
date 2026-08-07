@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	StageId,
+} from "~/modules/in-game-lists/types";
 import { withoutRepeatEvents } from "../components/dedupe-events";
 import type { DeathData } from "../core/detectors/death/index";
 import type {
@@ -9,7 +13,6 @@ import type {
 } from "../core/detectors/minimap/index";
 import { SPECTATOR_SLOTS } from "../core/detectors/minimap/rois";
 import type { DetectedEvent } from "../core/detectors/types";
-import type { ScannerAbility } from "../scanner-types";
 import test from "./node-test-compat";
 
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];
@@ -20,7 +23,7 @@ function teammate(
 	i: number,
 	{
 		name = null as string | null,
-		abilities = [] as (ScannerAbility | null)[],
+		abilities = [] as (AbilityWithUnknown | null)[],
 	} = {},
 ): MinimapTeammate {
 	return { slot: SPECTATOR_SLOTS[i]!, name, weaponId, abilities };

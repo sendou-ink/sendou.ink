@@ -5,19 +5,16 @@
  * layer and never leave a detector.
  */
 import { abilities } from "~/modules/in-game-lists/abilities";
-import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	Ability,
+	AbilityWithUnknown,
+	MainWeaponId,
+} from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 
 /** The scoreboard header's lobby tag. PRIVATE marks tournament games. */
 export const SCANNER_LOBBIES = ["X", "SERIES", "OPEN", "PRIVATE"] as const;
 export type ScannerLobby = (typeof SCANNER_LOBBIES)[number];
-
-/**
- * A detected gear ability: a sendou ability id, or the explicit
- * unrecognized marker (the UNKNOWN template in the shared img/abilities
- * set — distinct from null, which means the badge was covered/absent).
- */
-export type ScannerAbility = Ability | "UNKNOWN"; // xxx: why not AbilityWithUnknown
 
 const MAIN_WEAPON_ID_SET: ReadonlySet<number> = new Set(mainWeaponIds);
 const ABILITY_SET: ReadonlySet<string> = new Set(abilities.map((a) => a.name));
@@ -28,8 +25,12 @@ export function toMainWeaponId(id: number | string): MainWeaponId | null {
 	return MAIN_WEAPON_ID_SET.has(n) ? (n as MainWeaponId) : null;
 }
 
-/** Narrow an ability-template id to a ScannerAbility; null when unknown. */
-export function toScannerAbility(id: string): ScannerAbility | null {
+/**
+ * Narrow an ability-template id to an AbilityWithUnknown; null when the id is
+ * not a known template. Note "UNKNOWN" is a template of its own (the badge was
+ * read but not recognized) and is distinct from null.
+ */
+export function toAbilityWithUnknown(id: string): AbilityWithUnknown | null {
 	if (id === "UNKNOWN") return id;
 	return ABILITY_SET.has(id) ? (id as Ability) : null;
 }

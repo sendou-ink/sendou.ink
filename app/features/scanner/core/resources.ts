@@ -99,7 +99,7 @@ export async function assembleScoreboardResources(
 		icons("special-weapons", specialWeaponIds),
 		icons("sub-weapons", subWeaponIds),
 		// UNKNOWN is the garbled-badge template: it competes in matching and
-		// wins on unreadable slots (see ScannerAbility in scanner-types.ts)
+		// wins on unreadable slots (see toAbilityWithUnknown in scanner-types.ts)
 		icons("abilities", [
 			...abilityList.map((ability) => ability.name),
 			"UNKNOWN",

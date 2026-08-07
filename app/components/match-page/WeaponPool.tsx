@@ -16,7 +16,6 @@ export type WeaponPoolWeapon =
 	  }
 	| null;
 
-// xxx: maybe sort confirmed first then unconfirmed in weapon id order
 export function WeaponPool({
 	weapons,
 	size = 32,

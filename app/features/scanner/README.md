@@ -148,7 +148,7 @@ sequenceDiagram
 Weapon/ability/special/sub template sources are the site's shared game icons
 in the **sendou-ink/assets repo** under `assets/img/**` (`.avif`; ids from
 `~/modules/in-game-lists`, plus the scanner-only `UNKNOWN` ability badge —
-`toScannerAbility` narrows template ids back to sendou ids). Scanner-specific
+`toAbilityWithUnknown` narrows template ids back to sendou ids). Scanner-specific
 sets — glyph atlases and the planner signature atlas — live here under
 `public/scanner/v1/**` (override with `SCANNER_ASSETS_DIR`; the version
 segment bumps on breaking atlas-format changes). xxx: the atlases are in

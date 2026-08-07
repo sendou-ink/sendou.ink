@@ -43,7 +43,6 @@ import { WeaponPool } from "./WeaponPool";
 
 const LONG_TEAM_NAME_THRESHOLD = 16;
 
-// xxx: make actual in-game score
 /** Ingested team scores run 0-100; a knockout shows as 100 for the winner. */
 const SCOREBOARD_KO_SCORE = 100;
 

@@ -5,11 +5,15 @@
 
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
-import type { ScannerAbility } from "../scanner-types";
+import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 
 const ROW_LABELS = ["head", "clothes", "shoes"] as const;
 
-export function AbilityGrid({ abilities }: { abilities: ScannerAbility[][] }) {
+export function AbilityGrid({
+	abilities,
+}: {
+	abilities: AbilityWithUnknown[][];
+}) {
 	return (
 		<table className="players">
 			<tbody>
@@ -35,7 +39,7 @@ export function AbilityGrid({ abilities }: { abilities: ScannerAbility[][] }) {
 export function AbilityPopover({
 	abilities,
 }: {
-	abilities: ScannerAbility[][];
+	abilities: AbilityWithUnknown[][];
 }) {
 	const [open, setOpen] = useState(false);
 	const trigger = abilities[0]?.[0];

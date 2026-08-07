@@ -7,15 +7,17 @@
  * and weapon id.
  */
 
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import type { ScannerAbility } from "../scanner-types";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+} from "~/modules/in-game-lists/types";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
 import type { DetectedEvent } from "./detectors/types";
 
 /** player row index (0-7) → [head, clothes, shoes] ability-id rows */
-export type PlayerAbilityMap = Map<number, ScannerAbility[][]>;
+export type PlayerAbilityMap = Map<number, AbilityWithUnknown[][]>;
 
 /** Any player row a death can be attributed against (scoreboard, minimap). */
 interface HarvestablePlayer {

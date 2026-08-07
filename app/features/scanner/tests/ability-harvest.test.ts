@@ -6,7 +6,10 @@
  */
 
 import assert from "node:assert/strict";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+} from "~/modules/in-game-lists/types";
 import { connectAbilities } from "../core/ability-harvest";
 import {
 	DEATH_EVENT_TYPE,
@@ -14,15 +17,14 @@ import {
 } from "../core/detectors/death/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent } from "../core/detectors/types";
-import type { ScannerAbility } from "../scanner-types";
 import test from "./node-test-compat";
 
-const GRID_A: ScannerAbility[][] = [
+const GRID_A: AbilityWithUnknown[][] = [
 	["ISM", "ISM", "ISM", "ISM"],
 	["RSU", "RSU", "RSU", "RSU"],
 	["SSU", "SSU", "SSU", "SSU"],
 ];
-const GRID_B: ScannerAbility[][] = [
+const GRID_B: AbilityWithUnknown[][] = [
 	["QR", "QR", "QR", "QR"],
 	["QSJ", "QSJ", "QSJ", "QSJ"],
 	["IRU", "IRU", "IRU", "IRU"],
@@ -36,7 +38,7 @@ function death(
 	t: number,
 	name: string | null,
 	weaponId: MainWeaponId | null,
-	abilities: ScannerAbility[][] = GRID_A,
+	abilities: AbilityWithUnknown[][] = GRID_A,
 ): DetectedEvent<DeathData> {
 	return {
 		type: DEATH_EVENT_TYPE,

@@ -4,11 +4,9 @@ import type {
 	ScannerMatchObjective,
 	ScannerMatchPlayer,
 } from "~/features/scanner/core/scanner-match";
+import type { ScannerLobby } from "~/features/scanner/scanner-types";
 import type {
-	ScannerAbility,
-	ScannerLobby,
-} from "~/features/scanner/scanner-types";
-import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -67,7 +65,7 @@ function testMatch({
 	lobby?: ScannerLobby | null;
 	names?: string[];
 	weapons?: (MainWeaponId | null)[];
-	abilities?: Record<number, ScannerAbility[][]>;
+	abilities?: Record<number, AbilityWithUnknown[][]>;
 	povIndex?: number | null;
 	objective?: ScannerMatchObjective | null;
 } = {}): ScannerMatch {
@@ -491,7 +489,7 @@ describe("deriveScoreboardData", () => {
 	});
 
 	it("carries ingested player abilities through", () => {
-		const build: ScannerAbility[][] = [
+		const build: AbilityWithUnknown[][] = [
 			["ISM", "ISS", "ISS", "ISS"],
 			["QR", "QSJ", "QSJ", "QSJ"],
 			["SSU", "RSU", "RSU", "RSU"],

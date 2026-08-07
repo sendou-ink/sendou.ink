@@ -21,11 +21,12 @@
  * corroborate each other (steps 2c/2d in parse).
  */
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import { type ScannerAbility, toScannerAbility } from "../../../scanner-types";
+import { toAbilityWithUnknown } from "../../../scanner-types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import {
 	type GlyphSet,
@@ -88,7 +89,7 @@ export interface DeathData {
 	 * killer's gear abilities, [head, clothes, shoes] rows of [main, sub...]
 	 * ability ids; rows carry as many sub entries as the gear has slots (1-3)
 	 */
-	abilities: ScannerAbility[][];
+	abilities: AbilityWithUnknown[][];
 	/** killer's splash-tag name; null if unreadable */
 	name: string | null;
 }
@@ -645,18 +646,18 @@ export function createDeathDetector(
 
 		// 3. ability grid; rows carry 1-3 sub circles (left-aligned, as many
 		// as the gear has slots), so a sub box without badge ink ends the row
-		const abilityRows: ScannerAbility[][] = [];
+		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
 		if (abilities) {
 			for (let row = 0; row < ABILITY_ROWS; row++) {
-				const ids: ScannerAbility[] = [];
+				const ids: AbilityWithUnknown[] = [];
 				const debug: (WeaponMatch | null)[] = [];
 				const mainCrop = cropRoi(rgb, abilityMainRoi(row));
 				const main = matchWeapon(mainCrop, abilities.mains, {
 					inkThreshold: ABILITY_INK_THRESHOLD,
 				});
 				mainCrop.delete();
-				ids.push(toScannerAbility(main.id) ?? "UNKNOWN");
+				ids.push(toAbilityWithUnknown(main.id) ?? "UNKNOWN");
 				debug.push(main);
 				confidences.push(Math.max(0, main.score));
 				for (let slot = 0; slot < ABILITY_SUB_XS.length; slot++) {
@@ -676,7 +677,7 @@ export function createDeathDetector(
 						inkThreshold: ABILITY_INK_THRESHOLD,
 					});
 					crop.delete();
-					ids.push(toScannerAbility(sub.id) ?? "UNKNOWN");
+					ids.push(toAbilityWithUnknown(sub.id) ?? "UNKNOWN");
 					debug.push(sub);
 					confidences.push(Math.max(0, sub.score));
 				}

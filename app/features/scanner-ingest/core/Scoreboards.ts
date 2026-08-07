@@ -2,11 +2,9 @@ import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 } from "~/features/scanner/core/scanner-match";
+import type { ScannerLobby } from "~/features/scanner/scanner-types";
 import type {
-	ScannerAbility,
-	ScannerLobby,
-} from "~/features/scanner/scanner-types";
-import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -200,7 +198,7 @@ export interface IngestedScoreboardPlayer {
 	s: number | null;
 	paint: number | null;
 	/** [head, clothes, shoes] ability rows gathered from the match's death screens */
-	abilities?: ScannerAbility[][];
+	abilities?: AbilityWithUnknown[][];
 	/** set via POV attribution of a linked ingested match */
 	userId?: number;
 }
@@ -316,7 +314,7 @@ interface WinnerFirstPlayer {
 	ka: number | null;
 	d: number | null;
 	s: number | null;
-	abilities?: ScannerAbility[][];
+	abilities?: AbilityWithUnknown[][];
 }
 
 function winnerFirstView(

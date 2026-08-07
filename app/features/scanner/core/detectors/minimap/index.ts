@@ -21,12 +21,12 @@
  *   the template set, ink threshold, and score floor per card.
  */
 
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
-import {
-	type ScannerAbility,
-	toMainWeaponId,
-	toScannerAbility,
-} from "../../../scanner-types";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	StageId,
+} from "~/modules/in-game-lists/types";
+import { toAbilityWithUnknown, toMainWeaponId } from "../../../scanner-types";
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
@@ -94,7 +94,7 @@ export interface MinimapTeammate {
 	 * the card's three main abilities, [head, clothes, shoes] (null per
 	 * unreadable badge); empty when a respawn cross-out sits over the badges
 	 */
-	abilities: (ScannerAbility | null)[];
+	abilities: (AbilityWithUnknown | null)[];
 }
 
 export interface MinimapEnemy {
@@ -105,7 +105,7 @@ export interface MinimapEnemy {
 	name: string | null;
 	/** readable even on struck rows: the cross-out spares the weapon icon */
 	weaponId: MainWeaponId | null;
-	abilities: (ScannerAbility | null)[];
+	abilities: (AbilityWithUnknown | null)[];
 }
 
 export interface MinimapData {
@@ -258,7 +258,7 @@ export function createMinimapDetector(
 		inkThreshold: number,
 		confidences: number[],
 		debugRow: (WeaponMatch | null)[],
-	): (ScannerAbility | null)[] {
+	): (AbilityWithUnknown | null)[] {
 		if (!badges) return [null, null, null];
 		return centers.map(([cx, cy]) => {
 			const crop = cropRoi(rgb, badgeRoi(cx, cy));
@@ -267,7 +267,7 @@ export function createMinimapDetector(
 			debugRow.push(match);
 			confidences.push(Math.max(0, match.score));
 			return match.score >= ABILITY_MIN_SCORE
-				? toScannerAbility(match.id)
+				? toAbilityWithUnknown(match.id)
 				: null;
 		});
 	}
@@ -342,7 +342,7 @@ export function createMinimapDetector(
 				let nameRaw = "";
 				let weapon: WeaponMatch | null = null;
 				const badgeDebug: (WeaponMatch | null)[] = [];
-				let abilities: (ScannerAbility | null)[] = [];
+				let abilities: (AbilityWithUnknown | null)[] = [];
 				if (!occluded) {
 					const parsed = bestNameRead(gray, layout.name);
 					if (parsed) {
@@ -478,7 +478,7 @@ export function createMinimapDetector(
 			let nameRaw = "";
 			let weapon: WeaponMatch | null = null;
 			const badgeDebug: (WeaponMatch | null)[] = [];
-			let abilities: (ScannerAbility | null)[] = [];
+			let abilities: (AbilityWithUnknown | null)[] = [];
 			if (!occluded) {
 				if (nameGlyphs) {
 					const band = copyRoi(gray, layout.name);
@@ -578,7 +578,7 @@ export function createMinimapDetector(
 				confidences.push(Math.max(0, weapon.score));
 			}
 			const badgeDebug: (WeaponMatch | null)[] = [];
-			const abilities: (ScannerAbility | null)[] = occluded
+			const abilities: (AbilityWithUnknown | null)[] = occluded
 				? []
 				: matchBadges(
 						rgb,

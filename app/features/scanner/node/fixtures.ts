@@ -8,6 +8,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -19,7 +20,7 @@ import type {
 	GateResult,
 } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
-import type { ScannerAbility, ScannerLobby } from "../scanner-types";
+import type { ScannerLobby } from "../scanner-types";
 import { readImage } from "./image-io";
 
 export const FIXTURES_DIR = new URL("../tests/fixtures", import.meta.url)
@@ -40,7 +41,7 @@ interface ExpectedMinimapTeammate {
 	/** informational for the human corrector; tests compare weaponId */
 	weaponLabel?: string | null;
 	weaponId?: MainWeaponId | null;
-	abilities?: (ScannerAbility | null)[];
+	abilities?: (AbilityWithUnknown | null)[];
 }
 
 interface ExpectedMinimapEnemy {
@@ -49,7 +50,7 @@ interface ExpectedMinimapEnemy {
 	/** informational for the human corrector; tests compare weaponId */
 	weaponLabel?: string | null;
 	weaponId?: MainWeaponId | null;
-	abilities?: (ScannerAbility | null)[];
+	abilities?: (AbilityWithUnknown | null)[];
 }
 
 interface ExpectedScoreboard {
@@ -87,7 +88,7 @@ interface ExpectedScoreboard {
 		weaponId?: number | null;
 		weaponType?: "MAIN" | "SUB" | "SPECIAL";
 		/** Death + ScoreboardOwn: 3 gear rows of [main, sub, sub, sub] ability ids */
-		abilities?: ScannerAbility[][];
+		abilities?: AbilityWithUnknown[][];
 		/** Death only: killer's splash-tag name */
 		name?: string;
 		/** Objective only: match-timer seconds ("3:35" = 215); null = unreadable */

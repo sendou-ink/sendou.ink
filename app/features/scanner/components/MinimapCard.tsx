@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
+import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
@@ -8,14 +9,17 @@ import {
 	type MinimapTeammate,
 } from "../core/detectors/minimap/index";
 import type { CardSlot } from "../core/detectors/minimap/rois";
-import type { ScannerAbility } from "../scanner-types";
 import { FrameThumb } from "./FrameThumb";
 import { stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
 const ENEMY_SLOT_LETTERS = ["A", "B", "X", "Y"] as const;
 
-function AbilityRow({ abilities }: { abilities: (ScannerAbility | null)[] }) {
+function AbilityRow({
+	abilities,
+}: {
+	abilities: (AbilityWithUnknown | null)[];
+}) {
 	return (
 		<>
 			{abilities.map((id, i) =>

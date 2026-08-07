@@ -6,11 +6,12 @@
  * a match may be partial (features/scanner-ingest merges partials).
  */
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import type { ScannerAbility, ScannerLobby } from "../scanner-types";
+import type { ScannerLobby } from "../scanner-types";
 
 export interface ScannerMatchPlayer {
 	/** in-game name; null when unread (e.g. minimap POV enemy rows show none) */
@@ -22,7 +23,7 @@ export interface ScannerMatchPlayer {
 	d: number | null;
 	s: number | null;
 	/** [head, clothes, shoes] ability rows harvested from death screens */
-	abilities?: ScannerAbility[][];
+	abilities?: AbilityWithUnknown[][];
 }
 
 export interface ScannerMatchTeam {

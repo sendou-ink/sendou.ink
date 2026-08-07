@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import type {
+	AbilityWithUnknown,
 	MainWeaponId,
 	ModeShort,
 	StageId,
@@ -21,7 +22,7 @@ import {
 	ingestSkipReasons,
 	invalidObjectiveEvents,
 } from "../core/match-builder";
-import type { ScannerAbility, ScannerLobby } from "../scanner-types";
+import type { ScannerLobby } from "../scanner-types";
 import test from "./node-test-compat";
 
 const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
@@ -39,7 +40,7 @@ function mapStart(
 function death(
 	t: number,
 	name: string,
-	abilities: ScannerAbility[][] = [["ISM", "ISS", "ISS", "ISS"]],
+	abilities: AbilityWithUnknown[][] = [["ISM", "ISS", "ISS", "ISS"]],
 ): DetectedEvent {
 	const data: DeathData = {
 		weaponId: null,
@@ -295,7 +296,7 @@ test("without a pov the side whose count got lower is the winner side", () => {
 });
 
 test("enriches players with abilities from the match's deaths", () => {
-	const build: ScannerAbility[][] = [
+	const build: AbilityWithUnknown[][] = [
 		["ISM", "ISS", "ISS", "ISS"],
 		["QR", "QSJ", "QSJ", "QSJ"],
 		["SSU", "RSU", "RSU", "RSU"],
