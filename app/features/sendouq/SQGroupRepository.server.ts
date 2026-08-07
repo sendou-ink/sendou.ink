@@ -7,7 +7,6 @@ import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
-import invariant from "~/utils/invariant";
 import {
 	commonUserMembersAgg,
 	commonUserSelect,
@@ -77,7 +76,6 @@ export async function findCurrentGroups() {
 				commonUserMembersAgg(eb, {
 					mapModePreferences: eb.ref("User.mapModePreferences"),
 					noScreen: eb.ref("User.noScreen"),
-					role: eb.ref("GroupMember.role"),
 					note: eb.ref("GroupMember.note"),
 					weapons: matchProfileWeapons(eb),
 					languages: eb.ref("User.languages"),
@@ -122,7 +120,6 @@ export async function insert(args: CreateGroupArgs) {
 			.values({
 				groupId: createdGroup.id,
 				userId: args.userId,
-				role: "OWNER",
 			})
 			.execute();
 
@@ -141,17 +138,13 @@ export async function insert(args: CreateGroupArgs) {
 
 type CreateGroupFromPreviousGroupArgs = {
 	previousGroupId: number;
-	members: {
-		id: number;
-		role: Tables["GroupMember"]["role"];
-	}[];
+	memberUserIds: number[];
 	status?: Exclude<Tables["Group"]["status"], "INACTIVE">;
 };
 export async function insertFromPrevious(
 	args: CreateGroupFromPreviousGroupArgs,
 ) {
 	const status = args.status ?? "PREPARING";
-	const membersWithEnsuredOwner = ensureOwnerRole(args.members);
 
 	return db.transaction().execute(async (trx) => {
 		const createdGroup = await trx
@@ -175,10 +168,9 @@ export async function insertFromPrevious(
 		await trx
 			.insertInto("GroupMember")
 			.values(
-				membersWithEnsuredOwner.map((member) => ({
+				args.memberUserIds.map((userId) => ({
 					groupId: createdGroup.id,
-					userId: member.id,
-					role: member.role,
+					userId,
 				})),
 			)
 			.execute();
@@ -191,19 +183,6 @@ export async function insertFromPrevious(
 
 		return createdGroup;
 	});
-}
-
-function ensureOwnerRole(
-	members: CreateGroupFromPreviousGroupArgs["members"],
-): CreateGroupFromPreviousGroupArgs["members"] {
-	if (members.some((m) => m.role === "OWNER")) return members;
-
-	const promoteeIndex = members.findIndex((m) => m.role === "MANAGER");
-	const targetIndex = promoteeIndex !== -1 ? promoteeIndex : 0;
-
-	return members.map((m, i) =>
-		i === targetIndex ? { ...m, role: "OWNER" as const } : m,
-	);
 }
 
 function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
@@ -233,33 +212,11 @@ export function morphGroups({
 			.where("Group.id", "=", survivingGroupId)
 			.execute();
 
-		const otherGroupMembers = await trx
-			.selectFrom("GroupMember")
-			.select(["GroupMember.userId", "GroupMember.role"])
+		await trx
+			.updateTable("GroupMember")
+			.set({ groupId: survivingGroupId })
 			.where("GroupMember.groupId", "=", otherGroupId)
 			.execute();
-
-		for (const member of otherGroupMembers) {
-			const oldRole = otherGroupMembers.find(
-				(m) => m.userId === member.userId,
-			)?.role;
-			invariant(oldRole, "Member lacking a role");
-
-			await trx
-				.updateTable("GroupMember")
-				.set({
-					role:
-						oldRole === "OWNER"
-							? "MANAGER"
-							: oldRole === "MANAGER"
-								? "MANAGER"
-								: "REGULAR",
-					groupId: survivingGroupId,
-				})
-				.where("GroupMember.groupId", "=", otherGroupId)
-				.where("GroupMember.userId", "=", member.userId)
-				.execute();
-		}
 
 		await deleteLikesByGroupId(survivingGroupId, trx);
 		await refreshGroup(survivingGroupId, trx);
@@ -312,13 +269,7 @@ async function isGroupCorrect(
 
 export async function insertMember(
 	groupId: number,
-	{
-		userId,
-		role = "REGULAR",
-	}: {
-		userId: number;
-		role?: Tables["GroupMember"]["role"];
-	},
+	{ userId }: { userId: number },
 ) {
 	const chatCodeToRevalidate = await db.transaction().execute(async (trx) => {
 		await trx
@@ -326,7 +277,6 @@ export async function insertMember(
 			.values({
 				groupId,
 				userId,
-				role,
 			})
 			.execute();
 
@@ -656,7 +606,7 @@ export function leaveGroup(userId: number) {
 		const userGroup = await trx
 			.selectFrom("GroupMember")
 			.innerJoin("Group", "Group.id", "GroupMember.groupId")
-			.select(["Group.id", "GroupMember.role"])
+			.select(["Group.id"])
 			.where("userId", "=", userId)
 			.where("Group.status", "!=", "INACTIVE")
 			.executeTakeFirstOrThrow();
@@ -667,28 +617,15 @@ export function leaveGroup(userId: number) {
 			.where("GroupMember.groupId", "=", userGroup.id)
 			.execute();
 
-		const remainingMembers = await trx
+		const remainingMember = await trx
 			.selectFrom("GroupMember")
-			.select(["userId", "role"])
+			.select(["userId"])
 			.where("groupId", "=", userGroup.id)
-			.execute();
+			.executeTakeFirst();
 
-		if (remainingMembers.length === 0) {
+		if (!remainingMember) {
 			await trx.deleteFrom("Group").where("id", "=", userGroup.id).execute();
 			return;
-		}
-
-		if (userGroup.role === "OWNER") {
-			const newOwner =
-				remainingMembers.find((m) => m.role === "MANAGER") ??
-				remainingMembers[0];
-
-			await trx
-				.updateTable("GroupMember")
-				.set({ role: "OWNER" })
-				.where("userId", "=", newOwner.userId)
-				.where("groupId", "=", userGroup.id)
-				.execute();
 		}
 
 		const match = await trx
@@ -729,31 +666,6 @@ export function updateOwnMemberNote({
 			.set({ note: value })
 			.where("groupId", "=", groupId)
 			.where("userId", "=", actorId())
-			.execute();
-
-		await refreshGroup(groupId, trx);
-	});
-}
-
-export function updateMemberRole({
-	userId,
-	groupId,
-	role,
-}: {
-	userId: number;
-	groupId: number;
-	role: Tables["GroupMember"]["role"];
-}) {
-	if (role === "OWNER") {
-		throw new Error("Can't set role to OWNER with this function");
-	}
-
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("GroupMember")
-			.set({ role })
-			.where("userId", "=", userId)
-			.where("groupId", "=", groupId)
 			.execute();
 
 		await refreshGroup(groupId, trx);

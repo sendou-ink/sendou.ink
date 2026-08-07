@@ -1,6 +1,6 @@
 import { isWithinInterval, sub } from "date-fns";
 import * as R from "remeda";
-import type { DBBoolean, Tables } from "~/db/tables";
+import type { DBBoolean } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -79,7 +79,6 @@ class SendouQClass {
 			skillDifference:
 				undefined as ParsedMemento["groups"][number]["skillDifference"],
 			isReplay: false,
-			usersRole: null as Tables["GroupMember"]["role"] | null,
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
 
@@ -116,20 +115,12 @@ class SendouQClass {
 
 	/**
 	 * Finds the group that a user belongs to.
-	 * @returns The user's group with their role, or undefined if not in a group
+	 * @returns The user's group, or undefined if not in a group
 	 */
 	findOwnGroup(userId: number) {
-		const result = this.groups.find((group) =>
+		return this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
 		);
-		if (!result) return;
-
-		const member = result.members.find((m) => m.id === userId)!;
-
-		return {
-			...result,
-			usersRole: member.role,
-		};
 	}
 
 	/**

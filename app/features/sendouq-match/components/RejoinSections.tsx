@@ -56,39 +56,26 @@ export function MatchmadeRejoinSection({
 
 export function TrustedRejoinSection({
 	viewerGroup,
-	viewerUserId,
 }: {
 	viewerGroup: NonNullable<SendouQMatchLoaderData["match"]["groupAlpha"]>;
-	viewerUserId: number;
 }) {
 	const { t } = useTranslation(["q"]);
-	const viewerRole = viewerGroup.members.find(
-		(m) => m.id === viewerUserId,
-	)?.role;
 	const lookAgain = useActionSubmit(matchSchema);
 
-	if (viewerRole === "OWNER") {
-		return (
-			<div className="stack md items-center">
-				<SendouButton
-					variant="primary"
-					isPending={lookAgain.state !== "idle"}
-					onPress={() => {
-						lookAgain.submit("LOOK_AGAIN", {
-							previousGroupId: viewerGroup.id,
-						});
-					}}
-				>
-					{t("q:match.actions.lookAgain")}
-				</SendouButton>
-			</div>
-		);
-	}
-
 	return (
-		<p className="text-lighter text-sm text-center">
-			{t("q:match.rematch.waitingCaptain")}
-		</p>
+		<div className="stack md items-center">
+			<SendouButton
+				variant="primary"
+				isPending={lookAgain.state !== "idle"}
+				onPress={() => {
+					lookAgain.submit("LOOK_AGAIN", {
+						previousGroupId: viewerGroup.id,
+					});
+				}}
+			>
+				{t("q:match.actions.lookAgain")}
+			</SendouButton>
+		</div>
 	);
 }
 

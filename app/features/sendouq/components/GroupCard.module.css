@@ -99,20 +99,6 @@
 	height: 15px;
 }
 
-.star {
-	min-width: 18px;
-	max-width: 18px;
-	color: var(--color-text-accent);
-}
-
-.starFilled {
-	fill: var(--color-text-accent);
-}
-
-.starInactive {
-	color: var(--color-text-high);
-}
-
 .displayTier {
 	display: flex;
 	gap: var(--s-1);

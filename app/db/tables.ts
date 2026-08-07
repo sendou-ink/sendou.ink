@@ -368,7 +368,6 @@ export interface GroupMember {
 	createdAt: Generated<number>;
 	groupId: number;
 	note: string | null;
-	role: "OWNER" | "MANAGER" | "REGULAR";
 	userId: number;
 }
 

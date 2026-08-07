@@ -11,7 +11,6 @@ import {
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
 import { parseFormData } from "~/form/parse.server";
-import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
 import { groupAfterMorph } from "../core/groups";
@@ -64,17 +63,8 @@ export const action: ActionFunction = async ({ request }) => {
 		});
 
 	try {
-		// this throws because there should normally be no way user loses ownership by the action of some other user
-		const validateIsGroupOwner = () =>
-			errorToastIfFalsy(currentGroup.usersRole === "OWNER", "Not  owner");
-		const isGroupManager = () =>
-			currentGroup.usersRole === "MANAGER" ||
-			currentGroup.usersRole === "OWNER";
-
 		switch (data._action) {
 			case "LIKE": {
-				if (!isGroupManager()) return null;
-
 				await SQGroupRepository.insertLike({
 					likerGroupId: currentGroup.id,
 					targetGroupId: data.targetGroupId,
@@ -86,8 +76,6 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "RECHALLENGE": {
-				if (!isGroupManager()) return null;
-
 				await SQGroupRepository.rechallenge({
 					likerGroupId: currentGroup.id,
 					targetGroupId: data.targetGroupId,
@@ -98,8 +86,6 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "UNLIKE": {
-				if (!isGroupManager()) return null;
-
 				await SQGroupRepository.deleteLike({
 					likerGroupId: currentGroup.id,
 					targetGroupId: data.targetGroupId,
@@ -111,8 +97,6 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "GROUP_UP": {
-				if (!isGroupManager()) return null;
-
 				const allLikes = await SQGroupRepository.findAllLikesByGroupId(
 					data.targetGroupId,
 				);
@@ -161,8 +145,6 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "MATCH_UP": {
-				if (!isGroupManager()) return null;
-
 				const ownGroup = SendouQ.findOwnGroup(user.id);
 				const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
 				if (!ownGroup || !theirGroup) return null;
@@ -264,36 +246,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 				throw redirect(sendouQMatchPage(createdMatch.id));
 			}
-			case "GIVE_MANAGER": {
-				validateIsGroupOwner();
-
-				await SQGroupRepository.updateMemberRole({
-					groupId: currentGroup.id,
-					userId: data.userId,
-					role: "MANAGER",
-				});
-
-				await refreshSendouQInstance();
-
-				revalidateGroupTopic(currentGroup.id);
-
-				break;
-			}
-			case "REMOVE_MANAGER": {
-				validateIsGroupOwner();
-
-				await SQGroupRepository.updateMemberRole({
-					groupId: currentGroup.id,
-					userId: data.userId,
-					role: "REGULAR",
-				});
-
-				await refreshSendouQInstance();
-
-				revalidateGroupTopic(currentGroup.id);
-
-				break;
-			}
 			case "LEAVE_GROUP": {
 				await SQGroupRepository.leaveGroup(user.id);
 
@@ -315,26 +267,6 @@ export const action: ActionFunction = async ({ request }) => {
 				broadcastLookingUpdate();
 
 				throw redirect(SENDOUQ_PAGE);
-			}
-			case "KICK_FROM_GROUP": {
-				validateIsGroupOwner();
-				errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
-
-				await SQGroupRepository.leaveGroup(data.userId);
-
-				await refreshSendouQInstance();
-
-				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
-				if (remainingGroup?.chatCode) {
-					setGroupChatMetadata({
-						chatCode: remainingGroup.chatCode,
-						members: remainingGroup.members,
-					});
-				}
-
-				broadcastLookingUpdate();
-
-				break;
 			}
 			case "REFRESH_GROUP": {
 				await SQGroupRepository.refreshGroup(currentGroup.id);

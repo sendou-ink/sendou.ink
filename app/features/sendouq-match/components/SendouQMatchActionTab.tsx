@@ -274,10 +274,7 @@ function RequeueTab({
 					{!data.isOffSeason &&
 					!viewerGroup.matchmade &&
 					(!awaitingConfirmation || isOnReporterTeam) ? (
-						<TrustedRejoinSection
-							viewerGroup={viewerGroup}
-							viewerUserId={user.id}
-						/>
+						<TrustedRejoinSection viewerGroup={viewerGroup} />
 					) : null}
 					{isOnReporterTeam ? <hr className={styles.divider} /> : null}
 

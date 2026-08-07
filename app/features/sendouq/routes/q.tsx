@@ -14,7 +14,6 @@ import { Image } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
-import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -228,7 +227,6 @@ function JoinTeamDialog({
 	close: () => void;
 	members: {
 		username: string;
-		role: Tables["GroupMember"]["role"];
 	}[];
 }) {
 	const { t, i18n } = useTranslation(["q"]);

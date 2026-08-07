@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
-import { Mic, Star, Volume2, VolumeX } from "lucide-react";
+import { Mic, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
@@ -74,8 +74,6 @@ export function GroupCard({
 		? resolveFutureMatchModes(ownGroup, group)
 		: null;
 
-	const enableKicking = group.usersRole === "OWNER" && !displayOnly;
-
 	return (
 		<GroupCardContainer
 			groupId={group.id}
@@ -89,13 +87,10 @@ export function GroupCard({
 							return (
 								<GroupMember
 									member={member}
-									showActions={group.usersRole === "OWNER"}
 									key={member.discordId}
-									displayOnly={displayOnly}
 									hideVc={hideVc}
 									hideWeapons={hideWeapons}
 									hideNote={hideNote}
-									enableKicking={enableKicking}
 								/>
 							);
 						})}
@@ -199,9 +194,7 @@ export function GroupCard({
 				{group.skillDifference ? (
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
-				{action &&
-				(ownGroup?.usersRole === "OWNER" ||
-					ownGroup?.usersRole === "MANAGER") ? (
+				{action ? (
 					<ActionButton
 						schema={lookingSchema}
 						action={action === "MATCH_UP_RECHALLENGE" ? "MATCH_UP" : action}
@@ -246,20 +239,14 @@ function GroupCardContainer({
 
 function GroupMember({
 	member,
-	showActions,
-	displayOnly,
 	hideVc,
 	hideWeapons,
 	hideNote,
-	enableKicking,
 }: {
 	member: SQGroupMember;
-	showActions: boolean;
-	displayOnly?: boolean;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
 	hideNote?: boolean;
-	enableKicking?: boolean;
 }) {
 	const { t } = useTranslation(["q", "user"]);
 	const user = useUser();
@@ -298,13 +285,6 @@ function GroupMember({
 						styles.memberActions,
 					)}
 				>
-					{showActions || displayOnly ? (
-						<MemberRoleManager
-							member={member}
-							displayOnly={displayOnly}
-							enableKicking={enableKicking}
-						/>
-					) : null}
 					{member.skill ? <TierInfo skill={member.skill} /> : null}
 				</div>
 			</div>
@@ -506,83 +486,6 @@ function MemberSkillDifference({
 			<span className="text-lighter">{t("q:looking.sp.calculating")}</span> (
 			{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded})
 		</div>
-	);
-}
-
-function MemberRoleManager({
-	member,
-	displayOnly,
-	enableKicking,
-}: {
-	member: Pick<SQGroupMember, "id" | "role">;
-	displayOnly?: boolean;
-	enableKicking?: boolean;
-}) {
-	const loggedInUser = useUser();
-	const { t } = useTranslation(["q"]);
-
-	if (displayOnly && member.role !== "OWNER") return null;
-
-	return (
-		<SendouPopover
-			trigger={
-				<SendouButton
-					variant="minimal"
-					icon={
-						<Star
-							className={clsx(styles.star, {
-								[styles.starFilled]: member.role === "OWNER",
-								[styles.starInactive]: member.role === "REGULAR",
-							})}
-						/>
-					}
-				/>
-			}
-		>
-			<div className="stack sm items-center">
-				<div>{t(`q:roles.${member.role}`)}</div>
-				{member.role !== "OWNER" && !displayOnly ? (
-					<div className="stack md items-center">
-						{member.role === "REGULAR" ? (
-							<ActionButton
-								schema={lookingSchema}
-								action="GIVE_MANAGER"
-								fields={{ userId: member.id }}
-								formAction={SENDOUQ_LOOKING_PAGE}
-								variant="outlined"
-								size="small"
-							>
-								{t("q:looking.groups.actions.giveManager")}
-							</ActionButton>
-						) : null}
-						{member.role === "MANAGER" ? (
-							<ActionButton
-								schema={lookingSchema}
-								action="REMOVE_MANAGER"
-								fields={{ userId: member.id }}
-								formAction={SENDOUQ_LOOKING_PAGE}
-								variant="destructive"
-								size="small"
-							>
-								{t("q:looking.groups.actions.removeManager")}
-							</ActionButton>
-						) : null}
-						{enableKicking && member.id !== loggedInUser?.id ? (
-							<ActionButton
-								schema={lookingSchema}
-								action="KICK_FROM_GROUP"
-								fields={{ userId: member.id }}
-								formAction={SENDOUQ_LOOKING_PAGE}
-								variant="destructive"
-								size="small"
-							>
-								{t("q:looking.groups.actions.kick")}
-							</ActionButton>
-						) : null}
-					</div>
-				) : null}
-			</div>
-		</SendouPopover>
 	);
 }
 

@@ -45,19 +45,7 @@ export const lookingSchema = z.union([
 		targetGroupId: id,
 	}),
 	z.object({
-		_action: _action("GIVE_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("REMOVE_MANAGER"),
-		userId: id,
-	}),
-	z.object({
 		_action: _action("LEAVE_GROUP"),
-	}),
-	z.object({
-		_action: _action("KICK_FROM_GROUP"),
-		userId: id,
 	}),
 	z.object({
 		_action: _action("REFRESH_GROUP"),

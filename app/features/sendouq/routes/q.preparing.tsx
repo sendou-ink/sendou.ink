@@ -46,9 +46,7 @@ export default function QPreparingPage() {
 			<div className={styles.cardContainer}>
 				<GroupCard group={data.group} hideNote ownGroup={data.group} />
 			</div>
-			{data.group.members.length < FULL_GROUP_SIZE &&
-			(data.group.usersRole === "OWNER" ||
-				data.group.usersRole === "MANAGER") ? (
+			{data.group.members.length < FULL_GROUP_SIZE ? (
 				<MemberAdder
 					inviteCode={data.group.inviteCode}
 					groupMemberIds={data.group.members.map((m) => m.id)}

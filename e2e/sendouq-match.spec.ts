@@ -191,7 +191,8 @@ test.describe("SendouQ match page", () => {
 			isConcluded: true,
 		});
 
-		await impersonate(page, bravo[0].id);
+		// any member can re-queue the group, not only the member who created it
+		await impersonate(page, bravo[1].id);
 		const match = new SendouQMatchPage(page);
 		await match.goto(matchId);
 		await match.lookAgain();

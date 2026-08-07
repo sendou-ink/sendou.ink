@@ -24,7 +24,6 @@ function createMember(overrides: Partial<SQGroupMember> = {}): SQGroupMember {
 		discordAvatar: null,
 		customAvatarUrl: null,
 		customUrl: null,
-		role: "OWNER",
 		vc: "NO",
 		languages: [],
 		skill: "CALCULATING",
@@ -52,7 +51,6 @@ function createGroup(
 		tierRange: null,
 		skillDifference: undefined,
 		isReplay: false,
-		usersRole: null,
 		noScreen: false,
 		modePreferences: [],
 		status: "ACTIVE",
@@ -75,7 +73,6 @@ function createOwnGroupMember(
 		discordAvatar: null,
 		customAvatarUrl: null,
 		customUrl: null,
-		role: "OWNER",
 		vc: "NO",
 		languages: [],
 		skill: "CALCULATING",
@@ -103,7 +100,6 @@ function createOwnGroup(
 		tierRange: null,
 		skillDifference: undefined,
 		isReplay: false,
-		usersRole: "OWNER",
 		noScreen: false,
 		modePreferences: [],
 		chatCode: null,
@@ -159,8 +155,8 @@ describe("GroupCard", () => {
 				group: createGroup({
 					members: [
 						createMember({ id: 1, username: "Player1" }),
-						createMember({ id: 2, username: "Player2", role: "MANAGER" }),
-						createMember({ id: 3, username: "Player3", role: "REGULAR" }),
+						createMember({ id: 2, username: "Player2" }),
+						createMember({ id: 3, username: "Player3" }),
 					],
 				}),
 			});
@@ -260,9 +256,9 @@ describe("GroupCard", () => {
 					tier,
 					members: [
 						createMember({ id: 1 }),
-						createMember({ id: 2, role: "REGULAR" }),
-						createMember({ id: 3, role: "REGULAR" }),
-						createMember({ id: 4, role: "REGULAR" }),
+						createMember({ id: 2 }),
+						createMember({ id: 3 }),
+						createMember({ id: 4 }),
 					],
 				}),
 			});
@@ -301,9 +297,9 @@ describe("GroupCard", () => {
 					isReplay: true,
 					members: [
 						createMember({ id: 1 }),
-						createMember({ id: 2, role: "REGULAR" }),
-						createMember({ id: 3, role: "REGULAR" }),
-						createMember({ id: 4, role: "REGULAR" }),
+						createMember({ id: 2 }),
+						createMember({ id: 3 }),
+						createMember({ id: 4 }),
 					],
 				}),
 			});
@@ -376,24 +372,6 @@ describe("GroupCard", () => {
 
 			// Actual translated text is "Start match"
 			await expect.element(screen.getByText("Start match")).toBeVisible();
-		});
-
-		test("hides actions when user is not owner or manager", async () => {
-			// ownGroup with REGULAR role shouldn't show action buttons
-			const ownGroup = createOwnGroup({ id: 2, usersRole: "REGULAR" });
-
-			const screen = await renderGroupCard({
-				group: createGroup({ members: [createMember()] }),
-				action: "LIKE",
-				ownGroup,
-				displayOnly: false,
-			});
-
-			// Action button should not be rendered when user is not OWNER or MANAGER
-			const actionButton = screen.container.querySelector(
-				'[data-testid="group-card-action-button"]',
-			);
-			expect(actionButton).toBeNull();
 		});
 	});
 

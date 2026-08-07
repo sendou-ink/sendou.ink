@@ -94,10 +94,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
 					groupInvitedTo.id,
-					{
-						userId: user.id,
-						role: "MANAGER",
-					},
+					{ userId: user.id },
 				);
 
 				if (chatCodeToRevalidate) {

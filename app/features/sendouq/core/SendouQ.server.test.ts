@@ -138,28 +138,6 @@ describe("SendouQ", () => {
 			expect(group).toBeUndefined();
 		});
 
-		test("returns group with correct role when user is OWNER", async () => {
-			await createGroup([1, 2]);
-			await refreshSendouQInstance();
-
-			const group = SendouQ.findOwnGroup(users.id(1));
-
-			expect(group).toBeDefined();
-			const member = group?.members.find((m) => m.id === users.id(1));
-			expect(member?.role).toBe("OWNER");
-		});
-
-		test("returns group with correct role when user is REGULAR member", async () => {
-			await createGroup([1, 2]);
-			await refreshSendouQInstance();
-
-			const group = SendouQ.findOwnGroup(users.id(2));
-
-			expect(group).toBeDefined();
-			const member = group?.members.find((m) => m.id === users.id(2));
-			expect(member?.role).toBe("REGULAR");
-		});
-
 		test("returns correct group when multiple groups exist", async () => {
 			await createGroup([1, 2]);
 			await createGroup([3, 4]);

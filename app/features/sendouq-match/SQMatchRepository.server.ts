@@ -154,7 +154,6 @@ function groupWithTeamAndMembers(
 						)
 						.select((arrayEb) => [
 							...commonUserSelect(arrayEb),
-							"GroupMember.role",
 							"GroupMember.note",
 							"User.inGameName",
 							"User.vc",
