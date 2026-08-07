@@ -3,7 +3,7 @@ import type { ActionFunction } from "react-router";
 import { Config } from "~/config";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
-import { isAdmin } from "~/modules/permissions/utils";
+import { isAdmin, isDev } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { forbidden, parseBody } from "~/utils/remix.server";
@@ -18,7 +18,7 @@ import {
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 
-	if (!Config.scannerEnabled && !isAdmin(user)) {
+	if (!Config.scannerEnabled && !isAdmin(user) && !isDev(user)) {
 		forbidden();
 	}
 

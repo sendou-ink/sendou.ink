@@ -35,8 +35,9 @@ const ScannerApp = lazy(() =>
 export default function ScannerPage() {
 	const isHydrated = useHydrated();
 	const isAdmin = useHasRole("ADMIN");
+	const isDev = useHasRole("DEV");
 
-	if (!Config.scannerEnabled && !isAdmin) {
+	if (!Config.scannerEnabled && !isAdmin && !isDev) {
 		return <Redirect to="/" />;
 	}
 
