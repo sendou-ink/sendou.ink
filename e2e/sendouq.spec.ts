@@ -1,10 +1,11 @@
+import { sub } from "date-fns";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 } from "~/utils/urls";
-import { expect, impersonate, test } from "./helpers/playwright";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 import { SendouQPage } from "./pages/sendouq/sendouq-page";
 import { MatchProfilePage } from "./pages/settings/match-profile-page";
@@ -115,6 +116,72 @@ test.describe("SendouQ", () => {
 		// the pending challenge has been undone
 		await looking.goto();
 		await expect(looking.locators.undoButtons).toHaveCount(0);
+	});
+
+	test("Suggesting floats a group to the top and leaves a trail for the group", async ({
+		page,
+		factories,
+	}) => {
+		const owner = await factories.UserFactory.create({
+			discordName: "Owner",
+			profile: null,
+		});
+		const teammate = await factories.UserFactory.create({
+			discordName: "Teammate",
+			profile: null,
+		});
+		const target = await factories.UserFactory.create({
+			discordName: "Target",
+			profile: null,
+		});
+		const other = await factories.UserFactory.create({
+			discordName: "Other",
+			profile: null,
+		});
+
+		await factories.SQGroupFactory.create({
+			memberUserIds: [owner.id, teammate.id],
+		});
+		const suggestedGroup = await factories.SQGroupFactory.create({
+			memberUserIds: [target.id],
+		});
+		await factories.SQGroupFactory.create({ memberUserIds: [other.id] });
+
+		// the least recently active group sorts last, so the suggestion has somewhere to move it from
+		await factories.backdate("Group", suggestedGroup.id, {
+			latestActionAt: sub(new Date(), { minutes: 10 }),
+		});
+
+		await impersonate(page, owner.id);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.goto();
+
+		// the own group's card is always the first one
+		await expect(looking.groupCard(2).root).toContainText("Target");
+
+		await looking.groupCard(2).pressSuggest();
+
+		await expect(looking.groupCard(1).root).toContainText("Target");
+		await expect(looking.groupCard(1).trail).toHaveText("Suggested by Owner");
+		// a suggestion can't be undone or repeated
+		await isNotVisible(looking.groupCard(1).suggestButton);
+
+		// the whole group sees the suggestion, and any of them can act on it
+		await impersonate(page, teammate.id);
+		await looking.goto();
+		await expect(looking.groupCard(1).trail).toHaveText("Suggested by Owner");
+
+		await looking.groupCard(1).pressAction();
+
+		// inviting says everything the suggestion said, so it takes the trail over
+		await expect(looking.groupCard(1).trail).toHaveText("Invited by Teammate");
+		await isNotVisible(looking.groupCard(1).suggestButton);
+
+		// a solo queuer has no teammates to suggest anything to
+		await impersonate(page, other.id);
+		await looking.goto();
+		await isNotVisible(looking.locators.suggestButtons);
 	});
 
 	test("Joining the queue is blocked when the season's initial powers were never seeded", async ({

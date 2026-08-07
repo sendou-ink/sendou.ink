@@ -312,6 +312,9 @@ export interface GroupLike {
 	likerGroupId: number;
 	targetGroupId: number;
 	isRechallenge: Generated<DBBoolean>;
+	// TODO: migrate to not null
+	/** Member of the liker group who sent the invite. `null` for invites sent before the column existed. */
+	createdByUserId: number | null;
 }
 
 export interface GroupMatch {
@@ -369,6 +372,15 @@ export interface GroupMember {
 	groupId: number;
 	note: string | null;
 	userId: number;
+}
+
+/** A group member pointing their own group at another group, without inviting it */
+export interface GroupSuggestion {
+	createdAt: Generated<number>;
+	/** Group whose members see the suggestion */
+	suggesterGroupId: number;
+	targetGroupId: number;
+	createdByUserId: number;
 }
 
 export interface PrivateUserNote {
@@ -1254,6 +1266,7 @@ export interface DB {
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
+	GroupSuggestion: GroupSuggestion;
 	PrivateUserNote: PrivateUserNote;
 	LogInLink: LogInLink;
 	LFGPost: LFGPost;

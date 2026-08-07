@@ -33,10 +33,10 @@ import {
 	SENDOUQ_STREAMS_PAGE,
 } from "~/utils/urls";
 import { action } from "../actions/q.looking.server";
-import { GroupCard } from "../components/GroupCard";
+import { GroupCard, type GroupCardTrail } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { MemberAdder } from "../components/MemberAdder";
-import { groupExpiryStatus } from "../core/groups";
+import { canSuggest, groupExpiryStatus } from "../core/groups";
 import { loader } from "../loaders/q.looking.server";
 import { lookingSchema } from "../q-action-schemas";
 import {
@@ -236,7 +236,37 @@ function Groups() {
 	const isFullGroup =
 		data.ownGroup && data.ownGroup.members.length === FULL_GROUP_SIZE;
 
-	const groups = sortGroupsByPrivateNoteSentiment(data.groups, data.userCards);
+	const suggestedByUsernames = new Map(
+		data.suggestions.map((suggestion) => [
+			suggestion.groupId,
+			suggestion.createdByUsername,
+		]),
+	);
+	const invitedByUsernames = new Map(
+		data.likes.given.map((like) => [like.groupId, like.createdByUsername]),
+	);
+
+	const groups = sortGroups(data.groups, {
+		userCards: data.userCards,
+		suggestedGroupIds: new Set(suggestedByUsernames.keys()),
+	});
+
+	const trailOf = (groupId: number): GroupCardTrail | undefined => {
+		const invitedBy = invitedByUsernames.get(groupId);
+		if (invitedBy) return { type: "INVITED", username: invitedBy };
+
+		const suggestedBy = suggestedByUsernames.get(groupId);
+		if (suggestedBy) return { type: "SUGGESTED", username: suggestedBy };
+
+		return undefined;
+	};
+
+	const canSuggestGroups = Boolean(data.ownGroup && canSuggest(data.ownGroup));
+	// a group already invited or suggested has nothing left to point out
+	const isSuggestable = (groupId: number) =>
+		canSuggestGroups &&
+		!invitedByUsernames.has(groupId) &&
+		!suggestedByUsernames.has(groupId);
 
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
@@ -257,6 +287,7 @@ function Groups() {
 							key={group.id}
 							group={group}
 							action="UNLIKE"
+							trail={trailOf(group.id)}
 							ownGroup={data.ownGroup}
 							layout={layout}
 						/>
@@ -358,6 +389,8 @@ function Groups() {
 													? "UNLIKE"
 													: "LIKE"
 											}
+											suggestable={isSuggestable(group.id)}
+											trail={trailOf(group.id)}
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -385,6 +418,8 @@ function Groups() {
 											key={group.id}
 											group={group}
 											action={action()}
+											suggestable={isSuggestable(group.id)}
+											trail={trailOf(group.id)}
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -422,6 +457,8 @@ function Groups() {
 									key={group.id}
 									group={group}
 									action={action()}
+									suggestable={isSuggestable(group.id)}
+									trail={trailOf(group.id)}
 									ownGroup={data.ownGroup}
 									layout={layout}
 								/>
@@ -435,15 +472,22 @@ function Groups() {
 }
 
 /**
- * Floats groups the viewer has a positive private note on up and groups with a
- * negative note down, while preserving the server's tier/activity ordering
- * within each sentiment bucket and keeping full (censored) groups last. The
- * note sentiment is read from the already-loaded `userCards` data so the server
- * does not need to attach notes to group members.
+ * Floats groups a teammate suggested to the very top, then groups the viewer has
+ * a positive private note on up and groups with a negative note down, while
+ * preserving the server's tier/activity ordering within each bucket and keeping
+ * full (censored) groups last. The note sentiment is read from the already-loaded
+ * `userCards` data so the server does not need to attach notes to group members.
  */
-function sortGroupsByPrivateNoteSentiment<
-	T extends { members?: { id: number }[] },
->(groups: T[], userCards: Map<number, UserCardData>): T[] {
+function sortGroups<T extends { id: number; members?: { id: number }[] }>(
+	groups: T[],
+	{
+		userCards,
+		suggestedGroupIds,
+	}: {
+		userCards: Map<number, UserCardData>;
+		suggestedGroupIds: Set<number>;
+	},
+): T[] {
 	const sentimentScore = (group: T) => {
 		if (!group.members) return 0;
 
@@ -458,6 +502,10 @@ function sortGroupsByPrivateNoteSentiment<
 	};
 
 	return groups.toSorted((a, b) => {
+		const aIsSuggested = suggestedGroupIds.has(a.id);
+		const bIsSuggested = suggestedGroupIds.has(b.id);
+		if (aIsSuggested !== bIsSuggested) return aIsSuggested ? -1 : 1;
+
 		const aIsFull = !a.members;
 		const bIsFull = !b.members;
 		if (aIsFull !== bIsFull) return aIsFull ? 1 : -1;

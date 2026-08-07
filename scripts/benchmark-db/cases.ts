@@ -584,6 +584,11 @@ export function buildCases(fx: Fixtures): {
 	add("SQGroupRepository.findAllLikesByGroupId", fx.heavyGroupIds, (groupIds) =>
 		SQGroupRepository.findAllLikesByGroupId(groupIds[0]),
 	);
+	add(
+		"SQGroupRepository.findAllSuggestionsByGroupId",
+		fx.heavyGroupIds,
+		(groupIds) => SQGroupRepository.findAllSuggestionsByGroupId(groupIds[0]),
+	);
 	add("SQGroupRepository.findFriendsAndTeammates", fx.sq, (sq) =>
 		SQGroupRepository.findFriendsAndTeammates(sq.userId),
 	);

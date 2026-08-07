@@ -12,6 +12,7 @@ export class SendouQLookingPage {
 		this.locators = {
 			groupCards: page.getByTestId("sendouq-group-card"),
 			undoButtons: page.getByRole("button", { name: "Undo" }),
+			suggestButtons: page.getByTestId("group-card-suggest-button"),
 		};
 	}
 

@@ -13,7 +13,7 @@ import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.ser
 import { parseFormData } from "~/form/parse.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, sendouQMatchPage } from "~/utils/urls";
-import { groupAfterMorph } from "../core/groups";
+import { canSuggest, groupAfterMorph } from "../core/groups";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { lookingSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
@@ -68,9 +68,36 @@ export const action: ActionFunction = async ({ request }) => {
 				await SQGroupRepository.insertLike({
 					likerGroupId: currentGroup.id,
 					targetGroupId: data.targetGroupId,
+					createdByUserId: user.id,
 				});
 
 				notifyLikeReceived(data.targetGroupId);
+				revalidateGroupTopic(currentGroup.id);
+
+				break;
+			}
+			case "SUGGEST": {
+				if (!canSuggest(currentGroup)) return null;
+
+				const targetIsInPool = SendouQ.lookingGroups(user.id).some(
+					(group) => group.id === data.targetGroupId,
+				);
+				if (!targetIsInPool) return null;
+
+				// a group we already invited needs no pointing out
+				const likes = await SQGroupRepository.findAllLikesByGroupId(
+					currentGroup.id,
+				);
+				if (likes.given.some((like) => like.groupId === data.targetGroupId)) {
+					return null;
+				}
+
+				await SQGroupRepository.insertSuggestion({
+					suggesterGroupId: currentGroup.id,
+					targetGroupId: data.targetGroupId,
+					createdByUserId: user.id,
+				});
+
 				revalidateGroupTopic(currentGroup.id);
 
 				break;

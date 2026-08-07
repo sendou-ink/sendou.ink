@@ -3,7 +3,7 @@ import type { SqlBool } from "kysely";
 import { Mic, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
 import { Flipped } from "react-flip-toolkit";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
@@ -41,9 +41,17 @@ import { updateGroupNoteSchema } from "../q-schemas";
 import { resolveFutureMatchModes } from "../q-utils";
 import styles from "./GroupCard.module.css";
 
+/** Who in the viewer's own group acted on the shown group, and how. */
+export type GroupCardTrail = {
+	type: "INVITED" | "SUGGESTED";
+	username: string;
+};
+
 export function GroupCard({
 	group,
 	action,
+	suggestable = false,
+	trail,
 	displayOnly = false,
 	hideVc = false,
 	hideWeapons = false,
@@ -53,6 +61,9 @@ export function GroupCard({
 }: {
 	group: SQGroup | SQOwnGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
+	/** Can the viewer point their own teammates at this group? */
+	suggestable?: boolean;
+	trail?: GroupCardTrail;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
@@ -194,29 +205,80 @@ export function GroupCard({
 				{group.skillDifference ? (
 					<GroupSkillDifference skillDifference={group.skillDifference} />
 				) : null}
-				{action ? (
-					<ActionButton
-						schema={lookingSchema}
-						action={action === "MATCH_UP_RECHALLENGE" ? "MATCH_UP" : action}
-						fields={{ targetGroupId: group.id }}
-						formClassName="stack items-center"
-						size="small"
-						variant={action === "UNLIKE" ? "destructive" : "outlined"}
-						testId="group-card-action-button"
-					>
-						{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
-							? t("q:looking.groups.actions.startMatch")
-							: action === "LIKE" && !group.members
-								? t("q:looking.groups.actions.challenge")
-								: action === "LIKE"
-									? t("q:looking.groups.actions.invite")
-									: action === "GROUP_UP"
-										? t("q:looking.groups.actions.groupUp")
-										: t("q:looking.groups.actions.undo")}
-					</ActionButton>
+				{action || suggestable || trail ? (
+					<div className="stack xs items-center">
+						<div className="stack sm horizontal items-center justify-center">
+							{action ? (
+								<ActionButton
+									schema={lookingSchema}
+									action={
+										action === "MATCH_UP_RECHALLENGE" ? "MATCH_UP" : action
+									}
+									fields={{ targetGroupId: group.id }}
+									size="small"
+									variant={action === "UNLIKE" ? "destructive" : undefined}
+									testId="group-card-action-button"
+								>
+									{action === "MATCH_UP" || action === "MATCH_UP_RECHALLENGE"
+										? t("q:looking.groups.actions.startMatch")
+										: action === "LIKE" && !group.members
+											? t("q:looking.groups.actions.challenge")
+											: action === "LIKE"
+												? t("q:looking.groups.actions.invite")
+												: action === "GROUP_UP"
+													? t("q:looking.groups.actions.groupUp")
+													: t("q:looking.groups.actions.undo")}
+								</ActionButton>
+							) : null}
+							{suggestable ? (
+								<ActionButton
+									schema={lookingSchema}
+									action="SUGGEST"
+									fields={{ targetGroupId: group.id }}
+									size="small"
+									variant="outlined"
+									testId="group-card-suggest-button"
+								>
+									{t("q:looking.groups.actions.suggest")}
+								</ActionButton>
+							) : null}
+						</div>
+						{trail ? (
+							<GroupCardTrailText trail={trail} isFullGroup={!group.members} />
+						) : null}
+					</div>
 				) : null}
 			</section>
 		</GroupCardContainer>
+	);
+}
+
+function GroupCardTrailText({
+	trail,
+	isFullGroup,
+}: {
+	trail: GroupCardTrail;
+	isFullGroup: boolean;
+}) {
+	const { t } = useTranslation(["q"]);
+
+	const i18nKey = () => {
+		if (trail.type === "SUGGESTED") return "q:looking.groups.trail.suggested";
+
+		return isFullGroup
+			? "q:looking.groups.trail.challenged"
+			: "q:looking.groups.trail.invited";
+	};
+
+	return (
+		<div className="text-xxs text-lighter mt-1" data-testid="group-card-trail">
+			<Trans
+				t={t}
+				i18nKey={i18nKey()}
+				values={{ username: trail.username }}
+				components={[<span key="username" className="font-bold" />]}
+			/>
+		</div>
 	);
 }
 

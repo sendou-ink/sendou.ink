@@ -61,6 +61,16 @@ function createGroup(
 	};
 }
 
+/** A group whose members are censored, as full groups are in the looking page. */
+function createFullGroup(
+	overrides: Partial<Omit<SQGroup, "members">> = {},
+): SQGroup {
+	const group = createGroup(overrides);
+	group.members = undefined;
+
+	return group;
+}
+
 type OwnGroupMember = SQOwnGroup["members"][number];
 
 function createOwnGroupMember(
@@ -276,10 +286,9 @@ describe("GroupCard", () => {
 			};
 
 			const screen = await renderGroupCard({
-				group: createGroup({
+				group: createFullGroup({
 					tierRange,
 					tier: null,
-					members: undefined,
 				}),
 			});
 
@@ -316,9 +325,8 @@ describe("GroupCard", () => {
 			};
 
 			const screen = await renderGroupCard({
-				group: createGroup({
+				group: createFullGroup({
 					skillDifference,
-					members: undefined,
 				}),
 			});
 
@@ -345,12 +353,8 @@ describe("GroupCard", () => {
 		test("shows Challenge for LIKE with full group (no visible members)", async () => {
 			const ownGroup = createOwnGroup({ id: 2 });
 
-			// Create a group with members explicitly set to undefined (censored/full group)
-			const fullGroup = createGroup({});
-			fullGroup.members = undefined;
-
 			const screen = await renderGroupCard({
-				group: fullGroup,
+				group: createFullGroup(),
 				action: "LIKE",
 				ownGroup,
 				displayOnly: false,
@@ -364,7 +368,7 @@ describe("GroupCard", () => {
 			const ownGroup = createOwnGroup({ id: 2 });
 
 			const screen = await renderGroupCard({
-				group: createGroup({ members: undefined }),
+				group: createFullGroup(),
 				action: "MATCH_UP",
 				ownGroup,
 				displayOnly: false,
@@ -372,6 +376,58 @@ describe("GroupCard", () => {
 
 			// Actual translated text is "Start match"
 			await expect.element(screen.getByText("Start match")).toBeVisible();
+		});
+	});
+
+	describe("trail", () => {
+		test("shows suggested trail for a partial group", async () => {
+			const screen = await renderGroupCard({
+				group: createGroup({ members: [createMember()] }),
+				trail: { type: "SUGGESTED", username: "Suggester" },
+			});
+
+			const trail = screen.getByTestId("group-card-trail");
+			await expect.element(trail).toHaveTextContent("Suggested by Suggester");
+		});
+
+		test("shows suggested trail for a full group", async () => {
+			const screen = await renderGroupCard({
+				group: createFullGroup(),
+				trail: { type: "SUGGESTED", username: "Suggester" },
+			});
+
+			const trail = screen.getByTestId("group-card-trail");
+			await expect.element(trail).toHaveTextContent("Suggested by Suggester");
+		});
+
+		test("shows invited trail for a partial group", async () => {
+			const screen = await renderGroupCard({
+				group: createGroup({ members: [createMember()] }),
+				trail: { type: "INVITED", username: "Inviter" },
+			});
+
+			const trail = screen.getByTestId("group-card-trail");
+			await expect.element(trail).toHaveTextContent("Invited by Inviter");
+		});
+
+		test("shows challenged trail for a full group", async () => {
+			const screen = await renderGroupCard({
+				group: createFullGroup(),
+				trail: { type: "INVITED", username: "Challenger" },
+			});
+
+			const trail = screen.getByTestId("group-card-trail");
+			await expect.element(trail).toHaveTextContent("Challenged by Challenger");
+		});
+
+		test("renders no trail when not given", async () => {
+			const screen = await renderGroupCard({
+				group: createGroup({ members: [createMember()] }),
+			});
+
+			await expect
+				.element(screen.getByTestId("group-card-trail"))
+				.not.toBeInTheDocument();
 		});
 	});
 

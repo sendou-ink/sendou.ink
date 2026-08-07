@@ -44,9 +44,16 @@ export const { create } = defineFactory({
 	},
 	applyOptions: async (group, { isMatchmade, likedByGroupIds }: Options) => {
 		for (const likerGroupId of likedByGroupIds ?? []) {
+			const liker = await db
+				.selectFrom("GroupMember")
+				.select("GroupMember.userId")
+				.where("GroupMember.groupId", "=", likerGroupId)
+				.executeTakeFirstOrThrow();
+
 			await SQGroupRepository.insertLike({
 				likerGroupId,
 				targetGroupId: group.id,
+				createdByUserId: liker.userId,
 			});
 		}
 

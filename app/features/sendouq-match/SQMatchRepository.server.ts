@@ -612,6 +612,16 @@ export function insert({
 		await syncGroupTeamId(alphaGroupId, trx);
 		await syncGroupTeamId(bravoGroupId, trx);
 
+		// both groups are locked into this match, so anything pending is moot
+		await SQGroupRepository.deleteLikesAndSuggestionsByGroupId(
+			alphaGroupId,
+			trx,
+		);
+		await SQGroupRepository.deleteLikesAndSuggestionsByGroupId(
+			bravoGroupId,
+			trx,
+		);
+
 		await validateCreatedMatch(trx, alphaGroupId, bravoGroupId);
 
 		return match;

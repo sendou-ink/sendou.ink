@@ -197,6 +197,31 @@ function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
 		.execute();
 }
 
+function deleteSuggestionsByGroupId(groupId: number, trx: Transaction<DB>) {
+	return trx
+		.deleteFrom("GroupSuggestion")
+		.where((eb) =>
+			eb.or([
+				eb("GroupSuggestion.suggesterGroupId", "=", groupId),
+				eb("GroupSuggestion.targetGroupId", "=", groupId),
+			]),
+		)
+		.execute();
+}
+
+/**
+ * Deletes every like and suggestion where the given group is on either side.
+ * Called when the group's pending challenges and suggestions stop being
+ * actionable e.g. its roster changed or it started a match.
+ */
+export async function deleteLikesAndSuggestionsByGroupId(
+	groupId: number,
+	trx: Transaction<DB>,
+) {
+	await deleteLikesByGroupId(groupId, trx);
+	await deleteSuggestionsByGroupId(groupId, trx);
+}
+
 export function morphGroups({
 	survivingGroupId,
 	otherGroupId,
@@ -218,7 +243,7 @@ export function morphGroups({
 			.where("GroupMember.groupId", "=", otherGroupId)
 			.execute();
 
-		await deleteLikesByGroupId(survivingGroupId, trx);
+		await deleteLikesAndSuggestionsByGroupId(survivingGroupId, trx);
 		await refreshGroup(survivingGroupId, trx);
 
 		await trx
@@ -280,7 +305,7 @@ export async function insertMember(
 			})
 			.execute();
 
-		await deleteLikesByGroupId(groupId, trx);
+		await deleteLikesAndSuggestionsByGroupId(groupId, trx);
 
 		if (!(await isGroupCorrect(groupId, trx))) {
 			throw new SendouQError(
@@ -297,10 +322,12 @@ export async function insertMember(
 export async function findAllLikesByGroupId(groupId: number) {
 	const rows = await db
 		.selectFrom("GroupLike")
+		.leftJoin("User", "User.id", "GroupLike.createdByUserId")
 		.select([
 			"GroupLike.likerGroupId",
 			"GroupLike.targetGroupId",
 			"GroupLike.isRechallenge",
+			"User.username as createdByUsername",
 		])
 		.where((eb) =>
 			eb.or([
@@ -316,6 +343,7 @@ export async function findAllLikesByGroupId(groupId: number) {
 			.map((row) => ({
 				groupId: row.targetGroupId,
 				isRechallenge: row.isRechallenge,
+				createdByUsername: row.createdByUsername,
 			})),
 		received: rows
 			.filter((row) => row.targetGroupId === groupId)
@@ -324,6 +352,25 @@ export async function findAllLikesByGroupId(groupId: number) {
 				isRechallenge: row.isRechallenge,
 			})),
 	};
+}
+
+/** Suggestions the given group's members have made to each other, newest first. */
+export async function findAllSuggestionsByGroupId(groupId: number) {
+	const rows = await db
+		.selectFrom("GroupSuggestion")
+		.innerJoin("User", "User.id", "GroupSuggestion.createdByUserId")
+		.select([
+			"GroupSuggestion.targetGroupId",
+			"User.username as createdByUsername",
+		])
+		.where("GroupSuggestion.suggesterGroupId", "=", groupId)
+		.orderBy("GroupSuggestion.createdAt", "desc")
+		.execute();
+
+	return rows.map((row) => ({
+		groupId: row.targetGroupId,
+		createdByUsername: row.createdByUsername,
+	}));
 }
 
 export function rechallenge({
@@ -428,14 +475,32 @@ export async function setOldGroupsAsInactive() {
 			.where("latestActionAt", "<", dateToDatabaseTimestamp(oneHourAgo))
 			.execute();
 
+		const groupIds = groupsToSetInactive.map((g) => g.id);
+
+		await trx
+			.deleteFrom("GroupLike")
+			.where((eb) =>
+				eb.or([
+					eb("GroupLike.likerGroupId", "in", groupIds),
+					eb("GroupLike.targetGroupId", "in", groupIds),
+				]),
+			)
+			.execute();
+
+		await trx
+			.deleteFrom("GroupSuggestion")
+			.where((eb) =>
+				eb.or([
+					eb("GroupSuggestion.suggesterGroupId", "in", groupIds),
+					eb("GroupSuggestion.targetGroupId", "in", groupIds),
+				]),
+			)
+			.execute();
+
 		return trx
 			.updateTable("Group")
 			.set({ status: "INACTIVE" })
-			.where(
-				"Group.id",
-				"in",
-				groupsToSetInactive.map((g) => g.id),
-			)
+			.where("Group.id", "in", groupIds)
 			.executeTakeFirst();
 	});
 }
@@ -554,15 +619,17 @@ export async function findRecentlyFinishedMatches() {
 export function insertLike({
 	likerGroupId,
 	targetGroupId,
+	createdByUserId,
 }: {
 	likerGroupId: number;
 	targetGroupId: number;
+	createdByUserId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
 		try {
 			await trx
 				.insertInto("GroupLike")
-				.values({ likerGroupId, targetGroupId })
+				.values({ likerGroupId, targetGroupId, createdByUserId })
 				.onConflict((oc) =>
 					oc.columns(["likerGroupId", "targetGroupId"]).doNothing(),
 				)
@@ -574,7 +641,44 @@ export function insertLike({
 			throw error;
 		}
 
+		// inviting says everything the suggestion was there to say
+		await trx
+			.deleteFrom("GroupSuggestion")
+			.where("suggesterGroupId", "=", likerGroupId)
+			.where("targetGroupId", "=", targetGroupId)
+			.execute();
+
 		await refreshGroup(likerGroupId, trx);
+	});
+}
+
+/** Marks a group as worth a look for the suggester's own teammates. Suggesting twice is a no-op. */
+export function insertSuggestion({
+	suggesterGroupId,
+	targetGroupId,
+	createdByUserId,
+}: {
+	suggesterGroupId: number;
+	targetGroupId: number;
+	createdByUserId: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		try {
+			await trx
+				.insertInto("GroupSuggestion")
+				.values({ suggesterGroupId, targetGroupId, createdByUserId })
+				.onConflict((oc) =>
+					oc.columns(["suggesterGroupId", "targetGroupId"]).doNothing(),
+				)
+				.execute();
+		} catch (error) {
+			if (errorIsSqliteForeignKeyConstraintFailure(error)) {
+				throw new SendouQError(error.message);
+			}
+			throw error;
+		}
+
+		await refreshGroup(suggesterGroupId, trx);
 	});
 }
 

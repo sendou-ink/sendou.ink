@@ -37,6 +37,10 @@ export const lookingSchema = z.union([
 		targetGroupId: id,
 	}),
 	z.object({
+		_action: _action("SUGGEST"),
+		targetGroupId: id,
+	}),
+	z.object({
 		_action: _action("GROUP_UP"),
 		targetGroupId: id,
 	}),
