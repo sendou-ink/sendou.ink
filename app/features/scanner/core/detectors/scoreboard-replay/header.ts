@@ -64,6 +64,17 @@ interface TopBandParse {
 	stageScore: number;
 }
 
+/**
+ * In the BlitzMain glyphs the digit forms are near-identical to their letter
+ * lookalikes (0/O, the 1/I/l/| bars), so a stage read can surface the digit
+ * ("R0M-en") and burn an edit the snap threshold cannot spare. Stage names
+ * are digit-free in every language (sole exception carries a '9'), so digits
+ * and bars fold to letters before snapping.
+ */
+function foldDigitLookalikes(s: string): string {
+	return s.replace(/0/g, "o").replace(/[1|]/g, "l");
+}
+
 function parseTopBand(reading: string): TopBandParse {
 	let timestamp: string | null = null;
 	let stage: StageId | null = null;
@@ -80,7 +91,11 @@ function parseTopBand(reading: string): TopBandParse {
 		: reading;
 	if (m) timestamp = `${m[1]!} ${m[2]!.replace(/ /g, "")}`;
 	if (stageReading) {
-		const match = closestBy(stageReading, ALL_STAGE_ENTRIES, (e) => e.text);
+		const match = closestBy(
+			foldDigitLookalikes(stageReading),
+			ALL_STAGE_ENTRIES,
+			(e) => e.text,
+		);
 		if (match) {
 			stageScore = match.score;
 			if (match.score >= MIN_MATCH_SCORE) stage = match.entry.stageId;
