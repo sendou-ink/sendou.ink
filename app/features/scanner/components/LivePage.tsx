@@ -42,7 +42,6 @@ import { EventCard } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
-import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import {
@@ -293,25 +292,21 @@ export function LivePage({
 			<div className="controls">
 				{!running ? (
 					<>
-						{SENDOU_UPLOAD_ENABLED ? (
-							<button
-								type="button"
-								disabled={!sendouUser}
-								title={sendouUser ? undefined : "log in on sendou.ink first"}
-								onClick={() => void start(true)}
-							>
-								<Send aria-hidden />
-								Start capture
-							</button>
-						) : null}
 						<button
 							type="button"
-							className={SENDOU_UPLOAD_ENABLED ? "outlined" : undefined}
+							disabled={!sendouUser}
+							title={sendouUser ? undefined : "log in on sendou.ink first"}
+							onClick={() => void start(true)}
+						>
+							<Send aria-hidden />
+							Start capture
+						</button>
+						<button
+							type="button"
+							className="outlined"
 							onClick={() => void start(false)}
 						>
-							{SENDOU_UPLOAD_ENABLED
-								? "Start capture (no sending)"
-								: "Start capture"}
+							Start capture (no sending)
 						</button>
 					</>
 				) : (
@@ -319,21 +314,19 @@ export function LivePage({
 						<button type="button" onClick={stop}>
 							Stop
 						</button>
-						{SENDOU_UPLOAD_ENABLED ? (
-							<button
-								type="button"
-								className="outlined"
-								disabled={!sendouUser}
-								title={sendouUser ? undefined : "log in on sendou.ink first"}
-								onClick={() => {
-									liveSendRef.current = !liveSend;
-									setLiveSend(!liveSend);
-								}}
-							>
-								<Send aria-hidden />
-								{liveSend ? "Stop sending" : "Start sending"}
-							</button>
-						) : null}
+						<button
+							type="button"
+							className="outlined"
+							disabled={!sendouUser}
+							title={sendouUser ? undefined : "log in on sendou.ink first"}
+							onClick={() => {
+								liveSendRef.current = !liveSend;
+								setLiveSend(!liveSend);
+							}}
+						>
+							<Send aria-hidden />
+							{liveSend ? "Stop sending" : "Start sending"}
+						</button>
 					</>
 				)}
 				<select value={deviceId} onChange={(e) => setDeviceId(e.target.value)}>
@@ -411,7 +404,7 @@ export function LivePage({
 									justFormed={justFormed}
 									send={aggregateSendStatus(built.sources)}
 									onSend={
-										SENDOU_UPLOAD_ENABLED && sendouUser && !skipReason
+										sendouUser && !skipReason
 											? () => void send(matchContaining(id), { manual: true })
 											: undefined
 									}
@@ -466,7 +459,6 @@ export function LivePage({
 									}
 									send={e.send}
 									onSend={
-										SENDOU_UPLOAD_ENABLED &&
 										sendouUser &&
 										e.id !== undefined &&
 										INGESTABLE_TYPES.includes(e.type)
@@ -525,15 +517,13 @@ function LiveMenu({
 			>
 				CSV
 			</SendouMenuItem>
-			{SENDOU_UPLOAD_ENABLED ? (
-				<SendouMenuItem
-					icon={<Send />}
-					isDisabled={!canSend}
-					onAction={onSendUnsent}
-				>
-					Send unsent to sendou.ink
-				</SendouMenuItem>
-			) : null}
+			<SendouMenuItem
+				icon={<Send />}
+				isDisabled={!canSend}
+				onAction={onSendUnsent}
+			>
+				Send unsent to sendou.ink
+			</SendouMenuItem>
 			<SendouMenuItem
 				icon={<Trash2 />}
 				isDestructive

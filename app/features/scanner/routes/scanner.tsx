@@ -2,7 +2,10 @@ import { lazy } from "react";
 import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
+import { Redirect } from "~/components/Redirect";
+import { Config } from "~/config";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
@@ -31,6 +34,11 @@ const ScannerApp = lazy(() =>
 
 export default function ScannerPage() {
 	const isHydrated = useHydrated();
+	const isAdmin = useHasRole("ADMIN");
+
+	if (!Config.scannerEnabled && !isAdmin) {
+		return <Redirect to="/" />;
+	}
 
 	return <Main bigger>{isHydrated ? <ScannerApp /> : <Placeholder />}</Main>;
 }

@@ -56,7 +56,6 @@ import { EventCard, type GetFrame } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import type { FixtureData } from "./fixture-export";
-import { SENDOU_UPLOAD_ENABLED } from "./flags";
 import { formatTime } from "./format";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
@@ -602,18 +601,18 @@ export function VodPage({
 									` · ${progress.rate.toFixed(0)}× realtime`}
 							</span>
 						)}
-						{SENDOU_UPLOAD_ENABLED && upload?.url && (
+						{upload?.url && (
 							<Link to={upload.url} className="link-button">
 								<Video aria-hidden />
 								Add VoD
 							</Link>
 						)}
-						{SENDOU_UPLOAD_ENABLED && upload?.problem && (
+						{upload?.problem && (
 							<span className="score">
 								upload unavailable: {upload.problem}
 							</span>
 						)}
-						{SENDOU_UPLOAD_ENABLED && resultsMatchCount > 0 && (
+						{resultsMatchCount > 0 && (
 							<button
 								type="button"
 								disabled={!sendouUser || resultsSend?.state === "sending"}

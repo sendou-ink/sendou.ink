@@ -1,9 +1,11 @@
 import type { ActionFunction } from "react-router";
+import { Config } from "~/config";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { isAdmin } from "~/modules/permissions/utils";
 import { logger } from "~/utils/logger";
-import { badRequestIfFalsy, parseBody } from "~/utils/remix.server";
+import { badRequestIfFalsy, forbidden, parseBody } from "~/utils/remix.server";
 import * as Scoreboards from "../core/Scoreboards";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
 import { ingestBodySchema } from "../scanner-ingest-schemas";
@@ -14,6 +16,10 @@ import { ingestBodySchema } from "../scanner-ingest-schemas";
 // xxx: this needs some thinking and documentation to cover all the cases that can be ingested
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
+
+	if (!Config.scannerEnabled && !isAdmin(user)) {
+		forbidden();
+	}
 
 	const data = await parseBody({ request, schema: ingestBodySchema });
 

@@ -42,6 +42,7 @@ const values = {
 	VITE_PROD_MODE: stringBool("VITE_PROD_MODE"),
 	VITE_SHOW_LUTI_NAV_ITEM: stringBool("VITE_SHOW_LUTI_NAV_ITEM"),
 	VITE_FUSE_ENABLED: stringBool("VITE_FUSE_ENABLED"),
+	VITE_SCANNER_ENABLED: stringBool("VITE_SCANNER_ENABLED"),
 	VITE_LEAGUE_GOOGLE_FORM_URL: env.VITE_LEAGUE_GOOGLE_FORM_URL,
 	VITE_SHOW_BANNER_FOR_SEASON: env.VITE_SHOW_BANNER_FOR_SEASON,
 	VITE_SENTRY_DSN: env.VITE_SENTRY_DSN,
@@ -66,6 +67,8 @@ export const Config = {
 	/** Whether to show the LUTI navigation item. */
 	showLutiNavItem: values.VITE_SHOW_LUTI_NAV_ITEM,
 	fuseEnabled: values.VITE_FUSE_ENABLED,
+	/** Whether the scanner is available to everyone. While false only the admin can use the scanner page and its ingest endpoint. */
+	scannerEnabled: values.VITE_SCANNER_ENABLED,
 	/** Google Form URL for league registration, if configured. */
 	leagueGoogleFormUrl: values.VITE_LEAGUE_GOOGLE_FORM_URL,
 	/** Season identifier to show the registration banner for, if any. */
