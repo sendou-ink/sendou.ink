@@ -15,10 +15,6 @@ import {
 	ingestBodySchema,
 } from "../scanner-ingest-schemas";
 
-// xxx: dont only attach scoreboard on ingest, also when score is reported (for e.g. tournament stuff)
-// xxx: check why http://localhost:7001/to/4066/matches/139247?tab=result layout bad
-// xxx: check why http://localhost:7001/to/4066/matches/139247?tab=result first game not uploaded
-// xxx: this needs some thinking and documentation to cover all the cases that can be ingested
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 

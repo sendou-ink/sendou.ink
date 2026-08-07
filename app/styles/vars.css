@@ -129,11 +129,6 @@ html.dark [data-custom-theme],
 	--color-error: oklch(65% 0.25 10);
 	--color-error-high: oklch(87% 0.07 10);
 
-	/** xxx: validate these */
-	/* Team series colors of charts (e.g. the objective timeline): the error
-	   (~10) and info (~275) hues re-stepped so the marks pass CVD-separation
-	   and surface-contrast validation — the text-tier colors are too pastel
-	   as chart marks. */
 	--color-chart-alpha: #da5b76;
 	--color-chart-bravo: #6572e4;
 

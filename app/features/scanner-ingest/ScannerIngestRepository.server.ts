@@ -108,7 +108,6 @@ export function sendouqGamesPlayedByUserSince(params: {
  * time: their team is in a match whose `startedAt` is close enough before
  * `at`. When several qualify (rare) the latest-started one wins.
  */
-// xxx: change it to more generic. user id + stage + mode + startedAt -> what scrim, sq, tournament if any?
 export async function tournamentIdAt({
 	userId,
 	at,

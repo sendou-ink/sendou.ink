@@ -24,7 +24,7 @@ export async function listVideoInputs(): Promise<MediaDeviceInfo[]> {
 
 export type FrameHandler = (bitmap: ImageBitmap, t: number) => void;
 
-// XXX: hidden tabs can still be frozen/discarded outright, which suspends the
+// xxx: hidden tabs can still be frozen/discarded outright, which suspends the
 // workers too. A silent looping <audio> marks the page as playing audio and
 // exempts it from both intensive throttling and freezing — measure whether we
 // need it before adding it.
