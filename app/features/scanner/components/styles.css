@@ -958,6 +958,12 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 		}
 	}
 
+	&.unlinked {
+		color: var(--color-warning-high);
+		border-color: var(--color-warning-low);
+		background-color: var(--color-warning-low);
+	}
+
 	&.failed {
 		color: var(--color-error-high);
 		border-color: var(--color-error-low);

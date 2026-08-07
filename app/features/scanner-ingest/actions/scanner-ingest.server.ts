@@ -42,6 +42,7 @@ export const action: ActionFunction = async ({ request }) => {
 			mergedMatchesCount: 0,
 			linkedGamesCount: 0,
 			linkedMatches: [],
+			contextResolved: false,
 		} satisfies IngestResponse;
 	}
 
@@ -97,6 +98,7 @@ export const action: ActionFunction = async ({ request }) => {
 		mergedMatchesCount: mergedCount,
 		linkedGamesCount,
 		linkedMatches,
+		contextResolved: resolved !== null,
 	} satisfies IngestResponse;
 };
 
@@ -175,18 +177,26 @@ async function resolveIngestContext({
 			});
 		}
 
-		const tournamentId = await ScannerIngestRepository.tournamentIdAt({
-			userId: povUserId,
-			at,
-		});
-		if (tournamentId) {
+		const tournamentActivity =
+			await ScannerIngestRepository.tournamentActivityAt({
+				userId: povUserId,
+				at,
+			});
+		if (tournamentActivity) {
+			const { tournamentId, tournamentMatchId } = tournamentActivity;
 			addCandidate({
 				context: { type: "tournament", tournamentId },
 				loadGames: () =>
-					ScannerIngestRepository.gamesPlayedByUserInTournament({
-						userId: povUserId,
-						tournamentId,
-					}),
+					// a live send carries a single match, so the mode+stage order
+					// that anchors a whole scan is absent and the walk would take
+					// the first free game on that map anywhere in the tournament —
+					// some earlier round's. Only the set being played can be meant.
+					matches.length === 1
+						? ScannerIngestRepository.gamesInTournamentMatch(tournamentMatchId)
+						: ScannerIngestRepository.gamesPlayedByUserInTournament({
+								userId: povUserId,
+								tournamentId,
+							}),
 			});
 		}
 	}

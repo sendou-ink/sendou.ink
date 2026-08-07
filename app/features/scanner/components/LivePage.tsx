@@ -49,6 +49,7 @@ import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import {
 	aggregateSendStatus,
 	matchContaining,
+	retryableUnlinkedMatches,
 	type SendouUser,
 	sendMatches,
 	unsentMatches,
@@ -56,6 +57,13 @@ import {
 import { thumbnailFromBlob } from "./thumbnail";
 
 const SAMPLE_FPS = 2;
+
+/**
+ * How often a running capture rechecks whether a match sendou.ink could not
+ * link yet is due for another attempt (the backoff itself lives in
+ * sendou-ingest.ts).
+ */
+const UNLINKED_RETRY_TICK_MS = 15_000;
 
 /** The scan knows the on-screen sides only, not who is playing. */
 const SCANNER_TEAM_LABELS = ["Alpha", "Bravo"] as const;
@@ -85,6 +93,7 @@ export function LivePage({
 	);
 	const gatesRef = useRef(new Map<string, GateResult>());
 	const stopRef = useRef<(() => void) | null>(null);
+	const retryTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 	// the open match is known to be a non-SZ mode, so counter reads are
 	// misreads of another mode's overlay and are not collected at all
 	const objectiveBlockedRef = useRef(false);
@@ -131,6 +140,7 @@ export function LivePage({
 		refreshFeed();
 		return () => {
 			stopRef.current?.();
+			if (retryTimerRef.current) clearInterval(retryTimerRef.current);
 			clientRef.current?.dispose();
 		};
 	}, [refreshFeed]);
@@ -253,6 +263,12 @@ export function LivePage({
 			stopRef.current = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
 				clientRef.current?.analyze(bitmap, t);
 			});
+			// a match sent the moment its scoreboard closed usually beats the
+			// players to reporting the game, so sendou.ink had nothing to link
+			// it to; give those another go while the capture runs
+			retryTimerRef.current ??= setInterval(() => {
+				if (liveSendRef.current) void send(retryableUnlinkedMatches);
+			}, UNLINKED_RETRY_TICK_MS);
 			setStatus("watching");
 			setRunning(true);
 		} catch (e) {
@@ -270,6 +286,8 @@ export function LivePage({
 	const stop = () => {
 		stopRef.current?.();
 		stopRef.current = null;
+		if (retryTimerRef.current) clearInterval(retryTimerRef.current);
+		retryTimerRef.current = null;
 		const video = videoRef.current;
 		if (video?.srcObject instanceof MediaStream) {
 			for (const track of video.srcObject.getTracks()) track.stop();

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type {
@@ -15,6 +16,8 @@ import * as ScannerIngestRepository from "./ScannerIngestRepository.server";
 const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
 const WEAPONS: MainWeaponId[] = [10, 20, 30, 40, 50, 60, 70, 80];
 const PLAYED_AT = Date.UTC(2026, 7, 1, 18, 0, 0);
+/** enough teams for the bracket winner to play more than one match */
+const TOURNAMENT_TEAM_COUNT = 4;
 
 describe("addOrMergeMatches", () => {
 	test("inserts a fresh match with hash, hints and playedAt", async () => {
@@ -217,6 +220,59 @@ describe("addLinks", () => {
 		expect(reportedWeapons[0].mapIndex).toBe(maps[0].index);
 		expect(reportedWeapons[0].userId).toBe(povUser.id);
 		expect(reportedWeapons[0].weaponSplId).toBe(WEAPONS[0]);
+	});
+});
+
+describe("gamesInTournamentMatch", () => {
+	test("returns the match's own games only, leaving the rest of the tournament out", async () => {
+		const users = await UserFactory.createMany(TOURNAMENT_TEAM_COUNT);
+		const tournament = await TournamentFactory.createPlayed(
+			{ authorId: users[0]!.id, minMembersPerTeam: 1 },
+			{
+				teamRosters: users.map((user) => [user.id]),
+				playedOut: 0,
+			},
+		);
+		// the bracket winner plays every round on the same map list, so its
+		// earlier round's games are the ones a live send could wrongly take
+		const [firstMatch, ...laterMatches] = tournament.matches;
+		const winnerUserId = users.find(
+			(user) =>
+				tournament.teams.find((team) => team.id === firstMatch!.winnerTeamId)
+					?.memberUserIds[0] === user.id,
+		)!.id;
+
+		const games = await ScannerIngestRepository.gamesInTournamentMatch(
+			firstMatch!.id,
+		);
+
+		expect(games.length).toBeGreaterThan(0);
+		expect(
+			games.every(
+				(game) =>
+					game.target.type === "tournament" &&
+					game.target.tournamentMatchId === firstMatch!.id,
+			),
+		).toBe(true);
+
+		// the tournament-wide list is what the walk would otherwise see
+		const allGames =
+			await ScannerIngestRepository.gamesPlayedByUserInTournament({
+				userId: winnerUserId,
+				tournamentId: tournament.id,
+			});
+		expect(allGames.length).toBeGreaterThan(games.length);
+		expect(
+			allGames.some(
+				(game) =>
+					game.target.type === "tournament" &&
+					laterMatches.some(
+						(match) =>
+							game.target.type === "tournament" &&
+							game.target.tournamentMatchId === match.id,
+					),
+			),
+		).toBe(true);
 	});
 });
 

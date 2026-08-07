@@ -457,11 +457,14 @@ export function buildCases(fx: Fixtures): {
 				since: sendouq.sinceTimestamp,
 			}),
 	);
-	add("ScannerIngestRepository.tournamentIdAt", fx.scannerIngest, (ingest) =>
-		ScannerIngestRepository.tournamentIdAt({
-			userId: ingest.povUserId,
-			at: ingest.atMs,
-		}),
+	add(
+		"ScannerIngestRepository.tournamentActivityAt",
+		fx.scannerIngest,
+		(ingest) =>
+			ScannerIngestRepository.tournamentActivityAt({
+				userId: ingest.povUserId,
+				at: ingest.atMs,
+			}),
 	);
 	add(
 		"ScannerIngestRepository.groupMatchIdAt",
@@ -488,6 +491,12 @@ export function buildCases(fx: Fixtures): {
 			ScannerIngestRepository.findScoreboardsByTournamentMatchId(
 				tournamentMatchId,
 			),
+	);
+	add(
+		"ScannerIngestRepository.gamesInTournamentMatch",
+		fx.heavyTournamentMatchId,
+		(tournamentMatchId) =>
+			ScannerIngestRepository.gamesInTournamentMatch(tournamentMatchId),
 	);
 
 	// ScrimMapListRepository

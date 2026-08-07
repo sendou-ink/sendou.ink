@@ -28,6 +28,7 @@ const KO_MATCH_SCORE = 100;
 const SEND_CHIP_LABELS: Record<Exclude<SendStatus["state"], "sent">, string> = {
 	queued: "queued",
 	sending: "sending…",
+	unlinked: "waiting for report",
 	failed: "failed",
 };
 
@@ -113,7 +114,9 @@ export function MatchCard({
 					)}
 					{onSend && send?.state !== "sent" && send?.state !== "sending" ? (
 						<button type="button" onClick={onSend}>
-							{send?.state === "failed" ? "Retry" : "Send"}
+							{send?.state === "failed" || send?.state === "unlinked"
+								? "Retry"
+								: "Send"}
 						</button>
 					) : null}
 					{children ? (

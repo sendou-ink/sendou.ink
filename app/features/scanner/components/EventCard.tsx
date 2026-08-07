@@ -95,6 +95,7 @@ const SEND_LABELS: Record<SendStatus["state"], string> = {
 	queued: "queued",
 	sending: "sending…",
 	sent: "sent",
+	unlinked: "waiting for report",
 	failed: "failed",
 };
 

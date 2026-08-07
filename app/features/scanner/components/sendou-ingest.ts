@@ -31,6 +31,14 @@ const INGEST_URL = "/ingest";
 /** /ingest accepts at most 50 matches per request (mirrors the server cap) */
 const MAX_MATCHES_PER_REQUEST = 50;
 
+/**
+ * How long after each unlinked send to try again. A live send usually beats
+ * the players to reporting the game, so the first attempts find nothing to
+ * link to; these delays cover the reporting lag without hammering. Running
+ * out of them gives up — the capture ending still makes one last attempt.
+ */
+const UNLINKED_RETRY_DELAYS_MS = [30_000, 2 * 60_000, 5 * 60_000];
+
 export interface SendouUser {
 	id: number;
 	username: string;
@@ -71,10 +79,20 @@ export async function sendMatches({
 			const link = response.linkedMatches?.find(
 				(linked) => linked.matchIndex === 0,
 			)?.link;
+			// stored but not linked, and sendou.ink knows which tournament or
+			// SendouQ match this is: the game is just not reported yet, so a
+			// later resend can still land it. Without a context there is nothing
+			// to wait for and the match is as done as it will get.
+			const unlinked = !link && response.contextResolved;
 			await updateEventsSend(ids, {
-				state: "sent",
+				state: unlinked ? "unlinked" : "sent",
 				at: Date.now(),
 				...(link ? { link } : null),
+				...(unlinked
+					? {
+							attempts: (aggregateSendStatus(built.sources)?.attempts ?? 0) + 1,
+						}
+					: null),
 			});
 			result.sentMatches++;
 		} catch (err) {
@@ -163,7 +181,13 @@ export function aggregateSendStatus(
 	const statuses = sources
 		.map((e) => e.send)
 		.filter((status) => status !== undefined);
-	for (const state of ["sending", "failed", "sent", "queued"] as const) {
+	for (const state of [
+		"sending",
+		"failed",
+		"unlinked",
+		"sent",
+		"queued",
+	] as const) {
 		const ofState = statuses.filter((status) => status.state === state);
 		if (ofState.length > 0) {
 			return ofState.reduce((a, b) => (a.at >= b.at ? a : b));
@@ -177,6 +201,20 @@ export function unsentMatches(built: BuiltMatch<StoredEvent>): boolean {
 	return !built.sources.some(
 		(e) => e.send?.state === "sent" || e.send?.state === "sending",
 	);
+}
+
+/**
+ * Match selector: matches sendou.ink stored without a game to link them to,
+ * whose next attempt is due. Exhausting the backoff stops the retries.
+ */
+export function retryableUnlinkedMatches(
+	built: BuiltMatch<StoredEvent>,
+): boolean {
+	const status = aggregateSendStatus(built.sources);
+	if (status?.state !== "unlinked") return false;
+
+	const delay = UNLINKED_RETRY_DELAYS_MS[(status.attempts ?? 1) - 1];
+	return delay !== undefined && Date.now() - status.at >= delay;
 }
 
 function ingestableMatches(events: readonly DetectedEvent[]): ScannerMatch[] {

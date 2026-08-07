@@ -15,13 +15,19 @@ const MAX_EVENTS = 1000;
 
 /** Where an event stands with sendou.ink /ingest; absent = never attempted. */
 export interface SendStatus {
-	state: "queued" | "sending" | "sent" | "failed";
+	/**
+	 * "unlinked": sendou.ink stored the match but its game is not reported
+	 * yet, so it has no scoreboard to attach to — resent on a backoff.
+	 */
+	state: "queued" | "sending" | "sent" | "unlinked" | "failed";
 	/** wall-clock time of the last state change */
 	at: number;
 	/** failure detail, set when state is "failed" */
 	error?: string;
 	/** the sendou.ink match /ingest linked the sent match to, when it reported one */
 	link?: IngestedMatchLink;
+	/** how many times the match came back unlinked, set while state is "unlinked" */
+	attempts?: number;
 }
 
 export interface StoredEvent {

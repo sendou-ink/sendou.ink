@@ -24,4 +24,10 @@ export interface IngestResponse {
 	linkedGamesCount: number;
 	/** per request match (by its index in the body's `matches`), the match it linked to */
 	linkedMatches: Array<{ matchIndex: number; link: IngestedMatchLink }>;
+	/**
+	 * whether the request's matches were resolved to a tournament or SendouQ
+	 * match. A match that stayed unlinked despite one is waiting for its game
+	 * to be reported, so resending it later can still link it.
+	 */
+	contextResolved: boolean;
 }

@@ -85,6 +85,15 @@ export async function castedGamesInTournament(tournamentId: number) {
 	return tournamentGames({ tournamentId, tournamentMatchIds });
 }
 
+/**
+ * Returns the reported games of one tournament match, in chronological
+ * order — the candidate set for a live send, which carries no sequence of
+ * its own to anchor on and so must not see the rest of the tournament.
+ */
+export function gamesInTournamentMatch(tournamentMatchId: number) {
+	return tournamentGames({ tournamentMatchIds: [tournamentMatchId] });
+}
+
 /** Returns a SendouQ match's games (its whole map list), in map order. */
 export function gamesInGroupMatch(groupMatchId: number) {
 	return sendouqGames({ groupMatchId });
@@ -104,11 +113,12 @@ export function sendouqGamesPlayedByUserSince(params: {
 }
 
 /**
- * The tournament the user was (probably) playing in at the given wall-clock
- * time: their team is in a match whose `startedAt` is close enough before
- * `at`. When several qualify (rare) the latest-started one wins.
+ * The tournament match the user was (probably) playing at the given
+ * wall-clock time: their team is in a match whose `startedAt` is close
+ * enough before `at`. When several qualify (rare) the latest-started one
+ * wins.
  */
-export async function tournamentIdAt({
+export async function tournamentActivityAt({
 	userId,
 	at,
 }: {
@@ -135,7 +145,7 @@ export async function tournamentIdAt({
 			"TournamentMatch.stageId",
 			"TournamentStage.id",
 		)
-		.select("TournamentTeam.tournamentId")
+		.select(["TournamentTeam.tournamentId", "TournamentMatch.id as matchId"])
 		.where("TournamentTeamMember.userId", "=", userId)
 		.where((eb) =>
 			eb.or([
@@ -156,7 +166,9 @@ export async function tournamentIdAt({
 		.orderBy("TournamentMatch.startedAt", "desc")
 		.executeTakeFirst();
 
-	return row?.tournamentId ?? null;
+	return row
+		? { tournamentId: row.tournamentId, tournamentMatchId: row.matchId }
+		: null;
 }
 
 /**
