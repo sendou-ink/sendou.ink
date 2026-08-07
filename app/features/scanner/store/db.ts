@@ -9,8 +9,8 @@
  *  - `inspect-frames`: one-shot Inspect handoffs into a new screenshot tab,
  *    keyed by handoff key (see inspect.ts)
  */
-const DB_NAME = "vod-parser";
-const DB_VERSION = 4;
+const DB_NAME = "scanner";
+const DB_VERSION = 1;
 
 export const EVENTS_STORE = "events";
 export const FRAMES_STORE = "frames";
@@ -20,96 +20,38 @@ export const VOD_FRAMES_STORE = "vod-frames";
 export const INSPECT_FRAMES_STORE = "inspect-frames";
 
 /**
- * Move a store's embedded `frame` blobs into a keyed frame store (v3
- * migration), stamping `hasFrame` on the source records.
+ * Recreates the schema from scratch, dropping any stores already there, so a
+ * DB_VERSION bump is always a clean slate at the cost of wiping scanner data.
  */
-function extractFrames(source: IDBObjectStore, frames: IDBObjectStore): void {
-	const req = source.openCursor();
-	req.onsuccess = () => {
-		const cursor = req.result;
-		if (!cursor) return;
-		const record = cursor.value as { frame?: Blob; hasFrame?: boolean };
-		if (record.frame) {
-			frames.put(record.frame, cursor.primaryKey);
-			record.hasFrame = true;
-			delete record.frame;
-			cursor.update(record);
-		}
-		cursor.continue();
-	};
+function createStores(database: IDBDatabase): void {
+	for (const name of Array.from(database.objectStoreNames)) {
+		database.deleteObjectStore(name);
+	}
+
+	const events = database.createObjectStore(EVENTS_STORE, {
+		keyPath: "id",
+		autoIncrement: true,
+	});
+	events.createIndex("t", "t");
+	events.createIndex("detectedAt", "detectedAt");
+
+	database.createObjectStore(VODS_STORE, { keyPath: "name" });
+
+	const vodEvents = database.createObjectStore(VOD_EVENTS_STORE, {
+		keyPath: "id",
+		autoIncrement: true,
+	});
+	vodEvents.createIndex("vod", "vod");
+
+	database.createObjectStore(FRAMES_STORE);
+	database.createObjectStore(VOD_FRAMES_STORE);
+	database.createObjectStore(INSPECT_FRAMES_STORE);
 }
 
-const ALL_STORES = [
-	EVENTS_STORE,
-	FRAMES_STORE,
-	VODS_STORE,
-	VOD_EVENTS_STORE,
-	VOD_FRAMES_STORE,
-	INSPECT_FRAMES_STORE,
-];
-
-// xxx: get rid of migrate before we go live with this
-/**
- * Brings any database — fresh, older-versioned or drifted (a dev database
- * whose version was bumped past DB_VERSION without these stores) — to the
- * current schema. Store creation is existence-guarded rather than
- * version-gated so a reopen at version+1 (see openDb) can heal drift; only
- * data moves stay keyed on the version they shipped in.
- */
-function migrate(
-	database: IDBDatabase,
-	transaction: IDBTransaction,
-	oldVersion: number,
-): void {
-	if (!database.objectStoreNames.contains(EVENTS_STORE)) {
-		const store = database.createObjectStore(EVENTS_STORE, {
-			keyPath: "id",
-			autoIncrement: true,
-		});
-		store.createIndex("t", "t");
-		store.createIndex("detectedAt", "detectedAt");
-	}
-	if (!database.objectStoreNames.contains(VODS_STORE)) {
-		database.createObjectStore(VODS_STORE, { keyPath: "name" });
-	}
-	if (!database.objectStoreNames.contains(VOD_EVENTS_STORE)) {
-		const store = database.createObjectStore(VOD_EVENTS_STORE, {
-			keyPath: "id",
-			autoIncrement: true,
-		});
-		store.createIndex("vod", "vod");
-	}
-	if (!database.objectStoreNames.contains(FRAMES_STORE)) {
-		database.createObjectStore(FRAMES_STORE);
-	}
-	if (!database.objectStoreNames.contains(VOD_FRAMES_STORE)) {
-		database.createObjectStore(VOD_FRAMES_STORE);
-	}
-	if (oldVersion < 3) {
-		// v1/v2 era kept the frame blobs embedded in the event records
-		extractFrames(
-			transaction.objectStore(EVENTS_STORE),
-			transaction.objectStore(FRAMES_STORE),
-		);
-		extractFrames(
-			transaction.objectStore(VOD_EVENTS_STORE),
-			transaction.objectStore(VOD_FRAMES_STORE),
-		);
-	}
-	if (!database.objectStoreNames.contains(INSPECT_FRAMES_STORE)) {
-		database.createObjectStore(INSPECT_FRAMES_STORE);
-	}
-}
-
-function openAt(version?: number): Promise<IDBDatabase> {
+function openDb(): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {
-		const req =
-			version === undefined
-				? indexedDB.open(DB_NAME)
-				: indexedDB.open(DB_NAME, version);
-		req.onupgradeneeded = (event) => {
-			migrate(req.result, req.transaction!, event.oldVersion);
-		};
+		const req = indexedDB.open(DB_NAME, DB_VERSION);
+		req.onupgradeneeded = () => createStores(req.result);
 		req.onblocked = () => {
 			// biome-ignore lint/suspicious/noConsole: the only diagnostic channel for a hang caused by other tabs
 			console.warn(
@@ -119,25 +61,6 @@ function openAt(version?: number): Promise<IDBDatabase> {
 		req.onsuccess = () => resolve(req.result);
 		req.onerror = () => reject(req.error);
 	});
-}
-
-/**
- * Opens at whatever version exists, then upgrades when the schema is behind —
- * either an honest old version or a drifted database sitting at/above
- * DB_VERSION without all stores, which a plain open(DB_VERSION) would
- * silently accept (or reject with VersionError).
- */
-async function openDb(): Promise<IDBDatabase> {
-	let database = await openAt();
-	const missingStore = ALL_STORES.some(
-		(name) => !database.objectStoreNames.contains(name),
-	);
-	if (database.version < DB_VERSION || missingStore) {
-		const nextVersion = Math.max(DB_VERSION, database.version + 1);
-		database.close();
-		database = await openAt(nextVersion);
-	}
-	return database;
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
