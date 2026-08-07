@@ -48,27 +48,50 @@ const TAG_BRIGHT_MIN = 165;
 const TAG_GAP_TOLERANCE = 6;
 
 /**
- * Trim a band crop to the black-tag extent starting from its left edge.
- * Returns the trimmed width (0 when no tag is present at all).
+ * Trim a band crop to the black-tag extent: the longest run of tag columns
+ * starting within `maxLeadIn` of the left edge (a dark photo edge can fake
+ * a short run before the real tag), each run extended right until the tag
+ * ends. Returns a zero-width range when no tag is present at all.
  */
-function tagExtent(crop: Mat, darkMax: number): number {
+function tagExtent(
+	crop: Mat,
+	darkMax: number,
+	maxLeadIn: number,
+	columnFraction: number,
+): { start: number; end: number } {
 	const { cols, rows, data } = crop;
+	let best = { start: 0, end: 0 };
+	let start = -1;
 	let end = 0;
 	let gap = 0;
+	const takeRun = () => {
+		if (start !== -1 && end - start > best.end - best.start) {
+			best = { start, end };
+		}
+		start = -1;
+		gap = 0;
+	};
 	for (let x = 0; x < cols; x++) {
 		let tagLike = 0;
 		for (let y = 0; y < rows; y++) {
 			const v = data[y * cols + x]!;
 			if (v < darkMax || v > TAG_BRIGHT_MIN) tagLike++;
 		}
-		if (tagLike / rows >= TAG_COLUMN_FRACTION) {
+		if (tagLike / rows >= columnFraction) {
+			if (start === -1) {
+				if (x > maxLeadIn) break;
+				start = x;
+			}
 			end = x + 1;
 			gap = 0;
-		} else if (++gap > TAG_GAP_TOLERANCE) {
+		} else if (start !== -1 && ++gap > TAG_GAP_TOLERANCE) {
+			takeRun();
+		} else if (start === -1 && x > maxLeadIn) {
 			break;
 		}
 	}
-	return end;
+	takeRun();
+	return best;
 }
 
 export interface TagBandOptions extends RecognizeOptions {
@@ -79,6 +102,18 @@ export interface TagBandOptions extends RecognizeOptions {
 	 * snap fails retry with a lifted ceiling.
 	 */
 	tagDarkMax?: number;
+	/**
+	 * Non-tag columns tolerated before the tag begins. The battle-log tags
+	 * are not left-anchored (a leading rank icon shifts line 1 per lobby
+	 * type), so its bands start on the stage photo and scan for the tag.
+	 */
+	tagLeadInMax?: number;
+	/**
+	 * Tag-like row fraction a column must reach. The battle-log tags are
+	 * subtly tilted, so a horizontal band always catches a few photo rows
+	 * above or below the box — those bands pass a looser fraction.
+	 */
+	tagColumnFraction?: number;
 }
 
 /**
@@ -93,13 +128,18 @@ export function readTagBand(
 	options: TagBandOptions = {},
 ): string {
 	const crop = copyRoi(gray, band);
-	const width = tagExtent(crop, options.tagDarkMax ?? TAG_DARK_MAX);
-	if (width < 12) {
+	const { start, end } = tagExtent(
+		crop,
+		options.tagDarkMax ?? TAG_DARK_MAX,
+		options.tagLeadInMax ?? TAG_GAP_TOLERANCE,
+		options.tagColumnFraction ?? TAG_COLUMN_FRACTION,
+	);
+	if (end - start < 12) {
 		crop.delete();
 		return "";
 	}
 	const cv = getCV();
-	const view = crop.roi(new cv.Rect(0, 0, width, crop.rows));
+	const view = crop.roi(new cv.Rect(start, 0, end - start, crop.rows));
 	const trimmed = new cv.Mat();
 	view.copyTo(trimmed);
 	view.delete();

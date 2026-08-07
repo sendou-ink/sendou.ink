@@ -56,6 +56,7 @@ interface ExpectedScoreboard {
 	event:
 		| "Scoreboard"
 		| "ScoreboardReplay"
+		| "BattleLog"
 		| "ScoreboardOwn"
 		| "Death"
 		| "MapStart"
@@ -68,7 +69,7 @@ interface ExpectedScoreboard {
 		stage?: StageId;
 		/** informational for the human corrector; tests compare `stage` */
 		stageLabel?: string;
-		/** ScoreboardReplay only */
+		/** ScoreboardReplay + BattleLog only */
 		timestamp?: string;
 		/** ScoreboardReplay only */
 		replayCode?: string;

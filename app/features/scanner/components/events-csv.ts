@@ -28,10 +28,7 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
-import {
-	SCOREBOARD_REPLAY_EVENT_TYPE,
-	type ScoreboardReplayData,
-} from "../core/detectors/scoreboard-replay/index";
+import type { ScoreboardReplayData } from "../core/detectors/scoreboard-replay/index";
 import { formatClock, formatTime } from "./format";
 import {
 	lobbyLabel,
@@ -221,9 +218,8 @@ function eventCells(event: CsvEvent): Cell[] {
 			];
 		}
 		default: {
-			// Scoreboard and ScoreboardReplay share the base shape
+			// Scoreboard, ScoreboardReplay and BattleLog share the base shape
 			const d = event.data as ScoreboardData & Partial<ScoreboardReplayData>;
-			const isReplay = event.type === SCOREBOARD_REPLAY_EVENT_TYPE;
 			return [
 				...base,
 				lobbyLabel(d.lobby),
@@ -236,8 +232,8 @@ function eventCells(event: CsvEvent): Cell[] {
 				"",
 				"",
 				formatPlayers(d),
-				isReplay ? d.replayCode : "",
-				isReplay ? d.timestamp : "",
+				d.replayCode ?? "",
+				d.timestamp ?? "",
 			];
 		}
 	}

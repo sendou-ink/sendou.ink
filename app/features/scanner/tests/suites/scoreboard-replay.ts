@@ -226,12 +226,17 @@ export async function runScoreboardReplaySuite(
 		});
 	}
 
-	// The two scoreboard screens must not trigger each other's detectors; the
-	// mirror sweep (live gate over replay fixtures) lives in scoreboard.test.ts.
-	for (const fixture of mine(
-		loadFixtures("scoreboard").filter((f) => f.expected.event === "Scoreboard"),
-	)) {
-		test(`replay gate stays quiet on scoreboard/${fixture.name}`, async () => {
+	// The scoreboard-shaped screens must not trigger each other's detectors;
+	// the mirror sweeps live in scoreboard.test.ts and battle-log.test.ts.
+	for (const fixture of mine([
+		...loadFixtures("scoreboard").filter(
+			(f) => f.expected.event === "Scoreboard",
+		),
+		...loadFixtures("battle-log").filter(
+			(f) => f.expected.event === "BattleLog",
+		),
+	])) {
+		test(`replay gate stays quiet on ${fixture.name}`, async () => {
 			const { gate } = await runDetectorOnFixture(detector, fixture);
 			assert.equal(
 				gate.pass,

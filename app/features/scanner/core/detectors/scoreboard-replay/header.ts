@@ -10,6 +10,7 @@
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
+import type { Roi } from "../../canonical";
 import type { Mat } from "../../cv";
 import type { GlyphSet } from "../../glyphs";
 import { ALL_STAGE_ENTRIES, LOBBY_MODE_COMBOS } from "../../localized";
@@ -49,10 +50,12 @@ const TAG_DARK_MAX_LIFTED = 120;
  * (ja) — so any . / - separated triple followed by a time is accepted.
  * Adjacent skinny time digits can read with a spurious gap on compressed
  * captures ("14:1 1"), so a lone space is tolerated between them and
- * stripped when the timestamp is assembled.
+ * stripped when the timestamp is assembled. Not left-anchored: the
+ * battle-log line leads with a rank icon on ranked lobbies, which reads as
+ * a junk glyph before the date.
  */
 const TIMESTAMP_RE =
-	/^(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})\s+(\d(?: ?\d)?: ?\d ?\d)\s*(.*)$/;
+	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})\s+(\d(?: ?\d)?: ?\d ?\d)\s*(.*)$/;
 
 interface TopBandParse {
 	reading: string;
@@ -86,27 +89,49 @@ function parseTopBand(reading: string): TopBandParse {
 	return { reading, timestamp, stage, stageScore };
 }
 
+/** The two header tag bands; the battle log passes its own coordinates. */
+export interface ReplayHeaderBands {
+	top: Roi;
+	bottom: Roi;
+	/** see TagBandOptions.tagLeadInMax; the battle-log tags are not left-anchored */
+	tagLeadInMax?: number;
+	/** see TagBandOptions.tagColumnFraction; the battle-log tags are tilted */
+	tagColumnFraction?: number;
+}
+
+const REPLAY_BANDS: ReplayHeaderBands = {
+	top: HEADER_TOP_BAND,
+	bottom: HEADER_BOTTOM_BAND,
+};
+
 export function parseReplayHeader(
 	gray: Mat,
 	topGlyphs: GlyphSet,
 	bottomGlyphs: GlyphSet,
+	bands: ReplayHeaderBands = REPLAY_BANDS,
 ): ParsedReplayHeader {
-	let top = parseTopBand(readTagBand(gray, HEADER_TOP_BAND, topGlyphs));
+	const leadIn = {
+		tagLeadInMax: bands.tagLeadInMax,
+		tagColumnFraction: bands.tagColumnFraction,
+	};
+	let top = parseTopBand(readTagBand(gray, bands.top, topGlyphs, leadIn));
 	if (top.stage === null) {
 		const retry = parseTopBand(
-			readTagBand(gray, HEADER_TOP_BAND, topGlyphs, {
+			readTagBand(gray, bands.top, topGlyphs, {
+				...leadIn,
 				tagDarkMax: TAG_DARK_MAX_LIFTED,
 			}),
 		);
 		if (retry.stageScore >= top.stageScore) top = retry;
 	}
 
-	let bottomReading = readTagBand(gray, HEADER_BOTTOM_BAND, bottomGlyphs);
+	let bottomReading = readTagBand(gray, bands.bottom, bottomGlyphs, leadIn);
 	let bottomMatch = bottomReading
 		? closestBy(bottomReading, LOBBY_MODE_COMBOS, (c) => c.text)
 		: null;
 	if (!bottomMatch || bottomMatch.score < MIN_MATCH_SCORE) {
-		const reading = readTagBand(gray, HEADER_BOTTOM_BAND, bottomGlyphs, {
+		const reading = readTagBand(gray, bands.bottom, bottomGlyphs, {
+			...leadIn,
 			tagDarkMax: TAG_DARK_MAX_LIFTED,
 		});
 		const match = reading

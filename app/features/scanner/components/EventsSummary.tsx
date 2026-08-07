@@ -5,6 +5,7 @@
  * entirely once everything lives in a match.
  */
 
+import { BATTLE_LOG_EVENT_TYPE } from "../core/detectors/battle-log/index";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
@@ -21,6 +22,7 @@ const EVENT_TYPE_LABELS: Record<string, string> = {
 	[OBJECTIVE_EVENT_TYPE]: "objective",
 	[SCOREBOARD_EVENT_TYPE]: "scoreboard",
 	[SCOREBOARD_REPLAY_EVENT_TYPE]: "replay scoreboard",
+	[BATTLE_LOG_EVENT_TYPE]: "battle log",
 	[SCOREBOARD_OWN_EVENT_TYPE]: "own result",
 };
 

@@ -17,6 +17,10 @@
  */
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { harvestAbilities } from "./ability-harvest";
+import {
+	BATTLE_LOG_EVENT_TYPE,
+	type BattleLogData,
+} from "./detectors/battle-log/index";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import {
 	MAP_START_EVENT_TYPE,
@@ -349,9 +353,12 @@ function toBuiltMatch<E extends DetectedEvent>(
 
 	const board = open.scoreboard?.data as ScoreboardData | undefined;
 	const start = open.mapStart?.data as MapStartData | undefined;
-	const replay =
-		open.scoreboard?.type === SCOREBOARD_REPLAY_EVENT_TYPE
-			? (open.scoreboard.data as ScoreboardReplayData)
+	// the replay-browser and battle-log screens both carry the recording
+	// timestamp; only the former a replay code
+	const timestamped =
+		open.scoreboard?.type === SCOREBOARD_REPLAY_EVENT_TYPE ||
+		open.scoreboard?.type === BATTLE_LOG_EVENT_TYPE
+			? (open.scoreboard.data as BattleLogData & Partial<ScoreboardReplayData>)
 			: undefined;
 	const deaths = open.deaths.map((event) => event.data as DeathData);
 	const objectives = open.objectives.map((event) => ({
@@ -365,14 +372,14 @@ function toBuiltMatch<E extends DetectedEvent>(
 		startsAt:
 			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
 		endsAt: floorOrNull(open.scoreboard?.t ?? open.minimaps.at(-1)?.t),
-		playedAt: playedAt(open.scoreboard, replay),
+		playedAt: playedAt(open.scoreboard, timestamped),
 		lobby: board?.lobby ?? null,
 		mode,
 		stage: board?.stage ?? start?.stage ?? leadingStage(open.stageVotes),
 		matchScores: board?.matchScores.some((score) => score !== null)
 			? board.matchScores
 			: null,
-		replayCode: replay?.replayCode ?? null,
+		replayCode: timestamped?.replayCode ?? null,
 		cast: open.minimaps.some((event) => (event.data as MinimapData).spectator),
 		// only the SZ counter is parsed — reads on a known other-mode match
 		// are misreads of a lookalike overlay, not progress data
@@ -446,20 +453,20 @@ function bestCount(
 }
 
 /**
- * The wall-clock time the match was played: a replay scoreboard's on-screen
- * recording timestamp (anchored to when the screen was seen, not a possibly
- * much later send), else the closing scoreboard's detection time. Detection
- * times ride richer event records (StoredEvent) and are read structurally so
- * the builder stays generic.
+ * The wall-clock time the match was played: a replay/battle-log screen's
+ * on-screen recording timestamp (anchored to when the screen was seen, not
+ * a possibly much later send), else the closing scoreboard's detection
+ * time. Detection times ride richer event records (StoredEvent) and are
+ * read structurally so the builder stays generic.
  */
 function playedAt(
 	scoreboard: DetectedEvent | null,
-	replay: ScoreboardReplayData | undefined,
+	timestamped: BattleLogData | undefined,
 ): number | null {
 	if (!scoreboard) return null;
 	const detectedAt = (scoreboard as { detectedAt?: number }).detectedAt ?? null;
-	if (replay?.timestamp) {
-		const recorded = parseReplayTimestamp(replay.timestamp, {
+	if (timestamped?.timestamp) {
+		const recorded = parseReplayTimestamp(timestamped.timestamp, {
 			now: detectedAt ?? undefined,
 		});
 		if (recorded !== null) return recorded;

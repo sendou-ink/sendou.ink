@@ -4,6 +4,10 @@
  * picked up by the analyzer worker.
  */
 
+import {
+	BATTLE_LOG_EVENT_TYPE,
+	createBattleLogDetector,
+} from "./battle-log/index";
 import { createDeathDetector } from "./death/index";
 import { createMapStartDetector } from "./map-start/index";
 import { createMinimapDetector } from "./minimap/index";
@@ -22,11 +26,13 @@ import type { Detector } from "./types";
 
 /**
  * Event types whose data is the full 8-player scoreboard shape
- * (ScoreboardData): the results screen and the replay-browser detail.
+ * (ScoreboardData): the results screen, the replay-browser detail, and the
+ * battle-log detail.
  */
 export const SCOREBOARD_EVENT_TYPES: readonly string[] = [
 	SCOREBOARD_EVENT_TYPE,
 	SCOREBOARD_REPLAY_EVENT_TYPE,
+	BATTLE_LOG_EVENT_TYPE,
 ];
 
 export function createAllDetectors(
@@ -35,6 +41,7 @@ export function createAllDetectors(
 	return [
 		createScoreboardDetector(resources) as Detector<unknown>,
 		createScoreboardReplayDetector(resources) as Detector<unknown>,
+		createBattleLogDetector(resources) as Detector<unknown>,
 		createScoreboardOwnDetector(resources) as Detector<unknown>,
 		createDeathDetector(resources) as Detector<unknown>,
 		createMapStartDetector(resources) as Detector<unknown>,

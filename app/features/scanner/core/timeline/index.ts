@@ -3,6 +3,7 @@
  * Same-type events within a merge window collapse into one, keeping the
  * highest-confidence version; events below a confidence floor are dropped.
  */
+import { BATTLE_LOG_EVENT_TYPE } from "../detectors/battle-log/index";
 import {
 	OBJECTIVE_EVENT_TYPE,
 	sameObjectiveData,
@@ -45,6 +46,7 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	sameEventDataByType: {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
+		[BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
 		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
 	},
 	minConfidence: 0.6,

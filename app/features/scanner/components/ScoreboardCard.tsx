@@ -1,5 +1,6 @@
 import { WeaponImage } from "~/components/Image";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
+import { BATTLE_LOG_EVENT_TYPE } from "../core/detectors/battle-log/index";
 import type {
 	ScoreboardData,
 	ScoreboardPlayer,
@@ -77,6 +78,7 @@ export function ScoreboardCard(props: {
 	const eventType = props.eventType ?? "Scoreboard";
 	const data = props.data as CardData;
 	const isReplay = eventType === SCOREBOARD_REPLAY_EVENT_TYPE;
+	const isBattleLog = eventType === BATTLE_LOG_EVENT_TYPE;
 	return (
 		<div className="card">
 			<div className="meta">
@@ -84,7 +86,9 @@ export function ScoreboardCard(props: {
 					t={t}
 					confidence={confidence}
 					type={eventType}
-					label={isReplay ? "replay" : "scoreboard"}
+					label={
+						isReplay ? "replay" : isBattleLog ? "battle log" : "scoreboard"
+					}
 				/>
 				{(data.mode !== null || data.stage !== null) && (
 					<span>

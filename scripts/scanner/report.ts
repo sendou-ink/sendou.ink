@@ -8,6 +8,7 @@
  * Usage: pnpm scanner:report
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
+import { createBattleLogDetector } from "../../app/features/scanner/core/detectors/battle-log/index";
 import {
 	createDeathDetector,
 	type DeathData,
@@ -58,6 +59,12 @@ const configs: Config[] = [
 		detector: createScoreboardReplayDetector(resources),
 		fixturesDir: "scoreboard-replay",
 		event: "ScoreboardReplay",
+	},
+	{
+		label: "battle-log",
+		detector: createBattleLogDetector(resources),
+		fixturesDir: "battle-log",
+		event: "BattleLog",
 	},
 ];
 
@@ -190,8 +197,10 @@ for (const config of configs) {
 	console.info(`\n=== ${config.label} (${fixtures.length} fixtures) ===`);
 	console.info(`gate        ${pct(tally.gate)}`);
 	console.info(`header      ${pct(tally.header)}`);
-	if (config.event === "ScoreboardReplay") {
+	if (tally.timestamp.total > 0) {
 		console.info(`timestamp   ${pct(tally.timestamp)}`);
+	}
+	if (tally.replayCode.total > 0) {
 		console.info(`replayCode  ${pct(tally.replayCode)}`);
 	}
 	console.info(`matchScores ${pct(tally.matchScores)}`);

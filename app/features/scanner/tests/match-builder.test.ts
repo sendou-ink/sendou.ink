@@ -4,6 +4,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import type { BattleLogData } from "../core/detectors/battle-log/index";
 import type { DeathData } from "../core/detectors/death/index";
 import type {
 	MinimapData,
@@ -106,6 +107,19 @@ function replayScoreboard(
 		matchScores: [88, 71],
 	};
 	return { type: "ScoreboardReplay", t, confidence: 0.9, data };
+}
+
+function battleLogScoreboard(
+	t: number,
+	{ timestamp = null as string | null } = {},
+): DetectedEvent & { detectedAt?: number } {
+	const base = scoreboard(t).data as ScoreboardData;
+	const data: BattleLogData = {
+		...base,
+		timestamp,
+		matchScores: [100, 0],
+	};
+	return { type: "BattleLog", t, confidence: 0.9, data };
 }
 
 function teammate(weaponId: MainWeaponId | null, i: number): MinimapTeammate {
@@ -482,6 +496,16 @@ test("a replay scoreboard supplies replay code, set score and recording time", (
 	const match = built[0]!.match;
 	assert.equal(match.replayCode, "RABC-DEFG-HIJK-LMNO");
 	assert.deepEqual(match.matchScores, [88, 71]);
+	assert.equal(match.playedAt, new Date(2025, 11, 25, 21, 30).getTime());
+});
+
+test("a battle-log scoreboard closes a match and supplies the recording time without a replay code", () => {
+	const event = battleLogScoreboard(300, { timestamp: "25.12.2025 21:30" });
+	event.detectedAt = Date.UTC(2025, 11, 26, 12, 0);
+	const built = buildScannerMatches([event]);
+	const match = built[0]!.match;
+	assert.equal(match.replayCode, null);
+	assert.deepEqual(match.matchScores, [100, 0]);
 	assert.equal(match.playedAt, new Date(2025, 11, 25, 21, 30).getTime());
 });
 

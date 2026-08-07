@@ -3,6 +3,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
+import * as bl from "../core/detectors/battle-log/rois";
 import type { DeathData } from "../core/detectors/death/index";
 import * as death from "../core/detectors/death/rois";
 import type { MapStartData } from "../core/detectors/map-start/index";
@@ -75,6 +76,26 @@ function scoreboardRows(): RowRois[] {
 		paint: sb.paintRoi(cy),
 		stats: [sb.statRoi(cy, 0), sb.statRoi(cy, 1), sb.statRoi(cy, 2)],
 	}));
+}
+
+/** winnerSide comes from the event debug: players are ordered winners-first. */
+function battleLogRows(winnerSide: string): RowRois[] {
+	const panels = winnerSide === "bottom" ? [bl.PANEL_DY, 0] : [0, bl.PANEL_DY];
+	return panels.flatMap((dy) =>
+		bl.ROW_CENTERS.map((base) => {
+			const cy = base + dy;
+			return {
+				weapon: bl.weaponRoi(cy),
+				name: bl.nameRoi(cy),
+				paint: bl.paintRoi(cy),
+				stats: [bl.statRoi(cy, 0), bl.statRoi(cy, 1), bl.statRoi(cy, 2)] as [
+					Roi,
+					Roi,
+					Roi,
+				],
+			};
+		}),
+	);
 }
 
 /** winnerSide comes from the event debug: players are ordered winners-first. */
@@ -168,6 +189,25 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		]) {
 			rect(roi, "#facc15");
 		}
+		return;
+	}
+	if (detector === "battle-log") {
+		for (const dy of bl.PANEL_DYS) {
+			for (const base of bl.ROW_CENTERS) {
+				const cy = base + dy;
+				rect(bl.weaponRoi(cy), "#f87171");
+				rect(bl.nameRoi(cy), "#4ade80");
+				rect(bl.paintRoi(cy), "#60a5fa");
+				for (const i of [0, 1, 2] as const) rect(bl.statRoi(cy, i), "#e879f9");
+				rect(bl.gateDarkProbe(cy), "#facc15");
+			}
+			rect(bl.teamScoreRoi(dy), "#60a5fa");
+			rect(bl.resultTagRoi(dy), "#fb923c");
+		}
+		for (const roi of bl.MATCH_SCORE_ROIS) rect(roi, "#60a5fa");
+		for (const roi of bl.GATE_COLOR_PROBES) rect(roi, "#facc15");
+		rect(bl.HEADER_TOP_BAND, "#34d399");
+		rect(bl.HEADER_BOTTOM_BAND, "#34d399");
 		return;
 	}
 	if (detector === "scoreboard-replay") {
@@ -297,12 +337,17 @@ export function ScreenshotPage() {
 	const event = active?.events[0] as DetectedEvent<CardData> | undefined;
 	const rows = (event?.debug?.rows ?? []) as ScoreboardRowDebug[];
 	const isReplay = activeDetector === "scoreboard-replay";
+	const isBattleLog = activeDetector === "battle-log";
 	const isDeath = activeDetector === "death";
 	const isMapStart = activeDetector === "map-start";
 	const isOwn = activeDetector === "scoreboard-own";
 	const isMinimap = activeDetector === "minimap";
 	const winnerSide = String(event?.debug?.winnerSide ?? "left");
-	const rowRois = isReplay ? replayRows(winnerSide) : scoreboardRows();
+	const rowRois = isReplay
+		? replayRows(winnerSide)
+		: isBattleLog
+			? battleLogRows(winnerSide)
+			: scoreboardRows();
 
 	return (
 		<div>
@@ -459,6 +504,17 @@ export function ScreenshotPage() {
 					<br />
 					<RoiCrop frame={frame} roi={replay.HEADER_TOP_BAND} />{" "}
 					<RoiCrop frame={frame} roi={replay.REPLAY_CODE_ROI} />
+				</p>
+			)}
+
+			{frame && event && isBattleLog && (
+				<p>
+					timestamp <b>{event.data.timestamp ?? "?"}</b>
+					{" · "}match scores {JSON.stringify(event.data.matchScores)}
+					{" · "}winner panel <b>{winnerSide}</b>
+					<br />
+					<RoiCrop frame={frame} roi={bl.HEADER_TOP_BAND} />{" "}
+					<RoiCrop frame={frame} roi={bl.HEADER_BOTTOM_BAND} />
 				</p>
 			)}
 

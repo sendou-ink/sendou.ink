@@ -1,9 +1,10 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
  * Draw all scoreboard ROIs on a (normalized) frame for visual calibration.
- * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-replay]
+ * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-replay|battle-log]
  */
 import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
+import * as bl from "../../app/features/scanner/core/detectors/battle-log/rois";
 import * as death from "../../app/features/scanner/core/detectors/death/rois";
 import * as mapStart from "../../app/features/scanner/core/detectors/map-start/rois";
 import * as minimap from "../../app/features/scanner/core/detectors/minimap/rois";
@@ -21,7 +22,7 @@ const [imagePath, outPath = "roi-overlay.png", detector = "scoreboard"] =
 	process.argv.slice(2);
 if (!imagePath) {
 	console.error(
-		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-replay|death|map-start|minimap]",
+		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-replay|battle-log|death|map-start|minimap]",
 	);
 	process.exit(1);
 }
@@ -71,6 +72,27 @@ if (detector === "scoreboard") {
 	rect(frame, replay.HEADER_TOP_BAND, [0, 255, 0]);
 	rect(frame, replay.HEADER_BOTTOM_BAND, [0, 255, 0]);
 	rect(frame, replay.REPLAY_CODE_ROI, [0, 255, 0]);
+} else if (detector === "battle-log") {
+	for (const dy of bl.PANEL_DYS) {
+		for (const base of bl.ROW_CENTERS) {
+			const cy = base + dy;
+			rect(frame, bl.weaponRoi(cy), [255, 0, 0]);
+			rect(frame, bl.nameRoi(cy), [0, 255, 0]);
+			rect(frame, bl.paintRoi(cy), [0, 128, 255]);
+			rect(frame, bl.paintSuffixRoi(cy), [0, 255, 255]);
+			for (const i of [0, 1, 2] as const)
+				rect(frame, bl.statRoi(cy, i), [255, 0, 255]);
+			rect(frame, bl.gateDarkProbe(cy), [255, 255, 0]);
+			rect(frame, bl.povArrowRoi(cy), [255, 128, 0]);
+			rect(frame, bl.specialIconRoi(cy), [255, 0, 0]);
+		}
+		rect(frame, bl.teamScoreRoi(dy), [0, 128, 255]);
+		rect(frame, bl.resultTagRoi(dy), [255, 128, 0]);
+	}
+	for (const roi of bl.MATCH_SCORE_ROIS) rect(frame, roi, [0, 128, 255]);
+	for (const roi of bl.GATE_COLOR_PROBES) rect(frame, roi, [255, 255, 0]);
+	rect(frame, bl.HEADER_TOP_BAND, [0, 255, 0]);
+	rect(frame, bl.HEADER_BOTTOM_BAND, [0, 255, 0]);
 } else if (detector === "death") {
 	rect(frame, death.SPLAT_LINE1_ROI, [0, 255, 0]);
 	rect(frame, death.WEAPON_LINE_ROI, [255, 0, 0]);

@@ -1,17 +1,19 @@
 /**
- * Golden-file tests: run the ScoreboardDetector over every fixture and
- * compare per field, so a failure names the exact field and row with the
- * raw match score (threshold problems must look different from ROI problems).
- *
- * Target one case: node --test --test-name-pattern="xbattle" 'tests/**'
+ * Golden-file suite for the BattleLogDetector over every fixture in
+ * battle-log/, mirroring tests/suites/scoreboard-replay.ts (the battle log
+ * shows the same data sans the replay code), plus cross-negative sweeps:
+ * the battle-log gate must stay quiet on both lookalike results screens.
  */
 
 import assert from "node:assert/strict";
 import { loadOpenCV } from "../core/cv";
 import {
-	createScoreboardDetector,
-	type ScoreboardPlayer,
-	type ScoreboardRowDebug,
+	BATTLE_LOG_EVENT_TYPE,
+	createBattleLogDetector,
+} from "../core/detectors/battle-log/index";
+import type {
+	ScoreboardPlayer,
+	ScoreboardRowDebug,
 } from "../core/detectors/scoreboard/index";
 import {
 	type Fixture,
@@ -23,17 +25,17 @@ import { loadScoreboardResources } from "../node/resources";
 import test from "./node-test-compat";
 
 await loadOpenCV();
-const detector = createScoreboardDetector(await loadScoreboardResources());
-const fixtures = loadFixtures("scoreboard");
+const detector = createBattleLogDetector(await loadScoreboardResources());
+const fixtures = loadFixtures("battle-log");
 
-test("fixtures exist", () => {
-	assert.ok(fixtures.length > 0, "no fixtures found under scoreboard/");
+test("battle-log fixtures exist", () => {
+	assert.ok(fixtures.length > 0, "no fixtures found under battle-log/");
 });
 
 for (const fixture of fixtures) {
-	test(`scoreboard/${fixture.name}`, async (t) => {
+	test(`battle-log/${fixture.name}`, async (t) => {
 		const { gate, events } = await runDetectorOnFixture(detector, fixture);
-		const expectPositive = fixture.expected.event === "Scoreboard";
+		const expectPositive = fixture.expected.event === BATTLE_LOG_EVENT_TYPE;
 
 		await t.test("gate", () => {
 			assert.equal(
@@ -65,7 +67,7 @@ for (const fixture of fixtures) {
 			{ skip: expected.mode === undefined || skip(fixture, "header") },
 			() => {
 				const dbg = event.debug?.header as
-					| { lobbyReading?: string; lineReading?: string }
+					| { topReading?: string; bottomReading?: string }
 					| undefined;
 				assert.deepEqual(
 					{
@@ -78,7 +80,22 @@ for (const fixture of fixtures) {
 						mode: expected.mode ?? null,
 						stage: expected.stage ?? null,
 					},
-					`header mismatch (readings: "${dbg?.lobbyReading}" / "${dbg?.lineReading}")`,
+					`header mismatch (readings: "${dbg?.topReading}" / "${dbg?.bottomReading}")`,
+				);
+			},
+		);
+
+		await t.test(
+			"timestamp",
+			{
+				skip: expected.timestamp === undefined || skip(fixture, "timestamp"),
+			},
+			() => {
+				const dbg = event.debug?.header as { topReading?: string } | undefined;
+				assert.equal(
+					event.data.timestamp,
+					expected.timestamp,
+					`timestamp mismatch (reading: "${dbg?.topReading}")`,
 				);
 			},
 		);
@@ -97,6 +114,15 @@ for (const fixture of fixtures) {
 		);
 
 		const players = expected.players ?? [];
+
+		await t.test(
+			"player count",
+			{ skip: expected.players === undefined || skip(fixture, "players") },
+			() => {
+				assert.equal(event.data.players.length, players.length);
+			},
+		);
+
 		for (const [i, want] of players.entries()) {
 			const got: ScoreboardPlayer | undefined = event.data.players[i];
 			const dbg = rows[i];
@@ -123,7 +149,9 @@ for (const fixture of fixtures) {
 
 			await t.test(
 				`row ${i} name`,
-				{ skip: want.name === undefined || skip(fixture, `players.${i}.name`) },
+				{
+					skip: want.name === undefined || skip(fixture, `players.${i}.name`),
+				},
 				() => {
 					assert.equal(
 						got.name,
@@ -149,7 +177,9 @@ for (const fixture of fixtures) {
 
 			await t.test(
 				`row ${i} stats`,
-				{ skip: want.ka === undefined || skip(fixture, `players.${i}.stats`) },
+				{
+					skip: want.ka === undefined || skip(fixture, `players.${i}.stats`),
+				},
 				() => {
 					const scores = dbg?.statScores.map((s) => s.toFixed(3)).join(",");
 					assert.deepEqual(
@@ -163,33 +193,35 @@ for (const fixture of fixtures) {
 	});
 }
 
-// Mirror of the cross-negative sweeps in suites/scoreboard-replay.ts and
-// battle-log.test.ts: the live gate must stay quiet on every replay-browser
-// and battle-log positive.
+// The three scoreboard-shaped screens must not trigger each other's
+// detectors; the mirror sweeps live in scoreboard.test.ts and
+// suites/scoreboard-replay.ts.
 for (const fixture of [
+	...loadFixtures("scoreboard").filter(
+		(f) => f.expected.event === "Scoreboard",
+	),
 	...loadFixtures("scoreboard-replay").filter(
 		(f) => f.expected.event === "ScoreboardReplay",
 	),
-	...loadFixtures("battle-log").filter((f) => f.expected.event === "BattleLog"),
 ]) {
-	test(`scoreboard gate stays quiet on ${fixture.name}`, async () => {
+	test(`battle-log gate stays quiet on ${fixture.name}`, async () => {
 		const { gate } = await runDetectorOnFixture(detector, fixture);
 		assert.equal(
 			gate.pass,
 			false,
-			`scoreboard gate fired (score=${gate.score.toFixed(3)})`,
+			`battle-log gate fired (score=${gate.score.toFixed(3)})`,
 		);
 	});
 }
 
 // Shared negatives (tests/fixtures/negative/): frames no detector may fire on.
 for (const fixture of loadFixtures("negative")) {
-	test(`scoreboard gate stays quiet on negative/${fixture.name}`, async () => {
+	test(`battle-log gate stays quiet on negative/${fixture.name}`, async () => {
 		const { gate } = await runDetectorOnFixture(detector, fixture);
 		assert.equal(
 			gate.pass,
 			false,
-			`scoreboard gate fired (score=${gate.score.toFixed(3)})`,
+			`battle-log gate fired (score=${gate.score.toFixed(3)})`,
 		);
 	});
 }

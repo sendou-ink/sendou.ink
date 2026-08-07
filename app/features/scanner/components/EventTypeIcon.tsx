@@ -5,6 +5,7 @@
 
 import {
 	CircleHelp,
+	History,
 	type LucideIcon,
 	Map as MapIcon,
 	Play,
@@ -14,6 +15,7 @@ import {
 	Trophy,
 	User,
 } from "lucide-react";
+import { BATTLE_LOG_EVENT_TYPE } from "../core/detectors/battle-log/index";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
@@ -29,6 +31,7 @@ const EVENT_TYPE_ICONS: Record<string, LucideIcon> = {
 	[OBJECTIVE_EVENT_TYPE]: Target,
 	[SCOREBOARD_EVENT_TYPE]: Trophy,
 	[SCOREBOARD_REPLAY_EVENT_TYPE]: RotateCcw,
+	[BATTLE_LOG_EVENT_TYPE]: History,
 	[SCOREBOARD_OWN_EVENT_TYPE]: User,
 };
 
