@@ -1,0 +1,80 @@
+{
+  "event": "ScoreboardBattleLog",
+  "data": {
+    "lobby": "X",
+    "mode": "RM",
+    "stage": 23,
+    "stageLabel": "Lemuria Hub",
+    "timestamp": "5/8/2026 18:16",
+    "matchScores": [
+      96,
+      86
+    ],
+    "players": [
+      {
+        "name": "Now or Never Seven",
+        "weaponId": 60,
+        "paint": 1216,
+        "ka": 12,
+        "d": 11,
+        "s": 4
+      },
+      {
+        "name": "lnvisifloats",
+        "weaponId": 40,
+        "paint": 1233,
+        "ka": 20,
+        "d": 8,
+        "s": 4
+      },
+      {
+        "name": "3D",
+        "weaponId": 7010,
+        "paint": 1694,
+        "ka": 12,
+        "d": 6,
+        "s": 6
+      },
+      {
+        "name": "Beanie",
+        "weaponId": 252,
+        "paint": 1088,
+        "ka": 10,
+        "d": 11,
+        "s": 3
+      },
+      {
+        "name": "BluFocals",
+        "weaponId": 5001,
+        "paint": 1575,
+        "ka": 14,
+        "d": 11,
+        "s": 3
+      },
+      {
+        "name": "Headphones",
+        "weaponId": 2021,
+        "paint": 879,
+        "ka": 7,
+        "d": 8,
+        "s": 3
+      },
+      {
+        "name": "Slugger",
+        "weaponId": 1020,
+        "paint": 1618,
+        "ka": 10,
+        "d": 8,
+        "s": 5
+      },
+      {
+        "name": "Mesh Cap",
+        "weaponId": 50,
+        "paint": 1264,
+        "ka": 12,
+        "d": 9,
+        "s": 4
+      }
+    ]
+  }
+}

@@ -8,7 +8,7 @@
  * the winner's team total instead (the box prints the count times five, and
  * only a knockout's full 100 count reaches 500). The score value bounces as
  * it lands, so a frame may catch the digits settled or mid-pop — this module
- * parses at both sizes and both binarization thresholds and keeps the best
+ * parses at every size and binarization threshold and keeps the best
  * read (valid over none, longer digit run over shorter, then confidence).
  */
 import { getCV, type Mat } from "../../cv";
@@ -53,12 +53,20 @@ const BANNER_SCORE_BIN_THRESHOLD = 205;
  * with the wave-crest highlight brighter still) binarizes solid white at the
  * base threshold, gluing label and digits into one giant unmatchable blob
  * that can swallow all but the last digit. Only the ~250 digit ink survives
- * this threshold. Both passes always run; a swallowed background can only
+ * this threshold. Every pass always runs; a swallowed background can only
  * shorten the digit run, never lengthen it, so the longer run wins
  * regardless of confidence (the truncated read's surviving digit is genuine
  * ink and scores just as well).
  */
 const BANNER_SCORE_BRIGHT_BIN_THRESHOLD = 240;
+
+/**
+ * Third pass for the brightest banners: a yellow battle-log banner grays at
+ * ~245 near the wave crest, so even the bright pass keeps label ink attached
+ * and erodes the digits below the confidence floor. Only the ~250 digit
+ * cores survive this threshold.
+ */
+const BANNER_SCORE_BRIGHTEST_BIN_THRESHOLD = 248;
 
 /**
  * Digits of one number nearly touch; anything further apart than this
@@ -120,6 +128,7 @@ export function parseBannerScore(
 	for (const binThreshold of [
 		BANNER_SCORE_BIN_THRESHOLD,
 		BANNER_SCORE_BRIGHT_BIN_THRESHOLD,
+		BANNER_SCORE_BRIGHTEST_BIN_THRESHOLD,
 	]) {
 		for (const set of sets) {
 			const raw = recognizeText(crop, set, {
