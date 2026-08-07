@@ -17,6 +17,7 @@ import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
+import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ScrimMapListRepository from "~/features/scrims/ScrimMapListRepository.server";
 import * as ScrimMapRepository from "~/features/scrims/ScrimMapRepository.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
@@ -415,6 +416,87 @@ export function buildCases(fx: Fixtures): {
 			month: voting.month,
 			year: voting.year,
 		}),
+	);
+
+	// ScannerIngestRepository
+	add(
+		"ScannerIngestRepository.gamesPlayedByUserInTournament",
+		fx.scannerIngest,
+		(ingest) =>
+			ScannerIngestRepository.gamesPlayedByUserInTournament({
+				userId: ingest.povUserId,
+				tournamentId: ingest.tournamentId,
+			}),
+	);
+	add(
+		"ScannerIngestRepository.gamesPlayedByUserSince",
+		fx.scannerIngest,
+		(ingest) =>
+			ScannerIngestRepository.gamesPlayedByUserSince({
+				userId: ingest.povUserId,
+				since: ingest.sinceTimestamp,
+			}),
+	);
+	add(
+		"ScannerIngestRepository.castedGamesInTournament",
+		fx.castedTournamentId,
+		(tournamentId) =>
+			ScannerIngestRepository.castedGamesInTournament(tournamentId),
+	);
+	add(
+		"ScannerIngestRepository.gamesInGroupMatch",
+		fx.heavyGroupMatchId,
+		(groupMatchId) => ScannerIngestRepository.gamesInGroupMatch(groupMatchId),
+	);
+	add(
+		"ScannerIngestRepository.sendouqGamesPlayedByUserSince",
+		fx.scannerIngestSendouq,
+		(sendouq) =>
+			ScannerIngestRepository.sendouqGamesPlayedByUserSince({
+				userId: sendouq.userId,
+				since: sendouq.sinceTimestamp,
+			}),
+	);
+	add(
+		"ScannerIngestRepository.tournamentActivityAt",
+		fx.scannerIngest,
+		(ingest) =>
+			ScannerIngestRepository.tournamentActivityAt({
+				userId: ingest.povUserId,
+				at: ingest.atMs,
+			}),
+	);
+	add(
+		"ScannerIngestRepository.groupMatchIdAt",
+		fx.scannerIngestSendouq,
+		(sendouq) =>
+			ScannerIngestRepository.groupMatchIdAt({
+				userId: sendouq.userId,
+				at: sendouq.atMs,
+			}),
+	);
+	add(
+		"ScannerIngestRepository.staffTournamentIdsAt",
+		both(fx.calendarAuthorId, fx.scannerIngest),
+		([userId, ingest]) =>
+			ScannerIngestRepository.staffTournamentIdsAt({
+				userId,
+				at: ingest.atMs,
+			}),
+	);
+	add(
+		"ScannerIngestRepository.findScoreboardsByTournamentMatchId",
+		fx.heavyTournamentMatchId,
+		(tournamentMatchId) =>
+			ScannerIngestRepository.findScoreboardsByTournamentMatchId(
+				tournamentMatchId,
+			),
+	);
+	add(
+		"ScannerIngestRepository.gamesInTournamentMatch",
+		fx.heavyTournamentMatchId,
+		(tournamentMatchId) =>
+			ScannerIngestRepository.gamesInTournamentMatch(tournamentMatchId),
 	);
 
 	// ScrimMapListRepository

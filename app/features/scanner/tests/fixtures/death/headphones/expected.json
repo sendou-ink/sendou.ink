@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 10,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "CB",
+        "BRU",
+        "ISS",
+        "ISS"
+      ],
+      [
+        "ISS",
+        "BRU",
+        "QSJ",
+        "BRU"
+      ],
+      [
+        "SJ",
+        "SSU",
+        "QSJ",
+        "SRU"
+      ]
+    ],
+    "name": "Headphones",
+    "weaponLabel": "Splattershot Jr."
+  }
+}

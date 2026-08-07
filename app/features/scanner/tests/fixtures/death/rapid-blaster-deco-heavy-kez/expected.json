@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 241,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "CB",
+        "QR",
+        "BRU",
+        "QR"
+      ],
+      [
+        "QR",
+        "QR",
+        "QR",
+        "QR"
+      ],
+      [
+        "SJ",
+        "RES",
+        "ISM",
+        "ISM"
+      ]
+    ],
+    "name": "heavy kez",
+    "weaponLabel": "Rapid Blaster Deco"
+  }
+}

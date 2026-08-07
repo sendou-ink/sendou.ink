@@ -34,6 +34,7 @@ import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
+import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import type {
 	MemberRole,
@@ -502,6 +503,30 @@ export interface ReportedWeapon {
 	mapIndex: number;
 	userId: number;
 	weaponSplId: MainWeaponId;
+	createdAt: Generated<number>;
+}
+
+export interface IngestedMatch {
+	id: GeneratedAlways<number>;
+	povUserId: number | null;
+	submitterUserId: number | null;
+	/** database timestamp (seconds) the match was played at, when known */
+	playedAt: number | null;
+	data: JSONColumnType<ScannerMatch>;
+	matchHash: string;
+	/** server-resolved tournament the match probably belongs to; aids future linking */
+	tournamentIdHint: number | null;
+	/** server-resolved SendouQ match the match probably belongs to; aids future linking */
+	groupMatchIdHint: number | null;
+	createdAt: Generated<number>;
+}
+
+/** Links an ingested match to the game result it describes (exactly one target). */
+export interface IngestedMatchLink {
+	id: GeneratedAlways<number>;
+	ingestedMatchId: number;
+	tournamentMatchGameResultId: number | null;
+	groupMatchMapId: number | null;
 	createdAt: Generated<number>;
 }
 
@@ -1286,6 +1311,8 @@ export interface DB {
 	GroupReadyCheck: GroupReadyCheck;
 	GroupReadyCheckConfirmation: GroupReadyCheckConfirmation;
 	GroupSuggestion: GroupSuggestion;
+	IngestedMatch: IngestedMatch;
+	IngestedMatchLink: IngestedMatchLink;
 	PrivateUserNote: PrivateUserNote;
 	LogInLink: LogInLink;
 	LFGPost: LFGPost;

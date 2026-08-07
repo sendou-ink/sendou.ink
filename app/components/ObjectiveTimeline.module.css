@@ -1,0 +1,6 @@
+.container {
+	height: 300px;
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: var(--s-2-5) var(--s-3);
+}

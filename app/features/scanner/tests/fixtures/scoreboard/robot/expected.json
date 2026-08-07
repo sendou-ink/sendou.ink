@@ -1,0 +1,79 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 4,
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "R.O.B.O.T",
+        "weaponId": 211,
+        "paint": 686,
+        "ka": 13,
+        "d": 5,
+        "s": 3
+      },
+      {
+        "name": "でんさく",
+        "weaponId": 60,
+        "paint": 1207,
+        "ka": 11,
+        "d": 2,
+        "s": 5
+      },
+      {
+        "name": "いちごシロップ",
+        "weaponId": 2030,
+        "paint": 707,
+        "ka": 7,
+        "d": 2,
+        "s": 3
+      },
+      {
+        "name": "てんさく",
+        "weaponId": 3000,
+        "paint": 818,
+        "ka": 5,
+        "d": 5,
+        "s": 2
+      },
+      {
+        "name": "Mathis",
+        "weaponId": 2070,
+        "paint": 1013,
+        "ka": 10,
+        "d": 3,
+        "s": 5
+      },
+      {
+        "name": "Rαι×ι..・",
+        "weaponId": 8000,
+        "paint": 868,
+        "ka": 6,
+        "d": 6,
+        "s": 4
+      },
+      {
+        "name": "YuNI",
+        "weaponId": 3005,
+        "paint": 908,
+        "ka": 5,
+        "d": 6,
+        "s": 2
+      },
+      {
+        "name": "eileen",
+        "weaponId": 50,
+        "paint": 629,
+        "ka": 4,
+        "d": 9,
+        "s": 2
+      }
+    ],
+    "stageLabel": "Mincemeat Metalworks"
+  }
+}

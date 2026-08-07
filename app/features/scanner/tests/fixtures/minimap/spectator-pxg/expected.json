@@ -1,0 +1,102 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 18,
+    "spectator": true,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "kyutpie<3",
+        "abilities": [
+          "SSU",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": ".96 Gal",
+        "weaponId": 80
+      },
+      {
+        "slot": "right",
+        "name": "Grey",
+        "abilities": [
+          "LDE",
+          "SCU",
+          "ISM"
+        ],
+        "weaponLabel": "Flingza Roller",
+        "weaponId": 1030
+      },
+      {
+        "slot": "down",
+        "name": "JORDANYAGI",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ],
+        "weaponLabel": "Order Slosher Replica",
+        "weaponId": 3005
+      },
+      {
+        "slot": "left",
+        "name": "f(x)= x²-8",
+        "abilities": [
+          "OG",
+          "SCU",
+          "ISM"
+        ],
+        "weaponLabel": "Rapid Blaster Pro WNT-R",
+        "weaponId": 252
+      }
+    ],
+    "enemies": [
+      {
+        "name": "Nala fan",
+        "abilities": [
+          "CB",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "S-BLAST '91",
+        "weaponId": 261
+      },
+      {
+        "name": "バッラスト",
+        "abilities": [
+          "LDE",
+          "SPU",
+          "ISM"
+        ],
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070
+      },
+      {
+        "name": "Jared",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ],
+        "weaponLabel": "Twinklez Splat Dualies",
+        "weaponId": 5012
+      },
+      {
+        "name": "Reiyu C:3",
+        "abilities": [
+          "SSU",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "Splash-o-matic",
+        "weaponId": 20
+      }
+    ],
+    "stageLabel": "Crableg Capital"
+  },
+  "options": {
+    "skipFields": [
+      "teammates.3.name"
+    ],
+    "notes": "8-player spectator map screen from a different stream layout (PXG score bug top-left) — attests the card grid and the X jump-button disc land on the same ROIs across layouts. Latin names anchor the 29-30px glyph-height calibration. teammates.3.name skipped: the superscript two in f(x)= x²-8 is not a charset glyph (reads ´ or ·)."
+  }
+}

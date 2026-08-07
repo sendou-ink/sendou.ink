@@ -1,0 +1,79 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "SERIES",
+    "mode": "SZ",
+    "stage": 8,
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "Sendou",
+        "weaponId": 220,
+        "paint": 437,
+        "ka": 6,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "◇Dαrz™",
+        "weaponId": 4010,
+        "paint": 635,
+        "ka": 3,
+        "d": 0,
+        "s": 2
+      },
+      {
+        "name": "Love★Star",
+        "weaponId": 7015,
+        "paint": 467,
+        "ka": 4,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "m",
+        "weaponId": 5000,
+        "paint": 498,
+        "ka": 5,
+        "d": 2,
+        "s": 2
+      },
+      {
+        "name": "Super★star",
+        "weaponId": 2070,
+        "paint": 683,
+        "ka": 3,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "Kelo",
+        "weaponId": 5002,
+        "paint": 453,
+        "ka": 1,
+        "d": 3,
+        "s": 3
+      },
+      {
+        "name": "<sein>",
+        "weaponId": 47,
+        "paint": 488,
+        "ka": 0,
+        "d": 4,
+        "s": 2
+      },
+      {
+        "name": "ウサギ「usagi」",
+        "weaponId": 3011,
+        "paint": 312,
+        "ka": 1,
+        "d": 4,
+        "s": 1
+      }
+    ],
+    "stageLabel": "Inkblot Art Academy"
+  }
+}

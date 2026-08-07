@@ -167,6 +167,7 @@ export const TIER_LIST_MAKER_URL = "/tier-list-maker";
 export const ANALYZER_URL = "/analyzer";
 export const COMP_ANALYZER_URL = "/comp-analyzer";
 export const OBJECT_DAMAGE_CALCULATOR_URL = "/object-damage-calculator";
+export const SCANNER_PAGE = "/scanner";
 export const VODS_PAGE = "/vods";
 export const LEADERBOARDS_PAGE = "/leaderboards";
 export const LINKS_PAGE = "/links";
@@ -418,6 +419,13 @@ export const tournamentTeamPage = ({
 	tournamentId: number;
 	tournamentTeamId: number;
 }) => `/to/${tournamentId}/teams/${tournamentTeamId}`;
+export const tournamentTeamCompsPage = ({
+	tournamentId,
+	tournamentTeamId,
+}: {
+	tournamentId: number;
+	tournamentTeamId: number;
+}) => `${tournamentTeamPage({ tournamentId, tournamentTeamId })}/comps`;
 export const tournamentInfoPage = (tournamentId: number) =>
 	`/to/${tournamentId}/info`;
 export const tournamentRegisterPage = (tournamentId: number) =>

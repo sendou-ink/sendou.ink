@@ -4,7 +4,7 @@ import { InfoPopover } from "~/components/InfoPopover";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import { FormField } from "~/form/FormField";
-import { useFormFieldContext } from "~/form/SendouForm";
+import { useFormFieldContext, useFormValue } from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";
 import {
 	type BracketFormValue,
@@ -110,9 +110,10 @@ function BracketFields({
 	isDisabled: boolean;
 }) {
 	const { t } = useTranslation(["forms"]);
-	const { index, itemName, values, formValues, setItemField } = renderContext;
+	const { index, itemName, values, setItemField } = renderContext;
 	const bracket = values as unknown as BracketFormValue;
-	const progression = (formValues.progression ?? []) as ProgressionFormValue[];
+	const progression = (useFormValue("progression") ??
+		[]) as ProgressionFormValue[];
 
 	const isFollowUp = index > 0 && progression[index]?.source === "BRACKET";
 
@@ -226,9 +227,9 @@ function ProgressionEntryFields({
 	isSourceLocked: boolean;
 }) {
 	const { t } = useTranslation(["forms"]);
-	const { index, itemName, values, formValues, setItemField } = renderContext;
+	const { index, itemName, values, setItemField } = renderContext;
 	const entry = values as unknown as ProgressionFormValue;
-	const brackets = (formValues.brackets ?? []) as BracketFormValue[];
+	const brackets = (useFormValue("brackets") ?? []) as BracketFormValue[];
 	const sources = entry.sources ?? [];
 
 	const isFirstBracket = index === 0;
@@ -301,10 +302,11 @@ function SourceFields({
 	destinationBracketIdx: number;
 	isDisabled: boolean;
 }) {
-	const { index, itemName, values, formValues } = renderContext;
+	const { index, itemName, values } = renderContext;
 	const source = values as unknown as ProgressionSourceFormValue;
-	const brackets = (formValues.brackets ?? []) as BracketFormValue[];
-	const progression = (formValues.progression ?? []) as ProgressionFormValue[];
+	const brackets = (useFormValue("brackets") ?? []) as BracketFormValue[];
+	const progression = (useFormValue("progression") ??
+		[]) as ProgressionFormValue[];
 	const siblingSources = progression[destinationBracketIdx]?.sources ?? [];
 
 	// a bracket can be sourced only once, so the brackets taken by the other rows

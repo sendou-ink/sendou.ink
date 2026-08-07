@@ -90,7 +90,11 @@ export function TournamentGraphicHeader({
 			titleRow={
 				<>
 					<span className={graphicStyles.headerTitle}>{tournamentName}</span>
-					{typeof tier === "number" ? <TierPill tier={tier} /> : null}
+					{typeof tier === "number" ? (
+						<span className={styles.tierPillContainer}>
+							<TierPill tier={tier} />
+						</span>
+					) : null}
 				</>
 			}
 			subtitle={

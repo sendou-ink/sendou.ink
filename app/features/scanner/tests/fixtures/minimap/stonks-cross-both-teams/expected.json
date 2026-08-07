@@ -1,0 +1,82 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 6,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "STONKS",
+        "abilities": [
+          "IRU",
+          "RP",
+          "SJ"
+        ],
+        "weaponLabel": "Tri-Stringer",
+        "weaponId": 7010
+      },
+      {
+        "slot": "left",
+        "name": "Player",
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ],
+        "weaponLabel": "Splattershot Jr.",
+        "weaponId": 10
+      },
+      {
+        "slot": "right",
+        "name": null,
+        "abilities": [],
+        "weaponLabel": null,
+        "weaponId": null
+      },
+      {
+        "slot": "self",
+        "name": "Edd",
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ],
+        "weaponLabel": "Ballpoint Splatling",
+        "weaponId": 4030
+      }
+    ],
+    "enemies": [
+      {
+        "abilities": [
+          "BRU",
+          "SS",
+          "IRU"
+        ],
+        "weaponLabel": "Slosher",
+        "weaponId": 3000
+      },
+      {
+        "abilities": [],
+        "weaponLabel": "Splat Roller",
+        "weaponId": 1010
+      },
+      {
+        "abilities": [],
+        "weaponLabel": "Dualie Squelchers",
+        "weaponId": 5030
+      },
+      {
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ],
+        "weaponLabel": "Splattershot",
+        "weaponId": 40
+      }
+    ],
+    "stageLabel": "Museum d'Alfonsino"
+  },
+  "options": {
+    "notes": "One respawning card per team plus a struck-out special-ready (camo) enemy row. Enemy row 1's label was corrected from Flingza Roller to Splat Roller when the art-cropped templates landed (white roll, blue L-frame, yellow-striped grip — matches the 1010 icon exactly). Enemy row 2 is both struck out and special-ready: the red dualie art reads through the X, but the Custom-vs-plain Dualie Squelchers tag is hidden behind a stroke, so the icon matcher near-ties the twins (5031 0.600 vs 5030 0.597); the row's sub tile (Splat Bomb silhouette, readable despite the stroke clipping it) breaks the tie to plain Dualie Squelchers (subResolved). Control values are the deterministic estimator output (share of visible map surface, not in-game turf %)."
+  }
+}

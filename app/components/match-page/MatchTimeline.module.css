@@ -67,14 +67,7 @@
 	display: grid;
 	grid-template-rows: auto 1fr auto;
 	align-self: stretch;
-
-	&:first-child {
-		justify-self: end;
-	}
-
-	&:last-child {
-		justify-self: start;
-	}
+	container: weapon-pool / inline-size;
 }
 
 .mapCenter {
@@ -110,6 +103,21 @@
 	align-items: center;
 	justify-content: center;
 	gap: var(--s-2-5);
+
+	.mapSideBravo & {
+		justify-self: start;
+	}
+
+	.mapSide:not(.mapSideBravo) & {
+		justify-self: end;
+	}
+}
+
+.resultHeaderGroup {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
 }
 
 .resultHeader {
@@ -119,14 +127,168 @@
 }
 
 .resultLabel {
-	font-size: var(--font-xs);
+	font-size: var(--font-sm);
 	font-weight: var(--weight-extra);
 	text-transform: uppercase;
 }
 
 .resultPoints {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+}
+
+.scoreboard {
+	grid-column: 1 / -1;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-top: calc(-1 * var(--s-4));
+}
+
+.scoreboardToggle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	width: 100%;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+
+	&::before,
+	&::after {
+		content: "";
+		height: 1px;
+		flex: 1;
+		background-color: var(--color-border);
+	}
+}
+
+.scoreboardChevron {
+	transition: transform 0.15s ease;
+}
+
+.scoreboardChevronOpen {
+	transform: rotate(180deg);
+}
+
+.scoreboardPanel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	background-color: var(--color-bg);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	padding: var(--s-3);
+	font-size: var(--font-xs);
+}
+
+.scoreboardTables {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+}
+
+.scoreboardTable {
+	width: 100%;
+	min-width: 24rem;
+	table-layout: fixed;
+	border-collapse: collapse;
+}
+
+.scoreboardWeaponColumn,
+.scoreboardBuildColumn,
+.scoreboardStatHeader,
+.scoreboardTeamName,
+.scoreboardWeaponCell,
+.scoreboardPlayerName,
+.scoreboardStat,
+.scoreboardBuildCell {
+	padding: var(--s-1) var(--s-2);
+	vertical-align: middle;
+}
+
+.scoreboardHeaderRow {
+	border-bottom: var(--border-style);
+}
+
+.scoreboardPlayerRow:nth-child(even) {
+	background-color: var(--color-bg-high);
+}
+
+.scoreboardWeaponColumn {
+	width: 3rem;
+}
+
+.scoreboardBuildColumn {
+	width: 2.5rem;
+}
+
+.scoreboardStatHeader {
+	width: 3.5rem;
+	text-align: center;
 	font-size: var(--font-3xs);
 	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.scoreboardTeamName {
+	text-align: start;
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.scoreboardWeaponCell {
+	line-height: 0;
+}
+
+.scoreboardPlayerName {
+	text-align: start;
+	font-weight: var(--weight-semi);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.scoreboardStat {
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.scoreboardBuildCell {
+	text-align: center;
+	line-height: 0;
+}
+
+.scoreboardAbilities {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.scoreboardAbilityRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.scoreboardUnknownWeapon {
+	opacity: 0.6;
+}
+
+:global(html.light) .scoreboardUnknownWeapon {
+	filter: drop-shadow(0 0 1px var(--color-text));
 }
 
 .eventRow {

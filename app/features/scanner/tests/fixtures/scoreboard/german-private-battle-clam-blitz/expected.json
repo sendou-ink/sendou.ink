@@ -1,0 +1,87 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "CB",
+    "stage": 0,
+    "matchScores": [
+      96,
+      74
+    ],
+    "povIndex": 0,
+    "players": [
+      {
+        "name": "くらうに ★～",
+        "weaponId": 2070,
+        "paint": 1565,
+        "ka": 22,
+        "d": 4,
+        "s": 6
+      },
+      {
+        "name": "a",
+        "weaponId": 210,
+        "paint": 938,
+        "ka": 19,
+        "d": 15,
+        "s": 3
+      },
+      {
+        "name": "24K",
+        "weaponId": 80,
+        "paint": 1540,
+        "ka": 16,
+        "d": 7,
+        "s": 6
+      },
+      {
+        "name": "Ù Ballóòn",
+        "weaponId": 3000,
+        "paint": 1321,
+        "ka": 16,
+        "d": 12,
+        "s": 3
+      },
+      {
+        "name": "Eier",
+        "weaponId": 3011,
+        "paint": 1406,
+        "ka": 18,
+        "d": 13,
+        "s": 5
+      },
+      {
+        "name": "aruka",
+        "weaponId": 8001,
+        "paint": 1523,
+        "ka": 17,
+        "d": 9,
+        "s": 6
+      },
+      {
+        "name": "リッター4K",
+        "weaponId": 2021,
+        "paint": 1219,
+        "ka": 6,
+        "d": 10,
+        "s": 2
+      },
+      {
+        "name": "Florescent",
+        "weaponId": 50,
+        "paint": 1133,
+        "ka": 14,
+        "d": 13,
+        "s": 3
+      }
+    ],
+    "stageLabel": "Scorch Gorge"
+  },
+  "options": {
+    "skipFields": [
+      "players.0.name",
+      "players.3.name",
+      "players.6.name"
+    ]
+  }
+}

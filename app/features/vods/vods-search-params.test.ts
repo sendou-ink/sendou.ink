@@ -36,9 +36,22 @@ describe("vodsSearchParams", () => {
 });
 
 describe("vodsNewSearchParams", () => {
+	const ingestMatch = {
+		startsAt: 30,
+		mode: "SZ" as const,
+		modeAssumed: true,
+		stage: 0 as const,
+		weapons: [40 as const, null],
+	};
+
 	it("round-trips", () => {
 		assertRoundTrips(vodsNewSearchParams, {
 			vod: [null, 1, 12345],
+			ingest: [
+				null,
+				{ matches: [ingestMatch] },
+				{ type: "CAST", matches: [ingestMatch, ingestMatch] },
+			],
 		});
 	});
 
@@ -48,6 +61,11 @@ describe("vodsNewSearchParams", () => {
 			["-1"],
 			["1.5"],
 			["abc"],
+		]);
+		assertDecodesToDefault(vodsNewSearchParams, "ingest", [
+			["not json"],
+			['{"matches":[]}'],
+			['{"matches":[{"startsAt":-1}]}'],
 		]);
 	});
 });

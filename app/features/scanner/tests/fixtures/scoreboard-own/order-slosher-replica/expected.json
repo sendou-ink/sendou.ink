@@ -1,0 +1,31 @@
+{
+  "event": "ScoreboardOwn",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 7,
+    "weaponId": 3005,
+    "abilities": [
+      [
+        "CB",
+        "QSJ",
+        "SS",
+        "RES"
+      ],
+      [
+        "SSU",
+        "QSJ",
+        "SS",
+        "SRU"
+      ],
+      [
+        "SJ",
+        "ISS",
+        "SS",
+        "QSJ"
+      ]
+    ],
+    "stageLabel": "Mahi-Mahi Resort",
+    "weaponLabel": "Order Slosher Replica"
+  }
+}

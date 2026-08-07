@@ -79,7 +79,11 @@ export default defineConfig((config) => {
 
 		test: {
 			globalSetup: ["./scripts/ensure-test-db.ts"],
-			projects: ["./vitest.unit.config.ts", "./vitest.browser.config.ts"],
+			projects: [
+				"./vitest.unit.config.ts",
+				"./vitest.browser.config.ts",
+				"./vitest.scanner.config.ts",
+			],
 		},
 		define: {
 			__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
@@ -102,6 +106,7 @@ export default defineConfig((config) => {
 			// and full page reloads on first navigations.
 			include: [
 				"@date-fns/tz",
+				"@techstark/opencv-js",
 				"@dnd-kit/core",
 				"@dnd-kit/modifiers",
 				"@dnd-kit/sortable",
@@ -133,6 +138,7 @@ export default defineConfig((config) => {
 				"kysely",
 				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
+				"mediabunny",
 				"nanoid",
 				"openskill",
 				"pako",

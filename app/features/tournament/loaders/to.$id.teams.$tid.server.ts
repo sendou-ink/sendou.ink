@@ -79,6 +79,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			),
 		})),
 		winCounts: winCounts(sets),
+		participatedUsersCount: fullTournament.participatedUserIds?.length ?? 0,
 		division:
 			standingsResult.type === "multi"
 				? (standingsResult.standings.find((div) =>

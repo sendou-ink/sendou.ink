@@ -1,0 +1,80 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 2,
+    "replayCode": "RVRM-XXEL-0573-Q45U",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "nwrm",
+        "weaponId": 50,
+        "paint": 381,
+        "ka": 8,
+        "d": 2,
+        "s": 0
+      },
+      {
+        "name": "slord",
+        "weaponId": 20,
+        "paint": 613,
+        "ka": 4,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "Olise",
+        "weaponId": 2070,
+        "paint": 456,
+        "ka": 3,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "AHOOLddduuU",
+        "weaponId": 1015,
+        "paint": 287,
+        "ka": 1,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "★Bønk★•PE•",
+        "weaponId": 1002,
+        "paint": 327,
+        "ka": 3,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "Enamel",
+        "weaponId": 2070,
+        "paint": 408,
+        "ka": 1,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "Rιppιn←H",
+        "weaponId": 8001,
+        "paint": 270,
+        "ka": 3,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "Sen★u",
+        "weaponId": 10,
+        "paint": 354,
+        "ka": 0,
+        "d": 3,
+        "s": 1
+      }
+    ],
+    "stageLabel": "Hagglefish Market"
+  }
+}

@@ -479,7 +479,7 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 								"otherTeam.id",
 							),
 					)
-					.select((eb) => commonUserSelect(eb))
+					.select((eb) => [...commonUserSelect(eb), "User.country"])
 					.whereRef(
 						"TournamentMatchGameResult.matchId",
 						"=",

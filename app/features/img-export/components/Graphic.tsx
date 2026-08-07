@@ -149,19 +149,25 @@ export function GraphicTeamRow({
 					))}
 				</div>
 			</div>
-			<div className={styles.weapons}>
-				{team.weapons.map((weaponSplId, index) => (
-					<div key={`${weaponSplId}-${index}`} className={styles.weaponKit}>
-						<WeaponImage weaponSplId={weaponSplId} variant="badge" size={38} />
-						<SpecialWeaponImage
-							specialWeaponId={
-								weaponParams().weaponKits[weaponSplId].specialWeaponId
-							}
-							size={24}
-						/>
-					</div>
-				))}
-			</div>
+			{team.weapons.length > 0 ? (
+				<div className={styles.weapons}>
+					{team.weapons.map((weaponSplId, index) => (
+						<div key={`${weaponSplId}-${index}`} className={styles.weaponKit}>
+							<WeaponImage
+								weaponSplId={weaponSplId}
+								variant="badge"
+								size={38}
+							/>
+							<SpecialWeaponImage
+								specialWeaponId={
+									weaponParams().weaponKits[weaponSplId].specialWeaponId
+								}
+								size={24}
+							/>
+						</div>
+					))}
+				</div>
+			) : null}
 		</Element>
 	);
 }

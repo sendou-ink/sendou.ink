@@ -13,6 +13,9 @@ const devOnlyRoutes =
 					"/admin/generate-images",
 					"features/admin/routes/generate-images.tsx",
 				),
+				// verified against a production build (worker chunk, CDN fetch,
+				// React Compiler output); promote out of devOnlyRoutes on deploy
+				route("/scanner", "features/scanner/routes/scanner.tsx"),
 				route(
 					"/components",
 					"features/components-showcase/routes/components.tsx",
@@ -187,6 +190,10 @@ export default [
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),
+		route(
+			"teams/:tid/comps",
+			"features/tournament/routes/to.$id.teams.$tid.comps.ts",
+		),
 		route("streams", "features/tournament/routes/to.$id.streams.tsx"),
 
 		route("looking", "features/tournament-lfg/routes/to.$id.looking.tsx"),
@@ -351,6 +358,8 @@ export default [
 	route("/run-routine", "features/api-private/routes/run-routine.ts"),
 	route("/seed", "features/api-private/routes/seed.ts"),
 	route("/users", "features/api-private/routes/users.ts"),
+
+	route("/ingest", "features/scanner-ingest/routes/scanner-ingest.ts"),
 
 	layout("features/api-public/routes/api.layout.tsx", [
 		...prefix("/api", [

@@ -8,6 +8,8 @@ export default defineConfig({
 			...configDefaults.exclude,
 			"e2e/**",
 			"**/*.browser.test.{ts,tsx}",
+			// the scanner golden-file suite has its own heavy project (vitest.scanner.config.ts)
+			"app/features/scanner/**",
 		],
 		setupFiles: ["./app/test-setup.ts"],
 	},

@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 6,
+    "weaponType": "SPECIAL",
+    "abilities": [
+      [
+        "CB",
+        "ISM",
+        "ISM",
+        "SS"
+      ],
+      [
+        "SSU",
+        "SCU",
+        "SCU",
+        "QSJ"
+      ],
+      [
+        "SJ",
+        "SRU",
+        "QSJ",
+        "RES"
+      ]
+    ],
+    "name": "aruka",
+    "weaponLabel": "Booyah Bomb"
+  }
+}
