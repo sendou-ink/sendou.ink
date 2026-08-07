@@ -45,7 +45,7 @@ const scannerMatchPlayerSchema = z.object({
 	d: z.number().nullable(),
 	s: z.number().nullable(),
 	/** [head, clothes, shoes] ability rows harvested from death screens */
-	abilities: z.array(z.array(scannerAbilitySchema)).optional(),
+	abilities: z.array(z.array(scannerAbilitySchema).max(4)).max(3).optional(),
 });
 
 const scannerMatchTeamSchema = z.object({

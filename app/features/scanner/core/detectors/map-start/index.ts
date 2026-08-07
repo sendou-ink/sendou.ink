@@ -1,22 +1,17 @@
 /**
- * MapStartDetector: parses the match-intro splash shown as a game begins —
- * the mode title on the black center splat and the stage name bottom-right,
- * both snapped to the localized closed sets (core/localized.ts) and
- * reported as the canonical English names.
+ * MapStartDetector: parses the match-intro splash — the mode title on the
+ * black center splat and the stage name bottom-right, both snapped to the
+ * localized closed sets (core/localized.ts) and reported under canonical
+ * English names.
  *
- * The mode title wraps to two lines for the longer names ("Splat" /
- * "Zones"; the localized wrap variants carry their own hyphenation), so
- * parse finds the actual text lines inside MODE_BLOCK_ROI by row
- * projection, OCRs each band, and snaps the joined reading. The constant
- * "MODE" label ("Kampfart", "Mode", ...) doubles as a parse-time
- * confirmation: if it does not read back as any language's label, the gate
- * hit was a lookalike frame and no event is emitted.
- *
- * The splash sits on live gameplay, so on bright stages the text regions
- * pick up background past the splat/outline edges. The title block is
- * masked to pixels near darkness for line finding only (the raw crop OCRs
- * better once the bands are right); the stage line reads its min channel —
- * which drops blue-tinted water that gray keeps — under several
+ * The mode title wraps to two lines for longer names ("Splat" / "Zones"),
+ * so parse finds text lines inside MODE_BLOCK_ROI by row projection, OCRs
+ * each band, and snaps the joined reading. The constant "MODE" label
+ * doubles as a parse-time confirmation (else a lookalike gate hit emits
+ * nothing). The splash sits on live gameplay, so bright stages leak
+ * background past the text edges: the title block is masked to near-dark
+ * for line finding only (raw crop OCRs better); the stage line reads its
+ * min channel (drops blue-tinted water gray keeps) under several
  * binarizations, keeping the best-snapping one (see rois.ts).
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -108,12 +103,10 @@ function findLineBands(binary: Mat): LineBand[] {
 			if (data[y * cols + x]! > 0) counts[y]!++;
 		}
 	}
-	// Dual threshold: a band must contain rows above a cutoff scaled to the
-	// strongest row — the block is sized for the widest localized titles,
-	// and background leaking past the splat's rim puts a scene-dependent
-	// noise floor under every row that the fixed floor alone can't sit
-	// above — but then extends over the fixed floor, so the antialiased
-	// glyph tops/bottoms stay inside the band.
+	// dual threshold: a band needs rows above a cutoff scaled to the
+	// strongest row (background leaking past the splat's rim puts a
+	// scene-dependent noise floor under every row), then extends over a
+	// fixed floor so antialiased glyph tops/bottoms stay inside the band
 	const core = Math.max(
 		LINE_MIN_ROW_PIXELS,
 		LINE_ROW_FRACTION * Math.max(...counts),
@@ -263,12 +256,10 @@ export function createMapStartDetector(
 		let modeReading = "";
 		if (modeGlyphs) {
 			const block = copyRoi(gray, MODE_BLOCK_ROI);
-			// find the line bands on the masked block so bright background rows
-			// don't merge/invent bands, but OCR the raw crop: the mask radius
-			// clips the widest title strokes and costs recognition accuracy.
-			// Each band is trimmed to its text columns (also from the mask) —
-			// the block is wide enough for the longest localized titles, and at
-			// full width the raw OCR picks up background junk at the edges.
+			// find line bands on the masked block (bright background rows would
+			// merge/invent bands) but OCR the raw crop (masking clips strokes and
+			// costs accuracy); each band is trimmed to its text columns (also
+			// from the mask) since the full-width block picks up background junk
 			const masked = maskNearDark(block, BLOCK_MASK_RADIUS);
 			const binary = new cv.Mat();
 			cv.threshold(masked, binary, TEXT_BIN_THRESHOLD, 255, cv.THRESH_BINARY);
@@ -306,12 +297,10 @@ export function createMapStartDetector(
 			}
 		}
 
-		// 3. stage name. The backdrop is live gameplay — dark water on one
-		// stage, a white mall floor brighter than the text's antialiased edges
-		// on another — so no single binarization works everywhere: read the
-		// near-dark-masked crop (wins on dark scenes) and the raw crop at a few
-		// rising thresholds (a high one isolates the text's saturated-white
-		// core from an only-nearly-white floor), and keep whichever snaps best.
+		// 3. stage name. Backdrop is live gameplay (dark water on one stage,
+		// a bright floor on another), so no single binarization works
+		// everywhere: read the near-dark-masked crop plus the raw crop at a
+		// few rising thresholds, and keep whichever snaps best.
 		let stage: StageId | null = null;
 		let stageScore = 0;
 		let stageReading = "";

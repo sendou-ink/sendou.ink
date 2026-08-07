@@ -1,17 +1,13 @@
 /**
  * Weapon icon identification: NCC of every candidate icon (pre-scaled to a
- * few plausible sizes) against the row's weapon ROI.
+ * few sizes) against the row's weapon ROI, with an ink-coverage penalty so a
+ * small template can't win by matching a lucky sub-window of a bigger icon
+ * (the template's opaque area should match the ink actually present).
  *
- * Raw sliding NCC lets a small wrong template win by matching a lucky
- * sub-window of a bigger icon, so scores carry an ink-coverage penalty:
- * the template's opaque area should account for the icon pixels actually
- * present in the search region.
- *
- * Large template sets go through a coarse-to-fine pass: every icon is first
- * ranked at quarter resolution (same NCC + ink-coverage scoring), then only
- * the shortlist is re-matched at full resolution. Small sets (the ability
- * badges) skip the coarse pass — with few templates the extra calls cost
- * more than they save.
+ * Large template sets run coarse-to-fine: every icon first ranked at quarter
+ * resolution (same scoring), then only the shortlist re-matched at full res.
+ * Small sets (ability badges) skip the coarse pass — not worth it below ~2x
+ * the shortlist size.
  */
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import type { FrameData } from "../../image";
@@ -92,16 +88,12 @@ function countInkRgb(mat: Mat, threshold: number): number {
 /**
  * Downscale a composited RGB icon to each candidate size, with the coarse
  * variant and ink counts matchWeapon needs. Ink is counted on the resized
- * pixels exactly the way matchWeapon measures the search region: scaling the
- * source-resolution alpha count undercounts the antialiased edges that the
- * screen capture (and this resize) light up, and that skew alone can flip
- * the coverage ratio toward a wrong icon.
+ * pixels, not scaled from source alpha (which undercounts antialiased edges
+ * and can flip the coverage ratio toward a wrong icon).
  *
- * `referenceSize` switches the meaning of each size entry: instead of
- * resizing `composited` to a size×size square, it is scaled by
- * size/referenceSize — i.e. "the art as it renders inside a size-sized
- * padded square", where `composited` is a crop out of a referenceSize
- * square. That lets a template whose *icon square* is taller than the ROI
+ * `referenceSize` scales by size/referenceSize instead of resizing to a
+ * size×size square — "the art as it renders inside a size-sized padded
+ * square" — letting a template whose icon square is taller than the ROI
  * still compete when its art fits (see prepareWeaponTemplates cropToArt).
  */
 export function buildTemplateSizes(
@@ -147,21 +139,17 @@ export function buildTemplateSizes(
 }
 
 /**
- * Build match-ready templates from raw RGBA icon images (256x256 with alpha):
- * composite over the pill background, then downscale to each candidate size.
- * `templateSizes` defaults to the scoreboard row sizes; the death detector
- * builds a second set at burst-icon size from the same images. Screens whose
- * pills aren't near-black (the minimap's cards and special-ready camo
- * surfaces) override `background` — and with it `inkThreshold`, which must
- * clear the new background or the template ink counts saturate.
+ * Build match-ready templates from raw RGBA icon images (256x256 with
+ * alpha): composite over the pill background, then downscale to each size.
+ * Screens whose pills aren't near-black (minimap cards, camo surfaces)
+ * override `background` and `inkThreshold` (must clear the new background
+ * or ink counts saturate).
  *
- * `cropToArt` trims each template to the icon's alpha bounding box while
- * keeping the padded-square scale semantics (each size still means "drawn
- * inside a size-sized square"). The source icons carry generous transparent
- * padding, and matchWeapon skips any template taller/wider than the ROI —
- * so without the trim, a screen that renders icons near the ROI height
- * (the minimap cards render at the equivalent of ~56-60px squares inside a
- * 54px-tall box) can never match at the size actually on screen.
+ * `cropToArt` trims each template to the icon's alpha bbox (source icons
+ * carry generous transparent padding) while keeping the padded-square scale
+ * semantics — without it, a screen rendering icons near the ROI height
+ * (minimap cards, ~56-60px in a 54px box) can never match, since matchWeapon
+ * skips templates taller/wider than the ROI.
  */
 export function prepareWeaponTemplates(
 	icons: { id: string; image: FrameData }[],

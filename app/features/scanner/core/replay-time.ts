@@ -1,18 +1,15 @@
 /**
  * Turns the replay browser's on-screen recording timestamp (locale-formatted
  * by the console, e.g. "3/7/2026 22:28", "7.3.2026 22:28", "2026/3/7 22:28")
- * into a UTC epoch. The string carries no timezone or day/month-order
- * marker: the wall time is read in the local timezone, and when day vs month
- * is ambiguous (both ≤ 12) the order is inferred in three steps. An hour of
- * 0 or ≥ 13 proves a 24h clock (a 12h console would render AM/PM, which the
- * pattern doesn't match) and 24h locales are overwhelmingly day-first — the
- * lone major month-first locale, en-US, uses a 12h clock. Failing that, the
- * browser locale's date-part order decides. Finally, because the console's
- * locale and the browser's can still disagree (Finnish console, en-US
- * browser), a recency check corrects decisive misreads: replays are
- * near-always ingested close to when they were recorded, so when the chosen
- * reading lands far from now while the day/month swap lands recent, the swap
- * wins.
+ * into a UTC epoch, read in the local timezone. The string carries no
+ * timezone or day/month-order marker, so ambiguous day-vs-month (both ≤ 12)
+ * resolves in three steps: hour 0 or ≥13 proves a 24h clock (12h consoles
+ * render AM/PM) and 24h locales are near-universally day-first, except
+ * en-US which is 12h; failing that, the browser locale's date-part order
+ * decides; finally, since the console's locale and the browser's can still
+ * disagree, a recency check swaps day/month when that reading lands near now
+ * while the un-swapped one doesn't (replays are near-always ingested soon
+ * after recording).
  */
 
 const TIMESTAMP_RE =

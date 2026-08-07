@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { sendouUpload } from "../components/sendou-upload";
+import type { MinimapData } from "../core/detectors/minimap/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { DetectedEvent } from "../core/detectors/types";
 import test from "./node-test-compat";
@@ -48,4 +49,23 @@ test("no pov weapon is sent when no scoreboard identified the seat", () => {
 	const matches = prefilledMatches([scoreboard(300, null)]);
 
 	assert.equal(matches[0]!.povWeapon, undefined);
+});
+
+test("weapons are padded to 4 slots per team so uneven rosters keep the team split", () => {
+	const data: MinimapData = {
+		stage: 0,
+		spectator: true,
+		teammates: (["up", "left", "right"] as const).map((slot, i) => ({
+			slot,
+			name: null,
+			weaponId: ALPHA[i]!,
+			abilities: [],
+		})),
+		enemies: BRAVO.map((weaponId) => ({ name: null, weaponId, abilities: [] })),
+	};
+	const matches = prefilledMatches([
+		{ type: "Minimap", t: 300, confidence: 0.9, data },
+	]);
+
+	assert.deepEqual(matches[0]!.weapons, [...ALPHA.slice(0, 3), null, ...BRAVO]);
 });

@@ -343,27 +343,29 @@ export function createMinimapDetector(
 				let weapon: WeaponMatch | null = null;
 				const badgeDebug: (WeaponMatch | null)[] = [];
 				let abilities: (AbilityWithUnknown | null)[] = [];
+				// the spectator cross-out sits clear of the weapon ROI (like
+				// overlay enemy rows), so the weapon stays readable when struck
+				const templates = lightSurface ? lightWeapons : cardWeapons;
+				if (templates) {
+					const crop = cropRoi(rgb, layout.weapon);
+					weapon = matchWeapon(crop, templates, {
+						inkThreshold: lightSurface
+							? SPECIAL_READY_INK_THRESHOLD
+							: Math.max(
+									MINIMAP_WEAPON_INK_THRESHOLD,
+									Math.round(cornerMin) + 50,
+								),
+					});
+					crop.delete();
+					weapon = resolveTieBySubTile(rgb, weapon, layout.subTile);
+					confidences.push(Math.max(0, weapon.score));
+				}
 				if (!occluded) {
 					const parsed = bestNameRead(gray, layout.name);
 					if (parsed) {
 						nameRaw = parsed.raw.text;
 						if (parsed.name.length > 0) name = parsed.name;
 						confidences.push(parsed.confidence);
-					}
-					const templates = lightSurface ? lightWeapons : cardWeapons;
-					if (templates) {
-						const crop = cropRoi(rgb, layout.weapon);
-						weapon = matchWeapon(crop, templates, {
-							inkThreshold: lightSurface
-								? SPECIAL_READY_INK_THRESHOLD
-								: Math.max(
-										MINIMAP_WEAPON_INK_THRESHOLD,
-										Math.round(cornerMin) + 50,
-									),
-						});
-						crop.delete();
-						weapon = resolveTieBySubTile(rgb, weapon, layout.subTile);
-						confidences.push(Math.max(0, weapon.score));
 					}
 					abilities = matchBadges(
 						rgb,

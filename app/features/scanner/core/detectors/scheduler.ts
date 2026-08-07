@@ -1,51 +1,21 @@
 /**
- * DetectorScheduler: one temporally-ordered scan session's answer to "which
- * detectors should look at the frame at time t, and which of those should
- * pay for a parse?". It folds together three ideas:
+ * DetectorScheduler: decides which detectors check frame t, and which pay
+ * for a parse. Three concerns:
  *
- * - Cadence. While a detector's gate keeps failing it is checked every
- *   `searchIntervalS` (default 0.25s — produced VoDs cut screens to as
- *   little as ~1s with transition flicker inside that, so the search
- *   cadence must not assume raw-gameplay screen lifetimes; gates are
- *   ~1.6ms, so searching at the analysis floor costs nothing). Once the
- *   gate passes it drops to the dense `refineIntervalS` so the best-read
- *   refinement loop still sees every frame it wants; a detector whose
- *   parse is expensive (death ~1.4s) declares its own refineIntervalS so
- *   the dense default cannot multiply that cost. `checkIntervalS`
- *   (objective counter) remains a hard cap on both phases and exempts the
- *   detector from suppression, as before. `nextDueT()` lets the caller
- *   skip a frame's canvas readback + normalize entirely when no detector
- *   is due.
+ * - Cadence: `searchIntervalS` while a gate fails (default 0.25s — VoDs cut
+ *   screens to ~1s, below raw-gameplay lifetimes), dense `refineIntervalS`
+ *   once it passes, `checkIntervalS` as a hard cap exempt from suppression.
+ *   `nextDueT()` lets the caller skip a frame's readback when nothing's due.
+ * - Suppression: stops paying once a streak stagnates (`maxStagnantParses`
+ *   + a time floor, since a gate can fire during a screen's entry animation
+ *   before it's readable). `sufficientConfidence` suppresses immediately; a
+ *   gate `signature` moving past `signatureTolerance` ends the streak
+ *   (distinct browsed entries never drop those gates); `rearmCooldownS`
+ *   adds a cooldown on top (death: animated-background flicker).
+ * - Activity: tracks last gate pass + open-match state for the VoD scanner
+ *   to skip dead air.
  *
- * - Suppression. A static screen that keeps a gate firing stops paying for
- *   parses once a streak stagnates: at least `maxStagnantParses`
- *   consecutive parses AND `stagnantAfterS` seconds without the best
- *   confidence improving. The time floor matters — a gate often fires
- *   during a screen's entry animation while parses still read nothing, and
- *   at a dense sampling cadence a pure parse count would suppress before
- *   the screen ever becomes readable (with the gate held high, it would
- *   then never re-arm). A parse reaching the detector's
- *   `sufficientConfidence` suppresses immediately: the timeline keeps the
- *   best read per merge window, so once a read is that good further parses
- *   cannot change the outcome. A gate that reports a content `signature`
- *   ends the streak the moment the signature moves past
- *   `signatureTolerance`: browsing distinct battle log / replay entries never
- *   drops those gates, so without the signature one sufficient read would
- *   suppress every subsequent entry for as long as the screen family stays
- *   up. A
- *   detector with `rearmCooldownS` (death: the overlay's animated
- *   background makes its gate flicker) additionally skips parses for that
- *   long after a sufficient read, across gate drops; safe only where the
- *   timeline merges purely on time and the cooldown fits inside the merge
- *   window.
- *
- * - Activity. The scheduler tracks when any gate last passed and whether a
- *   match is open (a confident map-start without a closing scoreboard), so
- *   the VoD chunk scanner can tell dead air ("calm") from footage that
- *   deserves dense decoding.
- *
- * All state is keyed to the scan's own clock; a `t` jumping backwards means
- * a new capture session or rescan and resets everything.
+ * State keys to the scan's clock; `t` jumping backwards resets everything.
  */
 
 import type { DetectedEvent } from "./types";

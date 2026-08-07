@@ -80,7 +80,7 @@ export function harvestAbilities(
 export function connectAbilities(
 	events: readonly DetectedEvent[],
 ): Map<DetectedEvent, PlayerAbilityMap> {
-	const sorted = [...events].sort((a, b) => a.t - b.t);
+	const sorted = events.toSorted((a, b) => a.t - b.t);
 	const result = new Map<DetectedEvent, PlayerAbilityMap>();
 	let pendingDeaths: DeathData[] = [];
 	for (const event of sorted) {

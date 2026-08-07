@@ -5,6 +5,7 @@
  * entirely once everything lives in a match.
  */
 
+import * as R from "remeda";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
@@ -35,11 +36,8 @@ export function EventsSummary({
 	open: boolean;
 	onToggle: () => void;
 }) {
-	const counts = new Map<string, number>();
-	for (const event of events) {
-		counts.set(event.type, (counts.get(event.type) ?? 0) + 1);
-	}
-	const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+	const counts = R.countBy(events, (event) => event.type);
+	const sorted = Object.entries(counts).toSorted((a, b) => b[1] - a[1]);
 
 	return (
 		<div className="events-summary">
@@ -59,7 +57,7 @@ export function EventsSummary({
 				);
 			})}
 			<button type="button" className="events-toggle" onClick={onToggle}>
-				{open ? "hide events" : "show events"}
+				{open ? "Hide events" : "Show events"}
 			</button>
 		</div>
 	);

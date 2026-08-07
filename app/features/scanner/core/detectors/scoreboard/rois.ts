@@ -16,19 +16,17 @@ import type { Roi } from "../../canonical";
 export const ROW_CENTERS = [416, 482, 547, 613, 770, 836, 901, 967] as const;
 
 /**
- * Weapon icon search region within a row (icon size/offset varies per
- * weapon). matchTemplate silently skips any template taller than the
- * region, so the 56px height both fits the largest live-scoreboard icon
- * and intentionally excludes the larger replay-browser template sizes.
+ * Weapon icon search region within a row. matchTemplate skips templates
+ * taller than the region, so 56px fits the largest live icon while
+ * excluding replay-browser template sizes.
  */
 export function weaponRoi(cy: number): Roi {
 	return { x: 1054, y: cy - 28, w: 67, h: 56 };
 }
 
 /**
- * Player name text region (white text, left-aligned starting x=1126).
- * Long names run into the paint column; parse paint first and trim this
- * region at the leftmost paint digit.
+ * Player name text region (white, left-aligned x=1126). Long names run
+ * into the paint column; parse paint first and trim at its leftmost digit.
  */
 export function nameRoi(cy: number): Roi {
 	return { x: 1122, y: cy - 14, w: 208, h: 32 };
@@ -51,28 +49,24 @@ export function statRoi(cy: number, index: 0 | 1 | 2): Roi {
 }
 
 /**
- * The player's special-weapon icon, drawn above the specials counter in the
- * team's ink color (~22px art around x 1602-1624, y cy-22..cy+1). Bounded
- * below at cy+1 so the white counter digits stay out of the binarized shape.
+ * Special-weapon icon above the specials counter (~22px art, team ink
+ * color). Bounded at cy+1 so counter digits stay out of the binarized shape.
  */
 export function specialIconRoi(cy: number): Roi {
 	return { x: 1595, y: cy - 29, w: 40, h: 30 };
 }
 
 /**
- * POV arrow probe: the yellow arrow marking the recording player's row sits
- * left of the avatar, overlapping the team-box edge (measured x 933-985,
- * y cy-29..cy+23 across fixtures). Right edge stays short of the avatar
- * circle (~x 995) so yellow hair/gear can't leak in.
+ * POV arrow: yellow arrow marking the recording player's row, left of the
+ * avatar (x 933-985). Right edge stays short of the avatar circle (~x 995).
  */
 export function povArrowRoi(cy: number): Roi {
 	return { x: 930, y: cy - 32, w: 58, h: 56 };
 }
 
 /**
- * Team point totals ("500 p"), larger digits, right-aligned ending at
- * x=1658. Only read to recognize a knockout (winner total 500) — the
- * totals are the count times five, not the match score.
+ * Team point totals ("500 p"), right-aligned ending x=1658. Only read to
+ * recognize a knockout (winner total 500) — not the match score.
  */
 export const TEAM_SCORE_ROIS: readonly [Roi, Roi] = [
 	{ x: 1530, y: 330, w: 132, h: 44 },
@@ -80,12 +74,9 @@ export const TEAM_SCORE_ROIS: readonly [Roi, Roi] = [
 ];
 
 /**
- * The two sides of the colored "Score:" banner above the team boxes. The
- * left side's text is left-aligned from x~946 (digits directly there when
- * the language renders no label), the right side's right-aligned ending at
- * x~1691 — or x~1712 mid-pop, the digits bounce between ~28px and ~39px as
- * the value lands (MATCH_SCORE_DIGIT_HEIGHTS). Boxes cover both sizes plus
- * the label overlap the trailing-digit parse tolerates.
+ * The two sides of the "Score:" banner. Left is left-aligned from x~946,
+ * right right-aligned ending x~1691 (x~1712 mid-pop) — digits bounce
+ * ~28-39px as the value lands (MATCH_SCORE_DIGIT_HEIGHTS).
  */
 export const MATCH_SCORE_ROIS: readonly [Roi, Roi] = [
 	{ x: 935, y: 231, w: 230, h: 50 },
@@ -116,11 +107,9 @@ export const GATE_PANEL_MAX_MEAN = 85;
 export const GATE_TEXT_MIN_MAX = 180;
 
 /**
- * Header bands. The lobby tag ("X Battle") sits on its own line; mode and
- * stage tags share the next line. Tags are black boxes that size to their
- * text, so these bands are generous — header.ts trims each band to the
- * actual tag extent (map thumbnail pixels around the tags are excluded by
- * column statistics, not by fixed coordinates).
+ * Header bands: lobby tag ("X Battle") on its own line, mode+stage share
+ * the next. Tags size to their text, so bands are generous — header.ts
+ * trims each to the actual tag extent.
  */
 export const HEADER_LOBBY_BAND: Roi = { x: 828, y: 42, w: 330, h: 30 };
 export const HEADER_LINE_BAND: Roi = { x: 828, y: 88, w: 580, h: 40 };

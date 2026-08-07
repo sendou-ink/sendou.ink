@@ -5,6 +5,7 @@ import {
 } from "../core/detectors/scoreboard-own/index";
 import { AbilityGrid } from "./AbilityGrid";
 import { FrameThumb } from "./FrameThumb";
+import { useEventTimeFormatter } from "./format";
 import { lobbyLabel, mainWeaponLabel, modeLabel, stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
@@ -20,6 +21,7 @@ export function ScoreboardOwnCard(props: {
 }) {
 	const { t, confidence, data, thumbnail, detectedAt, getFrame, onInspect } =
 		props;
+	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<div className="card">
 			<div className="meta">
@@ -41,7 +43,7 @@ export function ScoreboardOwnCard(props: {
 				<span>
 					weapon <b>{mainWeaponLabel(data.weaponId) ?? "?"}</b>
 				</span>
-				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
+				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
 					thumbnail={thumbnail}
 					getFrame={getFrame}

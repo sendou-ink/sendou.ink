@@ -9,6 +9,7 @@ import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/score
 import { AbilityPopover } from "./AbilityGrid";
 import { FrameThumb } from "./FrameThumb";
 import type { CardData } from "./fixture-export";
+import { useEventTimeFormatter } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
@@ -79,6 +80,7 @@ export function ScoreboardCard(props: {
 	const data = props.data as CardData;
 	const isReplay = eventType === SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE;
 	const isScoreboardBattleLog = eventType === SCOREBOARD_BATTLE_LOG_EVENT_TYPE;
+	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<div className="card">
 			<div className="meta">
@@ -88,13 +90,13 @@ export function ScoreboardCard(props: {
 					type={eventType}
 					label={
 						isReplay
-							? "replay"
+							? "replay scoreboard"
 							: isScoreboardBattleLog
 								? "battle log"
 								: "scoreboard"
 					}
 				/>
-				{(data.mode !== null || data.stage !== null) && (
+				{data.mode !== null || data.stage !== null ? (
 					<span>
 						{[
 							lobbyLabel(data.lobby),
@@ -104,10 +106,12 @@ export function ScoreboardCard(props: {
 							.filter(Boolean)
 							.join(" · ")}
 					</span>
-				)}
-				{data.timestamp && <span>{data.timestamp}</span>}
-				{data.replayCode && <span className="score">{data.replayCode}</span>}
-				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
+				) : null}
+				{data.timestamp ? <span>{data.timestamp}</span> : null}
+				{data.replayCode ? (
+					<span className="score">{data.replayCode}</span>
+				) : null}
+				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
 					thumbnail={thumbnail}
 					getFrame={getFrame}

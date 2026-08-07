@@ -269,8 +269,10 @@ export function trailingDigitRun(
 	// A further digit left of the run means an unreadable glyph split the
 	// number (turf war percentages read "48", ".", "7") — the tail is not
 	// the score.
-	if (i >= 0 && isScoreDigit(raw.chars[i]!)) {
-		return { ...EMPTY_READ, reading: raw.text };
+	for (let k = i; k >= 0; k--) {
+		if (isScoreDigit(raw.chars[k]!)) {
+			return { ...EMPTY_READ, reading: raw.text };
+		}
 	}
 
 	const value = Number.parseInt(run.map((c) => c.char).join(""), 10);

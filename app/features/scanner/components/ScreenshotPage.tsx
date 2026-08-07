@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -253,6 +254,7 @@ export function ScreenshotPage() {
 	const [frame, setFrame] = useState<HTMLCanvasElement | null>(null);
 	const [results, setResults] = useState<Record<string, Result>>({});
 	const [busy, setBusy] = useState(false);
+	const busyRef = useRef(false);
 	const [over, setOver] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -285,6 +287,10 @@ export function ScreenshotPage() {
 	}, [frame, activeDetector]);
 
 	const analyze = useCallback(async (file: File | Blob) => {
+		// one file at a time: in-flight worker results would land in the next
+		// file's state through the shared resultRef otherwise
+		if (busyRef.current) return;
+		busyRef.current = true;
 		setError(null);
 		setBusy(true);
 		setResults({});
@@ -303,12 +309,19 @@ export function ScreenshotPage() {
 			resultRef.current = (r) => {
 				setResults((prev) => ({ ...prev, [r.detector]: r }));
 			};
-			doneRef.current = () => setBusy(false);
+			doneRef.current = () => {
+				busyRef.current = false;
+				setBusy(false);
+			};
 			const client = clientRef.current!;
 			await client.whenReady();
-			client.analyze(bitmap, 0);
+			if (!client.analyze(bitmap, 0)) {
+				busyRef.current = false;
+				setBusy(false);
+			}
 		} catch (e) {
 			setError(String(e));
+			busyRef.current = false;
 			setBusy(false);
 		}
 	}, []);
@@ -353,7 +366,7 @@ export function ScreenshotPage() {
 		<div>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target; the file input inside is the accessible path */}
 			<div
-				className={`dropzone ${over ? "over" : ""}`}
+				className={clsx("dropzone", { over })}
 				onDragOver={(e) => {
 					e.preventDefault();
 					setOver(true);
@@ -380,9 +393,9 @@ export function ScreenshotPage() {
 						}}
 					/>
 				</label>
-				{busy && " — analyzing…"}
+				{busy ? " — analyzing…" : null}
 			</div>
-			{error && <p className="error">{error}</p>}
+			{error ? <p className="error">{error}</p> : null}
 
 			<div
 				className="screenshot-frame"
@@ -391,7 +404,7 @@ export function ScreenshotPage() {
 				<canvas ref={displayRef} />
 			</div>
 
-			{frame && !busy && (
+			{frame && !busy ? (
 				<p>
 					<button
 						type="button"
@@ -414,14 +427,14 @@ export function ScreenshotPage() {
 						Download CSV
 					</button>
 				</p>
-			)}
+			) : null}
 
 			{Object.values(results).map((result) => (
 				<p key={result.detector}>
 					{result.detector} gate:{" "}
 					<b>{result.gate.pass ? "fired" : "no fire"}</b> (score{" "}
 					{result.gate.score.toFixed(3)})
-					{result.events[0] && result.detector === "death" && (
+					{result.events[0] && result.detector === "death" ? (
 						<>
 							{" · "}confidence{" "}
 							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
@@ -430,8 +443,8 @@ export function ScreenshotPage() {
 								return `splatted by ${weaponLabel(data.weaponType, data.weaponId) ?? "?"} (${data.name ?? "?"})`;
 							})()}
 						</>
-					)}
-					{result.events[0] && result.detector === "map-start" && (
+					) : null}
+					{result.events[0] && result.detector === "map-start" ? (
 						<>
 							{" · "}confidence{" "}
 							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
@@ -440,8 +453,8 @@ export function ScreenshotPage() {
 								return `${modeLabel(data.mode) ?? "?"} · ${stageLabel(data.stage) ?? "?"}`;
 							})()}
 						</>
-					)}
-					{result.events[0] && result.detector === "scoreboard-own" && (
+					) : null}
+					{result.events[0] && result.detector === "scoreboard-own" ? (
 						<>
 							{" · "}confidence{" "}
 							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
@@ -450,8 +463,8 @@ export function ScreenshotPage() {
 								return `${[lobbyLabel(data.lobby), modeLabel(data.mode), stageLabel(data.stage)].map((v) => v ?? "?").join(" · ")} · ${mainWeaponLabel(data.weaponId) ?? "?"}`;
 							})()}
 						</>
-					)}
-					{result.events[0] && result.detector === "minimap" && (
+					) : null}
+					{result.events[0] && result.detector === "minimap" ? (
 						<>
 							{" · "}confidence{" "}
 							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
@@ -463,36 +476,33 @@ export function ScreenshotPage() {
 								return `${data.stage ?? "?"} · ${players}`;
 							})()}
 						</>
-					)}
+					) : null}
 					{result.events[0] &&
-						result.detector !== "death" &&
-						result.detector !== "map-start" &&
-						result.detector !== "scoreboard-own" &&
-						result.detector !== "minimap" && (
-							<>
-								{" · "}confidence{" "}
-								{((result.events[0].confidence ?? 0) * 100).toFixed(1)}% ·
-								scores{" "}
-								{JSON.stringify(
-									(result.events[0].data as CardData).matchScores,
-								)}
-								{" · "}
-								{(() => {
-									const data = result.events[0].data as CardData;
-									return [
-										lobbyLabel(data.lobby),
-										modeLabel(data.mode),
-										stageLabel(data.stage),
-									]
-										.map((v) => v ?? "?")
-										.join(" · ");
-								})()}
-							</>
-						)}
+					result.detector !== "death" &&
+					result.detector !== "map-start" &&
+					result.detector !== "scoreboard-own" &&
+					result.detector !== "minimap" ? (
+						<>
+							{" · "}confidence{" "}
+							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}% · scores{" "}
+							{JSON.stringify((result.events[0].data as CardData).matchScores)}
+							{" · "}
+							{(() => {
+								const data = result.events[0].data as CardData;
+								return [
+									lobbyLabel(data.lobby),
+									modeLabel(data.mode),
+									stageLabel(data.stage),
+								]
+									.map((v) => v ?? "?")
+									.join(" · ");
+							})()}
+						</>
+					) : null}
 				</p>
 			))}
 
-			{frame && event && isReplay && (
+			{frame && event && isReplay ? (
 				<p>
 					timestamp <b>{event.data.timestamp ?? "?"}</b>
 					{" · "}code <b>{event.data.replayCode ?? "?"}</b>{" "}
@@ -505,9 +515,9 @@ export function ScreenshotPage() {
 					<RoiCrop frame={frame} roi={replay.HEADER_TOP_BAND} />{" "}
 					<RoiCrop frame={frame} roi={replay.REPLAY_CODE_ROI} />
 				</p>
-			)}
+			) : null}
 
-			{frame && event && isScoreboardBattleLog && (
+			{frame && event && isScoreboardBattleLog ? (
 				<p>
 					timestamp <b>{event.data.timestamp ?? "?"}</b>
 					{" · "}match scores {JSON.stringify(event.data.matchScores)}
@@ -516,9 +526,9 @@ export function ScreenshotPage() {
 					<RoiCrop frame={frame} roi={bl.HEADER_TOP_BAND} />{" "}
 					<RoiCrop frame={frame} roi={bl.HEADER_BOTTOM_BAND} />
 				</p>
-			)}
+			) : null}
 
-			{frame && event && isDeath && (
+			{frame && event && isDeath ? (
 				<p>
 					{(() => {
 						const data = event.data as unknown as DeathData;
@@ -542,9 +552,9 @@ export function ScreenshotPage() {
 						);
 					})()}
 				</p>
-			)}
+			) : null}
 
-			{frame && event && isMapStart && (
+			{frame && event && isMapStart ? (
 				<p>
 					{(() => {
 						const data = event.data as unknown as MapStartData;
@@ -569,9 +579,9 @@ export function ScreenshotPage() {
 						);
 					})()}
 				</p>
-			)}
+			) : null}
 
-			{frame && event && isOwn && (
+			{frame && event && isOwn ? (
 				<p>
 					{(() => {
 						const data = event.data as unknown as ScoreboardOwnData;
@@ -601,9 +611,9 @@ export function ScreenshotPage() {
 						);
 					})()}
 				</p>
-			)}
+			) : null}
 
-			{frame && event && isMinimap && (
+			{frame && event && isMinimap ? (
 				<p>
 					{(() => {
 						const data = event.data as unknown as MinimapData;
@@ -621,7 +631,7 @@ export function ScreenshotPage() {
 										)
 										.join(", ") || "—"}
 								</b>
-								{data.enemies.length > 0 && (
+								{data.enemies.length > 0 ? (
 									<>
 										{" · "}enemies{" "}
 										<b>
@@ -633,22 +643,22 @@ export function ScreenshotPage() {
 												.join(", ")}
 										</b>
 									</>
-								)}
-								{!data.spectator && (
+								) : null}
+								{!data.spectator ? (
 									<>
 										<br />
 										{minimap.CARD_LAYOUTS.map((card) => (
 											<RoiCrop key={card.slot} frame={frame} roi={card.name} />
 										))}
 									</>
-								)}
+								) : null}
 							</>
 						);
 					})()}
 				</p>
-			)}
+			) : null}
 
-			{frame && event && !isDeath && !isMapStart && !isOwn && !isMinimap && (
+			{frame && event && !isDeath && !isMapStart && !isOwn && !isMinimap ? (
 				<table className="inspector">
 					<thead>
 						<tr>
@@ -713,7 +723,7 @@ export function ScreenshotPage() {
 						})}
 					</tbody>
 				</table>
-			)}
+			) : null}
 		</div>
 	);
 }

@@ -78,18 +78,16 @@ export function db(): Promise<IDBDatabase> {
 }
 
 /** Single-request convenience wrapper over one object store. */
-export function tx<T>(
+export async function tx<T>(
 	storeName: string,
 	mode: IDBTransactionMode,
 	run: (store: IDBObjectStore) => IDBRequest<T>,
 ): Promise<T> {
-	return db().then(
-		(database) =>
-			new Promise<T>((resolve, reject) => {
-				const transaction = database.transaction(storeName, mode);
-				const req = run(transaction.objectStore(storeName));
-				req.onsuccess = () => resolve(req.result);
-				req.onerror = () => reject(req.error);
-			}),
-	);
+	const database = await db();
+	return new Promise<T>((resolve, reject) => {
+		const transaction = database.transaction(storeName, mode);
+		const req = run(transaction.objectStore(storeName));
+		req.onsuccess = () => resolve(req.result);
+		req.onerror = () => reject(req.error);
+	});
 }

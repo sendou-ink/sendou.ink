@@ -3,17 +3,13 @@
  * Calibrated against the death/ fixtures via tools/dump-crops.ts,
  * HoughCircles measurement, and bright-row profiling.
  *
- * The death cam overlays three fixed elements on live gameplay:
- * - a dark camo "splat burst" in the top-center with the two-line white
- *   message "Splatted by" / "<weapon name>!";
- * - the killer's gear panel bottom-left: a dark rounded rect with three
- *   gear rows (head/clothes/shoes), each one large main-ability circle
- *   (⌀~68) plus three small sub-ability circles (⌀~48), rows divided by
- *   white dashed lines;
- * - the killer's splash tag bottom-right, tilted a few degrees, with the
- *   name in large type (banner art and text color vary per player).
- * Everything except the tag banner sits over the live scene, so probe
- * regions were chosen inside the opaque-dark parts of the overlays.
+ * The death cam overlays three fixed elements on live gameplay: a dark
+ * camo "splat burst" top-center (two-line "Splatted by" / "<weapon>!"
+ * message); the killer's gear panel bottom-left (three gear rows, each
+ * with one main-ability circle ⌀~68 plus three sub circles ⌀~48,
+ * divided by dashed lines); and the killer's splash tag bottom-right,
+ * tilted, name in large type. Probes sit in the overlays' opaque-dark
+ * parts (everything but the tag banner sits over the live scene).
  */
 import type { Roi } from "../../canonical";
 
@@ -30,25 +26,19 @@ export const SPLAT_TEXT_BIN_THRESHOLD = 190;
 export const WEAPON_TEXT_HEIGHT = 34;
 
 /**
- * Non-Latin weaponLine=1 languages (JA: "<weapon> で" over "やられた！")
- * read the two lines with swapped widths: the variable-length weapon name
- * sits on line 1, so it gets the full-width box, while the constant line
- * below is short and centered, so a narrow box keeps scene ink that shows
- * past the burst's edge out of the read. Both boxes are taller than the
- * Latin ones: kana overshoot the Latin cap band on both sides (dakuten
- * above, full-depth bodies below — the JP line spans y=359..401 where the
- * Latin crop starts at 362).
+ * Non-Latin weaponLine=1 langs (JA: "<weapon> で" / "やられた！") swap line
+ * widths: variable name gets the full-width box, the short constant line
+ * gets a narrow one. Both boxes run taller than Latin: kana overshoot the
+ * cap band both sides (JP line spans y=359..401 vs Latin's y=362 start).
  */
 export const JA_WEAPON_LINE_ROI: Roi = { x: 640, y: 354, w: 640, h: 62 };
 export const JA_CONST_LINE_ROI: Roi = { x: 790, y: 412, w: 340, h: 54 };
 
 /**
- * The killer's weapon icon, drawn upright at the top of the burst above the
- * message text (main-weapon 2D icon art, ~110px; specials appear team-color
- * tinted instead and are not matched). Templates competing in this box are
- * built at BURST_ICON_TEMPLATE_SIZES — score peaks vary 124-132 per capture,
- * so several sizes are tried. When a "Lost the Rainmaker!" style line is
- * present the icon shifts up out of this box; the text read handles those.
+ * Killer's weapon icon, upright above the message text (~110px art;
+ * specials render team-tinted, unmatched). Templates at
+ * BURST_ICON_TEMPLATE_SIZES. A "Lost the Rainmaker!" style line shifts
+ * the icon out of this box; the text read handles those.
  */
 export const BURST_ICON_ROI: Roi = { x: 785, y: 230, w: 190, h: 140 };
 export const BURST_ICON_TEMPLATE_SIZES = [116, 124, 132] as const;
@@ -63,9 +53,8 @@ export const ABILITY_SUB_XS = [578, 630, 682] as const;
 const ABILITY_SUB_YS = [702, 797, 888] as const;
 
 /**
- * Search boxes around each circle. Heights double as the size filter:
- * matchTemplate silently skips templates taller than the ROI, so the
- * 56px sub box excludes the main-size templates.
+ * Search boxes around each circle; heights double as the size filter
+ * (matchTemplate skips templates taller than the ROI).
  */
 export function abilityMainRoi(row: number): Roi {
 	const cy = ABILITY_MAIN_YS[row]!;
@@ -83,45 +72,37 @@ export const ABILITY_MAIN_SIZES = [64, 68, 72] as const;
 export const ABILITY_SUB_SIZES = [44, 48, 52] as const;
 
 /**
- * Icon art diameter as a fraction of the circle box (art-ratio sweep over
- * the fixtures: mains peak at 1.0, subs at 0.92 — the badges draw the art
- * nearly edge-to-edge, so the template sizes above are effectively the art
- * sizes and the black ring contributes almost nothing).
+ * Icon art diameter as fraction of circle box: mains peak 1.0, subs 0.92
+ * — badges draw art nearly edge-to-edge, ring contributes ~nothing.
  */
 export const ABILITY_MAIN_ART_RATIO = 1.0;
 export const ABILITY_SUB_ART_RATIO = 0.92;
 
 /**
- * Ink threshold inside a circle box: the badge is near-black, icon art is
- * saturated-bright. The panel is slightly translucent, so a bright scene
- * can ghost through at low intensity — kept above that.
+ * Ink threshold: badge near-black, icon art saturated-bright; panel is
+ * slightly translucent so a bright scene can ghost through — kept above that.
  */
 export const ABILITY_INK_THRESHOLD = 90;
 
 /**
- * A gear row only carries as many sub circles as the gear has slots
- * (1-3, left-aligned); an absent slot shows the bare translucent panel.
- * Bright pixels (max channel > ABILITY_INK_THRESHOLD) inside the sub box
- * separate the cases cleanly: absent slots measure 0 across the fixtures
- * while every real badge — ability art or the white "?" of an unrevealed
- * slot, down to the dimmest 720p capture — measures 403+.
+ * A gear row carries only as many sub circles as gear slots (1-3); an
+ * absent slot shows bare panel. Bright pixels (max channel >
+ * ABILITY_INK_THRESHOLD) separate cases: absent measures 0, every real
+ * badge measures 403+ even at the dimmest 720p capture.
  */
 export const ABILITY_SLOT_MIN_INK = 200;
 
 /**
- * Splash tag name band. The tag renders tilted (text baseline rises to the
- * right by TAG_TILT_DEG); crop TAG_NAME_OUTER, rotate level around its
- * center, then read TAG_NAME_INNER relative to the rotated crop.
+ * Splash tag name band. Tag renders tilted (baseline rises right by
+ * TAG_TILT_DEG); crop TAG_NAME_OUTER, rotate level, read TAG_NAME_INNER
+ * relative to the rotated crop.
  */
 export const TAG_TILT_DEG = 3.0;
 export const TAG_NAME_OUTER: Roi = { x: 1130, y: 770, w: 650, h: 140 };
 /**
- * Name band inside the rotated outer crop. The top edge must clear the
- * kana dakuten, which rise well past the cap band (ご's marks start at
- * outer y=24; the old y=34 top clipped them, and the surviving sliver
- * touched the band border, where clearBorderBlobs deleted it — reading こ
- * for ご). The title line above ends by outer y=17 (descenders included),
- * so y=21 splits the two with margin on both sides.
+ * Name band inside the rotated crop. Top edge must clear kana dakuten
+ * (old y=34 clipped them, misreading こ for ご); y=21 splits the title
+ * line above (ends outer y=17) with margin.
  */
 export const TAG_NAME_INNER: Roi = { x: 20, y: 21, w: 610, h: 87 };
 
@@ -129,9 +110,8 @@ export const TAG_NAME_INNER: Roi = { x: 20, y: 21, w: 610, h: 87 };
 export const TAG_NAME_TEXT_HEIGHT = 46;
 
 /**
- * Gate probes. The burst camo is dark (~25-70) left/right of the constant
- * text line and below the weapon line; the gear panel is dark in the strip
- * right of the sub circles. The white message text gives the bright anchor.
+ * Gate probes: burst camo is dark left/right of the text line and below
+ * the weapon line; gear panel is dark right of the sub circles.
  */
 export const GATE_BURST_PROBES: readonly Roi[] = [
 	{ x: 750, y: 376, w: 36, h: 22 },
@@ -149,13 +129,11 @@ export const GATE_TEXT_MIN_MAX = 210;
 export const GATE_TEXT_MAX_FRACTION = 0.35;
 
 /**
- * The dark probes plus a white text line also describe the scoreboard
- * screens, so the gate additionally requires bright icon art at all three
- * main-ability circle centers. Brightness is the per-pixel max RGB channel,
- * not grayscale: saturated ability art can be gray-dark everywhere in the
- * circle (z-f-splatterscope-vod's middle-row orange/purple flame peaks at
- * 134 in gray but 248 in max-channel). Death fixtures measure 244+ in
- * max-channel while the closest non-death fixture row is 184.
+ * Dark probes + white text also match the scoreboard screens, so the gate
+ * additionally requires bright icon art at all three main-ability centers
+ * (max RGB channel, not grayscale — saturated art can be gray-dark yet
+ * bright in max-channel). Death fixtures measure 244+, closest non-death
+ * row 184.
  */
 export function gateAbilityProbe(row: number): Roi {
 	return {

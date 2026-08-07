@@ -1,18 +1,14 @@
 /**
  * Kit-icon identification: the team-tinted sub/special tiles next to a
- * player's main weapon (results scoreboard: the special icon above the
- * specials counter; minimap cards/rows: the sub-weapon tile).
+ * player's main weapon (scoreboard: special icon above the specials
+ * counter; minimap: sub-weapon tile). Tiles render the same art in each
+ * team's ink hue, so unlike weapon icons the match is shape-only: alpha
+ * silhouette vs the binarized search region, NCC + ink-coverage penalty.
  *
- * The tiles render the same art in each team's ink hue, so unlike weapon
- * icons the match is shape-only: the template's alpha silhouette against
- * the binarized search region, scored with NCC plus the same ink-coverage
- * penalty matchWeapon uses.
- *
- * The icon itself carries little pixel budget (~22px specials, ~30px
- * minimap subs), but it only ever needs to split main weapons whose
- * *icons* are near-ties (Splash- vs Sploosh-o-matic, plain vs Custom
- * Dualie Squelchers) — and near-tie icon twins ship with different kits,
- * whose silhouettes (stamp vs crab, bomb vs beakon) are far apart.
+ * Low pixel budget (~22px specials, ~30px minimap subs) is enough because
+ * it only splits main weapons whose *icons* are near-ties (Splash- vs
+ * Sploosh-o-matic) — near-tie icon twins ship with far-apart kit
+ * silhouettes (stamp vs crab, bomb vs beakon).
  */
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import type { FrameData } from "../../image";

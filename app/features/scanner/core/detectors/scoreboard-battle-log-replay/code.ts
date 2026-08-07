@@ -39,14 +39,12 @@ function resolveQsByDescent(raw: RecognizedText): string {
 }
 
 /**
- * On blurry captures a 'U' smears and the narrow 'L' template correlates on
- * its left stroke + bottom curve, edging out the true 'U' by a hair. As with
- * the Q rule, segment geometry decides what the templates cannot: a U's
- * right stroke fills the segment's top-right quadrant, where an L has no ink
- * at all (measured 0.00-0.15 leak on true Ls vs 0.27+ on Us across the
- * fixtures). The ink probe is the discriminator; the margin only skips
- * confident reads, and no true L on the fixtures carries a 'U' candidate
- * at all, so it stays generous (low-res-2's misread U trails by 0.086).
+ * On blurry captures a narrow 'L' template can edge out the true 'U' by a
+ * hair. Segment geometry decides what templates can't: a U's right stroke
+ * fills the segment's top-right quadrant, where an L has no ink (measured
+ * 0.00-0.15 leak on true Ls vs 0.27+ on Us across fixtures). The margin only
+ * skips confident reads and stays generous, since no true L on the fixtures
+ * carries a 'U' candidate at all.
  */
 const LU_SCORE_MARGIN = 0.12;
 const LU_INK_THRESHOLD = 150;

@@ -75,7 +75,7 @@ export interface ObjectiveScoreRead {
 export function matchScoresFromObjective(
 	reads: readonly ObjectiveScoreRead[],
 ): [number | null, number | null] {
-	const sorted = [...reads].sort((a, b) => a.t - b.t);
+	const sorted = reads.toSorted((a, b) => a.t - b.t);
 	const lastCountTaken = (side: 0 | 1) => {
 		for (let i = sorted.length - 1; i >= 0; i--) {
 			const count = sorted[i]!.score[side];

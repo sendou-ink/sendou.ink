@@ -19,7 +19,7 @@ import { sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
 import type { IngestSkipReason } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
-import { formatTime } from "./format";
+import { formatTime, useEventTimeFormatter } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
 
 /** the game score a knockout wins at */
@@ -284,6 +284,7 @@ function StatusChip({
 	skipReason?: IngestSkipReason;
 	live: boolean;
 }) {
+	const formatSentAt = useEventTimeFormatter();
 	if (skipReason) {
 		return (
 			<span className="match-chip">
@@ -295,7 +296,7 @@ function StatusChip({
 		return (
 			<span
 				className="match-chip sent"
-				title={`ingested ${new Date(send.at).toLocaleTimeString()}`}
+				title={`ingested ${formatSentAt(send.at)}`}
 			>
 				✓
 				{send.link ? (

@@ -1,14 +1,12 @@
 /**
  * Content guard for merging scoreboard-shaped events (results screen,
- * replay-browser detail). The replay browser lets the user flip between
+ * replay-browser detail). The replay browser lets users flip between
  * different matches' detail screens within seconds, so a time window alone
- * cannot tell "same board, sampled again" from "next replay opened" — three
- * distinct replays browsed back-to-back must not collapse into one event.
- *
- * Two events are considered the same match unless something decisive says
- * otherwise; every check tolerates the read jitter of a static screen
- * (glyph misreads, a flipped winner side, fields that only read on some
- * frames), so a split only happens on evidence that survives that noise.
+ * can't tell "same board, re-sampled" from "next replay opened." Two events
+ * are treated as the same match unless something decisive says otherwise;
+ * every check tolerates read jitter (glyph misreads, a flipped winner side,
+ * fields that only read on some frames), so a split only happens on
+ * evidence that survives that noise.
  */
 import type { ScoreboardData } from "../detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../detectors/scoreboard-battle-log-replay/index";

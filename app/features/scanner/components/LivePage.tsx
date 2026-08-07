@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Camera, Ellipsis, FileText, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
@@ -8,6 +9,7 @@ import {
 	openVirtualCamera,
 	startSampler,
 } from "../capture/sampler";
+import { connectAbilities } from "../core/ability-harvest";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
 import {
 	MAP_START_EVENT_TYPE,
@@ -134,143 +136,138 @@ export function LivePage({
 	}, [refreshFeed]);
 
 	/** Sends the matches `include` selects; serialized so sends never overlap. */
-	const send = useCallback(
-		async (
-			include: (built: BuiltMatch<StoredEvent>) => boolean,
-			{ manual = false } = {},
-		) => {
-			if (sendingRef.current) return;
-			sendingRef.current = true;
-			if (manual) setSendouError(null);
-			try {
-				const events = await listEvents();
-				const { sentMatches, failedMatches } = await sendMatches({
-					events,
-					include,
-					onStatus: refreshFeed,
-				});
-				if (manual && sentMatches + failedMatches === 0) {
-					setSendouError("nothing to send — no complete match selected");
-				}
-			} finally {
-				sendingRef.current = false;
-				refreshFeed();
+	const send = async (
+		include: (built: BuiltMatch<StoredEvent>) => boolean,
+		{ manual = false } = {},
+	) => {
+		if (sendingRef.current) return;
+		sendingRef.current = true;
+		if (manual) setSendouError(null);
+		try {
+			const events = await listEvents();
+			const { sentMatches, failedMatches } = await sendMatches({
+				events,
+				include,
+				onStatus: refreshFeed,
+			});
+			if (manual && sentMatches + failedMatches === 0) {
+				setSendouError("nothing to send — no complete match selected");
 			}
-		},
-		[refreshFeed],
-	);
+		} finally {
+			sendingRef.current = false;
+			refreshFeed();
+		}
+	};
 
 	/** `withLiveSend`: send each match to sendou.ink as it closes. */
-	const start = useCallback(
-		async (withLiveSend: boolean) => {
-			setError(null);
-			setSendouError(null);
-			setStatus("loading");
-			liveSendRef.current = withLiveSend;
-			setLiveSend(withLiveSend);
-			// a restart may land mid-another-match; collect until its mode is known
-			objectiveBlockedRef.current = false;
-			try {
-				const video = videoRef.current!;
-				const stream = await openVirtualCamera(deviceId || undefined);
-				video.srcObject = stream;
-				await video.play();
-				setDevices(await listVideoInputs());
+	const start = async (withLiveSend: boolean) => {
+		setError(null);
+		setSendouError(null);
+		setStatus("loading");
+		liveSendRef.current = withLiveSend;
+		setLiveSend(withLiveSend);
+		// a restart may land mid-another-match; collect until its mode is known
+		objectiveBlockedRef.current = false;
+		try {
+			const video = videoRef.current!;
+			const stream = await openVirtualCamera(deviceId || undefined);
+			video.srcObject = stream;
+			await video.play();
+			setDevices(await listVideoInputs());
 
-				clientRef.current ??= new AnalyzerClient(
-					(result) => {
-						// one result arrives per detector per frame; status reflects
-						// whether any of them fired
-						gatesRef.current.set(result.detector, result.gate);
-						const gates = [...gatesRef.current.values()];
-						setGateScore(Math.max(...gates.map((g) => g.score)));
-						if (!result.gate.pass) {
-							if (!gates.some((g) => g.pass)) setStatus("watching");
-							return;
+			clientRef.current ??= new AnalyzerClient(
+				(result) => {
+					// one result arrives per detector per frame; status reflects
+					// whether any of them fired
+					gatesRef.current.set(result.detector, result.gate);
+					const gates = [...gatesRef.current.values()];
+					setGateScore(Math.max(...gates.map((g) => g.score)));
+					if (!result.gate.pass) {
+						if (!gates.some((g) => g.pass)) setStatus("watching");
+						return;
+					}
+					setStatus("detected");
+					for (const event of result.events as DetectedEvent<FixtureData>[]) {
+						latestParseRef.current = { type: event.type, data: event.data };
+						if (
+							event.type === OBJECTIVE_EVENT_TYPE &&
+							objectiveBlockedRef.current
+						) {
+							continue;
 						}
-						setStatus("detected");
-						for (const event of result.events as DetectedEvent<FixtureData>[]) {
-							latestParseRef.current = { type: event.type, data: event.data };
-							if (
-								event.type === OBJECTIVE_EVENT_TYPE &&
-								objectiveBlockedRef.current
-							) {
-								continue;
+						const action = timelineRef.current.push(event);
+						if (action.action === "added" || action.action === "replaced") {
+							if (event.type === MAP_START_EVENT_TYPE) {
+								const mode = (event.data as MapStartData).mode;
+								objectiveBlockedRef.current = mode !== null && mode !== "SZ";
+							} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+								objectiveBlockedRef.current = false;
 							}
-							const action = timelineRef.current.push(event);
-							if (action.action === "added" || action.action === "replaced") {
-								if (event.type === MAP_START_EVENT_TYPE) {
-									const mode = (event.data as MapStartData).mode;
-									objectiveBlockedRef.current = mode !== null && mode !== "SZ";
-								} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-									objectiveBlockedRef.current = false;
-								}
-								const stale =
-									action.action === "replaced"
-										? storedIdsRef.current.get(action.replaced)
-										: undefined;
-								void (async () => {
-									const thumbnail = result.frame
-										? await thumbnailFromBlob(result.frame)
-										: undefined;
-									// reusing the replaced event's id keeps match card keys
-									// stable, so repeat detections don't remount the cards
-									const id = await saveEvent(
-										event,
-										thumbnail,
-										result.frame,
-										stale,
-									);
-									storedIdsRef.current.set(event, id);
-									if (
-										liveSendRef.current &&
-										INGESTABLE_TYPES.includes(event.type)
-									) {
-										if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-											// a scoreboard closes its match — send it
-											refreshFeed();
-											await send(
-												(built) =>
-													matchContaining(id)(built) && unsentMatches(built),
-											);
-										} else {
-											await updateEventsSend([id], {
-												state: "queued",
-												at: Date.now(),
-											});
-										}
+							const stale =
+								action.action === "replaced"
+									? storedIdsRef.current.get(action.replaced)
+									: undefined;
+							void (async () => {
+								const thumbnail = result.frame
+									? await thumbnailFromBlob(result.frame)
+									: undefined;
+								// reusing the replaced event's id keeps match card keys
+								// stable, so repeat detections don't remount the cards
+								const id = await saveEvent(
+									event,
+									thumbnail,
+									result.frame,
+									stale,
+								);
+								storedIdsRef.current.set(event, id);
+								if (
+									liveSendRef.current &&
+									INGESTABLE_TYPES.includes(event.type)
+								) {
+									if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+										// a scoreboard closes its match — send it
+										refreshFeed();
+										await send(
+											(built) =>
+												matchContaining(id)(built) && unsentMatches(built),
+										);
+									} else {
+										await updateEventsSend([id], {
+											state: "queued",
+											at: Date.now(),
+										});
 									}
-									refreshFeed();
-								})();
-							}
+								}
+								refreshFeed();
+							})();
 						}
-					},
-					(message) => {
-						setError(message);
-						setStatus("error");
-					},
-				);
-				await clientRef.current.whenReady();
+					}
+				},
+				(message) => {
+					setError(message);
+					setStatus("error");
+				},
+			);
+			await clientRef.current.whenReady();
 
-				stopRef.current = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
-					clientRef.current?.analyze(bitmap, t);
-				});
-				setStatus("watching");
-				setRunning(true);
-			} catch (e) {
-				setError(String(e));
-				setStatus("error");
-			}
-		},
-		[deviceId, refreshFeed, send],
-	);
+			stopRef.current = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
+				clientRef.current?.analyze(bitmap, t);
+			});
+			setStatus("watching");
+			setRunning(true);
+		} catch (e) {
+			setError(String(e));
+			setStatus("error");
+		}
+	};
 
 	const builtMatches = buildScannerMatches(feed);
 	const skipReasons = ingestSkipReasons(builtMatches);
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedFeed = feed.filter((e) => !groupedEvents.has(e));
+	const abilityMap = connectAbilities(feed);
 
-	const stop = useCallback(() => {
+	const stop = () => {
 		stopRef.current?.();
 		stopRef.current = null;
 		const video = videoRef.current;
@@ -285,7 +282,7 @@ export function LivePage({
 		if (liveSendRef.current) void send(unsentMatches);
 		liveSendRef.current = false;
 		setLiveSend(false);
-	}, [send]);
+	};
 
 	return (
 		<div>
@@ -295,7 +292,7 @@ export function LivePage({
 						<button
 							type="button"
 							disabled={!sendouUser}
-							title={sendouUser ? undefined : "log in on sendou.ink first"}
+							title={sendouUser ? undefined : "Log in on sendou.ink first"}
 							onClick={() => void start(true)}
 						>
 							<Send aria-hidden />
@@ -318,7 +315,7 @@ export function LivePage({
 							type="button"
 							className="outlined"
 							disabled={!sendouUser}
-							title={sendouUser ? undefined : "log in on sendou.ink first"}
+							title={sendouUser ? undefined : "Log in on sendou.ink first"}
 							onClick={() => {
 								liveSendRef.current = !liveSend;
 								setLiveSend(!liveSend);
@@ -338,10 +335,14 @@ export function LivePage({
 					))}
 				</select>
 				<span
-					className={`status ${status === "detected" ? "detected" : status === "watching" ? "watching" : "idle"}`}
+					className={clsx("status", {
+						detected: status === "detected",
+						watching: status === "watching",
+						idle: status !== "detected" && status !== "watching",
+					})}
 				>
 					{status}
-					{gateScore !== null && ` · gate ${gateScore.toFixed(2)}`}
+					{gateScore !== null ? ` · gate ${gateScore.toFixed(2)}` : null}
 				</span>
 				{liveSend ? (
 					<span className="status watching">sending matches live</span>
@@ -357,7 +358,7 @@ export function LivePage({
 						downloadEventsCsv(
 							`live-events-${new Date().toISOString().slice(0, 19).replaceAll(":", "-")}.csv`,
 							// feed is newest-first for display; export in chronological order
-							[...feed].sort(
+							feed.toSorted(
 								(a, b) =>
 									a.detectedAt - b.detectedAt || (a.id ?? 0) - (b.id ?? 0),
 							),
@@ -370,8 +371,8 @@ export function LivePage({
 					}}
 				/>
 			</div>
-			{error && <p className="error">{error}</p>}
-			{sendouError && <p className="error">{sendouError}</p>}
+			{error ? <p className="error">{error}</p> : null}
+			{sendouError ? <p className="error">{sendouError}</p> : null}
 			<div className="live-layout">
 				<video ref={videoRef} className="preview" muted playsInline />
 				<div className="feed">
@@ -422,6 +423,7 @@ export function LivePage({
 											t={e.t}
 											confidence={e.confidence}
 											data={e.data as FixtureData}
+											abilities={abilityMap.get(e)}
 											thumbnail={e.thumbnail}
 											detectedAt={e.detectedAt}
 											getFrame={
@@ -450,6 +452,7 @@ export function LivePage({
 									t={e.t}
 									confidence={e.confidence}
 									data={e.data as FixtureData}
+									abilities={abilityMap.get(e)}
 									thumbnail={e.thumbnail}
 									detectedAt={e.detectedAt}
 									getFrame={

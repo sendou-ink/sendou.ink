@@ -2,13 +2,11 @@
  * Header parsing: lobby type ("X Battle"), mode ("Splat Zones") and stage
  * ("Scorch Gorge") from the black tags above the team boxes.
  *
- * The tags auto-size to their text, so the stage's x position depends on the
- * mode's length. Each band is first trimmed to the tag extent (tag columns
- * are near-black background + white text; the map thumbnail around them is
- * mid-brightness), then OCR'd as one line and snapped to the known entries:
- * the mode+stage line is matched against every language's mode × stage
- * combinations (core/localized.ts), and the reported values are always
- * sendou.ink ids regardless of the game's language.
+ * Tags auto-size to their text, so the stage's x position depends on mode
+ * length. Each band is trimmed to the tag extent (near-black bg + white
+ * text; the map thumbnail around it is mid-brightness), then OCR'd as one
+ * line and snapped against every language's mode × stage combos
+ * (core/localized.ts) — reported values are always sendou.ink ids.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";

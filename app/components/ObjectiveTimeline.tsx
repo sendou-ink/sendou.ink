@@ -80,7 +80,7 @@ export function ObjectiveTimeline({
 		borderHigh: "--color-border-high",
 		text: "--color-text-high",
 	});
-	const sorted = [...events].sort((a, b) => a.t - b.t);
+	const sorted = events.toSorted((a, b) => a.t - b.t);
 	if (sorted.length === 0) return null;
 
 	const teamColors = [colors.alpha, colors.bravo];

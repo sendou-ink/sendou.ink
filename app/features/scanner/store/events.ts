@@ -44,7 +44,7 @@ export interface StoredEvent {
  * existing row (and its frame) instead of adding a new one, so an event a
  * better read replaces keeps a stable id.
  */
-export function saveEvent(
+export async function saveEvent(
 	event: DetectedEvent,
 	thumbnail?: string,
 	frame?: Blob,
@@ -60,27 +60,25 @@ export function saveEvent(
 		thumbnail,
 		hasFrame: frame !== undefined,
 	};
-	return db().then(
-		(database) =>
-			new Promise<number>((resolve, reject) => {
-				const transaction = database.transaction(
-					[EVENTS_STORE, FRAMES_STORE],
-					"readwrite",
-				);
-				const events = transaction.objectStore(EVENTS_STORE);
-				const frames = transaction.objectStore(FRAMES_STORE);
-				let id: number;
-				const add = events.put(record) as IDBRequest<number>;
-				add.onsuccess = () => {
-					id = add.result;
-					if (frame) frames.put(frame, id);
-					else if (reuseId !== undefined) frames.delete(id);
-					evictOldest(events, frames);
-				};
-				transaction.oncomplete = () => resolve(id);
-				transaction.onerror = () => reject(transaction.error);
-			}),
-	);
+	const database = await db();
+	return new Promise<number>((resolve, reject) => {
+		const transaction = database.transaction(
+			[EVENTS_STORE, FRAMES_STORE],
+			"readwrite",
+		);
+		const events = transaction.objectStore(EVENTS_STORE);
+		const frames = transaction.objectStore(FRAMES_STORE);
+		let id: number;
+		const add = events.put(record) as IDBRequest<number>;
+		add.onsuccess = () => {
+			id = add.result;
+			if (frame) frames.put(frame, id);
+			else if (reuseId !== undefined) frames.delete(id);
+			evictOldest(events, frames);
+		};
+		transaction.oncomplete = () => resolve(id);
+		transaction.onerror = () => reject(transaction.error);
+	});
 }
 
 /** Delete records (and frames) beyond MAX_EVENTS, oldest ids first. */
@@ -102,50 +100,46 @@ function evictOldest(events: IDBObjectStore, frames: IDBObjectStore): void {
 }
 
 /** Sets (or clears) the send status of the given events in one transaction. */
-export function updateEventsSend(
+export async function updateEventsSend(
 	ids: number[],
 	send: SendStatus | undefined,
 ): Promise<void> {
-	return db().then(
-		(database) =>
-			new Promise<void>((resolve, reject) => {
-				const transaction = database.transaction(EVENTS_STORE, "readwrite");
-				const events = transaction.objectStore(EVENTS_STORE);
-				for (const id of ids) {
-					const get = events.get(id) as IDBRequest<StoredEvent | undefined>;
-					get.onsuccess = () => {
-						const record = get.result;
-						if (!record) return; // evicted meanwhile
-						if (send) record.send = send;
-						else delete record.send;
-						events.put(record);
-					};
-				}
-				transaction.oncomplete = () => resolve();
-				transaction.onerror = () => reject(transaction.error);
-			}),
-	);
+	const database = await db();
+	return new Promise<void>((resolve, reject) => {
+		const transaction = database.transaction(EVENTS_STORE, "readwrite");
+		const events = transaction.objectStore(EVENTS_STORE);
+		for (const id of ids) {
+			const get = events.get(id) as IDBRequest<StoredEvent | undefined>;
+			get.onsuccess = () => {
+				const record = get.result;
+				if (!record) return; // evicted meanwhile
+				if (send) record.send = send;
+				else delete record.send;
+				events.put(record);
+			};
+		}
+		transaction.oncomplete = () => resolve();
+		transaction.onerror = () => reject(transaction.error);
+	});
 }
 
 /** Deletes the given events and their frames in one transaction. */
-export function deleteEvents(ids: number[]): Promise<void> {
-	return db().then(
-		(database) =>
-			new Promise<void>((resolve, reject) => {
-				const transaction = database.transaction(
-					[EVENTS_STORE, FRAMES_STORE],
-					"readwrite",
-				);
-				const events = transaction.objectStore(EVENTS_STORE);
-				const frames = transaction.objectStore(FRAMES_STORE);
-				for (const id of ids) {
-					events.delete(id);
-					frames.delete(id);
-				}
-				transaction.oncomplete = () => resolve();
-				transaction.onerror = () => reject(transaction.error);
-			}),
-	);
+export async function deleteEvents(ids: number[]): Promise<void> {
+	const database = await db();
+	return new Promise<void>((resolve, reject) => {
+		const transaction = database.transaction(
+			[EVENTS_STORE, FRAMES_STORE],
+			"readwrite",
+		);
+		const events = transaction.objectStore(EVENTS_STORE);
+		const frames = transaction.objectStore(FRAMES_STORE);
+		for (const id of ids) {
+			events.delete(id);
+			frames.delete(id);
+		}
+		transaction.oncomplete = () => resolve();
+		transaction.onerror = () => reject(transaction.error);
+	});
 }
 
 export function listEvents(): Promise<StoredEvent[]> {
@@ -165,18 +159,16 @@ export function loadEventFrame(id: number): Promise<Blob | undefined> {
 	);
 }
 
-export function clearEvents(): Promise<void> {
-	return db().then(
-		(database) =>
-			new Promise<void>((resolve, reject) => {
-				const transaction = database.transaction(
-					[EVENTS_STORE, FRAMES_STORE],
-					"readwrite",
-				);
-				transaction.objectStore(EVENTS_STORE).clear();
-				transaction.objectStore(FRAMES_STORE).clear();
-				transaction.oncomplete = () => resolve();
-				transaction.onerror = () => reject(transaction.error);
-			}),
-	);
+export async function clearEvents(): Promise<void> {
+	const database = await db();
+	return new Promise<void>((resolve, reject) => {
+		const transaction = database.transaction(
+			[EVENTS_STORE, FRAMES_STORE],
+			"readwrite",
+		);
+		transaction.objectStore(EVENTS_STORE).clear();
+		transaction.objectStore(FRAMES_STORE).clear();
+		transaction.oncomplete = () => resolve();
+		transaction.onerror = () => reject(transaction.error);
+	});
 }

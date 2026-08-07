@@ -19,9 +19,9 @@ import {
 } from "../core/detectors/death/weapon-names";
 import type { ScannerLobby } from "../scanner-types";
 
-const misc = gameMisc as Record<string, string>;
+const MISC = gameMisc as Record<string, string>;
 
-const weaponNameByKindAndId = new Map(
+const WEAPON_NAME_BY_KIND_AND_ID = new Map(
 	ALL_WEAPON_ENTRIES.map((e) => [`${e.type}:${e.id}`, e.name]),
 );
 
@@ -30,7 +30,7 @@ export function weaponLabel(
 	id: MainWeaponId | SubWeaponId | SpecialWeaponId | null,
 ): string | null {
 	if (type === null || id === null) return null;
-	return weaponNameByKindAndId.get(`${type}:${id}`) ?? String(id);
+	return WEAPON_NAME_BY_KIND_AND_ID.get(`${type}:${id}`) ?? String(id);
 }
 
 export function mainWeaponLabel(id: MainWeaponId | null): string | null {
@@ -40,11 +40,11 @@ export function mainWeaponLabel(id: MainWeaponId | null): string | null {
 export function stageLabel(stageId: StageId | null): string | null {
 	return stageId === null
 		? null
-		: (misc[`STAGE_${stageId}`] ?? String(stageId));
+		: (MISC[`STAGE_${stageId}`] ?? String(stageId));
 }
 
 export function modeLabel(mode: ModeShort | null): string | null {
-	return mode === null ? null : (misc[`MODE_LONG_${mode}`] ?? mode);
+	return mode === null ? null : (MISC[`MODE_LONG_${mode}`] ?? mode);
 }
 
 const LOBBY_LABELS: Record<ScannerLobby, string> = {

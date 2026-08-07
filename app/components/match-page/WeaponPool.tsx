@@ -66,7 +66,7 @@ export function WeaponPool({
 								variant="badge"
 								size={32}
 							/>
-							<span>{t(`weapons:MAIN_${weapon.weaponSplId}` as any)}</span>
+							<span>{t(`weapons:MAIN_${weapon.weaponSplId}`)}</span>
 						</div>
 					) : null,
 				)}

@@ -3,8 +3,9 @@
  * shared by the death card and the scoreboard player popover.
  */
 
-import { useState } from "react";
+import { Button } from "react-aria-components";
 import { Ability } from "~/components/Ability";
+import { SendouPopover } from "~/components/elements/Popover";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 
 const ROW_LABELS = ["head", "clothes", "shoes"] as const;
@@ -34,32 +35,27 @@ export function AbilityGrid({
 
 /**
  * Click-to-toggle popover showing a player's ability grid; the trigger is
- * the head-main ability icon. Closes when the pointer leaves it.
+ * the head-main ability icon.
  */
 export function AbilityPopover({
 	abilities,
 }: {
 	abilities: AbilityWithUnknown[][];
 }) {
-	const [open, setOpen] = useState(false);
 	const trigger = abilities[0]?.[0];
 	if (!trigger) return null;
 	return (
-		// biome-ignore lint/a11y/noStaticElementInteractions: hover-dismiss only; the button inside is the interactive element
-		<span className="ability-popover" onMouseLeave={() => setOpen(false)}>
-			<button
-				type="button"
-				className="ability-trigger"
-				onClick={() => setOpen((o) => !o)}
-				title="Show abilities (from death events)"
-			>
-				<Ability ability={trigger} size="TINY" />
-			</button>
-			{open && (
-				<div className="popover">
-					<AbilityGrid abilities={abilities} />
-				</div>
-			)}
-		</span>
+		<SendouPopover
+			trigger={
+				<Button
+					className="ability-trigger"
+					aria-label="Show abilities (from death events)"
+				>
+					<Ability ability={trigger} size="TINY" />
+				</Button>
+			}
+		>
+			<AbilityGrid abilities={abilities} />
+		</SendouPopover>
 	);
 }

@@ -22,10 +22,10 @@ export interface GateResult {
 	 */
 	variant?: string;
 	/**
-	 * coarse content fingerprint of the recognized screen (grid-cell means
-	 * over content ROIs, see image.ts roiSignature) — the scheduler re-arms a
-	 * suppressed streak when it moves, for screens whose distinct real
-	 * occurrences keep the gate passing (browsing battle log / replay entries)
+	 * coarse content fingerprint (grid-cell means over content ROIs, see
+	 * image.ts roiSignature) — the scheduler re-arms a suppressed streak
+	 * when it moves, for screens whose distinct real occurrences keep the
+	 * gate passing (browsing battle log / replay entries)
 	 */
 	signature?: number[];
 }
@@ -42,21 +42,20 @@ export interface Detector<TData = unknown> {
 	/**
 	 * Minimum seconds between checks in *both* scheduling phases: frames
 	 * inside the interval skip gate and parse entirely
-	 * (core/detectors/scheduler.ts, applied by the analyzer worker).
-	 * Declaring an interval also exempts the detector from steady-frame
-	 * suppression: it marks a screen that stays up for minutes with
-	 * *changing* content, which the stagnating-confidence heuristic would
-	 * wrongly silence.
+	 * (core/detectors/scheduler.ts, applied by the analyzer worker). Also
+	 * exempts the detector from steady-frame suppression: it marks a screen
+	 * that stays up for minutes with *changing* content, which the
+	 * stagnating-confidence heuristic would wrongly silence.
 	 */
 	checkIntervalS?: number;
 	/**
 	 * Check cadence while the gate keeps failing (the search phase); unset =
-	 * the scheduler's default (0.25s). Do not reason from raw-gameplay
-	 * screen lifetimes here: produced/casted VoDs cut screens (results,
-	 * intros) to as little as ~1s, with transition flicker eating frames
-	 * inside that window — the search cadence must sample such a window
-	 * several times. Gates cost ~1.6ms, so searching at the analysis floor
-	 * is effectively free; only override upward with strong evidence.
+	 * the scheduler's default (0.25s). Don't reason from raw-gameplay screen
+	 * lifetimes here: produced/casted VoDs cut screens (results, intros) to
+	 * as little as ~1s with transition flicker eating frames inside that
+	 * window, so the search cadence must sample it several times. Gates
+	 * cost ~1.6ms, so searching at the analysis floor is effectively free;
+	 * only override upward with strong evidence.
 	 */
 	searchIntervalS?: number;
 	/**

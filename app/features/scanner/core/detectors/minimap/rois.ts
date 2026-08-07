@@ -1,29 +1,15 @@
 /**
  * ALL minimap ROI coordinates, in canonical 1920x1080 space. Calibrated
- * against the minimap/ fixtures via tools/dump-crops.ts crops plus template
- * relocation sweeps (each card's ability badges sit on an exact 48px pitch,
- * which pins the grid origins).
+ * against the minimap/ fixtures via tools/dump-crops.ts plus template
+ * relocation sweeps (badges sit on an exact 48px pitch, pinning origins).
  *
- * The in-match map overlay (opened with X) draws over gaussian-blurred live
- * gameplay:
- * - four own-team callout cards: three teammates at fixed super-jump slots
- *   (d-pad up = top-center, left = mid-left, right = mid-right) and the POV
- *   player's own card bottom-left (no d-pad). Each carries the player name
- *   (BlitzMain, ~29px caps), the main weapon as full-color icon art on the
- *   translucent dark card, team-tinted sub/special tiles, and three
- *   main-ability badges (⌀~44). A respawning player's card is struck
- *   through with a large team-color X whose arms cross at the card center;
- * - the enemy panel top-right: four rows of full-color weapon icon art,
- *   sub/special tiles, and the same three ability badges — no names. A
- *   respawning enemy's row is struck through (the X spares the weapon icon
- *   at the row's left edge);
- * - special ready: a card/row whose player has a charged special swaps its
- *   dark background for a light gray-green camo pattern (~150 mean, low
- *   saturation), same geometry, inverted contrast around the weapon art;
- * - constant chrome: the close-button disc top-left (dark disc, white X)
- *   and the Spawn Point pill bottom-center. The pill label is localized,
- *   so the gate reads shapes (disc, strokes, the white jump-arrows icon),
- *   never text.
+ * The in-match map overlay (X) draws over gaussian-blurred gameplay: four
+ * own-team cards (POV player bottom-left) and an enemy panel top-right,
+ * each with weapon icon art, sub/special tiles, three ability badges
+ * (⌀~44); a respawning player is struck through with a team-color X, and
+ * a charged special swaps the card background for gray-green camo.
+ * Constant chrome (close disc, Spawn Point pill) gates on shape since the
+ * pill label is localized.
  */
 import type { Roi } from "../../canonical";
 
@@ -41,18 +27,13 @@ export interface CardLayout {
 	subTile: Roi;
 	/** the three main-ability badge centers, 48px pitch */
 	badges: readonly (readonly [number, number])[];
-	/**
-	 * cross-out probe at the card center (where the X's arms meet): white
-	 * name glyphs and the dark pill are unsaturated, the X core is not
-	 */
+	/** cross-out probe at card center: name/pill are unsaturated, X core isn't */
 	cross: Roi;
 }
 
 /**
- * The right card is the left card's layout shifted +1352px (verified on the
- * struck-through fixture card only — re-derive from an uncrossed right-slot
- * fixture when one lands). The self card differs: avatar leftmost, larger
- * left inset for the name, no d-pad.
+ * Right card = left shifted +1352px (verified only on the struck fixture).
+ * Self card differs: avatar leftmost, larger name inset, no d-pad.
  */
 export const CARD_LAYOUTS: readonly CardLayout[] = [
 	{
@@ -115,10 +96,7 @@ export function enemySubTileRoi(cy: number): Roi {
 	return { x: 1602, y: cy - 20, w: 39, h: 40 };
 }
 export const ENEMY_BADGE_XS = [1730, 1778, 1826] as const;
-/**
- * The row's X arms meet in the dark gap between the special tile and the
- * first badge; on a clean row the gap stays unsaturated.
- */
+/** X arms meet in the dark gap between special tile and first badge (unsaturated when clean). */
 export function enemyCrossRoi(cy: number): Roi {
 	return { x: 1685, y: cy - 12, w: 28, h: 24 };
 }
@@ -131,9 +109,8 @@ export const BADGE_TEMPLATE_SIZES = [38, 42, 46] as const;
 /** Badge art fills the circle like the death panel's mains. */
 export const BADGE_ART_RATIO = 1.0;
 /**
- * Badge ink threshold: badge circles are near-black; the enemy panel's
- * translucent pink bleeds into the box corners at ~150-180, a constant
- * penalty across candidates that leaves the ranking intact.
+ * Badge ink threshold: near-black circles vs the enemy panel's translucent
+ * pink bleed (~150-180 in corners) — a constant penalty, ranking intact.
  */
 export const MINIMAP_ABILITY_INK_THRESHOLD = 90;
 
@@ -141,32 +118,19 @@ export const MINIMAP_ABILITY_INK_THRESHOLD = 90;
 export const NAME_TEXT_HEIGHT = 29;
 export const NAME_BIN_THRESHOLD = 170;
 
-/**
- * Cross-out probe: fraction of saturated-and-bright pixels (HSV, 0..255
- * channels). Struck cards measure 0.26-0.38, clean ones <= 0.01.
- */
+/** Cross-out probe: fraction of saturated+bright HSV pixels. Struck 0.26-0.38, clean <=0.01. */
 export const CROSS_SATURATION_MIN = 110;
 export const CROSS_VALUE_MIN = 110;
 export const CROSS_MIN_FRACTION = 0.08;
 
 /**
- * Weapon template variants (template prep in scoreboard/weapons.ts): cards
- * and enemy rows both draw full-color icon art. Both minimap sets are built
- * with cropToArt — the game renders the icon at the equivalent of a
- * ~44-60px padded square, and the 54px-tall card box can only host the
- * larger sizes once the transparent padding is trimmed (the Splatana
- * Stamper on the special-ready fixture card is unmatchable without it).
- * Dark surfaces (translucent card/row over the blurred scene, measured
- * ~15-90) match against a bg-40 composite; special-ready camo surfaces
- * (~150 mean) against a bg-150 composite — each with an ink threshold
- * clearing its background.
+ * Weapon templates built with cropToArt (54px card box needs padding
+ * trimmed to fit larger icons — Splatana Stamper unmatchable otherwise).
+ * Dark surfaces match a bg-40 composite, special-ready camo a bg-150 one.
  */
 /**
- * Sub-weapon silhouette heights for the ~39x40 sub tiles (art renders
- * ~26-34px inside the dark plate). Matched shape-only (specials.ts), which
- * survives the team tint, the camo surround, and even a cross-out stroke
- * clipping the tile — used only to split near-tied main-weapon icons whose
- * kits carry different subs (plain vs Custom Dualie Squelchers).
+ * Sub-tile silhouettes matched shape-only (specials.ts): survives team
+ * tint/camo/cross-out, used to split near-tied main-weapon icons.
  */
 export const SUB_TILE_TEMPLATE_SIZES = [24, 27, 30, 33, 36] as const;
 
@@ -178,36 +142,27 @@ export const MINIMAP_WEAPON_TEMPLATE_SIZES = [
 export const MINIMAP_WEAPON_INK_THRESHOLD = CARD_WEAPON_BACKGROUND + 50;
 export const SPECIAL_READY_INK_THRESHOLD = SPECIAL_READY_BACKGROUND + 50;
 /**
- * Weapon-box corner mean above this = special-ready camo background. Probes
- * take the MIN of the two top corners: camo corners measure 140-165 on both,
- * while a dark card keeps at least one corner <=90 even when avatar bleed or
- * a cross-out stroke brightens the other.
+ * Corner mean above this = special-ready camo (measures 140-165); a dark
+ * card keeps at least one top corner <=90 despite avatar/cross-out bleed.
  */
 export const SPECIAL_READY_MIN_CORNER_MEAN = 120;
 /**
- * Weapon score floors: camo surfaces score systematically lower (the blob
- * pattern behind the art depresses NCC) — 0.45-0.61 on correct matches vs
- * 0.77+ on dark surfaces.
+ * Camo surfaces score systematically lower (blob pattern depresses NCC):
+ * 0.45-0.61 on correct matches vs 0.77+ on dark surfaces.
  */
 export const WEAPON_MIN_SCORE = 0.55;
 export const SPECIAL_READY_WEAPON_MIN_SCORE = 0.42;
 
 /**
- * Card/row presence: the overlay is crisp while the scene behind it is
- * gaussian-blurred, so mean |Laplacian| over the name band (cards) or the
- * weapon box (enemy rows) separates a drawn element from see-through
- * background regardless of what the blur happens to show.
+ * Overlay is crisp over a blurred scene: mean |Laplacian| over the name
+ * band/weapon box separates a drawn element from see-through background.
  */
 export const PRESENCE_MIN_LAPLACIAN = 8;
 
 /**
- * Gate probes (overlay variant): close-button disc + Spawn Point pill
- * shapes. The close button is a white ✕ glyph on a dark disc (center
- * (110,92), ±4px across fixtures), traced like the spectator X: bright
- * probes on the crossing point and the four stroke arms, dark probes in
- * the cardinal gaps between them. A mere bright blob at the same spot —
- * the results screen's splat counter puts white digits exactly there —
- * lights the gaps or misses the arms and fails.
+ * Close-button gate: white ✕ on a dark disc (center (110,92) ±4px). Bright
+ * probes trace the crossing point + four arms, dark probes sit in the
+ * cardinal gaps — a plain bright blob misses the arms and fails.
  */
 export const GATE_CLOSE_X_BRIGHT: readonly Roi[] = [
 	{ x: 104, y: 88, w: 12, h: 10 },
@@ -239,19 +194,11 @@ export const GATE_DARK_MAX_MEAN = 85;
 export const GATE_BRIGHT_MIN_MAX = 210;
 
 /**
- * Spectator-variant gate: casted streams show the map as the 8-player
- * spectator screen (all eight players carded left/right, A/B/Y/X jump
- * buttons) instead of the POV overlay, and stream layouts routinely cover
- * the overlay gate's corner chrome (close disc behind the branding
- * top-left, spawn-pill area behind the bottom bar). The X jump-button disc
- * beside the 8th player card (bottom-right) is rarely covered, so this
- * variant gates there: bright probes trace the X glyph itself (crossing
- * point plus the four stroke arms), dark probes sit in the disc's gaps at
- * the glyph's cardinal edges — a solid white blob or a non-X glyph at the
- * same spot lights the gaps and fails. Disc center (1424,712), aligned
- * within ±4px across the attested stream layouts; the 12x12/8x8 probe
- * boxes absorb that jitter. Measured margins: spectator frames read
- * bright>=249 / dark<=65 against the shared 210/85 thresholds.
+ * Spectator-variant gate: casted streams show the 8-player spectator
+ * screen and often cover the overlay gate's corner chrome, so this gates
+ * on the rarely-covered X jump-button disc beside the 8th card
+ * (bottom-right, center (1424,712) ±4px). Measured margins: bright>=249 /
+ * dark<=65 against the shared 210/85 thresholds.
  */
 export const GATE_SPECTATOR_X_BRIGHT: readonly Roi[] = [
 	{ x: 1418, y: 706, w: 12, h: 12 },
@@ -268,19 +215,10 @@ export const GATE_SPECTATOR_X_DARK: readonly Roi[] = [
 ];
 
 /**
- * Spectator screen card grid: four cards per column on a 120px row pitch,
- * the right column the left one shifted +1348px (same relation as the
- * overlay's right card, verified within ±4px across the attested stream
- * layouts). The left column carries the alpha team — its cards show a
- * d-pad glyph highlighting up/right/down/left, reported as the teammate
- * slot — and the right column the bravo team (reported as enemy rows,
- * though this screen does show their names). Each card: name line above
- * (BlitzMain, same 29-30px caps as the overlay cards), then weapon icon
- * art, sub + special tiles, and three ability badges on the overlay's
- * 48px pitch. The cross-out probe sits in the dark gap between the
- * special tile and the first badge (like the overlay enemy rows); no
- * struck-through or special-ready spectator fixture is attested yet, so
- * those probes reuse the overlay thresholds untuned.
+ * Spectator card grid: four cards per column, 120px row pitch, right =
+ * left +1348px. Left column is alpha team, right is bravo (reported as
+ * enemy rows). Mirrors the overlay's card layout; no struck/special-ready
+ * fixture attested yet, so those probes reuse overlay thresholds untuned.
  */
 export const SPECTATOR_SLOTS: readonly CardSlot[] = [
 	"up",
@@ -310,9 +248,7 @@ export function spectatorCardLayout(
 }
 
 /**
- * Spectator name reads are tried at both heights and the more confident
- * read wins: the JPEG/upscale blur across stream captures moves the best
- * fit between 29 and 30 per card (measured 0.85-0.93 at the winning
- * height, with the loser dropping glyphs' dakuten or bar lengths).
+ * Spectator names tried at both heights, more confident read wins: blur
+ * across captures moves the best fit between 29 and 30 per card.
  */
 export const SPECTATOR_NAME_TEXT_HEIGHTS = [29, 30] as const;

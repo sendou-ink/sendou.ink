@@ -230,6 +230,7 @@ export function createScoreboardBattleLogDetector(
 				binThreshold: TEAM_SCORE_BIN_THRESHOLD,
 			});
 			crop.delete();
+			confidences.push(teamScore.confidence);
 		}
 
 		let result: PanelParse["result"] = null;

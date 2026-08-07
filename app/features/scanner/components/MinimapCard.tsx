@@ -1,3 +1,4 @@
+import { ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
@@ -10,6 +11,7 @@ import {
 } from "../core/detectors/minimap/index";
 import type { CardSlot } from "../core/detectors/minimap/rois";
 import { FrameThumb } from "./FrameThumb";
+import { useEventTimeFormatter } from "./format";
 import { stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
@@ -35,30 +37,13 @@ function AbilityRow({
 	);
 }
 
-function SlotChevron({ direction }: { direction: CardSlot }) {
-	return (
-		<svg
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="3.5"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			aria-label={direction}
-			role="img"
-		>
-			<polyline points="6 14.5 12 8.5 18 14.5" />
-		</svg>
-	);
-}
-
 function TeammateMarker({ slot }: { slot: CardSlot }) {
 	if (slot === "self") {
 		return <span className="slot-marker">●</span>;
 	}
 	return (
 		<span className={`slot-marker ${slot}`}>
-			<SlotChevron direction={slot} />
+			<ChevronUp strokeWidth={3.5} aria-label={slot} role="img" />
 		</span>
 	);
 }
@@ -103,6 +88,7 @@ export function MinimapCard(props: {
 }) {
 	const { t, confidence, data, thumbnail, detectedAt, getFrame, onInspect } =
 		props;
+	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<div className="card">
 			<div className="meta">
@@ -113,7 +99,7 @@ export function MinimapCard(props: {
 					label="minimap"
 				/>
 				{data.stage !== null ? <span>{stageLabel(data.stage)}</span> : null}
-				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
+				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
 					thumbnail={thumbnail}
 					getFrame={getFrame}

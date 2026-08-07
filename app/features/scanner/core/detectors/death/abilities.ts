@@ -1,18 +1,13 @@
 /**
  * Ability badge templates for the death-screen gear panel.
  *
- * The committed icon assets (assets/cv/abilities/) are the bare icon
- * art with alpha; on screen each sits centered on a near-black circular
- * badge that fills a known fraction of the slot. Templates are built by
- * compositing the art onto a black square at that fraction, then resizing
- * the square to the candidate badge sizes — after which they are shaped
- * exactly like weapon templates and reuse matchWeapon for the NCC +
- * ink-coverage scoring (see weapons.ts for why raw NCC is not enough).
- *
- * Mains (⌀~68) and subs (⌀~48) render the art at different fractions of
- * the badge, so each role gets its own template set; the role ROIs' heights
- * keep the other role's sizes out of the match (matchTemplate skips
- * templates taller than the region).
+ * Committed icon assets (assets/cv/abilities/) are bare icon art with
+ * alpha; on screen each sits centered on a near-black circular badge
+ * filling a known fraction of the slot. Templates composite the art onto a
+ * black square at that fraction, then resize to the candidate badge sizes —
+ * shaped like weapon templates so matchWeapon's NCC + ink-coverage scoring
+ * (see weapons.ts) applies directly. Mains (⌀~68) and subs (⌀~48) use
+ * different art fractions, so each role gets its own template set.
  */
 import { getCV } from "../../cv";
 import type { FrameData } from "../../image";

@@ -1,13 +1,12 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * Bootstrap glyph atlases from the labeled reference fixtures.
- *
- * Slices glyph templates straight out of the reference frames; the same
- * scoreboard captured through different pipelines (OBS virtual camera at
- * 720p, game capture at native 1080p) yields subtly different pixels, so
- * every source contributes its own crop per character and recognition takes
- * the best-scoring one. scripts/scanner/build-glyph-atlas.ts then fills in the rest of
- * the charset from the fonts, preserving these fixture-tagged glyphs.
+ * Bootstrap glyph atlases from the labeled reference fixtures: slices glyph
+ * templates straight out of the reference frames, since the same scoreboard
+ * captured through different pipelines (OBS virtual camera 720p, game
+ * capture 1080p) yields subtly different pixels — every source contributes
+ * its own crop per character and recognition takes the best-scoring one.
+ * build-glyph-atlas.ts then fills in the rest of the charset from the
+ * fonts, preserving these fixture-tagged glyphs.
  *
  * Usage: pnpm scanner:bootstrap-atlas
  * Writes public/assets/glyphs/scoreboard-{names,paint-digits,stat-digits}.{png,json}

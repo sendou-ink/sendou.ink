@@ -3,11 +3,16 @@
 Browser app (route `/scanner`, dev-only until promoted) that watches OBS
 Virtual Camera footage, VoD files, or screenshots, detects Splatoon 3 UI
 screens with OpenCV.js in a Web Worker, and parses them into events speaking
-sendou.ink ids (`ModeShort`/`StageId`/weapon ids/`Ability`). Events are
-aggregated client-side into `ScannerMatch` objects (`core/scanner-match.ts`)
-— one detected game with everything the scan could read — which feed
-`/ingest` (features/scanner-ingest) and the `/vods/new` prefill. Imported
-from the emberz repo; see `MIGRATION.md` there.
+sendou.ink ids (`ModeShort`/`StageId`/weapon ids/`Ability`). Events aggregate
+client-side into `ScannerMatch` objects (`core/scanner-match.ts`) — one
+detected game per object, every field nullable — which feed `/ingest`
+(features/scanner-ingest) and the `/vods/new` prefill. Imported from the
+emberz repo; see `MIGRATION.md` there.
+
+Deliberate convention exceptions (dev tool, ported wholesale): the UI is
+English-only (no i18next) and styled by one global `components/styles.css`
+instead of per-component CSS modules; `tests/node-test-compat.ts` uses a
+default export to stay a `node:test` drop-in.
 
 ## Commands
 
@@ -52,88 +57,64 @@ sequenceDiagram
   Note over UI: VoD "Add VoD": ScannerMatch → slim prefill param → /vods/new
 ```
 
-- `core/` is pure (mats in, events/matches out) and runs in three contexts:
-  the worker, the `/scanner` Screenshot tab, and Node tests. No DOM/browser
-  APIs; Node-only helpers (image IO, fixture loading) live in `node/`. Pure
-  data/type imports from `~/modules` and `~/features/build-analyzer/data` are
-  fine — zod and the app config graph are not (schemas live in
-  `scanner-schemas.ts`, consumed by `features/scanner-ingest`; core only
-  `import type`s the shapes).
+- `core/` is pure (mats in, events/matches out) and runs in the worker, the
+  Screenshot tab, and Node tests. No DOM/browser APIs; Node-only helpers live
+  in `node/`. Pure data/type imports from `~/modules` and
+  `~/features/build-analyzer/data` are fine — zod and the app config graph
+  are not (schemas live in `scanner-schemas.ts`; core only `import type`s
+  the shapes).
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
   when the intro was missed), minimaps group per map by confirmed stage
-  change and >5 min gap. An event belongs to at most one match. Deaths
-  reveal enemy builds (`ability-harvest.ts`).
-  Every field is nullable — partial matches are fine, scanner-ingest merges
-  them server-side. Senders filter with `ingestSkipReasons`: private/unread
-  lobby only, and no games a disconnect cut short (a scoreless match whose
-  last counter read left the game more time than the footage did, or that
-  was replayed right after on the same map — the latter only ever resolves
-  after the fact, so it is a VoD-scan filter in practice).
-- The route (`routes/scanner.tsx`) is SSR-guarded: everything below it
-  assumes a browser, so the client tree loads via `React.lazy` after
-  `useHydrated`. Nothing from `core/worker/capture/store` may be imported at
-  route-module top level.
+  change and >5 min gap. An event belongs to at most one match; deaths
+  reveal enemy builds (`ability-harvest.ts`). Partial matches are fine —
+  scanner-ingest merges them server-side. Senders filter with
+  `ingestSkipReasons`: private/unread lobby only, and no games a disconnect
+  cut short (scoreless + counter left more time than the footage did, or
+  replayed right after on the same map — the latter is a VoD-scan filter in
+  practice since it only resolves after the fact).
+- The route (`routes/scanner.tsx`) is SSR-guarded: the client tree loads via
+  `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`
+  may be imported at route-module top level.
 - Eight detectors: `scoreboard` (results screen),
   `scoreboard-battle-log-replay` (replay-browser detail),
-  `scoreboard-battle-log` (Recent Battles detail — the same data as the
-  replay screen sans the replay code, panels stacked instead of
-  side by side), `scoreboard-own` (personal results), `death`
-  (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay,
-  plus the casted 8-player spectator map as a gated variant), `objective`
-  (the ranked in-match counter overlay: per-team counts, penalties, who
-  holds the objective, and the match timer — a discriminated union on mode
-  with only the SZ member so far). A match's reads land on `ScannerMatch`
-  as `objective` progress samples in `teams` order, each anchored to the
-  game clock so consumers can graph progress and spot capture gaps. Reads
-  that group into a match whose detected mode is not SZ are misreads of a
-  lookalike overlay (other modes' counters pass the gate): the builder
-  leaves that match's `objective` null and callers discard the events
-  (`invalidObjectiveEvents` — Live deletes them from the store, VoD before
-  persisting/on load; Live also stops collecting once a MapStart reveals a
-  non-SZ mode). Parsing details are in each detector's module header;
-  accuracy-critical matching internals in `core/glyphs.ts` and
+  `scoreboard-battle-log` (Recent Battles detail — same data sans replay
+  code, panels stacked), `scoreboard-own` (personal results), `death`
+  (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay
+  + casted 8-player spectator variant), `objective` (ranked counter overlay:
+  counts, penalties, holder, match timer — a mode-discriminated union with
+  only the SZ member so far). Objective reads land on `ScannerMatch` as
+  progress samples anchored to the game clock. Reads grouping into a match
+  whose detected mode is not SZ are lookalike misreads: the builder nulls
+  that match's `objective` and callers discard the events
+  (`invalidObjectiveEvents`; Live also stops collecting once a MapStart
+  reveals a non-SZ mode). Parsing details are in each detector's module
+  header; accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching
   recognition code.
-- Scheduling (`core/detectors/scheduler.ts`): per scan session the
-  DetectorScheduler decides which detectors look at a frame. While a gate
-  keeps failing its detector is checked every `searchIntervalS` (default
-  0.25s — produced/casted VoDs cut screens to ~1s with transition flicker
-  inside, so search cadence must not assume raw-gameplay screen lifetimes;
-  gates are ~ms-cheap, so this costs little); once the gate passes it
-  drops to the dense refine cadence for best-read refinement (detectors
-  with expensive parses override it via `refineIntervalS` — death 0.5s,
-  minimap 0.4s). Suppression ends a refinement streak
-  once it stagnates by parse count (default 6; per-detector
-  `maxStagnantParses` — death 3) AND elapsed time (~3s — the time floor
-  keeps a dense cadence from suppressing during a screen's entry animation
-  before it is readable) or immediately at `sufficientConfidence`, which
-  sits just under each detector's measured clean-read confidence floor
-  (fixture suite + confirmed scan events); death
-  adds `rearmCooldownS` (safe because it fits inside the Death timeline
-  merge window). Battle-log and replay gates also return a content
-  `signature` (grid-cell means over the header/name/code ROIs) — browsing
-  distinct entries never drops those gates, so the scheduler instead resets
-  the streak when the signature moves, one parse per distinct battle. `checkIntervalS` (objective: 1s)
-  still hard-caps both phases and exempts from suppression; a detector can
-  also declare `attachFrame: false` to keep continuously-firing events from
-  storing a frame PNG each. In the UI a match's objective reads render as
-  one step-line timeline (`~/components/ObjectiveTimeline.tsx`, shared with
-  the match page's stats section) instead of
-  per-event cards. Frames no detector is due for skip canvas readback
-  entirely, and everything is counted in `core/detectors/telemetry.ts`
-  (surfaced in the VoD tab's telemetry panel).
-- VoD scans (`components/VodPage.tsx`): on the WebCodecs path the file's
-  duration is split into one contiguous slice per worker and each worker
-  demuxes + decodes its slice itself (mediabunny in the worker — no frames
-  cross the main thread). When the scheduler reports calm (no gate pass for
-  a quiet period, no open match — a confident map-start pins the scan
-  active until a scoreboard or timeout), the worker stops sequential decode
-  and skims keyframe-to-keyframe (single-frame decodes, hop capped at 2.5s
-  so short screens can't hide), snapping back to dense decode on any gate
-  pass. Chunks start dense, so slice boundaries are covered. The seek
-  fallback drives one worker and widens its stride over calm footage the
-  same way.
+- Scheduling (`core/detectors/scheduler.ts`): the per-session
+  DetectorScheduler decides which detectors see a frame. Failing gates are
+  re-checked every `searchIntervalS` (0.25s — produced VoDs cut screens to
+  ~1s, and gates are ~ms-cheap); a passing gate drops to the dense refine
+  cadence (`refineIntervalS` overrides for expensive parses). Suppression
+  ends a refinement streak on parse-count stagnation AND ~3s elapsed (the
+  floor spans entry animations), or immediately at `sufficientConfidence`
+  (set just under each detector's measured clean-read floor); death adds
+  `rearmCooldownS`. Battle-log/replay gates return a content `signature` so
+  browsing distinct entries re-parses once per battle instead of dropping
+  the gate. `checkIntervalS` hard-caps both phases; `attachFrame: false`
+  keeps continuously-firing events from storing a frame PNG each. Frames no
+  detector is due for skip canvas readback, and everything is counted in
+  `core/detectors/telemetry.ts` (VoD tab's telemetry panel). A match's
+  objective reads render as one step-line timeline
+  (`~/components/ObjectiveTimeline.tsx`, shared with the match page).
+- VoD scans (`components/VodPage.tsx`): on the WebCodecs path each worker
+  demuxes + decodes its own contiguous slice (mediabunny in the worker — no
+  frames cross the main thread). When the scheduler reports calm (no gate
+  pass for a quiet period, no open match), the worker skims
+  keyframe-to-keyframe (hop capped at 2.5s so short screens can't hide),
+  snapping back to dense decode on any gate pass. The seek fallback drives
+  one worker and widens its stride over calm footage the same way.
 - Recognition is language-agnostic: OCR output snaps against every game
   language at once (`core/localized-entries.ts`, generated) and events carry
   sendou ids. English display names come from `components/labels.ts`.
@@ -148,17 +129,17 @@ sequenceDiagram
 Weapon/ability/special/sub template sources are the site's shared game icons
 in the **sendou-ink/assets repo** under `assets/img/**` (`.avif`; ids from
 `~/modules/in-game-lists`, plus the scanner-only `UNKNOWN` ability badge —
-`toAbilityWithUnknown` narrows template ids back to sendou ids). Scanner-specific
-sets — glyph atlases and the planner signature atlas — live here under
-`public/scanner/v1/**` (override with `SCANNER_ASSETS_DIR`; the version
-segment bumps on breaking atlas-format changes). xxx: the atlases are in
-`public/` only while the feature is in development — move them to the assets
-repo (and the worker back to the CDN base) later.
+`toAbilityWithUnknown` narrows template ids back to sendou ids).
+Scanner-specific sets — glyph atlases and the planner signature atlas — live
+here under `public/scanner/v1/**` (override with `SCANNER_ASSETS_DIR`; the
+version segment bumps on breaking atlas-format changes). xxx: the atlases are
+in `public/` only while the feature is in development — move them to the
+assets repo (and the worker back to the CDN base) later.
 
 - Browser/worker: icons from `Config.staticAssetsUrl` at `img/**` (base URL
   rides the worker init message; the DO Space needs CORS for GET from
-  sendou.ink + localhost since the worker `fetch()`es cross-origin); atlases
-  same-origin from `/scanner/v1/**`. Local dev against fresh icon regens:
+  sendou.ink + localhost); atlases same-origin from `/scanner/v1/**`. Local
+  dev against fresh icon regens:
   `npx serve /Users/kalle/Developer/assets/assets -l 9100 --cors` and
   `VITE_STATIC_ASSETS_URL=http://localhost:9100` in `.env`.
 - Node (tests/scripts): atlases from `public/scanner/v1`, icons from the
@@ -183,8 +164,8 @@ then the atlas rebuild; planner atlas via `scanner:build-planner-signatures`
 
 A test case is a directory `tests/fixtures/<detector>/<case-name>/` with
 `frame.png|jpg` (raw capture, never re-encoded) and `expected.json` (partial
-expectations, sendou ids; informational `stageLabel`/`weaponLabel` fields
-help the human corrector — tests compare only ids). Negative cases
+expectations, sendou ids; `stageLabel`/`weaponLabel` are informational for
+the human corrector — tests compare only ids). Negative cases
 (`{ "event": "none" }`) go in the shared `tests/fixtures/negative/`; every
 detector's suite sweeps them. Every live misread should become a fixture —
 the live app's "Save fixture" button exports the byte-exact analyzed frame

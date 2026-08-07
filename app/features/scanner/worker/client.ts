@@ -42,6 +42,7 @@ export class AnalyzerClient {
 	#onError: ErrorHandler;
 	#onDone: DoneHandler | undefined;
 	#readyPromise: Promise<void>;
+	#rejectReady: ((error: Error) => void) | undefined;
 	#idleWaiters: (() => void)[] = [];
 	#chunk: PendingChunk | null = null;
 
@@ -62,9 +63,13 @@ export class AnalyzerClient {
 			},
 		);
 		let resolveReady!: () => void;
-		this.#readyPromise = new Promise((resolve) => {
+		this.#readyPromise = new Promise((resolve, reject) => {
 			resolveReady = resolve;
+			this.#rejectReady = reject;
 		});
+		// init failure also surfaces via onError; don't let an un-awaited
+		// whenReady() turn it into an unhandled rejection as well
+		this.#readyPromise.catch(() => {});
 		this.#worker.onmessage = (e: MessageEvent<WorkerResponse>) => {
 			const msg = e.data;
 			if (msg.kind === "ready") {
@@ -164,6 +169,9 @@ export class AnalyzerClient {
 	}
 
 	#fail(message: string): void {
+		// an error before "ready" means init failed — reject whenReady() so
+		// callers don't hang on a client that will never become usable
+		if (!this.#ready) this.#rejectReady?.(new Error(message));
 		const chunk = this.#chunk;
 		this.#chunk = null;
 		this.#settle();

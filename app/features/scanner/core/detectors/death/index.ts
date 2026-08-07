@@ -1,24 +1,15 @@
 /**
- * DeathDetector: parses the death cam overlay shown while waiting to
- * respawn — "Splatted by <weapon>!" in the top-center burst, the killer's
- * gear abilities (3 rows x [main, sub, sub, sub]) in the bottom-left
- * panel, and the killer's name from the tilted splash tag bottom-right.
+ * DeathDetector: parses the death cam overlay — "Splatted by <weapon>!"
+ * text, the killer's gear abilities (3 rows x [main, sub, sub, sub]), and
+ * the killer's name from the tilted splash tag.
  *
- * The weapon arrives primarily as text: both burst lines are OCR'd with
- * the death-weapon atlas and matched against the per-language message
- * templates (localized-messages.ts) — the weapon name sits on line 1 or 2
- * depending on language ("Splatted by\n<weapon>!" vs "Durch <weapon>\n
- * erledigt!") — then the weapon line is snapped to that language's weapon
- * names and reported under its canonical English name. The constant line
- * doubles as a parse-time confirmation: if it does not read back as any
- * language's template, the gate hit was a lookalike frame and no event is
- * emitted. When the weapon line is unreadable (the WIPEOUT banner covers
- * it), the killer's weapon icon at the top of the burst is template-matched
- * against the main-weapon set at burst size instead. Low-fidelity captures
- * (720p upscaled) garble the read below the snap threshold while staying
- * recoverable: a candidate-lattice re-rank (rankByRead) accepts on a
- * decisive margin, and below that the burst icon and the text ranking
- * corroborate each other (steps 2c/2d in parse).
+ * Weapon reads primarily as OCR text matched against per-language message
+ * templates (localized-messages.ts); the constant line doubles as a
+ * parse-time confirmation (else a lookalike gate hit emits nothing). Falls
+ * back to template-matching the burst weapon icon when the WIPEOUT banner
+ * covers the text, then to a candidate-lattice re-rank for low-fidelity
+ * captures, then to icon/text corroboration when neither is decisive alone
+ * (steps 2c/2d).
  */
 import type {
 	AbilityWithUnknown,
@@ -311,22 +302,15 @@ export function createDeathDetector(
 	}
 
 	/**
-	 * Dominant colors of `inner`: the most frequent quantized colors (5 bits/
-	 * channel), each refined to the per-channel median within its bin, with
-	 * the bin's share of the band. A second background estimate besides
-	 * medianColor: independent whole-image channel medians blend distinct
-	 * populations into a color nobody has (a black banner half-covered by
-	 * green art medians to green-ish, turning the banner base itself into
-	 * "ink" that swallows the name), while the bin vote fails the other way
-	 * on textured banner bases, where a flat art blob out-votes any single
-	 * shade of the texture. Neither estimator wins everywhere, so the parse
-	 * tries both and keeps the better read. The runner-up cluster feeds the
-	 * split-banner candidate (see TAG_SPLIT_MIN_FRACTION).
-	 *
-	 * Bins are clustered before ranking: a flat hue that straddles a
-	 * quantization boundary splits into neighbor bins (a split banner's
-	 * yellow half measured 0.090+0.084 as two bins), and unclustered each
-	 * fragment under-reports the hue's real share of the band.
+	 * Dominant colors of `inner`: most frequent quantized colors (5 bits/
+	 * channel), clustered by proximity (else a hue straddling a quantization
+	 * boundary under-reports, split across neighbor bins), each refined to
+	 * its per-channel median with its share of the band. A second background
+	 * estimator besides medianColor — neither wins everywhere (whole-image
+	 * medians blend distinct populations into a color nobody has; the bin
+	 * vote loses to a flat art blob out-voting a textured banner's true
+	 * color) — so both are tried and the better read kept. The runner-up
+	 * cluster feeds the split-banner candidate (see TAG_SPLIT_MIN_FRACTION).
 	 */
 	function dominantColors(
 		inner: Mat,
@@ -387,13 +371,12 @@ export function createDeathDetector(
 	}
 
 	/**
-	 * Text-ness map of the name band: per-pixel max-channel distance from
-	 * the nearest of `colors` (one color for solid banners; the two hues of
-	 * a split banner). Banner art and text color vary per player — including
-	 * pairs like pink text on a light-blue banner with almost no luminance
-	 * contrast — so "differs from the dominant banner color" is the primary
-	 * signal, not brightness in any fixed channel or polarity. `invert`
-	 * flips the polarity to *closeness* for the text-color refinement pass.
+	 * Text-ness map: per-pixel max-channel distance from the nearest of
+	 * `colors` (one for solid banners, two hues for a split banner). Uses
+	 * distance from banner color rather than a fixed brightness/polarity
+	 * since text/banner colors vary per player (e.g. pink text on a
+	 * light-blue banner has near-zero luminance contrast). `invert` flips to
+	 * *closeness* for the text-color refinement pass.
 	 */
 	function distanceBand(
 		inner: Mat,
@@ -420,12 +403,11 @@ export function createDeathDetector(
 	}
 
 	/**
-	 * Zero out ink components that touch the band border. Busy banner art
-	 * (collages, prints) also differs from the median banner color, but the
-	 * art always continues past the name band and so touches its edges,
-	 * while the name is laid out inside it (fixture extremes: dakuten at
-	 * y=3, a 'y' descender ending 2px above the bottom). Left in place, an
-	 * edge blob merges into a glyph's column segment and corrupts the read.
+	 * Zero ink components touching the band border. Busy banner art also
+	 * differs from the median banner color but continues past the name
+	 * band's edges, while the name sits inside it (fixture extremes: dakuten
+	 * at y=3, descender 2px above bottom) — left in place an edge blob
+	 * merges into a glyph and corrupts the read.
 	 */
 	function clearBorderBlobs(band: Mat, threshold: number): void {
 		const bin = new cv.Mat();
@@ -686,14 +668,11 @@ export function createDeathDetector(
 			}
 		}
 
-		// 4. splash-tag name, two passes per background candidate: distance
-		// from the estimated banner color, then — because busy banner art
-		// (collages, prints) also differs from that estimate, merging with
-		// glyphs and surviving as fake ones — closeness to the text color
-		// estimated from pass 1's ink. Whichever pass reads back more
-		// confidently wins: solid banners stay on pass 1, art-heavy banners
-		// recover on pass 2. Both background estimators run (see
-		// dominantColor) and the better-reading candidate wins the same way.
+		// 4. splash-tag name: read against the estimated banner color, then
+		// (since busy banner art also differs from that estimate and can
+		// survive as fake glyphs) against closeness to the text color
+		// estimated from pass 1's ink; whichever reads back more confidently
+		// wins. Both background estimators (dominantColors) run the same way.
 		let name: string | null = null;
 		let nameConfidence = 0;
 		let nameRaw = "";
@@ -755,13 +734,11 @@ export function createDeathDetector(
 			) {
 				candidates.push([dominant, second.color]);
 			}
-			// an empty read never beats one that produced glyphs (an estimate
-			// landing on the text color blanks the whole band, and recognizeText
-			// reports a segment-less band as confidence 1), and near-tied
-			// confidences resolve to the longer read: confidence is the *min*
-			// char score, so a background estimate that erases most of the name
-			// can still read its two surviving glyphs immaculately — more
-			// recognized glyphs is the better read when neither is clearly worse
+			// an empty read never beats one with glyphs (an estimate landing on
+			// the text color blanks the band, and recognizeText scores a
+			// segment-less band confidence 1); near-tied confidences resolve to
+			// the longer read, since confidence is the *min* char score and
+			// erasing most of the name can still read the survivors immaculately
 			const NEAR_TIE = 0.03;
 			const beats = (
 				a: { parsed: { name: string; confidence: number } },

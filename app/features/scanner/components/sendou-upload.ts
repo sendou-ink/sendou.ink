@@ -72,8 +72,9 @@ function toPrefillMatch(match: ScannerMatch): IngestVodMatchInput {
 		mode: match.mode ?? DEFAULT_VOD_MODE,
 		modeAssumed: match.mode === null,
 		stage: match.stage,
+		// /vods/new splits this at a fixed 4 slots per team, so pad short rosters
 		weapons: match.teams.flatMap((team) =>
-			team.players.map((player) => player.weaponId),
+			Array.from({ length: 4 }, (_, i) => team.players[i]?.weaponId ?? null),
 		),
 		povWeapon: povWeaponId(match),
 	};

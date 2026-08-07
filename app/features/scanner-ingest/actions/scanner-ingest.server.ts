@@ -15,6 +15,12 @@ import {
 	ingestBodySchema,
 } from "../scanner-ingest-schemas";
 
+/**
+ * How far back the POV user's reported games are considered as content-
+ * resolution candidates
+ */
+const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
+
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 
@@ -110,12 +116,6 @@ function ingestedMatchLink(
 	}
 	throw new Error("ingest link target does not match its resolved context");
 }
-
-/**
- * How far back the POV user's reported games are considered as content-
- * resolution candidates
- */
-const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
 
 interface ResolvedIngestContext {
 	context: Scoreboards.IngestContext;
@@ -233,16 +233,18 @@ async function resolveIngestContext({
 		const since = dateToDatabaseTimestamp(
 			subDays(new Date(), CONTENT_RESOLUTION_WINDOW_DAYS),
 		);
-		const games = [
-			...(await ScannerIngestRepository.gamesPlayedByUserSince({
-				userId: povUserId,
-				since,
-			})),
-			...(await ScannerIngestRepository.sendouqGamesPlayedByUserSince({
-				userId: povUserId,
-				since,
-			})),
-		];
+		const games = (
+			await Promise.all([
+				ScannerIngestRepository.gamesPlayedByUserSince({
+					userId: povUserId,
+					since,
+				}),
+				ScannerIngestRepository.sendouqGamesPlayedByUserSince({
+					userId: povUserId,
+					since,
+				}),
+			])
+		).flat();
 		const context = Scoreboards.resolveContext({ matches, games });
 		if (context) {
 			const key = Scoreboards.contextKey(context);

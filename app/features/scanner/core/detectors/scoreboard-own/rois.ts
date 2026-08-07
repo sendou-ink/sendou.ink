@@ -3,21 +3,18 @@
  * Calibrated against scoreboard-own/private-battle-splat-zones-museum via
  * tools/dump-crops.ts and column/row projection measurement.
  *
- * The personal results screen ("your results" after a match) shows the
- * same lobby/mode/stage header tags as the live scoreboard — at the same
- * positions, so header parsing reuses the scoreboard bands — over a large
- * dark panel (~35) with the player's own banner, the medals list, and a
- * bottom row of four cards: the weapon card (yellow-bordered title tag
- * with the weapon name, big render on a white square), then one gear card
- * per slot [head, clothes, shoes], each with a light-gray ability strip of
+ * The personal results screen ("your results") shows the same header tags
+ * as the live scoreboard (same positions, reuses its bands) over a dark
+ * panel (~35) with the player's banner, medals list, and four bottom
+ * cards: weapon card (yellow-bordered title tag, big render on white
+ * square) then one gear card per slot, each with a gray ability strip of
  * one main badge (⌀~49) and three sub badges (⌀~38).
  */
 import type { Roi } from "../../canonical";
 
 /**
- * Weapon card title tag interior (black, fixed width, white weapon name
- * left-aligned). The band starts inside the tag so readTagBand's extent
- * trim anchors on tag columns immediately.
+ * Weapon card title tag interior (black, white name left-aligned). Band
+ * starts inside the tag so readTagBand's extent trim anchors immediately.
  */
 export const WEAPON_TITLE_BAND: Roi = { x: 876, y: 766, w: 200, h: 32 };
 /** Tight cap height of the title text at 1080p. */
@@ -34,9 +31,8 @@ export const GEAR_BADGE_CY = 927;
 export const GEAR_ROWS = 3;
 
 /**
- * Search boxes around each badge. Heights double as the size filter:
- * matchTemplate silently skips templates taller than the ROI, so the 52px
- * sub box excludes the main-size templates within a shared template list.
+ * Search boxes around each badge; heights double as the size filter
+ * (matchTemplate skips templates taller than the ROI).
  */
 export function gearMainRoi(row: number): Roi {
 	const cx = GEAR_MAIN_CXS[row]!;
@@ -52,23 +48,21 @@ export function gearSubRoi(row: number, slot: number): Roi {
 export const OWN_ABILITY_MAIN_SIZES = [45, 49, 53] as const;
 export const OWN_ABILITY_SUB_SIZES = [34, 38, 42] as const;
 /**
- * Icon art diameter as a fraction of the badge box: the ratio sweep peaks
- * at 1.0 for both roles — the art overflows the circle slightly (arrows
- * poke past the ring), so the badge ring contributes nothing.
+ * Icon art diameter as fraction of badge box: ratio peaks at 1.0 for both
+ * roles (art overflows the circle slightly), so the ring contributes nothing.
  */
 export const OWN_ABILITY_ART_RATIO = 1.0;
 /**
- * Ink threshold inside a badge box. Unlike the death panel these badges sit
- * on a light-gray strip (~140-155); 170 keeps the strip out of the ink
- * count while the saturated icon art still clears it on its max channel.
+ * Ink threshold inside a badge box. Unlike the death panel these sit on a
+ * light-gray strip (~140-155); 170 keeps the strip out while art still
+ * clears it on its max channel.
  */
 export const OWN_ABILITY_INK_THRESHOLD = 170;
 
 /**
- * Gate probes. The results panel is uniform dark (~35, bottom edge ~54)
- * at spots that dodge the banner, medals and cards; each card's title tag
- * holds bright white name text starting at its left edge; the ability
- * strip's gray shows in the constant gap after the third sub badge.
+ * Gate probes. Results panel is uniform dark (~35, edge ~54) at spots
+ * dodging the banner/medals/cards; each title tag holds bright white
+ * text at its left edge; the strip's gray shows after the third sub badge.
  */
 export const GATE_PANEL_PROBES: readonly Roi[] = [
 	{ x: 860, y: 245, w: 30, h: 20 },

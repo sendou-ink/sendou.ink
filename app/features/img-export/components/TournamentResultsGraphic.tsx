@@ -88,14 +88,14 @@ export function TournamentGraphicHeader({
 			avatarUrl={logoUrl}
 			identiconInput={tournamentName}
 			titleRow={
-				<span className={graphicStyles.headerTitle}>
-					{tournamentName}
+				<>
+					<span className={graphicStyles.headerTitle}>{tournamentName}</span>
 					{typeof tier === "number" ? (
 						<span className={styles.tierPillContainer}>
 							<TierPill tier={tier} />
 						</span>
 					) : null}
-				</span>
+				</>
 			}
 			subtitle={
 				<LocaleTime

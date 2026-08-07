@@ -13,9 +13,11 @@
  * Completed scans are persisted to IndexedDB keyed by file name
  * (src/store/vods.ts); the default view lists them for reinspection.
  */
+import clsx from "clsx";
 import { Download, FileText, Send, Trash2, Video } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -58,7 +60,7 @@ import { EventCard, type GetFrame } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import type { FixtureData } from "./fixture-export";
-import { formatTime } from "./format";
+import { formatTime, useEventDateTimeFormatter } from "./format";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import {
@@ -150,10 +152,9 @@ export function VodPage({
 	const [eventsOpen, setEventsOpen] = useState(false);
 	const [resultsSend, setResultsSend] = useState<ResultsSend | null>(null);
 
-	const abilityMap = useMemo(
-		() => connectAbilities(matches.map((m) => m.event)),
-		[matches],
-	);
+	const formatSavedAt = useEventDateTimeFormatter();
+
+	const abilityMap = connectAbilities(matches.map((m) => m.event));
 
 	const builtMatches = buildScannerMatches(matches.map((m) => m.event));
 	const skipReasons = ingestSkipReasons(builtMatches);
@@ -183,21 +184,13 @@ export function VodPage({
 
 	// only offered once the whole VoD has been processed (a stored VoD is a
 	// completed scan by construction)
-	const upload = useMemo(
-		() =>
-			status === "done" ? sendouUpload(matches.map((m) => m.event)) : null,
-		[status, matches],
-	);
+	const upload =
+		status === "done" ? sendouUpload(matches.map((m) => m.event)) : null;
 
 	// "Send results" — the /ingest counterpart of live sending: the
 	// scan's ingestable ScannerMatches POSTed in one go
-	const resultsMatchCount = useMemo(
-		() =>
-			status === "done"
-				? countIngestableMatches(matches.map((m) => m.event))
-				: 0,
-		[status, matches],
-	);
+	const resultsMatchCount =
+		status === "done" ? countIngestableMatches(matches.map((m) => m.event)) : 0;
 
 	const refreshVods = useCallback(async () => {
 		try {
@@ -207,7 +200,7 @@ export function VodPage({
 		}
 	}, []);
 
-	const uploadResults = useCallback(async () => {
+	const uploadResults = async () => {
 		const events = matchesRef.current.map((m) => m.event);
 		setResultsSend({
 			state: "sending",
@@ -231,7 +224,7 @@ export function VodPage({
 			await saveVodResultsSend(fileName, outcome);
 			await refreshVods();
 		}
-	}, [fileName, refreshVods]);
+	};
 
 	useEffect(() => {
 		void refreshVods();
@@ -244,245 +237,238 @@ export function VodPage({
 		};
 	}, [refreshVods]);
 
-	const scan = useCallback(
-		async (file: File) => {
-			abortRef.current.aborted = true;
-			abortScanRef.current?.();
-			const abort = { aborted: false };
-			abortRef.current = abort;
+	const scan = async (file: File) => {
+		abortRef.current.aborted = true;
+		abortScanRef.current?.();
+		const abort = { aborted: false };
+		abortRef.current = abort;
 
-			setError(null);
-			setTelemetry(null);
-			setMatches([]);
-			setResultsSend(null);
-			setEventsOpen(false);
-			setProgress(null);
-			setGateScore(null);
-			setMethod(null);
-			setFileName(file.name);
-			setSource("scan");
-			setStatus("scanning");
+		setError(null);
+		setTelemetry(null);
+		setMatches([]);
+		setResultsSend(null);
+		setEventsOpen(false);
+		setProgress(null);
+		setGateScore(null);
+		setMethod(null);
+		setFileName(file.name);
+		setSource("scan");
+		setStatus("scanning");
 
-			try {
-				// the element is used by the seek fallback and for post-scan review
-				const video = videoRef.current!;
-				if (urlRef.current) URL.revokeObjectURL(urlRef.current);
-				urlRef.current = URL.createObjectURL(file);
-				video.src = urlRef.current;
+		try {
+			// the element is used by the seek fallback and for post-scan review
+			const video = videoRef.current!;
+			if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+			urlRef.current = URL.createObjectURL(file);
+			video.src = urlRef.current;
 
-				if (clientsRef.current.length === 0) {
-					clientsRef.current = Array.from(
-						{ length: defaultScanWorkerCount() },
-						() =>
-							new AnalyzerClient(
-								(result) => {
-									gateScoreRef.current = result.gate.score;
-									if (!result.gate.pass) return;
-									for (const event of result.events as DetectedEvent<FixtureData>[]) {
-										const action = timelineRef.current.push(event);
-										if (
-											action.action !== "added" &&
-											action.action !== "replaced"
-										)
-											continue;
-										const frame = result.frame;
-										sideWorkRef.current.push(
-											(async () => {
-												const thumbnail = frame
-													? await thumbnailFromBlob(frame)
+			if (clientsRef.current.length === 0) {
+				clientsRef.current = Array.from(
+					{ length: defaultScanWorkerCount() },
+					() =>
+						new AnalyzerClient(
+							(result) => {
+								gateScoreRef.current = result.gate.score;
+								if (!result.gate.pass) return;
+								for (const event of result.events as DetectedEvent<FixtureData>[]) {
+									const action = timelineRef.current.push(event);
+									if (action.action !== "added" && action.action !== "replaced")
+										continue;
+									const frame = result.frame;
+									sideWorkRef.current.push(
+										(async () => {
+											const thumbnail = frame
+												? await thumbnailFromBlob(frame)
+												: undefined;
+											const replaced =
+												action.action === "replaced"
+													? matchesRef.current.find(
+															(m) => m.event === action.replaced,
+														)
 													: undefined;
-												const replaced =
-													action.action === "replaced"
-														? matchesRef.current.find(
-																(m) => m.event === action.replaced,
-															)
-														: undefined;
-												const next = matchesRef.current.filter(
-													(m) => m !== replaced,
-												);
-												next.push({
-													event,
-													key: replaced?.key ?? nextMatchKeyRef.current++,
-													thumbnail,
-													frame,
-												});
-												next.sort((a, b) => a.event.t - b.event.t);
-												matchesRef.current = next;
-												setMatches(next);
-											})().catch(() => {}),
-										);
-									}
-								},
-								(message) => {
-									frameDoneRef.current?.();
-									frameDoneRef.current = null;
-									setError(message);
-									setStatus("error");
-								},
-								(_t, info: DoneInfo) => {
-									doneInfoRef.current = info;
-									frameDoneRef.current?.();
-									frameDoneRef.current = null;
-								},
-							),
-					);
-				}
-				const clients = clientsRef.current;
-				await Promise.all(clients.map((c) => c.whenReady()));
-				// let work still in flight from an aborted scan finish before the
-				// timeline resets, so its results can't bleed into this scan
-				await Promise.all(clients.map((c) => c.whenIdle()));
-				if (abort.aborted) return;
-				matchesRef.current = [];
-				sideWorkRef.current = [];
-				timelineRef.current = new TimelineBuilder();
-
-				const started = performance.now();
-				const finalize = async (duration: number) => {
-					await Promise.all(sideWorkRef.current);
-					if (abort.aborted) return;
-					matchesRef.current = withoutInvalidObjectives(matchesRef.current);
-					setMatches(matchesRef.current);
-					setProgress((p) => (p ? { ...p, t: duration } : p));
-					setStatus("done");
-					await saveVod(
-						{ name: file.name, savedAt: Date.now(), duration },
-						matchesRef.current.map((m) => ({
-							type: m.event.type,
-							t: m.event.t,
-							confidence: m.event.confidence,
-							data: m.event.data,
-							thumbnail: m.thumbnail,
-							frame: m.frame,
-						})),
-					);
-					await refreshVods();
-				};
-
-				const probe = await probeWebCodecs(file);
-				if (abort.aborted) return;
-
-				if (probe) {
-					// each worker demuxes, decodes and analyzes its own slice of
-					// the file; the main thread only aggregates progress
-					setMethod("webcodecs");
-					const { duration } = probe;
-					const chunkSpan = duration / clients.length;
-					const chunks = clients.map((client, i) => ({
-						client,
-						tStart: i * chunkSpan,
-						tEnd: i === clients.length - 1 ? duration : (i + 1) * chunkSpan,
-						t: i * chunkSpan,
-						done: false,
-						telemetry: null as ScanTelemetry | null,
-					}));
-					abortScanRef.current = () => {
-						for (const client of clients) client.abortChunk();
-					};
-					const mergedTelemetry = () =>
-						mergeScanTelemetry(
-							chunks.flatMap((c) => (c.telemetry ? [c.telemetry] : [])),
-						);
-					let lastUiUpdate = Number.NEGATIVE_INFINITY;
-					const pushUiUpdate = () => {
-						const now = performance.now();
-						if (now - lastUiUpdate < 250) return;
-						lastUiUpdate = now;
-						const covered = chunks.reduce(
-							(sum, c) => sum + (Math.min(c.t, c.tEnd) - c.tStart),
-							0,
-						);
-						const elapsed = (now - started) / 1000;
-						setGateScore(gateScoreRef.current);
-						setProgress({
-							t: covered,
-							duration,
-							rate: elapsed > 0 ? covered / elapsed : 0,
-						});
-						setTelemetry(mergedTelemetry());
-					};
-					await Promise.all(
-						chunks.map((chunk, chunkIndex) =>
-							chunk.client
-								.scanChunk(
-									{ file, chunkIndex, tStart: chunk.tStart, tEnd: chunk.tEnd },
-									(progress) => {
-										chunk.t = progress.t;
-										chunk.telemetry = progress.telemetry;
-										if (progress.preview) {
-											// show one chunk at a time: the earliest still running
-											if (chunks.find((c) => !c.done) === chunk) {
-												drawPreview(previewRef.current, progress.preview);
-											}
-											progress.preview.close();
-										}
-										pushUiUpdate();
-									},
-								)
-								.then((chunkTelemetry) => {
-									chunk.done = true;
-									chunk.t = chunk.tEnd;
-									chunk.telemetry = chunkTelemetry;
-								}),
+											const next = matchesRef.current.filter(
+												(m) => m !== replaced,
+											);
+											next.push({
+												event,
+												key: replaced?.key ?? nextMatchKeyRef.current++,
+												thumbnail,
+												frame,
+											});
+											next.sort((a, b) => a.event.t - b.event.t);
+											matchesRef.current = next;
+											setMatches(next);
+										})().catch(() => {}),
+									);
+								}
+							},
+							(message) => {
+								frameDoneRef.current?.();
+								frameDoneRef.current = null;
+								setError(message);
+								setStatus("error");
+							},
+							(_t, info: DoneInfo) => {
+								doneInfoRef.current = info;
+								frameDoneRef.current?.();
+								frameDoneRef.current = null;
+							},
 						),
-					);
-					if (abort.aborted) return;
-					setTelemetry(mergedTelemetry());
-					await finalize(duration);
-					return;
-				}
-
-				// seek fallback: one worker, one frame in flight; the worker's calm
-				// signal widens the stride over dead air
-				setMethod("seek");
-				const strideRef = { current: SEEK_ACTIVE_STRIDE_S };
-				const vod = await openSeekScan(video, () => strideRef.current);
-				if (abort.aborted) return;
-				const client = clients[0]!;
-				let lastUiUpdate = Number.NEGATIVE_INFINITY;
-				for await (const { frame, t } of vod.frames) {
-					if (abort.aborted) {
-						frame.close();
-						break;
-					}
-					const now = performance.now();
-					if (now - lastUiUpdate >= 250) {
-						lastUiUpdate = now;
-						// the preview draw must precede analyze — transferring the
-						// frame to the worker detaches it
-						drawPreview(previewRef.current, frame);
-						setGateScore(gateScoreRef.current);
-						const elapsed = (now - started) / 1000;
-						setProgress({
-							t,
-							duration: vod.duration,
-							rate: elapsed > 0 ? t / elapsed : 0,
-						});
-						if (doneInfoRef.current)
-							setTelemetry(doneInfoRef.current.telemetry);
-					}
-					await new Promise<void>((resolve) => {
-						frameDoneRef.current = resolve;
-						if (!client.analyze(frame, t)) resolve();
-					});
-					strideRef.current = doneInfoRef.current?.calm
-						? SEEK_CALM_STRIDE_S
-						: SEEK_ACTIVE_STRIDE_S;
-				}
-				if (doneInfoRef.current) setTelemetry(doneInfoRef.current.telemetry);
-				await finalize(vod.duration);
-			} catch (e) {
-				if (!abort.aborted) {
-					abortScanRef.current?.();
-					setError(String(e));
-					setStatus("error");
-				}
+				);
 			}
-		},
-		[refreshVods],
-	);
+			const clients = clientsRef.current;
+			await Promise.all(clients.map((c) => c.whenReady()));
+			// let work still in flight from an aborted scan finish before the
+			// timeline resets, so its results can't bleed into this scan
+			await Promise.all(clients.map((c) => c.whenIdle()));
+			if (abort.aborted) return;
+			matchesRef.current = [];
+			sideWorkRef.current = [];
+			timelineRef.current = new TimelineBuilder();
 
-	const openStored = useCallback(async (vod: VodSummary) => {
+			const started = performance.now();
+			const finalize = async (duration: number) => {
+				await Promise.all(sideWorkRef.current);
+				if (abort.aborted) return;
+				matchesRef.current = withoutInvalidObjectives(matchesRef.current);
+				setMatches(matchesRef.current);
+				setProgress((p) => (p ? { ...p, t: duration } : p));
+				setStatus("done");
+				await saveVod(
+					{ name: file.name, savedAt: Date.now(), duration },
+					matchesRef.current.map((m) => ({
+						type: m.event.type,
+						t: m.event.t,
+						confidence: m.event.confidence,
+						data: m.event.data,
+						thumbnail: m.thumbnail,
+						frame: m.frame,
+					})),
+				);
+				await refreshVods();
+			};
+
+			const probe = await probeWebCodecs(file);
+			if (abort.aborted) return;
+
+			if (probe) {
+				// each worker demuxes, decodes and analyzes its own slice of
+				// the file; the main thread only aggregates progress
+				setMethod("webcodecs");
+				const { duration } = probe;
+				const chunkSpan = duration / clients.length;
+				const chunks = clients.map((client, i) => ({
+					client,
+					tStart: i * chunkSpan,
+					tEnd: i === clients.length - 1 ? duration : (i + 1) * chunkSpan,
+					t: i * chunkSpan,
+					done: false,
+					telemetry: null as ScanTelemetry | null,
+				}));
+				abortScanRef.current = () => {
+					for (const client of clients) client.abortChunk();
+				};
+				const mergedTelemetry = () =>
+					mergeScanTelemetry(
+						chunks.flatMap((c) => (c.telemetry ? [c.telemetry] : [])),
+					);
+				let lastUiUpdate = Number.NEGATIVE_INFINITY;
+				const pushUiUpdate = () => {
+					const now = performance.now();
+					if (now - lastUiUpdate < 250) return;
+					lastUiUpdate = now;
+					const covered = R.sumBy(
+						chunks,
+						(c) => Math.min(c.t, c.tEnd) - c.tStart,
+					);
+					const elapsed = (now - started) / 1000;
+					setGateScore(gateScoreRef.current);
+					setProgress({
+						t: covered,
+						duration,
+						rate: elapsed > 0 ? covered / elapsed : 0,
+					});
+					setTelemetry(mergedTelemetry());
+				};
+				await Promise.all(
+					chunks.map((chunk, chunkIndex) =>
+						chunk.client
+							.scanChunk(
+								{ file, chunkIndex, tStart: chunk.tStart, tEnd: chunk.tEnd },
+								(progress) => {
+									chunk.t = progress.t;
+									chunk.telemetry = progress.telemetry;
+									if (progress.preview) {
+										// show one chunk at a time: the earliest still running
+										if (chunks.find((c) => !c.done) === chunk) {
+											drawPreview(previewRef.current, progress.preview);
+										}
+										progress.preview.close();
+									}
+									pushUiUpdate();
+								},
+							)
+							.then((chunkTelemetry) => {
+								chunk.done = true;
+								chunk.t = chunk.tEnd;
+								chunk.telemetry = chunkTelemetry;
+							}),
+					),
+				);
+				if (abort.aborted) return;
+				setTelemetry(mergedTelemetry());
+				await finalize(duration);
+				return;
+			}
+
+			// seek fallback: one worker, one frame in flight; the worker's calm
+			// signal widens the stride over dead air
+			setMethod("seek");
+			const strideRef = { current: SEEK_ACTIVE_STRIDE_S };
+			const vod = await openSeekScan(video, () => strideRef.current);
+			if (abort.aborted) return;
+			const client = clients[0]!;
+			let lastUiUpdate = Number.NEGATIVE_INFINITY;
+			for await (const { frame, t } of vod.frames) {
+				if (abort.aborted) {
+					frame.close();
+					break;
+				}
+				const now = performance.now();
+				if (now - lastUiUpdate >= 250) {
+					lastUiUpdate = now;
+					// the preview draw must precede analyze — transferring the
+					// frame to the worker detaches it
+					drawPreview(previewRef.current, frame);
+					setGateScore(gateScoreRef.current);
+					const elapsed = (now - started) / 1000;
+					setProgress({
+						t,
+						duration: vod.duration,
+						rate: elapsed > 0 ? t / elapsed : 0,
+					});
+					if (doneInfoRef.current) setTelemetry(doneInfoRef.current.telemetry);
+				}
+				await new Promise<void>((resolve) => {
+					frameDoneRef.current = resolve;
+					if (!client.analyze(frame, t)) resolve();
+				});
+				strideRef.current = doneInfoRef.current?.calm
+					? SEEK_CALM_STRIDE_S
+					: SEEK_ACTIVE_STRIDE_S;
+			}
+			if (doneInfoRef.current) setTelemetry(doneInfoRef.current.telemetry);
+			await finalize(vod.duration);
+		} catch (e) {
+			if (!abort.aborted) {
+				abortScanRef.current?.();
+				setError(String(e));
+				setStatus("error");
+			}
+		}
+	};
+
+	const openStored = async (vod: VodSummary) => {
 		const name = vod.name;
 		abortRef.current.aborted = true;
 		abortScanRef.current?.();
@@ -519,17 +505,14 @@ export function VodPage({
 		} catch (e) {
 			setError(String(e));
 		}
-	}, []);
+	};
 
-	const removeVod = useCallback(
-		async (name: string) => {
-			await deleteVod(name);
-			await refreshVods();
-		},
-		[refreshVods],
-	);
+	const removeVod = async (name: string) => {
+		await deleteVod(name);
+		await refreshVods();
+	};
 
-	const backToList = useCallback(() => {
+	const backToList = () => {
 		abortRef.current.aborted = true;
 		abortScanRef.current?.();
 		setTelemetry(null);
@@ -544,7 +527,7 @@ export function VodPage({
 		setGateScore(null);
 		setMethod(null);
 		void refreshVods();
-	}, [refreshVods]);
+	};
 
 	const showVodView = fileName !== null;
 
@@ -552,7 +535,7 @@ export function VodPage({
 		<div>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target; the file input inside is the accessible path */}
 			<div
-				className={`dropzone ${over ? "over" : ""}`}
+				className={clsx("dropzone", { over })}
 				onDragOver={(e) => {
 					e.preventDefault();
 					setOver(true);
@@ -581,55 +564,64 @@ export function VodPage({
 				</label>
 			</div>
 			<div className="controls">
-				{showVodView && (
+				{showVodView ? (
 					<>
 						<button type="button" onClick={backToList}>
 							← All VoDs
 						</button>
 						<span
-							className={`status ${status === "scanning" ? "watching" : status === "done" ? "detected" : "idle"}`}
+							className={clsx("status", {
+								watching: status === "scanning",
+								detected: status === "done",
+								idle: status !== "scanning" && status !== "done",
+							})}
 						>
 							{source === "stored" ? "saved" : status}
-							{fileName && ` · ${fileName}`}
-							{method && ` · ${method}`}
-							{gateScore !== null &&
-								status === "scanning" &&
-								` · gate ${gateScore.toFixed(2)}`}
+							{fileName ? ` · ${fileName}` : null}
+							{method ? ` · ${method}` : null}
+							{gateScore !== null && status === "scanning"
+								? ` · gate ${gateScore.toFixed(2)}`
+								: null}
 						</span>
-						{progress && (
+						{progress ? (
 							<span className="score">
 								{formatTime(progress.t)} / {formatTime(progress.duration)}
-								{progress.duration > 0 &&
-									` (${Math.round((progress.t / progress.duration) * 100)}%)`}
-								{progress.rate > 0 &&
-									` · ${progress.rate.toFixed(0)}× realtime`}
+								{progress.duration > 0
+									? ` (${Math.round((progress.t / progress.duration) * 100)}%)`
+									: null}
+								{progress.rate > 0
+									? ` · ${progress.rate.toFixed(0)}× realtime`
+									: null}
 							</span>
-						)}
-						{upload?.url && (
+						) : null}
+						{upload?.url ? (
 							<Link to={upload.url} className="link-button">
 								<Video aria-hidden />
 								Add VoD
 							</Link>
-						)}
-						{upload?.problem && (
+						) : null}
+						{upload?.problem ? (
 							<span className="score">
 								upload unavailable: {upload.problem}
 							</span>
-						)}
-						{resultsMatchCount > 0 && (
+						) : null}
+						{resultsMatchCount > 0 ? (
 							<button
 								type="button"
 								disabled={!sendouUser || resultsSend?.state === "sending"}
-								title={sendouUser ? undefined : "log in on sendou.ink first"}
+								title={sendouUser ? undefined : "Log in on sendou.ink first"}
 								onClick={() => void uploadResults()}
 							>
 								<Send aria-hidden />
 								Send results
 							</button>
-						)}
-						{resultsSend && (
+						) : null}
+						{resultsSend ? (
 							<span
-								className={`score ${resultsSend.state === "done" && resultsSend.error ? "error" : ""}`}
+								className={clsx("score", {
+									error:
+										resultsSend.state === "done" && Boolean(resultsSend.error),
+								})}
 							>
 								{resultsSend.state === "sending"
 									? `sending match ${Math.min(resultsSend.sent + 1, resultsSend.total)}/${resultsSend.total}…`
@@ -637,34 +629,33 @@ export function VodPage({
 										? `sent ${resultsSend.sent}/${resultsSend.total} matches — ${resultsSend.error}`
 										: `sent ${resultsSend.sent}/${resultsSend.total} matches to sendou.ink`}
 							</span>
-						)}
-						{matches.length > 0 && (
+						) : null}
+						{matches.length > 0 ? (
 							<ExportMenu
 								fileName={fileName}
 								events={matches.map((m) => m.event)}
 							/>
-						)}
+						) : null}
 					</>
-				)}
+				) : null}
 			</div>
-			{error && <p className="error">{error}</p>}
+			{error ? <p className="error">{error}</p> : null}
 			{showVodView && telemetry ? (
 				<TelemetryPanel telemetry={telemetry} />
 			) : null}
-			{!showVodView && (
+			{!showVodView ? (
 				<div className="vod-list">
-					{vods.length === 0 && (
+					{vods.length === 0 ? (
 						<p className="score">
 							No saved VoDs yet — scan one and it will show up here.
 						</p>
-					)}
+					) : null}
 					{vods.map((vod) => (
 						<div key={vod.name} className="vod-item">
 							<span className="name">{vod.name}</span>
 							<span className="score">
 								{vod.eventCount} event{vod.eventCount === 1 ? "" : "s"} ·{" "}
-								{formatTime(vod.duration)} ·{" "}
-								{new Date(vod.savedAt).toLocaleString()}
+								{formatTime(vod.duration)} · {formatSavedAt(vod.savedAt)}
 							</span>
 							<button type="button" onClick={() => void openStored(vod)}>
 								Open
@@ -685,7 +676,7 @@ export function VodPage({
 						</div>
 					))}
 				</div>
-			)}
+			) : null}
 			<div
 				className="live-layout"
 				style={{
@@ -758,11 +749,11 @@ export function VodPage({
 											teamLabels={SCANNER_TEAM_LABELS}
 										/>
 									) : null}
-									{cardEvents.map((e, i) => {
+									{cardEvents.map((e) => {
 										const vodMatch = vodMatchByEvent.get(e);
 										return (
 											<EventCard
-												key={i}
+												key={vodMatch?.key ?? `${e.type}-${e.t}`}
 												type={e.type}
 												t={e.t}
 												confidence={e.confidence}
@@ -786,11 +777,11 @@ export function VodPage({
 					) : null}
 					{/* newest detection on top; storage keeps ascending video-time order */}
 					{eventsOpen
-						? [...ungroupedMatches]
-								.reverse()
-								.map((m, i) => (
+						? ungroupedMatches
+								.toReversed()
+								.map((m) => (
 									<EventCard
-										key={ungroupedMatches.length - 1 - i}
+										key={m.key}
 										type={m.event.type}
 										t={m.event.t}
 										confidence={m.event.confidence}
@@ -868,10 +859,12 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 			<summary>
 				telemetry · analyzed {telemetry.analyzedFrames}/
 				{telemetry.decodedFrames} decoded frames
-				{coveredS > 0 &&
-					` · skimmed ${formatTime(telemetry.skimVideoS)} of ${formatTime(coveredS)}`}
-				{telemetry.wallMs > 0 &&
-					` · ${formatTime(telemetry.wallMs / 1000)} cpu`}
+				{coveredS > 0
+					? ` · skimmed ${formatTime(telemetry.skimVideoS)} of ${formatTime(coveredS)}`
+					: null}
+				{telemetry.wallMs > 0
+					? ` · ${formatTime(telemetry.wallMs / 1000)} cpu`
+					: null}
 			</summary>
 			<table>
 				<thead>

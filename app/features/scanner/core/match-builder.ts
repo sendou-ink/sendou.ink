@@ -1,19 +1,14 @@
 /**
- * Group a detected-event timeline into ScannerMatch objects (scanner-match.ts).
- *
- * A MapStart opens a match and a scoreboard-type event closes one; deaths in
- * between belong to it. A scoreboard with no preceding MapStart claims the
- * deaths of the last 8 minutes as its match. Between delimiters (casted
- * footage has none) minimaps are grouped per map by stage change and time gap:
- * a Splatoon game runs a few minutes, so minimaps far apart are different
- * maps, and a confirmed stage read change is a new map. A match is emitted
- * only when a scoreboard or minimaps back it — a MapStart plus deaths whose
- * results screen was missed identifies no game.
- *
- * Matches are emitted regardless of lobby or outcome (the vods prefill wants
- * every match); senders filter with `ingestSkipReasons`. Death events reveal
- * enemy builds and are harvested onto the match's player rows
- * (ability-harvest.ts).
+ * Groups a detected-event timeline into ScannerMatch objects
+ * (scanner-match.ts). A MapStart opens a match, a scoreboard-type event
+ * closes one, and deaths in between belong to it; a scoreboard with no
+ * preceding MapStart claims the last 8 minutes of deaths. Between delimiters
+ * (casted footage has none) minimaps group per map by stage change and time
+ * gap, since a Splatoon game runs a few minutes. A match is emitted only
+ * when a scoreboard or minimaps back it (a MapStart with a missed results
+ * screen identifies nothing), regardless of lobby/outcome —
+ * `ingestSkipReasons` filters those. Deaths are harvested onto player rows
+ * as enemy builds (ability-harvest.ts).
  */
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { harvestAbilities } from "./ability-harvest";
@@ -86,16 +81,14 @@ export interface BuiltMatch<E extends DetectedEvent> {
 
 /**
  * Splits a timeline into ScannerMatch objects, chronological. Event types
- * that identify no match (ScoreboardOwn) are ignored. Matches never
- * overlap: every input event ends up in at most one match's `sources` —
- * each event is placed in exactly one accumulator (or dropped), and the
- * orphan-death pool is emptied the moment a boundary claims or invalidates
- * it.
+ * that identify no match (ScoreboardOwn) are ignored. Every input event ends
+ * up in at most one match's `sources` — orphan pools are cleared the moment
+ * a boundary claims or invalidates them.
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
 ): BuiltMatch<E>[] {
-	const sorted = [...events].sort((a, b) => a.t - b.t);
+	const sorted = events.toSorted((a, b) => a.t - b.t);
 	const built: BuiltMatch<E>[] = [];
 	const nextStage = buildNextStageMap(sorted);
 
@@ -175,16 +168,14 @@ export type IngestSkipReason =
 	| "disconnect";
 
 /**
- * Which of the built matches are not worth sending to /ingest, and why.
- * Kept out are non-tournament lobbies (an unread lobby gets the benefit of
- * the doubt) and games a disconnect cut short — a scoreless match is a
- * disconnect when its counter reads prove the game could not have ended on
- * its own (see `endedEarly`), or when the same map and mode is played again
- * right after and that one does have a score, i.e. it was replayed.
- *
- * The replay evidence only ever arrives after the fact, so a live scan may
- * have already sent the abandoned game by the time its replay is detected;
- * the counter-read check is what catches it in the moment.
+ * Which built matches are not worth sending to /ingest, and why. Kept out:
+ * non-tournament lobbies (unread lobbies get the benefit of the doubt), and
+ * games a disconnect cut short — proven either by counter reads showing the
+ * game couldn't have ended on its own (see `endedEarly`), or by the same
+ * map/mode being replayed right after with a score. Replay evidence only
+ * ever arrives after the fact, so a live scan may already have sent the
+ * abandoned game before its replay is detected; the counter-read check is
+ * what catches it in the moment.
  */
 export function ingestSkipReasons<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],

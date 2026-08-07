@@ -1,24 +1,17 @@
 /**
- * Glyph-template text recognition. Font, size, and position are known, so
- * instead of general OCR we segment the text crop by column projection and
- * classify each segment with sliding NCC against grayscale glyph templates.
- *
- * Three details matter for accuracy:
- * - matching runs on the *masked* grayscale crop (background zeroed via a
- *   dilated binary mask) so colored backgrounds (team score boxes) behave
- *   like the black pills, while antialiased glyph edges survive;
- * - scores carry an ink-coverage penalty, otherwise a narrow template
- *   sliding inside a wider glyph wins by ignoring ink it doesn't cover
- *   ('c' outscoring 'o' on an actual 'o');
- * - segments much wider than the set's median glyph get split at deep
- *   projection dips ('T' overhangs the next letter, merging segments);
- * - multi-stroke glyphs with a column gap between strokes (katakana パ, ハ,
- *   リ) segment as separate fragments no full-glyph template can match, so
- *   close segment pairs are re-classified merged and the merged read wins
- *   when it decisively outscores both fragments.
- *
- * Templates are matched at native scale: callers matching larger text
- * (team scores) pre-scale the glyph set with scaleGlyphSet.
+ * Glyph-template text recognition: font/size/position are known, so instead
+ * of OCR we segment the crop by column projection and classify each segment
+ * via sliding NCC against grayscale glyph templates (native scale;
+ * scaleGlyphSet pre-scales for larger text like team scores). Accuracy
+ * details: matching runs on the *masked* grayscale crop (background zeroed
+ * via a dilated binary mask) so colored backgrounds behave like black pills
+ * while antialiasing survives; scores carry an ink-coverage penalty (else a
+ * narrow template inside a wider glyph wins, e.g. 'c' outscoring 'o');
+ * segments wider than the median glyph split at deep projection dips ('T'
+ * overhangs merge into the next letter); multi-stroke glyphs with a stroke
+ * gap (katakana パ/ハ/リ) segment as fragments no template matches, so close
+ * pairs are re-classified merged and kept only when the merge decisively
+ * outscores both fragments.
  */
 import { getCV, type Mat } from "./cv";
 import type { FrameData } from "./image";
@@ -30,11 +23,10 @@ interface AtlasGlyphMeta {
 	w: number;
 	h: number;
 	/**
-	 * Where the template came from. Atlases are hybrids: "fixture" glyphs are
-	 * exact pixel crops from labeled frames (highest fidelity, sparse
-	 * coverage), "font" glyphs are rendered from the game fonts (full
-	 * coverage, slightly off in-game rendering). Recognition scores every
-	 * glyph and takes the max, so fixture glyphs win where they exist.
+	 * Template origin: "fixture" = exact pixel crop from a labeled frame
+	 * (high fidelity, sparse coverage); "font" = rendered from game fonts
+	 * (full coverage, imperfect). Recognition takes the max score, so
+	 * fixture glyphs win where they exist.
 	 */
 	source?: "fixture" | "font";
 }
@@ -222,10 +214,9 @@ function splitWideSegment(
 ): Segment[] {
 	const maxCharWidth = Math.round(medianWidth * 1.5);
 	if (seg.x1 - seg.x0 <= maxCharWidth) return [seg];
-	// Pick the split column by dip depth *relative to the peaks on both sides*,
-	// not by raw minimum: the raw minimum can land inside a thin-but-real stroke
-	// (a 'T' top bar profiles as low as the blurred gap to the next glyph),
-	// while the true boundary is the column lowest relative to its neighbours.
+	// Split at the dip deepest relative to its neighboring peaks, not raw
+	// minimum: the raw min can land inside a thin-but-real stroke (a 'T' top
+	// bar profiles as low as the blurred gap to the next glyph).
 	const leftMax = new Array<number>(seg.x1).fill(0);
 	const rightMax = new Array<number>(seg.x1).fill(0);
 	let running = 0;
@@ -249,10 +240,9 @@ function splitWideSegment(
 		}
 	}
 	if (best < 0 || bestRatio > 0.45) return [seg];
-	// The dip is often a plateau of equally-low columns (a 'T' arm blurring
-	// into the next glyph profiles no higher than the gap itself), and the
-	// profile cannot say which glyph the plateau's ink belongs to. Cut at the
-	// plateau edge that leaves the left part closest to whole glyph widths.
+	// The dip is often a plateau of equally-low columns whose ink ownership
+	// is ambiguous; cut at whichever edge leaves the left part closest to a
+	// whole glyph width.
 	let lo = best;
 	let hi = best;
 	while (lo - 1 >= seg.x0 + 3 && profile[lo - 1]! <= profile[best]!) lo--;
@@ -300,11 +290,10 @@ function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
 }
 
 /**
- * Fixture-crop templates are ground-truth pixels; a font-rendered glyph must
- * beat them by at least this much to win (stops near-duplicate font glyphs
- * like 'I' edging out an exact 'l' crop on noise). Keep this tight: for
- * near-duplicate shapes the gap is tiny, while at 0.04 a fixture crop of a
- * genuinely different char ('h' vs 'b') can displace a correct font match.
+ * Fixture crops are ground truth; a font glyph must beat one by this margin
+ * to win (stops 'I' noise-edging out an exact 'l' crop). Keep tight — at
+ * 0.04 a fixture crop of a genuinely different char ('h' vs 'b') can
+ * displace a correct font match.
  */
 const FIXTURE_TIEBREAK = 0.02;
 
@@ -466,20 +455,15 @@ interface ClassifiedSegment {
 }
 
 /**
- * Multi-stroke glyphs whose strokes never connect (katakana ハ/パ/リ and
- * kin) segment as two fragments, and the full-glyph template cannot match
- * either one (the width-ratio filter rightly rejects a wide template on a
- * narrow fragment). Re-classify close neighbor pairs as a single segment
- * and keep the merge only when it beats both fragments by a clear margin —
- * genuine letter pairs ("rn", "VV") already read well individually, so a
- * lookalike merged template ('m', 'W') cannot clear the margin over them.
- */
-/**
- * Kana stroke gaps run wide: い's two strokes sit ~0.4 medianWidth apart at
- * tag-name scale, so the gap cap must reach past that for the merge to even
- * be attempted — while staying below the space gap (0.55 medianWidth), so
- * merges never bridge a real word break. Misjoins stay guarded by the
- * beat-both-fragments margin below.
+ * Multi-stroke glyphs whose strokes never connect (katakana ハ/パ/リ and kin)
+ * segment as two fragments no full-glyph template can match (width-ratio
+ * filter rejects a wide template on a narrow fragment). Close neighbor pairs
+ * are re-classified merged and kept only when the merge beats both fragments
+ * by a clear margin — genuine pairs ("rn", "VV") already read well alone, so
+ * a lookalike merge ('m', 'W') can't clear it. Kana gaps run wide (い's
+ * strokes sit ~0.4 medianWidth apart at tag-name scale), so
+ * MERGE_MAX_GAP_RATIO reaches past that while staying below the space gap
+ * (0.55), so merges never bridge a real word break.
  */
 const MERGE_MAX_GAP_RATIO = 0.45;
 const MERGE_MARGIN = 0.02;

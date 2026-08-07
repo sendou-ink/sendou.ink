@@ -1,24 +1,19 @@
 /**
  * Stage identification for the minimap overlay by matching the drawn map
- * against the sendou.ink planner renders (planner-maps/, one PNG per stage x
- * mode, committed compactly as the signature atlas in assets/cv/planner/).
+ * against sendou.ink planner renders (assets/cv/planner/, one PNG per
+ * stage x mode, packed as a signature atlas).
  *
- * The map is drawn sharp over gaussian-blurred gameplay, so a Laplacian edge
- * mask isolates the render; team ink is saturated while the structural
- * skeleton (white walls, grate crosshatch, platform edges) is not, so
- * dropping saturated edges leaves an ink-invariant signature that survives
- * whatever colors the match happens to paint. The signature is downscaled and
- * blurred, which also absorbs the small scale/offset difference between the
- * POV overlay (map fills the screen) and the spectator screen (map smaller,
- * centered) and lets one atlas serve both via a short translation search.
+ * The map is drawn sharp over blurred gameplay, so a Laplacian edge mask
+ * isolates it; dropping saturated (team-ink) edges leaves a structural,
+ * ink-invariant signature. Downscaling+blurring also absorbs the POV (map
+ * fills screen) vs spectator (map smaller, centered) scale/offset
+ * difference, letting one atlas serve both via a translation search.
  *
- * Stage separates cleanly this way (best-stage NCC leads the next stage by
- * ~0.17-0.26 on the fixtures). Mode does NOT: the only thing distinguishing a
- * stage's five renders is the colored objective marker (splat-zone checker,
- * clam baskets, rainmaker checkpoints) that the ink-invariance strips, so the
- * atlas keeps all five per stage only to match whichever mode the frame is;
- * the reported result is the winning tile's stage. Mode is left to the
- * mode-bearing detectors (map-start, scoreboard header).
+ * Stage separates cleanly this way (NCC leads the next stage by
+ * ~0.17-0.26). Mode does NOT — the objective marker is the only per-mode
+ * difference and ink-invariance strips it — so the atlas keeps all five
+ * renders per stage and reports only the winning tile's stage; mode comes
+ * from map-start/scoreboard header instead.
  */
 import type { StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";

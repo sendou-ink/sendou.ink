@@ -3,7 +3,7 @@ import {
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
 import { FrameThumb } from "./FrameThumb";
-import { formatClock } from "./format";
+import { formatClock, useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
 
 export function ObjectiveCard(props: {
@@ -25,6 +25,7 @@ export function ObjectiveCard(props: {
 		return `${score}${penalty}`;
 	};
 	const holder = data.control.findIndex(Boolean);
+	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<div className="card">
 			<div className="meta">
@@ -43,7 +44,7 @@ export function ObjectiveCard(props: {
 						? ` · ${holder === 0 ? "alpha" : "bravo"} in control`
 						: null}
 				</span>
-				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
+				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
 					thumbnail={thumbnail}
 					getFrame={getFrame}

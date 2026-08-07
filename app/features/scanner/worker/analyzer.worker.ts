@@ -1,17 +1,14 @@
 /**
  * AnalyzerWorker: owns OpenCV.js (WASM), the detector registry and a
- * DetectorScheduler. Two ways in:
- *
- * - "frame": the main thread posts one ImageBitmap/VideoFrame at a time
- *   (live capture, screenshot harness, the VoD seek fallback). Results come
- *   back per detector, then a "done" carrying the scheduler's calm signal
- *   and telemetry.
- * - "scanChunk": a VoD time slice is demuxed and decoded entirely in the
- *   worker with mediabunny. The worker owns a contiguous slice, so
- *   scheduling is exact, frames that no detector is due for skip canvas
- *   readback entirely, and calm stretches are skimmed by keyframe hops
- *   instead of decoding every frame — the big VoD speedup, since sequential
- *   decode is what bounds scan wall-clock time.
+ * DetectorScheduler. Two entry points: "frame" — the main thread posts one
+ * ImageBitmap/VideoFrame at a time (live capture, screenshot harness, VoD
+ * seek fallback); results come back per detector, then a "done" carrying the
+ * scheduler's calm signal and telemetry. "scanChunk" — a VoD time slice is
+ * demuxed/decoded entirely in the worker with mediabunny: the worker owns a
+ * contiguous slice so scheduling is exact, undue frames skip canvas
+ * readback, and calm stretches skim by keyframe hops instead of decoding
+ * every frame — the big VoD speedup, since sequential decode bounds scan
+ * wall-clock time.
  */
 import {
 	ALL_FORMATS,

@@ -681,19 +681,17 @@ async function tournamentGames({
 			opponentOneId.as("opponentOneId"),
 			opponentTwoId.as("opponentTwoId"),
 		])
+		// joined (not EXISTS) so the planner drives off the user's own
+		// participation index instead of scanning the whole createdAt window
 		.$if(userId !== undefined, (qb) =>
-			qb.where((eb) =>
-				eb.exists(
-					eb
-						.selectFrom("TournamentMatchGameResultParticipant")
-						.select("TournamentMatchGameResultParticipant.userId")
-						.whereRef(
-							"TournamentMatchGameResultParticipant.matchGameResultId",
-							"=",
-							"TournamentMatchGameResult.id",
-						)
-						.where("TournamentMatchGameResultParticipant.userId", "=", userId!),
-				),
+			qb.innerJoin("TournamentMatchGameResultParticipant", (join) =>
+				join
+					.onRef(
+						"TournamentMatchGameResultParticipant.matchGameResultId",
+						"=",
+						"TournamentMatchGameResult.id",
+					)
+					.on("TournamentMatchGameResultParticipant.userId", "=", userId!),
 			),
 		)
 		.$if(tournamentId !== undefined, (qb) =>
@@ -755,13 +753,11 @@ async function teamInGameNames(teamIds: Array<number | null>) {
 	const members = await db
 		.selectFrom("TournamentTeamMember")
 		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
-		.select([
+		.select((eb) => [
 			"TournamentTeamMember.tournamentTeamId",
-			sql<
-				string | null
-			>`coalesce("TournamentTeamMember"."inGameName", "User"."inGameName")`.as(
-				"inGameName",
-			),
+			eb.fn
+				.coalesce("TournamentTeamMember.inGameName", "User.inGameName")
+				.as("inGameName"),
 		])
 		.where("TournamentTeamMember.tournamentTeamId", "in", uniqueTeamIds)
 		.execute();
@@ -803,28 +799,18 @@ async function sendouqGames({
 		.$if(groupMatchId !== undefined, (qb) =>
 			qb.where("GroupMatchMap.matchId", "=", groupMatchId!),
 		)
+		// joined (not EXISTS) so the planner drives off the user's own
+		// membership index instead of scanning the whole createdAt window
 		.$if(userId !== undefined, (qb) =>
-			qb.where((eb) =>
-				eb.exists(
-					eb
-						.selectFrom("GroupMember")
-						.select("GroupMember.userId")
-						.where("GroupMember.userId", "=", userId!)
-						.where((memberEb) =>
-							memberEb.or([
-								memberEb(
-									"GroupMember.groupId",
-									"=",
-									memberEb.ref("GroupMatch.alphaGroupId"),
-								),
-								memberEb(
-									"GroupMember.groupId",
-									"=",
-									memberEb.ref("GroupMatch.bravoGroupId"),
-								),
-							]),
-						),
-				),
+			qb.innerJoin("GroupMember", (join) =>
+				join
+					.on("GroupMember.userId", "=", userId!)
+					.on((eb) =>
+						eb.or([
+							eb("GroupMember.groupId", "=", eb.ref("GroupMatch.alphaGroupId")),
+							eb("GroupMember.groupId", "=", eb.ref("GroupMatch.bravoGroupId")),
+						]),
+					),
 			),
 		)
 		// content resolution walks played games only; a current match's

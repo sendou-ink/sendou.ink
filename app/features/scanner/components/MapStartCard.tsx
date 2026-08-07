@@ -3,6 +3,7 @@ import {
 	type MapStartData,
 } from "../core/detectors/map-start/index";
 import { FrameThumb } from "./FrameThumb";
+import { useEventTimeFormatter } from "./format";
 import { modeLabel, stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
@@ -18,6 +19,7 @@ export function MapStartCard(props: {
 }) {
 	const { t, confidence, data, thumbnail, detectedAt, getFrame, onInspect } =
 		props;
+	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<div className="card">
 			<div className="meta">
@@ -30,7 +32,7 @@ export function MapStartCard(props: {
 				<span>
 					<b>{modeLabel(data.mode) ?? "?"}</b> · {stageLabel(data.stage) ?? "?"}
 				</span>
-				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
+				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
 					thumbnail={thumbnail}
 					getFrame={getFrame}

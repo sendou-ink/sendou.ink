@@ -490,11 +490,6 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	gap: var(--s-1);
 }
 
-.scanner-app .ability-popover {
-	position: relative;
-	display: inline-flex;
-}
-
 .scanner-app button.ability-trigger {
 	height: auto;
 	padding: var(--s-0-5);
@@ -507,18 +502,6 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	display: block;
 	width: var(--field-size-icon);
 	height: var(--field-size-icon);
-}
-
-.scanner-app .ability-popover .popover {
-	position: absolute;
-	top: calc(100% + var(--s-1));
-	left: 0;
-	z-index: 20;
-	background: var(--color-bg-higher);
-	border: var(--border-style);
-	border-radius: var(--radius-field);
-	padding: var(--s-1-5);
-	box-shadow: 0 8px 24px rgb(0 0 0 / 0.5);
 }
 
 .scanner-app .vod-list {
@@ -1112,7 +1095,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	height: 7px;
 	border-radius: var(--radius-full);
 	background: currentColor;
-	margin-right: var(--s-1-5);
+	margin-inline-end: var(--s-1-5);
 	animation: scanner-pulse 1.6s ease-in-out infinite;
 }
 

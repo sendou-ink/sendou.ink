@@ -6,6 +6,7 @@ import {
 	type DeathData,
 } from "../core/detectors/death/index";
 import { FrameThumb } from "./FrameThumb";
+import { useEventTimeFormatter } from "./format";
 import { weaponLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
@@ -22,6 +23,7 @@ export function DeathCard(props: {
 	const { t, confidence, data, thumbnail, detectedAt, getFrame, onInspect } =
 		props;
 	const weaponName = weaponLabel(data.weaponType, data.weaponId);
+	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<div className="card">
 			<div className="meta">
@@ -31,7 +33,7 @@ export function DeathCard(props: {
 					type={DEATH_EVENT_TYPE}
 					label="death"
 				/>
-				{detectedAt && <span>{new Date(detectedAt).toLocaleTimeString()}</span>}
+				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
 					thumbnail={thumbnail}
 					getFrame={getFrame}

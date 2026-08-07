@@ -1,23 +1,20 @@
 /**
  * ObjectiveDetector: parses the ranked in-match counter overlay top-center —
  * each team's count plate, the penalty pill under it, which team is in
- * control (the controlling team's plate keeps its saturated team-color
- * fill; a non-controlling team's — or both, while the objective is neutral
- * — swaps to a near-black fill with the digits in the team's ink color;
- * see rois.ts for the layout), and the M:SS match timer above the plates.
+ * control (controlling team's plate keeps its saturated team-color fill;
+ * otherwise near-black fill with digits in the team's ink color — see
+ * rois.ts), and the M:SS match timer above the plates.
  *
- * Digits are read as the trailing digit run (banner.ts) of the band under
- * several channel extractions: team-color ink on the black plate needs the
- * brightest channel (dark blue ink is near-black in luminance), white or
- * near-black ink on a team-color fill needs the darkest channel (which
- * drops the fill and keeps the contrast) — every extraction is tried at
- * each threshold/size and the best-scoring read wins. A gate hit that
- * yields no readable count on either side emits nothing (lookalike frame).
+ * Digits are read as the trailing digit run (banner.ts) under several
+ * channel extractions — team-color ink on a black plate needs the
+ * brightest channel (dark blue ink is near-black in luminance), ink on a
+ * team-color fill needs the darkest channel — every extraction is tried at
+ * each threshold/size and the best-scoring read wins. A gate hit with no
+ * readable count on either side emits nothing (lookalike frame).
  *
- * The data is a discriminated union on `mode`, prepared for the counter
- * semantics of the other modes; only the SZ member exists so far and every
- * read is reported as it. Identifying the mode from the objective badge
- * between the plates is left for when TC/RM/CB fixtures land.
+ * `ObjectiveData` is a discriminated union on `mode`; only SZ exists so
+ * far. Identifying mode from the badge between the plates awaits TC/RM/CB
+ * fixtures.
  */
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import {

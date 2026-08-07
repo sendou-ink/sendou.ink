@@ -9,6 +9,7 @@ import type {
 	ScannerMatchPlayer,
 	ScannerMatchTeam,
 } from "~/features/scanner/core/scanner-match";
+import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 
 /**
  * Replay codes are random enough that two different games share almost no
@@ -145,7 +146,10 @@ export function mergeMatches(
 
 /** Lowercased, width-normalized in-game name without the #discriminator. */
 export function normalizeInGameName(name: string): string {
-	return name.split("#")[0]!.normalize("NFKC").trim().toLowerCase();
+	return inGameNameWithoutDiscriminator(name)
+		.normalize("NFKC")
+		.trim()
+		.toLowerCase();
 }
 
 function canonicalObjective(

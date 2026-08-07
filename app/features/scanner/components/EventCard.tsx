@@ -7,6 +7,7 @@
  * don't duplicate the wiring.
  */
 
+import clsx from "clsx";
 import { SCANNER_PAGE } from "~/utils/urls";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
 import {
@@ -35,6 +36,7 @@ import type { SendStatus } from "../store/events";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
 import { DeathCard } from "./DeathCard";
 import type { FixtureData } from "./fixture-export";
+import { useEventTimeFormatter } from "./format";
 import { MapStartCard } from "./MapStartCard";
 import { MinimapCard } from "./MinimapCard";
 import { ObjectiveCard } from "./ObjectiveCard";
@@ -104,20 +106,19 @@ function SendStrip({
 	onSend?: () => void;
 }) {
 	const state = send?.state;
+	const formatSentAt = useEventTimeFormatter();
 	return (
-		<div className={`send-strip ${state ?? "unsent"}`}>
+		<div className={clsx("send-strip", state ?? "unsent")}>
 			<span>
 				sendou.ink: {state ? SEND_LABELS[state] : "not sent"}
-				{state === "sent" &&
-					send &&
-					` ${new Date(send.at).toLocaleTimeString()}`}
+				{state === "sent" && send ? ` ${formatSentAt(send.at)}` : null}
 			</span>
-			{send?.error && <span className="error">{send.error}</span>}
-			{onSend && state !== "sent" && state !== "sending" && (
+			{send?.error ? <span className="error">{send.error}</span> : null}
+			{onSend && state !== "sent" && state !== "sending" ? (
 				<button type="button" onClick={onSend}>
 					{state === "failed" ? "Retry" : "Send"}
 				</button>
-			)}
+			) : null}
 		</div>
 	);
 }

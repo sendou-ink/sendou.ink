@@ -11,6 +11,7 @@
  * hash, merges partials, and scoreboards first-ingest-wins.
  */
 
+import * as R from "remeda";
 import type {
 	IngestedMatchLink,
 	IngestResponse,
@@ -117,12 +118,16 @@ export async function sendVodResults(
 	let sentMatches = 0;
 	let error: string | null = null;
 	const links: VodResultsSendReport["links"] = [];
-	for (let i = 0; i < matches.length; i += MAX_MATCHES_PER_REQUEST) {
-		const request = matches.slice(i, i + MAX_MATCHES_PER_REQUEST);
+	const chunks = R.chunk(matches, MAX_MATCHES_PER_REQUEST);
+	for (const [chunkIndex, request] of chunks.entries()) {
+		const offset = chunkIndex * MAX_MATCHES_PER_REQUEST;
 		try {
 			const response = await postIngestMatches(request);
 			for (const linked of response.linkedMatches ?? []) {
-				links.push({ matchIndex: i + linked.matchIndex, link: linked.link });
+				links.push({
+					matchIndex: offset + linked.matchIndex,
+					link: linked.link,
+				});
 			}
 			sentMatches += request.length;
 			onProgress?.(sentMatches, matches.length);
