@@ -40,8 +40,8 @@
 		"knip": "knip"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "3.1097.0",
-		"@aws-sdk/lib-storage": "3.1097.0",
+		"@aws-sdk/client-s3": "3.1098.0",
+		"@aws-sdk/lib-storage": "3.1098.0",
 		"@date-fns/tz": "1.5.0",
 		"@dnd-kit/core": "6.3.1",
 		"@dnd-kit/modifiers": "9.0.0",
@@ -52,7 +52,7 @@
 		"@internationalized/date": "3.12.2",
 		"@react-router/node": "8.3.0",
 		"@react-router/serve": "8.1.0",
-		"@sentry/react-router": "10.68.0",
+		"@sentry/react-router": "10.69.0",
 		"@tldraw/tldraw": "3.12.1",
 		"@zumer/snapdom": "2.23.1",
 		"chart.js": "4.5.1",
@@ -67,7 +67,7 @@
 		"ics": "3.12.0",
 		"isbot": "5.2.1",
 		"kysely": "0.29.0",
-		"lucide-react": "1.27.0",
+		"lucide-react": "1.28.0",
 		"markdown-to-jsx": "9.9.0",
 		"nanoid": "6.0.0",
 		"node-cron": "4.6.0",
