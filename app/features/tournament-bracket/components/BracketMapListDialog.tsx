@@ -91,7 +91,10 @@ export function BracketMapListDialog({
 		}
 
 		if (isPreparing) {
-			return null;
+			return PreparedMaps.eliminationTeamCountPrefill({
+				tournament,
+				bracketIdx,
+			});
 		}
 
 		return PreparedMaps.eliminationTeamCountOptions(bracketTeamsCount)[0].max;
@@ -823,20 +826,21 @@ function EliminationTeamCountSelect({
 				defaultValue={count ?? ""}
 			>
 				<option value="">Select count</option>
-				{PreparedMaps.eliminationTeamCountOptions(realCount).map(
-					(teamCountRange) => {
-						const label =
-							teamCountRange.min === teamCountRange.max
-								? teamCountRange.min
-								: `${teamCountRange.min}-${teamCountRange.max}`;
+				{PreparedMaps.eliminationTeamCountOptions(
+					// the prepared for count can be below the current team count e.g. when some of the registered teams are not expected to play
+					Math.min(realCount, count ?? realCount),
+				).map((teamCountRange) => {
+					const label =
+						teamCountRange.min === teamCountRange.max
+							? teamCountRange.min
+							: `${teamCountRange.min}-${teamCountRange.max}`;
 
-						return (
-							<option key={teamCountRange.max} value={teamCountRange.max}>
-								{label}
-							</option>
-						);
-					},
-				)}
+					return (
+						<option key={teamCountRange.max} value={teamCountRange.max}>
+							{label}
+						</option>
+					);
+				})}
 			</select>
 		</div>
 	);

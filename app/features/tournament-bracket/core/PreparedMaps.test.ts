@@ -1,7 +1,14 @@
+import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
 import { describe, expect, test } from "vitest";
 import type { PreparedMaps as PreparedMapsType } from "~/db/tables-json";
+import { nullFilledArray } from "~/utils/arrays";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import * as Engine from "./engine";
+import type { BracketData } from "./engine/types";
 import * as PreparedMaps from "./PreparedMaps";
-import { testTournament } from "./tests/test-utils";
+import type * as Progression from "./Progression";
+import type { TournamentData } from "./Tournament.server";
+import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
 
 const getTestTournament = (thirdPlaceMatchesForBoth = true) =>
 	testTournament({
@@ -827,4 +834,319 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		eliminationTeamCount: 8,
 		createdAt: 1724482944,
 	};
+});
+
+describe("PreparedMaps - eliminationTeamCountPrefill", () => {
+	const teams = ({
+		count,
+		firstId = 1,
+		memberCount = 4,
+	}: {
+		count: number;
+		firstId?: number;
+		memberCount?: number;
+	}) =>
+		nullFilledArray(count).map((_, i) =>
+			tournamentCtxTeam(firstId + i, {
+				memberUserIds: nullFilledArray(memberCount).map(
+					(_, memberIdx) => (firstId + i) * 10 + memberIdx,
+				),
+			}),
+		);
+
+	const tournamentWith = ({
+		bracketProgression,
+		startsAt,
+		regClosesAt,
+		isInvitational,
+		teams,
+		data,
+	}: {
+		bracketProgression: Progression.ParsedBracket[];
+		startsAt: Date;
+		regClosesAt?: Date;
+		isInvitational?: boolean;
+		teams: TournamentData["ctx"]["teams"];
+		data?: BracketData;
+	}) =>
+		testTournament({
+			data,
+			ctx: {
+				startsAt: dateToDatabaseTimestamp(startsAt),
+				teams,
+				settings: {
+					bracketProgression,
+					regClosesAt: regClosesAt
+						? dateToDatabaseTimestamp(regClosesAt)
+						: undefined,
+					isInvitational,
+				},
+			},
+		});
+
+	const DOUBLE_ELIMINATION_ONLY: Progression.ParsedBracket[] = [
+		{
+			type: "double_elimination",
+			name: "Main Bracket",
+			requiresCheckIn: false,
+			settings: {},
+		},
+	];
+
+	test("prefills with the registered team count when registration has closed", () => {
+		const tournament = tournamentWith({
+			bracketProgression: DOUBLE_ELIMINATION_ONLY,
+			startsAt: subHours(new Date(), 1),
+			teams: teams({ count: 12 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBe(16);
+	});
+
+	test("does not count teams that never filled their roster", () => {
+		const tournament = tournamentWith({
+			bracketProgression: DOUBLE_ELIMINATION_ONLY,
+			startsAt: addMinutes(new Date(), 30),
+			regClosesAt: subMinutes(new Date(), 10),
+			teams: [
+				...teams({ count: 12 }),
+				...teams({ count: 5, firstId: 13, memberCount: 2 }),
+			],
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBe(16);
+	});
+
+	test("prefills invitational tournaments even if the start time is far away", () => {
+		const tournament = tournamentWith({
+			bracketProgression: DOUBLE_ELIMINATION_ONLY,
+			startsAt: addHours(new Date(), 5),
+			isInvitational: true,
+			teams: teams({ count: 8 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBe(8);
+	});
+
+	test("counts every team of an invitational tournament even if their roster is not full", () => {
+		const tournament = tournamentWith({
+			bracketProgression: DOUBLE_ELIMINATION_ONLY,
+			startsAt: addMinutes(new Date(), 30),
+			isInvitational: true,
+			teams: [
+				...teams({ count: 7 }),
+				...teams({ count: 2, firstId: 8, memberCount: 2 }),
+			],
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBe(16);
+	});
+
+	test("does not prefill while registration is still open", () => {
+		const tournament = tournamentWith({
+			bracketProgression: DOUBLE_ELIMINATION_ONLY,
+			startsAt: addHours(new Date(), 3),
+			teams: teams({ count: 12 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBeNull();
+	});
+
+	test("prefills with the registered team count when registration is about to close", () => {
+		const tournament = tournamentWith({
+			bracketProgression: DOUBLE_ELIMINATION_ONLY,
+			startsAt: addMinutes(new Date(), 45),
+			teams: teams({ count: 12 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBe(16);
+	});
+
+	test("overestimates if registration is about to close with the team count near the range max", () => {
+		const tournament = tournamentWith({
+			bracketProgression: DOUBLE_ELIMINATION_ONLY,
+			startsAt: addMinutes(new Date(), 45),
+			teams: teams({ count: 15 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBe(32);
+	});
+
+	test("prefills a follow-up bracket with the amount of teams that advance", () => {
+		const tournament = tournamentWith({
+			bracketProgression: [
+				{
+					type: "round_robin",
+					name: "Groups",
+					requiresCheckIn: false,
+					settings: {},
+				},
+				{
+					type: "single_elimination",
+					name: "Top Cut",
+					requiresCheckIn: false,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [1, 2] }],
+				},
+			],
+			startsAt: subHours(new Date(), 1),
+			teams: teams({ count: 16 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 1 }),
+		).toBe(8);
+	});
+
+	test("prefills a follow-up bracket with the real participant count of a source bracket that started", () => {
+		const startedGroups = Engine.create({
+			type: "round_robin",
+			seeding: nullFilledArray(12).map((_, i) => i + 1),
+			settings: {},
+		});
+
+		const tournament = tournamentWith({
+			bracketProgression: [
+				{
+					type: "round_robin",
+					name: "Groups",
+					requiresCheckIn: true,
+					settings: {},
+				},
+				{
+					type: "single_elimination",
+					name: "Top Cut",
+					requiresCheckIn: false,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [1, 2] }],
+				},
+			],
+			startsAt: subHours(new Date(), 1),
+			// 8 of the registered teams never checked in, so they are not in the started bracket
+			teams: teams({ count: 20 }),
+			data: startedGroups,
+		});
+
+		expect(
+			tournament.bracketMetaByIdx(0)?.preview,
+			"test setup: the source bracket should have started",
+		).toBe(false);
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 1 }),
+		).toBe(8);
+	});
+
+	test("prefills a follow-up bracket sourcing the rest of the teams", () => {
+		const tournament = tournamentWith({
+			bracketProgression: [
+				{
+					type: "round_robin",
+					name: "Groups",
+					requiresCheckIn: false,
+					settings: {},
+				},
+				{
+					type: "single_elimination",
+					name: "Top Cut",
+					requiresCheckIn: false,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [1] }],
+				},
+				{
+					type: "single_elimination",
+					name: "Underground Bracket",
+					requiresCheckIn: false,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [2], rest: true }],
+				},
+			],
+			startsAt: subHours(new Date(), 1),
+			teams: teams({ count: 16 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 2 }),
+		).toBe(16);
+	});
+
+	test("prefills an underground bracket with the amount of teams eliminated early", () => {
+		const tournament = tournamentWith({
+			bracketProgression: [
+				...DOUBLE_ELIMINATION_ONLY,
+				{
+					type: "single_elimination",
+					name: "Underground Bracket",
+					requiresCheckIn: false,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [-1] }],
+				},
+			],
+			startsAt: subHours(new Date(), 1),
+			teams: teams({ count: 16 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 1 }),
+		).toBe(4);
+	});
+
+	test("does not prefill if teams advance based on swiss early advance", () => {
+		const tournament = tournamentWith({
+			bracketProgression: [
+				{
+					type: "swiss",
+					name: "Swiss",
+					requiresCheckIn: false,
+					settings: { advanceThreshold: 3 },
+				},
+				{
+					type: "single_elimination",
+					name: "Top Cut",
+					requiresCheckIn: false,
+					settings: {},
+					sources: [{ bracketIdx: 0, placements: [] }],
+				},
+			],
+			startsAt: subHours(new Date(), 1),
+			teams: teams({ count: 16 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 1 }),
+		).toBeNull();
+	});
+
+	test("does not prefill a bracket that is not an elimination bracket", () => {
+		const tournament = tournamentWith({
+			bracketProgression: [
+				{
+					type: "round_robin",
+					name: "Groups",
+					requiresCheckIn: false,
+					settings: {},
+				},
+			],
+			startsAt: subHours(new Date(), 1),
+			teams: teams({ count: 16 }),
+		});
+
+		expect(
+			PreparedMaps.eliminationTeamCountPrefill({ tournament, bracketIdx: 0 }),
+		).toBeNull();
+	});
 });
