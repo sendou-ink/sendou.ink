@@ -14,3 +14,16 @@ export const ingestBodySchema = z.object({
 	povUserId: id.optional(),
 	matches: z.array(scannerMatchSchema).min(1).max(MAX_MATCHES_PER_REQUEST),
 });
+
+/** The sendou.ink match an ingested match's scoreboard was linked to. */
+export type IngestedMatchLink =
+	| { type: "tournament"; tournamentId: number; matchId: number }
+	| { type: "sendouq"; groupMatchId: number };
+
+export interface IngestResponse {
+	storedMatchesCount: number;
+	mergedMatchesCount: number;
+	linkedGamesCount: number;
+	/** per request match (by its index in the body's `matches`), the match it linked to */
+	linkedMatches: Array<{ matchIndex: number; link: IngestedMatchLink }>;
+}

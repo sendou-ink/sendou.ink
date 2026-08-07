@@ -7,6 +7,7 @@
  * their events stays cheap. Re-scanning the same file name overwrites the
  * previous save.
  */
+import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import { db, tx, VOD_EVENTS_STORE, VOD_FRAMES_STORE, VODS_STORE } from "./db";
 
 /** How a VoD's last "Send results" went; absent = never attempted. */
@@ -18,6 +19,8 @@ export interface VodResultsSend {
 	error: string | null;
 	/** wall-clock time the send finished */
 	at: number;
+	/** links /ingest reported, keyed by index into the scan's ingestable matches */
+	links?: Array<{ matchIndex: number; link: IngestedMatchLink }>;
 }
 
 export interface VodSummary {

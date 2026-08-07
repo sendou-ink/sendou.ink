@@ -963,6 +963,16 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 		color: var(--color-success-high);
 		border-color: var(--color-success-low);
 		background-color: var(--color-success-low);
+
+		& a {
+			color: inherit;
+			text-decoration: underline;
+			text-underline-offset: 2px;
+
+			&:hover {
+				color: var(--color-text-high);
+			}
+		}
 	}
 
 	&.failed {

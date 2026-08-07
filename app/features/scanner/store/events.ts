@@ -6,6 +6,7 @@
  * so listing the feed never deserializes megabytes of blobs. The store is
  * capped: saving past MAX_EVENTS evicts the oldest events and their frames.
  */
+import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
 import { db, EVENTS_STORE, FRAMES_STORE, tx } from "./db";
 
@@ -19,6 +20,8 @@ export interface SendStatus {
 	at: number;
 	/** failure detail, set when state is "failed" */
 	error?: string;
+	/** the sendou.ink match /ingest linked the sent match to, when it reported one */
+	link?: IngestedMatchLink;
 }
 
 export interface StoredEvent {

@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
+import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
@@ -44,6 +45,7 @@ import {
 	loadVodEvents,
 	saveVod,
 	saveVodResultsSend,
+	type VodResultsSend,
 	type VodSummary,
 } from "../store/vods";
 import {
@@ -105,13 +107,7 @@ interface Progress {
 /** "Send results" progress/outcome shown next to the button. */
 type ResultsSend =
 	| { state: "sending"; sent: number; total: number }
-	| {
-			state: "done";
-			sent: number;
-			total: number;
-			error: string | null;
-			at: number;
-	  };
+	| ({ state: "done" } & VodResultsSend);
 
 export function VodPage({
 	sendouUser,
@@ -161,6 +157,14 @@ export function VodPage({
 
 	const builtMatches = buildScannerMatches(matches.map((m) => m.event));
 	const skipReasons = ingestSkipReasons(builtMatches);
+	// mirrors sendVodResults' ingestable-match order, which the send outcome's
+	// links are keyed by
+	const ingestableBuilt = builtMatches.filter((b) => !skipReasons.has(b));
+	const linkByIngestableIndex = new Map(
+		(resultsSend?.state === "done" ? (resultsSend.links ?? []) : []).map(
+			(linked) => [linked.matchIndex, linked.link] as const,
+		),
+	);
 	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
 	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
@@ -213,11 +217,12 @@ export function VodPage({
 		const report = await sendVodResults(events, (sent, total) =>
 			setResultsSend({ state: "sending", sent, total }),
 		);
-		const outcome = {
+		const outcome: VodResultsSend = {
 			sent: report.sentMatches,
 			total: report.totalMatches,
 			error: report.error,
 			at: Date.now(),
+			links: report.links,
 		};
 		setResultsSend({ state: "done", ...outcome });
 		// the scan is saved under its file name, so its send outcome can be
@@ -518,7 +523,6 @@ export function VodPage({
 
 	const removeVod = useCallback(
 		async (name: string) => {
-			if (!window.confirm(`Delete saved analysis of "${name}"?`)) return;
 			await deleteVod(name);
 			await refreshVods();
 		},
@@ -665,15 +669,19 @@ export function VodPage({
 							<button type="button" onClick={() => void openStored(vod)}>
 								Open
 							</button>
-							<SendouButton
-								variant="destructive"
-								size="small"
-								shape="square"
-								className="vod-delete"
-								icon={<Trash2 />}
-								aria-label="Delete"
-								onPress={() => void removeVod(vod.name)}
-							/>
+							<FormWithConfirm
+								dialogHeading={`Delete saved analysis of "${vod.name}"?`}
+								onConfirm={() => void removeVod(vod.name)}
+							>
+								<SendouButton
+									variant="destructive"
+									size="small"
+									shape="square"
+									className="vod-delete"
+									icon={<Trash2 />}
+									aria-label="Delete"
+								/>
+							</FormWithConfirm>
 						</div>
 					))}
 				</div>
@@ -716,6 +724,10 @@ export function VodPage({
 						keyOf={(built) => vodMatchByEvent.get(built.sources[0]!)!.key}
 						renderMatch={(built, justFormed) => {
 							const skipReason = skipReasons.get(built);
+							const link = linkByIngestableIndex.get(
+								ingestableBuilt.indexOf(built),
+							);
+							const send = skipReason ? undefined : bulkSend;
 							// counter reads render as one timeline chart, not a card each;
 							// a non-SZ match's reads (objective null) are never shown
 							const objectiveEvents = built.match.objective
@@ -736,7 +748,9 @@ export function VodPage({
 									}
 									skipReason={skipReason}
 									justFormed={justFormed}
-									send={skipReason ? undefined : bulkSend}
+									send={
+										send?.state === "sent" && link ? { ...send, link } : send
+									}
 								>
 									{objectiveEvents.length > 0 ? (
 										<ObjectiveTimeline

@@ -12,17 +12,18 @@ import { useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage, WeaponImage } from "~/components/Image";
 import { StageBannerBox } from "~/components/StageBannerBox";
+import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import { sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
 import type { IngestSkipReason } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
 import { formatTime } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
 
-const SEND_CHIP_LABELS: Record<SendStatus["state"], string> = {
+const SEND_CHIP_LABELS: Record<Exclude<SendStatus["state"], "sent">, string> = {
 	queued: "queued",
 	sending: "sending…",
-	sent: "ingested",
 	failed: "failed",
 };
 
@@ -262,20 +263,50 @@ function StatusChip({
 			</span>
 		);
 	}
+	if (send?.state === "sent") {
+		return (
+			<span
+				className="match-chip sent"
+				title={`ingested ${new Date(send.at).toLocaleTimeString()}`}
+			>
+				✓
+				{send.link ? (
+					<a
+						href={ingestedMatchUrl(send.link)}
+						target="_blank"
+						rel="noreferrer"
+					>
+						{ingestedMatchLabel(send.link)}
+					</a>
+				) : null}
+			</span>
+		);
+	}
 	if (send) {
 		return (
 			<span className={clsx("match-chip", send.state)} title={send.error}>
 				{send.state === "queued" || send.state === "sending" ? (
 					<span className="dot" />
 				) : null}
-				{send.state === "sent" ? "✓ " : null}
 				{SEND_CHIP_LABELS[send.state]}
-				{send.state === "sent"
-					? ` ${new Date(send.at).toLocaleTimeString()}`
-					: null}
 			</span>
 		);
 	}
 	if (live) return null;
 	return <span className="match-chip">not sent</span>;
+}
+
+function ingestedMatchUrl(link: IngestedMatchLink): string {
+	return link.type === "tournament"
+		? tournamentMatchPage({
+				tournamentId: link.tournamentId,
+				matchId: link.matchId,
+			})
+		: sendouQMatchPage(link.groupMatchId);
+}
+
+function ingestedMatchLabel(link: IngestedMatchLink): string {
+	return link.type === "tournament"
+		? `Match ID #${link.matchId}`
+		: `SQ Match ID #${link.groupMatchId}`;
 }

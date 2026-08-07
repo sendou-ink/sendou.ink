@@ -11,6 +11,10 @@
  * hash, merges partials, and scoreboards first-ingest-wins.
  */
 
+import type {
+	IngestedMatchLink,
+	IngestResponse,
+} from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
 import { buildScannerMatches, ingestSkipReasons } from "../core/match-builder";
@@ -62,8 +66,15 @@ export async function sendMatches({
 		await updateEventsSend(ids, { state: "sending", at: Date.now() });
 		onStatus();
 		try {
-			await postIngestMatches([built.match]);
-			await updateEventsSend(ids, { state: "sent", at: Date.now() });
+			const response = await postIngestMatches([built.match]);
+			const link = response.linkedMatches?.find(
+				(linked) => linked.matchIndex === 0,
+			)?.link;
+			await updateEventsSend(ids, {
+				state: "sent",
+				at: Date.now(),
+				...(link ? { link } : null),
+			});
 			result.sentMatches++;
 		} catch (err) {
 			await updateEventsSend(ids, {
@@ -83,6 +94,8 @@ export interface VodResultsSendReport {
 	totalMatches: number;
 	/** last failure's message; null when every request went through */
 	error: string | null;
+	/** links /ingest reported, keyed by index into the scan's ingestable matches */
+	links: Array<{ matchIndex: number; link: IngestedMatchLink }>;
 }
 
 /**
@@ -103,17 +116,21 @@ export async function sendVodResults(
 
 	let sentMatches = 0;
 	let error: string | null = null;
+	const links: VodResultsSendReport["links"] = [];
 	for (let i = 0; i < matches.length; i += MAX_MATCHES_PER_REQUEST) {
 		const request = matches.slice(i, i + MAX_MATCHES_PER_REQUEST);
 		try {
-			await postIngestMatches(request);
+			const response = await postIngestMatches(request);
+			for (const linked of response.linkedMatches ?? []) {
+				links.push({ matchIndex: i + linked.matchIndex, link: linked.link });
+			}
 			sentMatches += request.length;
 			onProgress?.(sentMatches, matches.length);
 		} catch (err) {
 			error = err instanceof Error ? err.message : String(err);
 		}
 	}
-	return { sentMatches, totalMatches: matches.length, error };
+	return { sentMatches, totalMatches: matches.length, error, links };
 }
 
 /** The number of matches a set of events would send to /ingest. */
@@ -170,7 +187,9 @@ function ingestableBuilt<E extends DetectedEvent>(
 	return built.filter((match) => !skipped.has(match));
 }
 
-async function postIngestMatches(matches: ScannerMatch[]) {
+async function postIngestMatches(
+	matches: ScannerMatch[],
+): Promise<IngestResponse> {
 	const res = await fetch(INGEST_URL, {
 		method: "POST",
 		headers: { "Content-Type": "application/json" },
@@ -181,6 +200,7 @@ async function postIngestMatches(matches: ScannerMatch[]) {
 			res.status === 401 ? "not logged in to sendou.ink" : await errorText(res),
 		);
 	}
+	return res.json();
 }
 
 /**

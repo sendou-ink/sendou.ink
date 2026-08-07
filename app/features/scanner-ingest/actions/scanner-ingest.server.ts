@@ -9,7 +9,11 @@ import { logger } from "~/utils/logger";
 import { badRequestIfFalsy, forbidden, parseBody } from "~/utils/remix.server";
 import * as Scoreboards from "../core/Scoreboards";
 import * as ScannerIngestRepository from "../ScannerIngestRepository.server";
-import { ingestBodySchema } from "../scanner-ingest-schemas";
+import {
+	type IngestedMatchLink,
+	type IngestResponse,
+	ingestBodySchema,
+} from "../scanner-ingest-schemas";
 
 // xxx: dont only attach scoreboard on ingest, also when score is reported (for e.g. tournament stuff)
 // xxx: check why http://localhost:7001/to/4066/matches/139247?tab=result layout bad
@@ -30,15 +34,17 @@ export const action: ActionFunction = async ({ request }) => {
 		badRequestIfFalsy(await UserRepository.findLeanById(povUserId));
 	}
 
-	const matches = data.matches.filter(
-		(match) => match.lobby === null || match.lobby === "PRIVATE",
-	);
+	const indexedMatches = data.matches
+		.map((match, requestIndex) => ({ match, requestIndex }))
+		.filter(({ match }) => match.lobby === null || match.lobby === "PRIVATE");
+	const matches = indexedMatches.map(({ match }) => match);
 	if (matches.length === 0) {
 		return {
 			storedMatchesCount: 0,
 			mergedMatchesCount: 0,
 			linkedGamesCount: 0,
-		};
+			linkedMatches: [],
+		} satisfies IngestResponse;
 	}
 
 	const resolved = await resolveIngestContext({
@@ -56,6 +62,7 @@ export const action: ActionFunction = async ({ request }) => {
 		});
 
 	let linkedGamesCount = 0;
+	let linkedMatches: IngestResponse["linkedMatches"] = [];
 	if (resolved) {
 		const matched = Scoreboards.matchedGames({
 			matches: effectiveMatches.map((effective) => effective.data),
@@ -70,6 +77,11 @@ export const action: ActionFunction = async ({ request }) => {
 			})),
 			povUserId,
 		});
+
+		linkedMatches = matched.map(({ matchIndex, game }) => ({
+			matchIndex: indexedMatches[matchIndex]!.requestIndex,
+			link: ingestedMatchLink(resolved.context, game.target),
+		}));
 
 		logger.debug(
 			`ingest: ${Scoreboards.contextKey(resolved.context)} matched ${matched.length} games, ` +
@@ -86,8 +98,26 @@ export const action: ActionFunction = async ({ request }) => {
 		storedMatchesCount: insertedCount,
 		mergedMatchesCount: mergedCount,
 		linkedGamesCount,
-	};
+		linkedMatches,
+	} satisfies IngestResponse;
 };
+
+function ingestedMatchLink(
+	context: Scoreboards.IngestContext,
+	target: Scoreboards.IngestableGameTarget,
+): IngestedMatchLink {
+	if (target.type === "tournament" && context.type === "tournament") {
+		return {
+			type: "tournament",
+			tournamentId: context.tournamentId,
+			matchId: target.tournamentMatchId,
+		};
+	}
+	if (target.type === "sendouq") {
+		return { type: "sendouq", groupMatchId: target.groupMatchId };
+	}
+	throw new Error("ingest link target does not match its resolved context");
+}
 
 /**
  * How far back the POV user's reported games are considered as content-
