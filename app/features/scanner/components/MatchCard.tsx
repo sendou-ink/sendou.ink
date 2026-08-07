@@ -87,8 +87,11 @@ export function MatchCard({
 					<ModeImage mode={match.mode} size={30} className="match-mode" />
 				) : null}
 				<div className="match-headline">
-					<div className="match-stage">
-						{stageLabel(match.stage) ?? "Unknown stage"}
+					<div className="match-title">
+						<div className="match-stage">
+							{stageLabel(match.stage) ?? "Unknown stage"}
+						</div>
+						<StatusChip send={send} skipReason={skipReason} live={live} />
 					</div>
 					{meta ? <div className="match-meta">{meta}</div> : null}
 					<TeamWeapons match={match} />
@@ -102,25 +105,24 @@ export function MatchCard({
 					) : (
 						<Score match={match} inProgress={inProgress} />
 					)}
-					<StatusChip send={send} skipReason={skipReason} live={live} />
 					{onSend && send?.state !== "sent" && send?.state !== "sending" ? (
 						<button type="button" onClick={onSend}>
 							{send?.state === "failed" ? "Retry" : "Send"}
 						</button>
 					) : null}
+					{children ? (
+						<SendouButton
+							variant="minimal"
+							size="small"
+							shape="circle"
+							icon={<ChevronDown />}
+							className={clsx("match-expand", { expanded })}
+							aria-expanded={expanded}
+							aria-label={expanded ? "Hide events" : "Show events"}
+							onPress={() => setExpanded(!expanded)}
+						/>
+					) : null}
 				</div>
-				{children ? (
-					<SendouButton
-						variant="minimal"
-						size="small"
-						shape="circle"
-						icon={<ChevronDown />}
-						className={clsx("match-expand", { expanded })}
-						aria-expanded={expanded}
-						aria-label={expanded ? "Hide events" : "Show events"}
-						onPress={() => setExpanded(!expanded)}
-					/>
-				) : null}
 			</div>
 			{send?.state === "failed" && send.error ? (
 				<div className="match-error">{send.error}</div>
