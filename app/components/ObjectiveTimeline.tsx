@@ -1,8 +1,11 @@
 /**
  * Line chart of a game's objective-counter reads: one line per team
  * (remaining count over match time, so lines fall toward 0). Control is a
- * thick strip along the bottom of the chart (y = 0) in the controlling
- * team's color, absent while neither team controls. Penalty is a
+ * state rather than a count, so it gets its own lane in a gutter below the
+ * zero gridline instead of sharing the count axis — a strip in the
+ * controlling team's color, absent while neither team controls. The
+ * zero gridline is drawn in the stronger border color to read as the
+ * divider between the counts above and the lane below. Penalty is a
  * translucent band filled between score and score + penalty — its thickness
  * is the extra count the team must burn through before its score moves
  * again, so it grows when a penalty lands and shrinks as it counts down.
@@ -38,6 +41,11 @@ ChartJS.register(
 );
 
 const PENALTY_BRIDGE_SECONDS = 6;
+/** count-axis units of gutter kept below zero for the control lane */
+const CONTROL_LANE_DEPTH = 13;
+const CONTROL_LANE_Y = -6;
+const CONTROL_LANE_WIDTH = 6;
+const COUNT_TICK_STEP = 25;
 
 /** One objective-counter read, values in `[alpha, bravo]` order. */
 export interface ObjectiveTimelineSample {
@@ -93,19 +101,20 @@ export function ObjectiveTimeline({
 		spanGaps: true,
 		cubicInterpolationMode: "monotone" as const,
 	}));
-	// strip along y = 0 while the team is in control; the losing edge is kept
-	// at 0 too so the strip extends exactly to where control ended
+	// strip along the lane while the team is in control; the losing edge is
+	// kept in the lane too so the strip extends exactly to where control ended
 	const controlDatasets = ([0, 1] as const).map((side) => ({
 		label: `${teamLabels[side]} control`,
 		data: sorted.map((event, i) => ({
 			x: event.t,
 			y:
 				event.data.control[side] || sorted[i - 1]?.data.control[side]
-					? 0
+					? CONTROL_LANE_Y
 					: null,
 		})),
 		borderColor: teamColors[side],
-		borderWidth: 5,
+		borderWidth: CONTROL_LANE_WIDTH,
+		borderCapStyle: "round" as const,
 		pointRadius: 0,
 		pointHoverRadius: 0,
 		hitRadius: 0,
@@ -167,11 +176,18 @@ export function ObjectiveTimeline({
 							},
 						},
 						y: {
-							min: 0,
+							min: -CONTROL_LANE_DEPTH,
 							suggestedMax: 100,
-							grid: { color: colors.border },
+							bounds: "data",
+							grid: {
+								color: (ctx) => gridColor(ctx.tick?.value ?? 0, colors),
+								tickColor: (ctx) => gridColor(ctx.tick?.value ?? 0, colors),
+							},
 							border: { color: colors.borderHigh },
-							ticks: { color: colors.text, stepSize: 25 },
+							afterBuildTicks: (axis) => {
+								axis.ticks = countAxisTicks(axis.max);
+							},
+							ticks: { color: colors.text, autoSkip: false },
 						},
 					},
 					plugins: {
@@ -222,6 +238,27 @@ export function ObjectiveTimeline({
 			/>
 		</div>
 	);
+}
+
+/**
+ * One tick every 25 up to the top of the data and none below zero, so the
+ * control gutter stays free of axis furniture.
+ */
+function countAxisTicks(max: number) {
+	const ticks = [];
+	for (let value = 0; value <= max; value += COUNT_TICK_STEP) {
+		ticks.push({ value });
+	}
+	return ticks;
+}
+
+/** zero divides counts from the lane, so it is drawn stronger; the gutter has no grid */
+function gridColor(
+	value: number,
+	colors: { border: string; borderHigh: string },
+) {
+	if (value < 0) return "transparent";
+	return value === 0 ? colors.borderHigh : colors.border;
 }
 
 /**

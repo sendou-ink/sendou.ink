@@ -155,8 +155,7 @@
 	border: none;
 	background: transparent;
 	cursor: pointer;
-	color: var(--color-text-high);
-	font-size: var(--font-3xs);
+	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;

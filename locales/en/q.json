@@ -176,7 +176,7 @@
 	"match.timeline.explainer.substitution": "Player substitution",
 	"match.timeline.explainer.spChange": "SP updates",
 	"match.timeline.points": "{{points}}p",
-	"match.timeline.stats": "Stats",
+	"match.timeline.details": "Details",
 	"match.timeline.stats.paint": "Paint",
 	"match.timeline.stats.kills": "K/A",
 	"match.timeline.stats.deaths": "D",

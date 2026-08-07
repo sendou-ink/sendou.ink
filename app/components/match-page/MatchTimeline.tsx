@@ -379,7 +379,7 @@ function TimelineScoreboardSection({
 				onClick={() => setIsExpanded(!isExpanded)}
 				aria-expanded={isExpanded}
 			>
-				{t("q:match.timeline.stats")}
+				{t("q:match.timeline.details")}
 				<ChevronDown
 					size={14}
 					className={clsx(styles.scoreboardChevron, {
