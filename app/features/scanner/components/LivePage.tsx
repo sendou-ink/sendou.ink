@@ -1,4 +1,7 @@
+import { Camera, Ellipsis, FileText, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
 import {
 	listVideoInputs,
@@ -158,103 +161,110 @@ export function LivePage({
 		[refreshFeed],
 	);
 
-	const start = useCallback(async () => {
-		setError(null);
-		setStatus("loading");
-		// a restart may land mid-another-match; collect until its mode is known
-		objectiveBlockedRef.current = false;
-		try {
-			const video = videoRef.current!;
-			const stream = await openVirtualCamera(deviceId || undefined);
-			video.srcObject = stream;
-			await video.play();
-			setDevices(await listVideoInputs());
+	/** `withLiveSend`: send each match to sendou.ink as it closes. */
+	const start = useCallback(
+		async (withLiveSend: boolean) => {
+			setError(null);
+			setSendouError(null);
+			setStatus("loading");
+			liveSendRef.current = withLiveSend;
+			setLiveSend(withLiveSend);
+			// a restart may land mid-another-match; collect until its mode is known
+			objectiveBlockedRef.current = false;
+			try {
+				const video = videoRef.current!;
+				const stream = await openVirtualCamera(deviceId || undefined);
+				video.srcObject = stream;
+				await video.play();
+				setDevices(await listVideoInputs());
 
-			clientRef.current ??= new AnalyzerClient(
-				(result) => {
-					// one result arrives per detector per frame; status reflects
-					// whether any of them fired
-					gatesRef.current.set(result.detector, result.gate);
-					const gates = [...gatesRef.current.values()];
-					setGateScore(Math.max(...gates.map((g) => g.score)));
-					if (!result.gate.pass) {
-						if (!gates.some((g) => g.pass)) setStatus("watching");
-						return;
-					}
-					setStatus("detected");
-					for (const event of result.events as DetectedEvent<FixtureData>[]) {
-						latestParseRef.current = { type: event.type, data: event.data };
-						if (
-							event.type === OBJECTIVE_EVENT_TYPE &&
-							objectiveBlockedRef.current
-						) {
-							continue;
+				clientRef.current ??= new AnalyzerClient(
+					(result) => {
+						// one result arrives per detector per frame; status reflects
+						// whether any of them fired
+						gatesRef.current.set(result.detector, result.gate);
+						const gates = [...gatesRef.current.values()];
+						setGateScore(Math.max(...gates.map((g) => g.score)));
+						if (!result.gate.pass) {
+							if (!gates.some((g) => g.pass)) setStatus("watching");
+							return;
 						}
-						const action = timelineRef.current.push(event);
-						if (action.action === "added" || action.action === "replaced") {
-							if (event.type === MAP_START_EVENT_TYPE) {
-								const mode = (event.data as MapStartData).mode;
-								objectiveBlockedRef.current = mode !== null && mode !== "SZ";
-							} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-								objectiveBlockedRef.current = false;
+						setStatus("detected");
+						for (const event of result.events as DetectedEvent<FixtureData>[]) {
+							latestParseRef.current = { type: event.type, data: event.data };
+							if (
+								event.type === OBJECTIVE_EVENT_TYPE &&
+								objectiveBlockedRef.current
+							) {
+								continue;
 							}
-							const stale =
-								action.action === "replaced"
-									? storedIdsRef.current.get(action.replaced)
-									: undefined;
-							void (async () => {
-								const thumbnail = result.frame
-									? await thumbnailFromBlob(result.frame)
-									: undefined;
-								// reusing the replaced event's id keeps match card keys
-								// stable, so repeat detections don't remount the cards
-								const id = await saveEvent(
-									event,
-									thumbnail,
-									result.frame,
-									stale,
-								);
-								storedIdsRef.current.set(event, id);
-								if (
-									liveSendRef.current &&
-									INGESTABLE_TYPES.includes(event.type)
-								) {
-									if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-										// a scoreboard closes its match — send it
-										refreshFeed();
-										await send(
-											(built) =>
-												matchContaining(id)(built) && unsentMatches(built),
-										);
-									} else {
-										await updateEventsSend([id], {
-											state: "queued",
-											at: Date.now(),
-										});
-									}
+							const action = timelineRef.current.push(event);
+							if (action.action === "added" || action.action === "replaced") {
+								if (event.type === MAP_START_EVENT_TYPE) {
+									const mode = (event.data as MapStartData).mode;
+									objectiveBlockedRef.current = mode !== null && mode !== "SZ";
+								} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+									objectiveBlockedRef.current = false;
 								}
-								refreshFeed();
-							})();
+								const stale =
+									action.action === "replaced"
+										? storedIdsRef.current.get(action.replaced)
+										: undefined;
+								void (async () => {
+									const thumbnail = result.frame
+										? await thumbnailFromBlob(result.frame)
+										: undefined;
+									// reusing the replaced event's id keeps match card keys
+									// stable, so repeat detections don't remount the cards
+									const id = await saveEvent(
+										event,
+										thumbnail,
+										result.frame,
+										stale,
+									);
+									storedIdsRef.current.set(event, id);
+									if (
+										liveSendRef.current &&
+										INGESTABLE_TYPES.includes(event.type)
+									) {
+										if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+											// a scoreboard closes its match — send it
+											refreshFeed();
+											await send(
+												(built) =>
+													matchContaining(id)(built) && unsentMatches(built),
+											);
+										} else {
+											await updateEventsSend([id], {
+												state: "queued",
+												at: Date.now(),
+											});
+										}
+									}
+									refreshFeed();
+								})();
+							}
 						}
-					}
-				},
-				(message) => {
-					setError(message);
-					setStatus("error");
-				},
-			);
-			await clientRef.current.whenReady();
+					},
+					(message) => {
+						setError(message);
+						setStatus("error");
+					},
+				);
+				await clientRef.current.whenReady();
 
-			stopRef.current = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
-				clientRef.current?.analyze(bitmap, t);
-			});
-			setStatus("watching");
-			setRunning(true);
-		} catch (e) {
-			setError(String(e));
-			setStatus("error");
-		}
-	}, [deviceId, refreshFeed, send]);
+				stopRef.current = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
+					clientRef.current?.analyze(bitmap, t);
+				});
+				setStatus("watching");
+				setRunning(true);
+			} catch (e) {
+				setError(String(e));
+				setStatus("error");
+			}
+		},
+		[deviceId, refreshFeed, send],
+	);
 
 	const builtMatches = buildScannerMatches(feed);
 	const skipReasons = ingestSkipReasons(builtMatches);
@@ -274,19 +284,57 @@ export function LivePage({
 		// the scan ending is the last match boundary — flush what's unsent
 		// (partials are safe: the server merges them into fuller resends)
 		if (liveSendRef.current) void send(unsentMatches);
+		liveSendRef.current = false;
+		setLiveSend(false);
 	}, [send]);
 
 	return (
 		<div>
 			<div className="controls">
 				{!running ? (
-					<button type="button" onClick={() => void start()}>
-						Start capture
-					</button>
+					<>
+						{SENDOU_UPLOAD_ENABLED ? (
+							<button
+								type="button"
+								disabled={!sendouUser}
+								title={sendouUser ? undefined : "log in on sendou.ink first"}
+								onClick={() => void start(true)}
+							>
+								<Send aria-hidden />
+								Start capture
+							</button>
+						) : null}
+						<button
+							type="button"
+							className={SENDOU_UPLOAD_ENABLED ? "outlined" : undefined}
+							onClick={() => void start(false)}
+						>
+							{SENDOU_UPLOAD_ENABLED
+								? "Start capture (no sending)"
+								: "Start capture"}
+						</button>
+					</>
 				) : (
-					<button type="button" onClick={stop}>
-						Stop
-					</button>
+					<>
+						<button type="button" onClick={stop}>
+							Stop
+						</button>
+						{SENDOU_UPLOAD_ENABLED ? (
+							<button
+								type="button"
+								className="outlined"
+								disabled={!sendouUser}
+								title={sendouUser ? undefined : "log in on sendou.ink first"}
+								onClick={() => {
+									liveSendRef.current = !liveSend;
+									setLiveSend(!liveSend);
+								}}
+							>
+								<Send aria-hidden />
+								{liveSend ? "Stop sending" : "Start sending"}
+							</button>
+						) : null}
+					</>
 				)}
 				<select value={deviceId} onChange={(e) => setDeviceId(e.target.value)}>
 					<option value="">Default camera (OBS Virtual Camera)</option>
@@ -302,19 +350,17 @@ export function LivePage({
 					{status}
 					{gateScore !== null && ` · gate ${gateScore.toFixed(2)}`}
 				</span>
-				<button
-					type="button"
-					disabled={!running}
-					onClick={() =>
+				{liveSend ? (
+					<span className="status watching">sending matches live</span>
+				) : null}
+				<LiveMenu
+					canSaveFixture={running}
+					canSend={Boolean(sendouUser) && feed.length > 0}
+					hasEvents={feed.length > 0}
+					onSaveFixture={() =>
 						void saveFixture(videoRef.current!, latestParseRef.current)
 					}
-				>
-					Save frame as fixture
-				</button>
-				<button
-					type="button"
-					disabled={feed.length === 0}
-					onClick={() =>
+					onDownloadCsv={() =>
 						downloadEventsCsv(
 							`live-events-${new Date().toISOString().slice(0, 19).replaceAll(":", "-")}.csv`,
 							// feed is newest-first for display; export in chronological order
@@ -324,42 +370,13 @@ export function LivePage({
 							),
 						)
 					}
-				>
-					Download CSV
-				</button>
-				<button
-					type="button"
-					onClick={() => {
+					onSendUnsent={() => void send(unsentMatches, { manual: true })}
+					onClearFeed={() => {
+						if (!window.confirm("Clear all detected events?")) return;
 						void clearEvents().then(refreshFeed);
 					}}
-				>
-					Clear feed
-				</button>
+				/>
 			</div>
-			{SENDOU_UPLOAD_ENABLED && (
-				<div className="controls">
-					<button
-						type="button"
-						disabled={!sendouUser}
-						onClick={() => {
-							liveSendRef.current = !liveSend;
-							setLiveSend(!liveSend);
-						}}
-					>
-						{liveSend ? "Stop live send" : "Start live send"}
-					</button>
-					<button
-						type="button"
-						disabled={!sendouUser || feed.length === 0}
-						onClick={() => void send(unsentMatches, { manual: true })}
-					>
-						Send unsent to sendou.ink
-					</button>
-					{liveSend && (
-						<span className="status watching">sending matches live</span>
-					)}
-				</div>
-			)}
 			{error && <p className="error">{error}</p>}
 			{sendouError && <p className="error">{sendouError}</p>}
 			<div className="live-layout">
@@ -463,5 +480,68 @@ export function LivePage({
 				</div>
 			</div>
 		</div>
+	);
+}
+
+/** The capture's occasional actions, behind one icon-only menu. */
+function LiveMenu({
+	canSaveFixture,
+	canSend,
+	hasEvents,
+	onSaveFixture,
+	onDownloadCsv,
+	onSendUnsent,
+	onClearFeed,
+}: {
+	canSaveFixture: boolean;
+	canSend: boolean;
+	hasEvents: boolean;
+	onSaveFixture: () => void;
+	onDownloadCsv: () => void;
+	onSendUnsent: () => void;
+	onClearFeed: () => void;
+}) {
+	return (
+		<SendouMenu
+			trigger={
+				<SendouButton
+					icon={<Ellipsis />}
+					className="icon-menu"
+					aria-label="More actions"
+				/>
+			}
+		>
+			<SendouMenuItem
+				icon={<Camera />}
+				isDisabled={!canSaveFixture}
+				onAction={onSaveFixture}
+			>
+				Save frame as fixture
+			</SendouMenuItem>
+			<SendouMenuItem
+				icon={<FileText />}
+				isDisabled={!hasEvents}
+				onAction={onDownloadCsv}
+			>
+				CSV
+			</SendouMenuItem>
+			{SENDOU_UPLOAD_ENABLED ? (
+				<SendouMenuItem
+					icon={<Send />}
+					isDisabled={!canSend}
+					onAction={onSendUnsent}
+				>
+					Send unsent to sendou.ink
+				</SendouMenuItem>
+			) : null}
+			<SendouMenuItem
+				icon={<Trash2 />}
+				isDestructive
+				isDisabled={!hasEvents}
+				onAction={onClearFeed}
+			>
+				Clear feed
+			</SendouMenuItem>
+		</SendouMenu>
 	);
 }

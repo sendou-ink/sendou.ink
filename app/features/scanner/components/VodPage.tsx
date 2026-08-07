@@ -13,7 +13,7 @@
  * Completed scans are persisted to IndexedDB keyed by file name
  * (src/store/vods.ts); the default view lists them for reinspection.
  */
-import { Download, FileText, Send, Video } from "lucide-react";
+import { Download, FileText, Send, Trash2, Video } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -666,9 +666,15 @@ export function VodPage({
 							<button type="button" onClick={() => void openStored(vod)}>
 								Open
 							</button>
-							<button type="button" onClick={() => void removeVod(vod.name)}>
-								Delete
-							</button>
+							<SendouButton
+								variant="destructive"
+								size="small"
+								shape="square"
+								className="vod-delete"
+								icon={<Trash2 />}
+								aria-label="Delete"
+								onPress={() => void removeVod(vod.name)}
+							/>
 						</div>
 					))}
 				</div>
@@ -801,7 +807,7 @@ function ExportMenu({
 			trigger={
 				<SendouButton
 					icon={<Download />}
-					className="export-menu"
+					className="icon-menu"
 					aria-label="Export"
 				/>
 			}

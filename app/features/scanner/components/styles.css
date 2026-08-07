@@ -3,6 +3,10 @@ Scanner feature styles, ported from emberz. Scoped under .scanner-app so nothing
 leaks into the host app; design tokens come from sendou.ink's own
 app/styles/vars.css (the emberz copies of those tokens were dropped).
 */
+.scanner-app {
+	container: scanner / inline-size;
+}
+
 .scanner-app .topbar {
 	display: flex;
 	align-items: center;
@@ -65,6 +69,11 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	}
 }
 
+.scanner-app button.outlined {
+	background: transparent;
+	color: var(--color-text-accent);
+}
+
 .scanner-app button:focus-visible {
 	outline: var(--focus-ring);
 	outline-offset: 1px;
@@ -80,8 +89,11 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	transform: initial;
 }
 
+/* the global select is full width, which would break the controls row */
 .scanner-app select {
 	appearance: none;
+	width: auto;
+	max-width: 20rem;
 	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
@@ -149,7 +161,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 
 .scanner-app .live-layout {
 	display: grid;
-	grid-template-columns: minmax(320px, 640px) 1fr;
+	grid-template-columns: minmax(320px, 640px) minmax(0, 1fr);
 	gap: var(--s-4);
 	align-items: start;
 }
@@ -536,6 +548,15 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	flex: 1;
 }
 
+/* the shared destructive variant loses to `.scanner-app button` on specificity */
+.scanner-app button.vod-delete {
+	width: var(--field-size-sm);
+	padding: 0;
+	border-color: var(--color-error);
+	background: var(--color-error);
+	outline-color: var(--color-error);
+}
+
 .scanner-app .dropzone {
 	border: var(--border-width) dashed var(--color-border-high);
 	border-radius: var(--radius-box);
@@ -614,7 +635,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	color: var(--color-text-high);
 }
 
-.scanner-app .candidates .cand:first-child {
+.scanner-app .weapon-candidates .cand:first-child {
 	color: var(--color-success);
 }
 
@@ -650,8 +671,8 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	}
 }
 
-/* export formats live behind this icon-only trigger, pushed to the row's end */
-.scanner-app button.export-menu {
+/* secondary actions live behind this icon-only trigger, pushed to the row's end */
+.scanner-app button.icon-menu {
 	margin-inline-start: auto;
 	width: var(--field-size-sm);
 	padding: 0;
@@ -693,6 +714,7 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 }
 
 .scanner-app .match-card {
+	container: match-card / inline-size;
 	position: sticky;
 	top: var(--layout-sticky-top);
 	z-index: 1;
@@ -831,7 +853,15 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .match-weapons {
 	display: flex;
 	align-items: center;
+	flex-wrap: wrap;
 	gap: var(--s-0-5);
+
+	/* a team is one wrapping unit: the eight never break up mid-team */
+	& .weapon-row {
+		display: flex;
+		align-items: center;
+		gap: var(--s-0-5);
+	}
 
 	& .vs {
 		font-size: var(--font-2xs);
@@ -1121,6 +1151,56 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 .scanner-app .telemetry table th:first-child,
 .scanner-app .telemetry table td:first-child {
 	text-align: left;
+}
+
+/* ── narrow viewports ──────────────────────────────────────────────── */
+
+/* a 640px wide preview would starve the feed next to it: split evenly instead */
+@container scanner (width < 1000px) {
+	.scanner-app .live-layout {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	}
+
+	/* the controls wrap here, where a trigger pushed to the end reads as stray */
+	.scanner-app button.icon-menu {
+		margin-inline-start: 0;
+	}
+}
+
+/* the two teams' weapons no longer fit beside each other: one row each */
+@container match-card (width < 460px) {
+	.scanner-app .match-weapons {
+		flex-direction: column;
+		align-items: flex-start;
+		row-gap: var(--s-1);
+
+		& .vs {
+			display: none;
+		}
+	}
+}
+
+@container scanner (width < 700px) {
+	.scanner-app .live-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	/* stacked, the preview would otherwise push the feed off the screen */
+	.scanner-app video.preview,
+	.scanner-app canvas.preview {
+		max-height: 45vh;
+		object-fit: contain;
+	}
+
+	.scanner-app .vod-item {
+		flex-wrap: wrap;
+	}
+
+	/* the ROI crops set the width; scroll them instead of the whole page */
+	.scanner-app table.inspector {
+		display: block;
+		overflow-x: auto;
+	}
 }
 
 @media (prefers-reduced-motion: reduce) {

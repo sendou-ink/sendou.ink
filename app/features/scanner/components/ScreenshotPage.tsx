@@ -671,7 +671,7 @@ export function ScreenshotPage() {
 										<RoiCrop frame={frame} roi={roi.weapon} />
 									</td>
 									<td>
-										<div className="candidates">
+										<div className="candidates weapon-candidates">
 											{dbg?.weapon?.top.map((c) => (
 												<span className="cand" key={c.id}>
 													<img

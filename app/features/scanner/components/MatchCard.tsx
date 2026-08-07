@@ -12,6 +12,7 @@ import { useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage, WeaponImage } from "~/components/Image";
 import { StageBannerBox } from "~/components/StageBannerBox";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { IngestSkipReason } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
@@ -199,36 +200,43 @@ function Score({
 	);
 }
 
+interface TeamWeapon {
+	weaponId: MainWeaponId;
+	/** the scan's own player — highlighted among the eight */
+	pov: boolean;
+}
+
 function TeamWeapons({ match }: { match: ScannerMatch }) {
-	const weaponsOf = (team: 0 | 1) =>
+	const weaponsOf = (team: 0 | 1): TeamWeapon[] =>
 		match.teams[team].players
 			.map((player, index) => ({
 				weaponId: player.weaponId,
 				pov: match.pov?.team === team && match.pov.index === index,
 			}))
-			.filter((weapon) => weapon.weaponId !== null);
+			.filter((weapon): weapon is TeamWeapon => weapon.weaponId !== null);
 	const alpha = weaponsOf(0);
 	const bravo = weaponsOf(1);
 	if (alpha.length + bravo.length === 0) return null;
 
 	return (
 		<div className="match-weapons">
-			{alpha.map((weapon, i) => (
-				<WeaponImage
-					key={i}
-					weaponSplId={weapon.weaponId!}
-					variant="build"
-					size={22}
-					className={clsx("weapon-icon", { pov: weapon.pov })}
-				/>
-			))}
+			{alpha.length > 0 ? <WeaponRow weapons={alpha} /> : null}
 			{alpha.length > 0 && bravo.length > 0 ? (
 				<span className="vs">vs</span>
 			) : null}
-			{bravo.map((weapon, i) => (
+			{bravo.length > 0 ? <WeaponRow weapons={bravo} /> : null}
+		</div>
+	);
+}
+
+/** One team's weapons, kept together when the card is too narrow for both. */
+function WeaponRow({ weapons }: { weapons: TeamWeapon[] }) {
+	return (
+		<div className="weapon-row">
+			{weapons.map((weapon, i) => (
 				<WeaponImage
 					key={i}
-					weaponSplId={weapon.weaponId!}
+					weaponSplId={weapon.weaponId}
 					variant="build"
 					size={22}
 					className={clsx("weapon-icon", { pov: weapon.pov })}
