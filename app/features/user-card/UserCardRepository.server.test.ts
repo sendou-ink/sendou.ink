@@ -82,6 +82,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				bannerPresetImg: null,
 				bannerImgId: null,
 				unverifiedPeakXP: { overall: 2600, takoroka: null, tentatek: 2600 },
+				xpDivision: "WEST",
 				hiddenCardStats: [],
 			}),
 		);
@@ -107,6 +108,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				bannerPresetImg: null,
 				bannerImgId: null,
 				unverifiedPeakXP: { overall: 2400, takoroka: null, tentatek: 2400 },
+				xpDivision: "WEST",
 				hiddenCardStats: [],
 			}),
 		);
@@ -129,6 +131,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				bannerPresetImg: null,
 				bannerImgId: null,
 				unverifiedPeakXP: { overall: 2800, takoroka: null, tentatek: 2800 },
+				xpDivision: "WEST",
 				hiddenCardStats: [],
 			}),
 		);
@@ -143,6 +146,95 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		});
 	});
 
+	it("shows the verified peak XP of the picked division", async () => {
+		await insertVerifiedXp(owner.id, 3010, "WEST");
+		await insertVerifiedXp(owner.id, 3000, "JPN");
+		await withUserId(owner.id, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: null,
+				xpDivision: "JPN",
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
+		);
+
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
+			type: "XP",
+			values: [{ isVerified: true, region: "JPN", points: 3000 }],
+		});
+	});
+
+	it("shows the highest verified peak XP across divisions when none is picked", async () => {
+		await insertVerifiedXp(owner.id, 3010, "WEST");
+		await insertVerifiedXp(owner.id, 3000, "JPN");
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
+		);
+
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
+			type: "XP",
+			values: [{ isVerified: true, region: "WEST", points: 3010 }],
+		});
+	});
+
+	it("falls back to the other division when the picked one has no placements", async () => {
+		await insertVerifiedXp(owner.id, 3010, "WEST");
+		await withUserId(owner.id, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: null,
+				xpDivision: "JPN",
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
+		);
+
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
+			type: "XP",
+			values: [{ isVerified: true, region: "WEST", points: 3010 }],
+		});
+	});
+
+	it("judges self-reported peak XP against the picked division's verified XP", async () => {
+		await insertVerifiedXp(owner.id, 3010, "WEST");
+		await insertVerifiedXp(owner.id, 3000, "JPN");
+		await withUserId(owner.id, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: { overall: 3005, takoroka: 3005, tentatek: null },
+				xpDivision: "JPN",
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
+		);
+
+		// 3005 does not beat the 3010 of the other division, but that ladder is not the one shown
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
+			type: "XP",
+			values: [
+				{ isVerified: false, region: "JPN", points: 3005 },
+				{ isVerified: true, region: "JPN", points: 3000 },
+			],
+		});
+	});
+
 	it("ignores self-reported peak XP when there is no verified XP", async () => {
 		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({
@@ -150,6 +242,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				bannerPresetImg: null,
 				bannerImgId: null,
 				unverifiedPeakXP: { overall: 3000, takoroka: 3000, tentatek: null },
+				xpDivision: "JPN",
 				hiddenCardStats: [],
 			}),
 		);
@@ -171,6 +264,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				bannerPresetImg: "#ff4655",
 				bannerImgId: null,
 				unverifiedPeakXP: null,
+				xpDivision: null,
 				hiddenCardStats: ["XP"],
 			}),
 		);
@@ -206,6 +300,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				bannerPresetImg: null,
 				bannerImgId: null,
 				unverifiedPeakXP: null,
+				xpDivision: null,
 				hiddenCardStats: ["XP"],
 			}),
 		);
@@ -236,6 +331,7 @@ describe("UserCardRepository.findAllByUserIds", () => {
 				bannerPresetImg: null,
 				bannerImgId: image.id,
 				unverifiedPeakXP: null,
+				xpDivision: null,
 				hiddenCardStats: [],
 			}),
 		);

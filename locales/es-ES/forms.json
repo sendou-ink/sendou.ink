@@ -15,6 +15,7 @@
 	"options.bannerType.URL": "Subir imagen",
 	"options.xpDivision.WEST": "Tentatek",
 	"options.xpDivision.JPN": "Takoroka",
+	"bottomTexts.xpDivision": "",
 	"bottomTexts.unverifiedXp": "Reporta un récord de energía hasta 200 puntos superior a tu energía en combate X verificada. Requiere tener resultados del combate X vinculados para poder compararlo.",
 	"bottomTexts.reportMatchId": "Partida de SendouQ a la que se refiere este reporte (opcional).",
 	"errors.unverifiedXpNotAboveVerified": "El récord de energía debe ser superior a tu energía en combate X verificada, por un máximo de 200 puntos. Vincula tus resultados del combate X primero.",

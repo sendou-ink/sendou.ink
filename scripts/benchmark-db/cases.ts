@@ -1156,6 +1156,9 @@ export function buildCases(fx: Fixtures): {
 	add("UserCardRepository.findCardEditExtrasByUserId", fx.heavyUser, (user) =>
 		UserCardRepository.findCardEditExtrasByUserId(user.id),
 	);
+	add("UserCardRepository.findVerifiedXpByUserId", fx.heavyUser, (user) =>
+		UserCardRepository.findVerifiedXpByUserId(user.id, null),
+	);
 
 	// UserRepository
 	add("UserRepository.findIdByIdentifier", fx.heavyUser, (user) =>

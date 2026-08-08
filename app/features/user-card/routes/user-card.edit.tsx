@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import { type MetaFunction, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { HowToLinkPopover } from "~/features/top-search/components/HowToLinkPopover";
-import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -76,10 +75,8 @@ function defaultValues(data: Awaited<ReturnType<typeof loader>>) {
 		bannerColor: banner.type === "COLOR" ? banner.hexCode : PRESET_COLORS[0],
 		bannerStageId: banner.type === "STAGE" ? banner.stageId : 1,
 		bannerImage: existingImage(extras.bannerImgId, extras.bannerImageUrl),
+		xpDivision: extras.xpDivision,
 		unverifiedXpPoints: peakXp?.overall,
-		unverifiedXpDivision: (typeof peakXp?.takoroka === "number"
-			? "JPN"
-			: "WEST") as XRankPlacementRegion,
 		hideXp: extras.hiddenCardStats.includes("XP"),
 		hideDiv: extras.hiddenCardStats.includes("DIV"),
 	};
@@ -107,8 +104,8 @@ function CardEditFields() {
 					</p>
 				)
 			) : null}
+			<FormField name="xpDivision" />
 			<FormField name="unverifiedXpPoints" />
-			<FormField name="unverifiedXpDivision" />
 			{presentStats.includes("XP") ? <FormField name="hideXp" /> : null}
 			{presentStats.includes("DIV") ? <FormField name="hideDiv" /> : null}
 		</div>

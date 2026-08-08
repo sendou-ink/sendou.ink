@@ -64,6 +64,7 @@ const EMPTY_CARD: CardArgs = {
 	bannerPresetImg: null,
 	bannerImgId: null,
 	unverifiedPeakXP: null,
+	xpDivision: null,
 	hiddenCardStats: [],
 };
 
