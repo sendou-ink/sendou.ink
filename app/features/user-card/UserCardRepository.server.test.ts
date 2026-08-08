@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
+import { db } from "~/db/sql";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
@@ -396,15 +397,8 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 		const first = await cachedCard(target.id);
 		expect(first.userCards.get(target.id)?.shortBio).toBeNull();
 
-		await withUserId(target.id, () =>
-			UserCardRepository.updateOwnCard({
-				shortBio: "edited",
-				bannerPresetImg: null,
-				bannerImgId: null,
-				unverifiedPeakXP: null,
-				hiddenCardStats: [],
-			}),
-		);
+		// written past the repository so the cached card is left in place
+		await updateShortBioDirectly(target.id, "edited");
 
 		const { userCards } = await withNoUser(() =>
 			UserCardRepository.findAllByUserIdsCached({
@@ -419,16 +413,26 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 	it("returns a fresh card once the cached one has expired", async () => {
 		await cachedCard(target.id);
 
+		await updateShortBioDirectly(target.id, "edited");
+		UserCardRepository.clearUserCardCache();
+
+		const { userCards } = await cachedCard(target.id);
+		expect(userCards.get(target.id)?.shortBio).toBe("edited");
+	});
+
+	it("returns a fresh card right after its owner edited it", async () => {
+		await cachedCard(target.id);
+
 		await withUserId(target.id, () =>
 			UserCardRepository.updateOwnCard({
 				shortBio: "edited",
 				bannerPresetImg: null,
 				bannerImgId: null,
 				unverifiedPeakXP: null,
+				xpDivision: null,
 				hiddenCardStats: [],
 			}),
 		);
-		UserCardRepository.clearUserCardCache();
 
 		const { userCards } = await cachedCard(target.id);
 		expect(userCards.get(target.id)?.shortBio).toBe("edited");
@@ -446,3 +450,12 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 		);
 	});
 });
+
+function updateShortBioDirectly(userId: number, shortBio: string) {
+	// biome-ignore lint/plugin: updateOwnCard invalidates the cached card, which these tests need to leave in place
+	return db
+		.updateTable("User")
+		.set({ shortBio })
+		.where("id", "=", userId)
+		.execute();
+}

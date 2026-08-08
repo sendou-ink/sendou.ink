@@ -273,8 +273,11 @@ export async function findVerifiedXpByUserId(
 	return verifiedXp(row?.xpPeaks ?? null, xpDivision);
 }
 
-/** Updates the editable user card fields of the acting user (their own card). */
-export function updateOwnCard(args: {
+/**
+ * Updates the editable user card fields of the acting user (their own card), dropping their
+ * cached card so they are not shown their pre-edit one by {@link findAllByUserIdsCached}.
+ */
+export async function updateOwnCard(args: {
 	shortBio: string | null;
 	bannerPresetImg: string | null;
 	bannerImgId: number | null;
@@ -284,7 +287,7 @@ export function updateOwnCard(args: {
 	hiddenCardStats: Array<HideableUserCardStat>;
 }) {
 	const userId = actorId();
-	return db.transaction().execute(async (trx) => {
+	await db.transaction().execute(async (trx) => {
 		// a removed or replaced uploaded banner is no longer referenced by anything,
 		// so its submitted image row is cleaned up (mirrors custom avatar handling)
 		const current = await trx
@@ -318,6 +321,8 @@ export function updateOwnCard(args: {
 			.where("id", "=", userId)
 			.execute();
 	});
+
+	cardCache.delete(userId);
 }
 
 /** SQLite `case` expression mapping `User.id % PRESET_COLORS.length` to a preset banner color. */
