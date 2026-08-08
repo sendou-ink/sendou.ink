@@ -211,11 +211,11 @@ export function insert({
 /**
  * Creates a new registration or applies a full-state edit to an existing one in a
  * single transaction: team name, linked sendou.ink team, owner assignment/transfer,
- * member adds/removes, in-game name updates and tournament name updates. Pass
- * `tournamentTeamId` to edit an existing team, or omit it to create a new one (all
- * members are then "added" and `ownerUserId` becomes the owner). The caller is
- * responsible for validating the derived ops and for any side effects (cache updates,
- * notifications) outside the transaction.
+ * member adds/removes, in-game name updates, tournament name updates and the
+ * counterpick map pool. Pass `tournamentTeamId` to edit an existing team, or omit it
+ * to create a new one (all members are then "added" and `ownerUserId` becomes the
+ * owner). The caller is responsible for validating the derived ops and for any side
+ * effects (cache updates, notifications) outside the transaction.
  *
  * Returns the tournament name changes that were actually applied (submitted values
  * equal to the user's current one are no-ops), for the caller to log.
@@ -232,6 +232,7 @@ export function upsertRegistration({
 	membersToRemove,
 	inGameNameUpdates,
 	tournamentNameUpdates,
+	mapPool,
 }: {
 	/** Present when editing an existing team, omitted when creating a new one. */
 	tournamentTeamId?: number;
@@ -253,6 +254,8 @@ export function upsertRegistration({
 		userId: number;
 		tournamentName: string | null;
 	}>;
+	/** Counterpick map pool to replace the team's with. Omitted leaves it as is. */
+	mapPool?: MapPool;
 }) {
 	const isNew = typeof tournamentTeamId !== "number";
 
@@ -299,6 +302,10 @@ export function upsertRegistration({
 				tournamentTeamId: id,
 				name,
 			});
+		}
+
+		if (mapPool) {
+			await replaceCounterpickMaps(trx, { tournamentTeamId: id, mapPool });
 		}
 
 		for (const userId of membersToRemove) {
@@ -956,30 +963,40 @@ export function leave({
 	});
 }
 
-export function upsertCounterpickMaps({
-	tournamentTeamId,
-	mapPool,
-}: {
+export function upsertCounterpickMaps(args: {
 	tournamentTeamId: Tables["TournamentTeam"]["id"];
 	mapPool: MapPool;
 }) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("MapPoolMap")
-			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
-			.execute();
+	return db.transaction().execute((trx) => replaceCounterpickMaps(trx, args));
+}
 
-		await trx
-			.insertInto("MapPoolMap")
-			.values(
-				mapPool.stageModePairs.map(({ stageId, mode }) => ({
-					tournamentTeamId,
-					stageId,
-					mode,
-				})),
-			)
-			.execute();
-	});
+async function replaceCounterpickMaps(
+	trx: Transaction<DB>,
+	{
+		tournamentTeamId,
+		mapPool,
+	}: {
+		tournamentTeamId: Tables["TournamentTeam"]["id"];
+		mapPool: MapPool;
+	},
+) {
+	await trx
+		.deleteFrom("MapPoolMap")
+		.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
+		.execute();
+
+	if (mapPool.stageModePairs.length === 0) return;
+
+	await trx
+		.insertInto("MapPoolMap")
+		.values(
+			mapPool.stageModePairs.map(({ stageId, mode }) => ({
+				tournamentTeamId,
+				stageId,
+				mode,
+			})),
+		)
+		.execute();
 }
 
 async function findTeamRecentMaps(teamId: number, limit: number) {

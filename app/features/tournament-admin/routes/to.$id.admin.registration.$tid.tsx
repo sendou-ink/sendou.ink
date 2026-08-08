@@ -4,13 +4,22 @@ import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { Label } from "~/components/Label";
 import { useUser } from "~/features/auth/core/user";
+import {
+	type CounterPickMapPool,
+	CounterPickMapPoolPicker,
+	MapPoolValidationStatusMessage,
+	useCounterPickMapPoolValidationStatus,
+} from "~/features/tournament/components/CounterPickMapPoolPicker";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
+import { FormFieldMessages } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type {
 	ArrayItemRenderContext,
+	CustomFieldRenderProps,
 	SelectOption,
 	TeamSearchFieldOptions,
 	TournamentSearchFieldOptions,
@@ -79,6 +88,7 @@ export default function TournamentAdminRegistrationPage() {
 						: null,
 					tournamentName: member.tournamentName ?? null,
 				})),
+				mapPool: team.mapPool ?? [],
 			}
 		: undefined;
 
@@ -298,7 +308,45 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 				)}
 			</FormField>
 			<FormField name="ownerId" options={ownerOptions} />
+			{tournament.teamsPrePickMaps && !tournament.hasStarted ? (
+				<FormField name="mapPool">
+					{(props: CustomFieldRenderProps) => (
+						<MapPoolField
+							{...props}
+							value={props.value as CounterPickMapPool}
+						/>
+					)}
+				</FormField>
+			) : null}
 		</>
+	);
+}
+
+function MapPoolField({
+	name,
+	value,
+	error,
+	onChange,
+	disabled,
+}: CustomFieldRenderProps<CounterPickMapPool>) {
+	const { t } = useTranslation(["common"]);
+	const validationStatus = useCounterPickMapPoolValidationStatus(value);
+
+	// the pickers are a group of buttons rather than one control, so there is no
+	// input for the label to point at
+	return (
+		<div className="stack sm">
+			<Label spaced={false}>{t("common:maps.mapPool")}</Label>
+			<div className="stack lg">
+				<CounterPickMapPoolPicker
+					mapPool={value}
+					onChange={onChange}
+					disabled={disabled}
+				/>
+				<MapPoolValidationStatusMessage status={validationStatus} />
+			</div>
+			<FormFieldMessages name={name} error={error} />
+		</div>
 	);
 }
 

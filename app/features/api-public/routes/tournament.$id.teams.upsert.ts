@@ -76,6 +76,8 @@ export const action = async (args: ActionFunctionArgs) => {
 				userId: member.userId,
 				inGameName: member.inGameName ?? null,
 			})),
+			// the API can't edit counterpick maps, so the team's existing pool is carried over as is
+			mapPool: existingTeam?.mapPool ?? [],
 		}),
 	});
 

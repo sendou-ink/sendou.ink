@@ -1,16 +1,14 @@
 import type { Page } from "@playwright/test";
-import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { registerTeamFormSchema } from "~/features/tournament/tournament-register-schemas";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { tournamentRegisterPage } from "~/utils/urls";
+import {
+	counterpickMap,
+	pickCounterpickMaps,
+} from "../../helpers/counterpick-map-pool";
 import { navigate, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { TournamentNav } from "./tournament-nav";
-
-/** Stage the counterpick picking starts from, leaving the lowest ids to tiebreakers. */
-const FIRST_COUNTERPICK_STAGE_ID = 5;
 
 export class TournamentRegisterPage {
 	private readonly page: Page;
@@ -52,7 +50,7 @@ export class TournamentRegisterPage {
 	}
 
 	counterpickMap(mode: ModeShort, stageId: StageId) {
-		return this.page.getByTestId(`map-pool-${mode}-${stageId}`);
+		return counterpickMap(this.page, mode, stageId);
 	}
 
 	addPlayer() {
@@ -60,19 +58,8 @@ export class TournamentRegisterPage {
 	}
 
 	/** Picks the required amount of counterpick maps for every mode, skipping banned ones. */
-	async pickCounterpickMaps() {
-		let stageId = FIRST_COUNTERPICK_STAGE_ID;
-
-		for (const mode of rankedModesShort) {
-			for (let i = 0; i < TOURNAMENT.COUNTERPICK_MAPS_PER_MODE; i++) {
-				while (BANNED_MAPS[mode].includes(stageId as StageId)) {
-					stageId++;
-				}
-
-				await this.counterpickMap(mode, stageId as StageId).click();
-				stageId++;
-			}
-		}
+	pickCounterpickMaps() {
+		return pickCounterpickMaps(this.page);
 	}
 
 	saveCounterpickMaps() {
