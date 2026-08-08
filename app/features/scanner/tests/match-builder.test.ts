@@ -375,6 +375,49 @@ test("without a pov the side whose count got lower is the winner side", () => {
 	);
 });
 
+test("a transient score dip is voided against the surrounding countdown", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(60, { score: [54, 100] }),
+		// truncated misread of "50" — only the trailing 0 was read
+		objective(61, { score: [0, 100], penalty: [4, null] }),
+		objective(62, { score: [49, 100] }),
+		objective(63, { score: [47, 100] }),
+		scoreboard(300),
+	]);
+	const samples = built[0]!.match.objective!.samples;
+	assert.deepEqual(
+		samples.map((sample) => sample.score),
+		[
+			[54, 100],
+			[null, 100],
+			[49, 100],
+			[47, 100],
+		],
+	);
+	assert.deepEqual(samples[1]!.penalty, [4, null]);
+});
+
+test("a stray full-count blip is voided against the surrounding countdown", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(60, { score: [80, 100] }),
+		objective(61, { score: [100, 100] }),
+		objective(62, { score: [75, 100] }),
+		objective(63, { score: [73, 100] }),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.objective!.samples.map((sample) => sample.score),
+		[
+			[80, 100],
+			[null, 100],
+			[75, 100],
+			[73, 100],
+		],
+	);
+});
+
 test("enriches players with abilities from the match's deaths", () => {
 	const build: AbilityWithUnknown[][] = [
 		["ISM", "ISS", "ISS", "ISS"],

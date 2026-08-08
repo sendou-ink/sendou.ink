@@ -53,6 +53,7 @@ import {
 	PENALTY_TEXT_HEIGHT,
 	PLATE_PROBE_ROIS,
 	SCORE_BIN_THRESHOLDS,
+	SCORE_EXTEND_MIN_CONF,
 	SCORE_ROIS,
 	SCORE_TEXT_HEIGHTS,
 	TIMER_BIN_THRESHOLD,
@@ -216,7 +217,13 @@ export function createObjectiveDetector(
 						spaceGap: Number.POSITIVE_INFINITY,
 						minCharScore: 0.3,
 					});
-					const read = trailingDigitRun(raw, set);
+					// the band holds nothing but the count, so a leading digit
+					// blurred below the extension floor voids the read instead of
+					// truncating it (see SCORE_EXTEND_MIN_CONF)
+					const read = trailingDigitRun(raw, set, {
+						extendMinScore: SCORE_EXTEND_MIN_CONF,
+						rejectTruncated: true,
+					});
 					if (isBetterRead(read, best)) best = read;
 				}
 			}

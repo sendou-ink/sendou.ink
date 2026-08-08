@@ -84,7 +84,9 @@ sequenceDiagram
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
   counts, penalties, holder, match timer — a mode-discriminated union with
   only the SZ member so far). Objective reads land on `ScannerMatch` as
-  progress samples anchored to the game clock. Each read also carries a
+  progress samples anchored to the game clock; a displayed count only ever
+  ticks down, so the builder keeps each side's longest non-increasing score
+  run and voids reads off it (surviving OCR blips chart as gaps, not dips). Each read also carries a
   per-side team ink color (`core/ink-color.ts` — the plate fill in
   control, the digit ink otherwise): casted footage keeps the specced
   player's team on the left plate, so the builder orients samples by ink

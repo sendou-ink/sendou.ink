@@ -231,10 +231,26 @@ export function isBetterRead(
 export interface TrailingDigitOptions {
 	/** char floor a glyph must clear to count as a digit of the number */
 	minCharScore?: number;
+	/**
+	 * lower floor for digits joining a run that another digit anchors at
+	 * `minCharScore` — motion blur / compression can erode one digit of a
+	 * genuine number below the main floor while its neighbor stays crisp.
+	 * Defaults to `minCharScore` (no two-tier extension).
+	 */
+	extendMinScore?: number;
 	/** min ink height as a fraction of the set height (drops labels, '+') */
 	minHeightRatio?: number;
 	/** values above this are rejected as misreads */
 	maxValue?: number;
+	/**
+	 * reject the read (null) when the char immediately left of the run sat
+	 * within digit-gap distance but failed the floors — on a band that holds
+	 * nothing but the number (objective counter plates), that char is a
+	 * blur-mangled leading digit and the run is a truncated misread ("50"
+	 * returning 0). Off for banner bands, where an adjacent label/burst
+	 * letter legitimately borders the digits.
+	 */
+	rejectTruncated?: boolean;
 }
 
 /**
@@ -250,29 +266,40 @@ export function trailingDigitRun(
 ): BannerScoreRead {
 	const {
 		minCharScore = DIGIT_MIN_CONF,
+		extendMinScore = minCharScore,
 		minHeightRatio = DIGIT_MIN_HEIGHT_RATIO,
 		maxValue = KO_MATCH_SCORE,
+		rejectTruncated = false,
 	} = options;
 	const maxGap = Math.max(4, Math.round(set.medianWidth * DIGIT_GAP_MAX_RATIO));
-	const isScoreDigit = (c: RecognizedChar) =>
-		c.score >= minCharScore && c.y1 - c.y0 >= set.height * minHeightRatio;
+	const fullHeight = (c: RecognizedChar) =>
+		c.y1 - c.y0 >= set.height * minHeightRatio;
+	const isRunDigit = (c: RecognizedChar) =>
+		c.score >= extendMinScore && fullHeight(c);
 
 	const run: RecognizedChar[] = [];
 	let i = raw.chars.length - 1;
 	for (; i >= 0; i--) {
 		const c = raw.chars[i]!;
-		if (!isScoreDigit(c)) break;
+		if (!isRunDigit(c)) break;
 		if (run.length > 0 && run[0]!.x0 - c.x1 > maxGap) break;
 		run.unshift(c);
 	}
 	if (run.length === 0) return { ...EMPTY_READ, reading: raw.text };
+	if (!run.some((c) => c.score >= minCharScore)) {
+		return { ...EMPTY_READ, reading: raw.text };
+	}
 	// A further digit left of the run means an unreadable glyph split the
 	// number (turf war percentages read "48", ".", "7") — the tail is not
 	// the score.
 	for (let k = i; k >= 0; k--) {
-		if (isScoreDigit(raw.chars[k]!)) {
+		const c = raw.chars[k]!;
+		if (c.score >= minCharScore && fullHeight(c)) {
 			return { ...EMPTY_READ, reading: raw.text };
 		}
+	}
+	if (rejectTruncated && i >= 0 && run[0]!.x0 - raw.chars[i]!.x1 <= maxGap) {
+		return { ...EMPTY_READ, reading: raw.text };
 	}
 
 	const value = Number.parseInt(run.map((c) => c.char).join(""), 10);

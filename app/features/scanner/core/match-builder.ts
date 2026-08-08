@@ -414,7 +414,10 @@ function floorOrNull(t: number | undefined): number | null {
  * the left plate is the POV/alpha side for the whole game, but casted
  * footage reorders the plates to follow the specced player — so each read
  * is first oriented by its sides' team ink hues (clustered against the
- * first read that saw both), making the series side-stable. The whole
+ * first read that saw both), making the series side-stable. A displayed
+ * count never increases (it shows the team's best remaining), so each
+ * side's series then keeps only its longest non-increasing run of scores —
+ * surviving OCR blips are voided rather than charted. The whole
  * series then goes into `teams` order: a scoreboard-closed match is
  * winner-first (POV seat when read; else in SZ the winner is the side
  * whose remaining count went furthest down), a minimap-grouped match
@@ -429,7 +432,9 @@ function buildObjective(
 	if (objectives.length === 0) return null;
 
 	const clusterHues = seedClusterHues(objectives);
-	const oriented = orientByTeamColor(objectives, clusterHues);
+	const oriented = withMonotonicScores(
+		orientByTeamColor(objectives, clusterHues),
+	);
 
 	const swap = board
 		? board.povIndex !== null
@@ -562,6 +567,54 @@ function minimapTeamColors(
 		};
 	}) as [InkRgb | null, InkRgb | null];
 	return sides[0] === null && sides[1] === null ? null : sides;
+}
+
+/**
+ * Voids score reads that contradict SZ's countdown: per side, only the
+ * longest non-increasing subsequence of the readable scores is kept and
+ * every read off it gets that side's score nulled (its penalty/control
+ * stand). A misread that slipped past the detector — a truncated "50"
+ * charted as a 0-dip, a stray 100 — is always the minority against the
+ * surrounding correct series, so it is what gets dropped.
+ */
+function withMonotonicScores(
+	oriented: readonly OrientedObjectiveRead[],
+): OrientedObjectiveRead[] {
+	const smoothed = oriented.map((read) => ({
+		...read,
+		score: [...read.score] as [number | null, number | null],
+	}));
+	for (const side of [0, 1] as const) {
+		const readIndices = smoothed.flatMap((read, i) =>
+			read.score[side] !== null ? [i] : [],
+		);
+		const kept = longestNonIncreasingRun(
+			readIndices.map((i) => smoothed[i]!.score[side]!),
+		);
+		for (const [k, i] of readIndices.entries()) {
+			if (!kept.has(k)) smoothed[i]!.score[side] = null;
+		}
+	}
+	return smoothed;
+}
+
+/** Indices of one longest non-increasing subsequence of `values`. */
+function longestNonIncreasingRun(values: readonly number[]): Set<number> {
+	const lengths = new Array<number>(values.length).fill(1);
+	const prev = new Array<number>(values.length).fill(-1);
+	let bestEnd = values.length > 0 ? 0 : -1;
+	for (let i = 0; i < values.length; i++) {
+		for (let j = 0; j < i; j++) {
+			if (values[j]! >= values[i]! && lengths[j]! + 1 > lengths[i]!) {
+				lengths[i] = lengths[j]! + 1;
+				prev[i] = j;
+			}
+		}
+		if (lengths[i]! > lengths[bestEnd]!) bestEnd = i;
+	}
+	const kept = new Set<number>();
+	for (let i = bestEnd; i !== -1; i = prev[i]!) kept.add(i);
+	return kept;
 }
 
 /** The lowest count a side ever showed; Infinity when never read. */

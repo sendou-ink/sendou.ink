@@ -104,6 +104,16 @@ export const PENALTY_TEXT_HEIGHT = 29;
  */
 export const SCORE_BIN_THRESHOLDS = [160, 190] as const;
 
+/**
+ * Extension floor for count digits joining a run anchored by a confident
+ * one: white digits on a bright control fill blur into the plate on
+ * compressed cast footage, eroding a leading digit to 0.64-0.76 while its
+ * neighbor still clears the main floor ("50" read as trailing "0" — the
+ * Splat World Series lime plates). Noise chars on the same plates matched
+ * digit templates at up to 0.66 but never alongside an anchor digit.
+ */
+export const SCORE_EXTEND_MIN_CONF = 0.6;
+
 /** Penalty pill: white digits on the translucent dark fill (~100 gray). */
 export const PENALTY_BIN_THRESHOLD = 170;
 export const PENALTY_PROBE_MAX_MEAN = 165;
