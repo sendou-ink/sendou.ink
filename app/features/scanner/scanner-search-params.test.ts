@@ -10,6 +10,7 @@ describe("scannerSearchParams", () => {
 		assertRoundTrips(scannerSearchParams, {
 			tab: ["live", "screenshot", "vod"],
 			inspect: ["1723456789012-abc123", null],
+			telemetry: [true, false],
 		});
 	});
 

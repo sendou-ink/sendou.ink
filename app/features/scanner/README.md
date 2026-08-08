@@ -116,8 +116,10 @@ sequenceDiagram
   the gate. `checkIntervalS` hard-caps both phases; `attachFrame: false`
   keeps continuously-firing events from storing a frame PNG each. Frames no
   detector is due for skip canvas readback, and everything is counted in
-  `core/detectors/telemetry.ts` (VoD tab's telemetry panel). A match's
-  objective reads render as one step-line timeline
+  `core/detectors/telemetry.ts` — but only when the VoD tab is opened with
+  `?telemetry=true` (nothing links there); otherwise the workers skip
+  collection and the panel stays hidden. A match's objective reads render
+  as one step-line timeline
   (`~/components/ObjectiveTimeline.tsx`, shared with the match page).
 - VoD scans (`components/VodPage.tsx`): on the WebCodecs path each worker
   demuxes + decodes its own contiguous slice (mediabunny in the worker — no

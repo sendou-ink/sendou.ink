@@ -22,6 +22,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
@@ -36,6 +37,7 @@ import {
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
+import { scannerSearchParams } from "../scanner-search-params";
 import type { SendStatus } from "../store/events";
 import {
 	deleteVod,
@@ -133,6 +135,9 @@ export function VodPage({
 	// in-flight thumbnail work; awaited before persisting a finished scan
 	const sideWorkRef = useRef<Promise<void>[]>([]);
 	const nextMatchKeyRef = useRef(0);
+	// telemetry collection is baked into the workers at init, so a change of
+	// the search param needs a fresh pool
+	const clientsCollectTelemetryRef = useRef(false);
 
 	const [fileName, setFileName] = useState<string | null>(null);
 	/** live scan vs. reopened saved VoD (no video element for the latter) */
@@ -148,6 +153,9 @@ export function VodPage({
 	const [over, setOver] = useState(false);
 	const [eventsOpen, setEventsOpen] = useState(false);
 	const [resultsSend, setResultsSend] = useState<ResultsSend | null>(null);
+
+	// opt-in via ?telemetry=true only; nothing in the UI links to it
+	const [collectTelemetry] = useSearchParam(scannerSearchParams, "telemetry");
 
 	const formatSavedAt = useEventDateTimeFormatter();
 
@@ -259,6 +267,11 @@ export function VodPage({
 			urlRef.current = URL.createObjectURL(file);
 			video.src = urlRef.current;
 
+			if (clientsCollectTelemetryRef.current !== collectTelemetry) {
+				for (const client of clientsRef.current) client.dispose();
+				clientsRef.current = [];
+				clientsCollectTelemetryRef.current = collectTelemetry;
+			}
 			if (clientsRef.current.length === 0) {
 				clientsRef.current = Array.from(
 					{ length: defaultScanWorkerCount() },
@@ -310,6 +323,7 @@ export function VodPage({
 								frameDoneRef.current?.();
 								frameDoneRef.current = null;
 							},
+							{ collectTelemetry },
 						),
 				);
 			}
@@ -365,10 +379,12 @@ export function VodPage({
 				abortScanRef.current = () => {
 					for (const client of clients) client.abortChunk();
 				};
-				const mergedTelemetry = () =>
-					mergeScanTelemetry(
-						chunks.flatMap((c) => (c.telemetry ? [c.telemetry] : [])),
+				const mergedTelemetry = () => {
+					const parts = chunks.flatMap((c) =>
+						c.telemetry ? [c.telemetry] : [],
 					);
+					return parts.length > 0 ? mergeScanTelemetry(parts) : null;
+				};
 				let lastUiUpdate = Number.NEGATIVE_INFINITY;
 				const pushUiUpdate = () => {
 					const now = performance.now();
