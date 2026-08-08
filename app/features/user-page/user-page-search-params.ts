@@ -66,10 +66,12 @@ export const userResultsSearchParams = SearchParams.define({
 	fromYear: SP.param(resultYear.nullable(), {
 		loader: true,
 		resets: ["page"],
+		timeDependent: true,
 	}),
 	toYear: SP.param(resultYear.nullable(), {
 		loader: true,
 		resets: ["page"],
+		timeDependent: true,
 	}),
 	source: SP.param(z.enum(RESULT_SOURCES), {
 		default: "ALL",
@@ -97,11 +99,15 @@ export const userSeasonsSearchParams = SearchParams.define({
 	season: SP.param(startedSeason.nullable(), {
 		loader: true,
 		resets: ["page"],
+		timeDependent: true,
 	}),
 });
 
 export const userSeasonSummaryGraphicSearchParams = SearchParams.define({
-	season: SP.param(startedSeason.nullable(), { loader: true }),
+	season: SP.param(startedSeason.nullable(), {
+		loader: true,
+		timeDependent: true,
+	}),
 });
 
 const buildsWeaponFilterCodec = z.codec(

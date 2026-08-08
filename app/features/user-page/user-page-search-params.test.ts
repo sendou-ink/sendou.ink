@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	BEST_TIER_NUMBER,
@@ -103,6 +103,25 @@ describe("userSeasonsSearchParams", () => {
 			["-1"],
 			["abc"],
 		]);
+	});
+
+	it("decodes a season correctly even if the same URL was visited before the season started", () => {
+		vi.useFakeTimers();
+		try {
+			// crawler or a user replays ?season=1 a few days before season 1 opens
+			vi.setSystemTime(new Date("2023-09-01T00:00:00.000Z"));
+			expect(
+				userSeasonsSearchParams.parse(new URLSearchParams("season=1")).season,
+			).toBe(null);
+
+			// season 1 has now started; the same URL should decode to season 1
+			vi.setSystemTime(new Date("2023-09-20T00:00:00.000Z"));
+			expect(
+				userSeasonsSearchParams.parse(new URLSearchParams("season=1")).season,
+			).toBe(1);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });
 
