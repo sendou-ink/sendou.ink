@@ -3,6 +3,7 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
@@ -260,6 +261,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 			logger.info(
 				`Checking in (success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournamentId}`,
 			);
+
+			await resolveNotifications({
+				userIds: teamMemberOf.memberUserIds,
+				type: "TO_CHECK_IN_OPENED",
+				meta: { tournamentId },
+			});
 			break;
 		}
 		case "ADD_PLAYER": {

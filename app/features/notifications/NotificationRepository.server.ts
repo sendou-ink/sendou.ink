@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import type { NotificationSubscription } from "~/db/tables-json";
@@ -73,6 +74,45 @@ export function findAllByType<T extends Notification["type"]>(type: T) {
 		.select(["type", "meta", "pictureUrl"])
 		.where("type", "=", type)
 		.execute() as Promise<Array<Extract<Notification, { type: T }>>>;
+}
+
+/**
+ * Marks the users' unseen notifications of the given type as seen, optionally
+ * only those whose meta matches every given key/value pair. Used to clear the
+ * unseen dot when the user addresses what the notification is about.
+ */
+// xxx: benchmark this
+export async function markAsSeenByType({
+	userIds,
+	type,
+	meta,
+}: {
+	userIds: number[];
+	type: Notification["type"];
+	meta?: Record<string, number | string>;
+}) {
+	if (userIds.length === 0) return;
+
+	let notificationIds = db
+		.selectFrom("Notification")
+		.select("Notification.id")
+		.where("Notification.type", "=", type);
+
+	for (const [key, value] of Object.entries(meta ?? {})) {
+		notificationIds = notificationIds.where(
+			sql`json_extract("Notification"."meta", ${`$.${key}`})`,
+			"=",
+			value,
+		);
+	}
+
+	await db
+		.updateTable("NotificationUser")
+		.set("seen", 1)
+		.where("NotificationUser.seen", "=", 0)
+		.where("NotificationUser.userId", "in", userIds)
+		.where("NotificationUser.notificationId", "in", notificationIds)
+		.execute();
 }
 
 export function markOwnAsSeen(notificationIds: number[]) {

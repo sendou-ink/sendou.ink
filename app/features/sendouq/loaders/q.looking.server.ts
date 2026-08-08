@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
@@ -25,6 +26,13 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		sqRedirectIfNeeded({
 			ownGroup,
 			currentLocation: "looking",
+		});
+	}
+
+	if (ownGroup) {
+		await resolveNotifications({
+			userIds: [user.id],
+			type: "SQ_ADDED_TO_GROUP",
 		});
 	}
 

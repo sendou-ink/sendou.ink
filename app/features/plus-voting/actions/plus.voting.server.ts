@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import type { PlusVoteFromFE } from "~/features/plus-voting/core";
 import {
 	nextNonCompletedVoting,
@@ -62,6 +63,11 @@ export const action: ActionFunction = async ({ request }) => {
 			becomesValidAt: dateToDatabaseTimestamp(votingRange.endDate),
 		})),
 	);
+
+	await resolveNotifications({
+		userIds: [user.id],
+		type: "PLUS_VOTING_STARTED",
+	});
 
 	return null;
 };

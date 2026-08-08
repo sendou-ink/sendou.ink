@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import type { SerializeFrom } from "~/utils/remix";
 import type { Tournament } from "../core/Tournament";
 import {
@@ -23,6 +24,14 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		tournamentBracketsSearchParams.parse(request).idx,
 	);
 	const bracket = tournament.bracketByIdx(bracketIdx);
+
+	if (user) {
+		await resolveNotifications({
+			userIds: [user.id],
+			type: "TO_BRACKET_STARTED",
+			meta: { tournamentId: tournament.ctx.id, bracketIdx },
+		});
+	}
 
 	return {
 		bracketIdx,

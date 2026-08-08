@@ -1,5 +1,10 @@
 import * as React from "react";
-import { useFetcher } from "react-router";
+import {
+	useFetcher,
+	useFetchers,
+	useLocation,
+	useNavigation,
+} from "react-router";
 import { useReloadOnNewDeploy } from "~/hooks/useReloadOnNewDeploy";
 import type { RootLoaderData } from "~/root";
 import { LAYOUT_DATA_ROUTE } from "~/utils/urls";
@@ -79,6 +84,10 @@ export function LayoutDataProvider({
 		clientUserId: data?.user?.id,
 		serverUserId: newest.loggedInUserId,
 	});
+	useRefreshOnPotentialNotificationResolution({
+		notifications: newest.notifications,
+		refresh,
+	});
 
 	const value: LayoutDataContextValue = {
 		...newest,
@@ -99,6 +108,58 @@ export function LayoutDataProvider({
  */
 export function useLayoutData() {
 	return React.useContext(LayoutDataContext);
+}
+
+/**
+ * Refetches the shell data right after something that may have resolved an
+ * unseen notification, so the bell dot clears without waiting for the next
+ * poll: a navigation (loaders mark notifications seen when the user views the
+ * page a notification points at) or a settled action submission (actions mark
+ * them seen when the user addresses the thing itself). Only fires while an
+ * unseen notification exists, so the common case adds no server load.
+ */
+function useRefreshOnPotentialNotificationResolution({
+	notifications,
+	refresh,
+}: {
+	notifications: LayoutData["notifications"];
+	refresh: () => void;
+}) {
+	const location = useLocation();
+	const navigation = useNavigation();
+	const fetchers = useFetchers();
+
+	const hasUnseen =
+		notifications?.some((notification) => !notification.seen) ?? false;
+
+	const submitting =
+		navigation.state === "submitting" ||
+		fetchers.some((fetcher) => fetcher.state === "submitting");
+	const allIdle =
+		navigation.state === "idle" &&
+		fetchers.every((fetcher) => fetcher.state === "idle");
+
+	const refreshOnIdleRef = React.useRef(false);
+	if (submitting && hasUnseen) {
+		refreshOnIdleRef.current = true;
+	}
+
+	const prevLocationKeyRef = React.useRef(location.key);
+
+	React.useEffect(() => {
+		if (prevLocationKeyRef.current !== location.key) {
+			prevLocationKeyRef.current = location.key;
+			if (hasUnseen) {
+				refresh();
+			}
+			return;
+		}
+
+		if (allIdle && refreshOnIdleRef.current) {
+			refreshOnIdleRef.current = false;
+			refresh();
+		}
+	}, [location.key, allIdle, hasUnseen, refresh]);
 }
 
 function useReloadOnStaleAuth({

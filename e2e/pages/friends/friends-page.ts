@@ -60,7 +60,9 @@ class FriendMenu {
 
 	constructor(page: Page, name: string) {
 		this.page = page;
-		this.trigger = page.getByRole("button", { name });
+		// scoped to the page content because the sidebar's friends section shows
+		// a button with the same name once the friendship data refreshes
+		this.trigger = page.getByRole("main").getByRole("button", { name });
 	}
 
 	async deleteFriend() {

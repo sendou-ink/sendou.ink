@@ -3,6 +3,7 @@ import * as R from "remeda";
 import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
@@ -55,6 +56,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 				// no sources = regular check in
 				bracketIdx: bracket.sources ? data.bracketIdx : undefined,
 			});
+
+			if (!bracket.sources) {
+				await resolveNotifications({
+					userIds: team.memberUserIds,
+					type: "TO_CHECK_IN_OPENED",
+					meta: { tournamentId },
+				});
+			}
 
 			break;
 		}

@@ -32,7 +32,7 @@ describe("notify()", () => {
 			userIds: [users.id(1), users.id(2)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 
@@ -40,7 +40,7 @@ describe("notify()", () => {
 			userIds: [users.id(3), users.id(4)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 
@@ -65,6 +65,7 @@ describe("notify()", () => {
 		expect(user1Notifications[0].type).toBe("SCRIM_NEW_REQUEST");
 		expect(notificationMeta(user1Notifications[0])).toEqual({
 			fromUsername: "alice",
+			scrimPostId: 1,
 		});
 	});
 
@@ -103,7 +104,7 @@ describe("notify()", () => {
 				userIds: [users.id(5)],
 				notification: {
 					type: "SCRIM_NEW_REQUEST",
-					meta: { fromUsername: "alice" },
+					meta: { fromUsername: "alice", scrimPostId: 1 },
 				},
 			});
 
@@ -113,7 +114,7 @@ describe("notify()", () => {
 				userIds: [users.id(5)],
 				notification: {
 					type: "SCRIM_NEW_REQUEST",
-					meta: { fromUsername: "alice" },
+					meta: { fromUsername: "alice", scrimPostId: 1 },
 				},
 			});
 		} finally {
@@ -225,7 +226,7 @@ describe("notify()", () => {
 			userIds: [users.id(12), users.id(13)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "bob" },
+				meta: { fromUsername: "bob", scrimPostId: 1 },
 			},
 		});
 
@@ -233,7 +234,7 @@ describe("notify()", () => {
 			userIds: [users.id(12), users.id(13)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "charlie" },
+				meta: { fromUsername: "charlie", scrimPostId: 1 },
 			},
 		});
 
@@ -248,8 +249,8 @@ describe("notify()", () => {
 		expect(user13Notifications).toHaveLength(2);
 
 		const metas = user12Notifications.map(notificationMeta);
-		expect(metas).toContainEqual({ fromUsername: "bob" });
-		expect(metas).toContainEqual({ fromUsername: "charlie" });
+		expect(metas).toContainEqual({ fromUsername: "bob", scrimPostId: 1 });
+		expect(metas).toContainEqual({ fromUsername: "charlie", scrimPostId: 1 });
 	});
 
 	test("duplicate user IDs in input array are deduplicated", async () => {
@@ -312,7 +313,7 @@ describe("notify() - web push notifications", () => {
 			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 
@@ -408,7 +409,7 @@ describe("notify() - web push notifications", () => {
 			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 

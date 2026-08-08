@@ -1,6 +1,7 @@
 import { addMinutes } from "date-fns";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import {
 	createMatchMemento,
@@ -125,6 +126,8 @@ export async function confirm({
 	// the ready check ended (e.g. ran out of time) while this request was in flight
 	if (!confirmation) return null;
 
+	await resolveNotifications({ userIds: [userId], type: "SQ_READY_CHECK" });
+
 	if (!confirmation.everyoneIsReady) {
 		revalidateGroups(readyCheck);
 
@@ -143,10 +146,17 @@ export async function expire(readyCheck: {
 	id: number;
 	alphaGroupId: number;
 	bravoGroupId: number;
+	members: Array<{ userId: number }>;
 }) {
 	await SQGroupRepository.deleteReadyCheck({
 		id: readyCheck.id,
 		markMissedMembers: true,
+	});
+
+	// the ready check no longer exists so there is nothing to respond to
+	await resolveNotifications({
+		userIds: readyCheck.members.map((member) => member.userId),
+		type: "SQ_READY_CHECK",
 	});
 
 	await refreshSendouQInstance();
@@ -238,6 +248,12 @@ async function createMatch({
 				matchId: createdMatch.id,
 			},
 		},
+	});
+
+	// the match superseded the ready check everyone was notified about
+	await resolveNotifications({
+		userIds: readyCheck.members.map((member) => member.userId),
+		type: "SQ_READY_CHECK",
 	});
 
 	return createdMatch.id;
