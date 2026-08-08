@@ -46,7 +46,7 @@ const TRANSLATORS: Array<{
 		language: "de",
 	},
 	{
-		translators: ["KaiserOfNone", "Mario64iscool2", "Lasky", "PedroFlores199"],
+		translators: ["KaiserOfNone", "Mario64iscool2", "Lasky"],
 		language: "es-ES",
 	},
 	{
