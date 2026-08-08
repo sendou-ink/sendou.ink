@@ -12,11 +12,19 @@ export class NotificationPopover {
 			openButton: this.page.getByTestId("notifications-button"),
 			items: this.page.getByTestId("notification-item"),
 			seeAllLink: this.page.getByTestId("notifications-see-all-button"),
+			/** Shown on the bell while unseen notifications exist. */
+			bellDot: this.page.getByTestId("notifications-bell-dot"),
+			/** Per notification, marking it as one the user has not read yet. */
+			unseenDots: this.page.getByTestId("notification-unseen-dot"),
 		};
 	}
 
 	async open() {
 		await this.locators.openButton.click();
+	}
+
+	async close() {
+		await this.page.keyboard.press("Escape");
 	}
 
 	notification(text: string) {

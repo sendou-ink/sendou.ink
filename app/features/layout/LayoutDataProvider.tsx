@@ -69,6 +69,9 @@ export function LayoutDataProvider({
 		};
 	}, [load]);
 
+	// stable so effects that refresh after a mutation don't re-run every render
+	const refresh = React.useCallback(() => load(LAYOUT_DATA_ROUTE), [load]);
+
 	const newest = useNewestOf(data, fetcher.data);
 
 	useReloadOnNewDeploy(newest.buildCommit ?? "");
@@ -79,7 +82,7 @@ export function LayoutDataProvider({
 
 	const value: LayoutDataContextValue = {
 		...newest,
-		refresh: () => load(LAYOUT_DATA_ROUTE),
+		refresh,
 		isRefreshing: state !== "idle",
 	};
 
