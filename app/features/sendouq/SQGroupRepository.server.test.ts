@@ -10,14 +10,18 @@ import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/Grou
 import { FULL_GROUP_SIZE } from "./q-constants";
 import * as SQGroupRepository from "./SQGroupRepository.server";
 
-const setupConcludedMatch = async () => {
-	const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
-	const alphaMembers = users.slice(0, FULL_GROUP_SIZE);
+const setupConcludedMatch = async (
+	/** Give the same members another match, for a user with a match history. */
+	returningAlphaMembers?: Array<{ id: number }>,
+) => {
+	const bravoMembers = await UserFactory.createMany(FULL_GROUP_SIZE);
+	const alphaMembers =
+		returningAlphaMembers ?? (await UserFactory.createMany(FULL_GROUP_SIZE));
 
 	const match = await SQMatchFactory.create(
 		{
 			alphaUserIds: alphaMembers.map((member) => member.id),
-			bravoUserIds: users.slice(FULL_GROUP_SIZE).map((member) => member.id),
+			bravoUserIds: bravoMembers.map((member) => member.id),
 			isMatchmade: true,
 		},
 		{ isConcluded: true },
@@ -57,8 +61,9 @@ describe("insert", () => {
 		expect(result.chatCodeToRevalidate).toBe(matchChatCode);
 	});
 
-	test("preserves existing vote when user already voted yes on previous match", async () => {
-		const { alphaGroupId, alphaMembers } = await setupConcludedMatch();
+	test("overrides the user's own yes vote on the previous match", async () => {
+		const { alphaGroupId, alphaMembers, matchChatCode } =
+			await setupConcludedMatch();
 
 		await castYesVote(alphaMembers[0].id, alphaGroupId);
 
@@ -67,10 +72,12 @@ describe("insert", () => {
 			userId: alphaMembers[0].id,
 		});
 
+		// leaving a yes vote standing would let the rest of the group reach a
+		// unanimous vote for a group the user is no longer available for
 		const votes = await fetchVotes(alphaGroupId);
 		expect(votes).toHaveLength(1);
-		expect(votes[0].isContinuing).toBe(true);
-		expect(result.chatCodeToRevalidate).toBeNull();
+		expect(votes[0].isContinuing).toBe(false);
+		expect(result.chatCodeToRevalidate).toBe(matchChatCode);
 	});
 
 	test("clears other members' yes votes on the previous group when recording implicit no", async () => {
@@ -90,6 +97,54 @@ describe("insert", () => {
 		expect(votes).toHaveLength(1);
 		expect(votes[0].userId).toBe(alphaMembers[0].id);
 		expect(votes[0].isContinuing).toBe(false);
+	});
+
+	test("records the implicit no-vote on the newest matchmade group of many", async () => {
+		const { alphaGroupId: olderGroupId, alphaMembers } =
+			await setupConcludedMatch();
+		const { alphaGroupId: newerGroupId, matchChatCode } =
+			await setupConcludedMatch(alphaMembers);
+		const olderVotesBefore = await fetchVotes(olderGroupId);
+
+		const result = await SQGroupRepository.insert({
+			status: "ACTIVE",
+			userId: alphaMembers[0].id,
+		});
+
+		expect(await fetchVotes(olderGroupId)).toEqual(olderVotesBefore);
+
+		const votes = await fetchVotes(newerGroupId);
+		expect(votes).toHaveLength(1);
+		expect(votes[0].userId).toBe(alphaMembers[0].id);
+		expect(votes[0].isContinuing).toBe(false);
+		expect(result.chatCodeToRevalidate).toBe(matchChatCode);
+	});
+
+	test("leaves the previous group's votes alone on a later, unrelated queue action", async () => {
+		const { alphaGroupId, alphaMembers } = await setupConcludedMatch();
+
+		await SQGroupRepository.insert({
+			status: "ACTIVE",
+			userId: alphaMembers[0].id,
+		});
+
+		// the three who stayed settle the vote among themselves
+		for (const member of alphaMembers.slice(1)) {
+			await castYesVote(member.id, alphaGroupId);
+		}
+
+		// ...meanwhile the one who left gives up on queueing alone and queues again
+		await SQGroupRepository.leaveGroup(alphaMembers[0].id);
+		const result = await SQGroupRepository.insert({
+			status: "ACTIVE",
+			userId: alphaMembers[0].id,
+		});
+
+		const votes = await fetchVotes(alphaGroupId);
+		expect(votes.filter((vote) => vote.isContinuing)).toHaveLength(
+			FULL_GROUP_SIZE - 1,
+		);
+		expect(result.chatCodeToRevalidate).toBeNull();
 	});
 
 	test("does not record any vote when user has no previous matchmade group", async () => {

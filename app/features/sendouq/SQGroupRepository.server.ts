@@ -1045,6 +1045,13 @@ async function deleteReadyCheckInTrx(
 		.execute();
 }
 
+/**
+ * Records the user as not continuing with the group they last played a matchmade
+ * match with, taking that group's votes in favour down with it. Getting a group
+ * elsewhere overrides a vote already cast in favour: the group can no longer
+ * continue at the size that vote was for, so the rest have to vote again. Once
+ * their no vote is in, that group is settled and later queue actions leave it be.
+ */
 async function recordImplicitRejoinNoVote(
 	userId: number,
 	trx: Transaction<DB>,
@@ -1060,18 +1067,19 @@ async function recordImplicitRejoinNoVote(
 				]),
 			),
 		)
-		.leftJoin("GroupMatchContinueVote", (join) =>
-			join
-				.onRef("GroupMatchContinueVote.groupId", "=", "Group.id")
-				.on("GroupMatchContinueVote.userId", "=", userId),
-		)
-		.select(["Group.id as groupId", "GroupMatch.chatCode as matchChatCode"])
+		.select((eb) => [
+			"Group.id as groupId",
+			"GroupMatch.chatCode as matchChatCode",
+			hasVotedNo(eb, userId).as("alreadySettled"),
+		])
 		.where("GroupMember.userId", "=", userId)
 		.where("Group.matchmade", "=", 1)
-		.where("GroupMatchContinueVote.id", "is", null)
+		// only the group they came from is still voting, older ones are long settled
+		.orderBy("Group.id", "desc")
+		.limit(1)
 		.executeTakeFirst();
 
-	if (!candidate) return null;
+	if (!candidate || candidate.alreadySettled) return null;
 
 	await trx
 		.deleteFrom("GroupMatchContinueVote")
@@ -1092,6 +1100,18 @@ async function recordImplicitRejoinNoVote(
 		.execute();
 
 	return candidate.matchChatCode;
+}
+
+/** Matches the `Group` rows the given user has already voted against continuing with. */
+function hasVotedNo(eb: ExpressionBuilder<DB, "Group">, userId: number) {
+	return eb.exists(
+		eb
+			.selectFrom("GroupMatchContinueVote")
+			.select("GroupMatchContinueVote.id")
+			.whereRef("GroupMatchContinueVote.groupId", "=", "Group.id")
+			.where("GroupMatchContinueVote.userId", "=", userId)
+			.where("GroupMatchContinueVote.isContinuing", "=", 0),
+	);
 }
 
 /** Matches the `GroupMember` rows that have no confirmation for the given ready check. */
