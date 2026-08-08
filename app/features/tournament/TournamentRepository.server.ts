@@ -1547,6 +1547,14 @@ export function finalizeWithoutSummary(tournamentId: number) {
 		.execute();
 }
 
+/** How close to its start time a tournament counts as happening right now. */
+const TOURNAMENT_ONGOING_WINDOW_IN_SECONDS = 24 * 60 * 60;
+
+/**
+ * Searches tournaments whose calendar event name contains the query, hidden events excluded.
+ *
+ * Ordered so that the tournaments most likely being looked for come first
+ */
 export async function searchByName({
 	query,
 	limit,
@@ -1558,6 +1566,12 @@ export async function searchByName({
 	minStartTime?: Date;
 	maxStartTime?: Date;
 }) {
+	const now = databaseTimestampNow();
+	const distanceFromNow = sql<number>`abs("CalendarEventDate"."startsAt" - ${now})`;
+	// window function so that the next tournament up is the next one of all the matches,
+	// not only of the ones that happen to fit in the limit
+	const nextUpStartsAt = sql<number>`min(case when "CalendarEventDate"."startsAt" - ${now} >= ${TOURNAMENT_ONGOING_WINDOW_IN_SECONDS} then "CalendarEventDate"."startsAt" end) over ()`;
+
 	let sqlQuery = db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -1574,7 +1588,15 @@ export async function searchByName({
 		])
 		.where("CalendarEvent.name", "like", `%${query}%`)
 		.where("CalendarEvent.hidden", "=", 0)
-		.orderBy("CalendarEventDate.startsAt", "desc")
+		.orderBy(
+			sql`case
+				when ${distanceFromNow} < ${TOURNAMENT_ONGOING_WINDOW_IN_SECONDS} then 0
+				when "CalendarEventDate"."startsAt" = ${nextUpStartsAt} then 1
+				else 2
+			end`,
+		)
+		.orderBy(distanceFromNow)
+		.orderBy("Tournament.id")
 		.limit(limit);
 
 	if (minStartTime) {
