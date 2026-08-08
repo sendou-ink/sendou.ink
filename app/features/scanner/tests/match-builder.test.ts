@@ -51,10 +51,12 @@ function death(
 	return { type: "Death", t, confidence: 0.9, data };
 }
 
+// default timer stays consistent with t (clock zero projected at 300s of
+// footage) so reads register as one live game to the replay filter
 function objective(
 	t: number,
 	{
-		time = 215 as number | null,
+		time = (300 - Math.round(t)) as number | null,
 		score = [95, 53] as [number | null, number | null],
 		penalty = [null, null] as [number | null, number | null],
 		control = [true, false] as [boolean, boolean],
@@ -260,7 +262,7 @@ test("a losing-side pov swaps objective samples into teams order", () => {
 	]);
 	assert.deepEqual(built[0]!.match.objective!.samples[0], {
 		t: 120,
-		time: 215,
+		time: 180,
 		score: [53, 95],
 		penalty: [null, 4],
 		control: [false, true],
@@ -396,6 +398,48 @@ test("a transient score dip is voided against the surrounding countdown", () => 
 		],
 	);
 	assert.deepEqual(samples[1]!.penalty, [4, null]);
+});
+
+test("post-game replay wipes are dropped by their clock projection", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(60, { score: [80, 6], penalty: [null, 56] }),
+		objective(61, { score: [78, 6], penalty: [null, 56] }),
+		objective(62, { score: [77, 6], penalty: [null, 56] }),
+		// broadcast re-runs the opening moments, clock jumped back to 4:51
+		objective(90, { time: 291, score: [100, 100] }),
+		objective(91, { time: 290, score: [99, 100] }),
+		// then the closing moments again
+		objective(100, { time: 62, score: [6, 77], penalty: [56, null] }),
+		objective(101, { time: 61, score: [6, 75], penalty: [56, null] }),
+		scoreboard(300),
+	]);
+	const samples = built[0]!.match.objective!.samples;
+	assert.deepEqual(
+		samples.map((sample) => sample.t),
+		[60, 61, 62],
+	);
+	assert.deepEqual(samples.at(-1)!.penalty, [null, 56]);
+});
+
+test("timerless reads share their live neighbor's replay-filter fate", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		// timerless head inherits from the first anchored read
+		objective(59, { time: null, score: [82, 6] }),
+		objective(60, { score: [80, 6] }),
+		objective(61, { score: [79, 6] }),
+		objective(62, { time: null, score: [78, 6] }),
+		// replay wipe, including a timerless read inside it
+		objective(90, { time: 291, score: [100, 100] }),
+		objective(91, { time: null, score: [99, 100] }),
+		objective(92, { time: 289, score: [97, 100] }),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.objective!.samples.map((sample) => sample.t),
+		[59, 60, 61, 62],
+	);
 });
 
 test("a stray full-count blip is voided against the surrounding countdown", () => {

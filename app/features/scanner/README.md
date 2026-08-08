@@ -84,7 +84,11 @@ sequenceDiagram
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
   counts, penalties, holder, match timer — a mode-discriminated union with
   only the SZ member so far). Objective reads land on `ScannerMatch` as
-  progress samples anchored to the game clock; a displayed count only ever
+  progress samples anchored to the game clock; broadcast replay wipes re-run
+  an earlier moment with the counter intact, so the builder keeps only the
+  dominant cluster of clock-zero projections (`t + time`) and drops replay
+  reads outright (timerless reads follow their preceding anchored
+  neighbor). A displayed count only ever
   ticks down, so the builder keeps each side's longest non-increasing score
   run and voids reads off it (surviving OCR blips chart as gaps, not dips). Each read also carries a
   per-side team ink color (`core/ink-color.ts` — the plate fill in

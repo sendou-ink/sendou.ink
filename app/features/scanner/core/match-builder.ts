@@ -79,6 +79,15 @@ const EARLY_END_MARGIN_SECONDS = 10;
  */
 const MIN_TEAM_HUE_SEPARATION = 30;
 
+/**
+ * A counter read whose projected clock zero (`t + time`) sits further than
+ * this from the match's dominant projection was taken off a broadcast
+ * replay of another moment, not the live game. Live projections jitter by
+ * a couple of seconds (wall clock and match timer both round to whole
+ * seconds); attested replay wipes land a minute or more away.
+ */
+const REPLAY_ANCHOR_TOLERANCE_SECONDS = 10;
+
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
 	/**
@@ -414,7 +423,11 @@ function floorOrNull(t: number | undefined): number | null {
  * the left plate is the POV/alpha side for the whole game, but casted
  * footage reorders the plates to follow the specced player — so each read
  * is first oriented by its sides' team ink hues (clustered against the
- * first read that saw both), making the series side-stable. A displayed
+ * first read that saw both), making the series side-stable. Broadcast
+ * replay wipes re-run an earlier moment with the counter overlay intact,
+ * so reads are first anchored by their projected clock zero (`t + time`),
+ * and only the dominant anchor cluster — the live game — survives;
+ * timerless reads follow their preceding anchored neighbor. A displayed
  * count never increases (it shows the team's best remaining), so each
  * side's series then keeps only its longest non-increasing run of scores —
  * surviving OCR blips are voided rather than charted. The whole
@@ -431,10 +444,9 @@ function buildObjective(
 ): ScannerMatchObjective | null {
 	if (objectives.length === 0) return null;
 
-	const clusterHues = seedClusterHues(objectives);
-	const oriented = withMonotonicScores(
-		orientByTeamColor(objectives, clusterHues),
-	);
+	const live = withoutReplayReads(objectives);
+	const clusterHues = seedClusterHues(live);
+	const oriented = withMonotonicScores(orientByTeamColor(live, clusterHues));
 
 	const swap = board
 		? board.povIndex !== null
@@ -567,6 +579,55 @@ function minimapTeamColors(
 		};
 	}) as [InkRgb | null, InkRgb | null];
 	return sides[0] === null && sides[1] === null ? null : sides;
+}
+
+/**
+ * Drops reads taken off broadcast replay wipes: `t + time` projects the
+ * wall-clock moment the match timer reaches zero, which stays constant
+ * across a live game but lands far away when the broadcast re-runs an
+ * earlier moment, clock and all. Only reads near the dominant projection
+ * (the live series always outnumbers ~30s replay clips) are kept; a
+ * timerless read shares the fate of its preceding anchored neighbor (the
+ * following one for a timerless head), so an unreadable — or as yet
+ * unattested overtime — timer display never voids live reads.
+ */
+function withoutReplayReads<T extends { t: number; data: ObjectiveData }>(
+	objectives: readonly T[],
+): T[] {
+	const anchored = objectives.flatMap((read, i) =>
+		read.data.time !== null ? [{ i, anchor: read.t + read.data.time }] : [],
+	);
+	if (anchored.length === 0) return [...objectives];
+
+	const dominant = dominantAnchor(anchored.map((read) => read.anchor));
+	const keptAnchored = new Map(
+		anchored.map(({ i, anchor }) => [
+			i,
+			Math.abs(anchor - dominant) <= REPLAY_ANCHOR_TOLERANCE_SECONDS,
+		]),
+	);
+
+	let previousKept = keptAnchored.get(anchored[0]!.i)!;
+	return objectives.filter((_, i) => {
+		previousKept = keptAnchored.get(i) ?? previousKept;
+		return previousKept;
+	});
+}
+
+/** The clock-zero projection supported by the most reads within tolerance. */
+function dominantAnchor(anchors: readonly number[]): number {
+	const sorted = anchors.toSorted((a, b) => a - b);
+	let best = sorted[0]!;
+	let bestCount = 0;
+	let lo = 0;
+	for (let hi = 0; hi < sorted.length; hi++) {
+		while (sorted[hi]! - sorted[lo]! > REPLAY_ANCHOR_TOLERANCE_SECONDS) lo++;
+		if (hi - lo + 1 > bestCount) {
+			bestCount = hi - lo + 1;
+			best = sorted[Math.floor((lo + hi) / 2)]!;
+		}
+	}
+	return best;
 }
 
 /**
