@@ -1153,6 +1153,9 @@ export function buildCases(fx: Fixtures): {
 			includeHiddenStats: true,
 		}),
 	);
+	add("UserCardRepository.findAllByUserIdsCached", fx.manyUserIds, (userIds) =>
+		UserCardRepository.findAllByUserIdsCached({ userIds }),
+	);
 	add("UserCardRepository.findCardEditExtrasByUserId", fx.heavyUser, (user) =>
 		UserCardRepository.findCardEditExtrasByUserId(user.id),
 	);

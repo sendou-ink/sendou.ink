@@ -152,6 +152,11 @@ export async function expire(readyCheck: {
 	await refreshSendouQInstance();
 
 	revalidateGroups(readyCheck);
+	// both groups return to the looking pool, so its shape changed for everyone
+	ChatSystemMessage.send({
+		room: SENDOUQ_LOOKING_ROOM,
+		revalidateOnly: true,
+	});
 }
 
 async function createMatch({
@@ -249,10 +254,6 @@ function revalidateGroups(readyCheck: {
 		},
 		{
 			room: sqGroupWebsocketRoom(readyCheck.bravoGroupId),
-			revalidateOnly: true,
-		},
-		{
-			room: SENDOUQ_LOOKING_ROOM,
 			revalidateOnly: true,
 		},
 	]);

@@ -20,7 +20,7 @@ import type {
 import { chatUsersSearchParams } from "./chat-search-params";
 import type { ChatMessage, ChatUser } from "./chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
-import { revalidateWithScope } from "./revalidation-scope";
+import { scheduleBroadcastRevalidation } from "./revalidation-scope";
 import { ChatContext } from "./useChatContext";
 
 const PING_INTERVAL_MS = 60_000;
@@ -252,7 +252,12 @@ function ChatProviderInner({
 			const isOwnRevalidate =
 				messageArr[0].revalidateOnly && messageArr[0].authorUserId === userId;
 			if (!isOwnRevalidate) {
-				revalidateWithScope(revalidate, messageArr[0].revalidateScope);
+				// jittered so a broadcast fanning out to a whole room does not make
+				// every subscribed client refetch in the same instant
+				scheduleBroadcastRevalidation(
+					revalidate,
+					messageArr[0].revalidateScope,
+				);
 			}
 		}
 

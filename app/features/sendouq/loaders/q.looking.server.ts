@@ -41,7 +41,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	]);
 
 	return {
-		...(await UserCardRepository.findAllByUserIds({
+		...(await UserCardRepository.findAllByUserIdsCached({
 			userIds: cardUserIds,
 		})),
 		groups: groupsToShow,

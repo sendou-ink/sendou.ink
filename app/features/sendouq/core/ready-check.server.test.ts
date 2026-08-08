@@ -11,9 +11,15 @@ import { backdate } from "~/db/seed/core/backdate";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import invariant from "~/utils/invariant";
-import { FULL_GROUP_SIZE, SENDOUQ } from "../q-constants";
+import {
+	FULL_GROUP_SIZE,
+	SENDOUQ,
+	SENDOUQ_LOOKING_ROOM,
+	sqGroupWebsocketRoom,
+} from "../q-constants";
 import * as ReadyCheck from "./ready-check.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -56,6 +62,13 @@ const findGroupStatus = async (groupId: number) => {
 const findMatch = () =>
 	db.selectFrom("GroupMatch").selectAll().executeTakeFirst();
 
+/** Rooms every system message sent so far was broadcast to, in order. */
+const broadcastedRooms = () =>
+	vi
+		.mocked(ChatSystemMessage.send)
+		.mock.calls.flatMap(([msg]) => (Array.isArray(msg) ? msg : [msg]))
+		.map((msg) => msg.room);
+
 /** Confirms every member of both groups as ready, which is what creates the match. */
 const confirmEveryoneReady = async (groupId: number) => {
 	for (;;) {
@@ -76,6 +89,7 @@ describe("SendouQ ready check", () => {
 
 	beforeEach(async () => {
 		groups = await setupMatchedUpGroups();
+		vi.mocked(ChatSystemMessage.send).mockClear();
 	});
 
 	test("takes both groups out of the looking pool", async () => {
@@ -176,6 +190,23 @@ describe("SendouQ ready check", () => {
 			await ReadyCheck.confirm({ readyCheck, userId: groups.ownMembers[1].id }),
 		).toBeNull();
 		expect(await findMatch()).toBeUndefined();
+	});
+
+	test("a confirmation revalidates only the two groups, expiring also the looking pool", async () => {
+		const readyCheck = await findReadyCheck(groups.ownGroup.id);
+		invariant(readyCheck);
+
+		await ReadyCheck.confirm({ readyCheck, userId: groups.ownMembers[1].id });
+
+		// the looking pool is unchanged while the ready check runs, so it is left alone
+		expect(broadcastedRooms()).toEqual([
+			sqGroupWebsocketRoom(groups.ownGroup.id),
+			sqGroupWebsocketRoom(groups.theirGroup.id),
+		]);
+
+		await ReadyCheck.expire(readyCheck);
+
+		expect(broadcastedRooms()).toContain(SENDOUQ_LOOKING_ROOM);
 	});
 
 	test("expiring sends both groups back to looking and marks who missed it", async () => {

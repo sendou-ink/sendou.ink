@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
+import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
 import { withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
@@ -345,5 +346,103 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		const banner = userCards.get(owner.id)?.banner;
 		expect(banner?.type).toBe("URL");
 		expect(banner).toHaveProperty("url");
+	});
+});
+
+describe("UserCardRepository.findAllByUserIdsCached", () => {
+	let target: { id: number };
+	let viewer: { id: number };
+	let otherViewer: { id: number };
+
+	beforeEach(async () => {
+		// user ids repeat between tests, so cards cached by an earlier test would be served here
+		UserCardRepository.clearUserCardCache();
+		[target, viewer, otherViewer] = await UserFactory.createMany(3);
+	});
+
+	const cachedCard = (userId: number, actorUserId?: number) => {
+		const find = () =>
+			UserCardRepository.findAllByUserIdsCached({ userIds: [userId] });
+
+		return typeof actorUserId === "number"
+			? withUserId(actorUserId, find)
+			: withNoUser(find);
+	};
+
+	it("gives every viewer their own private note", async () => {
+		await withUserId(viewer.id, () =>
+			PrivateUserNoteRepository.upsertOwnNote({
+				targetId: target.id,
+				sentiment: "POSITIVE",
+				text: "great teammate",
+			}),
+		);
+
+		const forAuthor = await cachedCard(target.id, viewer.id);
+		expect(forAuthor.userCards.get(target.id)?.privateNote).toMatchObject({
+			sentiment: "POSITIVE",
+			text: "great teammate",
+		});
+
+		// served from the entry the call above cached, which must not carry its note
+		const forOther = await cachedCard(target.id, otherViewer.id);
+		expect(forOther.userCards.get(target.id)?.privateNote).toBeNull();
+
+		const forAnonymous = await cachedCard(target.id);
+		expect(forAnonymous.userCards.get(target.id)?.privateNote).toBeNull();
+	});
+
+	it("serves cards from the cache and queries only the users missing from it", async () => {
+		const first = await cachedCard(target.id);
+		expect(first.userCards.get(target.id)?.shortBio).toBeNull();
+
+		await withUserId(target.id, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: "edited",
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: null,
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.findAllByUserIdsCached({
+				userIds: [target.id, viewer.id],
+			}),
+		);
+
+		expect(userCards.get(target.id)?.shortBio).toBeNull();
+		expect(userCards.get(viewer.id)?.id).toBe(viewer.id);
+	});
+
+	it("returns a fresh card once the cached one has expired", async () => {
+		await cachedCard(target.id);
+
+		await withUserId(target.id, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: "edited",
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: null,
+				hiddenCardStats: [],
+			}),
+		);
+		UserCardRepository.clearUserCardCache();
+
+		const { userCards } = await cachedCard(target.id);
+		expect(userCards.get(target.id)?.shortBio).toBe("edited");
+	});
+
+	it("coalesces concurrent misses for the same user into one query", async () => {
+		const [first, second] = await Promise.all([
+			cachedCard(target.id, viewer.id),
+			cachedCard(target.id, otherViewer.id),
+		]);
+
+		// both viewers were served the same cached card, so only one query built it
+		expect(first.userCards.get(target.id)?.stats).toBe(
+			second.userCards.get(target.id)?.stats,
+		);
 	});
 });

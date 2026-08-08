@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import type { Expression, ExpressionBuilder } from "kysely";
 import { sql } from "kysely";
 import { jsonBuildObject, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { ServerConfig } from "~/config.server";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { CustomTheme, PeakXP } from "~/db/tables-json";
@@ -13,6 +14,7 @@ import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
+import { LRUCache } from "~/modules/cache";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
@@ -55,8 +57,120 @@ export async function findAllByUserIds({
 }): Promise<{ userCards: Map<number, UserCardData> }> {
 	if (userIds.length === 0) return { userCards: new Map() };
 
-	const viewerId = actorIdOrNull();
+	return {
+		userCards: await queryUserCards({
+			userIds,
+			viewerId: actorIdOrNull(),
+			include,
+			includeHiddenStats,
+		}),
+	};
+}
 
+const CARD_CACHE_TTL_MS = 30 * 1000;
+const CARD_CACHE_MAX_ENTRIES = 2_000;
+const cardCache = new LRUCache<
+	number,
+	{ storedAt: number; card: Promise<UserCardData | undefined> }
+>({ max: CARD_CACHE_MAX_ENTRIES });
+
+/**
+ * Like {@link findAllByUserIds} (with the default options) but serves the
+ * viewer-independent card data from a short-lived in-memory cache, querying only users
+ * whose entry is missing or stale. The per-viewer `privateNote` is overlaid fresh on
+ * every call so a cached card is never viewer-specific. For high-frequency views (the
+ * SendouQ looking page) where broadcast-driven revalidation makes many clients rebuild
+ * the same cards at once; cards may be up to 30 seconds stale.
+ *
+ * The cache holds the in-flight query rather than its result, so concurrent misses for
+ * the same user (exactly what a revalidation burst causes) await one shared query
+ * instead of each firing their own.
+ */
+export async function findAllByUserIdsCached({
+	userIds,
+}: {
+	userIds: Array<number>;
+}): Promise<{ userCards: Map<number, UserCardData> }> {
+	if (ServerConfig.disableCache) return findAllByUserIds({ userIds });
+	if (userIds.length === 0) return { userCards: new Map() };
+
+	const now = Date.now();
+	const pendingCards = new Map<number, Promise<UserCardData | undefined>>();
+	const missingIds: Array<number> = [];
+	for (const userId of userIds) {
+		const entry = cardCache.get(userId);
+		if (entry && now - entry.storedAt < CARD_CACHE_TTL_MS) {
+			pendingCards.set(userId, entry.card);
+		} else {
+			missingIds.push(userId);
+		}
+	}
+
+	if (missingIds.length > 0) {
+		const query = queryUserCards({ userIds: missingIds, viewerId: null });
+		for (const userId of missingIds) {
+			pendingCards.set(userId, cacheQueriedCard({ userId, query, now }));
+		}
+	}
+
+	const cards = new Map<number, UserCardData>();
+	for (const [userId, pendingCard] of pendingCards) {
+		const card = await pendingCard;
+		if (card) cards.set(userId, card);
+	}
+
+	const privateNotes = await findPrivateNotesByTargetIds([...cards.keys()]);
+
+	const userCards = new Map<number, UserCardData>();
+	for (const [userId, card] of cards) {
+		userCards.set(userId, {
+			...card,
+			privateNote: privateNotes.get(userId) ?? null,
+		});
+	}
+
+	return { userCards };
+}
+
+/** Forgets every cached card, so the next read builds them from the database again. */
+export function clearUserCardCache() {
+	cardCache.clear();
+}
+
+function cacheQueriedCard({
+	userId,
+	query,
+	now,
+}: {
+	userId: number;
+	query: Promise<Map<number, UserCardData>>;
+	now: number;
+}) {
+	const card = query.then((userCards) => userCards.get(userId));
+	const entry = { storedAt: now, card };
+
+	// a failed query must not stay behind as this user's cached entry
+	card.catch(() => {
+		if (cardCache.get(userId) === entry) {
+			cardCache.delete(userId);
+		}
+	});
+	cardCache.set(userId, entry);
+
+	return card;
+}
+
+async function queryUserCards({
+	userIds,
+	viewerId,
+	include,
+	includeHiddenStats = false,
+}: {
+	userIds: Array<number>;
+	viewerId: number | null;
+	include?: { friendCode?: boolean };
+	includeHiddenStats?: boolean;
+}): Promise<Map<number, UserCardData>> {
 	// a user's card surfaces the better of their last two finished seasons (see bestSeasonResult)
 	const [rows, seasonResults] = await Promise.all([
 		db
@@ -85,7 +199,33 @@ export async function findAllByUserIds({
 		);
 	}
 
-	return { userCards };
+	return userCards;
+}
+
+/** The acting user's private notes about the given users, keyed by their user id. */
+async function findPrivateNotesByTargetIds(userIds: Array<number>) {
+	const notes = new Map<number, NonNullable<UserCardData["privateNote"]>>();
+
+	const viewerId = actorIdOrNull();
+	if (viewerId === null || userIds.length === 0) return notes;
+
+	const rows = await db
+		.selectFrom("PrivateUserNote")
+		.select([
+			"PrivateUserNote.targetId",
+			"PrivateUserNote.text",
+			"PrivateUserNote.sentiment",
+			"PrivateUserNote.updatedAt",
+		])
+		.where("PrivateUserNote.authorId", "=", viewerId)
+		.where("PrivateUserNote.targetId", "in", userIds)
+		.execute();
+
+	for (const { targetId, ...privateNote } of rows) {
+		notes.set(targetId, privateNote);
+	}
+
+	return notes;
 }
 
 /**
