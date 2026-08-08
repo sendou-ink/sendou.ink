@@ -149,11 +149,12 @@ export function canEditSuggestion(args: CanEditSuggestionArgs) {
 
 interface CanSuggestNewUserArgs {
 	user?: Pick<UserWithPlusTier, "id" | "plusTier">;
-	suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
+	/** Whether the user has already started a suggestion this month, any tier. */
+	hasSuggestedThisMonth: boolean;
 }
 export function canSuggestNewUser({
 	user,
-	suggestions,
+	hasSuggestedThisMonth,
 }: CanSuggestNewUserArgs) {
 	const votingActive =
 		process.env.NODE_ENV === "test" ? false : isVotingActive();
@@ -162,7 +163,7 @@ export function canSuggestNewUser({
 
 	return allTruthy([
 		!votingActive,
-		!hasUserSuggestedThisMonth({ user, suggestions }),
+		!hasSuggestedThisMonth,
 		isPlusServerMember(user),
 		existsSeason,
 	]);
@@ -170,13 +171,4 @@ export function canSuggestNewUser({
 
 function isPlusServerMember(user?: Pick<UserWithPlusTier, "plusTier">) {
 	return Boolean(user?.plusTier);
-}
-
-function hasUserSuggestedThisMonth({
-	user,
-	suggestions,
-}: Pick<CanSuggestNewUserArgs, "user" | "suggestions">) {
-	return suggestions.some(
-		(suggestion) => suggestion.entries[0].author.id === user?.id,
-	);
 }

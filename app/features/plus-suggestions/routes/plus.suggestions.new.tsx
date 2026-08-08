@@ -28,10 +28,9 @@ export default function PlusNewSuggestionModalPage() {
 	}));
 
 	if (
-		!data.suggestions ||
 		!canSuggestNewUser({
 			user,
-			suggestions: data.suggestions,
+			hasSuggestedThisMonth: data.summary.hasSuggested,
 		}) ||
 		tierOptions.length === 0
 	) {

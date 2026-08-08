@@ -25,6 +25,7 @@ import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
@@ -275,7 +276,7 @@ export function Layout({
 
 	const user = useUser();
 	const { unseenIds } = useNotifications();
-	const sidebarData = data?.sidebar;
+	const { sidebar: sidebarData } = useLayoutData();
 	const events = sidebarData?.events ?? [];
 	const friends = sidebarData?.friends ?? [];
 	const unseenFriendRequests = useUnseenFriendRequests(
@@ -402,7 +403,7 @@ export function Layout({
 			>
 				{sideNavChildren}
 			</SideNav>
-			<MobileNav sidebarData={data?.sidebar} />
+			<MobileNav sidebarData={sidebarData} />
 			<div className={styles.container}>
 				<header
 					ref={headerRef}

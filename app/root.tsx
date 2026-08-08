@@ -30,11 +30,8 @@ import {
 } from "react-router";
 import { Config } from "~/config";
 import type { CustomTheme } from "~/db/tables-json";
-import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
-import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
-import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
+import { resolveLayoutData } from "~/features/layout/core/layout.server";
 import { useDebounce } from "~/hooks/useDebounce";
-import { useReloadOnNewDeploy } from "~/hooks/useReloadOnNewDeploy";
 import lexendLatinUrl from "~/styles/fonts/lexend-latin.woff2?url";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Route } from "./+types/root";
@@ -47,6 +44,7 @@ import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
 import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
+import { LayoutDataProvider } from "./features/layout/LayoutDataProvider";
 import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
 	isTheme,
@@ -69,7 +67,6 @@ import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
 import { SearchParamsProvider } from "./modules/search-params/hooks";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
-import { GIT_COMMIT } from "./utils/git-commit";
 import { allI18nNamespaces } from "./utils/i18n";
 import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
 import { requestContextMiddleware } from "./utils/request-context-middleware.server";
@@ -129,7 +126,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const themeSession = await getThemeSession(request);
 	const sidenavSession = await getSidenavSession(request);
 
-	const sidebarData = await resolveSidebarData(user?.id ?? null);
+	const layoutData = await resolveLayoutData(user);
 
 	return data(
 		{
@@ -154,13 +151,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					}
 				: undefined,
 			customTheme: isSupporter(user) ? user?.customTheme : undefined,
-			notifications: user
-				? await NotificationRepository.findByUserId(user.id, {
-						limit: NOTIFICATIONS.PEEK_COUNT,
-					})
-				: undefined,
-			sidebar: sidebarData,
-			buildCommit: GIT_COMMIT,
+			...layoutData,
 		},
 		{
 			headers: { "Set-Cookie": await i18nCookie.serialize(locale) },
@@ -190,7 +181,6 @@ function Document({
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
-	useSidebarRevalidation();
 
 	const htmlStyle: Record<string, string | number> = {
 		...Object.fromEntries(customThemeStyle),
@@ -251,7 +241,9 @@ function Document({
 								<UnsavedChangesGuard />
 								<MyFuse data={data} />
 								<ChatProvider user={data?.user}>
-									<Layout data={data}>{children}</Layout>
+									<LayoutDataProvider data={data}>
+										<Layout data={data}>{children}</Layout>
+									</LayoutDataProvider>
 								</ChatProvider>
 							</I18nProvider>
 						</RouterProvider>
@@ -325,39 +317,6 @@ function useLoadingIndicator() {
 	);
 }
 
-function useSidebarRevalidation() {
-	const { revalidate, state } = useRevalidator();
-
-	// read through a ref so a revalidation elsewhere in the app does not
-	// re-run the effect and restart the interval before it ever fires
-	const stateRef = React.useRef(state);
-	stateRef.current = state;
-
-	useEffect(() => {
-		const TEN_MINUTES = 10 * 60 * 1000;
-
-		const revalidateIfIdle = () => {
-			if (stateRef.current === "idle") {
-				revalidate();
-			}
-		};
-
-		const handleVisibilityChange = () => {
-			if (document.visibilityState === "visible") {
-				revalidateIfIdle();
-			}
-		};
-
-		document.addEventListener("visibilitychange", handleVisibilityChange);
-		const interval = setInterval(revalidateIfIdle, TEN_MINUTES);
-
-		return () => {
-			document.removeEventListener("visibilitychange", handleVisibilityChange);
-			clearInterval(interval);
-		};
-	}, [revalidate]);
-}
-
 function usePreloadTranslation() {
 	React.useEffect(() => {
 		void generalI18next.loadNamespaces(allI18nNamespaces());
@@ -401,8 +360,6 @@ export default function App() {
 	//
 	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
 	const data = useLoaderData<RootLoaderData>();
-
-	useReloadOnNewDeploy(data.buildCommit);
 
 	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
 	// elements to work properly when a React Aria Component disabled scrolling

@@ -397,6 +397,19 @@ export function buildCases(fx: Fixtures): {
 		fx.plusSuggestionMonthYear,
 		(monthYear) => PlusSuggestionRepository.findAllByMonth(monthYear),
 	);
+	add(
+		"PlusSuggestionRepository.findAllByMonth (one tier)",
+		fx.plusSuggestionMonthYear,
+		(monthYear) =>
+			PlusSuggestionRepository.findAllByMonth({ ...monthYear, tier: 3 }),
+	);
+	add(
+		"PlusSuggestionRepository.findMonthSummary",
+		fx.plusSuggestionMonthYear && fx.heavyUser
+			? { ...fx.plusSuggestionMonthYear, userId: fx.heavyUser.id }
+			: null,
+		(args) => PlusSuggestionRepository.findMonthSummary(args),
+	);
 
 	// PlusVotingRepository
 	addStatic("PlusVotingRepository.findAllPlusTiersFromLatestVoting", () =>

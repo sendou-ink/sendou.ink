@@ -1,7 +1,8 @@
 import { Bell, ChevronRight, RefreshCcw } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useMatches, useRevalidator } from "react-router";
+import { Link } from "react-router";
+import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import {
 	NotificationItem,
 	NotificationItemDivider,
@@ -20,10 +21,7 @@ export type LoaderNotification = NonNullable<
 >[number];
 
 export function useNotifications() {
-	const [root] = useMatches();
-
-	const notifications = (root.loaderData as RootLoaderData | undefined)
-		?.notifications;
+	const { notifications } = useLayoutData();
 
 	const unseenIds = React.useMemo(
 		() =>
@@ -46,7 +44,7 @@ export function NotificationContent({
 	onClose?: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
-	const { revalidate, state } = useRevalidator();
+	const { refresh, isRefreshing } = useLayoutData();
 
 	useMarkNotificationsAsSeen(unseenIds);
 
@@ -60,8 +58,8 @@ export function NotificationContent({
 					icon={<RefreshCcw />}
 					shape="circle"
 					variant="minimal"
-					onPress={revalidate}
-					isDisabled={state !== "idle"}
+					onPress={refresh}
+					isDisabled={isRefreshing}
 				/>
 			</div>
 			<hr className={styles.divider} />

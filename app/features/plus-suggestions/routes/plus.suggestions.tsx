@@ -23,12 +23,12 @@ import {
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
-import { userPage } from "~/utils/urls";
+import { plusSuggestionCommentPage, userPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
 import styles from "../plus.module.css";
+import type { PlusTier } from "../plus-suggestions-constants";
 import { editSuggestionFormSchema } from "../plus-suggestions-schemas";
 import {
 	PLUS_TIER_PARAMS,
@@ -61,19 +61,15 @@ export const shouldRevalidate = plusSuggestionsSearchParams.shouldRevalidate;
 
 export default function PlusSuggestionsPage() {
 	const data = useLoaderData<PlusSuggestionsLoaderData>();
-	const [{ tier, alert }, setSearchParams] = useSearchParamsTyped(
+	const [{ alert }, setSearchParams] = useSearchParamsTyped(
 		plusSuggestionsSearchParams,
 	);
 	const user = useUser();
-	const tierVisible = Number(tier ?? "1");
+	const tierVisible = data.tier;
 
 	const handleTierChange = (tier: PlusTierParam) => {
 		setSearchParams({ tier });
 	};
-
-	const visibleSuggestions = data.suggestions.filter(
-		(suggestion) => suggestion.tier === tierVisible,
-	);
 
 	if (!nextNonCompletedVoting(new Date())) {
 		return (
@@ -101,23 +97,22 @@ export default function PlusSuggestionsPage() {
 							className={clsx(styles.topContainer, {
 								[styles.topContainerCentered]: !canSuggestNewUser({
 									user,
-									suggestions: data.suggestions,
+									hasSuggestedThisMonth: data.summary.hasSuggested,
 								}),
 							})}
 						>
 							<div className={styles.radios}>
 								{PLUS_TIER_PARAMS.map((tierParam) => {
 									const tier = Number(tierParam);
-									const suggestions = data.suggestions.filter(
-										(suggestion) => suggestion.tier === tier,
-									);
+									const suggestionsCount =
+										data.summary.suggestionCountsByTier[tier as PlusTier];
 
 									return (
 										<div key={tierParam} className={styles.radioContainer}>
 											<label htmlFor={tierParam} className={styles.radioLabel}>
 												+{tier}{" "}
 												<span className={styles.usersCount}>
-													({suggestions.length})
+													({suggestionsCount})
 												</span>
 											</label>
 											<input
@@ -134,17 +129,14 @@ export default function PlusSuggestionsPage() {
 							</div>
 						</div>
 						<div className="stack lg">
-							{visibleSuggestions.map((suggestion) => {
-								invariant(tierVisible);
-								return (
-									<SuggestedUser
-										key={`${suggestion.suggested.id}-${tierVisible}`}
-										suggestion={suggestion}
-										tier={tierVisible}
-									/>
-								);
-							})}
-							{visibleSuggestions.length === 0 ? (
+							{data.suggestions.map((suggestion) => (
+								<SuggestedUser
+									key={`${suggestion.suggested.id}-${tierVisible}`}
+									suggestion={suggestion}
+									tier={tierVisible}
+								/>
+							))}
+							{data.suggestions.length === 0 ? (
 								<div className={clsx(styles.suggestedInfoText, "text-center")}>
 									No suggestions yet
 								</div>
@@ -158,12 +150,9 @@ export default function PlusSuggestionsPage() {
 }
 
 function SuggestedForInfo() {
-	const user = useUser();
 	const data = useLoaderData<PlusSuggestionsLoaderData>();
 
-	const suggestedForTiers = data.suggestions
-		.filter((suggestion) => suggestion.suggested.id === user?.id)
-		.map((suggestion) => suggestion.tier);
+	const suggestedForTiers = data.summary.suggestedForTiers;
 
 	if (suggestedForTiers.length === 0) return null;
 
@@ -206,8 +195,6 @@ function SuggestedUser({
 	const data = useLoaderData<PlusSuggestionsLoaderData>();
 	const user = useUser();
 
-	invariant(data.suggestions);
-
 	return (
 		<div className="stack md">
 			<div className={styles.suggestedUserInfo}>
@@ -227,11 +214,11 @@ function SuggestedUser({
 						className={styles.commentButton}
 						size="small"
 						variant="outlined"
-						to={plusSuggestionsSearchParams.href(
-							`comment/${tier}/${suggestion.suggested.id}`,
-							{ tier: String(tier) as PlusTierParam },
-						)}
-						prefetch="render"
+						to={plusSuggestionCommentPage({
+							tier,
+							userId: suggestion.suggested.id,
+						})}
+						prefetch="intent"
 					>
 						Comment
 					</LinkButton>
