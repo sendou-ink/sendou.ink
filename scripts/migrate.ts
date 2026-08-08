@@ -40,6 +40,7 @@ async function main() {
 
 	const migrator = new Migrator({
 		db,
+		allowUnorderedMigrations: true,
 		provider: new FileMigrationProvider({
 			fs,
 			path,
