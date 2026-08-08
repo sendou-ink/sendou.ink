@@ -180,22 +180,24 @@ export class RoundRobinBracket extends Bracket {
 				}
 			};
 
+			// every team of the group belongs in the standings even if all of its matches were forfeited by dropped out opponents, dropped out ones are seeded further below
+			const groupTeamIds = R.unique(
+				matches
+					.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
+					.filter((id) => typeof id === "number"),
+			);
+			for (const teamId of groupTeamIds) {
+				if (droppedOutWithIncompleteMatches.has(teamId)) continue;
+
+				updateTeam({ teamId });
+			}
+
 			for (const match of matches) {
-				const opp1Id = match.opponent1?.id;
-				const opp2Id = match.opponent2?.id;
-				const opponentIds = [opp1Id, opp2Id].filter(
+				if (!match.winnerSide) continue;
+
+				const opponentIds = [match.opponent1?.id, match.opponent2?.id].filter(
 					(id) => typeof id === "number",
 				);
-
-				if (!match.winnerSide) {
-					// teams yet to finish a match still belong in the standings, dropped out ones are seeded further below
-					for (const teamId of opponentIds) {
-						if (droppedOutWithIncompleteMatches.has(teamId)) continue;
-
-						updateTeam({ teamId });
-					}
-					continue;
-				}
 
 				if (opponentIds.some((id) => droppedOutWithIncompleteMatches.has(id))) {
 					continue;
