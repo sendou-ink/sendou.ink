@@ -17,7 +17,6 @@ import {
 	Outlet,
 	useLoaderData,
 	useLocation,
-	useNavigation,
 	useOutletContext,
 } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -31,7 +30,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
-import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -523,7 +521,8 @@ function SubsPopover({ children }: { children: React.ReactNode }) {
 
 /**
  * Bracket switcher. Only the bracket the loader shipped the match data of is rendered;
- * switching navigates so that the newly selected bracket's data gets loaded.
+ * switching navigates so that the newly selected bracket's data gets loaded, the
+ * previously loaded bracket staying up until it arrives.
  */
 function BracketTabs({
 	loadedBracketIdx,
@@ -533,33 +532,15 @@ function BracketTabs({
 	children: React.ReactNode;
 }) {
 	const tournament = useTournament();
-	const [idxParam, setIdxParam] = useSearchParam(
-		tournamentBracketsSearchParams,
-		"idx",
-	);
-	const navigation = useNavigation();
+	const [, setIdxParam] = useSearchParam(tournamentBracketsSearchParams, "idx");
 
 	const visibleBrackets = tournament.visibleBracketsMeta;
-
-	// while the newly selected bracket is being loaded its tab is already the selected one
-	const pendingIdx = navigation.location
-		? tournamentBracketsSearchParams.parse(
-				new URLSearchParams(navigation.location.search),
-			).idx
-		: null;
-	const requestedIdx = pendingIdx ?? idxParam ?? loadedBracketIdx;
-	// the search param can point to a bracket without a tab e.g. one hidden after finalization
-	const selectedIdx = visibleBrackets.some(
-		(bracket) => bracket.idx === requestedIdx,
-	)
-		? requestedIdx
-		: loadedBracketIdx;
 
 	const bracketNameForTab = (name: string) => name.replace("bracket", "");
 
 	return (
 		<SendouTabs
-			selectedKey={String(selectedIdx)}
+			selectedKey={String(loadedBracketIdx)}
 			onSelectionChange={(key) => setIdxParam(Number(key))}
 		>
 			<SendouTabList>
@@ -575,7 +556,7 @@ function BracketTabs({
 			</SendouTabList>
 			{visibleBrackets.map((bracket) => (
 				<SendouTabPanel key={bracket.idx} id={String(bracket.idx)}>
-					{bracket.idx === loadedBracketIdx ? children : <Placeholder />}
+					{children}
 				</SendouTabPanel>
 			))}
 		</SendouTabs>
