@@ -58,9 +58,17 @@ function objective(
 		score = [95, 53] as [number | null, number | null],
 		penalty = [null, null] as [number | null, number | null],
 		control = [true, false] as [boolean, boolean],
+		teamColor = [null, null] as ObjectiveData["teamColor"],
 	} = {},
 ): DetectedEvent {
-	const data: ObjectiveData = { mode: "SZ", time, score, penalty, control };
+	const data: ObjectiveData = {
+		mode: "SZ",
+		time,
+		score,
+		penalty,
+		control,
+		teamColor,
+	};
 	return { type: "Objective", t, confidence: 0.9, data };
 }
 
@@ -147,6 +155,7 @@ function minimap(
 		alpha = ALPHA as (MainWeaponId | null)[],
 		bravo = BRAVO as (MainWeaponId | null)[],
 		spectator = true,
+		teamColors = [null, null] as MinimapData["teamColors"],
 	} = {},
 ): DetectedEvent {
 	const data: MinimapData = {
@@ -154,6 +163,7 @@ function minimap(
 		spectator,
 		teammates: alpha.map(teammate),
 		enemies: bravo.map(enemy),
+		teamColors,
 	};
 	return { type: "Minimap", t, confidence: 0.8, data };
 }
@@ -277,6 +287,76 @@ test("an unknown-mode match keeps its objective reads", () => {
 	]);
 	assert.equal(built[0]!.match.objective!.samples.length, 1);
 	assert.deepEqual(invalidObjectiveEvents(built), []);
+});
+
+const GREEN_INK = { r: 146, g: 180, b: 96 };
+const PURPLE_INK = { r: 130, g: 43, b: 130 };
+
+test("casted plate swaps are reoriented by team ink color", () => {
+	const built = buildScannerMatches([
+		minimap(0, { teamColors: [GREEN_INK, PURPLE_INK] }),
+		objective(60, {
+			score: [80, 90],
+			control: [true, false],
+			teamColor: [GREEN_INK, PURPLE_INK],
+		}),
+		// the caster specs a purple player: purple's plate moves left
+		objective(120, {
+			score: [90, 75],
+			penalty: [4, null],
+			control: [true, false],
+			teamColor: [PURPLE_INK, GREEN_INK],
+		}),
+		// colors unreadable: the previous arrangement carries over
+		objective(125, {
+			score: [85, 75],
+			control: [true, false],
+			teamColor: [null, null],
+		}),
+		minimap(180),
+	]);
+	assert.equal(built.length, 1);
+	const samples = built[0]!.match.objective!.samples;
+	assert.deepEqual(
+		samples.map((sample) => sample.score),
+		[
+			[80, 90],
+			[75, 90],
+			[75, 85],
+		],
+	);
+	assert.deepEqual(
+		samples.map((sample) => sample.penalty),
+		[
+			[null, null],
+			[null, 4],
+			[null, null],
+		],
+	);
+	assert.deepEqual(
+		samples.map((sample) => sample.control),
+		[
+			[true, false],
+			[false, true],
+			[false, true],
+		],
+	);
+});
+
+test("minimap ink colors anchor a bravo-first cluster into teams order", () => {
+	const built = buildScannerMatches([
+		minimap(0, { teamColors: [GREEN_INK, PURPLE_INK] }),
+		// every read had purple (bravo) on the left plate
+		objective(60, {
+			score: [90, 80],
+			control: [false, true],
+			teamColor: [PURPLE_INK, GREEN_INK],
+		}),
+		minimap(120),
+	]);
+	const samples = built[0]!.match.objective!.samples;
+	assert.deepEqual(samples[0]!.score, [80, 90]);
+	assert.deepEqual(samples[0]!.control, [true, false]);
 });
 
 test("without a pov the side whose count got lower is the winner side", () => {

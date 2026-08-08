@@ -42,6 +42,7 @@
 		"test:e2e:flaky-detect": "playwright test --repeat-each=10 --max-failures=1",
 		"check-plural-collapse": "node --experimental-strip-types scripts/collapse-single-plural-keys.ts --check",
 		"checks": "pnpm run biome:fix && pnpm run test:unit:browser && pnpm run check-translation-jsons && pnpm run check-plural-collapse && pnpm run typecheck && pnpm run knip",
+		"checks:scanner": "pnpm checks && pnpm test:scanner",
 		"seed": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/seed.ts",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
 		"i18n:sync": "node --experimental-strip-types scripts/collapse-single-plural-keys.ts && i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && pnpm run biome:fix",

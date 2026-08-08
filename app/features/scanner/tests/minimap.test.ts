@@ -17,6 +17,7 @@ import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
 import type { Detector } from "../core/detectors/types";
+import { hueDistance, hueOf } from "../core/ink-color";
 import {
 	type Fixture,
 	isFieldSkipped,
@@ -181,6 +182,28 @@ for (const fixture of fixtures) {
 		}
 	});
 }
+
+// The columns' sub-tile ink means anchor the objective counter's color
+// clusters to `teams` order (match-builder); the SWS26 spectator fixture
+// pairs with objective/splat-zones-cast-* from the same game, where the
+// plates read green ~78° and purple ~302°.
+test("spectator sub tiles read the two team ink colors", async () => {
+	const fixture = fixtures.find((f) => f.name === "spectator-sws26-swiss");
+	assert.ok(fixture, "spectator-sws26-swiss fixture missing");
+	const { events } = await runDetectorOnFixture<MinimapData>(
+		detector,
+		fixture!,
+	);
+	const teamColors = events[0]?.data.teamColors;
+	assert.ok(teamColors?.[0] && teamColors[1], "column ink color unreadable");
+	const [alpha, bravo] = teamColors;
+	assert.ok(
+		hueDistance(hueOf(alpha), hueOf(bravo)) >= 90,
+		"the two columns' ink hues do not separate",
+	);
+	assert.ok(hueDistance(hueOf(alpha), 84) <= 25, "left column is not green");
+	assert.ok(hueDistance(hueOf(bravo), 300) <= 25, "right column is not purple");
+});
 
 // The map overlay replaces everything else on screen; its gate may not fire
 // on any other detector's positives, nor theirs on the minimap fixtures.

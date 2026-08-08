@@ -24,10 +24,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "../core/detectors/objective/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
@@ -719,13 +716,13 @@ export function VodPage({
 								ingestableBuilt.indexOf(built),
 							);
 							const send = skipReason ? undefined : bulkSend;
-							// counter reads render as one timeline chart, not a card each;
-							// a non-SZ match's reads (objective null) are never shown
-							const objectiveEvents = built.match.objective
-								? built.sources
-										.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-										.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
-								: [];
+							// counter reads render as one timeline chart, not a card each --
+							// from the builder's samples, whose sides are team-stable (raw
+							// reads follow the specced player on casts); a non-SZ match's
+							// reads (objective null) are never shown
+							const objectiveEvents = (
+								built.match.objective?.samples ?? []
+							).map((sample) => ({ t: sample.t, data: sample }));
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
 								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
 							);

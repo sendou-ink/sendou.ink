@@ -44,7 +44,13 @@ function minimap(
 		enemies = BRAVO.map((id) => enemy(id)),
 	} = {},
 ): DetectedEvent {
-	const data: MinimapData = { stage, spectator: true, teammates, enemies };
+	const data: MinimapData = {
+		stage,
+		spectator: true,
+		teammates,
+		enemies,
+		teamColors: [null, null],
+	};
 	return { type: "Minimap", t, confidence: 0.8, data };
 }
 

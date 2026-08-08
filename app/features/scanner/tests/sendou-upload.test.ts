@@ -62,6 +62,7 @@ test("weapons are padded to 4 slots per team so uneven rosters keep the team spl
 			abilities: [],
 		})),
 		enemies: BRAVO.map((weaponId) => ({ name: null, weaponId, abilities: [] })),
+		teamColors: [null, null],
 	};
 	const matches = prefilledMatches([
 		{ type: "Minimap", t: 300, confidence: 0.9, data },

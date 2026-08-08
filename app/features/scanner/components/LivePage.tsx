@@ -16,10 +16,7 @@ import {
 	type MapStartData,
 } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "../core/detectors/objective/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
@@ -403,13 +400,13 @@ export function LivePage({
 						renderMatch={(built, justFormed) => {
 							const id = built.sources[0]!.id!;
 							const skipReason = skipReasons.get(built);
-							// counter reads render as one timeline chart, not a card each;
-							// a non-SZ match's reads (objective null) are never shown
-							const objectiveEvents = built.match.objective
-								? built.sources
-										.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-										.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
-								: [];
+							// counter reads render as one timeline chart, not a card each --
+							// from the builder's samples, whose sides are team-stable (raw
+							// reads follow the specced player on casts); a non-SZ match's
+							// reads (objective null) are never shown
+							const objectiveEvents = (
+								built.match.objective?.samples ?? []
+							).map((sample) => ({ t: sample.t, data: sample }));
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
 								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
 							);

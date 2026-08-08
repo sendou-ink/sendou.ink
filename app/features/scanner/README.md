@@ -84,7 +84,12 @@ sequenceDiagram
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
   counts, penalties, holder, match timer — a mode-discriminated union with
   only the SZ member so far). Objective reads land on `ScannerMatch` as
-  progress samples anchored to the game clock. Reads grouping into a match
+  progress samples anchored to the game clock. Each read also carries a
+  per-side team ink color (`core/ink-color.ts` — the plate fill in
+  control, the digit ink otherwise): casted footage keeps the specced
+  player's team on the left plate, so the builder orients samples by ink
+  hue and anchors them to `teams` order via the minimap sub-tile colors
+  (casts never show a results screen). Reads grouping into a match
   whose detected mode is not SZ are lookalike misreads: the builder nulls
   that match's `objective` and callers discard the events
   (`invalidObjectiveEvents`; Live also stops collecting once a MapStart

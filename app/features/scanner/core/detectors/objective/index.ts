@@ -31,6 +31,7 @@ import {
 	minChannel,
 	type Roi,
 } from "../../image";
+import { type InkRgb, meanInkColor } from "../../ink-color";
 import {
 	type BannerScoreRead,
 	isBetterRead,
@@ -78,6 +79,14 @@ export interface SplatZonesObjectiveData {
 	penalty: [number | null, number | null];
 	/** which team currently holds the zone (team-color plate fill) */
 	control: [boolean, boolean];
+	/**
+	 * mean team-ink RGB per side, sampled off the plate (the team-color
+	 * fill while in control, the digit ink otherwise — one of the two is
+	 * always drawn in the team's color); null when too little saturated
+	 * ink was found. The stable team identity for casted footage, where
+	 * the plates follow the specced player's side instead of alpha/bravo.
+	 */
+	teamColor: [InkRgb | null, InkRgb | null];
 }
 
 export const OBJECTIVE_EVENT_TYPE = "Objective";
@@ -89,7 +98,8 @@ const CHECK_INTERVAL_SECONDS = 1;
  * Timeline content guard: consecutive counter reads merge only when they
  * show the same state, so every actual tick/penalty/control change becomes
  * its own event. `time` is deliberately not compared — the timer ticks
- * every second, so comparing it would keep any two reads from ever merging.
+ * every second, so comparing it would keep any two reads from ever merging
+ * — and neither is `teamColor`, whose raw pixel means jitter per frame.
  */
 export function sameObjectiveData(a: unknown, b: unknown): boolean {
 	const da = a as ObjectiveData;
@@ -110,6 +120,7 @@ interface SideRead {
 	penalty: BannerScoreRead | null;
 	control: boolean;
 	fill: { mean: number; saturation: number };
+	teamColor: InkRgb | null;
 }
 
 export function createObjectiveDetector(
@@ -312,6 +323,12 @@ export function createObjectiveDetector(
 					score.value !== null &&
 					fill.saturation >= CONTROL_PLATE_MIN_SATURATION,
 				fill,
+				// the fill while in control, the digit ink otherwise — both
+				// ROIs together always cover whichever carries the team color
+				teamColor: meanInkColor(frame, [
+					SCORE_ROIS[side],
+					PLATE_PROBE_ROIS[side],
+				]),
 			};
 		}) as [SideRead, SideRead];
 		const timer = readTimer(gray);
@@ -338,6 +355,7 @@ export function createObjectiveDetector(
 						sides[1].penalty?.value ?? null,
 					],
 					control: [sides[0].control, sides[1].control],
+					teamColor: [sides[0].teamColor, sides[1].teamColor],
 				},
 				debug: {
 					timerReading: timer.reading,

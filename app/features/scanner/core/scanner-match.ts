@@ -83,9 +83,10 @@ export interface ScannerMatch {
 	/** spectator/casted footage (the 8-player spectator map screen was seen) */
 	cast: boolean;
 	/**
-	 * counter progress samples in `teams` order (the on-screen left plate is
-	 * the POV/alpha side; the builder reorients when teams[0] is the other
-	 * side); null when no counter was read
+	 * counter progress samples in `teams` order — the builder tracks each
+	 * side's team ink color, so casted footage's plate swaps (the plates
+	 * follow the specced player) can't scramble the series; null when no
+	 * counter was read
 	 */
 	objective: ScannerMatchObjective | null;
 	/**

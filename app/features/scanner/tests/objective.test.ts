@@ -19,6 +19,7 @@ import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
 import type { Detector } from "../core/detectors/types";
+import { hueDistance, hueOf } from "../core/ink-color";
 import {
 	type Fixture,
 	isFieldSkipped,
@@ -129,6 +130,41 @@ for (const fixture of fixtures) {
 		}
 	});
 }
+
+// The cast fixture pair captures the same game under both camera
+// arrangements (the specced team's plate sits left, so purple is left in
+// one frame and right in the other): each frame's two ink hues must
+// separate cleanly, and cross-frame the same team's hue must land on the
+// same cluster with the sides swapped — the invariant cast score tracking
+// (match-builder's color orientation) rests on.
+test("cast fixture pair: team ink hues identify sides across camera swaps", async () => {
+	const pair = [
+		"splat-zones-cast-specced-purple-left",
+		"splat-zones-cast-overhead-purple-right",
+	].map((name) => fixtures.find((fixture) => fixture.name === name));
+	assert.ok(pair[0] && pair[1], "cast fixture pair missing");
+
+	const colors = [];
+	for (const fixture of pair) {
+		const { events } = await runDetectorOnFixture<ObjectiveData>(
+			detector,
+			fixture!,
+		);
+		const teamColor = events[0]?.data.teamColor;
+		assert.ok(teamColor?.[0] && teamColor[1], "side ink color unreadable");
+		colors.push([teamColor[0], teamColor[1]] as const);
+	}
+
+	for (const [left, right] of colors) {
+		assert.ok(
+			hueDistance(hueOf(left), hueOf(right)) >= 90,
+			"the two teams' ink hues do not separate",
+		);
+	}
+	const [specced, overhead] = colors;
+	assert.ok(hueDistance(hueOf(specced![0]), hueOf(overhead![1])) <= 20);
+	assert.ok(hueDistance(hueOf(specced![1]), hueOf(overhead![0])) <= 20);
+});
 
 // Screens that replace gameplay can never show the counters — the gate must
 // stay quiet on their positives.

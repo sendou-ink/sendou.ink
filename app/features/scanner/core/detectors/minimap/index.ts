@@ -37,6 +37,7 @@ import {
 	meanBrightness,
 	type Roi,
 } from "../../image";
+import { type InkRgb, meanInkColor } from "../../ink-color";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseName } from "../scoreboard/names";
 import {
@@ -127,6 +128,13 @@ export interface MinimapData {
 	teammates: MinimapTeammate[];
 	/** enemy panel rows, top to bottom */
 	enemies: MinimapEnemy[];
+	/**
+	 * mean team-ink RGB per side sampled from the sub-weapon tiles
+	 * ([teammates/alpha, enemies/bravo]); null when too little saturated
+	 * ink. Anchors the objective counter's color-tracked sides to `teams`
+	 * order on casted footage, which never shows a results screen.
+	 */
+	teamColors: [InkRgb | null, InkRgb | null];
 }
 
 export const MINIMAP_EVENT_TYPE = "Minimap";
@@ -324,6 +332,7 @@ export function createMinimapDetector(
 
 		const teammates: MinimapTeammate[] = [];
 		const enemies: MinimapEnemy[] = [];
+		const sideSubTiles: [Roi[], Roi[]] = [[], []];
 		const cardDebug: Record<string, unknown>[] = [];
 		for (const dx of [0, SPECTATOR_ENEMY_DX]) {
 			for (let row = 0; row < 4; row++) {
@@ -333,6 +342,7 @@ export function createMinimapDetector(
 					cardDebug.push({ dx, row, presence, skipped: true });
 					continue;
 				}
+				sideSubTiles[dx === 0 ? 0 : 1].push(layout.subTile);
 				const crossFraction = saturatedFraction(hsv, layout.cross);
 				const occluded = crossFraction >= CROSS_MIN_FRACTION;
 				const cornerMin = minTopCornerMean(gray, layout.weapon);
@@ -407,6 +417,11 @@ export function createMinimapDetector(
 		}
 		debug.cards = cardDebug;
 
+		const teamColors: [InkRgb | null, InkRgb | null] = [
+			meanInkColor(rgb, sideSubTiles[0]),
+			meanInkColor(rgb, sideSubTiles[1]),
+		];
+
 		const stageMatch = detectStage(frame, confidences);
 		debug.stage = stageMatch;
 
@@ -429,6 +444,7 @@ export function createMinimapDetector(
 					spectator: true,
 					teammates,
 					enemies,
+					teamColors,
 				},
 				debug,
 			},
@@ -463,6 +479,7 @@ export function createMinimapDetector(
 
 		// 1. own-team callout cards
 		const teammates: MinimapTeammate[] = [];
+		const sideSubTiles: [Roi[], Roi[]] = [[], []];
 		const cardDebug: Record<string, unknown>[] = [];
 		for (const layout of CARD_LAYOUTS) {
 			// presence: the card is crisp UI, absent slots show blurred scene
@@ -540,6 +557,7 @@ export function createMinimapDetector(
 				matched !== null ||
 				abilities.some((a) => a !== null);
 			if (!hasEvidence) continue;
+			sideSubTiles[0].push(layout.subTile);
 			teammates.push({
 				slot: layout.slot,
 				name,
@@ -604,6 +622,7 @@ export function createMinimapDetector(
 				? SPECIAL_READY_WEAPON_MIN_SCORE
 				: WEAPON_MIN_SCORE;
 			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			sideSubTiles[1].push(enemySubTileRoi(cy));
 			enemies.push({
 				name: null,
 				weaponId: matched ? toMainWeaponId(matched.id) : null,
@@ -611,6 +630,11 @@ export function createMinimapDetector(
 			});
 		}
 		debug.enemies = enemyDebug;
+
+		const teamColors: [InkRgb | null, InkRgb | null] = [
+			meanInkColor(rgb, sideSubTiles[0]),
+			meanInkColor(rgb, sideSubTiles[1]),
+		];
 
 		const stageMatch = detectStage(frame, confidences);
 		debug.stage = stageMatch;
@@ -635,6 +659,7 @@ export function createMinimapDetector(
 					spectator: false,
 					teammates,
 					enemies,
+					teamColors,
 				},
 				debug,
 			},

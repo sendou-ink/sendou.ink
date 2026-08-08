@@ -36,6 +36,7 @@ import {
 	type ScoreboardBattleLogReplayData,
 } from "./detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "./detectors/types";
+import { hueDistance, hueOf, type InkRgb } from "./ink-color";
 import { parseReplayTimestamp } from "./replay-time";
 import type {
 	ScannerMatch,
@@ -69,6 +70,14 @@ const PLAYERS_PER_TEAM = 4;
  * screen is only read some seconds after the last whistle.
  */
 const EARLY_END_MARGIN_SECONDS = 10;
+
+/**
+ * The two team-ink hues must be at least this far apart before color is
+ * trusted to orient counter reads: a game's color pair is picked to
+ * contrast (attested pairs measure >130° apart), so a closer seed pair is
+ * a misread, and orientation falls back to the as-read arrangement.
+ */
+const MIN_TEAM_HUE_SEPARATION = 30;
 
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
@@ -357,6 +366,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		t: event.t,
 		data: event.data as ObjectiveData,
 	}));
+	const minimaps = open.minimaps.map((event) => event.data as MinimapData);
 
 	const mode = board?.mode ?? start?.mode ?? null;
 
@@ -376,13 +386,12 @@ function toBuiltMatch<E extends DetectedEvent>(
 		// only the SZ counter is parsed — reads on a known other-mode match
 		// are misreads of a lookalike overlay, not progress data
 		objective:
-			mode === null || mode === "SZ" ? buildObjective(objectives, board) : null,
+			mode === null || mode === "SZ"
+				? buildObjective(objectives, board, minimapTeamColors(minimaps))
+				: null,
 		teams: board
 			? teamsFromScoreboard(board, deaths)
-			: teamsFromMinimaps(
-					open.minimaps.map((event) => event.data as MinimapData),
-					deaths,
-				),
+			: teamsFromMinimaps(minimaps, deaths),
 		winner: board ? 0 : null,
 		pov:
 			board && board.povIndex !== null
@@ -401,46 +410,167 @@ function floorOrNull(t: number | undefined): number | null {
 }
 
 /**
- * The counter reads as `objective` samples in `teams` order. The on-screen
- * plates put the POV/alpha side left, which already is teams[0] for a
- * minimap-grouped match; a scoreboard-closed match's teams are winner-first,
- * so the sides swap when the POV seat sat on the losing team — or, with no
- * POV arrow read, when the right plate's count got lower (in SZ the winner
- * is the team whose remaining count went furthest down; ties keep the order
- * as read).
+ * The counter reads as `objective` samples in `teams` order. On POV footage
+ * the left plate is the POV/alpha side for the whole game, but casted
+ * footage reorders the plates to follow the specced player — so each read
+ * is first oriented by its sides' team ink hues (clustered against the
+ * first read that saw both), making the series side-stable. The whole
+ * series then goes into `teams` order: a scoreboard-closed match is
+ * winner-first (POV seat when read; else in SZ the winner is the side
+ * whose remaining count went furthest down), a minimap-grouped match
+ * anchors on the minimap's own/alpha-vs-enemy/bravo ink colors, and with
+ * no signal the first read's arrangement stands.
  */
 function buildObjective(
 	objectives: readonly { t: number; data: ObjectiveData }[],
 	board: ScoreboardData | undefined,
+	minimapColors: [InkRgb | null, InkRgb | null] | null,
 ): ScannerMatchObjective | null {
 	if (objectives.length === 0) return null;
+
+	const clusterHues = seedClusterHues(objectives);
+	const oriented = orientByTeamColor(objectives, clusterHues);
+
 	const swap = board
 		? board.povIndex !== null
 			? board.povIndex >= PLAYERS_PER_TEAM
-			: bestCount(objectives, 1) < bestCount(objectives, 0)
-		: false;
-	const samples = objectives.map(({ t, data }): ScannerMatchObjectiveSample => {
+			: bestCount(oriented, 1) < bestCount(oriented, 0)
+		: minimapAnchorSwap(clusterHues, minimapColors);
+
+	const samples = oriented.map((read): ScannerMatchObjectiveSample => {
 		const [a, b] = swap ? ([1, 0] as const) : ([0, 1] as const);
 		return {
-			t: Math.max(0, Math.floor(t)),
+			t: Math.max(0, Math.floor(read.t)),
+			time: read.time,
+			score: [read.score[a], read.score[b]],
+			penalty: [read.penalty[a], read.penalty[b]],
+			control: [read.control[a], read.control[b]],
+		};
+	});
+	return { mode: "SZ", samples };
+}
+
+/** A counter read with its sides in cluster (first-read) order. */
+interface OrientedObjectiveRead {
+	t: number;
+	time: number | null;
+	score: [number | null, number | null];
+	penalty: [number | null, number | null];
+	control: [boolean, boolean];
+}
+
+/**
+ * The two team-ink cluster hues, seeded from the first read that saw both
+ * sides' colors far enough apart; null when no read qualifies (color
+ * orientation then stays at the as-read arrangement).
+ */
+function seedClusterHues(
+	objectives: readonly { data: ObjectiveData }[],
+): [number, number] | null {
+	for (const { data } of objectives) {
+		const [left, right] = data.teamColor;
+		if (left === null || right === null) continue;
+		const hues: [number, number] = [hueOf(left), hueOf(right)];
+		if (hueDistance(hues[0], hues[1]) >= MIN_TEAM_HUE_SEPARATION) return hues;
+	}
+	return null;
+}
+
+/**
+ * Assign every read's sides to the color clusters: a read whose ink hues
+ * sit closer to the clusters crosswise is swapped (the cast switched the
+ * specced side). Reads with no readable color inherit the previous read's
+ * orientation — plate arrangement only changes with a camera change, which
+ * leaves the colors readable once the plates are back.
+ */
+function orientByTeamColor(
+	objectives: readonly { t: number; data: ObjectiveData }[],
+	clusterHues: [number, number] | null,
+): OrientedObjectiveRead[] {
+	let previousSwapped = false;
+	return objectives.map(({ t, data }): OrientedObjectiveRead => {
+		const swapped = clusterHues
+			? readSwapped(data, clusterHues, previousSwapped)
+			: false;
+		previousSwapped = swapped;
+		const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
+		return {
+			t,
 			time: data.time,
 			score: [data.score[a], data.score[b]],
 			penalty: [data.penalty[a], data.penalty[b]],
 			control: [data.control[a], data.control[b]],
 		};
 	});
-	return { mode: "SZ", samples };
 }
 
-/** The lowest count a side's plate ever showed; Infinity when never read. */
+function readSwapped(
+	data: ObjectiveData,
+	clusterHues: [number, number],
+	previousSwapped: boolean,
+): boolean {
+	const [left, right] = data.teamColor;
+	if (left === null && right === null) return previousSwapped;
+	const identityCost =
+		(left ? hueDistance(hueOf(left), clusterHues[0]) : 0) +
+		(right ? hueDistance(hueOf(right), clusterHues[1]) : 0);
+	const swappedCost =
+		(left ? hueDistance(hueOf(left), clusterHues[1]) : 0) +
+		(right ? hueDistance(hueOf(right), clusterHues[0]) : 0);
+	if (identityCost === swappedCost) return previousSwapped;
+	return swappedCost < identityCost;
+}
+
+/**
+ * Whether the cluster order is bravo-first, judged against the minimap's
+ * ink colors (own/alpha column, enemy/bravo column) — the `teams` anchor
+ * for cast matches, which never see a results screen.
+ */
+function minimapAnchorSwap(
+	clusterHues: [number, number] | null,
+	minimapColors: [InkRgb | null, InkRgb | null] | null,
+): boolean {
+	if (!clusterHues || !minimapColors) return false;
+	const [own, enemy] = minimapColors;
+	if (own === null && enemy === null) return false;
+	const identityCost =
+		(own ? hueDistance(hueOf(own), clusterHues[0]) : 0) +
+		(enemy ? hueDistance(hueOf(enemy), clusterHues[1]) : 0);
+	const swappedCost =
+		(own ? hueDistance(hueOf(own), clusterHues[1]) : 0) +
+		(enemy ? hueDistance(hueOf(enemy), clusterHues[0]) : 0);
+	return swappedCost < identityCost;
+}
+
+/**
+ * Componentwise mean of the minimap reads' per-side ink colors; null when
+ * no read got a side's color (or there were no minimaps at all).
+ */
+function minimapTeamColors(
+	minimaps: readonly MinimapData[],
+): [InkRgb | null, InkRgb | null] | null {
+	if (minimaps.length === 0) return null;
+	const sides = [0, 1].map((side): InkRgb | null => {
+		const colors = minimaps
+			.map((minimap) => minimap.teamColors[side as 0 | 1])
+			.filter((color): color is InkRgb => color !== null);
+		if (colors.length === 0) return null;
+		return {
+			r: Math.round(colors.reduce((sum, c) => sum + c.r, 0) / colors.length),
+			g: Math.round(colors.reduce((sum, c) => sum + c.g, 0) / colors.length),
+			b: Math.round(colors.reduce((sum, c) => sum + c.b, 0) / colors.length),
+		};
+	}) as [InkRgb | null, InkRgb | null];
+	return sides[0] === null && sides[1] === null ? null : sides;
+}
+
+/** The lowest count a side ever showed; Infinity when never read. */
 function bestCount(
-	objectives: readonly { data: ObjectiveData }[],
+	oriented: readonly OrientedObjectiveRead[],
 	side: 0 | 1,
 ): number {
 	return Math.min(
-		...objectives.map(
-			({ data }) => data.score[side] ?? Number.POSITIVE_INFINITY,
-		),
+		...oriented.map((read) => read.score[side] ?? Number.POSITIVE_INFINITY),
 	);
 }
 
