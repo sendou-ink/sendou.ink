@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
 	nextNonCompletedVoting,
@@ -28,6 +29,14 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	const user = getUser();
 	const monthYear = rangeToMonthYear(nextVotingRange);
+
+	if (user) {
+		await resolveNotifications({
+			userIds: [user.id],
+			type: "PLUS_SUGGESTION_ADDED",
+			meta: { tier: shownTier },
+		});
+	}
 
 	const [suggestions, summary] = await Promise.all([
 		PlusSuggestionRepository.findAllByMonth({ ...monthYear, tier: shownTier }),

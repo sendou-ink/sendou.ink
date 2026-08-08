@@ -71,7 +71,10 @@ export type Notification =
 			{ adderUsername: string; adderDiscordId: string; artId: number }
 	  >
 	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
-	| NotificationItem<"SCRIM_NEW_REQUEST", { fromUsername: string }>
+	| NotificationItem<
+			"SCRIM_NEW_REQUEST",
+			{ fromUsername: string; scrimPostId: number }
+	  >
 	| NotificationItem<
 			"SCRIM_SCHEDULED",
 			{ id: number; opponentTeamName: string }

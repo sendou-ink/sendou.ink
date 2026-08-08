@@ -11,7 +11,10 @@ import {
 import { NOTIFICATIONS } from "~/features/notifications/notifications-contants";
 import type { RootLoaderData } from "~/root";
 import { NOTIFICATIONS_URL } from "~/utils/urls";
-import { useMarkNotificationsAsSeen } from "../../features/notifications/notifications-hooks";
+import {
+	useMarkNotificationsAsSeen,
+	useStickyUnseenIds,
+} from "../../features/notifications/notifications-hooks";
 import { SendouButton } from "../elements/Button";
 
 import styles from "./NotificationPopover.module.css";
@@ -45,6 +48,7 @@ export function NotificationContent({
 }) {
 	const { t } = useTranslation(["common"]);
 	const { refresh, isRefreshing } = useLayoutData();
+	const stickyUnseenIds = useStickyUnseenIds(notifications);
 
 	useMarkNotificationsAsSeen(unseenIds);
 
@@ -73,7 +77,10 @@ export function NotificationContent({
 						<React.Fragment key={notification.id}>
 							<NotificationItem
 								key={notification.id}
-								notification={notification}
+								notification={{
+									...notification,
+									seen: Number(!stickyUnseenIds.has(notification.id)),
+								}}
 								onClose={onClose}
 							/>
 							{i !== notifications.length - 1 && <NotificationItemDivider />}

@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import type { getUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import {
 	tournamentFromDBCached,
 	tournamentFromParams,
@@ -36,6 +37,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	if (tournament.isLeagueSignup && !tournament.registrationOpen) {
 		throw new Response(null, { status: 404 });
+	}
+
+	if (user) {
+		await resolveNotifications({
+			userIds: [user.id],
+			type: "TO_LIKE_RECEIVED",
+			meta: { tournamentId },
+		});
+		await resolveNotifications({
+			userIds: [user.id],
+			type: "TO_LIKE_ACCEPTED",
+			meta: { tournamentId },
+		});
 	}
 
 	if (tournament.registrationOpen) {

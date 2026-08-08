@@ -7,6 +7,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { datePlaceholder } from "~/features/chat/chat-utils";
 import { notify } from "~/features/notifications/core/notify.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
@@ -57,6 +58,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			);
 
 			await ScrimPostRepository.deleteById(post.id);
+
+			// requests to the deleted post can no longer be accepted
+			await resolveNotifications({
+				userIds: post.users.filter((u) => u.isOwner).map((u) => u.id),
+				type: "SCRIM_NEW_REQUEST",
+				meta: { scrimPostId: post.id },
+			});
 
 			break;
 		}
@@ -130,6 +138,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					type: "SCRIM_NEW_REQUEST",
 					meta: {
 						fromUsername: user.username,
+						scrimPostId: post.id,
 					},
 				},
 			});
@@ -154,6 +163,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				}
 				throw error;
 			}
+
+			// accepting one request settles the post, the rest can no longer be accepted
+			await resolveNotifications({
+				userIds: post.users.filter((u) => u.isOwner).map((u) => u.id),
+				type: "SCRIM_NEW_REQUEST",
+				meta: { scrimPostId: post.id },
+			});
 
 			const fullPost = await ScrimPostRepository.findById(post.id);
 			if (fullPost?.chatCode) {
@@ -230,6 +246,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 								meta: { at: removed.startsAt },
 							},
 						});
+						await resolveNotifications({
+							userIds: removed.memberIds,
+							type: "SCRIM_NEW_REQUEST",
+							meta: { scrimPostId: removed.id },
+						});
 					}
 				} catch (error) {
 					logger.error("Failed to auto-cancel overlapping scrims", error);
@@ -239,7 +260,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "CANCEL_REQUEST": {
-			const { request } = await findRequest({
+			const { post, request } = await findRequest({
 				requestId: data.scrimPostRequestId,
 			});
 			requirePermission(request, "CANCEL");
@@ -250,6 +271,18 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			);
 
 			await ScrimPostRepository.deleteRequest(data.scrimPostRequestId);
+
+			const requestOwner = request.users.find((u) => u.isOwner);
+			if (requestOwner) {
+				await resolveNotifications({
+					userIds: post.users.filter((u) => u.isOwner).map((u) => u.id),
+					type: "SCRIM_NEW_REQUEST",
+					meta: {
+						scrimPostId: post.id,
+						fromUsername: requestOwner.username,
+					},
+				});
+			}
 
 			break;
 		}

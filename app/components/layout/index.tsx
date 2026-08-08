@@ -691,6 +691,7 @@ function SideNavUserPanel() {
 							{unseenIds.length > 0 ? (
 								<NotificationDot
 									className={sideNavStyles.sideNavFooterUnseenDot}
+									testId="notifications-bell-dot"
 								/>
 							) : null}
 							<SendouPopover

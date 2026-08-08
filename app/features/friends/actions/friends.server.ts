@@ -1,6 +1,7 @@
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import * as FriendRepository from "../FriendRepository.server";
@@ -45,10 +46,19 @@ export const action: ActionFunction = async ({ request }) => {
 			break;
 		}
 		case "CANCEL_REQUEST": {
-			await FriendRepository.deleteFriendRequest({
+			const deleted = await FriendRepository.deleteFriendRequest({
 				id: result.data.friendRequestId,
 				senderId: user.id,
 			});
+
+			if (deleted) {
+				// the receiver no longer has a request to respond to
+				await resolveNotifications({
+					userIds: [deleted.receiverId],
+					type: "FRIEND_REQUEST_RECEIVED",
+					meta: { senderUsername: user.username },
+				});
+			}
 
 			break;
 		}
@@ -71,12 +81,31 @@ export const action: ActionFunction = async ({ request }) => {
 				friendRequestId: result.data.friendRequestId,
 			});
 
+			await resolveNotifications({
+				userIds: [user.id],
+				type: "FRIEND_REQUEST_RECEIVED",
+				meta: { senderUsername: friendRequest.senderUsername },
+			});
+
 			break;
 		}
 		case "DECLINE_REQUEST": {
+			const friendRequest =
+				await FriendRepository.findFriendRequestByIdAndReceiver({
+					id: result.data.friendRequestId,
+					receiverId: user.id,
+				});
+			if (!friendRequest) break;
+
 			await FriendRepository.deleteFriendRequestByReceiver({
 				id: result.data.friendRequestId,
 				receiverId: user.id,
+			});
+
+			await resolveNotifications({
+				userIds: [user.id],
+				type: "FRIEND_REQUEST_RECEIVED",
+				meta: { senderUsername: friendRequest.senderUsername },
 			});
 
 			break;

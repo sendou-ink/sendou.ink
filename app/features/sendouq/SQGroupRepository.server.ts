@@ -873,10 +873,29 @@ export async function findReadyCheckByGroupId(groupId: number) {
 export function findAllReadyChecksStartedBefore(date: Date) {
 	return db
 		.selectFrom("GroupReadyCheck")
-		.select([
+		.select((eb) => [
 			"GroupReadyCheck.id",
 			"GroupReadyCheck.alphaGroupId",
 			"GroupReadyCheck.bravoGroupId",
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.where((innerEb) =>
+						innerEb.or([
+							innerEb(
+								"GroupMember.groupId",
+								"=",
+								innerEb.ref("GroupReadyCheck.alphaGroupId"),
+							),
+							innerEb(
+								"GroupMember.groupId",
+								"=",
+								innerEb.ref("GroupReadyCheck.bravoGroupId"),
+							),
+						]),
+					),
+			).as("members"),
 		])
 		.where("GroupReadyCheck.createdAt", "<", dateToDatabaseTimestamp(date))
 		.execute();
