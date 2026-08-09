@@ -56,11 +56,10 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const [activePanel, setActivePanel] = React.useState<PanelType>("closed");
 	const previousPanelRef = React.useRef<PanelType>("closed");
 	const user = useUser();
-	const { unseenIds } = useNotifications();
+	const { showUnseenDot } = useNotifications();
 	const chatContext = useChatContext();
 	const layoutSize = useLayoutSize();
 
-	const hasUnseenNotifications = unseenIds.length > 0;
 	const hasFriendInSendouQ =
 		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
 		false;
@@ -157,7 +156,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 				activePanel={activePanel}
 				onTabPress={handleTabPress}
 				isLoggedIn={Boolean(user)}
-				hasUnseenNotifications={hasUnseenNotifications}
+				hasUnseenNotifications={showUnseenDot}
 				hasFriendInSendouQ={hasFriendInSendouQ}
 				unseenFriendRequests={unseenFriendRequests}
 			/>

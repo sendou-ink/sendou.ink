@@ -275,7 +275,7 @@ export function Layout({
 	}
 
 	const user = useUser();
-	const { unseenIds } = useNotifications();
+	const { showUnseenDot } = useNotifications();
 	const { sidebar: sidebarData } = useLayoutData();
 	const events = sidebarData?.events ?? [];
 	const friends = sidebarData?.friends ?? [];
@@ -421,7 +421,7 @@ export function Layout({
 					>
 						<SideNavCollapseButton
 							className={styles.sideNavModalTrigger}
-							showNotificationDot={!sideNavModalOpen && unseenIds.length > 0}
+							showNotificationDot={!sideNavModalOpen && showUnseenDot}
 							badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
 							testId="sidenav-modal-trigger"
 						/>
@@ -458,7 +458,7 @@ export function Layout({
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
-						showNotificationDot={sideNavCollapsed && unseenIds.length > 0}
+						showNotificationDot={sideNavCollapsed && showUnseenDot}
 						badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
 						testId="sidenav-collapse-button"
 					/>
@@ -671,7 +671,7 @@ function SideNavUserPanel() {
 	const { t } = useTranslation();
 	const location = useLocation();
 	const user = useUser();
-	const { notifications, unseenIds } = useNotifications();
+	const { notifications, unseenIds, showUnseenDot } = useNotifications();
 
 	if (user) {
 		return (
@@ -688,7 +688,7 @@ function SideNavUserPanel() {
 							className={sideNavStyles.sideNavFooterNotification}
 							key={location.pathname}
 						>
-							{unseenIds.length > 0 ? (
+							{showUnseenDot ? (
 								<NotificationDot
 									className={sideNavStyles.sideNavFooterUnseenDot}
 									testId="notifications-bell-dot"

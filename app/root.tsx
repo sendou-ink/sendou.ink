@@ -45,6 +45,7 @@ import { ChatProvider } from "./features/chat/ChatProvider";
 import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import { LayoutDataProvider } from "./features/layout/LayoutDataProvider";
+import { NotificationsProvider } from "./features/notifications/NotificationsProvider";
 import { sessionIdMiddleware } from "./features/session-id/session-id-middleware.server";
 import {
 	isTheme,
@@ -241,9 +242,11 @@ function Document({
 								<UnsavedChangesGuard />
 								<MyFuse data={data} />
 								<ChatProvider user={data?.user}>
-									<LayoutDataProvider data={data}>
-										<Layout data={data}>{children}</Layout>
-									</LayoutDataProvider>
+									<NotificationsProvider user={data?.user}>
+										<LayoutDataProvider data={data}>
+											<Layout data={data}>{children}</Layout>
+										</LayoutDataProvider>
+									</NotificationsProvider>
 								</ChatProvider>
 							</I18nProvider>
 						</RouterProvider>

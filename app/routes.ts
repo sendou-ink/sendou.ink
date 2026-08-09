@@ -320,6 +320,10 @@ export default [
 	route("/admin/streams", "features/admin/routes/admin.streams.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
 	route("/api/layout", "features/layout/routes/api.layout.ts"),
+	route(
+		"/api/notifications",
+		"features/notifications/routes/api.notifications.ts",
+	),
 	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [

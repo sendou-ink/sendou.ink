@@ -1,11 +1,11 @@
 import * as React from "react";
 import { useFetcher } from "react-router";
-import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { NOTIFICATIONS_MARK_AS_SEEN_ROUTE } from "~/utils/urls";
+import { useNotificationsData } from "./NotificationsProvider";
 
 export function useMarkNotificationsAsSeen(unseenIds: number[]) {
 	const fetcher = useFetcher();
-	const { refresh } = useLayoutData();
+	const { refresh } = useNotificationsData();
 	const submittedIdsRef = React.useRef(new Set<number>());
 	const refreshPendingRef = React.useRef(false);
 
@@ -15,8 +15,9 @@ export function useMarkNotificationsAsSeen(unseenIds: number[]) {
 		// get submitted when the fetcher returns to idle
 		if (fetcher.state !== "idle") return;
 
-		// the bell dot reads from layout data, which the root loader does not
-		// revalidate for this action, so it has to be refetched by hand
+		// the action's skalop ping also triggers a refetch, but only for clients
+		// with a live websocket; refetching here keeps the dot clearing promptly
+		// for the tab that did the marking either way
 		if (refreshPendingRef.current) {
 			refreshPendingRef.current = false;
 			refresh();
@@ -41,6 +42,54 @@ export function useMarkNotificationsAsSeen(unseenIds: number[]) {
 			},
 		);
 	}, [submit, unseenIds, fetcher.state, refresh]);
+}
+
+const UNSEEN_DOT_GRACE_MS = 10_000;
+
+/**
+ * Whether the bell should show its unseen dot. An unseen notification born
+ * while the session is already open only counts once it has stayed unseen past
+ * a short grace period: one about something the user is already on their way
+ * to (e.g. a SendouQ match that just started, with the redirect to the match
+ * page a second away) resolves itself right after, and the dot flashing for
+ * it would be false signal. Notifications predating the session show the dot
+ * right away — anything that was going to resolve them (a loader of the page
+ * being landed on) already ran before the first notifications fetch.
+ */
+export function useShowUnseenDot(
+	notifications: Array<{ createdAt: number; seen: number }> | undefined,
+) {
+	// time lives in state (only advanced by the timer below) because reading
+	// Date.now() during render would be frozen by the React Compiler's memoization
+	const [mountedAt] = React.useState(() => Date.now());
+	const [now, setNow] = React.useState(mountedAt);
+
+	const dotShowTimes =
+		notifications
+			?.filter((notification) => !notification.seen)
+			.map((notification) => {
+				const createdAtMs = notification.createdAt * 1000;
+
+				return createdAtMs <= mountedAt
+					? mountedAt
+					: createdAtMs + UNSEEN_DOT_GRACE_MS;
+			}) ?? [];
+
+	const showDot = dotShowTimes.some((showTime) => showTime <= now);
+	const nextShowTime =
+		!showDot && dotShowTimes.length > 0 ? Math.min(...dotShowTimes) : null;
+
+	React.useEffect(() => {
+		if (nextShowTime === null) return;
+
+		const timeout = setTimeout(
+			() => setNow(Date.now()),
+			Math.max(0, nextShowTime - Date.now()) + 100,
+		);
+		return () => clearTimeout(timeout);
+	}, [nextShowTime]);
+
+	return showDot;
 }
 
 /**

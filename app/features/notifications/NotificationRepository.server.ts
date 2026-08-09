@@ -79,7 +79,8 @@ export function findAllByType<T extends Notification["type"]>(type: T) {
 /**
  * Marks the users' unseen notifications of the given type as seen, optionally
  * only those whose meta matches every given key/value pair. Used to clear the
- * unseen dot when the user addresses what the notification is about.
+ * unseen dot when the user addresses what the notification is about. Returns
+ * the user ids whose rows actually changed.
  *
  * The correlated `exists` keeps this proportional to the users' own
  * notifications. A `notificationId in (select ...)` reads the same but makes
@@ -94,10 +95,10 @@ export async function markAsSeenByType({
 	userIds: number[];
 	type: Notification["type"];
 	meta?: Record<string, number | string>;
-}) {
-	if (userIds.length === 0) return;
+}): Promise<number[]> {
+	if (userIds.length === 0) return [];
 
-	await db
+	const updated = await db
 		.updateTable("NotificationUser")
 		.set("seen", 1)
 		.where("NotificationUser.seen", "=", 0)
@@ -122,16 +123,28 @@ export async function markAsSeenByType({
 
 			return exists(matchingNotification);
 		})
+		.returning("NotificationUser.userId")
 		.execute();
+
+	return Array.from(new Set(updated.map((row) => row.userId)));
 }
 
-export function markOwnAsSeen(notificationIds: number[]) {
-	return db
+/**
+ * Marks the actor's notifications as seen. Returns the actor's user id in an
+ * array if any row actually changed (empty array otherwise), shaped for
+ * passing straight to `ChatSystemMessage.notifyNotificationsChanged`.
+ */
+export async function markOwnAsSeen(notificationIds: number[]) {
+	const updated = await db
 		.updateTable("NotificationUser")
 		.set("seen", 1)
 		.where("NotificationUser.notificationId", "in", notificationIds)
 		.where("NotificationUser.userId", "=", actorId())
+		.where("NotificationUser.seen", "=", 0)
+		.returning("NotificationUser.userId")
 		.execute();
+
+	return updated.length > 0 ? [updated[0].userId] : [];
 }
 
 export function deleteOld() {

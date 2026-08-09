@@ -214,6 +214,7 @@ export const PATRONS_LIST_ROUTE = "/patrons-list";
 export const LAYOUT_DATA_ROUTE = "/api/layout";
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
+export const NOTIFICATIONS_DATA_ROUTE = "/api/notifications";
 
 export const userCardFriendshipPage = (userId: number) =>
 	`/user-card/${userId}/friendship`;

@@ -49,6 +49,11 @@ export interface ChatContextValue {
 	unreadCounts: Record<string, number>;
 	totalUnreadCount: number;
 	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
+	/**
+	 * Bumps every time skalop pings that the user's notifications changed
+	 * server-side. Carries no data on purpose; watchers react by refetching.
+	 */
+	notificationsVersion: number;
 	chatUsers: Record<number, ChatUser>;
 	chatOpen: boolean;
 	setChatOpen: (open: boolean) => void;

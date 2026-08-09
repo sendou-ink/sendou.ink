@@ -1,3 +1,4 @@
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { logger } from "~/utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
@@ -56,7 +57,12 @@ export async function resolveNotifications<T extends Notification["type"]>({
 	meta?: MetaFilter<T>;
 }) {
 	try {
-		await NotificationRepository.markAsSeenByType({ userIds, type, meta });
+		const changedUserIds = await NotificationRepository.markAsSeenByType({
+			userIds,
+			type,
+			meta,
+		});
+		ChatSystemMessage.notifyNotificationsChanged(changedUserIds);
 	} catch (err) {
 		logger.error("Failed to resolve notifications", err);
 	}
