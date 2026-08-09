@@ -9,7 +9,7 @@ import {
 	type ScannerTab,
 	scannerSearchParams,
 } from "../scanner-search-params";
-import styles from "./App.module.css";
+import styles from "./ScannerApp.module.css";
 import { LivePage } from "./LivePage";
 import { ScreenshotPage } from "./ScreenshotPage";
 import type { SendouUser } from "./sendou-ingest";
@@ -21,7 +21,7 @@ const TAB_LABELS: Record<ScannerTab, string> = {
 	vod: "VoD",
 };
 
-export function App() {
+export function ScannerApp() {
 	const [tab] = useSearchParam(scannerSearchParams, "tab");
 	const rootUser = useUser();
 	const sendouUser: SendouUser | null = rootUser
