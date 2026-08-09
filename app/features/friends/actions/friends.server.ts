@@ -39,7 +39,7 @@ export const action: ActionFunction = async ({ request }) => {
 				userIds: [result.data.userId],
 				notification: {
 					type: "FRIEND_REQUEST_RECEIVED",
-					meta: { senderUsername: user.username },
+					meta: { senderId: user.id, senderUsername: user.username },
 				},
 			});
 
@@ -56,7 +56,7 @@ export const action: ActionFunction = async ({ request }) => {
 				await resolveNotifications({
 					userIds: [deleted.receiverId],
 					type: "FRIEND_REQUEST_RECEIVED",
-					meta: { senderUsername: user.username },
+					meta: { senderId: user.id },
 				});
 			}
 
@@ -84,7 +84,7 @@ export const action: ActionFunction = async ({ request }) => {
 			await resolveNotifications({
 				userIds: [user.id],
 				type: "FRIEND_REQUEST_RECEIVED",
-				meta: { senderUsername: friendRequest.senderUsername },
+				meta: { senderId: friendRequest.senderId },
 			});
 
 			break;
@@ -105,7 +105,7 @@ export const action: ActionFunction = async ({ request }) => {
 			await resolveNotifications({
 				userIds: [user.id],
 				type: "FRIEND_REQUEST_RECEIVED",
-				meta: { senderUsername: friendRequest.senderUsername },
+				meta: { senderId: friendRequest.senderId },
 			});
 
 			break;

@@ -1,5 +1,6 @@
 import { sub } from "date-fns";
 import { sql } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import type { NotificationSubscription } from "~/db/tables-json";
@@ -126,7 +127,7 @@ export async function markAsSeenByType({
 		.returning("NotificationUser.userId")
 		.execute();
 
-	return Array.from(new Set(updated.map((row) => row.userId)));
+	return R.unique(updated.map((row) => row.userId));
 }
 
 /**

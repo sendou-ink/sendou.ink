@@ -135,7 +135,11 @@ test.describe("Scrims", () => {
 		await factories.NotificationFactory.create({
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "N-ZAP", scrimPostId: post.id },
+				meta: {
+					fromUserId: NZAP_TEST_ID,
+					fromUsername: "N-ZAP",
+					scrimPostId: post.id,
+				},
 			},
 			users: [{ userId: ADMIN_ID }],
 		});

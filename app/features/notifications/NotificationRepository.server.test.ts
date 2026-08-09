@@ -1,19 +1,20 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as NotificationFactory from "~/db/seed/factories/NotificationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { withUserId } from "~/utils/Test";
 import * as NotificationRepository from "./NotificationRepository.server";
 
 const users = UserFactory.pool();
+
+const seenStatusOf = async (userId: number) => {
+	const notifications = await NotificationRepository.findByUserId(userId);
+	return notifications.map(({ type, seen }) => ({ type, seen }));
+};
 
 describe("markAsSeenByType", () => {
 	beforeEach(async () => {
 		await users.create(3);
 	});
-
-	const seenStatusOf = async (userId: number) => {
-		const notifications = await NotificationRepository.findByUserId(userId);
-		return notifications.map(({ type, seen }) => ({ type, seen }));
-	};
 
 	test("marks unseen notification of the type as seen", async () => {
 		await NotificationFactory.create({
@@ -94,14 +95,14 @@ describe("markAsSeenByType", () => {
 		await NotificationFactory.create({
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice", scrimPostId: 7 },
+				meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 7 },
 			},
 			users: [{ userId: users.id(1) }],
 		});
 		await NotificationFactory.create({
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "bob", scrimPostId: 7 },
+				meta: { fromUserId: 2, fromUsername: "bob", scrimPostId: 7 },
 			},
 			users: [{ userId: users.id(1) }],
 		});
@@ -141,6 +142,75 @@ describe("markAsSeenByType", () => {
 		]);
 		expect(await seenStatusOf(users.id(3))).toEqual([
 			{ type: "SQ_READY_CHECK", seen: 1 },
+		]);
+	});
+});
+
+describe("markOwnAsSeen", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("returns the actor's id when a notification flips to seen", async () => {
+		const notification = await NotificationFactory.create({
+			notification: { type: "SQ_READY_CHECK" },
+			users: [{ userId: users.id(1) }],
+		});
+
+		const changedUserIds = await withUserId(users.id(1), () =>
+			NotificationRepository.markOwnAsSeen([notification.id]),
+		);
+
+		expect(changedUserIds).toEqual([users.id(1)]);
+		expect(await seenStatusOf(users.id(1))).toEqual([
+			{ type: "SQ_READY_CHECK", seen: 1 },
+		]);
+	});
+
+	test("returns no user ids when the notifications were already seen", async () => {
+		const notification = await NotificationFactory.create({
+			notification: { type: "SQ_READY_CHECK" },
+			users: [{ userId: users.id(1), seen: 1 }],
+		});
+
+		const changedUserIds = await withUserId(users.id(1), () =>
+			NotificationRepository.markOwnAsSeen([notification.id]),
+		);
+
+		expect(changedUserIds).toEqual([]);
+	});
+
+	test("returns the actor's id once even if many notifications flip", async () => {
+		const notifications = await Promise.all([
+			NotificationFactory.create({
+				notification: { type: "SQ_READY_CHECK" },
+				users: [{ userId: users.id(1) }],
+			}),
+			NotificationFactory.create({
+				notification: { type: "SQ_NEW_MATCH", meta: { matchId: 1 } },
+				users: [{ userId: users.id(1) }],
+			}),
+		]);
+
+		const changedUserIds = await withUserId(users.id(1), () =>
+			NotificationRepository.markOwnAsSeen(notifications.map(({ id }) => id)),
+		);
+
+		expect(changedUserIds).toEqual([users.id(1)]);
+	});
+
+	test("leaves another user's copy of the notification unseen", async () => {
+		const notification = await NotificationFactory.create({
+			notification: { type: "SQ_READY_CHECK" },
+			users: [{ userId: users.id(1) }, { userId: users.id(2) }],
+		});
+
+		await withUserId(users.id(1), () =>
+			NotificationRepository.markOwnAsSeen([notification.id]),
+		);
+
+		expect(await seenStatusOf(users.id(2))).toEqual([
+			{ type: "SQ_READY_CHECK", seen: 0 },
 		]);
 	});
 });

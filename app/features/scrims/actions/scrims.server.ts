@@ -137,6 +137,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				notification: {
 					type: "SCRIM_NEW_REQUEST",
 					meta: {
+						fromUserId: user.id,
 						fromUsername: user.username,
 						scrimPostId: post.id,
 					},
@@ -279,7 +280,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					type: "SCRIM_NEW_REQUEST",
 					meta: {
 						scrimPostId: post.id,
-						fromUsername: requestOwner.username,
+						fromUserId: requestOwner.id,
 					},
 				});
 			}
