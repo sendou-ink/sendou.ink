@@ -1,7 +1,6 @@
 import { sub } from "date-fns";
 import type { Expression, ExpressionBuilder } from "kysely";
 import { sql } from "kysely";
-import { jsonBuildObject, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ServerConfig } from "~/config.server";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
@@ -18,8 +17,11 @@ import { LRUCache } from "~/modules/cache";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
+	asJson,
 	commonUserObjectFields,
 	concatUserSubmittedImagePrefix,
+	jsonBuildObject,
+	jsonObjectFrom,
 } from "~/utils/kysely.server";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import type {
@@ -355,7 +357,9 @@ function userCardDataJsonObject(
 		...commonUserObjectFields(eb),
 		shortBio: eb.ref("User.shortBio"),
 		div: eb.ref("User.div"),
-		customTheme: sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+		customTheme: asJson(
+			sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+		),
 		hiddenCardStats: eb.ref("User.hiddenCardStats"),
 		banner: bannerJson(eb),
 		friendCode: include?.friendCode

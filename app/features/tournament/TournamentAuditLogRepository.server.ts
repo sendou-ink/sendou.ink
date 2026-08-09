@@ -1,12 +1,11 @@
 import { sub } from "date-fns";
 import type { Transaction } from "kysely";
-import { jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { TournamentAuditLogMetadata } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { commonUserSelect } from "~/utils/kysely.server";
+import { commonUserSelect, jsonObjectFrom } from "~/utils/kysely.server";
 
 export const AUDIT_LOG_PAGE_SIZE = 30;
 

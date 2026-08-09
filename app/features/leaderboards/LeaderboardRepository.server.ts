@@ -1,6 +1,5 @@
 import type { InferResult } from "kysely";
 import { sql } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
@@ -11,6 +10,7 @@ import type {
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
 	latestSkillPerSeason,
 	skillCountsAsSeasonSet,
 } from "~/utils/kysely.server";

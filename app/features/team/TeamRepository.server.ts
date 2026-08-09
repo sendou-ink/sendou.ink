@@ -1,5 +1,4 @@
 import { type Insertable, sql, type Transaction } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { CustomTheme } from "~/db/tables-json";
@@ -13,6 +12,7 @@ import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
 	tournamentLogoOrNull,
 	userProfileWeapons,
 } from "~/utils/kysely.server";

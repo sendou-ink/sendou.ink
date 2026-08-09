@@ -1,11 +1,10 @@
 import { formatDistance } from "date-fns";
 import type { ExpressionBuilder, Insertable, NotNull } from "kysely";
-import { jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type { MonthYear } from "~/features/plus-voting/core";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
-import { commonUserSelect } from "~/utils/kysely.server";
+import { commonUserSelect, jsonObjectFrom } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import {
 	isPlusTier,

@@ -1,6 +1,5 @@
 import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -25,6 +24,8 @@ import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentLogoWithDefault,
 	tournamentUsername,
 } from "~/utils/kysely.server";

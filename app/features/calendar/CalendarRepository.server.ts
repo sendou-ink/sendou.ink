@@ -6,7 +6,6 @@ import type {
 	Transaction,
 } from "kysely";
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
@@ -24,6 +23,8 @@ import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";

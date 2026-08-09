@@ -1,6 +1,5 @@
 import { startOfYear } from "date-fns";
 import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
@@ -20,6 +19,8 @@ import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	matchProfileWeapons,
 	skillCountsAsSeasonSet,
 	tournamentLogoWithDefault,

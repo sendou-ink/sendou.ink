@@ -1,11 +1,11 @@
 import { sql, type Transaction } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
 } from "~/utils/kysely.server";
 import { seededRandom } from "~/utils/random";
 import type { ListedArt } from "./art-types";

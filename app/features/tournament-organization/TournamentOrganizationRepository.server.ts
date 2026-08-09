@@ -1,6 +1,5 @@
 import { isFuture } from "date-fns";
 import { sql } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -17,6 +16,7 @@ import {
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
