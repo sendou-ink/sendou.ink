@@ -23,11 +23,15 @@ import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
+import type { PlayerStatusTimelineSample } from "~/components/PlayerStatusTimeline";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
 /** Counter reads of a made-up zones game, for previewing the timeline chart. */
 const MOCK_OBJECTIVE_EVENTS = mockObjectiveEvents();
+
+/** Icon-strip reads of the same made-up game, for previewing the status bands. */
+const MOCK_PLAYER_STATUS_SAMPLES = mockPlayerStatusSamples();
 
 type ActionVariant =
 	| "winner"
@@ -699,6 +703,7 @@ export default function MatchPageTestRoute() {
 								},
 								scoreboard: {
 									objective: MOCK_OBJECTIVE_EVENTS,
+									playerStatus: MOCK_PLAYER_STATUS_SAMPLES,
 									scores: [100, 0],
 									alpha: [
 										{
@@ -911,4 +916,33 @@ function mockObjectiveEvents(): ObjectiveTimelineEvent[] {
 	}
 
 	return events;
+}
+
+/**
+ * Staggered respawn and special cycles per player over the same game as
+ * `mockObjectiveEvents`, sampled at the same cadence.
+ */
+function mockPlayerStatusSamples(): PlayerStatusTimelineSample[] {
+	const DURATION_SECONDS = 190;
+	const SAMPLE_EVERY_SECONDS = 2;
+
+	const samples: PlayerStatusTimelineSample[] = [];
+	for (
+		let t = SAMPLE_EVERY_SECONDS;
+		t <= DURATION_SECONDS;
+		t += SAMPLE_EVERY_SECONDS
+	) {
+		const flags = (kind: "dead" | "special", side: number) =>
+			[0, 1, 2, 3].map((slot) => {
+				const phase = t + slot * 17 + side * 31;
+				return kind === "dead" ? phase % 61 < 8 : phase % 47 < 12;
+			}) as [boolean, boolean, boolean, boolean];
+
+		samples.push({
+			t,
+			dead: [flags("dead", 0), flags("dead", 1)],
+			special: [flags("special", 0), flags("special", 1)],
+		});
+	}
+	return samples;
 }

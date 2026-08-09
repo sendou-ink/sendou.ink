@@ -30,16 +30,11 @@ import { Ability } from "../Ability";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
+import { GameTimeline } from "../GameTimeline";
 import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
-import {
-	ObjectiveTimeline,
-	type ObjectiveTimelineEvent,
-} from "../ObjectiveTimeline";
+import type { ObjectiveTimelineEvent } from "../ObjectiveTimeline";
 import { matchScoresFromObjective } from "../objective-timeline-utils";
-import {
-	PlayerStatusTimeline,
-	type PlayerStatusTimelineSample,
-} from "../PlayerStatusTimeline";
+import type { PlayerStatusTimelineSample } from "../PlayerStatusTimeline";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import type { WeaponPoolWeapon } from "./WeaponPool";
@@ -448,28 +443,20 @@ function TimelineScoreboardSection({
 			</button>
 			{isExpanded ? (
 				<div className={styles.scoreboardPanel}>
-					{scoreboard.playerStatus && scoreboard.playerStatus.length > 0 ? (
-						<PlayerStatusTimeline
-							samples={scoreboard.playerStatus}
-							teams={[
-								{
-									label: teams.alpha.name,
-									weapons: scoreboard.alpha.map((player) => player.weaponSplId),
-								},
-								{
-									label: teams.bravo.name,
-									weapons: scoreboard.bravo.map((player) => player.weaponSplId),
-								},
-							]}
-							domain={objectiveEventsDomain(scoreboard.objective)}
-						/>
-					) : null}
-					{scoreboard.objective && scoreboard.objective.length > 0 ? (
-						<ObjectiveTimeline
-							events={scoreboard.objective}
-							teamLabels={[teams.alpha.name, teams.bravo.name]}
-						/>
-					) : null}
+					<GameTimeline
+						objectiveEvents={scoreboard.objective}
+						playerStatusSamples={scoreboard.playerStatus}
+						teams={[
+							{
+								label: teams.alpha.name,
+								weapons: scoreboard.alpha.map((player) => player.weaponSplId),
+							},
+							{
+								label: teams.bravo.name,
+								weapons: scoreboard.bravo.map((player) => player.weaponSplId),
+							},
+						]}
+					/>
 					<div className={styles.scoreboardTables}>
 						<ScoreboardTable
 							name={teams.alpha.name}
@@ -484,14 +471,6 @@ function TimelineScoreboardSection({
 			) : null}
 		</div>
 	);
-}
-
-function objectiveEventsDomain(
-	events: ObjectiveTimelineEvent[] | undefined,
-): [number, number] | undefined {
-	if (!events || events.length === 0) return undefined;
-	const ts = events.map((event) => event.t);
-	return [Math.min(...ts), Math.max(...ts)];
 }
 
 function ScoreboardTable({

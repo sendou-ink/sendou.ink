@@ -17,11 +17,3 @@ export function playerStatusTeams(
 		),
 	})) as [PlayerStatusTimelineTeam, PlayerStatusTimelineTeam];
 }
-
-/** The objective chart's x-range, so both timelines share one axis. */
-export function objectiveDomain(
-	events: readonly { t: number }[],
-): [number, number] | undefined {
-	if (events.length === 0) return undefined;
-	return [events[0]!.t, events[events.length - 1]!.t];
-}

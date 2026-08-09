@@ -12,14 +12,17 @@ import { useTranslation } from "react-i18next";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import { Image, WeaponImage } from "./Image";
-import { formatElapsed } from "./objective-timeline-utils";
+import {
+	formatElapsed,
+	TIMELINE_PLOT_GUTTER_PX,
+} from "./objective-timeline-utils";
 import styles from "./PlayerStatusTimeline.module.css";
 
 /** Consecutive reads further apart than this leave an unknown gap. */
 const MAX_BRIDGE_SECONDS = 15;
 
 /** Trailing open band drawn this long past its last confirming read. */
-const TAIL_SECONDS = 1;
+export const PLAYER_STATUS_TAIL_SECONDS = 1;
 
 type PlayerFlags = readonly [boolean, boolean, boolean, boolean];
 
@@ -54,7 +57,7 @@ export function PlayerStatusTimeline({
 	const min = Math.min(domain?.[0] ?? Number.POSITIVE_INFINITY, sorted[0]!.t);
 	const max = Math.max(
 		domain?.[1] ?? 0,
-		sorted[sorted.length - 1]!.t + TAIL_SECONDS,
+		sorted[sorted.length - 1]!.t + PLAYER_STATUS_TAIL_SECONDS,
 	);
 	const range = Math.max(1, max - min);
 	const leftOf = (span: StatusSpan) => `${((span.start - min) / range) * 100}%`;
@@ -64,7 +67,14 @@ export function PlayerStatusTimeline({
 		`${label} · ${formatElapsed(span.start)}–${formatElapsed(span.end)}`;
 
 	return (
-		<div className={styles.container}>
+		<div
+			className={styles.container}
+			style={
+				{
+					"--plot-gutter": `${TIMELINE_PLOT_GUTTER_PX}px`,
+				} as React.CSSProperties
+			}
+		>
 			<div className={styles.legend}>
 				<span className={styles.legendItem}>
 					<span className={styles.legendSwatchDead} />
@@ -80,7 +90,9 @@ export function PlayerStatusTimeline({
 					<div className={styles.teamLabel}>{teams[side].label}</div>
 					{[0, 1, 2, 3].map((slot) => (
 						<div key={slot} className={styles.row}>
-							<SlotWeapon weaponSplId={teams[side].weapons[slot] ?? null} />
+							<div className={styles.slotLabel}>
+								<SlotWeapon weaponSplId={teams[side].weapons[slot] ?? null} />
+							</div>
 							<div className={styles.track}>
 								{statusSpans(sorted, (sample) => sample.dead[side][slot]!).map(
 									(span, i) => (
@@ -143,7 +155,7 @@ interface StatusSpan {
  * its last confirmation when the next read is too far away (or the series
  * ends) to know what happened in between.
  */
-function statusSpans(
+export function statusSpans(
 	sorted: readonly PlayerStatusTimelineSample[],
 	flagOf: (sample: PlayerStatusTimelineSample) => boolean,
 ): StatusSpan[] {
@@ -153,7 +165,7 @@ function statusSpans(
 	for (const sample of sorted) {
 		const flag = flagOf(sample);
 		if (start !== null && sample.t - lastTrueT > MAX_BRIDGE_SECONDS) {
-			spans.push({ start, end: lastTrueT + TAIL_SECONDS });
+			spans.push({ start, end: lastTrueT + PLAYER_STATUS_TAIL_SECONDS });
 			start = null;
 		}
 		if (flag) {
@@ -164,6 +176,7 @@ function statusSpans(
 			start = null;
 		}
 	}
-	if (start !== null) spans.push({ start, end: lastTrueT + TAIL_SECONDS });
+	if (start !== null)
+		spans.push({ start, end: lastTrueT + PLAYER_STATUS_TAIL_SECONDS });
 	return spans;
 }

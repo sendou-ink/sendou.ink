@@ -30,7 +30,11 @@ import { Line } from "react-chartjs-2";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "~/hooks/useThemeColors";
 import styles from "./ObjectiveTimeline.module.css";
-import { formatElapsed, smoothPenalties } from "./objective-timeline-utils";
+import {
+	formatElapsed,
+	smoothPenalties,
+	TIMELINE_PLOT_GUTTER_PX,
+} from "./objective-timeline-utils";
 
 ChartJS.register(
 	LinearScale,
@@ -68,9 +72,15 @@ export interface ObjectiveTimelineEvent {
 export function ObjectiveTimeline({
 	events,
 	teamLabels,
+	domain,
+	showTooltip = true,
 }: {
 	events: readonly ObjectiveTimelineEvent[];
 	teamLabels: readonly [string, string];
+	/** x-axis range override, to share the player-status timeline's axis */
+	domain?: [number, number];
+	/** off when a parent renders its own scrub readout over the chart */
+	showTooltip?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
 	const colors = useThemeColors({
@@ -166,17 +176,19 @@ export function ObjectiveTimeline({
 					animation: false,
 					maintainAspectRatio: false,
 					interaction: { mode: "index", intersect: false },
+					layout: { autoPadding: false },
 					scales: {
 						x: {
 							type: "linear",
-							min: sorted[0]!.t,
-							max: sorted[sorted.length - 1]!.t,
+							min: domain?.[0] ?? sorted[0]!.t,
+							max: domain?.[1] ?? sorted[sorted.length - 1]!.t,
 							grid: { color: colors.border },
 							border: { color: colors.borderHigh },
 							ticks: {
 								color: colors.text,
 								maxRotation: 0,
 								maxTicksLimit: 8,
+								align: "inner",
 								callback: (value) => formatElapsed(Number(value)),
 							},
 						},
@@ -192,6 +204,9 @@ export function ObjectiveTimeline({
 							afterBuildTicks: (axis) => {
 								axis.ticks = countAxisTicks(axis.max);
 							},
+							afterFit: (axis) => {
+								axis.width = TIMELINE_PLOT_GUTTER_PX;
+							},
 							ticks: { color: colors.text, autoSkip: false },
 						},
 					},
@@ -205,6 +220,7 @@ export function ObjectiveTimeline({
 							},
 						},
 						tooltip: {
+							enabled: showTooltip,
 							filter: (item) => item.datasetIndex < 2,
 							callbacks: {
 								title: (items) => {

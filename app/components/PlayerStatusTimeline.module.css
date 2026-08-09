@@ -51,7 +51,14 @@
 .row {
 	display: flex;
 	align-items: center;
-	gap: var(--s-2);
+}
+
+.slotLabel {
+	display: flex;
+	justify-content: flex-end;
+	flex-shrink: 0;
+	width: var(--plot-gutter, 36px);
+	padding-right: var(--s-2);
 }
 
 .track {

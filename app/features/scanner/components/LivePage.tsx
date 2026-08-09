@@ -3,8 +3,7 @@ import { Camera, Ellipsis, FileText, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
-import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
-import { PlayerStatusTimeline } from "~/components/PlayerStatusTimeline";
+import { GameTimeline } from "~/components/GameTimeline";
 import {
 	listVideoInputs,
 	openVirtualCamera,
@@ -47,7 +46,7 @@ import { type FixtureData, saveFixture } from "./fixture-export";
 import styles from "./LivePage.module.css";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
-import { objectiveDomain, playerStatusTeams } from "./player-status-view";
+import { playerStatusTeams } from "./player-status-view";
 import {
 	aggregateSendStatus,
 	matchContaining,
@@ -448,22 +447,11 @@ export function LivePage({
 											: undefined
 									}
 								>
-									{statusSamples.length > 0 ? (
-										<PlayerStatusTimeline
-											samples={statusSamples}
-											teams={playerStatusTeams(
-												built.match,
-												SCANNER_TEAM_LABELS,
-											)}
-											domain={objectiveDomain(objectiveEvents)}
-										/>
-									) : null}
-									{objectiveEvents.length > 0 ? (
-										<ObjectiveTimeline
-											events={objectiveEvents}
-											teamLabels={SCANNER_TEAM_LABELS}
-										/>
-									) : null}
+									<GameTimeline
+										objectiveEvents={objectiveEvents}
+										playerStatusSamples={statusSamples}
+										teams={playerStatusTeams(built.match, SCANNER_TEAM_LABELS)}
+									/>
 									{cardEvents.map((e) => (
 										<EventCard
 											key={e.id}

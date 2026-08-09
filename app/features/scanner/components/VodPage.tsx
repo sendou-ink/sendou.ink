@@ -21,8 +21,7 @@ import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
-import { PlayerStatusTimeline } from "~/components/PlayerStatusTimeline";
+import { GameTimeline } from "~/components/GameTimeline";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
@@ -65,7 +64,7 @@ import type { FixtureData } from "./fixture-export";
 import { formatTime, useEventDateTimeFormatter } from "./format";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
-import { objectiveDomain, playerStatusTeams } from "./player-status-view";
+import { playerStatusTeams } from "./player-status-view";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -767,22 +766,11 @@ export function VodPage({
 										send?.state === "sent" && link ? { ...send, link } : send
 									}
 								>
-									{statusSamples.length > 0 ? (
-										<PlayerStatusTimeline
-											samples={statusSamples}
-											teams={playerStatusTeams(
-												built.match,
-												SCANNER_TEAM_LABELS,
-											)}
-											domain={objectiveDomain(objectiveEvents)}
-										/>
-									) : null}
-									{objectiveEvents.length > 0 ? (
-										<ObjectiveTimeline
-											events={objectiveEvents}
-											teamLabels={SCANNER_TEAM_LABELS}
-										/>
-									) : null}
+									<GameTimeline
+										objectiveEvents={objectiveEvents}
+										playerStatusSamples={statusSamples}
+										teams={playerStatusTeams(built.match, SCANNER_TEAM_LABELS)}
+									/>
 									{cardEvents.map((e) => {
 										const vodMatch = vodMatchByEvent.get(e);
 										return (
