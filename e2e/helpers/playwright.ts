@@ -318,11 +318,25 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 async function expectRouterIdle(page: Page) {
 	// A submit's redirect plus the target page's loaders can exceed the default
 	// expect timeout when the full suite is loading all workers.
-	await expect(page.getByTestId("hydrated")).toHaveAttribute(
-		"data-router-idle",
-		"true",
-		{ timeout: 15_000 },
-	);
+	try {
+		await expect(page.getByTestId("hydrated")).toHaveAttribute(
+			"data-router-idle",
+			"true",
+			{ timeout: 15_000 },
+		);
+	} catch (error) {
+		// data-router-busy names what is still in flight, which the attribute
+		// assertion's own message does not
+		const busy = await page
+			.getByTestId("hydrated")
+			.getAttribute("data-router-busy")
+			.catch(() => null);
+
+		throw new Error(
+			`Router never went idle at ${page.url()} (in flight: ${busy ?? "unknown"})`,
+			{ cause: error },
+		);
+	}
 }
 
 /** Asserts the page rendered rather than the error boundary catching something. */

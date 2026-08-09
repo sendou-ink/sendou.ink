@@ -1,11 +1,7 @@
 import * as React from "react";
-import {
-	useFetcher,
-	useFetchers,
-	useLocation,
-	useNavigation,
-} from "react-router";
+import { useFetchers, useLocation, useNavigation } from "react-router";
 import { useChatContext } from "~/features/chat/useChatContext";
+import { useBackgroundResource } from "~/hooks/useBackgroundResource";
 import type { SerializeFrom } from "~/utils/remix";
 import { NOTIFICATIONS_DATA_ROUTE } from "~/utils/urls";
 import { resyncPushSubscription } from "./core/pushSubscription";
@@ -44,19 +40,14 @@ export function NotificationsProvider({
 	user?: { id: number } | null;
 	children: React.ReactNode;
 }) {
-	const fetcher = useFetcher<typeof loader>();
+	const { data, refresh } = useBackgroundResource<SerializeFrom<typeof loader>>(
+		NOTIFICATIONS_DATA_ROUTE,
+	);
 	const chat = useChatContext();
-	const { load } = fetcher;
 
 	const loggedIn = Boolean(user);
 	const readyState = chat?.readyState ?? "CLOSED";
 	const wsDown = loggedIn && readyState !== "CONNECTED";
-
-	// stable so effects that refresh after a mutation don't re-run every render
-	const refresh = React.useCallback(
-		() => load(NOTIFICATIONS_DATA_ROUTE),
-		[load],
-	);
 
 	React.useEffect(() => {
 		if (!loggedIn) return;
@@ -70,7 +61,7 @@ export function NotificationsProvider({
 	useRefreshOnVisible({ enabled: loggedIn, refresh });
 	useFallbackPoll({ enabled: wsDown, refresh });
 
-	const notifications = fetcher.data?.notifications;
+	const notifications = data?.notifications;
 
 	useFallbackRefreshOnPotentialResolution({
 		enabled: wsDown,

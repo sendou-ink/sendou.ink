@@ -1,7 +1,8 @@
 import * as React from "react";
-import { useFetcher } from "react-router";
+import { useBackgroundResource } from "~/hooks/useBackgroundResource";
 import { useReloadOnNewDeploy } from "~/hooks/useReloadOnNewDeploy";
 import type { RootLoaderData } from "~/root";
+import type { SerializeFrom } from "~/utils/remix";
 import { LAYOUT_DATA_ROUTE } from "~/utils/urls";
 import type { loader } from "./routes/api.layout";
 
@@ -38,18 +39,21 @@ export function LayoutDataProvider({
 	data?: RootLoaderData;
 	children: React.ReactNode;
 }) {
-	const fetcher = useFetcher<typeof loader>();
-	const { load, state } = fetcher;
+	const {
+		data: polledData,
+		isLoading,
+		refresh,
+	} = useBackgroundResource<SerializeFrom<typeof loader>>(LAYOUT_DATA_ROUTE);
 
 	// read through a ref so a poll elsewhere in the app does not re-run the effect
 	// and restart the interval before it ever fires
-	const stateRef = React.useRef(state);
-	stateRef.current = state;
+	const isLoadingRef = React.useRef(isLoading);
+	isLoadingRef.current = isLoading;
 
 	React.useEffect(() => {
 		const loadIfIdle = () => {
-			if (stateRef.current === "idle") {
-				load(LAYOUT_DATA_ROUTE);
+			if (!isLoadingRef.current) {
+				void refresh();
 			}
 		};
 
@@ -66,12 +70,9 @@ export function LayoutDataProvider({
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 			clearInterval(interval);
 		};
-	}, [load]);
+	}, [refresh]);
 
-	// stable so effects that refresh after a mutation don't re-run every render
-	const refresh = React.useCallback(() => load(LAYOUT_DATA_ROUTE), [load]);
-
-	const newest = useNewestOf(data, fetcher.data);
+	const newest = useNewestOf(data, polledData);
 
 	useReloadOnNewDeploy(newest.buildCommit ?? "");
 	useReloadOnStaleAuth({
@@ -82,7 +83,7 @@ export function LayoutDataProvider({
 	const value: LayoutDataContextValue = {
 		...newest,
 		refresh,
-		isRefreshing: state !== "idle",
+		isRefreshing: isLoading,
 	};
 
 	return (

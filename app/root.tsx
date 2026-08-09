@@ -432,16 +432,27 @@ function HydrationTestIndicator() {
 
 	if (!isHydrated) return null;
 
-	const routerIdle =
-		navigation.state === "idle" &&
-		revalidator.state === "idle" &&
-		fetchers.every((fetcher) => fetcher.state === "idle");
+	const busy = [
+		navigation.state !== "idle"
+			? `nav:${navigation.state}:${navigation.location?.pathname}`
+			: null,
+		revalidator.state !== "idle" ? `revalidator:${revalidator.state}` : null,
+		...fetchers
+			.filter((fetcher) => fetcher.state !== "idle")
+			.map(
+				(fetcher) =>
+					`fetcher[${fetcher.key}]:${fetcher.state}:${fetcher.formAction ?? "load"}`,
+			),
+	].filter(Boolean);
+
+	const routerIdle = busy.length === 0;
 
 	return (
 		<div
 			style={{ display: "none" }}
 			data-testid="hydrated"
 			data-router-idle={routerIdle ? "true" : undefined}
+			data-router-busy={routerIdle ? undefined : busy.join(" | ")}
 		/>
 	);
 }
