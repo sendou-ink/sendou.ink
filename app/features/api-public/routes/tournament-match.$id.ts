@@ -1,4 +1,3 @@
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
@@ -8,6 +7,7 @@ import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tourn
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
+import { jsonArrayFrom } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
@@ -123,6 +123,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				match.mapPickingStyle !== "TO"
 					? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
 							teamIds: [opponentOne.id, opponentTwo.id],
+							excludeMatchId: id,
 						}).catch((error) => {
 							logger.error("Failed to fetch recently played maps", error);
 							return [];

@@ -1,7 +1,7 @@
 import { add } from "date-fns";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import type { Pronouns, UserPreferences } from "~/db/tables-json";
+import type { CustomTheme, Pronouns, UserPreferences } from "~/db/tables-json";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -55,6 +55,8 @@ type Options = {
 	widgets?: Parameters<typeof UserRepository.upsertWidgets>[1];
 	/** Preferences, merged into the ones the user has, as the settings pages save them. */
 	preferences?: UserPreferences;
+	/** Custom theme, saved as the settings page saves it. Only shown to a supporter. */
+	customTheme?: CustomTheme;
 };
 
 type CardArgs = Parameters<typeof UserCardRepository.updateOwnCard>[0];
@@ -64,6 +66,7 @@ const EMPTY_CARD: CardArgs = {
 	bannerPresetImg: null,
 	bannerImgId: null,
 	unverifiedPeakXP: null,
+	xpDivision: null,
 	hiddenCardStats: [],
 };
 
@@ -368,6 +371,7 @@ export async function grant(
 		card,
 		widgets,
 		preferences,
+		customTheme,
 	}: Options,
 ) {
 	if (card) {
@@ -422,6 +426,10 @@ export async function grant(
 
 	if (preferences) {
 		await actAs(userId, () => UserRepository.updateOwnPreferences(preferences));
+	}
+
+	if (customTheme) {
+		await actAs(userId, () => UserRepository.updateOwnCustomTheme(customTheme));
 	}
 }
 

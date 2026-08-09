@@ -1,6 +1,5 @@
 import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -25,7 +24,11 @@ import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentLogoWithDefault,
+	tournamentMembersCount,
+	tournamentTeamsCount,
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -797,29 +800,8 @@ export function findAllForShowcase() {
 			"CalendarEvent.organizationId",
 			"CalendarEventDate.startsAt",
 			"CalendarEvent.hidden",
-			eb
-				.selectFrom("TournamentTeam")
-				.leftJoin("TournamentTeamCheckIn", (join) =>
-					join
-						.on("TournamentTeamCheckIn.bracketIdx", "is", null)
-						.onRef(
-							"TournamentTeamCheckIn.tournamentTeamId",
-							"=",
-							"TournamentTeam.id",
-						),
-				)
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.where((eb) =>
-					eb.or([
-						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-						eb("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
-					]),
-				)
-				.select(({ fn }) => [
-					fn.count<number>("TournamentTeam.id").distinct().as("teamsCount"),
-				])
-				.as("teamsCount"),
+			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
@@ -887,7 +869,7 @@ export function findAllForShowcase() {
 		])
 		.where("CalendarEventDate.startsAt", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startsAt", "asc")
-		.$narrowType<{ teamsCount: NotNull }>()
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
 		.execute();
 }
 
@@ -897,6 +879,22 @@ function databaseTimestampWeekAgo() {
 	now.setDate(now.getDate() - 7);
 
 	return dateToDatabaseTimestamp(now);
+}
+
+/**
+ * Resolves the team & participant counts of one tournament exactly like {@link findAllForShowcase}
+ * does, meant for refreshing those counts of an already cached showcase tournament.
+ */
+export function findShowcaseCountsById(tournamentId: number) {
+	return db
+		.selectFrom("Tournament")
+		.select((eb) => [
+			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
+		])
+		.where("Tournament.id", "=", tournamentId)
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
+		.executeTakeFirst();
 }
 
 export function findAllBetweenTwoTimestamps({

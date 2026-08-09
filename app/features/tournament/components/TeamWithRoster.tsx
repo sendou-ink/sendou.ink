@@ -148,7 +148,11 @@ function TeamMapPool({
 			{mapPool.map(({ mode, stageId }, i) => {
 				return (
 					<div key={i}>
-						<StageImage stageId={stageId} width={85} />
+						<StageImage
+							stageId={stageId}
+							width={85}
+							testId={`team-map-pool-${mode}-${stageId}`}
+						/>
 						<div className={styles.teamWithRosterMapPoolModeInfo}>
 							<ModeImage mode={mode} size={16} />
 						</div>

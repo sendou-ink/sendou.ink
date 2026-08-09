@@ -25,6 +25,7 @@ import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
@@ -274,8 +275,8 @@ export function Layout({
 	}
 
 	const user = useUser();
-	const { unseenIds } = useNotifications();
-	const sidebarData = data?.sidebar;
+	const { showUnseenDot } = useNotifications();
+	const { sidebar: sidebarData } = useLayoutData();
 	const events = sidebarData?.events ?? [];
 	const friends = sidebarData?.friends ?? [];
 	const unseenFriendRequests = useUnseenFriendRequests(
@@ -402,7 +403,7 @@ export function Layout({
 			>
 				{sideNavChildren}
 			</SideNav>
-			<MobileNav sidebarData={data?.sidebar} />
+			<MobileNav sidebarData={sidebarData} />
 			<div className={styles.container}>
 				<header
 					ref={headerRef}
@@ -420,7 +421,7 @@ export function Layout({
 					>
 						<SideNavCollapseButton
 							className={styles.sideNavModalTrigger}
-							showNotificationDot={!sideNavModalOpen && unseenIds.length > 0}
+							showNotificationDot={!sideNavModalOpen && showUnseenDot}
 							badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
 							testId="sidenav-modal-trigger"
 						/>
@@ -457,7 +458,7 @@ export function Layout({
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}
-						showNotificationDot={sideNavCollapsed && unseenIds.length > 0}
+						showNotificationDot={sideNavCollapsed && showUnseenDot}
 						badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
 						testId="sidenav-collapse-button"
 					/>
@@ -670,7 +671,7 @@ function SideNavUserPanel() {
 	const { t } = useTranslation();
 	const location = useLocation();
 	const user = useUser();
-	const { notifications, unseenIds } = useNotifications();
+	const { notifications, unseenIds, showUnseenDot } = useNotifications();
 
 	if (user) {
 		return (
@@ -687,9 +688,10 @@ function SideNavUserPanel() {
 							className={sideNavStyles.sideNavFooterNotification}
 							key={location.pathname}
 						>
-							{unseenIds.length > 0 ? (
+							{showUnseenDot ? (
 								<NotificationDot
 									className={sideNavStyles.sideNavFooterUnseenDot}
+									testId="notifications-bell-dot"
 								/>
 							) : null}
 							<SendouPopover

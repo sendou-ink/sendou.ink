@@ -384,6 +384,8 @@
 	"settings.notifications.disableInfo": "Per disattivare le notifiche push, controllare le impostazioni del browser",
 	"settings.notifications.browserNotSupported": "Le notifiche push non sono supportate su questo browser",
 	"settings.notifications.permissionDenied": "Le notifiche push sono state negate. Controlla le impostazioni del browser per riattivarle",
+	"settings.notifications.subscribeFailed": "",
+	"settings.notifications.resubscribeNeeded": "",
 	"settings.clockFormat": "",
 	"settings.theme": "",
 	"settings.themeInfo": "",

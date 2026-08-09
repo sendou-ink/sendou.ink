@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
@@ -73,6 +74,22 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						type: "SCRIM_CANCELED",
 						meta: { id: post.id, opponentTeamName: postTeamName },
 					},
+				});
+
+				// the canceled scrim is no longer happening
+				const participantIds = [
+					...post.users.map((m) => m.id),
+					...acceptedRequest.users.map((m) => m.id),
+				];
+				await resolveNotifications({
+					userIds: participantIds,
+					type: "SCRIM_SCHEDULED",
+					meta: { id: post.id },
+				});
+				await resolveNotifications({
+					userIds: participantIds,
+					type: "SCRIM_STARTING_SOON",
+					meta: { id: post.id },
 				});
 			}
 

@@ -1,10 +1,14 @@
 import type { ExpressionBuilder, NotNull } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
 import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
 import invariant from "~/utils/invariant";
-import { commonUserSelect, peakXpOverallSql } from "~/utils/kysely.server";
+import {
+	commonUserSelect,
+	jsonArrayFrom,
+	jsonObjectFrom,
+	peakXpOverallSql,
+} from "~/utils/kysely.server";
 import { SPLATOON_3_XP_BADGE_VALUES } from "./badges-constants";
 import { findSplatoon3XpBadgeValue } from "./badges-utils";
 

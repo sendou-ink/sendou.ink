@@ -1,6 +1,5 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
 import * as UserCardRepository from "../UserCardRepository.server";
@@ -25,21 +24,22 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const data = result.data;
 
-	if (data.unverifiedXpPoints) {
-		const verifiedPeakXp =
-			await XRankPlacementRepository.findPeakVerifiedXpByUserId(user.id);
-		if (
-			!isValidUnverifiedXp({
-				unverified: data.unverifiedXpPoints,
-				verified: verifiedPeakXp,
-			})
-		) {
-			return {
-				fieldErrors: {
-					unverifiedXpPoints: "forms:errors.unverifiedXpNotAboveVerified",
-				},
-			};
-		}
+	const verifiedXp = data.unverifiedXpPoints
+		? await UserCardRepository.findVerifiedXpByUserId(user.id, data.xpDivision)
+		: null;
+
+	if (
+		data.unverifiedXpPoints &&
+		!isValidUnverifiedXp({
+			unverified: data.unverifiedXpPoints,
+			verified: verifiedXp?.points ?? null,
+		})
+	) {
+		return {
+			fieldErrors: {
+				unverifiedXpPoints: "forms:errors.unverifiedXpNotAboveVerified",
+			},
+		};
 	}
 
 	const isSupporter = Boolean(user.roles?.includes("SUPPORTER"));
@@ -47,19 +47,17 @@ export const action: ActionFunction = async ({ request }) => {
 	await UserCardRepository.updateOwnCard({
 		shortBio: data.shortBio || null,
 		...resolveBanner({ ...data, isSupporter }),
-		unverifiedPeakXP: data.unverifiedXpPoints
-			? {
-					overall: data.unverifiedXpPoints,
-					tentatek:
-						data.unverifiedXpDivision === "WEST"
-							? data.unverifiedXpPoints
-							: null,
-					takoroka:
-						data.unverifiedXpDivision === "JPN"
-							? data.unverifiedXpPoints
-							: null,
-				}
-			: null,
+		xpDivision: data.xpDivision,
+		unverifiedPeakXP:
+			data.unverifiedXpPoints && verifiedXp
+				? {
+						overall: data.unverifiedXpPoints,
+						tentatek:
+							verifiedXp.region === "WEST" ? data.unverifiedXpPoints : null,
+						takoroka:
+							verifiedXp.region === "JPN" ? data.unverifiedXpPoints : null,
+					}
+				: null,
 		hiddenCardStats: resolveHiddenStats(data),
 	});
 

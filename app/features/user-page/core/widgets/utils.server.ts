@@ -1,27 +1,37 @@
+import { cachified } from "@epic-web/cachified";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 
 type LeaderboardTopData = {
 	times: number;
 	seasons: number[];
 };
 
-const sqLeaderboardTopCache = new Map<
+type UserSQLeaderboardTopData = Map<
 	number,
 	{
 		TOP_10: LeaderboardTopData;
 		TOP_100: LeaderboardTopData;
 	}
->();
+>;
 
-export async function cachedUserSQLeaderboardTopData() {
-	if (sqLeaderboardTopCache.size > 0) {
-		return sqLeaderboardTopCache;
-	}
+const SQ_LEADERBOARD_TOP_CACHE_KEY = "sq-leaderboard-top";
 
-	const allSeasons = Seasons.allFinished();
+/** How many times & in what seasons each user placed in the SendouQ leaderboard top 10 and top 100. */
+export function cachedUserSQLeaderboardTopData() {
+	return cachified({
+		key: SQ_LEADERBOARD_TOP_CACHE_KEY,
+		cache,
+		ttl: ttl(IN_MILLISECONDS.TWO_HOURS),
+		getFreshValue: userSQLeaderboardTopData,
+	});
+}
 
-	for (const season of allSeasons) {
+async function userSQLeaderboardTopData(): Promise<UserSQLeaderboardTopData> {
+	const result: UserSQLeaderboardTopData = new Map();
+
+	for (const season of Seasons.allFinished()) {
 		const leaderboard =
 			await LeaderboardRepository.findUserSPLeaderboard(season);
 
@@ -29,14 +39,14 @@ export async function cachedUserSQLeaderboardTopData() {
 			const userId = entry.id;
 			const placementRank = entry.placementRank;
 
-			if (!sqLeaderboardTopCache.has(userId)) {
-				sqLeaderboardTopCache.set(userId, {
+			if (!result.has(userId)) {
+				result.set(userId, {
 					TOP_10: { times: 0, seasons: [] },
 					TOP_100: { times: 0, seasons: [] },
 				});
 			}
 
-			const userData = sqLeaderboardTopCache.get(userId)!;
+			const userData = result.get(userId)!;
 
 			if (placementRank <= 10) {
 				userData.TOP_10.times += 1;
@@ -50,5 +60,5 @@ export async function cachedUserSQLeaderboardTopData() {
 		}
 	}
 
-	return sqLeaderboardTopCache;
+	return result;
 }

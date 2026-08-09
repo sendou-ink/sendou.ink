@@ -4,6 +4,7 @@ import {
 	redirect,
 } from "react-router";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -102,6 +103,13 @@ export const upsertRegistrationAction = async (
 				}))
 			: [];
 
+	// the map pool field is only shown while it can still be changed, so a submission
+	// from any other state says nothing about the pool the team has
+	const mapPool =
+		tournament.teamsPrePickMaps && !tournament.hasStarted
+			? new MapPool(data.mapPool)
+			: undefined;
+
 	const { appliedTournamentNameChanges } =
 		await TournamentTeamRepository.upsertRegistration({
 			tournamentTeamId: team?.id,
@@ -115,6 +123,7 @@ export const upsertRegistrationAction = async (
 			membersToRemove,
 			inGameNameUpdates,
 			tournamentNameUpdates,
+			mapPool,
 		});
 
 	for (const change of appliedTournamentNameChanges) {
@@ -177,12 +186,7 @@ export const upsertRegistrationAction = async (
 		});
 	}
 
-	if (!team) {
-		ShowcaseTournaments.updateCachedTournamentTeamCount({
-			tournamentId,
-			newTeamCount: tournament.ctx.teams.length + 1,
-		});
-	}
+	await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 	clearTournamentDataCache(tournamentId);
 

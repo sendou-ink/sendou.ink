@@ -1,8 +1,9 @@
 import { subMinutes } from "date-fns";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
 	removeRoom: vi.fn(),
 	setMetadata: vi.fn(),
 }));
@@ -10,6 +11,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 import { backdate } from "~/db/seed/core/backdate";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import invariant from "~/utils/invariant";
 import { wrappedAction, wrappedLoader } from "~/utils/Test";
@@ -53,6 +55,10 @@ const setupReadyCheck = async () => {
 };
 
 describe("SendouQ ready check page", () => {
+	afterEach(() => {
+		Seasons.DANGEROUS_setSeasonEndedOverride(false);
+	});
+
 	test("doesn't reveal who the opponents are", async () => {
 		const { theirGroup, theirMembers } = await setupReadyCheck();
 
@@ -76,11 +82,13 @@ describe("SendouQ ready check page", () => {
 			"group",
 			"readyUserIds",
 			"theirGroup",
+			"userCards",
 		]);
 
 		const shownUserIds = [
 			...data.group.members.map((member) => member.id),
 			...data.readyUserIds,
+			...data.userCards.keys(),
 		];
 		for (const member of theirMembers) {
 			expect(shownUserIds).not.toContain(member.id);
@@ -122,5 +130,25 @@ describe("SendouQ ready check page", () => {
 				ownGroup.id,
 			),
 		).toEqual(ownMembers.map((member) => member.id));
+	});
+
+	test("the season ending mid check ends it with nobody marked as having missed it", async () => {
+		const { ownGroup, theirGroup } = await setupReadyCheck();
+
+		Seasons.DANGEROUS_setSeasonEndedOverride(true);
+
+		// out of the queue and off to the front page
+		await expect(readyLoader({ user: "admin" })).rejects.toThrow("302");
+
+		expect(
+			await SQGroupRepository.findReadyCheckByGroupId(ownGroup.id),
+		).toBeUndefined();
+		for (const group of [ownGroup, theirGroup]) {
+			expect(
+				await SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId(
+					group.id,
+				),
+			).toEqual([]);
+		}
 	});
 });

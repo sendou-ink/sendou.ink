@@ -6,19 +6,23 @@ import * as UserCardRepository from "../UserCardRepository.server";
 export const loader = async () => {
 	const user = requireUser();
 
-	const [{ userCards }, extras, hasLinkedPlayer, verifiedPeakXp] =
-		await Promise.all([
-			UserCardRepository.findAllByUserIds({
-				userIds: [user.id],
-				includeHiddenStats: true,
-			}),
-			UserCardRepository.findCardEditExtrasByUserId(user.id),
-			XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
-			XRankPlacementRepository.findPeakVerifiedXpByUserId(user.id),
-		]);
+	const [{ userCards }, extras, hasLinkedPlayer] = await Promise.all([
+		UserCardRepository.findAllByUserIds({
+			userIds: [user.id],
+			includeHiddenStats: true,
+		}),
+		UserCardRepository.findCardEditExtrasByUserId(user.id),
+		XRankPlacementRepository.isPlayerLinkedByUserId(user.id),
+	]);
 
 	const card = userCards.get(user.id);
 	invariant(card, "card data not found for own user");
+
+	// the division the card settled on is what a self-reported peak XP is judged against
+	const verifiedXp = await UserCardRepository.findVerifiedXpByUserId(
+		user.id,
+		extras.xpDivision,
+	);
 
 	return {
 		card,
@@ -26,6 +30,6 @@ export const loader = async () => {
 		isSupporter: Boolean(user.roles?.includes("SUPPORTER")),
 		presentStats: card.stats.map((stat) => stat.type),
 		hasLinkedPlayer,
-		verifiedPeakXp,
+		verifiedPeakXp: verifiedXp?.points ?? null,
 	};
 };

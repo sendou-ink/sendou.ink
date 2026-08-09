@@ -8,8 +8,9 @@ import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
+import { JSON_COLUMNS } from "./json-columns";
+import { computedJsonColumns } from "./json-selections";
 import { NodeSqliteDialect } from "./node-sqlite-dialect";
-import { FastParseJSONResultsPlugin } from "./parse-json-results-plugin";
 import type { DB } from "./tables";
 import { WriteTrackerPlugin } from "./write-tracker";
 
@@ -51,13 +52,11 @@ export const db = new Kysely<DB>({
 	dialect: new NodeSqliteDialect({
 		database: sql,
 		cacheStatements: true,
+		jsonColumns: JSON_COLUMNS,
+		computedJsonColumns,
 	}),
 	log,
-	plugins: [
-		new EmptyValuesNoopPlugin(),
-		new FastParseJSONResultsPlugin(),
-		new WriteTrackerPlugin(),
-	],
+	plugins: [new EmptyValuesNoopPlugin(), new WriteTrackerPlugin()],
 });
 
 // Every test worker gets its own in-memory database, built by replaying the

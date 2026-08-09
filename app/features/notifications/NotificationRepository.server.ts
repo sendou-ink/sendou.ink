@@ -1,4 +1,6 @@
 import { sub } from "date-fns";
+import { sql } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import type { NotificationSubscription } from "~/db/tables-json";
@@ -75,13 +77,75 @@ export function findAllByType<T extends Notification["type"]>(type: T) {
 		.execute() as Promise<Array<Extract<Notification, { type: T }>>>;
 }
 
-export function markOwnAsSeen(notificationIds: number[]) {
-	return db
+/**
+ * Marks the users' unseen notifications of the given type as seen, optionally
+ * only those whose meta matches every given key/value pair. Used to clear the
+ * unseen dot when the user addresses what the notification is about. Returns
+ * the user ids whose rows actually changed.
+ *
+ * The correlated `exists` keeps this proportional to the users' own
+ * notifications. A `notificationId in (select ...)` reads the same but makes
+ * SQLite materialize every notification of the type (json_extract'ing each one)
+ * before touching the user's rows, which is ~80x slower on a hot path.
+ */
+export async function markAsSeenByType({
+	userIds,
+	type,
+	meta,
+}: {
+	userIds: number[];
+	type: Notification["type"];
+	meta?: Record<string, number | string>;
+}): Promise<number[]> {
+	if (userIds.length === 0) return [];
+
+	const updated = await db
+		.updateTable("NotificationUser")
+		.set("seen", 1)
+		.where("NotificationUser.seen", "=", 0)
+		.where("NotificationUser.userId", "in", userIds)
+		.where(({ exists, selectFrom, ref }) => {
+			let matchingNotification = selectFrom("Notification")
+				.select("Notification.id")
+				.whereRef(
+					"Notification.id",
+					"=",
+					ref("NotificationUser.notificationId"),
+				)
+				.where("Notification.type", "=", type);
+
+			for (const [key, value] of Object.entries(meta ?? {})) {
+				matchingNotification = matchingNotification.where(
+					sql`json_extract("Notification"."meta", ${`$.${key}`})`,
+					"=",
+					value,
+				);
+			}
+
+			return exists(matchingNotification);
+		})
+		.returning("NotificationUser.userId")
+		.execute();
+
+	return R.unique(updated.map((row) => row.userId));
+}
+
+/**
+ * Marks the actor's notifications as seen. Returns the actor's user id in an
+ * array if any row actually changed (empty array otherwise), shaped for
+ * passing straight to `ChatSystemMessage.notifyNotificationsChanged`.
+ */
+export async function markOwnAsSeen(notificationIds: number[]) {
+	const updated = await db
 		.updateTable("NotificationUser")
 		.set("seen", 1)
 		.where("NotificationUser.notificationId", "in", notificationIds)
 		.where("NotificationUser.userId", "=", actorId())
+		.where("NotificationUser.seen", "=", 0)
+		.returning("NotificationUser.userId")
 		.execute();
+
+	return updated.length > 0 ? [updated[0].userId] : [];
 }
 
 export function deleteOld() {
@@ -95,13 +159,24 @@ export function deleteOld() {
 		.executeTakeFirst();
 }
 
-export function insertOwnSubscription(subscription: NotificationSubscription) {
+export function upsertOwnSubscription(subscription: NotificationSubscription) {
 	return db
 		.insertInto("NotificationUserSubscription")
 		.values({
 			userId: actorId(),
 			subscription: JSON.stringify(subscription),
 		})
+		.onConflict((oc) =>
+			// an endpoint identifies one browser; a resubscribe or another user
+			// logging in on the same browser takes the row over instead of
+			// duplicating deliveries to it
+			oc
+				.expression(sql`json_extract("subscription", '$.endpoint')`)
+				.doUpdateSet({
+					userId: actorId(),
+					subscription: JSON.stringify(subscription),
+				}),
+		)
 		.execute();
 }
 

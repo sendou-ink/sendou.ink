@@ -186,7 +186,11 @@ function MapButton({
 				data-testid={testId}
 			/>
 			{selected ? (
-				<Check className={styles.mapButtonIcon} onClick={onClick} />
+				<Check
+					className={styles.mapButtonIcon}
+					onClick={onClick}
+					data-testid={`${testId}-picked`}
+				/>
 			) : null}
 			{tiebreaker ? (
 				<div className={styles.mapButtonText}>Tiebreak</div>

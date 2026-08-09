@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { userIsBanned } from "~/features/ban/core/banned.server";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import {
+	isOneModeTournamentOf,
+	validateCounterPickMapPool,
+} from "~/features/tournament/tournament-utils";
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -47,6 +53,46 @@ export function adminRegistrationFormSchemaServer({
 				message: "forms:errors.regTooManyMembers",
 				path: ["members"],
 			});
+		}
+
+		// the map pool is only written while it can still be changed, matching the
+		// form field's own visibility, so any other state says nothing about it
+		if (tournament.teamsPrePickMaps && !tournament.hasStarted) {
+			const currentMapPool =
+				typeof data.tournamentTeamId === "number"
+					? ((
+							await TournamentTeamRepository.findMapPoolsByTeamIds([
+								data.tournamentTeamId,
+							])
+						).get(data.tournamentTeamId) ?? [])
+					: [];
+			// a pool valid when picked can stop being valid later (a map gets banned, the
+			// tie-breaker pool changes), so only a changed pool is held to being valid and
+			// an untouched one can't block unrelated edits to the team
+			const mapPoolChanged =
+				MapPool.serialize(data.mapPool) !== MapPool.serialize(currentMapPool);
+
+			if (mapPoolChanged) {
+				const invalidMode = data.mapPool.some(
+					(map) => !tournament.modesIncluded.includes(map.mode),
+				);
+				const status = validateCounterPickMapPool(
+					new MapPool(data.mapPool),
+					isOneModeTournamentOf(
+						tournament.ctx.mapPickingStyle,
+						tournament.ctx.toSetMapPool,
+					),
+					tournament.ctx.tieBreakerMapPool,
+				);
+
+				if (invalidMode || status !== "VALID") {
+					ctx.addIssue({
+						code: z.ZodIssueCode.custom,
+						message: "forms:errors.invalidMapPool",
+						path: ["mapPool"],
+					});
+				}
+			}
 		}
 
 		const team =

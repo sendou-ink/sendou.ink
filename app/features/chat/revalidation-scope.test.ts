@@ -1,8 +1,9 @@
 import type { ShouldRevalidateFunctionArgs } from "react-router";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
 	isMatchResultsScopedRevalidation,
 	revalidateWithScope,
+	scheduleBroadcastRevalidation,
 } from "./revalidation-scope";
 
 const revalidationArgs = () =>
@@ -69,5 +70,61 @@ describe("revalidateWithScope", () => {
 		scoped.resolve();
 		unscoped.resolve();
 		await flushMicrotasks();
+	});
+});
+
+describe("scheduleBroadcastRevalidation", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.runAllTimers();
+		vi.useRealTimers();
+	});
+
+	test("revalidates once after a delay instead of immediately", () => {
+		const revalidate = vi.fn(() => Promise.resolve());
+
+		scheduleBroadcastRevalidation(revalidate, undefined);
+		expect(revalidate).not.toHaveBeenCalled();
+
+		vi.runAllTimers();
+		expect(revalidate).toHaveBeenCalledTimes(1);
+	});
+
+	test("broadcasts arriving while one is scheduled are absorbed into it", () => {
+		const revalidate = vi.fn(() => Promise.resolve());
+
+		scheduleBroadcastRevalidation(revalidate, undefined);
+		scheduleBroadcastRevalidation(revalidate, undefined);
+		scheduleBroadcastRevalidation(revalidate, undefined);
+
+		vi.runAllTimers();
+		expect(revalidate).toHaveBeenCalledTimes(1);
+	});
+
+	test("same-scope broadcasts keep the scope active during the revalidation", () => {
+		const { promise, resolve } = deferred();
+
+		scheduleBroadcastRevalidation(() => promise, "MATCH_RESULTS");
+		scheduleBroadcastRevalidation(() => promise, "MATCH_RESULTS");
+
+		vi.runAllTimers();
+		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(true);
+
+		resolve();
+	});
+
+	test("an absorbed unscoped broadcast widens the scheduled scope", () => {
+		const { promise, resolve } = deferred();
+
+		scheduleBroadcastRevalidation(() => promise, "MATCH_RESULTS");
+		scheduleBroadcastRevalidation(() => promise, undefined);
+
+		vi.runAllTimers();
+		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
+
+		resolve();
 	});
 });

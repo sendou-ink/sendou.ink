@@ -33,7 +33,12 @@ export function NotificationItem({
 			onClick={onClose}
 		>
 			<NotificationImage notification={notification}>
-				{!notification.seen ? <div className={styles.unseenDot} /> : null}
+				{!notification.seen ? (
+					<div
+						className={styles.unseenDot}
+						data-testid="notification-unseen-dot"
+					/>
+				) : null}
 			</NotificationImage>
 			<div className={styles.itemHeader}>
 				{t(

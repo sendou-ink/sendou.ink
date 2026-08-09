@@ -15,6 +15,7 @@
 	"options.bannerType.URL": "",
 	"options.xpDivision.WEST": "",
 	"options.xpDivision.JPN": "",
+	"bottomTexts.xpDivision": "",
 	"bottomTexts.unverifiedXp": "",
 	"bottomTexts.reportMatchId": "",
 	"errors.unverifiedXpNotAboveVerified": "",

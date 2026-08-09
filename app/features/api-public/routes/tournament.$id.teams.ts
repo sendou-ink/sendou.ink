@@ -1,5 +1,4 @@
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
@@ -10,6 +9,8 @@ import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";

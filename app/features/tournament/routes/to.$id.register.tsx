@@ -16,8 +16,12 @@ import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
+import {
+	type CounterPickMapPool,
+	CounterPickMapPoolPicker,
+	MapPoolValidationStatusMessage,
+	useCounterPickMapPoolValidationStatus,
+} from "~/features/tournament/components/CounterPickMapPoolPicker";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
@@ -26,7 +30,6 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
@@ -37,7 +40,6 @@ import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
 import styles from "../tournament.module.css";
-import { TOURNAMENT } from "../tournament-constants";
 import {
 	type RegisterTeamFormValues,
 	registerTeamFormSchema,
@@ -48,10 +50,6 @@ import {
 	deleteTeamMemberSchema,
 	updateMapPoolSchema,
 } from "../tournament-schemas";
-import {
-	type CounterPickValidationStatus,
-	validateCounterPickMapPool,
-} from "../tournament-utils";
 
 export { action, loader };
 
@@ -228,7 +226,7 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 				<>
 					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
 					{tournament.teamsPrePickMaps ? (
-						<CounterPickMapPoolPicker key={tournament.ctx.id} />
+						<TeamCounterPickMapPoolPicker key={tournament.ctx.id} />
 					) : null}
 				</>
 			) : null}
@@ -256,7 +254,7 @@ function ReadOnlyRegistrationForms() {
 			<TeamInfo ownTeam={team} canUnregister={false} readOnly />
 			<FillRoster ownTeam={team} ownTeamCheckedIn={checkedIn} readOnly />
 			{tournament.teamsPrePickMaps ? (
-				<CounterPickMapPoolPicker readOnly mapPool={team.mapPool ?? []} />
+				<TeamCounterPickMapPoolPicker readOnly mapPool={team.mapPool ?? []} />
 			) : null}
 		</div>
 	);
@@ -916,7 +914,7 @@ function DeleteMember({ members }: { members: TournamentTeamFull["members"] }) {
 	);
 }
 
-function CounterPickMapPoolPicker({
+function TeamCounterPickMapPoolPicker({
 	readOnly = false,
 	mapPool,
 }: {
@@ -924,17 +922,13 @@ function CounterPickMapPoolPicker({
 	mapPool?: NonNullable<TournamentTeamFull["mapPool"]>;
 }) {
 	const { t } = useTranslation(["common", "game-misc", "tournament"]);
-	const tournament = useTournament();
 	const fetcher = useFetcher();
 	const data = useLoaderData<TournamentRegisterPageLoader>();
-	const [counterPickMaps, setCounterPickMaps] = React.useState(
-		mapPool ?? data?.mapPool ?? [],
-	);
+	const [counterPickMaps, setCounterPickMaps] =
+		React.useState<CounterPickMapPool>(mapPool ?? data?.mapPool ?? []);
 
-	const counterPickMapPool = new MapPool(counterPickMaps);
-
-	const isOneModeTournamentOf =
-		tournament.modesIncluded.length === 1 ? tournament.modesIncluded[0] : null;
+	const validationStatus =
+		useCounterPickMapPoolValidationStatus(counterPickMaps);
 
 	return (
 		<div>
@@ -948,46 +942,12 @@ function CounterPickMapPoolPicker({
 						name="mapPool"
 						value={JSON.stringify(counterPickMaps)}
 					/>
-					{rankedModesShort
-						.filter(
-							(mode) =>
-								!isOneModeTournamentOf || isOneModeTournamentOf === mode,
-						)
-						.map((mode) => {
-							return (
-								<ModeMapPoolPicker
-									key={mode}
-									amountToPick={
-										isOneModeTournamentOf
-											? TOURNAMENT.COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE
-											: TOURNAMENT.COUNTERPICK_MAPS_PER_MODE
-									}
-									mode={mode}
-									tiebreaker={
-										tournament.ctx.tieBreakerMapPool.find(
-											(stage) => stage.mode === mode,
-										)?.stageId
-									}
-									pool={
-										counterPickMaps
-											.filter((m) => m.mode === mode)
-											.map((m) => m.stageId) ?? []
-									}
-									onChange={(stageIds) =>
-										setCounterPickMaps([
-											...counterPickMaps.filter((m) => m.mode !== mode),
-											...stageIds.map((stageId) => ({ mode, stageId })),
-										])
-									}
-									disabled={readOnly}
-								/>
-							);
-						})}
-					{readOnly ? null : validateCounterPickMapPool(
-							counterPickMapPool,
-							isOneModeTournamentOf,
-							tournament.ctx.tieBreakerMapPool,
-						) === "VALID" ? (
+					<CounterPickMapPoolPicker
+						mapPool={counterPickMaps}
+						onChange={setCounterPickMaps}
+						disabled={readOnly}
+					/>
+					{readOnly ? null : validationStatus === "VALID" ? (
 						<SubmitButton
 							schema={updateMapPoolSchema}
 							_action="UPDATE_MAP_POOL"
@@ -998,42 +958,10 @@ function CounterPickMapPoolPicker({
 							{t("common:actions.save")}
 						</SubmitButton>
 					) : (
-						<MapPoolValidationStatusMessage
-							status={validateCounterPickMapPool(
-								counterPickMapPool,
-								isOneModeTournamentOf,
-								tournament.ctx.tieBreakerMapPool,
-							)}
-						/>
+						<MapPoolValidationStatusMessage status={validationStatus} />
 					)}
 				</fetcher.Form>
 			</section>
-		</div>
-	);
-}
-
-function MapPoolValidationStatusMessage({
-	status,
-}: {
-	status: CounterPickValidationStatus;
-}) {
-	const { t } = useTranslation(["common"]);
-
-	if (
-		status !== "TOO_MUCH_STAGE_REPEAT" &&
-		status !== "STAGE_REPEAT_IN_SAME_MODE" &&
-		status !== "INCLUDES_BANNED" &&
-		status !== "INCLUDES_TIEBREAKER"
-	)
-		return null;
-
-	return (
-		<div className="mt-4">
-			<Alert alertClassName="w-max" variation="WARNING" tiny>
-				{t(`common:maps.validation.${status}`, {
-					maxStageRepeat: TOURNAMENT.COUNTERPICK_MAX_STAGE_REPEAT,
-				})}
-			</Alert>
 		</div>
 	);
 }

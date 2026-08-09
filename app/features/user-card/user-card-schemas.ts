@@ -6,6 +6,7 @@ import {
 	numberFieldOptional,
 	radioGroup,
 	select,
+	selectOptional,
 	stageSelect,
 	stringConstant,
 	textAreaOptional,
@@ -39,16 +40,17 @@ export const updateUserCardSchema = z.object({
 		dimensions: "thick-banner",
 		autoValidate: true,
 	}),
-	unverifiedXpPoints: numberFieldOptional({
-		label: "labels.unverifiedXp",
-		bottomText: "bottomTexts.unverifiedXp",
-	}),
-	unverifiedXpDivision: select({
+	xpDivision: selectOptional({
 		label: "labels.division",
+		bottomText: "bottomTexts.xpDivision",
 		items: [
 			{ label: "options.xpDivision.WEST", value: "WEST" },
 			{ label: "options.xpDivision.JPN", value: "JPN" },
 		],
+	}),
+	unverifiedXpPoints: numberFieldOptional({
+		label: "labels.unverifiedXp",
+		bottomText: "bottomTexts.unverifiedXp",
 	}),
 	hideXp: toggle({ label: "labels.hideXp" }),
 	hideDiv: toggle({ label: "labels.hideDiv" }),

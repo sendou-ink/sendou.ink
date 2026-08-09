@@ -78,13 +78,10 @@ export function addToCached({
 	userId,
 	tournamentId,
 	type,
-	newTeamCount,
 }: {
 	userId: number;
 	tournamentId: number;
 	type: "participant" | "organizer";
-	/** If a new team joined, the new total team count for the tournament including the new one */
-	newTeamCount?: number;
 }) {
 	if (!participationInfoMap) return;
 
@@ -98,13 +95,6 @@ export function addToCached({
 	}
 
 	participationInfoMap.set(userId, participation);
-
-	if (typeof newTeamCount === "number") {
-		updateCachedTournamentTeamCount({
-			tournamentId,
-			newTeamCount,
-		});
-	}
 }
 
 export function removeFromCached({
@@ -130,21 +120,25 @@ export function removeFromCached({
 	participationInfoMap.set(userId, participation);
 }
 
-export function updateCachedTournamentTeamCount({
-	tournamentId,
-	newTeamCount,
-}: {
-	tournamentId: number;
-	newTeamCount: number;
-}) {
-	cachedTournaments().then((tournaments) => {
-		const tournament = tournaments.upcoming.find(
-			(tournament) => tournament.id === tournamentId,
-		);
-		if (tournament) {
-			tournament.teamsCount = newTeamCount;
-		}
-	});
+/**
+ * Re-reads the team & participant counts of one tournament from the database into the cached
+ * showcase tournaments. No-op if the tournament is not part of the current cache.
+ */
+export async function refreshCachedTournamentCounts(tournamentId: number) {
+	if (!cache.has(SHOWCASE_TOURNAMENTS_CACHE_KEY)) return;
+
+	const tournaments = await cachedTournaments();
+	const cachedTournament = tournaments.upcoming.find(
+		(tournament) => tournament.id === tournamentId,
+	);
+	if (!cachedTournament) return;
+
+	const counts =
+		await TournamentRepository.findShowcaseCountsById(tournamentId);
+	if (!counts) return;
+
+	cachedTournament.teamsCount = counts.teamsCount;
+	cachedTournament.membersCount = counts.membersCount;
 }
 
 async function cachedParticipationInfo(
@@ -304,6 +298,7 @@ function mapTournamentFromDB(
 		name: tournament.name,
 		startsAt: tournament.startsAt,
 		teamsCount: tournament.teamsCount,
+		membersCount: tournament.membersCount,
 		logoUrl: tournament.logoUrl,
 		organization: tournament.organization
 			? {

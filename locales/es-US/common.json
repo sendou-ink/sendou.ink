@@ -384,6 +384,8 @@
 	"settings.notifications.disableInfo": "",
 	"settings.notifications.browserNotSupported": "",
 	"settings.notifications.permissionDenied": "",
+	"settings.notifications.subscribeFailed": "",
+	"settings.notifications.resubscribeNeeded": "",
 	"settings.clockFormat": "",
 	"settings.theme": "",
 	"settings.themeInfo": "",

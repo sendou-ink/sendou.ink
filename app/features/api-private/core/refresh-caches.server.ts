@@ -8,6 +8,7 @@ import {
 	refreshRunningTournaments,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { refreshTentativeTiersCache } from "~/features/tournament-organization/core/tentativeTiers.server";
+import { clearUserCardCache } from "~/features/user-card/UserCardRepository.server";
 import { cache } from "~/utils/cache.server";
 
 /**
@@ -19,6 +20,7 @@ export async function refreshCaches() {
 	clearAllTournamentDataCache();
 	clearParticipationInfoMap();
 	clearSeasonSkillsCache();
+	clearUserCardCache();
 	cache.clear();
 	await refreshBannedCache();
 	await refreshSendouQInstance();

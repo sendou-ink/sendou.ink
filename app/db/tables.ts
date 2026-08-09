@@ -954,6 +954,8 @@ export interface User {
 	div: string | null;
 	/** Peak XP as indicated by the user. Should have either `takoroka` or `tentatek` key defined but not both. */
 	unverifiedPeakXP: JSONColumnTypeNullable<PeakXP>;
+	/** Division the user card's XP is taken from. `null` when the user has not picked one, showing their highest XP across both. */
+	xpDivision: XRankPlacementRegion | null;
 }
 
 export interface UserResultHighlight {

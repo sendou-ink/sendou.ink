@@ -136,7 +136,6 @@ export default defineConfig((config) => {
 				"i18next-browser-languagedetector",
 				"i18next-http-backend",
 				"kysely",
-				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
 				"mediabunny",
 				"nanoid",

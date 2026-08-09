@@ -5,7 +5,6 @@ import {
 	sql,
 	type Transaction,
 } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
@@ -15,6 +14,7 @@ import { shortNanoid } from "~/utils/id";
 import {
 	commonUserMembersAgg,
 	commonUserSelect,
+	jsonArrayFrom,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
@@ -873,10 +873,29 @@ export async function findReadyCheckByGroupId(groupId: number) {
 export function findAllReadyChecksStartedBefore(date: Date) {
 	return db
 		.selectFrom("GroupReadyCheck")
-		.select([
+		.select((eb) => [
 			"GroupReadyCheck.id",
 			"GroupReadyCheck.alphaGroupId",
 			"GroupReadyCheck.bravoGroupId",
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.where((innerEb) =>
+						innerEb.or([
+							innerEb(
+								"GroupMember.groupId",
+								"=",
+								innerEb.ref("GroupReadyCheck.alphaGroupId"),
+							),
+							innerEb(
+								"GroupMember.groupId",
+								"=",
+								innerEb.ref("GroupReadyCheck.bravoGroupId"),
+							),
+						]),
+					),
+			).as("members"),
 		])
 		.where("GroupReadyCheck.createdAt", "<", dateToDatabaseTimestamp(date))
 		.execute();

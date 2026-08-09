@@ -20,7 +20,7 @@ import type {
 import { chatUsersSearchParams } from "./chat-search-params";
 import type { ChatMessage, ChatUser } from "./chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
-import { revalidateWithScope } from "./revalidation-scope";
+import { scheduleBroadcastRevalidation } from "./revalidation-scope";
 import { ChatContext } from "./useChatContext";
 
 const PING_INTERVAL_MS = 60_000;
@@ -119,6 +119,7 @@ function ChatProviderInner({
 		{},
 	);
 	const clearChatLabels = React.useCallback(() => setChatLabels({}), []);
+	const [notificationsVersion, setNotificationsVersion] = React.useState(0);
 
 	const ws = React.useRef<WebSocket>(undefined);
 
@@ -191,6 +192,13 @@ function ChatProviderInner({
 			return;
 		}
 
+		// Notifications changed server-side; handled before the fallthrough below
+		// so a contentless ping is never treated as a chat message
+		if (parsed.event === "NOTIFICATIONS_CHANGED") {
+			setNotificationsVersion((version) => version + 1);
+			return;
+		}
+
 		// CHAT_HISTORY response (also returned by SUBSCRIBE with metadata)
 		if (parsed.event === "CHAT_HISTORY" && Array.isArray(parsed.messages)) {
 			logger.debug(
@@ -252,7 +260,12 @@ function ChatProviderInner({
 			const isOwnRevalidate =
 				messageArr[0].revalidateOnly && messageArr[0].authorUserId === userId;
 			if (!isOwnRevalidate) {
-				revalidateWithScope(revalidate, messageArr[0].revalidateScope);
+				// jittered so a broadcast fanning out to a whole room does not make
+				// every subscribed client refetch in the same instant
+				scheduleBroadcastRevalidation(
+					revalidate,
+					messageArr[0].revalidateScope,
+				);
 			}
 		}
 
@@ -482,6 +495,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
+			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			setChatOpen,
@@ -505,6 +519,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
+			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			activeRooms,

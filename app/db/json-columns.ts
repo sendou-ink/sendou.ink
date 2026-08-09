@@ -1,0 +1,51 @@
+/**
+ * Every "Table.column" whose text content is a JSON document. The node-sqlite
+ * dialect parses only these columns (plus computed expression columns) when
+ * reading rows; all other text columns stay plain strings even if a user typed
+ * something JSON-shaped into them. Kept in sync with the JSONColumnType
+ * declarations of tables.ts by json-columns.test.ts.
+ */
+export const JSON_COLUMNS: ReadonlySet<string> = new Set([
+	"AllTeam.customTheme",
+	"AllTeam.mapModePreferences",
+	"Build.abilities",
+	"Build.modes",
+	"CalendarEvent.tags",
+	"GroupMatch.memento",
+	"IngestedMatch.data",
+	"LFGPost.languages",
+	"Notification.meta",
+	"NotificationUserSubscription.subscription",
+	"ScrimPost.visibility",
+	"SplatoonPlayer.peakXp",
+	"Team.customTheme",
+	"Team.mapModePreferences",
+	"Tournament.castTwitchAccounts",
+	"Tournament.castedMatchesInfo",
+	"Tournament.preparedMaps",
+	"Tournament.seedingSnapshot",
+	"Tournament.settings",
+	"TournamentAuditLog.metadata",
+	"TournamentMatch.opponentOne",
+	"TournamentMatch.opponentTwo",
+	"TournamentOrganization.socials",
+	"TournamentOrganizationSeries.substringMatches",
+	"TournamentOrganizationSeries.tierHistory",
+	"TournamentResult.setResults",
+	"TournamentRound.maps",
+	"TournamentStage.settings",
+	"TournamentTeam.activeRosterUserIds",
+	"User.buildSorting",
+	"User.customTheme",
+	"User.favoriteBadgeIds",
+	"User.favoriteTrophyIds",
+	"User.hiddenCardStats",
+	"User.hiddenTrophyIds",
+	"User.languages",
+	"User.mapModePreferences",
+	"User.preferences",
+	"User.pronouns",
+	"User.unverifiedPeakXP",
+	"User.weaponPool",
+	"UserWidget.widget",
+]);

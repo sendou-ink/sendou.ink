@@ -1,0 +1,10 @@
+language js
+
+// The kysely sqlite json helpers embed nested JSON documents as escaped strings
+// (SQLite's JSON subtype does not survive a subquery boundary) and rely on a
+// result-walking parse plugin this codebase no longer has. The forks in
+// `app/utils/kysely.server.ts` re-tag nested JSON values with `json()` so the
+// dialect's single-pass per-column parsing sees fully nested documents.
+`"kysely/helpers/sqlite"` as $source where {
+	register_diagnostic(span=$source, message="Do not import from `kysely/helpers/sqlite`. Use the `jsonArrayFrom` / `jsonObjectFrom` / `jsonBuildObject` forks in `~/utils/kysely.server` instead; the kysely versions return nested JSON documents as strings.", severity="error")
+}

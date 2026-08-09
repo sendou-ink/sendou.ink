@@ -1,6 +1,7 @@
 import type { ActionFunction } from "react-router";
 import type { PreparedMaps } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
 	calculateTournamentTierFromTeams,
@@ -176,6 +177,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 				});
 			}
 
+			// starting drops the teams that did not check in and can change the tier
+			ShowcaseTournaments.clearCachedTournaments();
+
 			// update RunningTournaments
 			await tournamentFromDB({ tournamentId, user });
 
@@ -281,6 +285,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await TournamentTeamRepository.checkIn(teamMemberOf.id, {
 				bracketIdx: data.bracketIdx,
 			});
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			logger.info(
 				`Checking in (bracket success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${data.bracketIdx}`,

@@ -4,13 +4,13 @@ import {
 	sql,
 	type Transaction,
 } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	commonUserJsonObject,
+	jsonArrayFrom,
 	latestSkillPerSeason,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";

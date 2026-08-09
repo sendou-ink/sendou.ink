@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { notificationMeta } from "../notifications-utils";
@@ -21,10 +22,15 @@ vi.mock("./webPush.server", () => ({
 	},
 }));
 
+vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
+	notifyNotificationsChanged: vi.fn(),
+}));
+
 describe("notify()", () => {
 	beforeEach(async () => {
 		await users.create(20);
 		clearSentNotificationsForTesting();
+		vi.mocked(ChatSystemMessage.notifyNotificationsChanged).mockClear();
 	});
 
 	test("different recipients receive same notification", async () => {
@@ -32,7 +38,7 @@ describe("notify()", () => {
 			userIds: [users.id(1), users.id(2)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 
@@ -40,7 +46,7 @@ describe("notify()", () => {
 			userIds: [users.id(3), users.id(4)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 
@@ -64,7 +70,9 @@ describe("notify()", () => {
 
 		expect(user1Notifications[0].type).toBe("SCRIM_NEW_REQUEST");
 		expect(notificationMeta(user1Notifications[0])).toEqual({
+			fromUserId: 1,
 			fromUsername: "alice",
+			scrimPostId: 1,
 		});
 	});
 
@@ -96,6 +104,34 @@ describe("notify()", () => {
 		expect(user6Notifications).toHaveLength(1);
 	});
 
+	test("pings recipients' websockets once per delivered notification", async () => {
+		await notify({
+			userIds: [users.id(1), users.id(2)],
+			notification: {
+				type: "BADGE_ADDED",
+				meta: { badgeName: "Test", badgeId: 1 },
+			},
+		});
+
+		expect(ChatSystemMessage.notifyNotificationsChanged).toHaveBeenCalledWith([
+			users.id(1),
+			users.id(2),
+		]);
+
+		// deduplicated resend delivers nothing, so it should not ping either
+		await notify({
+			userIds: [users.id(1), users.id(2)],
+			notification: {
+				type: "BADGE_ADDED",
+				meta: { badgeName: "Test", badgeId: 1 },
+			},
+		});
+
+		expect(ChatSystemMessage.notifyNotificationsChanged).toHaveBeenCalledTimes(
+			1,
+		);
+	});
+
 	test("identical notification is delivered again when repeated a day later", async () => {
 		vi.useFakeTimers();
 		try {
@@ -103,7 +139,7 @@ describe("notify()", () => {
 				userIds: [users.id(5)],
 				notification: {
 					type: "SCRIM_NEW_REQUEST",
-					meta: { fromUsername: "alice" },
+					meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
 				},
 			});
 
@@ -113,7 +149,7 @@ describe("notify()", () => {
 				userIds: [users.id(5)],
 				notification: {
 					type: "SCRIM_NEW_REQUEST",
-					meta: { fromUsername: "alice" },
+					meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
 				},
 			});
 		} finally {
@@ -225,7 +261,7 @@ describe("notify()", () => {
 			userIds: [users.id(12), users.id(13)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "bob" },
+				meta: { fromUserId: 2, fromUsername: "bob", scrimPostId: 1 },
 			},
 		});
 
@@ -233,7 +269,7 @@ describe("notify()", () => {
 			userIds: [users.id(12), users.id(13)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "charlie" },
+				meta: { fromUserId: 3, fromUsername: "charlie", scrimPostId: 1 },
 			},
 		});
 
@@ -248,8 +284,16 @@ describe("notify()", () => {
 		expect(user13Notifications).toHaveLength(2);
 
 		const metas = user12Notifications.map(notificationMeta);
-		expect(metas).toContainEqual({ fromUsername: "bob" });
-		expect(metas).toContainEqual({ fromUsername: "charlie" });
+		expect(metas).toContainEqual({
+			fromUserId: 2,
+			fromUsername: "bob",
+			scrimPostId: 1,
+		});
+		expect(metas).toContainEqual({
+			fromUserId: 3,
+			fromUsername: "charlie",
+			scrimPostId: 1,
+		});
 	});
 
 	test("duplicate user IDs in input array are deduplicated", async () => {
@@ -312,7 +356,7 @@ describe("notify() - web push notifications", () => {
 			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 
@@ -408,7 +452,7 @@ describe("notify() - web push notifications", () => {
 			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUsername: "alice" },
+				meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
 			},
 		});
 

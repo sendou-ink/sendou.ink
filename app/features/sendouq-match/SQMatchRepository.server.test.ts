@@ -1,4 +1,4 @@
-import { add } from "date-fns";
+import { add, sub } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -59,6 +59,34 @@ const fetchSkills = async (matchId: number) => {
 		.selectAll()
 		.where("groupMatchId", "=", matchId)
 		.execute();
+};
+
+/** Reports every map as won by alpha and has bravo confirm the score. */
+const playOutMatch = async (setup: Awaited<ReturnType<typeof setupMatch>>) => {
+	let reportedCount = 0;
+	let result = await SQMatchRepository.reportMapWinner({
+		matchId: setup.match.id,
+		winnerId: setup.alphaGroupId,
+		reportedByUserId: setup.alphaMembers[0].id,
+		reportedCount,
+	});
+	while (result.status === "MAP_REPORTED") {
+		reportedCount++;
+		result = await SQMatchRepository.reportMapWinner({
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.alphaMembers[0].id,
+			reportedCount,
+		});
+	}
+	expect(result.status).toBe("MATCH_REPORTED");
+
+	return SQMatchRepository.reportMapWinner({
+		matchId: setup.match.id,
+		winnerId: setup.alphaGroupId,
+		reportedByUserId: setup.bravoMembers[0].id,
+		reportedCount: reportedCount + 1,
+	});
 };
 
 describe("insert", () => {
@@ -389,6 +417,56 @@ describe("finalizeMatch", () => {
 			nominatedUserIds: [setup.alphaMembers[0].id],
 		});
 
+		const confirmation = await playOutMatch(setup);
+		expect(confirmation.status).toBe("MATCH_FINALIZED");
+
+		expect(await fetchCancelReports(setup.match.id)).toHaveLength(0);
+	});
+
+	test("attributes the match to the season it was created in, not the one it is reported in", async () => {
+		const reportingSeason = Seasons.currentOrPrevious()!;
+		const matchSeason = Seasons.previous(reportingSeason.starts)!;
+
+		const setup = await setupMatch({
+			createdAt: sub(matchSeason.ends, { hours: 1 }),
+		});
+
+		const confirmation = await playOutMatch(setup);
+		expect(confirmation.status).toBe("MATCH_FINALIZED");
+
+		const skills = await fetchSkills(setup.match.id);
+		expect(skills).not.toHaveLength(0);
+		expect(skills.map((skill) => skill.season)).toEqual(
+			skills.map(() => matchSeason.nth),
+		);
+
+		const mapResults = await db
+			.selectFrom("MapResult")
+			.selectAll()
+			.where("userId", "=", setup.alphaMembers[0].id)
+			.execute();
+		expect(mapResults).not.toHaveLength(0);
+		expect(mapResults.map((result) => result.season)).toEqual(
+			mapResults.map(() => matchSeason.nth),
+		);
+
+		const playerResults = await db
+			.selectFrom("PlayerResult")
+			.selectAll()
+			.where("ownerUserId", "=", setup.alphaMembers[0].id)
+			.execute();
+		expect(playerResults).not.toHaveLength(0);
+		expect(playerResults.map((result) => result.season)).toEqual(
+			playerResults.map(() => matchSeason.nth),
+		);
+	});
+
+	// Demonstrates a bug: reportMapWinner checks the match lock on a snapshot read
+	// outside the finalizing transaction, so two teammates confirming the score at
+	// the same time both finalize. Rating/stat changes get applied twice.
+	test("concurrent score confirmations finalize the match only once", async () => {
+		const setup = await setupMatch();
+
 		let reportedCount = 0;
 		let result = await SQMatchRepository.reportMapWinner({
 			matchId: setup.match.id,
@@ -407,15 +485,32 @@ describe("finalizeMatch", () => {
 		}
 		expect(result.status).toBe("MATCH_REPORTED");
 
-		const confirmation = await SQMatchRepository.reportMapWinner({
-			matchId: setup.match.id,
-			winnerId: setup.alphaGroupId,
-			reportedByUserId: setup.bravoMembers[0].id,
-			reportedCount: reportedCount + 1,
-		});
-		expect(confirmation.status).toBe("MATCH_FINALIZED");
+		const skillsBeforeConfirm = await fetchSkills(setup.match.id);
 
-		expect(await fetchCancelReports(setup.match.id)).toHaveLength(0);
+		const [first, second] = await Promise.all([
+			SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.bravoMembers[0].id,
+				reportedCount: reportedCount + 1,
+			}),
+			SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.bravoMembers[1].id,
+				reportedCount: reportedCount + 1,
+			}),
+		]);
+
+		const finalizedCount = [first, second].filter(
+			(r) => r.status === "MATCH_FINALIZED",
+		).length;
+		expect(finalizedCount).toBe(1);
+
+		const skillsAfterConfirm = await fetchSkills(setup.match.id);
+		const skillsFromThisFinalization =
+			skillsAfterConfirm.length - skillsBeforeConfirm.length;
+		expect(skillsFromThisFinalization).toBe(FULL_GROUP_SIZE * 2 + 2);
 	});
 });
 

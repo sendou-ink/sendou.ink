@@ -11,7 +11,10 @@ import {
 	NotificationsList,
 } from "../components/NotificationList";
 import { loader } from "../loaders/notifications.server";
-import { useMarkNotificationsAsSeen } from "../notifications-hooks";
+import {
+	useMarkNotificationsAsSeen,
+	useStickyUnseenIds,
+} from "../notifications-hooks";
 
 export { loader };
 
@@ -27,36 +30,7 @@ export const meta: MetaFunction = (args) => {
 export default function NotificationsPage() {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
-	const [unseenIds, setUnseenIds] = React.useState(
-		() =>
-			new Set(
-				data.notifications
-					.filter((notification) => !notification.seen)
-					.map((notification) => notification.id),
-			),
-	);
-	const [prevNotifications, setPrevNotifications] = React.useState(
-		data.notifications,
-	);
-
-	// persist unseen dots for the duration of the page being viewed
-	if (prevNotifications !== data.notifications) {
-		setPrevNotifications(data.notifications);
-		setUnseenIds((prevUnseenIds) => {
-			const newUnseenIds = new Set(prevUnseenIds);
-
-			for (const notification of data.notifications) {
-				if (!notification.seen) {
-					newUnseenIds.add(notification.id);
-				}
-			}
-
-			// optimize render by not updating state if nothing changed
-			if (newUnseenIds.size === prevUnseenIds.size) return prevUnseenIds;
-
-			return newUnseenIds;
-		});
-	}
+	const unseenIds = useStickyUnseenIds(data.notifications);
 
 	const unSeenIdsArr = React.useMemo(() => Array.from(unseenIds), [unseenIds]);
 

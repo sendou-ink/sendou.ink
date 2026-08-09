@@ -12,10 +12,11 @@
 	min-height: 200px;
 }
 
-.topContainer {
+.header {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
+	font-size: var(--font-sm);
+	gap: var(--s-2);
 	padding: var(--s-1) var(--s-2);
 
 	& svg {
@@ -24,13 +25,6 @@
 		max-width: 18px;
 		max-height: 18px;
 	}
-}
-
-.header {
-	display: flex;
-	align-items: center;
-	font-size: var(--font-sm);
-	gap: var(--s-2);
 }
 
 .noNotifications {

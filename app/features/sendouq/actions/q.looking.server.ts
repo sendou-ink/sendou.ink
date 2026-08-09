@@ -2,6 +2,7 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
@@ -166,6 +167,8 @@ export const action: ActionFunction = async ({ request }) => {
 				break;
 			}
 			case "MATCH_UP": {
+				errorToastIfFalsy(Seasons.current(), "Season is not active");
+
 				const ownGroup = SendouQ.findOwnGroup(user.id);
 				const theirGroup = SendouQ.findUncensoredGroupById(data.targetGroupId);
 				if (!ownGroup || !theirGroup) return null;

@@ -5,6 +5,7 @@ import {
 	requireUser,
 } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { clearTrophiesCache } from "~/features/trophies/loaders/trophies.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
@@ -121,6 +122,8 @@ export const action: ActionFunction = async ({ request }) => {
 			errorToastIfFalsy(isOwner || canReview, "Not allowed");
 
 			await TrophyRepository.deletePending(data.pendingTrophyId);
+
+			await resolveSubmittedNotification(pending.name);
 			return null;
 		}
 		case "DECLINE": {
@@ -152,6 +155,8 @@ export const action: ActionFunction = async ({ request }) => {
 					},
 				});
 			}
+
+			await resolveSubmittedNotification(pending.name);
 
 			return null;
 		}
@@ -190,6 +195,15 @@ export const action: ActionFunction = async ({ request }) => {
 						},
 					});
 				}
+
+				await resolveSubmittedNotification(pending.name);
+			} else {
+				// still needs approvals from the other reviewers
+				await resolveNotifications({
+					userIds: [user.id],
+					type: "TROPHY_SUBMITTED",
+					meta: { trophyName: pending.name },
+				});
 			}
 
 			return null;
@@ -199,6 +213,14 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 	}
 };
+
+function resolveSubmittedNotification(trophyName: string) {
+	return resolveNotifications({
+		userIds: [ADMIN_ID, ...QA_IDS],
+		type: "TROPHY_SUBMITTED",
+		meta: { trophyName },
+	});
+}
 
 async function notifyReviewersOfSubmission({
 	trophyName,

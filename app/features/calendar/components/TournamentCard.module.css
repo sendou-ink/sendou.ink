@@ -81,7 +81,7 @@
 	max-width: 165px;
 }
 
-.teamCount {
+.participantsPill {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	background-color: var(--color-bg-higher);
@@ -92,11 +92,17 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
+	white-space: nowrap;
 
 	& svg {
 		width: var(--tournament-card-icon-size);
 		height: var(--tournament-card-icon-size);
 	}
+}
+
+.participantsTeamsCount {
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
 }
 
 .modesPillContainer {

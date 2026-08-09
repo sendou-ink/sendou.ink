@@ -1,6 +1,5 @@
-import { add, startOfYear } from "date-fns";
+import { startOfYear } from "date-fns";
 import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
@@ -11,12 +10,17 @@ import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	matchProfileWeapons,
 	skillCountsAsSeasonSet,
 	tournamentLogoWithDefault,
@@ -393,7 +397,7 @@ export async function findSeasonCanceledMatchesByUserId({
 	userId: number;
 	season: number;
 }) {
-	const { starts, ends } = Seasons.nthToDateRange(season);
+	const { starts, ends } = Seasons.nthToReportingDateRange(season);
 
 	return db
 		.selectFrom("GroupMember")
@@ -449,11 +453,7 @@ export async function findSeasonCanceledMatchesByUserId({
 		])
 		.where("GroupMember.userId", "=", userId)
 		.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(starts))
-		.where(
-			"GroupMatch.createdAt",
-			"<=",
-			dateToDatabaseTimestamp(add(ends, { days: 1 })),
-		)
+		.where("GroupMatch.createdAt", "<=", dateToDatabaseTimestamp(ends))
 		.orderBy("GroupMatch.createdAt", "desc")
 		.execute();
 }
@@ -494,7 +494,7 @@ export async function findCancelNominationCountsByUserIds({
 	userIds: number[];
 	season: number;
 }) {
-	const seasonRange = Seasons.nthToDateRange(season);
+	const seasonRange = Seasons.nthToReportingDateRange(season);
 	const yearStarts = startOfYear(new Date());
 	const from = new Date(
 		Math.min(seasonRange.starts.getTime(), yearStarts.getTime()),
@@ -539,8 +539,7 @@ export async function findCancelNominationCountsByUserIds({
 			seasonCount: userMatches.filter(
 				(row) =>
 					row.createdAt >= dateToDatabaseTimestamp(seasonRange.starts) &&
-					row.createdAt <=
-						dateToDatabaseTimestamp(add(seasonRange.ends, { days: 1 })),
+					row.createdAt <= dateToDatabaseTimestamp(seasonRange.ends),
 			).length,
 			yearCount: userMatches.filter(
 				(row) => row.createdAt >= dateToDatabaseTimestamp(yearStarts),
@@ -1181,7 +1180,7 @@ async function handleMatchConfirmation({
 		.filter((m) => m.winnerGroupId !== null)
 		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
 
-	await finalizeMatch({
+	const finalized = await finalizeMatch({
 		match,
 		members,
 		winners,
@@ -1191,6 +1190,10 @@ async function handleMatchConfirmation({
 		preFinalize: (trx) =>
 			SQGroupRepository.setAsInactive(groupToDeactivate, trx),
 	});
+
+	if (!finalized) {
+		return { status: "ALREADY_LOCKED" };
+	}
 
 	return { status: "MATCH_FINALIZED" };
 }
@@ -1227,7 +1230,7 @@ async function handleStaffFinalization({
 		winnerId === match.groupAlpha.id ? "ALPHA" : "BRAVO",
 	];
 
-	await finalizeMatch({
+	const finalized = await finalizeMatch({
 		match,
 		members,
 		winners,
@@ -1249,6 +1252,10 @@ async function handleStaffFinalization({
 		},
 	});
 
+	if (!finalized) {
+		return { status: "ALREADY_LOCKED" };
+	}
+
 	return { status: "MATCH_FINALIZED" };
 }
 
@@ -1269,8 +1276,16 @@ async function finalizeMatch({
 	confirmedByUserId: number | null;
 	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
 }) {
+	// the match belongs to the season it was created in, not to whichever season
+	// is open when it happens to be reported (up to 25h later, see Seasons)
+	const season = Seasons.currentOrPrevious(
+		databaseTimestampToDate(match.createdAt),
+	)?.nth;
+	invariant(typeof season === "number", `No season for match ${match.id}`);
+
 	const { newSkills, differences } = await calculateMatchSkills({
 		groupMatchId: match.id,
+		season,
 		winner: (match.groupAlpha.id === winnerGroupId
 			? match.groupAlpha
 			: match.groupBravo
@@ -1283,7 +1298,10 @@ async function finalizeMatch({
 		loserGroupId,
 	});
 
-	await db.transaction().execute(async (trx) => {
+	return db.transaction().execute(async (trx) => {
+		const { isLocked, confirmedAt } = await findLockState(match.id, trx);
+		if (isLocked || confirmedAt) return false;
+
 		if (preFinalize) await preFinalize(trx);
 		await trx
 			.updateTable("GroupMatch")
@@ -1300,11 +1318,11 @@ async function finalizeMatch({
 			.where("groupMatchId", "=", match.id)
 			.execute();
 		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match, members, winners }),
+			summarizeMaps({ match, season, members, winners }),
 			trx,
 		);
 		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match, members, winners }),
+			summarizePlayerResults({ match, season, members, winners }),
 			trx,
 		);
 		await MatchSkillRepository.insertMatchSkills(
@@ -1316,7 +1334,25 @@ async function finalizeMatch({
 			},
 			trx,
 		);
+
+		return true;
 	});
+}
+
+/** Lock state read inside the finalizing transaction so concurrent confirmations can't both finalize. */
+function findLockState(matchId: number, trx: Transaction<DB>) {
+	return trx
+		.selectFrom("GroupMatch")
+		.select(({ exists, selectFrom }) => [
+			"GroupMatch.confirmedAt",
+			exists(
+				selectFrom("Skill")
+					.select("Skill.id")
+					.where("Skill.groupMatchId", "=", matchId),
+			).as("isLocked"),
+		])
+		.where("GroupMatch.id", "=", matchId)
+		.executeTakeFirstOrThrow();
 }
 
 /** Matches created before the given cutoff whose score was never confirmed and that no cancellation has locked. */
@@ -1388,7 +1424,7 @@ export async function resolveUnfinishedMatch(
 		.filter((m) => m.winnerGroupId !== null)
 		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
 
-	await finalizeMatch({
+	const finalized = await finalizeMatch({
 		match,
 		members: buildMembers(match),
 		winners,
@@ -1400,6 +1436,10 @@ export async function resolveUnfinishedMatch(
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
 		},
 	});
+
+	if (!finalized) {
+		return { status: "ALREADY_LOCKED" };
+	}
 
 	return { status: "CONFIRMED" };
 }

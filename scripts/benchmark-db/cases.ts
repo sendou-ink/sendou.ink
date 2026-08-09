@@ -397,6 +397,19 @@ export function buildCases(fx: Fixtures): {
 		fx.plusSuggestionMonthYear,
 		(monthYear) => PlusSuggestionRepository.findAllByMonth(monthYear),
 	);
+	add(
+		"PlusSuggestionRepository.findAllByMonth (one tier)",
+		fx.plusSuggestionMonthYear,
+		(monthYear) =>
+			PlusSuggestionRepository.findAllByMonth({ ...monthYear, tier: 3 }),
+	);
+	add(
+		"PlusSuggestionRepository.findMonthSummary",
+		fx.plusSuggestionMonthYear && fx.heavyUser
+			? { ...fx.plusSuggestionMonthYear, userId: fx.heavyUser.id }
+			: null,
+		(args) => PlusSuggestionRepository.findMonthSummary(args),
+	);
 
 	// PlusVotingRepository
 	addStatic("PlusVotingRepository.findAllPlusTiersFromLatestVoting", () =>
@@ -1075,6 +1088,11 @@ export function buildCases(fx: Fixtures): {
 		TournamentRepository.findAllForShowcase(),
 	);
 	add(
+		"TournamentRepository.findShowcaseCountsById",
+		fx.heavyTournamentId,
+		(tournamentId) => TournamentRepository.findShowcaseCountsById(tournamentId),
+	);
+	add(
 		"TournamentRepository.findAllBetweenTwoTimestamps",
 		fx.calendarWindow,
 		(window) => TournamentRepository.findAllBetweenTwoTimestamps(window),
@@ -1153,8 +1171,14 @@ export function buildCases(fx: Fixtures): {
 			includeHiddenStats: true,
 		}),
 	);
+	add("UserCardRepository.findAllByUserIdsCached", fx.manyUserIds, (userIds) =>
+		UserCardRepository.findAllByUserIdsCached({ userIds }),
+	);
 	add("UserCardRepository.findCardEditExtrasByUserId", fx.heavyUser, (user) =>
 		UserCardRepository.findCardEditExtrasByUserId(user.id),
+	);
+	add("UserCardRepository.findVerifiedXpByUserId", fx.heavyUser, (user) =>
+		UserCardRepository.findVerifiedXpByUserId(user.id, null),
 	);
 
 	// UserRepository

@@ -1,6 +1,7 @@
 import * as fs from "node:fs/promises";
 import { addMinutes, subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import type { TournamentMapPickingStyle } from "~/features/tournament/tournament-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, test } from "./helpers/playwright";
@@ -19,6 +20,8 @@ import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
 
 const ROSTER_SIZE = 4;
 const CAPTAIN_DISCORD_ID = "1234567890123456789";
+/** Stage above the ones the counterpick picking helper uses, so swapping to it is always a change. */
+const REPLACEMENT_STAGE_ID = 17;
 
 test.describe("Tournament admin team management", () => {
 	test("edits a registration, checks a team in and out, unregisters it and records it in the audit log", async ({
@@ -136,6 +139,71 @@ test.describe("Tournament admin team management", () => {
 		await expect(registration.locators.teamNameInput).toHaveValue(
 			"Imported Legends",
 		);
+	});
+
+	test("sets the counterpick map pool of a team that has none, rejects an incomplete edit to it and then edits it", async ({
+		page,
+		factories,
+	}) => {
+		// teams pre-pick their maps, so the registration form has a map pool to edit
+		const tournament = await createTournament(factories, {
+			mapPickingStyle: "AUTO_ALL",
+		});
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		const team = await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam("Poolless Pandas"),
+			memberUserIds: roster.map((user) => user.id),
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const registration = new TournamentAdminRegistrationPage(page);
+		await registration.gotoEdit(tournament.id, team.id);
+		await expect(registration.locators.editHeading).toBeVisible();
+
+		const picked = await registration.pickCounterpickMaps();
+		await registration.save();
+
+		const admin = new TournamentAdminPage(page);
+		await expect(admin.locators.searchInput).toBeVisible();
+
+		const teamPage = new TournamentTeamPage(page);
+		await teamPage.goto(tournament.id, team.id);
+		for (const { mode, stageId } of picked) {
+			await expect(teamPage.mapPoolStage(mode, stageId)).toBeVisible();
+		}
+
+		// a pool left incomplete is rejected instead of overwriting the saved one
+		const [replaced] = picked;
+		await registration.gotoEdit(tournament.id, team.id);
+		await expect(
+			registration.pickedCounterpickMap(replaced.mode, replaced.stageId),
+		).toBeVisible();
+		await registration.unpickCounterpickMap(replaced.mode, replaced.stageId);
+		await registration.save();
+		await expect(registration.locators.invalidMapPoolError).toBeVisible();
+
+		await teamPage.goto(tournament.id, team.id);
+		await expect(
+			teamPage.mapPoolStage(replaced.mode, replaced.stageId),
+		).toBeVisible();
+
+		// swapping one of the picked maps for another is reflected on the team page
+		await registration.gotoEdit(tournament.id, team.id);
+		await registration.unpickCounterpickMap(replaced.mode, replaced.stageId);
+		await registration.pickCounterpickMap(replaced.mode, REPLACEMENT_STAGE_ID);
+		await registration.save();
+
+		await expect(admin.locators.searchInput).toBeVisible();
+
+		await teamPage.goto(tournament.id, team.id);
+		await expect(
+			teamPage.mapPoolStage(replaced.mode, REPLACEMENT_STAGE_ID),
+		).toBeVisible();
+		await expect(
+			teamPage.mapPoolStage(replaced.mode, replaced.stageId),
+		).toHaveCount(0);
 	});
 
 	test("exports the team list", async ({ page, factories }) => {
@@ -325,7 +393,11 @@ async function createTournament(
 	factories: Factories,
 	{
 		establishedOrganization = false,
-	}: { establishedOrganization?: boolean } = {},
+		mapPickingStyle,
+	}: {
+		establishedOrganization?: boolean;
+		mapPickingStyle?: TournamentMapPickingStyle;
+	} = {},
 ) {
 	const organization = establishedOrganization
 		? await factories.TournamentOrganizationFactory.create(
@@ -338,6 +410,8 @@ async function createTournament(
 		authorId: NZAP_TEST_ID,
 		organizationId: organization?.id ?? null,
 		startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		// spread so the factory's own default is not overwritten with undefined
+		...(mapPickingStyle ? { mapPickingStyle } : {}),
 	});
 }
 

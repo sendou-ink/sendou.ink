@@ -211,8 +211,11 @@ export const soundPath = (fileName: string) =>
 export const GET_FRIENDS_FOR_ADDING_ROUTE = "/friends-for-adding";
 export const PATRONS_LIST_ROUTE = "/patrons-list";
 
+export const LAYOUT_DATA_ROUTE = "/api/layout";
 export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
+export const NOTIFICATIONS_SUBSCRIBE_ROUTE = "/notifications/subscribe";
+export const NOTIFICATIONS_DATA_ROUTE = "/api/notifications";
 
 export const userCardFriendshipPage = (userId: number) =>
 	`/user-card/${userId}/friendship`;
@@ -357,6 +360,9 @@ export const authErrorUrl = (errorCode: AuthErrorCode) =>
 export const impersonateUrl = (idToLogInAs: number) =>
 	`/auth/impersonate?id=${idToLogInAs}`;
 export const badgePage = (badgeId: number) => `${BADGES_PAGE}/${badgeId}`;
+/** The suggestions page loads one tier at a time, so its links carry the tier. */
+const tierParam = (tier?: string | number) =>
+	tier ? { tier: String(tier) as PlusTierParam } : {};
 export const plusSuggestionPage = ({
 	tier,
 	showAlert,
@@ -365,13 +371,22 @@ export const plusSuggestionPage = ({
 	showAlert?: boolean;
 } = {}) =>
 	plusSuggestionsSearchParams.href("/plus/suggestions", {
-		tier: tier ? (String(tier) as PlusTierParam) : null,
+		...tierParam(tier),
 		alert: Boolean(showAlert),
 	});
 export const plusSuggestionsNewPage = (tier?: string | number) =>
-	plusSuggestionsSearchParams.href("/plus/suggestions/new", {
-		tier: tier ? (String(tier) as PlusTierParam) : null,
-	});
+	plusSuggestionsSearchParams.href("/plus/suggestions/new", tierParam(tier));
+export const plusSuggestionCommentPage = ({
+	tier,
+	userId,
+}: {
+	tier: string | number;
+	userId: number;
+}) =>
+	plusSuggestionsSearchParams.href(
+		`/plus/suggestions/comment/${tier}/${userId}`,
+		tierParam(tier),
+	);
 
 export const weaponBuildPage = (weaponSlug: string) =>
 	`${BUILDS_PAGE}/${weaponSlug}`;

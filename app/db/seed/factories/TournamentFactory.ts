@@ -44,7 +44,7 @@ const ROUND_MAPS = {
 } satisfies RoundMaps;
 
 /** The maps every round of a factory-started bracket is played on. */
-type RoundMaps = Omit<Engine.RoundMapsInput, "roundId">;
+export type RoundMaps = Omit<Engine.RoundMapsInput, "roundId">;
 
 /** The wrapping calendar event is not the caller's to choose, so it is not an argument. */
 type InsertArgs = Omit<

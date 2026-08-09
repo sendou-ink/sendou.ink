@@ -614,6 +614,106 @@ describe("round robin standings - dropped out teams", () => {
 
 		expect(standings.map((s) => s.team.id)).toContain(4);
 	});
+
+	// 5 teams and 2 groups produce a 3-team group and a 2-team group. The
+	// only opponent of the 2-team group's other team drops out before playing,
+	// so the surviving team has no non-forfeited matches at all.
+	const twoTeamGroupDropoutTournament = () => {
+		let data = createResolved({
+			type: "round_robin",
+			seeding: [1, 2, 3, 4, 5],
+			settings: {
+				groupCount: 2,
+			},
+		});
+
+		const matchCountByGroupId = new Map<number, number>();
+		for (const match of data.match) {
+			matchCountByGroupId.set(
+				match.groupId,
+				(matchCountByGroupId.get(match.groupId) ?? 0) + 1,
+			);
+		}
+		const twoTeamGroupId = [...matchCountByGroupId.entries()].find(
+			([, count]) => count === 1,
+		)?.[0];
+		invariant(
+			typeof twoTeamGroupId === "number",
+			"no 2-team group in the fixture",
+		);
+
+		let droppedOutTeamId: number | null = null;
+		let survivingTeamId: number | null = null;
+
+		for (const match of data.match) {
+			const opponent1Id = match.opponent1!.id as number;
+			const opponent2Id = match.opponent2!.id as number;
+
+			if (match.groupId === twoTeamGroupId) {
+				// the higher seed no-showed and was dropped by the TO;
+				// endDroppedTeamMatches closes the match with a winner but no score
+				droppedOutTeamId = Math.max(opponent1Id, opponent2Id);
+				survivingTeamId = Math.min(opponent1Id, opponent2Id);
+				data = Engine.reportResult(data, {
+					matchId: match.id,
+					winnerSide:
+						match.opponent1?.id === survivingTeamId ? "opponent1" : "opponent2",
+				}).data;
+				continue;
+			}
+
+			const winnerIsOpp1 = opponent1Id < opponent2Id;
+			data = Engine.reportResult(data, {
+				matchId: match.id,
+				scores: winnerIsOpp1 ? [2, 0] : [0, 2],
+				winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+			}).data;
+		}
+
+		invariant(droppedOutTeamId !== null && survivingTeamId !== null);
+
+		return {
+			tournament: testTournament({
+				ctx: {
+					settings: {
+						bracketProgression: [
+							{
+								type: "round_robin",
+								name: "RR",
+								requiresCheckIn: false,
+								settings: {},
+							},
+						],
+					},
+					teams: [1, 2, 3, 4, 5].map((teamId) =>
+						tournamentCtxTeam(teamId, {
+							seed: teamId,
+							droppedOut: teamId === droppedOutTeamId ? 1 : 0,
+						}),
+					),
+				},
+				data,
+			}),
+			survivingTeamId,
+		};
+	};
+
+	it("includes a team whose every group opponent dropped out in standings", () => {
+		const { tournament, survivingTeamId } = twoTeamGroupDropoutTournament();
+		const standings = tournament.bracketByIdx(0)!.standings;
+
+		expect(standings.map((s) => s.team.id)).toContain(survivingTeamId);
+	});
+
+	it("reports relevantMatchesFinished=true when a 2-team group ended via drop out", () => {
+		const { tournament } = twoTeamGroupDropoutTournament();
+
+		const { relevantMatchesFinished } = tournament
+			.bracketByIdx(0)!
+			.source({ placements: [1] });
+
+		expect(relevantMatchesFinished).toBe(true);
+	});
 });
 
 describe("round robin A/B divisions standings", () => {

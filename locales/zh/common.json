@@ -384,6 +384,8 @@
 	"settings.notifications.disableInfo": "如需关闭推送通知，请检查您的浏览器设置",
 	"settings.notifications.browserNotSupported": "当前浏览器不支持推送通知",
 	"settings.notifications.permissionDenied": "推送通知权限已被拒绝。请检查您的浏览器设置以重新启用",
+	"settings.notifications.subscribeFailed": "",
+	"settings.notifications.resubscribeNeeded": "",
 	"settings.clockFormat": "时间格式",
 	"settings.theme": "主题",
 	"settings.themeInfo": "这也会同时设置其他用户看到你的个人主页时的颜色",

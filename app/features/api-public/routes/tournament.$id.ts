@@ -1,8 +1,8 @@
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { databaseTimestampToDate } from "~/utils/dates";
+import { jsonArrayFrom } from "~/utils/kysely.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentResponse } from "../schema";

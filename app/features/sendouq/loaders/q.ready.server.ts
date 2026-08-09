@@ -1,18 +1,18 @@
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import * as ReadyCheck from "../core/ready-check.server";
-import { SendouQ } from "../core/SendouQ.server";
-import { sqRedirectIfNeeded } from "../q-utils.server";
+import { SendouQ, sqRedirectIfNeeded } from "../core/SendouQ.server";
 
 export const loader = async () => {
 	const user = requireUser();
 
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 
-	sqRedirectIfNeeded({
+	await sqRedirectIfNeeded({
 		ownGroup,
 		currentLocation: "ready",
 	});
@@ -33,6 +33,9 @@ export const loader = async () => {
 	);
 
 	return {
+		...(await UserCardRepository.findAllByUserIdsCached({
+			userIds: ownGroup!.members.map((member) => member.id),
+		})),
 		group: ownGroup!,
 		expiresAt: dateToDatabaseTimestamp(ReadyCheck.expiresAt(readyCheck)),
 		readyUserIds: readyCheck.members

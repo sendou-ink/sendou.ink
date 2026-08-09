@@ -22,6 +22,8 @@ interface ParamOptionsBase {
 	resets?: string[];
 	/** The param's canonical encoding is the compressed form. Only for params whose values are inherently large. */
 	compress?: boolean;
+	/** The value schema reads the clock, so its decode results must never be cached. */
+	timeDependent?: boolean;
 }
 
 type DefaultOption<T> = {
@@ -46,6 +48,7 @@ export interface ParamDef<T> {
 	loader: boolean;
 	resets: string[];
 	compress: boolean;
+	timeDependent: boolean;
 	decodeValues: (values: string[]) => T;
 	encodePlain: (value: T) => string[];
 	decodeCache: Map<string, T>;
@@ -154,9 +157,12 @@ export function define<Shape extends AnyShape>(
 /**
  * Decodes one param from its raw URL values, resolving to the default when the
  * param is missing or malformed. Uses a per-param cache keyed on the raw values
- * so repeated decodes of the same string return the same reference.
+ * so repeated decodes of the same string return the same reference. Params
+ * declared `timeDependent` skip the cache and decode fresh every time.
  */
 export function decodeParam<T>(def: ParamDef<T>, values: string[]): T {
+	if (def.timeDependent) return def.decodeValues(values);
+
 	const cacheKey = JSON.stringify(values);
 	if (def.decodeCache.has(cacheKey)) {
 		return def.decodeCache.get(cacheKey) as T;
@@ -384,13 +390,14 @@ function baseDef<T>(
 	opts: ResolvedParamOptions<T>,
 ): Pick<
 	ParamDef<T>,
-	"default" | "loader" | "resets" | "compress" | "decodeCache"
+	"default" | "loader" | "resets" | "compress" | "timeDependent" | "decodeCache"
 > {
 	return {
 		default: opts.default,
 		loader: opts.loader,
 		resets: opts.resets ?? [],
 		compress: opts.compress ?? false,
+		timeDependent: opts.timeDependent ?? false,
 		decodeCache: new Map(),
 	};
 }

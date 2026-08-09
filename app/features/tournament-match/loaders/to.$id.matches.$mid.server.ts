@@ -143,6 +143,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 							match.mapPickingStyle !== "TO"
 								? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
 										teamIds: [match.opponentOne.id, match.opponentTwo.id],
+										excludeMatchId: matchId,
 									}).catch((error) => {
 										logger.error("Failed to fetch recently played maps", error);
 										return [];

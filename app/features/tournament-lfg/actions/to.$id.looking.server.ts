@@ -1,6 +1,8 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
 import {
 	clearTournamentDataCache,
@@ -194,6 +196,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				maxGroupSize: tournament.maxMembersPerTeam,
 			});
 
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
 			if (mergeResult.removedChatCode) {
 				ChatSystemMessage.removeRoom(mergeResult.removedChatCode);
 			}
@@ -221,6 +225,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					},
 					pictureUrl: tournament.ctx.logoUrl,
 				},
+			});
+
+			await resolveNotifications({
+				userIds: ownGroup.members.map((m) => m.id),
+				type: "TO_LIKE_RECEIVED",
+				meta: { tournamentId },
 			});
 
 			break;

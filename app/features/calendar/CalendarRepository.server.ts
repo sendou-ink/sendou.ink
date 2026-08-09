@@ -6,7 +6,6 @@ import type {
 	Transaction,
 } from "kysely";
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
@@ -24,7 +23,11 @@ import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentLogoWithDefault,
+	tournamentMembersCount,
+	tournamentTeamsCount,
 } from "~/utils/kysely.server";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
@@ -137,30 +140,6 @@ const withOrganization = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
 			),
 	);
 
-const withTeamsCount = (
-	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
-) =>
-	eb
-		.selectFrom("TournamentTeam")
-		.leftJoin("TournamentTeamCheckIn", (join) =>
-			join
-				.on("TournamentTeamCheckIn.bracketIdx", "is", null)
-				.onRef(
-					"TournamentTeamCheckIn.tournamentTeamId",
-					"=",
-					"TournamentTeam.id",
-				),
-		)
-		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-		.where("TournamentTeam.isPlaceholder", "=", 0)
-		.where((eb) =>
-			eb.or([
-				eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-				eb("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
-			]),
-		)
-		.select(({ fn }) => [fn.countAll<number>().as("teamsCount")]);
-
 function findAllBetweenTwoTimestampsQuery({
 	startTime,
 	endTime,
@@ -189,7 +168,8 @@ function findAllBetweenTwoTimestampsQuery({
 				"normalizedStartsAt",
 			),
 			withOrganization(eb).as("organization"),
-			withTeamsCount(eb).as("teamsCount"),
+			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb
@@ -223,7 +203,7 @@ function findAllBetweenTwoTimestampsQuery({
 			dateToDatabaseTimestamp(startTime),
 		)
 		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
-		.$narrowType<{ teamsCount: NotNull }>()
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
 		.execute();
 }
 
@@ -259,6 +239,8 @@ function findAllBetweenTwoTimestampsMapped(
 				authorId: row.authorId,
 				tags: tags.filter((tag) => !EXCLUDED_TAGS.includes(tag)),
 				teamsCount: row.teamsCount,
+				membersCount: row.membersCount,
+				minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,
 				normalizedTeamCount: normalizedTeamCount({
 					teamsCount: row.teamsCount,
 					minMembersPerTeam: row.tournamentSettings?.minMembersPerTeam ?? 4,

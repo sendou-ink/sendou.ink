@@ -3,10 +3,20 @@ import {
 	type ColumnType,
 	type Expression,
 	type ExpressionBuilder,
+	type RawBuilder,
 	sql,
 } from "kysely";
-import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
+import type {
+	jsonArrayFrom as sqliteJsonArrayFrom,
+	jsonBuildObject as sqliteJsonBuildObject,
+	jsonObjectFrom as sqliteJsonObjectFrom,
+} from "kysely/helpers/sqlite";
 import { Config } from "~/config";
+import {
+	jsonValuedNode,
+	jsonValuedSelection,
+	selectionOutputName,
+} from "~/db/json-selections";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { IS_E2E_TEST_RUN } from "./e2e";
@@ -279,6 +289,89 @@ export function tournamentTeamCount(
 		.where("TournamentTeam.isPlaceholder", "=", 0);
 }
 
+/** Expression resolving to whether any of a tournament's brackets has been started. */
+function tournamentHasStarted(eb: ExpressionBuilder<DB, "Tournament">) {
+	return eb.exists(
+		eb
+			.selectFrom("TournamentStage")
+			.select("TournamentStage.id")
+			.whereRef("TournamentStage.tournamentId", "=", "Tournament.id"),
+	);
+}
+
+/**
+ * Subquery resolving to the non-placeholder teams of a tournament that are still relevant to it:
+ * every registered team as long as no bracket has been started, only the checked in ones after
+ * that. Mirrors how the tournament page itself resolves its teams, so keep the two in sync.
+ * Correlates on `"Tournament"."id"`. Has no select of its own, so extend it with the aggregate the
+ * caller needs. A team can have several check in rows, so aggregate with `.distinct()`, e.g.
+ * `.select(({ fn }) => fn.count("TournamentTeam.id").distinct().as("count"))`.
+ */
+function tournamentCheckedInTeams(eb: ExpressionBuilder<DB, "Tournament">) {
+	return eb
+		.selectFrom("TournamentTeam")
+		.leftJoin(
+			"TournamentTeamCheckIn",
+			"TournamentTeamCheckIn.tournamentTeamId",
+			"TournamentTeam.id",
+		)
+		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where((eb2) =>
+			eb2.or([
+				eb2("TournamentTeamCheckIn.checkedInAt", "is not", null),
+				eb2.not(tournamentHasStarted(eb)),
+			]),
+		);
+}
+
+/**
+ * Subquery counting the teams of {@link tournamentCheckedInTeams}. Correlates on
+ * `"Tournament"."id"`. Alias it `.as("teamsCount")` when selecting it directly.
+ */
+export function tournamentTeamsCount(eb: ExpressionBuilder<DB, "Tournament">) {
+	return tournamentCheckedInTeams(eb).select(({ fn }) => [
+		fn.count<number>("TournamentTeam.id").distinct().as("count"),
+	]);
+}
+
+/**
+ * Expression resolving to a tournament's participant count: rostered players of the teams from
+ * {@link tournamentCheckedInTeams} while the tournament is still ongoing, players who actually got
+ * a result once it has been finalized. Correlates on `"Tournament"."id"`. Alias it
+ * `.as("membersCount")` when selecting it directly.
+ */
+export function tournamentMembersCount(
+	eb: ExpressionBuilder<DB, "Tournament">,
+) {
+	return eb
+		.case()
+		.when("Tournament.isFinalized", "=", 1)
+		.then(
+			eb
+				.selectFrom("TournamentResult")
+				.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
+				.select(({ fn }) => [
+					fn.count<number>("TournamentResult.userId").distinct().as("count"),
+				]),
+		)
+		.else(
+			tournamentCheckedInTeams(eb)
+				.innerJoin(
+					"TournamentTeamMember",
+					"TournamentTeamMember.tournamentTeamId",
+					"TournamentTeam.id",
+				)
+				.select(({ fn }) => [
+					fn
+						.count<number>("TournamentTeamMember.userId")
+						.distinct()
+						.as("count"),
+				]),
+		)
+		.end();
+}
+
 /**
  * Grouped subquery picking each user's (`by: "userId"`) or team's (`by: "identifier"`) latest
  * Skill row of a season: `latestId` plus that row's `ordinal`, `matchesCount` and the `by`
@@ -405,4 +498,84 @@ export function tournamentUsername(alias = "User") {
 	return sql<string>`coalesce(${sql.ref(`${alias}.tournamentName`)}, ${sql.ref(
 		`${alias}.username`,
 	)})`;
+}
+
+type SelectQueryBuilderExpression<O> = Parameters<
+	typeof sqliteJsonArrayFrom<O>
+>[0];
+
+/**
+ * Drop-in replacement for kysely's sqlite `jsonArrayFrom`. Emits the same query, except
+ * JSON-valued selections (per {@link jsonValuedSelection}: JSON columns, nested json helpers) get
+ * `json(...)` applied at the `json_object` argument position. SQLite's JSON subtype never
+ * survives a subquery boundary, so without the re-tag such values would be embedded as
+ * strings; the dialect parses each result column exactly once and relies on documents
+ * arriving fully nested. Always use this over the kysely one.
+ */
+export function jsonArrayFrom<O>(
+	expr: SelectQueryBuilderExpression<O>,
+): ReturnType<typeof sqliteJsonArrayFrom<O>> {
+	return sql`(select coalesce(json_group_array(json_object(${sql.join(
+		jsonObjectArgs(expr, "agg"),
+	)})), '[]') from ${expr} as agg)` as ReturnType<
+		typeof sqliteJsonArrayFrom<O>
+	>;
+}
+
+/** Drop-in replacement for kysely's sqlite `jsonObjectFrom`, see {@link jsonArrayFrom}. */
+export function jsonObjectFrom<O>(
+	expr: SelectQueryBuilderExpression<O>,
+): ReturnType<typeof sqliteJsonObjectFrom<O>> {
+	return sql`(select json_object(${sql.join(
+		jsonObjectArgs(expr, "obj"),
+	)}) from ${expr} as obj)` as ReturnType<typeof sqliteJsonObjectFrom<O>>;
+}
+
+/** Drop-in replacement for kysely's sqlite `jsonBuildObject`, see {@link jsonArrayFrom}. */
+export function jsonBuildObject<O extends Record<string, Expression<unknown>>>(
+	obj: O,
+): ReturnType<typeof sqliteJsonBuildObject<O>> {
+	return sql`json_object(${sql.join(
+		Object.keys(obj).flatMap((key) => [
+			sql.lit(key),
+			jsonValuedNode(obj[key].toOperationNode())
+				? sql`json(${obj[key]})`
+				: obj[key],
+		]),
+	)})` as ReturnType<typeof sqliteJsonBuildObject<O>>;
+}
+
+/**
+ * Re-tags a JSON-valued expression with SQLite's `json()` so it stays a nested document
+ * (instead of an escaped string) inside {@link jsonBuildObject}/{@link jsonArrayFrom}.
+ * Only needed for expressions the helpers can not recognize as JSON on their own, e.g. a
+ * raw `IIF(...)` over a JSON column.
+ */
+export function asJson<T>(expr: Expression<T>): RawBuilder<T> {
+	return sql<T>`json(${expr})`;
+}
+
+function jsonObjectArgs(
+	expr: SelectQueryBuilderExpression<unknown>,
+	table: string,
+) {
+	const args: Expression<unknown>[] = [];
+
+	for (const { selection } of expr.toOperationNode().selections ?? []) {
+		const name = selectionOutputName(selection);
+		if (!name) {
+			throw new Error(
+				"jsonArrayFrom and jsonObjectFrom can only handle explicit selections. selectAll() is not allowed in the subquery.",
+			);
+		}
+
+		const ref = sql.ref(`${table}.${name}`);
+
+		args.push(
+			sql.lit(name),
+			jsonValuedSelection(selection) ? sql`json(${ref})` : ref,
+		);
+	}
+
+	return args;
 }

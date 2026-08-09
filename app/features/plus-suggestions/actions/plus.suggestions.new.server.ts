@@ -46,13 +46,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const votingMonthYear = rangeToMonthYear(
 		badRequestIfFalsy(nextNonCompletedVoting(new Date())),
 	);
-	const suggestions =
-		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
+	const summary = await PlusSuggestionRepository.findMonthSummary({
+		...votingMonthYear,
+		userId: user.id,
+	});
 
 	errorToastIfFalsy(
 		canSuggestNewUser({
 			user,
-			suggestions,
+			hasSuggestedThisMonth: summary.hasSuggested,
 		}),
 		"Can't make a suggestion right now",
 	);

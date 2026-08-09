@@ -319,6 +319,11 @@ export default [
 	route("/admin", "features/admin/routes/admin.tsx"),
 	route("/admin/streams", "features/admin/routes/admin.streams.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
+	route("/api/layout", "features/layout/routes/api.layout.ts"),
+	route(
+		"/api/notifications",
+		"features/notifications/routes/api.notifications.ts",
+	),
 	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [
@@ -350,6 +355,7 @@ export default [
 		),
 	]),
 
+	route("/end-season", "features/api-private/routes/end-season.ts"),
 	route("/patrons", "features/api-private/routes/patrons.ts"),
 	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/run-routine", "features/api-private/routes/run-routine.ts"),
