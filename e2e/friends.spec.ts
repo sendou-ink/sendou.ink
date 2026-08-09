@@ -1,6 +1,7 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { expect, impersonate, test } from "./helpers/playwright";
 import { FriendsPage } from "./pages/friends/friends-page";
+import { NotificationPopover } from "./pages/layout/notification-popover";
 
 test.describe("Friends", () => {
 	test("send friend request, accept it, then delete friend", async ({
@@ -17,8 +18,15 @@ test.describe("Friends", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await friends.goto();
 
+		const notifications = new NotificationPopover(page);
+		await expect(notifications.locators.bellDot).toBeVisible();
+
 		await expect(friends.locators.acceptButton).toBeVisible();
 		await friends.acceptRequest();
+
+		// accepting resolved the friend request notification without the bell
+		// having been opened
+		await expect(notifications.locators.bellDot).toBeHidden();
 
 		await friends.friend("Sendou").deleteFriend();
 

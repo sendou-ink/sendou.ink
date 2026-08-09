@@ -11,7 +11,6 @@ interface LayoutData {
 	/** `null` when the server has no session, `undefined` when it has not said. */
 	loggedInUserId?: number | null;
 	sidebar?: RootLoaderData["sidebar"];
-	notifications?: RootLoaderData["notifications"];
 	buildCommit?: string;
 }
 
@@ -69,6 +68,9 @@ export function LayoutDataProvider({
 		};
 	}, [load]);
 
+	// stable so effects that refresh after a mutation don't re-run every render
+	const refresh = React.useCallback(() => load(LAYOUT_DATA_ROUTE), [load]);
+
 	const newest = useNewestOf(data, fetcher.data);
 
 	useReloadOnNewDeploy(newest.buildCommit ?? "");
@@ -79,7 +81,7 @@ export function LayoutDataProvider({
 
 	const value: LayoutDataContextValue = {
 		...newest,
-		refresh: () => load(LAYOUT_DATA_ROUTE),
+		refresh,
 		isRefreshing: state !== "idle",
 	};
 
@@ -91,8 +93,8 @@ export function LayoutDataProvider({
 }
 
 /**
- * App shell data (sidebar, notification peek, build commit), fresher than the
- * root loader whenever a poll has landed since the last root revalidation.
+ * App shell data (sidebar, build commit), fresher than the root loader
+ * whenever a poll has landed since the last root revalidation.
  */
 export function useLayoutData() {
 	return React.useContext(LayoutDataContext);

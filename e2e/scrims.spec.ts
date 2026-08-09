@@ -14,6 +14,7 @@ import {
 	test,
 } from "./helpers/playwright";
 import { AnythingAdder } from "./pages/layout/anything-adder";
+import { NotificationPopover } from "./pages/layout/notification-popover";
 import { NewScrimPostPage } from "./pages/scrims/new-scrim-post-page";
 import { ScrimPage } from "./pages/scrims/scrim-page";
 import { ScrimsPage } from "./pages/scrims/scrims-page";
@@ -128,13 +129,34 @@ test.describe("Scrims", () => {
 	});
 
 	test("accepts a request", async ({ page, factories }) => {
-		await createPostWithRequest(factories, { ownerUserId: ADMIN_ID });
+		const post = await createPostWithRequest(factories, {
+			ownerUserId: ADMIN_ID,
+		});
+		await factories.NotificationFactory.create({
+			notification: {
+				type: "SCRIM_NEW_REQUEST",
+				meta: {
+					fromUserId: NZAP_TEST_ID,
+					fromUsername: "N-ZAP",
+					scrimPostId: post.id,
+				},
+			},
+			users: [{ userId: ADMIN_ID }],
+		});
 
 		await impersonate(page, ADMIN_ID);
 
 		const scrims = new ScrimsPage(page);
 		await scrims.goto();
+
+		const notifications = new NotificationPopover(page);
+		await expect(notifications.locators.bellDot).toBeVisible();
+
 		await scrims.acceptFirstRequest();
+
+		// accepting settled the post, resolving the request notification without
+		// the bell having been opened
+		await expect(notifications.locators.bellDot).toBeHidden();
 
 		await scrims.openTab("booked");
 		await expect(scrims.locators.contactLinks).toHaveCount(1);

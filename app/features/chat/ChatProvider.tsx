@@ -119,6 +119,7 @@ function ChatProviderInner({
 		{},
 	);
 	const clearChatLabels = React.useCallback(() => setChatLabels({}), []);
+	const [notificationsVersion, setNotificationsVersion] = React.useState(0);
 
 	const ws = React.useRef<WebSocket>(undefined);
 
@@ -188,6 +189,13 @@ function ChatProviderInner({
 				...prev,
 				...serverRoom.metadata.chatUsers,
 			}));
+			return;
+		}
+
+		// Notifications changed server-side; handled before the fallthrough below
+		// so a contentless ping is never treated as a chat message
+		if (parsed.event === "NOTIFICATIONS_CHANGED") {
+			setNotificationsVersion((version) => version + 1);
 			return;
 		}
 
@@ -487,6 +495,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
+			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			setChatOpen,
@@ -510,6 +519,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
+			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			activeRooms,

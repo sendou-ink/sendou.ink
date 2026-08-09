@@ -7,6 +7,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { TROPHIES_PAGE } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import { NotificationPopover } from "./pages/layout/notification-popover";
 import { NewTrophyPage } from "./pages/trophies/new-trophy-page";
 import { TrophiesPage } from "./pages/trophies/trophies-page";
 import { UserPage } from "./pages/user/user-page";
@@ -165,6 +166,13 @@ test.describe("Trophies", () => {
 				organizationId: organization.id,
 				submitterUserId: NZAP_TEST_ID,
 			});
+			await factories.NotificationFactory.create({
+				notification: {
+					type: "TROPHY_SUBMITTED",
+					meta: { trophyName: name, submitterUsername: "N-ZAP" },
+				},
+				users: [{ userId: ADMIN_ID }],
+			});
 		}
 
 		await impersonate(page);
@@ -174,6 +182,9 @@ test.describe("Trophies", () => {
 
 		const pending = await newTrophy.openPending();
 
+		const notifications = new NotificationPopover(page);
+		await expect(notifications.locators.bellDot).toBeVisible();
+
 		await pending.approve(approvedName);
 		await expect(
 			pending
@@ -181,8 +192,15 @@ test.describe("Trophies", () => {
 				.getByText(`1/${TROPHY_APPROVALS_REQUIRED} approvals`),
 		).toBeVisible();
 
+		// approving resolved that submission's notification, but the other
+		// submission still waits for a review
+		await expect(notifications.locators.bellDot).toBeVisible();
+
 		await pending.decline(declinedName, "Does not meet the requirements");
 		await isNotVisible(pending.row(declinedName));
+
+		// with the last pending submission reviewed nothing needs attention anymore
+		await expect(notifications.locators.bellDot).toBeHidden();
 
 		const reviewed = await newTrophy.openReviewed();
 		await expect(reviewed.row(declinedName)).toBeVisible();

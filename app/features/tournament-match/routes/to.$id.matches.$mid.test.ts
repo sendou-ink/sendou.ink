@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
 	removeRoom: vi.fn(),
 	setMetadata: vi.fn(),
 }));

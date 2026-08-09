@@ -118,6 +118,28 @@ function postMessages(fullMessages: ChatMessage[]) {
 	}).catch(logSkalpError("sendMessage"));
 }
 
+/**
+ * Tells skalop to send a contentless "your notifications changed" ping to the
+ * users' websocket connections, prompting their clients to refetch. Fire and
+ * forget like the other system messages; a lost ping only delays the refetch.
+ */
+export function notifyNotificationsChanged(userIds: number[]) {
+	if (systemMessagesDisabled) return;
+	if (userIds.length === 0) return;
+
+	return void fetch(ServerConfig.skalop.systemMessageUrl!, {
+		method: "POST",
+		body: JSON.stringify({
+			action: "notifyUsers",
+			userIds,
+		}),
+		headers: [
+			[SKALOP_TOKEN_HEADER_NAME, ServerConfig.skalop.token!],
+			["Content-Type", "application/json"],
+		],
+	}).catch(logSkalpError("notifyUsers"));
+}
+
 export function removeRoom(chatCode: string) {
 	if (systemMessagesDisabled) return;
 

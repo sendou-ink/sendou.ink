@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -28,6 +29,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (!Scrim.isParticipating(post, user.id) && !user.roles.includes("STAFF")) {
 		throw new Response(null, { status: 403 });
 	}
+
+	await resolveNotifications({
+		userIds: [user.id],
+		type: "SCRIM_SCHEDULED",
+		meta: { id: post.id },
+	});
+	await resolveNotifications({
+		userIds: [user.id],
+		type: "SCRIM_STARTING_SOON",
+		meta: { id: post.id },
+	});
 
 	const participantIds = Scrim.participantIdsListFromAccepted(post);
 

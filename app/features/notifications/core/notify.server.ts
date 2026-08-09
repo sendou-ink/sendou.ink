@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
 import type { NotificationSubscription } from "~/db/tables-json";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { APP_ICON_URL } from "~/utils/urls";
 import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
@@ -72,6 +73,7 @@ export async function notify({
 				seen: defaultSeenUserIds?.includes(userId) ? 1 : 0,
 			})),
 		);
+		ChatSystemMessage.notifyNotificationsChanged(dededuplicatedUserIds);
 	} catch (e) {
 		logger.error("Failed to notify users", e);
 	}

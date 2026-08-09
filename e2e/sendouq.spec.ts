@@ -13,6 +13,7 @@ import {
 	runRoutine,
 	test,
 } from "./helpers/playwright";
+import { NotificationPopover } from "./pages/layout/notification-popover";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 import { SendouQPage } from "./pages/sendouq/sendouq-page";
 import { SendouQReadyPage } from "./pages/sendouq/sendouq-ready-page";
@@ -263,22 +264,36 @@ test.describe("SendouQ", () => {
 		await expect(ready.locators.membersReady).toHaveCount(1);
 		await expect(ready.locators.confirmedText).toBeVisible();
 
+		const notifications = new NotificationPopover(page);
+
 		const restOfTheQueue = [...accepters.slice(1), ...challengers];
 		for (const member of restOfTheQueue.slice(0, -1)) {
 			await impersonate(page, member.id);
 			await ready.goto();
+
+			// the ready check notification stays unseen until they respond to it
+			await expect(notifications.locators.bellDot).toBeVisible();
+
 			await ready.confirmReady();
 
 			await expect(page).toHaveURL(SENDOUQ_READY_PAGE);
 			await expect(ready.locators.confirmedText).toBeVisible();
+			await expect(notifications.locators.bellDot).toBeHidden();
 		}
 
 		// the last one to confirm gets everyone into the match
 		await impersonate(page, restOfTheQueue.at(-1)!.id);
 		await ready.goto();
+
+		await expect(notifications.locators.bellDot).toBeVisible();
+
 		await ready.confirmReady();
 
 		await expect(page).toHaveURL(/\/q\/match\/\d+/);
+
+		// confirming resolved the ready check notification and the new match
+		// notification arrives already seen for the one who created the match
+		await expect(notifications.locators.bellDot).toBeHidden();
 	});
 
 	test("Ready check expiring sends the groups back to looking and lets them kick who missed it", async ({
