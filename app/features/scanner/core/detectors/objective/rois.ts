@@ -140,7 +140,19 @@ export const CONTROL_PLATE_MIN_SATURATION = 60;
 // top-RIGHT and white camera-button badges below) — slot centers are
 // measured per side off the fixtures; neither layout is mirror-symmetric
 // (POV inner icons sit 108px left / 130px right of screen center) and the
-// cast sides don't even share a pitch (~103 left vs ~88 right).
+// cast sides don't even share a pitch (~98 left vs ~76 right). Cast icons
+// ride their badge columns ~20px left of each badge center; the outer-right
+// center sits a few px past the measured icon (~1313) because splat X's
+// there lean into inked backdrop on their left while alive bodies extend
+// right (attested dead <=0.16 vs alive >=0.33 at 1320).
+//
+// The cast strip additionally MIRRORS its pitches when the broadcast specs
+// a player on the other team (attested mid-game in the AREA CUP VoD): the
+// narrow ~76 pitch swaps to the left column and the wide ~97 pitch to the
+// right, badges and all — the "cast-mirror" layout. Its right column lands
+// within a few px of the POV right column, so a mirrored frame scores
+// deceptively well as POV; the mirror's own geometry must be a scored
+// candidate (and badge-probed) or the left column misreads ready/dead.
 //
 // Broadcasts can hide the camera badges while keeping the cast icon
 // geometry (attested in the AREA CUP VoD), so badge absence alone cannot
@@ -161,8 +173,15 @@ export const STATUS_SLOT_CENTERS_CAST: readonly [
 	readonly number[],
 	readonly number[],
 ] = [
-	[542, 646, 750, 852],
-	[1085, 1173, 1261, 1348],
+	[543, 642, 741, 837],
+	[1085, 1161, 1237, 1320],
+];
+export const STATUS_SLOT_CENTERS_CAST_MIRROR: readonly [
+	readonly number[],
+	readonly number[],
+] = [
+	[605, 681, 757, 833],
+	[1090, 1187, 1283, 1381],
 ];
 
 /**
@@ -262,14 +281,18 @@ export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
 export const STATUS_LAYOUT_STICKY_MAX_GAP_S = 30;
 
 /**
- * Cast-layout discriminator: the spectator HUD always draws white D-pad
- * camera badges under the right team's icons; nothing fixed sits there on
- * POV footage. All four probes must read white (bright AND unsaturated —
- * bright sky is saturated cyan) to call the frame cast.
+ * Cast-layout discriminator: the spectator HUD always draws white camera
+ * badges under the right team's icons; nothing fixed sits there on POV
+ * footage. All four probes must read white (bright AND unsaturated —
+ * bright sky is saturated cyan) to call the frame cast. The mirror set
+ * covers the cast-mirror arrangement's wide right badge pitch.
  */
 export const STATUS_DPAD_PROBES: readonly Roi[] = [1105, 1180, 1256, 1332].map(
 	(cx) => ({ x: cx - 8, y: 102, w: 16, h: 16 }),
 );
+export const STATUS_DPAD_PROBES_MIRROR: readonly Roi[] = [
+	1110, 1207, 1303, 1401,
+].map((cx) => ({ x: cx - 8, y: 102, w: 16, h: 16 }));
 export const STATUS_WHITE_MIN_VALUE = 215;
 export const STATUS_WHITE_MAX_SPREAD = 40;
 export const STATUS_CAST_MIN_DPAD_WHITE = 0.35;

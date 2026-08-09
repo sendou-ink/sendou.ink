@@ -113,7 +113,7 @@ interface ExpectedScoreboard {
 		/** PlayerStatus only: splatted per slot, [left team, right team] */
 		dead?: [boolean[], boolean[]];
 		/** PlayerStatus only: which icon-strip geometry the frame shows */
-		layout?: "pov" | "cast";
+		layout?: "pov" | "cast" | "cast-mirror";
 		/** Minimap only: casted 8-player spectator map screen (not parsed yet) */
 		spectator?: boolean;
 		/** Minimap only: own-team callout cards in slot order */

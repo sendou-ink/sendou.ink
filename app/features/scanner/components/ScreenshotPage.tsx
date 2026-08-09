@@ -233,9 +233,11 @@ function gateSummary(result: Result): string | null {
 /** Band covering one side's player-status icon strip, for the crop view. */
 function statusStripRoi(layout: PlayerStatusLayout, side: 0 | 1): Roi {
 	const centers =
-		layout === "cast"
-			? objective.STATUS_SLOT_CENTERS_CAST[side]
-			: objective.STATUS_SLOT_CENTERS_POV[side];
+		layout === "pov"
+			? objective.STATUS_SLOT_CENTERS_POV[side]
+			: layout === "cast"
+				? objective.STATUS_SLOT_CENTERS_CAST[side]
+				: objective.STATUS_SLOT_CENTERS_CAST_MIRROR[side];
 	const first = centers[0]!;
 	const last = centers[centers.length - 1]!;
 	return { x: first - 55, y: 25, w: last - first + 110, h: 115 };

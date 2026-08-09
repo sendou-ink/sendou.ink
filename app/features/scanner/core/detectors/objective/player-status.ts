@@ -9,11 +9,13 @@
  * frames light the shoulder probe past the glow floor, trough frames only
  * read as pale — and a splatted icon is an unsaturated grey/dark X with
  * none of the three. The casted spectator HUD draws the same strip at its
- * own geometry. White D-pad camera badges under the right team prove the
- * cast layout, but broadcasts can hide them while keeping cast geometry,
- * so a badge-less frame picks whichever geometry reads more decisively
- * (bodies far from the dead threshold on either side) instead of assuming
- * POV.
+ * own geometry — two of them, in fact: the pitches mirror when the specced
+ * POV sits on the other team ("cast-mirror", whose right column nearly
+ * coincides with POV's). White camera badges under the right team prove
+ * either cast arrangement, but broadcasts can hide them while keeping cast
+ * geometry, so a badge-less frame picks whichever geometry reads more
+ * decisively (bodies far from the dead threshold on either side) instead
+ * of assuming POV.
  */
 import type { Mat } from "../../cv";
 import { copyRoi, type Roi } from "../../image";
@@ -26,6 +28,7 @@ import {
 	STATUS_DEAD_MAX_BODY_PALE,
 	STATUS_DEAD_MAX_SHOULDER_GLOW,
 	STATUS_DPAD_PROBES,
+	STATUS_DPAD_PROBES_MIRROR,
 	STATUS_GLOW_MIN_VALUE,
 	STATUS_INK_MIN_SPREAD,
 	STATUS_INK_MIN_VALUE,
@@ -39,6 +42,7 @@ import {
 	STATUS_SHOULDER_BOX_CAST,
 	STATUS_SHOULDER_BOX_POV,
 	STATUS_SLOT_CENTERS_CAST,
+	STATUS_SLOT_CENTERS_CAST_MIRROR,
 	STATUS_SLOT_CENTERS_POV,
 	STATUS_WHITE_MAX_SPREAD,
 	STATUS_WHITE_MIN_VALUE,
@@ -48,7 +52,7 @@ export const PLAYER_STATUS_EVENT_TYPE = "PlayerStatus";
 
 export type PlayerStatusFlags = [boolean, boolean, boolean, boolean];
 
-export type PlayerStatusLayout = "pov" | "cast";
+export type PlayerStatusLayout = "pov" | "cast" | "cast-mirror";
 
 export interface PlayerStatusData {
 	/**
@@ -128,10 +132,12 @@ export function parsePlayerStatus(
 		debug: {
 			layout,
 			layoutScores: scores
-				? {
-						pov: Number(scores.pov.toFixed(3)),
-						cast: Number(scores.cast.toFixed(3)),
-					}
+				? Object.fromEntries(
+						Object.entries(scores).map(([name, score]) => [
+							name,
+							Number(score.toFixed(3)),
+						]),
+					)
 				: "badges",
 			bodyInk: reads.map((read) => Number(read.bodyInk.toFixed(2))),
 			bodyPale: reads.map((read) => Number(read.bodyPale.toFixed(2))),
@@ -145,11 +151,14 @@ function readSlots(
 	layout: PlayerStatusLayout,
 ): [SlotRead[], SlotRead[]] {
 	const centers =
-		layout === "cast" ? STATUS_SLOT_CENTERS_CAST : STATUS_SLOT_CENTERS_POV;
+		layout === "pov"
+			? STATUS_SLOT_CENTERS_POV
+			: layout === "cast"
+				? STATUS_SLOT_CENTERS_CAST
+				: STATUS_SLOT_CENTERS_CAST_MIRROR;
 	const shoulderBox =
-		layout === "cast" ? STATUS_SHOULDER_BOX_CAST : STATUS_SHOULDER_BOX_POV;
-	const bodyBox =
-		layout === "cast" ? STATUS_BODY_BOX_CAST : STATUS_BODY_BOX_POV;
+		layout === "pov" ? STATUS_SHOULDER_BOX_POV : STATUS_SHOULDER_BOX_CAST;
+	const bodyBox = layout === "pov" ? STATUS_BODY_BOX_POV : STATUS_BODY_BOX_CAST;
 
 	return centers.map((sideCenters) =>
 		sideCenters.map((cx): SlotRead => {
@@ -170,35 +179,64 @@ function readSlots(
 	) as [SlotRead[], SlotRead[]];
 }
 
+const ALL_LAYOUTS: readonly PlayerStatusLayout[] = [
+	"pov",
+	"cast",
+	"cast-mirror",
+];
+
 /**
- * Camera badges prove the cast layout outright. Badge-less frames are NOT
- * proven POV — broadcasts can hide the badges while keeping the cast icon
- * geometry — so both geometries are tried and the one whose body reads
- * land decisively on either side of the dead threshold wins. A mispicked
- * geometry puts outer-slot boxes between icons or on backdrop, which reads
- * mid-range ink — exactly what the score punishes; boxes on featureless
- * dark backdrop still read "decisively dead" though, so a busy scene can
- * nudge a frame's score across — the sticky margin keeps a single noisy
- * frame from flipping an established layout.
+ * Which layouts a badge-less frame may flip to from an established one on
+ * score alone. The cast-mirror right column nearly coincides with POV's, so
+ * decisiveness cannot tell those two apart — and a wrong POV pick on cast
+ * footage self-heals (the next badge frame proves the arrangement) while a
+ * wrong mirror pick on POV footage never would (POV shows no badges). So
+ * the mirror is only reachable via badges or from an established cast
+ * layout (the specced POV switching teams mid-game, attested in the AREA
+ * CUP VoD's badge-less overhead stretches).
+ */
+const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
+	{
+		pov: ["cast"],
+		cast: ["pov", "cast-mirror"],
+		"cast-mirror": ["cast"],
+	};
+
+/**
+ * Camera badges prove a cast arrangement outright (each arrangement has its
+ * own badge columns). Badge-less frames are NOT proven POV — broadcasts can
+ * hide the badges while keeping cast icon geometry — so the candidate
+ * geometries are scored and the one whose body reads land decisively on
+ * either side of the dead threshold wins. A mispicked geometry puts
+ * outer-slot boxes between icons or on backdrop, which reads mid-range ink —
+ * exactly what the score punishes; boxes on featureless dark backdrop still
+ * read "decisively dead" though, so a busy scene can nudge a frame's score
+ * across — the sticky margin keeps a single noisy frame from flipping an
+ * established layout, and SCORED_FLIPS keeps the POV/mirror false friends
+ * from ever trading places without badge proof.
  */
 function pickLayout(
 	frame: Mat,
 	prevLayout: PlayerStatusLayout | undefined,
 ): {
 	layout: PlayerStatusLayout;
-	scores: { pov: number; cast: number } | null;
+	scores: Record<PlayerStatusLayout, number> | null;
 } {
-	if (isCastLayout(frame)) return { layout: "cast", scores: null };
-	const scores = {
-		pov: layoutDecisiveness(frame, "pov"),
-		cast: layoutDecisiveness(frame, "cast"),
-	};
+	if (badgesVisible(frame, STATUS_DPAD_PROBES))
+		return { layout: "cast", scores: null };
+	if (badgesVisible(frame, STATUS_DPAD_PROBES_MIRROR))
+		return { layout: "cast-mirror", scores: null };
+	const scores = Object.fromEntries(
+		ALL_LAYOUTS.map((layout) => [layout, layoutDecisiveness(frame, layout)]),
+	) as Record<PlayerStatusLayout, number>;
 	if (prevLayout) {
-		const other: PlayerStatusLayout = prevLayout === "pov" ? "cast" : "pov";
+		const challenger = SCORED_FLIPS[prevLayout].reduce((a, b) =>
+			scores[b] > scores[a] ? b : a,
+		);
 		return {
 			layout:
-				scores[other] > scores[prevLayout] + STATUS_LAYOUT_STICKY_MARGIN
-					? other
+				scores[challenger] > scores[prevLayout] + STATUS_LAYOUT_STICKY_MARGIN
+					? challenger
 					: prevLayout,
 			scores,
 		};
@@ -289,9 +327,9 @@ function classFractions(
 	return { ink: ink / count, glow: glow / count, pale: pale / count };
 }
 
-/** All four D-pad probes reading white = the casted spectator layout. */
-function isCastLayout(frame: Mat): boolean {
-	return STATUS_DPAD_PROBES.every((roi) => {
+/** All four badge probes reading white = that casted spectator arrangement. */
+function badgesVisible(frame: Mat, probes: readonly Roi[]): boolean {
+	return probes.every((roi) => {
 		const crop = copyRoi(frame, roi);
 		const { data } = crop;
 		const channels = crop.channels();

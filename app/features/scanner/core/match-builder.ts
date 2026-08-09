@@ -462,7 +462,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		replayCode: timestamped?.replayCode ?? null,
 		cast:
 			open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
-			playerStatuses.some((read) => read.data.layout === "cast"),
+			playerStatuses.some((read) => read.data.layout !== "pov"),
 		objective: progress.objective,
 		playerStatus: progress.playerStatus,
 		teams: board
