@@ -169,12 +169,18 @@ export async function abort(readyCheck: {
 	id: number;
 	alphaGroupId: number;
 	bravoGroupId: number;
+	members: Array<{ userId: number }>;
 }) {
 	await endReadyCheck(readyCheck, { markMissedMembers: false });
 }
 
 async function endReadyCheck(
-	readyCheck: { id: number; alphaGroupId: number; bravoGroupId: number },
+	readyCheck: {
+		id: number;
+		alphaGroupId: number;
+		bravoGroupId: number;
+		members: Array<{ userId: number }>;
+	},
 	{ markMissedMembers }: { markMissedMembers: boolean },
 ) {
 	await SQGroupRepository.deleteReadyCheck({
