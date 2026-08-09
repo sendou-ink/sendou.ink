@@ -26,6 +26,10 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+} from "../core/detectors/objective/player-status";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
@@ -40,6 +44,7 @@ import { useEventTimeFormatter } from "./format";
 import { MapStartCard } from "./MapStartCard";
 import { MinimapCard } from "./MinimapCard";
 import { ObjectiveCard } from "./ObjectiveCard";
+import { PlayerStatusCard } from "./PlayerStatusCard";
 import { ScoreboardCard } from "./ScoreboardCard";
 import { ScoreboardOwnCard } from "./ScoreboardOwnCard";
 
@@ -147,6 +152,8 @@ function renderCard(
 		<MinimapCard {...shared} data={data as MinimapData} />
 	) : type === OBJECTIVE_EVENT_TYPE ? (
 		<ObjectiveCard {...shared} data={data as ObjectiveData} />
+	) : type === PLAYER_STATUS_EVENT_TYPE ? (
+		<PlayerStatusCard {...shared} data={data as PlayerStatusData} />
 	) : (
 		<ScoreboardCard
 			{...shared}

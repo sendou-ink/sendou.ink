@@ -186,6 +186,8 @@
 	"objectiveTimeline.timeLeft": "",
 	"objectiveTimeline.penalty": "",
 	"objectiveTimeline.inControl": "",
+	"playerStatusTimeline.splatted": "",
+	"playerStatusTimeline.specialReady": "",
 	"maps.createMapList": "ステージリストを作る",
 	"maps.halfSz": "半分エリア",
 	"maps.mapPool": "選択可能なステージ",

@@ -8,6 +8,10 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	sameObjectiveData,
 } from "../detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	samePlayerStatusData,
+} from "../detectors/objective/player-status";
 import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
@@ -42,13 +46,21 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	// within one open
 	// objective counter reads repeat every check second; the content guard
 	// below keeps every actual change while the window collapses static
-	// stretches into one event per state
-	mergeWindowByType: { Death: 8, Minimap: 5, [OBJECTIVE_EVENT_TYPE]: 10 },
+	// stretches into one event per state. Player statuses can revisit an
+	// exact prior state no sooner than a respawn takes (~9s), so their
+	// window must stay under that
+	mergeWindowByType: {
+		Death: 8,
+		Minimap: 5,
+		[OBJECTIVE_EVENT_TYPE]: 10,
+		[PLAYER_STATUS_EVENT_TYPE]: 5,
+	},
 	sameEventDataByType: {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
 		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
+		[PLAYER_STATUS_EVENT_TYPE]: samePlayerStatusData,
 	},
 	minConfidence: 0.6,
 };

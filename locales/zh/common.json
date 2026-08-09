@@ -186,6 +186,8 @@
 	"objectiveTimeline.timeLeft": "",
 	"objectiveTimeline.penalty": "",
 	"objectiveTimeline.inControl": "",
+	"playerStatusTimeline.splatted": "",
+	"playerStatusTimeline.specialReady": "",
 	"maps.createMapList": "创建场地列表",
 	"maps.halfSz": "真格区域占 50%",
 	"maps.mapPool": "场地池",

@@ -83,7 +83,13 @@ sequenceDiagram
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
   counts, penalties, holder, match timer — a mode-discriminated union with
-  only the SZ member so far). Objective reads land on `ScannerMatch` as
+  only the SZ member so far). The objective parse also emits a second
+  event type per read: `PlayerStatus`
+  (`core/detectors/objective/player-status.ts`), per-player special/dead
+  flags off the icon strip flanking the timer (POV and casted spectator
+  geometries; the cast layout is picked by its D-pad camera badges), with
+  the same `time` value so the two reads pair downstream; its fixtures
+  live under `tests/fixtures/player-status/`. Objective reads land on `ScannerMatch` as
   progress samples anchored to the game clock; broadcast replay wipes re-run
   an earlier moment with the counter intact, so the builder keeps only the
   dominant cluster of clock-zero projections (`t + time`) and drops replay
@@ -99,7 +105,12 @@ sequenceDiagram
   whose detected mode is not SZ are lookalike misreads: the builder nulls
   that match's `objective` and callers discard the events
   (`invalidObjectiveEvents`; Live also stops collecting once a MapStart
-  reveals a non-SZ mode). Parsing details are in each detector's module
+  reveals a non-SZ mode). PlayerStatus reads follow the objective pipeline
+  wholesale: same replay-wipe anchor, cast orientation inherited from the
+  nearest counter read, nulled together on non-SZ matches, and rendered as
+  per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
+  shared with the match page) above the objective chart. Parsing details
+  are in each detector's module
   header; accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching
   recognition code.

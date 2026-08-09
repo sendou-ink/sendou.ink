@@ -20,6 +20,10 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+} from "../core/detectors/objective/player-status";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
@@ -39,7 +43,8 @@ export type FixtureData =
 	| MapStartData
 	| ScoreboardOwnData
 	| MinimapData
-	| ObjectiveData;
+	| ObjectiveData
+	| PlayerStatusData;
 
 function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
@@ -142,6 +147,22 @@ function buildExpectedJson(
 					score: objective.score,
 					penalty: objective.penalty,
 					control: objective.control,
+				},
+			},
+			null,
+			2,
+		)}\n`;
+	}
+	if (eventType === PLAYER_STATUS_EVENT_TYPE) {
+		const status = data as PlayerStatusData;
+		return `${JSON.stringify(
+			{
+				event: eventType,
+				data: {
+					layout: status.layout,
+					time: status.time,
+					special: status.special,
+					dead: status.dead,
 				},
 			},
 			null,

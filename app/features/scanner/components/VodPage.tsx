@@ -22,10 +22,12 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
+import { PlayerStatusTimeline } from "~/components/PlayerStatusTimeline";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
+import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
 import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
@@ -62,6 +64,7 @@ import type { FixtureData } from "./fixture-export";
 import { formatTime, useEventDateTimeFormatter } from "./format";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
+import { objectiveDomain, playerStatusTeams } from "./player-status-view";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -739,8 +742,11 @@ export function VodPage({
 							const objectiveEvents = (
 								built.match.objective?.samples ?? []
 							).map((sample) => ({ t: sample.t, data: sample }));
+							const statusSamples = built.match.playerStatus?.samples ?? [];
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
-								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+								(e) =>
+									e.type !== OBJECTIVE_EVENT_TYPE &&
+									e.type !== PLAYER_STATUS_EVENT_TYPE,
 							);
 							return (
 								<MatchCard
@@ -756,6 +762,16 @@ export function VodPage({
 										send?.state === "sent" && link ? { ...send, link } : send
 									}
 								>
+									{statusSamples.length > 0 ? (
+										<PlayerStatusTimeline
+											samples={statusSamples}
+											teams={playerStatusTeams(
+												built.match,
+												SCANNER_TEAM_LABELS,
+											)}
+											domain={objectiveDomain(objectiveEvents)}
+										/>
+									) : null}
 									{objectiveEvents.length > 0 ? (
 										<ObjectiveTimeline
 											events={objectiveEvents}

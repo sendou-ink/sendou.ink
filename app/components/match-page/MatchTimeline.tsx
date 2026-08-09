@@ -36,6 +36,10 @@ import {
 	type ObjectiveTimelineEvent,
 } from "../ObjectiveTimeline";
 import { matchScoresFromObjective } from "../objective-timeline-utils";
+import {
+	PlayerStatusTimeline,
+	type PlayerStatusTimelineSample,
+} from "../PlayerStatusTimeline";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import type { WeaponPoolWeapon } from "./WeaponPool";
@@ -93,6 +97,8 @@ export interface TimelineMap {
 		bravo: TimelineScoreboardPlayer[];
 		/** Objective-counter reads ([alpha, bravo] values) charted above the stats tables. */
 		objective?: ObjectiveTimelineEvent[];
+		/** Per-player splat/special bands ([alpha, bravo]) charted above the objective chart. */
+		playerStatus?: PlayerStatusTimelineSample[];
 	};
 }
 
@@ -442,6 +448,22 @@ function TimelineScoreboardSection({
 			</button>
 			{isExpanded ? (
 				<div className={styles.scoreboardPanel}>
+					{scoreboard.playerStatus && scoreboard.playerStatus.length > 0 ? (
+						<PlayerStatusTimeline
+							samples={scoreboard.playerStatus}
+							teams={[
+								{
+									label: teams.alpha.name,
+									weapons: scoreboard.alpha.map((player) => player.weaponSplId),
+								},
+								{
+									label: teams.bravo.name,
+									weapons: scoreboard.bravo.map((player) => player.weaponSplId),
+								},
+							]}
+							domain={objectiveEventsDomain(scoreboard.objective)}
+						/>
+					) : null}
 					{scoreboard.objective && scoreboard.objective.length > 0 ? (
 						<ObjectiveTimeline
 							events={scoreboard.objective}
@@ -462,6 +484,14 @@ function TimelineScoreboardSection({
 			) : null}
 		</div>
 	);
+}
+
+function objectiveEventsDomain(
+	events: ObjectiveTimelineEvent[] | undefined,
+): [number, number] | undefined {
+	if (!events || events.length === 0) return undefined;
+	const ts = events.map((event) => event.t);
+	return [Math.min(...ts), Math.max(...ts)];
 }
 
 function ScoreboardTable({

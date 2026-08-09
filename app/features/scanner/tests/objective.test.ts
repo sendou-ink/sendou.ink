@@ -18,7 +18,7 @@ import {
 import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
 import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
-import type { Detector } from "../core/detectors/types";
+import type { DetectedEvent, Detector } from "../core/detectors/types";
 import { hueDistance, hueOf } from "../core/ink-color";
 import {
 	type Fixture,
@@ -40,10 +40,13 @@ test("objective fixtures exist", () => {
 
 for (const fixture of fixtures) {
 	test(`objective/${fixture.name}`, async (t) => {
-		const { gate, events } = await runDetectorOnFixture<ObjectiveData>(
+		const { gate, events: allEvents } = await runDetectorOnFixture(
 			detector,
 			fixture,
 		);
+		const events = allEvents.filter(
+			(event) => event.type === "Objective",
+		) as DetectedEvent<ObjectiveData>[];
 		const expectPositive = fixture.expected.event === "Objective";
 
 		await t.test("gate", () => {
@@ -146,11 +149,12 @@ test("cast fixture pair: team ink hues identify sides across camera swaps", asyn
 
 	const colors = [];
 	for (const fixture of pair) {
-		const { events } = await runDetectorOnFixture<ObjectiveData>(
-			detector,
-			fixture!,
-		);
-		const teamColor = events[0]?.data.teamColor;
+		const { events } = await runDetectorOnFixture(detector, fixture!);
+		const teamColor = (
+			events.find((event) => event.type === "Objective") as
+				| DetectedEvent<ObjectiveData>
+				| undefined
+		)?.data.teamColor;
 		assert.ok(teamColor?.[0] && teamColor[1], "side ink color unreadable");
 		colors.push([teamColor[0], teamColor[1]] as const);
 	}

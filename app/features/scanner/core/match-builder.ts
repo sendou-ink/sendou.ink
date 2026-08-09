@@ -25,6 +25,10 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "./detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+} from "./detectors/objective/player-status";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
 import {
@@ -43,6 +47,8 @@ import type {
 	ScannerMatchObjective,
 	ScannerMatchObjectiveSample,
 	ScannerMatchPlayer,
+	ScannerMatchPlayerStatus,
+	ScannerMatchPlayerStatusSample,
 	ScannerMatchTeam,
 } from "./scanner-match";
 
@@ -111,9 +117,10 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	const nextStage = buildNextStageMap(sorted);
 
 	let open: OpenMatch<E> | null = null;
-	// deaths/objective reads seen with no match open to anchor them yet
+	// deaths/objective/status reads seen with no match open to anchor them yet
 	let orphanDeaths: E[] = [];
 	let orphanObjectives: E[] = [];
+	let orphanPlayerStatuses: E[] = [];
 	const finalize = (): void => {
 		if (!open) return;
 		if (open.scoreboard || open.minimaps.length > 0) {
@@ -131,6 +138,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			vote(open.stageVotes, (event.data as MapStartData).stage);
 			orphanDeaths = [];
 			orphanObjectives = [];
+			orphanPlayerStatuses = [];
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			if (!open) {
 				open = startMatch();
@@ -140,12 +148,16 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				open.objectives = orphanObjectives.filter(
 					(objective) => event.t - objective.t <= FALLBACK_WINDOW_SECONDS,
 				);
+				open.playerStatuses = orphanPlayerStatuses.filter(
+					(status) => event.t - status.t <= FALLBACK_WINDOW_SECONDS,
+				);
 			}
 			open.scoreboard = event;
 			vote(open.stageVotes, (event.data as ScoreboardData).stage);
 			finalize();
 			orphanDeaths = [];
 			orphanObjectives = [];
+			orphanPlayerStatuses = [];
 		} else if (event.type === MINIMAP_EVENT_TYPE) {
 			const stage = (event.data as MinimapData).stage;
 			if (open) {
@@ -171,6 +183,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			(open?.deaths ?? orphanDeaths).push(event);
 		} else if (event.type === OBJECTIVE_EVENT_TYPE) {
 			(open?.objectives ?? orphanObjectives).push(event);
+		} else if (event.type === PLAYER_STATUS_EVENT_TYPE) {
+			(open?.playerStatuses ?? orphanPlayerStatuses).push(event);
 		}
 	}
 	finalize();
@@ -211,10 +225,12 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 }
 
 /**
- * Objective-counter reads that landed on a match whose detected mode is not
- * Splat Zones — the SZ parser (the only one so far) misreading another
- * mode's counter overlay. The builder already leaves such a match's
- * `objective` null; callers should delete these events from their stores.
+ * Objective-counter and player-status reads that landed on a match whose
+ * detected mode is not Splat Zones — the SZ parser (the only one so far)
+ * misreading another mode's counter overlay, and the statuses that rode
+ * along with those misreads. The builder already leaves such a match's
+ * `objective`/`playerStatus` null; callers should delete these events from
+ * their stores.
  */
 export function invalidObjectiveEvents<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
@@ -222,7 +238,11 @@ export function invalidObjectiveEvents<E extends DetectedEvent>(
 	return built
 		.filter((b) => b.match.mode !== null && b.match.mode !== "SZ")
 		.flatMap((b) =>
-			b.sources.filter((event) => event.type === OBJECTIVE_EVENT_TYPE),
+			b.sources.filter(
+				(event) =>
+					event.type === OBJECTIVE_EVENT_TYPE ||
+					event.type === PLAYER_STATUS_EVENT_TYPE,
+			),
 		);
 }
 
@@ -291,6 +311,8 @@ interface OpenMatch<E extends DetectedEvent> {
 	deaths: E[];
 	/** objective-counter reads; become the match's `objective` samples */
 	objectives: E[];
+	/** icon-strip reads; become the match's `playerStatus` samples */
+	playerStatuses: E[];
 	scoreboard: E | null;
 	/**
 	 * per-stage read counts (a MapStart's stage seeds it); the plurality
@@ -308,6 +330,7 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 		minimaps: [],
 		deaths: [],
 		objectives: [],
+		playerStatuses: [],
 		scoreboard: null,
 		stageVotes: new Map(),
 		lastMinimapT: null,
@@ -357,6 +380,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		...open.minimaps,
 		...open.deaths,
 		...open.objectives,
+		...open.playerStatuses,
 		...(open.scoreboard ? [open.scoreboard] : []),
 	].sort((a, b) => a.t - b.t);
 
@@ -375,9 +399,25 @@ function toBuiltMatch<E extends DetectedEvent>(
 		t: event.t,
 		data: event.data as ObjectiveData,
 	}));
+	const playerStatuses = open.playerStatuses.map((event) => ({
+		t: event.t,
+		data: event.data as PlayerStatusData,
+	}));
 	const minimaps = open.minimaps.map((event) => event.data as MinimapData);
 
 	const mode = board?.mode ?? start?.mode ?? null;
+	// only the SZ counter is parsed — reads on a known other-mode match are
+	// misreads of a lookalike overlay, not progress data (statuses included:
+	// they only ever ride along with counter reads)
+	const progress =
+		mode === null || mode === "SZ"
+			? buildProgress(
+					objectives,
+					playerStatuses,
+					board,
+					minimapTeamColors(minimaps),
+				)
+			: { objective: null, playerStatus: null };
 
 	const match: ScannerMatch = {
 		startsAt:
@@ -391,13 +431,11 @@ function toBuiltMatch<E extends DetectedEvent>(
 			? board.matchScores
 			: null,
 		replayCode: timestamped?.replayCode ?? null,
-		cast: open.minimaps.some((event) => (event.data as MinimapData).spectator),
-		// only the SZ counter is parsed — reads on a known other-mode match
-		// are misreads of a lookalike overlay, not progress data
-		objective:
-			mode === null || mode === "SZ"
-				? buildObjective(objectives, board, minimapTeamColors(minimaps))
-				: null,
+		cast:
+			open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
+			playerStatuses.some((read) => read.data.layout === "cast"),
+		objective: progress.objective,
+		playerStatus: progress.playerStatus,
 		teams: board
 			? teamsFromScoreboard(board, deaths)
 			: teamsFromMinimaps(minimaps, deaths),
@@ -419,34 +457,45 @@ function floorOrNull(t: number | undefined): number | null {
 }
 
 /**
- * The counter reads as `objective` samples in `teams` order. On POV footage
- * the left plate is the POV/alpha side for the whole game, but casted
- * footage reorders the plates to follow the specced player — so each read
+ * The counter reads as `objective` samples and the icon-strip reads as
+ * `playerStatus` samples, both in `teams` order. On POV footage the left
+ * plate is the POV/alpha side for the whole game, but casted footage
+ * reorders the plates to follow the specced player — so each counter read
  * is first oriented by its sides' team ink hues (clustered against the
- * first read that saw both), making the series side-stable. Broadcast
- * replay wipes re-run an earlier moment with the counter overlay intact,
- * so reads are first anchored by their projected clock zero (`t + time`),
- * and only the dominant anchor cluster — the live game — survives;
- * timerless reads follow their preceding anchored neighbor. A displayed
- * count never increases (it shows the team's best remaining), so each
- * side's series then keeps only its longest non-increasing run of scores —
- * surviving OCR blips are voided rather than charted. The whole
- * series then goes into `teams` order: a scoreboard-closed match is
+ * first read that saw both), making the series side-stable; a status read
+ * carries no ink of its own and inherits the orientation of the counter
+ * read nearest in time (they are emitted off the same frames). Broadcast
+ * replay wipes re-run an earlier moment with the whole HUD intact, so both
+ * series are anchored by their projected clock zero (`t + time`) against
+ * one shared dominant projection — the live game — and reads off it are
+ * dropped; timerless reads follow their preceding anchored neighbor. A
+ * displayed count never increases (it shows the team's best remaining), so
+ * each side's counter series then keeps only its longest non-increasing
+ * run of scores — surviving OCR blips are voided rather than charted. Both
+ * series then go into `teams` order: a scoreboard-closed match is
  * winner-first (POV seat when read; else in SZ the winner is the side
  * whose remaining count went furthest down), a minimap-grouped match
  * anchors on the minimap's own/alpha-vs-enemy/bravo ink colors, and with
- * no signal the first read's arrangement stands.
+ * no signal the first read's arrangement stands. A side's four slots keep
+ * their on-screen left-to-right order through a side swap — whether the
+ * game mirrors slot order across sides is unattested so far.
  */
-function buildObjective(
+function buildProgress(
 	objectives: readonly { t: number; data: ObjectiveData }[],
+	playerStatuses: readonly { t: number; data: PlayerStatusData }[],
 	board: ScoreboardData | undefined,
 	minimapColors: [InkRgb | null, InkRgb | null] | null,
-): ScannerMatchObjective | null {
-	if (objectives.length === 0) return null;
+): {
+	objective: ScannerMatchObjective | null;
+	playerStatus: ScannerMatchPlayerStatus | null;
+} {
+	const dominant = dominantAnchorOf([...objectives, ...playerStatuses]);
+	const live = withoutReplayReads(objectives, dominant);
+	const liveStatuses = withoutReplayReads(playerStatuses, dominant);
 
-	const live = withoutReplayReads(objectives);
 	const clusterHues = seedClusterHues(live);
-	const oriented = withMonotonicScores(orientByTeamColor(live, clusterHues));
+	const swapFlags = readSwapFlags(live, clusterHues);
+	const oriented = withMonotonicScores(orientObjectives(live, swapFlags));
 
 	const swap = board
 		? board.povIndex !== null
@@ -454,17 +503,64 @@ function buildObjective(
 			: bestCount(oriented, 1) < bestCount(oriented, 0)
 		: minimapAnchorSwap(clusterHues, minimapColors);
 
-	const samples = oriented.map((read): ScannerMatchObjectiveSample => {
-		const [a, b] = swap ? ([1, 0] as const) : ([0, 1] as const);
-		return {
-			t: Math.max(0, Math.floor(read.t)),
-			time: read.time,
-			score: [read.score[a], read.score[b]],
-			penalty: [read.penalty[a], read.penalty[b]],
-			control: [read.control[a], read.control[b]],
-		};
-	});
-	return { mode: "SZ", samples };
+	const objective =
+		oriented.length === 0
+			? null
+			: {
+					mode: "SZ" as const,
+					samples: oriented.map((read): ScannerMatchObjectiveSample => {
+						const [a, b] = swap ? ([1, 0] as const) : ([0, 1] as const);
+						return {
+							t: Math.max(0, Math.floor(read.t)),
+							time: read.time,
+							score: [read.score[a], read.score[b]],
+							penalty: [read.penalty[a], read.penalty[b]],
+							control: [read.control[a], read.control[b]],
+						};
+					}),
+				};
+
+	const playerStatus =
+		liveStatuses.length === 0
+			? null
+			: {
+					samples: liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
+						const clusterSwapped = nearestSwapFlag(live, swapFlags, read.t);
+						const [a, b] =
+							clusterSwapped !== swap ? ([1, 0] as const) : ([0, 1] as const);
+						return {
+							t: Math.max(0, Math.floor(read.t)),
+							time: read.data.time,
+							special: [read.data.special[a], read.data.special[b]],
+							dead: [read.data.dead[a], read.data.dead[b]],
+						};
+					}),
+				};
+
+	return { objective, playerStatus };
+}
+
+/**
+ * The cluster-orientation flag of the counter read nearest in time —
+ * status reads are emitted off the same frames as counter reads, so the
+ * nearest one saw the same camera arrangement. False when no counter read
+ * carried a usable flag (POV footage never swaps anyway).
+ */
+function nearestSwapFlag(
+	objectives: readonly { t: number }[],
+	swapFlags: readonly boolean[],
+	t: number,
+): boolean {
+	let best = -1;
+	for (const [i, read] of objectives.entries()) {
+		if (
+			best === -1 ||
+			Math.abs(read.t - t) < Math.abs(objectives[best]!.t - t)
+		) {
+			best = i;
+		}
+	}
+	return best === -1 ? false : (swapFlags[best] ?? false);
 }
 
 /** A counter read with its sides in cluster (first-read) order. */
@@ -494,23 +590,33 @@ function seedClusterHues(
 }
 
 /**
- * Assign every read's sides to the color clusters: a read whose ink hues
- * sit closer to the clusters crosswise is swapped (the cast switched the
+ * Per-read cluster assignment of the sides: a read whose ink hues sit
+ * closer to the clusters crosswise is swapped (the cast switched the
  * specced side). Reads with no readable color inherit the previous read's
  * orientation — plate arrangement only changes with a camera change, which
  * leaves the colors readable once the plates are back.
  */
-function orientByTeamColor(
+function readSwapFlags(
 	objectives: readonly { t: number; data: ObjectiveData }[],
 	clusterHues: [number, number] | null,
-): OrientedObjectiveRead[] {
+): boolean[] {
 	let previousSwapped = false;
-	return objectives.map(({ t, data }): OrientedObjectiveRead => {
+	return objectives.map(({ data }) => {
 		const swapped = clusterHues
 			? readSwapped(data, clusterHues, previousSwapped)
 			: false;
 		previousSwapped = swapped;
-		const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
+		return swapped;
+	});
+}
+
+/** The counter reads with their sides in cluster (first-read) order. */
+function orientObjectives(
+	objectives: readonly { t: number; data: ObjectiveData }[],
+	swapFlags: readonly boolean[],
+): OrientedObjectiveRead[] {
+	return objectives.map(({ t, data }, i): OrientedObjectiveRead => {
+		const [a, b] = swapFlags[i] ? ([1, 0] as const) : ([0, 1] as const);
 		return {
 			t,
 			time: data.time,
@@ -582,6 +688,20 @@ function minimapTeamColors(
 }
 
 /**
+ * The dominant clock-zero projection across every read that carried a
+ * timer; null when none did. Counter and status reads project the same
+ * live clock, so one shared anchor voids replay wipes from both series.
+ */
+function dominantAnchorOf(
+	reads: readonly { t: number; data: { time: number | null } }[],
+): number | null {
+	const anchors = reads.flatMap((read) =>
+		read.data.time !== null ? [read.t + read.data.time] : [],
+	);
+	return anchors.length === 0 ? null : dominantAnchor(anchors);
+}
+
+/**
  * Drops reads taken off broadcast replay wipes: `t + time` projects the
  * wall-clock moment the match timer reaches zero, which stays constant
  * across a live game but lands far away when the broadcast re-runs an
@@ -591,15 +711,15 @@ function minimapTeamColors(
  * following one for a timerless head), so an unreadable — or as yet
  * unattested overtime — timer display never voids live reads.
  */
-function withoutReplayReads<T extends { t: number; data: ObjectiveData }>(
-	objectives: readonly T[],
-): T[] {
-	const anchored = objectives.flatMap((read, i) =>
+function withoutReplayReads<
+	T extends { t: number; data: { time: number | null } },
+>(reads: readonly T[], dominant: number | null): T[] {
+	if (dominant === null) return [...reads];
+	const anchored = reads.flatMap((read, i) =>
 		read.data.time !== null ? [{ i, anchor: read.t + read.data.time }] : [],
 	);
-	if (anchored.length === 0) return [...objectives];
+	if (anchored.length === 0) return [...reads];
 
-	const dominant = dominantAnchor(anchored.map((read) => read.anchor));
 	const keptAnchored = new Map(
 		anchored.map(({ i, anchor }) => [
 			i,
@@ -608,7 +728,7 @@ function withoutReplayReads<T extends { t: number; data: ObjectiveData }>(
 	);
 
 	let previousKept = keptAnchored.get(anchored[0]!.i)!;
-	return objectives.filter((_, i) => {
+	return reads.filter((_, i) => {
 		previousKept = keptAnchored.get(i) ?? previousKept;
 		return previousKept;
 	});

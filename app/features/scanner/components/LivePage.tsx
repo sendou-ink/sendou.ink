@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
+import { PlayerStatusTimeline } from "~/components/PlayerStatusTimeline";
 import {
 	listVideoInputs,
 	openVirtualCamera,
@@ -17,6 +18,7 @@ import {
 } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
+import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
@@ -43,6 +45,7 @@ import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
+import { objectiveDomain, playerStatusTeams } from "./player-status-view";
 import {
 	aggregateSendStatus,
 	matchContaining,
@@ -197,7 +200,8 @@ export function LivePage({
 					for (const event of result.events as DetectedEvent<FixtureData>[]) {
 						latestParseRef.current = { type: event.type, data: event.data };
 						if (
-							event.type === OBJECTIVE_EVENT_TYPE &&
+							(event.type === OBJECTIVE_EVENT_TYPE ||
+								event.type === PLAYER_STATUS_EVENT_TYPE) &&
 							objectiveBlockedRef.current
 						) {
 							continue;
@@ -407,8 +411,11 @@ export function LivePage({
 							const objectiveEvents = (
 								built.match.objective?.samples ?? []
 							).map((sample) => ({ t: sample.t, data: sample }));
+							const statusSamples = built.match.playerStatus?.samples ?? [];
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
-								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+								(e) =>
+									e.type !== OBJECTIVE_EVENT_TYPE &&
+									e.type !== PLAYER_STATUS_EVENT_TYPE,
 							);
 							const newest = built === builtMatches.at(-1);
 							return (
@@ -425,6 +432,16 @@ export function LivePage({
 											: undefined
 									}
 								>
+									{statusSamples.length > 0 ? (
+										<PlayerStatusTimeline
+											samples={statusSamples}
+											teams={playerStatusTeams(
+												built.match,
+												SCANNER_TEAM_LABELS,
+											)}
+											domain={objectiveDomain(objectiveEvents)}
+										/>
+									) : null}
 									{objectiveEvents.length > 0 ? (
 										<ObjectiveTimeline
 											events={objectiveEvents}

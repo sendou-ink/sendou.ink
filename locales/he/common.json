@@ -186,6 +186,8 @@
 	"objectiveTimeline.timeLeft": "",
 	"objectiveTimeline.penalty": "",
 	"objectiveTimeline.inControl": "",
+	"playerStatusTimeline.splatted": "",
+	"playerStatusTimeline.specialReady": "",
 	"maps.createMapList": "יצירת רשימת מפות",
 	"maps.halfSz": "50% SZ",
 	"maps.mapPool": "מאגר מפות",

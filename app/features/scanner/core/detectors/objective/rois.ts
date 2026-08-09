@@ -83,10 +83,13 @@ export const GATE_TIMER_MAX_MEAN = 70;
 export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 240;
 
 /**
- * Timer's white M:SS digits measure 34px; the colon's dots stack under
- * the digit height floor, so a plain height filter drops the colon.
+ * Timer's white M:SS digits measure 34px on native 1080p footage; upscaled
+ * 720p captures draw them at ~40px. Every height is tried and the best
+ * valid read wins — the wrong-scale set scores well under a clean read's
+ * confidence. The colon's dots stack under the digit height floor at
+ * either size, so a plain height filter drops the colon.
  */
-export const TIMER_TEXT_HEIGHT = 34;
+export const TIMER_TEXT_HEIGHTS = [34, 40] as const;
 export const TIMER_BIN_THRESHOLD = 160;
 export const TIMER_DIGIT_MIN_CONF = 0.75;
 export const TIMER_DIGIT_MIN_HEIGHT_RATIO = 0.82;
@@ -126,3 +129,87 @@ export const PENALTY_PROBE_MAX_STD = 30;
  * (attested fills >=112 vs <=19).
  */
 export const CONTROL_PLATE_MIN_SATURATION = 60;
+
+// ---- player-status icon strips (the PlayerStatus event) ----
+//
+// Eight per-player squid/octo icons flank the timer. An alive icon's body
+// is drawn in team ink; holding special washes the upper body out into a
+// bright pale glow; a splatted player's icon turns an unsaturated grey/dark
+// X'd shape. Two layouts share the band: POV (small icons) and the casted
+// spectator HUD (bigger icons, gauge digits hanging over each icon's
+// top-RIGHT and white camera-button badges below) — slot centers are
+// measured per side off the fixtures; neither layout is mirror-symmetric
+// (POV inner icons sit 108px left / 130px right of screen center) and the
+// cast sides don't even share a pitch (~103 left vs ~88 right).
+
+/** Per-side slot center x's, slots left-to-right. */
+export const STATUS_SLOT_CENTERS_POV: readonly [
+	readonly number[],
+	readonly number[],
+] = [
+	[554, 653, 752, 852],
+	[1090, 1190, 1288, 1388],
+];
+export const STATUS_SLOT_CENTERS_CAST: readonly [
+	readonly number[],
+	readonly number[],
+] = [
+	[542, 646, 750, 852],
+	[1085, 1173, 1261, 1348],
+];
+
+/**
+ * Shoulder probe: the icon's upper-left body, clear of the weapon
+ * silhouette (drawn center/lower), the cast gauge digits (hanging top-right)
+ * and the POV sub/special trinkets (bottom). The special-ready glow is
+ * detected here. Boxes are relative to a slot center.
+ */
+export const STATUS_SHOULDER_BOX_POV = { dx: -30, y: 38, w: 24, h: 20 };
+export const STATUS_SHOULDER_BOX_CAST = { dx: -30, y: 35, w: 24, h: 30 };
+
+/**
+ * Body probe: the widest band of the icon that dodges the cast camera
+ * badges below (y>=100) and the POV coin trinkets (y>=95). Team ink
+ * presence here separates alive icons from the grey/dark splatted ones.
+ */
+export const STATUS_BODY_BOX_POV = { dx: -32, y: 44, w: 64, h: 48 };
+export const STATUS_BODY_BOX_CAST = { dx: -32, y: 55, w: 64, h: 43 };
+
+/**
+ * An ink pixel: saturated and bright enough to be team color. The value
+ * floor keeps dark saturated stage backdrops (deep blue arena walls behind
+ * the translucent dead icons measure v<=90) from counting as ink.
+ */
+export const STATUS_INK_MIN_SPREAD = 70;
+export const STATUS_INK_MIN_VALUE = 105;
+
+/**
+ * A glow pixel of the special-ready wash. 225 splits the attested ready
+ * shoulders (fractions >=0.40) from the brightest alive team color — POV
+ * lime peaks between 215 and 225 (glow fraction 0.97 at 215, 0.00 at 225).
+ */
+export const STATUS_GLOW_MIN_VALUE = 225;
+
+/**
+ * Splatted: body ink under the floor (attested dead <=0.09 vs alive
+ * >=0.40) with the shoulder-glow guard keeping the near-white ready wash
+ * (body ink as low as 0.03, glow >=0.40 vs dead <=0.03) out of it.
+ */
+export const STATUS_DEAD_MAX_BODY_INK = 0.22;
+export const STATUS_DEAD_MAX_SHOULDER_GLOW = 0.2;
+
+/** Special ready: shoulder glow past this (attested >=0.40 vs <=0.06). */
+export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
+
+/**
+ * Cast-layout discriminator: the spectator HUD always draws white D-pad
+ * camera badges under the right team's icons; nothing fixed sits there on
+ * POV footage. All four probes must read white (bright AND unsaturated —
+ * bright sky is saturated cyan) to call the frame cast.
+ */
+export const STATUS_DPAD_PROBES: readonly Roi[] = [1105, 1180, 1256, 1332].map(
+	(cx) => ({ x: cx - 8, y: 102, w: 16, h: 16 }),
+);
+export const STATUS_WHITE_MIN_VALUE = 215;
+export const STATUS_WHITE_MAX_SPREAD = 40;
+export const STATUS_CAST_MIN_DPAD_WHITE = 0.35;

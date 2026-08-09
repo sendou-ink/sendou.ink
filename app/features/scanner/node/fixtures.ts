@@ -63,6 +63,7 @@ interface ExpectedScoreboard {
 		| "MapStart"
 		| "Minimap"
 		| "Objective"
+		| "PlayerStatus"
 		| "none";
 	data?: {
 		lobby?: ScannerLobby;
@@ -99,6 +100,12 @@ interface ExpectedScoreboard {
 		penalty?: [number | null, number | null];
 		/** Objective only: which team currently holds the objective */
 		control?: [boolean, boolean];
+		/** PlayerStatus only: special held per slot, [left team, right team] */
+		special?: [boolean[], boolean[]];
+		/** PlayerStatus only: splatted per slot, [left team, right team] */
+		dead?: [boolean[], boolean[]];
+		/** PlayerStatus only: which icon-strip geometry the frame shows */
+		layout?: "pov" | "cast";
 		/** Minimap only: casted 8-player spectator map screen (not parsed yet) */
 		spectator?: boolean;
 		/** Minimap only: own-team callout cards in slot order */

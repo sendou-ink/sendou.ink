@@ -13,6 +13,7 @@ import type {
 } from "../core/detectors/minimap/index";
 import { SPECTATOR_SLOTS } from "../core/detectors/minimap/rois";
 import type { ObjectiveData } from "../core/detectors/objective/index";
+import type { PlayerStatusData } from "../core/detectors/objective/player-status";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../core/detectors/scoreboard-battle-log/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
@@ -821,4 +822,138 @@ test("a scoreboard is the preferred weapon/mode source and closes a match", () =
 
 test("no minimaps and no scoreboard means no match", () => {
 	assert.deepEqual(buildScannerMatches([mapStart(30), mapStart(400)]), []);
+});
+
+// ---- player-status samples ----
+
+const ALL_FALSE = [
+	[false, false, false, false],
+	[false, false, false, false],
+] as PlayerStatusData["special"];
+
+function playerStatus(
+	t: number,
+	{
+		time = (300 - Math.round(t)) as number | null,
+		special = ALL_FALSE,
+		dead = ALL_FALSE,
+		layout = "pov" as PlayerStatusData["layout"],
+	} = {},
+): DetectedEvent {
+	const data: PlayerStatusData = { time, special, dead, layout };
+	return { type: "PlayerStatus", t, confidence: 0.9, data };
+}
+
+test("player-status reads become teams-order samples on the match", () => {
+	const special = [
+		[true, false, false, false],
+		[false, false, false, false],
+	] as PlayerStatusData["special"];
+	const dead = [
+		[false, false, false, false],
+		[false, false, true, false],
+	] as PlayerStatusData["dead"];
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(120, { special, dead }),
+		scoreboard(300),
+	]);
+	assert.deepEqual(built[0]!.match.playerStatus, {
+		samples: [{ t: 120, time: 180, special, dead }],
+	});
+});
+
+test("a losing-side pov swaps player-status samples into teams order", () => {
+	const built = buildScannerMatches([
+		playerStatus(120, {
+			special: [
+				[true, false, false, false],
+				[false, false, false, false],
+			],
+			dead: [
+				[false, false, false, false],
+				[false, true, false, false],
+			],
+		}),
+		scoreboard(300, { povIndex: 5 }),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples[0]!;
+	assert.deepEqual(sample.special, [
+		[false, false, false, false],
+		[true, false, false, false],
+	]);
+	assert.deepEqual(sample.dead, [
+		[false, true, false, false],
+		[false, false, false, false],
+	]);
+});
+
+test("status reads inherit the nearest counter read's cast orientation", () => {
+	const built = buildScannerMatches([
+		minimap(0, { teamColors: [GREEN_INK, PURPLE_INK] }),
+		objective(60, {
+			score: [80, 90],
+			teamColor: [GREEN_INK, PURPLE_INK],
+		}),
+		playerStatus(60, {
+			dead: [
+				[true, false, false, false],
+				[false, false, false, false],
+			],
+			layout: "cast",
+		}),
+		// the caster specs a purple player: sides swap
+		objective(120, {
+			score: [90, 75],
+			teamColor: [PURPLE_INK, GREEN_INK],
+		}),
+		playerStatus(120, {
+			dead: [
+				[true, false, false, false],
+				[false, false, false, false],
+			],
+			layout: "cast",
+		}),
+		minimap(180),
+	]);
+	const samples = built[0]!.match.playerStatus!.samples;
+	assert.deepEqual(samples[0]!.dead, [
+		[true, false, false, false],
+		[false, false, false, false],
+	]);
+	// the same on-screen left side is now the other team
+	assert.deepEqual(samples[1]!.dead, [
+		[false, false, false, false],
+		[true, false, false, false],
+	]);
+	assert.equal(built[0]!.match.cast, true);
+});
+
+test("a known non-SZ match drops its player-status reads too", () => {
+	const events = [
+		mapStart(0, { mode: "CB" }),
+		objective(60),
+		playerStatus(61),
+		scoreboard(300, { mode: "CB" }),
+	];
+	const built = buildScannerMatches(events);
+	assert.equal(built[0]!.match.playerStatus, null);
+	assert.deepEqual(invalidObjectiveEvents(built), [events[1], events[2]]);
+});
+
+test("replay wipes drop status reads by the shared clock projection", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		objective(60, { score: [80, 6] }),
+		playerStatus(60),
+		objective(61, { score: [78, 6] }),
+		// broadcast re-runs the opening moments, clock jumped back
+		playerStatus(90, { time: 291 }),
+		objective(91, { time: 290, score: [99, 100] }),
+		scoreboard(300),
+	]);
+	assert.deepEqual(
+		built[0]!.match.playerStatus!.samples.map((sample) => sample.t),
+		[60],
+	);
 });

@@ -3,6 +3,7 @@ import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 	ScannerMatchPlayer,
+	ScannerMatchPlayerStatus,
 } from "~/features/scanner/core/scanner-match";
 import type { ScannerLobby } from "~/features/scanner/scanner-types";
 import type {
@@ -58,6 +59,7 @@ function testMatch({
 	abilities = {},
 	povIndex = null,
 	objective = null,
+	playerStatus = null,
 }: {
 	t?: number;
 	mode?: ModeShort | null;
@@ -68,6 +70,7 @@ function testMatch({
 	abilities?: Record<number, AbilityWithUnknown[][]>;
 	povIndex?: number | null;
 	objective?: ScannerMatchObjective | null;
+	playerStatus?: ScannerMatchPlayerStatus | null;
 } = {}): ScannerMatch {
 	const players = names.map(
 		(name, i): ScannerMatchPlayer => ({
@@ -91,6 +94,7 @@ function testMatch({
 		replayCode: null,
 		cast: false,
 		objective,
+		playerStatus,
 		teams: [{ players: players.slice(0, 4) }, { players: players.slice(4) }],
 		winner: 0,
 		pov:
@@ -122,6 +126,25 @@ function testObjective(): ScannerMatchObjective {
 	};
 }
 
+function testPlayerStatus(): ScannerMatchPlayerStatus {
+	return {
+		samples: [
+			{
+				t: 595,
+				time: 305,
+				special: [
+					[true, false, false, false],
+					[false, false, false, false],
+				],
+				dead: [
+					[false, false, false, false],
+					[false, true, false, false],
+				],
+			},
+		],
+	};
+}
+
 /** The same game reported with sides in the other on-screen order. */
 function swapSides(match: ScannerMatch): ScannerMatch {
 	return {
@@ -137,6 +160,16 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 							score: [sample.score[1], sample.score[0]],
 							penalty: [sample.penalty[1], sample.penalty[0]],
 							control: [sample.control[1], sample.control[0]],
+						})),
+					},
+		playerStatus:
+			match.playerStatus === null
+				? null
+				: {
+						samples: match.playerStatus.samples.map((sample) => ({
+							...sample,
+							special: [sample.special[1], sample.special[0]],
+							dead: [sample.dead[1], sample.dead[0]],
 						})),
 					},
 		winner: match.winner === null ? null : match.winner === 0 ? 1 : 0,
@@ -480,6 +513,43 @@ describe("deriveScoreboardData", () => {
 		]);
 
 		expect(swapped!.objective).toEqual(straight!.objective);
+	});
+
+	it("rebases status samples onto the same origin as the counter's", () => {
+		const data = derive([
+			{
+				data: testMatch({
+					objective: testObjective(),
+					playerStatus: testPlayerStatus(),
+				}),
+				povUserId: null,
+			},
+		]);
+
+		// the status read at 595 came first, so it is the shared origin
+		expect(data!.playerStatus!.samples[0]!.t).toBe(0);
+		expect(data!.objective!.samples.map((sample) => sample.t)).toEqual([5, 35]);
+	});
+
+	it("derives status samples winner-first", () => {
+		const straight = derive([
+			{
+				data: testMatch({ playerStatus: testPlayerStatus() }),
+				povUserId: null,
+			},
+		]);
+		const swapped = derive([
+			{
+				data: swapSides(testMatch({ playerStatus: testPlayerStatus() })),
+				povUserId: null,
+			},
+		]);
+
+		expect(straight!.playerStatus!.samples[0]!.dead).toEqual([
+			[false, false, false, false],
+			[false, true, false, false],
+		]);
+		expect(swapped!.playerStatus).toEqual(straight!.playerStatus);
 	});
 
 	it("leaves out the objective of a match with no counter reads", () => {

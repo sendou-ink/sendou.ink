@@ -37,6 +37,7 @@ function testMatch(partial: Partial<ScannerMatch> = {}): ScannerMatch {
 		replayCode: null,
 		cast: false,
 		objective: null,
+		playerStatus: null,
 		teams: [
 			{ players: NAMES.slice(0, 4).map((n, i) => player(n, WEAPONS[i]!)) },
 			{ players: NAMES.slice(4).map((n, i) => player(n, WEAPONS[4 + i]!)) },
@@ -281,5 +282,55 @@ describe("mergeMatches", () => {
 			NAMES.slice(0, 4),
 		);
 		expect(merged.matchScores).toEqual([100, 52]);
+	});
+});
+
+describe("playerStatus", () => {
+	const STATUS: NonNullable<ScannerMatch["playerStatus"]> = {
+		samples: [
+			{
+				t: 60,
+				time: 240,
+				special: [
+					[true, false, false, false],
+					[false, false, false, false],
+				],
+				dead: [
+					[false, false, false, false],
+					[false, true, false, false],
+				],
+			},
+		],
+	};
+
+	it("merges whole-series first-ingest-wins", () => {
+		const filled = Matches.mergeMatches(
+			testMatch(),
+			testMatch({ playerStatus: STATUS }),
+		);
+		expect(filled.merged.playerStatus).toEqual(STATUS);
+		expect(filled.changed).toBe(true);
+
+		const kept = Matches.mergeMatches(
+			testMatch({ playerStatus: STATUS }),
+			testMatch({ playerStatus: { samples: [] } }),
+		);
+		expect(kept.merged.playerStatus).toEqual(STATUS);
+	});
+
+	it("side-aligning an incoming match swaps its status samples too", () => {
+		const incoming = sideSwapped(testMatch({ playerStatus: STATUS }));
+		const { merged } = Matches.mergeMatches(
+			testMatch({ winner: null, matchScores: null, playerStatus: null }),
+			incoming,
+		);
+		expect(merged.playerStatus!.samples[0]!.dead).toEqual([
+			[false, true, false, false],
+			[false, false, false, false],
+		]);
+		expect(merged.playerStatus!.samples[0]!.special).toEqual([
+			[false, false, false, false],
+			[true, false, false, false],
+		]);
 	});
 });
