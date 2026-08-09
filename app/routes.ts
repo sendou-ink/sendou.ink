@@ -355,6 +355,7 @@ export default [
 		),
 	]),
 
+	route("/end-season", "features/api-private/routes/end-season.ts"),
 	route("/patrons", "features/api-private/routes/patrons.ts"),
 	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/run-routine", "features/api-private/routes/run-routine.ts"),

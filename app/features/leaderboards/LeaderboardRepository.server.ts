@@ -1,4 +1,3 @@
-import { add } from "date-fns";
 import type { InferResult } from "kysely";
 import { sql } from "kysely";
 import { jsonArrayFrom } from "kysely/helpers/sqlite";
@@ -163,7 +162,7 @@ export async function hasEnoughSqMatchesByUserId(userId: number) {
 	const season = Seasons.currentOrPrevious();
 	if (!season) return false;
 
-	const dateRange = Seasons.nthToDateRange(season.nth);
+	const dateRange = Seasons.nthToReportingDateRange(season.nth);
 	if (!dateRange) return false;
 
 	const rows = await db
@@ -187,11 +186,7 @@ export async function hasEnoughSqMatchesByUserId(userId: number) {
 			">",
 			dateToDatabaseTimestamp(dateRange.starts),
 		)
-		.where(
-			"GroupMatch.createdAt",
-			"<",
-			dateToDatabaseTimestamp(add(dateRange.ends, { days: 1 })),
-		)
+		.where("GroupMatch.createdAt", "<", dateToDatabaseTimestamp(dateRange.ends))
 		.select(db.fn.countAll<number>().as("count"))
 		.executeTakeFirstOrThrow();
 
@@ -408,7 +403,7 @@ export type SeasonPopularUsersWeapon = Record<
 export async function findSeasonPopularUsersWeapon(
 	season: number,
 ): Promise<SeasonPopularUsersWeapon> {
-	const { starts, ends } = Seasons.nthToDateRange(season);
+	const { starts, ends } = Seasons.nthToReportingDateRange(season);
 	const startsTs = dateToDatabaseTimestamp(starts);
 	const endsTs = dateToDatabaseTimestamp(ends);
 

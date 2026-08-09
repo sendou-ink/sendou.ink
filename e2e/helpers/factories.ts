@@ -95,7 +95,7 @@ export async function resetForTest(page: Page, factories: Factories) {
 		discordName: "N-ZAP",
 	});
 
-	await flushIfDirty(page);
+	await flushIfDirty(page, { resetDevOverrides: true });
 }
 
 /**
@@ -103,15 +103,19 @@ export async function resetForTest(page: Page, factories: Factories) {
  * flush. Called by the helpers that make the browser talk to the server — tests do
  * not call it themselves.
  */
-export async function flushIfDirty(page: Page) {
+export async function flushIfDirty(
+	page: Page,
+	{ resetDevOverrides = false } = {},
+) {
 	const { isDatabaseDirty, markDatabaseClean } = await import(
 		"~/db/write-tracker"
 	);
-	if (!isDatabaseDirty()) return;
+	if (!isDatabaseDirty() && !resetDevOverrides) return;
 
 	// deliberately not retryPost: that helper calls this one, and would recurse
 	const response = await page.request.post("/refresh-caches", {
 		timeout: 7_500,
+		form: { resetDevOverrides: String(resetDevOverrides) },
 	});
 	if (!response.ok()) {
 		throw new Error(`Cache refresh failed with status ${response.status()}`);

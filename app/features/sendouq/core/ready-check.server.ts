@@ -1,5 +1,6 @@
 import { addMinutes } from "date-fns";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
@@ -134,6 +135,15 @@ export async function confirm({
 		return null;
 	}
 
+	// the season ended while the groups were confirming, so there is no rated match
+	// to make. nobody is at fault for that, so it ends without missed check marks
+	// and the ready page's loader sends both groups back to looking
+	if (!Seasons.current()) {
+		await abort(readyCheck);
+
+		return null;
+	}
+
 	return createMatch({ readyCheck, actorUserId: userId });
 }
 
@@ -148,9 +158,28 @@ export async function expire(readyCheck: {
 	bravoGroupId: number;
 	members: Array<{ userId: number }>;
 }) {
+	await endReadyCheck(readyCheck, { markMissedMembers: true });
+}
+
+/**
+ * Ends a ready check that can no longer result in a match. Both groups go back to
+ * looking with nobody marked as having missed the check, as nobody is at fault.
+ */
+export async function abort(readyCheck: {
+	id: number;
+	alphaGroupId: number;
+	bravoGroupId: number;
+}) {
+	await endReadyCheck(readyCheck, { markMissedMembers: false });
+}
+
+async function endReadyCheck(
+	readyCheck: { id: number; alphaGroupId: number; bravoGroupId: number },
+	{ markMissedMembers }: { markMissedMembers: boolean },
+) {
 	await SQGroupRepository.deleteReadyCheck({
 		id: readyCheck.id,
-		markMissedMembers: true,
+		markMissedMembers,
 	});
 
 	// the ready check no longer exists so there is nothing to respond to

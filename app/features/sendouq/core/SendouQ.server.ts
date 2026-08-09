@@ -1,4 +1,5 @@
 import { isWithinInterval, sub } from "date-fns";
+import { redirect } from "react-router";
 import * as R from "remeda";
 import type { DBBoolean } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
@@ -14,10 +15,18 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { SerializeFrom } from "~/utils/remix";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+	SENDOUQ_READY_PAGE,
+	sendouQMatchPage,
+} from "~/utils/urls";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { TierRange } from "../q-types";
 import { getTierIndex } from "../q-utils.server";
 import { tierDifferenceToRangeOrExact } from "./groups.server";
+import * as ReadyCheck from "./ready-check.server";
 
 type DBGroupRow = Awaited<
 	ReturnType<typeof SQGroupRepository.findCurrentGroups>
@@ -595,4 +604,61 @@ async function freshSendouQInstance() {
 	]);
 
 	return new SendouQClass(groups, recentMatches, skills);
+}
+
+/** User needs to be on certain page depending on their SendouQ group status. This functions throws a `Redirect` if they are trying to load the wrong page. */
+export async function sqRedirectIfNeeded({
+	ownGroup,
+	currentLocation,
+}: {
+	ownGroup?: SQOwnGroup;
+	currentLocation: "default" | "preparing" | "looking" | "ready" | "match";
+}) {
+	const newLocation = groupRedirectLocation(
+		await groupUnlessSeasonIsOver(ownGroup),
+	);
+
+	// we are already in the correct location, don't redirect
+	if (currentLocation === "default" && newLocation === SENDOUQ_PAGE) return;
+	if (currentLocation === "preparing" && newLocation === SENDOUQ_PREPARING_PAGE)
+		return;
+	if (currentLocation === "looking" && newLocation === SENDOUQ_LOOKING_PAGE)
+		return;
+	if (currentLocation === "ready" && newLocation === SENDOUQ_READY_PAGE) return;
+	if (currentLocation === "match" && newLocation.includes("match")) return;
+
+	throw redirect(newLocation);
+}
+
+/**
+ * Takes the group out of the queue if the season it was queueing for has ended,
+ * leaving nowhere for it to be redirected but the front page. A group that got
+ * its match stays as it is, so the match can be reported during its grace period.
+ */
+async function groupUnlessSeasonIsOver(ownGroup?: SQOwnGroup) {
+	if (!ownGroup || ownGroup.matchId || Seasons.current()) return ownGroup;
+
+	// the ready check the group is in can't produce a rated match anymore, and
+	// leaving it behind would have the expiry routine mark its members as having
+	// missed a check they never had the chance to make
+	if (ownGroup.status === "READY_CHECK") {
+		const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(
+			ownGroup.id,
+		);
+		if (readyCheck) await ReadyCheck.abort(readyCheck);
+	}
+
+	await SQGroupRepository.setAsInactive(ownGroup.id);
+	await refreshSendouQInstance();
+
+	return undefined;
+}
+
+function groupRedirectLocation(group?: SQOwnGroup) {
+	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
+	if (group?.matchId) return sendouQMatchPage(group.matchId);
+	if (group?.status === "READY_CHECK") return SENDOUQ_READY_PAGE;
+	if (group) return SENDOUQ_LOOKING_PAGE;
+
+	return SENDOUQ_PAGE;
 }

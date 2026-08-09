@@ -7,6 +7,7 @@ import {
 	SENDOUQ_READY_PAGE,
 } from "~/utils/urls";
 import {
+	endSeason,
 	expect,
 	impersonate,
 	isNotVisible,
@@ -347,6 +348,77 @@ test.describe("SendouQ", () => {
 
 		await expect(looking.ownGroupCard.members).toHaveCount(FULL_GROUP_SIZE - 1);
 		await expect(looking.ownGroupCard.kickButtons).toHaveCount(0);
+	});
+
+	test("A ready check outliving the season doesn't turn into a match", async ({
+		page,
+		factories,
+	}) => {
+		const ownMembers = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const theirMembers =
+			await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		const ownGroup = await factories.SQGroupFactory.create({
+			memberUserIds: ownMembers.map((member) => member.id),
+		});
+		const theirGroup = await factories.SQGroupFactory.create({
+			memberUserIds: theirMembers.map((member) => member.id),
+		});
+
+		// everyone but the last member of the own group confirmed
+		await factories.SQReadyCheckFactory.create(
+			{
+				alphaGroupId: ownGroup.id,
+				bravoGroupId: theirGroup.id,
+				confirmedByUserId: ownMembers[0].id,
+			},
+			{
+				confirmedByUserIds: [
+					...ownMembers.slice(1, -1).map((member) => member.id),
+					...theirMembers.map((member) => member.id),
+				],
+			},
+		);
+
+		await impersonate(page, ownMembers.at(-1)!.id);
+
+		const ready = new SendouQReadyPage(page);
+		await ready.goto();
+
+		// the season ends before the last one confirms
+		await endSeason(page);
+
+		await ready.confirmReady();
+
+		// there is no rated match left to make, so the ready check ends and both
+		// groups leave the queue instead of being sent to play
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
+	});
+
+	test("The season ending takes the groups out of the queue", async ({
+		page,
+		factories,
+	}) => {
+		const members = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		await factories.SQGroupFactory.create({
+			memberUserIds: members.map((member) => member.id),
+		});
+
+		await impersonate(page, members[0].id);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.goto();
+		await expect(looking.ownGroupCard.members).toHaveCount(FULL_GROUP_SIZE);
+
+		await endSeason(page);
+
+		// the group is taken out of the queue on the spot, so there is no
+		// looking page left to be on
+		await looking.goto();
+		await expect(page).toHaveURL(SENDOUQ_PAGE);
+
+		// and no way back in until the next season starts
+		const q = new SendouQPage(page);
+		await isNotVisible(q.locators.joinWithMatesButton);
 	});
 
 	test("Joining the queue is blocked when the season's initial powers were never seeded", async ({

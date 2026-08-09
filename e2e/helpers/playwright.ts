@@ -212,6 +212,19 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 	return retryPost(page, "impersonate", `/auth/impersonate?id=${userId}`);
 }
 
+/**
+ * Makes the worker's server resolve every season as over, so tests can cover the
+ * season boundary. Undone before the next test starts.
+ */
+export async function endSeason(page: Page) {
+	const response = await retryPost(page, "endSeason", "/end-season");
+	if (!response?.ok()) {
+		throw new Error(
+			`Ending the season failed with status ${response?.status()}`,
+		);
+	}
+}
+
 /** Runs the named server Routine (normally cron-driven) in the worker's server process. */
 export async function runRoutine(page: Page, name: string) {
 	const response = await retryPost(page, "runRoutine", "/run-routine", {

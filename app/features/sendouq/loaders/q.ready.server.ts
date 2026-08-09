@@ -5,15 +5,14 @@ import * as UserCardRepository from "~/features/user-card/UserCardRepository.ser
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import * as ReadyCheck from "../core/ready-check.server";
-import { SendouQ } from "../core/SendouQ.server";
-import { sqRedirectIfNeeded } from "../q-utils.server";
+import { SendouQ, sqRedirectIfNeeded } from "../core/SendouQ.server";
 
 export const loader = async () => {
 	const user = requireUser();
 
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 
-	sqRedirectIfNeeded({
+	await sqRedirectIfNeeded({
 		ownGroup,
 		currentLocation: "ready",
 	});

@@ -1,4 +1,4 @@
-import { add, startOfYear } from "date-fns";
+import { startOfYear } from "date-fns";
 import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
 import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
@@ -11,7 +11,10 @@ import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
@@ -393,7 +396,7 @@ export async function findSeasonCanceledMatchesByUserId({
 	userId: number;
 	season: number;
 }) {
-	const { starts, ends } = Seasons.nthToDateRange(season);
+	const { starts, ends } = Seasons.nthToReportingDateRange(season);
 
 	return db
 		.selectFrom("GroupMember")
@@ -449,11 +452,7 @@ export async function findSeasonCanceledMatchesByUserId({
 		])
 		.where("GroupMember.userId", "=", userId)
 		.where("GroupMatch.createdAt", ">=", dateToDatabaseTimestamp(starts))
-		.where(
-			"GroupMatch.createdAt",
-			"<=",
-			dateToDatabaseTimestamp(add(ends, { days: 1 })),
-		)
+		.where("GroupMatch.createdAt", "<=", dateToDatabaseTimestamp(ends))
 		.orderBy("GroupMatch.createdAt", "desc")
 		.execute();
 }
@@ -494,7 +493,7 @@ export async function findCancelNominationCountsByUserIds({
 	userIds: number[];
 	season: number;
 }) {
-	const seasonRange = Seasons.nthToDateRange(season);
+	const seasonRange = Seasons.nthToReportingDateRange(season);
 	const yearStarts = startOfYear(new Date());
 	const from = new Date(
 		Math.min(seasonRange.starts.getTime(), yearStarts.getTime()),
@@ -539,8 +538,7 @@ export async function findCancelNominationCountsByUserIds({
 			seasonCount: userMatches.filter(
 				(row) =>
 					row.createdAt >= dateToDatabaseTimestamp(seasonRange.starts) &&
-					row.createdAt <=
-						dateToDatabaseTimestamp(add(seasonRange.ends, { days: 1 })),
+					row.createdAt <= dateToDatabaseTimestamp(seasonRange.ends),
 			).length,
 			yearCount: userMatches.filter(
 				(row) => row.createdAt >= dateToDatabaseTimestamp(yearStarts),
@@ -1269,8 +1267,16 @@ async function finalizeMatch({
 	confirmedByUserId: number | null;
 	preFinalize?: (trx: Transaction<DB>) => Promise<unknown>;
 }) {
+	// the match belongs to the season it was created in, not to whichever season
+	// is open when it happens to be reported (up to 25h later, see Seasons)
+	const season = Seasons.currentOrPrevious(
+		databaseTimestampToDate(match.createdAt),
+	)?.nth;
+	invariant(typeof season === "number", `No season for match ${match.id}`);
+
 	const { newSkills, differences } = await calculateMatchSkills({
 		groupMatchId: match.id,
+		season,
 		winner: (match.groupAlpha.id === winnerGroupId
 			? match.groupAlpha
 			: match.groupBravo
@@ -1300,11 +1306,11 @@ async function finalizeMatch({
 			.where("groupMatchId", "=", match.id)
 			.execute();
 		await PlayerStatRepository.upsertMapResults(
-			summarizeMaps({ match, members, winners }),
+			summarizeMaps({ match, season, members, winners }),
 			trx,
 		);
 		await PlayerStatRepository.upsertPlayerResults(
-			summarizePlayerResults({ match, members, winners }),
+			summarizePlayerResults({ match, season, members, winners }),
 			trx,
 		);
 		await MatchSkillRepository.insertMatchSkills(

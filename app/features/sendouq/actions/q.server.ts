@@ -16,7 +16,11 @@ import {
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
 import { normalizeFriendCode } from "~/utils/zod";
-import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
+import {
+	refreshSendouQInstance,
+	SendouQ,
+	sqRedirectIfNeeded,
+} from "../core/SendouQ.server";
 import { frontPageSchema } from "../q-action-schemas";
 import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
 import { qSearchParams } from "../q-search-params";
@@ -25,7 +29,6 @@ import {
 	SendouQError,
 	seasonInitialSkillsExist,
 	setGroupChatMetadata,
-	sqRedirectIfNeeded,
 } from "../q-utils.server";
 
 export const action: ActionFunction = async ({ request, url }) => {
@@ -44,7 +47,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 	try {
 		switch (data._action) {
 			case "JOIN_QUEUE": {
-				sqRedirectIfNeeded({
+				await sqRedirectIfNeeded({
 					ownGroup: SendouQ.findOwnGroup(user.id),
 					currentLocation: "default",
 				});

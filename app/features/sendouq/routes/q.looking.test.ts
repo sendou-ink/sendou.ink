@@ -13,8 +13,10 @@ import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { withUserId, wrappedAction } from "~/utils/Test";
 import * as ReadyCheck from "../core/ready-check.server";
@@ -127,6 +129,37 @@ describe("SendouQ match creation validation", () => {
 
 		const matches = await db.selectFrom("GroupMatch").selectAll().execute();
 		expect(matches).toHaveLength(0);
+	});
+
+	test("doesn't create a rated match after the season has ended", async () => {
+		const groups = await prepareGroups();
+
+		const season = Seasons.currentOrPrevious()!;
+		vi.useFakeTimers();
+		try {
+			// both groups were queueing when the season ended a moment ago
+			vi.setSystemTime(new Date(season.ends.getTime() + 10 * 60 * 1000));
+			// biome-ignore lint/plugin: no production write reaches this state, it is produced by time passing while the group idles in the queue
+			await db
+				.updateTable("Group")
+				.set({ latestActionAt: dateToDatabaseTimestamp(new Date()) })
+				.execute();
+			await refreshSendouQInstance();
+
+			await lookingAction(
+				{
+					_action: "MATCH_UP",
+					targetGroupId: groups.theirGroup.id,
+				},
+				{ user: "admin" },
+			).catch(() => undefined);
+			await confirmEveryoneReady(groups.ownGroup.id);
+
+			const matches = await db.selectFrom("GroupMatch").selectAll().execute();
+			expect(matches).toHaveLength(0);
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });
 

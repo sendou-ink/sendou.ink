@@ -193,7 +193,7 @@ export async function findSeasonReportedWeaponsByUserId({
 	userId: number;
 	season: number;
 }): Promise<Array<{ weaponSplId: MainWeaponId; count: number }>> {
-	const { starts, ends } = Seasons.nthToDateRange(season);
+	const { starts, ends } = Seasons.nthToReportingDateRange(season);
 	const startsTs = dateToDatabaseTimestamp(starts);
 	const endsTs = dateToDatabaseTimestamp(ends);
 
@@ -268,7 +268,7 @@ export async function findAllWeaponUsageStats({
 	stageId: StageId;
 	season: number;
 }): Promise<WeaponUsageStat[]> {
-	const { starts, ends } = Seasons.nthToDateRange(season);
+	const { starts, ends } = Seasons.nthToReportingDateRange(season);
 
 	const rows = await db
 		.selectFrom("GroupMember")

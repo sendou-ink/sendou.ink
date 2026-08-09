@@ -6,9 +6,8 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { groupExpiryStatus } from "../core/groups";
-import { SendouQ } from "../core/SendouQ.server";
+import { SendouQ, sqRedirectIfNeeded } from "../core/SendouQ.server";
 import { qLookingSearchParams } from "../q-search-params";
-import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
@@ -23,7 +22,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			: SendouQ.lookingGroups(user.id);
 
 	if (!isPreview) {
-		sqRedirectIfNeeded({
+		await sqRedirectIfNeeded({
 			ownGroup,
 			currentLocation: "looking",
 		});
