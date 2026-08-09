@@ -72,6 +72,7 @@ export const action = async (args: ActionFunctionArgs) => {
 			type: "participant",
 			userId,
 		});
+		await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 		await syncPickupChatMetadata({
 			teamId: team.id,

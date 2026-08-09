@@ -186,12 +186,7 @@ export const upsertRegistrationAction = async (
 		});
 	}
 
-	if (!team) {
-		ShowcaseTournaments.updateCachedTournamentTeamCount({
-			tournamentId,
-			newTeamCount: tournament.ctx.teams.length + 1,
-		});
-	}
+	await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 	clearTournamentDataCache(tournamentId);
 

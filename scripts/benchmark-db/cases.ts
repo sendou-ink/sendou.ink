@@ -1088,6 +1088,11 @@ export function buildCases(fx: Fixtures): {
 		TournamentRepository.findAllForShowcase(),
 	);
 	add(
+		"TournamentRepository.findShowcaseCountsById",
+		fx.heavyTournamentId,
+		(tournamentId) => TournamentRepository.findShowcaseCountsById(tournamentId),
+	);
+	add(
 		"TournamentRepository.findAllBetweenTwoTimestamps",
 		fx.calendarWindow,
 		(window) => TournamentRepository.findAllBetweenTwoTimestamps(window),

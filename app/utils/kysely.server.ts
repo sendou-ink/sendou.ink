@@ -19,7 +19,6 @@ import {
 } from "~/db/json-selections";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
-import { databaseTimestampNow } from "./dates";
 import { IS_E2E_TEST_RUN } from "./e2e";
 import { safeNumberParse } from "./number";
 
@@ -290,44 +289,60 @@ export function tournamentTeamCount(
 		.where("TournamentTeam.isPlaceholder", "=", 0);
 }
 
+/** Expression resolving to whether any of a tournament's brackets has been started. */
+function tournamentHasStarted(eb: ExpressionBuilder<DB, "Tournament">) {
+	return eb.exists(
+		eb
+			.selectFrom("TournamentStage")
+			.select("TournamentStage.id")
+			.whereRef("TournamentStage.tournamentId", "=", "Tournament.id"),
+	);
+}
+
 /**
- * Subquery resolving to a tournament's non-placeholder teams that are either checked in to the
- * tournament itself (not to a specific bracket) or belong to a tournament that has not started yet.
- * Correlates on `"Tournament"."id"` and `"CalendarEventDate"."startsAt"`. Has no select of its own,
- * so extend it with the aggregate the caller needs, e.g. `.select(({ fn }) => fn.countAll().as("count"))`.
+ * Subquery resolving to the non-placeholder teams of a tournament that are still relevant to it:
+ * every registered team as long as no bracket has been started, only the checked in ones after
+ * that. Mirrors how the tournament page itself resolves its teams, so keep the two in sync.
+ * Correlates on `"Tournament"."id"`. Has no select of its own, so extend it with the aggregate the
+ * caller needs. A team can have several check in rows, so aggregate with `.distinct()`, e.g.
+ * `.select(({ fn }) => fn.count("TournamentTeam.id").distinct().as("count"))`.
  */
-export function tournamentCheckedInTeams(
-	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
-) {
+function tournamentCheckedInTeams(eb: ExpressionBuilder<DB, "Tournament">) {
 	return eb
 		.selectFrom("TournamentTeam")
-		.leftJoin("TournamentTeamCheckIn", (join) =>
-			join
-				.on("TournamentTeamCheckIn.bracketIdx", "is", null)
-				.onRef(
-					"TournamentTeamCheckIn.tournamentTeamId",
-					"=",
-					"TournamentTeam.id",
-				),
+		.leftJoin(
+			"TournamentTeamCheckIn",
+			"TournamentTeamCheckIn.tournamentTeamId",
+			"TournamentTeam.id",
 		)
 		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
 		.where("TournamentTeam.isPlaceholder", "=", 0)
 		.where((eb2) =>
 			eb2.or([
 				eb2("TournamentTeamCheckIn.checkedInAt", "is not", null),
-				eb2("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
+				eb2.not(tournamentHasStarted(eb)),
 			]),
 		);
 }
 
 /**
+ * Subquery counting the teams of {@link tournamentCheckedInTeams}. Correlates on
+ * `"Tournament"."id"`. Alias it `.as("teamsCount")` when selecting it directly.
+ */
+export function tournamentTeamsCount(eb: ExpressionBuilder<DB, "Tournament">) {
+	return tournamentCheckedInTeams(eb).select(({ fn }) => [
+		fn.count<number>("TournamentTeam.id").distinct().as("count"),
+	]);
+}
+
+/**
  * Expression resolving to a tournament's participant count: rostered players of the teams from
- * {@link tournamentCheckedInTeams} while the tournament is still to come, players who actually got
+ * {@link tournamentCheckedInTeams} while the tournament is still ongoing, players who actually got
  * a result once it has been finalized. Correlates on `"Tournament"."id"`. Alias it
  * `.as("membersCount")` when selecting it directly.
  */
 export function tournamentMembersCount(
-	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
+	eb: ExpressionBuilder<DB, "Tournament">,
 ) {
 	return eb
 		.case()

@@ -26,9 +26,9 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	jsonObjectFrom,
-	tournamentCheckedInTeams,
 	tournamentLogoWithDefault,
 	tournamentMembersCount,
+	tournamentTeamsCount,
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -800,11 +800,7 @@ export function findAllForShowcase() {
 			"CalendarEvent.organizationId",
 			"CalendarEventDate.startsAt",
 			"CalendarEvent.hidden",
-			tournamentCheckedInTeams(eb)
-				.select(({ fn }) => [
-					fn.count<number>("TournamentTeam.id").distinct().as("count"),
-				])
-				.as("teamsCount"),
+			tournamentTeamsCount(eb).as("teamsCount"),
 			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
@@ -883,6 +879,22 @@ function databaseTimestampWeekAgo() {
 	now.setDate(now.getDate() - 7);
 
 	return dateToDatabaseTimestamp(now);
+}
+
+/**
+ * Resolves the team & participant counts of one tournament exactly like {@link findAllForShowcase}
+ * does, meant for refreshing those counts of an already cached showcase tournament.
+ */
+export function findShowcaseCountsById(tournamentId: number) {
+	return db
+		.selectFrom("Tournament")
+		.select((eb) => [
+			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
+		])
+		.where("Tournament.id", "=", tournamentId)
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
+		.executeTakeFirst();
 }
 
 export function findAllBetweenTwoTimestamps({

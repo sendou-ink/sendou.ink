@@ -137,8 +137,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 					tournamentId,
 					type: "participant",
 					userId: user.id,
-					newTeamCount: tournament.ctx.teams.length + 1,
 				});
+				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 			}
 			break;
 		}
@@ -168,6 +168,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				type: "participant",
 				userId: data.userId,
 			});
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			await syncPickupChatMetadata({
 				teamId: ownTeam.id,
@@ -206,6 +207,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				type: "participant",
 				userId: user.id,
 			});
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			await syncPickupChatMetadata({
 				teamId: teamMemberOf.id,
@@ -318,6 +320,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				type: "participant",
 				userId: data.userId,
 			});
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			await syncPickupChatMetadata({
 				teamId: ownTeam.id,
@@ -369,12 +372,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 					type: "participant",
 					userId,
 				});
-
-				ShowcaseTournaments.updateCachedTournamentTeamCount({
-					tournamentId,
-					newTeamCount: tournament.ctx.teams.length - 1,
-				});
 			}
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			break;
 		}

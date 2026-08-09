@@ -25,9 +25,9 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	jsonObjectFrom,
-	tournamentCheckedInTeams,
 	tournamentLogoWithDefault,
 	tournamentMembersCount,
+	tournamentTeamsCount,
 } from "~/utils/kysely.server";
 import { calendarEventPage, tournamentPage } from "~/utils/urls";
 import {
@@ -140,13 +140,6 @@ const withOrganization = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
 			),
 	);
 
-const withTeamsCount = (
-	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
-) =>
-	tournamentCheckedInTeams(eb).select(({ fn }) => [
-		fn.countAll<number>().as("count"),
-	]);
-
 function findAllBetweenTwoTimestampsQuery({
 	startTime,
 	endTime,
@@ -175,7 +168,7 @@ function findAllBetweenTwoTimestampsQuery({
 				"normalizedStartsAt",
 			),
 			withOrganization(eb).as("organization"),
-			withTeamsCount(eb).as("teamsCount"),
+			tournamentTeamsCount(eb).as("teamsCount"),
 			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(

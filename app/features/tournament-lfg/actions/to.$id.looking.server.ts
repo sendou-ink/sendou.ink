@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { requireNotBannedByOrganization } from "~/features/tournament/tournament-utils.server";
@@ -194,6 +195,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				otherTeamId: otherGroup.id,
 				maxGroupSize: tournament.maxMembersPerTeam,
 			});
+
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			if (mergeResult.removedChatCode) {
 				ChatSystemMessage.removeRoom(mergeResult.removedChatCode);
