@@ -44,7 +44,11 @@ import {
 } from "../scoreboard/banner";
 import type { ScoreboardResources } from "../scoreboard/index";
 import type { DetectedEvent, Detector, GateResult } from "../types";
-import { type PlayerStatusData, parsePlayerStatus } from "./player-status";
+import {
+	type PlayerStatusData,
+	type PlayerStatusLayout,
+	parsePlayerStatus,
+} from "./player-status";
 import {
 	CONTROL_PLATE_MIN_SATURATION,
 	GATE_PLATE_MAX_STD,
@@ -62,6 +66,7 @@ import {
 	SCORE_EXTEND_MIN_CONF,
 	SCORE_ROIS,
 	SCORE_TEXT_HEIGHTS,
+	STATUS_LAYOUT_STICKY_MAX_GAP_S,
 	TIMER_BIN_THRESHOLD,
 	TIMER_DARK_PROBES,
 	TIMER_DIGIT_MIN_CONF,
@@ -134,6 +139,7 @@ export function createObjectiveDetector(
 	resources: ScoreboardResources,
 ): Detector<ObjectiveData | PlayerStatusData> {
 	const cv = getCV();
+	let lastStatus: { layout: PlayerStatusLayout; t: number } | undefined;
 
 	const scoreSets: GlyphSet[] = resources.paintDigits
 		? SCORE_TEXT_HEIGHTS.map((h) =>
@@ -368,6 +374,16 @@ export function createObjectiveDetector(
 		// no readable count on either side = the gate hit a lookalike
 		if (sides.every((side) => side.score.value === null)) return [];
 
+		const playerStatus = parsePlayerStatus(
+			frame,
+			t,
+			timer.value,
+			lastStatus && t - lastStatus.t <= STATUS_LAYOUT_STICKY_MAX_GAP_S
+				? lastStatus.layout
+				: undefined,
+		);
+		lastStatus = { layout: playerStatus.data.layout, t };
+
 		const confidences = sides.flatMap((side) => [
 			...(side.score.value !== null ? [side.score.confidence] : []),
 			...(side.penalty?.value != null ? [side.penalty.confidence] : []),
@@ -399,7 +415,7 @@ export function createObjectiveDetector(
 					plateFills: sides.map((side) => side.fill),
 				},
 			},
-			parsePlayerStatus(frame, t, timer.value),
+			playerStatus,
 		];
 	}
 

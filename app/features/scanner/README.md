@@ -87,9 +87,17 @@ sequenceDiagram
   event type per read: `PlayerStatus`
   (`core/detectors/objective/player-status.ts`), per-player special/dead
   flags off the icon strip flanking the timer (POV and casted spectator
-  geometries; the cast layout is picked by its D-pad camera badges), with
+  geometries; D-pad camera badges prove the cast layout, but broadcasts
+  can hide them while keeping cast geometry, so a badge-less frame scores
+  both geometries on how decisively the bodies read and sticks with the
+  established layout unless the other wins clearly — the special-ready
+  wash also pulses, so its dim trough is told apart from a splat by its
+  pale body), with
   the same `time` value so the two reads pair downstream; its fixtures
-  live under `tests/fixtures/player-status/`. Objective reads land on `ScannerMatch` as
+  live under `tests/fixtures/player-status/`. The builder additionally
+  flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
+  outlasts the respawn wait, so those are misread blips (background ink
+  bleeding through a crossed-out icon). Objective reads land on `ScannerMatch` as
   progress samples anchored to the game clock; broadcast replay wipes re-run
   an earlier moment with the counter intact, so the builder keeps only the
   dominant cluster of clock-zero projections (`t + time`) and drops replay

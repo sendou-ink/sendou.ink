@@ -141,6 +141,13 @@ export const CONTROL_PLATE_MIN_SATURATION = 60;
 // measured per side off the fixtures; neither layout is mirror-symmetric
 // (POV inner icons sit 108px left / 130px right of screen center) and the
 // cast sides don't even share a pitch (~103 left vs ~88 right).
+//
+// Broadcasts can hide the camera badges while keeping the cast icon
+// geometry (attested in the AREA CUP VoD), so badge absence alone cannot
+// pick the POV layout — player-status.ts scores both geometries and keeps
+// the one whose body reads sit decisively on either side of the dead
+// threshold; a mispicked layout puts outer-slot boxes between icons and
+// flickers phantom deaths on the outermost players.
 
 /** Per-side slot center x's, slots left-to-right. */
 export const STATUS_SLOT_CENTERS_POV: readonly [
@@ -171,9 +178,13 @@ export const STATUS_SHOULDER_BOX_CAST = { dx: -30, y: 35, w: 24, h: 30 };
  * Body probe: the widest band of the icon that dodges the cast camera
  * badges below (y>=100) and the POV coin trinkets (y>=95). Team ink
  * presence here separates alive icons from the grey/dark splatted ones.
+ * Sized to cover most of the icon: a slimmer box left alive icons whose
+ * body is largely weapon silhouette/badges reading ink 0.24 while stage
+ * ink bleeding around a translucent dead icon read 0.23 (AREA CUP VoD) —
+ * this footprint separates them at 0.26 vs 0.20.
  */
-export const STATUS_BODY_BOX_POV = { dx: -32, y: 44, w: 64, h: 48 };
-export const STATUS_BODY_BOX_CAST = { dx: -32, y: 55, w: 64, h: 43 };
+export const STATUS_BODY_BOX_POV = { dx: -40, y: 40, w: 80, h: 50 };
+export const STATUS_BODY_BOX_CAST = { dx: -40, y: 45, w: 80, h: 50 };
 
 /**
  * An ink pixel: saturated and bright enough to be team color. The value
@@ -191,15 +202,51 @@ export const STATUS_INK_MIN_VALUE = 105;
 export const STATUS_GLOW_MIN_VALUE = 225;
 
 /**
- * Splatted: body ink under the floor (attested dead <=0.09 vs alive
- * >=0.40) with the shoulder-glow guard keeping the near-white ready wash
- * (body ink as low as 0.03, glow >=0.40 vs dead <=0.03) out of it.
+ * A pale pixel: bright but unsaturated, the ready wash across its whole
+ * pulse cycle. The wash PULSES — its trough dims below the glow floor
+ * (~190-220) while staying pale, so a trough frame reads no ink and no
+ * glow; without the pale class it is indistinguishable from a splat.
  */
-export const STATUS_DEAD_MAX_BODY_INK = 0.22;
+export const STATUS_PALE_MIN_VALUE = 185;
+export const STATUS_PALE_MAX_SPREAD = 70;
+
+/**
+ * Splatted: body ink under the floor (attested dead <=0.20 vs alive
+ * >=0.26 with the current body box) with two guards: shoulder glow keeps
+ * the bright ready wash out (glow >=0.40 vs dead <=0.03), body pale keeps
+ * the wash's dim pulse trough out (pale >=0.27 vs dead <=0.07).
+ */
+export const STATUS_DEAD_MAX_BODY_INK = 0.23;
 export const STATUS_DEAD_MAX_SHOULDER_GLOW = 0.2;
+export const STATUS_DEAD_MAX_BODY_PALE = 0.15;
 
 /** Special ready: shoulder glow past this (attested >=0.40 vs <=0.06). */
 export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
+
+/**
+ * Special ready off the body when the shoulder misses the wash (pulse
+ * trough, or wash dimmed on compressed footage): pale-dominant body
+ * (attested ready >=0.40 vs alive <=0.25 — plain alive bodies show some
+ * pale from weapon-silhouette whites).
+ */
+export const STATUS_READY_MIN_BODY_PALE = 0.32;
+
+/**
+ * Layout scoring (see player-status.ts): per-slot decisiveness is the
+ * body-ink distance from the dead threshold, capped so one saturated slot
+ * cannot carry a misaligned geometry. The sticky margin is what the
+ * non-established layout must win the score by before a badge-less frame
+ * switches an established geometry.
+ */
+export const STATUS_LAYOUT_SCORE_CAP = 0.3;
+export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
+
+/**
+ * An established layout only carries forward across reads this close in
+ * time — in-match reads land ~1s apart, while a longer silence means a new
+ * match (possibly new footage type) and the next frame picks fresh.
+ */
+export const STATUS_LAYOUT_STICKY_MAX_GAP_S = 30;
 
 /**
  * Cast-layout discriminator: the spectator HUD always draws white D-pad

@@ -948,6 +948,58 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 	assert.equal(built[0]!.match.cast, true);
 });
 
+test("sub-2s dead-flag blips between dense opposite reads get flipped", () => {
+	const deadAt = (slots: number[]) =>
+		[
+			[false, false, false, false],
+			[0, 1, 2, 3].map((slot) => slots.includes(slot)),
+		] as PlayerStatusData["dead"];
+	const built = buildScannerMatches([
+		mapStart(0),
+		// slot0: a real death 101-107 with a one-read false "respawn" at 104
+		// (background ink bleeding through the crossed-out icon), plus a
+		// one-read false death at 111 after the real respawn
+		playerStatus(100, { dead: deadAt([]) }),
+		playerStatus(101, { dead: deadAt([0]) }),
+		playerStatus(102, { dead: deadAt([0]) }),
+		playerStatus(103, { dead: deadAt([0]) }),
+		playerStatus(104, { dead: deadAt([]) }),
+		playerStatus(105, { dead: deadAt([0]) }),
+		playerStatus(106, { dead: deadAt([0]) }),
+		playerStatus(107, { dead: deadAt([0]) }),
+		playerStatus(108, { dead: deadAt([]) }),
+		playerStatus(109, { dead: deadAt([]) }),
+		playerStatus(110, { dead: deadAt([]) }),
+		playerStatus(111, { dead: deadAt([0]) }),
+		playerStatus(112, { dead: deadAt([]) }),
+		playerStatus(113, { dead: deadAt([]) }),
+		scoreboard(300),
+	]);
+	const slot0Deads = built[0]!.match.playerStatus!.samples.map(
+		(sample) => sample.dead[1][0],
+	);
+	assert.deepEqual(slot0Deads, [
+		false,
+		...Array.from({ length: 7 }, () => true),
+		...Array.from({ length: 6 }, () => false),
+	]);
+});
+
+test("a lone dead read between sparse reads is kept", () => {
+	const dead = [
+		[false, false, false, false],
+		[true, false, false, false],
+	] as PlayerStatusData["dead"];
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(60),
+		playerStatus(120, { dead }),
+		playerStatus(180),
+		scoreboard(300),
+	]);
+	assert.deepEqual(built[0]!.match.playerStatus!.samples[1]!.dead, dead);
+});
+
 test("a known non-SZ match drops its player-status reads too", () => {
 	const events = [
 		mapStart(0, { mode: "CB" }),

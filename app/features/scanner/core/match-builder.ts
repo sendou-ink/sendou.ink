@@ -95,6 +95,20 @@ const MIN_TEAM_HUE_SEPARATION = 30;
  */
 const REPLAY_ANCHOR_TOLERANCE_SECONDS = 10;
 
+/**
+ * Dead-flag runs that fit between their flanking opposite-state reads in
+ * less than these spans are physically impossible and get flipped to their
+ * surroundings: the fastest respawn in Splatoon is 3.5s, so no true dead
+ * stretch is shorter — while a respawned player CAN be re-splatted quickly
+ * (spawncamps are real), so the alive floor stays a conservative 2s and
+ * only clears blips like background ink bleeding through a crossed-out
+ * icon. Judging by the flank-to-flank span (the longest the state could
+ * truly have held) keeps sparse sampling honest: a lone dead read between
+ * far-apart reads spans wide and is left alone.
+ */
+const DEAD_RUN_MIN_SECONDS = 3.5;
+const ALIVE_RUN_MIN_SECONDS = 2;
+
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
 	/**
@@ -552,21 +566,75 @@ function buildProgress(
 		liveStatuses.length === 0
 			? null
 			: {
-					samples: liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
-						const swapped = read.fromMinimap
-							? minimapSwapped
-							: nearestSwapFlag(live, swapFlags, read.t) !== swap;
-						const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
-						return {
-							t: Math.max(0, Math.floor(read.t)),
-							time: read.data.time,
-							special: [read.data.special[a], read.data.special[b]],
-							dead: [read.data.dead[a], read.data.dead[b]],
-						};
-					}),
+					samples: withImpossibleDeadRunsFlipped(
+						liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
+							const swapped = read.fromMinimap
+								? minimapSwapped
+								: nearestSwapFlag(live, swapFlags, read.t) !== swap;
+							const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
+							return {
+								t: Math.max(0, Math.floor(read.t)),
+								time: read.data.time,
+								special: [read.data.special[a], read.data.special[b]],
+								dead: [read.data.dead[a], read.data.dead[b]],
+							};
+						}),
+					),
 				};
 
 	return { objective, playerStatus };
+}
+
+/**
+ * Debounce per-slot dead flags across a match's samples: an interior run
+ * whose flanking opposite-state reads sit closer together than the state
+ * could truly have held (DEAD/ALIVE_RUN_MIN_SECONDS) is a misread blip
+ * (background ink bleeding through a translucent splatted icon, or a box
+ * over a mid-animation icon) and takes the flanking state instead. Edge
+ * runs stay — nothing attests what came before or after the match window.
+ */
+function withImpossibleDeadRunsFlipped(
+	samples: ScannerMatchPlayerStatusSample[],
+): ScannerMatchPlayerStatusSample[] {
+	let smoothed = samples;
+	for (const side of [0, 1] as const) {
+		for (let slot = 0; slot < PLAYERS_PER_TEAM; slot++) {
+			// flipping one blip can expose the next (alternating flicker), so
+			// each slot's series is re-swept until it settles
+			let changed = true;
+			while (changed) {
+				changed = false;
+				const series = smoothed.map((sample) => sample.dead[side][slot]);
+				let runStart = 0;
+				for (let i = 1; i <= series.length; i++) {
+					if (i < series.length && series[i] === series[runStart]) continue;
+					const interior = runStart > 0 && i < series.length;
+					const impossiblyShort =
+						interior &&
+						smoothed[i]!.t - smoothed[runStart - 1]!.t <=
+							(series[runStart] ? DEAD_RUN_MIN_SECONDS : ALIVE_RUN_MIN_SECONDS);
+					if (impossiblyShort) {
+						if (smoothed === samples) {
+							smoothed = samples.map((sample) => ({
+								...sample,
+								dead: [[...sample.dead[0]], [...sample.dead[1]]] as [
+									PlayerStatusFlags,
+									PlayerStatusFlags,
+								],
+							}));
+						}
+						for (let j = runStart; j < i; j++) {
+							smoothed[j]!.dead[side][slot] = !series[runStart];
+						}
+						changed = true;
+						break;
+					}
+					runStart = i;
+				}
+			}
+		}
+	}
+	return smoothed;
 }
 
 /** A status read from either source, sides as read (pre-orientation). */

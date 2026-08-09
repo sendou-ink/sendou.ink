@@ -33,7 +33,6 @@ import test from "./node-test-compat";
 
 await loadOpenCV();
 const resources = await loadScoreboardResources();
-const detector = createObjectiveDetector(resources);
 const fixtures = loadFixtures("player-status");
 
 test("player-status fixtures exist", () => {
@@ -42,7 +41,12 @@ test("player-status fixtures exist", () => {
 
 for (const fixture of fixtures) {
 	test(`player-status/${fixture.name}`, async (t) => {
-		const { gate, events } = await runDetectorOnFixture(detector, fixture);
+		// fresh detector per fixture: the objective detector carries sticky
+		// layout state across reads, and fixtures are unrelated frames
+		const { gate, events } = await runDetectorOnFixture(
+			createObjectiveDetector(resources),
+			fixture,
+		);
 		const expectPositive = fixture.expected.event === "PlayerStatus";
 
 		await t.test("gate", () => {

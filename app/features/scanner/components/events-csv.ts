@@ -1,9 +1,9 @@
 /**
  * Flatten detected events into a single CSV for download. One row per event;
- * the six event types share columns where they overlap (lobby/mode/stage,
+ * the event types share columns where they overlap (lobby/mode/stage,
  * weapon/name/abilities) and a scoreboard's eight player rows — or the
- * minimap's teammates+enemies — are packed into one cell, matching the
- * compact per-event view of the live feed.
+ * minimap's teammates+enemies, or the objective HUD's icon strip — are packed
+ * into one cell, matching the compact per-event view of the live feed.
  */
 
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -23,8 +23,19 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
-import type { ScoreboardData } from "../core/detectors/scoreboard/index";
-import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+} from "../core/detectors/objective/player-status";
+import {
+	SCOREBOARD_EVENT_TYPE,
+	type ScoreboardData,
+} from "../core/detectors/scoreboard/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
+import {
+	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+	type ScoreboardBattleLogReplayData,
+} from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
@@ -103,6 +114,13 @@ function formatMinimapPlayers(data: MinimapData): string {
 		...data.teammates.map((p) => fmt(p.slot, p)),
 		...data.enemies.map((p, i) => fmt(`enemy${i + 1}`, p)),
 	].join("; ");
+}
+
+/** one team's four icons as ✕ splatted / ★ special ready / · alive */
+function formatPlayerStatusSide(data: PlayerStatusData, side: 0 | 1): string {
+	return data.dead[side]
+		.map((dead, slot) => (dead ? "✕" : data.special[side][slot] ? "★" : "·"))
+		.join("");
 }
 
 function formatPlayers(data: ScoreboardData): string {
@@ -220,9 +238,29 @@ function eventCells(event: CsvEvent): Cell[] {
 				"",
 			];
 		}
-		default: {
-			// Scoreboard, ScoreboardBattleLogReplay and ScoreboardBattleLog share
-			// the base shape
+		case PLAYER_STATUS_EVENT_TYPE: {
+			const d = event.data as PlayerStatusData;
+			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
+			return [
+				...base,
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				`${clock}${formatPlayerStatusSide(d, 0)} vs ${formatPlayerStatusSide(d, 1)} (${d.layout})`,
+				"",
+				"",
+			];
+		}
+		case SCOREBOARD_EVENT_TYPE:
+		case SCOREBOARD_BATTLE_LOG_EVENT_TYPE:
+		case SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE: {
+			// the three scoreboard reads share the base shape
 			const d = event.data as ScoreboardData &
 				Partial<ScoreboardBattleLogReplayData>;
 			return [
@@ -241,6 +279,8 @@ function eventCells(event: CsvEvent): Cell[] {
 				d.timestamp ?? "",
 			];
 		}
+		default:
+			return [...base, ...Array(HEADER.length - base.length).fill("")];
 	}
 }
 
