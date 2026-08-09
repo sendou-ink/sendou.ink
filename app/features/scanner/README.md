@@ -20,6 +20,8 @@ pnpm test:scanner                       # golden-file suite over tests/fixtures/
 pnpm scanner:report                     # accuracy table + name character error rate across fixtures
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
+pnpm scanner:scan-vod <video>           # VoD-tab scan as a CLI (ffmpeg): video in, events CSV out
+pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
 pnpm scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
 pnpm scanner:build-localized-entries    # regen localized closed sets from ../splat3

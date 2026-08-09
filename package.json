@@ -32,6 +32,8 @@
 		"test:unit:browser:ui": "cross-env VITE_SITE_DOMAIN=http://localhost:5173 vitest --silent=passed-only",
 		"test:scanner": "vitest run --project scanner",
 		"scanner:report": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/report.ts",
+		"scanner:scan-vod": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/scan-vod.ts",
+		"scanner:status-audit": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/status-audit.ts",
 		"scanner:fixtures": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/run-fixtures.ts",
 		"scanner:replay": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/replay-frames.ts",
 		"scanner:bootstrap-atlas": "vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/bootstrap-atlas-from-fixture.ts",

@@ -318,7 +318,7 @@ function eventCells(event: CsvEvent): Cell[] {
 	}
 }
 
-function eventsToCsv(events: CsvEvent[]): string {
+export function eventsToCsv(events: CsvEvent[]): string {
 	const lines = [HEADER.join(",")];
 	for (const event of events)
 		lines.push(eventCells(event).map(csvCell).join(","));
