@@ -460,6 +460,58 @@ describe("finalizeMatch", () => {
 			playerResults.map(() => matchSeason.nth),
 		);
 	});
+
+	// Demonstrates a bug: reportMapWinner checks the match lock on a snapshot read
+	// outside the finalizing transaction, so two teammates confirming the score at
+	// the same time both finalize. Rating/stat changes get applied twice.
+	test("concurrent score confirmations finalize the match only once", async () => {
+		const setup = await setupMatch();
+
+		let reportedCount = 0;
+		let result = await SQMatchRepository.reportMapWinner({
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.alphaMembers[0].id,
+			reportedCount,
+		});
+		while (result.status === "MAP_REPORTED") {
+			reportedCount++;
+			result = await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.alphaMembers[0].id,
+				reportedCount,
+			});
+		}
+		expect(result.status).toBe("MATCH_REPORTED");
+
+		const skillsBeforeConfirm = await fetchSkills(setup.match.id);
+
+		const [first, second] = await Promise.all([
+			SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.bravoMembers[0].id,
+				reportedCount: reportedCount + 1,
+			}),
+			SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.bravoMembers[1].id,
+				reportedCount: reportedCount + 1,
+			}),
+		]);
+
+		const finalizedCount = [first, second].filter(
+			(r) => r.status === "MATCH_FINALIZED",
+		).length;
+		expect(finalizedCount).toBe(1);
+
+		const skillsAfterConfirm = await fetchSkills(setup.match.id);
+		const skillsFromThisFinalization =
+			skillsAfterConfirm.length - skillsBeforeConfirm.length;
+		expect(skillsFromThisFinalization).toBe(FULL_GROUP_SIZE * 2 + 2);
+	});
 });
 
 describe("undoMatchReport", () => {

@@ -1179,7 +1179,7 @@ async function handleMatchConfirmation({
 		.filter((m) => m.winnerGroupId !== null)
 		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
 
-	await finalizeMatch({
+	const finalized = await finalizeMatch({
 		match,
 		members,
 		winners,
@@ -1189,6 +1189,10 @@ async function handleMatchConfirmation({
 		preFinalize: (trx) =>
 			SQGroupRepository.setAsInactive(groupToDeactivate, trx),
 	});
+
+	if (!finalized) {
+		return { status: "ALREADY_LOCKED" };
+	}
 
 	return { status: "MATCH_FINALIZED" };
 }
@@ -1225,7 +1229,7 @@ async function handleStaffFinalization({
 		winnerId === match.groupAlpha.id ? "ALPHA" : "BRAVO",
 	];
 
-	await finalizeMatch({
+	const finalized = await finalizeMatch({
 		match,
 		members,
 		winners,
@@ -1246,6 +1250,10 @@ async function handleStaffFinalization({
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
 		},
 	});
+
+	if (!finalized) {
+		return { status: "ALREADY_LOCKED" };
+	}
 
 	return { status: "MATCH_FINALIZED" };
 }
@@ -1289,7 +1297,10 @@ async function finalizeMatch({
 		loserGroupId,
 	});
 
-	await db.transaction().execute(async (trx) => {
+	return db.transaction().execute(async (trx) => {
+		const { isLocked, confirmedAt } = await findLockState(match.id, trx);
+		if (isLocked || confirmedAt) return false;
+
 		if (preFinalize) await preFinalize(trx);
 		await trx
 			.updateTable("GroupMatch")
@@ -1322,7 +1333,25 @@ async function finalizeMatch({
 			},
 			trx,
 		);
+
+		return true;
 	});
+}
+
+/** Lock state read inside the finalizing transaction so concurrent confirmations can't both finalize. */
+function findLockState(matchId: number, trx: Transaction<DB>) {
+	return trx
+		.selectFrom("GroupMatch")
+		.select(({ exists, selectFrom }) => [
+			"GroupMatch.confirmedAt",
+			exists(
+				selectFrom("Skill")
+					.select("Skill.id")
+					.where("Skill.groupMatchId", "=", matchId),
+			).as("isLocked"),
+		])
+		.where("GroupMatch.id", "=", matchId)
+		.executeTakeFirstOrThrow();
 }
 
 /** Matches created before the given cutoff whose score was never confirmed and that no cancellation has locked. */
@@ -1394,7 +1423,7 @@ export async function resolveUnfinishedMatch(
 		.filter((m) => m.winnerGroupId !== null)
 		.map((m) => (m.winnerGroupId === match.groupAlpha.id ? "ALPHA" : "BRAVO"));
 
-	await finalizeMatch({
+	const finalized = await finalizeMatch({
 		match,
 		members: buildMembers(match),
 		winners,
@@ -1406,6 +1435,10 @@ export async function resolveUnfinishedMatch(
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
 		},
 	});
+
+	if (!finalized) {
+		return { status: "ALREADY_LOCKED" };
+	}
 
 	return { status: "CONFIRMED" };
 }
