@@ -382,6 +382,8 @@
 	"settings.notifications.disableInfo": "Чтобы отключить push-уведомления проверьте настройки вашего браузера",
 	"settings.notifications.browserNotSupported": "Push-уведомления в вашем браузере не поддерживаются",
 	"settings.notifications.permissionDenied": "Push-уведомления были запрещены. Проверьте настройки вашего бразуера, чтобы включить их обратно",
+	"settings.notifications.subscribeFailed": "",
+	"settings.notifications.resubscribeNeeded": "",
 	"settings.clockFormat": "",
 	"settings.theme": "",
 	"settings.themeInfo": "",

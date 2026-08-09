@@ -8,6 +8,7 @@ import {
 import { useChatContext } from "~/features/chat/useChatContext";
 import type { SerializeFrom } from "~/utils/remix";
 import { NOTIFICATIONS_DATA_ROUTE } from "~/utils/urls";
+import { resyncPushSubscription } from "./core/pushSubscription";
 import type { loader } from "./routes/api.notifications";
 
 /** Spreads out the refetches when a notification fans out to many users at once. */
@@ -61,6 +62,7 @@ export function NotificationsProvider({
 		if (!loggedIn) return;
 
 		refresh();
+		void resyncPushSubscription();
 	}, [loggedIn, refresh]);
 
 	useRefreshOnPing({ version: chat?.notificationsVersion ?? 0, refresh });

@@ -159,13 +159,24 @@ export function deleteOld() {
 		.executeTakeFirst();
 }
 
-export function insertOwnSubscription(subscription: NotificationSubscription) {
+export function upsertOwnSubscription(subscription: NotificationSubscription) {
 	return db
 		.insertInto("NotificationUserSubscription")
 		.values({
 			userId: actorId(),
 			subscription: JSON.stringify(subscription),
 		})
+		.onConflict((oc) =>
+			// an endpoint identifies one browser; a resubscribe or another user
+			// logging in on the same browser takes the row over instead of
+			// duplicating deliveries to it
+			oc
+				.expression(sql`json_extract("subscription", '$.endpoint')`)
+				.doUpdateSet({
+					userId: actorId(),
+					subscription: JSON.stringify(subscription),
+				}),
+		)
 		.execute();
 }
 

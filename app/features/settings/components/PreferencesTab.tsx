@@ -5,10 +5,15 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
-import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
+import {
+	findPushSubscription,
+	isPushSupported,
+	subscribeToPush,
+} from "~/features/notifications/core/pushSubscription";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
+import { logger } from "~/utils/logger";
 import {
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,
@@ -68,50 +73,65 @@ function PushNotificationsEnabler() {
 	const isHydrated = useHydrated();
 	const [requestedPermission, setRequestedPermission] =
 		React.useState<NotificationPermission | null>(null);
+	const [subscribeFailed, setSubscribeFailed] = React.useState(false);
+	const [hasSubscription, setHasSubscription] = React.useState<boolean | null>(
+		null,
+	);
+	const subscribeInFlight = React.useRef(false);
 
 	const notificationsPermsGranted: NotificationPermission | "not-supported" =
 		requestedPermission ??
 		(!isHydrated
 			? "default"
-			: !("serviceWorker" in navigator) || !("PushManager" in window)
+			: !isPushSupported()
 				? "not-supported"
 				: Notification.permission);
 
-	function askPermission() {
-		Notification.requestPermission().then((permission) => {
-			setRequestedPermission(permission);
-			if (permission === "granted") {
-				initServiceWorker();
+	React.useEffect(() => {
+		if (notificationsPermsGranted !== "granted") return;
+
+		let cancelled = false;
+		findPushSubscription().then((subscription) => {
+			if (!cancelled && !subscribeInFlight.current) {
+				setHasSubscription(Boolean(subscription));
 			}
 		});
-	}
+		return () => {
+			cancelled = true;
+		};
+	}, [notificationsPermsGranted]);
 
-	async function initServiceWorker() {
-		const swRegistration = await navigator.serviceWorker.register("sw-2.js");
-		const subscription = await swRegistration.pushManager.getSubscription();
-		if (subscription) {
-			sendSubscriptionToServer(subscription);
-		} else {
-			const subscription = await swRegistration.pushManager.subscribe({
-				userVisibleOnly: true,
-				applicationServerKey: Config.vapid.publicKey,
-			});
-			sendSubscriptionToServer(subscription);
+	async function askPermission() {
+		const permission = await Notification.requestPermission();
+		setRequestedPermission(permission);
+		if (permission !== "granted") return;
+
+		subscribeInFlight.current = true;
+		try {
+			setSubscribeFailed(false);
+			await subscribeToPush();
+			setHasSubscription(true);
+		} catch (err) {
+			logger.error("Failed to enable push notifications", err);
+			setSubscribeFailed(true);
+		} finally {
+			subscribeInFlight.current = false;
 		}
-	}
-
-	function sendSubscriptionToServer(subscription: PushSubscription) {
-		fetch("/notifications/subscribe", {
-			method: "post",
-			body: JSON.stringify(subscription),
-			headers: { "content-type": "application/json" },
-		});
 	}
 
 	return (
 		<div>
 			<Label>{t("common:settings.notifications.title")}</Label>
-			{notificationsPermsGranted === "granted" ? (
+			{subscribeFailed ? (
+				<SendouButton size="small" variant="minimal" onPress={askPermission}>
+					{t("common:actions.enable")}
+				</SendouButton>
+			) : notificationsPermsGranted === "granted" &&
+				hasSubscription === false ? (
+				<SendouButton size="small" variant="minimal" onPress={askPermission}>
+					{t("common:actions.enable")}
+				</SendouButton>
+			) : notificationsPermsGranted === "granted" ? (
 				<SendouPopover
 					trigger={
 						<SendouButton size="small" variant="minimal">
@@ -139,6 +159,16 @@ function PushNotificationsEnabler() {
 					{t("common:actions.enable")}
 				</SendouButton>
 			)}
+			{subscribeFailed ? (
+				<FormMessage type="error">
+					{t("common:settings.notifications.subscribeFailed")}
+				</FormMessage>
+			) : notificationsPermsGranted === "granted" &&
+				hasSubscription === false ? (
+				<FormMessage type="info">
+					{t("common:settings.notifications.resubscribeNeeded")}
+				</FormMessage>
+			) : null}
 			<FormMessage type="info">
 				{t("common:settings.notifications.description")}
 			</FormMessage>

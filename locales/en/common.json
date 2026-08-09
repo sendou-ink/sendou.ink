@@ -382,6 +382,8 @@
 	"settings.notifications.disableInfo": "To disable push notifications check your browser settings",
 	"settings.notifications.browserNotSupported": "Push notifications are not supported on this browser",
 	"settings.notifications.permissionDenied": "Push notifications were denied. Check your browser settings to re-enable",
+	"settings.notifications.subscribeFailed": "Push notifications could not be enabled. Please try again",
+	"settings.notifications.resubscribeNeeded": "Push notifications are not active on this browser. Enable them again to keep receiving notifications",
 	"settings.clockFormat": "Clock format",
 	"settings.theme": "Theme",
 	"settings.themeInfo": "This also sets the colors of your user page to others",

@@ -382,6 +382,8 @@
 	"settings.notifications.disableInfo": "ブラウザー設定からプッシュ通知をオフにできます。",
 	"settings.notifications.browserNotSupported": "使用されているブラウザーではプッシュ通知を送ることはできません。",
 	"settings.notifications.permissionDenied": "プッシュ通知がブロックされました。ブラウザー設定を確認してください。",
+	"settings.notifications.subscribeFailed": "",
+	"settings.notifications.resubscribeNeeded": "",
 	"settings.clockFormat": "時計の表示形式",
 	"settings.theme": "テーマ",
 	"settings.themeInfo": "他のユーザーに表示されるあなたのページの色を設定します。",

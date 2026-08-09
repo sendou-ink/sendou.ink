@@ -214,3 +214,68 @@ describe("markOwnAsSeen", () => {
 		]);
 	});
 });
+
+describe("upsertOwnSubscription", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	const subscription = (endpoint: string) => ({
+		endpoint,
+		keys: { auth: "auth", p256dh: "p256dh" },
+	});
+
+	test("resubscribing with the same endpoint does not duplicate the subscription", async () => {
+		await withUserId(users.id(1), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/1"),
+			),
+		);
+		await withUserId(users.id(1), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/1"),
+			),
+		);
+
+		const subscriptions =
+			await NotificationRepository.findAllSubscriptionsByUserIds([users.id(1)]);
+		expect(subscriptions).toHaveLength(1);
+	});
+
+	test("another user subscribing on the same browser takes over the endpoint", async () => {
+		await withUserId(users.id(1), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/1"),
+			),
+		);
+		await withUserId(users.id(2), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/1"),
+			),
+		);
+
+		expect(
+			await NotificationRepository.findAllSubscriptionsByUserIds([users.id(1)]),
+		).toHaveLength(0);
+		expect(
+			await NotificationRepository.findAllSubscriptionsByUserIds([users.id(2)]),
+		).toHaveLength(1);
+	});
+
+	test("different endpoints subscribe separately for the same user", async () => {
+		await withUserId(users.id(1), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/1"),
+			),
+		);
+		await withUserId(users.id(1), () =>
+			NotificationRepository.upsertOwnSubscription(
+				subscription("https://push.example.com/2"),
+			),
+		);
+
+		expect(
+			await NotificationRepository.findAllSubscriptionsByUserIds([users.id(1)]),
+		).toHaveLength(2);
+	});
+});

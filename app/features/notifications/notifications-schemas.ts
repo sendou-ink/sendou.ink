@@ -7,9 +7,9 @@ export const markAsSeenActionSchema = z.object({
 });
 
 export const subscribeSchema = z.object({
-	endpoint: z.string().url(),
+	endpoint: z.string().url().startsWith("https://").max(2048),
 	keys: z.object({
-		auth: z.string(),
-		p256dh: z.string(),
+		auth: z.string().max(1024),
+		p256dh: z.string().max(1024),
 	}),
 });

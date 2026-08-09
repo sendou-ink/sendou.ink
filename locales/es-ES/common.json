@@ -382,6 +382,8 @@
 	"settings.notifications.disableInfo": "Para desactivarlas, revisa los ajustes de tu navegador.",
 	"settings.notifications.browserNotSupported": "Tu navegador no es compatible con las notificaciones push.",
 	"settings.notifications.permissionDenied": "El permiso de notificaciones fue denegado. Actívalo en la configuración de tu navegador.",
+	"settings.notifications.subscribeFailed": "",
+	"settings.notifications.resubscribeNeeded": "",
 	"settings.clockFormat": "Formato de hora",
 	"settings.theme": "Tema",
 	"settings.themeInfo": "Esto también determina los colores de tu página de usuario para los demás",
