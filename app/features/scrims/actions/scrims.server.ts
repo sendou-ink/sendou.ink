@@ -29,7 +29,7 @@ import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { SCRIM } from "../scrims-constants";
 import { scrimsActionSchema } from "../scrims-schemas";
 import { generateTimeOptions } from "../scrims-utils";
-import { usersListForPost } from "./scrims.new.server";
+import { usersListForPost, validatePickup } from "./scrims.new.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const user = requireUser();
@@ -83,6 +83,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					contentOwnerUserId: post.users.find((u) => u.isOwner)?.id,
 				});
 				errorToastIfFalsy(canSeePost, "Post not found");
+			}
+
+			if (data.from.mode === "PICKUP") {
+				const pickupUserError = await validatePickup(data.from.users, user.id);
+				if (pickupUserError) {
+					return { fieldErrors: { from: pickupUserError.error } };
+				}
 			}
 
 			if (post.rangeEndsAt && !data.at) {
