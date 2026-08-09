@@ -304,6 +304,7 @@ function mapTournamentFromDB(
 		name: tournament.name,
 		startsAt: tournament.startsAt,
 		teamsCount: tournament.teamsCount,
+		membersCount: tournament.membersCount,
 		logoUrl: tournament.logoUrl,
 		organization: tournament.organization
 			? {

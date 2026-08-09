@@ -19,6 +19,7 @@ import {
 } from "~/db/json-selections";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
+import { databaseTimestampNow } from "./dates";
 import { IS_E2E_TEST_RUN } from "./e2e";
 import { safeNumberParse } from "./number";
 
@@ -287,6 +288,73 @@ export function tournamentTeamCount(
 		.select((eb2) => eb2.fn.countAll<number>().as("count"))
 		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
 		.where("TournamentTeam.isPlaceholder", "=", 0);
+}
+
+/**
+ * Subquery resolving to a tournament's non-placeholder teams that are either checked in to the
+ * tournament itself (not to a specific bracket) or belong to a tournament that has not started yet.
+ * Correlates on `"Tournament"."id"` and `"CalendarEventDate"."startsAt"`. Has no select of its own,
+ * so extend it with the aggregate the caller needs, e.g. `.select(({ fn }) => fn.countAll().as("count"))`.
+ */
+export function tournamentCheckedInTeams(
+	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
+) {
+	return eb
+		.selectFrom("TournamentTeam")
+		.leftJoin("TournamentTeamCheckIn", (join) =>
+			join
+				.on("TournamentTeamCheckIn.bracketIdx", "is", null)
+				.onRef(
+					"TournamentTeamCheckIn.tournamentTeamId",
+					"=",
+					"TournamentTeam.id",
+				),
+		)
+		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where((eb2) =>
+			eb2.or([
+				eb2("TournamentTeamCheckIn.checkedInAt", "is not", null),
+				eb2("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
+			]),
+		);
+}
+
+/**
+ * Expression resolving to a tournament's participant count: rostered players of the teams from
+ * {@link tournamentCheckedInTeams} while the tournament is still to come, players who actually got
+ * a result once it has been finalized. Correlates on `"Tournament"."id"`. Alias it
+ * `.as("membersCount")` when selecting it directly.
+ */
+export function tournamentMembersCount(
+	eb: ExpressionBuilder<DB, "CalendarEventDate" | "Tournament">,
+) {
+	return eb
+		.case()
+		.when("Tournament.isFinalized", "=", 1)
+		.then(
+			eb
+				.selectFrom("TournamentResult")
+				.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
+				.select(({ fn }) => [
+					fn.count<number>("TournamentResult.userId").distinct().as("count"),
+				]),
+		)
+		.else(
+			tournamentCheckedInTeams(eb)
+				.innerJoin(
+					"TournamentTeamMember",
+					"TournamentTeamMember.tournamentTeamId",
+					"TournamentTeam.id",
+				)
+				.select(({ fn }) => [
+					fn
+						.count<number>("TournamentTeamMember.userId")
+						.distinct()
+						.as("count"),
+				]),
+		)
+		.end();
 }
 
 /**

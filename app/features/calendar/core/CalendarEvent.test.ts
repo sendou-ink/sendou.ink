@@ -17,6 +17,8 @@ function makeEvent(
 		tags: [],
 		modes: ["SZ"],
 		teamsCount: 2,
+		membersCount: 8,
+		minMembersPerTeam: 4,
 		organization: null,
 		authorId: 1,
 		type: "calendar",

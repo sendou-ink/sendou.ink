@@ -13,6 +13,7 @@ import { Trophy } from "~/features/trophies/components/Trophy";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
@@ -35,6 +36,10 @@ export function TournamentCard({
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
 	const isHostedOnSendouInk = typeof tournament.isRanked === "boolean";
+	const modes =
+		tournament.modes && !isDefaultModes(tournament.modes)
+			? tournament.modes
+			: null;
 
 	const startDate = isShowcase
 		? databaseTimestampToDate(tournament.startsAt)
@@ -135,10 +140,10 @@ export function TournamentCard({
 				{isShowcase && "hasVods" in tournament && tournament.hasVods ? (
 					<div className={styles.vodIndicator}>📺 VODs</div>
 				) : null}
-				{tournament.modes ? <ModesPill modes={tournament.modes} /> : null}
+				{modes ? <ModesPill modes={modes} /> : null}
 				<div
 					className={clsx(styles.pillsContainer, {
-						[styles.lonely]: !tournament.modes && isHostedOnSendouInk,
+						[styles.lonely]: !modes && isHostedOnSendouInk,
 					})}
 				>
 					{tournament.isRanked ? (
@@ -155,9 +160,11 @@ export function TournamentCard({
 						/>
 					) : null}
 					{isHostedOnSendouInk ? (
-						<div className={styles.teamCount}>
-							<Users /> {tournament.teamsCount}
-						</div>
+						<ParticipantsPill
+							teamsCount={tournament.teamsCount}
+							membersCount={tournament.membersCount}
+							minMembersPerTeam={tournament.minMembersPerTeam}
+						/>
 					) : null}
 				</div>
 			</div>
@@ -284,6 +291,30 @@ function SpoilerRevealPill({ onReveal }: { onReveal: () => void }) {
 	);
 }
 
+function ParticipantsPill({
+	teamsCount,
+	membersCount,
+	minMembersPerTeam,
+}: {
+	teamsCount: number;
+	membersCount: number;
+	minMembersPerTeam: number;
+}) {
+	const isSolo = minMembersPerTeam === 1;
+
+	return (
+		<div className={styles.participantsPill}>
+			<Users />
+			<span>
+				{isSolo ? teamsCount : membersCount}
+				{isSolo ? null : (
+					<span className={styles.participantsTeamsCount}>/{teamsCount}</span>
+				)}
+			</span>
+		</div>
+	);
+}
+
 function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
 	const size = 16;
 
@@ -332,5 +363,13 @@ function PrizesPill({
 				/>
 			) : null}
 		</SendouPopover>
+	);
+}
+
+/** Modes pill is only interesting when the tournament deviates from the standard ranked modes */
+function isDefaultModes(modes: NonNullable<CalendarEvent["modes"]>) {
+	return (
+		modes.length === rankedModesShort.length &&
+		rankedModesShort.every((mode) => modes.includes(mode))
 	);
 }

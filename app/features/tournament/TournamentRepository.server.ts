@@ -26,7 +26,9 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	jsonObjectFrom,
+	tournamentCheckedInTeams,
 	tournamentLogoWithDefault,
+	tournamentMembersCount,
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -798,29 +800,12 @@ export function findAllForShowcase() {
 			"CalendarEvent.organizationId",
 			"CalendarEventDate.startsAt",
 			"CalendarEvent.hidden",
-			eb
-				.selectFrom("TournamentTeam")
-				.leftJoin("TournamentTeamCheckIn", (join) =>
-					join
-						.on("TournamentTeamCheckIn.bracketIdx", "is", null)
-						.onRef(
-							"TournamentTeamCheckIn.tournamentTeamId",
-							"=",
-							"TournamentTeam.id",
-						),
-				)
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.where((eb) =>
-					eb.or([
-						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-						eb("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
-					]),
-				)
+			tournamentCheckedInTeams(eb)
 				.select(({ fn }) => [
-					fn.count<number>("TournamentTeam.id").distinct().as("teamsCount"),
+					fn.count<number>("TournamentTeam.id").distinct().as("count"),
 				])
 				.as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
@@ -888,7 +873,7 @@ export function findAllForShowcase() {
 		])
 		.where("CalendarEventDate.startsAt", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startsAt", "asc")
-		.$narrowType<{ teamsCount: NotNull }>()
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
 		.execute();
 }
 
