@@ -645,6 +645,161 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 	color: var(--color-success);
 }
 
+/* ---- screenshot tab: per-detector gate results ---- */
+
+.scanner-app .gate-list {
+	display: grid;
+	grid-template-columns: repeat(3, max-content) 1fr;
+	column-gap: var(--s-4);
+	row-gap: var(--s-1-5);
+	align-items: baseline;
+	font-size: var(--font-xs);
+	margin-block: var(--s-4);
+}
+
+.scanner-app .gate-row {
+	display: contents;
+}
+
+.scanner-app .gate-badge {
+	justify-self: start;
+	align-self: center;
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background: var(--color-bg-high);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.scanner-app .gate-row.fired .gate-badge {
+	background: var(--color-success-low);
+	color: var(--color-success-high);
+}
+
+.scanner-app .gate-row:not(.fired) .gate-name {
+	color: var(--color-text-high);
+}
+
+.scanner-app .gate-row.fired .gate-name {
+	font-weight: var(--weight-bold);
+}
+
+.scanner-app .gate-score {
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.scanner-app .gate-note {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+/* ---- screenshot tab: fired detector's parse detail ---- */
+
+.scanner-app .detail {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	margin-block: var(--s-4);
+}
+
+.scanner-app .detail-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+}
+
+.scanner-app .stat {
+	display: inline-flex;
+	align-items: baseline;
+	gap: var(--s-1-5);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--radius-field);
+	background: var(--color-bg-high);
+	font-size: var(--font-xs);
+}
+
+.scanner-app .stat-label {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	white-space: nowrap;
+}
+
+.scanner-app .stat-value {
+	font-weight: var(--weight-bold);
+}
+
+.scanner-app .stat-raw {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.scanner-app .detail-crops {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	align-items: end;
+}
+
+.scanner-app .detail-crops figure {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	min-width: 0;
+}
+
+.scanner-app .detail-crops canvas {
+	display: block;
+	max-width: 100%;
+	background: #000;
+	border-radius: var(--radius-selector);
+	border: var(--border-width) solid var(--color-bg-high);
+}
+
+.scanner-app .detail-crops figcaption {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.scanner-app .status-slots {
+	display: inline-flex;
+	gap: var(--s-2);
+	align-self: center;
+}
+
+.scanner-app .status-side {
+	display: inline-flex;
+	gap: var(--s-0-5);
+}
+
+.scanner-app .status-slot {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+	border-radius: var(--radius-selector);
+	background: var(--color-bg-higher);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.scanner-app .status-slot.dead {
+	background: var(--color-error-low);
+	color: var(--color-error-high);
+}
+
+.scanner-app .status-slot.special {
+	background: var(--color-warning-low);
+	color: var(--color-warning-high);
+}
+
 /* internal navigation styled like the sibling action buttons */
 .scanner-app .link-button {
 	display: inline-flex;

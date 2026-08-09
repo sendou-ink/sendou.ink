@@ -1,5 +1,11 @@
 import clsx from "clsx";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
@@ -10,6 +16,13 @@ import type { MapStartData } from "../core/detectors/map-start/index";
 import * as mapStart from "../core/detectors/map-start/rois";
 import type { MinimapData } from "../core/detectors/minimap/index";
 import * as minimap from "../core/detectors/minimap/rois";
+import type { ObjectiveData } from "../core/detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+	type PlayerStatusLayout,
+} from "../core/detectors/objective/player-status";
+import * as objective from "../core/detectors/objective/rois";
 import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
 import * as sb from "../core/detectors/scoreboard/rois";
 import * as bl from "../core/detectors/scoreboard-battle-log/rois";
@@ -60,6 +73,55 @@ function RoiCrop(props: {
 		);
 	}, [frame, roi.x, roi.y, roi.w, roi.h, scale]);
 	return <canvas ref={ref} />;
+}
+
+function Stat(props: { label: string; raw?: unknown; children: ReactNode }) {
+	return (
+		<span className="stat">
+			<span className="stat-label">{props.label}</span>
+			<span className="stat-value">{props.children}</span>
+			{props.raw != null && props.raw !== "" ? (
+				<span className="stat-raw">raw: {String(props.raw)}</span>
+			) : null}
+		</span>
+	);
+}
+
+function LabeledCrop(props: {
+	label: string;
+	frame: HTMLCanvasElement;
+	roi: Roi;
+	scale?: number;
+}) {
+	return (
+		<figure>
+			<RoiCrop frame={props.frame} roi={props.roi} scale={props.scale} />
+			<figcaption>{props.label}</figcaption>
+		</figure>
+	);
+}
+
+/** One pill per player slot: number = alive, ★ = special held, ✗ = splatted. */
+function StatusSlots(props: { data: PlayerStatusData }) {
+	return (
+		<span className="status-slots">
+			{([0, 1] as const).map((side) => (
+				<span key={side} className="status-side">
+					{props.data.dead[side].map((dead, slot) => {
+						const special = !dead && props.data.special[side][slot];
+						return (
+							<span
+								key={slot}
+								className={clsx("status-slot", { dead, special })}
+							>
+								{dead ? "✗" : special ? "★" : slot + 1}
+							</span>
+						);
+					})}
+				</span>
+			))}
+		</span>
+	);
 }
 
 /** Per-row parse ROIs, in the same order as the event's players array. */
@@ -117,6 +179,63 @@ function replayRows(winnerSide: string): RowRois[] {
 	);
 }
 
+/** Same marker language as the objective status pills: ✗ dead, ★ special. */
+function playerFlags(p: { dead: boolean; specialReady: boolean }) {
+	return `${p.dead ? " ✗" : ""}${p.specialReady ? " ★" : ""}`;
+}
+
+function formatTimer(time: number | null) {
+	if (time === null) return "?:??";
+	return `${Math.floor(time / 60)}:${String(time % 60).padStart(2, "0")}`;
+}
+
+/** One-line recap of what a fired detector read, for the gate list. */
+function gateSummary(result: Result): string | null {
+	const event = result.events[0];
+	if (!event) return null;
+	const confidence = `${((event.confidence ?? 0) * 100).toFixed(1)}% conf`;
+	switch (result.detector) {
+		case "death": {
+			const data = event.data as DeathData;
+			return `${confidence} · splatted by ${weaponLabel(data.weaponType, data.weaponId) ?? "?"} (${data.name ?? "?"})`;
+		}
+		case "map-start": {
+			const data = event.data as MapStartData;
+			return `${confidence} · ${modeLabel(data.mode) ?? "?"} · ${stageLabel(data.stage) ?? "?"}`;
+		}
+		case "scoreboard-own": {
+			const data = event.data as ScoreboardOwnData;
+			return `${confidence} · ${[lobbyLabel(data.lobby), modeLabel(data.mode), stageLabel(data.stage)].map((v) => v ?? "?").join(" · ")} · ${mainWeaponLabel(data.weaponId) ?? "?"}`;
+		}
+		case "minimap": {
+			const data = event.data as MinimapData;
+			const players = data.teammates
+				.map((p) => `${p.name ?? "?"}${playerFlags(p)}`)
+				.join(", ");
+			return `${confidence} · ${data.stage ?? "?"} · ${players}`;
+		}
+		case "objective": {
+			const data = event.data as unknown as ObjectiveData;
+			return `${confidence} · ${formatTimer(data.time)} · score ${data.score[0] ?? "?"}–${data.score[1] ?? "?"}`;
+		}
+		default: {
+			const data = event.data as CardData;
+			return `${confidence} · scores ${JSON.stringify(data.matchScores)} · ${[lobbyLabel(data.lobby), modeLabel(data.mode), stageLabel(data.stage)].map((v) => v ?? "?").join(" · ")}`;
+		}
+	}
+}
+
+/** Band covering one side's player-status icon strip, for the crop view. */
+function statusStripRoi(layout: PlayerStatusLayout, side: 0 | 1): Roi {
+	const centers =
+		layout === "cast"
+			? objective.STATUS_SLOT_CENTERS_CAST[side]
+			: objective.STATUS_SLOT_CENTERS_POV[side];
+	const first = centers[0]!;
+	const last = centers[centers.length - 1]!;
+	return { x: first - 55, y: 25, w: last - first + 110, h: 115 };
+}
+
 function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 	const rect = (roi: Roi, color: string) => {
 		ctx.strokeStyle = color;
@@ -137,6 +256,31 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 			...death.GATE_PANEL_PROBES,
 		]) {
 			rect(roi, "#facc15");
+		}
+		return;
+	}
+	if (detector === "objective") {
+		rect(objective.TIMER_DIGIT_ROI, "#34d399");
+		for (const side of [0, 1] as const) {
+			rect(objective.SCORE_ROIS[side], "#f87171");
+			rect(objective.PENALTY_ROIS[side], "#fb923c");
+			rect(objective.PLATE_PROBE_ROIS[side], "#facc15");
+		}
+		for (const [centers, box, color] of [
+			[
+				objective.STATUS_SLOT_CENTERS_POV,
+				objective.STATUS_BODY_BOX_POV,
+				"#60a5fa",
+			],
+			[
+				objective.STATUS_SLOT_CENTERS_CAST,
+				objective.STATUS_BODY_BOX_CAST,
+				"#e879f9",
+			],
+		] as const) {
+			for (const cx of centers.flat()) {
+				rect({ x: cx + box.dx, y: box.y, w: box.w, h: box.h }, color);
+			}
 		}
 		return;
 	}
@@ -355,6 +499,7 @@ export function ScreenshotPage() {
 	const isMapStart = activeDetector === "map-start";
 	const isOwn = activeDetector === "scoreboard-own";
 	const isMinimap = activeDetector === "minimap";
+	const isObjective = activeDetector === "objective";
 	const winnerSide = String(event?.debug?.winnerSide ?? "left");
 	const rowRois = isReplay
 		? replayRows(winnerSide)
@@ -429,236 +574,305 @@ export function ScreenshotPage() {
 				</p>
 			) : null}
 
-			{Object.values(results).map((result) => (
-				<p key={result.detector}>
-					{result.detector} gate:{" "}
-					<b>{result.gate.pass ? "fired" : "no fire"}</b> (score{" "}
-					{result.gate.score.toFixed(3)})
-					{result.events[0] && result.detector === "death" ? (
-						<>
-							{" · "}confidence{" "}
-							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
-							{(() => {
-								const data = result.events[0].data as DeathData;
-								return `splatted by ${weaponLabel(data.weaponType, data.weaponId) ?? "?"} (${data.name ?? "?"})`;
-							})()}
-						</>
-					) : null}
-					{result.events[0] && result.detector === "map-start" ? (
-						<>
-							{" · "}confidence{" "}
-							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
-							{(() => {
-								const data = result.events[0].data as MapStartData;
-								return `${modeLabel(data.mode) ?? "?"} · ${stageLabel(data.stage) ?? "?"}`;
-							})()}
-						</>
-					) : null}
-					{result.events[0] && result.detector === "scoreboard-own" ? (
-						<>
-							{" · "}confidence{" "}
-							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
-							{(() => {
-								const data = result.events[0].data as ScoreboardOwnData;
-								return `${[lobbyLabel(data.lobby), modeLabel(data.mode), stageLabel(data.stage)].map((v) => v ?? "?").join(" · ")} · ${mainWeaponLabel(data.weaponId) ?? "?"}`;
-							})()}
-						</>
-					) : null}
-					{result.events[0] && result.detector === "minimap" ? (
-						<>
-							{" · "}confidence{" "}
-							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}%{" · "}
-							{(() => {
-								const data = result.events[0].data as MinimapData;
-								const players = data.teammates
-									.map((p) => p.name ?? "?")
-									.join(", ");
-								return `${data.stage ?? "?"} · ${players}`;
-							})()}
-						</>
-					) : null}
-					{result.events[0] &&
-					result.detector !== "death" &&
-					result.detector !== "map-start" &&
-					result.detector !== "scoreboard-own" &&
-					result.detector !== "minimap" ? (
-						<>
-							{" · "}confidence{" "}
-							{((result.events[0].confidence ?? 0) * 100).toFixed(1)}% · scores{" "}
-							{JSON.stringify((result.events[0].data as CardData).matchScores)}
-							{" · "}
-							{(() => {
-								const data = result.events[0].data as CardData;
-								return [
-									lobbyLabel(data.lobby),
-									modeLabel(data.mode),
-									stageLabel(data.stage),
-								]
-									.map((v) => v ?? "?")
-									.join(" · ");
-							})()}
-						</>
-					) : null}
-				</p>
-			))}
+			{Object.keys(results).length > 0 ? (
+				<div className="gate-list">
+					{Object.values(results).map((result) => (
+						<div
+							key={result.detector}
+							className={clsx("gate-row", { fired: result.gate.pass })}
+						>
+							<span className="gate-badge">
+								{result.gate.pass ? "fired" : "no fire"}
+							</span>
+							<span className="gate-name">{result.detector}</span>
+							<span className="gate-score">{result.gate.score.toFixed(3)}</span>
+							<span className="gate-note">{gateSummary(result)}</span>
+						</div>
+					))}
+				</div>
+			) : null}
 
 			{frame && event && isReplay ? (
-				<p>
-					timestamp <b>{event.data.timestamp ?? "?"}</b>
-					{" · "}code <b>{event.data.replayCode ?? "?"}</b>{" "}
-					<span className="score">
-						(raw: {String(event.debug?.codeRaw ?? "")})
-					</span>
-					{" · "}match scores {JSON.stringify(event.data.matchScores)}
-					{" · "}winner panel <b>{winnerSide}</b>
-					<br />
-					<RoiCrop frame={frame} roi={replay.HEADER_TOP_BAND} />{" "}
-					<RoiCrop frame={frame} roi={replay.REPLAY_CODE_ROI} />
-				</p>
+				<div className="detail">
+					<div className="detail-stats">
+						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
+						<Stat label="code" raw={event.debug?.codeRaw}>
+							{event.data.replayCode ?? "?"}
+						</Stat>
+						<Stat label="match scores">
+							{JSON.stringify(event.data.matchScores)}
+						</Stat>
+						<Stat label="winner panel">{winnerSide}</Stat>
+					</div>
+					<div className="detail-crops">
+						<LabeledCrop
+							label="header"
+							frame={frame}
+							roi={replay.HEADER_TOP_BAND}
+						/>
+						<LabeledCrop
+							label="replay code"
+							frame={frame}
+							roi={replay.REPLAY_CODE_ROI}
+						/>
+					</div>
+				</div>
 			) : null}
 
 			{frame && event && isScoreboardBattleLog ? (
-				<p>
-					timestamp <b>{event.data.timestamp ?? "?"}</b>
-					{" · "}match scores {JSON.stringify(event.data.matchScores)}
-					{" · "}winner panel <b>{winnerSide}</b>
-					<br />
-					<RoiCrop frame={frame} roi={bl.HEADER_TOP_BAND} />{" "}
-					<RoiCrop frame={frame} roi={bl.HEADER_BOTTOM_BAND} />
-				</p>
+				<div className="detail">
+					<div className="detail-stats">
+						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
+						<Stat label="match scores">
+							{JSON.stringify(event.data.matchScores)}
+						</Stat>
+						<Stat label="winner panel">{winnerSide}</Stat>
+					</div>
+					<div className="detail-crops">
+						<LabeledCrop
+							label="header top"
+							frame={frame}
+							roi={bl.HEADER_TOP_BAND}
+						/>
+						<LabeledCrop
+							label="header bottom"
+							frame={frame}
+							roi={bl.HEADER_BOTTOM_BAND}
+						/>
+					</div>
+				</div>
 			) : null}
 
 			{frame && event && isDeath ? (
-				<p>
+				<div className="detail">
 					{(() => {
 						const data = event.data as unknown as DeathData;
 						return (
 							<>
-								weapon{" "}
-								<b>{weaponLabel(data.weaponType, data.weaponId) ?? "?"}</b>{" "}
-								<span className="score">
-									(raw: {String(event.debug?.weaponRaw ?? "")})
-								</span>
-								{" · "}name <b>{data.name ?? "?"}</b>{" "}
-								<span className="score">
-									(raw: {String(event.debug?.nameRaw ?? "")})
-								</span>
-								{" · "}abilities{" "}
-								{data.abilities.map((row) => row.join(" ")).join(" | ")}
-								<br />
-								<RoiCrop frame={frame} roi={death.WEAPON_LINE_ROI} />{" "}
-								<RoiCrop frame={frame} roi={death.TAG_NAME_OUTER} />
+								<div className="detail-stats">
+									<Stat label="weapon" raw={event.debug?.weaponRaw}>
+										{weaponLabel(data.weaponType, data.weaponId) ?? "?"}
+									</Stat>
+									<Stat label="name" raw={event.debug?.nameRaw}>
+										{data.name ?? "?"}
+									</Stat>
+									<Stat label="abilities">
+										{data.abilities.map((row) => row.join(" ")).join(" | ")}
+									</Stat>
+								</div>
+								<div className="detail-crops">
+									<LabeledCrop
+										label="weapon line"
+										frame={frame}
+										roi={death.WEAPON_LINE_ROI}
+									/>
+									<LabeledCrop
+										label="name tag"
+										frame={frame}
+										roi={death.TAG_NAME_OUTER}
+									/>
+								</div>
 							</>
 						);
 					})()}
-				</p>
+				</div>
 			) : null}
 
 			{frame && event && isMapStart ? (
-				<p>
+				<div className="detail">
 					{(() => {
 						const data = event.data as unknown as MapStartData;
 						return (
 							<>
-								mode <b>{modeLabel(data.mode) ?? "?"}</b>{" "}
-								<span className="score">
-									(raw: {String(event.debug?.modeReading ?? "")})
-								</span>
-								{" · "}stage <b>{stageLabel(data.stage) ?? "?"}</b>{" "}
-								<span className="score">
-									(raw: {String(event.debug?.stageReading ?? "")})
-								</span>
-								<br />
-								<RoiCrop
-									frame={frame}
-									roi={mapStart.MODE_BLOCK_ROI}
-									scale={0.75}
-								/>{" "}
-								<RoiCrop frame={frame} roi={mapStart.STAGE_ROI} />
+								<div className="detail-stats">
+									<Stat label="mode" raw={event.debug?.modeReading}>
+										{modeLabel(data.mode) ?? "?"}
+									</Stat>
+									<Stat label="stage" raw={event.debug?.stageReading}>
+										{stageLabel(data.stage) ?? "?"}
+									</Stat>
+								</div>
+								<div className="detail-crops">
+									<LabeledCrop
+										label="mode block"
+										frame={frame}
+										roi={mapStart.MODE_BLOCK_ROI}
+										scale={0.75}
+									/>
+									<LabeledCrop
+										label="stage"
+										frame={frame}
+										roi={mapStart.STAGE_ROI}
+									/>
+								</div>
 							</>
 						);
 					})()}
-				</p>
+				</div>
 			) : null}
 
 			{frame && event && isOwn ? (
-				<p>
+				<div className="detail">
 					{(() => {
 						const data = event.data as unknown as ScoreboardOwnData;
 						return (
 							<>
-								weapon <b>{mainWeaponLabel(data.weaponId) ?? "?"}</b>{" "}
-								<span className="score">
-									(raw: {String(event.debug?.weaponReading ?? "")})
-								</span>
-								{" · "}abilities{" "}
-								{data.abilities.map((row) => row.join(" ")).join(" | ")}
-								<br />
-								<RoiCrop frame={frame} roi={own.WEAPON_TITLE_BAND} />{" "}
-								{[0, 1, 2].map((row) => (
-									<RoiCrop
-										key={row}
+								<div className="detail-stats">
+									<Stat label="weapon" raw={event.debug?.weaponReading}>
+										{mainWeaponLabel(data.weaponId) ?? "?"}
+									</Stat>
+									<Stat label="abilities">
+										{data.abilities.map((row) => row.join(" ")).join(" | ")}
+									</Stat>
+								</div>
+								<div className="detail-crops">
+									<LabeledCrop
+										label="title band"
 										frame={frame}
-										roi={{
-											x: own.GEAR_MAIN_CXS[row]! - 36,
-											y: own.GEAR_BADGE_CY - 32,
-											w: 200,
-											h: 64,
-										}}
+										roi={own.WEAPON_TITLE_BAND}
 									/>
-								))}
+									{[0, 1, 2].map((row) => (
+										<LabeledCrop
+											key={row}
+											label={`gear ${row + 1}`}
+											frame={frame}
+											roi={{
+												x: own.GEAR_MAIN_CXS[row]! - 36,
+												y: own.GEAR_BADGE_CY - 32,
+												w: 200,
+												h: 64,
+											}}
+										/>
+									))}
+								</div>
 							</>
 						);
 					})()}
-				</p>
+				</div>
 			) : null}
 
 			{frame && event && isMinimap ? (
-				<p>
+				<div className="detail">
 					{(() => {
 						const data = event.data as unknown as MinimapData;
 						return (
 							<>
-								stage <b>{stageLabel(data.stage) ?? "?"}</b>
-								{" · "}
-								{data.spectator ? "spectator map" : "POV overlay"}
-								{" · "}team{" "}
-								<b>
-									{data.teammates
-										.map(
-											(p) =>
-												`${p.slot}: ${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})`,
-										)
-										.join(", ") || "—"}
-								</b>
-								{data.enemies.length > 0 ? (
-									<>
-										{" · "}enemies{" "}
-										<b>
+								<div className="detail-stats">
+									<Stat label="stage">{stageLabel(data.stage) ?? "?"}</Stat>
+									<Stat label="view">
+										{data.spectator ? "spectator map" : "POV overlay"}
+									</Stat>
+									<Stat label="team">
+										{data.teammates
+											.map(
+												(p) =>
+													`${p.slot}: ${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})${playerFlags(p)}`,
+											)
+											.join(", ") || "—"}
+									</Stat>
+									{data.enemies.length > 0 ? (
+										<Stat label="enemies">
 											{data.enemies
 												.map(
 													(p) =>
-														`${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})`,
+														`${p.name ?? "?"} (${mainWeaponLabel(p.weaponId) ?? "?"})${playerFlags(p)}`,
 												)
 												.join(", ")}
-										</b>
-									</>
-								) : null}
+										</Stat>
+									) : null}
+								</div>
 								{!data.spectator ? (
-									<>
-										<br />
+									<div className="detail-crops">
 										{minimap.CARD_LAYOUTS.map((card) => (
-											<RoiCrop key={card.slot} frame={frame} roi={card.name} />
+											<LabeledCrop
+												key={card.slot}
+												label={`slot ${card.slot}`}
+												frame={frame}
+												roi={card.name}
+											/>
 										))}
-									</>
+									</div>
 								) : null}
 							</>
 						);
 					})()}
-				</p>
+				</div>
 			) : null}
 
-			{frame && event && !isDeath && !isMapStart && !isOwn && !isMinimap ? (
+			{frame && event && isObjective ? (
+				<div className="detail">
+					{(() => {
+						const data = event.data as unknown as ObjectiveData;
+						const status = active?.events.find(
+							(e) => e.type === PLAYER_STATUS_EVENT_TYPE,
+						) as DetectedEvent<PlayerStatusData> | undefined;
+						return (
+							<>
+								<div className="detail-stats">
+									<Stat label="timer">{formatTimer(data.time)}</Stat>
+									<Stat label="score">
+										{data.score[0] ?? "?"}–{data.score[1] ?? "?"}
+									</Stat>
+									<Stat label="penalty">
+										{data.penalty[0] ?? "—"} / {data.penalty[1] ?? "—"}
+									</Stat>
+									<Stat label="control">
+										{data.control[0]
+											? "left"
+											: data.control[1]
+												? "right"
+												: "none"}
+									</Stat>
+									{status ? (
+										<>
+											<Stat label="layout">{status.data.layout}</Stat>
+											<Stat label="players">
+												<StatusSlots data={status.data} />
+											</Stat>
+										</>
+									) : null}
+								</div>
+								<div className="detail-crops">
+									<LabeledCrop
+										label="left count"
+										frame={frame}
+										roi={objective.SCORE_ROIS[0]}
+									/>
+									<LabeledCrop
+										label="timer"
+										frame={frame}
+										roi={objective.TIMER_DIGIT_ROI}
+									/>
+									<LabeledCrop
+										label="right count"
+										frame={frame}
+										roi={objective.SCORE_ROIS[1]}
+									/>
+									{status
+										? ([0, 1] as const).map((side) => (
+												<LabeledCrop
+													key={side}
+													label={side === 0 ? "left team" : "right team"}
+													frame={frame}
+													roi={statusStripRoi(status.data.layout, side)}
+													scale={0.75}
+												/>
+											))
+										: null}
+								</div>
+							</>
+						);
+					})()}
+				</div>
+			) : null}
+
+			{frame &&
+			event &&
+			!isDeath &&
+			!isMapStart &&
+			!isOwn &&
+			!isMinimap &&
+			!isObjective ? (
 				<table className="inspector">
 					<thead>
 						<tr>
