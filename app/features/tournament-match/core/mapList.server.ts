@@ -117,6 +117,7 @@ export async function resolveMatchMapList({
 		match.mapPickingStyle !== "TO"
 			? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
 					teamIds: teams,
+					excludeMatchId: match.id,
 				}).catch((error) => {
 					logger.error("Failed to fetch recently played maps", error);
 					return [];

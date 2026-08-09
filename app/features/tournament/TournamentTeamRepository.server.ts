@@ -999,7 +999,11 @@ async function replaceCounterpickMaps(
 		.execute();
 }
 
-async function findTeamRecentMaps(teamId: number, limit: number) {
+async function findTeamRecentMaps(
+	teamId: number,
+	excludeMatchId: number,
+	limit: number,
+) {
 	return db
 		.selectFrom("TournamentMatchGameResult")
 		.innerJoin(
@@ -1012,6 +1016,7 @@ async function findTeamRecentMaps(teamId: number, limit: number) {
 			"TournamentMatchGameResult.stageId",
 		])
 		.where("TournamentMatchGameResultParticipant.tournamentTeamId", "=", teamId)
+		.where("TournamentMatchGameResult.matchId", "!=", excludeMatchId)
 		.orderBy("TournamentMatchGameResult.createdAt", "desc")
 		.limit(limit)
 		.execute();
@@ -1058,10 +1063,15 @@ export async function findMapPoolsByTeamIds(tournamentTeamIds: number[]) {
 
 export async function findRecentlyPlayedMapsByIds({
 	teamIds,
+	excludeMatchId,
 	limit = 5,
 }: {
 	/** Team IDs to retrieve recent maps for */
 	teamIds: [number, number];
+	/** Match whose own games are left out, being the match the maps are resolved for.
+	 * Without it a set's map list changes under the teams mid-set, as the games they
+	 * already played would count as recently played when it is regenerated. */
+	excludeMatchId: number;
 	/** Limit of recent maps to retrieve per team
 	 *
 	 * @default 5
@@ -1069,8 +1079,8 @@ export async function findRecentlyPlayedMapsByIds({
 	limit?: number;
 }): Promise<Array<{ mode: ModeShort; stageId: StageId }>> {
 	const [teamOneMaps, teamTwoMaps] = await Promise.all([
-		findTeamRecentMaps(teamIds[0], limit),
-		findTeamRecentMaps(teamIds[1], limit),
+		findTeamRecentMaps(teamIds[0], excludeMatchId, limit),
+		findTeamRecentMaps(teamIds[1], excludeMatchId, limit),
 	]);
 
 	return flatZip(teamOneMaps, teamTwoMaps);

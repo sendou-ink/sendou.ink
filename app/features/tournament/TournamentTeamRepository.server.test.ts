@@ -3,8 +3,39 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import type { TournamentSettings } from "~/db/tables-json";
 import { withUserId } from "~/utils/Test";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
+
+const TEAM_COUNT = 4;
+
+/** Pools of two teams each, followed by a final between the two pool winners. */
+const POOLS_TO_FINAL: TournamentSettings["bracketProgression"] = [
+	{
+		name: "Pools",
+		type: "round_robin",
+		requiresCheckIn: false,
+		settings: { teamsPerGroup: 2 },
+	},
+	{
+		name: "Final",
+		type: "single_elimination",
+		requiresCheckIn: false,
+		settings: { thirdPlaceMatch: false },
+		sources: [{ bracketIdx: 0, placements: [1] }],
+	},
+];
+
+const POOL_MAPS: TournamentFactory.RoundMaps = {
+	count: 1,
+	type: "BEST_OF",
+	list: [{ mode: "SZ", stageId: 1 }],
+};
+const FINAL_MAPS: TournamentFactory.RoundMaps = {
+	count: 1,
+	type: "BEST_OF",
+	list: [{ mode: "TC", stageId: 2 }],
+};
 
 let organizer: { id: number };
 let owner: { id: number };
@@ -283,6 +314,41 @@ describe("TournamentTeamRepository", () => {
 				members.find((teamMember) => teamMember.userId === member.id)
 					?.isOrganizerAdded,
 			).toBe(0);
+		});
+	});
+
+	describe("findRecentlyPlayedMapsByIds", () => {
+		test("leaves out the games of the match the maps are resolved for", async () => {
+			// the map list of an in-progress set is regenerated whenever its cache entry
+			// is lost, so counting the set's own games as recently played would change
+			// the maps the teams have left to play under them
+			const players = await UserFactory.createMany(TEAM_COUNT);
+			const tournament = await TournamentFactory.createPlayed(
+				{
+					authorId: organizer.id,
+					bracketProgression: POOLS_TO_FINAL,
+					minMembersPerTeam: 1,
+				},
+				{
+					teamRosters: players.map((player) => [player.id]),
+					playedOut: 0,
+					maps: POOL_MAPS,
+				},
+			);
+			const [final] = await TournamentFactory.playOut(tournament.id, 1, {
+				maps: FINAL_MAPS,
+			});
+
+			const recentMaps =
+				await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+					teamIds: [final.winnerTeamId, final.loserTeamId],
+					excludeMatchId: final.id,
+				});
+
+			expect(recentMaps).toEqual([
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "SZ", stageId: 1 },
+			]);
 		});
 	});
 });
