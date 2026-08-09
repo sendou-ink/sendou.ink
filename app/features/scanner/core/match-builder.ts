@@ -28,6 +28,7 @@ import {
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
+	type PlayerStatusFlags,
 } from "./detectors/objective/player-status";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
@@ -403,21 +404,25 @@ function toBuiltMatch<E extends DetectedEvent>(
 		t: event.t,
 		data: event.data as PlayerStatusData,
 	}));
-	const minimaps = open.minimaps.map((event) => event.data as MinimapData);
+	const minimapReads = open.minimaps.map((event) => ({
+		t: event.t,
+		data: event.data as MinimapData,
+	}));
+	const minimaps = minimapReads.map((read) => read.data);
 
 	const mode = board?.mode ?? start?.mode ?? null;
 	// only the SZ counter is parsed — reads on a known other-mode match are
 	// misreads of a lookalike overlay, not progress data (statuses included:
-	// they only ever ride along with counter reads)
-	const progress =
-		mode === null || mode === "SZ"
-			? buildProgress(
-					objectives,
-					playerStatuses,
-					board,
-					minimapTeamColors(minimaps),
-				)
-			: { objective: null, playerStatus: null };
+	// they only ever ride along with counter reads). Minimap card states are
+	// mode-agnostic, so they feed the status samples regardless
+	const counterModeValid = mode === null || mode === "SZ";
+	const progress = buildProgress(
+		counterModeValid ? objectives : [],
+		counterModeValid ? playerStatuses : [],
+		minimapReads,
+		board,
+		minimapTeamColors(minimaps),
+	);
 
 	const match: ScannerMatch = {
 		startsAt:
@@ -479,10 +484,22 @@ function floorOrNull(t: number | undefined): number | null {
  * no signal the first read's arrangement stands. A side's four slots keep
  * their on-screen left-to-right order through a side swap — whether the
  * game mirrors slot order across sides is unattested so far.
+ *
+ * Minimap reads contribute status samples too (their card cross-out and
+ * special-camo states), interleaved with the icon-strip reads on the same
+ * replay-wipe anchor (timerless, so each follows its anchored neighbor).
+ * Their sides are own/alpha-vs-enemy/bravo — camera-stable, unlike the
+ * plates — so they skip the per-read cluster orientation and map to
+ * `teams` through the same minimap ink anchor the whole match uses
+ * (identity on a minimap-grouped match by construction). Whether the
+ * minimap's card order matches the icon strip's slot order within a side
+ * is unattested so far; both follow the order `teams` players are seated
+ * in for their respective sources.
  */
 function buildProgress(
 	objectives: readonly { t: number; data: ObjectiveData }[],
 	playerStatuses: readonly { t: number; data: PlayerStatusData }[],
+	minimapReads: readonly { t: number; data: MinimapData }[],
 	board: ScoreboardData | undefined,
 	minimapColors: [InkRgb | null, InkRgb | null] | null,
 ): {
@@ -491,7 +508,17 @@ function buildProgress(
 } {
 	const dominant = dominantAnchorOf([...objectives, ...playerStatuses]);
 	const live = withoutReplayReads(objectives, dominant);
-	const liveStatuses = withoutReplayReads(playerStatuses, dominant);
+	const statusReads = [
+		...playerStatuses.map(
+			(read): StatusRead => ({
+				t: read.t,
+				fromMinimap: false,
+				data: read.data,
+			}),
+		),
+		...minimapStatusReads(minimapReads),
+	].sort((a, b) => a.t - b.t);
+	const liveStatuses = withoutReplayReads(statusReads, dominant);
 
 	const clusterHues = seedClusterHues(live);
 	const swapFlags = readSwapFlags(live, clusterHues);
@@ -502,6 +529,7 @@ function buildProgress(
 			? board.povIndex >= PLAYERS_PER_TEAM
 			: bestCount(oriented, 1) < bestCount(oriented, 0)
 		: minimapAnchorSwap(clusterHues, minimapColors);
+	const minimapSwapped = swap !== minimapAnchorSwap(clusterHues, minimapColors);
 
 	const objective =
 		oriented.length === 0
@@ -525,9 +553,10 @@ function buildProgress(
 			? null
 			: {
 					samples: liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
-						const clusterSwapped = nearestSwapFlag(live, swapFlags, read.t);
-						const [a, b] =
-							clusterSwapped !== swap ? ([1, 0] as const) : ([0, 1] as const);
+						const swapped = read.fromMinimap
+							? minimapSwapped
+							: nearestSwapFlag(live, swapFlags, read.t) !== swap;
+						const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
 						return {
 							t: Math.max(0, Math.floor(read.t)),
 							time: read.data.time,
@@ -538,6 +567,57 @@ function buildProgress(
 				};
 
 	return { objective, playerStatus };
+}
+
+/** A status read from either source, sides as read (pre-orientation). */
+interface StatusRead {
+	t: number;
+	/** minimap sides are own/enemy — camera-stable, unlike the HUD plates */
+	fromMinimap: boolean;
+	data: {
+		time: number | null;
+		special: [PlayerStatusFlags, PlayerStatusFlags];
+		dead: [PlayerStatusFlags, PlayerStatusFlags];
+	};
+}
+
+/**
+ * The minimap reads' card/row states as status reads: own/alpha side
+ * first, slots in card order — the same order `teamsFromMinimaps` seats
+ * players — with absent cards padded false (nothing to chart, never a
+ * fabricated state). A read that saw no cards at all identifies nobody
+ * and contributes nothing.
+ */
+function minimapStatusReads(
+	minimapReads: readonly { t: number; data: MinimapData }[],
+): StatusRead[] {
+	return minimapReads.flatMap((read): StatusRead[] => {
+		const { teammates, enemies } = read.data;
+		if (teammates.length === 0 && enemies.length === 0) return [];
+		return [
+			{
+				t: read.t,
+				fromMinimap: true,
+				data: {
+					time: null,
+					special: [
+						sideFlags(teammates, "specialReady"),
+						sideFlags(enemies, "specialReady"),
+					],
+					dead: [sideFlags(teammates, "dead"), sideFlags(enemies, "dead")],
+				},
+			},
+		];
+	});
+}
+
+function sideFlags(
+	players: readonly { dead: boolean; specialReady: boolean }[],
+	key: "dead" | "specialReady",
+): PlayerStatusFlags {
+	return [0, 1, 2, 3].map(
+		(slot) => players[slot]?.[key] ?? false,
+	) as PlayerStatusFlags;
 }
 
 /**

@@ -140,6 +140,8 @@ function teammate(weaponId: MainWeaponId | null, i: number): MinimapTeammate {
 		name: null,
 		weaponId,
 		abilities: [],
+		dead: false,
+		specialReady: false,
 	};
 }
 
@@ -148,6 +150,8 @@ function enemy(weaponId: MainWeaponId | null): MinimapEnemy {
 		name: null,
 		weaponId,
 		abilities: [],
+		dead: false,
+		specialReady: false,
 	};
 }
 
@@ -159,13 +163,23 @@ function minimap(
 		bravo = BRAVO as (MainWeaponId | null)[],
 		spectator = true,
 		teamColors = [null, null] as MinimapData["teamColors"],
+		dead = [[], []] as [number[], number[]],
+		specialReady = [[], []] as [number[], number[]],
 	} = {},
 ): DetectedEvent {
 	const data: MinimapData = {
 		stage,
 		spectator,
-		teammates: alpha.map(teammate),
-		enemies: bravo.map(enemy),
+		teammates: alpha.map((id, i) => ({
+			...teammate(id, i),
+			dead: dead[0].includes(i),
+			specialReady: specialReady[0].includes(i),
+		})),
+		enemies: bravo.map((id, i) => ({
+			...enemy(id),
+			dead: dead[1].includes(i),
+			specialReady: specialReady[1].includes(i),
+		})),
 		teamColors,
 	};
 	return { type: "Minimap", t, confidence: 0.8, data };
@@ -916,13 +930,18 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 		}),
 		minimap(180),
 	]);
+	// the two minimap reads contribute their own (all-clear) samples
 	const samples = built[0]!.match.playerStatus!.samples;
-	assert.deepEqual(samples[0]!.dead, [
+	assert.deepEqual(
+		samples.map((sample) => sample.t),
+		[0, 60, 120, 180],
+	);
+	assert.deepEqual(samples[1]!.dead, [
 		[true, false, false, false],
 		[false, false, false, false],
 	]);
 	// the same on-screen left side is now the other team
-	assert.deepEqual(samples[1]!.dead, [
+	assert.deepEqual(samples[2]!.dead, [
 		[false, false, false, false],
 		[true, false, false, false],
 	]);
@@ -956,4 +975,67 @@ test("replay wipes drop status reads by the shared clock projection", () => {
 		built[0]!.match.playerStatus!.samples.map((sample) => sample.t),
 		[60],
 	);
+});
+
+test("minimap card states become timerless player-status samples", () => {
+	const built = buildScannerMatches([
+		minimap(70, { dead: [[2], [0]], specialReady: [[], [3]] }),
+		minimap(120),
+	]);
+	assert.deepEqual(built[0]!.match.playerStatus, {
+		samples: [
+			{
+				t: 70,
+				time: null,
+				special: [
+					[false, false, false, false],
+					[false, false, false, true],
+				],
+				dead: [
+					[false, false, true, false],
+					[true, false, false, false],
+				],
+			},
+			{
+				t: 120,
+				time: null,
+				special: ALL_FALSE,
+				dead: ALL_FALSE,
+			},
+		],
+	});
+});
+
+test("a known non-SZ match still gets its minimap-sourced status samples", () => {
+	const events = [
+		mapStart(0, { mode: "CB" }),
+		objective(60),
+		playerStatus(61),
+		minimap(90, { spectator: false, dead: [[0], []] }),
+		scoreboard(300, { mode: "CB" }),
+	];
+	const built = buildScannerMatches(events);
+	assert.equal(built[0]!.match.objective, null);
+	const samples = built[0]!.match.playerStatus!.samples;
+	assert.deepEqual(
+		samples.map((sample) => sample.t),
+		[90],
+	);
+	assert.deepEqual(samples[0]!.dead, [
+		[true, false, false, false],
+		[false, false, false, false],
+	]);
+	assert.deepEqual(invalidObjectiveEvents(built), [events[1], events[2]]);
+});
+
+test("a losing-side pov swaps minimap-sourced samples into teams order", () => {
+	const built = buildScannerMatches([
+		minimap(90, { spectator: false, dead: [[0], []] }),
+		scoreboard(300, { povIndex: 6 }),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples[0]!;
+	assert.deepEqual(sample.dead, [
+		[false, false, false, false],
+		[true, false, false, false],
+	]);
 });

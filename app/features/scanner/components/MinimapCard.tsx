@@ -69,6 +69,16 @@ function PlayerRow({
 				<span className="weapon-missing">?</span>
 			)}
 			<span className="name">{player.name ?? ""}</span>
+			{player.dead ? (
+				<span className="status-chip dead" title="respawning (struck out)">
+					✕
+				</span>
+			) : null}
+			{player.specialReady ? (
+				<span className="status-chip special" title="special ready (camo)">
+					★
+				</span>
+			) : null}
 			<span className="abilities">
 				<AbilityRow abilities={player.abilities} />
 			</span>

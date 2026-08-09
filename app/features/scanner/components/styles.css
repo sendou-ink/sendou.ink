@@ -355,6 +355,29 @@ app/styles/vars.css (the emberz copies of those tokens were dropped).
 		gap: var(--s-0-5);
 		flex-shrink: 0;
 	}
+
+	& .status-chip {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 16px;
+		height: 16px;
+		border-radius: var(--radius-full);
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-bold);
+		line-height: 1;
+
+		&.dead {
+			background: var(--color-error-low);
+			color: var(--color-error-high);
+		}
+
+		&.special {
+			background: var(--color-warning-low);
+			color: var(--color-warning-high);
+		}
+	}
 }
 
 /* d-pad chevron / face-button pucks, same round-solid language as weapon icons */

@@ -349,6 +349,7 @@ for (const config of configs) {
 		names: { ok: 0, total: 0 } as Tally,
 		abilities: { ok: 0, total: 0 } as Tally,
 		stage: { ok: 0, total: 0 } as Tally,
+		status: { ok: 0, total: 0 } as Tally,
 	};
 	let charEdits = 0;
 	let charTotal = 0;
@@ -372,11 +373,15 @@ for (const config of configs) {
 				name?: string | null;
 				weaponId?: number | null;
 				abilities?: (string | null)[];
+				dead?: boolean;
+				specialReady?: boolean;
 			}[],
 			{
 				name?: string | null;
 				weaponId: number | null;
 				abilities: (string | null)[];
+				dead: boolean;
+				specialReady: boolean;
 			}[],
 		][] = [
 			["teammate", expected.teammates ?? [], event.data.teammates],
@@ -415,6 +420,15 @@ for (const config of configs) {
 							`${fixture.name} ${side}${i}: ability [${slot}] "${gotId}" != "${wantId}"`,
 						);
 				});
+				for (const flag of ["dead", "specialReady"] as const) {
+					if (want[flag] === undefined) continue;
+					tally.status.total++;
+					if (got[flag] === want[flag]) tally.status.ok++;
+					else
+						misses.push(
+							`${fixture.name} ${side}${i}: ${flag} ${got[flag]} != ${want[flag]}`,
+						);
+				}
 			});
 		}
 		if (expected.stage !== undefined) {
@@ -433,6 +447,7 @@ for (const config of configs) {
 	console.info(`names       ${pct(tally.names)}`);
 	console.info(`abilities   ${pct(tally.abilities)}`);
 	console.info(`stage       ${pct(tally.stage)}`);
+	console.info(`status      ${pct(tally.status)}`);
 	console.info(
 		`name CER    ${charTotal ? ((100 * charEdits) / charTotal).toFixed(2) : "n/a"}% (${charEdits} edits / ${charTotal} chars)`,
 	);

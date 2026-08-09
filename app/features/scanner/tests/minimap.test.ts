@@ -134,6 +134,16 @@ for (const fixture of fixtures) {
 							`abilities (debug: ${cardDebug})`,
 						);
 					}
+					if (want.dead !== undefined) {
+						assert.equal(got.dead, want.dead, `dead (debug: ${cardDebug})`);
+					}
+					if (want.specialReady !== undefined) {
+						assert.equal(
+							got.specialReady,
+							want.specialReady,
+							`specialReady (debug: ${cardDebug})`,
+						);
+					}
 				},
 			);
 		}
@@ -175,6 +185,16 @@ for (const fixture of fixtures) {
 							got.abilities,
 							want.abilities,
 							`abilities (debug: ${rowDebug})`,
+						);
+					}
+					if (want.dead !== undefined) {
+						assert.equal(got.dead, want.dead, `dead (debug: ${rowDebug})`);
+					}
+					if (want.specialReady !== undefined) {
+						assert.equal(
+							got.specialReady,
+							want.specialReady,
+							`specialReady (debug: ${rowDebug})`,
 						);
 					}
 				},

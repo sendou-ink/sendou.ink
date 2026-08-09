@@ -36,12 +36,16 @@ interface ExpectedPlayer {
 }
 
 interface ExpectedMinimapTeammate {
-	slot?: "up" | "left" | "right" | "self";
+	slot?: "up" | "left" | "right" | "self" | "down";
 	name?: string | null;
 	/** informational for the human corrector; tests compare weaponId */
 	weaponLabel?: string | null;
 	weaponId?: MainWeaponId | null;
 	abilities?: (AbilityWithUnknown | null)[];
+	/** struck through with the respawn cross-out */
+	dead?: boolean;
+	/** on the light camo surface of a charged special */
+	specialReady?: boolean;
 }
 
 interface ExpectedMinimapEnemy {
@@ -51,6 +55,10 @@ interface ExpectedMinimapEnemy {
 	weaponLabel?: string | null;
 	weaponId?: MainWeaponId | null;
 	abilities?: (AbilityWithUnknown | null)[];
+	/** struck through with the respawn cross-out */
+	dead?: boolean;
+	/** on the light camo surface of a charged special */
+	specialReady?: boolean;
 }
 
 interface ExpectedScoreboard {

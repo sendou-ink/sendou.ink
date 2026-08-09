@@ -109,7 +109,12 @@ sequenceDiagram
   wholesale: same replay-wipe anchor, cast orientation inherited from the
   nearest counter read, nulled together on non-SZ matches, and rendered as
   per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
-  shared with the match page) above the objective chart. Parsing details
+  shared with the match page) above the objective chart. Minimap reads
+  feed the same samples: every card/row carries `dead` (respawn
+  cross-out) and `specialReady` (special camo) flags, merged in timerless
+  on the shared replay anchor — and mode-agnostic, so a known non-SZ
+  match keeps its minimap-sourced samples while its counter/status
+  misreads are voided. Parsing details
   are in each detector's module
   header; accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching

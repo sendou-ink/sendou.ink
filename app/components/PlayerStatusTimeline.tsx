@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import { Image, WeaponImage } from "./Image";
+import { formatElapsed } from "./objective-timeline-utils";
 import styles from "./PlayerStatusTimeline.module.css";
 
 /** Consecutive reads further apart than this leave an unknown gap. */
@@ -59,6 +60,8 @@ export function PlayerStatusTimeline({
 	const leftOf = (span: StatusSpan) => `${((span.start - min) / range) * 100}%`;
 	const widthOf = (span: StatusSpan) =>
 		`${((span.end - span.start) / range) * 100}%`;
+	const titleOf = (label: string, span: StatusSpan) =>
+		`${label} · ${formatElapsed(span.start)}–${formatElapsed(span.end)}`;
 
 	return (
 		<div className={styles.container}>
@@ -85,6 +88,10 @@ export function PlayerStatusTimeline({
 											key={`d${i}`}
 											className={styles.spanDead}
 											style={{ left: leftOf(span), width: widthOf(span) }}
+											title={titleOf(
+												t("common:playerStatusTimeline.splatted"),
+												span,
+											)}
 										/>
 									),
 								)}
@@ -96,6 +103,10 @@ export function PlayerStatusTimeline({
 										key={`s${i}`}
 										className={styles.spanSpecial}
 										style={{ left: leftOf(span), width: widthOf(span) }}
+										title={titleOf(
+											t("common:playerStatusTimeline.specialReady"),
+											span,
+										)}
 									/>
 								))}
 							</div>

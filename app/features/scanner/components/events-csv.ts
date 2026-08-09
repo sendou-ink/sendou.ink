@@ -93,9 +93,12 @@ function formatMinimapPlayers(data: MinimapData): string {
 			name: string | null;
 			weaponId: number | null;
 			abilities: (string | null)[];
+			dead: boolean;
+			specialReady: boolean;
 		},
 	) =>
-		`${label} ${p.name ?? "?"} · ${mainWeaponLabel(p.weaponId as MainWeaponId | null) ?? "?"} · ${formatMinimapAbilities(p.abilities)}`;
+		`${label} ${p.name ?? "?"} · ${mainWeaponLabel(p.weaponId as MainWeaponId | null) ?? "?"} · ${formatMinimapAbilities(p.abilities)}` +
+		`${p.dead ? " · splatted" : ""}${p.specialReady ? " · special" : ""}`;
 	return [
 		...data.teammates.map((p) => fmt(p.slot, p)),
 		...data.enemies.map((p, i) => fmt(`enemy${i + 1}`, p)),

@@ -90,6 +90,19 @@ export function matchScoresFromObjective(
 	return [lastCountTaken(0), lastCountTaken(1)];
 }
 
+/**
+ * Seconds into the source formatted for display: m:ss, growing an hours
+ * part only when needed.
+ */
+export function formatElapsed(seconds: number): string {
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	const rest = String(Math.floor(seconds % 60)).padStart(2, "0");
+	return hours > 0
+		? `${hours}:${String(minutes).padStart(2, "0")}:${rest}`
+		: `${minutes}:${rest}`;
+}
+
 function medianFilterValues(
 	values: readonly (number | null)[],
 ): (number | null)[] {

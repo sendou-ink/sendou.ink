@@ -12,7 +12,9 @@
           "SJ"
         ],
         "weaponLabel": "Splattershot",
-        "weaponId": 40
+        "weaponId": 40,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "left",
@@ -23,7 +25,9 @@
           "SJ"
         ],
         "weaponLabel": "Splatana Stamper",
-        "weaponId": 8000
+        "weaponId": 8000,
+        "dead": false,
+        "specialReady": true
       },
       {
         "slot": "right",
@@ -34,7 +38,9 @@
           "ISS"
         ],
         "weaponLabel": "Splattershot Jr.",
-        "weaponId": 10
+        "weaponId": 10,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "self",
@@ -45,7 +51,9 @@
           "SJ"
         ],
         "weaponLabel": "Custom Blaster",
-        "weaponId": 211
+        "weaponId": 211,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "enemies": [
@@ -56,7 +64,9 @@
           "SJ"
         ],
         "weaponLabel": "Inkbrush Nouveau",
-        "weaponId": 1101
+        "weaponId": 1101,
+        "dead": false,
+        "specialReady": true
       },
       {
         "abilities": [
@@ -65,7 +75,9 @@
           "SJ"
         ],
         "weaponLabel": ".52 Gal",
-        "weaponId": 50
+        "weaponId": 50,
+        "dead": false,
+        "specialReady": false
       },
       {
         "abilities": [
@@ -74,7 +86,9 @@
           "SCU"
         ],
         "weaponLabel": "Big Swig Roller",
-        "weaponId": 1040
+        "weaponId": 1040,
+        "dead": false,
+        "specialReady": true
       },
       {
         "abilities": [
@@ -83,7 +97,9 @@
           "SSU"
         ],
         "weaponLabel": "Luna Blaster Neo",
-        "weaponId": 201
+        "weaponId": 201,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "stageLabel": "Undertow Spillway"

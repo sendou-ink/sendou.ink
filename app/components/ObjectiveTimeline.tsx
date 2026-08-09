@@ -30,7 +30,7 @@ import { Line } from "react-chartjs-2";
 import { useTranslation } from "react-i18next";
 import { useThemeColors } from "~/hooks/useThemeColors";
 import styles from "./ObjectiveTimeline.module.css";
-import { smoothPenalties } from "./objective-timeline-utils";
+import { formatElapsed, smoothPenalties } from "./objective-timeline-utils";
 
 ChartJS.register(
 	LinearScale,
@@ -264,16 +264,6 @@ function gridColor(
 ) {
 	if (value < 0) return "transparent";
 	return value === 0 ? colors.borderHigh : colors.border;
-}
-
-/** Position on the x-axis: m:ss, growing an hours part only when needed. */
-function formatElapsed(seconds: number): string {
-	const hours = Math.floor(seconds / 3600);
-	const minutes = Math.floor((seconds % 3600) / 60);
-	const rest = String(Math.floor(seconds % 60)).padStart(2, "0");
-	return hours > 0
-		? `${hours}:${String(minutes).padStart(2, "0")}:${rest}`
-		: `${minutes}:${rest}`;
 }
 
 /** the match timer's M:SS (215 → "3:35") */

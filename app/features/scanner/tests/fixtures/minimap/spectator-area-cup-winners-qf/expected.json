@@ -13,7 +13,9 @@
           "ISM"
         ],
         "weaponLabel": "Snipewriter 5H",
-        "weaponId": 2070
+        "weaponId": 2070,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "right",
@@ -24,7 +26,9 @@
           "SSU"
         ],
         "weaponLabel": "Splash-o-matic",
-        "weaponId": 20
+        "weaponId": 20,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "down",
@@ -35,7 +39,9 @@
           "SJ"
         ],
         "weaponLabel": "Custom Blaster",
-        "weaponId": 211
+        "weaponId": 211,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "left",
@@ -46,7 +52,9 @@
           "SJ"
         ],
         "weaponLabel": "Splatana Stamper",
-        "weaponId": 8000
+        "weaponId": 8000,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "enemies": [
@@ -58,7 +66,9 @@
           "SJ"
         ],
         "weaponLabel": "Mint Decavitator",
-        "weaponId": 8020
+        "weaponId": 8020,
+        "dead": false,
+        "specialReady": false
       },
       {
         "name": "たなは",
@@ -68,7 +78,9 @@
           "SCU"
         ],
         "weaponLabel": "Splat Brella",
-        "weaponId": 6000
+        "weaponId": 6000,
+        "dead": false,
+        "specialReady": false
       },
       {
         "name": "いなてんきんぐ",
@@ -78,7 +90,9 @@
           "RSU"
         ],
         "weaponLabel": "Zink Mini Splatling",
-        "weaponId": 4001
+        "weaponId": 4001,
+        "dead": false,
+        "specialReady": false
       },
       {
         "name": "そふ",
@@ -88,7 +102,9 @@
           "RES"
         ],
         "weaponLabel": "Heavy Splatling",
-        "weaponId": 4010
+        "weaponId": 4010,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "stageLabel": "Mincemeat Metalworks"

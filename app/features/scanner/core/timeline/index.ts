@@ -5,6 +5,10 @@
  */
 
 import {
+	MINIMAP_EVENT_TYPE,
+	sameMinimapStatusData,
+} from "../detectors/minimap/index";
+import {
 	OBJECTIVE_EVENT_TYPE,
 	sameObjectiveData,
 } from "../detectors/objective/index";
@@ -43,7 +47,8 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	// of one death land within the window while consecutive deaths are outside;
 	// players flick the map open for 1-3s and each open is a fresh sample
 	// (slots read differently across opens), so minimap frames merge only
-	// within one open
+	// within one open — and a dead/special flip caught mid-open stays its
+	// own event via the content guard
 	// objective counter reads repeat every check second; the content guard
 	// below keeps every actual change while the window collapses static
 	// stretches into one event per state. Player statuses can revisit an
@@ -51,7 +56,7 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	// window must stay under that
 	mergeWindowByType: {
 		Death: 8,
-		Minimap: 5,
+		[MINIMAP_EVENT_TYPE]: 5,
 		[OBJECTIVE_EVENT_TYPE]: 10,
 		[PLAYER_STATUS_EVENT_TYPE]: 5,
 	},
@@ -59,6 +64,7 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
+		[MINIMAP_EVENT_TYPE]: sameMinimapStatusData,
 		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
 		[PLAYER_STATUS_EVENT_TYPE]: samePlayerStatusData,
 	},
