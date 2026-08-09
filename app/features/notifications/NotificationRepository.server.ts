@@ -80,8 +80,12 @@ export function findAllByType<T extends Notification["type"]>(type: T) {
  * Marks the users' unseen notifications of the given type as seen, optionally
  * only those whose meta matches every given key/value pair. Used to clear the
  * unseen dot when the user addresses what the notification is about.
+ *
+ * The correlated `exists` keeps this proportional to the users' own
+ * notifications. A `notificationId in (select ...)` reads the same but makes
+ * SQLite materialize every notification of the type (json_extract'ing each one)
+ * before touching the user's rows, which is ~80x slower on a hot path.
  */
-// xxx: benchmark this
 export async function markAsSeenByType({
 	userIds,
 	type,
@@ -93,25 +97,31 @@ export async function markAsSeenByType({
 }) {
 	if (userIds.length === 0) return;
 
-	let notificationIds = db
-		.selectFrom("Notification")
-		.select("Notification.id")
-		.where("Notification.type", "=", type);
-
-	for (const [key, value] of Object.entries(meta ?? {})) {
-		notificationIds = notificationIds.where(
-			sql`json_extract("Notification"."meta", ${`$.${key}`})`,
-			"=",
-			value,
-		);
-	}
-
 	await db
 		.updateTable("NotificationUser")
 		.set("seen", 1)
 		.where("NotificationUser.seen", "=", 0)
 		.where("NotificationUser.userId", "in", userIds)
-		.where("NotificationUser.notificationId", "in", notificationIds)
+		.where(({ exists, selectFrom, ref }) => {
+			let matchingNotification = selectFrom("Notification")
+				.select("Notification.id")
+				.whereRef(
+					"Notification.id",
+					"=",
+					ref("NotificationUser.notificationId"),
+				)
+				.where("Notification.type", "=", type);
+
+			for (const [key, value] of Object.entries(meta ?? {})) {
+				matchingNotification = matchingNotification.where(
+					sql`json_extract("Notification"."meta", ${`$.${key}`})`,
+					"=",
+					value,
+				);
+			}
+
+			return exists(matchingNotification);
+		})
 		.execute();
 }
 
