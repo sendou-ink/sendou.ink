@@ -93,6 +93,7 @@ export async function findAllPosts(user?: {
 
 	return rows.filter((row) => {
 		if (!row.plusTierVisibility) return true;
+		if (row.author.id === userId) return true;
 		if (!user?.plusTier) return false;
 
 		return row.plusTierVisibility >= user.plusTier;
