@@ -15,7 +15,12 @@
  * either cast arrangement, but broadcasts can hide them while keeping cast
  * geometry, so a badge-less frame picks whichever geometry reads more
  * decisively (bodies far from the dead threshold on either side) instead
- * of assuming POV.
+ * of assuming POV — with two positional refinements: a decisive slot-comb
+ * win proves the badge-less mirror arrangement outright, and a
+ * history-less near-tie stays with the cast family (see pickLayout). The
+ * cast wash glow is pale, so on cast layouts only the unsaturated glow
+ * fraction counts toward ready (and against dead) — saturated backdrop
+ * leaking over a dead icon's shoulder cannot fake or suppress a state.
  */
 import type { Mat } from "../../cv";
 import { copyRoi, type Roi } from "../../image";
@@ -24,16 +29,27 @@ import {
 	STATUS_BODY_BOX_CAST,
 	STATUS_BODY_BOX_POV,
 	STATUS_CAST_MIN_DPAD_WHITE,
+	STATUS_COMB_BAND_H,
+	STATUS_COMB_BAND_Y,
+	STATUS_COMB_CENTER_HALF_WIDTH,
+	STATUS_COMB_GAP_HALF_WIDTH,
+	STATUS_COMB_MAX_SHIFT,
+	STATUS_COMB_SIDE_SPANS,
 	STATUS_DEAD_MAX_BODY_INK,
 	STATUS_DEAD_MAX_BODY_PALE,
 	STATUS_DEAD_MAX_SHOULDER_GLOW,
 	STATUS_DPAD_PROBES,
 	STATUS_DPAD_PROBES_MIRROR,
+	STATUS_FRESH_CAST_MIN_DECISIVENESS,
+	STATUS_FRESH_POV_MIN_LEAD,
+	STATUS_GLOW_MAX_SPREAD,
 	STATUS_GLOW_MIN_VALUE,
 	STATUS_INK_MIN_SPREAD,
 	STATUS_INK_MIN_VALUE,
 	STATUS_LAYOUT_SCORE_CAP,
 	STATUS_LAYOUT_STICKY_MARGIN,
+	STATUS_MIRROR_COMB_LEAD,
+	STATUS_MIRROR_COMB_MIN,
 	STATUS_PALE_MAX_SPREAD,
 	STATUS_PALE_MIN_VALUE,
 	STATUS_READY_MIN_BODY_PALE,
@@ -93,6 +109,7 @@ interface SlotRead {
 	bodyInk: number;
 	bodyPale: number;
 	shoulderGlow: number;
+	shoulderPaleGlow: number;
 }
 
 /**
@@ -142,6 +159,9 @@ export function parsePlayerStatus(
 			bodyInk: reads.map((read) => Number(read.bodyInk.toFixed(2))),
 			bodyPale: reads.map((read) => Number(read.bodyPale.toFixed(2))),
 			shoulderGlow: reads.map((read) => Number(read.shoulderGlow.toFixed(2))),
+			shoulderPaleGlow: reads.map((read) =>
+				Number(read.shoulderPaleGlow.toFixed(2)),
+			),
 		},
 	};
 }
@@ -174,7 +194,13 @@ function readSlots(
 				w: bodyBox.w,
 				h: bodyBox.h,
 			});
-			return classifySlot(body.ink, body.pale, shoulder.glow, layout);
+			return classifySlot(
+				body.ink,
+				body.pale,
+				shoulder.glow,
+				shoulder.paleGlow,
+				layout,
+			);
 		}),
 	) as [SlotRead[], SlotRead[]];
 }
@@ -214,6 +240,16 @@ const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
  * across — the sticky margin keeps a single noisy frame from flipping an
  * established layout, and SCORED_FLIPS keeps the POV/mirror false friends
  * from ever trading places without badge proof.
+ *
+ * Two decisions decisiveness cannot make on its own:
+ * - The badge-less MIRROR arrangement (attested in the sendou-triton VoD)
+ *   scores below cast even on true mirror frames, so a decisive slot-comb
+ *   win (see combContrast) overrides everything but badges — comb evidence
+ *   is positional and cannot confuse the POV/mirror false friends because
+ *   only their differing left columns can produce a decisive lead.
+ * - A history-less pov-vs-cast near-tie (busy backdrops mis-rank cast
+ *   footage): the fresh pick stays cast unless cast reads under the floor
+ *   or pov leads decisively (STATUS_FRESH_* in rois.ts).
  */
 function pickLayout(
 	frame: Mat,
@@ -229,6 +265,14 @@ function pickLayout(
 	const scores = Object.fromEntries(
 		ALL_LAYOUTS.map((layout) => [layout, layoutDecisiveness(frame, layout)]),
 	) as Record<PlayerStatusLayout, number>;
+	const combs = combScores(frame);
+	if (
+		combs["cast-mirror"] >= STATUS_MIRROR_COMB_MIN &&
+		combs["cast-mirror"] >= combs.cast + STATUS_MIRROR_COMB_LEAD &&
+		combs["cast-mirror"] >= combs.pov + STATUS_MIRROR_COMB_LEAD
+	) {
+		return { layout: "cast-mirror", scores };
+	}
 	if (prevLayout) {
 		const challenger = SCORED_FLIPS[prevLayout].reduce((a, b) =>
 			scores[b] > scores[a] ? b : a,
@@ -240,6 +284,12 @@ function pickLayout(
 					: prevLayout,
 			scores,
 		};
+	}
+	if (
+		scores.cast >= STATUS_FRESH_CAST_MIN_DECISIVENESS &&
+		scores.pov < scores.cast + STATUS_FRESH_POV_MIN_LEAD
+	) {
+		return { layout: "cast", scores };
 	}
 	return { layout: scores.pov >= scores.cast ? "pov" : "cast", scores };
 }
@@ -260,26 +310,30 @@ function layoutDecisiveness(frame: Mat, layout: PlayerStatusLayout): number {
 }
 
 /**
- * State from the three fractions, with a confidence scaled by the distance
- * to the nearest decision boundary (1 at twice the threshold / at zero).
- * On the cast layout a ready icon is always the wash, which replaces the
- * body's team ink — an ink-heavy body there means the bright read is
- * backdrop leaking past the icon edge, not a held special (see
- * STATUS_READY_WASH_MAX_BODY_INK).
+ * State from the pixel-class fractions, with a confidence scaled by the
+ * distance to the nearest decision boundary (1 at twice the threshold / at
+ * zero). On the cast layouts a ready icon is always the wash, which
+ * replaces the body's team ink — an ink-heavy body there means the bright
+ * read is backdrop leaking past the icon edge, not a held special (see
+ * STATUS_READY_WASH_MAX_BODY_INK) — and the wash glow is pale, so only the
+ * unsaturated glow fraction counts (a saturated bright leak, like sky over
+ * a dead icon's shoulder, is not a wash — see STATUS_GLOW_MAX_SPREAD).
  */
 function classifySlot(
 	bodyInk: number,
 	bodyPale: number,
 	shoulderGlow: number,
+	shoulderPaleGlow: number,
 	layout: PlayerStatusLayout,
 ): SlotRead {
+	const washGlow = layout === "pov" ? shoulderGlow : shoulderPaleGlow;
 	const dead =
 		bodyInk <= STATUS_DEAD_MAX_BODY_INK &&
-		shoulderGlow <= STATUS_DEAD_MAX_SHOULDER_GLOW &&
+		washGlow <= STATUS_DEAD_MAX_SHOULDER_GLOW &&
 		bodyPale <= STATUS_DEAD_MAX_BODY_PALE;
 	const special =
 		!dead &&
-		(shoulderGlow >= STATUS_READY_MIN_SHOULDER_GLOW ||
+		(washGlow >= STATUS_READY_MIN_SHOULDER_GLOW ||
 			bodyPale >= STATUS_READY_MIN_BODY_PALE) &&
 		(layout === "pov" || bodyInk <= STATUS_READY_WASH_MAX_BODY_INK);
 	const confidence = dead
@@ -291,24 +345,33 @@ function classifySlot(
 			? Math.min(
 					1,
 					Math.max(
-						shoulderGlow / (STATUS_READY_MIN_SHOULDER_GLOW * 2),
+						washGlow / (STATUS_READY_MIN_SHOULDER_GLOW * 2),
 						bodyPale / (STATUS_READY_MIN_BODY_PALE * 2),
 					),
 				)
 			: Math.min(1, bodyInk / (STATUS_DEAD_MAX_BODY_INK * 2));
-	return { dead, special, confidence, bodyInk, bodyPale, shoulderGlow };
+	return {
+		dead,
+		special,
+		confidence,
+		bodyInk,
+		bodyPale,
+		shoulderGlow,
+		shoulderPaleGlow,
+	};
 }
 
 /** Ink, glow, and pale pixel fractions of a ROI (see rois.ts for the classes). */
 function classFractions(
 	frame: Mat,
 	roi: Roi,
-): { ink: number; glow: number; pale: number } {
+): { ink: number; glow: number; paleGlow: number; pale: number } {
 	const crop = copyRoi(frame, roi);
 	const { data } = crop;
 	const channels = crop.channels();
 	let ink = 0;
 	let glow = 0;
+	let paleGlow = 0;
 	let pale = 0;
 	let count = 0;
 	for (let i = 0; i < data.length; i += channels) {
@@ -318,13 +381,137 @@ function classFractions(
 		const value = Math.max(r, g, b);
 		const spread = value - Math.min(r, g, b);
 		if (spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE) ink++;
-		if (value >= STATUS_GLOW_MIN_VALUE) glow++;
+		if (value >= STATUS_GLOW_MIN_VALUE) {
+			glow++;
+			if (spread <= STATUS_GLOW_MAX_SPREAD) paleGlow++;
+		}
 		if (value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD)
 			pale++;
 		count++;
 	}
 	crop.delete();
-	return { ink: ink / count, glow: glow / count, pale: pale / count };
+	return {
+		ink: ink / count,
+		glow: glow / count,
+		paleGlow: paleGlow / count,
+		pale: pale / count,
+	};
+}
+
+/**
+ * Slot-comb contrast per layout: mean iconness (ink-or-pale column
+ * fraction over the strip's body band) at the layout's slot centers minus
+ * the mean at its between-slot gap midpoints, maximized over a small
+ * global shift. Icon bodies concentrate iconness at true centers while the
+ * V-notches between kites drop it, so a rigid comb at the wrong pitch
+ * cannot score all four slots at once — positional evidence orthogonal to
+ * body decisiveness, strong enough to prove the badge-less mirror
+ * arrangement (see STATUS_MIRROR_COMB_* in rois.ts).
+ */
+function combScores(frame: Mat): Record<PlayerStatusLayout, number> {
+	const profiles = STATUS_COMB_SIDE_SPANS.map(([x0, x1]) =>
+		iconnessProfile(frame, x0, x1),
+	);
+	const centersOf = (layout: PlayerStatusLayout) =>
+		layout === "pov"
+			? STATUS_SLOT_CENTERS_POV
+			: layout === "cast"
+				? STATUS_SLOT_CENTERS_CAST
+				: STATUS_SLOT_CENTERS_CAST_MIRROR;
+	return Object.fromEntries(
+		ALL_LAYOUTS.map((layout) => [
+			layout,
+			centersOf(layout).reduce(
+				(sum, sideCenters, side) =>
+					sum +
+					combContrast(
+						profiles[side]!,
+						STATUS_COMB_SIDE_SPANS[side]![0],
+						sideCenters,
+					),
+				0,
+			),
+		]),
+	) as Record<PlayerStatusLayout, number>;
+}
+
+function iconnessProfile(frame: Mat, x0: number, x1: number): number[] {
+	const crop = copyRoi(frame, {
+		x: x0,
+		y: STATUS_COMB_BAND_Y,
+		w: x1 - x0,
+		h: STATUS_COMB_BAND_H,
+	});
+	const { data } = crop;
+	const channels = crop.channels();
+	const width = crop.cols;
+	const height = crop.rows;
+	const profile = new Array<number>(width).fill(0);
+	for (let y = 0; y < height; y++) {
+		for (let x = 0; x < width; x++) {
+			const i = (y * width + x) * channels;
+			const r = data[i]!;
+			const g = data[i + 1]!;
+			const b = data[i + 2]!;
+			const value = Math.max(r, g, b);
+			const spread = value - Math.min(r, g, b);
+			const isInk =
+				spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE;
+			const isPale =
+				value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD;
+			if (isInk || isPale) profile[x]! += 1 / height;
+		}
+	}
+	crop.delete();
+	return profile;
+}
+
+function combContrast(
+	profile: number[],
+	x0: number,
+	centers: readonly number[],
+): number {
+	let best = -1;
+	for (
+		let shift = -STATUS_COMB_MAX_SHIFT;
+		shift <= STATUS_COMB_MAX_SHIFT;
+		shift += 2
+	) {
+		let onCenters = 0;
+		for (const cx of centers)
+			onCenters += bandMean(
+				profile,
+				x0,
+				cx + shift,
+				STATUS_COMB_CENTER_HALF_WIDTH,
+			);
+		onCenters /= centers.length;
+		let onGaps = 0;
+		for (let i = 0; i < centers.length - 1; i++) {
+			const mid = Math.round((centers[i]! + centers[i + 1]!) / 2);
+			onGaps += bandMean(profile, x0, mid + shift, STATUS_COMB_GAP_HALF_WIDTH);
+		}
+		onGaps /= centers.length - 1;
+		best = Math.max(best, onCenters - onGaps);
+	}
+	return best;
+}
+
+function bandMean(
+	profile: number[],
+	x0: number,
+	center: number,
+	halfWidth: number,
+): number {
+	let sum = 0;
+	let count = 0;
+	for (let x = center - halfWidth; x <= center + halfWidth; x++) {
+		const i = x - x0;
+		if (i < 0 || i >= profile.length) continue;
+		sum += profile[i]!;
+		count++;
+	}
+	return count ? sum / count : 0;
 }
 
 /** All four badge probes reading white = that casted spectator arrangement. */

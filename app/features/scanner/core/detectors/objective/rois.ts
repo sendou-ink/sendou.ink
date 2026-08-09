@@ -221,6 +221,17 @@ export const STATUS_INK_MIN_VALUE = 105;
 export const STATUS_GLOW_MIN_VALUE = 225;
 
 /**
+ * Cast-family glow must also be UNSATURATED: the cast wash is pale even at
+ * its brightest, while backdrop leaking past an icon edge is colored —
+ * bright sky over a dead icon's shoulder reads glow 0.30 raw but 0.00 under
+ * this cap (sky spread >130), and the lilac/pink washes sit at spread
+ * 70-90 (attested capped fractions 0.46-0.61 vs raw 0.46-0.62). POV ready
+ * icons light up IN team color (attested glow 0.94 fully saturated), so
+ * the cap is cast/mirror-only, like the wash-ink guard.
+ */
+export const STATUS_GLOW_MAX_SPREAD = 90;
+
+/**
  * A pale pixel: bright but unsaturated, the ready wash across its whole
  * pulse cycle. The wash PULSES — its trough dims below the glow floor
  * (~190-220) while staying pale, so a trough frame reads no ink and no
@@ -245,10 +256,11 @@ export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
 /**
  * Special ready off the body when the shoulder misses the wash (pulse
  * trough, or wash dimmed on compressed footage): pale-dominant body
- * (attested ready >=0.40 vs alive <=0.25 — plain alive bodies show some
- * pale from weapon-silhouette whites).
+ * (attested ready >=0.31 — the AREA CUP mirror wash after a respawn — vs
+ * alive <=0.25 — plain alive bodies show some pale from weapon-silhouette
+ * whites).
  */
-export const STATUS_READY_MIN_BODY_PALE = 0.32;
+export const STATUS_READY_MIN_BODY_PALE = 0.3;
 
 /**
  * Cast-layout ready guard: the cast wash REPLACES the body's team ink
@@ -272,6 +284,44 @@ export const STATUS_READY_WASH_MAX_BODY_INK = 0.4;
  */
 export const STATUS_LAYOUT_SCORE_CAP = 0.3;
 export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
+
+/**
+ * History-less badge-less picks prefer the cast family: every attested
+ * badge-less strip is a cast broadcast (S3 first-person POV footage is
+ * unattested), and decisiveness alone mis-ranks busy backdrops — the
+ * sendou-triton match-start frame scores pov 0.278 / cast 0.273 yet is
+ * cast. POV wins a fresh pick only when cast geometry reads poorly
+ * (below the floor — the S2 POV fixture reads cast at 0.198 vs attested
+ * cast footage >=0.212) or pov beats it by a decisive lead (attested cast
+ * frames mis-lead pov by at most 0.036).
+ */
+export const STATUS_FRESH_CAST_MIN_DECISIVENESS = 0.21;
+export const STATUS_FRESH_POV_MIN_LEAD = 0.05;
+
+/**
+ * Slot-comb contrast (see combContrast in player-status.ts): mean iconness
+ * at a layout's slot centers minus mean at its between-slot gaps, maximized
+ * over a small global shift. Rigid comb positions expose the arrangement's
+ * pitch — the badge-less mirror strip scores 0.81 while cast reads it at
+ * -0.07 (sendou-triton MakoMart) — so a decisive comb win proves the
+ * mirror arrangement even though its right column nearly coincides with
+ * POV's. Both gates are needed: the worst attested false mirror comb is
+ * 0.44 total (lead-banner frame) with a 0.24 lead.
+ */
+export const STATUS_COMB_BAND_Y = 35;
+export const STATUS_COMB_BAND_H = 61;
+export const STATUS_COMB_SIDE_SPANS: readonly [
+	[number, number],
+	[number, number],
+] = [
+	[440, 960],
+	[960, 1480],
+];
+export const STATUS_COMB_CENTER_HALF_WIDTH = 16;
+export const STATUS_COMB_GAP_HALF_WIDTH = 7;
+export const STATUS_COMB_MAX_SHIFT = 10;
+export const STATUS_MIRROR_COMB_MIN = 0.5;
+export const STATUS_MIRROR_COMB_LEAD = 0.25;
 
 /**
  * An established layout only carries forward across reads this close in
