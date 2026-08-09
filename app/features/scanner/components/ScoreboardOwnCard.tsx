@@ -1,9 +1,11 @@
+import clsx from "clsx";
 import { WeaponImage } from "~/components/Image";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
 import { AbilityGrid } from "./AbilityGrid";
+import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
 import { lobbyLabel, mainWeaponLabel, modeLabel, stageLabel } from "./labels";
@@ -23,8 +25,8 @@ export function ScoreboardOwnCard(props: {
 		props;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className="card">
-			<div className="meta">
+		<div className={styles.card}>
+			<div className={styles.meta}>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -51,14 +53,14 @@ export function ScoreboardOwnCard(props: {
 					fixture={{ data, type: "ScoreboardOwn" }}
 				/>
 			</div>
-			<div className="teams solo">
-				<div className="team">
+			<div className={clsx(styles.teams, styles.solo)}>
+				<div className={styles.team}>
 					{data.weaponId !== null ? (
 						<WeaponImage
 							weaponSplId={data.weaponId}
 							variant="build"
 							size={28}
-							className="weapon-icon"
+							className={styles.weaponIcon}
 						/>
 					) : null}
 					<AbilityGrid abilities={data.abilities} />

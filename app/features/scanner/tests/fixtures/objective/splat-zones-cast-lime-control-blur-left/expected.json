@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 262,
+		"score": [50, 100],
+		"penalty": [null, null],
+		"control": [true, false]
+	},
+	"options": {
+		"notes": "Casted stream (Splat World Series 2026 playoffs) mid-fight: lime team in control, white '50' on the bright lime fill blurred by stream compression — the leading '5' scored under the main digit floor and the read truncated to 0 before the extension floor existed."
+	}
+}

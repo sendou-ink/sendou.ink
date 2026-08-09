@@ -60,6 +60,33 @@ export interface ScannerMatchObjective {
 	samples: ScannerMatchObjectiveSample[];
 }
 
+export type ScannerMatchPlayerFlags = [boolean, boolean, boolean, boolean];
+
+export interface ScannerMatchPlayerStatusSample {
+	/** whole seconds into the video/stream the icon strip was read at */
+	t: number;
+	/**
+	 * seconds shown on the match timer at the read — the same key the
+	 * objective samples carry, for charting both on one clock axis
+	 */
+	time: number | null;
+	/** special held per player, teams in `teams` order, slots in row order */
+	special: [ScannerMatchPlayerFlags, ScannerMatchPlayerFlags];
+	/** splatted per player, same arrangement */
+	dead: [ScannerMatchPlayerFlags, ScannerMatchPlayerFlags];
+}
+
+/**
+ * Per-player special/death states over the match, read off the icon strip
+ * next to the objective counter. Chronological and deduped to state
+ * changes like the objective samples, with an unchanged state re-confirmed
+ * every ~6s — render longer sample gaps as unknown, not as a continued
+ * state.
+ */
+export interface ScannerMatchPlayerStatus {
+	samples: ScannerMatchPlayerStatusSample[];
+}
+
 export interface ScannerMatch {
 	/** whole seconds into the video/stream the match starts at */
 	startsAt: number | null;
@@ -83,11 +110,18 @@ export interface ScannerMatch {
 	/** spectator/casted footage (the 8-player spectator map screen was seen) */
 	cast: boolean;
 	/**
-	 * counter progress samples in `teams` order (the on-screen left plate is
-	 * the POV/alpha side; the builder reorients when teams[0] is the other
-	 * side); null when no counter was read
+	 * counter progress samples in `teams` order — the builder tracks each
+	 * side's team ink color, so casted footage's plate swaps (the plates
+	 * follow the specced player) can't scramble the series; null when no
+	 * counter was read
 	 */
 	objective: ScannerMatchObjective | null;
+	/**
+	 * per-player special/death samples in `teams` order, oriented alongside
+	 * the objective samples (a status read pairs with the counter read of
+	 * its frame); null when the icon strip was never read
+	 */
+	playerStatus: ScannerMatchPlayerStatus | null;
 	/**
 	 * on-screen order: scoreboard rows 0-3 are teams[0] (the winners),
 	 * minimap alpha/own side is teams[0]

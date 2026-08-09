@@ -16,7 +16,8 @@ export type ResultHandler = (
 export type ErrorHandler = (message: string) => void;
 export interface DoneInfo {
 	calm: boolean;
-	telemetry: ScanTelemetry;
+	/** null unless the client was created with collectTelemetry */
+	telemetry: ScanTelemetry | null;
 }
 export type DoneHandler = (t: number, info: DoneInfo) => void;
 export type ChunkProgress = Extract<WorkerResponse, { kind: "chunkProgress" }>;
@@ -29,7 +30,7 @@ export function defaultScanWorkerCount(): number {
 }
 
 interface PendingChunk {
-	resolve(telemetry: ScanTelemetry): void;
+	resolve(telemetry: ScanTelemetry | null): void;
 	reject(error: Error): void;
 	onProgress?: ChunkProgressHandler;
 }
@@ -51,7 +52,10 @@ export class AnalyzerClient {
 		// biome-ignore lint/suspicious/noConsole: default sink for worker errors when no handler is passed
 		onError: ErrorHandler = console.error,
 		onDone?: DoneHandler,
-		options: { suppressSteadyFrames?: boolean } = {},
+		options: {
+			suppressSteadyFrames?: boolean;
+			collectTelemetry?: boolean;
+		} = {},
 	) {
 		this.#onResult = onResult;
 		this.#onError = onError;
@@ -104,6 +108,7 @@ export class AnalyzerClient {
 			kind: "init",
 			assetsBaseUrl: Config.staticAssetsUrl,
 			suppressSteadyFrames: options.suppressSteadyFrames ?? true,
+			collectTelemetry: options.collectTelemetry ?? false,
 		});
 	}
 
@@ -141,7 +146,7 @@ export class AnalyzerClient {
 	scanChunk(
 		request: { file: File; chunkIndex: number; tStart: number; tEnd: number },
 		onProgress?: ChunkProgressHandler,
-	): Promise<ScanTelemetry> {
+	): Promise<ScanTelemetry | null> {
 		if (this.busy) {
 			return Promise.reject(new Error("analyzer is busy"));
 		}

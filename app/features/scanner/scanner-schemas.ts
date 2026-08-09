@@ -19,6 +19,7 @@ import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 	ScannerMatchPlayer,
+	ScannerMatchPlayerStatus,
 	ScannerMatchTeam,
 } from "./core/scanner-match";
 import { SCANNER_LOBBIES } from "./scanner-types";
@@ -72,6 +73,26 @@ const scannerMatchObjectiveSchema = z.object({
 		.max(MAX_OBJECTIVE_SAMPLES),
 });
 
+const playerFlagsSchema = z.tuple([
+	z.boolean(),
+	z.boolean(),
+	z.boolean(),
+	z.boolean(),
+]);
+
+const scannerMatchPlayerStatusSampleSchema = z.object({
+	t: z.number().int().min(0),
+	time: z.number().int().min(0).nullable(),
+	special: z.tuple([playerFlagsSchema, playerFlagsSchema]),
+	dead: z.tuple([playerFlagsSchema, playerFlagsSchema]),
+});
+
+const scannerMatchPlayerStatusSchema = z.object({
+	samples: z
+		.array(scannerMatchPlayerStatusSampleSchema)
+		.max(MAX_OBJECTIVE_SAMPLES),
+});
+
 export const scannerMatchSchema = z.object({
 	startsAt: z.number().int().min(0).nullable(),
 	endsAt: z.number().int().min(0).nullable(),
@@ -86,6 +107,7 @@ export const scannerMatchSchema = z.object({
 	replayCode: detectionText.nullable(),
 	cast: z.boolean(),
 	objective: scannerMatchObjectiveSchema.nullable(),
+	playerStatus: scannerMatchPlayerStatusSchema.nullable(),
 	teams: z.tuple([scannerMatchTeamSchema, scannerMatchTeamSchema]),
 	winner: teamIndexSchema.nullable(),
 	pov: z
@@ -114,6 +136,10 @@ true satisfies MutuallyAssignable<
 true satisfies MutuallyAssignable<
 	z.infer<typeof scannerMatchObjectiveSchema>,
 	ScannerMatchObjective
+>;
+true satisfies MutuallyAssignable<
+	z.infer<typeof scannerMatchPlayerStatusSchema>,
+	ScannerMatchPlayerStatus
 >;
 true satisfies MutuallyAssignable<
 	z.infer<typeof scannerMatchSchema>,

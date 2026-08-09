@@ -299,6 +299,7 @@ function testMatch(partial: Partial<ScannerMatch> = {}): ScannerMatch {
 		replayCode: null,
 		cast: false,
 		objective: null,
+		playerStatus: null,
 		teams: [
 			{ players: NAMES.slice(0, 4).map((n, i) => player(n, WEAPONS[i]!)) },
 			{ players: NAMES.slice(4).map((n, i) => player(n, WEAPONS[4 + i]!)) },

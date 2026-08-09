@@ -1,0 +1,39 @@
+/* an unstyled button so the image itself is the target */
+button.thumbButton {
+	height: auto;
+	padding: 0;
+	border: none;
+	background: none;
+	margin-inline-start: auto;
+	border-radius: var(--radius-field);
+
+	&:hover {
+		filter: brightness(1.2);
+	}
+}
+
+.thumb {
+	display: block;
+	height: 40px;
+	width: auto;
+	border-radius: var(--radius-field);
+}
+
+.dialog {
+	width: max-content;
+	max-width: min(96vw, 1400px);
+}
+
+.frameFull {
+	display: block;
+	max-width: 100%;
+	max-height: calc(80dvh - 9rem);
+	border-radius: var(--radius-field);
+}
+
+.frameActions {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-3);
+	margin-block-start: var(--s-3);
+}

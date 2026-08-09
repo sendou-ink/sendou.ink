@@ -30,12 +30,11 @@ import { Ability } from "../Ability";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
 import { SendouPopover } from "../elements/Popover";
+import { GameTimeline } from "../GameTimeline";
 import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
-import {
-	ObjectiveTimeline,
-	type ObjectiveTimelineEvent,
-} from "../ObjectiveTimeline";
+import type { ObjectiveTimelineEvent } from "../ObjectiveTimeline";
 import { matchScoresFromObjective } from "../objective-timeline-utils";
+import type { PlayerStatusTimelineSample } from "../PlayerStatusTimeline";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import type { WeaponPoolWeapon } from "./WeaponPool";
@@ -93,6 +92,8 @@ export interface TimelineMap {
 		bravo: TimelineScoreboardPlayer[];
 		/** Objective-counter reads ([alpha, bravo] values) charted above the stats tables. */
 		objective?: ObjectiveTimelineEvent[];
+		/** Per-player splat/special bands ([alpha, bravo]) charted above the objective chart. */
+		playerStatus?: PlayerStatusTimelineSample[];
 	};
 }
 
@@ -442,12 +443,20 @@ function TimelineScoreboardSection({
 			</button>
 			{isExpanded ? (
 				<div className={styles.scoreboardPanel}>
-					{scoreboard.objective && scoreboard.objective.length > 0 ? (
-						<ObjectiveTimeline
-							events={scoreboard.objective}
-							teamLabels={[teams.alpha.name, teams.bravo.name]}
-						/>
-					) : null}
+					<GameTimeline
+						objectiveEvents={scoreboard.objective}
+						playerStatusSamples={scoreboard.playerStatus}
+						teams={[
+							{
+								label: teams.alpha.name,
+								weapons: scoreboard.alpha.map((player) => player.weaponSplId),
+							},
+							{
+								label: teams.bravo.name,
+								weapons: scoreboard.bravo.map((player) => player.weaponSplId),
+							},
+						]}
+					/>
 					<div className={styles.scoreboardTables}>
 						<ScoreboardTable
 							name={teams.alpha.name}

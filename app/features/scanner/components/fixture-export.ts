@@ -20,6 +20,14 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+} from "../core/detectors/objective/player-status";
+import {
+	STRIP_WEAPONS_EVENT_TYPE,
+	type StripWeaponsData,
+} from "../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
@@ -39,7 +47,9 @@ export type FixtureData =
 	| MapStartData
 	| ScoreboardOwnData
 	| MinimapData
-	| ObjectiveData;
+	| ObjectiveData
+	| PlayerStatusData
+	| StripWeaponsData;
 
 function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
@@ -118,12 +128,16 @@ function buildExpectedJson(
 						weaponLabel: mainWeaponLabel(p.weaponId),
 						weaponId: p.weaponId,
 						abilities: p.abilities,
+						dead: p.dead,
+						specialReady: p.specialReady,
 					})),
 					enemies: minimap.enemies.map((p) => ({
 						...(minimap.spectator && { name: p.name }),
 						weaponLabel: mainWeaponLabel(p.weaponId),
 						weaponId: p.weaponId,
 						abilities: p.abilities,
+						dead: p.dead,
+						specialReady: p.specialReady,
 					})),
 				},
 			},
@@ -142,6 +156,45 @@ function buildExpectedJson(
 					score: objective.score,
 					penalty: objective.penalty,
 					control: objective.control,
+				},
+			},
+			null,
+			2,
+		)}\n`;
+	}
+	if (eventType === PLAYER_STATUS_EVENT_TYPE) {
+		const status = data as PlayerStatusData;
+		return `${JSON.stringify(
+			{
+				event: eventType,
+				data: {
+					layout: status.layout,
+					time: status.time,
+					special: status.special,
+					dead: status.dead,
+				},
+			},
+			null,
+			2,
+		)}\n`;
+	}
+	if (eventType === STRIP_WEAPONS_EVENT_TYPE) {
+		const strip = data as StripWeaponsData;
+		return `${JSON.stringify(
+			{
+				event: eventType,
+				data: {
+					layout: strip.layout,
+					time: strip.time,
+					// the top candidate per slot; hand-correct to the true weapons
+					weapons: strip.slots.map((side) =>
+						side.map((candidates) => candidates?.[0]?.weaponId ?? null),
+					),
+					weaponLabels: strip.slots.map((side) =>
+						side.map((candidates) =>
+							mainWeaponLabel(candidates?.[0]?.weaponId ?? null),
+						),
+					),
 				},
 			},
 			null,

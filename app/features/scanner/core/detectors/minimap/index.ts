@@ -3,11 +3,12 @@
  * own-team callout cards (name, main weapon, the three main-ability
  * badges), the enemy panel rows (weapon, abilities; the game shows no
  * enemy names) — plus the stage, matched from the drawn map (stage.ts).
- * The goal is the most complete read of every card/row; per-match state
- * (respawn cross-outs, special charge, map control) is deliberately not
- * reported.
+ * The goal is the most complete read of every card/row; map control is
+ * deliberately not reported.
  *
- * Two screen states still steer the reads without being emitted:
+ * Two per-player screen states are reported (`dead`, `specialReady` — the
+ * match builder merges them into the death/special timeline alongside the
+ * icon-strip PlayerStatus reads) and steer the reads themselves:
  * - a respawning player's card is struck through with a large team-color
  *   X that covers the name and badges (own cards also lose the weapon;
  *   enemy rows keep theirs — the X spares the row's weapon icon). Reading
@@ -37,6 +38,7 @@ import {
 	meanBrightness,
 	type Roi,
 } from "../../image";
+import { type InkRgb, meanInkColor } from "../../ink-color";
 import type { ScoreboardResources } from "../scoreboard/index";
 import { type ParsedName, parseName } from "../scoreboard/names";
 import {
@@ -95,6 +97,10 @@ export interface MinimapTeammate {
 	 * unreadable badge); empty when a respawn cross-out sits over the badges
 	 */
 	abilities: (AbilityWithUnknown | null)[];
+	/** struck through with the respawn cross-out at the read */
+	dead: boolean;
+	/** on the light camo surface of a charged special at the read */
+	specialReady: boolean;
 }
 
 export interface MinimapEnemy {
@@ -106,6 +112,10 @@ export interface MinimapEnemy {
 	/** readable even on struck rows: the cross-out spares the weapon icon */
 	weaponId: MainWeaponId | null;
 	abilities: (AbilityWithUnknown | null)[];
+	/** struck through with the respawn cross-out at the read */
+	dead: boolean;
+	/** on the light camo surface of a charged special at the read */
+	specialReady: boolean;
 }
 
 export interface MinimapData {
@@ -127,9 +137,40 @@ export interface MinimapData {
 	teammates: MinimapTeammate[];
 	/** enemy panel rows, top to bottom */
 	enemies: MinimapEnemy[];
+	/**
+	 * mean team-ink RGB per side sampled from the sub-weapon tiles
+	 * ([teammates/alpha, enemies/bravo]); null when too little saturated
+	 * ink. Anchors the objective counter's color-tracked sides to `teams`
+	 * order on casted footage, which never shows a results screen.
+	 */
+	teamColors: [InkRgb | null, InkRgb | null];
 }
 
 export const MINIMAP_EVENT_TYPE = "Minimap";
+
+/**
+ * Timeline content guard: minimap frames inside the merge window collapse
+ * only while every card/row keeps its dead/special state, so each flip a
+ * map-open catches (a respawn, a special charged or spent) stays its own
+ * event. Names, weapons and badges are not compared — OCR wobble on an
+ * unchanged screen is still the same state.
+ */
+export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
+	const da = a as MinimapData;
+	const db = b as MinimapData;
+	const sameSide = (
+		xs: readonly { dead: boolean; specialReady: boolean }[],
+		ys: readonly { dead: boolean; specialReady: boolean }[],
+	): boolean =>
+		xs.length === ys.length &&
+		xs.every(
+			(x, i) =>
+				x.dead === ys[i]!.dead && x.specialReady === ys[i]!.specialReady,
+		);
+	return (
+		sameSide(da.teammates, db.teammates) && sameSide(da.enemies, db.enemies)
+	);
+}
 
 /** Badge match below this is reported as null (kept in debug). */
 const ABILITY_MIN_SCORE = 0.45;
@@ -324,6 +365,7 @@ export function createMinimapDetector(
 
 		const teammates: MinimapTeammate[] = [];
 		const enemies: MinimapEnemy[] = [];
+		const sideSubTiles: [Roi[], Roi[]] = [[], []];
 		const cardDebug: Record<string, unknown>[] = [];
 		for (const dx of [0, SPECTATOR_ENEMY_DX]) {
 			for (let row = 0; row < 4; row++) {
@@ -333,6 +375,7 @@ export function createMinimapDetector(
 					cardDebug.push({ dx, row, presence, skipped: true });
 					continue;
 				}
+				sideSubTiles[dx === 0 ? 0 : 1].push(layout.subTile);
 				const crossFraction = saturatedFraction(hsv, layout.cross);
 				const occluded = crossFraction >= CROSS_MIN_FRACTION;
 				const cornerMin = minTopCornerMean(gray, layout.weapon);
@@ -397,6 +440,8 @@ export function createMinimapDetector(
 					name,
 					weaponId: matched ? toMainWeaponId(matched.id) : null,
 					abilities,
+					dead: occluded,
+					specialReady: lightSurface,
 				};
 				if (dx === 0) {
 					teammates.push({ slot: SPECTATOR_SLOTS[row]!, ...fields });
@@ -406,6 +451,11 @@ export function createMinimapDetector(
 			}
 		}
 		debug.cards = cardDebug;
+
+		const teamColors: [InkRgb | null, InkRgb | null] = [
+			meanInkColor(rgb, sideSubTiles[0]),
+			meanInkColor(rgb, sideSubTiles[1]),
+		];
 
 		const stageMatch = detectStage(frame, confidences);
 		debug.stage = stageMatch;
@@ -429,6 +479,7 @@ export function createMinimapDetector(
 					spectator: true,
 					teammates,
 					enemies,
+					teamColors,
 				},
 				debug,
 			},
@@ -463,6 +514,7 @@ export function createMinimapDetector(
 
 		// 1. own-team callout cards
 		const teammates: MinimapTeammate[] = [];
+		const sideSubTiles: [Roi[], Roi[]] = [[], []];
 		const cardDebug: Record<string, unknown>[] = [];
 		for (const layout of CARD_LAYOUTS) {
 			// presence: the card is crisp UI, absent slots show blurred scene
@@ -540,11 +592,14 @@ export function createMinimapDetector(
 				matched !== null ||
 				abilities.some((a) => a !== null);
 			if (!hasEvidence) continue;
+			sideSubTiles[0].push(layout.subTile);
 			teammates.push({
 				slot: layout.slot,
 				name,
 				weaponId: matched ? toMainWeaponId(matched.id) : null,
 				abilities,
+				dead: occluded,
+				specialReady: lightSurface,
 			});
 		}
 		debug.cards = cardDebug;
@@ -604,13 +659,21 @@ export function createMinimapDetector(
 				? SPECIAL_READY_WEAPON_MIN_SCORE
 				: WEAPON_MIN_SCORE;
 			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
+			sideSubTiles[1].push(enemySubTileRoi(cy));
 			enemies.push({
 				name: null,
 				weaponId: matched ? toMainWeaponId(matched.id) : null,
 				abilities,
+				dead: occluded,
+				specialReady: lightSurface,
 			});
 		}
 		debug.enemies = enemyDebug;
+
+		const teamColors: [InkRgb | null, InkRgb | null] = [
+			meanInkColor(rgb, sideSubTiles[0]),
+			meanInkColor(rgb, sideSubTiles[1]),
+		];
 
 		const stageMatch = detectStage(frame, confidences);
 		debug.stage = stageMatch;
@@ -635,6 +698,7 @@ export function createMinimapDetector(
 					spectator: false,
 					teammates,
 					enemies,
+					teamColors,
 				},
 				debug,
 			},

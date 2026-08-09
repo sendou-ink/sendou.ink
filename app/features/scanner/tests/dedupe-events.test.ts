@@ -24,16 +24,24 @@ function teammate(
 	{
 		name = null as string | null,
 		abilities = [] as (AbilityWithUnknown | null)[],
+		dead = false,
 	} = {},
 ): MinimapTeammate {
-	return { slot: SPECTATOR_SLOTS[i]!, name, weaponId, abilities };
+	return {
+		slot: SPECTATOR_SLOTS[i]!,
+		name,
+		weaponId,
+		abilities,
+		dead,
+		specialReady: false,
+	};
 }
 
 function enemy(
 	weaponId: MainWeaponId | null,
 	{ name = null as string | null } = {},
 ): MinimapEnemy {
-	return { name, weaponId, abilities: [] };
+	return { name, weaponId, abilities: [], dead: false, specialReady: false };
 }
 
 function minimap(
@@ -44,7 +52,13 @@ function minimap(
 		enemies = BRAVO.map((id) => enemy(id)),
 	} = {},
 ): DetectedEvent {
-	const data: MinimapData = { stage, spectator: true, teammates, enemies };
+	const data: MinimapData = {
+		stage,
+		spectator: true,
+		teammates,
+		enemies,
+		teamColors: [null, null],
+	};
 	return { type: "Minimap", t, confidence: 0.8, data };
 }
 
@@ -79,6 +93,16 @@ test("a changed ability read keeps both minimaps", () => {
 			teammates: ALPHA.map((id, i) =>
 				teammate(id, i, { abilities: i === 0 ? ["ISM"] : [] }),
 			),
+		}),
+	]);
+	assert.equal(kept.length, 2);
+});
+
+test("a changed dead state keeps both minimaps", () => {
+	const kept = withoutRepeatEvents([
+		minimap(70),
+		minimap(73, {
+			teammates: ALPHA.map((id, i) => teammate(id, i, { dead: i === 0 })),
 		}),
 	]);
 	assert.equal(kept.length, 2);

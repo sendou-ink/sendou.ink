@@ -1,0 +1,34 @@
+/* the global select is full width, which would break the controls row */
+.deviceSelect {
+	appearance: none;
+	width: auto;
+	max-width: 20rem;
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	background-image: var(--field-icon-chevron);
+	background-position: center right var(--field-padding);
+	background-size: var(--field-size-icon) auto;
+	background-repeat: no-repeat;
+	color: var(--color-text);
+	cursor: pointer;
+	font-family: inherit;
+	font-size: var(--font-xs);
+	height: var(--field-size-sm);
+	padding: 0 calc(var(--field-size-icon) + var(--field-padding) + var(--s-2)) 0
+		var(--field-padding);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	outline: none;
+
+	&:focus-within {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		opacity: 0.5;
+	}
+}

@@ -12,7 +12,9 @@
           "SJ"
         ],
         "weaponLabel": "Tri-Stringer",
-        "weaponId": 7010
+        "weaponId": 7010,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "left",
@@ -23,14 +25,18 @@
           "SS"
         ],
         "weaponLabel": "Splattershot Jr.",
-        "weaponId": 10
+        "weaponId": 10,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "right",
         "name": null,
         "abilities": [],
         "weaponLabel": null,
-        "weaponId": null
+        "weaponId": null,
+        "dead": true,
+        "specialReady": false
       },
       {
         "slot": "self",
@@ -41,7 +47,9 @@
           "SS"
         ],
         "weaponLabel": "Ballpoint Splatling",
-        "weaponId": 4030
+        "weaponId": 4030,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "enemies": [
@@ -52,17 +60,23 @@
           "IRU"
         ],
         "weaponLabel": "Slosher",
-        "weaponId": 3000
+        "weaponId": 3000,
+        "dead": false,
+        "specialReady": false
       },
       {
         "abilities": [],
         "weaponLabel": "Splat Roller",
-        "weaponId": 1010
+        "weaponId": 1010,
+        "dead": true,
+        "specialReady": false
       },
       {
         "abilities": [],
         "weaponLabel": "Dualie Squelchers",
-        "weaponId": 5030
+        "weaponId": 5030,
+        "dead": true,
+        "specialReady": true
       },
       {
         "abilities": [
@@ -71,7 +85,9 @@
           "SS"
         ],
         "weaponLabel": "Splattershot",
-        "weaponId": 40
+        "weaponId": 40,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "stageLabel": "Museum d'Alfonsino"

@@ -16,6 +16,12 @@ export interface InitRequest {
 	 * off to get every detector on every frame
 	 */
 	suppressSteadyFrames?: boolean;
+	/**
+	 * accumulate scan telemetry counters (and time the detectors) so they can
+	 * be reported back with progress and done messages; default false — the
+	 * VoD tab only asks for them when the telemetry panel is opted into
+	 */
+	collectTelemetry?: boolean;
 }
 
 export interface AnalyzeRequest {
@@ -70,7 +76,8 @@ export type WorkerResponse =
 			t: number;
 			/** scheduler sees dead air — the caller may widen its sampling stride */
 			calm: boolean;
-			telemetry: ScanTelemetry;
+			/** null when the worker was not asked to collect telemetry */
+			telemetry: ScanTelemetry | null;
 	  }
 	| {
 			kind: "chunkProgress";
@@ -78,9 +85,9 @@ export type WorkerResponse =
 			/** seconds of video the chunk scan has reached */
 			t: number;
 			mode: "active" | "skim";
-			telemetry: ScanTelemetry;
+			telemetry: ScanTelemetry | null;
 			/** small bitmap of the latest decoded frame, for the preview canvas */
 			preview?: ImageBitmap;
 	  }
-	| { kind: "chunkDone"; chunkIndex: number; telemetry: ScanTelemetry }
+	| { kind: "chunkDone"; chunkIndex: number; telemetry: ScanTelemetry | null }
 	| { kind: "error"; message: string };

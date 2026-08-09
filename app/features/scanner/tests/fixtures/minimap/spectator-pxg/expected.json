@@ -13,7 +13,9 @@
           "SJ"
         ],
         "weaponLabel": ".96 Gal",
-        "weaponId": 80
+        "weaponId": 80,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "right",
@@ -24,7 +26,9 @@
           "ISM"
         ],
         "weaponLabel": "Flingza Roller",
-        "weaponId": 1030
+        "weaponId": 1030,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "down",
@@ -35,7 +39,9 @@
           "SJ"
         ],
         "weaponLabel": "Order Slosher Replica",
-        "weaponId": 3005
+        "weaponId": 3005,
+        "dead": false,
+        "specialReady": false
       },
       {
         "slot": "left",
@@ -46,7 +52,9 @@
           "ISM"
         ],
         "weaponLabel": "Rapid Blaster Pro WNT-R",
-        "weaponId": 252
+        "weaponId": 252,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "enemies": [
@@ -58,7 +66,9 @@
           "SJ"
         ],
         "weaponLabel": "S-BLAST '91",
-        "weaponId": 261
+        "weaponId": 261,
+        "dead": false,
+        "specialReady": false
       },
       {
         "name": "バッラスト",
@@ -68,7 +78,9 @@
           "ISM"
         ],
         "weaponLabel": "Snipewriter 5H",
-        "weaponId": 2070
+        "weaponId": 2070,
+        "dead": false,
+        "specialReady": false
       },
       {
         "name": "Jared",
@@ -78,7 +90,9 @@
           "SJ"
         ],
         "weaponLabel": "Twinklez Splat Dualies",
-        "weaponId": 5012
+        "weaponId": 5012,
+        "dead": false,
+        "specialReady": false
       },
       {
         "name": "Reiyu C:3",
@@ -88,7 +102,9 @@
           "SJ"
         ],
         "weaponLabel": "Splash-o-matic",
-        "weaponId": 20
+        "weaponId": 20,
+        "dead": false,
+        "specialReady": false
       }
     ],
     "stageLabel": "Crableg Capital"

@@ -1,5 +1,12 @@
 const PENALTY_BRIDGE_SECONDS = 6;
 
+/**
+ * Width of the label gutter left of the plot area, shared by the objective
+ * chart (its y-axis is forced to this width) and the player-status rows (their
+ * weapon-icon column), so both plots span exactly the same x-range.
+ */
+export const TIMELINE_PLOT_GUTTER_PX = 36;
+
 /** The count a knockout wins at: the counter runs out and the team takes all of it. */
 const FULL_COUNT = 100;
 
@@ -88,6 +95,19 @@ export function matchScoresFromObjective(
 	};
 
 	return [lastCountTaken(0), lastCountTaken(1)];
+}
+
+/**
+ * Seconds into the source formatted for display: m:ss, growing an hours
+ * part only when needed.
+ */
+export function formatElapsed(seconds: number): string {
+	const hours = Math.floor(seconds / 3600);
+	const minutes = Math.floor((seconds % 3600) / 60);
+	const rest = String(Math.floor(seconds % 60)).padStart(2, "0");
+	return hours > 0
+		? `${hours}:${String(minutes).padStart(2, "0")}:${rest}`
+		: `${minutes}:${rest}`;
 }
 
 function medianFilterValues(

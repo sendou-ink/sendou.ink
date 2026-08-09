@@ -88,6 +88,12 @@ export interface ScoreboardRowDebug {
 export interface ScoreboardResources {
 	weapons: WeaponTemplate[];
 	/**
+	 * Weapon renders prepared for the in-match icon strip (objective's
+	 * StripWeapons evidence). Optional: without them the strip slot →
+	 * scoreboard row assignment falls back to as-drawn order.
+	 */
+	stripWeapons?: WeaponTemplate[] | null;
+	/**
 	 * Special-weapon silhouettes (assets/cv/specials). Optional: without
 	 * them, near-tied weapon icons (Splash- vs Sploosh-o-matic) stay decided
 	 * by icon score alone.

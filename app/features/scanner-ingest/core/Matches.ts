@@ -7,6 +7,7 @@ import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 	ScannerMatchPlayer,
+	ScannerMatchPlayerStatus,
 	ScannerMatchTeam,
 } from "~/features/scanner/core/scanner-match";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
@@ -52,6 +53,11 @@ export function canonicalMatch(match: ScannerMatch): ScannerMatch {
 		cast: match.cast,
 		objective:
 			match.objective === null ? null : canonicalObjective(match.objective),
+		// `?? null` also normalizes rows stored before the field existed
+		playerStatus:
+			match.playerStatus == null
+				? null
+				: canonicalPlayerStatus(match.playerStatus),
 		teams: [canonicalTeam(match.teams[0]), canonicalTeam(match.teams[1])],
 		winner: match.winner,
 		pov:
@@ -128,6 +134,7 @@ export function mergeMatches(
 		// whole-series first-ingest-wins: interleaving two partial sample
 		// series from different scans is not attempted
 		objective: existing.objective ?? oriented.objective,
+		playerStatus: existing.playerStatus ?? oriented.playerStatus,
 		teams: [
 			mergeTeam(existing.teams[0], oriented.teams[0]),
 			mergeTeam(existing.teams[1], oriented.teams[1]),
@@ -163,6 +170,19 @@ function canonicalObjective(
 			score: [sample.score[0], sample.score[1]],
 			penalty: [sample.penalty[0], sample.penalty[1]],
 			control: [sample.control[0], sample.control[1]],
+		})),
+	};
+}
+
+function canonicalPlayerStatus(
+	playerStatus: ScannerMatchPlayerStatus,
+): ScannerMatchPlayerStatus {
+	return {
+		samples: playerStatus.samples.map((sample) => ({
+			t: sample.t,
+			time: sample.time,
+			special: [[...sample.special[0]], [...sample.special[1]]],
+			dead: [[...sample.dead[0]], [...sample.dead[1]]],
 		})),
 	};
 }
@@ -289,6 +309,16 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 							score: [sample.score[1], sample.score[0]],
 							penalty: [sample.penalty[1], sample.penalty[0]],
 							control: [sample.control[1], sample.control[0]],
+						})),
+					},
+		playerStatus:
+			match.playerStatus == null
+				? null
+				: {
+						samples: match.playerStatus.samples.map((sample) => ({
+							...sample,
+							special: [sample.special[1], sample.special[0]],
+							dead: [sample.dead[1], sample.dead[0]],
 						})),
 					},
 	};

@@ -1,0 +1,391 @@
+.group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.matchCard {
+	container: match-card / inline-size;
+	position: sticky;
+	top: var(--layout-sticky-top);
+	z-index: 1;
+	overflow: hidden;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+
+	/* only cards the scan just formed animate in — see MatchCard's `enter` */
+	&.enter {
+		animation: scanner-card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+	}
+
+	/* one overlay element all send-state effects draw on */
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		pointer-events: none;
+	}
+
+	&.sending {
+		box-shadow: inset 0 0 0 1px var(--color-info-low);
+
+		&::after {
+			background-image: linear-gradient(
+				105deg,
+				transparent 40%,
+				rgb(255 255 255 / 0.09) 50%,
+				transparent 60%
+			);
+			background-size: 250% 100%;
+			animation: scanner-sheen 1.4s linear infinite;
+		}
+	}
+
+	&.flashSent::after {
+		animation: scanner-sent-pop 0.8s ease-out both;
+	}
+
+	&.live {
+		box-shadow: inset 0 0 0 1px var(--color-info-low);
+	}
+}
+
+@keyframes scanner-card-in {
+	from {
+		opacity: 0;
+		transform: translateY(10px) scale(0.98);
+	}
+}
+
+@keyframes scanner-sheen {
+	from {
+		background-position: 130% 0;
+	}
+	to {
+		background-position: -130% 0;
+	}
+}
+
+@keyframes scanner-sent-pop {
+	0% {
+		opacity: 1;
+		box-shadow:
+			inset 0 0 0 2px var(--color-success),
+			inset 0 0 32px var(--color-success-low);
+	}
+	100% {
+		opacity: 0;
+		box-shadow:
+			inset 0 0 0 2px var(--color-success),
+			inset 0 0 32px var(--color-success-low);
+	}
+}
+
+@keyframes scanner-shake {
+	20% {
+		transform: translateX(-4px);
+	}
+	50% {
+		transform: translateX(4px);
+	}
+	80% {
+		transform: translateX(-2px);
+	}
+}
+
+.main {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--s-2) var(--s-3);
+	padding: var(--s-3) var(--s-4);
+	min-height: 66px;
+}
+
+.matchCard.flashFailed .main {
+	animation: scanner-shake 0.35s ease;
+}
+
+.mode {
+	flex-shrink: 0;
+	filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.5));
+}
+
+.headline {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	/* claims row space so the score/chips can never crush the stage name
+	   out of view in a narrow feed column; wraps instead */
+	flex: 1 1 0;
+	min-width: 150px;
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--s-1) var(--s-2);
+}
+
+.stage {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	line-height: 1.1;
+}
+
+.meta {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.weapons {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--s-0-5);
+
+	& .vs {
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-semi);
+		color: var(--color-text-high);
+		margin: 0 5px;
+	}
+}
+
+/* a team is one wrapping unit: the eight never break up mid-team */
+.weaponRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
+.weapon {
+	flex-shrink: 0;
+	width: 32px;
+	height: 32px;
+	vertical-align: middle;
+	background: var(--color-bg-badge);
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5);
+
+	&.pov {
+		outline: var(--border-style-high);
+		background-color: var(--color-bg-high);
+		outline-offset: 1px;
+	}
+}
+
+.side {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: var(--s-1-5);
+	margin-inline-start: auto;
+	align-self: stretch;
+	flex-shrink: 0;
+}
+
+.matchScore {
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	line-height: 1;
+	padding: 5px var(--s-3);
+	border-radius: var(--radius-full);
+	background: color-mix(in oklab, var(--color-bg) 72%, transparent);
+	backdrop-filter: blur(8px);
+
+	& .win {
+		color: var(--color-error-high);
+	}
+
+	& .lose {
+		color: var(--color-info-high);
+	}
+}
+
+/* undo the scanner-wide solid button look for the banner icon button */
+button.expand {
+	flex-shrink: 0;
+	margin-block-start: auto;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-full);
+	background: color-mix(in oklab, var(--color-bg) 55%, transparent);
+	backdrop-filter: blur(8px);
+	color: var(--color-text-high);
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+
+	& svg {
+		width: var(--field-size-icon);
+		height: var(--field-size-icon);
+	}
+
+	&:hover {
+		color: var(--color-text);
+		background: color-mix(in oklab, var(--color-bg) 78%, transparent);
+	}
+
+	&.expanded {
+		transform: rotate(180deg);
+	}
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	padding: var(--s-0-5) var(--s-2-5);
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	border: var(--border-style);
+	background-color: var(--color-bg);
+	color: var(--color-text-high);
+	white-space: nowrap;
+
+	& .dot {
+		width: 7px;
+		height: 7px;
+		border-radius: var(--radius-full);
+		background: currentColor;
+	}
+
+	&.live {
+		color: var(--color-error);
+		border-color: var(--color-error-low);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+
+		& .dot {
+			animation: scanner-pulse 1.4s ease-in-out infinite;
+		}
+	}
+
+	&.inProgress .dot {
+		animation: scanner-pulse 1.4s ease-in-out infinite;
+	}
+
+	&.queued,
+	&.sending {
+		color: var(--color-info-high);
+		border-color: var(--color-info-low);
+		background-color: var(--color-info-low);
+
+		& .dot {
+			animation: scanner-pulse 1.4s ease-in-out infinite;
+		}
+	}
+
+	&.sent {
+		color: var(--color-success-high);
+		border-color: var(--color-success-low);
+		background-color: var(--color-success-low);
+
+		& a {
+			color: inherit;
+			text-decoration: underline;
+			text-underline-offset: 2px;
+
+			&:hover {
+				color: var(--color-text-high);
+			}
+		}
+	}
+
+	&.unlinked {
+		color: var(--color-warning-high);
+		border-color: var(--color-warning-low);
+		background-color: var(--color-warning-low);
+	}
+
+	&.failed {
+		color: var(--color-error-high);
+		border-color: var(--color-error-low);
+		background-color: var(--color-error-low);
+	}
+}
+
+@keyframes scanner-pulse {
+	50% {
+		opacity: 0.25;
+		transform: scale(0.8);
+	}
+}
+
+.error {
+	padding: 0 var(--s-4) var(--s-2-5);
+	font-size: var(--font-2xs);
+	color: var(--color-error);
+}
+
+/* source event cards, nested under their match card via an indent rail */
+.events {
+	--scanner-card-padding: var(--s-2-5) 14px;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	margin-inline-start: var(--s-2-5);
+	padding-inline-start: var(--s-3);
+	border-inline-start: var(--border-width) solid var(--color-border);
+	animation: scanner-detail-in 0.25s ease both;
+}
+
+@keyframes scanner-detail-in {
+	from {
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+}
+
+.setDivider {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2-5);
+	margin-top: var(--s-1-5);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+
+	&::before,
+	&::after {
+		content: "";
+		flex: 1;
+		height: var(--border-width);
+		background-color: var(--color-border);
+	}
+}
+
+/* the two teams' weapons no longer fit beside each other: one row each */
+@container match-card (width < 460px) {
+	.weapons {
+		flex-direction: column;
+		align-items: flex-start;
+		row-gap: var(--s-1);
+
+		& .vs {
+			display: none;
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.matchCard,
+	.matchCard.sending::after,
+	.matchCard.flashSent::after,
+	.matchCard.flashFailed .main,
+	.events,
+	.chip.live .dot,
+	.chip.inProgress .dot,
+	.chip.queued .dot,
+	.chip.sending .dot {
+		animation: none;
+	}
+}

@@ -28,6 +28,7 @@ import { DetectorScheduler } from "../core/detectors/scheduler";
 import {
 	createScanTelemetry,
 	detectorTelemetry,
+	type ScanTelemetry,
 } from "../core/detectors/telemetry";
 import type { Detector } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
@@ -53,7 +54,9 @@ const PREVIEW_HEIGHT = 270;
 
 let detectors: Detector<unknown>[] = [];
 let scheduler: DetectorScheduler | null = null;
-let telemetry = createScanTelemetry();
+/** null unless the init message asked for telemetry */
+let telemetry: ScanTelemetry | null = null;
+let collectTelemetry = false;
 let chunkAborted = false;
 /** last per-frame t, to reset telemetry when a new session rewinds the clock */
 let lastFrameT = Number.NEGATIVE_INFINITY;
@@ -65,6 +68,7 @@ function post(message: WorkerResponse, transfer: Transferable[] = []): void {
 async function init({
 	assetsBaseUrl,
 	suppressSteadyFrames = true,
+	collectTelemetry: collect = false,
 }: InitRequest): Promise<void> {
 	try {
 		await loadOpenCV();
@@ -75,7 +79,8 @@ async function init({
 			matchOpeningTypes: [MAP_START_EVENT_TYPE],
 			matchClosingTypes: SCOREBOARD_EVENT_TYPES,
 		});
-		telemetry = createScanTelemetry();
+		collectTelemetry = collect;
+		telemetry = freshTelemetry();
 		post({ kind: "ready" });
 	} catch (error) {
 		post({ kind: "error", message: `init failed: ${String(error)}` });
@@ -115,7 +120,7 @@ async function analyzeFrame(
 	} finally {
 		src.delete();
 	}
-	telemetry.analyzedFrames++;
+	if (telemetry) telemetry.analyzedFrames++;
 
 	// On detection, ship back the exact analyzed pixels (lossless, at capture
 	// resolution) so the UI never has to re-grab a later frame — encoded at
@@ -127,21 +132,27 @@ async function analyzeFrame(
 	try {
 		for (const detector of detectors) {
 			if (!due.includes(detector.id)) continue;
-			const counters = detectorTelemetry(telemetry, detector.id);
-			counters.checks++;
-			const gateStart = performance.now();
+			const counters = telemetry
+				? detectorTelemetry(telemetry, detector.id)
+				: null;
+			const gateStart = counters ? performance.now() : 0;
 			const gate = detector.gate(frame);
-			counters.gateMs += performance.now() - gateStart;
+			if (counters) {
+				counters.checks++;
+				counters.gateMs += performance.now() - gateStart;
+			}
 			scheduler!.recordGate(detector.id, t, gate.pass, gate.signature);
-			if (gate.pass) counters.gatePasses++;
+			if (counters && gate.pass) counters.gatePasses++;
 			const runParse = gate.pass && scheduler!.shouldParse(detector.id, t);
-			if (gate.pass && !runParse) counters.suppressedParses++;
+			if (counters && gate.pass && !runParse) counters.suppressedParses++;
 			let events: ReturnType<typeof detector.parse> = [];
 			if (runParse) {
-				const parseStart = performance.now();
+				const parseStart = counters ? performance.now() : 0;
 				events = detector.parse(frame, t, gate);
-				counters.parses++;
-				counters.parseMs += performance.now() - parseStart;
+				if (counters) {
+					counters.parses++;
+					counters.parseMs += performance.now() - parseStart;
+				}
 				scheduler!.recordParse(detector.id, t, events);
 			}
 			const blob =
@@ -163,7 +174,7 @@ async function analyzeFrame(
 }
 
 async function analyze({ bitmap, t }: AnalyzeRequest): Promise<void> {
-	if (t + 5 < lastFrameT) telemetry = createScanTelemetry();
+	if (t + 5 < lastFrameT) telemetry = freshTelemetry();
 	lastFrameT = t;
 	try {
 		await analyzeFrame(bitmap, t);
@@ -181,7 +192,7 @@ async function scanChunk({
 }: ScanChunkRequest): Promise<void> {
 	chunkAborted = false;
 	scheduler!.reset(tStart);
-	telemetry = createScanTelemetry();
+	telemetry = freshTelemetry();
 	const wallStart = performance.now();
 	let lastProgressAt = 0;
 	let lastPreviewAt = 0;
@@ -201,11 +212,13 @@ async function scanChunk({
 		const packets = new EncodedPacketSink(track);
 
 		const handleSample = async (sample: VideoSample): Promise<void> => {
-			telemetry.decodedFrames++;
 			const t = sample.timestamp;
-			const span = Math.max(0, t - cursor);
-			if (mode === "active") telemetry.activeVideoS += span;
-			else telemetry.skimVideoS += span;
+			if (telemetry) {
+				telemetry.decodedFrames++;
+				const span = Math.max(0, t - cursor);
+				if (mode === "active") telemetry.activeVideoS += span;
+				else telemetry.skimVideoS += span;
+			}
 			cursor = Math.max(cursor, t);
 			const frame = sample.toVideoFrame();
 			sample.close();
@@ -225,7 +238,7 @@ async function scanChunk({
 			}
 			if (preview || now - lastProgressAt >= PROGRESS_POST_INTERVAL_MS) {
 				lastProgressAt = now;
-				telemetry.wallMs = performance.now() - wallStart;
+				if (telemetry) telemetry.wallMs = performance.now() - wallStart;
 				post(
 					{
 						kind: "chunkProgress",
@@ -282,7 +295,7 @@ async function scanChunk({
 			}
 		}
 
-		telemetry.wallMs = performance.now() - wallStart;
+		if (telemetry) telemetry.wallMs = performance.now() - wallStart;
 		post({ kind: "chunkDone", chunkIndex, telemetry });
 	} catch (error) {
 		post({
@@ -292,6 +305,10 @@ async function scanChunk({
 	} finally {
 		input.dispose();
 	}
+}
+
+function freshTelemetry(): ScanTelemetry | null {
+	return collectTelemetry ? createScanTelemetry() : null;
 }
 
 self.onmessage = (e: MessageEvent) => {

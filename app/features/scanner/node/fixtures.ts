@@ -36,12 +36,16 @@ interface ExpectedPlayer {
 }
 
 interface ExpectedMinimapTeammate {
-	slot?: "up" | "left" | "right" | "self";
+	slot?: "up" | "left" | "right" | "self" | "down";
 	name?: string | null;
 	/** informational for the human corrector; tests compare weaponId */
 	weaponLabel?: string | null;
 	weaponId?: MainWeaponId | null;
 	abilities?: (AbilityWithUnknown | null)[];
+	/** struck through with the respawn cross-out */
+	dead?: boolean;
+	/** on the light camo surface of a charged special */
+	specialReady?: boolean;
 }
 
 interface ExpectedMinimapEnemy {
@@ -51,6 +55,10 @@ interface ExpectedMinimapEnemy {
 	weaponLabel?: string | null;
 	weaponId?: MainWeaponId | null;
 	abilities?: (AbilityWithUnknown | null)[];
+	/** struck through with the respawn cross-out */
+	dead?: boolean;
+	/** on the light camo surface of a charged special */
+	specialReady?: boolean;
 }
 
 interface ExpectedScoreboard {
@@ -63,6 +71,8 @@ interface ExpectedScoreboard {
 		| "MapStart"
 		| "Minimap"
 		| "Objective"
+		| "PlayerStatus"
+		| "StripWeapons"
 		| "none";
 	data?: {
 		lobby?: ScannerLobby;
@@ -99,6 +109,19 @@ interface ExpectedScoreboard {
 		penalty?: [number | null, number | null];
 		/** Objective only: which team currently holds the objective */
 		control?: [boolean, boolean];
+		/** PlayerStatus only: special held per slot, [left team, right team] */
+		special?: [boolean[], boolean[]];
+		/** PlayerStatus only: splatted per slot, [left team, right team] */
+		dead?: [boolean[], boolean[]];
+		/** PlayerStatus + StripWeapons: which icon-strip geometry the frame shows */
+		layout?: "pov" | "cast" | "cast-mirror";
+		/**
+		 * StripWeapons only: the true weapon per slot, [left team, right
+		 * team], null = slot skipped (splatted icon). weaponLabels is
+		 * informational for the human corrector.
+		 */
+		weapons?: [(MainWeaponId | null)[], (MainWeaponId | null)[]];
+		weaponLabels?: [(string | null)[], (string | null)[]];
 		/** Minimap only: casted 8-player spectator map screen (not parsed yet) */
 		spectator?: boolean;
 		/** Minimap only: own-team callout cards in slot order */

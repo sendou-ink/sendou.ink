@@ -3,7 +3,7 @@ import { Camera, Ellipsis, FileText, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
-import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
+import { GameTimeline } from "~/components/GameTimeline";
 import {
 	listVideoInputs,
 	openVirtualCamera,
@@ -16,10 +16,9 @@ import {
 	type MapStartData,
 } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "../core/detectors/objective/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
+import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
@@ -29,6 +28,7 @@ import {
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
+import scannerStyles from "../scanner.module.css";
 import {
 	clearEvents,
 	deleteEvents,
@@ -44,8 +44,10 @@ import { EventCard } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
+import styles from "./LivePage.module.css";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
+import { playerStatusTeams } from "./player-status-view";
 import {
 	aggregateSendStatus,
 	matchContaining,
@@ -200,7 +202,8 @@ export function LivePage({
 					for (const event of result.events as DetectedEvent<FixtureData>[]) {
 						latestParseRef.current = { type: event.type, data: event.data };
 						if (
-							event.type === OBJECTIVE_EVENT_TYPE &&
+							(event.type === OBJECTIVE_EVENT_TYPE ||
+								event.type === PLAYER_STATUS_EVENT_TYPE) &&
 							objectiveBlockedRef.current
 						) {
 							continue;
@@ -280,7 +283,10 @@ export function LivePage({
 	const builtMatches = buildScannerMatches(feed);
 	const skipReasons = ingestSkipReasons(builtMatches);
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
-	const ungroupedFeed = feed.filter((e) => !groupedEvents.has(e));
+	// strip weapon evidence is assignment input, not a detection worth a card
+	const ungroupedFeed = feed.filter(
+		(e) => !groupedEvents.has(e) && e.type !== STRIP_WEAPONS_EVENT_TYPE,
+	);
 	const abilityMap = connectAbilities(feed);
 
 	const stop = () => {
@@ -304,7 +310,7 @@ export function LivePage({
 
 	return (
 		<div>
-			<div className="controls">
+			<div className={scannerStyles.controls}>
 				{!running ? (
 					<>
 						<button
@@ -318,7 +324,7 @@ export function LivePage({
 						</button>
 						<button
 							type="button"
-							className="outlined"
+							className={scannerStyles.outlined}
 							onClick={() => void start(false)}
 						>
 							Start capture (no sending)
@@ -331,7 +337,7 @@ export function LivePage({
 						</button>
 						<button
 							type="button"
-							className="outlined"
+							className={scannerStyles.outlined}
 							disabled={!sendouUser}
 							title={sendouUser ? undefined : "Log in on sendou.ink first"}
 							onClick={() => {
@@ -344,7 +350,11 @@ export function LivePage({
 						</button>
 					</>
 				)}
-				<select value={deviceId} onChange={(e) => setDeviceId(e.target.value)}>
+				<select
+					className={styles.deviceSelect}
+					value={deviceId}
+					onChange={(e) => setDeviceId(e.target.value)}
+				>
 					<option value="">Default camera (OBS Virtual Camera)</option>
 					{devices.map((d) => (
 						<option key={d.deviceId} value={d.deviceId}>
@@ -353,17 +363,20 @@ export function LivePage({
 					))}
 				</select>
 				<span
-					className={clsx("status", {
-						detected: status === "detected",
-						watching: status === "watching",
-						idle: status !== "detected" && status !== "watching",
+					className={clsx(scannerStyles.status, {
+						[scannerStyles.detected]: status === "detected",
+						[scannerStyles.watching]: status === "watching",
+						[scannerStyles.idle]:
+							status !== "detected" && status !== "watching",
 					})}
 				>
 					{status}
 					{gateScore !== null ? ` · gate ${gateScore.toFixed(2)}` : null}
 				</span>
 				{liveSend ? (
-					<span className="status watching">sending matches live</span>
+					<span className={clsx(scannerStyles.status, scannerStyles.watching)}>
+						sending matches live
+					</span>
 				) : null}
 				<LiveMenu
 					canSaveFixture={running}
@@ -389,13 +402,20 @@ export function LivePage({
 					}}
 				/>
 			</div>
-			{error ? <p className="error">{error}</p> : null}
-			{sendouError ? <p className="error">{sendouError}</p> : null}
-			<div className="live-layout">
-				<video ref={videoRef} className="preview" muted playsInline />
-				<div className="feed">
+			{error ? <p className={scannerStyles.error}>{error}</p> : null}
+			{sendouError ? (
+				<p className={scannerStyles.error}>{sendouError}</p>
+			) : null}
+			<div className={scannerStyles.liveLayout}>
+				<video
+					ref={videoRef}
+					className={scannerStyles.preview}
+					muted
+					playsInline
+				/>
+				<div className={scannerStyles.feed}>
 					{feed.length === 0 ? (
-						<p className="score">No detections yet.</p>
+						<p className={scannerStyles.score}>No detections yet.</p>
 					) : null}
 					<MatchLobbyTabs
 						matches={builtMatches}
@@ -403,15 +423,19 @@ export function LivePage({
 						renderMatch={(built, justFormed) => {
 							const id = built.sources[0]!.id!;
 							const skipReason = skipReasons.get(built);
-							// counter reads render as one timeline chart, not a card each;
-							// a non-SZ match's reads (objective null) are never shown
-							const objectiveEvents = built.match.objective
-								? built.sources
-										.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-										.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
-								: [];
+							// counter reads render as one timeline chart, not a card each --
+							// from the builder's samples, whose sides are team-stable (raw
+							// reads follow the specced player on casts); a non-SZ match's
+							// reads (objective null) are never shown
+							const objectiveEvents = (
+								built.match.objective?.samples ?? []
+							).map((sample) => ({ t: sample.t, data: sample }));
+							const statusSamples = built.match.playerStatus?.samples ?? [];
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
-								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+								(e) =>
+									e.type !== OBJECTIVE_EVENT_TYPE &&
+									e.type !== PLAYER_STATUS_EVENT_TYPE &&
+									e.type !== STRIP_WEAPONS_EVENT_TYPE,
 							);
 							const newest = built === builtMatches.at(-1);
 							return (
@@ -428,12 +452,11 @@ export function LivePage({
 											: undefined
 									}
 								>
-									{objectiveEvents.length > 0 ? (
-										<ObjectiveTimeline
-											events={objectiveEvents}
-											teamLabels={SCANNER_TEAM_LABELS}
-										/>
-									) : null}
+									<GameTimeline
+										objectiveEvents={objectiveEvents}
+										playerStatusSamples={statusSamples}
+										teams={playerStatusTeams(built.match, SCANNER_TEAM_LABELS)}
+									/>
 									{cardEvents.map((e) => (
 										<EventCard
 											key={e.id}
@@ -519,7 +542,7 @@ function LiveMenu({
 			trigger={
 				<SendouButton
 					icon={<Ellipsis />}
-					className="icon-menu"
+					className={scannerStyles.iconMenu}
 					aria-label="More actions"
 				/>
 			}

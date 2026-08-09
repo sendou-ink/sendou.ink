@@ -21,13 +21,13 @@ import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
-import { ObjectiveTimeline } from "~/components/ObjectiveTimeline";
+import { GameTimeline } from "~/components/GameTimeline";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "../core/detectors/objective/index";
+import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
+import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
 import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
@@ -39,6 +39,8 @@ import {
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
+import scannerStyles from "../scanner.module.css";
+import { scannerSearchParams } from "../scanner-search-params";
 import type { SendStatus } from "../store/events";
 import {
 	deleteVod,
@@ -63,6 +65,7 @@ import type { FixtureData } from "./fixture-export";
 import { formatTime, useEventDateTimeFormatter } from "./format";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
+import { playerStatusTeams } from "./player-status-view";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -70,6 +73,7 @@ import {
 } from "./sendou-ingest";
 import { sendouUpload } from "./sendou-upload";
 import { thumbnailFromBlob } from "./thumbnail";
+import styles from "./VodPage.module.css";
 
 /** The scan knows the on-screen sides only, not who is playing. */
 const SCANNER_TEAM_LABELS = ["Alpha", "Bravo"] as const;
@@ -136,6 +140,9 @@ export function VodPage({
 	// in-flight thumbnail work; awaited before persisting a finished scan
 	const sideWorkRef = useRef<Promise<void>[]>([]);
 	const nextMatchKeyRef = useRef(0);
+	// telemetry collection is baked into the workers at init, so a change of
+	// the search param needs a fresh pool
+	const clientsCollectTelemetryRef = useRef(false);
 
 	const [fileName, setFileName] = useState<string | null>(null);
 	/** live scan vs. reopened saved VoD (no video element for the latter) */
@@ -151,6 +158,9 @@ export function VodPage({
 	const [over, setOver] = useState(false);
 	const [eventsOpen, setEventsOpen] = useState(false);
 	const [resultsSend, setResultsSend] = useState<ResultsSend | null>(null);
+
+	// opt-in via ?telemetry=true only; nothing in the UI links to it
+	const [collectTelemetry] = useSearchParam(scannerSearchParams, "telemetry");
 
 	const formatSavedAt = useEventDateTimeFormatter();
 
@@ -168,7 +178,11 @@ export function VodPage({
 	);
 	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
-	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
+	// strip weapon evidence is assignment input, not a detection worth a card
+	const ungroupedMatches = matches.filter(
+		(m) =>
+			!groupedEvents.has(m.event) && m.event.type !== STRIP_WEAPONS_EVENT_TYPE,
+	);
 
 	// "Send results" sends the whole scan in one go, so its outcome maps
 	// onto every ingestable card; a partial failure (some chunks sent, some
@@ -262,6 +276,11 @@ export function VodPage({
 			urlRef.current = URL.createObjectURL(file);
 			video.src = urlRef.current;
 
+			if (clientsCollectTelemetryRef.current !== collectTelemetry) {
+				for (const client of clientsRef.current) client.dispose();
+				clientsRef.current = [];
+				clientsCollectTelemetryRef.current = collectTelemetry;
+			}
 			if (clientsRef.current.length === 0) {
 				clientsRef.current = Array.from(
 					{ length: defaultScanWorkerCount() },
@@ -313,6 +332,7 @@ export function VodPage({
 								frameDoneRef.current?.();
 								frameDoneRef.current = null;
 							},
+							{ collectTelemetry },
 						),
 				);
 			}
@@ -368,10 +388,12 @@ export function VodPage({
 				abortScanRef.current = () => {
 					for (const client of clients) client.abortChunk();
 				};
-				const mergedTelemetry = () =>
-					mergeScanTelemetry(
-						chunks.flatMap((c) => (c.telemetry ? [c.telemetry] : [])),
+				const mergedTelemetry = () => {
+					const parts = chunks.flatMap((c) =>
+						c.telemetry ? [c.telemetry] : [],
 					);
+					return parts.length > 0 ? mergeScanTelemetry(parts) : null;
+				};
 				let lastUiUpdate = Number.NEGATIVE_INFINITY;
 				const pushUiUpdate = () => {
 					const now = performance.now();
@@ -535,7 +557,9 @@ export function VodPage({
 		<div>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target; the file input inside is the accessible path */}
 			<div
-				className={clsx("dropzone", { over })}
+				className={clsx(scannerStyles.dropzone, {
+					[scannerStyles.over]: over,
+				})}
 				onDragOver={(e) => {
 					e.preventDefault();
 					setOver(true);
@@ -563,17 +587,18 @@ export function VodPage({
 					/>
 				</label>
 			</div>
-			<div className="controls">
+			<div className={scannerStyles.controls}>
 				{showVodView ? (
 					<>
 						<button type="button" onClick={backToList}>
 							← All VoDs
 						</button>
 						<span
-							className={clsx("status", {
-								watching: status === "scanning",
-								detected: status === "done",
-								idle: status !== "scanning" && status !== "done",
+							className={clsx(scannerStyles.status, {
+								[scannerStyles.watching]: status === "scanning",
+								[scannerStyles.detected]: status === "done",
+								[scannerStyles.idle]:
+									status !== "scanning" && status !== "done",
 							})}
 						>
 							{source === "stored" ? "saved" : status}
@@ -584,7 +609,7 @@ export function VodPage({
 								: null}
 						</span>
 						{progress ? (
-							<span className="score">
+							<span className={scannerStyles.score}>
 								{formatTime(progress.t)} / {formatTime(progress.duration)}
 								{progress.duration > 0
 									? ` (${Math.round((progress.t / progress.duration) * 100)}%)`
@@ -595,13 +620,13 @@ export function VodPage({
 							</span>
 						) : null}
 						{upload?.url ? (
-							<Link to={upload.url} className="link-button">
+							<Link to={upload.url} className={styles.linkButton}>
 								<Video aria-hidden />
 								Add VoD
 							</Link>
 						) : null}
 						{upload?.problem ? (
-							<span className="score">
+							<span className={scannerStyles.score}>
 								upload unavailable: {upload.problem}
 							</span>
 						) : null}
@@ -618,8 +643,8 @@ export function VodPage({
 						) : null}
 						{resultsSend ? (
 							<span
-								className={clsx("score", {
-									error:
+								className={clsx(scannerStyles.score, {
+									[scannerStyles.error]:
 										resultsSend.state === "done" && Boolean(resultsSend.error),
 								})}
 							>
@@ -639,21 +664,21 @@ export function VodPage({
 					</>
 				) : null}
 			</div>
-			{error ? <p className="error">{error}</p> : null}
+			{error ? <p className={scannerStyles.error}>{error}</p> : null}
 			{showVodView && telemetry ? (
 				<TelemetryPanel telemetry={telemetry} />
 			) : null}
 			{!showVodView ? (
-				<div className="vod-list">
+				<div className={styles.vodList}>
 					{vods.length === 0 ? (
-						<p className="score">
+						<p className={scannerStyles.score}>
 							No saved VoDs yet — scan one and it will show up here.
 						</p>
 					) : null}
 					{vods.map((vod) => (
-						<div key={vod.name} className="vod-item">
-							<span className="name">{vod.name}</span>
-							<span className="score">
+						<div key={vod.name} className={styles.vodItem}>
+							<span className={styles.vodName}>{vod.name}</span>
+							<span className={clsx(scannerStyles.score, styles.vodMeta)}>
 								{vod.eventCount} event{vod.eventCount === 1 ? "" : "s"} ·{" "}
 								{formatTime(vod.duration)} · {formatSavedAt(vod.savedAt)}
 							</span>
@@ -668,7 +693,7 @@ export function VodPage({
 									variant="destructive"
 									size="small"
 									shape="square"
-									className="vod-delete"
+									className={styles.vodDelete}
 									icon={<Trash2 />}
 									aria-label="Delete"
 								/>
@@ -678,7 +703,7 @@ export function VodPage({
 				</div>
 			) : null}
 			<div
-				className="live-layout"
+				className={scannerStyles.liveLayout}
 				style={{
 					display: showVodView ? undefined : "none",
 					// a reopened saved VoD has no video to review — give the feed the full width
@@ -688,12 +713,12 @@ export function VodPage({
 				<div style={{ display: source === "scan" ? undefined : "none" }}>
 					<canvas
 						ref={previewRef}
-						className="preview"
+						className={scannerStyles.preview}
 						style={{ display: status === "scanning" ? "block" : "none" }}
 					/>
 					<video
 						ref={videoRef}
-						className="preview"
+						className={scannerStyles.preview}
 						muted
 						playsInline
 						controls
@@ -702,9 +727,9 @@ export function VodPage({
 						}}
 					/>
 				</div>
-				<div className="feed">
+				<div className={scannerStyles.feed}>
 					{matches.length === 0 ? (
-						<p className="score">
+						<p className={scannerStyles.score}>
 							{status === "scanning"
 								? "Scanning — matches appear here as scoreboards are detected."
 								: "No matches found in this VoD."}
@@ -719,15 +744,19 @@ export function VodPage({
 								ingestableBuilt.indexOf(built),
 							);
 							const send = skipReason ? undefined : bulkSend;
-							// counter reads render as one timeline chart, not a card each;
-							// a non-SZ match's reads (objective null) are never shown
-							const objectiveEvents = built.match.objective
-								? built.sources
-										.filter((e) => e.type === OBJECTIVE_EVENT_TYPE)
-										.map((e) => ({ t: e.t, data: e.data as ObjectiveData }))
-								: [];
+							// counter reads render as one timeline chart, not a card each --
+							// from the builder's samples, whose sides are team-stable (raw
+							// reads follow the specced player on casts); a non-SZ match's
+							// reads (objective null) are never shown
+							const objectiveEvents = (
+								built.match.objective?.samples ?? []
+							).map((sample) => ({ t: sample.t, data: sample }));
+							const statusSamples = built.match.playerStatus?.samples ?? [];
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
-								(e) => e.type !== OBJECTIVE_EVENT_TYPE,
+								(e) =>
+									e.type !== OBJECTIVE_EVENT_TYPE &&
+									e.type !== PLAYER_STATUS_EVENT_TYPE &&
+									e.type !== STRIP_WEAPONS_EVENT_TYPE,
 							);
 							return (
 								<MatchCard
@@ -743,12 +772,11 @@ export function VodPage({
 										send?.state === "sent" && link ? { ...send, link } : send
 									}
 								>
-									{objectiveEvents.length > 0 ? (
-										<ObjectiveTimeline
-											events={objectiveEvents}
-											teamLabels={SCANNER_TEAM_LABELS}
-										/>
-									) : null}
+									<GameTimeline
+										objectiveEvents={objectiveEvents}
+										playerStatusSamples={statusSamples}
+										teams={playerStatusTeams(built.match, SCANNER_TEAM_LABELS)}
+									/>
 									{cardEvents.map((e) => {
 										const vodMatch = vodMatchByEvent.get(e);
 										return (
@@ -811,7 +839,7 @@ function ExportMenu({
 			trigger={
 				<SendouButton
 					icon={<Download />}
-					className="icon-menu"
+					className={scannerStyles.iconMenu}
 					aria-label="Export"
 				/>
 			}
@@ -855,7 +883,7 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 	);
 	const coveredS = telemetry.activeVideoS + telemetry.skimVideoS;
 	return (
-		<details className="telemetry">
+		<details className={styles.telemetry}>
 			<summary>
 				telemetry · analyzed {telemetry.analyzedFrames}/
 				{telemetry.decodedFrames} decoded frames

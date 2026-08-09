@@ -2,6 +2,7 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
+import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { formatClock, useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
@@ -27,8 +28,8 @@ export function ObjectiveCard(props: {
 	const holder = data.control.findIndex(Boolean);
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className="card">
-			<div className="meta">
+		<div className={styles.card}>
+			<div className={styles.meta}>
 				<MetaPills
 					t={t}
 					confidence={confidence}

@@ -29,7 +29,9 @@ export const meta: MetaFunction = (args) => {
 // may be imported at route-module top level — only from inside this lazily
 // imported client component tree, after hydration.
 const ScannerApp = lazy(() =>
-	import("~/features/scanner/components/App").then((m) => ({ default: m.App })),
+	import("~/features/scanner/components/ScannerApp").then((m) => ({
+		default: m.ScannerApp,
+	})),
 );
 
 export default function ScannerPage() {

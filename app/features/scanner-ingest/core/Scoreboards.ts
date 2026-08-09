@@ -1,6 +1,7 @@
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,
+	ScannerMatchPlayerStatus,
 } from "~/features/scanner/core/scanner-match";
 import type { ScannerLobby } from "~/features/scanner/scanner-types";
 import type {
@@ -219,6 +220,12 @@ export interface IngestedScoreboardData {
 	 * was read.
 	 */
 	objective?: ScannerMatchObjective;
+	/**
+	 * per-player special/death samples, teams winner-first and `t` rebased
+	 * onto the same origin as `objective` so both chart on one axis. Absent
+	 * when the icon strip was never read.
+	 */
+	playerStatus?: ScannerMatchPlayerStatus;
 }
 
 /**
@@ -271,6 +278,7 @@ export function deriveScoreboardData({
 		scores: view.scores,
 		players,
 		...(view.objective ? { objective: view.objective } : null),
+		...(view.playerStatus ? { playerStatus: view.playerStatus } : null),
 	};
 }
 
@@ -298,6 +306,8 @@ interface WinnerFirstView {
 	players: WinnerFirstPlayer[];
 	/** counter progress with both the sides and `t` already winner-first */
 	objective: ScannerMatchObjective | null;
+	/** status samples winner-first, on the same rebased `t` axis */
+	playerStatus: ScannerMatchPlayerStatus | null;
 	povIndex: number | null;
 	/** chronological walk key: wall-clock, else video time, else input order */
 	order: number;
@@ -331,6 +341,8 @@ function winnerFirstView(
 		return null;
 	}
 
+	const progressFirstT = firstProgressT(match);
+
 	return {
 		lobby: match.lobby,
 		mode: match.mode,
@@ -343,7 +355,16 @@ function winnerFirstView(
 			...player,
 			name: player.name ?? "",
 		})),
-		objective: winnerFirstObjective(match.objective, match.winner),
+		objective: winnerFirstObjective(
+			match.objective,
+			match.winner,
+			progressFirstT,
+		),
+		playerStatus: winnerFirstPlayerStatus(
+			match.playerStatus ?? null,
+			match.winner,
+			progressFirstT,
+		),
 		povIndex:
 			match.pov === null
 				? null
@@ -355,19 +376,33 @@ function winnerFirstView(
 }
 
 /**
+ * The shared `t` origin of a match's progress series: the earliest counter
+ * or status read, so both rebase onto one axis and stay aligned without
+ * the source video.
+ */
+function firstProgressT(match: ScannerMatch): number {
+	const ts = [
+		...(match.objective?.samples ?? []).map((sample) => sample.t),
+		...(match.playerStatus?.samples ?? []).map((sample) => sample.t),
+	];
+	return ts.length > 0 ? Math.min(...ts) : 0;
+}
+
+/**
  * Puts a match's counter samples in derived-scoreboard shape: per-team
  * values winner-first like `scores` and `players`, and `t` rebased to the
- * game's first read so the samples stay meaningful without the source video.
+ * game's first progress read so the samples stay meaningful without the
+ * source video.
  */
 function winnerFirstObjective(
 	objective: ScannerMatchObjective | null,
 	winner: 0 | 1,
+	firstT: number,
 ): ScannerMatchObjective | null {
 	if (!objective || objective.samples.length === 0) return null;
 
 	const winnerFirst = <T>(pair: [T, T]): [T, T] =>
 		winner === 0 ? [pair[0], pair[1]] : [pair[1], pair[0]];
-	const firstT = Math.min(...objective.samples.map((sample) => sample.t));
 
 	return {
 		mode: objective.mode,
@@ -377,6 +412,27 @@ function winnerFirstObjective(
 			score: winnerFirst(sample.score),
 			penalty: winnerFirst(sample.penalty),
 			control: winnerFirst(sample.control),
+		})),
+	};
+}
+
+/** The status samples winner-first on the shared rebased `t` axis. */
+function winnerFirstPlayerStatus(
+	playerStatus: ScannerMatchPlayerStatus | null,
+	winner: 0 | 1,
+	firstT: number,
+): ScannerMatchPlayerStatus | null {
+	if (!playerStatus || playerStatus.samples.length === 0) return null;
+
+	const winnerFirst = <T>(pair: [T, T]): [T, T] =>
+		winner === 0 ? [pair[0], pair[1]] : [pair[1], pair[0]];
+
+	return {
+		samples: playerStatus.samples.map((sample) => ({
+			t: sample.t - firstT,
+			time: sample.time,
+			special: winnerFirst(sample.special),
+			dead: winnerFirst(sample.dead),
 		})),
 	};
 }

@@ -186,6 +186,8 @@
 	"objectiveTimeline.timeLeft": "{{time}} left",
 	"objectiveTimeline.penalty": "+{{value}} penalty",
 	"objectiveTimeline.inControl": "In control",
+	"playerStatusTimeline.splatted": "Splatted",
+	"playerStatusTimeline.specialReady": "Special ready",
 	"maps.createMapList": "Create map list",
 	"maps.halfSz": "50% SZ",
 	"maps.mapPool": "Map pool",

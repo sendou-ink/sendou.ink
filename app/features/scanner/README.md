@@ -10,9 +10,8 @@ detected game per object, every field nullable — which feed `/ingest`
 emberz repo; see `MIGRATION.md` there.
 
 Deliberate convention exceptions (dev tool, ported wholesale): the UI is
-English-only (no i18next) and styled by one global `components/styles.css`
-instead of per-component CSS modules; `tests/node-test-compat.ts` uses a
-default export to stay a `node:test` drop-in.
+English-only (no i18next) and `tests/node-test-compat.ts` uses a default
+export to stay a `node:test` drop-in.
 
 ## Commands
 
@@ -83,12 +82,68 @@ sequenceDiagram
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
   counts, penalties, holder, match timer — a mode-discriminated union with
-  only the SZ member so far). Objective reads land on `ScannerMatch` as
-  progress samples anchored to the game clock. Reads grouping into a match
+  only the SZ member so far). The objective parse also emits a second
+  event type per read: `PlayerStatus`
+  (`core/detectors/objective/player-status.ts`), per-player special/dead
+  flags off the icon strip flanking the timer (POV and casted spectator
+  geometries; D-pad camera badges prove the cast layout, but broadcasts
+  can hide them while keeping cast geometry, so a badge-less frame scores
+  both geometries on how decisively the bodies read and sticks with the
+  established layout unless the other wins clearly — the special-ready
+  wash also pulses, so its dim trough is told apart from a splat by its
+  pale body, and a cast-layout ready read must also see a washed
+  (ink-poor) body: pale backdrop or the lead banner leaking past an icon
+  edge fakes the shoulder glow on the overhead map view's badge-less
+  strip), with
+  the same `time` value so the two reads pair downstream; its fixtures
+  live under `tests/fixtures/player-status/`. Within a side the strip's
+  slot order is the lobby seating, while the results scoreboard re-sorts
+  each team per game (attested in the sendou-triton VoD: strip [Planetz,
+  .52, Neo Splash, Snipewriter] vs rows [.52, Neo Splash, Snipewriter,
+  Planetz], and the orders differ per game while the seating holds) — so
+  every 5th counter read also samples a `StripWeapons` evidence event: a
+  ranked weapon-icon match per alive slot (the squid plate's team ink is
+  hue-knocked-out to flat grey first; splatted slots grey the render out
+  and are skipped). Single reads rank the true weapon top-1 only about
+  half the time; the builder aggregates them across the match — plus the
+  minimap cards' parsed weapons, whose column order mirrors the strip
+  seating (attested for the enemy column) — and takes the best-scoring of
+  the 24 slot→row assignments against the scoreboard's weapons
+  (`core/slot-row-assignment.ts`), falling back to as-drawn order on thin
+  or tied evidence. The POV overlay's teammate diamond follows neither
+  order and maps by card name instead. Strip-weapon fixtures live under
+  `tests/fixtures/strip-weapons/`. The builder additionally
+  flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
+  outlasts the respawn wait, so those are misread blips (background ink
+  bleeding through a crossed-out icon) — and bridges sub-10s not-ready
+  gaps between ready reads when no death inside the gap explains them (no
+  special regains that fast, so the gap is the wash's dim pulse trough). Objective reads land on `ScannerMatch` as
+  progress samples anchored to the game clock; broadcast replay wipes re-run
+  an earlier moment with the counter intact, so the builder keeps only the
+  dominant cluster of clock-zero projections (`t + time`) and drops replay
+  reads outright (timerless reads follow their preceding anchored
+  neighbor). A displayed count only ever
+  ticks down, so the builder keeps each side's longest non-increasing score
+  run and voids reads off it (surviving OCR blips chart as gaps, not dips). Each read also carries a
+  per-side team ink color (`core/ink-color.ts` — the plate fill in
+  control, the digit ink otherwise): casted footage keeps the specced
+  player's team on the left plate, so the builder orients samples by ink
+  hue and anchors them to `teams` order via the minimap sub-tile colors
+  (casts never show a results screen). Reads grouping into a match
   whose detected mode is not SZ are lookalike misreads: the builder nulls
   that match's `objective` and callers discard the events
   (`invalidObjectiveEvents`; Live also stops collecting once a MapStart
-  reveals a non-SZ mode). Parsing details are in each detector's module
+  reveals a non-SZ mode). PlayerStatus reads follow the objective pipeline
+  wholesale: same replay-wipe anchor, cast orientation inherited from the
+  nearest counter read, nulled together on non-SZ matches, and rendered as
+  per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
+  shared with the match page) above the objective chart. Minimap reads
+  feed the same samples: every card/row carries `dead` (respawn
+  cross-out) and `specialReady` (special camo) flags, merged in timerless
+  on the shared replay anchor — and mode-agnostic, so a known non-SZ
+  match keeps its minimap-sourced samples while its counter/status
+  misreads are voided. Parsing details
+  are in each detector's module
   header; accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching
   recognition code.
@@ -105,8 +160,10 @@ sequenceDiagram
   the gate. `checkIntervalS` hard-caps both phases; `attachFrame: false`
   keeps continuously-firing events from storing a frame PNG each. Frames no
   detector is due for skip canvas readback, and everything is counted in
-  `core/detectors/telemetry.ts` (VoD tab's telemetry panel). A match's
-  objective reads render as one step-line timeline
+  `core/detectors/telemetry.ts` — but only when the VoD tab is opened with
+  `?telemetry=true` (nothing links there); otherwise the workers skip
+  collection and the panel stays hidden. A match's objective reads render
+  as one step-line timeline
   (`~/components/ObjectiveTimeline.tsx`, shared with the match page).
 - VoD scans (`components/VodPage.tsx`): on the WebCodecs path each worker
   demuxes + decodes its own contiguous slice (mediabunny in the worker — no
